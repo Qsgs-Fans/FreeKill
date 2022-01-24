@@ -1,0 +1,112 @@
+import QtQuick 2.15
+import QtQuick.Controls 2.0
+import QtQuick.Window 2.0
+import QtQuick.Layouts 1.15
+
+Item {
+    id: root
+    width: 640; height: 480
+    Component {
+        id: roomDelegate
+
+        Row {
+            spacing: 24
+            Text {
+                width: 40
+                text: String(roomId)
+            }
+
+            Text {
+                width: 40
+                text: roomName
+            }
+
+            Text {
+                width: 20
+                text: gameMode
+            }
+
+            Text {
+                width: 10
+                color: (playerNum == capacity) ? "red" : "black"
+                text: String(playerNum) + "/" + String(capacity)
+            }
+
+            Text {
+                text: "Enter"
+                font.underline: true
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: {    parent.color = "blue"   }
+                    onExited: { parent.color = "black"  }
+                    onClicked: {}
+                }
+            }
+        }
+    }
+
+    ListModel {
+        id: roomModel
+    }
+
+    RowLayout {
+        anchors.fill: parent
+        Rectangle {
+            width: root.width * 0.7
+            height: root.height
+            color: "#e2e2e1"
+            radius: 4
+            Text {
+                text: "Room List"
+            }
+            ListView {
+                height: parent.height * 0.9
+                width: parent.width * 0.95
+                anchors.centerIn: parent
+                id: roomList
+                delegate: roomDelegate
+                model: roomModel
+            }
+            Rectangle {
+                id: scrollbar
+                anchors.right: roomList.right
+                y: roomList.visibleArea.yPosition * roomList.height
+                width: 10
+                radius: 4
+                height: roomList.visibleArea.heightRatio * roomList.height
+                color: "#a89da8"
+            }
+        }
+
+        ColumnLayout {
+            Text {
+                text: "Avatar"
+            }
+            Button {
+                text: "Create Room"
+                onClicked: {}
+            }
+            Button {
+                text: "Generals Overview"
+            }
+            Button {
+                text: "Cards Overview"
+            }
+            Button {
+                text: "Scenarios Overview"
+            }
+            Button {
+                text: "About"
+            }
+            Button {
+                text: "Exit Lobby"
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        // toast.show("Welcome to FreeKill lobby!")
+    }
+}
+
