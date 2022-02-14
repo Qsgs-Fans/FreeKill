@@ -1,3 +1,5 @@
 build/
 .kdev4/
 *.user
+*-swp
+*.kdev4
