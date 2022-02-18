@@ -23,7 +23,12 @@ public:
         DEST_SERVER = 0x002,
         DEST_LOBBY = 0x004
     };
-    Router(QObject *parent, QObject *receiver, ClientSocket *socket);
+
+    enum RouterType {
+        TYPE_SERVER,
+        TYPE_CLIENT
+    };
+    Router(QObject *parent, ClientSocket *socket, RouterType type);
     ~Router();
 
     ClientSocket *getSocket() const;
@@ -54,8 +59,7 @@ protected:
 
 private:
     ClientSocket *socket;
-    // void *sender;           // Server or Client
-    QObject *receiver;         // Server or Client
+    RouterType type;
 
     // For sender
     int requestId;

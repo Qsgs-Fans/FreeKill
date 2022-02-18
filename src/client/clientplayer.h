@@ -5,9 +5,13 @@
 
 class ClientPlayer : public Player {
     Q_OBJECT
-private:
-
 public:
+    ClientPlayer(uint id, QObject *parent = nullptr);
+    ~ClientPlayer();
+
+private:
 };
+
+extern ClientPlayer *Self;
 
 #endif // _CLIENTPLAYER_H

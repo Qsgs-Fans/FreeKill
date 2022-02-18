@@ -31,7 +31,7 @@ Card.HandlingMethod = {
     MethodRecast = 4,
     MethodPindian = 5,
 }
-Card:initialize = function(suit, number)
+function Card:initialize(suit, number)
 
 end
 

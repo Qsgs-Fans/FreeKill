@@ -20,6 +20,7 @@ public:
     ~Player();
 
     uint getId() const;
+    void setId(uint id);
 
     QString getScreenName() const;
     void setScreenName(const QString &name);

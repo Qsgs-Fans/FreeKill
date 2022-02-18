@@ -3,3 +3,5 @@ build/
 *.user
 *-swp
 *.kdev4
+freekill
+freekill.exe

@@ -45,4 +45,6 @@ private:
     QHash<uint, ServerPlayer *> players;
 };
 
+extern Server *ServerInstance;
+
 #endif // _SERVER_H

@@ -2,11 +2,11 @@
 #include <QJsonDocument>
 #include "router.h"
 
-Router::Router(QObject *parent, QObject *receiver, ClientSocket *socket)
+Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent)
 {
-    this->receiver = receiver;
-    socket = nullptr;
+    this->type = type;
+    this->socket = nullptr;
     setSocket(socket);
     expectedReplyId = -1;
     replyTimeout = 0;
@@ -25,18 +25,19 @@ ClientSocket* Router::getSocket() const
 
 void Router::setSocket(ClientSocket *socket)
 {
-    if (socket != nullptr) {
-        socket->disconnect(this);
-        disconnect(socket);
-        socket->deleteLater();
+    if (this->socket != nullptr) {
+        this->socket->disconnect(this);
+        disconnect(this->socket);
+        this->socket->deleteLater();
     }
 
     this->socket = nullptr;
-    if (socket != Q_NULLPTR) {
+    if (socket != nullptr) {
         connect(this, &Router::messageReady, socket, &ClientSocket::send);
         connect(socket, &ClientSocket::message_got, this, &Router::handlePacket);
         connect(socket, &ClientSocket::disconnected, this, &Router::abortRequest);
         socket->setParent(this);
+        this->socket = socket;
     }
 }
 
@@ -69,7 +70,7 @@ void Router::request(int type, const QString& command,
     body << json_data;
     body << timeout;
 
-    emit messageReady(QJsonDocument(body).toJson());
+    emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
 void Router::reply(int type, const QString& command, const QString& json_data)
@@ -80,7 +81,7 @@ void Router::reply(int type, const QString& command, const QString& json_data)
     body << command;
     body << json_data;
 
-    emit messageReady(QJsonDocument(body).toJson());
+    emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
 void Router::notify(int type, const QString& command, const QString& json_data)
@@ -91,7 +92,7 @@ void Router::notify(int type, const QString& command, const QString& json_data)
     body << command;
     body << json_data;
 
-    emit messageReady(QJsonDocument(body).toJson());
+    emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
 int Router::getTimeout() const
@@ -139,9 +140,6 @@ void Router::abortRequest()
 
 void Router::handlePacket(const QByteArray& rawPacket)
 {
-    if (receiver == nullptr)
-        return;
-
     QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
     if (packet.isNull() || !packet.isArray())
         return;
@@ -153,13 +151,14 @@ void Router::handlePacket(const QByteArray& rawPacket)
 
     if (type & TYPE_NOTIFICATION) {
         // TODO: let receiver call function
-        // sender->func
+        qDebug() << rawPacket << Qt::endl;
     }
     else if (type & TYPE_REQUEST) {
         this->requestId = requestId;
         this->requestTimeout = packet[4].toInt();
 
         // TODO: callback
+        qDebug() << rawPacket << Qt::endl;
     }
     else if (type & TYPE_REPLY) {
         QMutexLocker locker(&replyMutex);
@@ -175,6 +174,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
 
         m_reply = json_data;
         // TODO: callback?
+        qDebug() << rawPacket << Qt::endl;
 
         replyReadySemaphore.release();
         if (extraReplyReadySemaphore) {

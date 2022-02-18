@@ -17,6 +17,11 @@ uint Player::getId() const
     return id;
 }
 
+void Player::setId(uint id)
+{
+    this->id = id;
+}
+
 QString Player::getScreenName() const
 {
     return screenName;

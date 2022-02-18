@@ -10,6 +10,7 @@ ClientSocket::ClientSocket() : socket(new QTcpSocket(this))
 ClientSocket::ClientSocket(QTcpSocket* socket)
 {
     socket->setParent(this);
+    this->socket = socket;
     init();
 }
 
@@ -35,9 +36,6 @@ void ClientSocket::getMessage()
     while (socket->canReadLine()) {
         char msg[16000];    // buffer
         socket->readLine(msg, sizeof(msg));
-#ifndef QT_NO_DEBUG
-        printf("RX: %s", msg);
-#endif
         emit message_got(msg);
     }
 }
@@ -52,9 +50,6 @@ void ClientSocket::send(const QByteArray &msg)
     socket->write(msg);
     if (!msg.endsWith("\n"))
         socket->write("\n");
-#ifndef QT_NO_DEBUG
-    printf("TX: %s\n", msg.data());
-#endif
     socket->flush();
 }
 

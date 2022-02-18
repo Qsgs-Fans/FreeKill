@@ -2,6 +2,7 @@
 #define _SERVERPLAYER_H
 
 #include "player.h"
+#include "router.h"
 #include <QVariant>
 class ClientSocket;
 class Server;
@@ -10,10 +11,10 @@ class Room;
 class ServerPlayer : public Player {
     Q_OBJECT
 public:
-    explicit ServerPlayer(Server *server);
+    explicit ServerPlayer(Room *room);
     ~ServerPlayer();
 
-    uint getUid();
+    uint getUid() const;
 
     void setSocket(ClientSocket *socket);
 
@@ -24,15 +25,16 @@ public:
     void speak(const QString &message);
 
     void doRequest(const QString &command,
-                   const QVariant &data = QVariant(), int timeout = -1);
-    void doReply(const QString &command, const QVariant &data = QVariant());
-    void doNotify(const QString &command, const QVariant &data = QVariant());
+                   const QString &json_data, int timeout = -1);
+    void doReply(const QString &command, const QString &json_data);
+    void doNotify(const QString &command, const QString &json_data);
 
     void prepareForRequest(const QString &command,
                            const QVariant &data = QVariant());
 private:
     uint uid;
     ClientSocket *socket;   // socket for communicating with client
+    Router *router;
     Server *server;
     Room *room;             // Room that player is in, maybe lobby
 

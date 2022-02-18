@@ -37,6 +37,9 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
     // TODO
     // room->addPlayer(owner);
     rooms.insert(room->getId(), room);
+#ifdef QT_DEBUG
+    qDebug() << "Room #" << room->getId() << " created.";
+#endif
     emit roomCreated(room);
 }
 
@@ -62,7 +65,15 @@ void Server::updateRoomList(ServerPlayer* user)
 
 void Server::processNewConnection(ClientSocket* client)
 {
-    // TODO
+    ServerPlayer *player = new ServerPlayer(lobby());
+    player->setSocket(client);
+#ifdef QT_DEBUG
+    qDebug() << "ServerPlayer #" << player->getUid() << "connected.";
+    qDebug() << "His address is " << client->peerAddress();
+#endif
+
+    player->doNotify("test", "{\"json\": \"lua\"}");
+
 }
 
 void Server::onRoomAbandoned()
