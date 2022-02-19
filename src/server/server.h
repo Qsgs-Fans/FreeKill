@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QHash>
 #include <QHostAddress>
+#include <lua.hpp>
 
 class ServerSocket;
 class ClientSocket;
@@ -43,6 +44,8 @@ private:
     ServerSocket *server;
     QHash<uint, Room *> rooms;
     QHash<uint, ServerPlayer *> players;
+
+    lua_State *L;
 };
 
 extern Server *ServerInstance;

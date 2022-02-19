@@ -2,18 +2,15 @@
 #include "server.h"
 #include "client.h"
 
-Server *ServerInstance;
-Client *ClientInstance;
-
 void QmlBackend::startServer(ushort port)
 {
-    ServerInstance = new class Server(this);
-    ServerInstance->listen(QHostAddress::Any, port);
+    class Server *server = new class Server(this);
+    server->listen(QHostAddress::Any, port);
 }
 
 void QmlBackend::joinServer(QString address)
 {
-    ClientInstance = new class Client(this);
+    class Client *client = new class Client(this);
     QString addr = "127.0.0.1";
     ushort port = 9527u;
 
@@ -25,5 +22,5 @@ void QmlBackend::joinServer(QString address)
         addr = address;
     }
 
-    ClientInstance->connectToHost(QHostAddress(addr), port);
+    client->connectToHost(QHostAddress(addr), port);
 }

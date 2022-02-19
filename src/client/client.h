@@ -2,8 +2,10 @@
 #define _CLIENT_H
 
 #include <QObject>
+#include <lua.hpp>
 #include "router.h"
 #include "clientplayer.h"
+#include "global.h"
 
 class Client : public QObject {
     Q_OBJECT
@@ -22,10 +24,14 @@ public:
     void replyToServer(const QString &command, const QString &json_data);
     void notifyServer(const QString &command, const QString &json_data);
 
+    LuaFunction callback;
+
 private:
     Router *router;
     QMap<uint, ClientPlayer *> players;
     ClientPlayer *self;
+
+    lua_State *L;
 };
 
 extern Client *ClientInstance;

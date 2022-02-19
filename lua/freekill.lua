@@ -7,4 +7,13 @@ package.path = package.path .. ';./lua/lib/?.lua'
 class = require 'middleclass'
 json = require 'json'
 
+print 'Hello world'
+print(swig_type(freekill.test))
+
+function pt(t)
+    for k, v in pairs(t) do
+        print(k, v)
+    end
+end
+
 -- load core classes

@@ -1,17 +1,25 @@
 #include "client.h"
 #include "client_socket.h"
 
+Client *ClientInstance;
+
 Client::Client(QObject* parent)
     : QObject(parent)
 {
+    ClientInstance = this;
     self = nullptr;
 
     ClientSocket *socket = new ClientSocket;
     router = new Router(this, socket, Router::TYPE_CLIENT);
+
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
+    DoLuaScript(L, "lua/client/client.lua");
 }
 
 Client::~Client()
 {
+    ClientInstance = nullptr;
     router->getSocket()->deleteLater();
 }
 

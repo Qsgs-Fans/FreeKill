@@ -3,10 +3,14 @@
 #include "client_socket.h"
 #include "room.h"
 #include "serverplayer.h"
+#include "global.h"
+
+Server *ServerInstance;
 
 Server::Server(QObject* parent)
     : QObject(parent)
 {
+    ServerInstance = this;
     server = new ServerSocket();
     server->setParent(this);
     connect(server, &ServerSocket::new_connection,
@@ -15,11 +19,14 @@ Server::Server(QObject* parent)
     // create lobby
     createRoom(NULL, "Lobby", UINT32_MAX);
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
+
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
 }
 
 Server::~Server()
 {
-
+    ServerInstance = nullptr;
 }
 
 bool Server::listen(const QHostAddress& address, ushort port)
