@@ -1,15 +1,18 @@
 #include "client.h"
 #include "client_socket.h"
+#include "clientplayer.h"
 
 Client *ClientInstance;
+ClientPlayer *Self;
 
 Client::Client(QObject* parent)
-    : QObject(parent)
+    : QObject(parent), callback(0)
 {
     ClientInstance = this;
-    self = nullptr;
+    Self = nullptr;
 
     ClientSocket *socket = new ClientSocket;
+    connect(socket, &ClientSocket::error_message, this, &Client::error_message);
     router = new Router(this, socket, Router::TYPE_CLIENT);
 
     L = CreateLuaState();
@@ -45,6 +48,3 @@ void Client::notifyServer(const QString& command, const QString& json_data)
     int type = Router::TYPE_REQUEST | Router::SRC_CLIENT | Router::DEST_SERVER;
     router->notify(type, command, json_data);
 }
-
-
-

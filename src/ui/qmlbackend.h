@@ -10,14 +10,27 @@ class QmlBackend : public QObject {
 public:
     enum WindowType {
         Server,
-        Client,
+        Lobby,
+        Room,
         NotStarted
     };
 
-    Q_INVOKABLE void startServer(ushort port);
-    Q_INVOKABLE void joinServer(QString address);
+    QmlBackend(QObject *parent = nullptr);
+
+    // For lua use
+    void emitNotifyUI(const char *command, const char *json_data) {
+        emit notifyUI(command, json_data);
+    }
+
 signals:
-    void callback(QString func_name, QString json_data);
+    void notifyUI(const QString &command, const QString &json_data);
+
+public slots:
+    void startServer(ushort port);
+    void joinServer(QString address);
+    void replyToServer(const QString &command, const QString &json_data);
+    void notifyServer(const QString &command, const QString &json_data);
+
 private:
     WindowType type;
 };

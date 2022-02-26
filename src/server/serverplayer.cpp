@@ -70,3 +70,7 @@ void ServerPlayer::doNotify(const QString& command, const QString& json_data)
     router->notify(type, command, json_data);
 }
 
+void ServerPlayer::prepareForRequest(const QString& command, const QVariant& data)
+{
+    ;
+}

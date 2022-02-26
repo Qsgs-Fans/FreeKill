@@ -24,12 +24,15 @@ public:
     void replyToServer(const QString &command, const QString &json_data);
     void notifyServer(const QString &command, const QString &json_data);
 
+    void callLua(const QString &command, const QString &json_data);
     LuaFunction callback;
+
+signals:
+    void error_message(const QString &msg);
 
 private:
     Router *router;
     QMap<uint, ClientPlayer *> players;
-    ClientPlayer *self;
 
     lua_State *L;
 };

@@ -72,6 +72,7 @@ void Server::updateRoomList(ServerPlayer* user)
 
 void Server::processNewConnection(ClientSocket* client)
 {
+    // version check, file check, ban IP, reconnect, etc
     ServerPlayer *player = new ServerPlayer(lobby());
     player->setSocket(client);
 #ifdef QT_DEBUG
@@ -79,7 +80,7 @@ void Server::processNewConnection(ClientSocket* client)
     qDebug() << "His address is " << client->peerAddress();
 #endif
 
-    player->doNotify("test", "{\"json\": \"lua\"}");
+    player->doNotify("enter_lobby", "{}");
 
 }
 

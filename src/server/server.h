@@ -11,6 +11,8 @@ class ClientSocket;
 class Room;
 class ServerPlayer;
 
+typedef int LuaFunction;
+
 class Server : public QObject {
     Q_OBJECT
 
@@ -27,6 +29,9 @@ public:
     ServerPlayer *findPlayer(uint id) const;
 
     void updateRoomList(ServerPlayer *user);
+
+    void callLua(const QString &command, const QString &json_data);
+    LuaFunction callback;
 
 signals:
     void roomCreated(Room *room);

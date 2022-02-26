@@ -1,6 +1,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include "router.h"
+#include "client.h"
+#include "server.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent)
@@ -150,15 +152,21 @@ void Router::handlePacket(const QByteArray& rawPacket)
     QString json_data = packet[3].toString();
 
     if (type & TYPE_NOTIFICATION) {
-        // TODO: let receiver call function
-        qDebug() << rawPacket << Qt::endl;
+        if (type & DEST_CLIENT) {
+            qobject_cast<Client *>(parent())->callLua(command, json_data);
+        } else {
+            qDebug() << rawPacket << Qt::endl;
+        }
     }
     else if (type & TYPE_REQUEST) {
         this->requestId = requestId;
         this->requestTimeout = packet[4].toInt();
 
-        // TODO: callback
-        qDebug() << rawPacket << Qt::endl;
+        if (type & DEST_CLIENT) {
+            qobject_cast<Client *>(parent())->callLua(command, json_data);
+        } else {
+            qDebug() << rawPacket << Qt::endl;
+        }
     }
     else if (type & TYPE_REPLY) {
         QMutexLocker locker(&replyMutex);
