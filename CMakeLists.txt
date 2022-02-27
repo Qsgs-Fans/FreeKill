@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(REQUIRED_QT_VERSION "5.15.2")
 
 include_directories(${PROJECT_SOURCE_DIR}/)
-include_directories(${LUA_INCLUDE_DIRECTORIES})
+include_directories(include/lua)
 include_directories(src)
 include_directories(src/client)
 include_directories(src/core)

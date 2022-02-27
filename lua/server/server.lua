@@ -14,4 +14,13 @@ function Server:initialize()
     end
 end
 
+freekill.server_callback["create_room"] = function(json_data)
+    -- json_data: [ int id, string name, int capacity ]
+    local data = json.decode(json_data)
+    local owner = freekill.ServerInstance:findPlayer(data[1])
+    local roomName = data[2]
+    local capacity = data[3]
+    freekill.ServerInstance:createRoom(owner, roomName, capacity)
+end
+
 ServerInstance = Server:new()
