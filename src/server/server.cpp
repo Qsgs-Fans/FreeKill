@@ -4,6 +4,9 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "global.h"
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 Server *ServerInstance;
 
@@ -43,7 +46,10 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
     room->setCapacity(capacity);
     room->setOwner(owner);
     room->addPlayer(owner);
-    rooms.insert(room->getId(), room);
+    if (room->isLobby())
+        m_lobby = room;
+    else
+        rooms.insert(room->getId(), room);
 #ifdef QT_DEBUG
     qDebug() << "Room #" << room->getId() << " created.";
 #endif
@@ -56,7 +62,7 @@ Room *Server::findRoom(uint id) const
 
 Room *Server::lobby() const
 {
-    return findRoom(0);
+    return m_lobby;
 }
 
 ServerPlayer *Server::findPlayer(uint id) const
@@ -64,9 +70,23 @@ ServerPlayer *Server::findPlayer(uint id) const
     return players.value(id);
 }
 
-void Server::updateRoomList(ServerPlayer* user)
+void Server::updateRoomList()
 {
-    // TODO
+    QJsonArray arr;
+    foreach (Room *room, rooms) {
+        QJsonObject obj;
+        obj["roomId"] = (int)room->getId();
+        obj["roomName"] = room->getName();
+        obj["gameMode"] = "Role";
+        obj["playerNum"] = room->getPlayers().count();
+        obj["capacity"] = (int)room->getCapacity();
+        arr << obj;
+    }
+    lobby()->doBroadcastNotify(
+        lobby()->getPlayers(),
+        "update_room_list",
+        QJsonDocument(arr).toJson()
+    );
 }
 
 void Server::processNewConnection(ClientSocket* client)
@@ -86,7 +106,10 @@ void Server::processNewConnection(ClientSocket* client)
 
 void Server::onRoomAbandoned()
 {
-    // TODO
+    Room *room = qobject_cast<Room *>(sender());
+    rooms.remove(room->getId());
+    updateRoomList();
+    room->deleteLater();
 }
 
 void Server::onUserDisconnected()

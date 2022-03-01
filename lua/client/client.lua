@@ -12,17 +12,9 @@ function Client:initialize()
         if (type(cb) == "function") then
             cb(json_data)
         else
-            self:notifyUI("error_msg", "Unknown command " .. command);
+            self:notifyUI(command, json_data);
         end
     end
-end
-
-freekill.client_callback["enter_lobby"] = function(json_data)
-    ClientInstance:notifyUI("enter_lobby", json_data)
-end
-
-freekill.client_callback["enter_room"] = function(json_data)
-    ClientInstance:notifyUI("enter_room", json_data)
 end
 
 -- Create ClientInstance (used by Lua)

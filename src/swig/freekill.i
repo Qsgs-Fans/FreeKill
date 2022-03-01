@@ -41,12 +41,13 @@ SWIG_arg ++;
 %{ lua_pushstring(L, $1.toUtf8()); SWIG_arg++; %}
 
 // const QString &
+%typemap(arginit) QString const &
+  "QString $1_str;"
+
 %typemap(in, checkfn = "lua_isstring") QString const &
 %{
-    if (1) {    // to avoid 'Jump bypasses variable initialization' error
-        QString $1_str = QString::fromUtf8(lua_tostring(L, $input));
-        $1 = &$1_str;
-    }
+    $1_str = QString::fromUtf8(lua_tostring(L, $input));
+    $1 = &$1_str;
 %}
 
 %typemap(out) QString const &
@@ -114,7 +115,7 @@ public:
 
     ServerPlayer *findPlayer(unsigned int id) const;
 
-    void updateRoomList(ServerPlayer *user);
+    void updateRoomList();
 
     LuaFunction callback;
 };
@@ -219,7 +220,7 @@ public:
 
     void addPlayer(ServerPlayer *player);
     void removePlayer(ServerPlayer *player);
-    QHash<unsigned int, ServerPlayer*> getPlayers() const;
+    QList<ServerPlayer *> getPlayers() const;
     ServerPlayer *findPlayer(unsigned int id) const;
 
     void setGameLogic(GameLogic *logic);

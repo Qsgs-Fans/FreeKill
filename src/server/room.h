@@ -2,7 +2,7 @@
 #define _ROOM_H
 
 #include <QThread>
-#include <QHash>
+#include <QList>
 class Server;
 class ServerPlayer;
 class GameLogic;
@@ -30,7 +30,7 @@ public:
 
     void addPlayer(ServerPlayer *player);
     void removePlayer(ServerPlayer *player);
-    QHash<uint, ServerPlayer*> getPlayers() const;
+    QList<ServerPlayer*> getPlayers() const;
     ServerPlayer *findPlayer(uint id) const;
 
     void setGameLogic(GameLogic *logic);
@@ -40,6 +40,12 @@ public:
     void startGame();
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
     void doNotify(const QList<ServerPlayer *> targets, int timeout);
+
+    void doBroadcastNotify(
+        const QList<ServerPlayer *> targets,
+        const QString &command,
+        const QString &json_data
+    );
 
 signals:
     void abandoned();
@@ -62,7 +68,7 @@ private:
     bool m_abandoned;   // If room is empty, delete it
 
     ServerPlayer *owner;    // who created this room?
-    QHash<uint, ServerPlayer *> players;
+    QList<ServerPlayer *> players;
     GameLogic *logic;
 };
 

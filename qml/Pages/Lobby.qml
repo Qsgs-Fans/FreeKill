@@ -5,7 +5,7 @@ import QtQuick.Layouts 1.15
 
 Item {
     id: root
-    width: 640; height: 480
+    property alias roomModel: roomModel
     Component {
         id: roomDelegate
 

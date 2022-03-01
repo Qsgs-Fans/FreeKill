@@ -77,7 +77,7 @@ void Room::setOwner(ServerPlayer *owner)
 void Room::addPlayer(ServerPlayer *player)
 {
     if (!player) return;
-    players.insert(player->getUid(), player);
+    players.append(player);
     player->setRoom(this);
     if (isLobby()) {
         player->doNotify("enter_lobby", "{}");
@@ -90,18 +90,31 @@ void Room::addPlayer(ServerPlayer *player)
 
 void Room::removePlayer(ServerPlayer *player)
 {
-    players.remove(player->getId());
+    players.removeOne(player);
     emit playerRemoved(player);
+
+    if (isLobby()) return;
+
+    if (isAbandoned()) {
+        emit abandoned();
+    } else if (player == owner) {
+        setOwner(players.first());
+        owner->doNotify("room_owner", "{}");
+    }
 }
 
-QHash<uint, ServerPlayer *> Room::getPlayers() const
+QList<ServerPlayer *> Room::getPlayers() const
 {
     return players;
 }
 
 ServerPlayer *Room::findPlayer(uint id) const
 {
-    return players.value(id);
+    foreach (ServerPlayer *p, players) {
+        if (p->getId() == id)
+            return p;
+    }
+    return nullptr;
 }
 
 void Room::setGameLogic(GameLogic *logic)
@@ -128,6 +141,15 @@ void Room::doNotify(const QList<ServerPlayer *> targets, int timeout)
 {
     // TODO
 }
+
+void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
+                             const QString& command, const QString& json_data)
+{
+    foreach (ServerPlayer *p, targets) {
+        p->doNotify(command, json_data);
+    }
+}
+
 
 void Room::run()
 {
