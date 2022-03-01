@@ -22,6 +22,13 @@ Window {
         "enter_room": function(json_data) {
             mainStack.push(room);
             mainWindow.busy = false;
+        },
+        "update_room_list": function(json_data) {
+            let current = mainStack.currentItem;    // should be lobby
+            current.roomModel.clear();
+            JSON.parse(json_data).forEach(function(room) {
+                current.roomModel.append(room);
+            });
         }
     })
 
@@ -108,7 +115,7 @@ Window {
             if (typeof(cb) === "function") {
                 cb(json_data);
             } else {
-                callbacks["error_msg"]("Unknown UI command " + command + "!");
+                callbacks["error_msg"]("Unknown command " + command + "!");
             }
         }
     }

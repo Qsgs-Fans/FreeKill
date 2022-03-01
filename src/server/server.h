@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QHash>
+#include <QMap>
 #include <QHostAddress>
 #include <lua.hpp>
 
@@ -28,7 +29,7 @@ public:
 
     ServerPlayer *findPlayer(uint id) const;
 
-    void updateRoomList(ServerPlayer *user);
+    void updateRoomList();
 
     void callLua(const QString &command, const QString &json_data);
     LuaFunction callback;
@@ -47,7 +48,8 @@ public slots:
 
 private:
     ServerSocket *server;
-    QHash<uint, Room *> rooms;
+    Room *m_lobby;
+    QMap<uint, Room *> rooms;
     QHash<uint, ServerPlayer *> players;
 
     lua_State *L;
