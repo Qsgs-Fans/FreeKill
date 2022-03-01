@@ -40,7 +40,13 @@ Item {
                     hoverEnabled: true
                     onEntered: {    parent.color = "blue"   }
                     onExited: { parent.color = "black"  }
-                    onClicked: {}
+                    onClicked: {
+                        mainWindow.busy = true;
+                        Backend.notifyServer(
+                            "enter_room",
+                            JSON.stringify([roomId])
+                        );
+                    }
                 }
             }
         }
@@ -85,7 +91,9 @@ Item {
             }
             Button {
                 text: "Create Room"
-                onClicked: {}
+                onClicked: {
+                    mainStack.push(createRoom);
+                }
             }
             Button {
                 text: "Generals Overview"
@@ -101,12 +109,42 @@ Item {
             }
             Button {
                 text: "Exit Lobby"
+                onClicked: {
+                    toast.show("Goodbye.");
+                    Backend.quitLobby();
+                    mainStack.pop();
+                }
             }
         }
     }
 
+    Loader {
+        id: lobby_dialog
+        z: 1000
+        onSourceChanged: {
+            if (item === null)
+                return;
+            item.finished.connect(function(){
+                source = "";
+            });
+            item.widthChanged.connect(function(){
+                lobby_dialog.moveToCenter();
+            });
+            item.heightChanged.connect(function(){
+                lobby_dialog.moveToCenter();
+            });
+            moveToCenter();
+        }
+
+        function moveToCenter()
+        {
+            item.x = Math.round((root.width - item.width) / 2);
+            item.y = Math.round(root.height * 0.67 - item.height / 2);
+        }
+    }
+
     Component.onCompleted: {
-        // toast.show("Welcome to FreeKill lobby!")
+        toast.show("Welcome to FreeKill lobby!");
     }
 }
 

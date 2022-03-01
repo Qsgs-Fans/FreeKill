@@ -13,10 +13,13 @@ QmlBackend::QmlBackend(QObject* parent)
 
 void QmlBackend::startServer(ushort port)
 {
-    class Server *server = new class Server(this);
-    if (!server->listen(QHostAddress::Any, port)) {
-        server->deleteLater();
-        emit notifyUI("error_msg", tr("Cannot start server!"));
+    if (!ServerInstance) {
+        class Server *server = new class Server(this);
+
+        if (!server->listen(QHostAddress::Any, port)) {
+            server->deleteLater();
+            emit notifyUI("error_msg", tr("Cannot start server!"));
+        }
     }
 }
 
@@ -49,4 +52,9 @@ void QmlBackend::replyToServer(const QString& command, const QString& json_data)
 void QmlBackend::notifyServer(const QString& command, const QString& json_data)
 {
     ClientInstance->notifyServer(command, json_data);
+}
+
+void QmlBackend::quitLobby()
+{
+    delete ClientInstance;
 }

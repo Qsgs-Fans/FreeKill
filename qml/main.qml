@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.0
 import QtQuick.Window 2.0
+import "Pages"
 
 Window {
     id: mainWindow
@@ -10,46 +11,52 @@ Window {
     property var callbacks: ({
         "error_msg": function(json_data) {
             toast.show(json_data);
-            if (mainWindow.state === "busy")
-                mainWindow.state = "init";
+            mainWindow.busy = false;
         },
         "enter_lobby": function(json_data) {
-            mainWindow.state = "lobby";
+            if (mainStack.depth === 1) {
+                mainStack.push(lobby);
+            }
+            mainWindow.busy = false;
+        },
+        "enter_room": function(json_data) {
+            mainStack.push(room);
+            mainWindow.busy = false;
         }
     })
 
-    Loader {
-        id: mainLoader
-        source: "Page/Init.qml"
+    StackView {
+        id: mainStack
+        visible: !mainWindow.busy
+        initialItem: init
         anchors.fill: parent
     }
 
-    property string state: "init"
-
-    onStateChanged: {
-        switch (state) {
-            case "init":
-                mainLoader.source = "Page/Init.qml";
-                break;
-            case "lobby":
-                mainLoader.source = "Page/Lobby.qml";
-                break;
-            case "room":
-                mainLoader.source = "Page/Room.qml";
-                break;
-            case "busy":
-                mainLoader.source = "";
-                break;
-            default: break;
-        }
+    Component {
+        id: init
+        Init {}
     }
 
-    property string busyString: "Busy"
+    Component {
+        id: lobby
+        Lobby {}
+    }
 
+    Component {
+        id: room
+        Room {}
+    }
+
+    Component {
+        id: createRoom
+        CreateRoom {}
+    }
+
+    property bool busy: false
     BusyIndicator {
         running: true
         anchors.centerIn: parent
-        visible: mainWindow.state === "busy"
+        visible: mainWindow.busy === true
     }
 
     Rectangle {
@@ -83,14 +90,14 @@ Window {
 
             ScriptAction {
                 script: {
-                    toast.opacity = 0
+                    toast.opacity = 0;
                 }
             }
         }
 
         function show(text) {
-            opacity = 1
-            toast_text.text = text
+            opacity = 1;
+            toast_text.text = text;
         }
     }
 

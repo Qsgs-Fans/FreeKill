@@ -3,6 +3,7 @@
 #include "router.h"
 #include "client.h"
 #include "server.h"
+#include "serverplayer.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent)
@@ -153,9 +154,14 @@ void Router::handlePacket(const QByteArray& rawPacket)
 
     if (type & TYPE_NOTIFICATION) {
         if (type & DEST_CLIENT) {
-            qobject_cast<Client *>(parent())->callLua(command, json_data);
+            ClientInstance->callLua(command, json_data);
         } else {
-            qDebug() << rawPacket << Qt::endl;
+            // Add the uid of sender to json_data
+            QJsonArray arr = QJsonDocument::fromJson(json_data.toUtf8()).array();
+            arr.prepend(
+                (int)qobject_cast<ServerPlayer *>(parent())->getUid()
+            );
+            ServerInstance->callLua(command, QJsonDocument(arr).toJson());
         }
     }
     else if (type & TYPE_REQUEST) {
@@ -165,7 +171,8 @@ void Router::handlePacket(const QByteArray& rawPacket)
         if (type & DEST_CLIENT) {
             qobject_cast<Client *>(parent())->callLua(command, json_data);
         } else {
-            qDebug() << rawPacket << Qt::endl;
+            // requesting server is not allowed
+            Q_ASSERT(false);
         }
     }
     else if (type & TYPE_REPLY) {

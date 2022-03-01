@@ -21,5 +21,9 @@ freekill.client_callback["enter_lobby"] = function(json_data)
     ClientInstance:notifyUI("enter_lobby", json_data)
 end
 
+freekill.client_callback["enter_room"] = function(json_data)
+    ClientInstance:notifyUI("enter_room", json_data)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()

@@ -1,6 +1,5 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.0
-import QtQuick.Window 2.0
 
 Item {
     id: root
@@ -20,16 +19,16 @@ Item {
             Button {
                 text: "Join Server"
                 onClicked: {
-                    mainWindow.state = "busy";
-                    mainWindow.busyString = "Connecting to host...";
+                    mainWindow.busy = true;
+                    toast.show("Connecting to host...");
                     Backend.joinServer(server_addr.text);
                 }
             }
             Button {
                 text: "Console start"
                 onClicked: {
-                    mainWindow.state = "busy";
-                    mainWindow.busyString = "Connecting to host...";
+                    mainWindow.busy = true;
+                    toast.show("Connecting to host...");
                     Backend.startServer(9527);
                     Backend.joinServer("127.0.0.1");
                 }

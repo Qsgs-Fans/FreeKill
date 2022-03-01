@@ -8,6 +8,10 @@ Room::Room(Server* server)
     id = roomId;
     roomId++;
     this->server = server;
+    if (!isLobby()) {
+        connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
+        connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
+    }
 }
 
 Room::~Room()
@@ -72,7 +76,15 @@ void Room::setOwner(ServerPlayer *owner)
 
 void Room::addPlayer(ServerPlayer *player)
 {
-    players.insert(player->getId(), player);
+    if (!player) return;
+    players.insert(player->getUid(), player);
+    player->setRoom(this);
+    if (isLobby()) {
+        player->doNotify("enter_lobby", "{}");
+    } else {
+        player->doNotify("enter_room", "{}");
+    }
+    qDebug() << "Player #" << player->getUid() << " entered room";
     emit playerAdded(player);
 }
 
