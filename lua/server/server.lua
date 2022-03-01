@@ -15,12 +15,30 @@ function Server:initialize()
 end
 
 freekill.server_callback["create_room"] = function(json_data)
-    -- json_data: [ int id, string name, int capacity ]
+    -- json_data: [ int uid, string name, int capacity ]
     local data = json.decode(json_data)
-    local owner = freekill.ServerInstance:findPlayer(data[1])
+    local owner = freekill.ServerInstance:findPlayer(tonumber(data[1]))
     local roomName = data[2]
     local capacity = data[3]
     freekill.ServerInstance:createRoom(owner, roomName, capacity)
+end
+
+freekill.server_callback["enter_room"] = function(json_data)
+    -- json_data: [ int uid, int roomId ]
+    local data = json.decode(json_data)
+    local player = freekill.ServerInstance:findPlayer(tonumber(data[1]))
+    local room = freekill.ServerInstance:findRoom(tonumber(data[2]))
+    room:addPlayer(player)
+end
+
+freekill.server_callback["quit_room"] = function(json_data)
+    -- json_data: [ int uid ]
+    local data = json.decode(json_data)
+    local player = freekill.ServerInstance:findPlayer(tonumber(data[1]))
+    local room = player:getRoom()
+    if not room:isLobby() then
+        room:removePlayer(player)
+    end
 end
 
 ServerInstance = Server:new()

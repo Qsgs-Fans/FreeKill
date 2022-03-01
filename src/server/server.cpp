@@ -22,6 +22,7 @@ Server::Server(QObject* parent)
 
     L = CreateLuaState();
     DoLuaScript(L, "lua/freekill.lua");
+    DoLuaScript(L, "lua/server/server.lua");
 }
 
 Server::~Server()
@@ -41,13 +42,11 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
     room->setName(name);
     room->setCapacity(capacity);
     room->setOwner(owner);
-    // TODO
-    // room->addPlayer(owner);
+    room->addPlayer(owner);
     rooms.insert(room->getId(), room);
 #ifdef QT_DEBUG
     qDebug() << "Room #" << room->getId() << " created.";
 #endif
-    emit roomCreated(room);
 }
 
 Room *Server::findRoom(uint id) const
@@ -75,13 +74,14 @@ void Server::processNewConnection(ClientSocket* client)
     // version check, file check, ban IP, reconnect, etc
     ServerPlayer *player = new ServerPlayer(lobby());
     player->setSocket(client);
+    players.insert(player->getUid(), player);
 #ifdef QT_DEBUG
     qDebug() << "ServerPlayer #" << player->getUid() << "connected.";
     qDebug() << "His address is " << client->peerAddress();
 #endif
 
-    player->doNotify("enter_lobby", "{}");
-
+    //player->doNotify("enter_lobby", "{}");
+    lobby()->addPlayer(player);
 }
 
 void Server::onRoomAbandoned()

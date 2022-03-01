@@ -23,6 +23,7 @@ Client::Client(QObject* parent)
 Client::~Client()
 {
     ClientInstance = nullptr;
+    router->getSocket()->disconnectFromHost();
     router->getSocket()->deleteLater();
 }
 
@@ -39,12 +40,12 @@ void Client::requestServer(const QString& command, const QString& json_data, int
 
 void Client::replyToServer(const QString& command, const QString& json_data)
 {
-    int type = Router::TYPE_REQUEST | Router::SRC_CLIENT | Router::DEST_SERVER;
+    int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;
     router->reply(type, command, json_data);
 }
 
 void Client::notifyServer(const QString& command, const QString& json_data)
 {
-    int type = Router::TYPE_REQUEST | Router::SRC_CLIENT | Router::DEST_SERVER;
+    int type = Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
     router->notify(type, command, json_data);
 }

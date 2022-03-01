@@ -31,6 +31,9 @@ public slots:
     void replyToServer(const QString &command, const QString &json_data);
     void notifyServer(const QString &command, const QString &json_data);
 
+    // Lobby
+    void quitLobby();
+
 private:
     WindowType type;
 };
