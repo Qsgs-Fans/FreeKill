@@ -44,7 +44,7 @@ public:
     void doBroadcastNotify(
         const QList<ServerPlayer *> targets,
         const QString &command,
-        const QString &json_data
+        const QString &jsonData
     );
 
 signals:

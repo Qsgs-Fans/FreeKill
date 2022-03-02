@@ -1,5 +1,6 @@
 build/
 .kdev4/
+.vscode/
 *.user
 *-swp
 *.kdev4

@@ -74,17 +74,17 @@ void Server::updateRoomList()
 {
     QJsonArray arr;
     foreach (Room *room, rooms) {
-        QJsonObject obj;
-        obj["roomId"] = (int)room->getId();
-        obj["roomName"] = room->getName();
-        obj["gameMode"] = "Role";
-        obj["playerNum"] = room->getPlayers().count();
-        obj["capacity"] = (int)room->getCapacity();
+        QJsonArray obj;
+        obj << (int)room->getId();  // roomId
+        obj << room->getName();     // roomName
+        obj << "Role";              // gameMode
+        obj << room->getPlayers().count();  // playerNum
+        obj << (int)room->getCapacity();    // capacity
         arr << obj;
     }
     lobby()->doBroadcastNotify(
         lobby()->getPlayers(),
-        "update_room_list",
+        "UpdateRoomList",
         QJsonDocument(arr).toJson()
     );
 }
@@ -100,7 +100,6 @@ void Server::processNewConnection(ClientSocket* client)
     qDebug() << "His address is " << client->peerAddress();
 #endif
 
-    //player->doNotify("enter_lobby", "{}");
     lobby()->addPlayer(player);
 }
 
@@ -114,7 +113,7 @@ void Server::onRoomAbandoned()
 
 void Server::onUserDisconnected()
 {
-    // TODO
+    qobject_cast<ServerPlayer *>(sender())->setStateString("offline");
 }
 
 void Server::onUserStateChanged()

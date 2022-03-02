@@ -18,7 +18,7 @@ void QmlBackend::startServer(ushort port)
 
         if (!server->listen(QHostAddress::Any, port)) {
             server->deleteLater();
-            emit notifyUI("error_msg", tr("Cannot start server!"));
+            emit notifyUI("ErrorMsg", tr("Cannot start server!"));
         }
     }
 }
@@ -28,7 +28,7 @@ void QmlBackend::joinServer(QString address)
     class Client *client = new class Client(this);
     connect(client, &Client::error_message, [this, client](const QString &msg){
         client->deleteLater();
-        emit notifyUI("error_msg", msg);
+        emit notifyUI("ErrorMsg", msg);
     });
     QString addr = "127.0.0.1";
     ushort port = 9527u;
@@ -44,14 +44,14 @@ void QmlBackend::joinServer(QString address)
     client->connectToHost(QHostAddress(addr), port);
 }
 
-void QmlBackend::replyToServer(const QString& command, const QString& json_data)
+void QmlBackend::replyToServer(const QString& command, const QString& jsonData)
 {
-    ClientInstance->replyToServer(command, json_data);
+    ClientInstance->replyToServer(command, jsonData);
 }
 
-void QmlBackend::notifyServer(const QString& command, const QString& json_data)
+void QmlBackend::notifyServer(const QString& command, const QString& jsonData)
 {
-    ClientInstance->notifyServer(command, json_data);
+    ClientInstance->notifyServer(command, jsonData);
 }
 
 void QmlBackend::quitLobby()

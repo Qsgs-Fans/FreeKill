@@ -80,9 +80,9 @@ void Room::addPlayer(ServerPlayer *player)
     players.append(player);
     player->setRoom(this);
     if (isLobby()) {
-        player->doNotify("enter_lobby", "{}");
+        player->doNotify("EnterLobby", "[]");
     } else {
-        player->doNotify("enter_room", "{}");
+        player->doNotify("EnterRoom", "[]");
     }
     qDebug() << "Player #" << player->getUid() << " entered room";
     emit playerAdded(player);
@@ -99,7 +99,7 @@ void Room::removePlayer(ServerPlayer *player)
         emit abandoned();
     } else if (player == owner) {
         setOwner(players.first());
-        owner->doNotify("room_owner", "{}");
+        owner->doNotify("RoomOwner", "[]");
     }
 }
 
@@ -143,10 +143,10 @@ void Room::doNotify(const QList<ServerPlayer *> targets, int timeout)
 }
 
 void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
-                             const QString& command, const QString& json_data)
+                             const QString& command, const QString& jsonData)
 {
     foreach (ServerPlayer *p, targets) {
-        p->doNotify(command, json_data);
+        p->doNotify(command, jsonData);
     }
 }
 

@@ -52,22 +52,22 @@ void ServerPlayer::speak(const QString& message)
     ;
 }
 
-void ServerPlayer::doRequest(const QString& command, const QString& json_data, int timeout)
+void ServerPlayer::doRequest(const QString& command, const QString& jsonData, int timeout)
 {
     int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->request(type, command, json_data, timeout);
+    router->request(type, command, jsonData, timeout);
 }
 
-void ServerPlayer::doReply(const QString& command, const QString& json_data)
+void ServerPlayer::doReply(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_REPLY | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->reply(type, command, json_data);
+    router->reply(type, command, jsonData);
 }
 
-void ServerPlayer::doNotify(const QString& command, const QString& json_data)
+void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->notify(type, command, json_data);
+    router->notify(type, command, jsonData);
 }
 
 void ServerPlayer::prepareForRequest(const QString& command, const QVariant& data)

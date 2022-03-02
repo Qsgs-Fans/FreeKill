@@ -37,9 +37,9 @@ public:
     void setReplyReadySemaphore(QSemaphore *semaphore);
 
     void request(int type, const QString &command,
-                 const QString &json_data, int timeout);
-    void reply(int type, const QString &command, const QString &json_data);
-    void notify(int type, const QString &command, const QString &json_data);
+                 const QString &jsonData, int timeout);
+    void reply(int type, const QString &command, const QString &jsonData);
+    void notify(int type, const QString &command, const QString &jsonData);
 
     int getTimeout() const;
 

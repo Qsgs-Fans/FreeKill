@@ -20,11 +20,11 @@ public:
     // void login
 
     void requestServer(const QString &command,
-                   const QString &json_data, int timeout = -1);
-    void replyToServer(const QString &command, const QString &json_data);
-    void notifyServer(const QString &command, const QString &json_data);
+                   const QString &jsonData, int timeout = -1);
+    void replyToServer(const QString &command, const QString &jsonData);
+    void notifyServer(const QString &command, const QString &jsonData);
 
-    void callLua(const QString &command, const QString &json_data);
+    void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
 signals:

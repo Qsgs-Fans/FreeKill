@@ -4,15 +4,15 @@ freekill.client_callback = {}
 
 function Client:initialize()
     self.client = freekill.ClientInstance
-    self.notifyUI = function(self, command, json_data)
-        freekill.Backend:emitNotifyUI(command, json_data)
+    self.notifyUI = function(self, command, jsonData)
+        freekill.Backend:emitNotifyUI(command, jsonData)
     end
-    self.client.callback = function(_self, command, json_data)
+    self.client.callback = function(_self, command, jsonData)
         local cb = freekill.client_callback[command]
         if (type(cb) == "function") then
-            cb(json_data)
+            cb(jsonData)
         else
-            self:notifyUI(command, json_data);
+            self:notifyUI(command, jsonData);
         end
     end
 end

@@ -9,25 +9,31 @@ Window {
     width: 720
     height: 480
     property var callbacks: ({
-        "error_msg": function(json_data) {
-            toast.show(json_data);
+        "ErrorMsg": function(jsonData) {
+            toast.show(jsonData);
             mainWindow.busy = false;
         },
-        "enter_lobby": function(json_data) {
+        "EnterLobby": function(jsonData) {
             if (mainStack.depth === 1) {
                 mainStack.push(lobby);
             }
             mainWindow.busy = false;
         },
-        "enter_room": function(json_data) {
+        "EnterRoom": function(jsonData) {
             mainStack.push(room);
             mainWindow.busy = false;
         },
-        "update_room_list": function(json_data) {
+        "UpdateRoomList": function(jsonData) {
             let current = mainStack.currentItem;    // should be lobby
             current.roomModel.clear();
-            JSON.parse(json_data).forEach(function(room) {
-                current.roomModel.append(room);
+            JSON.parse(jsonData).forEach(function(room) {
+                current.roomModel.append({
+                    roomId: room[0],
+                    roomName: room[1],
+                    gameMode: room[2],
+                    playerNum: room[3],
+                    capacity: room[4],
+                });
             });
         }
     })
@@ -110,12 +116,12 @@ Window {
 
     Connections {
         target: Backend
-        function onNotifyUI(command, json_data) {
+        function onNotifyUI(command, jsonData) {
             let cb = callbacks[command]
             if (typeof(cb) === "function") {
-                cb(json_data);
+                cb(jsonData);
             } else {
-                callbacks["error_msg"]("Unknown command " + command + "!");
+                callbacks["ErrorMsg"]("Unknown command " + command + "!");
             }
         }
     }

@@ -31,7 +31,7 @@ public:
 
     void updateRoomList();
 
-    void callLua(const QString &command, const QString &json_data);
+    void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
 signals:
