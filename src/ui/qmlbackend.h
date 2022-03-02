@@ -18,18 +18,18 @@ public:
     QmlBackend(QObject *parent = nullptr);
 
     // For lua use
-    void emitNotifyUI(const char *command, const char *json_data) {
-        emit notifyUI(command, json_data);
+    void emitNotifyUI(const char *command, const char *jsonData) {
+        emit notifyUI(command, jsonData);
     }
 
 signals:
-    void notifyUI(const QString &command, const QString &json_data);
+    void notifyUI(const QString &command, const QString &jsonData);
 
 public slots:
     void startServer(ushort port);
     void joinServer(QString address);
-    void replyToServer(const QString &command, const QString &json_data);
-    void notifyServer(const QString &command, const QString &json_data);
+    void replyToServer(const QString &command, const QString &jsonData);
+    void notifyServer(const QString &command, const QString &jsonData);
 
     // Lobby
     void quitLobby();

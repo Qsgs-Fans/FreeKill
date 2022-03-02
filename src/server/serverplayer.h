@@ -25,9 +25,9 @@ public:
     void speak(const QString &message);
 
     void doRequest(const QString &command,
-                   const QString &json_data, int timeout = -1);
-    void doReply(const QString &command, const QString &json_data);
-    void doNotify(const QString &command, const QString &json_data);
+                   const QString &jsonData, int timeout = -1);
+    void doReply(const QString &command, const QString &jsonData);
+    void doNotify(const QString &command, const QString &jsonData);
 
     void prepareForRequest(const QString &command,
                            const QVariant &data = QVariant());

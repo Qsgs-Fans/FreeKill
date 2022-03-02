@@ -11,7 +11,7 @@ Item {
         text: "quit"
         onClicked: {
             mainStack.pop();
-            Backend.notifyServer("quit_room", "[]");
+            Backend.notifyServer("QuitRoom", "[]");
         }
     }
 }

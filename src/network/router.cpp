@@ -50,7 +50,7 @@ void Router::setReplyReadySemaphore(QSemaphore *semaphore)
 }
 
 void Router::request(int type, const QString& command,
-                     const QString& json_data, int timeout)
+                     const QString& jsonData, int timeout)
 {
     // In case a request is called without a following waitForReply call
     if (replyReadySemaphore.available() > 0)
@@ -70,30 +70,30 @@ void Router::request(int type, const QString& command,
     body << requestId;
     body << type;
     body << command;
-    body << json_data;
+    body << jsonData;
     body << timeout;
 
     emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
-void Router::reply(int type, const QString& command, const QString& json_data)
+void Router::reply(int type, const QString& command, const QString& jsonData)
 {
     QJsonArray body;
     body << this->requestId;
     body << type;
     body << command;
-    body << json_data;
+    body << jsonData;
 
     emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
 
-void Router::notify(int type, const QString& command, const QString& json_data)
+void Router::notify(int type, const QString& command, const QString& jsonData)
 {
     QJsonArray body;
     body << -2;         // requestId = -2 mean this is for notification
     body << type;
     body << command;
-    body << json_data;
+    body << jsonData;
 
     emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
 }
@@ -150,14 +150,14 @@ void Router::handlePacket(const QByteArray& rawPacket)
     int requestId = packet[0].toInt();
     int type = packet[1].toInt();
     QString command = packet[2].toString();
-    QString json_data = packet[3].toString();
+    QString jsonData = packet[3].toString();
 
     if (type & TYPE_NOTIFICATION) {
         if (type & DEST_CLIENT) {
-            ClientInstance->callLua(command, json_data);
+            ClientInstance->callLua(command, jsonData);
         } else {
-            // Add the uid of sender to json_data
-            QJsonArray arr = QJsonDocument::fromJson(json_data.toUtf8()).array();
+            // Add the uid of sender to jsonData
+            QJsonArray arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
             arr.prepend(
                 (int)qobject_cast<ServerPlayer *>(parent())->getUid()
             );
@@ -169,7 +169,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
         this->requestTimeout = packet[4].toInt();
 
         if (type & DEST_CLIENT) {
-            qobject_cast<Client *>(parent())->callLua(command, json_data);
+            qobject_cast<Client *>(parent())->callLua(command, jsonData);
         } else {
             // requesting server is not allowed
             Q_ASSERT(false);
@@ -187,7 +187,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
             requestStartTime.secsTo(QDateTime::currentDateTime()))
             return;
 
-        m_reply = json_data;
+        m_reply = jsonData;
         // TODO: callback?
         qDebug() << rawPacket << Qt::endl;
 
