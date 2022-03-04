@@ -1,4 +1,4 @@
-local Server = class('Server')
+local Server = class("Server")
 
 freekill.server_callback = {}
 
@@ -12,6 +12,13 @@ function Server:initialize()
             print("Server error: Unknown command " .. command);
         end
     end
+
+    self.rooms = {}     -- hashtable: uid --> room
+    self.players = {}   -- hashtable: uid --> splayer
+end
+
+function Server:createRoom(owner, roomName, capacity)
+
 end
 
 freekill.server_callback["CreateRoom"] = function(jsonData)
@@ -21,6 +28,7 @@ freekill.server_callback["CreateRoom"] = function(jsonData)
     local roomName = data[2]
     local capacity = data[3]
     freekill.ServerInstance:createRoom(owner, roomName, capacity)
+    ServerInstance:createRoom()
 end
 
 freekill.server_callback["EnterRoom"] = function(jsonData)

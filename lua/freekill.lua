@@ -1,11 +1,13 @@
 -- Fundemental script for FreeKill
 -- Load mods, init the engine, etc.
 
-package.path = package.path .. ';./lua/lib/?.lua'
+package.path = package.path .. ";./lua/lib/?.lua"
+                            .. ";./lua/core/?.lua"
 
 -- load libraries
-class = require 'middleclass'
-json = require 'json'
+class = require "middleclass"
+json = require "json"
+dofile "lua/util.lua"
 
 DebugMode = true
 
@@ -16,3 +18,8 @@ function pt(t)
 end
 
 -- load core classes
+General = require "general"
+Card = require "card"
+-- Skill = require "skill"
+
+-- load packages
