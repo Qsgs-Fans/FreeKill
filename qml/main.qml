@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.0
 import QtQuick.Window 2.0
+import "Logic.js" as Logic
 import "Pages"
 
 Window {
@@ -8,35 +9,7 @@ Window {
     visible: true
     width: 720
     height: 480
-    property var callbacks: ({
-        "ErrorMsg": function(jsonData) {
-            toast.show(jsonData);
-            mainWindow.busy = false;
-        },
-        "EnterLobby": function(jsonData) {
-            if (mainStack.depth === 1) {
-                mainStack.push(lobby);
-            }
-            mainWindow.busy = false;
-        },
-        "EnterRoom": function(jsonData) {
-            mainStack.push(room);
-            mainWindow.busy = false;
-        },
-        "UpdateRoomList": function(jsonData) {
-            let current = mainStack.currentItem;    // should be lobby
-            current.roomModel.clear();
-            JSON.parse(jsonData).forEach(function(room) {
-                current.roomModel.append({
-                    roomId: room[0],
-                    roomName: room[1],
-                    gameMode: room[2],
-                    playerNum: room[3],
-                    capacity: room[4],
-                });
-            });
-        }
-    })
+    property var callbacks: Logic.callbacks
 
     StackView {
         id: mainStack

@@ -2,6 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QCommandLineParser>
+#include <QDir>
 #include "qmlbackend.h"
 #include "server.h"
 
@@ -36,6 +37,8 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     QmlBackend backend;
     engine.rootContext()->setContextProperty("Backend", &backend);
+    QUrl currentDir = QUrl::fromLocalFile(QDir::currentPath());
+    engine.rootContext()->setContextProperty("AppPath", currentDir);
     engine.load("qml/main.qml");
 
     return app.exec();

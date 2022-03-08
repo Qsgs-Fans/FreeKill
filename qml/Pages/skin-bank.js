@@ -1,0 +1,8 @@
+var AppPath = "file://home/notify/develop/FreeKill"
+var PHOTO_BACK_DIR = AppPath + "/image/photo/back/"
+var PHOTO_DIR = AppPath + "/image/photo/"
+var STATE_DIR = AppPath + "/image/photo/state/"
+var ROLE_DIR = AppPath + "/image/photo/role/"
+var DEATH_DIR = AppPath + "/image/photo/death/"
+var MAGATAMA_DIR = AppPath + "/image/photo/magatama/"
+var PACKAGES = AppPath + "/packages/"
