@@ -7,7 +7,7 @@ package.path = package.path .. ";./lua/lib/?.lua"
 -- load libraries
 class = require "middleclass"
 json = require "json"
-dofile "lua/util.lua"
+Util = require "util"
 
 DebugMode = true
 
@@ -18,8 +18,9 @@ function pt(t)
 end
 
 -- load core classes
+Sanguosha = require "engine"
 General = require "general"
 Card = require "card"
--- Skill = require "skill"
+Skill = require "skill"
 
 -- load packages
