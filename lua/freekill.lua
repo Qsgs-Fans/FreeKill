@@ -7,6 +7,8 @@ package.path = package.path .. ';./lua/lib/?.lua'
 class = require 'middleclass'
 json = require 'json'
 
+DebugMode = true
+
 function pt(t)
     for k, v in pairs(t) do
         print(k, v)
