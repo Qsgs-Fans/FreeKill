@@ -39,6 +39,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("Backend", &backend);
     QUrl currentDir = QUrl::fromLocalFile(QDir::currentPath());
     engine.rootContext()->setContextProperty("AppPath", currentDir);
+#ifdef QT_DEBUG
+    bool debugging = true;
+#else
+    bool debugging = false;
+#endif
+    engine.rootContext()->setContextProperty("Debugging", debugging);
     engine.load("qml/main.qml");
 
     return app.exec();

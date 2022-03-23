@@ -7,18 +7,21 @@ Item {
     id: root
     width: 175
     height: 233
+    scale: 0.8
     property string general: "liubei"
-    property string pack:"standard"
     property string screenName: ""
     property string role: "lord"
     property string kingdom: "shu"
     property string netstate: "trust"
     property int handcards: 0
-    property int maxHp: 5
-    property int hp: -1
+    property int maxHp: 4
+    property int hp: 3
     property int seatNumber: 3
     property bool isDead: false
     property bool dying: false
+    property bool faceturned: false
+    property bool chained: false
+    property bool drank: false
 
     Image {
         id: back
@@ -57,7 +60,7 @@ Item {
         smooth: true
         visible: false
         fillMode: Image.PreserveAspectCrop
-        source: SkinBank.PACKAGES + pack + "/image/generals/" + general
+        source: SkinBank.GENERAL_DIR + general
     }
 
     Rectangle {
@@ -81,6 +84,21 @@ Item {
         source: generalImage
         saturation: 0
         visible: root.isDead
+    }
+
+    Image {
+        id: turnedOver
+        visible: root.faceturned
+        source: SkinBank.PHOTO_DIR + "faceturned"
+        anchors.centerIn: photoMask
+    }
+
+    Image {
+        id: chain
+        visible: root.chained
+        source: SkinBank.PHOTO_DIR + "chain"
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: 72
     }
 
     Image {

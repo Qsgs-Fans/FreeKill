@@ -41,4 +41,12 @@ freekill.server_callback["QuitRoom"] = function(jsonData)
     end
 end
 
+freekill.server_callback["DoLuaScript"] = function(jsonData)
+    -- jsonData: [ int uid, string luaScript ]
+    -- warning: only use this in debugging mode.
+    if not DebugMode then return end
+    local data = json.decode(jsonData)
+    assert(load(data[2]))()
+end
+
 ServerInstance = Server:new()

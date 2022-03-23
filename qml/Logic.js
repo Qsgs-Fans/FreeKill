@@ -6,6 +6,7 @@ callbacks["ErrorMsg"] = function(jsonData) {
 }
 
 callbacks["EnterLobby"] = function(jsonData) {
+    // depth == 1 means the lobby page is not present in mainStack
     if (mainStack.depth === 1) {
         mainStack.push(lobby);
     }
