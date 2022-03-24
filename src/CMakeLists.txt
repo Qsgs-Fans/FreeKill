@@ -32,13 +32,15 @@ set(freekill_HEADERS
 
 if (WIN32)
     set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
+    set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
 else ()
     set(LUA_LIB lua5.4)
+    set(SQLITE3_LIB sqlite3)
 endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})
 add_executable(FreeKill ${freekill_SRCS})
-target_link_libraries(FreeKill ${LUA_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
+target_link_libraries(FreeKill ${LUA_LIB} ${SQLITE3_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
 add_custom_command(
     OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
     DEPENDS ${PROJECT_SOURCE_DIR}/src/swig/*.i
