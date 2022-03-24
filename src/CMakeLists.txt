@@ -41,9 +41,10 @@ endif ()
 source_group("Include" FILES ${freekill_HEADERS})
 add_executable(FreeKill ${freekill_SRCS})
 target_link_libraries(FreeKill ${LUA_LIB} ${SQLITE3_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
+file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
 add_custom_command(
     OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
-    DEPENDS ${PROJECT_SOURCE_DIR}/src/swig/*.i
+    DEPENDS ${SWIG_FILES}
     COMMENT "Generating freekill-wrap.cxx"
     COMMAND swig -c++ -lua -Wall -o
         ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
