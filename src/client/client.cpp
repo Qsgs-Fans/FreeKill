@@ -23,6 +23,7 @@ Client::Client(QObject* parent)
 Client::~Client()
 {
     ClientInstance = nullptr;
+    lua_close(L);
     router->getSocket()->disconnectFromHost();
     router->getSocket()->deleteLater();
 }

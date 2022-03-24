@@ -31,6 +31,8 @@ Server::Server(QObject* parent)
 Server::~Server()
 {
     ServerInstance = nullptr;
+    m_lobby->deleteLater();
+    lua_close(L);
 }
 
 bool Server::listen(const QHostAddress& address, ushort port)
@@ -50,9 +52,6 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
         m_lobby = room;
     else
         rooms.insert(room->getId(), room);
-#ifdef QT_DEBUG
-    qDebug() << "Room #" << room->getId() << " created.";
-#endif
 }
 
 Room *Server::findRoom(uint id) const
@@ -91,15 +90,68 @@ void Server::updateRoomList()
 
 void Server::processNewConnection(ClientSocket* client)
 {
+    qDebug() << client->peerAddress() << "connected";
     // version check, file check, ban IP, reconnect, etc
+
+    connect(client, &ClientSocket::disconnected, this, [client](){
+        qDebug() << client->peerAddress() << "disconnected";
+    });
+
+    // network delay test
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+    body << "NetworkDelayTest";
+    body << "[]";
+    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    // Note: the client should send a setup string next
+    connect(client, &ClientSocket::message_got, this, &Server::processRequest);
+    client->timerSignup.start(30000);
+}
+
+void Server::processRequest(const QByteArray& msg)
+{
+    ClientSocket *client = qobject_cast<ClientSocket *>(sender());
+    client->disconnect(this, SLOT(processRequest(const QByteArray &)));
+    client->timerSignup.stop();
+
+    bool valid = true;
+    QJsonDocument doc = QJsonDocument::fromJson(msg);
+    if (doc.isNull() || !doc.isArray()) {
+        valid = false;
+    } else {
+        if (doc.array().size() != 4
+            || doc[0] != -2
+            || doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER)
+            || doc[2] != "Setup"
+        )
+            valid = false;
+        else
+            valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 2);
+    }
+
+    if (!valid) {
+        qDebug() << "Invalid setup string:" << msg;
+        QJsonArray body;
+        body << -2;
+        body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+        body << "ErrorMsg";
+        body << "INVALID SETUP STRING";
+        client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+        client->disconnectFromHost();
+        return;
+    }
+
     ServerPlayer *player = new ServerPlayer(lobby());
     player->setSocket(client);
+    client->disconnect(this);
+    connect(client, &ClientSocket::disconnected, this, [player](){
+        qDebug() << "Player" << player->getUid() << "disconnected";
+    });
+    QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
+    player->setScreenName(arr[0].toString());
+    player->setAvatar(arr[1].toString());
     players.insert(player->getUid(), player);
-#ifdef QT_DEBUG
-    qDebug() << "ServerPlayer #" << player->getUid() << "connected.";
-    qDebug() << "His address is " << client->peerAddress();
-#endif
-
     lobby()->addPlayer(player);
 }
 

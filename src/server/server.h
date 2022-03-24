@@ -41,6 +41,7 @@ signals:
 
 public slots:
     void processNewConnection(ClientSocket *client);
+    void processRequest(const QByteArray &msg);
 
     void onRoomAbandoned();
     void onUserDisconnected();

@@ -18,6 +18,9 @@ void ServerSocket::processNewConnection()
 {
     QTcpSocket *socket = server->nextPendingConnection();
     ClientSocket *connection = new ClientSocket(socket);
+    connect(connection, &ClientSocket::disconnected, this, [connection](){
+        connection->deleteLater();
+    });
     emit new_connection(connection);
 }
 

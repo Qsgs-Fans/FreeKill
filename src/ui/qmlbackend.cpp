@@ -25,6 +25,7 @@ void QmlBackend::startServer(ushort port)
 
 void QmlBackend::joinServer(QString address)
 {
+    if (ClientInstance != nullptr) return;
     class Client *client = new class Client(this);
     connect(client, &Client::error_message, [this, client](const QString &msg){
         client->deleteLater();

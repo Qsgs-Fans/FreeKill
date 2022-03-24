@@ -41,7 +41,7 @@ add_executable(FreeKill ${freekill_SRCS})
 target_link_libraries(FreeKill ${LUA_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
 add_custom_command(
     OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
-    DEPENDS ${PROJECT_SOURCE_DIR}/src/swig/freekill.i
+    DEPENDS ${PROJECT_SOURCE_DIR}/src/swig/*.i
     COMMENT "Generating freekill-wrap.cxx"
     COMMAND swig -c++ -lua -Wall -o
         ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
