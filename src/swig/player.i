@@ -39,8 +39,6 @@ extern ClientPlayer *Self;
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {
 public:
-    unsigned int getUid() const;
-
     void setSocket(ClientSocket *socket);
 
     Server *getServer() const;

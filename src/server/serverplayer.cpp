@@ -3,13 +3,7 @@
 #include "server.h"
 
 ServerPlayer::ServerPlayer(Room *room)
-    : uid(0)
 {
-    static int m_playerid = 0;
-    m_playerid++;
-
-    uid = m_playerid;
-
     socket = nullptr;
     router = new Router(this, socket, Router::TYPE_SERVER);
 
@@ -19,11 +13,6 @@ ServerPlayer::ServerPlayer(Room *room)
 ServerPlayer::~ServerPlayer()
 {
     router->deleteLater();
-}
-
-uint ServerPlayer::getUid() const
-{
-    return uid;
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket)
