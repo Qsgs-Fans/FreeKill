@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QHostAddress>
 #include <lua.hpp>
+#include <sqlite3.h>
 
 class ServerSocket;
 class ClientSocket;
@@ -41,6 +42,7 @@ signals:
 
 public slots:
     void processNewConnection(ClientSocket *client);
+    void processRequest(const QByteArray &msg);
 
     void onRoomAbandoned();
     void onUserDisconnected();
@@ -53,6 +55,9 @@ private:
     QHash<uint, ServerPlayer *> players;
 
     lua_State *L;
+    sqlite3 *db;
+
+    void handleNameAndPassword(ClientSocket *client, const QString &name, const QString &password);
 };
 
 extern Server *ServerInstance;

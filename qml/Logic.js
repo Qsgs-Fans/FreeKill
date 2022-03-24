@@ -1,4 +1,11 @@
-var callbacks = {}
+var callbacks = {};
+
+callbacks["NetworkDelayTest"] = function(jsonData) {
+    Backend.notifyServer("Setup", JSON.stringify([
+        config.screenName,
+        config.password
+    ]));
+}
 
 callbacks["ErrorMsg"] = function(jsonData) {
     toast.show(jsonData);
@@ -9,11 +16,14 @@ callbacks["EnterLobby"] = function(jsonData) {
     // depth == 1 means the lobby page is not present in mainStack
     if (mainStack.depth === 1) {
         mainStack.push(lobby);
+    } else {
+        mainStack.pop();
     }
     mainWindow.busy = false;
 }
 
 callbacks["EnterRoom"] = function(jsonData) {
+    config.roomCapacity = JSON.parse(jsonData)[0];
     mainStack.push(room);
     mainWindow.busy = false;
 }

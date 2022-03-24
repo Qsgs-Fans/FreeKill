@@ -47,3 +47,59 @@ function arrangePhotos() {
         item.y = region.y;
     }
 }
+
+callbacks["AddPlayer"] = function(jsonData) {
+    // jsonData: string screenName, string avatar
+    for (let i = 0; i < photoModel.length; i++) {
+        if (photoModel[i].screenName === "") {
+            let data = JSON.parse(jsonData);
+            let name = data[0];
+            let avatar = data[1];
+            photoModel[i] = {
+                general: avatar,
+                screenName: name,
+                role: "unknown",
+                kingdom: "qun",
+                netstate: "online",
+                maxHp: 0,
+                hp: 0,
+                seatNumber: i + 1,
+                isDead: false,
+                dying: false,
+                faceturned: false,
+                chained: false,
+                drank: false
+            };
+            photoModel = photoModel;
+            arrangePhotos();
+            return;
+        }
+    }
+}
+
+callbacks["RemovePlayer"] = function(jsonData) {
+    // jsonData: string screenName
+    let name = JSON.parse(jsonData)[0];
+    for (let i = 0; i < photoModel.length; i++) {
+        if (photoModel[i].screenName === name) {
+            photoModel[i] = {
+                general: "",
+                screenName: "",
+                role: "unknown",
+                kingdom: "qun",
+                netstate: "online",
+                maxHp: 0,
+                hp: 0,
+                seatNumber: i + 1,
+                isDead: false,
+                dying: false,
+                faceturned: false,
+                chained: false,
+                drank: false
+            };
+            photoModel = photoModel;
+            arrangePhotos();
+            return;
+        }
+    }
+}

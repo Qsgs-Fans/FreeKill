@@ -1,6 +1,8 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
+#include <QJsonArray>
+#include <QJsonDocument>
 
 Room::Room(Server* server)
 {
@@ -17,6 +19,7 @@ Room::Room(Server* server)
 Room::~Room()
 {
     // TODO
+    disconnect();
 }
 
 Server *Room::getServer() const
@@ -77,14 +80,33 @@ void Room::setOwner(ServerPlayer *owner)
 void Room::addPlayer(ServerPlayer *player)
 {
     if (!player) return;
+
+    QJsonArray jsonData;
+
+    // First, notify other players the new player is entering
+    if (!isLobby()) {
+        jsonData << player->getScreenName();
+        jsonData << player->getAvatar();
+        doBroadcastNotify(getPlayers(), "AddPlayer", QJsonDocument(jsonData).toJson());
+    }
+
     players.append(player);
     player->setRoom(this);
     if (isLobby()) {
         player->doNotify("EnterLobby", "[]");
     } else {
-        player->doNotify("EnterRoom", "[]");
+        // Second, let the player enter room and add other players
+        jsonData = QJsonArray();
+        jsonData << (int)this->capacity;
+        player->doNotify("EnterRoom", QJsonDocument(jsonData).toJson());
+
+        foreach (ServerPlayer *p, getOtherPlayers(player)) {
+            jsonData = QJsonArray();
+            jsonData << p->getScreenName();
+            jsonData << p->getAvatar();
+            player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
+        }
     }
-    qDebug() << "Player #" << player->getUid() << " entered room";
     emit playerAdded(player);
 }
 
@@ -94,6 +116,11 @@ void Room::removePlayer(ServerPlayer *player)
     emit playerRemoved(player);
 
     if (isLobby()) return;
+
+    // player->doNotify("QuitRoom", "[]");
+    QJsonArray jsonData;
+    jsonData << player->getScreenName();
+    doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
 
     if (isAbandoned()) {
         emit abandoned();
@@ -106,6 +133,13 @@ void Room::removePlayer(ServerPlayer *player)
 QList<ServerPlayer *> Room::getPlayers() const
 {
     return players;
+}
+
+QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer* expect) const
+{
+    QList<ServerPlayer *> others = getPlayers();
+    others.removeOne(expect);
+    return others;
 }
 
 ServerPlayer *Room::findPlayer(uint id) const
