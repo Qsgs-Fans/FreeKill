@@ -7,6 +7,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegExp>
+#include <QCryptographicHash>
 
 Server *ServerInstance;
 
@@ -26,6 +28,8 @@ Server::Server(QObject* parent)
     L = CreateLuaState();
     DoLuaScript(L, "lua/freekill.lua");
     DoLuaScript(L, "lua/server/server.lua");
+
+    db = OpenDatabase();
 }
 
 Server::~Server()
@@ -33,6 +37,7 @@ Server::~Server()
     ServerInstance = nullptr;
     m_lobby->deleteLater();
     lua_close(L);
+    sqlite3_close(db);
 }
 
 bool Server::listen(const QHostAddress& address, ushort port)
@@ -142,17 +147,65 @@ void Server::processRequest(const QByteArray& msg)
         return;
     }
 
-    ServerPlayer *player = new ServerPlayer(lobby());
-    player->setSocket(client);
-    client->disconnect(this);
-    connect(client, &ClientSocket::disconnected, this, [player](){
-        qDebug() << "Player" << player->getUid() << "disconnected";
-    });
     QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
-    player->setScreenName(arr[0].toString());
-    player->setAvatar(arr[1].toString());
-    players.insert(player->getUid(), player);
-    lobby()->addPlayer(player);
+    handleNameAndPassword(client, arr[0].toString(), arr[1].toString());
+}
+
+void Server::handleNameAndPassword(ClientSocket *client, const QString& name, const QString& password)
+{
+    // First check the name and password
+    // Matches a string that does not contain special characters
+    QRegExp nameExp("[^\\0000-\\0057\\0072-\\0100\\0133-\\0140\\0173-\\0177]+");
+    QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
+    bool passed = false;
+    QJsonObject result;
+    if (nameExp.exactMatch(name)) {
+        // Then we check the database,
+        QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE name='%1';").arg(name);
+        result = SelectFromDatabase(db, sql_find);
+        QJsonArray arr = result["password"].toArray();
+        if (arr.isEmpty()) {
+            // not present in database, register
+            QString sql_reg = QString("INSERT INTO userinfo (name,password,\
+            avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4',%5);")
+            .arg(name)
+            .arg(QString(passwordHash))
+            .arg("liubei")
+            .arg(client->peerAddress())
+            .arg("FALSE");
+            ExecSQL(db, sql_reg);
+            result = SelectFromDatabase(db, sql_find);  // refresh result
+            passed = true;
+        } else {
+            // check if password is the same
+            passed = (passwordHash == arr[0].toString());
+        }
+    }
+
+    if (passed) {
+        ServerPlayer *player = new ServerPlayer(lobby());
+        player->setSocket(client);
+        client->disconnect(this);
+        connect(client, &ClientSocket::disconnected, this, [player](){
+            qDebug() << "Player" << player->getUid() << "disconnected";
+        });
+        player->setScreenName(name);
+        player->setAvatar(result["avatar"].toArray()[0].toString());
+        player->setId(result["id"].toArray()[0].toInt());
+        players.insert(player->getId(), player);
+        lobby()->addPlayer(player);
+    } else {
+        qDebug() << client->peerAddress() << "entered wrong password";
+        QJsonArray body;
+        body << -2;
+        body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+        body << "ErrorMsg";
+        body << "username or password error";
+        client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+        client->disconnectFromHost();
+        return;
+    }
 }
 
 void Server::onRoomAbandoned()

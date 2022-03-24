@@ -5,7 +5,7 @@ QtObject {
 
     // Player property of client
     property string screenName: ""
-    property string avatar: ""
+    property string password: ""
 
     // Client data
     property int roomCapacity: 0
