@@ -45,6 +45,10 @@ Window {
         visible: mainWindow.busy === true
     }
 
+    Config {
+        id: config
+    }
+
     Rectangle {
         id: toast
         opacity: 0

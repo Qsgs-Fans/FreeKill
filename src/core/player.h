@@ -44,7 +44,7 @@ signals:
 
 private:
     uint id;
-    QString screenName;
+    QString screenName;     // screenName should not be same.
     QString avatar;
     State state;
     bool ready;

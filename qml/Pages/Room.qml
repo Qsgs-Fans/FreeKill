@@ -20,7 +20,6 @@ Item {
         text: "quit"
         anchors.bottom: parent.bottom
         onClicked: {
-            mainStack.pop();
             Backend.notifyServer("QuitRoom", "[]");
         }
     }
@@ -32,7 +31,7 @@ Item {
         TextField {
             id: lua
             Layout.fillWidth: true
-            text: "player"
+            text: "print \"Hello world.\""
         }
         Button {
             text: "DoLuaScript"
@@ -62,7 +61,19 @@ Item {
             id: photos
             model: photoModel
             Photo {
-                // TODO
+                general: modelData.general
+                screenName: modelData.screenName
+                role: modelData.role
+                kingdom: modelData.kingdom
+                netstate: modelData.netstate
+                maxHp: modelData.maxHp
+                hp: modelData.hp
+                seatNumber: modelData.seatNumber
+                isDead: modelData.isDead
+                dying: modelData.dying
+                faceturned: modelData.faceturned
+                chained: modelData.chained
+                drank: modelData.drank
             }
         }
 
@@ -88,10 +99,63 @@ Item {
         id: dashboard
         width: roomScene.width
         anchors.top: roomArea.bottom
+
+        self.general: dashboardModel.general
+        self.screenName: dashboardModel.screenName
+        self.role: dashboardModel.role
+        self.kingdom: dashboardModel.kingdom
+        self.netstate: dashboardModel.netstate
+        self.maxHp: dashboardModel.maxHp
+        self.hp: dashboardModel.hp
+        self.seatNumber: dashboardModel.seatNumber
+        self.isDead: dashboardModel.isDead
+        self.dying: dashboardModel.dying
+        self.faceturned: dashboardModel.faceturned
+        self.chained: dashboardModel.chained
+        self.drank: dashboardModel.drank
     }
 
     Component.onCompleted: {
         toast.show("Sucesessfully entered room.");
+
+        dashboardModel = {
+            general: config.avatar,
+            screenName: config.screenName,
+            role: "unknown",
+            kingdom: "qun",
+            netstate: "online",
+            maxHp: 0,
+            hp: 0,
+            seatNumber: 1,
+            isDead: false,
+            dying: false,
+            faceturned: false,
+            chained: false,
+            drank: false
+        }
+
+        playerNum = config.roomCapacity;
+
+        let i;
+        for (i = 1; i < playerNum; i++) {
+            photoModel.push({
+                general: "",
+                screenName: "",
+                role: "unknown",
+                kingdom: "qun",
+                netstate: "online",
+                maxHp: 0,
+                hp: 0,
+                seatNumber: i + 1,
+                isDead: false,
+                dying: false,
+                faceturned: false,
+                chained: false,
+                drank: false
+            });
+        }
+        photoModel = photoModel;    // Force the Repeater reload
+
         Logic.arrangePhotos();
     }
 }

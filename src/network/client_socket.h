@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QAbstractSocket>
 #include <QHostAddress>
+#include <QTimer>
 
 class QTcpSocket;
 
@@ -21,6 +22,7 @@ public:
     bool isConnected() const;
     QString peerName() const;
     QString peerAddress() const;
+    QTimer timerSignup;
 
 signals:
     void message_got(const QByteArray& msg);

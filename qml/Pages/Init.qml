@@ -14,11 +14,24 @@ Item {
                 text: "127.0.0.1"
             }
             TextField {
+                id: screenNameEdit
                 text: "player"
+            }
+            /*TextField {
+                id: avatarEdit
+                text: "liubei"
+            }*/
+            TextField {
+                id: passwordEdit
+                text: ""
+                echoMode: TextInput.Password
+                passwordCharacter: "*"
             }
             Button {
                 text: "Join Server"
                 onClicked: {
+                    config.screenName = screenNameEdit.text;
+                    config.password = passwordEdit.text;
                     mainWindow.busy = true;
                     toast.show("Connecting to host...");
                     Backend.joinServer(server_addr.text);
@@ -27,6 +40,8 @@ Item {
             Button {
                 text: "Console start"
                 onClicked: {
+                    config.screenName = screenNameEdit.text;
+                    config.password = passwordEdit.text;
                     mainWindow.busy = true;
                     toast.show("Connecting to host...");
                     Backend.startServer(9527);

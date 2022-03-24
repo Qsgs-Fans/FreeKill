@@ -1,38 +1,39 @@
-/*
-** $Id: ldebug.h $
-** Auxiliary functions from Debug Interface module
-** See Copyright Notice in lua.h
-*/
+# 1 "./lua/ldebug.h"
+
+
+
+
+
 
 #ifndef ldebug_h
-#define ldebug_h
+#define ldebug_h 
 
 
 #include "lstate.h"
 
 
-#define pcRel(pc, p)	(cast_int((pc) - (p)->code) - 1)
+#define pcRel(pc,p) (cast_int((pc) - (p)->code) - 1)
 
 
-/* Active Lua function (given call info) */
-#define ci_func(ci)		(clLvalue(s2v((ci)->func)))
+
+#define ci_func(ci) (clLvalue(s2v((ci)->func)))
 
 
-#define resethookcount(L)	(L->hookcount = L->basehookcount)
-
-/*
-** mark for entries in 'lineinfo' array that has absolute information in
-** 'abslineinfo' array
-*/
-#define ABSLINEINFO	(-0x80)
+#define resethookcount(L) (L->hookcount = L->basehookcount)
 
 
-/*
-** MAXimum number of successive Instructions WiTHout ABSolute line
-** information. (A power of two allows fast divisions.)
-*/
+
+
+
+#define ABSLINEINFO (-0x80)
+
+
+
+
+
+
 #if !defined(MAXIWTHABS)
-#define MAXIWTHABS	128
+#define MAXIWTHABS 128
 #endif
 
 

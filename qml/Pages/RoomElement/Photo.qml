@@ -8,15 +8,15 @@ Item {
     width: 175
     height: 233
     scale: 0.8
-    property string general: "liubei"
+    property string general: ""
     property string screenName: ""
-    property string role: "lord"
-    property string kingdom: "shu"
-    property string netstate: "trust"
+    property string role: "unknown"
+    property string kingdom: "qun"
+    property string netstate: "online"
     property int handcards: 0
-    property int maxHp: 4
-    property int hp: 3
-    property int seatNumber: 3
+    property int maxHp: 0
+    property int hp: 0
+    property int seatNumber: 1
     property bool isDead: false
     property bool dying: false
     property bool faceturned: false
@@ -41,7 +41,7 @@ Item {
         color: "white"
         width: 24
         wrapMode: Text.WordWrap
-        text: "刘备"
+        text: ""
     }
 
     HpBar {
@@ -60,7 +60,7 @@ Item {
         smooth: true
         visible: false
         fillMode: Image.PreserveAspectCrop
-        source: SkinBank.GENERAL_DIR + general
+        source: (general != "") ? SkinBank.GENERAL_DIR + general : ""
     }
 
     Rectangle {

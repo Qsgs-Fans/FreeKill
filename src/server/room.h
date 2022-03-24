@@ -31,6 +31,7 @@ public:
     void addPlayer(ServerPlayer *player);
     void removePlayer(ServerPlayer *player);
     QList<ServerPlayer*> getPlayers() const;
+    QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
     ServerPlayer *findPlayer(uint id) const;
 
     void setGameLogic(GameLogic *logic);

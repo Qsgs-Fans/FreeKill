@@ -43,7 +43,7 @@ Item {
                     onClicked: {
                         mainWindow.busy = true;
                         Backend.notifyServer(
-                            "enter_room",
+                            "EnterRoom",
                             JSON.stringify([roomId])
                         );
                     }
