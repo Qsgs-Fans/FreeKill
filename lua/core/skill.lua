@@ -7,7 +7,7 @@ local SKILL_TYPE = {
     "Lord",
 }
 
-SkillType = Util.createEnum(SKILL_TYPE)
+SkillType = Util:createEnum(SKILL_TYPE)
 
 local Skill = class("Skill")
 
@@ -19,7 +19,7 @@ end
 
 local TriggerSkill = class("TriggerSkill", Skill)
 
-TriggerSkill:initialize(spec)
+function TriggerSkill:initialize(spec)
     Skill.initialize(self, spec.name, spec.skillType)
     self.isRefreshAt = spec.isRefreshAt
     self.isTriggerable = spec.isTriggerable

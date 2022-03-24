@@ -13,8 +13,8 @@ end
 
 local Util = class("Util")
 
-function Util.static:createEnum(tbl, index) 
-  assert(IsTable(tbl))
+function Util.static:createEnum(tbl, index)
+  assert(type(tbl) == "table")
   local enumtbl = {}
   local enumindex = index or 0
   for i, v in ipairs(tbl) do
