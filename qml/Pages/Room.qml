@@ -119,7 +119,7 @@ Item {
         toast.show("Sucesessfully entered room.");
 
         dashboardModel = {
-            general: config.avatar,
+            general: "liubei",
             screenName: config.screenName,
             role: "unknown",
             kingdom: "qun",

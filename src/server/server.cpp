@@ -188,7 +188,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         player->setSocket(client);
         client->disconnect(this);
         connect(client, &ClientSocket::disconnected, this, [player](){
-            qDebug() << "Player" << player->getUid() << "disconnected";
+            qDebug() << "Player" << player->getId() << "disconnected";
         });
         player->setScreenName(name);
         player->setAvatar(result["avatar"].toArray()[0].toString());

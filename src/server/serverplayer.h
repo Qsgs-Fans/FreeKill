@@ -14,8 +14,6 @@ public:
     explicit ServerPlayer(Room *room);
     ~ServerPlayer();
 
-    uint getUid() const;
-
     void setSocket(ClientSocket *socket);
 
     Server *getServer() const;
@@ -32,7 +30,6 @@ public:
     void prepareForRequest(const QString &command,
                            const QVariant &data = QVariant());
 private:
-    uint uid;
     ClientSocket *socket;   // socket for communicating with client
     Router *router;
     Server *server;
