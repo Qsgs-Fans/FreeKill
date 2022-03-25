@@ -29,6 +29,10 @@ public:
 
     void prepareForRequest(const QString &command,
                            const QVariant &data = QVariant());
+
+signals:
+    void disconnected();
+                            
 private:
     ClientSocket *socket;   // socket for communicating with client
     Router *router;

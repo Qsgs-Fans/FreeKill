@@ -29,6 +29,7 @@ public:
     Room *lobby() const;
 
     ServerPlayer *findPlayer(uint id) const;
+    void removePlayer(uint id);
 
     void updateRoomList();
 

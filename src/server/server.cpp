@@ -22,8 +22,9 @@ Server::Server(QObject* parent)
             this, &Server::processNewConnection);
 
     // create lobby
-    createRoom(NULL, "Lobby", UINT32_MAX);
+    createRoom(nullptr, "Lobby", UINT32_MAX);
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
+    connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
 
     L = CreateLuaState();
     DoLuaScript(L, "lua/freekill.lua");
@@ -49,14 +50,15 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
 {
     Room *room = new Room(this);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-    room->setName(name);
-    room->setCapacity(capacity);
-    room->setOwner(owner);
-    room->addPlayer(owner);
     if (room->isLobby())
         m_lobby = room;
     else
         rooms.insert(room->getId(), room);
+        
+    room->setName(name);
+    room->setCapacity(capacity);
+    room->setOwner(owner);
+    room->addPlayer(owner);
 }
 
 Room *Server::findRoom(uint id) const
@@ -72,6 +74,10 @@ Room *Server::lobby() const
 ServerPlayer *Server::findPlayer(uint id) const
 {
     return players.value(id);
+}
+
+void Server::removePlayer(uint id) {
+    players.remove(id);
 }
 
 void Server::updateRoomList()
@@ -180,11 +186,12 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
             passed = true;
         } else {
             // check if this username already login
-            int id = result["id"].toArray()[0].toInt();
+            int id = result["id"].toArray()[0].toString().toInt();
             if (!players.value(id))
                 // check if password is the same
                 passed = (passwordHash == arr[0].toString());
             else {
+                // TODO: reconnect here
                 qDebug() << client->peerAddress() << "tried login with a name that already logged in";
                 QJsonArray body;
                 body << -2;
@@ -202,12 +209,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         ServerPlayer *player = new ServerPlayer(lobby());
         player->setSocket(client);
         client->disconnect(this);
-        connect(client, &ClientSocket::disconnected, this, [player](){
-            qDebug() << "Player" << player->getId() << "disconnected";
-        });
+        connect(player, &ServerPlayer::disconnected, this, &Server::onUserDisconnected);
         player->setScreenName(name);
         player->setAvatar(result["avatar"].toArray()[0].toString());
-        player->setId(result["id"].toArray()[0].toInt());
+        player->setId(result["id"].toArray()[0].toString().toInt());
         players.insert(player->getId(), player);
         lobby()->addPlayer(player);
     } else {
@@ -233,7 +238,14 @@ void Server::onRoomAbandoned()
 
 void Server::onUserDisconnected()
 {
-    qobject_cast<ServerPlayer *>(sender())->setStateString("offline");
+    ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
+    qDebug() << "Player" << player->getId() << "disconnected";
+    Room *room = player->getRoom();
+    if (room->isStarted()) {
+        player->setState(Player::Offline);
+    } else {
+        player->deleteLater();
+    }
 }
 
 void Server::onUserStateChanged()

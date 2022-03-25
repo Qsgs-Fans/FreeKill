@@ -10,6 +10,7 @@ Room::Room(Server* server)
     id = roomId;
     roomId++;
     this->server = server;
+    gameStarted = false;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
         connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
@@ -107,7 +108,7 @@ void Room::addPlayer(ServerPlayer *player)
             player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
         }
 
-        if (players.length() == capacity)
+        if (isFull())
             start();
     }
     emit playerAdded(player);
@@ -190,6 +191,12 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 void Room::gameOver()
 {
     gameStarted = false;
+    // clean offline players
+    foreach (ServerPlayer *p, players) {
+        if (p->getState() == Player::Offline) {
+            p->deleteLater();
+        }
+    }
 }
 
 void Room::run()
