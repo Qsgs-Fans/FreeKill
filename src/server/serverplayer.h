@@ -24,11 +24,10 @@ public:
 
     void doRequest(const QString &command,
                    const QString &jsonData, int timeout = -1);
-    void doReply(const QString &command, const QString &jsonData);
     void doNotify(const QString &command, const QString &jsonData);
 
     void prepareForRequest(const QString &command,
-                           const QVariant &data = QVariant());
+                           const QString &data);
 
 signals:
     void disconnected();
@@ -40,7 +39,7 @@ private:
     Room *room;             // Room that player is in, maybe lobby
 
     QString requestCommand;
-    QVariant requestData;
+    QString requestData;
 };
 
 #endif // _SERVERPLAYER_H

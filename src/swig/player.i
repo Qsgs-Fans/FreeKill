@@ -39,8 +39,6 @@ extern ClientPlayer *Self;
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {
 public:
-    void setSocket(ClientSocket *socket);
-
     Server *getServer() const;
     Room *getRoom() const;
     void setRoom(Room *room);
@@ -49,9 +47,7 @@ public:
 
     void doRequest(const QString &command,
                    const QString &json_data, int timeout = -1);
-    void doReply(const QString &command, const QString &json_data);
     void doNotify(const QString &command, const QString &json_data);
 
-    void prepareForRequest(const QString &command,
-                           const QVariant &data = QVariant());
+    void prepareForRequest(const QString &command, const QString &data);
 };

@@ -2,7 +2,7 @@
 %nodefaultdtor QmlBackend;
 class QmlBackend : public QObject {
 public:
-    void emitNotifyUI(const char *command, const char *json_data);
+    void emitNotifyUI(const QString &command, const QString &json_data);
 };
 
 extern QmlBackend *Backend;
@@ -11,8 +11,6 @@ extern QmlBackend *Backend;
 %nodefaultdtor Client;
 class Client : public QObject {
 public:
-    void requestServer(const QString &command,
-                   const QString &json_data, int timeout = -1);
     void replyToServer(const QString &command, const QString &json_data);
     void notifyServer(const QString &command, const QString &json_data);
 

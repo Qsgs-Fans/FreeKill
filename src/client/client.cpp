@@ -33,12 +33,6 @@ void Client::connectToHost(const QHostAddress& server, ushort port)
     router->getSocket()->connectToHost(server, port);
 }
 
-void Client::requestServer(const QString& command, const QString& jsonData, int timeout)
-{
-    int type = Router::TYPE_REQUEST | Router::SRC_CLIENT | Router::DEST_SERVER;
-    router->request(type, command, jsonData, timeout);
-}
-
 void Client::replyToServer(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;

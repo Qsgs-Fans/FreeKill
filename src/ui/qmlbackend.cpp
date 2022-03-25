@@ -60,3 +60,11 @@ void QmlBackend::quitLobby()
 {
     delete ClientInstance;
 }
+
+void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
+    emit notifyUI(command, jsonData);
+}
+
+void QmlBackend::callLua(const QString &command, const QString &jsonData) {
+    ClientInstance->callLua(command, jsonData);
+}

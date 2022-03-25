@@ -5,7 +5,6 @@
 #include <QList>
 class Server;
 class ServerPlayer;
-class GameLogic;
 
 class Room : public QThread {
     Q_OBJECT
@@ -35,8 +34,6 @@ public:
     ServerPlayer *findPlayer(uint id) const;
 
     bool isStarted() const;
-    void setGameLogic(GameLogic *logic);
-    GameLogic *getGameLogic() const;
     // ====================================}
 
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
@@ -52,10 +49,6 @@ public:
 
 signals:
     void abandoned();
-
-    void aboutToStart();
-    void started();
-    void finished();
 
     void playerAdded(ServerPlayer *player);
     void playerRemoved(ServerPlayer *player);
@@ -73,7 +66,6 @@ private:
     ServerPlayer *owner;    // who created this room?
     QList<ServerPlayer *> players;
     bool gameStarted;
-    GameLogic *logic;
 };
 
 #endif // _ROOM_H

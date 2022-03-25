@@ -160,16 +160,6 @@ bool Room::isStarted() const
     return gameStarted;
 }
 
-void Room::setGameLogic(GameLogic *logic)
-{
-    this->logic = logic;
-}
-
-GameLogic *Room::getGameLogic() const
-{
-    return logic;
-}
-
 void Room::doRequest(const QList<ServerPlayer *> targets, int timeout)
 {
     // TODO

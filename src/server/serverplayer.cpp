@@ -66,19 +66,14 @@ void ServerPlayer::doRequest(const QString& command, const QString& jsonData, in
     router->request(type, command, jsonData, timeout);
 }
 
-void ServerPlayer::doReply(const QString& command, const QString& jsonData)
-{
-    int type = Router::TYPE_REPLY | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->reply(type, command, jsonData);
-}
-
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
     router->notify(type, command, jsonData);
 }
 
-void ServerPlayer::prepareForRequest(const QString& command, const QVariant& data)
+void ServerPlayer::prepareForRequest(const QString& command, const QString& data)
 {
-    ;
+    requestCommand = command;
+    requestData = data;
 }

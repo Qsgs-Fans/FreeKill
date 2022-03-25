@@ -15,12 +15,6 @@ public:
 
     void connectToHost(const QHostAddress &server, ushort port);
 
-    // TODO: database of the server
-    // void signup
-    // void login
-
-    void requestServer(const QString &command,
-                   const QString &jsonData, int timeout = -1);
     void replyToServer(const QString &command, const QString &jsonData);
     void notifyServer(const QString &command, const QString &jsonData);
 

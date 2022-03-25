@@ -4,11 +4,7 @@ class Server : public QObject {
 public:
     void createRoom(ServerPlayer *owner, const QString &name, unsigned int capacity);
     Room *findRoom(unsigned int id) const;
-    Room *lobby() const;
-
     ServerPlayer *findPlayer(unsigned int id) const;
-
-    void updateRoomList();
 
     LuaFunction callback;
     LuaFunction startRoom;
@@ -74,8 +70,6 @@ public:
     ServerPlayer *findPlayer(unsigned int id) const;
 
     bool isStarted() const;
-    void setGameLogic(GameLogic *logic);
-    GameLogic *getGameLogic() const;
     // ====================================}
 
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
