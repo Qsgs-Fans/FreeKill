@@ -35,6 +35,9 @@ public:
     void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
+    void roomStart(Room *room);
+    LuaFunction startRoom;
+
 signals:
     void roomCreated(Room *room);
     void playerAdded(ServerPlayer *player);

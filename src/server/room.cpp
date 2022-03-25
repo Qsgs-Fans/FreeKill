@@ -106,6 +106,9 @@ void Room::addPlayer(ServerPlayer *player)
             jsonData << p->getAvatar();
             player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
         }
+
+        if (players.length() == capacity)
+            start();
     }
     emit playerAdded(player);
 }
@@ -151,6 +154,11 @@ ServerPlayer *Room::findPlayer(uint id) const
     return nullptr;
 }
 
+bool Room::isStarted() const
+{
+    return gameStarted;
+}
+
 void Room::setGameLogic(GameLogic *logic)
 {
     this->logic = logic;
@@ -159,11 +167,6 @@ void Room::setGameLogic(GameLogic *logic)
 GameLogic *Room::getGameLogic() const
 {
     return logic;
-}
-
-void Room::startGame()
-{
-    // TODO
 }
 
 void Room::doRequest(const QList<ServerPlayer *> targets, int timeout)
@@ -184,9 +187,14 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
     }
 }
 
+void Room::gameOver()
+{
+    gameStarted = false;
+}
 
 void Room::run()
 {
-    // TODO
+    gameStarted = true;
+    getServer()->roomStart(this);
 }
 

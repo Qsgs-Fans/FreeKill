@@ -1,18 +1,28 @@
-Room = class("Room")
+local Room = class("Room")
 
--- Just same as "static int roomId" in cpp
--- However id 0 is for lobby, so we start at 1
-local roomId = 1
-
-function Room:initialize()
-    self.id = roomId
-    roomId = roomId + 1
-    self.room = ServerInstace:findRoom(self.id)
+function Room:initialize(_room)
+    self.room = _room
+    self.gameFinished = false
 end
 
-function Room:getCProperties()
-    self.name = self.room:getName()
-    self.capacity = self.room:getCapacity()
+-- When this function returns, the Room(C++) thread stopped.
+function Room:run()
+    print 'Room is running!'
+    -- First, create players(Lua) from ServerPlayer(C++)
+    -- Second, assign role and adjust seats
+    -- Then let's choose general and start the game!
+end
+
+function Room:startGame()
+    while true do 
+        if self.gameFinished then break end
+    end
+end
+
+function Room:gameOver()
+    self.gameFinished = true
+    -- dosomething
+    self.room:gameOver()
 end
 
 return Room

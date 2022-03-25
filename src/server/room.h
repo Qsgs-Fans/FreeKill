@@ -34,11 +34,11 @@ public:
     QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
     ServerPlayer *findPlayer(uint id) const;
 
+    bool isStarted() const;
     void setGameLogic(GameLogic *logic);
     GameLogic *getGameLogic() const;
     // ====================================}
 
-    void startGame();
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
     void doNotify(const QList<ServerPlayer *> targets, int timeout);
 
@@ -47,6 +47,8 @@ public:
         const QString &command,
         const QString &jsonData
     );
+
+    void gameOver();
 
 signals:
     void abandoned();
@@ -70,6 +72,7 @@ private:
 
     ServerPlayer *owner;    // who created this room?
     QList<ServerPlayer *> players;
+    bool gameStarted;
     GameLogic *logic;
 };
 

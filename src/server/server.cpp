@@ -159,6 +159,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
     bool passed = false;
     QJsonObject result;
+
     if (nameExp.exactMatch(name)) {
         // Then we check the database,
         QString sql_find = QString("SELECT * FROM userinfo \
@@ -178,8 +179,22 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
             result = SelectFromDatabase(db, sql_find);  // refresh result
             passed = true;
         } else {
-            // check if password is the same
-            passed = (passwordHash == arr[0].toString());
+            // check if this username already login
+            int id = result["id"].toArray()[0].toInt();
+            if (!players.value(id))
+                // check if password is the same
+                passed = (passwordHash == arr[0].toString());
+            else {
+                qDebug() << client->peerAddress() << "tried login with a name that already logged in";
+                QJsonArray body;
+                body << -2;
+                body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+                body << "ErrorMsg";
+                body << "others logged in with this name";
+                client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+                client->disconnectFromHost();
+                return;
+            }
         }
     }
 

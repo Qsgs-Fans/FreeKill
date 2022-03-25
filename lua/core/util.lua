@@ -11,6 +11,18 @@ function table:insertTable(list)
 	end
 end
 
+function table:removeOne(element)
+	if #self == 0 or type(self[1]) ~= type(element) then return false end
+
+	for i = 1, #self do
+		if self[i] == element then
+			table.remove(self, i)
+			return true
+		end
+	end
+	return false
+end
+
 local Util = class("Util")
 
 function Util.static:createEnum(tbl, index)

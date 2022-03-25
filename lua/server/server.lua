@@ -1,4 +1,6 @@
-local Server = class("Server")
+local Server = class('Server')
+package.path = package.path .. ';./lua/server/?.lua'
+local Room = require "room"
 
 freekill.server_callback = {}
 
@@ -13,12 +15,21 @@ function Server:initialize()
         end
     end
 
-    self.rooms = {}     -- hashtable: uid --> room
-    self.players = {}   -- hashtable: uid --> splayer
-end
+    self.server.startRoom = function(_self, _room)
+        local room = Room:new(_room)
+        room.server = self
+        table.insert(self.rooms, room)
 
-function Server:createRoom(owner, roomName, capacity)
+        room:run()
 
+        -- If room.run returns, the game is over and lua room
+        -- should be destoried now.
+        -- This behavior does not affect C++ Room.
+        table.removeOne(self.rooms, room)
+    end
+
+    self.rooms = {}
+    self.players = {}
 end
 
 freekill.server_callback["CreateRoom"] = function(jsonData)
@@ -28,7 +39,6 @@ freekill.server_callback["CreateRoom"] = function(jsonData)
     local roomName = data[2]
     local capacity = data[3]
     freekill.ServerInstance:createRoom(owner, roomName, capacity)
-    ServerInstance:createRoom()
 end
 
 freekill.server_callback["EnterRoom"] = function(jsonData)

@@ -11,6 +11,7 @@ public:
     void updateRoomList();
 
     LuaFunction callback;
+    LuaFunction startRoom;
 };
 
 %{
@@ -29,6 +30,21 @@ void Server::callLua(const QString& command, const QString& json_data)
         qDebug() << error_msg;
     }
 }
+
+void Server::roomStart(Room *room) {
+    Q_ASSERT(startRoom);
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, startRoom);
+    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Server, 0);
+    SWIG_NewPointerObj(L, room, SWIGTYPE_p_Room, 0);
+
+    int error = lua_pcall(L, 2, 0, 0);
+    if (error) {
+        const char *error_msg = lua_tostring(L, -1);
+        qDebug() << error_msg;
+    }
+}
+    
 %}
 
 extern Server *ServerInstance;
@@ -57,12 +73,19 @@ public:
     QList<ServerPlayer *> getPlayers() const;
     ServerPlayer *findPlayer(unsigned int id) const;
 
+    bool isStarted() const;
     void setGameLogic(GameLogic *logic);
     GameLogic *getGameLogic() const;
     // ====================================}
 
-    void startGame();
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
     void doNotify(const QList<ServerPlayer *> targets, int timeout);
+    void doBroadcastNotify(
+        const QList<ServerPlayer *> targets,
+        const QString &command,
+        const QString &jsonData
+    );
+    
+    void gameOver();
 };
 
