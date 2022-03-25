@@ -1,6 +1,7 @@
-local Server = class('Server')
+Server = class('Server')
 package.path = package.path .. ';./lua/server/?.lua'
-local Room = require "room"
+Room = require "room"
+ServerPlayer = require "serverplayer"
 
 freekill.server_callback = {}
 
@@ -65,6 +66,15 @@ freekill.server_callback["DoLuaScript"] = function(jsonData)
     if not DebugMode then return end
     local data = json.decode(jsonData)
     assert(load(data[2]))()
+end
+
+freekill.server_callback["PlayerStateChanged"] = function(jsonData)
+    -- jsonData: [ int uid, string stateString ]
+    -- note: this function is not called by Router.
+    local data = json.decode(jsonData)
+    local id = data[1]
+    local stateString = data[2]
+    ServerInstance.players[id].state = stateString
 end
 
 ServerInstance = Server:new()

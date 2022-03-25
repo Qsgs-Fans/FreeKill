@@ -54,7 +54,7 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
         m_lobby = room;
     else
         rooms.insert(room->getId(), room);
-        
+
     room->setName(name);
     room->setCapacity(capacity);
     room->setOwner(owner);
@@ -210,6 +210,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         player->setSocket(client);
         client->disconnect(this);
         connect(player, &ServerPlayer::disconnected, this, &Server::onUserDisconnected);
+        connect(player, &Player::stateChanged, this, &Server::onUserStateChanged);
         player->setScreenName(name);
         player->setAvatar(result["avatar"].toArray()[0].toString());
         player->setId(result["id"].toArray()[0].toString().toInt());
@@ -250,5 +251,9 @@ void Server::onUserDisconnected()
 
 void Server::onUserStateChanged()
 {
-    // TODO
+    Player *player = qobject_cast<Player *>(sender());
+    QJsonArray arr;
+    arr << (int)player->getId();
+    arr << player->getStateString();
+    callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
 }

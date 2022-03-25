@@ -1,4 +1,4 @@
-local Player = class("Skill")
+local Player = class("Player")
 
 function Player:initialize()
     self.hp = nil
@@ -25,3 +25,5 @@ function Player:setHp(maxHp, initialHp)
     self.maxHp = maxHp
     self.hp = initialHp or maxHp
 end
+
+return Player

@@ -1,3 +1,14 @@
+-- the iterator of QList object
+local qlist_iterator = function(list, n)
+	if n < list:length() - 1 then
+		return n + 1, list:at(n + 1) -- the next element of list
+	end
+end
+
+function freekill.qlist(list)
+	return qlist_iterator, list, -1
+end
+
 function table:contains(element)
 	if #self == 0 or type(self[1]) ~= type(element) then return false end
 	for _, e in ipairs(self) do

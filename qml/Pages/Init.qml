@@ -33,7 +33,6 @@ Item {
                     config.screenName = screenNameEdit.text;
                     config.password = passwordEdit.text;
                     mainWindow.busy = true;
-                    toast.show("Connecting to host...");
                     Backend.joinServer(server_addr.text);
                 }
             }
@@ -43,7 +42,6 @@ Item {
                     config.screenName = screenNameEdit.text;
                     config.password = passwordEdit.text;
                     mainWindow.busy = true;
-                    toast.show("Connecting to host...");
                     Backend.startServer(9527);
                     Backend.joinServer("127.0.0.1");
                 }

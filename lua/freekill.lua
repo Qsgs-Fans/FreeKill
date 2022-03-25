@@ -22,5 +22,6 @@ Sanguosha = require "engine"
 General = require "general"
 Card = require "card"
 Skill = require "skill"
+Player = require "player"
 
 -- load packages

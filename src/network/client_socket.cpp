@@ -92,6 +92,6 @@ void ClientSocket::raiseError(QAbstractSocket::SocketError socket_error)
     default: reason = tr("Unknow error"); break;
     }
 
-    emit error_message(tr("Connection failed, error code = %1\n reason:\n %2")
+    emit error_message(tr("Connection failed, error code = %1\n reason: %2")
         .arg(socket_error).arg(reason));
 }

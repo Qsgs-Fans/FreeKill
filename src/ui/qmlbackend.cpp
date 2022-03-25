@@ -30,6 +30,7 @@ void QmlBackend::joinServer(QString address)
     connect(client, &Client::error_message, [this, client](const QString &msg){
         client->deleteLater();
         emit notifyUI("ErrorMsg", msg);
+        emit notifyUI("BackToStart", "[]");
     });
     QString addr = "127.0.0.1";
     ushort port = 9527u;
