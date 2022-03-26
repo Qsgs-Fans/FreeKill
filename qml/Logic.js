@@ -1,7 +1,7 @@
 var callbacks = {};
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
-    Backend.notifyServer("Setup", JSON.stringify([
+    ClientInstance.notifyServer("Setup", JSON.stringify([
         config.screenName,
         config.password
     ]));

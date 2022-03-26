@@ -22,6 +22,21 @@ function table:insertTable(list)
 	end
 end
 
+Sql = {
+	open = function(filename)
+		return freekill.OpenDatabase(filename)
+	end,
+	close = function(db)
+		freekill.CloseDatabase(db)
+	end,
+	exec = function(db, sql)
+		freekill.ExecSQL(db, sql)
+	end,
+	exec_select = function(db, sql)
+		return json.decode(freekill.SelectFromDb(db, sql))
+	end,
+}
+
 function table:removeOne(element)
 	if #self == 0 or type(self[1]) ~= type(element) then return false end
 

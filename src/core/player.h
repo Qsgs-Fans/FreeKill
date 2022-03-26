@@ -19,8 +19,8 @@ public:
     explicit Player(QObject *parent = nullptr);
     ~Player();
 
-    uint getId() const;
-    void setId(uint id);
+    int getId() const;
+    void setId(int id);
 
     QString getScreenName() const;
     void setScreenName(const QString &name);
@@ -43,7 +43,7 @@ signals:
     void readyChanged();
 
 private:
-    uint id;
+    int id;
     QString screenName;     // screenName should not be same.
     QString avatar;
     State state;

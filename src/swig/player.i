@@ -9,8 +9,8 @@ public:
         Offline
     };
 
-    unsigned int getId() const;
-    void setId(unsigned int id);
+    int getId() const;
+    void setId(int id);
 
     QString getScreenName() const;
     void setScreenName(const QString &name);

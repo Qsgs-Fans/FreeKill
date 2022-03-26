@@ -12,12 +12,12 @@ Player::~Player()
 {
 }
 
-uint Player::getId() const
+int Player::getId() const
 {
     return id;
 }
 
-void Player::setId(uint id)
+void Player::setId(int id)
 {
     this->id = id;
 }

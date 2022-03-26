@@ -22,6 +22,7 @@ Item {
     property bool faceturned: false
     property bool chained: false
     property bool drank: false
+    property bool isOwner: false
 
     Image {
         id: back

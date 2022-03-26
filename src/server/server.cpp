@@ -22,7 +22,7 @@ Server::Server(QObject* parent)
             this, &Server::processNewConnection);
 
     // create lobby
-    createRoom(nullptr, "Lobby", UINT32_MAX);
+    createRoom(nullptr, "Lobby", INT32_MAX);
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
     connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
 
@@ -46,7 +46,7 @@ bool Server::listen(const QHostAddress& address, ushort port)
     return server->listen(address, port);
 }
 
-void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
+void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
 {
     Room *room = new Room(this);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
@@ -57,11 +57,11 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, uint capacity)
 
     room->setName(name);
     room->setCapacity(capacity);
-    room->setOwner(owner);
     room->addPlayer(owner);
+    if (!room->isLobby()) room->setOwner(owner);
 }
 
-Room *Server::findRoom(uint id) const
+Room *Server::findRoom(int id) const
 {
     return rooms.value(id);
 }
@@ -71,12 +71,12 @@ Room *Server::lobby() const
     return m_lobby;
 }
 
-ServerPlayer *Server::findPlayer(uint id) const
+ServerPlayer *Server::findPlayer(int id) const
 {
     return players.value(id);
 }
 
-void Server::removePlayer(uint id) {
+void Server::removePlayer(int id) {
     players.remove(id);
 }
 
@@ -85,11 +85,11 @@ void Server::updateRoomList()
     QJsonArray arr;
     foreach (Room *room, rooms) {
         QJsonArray obj;
-        obj << (int)room->getId();  // roomId
+        obj << room->getId();  // roomId
         obj << room->getName();     // roomName
         obj << "Role";              // gameMode
         obj << room->getPlayers().count();  // playerNum
-        obj << (int)room->getCapacity();    // capacity
+        obj << room->getCapacity();    // capacity
         arr << obj;
     }
     lobby()->doBroadcastNotify(
@@ -164,6 +164,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     QRegExp nameExp("[^\\0000-\\0057\\0072-\\0100\\0133-\\0140\\0173-\\0177]+");
     QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
     bool passed = false;
+    QString error_msg;
     QJsonObject result;
 
     if (nameExp.exactMatch(name)) {
@@ -190,22 +191,16 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
             if (!players.value(id))
                 // check if password is the same
                 passed = (passwordHash == arr[0].toString());
+                if (!passed) error_msg = "username or password error";
             else {
                 // TODO: reconnect here
-                qDebug() << client->peerAddress() << "tried login with a name that already logged in";
-                QJsonArray body;
-                body << -2;
-                body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
-                body << "ErrorMsg";
-                body << "others logged in with this name";
-                client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
-                client->disconnectFromHost();
-                return;
+                error_msg = "others logged in with this name";
             }
         }
     }
 
     if (passed) {
+        // create new ServerPlayer and setup
         ServerPlayer *player = new ServerPlayer(lobby());
         player->setSocket(client);
         client->disconnect(this);
@@ -215,14 +210,22 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         player->setAvatar(result["avatar"].toArray()[0].toString());
         player->setId(result["id"].toArray()[0].toString().toInt());
         players.insert(player->getId(), player);
+
+        // tell the lobby player's basic property
+        QJsonArray arr;
+        arr << player->getId();
+        arr << player->getScreenName();
+        arr << player->getAvatar();
+        player->doNotify("Setup", QJsonDocument(arr).toJson());
+
         lobby()->addPlayer(player);
     } else {
-        qDebug() << client->peerAddress() << "entered wrong password";
+        qDebug() << client->peerAddress() << "lost connection:" << error_msg;
         QJsonArray body;
         body << -2;
         body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
         body << "ErrorMsg";
-        body << "username or password error";
+        body << error_msg;
         client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
         client->disconnectFromHost();
         return;
@@ -253,7 +256,7 @@ void Server::onUserStateChanged()
 {
     Player *player = qobject_cast<Player *>(sender());
     QJsonArray arr;
-    arr << (int)player->getId();
+    arr << player->getId();
     arr << player->getStateString();
     callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
 }

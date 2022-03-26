@@ -1,6 +1,7 @@
 #include "client.h"
 #include "client_socket.h"
 #include "clientplayer.h"
+#include "qmlbackend.h"
 
 Client *ClientInstance;
 ClientPlayer *Self;
@@ -9,7 +10,10 @@ Client::Client(QObject* parent)
     : QObject(parent), callback(0)
 {
     ClientInstance = this;
-    Self = nullptr;
+    Self = new ClientPlayer(0, this);
+    QQmlApplicationEngine *engine = Backend->getEngine();
+    engine->rootContext()->setContextProperty("ClientInstance", ClientInstance);
+    engine->rootContext()->setContextProperty("Self", Self);
 
     ClientSocket *socket = new ClientSocket;
     connect(socket, &ClientSocket::error_message, this, &Client::error_message);

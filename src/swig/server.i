@@ -2,9 +2,9 @@
 %nodefaultdtor Server;
 class Server : public QObject {
 public:
-    void createRoom(ServerPlayer *owner, const QString &name, unsigned int capacity);
-    Room *findRoom(unsigned int id) const;
-    ServerPlayer *findPlayer(unsigned int id) const;
+    void createRoom(ServerPlayer *owner, const QString &name, int capacity);
+    Room *findRoom(int id) const;
+    ServerPlayer *findPlayer(int id) const;
 
     LuaFunction callback;
     LuaFunction startRoom;
@@ -52,12 +52,12 @@ public:
     // Property reader & setter
     // ==================================={
     Server *getServer() const;
-    unsigned int getId() const;
+    int getId() const;
     bool isLobby() const;
     QString getName() const;
     void setName(const QString &name);
-    unsigned int getCapacity() const;
-    void setCapacity(unsigned int capacity);
+    int getCapacity() const;
+    void setCapacity(int capacity);
     bool isFull() const;
     bool isAbandoned() const;
 
@@ -67,7 +67,7 @@ public:
     void addPlayer(ServerPlayer *player);
     void removePlayer(ServerPlayer *player);
     QList<ServerPlayer *> getPlayers() const;
-    ServerPlayer *findPlayer(unsigned int id) const;
+    ServerPlayer *findPlayer(int id) const;
 
     bool isStarted() const;
     // ====================================}

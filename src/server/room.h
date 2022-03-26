@@ -15,12 +15,12 @@ public:
     // Property reader & setter
     // ==================================={
     Server *getServer() const;
-    uint getId() const;
+    int getId() const;
     bool isLobby() const;
     QString getName() const;
     void setName(const QString &name);
-    uint getCapacity() const;
-    void setCapacity(uint capacity);
+    int getCapacity() const;
+    void setCapacity(int capacity);
     bool isFull() const;
     bool isAbandoned() const;
 
@@ -31,7 +31,7 @@ public:
     void removePlayer(ServerPlayer *player);
     QList<ServerPlayer*> getPlayers() const;
     QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
-    ServerPlayer *findPlayer(uint id) const;
+    ServerPlayer *findPlayer(int id) const;
 
     bool isStarted() const;
     // ====================================}
@@ -58,9 +58,9 @@ protected:
 
 private:
     Server *server;
-    uint id;       // Lobby's id is 0
+    int id;       // Lobby's id is 0
     QString name;   // “阴间大乱斗”
-    uint capacity;   // by default is 5, max is 8
+    int capacity;   // by default is 5, max is 8
     bool m_abandoned;   // If room is empty, delete it
 
     ServerPlayer *owner;    // who created this room?

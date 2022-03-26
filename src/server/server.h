@@ -24,12 +24,12 @@ public:
 
     bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);
 
-    void createRoom(ServerPlayer *owner, const QString &name, uint capacity);
-    Room *findRoom(uint id) const;
+    void createRoom(ServerPlayer *owner, const QString &name, int capacity);
+    Room *findRoom(int id) const;
     Room *lobby() const;
 
-    ServerPlayer *findPlayer(uint id) const;
-    void removePlayer(uint id);
+    ServerPlayer *findPlayer(int id) const;
+    void removePlayer(int id);
 
     void updateRoomList();
 
@@ -55,8 +55,8 @@ public slots:
 private:
     ServerSocket *server;
     Room *m_lobby;
-    QMap<uint, Room *> rooms;
-    QHash<uint, ServerPlayer *> players;
+    QMap<int, Room *> rooms;
+    QHash<int, ServerPlayer *> players;
 
     lua_State *L;
     sqlite3 *db;

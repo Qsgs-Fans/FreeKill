@@ -68,7 +68,8 @@ callbacks["AddPlayer"] = function(jsonData) {
                 dying: false,
                 faceturned: false,
                 chained: false,
-                drank: false
+                drank: false,
+                isOwner: false
             };
             photoModel = photoModel;
             arrangePhotos();
@@ -95,7 +96,8 @@ callbacks["RemovePlayer"] = function(jsonData) {
                 dying: false,
                 faceturned: false,
                 chained: false,
-                drank: false
+                drank: false,
+                isOwner: false
             };
             photoModel = photoModel;
             arrangePhotos();
@@ -103,3 +105,10 @@ callbacks["RemovePlayer"] = function(jsonData) {
         }
     }
 }
+
+/*
+callbacks["RoomOwner"] = function(jsonData) {
+    // jsonData: int uid of the owner
+    toast.show(J)
+}
+*/

@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QJsonDocument>
+#include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include "client.h"
 
 class QmlBackend : public QObject {
@@ -10,23 +12,23 @@ class QmlBackend : public QObject {
 public:
     QmlBackend(QObject *parent = nullptr);
 
+    QQmlApplicationEngine *getEngine() const;
+    void setEngine(QQmlApplicationEngine *engine);
+
     Q_INVOKABLE void startServer(ushort port);
     Q_INVOKABLE void joinServer(QString address);
-    Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
-    Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
     // Lobby
     Q_INVOKABLE void quitLobby();
 
-    // For interacting between lua and qml
     // lua --> qml
     void emitNotifyUI(const QString &command, const QString &jsonData);
 
-    // qml --> lua
-    Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
-
 signals:
     void notifyUI(const QString &command, const QString &jsonData);
+
+private:
+    QQmlApplicationEngine *engine;
 };
 
 extern QmlBackend *Backend;

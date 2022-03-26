@@ -17,5 +17,23 @@ function Client:initialize()
     end
 end
 
+freekill.client_callback["Setup"] = function(jsonData)
+    -- jsonData: [ int id, string screenName, string avatar ]
+    local data = json.decode(jsonData)
+    local id, name, avatar = data[1], data[2], data[3]
+    local self = freekill.Self
+    self:setId(id)
+    self:setScreenName(name)
+    self:setAvatar(avatar)
+end
+
+freekill.client_callback["AddPlayer"] = function(jsonData)
+    -- jsonData: [ int id, string screenName, string avatar ]
+    -- when other player enter the room, we create clientplayer(C and lua) for them
+    local data = json.decode(jsonData)
+    local id, name, avatar = data[1], data[2], data[3]
+    ClientInstance:notifyUI("AddPlayer", json.encode({ name, avatar }))
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()

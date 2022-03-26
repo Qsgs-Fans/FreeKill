@@ -8,8 +8,18 @@ QmlBackend::QmlBackend(QObject* parent)
     : QObject(parent)
 {
     Backend = this;
+    engine = nullptr;
 }
 
+QQmlApplicationEngine *QmlBackend::getEngine() const
+{
+    return engine;
+}
+
+void QmlBackend::setEngine(QQmlApplicationEngine *engine)
+{
+    this->engine = engine;
+}
 
 void QmlBackend::startServer(ushort port)
 {
@@ -46,16 +56,6 @@ void QmlBackend::joinServer(QString address)
     client->connectToHost(QHostAddress(addr), port);
 }
 
-void QmlBackend::replyToServer(const QString& command, const QString& jsonData)
-{
-    ClientInstance->replyToServer(command, jsonData);
-}
-
-void QmlBackend::notifyServer(const QString& command, const QString& jsonData)
-{
-    ClientInstance->notifyServer(command, jsonData);
-}
-
 void QmlBackend::quitLobby()
 {
     delete ClientInstance;
@@ -63,8 +63,4 @@ void QmlBackend::quitLobby()
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
     emit notifyUI(command, jsonData);
-}
-
-void QmlBackend::callLua(const QString &command, const QString &jsonData) {
-    ClientInstance->callLua(command, jsonData);
 }

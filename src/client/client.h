@@ -15,10 +15,10 @@ public:
 
     void connectToHost(const QHostAddress &server, ushort port);
 
-    void replyToServer(const QString &command, const QString &jsonData);
-    void notifyServer(const QString &command, const QString &jsonData);
+    Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
+    Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
-    void callLua(const QString &command, const QString &jsonData);
+    Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
 signals:
@@ -26,7 +26,7 @@ signals:
 
 private:
     Router *router;
-    QMap<uint, ClientPlayer *> players;
+    QMap<int, ClientPlayer *> players;
 
     lua_State *L;
 };
