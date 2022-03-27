@@ -1,11 +1,8 @@
 #ifndef _ROOM_H
 #define _ROOM_H
 
-#include <QThread>
-#include <QList>
 class Server;
 class ServerPlayer;
-class GameLogic;
 
 class Room : public QThread {
     Q_OBJECT
@@ -16,12 +13,12 @@ public:
     // Property reader & setter
     // ==================================={
     Server *getServer() const;
-    uint getId() const;
+    int getId() const;
     bool isLobby() const;
     QString getName() const;
     void setName(const QString &name);
-    uint getCapacity() const;
-    void setCapacity(uint capacity);
+    int getCapacity() const;
+    void setCapacity(int capacity);
     bool isFull() const;
     bool isAbandoned() const;
 
@@ -32,13 +29,11 @@ public:
     void removePlayer(ServerPlayer *player);
     QList<ServerPlayer*> getPlayers() const;
     QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
-    ServerPlayer *findPlayer(uint id) const;
+    ServerPlayer *findPlayer(int id) const;
 
-    void setGameLogic(GameLogic *logic);
-    GameLogic *getGameLogic() const;
+    bool isStarted() const;
     // ====================================}
 
-    void startGame();
     void doRequest(const QList<ServerPlayer *> targets, int timeout);
     void doNotify(const QList<ServerPlayer *> targets, int timeout);
 
@@ -48,12 +43,10 @@ public:
         const QString &jsonData
     );
 
+    void gameOver();
+
 signals:
     void abandoned();
-
-    void aboutToStart();
-    void started();
-    void finished();
 
     void playerAdded(ServerPlayer *player);
     void playerRemoved(ServerPlayer *player);
@@ -63,14 +56,14 @@ protected:
 
 private:
     Server *server;
-    uint id;       // Lobby's id is 0
+    int id;       // Lobby's id is 0
     QString name;   // “阴间大乱斗”
-    uint capacity;   // by default is 5, max is 8
+    int capacity;   // by default is 5, max is 8
     bool m_abandoned;   // If room is empty, delete it
 
     ServerPlayer *owner;    // who created this room?
     QList<ServerPlayer *> players;
-    GameLogic *logic;
+    bool gameStarted;
 };
 
 #endif // _ROOM_H

@@ -1,19 +1,10 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <QObject>
-#include <QHash>
-#include <QMap>
-#include <QHostAddress>
-#include <lua.hpp>
-#include <sqlite3.h>
-
 class ServerSocket;
 class ClientSocket;
 class Room;
 class ServerPlayer;
-
-typedef int LuaFunction;
 
 class Server : public QObject {
     Q_OBJECT
@@ -24,16 +15,20 @@ public:
 
     bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);
 
-    void createRoom(ServerPlayer *owner, const QString &name, uint capacity);
-    Room *findRoom(uint id) const;
+    void createRoom(ServerPlayer *owner, const QString &name, int capacity);
+    Room *findRoom(int id) const;
     Room *lobby() const;
 
-    ServerPlayer *findPlayer(uint id) const;
+    ServerPlayer *findPlayer(int id) const;
+    void removePlayer(int id);
 
     void updateRoomList();
 
     void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
+
+    void roomStart(Room *room);
+    LuaFunction startRoom;
 
 signals:
     void roomCreated(Room *room);
@@ -51,8 +46,8 @@ public slots:
 private:
     ServerSocket *server;
     Room *m_lobby;
-    QMap<uint, Room *> rooms;
-    QHash<uint, ServerPlayer *> players;
+    QMap<int, Room *> rooms;
+    QHash<int, ServerPlayer *> players;
 
     lua_State *L;
     sqlite3 *db;

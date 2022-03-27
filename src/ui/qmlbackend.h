@@ -1,41 +1,28 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
-#include <QObject>
-#include <QJsonDocument>
-#include "client.h"
-
 class QmlBackend : public QObject {
     Q_OBJECT
 public:
-    enum WindowType {
-        Server,
-        Lobby,
-        Room,
-        NotStarted
-    };
-
     QmlBackend(QObject *parent = nullptr);
 
-    // For lua use
-    void emitNotifyUI(const char *command, const char *jsonData) {
-        emit notifyUI(command, jsonData);
-    }
+    QQmlApplicationEngine *getEngine() const;
+    void setEngine(QQmlApplicationEngine *engine);
+
+    Q_INVOKABLE void startServer(ushort port);
+    Q_INVOKABLE void joinServer(QString address);
+
+    // Lobby
+    Q_INVOKABLE void quitLobby();
+
+    // lua --> qml
+    void emitNotifyUI(const QString &command, const QString &jsonData);
 
 signals:
     void notifyUI(const QString &command, const QString &jsonData);
 
-public slots:
-    void startServer(ushort port);
-    void joinServer(QString address);
-    void replyToServer(const QString &command, const QString &jsonData);
-    void notifyServer(const QString &command, const QString &jsonData);
-
-    // Lobby
-    void quitLobby();
-
 private:
-    WindowType type;
+    QQmlApplicationEngine *engine;
 };
 
 extern QmlBackend *Backend;

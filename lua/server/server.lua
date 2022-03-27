@@ -1,4 +1,7 @@
-local Server = class("Server")
+Server = class('Server')
+package.path = package.path .. ';./lua/server/?.lua'
+Room = require "room"
+ServerPlayer = require "serverplayer"
 
 freekill.server_callback = {}
 
@@ -13,12 +16,21 @@ function Server:initialize()
         end
     end
 
-    self.rooms = {}     -- hashtable: uid --> room
-    self.players = {}   -- hashtable: uid --> splayer
-end
+    self.server.startRoom = function(_self, _room)
+        local room = Room:new(_room)
+        room.server = self
+        table.insert(self.rooms, room)
 
-function Server:createRoom(owner, roomName, capacity)
+        room:run()
 
+        -- If room.run returns, the game is over and lua room
+        -- should be destoried now.
+        -- This behavior does not affect C++ Room.
+        table.removeOne(self.rooms, room)
+    end
+
+    self.rooms = {}
+    self.players = {}
 end
 
 freekill.server_callback["CreateRoom"] = function(jsonData)
@@ -28,7 +40,6 @@ freekill.server_callback["CreateRoom"] = function(jsonData)
     local roomName = data[2]
     local capacity = data[3]
     freekill.ServerInstance:createRoom(owner, roomName, capacity)
-    ServerInstance:createRoom()
 end
 
 freekill.server_callback["EnterRoom"] = function(jsonData)
@@ -55,6 +66,15 @@ freekill.server_callback["DoLuaScript"] = function(jsonData)
     if not DebugMode then return end
     local data = json.decode(jsonData)
     assert(load(data[2]))()
+end
+
+freekill.server_callback["PlayerStateChanged"] = function(jsonData)
+    -- jsonData: [ int uid, string stateString ]
+    -- note: this function is not called by Router.
+    local data = json.decode(jsonData)
+    local id = data[1]
+    local stateString = data[2]
+    ServerInstance.players[id].state = stateString
 end
 
 ServerInstance = Server:new()

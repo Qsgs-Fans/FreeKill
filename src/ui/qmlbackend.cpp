@@ -8,13 +8,23 @@ QmlBackend::QmlBackend(QObject* parent)
     : QObject(parent)
 {
     Backend = this;
+    engine = nullptr;
 }
 
+QQmlApplicationEngine *QmlBackend::getEngine() const
+{
+    return engine;
+}
+
+void QmlBackend::setEngine(QQmlApplicationEngine *engine)
+{
+    this->engine = engine;
+}
 
 void QmlBackend::startServer(ushort port)
 {
     if (!ServerInstance) {
-        class Server *server = new class Server(this);
+        Server *server = new Server(this);
 
         if (!server->listen(QHostAddress::Any, port)) {
             server->deleteLater();
@@ -26,10 +36,11 @@ void QmlBackend::startServer(ushort port)
 void QmlBackend::joinServer(QString address)
 {
     if (ClientInstance != nullptr) return;
-    class Client *client = new class Client(this);
+    Client *client = new Client(this);
     connect(client, &Client::error_message, [this, client](const QString &msg){
         client->deleteLater();
         emit notifyUI("ErrorMsg", msg);
+        emit notifyUI("BackToStart", "[]");
     });
     QString addr = "127.0.0.1";
     ushort port = 9527u;
@@ -45,17 +56,11 @@ void QmlBackend::joinServer(QString address)
     client->connectToHost(QHostAddress(addr), port);
 }
 
-void QmlBackend::replyToServer(const QString& command, const QString& jsonData)
-{
-    ClientInstance->replyToServer(command, jsonData);
-}
-
-void QmlBackend::notifyServer(const QString& command, const QString& jsonData)
-{
-    ClientInstance->notifyServer(command, jsonData);
-}
-
 void QmlBackend::quitLobby()
 {
     delete ClientInstance;
+}
+
+void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
+    emit notifyUI(command, jsonData);
 }

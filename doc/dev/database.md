@@ -1,4 +1,4 @@
-# FreeKill 的数据库（TODO）
+# FreeKill 的数据库
 
 > [dev](./index.md) > 数据库
 

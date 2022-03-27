@@ -45,7 +45,7 @@ Item {
                     onClicked: {
                         mainWindow.busy = true;
                         mainStack.pop();
-                        Backend.notifyServer(
+                        ClientInstance.notifyServer(
                             "CreateRoom",
                             JSON.stringify([roomName.text, playerNum.value])
                         );

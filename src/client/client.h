@@ -1,11 +1,8 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include <QObject>
-#include <lua.hpp>
 #include "router.h"
 #include "clientplayer.h"
-#include "global.h"
 
 class Client : public QObject {
     Q_OBJECT
@@ -15,16 +12,10 @@ public:
 
     void connectToHost(const QHostAddress &server, ushort port);
 
-    // TODO: database of the server
-    // void signup
-    // void login
+    Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
+    Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
-    void requestServer(const QString &command,
-                   const QString &jsonData, int timeout = -1);
-    void replyToServer(const QString &command, const QString &jsonData);
-    void notifyServer(const QString &command, const QString &jsonData);
-
-    void callLua(const QString &command, const QString &jsonData);
+    Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
 signals:
@@ -32,7 +23,7 @@ signals:
 
 private:
     Router *router;
-    QMap<uint, ClientPlayer *> players;
+    QMap<int, ClientPlayer *> players;
 
     lua_State *L;
 };

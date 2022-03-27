@@ -1,7 +1,6 @@
-#include <QJsonArray>
-#include <QJsonDocument>
 #include "router.h"
 #include "client.h"
+#include "client_socket.h"
 #include "server.h"
 #include "serverplayer.h"
 
@@ -159,7 +158,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
             // Add the uid of sender to jsonData
             QJsonArray arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
             arr.prepend(
-                (int)qobject_cast<ServerPlayer *>(parent())->getId()
+                qobject_cast<ServerPlayer *>(parent())->getId()
             );
             ServerInstance->callLua(command, QJsonDocument(arr).toJson());
         }

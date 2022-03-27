@@ -11,6 +11,9 @@ Item {
     property int playerNum: 0
     property var dashboardModel
 
+    property bool isOwner: false
+    property bool isStarted: false
+
     // tmp
     Text {
         anchors.centerIn: parent
@@ -20,8 +23,13 @@ Item {
         text: "quit"
         anchors.bottom: parent.bottom
         onClicked: {
-            Backend.notifyServer("QuitRoom", "[]");
+            ClientInstance.notifyServer("QuitRoom", "[]");
         }
+    }
+    Button {
+        text: "start game"
+        visible: isOwner && !isStarted
+        anchors.centerIn: parent
     }
 
     // For debugging
@@ -36,7 +44,7 @@ Item {
         Button {
             text: "DoLuaScript"
             onClicked: {
-                Backend.notifyServer("DoLuaScript", JSON.stringify([lua.text]));
+                ClientInstance.notifyServer("DoLuaScript", JSON.stringify([lua.text]));
             }
         }
     }
@@ -74,6 +82,7 @@ Item {
                 faceturned: modelData.faceturned
                 chained: modelData.chained
                 drank: modelData.drank
+                isOwner: modelData.isOwner
             }
         }
 
@@ -113,14 +122,15 @@ Item {
         self.faceturned: dashboardModel.faceturned
         self.chained: dashboardModel.chained
         self.drank: dashboardModel.drank
+        self.isOwner: dashboardModel.isOwner
     }
 
     Component.onCompleted: {
         toast.show("Sucesessfully entered room.");
 
         dashboardModel = {
-            general: "liubei",
-            screenName: config.screenName,
+            general: Self.avatar,
+            screenName: Self.screenName,
             role: "unknown",
             kingdom: "qun",
             netstate: "online",
@@ -131,7 +141,8 @@ Item {
             dying: false,
             faceturned: false,
             chained: false,
-            drank: false
+            drank: false,
+            isOwner: false
         }
 
         playerNum = config.roomCapacity;
@@ -151,7 +162,8 @@ Item {
                 dying: false,
                 faceturned: false,
                 chained: false,
-                drank: false
+                drank: false,
+                isOwner: false
             });
         }
         photoModel = photoModel;    // Force the Repeater reload

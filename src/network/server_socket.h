@@ -1,10 +1,6 @@
 #ifndef _SERVER_SOCKET_H
 #define _SERVER_SOCKET_H
 
-#include <QObject>
-#include <QHostAddress>
-
-class QTcpServer;
 class ClientSocket;
 
 class ServerSocket : public QObject {

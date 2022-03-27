@@ -1,8 +1,3 @@
-#include <QGuiApplication>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include <QCommandLineParser>
-#include <QDir>
 #include "qmlbackend.h"
 #include "server.h"
 
@@ -29,16 +24,18 @@ int main(int argc, char *argv[])
         Server *server = new Server;
         if (!server->listen(QHostAddress::Any, serverPort)) {
             fprintf(stderr, "cannot listen on port %d!\n", serverPort);
-            exit(1);
+            app.exit(1);
         }
         return app.exec();
     }
 
     QQmlApplicationEngine engine;
+    
     QmlBackend backend;
+    backend.setEngine(&engine);
+    
     engine.rootContext()->setContextProperty("Backend", &backend);
-    QUrl currentDir = QUrl::fromLocalFile(QDir::currentPath());
-    engine.rootContext()->setContextProperty("AppPath", currentDir);
+    engine.rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 #ifdef QT_DEBUG
     bool debugging = true;
 #else

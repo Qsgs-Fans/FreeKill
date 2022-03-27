@@ -1,6 +1,8 @@
 #include "serverplayer.h"
 #include "room.h"
 #include "server.h"
+#include "router.h"
+#include "client_socket.h"
 
 ServerPlayer::ServerPlayer(Room *room)
 {
@@ -8,22 +10,41 @@ ServerPlayer::ServerPlayer(Room *room)
     router = new Router(this, socket, Router::TYPE_SERVER);
 
     this->room = room;
+    server = room->getServer();
 }
 
 ServerPlayer::~ServerPlayer()
 {
+    // clean up, quit room and server
+    room->removePlayer(this);
+    if (room != nullptr) {
+        // now we are in lobby, so quit lobby
+        room->removePlayer(this);
+    }
+    server->removePlayer(getId());
     router->deleteLater();
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket)
 {
-    this->socket = socket;
+    if (this->socket != nullptr) {
+        this->socket->disconnect(this);
+        disconnect(this->socket);
+        this->socket->deleteLater();
+    }
+
+    this->socket = nullptr;
+    if (socket != nullptr) {
+        connect(socket, &ClientSocket::disconnected, this, &ServerPlayer::disconnected);
+        this->socket = socket;
+    }
+
     router->setSocket(socket);
 }
 
 Server *ServerPlayer::getServer() const
 {
-    return room->getServer();
+    return server;
 }
 
 Room *ServerPlayer::getRoom() const
@@ -47,19 +68,14 @@ void ServerPlayer::doRequest(const QString& command, const QString& jsonData, in
     router->request(type, command, jsonData, timeout);
 }
 
-void ServerPlayer::doReply(const QString& command, const QString& jsonData)
-{
-    int type = Router::TYPE_REPLY | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->reply(type, command, jsonData);
-}
-
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
     router->notify(type, command, jsonData);
 }
 
-void ServerPlayer::prepareForRequest(const QString& command, const QVariant& data)
+void ServerPlayer::prepareForRequest(const QString& command, const QString& data)
 {
-    ;
+    requestCommand = command;
+    requestData = data;
 }

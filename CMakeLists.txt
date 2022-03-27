@@ -17,7 +17,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(REQUIRED_QT_VERSION "5.15.2")
 
-include_directories(${PROJECT_SOURCE_DIR}/)
 include_directories(include/lua)
 include_directories(include/sqlite3)
 include_directories(src)

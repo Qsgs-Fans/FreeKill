@@ -1,6 +1,5 @@
 #include "server_socket.h"
 #include "client_socket.h"
-#include <QTcpServer>
 
 ServerSocket::ServerSocket()
 {

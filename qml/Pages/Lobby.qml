@@ -42,7 +42,7 @@ Item {
                     onExited: { parent.color = "black"  }
                     onClicked: {
                         mainWindow.busy = true;
-                        Backend.notifyServer(
+                        ClientInstance.notifyServer(
                             "EnterRoom",
                             JSON.stringify([roomId])
                         );
@@ -86,8 +86,11 @@ Item {
         }
 
         ColumnLayout {
-            Text {
-                text: "Avatar"
+            Button {
+                text: "Edit Profile"
+                onClicked: {
+                    
+                }
             }
             Button {
                 text: "Create Room"

@@ -1,6 +1,4 @@
-#include "global.h"
-#include <QtCore>
-#include <QFileDevice>
+#include "util.h"
 
 extern "C" {
     int luaopen_freekill(lua_State *);

@@ -1,15 +1,14 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
-#include <QJsonArray>
-#include <QJsonDocument>
 
 Room::Room(Server* server)
 {
-    static uint roomId = 0;
+    static int roomId = 0;
     id = roomId;
     roomId++;
     this->server = server;
+    gameStarted = false;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
         connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
@@ -27,7 +26,7 @@ Server *Room::getServer() const
     return server;
 }
 
-uint Room::getId() const
+int Room::getId() const
 {
     return id;
 }
@@ -47,12 +46,12 @@ void Room::setName(const QString &name)
     this->name = name;
 }
 
-uint Room::getCapacity() const
+int Room::getCapacity() const
 {
     return capacity;
 }
 
-void Room::setCapacity(uint capacity)
+void Room::setCapacity(int capacity)
 {
     this->capacity = capacity;
 }
@@ -75,6 +74,9 @@ ServerPlayer *Room::getOwner() const
 void Room::setOwner(ServerPlayer *owner)
 {
     this->owner = owner;
+    QJsonArray jsonData;
+    jsonData << owner->getId();
+    owner->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
 }
 
 void Room::addPlayer(ServerPlayer *player)
@@ -85,6 +87,7 @@ void Room::addPlayer(ServerPlayer *player)
 
     // First, notify other players the new player is entering
     if (!isLobby()) {
+        jsonData << player->getId();
         jsonData << player->getScreenName();
         jsonData << player->getAvatar();
         doBroadcastNotify(getPlayers(), "AddPlayer", QJsonDocument(jsonData).toJson());
@@ -97,15 +100,19 @@ void Room::addPlayer(ServerPlayer *player)
     } else {
         // Second, let the player enter room and add other players
         jsonData = QJsonArray();
-        jsonData << (int)this->capacity;
+        jsonData << this->capacity;
         player->doNotify("EnterRoom", QJsonDocument(jsonData).toJson());
 
         foreach (ServerPlayer *p, getOtherPlayers(player)) {
             jsonData = QJsonArray();
+            jsonData << p->getId();
             jsonData << p->getScreenName();
             jsonData << p->getAvatar();
             player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
         }
+
+        if (isFull())
+            start();
     }
     emit playerAdded(player);
 }
@@ -126,7 +133,6 @@ void Room::removePlayer(ServerPlayer *player)
         emit abandoned();
     } else if (player == owner) {
         setOwner(players.first());
-        owner->doNotify("RoomOwner", "[]");
     }
 }
 
@@ -142,7 +148,7 @@ QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer* expect) const
     return others;
 }
 
-ServerPlayer *Room::findPlayer(uint id) const
+ServerPlayer *Room::findPlayer(int id) const
 {
     foreach (ServerPlayer *p, players) {
         if (p->getId() == id)
@@ -151,19 +157,9 @@ ServerPlayer *Room::findPlayer(uint id) const
     return nullptr;
 }
 
-void Room::setGameLogic(GameLogic *logic)
+bool Room::isStarted() const
 {
-    this->logic = logic;
-}
-
-GameLogic *Room::getGameLogic() const
-{
-    return logic;
-}
-
-void Room::startGame()
-{
-    // TODO
+    return gameStarted;
 }
 
 void Room::doRequest(const QList<ServerPlayer *> targets, int timeout)
@@ -184,9 +180,20 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
     }
 }
 
+void Room::gameOver()
+{
+    gameStarted = false;
+    // clean offline players
+    foreach (ServerPlayer *p, players) {
+        if (p->getState() == Player::Offline) {
+            p->deleteLater();
+        }
+    }
+}
 
 void Room::run()
 {
-    // TODO
+    gameStarted = true;
+    getServer()->roomStart(this);
 }
 

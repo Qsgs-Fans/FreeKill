@@ -7,6 +7,7 @@
 #include "clientplayer.h"
 #include "room.h"
 #include "qmlbackend.h"
+#include "util.h"
 %}
 
 %include "naturalvar.i"

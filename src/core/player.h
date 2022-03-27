@@ -1,8 +1,6 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-#include <QObject>
-
 // Common part of ServerPlayer and ClientPlayer
 // dont initialize it directly
 class Player : public QObject {
@@ -19,8 +17,8 @@ public:
     explicit Player(QObject *parent = nullptr);
     ~Player();
 
-    uint getId() const;
-    void setId(uint id);
+    int getId() const;
+    void setId(int id);
 
     QString getScreenName() const;
     void setScreenName(const QString &name);
@@ -43,7 +41,7 @@ signals:
     void readyChanged();
 
 private:
-    uint id;
+    int id;
     QString screenName;     // screenName should not be same.
     QString avatar;
     State state;

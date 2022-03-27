@@ -1,15 +1,21 @@
 var callbacks = {};
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
-    Backend.notifyServer("Setup", JSON.stringify([
+    ClientInstance.notifyServer("Setup", JSON.stringify([
         config.screenName,
         config.password
     ]));
 }
 
 callbacks["ErrorMsg"] = function(jsonData) {
-    toast.show(jsonData);
+    toast.show(jsonData, 5000);
     mainWindow.busy = false;
+}
+
+callbacks["BackToStart"] = function(jsonData) {
+    while (mainStack.depth > 1) {
+        mainStack.pop();
+    }
 }
 
 callbacks["EnterLobby"] = function(jsonData) {
