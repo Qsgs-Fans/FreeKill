@@ -7,6 +7,7 @@ freekill.server_callback = {}
 
 function Server:initialize()
     self.server = freekill.ServerInstance
+    self.db = freekill.ServerInstance:getDatabase()
     self.server.callback = function(_self, command, jsonData)
         local cb = freekill.server_callback[command]
         if (type(cb) == "function") then
@@ -31,6 +32,35 @@ function Server:initialize()
 
     self.rooms = {}
     self.players = {}
+end
+
+freekill.server_callback["UpdateAvatar"] = function(jsonData)
+    -- jsonData: [ int uid, string newavatar ]
+    local data = json.decode(jsonData)
+    local id, avatar = data[1], data[2]
+    local sql = "UPDATE userinfo SET avatar='%s' WHERE id=%d;"
+    Sql.exec(ServerInstance.db, string.format(sql, avatar, id))
+    local player = freekill.ServerInstance:findPlayer(id)
+    player:doNotify("UpdateAvatar", "[]")
+end
+
+freekill.server_callback["UpdatePassword"] = function(jsonData)
+    -- jsonData: [ int uid, string oldpassword, int newpassword ]
+    local data = json.decode(jsonData)
+    local id, old, new = data[1], data[2], data[3]
+    local sql_find = "SELECT password FROM userinfo WHERE id=%d;"
+    local sql_update = "UPDATE userinfo SET password='%s' WHERE id=%d;"
+
+    local db = ServerInstance.db
+    local passed = false
+    local result = Sql.exec_select(db, string.format(sql_find, id))
+    passed = (result["password"][1] == sha256(old))
+    if passed then
+        Sql.exec(db, string.format(sql_update, sha256(new), id))
+    end
+
+    local player = freekill.ServerInstance:findPlayer(tonumber(id))
+    player:doNotify("UpdatePassword", passed and "1" or "0")
 end
 
 freekill.server_callback["CreateRoom"] = function(jsonData)

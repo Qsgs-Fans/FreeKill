@@ -22,11 +22,11 @@ Server::Server(QObject* parent)
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
     connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
 
+    db = OpenDatabase();
+    
     L = CreateLuaState();
     DoLuaScript(L, "lua/freekill.lua");
     DoLuaScript(L, "lua/server/server.lua");
-
-    db = OpenDatabase();
 }
 
 Server::~Server()
@@ -93,6 +93,10 @@ void Server::updateRoomList()
         "UpdateRoomList",
         QJsonDocument(arr).toJson()
     );
+}
+
+sqlite3 *Server::getDatabase() {
+    return db;
 }
 
 void Server::processNewConnection(ClientSocket* client)

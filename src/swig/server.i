@@ -6,6 +6,8 @@ public:
     Room *findRoom(int id) const;
     ServerPlayer *findPlayer(int id) const;
 
+    sqlite3 *getDatabase();
+
     LuaFunction callback;
     LuaFunction startRoom;
 };
