@@ -2,6 +2,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.0
 import QtQuick.Window 2.0
 import QtQuick.Layouts 1.15
+import "Logic.js" as Logic
 
 Item {
     id: root
@@ -89,13 +90,15 @@ Item {
             Button {
                 text: "Edit Profile"
                 onClicked: {
-                    
+                    globalPopup.source = "EditProfile.qml";
+                    globalPopup.open();
                 }
             }
             Button {
                 text: "Create Room"
                 onClicked: {
-                    mainStack.push(createRoom);
+                    globalPopup.source = "CreateRoom.qml";
+                    globalPopup.open();
                 }
             }
             Button {

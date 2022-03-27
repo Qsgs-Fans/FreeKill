@@ -24,6 +24,8 @@ public:
 
     void updateRoomList();
 
+    sqlite3 *getDatabase();
+
     void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
@@ -49,8 +51,8 @@ private:
     QMap<int, Room *> rooms;
     QHash<int, ServerPlayer *> players;
 
-    lua_State *L;
     sqlite3 *db;
+    lua_State *L;
 
     void handleNameAndPassword(ClientSocket *client, const QString &name, const QString &password);
 };
