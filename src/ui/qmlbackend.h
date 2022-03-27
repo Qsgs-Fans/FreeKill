@@ -18,6 +18,13 @@ public:
     // lua --> qml
     void emitNotifyUI(const QString &command, const QString &jsonData);
 
+    // File used by both Lua and Qml
+    static Q_INVOKABLE void cd(const QString &path);
+    static Q_INVOKABLE QStringList ls(const QString &dir = "");
+    static Q_INVOKABLE QString pwd();
+    static Q_INVOKABLE bool exists(const QString &file);
+    static Q_INVOKABLE bool isDir(const QString &file);
+
 signals:
     void notifyUI(const QString &command, const QString &jsonData);
 

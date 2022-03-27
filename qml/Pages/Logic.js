@@ -1,6 +1,6 @@
 callbacks["UpdateAvatar"] = function(jsonData) {
     mainWindow.busy = false;
-    self.avatar = avatarName.text;
+    Self.avatar = jsonData;
     toast.show("Update avatar done.");
 }
 

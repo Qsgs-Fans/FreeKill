@@ -37,6 +37,20 @@ Sql = {
 	end,
 }
 
+FileIO = {
+	pwd = freekill.QmlBackend_pwd,
+	ls = function(filename)
+		if filename == nil then
+			return freekill.QmlBackend_ls(".")
+		else
+			return freekill.QmlBackend_ls(filename)
+		end
+	end,
+	cd = freekill.QmlBackend_cd,
+	exists = freekill.QmlBackend_exists,
+	isDir = freekill.QmlBackend_isDir
+}
+
 function table:removeOne(element)
 	if #self == 0 or type(self[1]) ~= type(element) then return false end
 

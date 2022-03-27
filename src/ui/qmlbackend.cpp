@@ -64,3 +64,23 @@ void QmlBackend::quitLobby()
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
     emit notifyUI(command, jsonData);
 }
+
+void QmlBackend::cd(const QString &path) {
+    QDir::setCurrent(path);
+}
+
+QStringList QmlBackend::ls(const QString &dir) {
+    return QDir(dir).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+}
+
+QString QmlBackend::pwd() {
+    return QDir::currentPath();
+}
+
+bool QmlBackend::exists(const QString &file) {
+    return QFile::exists(file);
+}
+
+bool QmlBackend::isDir(const QString &file) {
+    return QFileInfo(file).isDir();
+}

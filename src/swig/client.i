@@ -3,6 +3,12 @@
 class QmlBackend : public QObject {
 public:
     void emitNotifyUI(const QString &command, const QString &json_data);
+
+    static void cd(const QString &path);
+    static QStringList ls(const QString &dir);
+    static QString pwd();
+    static bool exists(const QString &file);
+    static bool isDir(const QString &file);
 };
 
 extern QmlBackend *Backend;
