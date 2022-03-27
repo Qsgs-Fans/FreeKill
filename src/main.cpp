@@ -1,6 +1,3 @@
-#include <QGuiApplication>
-#include <QCommandLineParser>
-#include <QDir>
 #include "qmlbackend.h"
 #include "server.h"
 

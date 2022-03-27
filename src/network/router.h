@@ -1,12 +1,7 @@
 #ifndef _ROUTER_H
 #define _ROUTER_H
 
-#include <QObject>
-#include <QDateTime>
-#include <QMutex>
-#include <QVariant>
-#include <QSemaphore>
-#include "client_socket.h"
+class ClientSocket;
 
 class Router : public QObject {
     Q_OBJECT

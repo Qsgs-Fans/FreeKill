@@ -1,12 +1,6 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
-#include <QObject>
-#include <QJsonDocument>
-#include <QQmlApplicationEngine>
-#include <QQmlContext>
-#include "client.h"
-
 class QmlBackend : public QObject {
     Q_OBJECT
 public:

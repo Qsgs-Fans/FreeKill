@@ -1,13 +1,6 @@
 #ifndef _CLIENT_SOCKET_H
 #define _CLIENT_SOCKET_H
 
-#include <QObject>
-#include <QAbstractSocket>
-#include <QHostAddress>
-#include <QTimer>
-
-class QTcpSocket;
-
 class ClientSocket : public QObject {
     Q_OBJECT
 

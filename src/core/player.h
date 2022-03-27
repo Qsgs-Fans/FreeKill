@@ -1,8 +1,6 @@
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
-#include <QObject>
-
 // Common part of ServerPlayer and ClientPlayer
 // dont initialize it directly
 class Player : public QObject {

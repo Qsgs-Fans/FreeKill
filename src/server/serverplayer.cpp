@@ -1,6 +1,8 @@
 #include "serverplayer.h"
 #include "room.h"
 #include "server.h"
+#include "router.h"
+#include "client_socket.h"
 
 ServerPlayer::ServerPlayer(Room *room)
 {

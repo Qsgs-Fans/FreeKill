@@ -2,9 +2,9 @@
 #define _SERVERPLAYER_H
 
 #include "player.h"
-#include "router.h"
-#include <QVariant>
+
 class ClientSocket;
+class Router;
 class Server;
 class Room;
 

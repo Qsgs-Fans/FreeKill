@@ -2,6 +2,7 @@
 #include "client_socket.h"
 #include "clientplayer.h"
 #include "qmlbackend.h"
+#include "util.h"
 
 Client *ClientInstance;
 ClientPlayer *Self;

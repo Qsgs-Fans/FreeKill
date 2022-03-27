@@ -1,7 +1,6 @@
-#include <QJsonArray>
-#include <QJsonDocument>
 #include "router.h"
 #include "client.h"
+#include "client_socket.h"
 #include "server.h"
 #include "serverplayer.h"
 

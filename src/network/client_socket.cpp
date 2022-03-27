@@ -1,6 +1,4 @@
 #include "client_socket.h"
-#include <QTcpSocket>
-#include <QHostAddress>
 
 ClientSocket::ClientSocket() : socket(new QTcpSocket(this))
 {

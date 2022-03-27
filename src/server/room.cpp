@@ -1,8 +1,6 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
-#include <QJsonArray>
-#include <QJsonDocument>
 
 Room::Room(Server* server)
 {

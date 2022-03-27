@@ -1,7 +1,7 @@
 set(freekill_SRCS
     "main.cpp"
     "core/player.cpp"
-    "core/global.cpp"
+    "core/util.cpp"
     "network/server_socket.cpp"
     "network/client_socket.cpp"
     "network/router.cpp"
@@ -15,7 +15,7 @@ set(freekill_SRCS
 )
 
 set(freekill_HEADERS
-    "core/global.h"
+    "core/util.h"
     "core/player.h"
     "network/server_socket.h"
     "network/client_socket.h"
@@ -38,6 +38,7 @@ endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})
 add_executable(FreeKill ${freekill_SRCS})
+target_precompile_headers(FreeKill PRIVATE "pch.h")
 target_link_libraries(FreeKill ${LUA_LIB} ${SQLITE3_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
 add_custom_command(

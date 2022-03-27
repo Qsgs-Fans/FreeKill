@@ -1,11 +1,8 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include <QObject>
-#include <lua.hpp>
 #include "router.h"
 #include "clientplayer.h"
-#include "global.h"
 
 class Client : public QObject {
     Q_OBJECT

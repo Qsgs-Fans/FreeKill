@@ -2,13 +2,9 @@
 #include "server_socket.h"
 #include "client_socket.h"
 #include "room.h"
+#include "router.h"
 #include "serverplayer.h"
-#include "global.h"
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QRegExp>
-#include <QCryptographicHash>
+#include "util.h"
 
 Server *ServerInstance;
 

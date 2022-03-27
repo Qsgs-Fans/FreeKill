@@ -1,19 +1,10 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <QObject>
-#include <QHash>
-#include <QMap>
-#include <QHostAddress>
-#include <lua.hpp>
-#include <sqlite3.h>
-
 class ServerSocket;
 class ClientSocket;
 class Room;
 class ServerPlayer;
-
-typedef int LuaFunction;
 
 class Server : public QObject {
     Q_OBJECT

@@ -1,8 +1,6 @@
 #ifndef _ROOM_H
 #define _ROOM_H
 
-#include <QThread>
-#include <QList>
 class Server;
 class ServerPlayer;
 
