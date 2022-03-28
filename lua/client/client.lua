@@ -32,7 +32,7 @@ freekill.client_callback["AddPlayer"] = function(jsonData)
     -- when other player enter the room, we create clientplayer(C and lua) for them
     local data = json.decode(jsonData)
     local id, name, avatar = data[1], data[2], data[3]
-    ClientInstance:notifyUI("AddPlayer", json.encode({ name, avatar }))
+    ClientInstance:notifyUI("AddPlayer", json.encode({ id, name, avatar }))
 end
 
 -- Create ClientInstance (used by Lua)

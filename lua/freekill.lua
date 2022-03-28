@@ -9,6 +9,7 @@ class = require "middleclass"
 json = require "json"
 require "sha256"
 Util = require "core/util"
+math.randomseed(os.time())
 
 DebugMode = true
 

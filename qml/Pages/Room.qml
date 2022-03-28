@@ -129,6 +129,7 @@ Item {
         toast.show("Sucesessfully entered room.");
 
         dashboardModel = {
+            id: Self.id,
             general: Self.avatar,
             screenName: Self.screenName,
             role: "unknown",
@@ -150,6 +151,7 @@ Item {
         let i;
         for (i = 1; i < playerNum; i++) {
             photoModel.push({
+                id: -1,
                 general: "",
                 screenName: "",
                 role: "unknown",

@@ -16,6 +16,13 @@ function table:contains(element)
 	end
 end
 
+function table:shuffle()
+	for i = #self, 2, -1 do
+	  	local j = math.random(i)
+	  	self[i], self[j] = self[j], self[i]
+	end
+end
+
 function table:insertTable(list)
 	for _, e in ipairs(list) do
 		table.insert(self, e)
@@ -50,6 +57,27 @@ FileIO = {
 	exists = freekill.QmlBackend_exists,
 	isDir = freekill.QmlBackend_isDir
 }
+
+Stack = class("Stack")
+function Stack:initialize()
+	self.t = {}
+	self.p = 0
+end
+
+function Stack:push(e)
+	self.p = self.p + 1
+	self.t[self.p] = e
+end
+
+function Stack:isEmpty()
+	return self.p == 0
+end
+
+function Stack:pop()
+	if self.p == 0 then return nil end
+	self.p = self.p - 1
+	return self.t[self.p + 1]
+end
 
 function table:removeOne(element)
 	if #self == 0 or type(self[1]) ~= type(element) then return false end

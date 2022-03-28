@@ -49,13 +49,15 @@ function arrangePhotos() {
 }
 
 callbacks["AddPlayer"] = function(jsonData) {
-    // jsonData: string screenName, string avatar
+    // jsonData: int id, string screenName, string avatar
     for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].screenName === "") {
+        if (photoModel[i].id === -1) {
             let data = JSON.parse(jsonData);
-            let name = data[0];
-            let avatar = data[1];
+            let uid = data[0];
+            let name = data[1];
+            let avatar = data[2];
             photoModel[i] = {
+                id: uid,
                 general: avatar,
                 screenName: name,
                 role: "unknown",
@@ -79,11 +81,12 @@ callbacks["AddPlayer"] = function(jsonData) {
 }
 
 callbacks["RemovePlayer"] = function(jsonData) {
-    // jsonData: string screenName
-    let name = JSON.parse(jsonData)[0];
+    // jsonData: int uid
+    let uid = JSON.parse(jsonData)[0];
     for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].screenName === name) {
+        if (photoModel[i].id === uid) {
             photoModel[i] = {
+                id: -1,
                 general: "",
                 screenName: "",
                 role: "unknown",
@@ -112,3 +115,26 @@ callbacks["RoomOwner"] = function(jsonData) {
     toast.show(J)
 }
 */
+
+callbacks["PropertyUpdate"] = function(jsonData) {
+    // jsonData: int id, string property_name, value
+    let data = JSON.parse(jsonData);
+    let uid = data[0];
+    let property_name = data[1];
+    let value = data[2];
+
+    if (Self.id === uid) {
+        dashboardModel[property_name] = value;
+        dashboardModel = dashboardModel;
+        return;
+    }
+
+    for (let i = 0; i < photoModel.length; i++) {
+        if (photoModel[i].id === uid) {
+            photoModel[i][property_name] = value;
+            photoModel = photoModel;
+            arrangePhotos();
+            return;
+        }
+    }
+}

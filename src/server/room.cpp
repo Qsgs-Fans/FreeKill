@@ -81,7 +81,7 @@ void Room::setOwner(ServerPlayer *owner)
 
 void Room::addPlayer(ServerPlayer *player)
 {
-    if (!player) return;
+    if (isFull() || !player) return;
 
     QJsonArray jsonData;
 
@@ -126,7 +126,7 @@ void Room::removePlayer(ServerPlayer *player)
 
     // player->doNotify("QuitRoom", "[]");
     QJsonArray jsonData;
-    jsonData << player->getScreenName();
+    jsonData << player->getId();
     doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
 
     if (isAbandoned()) {

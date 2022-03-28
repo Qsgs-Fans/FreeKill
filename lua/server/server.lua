@@ -1,5 +1,8 @@
 Server = class('Server')
+
+-- load server classes
 Room = require "server/room"
+GameLogic = require "server/gamelogic"
 ServerPlayer = require "server/serverplayer"
 
 freekill.server_callback = {}
