@@ -4,10 +4,10 @@
 
 Room::Room(Server* server)
 {
-    static int roomId = 0;
-    id = roomId;
-    roomId++;
+    id = server->nextRoomId;
+    server->nextRoomId++;
     this->server = server;
+    setParent(server);
     gameStarted = false;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
