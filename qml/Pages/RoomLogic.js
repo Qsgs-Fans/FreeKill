@@ -42,7 +42,7 @@ function arrangePhotos() {
         if (!item)
             continue;
 
-        region = regions[seatIndex[i] - 1];
+        region = regions[seatIndex[photoModel.get(i).index] - 1];
         item.x = region.x;
         item.y = region.y;
     }
@@ -50,31 +50,17 @@ function arrangePhotos() {
 
 callbacks["AddPlayer"] = function(jsonData) {
     // jsonData: int id, string screenName, string avatar
-    for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].id === -1) {
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === -1) {
             let data = JSON.parse(jsonData);
             let uid = data[0];
             let name = data[1];
             let avatar = data[2];
-            photoModel[i] = {
-                id: uid,
-                general: avatar,
-                screenName: name,
-                role: "unknown",
-                kingdom: "qun",
-                netstate: "online",
-                maxHp: 0,
-                hp: 0,
-                seatNumber: i + 1,
-                isDead: false,
-                dying: false,
-                faceturned: false,
-                chained: false,
-                drank: false,
-                isOwner: false
-            };
-            photoModel = photoModel;
-            arrangePhotos();
+            item.id = uid;
+            item._screenName = name;
+            item._general = avatar;
+            photos.itemAt(i).tremble();
             return;
         }
     }
@@ -83,27 +69,12 @@ callbacks["AddPlayer"] = function(jsonData) {
 callbacks["RemovePlayer"] = function(jsonData) {
     // jsonData: int uid
     let uid = JSON.parse(jsonData)[0];
-    for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].id === uid) {
-            photoModel[i] = {
-                id: -1,
-                general: "",
-                screenName: "",
-                role: "unknown",
-                kingdom: "qun",
-                netstate: "online",
-                maxHp: 0,
-                hp: 0,
-                seatNumber: i + 1,
-                isDead: false,
-                dying: false,
-                faceturned: false,
-                chained: false,
-                drank: false,
-                isOwner: false
-            };
-            photoModel = photoModel;
-            arrangePhotos();
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === uid) {
+            item.id = -1;
+            item._screenName = "";
+            item._general = "";
             return;
         }
     }
@@ -125,16 +96,41 @@ callbacks["PropertyUpdate"] = function(jsonData) {
 
     if (Self.id === uid) {
         dashboardModel[property_name] = value;
-        dashboardModel = dashboardModel;
+        roomScene.dashboardModelChanged();
         return;
     }
 
-    for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].id === uid) {
-            photoModel[i][property_name] = value;
-            photoModel = photoModel;
-            arrangePhotos();
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === uid) {
+            item["_" + property_name] = value;
             return;
         }
     }
+}
+
+callbacks["ArrangeSeats"] = function(jsonData) {
+    // jsonData: seat order
+    let order = JSON.parse(jsonData);
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        item._seatNumber = order.indexOf(item.id) + 1;
+    }
+
+    dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
+    roomScene.dashboardModelChanged();
+    
+    // make Self to the first of list, then reorder photomodel
+    let selfIndex = order.indexOf(Self.id);
+    let after = order.splice(selfIndex);
+    after.push(...order);
+    let photoOrder = after.slice(1);
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        item.index = photoOrder.indexOf(item.id);
+    }
+    
+    arrangePhotos();
 }

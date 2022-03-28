@@ -9,10 +9,6 @@ function ServerPlayer:getId()
     return self.serverplayer:getId()
 end
 
-function ServerPlayer:setRole(role)
-    self.role = role
-end
-
 function ServerPlayer:doNotify(command, jsonData)
     self.serverplayer:doNotify(command, jsonData)
 end

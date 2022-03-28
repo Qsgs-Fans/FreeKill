@@ -35,8 +35,12 @@ function GameLogic:assignRoles()
 
     for i = 1, n do
         local p = self.room.players[i]
-        p:setRole(roles[i])
-        self.room:broadcastProperty(p, "role")
+        p.role = roles[i]
+        if p.role == "lord" then
+            self.room:broadcastProperty(p, "role")
+        else
+            self.room:notifyProperty(p, p, "role")
+        end
     end
 end
 

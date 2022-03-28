@@ -49,3 +49,22 @@ void Client::notifyServer(const QString& command, const QString& jsonData)
     int type = Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
     router->notify(type, command, jsonData);
 }
+
+ClientPlayer *Client::addPlayer(int id, const QString &name, const QString &avatar) {
+    ClientPlayer *player = new ClientPlayer(id);
+    player->setScreenName(name);
+    player->setAvatar(avatar);
+
+    players[id] = player;
+    return player;
+}
+
+void Client::removePlayer(int id) {
+    ClientPlayer *p = players[id];
+    p->deleteLater();
+    players[id] = nullptr;
+}
+
+void Client::clearPlayers() {
+    players.clear();
+}

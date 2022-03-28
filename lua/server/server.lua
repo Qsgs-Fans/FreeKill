@@ -43,6 +43,7 @@ freekill.server_callback["UpdateAvatar"] = function(jsonData)
     local sql = "UPDATE userinfo SET avatar='%s' WHERE id=%d;"
     Sql.exec(ServerInstance.db, string.format(sql, avatar, id))
     local player = freekill.ServerInstance:findPlayer(id)
+    player:setAvatar(avatar)
     player:doNotify("UpdateAvatar", avatar)
 end
 

@@ -21,6 +21,9 @@ public:
     void notifyServer(const QString &command, const QString &json_data);
 
     LuaFunction callback;
+
+    ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
+    void removePlayer(int id);
 };
 
 extern Client *ClientInstance;
