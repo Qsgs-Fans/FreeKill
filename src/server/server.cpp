@@ -18,6 +18,7 @@ Server::Server(QObject* parent)
             this, &Server::processNewConnection);
 
     // create lobby
+    nextRoomId = 0;
     createRoom(nullptr, "Lobby", INT32_MAX);
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
     connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
@@ -188,15 +189,17 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         } else {
             // check if this username already login
             int id = result["id"].toArray()[0].toString().toInt();
-            if (!players.value(id))
+            if (!players.value(id)) {
                 // check if password is the same
                 passed = (passwordHash == arr[0].toString());
                 if (!passed) error_msg = "username or password error";
-            else {
+            } else {
                 // TODO: reconnect here
                 error_msg = "others logged in with this name";
             }
         }
+    } else {
+        error_msg = "invalid user name";
     }
 
     if (passed) {

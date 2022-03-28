@@ -1,24 +1,103 @@
-local Sanguosha = class("Engine")
+local Engine = class("Engine")
 
-function Sanguosha:initialize()
-    self.skills = {}
-    self.generals = {}
-    self.cards = {}
+function Engine:initialize()
+    -- Engine should be singleton
+    if Fk ~= nil then
+        error("Engine has been initialized")
+        return
+    end
+
+    Fk = self
+
+    self.packages = {}      -- name --> Package
+    self.skills = {}        -- name --> Skill
+    self.related_skills = {} -- skillName --> relatedName
+    self.generals = {}      -- name --> General
+    self.lords = {}         -- lordName[]
+    self.cards = {}         -- Card[]
+    self.translations = {}  -- srcText --> translated
+
+    self:loadPackages()
 end
 
-function Sanguosha:addSkill(skill)
-    table.insert(self.skills, skill)
+-- Package pack
+function Engine:loadPackage(pack)
+    assert(pack:isInstanceOf(Package))
+    if self.packages[pack.name] ~= nil then 
+        error(string.format("Duplicate package %s detected", pack.name))
+    end
+    self.packages[pack.name] = pack
+
+    -- add cards, generals and skills to Engine
+    if pack.type == Package.CardPack then
+        self:addCards(pack.cards)
+    elseif pack.type == Package.GeneralPack then
+        self:addGenerals(pack.generals)
+    end
+    self:addSkills(pack:getSkills())
 end
 
-function Sanguosha:addGeneral(general)
-    table.insert(self.generals, general)
+function Engine:loadPackages()
+    assert(FileIO.isDir("packages"))
+    FileIO.cd("packages")
+    for _, dir in ipairs(FileIO.ls()) do
+        if FileIO.isDir(dir) then
+            self:loadPackage(require(dir))
+        end
+    end
+    FileIO.cd("..")
 end
 
-function Sanguosha:addCard(card)
-    table.insert(self.cards, cards)
+function Engine:loadTranslationTable(t)
+    assert(type(t) == "table")
+    for k, v in pairs(t) do
+        self.translations[k] = v
+    end
 end
 
-function Sanguosha:getGeneralsRandomly(num, generalPool, except, filter)
+function Engine:addSkill(skill)
+    assert(skill.class:isSubclassOf(Skill))
+    if self.skills[skill.name] ~= nil then
+        error(string.format("Duplicate skill %s detected", skill.name))
+    end
+    self.skills[skill.name] = skill
+end
+
+function Engine:addSkills(skills)
+    assert(type(skills) == "table")
+    for _, skill in ipairs(skills) do
+        self:addSkill(skill)
+    end
+end
+
+function Engine:addGeneral(general)
+    assert(general:isInstanceOf(General))
+    if self.generals[general.name] ~= nil then
+        error(string.format("Duplicate general %s detected", general.name))
+    end
+    self.generals[general.name] = general
+end
+
+function Engine:addGenerals(generals)
+    assert(type(generals) == "table")
+    for _, general in ipairs(generals) do
+        self:addGeneral(general)
+    end
+end
+
+function Engine:addCard(card)
+    assert(card.class:isSubclassOf(Card))
+    table.insert(self.cards, card)
+end
+
+function Engine:addCards(cards)
+    assert(type(cards) == "table")
+    for _, card in ipairs(cards) do
+        self:addCard(card)
+    end
+end
+
+function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     if filter then
         assert(type(filter) == "function")
     end
@@ -51,7 +130,7 @@ function Sanguosha:getGeneralsRandomly(num, generalPool, except, filter)
     return result
 end
 
-function Sanguosha:getAllGenerals(except)
+function Engine:getAllGenerals(except)
     local result = {}
     for _, general in ipairs(self.generals) do
         if not (except and table.contains(except, general)) then
@@ -62,4 +141,4 @@ function Sanguosha:getAllGenerals(except)
     return result
 end
 
-return Sanguosha
+return Engine

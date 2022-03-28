@@ -7,7 +7,6 @@ import "RoomLogic.js" as Logic
 Item {
     id: roomScene
 
-    property var photoModel: []
     property int playerNum: 0
     property var dashboardModel
 
@@ -23,6 +22,7 @@ Item {
         text: "quit"
         anchors.bottom: parent.bottom
         onClicked: {
+            ClientInstance.clearPlayers();
             ClientInstance.notifyServer("QuitRoom", "[]");
         }
     }
@@ -60,6 +60,10 @@ Item {
      * +---------------------+
      */
 
+    ListModel {
+        id: photoModel
+    }
+
     Item {
         id: roomArea
         width: roomScene.width
@@ -69,20 +73,20 @@ Item {
             id: photos
             model: photoModel
             Photo {
-                general: modelData.general
-                screenName: modelData.screenName
-                role: modelData.role
-                kingdom: modelData.kingdom
-                netstate: modelData.netstate
-                maxHp: modelData.maxHp
-                hp: modelData.hp
-                seatNumber: modelData.seatNumber
-                isDead: modelData.isDead
-                dying: modelData.dying
-                faceturned: modelData.faceturned
-                chained: modelData.chained
-                drank: modelData.drank
-                isOwner: modelData.isOwner
+                general: _general
+                screenName: _screenName
+                role: _role
+                kingdom: _kingdom
+                netstate: _netstate
+                maxHp: _maxHp
+                hp: _hp
+                seatNumber: _seatNumber
+                isDead: _isDead
+                dying: _dying
+                faceturned: _faceturned
+                chained: _chained
+                drank: _drank
+                isOwner: _isOwner
             }
         }
 
@@ -129,6 +133,7 @@ Item {
         toast.show("Sucesessfully entered room.");
 
         dashboardModel = {
+            id: Self.id,
             general: Self.avatar,
             screenName: Self.screenName,
             role: "unknown",
@@ -149,24 +154,25 @@ Item {
 
         let i;
         for (i = 1; i < playerNum; i++) {
-            photoModel.push({
-                general: "",
-                screenName: "",
-                role: "unknown",
-                kingdom: "qun",
-                netstate: "online",
-                maxHp: 0,
-                hp: 0,
-                seatNumber: i + 1,
-                isDead: false,
-                dying: false,
-                faceturned: false,
-                chained: false,
-                drank: false,
-                isOwner: false
+            photoModel.append({
+                id: -1,
+                index: i - 1,   // For animating seat swap
+                _general: "",
+                _screenName: "",
+                _role: "unknown",
+                _kingdom: "qun",
+                _netstate: "online",
+                _maxHp: 0,
+                _hp: 0,
+                _seatNumber: i + 1,
+                _isDead: false,
+                _dying: false,
+                _faceturned: false,
+                _chained: false,
+                _drank: false,
+                _isOwner: false
             });
         }
-        photoModel = photoModel;    // Force the Repeater reload
 
         Logic.arrangePhotos();
     }

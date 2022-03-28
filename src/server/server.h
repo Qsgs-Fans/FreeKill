@@ -3,8 +3,9 @@
 
 class ServerSocket;
 class ClientSocket;
-class Room;
 class ServerPlayer;
+
+#include "room.h"
 
 class Server : public QObject {
     Q_OBJECT
@@ -49,6 +50,8 @@ private:
     ServerSocket *server;
     Room *m_lobby;
     QMap<int, Room *> rooms;
+    int nextRoomId;
+    friend Room::Room(Server *server);
     QHash<int, ServerPlayer *> players;
 
     sqlite3 *db;

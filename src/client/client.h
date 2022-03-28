@@ -18,6 +18,10 @@ public:
     Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
+    ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
+    void removePlayer(int id);
+    Q_INVOKABLE void clearPlayers();
+
 signals:
     void error_message(const QString &msg);
 

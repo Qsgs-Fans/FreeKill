@@ -4,10 +4,10 @@
 
 Room::Room(Server* server)
 {
-    static int roomId = 0;
-    id = roomId;
-    roomId++;
+    id = server->nextRoomId;
+    server->nextRoomId++;
     this->server = server;
+    setParent(server);
     gameStarted = false;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
@@ -81,7 +81,7 @@ void Room::setOwner(ServerPlayer *owner)
 
 void Room::addPlayer(ServerPlayer *player)
 {
-    if (!player) return;
+    if (isFull() || !player) return;
 
     QJsonArray jsonData;
 
@@ -126,7 +126,7 @@ void Room::removePlayer(ServerPlayer *player)
 
     // player->doNotify("QuitRoom", "[]");
     QJsonArray jsonData;
-    jsonData << player->getScreenName();
+    jsonData << player->getId();
     doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
 
     if (isAbandoned()) {

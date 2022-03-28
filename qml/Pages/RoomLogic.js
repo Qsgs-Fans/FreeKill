@@ -42,65 +42,39 @@ function arrangePhotos() {
         if (!item)
             continue;
 
-        region = regions[seatIndex[i] - 1];
+        region = regions[seatIndex[photoModel.get(i).index] - 1];
         item.x = region.x;
         item.y = region.y;
     }
 }
 
 callbacks["AddPlayer"] = function(jsonData) {
-    // jsonData: string screenName, string avatar
-    for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].screenName === "") {
+    // jsonData: int id, string screenName, string avatar
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === -1) {
             let data = JSON.parse(jsonData);
-            let name = data[0];
-            let avatar = data[1];
-            photoModel[i] = {
-                general: avatar,
-                screenName: name,
-                role: "unknown",
-                kingdom: "qun",
-                netstate: "online",
-                maxHp: 0,
-                hp: 0,
-                seatNumber: i + 1,
-                isDead: false,
-                dying: false,
-                faceturned: false,
-                chained: false,
-                drank: false,
-                isOwner: false
-            };
-            photoModel = photoModel;
-            arrangePhotos();
+            let uid = data[0];
+            let name = data[1];
+            let avatar = data[2];
+            item.id = uid;
+            item._screenName = name;
+            item._general = avatar;
+            photos.itemAt(i).tremble();
             return;
         }
     }
 }
 
 callbacks["RemovePlayer"] = function(jsonData) {
-    // jsonData: string screenName
-    let name = JSON.parse(jsonData)[0];
-    for (let i = 0; i < photoModel.length; i++) {
-        if (photoModel[i].screenName === name) {
-            photoModel[i] = {
-                general: "",
-                screenName: "",
-                role: "unknown",
-                kingdom: "qun",
-                netstate: "online",
-                maxHp: 0,
-                hp: 0,
-                seatNumber: i + 1,
-                isDead: false,
-                dying: false,
-                faceturned: false,
-                chained: false,
-                drank: false,
-                isOwner: false
-            };
-            photoModel = photoModel;
-            arrangePhotos();
+    // jsonData: int uid
+    let uid = JSON.parse(jsonData)[0];
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === uid) {
+            item.id = -1;
+            item._screenName = "";
+            item._general = "";
             return;
         }
     }
@@ -112,3 +86,51 @@ callbacks["RoomOwner"] = function(jsonData) {
     toast.show(J)
 }
 */
+
+callbacks["PropertyUpdate"] = function(jsonData) {
+    // jsonData: int id, string property_name, value
+    let data = JSON.parse(jsonData);
+    let uid = data[0];
+    let property_name = data[1];
+    let value = data[2];
+
+    if (Self.id === uid) {
+        dashboardModel[property_name] = value;
+        roomScene.dashboardModelChanged();
+        return;
+    }
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === uid) {
+            item["_" + property_name] = value;
+            return;
+        }
+    }
+}
+
+callbacks["ArrangeSeats"] = function(jsonData) {
+    // jsonData: seat order
+    let order = JSON.parse(jsonData);
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        item._seatNumber = order.indexOf(item.id) + 1;
+    }
+
+    dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
+    roomScene.dashboardModelChanged();
+    
+    // make Self to the first of list, then reorder photomodel
+    let selfIndex = order.indexOf(Self.id);
+    let after = order.splice(selfIndex);
+    after.push(...order);
+    let photoOrder = after.slice(1);
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        item.index = photoOrder.indexOf(item.id);
+    }
+    
+    arrangePhotos();
+}

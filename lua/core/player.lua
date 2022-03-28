@@ -1,11 +1,19 @@
 local Player = class("Player")
 
 function Player:initialize()
-    self.hp = nil
-    self.maxHp = nil
-    self.general = nil
+    self.hp = 0
+    self.maxHp = 0
+    self.kingdom = "qun"
+    self.role = ""
+    self.general = ""
+    self.handcard_num = 0
+    self.seat = 0
+    self.phase = Player.PhaseNone
+    self.faceup = true
+    self.chained = false
     self.dying = false
     self.dead = false
+
     self.playerSkills = {}
 end
 

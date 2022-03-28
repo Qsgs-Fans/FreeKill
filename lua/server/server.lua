@@ -1,7 +1,9 @@
 Server = class('Server')
-package.path = package.path .. ';./lua/server/?.lua'
-Room = require "room"
-ServerPlayer = require "serverplayer"
+
+-- load server classes
+Room = require "server/room"
+GameLogic = require "server/gamelogic"
+ServerPlayer = require "server/serverplayer"
 
 freekill.server_callback = {}
 
@@ -30,8 +32,8 @@ function Server:initialize()
         table.removeOne(self.rooms, room)
     end
 
-    self.rooms = {}
-    self.players = {}
+    self.rooms = {}     -- id --> Room(Started)
+    self.players = {}   -- id --> ServerPlayer
 end
 
 freekill.server_callback["UpdateAvatar"] = function(jsonData)
@@ -41,7 +43,8 @@ freekill.server_callback["UpdateAvatar"] = function(jsonData)
     local sql = "UPDATE userinfo SET avatar='%s' WHERE id=%d;"
     Sql.exec(ServerInstance.db, string.format(sql, avatar, id))
     local player = freekill.ServerInstance:findPlayer(id)
-    player:doNotify("UpdateAvatar", "[]")
+    player:setAvatar(avatar)
+    player:doNotify("UpdateAvatar", avatar)
 end
 
 freekill.server_callback["UpdatePassword"] = function(jsonData)

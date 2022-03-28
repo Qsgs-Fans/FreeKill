@@ -24,6 +24,14 @@ Item {
     property bool drank: false
     property bool isOwner: false
 
+    Behavior on x {
+        NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
+    }
+
+    Behavior on y {
+        NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
+    }
+
     Image {
         id: back
         source: SkinBank.PHOTO_BACK_DIR + root.kingdom
@@ -145,11 +153,42 @@ Item {
         anchors.rightMargin: -4
     }
 
-    Text {
+    GlowText {
         id: seatNum
-        visible: false // TODO
-        property var seatChr: ["一", "二", "三", "四", "五", "六", "七"]
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: -32
+        property var seatChr: ["一", "二", "三", "四", "五", "六", "七", "八"]
         font.family: "FZLiShu II-S06S"
-        text: seatChr[root.seatNumber - 1]
+        font.pixelSize: 32
+        text: seatChr[seatNumber - 1]
+
+        glow.color: "brown"
+        glow.spread: 0.2
+        glow.radius: 8
+        glow.samples: 12
+    }
+
+    SequentialAnimation {
+        id: trembleAnimation
+        running: false
+        PropertyAnimation {
+            target: root
+            property: "x"
+            to: root.x - 20
+            easing.type: Easing.InQuad
+            duration: 100
+        }
+        PropertyAnimation {
+            target: root
+            property: "x"
+            to: root.x
+            easing.type: Easing.OutQuad
+            duration: 100
+        }
+    }
+    
+    function tremble() {
+        trembleAnimation.start()
     }
 }
