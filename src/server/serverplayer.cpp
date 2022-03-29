@@ -68,6 +68,16 @@ void ServerPlayer::doRequest(const QString& command, const QString& jsonData, in
     router->request(type, command, jsonData, timeout);
 }
 
+QString ServerPlayer::waitForReply()
+{
+    return router->waitForReply();
+}
+
+QString ServerPlayer::waitForReply(int timeout)
+{
+    return router->waitForReply(timeout);
+}
+
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
     int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;

@@ -60,7 +60,6 @@ callbacks["AddPlayer"] = function(jsonData) {
             item.id = uid;
             item._screenName = name;
             item._general = avatar;
-            photos.itemAt(i).tremble();
             return;
         }
     }
@@ -80,12 +79,24 @@ callbacks["RemovePlayer"] = function(jsonData) {
     }
 }
 
-/*
 callbacks["RoomOwner"] = function(jsonData) {
     // jsonData: int uid of the owner
-    toast.show(J)
+    let uid = JSON.parse(jsonData)[0];
+
+    if (dashboardModel.id === uid) {
+        dashboardModel.isOwner = true;
+        roomScene.dashboardModelChanged();
+        return;
+    }
+
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === uid) {
+            item._isOwner = true;
+            return;
+        }
+    }
 }
-*/
 
 callbacks["PropertyUpdate"] = function(jsonData) {
     // jsonData: int id, string property_name, value
@@ -112,6 +123,7 @@ callbacks["PropertyUpdate"] = function(jsonData) {
 callbacks["ArrangeSeats"] = function(jsonData) {
     // jsonData: seat order
     let order = JSON.parse(jsonData);
+    roomScene.isStarted = true;
 
     for (let i = 0; i < photoModel.count; i++) {
         let item = photoModel.get(i);
@@ -133,4 +145,30 @@ callbacks["ArrangeSeats"] = function(jsonData) {
     }
     
     arrangePhotos();
+}
+
+function cancelAllFocus() {
+    let item;
+    for (let i = 0; i < playerNum - 1; i++) {
+        item = photos.itemAt(i);
+        item.progressBar.visible = false;
+        item.progressTip = "";
+    }
+}
+
+callbacks["MoveFocus"] = function(jsonData) {
+    cancelAllFocus();
+    let data = JSON.parse(jsonData);
+    let focuses = data[0];
+    let command = data[1];
+
+    let item, model;
+    for (let i = 0; i < playerNum - 1; i++) {
+        model = photoModel.get(i);
+        if (focuses.indexOf[model.id] !== -1) {
+            item = photos.itemAt(i);
+            item.progressBar.visible = true;
+            item.progressTip = command + " thinking...";
+        }
+    }
 }

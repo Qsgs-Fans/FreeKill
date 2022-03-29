@@ -14,10 +14,6 @@ Item {
     property bool isStarted: false
 
     // tmp
-    Text {
-        anchors.centerIn: parent
-        text: "You are in room."
-    }
     Button {
         text: "quit"
         anchors.bottom: parent.bottom

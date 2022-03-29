@@ -47,6 +47,8 @@ public:
 
     void doRequest(const QString &command,
                    const QString &json_data, int timeout = -1);
+    QString waitForReply();
+    QString waitForReply(int timeout);
     void doNotify(const QString &command, const QString &json_data);
 
     void prepareForRequest(const QString &command, const QString &data);

@@ -45,7 +45,11 @@ function GameLogic:assignRoles()
 end
 
 function GameLogic:chooseGenerals()
-
+    for _, p in ipairs(self.room.players) do
+        print("Ask for general " .. p:getId())
+        local generals = {"liubei", "caocao", "sunquan", "zhangliao", "guanyu"}
+        self.room:askForGeneral(p, generals)
+    end
 end
 
 function GameLogic:startGame()

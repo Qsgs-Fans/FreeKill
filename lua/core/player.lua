@@ -13,7 +13,8 @@ function Player:initialize()
     self.chained = false
     self.dying = false
     self.dead = false
-
+    self.state = ""
+    
     self.playerSkills = {}
 end
 

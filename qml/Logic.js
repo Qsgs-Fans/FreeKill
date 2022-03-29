@@ -29,7 +29,10 @@ callbacks["EnterLobby"] = function(jsonData) {
 }
 
 callbacks["EnterRoom"] = function(jsonData) {
-    config.roomCapacity = JSON.parse(jsonData)[0];
+    // jsonData: int capacity, int timeout
+    let data = JSON.parse(jsonData);
+    config.roomCapacity = data[0];
+    config.roomTimeout = data[1];
     mainStack.push(room);
     mainWindow.busy = false;
 }

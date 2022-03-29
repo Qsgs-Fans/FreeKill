@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtGraphicalEffects 1.15
+import QtQuick.Controls 2.15
 import "PhotoElement"
 import "../skin-bank.js" as SkinBank
 
@@ -23,6 +24,9 @@ Item {
     property bool chained: false
     property bool drank: false
     property bool isOwner: false
+
+    property alias progressBar: progressBar
+    property alias progressTip: progressTip.text
 
     Behavior on x {
         NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
@@ -96,6 +100,15 @@ Item {
     }
 
     Image {
+        anchors.bottom: parent.bottom
+        anchors.right: parent.right
+        anchors.bottomMargin: 8
+        anchors.rightMargin: 4
+        source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : "ready")
+        visible: screenName != "" && !roomScene.isStarted
+    }
+
+    Image {
         id: turnedOver
         visible: root.faceturned
         source: SkinBank.PHOTO_DIR + "faceturned"
@@ -155,6 +168,7 @@ Item {
 
     GlowText {
         id: seatNum
+        visible: !progressBar.visible
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: -32
@@ -190,5 +204,43 @@ Item {
     
     function tremble() {
         trembleAnimation.start()
+    }
+
+    ProgressBar {
+        id: progressBar
+        width: parent.width
+        height: 4
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: -4
+        from: 0.0
+        to: 100.0
+
+        visible: false
+        NumberAnimation on value {
+            running: progressBar.visible
+            from: 100.0
+            to: 0.0
+            duration: config.roomTimeout * 1000
+
+            onFinished: {
+                progressBar.visible = false;
+                root.progressTip = "";
+            }
+        }
+    }
+
+    Image {
+        anchors.top: progressBar.bottom
+        anchors.topMargin: 1
+        source: SkinBank.PHOTO_DIR + "control/tip"
+        visible: progressTip.text != ""
+        Text {
+            id: progressTip
+            font.family: "FZLiBian-S02"
+            font.pixelSize: 18
+            x: 18
+            color: "white"
+            text: ""
+        }
     }
 }

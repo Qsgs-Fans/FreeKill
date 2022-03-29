@@ -8,6 +8,7 @@ Room::Room(Server* server)
     server->nextRoomId++;
     this->server = server;
     setParent(server);
+    owner = nullptr;
     gameStarted = false;
     timeout = 15;
     if (!isLobby()) {
@@ -77,7 +78,7 @@ void Room::setOwner(ServerPlayer *owner)
     this->owner = owner;
     QJsonArray jsonData;
     jsonData << owner->getId();
-    owner->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
+    doBroadcastNotify(players, "RoomOwner", QJsonDocument(jsonData).toJson());
 }
 
 void Room::addPlayer(ServerPlayer *player)
@@ -102,6 +103,7 @@ void Room::addPlayer(ServerPlayer *player)
         // Second, let the player enter room and add other players
         jsonData = QJsonArray();
         jsonData << this->capacity;
+        jsonData << this->timeout;
         player->doNotify("EnterRoom", QJsonDocument(jsonData).toJson());
 
         foreach (ServerPlayer *p, getOtherPlayers(player)) {
@@ -110,6 +112,12 @@ void Room::addPlayer(ServerPlayer *player)
             jsonData << p->getScreenName();
             jsonData << p->getAvatar();
             player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
+        }
+
+        if (this->owner != nullptr) {
+            jsonData = QJsonArray();
+            jsonData << this->owner->getId();
+            player->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
         }
 
         if (isFull())

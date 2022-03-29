@@ -58,6 +58,8 @@ FileIO = {
 	isDir = freekill.QmlBackend_isDir
 }
 
+os.getms = freekill.GetMicroSecond
+
 Stack = class("Stack")
 function Stack:initialize()
 	self.t = {}
