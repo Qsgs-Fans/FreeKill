@@ -157,15 +157,16 @@ function cancelAllFocus() {
 }
 
 callbacks["MoveFocus"] = function(jsonData) {
+    // jsonData: int[] focuses, string command
     cancelAllFocus();
     let data = JSON.parse(jsonData);
     let focuses = data[0];
     let command = data[1];
-
+    
     let item, model;
     for (let i = 0; i < playerNum - 1; i++) {
         model = photoModel.get(i);
-        if (focuses.indexOf[model.id] !== -1) {
+        if (focuses.indexOf(model.id) != -1) {
             item = photos.itemAt(i);
             item.progressBar.visible = true;
             item.progressTip = command + " thinking...";

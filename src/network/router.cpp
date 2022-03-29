@@ -187,6 +187,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
             return;
 
         m_reply = jsonData;
+        qDebug() << m_reply;
         // TODO: callback?
 
         replyReadySemaphore.release();

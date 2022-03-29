@@ -44,7 +44,7 @@ function Room:doBroadcastNotify(command, jsonData, players)
 end
 
 function Room:doRequest(player, command, jsonData, wait)
-    wait = wait or true
+    if wait == nil then wait = true end
     player:doRequest(command, jsonData, self.timeout)
 
     if wait then
@@ -52,10 +52,11 @@ function Room:doRequest(player, command, jsonData, wait)
     end
 end
 
-function Room:doBroadcastRequest(command, jsonData, players)
+function Room:doBroadcastRequest(command, players)
     players = players or self.players
+    self:notifyMoveFocus(players, command)
     for _, p in ipairs(players) do
-        self:doRequest(p, command, jsonData, false)
+        self:doRequest(p, command, p.request_data, false)
     end
 
     local remainTime = self.timeout
@@ -69,7 +70,7 @@ function Room:doBroadcastRequest(command, jsonData, players)
 end
 
 function Room:notifyMoveFocus(players, command)
-    if (type(players) ~= "table") then
+    if (players.class) then
         players = {players}
     end
 
@@ -113,7 +114,13 @@ function Room:adjustSeats()
 end
 
 function Room:getLord()
-    return self.players[1]
+    local lord = self.players[1]
+    if lord.role == "lord" then return lord end
+    for _, p in ipairs(self.players) do
+        if p.role == "lord" then return p end
+    end
+
+    return nil
 end
 
 function Room:getOtherPlayers(expect)
@@ -134,9 +141,9 @@ function Room:askForGeneral(player, generals)
         if result == "" then
             return defaultChoice
         else
-            -- TODO: result may be a JSON array
+            -- TODO: result is a JSON array
             -- update here when choose multiple generals
-            return result
+            return json.decode(result)[1]
         end
     end
 

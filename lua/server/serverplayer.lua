@@ -4,7 +4,12 @@ function ServerPlayer:initialize(_self)
     Player.initialize(self)
     self.serverplayer = _self
 
+    self.next = nil
+
+    -- Below are for doBroadcastRequest
+    self.request_data = ""
     self.client_reply = ""
+    self.reply_ready = false
 end
 
 function ServerPlayer:getId()
@@ -17,6 +22,8 @@ end
 
 function ServerPlayer:doRequest(command, jsonData, timeout)
     timeout = timeout or self.room.timeout
+    self.client_reply = ""
+    self.reply_ready = false
     self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
@@ -27,7 +34,9 @@ function ServerPlayer:waitForReply(timeout)
     else
         result = self.serverplayer:waitForReply(timeout)
     end
+    self.request_data = ""
     self.client_reply = result
+    if result ~= "" then self.reply_ready = true end
     return result
 end
 

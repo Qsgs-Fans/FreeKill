@@ -25,7 +25,8 @@ function GameLogic:run()
     self.room:adjustSeats()
 
     self:chooseGenerals()
-    self:startGame()
+    self:prepareForStart()
+    self:action()
 end
 
 function GameLogic:assignRoles()
@@ -45,11 +46,52 @@ function GameLogic:assignRoles()
 end
 
 function GameLogic:chooseGenerals()
-    local lord = self.room:getLord()
-    local nonlord = self.room:getOtherPlayers(lord)
+    local room = self.room
+    local function setPlayerGeneral(player, general)
+        local g = Fk.generals[general]
+        if g == nil then return end
+        player.general = general
+        self.room:notifyProperty(player, player, "general")
+    end
+    local lord = room:getLord()
+    local lord_general = nil
+    if lord ~= nil then
+        local generals = Fk:getGeneralsRandomly(3)
+        for i = 1, #generals do
+            generals[i] = generals[i].name
+        end
+        lord_general = room:askForGeneral(lord, generals);
+        setPlayerGeneral(lord, lord_general);
+        room:broadcastProperty(lord, "general");
+    end
+
+    local nonlord = room:getOtherPlayers(lord)
+    local generals = Fk:getGeneralsRandomly(#nonlord * 3, Fk.generals, {lord_general})
+    table.shuffle(generals)
+    for _, p in ipairs(nonlord) do
+        local arg = {
+            (table.remove(generals, 1)).name,
+            (table.remove(generals, 1)).name,
+            (table.remove(generals, 1)).name,
+        }
+        p.request_data = json.encode(arg)
+        print(p.request_data)
+    end
+
+    room:doBroadcastRequest("AskForGeneral", nonlord)
+    for _, p in ipairs(nonlord) do
+        if p.general == "" and p.reply_ready then
+            local general = json.decode(p.client_reply)[1]
+            setPlayerGeneral(p, general)
+        end
+    end
 end
 
-function GameLogic:startGame()
+function GameLogic:prepareForStart()
+
+end
+
+function GameLogic:action()
 
 end
 
