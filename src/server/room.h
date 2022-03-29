@@ -31,6 +31,9 @@ public:
     QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
     ServerPlayer *findPlayer(int id) const;
 
+    int getTimeout() const;
+    void setTimeout(int timeout);
+
     bool isStarted() const;
     // ====================================}
 
@@ -64,6 +67,8 @@ private:
     ServerPlayer *owner;    // who created this room?
     QList<ServerPlayer *> players;
     bool gameStarted;
+
+    int timeout;
 };
 
 #endif // _ROOM_H

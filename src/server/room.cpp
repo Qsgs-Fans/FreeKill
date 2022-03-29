@@ -9,6 +9,7 @@ Room::Room(Server* server)
     this->server = server;
     setParent(server);
     gameStarted = false;
+    timeout = 15;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
         connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
@@ -150,11 +151,17 @@ QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer* expect) const
 
 ServerPlayer *Room::findPlayer(int id) const
 {
-    foreach (ServerPlayer *p, players) {
-        if (p->getId() == id)
-            return p;
-    }
-    return nullptr;
+    return server->findPlayer(id);
+}
+
+int Room::getTimeout() const
+{
+    return timeout;
+}
+
+void Room::setTimeout(int timeout)
+{
+    this->timeout = timeout;
 }
 
 bool Room::isStarted() const

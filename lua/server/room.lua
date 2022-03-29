@@ -4,6 +4,7 @@ function Room:initialize(_room)
     self.room = _room
     self.players = {}       -- ServerPlayer[]
     self.gameFinished = false
+    self.timeout = _room:getTimeout()
 end
 
 -- When this function returns, the Room(C++) thread stopped.
