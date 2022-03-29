@@ -11,6 +11,7 @@ end
 function Room:run()
     for _, p in freekill.qlist(self.room:getPlayers()) do
         local player = ServerPlayer:new(p)
+        player.state = p:getStateString()
         table.insert(self.players, player)
         self.server.players[player:getId()] = player
     end
@@ -47,7 +48,7 @@ function Room:doRequest(player, command, jsonData, wait)
     player:doRequest(command, jsonData, self.timeout)
 
     if wait then
-        player:waitForReply(self.timeout)
+        return player:waitForReply(self.timeout)
     end
 end
 
@@ -109,6 +110,16 @@ function Room:adjustSeats()
     end
 
     self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+end
+
+function Room:getLord()
+    return self.players[1]
+end
+
+function Room:getOtherPlayers(expect)
+    local ret = {table.unpack(self.players)}
+    table.removeOne(ret, expect)
+    return ret
 end
 
 function Room:askForGeneral(player, generals)

@@ -8,7 +8,7 @@ ServerPlayer::ServerPlayer(Room *room)
 {
     socket = nullptr;
     router = new Router(this, socket, Router::TYPE_SERVER);
-
+    setState(Player::Online);
     this->room = room;
     server = room->getServer();
 }

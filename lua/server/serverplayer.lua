@@ -16,6 +16,7 @@ function ServerPlayer:doNotify(command, jsonData)
 end
 
 function ServerPlayer:doRequest(command, jsonData, timeout)
+    timeout = timeout or self.room.timeout
     self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
@@ -27,6 +28,7 @@ function ServerPlayer:waitForReply(timeout)
         result = self.serverplayer:waitForReply(timeout)
     end
     self.client_reply = result
+    return result
 end
 
 return ServerPlayer

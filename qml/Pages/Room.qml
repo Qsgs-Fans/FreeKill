@@ -13,6 +13,8 @@ Item {
     property bool isOwner: false
     property bool isStarted: false
 
+    property alias popupBox: popupBox
+
     // tmp
     Button {
         text: "quit"
@@ -24,7 +26,7 @@ Item {
     }
     Button {
         text: "start game"
-        visible: isOwner && !isStarted
+        visible: dashboardModel.isOwner && !isStarted
         anchors.centerIn: parent
     }
 
@@ -123,6 +125,30 @@ Item {
         self.chained: dashboardModel.chained
         self.drank: dashboardModel.drank
         self.isOwner: dashboardModel.isOwner
+    }
+
+    Loader {
+        id: popupBox
+        onSourceChanged: {
+            if (item === null)
+                return;
+            item.finished.connect(function(){
+                source = "";
+            });
+            item.widthChanged.connect(function(){
+                popupBox.moveToCenter();
+            });
+            item.heightChanged.connect(function(){
+                popupBox.moveToCenter();
+            });
+            moveToCenter();
+        }
+
+        function moveToCenter()
+        {
+            item.x = Math.round((roomArea.width - item.width) / 2);
+            item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
+        }
     }
 
     Component.onCompleted: {

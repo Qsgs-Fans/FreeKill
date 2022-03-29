@@ -60,7 +60,7 @@ void Router::request(int type, const QString& command,
 
     replyMutex.lock();
     expectedReplyId = requestId;
-    replyTimeout = 0;
+    replyTimeout = timeout;
     requestStartTime = QDateTime::currentDateTime();
     m_reply = QString();
     replyMutex.unlock();
@@ -123,7 +123,7 @@ QString Router::waitForReply()
 
 QString Router::waitForReply(int timeout)
 {
-    replyReadySemaphore.tryAcquire(1, timeout);
+    replyReadySemaphore.tryAcquire(1, timeout * 1000);
     return m_reply;
 }
 
@@ -188,7 +188,6 @@ void Router::handlePacket(const QByteArray& rawPacket)
 
         m_reply = jsonData;
         // TODO: callback?
-        qDebug() << rawPacket << Qt::endl;
 
         replyReadySemaphore.release();
         if (extraReplyReadySemaphore) {
