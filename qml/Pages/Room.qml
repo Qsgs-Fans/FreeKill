@@ -71,20 +71,20 @@ Item {
             id: photos
             model: photoModel
             Photo {
-                general: _general
-                screenName: _screenName
-                role: _role
-                kingdom: _kingdom
-                netstate: _netstate
-                maxHp: _maxHp
-                hp: _hp
-                seatNumber: _seatNumber
-                isDead: _isDead
-                dying: _dying
-                faceturned: _faceturned
-                chained: _chained
-                drank: _drank
-                isOwner: _isOwner
+                general: model.general
+                screenName: model.screenName
+                role: model.role
+                kingdom: model.kingdom
+                netstate: model.netstate
+                maxHp: model.maxHp
+                hp: model.hp
+                seatNumber: model.seatNumber
+                isDead: model.isDead
+                dying: model.dying
+                faceturned: model.faceturned
+                chained: model.chained
+                drank: model.drank
+                isOwner: model.isOwner
             }
         }
 
@@ -179,20 +179,20 @@ Item {
             photoModel.append({
                 id: -1,
                 index: i - 1,   // For animating seat swap
-                _general: "",
-                _screenName: "",
-                _role: "unknown",
-                _kingdom: "qun",
-                _netstate: "online",
-                _maxHp: 0,
-                _hp: 0,
-                _seatNumber: i + 1,
-                _isDead: false,
-                _dying: false,
-                _faceturned: false,
-                _chained: false,
-                _drank: false,
-                _isOwner: false
+                general: "",
+                screenName: "",
+                role: "unknown",
+                kingdom: "qun",
+                netstate: "online",
+                maxHp: 0,
+                hp: 0,
+                seatNumber: i + 1,
+                isDead: false,
+                dying: false,
+                faceturned: false,
+                chained: false,
+                drank: false,
+                isOwner: false
             });
         }
 

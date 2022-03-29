@@ -104,8 +104,8 @@ GraphicsBox {
             draggable: true
 
             onClicked: {
-                var toSelect = true;
-                for (var i = 0; i < selectedItem.length; i++) {
+                let toSelect = true;
+                for (let i = 0; i < selectedItem.length; i++) {
                     if (selectedItem[i] === this) {
                         toSelect = false;
                         selectedItem.splice(i, 1);
@@ -145,7 +145,7 @@ GraphicsBox {
     function updatePosition()
     {
         choices = [];
-        var item, magnet, pos, i;
+        let item, magnet, pos, i;
         for (i = 0; i < selectedItem.length && i < resultList.count; i++) {
             item = selectedItem[i];
             choices.push(item.name);

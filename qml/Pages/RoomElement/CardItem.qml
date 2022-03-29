@@ -220,7 +220,7 @@ Item {
 
     function toData()
     {
-        var data = {
+        let data = {
             cid: cid,
             name: name,
             suit: suit,

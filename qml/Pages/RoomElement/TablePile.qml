@@ -22,7 +22,7 @@ Item {
         running: true
         triggeredOnStart: true
         onTriggered: {
-            var i, card;
+            let i, card;
             if (toVanish) {
                 for (i = 0; i < discardedCards.length; i++) {
                     card = discardedCards[i];
@@ -60,13 +60,13 @@ Item {
 
     function remove(outputs)
     {
-        var i, j;
+        let i, j;
 
-        var result = area.remove(outputs);
-        var vanished = [];
+        let result = area.remove(outputs);
+        let vanished = [];
         if (result.length < outputs.length) {
             for (i = 0; i < outputs.length; i++) {
-                var exists = false;
+                let exists = false;
                 for (j = 0; j < result.length; j++) {
                    if (result[j].cid === outputs[i]) {
                        exists = true;
@@ -96,9 +96,9 @@ Item {
         if (cards.length <= 0)
             return;
 
-        var i, card;
+        let i, card;
 
-        var overflow = false;
+        let overflow = false;
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
             card.homeX = i * card.width;
@@ -111,8 +111,8 @@ Item {
 
         if (overflow) {
             //@to-do: Adjust cards in multiple lines if there are too many cards
-            var xLimit = root.width - card.width;
-            var spacing = xLimit / (cards.length - 1);
+            let xLimit = root.width - card.width;
+            let spacing = xLimit / (cards.length - 1);
             for (i = 0; i < cards.length; i++) {
                 card = cards[i];
                 card.homeX = i * spacing;
@@ -120,8 +120,8 @@ Item {
             }
         }
 
-        var offsetX = Math.max(0, (root.width - cards.length * card.width) / 2);
-        var parentPos = roomScene.mapFromItem(root, 0, 0);
+        let offsetX = Math.max(0, (root.width - cards.length * card.width) / 2);
+        let parentPos = roomScene.mapFromItem(root, 0, 0);
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
             card.homeX += parentPos.x + offsetX;

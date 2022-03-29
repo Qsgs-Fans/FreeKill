@@ -19,7 +19,7 @@ Item {
     {
         cardArea.add(inputs);
         if (inputs instanceof Array) {
-            for (var i = 0; i < inputs.length; i++)
+            for (let i = 0; i < inputs.length; i++)
                 filterInputCard(inputs[i]);
         } else {
             filterInputCard(inputs);
@@ -36,9 +36,9 @@ Item {
 
     function remove(outputs)
     {
-        var result = cardArea.remove(outputs);
-        var card;
-        for (var i = 0; i < result.length; i++) {
+        let result = cardArea.remove(outputs);
+        let card;
+        for (let i = 0; i < result.length; i++) {
             card = result[i];
             card.draggable = false;
             card.selectable = false;
@@ -49,7 +49,7 @@ Item {
 
     function enableCards(cardIds)
     {
-        var card, i;
+        let card, i;
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
             card.selectable = cardIds.contains(card.cid);
@@ -64,7 +64,7 @@ Item {
     {
         cardArea.updateCardPosition(false);
 
-        var i, card;
+        let i, card;
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
             if (card.selected)
@@ -81,8 +81,8 @@ Item {
     {
         area.updateCardPosition(true);
 
-        for (var i = 0; i < cards.length; i++) {
-            var card = cards[i];
+        for (let i = 0; i < cards.length; i++) {
+            let card = cards[i];
             if (card.selected) {
                 if (!selectedCards.contains(card))
                     selectCard(card);
@@ -101,7 +101,7 @@ Item {
 
     function unselectCard(card)
     {
-        for (var i = 0; i < selectedCards.length; i++) {
+        for (let i = 0; i < selectedCards.length; i++) {
             if (selectedCards[i] === card) {
                 selectedCards.splice(i, 1);
                 cardSelected(card.cid, false);
@@ -112,7 +112,7 @@ Item {
 
     function unselectAll(exceptId) {
         let card = undefined;
-        for (var i = 0; i < selectedCards.length; i++) {
+        for (let i = 0; i < selectedCards.length; i++) {
             if (selectedCards[i].cid !== exceptId) {
                 selectedCards[i].selected = false;
             } else {

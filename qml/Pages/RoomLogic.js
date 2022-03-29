@@ -7,14 +7,14 @@ function arrangePhotos() {
      * +---------------+
      */
 
-    var photoWidth = 175;
-    var roomAreaPadding = 10;
-    var verticalPadding = Math.max(10, roomArea.width * 0.01);
-    var horizontalSpacing = Math.max(30, roomArea.height * 0.1);
-    var verticalSpacing = (roomArea.width - photoWidth * 7 - verticalPadding * 2) / 6;
+    const photoWidth = 175;
+    const roomAreaPadding = 10;
+    let verticalPadding = Math.max(10, roomArea.width * 0.01);
+    let horizontalSpacing = Math.max(30, roomArea.height * 0.1);
+    let verticalSpacing = (roomArea.width - photoWidth * 7 - verticalPadding * 2) / 6;
 
     // Position 1-7
-    var regions = [
+    const regions = [
         { x: verticalPadding + (photoWidth + verticalSpacing) * 6, y: roomAreaPadding + horizontalSpacing * 2 },
         { x: verticalPadding + (photoWidth + verticalSpacing) * 5, y: roomAreaPadding + horizontalSpacing },
         { x: verticalPadding + (photoWidth + verticalSpacing) * 4, y: roomAreaPadding },
@@ -24,7 +24,7 @@ function arrangePhotos() {
         { x: verticalPadding, y: roomAreaPadding + horizontalSpacing * 2 },
     ];
 
-    var regularSeatIndex = [
+    const regularSeatIndex = [
         [4],
         [3, 5],
         [1, 4, 7],
@@ -33,9 +33,9 @@ function arrangePhotos() {
         [1, 2, 3, 5, 6, 7],
         [1, 2, 3, 4, 5, 6, 7],
     ];
-    var seatIndex = regularSeatIndex[playerNum - 2];
+    let seatIndex = regularSeatIndex[playerNum - 2];
 
-    var item, region, i;
+    let item, region, i;
 
     for (i = 0; i < playerNum - 1; i++) {
         item = photos.itemAt(i);
@@ -58,8 +58,8 @@ callbacks["AddPlayer"] = function(jsonData) {
             let name = data[1];
             let avatar = data[2];
             item.id = uid;
-            item._screenName = name;
-            item._general = avatar;
+            item.screenName = name;
+            item.general = avatar;
             return;
         }
     }
@@ -72,8 +72,8 @@ callbacks["RemovePlayer"] = function(jsonData) {
         let item = photoModel.get(i);
         if (item.id === uid) {
             item.id = -1;
-            item._screenName = "";
-            item._general = "";
+            item.screenName = "";
+            item.general = "";
             return;
         }
     }
@@ -92,7 +92,7 @@ callbacks["RoomOwner"] = function(jsonData) {
     for (let i = 0; i < photoModel.count; i++) {
         let item = photoModel.get(i);
         if (item.id === uid) {
-            item._isOwner = true;
+            item.isOwner = true;
             return;
         }
     }
@@ -114,7 +114,7 @@ callbacks["PropertyUpdate"] = function(jsonData) {
     for (let i = 0; i < photoModel.count; i++) {
         let item = photoModel.get(i);
         if (item.id === uid) {
-            item["_" + property_name] = value;
+            item[property_name] = value;
             return;
         }
     }
@@ -127,7 +127,7 @@ callbacks["ArrangeSeats"] = function(jsonData) {
 
     for (let i = 0; i < photoModel.count; i++) {
         let item = photoModel.get(i);
-        item._seatNumber = order.indexOf(item.id) + 1;
+        item.seatNumber = order.indexOf(item.id) + 1;
     }
 
     dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
