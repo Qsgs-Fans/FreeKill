@@ -3,31 +3,38 @@
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
-    QGuiApplication::setApplicationName("FreeKill");
-    QGuiApplication::setApplicationVersion("Alpha 0.0.1");
+    QCoreApplication *app;
+    QCoreApplication::setApplicationName("FreeKill");
+    QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("FreeKill server");
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOption({{"s", "server"}, "start server at <port>", "port"});
-    parser.process(app);
+    QStringList cliOptions;
+    for (int i = 0; i < argc; i++)
+        cliOptions << argv[i];
+
+    parser.parse(cliOptions);
 
     bool startServer = parser.isSet("server");
     ushort serverPort = 9527;
 
     if (startServer) {
+        app = new QCoreApplication(argc, argv);
         bool ok = false;
         if (parser.value("server").toInt(&ok) && ok)
             serverPort = parser.value("server").toInt();
         Server *server = new Server;
         if (!server->listen(QHostAddress::Any, serverPort)) {
             fprintf(stderr, "cannot listen on port %d!\n", serverPort);
-            app.exit(1);
+            app->exit(1);
         }
-        return app.exec();
+        return app->exec();
     }
+
+    app = new QGuiApplication(argc, argv);
 
     QQmlApplicationEngine *engine = new QQmlApplicationEngine;
     
@@ -44,7 +51,7 @@ int main(int argc, char *argv[])
     engine->rootContext()->setContextProperty("Debugging", debugging);
     engine->load("qml/main.qml");
 
-    int ret = app.exec();
+    int ret = app->exec();
 
     // delete the engine first
     // to avoid "TypeError: Cannot read property 'xxx' of null"
