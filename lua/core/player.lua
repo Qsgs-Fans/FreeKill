@@ -1,3 +1,4 @@
+---@class Player : Object
 local Player = class("Player")
 
 function Player:initialize()

@@ -1,3 +1,4 @@
+---@class GameLogic: Object
 local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)

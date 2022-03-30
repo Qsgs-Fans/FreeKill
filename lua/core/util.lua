@@ -29,16 +29,29 @@ function table:insertTable(list)
 	end
 end
 
+---@class Sql
 Sql = {
+	---@param filename string
 	open = function(filename)
 		return freekill.OpenDatabase(filename)
 	end,
+
+	---@param db freekill.SQLite3
 	close = function(db)
 		freekill.CloseDatabase(db)
 	end,
+
+	--- Execute an SQL statement.
+	---@param db freekill.SQLite3
+	---@param sql string
 	exec = function(db, sql)
 		freekill.ExecSQL(db, sql)
 	end,
+
+	--- Execute a `SELECT` SQL statement.
+	---@param db freekill.SQLite3
+	---@param sql string
+	---@return table data # { [columnName] --> result : string[] }
 	exec_select = function(db, sql)
 		return json.decode(freekill.SelectFromDb(db, sql))
 	end,

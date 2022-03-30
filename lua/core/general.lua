@@ -1,3 +1,4 @@
+--- @class General : Object
 General = class("General")
 
 -- enum Gender
@@ -18,6 +19,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp
     self.other_skills = {}  -- string[]
 end
 
+---@param skill any
 function General:addSkill(skill)
     if (type(skill) == "string") then
         table.insert(self.other_skills, skill)

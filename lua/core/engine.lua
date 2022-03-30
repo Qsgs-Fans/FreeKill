@@ -1,3 +1,11 @@
+---@class Engine : Object
+---@field packages table
+---@field skills table
+---@field related_skills table
+---@field generals table
+---@field lords table
+---@field cards table
+---@field translations table
 local Engine = class("Engine")
 
 function Engine:initialize()
@@ -20,7 +28,7 @@ function Engine:initialize()
     self:loadPackages()
 end
 
--- Package pack
+---@param pack Package
 function Engine:loadPackage(pack)
     assert(pack:isInstanceOf(Package))
     if self.packages[pack.name] ~= nil then 
@@ -48,6 +56,7 @@ function Engine:loadPackages()
     FileIO.cd("..")
 end
 
+---@param t table
 function Engine:loadTranslationTable(t)
     assert(type(t) == "table")
     for k, v in pairs(t) do
@@ -55,6 +64,7 @@ function Engine:loadTranslationTable(t)
     end
 end
 
+---@param skill any
 function Engine:addSkill(skill)
     assert(skill.class:isSubclassOf(Skill))
     if self.skills[skill.name] ~= nil then
@@ -63,6 +73,7 @@ function Engine:addSkill(skill)
     self.skills[skill.name] = skill
 end
 
+---@param skills any[]
 function Engine:addSkills(skills)
     assert(type(skills) == "table")
     for _, skill in ipairs(skills) do
@@ -70,6 +81,7 @@ function Engine:addSkills(skills)
     end
 end
 
+---@param general General
 function Engine:addGeneral(general)
     assert(general:isInstanceOf(General))
     if self.generals[general.name] ~= nil then
@@ -78,6 +90,7 @@ function Engine:addGeneral(general)
     self.generals[general.name] = general
 end
 
+---@param generals General[]
 function Engine:addGenerals(generals)
     assert(type(generals) == "table")
     for _, general in ipairs(generals) do
@@ -97,6 +110,11 @@ function Engine:addCards(cards)
     end
 end
 
+---@param num number
+---@param generalPool General[]
+---@param except string[]
+---@param filter function
+---@return General[] generals
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     if filter then
         assert(type(filter) == "function")
@@ -130,6 +148,8 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     return result
 end
 
+---@param except General[]
+---@return General[]
 function Engine:getAllGenerals(except)
     local result = {}
     for _, general in ipairs(self.generals) do

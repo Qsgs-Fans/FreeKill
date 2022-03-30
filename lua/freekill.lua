@@ -5,8 +5,13 @@ package.path = package.path .. ";./lua/lib/?.lua"
                             .. ";./lua/?.lua"
 
 -- load libraries
+
+---@type class
 class = require "middleclass"
+
+---@type json
 json = require "json"
+
 require "sha256"
 Util = require "core.util"
 math.randomseed(os.time())

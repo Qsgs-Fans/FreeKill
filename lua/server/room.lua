@@ -1,3 +1,4 @@
+---@class Room : Object
 local Room = class("Room")
 
 function Room:initialize(_room)
@@ -13,6 +14,7 @@ function Room:run()
     for _, p in freekill.qlist(self.room:getPlayers()) do
         local player = ServerPlayer:new(p)
         player.state = p:getStateString()
+        player.room = self
         table.insert(self.players, player)
         self.server.players[player:getId()] = player
     end

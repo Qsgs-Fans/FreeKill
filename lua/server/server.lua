@@ -1,3 +1,4 @@
+---@class Server : Object
 Server = class('Server')
 
 -- load server classes
