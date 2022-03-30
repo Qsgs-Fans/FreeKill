@@ -107,16 +107,11 @@ function table:removeOne(element)
 	return false
 end
 
-local Util = class("Util")
-
-function Util.static:createEnum(tbl, index)
-  assert(type(tbl) == "table")
-  local enumtbl = {}
-  local enumindex = index or 0
-  for i, v in ipairs(tbl) do
-      enumtbl[v] = enumindex + i
-  end
-  return enumtbl
+--- convert a table to enum, e.g. core/card.lua
+---@param table table # class to store the enum
+---@param enum string[]
+function freekill.createEnum(table, enum)
+	for i, v in ipairs(enum) do
+		table[v] = i
+	end
 end
-
-return Util

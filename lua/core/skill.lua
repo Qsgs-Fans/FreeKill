@@ -1,15 +1,13 @@
-local SKILL_TYPE = {
+---@class Skill
+local Skill = class("Skill")
+
+freekill.createEnum(Skill, {
     "Common",
     "Frequent",
     "Compulsory",
     "Awaken",
     "Limit",
-    "Lord",
-}
-
-SkillType = Util:createEnum(SKILL_TYPE)
-
-local Skill = class("Skill")
+})
 
 function Skill:initialize(name, skillType)
     self.name = name

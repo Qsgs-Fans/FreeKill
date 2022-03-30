@@ -46,14 +46,11 @@ function Engine:loadPackage(pack)
 end
 
 function Engine:loadPackages()
-    assert(FileIO.isDir("packages"))
-    FileIO.cd("packages")
     for _, dir in ipairs(FileIO.ls()) do
         if FileIO.isDir(dir) then
-            self:loadPackage(require(dir))
+            self:loadPackage(require(string.format("package.%s", dir)))
         end
     end
-    FileIO.cd("..")
 end
 
 ---@param t table
@@ -98,13 +95,17 @@ function Engine:addGenerals(generals)
     end
 end
 
+local cardId = 1
+---@param card Card
 function Engine:addCard(card)
     assert(card.class:isSubclassOf(Card))
+    card.id = cardId
+    cardId = cardId + 1
     table.insert(self.cards, card)
 end
 
+---@param cards Card[]
 function Engine:addCards(cards)
-    assert(type(cards) == "table")
     for _, card in ipairs(cards) do
         self:addCard(card)
     end

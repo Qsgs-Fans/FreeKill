@@ -10,8 +10,10 @@
 General = class("General")
 
 -- enum Gender
-General.Male = 0
-General.Female = 1
+freekill.createEnum(General, {
+    "Male",
+    "Female"
+})
 
 function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp)
     self.package = package

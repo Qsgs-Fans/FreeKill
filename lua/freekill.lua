@@ -9,8 +9,9 @@ package.path = package.path .. ";./lua/lib/?.lua"
 class = require "middleclass"
 json = require "json"
 
-require "sha256"
-Util = require "core.util"
+dofile "lua/lib/sha256.lua"
+dofile "lua/core/util.lua"
+
 math.randomseed(os.time())
 
 DebugMode = true
@@ -26,6 +27,7 @@ Engine = require "core.engine"
 Package = require "core.package"
 General = require "core.general"
 Card = require "core.card"
+SkillCard, BasicCard, TrickCard, EquipCard = require "core.card_type"
 Skill = require "core.skill"
 Player = require "core.player"
 

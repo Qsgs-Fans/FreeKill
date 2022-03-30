@@ -20,6 +20,10 @@ function Object:subclass(name)end
 ---@return boolean
 function Object:isInstanceOf(class) end
 
+---@param class class
+---@return boolean
+function Object:isSubclassOf(class) end
+
 ---@class json
 json = {}
 
