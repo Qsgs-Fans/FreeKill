@@ -3,7 +3,8 @@ local Room = class("Room")
 function Room:initialize(_room)
     self.room = _room
     self.players = {}       -- ServerPlayer[]
-    self.gameFinished = false
+    self.alive_players = {}
+    self.game_finished = false
     self.timeout = _room:getTimeout()
 end
 
@@ -151,7 +152,7 @@ function Room:askForGeneral(player, generals)
 end
 
 function Room:gameOver()
-    self.gameFinished = true
+    self.game_finished = true
     -- dosomething
     self.room:gameOver()
 end

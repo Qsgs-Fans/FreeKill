@@ -9,6 +9,7 @@ function ServerPlayer:initialize(_self)
     -- Below are for doBroadcastRequest
     self.request_data = ""
     self.client_reply = ""
+    self.default_reply = ""
     self.reply_ready = false
 end
 
