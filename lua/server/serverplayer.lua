@@ -1,4 +1,11 @@
 ---@class ServerPlayer : Player
+---@field serverplayer freekill.ServerPlayer
+---@field room Room
+---@field next ServerPlayer
+---@field request_data string
+---@field client_reply string
+---@field default_reply string
+---@field reply_ready boolean
 local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
@@ -15,14 +22,23 @@ function ServerPlayer:initialize(_self)
     self.reply_ready = false
 end
 
+---@return number
 function ServerPlayer:getId()
     return self.serverplayer:getId()
 end
 
+---@param command string
+---@param jsonData string
 function ServerPlayer:doNotify(command, jsonData)
     self.serverplayer:doNotify(command, jsonData)
 end
 
+--- Send a request to client, and allow client to reply within *timeout* seconds.
+---
+--- *timeout* must not be negative. If nil, room.timeout is used.
+---@param command string
+---@param jsonData string
+---@param timeout number
 function ServerPlayer:doRequest(command, jsonData, timeout)
     timeout = timeout or self.room.timeout
     self.client_reply = ""
@@ -30,6 +46,11 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
     self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
+--- Wait for at most *timeout* seconds for reply from client.
+---
+--- If *timeout* is negative or **nil**, the function will wait forever until get reply.
+---@param timeout number # seconds to wait
+---@return string reply # JSON data
 function ServerPlayer:waitForReply(timeout)
     local result = ""
     if timeout == nil then

@@ -73,6 +73,7 @@ FileIO = {
 
 os.getms = freekill.GetMicroSecond
 
+---@class Stack : Object
 Stack = class("Stack")
 function Stack:initialize()
 	self.t = {}

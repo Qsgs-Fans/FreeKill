@@ -1,4 +1,8 @@
 ---@class Server : Object
+---@field server freekill.Server
+---@field db freekill.SQLite3
+---@field rooms table
+---@field players table
 Server = class('Server')
 
 -- load server classes

@@ -6,10 +6,7 @@ package.path = package.path .. ";./lua/lib/?.lua"
 
 -- load libraries
 
----@type class
 class = require "middleclass"
-
----@type json
 json = require "json"
 
 require "sha256"

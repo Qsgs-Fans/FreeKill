@@ -1,8 +1,15 @@
 ---@class Room : Object
+---@field room freekill.Room
+---@field server Server
+---@field players table
+---@field alive_players table
+---@field game_finished boolean
+---@field timeout number
 local Room = class("Room")
 
 function Room:initialize(_room)
     self.room = _room
+    self.server = nil
     self.players = {}       -- ServerPlayer[]
     self.alive_players = {}
     self.game_finished = false
@@ -23,12 +30,17 @@ function Room:run()
     self.logic:run()
 end
 
+---@param player ServerPlayer
+---@param property string
 function Room:broadcastProperty(player, property)
     for _, p in ipairs(self.players) do
         self:notifyProperty(p, player, property)
     end
 end
 
+---@param p ServerPlayer
+---@param player ServerPlayer
+---@param property string
 function Room:notifyProperty(p, player, property)
     p:doNotify("PropertyUpdate", json.encode{
         player:getId(),
@@ -37,6 +49,9 @@ function Room:notifyProperty(p, player, property)
     })
 end
 
+---@param command string
+---@param jsonData string
+---@param players ServerPlayer[] # default all players
 function Room:doBroadcastNotify(command, jsonData, players)
     players = players or self.players
     local tolist = freekill.SPlayerList()
@@ -46,6 +61,11 @@ function Room:doBroadcastNotify(command, jsonData, players)
     self.room:doBroadcastNotify(tolist, command, jsonData)
 end
 
+---@param player ServerPlayer
+---@param command string
+---@param jsonData string
+---@param wait boolean # default true
+---@return string | nil
 function Room:doRequest(player, command, jsonData, wait)
     if wait == nil then wait = true end
     player:doRequest(command, jsonData, self.timeout)
@@ -55,6 +75,8 @@ function Room:doRequest(player, command, jsonData, wait)
     end
 end
 
+---@param command string
+---@param players ServerPlayer[]
 function Room:doBroadcastRequest(command, players)
     players = players or self.players
     self:notifyMoveFocus(players, command)
@@ -72,6 +94,8 @@ function Room:doBroadcastRequest(command, players)
     end
 end
 
+---@param players ServerPlayer | ServerPlayer[]
+---@param command string
 function Room:notifyMoveFocus(players, command)
     if (players.class) then
         players = {players}
@@ -116,6 +140,7 @@ function Room:adjustSeats()
     self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
 end
 
+---@return ServerPlayer | nil
 function Room:getLord()
     local lord = self.players[1]
     if lord.role == "lord" then return lord end
@@ -126,12 +151,17 @@ function Room:getLord()
     return nil
 end
 
+---@param expect ServerPlayer
+---@return ServerPlayer[]
 function Room:getOtherPlayers(expect)
     local ret = {table.unpack(self.players)}
     table.removeOne(ret, expect)
     return ret
 end
 
+---@param player ServerPlayer
+---@param generals string[]
+---@return string
 function Room:askForGeneral(player, generals)
     local command = "AskForGeneral"
     self:notifyMoveFocus(player, command)
