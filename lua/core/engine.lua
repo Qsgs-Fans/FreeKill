@@ -46,9 +46,9 @@ function Engine:loadPackage(pack)
 end
 
 function Engine:loadPackages()
-    for _, dir in ipairs(FileIO.ls()) do
-        if FileIO.isDir(dir) then
-            self:loadPackage(require(string.format("package.%s", dir)))
+    for _, dir in ipairs(FileIO.ls("packages")) do
+        if FileIO.isDir("packages/" .. dir) then
+            self:loadPackage(require(string.format("packages.%s", dir)))
         end
     end
 end

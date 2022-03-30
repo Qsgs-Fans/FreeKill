@@ -1,5 +1,5 @@
 ---@class ServerPlayer : Player
----@field serverplayer freekill.ServerPlayer
+---@field serverplayer fk.ServerPlayer
 ---@field room Room
 ---@field next ServerPlayer
 ---@field request_data string

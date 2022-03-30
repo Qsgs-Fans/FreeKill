@@ -1,4 +1,4 @@
-%module freekill
+%module fk
 
 %{
 #include "client.h"

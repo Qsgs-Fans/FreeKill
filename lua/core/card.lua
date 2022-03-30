@@ -9,7 +9,7 @@
 local Card = class("Card")
 
 -- enum Suit
-freekill.createEnum(Card, {
+fk.createEnum(Card, {
     "Spade",
     "Club",
     "Heart",
@@ -18,14 +18,14 @@ freekill.createEnum(Card, {
 })
 
 -- enum Color
-freekill.createEnum(Card, {
+fk.createEnum(Card, {
     "Black",
     "Red",
     "NoColor"
 })
 
 -- enum Type
-freekill.createEnum(Card, {
+fk.createEnum(Card, {
     "TypeSkill",
     "TypeBasic",
     "TypeTrick",

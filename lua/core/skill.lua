@@ -1,7 +1,7 @@
 ---@class Skill
 local Skill = class("Skill")
 
-freekill.createEnum(Skill, {
+fk.createEnum(Skill, {
     "Common",
     "Frequent",
     "Compulsory",

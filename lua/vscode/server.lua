@@ -1,29 +1,29 @@
 ---@meta
 
----@class freekill.Server
+---@class fk.Server
 FServer = {}
 
----@type freekill.Server
-freekill.ServerInstance = {}
+---@type fk.Server
+fk.ServerInstance = {}
 
----@class freekill.Room
+---@class fk.Room
 --- Room (C++)
 FRoom = {}
 
----@param owner freekill.ServerPlayer
+---@param owner fk.ServerPlayer
 ---@param name string
 ---@param capacity number
 function FServer:createRoom(owner,name,capacity)end
 
 ---@param id number
----@return freekill.Room room
+---@return fk.Room room
 function FServer:findRoom(id)end
 
 ---@param id number
----@return freekill.ServerPlayer player
+---@return fk.ServerPlayer player
 function FServer:findPlayer(id)end
 
----@return freekill.SQLite3 db
+---@return fk.SQLite3 db
 function FServer:getDatabase()end
 
 function FRoom:getServer()end

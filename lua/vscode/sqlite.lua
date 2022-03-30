@@ -1,20 +1,20 @@
 ---@meta
 
----@class freekill.SQLite3
+---@class fk.SQLite3
 SQLite3 = {}
 
 ---@param filename string
----@return freekill.SQLite3
-function freekill.OpenDatabase(filename)end
+---@return fk.SQLite3
+function fk.OpenDatabase(filename)end
 
----@param db freekill.SQLite3
+---@param db fk.SQLite3
 ---@param sql string
 ---@return string jsonData
-function freekill.SelectFromDb(db, sql)end
+function fk.SelectFromDb(db, sql)end
 
----@param db freekill.SQLite3
+---@param db fk.SQLite3
 ---@param sql string
-function freekill.ExecSQL(db, sql)end
+function fk.ExecSQL(db, sql)end
 
----@param db freekill.SQLite3
-function freekill.CloseDatabase(db)end
+---@param db fk.SQLite3
+function fk.CloseDatabase(db)end

@@ -3,15 +3,15 @@ Client = class('Client')
 -- load client classes
 ClientPlayer = require "client.clientplayer"
 
-freekill.client_callback = {}
+fk.client_callback = {}
 
 function Client:initialize()
-    self.client = freekill.ClientInstance
+    self.client = fk.ClientInstance
     self.notifyUI = function(self, command, jsonData)
-        freekill.Backend:emitNotifyUI(command, jsonData)
+        fk.Backend:emitNotifyUI(command, jsonData)
     end
     self.client.callback = function(_self, command, jsonData)
-        local cb = freekill.client_callback[command]
+        local cb = fk.client_callback[command]
         if (type(cb) == "function") then
             cb(jsonData)
         else
@@ -22,31 +22,31 @@ function Client:initialize()
     self.players = {}       -- ClientPlayer[]
 end
 
-freekill.client_callback["Setup"] = function(jsonData)
+fk.client_callback["Setup"] = function(jsonData)
     -- jsonData: [ int id, string screenName, string avatar ]
     local data = json.decode(jsonData)
     local id, name, avatar = data[1], data[2], data[3]
-    local self = freekill.Self
+    local self = fk.Self
     self:setId(id)
     self:setScreenName(name)
     self:setAvatar(avatar)
 end
 
-freekill.client_callback["AddPlayer"] = function(jsonData)
+fk.client_callback["AddPlayer"] = function(jsonData)
     -- jsonData: [ int id, string screenName, string avatar ]
     -- when other player enter the room, we create clientplayer(C and lua) for them
     local data = json.decode(jsonData)
     local id, name, avatar = data[1], data[2], data[3]
-    local player = freekill.ClientInstance:addPlayer(id, name, avatar)
+    local player = fk.ClientInstance:addPlayer(id, name, avatar)
     table.insert(ClientInstance.players, ClientPlayer:new(player))
     ClientInstance:notifyUI("AddPlayer", jsonData)
 end
 
-freekill.client_callback["RemovePlayer"] = function(jsonData)
+fk.client_callback["RemovePlayer"] = function(jsonData)
     -- jsonData: [ int id ]
     local data = json.decode(jsonData)
     local id = data[1]
-    freekill.ClientInstance:removePlayer(id)
+    fk.ClientInstance:removePlayer(id)
     for _, p in ipairs(ClientInstance.players) do
         if p.player:getId() == id then
             table.removeOne(ClientInstance.players, p)
@@ -56,7 +56,7 @@ freekill.client_callback["RemovePlayer"] = function(jsonData)
     ClientInstance:notifyUI("RemovePlayer", jsonData)
 end
 
-freekill.client_callback["ArrangeSeats"] = function(jsonData)
+fk.client_callback["ArrangeSeats"] = function(jsonData)
     local data = json.decode(jsonData)
     local n = #ClientInstance.players
     local players = {}

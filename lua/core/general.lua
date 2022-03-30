@@ -10,7 +10,7 @@
 General = class("General")
 
 -- enum Gender
-freekill.createEnum(General, {
+fk.createEnum(General, {
     "Male",
     "Female"
 })

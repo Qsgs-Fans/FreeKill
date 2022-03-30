@@ -1,6 +1,6 @@
 ---@meta
 
----@class freekill.Player
+---@class fk.Player
 FPlayer = {}
 
 ---@return number id
@@ -27,16 +27,16 @@ function FPlayer:getStateString()end
 ---@param state string
 function FPlayer:setStateString(state)end
 
----@class freekill.ServerPlayer : freekill.Player
+---@class fk.ServerPlayer : fk.Player
 FServerPlayer = {}
 
----@return freekill.Server
+---@return fk.Server
 function FServerPlayer:getServer()end
 
----@return freekill.Room
+---@return fk.Room
 function FServerPlayer:getRoom()end
 
----@param room freekill.Room
+---@param room fk.Room
 function FServerPlayer:setRoom(room)end
 
 ---@param msg string

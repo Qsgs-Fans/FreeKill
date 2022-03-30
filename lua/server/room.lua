@@ -1,5 +1,5 @@
 ---@class Room : Object
----@field room freekill.Room
+---@field room fk.Room
 ---@field server Server
 ---@field players table
 ---@field alive_players table
@@ -18,7 +18,7 @@ end
 
 -- When this function returns, the Room(C++) thread stopped.
 function Room:run()
-    for _, p in freekill.qlist(self.room:getPlayers()) do
+    for _, p in fk.qlist(self.room:getPlayers()) do
         local player = ServerPlayer:new(p)
         player.state = p:getStateString()
         player.room = self
@@ -54,7 +54,7 @@ end
 ---@param players ServerPlayer[] # default all players
 function Room:doBroadcastNotify(command, jsonData, players)
     players = players or self.players
-    local tolist = freekill.SPlayerList()
+    local tolist = fk.SPlayerList()
     for _, p in ipairs(players) do
         tolist:append(p.serverplayer)
     end

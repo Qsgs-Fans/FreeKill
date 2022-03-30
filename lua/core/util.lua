@@ -5,7 +5,7 @@ local qlist_iterator = function(list, n)
 	end
 end
 
-function freekill.qlist(list)
+function fk.qlist(list)
 	return qlist_iterator, list, -1
 end
 
@@ -33,45 +33,45 @@ end
 Sql = {
 	---@param filename string
 	open = function(filename)
-		return freekill.OpenDatabase(filename)
+		return fk.OpenDatabase(filename)
 	end,
 
-	---@param db freekill.SQLite3
+	---@param db fk.SQLite3
 	close = function(db)
-		freekill.CloseDatabase(db)
+		fk.CloseDatabase(db)
 	end,
 
 	--- Execute an SQL statement.
-	---@param db freekill.SQLite3
+	---@param db fk.SQLite3
 	---@param sql string
 	exec = function(db, sql)
-		freekill.ExecSQL(db, sql)
+		fk.ExecSQL(db, sql)
 	end,
 
 	--- Execute a `SELECT` SQL statement.
-	---@param db freekill.SQLite3
+	---@param db fk.SQLite3
 	---@param sql string
 	---@return table data # { [columnName] --> result : string[] }
 	exec_select = function(db, sql)
-		return json.decode(freekill.SelectFromDb(db, sql))
+		return json.decode(fk.SelectFromDb(db, sql))
 	end,
 }
 
 FileIO = {
-	pwd = freekill.QmlBackend_pwd,
+	pwd = fk.QmlBackend_pwd,
 	ls = function(filename)
 		if filename == nil then
-			return freekill.QmlBackend_ls(".")
+			return fk.QmlBackend_ls(".")
 		else
-			return freekill.QmlBackend_ls(filename)
+			return fk.QmlBackend_ls(filename)
 		end
 	end,
-	cd = freekill.QmlBackend_cd,
-	exists = freekill.QmlBackend_exists,
-	isDir = freekill.QmlBackend_isDir
+	cd = fk.QmlBackend_cd,
+	exists = fk.QmlBackend_exists,
+	isDir = fk.QmlBackend_isDir
 }
 
-os.getms = freekill.GetMicroSecond
+os.getms = fk.GetMicroSecond
 
 ---@class Stack : Object
 Stack = class("Stack")
@@ -110,7 +110,7 @@ end
 --- convert a table to enum, e.g. core/card.lua
 ---@param table table # class to store the enum
 ---@param enum string[]
-function freekill.createEnum(table, enum)
+function fk.createEnum(table, enum)
 	for i, v in ipairs(enum) do
 		table[v] = i
 	end

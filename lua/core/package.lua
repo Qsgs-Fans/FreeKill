@@ -8,7 +8,7 @@
 local Package = class("Package")
 
 -- enum Type
-freekill.createEnum(Package, {
+fk.createEnum(Package, {
     "GeneralPack",
     "CardPack",
     "SpecialPack"

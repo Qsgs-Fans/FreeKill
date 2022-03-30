@@ -1,6 +1,6 @@
 ---@class Server : Object
----@field server freekill.Server
----@field db freekill.SQLite3
+---@field server fk.Server
+---@field db fk.SQLite3
 ---@field rooms table
 ---@field players table
 Server = class('Server')
@@ -10,13 +10,13 @@ Room = require "server.room"
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
 
-freekill.server_callback = {}
+fk.server_callback = {}
 
 function Server:initialize()
-    self.server = freekill.ServerInstance
-    self.db = freekill.ServerInstance:getDatabase()
+    self.server = fk.ServerInstance
+    self.db = fk.ServerInstance:getDatabase()
     self.server.callback = function(_self, command, jsonData)
-        local cb = freekill.server_callback[command]
+        local cb = fk.server_callback[command]
         if (type(cb) == "function") then
             cb(jsonData)
         else
@@ -41,18 +41,18 @@ function Server:initialize()
     self.players = {}   -- id --> ServerPlayer
 end
 
-freekill.server_callback["UpdateAvatar"] = function(jsonData)
+fk.server_callback["UpdateAvatar"] = function(jsonData)
     -- jsonData: [ int uid, string newavatar ]
     local data = json.decode(jsonData)
     local id, avatar = data[1], data[2]
     local sql = "UPDATE userinfo SET avatar='%s' WHERE id=%d;"
     Sql.exec(ServerInstance.db, string.format(sql, avatar, id))
-    local player = freekill.ServerInstance:findPlayer(id)
+    local player = fk.ServerInstance:findPlayer(id)
     player:setAvatar(avatar)
     player:doNotify("UpdateAvatar", avatar)
 end
 
-freekill.server_callback["UpdatePassword"] = function(jsonData)
+fk.server_callback["UpdatePassword"] = function(jsonData)
     -- jsonData: [ int uid, string oldpassword, int newpassword ]
     local data = json.decode(jsonData)
     local id, old, new = data[1], data[2], data[3]
@@ -67,38 +67,38 @@ freekill.server_callback["UpdatePassword"] = function(jsonData)
         Sql.exec(db, string.format(sql_update, sha256(new), id))
     end
 
-    local player = freekill.ServerInstance:findPlayer(tonumber(id))
+    local player = fk.ServerInstance:findPlayer(tonumber(id))
     player:doNotify("UpdatePassword", passed and "1" or "0")
 end
 
-freekill.server_callback["CreateRoom"] = function(jsonData)
+fk.server_callback["CreateRoom"] = function(jsonData)
     -- jsonData: [ int uid, string name, int capacity ]
     local data = json.decode(jsonData)
-    local owner = freekill.ServerInstance:findPlayer(tonumber(data[1]))
+    local owner = fk.ServerInstance:findPlayer(tonumber(data[1]))
     local roomName = data[2]
     local capacity = data[3]
-    freekill.ServerInstance:createRoom(owner, roomName, capacity)
+    fk.ServerInstance:createRoom(owner, roomName, capacity)
 end
 
-freekill.server_callback["EnterRoom"] = function(jsonData)
+fk.server_callback["EnterRoom"] = function(jsonData)
     -- jsonData: [ int uid, int roomId ]
     local data = json.decode(jsonData)
-    local player = freekill.ServerInstance:findPlayer(tonumber(data[1]))
-    local room = freekill.ServerInstance:findRoom(tonumber(data[2]))
+    local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
+    local room = fk.ServerInstance:findRoom(tonumber(data[2]))
     room:addPlayer(player)
 end
 
-freekill.server_callback["QuitRoom"] = function(jsonData)
+fk.server_callback["QuitRoom"] = function(jsonData)
     -- jsonData: [ int uid ]
     local data = json.decode(jsonData)
-    local player = freekill.ServerInstance:findPlayer(tonumber(data[1]))
+    local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
     local room = player:getRoom()
     if not room:isLobby() then
         room:removePlayer(player)
     end
 end
 
-freekill.server_callback["DoLuaScript"] = function(jsonData)
+fk.server_callback["DoLuaScript"] = function(jsonData)
     -- jsonData: [ int uid, string luaScript ]
     -- warning: only use this in debugging mode.
     if not DebugMode then return end
@@ -106,7 +106,7 @@ freekill.server_callback["DoLuaScript"] = function(jsonData)
     assert(load(data[2]))()
 end
 
-freekill.server_callback["PlayerStateChanged"] = function(jsonData)
+fk.server_callback["PlayerStateChanged"] = function(jsonData)
     -- jsonData: [ int uid, string stateString ]
     -- note: this function is not called by Router.
     local data = json.decode(jsonData)
