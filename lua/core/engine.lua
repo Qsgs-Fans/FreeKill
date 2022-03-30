@@ -106,8 +106,8 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     except = except or {}
     
     local availableGenerals = {}
-    for _, general in ipairs(generalPool) do
-        if not table.contains(except, general) and not (filter and filter(general)) then
+    for _, general in pairs(generalPool) do
+        if not table.contains(except, general.name) and not (filter and filter(general)) then
             table.insert(availableGenerals, general)
         end
     end
@@ -117,9 +117,9 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     end
 
     local result = {}
-    while num > 0 do
+    for i = 1, num do
         local randomGeneral = math.random(1, #availableGenerals)
-        table.insert(result, randomGeneral)
+        table.insert(result, availableGenerals[randomGeneral])
         table.remove(availableGenerals, randomGeneral)
 
         if #availableGenerals == 0 then

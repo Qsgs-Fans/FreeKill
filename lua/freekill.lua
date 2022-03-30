@@ -8,7 +8,7 @@ package.path = package.path .. ";./lua/lib/?.lua"
 class = require "middleclass"
 json = require "json"
 require "sha256"
-Util = require "core/util"
+Util = require "core.util"
 math.randomseed(os.time())
 
 DebugMode = true
@@ -20,12 +20,12 @@ function pt(t)
 end
 
 -- load core classes
-Engine = require "core/engine"
-Package = require "core/package"
-General = require "core/general"
-Card = require "core/card"
-Skill = require "core/skill"
-Player = require "core/player"
+Engine = require "core.engine"
+Package = require "core.package"
+General = require "core.general"
+Card = require "core.card"
+Skill = require "core.skill"
+Player = require "core.player"
 
 -- load packages
 Fk = Engine:new()

@@ -26,6 +26,7 @@ Item {
     property bool footnoteVisible: true
     property bool known: true       // if false it only show a card back
     property bool enabled: true     // if false the card will be grey
+    property alias card: cardItem
     property alias glow: glowItem
 
     function getColor() {
@@ -38,9 +39,12 @@ Item {
     property int cid: 0
     property bool selectable: true
     property bool selected: false
+    property bool draggable: false
+    property bool autoBack: true
     property int origX: 0
     property int origY: 0
-    property real origOpacity: 0
+    property real origOpacity: 1
+    property bool isClicked: false
     property bool moveAborted: false
     property alias goBackAnim: goBackAnimation
     property int goBackDuration: 500
@@ -71,6 +75,7 @@ Item {
         source: known ? (name != "" ? SkinBank.CARD_DIR + name : "")
                       : (SkinBank.CARD_DIR + "card-back")
         anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
     }
 
     Image {
@@ -97,7 +102,7 @@ Item {
     Image {
         id: colorItem
         visible: known && suit == ""
-        source: visible ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
+        source: (visible && color != "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
         x: 1
     }
 
@@ -124,6 +129,41 @@ Item {
         anchors.fill: parent
         color: Qt.rgba(0, 0, 0, 0.5)
         opacity: 0.7
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        drag.target: draggable ? parent : undefined
+        drag.axis: Drag.XAndYAxis
+        hoverEnabled: true
+
+        onReleased: {
+            root.isClicked = mouse.isClick;
+            parent.released();
+            if (autoBack)
+                goBackAnimation.start();
+        }
+
+        onEntered: {
+            parent.entered();
+            if (draggable) {
+                glow.visible = true;
+                root.z++;
+            }
+        }
+
+        onExited: {
+            parent.exited();
+            if (draggable) {
+                glow.visible = false;
+                root.z--;
+            }
+        }
+
+        onClicked: {
+            selected = selectable ? !selected : false;
+            parent.clicked();
+        }
     }
 
     ParallelAnimation {
@@ -180,7 +220,7 @@ Item {
 
     function toData()
     {
-        var data = {
+        let data = {
             cid: cid,
             name: name,
             suit: suit,

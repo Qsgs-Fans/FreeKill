@@ -10,9 +10,9 @@ Item {
 
     function add(inputs)
     {
-        var card;
+        let card;
         if (inputs instanceof Array) {
-            for (var i = 0; i < inputs.length; i++) {
+            for (let i = 0; i < inputs.length; i++) {
                 card = inputs[i];
                 pendingInput.push(card);
                 cards.push(card.toData());
@@ -38,7 +38,7 @@ Item {
         if (!checkExisting)
             return true;
 
-        for (var i = 0; i < cards.length; i++)
+        for (let i = 0; i < cards.length; i++)
         {
             if (cards[i].cid === cid)
                 return true;
@@ -48,13 +48,13 @@ Item {
 
     function remove(outputs)
     {
-        var component = Qt.createComponent("CardItem.qml");
+        let component = Qt.createComponent("CardItem.qml");
         if (component.status !== Component.Ready)
             return [];
 
-        var parentPos = roomScene.mapFromItem(root, 0, 0);
-        var card;
-        var items = [];
+        let parentPos = roomScene.mapFromItem(root, 0, 0);
+        let card;
+        let items = [];
         for (let i = 0; i < outputs.length; i++) {
             if (_contains(outputs[i])) {
                 let state = JSON.parse(Sanguosha.getCard4Qml(outputs[i]))
@@ -82,10 +82,10 @@ Item {
 
     function updateCardPosition(animated)
     {
-        var i, card;
+        let i, card;
 
         if (animated) {
-            var parentPos = roomScene.mapFromItem(root, 0, 0);
+            let parentPos = roomScene.mapFromItem(root, 0, 0);
             for (i = 0; i < pendingInput.length; i++) {
                 card = pendingInput[i];
                 card.origX = parentPos.x - card.width / 2 + ((i - pendingInput.length / 2) * 15);

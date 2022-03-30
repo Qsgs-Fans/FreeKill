@@ -1,7 +1,7 @@
 Client = class('Client')
 
 -- load client classes
-ClientPlayer = require "client/clientplayer"
+ClientPlayer = require "client.clientplayer"
 
 freekill.client_callback = {}
 

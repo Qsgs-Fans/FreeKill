@@ -71,6 +71,8 @@ public:
     QList<ServerPlayer *> getPlayers() const;
     ServerPlayer *findPlayer(int id) const;
 
+    int getTimeout() const;
+
     bool isStarted() const;
     // ====================================}
 

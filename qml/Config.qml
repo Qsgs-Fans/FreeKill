@@ -9,4 +9,5 @@ QtObject {
 
     // Client data
     property int roomCapacity: 0
+    property int roomTimeout: 0
 }

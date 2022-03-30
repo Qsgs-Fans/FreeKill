@@ -34,3 +34,15 @@ public:
 %template(PlayerList)  QList<const Player *>;
 %template(IntList) QList<int>;
 %template(BoolList) QList<bool>;
+
+%native(GetMicroSecond) int GetMicroSecond(lua_State *L);
+%{
+#include <sys/time.h>
+static int GetMicroSecond(lua_State *L) {
+    struct timeval tv;
+    gettimeofday(&tv, nullptr);
+    long microsecond = tv.tv_sec * 1000000 + tv.tv_usec;
+    lua_pushnumber(L, microsecond);
+    return 1;
+}    
+%}
