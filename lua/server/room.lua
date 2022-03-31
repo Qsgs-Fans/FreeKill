@@ -1,8 +1,8 @@
 ---@class Room : Object
 ---@field room fk.Room
 ---@field server Server
----@field players table
----@field alive_players table
+---@field players ServerPlayer[]
+---@field alive_players ServerPlayer[]
 ---@field game_finished boolean
 ---@field timeout number
 local Room = class("Room")
@@ -10,7 +10,7 @@ local Room = class("Room")
 function Room:initialize(_room)
     self.room = _room
     self.server = nil
-    self.players = {}       -- ServerPlayer[]
+    self.players = {}
     self.alive_players = {}
     self.game_finished = false
     self.timeout = _room:getTimeout()

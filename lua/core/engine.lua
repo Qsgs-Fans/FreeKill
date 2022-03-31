@@ -1,11 +1,11 @@
 ---@class Engine : Object
----@field packages table
----@field skills table
----@field related_skills table
----@field generals table
----@field lords table
----@field cards table
----@field translations table
+---@field packages table<string, Package>
+---@field skills table<string, Skill>
+---@field related_skills table<string, string>
+---@field generals table<string, General>
+---@field lords string[]
+---@field cards Card[]
+---@field translations table<string, string>
 local Engine = class("Engine")
 
 function Engine:initialize()
@@ -61,7 +61,7 @@ function Engine:loadTranslationTable(t)
     end
 end
 
----@param skill any
+---@param skill Skill
 function Engine:addSkill(skill)
     assert(skill.class:isSubclassOf(Skill))
     if self.skills[skill.name] ~= nil then
@@ -70,7 +70,7 @@ function Engine:addSkill(skill)
     self.skills[skill.name] = skill
 end
 
----@param skills any[]
+---@param skills Skill[]
 function Engine:addSkills(skills)
     assert(type(skills) == "table")
     for _, skill in ipairs(skills) do
@@ -123,7 +123,7 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
 
     generalPool = generalPool or self.generals
     except = except or {}
-    
+
     local availableGenerals = {}
     for _, general in pairs(generalPool) do
         if not table.contains(except, general.name) and not (filter and filter(general)) then

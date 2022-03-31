@@ -1,4 +1,18 @@
 ---@class Player : Object
+---@field hp number
+---@field maxHp number
+---@field kingdom string
+---@field role string
+---@field general string
+---@field handcard_num number
+---@field seat number
+---@field phase number
+---@field faceup boolean
+---@field chained boolean
+---@field dying boolean
+---@field dead boolean
+---@field state string
+---@field playerSkills Skill[]
 local Player = class("Player")
 
 function Player:initialize()
@@ -15,7 +29,7 @@ function Player:initialize()
     self.dying = false
     self.dead = false
     self.state = ""
-    
+
     self.playerSkills = {}
 end
 

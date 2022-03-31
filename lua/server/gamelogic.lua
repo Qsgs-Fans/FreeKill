@@ -1,9 +1,9 @@
 ---@class GameLogic: Object
 ---@field room Room
----@field skill_table table
----@filed skills table
+---@field skill_table table<number, Skill>
+---@field skills string[]
 ---@field event_stack Stack
----@field role_table table
+---@field role_table string[][]
 local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)
