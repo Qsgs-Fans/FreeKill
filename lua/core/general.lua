@@ -1,9 +1,19 @@
---- @class General : Object
+---@class General : Object
+---@field package Package
+---@field name string
+---@field kingdom string
+---@field hp number
+---@field maxHp number
+---@field gender number
+---@field skills table
+---@field other_skills table
 General = class("General")
 
 -- enum Gender
-General.Male = 0
-General.Female = 1
+fk.createEnum(General, {
+    "Male",
+    "Female"
+})
 
 function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp)
     self.package = package
@@ -12,7 +22,6 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp
     self.hp = hp
     self.maxHp = maxHp or hp
     self.gender = gender or General.Male
-    self.initialHp = initialHp or maxHp
 
     self.skills = {}        -- Skill[]
     -- skill belongs other general, e.g. "mashu" of pangde

@@ -1,14 +1,14 @@
 #include "util.h"
 
 extern "C" {
-    int luaopen_freekill(lua_State *);
+    int luaopen_fk(lua_State *);
 }
 
 lua_State *CreateLuaState()
 {
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
-    luaopen_freekill(L);
+    luaopen_fk(L);
 
     return L;
 }

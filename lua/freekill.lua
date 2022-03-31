@@ -6,14 +6,12 @@ package.path = package.path .. ";./lua/lib/?.lua"
 
 -- load libraries
 
----@type class
 class = require "middleclass"
-
----@type json
 json = require "json"
 
-require "sha256"
-Util = require "core.util"
+dofile "lua/lib/sha256.lua"
+dofile "lua/core/util.lua"
+
 math.randomseed(os.time())
 
 DebugMode = true
@@ -29,8 +27,13 @@ Engine = require "core.engine"
 Package = require "core.package"
 General = require "core.general"
 Card = require "core.card"
+SkillCard = require "core.card_type.skill"
+BasicCard = require "core.card_type.basic"
+TrickCard = require "core.card_type.trick"
+EquipCard = require "core.card_type.equip"
 Skill = require "core.skill"
 Player = require "core.player"
 
 -- load packages
+dofile "lua/fk_ex.lua"
 Fk = Engine:new()

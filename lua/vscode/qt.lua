@@ -3,15 +3,15 @@
 ---@return number length
 function SPlayerList:length()end
 
----@param e freekill.ServerPlayer
+---@param e fk.ServerPlayer
 function SPlayerList:append(e)end
 
----@param e freekill.ServerPlayer
+---@param e fk.ServerPlayer
 ---@return boolean
 function SPlayerList:contains(e)end
 
 ---@param index number
----@return freekill.ServerPlayer | nil
+---@return fk.ServerPlayer | nil
 function SPlayerList:at(index)end
 
 function SPlayerList:first()end

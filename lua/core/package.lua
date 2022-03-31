@@ -8,9 +8,11 @@
 local Package = class("Package")
 
 -- enum Type
-Package.GeneralPack = 0
-Package.CardPack = 1
-Package.SpecialPack = 2
+fk.createEnum(Package, {
+    "GeneralPack",
+    "CardPack",
+    "SpecialPack"
+})
 
 function Package:initialize(name, _type)
     assert(type(name) == "string")
@@ -43,6 +45,20 @@ end
 function Package:addGeneral(general)
     assert(general.class and general:isInstanceOf(General))
     table.insert(self.generals, general)
+end
+
+---@param card Card
+function Package:addCard(card)
+    assert(card.class and card:isInstanceOf(Card))
+    card.package = self
+    table.insert(self.cards, card)
+end
+
+---@param cards Card[]
+function Package:addCards(cards)
+    for _, card in ipairs(cards) do
+        self:addCard(card)
+    end
 end
 
 return Package

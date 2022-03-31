@@ -19,21 +19,19 @@ function Player:initialize()
     self.playerSkills = {}
 end
 
+---@param general General
+---@param setHp boolean
+---@param addSkills boolean
 function Player:setGeneral(general, setHp, addSkills)
     self.general = general
     if setHp then
         self.maxHp = general.maxHp
-        self.hp = general.initialHp
+        self.hp = general.hp
     end
 
     if addSkills then
         table.insertTable(self.playerSkills, general.skills)
     end
-end
-
-function Player:setHp(maxHp, initialHp)
-    self.maxHp = maxHp
-    self.hp = initialHp or maxHp
 end
 
 return Player

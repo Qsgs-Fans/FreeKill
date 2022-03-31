@@ -1,5 +1,5 @@
 local extension = Package:new("standard")
-extension.metadata = require "standard.metadata"
+extension.metadata = require "packages.standard.metadata"
 
 Fk:loadTranslationTable{
     ["wei"] = "魏",
