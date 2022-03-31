@@ -1,30 +1,21 @@
----@class Skill
+---@class Skill : Object
+---@field name string
+---@field frequency number # enum Frequency
 local Skill = class("Skill")
 
+-- enum Frequency
 fk.createEnum(Skill, {
-    "Common",
     "Frequent",
+    "NotFrequent",
     "Compulsory",
-    "Awaken",
-    "Limit",
+    "Limited",
+    "Wake",
 })
 
-function Skill:initialize(name, skillType)
+function Skill:initialize(name, frequency)
+    -- TODO: visible, lord, etc
     self.name = name
-    self.description = ":" .. name
-    self.skillType = skillType
-end
-
-local TriggerSkill = class("TriggerSkill", Skill)
-
-function TriggerSkill:initialize(spec)
-    Skill.initialize(self, spec.name, spec.skillType)
-    self.isRefreshAt = spec.isRefreshAt
-    self.isTriggerable = spec.isTriggerable
-    self.targetFilter = spec.targetFilter
-    self.cardFilter = spec.cardFilter
-    self.beforeTrigger = spec.beforeTrigger
-    self.onTrigger = spec.onTrigger
+    self.frequency = frequency
 end
 
 return Skill
