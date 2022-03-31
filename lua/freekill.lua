@@ -35,4 +35,5 @@ Skill = require "core.skill"
 Player = require "core.player"
 
 -- load packages
+dofile "lua/fk_ex.lua"
 Fk = Engine:new()
