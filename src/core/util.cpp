@@ -15,9 +15,14 @@ lua_State *CreateLuaState()
 
 bool DoLuaScript(lua_State *L, const char *script)
 {
-    int error = luaL_dofile(L, script);
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_replace(L, -2);
+
+    luaL_loadfile(L, script);
+    int error = lua_pcall(L, 0, LUA_MULTRET, -2);
     if (error) {
-        QString error_msg = lua_tostring(L, -1);
+        const char *error_msg = lua_tostring(L, -1);
         qDebug() << error_msg;
         return false;
     }
