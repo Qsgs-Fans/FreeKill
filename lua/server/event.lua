@@ -1,16 +1,13 @@
-local EVENTS = {
-  "GameStart",
+fk.createEnum(fk, {
+    "NonTrigger",
 
-  "PhaseChanging",
-  "PhaseStart",
-  "PhaseProceeding",
-  "PhaseEnd",
+    "GameStart",
+    "TurnStart",
+    "EventPhaseStart",
+    "EventPhaseProceeding",
+    "EventPhaseEnd",
+    "EventPhaseChanging",
+    "EventPhaseSkipping",
 
-  "PreCardUse",
-  "AfterCardUseDeclared",
-  "AfterCardTargetDeclared",
-  "CardUsing",
-  "CardUseFinished",
-}
-
-GameEvent = Util:createEnum(EVENTS)
+    "NumOfEvents"
+})

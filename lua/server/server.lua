@@ -9,6 +9,7 @@ Server = class('Server')
 Room = require "server.room"
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
+dofile "lua/server/event.lua"
 
 fk.server_callback = {}
 
