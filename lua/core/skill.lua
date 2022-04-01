@@ -1,16 +1,15 @@
 ---@class Skill : Object
 ---@field name string
----@field frequency integer # enum Frequency
+---@field frequency Frequency
 local Skill = class("Skill")
 
--- enum Frequency
-fk.createEnum(Skill, {
-    "Frequent",
-    "NotFrequent",
-    "Compulsory",
-    "Limited",
-    "Wake",
-})
+---@alias Frequency integer
+
+Skill.Frequent = 1
+Skill.NotFrequent = 2
+Skill.Compulsory = 3
+Skill.Limited = 4
+Skill.Wake = 5
 
 function Skill:initialize(name, frequency)
     -- TODO: visible, lord, etc

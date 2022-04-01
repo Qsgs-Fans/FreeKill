@@ -107,11 +107,14 @@ function table:removeOne(element)
 	return false
 end
 
---- convert a table to enum, e.g. core/card.lua
----@param table table # class to store the enum
+--- useful function to create enums
+---
+--- only use it in a terminal
+---@param table string
 ---@param enum string[]
-function fk.createEnum(table, enum)
+function CreateEnum(table, enum)
+	local enum_format = "%s.%s = %d"
 	for i, v in ipairs(enum) do
-		table[v] = i
+		print(string.format(enum_format, table, v, i))
 	end
 end

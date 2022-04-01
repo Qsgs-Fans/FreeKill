@@ -4,16 +4,15 @@
 ---@field kingdom string
 ---@field hp integer
 ---@field maxHp integer
----@field gender integer
+---@field gender Gender
 ---@field skills Skill[]
 ---@field other_skills string[]
 General = class("General")
 
--- enum Gender
-fk.createEnum(General, {
-    "Male",
-    "Female"
-})
+---@alias Gender integer
+
+General.Male = 1
+General.Female = 2
 
 function General:initialize(package, name, kingdom, hp, maxHp, gender)
     self.package = package

@@ -1,36 +1,33 @@
 ---@class Card : Object
 ---@field package Package
 ---@field name string
----@field suit integer # enum suit
+---@field suit Suit
 ---@field number integer
----@field color integer # enum color
+---@field color Color
 ---@field id integer
----@field type integer # enum type
+---@field type CardType
 local Card = class("Card")
 
--- enum Suit
-fk.createEnum(Card, {
-    "Spade",
-    "Club",
-    "Heart",
-    "Diamond",
-    "NoSuit"
-})
+---@alias Suit integer
 
--- enum Color
-fk.createEnum(Card, {
-    "Black",
-    "Red",
-    "NoColor"
-})
+Card.Spade = 1
+Card.Club = 2
+Card.Heart = 3
+Card.Diamond = 4
+Card.NoSuit = 5
 
--- enum Type
-fk.createEnum(Card, {
-    "TypeSkill",
-    "TypeBasic",
-    "TypeTrick",
-    "TypeEquip"
-})
+---@alias Color integer
+
+Card.Black = 1
+Card.Red = 2
+Card.NoColor = 3
+
+---@alias CardType integer
+
+Card.TypeSkill = 1
+Card.TypeBasic = 2
+Card.TypeTrick = 3
+Card.TypeEquip = 4
 
 function Card:initialize(name, suit, number, color)
     self.name = name
