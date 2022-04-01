@@ -30,22 +30,27 @@ Item {
         anchors.centerIn: parent
     }
 
-    // For debugging
-    RowLayout {
-        visible: Debugging ? true : false
-        width: parent.width
-        TextField {
-            id: lua
-            Layout.fillWidth: true
-            text: "print \"Hello world.\""
+    states: [
+        // Normal status
+        State {
+            name: "not_active"
         }
-        Button {
-            text: "DoLuaScript"
-            onClicked: {
-                ClientInstance.notifyServer("DoLuaScript", JSON.stringify([lua.text]));
-            }
+
+        // Playing cards in playing phase
+        State {
+            name: "playing"
         }
-    }
+
+        // all requests need to operate dashboard
+        State {
+            name: "responding"
+        }
+
+        // requests only operate a popup window
+        State {
+            name: "replying"
+        }
+    ]
 
     /* Layout:
      * +---------------------+

@@ -188,3 +188,7 @@ callbacks["AskForGeneral"] = function(jsonData) {
         box.generalList.append({ "name": data[i] });
     box.updatePosition();
 }
+
+callbacks["AskForSkillInvoke"] = function(jsonData) {
+    // jsonData: string name
+}
