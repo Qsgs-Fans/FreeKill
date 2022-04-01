@@ -5,13 +5,22 @@
 --- middleclass
 class = {}
 
+---@param class class
+---@return boolean
+function class:isSubclassOf(class) end
+
 ---@class Object
 ---@field class class
 Object = {}
 
+---@generic T
+---@param self T
 function Object:initialize(...) end
 
-function Object.new(...)end
+---@generic T
+---@param self T
+---@return T
+function Object:new(...)end
 
 ---@param name string
 function Object:subclass(name)end

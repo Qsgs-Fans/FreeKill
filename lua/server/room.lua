@@ -1,17 +1,37 @@
 ---@class Room : Object
 ---@field room fk.Room
----@field server Server
----@field players table
----@field alive_players table
+---@field players ServerPlayer[]
+---@field alive_players ServerPlayer[]
+---@field current ServerPlayer
 ---@field game_finished boolean
----@field timeout number
+---@field timeout integer
 local Room = class("Room")
 
+-- load classes used by the game
+GameLogic = require "server.gamelogic"
+ServerPlayer = require "server.serverplayer"
+
+fk.room_callback = {}
+
+---@param _room fk.Room
 function Room:initialize(_room)
     self.room = _room
-    self.server = nil
-    self.players = {}       -- ServerPlayer[]
+    self.room.callback = function(_self, command, jsonData)
+        local cb = fk.room_callback[command]
+        if (type(cb) == "function") then
+            cb(jsonData)
+        else
+            print("Lobby error: Unknown command " .. command);
+        end
+    end
+
+    self.room.startGame = function(_self)
+        self:run()
+    end
+
+    self.players = {}
     self.alive_players = {}
+    self.current = nil
     self.game_finished = false
     self.timeout = _room:getTimeout()
 end
@@ -23,7 +43,6 @@ function Room:run()
         player.state = p:getStateString()
         player.room = self
         table.insert(self.players, player)
-        self.server.players[player:getId()] = player
     end
 
     self.logic = GameLogic:new(self)
@@ -189,4 +208,50 @@ function Room:gameOver()
     self.room:gameOver()
 end
 
-return Room
+---@param id integer
+function Room:findPlayerById(id)
+    for _, p in ipairs(self.players) do
+        if p:getId() == id then
+            return p
+        end
+    end
+    return nil
+end
+
+---@param player ServerPlayer
+---@param choices string[]
+function Room:askForChoice(player, choices)
+    return choices[1]
+end
+
+fk.room_callback["QuitRoom"] = function(jsonData)
+    -- jsonData: [ int uid ]
+    local data = json.decode(jsonData)
+    local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
+    local room = player:getRoom()
+    if not room:isLobby() then
+        room:removePlayer(player)
+    end
+end
+
+fk.room_callback["PlayerStateChanged"] = function(jsonData)
+    -- jsonData: [ int uid, string stateString ]
+    -- note: this function is not called by Router.
+    -- note: when this function is called, the room must be started
+    local data = json.decode(jsonData)
+    local id = data[1]
+    local stateString = data[2]
+    RoomInstance:findPlayerById(id).state = stateString
+end
+
+fk.room_callback["DoLuaScript"] = function(jsonData)
+    -- jsonData: [ int uid, string luaScript ]
+    -- warning: only use this in debugging mode.
+    if not DebugMode then return end
+    local data = json.decode(jsonData)
+    assert(load(data[2]))()
+end
+
+function CreateRoom(_room)
+    RoomInstance = Room:new(_room)
+end

@@ -11,7 +11,7 @@ fk = {}
 SPlayerList = {}
 
 --- * get microsecond from Epoch
----@return number microsecond
+---@return integer microsecond
 function fk:GetMicroSecond()end
 
 --- construct a QList<ServerPlayer *>.

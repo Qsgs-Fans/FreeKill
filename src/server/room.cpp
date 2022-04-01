@@ -1,6 +1,7 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
+#include "util.h"
 
 Room::Room(Server* server)
 {
@@ -15,12 +16,22 @@ Room::Room(Server* server)
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
         connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
     }
+
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
+    if (isLobby()) {
+        DoLuaScript(L, "lua/server/lobby.lua");
+    } else {
+        DoLuaScript(L, "lua/server/room.lua");
+    }
+    initLua();
 }
 
 Room::~Room()
 {
     // TODO
     disconnect();
+    lua_close(L);
 }
 
 Server *Room::getServer() const
@@ -83,7 +94,15 @@ void Room::setOwner(ServerPlayer *owner)
 
 void Room::addPlayer(ServerPlayer *player)
 {
-    if (isFull() || !player) return;
+    if (!player) return;
+
+    if (isFull() || gameStarted) {
+        player->doNotify("ErrorMsg", "Room is full or already started!");
+        if (runned_players.contains(player->getId())) {
+            player->doNotify("ErrorMsg", "Running away is shameful.");
+        }
+        return;
+    }
 
     QJsonArray jsonData;
 
@@ -120,7 +139,7 @@ void Room::addPlayer(ServerPlayer *player)
             player->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
         }
 
-        if (isFull())
+        if (isFull() && !gameStarted)
             start();
     }
     emit playerAdded(player);
@@ -133,10 +152,18 @@ void Room::removePlayer(ServerPlayer *player)
 
     if (isLobby()) return;
 
-    // player->doNotify("QuitRoom", "[]");
-    QJsonArray jsonData;
-    jsonData << player->getId();
-    doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    if (gameStarted) {
+        QJsonArray jsonData;
+        jsonData << player->getId();
+        doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
+        runned_players << player->getId();
+
+        // TODO: create a robot for runned player. 
+    } else {
+        QJsonArray jsonData;
+        jsonData << player->getId();
+        doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    }
 
     if (isAbandoned()) {
         emit abandoned();
@@ -198,6 +225,7 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 void Room::gameOver()
 {
     gameStarted = false;
+    runned_players.clear();
     // clean offline players
     foreach (ServerPlayer *p, players) {
         if (p->getState() == Player::Offline) {
@@ -209,6 +237,5 @@ void Room::gameOver()
 void Room::run()
 {
     gameStarted = true;
-    getServer()->roomStart(this);
+    roomStart();
 }
-

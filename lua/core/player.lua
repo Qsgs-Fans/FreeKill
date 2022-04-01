@@ -1,5 +1,31 @@
 ---@class Player : Object
+---@field hp integer
+---@field maxHp integer
+---@field kingdom string
+---@field role string
+---@field general string
+---@field handcard_num integer
+---@field seat integer
+---@field phase Phase
+---@field faceup boolean
+---@field chained boolean
+---@field dying boolean
+---@field dead boolean
+---@field state string
+---@field player_skills Skill[]
 local Player = class("Player")
+
+---@alias Phase integer
+
+Player.RoundStart = 1
+Player.Start = 2
+Player.Judge = 3
+Player.Draw = 4
+Player.Play = 5
+Player.Discard = 6
+Player.Finish = 7
+Player.NotActive = 8
+Player.PhaseNone = 9
 
 function Player:initialize()
     self.hp = 0
@@ -15,8 +41,8 @@ function Player:initialize()
     self.dying = false
     self.dead = false
     self.state = ""
-    
-    self.playerSkills = {}
+
+    self.player_skills = {}
 end
 
 ---@param general General

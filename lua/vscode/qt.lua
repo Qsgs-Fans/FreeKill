@@ -1,6 +1,6 @@
 ---@meta
 
----@return number length
+---@return integer length
 function SPlayerList:length()end
 
 ---@param e fk.ServerPlayer
@@ -10,7 +10,7 @@ function SPlayerList:append(e)end
 ---@return boolean
 function SPlayerList:contains(e)end
 
----@param index number
+---@param index integer
 ---@return fk.ServerPlayer | nil
 function SPlayerList:at(index)end
 

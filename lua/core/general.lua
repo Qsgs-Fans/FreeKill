@@ -2,20 +2,19 @@
 ---@field package Package
 ---@field name string
 ---@field kingdom string
----@field hp number
----@field maxHp number
----@field gender number
----@field skills table
----@field other_skills table
+---@field hp integer
+---@field maxHp integer
+---@field gender Gender
+---@field skills Skill[]
+---@field other_skills string[]
 General = class("General")
 
--- enum Gender
-fk.createEnum(General, {
-    "Male",
-    "Female"
-})
+---@alias Gender integer
 
-function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp)
+General.Male = 1
+General.Female = 2
+
+function General:initialize(package, name, kingdom, hp, maxHp, gender)
     self.package = package
     self.name = name
     self.kingdom = kingdom
@@ -23,12 +22,11 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp
     self.maxHp = maxHp or hp
     self.gender = gender or General.Male
 
-    self.skills = {}        -- Skill[]
-    -- skill belongs other general, e.g. "mashu" of pangde
-    self.other_skills = {}  -- string[]
+    self.skills = {}        -- skills first added to this general
+    self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
 end
 
----@param skill any
+---@param skill Skill
 function General:addSkill(skill)
     if (type(skill) == "string") then
         table.insert(self.other_skills, skill)

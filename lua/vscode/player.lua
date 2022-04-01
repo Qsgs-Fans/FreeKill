@@ -3,10 +3,10 @@
 ---@class fk.Player
 FPlayer = {}
 
----@return number id
+---@return integer id
 function FPlayer:getId()end
 
----@param id number
+---@param id integer
 function FPlayer:setId(id)end
 
 ---@return string name
@@ -47,13 +47,13 @@ function FServerPlayer:speak(msg)end
 --- *timeout* must not be negative or **nil**.
 ---@param command string
 ---@param jsonData string
----@param timeout number
+---@param timeout integer
 function FServerPlayer:doRequest(command,jsonData,timeout)end
 
 --- Wait for at most *timeout* seconds for reply from client.
 ---
 --- If *timeout* is negative or **nil**, the function will wait forever until get reply.
----@param timeout number # seconds to wait
+---@param timeout integer # seconds to wait
 ---@return string reply # JSON data
 ---@overload fun()
 function FServerPlayer:waitForReply(timeout)end

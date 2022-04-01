@@ -1,18 +1,17 @@
 ---@class Package : Object
 ---@field name string
----@field type number
----@field generals table
----@field extra_skills table
----@field related_skills table
----@field cards table
+---@field type PackageType
+---@field generals General[]
+---@field extra_skills Skill[]
+---@field related_skills table<string, string>
+---@field cards Card[]
 local Package = class("Package")
 
--- enum Type
-fk.createEnum(Package, {
-    "GeneralPack",
-    "CardPack",
-    "SpecialPack"
-})
+---@alias PackageType integer
+
+Package.GeneralPack = 1
+Package.CardPack = 2
+Package.SpecialPack = 3
 
 function Package:initialize(name, _type)
     assert(type(name) == "string")
@@ -21,11 +20,9 @@ function Package:initialize(name, _type)
     self.type = _type or Package.GeneralPack
 
     self.generals = {}
-    -- skill not belongs to any generals, like "jixi"
-    self.extra_skills = {}
-    -- table: string --> string
+    self.extra_skills = {}  -- skill not belongs to any generals, like "jixi"
     self.related_skills = {}
-    self.cards = {}     --> Card[]
+    self.cards = {}
 end
 
 ---@return table skills

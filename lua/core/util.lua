@@ -29,6 +29,26 @@ function table:insertTable(list)
 	end
 end
 
+function table:indexOf(value, from)
+	from = from or 1
+	for i = from, #self do
+		if self[i] == value then return i end
+	end
+	return -1
+end
+
+function table:removeOne(element)
+	if #self == 0 or type(self[1]) ~= type(element) then return false end
+
+	for i = 1, #self do
+		if self[i] == element then
+			table.remove(self, i)
+			return true
+		end
+	end
+	return false
+end
+
 ---@class Sql
 Sql = {
 	---@param filename string
@@ -95,23 +115,15 @@ function Stack:pop()
 	return self.t[self.p + 1]
 end
 
-function table:removeOne(element)
-	if #self == 0 or type(self[1]) ~= type(element) then return false end
 
-	for i = 1, #self do
-		if self[i] == element then
-			table.remove(self, i)
-			return true
-		end
-	end
-	return false
-end
-
---- convert a table to enum, e.g. core/card.lua
----@param table table # class to store the enum
+--- useful function to create enums
+---
+--- only use it in a terminal
+---@param table string
 ---@param enum string[]
-function fk.createEnum(table, enum)
+function CreateEnum(table, enum)
+	local enum_format = "%s.%s = %d"
 	for i, v in ipairs(enum) do
-		table[v] = i
+		print(string.format(enum_format, table, v, i))
 	end
 end
