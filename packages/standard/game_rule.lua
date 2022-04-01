@@ -10,4 +10,9 @@ GameRule = fk.CreateTriggerSkill{
         return (target == player) or (target == nil)
     end,
 
+    on_trigger = function(self, event, target, player, data)
+        if player == nil then return false end
+        return TriggerSkill.trigger(self, event, target, player, data)
+    end,
+
 }

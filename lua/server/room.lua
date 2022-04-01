@@ -224,6 +224,18 @@ function Room:askForChoice(player, choices)
     return choices[1]
 end
 
+---@param player ServerPlayer
+---@param skill_name string
+---@return boolean
+function Room:askForSkillInvoke(player, skill_name, data)
+    local command = "AskForSkillInvoke"
+    self:notifyMoveFocus(player, skill_name)
+    local invoked = false
+    local result = self:doRequest(player, command, skill_name)
+    if result ~= "" then invoked = true end
+    return invoked
+end
+
 fk.room_callback["QuitRoom"] = function(jsonData)
     -- jsonData: [ int uid ]
     local data = json.decode(jsonData)

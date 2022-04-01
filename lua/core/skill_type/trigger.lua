@@ -49,10 +49,9 @@ end
 ---@param data any # useful data of the event
 ---@return boolean # returns true if trigger is broken
 function TriggerSkill:trigger(event, target, player, data)
-    print(string.format("%s triggered: event=%d", self.name, event))
-    --if player.room:askForSkillInvoke(self.name) then
-    --    return self:use(event, target, player, data)
-    --end
+    if player.room:askForSkillInvoke(self.name) then
+        return self:use(event, target, player, data)
+    end
     return false
 end
 
