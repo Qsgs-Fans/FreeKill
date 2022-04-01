@@ -48,6 +48,19 @@ function arrangePhotos() {
     }
 }
 
+function doOkButton() {
+    replyToServer("1");
+}
+
+function doCancelButton() {
+    replyToServer("");
+}
+
+function replyToServer(jsonData) {
+    roomScene.state = "notactive";
+    ClientInstance.replyToServer("", jsonData);
+}
+
 callbacks["AddPlayer"] = function(jsonData) {
     // jsonData: int id, string screenName, string avatar
     for (let i = 0; i < photoModel.count; i++) {
@@ -178,11 +191,13 @@ callbacks["AskForGeneral"] = function(jsonData) {
     // jsonData: string[] Generals
     // TODO: choose multiple generals
     let data = JSON.parse(jsonData);
+    roomScene.promptText = "Please choose 1 general";
+    roomScene.state = "replying";
     roomScene.popupBox.source = "RoomElement/ChooseGeneralBox.qml";
     let box = roomScene.popupBox.item;
     box.choiceNum = 1;
     box.accepted.connect(() => {
-        ClientInstance.replyToServer("AskForGeneral", JSON.stringify([box.choices[0]]));
+        replyToServer(JSON.stringify([box.choices[0]]));
     });
     for (let i = 0; i < data.length; i++)
         box.generalList.append({ "name": data[i] });
@@ -191,4 +206,6 @@ callbacks["AskForGeneral"] = function(jsonData) {
 
 callbacks["AskForSkillInvoke"] = function(jsonData) {
     // jsonData: string name
+    roomScene.promptText = "Do you want to invoke '" + jsonData + "' ?";
+    roomScene.state = "responding";
 }

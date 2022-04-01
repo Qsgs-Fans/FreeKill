@@ -49,7 +49,7 @@ end
 ---@param data any # useful data of the event
 ---@return boolean # returns true if trigger is broken
 function TriggerSkill:trigger(event, target, player, data)
-    if player.room:askForSkillInvoke(self.name) then
+    if player.room:askForSkillInvoke(player, self.name) then
         return self:use(event, target, player, data)
     end
     return false
