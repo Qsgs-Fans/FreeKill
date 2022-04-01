@@ -1,12 +1,12 @@
 ---@class Player : Object
----@field hp number
----@field maxHp number
+---@field hp integer
+---@field maxHp integer
 ---@field kingdom string
 ---@field role string
 ---@field general string
----@field handcard_num number
----@field seat number
----@field phase number
+---@field handcard_num integer
+---@field seat integer
+---@field phase integer
 ---@field faceup boolean
 ---@field chained boolean
 ---@field dying boolean

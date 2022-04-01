@@ -2,9 +2,9 @@
 ---@field package Package
 ---@field name string
 ---@field kingdom string
----@field hp number
----@field maxHp number
----@field gender number
+---@field hp integer
+---@field maxHp integer
+---@field gender integer
 ---@field skills Skill[]
 ---@field other_skills string[]
 General = class("General")
@@ -15,7 +15,7 @@ fk.createEnum(General, {
     "Female"
 })
 
-function General:initialize(package, name, kingdom, hp, maxHp, gender, initialHp)
+function General:initialize(package, name, kingdom, hp, maxHp, gender)
     self.package = package
     self.name = name
     self.kingdom = kingdom

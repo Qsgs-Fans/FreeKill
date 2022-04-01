@@ -1,3 +1,5 @@
+---@alias Event integer
+
 fk.createEnum(fk, {
     "NonTrigger",
 

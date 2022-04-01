@@ -1,6 +1,6 @@
 ---@class Package : Object
 ---@field name string
----@field type number
+---@field type integer
 ---@field generals General[]
 ---@field extra_skills Skill[]
 ---@field related_skills table<string, string>

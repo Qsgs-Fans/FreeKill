@@ -1,11 +1,11 @@
 ---@class Card : Object
 ---@field package Package
 ---@field name string
----@field suit number # enum suit
----@field number number
----@field color number # enum color
----@field id number
----@field type number # enum type
+---@field suit integer # enum suit
+---@field number integer
+---@field color integer # enum color
+---@field id integer
+---@field type integer # enum type
 local Card = class("Card")
 
 -- enum Suit

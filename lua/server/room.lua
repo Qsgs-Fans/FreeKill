@@ -4,7 +4,7 @@
 ---@field players ServerPlayer[]
 ---@field alive_players ServerPlayer[]
 ---@field game_finished boolean
----@field timeout number
+---@field timeout integer
 local Room = class("Room")
 
 function Room:initialize(_room)

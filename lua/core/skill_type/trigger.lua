@@ -1,8 +1,8 @@
 ---@class TriggerSkill : Skill
 ---@field global boolean
----@field events number[]
----@field refresh_events number[]
----@field priority_table table<number, number>
+---@field events Event[]
+---@field refresh_events Event[]
+---@field priority_table table<Event, number>
 local TriggerSkill = Skill:subclass("TriggerSkill")
 
 function TriggerSkill:initialize(name, frequency)

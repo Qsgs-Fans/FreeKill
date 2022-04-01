@@ -111,7 +111,7 @@ function Engine:addCards(cards)
     end
 end
 
----@param num number
+---@param num integer
 ---@param generalPool General[]
 ---@param except string[]
 ---@param filter function

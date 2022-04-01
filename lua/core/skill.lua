@@ -1,6 +1,6 @@
 ---@class Skill : Object
 ---@field name string
----@field frequency number # enum Frequency
+---@field frequency integer # enum Frequency
 local Skill = class("Skill")
 
 -- enum Frequency

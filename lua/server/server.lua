@@ -1,8 +1,8 @@
 ---@class Server : Object
 ---@field server fk.Server
 ---@field db fk.SQLite3
----@field rooms table<number, Room>
----@field players table<number, ServerPlayer>
+---@field rooms table<integer, Room>
+---@field players table<integer, ServerPlayer>
 Server = class('Server')
 
 -- load server classes

@@ -1,6 +1,6 @@
 ---@class GameLogic: Object
 ---@field room Room
----@field skill_table table<number, Skill>
+---@field skill_table table<Event, Skill>
 ---@field skills string[]
 ---@field event_stack Stack
 ---@field role_table string[][]

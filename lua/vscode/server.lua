@@ -12,14 +12,14 @@ FRoom = {}
 
 ---@param owner fk.ServerPlayer
 ---@param name string
----@param capacity number
+---@param capacity integer
 function FServer:createRoom(owner,name,capacity)end
 
----@param id number
+---@param id integer
 ---@return fk.Room room
 function FServer:findRoom(id)end
 
----@param id number
+---@param id integer
 ---@return fk.ServerPlayer player
 function FServer:findPlayer(id)end
 

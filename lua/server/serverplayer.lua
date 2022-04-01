@@ -22,7 +22,7 @@ function ServerPlayer:initialize(_self)
     self.reply_ready = false
 end
 
----@return number
+---@return integer
 function ServerPlayer:getId()
     return self.serverplayer:getId()
 end
@@ -38,7 +38,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout number
+---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
     timeout = timeout or self.room.timeout
     self.client_reply = ""
@@ -49,7 +49,7 @@ end
 --- Wait for at most *timeout* seconds for reply from client.
 ---
 --- If *timeout* is negative or **nil**, the function will wait forever until get reply.
----@param timeout number # seconds to wait
+---@param timeout integer # seconds to wait
 ---@return string reply # JSON data
 function ServerPlayer:waitForReply(timeout)
     local result = ""
