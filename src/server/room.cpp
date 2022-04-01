@@ -1,6 +1,7 @@
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
+#include "util.h"
 
 Room::Room(Server* server)
 {
@@ -15,12 +16,22 @@ Room::Room(Server* server)
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
         connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
     }
+
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
+    if (isLobby()) {
+        DoLuaScript(L, "lua/server/lobby.lua");
+    } else {
+        DoLuaScript(L, "lua/server/room.lua");
+    }
+    initLua();
 }
 
 Room::~Room()
 {
     // TODO
     disconnect();
+    lua_close(L);
 }
 
 Server *Room::getServer() const
@@ -209,6 +220,5 @@ void Room::gameOver()
 void Room::run()
 {
     gameStarted = true;
-    getServer()->roomStart(this);
+    roomStart();
 }
-

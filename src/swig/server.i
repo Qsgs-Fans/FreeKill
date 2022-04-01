@@ -2,60 +2,13 @@
 %nodefaultdtor Server;
 class Server : public QObject {
 public:
+    Room *lobby() const;
     void createRoom(ServerPlayer *owner, const QString &name, int capacity);
     Room *findRoom(int id) const;
     ServerPlayer *findPlayer(int id) const;
 
     sqlite3 *getDatabase();
-
-    LuaFunction callback;
-    LuaFunction startRoom;
 };
-
-%{
-void Server::callLua(const QString& command, const QString& json_data)
-{
-    Q_ASSERT(callback);
-
-    lua_getglobal(L, "debug");
-    lua_getfield(L, -1, "traceback");
-    lua_replace(L, -2);
-
-    lua_rawgeti(L, LUA_REGISTRYINDEX, callback);
-    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Server, 0);
-    lua_pushstring(L, command.toUtf8());
-    lua_pushstring(L, json_data.toUtf8());
-
-    int error = lua_pcall(L, 3, 0, -5);
-    lua_pop(L, 1);
-
-    if (error) {
-        const char *error_msg = lua_tostring(L, -1);
-        qDebug() << error_msg;
-    }
-}
-
-void Server::roomStart(Room *room) {
-    Q_ASSERT(startRoom);
-
-    lua_getglobal(L, "debug");
-    lua_getfield(L, -1, "traceback");
-    lua_replace(L, -2);
-
-    lua_rawgeti(L, LUA_REGISTRYINDEX, startRoom);
-    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Server, 0);
-    SWIG_NewPointerObj(L, room, SWIGTYPE_p_Room, 0);
-
-    int error = lua_pcall(L, 2, 0, -4);
-    lua_pop(L, 1);
-
-    if (error) {
-        const char *error_msg = lua_tostring(L, -1);
-        qDebug() << error_msg;
-    }
-}
-    
-%}
 
 extern Server *ServerInstance;
 
@@ -97,5 +50,67 @@ public:
     );
     
     void gameOver();
+
+    LuaFunction callback;
+    LuaFunction startGame;
 };
+
+%{
+void Room::initLua()
+{
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_replace(L, -2);
+    lua_getglobal(L, "CreateRoom");
+    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Room, 0);
+    int error = lua_pcall(L, 1, 0, -2);
+    lua_pop(L, 1);
+    if (error) {
+        const char *error_msg = lua_tostring(L, -1);
+        qDebug() << error_msg;
+    }
+}
+
+void Room::callLua(const QString& command, const QString& json_data)
+{
+    Q_ASSERT(callback);
+
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_replace(L, -2);
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, callback);
+    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Room, 0);
+    lua_pushstring(L, command.toUtf8());
+    lua_pushstring(L, json_data.toUtf8());
+
+    int error = lua_pcall(L, 3, 0, -5);
+    lua_pop(L, 1);
+
+    if (error) {
+        const char *error_msg = lua_tostring(L, -1);
+        qDebug() << error_msg;
+    }
+}
+
+void Room::roomStart() {
+    Q_ASSERT(startGame);
+
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    lua_replace(L, -2);
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, startGame);
+    SWIG_NewPointerObj(L, this, SWIGTYPE_p_Room, 0);
+
+    int error = lua_pcall(L, 1, 0, -3);
+    lua_pop(L, 1);
+
+    if (error) {
+        const char *error_msg = lua_tostring(L, -1);
+        qDebug() << error_msg;
+    }
+}
+    
+%}
 

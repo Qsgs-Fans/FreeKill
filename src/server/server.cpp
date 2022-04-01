@@ -12,6 +12,7 @@ Server::Server(QObject* parent)
     : QObject(parent)
 {
     ServerInstance = this;
+    db = OpenDatabase();
     server = new ServerSocket();
     server->setParent(this);
     connect(server, &ServerSocket::new_connection,
@@ -22,19 +23,12 @@ Server::Server(QObject* parent)
     createRoom(nullptr, "Lobby", INT32_MAX);
     connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
     connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
-
-    db = OpenDatabase();
-    
-    L = CreateLuaState();
-    DoLuaScript(L, "lua/freekill.lua");
-    DoLuaScript(L, "lua/server/server.lua");
 }
 
 Server::~Server()
 {
     ServerInstance = nullptr;
     m_lobby->deleteLater();
-    lua_close(L);
     sqlite3_close(db);
 }
 
@@ -257,9 +251,9 @@ void Server::onUserDisconnected()
 
 void Server::onUserStateChanged()
 {
-    Player *player = qobject_cast<Player *>(sender());
+    ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
     QJsonArray arr;
     arr << player->getId();
     arr << player->getStateString();
-    callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
+    player->getRoom()->callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
 }

@@ -48,6 +48,15 @@ public:
 
     void gameOver();
 
+    lua_State *getLuaState() const;
+
+    void initLua();
+    void callLua(const QString &command, const QString &jsonData);
+    LuaFunction callback;
+
+    void roomStart();
+    LuaFunction startGame;
+
 signals:
     void abandoned();
 
@@ -69,6 +78,8 @@ private:
     bool gameStarted;
 
     int timeout;
+
+    lua_State *L;
 };
 
 #endif // _ROOM_H

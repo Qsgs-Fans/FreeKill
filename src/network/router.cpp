@@ -155,12 +155,11 @@ void Router::handlePacket(const QByteArray& rawPacket)
         if (type & DEST_CLIENT) {
             ClientInstance->callLua(command, jsonData);
         } else {
+            ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
             // Add the uid of sender to jsonData
             QJsonArray arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
-            arr.prepend(
-                qobject_cast<ServerPlayer *>(parent())->getId()
-            );
-            ServerInstance->callLua(command, QJsonDocument(arr).toJson());
+            arr.prepend(player->getId());
+            player->getRoom()->callLua(command, QJsonDocument(arr).toJson());
         }
     }
     else if (type & TYPE_REQUEST) {

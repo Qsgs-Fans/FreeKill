@@ -19,6 +19,9 @@ function FServer:createRoom(owner,name,capacity)end
 ---@return fk.Room room
 function FServer:findRoom(id)end
 
+---@return fk.Room room
+function FServer:lobby()end
+
 ---@param id integer
 ---@return fk.ServerPlayer player
 function FServer:findPlayer(id)end
