@@ -8,6 +8,7 @@ callbacks["NetworkDelayTest"] = function(jsonData) {
 }
 
 callbacks["ErrorMsg"] = function(jsonData) {
+    console.log("ERROR: " + jsonData);
     toast.show(jsonData, 5000);
     mainWindow.busy = false;
 }

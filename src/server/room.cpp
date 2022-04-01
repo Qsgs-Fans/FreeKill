@@ -94,7 +94,15 @@ void Room::setOwner(ServerPlayer *owner)
 
 void Room::addPlayer(ServerPlayer *player)
 {
-    if (isFull() || !player) return;
+    if (!player) return;
+
+    if (isFull() || gameStarted) {
+        player->doNotify("ErrorMsg", "Room is full or already started!");
+        if (runned_players.contains(player->getId())) {
+            player->doNotify("ErrorMsg", "Running away is shameful.");
+        }
+        return;
+    }
 
     QJsonArray jsonData;
 
@@ -131,7 +139,7 @@ void Room::addPlayer(ServerPlayer *player)
             player->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
         }
 
-        if (isFull())
+        if (isFull() && !gameStarted)
             start();
     }
     emit playerAdded(player);
@@ -144,10 +152,18 @@ void Room::removePlayer(ServerPlayer *player)
 
     if (isLobby()) return;
 
-    // player->doNotify("QuitRoom", "[]");
-    QJsonArray jsonData;
-    jsonData << player->getId();
-    doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    if (gameStarted) {
+        QJsonArray jsonData;
+        jsonData << player->getId();
+        doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
+        runned_players << player->getId();
+
+        // TODO: create a robot for runned player. 
+    } else {
+        QJsonArray jsonData;
+        jsonData << player->getId();
+        doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    }
 
     if (isAbandoned()) {
         emit abandoned();
@@ -209,6 +225,7 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 void Room::gameOver()
 {
     gameStarted = false;
+    runned_players.clear();
     // clean offline players
     foreach (ServerPlayer *p, players) {
         if (p->getState() == Player::Offline) {
