@@ -1,7 +1,8 @@
 ---@class Engine : Object
 ---@field packages table<string, Package>
 ---@field skills table<string, Skill>
----@field related_skills table<string, string>
+---@field related_skills table<string, Skill[]>
+---@field global_trigger TriggerSkill[]
 ---@field generals table<string, General>
 ---@field lords string[]
 ---@field cards Card[]
@@ -19,7 +20,8 @@ function Engine:initialize()
 
     self.packages = {}      -- name --> Package
     self.skills = {}        -- name --> Skill
-    self.related_skills = {} -- skillName --> relatedName
+    self.related_skills = {} -- skillName --> relatedSkill[]
+    self.global_trigger = {}
     self.generals = {}      -- name --> General
     self.lords = {}         -- lordName[]
     self.cards = {}         -- Card[]

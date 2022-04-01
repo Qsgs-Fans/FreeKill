@@ -21,13 +21,14 @@ bool DoLuaScript(lua_State *L, const char *script)
 
     luaL_loadfile(L, script);
     int error = lua_pcall(L, 0, LUA_MULTRET, -2);
-    lua_pop(L, 1);
 
     if (error) {
         const char *error_msg = lua_tostring(L, -1);
         qDebug() << error_msg;
+        lua_pop(L, 2);
         return false;
     }
+    lua_pop(L, 1);
     return true;
 }
 

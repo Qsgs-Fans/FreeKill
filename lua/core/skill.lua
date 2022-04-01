@@ -1,6 +1,7 @@
 ---@class Skill : Object
 ---@field name string
 ---@field frequency Frequency
+---@field visible boolean
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -15,6 +16,7 @@ function Skill:initialize(name, frequency)
     -- TODO: visible, lord, etc
     self.name = name
     self.frequency = frequency
+    self.visible = true
 end
 
 return Skill

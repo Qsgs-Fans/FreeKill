@@ -64,4 +64,25 @@ function ServerPlayer:waitForReply(timeout)
     return result
 end
 
+---@param skill Skill
+function ServerPlayer:hasSkill(skill)
+    return table.contains(self.player_skills, skill)
+end
+
+function ServerPlayer:isAlive()
+    return self.dead == false
+end
+
+function ServerPlayer:getNextAlive()
+    if #self.room.alive_players == 0 then
+        return self
+    end
+
+    local ret = self.next
+    while ret.dead do
+        ret = ret.next
+    end
+    return ret
+end
+
 return ServerPlayer

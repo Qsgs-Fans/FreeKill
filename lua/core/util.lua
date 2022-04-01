@@ -29,6 +29,26 @@ function table:insertTable(list)
 	end
 end
 
+function table:indexOf(value, from)
+	from = from or 1
+	for i = from, #self do
+		if self[i] == value then return i end
+	end
+	return -1
+end
+
+function table:removeOne(element)
+	if #self == 0 or type(self[1]) ~= type(element) then return false end
+
+	for i = 1, #self do
+		if self[i] == element then
+			table.remove(self, i)
+			return true
+		end
+	end
+	return false
+end
+
 ---@class Sql
 Sql = {
 	---@param filename string
@@ -95,17 +115,6 @@ function Stack:pop()
 	return self.t[self.p + 1]
 end
 
-function table:removeOne(element)
-	if #self == 0 or type(self[1]) ~= type(element) then return false end
-
-	for i = 1, #self do
-		if self[i] == element then
-			table.remove(self, i)
-			return true
-		end
-	end
-	return false
-end
 
 --- useful function to create enums
 ---

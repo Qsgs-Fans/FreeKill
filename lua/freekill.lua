@@ -11,16 +11,9 @@ json = require "json"
 
 dofile "lua/lib/sha256.lua"
 dofile "lua/core/util.lua"
+dofile "lua/core/debug.lua"
 
 math.randomseed(os.time())
-
-DebugMode = true
-
-function pt(t)
-    for k, v in pairs(t) do
-        print(k, v)
-    end
-end
 
 -- load core classes
 Engine = require "core.engine"

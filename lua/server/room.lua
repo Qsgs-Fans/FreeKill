@@ -2,6 +2,7 @@
 ---@field room fk.Room
 ---@field players ServerPlayer[]
 ---@field alive_players ServerPlayer[]
+---@field current ServerPlayer
 ---@field game_finished boolean
 ---@field timeout integer
 local Room = class("Room")
@@ -9,7 +10,6 @@ local Room = class("Room")
 -- load classes used by the game
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
-dofile "lua/server/event.lua"
 
 fk.room_callback = {}
 
@@ -31,6 +31,7 @@ function Room:initialize(_room)
 
     self.players = {}
     self.alive_players = {}
+    self.current = nil
     self.game_finished = false
     self.timeout = _room:getTimeout()
 end
@@ -215,6 +216,12 @@ function Room:findPlayerById(id)
         end
     end
     return nil
+end
+
+---@param player ServerPlayer
+---@param choices string[]
+function Room:askForChoice(player, choices)
+    return choices[1]
 end
 
 fk.room_callback["QuitRoom"] = function(jsonData)
