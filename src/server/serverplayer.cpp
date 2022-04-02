@@ -72,7 +72,7 @@ void ServerPlayer::doRequest(const QString& command, const QString& jsonData, in
 QString ServerPlayer::waitForReply()
 {
     if (getState() != Player::Online) {
-        getRoom()->sleep(1000);
+        QThread::sleep(1);
         return "";
     }
     return router->waitForReply();
@@ -81,7 +81,7 @@ QString ServerPlayer::waitForReply()
 QString ServerPlayer::waitForReply(int timeout)
 {
     if (getState() != Player::Online) {
-        getRoom()->sleep(1000);
+        QThread::sleep(1);
         return "";
     }
     return router->waitForReply(timeout);
