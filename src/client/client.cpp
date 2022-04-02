@@ -1,7 +1,6 @@
 #include "client.h"
 #include "client_socket.h"
 #include "clientplayer.h"
-#include "qmlbackend.h"
 #include "util.h"
 
 Client *ClientInstance;
@@ -67,4 +66,8 @@ void Client::removePlayer(int id) {
 
 void Client::clearPlayers() {
     players.clear();
+}
+
+lua_State *Client::getLuaState() {
+    return L;
 }

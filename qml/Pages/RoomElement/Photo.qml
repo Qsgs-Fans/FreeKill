@@ -243,4 +243,11 @@ Item {
             text: ""
         }
     }
+
+    onGeneralChanged: {
+        if (!roomScene.isStarted) return;
+        generalName.text = Backend.translate(general);
+        let data = JSON.parse(Backend.getGeneralData(general));
+        kingdom = data[0];
+    }
 }

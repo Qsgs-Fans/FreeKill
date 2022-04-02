@@ -25,6 +25,10 @@ public:
     static Q_INVOKABLE bool exists(const QString &file);
     static Q_INVOKABLE bool isDir(const QString &file);
 
+    // read data from lua, call lua functions
+    Q_INVOKABLE QString translate(const QString &src);
+    Q_INVOKABLE QString getGeneralData(const QString &general_name);
+
 signals:
     void notifyUI(const QString &command, const QString &jsonData);
 
