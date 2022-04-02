@@ -14,11 +14,13 @@ Item {
     property bool isStarted: false
 
     property alias popupBox: popupBox
+    property alias promptText: prompt.text
 
     // tmp
     Button {
         text: "quit"
-        anchors.bottom: parent.bottom
+        anchors.top: parent.top
+        anchors.right: parent.right
         onClicked: {
             ClientInstance.clearPlayers();
             ClientInstance.notifyServer("QuitRoom", "[]");
@@ -30,22 +32,60 @@ Item {
         anchors.centerIn: parent
     }
 
-    // For debugging
-    RowLayout {
-        visible: Debugging ? true : false
-        width: parent.width
-        TextField {
-            id: lua
-            Layout.fillWidth: true
-            text: "print \"Hello world.\""
-        }
-        Button {
-            text: "DoLuaScript"
-            onClicked: {
-                ClientInstance.notifyServer("DoLuaScript", JSON.stringify([lua.text]));
+    states: [
+        State { name: "notactive" }, // Normal status
+        State { name: "playing" }, // Playing cards in playing phase
+        State { name: "responding" }, // all requests need to operate dashboard
+        State { name: "replying" } // requests only operate a popup window
+    ]
+    state: "notactive"
+    transitions: [
+        Transition {
+            from: "*"; to: "notactive"
+            ScriptAction {
+                script: {
+                    promptText = "";
+                    progress.visible = false;
+                    okCancel.visible = false;
+                    endPhaseButton.visible = false;
+
+                    if (popupBox.item != null) {
+                        popupBox.item.finished();
+                    } 
+                }
+            }
+        },
+
+        Transition {
+            from: "*"; to: "playing"
+            ScriptAction {
+                script: {
+                    progress.visible = true;
+                    okCancel.visible = true;
+                    endPhaseButton.visible = true;
+                }
+            }
+        },
+
+        Transition {
+            from: "*"; to: "responding"
+            ScriptAction {
+                script: {
+                    progress.visible = true;
+                    okCancel.visible = true;
+                }
+            }
+        },
+
+        Transition {
+            from: "*"; to: "replying"
+            ScriptAction {
+                script: {
+                    progress.visible = true;
+                }
             }
         }
-    }
+    ]
 
     /* Layout:
      * +---------------------+
@@ -125,6 +165,74 @@ Item {
         self.chained: dashboardModel.chained
         self.drank: dashboardModel.drank
         self.isOwner: dashboardModel.isOwner
+    }
+
+    Item {
+        id: controls
+        anchors.bottom: dashboard.top
+        anchors.bottomMargin: -40
+        width: roomScene.width
+
+        Text {
+            id: prompt
+            visible: progress.visible
+            anchors.bottom: progress.top
+            anchors.bottomMargin: 8
+            anchors.horizontalCenter: progress.horizontalCenter
+        }
+
+        ProgressBar {
+            id: progress
+            width: parent.width * 0.6
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: okCancel.top
+            anchors.bottomMargin: 8
+            from: 0.0
+            to: 100.0
+
+            visible: false
+            NumberAnimation on value {
+                running: progress.visible
+                from: 100.0
+                to: 0.0
+                duration: config.roomTimeout * 1000
+
+                onFinished: {
+                    roomScene.state = "notactive"
+                }
+            }
+        }
+
+        Row {
+            id: okCancel
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: progress.horizontalCenter
+            spacing: 20
+            visible: false
+
+            Button {
+                id: okButton
+                text: "OK"
+                onClicked: Logic.doOkButton();
+            }
+
+            Button {
+                id: cancelButton
+                text: "Cancel"
+                onClicked: Logic.doCancelButton();
+            }
+        }
+
+        Button {
+            id: endPhaseButton
+            text: "End"
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 40
+            anchors.right: parent.right
+            anchors.rightMargin: 30
+            visible: false;
+            onClicked: Logic.doCancelButton();
+        }
     }
 
     Loader {
