@@ -187,6 +187,21 @@ callbacks["MoveFocus"] = function(jsonData) {
     }
 }
 
+callbacks["PlayerRunned"] = function(jsonData) {
+    // jsonData: int runner, int robot
+    let data = JSON.parse(jsonData);
+    let runner = data[0];
+    let robot = data[1];
+
+    let model;
+    for (let i = 0; i < playerNum - 1; i++) {
+        model = photoModel.get(i);
+        if (model.id === runner) {
+            model.id = robot;
+        }
+    }
+}
+
 callbacks["AskForGeneral"] = function(jsonData) {
     // jsonData: string[] Generals
     // TODO: choose multiple generals

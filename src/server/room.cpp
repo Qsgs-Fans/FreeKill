@@ -11,6 +11,7 @@ Room::Room(Server* server)
     setParent(server);
     owner = nullptr;
     gameStarted = false;
+    robot_id = -1;
     timeout = 15;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
@@ -80,7 +81,14 @@ bool Room::isFull() const
 
 bool Room::isAbandoned() const
 {
-    return players.isEmpty();
+    if (players.isEmpty())
+        return true;
+
+    foreach (ServerPlayer *p, players) {
+        if (p->getState() == Player::Online)
+            return false;
+    }
+    return true;
 }
 
 ServerPlayer *Room::getOwner() const
@@ -149,6 +157,20 @@ void Room::addPlayer(ServerPlayer *player)
     emit playerAdded(player);
 }
 
+void Room::addRobot(ServerPlayer *player)
+{
+    if (player != owner || isFull()) return;
+
+    ServerPlayer *robot = new ServerPlayer(this);
+    robot->setState(Player::Robot);
+    robot->setId(robot_id);
+    robot->setAvatar("guanyu");
+    robot->setScreenName(QString("COMP-%1").arg(robot_id));
+    robot_id--;
+
+    addPlayer(robot);
+}
+
 void Room::removePlayer(ServerPlayer *player)
 {
     players.removeOne(player);
@@ -157,12 +179,22 @@ void Room::removePlayer(ServerPlayer *player)
     if (isLobby()) return;
 
     if (gameStarted) {
+        // TODO: if the player is died..
+        // create robot first
+        ServerPlayer *robot = new ServerPlayer(this);
+        robot->setState(Player::Robot);
+        robot->setId(robot_id);
+        robot->setAvatar(player->getAvatar());
+        robot->setScreenName(QString("COMP-%1").arg(robot_id));
+        robot_id--;
+
+        // tell lua & clients
         QJsonArray jsonData;
         jsonData << player->getId();
+        jsonData << robot->getId();
+        callLua("PlayerRunned", QJsonDocument(jsonData).toJson());
         doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
         runned_players << player->getId();
-
-        // TODO: create a robot for runned player. 
     } else {
         QJsonArray jsonData;
         jsonData << player->getId();
@@ -190,7 +222,11 @@ QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer* expect) const
 
 ServerPlayer *Room::findPlayer(int id) const
 {
-    return server->findPlayer(id);
+    foreach (ServerPlayer *p, players) {
+        if (p->getId() == id)
+            return p;
+    }
+    return nullptr;
 }
 
 int Room::getTimeout() const
@@ -230,9 +266,9 @@ void Room::gameOver()
 {
     gameStarted = false;
     runned_players.clear();
-    // clean offline players
+    // clean not online players
     foreach (ServerPlayer *p, players) {
-        if (p->getState() == Player::Offline) {
+        if (p->getState() != Player::Online) {
             p->deleteLater();
         }
     }

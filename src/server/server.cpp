@@ -232,6 +232,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 void Server::onRoomAbandoned()
 {
     Room *room = qobject_cast<Room *>(sender());
+    room->gameOver();
     rooms.remove(room->getId());
     updateRoomList();
     room->deleteLater();
