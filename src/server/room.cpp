@@ -81,7 +81,14 @@ bool Room::isFull() const
 
 bool Room::isAbandoned() const
 {
-    return players.isEmpty();
+    if (players.isEmpty())
+        return true;
+
+    foreach (ServerPlayer *p, players) {
+        if (p->getState() == Player::Online)
+            return false;
+    }
+    return true;
 }
 
 ServerPlayer *Room::getOwner() const
