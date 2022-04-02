@@ -5,6 +5,7 @@
 ---@field current ServerPlayer
 ---@field game_finished boolean
 ---@field timeout integer
+---@field tag table<string, any>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -34,6 +35,7 @@ function Room:initialize(_room)
     self.current = nil
     self.game_finished = false
     self.timeout = _room:getTimeout()
+    self.tag = {}
 end
 
 -- When this function returns, the Room(C++) thread stopped.
