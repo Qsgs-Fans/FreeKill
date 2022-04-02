@@ -8,9 +8,11 @@ EquipCard = require "core.card_type.equip"
 dofile "lua/server/event.lua"
 TriggerSkill = require "core.skill_type.trigger"
 
+---@class CardSpec: Card
+
 ---@class SkillSpec: Skill
 
----@alias TrigFunc fun(self: any, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
 ---@class TriggerSkillSpec: SkillSpec
 ---@field global boolean
 ---@field events Event | Event[]
@@ -21,7 +23,7 @@ TriggerSkill = require "core.skill_type.trigger"
 ---@field on_refresh TrigFunc
 ---@field can_refresh TrigFunc
 
----@param spec table
+---@param spec CardSpec
 ---@return BasicCard
 function fk.CreateBasicCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -34,7 +36,7 @@ function fk.CreateBasicCard(spec)
     return card
 end
 
----@param spec table
+---@param spec CardSpec
 ---@return TrickCard
 function fk.CreateTrickCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -47,7 +49,7 @@ function fk.CreateTrickCard(spec)
     return card
 end
 
----@param spec table
+---@param spec CardSpec
 ---@return EquipCard
 function fk.CreateEquipCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -108,7 +110,7 @@ function fk.CreateTriggerSkill(spec)
 		end
 	end
 	if type(spec.priority) == "number" then
-		for _, event in ipairs(spec.events) do
+		for _, event in ipairs(skill.events) do
 			skill.priority_table[event] = spec.priority
 		end
 	elseif type(spec.priority) == "table" then

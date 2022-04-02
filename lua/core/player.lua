@@ -13,6 +13,9 @@
 ---@field dead boolean
 ---@field state string
 ---@field player_skills Skill[]
+---@field flag string[]
+---@field tag table<string, any>
+---@field mark table<string, integer>
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -43,6 +46,9 @@ function Player:initialize()
     self.state = ""
 
     self.player_skills = {}
+    self.flag = {}
+    self.tag = {}
+    self.mark = {}
 end
 
 ---@param general General
@@ -56,8 +62,24 @@ function Player:setGeneral(general, setHp, addSkills)
     end
 
     if addSkills then
-        table.insertTable(self.playerSkills, general.skills)
+        table.insertTable(self.player_skills, general.skills)
     end
+end
+
+---@param flag string
+function Player:hasFlag(flag)
+    return table.contains(self.flag, flag)
+end
+
+---@param flag string
+function Player:setFlag(flag)
+    if not self:hasFlag(flag) then
+        table.insert(self.flag, flag)
+    end
+end
+
+function Player:clearFlags()
+    self.flag = {}
 end
 
 return Player
