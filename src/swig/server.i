@@ -32,6 +32,7 @@ public:
     void setOwner(ServerPlayer *owner);
 
     void addPlayer(ServerPlayer *player);
+    void addRobot(ServerPlayer *player);
     void removePlayer(ServerPlayer *player);
     QList<ServerPlayer *> getPlayers() const;
     ServerPlayer *findPlayer(int id) const;

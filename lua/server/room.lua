@@ -256,6 +256,17 @@ fk.room_callback["QuitRoom"] = function(jsonData)
     end
 end
 
+fk.room_callback["AddRobot"] = function(jsonData)
+    -- jsonData: [ int uid ]
+    local data = json.decode(jsonData)
+    local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
+    local room = player:getRoom()
+    
+    if not room:isLobby() then
+        room:addRobot(player)
+    end
+end
+
 fk.room_callback["PlayerStateChanged"] = function(jsonData)
     -- jsonData: [ int uid, string stateString ]
     -- note: this function is not called by Router.

@@ -27,9 +27,12 @@ Item {
         }
     }
     Button {
-        text: "start game"
+        text: "add robot"
         visible: dashboardModel.isOwner && !isStarted
         anchors.centerIn: parent
+        onClicked: {
+            ClientInstance.notifyServer("AddRobot", "[]");
+        }
     }
 
     states: [

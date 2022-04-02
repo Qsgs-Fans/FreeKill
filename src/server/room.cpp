@@ -149,6 +149,9 @@ void Room::addPlayer(ServerPlayer *player)
     emit playerAdded(player);
 }
 
+void Room::addRobot(ServerPlayer *player)
+{}
+
 void Room::removePlayer(ServerPlayer *player)
 {
     players.removeOne(player);
