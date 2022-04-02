@@ -117,7 +117,7 @@ end
 ---@param generalPool General[]
 ---@param except string[]
 ---@param filter function
----@return General[] generals
+---@return General[]
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     if filter then
         assert(type(filter) == "function")

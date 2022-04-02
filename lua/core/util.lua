@@ -71,7 +71,7 @@ Sql = {
 	--- Execute a `SELECT` SQL statement.
 	---@param db fk.SQLite3
 	---@param sql string
-	---@return table data # { [columnName] --> result : string[] }
+	---@return table @ { [columnName] --> result : string[] }
 	exec_select = function(db, sql)
 		return json.decode(fk.SelectFromDb(db, sql))
 	end,

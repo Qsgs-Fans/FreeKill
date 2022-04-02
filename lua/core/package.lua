@@ -25,7 +25,7 @@ function Package:initialize(name, _type)
     self.cards = {}
 end
 
----@return table skills
+---@return Skill[]
 function Package:getSkills()
     local ret = {table.unpack(self.related_skills)}
     if self.type == Package.GeneralPack then

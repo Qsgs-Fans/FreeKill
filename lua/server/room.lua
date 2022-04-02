@@ -72,7 +72,7 @@ end
 
 ---@param command string
 ---@param jsonData string
----@param players ServerPlayer[] # default all players
+---@param players ServerPlayer[] @ default all players
 function Room:doBroadcastNotify(command, jsonData, players)
     players = players or self.players
     local tolist = fk.SPlayerList()
@@ -85,7 +85,7 @@ end
 ---@param player ServerPlayer
 ---@param command string
 ---@param jsonData string
----@param wait boolean # default true
+---@param wait boolean @ default true
 ---@return string | nil
 function Room:doRequest(player, command, jsonData, wait)
     if wait == nil then wait = true end

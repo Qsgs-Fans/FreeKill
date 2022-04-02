@@ -41,6 +41,6 @@ json = {}
 function json.encode(obj)end
 
 --- convert JSON string to lua types
----@param str string # JSON string to decode
+---@param str string @ JSON string to decode
 ---@return table|number|string
 function json.decode(str)end

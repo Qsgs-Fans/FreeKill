@@ -8,6 +8,19 @@ EquipCard = require "core.card_type.equip"
 dofile "lua/server/event.lua"
 TriggerSkill = require "core.skill_type.trigger"
 
+---@class SkillSpec: Skill
+
+---@alias TrigFunc fun(self: any, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@class TriggerSkillSpec: SkillSpec
+---@field global boolean
+---@field events Event | Event[]
+---@field refresh_events Event | Event[]
+---@field priority number | table<Event, number>
+---@field on_trigger TrigFunc
+---@field can_trigger TrigFunc
+---@field on_refresh TrigFunc
+---@field can_refresh TrigFunc
+
 ---@param spec table
 ---@return BasicCard
 function fk.CreateBasicCard(spec)
@@ -47,7 +60,7 @@ function fk.CreateEquipCard(spec)
     return card
 end
 
----@param spec table
+---@param spec TriggerSkillSpec
 ---@return TriggerSkill
 function fk.CreateTriggerSkill(spec)
 	assert(type(spec.name) == "string")
@@ -79,6 +92,10 @@ function fk.CreateTriggerSkill(spec)
 
 	if spec.can_refresh then
 		skill.canRefresh = spec.can_refresh
+	end
+
+	if spec.on_refresh then
+		skill.refresh = spec.on_refresh
 	end
 
 	if not spec.priority then
