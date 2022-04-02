@@ -127,3 +127,10 @@ function CreateEnum(table, enum)
 		print(string.format(enum_format, table, v, i))
 	end
 end
+
+function switch(param, case_table)
+	local case = case_table[param]
+    if case then return case() end
+    local def = case_table["default"]
+    return def and def() or nil
+end
