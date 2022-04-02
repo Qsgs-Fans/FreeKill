@@ -41,9 +41,13 @@ GameRule = fk.CreateTriggerSkill{
                 player:setFlag("-Global_FirstRound")
                 player:turnOver()
             elseif not player.dead then
-                --player:play()
-                room:askForSkillInvoke(player, "rule")
+                player:play()
+                --room:askForSkillInvoke(player, "rule")
             end
+        end,
+        default = function()
+            print("game_rule: Event=" .. event)
+            room:askForSkillInvoke(player, "rule")
         end,
         })
         return false
