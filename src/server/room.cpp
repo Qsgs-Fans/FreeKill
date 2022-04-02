@@ -11,6 +11,7 @@ Room::Room(Server* server)
     setParent(server);
     owner = nullptr;
     gameStarted = false;
+    robot_id = -1;
     timeout = 15;
     if (!isLobby()) {
         connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
@@ -150,7 +151,18 @@ void Room::addPlayer(ServerPlayer *player)
 }
 
 void Room::addRobot(ServerPlayer *player)
-{}
+{
+    if (player != owner || isFull()) return;
+
+    ServerPlayer *robot = new ServerPlayer(this);
+    robot->setState(Player::Robot);
+    robot->setId(robot_id);
+    robot->setAvatar("guanyu");
+    robot->setScreenName(QString("COMP-%1").arg(robot_id));
+    robot_id--;
+
+    addPlayer(robot);
+}
 
 void Room::removePlayer(ServerPlayer *player)
 {
@@ -233,9 +245,9 @@ void Room::gameOver()
 {
     gameStarted = false;
     runned_players.clear();
-    // clean offline players
+    // clean not online players
     foreach (ServerPlayer *p, players) {
-        if (p->getState() == Player::Offline) {
+        if (p->getState() != Player::Online) {
             p->deleteLater();
         }
     }

@@ -77,6 +77,7 @@ private:
     ServerPlayer *owner;    // who created this room?
     QList<ServerPlayer *> players;
     QList<int> runned_players;
+    int robot_id;
     bool gameStarted;
 
     int timeout;

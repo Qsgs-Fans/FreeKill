@@ -64,22 +64,26 @@ void ServerPlayer::speak(const QString& message)
 
 void ServerPlayer::doRequest(const QString& command, const QString& jsonData, int timeout)
 {
+    if (getState() != Player::Online) return;
     int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
     router->request(type, command, jsonData, timeout);
 }
 
 QString ServerPlayer::waitForReply()
 {
+    if (getState() != Player::Online) return "";
     return router->waitForReply();
 }
 
 QString ServerPlayer::waitForReply(int timeout)
 {
+    if (getState() != Player::Online) return "";
     return router->waitForReply(timeout);
 }
 
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
+    if (getState() != Player::Online) return;
     int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
     router->notify(type, command, jsonData);
 }
