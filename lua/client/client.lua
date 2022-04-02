@@ -2,6 +2,7 @@ Client = class('Client')
 
 -- load client classes
 ClientPlayer = require "client.clientplayer"
+dofile "lua/client/client_util.lua"
 
 fk.client_callback = {}
 

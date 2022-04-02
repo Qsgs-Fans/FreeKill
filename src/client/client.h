@@ -3,6 +3,7 @@
 
 #include "router.h"
 #include "clientplayer.h"
+#include "qmlbackend.h"
 
 class Client : public QObject {
     Q_OBJECT
@@ -21,6 +22,8 @@ public:
     ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
     void removePlayer(int id);
     Q_INVOKABLE void clearPlayers();
+
+    lua_State *getLuaState();
 
 signals:
     void error_message(const QString &msg);

@@ -84,3 +84,35 @@ bool QmlBackend::exists(const QString &file) {
 bool QmlBackend::isDir(const QString &file) {
     return QFileInfo(file).isDir();
 }
+
+QString QmlBackend::translate(const QString &src) {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "Translate");
+    lua_pushstring(L, src.toUtf8().data());
+
+    int err = lua_pcall(L, 1, 1, 0);
+    const char *result = lua_tostring(L, -1);
+    if (err) {
+        qDebug() << result;
+        lua_pop(L, 1);
+        return "";
+    }
+    lua_pop(L, 1);
+    return QString(result);
+}
+
+QString QmlBackend::getGeneralData(const QString &general_name) {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetGeneralData");
+    lua_pushstring(L, general_name.toUtf8().data());
+
+    int err = lua_pcall(L, 1, 1, 0);
+    const char *result = lua_tostring(L, -1);
+    if (err) {
+        qDebug() << result;
+        lua_pop(L, 1);
+        return "";
+    }
+    lua_pop(L, 1);
+    return QString(result);
+}
