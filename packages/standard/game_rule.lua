@@ -12,7 +12,11 @@ GameRule = fk.CreateTriggerSkill{
 
     on_trigger = function(self, event, target, player, data)
         if player == nil then return false end
-        return TriggerSkill.trigger(self, event, target, player, data)
+        local room = player.room
+        if player.room:askForSkillInvoke(player, self.name) then
+            -- do something
+        end
+        return false
     end,
 
 }

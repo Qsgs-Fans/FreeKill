@@ -220,8 +220,16 @@ end
 
 ---@param player ServerPlayer
 ---@param choices string[]
-function Room:askForChoice(player, choices)
-    return choices[1]
+---@param skill_name string
+function Room:askForChoice(player, choices, skill_name, data)
+    if #choices == 1 then return choices[1] end
+    local command = "AskForChoice"
+    self:notifyMoveFocus(player, skill_name)
+    local result = self:doRequest(player, command, json.encode{
+        choices, skill_name
+    })
+    if result == "" then result = choices[1] end
+    return result
 end
 
 ---@param player ServerPlayer

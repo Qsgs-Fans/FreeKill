@@ -249,7 +249,7 @@ function GameLogic:trigger(event, target, data)
             end
 
             while #skill_names > 0 do
-                local skill_name = room:askForChoice(player, skill_names)
+                local skill_name = room:askForChoice(player, skill_names, "trigger")
                 local skill = triggerables[table.indexOf(skill_names, skill_name)]
                 broken = skill:trigger(event, target, player, data)
                 if broken then break end

@@ -209,3 +209,20 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
     roomScene.promptText = "Do you want to invoke '" + jsonData + "' ?";
     roomScene.state = "responding";
 }
+
+callbacks["AskForChoice"] = function(jsonData) {
+    // jsonData: [ string[] choices, string skill ]
+    // TODO: multiple choices, e.g. benxi_ol
+    let data = JSON.parse(jsonData);
+    let choices = data[0];
+    let skill_name = data[1];
+    roomScene.promptText = skill_name + ": Please make choice";
+    roomScene.state = "replying";
+    roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
+    let box = roomScene.popupBox.item;
+    box.options = choices;
+    box.skill_name = skill_name;
+    box.accepted.connect(() => {
+        replyToServer(choices[box.result]);
+    });
+}
