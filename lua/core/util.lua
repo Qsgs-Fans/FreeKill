@@ -71,7 +71,7 @@ Sql = {
 	--- Execute a `SELECT` SQL statement.
 	---@param db fk.SQLite3
 	---@param sql string
-	---@return table data # { [columnName] --> result : string[] }
+	---@return table @ { [columnName] --> result : string[] }
 	exec_select = function(db, sql)
 		return json.decode(fk.SelectFromDb(db, sql))
 	end,
@@ -126,4 +126,11 @@ function CreateEnum(table, enum)
 	for i, v in ipairs(enum) do
 		print(string.format(enum_format, table, v, i))
 	end
+end
+
+function switch(param, case_table)
+	local case = case_table[param]
+    if case then return case() end
+    local def = case_table["default"]
+    return def and def() or nil
 end

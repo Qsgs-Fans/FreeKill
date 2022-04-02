@@ -16,17 +16,17 @@ FRoom = {}
 function FServer:createRoom(owner,name,capacity)end
 
 ---@param id integer
----@return fk.Room room
+---@return fk.Room
 function FServer:findRoom(id)end
 
----@return fk.Room room
+---@return fk.Room
 function FServer:lobby()end
 
 ---@param id integer
----@return fk.ServerPlayer player
+---@return fk.ServerPlayer
 function FServer:findPlayer(id)end
 
----@return fk.SQLite3 db
+---@return fk.SQLite3
 function FServer:getDatabase()end
 
 function FRoom:getServer()end

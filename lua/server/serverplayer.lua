@@ -49,8 +49,8 @@ end
 --- Wait for at most *timeout* seconds for reply from client.
 ---
 --- If *timeout* is negative or **nil**, the function will wait forever until get reply.
----@param timeout integer # seconds to wait
----@return string reply # JSON data
+---@param timeout integer @ seconds to wait
+---@return string @ JSON data
 function ServerPlayer:waitForReply(timeout)
     local result = ""
     if timeout == nil then
@@ -83,6 +83,14 @@ function ServerPlayer:getNextAlive()
         ret = ret.next
     end
     return ret
+end
+
+function ServerPlayer:turnOver()
+    self.faceup = not self.faceup
+    self.room:broadcastProperty(self, "faceup")
+
+    -- TODO: log
+    self.room.logic:trigger(fk.TurnedOver, self)
 end
 
 return ServerPlayer

@@ -30,6 +30,10 @@ Room::Room(Server* server)
 Room::~Room()
 {
     // TODO
+    if (isRunning()) {
+        terminate();
+        wait();
+    }
     disconnect();
     lua_close(L);
 }

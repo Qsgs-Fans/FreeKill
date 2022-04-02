@@ -20,7 +20,7 @@ Item {
     property int seatNumber: 1
     property bool isDead: false
     property bool dying: false
-    property bool faceturned: false
+    property bool faceup: true
     property bool chained: false
     property bool drank: false
     property bool isOwner: false
@@ -110,9 +110,9 @@ Item {
 
     Image {
         id: turnedOver
-        visible: root.faceturned
+        visible: !root.faceup
         source: SkinBank.PHOTO_DIR + "faceturned"
-        anchors.centerIn: photoMask
+        x: 29; y: 5
     }
 
     Image {

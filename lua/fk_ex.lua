@@ -8,7 +8,22 @@ EquipCard = require "core.card_type.equip"
 dofile "lua/server/event.lua"
 TriggerSkill = require "core.skill_type.trigger"
 
----@param spec table
+---@class CardSpec: Card
+
+---@class SkillSpec: Skill
+
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@class TriggerSkillSpec: SkillSpec
+---@field global boolean
+---@field events Event | Event[]
+---@field refresh_events Event | Event[]
+---@field priority number | table<Event, number>
+---@field on_trigger TrigFunc
+---@field can_trigger TrigFunc
+---@field on_refresh TrigFunc
+---@field can_refresh TrigFunc
+
+---@param spec CardSpec
 ---@return BasicCard
 function fk.CreateBasicCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -21,7 +36,7 @@ function fk.CreateBasicCard(spec)
     return card
 end
 
----@param spec table
+---@param spec CardSpec
 ---@return TrickCard
 function fk.CreateTrickCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -34,7 +49,7 @@ function fk.CreateTrickCard(spec)
     return card
 end
 
----@param spec table
+---@param spec CardSpec
 ---@return EquipCard
 function fk.CreateEquipCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
@@ -47,7 +62,7 @@ function fk.CreateEquipCard(spec)
     return card
 end
 
----@param spec table
+---@param spec TriggerSkillSpec
 ---@return TriggerSkill
 function fk.CreateTriggerSkill(spec)
 	assert(type(spec.name) == "string")
@@ -81,6 +96,10 @@ function fk.CreateTriggerSkill(spec)
 		skill.canRefresh = spec.can_refresh
 	end
 
+	if spec.on_refresh then
+		skill.refresh = spec.on_refresh
+	end
+
 	if not spec.priority then
 		if frequency == Skill.Wake then
 			spec.priority = 3
@@ -91,7 +110,7 @@ function fk.CreateTriggerSkill(spec)
 		end
 	end
 	if type(spec.priority) == "number" then
-		for _, event in ipairs(spec.events) do
+		for _, event in ipairs(skill.events) do
 			skill.priority_table[event] = spec.priority
 		end
 	elseif type(spec.priority) == "table" then
