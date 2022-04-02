@@ -90,7 +90,7 @@ function ServerPlayer:turnOver()
     self.room:broadcastProperty(self, "faceup")
 
     -- TODO: log
-    -- TODO: trigger event
+    self.room.logic:trigger(fk.TurnedOver, self)
 end
 
 return ServerPlayer

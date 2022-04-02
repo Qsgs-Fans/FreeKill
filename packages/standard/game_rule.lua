@@ -42,6 +42,7 @@ GameRule = fk.CreateTriggerSkill{
                 player:turnOver()
             elseif not player.dead then
                 --player:play()
+                room:askForSkillInvoke(player, "rule")
             end
         end,
         })
