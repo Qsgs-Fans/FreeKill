@@ -179,12 +179,22 @@ void Room::removePlayer(ServerPlayer *player)
     if (isLobby()) return;
 
     if (gameStarted) {
+        // TODO: if the player is died..
+        // create robot first
+        ServerPlayer *robot = new ServerPlayer(this);
+        robot->setState(Player::Robot);
+        robot->setId(robot_id);
+        robot->setAvatar(player->getAvatar());
+        robot->setScreenName(QString("COMP-%1").arg(robot_id));
+        robot_id--;
+
+        // tell lua & clients
         QJsonArray jsonData;
         jsonData << player->getId();
+        jsonData << robot->getId();
+        callLua("PlayerRunned", QJsonDocument(jsonData).toJson());
         doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
         runned_players << player->getId();
-
-        // TODO: create a robot for runned player. 
     } else {
         QJsonArray jsonData;
         jsonData << player->getId();
@@ -212,7 +222,11 @@ QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer* expect) const
 
 ServerPlayer *Room::findPlayer(int id) const
 {
-    return server->findPlayer(id);
+    foreach (ServerPlayer *p, players) {
+        if (p->getId() == id)
+            return p;
+    }
+    return nullptr;
 }
 
 int Room::getTimeout() const
