@@ -73,6 +73,15 @@ end
 
 ---@param flag string
 function Player:setFlag(flag)
+    if flag == "." then 
+        self:clearFlags()
+        return
+    end
+    if flag:sub(1, 1) == "-" then
+        flag = flag:sub(2, #flag)
+        table.removeOne(self.flag, flag)
+        return
+    end
     if not self:hasFlag(flag) then
         table.insert(self.flag, flag)
     end
@@ -80,6 +89,38 @@ end
 
 function Player:clearFlags()
     self.flag = {}
+end
+
+function Player:addMark(mark, count)
+    count = count or 1
+    local num = self.mark[mark]
+    num = num or 0
+    self:setMark(mark, math.max(num + count, 0))
+end
+
+function Player:removeMark(mark, count)
+    count = count or 1
+    local num = self.mark[mark]
+    num = num or 0
+    self:setMark(mark, math.max(num - count, 0))
+end
+
+function Player:setMark(mark, count)
+    if self.mark[mark] ~= count then
+        self.mark[mark] = count
+    end
+end
+
+function Player:getMark(mark)
+    return (self.mark[mark] or 0)
+end
+
+function Player:getMarkNames()
+    local ret = {}
+    for k, _ in pairs(self.mark) do
+        table.insert(ret, k)
+    end
+    return ret
 end
 
 return Player

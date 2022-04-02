@@ -85,4 +85,12 @@ function ServerPlayer:getNextAlive()
     return ret
 end
 
+function ServerPlayer:turnOver()
+    self.faceup = not self.faceup
+    self.room:broadcastProperty(self, "faceup")
+
+    -- TODO: log
+    -- TODO: trigger event
+end
+
 return ServerPlayer

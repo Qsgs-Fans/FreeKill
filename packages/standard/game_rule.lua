@@ -34,7 +34,15 @@ GameRule = fk.CreateTriggerSkill{
             end
 
             -- TODO: send log
-            -- TODO: play
+            
+            player:addMark("Global_TurnCount")
+            player:setMark("damage_point_round", 0)
+            if not player.faceup then
+                player:setFlag("-Global_FirstRound")
+                player:turnOver()
+            elseif not player.dead then
+                --player:play()
+            end
         end,
         })
         return false

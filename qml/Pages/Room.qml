@@ -121,7 +121,7 @@ Item {
                 seatNumber: model.seatNumber
                 isDead: model.isDead
                 dying: model.dying
-                faceturned: model.faceturned
+                faceup: model.faceup
                 chained: model.chained
                 drank: model.drank
                 isOwner: model.isOwner
@@ -161,7 +161,7 @@ Item {
         self.seatNumber: dashboardModel.seatNumber
         self.isDead: dashboardModel.isDead
         self.dying: dashboardModel.dying
-        self.faceturned: dashboardModel.faceturned
+        self.faceup: dashboardModel.faceup
         self.chained: dashboardModel.chained
         self.drank: dashboardModel.drank
         self.isOwner: dashboardModel.isOwner
@@ -274,7 +274,7 @@ Item {
             seatNumber: 1,
             isDead: false,
             dying: false,
-            faceturned: false,
+            faceup: true,
             chained: false,
             drank: false,
             isOwner: false
@@ -297,7 +297,7 @@ Item {
                 seatNumber: i + 1,
                 isDead: false,
                 dying: false,
-                faceturned: false,
+                faceup: true,
                 chained: false,
                 drank: false,
                 isOwner: false
