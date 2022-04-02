@@ -56,6 +56,8 @@ QString Player::getStateString() const
         return QStringLiteral("online");
     case Trust:
         return QStringLiteral("trust");
+    case Robot:
+        return QStringLiteral("robot");
     case Offline:
         return QStringLiteral("offline");
     default:
@@ -75,6 +77,8 @@ void Player::setStateString(const QString &state)
         setState(Online);
     else if (state == QStringLiteral("trust"))
         setState(Trust);
+    else if (state == QStringLiteral("robot"))
+        setState(Robot);
     else if (state == QStringLiteral("offline"))
         setState(Offline);
     else
