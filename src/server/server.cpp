@@ -244,6 +244,7 @@ void Server::onUserDisconnected()
     Room *room = player->getRoom();
     if (room->isStarted()) {
         player->setState(Player::Offline);
+        // TODO: add a robot
     } else {
         player->deleteLater();
     }
