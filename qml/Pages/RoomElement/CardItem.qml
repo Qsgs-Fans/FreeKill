@@ -21,6 +21,7 @@ Item {
     property string suit: "club"
     property int number: 7
     property string name: "slash"
+    property string subtype: ""
     property string color: ""    // only use when suit is empty
     property string footnote: "曹操对刘备"    // footnote, e.g. "A use card to B"
     property bool footnoteVisible: true

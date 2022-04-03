@@ -26,8 +26,7 @@ Item {
     property bool isOwner: false
 
     property alias handcardArea: handcardAreaItem
-    // TODO: 
-    property alias equipArea: handcardAreaItem
+    property alias equipArea: equipAreaItem
     property alias delayedTrickArea: delayedTrickAreaItem
     property alias specialArea: handcardAreaItem
 
@@ -115,10 +114,24 @@ Item {
     }
 
     Image {
+        visible: equipAreaItem.length > 0
+        source: SkinBank.PHOTO_DIR + "equipbg"
+        x: 31
+        y: 121
+    }
+
+    Image {
         id: turnedOver
         visible: !root.faceup
         source: SkinBank.PHOTO_DIR + "faceturned"
         x: 29; y: 5
+    }
+
+    EquipArea {
+        id: equipAreaItem
+
+        x: 31
+        y: 139
     }
 
     Image {
