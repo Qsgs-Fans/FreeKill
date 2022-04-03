@@ -1,3 +1,16 @@
+var Player = {
+    PlaceHand : 1,
+    PlaceEquip : 2,
+    PlaceDelayedTrick : 3,
+    PlaceJudge : 4,
+    PlaceSpecial : 5,
+    DiscardPile : 6,
+    DrawPile : 7,
+    PlaceTable : 8,
+    PlaceUnknown : 9,
+    PlaceAG : 10
+}
+
 function arrangePhotos() {
     /* Layout of photos:
      * +---------------+
@@ -115,8 +128,8 @@ function getAreaItem(area, id) {
 function moveCards(moves) {
     for (var i = 0; i < moves.length; i++) {
         var move = moves[i];
-        var from = getAreaItem(move.from);
-        var to = getAreaItem(move.to);
+        var from = getAreaItem(move.from, Self.id);
+        var to = getAreaItem(move.to, Self.id);
         if (!from || !to || from === to)
             continue;
         var items = from.remove(move.cards);

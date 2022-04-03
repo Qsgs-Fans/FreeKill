@@ -11,10 +11,15 @@ RowLayout {
     property alias delayedTrickArea: selfPhoto.delayedTrickArea
     property alias specialArea: selfPhoto.specialArea
 
+    Item {
+        width: 40
+    }
+
     HandcardArea {
         id: handcardAreaItem
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        Layout.preferredHeight: 130
+        Layout.alignment: Qt.AlignVCenter
     }
 
     Photo {

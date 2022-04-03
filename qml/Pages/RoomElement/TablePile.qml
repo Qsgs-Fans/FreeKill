@@ -27,8 +27,7 @@ Item {
                 for (i = 0; i < discardedCards.length; i++) {
                     card = discardedCards[i];
                     card.homeOpacity = 0;
-                    // card.goBack(true);
-                    roomScene.cardItemGoBack(card, true)
+                    card.goBack(true);
                     card.destroyOnStop()
                 }
 
@@ -101,12 +100,12 @@ Item {
         let overflow = false;
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
-            card.homeX = i * card.width;
-            if (card.homeX + card.width >= root.width) {
+            card.origX = i * card.width;
+            if (card.origX + card.width >= root.width) {
                 overflow = true;
                 break;
             }
-            card.homeY = 0;
+            card.origY = 0;
         }
 
         if (overflow) {
@@ -115,8 +114,8 @@ Item {
             let spacing = xLimit / (cards.length - 1);
             for (i = 0; i < cards.length; i++) {
                 card = cards[i];
-                card.homeX = i * spacing;
-                card.homeY = 0;
+                card.origX = i * spacing;
+                card.origY = 0;
             }
         }
 
@@ -124,15 +123,14 @@ Item {
         let parentPos = roomScene.mapFromItem(root, 0, 0);
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
-            card.homeX += parentPos.x + offsetX;
-            card.homeY += parentPos.y;
+            card.origX += parentPos.x + offsetX;
+            card.origY += parentPos.y;
         }
 
         if (animated) {
             for (i = 0; i < cards.length; i++)
-                // cards[i].goBack() // WTF
+                cards[i].goBack(true)
                 // console.log(cards[i].homeOpacity)
-                roomScene.cardItemGoBack(cards[i], true)
         }
     }
 }
