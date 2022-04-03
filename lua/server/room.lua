@@ -276,7 +276,8 @@ fk.room_callback["PlayerRunned"] = function(jsonData)
     local robot = data[2]
     for _, p in ipairs(RoomInstance.players) do
         if p:getId() == runner then
-            p.serverplayer = RoomInstance:findPlayerById(robot)
+            p.serverplayer = RoomInstance.room:findPlayer(robot)
+            p.id = p.serverplayer:getId()
         end
     end
 end

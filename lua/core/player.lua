@@ -1,4 +1,5 @@
 ---@class Player : Object
+---@field id integer
 ---@field hp integer
 ---@field maxHp integer
 ---@field kingdom string
@@ -31,6 +32,7 @@ Player.NotActive = 8
 Player.PhaseNone = 9
 
 function Player:initialize()
+    self.id = 114514
     self.hp = 0
     self.maxHp = 0
     self.kingdom = "qun"

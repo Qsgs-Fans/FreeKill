@@ -189,6 +189,8 @@ void Room::removePlayer(ServerPlayer *player)
         robot->setScreenName(QString("COMP-%1").arg(robot_id));
         robot_id--;
 
+        players.append(robot);
+
         // tell lua & clients
         QJsonArray jsonData;
         jsonData << player->getId();
