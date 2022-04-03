@@ -25,6 +25,12 @@ Item {
     property bool drank: false
     property bool isOwner: false
 
+    property alias handcardArea: handcardAreaItem
+    // TODO: 
+    property alias equipArea: handcardAreaItem
+    property alias delayedTrickArea: handcardAreaItem
+    property alias specialArea: handcardAreaItem
+
     property alias progressBar: progressBar
     property alias progressTip: progressTip.text
 
@@ -242,6 +248,16 @@ Item {
             color: "white"
             text: ""
         }
+    }
+
+    InvisibleCardArea {
+        id: handcardAreaItem
+        anchors.centerIn: parent
+    }
+
+    InvisibleCardArea {
+        id: defaultArea
+        anchors.centerIn: parent
     }
 
     onGeneralChanged: {

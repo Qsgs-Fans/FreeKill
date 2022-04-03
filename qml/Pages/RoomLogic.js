@@ -61,6 +61,71 @@ function replyToServer(jsonData) {
     ClientInstance.replyToServer("", jsonData);
 }
 
+function getPhotoModel(id) {
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === id) {
+            return item;
+        }
+    }
+    return undefined;
+}
+
+function getPhoto(id) {
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === id) {
+            return photos.itemAt(i);
+        }
+    }
+    return undefined;
+}
+
+function getAreaItem(area, id) {
+    if (area === Player.DrawPile) {
+        return drawPile;
+    } else if (area === Player.DiscardPile || area === Player.PlaceTable
+                || area === Player.PlaceJudge) {
+        return tablePile;
+    } else if (area === Player.PlaceAG) {
+        return popupBox.item;
+    }
+
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === dashboardModel.id) {
+            photo = dashboard;
+        } else {
+            return null;
+        }
+    }
+
+    if (area === Player.PlaceHand) {
+        return photo.handcardArea;
+    } /*else if (area === Player.PlaceEquip)
+        return photo.equipArea;
+    else if (area === Player.PlaceDelayedTrick)
+        return photo.delayedTrickArea;
+    else if (area === Player.PlaceSpecial)
+        return photo.specialArea;*/
+
+    return null;
+}
+
+function moveCards(moves) {
+    for (var i = 0; i < moves.length; i++) {
+        var move = moves[i];
+        var from = getAreaItem(move.from);
+        var to = getAreaItem(move.to);
+        if (!from || !to || from === to)
+            continue;
+        var items = from.remove(move.cards);
+        if (items.length > 0)
+            to.add(items);
+        to.updateCardPosition(true);
+    }
+}
+
 callbacks["AddPlayer"] = function(jsonData) {
     // jsonData: int id, string screenName, string avatar
     for (let i = 0; i < photoModel.count; i++) {
@@ -81,14 +146,11 @@ callbacks["AddPlayer"] = function(jsonData) {
 callbacks["RemovePlayer"] = function(jsonData) {
     // jsonData: int uid
     let uid = JSON.parse(jsonData)[0];
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item.id = -1;
-            item.screenName = "";
-            item.general = "";
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model.id = -1;
+        model.screenName = "";
+        model.general = "";
     }
 }
 
@@ -102,12 +164,9 @@ callbacks["RoomOwner"] = function(jsonData) {
         return;
     }
 
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item.isOwner = true;
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model.isOwner = true;
     }
 }
 
@@ -124,12 +183,9 @@ callbacks["PropertyUpdate"] = function(jsonData) {
         return;
     }
 
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item[property_name] = value;
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model[property_name] = value;
     }
 }
 
@@ -193,12 +249,9 @@ callbacks["PlayerRunned"] = function(jsonData) {
     let runner = data[0];
     let robot = data[1];
 
-    let model;
-    for (let i = 0; i < playerNum - 1; i++) {
-        model = photoModel.get(i);
-        if (model.id === runner) {
-            model.id = robot;
-        }
+    let model = getPhotoModel(runner);
+    if (typeof(model) !== "undefined") {
+        model.id = robot;
     }
 }
 
