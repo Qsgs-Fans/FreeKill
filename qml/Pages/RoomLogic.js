@@ -115,12 +115,12 @@ function getAreaItem(area, id) {
 
     if (area === Player.PlaceHand) {
         return photo.handcardArea;
-    } /*else if (area === Player.PlaceEquip)
+    } else if (area === Player.PlaceEquip)
         return photo.equipArea;
     else if (area === Player.PlaceDelayedTrick)
         return photo.delayedTrickArea;
     else if (area === Player.PlaceSpecial)
-        return photo.specialArea;*/
+        return photo.specialArea;
 
     return null;
 }

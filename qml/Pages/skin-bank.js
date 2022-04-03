@@ -8,3 +8,4 @@ var DEATH_DIR = AppPath + "/image/photo/death/";
 var MAGATAMA_DIR = AppPath + "/image/photo/magatama/";
 var CARD_DIR = AppPath + "/image/card/";
 var CARD_SUIT_DIR = AppPath + "/image/card/suit/";
+var DELAYED_TRICK_DIR = AppPath + "/image/card/delayedTrick/";

@@ -28,7 +28,7 @@ Item {
     property alias handcardArea: handcardAreaItem
     // TODO: 
     property alias equipArea: handcardAreaItem
-    property alias delayedTrickArea: handcardAreaItem
+    property alias delayedTrickArea: delayedTrickAreaItem
     property alias specialArea: handcardAreaItem
 
     property alias progressBar: progressBar
@@ -253,6 +253,13 @@ Item {
     InvisibleCardArea {
         id: handcardAreaItem
         anchors.centerIn: parent
+    }
+
+    DelayedTrickArea {
+        id: delayedTrickAreaItem
+        rows: 1
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
     }
 
     InvisibleCardArea {
