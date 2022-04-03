@@ -49,14 +49,15 @@ public:
 
     void gameOver();
 
-    lua_State *getLuaState() const;
-
     void initLua();
     void callLua(const QString &command, const QString &jsonData);
     LuaFunction callback;
 
     void roomStart();
     LuaFunction startGame;
+
+    void lockLua(const QString &caller);
+    void unlockLua(const QString &caller);
 
 signals:
     void abandoned();
@@ -83,6 +84,7 @@ private:
     int timeout;
 
     lua_State *L;
+    QMutex lua_mutex;
 };
 
 #endif // _ROOM_H

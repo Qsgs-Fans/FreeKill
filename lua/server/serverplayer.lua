@@ -11,6 +11,7 @@ local ServerPlayer = Player:subclass("ServerPlayer")
 function ServerPlayer:initialize(_self)
     Player.initialize(self)
     self.serverplayer = _self
+    self.id = _self:getId()
     self.room = nil
 
     self.next = nil
@@ -24,7 +25,7 @@ end
 
 ---@return integer
 function ServerPlayer:getId()
-    return self.serverplayer:getId()
+    return self.id
 end
 
 ---@param command string

@@ -276,7 +276,8 @@ fk.room_callback["PlayerRunned"] = function(jsonData)
     local robot = data[2]
     for _, p in ipairs(RoomInstance.players) do
         if p:getId() == runner then
-            p.serverplayer = RoomInstance:findPlayerById(robot)
+            p.serverplayer = RoomInstance.room:findPlayer(robot)
+            p.id = p.serverplayer:getId()
         end
     end
 end
@@ -289,6 +290,12 @@ fk.room_callback["PlayerStateChanged"] = function(jsonData)
     local id = data[1]
     local stateString = data[2]
     RoomInstance:findPlayerById(id).state = stateString
+end
+
+fk.room_callback["RoomDeleted"] = function(jsonData)
+    debug.sethook(function ()
+        error("Room is deleted when running")
+    end, "l")
 end
 
 fk.room_callback["DoLuaScript"] = function(jsonData)

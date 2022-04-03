@@ -32,10 +32,10 @@ Room::~Room()
 {
     // TODO
     if (isRunning()) {
-        terminate();
+        callLua("RoomDeleted", "");
+        unlockLua(__FUNCTION__);
         wait();
     }
-    disconnect();
     lua_close(L);
 }
 
@@ -180,6 +180,7 @@ void Room::removePlayer(ServerPlayer *player)
 
     if (gameStarted) {
         // TODO: if the player is died..
+
         // create robot first
         ServerPlayer *robot = new ServerPlayer(this);
         robot->setState(Player::Robot);
@@ -188,6 +189,8 @@ void Room::removePlayer(ServerPlayer *player)
         robot->setScreenName(QString("COMP-%1").arg(robot_id));
         robot_id--;
 
+        players.append(robot);
+
         // tell lua & clients
         QJsonArray jsonData;
         jsonData << player->getId();
@@ -195,6 +198,10 @@ void Room::removePlayer(ServerPlayer *player)
         callLua("PlayerRunned", QJsonDocument(jsonData).toJson());
         doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
         runned_players << player->getId();
+
+        // FIXME: abortRequest here will result crash
+        // but if dont abort and room is abandoned, the main thread will wait until replyed
+        // player->abortRequest();
     } else {
         QJsonArray jsonData;
         jsonData << player->getId();
@@ -202,6 +209,8 @@ void Room::removePlayer(ServerPlayer *player)
     }
 
     if (isAbandoned()) {
+        // FIXME: do not delete room here
+        // create a new thread and delete the room
         emit abandoned();
     } else if (player == owner) {
         setOwner(players.first());
@@ -274,8 +283,28 @@ void Room::gameOver()
     }
 }
 
+void Room::lockLua(const QString &caller)
+{
+    if (!gameStarted) return;
+    lua_mutex.lock();
+#ifdef QT_DEBUG
+    //qDebug() << caller << "=> room->L is locked.";
+#endif
+}
+
+void Room::unlockLua(const QString &caller)
+{
+    if (!gameStarted) return;
+    lua_mutex.unlock();
+#ifdef QT_DEBUG
+    //qDebug() << caller << "=> room->L is unlocked.";
+#endif
+}
+
 void Room::run()
 {
     gameStarted = true;
+    lockLua(__FUNCTION__);
     roomStart();
+    unlockLua(__FUNCTION__);
 }
