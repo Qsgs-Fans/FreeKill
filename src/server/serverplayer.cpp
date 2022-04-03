@@ -69,22 +69,37 @@ void ServerPlayer::doRequest(const QString& command, const QString& jsonData, in
     router->request(type, command, jsonData, timeout);
 }
 
+void ServerPlayer::abortRequest()
+{
+    router->abortRequest();
+}
+
 QString ServerPlayer::waitForReply()
 {
+    room->unlockLua(__FUNCTION__);
+    QString ret;
     if (getState() != Player::Online) {
         QThread::sleep(1);
-        return "";
+        ret = "";
+    } else {
+        ret = router->waitForReply();
     }
-    return router->waitForReply();
+    room->lockLua(__FUNCTION__);
+    return ret;
 }
 
 QString ServerPlayer::waitForReply(int timeout)
 {
+    room->unlockLua(__FUNCTION__);
+    QString ret;
     if (getState() != Player::Online) {
         QThread::sleep(1);
-        return "";
+        ret = "";
+    } else {
+        ret = router->waitForReply(timeout);
     }
-    return router->waitForReply(timeout);
+    room->lockLua(__FUNCTION__);
+    return ret;
 }
 
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)

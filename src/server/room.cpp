@@ -32,10 +32,10 @@ Room::~Room()
 {
     // TODO
     if (isRunning()) {
-        terminate();
+        callLua("RoomDeleted", "");
+        unlockLua(__FUNCTION__);
         wait();
     }
-    disconnect();
     lua_close(L);
 }
 
@@ -180,6 +180,9 @@ void Room::removePlayer(ServerPlayer *player)
 
     if (gameStarted) {
         // TODO: if the player is died..
+
+        player->abortRequest();
+
         // create robot first
         ServerPlayer *robot = new ServerPlayer(this);
         robot->setState(Player::Robot);
@@ -274,8 +277,28 @@ void Room::gameOver()
     }
 }
 
+void Room::lockLua(const QString &caller)
+{
+    if (!gameStarted) return;
+    lua_mutex.lock();
+#ifdef QT_DEBUG
+    qDebug() << caller << "=> room->L is locked.";
+#endif
+}
+
+void Room::unlockLua(const QString &caller)
+{
+    if (!gameStarted) return;
+    lua_mutex.unlock();
+#ifdef QT_DEBUG
+    qDebug() << caller << "=> room->L is unlocked.";
+#endif
+}
+
 void Room::run()
 {
     gameStarted = true;
+    lockLua(__FUNCTION__);
     roomStart();
+    unlockLua(__FUNCTION__);
 }

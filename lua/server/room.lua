@@ -291,6 +291,12 @@ fk.room_callback["PlayerStateChanged"] = function(jsonData)
     RoomInstance:findPlayerById(id).state = stateString
 end
 
+fk.room_callback["RoomDeleted"] = function(jsonData)
+    debug.sethook(function ()
+        error("Room is deleted when running")
+    end, "l")
+end
+
 fk.room_callback["DoLuaScript"] = function(jsonData)
     -- jsonData: [ int uid, string luaScript ]
     -- warning: only use this in debugging mode.
