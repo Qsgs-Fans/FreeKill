@@ -79,9 +79,9 @@ Column {
     {
         area.add(inputs);
 
-        var card, item;
+        let card, item;
         if (inputs instanceof Array) {
-            for (var i = 0; i < inputs.length; i++) {
+            for (let i = 0; i < inputs.length; i++) {
                 card = inputs[i];
                 item = items[subtypes.indexOf(card.subtype)];
                 item.setCard(card);
@@ -97,11 +97,11 @@ Column {
 
     function remove(outputs)
     {
-        var result = area.remove(outputs);
-        for (var i = 0; i < result.length; i++) {
-            var card = result[i];
-            for (var j = 0; j < items.length; j++) {
-                var item = items[j];
+        let result = area.remove(outputs);
+        for (let i = 0; i < result.length; i++) {
+            let card = result[i];
+            for (let j = 0; j < items.length; j++) {
+                let item = items[j];
                 if (item.cid === card.cid) {
                     item.reset();
                     item.hide();

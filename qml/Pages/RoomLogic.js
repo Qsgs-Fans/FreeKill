@@ -126,13 +126,13 @@ function getAreaItem(area, id) {
 }
 
 function moveCards(moves) {
-    for (var i = 0; i < moves.length; i++) {
-        var move = moves[i];
-        var from = getAreaItem(move.from, Self.id);
-        var to = getAreaItem(move.to, Self.id);
+    for (let i = 0; i < moves.length; i++) {
+        let move = moves[i];
+        let from = getAreaItem(move.from, Self.id);
+        let to = getAreaItem(move.to, Self.id);
         if (!from || !to || from === to)
             continue;
-        var items = from.remove(move.cards);
+        let items = from.remove(move.cards);
         if (items.length > 0)
             to.add(items);
         to.updateCardPosition(true);

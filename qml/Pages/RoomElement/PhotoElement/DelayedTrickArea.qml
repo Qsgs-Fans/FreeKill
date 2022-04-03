@@ -43,11 +43,11 @@ Item {
 
     function remove(outputs)
     {
-        var result = area.remove(outputs);
-        for (var i = 0; i < result.length; i++) {
-            var item = result[i];
-            for (var j = 0; j < cards.count; j++) {
-                var icon = cards.get(j);
+        let result = area.remove(outputs);
+        for (let i = 0; i < result.length; i++) {
+            let item = result[i];
+            for (let j = 0; j < cards.count; j++) {
+                let icon = cards.get(j);
                 if (icon.cid === item.cid) {
                     cards.remove(j, 1);
                     break;

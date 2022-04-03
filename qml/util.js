@@ -6,7 +6,7 @@ function convertNumber(number) {
     if (number >= 2 && number <= 10)
         return number;
     if (number >= 11 && number <= 13) {
-        var strs = ["J", "Q", "K"];
+        const strs = ["J", "Q", "K"];
         return strs[number - 11];
     }
     return "";
