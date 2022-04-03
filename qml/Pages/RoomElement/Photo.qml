@@ -14,7 +14,7 @@ Item {
     property string role: "unknown"
     property string kingdom: "qun"
     property string netstate: "online"
-    property int handcards: 0
+    property alias handcards: handcardAreaItem.length
     property int maxHp: 0
     property int hp: 0
     property int seatNumber: 1

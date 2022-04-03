@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import "../../util.js" as Utility
 
 Item {
     property alias cards: cardArea.cards

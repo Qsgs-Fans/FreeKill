@@ -24,6 +24,7 @@ RowLayout {
 
     Photo {
         id: selfPhoto
+        handcards: handcardAreaItem.length
     }
 
     Item { width: 5 }
