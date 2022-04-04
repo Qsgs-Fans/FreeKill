@@ -132,6 +132,9 @@ function GameLogic:prepareForStart()
     local allCardIds = Fk:getAllCardIds()
     table.shuffle(allCardIds)
     room.draw_pile = allCardIds
+    for _, id in ipairs(room.draw_pile) do
+        self.room:setCardArea(id, Card.DrawPile)
+    end
 
     self:addTriggerSkill(GameRule)
     for _, trig in ipairs(Fk.global_trigger) do
@@ -144,7 +147,12 @@ function GameLogic:action()
     local room = self.room
 
     for _, p in ipairs(room.players) do
-        p:addCards(Player.Hand, room:getNCards(4))
+        local cardIds = room:getNCards(4)
+        p:addCards(Player.Hand, cardIds)
+
+        for _, id in ipairs(cardIds) do
+            self.room:setCardArea(id, Card.PlayerHand)
+        end
         print(#room.draw_pile)
         print(#p:getCardIds(Player.Hand))
 

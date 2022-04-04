@@ -7,6 +7,7 @@
 ---@field timeout integer
 ---@field tag table<string, any>
 ---@field draw_pile integer[]
+---@field card_place table<integer, CardArea>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -39,6 +40,9 @@ function Room:initialize(_room)
     self.tag = {}
     self.draw_pile = {}
     self.discard_pile = {}
+    self.processing_area = {}
+    self.void = {}
+    self.card_place = {}
 end
 
 -- When this function returns, the Room(C++) thread stopped.
@@ -170,6 +174,7 @@ function Room:shuffleDrawPile()
     end
 
     table.insertTable(self.draw_pile, self.discard_pile)
+    self.discard_pile = {}
     table.shuffle(self.draw_pile)
 end
 
@@ -196,7 +201,155 @@ function Room:getNCards(num, from)
     return cardIds
 end
 
----@return ServerPlayer | nil
+---@param cardId integer
+---@param cardArea CardArea
+function Room:setCardArea(cardId, cardArea)
+    self.card_place[cardId] = cardArea
+end
+
+---@param cardId integer
+---@return CardArea
+function Room:getCardArea(cardId)
+    return self.card_place[cardId] or Card.Unknown
+end
+
+---@alias CardsMoveInfo {ids: integer[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null }
+---@alias MoveInfo {cardId: integer, fromArea: CardArea}
+---@alias CardsMoveStruct {moveInfo: {id: integer, fromArea: CardArea}[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer|null, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null, fromSpecialName: string|null }
+
+---@vararg CardsMoveInfo
+---@return boolean
+function Room:moveCards(...)
+    ---@type CardsMoveStruct[]
+    local cardsMoveStructs = {}
+    local infoCheck = function(info)
+        assert(table.contains({ Card.PlayerHand, Card.PlayerEquip, Card.PlayerJudge, Card.PlayerSpecial, Card.Processing, Card.DrawPile, Card.DiscardPile, Card.Void }, info.toArea))
+        assert(info.toArea ~= Card.PlayerSpecial or type(info.specialName) == "string")
+        assert(type(info.moveReason) == "number")
+    end
+
+    for _, cardsMoveInfo in ipairs({...}) do
+        if #cardsMoveInfo.ids > 0 then
+            infoCheck(cardsMoveInfo)
+
+            ---@type MoveInfo[]
+            local infos = {}
+            for _, id in ipairs(cardsMoveInfo.ids) do
+                table.insert(infos, { cardId = id, fromArea = self:getCardArea(id) })
+            end
+    
+            ---@type CardsMoveStruct
+            local cardsMoveStruct = {
+                moveInfo = infos,
+                from = cardsMoveInfo.from,
+                to = cardsMoveInfo.to,
+                toArea = cardsMoveInfo.toArea,
+                moveReason = cardsMoveInfo.moveReason,
+                proposer = cardsMoveInfo.proposer,
+                skillName = cardsMoveInfo.skillName,
+                moveVisible = cardsMoveInfo.moveVisible,
+                specialName = cardsMoveInfo.specialName,
+                specialVisible = cardsMoveInfo.specialVisible,
+            }
+    
+            table.insert(cardsMoveStructs, cardsMoveStruct)
+        end
+    end
+
+    if #cardsMoveStructs < 1 then
+        return false
+    end
+
+    if self.logic:trigger(fk.BeforeCardsMove, nil, cardsMoveStructs) then
+        return false
+    end
+
+    for _, data in ipairs(cardsMoveStructs) do
+        if #data.moveInfo > 0 then
+            infoCheck(data)
+
+            ---@param info MoveInfo
+            for _, info in ipairs(data.moveInfo) do
+                local realFromArea = self:getCardArea(info.cardId)
+                local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+
+                if table.contains(playerAreas, realFromArea) and data.from then
+                    self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, data.specialName)
+                elseif realFromArea ~= Card.Unknown then
+                    local fromAreaIds = {}
+                    if realFromArea == Card.Processing then
+                        fromAreaIds = self.processing_area
+                    elseif realFromArea == Card.DrawPile then
+                        fromAreaIds = self.draw_pile
+                    elseif realFromArea == Card.DiscardPile then
+                        fromAreaIds = self.discard_pile
+                    elseif realFromArea == Card.Void then
+                        fromAreaIds = self.void
+                    end
+
+                    table.removeOne(fromAreaIds, info.cardId)
+                end
+
+                if table.contains(playerAreas, data.toArea) and data.to then
+                    self:getPlayerById(data.to):addCards(data.toArea, { info.cardId }, data.specialName)
+                    self:setCardArea(info.cardId, data.toArea)
+                else
+                    local toAreaIds = {}
+                    if data.toArea == Card.Processing then
+                        toAreaIds = self.processing_area
+                    elseif data.toArea == Card.DrawPile then
+                        toAreaIds = self.draw_pile
+                    elseif data.toArea == Card.DiscardPile then
+                        toAreaIds = self.discard_pile
+                    elseif data.toArea == Card.Void then
+                        toAreaIds = self.void
+                    end
+
+                    table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
+                    self:setCardArea(info.cardId, data.toArea)
+                end
+            end
+        end
+    end
+
+    self.logic:trigger(fk.AfterCardsMove, nil, cardsMoveStructs)
+    return true
+end
+
+---@param player ServerPlayer
+---@param num integer
+---@param skillName string
+---@param fromPlace "top"|"bottom"
+---@return integer[]
+function Room:drawCards(player, num, skillName, fromPlace)
+    local topCards = self:getNCards(num, fromPlace)
+    self:moveCards({
+        ids = topCards,
+        to = player:getId(),
+        toArea = Card.PlayerHand,
+        moveReason = fk.ReasonDraw,
+        proposer = player:getId(),
+        skillName = skillName,
+    })
+
+    return { table.unpack(topCards) }
+end
+
+---@param id integer
+---@return ServerPlayer
+function Room:getPlayerById(id)
+    assert(type(id) == "number")
+
+    for _, p in ipairs(self.players) do
+        if p:getId() == id then
+            return p
+        end
+    end
+
+    error("cannot find player by " .. id)
+end
+
+---@return ServerPlayer | null
 function Room:getLord()
     local lord = self.players[1]
     if lord.role == "lord" then return lord end

@@ -7,6 +7,7 @@
 ---@field id integer
 ---@field type CardType
 ---@field sub_type CardSubtype
+---@field area CardArea
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -39,6 +40,18 @@ Card.SubtypeArmor = 4
 Card.SubtypeDefensiveRide = 5
 Card.SubtypeOffensiveRide = 6
 Card.SubtypeTreasure = 7
+
+---@alias CardArea integer
+
+Card.Unknown = 0
+Card.PlayerHand = 1
+Card.PlayerEquip = 2
+Card.PlayerJudge = 3
+Card.PlayerSpecial = 4
+Card.Processing = 5
+Card.DrawPile = 6
+Card.DiscardPile = 7
+Card.Void = 8
 
 function Card:initialize(name, suit, number, color)
     self.name = name

@@ -33,7 +33,7 @@ Player.Finish = 7
 Player.NotActive = 8
 Player.PhaseNone = 9
 
----@alias CardArea integer
+---@alias PlayerCardArea integer
 
 Player.Hand = 1
 Player.Equip = 2
@@ -139,6 +139,9 @@ function Player:getMarkNames()
     return ret
 end
 
+---@param playerArea PlayerCardArea
+---@param cardIds integer[]
+---@param specialName string
 function Player:addCards(playerArea, cardIds, specialName)
     assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
     assert(playerArea ~= Player.Special or type(specialName) == "string")
@@ -151,6 +154,28 @@ function Player:addCards(playerArea, cardIds, specialName)
     end
 end
 
+---@param playerArea PlayerCardArea
+---@param cardIds integer[]
+---@param specialName string
+function Player:removeCards(playerArea, cardIds, specialName)
+    assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
+    assert(playerArea ~= Player.Special or type(specialName) == "string")
+
+    local fromAreaIds = playerArea == Player.Special and self.special_cards[specialName] or self.player_cards[playerArea]
+    if fromAreaIds then
+        for _, id in ipairs(cardIds) do
+            if #fromAreaIds == 0 then
+                break
+            end
+
+            table.removeOne(fromAreaIds, id)
+        end
+    end
+end
+
+---@param playerAreas PlayerCardArea
+---@param specialName string
+---@return integer[]
 function Player:getCardIds(playerAreas, specialName)
     local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
     playerAreas = playerAreas or rightAreas
