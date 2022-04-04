@@ -139,6 +139,42 @@ function moveCards(moves) {
     }
 }
 
+function setEmotion(id, emotion) {
+    let component = Qt.createComponent("RoomElement/PixmapAnimation.qml");
+    if (component.status !== Component.Ready)
+        return;
+
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === dashboardModel.id) {
+            photo = dashboard.self;
+        } else {
+            return null;
+        }
+    }
+
+    var animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
+    animation.finished.connect(() => animation.destroy());
+    animation.start();
+}
+
+function changeHp(id, delta, losthp) {
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === dashboardModel.id) {
+            photo = dashboard.self;
+        } else {
+            return null;
+        }
+    }
+    if (delta < 0) {
+        if (!losthp) {
+            setEmotion(id, "damage")
+            photo.tremble()
+        }
+    }
+}
+
 callbacks["AddPlayer"] = function(jsonData) {
     // jsonData: int id, string screenName, string avatar
     for (let i = 0; i < photoModel.count; i++) {
