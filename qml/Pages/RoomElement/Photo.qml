@@ -24,6 +24,7 @@ Item {
     property bool chained: false
     property bool drank: false
     property bool isOwner: false
+    property string status: "normal"
 
     property alias handcardArea: handcardAreaItem
     property alias equipArea: equipAreaItem
@@ -32,6 +33,9 @@ Item {
 
     property alias progressBar: progressBar
     property alias progressTip: progressTip.text
+
+    property bool selectable: false
+    property bool selected: false
 
     Behavior on x {
         NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
@@ -126,6 +130,11 @@ Item {
         source: SkinBank.PHOTO_DIR + "equipbg"
         x: 31
         y: 121
+    }
+
+    Image {
+        source: root.status != "normal" ? SkinBank.STATUS_DIR + root.status : ""
+        x: -6
     }
 
     Image {
