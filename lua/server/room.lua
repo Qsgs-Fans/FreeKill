@@ -6,6 +6,7 @@
 ---@field game_finished boolean
 ---@field timeout integer
 ---@field tag table<string, any>
+---@field draw_pile integer[]
 local Room = class("Room")
 
 -- load classes used by the game
@@ -36,6 +37,8 @@ function Room:initialize(_room)
     self.game_finished = false
     self.timeout = _room:getTimeout()
     self.tag = {}
+    self.draw_pile = {}
+    self.discard_pile = {}
 end
 
 -- When this function returns, the Room(C++) thread stopped.
@@ -159,6 +162,38 @@ function Room:adjustSeats()
     end
 
     self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+end
+
+function Room:shuffleDrawPile()
+    if #self.draw_pile + #self.discard_pile == 0 then
+        return
+    end
+
+    table.insertTable(self.draw_pile, self.discard_pile)
+    table.shuffle(self.draw_pile)
+end
+
+---@param num integer
+---@param from string
+---@return integer[]
+function Room:getNCards(num, from)
+    from = from or "top"
+    assert(from == "top" or from == "bottom")
+
+    local cardIds = {}
+    while num > 0 do
+        if #self.draw_pile < 1 then
+            self:shuffleDrawPile()
+        end
+
+        local index = from == "top" and 1 or #self.draw_pile
+        table.insert(cardIds, self.draw_pile[index])
+        table.remove(self.draw_pile, index)
+
+        num = num - 1
+    end
+
+    return cardIds
 end
 
 ---@return ServerPlayer | nil

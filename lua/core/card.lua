@@ -6,6 +6,7 @@
 ---@field color Color
 ---@field id integer
 ---@field type CardType
+---@field sub_type CardSubtype
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -29,6 +30,16 @@ Card.TypeBasic = 2
 Card.TypeTrick = 3
 Card.TypeEquip = 4
 
+---@alias CardSubtype integer
+
+Card.SubTypeNone = 1
+Card.SubtypeDelayedTrick = 2
+Card.SubtypeWeapon = 3
+Card.SubtypeArmor = 4
+Card.SubtypeDefensiveRide = 5
+Card.SubtypeOffensiveRide = 6
+Card.SubtypeTreasure = 7
+
 function Card:initialize(name, suit, number, color)
     self.name = name
     self.suit = suit or Card.NoSuit
@@ -47,6 +58,7 @@ function Card:initialize(name, suit, number, color)
     self.package = nil
     self.id = 0
     self.type = 0
+    self.sub_type = Card.SubTypeNone
 end
 
 return Card

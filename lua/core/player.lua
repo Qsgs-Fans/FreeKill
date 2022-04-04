@@ -17,6 +17,8 @@
 ---@field flag string[]
 ---@field tag table<string, any>
 ---@field mark table<string, integer>
+---@field player_cards table<integer, integer[]>
+---@field special_cards table<string, integer[]>
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -31,6 +33,13 @@ Player.Finish = 7
 Player.NotActive = 8
 Player.PhaseNone = 9
 
+---@alias CardArea integer
+
+Player.Hand = 1
+Player.Equip = 2
+Player.Judge = 3
+Player.Special = 4
+
 function Player:initialize()
     self.id = 114514
     self.hp = 0
@@ -38,7 +47,6 @@ function Player:initialize()
     self.kingdom = "qun"
     self.role = ""
     self.general = ""
-    self.handcard_num = 0
     self.seat = 0
     self.phase = Player.PhaseNone
     self.faceup = true
@@ -51,6 +59,12 @@ function Player:initialize()
     self.flag = {}
     self.tag = {}
     self.mark = {}
+    self.player_cards = {
+        [Player.Hand] = {},
+        [Player.Equip] = {},
+        [Player.Judge] = {},
+    }
+    self.special_cards = {}
 end
 
 ---@param general General
@@ -123,6 +137,36 @@ function Player:getMarkNames()
         table.insert(ret, k)
     end
     return ret
+end
+
+function Player:addCards(playerArea, cardIds, specialName)
+    assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
+    assert(playerArea ~= Player.Special or type(specialName) == "string")
+
+    if playerArea == Player.Special then
+        self.special_cards[specialName] = self.special_cards[specialName] or {}
+        table.insertTable(self.special_cards[specialName], cardIds)
+    else
+        table.insertTable(self.player_cards[playerArea], cardIds)
+    end
+end
+
+function Player:getCardIds(playerAreas, specialName)
+    local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
+    playerAreas = playerAreas or rightAreas
+    assert(type(playerAreas) == "number" or type(playerAreas) == "table")
+    local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
+
+    local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+    local cardIds = {}
+    for _, area in ipairs(areas) do
+        assert(table.contains(rightAreas, area))
+        assert(playerArea ~= Player.Special or type(specialName) == "string")
+        local currentCardIds = area == Player.Special and self.special_cards[specialName] or self.player_cards[area]
+        table.insertTable(cardIds, currentCardIds)
+    end
+
+    return cardIds
 end
 
 return Player

@@ -64,7 +64,7 @@ function GameLogic:chooseGenerals()
     local lord = room:getLord()
     local lord_general = nil
     if lord ~= nil then
-        room.current  = lord
+        room.current = lord
         local generals = Fk:getGeneralsRandomly(3)
         for i = 1, #generals do
             generals[i] = generals[i].name
@@ -129,6 +129,9 @@ function GameLogic:prepareForStart()
 
     -- TODO: prepare drawPile
     -- TODO: init cards in drawPile
+    local allCardIds = Fk:getAllCardIds()
+    table.shuffle(allCardIds)
+    room.draw_pile = allCardIds
 
     self:addTriggerSkill(GameRule)
     for _, trig in ipairs(Fk.global_trigger) do
@@ -139,6 +142,19 @@ end
 function GameLogic:action()
     self:trigger(fk.GameStart)
     local room = self.room
+
+    for _, p in ipairs(room.players) do
+        p:addCards(Player.Hand, room:getNCards(4))
+        print(#room.draw_pile)
+        print(#p:getCardIds(Player.Hand))
+
+        local info = p.general
+        for _, id in ipairs(p:getCardIds(Player.Hand)) do
+            info = info .. " + " .. Fk:getCardById(id).name
+        end
+        print(info)
+    end    
+
     while true do
         self:trigger(fk.TurnStart, room.current)
         if room.game_finished then break end
