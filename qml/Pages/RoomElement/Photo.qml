@@ -41,6 +41,14 @@ Item {
         NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
     }
 
+    PixmapAnimation {
+        id: animFrame
+        source: "selected"
+        anchors.centerIn: parent
+        loop: true
+        scale: 1.1
+    }
+
     Image {
         id: back
         source: SkinBank.PHOTO_BACK_DIR + root.kingdom
@@ -261,6 +269,13 @@ Item {
             color: "white"
             text: ""
         }
+    }
+
+    PixmapAnimation {
+        id: animSelectable
+        source: "selectable"
+        anchors.centerIn: parent
+        loop: true
     }
 
     InvisibleCardArea {
