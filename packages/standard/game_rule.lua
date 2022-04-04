@@ -36,14 +36,56 @@ GameRule = fk.CreateTriggerSkill{
             -- TODO: send log
             
             player:addMark("Global_TurnCount")
-            player:setMark("damage_point_round", 0)
             if not player.faceup then
                 player:setFlag("-Global_FirstRound")
                 player:turnOver()
             elseif not player.dead then
-                --player:play()
-                room:askForSkillInvoke(player, "rule")
+                player:play()
             end
+        end,
+        [fk.EventPhaseProceeding] = function()
+            switch(player.phase, {
+            [Player.PhaseNone] = function()
+                error("You should never proceed PhaseNone")
+            end,
+            [Player.RoundStart] = function()
+                print("Proceeding RoundStart.")
+            end,
+            [Player.Start] = function()
+                print("Proceeding Start.")
+            end,
+            [Player.Judge] = function()
+                print("Proceeding Judge.")
+            end,
+            [Player.Draw] = function()
+                print("Proceeding Draw.")
+            end,
+            [Player.Play] = function()
+                print("Proceeding Play.")
+                room:askForSkillInvoke(player, "rule")
+            end,
+            [Player.Discard] = function()
+                print("Proceeding Discard.")
+            end,
+            [Player.Finish] = function()
+                print("Proceeding Finish.")
+            end,
+            [Player.NotActive] = function()
+                print("Proceeding NotActive.")
+            end,
+            })
+        end,
+        [fk.EventPhaseEnd] = function()
+            if player.phase == Player.Play then
+                -- TODO: clear history
+            end
+        end,
+        [fk.EventPhaseChanging] = function()
+            -- TODO: copy but dont copy all
+        end,
+        default = function()
+            print("game_rule: Event=" .. event)
+            room:askForSkillInvoke(player, "rule")
         end,
         })
         return false
