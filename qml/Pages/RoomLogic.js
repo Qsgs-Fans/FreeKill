@@ -94,6 +94,15 @@ function getPhoto(id) {
     return undefined;
 }
 
+function getPhotoOrDashboard(id) {
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === Self.id)
+            return dashboard;
+    }
+    return photo;
+}
+
 function getAreaItem(area, id) {
     if (area === Player.DrawPile) {
         return drawPile;
@@ -104,13 +113,9 @@ function getAreaItem(area, id) {
         return popupBox.item;
     }
 
-    let photo = getPhoto(id);
+    let photo = getPhotoOrDashboard(id);
     if (!photo) {
-        if (id === dashboardModel.id) {
-            photo = dashboard;
-        } else {
-            return null;
-        }
+        return null;
     }
 
     if (area === Player.PlaceHand) {
@@ -153,7 +158,7 @@ function setEmotion(id, emotion) {
         }
     }
 
-    var animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
+    let animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
     animation.finished.connect(() => animation.destroy());
     animation.start();
 }
@@ -173,6 +178,29 @@ function changeHp(id, delta, losthp) {
             photo.tremble()
         }
     }
+}
+
+function doIndicate(from, tos) {
+    let component = Qt.createComponent("RoomElement/IndicatorLine.qml");
+    if (component.status !== Component.Ready)
+        return;
+
+    let fromItem = getPhotoOrDashboard(from);
+    let fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+
+    let end = [];
+    for (let i = 0; i < tos.length; i++) {
+        if (from === tos[i])
+            continue;
+        let toItem = getPhotoOrDashboard(tos[i]);
+        let toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
+        end.push(toPos);
+    }
+
+    let color = "#96943D";
+    let line = component.createObject(roomScene, {start: fromPos, end: end, color: color});
+    line.finished.connect(() => line.destroy());
+    line.running = true;
 }
 
 callbacks["AddPlayer"] = function(jsonData) {
