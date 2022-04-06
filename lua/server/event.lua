@@ -21,21 +21,33 @@ fk.PreHpRecover = 15
 fk.HpRecover = 16
 fk.PreHpLost = 17
 fk.HpLost = 18
-fk.HpChanged = 19
-fk.MaxHpChanged = 20
+fk.BeforeHpChanged = 19
+fk.HpChanged = 20
+fk.MaxHpChanged = 21
 
-fk.EventLoseSkill = 21
-fk.EventAcquireSkill = 22
+fk.EventLoseSkill = 22
+fk.EventAcquireSkill = 23
 
-fk.StartJudge = 23
-fk.AskForRetrial = 24
-fk.FinishRetrial = 25
-fk.FinishJudge = 26
+fk.StartJudge = 24
+fk.AskForRetrial = 25
+fk.FinishRetrial = 26
+fk.FinishJudge = 27
 
-fk.PindianVerifying = 27
-fk.Pindian = 28
+fk.PindianVerifying = 28
+fk.Pindian = 29
 
-fk.TurnedOver = 29
-fk.ChainStateChanged = 30
+fk.TurnedOver = 30
+fk.ChainStateChanged = 31
 
-fk.NumOfEvents = 31
+fk.PreDamage = 32
+fk.DamageCaused = 33
+fk.DamageInflicted = 34
+fk.Damage = 35
+fk.Damaged = 36
+fk.DamageFinished = 37
+
+fk.EnterDying = 38
+fk.Dying = 39
+fk.AfterDying = 40
+
+fk.NumOfEvents = 41

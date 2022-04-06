@@ -8,6 +8,7 @@ local Equip = require "core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
 dofile "lua/server/event.lua"
+dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 
 ---@class CardSpec: Card
@@ -72,8 +73,9 @@ function fk.CreateWeapon(spec)
 		elseif not spec.class_name then spec.class_name = spec.name end
 		if spec.suit then assert(type(spec.suit) == "number") end
 		if spec.number then assert(type(spec.number) == "number") end
+		if spec.attack_range then assert(type(spec.attack_range) == "number" and spec.attack_range >= 0) end
 
-    local card = Weapon:new(spec.name, spec.suit, spec.number)
+    local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
     return card
 end
 

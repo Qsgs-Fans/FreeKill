@@ -59,6 +59,7 @@ GameRule = fk.CreateTriggerSkill{
             end,
             [Player.Draw] = function()
                 print("Proceeding Draw.")
+                room:drawCards(player, 2, self.name)
             end,
             [Player.Play] = function()
                 print("Proceeding Play.")
@@ -66,6 +67,10 @@ GameRule = fk.CreateTriggerSkill{
             end,
             [Player.Discard] = function()
                 print("Proceeding Discard.")
+                local discardNum = #player:getCardIds(Player.Hand) - player:getMaxCards()
+                if discardNum > 0 then
+                    room:askForDiscard(player, discardNum, discardNum, false, self.name)
+                end
             end,
             [Player.Finish] = function()
                 print("Proceeding Finish.")

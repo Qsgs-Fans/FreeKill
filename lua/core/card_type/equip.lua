@@ -9,16 +9,17 @@ end
 ---@class Weapon : EquipCard
 local Weapon = EquipCard:subclass("Weapon")
 
-function Weapon:initialize(name, suit, number)
+function Weapon:initialize(name, suit, number, attackRange)
     EquipCard.initialize(self, name, suit, number)
     self.sub_type = Card.SubtypeWeapon
+    self.attack_range = attackRange or 1
 end
 
 ---@param suit Suit
 ---@param number integer
 ---@return Weapon
 function Weapon:clone(suit, number)
-    local newCard = Weapon:new(self.name, suit, number)
+    local newCard = Weapon:new(self.name, suit, number, self.attack_range)
     return newCard
 end
 

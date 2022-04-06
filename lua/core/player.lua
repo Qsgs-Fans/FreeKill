@@ -194,4 +194,31 @@ function Player:getCardIds(playerAreas, specialName)
     return cardIds
 end
 
+function Player:getMaxCards()
+    local baseValue = math.max(self.hp, 0)
+
+    return baseValue
+end
+
+---@param subtype CardSubtype
+---@return integer|null
+function Player:getEquipBySubtype(subtype)
+    local equipId = nil
+    for _, id in ipairs(self.player_cards[Player.Equip]) do
+        if Fk.getCardById(id).sub_type == subtype then
+            equipId = id
+            break
+        end
+    end
+
+    return equipId
+end
+
+function Player:getAttackRange()
+    local weapon = Fk.getCardById(self:getEquipBySubtype(Card.SubtypeWeapon))
+    local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
+
+    return math.max(baseAttackRange, 0)
+end
+
 return Player

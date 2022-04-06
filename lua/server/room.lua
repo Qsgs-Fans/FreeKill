@@ -174,6 +174,9 @@ function Room:shuffleDrawPile()
     end
 
     table.insertTable(self.draw_pile, self.discard_pile)
+    for _, id in ipairs(self.discard_pile) do
+        self:setCardArea(id, Card.DrawPile)
+    end
     self.discard_pile = {}
     table.shuffle(self.draw_pile)
 end
@@ -292,7 +295,6 @@ function Room:moveCards(...)
 
                 if table.contains(playerAreas, data.toArea) and data.to then
                     self:getPlayerById(data.to):addCards(data.toArea, { info.cardId }, data.specialName)
-                    self:setCardArea(info.cardId, data.toArea)
                 else
                     local toAreaIds = {}
                     if data.toArea == Card.Processing then
@@ -306,8 +308,8 @@ function Room:moveCards(...)
                     end
 
                     table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
-                    self:setCardArea(info.cardId, data.toArea)
                 end
+                self:setCardArea(info.cardId, data.toArea)
             end
         end
     end
@@ -335,6 +337,34 @@ function Room:drawCards(player, num, skillName, fromPlace)
     return { table.unpack(topCards) }
 end
 
+---@param player ServerPlayer
+---@param minNum integer
+---@param maxNum integer
+---@param includeEquip boolean
+---@param skillName string
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
+    if minNum < 1 then
+        return nil
+    end
+
+    local hands = player:getCardIds(Player.Hand)
+    local toDiscard = {}
+    for i = 1, minNum do
+        local randomId = hands[math.random(1, #hands)]
+        table.insert(toDiscard, randomId)
+        table.removeOne(hands, randomId)
+    end
+
+    self:moveCards({
+        ids = toDiscard,
+        from = player:getId(),
+        toArea = Card.DiscardPile,
+        moveReason = fk.ReasonDiscard,
+        proposer = player:getId(),
+        skillName = skillName
+    })
+end
+
 ---@param id integer
 ---@return ServerPlayer
 function Room:getPlayerById(id)
@@ -347,6 +377,36 @@ function Room:getPlayerById(id)
     end
 
     error("cannot find player by " .. id)
+end
+
+---@param sortBySeat boolean
+---@return ServerPlayer[]
+function Room:getAlivePlayers(sortBySeat)
+    sortBySeat = sortBySeat or true
+
+    local alivePlayers = {}
+    for _, player in ipairs(self.players) do
+        if player:isAlive() then
+            table.insert(alivePlayers, player)
+        end
+    end
+
+    return alivePlayers
+end
+
+---@param player ServerPlayer
+---@param sortBySeat boolean
+---@return ServerPlayer[]
+function Room:getOtherPlayers(player, sortBySeat)
+    local alivePlayers = self:getAlivePlayers(sortBySeat)
+    for _, p in ipairs(alivePlayers) do
+        if p:getId() == player:getId() then
+            table.removeOne(alivePlayers, player)
+            break
+        end
+    end
+
+    return alivePlayers
 end
 
 ---@return ServerPlayer | null
@@ -398,16 +458,6 @@ function Room:gameOver()
     self.room:gameOver()
 end
 
----@param id integer
-function Room:findPlayerById(id)
-    for _, p in ipairs(self.players) do
-        if p:getId() == id then
-            return p
-        end
-    end
-    return nil
-end
-
 ---@param player ServerPlayer
 ---@param choices string[]
 ---@param skill_name string
@@ -432,6 +482,215 @@ function Room:askForSkillInvoke(player, skill_name, data)
     local result = self:doRequest(player, command, skill_name)
     if result ~= "" then invoked = true end
     return invoked
+end
+
+---@param player ServerPlayer
+---@param num integer
+---@param reason "loseHp"|"damage"|"recover"|null
+---@param skillName string
+---@param damageStruct DamageStruct|null
+---@return boolean
+function Room:changeHp(player, num, reason, skillName, damageStruct)
+    if num == 0 then
+        return false
+    end
+    assert(reason == nil or table.contains({ "loseHp", "damage", "recover" }, reason))
+
+    ---@alias HpChangedData { num: integer, reason: string, skillName: string }
+
+    ---@type HpChangedData
+    local data = {
+        num = num,
+        reason = reason,
+        skillName = skillName,
+    }
+
+    if self.logic:trigger(fk.BeforeHpChanged, player, data) then
+        return false
+    end
+
+    assert(not (data.reason == "recover" and data.num < 0))
+    player.hp = math.min(player.hp + data.num, player.maxHp)
+
+    self.logic:trigger(fk.HpChanged, player, data)
+
+    if player.hp < 1 then
+        ---@type DyingStruct
+        local dyingStruct = {
+            who = player:getId(),
+            damage = damageStruct,
+        }
+        self:enterDying(dyingStruct)
+    elseif player.dying then
+        player.dying = false
+    end
+
+    return true
+end
+
+---@param player ServerPlayer
+---@param num integer
+---@param skillName string
+---@return boolean
+function Room:loseHp(player, num, skillName)
+    if num == nil then
+        num = 1
+    elseif num < 1 then
+        return false
+    end
+
+    ---@alias HpLostData { num: integer, skillName: string }
+
+    ---@type HpLostData
+    local data = {
+        num = num,
+        skillName = skillName,
+    }
+    if self.logic:trigger(fk.PreHpLost, player, data) or data.num < 1 then
+        return false
+    end
+
+    if not self:changeHp(player, -num, "loseHp", skillName) then
+        return false
+    end
+
+    self.logic:trigger(fk.HpLost, player, data)
+    return true
+end
+
+---@param player ServerPlayer
+---@param num integer
+---@return boolean
+function Room:changeMaxHp(player, num)
+    if num == 0 then
+        return false
+    end
+
+    player.maxHp = math.max(player.maxHp + num, 0)
+    local diff = player.hp - player.maxHp
+    if diff > 0 then
+        if not self:changeHp(player, -diff) then
+            player.hp = player.hp - diff
+        end
+    end
+
+    if player.maxHp == 0 then
+        self:killPlayer({ who = player:getId() })
+    end
+
+    self.logic:trigger(fk.MaxHpChanged, player, { num = num })
+    return true
+end
+
+---@alias DamageStruct { from: integer|null, to: integer, damage: integer, damageType: DamageType, skillName: string }
+
+---@param damageStruct DamageStruct
+---@return boolean
+function Room:damage(damageStruct)
+    if damageStruct.damage < 1 then
+        return false
+    end
+
+    assert(type(damageStruct.to) == "number")
+
+    local stages = {
+        [fk.PreDamage] = damageStruct.from,
+        [fk.DamageCaused] = damageStruct.from,
+        [fk.DamageInflicted] = damageStruct.to,
+    }
+
+    for event, playerId in ipairs(stages) do
+        local player = playerId and self:getPlayerById(playerId) or nil
+        if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
+            return false
+        end
+
+        assert(type(damageStruct.to) == "number")
+    end
+
+    assert(self:getPlayerById(damageStruct.to))
+    local victim = self:getPlayerById(damageStruct.to)
+    if not victim:isAlive() then
+        return false
+    end
+
+    if not self:changeHp(victim, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
+        return false
+    end   
+
+    stages = {
+        [fk.Damage] = damageStruct.from,
+        [fk.Damaged] = damageStruct.to,
+        [fk.DamageFinished] = damageStruct.from,
+    }
+
+    for event, playerId in ipairs(stages) do
+        local player = playerId and self:getPlayerById(playerId) or nil
+        self.logic:trigger(event, player, damageStruct)
+    end
+
+    return true
+end
+
+---@alias RecoverStruct { who: integer, num: integer, recoverBy: integer|null, skillName: string|null }
+
+---@param recoverStruct RecoverStruct
+---@return boolean
+function Room:recover(recoverStruct)
+    if recoverStruct.num < 1 then
+        return false
+    end
+
+    local who = self:getPlayerById(recoverStruct.who)
+    if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
+        return false
+    end
+
+    if not self:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
+        return false
+    end
+
+    self.logic:trigger(fk.HpRecover, who, recoverStruct)
+    return true
+end
+
+---@alias DyingStruct { who: integer, damage: DamageStruct }
+
+---@param dyingStruct DyingStruct
+function Room:enterDying(dyingStruct)
+    local dyingPlayer = self:getPlayerById(dyingStruct.who)
+    dyingPlayer.dying = true
+    self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
+
+    if dyingPlayer.hp < 1 then
+        local alivePlayers = self:getAlivePlayers()
+        for _, player in ipairs(alivePlayers) do
+            self.logic:trigger(fk.Dying, player, dyingStruct)
+    
+            if player.hp > 0 then
+                break
+            end
+        end
+
+        if dyingPlayer.hp < 1 then
+            ---@type DeathStruct
+            local deathData = {
+                who = dyingPlayer:getId(),
+                damage = dyingStruct.damage,
+            }
+            self:killPlayer(deathData)
+        end
+    end
+    
+    self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
+end
+
+---@alias DeathStruct { who: integer, damage: DamageStruct }
+
+---@param deathStruct DeathStruct
+function Room:killPlayer(deathStruct)
+    print(self:getPlayerById(deathStruct.who).general .. " is dead")
+    self:gameOver()
 end
 
 fk.room_callback["QuitRoom"] = function(jsonData)
@@ -477,7 +736,7 @@ fk.room_callback["PlayerStateChanged"] = function(jsonData)
     local data = json.decode(jsonData)
     local id = data[1]
     local stateString = data[2]
-    RoomInstance:findPlayerById(id).state = stateString
+    RoomInstance:getPlayerById(id).state = stateString
 end
 
 fk.room_callback["RoomDeleted"] = function(jsonData)
