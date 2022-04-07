@@ -1,3 +1,6 @@
+---@class Client
+---@field client fk.Client
+---@field players ClientPlayer[]
 Client = class('Client')
 
 -- load client classes
@@ -21,6 +24,15 @@ function Client:initialize()
     end
 
     self.players = {}       -- ClientPlayer[]
+end
+
+---@param id integer
+---@return ClientPlayer
+function Client:findPlayer(id)
+    for _, p in ipairs(self.players) do
+        if p.player:getId() == id then return p end
+    end
+    return nil
 end
 
 fk.client_callback["Setup"] = function(jsonData)
@@ -61,19 +73,21 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
     local data = json.decode(jsonData)
     local n = #ClientInstance.players
     local players = {}
-    local function findPlayer(id)
-        for _, p in ipairs(ClientInstance.players) do
-            if p.player:getId() == id then return p end
-        end
-        return nil
-    end
 
     for i = 1, n do
-        table.insert(players, findPlayer(data[i]))
+        table.insert(players, ClientInstance:findPlayer(data[i]))
     end
     ClientInstance.players = players
 
     ClientInstance:notifyUI("ArrangeSeats", jsonData)
+end
+
+fk.client_callback["PropertyUpdate"] = function(jsonData)
+    -- jsonData: [ int id, string property_name, value ]
+    local data = json.decode(jsonData)
+    local id, name, value = data[1], data[2], data[3]
+    ClientInstance:findPlayer(id)[name] = value
+    ClientInstance:notifyUI("PropertyUpdate", jsonData)
 end
 
 -- Create ClientInstance (used by Lua)
