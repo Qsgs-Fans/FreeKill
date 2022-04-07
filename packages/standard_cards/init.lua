@@ -47,7 +47,7 @@ extension:addCards({
 })
 
 local jink = fk.CreateBasicCard{
-    name = 'jink',
+    name = "jink",
     suit = Card.Heart,
     number = 2,
 }
@@ -75,7 +75,7 @@ extension:addCards({
 })
 
 local peach = fk.CreateBasicCard{
-    name = 'peach',
+    name = "peach",
     suit = Card.Heart,
     number = 3,
 }
@@ -95,7 +95,7 @@ extension:addCards({
 })
 
 local dismantlement = fk.CreateTrickCard{
-    name = 'dismantlement',
+    name = "dismantlement",
     suit = Card.Spade,
     number = 3,
 }
@@ -115,7 +115,7 @@ extension:addCards({
 })
 
 local snatch = fk.CreateTrickCard{
-    name = 'snatch',
+    name = "snatch",
     suit = Card.Spade,
     number = 3,
 }
@@ -133,7 +133,7 @@ extension:addCards({
 })
 
 local duel = fk.CreateTrickCard{
-    name = 'duel',
+    name = "duel",
     suit = Card.Spade,
     number = 1,
 }
@@ -150,7 +150,7 @@ extension:addCards({
 })
 
 local collateral = fk.CreateTrickCard{
-    name = 'collateral',
+    name = "collateral",
     suit = Card.Club,
     number = 12,
 }
@@ -164,7 +164,7 @@ extension:addCards({
 })
 
 local exNihilo = fk.CreateTrickCard{
-    name = 'ex_nihilo',
+    name = "ex_nihilo",
     suit = Card.Heart,
     number = 7,
 }
@@ -180,7 +180,7 @@ extension:addCards({
 })
 
 local nullification = fk.CreateTrickCard{
-    name = 'nullification',
+    name = "nullification",
     suit = Card.Spade,
     number = 11,
 }
@@ -198,7 +198,7 @@ extension:addCards({
 })
 
 local savageAssault = fk.CreateTrickCard{
-    name = 'savage_assault',
+    name = "savage_assault",
     suit = Card.Spade,
     number = 7,
 }
@@ -213,7 +213,7 @@ extension:addCards({
 })
 
 local archeryAttack = fk.CreateTrickCard{
-    name = 'archery_attack',
+    name = "archery_attack",
     suit = Card.Heart,
     number = 1,
 }
@@ -226,7 +226,7 @@ extension:addCards({
 })
 
 local godSalvation = fk.CreateTrickCard{
-    name = 'god_salvation',
+    name = "god_salvation",
     suit = Card.Heart,
     number = 1,
 }
@@ -239,7 +239,7 @@ extension:addCards({
 })
 
 local amazingGrace = fk.CreateTrickCard{
-    name = 'amazing_grace',
+    name = "amazing_grace",
     suit = Card.Heart,
     number = 3,
 }
@@ -253,7 +253,7 @@ extension:addCards({
 })
 
 local lightning = fk.CreateDelayedTrickCard{
-    name = 'lightning',
+    name = "lightning",
     suit = Card.Spade,
     number = 1,
 }
@@ -267,7 +267,7 @@ extension:addCards({
 })
 
 local indulgence = fk.CreateDelayedTrickCard{
-    name = 'indulgence',
+    name = "indulgence",
     suit = Card.Spade,
     number = 6,
 }
@@ -281,12 +281,12 @@ extension:addCards({
 })
 
 local crossbow = fk.CreateWeapon{
-    name = 'crossbow',
+    name = "crossbow",
     suit = Card.Club,
     number = 1,
 }
 Fk:loadTranslationTable{
-    ["qinggang_sword"] = "青釭剑",
+    ["crossbow"] = "诸葛连弩",
 }
 
 extension:addCards({
@@ -295,7 +295,7 @@ extension:addCards({
 })
 
 local qingGang = fk.CreateWeapon{
-    name = 'qinggang_sword',
+    name = "qinggang_sword",
     suit = Card.Spade,
     number = 6,
 }
@@ -308,7 +308,7 @@ extension:addCards({
 })
 
 local iceSword = fk.CreateWeapon{
-    name = 'ice_sword',
+    name = "ice_sword",
     suit = Card.Spade,
     number = 2,
 }
@@ -320,21 +320,21 @@ extension:addCards({
     iceSword,
 })
 
-local doubleSword = fk.CreateWeapon{
-    name = 'double_sword',
+local doubleSwords = fk.CreateWeapon{
+    name = "double_swords",
     suit = Card.Spade,
     number = 2,
 }
 Fk:loadTranslationTable{
-    ["double_sword"] = "雌雄双股剑",
+    ["double_swords"] = "雌雄双股剑",
 }
 
 extension:addCards({
-    doubleSword,
+    doubleSwords,
 })
 
 local blade = fk.CreateWeapon{
-    name = 'blade',
+    name = "blade",
     suit = Card.Spade,
     number = 5,
 }
@@ -347,7 +347,7 @@ extension:addCards({
 })
 
 local spear = fk.CreateWeapon{
-    name = 'spear',
+    name = "spear",
     suit = Card.Spade,
     number = 12,
 }
@@ -360,7 +360,7 @@ extension:addCards({
 })
 
 local axe = fk.CreateWeapon{
-    name = 'axe',
+    name = "axe",
     suit = Card.Diamond,
     number = 5,
 }
@@ -373,7 +373,7 @@ extension:addCards({
 })
 
 local halberd = fk.CreateWeapon{
-    name = 'halberd',
+    name = "halberd",
     suit = Card.Diamond,
     number = 12,
 }
@@ -386,7 +386,7 @@ extension:addCards({
 })
 
 local kylinBow = fk.CreateWeapon{
-    name = 'kylin_bow',
+    name = "kylin_bow",
     suit = Card.Heart,
     number = 5,
 }
@@ -399,7 +399,7 @@ extension:addCards({
 })
 
 local eightDiagram = fk.CreateArmor{
-    name = 'eight_diagram',
+    name = "eight_diagram",
     suit = Card.Spade,
     number = 2,
 }
@@ -413,7 +413,7 @@ extension:addCards({
 })
 
 local niohShield = fk.CreateArmor{
-    name = 'nioh_sheild',
+    name = "nioh_shield",
     suit = Card.Club,
     number = 2,
 }
@@ -426,7 +426,7 @@ extension:addCards({
 })
 
 local diLu = fk.CreateDefensiveRide{
-    name = 'dilu',
+    name = "dilu",
     suit = Card.Club,
     number = 5,
 }
@@ -439,7 +439,7 @@ extension:addCards({
 })
 
 local jueYing = fk.CreateDefensiveRide{
-    name = 'jueying',
+    name = "jueying",
     suit = Card.Spade,
     number = 5,
 }
@@ -452,7 +452,7 @@ extension:addCards({
 })
 
 local zhuaHuangFeiDian = fk.CreateDefensiveRide{
-    name = 'zhuahuangfeidian',
+    name = "zhuahuangfeidian",
     suit = Card.Heart,
     number = 13,
 }
@@ -465,7 +465,7 @@ extension:addCards({
 })
 
 local chiTu = fk.CreateOffensiveRide{
-    name = 'chitu',
+    name = "chitu",
     suit = Card.Heart,
     number = 5,
 }
@@ -478,7 +478,7 @@ extension:addCards({
 })
 
 local daYuan = fk.CreateOffensiveRide{
-    name = 'dayuan',
+    name = "dayuan",
     suit = Card.Spade,
     number = 13,
 }
@@ -491,7 +491,7 @@ extension:addCards({
 })
 
 local ziXing = fk.CreateOffensiveRide{
-    name = 'zixing',
+    name = "zixing",
     suit = Card.Heart,
     number = 5,
 }

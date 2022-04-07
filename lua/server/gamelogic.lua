@@ -147,21 +147,8 @@ function GameLogic:action()
     local room = self.room
 
     for _, p in ipairs(room.players) do
-        local cardIds = room:getNCards(4)
-        p:addCards(Player.Hand, cardIds)
-
-        for _, id in ipairs(cardIds) do
-            self.room:setCardArea(id, Card.PlayerHand)
-        end
-        print(#room.draw_pile)
-        print(#p:getCardIds(Player.Hand))
-
-        local info = p.general
-        for _, id in ipairs(p:getCardIds(Player.Hand)) do
-            info = info .. " + " .. Fk:getCardById(id).name
-        end
-        print(info)
-    end    
+        self:trigger(fk.DrawInitialCards, p, { num = 4 })
+    end
 
     while true do
         self:trigger(fk.TurnStart, room.current)

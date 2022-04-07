@@ -1,7 +1,7 @@
 GameRule = fk.CreateTriggerSkill{
     name = "game_rule",
     events = {
-        fk.GameStart, fk.TurnStart,
+        fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
         fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
     },
     priority = 0,
@@ -26,6 +26,19 @@ GameRule = fk.CreateTriggerSkill{
 
         local room = player.room
         switch(event, {
+        [fk.DrawInitialCards] = function()
+            if data.num > 0 then
+                -- TODO: need a new function to call the UI
+                local cardIds = room:getNCards(data.num)
+                player:addCards(Player.Hand, cardIds)
+
+                for _, id in ipairs(cardIds) do
+                    room:setCardArea(id, Card.PlayerHand)
+                end
+
+                room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+            end
+        end,
         [fk.TurnStart] = function()
             player = room.current
             if room.tag["FirstRound"] == true then

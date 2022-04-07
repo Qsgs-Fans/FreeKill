@@ -186,7 +186,7 @@ function Player:getCardIds(playerAreas, specialName)
     local cardIds = {}
     for _, area in ipairs(areas) do
         assert(table.contains(rightAreas, area))
-        assert(playerArea ~= Player.Special or type(specialName) == "string")
+        assert(area ~= Player.Special or type(specialName) == "string")
         local currentCardIds = area == Player.Special and self.special_cards[specialName] or self.player_cards[area]
         table.insertTable(cardIds, currentCardIds)
     end

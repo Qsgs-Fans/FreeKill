@@ -33,7 +33,7 @@ Card.TypeEquip = 4
 
 ---@alias CardSubtype integer
 
-Card.SubTypeNone = 1
+Card.SubtypeNone = 1
 Card.SubtypeDelayedTrick = 2
 Card.SubtypeWeapon = 3
 Card.SubtypeArmor = 4

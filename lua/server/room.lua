@@ -7,6 +7,9 @@
 ---@field timeout integer
 ---@field tag table<string, any>
 ---@field draw_pile integer[]
+---@field discard_pile integer[]
+---@field processing_area integer[]
+---@field void integer[]
 ---@field card_place table<integer, CardArea>
 local Room = class("Room")
 
@@ -215,10 +218,6 @@ end
 function Room:getCardArea(cardId)
     return self.card_place[cardId] or Card.Unknown
 end
-
----@alias CardsMoveInfo {ids: integer[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null }
----@alias MoveInfo {cardId: integer, fromArea: CardArea}
----@alias CardsMoveStruct {moveInfo: {id: integer, fromArea: CardArea}[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer|null, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null, fromSpecialName: string|null }
 
 ---@vararg CardsMoveInfo
 ---@return boolean
@@ -496,8 +495,6 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
     end
     assert(reason == nil or table.contains({ "loseHp", "damage", "recover" }, reason))
 
-    ---@alias HpChangedData { num: integer, reason: string, skillName: string }
-
     ---@type HpChangedData
     local data = {
         num = num,
@@ -539,8 +536,6 @@ function Room:loseHp(player, num, skillName)
         return false
     end
 
-    ---@alias HpLostData { num: integer, skillName: string }
-
     ---@type HpLostData
     local data = {
         num = num,
@@ -581,8 +576,6 @@ function Room:changeMaxHp(player, num)
     self.logic:trigger(fk.MaxHpChanged, player, { num = num })
     return true
 end
-
----@alias DamageStruct { from: integer|null, to: integer, damage: integer, damageType: DamageType, skillName: string }
 
 ---@param damageStruct DamageStruct
 ---@return boolean
@@ -632,8 +625,6 @@ function Room:damage(damageStruct)
     return true
 end
 
----@alias RecoverStruct { who: integer, num: integer, recoverBy: integer|null, skillName: string|null }
-
 ---@param recoverStruct RecoverStruct
 ---@return boolean
 function Room:recover(recoverStruct)
@@ -653,8 +644,6 @@ function Room:recover(recoverStruct)
     self.logic:trigger(fk.HpRecover, who, recoverStruct)
     return true
 end
-
----@alias DyingStruct { who: integer, damage: DamageStruct }
 
 ---@param dyingStruct DyingStruct
 function Room:enterDying(dyingStruct)
@@ -684,8 +673,6 @@ function Room:enterDying(dyingStruct)
     
     self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
 end
-
----@alias DeathStruct { who: integer, damage: DamageStruct }
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
