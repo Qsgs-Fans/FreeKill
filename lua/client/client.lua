@@ -90,5 +90,10 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
     ClientInstance:notifyUI("PropertyUpdate", jsonData)
 end
 
+fk.client_callback["MoveCards"] = function(jsonData)
+    -- jsonData: []
+    -- TODO
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
