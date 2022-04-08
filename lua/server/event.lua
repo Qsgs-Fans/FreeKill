@@ -9,30 +9,45 @@ fk.EventPhaseEnd = 6
 fk.EventPhaseChanging = 7
 fk.EventPhaseSkipping = 8
 
-fk.DrawNCards = 9
-fk.AfterDrawNCards = 10
-fk.DrawInitialCards = 11
-fk.AfterDrawInitialCards = 12
+fk.BeforeCardsMove = 9
+fk.AfterCardsMove = 10
 
-fk.PreHpRecover = 13
-fk.HpRecover = 14
-fk.PreHpLost = 15
-fk.HpLost = 16
-fk.HpChanged = 17
-fk.MaxHpChanged = 18
+fk.DrawNCards = 11
+fk.AfterDrawNCards = 12
+fk.DrawInitialCards = 13
+fk.AfterDrawInitialCards = 14
 
-fk.EventLoseSkill = 19
-fk.EventAcquireSkill = 20
+fk.PreHpRecover = 15
+fk.HpRecover = 16
+fk.PreHpLost = 17
+fk.HpLost = 18
+fk.BeforeHpChanged = 19
+fk.HpChanged = 20
+fk.MaxHpChanged = 21
 
-fk.StartJudge = 21
-fk.AskForRetrial = 22
-fk.FinishRetrial = 23
-fk.FinishJudge = 24
+fk.EventLoseSkill = 22
+fk.EventAcquireSkill = 23
 
-fk.PindianVerifying = 25
-fk.Pindian = 26
+fk.StartJudge = 24
+fk.AskForRetrial = 25
+fk.FinishRetrial = 26
+fk.FinishJudge = 27
 
-fk.TurnedOver = 27
-fk.ChainStateChanged = 28
+fk.PindianVerifying = 28
+fk.Pindian = 29
 
-fk.NumOfEvents = 29
+fk.TurnedOver = 30
+fk.ChainStateChanged = 31
+
+fk.PreDamage = 32
+fk.DamageCaused = 33
+fk.DamageInflicted = 34
+fk.Damage = 35
+fk.Damaged = 36
+fk.DamageFinished = 37
+
+fk.EnterDying = 38
+fk.Dying = 39
+fk.AfterDying = 40
+
+fk.NumOfEvents = 41

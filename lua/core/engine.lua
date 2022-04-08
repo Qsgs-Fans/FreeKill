@@ -164,4 +164,23 @@ function Engine:getAllGenerals(except)
     return result
 end
 
+---@param except integer[]
+---@return integer[]
+function Engine:getAllCardIds(except)
+    local result = {}
+    for _, card in ipairs(self.cards) do
+        if not (except and table.contains(except, card.id)) then
+            table.insert(result, card.id)
+        end
+    end
+
+    return result
+end
+
+---@param id integer
+---@return Card
+function Engine:getCardById(id)
+    return self.cards[id]
+end
+
 return Engine

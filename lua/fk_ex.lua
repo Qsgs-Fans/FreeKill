@@ -2,10 +2,13 @@
 
 SkillCard = require "core.card_type.skill"
 BasicCard = require "core.card_type.basic"
-TrickCard = require "core.card_type.trick"
-EquipCard = require "core.card_type.equip"
+local Trick = require "core.card_type.trick"
+TrickCard, DelayedTrickCard = table.unpack(Trick)
+local Equip = require "core.card_type.equip"
+_, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
 dofile "lua/server/event.lua"
+dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 
 ---@class CardSpec: Card
@@ -27,10 +30,10 @@ TriggerSkill = require "core.skill_type.trigger"
 ---@return BasicCard
 function fk.CreateBasicCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-	if not spec.name then spec.name = spec.class_name
-	elseif not spec.class_name then spec.class_name = spec.name end
-	if spec.suit then assert(type(spec.suit) == "number") end
-	if spec.number then assert(type(spec.number) == "number") end
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
 
     local card = BasicCard:new(spec.name, spec.suit, spec.number)
     return card
@@ -40,25 +43,91 @@ end
 ---@return TrickCard
 function fk.CreateTrickCard(spec)
     assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-	if not spec.name then spec.name = spec.class_name
-	elseif not spec.class_name then spec.class_name = spec.name end
-	if spec.suit then assert(type(spec.suit) == "number") end
-	if spec.number then assert(type(spec.number) == "number") end
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
 
     local card = TrickCard:new(spec.name, spec.suit, spec.number)
     return card
 end
 
 ---@param spec CardSpec
----@return EquipCard
-function fk.CreateEquipCard(spec)
-    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-	if not spec.name then spec.name = spec.class_name
-	elseif not spec.class_name then spec.class_name = spec.name end
-	if spec.suit then assert(type(spec.suit) == "number") end
-	if spec.number then assert(type(spec.number) == "number") end
+---@return DelayedTrickCard
+function fk.CreateDelayedTrickCard(spec)
+		assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
 
-    local card = EquipCard:new(spec.name, spec.suit, spec.number)
+    local card = DelayedTrickCard:new(spec.name, spec.suit, spec.number)
+    return card
+end
+
+---@param spec CardSpec
+---@return Weapon
+function fk.CreateWeapon(spec)
+    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
+		if spec.attack_range then assert(type(spec.attack_range) == "number" and spec.attack_range >= 0) end
+
+    local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
+    return card
+end
+
+---@param spec CardSpec
+---@return Armor
+function fk.CreateArmor(spec)
+    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
+
+    local card = Armor:new(spec.name, spec.suit, spec.number)
+    return card
+end
+
+---@param spec CardSpec
+---@return DefensiveRide
+function fk.CreateDefensiveRide(spec)
+    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
+
+    local card = DefensiveRide:new(spec.name, spec.suit, spec.number)
+    return card
+end
+
+---@param spec CardSpec
+---@return OffensiveRide
+function fk.CreateOffensiveRide(spec)
+    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
+
+    local card = OffensiveRide:new(spec.name, spec.suit, spec.number)
+    return card
+end
+
+---@param spec CardSpec
+---@return Treasure
+function fk.CreateTreasure(spec)
+    assert(type(spec.name) == "string" or type(spec.class_name) == "string")
+		if not spec.name then spec.name = spec.class_name
+		elseif not spec.class_name then spec.class_name = spec.name end
+		if spec.suit then assert(type(spec.suit) == "number") end
+		if spec.number then assert(type(spec.number) == "number") end
+
+    local card = Treasure:new(spec.name, spec.suit, spec.number)
     return card
 end
 
