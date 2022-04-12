@@ -1,14 +1,13 @@
-var Player = {
-    PlaceHand : 1,
-    PlaceEquip : 2,
-    PlaceDelayedTrick : 3,
-    PlaceJudge : 4,
-    PlaceSpecial : 5,
-    DiscardPile : 6,
-    DrawPile : 7,
-    PlaceTable : 8,
-    PlaceUnknown : 9,
-    PlaceAG : 10
+var Card = {
+    Unknown : 0,
+    PlayerHand : 1,
+    PlayerEquip : 2,
+    PlayerJudge : 3,
+    PlayerSpecial : 4,
+    Processing : 5,
+    DrawPile : 6,
+    DiscardPile : 7,
+    Void : 8
 }
 
 function arrangePhotos() {
@@ -104,12 +103,11 @@ function getPhotoOrDashboard(id) {
 }
 
 function getAreaItem(area, id) {
-    if (area === Player.DrawPile) {
+    if (area === Card.DrawPile) {
         return drawPile;
-    } else if (area === Player.DiscardPile || area === Player.PlaceTable
-                || area === Player.PlaceJudge) {
+    } else if (area === Card.DiscardPile || area === Card.Processing) {
         return tablePile;
-    } else if (area === Player.PlaceAG) {
+    } else if (area === Card.AG) {
         return popupBox.item;
     }
 
@@ -118,13 +116,13 @@ function getAreaItem(area, id) {
         return null;
     }
 
-    if (area === Player.PlaceHand) {
+    if (area === Card.PlayerHand) {
         return photo.handcardArea;
-    } else if (area === Player.PlaceEquip)
+    } else if (area === Card.PlayerEquip)
         return photo.equipArea;
-    else if (area === Player.PlaceDelayedTrick)
+    else if (area === Card.PlayerJudge)
         return photo.delayedTrickArea;
-    else if (area === Player.PlaceSpecial)
+    else if (area === Card.PlayerSpecial)
         return photo.specialArea;
 
     return null;
