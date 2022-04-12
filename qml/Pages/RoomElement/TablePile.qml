@@ -26,7 +26,7 @@ Item {
             if (toVanish) {
                 for (i = 0; i < discardedCards.length; i++) {
                     card = discardedCards[i];
-                    card.homeOpacity = 0;
+                    card.origOpacity = 0;
                     card.goBack(true);
                     card.destroyOnStop()
                 }

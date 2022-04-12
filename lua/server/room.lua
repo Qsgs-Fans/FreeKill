@@ -224,12 +224,13 @@ end
 ---@param forceVisible boolean
 function Room:notifyMoveCards(players, card_moves, forceVisible)
     if players == nil or players == {} then players = self.players end
-    for _, p in ipairs(players) do  --[[
+    for _, p in ipairs(players) do
         local arg = table.clone(card_moves)
         for _, move in ipairs(arg) do
-            local to = self:getPlayerById(move.to)
+            -- local to = self:getPlayerById(move.to)
 
             -- forceVisible make the move visible
+            -- FIXME: move.moveInfo is an array, fix this
             move.moveVisible = (forceVisible)
                 -- if move is relevant to player, it should be open
                 or ((move.from == p:getId()) or (move.to == p:getId() and move.toArea ~= Card.PlayerSpecial))
@@ -245,10 +246,12 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
                 -- TODO: PlayerSpecial
             
             if not move.moveVisible then
-                move=nil
+                for _, info in ipairs(move.moveInfo) do
+                    info.cardId = -1
+                end
             end
-        end]]
-        p:doNotify("MoveCards", json.encode(card_moves))
+        end
+        p:doNotify("MoveCards", json.encode(arg))
     end
 end
 
