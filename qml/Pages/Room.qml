@@ -161,7 +161,7 @@ Item {
             width: parent.width * 0.6
             height: 150
             x: parent.width * 0.2
-            y: parent.height * 0.5
+            y: parent.height * 0.6
         }
     }
 

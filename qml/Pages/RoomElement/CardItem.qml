@@ -248,7 +248,7 @@ Item {
     function destroyOnStop()
     {
         root.moveFinished.connect(function(){
-            destroy();
+            root.destroy();
         });
     }
 }
