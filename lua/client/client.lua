@@ -43,6 +43,8 @@ fk.client_callback["Setup"] = function(jsonData)
     self:setId(id)
     self:setScreenName(name)
     self:setAvatar(avatar)
+    Self = ClientPlayer:new(fk.Self)
+    table.insert(ClientInstance.players, Self)
 end
 
 fk.client_callback["AddPlayer"] = function(jsonData)
@@ -59,13 +61,13 @@ fk.client_callback["RemovePlayer"] = function(jsonData)
     -- jsonData: [ int id ]
     local data = json.decode(jsonData)
     local id = data[1]
-    fk.ClientInstance:removePlayer(id)
     for _, p in ipairs(ClientInstance.players) do
         if p.player:getId() == id then
             table.removeOne(ClientInstance.players, p)
             break
         end
     end
+    fk.ClientInstance:removePlayer(id)
     ClientInstance:notifyUI("RemovePlayer", jsonData)
 end
 
@@ -90,9 +92,52 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
     ClientInstance:notifyUI("PropertyUpdate", jsonData)
 end
 
+--- separated moves to many moves(one card per move)
+---@param moves CardsMoveStruct[]
+local function separateMoves(moves)
+    local ret = {}  ---@type CardsMoveInfo[]
+    for _, move in ipairs(moves) do
+        for _, info in ipairs(move.moveInfo) do
+            table.insert(ret, {
+                ids = {info.cardId},
+                from = move.from,
+                to = move.to,
+                toArea = move.toArea,
+                fromArea = info.fromArea,
+            })
+        end
+    end
+    return ret
+end
+
+--- merge separated moves (one fromArea per move)
+local function mergeMoves(moves)
+    local ret = {}
+    local temp = {}
+    for _, move in ipairs(moves) do
+        if temp[move.fromArea] == nil then 
+            temp[move.fromArea] = {
+                ids = {},
+                from = move.from,
+                to = move.to,
+                fromArea = move.fromArea,
+                toArea = move.toArea
+            }
+        end
+        table.insert(temp[move.fromArea].ids, move.ids[1])
+    end
+    for _, v in pairs(temp) do
+        table.insert(ret, v)
+    end
+    return ret
+end
+
 fk.client_callback["MoveCards"] = function(jsonData)
-    -- jsonData: []
-    -- TODO
+    -- jsonData: CardsMoveStruct[]
+    local raw_moves = json.decode(jsonData)
+    local separated = separateMoves(raw_moves)
+    local merged = mergeMoves(separated)
+    ClientInstance:notifyUI("MoveCards", json.encode(merged))
 end
 
 -- Create ClientInstance (used by Lua)

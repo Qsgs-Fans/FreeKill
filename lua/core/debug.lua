@@ -17,3 +17,4 @@ end
 --debug.sethook(PrintWhenMethodCall, "c")
 
 function p(v) print(inspect(v)) end
+function pt(t) for k,v in pairs(t)do print(k,v) end end

@@ -49,6 +49,23 @@ function table:removeOne(element)
 	return false
 end
 
+-- Note: only clone key and value, no metatable
+-- so dont use for class or instance
+---@generic T
+---@param self T
+---@return T
+function table.clone(self)
+	local ret = {}
+	for k, v in pairs(self) do
+		if type(v) == "table" then
+			ret[k] = table.clone(v)
+		else
+			ret[k] = v
+		end
+	end
+	return ret
+end
+
 ---@class Sql
 Sql = {
 	---@param filename string

@@ -219,6 +219,39 @@ function Room:getCardArea(cardId)
     return self.card_place[cardId] or Card.Unknown
 end
 
+---@param players ServerPlayer[]
+---@param card_moves CardsMoveStruct[]
+---@param forceVisible boolean
+function Room:notifyMoveCards(players, card_moves, forceVisible)
+    if players == nil or players == {} then players = self.players end
+    for _, p in ipairs(players) do  --[[
+        local arg = table.clone(card_moves)
+        for _, move in ipairs(arg) do
+            local to = self:getPlayerById(move.to)
+
+            -- forceVisible make the move visible
+            move.moveVisible = (forceVisible)
+                -- if move is relevant to player, it should be open
+                or ((move.from == p:getId()) or (move.to == p:getId() and move.toArea ~= Card.PlayerSpecial))
+                -- cards move from/to equip/judge/discard/processing should be open
+                or move.moveInfo.fromArea == Card.PlayerEquip
+                or move.toArea == Card.PlayerEquip
+                or move.moveInfo.fromArea == Card.PlayerJudge
+                or move.toArea == Card.PlayerJudge
+                or move.moveInfo.fromArea == Card.DiscardPile
+                or move.toArea == Card.DiscardPile
+                or move.moveInfo.fromArea == Card.Processing
+                or move.toArea == Card.Processing
+                -- TODO: PlayerSpecial
+            
+            if not move.moveVisible then
+                move=nil
+            end
+        end]]
+        p:doNotify("MoveCards", json.encode(card_moves))
+    end
+end
+
 ---@vararg CardsMoveInfo
 ---@return boolean
 function Room:moveCards(...)
@@ -265,6 +298,8 @@ function Room:moveCards(...)
     if self.logic:trigger(fk.BeforeCardsMove, nil, cardsMoveStructs) then
         return false
     end
+
+    self:notifyMoveCards(self.players, cardsMoveStructs)
 
     for _, data in ipairs(cardsMoveStructs) do
         if #data.moveInfo > 0 then

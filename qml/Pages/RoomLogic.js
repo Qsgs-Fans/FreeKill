@@ -133,11 +133,11 @@ function getAreaItem(area, id) {
 function moveCards(moves) {
     for (let i = 0; i < moves.length; i++) {
         let move = moves[i];
-        let from = getAreaItem(move.from, Self.id);
-        let to = getAreaItem(move.to, Self.id);
+        let from = getAreaItem(move.fromArea, move.from);
+        let to = getAreaItem(move.toArea, move.to);
         if (!from || !to || from === to)
             continue;
-        let items = from.remove(move.cards);
+        let items = from.remove(move.ids);
         if (items.length > 0)
             to.add(items);
         to.updateCardPosition(true);
@@ -370,4 +370,10 @@ callbacks["AskForChoice"] = function(jsonData) {
     box.accepted.connect(() => {
         replyToServer(choices[box.result]);
     });
+}
+
+callbacks["MoveCards"] = function(jsonData) {
+    // jsonData: merged moves
+    let moves = JSON.parse(jsonData);
+    moveCards(moves);
 }
