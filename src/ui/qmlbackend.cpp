@@ -119,4 +119,36 @@ QString QmlBackend::getCardData(int id) {
     CALLFUNC
 }
 
+QString QmlBackend::getAllGeneralPack() {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetAllGeneralPack");
+    lua_pushinteger(L, 0);
+
+    CALLFUNC
+}
+
+QString QmlBackend::getGenerals(const QString &pack_name) {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetGenerals");
+    lua_pushstring(L, pack_name.toUtf8().data());
+
+    CALLFUNC
+}
+
+QString QmlBackend::getAllCardPack() {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetAllCardPack");
+    lua_pushinteger(L, 0);
+
+    CALLFUNC
+}
+
+QString QmlBackend::getCards(const QString &pack_name) {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetCards");
+    lua_pushstring(L, pack_name.toUtf8().data());
+
+    CALLFUNC
+}
+
 #undef CALLFUNC
