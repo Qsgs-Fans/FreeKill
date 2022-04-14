@@ -18,20 +18,11 @@ Window {
         anchors.fill: parent
     }
 
-    Component {
-        id: init
-        Init {}
-    }
-
-    Component {
-        id: lobby
-        Lobby {}
-    }
-
-    Component {
-        id: room
-        Room {}
-    }
+    Component { id: init; Init {} }
+    Component { id: lobby; Lobby {} }
+    Component { id: generalsOverview; GeneralsOverview {} }
+    Component { id: cardsOverview; CardsOverview {} }
+    Component { id: room; Room {} }
 
     property bool busy: false
     BusyIndicator {

@@ -97,9 +97,17 @@ Item {
             }
             Button {
                 text: "Generals Overview"
+                onClicked: {
+                    mainStack.push(generalsOverview);
+                    mainStack.currentItem.loadPackages();
+                }
             }
             Button {
                 text: "Cards Overview"
+                onClicked: {
+                    mainStack.push(cardsOverview);
+                    mainStack.currentItem.loadPackages();
+                }
             }
             Button {
                 text: "Scenarios Overview"

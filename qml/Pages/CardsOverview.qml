@@ -8,7 +8,7 @@ Item {
 
     property bool loaded: false
 
-    ListView {
+    ListView {      
         width: Math.floor(root.width / 98) * 98
         height: parent.height
         anchors.centerIn: parent
@@ -22,13 +22,12 @@ Item {
             GridLayout {
                 columns: root.width / 98
                 Repeater {
-                    model: JSON.parse(Backend.getGenerals(name))
-                    GeneralCardItem { 
+                    model: JSON.parse(Backend.getCards(name))
+                    CardItem { 
                         autoBack: false
                         Component.onCompleted: {
-                            let data = JSON.parse(Backend.getGeneralData(modelData));
-                            name = modelData;
-                            kingdom = data.kingdom;
+                            let data = JSON.parse(Backend.getCardData(modelData));
+                            setData(data);
                         }
                     }
                 }
@@ -46,7 +45,7 @@ Item {
 
     function loadPackages() {
         if (loaded) return;
-        let packs = JSON.parse(Backend.getAllGeneralPack());
+        let packs = JSON.parse(Backend.getAllCardPack());
         packs.forEach((name) => packages.append({ name: name }));
         loaded = true;
     }

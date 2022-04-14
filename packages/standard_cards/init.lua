@@ -1,6 +1,10 @@
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
+Fk:loadTranslationTable{
+    ["standard_cards"] = "标+EX"
+}
+
 local slash = fk.CreateBasicCard{
     name = "slash",
     number = 7,
@@ -278,6 +282,7 @@ Fk:loadTranslationTable{
 extension:addCards({
     indulgence,
     indulgence:clone(Card.Club, 6),
+    indulgence:clone(Card.Heart, 6),
 })
 
 local crossbow = fk.CreateWeapon{
