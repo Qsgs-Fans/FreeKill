@@ -1,10 +1,14 @@
-//var AppPath = "file://home/notify/develop/FreeKill";
+//var AppPath = "file:///home/notify/develop/FreeKill";
 var PHOTO_BACK_DIR = AppPath + "/image/photo/back/";
 var PHOTO_DIR = AppPath + "/image/photo/";
 var GENERAL_DIR = AppPath + "/image/generals/";
 var STATE_DIR = AppPath + "/image/photo/state/";
+var STATUS_DIR = AppPath + "/image/photo/status/";
 var ROLE_DIR = AppPath + "/image/photo/role/";
 var DEATH_DIR = AppPath + "/image/photo/death/";
 var MAGATAMA_DIR = AppPath + "/image/photo/magatama/";
 var CARD_DIR = AppPath + "/image/card/";
 var CARD_SUIT_DIR = AppPath + "/image/card/suit/";
+var DELAYED_TRICK_DIR = AppPath + "/image/card/delayedTrick/";
+var EQUIP_ICON_DIR = AppPath + "/image/card/equipIcon/";
+var PIXANIM_DIR = AppPath + "/image/anim/"

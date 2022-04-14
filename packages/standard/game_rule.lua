@@ -31,6 +31,15 @@ GameRule = fk.CreateTriggerSkill{
                 -- TODO: need a new function to call the UI
                 local cardIds = room:getNCards(data.num)
                 player:addCards(Player.Hand, cardIds)
+                local move_to_notify = {}   ---@type CardsMoveStruct
+                move_to_notify.toArea = Card.PlayerHand
+                move_to_notify.to = player:getId()
+                move_to_notify.moveInfo = {}
+                for _, id in ipairs(cardIds) do
+                    table.insert(move_to_notify.moveInfo, 
+                    { cardId = id, fromArea = Card.DrawPile })
+                end
+                room:notifyMoveCards(room.players, {move_to_notify})
 
                 for _, id in ipairs(cardIds) do
                     room:setCardArea(id, Card.PlayerHand)
@@ -62,34 +71,31 @@ GameRule = fk.CreateTriggerSkill{
                 error("You should never proceed PhaseNone")
             end,
             [Player.RoundStart] = function()
-                print("Proceeding RoundStart.")
+                
             end,
             [Player.Start] = function()
-                print("Proceeding Start.")
+                
             end,
             [Player.Judge] = function()
-                print("Proceeding Judge.")
+                
             end,
             [Player.Draw] = function()
-                print("Proceeding Draw.")
                 room:drawCards(player, 2, self.name)
             end,
             [Player.Play] = function()
-                print("Proceeding Play.")
                 room:askForSkillInvoke(player, "rule")
             end,
             [Player.Discard] = function()
-                print("Proceeding Discard.")
                 local discardNum = #player:getCardIds(Player.Hand) - player:getMaxCards()
                 if discardNum > 0 then
                     room:askForDiscard(player, discardNum, discardNum, false, self.name)
                 end
             end,
             [Player.Finish] = function()
-                print("Proceeding Finish.")
+                
             end,
             [Player.NotActive] = function()
-                print("Proceeding NotActive.")
+                
             end,
             })
         end,

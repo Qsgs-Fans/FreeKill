@@ -17,6 +17,22 @@ Item {
     property alias promptText: prompt.text
 
     // tmp
+    Row {
+        Button{text:"摸1牌"
+        onClicked:{
+            Logic.moveCards([{
+                from:Logic.Player.DrawPile,
+                to:Logic.Player.PlaceHand,
+                cards:[1],
+            }])
+        }}
+        Button{text:"弃1牌"
+        onClicked:{Logic.moveCards([{
+                to:Logic.Player.DrawPile,
+                from:Logic.Player.PlaceHand,
+                cards:[1],
+            }])}}
+    }
     Button {
         text: "quit"
         anchors.top: parent.top
@@ -145,7 +161,7 @@ Item {
             width: parent.width * 0.6
             height: 150
             x: parent.width * 0.2
-            y: parent.height * 0.5
+            y: parent.height * 0.6
         }
     }
 

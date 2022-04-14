@@ -9,3 +9,18 @@ function GetGeneralData(name)
         general.kingdom
     }
 end
+
+function GetCardData(id)
+    local card = Fk.cards[id]
+    if card == nil then return json.encode{
+        cid = id,
+        known = false
+    } end
+    return json.encode{
+        cid = id,
+        name = card.name,
+        number = card.number,
+        suit = card:getSuitString(),
+        color = card.color,
+    }
+end

@@ -1,6 +1,6 @@
 ---@alias CardsMoveInfo {ids: integer[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null }
 ---@alias MoveInfo {cardId: integer, fromArea: CardArea}
----@alias CardsMoveStruct {moveInfo: {id: integer, fromArea: CardArea}[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer|null, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null, fromSpecialName: string|null }
+---@alias CardsMoveStruct {moveInfo: MoveInfo[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer|null, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null, fromSpecialName: string|null }
 
 ---@alias HpChangedData { num: integer, reason: string, skillName: string }
 ---@alias HpLostData { num: integer, skillName: string }

@@ -28,6 +28,7 @@ public:
     // read data from lua, call lua functions
     Q_INVOKABLE QString translate(const QString &src);
     Q_INVOKABLE QString getGeneralData(const QString &general_name);
+    Q_INVOKABLE QString getCardData(int id);
 
 signals:
     void notifyUI(const QString &command, const QString &jsonData);

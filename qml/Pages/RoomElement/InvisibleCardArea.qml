@@ -57,7 +57,7 @@ Item {
         let items = [];
         for (let i = 0; i < outputs.length; i++) {
             if (_contains(outputs[i])) {
-                let state = JSON.parse(Sanguosha.getCard4Qml(outputs[i]))
+                let state = JSON.parse(Backend.getCardData(outputs[i]))
                 state.x = parentPos.x;
                 state.y = parentPos.y;
                 state.opacity = 0;

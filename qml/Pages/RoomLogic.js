@@ -1,3 +1,15 @@
+var Card = {
+    Unknown : 0,
+    PlayerHand : 1,
+    PlayerEquip : 2,
+    PlayerJudge : 3,
+    PlayerSpecial : 4,
+    Processing : 5,
+    DrawPile : 6,
+    DiscardPile : 7,
+    Void : 8
+}
+
 function arrangePhotos() {
     /* Layout of photos:
      * +---------------+
@@ -61,6 +73,134 @@ function replyToServer(jsonData) {
     ClientInstance.replyToServer("", jsonData);
 }
 
+function getPhotoModel(id) {
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === id) {
+            return item;
+        }
+    }
+    return undefined;
+}
+
+function getPhoto(id) {
+    for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.id === id) {
+            return photos.itemAt(i);
+        }
+    }
+    return undefined;
+}
+
+function getPhotoOrDashboard(id) {
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === Self.id)
+            return dashboard;
+    }
+    return photo;
+}
+
+function getAreaItem(area, id) {
+    if (area === Card.DrawPile) {
+        return drawPile;
+    } else if (area === Card.DiscardPile || area === Card.Processing) {
+        return tablePile;
+    } else if (area === Card.AG) {
+        return popupBox.item;
+    }
+
+    let photo = getPhotoOrDashboard(id);
+    if (!photo) {
+        return null;
+    }
+
+    if (area === Card.PlayerHand) {
+        return photo.handcardArea;
+    } else if (area === Card.PlayerEquip)
+        return photo.equipArea;
+    else if (area === Card.PlayerJudge)
+        return photo.delayedTrickArea;
+    else if (area === Card.PlayerSpecial)
+        return photo.specialArea;
+
+    return null;
+}
+
+function moveCards(moves) {
+    for (let i = 0; i < moves.length; i++) {
+        let move = moves[i];
+        let from = getAreaItem(move.fromArea, move.from);
+        let to = getAreaItem(move.toArea, move.to);
+        if (!from || !to || from === to)
+            continue;
+        let items = from.remove(move.ids);
+        if (items.length > 0)
+            to.add(items);
+        to.updateCardPosition(true);
+    }
+}
+
+function setEmotion(id, emotion) {
+    let component = Qt.createComponent("RoomElement/PixmapAnimation.qml");
+    if (component.status !== Component.Ready)
+        return;
+
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === dashboardModel.id) {
+            photo = dashboard.self;
+        } else {
+            return null;
+        }
+    }
+
+    let animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
+    animation.finished.connect(() => animation.destroy());
+    animation.start();
+}
+
+function changeHp(id, delta, losthp) {
+    let photo = getPhoto(id);
+    if (!photo) {
+        if (id === dashboardModel.id) {
+            photo = dashboard.self;
+        } else {
+            return null;
+        }
+    }
+    if (delta < 0) {
+        if (!losthp) {
+            setEmotion(id, "damage")
+            photo.tremble()
+        }
+    }
+}
+
+function doIndicate(from, tos) {
+    let component = Qt.createComponent("RoomElement/IndicatorLine.qml");
+    if (component.status !== Component.Ready)
+        return;
+
+    let fromItem = getPhotoOrDashboard(from);
+    let fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+
+    let end = [];
+    for (let i = 0; i < tos.length; i++) {
+        if (from === tos[i])
+            continue;
+        let toItem = getPhotoOrDashboard(tos[i]);
+        let toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
+        end.push(toPos);
+    }
+
+    let color = "#96943D";
+    let line = component.createObject(roomScene, {start: fromPos, end: end, color: color});
+    line.finished.connect(() => line.destroy());
+    line.running = true;
+}
+
 callbacks["AddPlayer"] = function(jsonData) {
     // jsonData: int id, string screenName, string avatar
     for (let i = 0; i < photoModel.count; i++) {
@@ -81,14 +221,11 @@ callbacks["AddPlayer"] = function(jsonData) {
 callbacks["RemovePlayer"] = function(jsonData) {
     // jsonData: int uid
     let uid = JSON.parse(jsonData)[0];
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item.id = -1;
-            item.screenName = "";
-            item.general = "";
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model.id = -1;
+        model.screenName = "";
+        model.general = "";
     }
 }
 
@@ -102,12 +239,9 @@ callbacks["RoomOwner"] = function(jsonData) {
         return;
     }
 
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item.isOwner = true;
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model.isOwner = true;
     }
 }
 
@@ -124,12 +258,9 @@ callbacks["PropertyUpdate"] = function(jsonData) {
         return;
     }
 
-    for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.id === uid) {
-            item[property_name] = value;
-            return;
-        }
+    let model = getPhotoModel(uid);
+    if (typeof(model) !== "undefined") {
+        model[property_name] = value;
     }
 }
 
@@ -193,12 +324,9 @@ callbacks["PlayerRunned"] = function(jsonData) {
     let runner = data[0];
     let robot = data[1];
 
-    let model;
-    for (let i = 0; i < playerNum - 1; i++) {
-        model = photoModel.get(i);
-        if (model.id === runner) {
-            model.id = robot;
-        }
+    let model = getPhotoModel(runner);
+    if (typeof(model) !== "undefined") {
+        model.id = robot;
     }
 }
 
@@ -240,4 +368,10 @@ callbacks["AskForChoice"] = function(jsonData) {
     box.accepted.connect(() => {
         replyToServer(choices[box.result]);
     });
+}
+
+callbacks["MoveCards"] = function(jsonData) {
+    // jsonData: merged moves
+    let moves = JSON.parse(jsonData);
+    moveCards(moves);
 }

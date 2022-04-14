@@ -1,4 +1,5 @@
 import QtQuick 2.15
+import "../../util.js" as Utility
 
 Item {
     property alias cards: cardArea.cards
@@ -68,12 +69,12 @@ Item {
         for (i = 0; i < cards.length; i++) {
             card = cards[i];
             if (card.selected)
-                card.homeY -= 20;
+                card.origY -= 20;
         }
 
         if (animated) {
             for (i = 0; i < cards.length; i++)
-                roomScene.cardItemGoBack(cards[i], true)
+                cards[i].goBack(true)
         }
     }
 

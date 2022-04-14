@@ -85,20 +85,22 @@ bool QmlBackend::isDir(const QString &file) {
     return QFileInfo(file).isDir();
 }
 
+#define CALLFUNC int err = lua_pcall(L, 1, 1, 0); \
+    const char *result = lua_tostring(L, -1); \
+    if (err) { \
+        qDebug() << result; \
+        lua_pop(L, 1); \
+        return ""; \
+    } \
+    lua_pop(L, 1); \
+    return QString(result); \
+
 QString QmlBackend::translate(const QString &src) {
     lua_State *L = ClientInstance->getLuaState();
     lua_getglobal(L, "Translate");
     lua_pushstring(L, src.toUtf8().data());
 
-    int err = lua_pcall(L, 1, 1, 0);
-    const char *result = lua_tostring(L, -1);
-    if (err) {
-        qDebug() << result;
-        lua_pop(L, 1);
-        return "";
-    }
-    lua_pop(L, 1);
-    return QString(result);
+    CALLFUNC
 }
 
 QString QmlBackend::getGeneralData(const QString &general_name) {
@@ -106,13 +108,15 @@ QString QmlBackend::getGeneralData(const QString &general_name) {
     lua_getglobal(L, "GetGeneralData");
     lua_pushstring(L, general_name.toUtf8().data());
 
-    int err = lua_pcall(L, 1, 1, 0);
-    const char *result = lua_tostring(L, -1);
-    if (err) {
-        qDebug() << result;
-        lua_pop(L, 1);
-        return "";
-    }
-    lua_pop(L, 1);
-    return QString(result);
+    CALLFUNC
 }
+
+QString QmlBackend::getCardData(int id) {
+    lua_State *L = ClientInstance->getLuaState();
+    lua_getglobal(L, "GetCardData");
+    lua_pushinteger(L, id);
+
+    CALLFUNC
+}
+
+#undef CALLFUNC

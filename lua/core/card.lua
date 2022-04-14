@@ -74,4 +74,19 @@ function Card:initialize(name, suit, number, color)
     self.sub_type = Card.SubTypeNone
 end
 
+function Card:getSuitString()
+    local suit = self.suit
+    if suit == Card.Spade then
+        return "spade"
+    elseif suit == Card.Heart then
+        return "heart"
+    elseif suit == Card.Club then
+        return "club"
+    elseif suit == Card.Diamond then
+        return "diamond"
+    else
+        return "unknown"
+    end
+end
+
 return Card

@@ -14,7 +14,7 @@ Item {
     property string role: "unknown"
     property string kingdom: "qun"
     property string netstate: "online"
-    property int handcards: 0
+    property alias handcards: handcardAreaItem.length
     property int maxHp: 0
     property int hp: 0
     property int seatNumber: 1
@@ -24,9 +24,18 @@ Item {
     property bool chained: false
     property bool drank: false
     property bool isOwner: false
+    property string status: "normal"
+
+    property alias handcardArea: handcardAreaItem
+    property alias equipArea: equipAreaItem
+    property alias delayedTrickArea: delayedTrickAreaItem
+    property alias specialArea: handcardAreaItem
 
     property alias progressBar: progressBar
     property alias progressTip: progressTip.text
+
+    property bool selectable: false
+    property bool selected: false
 
     Behavior on x {
         NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
@@ -34,6 +43,14 @@ Item {
 
     Behavior on y {
         NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
+    }
+
+    PixmapAnimation {
+        id: animFrame
+        source: "selected"
+        anchors.centerIn: parent
+        loop: true
+        scale: 1.1
     }
 
     Image {
@@ -109,10 +126,29 @@ Item {
     }
 
     Image {
+        visible: equipAreaItem.length > 0
+        source: SkinBank.PHOTO_DIR + "equipbg"
+        x: 31
+        y: 121
+    }
+
+    Image {
+        source: root.status != "normal" ? SkinBank.STATUS_DIR + root.status : ""
+        x: -6
+    }
+
+    Image {
         id: turnedOver
         visible: !root.faceup
         source: SkinBank.PHOTO_DIR + "faceturned"
         x: 29; y: 5
+    }
+
+    EquipArea {
+        id: equipAreaItem
+
+        x: 31
+        y: 139
     }
 
     Image {
@@ -242,6 +278,30 @@ Item {
             color: "white"
             text: ""
         }
+    }
+
+    PixmapAnimation {
+        id: animSelectable
+        source: "selectable"
+        anchors.centerIn: parent
+        loop: true
+    }
+
+    InvisibleCardArea {
+        id: handcardAreaItem
+        anchors.centerIn: parent
+    }
+
+    DelayedTrickArea {
+        id: delayedTrickAreaItem
+        rows: 1
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
+    }
+
+    InvisibleCardArea {
+        id: defaultArea
+        anchors.centerIn: parent
     }
 
     onGeneralChanged: {

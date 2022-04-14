@@ -21,8 +21,9 @@ Item {
     property string suit: "club"
     property int number: 7
     property string name: "slash"
+    property string subtype: ""
     property string color: ""    // only use when suit is empty
-    property string footnote: "曹操对刘备"    // footnote, e.g. "A use card to B"
+    property string footnote: ""    // footnote, e.g. "A use card to B"
     property bool footnoteVisible: true
     property bool known: true       // if false it only show a card back
     property bool enabled: true     // if false the card will be grey
@@ -247,7 +248,7 @@ Item {
     function destroyOnStop()
     {
         root.moveFinished.connect(function(){
-            destroy();
+            root.destroy();
         });
     }
 }
