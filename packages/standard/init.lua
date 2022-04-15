@@ -3,6 +3,7 @@ extension.metadata = require "packages.standard.metadata"
 dofile "packages/standard/game_rule.lua"
 
 Fk:loadTranslationTable{
+    ["standard"] = "标准包",
     ["wei"] = "魏",
     ["shu"] = "蜀",
     ["wu"] = "吴",

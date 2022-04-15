@@ -10,27 +10,26 @@ Item {
     Component {
         id: roomDelegate
 
-        Row {
-            spacing: 24
+        RowLayout {
+            width: roomList.width * 0.9
+            spacing: 16
             Text {
-                width: 40
-                text: String(roomId)
+                text: roomId
             }
 
             Text {
-                width: 40
+                horizontalAlignment: Text.AlignHCenter
+                Layout.fillWidth: true
                 text: roomName
             }
 
             Text {
-                width: 20
                 text: gameMode
             }
 
             Text {
-                width: 10
                 color: (playerNum == capacity) ? "red" : "black"
-                text: String(playerNum) + "/" + String(capacity)
+                text: playerNum + "/" + capacity
             }
 
             Text {
@@ -60,29 +59,24 @@ Item {
     RowLayout {
         anchors.fill: parent
         Rectangle {
-            width: root.width * 0.7
-            height: root.height
+            Layout.preferredWidth: root.width * 0.7
+            Layout.fillHeight: true
             color: "#e2e2e1"
             radius: 4
             Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
                 text: "Room List"
             }
             ListView {
                 height: parent.height * 0.9
                 width: parent.width * 0.95
+                contentHeight: roomDelegate.height * count
+                ScrollBar.vertical: ScrollBar {}
                 anchors.centerIn: parent
                 id: roomList
                 delegate: roomDelegate
                 model: roomModel
-            }
-            Rectangle {
-                id: scrollbar
-                anchors.right: roomList.right
-                y: roomList.visibleArea.yPosition * roomList.height
-                width: 10
-                radius: 4
-                height: roomList.visibleArea.heightRatio * roomList.height
-                color: "#a89da8"
             }
         }
 
@@ -103,9 +97,17 @@ Item {
             }
             Button {
                 text: "Generals Overview"
+                onClicked: {
+                    mainStack.push(generalsOverview);
+                    mainStack.currentItem.loadPackages();
+                }
             }
             Button {
                 text: "Cards Overview"
+                onClicked: {
+                    mainStack.push(cardsOverview);
+                    mainStack.currentItem.loadPackages();
+                }
             }
             Button {
                 text: "Scenarios Overview"

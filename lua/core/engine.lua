@@ -1,5 +1,6 @@
 ---@class Engine : Object
 ---@field packages table<string, Package>
+---@field package_names string[]
 ---@field skills table<string, Skill>
 ---@field related_skills table<string, Skill[]>
 ---@field global_trigger TriggerSkill[]
@@ -19,6 +20,7 @@ function Engine:initialize()
     Fk = self
 
     self.packages = {}      -- name --> Package
+    self.package_names = {}
     self.skills = {}        -- name --> Skill
     self.related_skills = {} -- skillName --> relatedSkill[]
     self.global_trigger = {}
@@ -37,6 +39,7 @@ function Engine:loadPackage(pack)
         error(string.format("Duplicate package %s detected", pack.name))
     end
     self.packages[pack.name] = pack
+    table.insert(self.package_names, pack.name)
 
     -- add cards, generals and skills to Engine
     if pack.type == Package.CardPack then
@@ -48,9 +51,26 @@ function Engine:loadPackage(pack)
 end
 
 function Engine:loadPackages()
-    for _, dir in ipairs(FileIO.ls("packages")) do
+    local directories = FileIO.ls("packages")
+
+    -- load standard & standard_cards first
+    self:loadPackage(require("packages.standard"))
+    self:loadPackage(require("packages.standard_cards"))
+    table.removeOne(directories, "standard")
+    table.removeOne(directories, "standard_cards")
+
+    for _, dir in ipairs(directories) do
         if FileIO.isDir("packages/" .. dir) then
-            self:loadPackage(require(string.format("packages.%s", dir)))
+            local pack = require(string.format("packages.%s", dir))
+            -- Note that instance of Package is a table too
+            -- so dont use type(pack) == "table" here
+            if pack[1] ~= nil then
+                for _, p in ipairs(pack) do
+                    self:loadPackage(p)
+                end
+            else
+                self:loadPackage(pack)
+            end
         end
     end
 end
