@@ -2,34 +2,34 @@
 #define _CLIENT_SOCKET_H
 
 class ClientSocket : public QObject {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    ClientSocket();
-    // For server use
-    ClientSocket(QTcpSocket *socket);
+  ClientSocket();
+  // For server use
+  ClientSocket(QTcpSocket *socket);
 
-    void connectToHost(const QHostAddress &address = QHostAddress::LocalHost, ushort port = 9527u);
-    void disconnectFromHost();
-    void send(const QByteArray& msg);
-    bool isConnected() const;
-    QString peerName() const;
-    QString peerAddress() const;
-    QTimer timerSignup;
+  void connectToHost(const QHostAddress &address = QHostAddress::LocalHost, ushort port = 9527u);
+  void disconnectFromHost();
+  void send(const QByteArray& msg);
+  bool isConnected() const;
+  QString peerName() const;
+  QString peerAddress() const;
+  QTimer timerSignup;
 
 signals:
-    void message_got(const QByteArray& msg);
-    void error_message(const QString &msg);
-    void disconnected();
-    void connected();
+  void message_got(const QByteArray& msg);
+  void error_message(const QString &msg);
+  void disconnected();
+  void connected();
 
 private slots:
-    void getMessage();
-    void raiseError(QAbstractSocket::SocketError error);
+  void getMessage();
+  void raiseError(QAbstractSocket::SocketError error);
 
 private:
-    QTcpSocket *socket;
-    void init();
+  QTcpSocket *socket;
+  void init();
 };
 
 #endif // _CLIENT_SOCKET_H

@@ -2,43 +2,43 @@
 #define _QMLBACKEND_H
 
 class QmlBackend : public QObject {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    QmlBackend(QObject *parent = nullptr);
+  QmlBackend(QObject *parent = nullptr);
 
-    QQmlApplicationEngine *getEngine() const;
-    void setEngine(QQmlApplicationEngine *engine);
+  QQmlApplicationEngine *getEngine() const;
+  void setEngine(QQmlApplicationEngine *engine);
 
-    Q_INVOKABLE void startServer(ushort port);
-    Q_INVOKABLE void joinServer(QString address);
+  Q_INVOKABLE void startServer(ushort port);
+  Q_INVOKABLE void joinServer(QString address);
 
-    // Lobby
-    Q_INVOKABLE void quitLobby();
+  // Lobby
+  Q_INVOKABLE void quitLobby();
 
-    // lua --> qml
-    void emitNotifyUI(const QString &command, const QString &jsonData);
+  // lua --> qml
+  void emitNotifyUI(const QString &command, const QString &jsonData);
 
-    // File used by both Lua and Qml
-    static Q_INVOKABLE void cd(const QString &path);
-    static Q_INVOKABLE QStringList ls(const QString &dir = "");
-    static Q_INVOKABLE QString pwd();
-    static Q_INVOKABLE bool exists(const QString &file);
-    static Q_INVOKABLE bool isDir(const QString &file);
+  // File used by both Lua and Qml
+  static Q_INVOKABLE void cd(const QString &path);
+  static Q_INVOKABLE QStringList ls(const QString &dir = "");
+  static Q_INVOKABLE QString pwd();
+  static Q_INVOKABLE bool exists(const QString &file);
+  static Q_INVOKABLE bool isDir(const QString &file);
 
-    // read data from lua, call lua functions
-    Q_INVOKABLE QString translate(const QString &src);
-    Q_INVOKABLE QString getGeneralData(const QString &general_name);
-    Q_INVOKABLE QString getCardData(int id);
-    Q_INVOKABLE QString getAllGeneralPack();
-    Q_INVOKABLE QString getGenerals(const QString &pack_name);
-    Q_INVOKABLE QString getAllCardPack();
-    Q_INVOKABLE QString getCards(const QString &pack_name);
+  // read data from lua, call lua functions
+  Q_INVOKABLE QString translate(const QString &src);
+  Q_INVOKABLE QString getGeneralData(const QString &general_name);
+  Q_INVOKABLE QString getCardData(int id);
+  Q_INVOKABLE QString getAllGeneralPack();
+  Q_INVOKABLE QString getGenerals(const QString &pack_name);
+  Q_INVOKABLE QString getAllCardPack();
+  Q_INVOKABLE QString getCards(const QString &pack_name);
 
 signals:
-    void notifyUI(const QString &command, const QString &jsonData);
+  void notifyUI(const QString &command, const QString &jsonData);
 
 private:
-    QQmlApplicationEngine *engine;
+  QQmlApplicationEngine *engine;
 };
 
 extern QmlBackend *Backend;

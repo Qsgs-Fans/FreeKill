@@ -1,9 +1,9 @@
 #include "clientplayer.h"
 
 ClientPlayer::ClientPlayer(int id, QObject* parent)
-    : Player(parent)
+  : Player(parent)
 {
-    setId(id);
+  setId(id);
 }
 
 ClientPlayer::~ClientPlayer()

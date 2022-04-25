@@ -2,33 +2,33 @@ import QtQuick 2.15
 import ".."
 
 GraphicsBox {
-    property var options: []
-    property string skill_name: ""
-    property int result
+  property var options: []
+  property string skill_name: ""
+  property int result
 
-    id: root
-    title.text: skill_name + ": Please choose"
-    width: Math.max(140, body.width + 20)
-    height: body.height + title.height + 20
+  id: root
+  title.text: skill_name + ": Please choose"
+  width: Math.max(140, body.width + 20)
+  height: body.height + title.height + 20
 
-    Column {
-        id: body
-        x: 10
-        y: title.height + 5
-        spacing: 10
+  Column {
+    id: body
+    x: 10
+    y: title.height + 5
+    spacing: 10
 
-        Repeater {
-            model: options
+    Repeater {
+      model: options
 
-            MetroButton {
-                text: modelData
-                anchors.horizontalCenter: parent.horizontalCenter
+      MetroButton {
+        text: modelData
+        anchors.horizontalCenter: parent.horizontalCenter
 
-                onClicked: {
-                    result = index;
-                    root.close();
-                }
-            }
+        onClicked: {
+          result = index;
+          root.close();
         }
+      }
     }
+  }
 }

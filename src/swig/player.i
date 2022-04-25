@@ -2,29 +2,29 @@
 %nodefaultdtor Player;
 class Player : public QObject {
 public:
-    enum State{
-        Invalid,
-        Online,
-        Trust,
-        Offline
-    };
+  enum State{
+    Invalid,
+    Online,
+    Trust,
+    Offline
+  };
 
-    int getId() const;
-    void setId(int id);
+  int getId() const;
+  void setId(int id);
 
-    QString getScreenName() const;
-    void setScreenName(const QString &name);
+  QString getScreenName() const;
+  void setScreenName(const QString &name);
 
-    QString getAvatar() const;
-    void setAvatar(const QString &avatar);
+  QString getAvatar() const;
+  void setAvatar(const QString &avatar);
 
-    State getState() const;
-    QString getStateString() const;
-    void setState(State state);
-    void setStateString(const QString &state);
+  State getState() const;
+  QString getStateString() const;
+  void setState(State state);
+  void setStateString(const QString &state);
 
-    bool isReady() const;
-    void setReady(bool ready);
+  bool isReady() const;
+  void setReady(bool ready);
 };
 
 %nodefaultctor ClientPlayer;
@@ -39,17 +39,17 @@ extern ClientPlayer *Self;
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {
 public:
-    Server *getServer() const;
-    Room *getRoom() const;
-    void setRoom(Room *room);
+  Server *getServer() const;
+  Room *getRoom() const;
+  void setRoom(Room *room);
 
-    void speak(const QString &message);
+  void speak(const QString &message);
 
-    void doRequest(const QString &command,
-                   const QString &json_data, int timeout);
-    QString waitForReply();
-    QString waitForReply(int timeout);
-    void doNotify(const QString &command, const QString &json_data);
+  void doRequest(const QString &command,
+           const QString &json_data, int timeout);
+  QString waitForReply();
+  QString waitForReply(int timeout);
+  void doNotify(const QString &command, const QString &json_data);
 
-    void prepareForRequest(const QString &command, const QString &data);
+  void prepareForRequest(const QString &command, const QString &data);
 };

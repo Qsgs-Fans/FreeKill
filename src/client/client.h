@@ -6,33 +6,33 @@
 #include "qmlbackend.h"
 
 class Client : public QObject {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    Client(QObject *parent = nullptr);
-    ~Client();
+  Client(QObject *parent = nullptr);
+  ~Client();
 
-    void connectToHost(const QHostAddress &server, ushort port);
+  void connectToHost(const QHostAddress &server, ushort port);
 
-    Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
-    Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
+  Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
+  Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
-    Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
-    LuaFunction callback;
+  Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
+  LuaFunction callback;
 
-    ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
-    void removePlayer(int id);
-    Q_INVOKABLE void clearPlayers();
+  ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
+  void removePlayer(int id);
+  Q_INVOKABLE void clearPlayers();
 
-    lua_State *getLuaState();
+  lua_State *getLuaState();
 
 signals:
-    void error_message(const QString &msg);
+  void error_message(const QString &msg);
 
 private:
-    Router *router;
-    QMap<int, ClientPlayer *> players;
+  Router *router;
+  QMap<int, ClientPlayer *> players;
 
-    lua_State *L;
+  lua_State *L;
 };
 
 extern Client *ClientInstance;

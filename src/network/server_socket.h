@@ -4,21 +4,21 @@
 class ClientSocket;
 
 class ServerSocket : public QObject {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    ServerSocket();
+  ServerSocket();
 
-    bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);
+  bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);
 
 signals:
-    void new_connection(ClientSocket *socket);
+  void new_connection(ClientSocket *socket);
 
 private slots:
-    void processNewConnection();
+  void processNewConnection();
 
 private:
-    QTcpServer *server;
+  QTcpServer *server;
 };
 
 #endif // _SERVER_SOCKET_H

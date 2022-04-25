@@ -5,9 +5,9 @@
 local ClientPlayer = Player:subclass("ClientPlayer")
 
 function ClientPlayer:initialize(cp)
-    self.player = cp
-    self.handcardNum = 0
-    self.known_cards = {}
+  self.player = cp
+  self.handcardNum = 0
+  self.known_cards = {}
 end
 
 return ClientPlayer
