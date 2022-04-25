@@ -10,6 +10,7 @@ _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
+ActiveCardSkill = require "core.skill_type.card_skill"
 
 ---@class CardSpec: Card
 
@@ -49,6 +50,10 @@ function fk.CreateTrickCard(spec)
 		if spec.number then assert(type(spec.number) == "number") end
 
     local card = TrickCard:new(spec.name, spec.suit, spec.number)
+		
+		if spec.skill then
+			card.skill = spec.skill
+		end
     return card
 end
 
@@ -187,5 +192,18 @@ function fk.CreateTriggerSkill(spec)
 			skill.priority_table[event] = priority
 		end
 	end
+	return skill
+end
+
+function fk.CreateActiveCardSkill(spec)
+	local skill = ActiveCardSkill:new(spec.name)
+	if spec.on_use then
+		skill.onUse = spec.on_use
+	end
+
+	if spec.on_effect then
+		skill.onEffect = spec.on_effect
+	end
+
 	return skill
 end

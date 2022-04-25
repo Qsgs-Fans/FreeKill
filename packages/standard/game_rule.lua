@@ -84,6 +84,21 @@ GameRule = fk.CreateTriggerSkill{
             end,
             [Player.Play] = function()
                 room:askForSkillInvoke(player, "rule")
+
+                local ex_nihilo = nil
+                for _, cardId in ipairs(room.draw_pile) do
+                    if Fk:getCardById(cardId).trueName == "ex_nihilo" then
+                        ex_nihilo = cardId
+                        break
+                    end
+                end
+
+                if ex_nihilo then
+                    room:useCard({
+                        from = player:getId(),
+                        cardId = ex_nihilo,
+                    })
+                end
             end,
             [Player.Discard] = function()
                 local discardNum = #player:getCardIds(Player.Hand) - player:getMaxCards()

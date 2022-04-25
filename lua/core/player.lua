@@ -19,6 +19,7 @@
 ---@field mark table<string, integer>
 ---@field player_cards table<integer, integer[]>
 ---@field special_cards table<string, integer[]>
+---@field cardUsedHistory table<string, integer>
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -65,6 +66,8 @@ function Player:initialize()
         [Player.Judge] = {},
     }
     self.special_cards = {}
+
+    self.cardUsedHistory = {}
 end
 
 ---@param general General
@@ -194,6 +197,18 @@ function Player:getCardIds(playerAreas, specialName)
     return cardIds
 end
 
+---@param cardSubtype CardSubtype
+---@return integer|null
+function Player:getEquipment(cardSubtype)
+    for _, cardId in ipairs(self.player_cards[Player.Equip]) do
+        if Fk:getCardById(cardId).sub_type == cardSubtype then
+            return cardId
+        end
+    end
+
+    return nil
+end
+
 function Player:getMaxCards()
     local baseValue = math.max(self.hp, 0)
 
@@ -205,7 +220,7 @@ end
 function Player:getEquipBySubtype(subtype)
     local equipId = nil
     for _, id in ipairs(self.player_cards[Player.Equip]) do
-        if Fk.getCardById(id).sub_type == subtype then
+        if Fk:getCardById(id).sub_type == subtype then
             equipId = id
             break
         end
@@ -215,10 +230,23 @@ function Player:getEquipBySubtype(subtype)
 end
 
 function Player:getAttackRange()
-    local weapon = Fk.getCardById(self:getEquipBySubtype(Card.SubtypeWeapon))
+    local weapon = Fk:getCardById(self:getEquipBySubtype(Card.SubtypeWeapon))
     local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
 
     return math.max(baseAttackRange, 0)
+end
+
+function Player:addCardUseHistory(cardName, num)
+    assert(type(num) == "number" and num ~= 0)
+
+    self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or 0
+    self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] + num
+end
+
+function Player:resetCardUseHistory(cardName)
+    if self.cardUsedHistory[cardName] then
+        self.cardUsedHistory[cardName] = 0
+    end
 end
 
 return Player

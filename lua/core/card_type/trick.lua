@@ -11,6 +11,9 @@ end
 ---@return TrickCard
 function TrickCard:clone(suit, number)
     local newCard = TrickCard:new(self.name, suit, number)
+
+    newCard.skill = self.skill
+
     return newCard
 end
 

@@ -416,6 +416,22 @@ function Room:getPlayerById(id)
     error("cannot find player by " .. id)
 end
 
+---@param playerIds integer[]
+function Room:sortPlayersByAction(playerIds)
+
+end
+
+function Room:deadPlayerFilter(playerIds)
+    local newPlayerIds = {}
+    for _, playerId in ipairs(playerIds) do
+        if self:getPlayerById(playerId):isAlive() then
+            table.insert(newPlayerIds, playerId)
+        end
+    end
+
+    return newPlayerIds
+end
+
 ---@param sortBySeat boolean
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
@@ -716,6 +732,227 @@ end
 function Room:killPlayer(deathStruct)
     print(self:getPlayerById(deathStruct.who).general .. " is dead")
     self:gameOver()
+end
+
+---@param room Room
+---@param cardUseEvent CardUseStruct
+---@param aimEventCollaborators table<string, AimStruct[]>
+---@return boolean
+local onAim = function(room, cardUseEvent, aimEventCollaborators)
+    local eventStages = { fk.TargetSpecifying, fk.TargetConfirming, fk.TargetSpecified, fk.TargetConfirmed }
+    for _, stage in ipairs(eventStages) do
+        if not cardUseEvent.tos then
+            return false
+        end
+
+        room:sortPlayersByAction(cardUseEvent.tos)
+        local aimGroup = AimGroup:initAimGroup(TargetGroup:getRealTargets(cardUseEvent.tos))
+
+        local collaboratorsIndex = {}
+        local firstTarget = true
+        repeat
+            local toId = AimGroup:getUndoneOrDoneTargets(aimGroup)[1]
+            ---@type AimStruct
+            local aimStruct
+            local initialEvent = false
+            collaboratorsIndex[toId] = collaboratorsIndex[toId] or 0
+
+            if not aimEventCollaborators[toId] or collaboratorsIndex[toId] >= #aimEventCollaborators[toId] then
+                aimStruct = {
+                    from = cardUseEvent.from,
+                    cardId = cardUseEvent.cardId,
+                    to = toId,
+                    targetGroup = cardUseEvent.tos,
+                    nullifiedTargets = cardUseEvent.nullifiedTargets or {},
+                    tos = aimGroup,
+                    firstTarget = firstTarget,
+                    additionalDamage = cardUseEvent.addtionalDamage
+                }
+
+                collaboratorsIndex[toId] = 1
+                initialEvent = true
+            else
+                aimStruct = aimEventCollaborators[toId][collaboratorsIndex[toId]]
+                aimStruct.from = cardUseEvent.from
+                aimStruct.cardId = cardUseEvent.cardId
+                aimStruct.tos = aimGroup
+                aimStruct.targetGroup = cardUseEvent.tos
+                aimStruct.nullifiedTargets = cardUseEvent.nullifiedTargets or {}
+                aimStruct.firstTarget = firstTarget
+            end
+
+            firstTarget = false
+
+            if room.logic:trigger(stage, (stage == fk.TargetSpecifying or stage == fk.TargetSpecified) and room:getPlayerById(aimStruct.from) or room:getPlayerById(aimStruct.to), aimStruct) then
+                return false
+            end
+            AimGroup:removeDeadTargets(room, aimStruct)
+
+            local aimEventTargetGroup = aimStruct.targetGroup
+            if aimEventTargetGroup then
+                room:sortPlayersByAction(aimEventTargetGroup)
+            end
+
+            cardUseEvent.from = aimStruct.from
+            cardUseEvent.tos = aimEventTargetGroup
+            cardUseEvent.nullifiedTargets = aimStruct.nullifiedTargets
+            
+            if #AimGroup:getAllTargets(aimStruct.tos) == 0 then
+                return false
+            end
+
+            local cancelledTargets = AimGroup:getCancelledTargets(aimStruct.tos)
+            if #cancelledTargets > 0 then
+                for _, target in ipairs(cancelledTargets) do
+                    aimEventCollaborators[target] = {}
+                    collaboratorsIndex[target] = 0
+                end
+            end
+            aimStruct.tos[AimGroup.Cancelled] = {}
+
+            aimEventCollaborators[toId] = aimEventCollaborators[toId] or {}
+            if not room:getPlayerById(toId):isAlive() then
+                if initialEvent then
+                    table.insert(aimEventCollaborators[toId], aimStruct)
+                else
+                    aimEventCollaborators[toId][collaboratorsIndex[toId]] = aimStruct
+                end
+            end
+
+            AimGroup:setTargetDone(aimStruct.tos, toId)
+            aimGroup = aimStruct.tos
+        until #AimGroup:getUndoneOrDoneTargets(aimGroup) == 0
+    end
+
+    return true
+end
+
+---@param cardUseEvent CardUseStruct
+---@return boolean
+function Room:useCard(cardUseEvent)
+    self:moveCards({
+        ids = { cardUseEvent.cardId },
+        from = cardUseEvent.customFrom or cardUseEvent.from,
+        toArea = Card.Processing,
+        moveReason = fk.ReasonUse,
+    })
+    
+    if Fk:getCardById(cardUseEvent.cardId).skill then
+        Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
+    end
+    if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
+        return false
+    end
+
+    if not cardUseEvent.extraUse then
+        self:getPlayerById(cardUseEvent.from):addCardUseHistory(Fk:getCardById(cardUseEvent.cardId).trueName, 1)
+    end
+
+    if cardUseEvent.responseToEvent then
+        cardUseEvent.responseToEvent.cardIdsResponded = cardUseEvent.responseToEvent.cardIdsResponded or {}
+        table.insert(cardUseEvent.responseToEvent.cardIdsResponded, cardUseEvent.cardId)
+    end
+
+    for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
+        -- TODO: need to complete the cards for response
+
+        self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
+        if event == fk.CardUsing then
+            ---@type table<string, AimStruct>
+            local aimEventCollaborators = {}
+            if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) then
+                break
+            end
+
+            if Fk:getCardById(cardUseEvent.cardId).type == Card.TypeEquip then
+                if self:getCardArea(cardUseEvent.cardId) ~= Card.Processing then
+                    break
+                end
+
+                if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
+                    self.moveCards({
+                        ids = { cardUseEvent.cardId },
+                        toArea = Card.DiscardPile,
+                        moveReason = fk.ReasonPutIntoDiscardPile,
+                    })
+                else
+                    local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
+                    local existingEquipId = self:getPlayerById(target):getEquipment(Fk:getCardById(cardUseEvent.cardId).sub_type)
+                    if existingEquipId then
+                        self:moveCards(
+                            {
+                                ids = { existingEquipId },
+                                from = target,
+                                toArea = Card.DiscardPile,
+                                moveReason = fk.ReasonPutIntoDiscardPile,
+                            },
+                            {
+                                ids = { cardUseEvent.cardId },
+                                to = target,
+                                toArea = Card.PlayerEquip,
+                                moveReason = fk.ReasonUse,
+                            }
+                        )
+                    else
+                        self:moveCards({
+                            ids = { cardUseEvent.cardId },
+                            to = target,
+                            toArea = Card.PlayerEquip,
+                            moveReason = fk.ReasonUse,
+                        })
+                    end
+                end
+
+                break
+            elseif Fk:getCardById(cardUseEvent.cardId).sub_type == Card.SubtypeDelayedTrick then
+                if self:getCardArea(cardUseEvent.cardId) ~= Card.Processing then
+                    break
+                end
+                
+                local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
+                if not self:getPlayerById(target).dead then
+                    local findSameCard = false
+                    for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Equip)) do
+                        if Fk:getCardById(cardId).trueName == Fk:getCardById(cardUseEvent.cardId) then
+                            findSameCard = true
+                        end
+                    end
+
+                    if not findSameCard then
+                        self:moveCards({
+                            ids = { cardUseEvent.cardId },
+                            to = target,
+                            toArea = Card.PlayerJudge,
+                            moveReason = fk.ReasonUse,
+                        })
+
+                        break
+                    end
+                end
+
+                self:moveCards({
+                    ids = { cardUseEvent.cardId },
+                    toArea = Card.DiscardPile,
+                    moveReason = fk.ReasonPutIntoDiscardPile,
+                })
+
+                break
+            end
+
+            if Fk:getCardById(cardUseEvent.cardId).skill then
+                Fk:getCardById(cardUseEvent.cardId).skill:onEffect(self, cardUseEvent)
+            end
+        end
+    end
+
+    self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
+    if self:getCardArea(cardUseEvent.cardId) == Card.Processing then
+        self:moveCards({
+            ids = { cardUseEvent.cardId },
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonPutIntoDiscardPile,
+        })
+    end
 end
 
 fk.room_callback["QuitRoom"] = function(jsonData)

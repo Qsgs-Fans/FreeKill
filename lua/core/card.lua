@@ -3,6 +3,7 @@
 ---@field name string
 ---@field suit Suit
 ---@field number integer
+---@field trueName string
 ---@field color Color
 ---@field id integer
 ---@field type CardType
@@ -57,6 +58,7 @@ function Card:initialize(name, suit, number, color)
     self.name = name
     self.suit = suit or Card.NoSuit
     self.number = number or 0
+    self.trueName = name
 
     if suit == Card.Spade or suit == Card.Club then
         self.color = Card.Black
@@ -72,6 +74,7 @@ function Card:initialize(name, suit, number, color)
     self.id = 0
     self.type = 0
     self.sub_type = Card.SubTypeNone
+    self.skill = nil
 end
 
 function Card:getSuitString()

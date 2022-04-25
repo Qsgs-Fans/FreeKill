@@ -167,10 +167,23 @@ extension:addCards({
     collateral:clone(Card.Club, 13),
 })
 
+local exNihiloSkill = fk.CreateActiveCardSkill {
+    name = "ex_nihilo_skill",
+    on_use = function(self, room, cardUseEvent)
+        if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+            cardUseEvent.tos = { { cardUseEvent.from } }
+        end
+    end,
+    on_effect = function(self, room, cardEffectEvent)
+        room:drawCards(room:getPlayerById(TargetGroup:getRealTargets(cardEffectEvent.tos)[1]), 2, "ex_nihilo")
+    end
+}
+
 local exNihilo = fk.CreateTrickCard{
     name = "ex_nihilo",
     suit = Card.Heart,
     number = 7,
+    skill = exNihiloSkill,
 }
 Fk:loadTranslationTable{
     ["ex_nihilo"] = "无中生有",
