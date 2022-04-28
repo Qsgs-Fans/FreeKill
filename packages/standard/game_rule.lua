@@ -83,21 +83,10 @@ GameRule = fk.CreateTriggerSkill{
         room:drawCards(player, 2, self.name)
       end,
       [Player.Play] = function()
-        room:askForSkillInvoke(player, "rule")
-
-        local ex_nihilo = nil
-        for _, cardId in ipairs(room.draw_pile) do
-          if Fk:getCardById(cardId).trueName == "ex_nihilo" then
-            ex_nihilo = cardId
-            break
-          end
-        end
-
-        if ex_nihilo then
-          room:useCard({
-            from = player:getId(),
-            cardId = ex_nihilo,
-          })
+        while not player.dead do
+          local result = room:doRequest(player, "PlayCard", player:getId())
+          if result == "" then break end
+          print(string.format("playCard: player %d, card %s", player:getId(), result))
         end
       end,
       [Player.Discard] = function()

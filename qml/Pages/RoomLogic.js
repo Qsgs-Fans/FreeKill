@@ -218,6 +218,64 @@ callbacks["AddPlayer"] = function(jsonData) {
   }
 }
 
+function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
+  let i = 0;
+  let enabled = true;
+  let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
+  let all_photos = [dashboard.self];
+  for (i = 0; i < playerNum - 1; i++) {
+    all_photos.push(photos.itemAt(i))
+  }
+  selected_targets = [];
+  for (i = 0; i < playerNum; i++) {
+    all_photos[i].selected = false;
+  }
+
+  if (candidate) {
+    let data = {
+      ok_enabled: false,
+      enabled_targets: [1]
+    }
+    okButton.enabled = data.ok_enabled;
+    let enables = data.enabled_targets;
+    all_photos.forEach(photo => {
+      photo.state = "candidate";
+      photo.selectable = enables.indexOf(photo.playerid) !== -1;
+    });
+  } else {
+    all_photos.forEach(photo => {
+      photo.state = "normal";
+      photo.selected = false;
+    });
+
+    okButton.enabled = false;
+  }
+}
+
+function updateSelectedTargets(playerid, selected, targets) {
+  let i = 0;
+  let card = dashboard.getSelectedCard();
+  let all_photos = [dashboard.self]
+  for (i = 0; i < playerNum - 1; i++) {
+    all_photos.push(photos.itemAt(i))
+  }
+
+  let data = {
+    selected_targets: [],
+    enabled_targets: [],
+    ok_enabled: true
+  }
+
+  okButton.enabled = data.ok_enabled;
+  selected_targets = data.selected_targets;
+  let enables = data.enabled_targets;
+  all_photos.forEach(photo => {
+    if (selected_targets.indexOf(photo.playerid) === -1)
+      photo.selectable = enables.indexOf(photo.playerid) !== -1;
+  })
+  okButton.enabled = data.ok_enabled;
+}
+
 callbacks["RemovePlayer"] = function(jsonData) {
   // jsonData: int uid
   let uid = JSON.parse(jsonData)[0];
@@ -374,4 +432,13 @@ callbacks["MoveCards"] = function(jsonData) {
   // jsonData: merged moves
   let moves = JSON.parse(jsonData);
   moveCards(moves);
+}
+
+callbacks["PlayCard"] = function(jsonData) {
+  // jsonData: int playerId
+  let playerId = parseInt(jsonData);
+  if (playerId == Self.id) {
+    roomScene.promptText = "Please use a card";
+    roomScene.state = "playing";
+  }
 }

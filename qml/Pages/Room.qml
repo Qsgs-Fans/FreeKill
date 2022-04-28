@@ -16,6 +16,8 @@ Item {
   property alias popupBox: popupBox
   property alias promptText: prompt.text
 
+  property var selected_targets: []
+
   // tmp
   Row {
     Button{text:"摸1牌"
@@ -68,6 +70,11 @@ Item {
           okCancel.visible = false;
           endPhaseButton.visible = false;
 
+          dashboard.disableAllCards();
+          if (dashboard.pending_skill !== "")
+            dashboard.stopPending();
+          selected_targets = [];
+
           if (popupBox.item != null) {
             popupBox.item.finished();
           } 
@@ -79,6 +86,7 @@ Item {
       from: "*"; to: "playing"
       ScriptAction {
         script: {
+          dashboard.enableCards();
           progress.visible = true;
           okCancel.visible = true;
           endPhaseButton.visible = true;
@@ -130,6 +138,7 @@ Item {
       id: photos
       model: photoModel
       Photo {
+        playerid: model.id
         general: model.general
         screenName: model.screenName
         role: model.role
@@ -144,6 +153,10 @@ Item {
         chained: model.chained
         drank: model.drank
         isOwner: model.isOwner
+
+        onSelectedChanged: {
+          Logic.updateSelectedTargets(playerid, selected, selected_targets);
+        }
       }
     }
 
@@ -170,6 +183,7 @@ Item {
     width: roomScene.width
     anchors.top: roomArea.bottom
 
+    self.playerid: dashboardModel.id
     self.general: dashboardModel.general
     self.screenName: dashboardModel.screenName
     self.role: dashboardModel.role
@@ -184,6 +198,14 @@ Item {
     self.chained: dashboardModel.chained
     self.drank: dashboardModel.drank
     self.isOwner: dashboardModel.isOwner
+
+    onSelectedChanged: {
+      Logic.updateSelectedTargets(self.playerid, selected, selected_targets);
+    }
+
+    onCardSelected: {
+      Logic.enableTargets(card);
+    }
   }
 
   Item {

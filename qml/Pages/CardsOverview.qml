@@ -22,11 +22,11 @@ Item {
       GridLayout {
         columns: root.width / 98
         Repeater {
-          model: JSON.parse(Backend.getCards(name))
+          model: JSON.parse(Backend.callLuaFunction("GetCards", [name]))
           CardItem { 
             autoBack: false
             Component.onCompleted: {
-              let data = JSON.parse(Backend.getCardData(modelData));
+              let data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
               setData(data);
             }
           }
@@ -45,7 +45,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    let packs = JSON.parse(Backend.getAllCardPack());
+    let packs = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
     packs.forEach((name) => packages.append({ name: name }));
     loaded = true;
   }

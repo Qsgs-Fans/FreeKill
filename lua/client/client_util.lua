@@ -62,3 +62,12 @@ function GetCards(pack_name)
   end
   return json.encode(ret)
 end
+
+---@param card string | integer
+---@param player integer
+function CanUseCard(card, player)
+  return "true"
+end
+
+function CanUseCardToTarget() end
+function CardFeasible() end

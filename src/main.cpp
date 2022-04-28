@@ -50,6 +50,8 @@ int main(int argc, char *argv[])
 #endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
   engine->load("qml/main.qml");
+  if (engine->rootObjects().isEmpty())
+    return -1;
 
   int ret = app->exec();
 

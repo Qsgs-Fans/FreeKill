@@ -85,70 +85,56 @@ bool QmlBackend::isDir(const QString &file) {
   return QFileInfo(file).isDir();
 }
 
-#define CALLFUNC int err = lua_pcall(L, 1, 1, 0); \
-  const char *result = lua_tostring(L, -1); \
-  if (err) { \
-    qDebug() << result; \
-    lua_pop(L, 1); \
-    return ""; \
-  } \
-  lua_pop(L, 1); \
-  return QString(result); \
-
 QString QmlBackend::translate(const QString &src) {
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, "Translate");
   lua_pushstring(L, src.toUtf8().data());
 
-  CALLFUNC
+  int err = lua_pcall(L, 1, 1, 0);
+  const char *result = lua_tostring(L, -1);
+  if (err) {
+    qDebug() << result;
+    lua_pop(L, 1);
+    return "";
+  }
+  lua_pop(L, 1);
+  return QString(result);
 }
 
-QString QmlBackend::getGeneralData(const QString &general_name) {
+QString QmlBackend::callLuaFunction(const QString &func_name,
+                                    QVariantList params)
+{
   lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetGeneralData");
-  lua_pushstring(L, general_name.toUtf8().data());
+  lua_getglobal(L, func_name.toLatin1().data());
 
-  CALLFUNC
+  foreach (QVariant v, params) {
+    switch(v.type()) {
+      case QVariant::Bool:
+        lua_pushboolean(L, v.toBool());
+        break;
+      case QVariant::Int:
+      case QVariant::UInt:
+        lua_pushinteger(L, v.toInt());
+        break;
+      case QVariant::Double:
+        lua_pushnumber(L, v.toDouble());
+        break;
+      case QVariant::String:
+        lua_pushstring(L, v.toString().toUtf8().data());
+        break;
+      default:
+        qDebug() << "cannot handle QVariant type" << v.type();
+        break;
+    }
+  }
+
+  int err = lua_pcall(L, params.length(), 1, 0);
+  const char *result = lua_tostring(L, -1);
+  if (err) {
+    qDebug() << result;
+    lua_pop(L, 1);
+    return "";
+  }
+  lua_pop(L, 1);
+  return QString(result);
 }
-
-QString QmlBackend::getCardData(int id) {
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetCardData");
-  lua_pushinteger(L, id);
-
-  CALLFUNC
-}
-
-QString QmlBackend::getAllGeneralPack() {
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetAllGeneralPack");
-  lua_pushinteger(L, 0);
-
-  CALLFUNC
-}
-
-QString QmlBackend::getGenerals(const QString &pack_name) {
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetGenerals");
-  lua_pushstring(L, pack_name.toUtf8().data());
-
-  CALLFUNC
-}
-
-QString QmlBackend::getAllCardPack() {
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetAllCardPack");
-  lua_pushinteger(L, 0);
-
-  CALLFUNC
-}
-
-QString QmlBackend::getCards(const QString &pack_name) {
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "GetCards");
-  lua_pushstring(L, pack_name.toUtf8().data());
-
-  CALLFUNC
-}
-
-#undef CALLFUNC

@@ -9,6 +9,7 @@ Item {
   width: 175
   height: 233
   scale: 0.8
+  property int playerid
   property string general: ""
   property string screenName: ""
   property string role: "unknown"
@@ -45,12 +46,63 @@ Item {
     NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
   }
 
+  states: [
+    State { name: "normal" },
+    State { name: "candidate" },
+    State { name: "playing" }
+    //State { name: "responding" },
+    //State { name: "sos" }
+  ]
+
+  state: "normal"
+  transitions: [
+    Transition {
+      from: "*"; to: "normal"
+      ScriptAction {
+        script: {
+          animPlaying.stop();
+          animSelectable.stop();
+          animSelected.stop();
+        }
+      }
+    },
+
+    Transition {
+      from: "*"; to: "playing"
+      ScriptAction {
+        script: {
+          animPlaying.start();
+        }
+      }
+    },
+
+    Transition {
+      from: "*"; to: "candidate"
+      ScriptAction {
+        script: {
+          animSelectable.start();
+          animSelected.start();
+        }
+      }
+    }
+  ]
+
   PixmapAnimation {
-    id: animFrame
+    id: animPlaying
+    source: "playing"
+    anchors.centerIn: parent
+    loop: true
+    scale: 1.1
+    visible: root.state === "playing"
+  }
+
+  PixmapAnimation {
+    id: animSelected
     source: "selected"
     anchors.centerIn: parent
     loop: true
     scale: 1.1
+    visible: root.state === "candidate" && selected
   }
 
   Image {
@@ -193,6 +245,15 @@ Item {
     }
   }
 
+  MouseArea {
+    anchors.fill: parent
+    onClicked: {
+      if (parent.state != "candidate" || !parent.selectable)
+        return;
+      parent.selected = !parent.selected;
+    }
+  }
+
   RoleComboBox {
     id: role
     value: root.role
@@ -200,6 +261,12 @@ Item {
     anchors.topMargin: -4
     anchors.right: parent.right
     anchors.rightMargin: -4
+  }
+
+  Image {
+    visible: root.state === "candidate" && !selectable && !selected
+    source: SkinBank.PHOTO_DIR + "disable"
+    x: 31; y: -21
   }
 
   GlowText {
@@ -285,6 +352,7 @@ Item {
     source: "selectable"
     anchors.centerIn: parent
     loop: true
+    visible: root.state === "candidate" && selectable
   }
 
   InvisibleCardArea {
@@ -307,7 +375,7 @@ Item {
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
     generalName.text = Backend.translate(general);
-    let data = JSON.parse(Backend.getGeneralData(general));
+    let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
     kingdom = data.kingdom;
   }
 }
