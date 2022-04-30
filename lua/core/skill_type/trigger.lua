@@ -6,12 +6,12 @@
 local TriggerSkill = Skill:subclass("TriggerSkill")
 
 function TriggerSkill:initialize(name, frequency)
-    Skill.initialize(self, name, frequency)
+  Skill.initialize(self, name, frequency)
 
-    self.global = false
-    self.events = {}
-    self.refresh_events = {}
-    self.priority_table = {}    -- GameEvent --> priority
+  self.global = false
+  self.events = {}
+  self.refresh_events = {}
+  self.priority_table = {}  -- GameEvent --> priority
 end
 
 -- Default functions
@@ -37,8 +37,8 @@ function TriggerSkill:refresh(event, target, player, data) end
 ---@param data any @ useful data of the event
 ---@return boolean
 function TriggerSkill:triggerable(event, target, player, data)
-    return target and (target == player)
-        and (self.global or (target:isAlive() and target:hasSkill(self)))
+  return target and (target == player)
+    and (self.global or (target:isAlive() and target:hasSkill(self)))
 end
 
 ---Trigger this skill
@@ -48,10 +48,10 @@ end
 ---@param data any @ useful data of the event
 ---@return boolean @ returns true if trigger is broken
 function TriggerSkill:trigger(event, target, player, data)
-    if player.room:askForSkillInvoke(player, self.name) then
-        return self:use(event, target, player, data)
-    end
-    return false
+  if player.room:askForSkillInvoke(player, self.name) then
+    return self:use(event, target, player, data)
+  end
+  return false
 end
 
 ---Use this skill

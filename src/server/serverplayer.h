@@ -9,40 +9,40 @@ class Server;
 class Room;
 
 class ServerPlayer : public Player {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    explicit ServerPlayer(Room *room);
-    ~ServerPlayer();
+  explicit ServerPlayer(Room *room);
+  ~ServerPlayer();
 
-    void setSocket(ClientSocket *socket);
+  void setSocket(ClientSocket *socket);
 
-    Server *getServer() const;
-    Room *getRoom() const;
-    void setRoom(Room *room);
+  Server *getServer() const;
+  Room *getRoom() const;
+  void setRoom(Room *room);
 
-    void speak(const QString &message);
+  void speak(const QString &message);
 
-    void doRequest(const QString &command,
-                   const QString &jsonData, int timeout = -1);
-    void abortRequest();
-    QString waitForReply(int timeout);
-    QString waitForReply();
-    void doNotify(const QString &command, const QString &jsonData);
+  void doRequest(const QString &command,
+           const QString &jsonData, int timeout = -1);
+  void abortRequest();
+  QString waitForReply(int timeout);
+  QString waitForReply();
+  void doNotify(const QString &command, const QString &jsonData);
 
-    void prepareForRequest(const QString &command,
-                           const QString &data);
+  void prepareForRequest(const QString &command,
+                        const QString &data);
 
 signals:
-    void disconnected();
-                            
+  void disconnected();
+              
 private:
-    ClientSocket *socket;   // socket for communicating with client
-    Router *router;
-    Server *server;
-    Room *room;             // Room that player is in, maybe lobby
+  ClientSocket *socket;   // socket for communicating with client
+  Router *router;
+  Server *server;
+  Room *room;       // Room that player is in, maybe lobby
 
-    QString requestCommand;
-    QString requestData;
+  QString requestCommand;
+  QString requestData;
 };
 
 #endif // _SERVERPLAYER_H

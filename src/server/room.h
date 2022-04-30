@@ -5,86 +5,86 @@ class Server;
 class ServerPlayer;
 
 class Room : public QThread {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    explicit Room(Server *m_server);
-    ~Room();
+  explicit Room(Server *m_server);
+  ~Room();
 
-    // Property reader & setter
-    // ==================================={
-    Server *getServer() const;
-    int getId() const;
-    bool isLobby() const;
-    QString getName() const;
-    void setName(const QString &name);
-    int getCapacity() const;
-    void setCapacity(int capacity);
-    bool isFull() const;
-    bool isAbandoned() const;
+  // Property reader & setter
+  // ==================================={
+  Server *getServer() const;
+  int getId() const;
+  bool isLobby() const;
+  QString getName() const;
+  void setName(const QString &name);
+  int getCapacity() const;
+  void setCapacity(int capacity);
+  bool isFull() const;
+  bool isAbandoned() const;
 
-    ServerPlayer *getOwner() const;
-    void setOwner(ServerPlayer *owner);
+  ServerPlayer *getOwner() const;
+  void setOwner(ServerPlayer *owner);
 
-    void addPlayer(ServerPlayer *player);
-    void addRobot(ServerPlayer *player);
-    void removePlayer(ServerPlayer *player);
-    QList<ServerPlayer*> getPlayers() const;
-    QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
-    ServerPlayer *findPlayer(int id) const;
+  void addPlayer(ServerPlayer *player);
+  void addRobot(ServerPlayer *player);
+  void removePlayer(ServerPlayer *player);
+  QList<ServerPlayer*> getPlayers() const;
+  QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
+  ServerPlayer *findPlayer(int id) const;
 
-    int getTimeout() const;
-    void setTimeout(int timeout);
+  int getTimeout() const;
+  void setTimeout(int timeout);
 
-    bool isStarted() const;
-    // ====================================}
+  bool isStarted() const;
+  // ====================================}
 
-    void doRequest(const QList<ServerPlayer *> targets, int timeout);
-    void doNotify(const QList<ServerPlayer *> targets, int timeout);
+  void doRequest(const QList<ServerPlayer *> targets, int timeout);
+  void doNotify(const QList<ServerPlayer *> targets, int timeout);
 
-    void doBroadcastNotify(
-        const QList<ServerPlayer *> targets,
-        const QString &command,
-        const QString &jsonData
-    );
+  void doBroadcastNotify(
+    const QList<ServerPlayer *> targets,
+    const QString &command,
+    const QString &jsonData
+  );
 
-    void gameOver();
+  void gameOver();
 
-    void initLua();
-    void callLua(const QString &command, const QString &jsonData);
-    LuaFunction callback;
+  void initLua();
+  void callLua(const QString &command, const QString &jsonData);
+  LuaFunction callback;
 
-    void roomStart();
-    LuaFunction startGame;
+  void roomStart();
+  LuaFunction startGame;
 
-    void lockLua(const QString &caller);
-    void unlockLua(const QString &caller);
+  void lockLua(const QString &caller);
+  void unlockLua(const QString &caller);
 
 signals:
-    void abandoned();
+  void abandoned();
 
-    void playerAdded(ServerPlayer *player);
-    void playerRemoved(ServerPlayer *player);
+  void playerAdded(ServerPlayer *player);
+  void playerRemoved(ServerPlayer *player);
 
 protected:
-    virtual void run();
+  virtual void run();
 
 private:
-    Server *server;
-    int id;       // Lobby's id is 0
-    QString name;   // “阴间大乱斗”
-    int capacity;   // by default is 5, max is 8
-    bool m_abandoned;   // If room is empty, delete it
+  Server *server;
+  int id;     // Lobby's id is 0
+  QString name;   // “阴间大乱斗”
+  int capacity;   // by default is 5, max is 8
+  bool m_abandoned;   // If room is empty, delete it
 
-    ServerPlayer *owner;    // who created this room?
-    QList<ServerPlayer *> players;
-    QList<int> runned_players;
-    int robot_id;
-    bool gameStarted;
+  ServerPlayer *owner;  // who created this room?
+  QList<ServerPlayer *> players;
+  QList<int> runned_players;
+  int robot_id;
+  bool gameStarted;
 
-    int timeout;
+  int timeout;
 
-    lua_State *L;
-    QMutex lua_mutex;
+  lua_State *L;
+  QMutex lua_mutex;
 };
 
 #endif // _ROOM_H

@@ -10,7 +10,8 @@ class = require "middleclass"
 json = require "json"
 
 dofile "lua/lib/sha256.lua"
-dofile "lua/core/util.lua"
+local GroupUtils = require "core.util"
+TargetGroup, AimGroup = table.unpack(GroupUtils)
 dofile "lua/core/debug.lua"
 
 math.randomseed(os.time())

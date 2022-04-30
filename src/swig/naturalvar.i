@@ -7,10 +7,10 @@
 %typemap(in) LuaFunction
 %{
 if (lua_isfunction(L, $input)) {
-    lua_pushvalue(L, $input);
-    $1 = luaL_ref(L, LUA_REGISTRYINDEX);
+  lua_pushvalue(L, $input);
+  $1 = luaL_ref(L, LUA_REGISTRYINDEX);
 } else {
-    $1 = 0;
+  $1 = 0;
 }
 %}
 
@@ -35,8 +35,8 @@ SWIG_arg ++;
 
 %typemap(in, checkfn = "lua_isstring") QString const &
 %{
-    $1_str = QString::fromUtf8(lua_tostring(L, $input));
-    $1 = &$1_str;
+  $1_str = QString::fromUtf8(lua_tostring(L, $input));
+  $1 = &$1_str;
 %}
 
 %typemap(out) QString const &
@@ -48,10 +48,10 @@ SWIG_arg ++;
 %typemap(in, checkfn = "lua_istable") QStringList
 %{
 for (size_t i = 0; i < lua_rawlen(L, $input); ++i) {
-    lua_rawgeti(L, $input, i + 1);
-    const char *elem = luaL_checkstring(L, -1);
-    $1 << QString::fromUtf8(QByteArray(elem));
-    lua_pop(L, 1);
+  lua_rawgeti(L, $input, i + 1);
+  const char *elem = luaL_checkstring(L, -1);
+  $1 << QString::fromUtf8(QByteArray(elem));
+  lua_pop(L, 1);
 }
 %}
 
@@ -60,9 +60,9 @@ for (size_t i = 0; i < lua_rawlen(L, $input); ++i) {
 lua_createtable(L, $1.length(), 0);
 
 for (int i = 0; i < $1.length(); i++) {
-    QString str = $1.at(i);
-    lua_pushstring(L, str.toUtf8().constData());
-    lua_rawseti(L, -2, i + 1);
+  QString str = $1.at(i);
+  lua_pushstring(L, str.toUtf8().constData());
+  lua_rawseti(L, -2, i + 1);
 }
 
 SWIG_arg++;
@@ -70,7 +70,7 @@ SWIG_arg++;
 
 %typemap(typecheck) QStringList
 %{
-    $1 = lua_istable(L, $input) ? 1 : 0;
+  $1 = lua_istable(L, $input) ? 1 : 0;
 %}
 
 

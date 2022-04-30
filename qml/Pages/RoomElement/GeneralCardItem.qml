@@ -13,12 +13,12 @@ import "../skin-bank.js" as SkinBank
  */
 
 CardItem {
-    property string kingdom: "qun"
-    name: "caocao"
-    // description: Sanguosha.getGeneralDescription(name)
-    suit: ""
-    number: 0
-    footnote: ""
-    card.source: SkinBank.GENERAL_DIR + name
-    glow.color: "white" //Engine.kingdomColor[kingdom]
+  property string kingdom: "qun"
+  name: "caocao"
+  // description: Sanguosha.getGeneralDescription(name)
+  suit: ""
+  number: 0
+  footnote: ""
+  card.source: SkinBank.GENERAL_DIR + name
+  glow.color: "white" //Engine.kingdomColor[kingdom]
 }

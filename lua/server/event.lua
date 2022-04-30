@@ -50,4 +50,24 @@ fk.EnterDying = 38
 fk.Dying = 39
 fk.AfterDying = 40
 
-fk.NumOfEvents = 41
+fk.PreCardUse = 41
+fk.AfterCardUseDeclared = 42
+fk.AfterCardTargetDeclared = 43
+fk.BeforeCardUseEffect = 44
+fk.CardUsing = 45
+fk.TargetSpecifying = 46
+fk.TargetConfirming = 47
+fk.TargetSpecified = 48
+fk.TargetConfirmed = 49
+fk.CardUseFinished = 50
+
+fk.PreCardRespond = 51
+fk.CardResponding = 52
+fk.CardRespondFinished = 53
+
+fk.PreCardEffect = 54
+fk.BeforeCardEffect = 55
+fk.CardEffecting = 56
+fk.CardEffectFinished = 57
+
+fk.NumOfEvents = 58

@@ -6,111 +6,111 @@
 
 ServerPlayer::ServerPlayer(Room *room)
 {
-    socket = nullptr;
-    router = new Router(this, socket, Router::TYPE_SERVER);
-    setState(Player::Online);
-    this->room = room;
-    server = room->getServer();
+  socket = nullptr;
+  router = new Router(this, socket, Router::TYPE_SERVER);
+  setState(Player::Online);
+  this->room = room;
+  server = room->getServer();
 }
 
 ServerPlayer::~ServerPlayer()
 {
-    // clean up, quit room and server
+  // clean up, quit room and server
+  room->removePlayer(this);
+  if (room != nullptr) {
+    // now we are in lobby, so quit lobby
     room->removePlayer(this);
-    if (room != nullptr) {
-        // now we are in lobby, so quit lobby
-        room->removePlayer(this);
-    }
-    server->removePlayer(getId());
-    router->deleteLater();
+  }
+  server->removePlayer(getId());
+  router->deleteLater();
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket)
 {
-    if (this->socket != nullptr) {
-        this->socket->disconnect(this);
-        disconnect(this->socket);
-        this->socket->deleteLater();
-    }
+  if (this->socket != nullptr) {
+    this->socket->disconnect(this);
+    disconnect(this->socket);
+    this->socket->deleteLater();
+  }
 
-    this->socket = nullptr;
-    if (socket != nullptr) {
-        connect(socket, &ClientSocket::disconnected, this, &ServerPlayer::disconnected);
-        this->socket = socket;
-    }
+  this->socket = nullptr;
+  if (socket != nullptr) {
+    connect(socket, &ClientSocket::disconnected, this, &ServerPlayer::disconnected);
+    this->socket = socket;
+  }
 
-    router->setSocket(socket);
+  router->setSocket(socket);
 }
 
 Server *ServerPlayer::getServer() const
 {
-    return server;
+  return server;
 }
 
 Room *ServerPlayer::getRoom() const
 {
-    return room;
+  return room;
 }
 
 void ServerPlayer::setRoom(Room* room)
 {
-    this->room = room;
+  this->room = room;
 }
 
 void ServerPlayer::speak(const QString& message)
 {
-    ;
+  ;
 }
 
 void ServerPlayer::doRequest(const QString& command, const QString& jsonData, int timeout)
 {
-    if (getState() != Player::Online) return;
-    int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->request(type, command, jsonData, timeout);
+  if (getState() != Player::Online) return;
+  int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
+  router->request(type, command, jsonData, timeout);
 }
 
 void ServerPlayer::abortRequest()
 {
-    router->abortRequest();
+  router->abortRequest();
 }
 
 QString ServerPlayer::waitForReply()
 {
-    room->unlockLua(__FUNCTION__);
-    QString ret;
-    if (getState() != Player::Online) {
-        QThread::sleep(1);
-        ret = "";
-    } else {
-        ret = router->waitForReply();
-    }
-    room->lockLua(__FUNCTION__);
-    return ret;
+  room->unlockLua(__FUNCTION__);
+  QString ret;
+  if (getState() != Player::Online) {
+    QThread::sleep(1);
+    ret = "";
+  } else {
+    ret = router->waitForReply();
+  }
+  room->lockLua(__FUNCTION__);
+  return ret;
 }
 
 QString ServerPlayer::waitForReply(int timeout)
 {
-    room->unlockLua(__FUNCTION__);
-    QString ret;
-    if (getState() != Player::Online) {
-        QThread::sleep(1);
-        ret = "";
-    } else {
-        ret = router->waitForReply(timeout);
-    }
-    room->lockLua(__FUNCTION__);
-    return ret;
+  room->unlockLua(__FUNCTION__);
+  QString ret;
+  if (getState() != Player::Online) {
+    QThread::sleep(1);
+    ret = "";
+  } else {
+    ret = router->waitForReply(timeout);
+  }
+  room->lockLua(__FUNCTION__);
+  return ret;
 }
 
 void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
 {
-    if (getState() != Player::Online) return;
-    int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
-    router->notify(type, command, jsonData);
+  if (getState() != Player::Online) return;
+  int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
+  router->notify(type, command, jsonData);
 }
 
 void ServerPlayer::prepareForRequest(const QString& command, const QString& data)
 {
-    requestCommand = command;
-    requestData = data;
+  requestCommand = command;
+  requestData = data;
 }

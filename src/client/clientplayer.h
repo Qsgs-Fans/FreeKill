@@ -4,23 +4,23 @@
 #include "player.h"
 
 class ClientPlayer : public Player {
-    Q_OBJECT
+  Q_OBJECT
 
-    Q_PROPERTY(int id READ getId CONSTANT)
-    Q_PROPERTY(QString screenName 
-        READ getScreenName 
-        WRITE setScreenName 
-        NOTIFY screenNameChanged
-    )
-    Q_PROPERTY(QString avatar
-        READ getAvatar 
-        WRITE setAvatar 
-        NOTIFY avatarChanged
-    )
+  Q_PROPERTY(int id READ getId CONSTANT)
+  Q_PROPERTY(QString screenName 
+    READ getScreenName 
+    WRITE setScreenName 
+    NOTIFY screenNameChanged
+  )
+  Q_PROPERTY(QString avatar
+    READ getAvatar 
+    WRITE setAvatar 
+    NOTIFY avatarChanged
+  )
 
 public:
-    ClientPlayer(int id, QObject *parent = nullptr);
-    ~ClientPlayer();
+  ClientPlayer(int id, QObject *parent = nullptr);
+  ~ClientPlayer();
 
 private:
 };

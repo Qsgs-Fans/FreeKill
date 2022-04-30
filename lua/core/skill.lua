@@ -13,10 +13,10 @@ Skill.Limited = 4
 Skill.Wake = 5
 
 function Skill:initialize(name, frequency)
-    -- TODO: visible, lord, etc
-    self.name = name
-    self.frequency = frequency
-    self.visible = true
+  -- TODO: visible, lord, etc
+  self.name = name
+  self.frequency = frequency
+  self.visible = true
 end
 
 return Skill

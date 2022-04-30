@@ -3,6 +3,7 @@
 ---@field name string
 ---@field suit Suit
 ---@field number integer
+---@field trueName string
 ---@field color Color
 ---@field id integer
 ---@field type CardType
@@ -26,10 +27,9 @@ Card.NoColor = 3
 
 ---@alias CardType integer
 
-Card.TypeSkill = 1
-Card.TypeBasic = 2
-Card.TypeTrick = 3
-Card.TypeEquip = 4
+Card.TypeBasic = 1
+Card.TypeTrick = 2
+Card.TypeEquip = 3
 
 ---@alias CardSubtype integer
 
@@ -54,39 +54,41 @@ Card.DiscardPile = 7
 Card.Void = 8
 
 function Card:initialize(name, suit, number, color)
-    self.name = name
-    self.suit = suit or Card.NoSuit
-    self.number = number or 0
+  self.name = name
+  self.suit = suit or Card.NoSuit
+  self.number = number or 0
+  self.trueName = name
 
-    if suit == Card.Spade or suit == Card.Club then
-        self.color = Card.Black
-    elseif suit == Card.Heart or suit == Card.Diamond then
-        self.color = Card.Red
-    elseif color ~= nil then
-        self.color = color
-    else
-        self.color = Card.NoColor
-    end
+  if suit == Card.Spade or suit == Card.Club then
+    self.color = Card.Black
+  elseif suit == Card.Heart or suit == Card.Diamond then
+    self.color = Card.Red
+  elseif color ~= nil then
+    self.color = color
+  else
+    self.color = Card.NoColor
+  end
 
-    self.package = nil
-    self.id = 0
-    self.type = 0
-    self.sub_type = Card.SubTypeNone
+  self.package = nil
+  self.id = 0
+  self.type = 0
+  self.sub_type = Card.SubTypeNone
+  self.skill = nil
 end
 
 function Card:getSuitString()
-    local suit = self.suit
-    if suit == Card.Spade then
-        return "spade"
-    elseif suit == Card.Heart then
-        return "heart"
-    elseif suit == Card.Club then
-        return "club"
-    elseif suit == Card.Diamond then
-        return "diamond"
-    else
-        return "unknown"
-    end
+  local suit = self.suit
+  if suit == Card.Spade then
+    return "spade"
+  elseif suit == Card.Heart then
+    return "heart"
+  elseif suit == Card.Club then
+    return "club"
+  elseif suit == Card.Diamond then
+    return "diamond"
+  else
+    return "unknown"
+  end
 end
 
 return Card
