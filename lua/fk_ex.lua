@@ -84,16 +84,25 @@ function fk.CreateTriggerSkill(spec)
   return skill
 end
 
+---@class ActiveSkillSpec: SkillSpec
+---@field can_use fun(self: ActiveSkill, player: Player): boolean
+---@field card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean
+---@field target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[]): boolean
+---@field feasible fun(self: ActiveSkill, selected: integer[], selected_targets: integer[]): boolean
+---@field on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
+---@field on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
+
+---@param spec ActiveSkillSpec
+---@return ActiveSkill
 function fk.CreateActiveSkill(spec)
+  assert(type(spec.name) == "string")
   local skill = ActiveSkill:new(spec.name)
-  if spec.on_use then
-    skill.onUse = spec.on_use
-  end
-
-  if spec.on_effect then
-    skill.onEffect = spec.on_effect
-  end
-
+  if spec.can_use then skill.canUse = spec.can_use end
+  if spec.card_filter then skill.cardFilter = spec.card_filter end
+  if spec.target_filter then skill.targetFilter = spec.target_filter end
+  if spec.feasible then skill.feasible = spec.feasible end
+  if spec.on_use then skill.onUse = spec.on_use end
+  if spec.on_effect then skill.onEffect = spec.on_effect end
   return skill
 end
 
@@ -141,6 +150,17 @@ function fk.CreateDelayedTrickCard(spec)
   local card = DelayedTrickCard:new(spec.name, spec.suit, spec.number)
   return card
 end
+
+local defaultEquipSkill = fk.CreateActiveSkill{
+  name = "default_equip_skill",
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+    local target = TargetGroup:getRealTargets(use.tos)[1]
+    local card = Fk:getCardById(use.cardId)
+  end
+}
 
 ---@param spec CardSpec
 ---@return Weapon
