@@ -22,6 +22,7 @@ end
 ---@return Weapon
 function Weapon:clone(suit, number)
   local newCard = Weapon:new(self.name, suit, number, self.attack_range)
+  newCard.skill = self.skill
   return newCard
 end
 
@@ -38,6 +39,7 @@ end
 ---@return Armor
 function Armor:clone(suit, number)
   local newCard = Armor:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 
@@ -54,6 +56,7 @@ end
 ---@return DefensiveRide
 function DefensiveRide:clone(suit, number)
   local newCard = DefensiveRide:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 
@@ -70,6 +73,7 @@ end
 ---@return OffensiveRide
 function OffensiveRide:clone(suit, number)
   local newCard = OffensiveRide:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 
@@ -86,6 +90,7 @@ end
 ---@return Treasure
 function Treasure:clone(suit, number)
   local newCard = Treasure:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 

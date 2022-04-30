@@ -220,7 +220,6 @@ callbacks["AddPlayer"] = function(jsonData) {
 
 function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   let i = 0;
-  let enabled = true;
   let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
   let all_photos = [dashboard.self];
   for (i = 0; i < playerNum - 1; i++) {
@@ -234,14 +233,22 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   if (candidate) {
     let data = {
       ok_enabled: false,
-      enabled_targets: [1]
+      enabled_targets: []
     }
-    okButton.enabled = data.ok_enabled;
-    let enables = data.enabled_targets;
+
     all_photos.forEach(photo => {
       photo.state = "candidate";
-      photo.selectable = enables.indexOf(photo.playerid) !== -1;
-    });
+      let id = photo.playerid;
+      let ret = Backend.callLuaFunction(
+        "CanUseCardToTarget",
+        [card, id, selected_targets]
+      );
+      photo.selectable = ret;
+    })
+
+    okButton.enabled = Backend.callLuaFunction(
+      "CardFeasible", [card, selected_targets]
+    );
   } else {
     all_photos.forEach(photo => {
       photo.state = "normal";

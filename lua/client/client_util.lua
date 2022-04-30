@@ -1,3 +1,5 @@
+-- All functions in this file are used by Qml
+
 function Translate(src)
   return Fk.translations[src]
 end
@@ -66,8 +68,66 @@ end
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)
-  return "true"
+  local c   ---@type Card
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+  else
+    error()
+  end
+
+  local ret = c.skill:canUse(ClientInstance:findPlayer(player))
+  return json.encode(ret)
 end
 
-function CanUseCardToTarget() end
-function CardFeasible() end
+---@param card string | integer
+---@param to_select integer @ id of the target
+---@param selected integer[] @ ids of selected targets
+---@param selected_cards integer[] @ ids of selected cards
+function CanUseCardToTarget(card, to_select, selected)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    error()
+  end
+
+  local ret = c.skill:targetFilter(to_select, selected, selected_cards)
+  return json.encode(ret)
+end
+
+---@param card string | integer
+---@param to_select integer @ id of a card not selected
+---@param selected integer[] @ ids of selected cards
+---@param selected_targets integer[] @ ids of selected players
+function CanSelectCardForSkill(card, to_select, selected_targets)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    error()
+  end
+
+  local ret = c.skill:cardFilter(to_select, selected_cards, selected_targets)
+  return json.encode(ret)
+end
+
+---@param card string | integer
+---@param selected integer[] @ ids of selected cards
+---@param selected_targets integer[] @ ids of selected players
+function CardFeasible(card, selected_targets)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    error()
+  end
+
+  local ret = c.skill:feasible(selected_cards, selected_targets)
+  return json.encode(ret)
+end

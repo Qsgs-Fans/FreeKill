@@ -27,10 +27,9 @@ Card.NoColor = 3
 
 ---@alias CardType integer
 
-Card.TypeSkill = 1
-Card.TypeBasic = 2
-Card.TypeTrick = 3
-Card.TypeEquip = 4
+Card.TypeBasic = 1
+Card.TypeTrick = 2
+Card.TypeEquip = 3
 
 ---@alias CardSubtype integer
 

@@ -5,7 +5,6 @@ dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active_skill"
 
-SkillCard = require "core.card_type.skill"
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
 TrickCard, DelayedTrickCard = table.unpack(Trick)
@@ -107,6 +106,16 @@ function fk.CreateActiveSkill(spec)
 end
 
 ---@class CardSpec: Card
+---@field skill Skill
+
+local defaultCardSkill = fk.CreateActiveSkill{
+  name = "default_card_skill",
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end
+}
 
 ---@param spec CardSpec
 ---@return BasicCard
@@ -118,6 +127,7 @@ function fk.CreateBasicCard(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = BasicCard:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -130,11 +140,8 @@ function fk.CreateTrickCard(spec)
   if spec.suit then assert(type(spec.suit) == "number") end
   if spec.number then assert(type(spec.number) == "number") end
 
-  local card = TrickCard:new(spec.name, spec.suit, spec.number)
-    
-  if spec.skill then
-    card.skill = spec.skill
-  end
+  local card = TrickCard:new(spec.name, spec.suit, spec.number)  
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -148,19 +155,9 @@ function fk.CreateDelayedTrickCard(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = DelayedTrickCard:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
-
-local defaultEquipSkill = fk.CreateActiveSkill{
-  name = "default_equip_skill",
-  on_use = function(self, room, use)
-    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
-      use.tos = { { use.from } }
-    end
-    local target = TargetGroup:getRealTargets(use.tos)[1]
-    local card = Fk:getCardById(use.cardId)
-  end
-}
 
 ---@param spec CardSpec
 ---@return Weapon
@@ -173,6 +170,7 @@ function fk.CreateWeapon(spec)
   if spec.attack_range then assert(type(spec.attack_range) == "number" and spec.attack_range >= 0) end
 
   local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -186,6 +184,7 @@ function fk.CreateArmor(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = Armor:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -199,6 +198,7 @@ function fk.CreateDefensiveRide(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = DefensiveRide:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -212,6 +212,7 @@ function fk.CreateOffensiveRide(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = OffensiveRide:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end
 
@@ -225,5 +226,6 @@ function fk.CreateTreasure(spec)
   if spec.number then assert(type(spec.number) == "number") end
 
   local card = Treasure:new(spec.name, spec.suit, spec.number)
+  card.skill = spec.skill or defaultCardSkill
   return card
 end

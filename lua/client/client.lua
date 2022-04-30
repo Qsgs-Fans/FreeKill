@@ -5,7 +5,6 @@ Client = class('Client')
 
 -- load client classes
 ClientPlayer = require "client.clientplayer"
-dofile "lua/client/client_util.lua"
 
 fk.client_callback = {}
 
@@ -142,3 +141,4 @@ end
 
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
+dofile "lua/client/client_util.lua"

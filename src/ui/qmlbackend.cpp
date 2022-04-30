@@ -101,6 +101,38 @@ QString QmlBackend::translate(const QString &src) {
   return QString(result);
 }
 
+void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
+  QVariantList list;
+  switch(v.type()) {
+    case QVariant::Bool:
+      lua_pushboolean(L, v.toBool());
+      break;
+    case QVariant::Int:
+    case QVariant::UInt:
+      lua_pushinteger(L, v.toInt());
+      break;
+    case QVariant::Double:
+      lua_pushnumber(L, v.toDouble());
+      break;
+    case QVariant::String:
+      lua_pushstring(L, v.toString().toUtf8().data());
+      break;
+    case QVariant::List:
+      lua_newtable(L);
+      list = v.toList();
+      for (int i = 1; i <= list.length(); i++) {
+        lua_pushinteger(L, i);
+        pushLuaValue(L, list[i - 1]);
+        lua_settable(L, -3);
+      }
+      break;
+    default:
+      qDebug() << "cannot handle QVariant type" << v.type();
+      lua_pushnil(L);
+      break;
+  }
+}
+
 QString QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params)
 {
@@ -108,24 +140,7 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   lua_getglobal(L, func_name.toLatin1().data());
 
   foreach (QVariant v, params) {
-    switch(v.type()) {
-      case QVariant::Bool:
-        lua_pushboolean(L, v.toBool());
-        break;
-      case QVariant::Int:
-      case QVariant::UInt:
-        lua_pushinteger(L, v.toInt());
-        break;
-      case QVariant::Double:
-        lua_pushnumber(L, v.toDouble());
-        break;
-      case QVariant::String:
-        lua_pushstring(L, v.toString().toUtf8().data());
-        break;
-      default:
-        qDebug() << "cannot handle QVariant type" << v.type();
-        break;
-    }
+    pushLuaValue(L, v);
   }
 
   int err = lua_pcall(L, params.length(), 1, 0);

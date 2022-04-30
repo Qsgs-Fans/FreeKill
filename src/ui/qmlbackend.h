@@ -35,6 +35,8 @@ signals:
 
 private:
   QQmlApplicationEngine *engine;
+
+  void pushLuaValue(lua_State *L, QVariant v);
 };
 
 extern QmlBackend *Backend;

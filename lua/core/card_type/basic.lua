@@ -11,6 +11,7 @@ end
 ---@return BasicCard
 function BasicCard:clone(suit, number)
   local newCard = BasicCard:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 

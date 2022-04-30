@@ -30,6 +30,7 @@ end
 ---@return DelayedTrickCard
 function DelayedTrickCard:clone(suit, number)
   local newCard = DelayedTrickCard:new(self.name, suit, number)
+  newCard.skill = self.skill
   return newCard
 end
 
