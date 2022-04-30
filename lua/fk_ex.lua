@@ -1,18 +1,16 @@
 -- load types for extension
 
+dofile "lua/server/event.lua"
+dofile "lua/server/system_enum.lua"
+TriggerSkill = require "core.skill_type.trigger"
+ActiveSkill = require "core.skill_type.active_skill"
+
 SkillCard = require "core.card_type.skill"
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
 TrickCard, DelayedTrickCard = table.unpack(Trick)
 local Equip = require "core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
-
-dofile "lua/server/event.lua"
-dofile "lua/server/system_enum.lua"
-TriggerSkill = require "core.skill_type.trigger"
-ActiveCardSkill = require "core.skill_type.card_skill"
-
----@class CardSpec: Card
 
 ---@class SkillSpec: Skill
 
@@ -26,6 +24,80 @@ ActiveCardSkill = require "core.skill_type.card_skill"
 ---@field can_trigger TrigFunc
 ---@field on_refresh TrigFunc
 ---@field can_refresh TrigFunc
+
+---@param spec TriggerSkillSpec
+---@return TriggerSkill
+function fk.CreateTriggerSkill(spec)
+  assert(type(spec.name) == "string")
+  --assert(type(spec.on_trigger) == "function")
+  if spec.frequency then assert(type(spec.frequency) == "number") end
+
+  local frequency = spec.frequency or Skill.NotFrequent
+  local skill = TriggerSkill:new(spec.name, frequency)
+
+  if type(spec.events) == "number" then
+    table.insert(skill.events, spec.events)
+  elseif type(spec.events) == "table" then
+    table.insertTable(skill.events, spec.events)
+  end
+
+  if type(spec.refresh_events) == "number" then
+    table.insert(skill.refresh_events, spec.refresh_events)
+  elseif type(spec.refresh_events) == "table" then
+    table.insertTable(skill.refresh_events, spec.refresh_events)
+  end
+
+  if type(spec.global) == "boolean" then skill.global = spec.global end
+
+  if spec.on_trigger then skill.trigger = spec.on_trigger end
+
+  if spec.can_trigger then
+    skill.triggerable = spec.can_trigger
+  end
+
+  if spec.can_refresh then
+    skill.canRefresh = spec.can_refresh
+  end
+
+  if spec.on_refresh then
+    skill.refresh = spec.on_refresh
+  end
+
+  if not spec.priority then
+    if frequency == Skill.Wake then
+      spec.priority = 3
+    elseif frequency == Skill.Compulsory then
+      spec.priority = 2
+    else
+      spec.priority = 1
+    end
+  end
+  if type(spec.priority) == "number" then
+    for _, event in ipairs(skill.events) do
+      skill.priority_table[event] = spec.priority
+    end
+  elseif type(spec.priority) == "table" then
+    for event, priority in pairs(spec.priority) do
+      skill.priority_table[event] = priority
+    end
+  end
+  return skill
+end
+
+function fk.CreateActiveSkill(spec)
+  local skill = ActiveSkill:new(spec.name)
+  if spec.on_use then
+    skill.onUse = spec.on_use
+  end
+
+  if spec.on_effect then
+    skill.onEffect = spec.on_effect
+  end
+
+  return skill
+end
+
+---@class CardSpec: Card
 
 ---@param spec CardSpec
 ---@return BasicCard
@@ -134,76 +206,4 @@ function fk.CreateTreasure(spec)
 
   local card = Treasure:new(spec.name, spec.suit, spec.number)
   return card
-end
-
----@param spec TriggerSkillSpec
----@return TriggerSkill
-function fk.CreateTriggerSkill(spec)
-  assert(type(spec.name) == "string")
-  --assert(type(spec.on_trigger) == "function")
-  if spec.frequency then assert(type(spec.frequency) == "number") end
-
-  local frequency = spec.frequency or Skill.NotFrequent
-  local skill = TriggerSkill:new(spec.name, frequency)
-
-  if type(spec.events) == "number" then
-    table.insert(skill.events, spec.events)
-  elseif type(spec.events) == "table" then
-    table.insertTable(skill.events, spec.events)
-  end
-
-  if type(spec.refresh_events) == "number" then
-    table.insert(skill.refresh_events, spec.refresh_events)
-  elseif type(spec.refresh_events) == "table" then
-    table.insertTable(skill.refresh_events, spec.refresh_events)
-  end
-
-  if type(spec.global) == "boolean" then skill.global = spec.global end
-
-  if spec.on_trigger then skill.trigger = spec.on_trigger end
-
-  if spec.can_trigger then
-    skill.triggerable = spec.can_trigger
-  end
-
-  if spec.can_refresh then
-    skill.canRefresh = spec.can_refresh
-  end
-
-  if spec.on_refresh then
-    skill.refresh = spec.on_refresh
-  end
-
-  if not spec.priority then
-    if frequency == Skill.Wake then
-      spec.priority = 3
-    elseif frequency == Skill.Compulsory then
-      spec.priority = 2
-    else
-      spec.priority = 1
-    end
-  end
-  if type(spec.priority) == "number" then
-    for _, event in ipairs(skill.events) do
-      skill.priority_table[event] = spec.priority
-    end
-  elseif type(spec.priority) == "table" then
-    for event, priority in pairs(spec.priority) do
-      skill.priority_table[event] = priority
-    end
-  end
-  return skill
-end
-
-function fk.CreateActiveCardSkill(spec)
-  local skill = ActiveCardSkill:new(spec.name)
-  if spec.on_use then
-    skill.onUse = spec.on_use
-  end
-
-  if spec.on_effect then
-    skill.onEffect = spec.on_effect
-  end
-
-  return skill
 end

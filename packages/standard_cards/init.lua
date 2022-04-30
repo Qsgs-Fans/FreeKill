@@ -167,7 +167,7 @@ extension:addCards({
   collateral:clone(Card.Club, 13),
 })
 
-local exNihiloSkill = fk.CreateActiveCardSkill {
+local exNihiloSkill = fk.CreateActiveSkill{
   name = "ex_nihilo_skill",
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
