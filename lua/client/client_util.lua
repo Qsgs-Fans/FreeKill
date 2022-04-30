@@ -14,19 +14,31 @@ function GetGeneralData(name)
   }
 end
 
+local cardSubtypeStrings = {
+  [Card.SubtypeNone] = "none",
+  [Card.SubtypeDelayedTrick] = "delayed_trick",
+  [Card.SubtypeWeapon] = "weapon",
+  [Card.SubtypeArmor] = "armor",
+  [Card.SubtypeDefensiveRide] = "defensive_horse",
+  [Card.SubtypeOffensiveRide] = "offensive_horse",
+  [Card.SubtypeTreasure] = "treasure",
+}
+
 function GetCardData(id)
   local card = Fk.cards[id]
   if card == nil then return json.encode{
     cid = id,
     known = false
   } end
-  return json.encode{
+  local ret = {
     cid = id,
     name = card.name,
     number = card.number,
     suit = card:getSuitString(),
     color = card.color,
+    subtype = cardSubtypeStrings[card.sub_type]
   }
+  return json.encode(ret)
 end
 
 function GetAllGeneralPack()

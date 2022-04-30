@@ -86,7 +86,18 @@ GameRule = fk.CreateTriggerSkill{
         while not player.dead do
           local result = room:doRequest(player, "PlayCard", player:getId())
           if result == "" then break end
-          print(string.format("playCard: player %d, card %s", player:getId(), result))
+
+          local data = json.decode(result)
+          local card = data.card
+          local targets = data.targets
+          local use = {}    ---@type CardUseStruct
+          use.from = player:getId()
+          use.tos = {}
+          for _, target in ipairs(targets) do
+            table.insert(use.tos, { target })
+          end
+          use.cardId = card
+          room:useCard(use)
         end
       end,
       [Player.Discard] = function()

@@ -125,7 +125,7 @@ Item {
       text = "-1"
       icon = "horse";
     } else {
-      text = name;
+      text = Backend.translate(name);
       icon = name;
     }
   }
