@@ -14,7 +14,7 @@ end
 --- Determine whether the skill can be used in playing phase
 ---@param player Player
 function ActiveSkill:canUse(player)
-  return false
+  return true
 end
 
 --- Determine whether a card can be selected by this skill
@@ -32,7 +32,7 @@ end
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
 function ActiveSkill:targetFilter(to_select, selected, selected_cards)
-  return true
+  return false
 end
 
 --- Determine if selected cards and targets are valid for this skill
