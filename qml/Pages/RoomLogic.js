@@ -61,6 +61,15 @@ function arrangePhotos() {
 }
 
 function doOkButton() {
+  if (roomScene.state == "playing") {
+    replyToServer(JSON.stringify(
+      {
+        card: dashboard.getSelectedCard(),
+        targets: selected_targets
+      }
+    ));
+    return;
+  } 
   replyToServer("1");
 }
 
@@ -239,16 +248,16 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     all_photos.forEach(photo => {
       photo.state = "candidate";
       let id = photo.playerid;
-      let ret = Backend.callLuaFunction(
+      let ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
         [card, id, selected_targets]
-      );
+      ));
       photo.selectable = ret;
     })
 
-    okButton.enabled = Backend.callLuaFunction(
+    okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
-    );
+    ));
   } else {
     all_photos.forEach(photo => {
       photo.state = "normal";
@@ -259,7 +268,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   }
 }
 
-function updateSelectedTargets(playerid, selected, targets) {
+function updateSelectedTargets(playerid, selected) {
   let i = 0;
   let card = dashboard.getSelectedCard();
   let all_photos = [dashboard.self]
@@ -267,20 +276,25 @@ function updateSelectedTargets(playerid, selected, targets) {
     all_photos.push(photos.itemAt(i))
   }
 
-  let data = {
-    selected_targets: [],
-    enabled_targets: [],
-    ok_enabled: true
+  if (selected) {
+    selected_targets.push(playerid);
+  } else {
+    selected_targets.splice(selected_targets.indexOf(playerid), 1);
   }
 
-  okButton.enabled = data.ok_enabled;
-  selected_targets = data.selected_targets;
-  let enables = data.enabled_targets;
   all_photos.forEach(photo => {
-    if (selected_targets.indexOf(photo.playerid) === -1)
-      photo.selectable = enables.indexOf(photo.playerid) !== -1;
+    if (photo.selected) return;
+    let id = photo.playerid;
+    let ret = JSON.parse(Backend.callLuaFunction(
+      "CanUseCardToTarget",
+      [card, id, selected_targets]
+    ));
+    photo.selectable = ret;
   })
-  okButton.enabled = data.ok_enabled;
+
+  okButton.enabled = JSON.parse(Backend.callLuaFunction(
+    "CardFeasible", [card, selected_targets]
+  ));
 }
 
 callbacks["RemovePlayer"] = function(jsonData) {

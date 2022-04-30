@@ -155,7 +155,7 @@ Item {
         isOwner: model.isOwner
 
         onSelectedChanged: {
-          Logic.updateSelectedTargets(playerid, selected, selected_targets);
+          Logic.updateSelectedTargets(playerid, selected);
         }
       }
     }
@@ -200,7 +200,7 @@ Item {
     self.isOwner: dashboardModel.isOwner
 
     onSelectedChanged: {
-      Logic.updateSelectedTargets(self.playerid, selected, selected_targets);
+      Logic.updateSelectedTargets(self.playerid, selected);
     }
 
     onCardSelected: {
