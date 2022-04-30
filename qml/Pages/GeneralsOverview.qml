@@ -25,11 +25,7 @@ Item {
           model: JSON.parse(Backend.callLuaFunction("GetGenerals", [name]))
           GeneralCardItem { 
             autoBack: false
-            Component.onCompleted: {
-              let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [modelData]));
-              name = modelData;
-              kingdom = data.kingdom;
-            }
+            name: modelData
           }
         }
       }
