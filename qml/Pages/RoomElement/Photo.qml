@@ -38,6 +38,15 @@ Item {
   property bool selectable: false
   property bool selected: false
 
+  property bool playing: false
+  onPlayingChanged: {
+    if (playing) {
+      animPlaying.start();
+    } else {
+      animPlaying.stop();
+    }
+  }
+
   Behavior on x {
     NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
   }
@@ -48,8 +57,8 @@ Item {
 
   states: [
     State { name: "normal" },
-    State { name: "candidate" },
-    State { name: "playing" }
+    State { name: "candidate" }
+    //State { name: "playing" }
     //State { name: "responding" },
     //State { name: "sos" }
   ]
@@ -60,18 +69,8 @@ Item {
       from: "*"; to: "normal"
       ScriptAction {
         script: {
-          animPlaying.stop();
           animSelectable.stop();
           animSelected.stop();
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "playing"
-      ScriptAction {
-        script: {
-          animPlaying.start();
         }
       }
     },
@@ -93,7 +92,7 @@ Item {
     anchors.centerIn: parent
     loop: true
     scale: 1.1
-    visible: root.state === "playing"
+    visible: root.playing
   }
 
   PixmapAnimation {

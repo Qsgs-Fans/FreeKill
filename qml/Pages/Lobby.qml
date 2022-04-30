@@ -33,7 +33,7 @@ Item {
       }
 
       Text {
-        text: "Enter"
+        text: Backend.translate("Enter")
         font.underline: true
         MouseArea {
           anchors.fill: parent
@@ -66,7 +66,7 @@ Item {
       Text {
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        text: "Room List"
+        text: Backend.translate("Room List")
       }
       ListView {
         height: parent.height * 0.9
@@ -82,41 +82,41 @@ Item {
 
     ColumnLayout {
       Button {
-        text: "Edit Profile"
+        text: Backend.translate("Edit Profile")
         onClicked: {
           globalPopup.source = "EditProfile.qml";
           globalPopup.open();
         }
       }
       Button {
-        text: "Create Room"
+        text: Backend.translate("Create Room")
         onClicked: {
           globalPopup.source = "CreateRoom.qml";
           globalPopup.open();
         }
       }
       Button {
-        text: "Generals Overview"
+        text: Backend.translate("Generals Overview")
         onClicked: {
           mainStack.push(generalsOverview);
           mainStack.currentItem.loadPackages();
         }
       }
       Button {
-        text: "Cards Overview"
+        text: Backend.translate("Cards Overview")
         onClicked: {
           mainStack.push(cardsOverview);
           mainStack.currentItem.loadPackages();
         }
       }
       Button {
-        text: "Scenarios Overview"
+        text: Backend.translate("Scenarios Overview")
       }
       Button {
-        text: "About"
+        text: Backend.translate("About")
       }
       Button {
-        text: "Exit Lobby"
+        text: Backend.translate("Exit Lobby")
         onClicked: {
           toast.show("Goodbye.");
           Backend.quitLobby();
@@ -152,7 +152,7 @@ Item {
   }
 
   Component.onCompleted: {
-    toast.show("Welcome to FreeKill lobby!");
+    toast.show(Backend.translate("$WelcomeToLobby"));
   }
 }
 

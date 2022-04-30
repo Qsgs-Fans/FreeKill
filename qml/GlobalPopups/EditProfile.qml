@@ -17,7 +17,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "Username"
+        text: Backend.translate("Username")
       }
       Text {
         text: Self.screenName
@@ -29,7 +29,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "Avatar"
+        text: Backend.translate("Avatar")
       }
       TextField {
         id: avatarName
@@ -42,7 +42,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "Old Password"
+        text: Backend.translate("Old Password")
       }
       TextField {
         id: oldPassword
@@ -55,7 +55,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "New Password"
+        text: Backend.translate("New Password")
       }
       TextField {
         id: newPassword
@@ -68,7 +68,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Button {
-        text: "Update Avatar"
+        text: Backend.translate("Update Avatar")
         enabled: avatarName.text !== ""
         onClicked: {
           mainWindow.busy = true;
@@ -79,7 +79,7 @@ Item {
         }
       }
       Button {
-        text: "Update Password"
+        text: Backend.translate("Update Password")
         enabled: oldPassword.text !== "" && newPassword.text !== ""
         onClicked: {
           mainWindow.busy = true;
@@ -90,7 +90,7 @@ Item {
         }
       }
       Button {
-        text: "Exit"
+        text: Backend.translate("Quit")
         onClicked: {
           root.finished();
         }
