@@ -40,7 +40,7 @@ Fk:loadTranslationTable{
   ["xuchu"] = "许褚",
 }
 
-local guojia = General:new(extension, "guojia", "wei", 4)
+local guojia = General:new(extension, "guojia", "wei", 3)
 extension:addGeneral(guojia)
 Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",

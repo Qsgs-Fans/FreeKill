@@ -2,6 +2,7 @@
 var PHOTO_BACK_DIR = AppPath + "/image/photo/back/";
 var PHOTO_DIR = AppPath + "/image/photo/";
 var GENERAL_DIR = AppPath + "/image/generals/";
+var GENERALCARD_DIR = AppPath + "/image/card/general/";
 var STATE_DIR = AppPath + "/image/photo/state/";
 var STATUS_DIR = AppPath + "/image/photo/status/";
 var ROLE_DIR = AppPath + "/image/photo/role/";

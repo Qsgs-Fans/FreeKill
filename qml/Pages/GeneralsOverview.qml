@@ -25,11 +25,7 @@ Item {
           model: JSON.parse(Backend.callLuaFunction("GetGenerals", [name]))
           GeneralCardItem { 
             autoBack: false
-            Component.onCompleted: {
-              let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [modelData]));
-              name = modelData;
-              kingdom = data.kingdom;
-            }
+            name: modelData
           }
         }
       }
@@ -37,7 +33,7 @@ Item {
   }
 
   Button {
-    text: "Quit"
+    text: Backend.translate("Quit")
     anchors.right: parent.right
     onClicked: {
       mainStack.pop();

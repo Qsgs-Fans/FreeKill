@@ -1,3 +1,17 @@
+var generalsOverviewPage, cardsOverviewPage;
+var clientPageCreated = false;
+function createClientPages() {
+  if (!clientPageCreated) {
+    clientPageCreated = true;
+
+    generalsOverviewPage = generalsOverview.createObject(mainWindow);
+    cardsOverviewPage = cardsOverview.createObject(mainWindow);
+
+    mainWindow.generalsOverviewPage = generalsOverviewPage;
+    mainWindow.cardsOverviewPage = cardsOverviewPage;
+  }  
+}
+
 var callbacks = {};
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
@@ -21,6 +35,7 @@ callbacks["BackToStart"] = function(jsonData) {
 
 callbacks["EnterLobby"] = function(jsonData) {
   // depth == 1 means the lobby page is not present in mainStack
+  createClientPages();
   if (mainStack.depth === 1) {
     mainStack.push(lobby);
   } else {

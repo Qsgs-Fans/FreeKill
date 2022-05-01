@@ -28,7 +28,7 @@ Column {
       width: root.width
       text: value
       color: root.colors[(value >= 3 || value >= maxValue) ? 3 : (value <= 0 ? 0 : value)]
-      font.family: "FZLiBian-S02"
+      font.family: fontLibian.name
       font.pixelSize: 22
       font.bold: true
       horizontalAlignment: Text.AlignHCenter
