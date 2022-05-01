@@ -10,36 +10,23 @@ Item {
   Component {
     id: roomDelegate
 
-    RowLayout {
-      width: roomList.width * 0.9
-      spacing: 16
-      Text {
-        text: roomId
-      }
+    Item {
+      height: 18
+      width: roomList.width
 
-      Text {
-        horizontalAlignment: Text.AlignHCenter
-        Layout.fillWidth: true
-        text: roomName
-      }
-
-      Text {
-        text: gameMode
-      }
-
-      Text {
-        color: (playerNum == capacity) ? "red" : "black"
-        text: playerNum + "/" + capacity
-      }
-
-      Text {
-        text: Backend.translate("Enter")
-        font.underline: true
+      Rectangle {
+        anchors.fill: parent
+        color: "white"
+        opacity: 0
+        radius: 2
+        Behavior on opacity {
+          NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
+        }
         MouseArea {
           anchors.fill: parent
           hoverEnabled: true
-          onEntered: {  parent.color = "blue"   }
-          onExited: { parent.color = "black"  }
+          onEntered: parent.opacity = 1;
+          onExited: parent.opacity = 0;
           onClicked: {
             mainWindow.busy = true;
             ClientInstance.notifyServer(
@@ -47,6 +34,29 @@ Item {
               JSON.stringify([roomId])
             );
           }
+        }
+      }
+
+      RowLayout {
+        anchors.fill: parent
+        spacing: 16
+        Text {
+          text: roomId
+        }
+
+        Text {
+          horizontalAlignment: Text.AlignHCenter
+          Layout.fillWidth: true
+          text: roomName
+        }
+
+        Text {
+          text: gameMode
+        }
+
+        Text {
+          color: (playerNum == capacity) ? "red" : "black"
+          text: playerNum + "/" + capacity
         }
       }
     }
@@ -58,25 +68,30 @@ Item {
 
   RowLayout {
     anchors.fill: parent
-    Rectangle {
+    Item {
       Layout.preferredWidth: root.width * 0.7
       Layout.fillHeight: true
-      color: "#e2e2e1"
-      radius: 4
-      Text {
-        width: parent.width
-        horizontalAlignment: Text.AlignHCenter
-        text: Backend.translate("Room List")
-      }
-      ListView {
-        height: parent.height * 0.9
-        width: parent.width * 0.95
-        contentHeight: roomDelegate.height * count
-        ScrollBar.vertical: ScrollBar {}
+      Rectangle {
+        width: parent.width * 0.8
+        height: parent.height * 0.8
         anchors.centerIn: parent
-        id: roomList
-        delegate: roomDelegate
-        model: roomModel
+        color: "#88888888"
+        radius: 16
+        Text {
+          width: parent.width
+          horizontalAlignment: Text.AlignHCenter
+          text: Backend.translate("Room List")
+        }
+        ListView {
+          id: roomList
+          height: parent.height * 0.9
+          width: parent.width * 0.95
+          contentHeight: roomDelegate.height * count
+          ScrollBar.vertical: ScrollBar {}
+          anchors.centerIn: parent
+          delegate: roomDelegate
+          model: roomModel
+        }
       }
     }
 
