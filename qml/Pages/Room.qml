@@ -18,6 +18,12 @@ Item {
 
   property var selected_targets: []
 
+  Image {
+    source: AppPath + "/image/gamebg"
+    anchors.fill: parent
+    fillMode: Image.PreserveAspectCrop
+  }
+
   // tmp
   Button {
     text: "quit"

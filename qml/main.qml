@@ -11,6 +11,12 @@ Window {
   height: 480
   property var callbacks: Logic.callbacks
 
+  Image {
+    source: AppPath + "/image/background"
+    anchors.fill: parent
+    fillMode: Image.PreserveAspectCrop
+  }
+
   StackView {
     id: mainStack
     visible: !mainWindow.busy

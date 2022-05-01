@@ -13,9 +13,9 @@ import "../skin-bank.js" as SkinBank
  */
 
 CardItem {
-  property string kingdom: "qun"
-  property int hp: 5
-  name: "caocao"
+  property string kingdom
+  property int hp
+  name: ""
   // description: Sanguosha.getGeneralDescription(name)
   suit: ""
   number: 0
