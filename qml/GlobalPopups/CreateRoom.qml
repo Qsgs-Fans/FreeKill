@@ -17,12 +17,12 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "Room Name"
+        text: Backend.translate("Room Name")
       }
       TextField {
         id: roomName
         font.pixelSize: 18
-        text: Self.screenName + "'s Room"
+        text: Backend.translate("$RoomName").arg(Self.screenName)
       }
     }
 
@@ -30,7 +30,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "Player num"
+        text: Backend.translate("Player num")
       }
       SpinBox {
         id: playerNum
@@ -43,7 +43,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Button {
-        text: "OK"
+        text: Backend.translate("OK")
         onClicked: {
           root.finished();
           mainWindow.busy = true;
@@ -54,7 +54,7 @@ Item {
         }
       }
       Button {
-        text: "Cancel"
+        text: Backend.translate("Cancel")
         onClicked: {
           root.finished();
         }

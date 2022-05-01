@@ -83,6 +83,12 @@ function Engine:loadTranslationTable(t)
   end
 end
 
+function Engine:translate(src)
+  local ret = self.translations[src]
+  if not ret then return src end
+  return ret
+end
+
 ---@param skill Skill
 function Engine:addSkill(skill)
   assert(skill.class:isSubclassOf(Skill))

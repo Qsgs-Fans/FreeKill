@@ -36,7 +36,7 @@ Item {
   }
 
   Button {
-    text: "Quit"
+    text: Backend.translate("Quit")
     anchors.right: parent.right
     onClicked: {
       mainStack.pop();

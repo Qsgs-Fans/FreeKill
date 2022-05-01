@@ -7,7 +7,7 @@ GraphicsBox {
   property int result
 
   id: root
-  title.text: skill_name + ": Please choose"
+  title.text: Backend.translate("$Choice").arg(Backend.translate(skill_name))
   width: Math.max(140, body.width + 20)
   height: body.height + title.height + 20
 
@@ -21,7 +21,7 @@ GraphicsBox {
       model: options
 
       MetroButton {
-        text: modelData
+        text: Backend.translate(modelData)
         anchors.horizontalCenter: parent.horizontalCenter
 
         onClicked: {

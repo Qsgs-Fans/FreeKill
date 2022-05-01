@@ -18,23 +18,13 @@ Item {
 
   property var selected_targets: []
 
-  // tmp
-  Row {
-    Button{text:"摸1牌"
-    onClicked:{
-      Logic.moveCards([{
-        from:Logic.Player.DrawPile,
-        to:Logic.Player.PlaceHand,
-        cards:[1],
-      }])
-    }}
-    Button{text:"弃1牌"
-    onClicked:{Logic.moveCards([{
-        to:Logic.Player.DrawPile,
-        from:Logic.Player.PlaceHand,
-        cards:[1],
-      }])}}
+  Image {
+    source: AppPath + "/image/gamebg"
+    anchors.fill: parent
+    fillMode: Image.PreserveAspectCrop
   }
+
+  // tmp
   Button {
     text: "quit"
     anchors.top: parent.top
@@ -253,20 +243,20 @@ Item {
 
       Button {
         id: okButton
-        text: "OK"
+        text: Backend.translate("OK")
         onClicked: Logic.doOkButton();
       }
 
       Button {
         id: cancelButton
-        text: "Cancel"
+        text: Backend.translate("Cancel")
         onClicked: Logic.doCancelButton();
       }
     }
 
     Button {
       id: endPhaseButton
-      text: "End"
+      text: Backend.translate("End")
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 40
       anchors.right: parent.right
@@ -301,7 +291,7 @@ Item {
   }
 
   Component.onCompleted: {
-    toast.show("Sucesessfully entered room.");
+    toast.show(Backend.translate("$EnterRoom"));
 
     dashboardModel = {
       id: Self.id,

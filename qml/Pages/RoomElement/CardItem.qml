@@ -117,7 +117,7 @@ Item {
     visible: footnoteVisible
     wrapMode: Text.WrapAnywhere
     horizontalAlignment: Text.AlignHCenter
-    font.family: "FZLiBian-S02"
+    font.family: fontLibian.name
     font.pixelSize: 14
     glow.color: "black"
     glow.spread: 1

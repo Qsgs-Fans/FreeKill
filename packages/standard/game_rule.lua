@@ -84,6 +84,7 @@ GameRule = fk.CreateTriggerSkill{
       end,
       [Player.Play] = function()
         while not player.dead do
+          room:notifyMoveFocus(player, "PlayCard")
           local result = room:doRequest(player, "PlayCard", player:getId())
           if result == "" then break end
 

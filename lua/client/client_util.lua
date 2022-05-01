@@ -1,7 +1,7 @@
 -- All functions in this file are used by Qml
 
 function Translate(src)
-  return Fk.translations[src]
+  return Fk:translate(src)
 end
 
 function GetGeneralData(name)
@@ -143,3 +143,51 @@ function CardFeasible(card, selected_targets)
   local ret = c.skill:feasible(selected_cards, selected_targets)
   return json.encode(ret)
 end
+
+Fk:loadTranslationTable{
+  -- Lobby
+  ["Room List"] = "房间列表",
+  ["Enter"] = "进入",
+
+  ["Edit Profile"] = "编辑个人信息",
+  ["Username"] = "用户名",
+  ["Avatar"] = "头像",
+  ["Old Password"] = "旧密码",
+  ["New Password"] = "新密码",
+  ["Update Avatar"] = "更新头像",
+  ["Update Password"] = "更新密码",
+
+  ["Create Room"] = "创建房间",
+  ["Room Name"] = "房间名字",
+  ["$RoomName"] = "%1的房间",
+  ["Player num"] = "玩家数目",
+
+  ["Generals Overview"] = "武将一览",
+  ["Cards Overview"] = "卡牌一览",
+  ["Scenarios Overview"] = "玩法一览",
+  ["About"] = "关于",
+  ["Exit Lobby"] = "退出大厅",
+
+  ["OK"] = "确定",
+  ["Cancel"] = "取消",
+  ["End"] = "结束",
+  ["Quit"] = "退出",
+
+  ["$WelcomeToLobby"] = "欢迎进入FreeKill游戏大厅！",
+
+  -- Room
+  ["$EnterRoom"] = "成功加入房间。",
+  ["$Choice"] = "%1：请选择",
+  ["$ChooseGeneral"] = "请选择 %1 名武将",
+  ["Fight"] = "出战",
+
+  ["#PlayCard"] = "出牌阶段，请使用一张牌",
+  ["#AskForGeneral"] = "请选择 1 名武将",
+  ["#AskForSkillInvoke"] = "你想发动技能“%1”吗？",
+  ["#AskForChoice"] = "%1：请选择",
+
+  [" thinking..."] = " 思考中...",
+  ["AskForGeneral"] = "选择武将",
+  ["AskForChoice"] = "选择",
+  ["PlayCard"] = "出牌",
+}

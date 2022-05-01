@@ -11,6 +11,16 @@ Window {
   height: 480
   property var callbacks: Logic.callbacks
 
+  Image {
+    source: AppPath + "/image/background"
+    anchors.fill: parent
+    fillMode: Image.PreserveAspectCrop
+  }
+
+  FontLoader { id: fontLiSu; source: AppPath + "/fonts/simli.ttf" }
+  FontLoader { id: fontLibian; source: AppPath + "/fonts/FZLBGBK.ttf" }
+  FontLoader { id: fontLi2; source: AppPath + "/fonts/FZLE.ttf" }
+
   StackView {
     id: mainStack
     visible: !mainWindow.busy
@@ -23,6 +33,9 @@ Window {
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
   Component { id: room; Room {} }
+
+  property var generalsOverviewPage
+  property var cardsOverviewPage
 
   property bool busy: false
   BusyIndicator {

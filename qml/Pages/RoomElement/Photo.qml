@@ -38,6 +38,15 @@ Item {
   property bool selectable: false
   property bool selected: false
 
+  property bool playing: false
+  onPlayingChanged: {
+    if (playing) {
+      animPlaying.start();
+    } else {
+      animPlaying.stop();
+    }
+  }
+
   Behavior on x {
     NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
   }
@@ -48,8 +57,8 @@ Item {
 
   states: [
     State { name: "normal" },
-    State { name: "candidate" },
-    State { name: "playing" }
+    State { name: "candidate" }
+    //State { name: "playing" }
     //State { name: "responding" },
     //State { name: "sos" }
   ]
@@ -60,18 +69,8 @@ Item {
       from: "*"; to: "normal"
       ScriptAction {
         script: {
-          animPlaying.stop();
           animSelectable.stop();
           animSelected.stop();
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "playing"
-      ScriptAction {
-        script: {
-          animPlaying.start();
         }
       }
     },
@@ -93,7 +92,7 @@ Item {
     anchors.centerIn: parent
     loop: true
     scale: 1.1
-    visible: root.state === "playing"
+    visible: root.playing
   }
 
   PixmapAnimation {
@@ -114,7 +113,7 @@ Item {
     id: generalName
     x: 5
     y: 28
-    font.family: "FZLiBian-S02"
+    font.family: fontLibian.name
     font.pixelSize: 22
     opacity: 0.7
     horizontalAlignment: Text.AlignHCenter
@@ -234,7 +233,7 @@ Item {
 
     Text {
       text: root.handcards
-      font.family: "FZLiBian-S02"
+      font.family: fontLibian.name
       font.pixelSize: 32
       //font.weight: 30
       color: "white"
@@ -276,7 +275,7 @@ Item {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: -32
     property var seatChr: ["一", "二", "三", "四", "五", "六", "七", "八"]
-    font.family: "FZLiShu II-S06S"
+    font.family: fontLi2.name
     font.pixelSize: 32
     text: seatChr[seatNumber - 1]
 
@@ -339,7 +338,7 @@ Item {
     visible: progressTip.text != ""
     Text {
       id: progressTip
-      font.family: "FZLiBian-S02"
+      font.family: fontLibian.name
       font.pixelSize: 18
       x: 18
       color: "white"

@@ -15,7 +15,7 @@ GraphicsBox {
   }
 
   id: root
-  title.text: qsTr("Please choose ") + choiceNum + qsTr(" general(s)")
+  title.text: Backend.translate("$ChooseGeneral").arg(choiceNum)
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
   height: body.implicitHeight + body.anchors.topMargin + body.anchors.bottomMargin
 
@@ -84,7 +84,7 @@ GraphicsBox {
         id: fightButton
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        text: qsTr("Fight")
+        text: Backend.translate("Fight")
         width: 120
         height: 35
         enabled: false

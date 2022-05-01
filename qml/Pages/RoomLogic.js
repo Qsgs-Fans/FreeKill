@@ -392,7 +392,25 @@ callbacks["MoveFocus"] = function(jsonData) {
     if (focuses.indexOf(model.id) != -1) {
       item = photos.itemAt(i);
       item.progressBar.visible = true;
-      item.progressTip = command + " thinking...";
+      item.progressTip = Backend.translate(command) 
+        + Backend.translate(" thinking...");
+
+      if (command === "PlayCard") {
+        item.playing = true;
+      }
+    } else {
+      item = photos.itemAt(i);
+      if (command === "PlayCard") {
+        item.playing = false;
+      }
+    }
+  }
+
+  if (command === "PlayCard") {
+    if (focuses.indexOf(Self.id) != -1) {
+      dashboard.self.playing = true;
+    } else {
+      dashboard.self.playing = false;
     }
   }
 }
@@ -413,7 +431,7 @@ callbacks["AskForGeneral"] = function(jsonData) {
   // jsonData: string[] Generals
   // TODO: choose multiple generals
   let data = JSON.parse(jsonData);
-  roomScene.promptText = "Please choose 1 general";
+  roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChooseGeneralBox.qml";
   let box = roomScene.popupBox.item;
@@ -428,7 +446,8 @@ callbacks["AskForGeneral"] = function(jsonData) {
 
 callbacks["AskForSkillInvoke"] = function(jsonData) {
   // jsonData: string name
-  roomScene.promptText = "Do you want to invoke '" + jsonData + "' ?";
+  roomScene.promptText = Backend.translate("#AskForSkillInvoke")
+    .arg(Backend.translate(jsonData));
   roomScene.state = "responding";
 }
 
@@ -438,7 +457,8 @@ callbacks["AskForChoice"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let choices = data[0];
   let skill_name = data[1];
-  roomScene.promptText = skill_name + ": Please make choice";
+  roomScene.promptText = Backend.translate("#AskForChoice")
+    .arg(Backend.translate(jsonData));;
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
   let box = roomScene.popupBox.item;
@@ -459,7 +479,7 @@ callbacks["PlayCard"] = function(jsonData) {
   // jsonData: int playerId
   let playerId = parseInt(jsonData);
   if (playerId == Self.id) {
-    roomScene.promptText = "Please use a card";
+    roomScene.promptText = Backend.translate("#PlayCard");
     roomScene.state = "playing";
   }
 }
