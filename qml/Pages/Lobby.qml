@@ -98,14 +98,14 @@ Item {
       Button {
         text: Backend.translate("Generals Overview")
         onClicked: {
-          mainStack.push(generalsOverview);
+          mainStack.push(mainWindow.generalsOverviewPage);
           mainStack.currentItem.loadPackages();
         }
       }
       Button {
         text: Backend.translate("Cards Overview")
         onClicked: {
-          mainStack.push(cardsOverview);
+          mainStack.push(mainWindow.cardsOverviewPage);
           mainStack.currentItem.loadPackages();
         }
       }

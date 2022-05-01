@@ -24,6 +24,9 @@ Window {
   Component { id: cardsOverview; CardsOverview {} }
   Component { id: room; Room {} }
 
+  property var generalsOverviewPage
+  property var cardsOverviewPage
+
   property bool busy: false
   BusyIndicator {
     running: true
