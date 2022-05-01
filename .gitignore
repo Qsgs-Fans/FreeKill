@@ -8,3 +8,12 @@ FreeKill
 FreeKill.exe
 freekill-wrap.cxx
 server/users.db
+bearer/
+iconengines/
+imageformats/
+platforms/
+Qt/
+QtGraphicalEffects/
+QtQuick/
+QtQuick.2/
+*.dll

@@ -35,7 +35,7 @@ Item {
     visible: number > 0 && number < 14
     text: Utility.convertNumber(number)
     color: "white"
-    font.family: "FZLiBian-S02"
+    font.family: fontLibian.name
     font.pixelSize: 16
     glow.color: "black"
     glow.spread: 0.75
@@ -47,7 +47,7 @@ Item {
 
   GlowText {
     id: textItem
-    font.family: "FZLiBian-S02"
+    font.family: fontLibian.name
     color: "white"
     font.pixelSize: 18
     glow.color: "black"
