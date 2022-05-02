@@ -261,10 +261,4 @@ void Server::onUserDisconnected()
 }
 
 void Server::onUserStateChanged()
-{
-  ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  QJsonArray arr;
-  arr << player->getId();
-  arr << player->getStateString();
-  player->getRoom()->callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
-}
+{}

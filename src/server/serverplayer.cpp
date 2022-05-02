@@ -21,7 +21,8 @@ ServerPlayer::~ServerPlayer()
     // now we are in lobby, so quit lobby
     room->removePlayer(this);
   }
-  server->removePlayer(getId());
+  if (server->findPlayer(getId()) == this)
+    server->removePlayer(getId());
   router->deleteLater();
 }
 

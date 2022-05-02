@@ -976,16 +976,6 @@ fk.room_callback["AddRobot"] = function(jsonData)
   end
 end
 
-fk.room_callback["PlayerStateChanged"] = function(jsonData)
-  -- jsonData: [ int uid, string stateString ]
-  -- note: this function is not called by Router.
-  -- note: when this function is called, the room must be started
-  local data = json.decode(jsonData)
-  local id = data[1]
-  local stateString = data[2]
-  RoomInstance:getPlayerById(id).state = stateString
-end
-
 function CreateRoom(_room)
   RoomInstance = Room:new(_room)
 end
