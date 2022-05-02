@@ -10,7 +10,8 @@ public:
   enum State{
     Invalid,
     Online,
-    Trust,  // Trust or run
+    Trust,
+    Run,
     Robot,  // only for real robot
     Offline
   };

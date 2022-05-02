@@ -32,8 +32,6 @@ Room::~Room()
 {
   // TODO
   if (isRunning()) {
-    callLua("RoomDeleted", "");
-    unlockLua(__FUNCTION__);
     wait();
   }
   lua_close(L);
@@ -173,44 +171,39 @@ void Room::addRobot(ServerPlayer *player)
 
 void Room::removePlayer(ServerPlayer *player)
 {
-  players.removeOne(player);
-  emit playerRemoved(player);
+  if (!gameStarted) {
+    players.removeOne(player);
+    emit playerRemoved(player);
 
-  if (isLobby()) return;
-
-  if (gameStarted) {
-    // TODO: if the player is died..
-
-    // create robot first
-    ServerPlayer *robot = new ServerPlayer(this);
-    robot->setState(Player::Robot);
-    robot->setId(robot_id);
-    robot->setAvatar(player->getAvatar());
-    robot->setScreenName(QString("COMP-%1").arg(robot_id));
-    robot_id--;
-
-    players.append(robot);
-
-    // tell lua & clients
-    QJsonArray jsonData;
-    jsonData << player->getId();
-    jsonData << robot->getId();
-    callLua("PlayerRunned", QJsonDocument(jsonData).toJson());
-    doBroadcastNotify(getPlayers(), "PlayerRunned", QJsonDocument(jsonData).toJson());
-    runned_players << player->getId();
-
-    // FIXME: abortRequest here will result crash
-    // but if dont abort and room is abandoned, the main thread will wait until replyed
-    // player->abortRequest();
-  } else {
     QJsonArray jsonData;
     jsonData << player->getId();
     doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+
+    if (isLobby()) return;
+  } else {
+    // TODO: if the player is died..
+
+    // change the socket and state to runned player
+    ClientSocket *socket = player->getSocket();
+    player->setState(Player::Run);
+
+    // and then create a new ServerPlayer for the runner
+    ServerPlayer *runner = new ServerPlayer(this);
+    runner->setSocket(socket);
+    connect(runner, &ServerPlayer::disconnected, server, &Server::onUserDisconnected);
+    connect(runner, &Player::stateChanged, server, &Server::onUserStateChanged);
+    runner->setScreenName(player->getScreenName());
+    runner->setAvatar(player->getAvatar());
+    runner->setId(player->getId());
+
+    // finally update Server's player list and clean
+    server->addPlayer(runner);
+
+    emit playerRemoved(runner);
+    runner->abortRequest();
   }
 
   if (isAbandoned()) {
-    // FIXME: do not delete room here
-    // create a new thread and delete the room
     emit abandoned();
   } else if (player == owner) {
     setOwner(players.first());
@@ -283,28 +276,8 @@ void Room::gameOver()
   }
 }
 
-void Room::lockLua(const QString &caller)
-{
-  if (!gameStarted) return;
-  lua_mutex.lock();
-#ifdef QT_DEBUG
-  //qDebug() << caller << "=> room->L is locked.";
-#endif
-}
-
-void Room::unlockLua(const QString &caller)
-{
-  if (!gameStarted) return;
-  lua_mutex.unlock();
-#ifdef QT_DEBUG
-  //qDebug() << caller << "=> room->L is unlocked.";
-#endif
-}
-
 void Room::run()
 {
   gameStarted = true;
-  lockLua(__FUNCTION__);
   roomStart();
-  unlockLua(__FUNCTION__);
 }

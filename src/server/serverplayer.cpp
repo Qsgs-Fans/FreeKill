@@ -21,7 +21,8 @@ ServerPlayer::~ServerPlayer()
     // now we are in lobby, so quit lobby
     room->removePlayer(this);
   }
-  server->removePlayer(getId());
+  if (server->findPlayer(getId()) == this)
+    server->removePlayer(getId());
   router->deleteLater();
 }
 
@@ -40,6 +41,11 @@ void ServerPlayer::setSocket(ClientSocket *socket)
   }
 
   router->setSocket(socket);
+}
+
+ClientSocket *ServerPlayer::getSocket() const
+{
+  return socket;
 }
 
 Server *ServerPlayer::getServer() const
@@ -76,21 +82,20 @@ void ServerPlayer::abortRequest()
 
 QString ServerPlayer::waitForReply()
 {
-  room->unlockLua(__FUNCTION__);
   QString ret;
-  if (getState() != Player::Online) {
-    QThread::sleep(1);
-    ret = "";
+  Player::State state = getState();
+  if (state != Player::Online) {
+    if (state != Player::Run)
+      QThread::sleep(1);
+    ret = QString("__state=%1").arg(getStateString());
   } else {
     ret = router->waitForReply();
   }
-  room->lockLua(__FUNCTION__);
   return ret;
 }
 
 QString ServerPlayer::waitForReply(int timeout)
 {
-  room->unlockLua(__FUNCTION__);
   QString ret;
   if (getState() != Player::Online) {
     QThread::sleep(1);
@@ -98,7 +103,6 @@ QString ServerPlayer::waitForReply(int timeout)
   } else {
     ret = router->waitForReply(timeout);
   }
-  room->lockLua(__FUNCTION__);
   return ret;
 }
 

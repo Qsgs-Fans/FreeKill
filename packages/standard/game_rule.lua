@@ -33,7 +33,7 @@ GameRule = fk.CreateTriggerSkill{
         player:addCards(Player.Hand, cardIds)
         local move_to_notify = {}   ---@type CardsMoveStruct
         move_to_notify.toArea = Card.PlayerHand
-        move_to_notify.to = player:getId()
+        move_to_notify.to = player.id
         move_to_notify.moveInfo = {}
         for _, id in ipairs(cardIds) do
           table.insert(move_to_notify.moveInfo, 
@@ -85,14 +85,14 @@ GameRule = fk.CreateTriggerSkill{
       [Player.Play] = function()
         while not player.dead do
           room:notifyMoveFocus(player, "PlayCard")
-          local result = room:doRequest(player, "PlayCard", player:getId())
+          local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
 
           local data = json.decode(result)
           local card = data.card
           local targets = data.targets
           local use = {}    ---@type CardUseStruct
-          use.from = player:getId()
+          use.from = player.id
           use.tos = {}
           for _, target in ipairs(targets) do
             table.insert(use.tos, { target })
