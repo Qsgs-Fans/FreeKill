@@ -85,12 +85,9 @@ QString ServerPlayer::waitForReply()
   QString ret;
   Player::State state = getState();
   if (state != Player::Online) {
-    if (state == Player::Run) {
-      ret = QString("__state=%1").arg(getStateString());
-    } else {
+    if (state != Player::Run)
       QThread::sleep(1);
-      ret = "";
-    }
+    ret = QString("__state=%1").arg(getStateString());
   } else {
     ret = router->waitForReply();
   }

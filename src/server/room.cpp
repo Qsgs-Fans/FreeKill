@@ -200,6 +200,7 @@ void Room::removePlayer(ServerPlayer *player)
     server->addPlayer(runner);
 
     emit playerRemoved(runner);
+    runner->abortRequest();
   }
 
   if (isAbandoned()) {

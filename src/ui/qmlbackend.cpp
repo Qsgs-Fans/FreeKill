@@ -58,7 +58,8 @@ void QmlBackend::joinServer(QString address)
 
 void QmlBackend::quitLobby()
 {
-  delete ClientInstance;
+  if (ClientInstance)
+    delete ClientInstance;
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
