@@ -15,6 +15,7 @@ public:
   ~ServerPlayer();
 
   void setSocket(ClientSocket *socket);
+  ClientSocket *getSocket() const;
 
   Server *getServer() const;
   Room *getRoom() const;

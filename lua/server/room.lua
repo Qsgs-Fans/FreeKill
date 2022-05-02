@@ -976,21 +976,6 @@ fk.room_callback["AddRobot"] = function(jsonData)
   end
 end
 
-fk.room_callback["PlayerRunned"] = function(jsonData)
-  -- jsonData: [ int runner_id, int robot_id ]
-  -- note: this function is not called by Router.
-  -- note: when this function is called, the room must be started
-  local data = json.decode(jsonData)
-  local runner = data[1]
-  local robot = data[2]
-  for _, p in ipairs(RoomInstance.players) do
-    if p:getId() == runner then
-      p.serverplayer = RoomInstance.room:findPlayer(robot)
-      p.id = p.serverplayer:getId()
-    end
-  end
-end
-
 fk.room_callback["PlayerStateChanged"] = function(jsonData)
   -- jsonData: [ int uid, string stateString ]
   -- note: this function is not called by Router.
@@ -999,20 +984,6 @@ fk.room_callback["PlayerStateChanged"] = function(jsonData)
   local id = data[1]
   local stateString = data[2]
   RoomInstance:getPlayerById(id).state = stateString
-end
-
-fk.room_callback["RoomDeleted"] = function(jsonData)
-  debug.sethook(function ()
-    error("Room is deleted when running")
-  end, "l")
-end
-
-fk.room_callback["DoLuaScript"] = function(jsonData)
-  -- jsonData: [ int uid, string luaScript ]
-  -- warning: only use this in debugging mode.
-  if not DebugMode then return end
-  local data = json.decode(jsonData)
-  assert(load(data[2]))()
 end
 
 function CreateRoom(_room)

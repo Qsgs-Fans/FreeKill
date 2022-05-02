@@ -67,6 +67,15 @@ ServerPlayer *Server::findPlayer(int id) const
   return players.value(id);
 }
 
+void Server::addPlayer(ServerPlayer *player)
+{
+  int id = player->getId();
+  if (players.contains(id))
+    players.remove(id);
+
+  players.insert(id, player);
+}
+
 void Server::removePlayer(int id) {
   players.remove(id);
 }

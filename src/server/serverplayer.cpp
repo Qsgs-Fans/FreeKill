@@ -42,6 +42,11 @@ void ServerPlayer::setSocket(ClientSocket *socket)
   router->setSocket(socket);
 }
 
+ClientSocket *ServerPlayer::getSocket() const
+{
+  return socket;
+}
+
 Server *ServerPlayer::getServer() const
 {
   return server;
@@ -78,9 +83,14 @@ QString ServerPlayer::waitForReply()
 {
   room->unlockLua(__FUNCTION__);
   QString ret;
-  if (getState() != Player::Online) {
-    QThread::sleep(1);
-    ret = "";
+  Player::State state = getState();
+  if (state != Player::Online) {
+    if (state == Player::Run) {
+      ret = QString("__state=%1").arg(getStateString());
+    } else {
+      QThread::sleep(1);
+      ret = "";
+    }
   } else {
     ret = router->waitForReply();
   }
