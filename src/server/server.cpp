@@ -67,6 +67,15 @@ ServerPlayer *Server::findPlayer(int id) const
   return players.value(id);
 }
 
+void Server::addPlayer(ServerPlayer *player)
+{
+  int id = player->getId();
+  if (players.contains(id))
+    players.remove(id);
+
+  players.insert(id, player);
+}
+
 void Server::removePlayer(int id) {
   players.remove(id);
 }
@@ -252,10 +261,4 @@ void Server::onUserDisconnected()
 }
 
 void Server::onUserStateChanged()
-{
-  ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  QJsonArray arr;
-  arr << player->getId();
-  arr << player->getStateString();
-  player->getRoom()->callLua("PlayerStateChanged", QJsonDocument(arr).toJson());
-}
+{}

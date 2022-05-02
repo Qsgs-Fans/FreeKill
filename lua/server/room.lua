@@ -52,7 +52,6 @@ end
 function Room:run()
   for _, p in fk.qlist(self.room:getPlayers()) do
     local player = ServerPlayer:new(p)
-    player.state = p:getStateString()
     player.room = self
     table.insert(self.players, player)
   end
@@ -74,7 +73,7 @@ end
 ---@param property string
 function Room:notifyProperty(p, player, property)
   p:doNotify("PropertyUpdate", json.encode{
-    player:getId(),
+    player.id,
     property,
     player[property],
   })
@@ -134,7 +133,7 @@ function Room:notifyMoveFocus(players, command)
 
   local ids = {}
   for _, p in ipairs(players) do
-    table.insert(ids, p:getId())
+    table.insert(ids, p.id)
   end
 
   self:doBroadcastNotify("MoveFocus", json.encode{
@@ -165,7 +164,7 @@ function Room:adjustSeats()
   local player_circle = {}
   for i = 1, #self.players do
     self.players[i].seat = i
-    table.insert(player_circle, self.players[i]:getId())
+    table.insert(player_circle, self.players[i].id)
   end
 
   self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
@@ -233,7 +232,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       -- FIXME: move.moveInfo is an array, fix this
       move.moveVisible = (forceVisible)
         -- if move is relevant to player, it should be open
-        or ((move.from == p:getId()) or (move.to == p:getId() and move.toArea ~= Card.PlayerSpecial))
+        or ((move.from == p.id) or (move.to == p.id and move.toArea ~= Card.PlayerSpecial))
         -- cards move from/to equip/judge/discard/processing should be open
         or move.moveInfo.fromArea == Card.PlayerEquip
         or move.toArea == Card.PlayerEquip
@@ -364,10 +363,10 @@ function Room:drawCards(player, num, skillName, fromPlace)
   local topCards = self:getNCards(num, fromPlace)
   self:moveCards({
     ids = topCards,
-    to = player:getId(),
+    to = player.id,
     toArea = Card.PlayerHand,
     moveReason = fk.ReasonDraw,
-    proposer = player:getId(),
+    proposer = player.id,
     skillName = skillName,
   })
 
@@ -394,10 +393,10 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
 
   self:moveCards({
     ids = toDiscard,
-    from = player:getId(),
+    from = player.id,
     toArea = Card.DiscardPile,
     moveReason = fk.ReasonDiscard,
-    proposer = player:getId(),
+    proposer = player.id,
     skillName = skillName
   })
 end
@@ -408,7 +407,7 @@ function Room:getPlayerById(id)
   assert(type(id) == "number")
 
   for _, p in ipairs(self.players) do
-    if p:getId() == id then
+    if p.id == id then
       return p
     end
   end
@@ -453,7 +452,7 @@ end
 function Room:getOtherPlayers(player, sortBySeat)
   local alivePlayers = self:getAlivePlayers(sortBySeat)
   for _, p in ipairs(alivePlayers) do
-    if p:getId() == player:getId() then
+    if p.id == player.id then
       table.removeOne(alivePlayers, player)
       break
     end
@@ -568,7 +567,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
   if player.hp < 1 then
     ---@type DyingStruct
     local dyingStruct = {
-      who = player:getId(),
+      who = player.id,
       damage = damageStruct,
     }
     self:enterDying(dyingStruct)
@@ -624,7 +623,7 @@ function Room:changeMaxHp(player, num)
   end
 
   if player.maxHp == 0 then
-    self:killPlayer({ who = player:getId() })
+    self:killPlayer({ who = player.id })
   end
 
   self.logic:trigger(fk.MaxHpChanged, player, { num = num })
@@ -718,7 +717,7 @@ function Room:enterDying(dyingStruct)
     if dyingPlayer.hp < 1 then
       ---@type DeathStruct
       local deathData = {
-        who = dyingPlayer:getId(),
+        who = dyingPlayer.id,
         damage = dyingStruct.damage,
       }
       self:killPlayer(deathData)
@@ -974,45 +973,6 @@ fk.room_callback["AddRobot"] = function(jsonData)
   if not room:isLobby() then
     room:addRobot(player)
   end
-end
-
-fk.room_callback["PlayerRunned"] = function(jsonData)
-  -- jsonData: [ int runner_id, int robot_id ]
-  -- note: this function is not called by Router.
-  -- note: when this function is called, the room must be started
-  local data = json.decode(jsonData)
-  local runner = data[1]
-  local robot = data[2]
-  for _, p in ipairs(RoomInstance.players) do
-    if p:getId() == runner then
-      p.serverplayer = RoomInstance.room:findPlayer(robot)
-      p.id = p.serverplayer:getId()
-    end
-  end
-end
-
-fk.room_callback["PlayerStateChanged"] = function(jsonData)
-  -- jsonData: [ int uid, string stateString ]
-  -- note: this function is not called by Router.
-  -- note: when this function is called, the room must be started
-  local data = json.decode(jsonData)
-  local id = data[1]
-  local stateString = data[2]
-  RoomInstance:getPlayerById(id).state = stateString
-end
-
-fk.room_callback["RoomDeleted"] = function(jsonData)
-  debug.sethook(function ()
-    error("Room is deleted when running")
-  end, "l")
-end
-
-fk.room_callback["DoLuaScript"] = function(jsonData)
-  -- jsonData: [ int uid, string luaScript ]
-  -- warning: only use this in debugging mode.
-  if not DebugMode then return end
-  local data = json.decode(jsonData)
-  assert(load(data[2]))()
 end
 
 function CreateRoom(_room)

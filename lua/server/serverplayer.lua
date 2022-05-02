@@ -15,6 +15,7 @@ function ServerPlayer:initialize(_self)
   Player.initialize(self)
   self.serverplayer = _self
   self.id = _self:getId()
+  self.state = _self:getStateString()
   self.room = nil
 
   self.next = nil
@@ -25,11 +26,6 @@ function ServerPlayer:initialize(_self)
   self.default_reply = ""
   self.reply_ready = false
   self.phases = {}
-end
-
----@return integer
-function ServerPlayer:getId()
-  return self.id
 end
 
 ---@param command string

@@ -43,7 +43,11 @@ fk.client_callback["Setup"] = function(jsonData)
   self:setScreenName(name)
   self:setAvatar(avatar)
   Self = ClientPlayer:new(fk.Self)
-  table.insert(ClientInstance.players, Self)
+end
+
+fk.client_callback["EnterRoom"] = function(jsonData)
+  ClientInstance.players = {Self}
+  ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
 fk.client_callback["AddPlayer"] = function(jsonData)
