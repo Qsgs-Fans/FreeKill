@@ -82,7 +82,6 @@ void ServerPlayer::abortRequest()
 
 QString ServerPlayer::waitForReply()
 {
-  room->unlockLua(__FUNCTION__);
   QString ret;
   Player::State state = getState();
   if (state != Player::Online) {
@@ -95,13 +94,11 @@ QString ServerPlayer::waitForReply()
   } else {
     ret = router->waitForReply();
   }
-  room->lockLua(__FUNCTION__);
   return ret;
 }
 
 QString ServerPlayer::waitForReply(int timeout)
 {
-  room->unlockLua(__FUNCTION__);
   QString ret;
   if (getState() != Player::Online) {
     QThread::sleep(1);
@@ -109,7 +106,6 @@ QString ServerPlayer::waitForReply(int timeout)
   } else {
     ret = router->waitForReply(timeout);
   }
-  room->lockLua(__FUNCTION__);
   return ret;
 }
 

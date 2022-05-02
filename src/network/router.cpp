@@ -161,9 +161,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
       arr.prepend(player->getId());
 
       Room *room = player->getRoom();
-      room->lockLua(__FUNCTION__);
       room->callLua(command, QJsonDocument(arr).toJson());
-      room->unlockLua(__FUNCTION__);
     }
   }
   else if (type & TYPE_REQUEST) {

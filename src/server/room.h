@@ -56,9 +56,6 @@ public:
   void roomStart();
   LuaFunction startGame;
 
-  void lockLua(const QString &caller);
-  void unlockLua(const QString &caller);
-
 signals:
   void abandoned();
 
