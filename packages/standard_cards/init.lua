@@ -118,10 +118,23 @@ extension:addCards({
   dismantlement:clone(Card.Heart, 12),
 })
 
+local snatchSkill = fk.CreateActiveSkill{
+  name = "snatch_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return Self ~= player and Self:distanceTo(player) <= 1
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end
+}
 local snatch = fk.CreateTrickCard{
   name = "snatch",
   suit = Card.Spade,
   number = 3,
+  skill = snatchSkill,
 }
 Fk:loadTranslationTable{
   ["snatch"] = "顺手牵羊",
@@ -134,6 +147,7 @@ extension:addCards({
 
   snatch:clone(Card.Diamond, 3),
   snatch:clone(Card.Diamond, 4),
+  snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),
 })
 
 local duel = fk.CreateTrickCard{

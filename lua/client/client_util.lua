@@ -87,7 +87,7 @@ function CanUseCard(card, player)
     error()
   end
 
-  local ret = c.skill:canUse(ClientInstance:findPlayer(player))
+  local ret = c.skill:canUse(ClientInstance:getPlayerById(player))
   return json.encode(ret)
 end
 

@@ -1,6 +1,8 @@
 ---@class Client
 ---@field client fk.Client
 ---@field players ClientPlayer[]
+---@field alive_players ClientPlayer[]
+---@field current ClientPlayer
 Client = class('Client')
 
 -- load client classes
@@ -23,11 +25,12 @@ function Client:initialize()
   end
 
   self.players = {}     -- ClientPlayer[]
+  self.alive_players = {}
 end
 
 ---@param id integer
 ---@return ClientPlayer
-function Client:findPlayer(id)
+function Client:getPlayerById(id)
   for _, p in ipairs(self.players) do
     if p.player:getId() == id then return p end
   end
@@ -80,9 +83,14 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
   local players = {}
 
   for i = 1, n do
-    table.insert(players, ClientInstance:findPlayer(data[i]))
+    local p = ClientInstance:getPlayerById(data[i])
+    p.seat = i
+    table.insert(players, p)
   end
   ClientInstance.players = players
+
+  -- FIXME: this is incorrect. fix alive_players
+  ClientInstance.alive_players = players
 
   ClientInstance:notifyUI("ArrangeSeats", jsonData)
 end
@@ -91,7 +99,7 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
   -- jsonData: [ int id, string property_name, value ]
   local data = json.decode(jsonData)
   local id, name, value = data[1], data[2], data[3]
-  ClientInstance:findPlayer(id)[name] = value
+  ClientInstance:getPlayerById(id)[name] = value
   ClientInstance:notifyUI("PropertyUpdate", jsonData)
 end
 

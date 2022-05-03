@@ -1,4 +1,4 @@
----@class ClientPlayer
+---@class ClientPlayer: Player
 ---@field player fk.Player
 ---@field handcardNum integer
 ---@field known_cards integer[]

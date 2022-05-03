@@ -271,6 +271,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
 function updateSelectedTargets(playerid, selected) {
   let i = 0;
   let card = dashboard.getSelectedCard();
+  let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
   let all_photos = [dashboard.self]
   for (i = 0; i < playerNum - 1; i++) {
     all_photos.push(photos.itemAt(i))
@@ -282,19 +283,28 @@ function updateSelectedTargets(playerid, selected) {
     selected_targets.splice(selected_targets.indexOf(playerid), 1);
   }
 
-  all_photos.forEach(photo => {
-    if (photo.selected) return;
-    let id = photo.playerid;
-    let ret = JSON.parse(Backend.callLuaFunction(
-      "CanUseCardToTarget",
-      [card, id, selected_targets]
-    ));
-    photo.selectable = ret;
-  })
+  if (candidate) {
+    all_photos.forEach(photo => {
+      if (photo.selected) return;
+      let id = photo.playerid;
+      let ret = JSON.parse(Backend.callLuaFunction(
+        "CanUseCardToTarget",
+        [card, id, selected_targets]
+      ));
+      photo.selectable = ret;
+    })
 
-  okButton.enabled = JSON.parse(Backend.callLuaFunction(
-    "CardFeasible", [card, selected_targets]
-  ));
+    okButton.enabled = JSON.parse(Backend.callLuaFunction(
+      "CardFeasible", [card, selected_targets]
+    ));
+  } else {
+    all_photos.forEach(photo => {
+      photo.state = "normal";
+      photo.selected = false;
+    });
+
+    okButton.enabled = false;
+  }
 }
 
 callbacks["RemovePlayer"] = function(jsonData) {

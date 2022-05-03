@@ -32,6 +32,7 @@ function Room:initialize(_room)
   end
 
   self.room.startGame = function(_self)
+    Room.initialize(self, _room)  -- clear old data  
     self:run()
   end
 

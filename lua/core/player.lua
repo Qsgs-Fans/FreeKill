@@ -236,6 +236,21 @@ function Player:getAttackRange()
   return math.max(baseAttackRange, 0)
 end
 
+---@param other Player
+function Player:distanceTo(other)
+  print(string.format("from=%d,to=%d,live=%d", self.seat, other.seat, #Fk:currentRoom().alive_players))
+  local right = math.abs(self.seat - other.seat)
+  local left = #Fk:currentRoom().alive_players - right
+  local ret = math.min(left, right)
+  -- TODO: corrent distance here using skills
+  return math.max(ret, 1)
+end
+
+---@param other Player
+function Player:inMyAttackRange(other)
+  return self ~= other and self:distanceTo(other) <= self:getAttackRange()
+end
+
 function Player:addCardUseHistory(cardName, num)
   assert(type(num) == "number" and num ~= 0)
 
