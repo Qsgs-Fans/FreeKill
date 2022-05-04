@@ -238,7 +238,6 @@ end
 
 ---@param other Player
 function Player:distanceTo(other)
-  print(string.format("from=%d,to=%d,live=%d", self.seat, other.seat, #Fk:currentRoom().alive_players))
   local right = math.abs(self.seat - other.seat)
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)

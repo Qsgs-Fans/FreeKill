@@ -147,7 +147,6 @@ extension:addCards({
 
   snatch:clone(Card.Diamond, 3),
   snatch:clone(Card.Diamond, 4),
-  snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),
 })
 
 local duel = fk.CreateTrickCard{

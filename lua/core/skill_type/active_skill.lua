@@ -38,9 +38,9 @@ end
 --- Determine if selected cards and targets are valid for this skill
 --- If returns true, the OK button should be enabled
 --- only used in skill of players
----@param selected integer[] @ ids of selected cards
----@param selected_targets integer[] @ ids of selected players
-function ActiveSkill:feasible(selected, selected_targets)
+---@param selected integer[] @ ids of selected players
+---@param selected_cards integer[] @ ids of selected cards
+function ActiveSkill:feasible(selected, selected_cards)
   return true
 end
 

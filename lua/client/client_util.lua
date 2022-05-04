@@ -140,7 +140,7 @@ function CardFeasible(card, selected_targets)
     error()
   end
 
-  local ret = c.skill:feasible(selected_cards, selected_targets)
+  local ret = c.skill:feasible(selected_targets, selected_cards)
   return json.encode(ret)
 end
 

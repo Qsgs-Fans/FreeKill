@@ -87,7 +87,7 @@ end
 ---@field can_use fun(self: ActiveSkill, player: Player): boolean
 ---@field card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean
 ---@field target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[]): boolean
----@field feasible fun(self: ActiveSkill, selected: integer[], selected_targets: integer[]): boolean
+---@field feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
 ---@field on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
 ---@field on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 
