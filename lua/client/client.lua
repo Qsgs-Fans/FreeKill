@@ -50,6 +50,7 @@ end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.players = {Self}
+  ClientInstance.alive_players = {Self}
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
@@ -59,7 +60,9 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   local data = json.decode(jsonData)
   local id, name, avatar = data[1], data[2], data[3]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
-  table.insert(ClientInstance.players, ClientPlayer:new(player))
+  local p = ClientPlayer:new(player)
+  table.insert(ClientInstance.players, p)
+  table.insert(ClientInstance.alive_players, p)
   ClientInstance:notifyUI("AddPlayer", jsonData)
 end
 
@@ -70,6 +73,7 @@ fk.client_callback["RemovePlayer"] = function(jsonData)
   for _, p in ipairs(ClientInstance.players) do
     if p.player:getId() == id then
       table.removeOne(ClientInstance.players, p)
+      table.removeOne(ClientInstance.alive_players, p)
       break
     end
   end
@@ -88,9 +92,6 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
     table.insert(players, p)
   end
   ClientInstance.players = players
-
-  -- FIXME: this is incorrect. fix alive_players
-  ClientInstance.alive_players = players
 
   ClientInstance:notifyUI("ArrangeSeats", jsonData)
 end
