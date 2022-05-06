@@ -505,6 +505,31 @@ function Room:askForGeneral(player, generals)
   return defaultChoice
 end
 
+---@param chooser ServerPlayer
+---@param target ServerPlayer
+---@param flag string @ "hej", h for handcard, e for equip, j for judge
+---@param reason string
+function Room:askForCardChosen(chooser, target, flag, reason)
+  local command = "AskForCardChosen"
+  self:notifyMoveFocus(chooser, command)
+  local data = {target.id, flag, reason}
+  local result = self:doRequest(chooser, command, json.encode(data))
+
+  if result == "" then
+    -- FIXME: generate a random card according to flag
+    result = -1
+  else
+    result = tonumber(result)
+  end
+
+  if result == -1 then
+    local handcards = target.player_cards[Player.Hand]
+    result = handcards[math.random(1, #handcards)]
+  end
+
+  return result
+end
+
 function Room:gameOver()
   self.game_finished = true
   -- dosomething

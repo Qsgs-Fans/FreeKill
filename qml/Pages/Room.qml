@@ -268,6 +268,7 @@ Item {
 
   Loader {
     id: popupBox
+    z: 999
     onSourceChanged: {
       if (item === null)
         return;

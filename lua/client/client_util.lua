@@ -190,4 +190,11 @@ Fk:loadTranslationTable{
   ["AskForGeneral"] = "选择武将",
   ["AskForChoice"] = "选择",
   ["PlayCard"] = "出牌",
+
+  ["AskForCardChosen"] = "选牌",
+  ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
+  ["$ChooseCard"] = "请选择一张卡牌",
+  ["$Hand"] = "手牌区",
+  ["$Equip"] = "装备区",
+  ["$Judge"] = "判定区",
 }
