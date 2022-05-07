@@ -14,6 +14,7 @@
 ---@field dead boolean
 ---@field state string
 ---@field player_skills Skill[]
+---@field derivative_skills table<Skill, Skill[]>
 ---@field flag string[]
 ---@field tag table<string, any>
 ---@field mark table<string, integer>
@@ -57,6 +58,7 @@ function Player:initialize()
   self.state = ""
 
   self.player_skills = {}
+  self.derivative_skills = {}
   self.flag = {}
   self.tag = {}
   self.mark = {}
@@ -261,6 +263,116 @@ function Player:resetCardUseHistory(cardName)
   if self.cardUsedHistory[cardName] then
     self.cardUsedHistory[cardName] = 0
   end
+end
+
+---@param skill string | Skill
+---@return Skill
+local function getActualSkill(skill)
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
+  assert(skill:isInstanceOf(Skill))
+  return skill
+end
+
+---@param skill string | Skill
+function Player:hasEquipSkill(skill)
+  skill = getActualSkill(skill)
+  local equips = self.player_cards[Player.Equip]
+  for _, id in ipairs(equips) do
+    local card = Fk:getCardById(id)
+    if card.skill == skill then
+      return true
+    end
+  end
+  return false
+end
+
+---@param skill string | Skill
+function Player:hasSkill(skill)
+  skill = getActualSkill(skill)
+
+  if self:hasEquipSkill(skill) then
+    return true
+  end
+
+  if table.contains(self.player_skills, skill) then
+    return true
+  end
+
+  for _, v in pairs(self.derivative_skills) do
+    if table.contains(v, skill) then
+      return true
+    end
+  end
+
+  return false
+end
+
+---@param skill string | Skill
+---@param source_skill string | Skill | nil
+---@return Skill[] @ got skills that Player didn't have at start
+function Player:addSkill(skill, source_skill)
+  skill = getActualSkill(skill)
+
+  local toget = skill.related_skills
+  table.insert(toget, skill)
+  local ret = {}
+  for _, s in ipairs(toget) do
+    if not self:hasSkill(s) then
+      table.insert(ret, s)
+    end
+  end
+
+  if source_skill then
+    source_skill = getActualSkill(source_skill)
+    if not self.derivative_skills[source_skill] then
+      self.derivative_skills[source_skill] = {}
+    end
+    table.insertIfNeed(self.derivative_skills[source_skill], skill)
+  else
+    table.insertIfNeed(self.player_skills, skill)
+  end
+
+  -- add related skills
+  if not self.derivative_skills[skill] then
+    self.derivative_skills[skill] = {}
+  end
+  for _, s in ipairs(skill.related_skills) do
+    table.insertIfNeed(self.derivative_skills[skill], s)
+  end
+
+  return ret
+end
+
+---@param skill string | Skill
+---@param source_skill string | Skill | nil
+---@return Skill[] @ lost skills that the Player doesn't have anymore
+function Player:loseSkill(skill, source_skill)
+  skill = getActualSkill(skill)
+
+  if source_skill then
+    source_skill = getActualSkill(source_skill)
+    if not self.derivative_skills[source_skill] then
+      self.derivative_skills[source_skill] = {}
+    end
+    table.removeOne(self.derivative_skills[source_skill], skill)
+  else
+    table.removeOne(self.player_skills, skill)
+  end
+
+  -- clear derivative skills of this skill as well
+  local tolose = self.derivative_skills[skill]
+  table.insert(tolose, skill)
+  self.derivative_skills[skill] = nil
+
+  local ret = {}  ---@type Skill[]
+  for _, s in ipairs(tolose) do
+    if not self:hasSkill(s) then
+      table.insert(ret, s)
+    end
+  end
+  return ret
 end
 
 return Player

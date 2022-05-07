@@ -12,4 +12,19 @@ function ClientPlayer:initialize(cp)
   self.global_known_cards = {}  -- card that visible to all players
 end
 
+---@param skill Skill
+function ClientPlayer:hasSkill(skill)
+  return table.contains(self.player_skills, skill)
+end
+
+---@param skill Skill
+function ClientPlayer:addSkill(skill)
+  table.insert(self.player_skills, skill)
+end
+
+---@param skill Skill
+function ClientPlayer:loseSkill(skill)
+  table.removeOne(self.player_skills, skill)
+end
+
 return ClientPlayer

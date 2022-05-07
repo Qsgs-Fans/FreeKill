@@ -65,11 +65,6 @@ function ServerPlayer:waitForReply(timeout)
   return result
 end
 
----@param skill Skill
-function ServerPlayer:hasSkill(skill)
-  return table.contains(self.player_skills, skill)
-end
-
 function ServerPlayer:isAlive()
   return self.dead == false
 end

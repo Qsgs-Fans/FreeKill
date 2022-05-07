@@ -82,7 +82,7 @@ end
 
 ---@param command string
 ---@param jsonData string
----@param players ServerPlayer[] @ default all players
+---@param players ServerPlayer[] | nil @ default all players
 function Room:doBroadcastNotify(command, jsonData, players)
   players = players or self.players
   local tolist = fk.SPlayerList()
@@ -977,6 +977,60 @@ function Room:useCard(cardUseEvent)
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
+  end
+end
+
+---@param player ServerPlayer
+---@param skill_names string[] | string
+---@param source_skill string | Skill | nil
+function Room:handleAddLoseSkills(player, skill_names, source_skill)
+  if type(skill_names) == "string" then
+    skill_names = skill_names:split("|")
+  end
+
+  if #skill_names == 0 then return end
+  local losts = {}  ---@type boolean[]
+  local triggers = {} ---@type Skill[]
+  for _, skill in ipairs(skill_names) do
+    if string.sub(skill, 1, 1) == "-" then
+      local actual_skill = string.sub(skill, 2, #skill)
+      if player:hasSkill(actual_skill) then
+        local lost_skills = player:loseSkill(actual_skill, source_skill)
+        for _, s in ipairs(lost_skills) do
+          self:doBroadcastNotify("LoseSkill", json.encode{
+            player.id,
+            s.name
+          })
+          -- TODO: send a log here
+          table.insert(losts, true)
+          table.insert(triggers, s)
+        end
+      end
+    else
+      local sk = Fk.skills[skill]
+      if sk and not player:hasSkill(sk) then
+        local got_skills = player:addSkill(sk)
+
+        for _, s in ipairs(got_skills) do
+          -- TODO: limit skill mark
+
+          self:doBroadcastNotify("AddSkill", json.encode{
+            player.id,
+            s.name
+          })
+          -- TODO: send log
+          table.insert(losts, false)
+          table.insert(triggers, s)
+        end
+      end
+    end
+  end
+
+  if #triggers > 0 then
+    for i = 1, #triggers do
+      local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
+      self.logic:trigger(event, player, triggers[i])
+    end
   end
 end
 

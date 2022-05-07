@@ -202,6 +202,30 @@ fk.client_callback["MoveCards"] = function(jsonData)
   ClientInstance:notifyUI("MoveCards", json.encode(merged))
 end
 
+fk.client_callback["LoseSkill"] = function(jsonData)
+  -- jsonData: [ int player_id, string skill_name ]
+  local data = json.decode(jsonData)
+  local id, skill_name = data[1], data[2]
+  local target = ClientInstance:getPlayerById(id)
+  local skill = Fk.skills[skill_name]
+  target:loseSkill(skill)
+  if skill.visible then
+    ClientInstance:notifyUI("LoseSkill", jsonData)
+  end
+end
+
+fk.client_callback["AddSkill"] = function(jsonData)
+  -- jsonData: [ int player_id, string skill_name ]
+  local data = json.decode(jsonData)
+  local id, skill_name = data[1], data[2]
+  local target = ClientInstance:getPlayerById(id)
+  local skill = Fk.skills[skill_name]
+  target:addSkill(skill)
+  if skill.visible then
+    ClientInstance:notifyUI("AddSkill", jsonData)
+  end
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

@@ -2,6 +2,7 @@
 ---@field name string
 ---@field frequency Frequency
 ---@field visible boolean
+---@field related_skills Skill[]
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -17,6 +18,12 @@ function Skill:initialize(name, frequency)
   self.name = name
   self.frequency = frequency
   self.visible = true
+  self.related_skills = {}
+end
+
+---@param skill Skill
+function Skill:addRelatedSkill(skill)
+  table.insert(self.related_skills, skill)
 end
 
 return Skill
