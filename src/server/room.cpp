@@ -32,6 +32,7 @@ Room::~Room()
 {
   // TODO
   if (isRunning()) {
+    terminate();
     wait();
   }
   lua_close(L);
