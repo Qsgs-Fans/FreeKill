@@ -19,17 +19,21 @@ RowLayout {
   property var pendings: [] // int[], store cid
   property int selected_card: -1
 
+  property alias skillButtons: skillPanel.skill_buttons
+
   signal cardSelected(var card)
 
-  Item {
-    width: 40
-  }
+  Item { width: 5 }
 
   HandcardArea {
     id: handcardAreaItem
     Layout.fillWidth: true
     Layout.preferredHeight: 130
     Layout.alignment: Qt.AlignVCenter
+  }
+
+  SkillArea {
+    id: skillPanel
   }
 
   Photo {
@@ -141,8 +145,8 @@ RowLayout {
   }
 
   function deactivateSkillButton() {
-    for (let i = 0; i < headSkills.length; i++) {
-      headSkillButtons.itemAt(i).pressed = false;
+    for (let i = 0; i < skillButtons.count; i++) {
+      skillButtons.itemAt(i).pressed = false;
     }
   }
 

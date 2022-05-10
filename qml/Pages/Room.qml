@@ -291,6 +291,15 @@ Item {
     }
   }
 
+  function activateSkill(skill_name, pressed) {
+    if (pressed) {
+      dashboard.startPending(skill_name);
+      cancelButton.enabled = true;
+    } else {
+      Logic.doCancelButton();
+    }
+  }
+
   Component.onCompleted: {
     toast.show(Backend.translate("$EnterRoom"));
 

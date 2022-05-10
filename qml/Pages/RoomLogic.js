@@ -534,3 +534,25 @@ callbacks["PlayCard"] = function(jsonData) {
     roomScene.state = "playing";
   }
 }
+
+callbacks["LoseSkill"] = function(jsonData) {
+  // jsonData: [ int player_id, string skill_name ]
+  let data = JSON.parse(jsonData);
+  let id = data[0];
+  let skill_name = data[1];
+  if (id === Self.id) {
+    roomScene.promptText = Backend.translate("#PlayCard");
+    roomScene.state = "playing";
+  }
+}
+
+callbacks["AddSkill"] = function(jsonData) {
+  // jsonData: [ int player_id, string skill_name ]
+  let data = JSON.parse(jsonData);
+  let id = data[0];
+  let skill_name = data[1];
+  if (id === Self.id) {
+    roomScene.promptText = Backend.translate("#PlayCard");
+    roomScene.state = "playing";
+  }
+}
