@@ -42,6 +42,15 @@ Item {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
+  Button {
+    text: "test"
+    onClicked: dashboard.expandPile("_equip");
+  }
+  Button {
+    text: "test2"
+    x: 60
+    onClicked: dashboard.retractPile("_equip");
+  }
 
   states: [
     State { name: "notactive" }, // Normal status

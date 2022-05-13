@@ -21,6 +21,8 @@ RowLayout {
 
   property alias skillButtons: skillPanel.skill_buttons
 
+  property var expanded_piles: ({}) // name -> int[]
+
   signal cardSelected(var card)
 
   Item { width: 5 }
@@ -56,6 +58,49 @@ RowLayout {
 
   function unSelectAll(expectId) {
     handcardAreaItem.unselectAll(expectId);
+  }
+
+  function expandPile(pile) {
+    let expanded_pile_names = Object.keys(expanded_piles);
+    if (expanded_pile_names.indexOf(pile) !== -1)
+      return;
+
+    let component = Qt.createComponent("CardItem.qml");
+    let parentPos = roomScene.mapFromItem(selfPhoto, 0, 0);
+
+    // FIXME: only expand equip area here. modify this if need true pile
+    expanded_piles[pile] = [];
+    if (pile === "_equip") {
+      let equips = selfPhoto.equipArea.getAllCards();
+      equips.forEach(data => {
+        data.x = parentPos.x;
+        data.y = parentPos.y;
+        let card = component.createObject(roomScene, data);
+        handcardAreaItem.add(card);
+      })
+      handcardAreaItem.updateCardPosition();
+    }
+  }
+
+  function retractPile(pile) {
+    let expanded_pile_names = Object.keys(expanded_piles);
+    if (expanded_pile_names.indexOf(pile) === -1)
+      return;
+
+    let parentPos = roomScene.mapFromItem(selfPhoto, 0, 0);
+
+    delete expanded_piles[pile];
+    if (pile === "_equip") {
+      let equips = selfPhoto.equipArea.getAllCards();
+      equips.forEach(data => {
+        let card = handcardAreaItem.remove([data.cid])[0];
+        card.origX = parentPos.x;
+        card.origY = parentPos.y;
+        card.destroyOnStop();
+        card.goBack(true);
+      })
+      handcardAreaItem.updateCardPosition();
+    }
   }
 
   function enableCards() {
