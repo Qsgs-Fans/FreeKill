@@ -11,6 +11,7 @@
 ---@field processing_area integer[]
 ---@field void integer[]
 ---@field card_place table<integer, CardArea>
+---@field owner_map table<integer, integer>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -47,6 +48,7 @@ function Room:initialize(_room)
   self.processing_area = {}
   self.void = {}
   self.card_place = {}
+  self.owner_map = {}
 end
 
 -- When this function returns, the Room(C++) thread stopped.
@@ -178,7 +180,7 @@ function Room:shuffleDrawPile()
 
   table.insertTable(self.draw_pile, self.discard_pile)
   for _, id in ipairs(self.discard_pile) do
-    self:setCardArea(id, Card.DrawPile)
+    self:setCardArea(id, Card.DrawPile, nil)
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
@@ -209,8 +211,10 @@ end
 
 ---@param cardId integer
 ---@param cardArea CardArea
-function Room:setCardArea(cardId, cardArea)
+---@param integer owner
+function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
+  self.owner_map[cardId] = owner
 end
 
 ---@param cardId integer
@@ -346,7 +350,7 @@ function Room:moveCards(...)
 
           table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
         end
-        self:setCardArea(info.cardId, data.toArea)
+        self:setCardArea(info.cardId, data.toArea, data.to)
       end
     end
   end
@@ -362,6 +366,7 @@ end
 function Room:obtainCard(player, cid, unhide, reason)
   self:moveCards({
     ids = {cid},
+    from = self.owner_map[cid],
     to = player,
     toArea = Card.PlayerHand,
     moveReason = reason or fk.ReasonJustMove,

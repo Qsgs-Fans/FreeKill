@@ -124,6 +124,7 @@ local snatchSkill = fk.CreateActiveSkill{
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:distanceTo(player) <= 1
+        and not player:isAllNude()
     end
   end,
   feasible = function(self, selected)
@@ -139,15 +140,7 @@ local snatchSkill = fk.CreateActiveSkill{
       "snatch"
     )
 
-    room:moveCards({
-      ids = {cid},
-      from = to,
-      to = from,
-      toArea = Card.PlayerHand,
-      moveReason = fk.ReasonJustMove,
-      proposer = from,
-      moveVisible = false,
-    })
+    room:obtainCard(from, cid)
   end
 }
 local snatch = fk.CreateTrickCard{

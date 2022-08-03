@@ -133,7 +133,7 @@ function GameLogic:prepareForStart()
   table.shuffle(allCardIds)
   room.draw_pile = allCardIds
   for _, id in ipairs(room.draw_pile) do
-    self.room:setCardArea(id, Card.DrawPile)
+    self.room:setCardArea(id, Card.DrawPile, nil)
   end
 
   self:addTriggerSkill(GameRule)
