@@ -355,6 +355,21 @@ function Room:moveCards(...)
   return true
 end
 
+---@param player integer
+---@param cid integer
+---@param unhide boolean
+---@param reason CardMoveReason
+function Room:obtainCard(player, cid, unhide, reason)
+  self:moveCards({
+    ids = {cid},
+    to = player,
+    toArea = Card.PlayerHand,
+    moveReason = reason or fk.ReasonJustMove,
+    proposer = player,
+    moveVisible = unhide or false,
+  })
+end
+
 ---@param player ServerPlayer
 ---@param num integer
 ---@param skillName string

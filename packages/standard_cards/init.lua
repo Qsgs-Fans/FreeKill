@@ -138,9 +138,16 @@ local snatchSkill = fk.CreateActiveSkill{
       "hej",
       "snatch"
     )
-    -- TODO: complete this function
-    -- room:obtainCard(from, cid, ...)
-    p(cid)
+
+    room:moveCards({
+      ids = {cid},
+      from = to,
+      to = from,
+      toArea = Card.PlayerHand,
+      moveReason = fk.ReasonJustMove,
+      proposer = from,
+      moveVisible = false,
+    })
   end
 }
 local snatch = fk.CreateTrickCard{
