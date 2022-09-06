@@ -32,9 +32,16 @@ RowLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: 130
     Layout.alignment: Qt.AlignVCenter
+    onWidthChanged: updateCardPosition(true);
   }
 
   SkillArea {
+    Layout.fillHeight: true
+    Layout.fillWidth: true
+    Layout.maximumWidth: width
+    Layout.maximumHeight: height
+    Layout.alignment: Qt.AlignBottom
+    Layout.bottomMargin: 24
     id: skillPanel
   }
 
@@ -213,5 +220,13 @@ RowLayout {
     pendings = [];
     handcardAreaItem.adjustCards();
     cardSelected(-1);
+  }
+
+  function addSkill(skill_name) {
+    skillPanel.addSkill(skill_name);
+  }
+
+  function loseSkill(skill_name) {
+    skillPanel.loseSkill(skill_name);
   }
 }

@@ -532,6 +532,7 @@ callbacks["PlayCard"] = function(jsonData) {
   if (playerId == Self.id) {
     roomScene.promptText = Backend.translate("#PlayCard");
     roomScene.state = "playing";
+    okButton.enabled = false;
   }
 }
 
@@ -541,8 +542,7 @@ callbacks["LoseSkill"] = function(jsonData) {
   let id = data[0];
   let skill_name = data[1];
   if (id === Self.id) {
-    roomScene.promptText = Backend.translate("#PlayCard");
-    roomScene.state = "playing";
+    dashboard.loseSkill(skill_name);
   }
 }
 
@@ -552,7 +552,6 @@ callbacks["AddSkill"] = function(jsonData) {
   let id = data[0];
   let skill_name = data[1];
   if (id === Self.id) {
-    roomScene.promptText = Backend.translate("#PlayCard");
-    roomScene.state = "playing";
+    dashboard.addSkill(skill_name);
   }
 }

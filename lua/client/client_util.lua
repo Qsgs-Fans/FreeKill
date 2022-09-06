@@ -144,6 +144,38 @@ function CardFeasible(card, selected_targets)
   return json.encode(ret)
 end
 
+-- Handle skills
+
+function GetSkillData(skill_name)
+  local skill = Fk.skills[skill_name]
+  local freq = "notactive"
+  if skill:isInstanceOf(ActiveSkill) then
+    freq = "active"
+  end
+  return json.encode{
+    skill = Fk:translate(skill_name),
+    orig_skill = skill_name,
+    freq = freq,
+    enabled = false
+  }
+end
+
+function ActiveCanUse(skill_name, player)
+
+end
+
+function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
+
+end
+
+function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
+
+end
+
+function ActiveFeasible(skill_name, selected, selected_cards)
+
+end
+
 Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",

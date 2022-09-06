@@ -136,6 +136,10 @@ function GameLogic:prepareForStart()
     self.room:setCardArea(id, Card.DrawPile, nil)
   end
 
+  for _, p in ipairs(room.alive_players) do
+    room:handleAddLoseSkills(p, "zhiheng")
+  end
+
   self:addTriggerSkill(GameRule)
   for _, trig in ipairs(Fk.global_trigger) do
     self:addTriggerSkill(trig)

@@ -12,12 +12,13 @@ Item {
       pressed = false;
   }
 
-  width: type === "active" ? 120 : 72
-  height: type === "active" ? 55 : 36
+  width: type === "active" ? 120 * 0.66 : 72 * 0.66
+  height: type === "active" ? 55 * 0.66 : 36 * 0.66
 
   Image {
-    x: -13
-    y: -6
+    x: -13 - 120 * 0.166
+    y: -6 - 55 * 0.166
+    scale: 0.66
     source: type !== "active" ? ""
       : AppPath + "/image/button/skill/active/"
       + (enabled ? (pressed ? "pressed" : "normal") : "disabled")
@@ -28,7 +29,7 @@ Item {
     id: skill
     text: "制衡"
     font.family: fontLi2.name
-    font.pixelSize: 36
+    font.pixelSize: 36 * 0.66
     visible: false
   }
 

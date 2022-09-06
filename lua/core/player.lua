@@ -327,7 +327,7 @@ end
 function Player:addSkill(skill, source_skill)
   skill = getActualSkill(skill)
 
-  local toget = skill.related_skills
+  local toget = table.clone(skill.related_skills)
   table.insert(toget, skill)
   local ret = {}
   for _, s in ipairs(toget) do

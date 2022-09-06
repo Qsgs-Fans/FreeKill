@@ -66,6 +66,7 @@ function table.clone(self)
   return ret
 end
 
+-- if table does not contain the element, we insert it
 function table:insertIfNeed(element)
   if not table.contains(self, element) then
     table.insert(self, element)
