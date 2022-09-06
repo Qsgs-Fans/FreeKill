@@ -124,6 +124,7 @@ local snatchSkill = fk.CreateActiveSkill{
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:distanceTo(player) <= 1
+        and not player:isAllNude()
     end
   end,
   feasible = function(self, selected)
@@ -138,9 +139,8 @@ local snatchSkill = fk.CreateActiveSkill{
       "hej",
       "snatch"
     )
-    -- TODO: complete this function
-    -- room:obtainCard(from, cid, ...)
-    p(cid)
+
+    room:obtainCard(from, cid)
   end
 }
 local snatch = fk.CreateTrickCard{
@@ -160,7 +160,6 @@ extension:addCards({
 
   snatch:clone(Card.Diamond, 3),
   snatch:clone(Card.Diamond, 4),
-  snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),snatch:clone(Card.Diamond, 4),
 })
 
 local duel = fk.CreateTrickCard{

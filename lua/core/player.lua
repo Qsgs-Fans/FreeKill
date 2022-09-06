@@ -265,6 +265,18 @@ function Player:resetCardUseHistory(cardName)
   end
 end
 
+function Player:isKongcheng()
+  return #self:getCardIds(Player.Hand) == 0
+end
+
+function Player:isNude()
+  return #self:getCardIds{Player.Hand, Player.Equip} == 0
+end
+
+function Player:isAllNude()
+  return #self:getCardIds() == 0
+end
+
 ---@param skill string | Skill
 ---@return Skill
 local function getActualSkill(skill)
