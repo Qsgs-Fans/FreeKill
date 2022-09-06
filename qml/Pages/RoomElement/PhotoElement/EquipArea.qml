@@ -116,5 +116,9 @@ Column {
   {
     area.updateCardPosition(animated);
   }
+
+  function getAllCards() {
+    return area.cards;
+  }
 }
 

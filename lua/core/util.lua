@@ -66,6 +66,28 @@ function table.clone(self)
   return ret
 end
 
+function table:insertIfNeed(element)
+  if not table.contains(self, element) then
+    table.insert(self, element)
+  end
+end
+
+---@param delimiter string
+---@return string[]
+function string:split(delimiter)
+  if #self == 0 then return {} end
+  local result = {}
+  local from = 1
+  local delim_from, delim_to = string.find(self, delimiter, from)
+  while delim_from do
+    table.insert(result, string.sub(self, from, delim_from - 1))
+    from  = delim_to + 1
+    delim_from, delim_to = string.find(self, delimiter, from)
+  end
+  table.insert(result, string.sub(self, from))
+  return result
+end
+
 ---@class Sql
 Sql = {
   ---@param filename string

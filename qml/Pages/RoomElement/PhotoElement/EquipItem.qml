@@ -45,15 +45,11 @@ Item {
     y: 1
   }
 
-  GlowText {
+  Text {
     id: textItem
     font.family: fontLibian.name
     color: "white"
     font.pixelSize: 18
-    glow.color: "black"
-    glow.spread: 0.9
-    glow.radius: 2
-    glow.samples: 6
     anchors.left: iconItem.right
     anchors.leftMargin: -8
     verticalAlignment: Text.AlignVCenter

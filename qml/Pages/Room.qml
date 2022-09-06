@@ -42,6 +42,15 @@ Item {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
+  Button {
+    text: "test"
+    onClicked: dashboard.expandPile("_equip");
+  }
+  Button {
+    text: "test2"
+    x: 60
+    onClicked: dashboard.retractPile("_equip");
+  }
 
   states: [
     State { name: "notactive" }, // Normal status
@@ -288,6 +297,15 @@ Item {
     {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
+    }
+  }
+
+  function activateSkill(skill_name, pressed) {
+    if (pressed) {
+      dashboard.startPending(skill_name);
+      cancelButton.enabled = true;
+    } else {
+      Logic.doCancelButton();
     }
   }
 
