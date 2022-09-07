@@ -96,11 +96,11 @@ Fk:loadTranslationTable{
 
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
-  -- feasible = function(self, selected, selected_cards)
-  --   return #selected == 0 and #selected_cards > 0
-  -- end,
+  feasible = function(self, selected, selected_cards)
+    return #selected == 0 and #selected_cards > 0
+  end,
   on_effect = function(self, room, effect)
-    room:drawCards(room:getPlayerById(effect.from), 1, "zhiheng")
+    room:drawCards(room:getPlayerById(effect.from), #effect.cards, "zhiheng")
   end
 }
 local sunquan = General:new(extension, "sunquan", "wu", 4)

@@ -51,7 +51,7 @@ end
 function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
----@param cardEffectEvent CardEffectEvent
+---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onEffect(room, cardEffectEvent) end
 
 return ActiveSkill

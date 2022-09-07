@@ -180,7 +180,6 @@ function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
 end
 
 function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
-  print(skill_name, to_select, selected, selected_cards)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill and skill:isInstanceOf(ActiveSkill) then
