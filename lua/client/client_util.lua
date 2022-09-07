@@ -102,7 +102,8 @@ function CanUseCardToTarget(card, to_select, selected)
     c = Fk:getCardById(card)
     selected_cards = {card}
   else
-    error()
+    local t = json.decode(card)
+    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards)
   end
 
   local ret = c.skill:targetFilter(to_select, selected, selected_cards)
@@ -137,7 +138,8 @@ function CardFeasible(card, selected_targets)
     c = Fk:getCardById(card)
     selected_cards = {card}
   else
-    error()
+    local t = json.decode(card)
+    return ActiveFeasible(t.skill, selected_targets, t.subcards)
   end
 
   local ret = c.skill:feasible(selected_targets, selected_cards)
@@ -155,25 +157,50 @@ function GetSkillData(skill_name)
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
-    freq = freq,
-    enabled = false
+    freq = freq
   }
 end
 
-function ActiveCanUse(skill_name, player)
-
+function ActiveCanUse(skill_name)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:canUse(Self)
+  end
+  return json.encode(ret)
 end
 
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
-
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:cardFilter(to_select, selected, selected_targets)
+  end
+  return json.encode(ret)
 end
 
 function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
-
+  print(skill_name, to_select, selected, selected_cards)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:targetFilter(to_select, selected, selected_cards)
+  end
+  return json.encode(ret)
 end
 
 function ActiveFeasible(skill_name, selected, selected_cards)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:feasible(selected, selected_cards)
+  end
+  return json.encode(ret)
+end
 
+-- ViewAsSkill (Todo)
+function CanViewAs(skill_name, card_ids)
+  return "true"
 end
 
 Fk:loadTranslationTable{

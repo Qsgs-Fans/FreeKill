@@ -70,6 +70,7 @@ Item {
           endPhaseButton.visible = false;
 
           dashboard.disableAllCards();
+          dashboard.disableSkills();
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
           selected_targets = [];
@@ -86,6 +87,7 @@ Item {
       ScriptAction {
         script: {
           dashboard.enableCards();
+          dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
           endPhaseButton.visible = true;
@@ -97,6 +99,8 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
+          dashboard.enableCards();
+          dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
         }
@@ -107,6 +111,8 @@ Item {
       from: "*"; to: "replying"
       ScriptAction {
         script: {
+          dashboard.disableAllCards();
+          dashboard.disableSkills();
           progress.visible = true;
         }
       }

@@ -5,6 +5,7 @@ Item {
   id: root
   property alias skill: skill.text
   property string type: "active"
+  property string orig: ""
   property bool pressed: false
 
   onEnabledChanged: {
@@ -27,7 +28,6 @@ Item {
   Text {
     anchors.centerIn: parent
     id: skill
-    text: "制衡"
     font.family: fontLi2.name
     font.pixelSize: 36 * 0.66
     visible: false

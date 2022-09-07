@@ -36,11 +36,12 @@ Flickable {
         SkillButton {
           skill: model.skill
           type: "active"
-          enabled: model.enabled
+          enabled: false
+          orig: model.orig_skill
 
           onPressedChanged: {
             if (enabled)
-              roomScene.activateSkill(skill, pressed);
+              roomScene.activateSkill(orig, pressed);
           }
         }
       }
@@ -58,6 +59,7 @@ Flickable {
         onItemAdded: parent.forceLayout()
         SkillButton {
           skill: model.skill
+          orig: model.orig_skill
           type: "notactive"
         }
       }
@@ -71,12 +73,6 @@ Flickable {
     ));
     if (data.freq = "active") {
       active_skills.append(data);
-      active_skills.append(data);
-      active_skills.append(data);
-      not_active_skills.append(data);
-      not_active_skills.append(data);
-      not_active_skills.append(data);
-      not_active_skills.append(data);
     } else {
       not_active_skills.append(data);
     }

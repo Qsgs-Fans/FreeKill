@@ -89,7 +89,7 @@ GameRule = fk.CreateTriggerSkill{
           if result == "" then break end
 
           local data = json.decode(result)
-          local card = data.card
+          local card = data.card  -- TODO: active or viewas
           local targets = data.targets
           local use = {}    ---@type CardUseStruct
           use.from = player.id

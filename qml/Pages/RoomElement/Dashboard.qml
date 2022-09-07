@@ -156,23 +156,21 @@ RowLayout {
     if (pending_skill === "") return;
 
     let enabled_cards = [];
+    let targets = roomScene.selected_targets;
 
-    handcardAreaItem.cards.forEach(function(card) {
-      if (card.selected || Router.vs_view_filter(pending_skill, pendings, card.cid))
+    handcardAreaItem.cards.forEach((card) => {
+      if (card.selected || JSON.parse(Backend.callLuaFunction(
+        "ActiveCardFilter",
+        [pending_skill, card.cid, pendings, targets]
+      )))
         enabled_cards.push(card.cid);
     });
     handcardAreaItem.enableCards(enabled_cards);
 
-    let equip;
-    for (let i = 0; i < 5; i++) {
-      equip = equipAreaItem.equips.itemAt(i);
-      if (equip.selected || equip.cid !== -1 &&
-        Router.vs_view_filter(pending_skill, pendings, equip.cid))
-        enabled_cards.push(equip.cid);
-    }
-    equipAreaItem.enableCards(enabled_cards);
-
-    if (Router.vs_can_view_as(pending_skill, pendings)) {
+    if (JSON.parse(Backend.callLuaFunction(
+        "CanViewAs",
+        [pending_skill, pendings]
+      ))) {
       pending_card = {
         skill: pending_skill,
         subcards: pendings
@@ -208,17 +206,11 @@ RowLayout {
 
     // TODO: expand pile
 
-    let equip;
-    for (let i = 0; i < 5; i++) {
-      equip = equipAreaItem.equips.itemAt(i);
-      if (equip.name !== "") {
-        equip.selected = false;
-        equip.selectable = false;
-      }
-    }
+    // TODO: equipment
 
     pendings = [];
     handcardAreaItem.adjustCards();
+    handcardAreaItem.unselectAll();
     cardSelected(-1);
   }
 
@@ -228,5 +220,17 @@ RowLayout {
 
   function loseSkill(skill_name) {
     skillPanel.loseSkill(skill_name);
+  }
+
+  function enableSkills() {
+    for (let i = 0; i < skillButtons.count; i++) {
+      let item = skillButtons.itemAt(i);
+      item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig]));
+    }
+  }
+
+  function disableSkills() {
+    for (let i = 0; i < skillButtons.count; i++)
+      skillButtons.itemAt(i).enabled = false;
   }
 }
