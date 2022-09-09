@@ -165,7 +165,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 {
   // First check the name and password
   // Matches a string that does not contain special characters
-  QRegularExpression nameExp("\\0000-\\0057\\0072-\\0100\\0133-\\0140\\0173-\\0177");
+  QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
   QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
   bool passed = false;
   QString error_msg;
