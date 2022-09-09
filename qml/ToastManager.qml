@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 // copy from https://gist.github.com/jonmcclung/bae669101d17b103e94790341301c129
 // and modified some code

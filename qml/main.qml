@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.0
-import QtQuick.Window 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
 import "Logic.js" as Logic
 import "Pages"
 

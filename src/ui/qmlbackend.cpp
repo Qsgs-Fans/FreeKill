@@ -104,21 +104,21 @@ QString QmlBackend::translate(const QString &src) {
 
 void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   QVariantList list;
-  switch(v.type()) {
-    case QVariant::Bool:
+  switch (v.typeId()) {
+    case QMetaType::Bool:
       lua_pushboolean(L, v.toBool());
       break;
-    case QVariant::Int:
-    case QVariant::UInt:
+    case QMetaType::Int:
+    case QMetaType::UInt:
       lua_pushinteger(L, v.toInt());
       break;
-    case QVariant::Double:
+    case QMetaType::Double:
       lua_pushnumber(L, v.toDouble());
       break;
-    case QVariant::String:
+    case QMetaType::QString:
       lua_pushstring(L, v.toString().toUtf8().data());
       break;
-    case QVariant::List:
+    case QMetaType::QVariantList:
       lua_newtable(L);
       list = v.toList();
       for (int i = 1; i <= list.length(); i++) {
@@ -128,7 +128,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
       }
       break;
     default:
-      qDebug() << "cannot handle QVariant type" << v.type();
+      qDebug() << "cannot handle QVariant type" << v.typeId();
       lua_pushnil(L);
       break;
   }

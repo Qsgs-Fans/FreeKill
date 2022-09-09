@@ -7,6 +7,10 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
+#ifdef Q_OS_ANDROID
+  QDir::setCurrent("/storage/emulated/0/FreeKill");
+#endif
+
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();

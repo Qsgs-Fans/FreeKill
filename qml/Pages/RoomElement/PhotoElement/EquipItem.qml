@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import ".."
 import "../../../util.js" as Utility
 import "../../skin-bank.js" as SkinBank
@@ -40,7 +40,7 @@ Item {
     glow.color: "black"
     glow.spread: 0.75
     glow.radius: 2
-    glow.samples: 4
+    //glow.samples: 4
     x: parent.width - 24
     y: 1
   }

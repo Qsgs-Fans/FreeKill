@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.1
-import QtGraphicalEffects 1.0
+import QtQuick
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
 
 RowLayout {
   id: root
