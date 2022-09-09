@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import ".."
 import "../../../util.js" as Utility
 import "../../skin-bank.js" as SkinBank

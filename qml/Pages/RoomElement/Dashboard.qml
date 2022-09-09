@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import QtQuick.Layouts 1.1
+import QtQuick
+import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 
 RowLayout {

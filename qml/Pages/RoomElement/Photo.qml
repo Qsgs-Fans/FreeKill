@@ -1,6 +1,6 @@
-import QtQuick 2.15
+import QtQuick
 import Qt5Compat.GraphicalEffects
-import QtQuick.Controls 2.15
+import QtQuick.Controls
 import "PhotoElement"
 import "../skin-bank.js" as SkinBank
 
