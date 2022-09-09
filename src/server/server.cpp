@@ -165,13 +165,13 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 {
   // First check the name and password
   // Matches a string that does not contain special characters
-  QRegExp nameExp("[^\\0000-\\0057\\0072-\\0100\\0133-\\0140\\0173-\\0177]+");
+  QRegularExpression nameExp("\\0000-\\0057\\0072-\\0100\\0133-\\0140\\0173-\\0177");
   QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
   bool passed = false;
   QString error_msg;
   QJsonObject result;
 
-  if (nameExp.exactMatch(name)) {
+  if (!nameExp.match(name).hasMatch()) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';").arg(name);

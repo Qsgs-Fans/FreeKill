@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtGraphicalEffects 1.0
+import Qt5Compat.GraphicalEffects
 import "../skin-bank.js" as SkinBank
 
 /* Layout of card:
@@ -122,7 +122,7 @@ Item {
     glow.color: "black"
     glow.spread: 1
     glow.radius: 1
-    glow.samples: 12
+    //glow.samples: 12
   }
 
   Rectangle {

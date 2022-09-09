@@ -39,7 +39,7 @@ endif ()
 source_group("Include" FILES ${freekill_HEADERS})
 add_executable(FreeKill ${freekill_SRCS})
 target_precompile_headers(FreeKill PRIVATE "pch.h")
-target_link_libraries(FreeKill ${LUA_LIB} ${SQLITE3_LIB} Qt5::Qml Qt5::Gui Qt5::Network Qt5::Multimedia)
+target_link_libraries(FreeKill ${LUA_LIB} ${SQLITE3_LIB} Qt6::Qml Qt6::Gui Qt6::Network Qt6::Multimedia Qt6::Core5Compat)
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
 add_custom_command(
   OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx

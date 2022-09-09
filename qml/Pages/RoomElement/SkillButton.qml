@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtGraphicalEffects 1.0
+import Qt5Compat.GraphicalEffects
 
 Item {
   id: root
@@ -38,7 +38,7 @@ Item {
     source: skill
     anchors.fill: skill
     radius: 6
-    samples: 8
+    //samples: 8
     color: "grey"
   }
 

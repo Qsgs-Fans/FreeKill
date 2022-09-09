@@ -2,11 +2,12 @@ cmake_minimum_required(VERSION 3.16)
 
 project(FreeKill VERSION 0.0.1)
 
-find_package(Qt5 REQUIRED COMPONENTS
+find_package(Qt6 REQUIRED COMPONENTS
   Gui
   Qml
   Network
   Multimedia
+  Core5Compat
 )
 
 find_package(Lua)

@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtGraphicalEffects 1.15
+import Qt5Compat.GraphicalEffects
 import QtQuick.Controls 2.15
 import "PhotoElement"
 import "../skin-bank.js" as SkinBank
@@ -282,7 +282,7 @@ Item {
     glow.color: "brown"
     glow.spread: 0.2
     glow.radius: 8
-    glow.samples: 12
+    //glow.samples: 12
   }
 
   SequentialAnimation {

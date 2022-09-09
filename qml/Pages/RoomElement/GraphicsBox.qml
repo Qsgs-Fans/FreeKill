@@ -1,5 +1,5 @@
 import QtQuick 2.15
-import QtGraphicalEffects 1.0
+import Qt5Compat.GraphicalEffects
 
 Item {
   property alias title: titleItem
@@ -22,7 +22,7 @@ Item {
     anchors.fill: background
     color: "#B0000000"
     radius: 5
-    samples: 12
+    //samples: 12
     spread: 0.2
     horizontalOffset: 5
     verticalOffset: 4
