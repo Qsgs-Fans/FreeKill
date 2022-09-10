@@ -9,6 +9,8 @@ public:
   static QString pwd();
   static bool exists(const QString &file);
   static bool isDir(const QString &file);
+
+  void parseFkp(const QString &file);
 };
 
 extern QmlBackend *Backend;

@@ -49,6 +49,7 @@ target_precompile_headers(FreeKill PRIVATE "pch.h")
 target_link_libraries(FreeKill PRIVATE
   ${LUA_LIB}
   ${SQLITE3_LIB}
+  fkparse
   Qt6::Qml
   Qt6::Gui
   Qt6::Network
