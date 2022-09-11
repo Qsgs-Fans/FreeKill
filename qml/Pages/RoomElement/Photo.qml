@@ -8,7 +8,7 @@ Item {
   id: root
   width: 175
   height: 233
-  scale: 0.8
+  scale: 0.75
   property int playerid
   property string general: ""
   property string screenName: ""

@@ -31,7 +31,8 @@ RowLayout {
     id: handcardAreaItem
     Layout.fillWidth: true
     Layout.preferredHeight: 130
-    Layout.alignment: Qt.AlignVCenter
+    Layout.alignment: Qt.AlignBottom
+    Layout.bottomMargin: 24
     onWidthChanged: updateCardPosition(true);
   }
 
@@ -41,16 +42,16 @@ RowLayout {
     Layout.maximumWidth: width
     Layout.maximumHeight: height
     Layout.alignment: Qt.AlignBottom
-    Layout.bottomMargin: 24
+    Layout.bottomMargin: 32
+    Layout.rightMargin: -16
     id: skillPanel
   }
 
   Photo {
     id: selfPhoto
+    Layout.rightMargin: -16
     handcards: handcardAreaItem.length
   }
-
-  Item { width: 5 }
 
   Connections {
     target: handcardAreaItem

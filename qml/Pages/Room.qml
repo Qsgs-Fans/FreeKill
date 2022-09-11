@@ -137,7 +137,7 @@ Item {
   Item {
     id: roomArea
     width: roomScene.width
-    height: roomScene.height - dashboard.height
+    height: roomScene.height - dashboard.height + 20
 
     Repeater {
       id: photos
@@ -179,7 +179,7 @@ Item {
       width: parent.width * 0.6
       height: 150
       x: parent.width * 0.2
-      y: parent.height * 0.6
+      y: parent.height * 0.6 + 20
     }
   }
 
@@ -216,7 +216,7 @@ Item {
   Item {
     id: controls
     anchors.bottom: dashboard.top
-    anchors.bottomMargin: -40
+    anchors.bottomMargin: -60
     width: roomScene.width
 
     Text {

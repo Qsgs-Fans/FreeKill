@@ -3,6 +3,7 @@ import QtQuick.Controls
 
 Item {
   id: root
+  scale: 2
 
   Frame {
     id: join_server

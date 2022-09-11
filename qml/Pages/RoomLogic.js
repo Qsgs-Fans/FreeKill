@@ -20,20 +20,21 @@ function arrangePhotos() {
    */
 
   const photoWidth = 175;
-  const roomAreaPadding = 10;
-  let verticalPadding = Math.max(10, roomArea.width * 0.01);
-  let horizontalSpacing = Math.max(30, roomArea.height * 0.1);
+  // Padding is negative, because photos are scaled.
+  const roomAreaPadding = -16;
+  const verticalPadding = -16;
+  const horizontalSpacing = 32;
   let verticalSpacing = (roomArea.width - photoWidth * 7 - verticalPadding * 2) / 6;
 
   // Position 1-7
   const regions = [
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 6, y: roomAreaPadding + horizontalSpacing * 2 },
+    { x: verticalPadding + (photoWidth + verticalSpacing) * 6, y: roomAreaPadding + horizontalSpacing * 3 },
     { x: verticalPadding + (photoWidth + verticalSpacing) * 5, y: roomAreaPadding + horizontalSpacing },
     { x: verticalPadding + (photoWidth + verticalSpacing) * 4, y: roomAreaPadding },
     { x: verticalPadding + (photoWidth + verticalSpacing) * 3, y: roomAreaPadding },
     { x: verticalPadding + (photoWidth + verticalSpacing) * 2, y: roomAreaPadding },
     { x: verticalPadding + photoWidth + verticalSpacing, y: roomAreaPadding + horizontalSpacing },
-    { x: verticalPadding, y: roomAreaPadding + horizontalSpacing * 2 },
+    { x: verticalPadding, y: roomAreaPadding + horizontalSpacing * 3 },
   ];
 
   const regularSeatIndex = [
