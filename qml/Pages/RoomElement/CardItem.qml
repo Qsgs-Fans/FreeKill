@@ -138,7 +138,7 @@ Item {
     drag.axis: Drag.XAndYAxis
     hoverEnabled: true
 
-    onReleased: {
+    onReleased: function(mouse) {
       root.isClicked = mouse.isClick;
       parent.released();
       if (autoBack)

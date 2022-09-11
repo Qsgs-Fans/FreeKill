@@ -19,22 +19,24 @@ function arrangePhotos() {
    * +---------------+
    */
 
-  const photoWidth = 175;
+  const photoWidth = 175 * 0.75;
   // Padding is negative, because photos are scaled.
   const roomAreaPadding = -16;
-  const verticalPadding = -16;
+  const verticalPadding = -175 / 8;
   const horizontalSpacing = 32;
-  let verticalSpacing = (roomArea.width - photoWidth * 7 - verticalPadding * 2) / 6;
+  let verticalSpacing = (roomArea.width - photoWidth * 7) / 8;
 
   // Position 1-7
-  const regions = [
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 6, y: roomAreaPadding + horizontalSpacing * 3 },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 5, y: roomAreaPadding + horizontalSpacing },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 4, y: roomAreaPadding },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 3, y: roomAreaPadding },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 2, y: roomAreaPadding },
-    { x: verticalPadding + photoWidth + verticalSpacing, y: roomAreaPadding + horizontalSpacing },
-    { x: verticalPadding, y: roomAreaPadding + horizontalSpacing * 3 },
+  let startX = verticalPadding + verticalSpacing;
+  let padding = photoWidth + verticalSpacing;
+  let regions = [
+    { x: startX + padding * 6, y: roomAreaPadding + horizontalSpacing * 3 },
+    { x: startX + padding * 5, y: roomAreaPadding + horizontalSpacing },
+    { x: startX + padding * 4, y: roomAreaPadding },
+    { x: startX + padding * 3, y: roomAreaPadding },
+    { x: startX + padding * 2, y: roomAreaPadding },
+    { x: startX + padding, y: roomAreaPadding + horizontalSpacing },
+    { x: startX, y: roomAreaPadding + horizontalSpacing * 3 },
   ];
 
   const regularSeatIndex = [

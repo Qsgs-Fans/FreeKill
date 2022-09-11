@@ -49,7 +49,7 @@ RowLayout {
 
   Photo {
     id: selfPhoto
-    Layout.rightMargin: -16
+    Layout.rightMargin: -175 / 8 + (roomArea.width - 175 * 0.75 * 7) / 8
     handcards: handcardAreaItem.length
   }
 

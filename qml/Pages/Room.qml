@@ -208,7 +208,7 @@ Item {
       Logic.updateSelectedTargets(self.playerid, selected);
     }
 
-    onCardSelected: {
+    onCardSelected: function(card) {
       Logic.enableTargets(card);
     }
   }
