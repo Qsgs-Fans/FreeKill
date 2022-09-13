@@ -9,8 +9,7 @@ find_package(Qt6 REQUIRED COMPONENTS
   Gui
   Qml
   Network
-  #Multimedia
-  Core5Compat
+  Multimedia
 )
 
 find_package(Lua)

@@ -35,6 +35,7 @@ elseif (ANDROID)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
   set_target_properties(FreeKill PROPERTIES
+    QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
     QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB}"
   )
 else ()
@@ -53,6 +54,5 @@ target_link_libraries(FreeKill PRIVATE
   Qt6::Qml
   Qt6::Gui
   Qt6::Network
-  #Qt6::Multimedia
-  Qt6::Core5Compat
+  Qt6::Multimedia
 )
