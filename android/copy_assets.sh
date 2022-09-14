@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ ! -e res/mipmap ]; then
+  mkdir -p res/mipmap
+fi
+cp ../image/icon.png res/mipmap
+
 if [ ! -e assets/res ]; then
   mkdir -p assets/res
 fi
