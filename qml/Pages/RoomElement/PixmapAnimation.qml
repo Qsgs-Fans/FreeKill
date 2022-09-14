@@ -1,5 +1,5 @@
-import QtQuick 2.15
-import Qt.labs.folderlistmodel 2.15
+import QtQuick
+import Qt.labs.folderlistmodel
 import "../skin-bank.js" as SkinBank
 
 Item {

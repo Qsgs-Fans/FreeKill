@@ -42,7 +42,7 @@ GameRule = fk.CreateTriggerSkill{
         room:notifyMoveCards(room.players, {move_to_notify})
 
         for _, id in ipairs(cardIds) do
-          room:setCardArea(id, Card.PlayerHand)
+          room:setCardArea(id, Card.PlayerHand, player.id)
         end
 
         room.logic:trigger(fk.AfterDrawInitialCards, player, data)
@@ -91,14 +91,25 @@ GameRule = fk.CreateTriggerSkill{
           local data = json.decode(result)
           local card = data.card
           local targets = data.targets
-          local use = {}    ---@type CardUseStruct
-          use.from = player.id
-          use.tos = {}
-          for _, target in ipairs(targets) do
-            table.insert(use.tos, { target })
+          if type(card) == "string" then
+            local card_data = json.decode(card)
+            local skill = Fk.skills[card_data.skill]
+            local selected_cards = card_data.subcards
+            skill:onEffect(room, {
+              from = player.id,
+              cards = selected_cards,
+              tos = targets,
+            })
+          else
+            local use = {}    ---@type CardUseStruct
+            use.from = player.id
+            use.tos = {}
+            for _, target in ipairs(targets) do
+              table.insert(use.tos, { target })
+            end
+            use.cardId = card
+            room:useCard(use)
           end
-          use.cardId = card
-          room:useCard(use)
         end
       end,
       [Player.Discard] = function()

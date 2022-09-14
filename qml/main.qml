@@ -1,15 +1,23 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.0
-import QtQuick.Window 2.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Window
 import "Logic.js" as Logic
 import "Pages"
 
 Window {
-  id: mainWindow
   visible: true
-  width: 720
-  height: 480
+  width: 960
+  height: 540
   property var callbacks: Logic.callbacks
+
+Item {
+  id: mainWindow
+  width: (parent.width / parent.height < 960 / 540)
+    ? 960 : 540 * parent.width / parent.height
+  height: (parent.width / parent.height > 960 / 540)
+    ? 540 : 960 * parent.height / parent.width
+  scale: parent.width / width
+  anchors.centerIn: parent
 
   Image {
     source: AppPath + "/image/background"
@@ -130,6 +138,7 @@ Window {
       }
     }
   }
+}
 
   onClosing: {
     Backend.quitLobby();

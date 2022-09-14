@@ -1,6 +1,9 @@
 ---@class Client
 ---@field client fk.Client
 ---@field players ClientPlayer[]
+---@field alive_players ClientPlayer[]
+---@field current ClientPlayer
+---@field discard_pile integer[]
 Client = class('Client')
 
 -- load client classes
@@ -23,15 +26,40 @@ function Client:initialize()
   end
 
   self.players = {}     -- ClientPlayer[]
+  self.alive_players = {}
+  self.discard_pile = {}
 end
 
 ---@param id integer
 ---@return ClientPlayer
-function Client:findPlayer(id)
+function Client:getPlayerById(id)
   for _, p in ipairs(self.players) do
-    if p.player:getId() == id then return p end
+    if p.id == id then return p end
   end
   return nil
+end
+
+function Client:moveCards(moves)
+  for _, move in ipairs(moves) do
+    if move.from and move.fromArea then
+      local from = self:getPlayerById(move.from)
+      if from.id ~= Self.id and move.fromArea == Card.PlayerHand then
+        for i = 1, #move.ids do
+          table.remove(from.player_cards[Player.Hand])
+        end
+      else
+        from:removeCards(move.fromArea, move.ids)
+      end
+    elseif move.fromArea == Card.DiscardPile then
+      table.removeOne(self.discard_pile, move.ids[1])
+    end
+
+    if move.to and move.toArea then
+      self:getPlayerById(move.to):addCards(move.toArea, move.ids)
+    elseif move.toArea == Card.DiscardPile then
+      table.insert(self.discard_pile, move.ids[1])
+    end
+  end
 end
 
 fk.client_callback["Setup"] = function(jsonData)
@@ -47,6 +75,8 @@ end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.players = {Self}
+  ClientInstance.alive_players = {Self}
+  ClientInstance.discard_pile = {}
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
@@ -56,7 +86,9 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   local data = json.decode(jsonData)
   local id, name, avatar = data[1], data[2], data[3]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
-  table.insert(ClientInstance.players, ClientPlayer:new(player))
+  local p = ClientPlayer:new(player)
+  table.insert(ClientInstance.players, p)
+  table.insert(ClientInstance.alive_players, p)
   ClientInstance:notifyUI("AddPlayer", jsonData)
 end
 
@@ -67,6 +99,7 @@ fk.client_callback["RemovePlayer"] = function(jsonData)
   for _, p in ipairs(ClientInstance.players) do
     if p.player:getId() == id then
       table.removeOne(ClientInstance.players, p)
+      table.removeOne(ClientInstance.alive_players, p)
       break
     end
   end
@@ -80,7 +113,9 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
   local players = {}
 
   for i = 1, n do
-    table.insert(players, ClientInstance:findPlayer(data[i]))
+    local p = ClientInstance:getPlayerById(data[i])
+    p.seat = i
+    table.insert(players, p)
   end
   ClientInstance.players = players
 
@@ -91,8 +126,29 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
   -- jsonData: [ int id, string property_name, value ]
   local data = json.decode(jsonData)
   local id, name, value = data[1], data[2], data[3]
-  ClientInstance:findPlayer(id)[name] = value
+  ClientInstance:getPlayerById(id)[name] = value
   ClientInstance:notifyUI("PropertyUpdate", jsonData)
+end
+
+fk.client_callback["AskForCardChosen"] = function(jsonData)
+  -- jsonData: [ int target_id, string flag, int reason ]
+  local data = json.decode(jsonData)
+  local id, flag, reason = data[1], data[2], data[3]
+  local target = ClientInstance:getPlayerById(id)
+  local hand = target.player_cards[Player.Hand]
+  local equip = target.player_cards[Player.Equip]
+  local judge = target.player_cards[Player.Judge]
+  if not string.find(flag, "h") then
+    hand = {}
+  end
+  if not string.find(flag, "e") then
+    equip = {}
+  end
+  if not string.find(flag, "j") then
+    judge = {}
+  end
+  local ui_data = {hand, equip, judge, reason}
+  ClientInstance:notifyUI("AskForCardChosen", json.encode(ui_data))
 end
 
 --- separated moves to many moves(one card per move)
@@ -113,13 +169,15 @@ local function separateMoves(moves)
   return ret
 end
 
---- merge separated moves (one fromArea per move)
+--- merge separated moves that information is the same
 local function mergeMoves(moves)
   local ret = {}
   local temp = {}
   for _, move in ipairs(moves) do
-    if temp[move.fromArea] == nil then 
-      temp[move.fromArea] = {
+    local info = string.format("%q,%q,%q,%q", 
+      move.from, move.to, move.fromArea, move.toArea)
+    if temp[info] == nil then 
+      temp[info] = {
         ids = {},
         from = move.from,
         to = move.to,
@@ -127,7 +185,7 @@ local function mergeMoves(moves)
         toArea = move.toArea
       }
     end
-    table.insert(temp[move.fromArea].ids, move.ids[1])
+    table.insert(temp[info].ids, move.ids[1])
   end
   for _, v in pairs(temp) do
     table.insert(ret, v)
@@ -139,8 +197,33 @@ fk.client_callback["MoveCards"] = function(jsonData)
   -- jsonData: CardsMoveStruct[]
   local raw_moves = json.decode(jsonData)
   local separated = separateMoves(raw_moves)
+  ClientInstance:moveCards(separated)
   local merged = mergeMoves(separated)
   ClientInstance:notifyUI("MoveCards", json.encode(merged))
+end
+
+fk.client_callback["LoseSkill"] = function(jsonData)
+  -- jsonData: [ int player_id, string skill_name ]
+  local data = json.decode(jsonData)
+  local id, skill_name = data[1], data[2]
+  local target = ClientInstance:getPlayerById(id)
+  local skill = Fk.skills[skill_name]
+  target:loseSkill(skill)
+  if skill.visible then
+    ClientInstance:notifyUI("LoseSkill", jsonData)
+  end
+end
+
+fk.client_callback["AddSkill"] = function(jsonData)
+  -- jsonData: [ int player_id, string skill_name ]
+  local data = json.decode(jsonData)
+  local id, skill_name = data[1], data[2]
+  local target = ClientInstance:getPlayerById(id)
+  local skill = Fk.skills[skill_name]
+  target:addSkill(skill)
+  if skill.visible then
+    ClientInstance:notifyUI("AddSkill", jsonData)
+  end
 end
 
 -- Create ClientInstance (used by Lua)

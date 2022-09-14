@@ -87,7 +87,7 @@ function CanUseCard(card, player)
     error()
   end
 
-  local ret = c.skill:canUse(ClientInstance:findPlayer(player))
+  local ret = c.skill:canUse(ClientInstance:getPlayerById(player))
   return json.encode(ret)
 end
 
@@ -102,7 +102,8 @@ function CanUseCardToTarget(card, to_select, selected)
     c = Fk:getCardById(card)
     selected_cards = {card}
   else
-    error()
+    local t = json.decode(card)
+    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards)
   end
 
   local ret = c.skill:targetFilter(to_select, selected, selected_cards)
@@ -137,11 +138,68 @@ function CardFeasible(card, selected_targets)
     c = Fk:getCardById(card)
     selected_cards = {card}
   else
-    error()
+    local t = json.decode(card)
+    return ActiveFeasible(t.skill, selected_targets, t.subcards)
   end
 
-  local ret = c.skill:feasible(selected_cards, selected_targets)
+  local ret = c.skill:feasible(selected_targets, selected_cards)
   return json.encode(ret)
+end
+
+-- Handle skills
+
+function GetSkillData(skill_name)
+  local skill = Fk.skills[skill_name]
+  local freq = "notactive"
+  if skill:isInstanceOf(ActiveSkill) then
+    freq = "active"
+  end
+  return json.encode{
+    skill = Fk:translate(skill_name),
+    orig_skill = skill_name,
+    freq = freq
+  }
+end
+
+function ActiveCanUse(skill_name)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:canUse(Self)
+  end
+  return json.encode(ret)
+end
+
+function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:cardFilter(to_select, selected, selected_targets)
+  end
+  return json.encode(ret)
+end
+
+function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:targetFilter(to_select, selected, selected_cards)
+  end
+  return json.encode(ret)
+end
+
+function ActiveFeasible(skill_name, selected, selected_cards)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ActiveSkill) then
+    ret = skill:feasible(selected, selected_cards)
+  end
+  return json.encode(ret)
+end
+
+-- ViewAsSkill (Todo)
+function CanViewAs(skill_name, card_ids)
+  return "true"
 end
 
 Fk:loadTranslationTable{
@@ -190,4 +248,11 @@ Fk:loadTranslationTable{
   ["AskForGeneral"] = "选择武将",
   ["AskForChoice"] = "选择",
   ["PlayCard"] = "出牌",
+
+  ["AskForCardChosen"] = "选牌",
+  ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
+  ["$ChooseCard"] = "请选择一张卡牌",
+  ["$Hand"] = "手牌区",
+  ["$Equip"] = "装备区",
+  ["$Judge"] = "判定区",
 }

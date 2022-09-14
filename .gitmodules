@@ -1,0 +1,3 @@
+[submodule "fkparse"]
+	path = fkparse
+	url = git@github.com:Notify-ctrl/fkparse

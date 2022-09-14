@@ -19,21 +19,24 @@ function arrangePhotos() {
    * +---------------+
    */
 
-  const photoWidth = 175;
-  const roomAreaPadding = 10;
-  let verticalPadding = Math.max(10, roomArea.width * 0.01);
-  let horizontalSpacing = Math.max(30, roomArea.height * 0.1);
-  let verticalSpacing = (roomArea.width - photoWidth * 7 - verticalPadding * 2) / 6;
+  const photoWidth = 175 * 0.75;
+  // Padding is negative, because photos are scaled.
+  const roomAreaPadding = -16;
+  const verticalPadding = -175 / 8;
+  const horizontalSpacing = 32;
+  let verticalSpacing = (roomArea.width - photoWidth * 7) / 8;
 
   // Position 1-7
-  const regions = [
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 6, y: roomAreaPadding + horizontalSpacing * 2 },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 5, y: roomAreaPadding + horizontalSpacing },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 4, y: roomAreaPadding },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 3, y: roomAreaPadding },
-    { x: verticalPadding + (photoWidth + verticalSpacing) * 2, y: roomAreaPadding },
-    { x: verticalPadding + photoWidth + verticalSpacing, y: roomAreaPadding + horizontalSpacing },
-    { x: verticalPadding, y: roomAreaPadding + horizontalSpacing * 2 },
+  let startX = verticalPadding + verticalSpacing;
+  let padding = photoWidth + verticalSpacing;
+  let regions = [
+    { x: startX + padding * 6, y: roomAreaPadding + horizontalSpacing * 3 },
+    { x: startX + padding * 5, y: roomAreaPadding + horizontalSpacing },
+    { x: startX + padding * 4, y: roomAreaPadding },
+    { x: startX + padding * 3, y: roomAreaPadding },
+    { x: startX + padding * 2, y: roomAreaPadding },
+    { x: startX + padding, y: roomAreaPadding + horizontalSpacing },
+    { x: startX, y: roomAreaPadding + horizontalSpacing * 3 },
   ];
 
   const regularSeatIndex = [
@@ -61,7 +64,7 @@ function arrangePhotos() {
 }
 
 function doOkButton() {
-  if (roomScene.state == "playing") {
+  if (roomScene.state == "playing" || roomScene.state == "responding") {
     replyToServer(JSON.stringify(
       {
         card: dashboard.getSelectedCard(),
@@ -74,6 +77,20 @@ function doOkButton() {
 }
 
 function doCancelButton() {
+  if (roomScene.state == "playing") {
+    dashboard.deactivateSkillButton();
+    dashboard.unSelectAll();
+    dashboard.stopPending();
+    dashboard.enableCards();
+    return;
+  } else if (roomScene.state == "responding") {
+    dashboard.deactivateSkillButton();
+    dashboard.unSelectAll();
+    dashboard.stopPending();
+    replyToServer("");
+    return;
+  }
+   
   replyToServer("");
 }
 
@@ -271,6 +288,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
 function updateSelectedTargets(playerid, selected) {
   let i = 0;
   let card = dashboard.getSelectedCard();
+  let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
   let all_photos = [dashboard.self]
   for (i = 0; i < playerNum - 1; i++) {
     all_photos.push(photos.itemAt(i))
@@ -282,19 +300,28 @@ function updateSelectedTargets(playerid, selected) {
     selected_targets.splice(selected_targets.indexOf(playerid), 1);
   }
 
-  all_photos.forEach(photo => {
-    if (photo.selected) return;
-    let id = photo.playerid;
-    let ret = JSON.parse(Backend.callLuaFunction(
-      "CanUseCardToTarget",
-      [card, id, selected_targets]
-    ));
-    photo.selectable = ret;
-  })
+  if (candidate) {
+    all_photos.forEach(photo => {
+      if (photo.selected) return;
+      let id = photo.playerid;
+      let ret = JSON.parse(Backend.callLuaFunction(
+        "CanUseCardToTarget",
+        [card, id, selected_targets]
+      ));
+      photo.selectable = ret;
+    })
 
-  okButton.enabled = JSON.parse(Backend.callLuaFunction(
-    "CardFeasible", [card, selected_targets]
-  ));
+    okButton.enabled = JSON.parse(Backend.callLuaFunction(
+      "CardFeasible", [card, selected_targets]
+    ));
+  } else {
+    all_photos.forEach(photo => {
+      photo.state = "normal";
+      photo.selected = false;
+    });
+
+    okButton.enabled = false;
+  }
 }
 
 callbacks["RemovePlayer"] = function(jsonData) {
@@ -469,6 +496,47 @@ callbacks["AskForChoice"] = function(jsonData) {
   });
 }
 
+callbacks["AskForCardChosen"] = function(jsonData) {
+  // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
+  //  string reason ]
+  let data = JSON.parse(jsonData);
+  let handcard_ids = data[0];
+  let equip_ids = data[1];
+  let delayedTrick_ids = data[2];
+  let reason = data[3];
+  let handcards = [];
+  let equips = [];
+  let delayedTricks = [];
+
+  handcard_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    handcards.push(card_data);
+  });
+
+  equip_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    equips.push(card_data);
+  });
+
+  delayedTrick_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    delayedTricks.push(card_data);
+  });
+
+  roomScene.promptText = Backend.translate("#AskForChooseCard")
+    .arg(Backend.translate(reason));
+  roomScene.state = "replying";
+  roomScene.popupBox.source = "RoomElement/PlayerCardBox.qml";
+  let box = roomScene.popupBox.item;
+  box.addHandcards(handcards);
+  box.addEquips(equips);
+  box.addDelayedTricks(delayedTricks);
+  roomScene.popupBox.moveToCenter();
+  box.cardSelected.connect(function(cid){
+    replyToServer(cid);
+  });
+}
+
 callbacks["MoveCards"] = function(jsonData) {
   // jsonData: merged moves
   let moves = JSON.parse(jsonData);
@@ -481,5 +549,26 @@ callbacks["PlayCard"] = function(jsonData) {
   if (playerId == Self.id) {
     roomScene.promptText = Backend.translate("#PlayCard");
     roomScene.state = "playing";
+    okButton.enabled = false;
+  }
+}
+
+callbacks["LoseSkill"] = function(jsonData) {
+  // jsonData: [ int player_id, string skill_name ]
+  let data = JSON.parse(jsonData);
+  let id = data[0];
+  let skill_name = data[1];
+  if (id === Self.id) {
+    dashboard.loseSkill(skill_name);
+  }
+}
+
+callbacks["AddSkill"] = function(jsonData) {
+  // jsonData: [ int player_id, string skill_name ]
+  let data = JSON.parse(jsonData);
+  let id = data[0];
+  let skill_name = data[1];
+  if (id === Self.id) {
+    dashboard.addSkill(skill_name);
   }
 }

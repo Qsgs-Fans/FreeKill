@@ -118,10 +118,36 @@ extension:addCards({
   dismantlement:clone(Card.Heart, 12),
 })
 
+local snatchSkill = fk.CreateActiveSkill{
+  name = "snatch_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return Self ~= player and Self:distanceTo(player) <= 1
+        and not player:isAllNude()
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = TargetGroup:getRealTargets(effect.tos)[1]
+    local from = effect.from
+    local cid = room:askForCardChosen(
+      room:getPlayerById(from),
+      room:getPlayerById(to),
+      "hej",
+      "snatch"
+    )
+
+    room:obtainCard(from, cid)
+  end
+}
 local snatch = fk.CreateTrickCard{
   name = "snatch",
   suit = Card.Spade,
   number = 3,
+  skill = snatchSkill,
 }
 Fk:loadTranslationTable{
   ["snatch"] = "顺手牵羊",

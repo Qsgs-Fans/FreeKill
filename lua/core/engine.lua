@@ -209,4 +209,11 @@ function Engine:getCardById(id)
   return self.cards[id]
 end
 
+function Engine:currentRoom()
+  if ClientInstance then
+    return ClientInstance
+  end
+  return RoomInstance
+end
+
 return Engine
