@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import ".."
 
 Column {
@@ -36,7 +36,7 @@ Column {
       glow.color: "#3E3F47"
       glow.spread: 0.8
       glow.radius: 8
-      glow.samples: 12
+      //glow.samples: 12
     }
 
     GlowText {
@@ -51,7 +51,7 @@ Column {
       glow.color: hpItem.glow.color
       glow.spread: hpItem.glow.spread
       glow.radius: hpItem.glow.radius
-      glow.samples: hpItem.glow.samples
+      //glow.samples: hpItem.glow.samples
     }
 
     GlowText {
@@ -65,7 +65,7 @@ Column {
       glow.color: hpItem.glow.color
       glow.spread: hpItem.glow.spread
       glow.radius: hpItem.glow.radius
-      glow.samples: hpItem.glow.samples
+      //glow.samples: hpItem.glow.samples
     }
   }
 }

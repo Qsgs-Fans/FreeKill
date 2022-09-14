@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 
 Item {
   property point start: Qt.point(0, 0)

@@ -11,6 +11,7 @@
 ---@field processing_area integer[]
 ---@field void integer[]
 ---@field card_place table<integer, CardArea>
+---@field owner_map table<integer, integer>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -32,6 +33,7 @@ function Room:initialize(_room)
   end
 
   self.room.startGame = function(_self)
+    Room.initialize(self, _room)  -- clear old data  
     self:run()
   end
 
@@ -46,6 +48,7 @@ function Room:initialize(_room)
   self.processing_area = {}
   self.void = {}
   self.card_place = {}
+  self.owner_map = {}
 end
 
 -- When this function returns, the Room(C++) thread stopped.
@@ -81,7 +84,7 @@ end
 
 ---@param command string
 ---@param jsonData string
----@param players ServerPlayer[] @ default all players
+---@param players ServerPlayer[] | nil @ default all players
 function Room:doBroadcastNotify(command, jsonData, players)
   players = players or self.players
   local tolist = fk.SPlayerList()
@@ -177,7 +180,7 @@ function Room:shuffleDrawPile()
 
   table.insertTable(self.draw_pile, self.discard_pile)
   for _, id in ipairs(self.discard_pile) do
-    self:setCardArea(id, Card.DrawPile)
+    self:setCardArea(id, Card.DrawPile, nil)
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
@@ -208,8 +211,10 @@ end
 
 ---@param cardId integer
 ---@param cardArea CardArea
-function Room:setCardArea(cardId, cardArea)
+---@param integer owner
+function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
+  self.owner_map[cardId] = owner
 end
 
 ---@param cardId integer
@@ -345,13 +350,29 @@ function Room:moveCards(...)
 
           table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
         end
-        self:setCardArea(info.cardId, data.toArea)
+        self:setCardArea(info.cardId, data.toArea, data.to)
       end
     end
   end
 
   self.logic:trigger(fk.AfterCardsMove, nil, cardsMoveStructs)
   return true
+end
+
+---@param player integer
+---@param cid integer
+---@param unhide boolean
+---@param reason CardMoveReason
+function Room:obtainCard(player, cid, unhide, reason)
+  self:moveCards({
+    ids = {cid},
+    from = self.owner_map[cid],
+    to = player,
+    toArea = Card.PlayerHand,
+    moveReason = reason or fk.ReasonJustMove,
+    proposer = player,
+    moveVisible = unhide or false,
+  })
 end
 
 ---@param player ServerPlayer
@@ -502,6 +523,31 @@ function Room:askForGeneral(player, generals)
   end
 
   return defaultChoice
+end
+
+---@param chooser ServerPlayer
+---@param target ServerPlayer
+---@param flag string @ "hej", h for handcard, e for equip, j for judge
+---@param reason string
+function Room:askForCardChosen(chooser, target, flag, reason)
+  local command = "AskForCardChosen"
+  self:notifyMoveFocus(chooser, command)
+  local data = {target.id, flag, reason}
+  local result = self:doRequest(chooser, command, json.encode(data))
+
+  if result == "" then
+    -- FIXME: generate a random card according to flag
+    result = -1
+  else
+    result = tonumber(result)
+  end
+
+  if result == -1 then
+    local handcards = target.player_cards[Player.Hand]
+    result = handcards[math.random(1, #handcards)]
+  end
+
+  return result
 end
 
 function Room:gameOver()
@@ -951,6 +997,60 @@ function Room:useCard(cardUseEvent)
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
+  end
+end
+
+---@param player ServerPlayer
+---@param skill_names string[] | string
+---@param source_skill string | Skill | nil
+function Room:handleAddLoseSkills(player, skill_names, source_skill)
+  if type(skill_names) == "string" then
+    skill_names = skill_names:split("|")
+  end
+
+  if #skill_names == 0 then return end
+  local losts = {}  ---@type boolean[]
+  local triggers = {} ---@type Skill[]
+  for _, skill in ipairs(skill_names) do
+    if string.sub(skill, 1, 1) == "-" then
+      local actual_skill = string.sub(skill, 2, #skill)
+      if player:hasSkill(actual_skill) then
+        local lost_skills = player:loseSkill(actual_skill, source_skill)
+        for _, s in ipairs(lost_skills) do
+          self:doBroadcastNotify("LoseSkill", json.encode{
+            player.id,
+            s.name
+          })
+          -- TODO: send a log here
+          table.insert(losts, true)
+          table.insert(triggers, s)
+        end
+      end
+    else
+      local sk = Fk.skills[skill]
+      if sk and not player:hasSkill(sk) then
+        local got_skills = player:addSkill(sk)
+
+        for _, s in ipairs(got_skills) do
+          -- TODO: limit skill mark
+
+          self:doBroadcastNotify("AddSkill", json.encode{
+            player.id,
+            s.name
+          })
+          -- TODO: send log
+          table.insert(losts, false)
+          table.insert(triggers, s)
+        end
+      end
+    end
+  end
+
+  if #triggers > 0 then
+    for i = 1, #triggers do
+      local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
+      self.logic:trigger(event, player, triggers[i])
+    end
   end
 end
 

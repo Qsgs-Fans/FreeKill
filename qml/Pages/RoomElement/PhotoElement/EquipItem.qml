@@ -1,4 +1,4 @@
-import QtQuick 2.15
+import QtQuick
 import ".."
 import "../../../util.js" as Utility
 import "../../skin-bank.js" as SkinBank
@@ -40,20 +40,16 @@ Item {
     glow.color: "black"
     glow.spread: 0.75
     glow.radius: 2
-    glow.samples: 4
+    //glow.samples: 4
     x: parent.width - 24
     y: 1
   }
 
-  GlowText {
+  Text {
     id: textItem
     font.family: fontLibian.name
     color: "white"
     font.pixelSize: 18
-    glow.color: "black"
-    glow.spread: 0.9
-    glow.radius: 2
-    glow.samples: 6
     anchors.left: iconItem.right
     anchors.leftMargin: -8
     verticalAlignment: Text.AlignVCenter

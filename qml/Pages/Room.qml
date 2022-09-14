@@ -1,6 +1,6 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
 import "RoomElement"
 import "RoomLogic.js" as Logic
 
@@ -42,6 +42,15 @@ Item {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
+  Button {
+    text: "test"
+    onClicked: dashboard.expandPile("_equip");
+  }
+  Button {
+    text: "test2"
+    x: 60
+    onClicked: dashboard.retractPile("_equip");
+  }
 
   states: [
     State { name: "notactive" }, // Normal status
@@ -61,6 +70,7 @@ Item {
           endPhaseButton.visible = false;
 
           dashboard.disableAllCards();
+          dashboard.disableSkills();
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
           selected_targets = [];
@@ -77,6 +87,7 @@ Item {
       ScriptAction {
         script: {
           dashboard.enableCards();
+          dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
           endPhaseButton.visible = true;
@@ -88,6 +99,8 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
+          dashboard.enableCards();
+          dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
         }
@@ -98,6 +111,8 @@ Item {
       from: "*"; to: "replying"
       ScriptAction {
         script: {
+          dashboard.disableAllCards();
+          dashboard.disableSkills();
           progress.visible = true;
         }
       }
@@ -122,7 +137,7 @@ Item {
   Item {
     id: roomArea
     width: roomScene.width
-    height: roomScene.height - dashboard.height
+    height: roomScene.height - dashboard.height + 20
 
     Repeater {
       id: photos
@@ -164,7 +179,7 @@ Item {
       width: parent.width * 0.6
       height: 150
       x: parent.width * 0.2
-      y: parent.height * 0.6
+      y: parent.height * 0.6 + 20
     }
   }
 
@@ -193,7 +208,7 @@ Item {
       Logic.updateSelectedTargets(self.playerid, selected);
     }
 
-    onCardSelected: {
+    onCardSelected: function(card) {
       Logic.enableTargets(card);
     }
   }
@@ -201,7 +216,7 @@ Item {
   Item {
     id: controls
     anchors.bottom: dashboard.top
-    anchors.bottomMargin: -40
+    anchors.bottomMargin: -60
     width: roomScene.width
 
     Text {
@@ -268,6 +283,7 @@ Item {
 
   Loader {
     id: popupBox
+    z: 999
     onSourceChanged: {
       if (item === null)
         return;
@@ -287,6 +303,15 @@ Item {
     {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
+    }
+  }
+
+  function activateSkill(skill_name, pressed) {
+    if (pressed) {
+      dashboard.startPending(skill_name);
+      cancelButton.enabled = true;
+    } else {
+      Logic.doCancelButton();
     }
   }
 

@@ -94,10 +94,21 @@ Fk:loadTranslationTable{
   ["huangyueying"] = "黄月英",
 }
 
+local zhiheng = fk.CreateActiveSkill{
+  name = "zhiheng",
+  feasible = function(self, selected, selected_cards)
+    return #selected == 0 and #selected_cards > 0
+  end,
+  on_effect = function(self, room, effect)
+    room:drawCards(room:getPlayerById(effect.from), #effect.cards, "zhiheng")
+  end
+}
 local sunquan = General:new(extension, "sunquan", "wu", 4)
+sunquan:addSkill(zhiheng)
 extension:addGeneral(sunquan)
 Fk:loadTranslationTable{
   ["sunquan"] = "孙权",
+  ["zhiheng"] = "制衡",
 }
 
 local ganning = General:new(extension, "ganning", "wu", 4)

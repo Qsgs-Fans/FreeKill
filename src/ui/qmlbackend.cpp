@@ -9,6 +9,13 @@ QmlBackend::QmlBackend(QObject* parent)
 {
   Backend = this;
   engine = nullptr;
+  parser = fkp_new_parser();
+}
+
+QmlBackend::~QmlBackend()
+{
+  Backend = nullptr;
+  fkp_close(parser);
 }
 
 QQmlApplicationEngine *QmlBackend::getEngine() const
@@ -104,21 +111,21 @@ QString QmlBackend::translate(const QString &src) {
 
 void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   QVariantList list;
-  switch(v.type()) {
-    case QVariant::Bool:
+  switch (v.typeId()) {
+    case QMetaType::Bool:
       lua_pushboolean(L, v.toBool());
       break;
-    case QVariant::Int:
-    case QVariant::UInt:
+    case QMetaType::Int:
+    case QMetaType::UInt:
       lua_pushinteger(L, v.toInt());
       break;
-    case QVariant::Double:
+    case QMetaType::Double:
       lua_pushnumber(L, v.toDouble());
       break;
-    case QVariant::String:
+    case QMetaType::QString:
       lua_pushstring(L, v.toString().toUtf8().data());
       break;
-    case QVariant::List:
+    case QMetaType::QVariantList:
       lua_newtable(L);
       list = v.toList();
       for (int i = 1; i <= list.length(); i++) {
@@ -128,7 +135,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
       }
       break;
     default:
-      qDebug() << "cannot handle QVariant type" << v.type();
+      qDebug() << "cannot handle QVariant type" << v.typeId();
       lua_pushnil(L);
       break;
   }
@@ -153,4 +160,58 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   }
   lua_pop(L, 1);
   return QString(result);
+}
+
+void QmlBackend::parseFkp(const QString &fileName) {
+  if (!QFile::exists(fileName)) {
+//    errorEdit->setText(tr("File does not exist!"));
+    return;
+  }
+  QString cwd = QDir::currentPath();
+
+  QStringList strlist = fileName.split('/');
+  QString shortFileName = strlist.last();
+  strlist.removeLast();
+  QString path = strlist.join('/');
+  QDir::setCurrent(path);
+
+  bool error = fkp_parse(
+    parser,
+    shortFileName.toUtf8().data(),
+    FKP_QSAN_LUA
+  );
+/*  setError(error);
+
+  if (error) {
+    QStringList tmplist = shortFileName.split('.');
+    tmplist.removeLast();
+    QString fName = tmplist.join('.') + "-error.txt";
+    if (!QFile::exists(fName)) {
+      errorEdit->setText(tr("Unknown compile error."));
+    } else {
+      QFile f(fName);
+      f.open(QIODevice::ReadOnly);
+      errorEdit->setText(f.readAll());
+      f.remove();
+    }
+  } else {
+    errorEdit->setText(tr("Successfully compiled chosen file."));
+  }
+*/
+  QDir::setCurrent(cwd);
+}
+
+static void copyFkpHash2QHash(QHash<QString, QString> &dst, fkp_hash *from) {
+  dst.clear();
+  for (size_t i = 0; i < from->capacity; i++) {
+    if (from->entries[i].key != NULL) {
+      dst[from->entries[i].key] = QString((const char *)from->entries[i].value);
+    }
+  }
+}
+
+void QmlBackend::readHashFromParser() {
+  copyFkpHash2QHash(generals, parser->generals);
+  copyFkpHash2QHash(skills, parser->skills);
+  copyFkpHash2QHash(marks, parser->marks);
 }

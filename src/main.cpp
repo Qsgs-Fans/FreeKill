@@ -1,11 +1,45 @@
 #include "qmlbackend.h"
 #include "server.h"
 
+#ifdef Q_OS_ANDROID
+static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
+{
+  QFileInfo srcFileInfo(srcFilePath);
+  if (srcFileInfo.isDir()) {
+    QDir targetDir(tgtFilePath);
+    if (!targetDir.exists()) {
+      targetDir.cdUp();
+      if (!targetDir.mkdir(QFileInfo(tgtFilePath).fileName()))
+        return false;
+    }
+    QDir sourceDir(srcFilePath);
+    QStringList fileNames = sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+    foreach (const QString &fileName, fileNames) {
+      const QString newSrcFilePath
+          = srcFilePath + QLatin1Char('/') + fileName;
+      const QString newTgtFilePath
+          = tgtFilePath + QLatin1Char('/') + fileName;
+      if (!copyPath(newSrcFilePath, newTgtFilePath))
+        return false;
+    }
+  } else {
+    QFile::remove(tgtFilePath);
+    if (!QFile::copy(srcFilePath, tgtFilePath))
+      return false;
+  }
+  return true;
+}
+#endif
+
 int main(int argc, char *argv[])
 {
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
+
+#ifdef Q_OS_ANDROID
+  copyPath("assets:/res", QDir::currentPath());
+#endif
 
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
