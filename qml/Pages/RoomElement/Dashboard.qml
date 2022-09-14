@@ -119,6 +119,9 @@ RowLayout {
         ids.push(cards[i].cid);
     }
     handcardAreaItem.enableCards(ids)
+    if (pending_skill === "") {
+      cancelButton.enabled = false;
+    }
   }
 
   function selectCard(cardId, selected) {

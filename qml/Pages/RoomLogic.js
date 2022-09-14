@@ -64,7 +64,7 @@ function arrangePhotos() {
 }
 
 function doOkButton() {
-  if (roomScene.state == "playing") {
+  if (roomScene.state == "playing" || roomScene.state == "responding") {
     replyToServer(JSON.stringify(
       {
         card: dashboard.getSelectedCard(),
@@ -77,6 +77,20 @@ function doOkButton() {
 }
 
 function doCancelButton() {
+  if (roomScene.state == "playing") {
+    dashboard.deactivateSkillButton();
+    dashboard.unSelectAll();
+    dashboard.stopPending();
+    dashboard.enableCards();
+    return;
+  } else if (roomScene.state == "responding") {
+    dashboard.deactivateSkillButton();
+    dashboard.unSelectAll();
+    dashboard.stopPending();
+    replyToServer("");
+    return;
+  }
+   
   replyToServer("");
 }
 
