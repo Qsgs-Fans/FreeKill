@@ -572,3 +572,20 @@ callbacks["AddSkill"] = function(jsonData) {
     dashboard.addSkill(skill_name);
   }
 }
+
+callbacks["AskForUseActiveSkill"] = function(jsonData) {
+  // jsonData: string skill_name, string prompt
+  let data = JSON.parse(jsonData);
+  let skill_name = data[0];
+  let prompt = data[1];
+  let cancelable = data[2];
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
+      .arg(Backend.translate(skill_name));
+  }
+  // TODO: process prompt
+
+  roomScene.state = "responding";
+  dashboard.startPending(skill_name);
+  cancelButton.enabled = cancelable;
+}

@@ -255,4 +255,5 @@ Fk:loadTranslationTable{
   ["$Hand"] = "手牌区",
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
+  ["#AskForUseActiveSkill"] = "请使用技能 %1",
 }

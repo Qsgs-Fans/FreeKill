@@ -1054,6 +1054,41 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
   end
 end
 
+function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable)
+  prompt = prompt or ""
+  cancelable = cancelable or false
+  local skill = Fk.skills[skill_name]
+  if not (skill and skill:isInstanceOf(ActiveSkill)) then
+    print("Attempt ask for use non-active skill: " .. skill_name)
+    return false
+  end
+
+  local command = "AskForUseActiveSkill"
+  self:notifyMoveFocus(player, command)
+  local data = {skill_name, prompt, cancelable}
+  local result = self:doRequest(player, command, json.encode(data))
+
+  if result == "" then
+    return false
+  end
+
+  local data = json.decode(result)
+  local card = data.card
+  local targets = data.targets
+  local card_data = json.decode(card)
+  local selected_cards = card_data.subcards
+  skill:onEffect(room, {
+    from = player.id,
+    cards = selected_cards,
+    tos = targets,
+  })
+
+  return true
+end
+
+function Room:askForUseCard() end
+function Room:askForResponse() end
+
 fk.room_callback["QuitRoom"] = function(jsonData)
   -- jsonData: [ int uid ]
   local data = json.decode(jsonData)
