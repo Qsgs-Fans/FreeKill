@@ -78,15 +78,16 @@ function doOkButton() {
 
 function doCancelButton() {
   if (roomScene.state == "playing") {
+    dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    dashboard.stopPending();
     dashboard.enableCards();
+    dashboard.enableSkills();
     return;
   } else if (roomScene.state == "responding") {
+    dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    dashboard.stopPending();
     replyToServer("");
     return;
   }

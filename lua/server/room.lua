@@ -404,12 +404,23 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     return nil
   end
 
-  local hands = player:getCardIds(Player.Hand)
   local toDiscard = {}
-  for i = 1, minNum do
-    local randomId = hands[math.random(1, #hands)]
-    table.insert(toDiscard, randomId)
-    table.removeOne(hands, randomId)
+  local data = {
+    num = maxNum,
+    min_num = minNum,
+    include_equip = includeEquip,
+    reason = skillName
+  }
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", "", true, data)
+  if ret then
+    toDiscard = ret.cards
+  else
+    local hands = player:getCardIds(Player.Hand)
+    for i = 1, minNum do
+      local randomId = hands[math.random(1, #hands)]
+      table.insert(toDiscard, randomId)
+      table.removeOne(hands, randomId)
+    end
   end
 
   self:moveCards({
@@ -1054,9 +1065,10 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
   end
 end
 
-function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable)
+function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data)
   prompt = prompt or ""
   cancelable = cancelable or false
+  extra_data = extra_data or {}
   local skill = Fk.skills[skill_name]
   if not (skill and skill:isInstanceOf(ActiveSkill)) then
     print("Attempt ask for use non-active skill: " .. skill_name)
@@ -1064,15 +1076,15 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable)
   end
 
   local command = "AskForUseActiveSkill"
-  self:notifyMoveFocus(player, command)
-  local data = {skill_name, prompt, cancelable}
+  self:notifyMoveFocus(player, skill_name)  -- for display skill name instead of command name
+  local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
   local result = self:doRequest(player, command, json.encode(data))
 
   if result == "" then
     return false
   end
 
-  local data = json.decode(result)
+  data = json.decode(result)
   local card = data.card
   local targets = data.targets
   local card_data = json.decode(card)
@@ -1083,7 +1095,10 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable)
     tos = targets,
   })
 
-  return true
+  return true, {
+    cards = selected_cards,
+    targets = targets
+  }
 end
 
 function Room:askForUseCard() end
