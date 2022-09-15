@@ -53,6 +53,7 @@ target_link_libraries(FreeKill PRIVATE
   fkparse
   Qt6::Qml
   Qt6::Gui
+  Qt6::Widgets
   Qt6::Network
   Qt6::Multimedia
 )

@@ -3,7 +3,7 @@
 
 // core gui qml
 #include <QtCore>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QtQml>
 
 // network

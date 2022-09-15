@@ -8,6 +8,7 @@ add_subdirectory(fkparse)
 find_package(Qt6 REQUIRED COMPONENTS
   Gui
   Qml
+  Widgets
   Network
   Multimedia
 )

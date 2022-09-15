@@ -1,5 +1,7 @@
 #include "qmlbackend.h"
 #include "server.h"
+#include <QSplashScreen>
+#include <QScreen>
 
 #ifdef Q_OS_ANDROID
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
@@ -37,10 +39,6 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
-#ifdef Q_OS_ANDROID
-  copyPath("assets:/res", QDir::currentPath());
-#endif
-
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -68,8 +66,26 @@ int main(int argc, char *argv[])
     return app->exec();
   }
 
-  app = new QGuiApplication(argc, argv);
+  app = new QApplication(argc, argv);
 
+#define SHOW_SPLASH_MSG(msg) \
+  splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
+
+#ifdef Q_OS_ANDROID
+  QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
+  QRect screenGeometry = screen->geometry();
+  int screenWidth = screenGeometry.width();
+  int screenHeight = screenGeometry.height();
+  QSplashScreen splash(QPixmap("assets:/res/image/splash.jpg").scaled(screenWidth, screenHeight));
+  splash.showFullScreen();
+  SHOW_SPLASH_MSG("Copying resources...");
+  copyPath("assets:/res", QDir::currentPath());
+#else
+  QSplashScreen splash(QPixmap("image/splash.jpg"));
+  splash.show();
+#endif
+
+  SHOW_SPLASH_MSG("Loading qml files...");
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
   
   QmlBackend backend;
@@ -87,6 +103,7 @@ int main(int argc, char *argv[])
   if (engine->rootObjects().isEmpty())
     return -1;
 
+  splash.close();
   int ret = app->exec();
 
   // delete the engine first
