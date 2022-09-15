@@ -5,3 +5,5 @@
 ___
 
 FreeKill 使用 sqlite3 数据库。
+
+关于数据库的组织，详见server/init.sql。单纯存个用户名和密码而已
