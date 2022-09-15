@@ -1,6 +1,7 @@
 local extension = Package:new("standard")
 extension.metadata = require "packages.standard.metadata"
 dofile "packages/standard/game_rule.lua"
+dofile "packages/standard/aux_skills.lua"
 
 Fk:loadTranslationTable{
   ["standard"] = "标准包",

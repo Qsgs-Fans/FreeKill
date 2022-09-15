@@ -48,7 +48,7 @@ callbacks["EnterRoom"] = function(jsonData) {
   // jsonData: int capacity, int timeout
   let data = JSON.parse(jsonData);
   config.roomCapacity = data[0];
-  config.roomTimeout = data[1];
+  config.roomTimeout = data[1] - 1;
   mainStack.push(room);
   mainWindow.busy = false;
 }

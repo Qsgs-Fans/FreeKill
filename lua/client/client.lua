@@ -226,6 +226,17 @@ fk.client_callback["AddSkill"] = function(jsonData)
   end
 end
 
+fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
+  -- jsonData: [ string skill_name, string prompt, bool cancelable. json extra_data ]
+  local data = json.decode(jsonData)
+  local skill = Fk.skills[data[1]]
+  local extra_data = json.decode(data[4])
+  for k, v in pairs(extra_data) do
+    skill[k] = v
+  end
+  ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"
