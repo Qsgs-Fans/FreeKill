@@ -190,6 +190,10 @@ RowLayout {
     pending_skill = skill_name;
     pendings = [];
     handcardAreaItem.unselectAll();
+    for (let i = 0; i < skillButtons.count; i++) {
+      let item = skillButtons.itemAt(i);
+      item.enabled = item.pressed;
+    }
 
     // TODO: expand pile
 

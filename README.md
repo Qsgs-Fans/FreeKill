@@ -10,28 +10,10 @@ ___
 
 ## 如何构建
 
-以Debian11为例，首先克隆仓库：
+FreeKill使用Qt6.3，支持的运行平台有Windows、Linux、Android。
 
-```shell
-$ git clone https://github.com/Notify-ctrl/FreeKill
-```
-
-然后安装编译软件所必需的软件包：
-
-```shell
-$ sudo apt install qtbase5-dev qtdeclarative5-dev qtmultimedia5-dev qml-module-qtquick2 qml-module-qtquick-controls2 qml-module-qtquick-window2 qml-module-qtquick-layouts qml-module-qtgraphicaleffects cmake swig lua5.4 sqlite3
-```
-
-然后编译运行即可。
-
-```shell
-$ mkdir build && cd build
-$ cmake .. && make
-$ cp src/FreeKill ..
-$ cd ..
-$ ./FreeKill
-```
-
-对于Windows用户，建议安装Qt Creator和Qt 5.15.2。必要时自行配置CMake。
+欲编译FreeKill，首先得从Qt官网的安装工具安装Qt Creator和Qt 6.3.2。安装时需要勾选CMake，应该默认就是选上的状态。
 
 然后下载swig，并为其配置环境变量，即可构建FreeKill。
+
+对于Linux用户而言，还需要自己从包管理器安装lua5.4和sqlite。

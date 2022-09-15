@@ -30,6 +30,7 @@ function Engine:initialize()
   self.translations = {}  -- srcText --> translated
 
   self:loadPackages()
+  self:addSkills(AuxSkills)
 end
 
 ---@param pack Package

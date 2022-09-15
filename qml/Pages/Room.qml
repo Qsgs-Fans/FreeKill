@@ -69,10 +69,10 @@ Item {
           okCancel.visible = false;
           endPhaseButton.visible = false;
 
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
+          dashboard.disableAllCards();
+          dashboard.disableSkills();
           selected_targets = [];
 
           if (popupBox.item != null) {
@@ -277,7 +277,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 30
       visible: false;
-      onClicked: Logic.doCancelButton();
+      onClicked: Logic.replyToServer("");
     }
   }
 
