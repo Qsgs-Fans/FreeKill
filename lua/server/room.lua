@@ -433,6 +433,31 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
   })
 end
 
+---@param player ServerPlayer
+---@param targets ServerPlayer[]
+---@param minNum integer
+---@param maxNum integer
+---@return integer[]
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
+  if minNum < 1 then
+    return nil
+  end
+
+  local data = {
+    targets = targets,
+    num = maxNum,
+    min_num = minNum,
+    reason = skillName
+  }
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", "", true, data)
+  if ret then
+    return ret.targets
+  else
+    -- TODO: default
+    return {}
+  end
+end
+
 ---@param id integer
 ---@return ServerPlayer
 function Room:getPlayerById(id)
