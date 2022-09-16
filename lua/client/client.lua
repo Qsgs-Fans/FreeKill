@@ -237,6 +237,15 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)
 end
 
+fk.client_callback["SetPlayerMark"] = function(jsonData)
+  -- jsonData: [ int id, string mark, int value ]
+  local data = json.decode(jsonData)
+  local player, mark, value = data[1], data[2], data[3]
+  ClientInstance:getPlayerById(player):setMark(mark, value)
+
+  -- TODO: if mark is visible, update the UI.
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

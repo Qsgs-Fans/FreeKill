@@ -206,6 +206,32 @@ function Room:getNCards(num, from)
   return cardIds
 end
 
+---@param player ServerPlayer
+---@param mark string
+---@param value integer
+function Room:setPlayerMark(player, mark, value)
+  player:setMark(mark, value)
+  self:doBroadcastNotify("SetPlayerMark", json.encode{
+    player.id,
+    mark,
+    value
+  })
+end
+
+function Room:addPlayerMark(player, mark, count)
+  count = count or 1
+  local num = player:getMark(mark)
+  num = num or 0
+  self:setPlayerMark(player, mark, math.max(num + count, 0))
+end
+
+function Room:removePlayerMark(player, mark, count)
+  count = count or 1
+  local num = player:getMark(mark)
+  num = num or 0
+  self:setPlayerMark(player, mark, math.max(num - count, 0))
+end
+
 ------------------------------------------------------------------------
 -- network functions, notify function
 ------------------------------------------------------------------------
