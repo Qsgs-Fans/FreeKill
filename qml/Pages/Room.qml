@@ -15,6 +15,9 @@ Item {
 
   property alias popupBox: popupBox
   property alias promptText: prompt.text
+  property alias okCancel: okCancel
+  property alias okButton: okButton
+  property alias cancelButton: cancelButton
 
   property var selected_targets: []
 

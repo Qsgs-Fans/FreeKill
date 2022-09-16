@@ -257,11 +257,11 @@ end
 
 ---@param command string
 ---@param players ServerPlayer[]
-function Room:doBroadcastRequest(command, players)
+function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   self:notifyMoveFocus(players, command)
   for _, p in ipairs(players) do
-    self:doRequest(p, command, p.request_data, false)
+    self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
   local remainTime = self.timeout
@@ -269,8 +269,39 @@ function Room:doBroadcastRequest(command, players)
   local elapsed = 0
   for _, p in ipairs(players) do
     elapsed = os.time() - currentTime
-    remainTime = remainTime - elapsed
-    p:waitForReply(remainTime)
+    p:waitForReply(remainTime - elapsed)
+  end
+end
+
+---@param command string
+---@param players ServerPlayer[]
+function Room:doRaceRequest(command, players, jsonData)
+  players = players or self.players
+  self:notifyMoveFocus(players, command)
+  for _, p in ipairs(players) do
+    self:doRequest(p, command, jsonData or p.request_data, false)
+  end
+
+  local remainTime = self.timeout
+  local currentTime = os.time()
+  local elapsed = 0
+  local winner
+  while true do
+    elapsed = os.time() - currentTime
+    if remainTime - elapsed <= 0 then
+      return nil
+    end
+    for _, p in ipairs(players) do
+      p:waitForReply(0)
+      if p.reply_ready == true then
+        winner = p
+        break
+      end
+    end
+    if winner then
+      self:doBroadcastNotify("CancelRequest", "")
+      return winner
+    end
   end
 end
 

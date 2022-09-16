@@ -476,7 +476,10 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   // jsonData: string name
   roomScene.promptText = Backend.translate("#AskForSkillInvoke")
     .arg(Backend.translate(jsonData));
-  roomScene.state = "responding";
+  roomScene.state = "replying";
+  roomScene.okCancel.visible = true;
+  roomScene.okButton.enabled = true;
+  roomScene.cancelButton.enabled = true;
 }
 
 callbacks["AskForChoice"] = function(jsonData) {
@@ -589,4 +592,8 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   roomScene.state = "responding";
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
+}
+
+callbacks["CancelRequest"] = function() {
+  roomScene.state = "notactive";
 }
