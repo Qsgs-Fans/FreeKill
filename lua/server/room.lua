@@ -1244,6 +1244,7 @@ function Room:gameOver()
   self.room:gameOver()
 end
 
+--[[
 fk.room_callback = {}
 
 fk.room_callback["QuitRoom"] = function(jsonData)
@@ -1266,6 +1267,7 @@ fk.room_callback["AddRobot"] = function(jsonData)
     room:addRobot(player)
   end
 end
+]]
 
 function CreateRoom(_room)
   RoomInstance = Room:new(_room)

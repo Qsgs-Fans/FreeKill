@@ -161,7 +161,15 @@ void Router::handlePacket(const QByteArray& rawPacket)
       arr.prepend(player->getId());
 
       Room *room = player->getRoom();
-      room->callLua(command, QJsonDocument(arr).toJson());
+      if (room->isLobby())
+        room->callLua(command, QJsonDocument(arr).toJson());
+      else {
+        if (command == "QuitRoom") {
+          room->removePlayer(player);
+        } else if (command == "AddRobot") {
+          room->addRobot(player);
+        }
+      }
     }
   }
   else if (type & TYPE_REQUEST) {
