@@ -1,4 +1,4 @@
----@class Lobby : Object
+--[[-@class Lobby : Object
 ---@field lobby fk.Room
 Lobby = class("Lobby")
 
@@ -66,3 +66,4 @@ end
 function CreateRoom(_room)
   LobbyInstance = Lobby:new(_room)
 end
+]]
