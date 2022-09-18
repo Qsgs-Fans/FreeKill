@@ -50,8 +50,6 @@ public:
   void gameOver();
 
   void initLua();
-  void callLua(const QString &command, const QString &jsonData);
-  LuaFunction callback;
 
   void roomStart();
   LuaFunction startGame;

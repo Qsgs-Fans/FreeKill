@@ -46,14 +46,6 @@ ServerPlayer = require "server.serverplayer"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-  self.room.callback = function(_self, command, jsonData)
-    local cb = fk.room_callback[command]
-    if (type(cb) == "function") then
-      cb(jsonData)
-    else
-      print("Lobby error: Unknown command " .. command);
-    end
-  end
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data  
@@ -1243,31 +1235,6 @@ function Room:gameOver()
   -- dosomething
   self.room:gameOver()
 end
-
---[[
-fk.room_callback = {}
-
-fk.room_callback["QuitRoom"] = function(jsonData)
-  -- jsonData: [ int uid ]
-  local data = json.decode(jsonData)
-  local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
-  local room = player:getRoom()
-  if not room:isLobby() then
-    room:removePlayer(player)
-  end
-end
-
-fk.room_callback["AddRobot"] = function(jsonData)
-  -- jsonData: [ int uid ]
-  local data = json.decode(jsonData)
-  local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
-  local room = player:getRoom()
-  
-  if not room:isLobby() then
-    room:addRobot(player)
-  end
-end
-]]
 
 function CreateRoom(_room)
   RoomInstance = Room:new(_room)

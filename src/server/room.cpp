@@ -20,9 +20,7 @@ Room::Room(Server* server)
 
   L = CreateLuaState();
   DoLuaScript(L, "lua/freekill.lua");
-  if (isLobby()) {
-//    DoLuaScript(L, "lua/server/lobby.lua");
-  } else {
+  if (!isLobby()) {
     DoLuaScript(L, "lua/server/room.lua");
     initLua();
   }
