@@ -205,7 +205,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
 
       Room *room = player->getRoom();
-      if (room->isLobby())
+      if (room->isLobby() && lobby_actions.contains(command))
         lobby_actions[command](player, jsonData);
       else {
         if (command == "QuitRoom") {

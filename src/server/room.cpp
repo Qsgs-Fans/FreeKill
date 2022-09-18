@@ -13,14 +13,13 @@ Room::Room(Server* server)
   gameStarted = false;
   robot_id = -1;
   timeout = 15;
+  L = NULL;
   if (!isLobby()) {
     connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
     connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
-  }
 
-  L = CreateLuaState();
-  DoLuaScript(L, "lua/freekill.lua");
-  if (!isLobby()) {
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
     DoLuaScript(L, "lua/server/room.lua");
     initLua();
   }
@@ -33,7 +32,7 @@ Room::~Room()
     terminate();
     wait();
   }
-  lua_close(L);
+  if (L) lua_close(L);
 }
 
 Server *Room::getServer() const
@@ -44,6 +43,11 @@ Server *Room::getServer() const
 int Room::getId() const
 {
   return id;
+}
+
+void Room::setId(int id)
+{
+  this->id = id;
 }
 
 bool Room::isLobby() const
@@ -199,7 +203,7 @@ void Room::removePlayer(ServerPlayer *player)
     server->addPlayer(runner);
 
     emit playerRemoved(runner);
-    runner->abortRequest();
+    player->abortRequest();
   }
 
   if (isAbandoned()) {
@@ -273,6 +277,8 @@ void Room::gameOver()
       p->deleteLater();
     }
   }
+  players.clear();
+  owner = nullptr;
 }
 
 void Room::run()

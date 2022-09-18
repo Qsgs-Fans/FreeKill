@@ -14,6 +14,7 @@ public:
   // ==================================={
   Server *getServer() const;
   int getId() const;
+  void setId(int id);
   bool isLobby() const;
   QString getName() const;
   void setName(const QString &name);

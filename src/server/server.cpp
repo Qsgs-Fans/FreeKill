@@ -39,12 +39,20 @@ bool Server::listen(const QHostAddress& address, ushort port)
 
 void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
 {
-  Room *room = new Room(this);
-  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-  if (room->isLobby())
-    m_lobby = room;
-  else
+  Room *room;
+  if (!idle_rooms.isEmpty()) {
+    room = idle_rooms.pop();
+    room->setId(nextRoomId);
+    nextRoomId++;
     rooms.insert(room->getId(), room);
+  } else {
+    room = new Room(this);
+    connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
+    if (room->isLobby())
+      m_lobby = room;
+    else
+      rooms.insert(room->getId(), room);
+  }
 
   room->setName(name);
   room->setCapacity(capacity);
@@ -244,7 +252,12 @@ void Server::onRoomAbandoned()
   room->gameOver();
   rooms.remove(room->getId());
   updateRoomList();
-  room->deleteLater();
+  //room->deleteLater();
+  if (room->isRunning()) {
+    room->terminate();
+    room->wait();
+  }
+  idle_rooms.push(room);
 }
 
 void Server::onUserDisconnected()

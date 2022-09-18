@@ -45,6 +45,7 @@ private:
   ServerSocket *server;
   Room *m_lobby;
   QMap<int, Room *> rooms;
+  QStack<Room *> idle_rooms;
   int nextRoomId;
   friend Room::Room(Server *server);
   QHash<int, ServerPlayer *> players;
