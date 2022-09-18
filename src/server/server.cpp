@@ -258,6 +258,10 @@ void Server::onRoomAbandoned()
     room->wait();
   }
   idle_rooms.push(room);
+#ifdef QT_DEBUG
+  qDebug() << rooms.size() << "running room(s),"
+    << idle_rooms.size() << "idle room(s).";
+#endif
 }
 
 void Server::onUserDisconnected()

@@ -9,9 +9,10 @@ Room::Room(Server* server)
   server->nextRoomId++;
   this->server = server;
   setParent(server);
+  m_abandoned = false;
   owner = nullptr;
   gameStarted = false;
-  robot_id = -1;
+  robot_id = -2;  // -1 is reserved in UI logic
   timeout = 15;
   L = NULL;
   if (!isLobby()) {
@@ -82,6 +83,9 @@ bool Room::isFull() const
 
 bool Room::isAbandoned() const
 {
+  if (isLobby())
+    return false;
+
   if (players.isEmpty())
     return true;
 
@@ -206,7 +210,8 @@ void Room::removePlayer(ServerPlayer *player)
     player->abortRequest();
   }
 
-  if (isAbandoned()) {
+  if (isAbandoned() && !m_abandoned) {
+    m_abandoned = true;
     emit abandoned();
   } else if (player == owner) {
     setOwner(players.first());
@@ -284,5 +289,6 @@ void Room::gameOver()
 void Room::run()
 {
   gameStarted = true;
+  m_abandoned = false;
   roomStart();
 }

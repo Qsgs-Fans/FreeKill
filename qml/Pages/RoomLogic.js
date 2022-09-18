@@ -379,9 +379,11 @@ callbacks["ArrangeSeats"] = function(jsonData) {
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
     item.seatNumber = order.indexOf(item.id) + 1;
+    item.general = "";
   }
 
   dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
+  dashboardModel.general = "";
   roomScene.dashboardModelChanged();
   
   // make Self to the first of list, then reorder photomodel

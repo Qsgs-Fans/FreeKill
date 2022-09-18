@@ -33,7 +33,7 @@ Item {
     anchors.top: parent.top
     anchors.right: parent.right
     onClicked: {
-      ClientInstance.clearPlayers();
+      // ClientInstance.clearPlayers();
       ClientInstance.notifyServer("QuitRoom", "[]");
     }
   }

@@ -103,8 +103,10 @@ fk.client_callback["RemovePlayer"] = function(jsonData)
       break
     end
   end
-  fk.ClientInstance:removePlayer(id)
-  ClientInstance:notifyUI("RemovePlayer", jsonData)
+  if id ~= Self.id then
+    fk.ClientInstance:removePlayer(id)
+    ClientInstance:notifyUI("RemovePlayer", jsonData)
+  end
 end
 
 fk.client_callback["ArrangeSeats"] = function(jsonData)
