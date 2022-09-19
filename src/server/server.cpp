@@ -186,9 +186,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
   unsigned char buf[4096] = {0};
   RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
     buf, rsa, RSA_PKCS1_PADDING);
-  QByteArray passwordHash = QCryptographicHash::hash(
-    QByteArray::fromRawData((const char *)buf, strlen((const char *)buf)),
-    QCryptographicHash::Sha256).toHex();
+  auto decrypted_pw = QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
   bool passed = false;
   QString error_msg;
   QJsonObject result;
@@ -200,11 +198,16 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     result = SelectFromDatabase(db, sql_find);
     QJsonArray arr = result["password"].toArray();
     if (arr.isEmpty()) {
+      auto salt_gen = QRandomGenerator::securelySeeded();
+      auto salt = QByteArray::number(salt_gen(), 16);
+      decrypted_pw.append(salt);
+      auto passwordHash = QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
       // not present in database, register
-      QString sql_reg = QString("INSERT INTO userinfo (name,password,\
-      avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4',%5);")
+      QString sql_reg = QString("INSERT INTO userinfo (name,password,salt,\
+      avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4','%5',%6);")
       .arg(name)
       .arg(QString(passwordHash))
+      .arg(salt)
       .arg("liubei")
       .arg(client->peerAddress())
       .arg("FALSE");
@@ -216,6 +219,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
       int id = result["id"].toArray()[0].toString().toInt();
       if (!players.value(id)) {
         // check if password is the same
+        auto salt = result["salt"].toArray()[0].toString().toLatin1();
+        decrypted_pw.append(salt);
+        auto passwordHash = QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
         passed = (passwordHash == arr[0].toString());
         if (!passed) error_msg = "username or password error";
       } else {

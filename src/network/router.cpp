@@ -161,18 +161,23 @@ void Router::handlePacket(const QByteArray& rawPacket)
       auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
       auto oldpw = arr[0].toString();
       auto newpw = arr[1].toString();
-      auto sql_find = QString("SELECT password FROM userinfo WHERE id=%1;")
-        .arg(sender->getId());
-      auto sql_update = QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
-        .arg(QCryptographicHash::hash(newpw.toLatin1(), QCryptographicHash::Sha256).toHex())
+      auto sql_find = QString("SELECT password, salt FROM userinfo WHERE id=%1;")
         .arg(sender->getId());
 
       auto passed = false;
       auto result = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
       passed = (result["password"].toArray()[0].toString() ==
-        QCryptographicHash::hash(oldpw.toLatin1(), QCryptographicHash::Sha256).toHex());
-      if (passed)
+        QCryptographicHash::hash(
+          oldpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+          QCryptographicHash::Sha256).toHex());
+      if (passed) {
+        auto sql_update = QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
+          .arg(QCryptographicHash::hash(
+            newpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+            QCryptographicHash::Sha256).toHex())
+          .arg(sender->getId());
         ExecSQL(ServerInstance->getDatabase(), sql_update);
+      }
 
       sender->doNotify("UpdatePassword", passed ? "1" : "0");
     };
