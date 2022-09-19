@@ -34,6 +34,8 @@ public:
                                       QVariantList params);
 
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
+  Q_INVOKABLE QString loadConf();
+  Q_INVOKABLE void saveConf(const QString &conf);
   // support fkp
   Q_INVOKABLE void parseFkp(const QString &filename);
 

@@ -10,6 +10,8 @@ freekill-wrap.cxx
 server/users.db
 server/rsa
 server/rsa_pub
+freekill.client.config.json
+freekill.server.config.json
 bearer/
 iconengines/
 imageformats/

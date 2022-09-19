@@ -26,7 +26,7 @@ void ClientSocket::init()
           this, &ClientSocket::raiseError);
 }
 
-void ClientSocket::connectToHost(const QHostAddress &address, ushort port)
+void ClientSocket::connectToHost(const QString &address, ushort port)
 {
   socket->connectToHost(address, port);
 }

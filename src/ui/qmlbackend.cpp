@@ -62,7 +62,7 @@ void QmlBackend::joinServer(QString address)
     addr = address;
   }
 
-  client->connectToHost(QHostAddress(addr), port);
+  client->connectToHost(addr, port);
 }
 
 void QmlBackend::quitLobby()
@@ -173,6 +173,35 @@ QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
   RSA_public_encrypt(data.length(), (const unsigned char *)data.toUtf8().data(),
     buf, rsa, RSA_PKCS1_PADDING);
   return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
+}
+
+QString QmlBackend::loadConf() {
+  QFile conf("freekill.client.config.json");
+  if (!conf.exists()) {
+    conf.open(QIODevice::WriteOnly);
+    static const char *init_conf = "{\
+      \"winWidth\": 0,\
+      \"winHeight\": 0,\
+      \"lastLoginServer\": \"127.0.0.1\",\
+      \"savedPassword\": {\
+        \"127.0.0.1\": {\
+          \"username\": \"player\",\
+          \"password\": \"\",\
+          \"shorten_password\": \"JSDHSFDWJSZSBWS!WJQS+600\"\
+        }\
+      }\
+    }";
+    conf.write(init_conf);
+    return init_conf;
+  }
+  conf.open(QIODevice::ReadOnly);
+  return conf.readAll();
+}
+
+void QmlBackend::saveConf(const QString &conf) {
+  QFile c("freekill.client.config.json");
+  c.open(QIODevice::WriteOnly);
+  c.write(conf.toUtf8());
 }
 
 void QmlBackend::parseFkp(const QString &fileName) {

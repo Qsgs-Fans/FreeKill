@@ -15,13 +15,33 @@ Item {
     
     Column {
       spacing: 8
-      TextField {
+      ComboBox {
         id: server_addr
-        text: "127.0.0.1"
+        model: []
+        editable: true
+
+        onEditTextChanged: {
+          if (model.indexOf(editText) === -1) {
+            passwordEdit.text = "";
+          } else {
+            let data = config.savedPassword[editText];
+            screenNameEdit.text = data.username;
+            passwordEdit.text = data.shorten_password;
+          }
+        }
       }
       TextField {
         id: screenNameEdit
         text: "player"
+        onTextChanged: {
+          passwordEdit.text = "";
+          let data = config.savedPassword[server_addr.editText];
+          if (data) {
+            if (text === data.username) {
+              passwordEdit.text = data.shorten_password;
+            }
+          }
+        }
       }
       /*TextField {
         id: avatarEdit
@@ -36,15 +56,17 @@ Item {
       Button {
         text: "Join Server"
         onClicked: {
+          config.serverAddr = server_addr.editText;
           config.screenName = screenNameEdit.text;
           config.password = passwordEdit.text;
           mainWindow.busy = true;
-          Backend.joinServer(server_addr.text);
+          Backend.joinServer(server_addr.editText);
         }
       }
       Button {
         text: "Console start"
         onClicked: {
+          config.serverAddr = "127.0.0.1";
           config.screenName = screenNameEdit.text;
           config.password = passwordEdit.text;
           mainWindow.busy = true;
@@ -53,5 +75,16 @@ Item {
         }
       }
     }
+  }
+
+  Component.onCompleted: {
+    config.loadConf();
+    server_addr.model = Object.keys(config.savedPassword);
+    server_addr.onModelChanged();
+    server_addr.currentIndex = server_addr.model.indexOf(config.lastLoginServer);
+
+    let data = config.savedPassword[config.lastLoginServer];
+    screenNameEdit.text = data.username;
+    passwordEdit.text = data.shorten_password;
   }
 }
