@@ -32,7 +32,7 @@ Client::~Client()
   router->getSocket()->deleteLater();
 }
 
-void Client::connectToHost(const QHostAddress& server, ushort port)
+void Client::connectToHost(const QString &server, ushort port)
 {
   router->getSocket()->connectToHost(server, port);
 }

@@ -50,6 +50,8 @@ private:
   friend Room::Room(Server *server);
   QHash<int, ServerPlayer *> players;
 
+  RSA *rsa;
+  QString public_key;
   sqlite3 *db;
 
   void handleNameAndPassword(ClientSocket *client, const QString &name, const QString &password);

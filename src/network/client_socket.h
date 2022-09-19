@@ -9,7 +9,7 @@ public:
   // For server use
   ClientSocket(QTcpSocket *socket);
 
-  void connectToHost(const QHostAddress &address = QHostAddress::LocalHost, ushort port = 9527u);
+  void connectToHost(const QString &address = "127.0.0.1", ushort port = 9527u);
   void disconnectFromHost();
   void send(const QByteArray& msg);
   bool isConnected() const;
