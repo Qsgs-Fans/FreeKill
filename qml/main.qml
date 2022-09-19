@@ -142,8 +142,10 @@ Item {
 }
 
   Component.onCompleted: {
-    width = config.winWidth;
-    height = config.winHeight;
+    if (!Android) {
+      width = config.winWidth;
+      height = config.winHeight;
+    }
   }
 
   onClosing: {

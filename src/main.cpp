@@ -99,6 +99,11 @@ int main(int argc, char *argv[])
   bool debugging = false;
 #endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
+#ifdef Q_OS_ANDROID
+  engine->rootContext()->setContextProperty("Android", true);
+#else
+  engine->rootContext()->setContextProperty("Android", false);
+#endif
   engine->load("qml/main.qml");
   if (engine->rootObjects().isEmpty())
     return -1;

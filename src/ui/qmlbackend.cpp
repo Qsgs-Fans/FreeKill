@@ -180,14 +180,14 @@ QString QmlBackend::loadConf() {
   if (!conf.exists()) {
     conf.open(QIODevice::WriteOnly);
     static const char *init_conf = "{\
-      \"winWidth\": 0,\
-      \"winHeight\": 0,\
+      \"winWidth\": 960,\
+      \"winHeight\": 540,\
       \"lastLoginServer\": \"127.0.0.1\",\
       \"savedPassword\": {\
         \"127.0.0.1\": {\
           \"username\": \"player\",\
           \"password\": \"\",\
-          \"shorten_password\": \"JSDHSFDWJSZSBWS!WJQS+600\"\
+          \"shorten_password\": \"\"\
         }\
       }\
     }";

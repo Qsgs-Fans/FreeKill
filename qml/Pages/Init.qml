@@ -55,6 +55,7 @@ Item {
       }
       Button {
         text: "Join Server"
+        enabled: passwordEdit.text !== ""
         onClicked: {
           config.serverAddr = server_addr.editText;
           config.screenName = screenNameEdit.text;
@@ -65,6 +66,7 @@ Item {
       }
       Button {
         text: "Console start"
+        enabled: passwordEdit.text !== ""
         onClicked: {
           config.serverAddr = "127.0.0.1";
           config.screenName = screenNameEdit.text;
