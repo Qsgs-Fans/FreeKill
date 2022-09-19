@@ -192,7 +192,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
   QString error_msg;
   QJsonObject result;
 
-  if (!nameExp.match(name).hasMatch()) {
+  if (!nameExp.match(name).hasMatch() && !name.isEmpty()) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';").arg(name);
