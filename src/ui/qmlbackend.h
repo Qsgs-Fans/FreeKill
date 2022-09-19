@@ -32,6 +32,8 @@ public:
   Q_INVOKABLE QString translate(const QString &src);
   Q_INVOKABLE QString callLuaFunction(const QString &func_name,
                                       QVariantList params);
+
+  Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   // support fkp
   Q_INVOKABLE void parseFkp(const QString &filename);
 
@@ -40,6 +42,7 @@ signals:
 
 private:
   QQmlApplicationEngine *engine;
+  RSA *rsa;
   fkp_parser *parser;
   QHash<QString, QString> generals;
   QHash<QString, QString> skills;

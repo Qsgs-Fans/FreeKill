@@ -13,4 +13,6 @@ QString SelectFromDb(sqlite3 *db, const QString &sql);
 void ExecSQL(sqlite3 *db, const QString &sql);
 void CloseDatabase(sqlite3 *db);
 
+RSA *InitServerRSA();
+
 #endif // _GLOBAL_H

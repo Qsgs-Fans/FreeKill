@@ -8,6 +8,8 @@ FreeKill
 FreeKill.exe
 freekill-wrap.cxx
 server/users.db
+server/rsa
+server/rsa_pub
 bearer/
 iconengines/
 imageformats/

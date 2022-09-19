@@ -9,12 +9,14 @@ QmlBackend::QmlBackend(QObject* parent)
 {
   Backend = this;
   engine = nullptr;
+  rsa = RSA_new();
   parser = fkp_new_parser();
 }
 
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
+  RSA_free(rsa);
   fkp_close(parser);
 }
 
@@ -160,6 +162,17 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   }
   lua_pop(L, 1);
   return QString(result);
+}
+
+QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
+  BIO *keyio = BIO_new_mem_buf(key.toLatin1().data(), -1);
+  PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
+  BIO_free_all(keyio);
+
+  unsigned char buf[RSA_size(rsa)];
+  RSA_public_encrypt(data.length(), (const unsigned char *)data.toUtf8().data(),
+    buf, rsa, RSA_PKCS1_PADDING);
+  return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
 }
 
 void QmlBackend::parseFkp(const QString &fileName) {

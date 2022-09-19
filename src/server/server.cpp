@@ -13,6 +13,12 @@ Server::Server(QObject* parent)
 {
   ServerInstance = this;
   db = OpenDatabase();
+  rsa = InitServerRSA();
+  QFile file("server/rsa_pub");
+  file.open(QIODevice::ReadOnly);
+  QTextStream in(&file);
+  public_key = in.readAll();
+
   server = new ServerSocket();
   server->setParent(this);
   connect(server, &ServerSocket::new_connection,
@@ -30,6 +36,7 @@ Server::~Server()
   ServerInstance = nullptr;
   m_lobby->deleteLater();
   sqlite3_close(db);
+  RSA_free(rsa);
 }
 
 bool Server::listen(const QHostAddress& address, ushort port)
@@ -125,7 +132,7 @@ void Server::processNewConnection(ClientSocket* client)
   body << -2;
   body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
   body << "NetworkDelayTest";
-  body << "[]";
+  body << public_key;
   client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, this, &Server::processRequest);
@@ -174,7 +181,14 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
   // First check the name and password
   // Matches a string that does not contain special characters
   QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
-  QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
+
+  auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
+  unsigned char buf[4096] = {0};
+  RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
+    buf, rsa, RSA_PKCS1_PADDING);
+  QByteArray passwordHash = QCryptographicHash::hash(
+    QByteArray::fromRawData((const char *)buf, strlen((const char *)buf)),
+    QCryptographicHash::Sha256).toHex();
   bool passed = false;
   QString error_msg;
   QJsonObject result;

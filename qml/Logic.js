@@ -15,9 +15,10 @@ function createClientPages() {
 var callbacks = {};
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
+  // jsonData: RSA pub key
   ClientInstance.notifyServer("Setup", JSON.stringify([
     config.screenName,
-    config.password
+    Backend.pubEncrypt(jsonData, config.password)
   ]));
 }
 
