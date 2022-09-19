@@ -96,6 +96,10 @@ bool Room::isAbandoned() const
   return true;
 }
 
+void Room::setAbandoned(bool abandoned) {
+  m_abandoned = abandoned;
+}
+
 ServerPlayer *Room::getOwner() const
 {
   return owner;
@@ -289,6 +293,5 @@ void Room::gameOver()
 void Room::run()
 {
   gameStarted = true;
-  m_abandoned = false;
   roomStart();
 }

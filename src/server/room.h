@@ -22,6 +22,7 @@ public:
   void setCapacity(int capacity);
   bool isFull() const;
   bool isAbandoned() const;
+  void setAbandoned(bool abandoned);  // never use this function
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);

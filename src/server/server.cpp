@@ -51,6 +51,7 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
     room = idle_rooms.pop();
     room->setId(nextRoomId);
     nextRoomId++;
+    room->setAbandoned(false);
     rooms.insert(room->getId(), room);
   } else {
     room = new Room(this);
