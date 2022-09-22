@@ -928,6 +928,43 @@ function Room:drawCards(player, num, skillName, fromPlace)
   return { table.unpack(topCards) }
 end
 
+---@param card Card | Card[]
+---@param to_place integer
+---@param target ServerPlayer
+---@param reason integer
+---@param skill_name string
+---@param special_name string
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name)
+  reason = reason or fk.ReasonJustMove
+  skill_name = skill_name or ""
+  special_name = special_name or ""
+  local ids = {}
+  if card[1] ~= nil then
+    for i, cd in ipairs(card) do
+      ids[i] = cd.id
+    end
+  else
+    ids[1] = card.id
+  end
+
+  local to
+  if table.contains(
+    {Card.PlayerEquip, Card.PlayerHand,
+     Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+    to = target.id
+  end
+
+  self.moveCards{
+    ids = ids,
+    from = self.owner_map[ids[1]],
+    to = to,
+    toArea = to_place,
+    moveReason = reason,
+    skillName = skill_name,
+    specialName = special_name
+  }
+end
+
 ------------------------------------------------------------------------
 -- some easier actions
 ------------------------------------------------------------------------
@@ -1184,6 +1221,27 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])
     end
+  end
+end
+
+-- judge
+
+---@param data JudgeData
+---@return Card
+function Room:judge(data)
+  local who = data.who
+  self.logic:trigger(fk.StartJudge, who, data)
+  data.card = Fk:getCardById(self:getNCards(1)[1])
+  -- TODO: send log
+  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
+
+  self.logic:trigger(fk.AskForRetrial, who, data)
+  self.logic:trigger(fk.FinishRetrial, who, data)
+  -- TODO: send log & animation
+
+  self.logic:trigger(fk.FinishJudge, who, data)
+  if self:getCardArea(data.card.id) == Card.Processing then
+    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
   end
 end
 
