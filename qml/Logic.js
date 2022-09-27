@@ -83,3 +83,18 @@ callbacks["UpdateRoomList"] = function(jsonData) {
     });
   });
 }
+
+callbacks["Chat"] = function(jsonData) {
+  // jsonData: { string userName, string general, string time, string msg }
+  let current = mainStack.currentItem;  // lobby(TODO) or room
+  let data = JSON.parse(jsonData);
+  let pid = data.type;
+  let userName = data.userName;
+  let general = Backend.translate(data.general);
+  let time = data.time;
+  let msg = data.msg;
+  if (general === "")
+    current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
+  else
+    current.addToChat(pid, data, `[${time}] ${userName}(${general}): ${msg}`);
+}

@@ -248,6 +248,16 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   -- TODO: if mark is visible, update the UI.
 end
 
+fk.client_callback["Chat"] = function(jsonData)
+  -- jsonData: { int type, string msg }
+  local data = json.decode(jsonData)
+  local p = ClientInstance:getPlayerById(data.type)
+  data.userName = p.player:getScreenName()
+  data.general = p.general
+  data.time = os.date("%H:%M:%S")
+  ClientInstance:notifyUI("Chat", json.encode(data))
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

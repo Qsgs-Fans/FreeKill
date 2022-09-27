@@ -599,3 +599,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
 callbacks["CancelRequest"] = function() {
   roomScene.state = "notactive";
 }
+
+callbacks["GameLog"] = function(jsonData) {
+  roomScene.addToLog(jsonData)
+}

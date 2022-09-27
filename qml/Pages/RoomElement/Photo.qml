@@ -371,10 +371,55 @@ Item {
     anchors.centerIn: parent
   }
 
+  Rectangle {
+    id: chat
+    color: "#F2ECD7"
+    radius: 4
+    opacity: 0
+    width: parent.width
+    height: childrenRect.height + 8
+    property string text: ""
+    visible: false
+    Text {
+      width: parent.width - 8
+      x: 4
+      y: 4
+      text: parent.text
+      wrapMode: Text.WrapAnywhere
+      font.family: fontLibian.name
+      font.pixelSize: 20
+    }
+    SequentialAnimation {
+      id: chatAnim
+      PropertyAnimation {
+        target: chat
+        property: "opacity"
+        to: 0.9
+        duration: 200
+      }
+      NumberAnimation {
+        duration: 2500
+      }
+      PropertyAnimation {
+        target: chat
+        property: "opacity"
+        to: 0
+        duration: 150
+      }
+      onFinished: chat.visible = false;
+    }
+  }
+
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
     generalName.text = Backend.translate(general);
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
     kingdom = data.kingdom;
+  }
+
+  function chat(msg) {
+    chat.text = msg;
+    chat.visible = true;
+    chatAnim.restart();
   }
 }

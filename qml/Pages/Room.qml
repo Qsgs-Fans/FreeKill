@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
 
@@ -316,6 +317,62 @@ Item {
     } else {
       Logic.doCancelButton();
     }
+  }
+
+  Drawer {
+    id: roomDrawer
+    width: parent.width * 0.3
+    height: parent.height
+    dim: false
+    clip: true
+    
+    ColumnLayout {
+      anchors.fill: parent
+
+      SwipeView {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        interactive: false
+        currentIndex: drawerBar.currentIndex
+        Item {
+          LogEdit {
+            id: log
+            anchors.fill: parent
+          }
+        }
+        Item {
+          ChatBox {
+            id: chat
+            anchors.fill: parent
+          }
+        }
+      }
+
+      TabBar {
+        id: drawerBar
+        width: roomDrawer.width
+        TabButton {
+          width: roomDrawer.width / 2
+          text: Backend.translate("Log")
+        }
+        TabButton {
+          width: roomDrawer.width / 2
+          text: Backend.translate("Chat")
+        }
+      }
+    }
+  }
+
+  function addToChat(pid, raw, msg) {
+    chat.append(msg);
+    let photo = Logic.getPhoto(pid);
+    if (photo === undefined)
+      photo = dashboard.self;
+    photo.chat(raw.msg);
+  }
+
+  function addToLog(msg) {
+    log.append(msg);
   }
 
   Component.onCompleted: {
