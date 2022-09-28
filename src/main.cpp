@@ -55,9 +55,6 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
     fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg);
     break;
   }
-#ifndef Q_OS_WIN
-  fprintf(stderr, "fk> ");
-#endif
 }
 
 int main(int argc, char *argv[])
@@ -93,7 +90,7 @@ int main(int argc, char *argv[])
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-#ifndef Q_OS_WIN
+#ifdef Q_OS_LINUX
       auto shell = new Shell;
       shell->start();
 #endif

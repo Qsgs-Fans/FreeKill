@@ -1,13 +1,17 @@
-#ifndef Q_OS_WIN
+#ifdef Q_OS_LINUX
 #include "shell.h"
 #include "server.h"
 #include "serverplayer.h"
 #include <signal.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 static void sigintHandler(int) {
-  fprintf(stderr, "\nfk> ");
-  fflush(stdin);
-  return;
+  fprintf(stderr, "\n");
+  rl_reset_line_state();
+  rl_replace_line("", 0);
+  rl_crlf();
+  rl_redisplay();
 }
 
 const char *Shell::ColoredText(const char *input, Color color, TextType type) {
@@ -41,11 +45,6 @@ void Shell::helpCommand(QStringList &) {
   qInfo("For more commands, check the documentation.");
 }
 
-void Shell::quitCommand(QStringList &) {
-  qInfo("Server is shutting down.");
-  qApp->quit();
-}
-
 void Shell::lspCommand(QStringList &) {
   if (ServerInstance->players.size() == 0) {
     qInfo("No online player.");
@@ -71,10 +70,11 @@ void Shell::lsrCommand(QStringList &) {
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
+
   static QHash<QString, void (Shell::*)(QStringList &)> handlers;
   if (handlers.size() == 0) {
     handlers["help"] = &Shell::helpCommand;
-    handlers["quit"] = &Shell::quitCommand;
+    handlers["?"] = &Shell::helpCommand;
     handlers["lsplayer"] = &Shell::lspCommand;
     handlers["lsroom"] = &Shell::lsrCommand;
   }
@@ -87,13 +87,19 @@ void Shell::run() {
   printf("This is free software, and you are welcome to redistribute it under\n");
   printf("certain conditions; For more information visit http://www.gnu.org/licenses.\n\n");
   printf("This is server cli. Enter \"help\" for usage hints.\n");
-  QFile file;
-  file.open(stdin, QIODevice::ReadOnly);
+
   while (true) {
-    printf("\rfk> ");
-    auto bytes = file.readLine();
-    auto command = QString::fromUtf8(bytes);
-    command.remove('\n');
+    char *bytes = readline("fk> ");
+    if (!bytes || !strcmp(bytes, "quit")) {
+      qInfo("Server is shutting down.");
+      qApp->quit();
+      return;
+    }
+
+    if (*bytes)
+      add_history(bytes);
+
+    auto command = QString(bytes);
     auto command_list = command.split(' ');
     auto func = handler_map[command_list.first()];
     if (!func) {
@@ -103,11 +109,7 @@ void Shell::run() {
       (this->*func)(command_list);
     }
 
-    if (file.atEnd()) {
-      qInfo("Server is shutting down.");
-      qApp->quit();
-      return;
-    }
+    free(bytes);
   }
 }
 

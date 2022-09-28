@@ -45,6 +45,7 @@ else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)
   set(CRYPTO_LIB OpenSSL::Crypto)
+  set(READLINE_LIB readline)
 endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})
@@ -55,6 +56,7 @@ target_link_libraries(FreeKill PRIVATE
   ${LUA_LIB}
   ${SQLITE3_LIB}
   ${CRYPTO_LIB}
+  ${READLINE_LIB}
   fkparse
   Qt6::Qml
   Qt6::Gui
