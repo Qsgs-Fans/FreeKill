@@ -85,7 +85,11 @@ function ServerPlayer:turnOver()
   self.faceup = not self.faceup
   self.room:broadcastProperty(self, "faceup")
 
-  -- TODO: log
+  self.room:sendLog{
+    type = "#TurnOver",
+    from = self.id,
+    arg = self.faceup and "face_up" or "face_down",
+  }
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 

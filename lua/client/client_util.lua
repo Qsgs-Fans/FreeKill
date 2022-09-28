@@ -257,3 +257,45 @@ Fk:loadTranslationTable{
   ["$Judge"] = "判定区",
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
 }
+
+-- related to sendLog
+Fk:loadTranslationTable{
+  -- game processing
+  ["$AppendSeparator"] = '<font color="grey">------------------------------</font>',
+  ["$GameStart"] = "== 游戏开始 ==",
+  ["$GameEnd"] = "== 游戏结束 ==",
+
+  -- get/lose skill
+  ["#AcquireSkill"] = "%from 获得了技能“%arg”",
+	["#LoseSkill"] = "%from 失去了技能“%arg”",
+
+  -- moveCards (they are sent by notifyMoveCards)
+  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
+  ["log_spade"] = "♠",
+  ["log_heart"] = '<font color="#CC3131">♥</font>',
+  ["log_club"] = "♣",
+  ["log_diamond"] = '<font color="#CC3131">♦</font>',
+  ["log_nosuit"] = "无花色",
+  ["nosuit"] = "无花色",
+  ["spade"] = "黑桃",
+  ["heart"] = "红桃",
+  ["club"] = "梅花",
+  ["diamond"] = "方块",
+  
+  ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+
+  -- useCard
+  ["#UseCard"] = "%from 使用了牌 %card",
+  ["#UseCardToTargets"] = "%from 使用了牌 %card，目标是 %to",
+
+  -- judge
+  ["#InitialJudge"] = "%from 的判定牌为 %card",
+  ["#ChangedJudge"] = "%from 发动“%arg”把 %to 的判定牌改为 %card",
+  ["#JudgeResult"] = "%from 的判定结果为 %card",
+
+  -- turnOver
+  ["#TurnOver"] = "%from 将武将牌翻面，现在是 %arg",
+	["face_up"] = "正面朝上",
+	["face_down"] = "背面朝上",
+}

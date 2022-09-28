@@ -377,6 +377,11 @@ function Room:notifyMoveFocus(players, command)
   })
 end
 
+---@param log LogMessage
+function Room:sendLog(log)
+  self:doBroadcastNotify("GameLog", json.encode(log))
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -1173,10 +1178,12 @@ end
 ---@param player ServerPlayer
 ---@param skill_names string[] | string
 ---@param source_skill string | Skill | nil
-function Room:handleAddLoseSkills(player, skill_names, source_skill)
+function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog)
   if type(skill_names) == "string" then
     skill_names = skill_names:split("|")
   end
+
+  if sendlog == nil then sendlog = true end
 
   if #skill_names == 0 then return end
   local losts = {}  ---@type boolean[]
@@ -1191,7 +1198,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
             player.id,
             s.name
           })
-          -- TODO: send a log here
+
+          if sendlog then
+            self:sendLog{
+              type = "#LoseSkill",
+              from = player.id,
+              arg = s.name
+            }
+          end
+
           table.insert(losts, true)
           table.insert(triggers, s)
         end
@@ -1208,7 +1223,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
             player.id,
             s.name
           })
-          -- TODO: send log
+
+          if sendlog then
+            self:sendLog{
+              type = "#AcquireSkill",
+              from = player.id,
+              arg = s.name
+            }
+          end
+
           table.insert(losts, false)
           table.insert(triggers, s)
         end
@@ -1232,12 +1255,20 @@ function Room:judge(data)
   local who = data.who
   self.logic:trigger(fk.StartJudge, who, data)
   data.card = Fk:getCardById(self:getNCards(1)[1])
-  -- TODO: send log
+  self:sendLog{
+    type = "#InitialJudge",
+    from = who.id,
+    card = {data.card},
+  }
   self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
 
   self.logic:trigger(fk.AskForRetrial, who, data)
   self.logic:trigger(fk.FinishRetrial, who, data)
-  -- TODO: send log & animation
+  self:sendLog{
+    type = "#JudgeResult",
+    from = who.id,
+    card = {data.card},
+  }
 
   self.logic:trigger(fk.FinishJudge, who, data)
   if self:getCardArea(data.card.id) == Card.Processing then
