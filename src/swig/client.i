@@ -48,7 +48,7 @@ void Client::callLua(const QString& command, const QString& json_data)
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
-    qDebug() << error_msg;
+    qCritical() << error_msg;
     lua_pop(L, 2);
   }
   lua_pop(L, 1);

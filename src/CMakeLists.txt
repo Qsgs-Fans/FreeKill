@@ -8,6 +8,7 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
+  "server/shell.cpp"
   "client/client.cpp"
   "client/clientplayer.cpp"
   "ui/qmlbackend.cpp"

@@ -1,5 +1,6 @@
 #include "qmlbackend.h"
 #include "server.h"
+#include "shell.h"
 #include <QSplashScreen>
 #include <QScreen>
 
@@ -33,8 +34,33 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 }
 #endif
 
+void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+  fprintf(stderr, "\r[%s] ", QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
+  auto localMsg = msg.toUtf8().constData();
+  auto threadName = QThread::currentThread()->objectName().toLatin1().constData();
+  switch (type) {
+  case QtDebugMsg:
+    fprintf(stderr, "[%s/\e[1;30mDEBUG\e[0m] %s\n", threadName, localMsg);
+    break;
+  case QtInfoMsg:
+    fprintf(stderr, "[%s/\e[1;32mINFO\e[0m] %s\n", threadName, localMsg);
+    break;
+  case QtWarningMsg:
+    fprintf(stderr, "[%s/\e[1;33mWARNING\e[0m] %s\n", threadName, localMsg);
+    break;
+  case QtCriticalMsg:
+    fprintf(stderr, "[%s/\e[1;31mCRITICAL\e[0m] %s\n", threadName, localMsg);
+    break;
+  case QtFatalMsg:
+    fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg);
+    break;
+  }
+  fprintf(stderr, "fk> ");
+}
+
 int main(int argc, char *argv[])
 {
+  QThread::currentThread()->setObjectName("Main");
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
@@ -54,14 +80,19 @@ int main(int argc, char *argv[])
   ushort serverPort = 9527;
 
   if (startServer) {
+    qInstallMessageHandler(fkMsgHandler);
     app = new QCoreApplication(argc, argv);
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
       serverPort = parser.value("server").toInt();
     Server *server = new Server;
     if (!server->listen(QHostAddress::Any, serverPort)) {
-      fprintf(stderr, "cannot listen on port %d!\n", serverPort);
+      qFatal("cannot listen on port %d!\n", serverPort);
       app->exit(1);
+    } else {
+      qInfo("Server is listening on port %d", serverPort);
+      auto shell = new Shell;
+      shell->start();
     }
     return app->exec();
   }

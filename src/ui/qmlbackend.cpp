@@ -103,7 +103,7 @@ QString QmlBackend::translate(const QString &src) {
   int err = lua_pcall(L, 1, 1, 0);
   const char *result = lua_tostring(L, -1);
   if (err) {
-    qDebug() << result;
+    qCritical() << result;
     lua_pop(L, 1);
     return "";
   }
@@ -137,7 +137,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
       }
       break;
     default:
-      qDebug() << "cannot handle QVariant type" << v.typeId();
+      qCritical() << "cannot handle QVariant type" << v.typeId();
       lua_pushnil(L);
       break;
   }
@@ -156,7 +156,7 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   int err = lua_pcall(L, params.length(), 1, 0);
   const char *result = lua_tostring(L, -1);
   if (err) {
-    qDebug() << result;
+    qCritical() << result;
     lua_pop(L, 1);
     return "";
   }

@@ -24,7 +24,7 @@ bool DoLuaScript(lua_State *L, const char *script)
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
-    qDebug() << error_msg;
+    qCritical() << error_msg;
     lua_pop(L, 2);
     return false;
   }
@@ -65,7 +65,7 @@ sqlite3 *OpenDatabase(const QString &filename)
   if (!QFile::exists(filename)) {
     QFile file("./server/init.sql");
     if (!file.open(QIODevice::ReadOnly)) {
-      qDebug() << "cannot open init.sql. Quit now.";
+      qFatal("cannot open init.sql. Quit now.");
       qApp->exit(1);
     }
 
@@ -75,7 +75,7 @@ sqlite3 *OpenDatabase(const QString &filename)
     rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr, &err_msg);
 
     if (rc != SQLITE_OK ) {
-      qDebug() << "sqlite error:" << err_msg;
+      qCritical() << "sqlite error:" << err_msg;
       sqlite3_free(err_msg);
       sqlite3_close(ret);
       qApp->exit(1);
@@ -83,7 +83,7 @@ sqlite3 *OpenDatabase(const QString &filename)
   } else {
     rc = sqlite3_open(filename.toLatin1().data(), &ret);
     if (rc != SQLITE_OK) {
-      qDebug() << "Cannot open database:" << sqlite3_errmsg(ret);
+      qCritical() << "Cannot open database:" << sqlite3_errmsg(ret);
       sqlite3_close(ret);
       qApp->exit(1);
     }

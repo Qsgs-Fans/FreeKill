@@ -121,11 +121,11 @@ sqlite3 *Server::getDatabase() {
 
 void Server::processNewConnection(ClientSocket* client)
 {
-  qDebug() << client->peerAddress() << "connected";
+  qInfo() << client->peerAddress() << "connected";
   // version check, file check, ban IP, reconnect, etc
 
   connect(client, &ClientSocket::disconnected, this, [client](){
-    qDebug() << client->peerAddress() << "disconnected";
+    qInfo() << client->peerAddress() << "disconnected";
   });
 
   // network delay test
@@ -162,7 +162,7 @@ void Server::processRequest(const QByteArray& msg)
   }
 
   if (!valid) {
-    qDebug() << "Invalid setup string:" << msg;
+    qWarning() << "Invalid setup string:" << msg;
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
@@ -255,7 +255,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 
     lobby()->addPlayer(player);
   } else {
-    qDebug() << client->peerAddress() << "lost connection:" << error_msg;
+    qInfo() << client->peerAddress() << "lost connection:" << error_msg;
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
@@ -288,7 +288,7 @@ void Server::onRoomAbandoned()
 void Server::onUserDisconnected()
 {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  qDebug() << "Player" << player->getId() << "disconnected";
+  qInfo() << "Player" << player->getId() << "disconnected";
   Room *room = player->getRoom();
   if (room->isStarted()) {
     player->setState(Player::Offline);
