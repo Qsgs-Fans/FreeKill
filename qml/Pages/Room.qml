@@ -19,6 +19,7 @@ Item {
   property alias okCancel: okCancel
   property alias okButton: okButton
   property alias cancelButton: cancelButton
+  property alias dynamicCardArea: dynamicCardArea
 
   property var selected_targets: []
 
@@ -246,8 +247,10 @@ Item {
     Text {
       id: prompt
       visible: progress.visible
-      anchors.bottom: progress.top
-      anchors.bottomMargin: 8
+      anchors.top: progress.top
+      anchors.topMargin: -2
+      color: "white"
+      z: 1
       anchors.horizontalCenter: progress.horizontalCenter
     }
 
@@ -256,11 +259,31 @@ Item {
       width: parent.width * 0.6
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: okCancel.top
-      anchors.bottomMargin: 8
+      anchors.bottomMargin: 4
       from: 0.0
       to: 100.0
 
       visible: false
+
+      background: Rectangle {
+        implicitWidth: 200
+        implicitHeight: 14
+        color: "black"
+        radius: 3
+      }
+
+      contentItem: Item {
+        implicitWidth: 200
+        implicitHeight: 12
+
+        Rectangle {
+          width: progress.visualPosition * parent.width
+          height: parent.height
+          radius: 2
+          color: "red"
+        }
+      }
+
       NumberAnimation on value {
         running: progress.visible
         from: 100.0
@@ -382,6 +405,11 @@ Item {
         }
       }
     }
+  }
+
+  Item {
+    id: dynamicCardArea
+    anchors.fill: parent
   }
 
   Rectangle {
