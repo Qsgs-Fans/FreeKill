@@ -42,6 +42,7 @@ public slots:
   void onUserStateChanged();
 
 private:
+  friend class Shell;
   ServerSocket *server;
   Room *m_lobby;
   QMap<int, Room *> rooms;

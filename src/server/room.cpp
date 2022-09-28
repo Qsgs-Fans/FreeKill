@@ -5,6 +5,7 @@
 
 Room::Room(Server* server)
 {
+  setObjectName("Room");
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;

@@ -55,12 +55,15 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
     fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg);
     break;
   }
+#ifndef Q_OS_WIN
   fprintf(stderr, "fk> ");
+#endif
 }
 
 int main(int argc, char *argv[])
 {
   QThread::currentThread()->setObjectName("Main");
+  qInstallMessageHandler(fkMsgHandler);
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
@@ -80,7 +83,6 @@ int main(int argc, char *argv[])
   ushort serverPort = 9527;
 
   if (startServer) {
-    qInstallMessageHandler(fkMsgHandler);
     app = new QCoreApplication(argc, argv);
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
@@ -91,8 +93,10 @@ int main(int argc, char *argv[])
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
+#ifndef Q_OS_WIN
       auto shell = new Shell;
       shell->start();
+#endif
     }
     return app->exec();
   }
