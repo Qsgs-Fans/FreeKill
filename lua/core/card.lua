@@ -87,8 +87,32 @@ function Card:getSuitString()
   elseif suit == Card.Diamond then
     return "diamond"
   else
-    return "unknown"
+    return "nosuit"
   end
+end
+
+local function getNumberStr(num)
+  if num == 1 then
+    return "A"
+  elseif num == 11 then
+    return "J"
+  elseif num == 12 then
+    return "Q"
+  elseif num == 13 then
+    return "K"
+  end
+  return tostring(num)
+end
+
+-- for sendLog
+function Card:toLogString()
+  local ret = string.format('<font color="#0598BC"><b>%s</b></font>', Fk:translate(self.name) .. "[")
+  ret = ret .. Fk:translate("log_" .. self:getSuitString())
+  if self.number > 0 then
+    ret = ret .. string.format('<font color="%s"><b>%s</b></font>', self.color == Card.Red and "#CC3131" or "black", getNumberStr(self.number))
+  end
+  ret = ret .. '<font color="#0598BC"><b>]</b></font>'
+  return ret
 end
 
 return Card

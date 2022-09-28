@@ -5,6 +5,7 @@
 
 Room::Room(Server* server)
 {
+  setObjectName("Room");
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
@@ -273,6 +274,17 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 {
   foreach (ServerPlayer *p, targets) {
     p->doNotify(command, jsonData);
+  }
+}
+
+void Room::chat(ServerPlayer *sender, const QString &jsonData) {
+  auto doc = QJsonDocument::fromJson(jsonData.toUtf8()).object();
+  auto type = doc["type"].toInt();
+  doc["type"] = sender->getId();
+  if (type == 1) {
+    // TODO: server chatting
+  } else {
+    doBroadcastNotify(players, "Chat", QJsonDocument(doc).toJson(QJsonDocument::Compact));
   }
 }
 

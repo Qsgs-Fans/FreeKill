@@ -192,6 +192,9 @@ void Router::handlePacket(const QByteArray& rawPacket)
       auto roomId = arr[0].toInt();
       ServerInstance->findRoom(roomId)->addPlayer(sender);
     };
+    lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData){
+      sender->getRoom()->chat(sender, jsonData);
+    };
   }
 
   QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
@@ -217,6 +220,8 @@ void Router::handlePacket(const QByteArray& rawPacket)
           room->removePlayer(player);
         } else if (command == "AddRobot") {
           room->addRobot(player);
+        } else if (command == "Chat") {
+          room->chat(player, jsonData);
         }
       }
     }

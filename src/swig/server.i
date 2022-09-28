@@ -67,7 +67,7 @@ void Room::initLua()
   lua_pop(L, 1);
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
-    qDebug() << error_msg;
+    qCritical() << error_msg;
   }
 }
 
@@ -85,7 +85,7 @@ void Room::roomStart() {
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
-    qDebug() << error_msg;
+    qCritical() << error_msg;
     lua_pop(L, 2);
   }
   lua_pop(L, 1);

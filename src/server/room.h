@@ -48,6 +48,7 @@ public:
     const QString &command,
     const QString &jsonData
   );
+  void chat(ServerPlayer *sender, const QString &jsonData);
 
   void gameOver();
 

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
 
@@ -18,6 +19,7 @@ Item {
   property alias okCancel: okCancel
   property alias okButton: okButton
   property alias cancelButton: cancelButton
+  property alias dynamicCardArea: dynamicCardArea
 
   property var selected_targets: []
 
@@ -186,10 +188,30 @@ Item {
     }
   }
 
+  Item {
+    id: dashboardBtn
+    width: childrenRect.width
+    height: childrenRect.height
+    anchors.bottom: parent.bottom
+    ColumnLayout {
+      MetroButton {
+        text: Backend.translate("Trust")
+      }
+      MetroButton {
+        text: Backend.translate("Sort Cards")
+      }
+      MetroButton {
+        text: Backend.translate("Chat")
+        onClicked: roomDrawer.open();
+      }
+    }
+  }
+
   Dashboard {
     id: dashboard
-    width: roomScene.width
+    width: roomScene.width - dashboardBtn.width
     anchors.top: roomArea.bottom
+    anchors.left: dashboardBtn.right
 
     self.playerid: dashboardModel.id
     self.general: dashboardModel.general
@@ -225,8 +247,10 @@ Item {
     Text {
       id: prompt
       visible: progress.visible
-      anchors.bottom: progress.top
-      anchors.bottomMargin: 8
+      anchors.top: progress.top
+      anchors.topMargin: -2
+      color: "white"
+      z: 1
       anchors.horizontalCenter: progress.horizontalCenter
     }
 
@@ -235,11 +259,31 @@ Item {
       width: parent.width * 0.6
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.bottom: okCancel.top
-      anchors.bottomMargin: 8
+      anchors.bottomMargin: 4
       from: 0.0
       to: 100.0
 
       visible: false
+
+      background: Rectangle {
+        implicitWidth: 200
+        implicitHeight: 14
+        color: "black"
+        radius: 3
+      }
+
+      contentItem: Item {
+        implicitWidth: 200
+        implicitHeight: 12
+
+        Rectangle {
+          width: progress.visualPosition * parent.width
+          height: parent.height
+          radius: 2
+          color: "red"
+        }
+      }
+
       NumberAnimation on value {
         running: progress.visible
         from: 100.0
@@ -316,6 +360,133 @@ Item {
     } else {
       Logic.doCancelButton();
     }
+  }
+
+  Drawer {
+    id: roomDrawer
+    width: parent.width * 0.3
+    height: parent.height
+    dim: false
+    clip: true
+    dragMargin: 0
+    
+    ColumnLayout {
+      anchors.fill: parent
+
+      SwipeView {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        interactive: false
+        currentIndex: drawerBar.currentIndex
+        Item {
+          LogEdit {
+            id: log
+            anchors.fill: parent
+          }
+        }
+        Item {
+          ChatBox {
+            id: chat
+            anchors.fill: parent
+          }
+        }
+      }
+
+      TabBar {
+        id: drawerBar
+        width: roomDrawer.width
+        TabButton {
+          width: roomDrawer.width / 2
+          text: Backend.translate("Log")
+        }
+        TabButton {
+          width: roomDrawer.width / 2
+          text: Backend.translate("Chat")
+        }
+      }
+    }
+  }
+
+  Item {
+    id: dynamicCardArea
+    anchors.fill: parent
+  }
+
+  Rectangle {
+    id: easyChat
+    width: parent.width
+    height: 28
+    anchors.bottom: parent.bottom
+    visible: false
+    color: "#040403"
+    radius: 3
+    border.width: 1
+    border.color: "#A6967A"
+
+    TextInput {
+      id: easyChatEdit
+      anchors.fill: parent
+      anchors.margins: 6
+      color: "white"
+      clip: true
+      font.pixelSize: 14
+
+      onAccepted: {
+        if (text != "") {
+          ClientInstance.notifyServer(
+            "Chat",
+            JSON.stringify({
+              type: 0,
+              msg: text
+            })
+          );
+          text = "";
+          easyChat.visible = false;
+          easyChatEdit.enabled = false;
+        }
+      }
+    }
+  }
+
+  Shortcut {
+    sequence: "T"
+    onActivated: {
+      easyChat.visible = true;
+      easyChatEdit.enabled = true;
+      easyChatEdit.forceActiveFocus();
+    }
+  }
+
+  Shortcut {
+    sequence: "Esc"
+    onActivated: {
+      easyChat.visible = false;
+      easyChatEdit.enabled = false;
+    }
+  }
+
+  Shortcut {
+    sequence: "Return"
+    enabled: okButton.enabled
+    onActivated: Logic.doOkButton();
+  }
+
+  Shortcut {
+    sequence: "Space"
+    enabled: cancelButton.enabled
+    onActivated: Logic.doCancelButton();
+  }
+
+  function addToChat(pid, raw, msg) {
+    chat.append(msg);
+    let photo = Logic.getPhoto(pid);
+    if (photo === undefined)
+      photo = dashboard.self;
+    photo.chat(raw.msg);
+  }
+
+  function addToLog(msg) {
+    log.append(msg);
   }
 
   Component.onCompleted: {

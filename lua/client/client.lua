@@ -62,6 +62,75 @@ function Client:moveCards(moves)
   end
 end
 
+---@param msg LogMessage
+function Client:appendLog(msg)
+  local data = msg
+  local function getPlayerStr(pid, color)
+    if not pid then
+      return ""
+    end
+    local ret = self:getPlayerById(pid)
+    ret = ret.general
+    ret = Fk:translate(ret)
+    ret = string.format('<font color="' .. color .. '"><b>%s</b></font>', ret)
+    return ret
+  end
+
+  local from = getPlayerStr(data.from, "#0C8F0C")
+
+  local to = data.to or {}
+  local to_str = {}
+  for _, id in ipairs(to) do
+    table.insert(to_str, getPlayerStr(id, "#CC3131"))
+  end
+  to = table.concat(to_str, ", ")
+
+  local card = data.card or {}
+  local allUnknown = true
+  local unknownCount = 0
+  for _, id in ipairs(card) do
+    if id ~= -1 then
+      allUnknown = false
+    else
+      unknownCount = unknownCount + 1
+    end
+  end
+
+  if allUnknown then
+    card = ""
+  else
+    local card_str = {}
+    for _, id in ipairs(card) do
+      table.insert(card_str, Fk:getCardById(id):toLogString())
+    end
+    if unknownCount > 0 then
+      table.insert(card_str, Fk:translate("unknown_card")
+        .. unknownCount == 1 and "x" .. unknownCount or "")
+    end
+    card = table.concat(card_str, ", ")
+  end
+
+  local function parseArg(arg)
+    arg = arg or ""
+    arg = Fk:translate(arg)
+    arg = string.format('<font color="#0598BC"><b>%s</b></font>', arg)
+    return arg
+  end
+
+  local arg = parseArg(data.arg)
+  local arg2 = parseArg(data.arg2)
+  local arg3 = parseArg(data.arg3)
+
+  local log = Fk:translate(data.type)
+  log = string.gsub(log, "%%from", from)
+  log = string.gsub(log, "%%to", to)
+  log = string.gsub(log, "%%card", card)
+  log = string.gsub(log, "%%arg2", arg2)
+  log = string.gsub(log, "%%arg3", arg3)
+  log = string.gsub(log, "%%arg", arg)
+  self:notifyUI("GameLog", log)
+end
+
 fk.client_callback["Setup"] = function(jsonData)
   -- jsonData: [ int id, string screenName, string avatar ]
   local data = json.decode(jsonData)
@@ -165,6 +234,7 @@ local function separateMoves(moves)
         to = move.to,
         toArea = move.toArea,
         fromArea = info.fromArea,
+        moveReason = move.moveReason,
       })
     end
   end
@@ -184,7 +254,8 @@ local function mergeMoves(moves)
         from = move.from,
         to = move.to,
         fromArea = move.fromArea,
-        toArea = move.toArea
+        toArea = move.toArea,
+        moveReason = move.moveReason,
       }
     end
     table.insert(temp[info].ids, move.ids[1])
@@ -195,12 +266,33 @@ local function mergeMoves(moves)
   return ret
 end
 
+local function sendMoveCardLog(move)
+  if move.moveReason == fk.ReasonDraw then
+    ClientInstance:appendLog{
+      type = "$DrawCards",
+      from = move.to,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  elseif move.moveReason == fk.ReasonDiscard then
+    ClientInstance:appendLog{
+      type = "$DiscardCards",
+      from = move.from,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  end
+end
+
 fk.client_callback["MoveCards"] = function(jsonData)
   -- jsonData: CardsMoveStruct[]
   local raw_moves = json.decode(jsonData)
   local separated = separateMoves(raw_moves)
   ClientInstance:moveCards(separated)
   local merged = mergeMoves(separated)
+  for _, move in ipairs(merged) do
+    sendMoveCardLog(move)
+  end
   ClientInstance:notifyUI("MoveCards", json.encode(merged))
 end
 
@@ -246,6 +338,21 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   ClientInstance:getPlayerById(player):setMark(mark, value)
 
   -- TODO: if mark is visible, update the UI.
+end
+
+fk.client_callback["Chat"] = function(jsonData)
+  -- jsonData: { int type, string msg }
+  local data = json.decode(jsonData)
+  local p = ClientInstance:getPlayerById(data.type)
+  data.userName = p.player:getScreenName()
+  data.general = p.general
+  data.time = os.date("%H:%M:%S")
+  ClientInstance:notifyUI("Chat", json.encode(data))
+end
+
+fk.client_callback["GameLog"] = function(jsonData)
+  local data = json.decode(jsonData)
+  ClientInstance:appendLog(data)
 end
 
 -- Create ClientInstance (used by Lua)
