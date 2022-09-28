@@ -1,6 +1,5 @@
 #ifndef _SHELL_H
 #define _SHELL_H
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 
 class Shell: public QThread {
   Q_OBJECT
@@ -34,5 +33,4 @@ private:
   void lsrCommand(QStringList &);
 };
 
-#endif
 #endif

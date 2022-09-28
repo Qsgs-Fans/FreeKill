@@ -8,7 +8,6 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
-  "server/shell.cpp"
   "client/client.cpp"
   "client/clientplayer.cpp"
   "ui/qmlbackend.cpp"
@@ -46,6 +45,7 @@ else ()
   set(SQLITE3_LIB sqlite3)
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(READLINE_LIB readline)
+  list(APPEND freekill_SRCS "server/shell.cpp")
 endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})

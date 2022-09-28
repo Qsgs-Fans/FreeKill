@@ -1,6 +1,10 @@
 #include "qmlbackend.h"
 #include "server.h"
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "shell.h"
+#endif
+
 #include <QSplashScreen>
 #include <QScreen>
 
