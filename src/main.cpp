@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-#ifdef Q_OS_LINUX
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       auto shell = new Shell;
       shell->start();
 #endif
