@@ -256,6 +256,11 @@ Fk:loadTranslationTable{
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
+
+  ["Trust"] = "托管",
+  ["Sort Cards"] = "牌序",
+  ["Chat"] = "聊天",
+  ["Log"] = "战报",
 }
 
 -- related to sendLog

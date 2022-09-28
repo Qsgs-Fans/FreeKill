@@ -141,6 +141,16 @@ Item {
   }
 }
 
+  Shortcut {
+    sequences: [ StandardKey.FullScreen ]
+    onActivated: {
+      if (realMainWin.visibility === Window.FullScreen)
+        realMainWin.showNormal();
+      else
+        realMainWin.showFullScreen();
+    }
+  }
+
   Component.onCompleted: {
     if (!Android) {
       width = config.winWidth;

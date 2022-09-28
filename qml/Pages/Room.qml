@@ -187,10 +187,30 @@ Item {
     }
   }
 
+  Item {
+    id: dashboardBtn
+    width: childrenRect.width
+    height: childrenRect.height
+    anchors.bottom: parent.bottom
+    ColumnLayout {
+      MetroButton {
+        text: Backend.translate("Trust")
+      }
+      MetroButton {
+        text: Backend.translate("Sort Cards")
+      }
+      MetroButton {
+        text: Backend.translate("Chat")
+        onClicked: roomDrawer.open();
+      }
+    }
+  }
+
   Dashboard {
     id: dashboard
-    width: roomScene.width
+    width: roomScene.width - dashboardBtn.width
     anchors.top: roomArea.bottom
+    anchors.left: dashboardBtn.right
 
     self.playerid: dashboardModel.id
     self.general: dashboardModel.general
@@ -325,6 +345,7 @@ Item {
     height: parent.height
     dim: false
     clip: true
+    dragMargin: 0
     
     ColumnLayout {
       anchors.fill: parent
@@ -361,6 +382,71 @@ Item {
         }
       }
     }
+  }
+
+  Rectangle {
+    id: easyChat
+    width: parent.width
+    height: 28
+    anchors.bottom: parent.bottom
+    visible: false
+    color: "#040403"
+    radius: 3
+    border.width: 1
+    border.color: "#A6967A"
+
+    TextInput {
+      id: easyChatEdit
+      anchors.fill: parent
+      anchors.margins: 6
+      color: "white"
+      clip: true
+      font.pixelSize: 14
+
+      onAccepted: {
+        if (text != "") {
+          ClientInstance.notifyServer(
+            "Chat",
+            JSON.stringify({
+              type: 0,
+              msg: text
+            })
+          );
+          text = "";
+          easyChat.visible = false;
+          easyChatEdit.enabled = false;
+        }
+      }
+    }
+  }
+
+  Shortcut {
+    sequence: "T"
+    onActivated: {
+      easyChat.visible = true;
+      easyChatEdit.enabled = true;
+      easyChatEdit.forceActiveFocus();
+    }
+  }
+
+  Shortcut {
+    sequence: "Esc"
+    onActivated: {
+      easyChat.visible = false;
+      easyChatEdit.enabled = false;
+    }
+  }
+
+  Shortcut {
+    sequence: "Return"
+    enabled: okButton.enabled
+    onActivated: Logic.doOkButton();
+  }
+
+  Shortcut {
+    sequence: "Space"
+    enabled: cancelButton.enabled
+    onActivated: Logic.doCancelButton();
   }
 
   function addToChat(pid, raw, msg) {
