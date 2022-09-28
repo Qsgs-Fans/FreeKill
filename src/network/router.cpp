@@ -148,7 +148,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
     lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
       auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
       auto avatar = arr[0].toString();
-      QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+      static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
       if (!nameExp.match(avatar).hasMatch()) {
         auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
           .arg(avatar).arg(sender->getId());
