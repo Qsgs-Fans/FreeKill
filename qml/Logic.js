@@ -26,8 +26,9 @@ callbacks["NetworkDelayTest"] = function(jsonData) {
     cipherText = Backend.pubEncrypt(jsonData, config.password);
   }
   config.cipherText = cipherText;
+  let md5sum = Backend.calcFileMD5();
   ClientInstance.notifyServer("Setup", JSON.stringify([
-    config.screenName, cipherText
+    config.screenName, cipherText, md5sum
   ]));
 }
 

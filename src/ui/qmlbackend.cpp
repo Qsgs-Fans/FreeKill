@@ -1,6 +1,7 @@
 #include "qmlbackend.h"
 #include "server.h"
 #include "client.h"
+#include "util.h"
 
 QmlBackend *Backend;
 
@@ -257,3 +258,8 @@ void QmlBackend::readHashFromParser() {
   copyFkpHash2QHash(skills, parser->skills);
   copyFkpHash2QHash(marks, parser->marks);
 }
+
+QString QmlBackend::calcFileMD5() {
+  return ::calcFileMD5();
+}
+

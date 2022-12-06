@@ -15,4 +15,6 @@ void CloseDatabase(sqlite3 *db);
 
 RSA *InitServerRSA();
 
+QString calcFileMD5();
+
 #endif // _GLOBAL_H

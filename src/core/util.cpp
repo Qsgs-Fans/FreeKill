@@ -1,4 +1,7 @@
 #include "util.h"
+#include <qcryptographichash.h>
+#include <qnamespace.h>
+#include <qregularexpression.h>
 
 extern "C" {
   int luaopen_fk(lua_State *);
@@ -146,3 +149,47 @@ RSA *InitServerRSA() {
   fclose(keyFile);
   return rsa;
 }
+
+static void writeFileMD5(QFile &dest, const QString &fname) {
+  QFile f(fname);
+  if (!f.open(QIODevice::ReadOnly)) {
+    return;
+  }
+
+  auto data = f.readAll();
+  auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
+  dest.write(fname.toUtf8() + '=' + hash + '\n');
+}
+
+static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) {
+  QDir d(dir);
+  auto entries = d.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  auto re = QRegularExpression::fromWildcard(filter);
+  foreach (QFileInfo info, entries) {
+    if (info.isDir()) {
+      writeDirMD5(dest, info.filePath(), filter);
+    } else {
+      if (re.match(info.fileName()).hasMatch()) {
+        writeFileMD5(dest, info.filePath());
+      }
+    }
+  }
+}
+
+QString calcFileMD5() {
+  // First, generate flist.txt
+  // flist.txt is a file contains all md5sum for code files
+  QFile flist("flist.txt");
+  if (!flist.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    qFatal("Cannot open flist.txt. Quitting.");
+  }
+
+  writeDirMD5(flist, "lua", "*.lua");
+  writeDirMD5(flist, "qml", "*.qml");
+  writeDirMD5(flist, "qml", "*.js");
+
+  // then, return flist.txt's md5
+  auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
+  return ret.toHex();
+}
+

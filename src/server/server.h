@@ -54,6 +54,7 @@ private:
   RSA *rsa;
   QString public_key;
   sqlite3 *db;
+  QString md5;
 
   void handleNameAndPassword(ClientSocket *client, const QString &name, const QString &password);
 };

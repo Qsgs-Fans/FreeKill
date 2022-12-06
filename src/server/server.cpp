@@ -18,6 +18,7 @@ Server::Server(QObject* parent)
   file.open(QIODevice::ReadOnly);
   QTextStream in(&file);
   public_key = in.readAll();
+  md5 = calcFileMD5();
 
   server = new ServerSocket();
   server->setParent(this);
@@ -158,7 +159,7 @@ void Server::processRequest(const QByteArray& msg)
     )
       valid = false;
     else
-      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 2);
+      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 3);
   }
 
   if (!valid) {
@@ -174,6 +175,19 @@ void Server::processRequest(const QByteArray& msg)
   }
 
   QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
+
+  if (md5 != arr[2].toString()) {
+    qWarning() << "MD5 check failed!";
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "MD5 check failed!";
+    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    client->disconnectFromHost();
+    return;
+  }
+
   handleNameAndPassword(client, arr[0].toString(), arr[1].toString());
 }
 

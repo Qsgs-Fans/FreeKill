@@ -1,9 +1,17 @@
+# Compile output
 build/
+*.o
+
+# IDE & LSP
 .kdev4/
 .vscode/
 *.user
 *-swp
 *.kdev4
+.cache/
+tags
+
+# file produced by game
 FreeKill
 FreeKill.exe
 freekill-wrap.cxx
@@ -12,6 +20,9 @@ server/rsa
 server/rsa_pub
 freekill.client.config.json
 freekill.server.config.json
+flist.txt
+
+# windeployqt
 bearer/
 iconengines/
 imageformats/

@@ -2,6 +2,7 @@
 #define _QMLBACKEND_H
 
 #include "fkparse.h"
+#include <qtmetamacros.h>
 
 class QmlBackend : public QObject {
   Q_OBJECT
@@ -38,6 +39,8 @@ public:
   Q_INVOKABLE void saveConf(const QString &conf);
   // support fkp
   Q_INVOKABLE void parseFkp(const QString &filename);
+
+  Q_INVOKABLE QString calcFileMD5();
 
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
