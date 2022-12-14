@@ -189,7 +189,10 @@ QString calcFileMD5() {
   writeDirMD5(flist, "qml", "*.js");
 
   // then, return flist.txt's md5
+  flist.close();
+  flist.open(QIODevice::ReadOnly);
   auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
+  flist.close();
   return ret.toHex();
 }
 
