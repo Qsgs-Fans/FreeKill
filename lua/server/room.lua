@@ -295,7 +295,7 @@ end
 ---@param players ServerPlayer[]
 function Room:doRaceRequest(command, players, jsonData)
   players = players or self.players
-  self:notifyMoveFocus(players, command)
+  -- self:notifyMoveFocus(players, command)
   for _, p in ipairs(players) do
     self:doRequest(p, command, jsonData or p.request_data, false)
   end
@@ -304,6 +304,7 @@ function Room:doRaceRequest(command, players, jsonData)
   local currentTime = os.time()
   local elapsed = 0
   local winner
+  local canceled_players = {}
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
@@ -315,10 +316,18 @@ function Room:doRaceRequest(command, players, jsonData)
         winner = p
         break
       end
+
+      if p.reply_cancel then
+        table.insertIfNeed(canceled_players, p)
+      end
     end
     if winner then
       self:doBroadcastNotify("CancelRequest", "")
       return winner
+    end
+
+    if #players == #canceled_players then
+      return nil
     end
   end
 end
@@ -566,8 +575,104 @@ function Room:askForSkillInvoke(player, skill_name, data)
   return invoked
 end
 
-function Room:askForUseCard() end
-function Room:askForResponse() end
+---@param player ServerPlayer
+---@return CardUseStruct
+function Room:askForUseCard(player, card_name, prompt, cancelable, extra_data)
+  local command = "AskForUseCard"
+  self:notifyMoveFocus(player, card_name)
+  cancelable = cancelable or false
+  extra_data = extra_data or {}
+  prompt = prompt or "#AskForUseCard"
+
+  local data = {card_name, prompt, cancelable, extra_data}
+  local result = self:doRequest(player, command, json.encode(data))
+  if result ~= "" then
+    data = json.decode(result)
+    local card = data.card
+    local targets = data.targets
+    if type(card) == "string" then
+      -- TODO: ViewAsSkill
+      return nil
+    else
+      local use = {}    ---@type CardUseStruct
+      use.from = player.id
+      use.tos = {}
+      for _, target in ipairs(targets) do
+        table.insert(use.tos, { target })
+      end
+      if #use.tos == 0 then
+        use.tos = nil
+      end
+      use.cardId = card
+      return use
+    end
+  end
+  return nil
+end
+
+function Room:askForResponse(player, card_name, prompt, cancelable, extra_data)
+  local command = "AskForResponseCard"
+  self:notifyMoveFocus(player, card_name)
+  cancelable = cancelable or false
+  extra_data = extra_data or {}
+  prompt = prompt or "#AskForResponseCard"
+
+  local data = {card_name, prompt, cancelable, extra_data}
+  local result = self:doRequest(player, command, json.encode(data))
+  if result ~= "" then
+    data = json.decode(result)
+    local card = data.card
+    local targets = data.targets
+    if type(card) == "string" then
+      -- TODO: ViewAsSkill
+      return nil
+    else
+      return card
+    end
+  end
+  return nil
+end
+
+function Room:askForNullification(players, card_name, prompt, cancelable, extra_data)
+  if #players == 0 then
+    return nil
+  end
+
+  local command = "AskForUseCard"
+  card_name = card_name or "nullification"
+  cancelable = cancelable or false
+  extra_data = extra_data or {}
+  prompt = prompt or "#AskForUseCard"
+
+  self:notifyMoveFocus(self.players, card_name)
+  self:doBroadcastNotify("WaitForNullification", "")
+
+  local data = {card_name, prompt, cancelable, extra_data}
+  local winner = self:doRaceRequest(command, players, json.encode(data))
+  if winner then
+    local result = winner.client_reply
+    data = json.decode(result)
+    local card = data.card
+    local targets = data.targets
+    if type(card) == "string" then
+      -- TODO: ViewAsSkill
+      return nil
+    else
+      local use = {}    ---@type CardUseStruct
+      use.from = winner.id
+      use.tos = {}
+      for _, target in ipairs(targets) do
+        table.insert(use.tos, { target })
+      end
+      if #use.tos == 0 then
+        use.tos = nil
+      end
+      use.cardId = card
+      return use
+    end
+  end
+  return nil
+end
 
 ------------------------------------------------------------------------
 -- use card logic, and wrappers
@@ -580,7 +685,7 @@ function Room:askForResponse() end
 local onAim = function(room, cardUseEvent, aimEventCollaborators)
   local eventStages = { fk.TargetSpecifying, fk.TargetConfirming, fk.TargetSpecified, fk.TargetConfirmed }
   for _, stage in ipairs(eventStages) do
-    if not cardUseEvent.tos then
+    if (not cardUseEvent.tos) or #cardUseEvent.tos == 0 then
       return false
     end
 
@@ -871,8 +976,6 @@ function Room:doCardEffect(cardEffectEvent)
     end
 
     if event == fk.PreCardEffect then
-      -- TODO: use jink
-
       if Fk:getCardById(cardEffectEvent.cardId).name == 'slash' and
         not (
           cardEffectEvent.disresponsive or
@@ -880,38 +983,31 @@ function Room:doCardEffect(cardEffectEvent)
           table.contains(cardEffectEvent.disresponsiveList or {}, cardEffectEvent.to) or
           table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
         ) then
-        local result = self:doRequest(self:getPlayerById(cardEffectEvent.to), "PlayCard", cardEffectEvent.to)
-        if result ~= '' then
-          local data = json.decode(result)
-          local card = data.card
-          local targets = data.targets
-          if type(card) == "string" then
-            local card_data = json.decode(card)
-            local skill = Fk.skills[card_data.skill]
-            local selected_cards = card_data.subcards
-            skill:onEffect(self, {
-              from = cardEffectEvent.to,
-              cards = selected_cards,
-              tos = targets,
-            })
-          else
-            local use = {}    ---@type CardUseStruct
-            use.from = cardEffectEvent.to
-            use.toCardId = cardEffectEvent.cardId
-            use.responseToEvent = cardEffectEvent
-            use.cardId = card
-            self:useCard(use)
-          end
+        local to = self:getPlayerById(cardEffectEvent.to)
+        local use = self:askForUseCard(to, "jink")
+        if use then
+          use.toCardId = cardEffectEvent.cardId
+          use.responseToEvent = cardEffectEvent
+          self:useCard(use)
         end
       elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
-        -- TODO: use nullification
+        local players = {}
+        for _, p in ipairs(self.players) do
+          local cards = p.player_cards[Player.Hand]
+          for _, cid in ipairs(cards) do
+            if Fk:getCardById(cid).name == "nullification" then
+              table.insert(players, p)
+              break
+            end
+          end
+        end
 
-        -- local use = {}    ---@type CardUseStruct
-        -- use.from = cardEffectEvent.to
-        -- use.toCardId = cardEffectEvent.cardId
-        -- use.responseToEvent = cardEffectEvent
-        -- use.cardId = card
-        -- self:useCard(use)
+        local use = self:askForNullification(players)
+        if use then
+          use.toCardId = cardEffectEvent.cardId
+          use.responseToEvent = cardEffectEvent
+          self:useCard(use)
+        end
       end
     end
 

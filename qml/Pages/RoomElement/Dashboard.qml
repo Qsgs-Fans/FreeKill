@@ -111,7 +111,17 @@ RowLayout {
     }
   }
 
-  function enableCards() {
+  // If cname is set, we are responding card.
+  function enableCards(cname) {
+    if (cname) {
+      let ids = [], cards = handcardAreaItem.cards;
+      for (let i = 0; i < cards.length; i++) {
+        if (cards[i].name === cname)
+          ids.push(cards[i].cid);
+      }
+      handcardAreaItem.enableCards(ids);
+      return;
+    }
     // TODO: expand pile
     let ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
@@ -230,7 +240,11 @@ RowLayout {
     skillPanel.loseSkill(skill_name);
   }
 
-  function enableSkills() {
+  function enableSkills(cname) {
+    if (cname) {
+      // TODO: vs skill
+      return;
+    }
     for (let i = 0; i < skillButtons.count; i++) {
       let item = skillButtons.itemAt(i);
       item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig]));

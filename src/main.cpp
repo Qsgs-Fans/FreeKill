@@ -44,23 +44,23 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   fprintf(stderr, "\r[%s] ", QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
-  auto localMsg = msg.toUtf8().constData();
+  auto localMsg = msg.toUtf8();
   auto threadName = QThread::currentThread()->objectName().toLatin1().constData();
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/\e[1;30mDEBUG\e[0m] %s\n", threadName, localMsg);
+    fprintf(stderr, "[%s/\e[1;30mDEBUG\e[0m] %s\n", threadName, localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/\e[1;32mINFO\e[0m] %s\n", threadName, localMsg);
+    fprintf(stderr, "[%s/\e[1;32mINFO\e[0m] %s\n", threadName, localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/\e[1;33mWARNING\e[0m] %s\n", threadName, localMsg);
+    fprintf(stderr, "[%s/\e[1;33mWARNING\e[0m] %s\n", threadName, localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/\e[1;31mCRITICAL\e[0m] %s\n", threadName, localMsg);
+    fprintf(stderr, "[%s/\e[1;31mCRITICAL\e[0m] %s\n", threadName, localMsg.constData());
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg);
+    fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg.constData());
     break;
   }
 }
