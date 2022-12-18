@@ -5,10 +5,35 @@ Fk:loadTranslationTable{
   ["standard_cards"] = "标+EX"
 }
 
+local slashSkill = fk.CreateActiveSkill{
+  name = "slash_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return Self ~= player
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = effect.to
+    local from = effect.from
+    local cid = room:askForCardChosen(
+      room:getPlayerById(from),
+      room:getPlayerById(to),
+      "hej",
+      "snatch"
+    )
+
+    room:obtainCard(from, cid)
+  end
+}
 local slash = fk.CreateBasicCard{
   name = "slash",
   number = 7,
   suit = Card.Spade,
+  skill = slashSkill,
 }
 Fk:loadTranslationTable{
   ["slash"] = "杀",
@@ -50,10 +75,19 @@ extension:addCards({
   slash:clone(Card.Diamond, 13),
 })
 
+local jinkSkill = fk.CreateActiveSkill{
+  name = "jink_skill",
+  on_effect = function(self, room, effect)
+    if effect.responseToEvent then
+      effect.responseToEvent.isCancellOut = true
+    end
+  end
+}
 local jink = fk.CreateBasicCard{
   name = "jink",
   suit = Card.Heart,
   number = 2,
+  skill = jinkSkill,
 }
 Fk:loadTranslationTable{
   ["jink"] = "闪",
@@ -131,7 +165,7 @@ local snatchSkill = fk.CreateActiveSkill{
     return #selected == 1
   end,
   on_effect = function(self, room, effect)
-    local to = TargetGroup:getRealTargets(effect.tos)[1]
+    local to = effect.to
     local from = effect.from
     local cid = room:askForCardChosen(
       room:getPlayerById(from),
@@ -201,7 +235,7 @@ local exNihiloSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, cardEffectEvent)
-    room:drawCards(room:getPlayerById(TargetGroup:getRealTargets(cardEffectEvent.tos)[1]), 2, "ex_nihilo")
+    room:drawCards(room:getPlayerById(cardEffectEvent.to), 2, "ex_nihilo")
   end
 }
 
@@ -222,10 +256,19 @@ extension:addCards({
   exNihilo:clone(Card.Heart, 11),
 })
 
+local nullificationSkill = fk.CreateActiveSkill{
+  name = "nullification_skill",
+  on_effect = function(self, room, effect)
+    if effect.responseToEvent then
+      effect.responseToEvent.isCancellOut = true
+    end
+  end
+}
 local nullification = fk.CreateTrickCard{
   name = "nullification",
   suit = Card.Spade,
   number = 11,
+  skill = nullificationSkill,
 }
 Fk:loadTranslationTable{
   ["nullification"] = "无懈可击",
