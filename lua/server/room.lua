@@ -594,9 +594,9 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       ---@type AimStruct
       local aimStruct
       local initialEvent = false
-      collaboratorsIndex[toId] = collaboratorsIndex[toId] or 0
+      collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
 
-      if not aimEventCollaborators[toId] or collaboratorsIndex[toId] >= #aimEventCollaborators[toId] then
+      if not aimEventCollaborators[toId] or collaboratorsIndex[toId] > #aimEventCollaborators[toId] then
         aimStruct = {
           from = cardUseEvent.from,
           cardId = cardUseEvent.cardId,
@@ -635,7 +635,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       cardUseEvent.from = aimStruct.from
       cardUseEvent.tos = aimEventTargetGroup
       cardUseEvent.nullifiedTargets = aimStruct.nullifiedTargets
-      
+
       if #AimGroup:getAllTargets(aimStruct.tos) == 0 then
         return false
       end
@@ -644,18 +644,20 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       if #cancelledTargets > 0 then
         for _, target in ipairs(cancelledTargets) do
           aimEventCollaborators[target] = {}
-          collaboratorsIndex[target] = 0
+          collaboratorsIndex[target] = 1
         end
       end
       aimStruct.tos[AimGroup.Cancelled] = {}
 
       aimEventCollaborators[toId] = aimEventCollaborators[toId] or {}
-      if not room:getPlayerById(toId):isAlive() then
+      if room:getPlayerById(toId):isAlive() then
         if initialEvent then
           table.insert(aimEventCollaborators[toId], aimStruct)
         else
           aimEventCollaborators[toId][collaboratorsIndex[toId]] = aimStruct
         end
+
+        collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
       end
 
       AimGroup:setTargetDone(aimStruct.tos, toId)
@@ -693,7 +695,9 @@ function Room:useCard(cardUseEvent)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
-    -- TODO: need to complete the cards for response
+    if not cardUseEvent.toCardId and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      break
+    end
 
     self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
     if event == fk.CardUsing then
@@ -779,7 +783,59 @@ function Room:useCard(cardUseEvent)
       end
 
       if Fk:getCardById(cardUseEvent.cardId).skill then
-        Fk:getCardById(cardUseEvent.cardId).skill:onEffect(self, cardUseEvent)
+        ---@type CardEffectEvent
+        local cardEffectEvent = {
+          from = cardUseEvent.from,
+          tos = cardUseEvent.tos,
+          cardId = cardUseEvent.cardId,
+          toCardId = cardUseEvent.toCardId,
+          responseToEvent = cardUseEvent.responseToEvent,
+          nullifiedTargets = cardUseEvent.nullifiedTargets,
+          disresponsiveList = cardUseEvent.disresponsiveList,
+          unoffsetableList = cardUseEvent.unoffsetableList,
+          addtionalDamage = cardUseEvent.addtionalDamage,
+          cardIdsResponded = cardUseEvent.nullifiedTargets,
+        }
+
+        if cardUseEvent.toCardId ~= nil then
+          self:doCardEffect(cardEffectEvent)
+        else
+          local collaboratorsIndex = {}
+          for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
+            if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
+              if aimEventCollaborators[toId] then
+                cardEffectEvent.to = toId
+                collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
+                local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
+
+                cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
+
+                if curAimEvent.disresponsiveList then
+                  for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
+                    if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
+                      table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
+                    end
+                  end
+                end
+
+                if curAimEvent.unoffsetableList then
+                  for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
+                    if not table.contains(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer) then
+                      table.insert(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer)
+                    end
+                  end
+                end
+
+                cardEffectEvent.disresponsive = curAimEvent.disresponsive
+                cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
+
+                collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
+
+                self:doCardEffect(cardEffectEvent)
+              end
+            end
+          end
+        end
       end
     end
   end
@@ -791,6 +847,76 @@ function Room:useCard(cardUseEvent)
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
+  end
+end
+
+---@param cardEffectEvent CardEffectEvent
+function Room:doCardEffect(cardEffectEvent)
+  for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
+    if cardEffectEvent.isCancellOut then
+      self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      break
+    end
+    
+    if not cardEffectEvent.toCardId and (not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
+      break
+    end
+
+    if table.contains((cardEffectEvent.nullifiedTargets or {}), cardEffectEvent.to) then
+      break
+    end
+
+    if self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+      return
+    end
+
+    if event == fk.PreCardEffect then
+      if Fk:getCardById(cardEffectEvent.cardId).name == 'slash' and
+        not (
+          cardEffectEvent.disresponsive or
+          cardEffectEvent.unoffsetable or
+          table.contains(cardEffectEvent.disresponsiveList or {}, cardEffectEvent.to) or
+          table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
+        ) then
+        local result = self:doRequest(self:getPlayerById(cardEffectEvent.to), "PlayCard", cardEffectEvent.to)
+        if result ~= '' then
+          local data = json.decode(result)
+          local card = data.card
+          local targets = data.targets
+          if type(card) == "string" then
+            local card_data = json.decode(card)
+            local skill = Fk.skills[card_data.skill]
+            local selected_cards = card_data.subcards
+            skill:onEffect(self, {
+              from = cardEffectEvent.to,
+              cards = selected_cards,
+              tos = targets,
+            })
+          else
+            local use = {}    ---@type CardUseStruct
+            use.from = cardEffectEvent.to
+            use.toCardId = cardEffectEvent.cardId
+            use.responseToEvent = cardEffectEvent
+            use.cardId = card
+            self:useCard(use)
+          end
+        end
+      elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
+        -- local use = {}    ---@type CardUseStruct
+        -- use.from = cardEffectEvent.to
+        -- use.toCardId = cardEffectEvent.cardId
+        -- use.responseToEvent = cardEffectEvent
+        -- use.cardId = card
+        -- self:useCard(use)
+      end
+    end
+
+    if event == fk.CardEffecting then
+      local cardEffecting = Fk:getCardById(cardEffectEvent.cardId)
+      if cardEffecting.skill then
+        cardEffecting.skill:onEffect(self, cardEffectEvent)
+      end
+    end
   end
 end
 
