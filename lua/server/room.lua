@@ -871,6 +871,8 @@ function Room:doCardEffect(cardEffectEvent)
     end
 
     if event == fk.PreCardEffect then
+      -- TODO: use jink
+
       if Fk:getCardById(cardEffectEvent.cardId).name == 'slash' and
         not (
           cardEffectEvent.disresponsive or
@@ -902,6 +904,8 @@ function Room:doCardEffect(cardEffectEvent)
           end
         end
       elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
+        -- TODO: use nullification
+
         -- local use = {}    ---@type CardUseStruct
         -- use.from = cardEffectEvent.to
         -- use.toCardId = cardEffectEvent.cardId
