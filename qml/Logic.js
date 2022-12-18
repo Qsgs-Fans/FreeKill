@@ -15,9 +15,20 @@ function createClientPages() {
 var callbacks = {};
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
+  // jsonData: RSA pub key
+  let cipherText
+  if (config.savedPassword[config.serverAddr] !== undefined
+    && config.savedPassword[config.serverAddr].shorten_password === config.password) {
+    cipherText = config.savedPassword[config.serverAddr].password;
+    if (Debugging)
+      console.log("use remembered password", config.password);
+  } else {
+    cipherText = Backend.pubEncrypt(jsonData, config.password);
+  }
+  config.cipherText = cipherText;
+  let md5sum = Backend.calcFileMD5();
   ClientInstance.notifyServer("Setup", JSON.stringify([
-    config.screenName,
-    config.password
+    config.screenName, cipherText, md5sum
   ]));
 }
 
@@ -37,6 +48,13 @@ callbacks["EnterLobby"] = function(jsonData) {
   // depth == 1 means the lobby page is not present in mainStack
   createClientPages();
   if (mainStack.depth === 1) {
+    // we enter the lobby successfully, so save password now.
+    config.lastLoginServer = config.serverAddr;
+    config.savedPassword[config.serverAddr] = {
+      username: config.screenName,
+      password: config.cipherText,
+      shorten_password: config.cipherText.slice(0, 8)
+    }
     mainStack.push(lobby);
   } else {
     mainStack.pop();
@@ -65,4 +83,19 @@ callbacks["UpdateRoomList"] = function(jsonData) {
     capacity: room[4],
     });
   });
+}
+
+callbacks["Chat"] = function(jsonData) {
+  // jsonData: { string userName, string general, string time, string msg }
+  let current = mainStack.currentItem;  // lobby(TODO) or room
+  let data = JSON.parse(jsonData);
+  let pid = data.type;
+  let userName = data.userName;
+  let general = Backend.translate(data.general);
+  let time = data.time;
+  let msg = data.msg;
+  if (general === "")
+    current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
+  else
+    current.addToChat(pid, data, `[${time}] ${userName}(${general}): ${msg}`);
 }

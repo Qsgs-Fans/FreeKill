@@ -5,6 +5,7 @@ import "Logic.js" as Logic
 import "Pages"
 
 Window {
+  id: realMainWin
   visible: true
   width: 960
   height: 540
@@ -18,6 +19,10 @@ Item {
     ? 540 : 960 * parent.height / parent.width
   scale: parent.width / width
   anchors.centerIn: parent
+
+  Config {
+    id: config
+  }
 
   Image {
     source: AppPath + "/image/background"
@@ -50,10 +55,6 @@ Item {
     running: true
     anchors.centerIn: parent
     visible: mainWindow.busy === true
-  }
-
-  Config {
-    id: config
   }
 
   // global popup. it is modal and just lower than toast
@@ -140,7 +141,27 @@ Item {
   }
 }
 
+  Shortcut {
+    sequences: [ StandardKey.FullScreen ]
+    onActivated: {
+      if (realMainWin.visibility === Window.FullScreen)
+        realMainWin.showNormal();
+      else
+        realMainWin.showFullScreen();
+    }
+  }
+
+  Component.onCompleted: {
+    if (!Android) {
+      width = config.winWidth;
+      height = config.winHeight;
+    }
+  }
+
   onClosing: {
+    config.winWidth = width;
+    config.winHeight = height;
+    config.saveConf();
     Backend.quitLobby();
   }
 }

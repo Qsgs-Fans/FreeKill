@@ -2,6 +2,7 @@
 #define _QMLBACKEND_H
 
 #include "fkparse.h"
+#include <qtmetamacros.h>
 
 class QmlBackend : public QObject {
   Q_OBJECT
@@ -32,14 +33,21 @@ public:
   Q_INVOKABLE QString translate(const QString &src);
   Q_INVOKABLE QString callLuaFunction(const QString &func_name,
                                       QVariantList params);
+
+  Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
+  Q_INVOKABLE QString loadConf();
+  Q_INVOKABLE void saveConf(const QString &conf);
   // support fkp
   Q_INVOKABLE void parseFkp(const QString &filename);
+
+  Q_INVOKABLE QString calcFileMD5();
 
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
 
 private:
   QQmlApplicationEngine *engine;
+  RSA *rsa;
   fkp_parser *parser;
   QHash<QString, QString> generals;
   QHash<QString, QString> skills;

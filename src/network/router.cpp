@@ -3,6 +3,7 @@
 #include "client_socket.h"
 #include "server.h"
 #include "serverplayer.h"
+#include "util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
   : QObject(parent)
@@ -142,6 +143,60 @@ void Router::abortRequest()
 
 void Router::handlePacket(const QByteArray& rawPacket)
 {
+  static QMap<QString, void (*)(ServerPlayer *, const QString &)> lobby_actions;
+  if (lobby_actions.size() <= 0) {
+    lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
+      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto avatar = arr[0].toString();
+      static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+      if (!nameExp.match(avatar).hasMatch()) {
+        auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
+          .arg(avatar).arg(sender->getId());
+        ExecSQL(ServerInstance->getDatabase(), sql);
+        sender->setAvatar(avatar);
+        sender->doNotify("UpdateAvatar", avatar);
+      }
+    };
+    lobby_actions["UpdatePassword"] = [](ServerPlayer *sender, const QString &jsonData){
+      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto oldpw = arr[0].toString();
+      auto newpw = arr[1].toString();
+      auto sql_find = QString("SELECT password, salt FROM userinfo WHERE id=%1;")
+        .arg(sender->getId());
+
+      auto passed = false;
+      auto result = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
+      passed = (result["password"].toArray()[0].toString() ==
+        QCryptographicHash::hash(
+          oldpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+          QCryptographicHash::Sha256).toHex());
+      if (passed) {
+        auto sql_update = QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
+          .arg(QCryptographicHash::hash(
+            newpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+            QCryptographicHash::Sha256).toHex())
+          .arg(sender->getId());
+        ExecSQL(ServerInstance->getDatabase(), sql_update);
+      }
+
+      sender->doNotify("UpdatePassword", passed ? "1" : "0");
+    };
+    lobby_actions["CreateRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto name = arr[0].toString();
+      auto capacity = arr[1].toInt();
+      ServerInstance->createRoom(sender, name, capacity);
+    };
+    lobby_actions["EnterRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto roomId = arr[0].toInt();
+      ServerInstance->findRoom(roomId)->addPlayer(sender);
+    };
+    lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData){
+      sender->getRoom()->chat(sender, jsonData);
+    };
+  }
+
   QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
   if (packet.isNull() || !packet.isArray())
     return;
@@ -156,12 +211,19 @@ void Router::handlePacket(const QByteArray& rawPacket)
       ClientInstance->callLua(command, jsonData);
     } else {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
-      // Add the uid of sender to jsonData
-      QJsonArray arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
-      arr.prepend(player->getId());
 
       Room *room = player->getRoom();
-      room->callLua(command, QJsonDocument(arr).toJson());
+      if (room->isLobby() && lobby_actions.contains(command))
+        lobby_actions[command](player, jsonData);
+      else {
+        if (command == "QuitRoom") {
+          room->removePlayer(player);
+        } else if (command == "AddRobot") {
+          room->addRobot(player);
+        } else if (command == "Chat") {
+          room->chat(player, jsonData);
+        }
+      }
     }
   }
   else if (type & TYPE_REQUEST) {

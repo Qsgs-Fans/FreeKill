@@ -46,14 +46,6 @@ ServerPlayer = require "server.serverplayer"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-  self.room.callback = function(_self, command, jsonData)
-    local cb = fk.room_callback[command]
-    if (type(cb) == "function") then
-      cb(jsonData)
-    else
-      print("Lobby error: Unknown command " .. command);
-    end
-  end
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data  
@@ -206,6 +198,32 @@ function Room:getNCards(num, from)
   return cardIds
 end
 
+---@param player ServerPlayer
+---@param mark string
+---@param value integer
+function Room:setPlayerMark(player, mark, value)
+  player:setMark(mark, value)
+  self:doBroadcastNotify("SetPlayerMark", json.encode{
+    player.id,
+    mark,
+    value
+  })
+end
+
+function Room:addPlayerMark(player, mark, count)
+  count = count or 1
+  local num = player:getMark(mark)
+  num = num or 0
+  self:setPlayerMark(player, mark, math.max(num + count, 0))
+end
+
+function Room:removePlayerMark(player, mark, count)
+  count = count or 1
+  local num = player:getMark(mark)
+  num = num or 0
+  self:setPlayerMark(player, mark, math.max(num - count, 0))
+end
+
 ------------------------------------------------------------------------
 -- network functions, notify function
 ------------------------------------------------------------------------
@@ -257,11 +275,11 @@ end
 
 ---@param command string
 ---@param players ServerPlayer[]
-function Room:doBroadcastRequest(command, players)
+function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   self:notifyMoveFocus(players, command)
   for _, p in ipairs(players) do
-    self:doRequest(p, command, p.request_data, false)
+    self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
   local remainTime = self.timeout
@@ -269,8 +287,39 @@ function Room:doBroadcastRequest(command, players)
   local elapsed = 0
   for _, p in ipairs(players) do
     elapsed = os.time() - currentTime
-    remainTime = remainTime - elapsed
-    p:waitForReply(remainTime)
+    p:waitForReply(remainTime - elapsed)
+  end
+end
+
+---@param command string
+---@param players ServerPlayer[]
+function Room:doRaceRequest(command, players, jsonData)
+  players = players or self.players
+  self:notifyMoveFocus(players, command)
+  for _, p in ipairs(players) do
+    self:doRequest(p, command, jsonData or p.request_data, false)
+  end
+
+  local remainTime = self.timeout
+  local currentTime = os.time()
+  local elapsed = 0
+  local winner
+  while true do
+    elapsed = os.time() - currentTime
+    if remainTime - elapsed <= 0 then
+      return nil
+    end
+    for _, p in ipairs(players) do
+      p:waitForReply(0)
+      if p.reply_ready == true then
+        winner = p
+        break
+      end
+    end
+    if winner then
+      self:doBroadcastNotify("CancelRequest", "")
+      return winner
+    end
   end
 end
 
@@ -326,6 +375,11 @@ function Room:notifyMoveFocus(players, command)
     ids,
     command
   })
+end
+
+---@param log LogMessage
+function Room:sendLog(log)
+  self:doBroadcastNotify("GameLog", json.encode(log))
 end
 
 ------------------------------------------------------------------------
@@ -540,9 +594,9 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       ---@type AimStruct
       local aimStruct
       local initialEvent = false
-      collaboratorsIndex[toId] = collaboratorsIndex[toId] or 0
+      collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
 
-      if not aimEventCollaborators[toId] or collaboratorsIndex[toId] >= #aimEventCollaborators[toId] then
+      if not aimEventCollaborators[toId] or collaboratorsIndex[toId] > #aimEventCollaborators[toId] then
         aimStruct = {
           from = cardUseEvent.from,
           cardId = cardUseEvent.cardId,
@@ -581,7 +635,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       cardUseEvent.from = aimStruct.from
       cardUseEvent.tos = aimEventTargetGroup
       cardUseEvent.nullifiedTargets = aimStruct.nullifiedTargets
-      
+
       if #AimGroup:getAllTargets(aimStruct.tos) == 0 then
         return false
       end
@@ -590,18 +644,20 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       if #cancelledTargets > 0 then
         for _, target in ipairs(cancelledTargets) do
           aimEventCollaborators[target] = {}
-          collaboratorsIndex[target] = 0
+          collaboratorsIndex[target] = 1
         end
       end
       aimStruct.tos[AimGroup.Cancelled] = {}
 
       aimEventCollaborators[toId] = aimEventCollaborators[toId] or {}
-      if not room:getPlayerById(toId):isAlive() then
+      if room:getPlayerById(toId):isAlive() then
         if initialEvent then
           table.insert(aimEventCollaborators[toId], aimStruct)
         else
           aimEventCollaborators[toId][collaboratorsIndex[toId]] = aimStruct
         end
+
+        collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
       end
 
       AimGroup:setTargetDone(aimStruct.tos, toId)
@@ -639,7 +695,9 @@ function Room:useCard(cardUseEvent)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
-    -- TODO: need to complete the cards for response
+    if not cardUseEvent.toCardId and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      break
+    end
 
     self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
     if event == fk.CardUsing then
@@ -725,7 +783,59 @@ function Room:useCard(cardUseEvent)
       end
 
       if Fk:getCardById(cardUseEvent.cardId).skill then
-        Fk:getCardById(cardUseEvent.cardId).skill:onEffect(self, cardUseEvent)
+        ---@type CardEffectEvent
+        local cardEffectEvent = {
+          from = cardUseEvent.from,
+          tos = cardUseEvent.tos,
+          cardId = cardUseEvent.cardId,
+          toCardId = cardUseEvent.toCardId,
+          responseToEvent = cardUseEvent.responseToEvent,
+          nullifiedTargets = cardUseEvent.nullifiedTargets,
+          disresponsiveList = cardUseEvent.disresponsiveList,
+          unoffsetableList = cardUseEvent.unoffsetableList,
+          addtionalDamage = cardUseEvent.addtionalDamage,
+          cardIdsResponded = cardUseEvent.nullifiedTargets,
+        }
+
+        if cardUseEvent.toCardId ~= nil then
+          self:doCardEffect(cardEffectEvent)
+        else
+          local collaboratorsIndex = {}
+          for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
+            if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
+              if aimEventCollaborators[toId] then
+                cardEffectEvent.to = toId
+                collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
+                local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
+
+                cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
+
+                if curAimEvent.disresponsiveList then
+                  for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
+                    if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
+                      table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
+                    end
+                  end
+                end
+
+                if curAimEvent.unoffsetableList then
+                  for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
+                    if not table.contains(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer) then
+                      table.insert(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer)
+                    end
+                  end
+                end
+
+                cardEffectEvent.disresponsive = curAimEvent.disresponsive
+                cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
+
+                collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
+
+                self:doCardEffect(cardEffectEvent)
+              end
+            end
+          end
+        end
       end
     end
   end
@@ -737,6 +847,80 @@ function Room:useCard(cardUseEvent)
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
+  end
+end
+
+---@param cardEffectEvent CardEffectEvent
+function Room:doCardEffect(cardEffectEvent)
+  for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
+    if cardEffectEvent.isCancellOut then
+      self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      break
+    end
+    
+    if not cardEffectEvent.toCardId and (not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
+      break
+    end
+
+    if table.contains((cardEffectEvent.nullifiedTargets or {}), cardEffectEvent.to) then
+      break
+    end
+
+    if self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+      return
+    end
+
+    if event == fk.PreCardEffect then
+      -- TODO: use jink
+
+      if Fk:getCardById(cardEffectEvent.cardId).name == 'slash' and
+        not (
+          cardEffectEvent.disresponsive or
+          cardEffectEvent.unoffsetable or
+          table.contains(cardEffectEvent.disresponsiveList or {}, cardEffectEvent.to) or
+          table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
+        ) then
+        local result = self:doRequest(self:getPlayerById(cardEffectEvent.to), "PlayCard", cardEffectEvent.to)
+        if result ~= '' then
+          local data = json.decode(result)
+          local card = data.card
+          local targets = data.targets
+          if type(card) == "string" then
+            local card_data = json.decode(card)
+            local skill = Fk.skills[card_data.skill]
+            local selected_cards = card_data.subcards
+            skill:onEffect(self, {
+              from = cardEffectEvent.to,
+              cards = selected_cards,
+              tos = targets,
+            })
+          else
+            local use = {}    ---@type CardUseStruct
+            use.from = cardEffectEvent.to
+            use.toCardId = cardEffectEvent.cardId
+            use.responseToEvent = cardEffectEvent
+            use.cardId = card
+            self:useCard(use)
+          end
+        end
+      elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
+        -- TODO: use nullification
+
+        -- local use = {}    ---@type CardUseStruct
+        -- use.from = cardEffectEvent.to
+        -- use.toCardId = cardEffectEvent.cardId
+        -- use.responseToEvent = cardEffectEvent
+        -- use.cardId = card
+        -- self:useCard(use)
+      end
+    end
+
+    if event == fk.CardEffecting then
+      local cardEffecting = Fk:getCardById(cardEffectEvent.cardId)
+      if cardEffecting.skill then
+        cardEffecting.skill:onEffect(self, cardEffectEvent)
+      end
+    end
   end
 end
 
@@ -877,6 +1061,43 @@ function Room:drawCards(player, num, skillName, fromPlace)
   })
 
   return { table.unpack(topCards) }
+end
+
+---@param card Card | Card[]
+---@param to_place integer
+---@param target ServerPlayer
+---@param reason integer
+---@param skill_name string
+---@param special_name string
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name)
+  reason = reason or fk.ReasonJustMove
+  skill_name = skill_name or ""
+  special_name = special_name or ""
+  local ids = {}
+  if card[1] ~= nil then
+    for i, cd in ipairs(card) do
+      ids[i] = cd.id
+    end
+  else
+    ids[1] = card.id
+  end
+
+  local to
+  if table.contains(
+    {Card.PlayerEquip, Card.PlayerHand,
+     Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+    to = target.id
+  end
+
+  self.moveCards{
+    ids = ids,
+    from = self.owner_map[ids[1]],
+    to = to,
+    toArea = to_place,
+    moveReason = reason,
+    skillName = skill_name,
+    specialName = special_name
+  }
 end
 
 ------------------------------------------------------------------------
@@ -1087,10 +1308,12 @@ end
 ---@param player ServerPlayer
 ---@param skill_names string[] | string
 ---@param source_skill string | Skill | nil
-function Room:handleAddLoseSkills(player, skill_names, source_skill)
+function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog)
   if type(skill_names) == "string" then
     skill_names = skill_names:split("|")
   end
+
+  if sendlog == nil then sendlog = true end
 
   if #skill_names == 0 then return end
   local losts = {}  ---@type boolean[]
@@ -1105,7 +1328,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
             player.id,
             s.name
           })
-          -- TODO: send a log here
+
+          if sendlog then
+            self:sendLog{
+              type = "#LoseSkill",
+              from = player.id,
+              arg = s.name
+            }
+          end
+
           table.insert(losts, true)
           table.insert(triggers, s)
         end
@@ -1122,7 +1353,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
             player.id,
             s.name
           })
-          -- TODO: send log
+
+          if sendlog then
+            self:sendLog{
+              type = "#AcquireSkill",
+              from = player.id,
+              arg = s.name
+            }
+          end
+
           table.insert(losts, false)
           table.insert(triggers, s)
         end
@@ -1135,6 +1374,35 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill)
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])
     end
+  end
+end
+
+-- judge
+
+---@param data JudgeData
+---@return Card
+function Room:judge(data)
+  local who = data.who
+  self.logic:trigger(fk.StartJudge, who, data)
+  data.card = Fk:getCardById(self:getNCards(1)[1])
+  self:sendLog{
+    type = "#InitialJudge",
+    from = who.id,
+    card = {data.card},
+  }
+  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
+
+  self.logic:trigger(fk.AskForRetrial, who, data)
+  self.logic:trigger(fk.FinishRetrial, who, data)
+  self:sendLog{
+    type = "#JudgeResult",
+    from = who.id,
+    card = {data.card},
+  }
+
+  self.logic:trigger(fk.FinishJudge, who, data)
+  if self:getCardArea(data.card.id) == Card.Processing then
+    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
   end
 end
 
@@ -1185,29 +1453,6 @@ function Room:gameOver()
   self.game_finished = true
   -- dosomething
   self.room:gameOver()
-end
-
-fk.room_callback = {}
-
-fk.room_callback["QuitRoom"] = function(jsonData)
-  -- jsonData: [ int uid ]
-  local data = json.decode(jsonData)
-  local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
-  local room = player:getRoom()
-  if not room:isLobby() then
-    room:removePlayer(player)
-  end
-end
-
-fk.room_callback["AddRobot"] = function(jsonData)
-  -- jsonData: [ int uid ]
-  local data = json.decode(jsonData)
-  local player = fk.ServerInstance:findPlayer(tonumber(data[1]))
-  local room = player:getRoom()
-  
-  if not room:isLobby() then
-    room:addRobot(player)
-  end
 end
 
 function CreateRoom(_room)

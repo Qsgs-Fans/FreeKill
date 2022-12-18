@@ -69,5 +69,6 @@ fk.PreCardEffect = 54
 fk.BeforeCardEffect = 55
 fk.CardEffecting = 56
 fk.CardEffectFinished = 57
+fk.CardEffectCancelledOut = 58
 
-fk.NumOfEvents = 58
+fk.NumOfEvents = 59

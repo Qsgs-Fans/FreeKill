@@ -33,3 +33,5 @@ fk.ReasonResonpse = 10
 fk.NormalDamage = 1
 fk.ThunderDamage = 2
 fk.FireDamage = 3
+
+---@alias LogMessage {type: string, from: integer, to: integer[], card: integer[], arg: any, arg2: any, arg3: any}
