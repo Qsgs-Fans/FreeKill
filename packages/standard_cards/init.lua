@@ -261,6 +261,9 @@ extension:addCards({
 
 local nullificationSkill = fk.CreateActiveSkill{
   name = "nullification_skill",
+  can_use = function()
+    return false
+  end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true
