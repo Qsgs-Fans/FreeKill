@@ -88,11 +88,11 @@ function doCancelButton() {
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    replyToServer("");
+    replyToServer("__cancel");
     return;
   }
    
-  replyToServer("");
+  replyToServer("__cancel");
 }
 
 function replyToServer(jsonData) {
@@ -639,4 +639,8 @@ callbacks["AskForResponseCard"] = function(jsonData) {
   roomScene.state = "responding";
   okButton.enabled = false;
   cancelButton.enabled = true;
+}
+
+callbacks["WaitForNullification"] = function() {
+  roomScene.state = "notactive";
 }

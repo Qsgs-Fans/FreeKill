@@ -258,6 +258,7 @@ Fk:loadTranslationTable{
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
   ["#AskForUseCard"] = "请使用卡牌 %1",
   ["#AskForResponseCard"] = "请打出卡牌 %1",
+  ["#AskForNullification"] = "无懈",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
