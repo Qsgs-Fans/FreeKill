@@ -99,7 +99,8 @@ bool QmlBackend::isDir(const QString &file) {
 QString QmlBackend::translate(const QString &src) {
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, "Translate");
-  lua_pushstring(L, src.toUtf8().data());
+  auto bytes = src.toUtf8();
+  lua_pushstring(L, bytes.data());
 
   int err = lua_pcall(L, 1, 1, 0);
   const char *result = lua_tostring(L, -1);
@@ -125,9 +126,11 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
     case QMetaType::Double:
       lua_pushnumber(L, v.toDouble());
       break;
-    case QMetaType::QString:
-      lua_pushstring(L, v.toString().toUtf8().data());
+    case QMetaType::QString: {
+      auto bytes = v.toString().toUtf8();
+      lua_pushstring(L, bytes.data());
       break;
+    }
     case QMetaType::QVariantList:
       lua_newtable(L);
       list = v.toList();

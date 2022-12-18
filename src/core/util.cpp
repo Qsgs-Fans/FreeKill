@@ -108,7 +108,8 @@ static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
 
 QJsonObject SelectFromDatabase(sqlite3 *db, const QString &sql) {
   QJsonObject obj;
-  sqlite3_exec(db, sql.toUtf8().data(), callback, (void *)&obj, nullptr);
+  auto bytes = sql.toUtf8();
+  sqlite3_exec(db, bytes.data(), callback, (void *)&obj, nullptr);
   return obj;
 }
 
@@ -118,7 +119,8 @@ QString SelectFromDb(sqlite3 *db, const QString &sql) {
 }
 
 void ExecSQL(sqlite3 *db, const QString &sql) {
-  sqlite3_exec(db, sql.toUtf8().data(), nullptr, nullptr, nullptr);
+  auto bytes = sql.toUtf8();
+  sqlite3_exec(db, bytes.data(), nullptr, nullptr, nullptr);
 }
 
 void CloseDatabase(sqlite3 *db) {

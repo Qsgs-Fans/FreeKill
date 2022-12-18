@@ -33,7 +33,8 @@ const char *Shell::ColoredText(const char *input, Color color, TextType type) {
   header.append(QString::number(30 + color));
   header.append("m");
   header.append(str);
-  return header.toUtf8().constData();
+  auto bytes = header.toUtf8();
+  return bytes.constData();
 }
 
 void Shell::helpCommand(QStringList &) {
@@ -103,7 +104,8 @@ void Shell::run() {
     auto command_list = command.split(' ');
     auto func = handler_map[command_list.first()];
     if (!func) {
-      qWarning("Unknown command \"%s\". Type \"help\" for hints.", command_list.first().toUtf8().constData());
+      auto bytes = command_list.first().toUtf8();
+      qWarning("Unknown command \"%s\". Type \"help\" for hints.", bytes.constData());
     } else {
       command_list.removeFirst();
       (this->*func)(command_list);
