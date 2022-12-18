@@ -1,6 +1,7 @@
 #include "qmlbackend.h"
 #include "server.h"
 #include "client.h"
+#include "util.h"
 
 QmlBackend *Backend;
 
@@ -9,12 +10,14 @@ QmlBackend::QmlBackend(QObject* parent)
 {
   Backend = this;
   engine = nullptr;
+  rsa = RSA_new();
   parser = fkp_new_parser();
 }
 
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
+  RSA_free(rsa);
   fkp_close(parser);
 }
 
@@ -60,7 +63,7 @@ void QmlBackend::joinServer(QString address)
     addr = address;
   }
 
-  client->connectToHost(QHostAddress(addr), port);
+  client->connectToHost(addr, port);
 }
 
 void QmlBackend::quitLobby()
@@ -101,7 +104,7 @@ QString QmlBackend::translate(const QString &src) {
   int err = lua_pcall(L, 1, 1, 0);
   const char *result = lua_tostring(L, -1);
   if (err) {
-    qDebug() << result;
+    qCritical() << result;
     lua_pop(L, 1);
     return "";
   }
@@ -135,7 +138,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
       }
       break;
     default:
-      qDebug() << "cannot handle QVariant type" << v.typeId();
+      qCritical() << "cannot handle QVariant type" << v.typeId();
       lua_pushnil(L);
       break;
   }
@@ -154,12 +157,52 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   int err = lua_pcall(L, params.length(), 1, 0);
   const char *result = lua_tostring(L, -1);
   if (err) {
-    qDebug() << result;
+    qCritical() << result;
     lua_pop(L, 1);
     return "";
   }
   lua_pop(L, 1);
   return QString(result);
+}
+
+QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
+  BIO *keyio = BIO_new_mem_buf(key.toLatin1().data(), -1);
+  PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
+  BIO_free_all(keyio);
+
+  unsigned char buf[RSA_size(rsa)];
+  RSA_public_encrypt(data.length(), (const unsigned char *)data.toUtf8().data(),
+    buf, rsa, RSA_PKCS1_PADDING);
+  return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
+}
+
+QString QmlBackend::loadConf() {
+  QFile conf("freekill.client.config.json");
+  if (!conf.exists()) {
+    conf.open(QIODevice::WriteOnly);
+    static const char *init_conf = "{\
+      \"winWidth\": 960,\
+      \"winHeight\": 540,\
+      \"lastLoginServer\": \"127.0.0.1\",\
+      \"savedPassword\": {\
+        \"127.0.0.1\": {\
+          \"username\": \"player\",\
+          \"password\": \"\",\
+          \"shorten_password\": \"\"\
+        }\
+      }\
+    }";
+    conf.write(init_conf);
+    return init_conf;
+  }
+  conf.open(QIODevice::ReadOnly);
+  return conf.readAll();
+}
+
+void QmlBackend::saveConf(const QString &conf) {
+  QFile c("freekill.client.config.json");
+  c.open(QIODevice::WriteOnly);
+  c.write(conf.toUtf8());
 }
 
 void QmlBackend::parseFkp(const QString &fileName) {
@@ -215,3 +258,8 @@ void QmlBackend::readHashFromParser() {
   copyFkpHash2QHash(skills, parser->skills);
   copyFkpHash2QHash(marks, parser->marks);
 }
+
+QString QmlBackend::calcFileMD5() {
+  return ::calcFileMD5();
+}
+

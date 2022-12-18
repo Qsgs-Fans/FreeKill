@@ -5,27 +5,26 @@
 
 Room::Room(Server* server)
 {
+  setObjectName("Room");
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
   setParent(server);
+  m_abandoned = false;
   owner = nullptr;
   gameStarted = false;
-  robot_id = -1;
+  robot_id = -2;  // -1 is reserved in UI logic
   timeout = 15;
+  L = NULL;
   if (!isLobby()) {
     connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
     connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
-  }
 
-  L = CreateLuaState();
-  DoLuaScript(L, "lua/freekill.lua");
-  if (isLobby()) {
-    DoLuaScript(L, "lua/server/lobby.lua");
-  } else {
+    L = CreateLuaState();
+    DoLuaScript(L, "lua/freekill.lua");
     DoLuaScript(L, "lua/server/room.lua");
+    initLua();
   }
-  initLua();
 }
 
 Room::~Room()
@@ -35,7 +34,7 @@ Room::~Room()
     terminate();
     wait();
   }
-  lua_close(L);
+  if (L) lua_close(L);
 }
 
 Server *Room::getServer() const
@@ -46,6 +45,11 @@ Server *Room::getServer() const
 int Room::getId() const
 {
   return id;
+}
+
+void Room::setId(int id)
+{
+  this->id = id;
 }
 
 bool Room::isLobby() const
@@ -80,6 +84,9 @@ bool Room::isFull() const
 
 bool Room::isAbandoned() const
 {
+  if (isLobby())
+    return false;
+
   if (players.isEmpty())
     return true;
 
@@ -88,6 +95,10 @@ bool Room::isAbandoned() const
       return false;
   }
   return true;
+}
+
+void Room::setAbandoned(bool abandoned) {
+  m_abandoned = abandoned;
 }
 
 ServerPlayer *Room::getOwner() const
@@ -201,10 +212,11 @@ void Room::removePlayer(ServerPlayer *player)
     server->addPlayer(runner);
 
     emit playerRemoved(runner);
-    runner->abortRequest();
+    player->abortRequest();
   }
 
-  if (isAbandoned()) {
+  if (isAbandoned() && !m_abandoned) {
+    m_abandoned = true;
     emit abandoned();
   } else if (player == owner) {
     setOwner(players.first());
@@ -265,6 +277,17 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
   }
 }
 
+void Room::chat(ServerPlayer *sender, const QString &jsonData) {
+  auto doc = QJsonDocument::fromJson(jsonData.toUtf8()).object();
+  auto type = doc["type"].toInt();
+  doc["type"] = sender->getId();
+  if (type == 1) {
+    // TODO: server chatting
+  } else {
+    doBroadcastNotify(players, "Chat", QJsonDocument(doc).toJson(QJsonDocument::Compact));
+  }
+}
+
 void Room::gameOver()
 {
   gameStarted = false;
@@ -275,6 +298,8 @@ void Room::gameOver()
       p->deleteLater();
     }
   }
+  players.clear();
+  owner = nullptr;
 }
 
 void Room::run()

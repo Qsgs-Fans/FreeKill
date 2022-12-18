@@ -1,5 +1,7 @@
 #!/bin/sh
 
+rm -rf res assets
+
 if [ ! -e res/mipmap ]; then
   mkdir -p res/mipmap
 fi

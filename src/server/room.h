@@ -14,6 +14,7 @@ public:
   // ==================================={
   Server *getServer() const;
   int getId() const;
+  void setId(int id);
   bool isLobby() const;
   QString getName() const;
   void setName(const QString &name);
@@ -21,6 +22,7 @@ public:
   void setCapacity(int capacity);
   bool isFull() const;
   bool isAbandoned() const;
+  void setAbandoned(bool abandoned);  // never use this function
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -46,12 +48,11 @@ public:
     const QString &command,
     const QString &jsonData
   );
+  void chat(ServerPlayer *sender, const QString &jsonData);
 
   void gameOver();
 
   void initLua();
-  void callLua(const QString &command, const QString &jsonData);
-  LuaFunction callback;
 
   void roomStart();
   LuaFunction startGame;

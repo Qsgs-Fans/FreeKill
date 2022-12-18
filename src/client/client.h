@@ -11,7 +11,7 @@ public:
   Client(QObject *parent = nullptr);
   ~Client();
 
-  void connectToHost(const QHostAddress &server, ushort port);
+  void connectToHost(const QString &server, ushort port);
 
   Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);

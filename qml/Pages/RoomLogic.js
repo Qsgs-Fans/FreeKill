@@ -379,9 +379,11 @@ callbacks["ArrangeSeats"] = function(jsonData) {
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
     item.seatNumber = order.indexOf(item.id) + 1;
+    item.general = "";
   }
 
   dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
+  dashboardModel.general = "";
   roomScene.dashboardModelChanged();
   
   // make Self to the first of list, then reorder photomodel
@@ -476,7 +478,10 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   // jsonData: string name
   roomScene.promptText = Backend.translate("#AskForSkillInvoke")
     .arg(Backend.translate(jsonData));
-  roomScene.state = "responding";
+  roomScene.state = "replying";
+  roomScene.okCancel.visible = true;
+  roomScene.okButton.enabled = true;
+  roomScene.cancelButton.enabled = true;
 }
 
 callbacks["AskForChoice"] = function(jsonData) {
@@ -589,4 +594,12 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   roomScene.state = "responding";
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
+}
+
+callbacks["CancelRequest"] = function() {
+  roomScene.state = "notactive";
+}
+
+callbacks["GameLog"] = function(jsonData) {
+  roomScene.addToLog(jsonData)
 }

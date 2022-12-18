@@ -1,4 +1,7 @@
 #include "util.h"
+#include <qcryptographichash.h>
+#include <qnamespace.h>
+#include <qregularexpression.h>
 
 extern "C" {
   int luaopen_fk(lua_State *);
@@ -24,7 +27,7 @@ bool DoLuaScript(lua_State *L, const char *script)
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
-    qDebug() << error_msg;
+    qCritical() << error_msg;
     lua_pop(L, 2);
     return false;
   }
@@ -65,7 +68,7 @@ sqlite3 *OpenDatabase(const QString &filename)
   if (!QFile::exists(filename)) {
     QFile file("./server/init.sql");
     if (!file.open(QIODevice::ReadOnly)) {
-      qDebug() << "cannot open init.sql. Quit now.";
+      qFatal("cannot open init.sql. Quit now.");
       qApp->exit(1);
     }
 
@@ -75,7 +78,7 @@ sqlite3 *OpenDatabase(const QString &filename)
     rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr, &err_msg);
 
     if (rc != SQLITE_OK ) {
-      qDebug() << "sqlite error:" << err_msg;
+      qCritical() << "sqlite error:" << err_msg;
       sqlite3_free(err_msg);
       sqlite3_close(ret);
       qApp->exit(1);
@@ -83,7 +86,7 @@ sqlite3 *OpenDatabase(const QString &filename)
   } else {
     rc = sqlite3_open(filename.toLatin1().data(), &ret);
     if (rc != SQLITE_OK) {
-      qDebug() << "Cannot open database:" << sqlite3_errmsg(ret);
+      qCritical() << "Cannot open database:" << sqlite3_errmsg(ret);
       sqlite3_close(ret);
       qApp->exit(1);
     }
@@ -121,3 +124,75 @@ void ExecSQL(sqlite3 *db, const QString &sql) {
 void CloseDatabase(sqlite3 *db) {
   sqlite3_close(db);
 }
+
+RSA *InitServerRSA() {
+  RSA *rsa = RSA_new();
+  if (!QFile::exists("server/rsa_pub")) {
+    BIGNUM *bne = BN_new();
+    BN_set_word(bne, RSA_F4);
+    RSA_generate_key_ex(rsa, 2048, bne, NULL);
+
+    BIO *bp_pub = BIO_new_file("server/rsa_pub", "w+");
+    PEM_write_bio_RSAPublicKey(bp_pub, rsa);
+    BIO *bp_pri = BIO_new_file("server/rsa", "w+");
+    PEM_write_bio_RSAPrivateKey(bp_pri, rsa, NULL, NULL, 0, NULL, NULL);
+
+    BIO_free_all(bp_pub);
+    BIO_free_all(bp_pri);
+    BN_free(bne);
+  }
+  FILE *keyFile = fopen("server/rsa_pub", "r");
+  PEM_read_RSAPublicKey(keyFile, &rsa, NULL, NULL);
+  fclose(keyFile);
+  keyFile = fopen("server/rsa", "r");
+  PEM_read_RSAPrivateKey(keyFile, &rsa, NULL, NULL);
+  fclose(keyFile);
+  return rsa;
+}
+
+static void writeFileMD5(QFile &dest, const QString &fname) {
+  QFile f(fname);
+  if (!f.open(QIODevice::ReadOnly)) {
+    return;
+  }
+
+  auto data = f.readAll();
+  auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
+  dest.write(fname.toUtf8() + '=' + hash + '\n');
+}
+
+static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) {
+  QDir d(dir);
+  auto entries = d.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  auto re = QRegularExpression::fromWildcard(filter);
+  foreach (QFileInfo info, entries) {
+    if (info.isDir()) {
+      writeDirMD5(dest, info.filePath(), filter);
+    } else {
+      if (re.match(info.fileName()).hasMatch()) {
+        writeFileMD5(dest, info.filePath());
+      }
+    }
+  }
+}
+
+QString calcFileMD5() {
+  // First, generate flist.txt
+  // flist.txt is a file contains all md5sum for code files
+  QFile flist("flist.txt");
+  if (!flist.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    qFatal("Cannot open flist.txt. Quitting.");
+  }
+
+  writeDirMD5(flist, "lua", "*.lua");
+  writeDirMD5(flist, "qml", "*.qml");
+  writeDirMD5(flist, "qml", "*.js");
+
+  // then, return flist.txt's md5
+  flist.close();
+  flist.open(QIODevice::ReadOnly);
+  auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
+  flist.close();
+  return ret.toHex();
+}
+

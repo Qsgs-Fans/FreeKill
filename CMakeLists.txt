@@ -8,10 +8,12 @@ add_subdirectory(fkparse)
 find_package(Qt6 REQUIRED COMPONENTS
   Gui
   Qml
+  Widgets
   Network
   Multimedia
 )
 
+find_package(OpenSSL)
 find_package(Lua)
 find_package(SQLite3)
 

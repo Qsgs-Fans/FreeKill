@@ -42,14 +42,19 @@ public slots:
   void onUserStateChanged();
 
 private:
+  friend class Shell;
   ServerSocket *server;
   Room *m_lobby;
   QMap<int, Room *> rooms;
+  QStack<Room *> idle_rooms;
   int nextRoomId;
   friend Room::Room(Server *server);
   QHash<int, ServerPlayer *> players;
 
+  RSA *rsa;
+  QString public_key;
   sqlite3 *db;
+  QString md5;
 
   void handleNameAndPassword(ClientSocket *client, const QString &name, const QString &password);
 };

@@ -46,3 +46,8 @@ static int GetMicroSecond(lua_State *L) {
   return 1;
 }  
 %}
+
+void qDebug(const char *msg, ...);
+void qInfo(const char *msg, ...);
+void qWarning(const char *msg, ...);
+void qCritical(const char *msg, ...);

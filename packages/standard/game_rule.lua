@@ -18,7 +18,7 @@ GameRule = fk.CreateTriggerSkill{
 
     if target == nil then
       if event == fk.GameStart then
-        print("Game started")
+        fk.qInfo("Game started")
         RoomInstance.tag["FirstRound"] = true
       end
       return false
@@ -35,6 +35,7 @@ GameRule = fk.CreateTriggerSkill{
         move_to_notify.toArea = Card.PlayerHand
         move_to_notify.to = player.id
         move_to_notify.moveInfo = {}
+        move_to_notify.moveReason = fk.ReasonDraw
         for _, id in ipairs(cardIds) do
           table.insert(move_to_notify.moveInfo, 
           { cardId = id, fromArea = Card.DrawPile })
@@ -55,7 +56,7 @@ GameRule = fk.CreateTriggerSkill{
         player:setFlag("Global_FirstRound")
       end
 
-      -- TODO: send log
+      room:sendLog{ type = "$AppendSeparator" }
       
       player:addMark("Global_TurnCount")
       if not player.faceup then

@@ -127,8 +127,6 @@ function GameLogic:prepareForStart()
     -- TODO: add skills to player
   end
 
-  -- TODO: prepare drawPile
-  -- TODO: init cards in drawPile
   local allCardIds = Fk:getAllCardIds()
   table.shuffle(allCardIds)
   room.draw_pile = allCardIds
@@ -137,13 +135,15 @@ function GameLogic:prepareForStart()
   end
 
   for _, p in ipairs(room.alive_players) do
-    room:handleAddLoseSkills(p, "zhiheng")
+    room:handleAddLoseSkills(p, "zhiheng", nil, false)
   end
 
   self:addTriggerSkill(GameRule)
   for _, trig in ipairs(Fk.global_trigger) do
     self:addTriggerSkill(trig)
   end
+
+  self.room:sendLog{ type = "$GameStart" }
 end
 
 function GameLogic:action()

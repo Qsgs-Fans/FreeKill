@@ -13,6 +13,13 @@ Server::Server(QObject* parent)
 {
   ServerInstance = this;
   db = OpenDatabase();
+  rsa = InitServerRSA();
+  QFile file("server/rsa_pub");
+  file.open(QIODevice::ReadOnly);
+  QTextStream in(&file);
+  public_key = in.readAll();
+  md5 = calcFileMD5();
+
   server = new ServerSocket();
   server->setParent(this);
   connect(server, &ServerSocket::new_connection,
@@ -30,6 +37,7 @@ Server::~Server()
   ServerInstance = nullptr;
   m_lobby->deleteLater();
   sqlite3_close(db);
+  RSA_free(rsa);
 }
 
 bool Server::listen(const QHostAddress& address, ushort port)
@@ -39,12 +47,21 @@ bool Server::listen(const QHostAddress& address, ushort port)
 
 void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
 {
-  Room *room = new Room(this);
-  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-  if (room->isLobby())
-    m_lobby = room;
-  else
+  Room *room;
+  if (!idle_rooms.isEmpty()) {
+    room = idle_rooms.pop();
+    room->setId(nextRoomId);
+    nextRoomId++;
+    room->setAbandoned(false);
     rooms.insert(room->getId(), room);
+  } else {
+    room = new Room(this);
+    connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
+    if (room->isLobby())
+      m_lobby = room;
+    else
+      rooms.insert(room->getId(), room);
+  }
 
   room->setName(name);
   room->setCapacity(capacity);
@@ -105,11 +122,11 @@ sqlite3 *Server::getDatabase() {
 
 void Server::processNewConnection(ClientSocket* client)
 {
-  qDebug() << client->peerAddress() << "connected";
+  qInfo() << client->peerAddress() << "connected";
   // version check, file check, ban IP, reconnect, etc
 
   connect(client, &ClientSocket::disconnected, this, [client](){
-    qDebug() << client->peerAddress() << "disconnected";
+    qInfo() << client->peerAddress() << "disconnected";
   });
 
   // network delay test
@@ -117,7 +134,7 @@ void Server::processNewConnection(ClientSocket* client)
   body << -2;
   body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
   body << "NetworkDelayTest";
-  body << "[]";
+  body << public_key;
   client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, this, &Server::processRequest);
@@ -142,11 +159,11 @@ void Server::processRequest(const QByteArray& msg)
     )
       valid = false;
     else
-      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 2);
+      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 3);
   }
 
   if (!valid) {
-    qDebug() << "Invalid setup string:" << msg;
+    qWarning() << "Invalid setup string:" << msg;
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
@@ -158,6 +175,19 @@ void Server::processRequest(const QByteArray& msg)
   }
 
   QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
+
+  if (md5 != arr[2].toString()) {
+    qWarning() << "MD5 check failed!";
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "MD5 check failed!";
+    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    client->disconnectFromHost();
+    return;
+  }
+
   handleNameAndPassword(client, arr[0].toString(), arr[1].toString());
 }
 
@@ -165,24 +195,34 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 {
   // First check the name and password
   // Matches a string that does not contain special characters
-  QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
-  QByteArray passwordHash = QCryptographicHash::hash(password.toLatin1(), QCryptographicHash::Sha256).toHex();
+  static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+
+  auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
+  unsigned char buf[4096] = {0};
+  RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
+    buf, rsa, RSA_PKCS1_PADDING);
+  auto decrypted_pw = QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
   bool passed = false;
   QString error_msg;
   QJsonObject result;
 
-  if (!nameExp.match(name).hasMatch()) {
+  if (!nameExp.match(name).hasMatch() && !name.isEmpty()) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';").arg(name);
     result = SelectFromDatabase(db, sql_find);
     QJsonArray arr = result["password"].toArray();
     if (arr.isEmpty()) {
+      auto salt_gen = QRandomGenerator::securelySeeded();
+      auto salt = QByteArray::number(salt_gen(), 16);
+      decrypted_pw.append(salt);
+      auto passwordHash = QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
       // not present in database, register
-      QString sql_reg = QString("INSERT INTO userinfo (name,password,\
-      avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4',%5);")
+      QString sql_reg = QString("INSERT INTO userinfo (name,password,salt,\
+      avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4','%5',%6);")
       .arg(name)
       .arg(QString(passwordHash))
+      .arg(salt)
       .arg("liubei")
       .arg(client->peerAddress())
       .arg("FALSE");
@@ -194,6 +234,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
       int id = result["id"].toArray()[0].toString().toInt();
       if (!players.value(id)) {
         // check if password is the same
+        auto salt = result["salt"].toArray()[0].toString().toLatin1();
+        decrypted_pw.append(salt);
+        auto passwordHash = QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
         passed = (passwordHash == arr[0].toString());
         if (!passed) error_msg = "username or password error";
       } else {
@@ -226,7 +269,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 
     lobby()->addPlayer(player);
   } else {
-    qDebug() << client->peerAddress() << "lost connection:" << error_msg;
+    qInfo() << client->peerAddress() << "lost connection:" << error_msg;
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
@@ -244,13 +287,22 @@ void Server::onRoomAbandoned()
   room->gameOver();
   rooms.remove(room->getId());
   updateRoomList();
-  room->deleteLater();
+  //room->deleteLater();
+  if (room->isRunning()) {
+    room->terminate();
+    room->wait();
+  }
+  idle_rooms.push(room);
+#ifdef QT_DEBUG
+  qDebug() << rooms.size() << "running room(s),"
+    << idle_rooms.size() << "idle room(s).";
+#endif
 }
 
 void Server::onUserDisconnected()
 {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  qDebug() << "Player" << player->getId() << "disconnected";
+  qInfo() << "Player" << player->getId() << "disconnected";
   Room *room = player->getRoom();
   if (room->isStarted()) {
     player->setState(Player::Offline);
