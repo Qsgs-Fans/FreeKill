@@ -31,7 +31,7 @@ set(freekill_HEADERS
 if (WIN32)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
-  set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/win/libcrypto_1_1.dll)
+  set(CRYPTO_LIB OpenSSL::Crypto)
 elseif (ANDROID)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)

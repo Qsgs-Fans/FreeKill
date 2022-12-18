@@ -13,10 +13,11 @@ FreeKill采用最新的Qt进行构建，因此需要先安装Qt6的开发环境�
 Qt安装的流程不赘述。为了编译FreeKill，至少需要安装以下的组件：
 - Qt 6: MinGW 11.2.0 64-bit （不支持MSVC）
 - Qt 6: Qt5 Compat
+- Qt 6: Shader Tools （为了使用GraphicalEffects）
 - Qt 6: Multimedia
 - QtCreator（这个是安装器强制要你安装的）
 - CMake、Ninja
-- OpenSSL 1.1.1j Source
+- OpenSSL 1.1.1
 
 接下来根据平台的不同，步骤也稍有区别。
 
@@ -24,13 +25,15 @@ ___
 
 ## Windows
 
-从网络上下载swig、flex、bison。swig在其官网可以下载，flex和bison可在[github](https://github.com/lexxmark/winflexbison/releases/)下载。
+从网络上下载swig、flex、bison。swig在其官网可以下载，flex和bison可在[github](https://github.com/lexxmark/winflexbison/releases/)或者SourceForge下载。
 
 全都下载完成之后，将含有swig.exe、win_flex.exe、win_bison.exe的文件夹全部都设置到Path环境变量里面去。
 
-之后，把<Qt_root>/Tools/OpenSSL/src/include/openssl这个文件夹复制到<Qt_root>/6.3.2/mingw_64/include。
+接下来使用QtCreator打开项目，然后尝试编译。
 
-接下来万事俱备，使用QtCreator打开项目，然后编译吧。
+这时遇到cmake报错：OpenSSL:Crypto not found. 这是因为我们还没有告诉编译器OpenSSL的位置，点左侧“项目”，查看构建选项，在CMake的Initial Configuration中，点击添加按钮，新增String型环境变量OPENSSL_ROOT_DIR，将其值设为跟Qt一同安装的OpenSSL的位置（如C:/Qt/Tools/OpenSSL/Win_x64）。然后点下方的Re-configure with Initial Parameters，这样就能正常编译了。
+
+运行的话，在Qt Creator的项目选项->运行中，先将工作目录改为项目所在的目录（git仓库的目录）。然后先将编译好了的FreeKill.exe放到项目目录中，在目录下打开CMD，执行windeployqt FreeKill.exe。调整目录下的dll文件直到能运行起来为止，之后就可以在Qt Creator中正常运行和调试了。
 
 ___
 
@@ -47,7 +50,7 @@ $ sudo apt install liblua5.4-dev libsqlite3-dev libssl-dev swig flex bison
 Arch Linux：
 
 ```sh
-$ sudo pacman -Sy lua sqlite swig openssl swig flex bison
+$ sudo pacman -Sy lua sqlite swig openssl flex bison
 ```
 
 然后使用配置好的QtCreator环境即可编译。

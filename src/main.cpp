@@ -5,6 +5,10 @@
 #include "shell.h"
 #endif
 
+#if defined(Q_OS_WIN32)
+#include "applink.c"
+#endif
+
 #include <QSplashScreen>
 #include <QScreen>
 
