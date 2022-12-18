@@ -31,4 +31,10 @@ Qt/
 QtGraphicalEffects/
 QtQuick/
 QtQuick.2/
+Qt5Compat/
+QtQml/
+sqldrivers/
+styles/
+tls/
+translations/
 *.dll
