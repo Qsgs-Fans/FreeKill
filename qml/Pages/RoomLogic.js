@@ -246,6 +246,12 @@ callbacks["AddPlayer"] = function(jsonData) {
 }
 
 function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
+  if (roomScene.respond_play) {
+    let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
+    okButton.enabled = candidate;
+    return;
+  }
+
   let i = 0;
   let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
   let all_photos = [dashboard.self];
@@ -591,6 +597,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   }
   // TODO: process prompt
 
+  roomScene.respond_play = false;
   roomScene.state = "responding";
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
@@ -602,4 +609,34 @@ callbacks["CancelRequest"] = function() {
 
 callbacks["GameLog"] = function(jsonData) {
   roomScene.addToLog(jsonData)
+}
+
+callbacks["AskForUseCard"] = function(jsonData) {
+  // jsonData: card, prompt, cancelable, {}
+  let data = JSON.parse(jsonData);
+  let cardname = data[0];
+  let prompt = data[1];
+
+  roomScene.promptText = Backend.translate(prompt)
+    .arg(Backend.translate(cardname));
+  roomScene.responding_card = cardname;
+  roomScene.respond_play = false;
+  roomScene.state = "responding";
+  okButton.enabled = false;
+  cancelButton.enabled = true;
+}
+
+callbacks["AskForResponseCard"] = function(jsonData) {
+  // jsonData: card, prompt, cancelable, {}
+  let data = JSON.parse(jsonData);
+  let cardname = data[0];
+  let prompt = data[1];
+
+  roomScene.promptText = Backend.translate(prompt)
+    .arg(Backend.translate(cardname));
+  roomScene.responding_card = cardname;
+  roomScene.respond_play = true;
+  roomScene.state = "responding";
+  okButton.enabled = false;
+  cancelButton.enabled = true;
 }
