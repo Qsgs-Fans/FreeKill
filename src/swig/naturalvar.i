@@ -61,7 +61,8 @@ lua_createtable(L, $1.length(), 0);
 
 for (int i = 0; i < $1.length(); i++) {
   QString str = $1.at(i);
-  lua_pushstring(L, str.toUtf8().constData());
+  auto bytes = str.toUtf8();
+  lua_pushstring(L, bytes.constData());
   lua_rawseti(L, -2, i + 1);
 }
 

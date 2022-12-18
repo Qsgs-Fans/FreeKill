@@ -6,6 +6,7 @@
 ---@field client_reply string
 ---@field default_reply string
 ---@field reply_ready boolean
+---@field reply_cancel boolean
 ---@field phases Phase[]
 ---@field phase_state table[]
 ---@field phase_index integer
@@ -25,6 +26,7 @@ function ServerPlayer:initialize(_self)
   self.client_reply = ""
   self.default_reply = ""
   self.reply_ready = false
+  self.reply_cancel = false
   self.phases = {}
 end
 
@@ -44,6 +46,7 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   timeout = timeout or self.room.timeout
   self.client_reply = ""
   self.reply_ready = false
+  self.reply_cancel = false
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
@@ -61,6 +64,10 @@ function ServerPlayer:waitForReply(timeout)
   end
   self.request_data = ""
   self.client_reply = result
+  if result == "__cancel" then
+    result = ""
+    self.reply_cancel = true
+  end
   if result ~= "" then self.reply_ready = true end
   return result
 end

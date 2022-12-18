@@ -22,6 +22,8 @@ Item {
   property alias dynamicCardArea: dynamicCardArea
 
   property var selected_targets: []
+  property string responding_card
+  property bool respond_play: false
 
   Image {
     source: AppPath + "/image/gamebg"
@@ -104,8 +106,8 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
-          dashboard.enableCards();
-          dashboard.enableSkills();
+          dashboard.enableCards(responding_card);
+          dashboard.enableSkills(responding_card);
           progress.visible = true;
           okCancel.visible = true;
         }
