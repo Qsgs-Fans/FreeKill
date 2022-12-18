@@ -19,7 +19,7 @@ Item {
   property int maxHp: 0
   property int hp: 0
   property int seatNumber: 1
-  property bool isDead: false
+  property bool dead: false
   property bool dying: false
   property bool faceup: true
   property bool chained: false
@@ -164,7 +164,7 @@ Item {
     anchors.fill: photoMask
     source: generalImage
     saturation: 0
-    visible: root.isDead
+    visible: root.dead
   }
 
   Image {
@@ -212,8 +212,8 @@ Item {
 
   Image {
     // id: saveme
-    visible: root.isDead || root.dying
-    source: SkinBank.DEATH_DIR + (root.isDead ? root.role : "saveme")
+    visible: root.dead || root.dying
+    source: SkinBank.DEATH_DIR + (root.dead ? root.role : "saveme")
     anchors.centerIn: photoMask
   }
 

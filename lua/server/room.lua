@@ -1227,6 +1227,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
 
   assert(not (data.reason == "recover" and data.num < 0))
   player.hp = math.min(player.hp + data.num, player.maxHp)
+  self:broadcastProperty(player, "hp")
 
   self.logic:trigger(fk.HpChanged, player, data)
 
@@ -1281,6 +1282,7 @@ function Room:changeMaxHp(player, num)
   end
 
   player.maxHp = math.max(player.maxHp + num, 0)
+  self:broadcastProperty(player, "maxHp")
   local diff = player.hp - player.maxHp
   if diff > 0 then
     if not self:changeHp(player, -diff) then
@@ -1368,6 +1370,7 @@ end
 function Room:enterDying(dyingStruct)
   local dyingPlayer = self:getPlayerById(dyingStruct.who)
   dyingPlayer.dying = true
+  self:broadcastProperty(dyingPlayer, "dying")
   self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
 
   if dyingPlayer.hp < 1 then
@@ -1395,8 +1398,8 @@ end
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
-  print(self:getPlayerById(deathStruct.who).general .. " is dead")
-  self:gameOver()
+  self:broadcastProperty(self:getPlayerById(deathStruct.who), "dead")
+  while true do end
 end
 
 -- lose/acquire skill actions

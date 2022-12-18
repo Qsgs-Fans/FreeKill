@@ -19,14 +19,14 @@ local slashSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
-    local cid = room:askForCardChosen(
-      room:getPlayerById(from),
-      room:getPlayerById(to),
-      "hej",
-      "snatch"
-    )
-
-    room:obtainCard(from, cid)
+    
+    room:damage({
+      from = from,
+      to = to,
+      damage = 1,
+      damageType = fk.NormalDamage,
+      skillName = self.name
+    })
   end
 }
 local slash = fk.CreateBasicCard{

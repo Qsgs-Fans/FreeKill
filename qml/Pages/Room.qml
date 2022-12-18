@@ -159,7 +159,7 @@ Item {
         maxHp: model.maxHp
         hp: model.hp
         seatNumber: model.seatNumber
-        isDead: model.isDead
+        dead: model.dead
         dying: model.dying
         faceup: model.faceup
         chained: model.chained
@@ -224,7 +224,7 @@ Item {
     self.maxHp: dashboardModel.maxHp
     self.hp: dashboardModel.hp
     self.seatNumber: dashboardModel.seatNumber
-    self.isDead: dashboardModel.isDead
+    self.dead: dashboardModel.dead
     self.dying: dashboardModel.dying
     self.faceup: dashboardModel.faceup
     self.chained: dashboardModel.chained
@@ -504,7 +504,7 @@ Item {
       maxHp: 0,
       hp: 0,
       seatNumber: 1,
-      isDead: false,
+      dead: false,
       dying: false,
       faceup: true,
       chained: false,
@@ -527,7 +527,7 @@ Item {
         maxHp: 0,
         hp: 0,
         seatNumber: i + 1,
-        isDead: false,
+        dead: false,
         dying: false,
         faceup: true,
         chained: false,
