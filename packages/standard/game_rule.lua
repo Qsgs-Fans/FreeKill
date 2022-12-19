@@ -79,7 +79,7 @@ GameRule = fk.CreateTriggerSkill{
           table.insert(move_to_notify.moveInfo, 
           { cardId = id, fromArea = Card.DrawPile })
         end
-        room:notifyMoveCards(room.players, {move_to_notify})
+        room:notifyMoveCards(nil, {move_to_notify})
 
         for _, id in ipairs(cardIds) do
           room:setCardArea(id, Card.PlayerHand, player.id)

@@ -131,14 +131,7 @@ end
 function Room:getAlivePlayers(sortBySeat)
   sortBySeat = sortBySeat or true
 
-  local alivePlayers = {}
-  for _, player in ipairs(self.players) do
-    if player:isAlive() then
-      table.insert(alivePlayers, player)
-    end
-  end
-
-  return alivePlayers
+  return self.alive_players
 end
 
 ---@param player ServerPlayer
@@ -169,8 +162,13 @@ end
 
 ---@param expect ServerPlayer
 ---@return ServerPlayer[]
-function Room:getOtherPlayers(expect)
-  local ret = {table.unpack(self.players)}
+function Room:getOtherPlayers(expect, include_dead)
+  local ret
+  if include_dead then
+    ret = {table.unpack(self.players)}
+  else
+    ret = {table.unpack(self.alive_players)}
+  end
   table.removeOne(ret, expect)
   return ret
 end
@@ -637,7 +635,7 @@ function Room:askForNullification(players, card_name, prompt, cancelable, extra_
   extra_data = extra_data or {}
   prompt = prompt or "#AskForUseCard"
 
-  self:notifyMoveFocus(self.players, card_name)
+  self:notifyMoveFocus(self.alive_players, card_name)
   self:doBroadcastNotify("WaitForNullification", "")
 
   local data = {card_name, prompt, cancelable, extra_data}
@@ -985,7 +983,7 @@ function Room:doCardEffect(cardEffectEvent)
         end
       elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
         local players = {}
-        for _, p in ipairs(self.players) do
+        for _, p in ipairs(self.alive_players) do
           local cards = p.player_cards[Player.Hand]
           for _, cid in ipairs(cards) do
             if Fk:getCardById(cid).name == "nullification" then
@@ -1064,7 +1062,7 @@ function Room:moveCards(...)
     return false
   end
 
-  self:notifyMoveCards(self.players, cardsMoveStructs)
+  self:notifyMoveCards(nil, cardsMoveStructs)
 
   for _, data in ipairs(cardsMoveStructs) do
     if #data.moveInfo > 0 then
