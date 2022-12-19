@@ -102,6 +102,9 @@ end
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
 function CanUseCardToTarget(card, to_select, selected)
+  if ClientInstance:getPlayerById(to_select).dead then
+    return "false"
+  end
   local c   ---@type Card
   local selected_cards
   if type(card) == "number" then

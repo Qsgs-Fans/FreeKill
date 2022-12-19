@@ -168,7 +168,7 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseEnd] = function()
       if player.phase == Player.Play then
-        -- TODO: clear history
+        player:resetCardUseHistory()
       end
     end,
     [fk.EventPhaseChanging] = function()

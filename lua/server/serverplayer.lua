@@ -236,4 +236,14 @@ function ServerPlayer:throwAllCards(flag)
   end
 end
 
+function ServerPlayer:addCardUseHistory(cardName, num)
+  Player.addCardUseHistory(self, cardName, num)
+  self:doNotify("AddCardUseHistory", json.encode{cardName, num})
+end
+
+function ServerPlayer:resetCardUseHistory(cardName)
+  Player.resetCardUseHistory(self, cardName)
+  self:doNotify("ResetCardUseHistory", cardName or "")
+end
+
 return ServerPlayer

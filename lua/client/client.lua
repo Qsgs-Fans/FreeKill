@@ -372,6 +372,16 @@ fk.client_callback["LogEvent"] = function(jsonData)
   ClientInstance:notifyUI("LogEvent", jsonData)
 end
 
+fk.client_callback["AddCardUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:addCardUseHistory(data[1], data[2])
+end
+
+fk.client_callback["ResetCardUseHistory"] = function(jsonData)
+  if jsonData == "" then jsonData = nil end
+  Self:resetCardUseHistory(jsonData)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

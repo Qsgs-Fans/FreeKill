@@ -270,9 +270,16 @@ function Player:addCardUseHistory(cardName, num)
 end
 
 function Player:resetCardUseHistory(cardName)
+  if not cardName then
+    self.cardUsedHistory = {}
+  end
   if self.cardUsedHistory[cardName] then
     self.cardUsedHistory[cardName] = 0
   end
+end
+
+function Player:usedTimes(cardName)
+  return self.cardUsedHistory[cardName] or 0
 end
 
 function Player:isKongcheng()
