@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
+import "skin-bank.js" as SkinBank
+
 
 Item {
   id: roomScene

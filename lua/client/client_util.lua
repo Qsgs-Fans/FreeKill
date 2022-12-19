@@ -310,6 +310,7 @@ Fk:loadTranslationTable{
   ["#UseCardToTargets"] = "%from 使用了牌 %card，目标是 %to",
   ["#CardUseCollaborator"] = "%from 在此次 %card 中的子目标是 %to",
   ["#UseCardToCard"] = "%from 使用了牌 %card，目标是 %arg",
+  ["#ResponsePlayCard"] = "%from 打出了牌 %card",
 
   -- judge
   ["#InitialJudge"] = "%from 的判定牌为 %card",

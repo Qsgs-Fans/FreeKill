@@ -361,6 +361,14 @@ fk.client_callback["GameLog"] = function(jsonData)
   ClientInstance:appendLog(data)
 end
 
+fk.client_callback["LogEvent"] = function(jsonData)
+  local data = json.decode(jsonData)
+  if data.type == "Death" then
+    table.removeOne(ClientInstance.alive_players, data.to)
+  end
+  ClientInstance:notifyUI("LogEvent", jsonData)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

@@ -170,6 +170,14 @@ function moveCards(moves) {
 }
 
 function setEmotion(id, emotion) {
+  let path = (SkinBank.PIXANIM_DIR + emotion).replace("file://", "");
+  if (!Backend.exists(path)) {
+    return;
+  }
+  if (!Backend.isDir(path)) {
+    // TODO: set picture emotion
+    return;
+  }
   let component = Qt.createComponent("RoomElement/PixmapAnimation.qml");
   if (component.status !== Component.Ready)
     return;
@@ -183,7 +191,8 @@ function setEmotion(id, emotion) {
     }
   }
 
-  let animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
+  let animation = component.createObject(photo, {source: emotion});
+  animation.anchors.centerIn = photo;
   animation.finished.connect(() => animation.destroy());
   animation.start();
 }
@@ -658,11 +667,25 @@ callbacks["Animate"] = function(jsonData) {
       })
       break;
     case "Emotion":
+      setEmotion(data.player, data.emotion);
       break;
     case "LightBox":
       break;
     case "SuperLightBox":
       break;
+    default:
+      break;
+  }
+}
+
+callbacks["LogEvent"] = function(jsonData) {
+  // jsonData: [Object object]
+  let data = JSON.parse(jsonData);
+  switch (data.type) {
+    case "Damage":
+      let item = getPhotoOrDashboard(data.to);
+      setEmotion(data.to, "damage");
+      item.tremble();
     default:
       break;
   }

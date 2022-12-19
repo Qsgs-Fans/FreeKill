@@ -395,6 +395,19 @@ function Room:doAnimate(type, data, players)
   self:doBroadcastNotify("Animate", json.encode(data), players)
 end
 
+function Room:setEmotion(player, name)
+  self:doAnimate("Emotion", {
+    player = player.id,
+    emotion = name
+  })
+end
+
+function Room:sendLogEvent(type, data, players)
+  players = players or self.players
+  data.type = type
+  self:doBroadcastNotify("LogEvent", json.encode(data), players)
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -773,17 +786,19 @@ end
 ---@param cardUseEvent CardUseStruct
 ---@return boolean
 function Room:useCard(cardUseEvent)
+  local from = cardUseEvent.customFrom or cardUseEvent.from
   self:moveCards({
     ids = { cardUseEvent.cardId },
-    from = cardUseEvent.customFrom or cardUseEvent.from,
+    from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
+
+  self:setEmotion(self:getPlayerById(from), Fk:getCardById(cardUseEvent.cardId).name)
   self:doAnimate("Indicate", {
-    from = cardUseEvent.customFrom or cardUseEvent.from,
+    from = from,
     to = cardUseEvent.tos or {},
   })
-  
   if cardUseEvent.tos then
     local to = {}
     for _, t in ipairs(cardUseEvent.tos) do
@@ -791,7 +806,7 @@ function Room:useCard(cardUseEvent)
     end
     self:sendLog{
       type = "#UseCardToTargets",
-      from = cardUseEvent.customFrom or cardUseEvent.from,
+      from = from,
       to = to,
       card = {cardUseEvent.cardId},
     }
@@ -810,14 +825,14 @@ function Room:useCard(cardUseEvent)
   elseif cardUseEvent.toCardId then
     self:sendLog{
       type = "#UseCardToCard",
-      from = cardUseEvent.customFrom or cardUseEvent.from,
+      from = from,
       card = {cardUseEvent.cardId},
       arg = Fk:getCardById(cardUseEvent.toCardId).name,
     }
   else
     self:sendLog{
       type = "#UseCard",
-      from = cardUseEvent.customFrom or cardUseEvent.from,
+      from = from,
       card = {cardUseEvent.cardId},
     }
   end
@@ -1290,6 +1305,10 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
         arg2 = damage_nature_table[damageStruct.damageType],
       }
     end
+    self:sendLogEvent("Damage", {
+      to = player.id,
+      damageType = damage_nature_table[damageStruct.damageType],
+    })
   elseif reason == "loseHp" then
     self:sendLog{
       type = "#LoseHP",
@@ -1506,7 +1525,7 @@ function Room:killPlayer(deathStruct)
       arg = victim.role,
     }
   end
-  --self:doBroadcastNotify("LogEvent", data)
+  self:sendLogEvent("Death", {to = victim.id})
   
   self:broadcastProperty(victim, "role")
   self:broadcastProperty(victim, "dead")
