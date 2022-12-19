@@ -465,14 +465,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     end
   end
 
-  self:moveCards({
-    ids = toDiscard,
-    from = player.id,
-    toArea = Card.DiscardPile,
-    moveReason = fk.ReasonDiscard,
-    proposer = player.id,
-    skillName = skillName
-  })
+  self:throwCard(toDiscard, skillName, player, player)
 end
 
 ---@param player ServerPlayer
@@ -1398,8 +1391,20 @@ end
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
-  self:broadcastProperty(self:getPlayerById(deathStruct.who), "dead")
-  while true do end
+  local victim = self:getPlayerById(deathStruct.who)
+  victim.dead = true
+  table.removeOne(self.alive_players, victim)
+  
+  local logic = self.logic
+  logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
+
+  -- TODO: send log
+  self:broadcastProperty(victim, "role")
+  self:broadcastProperty(victim, "dead")
+
+  logic:trigger(fk.GameOverJudge, victim, deathStruct)
+  logic:trigger(fk.Death, victim, deathStruct)
+  logic:trigger(fk.BuryVictim, victim, deathStruct)
 end
 
 -- lose/acquire skill actions
@@ -1505,6 +1510,26 @@ function Room:judge(data)
   end
 end
 
+---@param card_ids integer[]
+---@param skillName string
+---@param who ServerPlayer
+---@param thrower ServerPlayer
+function Room:throwCard(card_ids, skillName, who, thrower)
+  if type(card_ids) == "number" then
+    card_ids = {card_ids}
+  end
+  skillName = skillName or ""
+  thrower = thrower or who
+  self:moveCards({
+    ids = card_ids,
+    from = who.id,
+    toArea = Card.DiscardPile,
+    moveReason = fk.ReasonDiscard,
+    proposer = thrower.id,
+    skillName = skillName
+  })
+end
+
 -- other helpers
 
 function Room:adjustSeats()
@@ -1548,8 +1573,9 @@ function Room:shuffleDrawPile()
   table.shuffle(self.draw_pile)
 end
 
-function Room:gameOver()
+function Room:gameOver(winner)
   self.game_finished = true
+  fk.qInfo(string.format("winner is %s", winner))
   -- dosomething
   self.room:gameOver()
 end

@@ -208,4 +208,34 @@ function ServerPlayer:play(phase_table)
   end
 end
 
+function ServerPlayer:drawCards(num, skillName, fromPlace)
+  return self.room:drawCards(self, num, skillName, fromPlace)
+end
+
+function ServerPlayer:bury()
+  -- self:clearFlags()
+  -- self:clearHistory()
+  self:throwAllCards()
+  -- self:throwAllMarks()
+  -- self:clearPiles()
+
+  -- self.room:clearPlayerCardLimitation(self, false)
+end
+
+function ServerPlayer:throwAllCards(flag)
+  local room = self.room
+  flag = flag or "hej"
+  if string.find(flag, "h") then
+    room:throwCard(self.player_cards[Player.Hand], "", self)
+  end
+
+  if string.find(flag, "e") then
+    room:throwCard(self.player_cards[Player.Equip], "", self)
+  end
+
+  if string.find(flag, "j") then
+    room:throwCard(self.player_cards[Player.Judge], "", self)
+  end
+end
+
 return ServerPlayer
