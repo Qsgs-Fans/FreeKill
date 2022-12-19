@@ -690,3 +690,10 @@ callbacks["LogEvent"] = function(jsonData) {
       break;
   }
 }
+
+callbacks["GameOver"] = function(jsonData) {
+  roomScene.state = "notactive";
+  roomScene.popupBox.source = "RoomElement/GameOverBox.qml";
+  let box = roomScene.popupBox.item;
+  box.winner = jsonData;
+}

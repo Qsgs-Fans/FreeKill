@@ -23,7 +23,7 @@ local slashSkill = fk.CreateActiveSkill{
     room:damage({
       from = from,
       to = to,
-      damage = 1,
+      damage = 1000,
       damageType = fk.NormalDamage,
       skillName = self.name
     })

@@ -49,7 +49,14 @@ function Room:initialize(_room)
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data  
-    self:run()
+    local co_func = function()
+      self:run()
+    end
+    local co = coroutine.create(co_func)
+    while not self.game_finished do
+      coroutine.resume(co)
+    end
+    fk.qInfo("Game Finished.")
   end
 
   self.players = {}
@@ -1703,9 +1710,14 @@ end
 
 function Room:gameOver(winner)
   self.game_finished = true
-  fk.qInfo(string.format("winner is %s", winner))
-  -- dosomething
+
+  for _, p in ipairs(self.players) do
+    self:broadcastProperty(p, "role")
+  end
+  self:doBroadcastNotify("GameOver", winner)
+
   self.room:gameOver()
+  coroutine.yield()
 end
 
 function CreateRoom(_room)

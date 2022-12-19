@@ -270,6 +270,10 @@ Fk:loadTranslationTable{
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+
+  ["$GameOver"] = "游戏结束",
+  ["$Winner"] = "%1 获胜",
+  ["Back To Lobby"] = "返回大厅",
 }
 
 -- Game concepts
@@ -278,6 +282,7 @@ Fk:loadTranslationTable{
   ["loyalist"] = "忠臣",
   ["rebel"] = "反贼",
   ["renegade"] = "内奸",
+  ["lord+loyalist"] = "主忠",
 
   ["normal_damage"] = "无属性",
   ["fire_damage"] = "火属性",
