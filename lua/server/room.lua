@@ -389,6 +389,12 @@ function Room:sendLog(log)
   self:doBroadcastNotify("GameLog", json.encode(log))
 end
 
+function Room:doAnimate(type, data, players)
+  players = players or self.players
+  data.type = type
+  self:doBroadcastNotify("Animate", json.encode(data), players)
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -773,7 +779,49 @@ function Room:useCard(cardUseEvent)
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
+  self:doAnimate("Indicate", {
+    from = cardUseEvent.customFrom or cardUseEvent.from,
+    to = cardUseEvent.tos or {},
+  })
   
+  if cardUseEvent.tos then
+    local to = {}
+    for _, t in ipairs(cardUseEvent.tos) do
+      table.insert(to, t[1])
+    end
+    self:sendLog{
+      type = "#UseCardToTargets",
+      from = cardUseEvent.customFrom or cardUseEvent.from,
+      to = to,
+      card = {cardUseEvent.cardId},
+    }
+    for _, t in ipairs(cardUseEvent.tos) do
+      if t[2] then
+        local temp = {table.unpack(t)}
+        table.remove(temp, 1)
+        self:sendLog{
+          type = "#CardUseCollaborator",
+          from = t[1],
+          to = temp,
+          card = {cardUseEvent.cardId},
+        }
+      end
+    end
+  elseif cardUseEvent.toCardId then
+    self:sendLog{
+      type = "#UseCardToCard",
+      from = cardUseEvent.customFrom or cardUseEvent.from,
+      card = {cardUseEvent.cardId},
+      arg = Fk:getCardById(cardUseEvent.toCardId).name,
+    }
+  else
+    self:sendLog{
+      type = "#UseCard",
+      from = cardUseEvent.customFrom or cardUseEvent.from,
+      card = {cardUseEvent.cardId},
+    }
+  end
+
   if Fk:getCardById(cardUseEvent.cardId).skill then
     Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
   end

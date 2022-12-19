@@ -644,3 +644,26 @@ callbacks["AskForResponseCard"] = function(jsonData) {
 callbacks["WaitForNullification"] = function() {
   roomScene.state = "notactive";
 }
+
+callbacks["Animate"] = function(jsonData) {
+  // jsonData: [Object object]
+  let data = JSON.parse(jsonData);
+  switch (data.type) {
+    case "Indicate":
+      data.to.forEach(item => {
+        doIndicate(data.from, [item[0]]);
+        if (item[1]) {
+          doIndicate(item[0], item.slice(1));
+        }
+      })
+      break;
+    case "Emotion":
+      break;
+    case "LightBox":
+      break;
+    case "SuperLightBox":
+      break;
+    default:
+      break;
+  }
+}
