@@ -25,6 +25,7 @@ Item {
   property bool chained: false
   property bool drank: false
   property bool isOwner: false
+  property int distance: 0
   property string status: "normal"
 
   property alias handcardArea: handcardAreaItem
@@ -407,6 +408,17 @@ Item {
         duration: 150
       }
       onFinished: chat.visible = false;
+    }
+  }
+
+  Rectangle {
+    color: "white"
+    height: 20
+    width: 20
+    visible: distance != 0
+    Text {
+      text: distance
+      anchors.centerIn: parent
     }
   }
 

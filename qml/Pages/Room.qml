@@ -462,6 +462,15 @@ Item {
   }
 
   Shortcut {
+    sequence: "D"
+    property bool show_distance: false
+    onActivated: {
+      show_distance = !show_distance;
+      showDistance(show_distance);
+    }
+  }
+
+  Shortcut {
     sequence: "Esc"
     onActivated: {
       easyChat.visible = false;
@@ -491,6 +500,18 @@ Item {
 
   function addToLog(msg) {
     log.append(msg);
+  }
+
+  function showDistance(show) {
+    for (let i = 0; i < photoModel.count; i++) {
+      let item = photos.itemAt(i);
+      if (show) {
+        let dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
+        item.distance = parseInt(dis);
+      } else {
+        item.distance = 0;
+      }
+    }
   }
 
   Component.onCompleted: {

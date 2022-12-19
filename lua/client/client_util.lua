@@ -77,6 +77,12 @@ function GetCards(pack_name)
   return json.encode(ret)
 end
 
+function DistanceTo(from, to)
+  local a = ClientInstance:getPlayerById(from)
+  local b = ClientInstance:getPlayerById(to)
+  return a:distanceTo(b)
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)

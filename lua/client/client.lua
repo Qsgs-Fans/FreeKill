@@ -364,7 +364,10 @@ end
 fk.client_callback["LogEvent"] = function(jsonData)
   local data = json.decode(jsonData)
   if data.type == "Death" then
-    table.removeOne(ClientInstance.alive_players, data.to)
+    table.removeOne(
+      ClientInstance.alive_players,
+      ClientInstance:getPlayerById(data.to)
+    )
   end
   ClientInstance:notifyUI("LogEvent", jsonData)
 end

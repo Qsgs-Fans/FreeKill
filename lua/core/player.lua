@@ -242,7 +242,15 @@ end
 
 ---@param other Player
 function Player:distanceTo(other)
-  local right = math.abs(self.seat - other.seat)
+  assert(other:isInstanceOf(Player))
+  local right = 0
+  local temp = self
+  while temp ~= other do
+    if not temp.dead then
+      right = right + 1
+    end
+    temp = temp.next
+  end
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)
   -- TODO: corrent distance here using skills
