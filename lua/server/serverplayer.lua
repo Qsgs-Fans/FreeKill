@@ -19,8 +19,6 @@ function ServerPlayer:initialize(_self)
   self.state = _self:getStateString()
   self.room = nil
 
-  self.next = nil
-
   -- Below are for doBroadcastRequest
   self.request_data = ""
   self.client_reply = ""

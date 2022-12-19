@@ -188,6 +188,12 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
     p.seat = i
     table.insert(players, p)
   end
+
+  for i = 1, #players - 1 do
+    players[i].next = players[i + 1]
+  end
+  players[#players].next = players[1]
+
   ClientInstance.players = players
 
   ClientInstance:notifyUI("ArrangeSeats", jsonData)

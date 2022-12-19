@@ -7,6 +7,7 @@
 ---@field general string
 ---@field handcard_num integer
 ---@field seat integer
+---@field next Player
 ---@field phase Phase
 ---@field faceup boolean
 ---@field chained boolean
@@ -50,6 +51,7 @@ function Player:initialize()
   self.role = ""
   self.general = ""
   self.seat = 0
+  self.next = nil
   self.phase = Player.PhaseNone
   self.faceup = true
   self.chained = false

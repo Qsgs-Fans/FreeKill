@@ -1220,6 +1220,49 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
   player.hp = math.min(player.hp + data.num, player.maxHp)
   self:broadcastProperty(player, "hp")
 
+  if reason == "damage" then
+    local damage_nature_table = {
+      [fk.NormalDamage] = "normal_damage",
+      [fk.FireDamage] = "fire_damage",
+      [fk.ThunderDamage] = "thunder_damage",
+    }
+    if damageStruct.from then
+      self:sendLog{
+        type = "#Damage",
+        to = {damageStruct.from},
+        from = player.id,
+        arg = 0 - num,
+        arg2 = damage_nature_table[damageStruct.damageType],
+      }
+    else
+      self:sendLog{
+        type = "#DamageWithNoFrom",
+        from = player.id,
+        arg = 0 - num,
+        arg2 = damage_nature_table[damageStruct.damageType],
+      }
+    end
+  elseif reason == "loseHp" then
+    self:sendLog{
+      type = "#LoseHP",
+      from = player.id,
+      arg = 0 - num,
+    }
+  elseif reason == "recover" then
+    self:sendLog{
+      type = "#HealHP",
+      from = player.id,
+      arg = num,
+    }
+  end
+
+  self:sendLog{
+    type = "#ShowHPAndMaxHP",
+    from = player.id,
+    arg = player.hp,
+    arg2 = player.maxHp,
+  }
+
   self.logic:trigger(fk.HpChanged, player, data)
 
   if player.hp < 1 then
@@ -1321,7 +1364,7 @@ function Room:damage(damageStruct)
 
   if not self:changeHp(victim, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
     return false
-  end   
+  end
 
   stages = {
     [fk.Damage] = damageStruct.from,
@@ -1362,6 +1405,10 @@ function Room:enterDying(dyingStruct)
   local dyingPlayer = self:getPlayerById(dyingStruct.who)
   dyingPlayer.dying = true
   self:broadcastProperty(dyingPlayer, "dying")
+  self:sendLog{
+    type = "#EnterDying",
+    from = dyingPlayer.id,
+  }
   self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
 
   if dyingPlayer.hp < 1 then
@@ -1396,7 +1443,23 @@ function Room:killPlayer(deathStruct)
   local logic = self.logic
   logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
 
-  -- TODO: send log
+  local killer = deathStruct.damage and deathStruct.damage.from or nil
+  if killer then
+    self:sendLog{
+      type = "#KillPlayer",
+      to = {killer},
+      from = victim.id,
+      arg = victim.role,
+    }
+  else
+    self:sendLog{
+      type = "#KillPlayerWithNoKiller",
+      from = victim.id,
+      arg = victim.role,
+    }
+  end
+  --self:doBroadcastNotify("LogEvent", data)
+  
   self:broadcastProperty(victim, "role")
   self:broadcastProperty(victim, "dead")
 

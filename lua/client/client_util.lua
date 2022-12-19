@@ -266,6 +266,18 @@ Fk:loadTranslationTable{
   ["Log"] = "战报",
 }
 
+-- Game concepts
+Fk:loadTranslationTable{
+  ["lord"] = "主公",
+  ["loyalist"] = "忠臣",
+  ["rebel"] = "反贼",
+  ["renegade"] = "内奸",
+
+  ["normal_damage"] = "无属性",
+  ["fire_damage"] = "火属性",
+  ["thunder_damage"] = "雷属性",
+}
+
 -- related to sendLog
 Fk:loadTranslationTable{
   -- game processing
@@ -306,4 +318,16 @@ Fk:loadTranslationTable{
   ["#TurnOver"] = "%from 将武将牌翻面，现在是 %arg",
 	["face_up"] = "正面朝上",
 	["face_down"] = "背面朝上",
+
+  -- damage, heal and lose HP
+  ["#Damage"] = "%to 对 %from 造成了 %arg 点 %arg2 伤害",
+  ["#DamageWithNoFrom"] = "%from 受到了 %arg 点 %arg2 伤害",
+  ["#LoseHP"] = "%from 失去了 %arg 点体力",
+  ["#HealHP"] = "%from 回复了 %arg 点体力",
+  ["#ShowHPAndMaxHP"] = "%from 现在的体力值为 %arg，体力上限为 %arg2",
+
+  -- dying and death
+  ["#EnterDying"] = "%from 进入了濒死阶段",
+  ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
+  ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
 }
