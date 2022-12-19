@@ -186,6 +186,7 @@ QString calcFileMD5() {
     qFatal("Cannot open flist.txt. Quitting.");
   }
 
+  writeDirMD5(flist, "packages", "*.lua");
   writeDirMD5(flist, "lua", "*.lua");
   writeDirMD5(flist, "qml", "*.qml");
   writeDirMD5(flist, "qml", "*.js");

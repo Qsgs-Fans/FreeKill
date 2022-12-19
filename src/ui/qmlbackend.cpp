@@ -70,6 +70,9 @@ void QmlBackend::quitLobby()
 {
   if (ClientInstance)
     delete ClientInstance;
+
+  if (ServerInstance)
+    delete ServerInstance;
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
