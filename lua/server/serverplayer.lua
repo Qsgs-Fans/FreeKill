@@ -138,6 +138,13 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   return false
 end
 
+local phase_name_table = {
+  [Player.Judge] = "phase_judge",
+  [Player.Draw] = "phase_draw",
+  [Player.Play] = "phase_play",
+  [Player.Discard] = "phase_discard",
+}
+
 ---@param phase_table Phase[]
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
@@ -213,7 +220,7 @@ function ServerPlayer:play(phase_table)
       room:sendLog{
         type = "#PhaseSkipped",
         from = self.id,
-        arg = self.phase,
+        arg = phase_name_table[self.phase],
       }
     end
   end
