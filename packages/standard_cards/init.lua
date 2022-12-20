@@ -437,12 +437,12 @@ local indulgence = fk.CreateDelayedTrickCard{
 Fk:loadTranslationTable{
   ["indulgence"] = "乐不思蜀",
 }
-for iiii=30,1,-1 do
+
 extension:addCards({
   indulgence,
   indulgence:clone(Card.Club, 6),
   indulgence:clone(Card.Heart, 6),
-})end
+})
 
 local crossbow = fk.CreateWeapon{
   name = "crossbow",

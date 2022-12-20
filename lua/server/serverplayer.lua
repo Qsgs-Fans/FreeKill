@@ -182,7 +182,10 @@ function ServerPlayer:play(phase_table)
     local logic = self.room.logic
     self.phase = Player.PhaseNone
 
-    local skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
+    local skip = phase_state[i].skipped
+    if not skip then
+      skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
+    end
     phases[i] = phase_change.to
     phase_state[i].phase = phases[i]
 
@@ -190,7 +193,7 @@ function ServerPlayer:play(phase_table)
     room:notifyProperty(self, self, "phase")
 
     local cancel_skip = true
-    if phases[i] ~= Player.NotActive and (phase_state[i].skipped or skip) then
+    if phases[i] ~= Player.NotActive and (skip) then
       cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
     end
 
