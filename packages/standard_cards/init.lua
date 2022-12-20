@@ -429,12 +429,10 @@ local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      local targets = {}
+      cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        table.insert(targets, { player.id })
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
-
-      cardUseEvent.tos = { targets }
     end
   end,
   on_effect = function(self, room, effect)
@@ -480,12 +478,10 @@ local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      local targets = {}
+      cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        table.insert(targets, { player.id })
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
-
-      cardUseEvent.tos = { targets }
     end
   end,
   on_effect = function(self, room, effect)
@@ -529,12 +525,10 @@ local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      local targets = {}
+      cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        table.insert(targets, { player.id })
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
-
-      cardUseEvent.tos = { targets }
     end
   end,
   on_effect = function(self, room, cardEffectEvent)
@@ -563,12 +557,10 @@ local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      local targets = {}
+      cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        table.insert(targets, { player.id })
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
-
-      cardUseEvent.tos = { targets }
     end
   end,
   on_effect = function(self, room, cardEffectEvent)
