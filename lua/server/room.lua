@@ -736,6 +736,20 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
           additionalDamage = cardUseEvent.addtionalDamage
         }
 
+        local index = 1
+        for _, targets in ipairs(cardUseEvent.tos) do
+          if index > collaboratorsIndex[toId] then
+            break
+          end
+
+          if #targets > 1 then
+            for i = 2, #targets do
+              aimStruct.subTargets = {}
+              table.insert(aimStruct.subTargets, targets[i])
+            end
+          end
+        end
+
         collaboratorsIndex[toId] = 1
         initialEvent = true
       else
@@ -799,13 +813,17 @@ end
 ---@param cardUseEvent CardUseStruct
 ---@return boolean
 function Room:useCard(cardUseEvent)
-  local from = cardUseEvent.customFrom or cardUseEvent.from
+  local from = cardUseEvent.from
   self:moveCards({
     ids = { cardUseEvent.cardId },
     from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
+
+  if Fk:getCardById(cardUseEvent.cardId).skill then
+    Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
+  end
 
   self:setEmotion(self:getPlayerById(from), Fk:getCardById(cardUseEvent.cardId).name)
   self:doAnimate("Indicate", {
@@ -850,9 +868,6 @@ function Room:useCard(cardUseEvent)
     }
   end
 
-  if Fk:getCardById(cardUseEvent.cardId).skill then
-    Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
-  end
   if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
     return false
   end
@@ -980,6 +995,7 @@ function Room:useCard(cardUseEvent)
                 collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
                 local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
 
+                cardEffectEvent.subTargets = curAimEvent.subTargets
                 cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
 
                 if curAimEvent.disresponsiveList then
@@ -1089,6 +1105,30 @@ function Room:doCardEffect(cardEffectEvent)
   end
 end
 
+---@param cardResponseEvent CardResponseEvent
+function Room:responseCard(cardResponseEvent)
+  local from = cardResponseEvent.customFrom or cardResponseEvent.from
+  self:moveCards({
+    ids = { cardResponseEvent.cardId },
+    from = from,
+    toArea = Card.Processing,
+    moveReason = fk.ReasonResonpse,
+  })
+
+  self:setEmotion(self:getPlayerById(from), Fk:getCardById(cardResponseEvent.cardId).name)
+
+  for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
+    self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+  end
+
+  if self:getCardArea(cardResponseEvent.cardId) == Card.Processing or cardResponseEvent.skipDrop then
+    self:moveCards({
+      ids = { cardResponseEvent.cardId },
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile,
+    })
+  end
+end
 ------------------------------------------------------------------------
 -- move cards, and wrappers
 ------------------------------------------------------------------------
@@ -1419,6 +1459,10 @@ end
 function Room:damage(damageStruct)
   if damageStruct.damage < 1 then
     return false
+  end
+
+  if damageStruct.from and not self:getPlayerById(damageStruct.from):isAlive() then
+    damageStruct.from = nil
   end
 
   assert(type(damageStruct.to) == "number")
