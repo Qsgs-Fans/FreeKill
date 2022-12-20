@@ -98,7 +98,9 @@ QString ServerPlayer::waitForReply(int timeout)
 {
   QString ret;
   if (getState() != Player::Online) {
+#ifndef QT_DEBUG
     QThread::sleep(1);
+#endif
     ret = "__cancel";
   } else {
     ret = router->waitForReply(timeout);

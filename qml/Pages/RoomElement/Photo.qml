@@ -19,12 +19,13 @@ Item {
   property int maxHp: 0
   property int hp: 0
   property int seatNumber: 1
-  property bool isDead: false
+  property bool dead: false
   property bool dying: false
   property bool faceup: true
   property bool chained: false
   property bool drank: false
   property bool isOwner: false
+  property int distance: 0
   property string status: "normal"
 
   property alias handcardArea: handcardAreaItem
@@ -164,7 +165,7 @@ Item {
     anchors.fill: photoMask
     source: generalImage
     saturation: 0
-    visible: root.isDead
+    visible: root.dead
   }
 
   Image {
@@ -212,8 +213,8 @@ Item {
 
   Image {
     // id: saveme
-    visible: root.isDead || root.dying
-    source: SkinBank.DEATH_DIR + (root.isDead ? root.role : "saveme")
+    visible: root.dead || root.dying
+    source: SkinBank.DEATH_DIR + (root.dead ? root.role : "saveme")
     anchors.centerIn: photoMask
   }
 
@@ -407,6 +408,17 @@ Item {
         duration: 150
       }
       onFinished: chat.visible = false;
+    }
+  }
+
+  Rectangle {
+    color: "white"
+    height: 20
+    width: 20
+    visible: distance != 0
+    Text {
+      text: distance
+      anchors.centerIn: parent
     }
   }
 

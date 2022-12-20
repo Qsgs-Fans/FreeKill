@@ -159,8 +159,9 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   }
 
   auto data = f.readAll();
+  data.replace(QByteArray("\r\n"), QByteArray("\n"));
   auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
-  dest.write(fname.toUtf8() + '=' + hash + '\n');
+  dest.write(fname.toUtf8() + '=' + hash + ';');
 }
 
 static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) {
@@ -186,6 +187,7 @@ QString calcFileMD5() {
     qFatal("Cannot open flist.txt. Quitting.");
   }
 
+  writeDirMD5(flist, "packages", "*.lua");
   writeDirMD5(flist, "lua", "*.lua");
   writeDirMD5(flist, "qml", "*.qml");
   writeDirMD5(flist, "qml", "*.js");

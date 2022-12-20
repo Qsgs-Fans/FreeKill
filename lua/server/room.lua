@@ -49,7 +49,14 @@ function Room:initialize(_room)
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data  
-    self:run()
+    local co_func = function()
+      self:run()
+    end
+    local co = coroutine.create(co_func)
+    while not self.game_finished do
+      coroutine.resume(co)
+    end
+    fk.qInfo("Game Finished.")
   end
 
   self.players = {}
@@ -126,19 +133,18 @@ function Room:deadPlayerFilter(playerIds)
   return newPlayerIds
 end
 
----@param sortBySeat boolean
 ---@return ServerPlayer[]
-function Room:getAlivePlayers(sortBySeat)
-  sortBySeat = sortBySeat or true
-
-  local alivePlayers = {}
-  for _, player in ipairs(self.players) do
-    if player:isAlive() then
-      table.insert(alivePlayers, player)
+function Room:getAlivePlayers()
+  local current = self.current
+  local temp = current.next
+  local ret = {current}
+  while temp ~= current do
+    if not temp.dead then
+      table.insert(ret, temp)
     end
+    temp = temp.next
   end
-
-  return alivePlayers
+  return ret
 end
 
 ---@param player ServerPlayer
@@ -169,8 +175,13 @@ end
 
 ---@param expect ServerPlayer
 ---@return ServerPlayer[]
-function Room:getOtherPlayers(expect)
-  local ret = {table.unpack(self.players)}
+function Room:getOtherPlayers(expect, include_dead)
+  local ret
+  if include_dead then
+    ret = {table.unpack(self.players)}
+  else
+    ret = {table.unpack(self.alive_players)}
+  end
   table.removeOne(ret, expect)
   return ret
 end
@@ -391,6 +402,25 @@ function Room:sendLog(log)
   self:doBroadcastNotify("GameLog", json.encode(log))
 end
 
+function Room:doAnimate(type, data, players)
+  players = players or self.players
+  data.type = type
+  self:doBroadcastNotify("Animate", json.encode(data), players)
+end
+
+function Room:setEmotion(player, name)
+  self:doAnimate("Emotion", {
+    player = player.id,
+    emotion = name
+  })
+end
+
+function Room:sendLogEvent(type, data, players)
+  players = players or self.players
+  data.type = type
+  self:doBroadcastNotify("LogEvent", json.encode(data), players)
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -465,14 +495,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     end
   end
 
-  self:moveCards({
-    ids = toDiscard,
-    from = player.id,
-    toArea = Card.DiscardPile,
-    moveReason = fk.ReasonDiscard,
-    proposer = player.id,
-    skillName = skillName
-  })
+  self:throwCard(toDiscard, skillName, player, player)
 end
 
 ---@param player ServerPlayer
@@ -644,7 +667,7 @@ function Room:askForNullification(players, card_name, prompt, cancelable, extra_
   extra_data = extra_data or {}
   prompt = prompt or "#AskForUseCard"
 
-  self:notifyMoveFocus(self.players, card_name)
+  self:notifyMoveFocus(self.alive_players, card_name)
   self:doBroadcastNotify("WaitForNullification", "")
 
   local data = {card_name, prompt, cancelable, extra_data}
@@ -776,13 +799,57 @@ end
 ---@param cardUseEvent CardUseStruct
 ---@return boolean
 function Room:useCard(cardUseEvent)
+  local from = cardUseEvent.customFrom or cardUseEvent.from
   self:moveCards({
     ids = { cardUseEvent.cardId },
-    from = cardUseEvent.customFrom or cardUseEvent.from,
+    from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
-  
+
+  self:setEmotion(self:getPlayerById(from), Fk:getCardById(cardUseEvent.cardId).name)
+  self:doAnimate("Indicate", {
+    from = from,
+    to = cardUseEvent.tos or {},
+  })
+  if cardUseEvent.tos then
+    local to = {}
+    for _, t in ipairs(cardUseEvent.tos) do
+      table.insert(to, t[1])
+    end
+    self:sendLog{
+      type = "#UseCardToTargets",
+      from = from,
+      to = to,
+      card = {cardUseEvent.cardId},
+    }
+    for _, t in ipairs(cardUseEvent.tos) do
+      if t[2] then
+        local temp = {table.unpack(t)}
+        table.remove(temp, 1)
+        self:sendLog{
+          type = "#CardUseCollaborator",
+          from = t[1],
+          to = temp,
+          card = {cardUseEvent.cardId},
+        }
+      end
+    end
+  elseif cardUseEvent.toCardId then
+    self:sendLog{
+      type = "#UseCardToCard",
+      from = from,
+      card = {cardUseEvent.cardId},
+      arg = Fk:getCardById(cardUseEvent.toCardId).name,
+    }
+  else
+    self:sendLog{
+      type = "#UseCard",
+      from = from,
+      card = {cardUseEvent.cardId},
+    }
+  end
+
   if Fk:getCardById(cardUseEvent.cardId).skill then
     Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
   end
@@ -992,7 +1059,7 @@ function Room:doCardEffect(cardEffectEvent)
         end
       elseif Fk:getCardById(cardEffectEvent.cardId).type == Card.TypeTrick then
         local players = {}
-        for _, p in ipairs(self.players) do
+        for _, p in ipairs(self.alive_players) do
           local cards = p.player_cards[Player.Hand]
           for _, cid in ipairs(cards) do
             if Fk:getCardById(cid).name == "nullification" then
@@ -1071,7 +1138,7 @@ function Room:moveCards(...)
     return false
   end
 
-  self:notifyMoveCards(self.players, cardsMoveStructs)
+  self:notifyMoveCards(nil, cardsMoveStructs)
 
   for _, data in ipairs(cardsMoveStructs) do
     if #data.moveInfo > 0 then
@@ -1227,6 +1294,54 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
 
   assert(not (data.reason == "recover" and data.num < 0))
   player.hp = math.min(player.hp + data.num, player.maxHp)
+  self:broadcastProperty(player, "hp")
+
+  if reason == "damage" then
+    local damage_nature_table = {
+      [fk.NormalDamage] = "normal_damage",
+      [fk.FireDamage] = "fire_damage",
+      [fk.ThunderDamage] = "thunder_damage",
+    }
+    if damageStruct.from then
+      self:sendLog{
+        type = "#Damage",
+        to = {damageStruct.from},
+        from = player.id,
+        arg = 0 - num,
+        arg2 = damage_nature_table[damageStruct.damageType],
+      }
+    else
+      self:sendLog{
+        type = "#DamageWithNoFrom",
+        from = player.id,
+        arg = 0 - num,
+        arg2 = damage_nature_table[damageStruct.damageType],
+      }
+    end
+    self:sendLogEvent("Damage", {
+      to = player.id,
+      damageType = damage_nature_table[damageStruct.damageType],
+    })
+  elseif reason == "loseHp" then
+    self:sendLog{
+      type = "#LoseHP",
+      from = player.id,
+      arg = 0 - num,
+    }
+  elseif reason == "recover" then
+    self:sendLog{
+      type = "#HealHP",
+      from = player.id,
+      arg = num,
+    }
+  end
+
+  self:sendLog{
+    type = "#ShowHPAndMaxHP",
+    from = player.id,
+    arg = player.hp,
+    arg2 = player.maxHp,
+  }
 
   self.logic:trigger(fk.HpChanged, player, data)
 
@@ -1281,6 +1396,7 @@ function Room:changeMaxHp(player, num)
   end
 
   player.maxHp = math.max(player.maxHp + num, 0)
+  self:broadcastProperty(player, "maxHp")
   local diff = player.hp - player.maxHp
   if diff > 0 then
     if not self:changeHp(player, -diff) then
@@ -1328,7 +1444,7 @@ function Room:damage(damageStruct)
 
   if not self:changeHp(victim, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
     return false
-  end   
+  end
 
   stages = {
     [fk.Damage] = damageStruct.from,
@@ -1368,35 +1484,58 @@ end
 function Room:enterDying(dyingStruct)
   local dyingPlayer = self:getPlayerById(dyingStruct.who)
   dyingPlayer.dying = true
+  self:broadcastProperty(dyingPlayer, "dying")
+  self:sendLog{
+    type = "#EnterDying",
+    from = dyingPlayer.id,
+  }
   self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
 
   if dyingPlayer.hp < 1 then
-    local alivePlayers = self:getAlivePlayers()
-    for _, player in ipairs(alivePlayers) do
-      self.logic:trigger(fk.Dying, player, dyingStruct)
-  
-      if player.hp > 0 then
-        break
-      end
-    end
-
-    if dyingPlayer.hp < 1 then
-      ---@type DeathStruct
-      local deathData = {
-        who = dyingPlayer.id,
-        damage = dyingStruct.damage,
-      }
-      self:killPlayer(deathData)
-    end
+    self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
+    self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
+    self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
   end
   
+  if not dyingPlayer.dead then
+    dyingPlayer.dying = false
+    self:broadcastProperty(dyingPlayer, "dying")
+  end
   self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
 end
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
-  print(self:getPlayerById(deathStruct.who).general .. " is dead")
-  self:gameOver()
+  local victim = self:getPlayerById(deathStruct.who)
+  victim.dead = true
+  table.removeOne(self.alive_players, victim)
+  
+  local logic = self.logic
+  logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
+
+  local killer = deathStruct.damage and deathStruct.damage.from or nil
+  if killer then
+    self:sendLog{
+      type = "#KillPlayer",
+      to = {killer},
+      from = victim.id,
+      arg = victim.role,
+    }
+  else
+    self:sendLog{
+      type = "#KillPlayerWithNoKiller",
+      from = victim.id,
+      arg = victim.role,
+    }
+  end
+  self:sendLogEvent("Death", {to = victim.id})
+  
+  self:broadcastProperty(victim, "role")
+  self:broadcastProperty(victim, "dead")
+
+  logic:trigger(fk.GameOverJudge, victim, deathStruct)
+  logic:trigger(fk.Death, victim, deathStruct)
+  logic:trigger(fk.BuryVictim, victim, deathStruct)
 end
 
 -- lose/acquire skill actions
@@ -1502,6 +1641,26 @@ function Room:judge(data)
   end
 end
 
+---@param card_ids integer[]
+---@param skillName string
+---@param who ServerPlayer
+---@param thrower ServerPlayer
+function Room:throwCard(card_ids, skillName, who, thrower)
+  if type(card_ids) == "number" then
+    card_ids = {card_ids}
+  end
+  skillName = skillName or ""
+  thrower = thrower or who
+  self:moveCards({
+    ids = card_ids,
+    from = who.id,
+    toArea = Card.DiscardPile,
+    moveReason = fk.ReasonDiscard,
+    proposer = thrower.id,
+    skillName = skillName
+  })
+end
+
 -- other helpers
 
 function Room:adjustSeats()
@@ -1545,10 +1704,16 @@ function Room:shuffleDrawPile()
   table.shuffle(self.draw_pile)
 end
 
-function Room:gameOver()
+function Room:gameOver(winner)
   self.game_finished = true
-  -- dosomething
+
+  for _, p in ipairs(self.players) do
+    self:broadcastProperty(p, "role")
+  end
+  self:doBroadcastNotify("GameOver", winner)
+
   self.room:gameOver()
+  coroutine.yield()
 end
 
 function CreateRoom(_room)

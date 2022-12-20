@@ -1,8 +1,48 @@
+---@param victim ServerPlayer
+local function getWinner(victim)
+  local room = victim.room
+  local winner = ""
+  local alive = room.alive_players
+
+  if victim.role == "lord" then
+    if #alive == 1 and alive[1].role == "renegade" then
+      winner = "renegede"
+    else
+      winner = "rebel"
+    end
+  elseif victim.role ~= "loyalist" then
+    local lord_win = true
+    for _, p in ipairs(alive) do
+      if p.role == "rebel" or p.role == "renegade" then
+        lord_win = false
+        break
+      end
+    end
+    if lord_win then
+      winner = "lord+loyalist"
+    end
+  end
+
+  return winner
+end
+
+---@param killer ServerPlayer
+local function rewardAndPunish(killer, victim)
+  if killer.dead then return end
+  if victim.role == "rebel" then
+    killer:drawCards(3, "kill")
+  elseif victim.role == "loyalist" and killer.role == "lord" then
+    killer:throwAllCards("he")
+  end
+end
+
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
   events = {
     fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
+    fk.AskForPeaches, fk.AskForPeachesDone,
+    fk.GameOverJudge, fk.BuryVictim,
   },
   priority = 0,
 
@@ -40,7 +80,7 @@ GameRule = fk.CreateTriggerSkill{
           table.insert(move_to_notify.moveInfo, 
           { cardId = id, fromArea = Card.DrawPile })
         end
-        room:notifyMoveCards(room.players, {move_to_notify})
+        room:notifyMoveCards(nil, {move_to_notify})
 
         for _, id in ipairs(cardIds) do
           room:setCardArea(id, Card.PlayerHand, player.id)
@@ -129,11 +169,51 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseEnd] = function()
       if player.phase == Player.Play then
-        -- TODO: clear history
+        player:resetCardUseHistory()
       end
     end,
     [fk.EventPhaseChanging] = function()
       -- TODO: copy but dont copy all
+    end,
+    [fk.AskForPeaches] = function()
+      local savers = room:getAlivePlayers()
+      for _, p in ipairs(savers) do
+        if player.hp > 0 or player.dead then break end
+        while player.hp < 1 do
+          local peach_use = room:askForUseCard(p, "peach")
+          if not peach_use then break end
+          peach_use.tos = { {player.id} }
+          room:useCard(peach_use)
+        end
+      end
+    end,
+    [fk.AskForPeachesDone] = function()
+      if player.hp < 1 then
+        ---@type DeathStruct
+        local deathData = {
+          who = player.id,
+          damage = data.damage,
+        }
+        room:killPlayer(deathData)
+      end
+    end,
+    [fk.GameOverJudge] = function()
+      local winner = getWinner(player)
+      if winner ~= "" then
+        room:gameOver(winner)
+        return true
+      end
+    end,
+    [fk.BuryVictim] = function()
+      player:bury()
+      if room.tag["SkipNormalDeathProcess"] then
+        return false
+      end
+      local damage = data.damage
+      if damage and damage.from then
+        local killer = room:getPlayerById(damage.from)
+        rewardAndPunish(killer, player);
+      end
     end,
     default = function()
       print("game_rule: Event=" .. event)

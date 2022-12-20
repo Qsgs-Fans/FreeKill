@@ -143,6 +143,7 @@ fk.client_callback["Setup"] = function(jsonData)
 end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
+  Self = ClientPlayer:new(fk.Self)
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
@@ -188,6 +189,12 @@ fk.client_callback["ArrangeSeats"] = function(jsonData)
     p.seat = i
     table.insert(players, p)
   end
+
+  for i = 1, #players - 1 do
+    players[i].next = players[i + 1]
+  end
+  players[#players].next = players[1]
+
   ClientInstance.players = players
 
   ClientInstance:notifyUI("ArrangeSeats", jsonData)
@@ -353,6 +360,27 @@ end
 fk.client_callback["GameLog"] = function(jsonData)
   local data = json.decode(jsonData)
   ClientInstance:appendLog(data)
+end
+
+fk.client_callback["LogEvent"] = function(jsonData)
+  local data = json.decode(jsonData)
+  if data.type == "Death" then
+    table.removeOne(
+      ClientInstance.alive_players,
+      ClientInstance:getPlayerById(data.to)
+    )
+  end
+  ClientInstance:notifyUI("LogEvent", jsonData)
+end
+
+fk.client_callback["AddCardUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:addCardUseHistory(data[1], data[2])
+end
+
+fk.client_callback["ResetCardUseHistory"] = function(jsonData)
+  if jsonData == "" then jsonData = nil end
+  Self:resetCardUseHistory(jsonData)
 end
 
 -- Create ClientInstance (used by Lua)

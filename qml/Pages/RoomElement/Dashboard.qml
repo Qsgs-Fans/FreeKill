@@ -255,4 +255,8 @@ RowLayout {
     for (let i = 0; i < skillButtons.count; i++)
       skillButtons.itemAt(i).enabled = false;
   }
+
+  function tremble() {
+    selfPhoto.tremble();
+  }
 }

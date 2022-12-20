@@ -170,6 +170,14 @@ function moveCards(moves) {
 }
 
 function setEmotion(id, emotion) {
+  let path = (SkinBank.PIXANIM_DIR + emotion).replace("file://", "");
+  if (!Backend.exists(path)) {
+    return;
+  }
+  if (!Backend.isDir(path)) {
+    // TODO: set picture emotion
+    return;
+  }
   let component = Qt.createComponent("RoomElement/PixmapAnimation.qml");
   if (component.status !== Component.Ready)
     return;
@@ -183,7 +191,8 @@ function setEmotion(id, emotion) {
     }
   }
 
-  let animation = component.createObject(photo, {source: emotion, anchors: {centerIn: photo}});
+  let animation = component.createObject(photo, {source: emotion});
+  animation.anchors.centerIn = photo;
   animation.finished.connect(() => animation.destroy());
   animation.start();
 }
@@ -643,4 +652,48 @@ callbacks["AskForResponseCard"] = function(jsonData) {
 
 callbacks["WaitForNullification"] = function() {
   roomScene.state = "notactive";
+}
+
+callbacks["Animate"] = function(jsonData) {
+  // jsonData: [Object object]
+  let data = JSON.parse(jsonData);
+  switch (data.type) {
+    case "Indicate":
+      data.to.forEach(item => {
+        doIndicate(data.from, [item[0]]);
+        if (item[1]) {
+          doIndicate(item[0], item.slice(1));
+        }
+      })
+      break;
+    case "Emotion":
+      setEmotion(data.player, data.emotion);
+      break;
+    case "LightBox":
+      break;
+    case "SuperLightBox":
+      break;
+    default:
+      break;
+  }
+}
+
+callbacks["LogEvent"] = function(jsonData) {
+  // jsonData: [Object object]
+  let data = JSON.parse(jsonData);
+  switch (data.type) {
+    case "Damage":
+      let item = getPhotoOrDashboard(data.to);
+      setEmotion(data.to, "damage");
+      item.tremble();
+    default:
+      break;
+  }
+}
+
+callbacks["GameOver"] = function(jsonData) {
+  roomScene.state = "notactive";
+  roomScene.popupBox.source = "RoomElement/GameOverBox.qml";
+  let box = roomScene.popupBox.item;
+  box.winner = jsonData;
 }
