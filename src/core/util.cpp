@@ -159,6 +159,7 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   }
 
   auto data = f.readAll();
+  data.replace(QByteArray("\r\n"), QByteArray("\n"));
   auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
   dest.write(fname.toUtf8() + '=' + hash + ';');
 }
