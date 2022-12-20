@@ -28,7 +28,7 @@ local slashSkill = fk.CreateActiveSkill{
     room:damage({
       from = from,
       to = to,
-      damage = 1,
+      damage = 1 + (effect.addtionalDamage or 0),
       damageType = fk.NormalDamage,
       skillName = self.name
     })
@@ -134,12 +134,12 @@ local peachSkill = fk.CreateActiveSkill{
     local to = effect.to
     local from = effect.from
     
-    room:recover{
+    room:recover({
       who = to,
       num = 1,
       recoverBy = from,
       skillName = self.name
-    }
+    })
   end
 }
 local peach = fk.CreateBasicCard{
@@ -163,10 +163,35 @@ extension:addCards({
   peach:clone(Card.Heart, 12),
 })
 
+local dismantlementSkill = fk.CreateActiveSkill{
+  name = "dismantlement_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return Self ~= player and not player:isAllNude()
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local from = room:getPlayerById(effect.from)
+    local cid = room:askForCardChosen(
+      from,
+      to,
+      "hej",
+      self.name
+    )
+
+    room:throwCard(cid, self.name, to, from)
+  end
+}
 local dismantlement = fk.CreateTrickCard{
   name = "dismantlement",
   suit = Card.Spade,
   number = 3,
+  skill = dismantlementSkill,
 }
 Fk:loadTranslationTable{
   ["dismantlement"] = "过河拆桥",
@@ -202,7 +227,7 @@ local snatchSkill = fk.CreateActiveSkill{
       room:getPlayerById(from),
       room:getPlayerById(to),
       "hej",
-      "snatch"
+      self.name
     )
 
     room:obtainCard(from, cid)
@@ -227,10 +252,60 @@ extension:addCards({
   snatch:clone(Card.Diamond, 4),
 })
 
+local duelSkill = fk.CreateActiveSkill{
+  name = "duel_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return Self ~= player
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local from = room:getPlayerById(effect.from)
+    local responsers = { to, from }
+    local currentTurn = 1
+    local currentResponser = to
+
+    while currentResponser:isAlive() do
+      if effect.disresponsive or table.contains(effect.disresponsiveList or {}, currentResponser.id) then
+        break
+      end
+
+      local cardIdResponded = room:askForResponse(currentResponser, 'slash')
+      if cardIdResponded then
+        room:responseCard({
+          from = currentResponser.id,
+          cardId = cardIdResponded,
+          responseToEvent = effect,
+        })
+      else
+        break
+      end
+
+      currentTurn = currentTurn % 2 + 1
+      currentResponser = responsers[currentTurn]
+    end
+
+    if currentResponser:isAlive() then
+      room:damage({
+        from = responsers[currentTurn % 2 + 1].id,
+        to = currentResponser.id,
+        damage = 1 + (effect.addtionalDamage or 0),
+        damageType = fk.NormalDamage,
+        skillName = self.name,
+      })
+    end
+  end
+}
 local duel = fk.CreateTrickCard{
   name = "duel",
   suit = Card.Spade,
   number = 1,
+  skill = duelSkill,
 }
 Fk:loadTranslationTable{
   ["duel"] = "决斗",
@@ -244,10 +319,44 @@ extension:addCards({
   duel:clone(Card.Diamond, 1),
 })
 
+local collateralSkill = fk.CreateActiveSkill{
+  name = "collateral_skill",
+  target_filter = function(self, to_select, selected)
+    local player = Fk:currentRoom():getPlayerById(to_select)
+    if #selected == 0 then
+      return Self ~= player and player:getEquipment(Card.SubtypeWeapon)
+    elseif #selected == 1 then
+      return Fk:currentRoom():getPlayerById(selected[1]):inMyAttackRange(player)
+    end
+  end,
+  feasible = function(self, selected)
+    return #selected == 2
+  end,
+  on_use = function(self, room, cardUseEvent)
+    cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
+  end,
+  on_effect = function(self, room, effect)
+    local cardIdResponded = nil
+    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
+      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
+    end
+
+    if cardIdResponded then
+      room:useCard({
+        from = effect.to,
+        tos = { { effect.subTargets[1] } },
+        cardId = cardIdResponded,
+      })
+    else
+      room:obtainCard(effect.from, room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon), true, fk.ReasonGive)
+    end
+  end
+}
 local collateral = fk.CreateTrickCard{
   name = "collateral",
   suit = Card.Club,
   number = 12,
+  skill = collateralSkill,
 }
 Fk:loadTranslationTable{
   ["collateral"] = "借刀杀人",
@@ -269,7 +378,6 @@ local exNihiloSkill = fk.CreateActiveSkill{
     room:drawCards(room:getPlayerById(cardEffectEvent.to), 2, "ex_nihilo")
   end
 }
-
 local exNihilo = fk.CreateTrickCard{
   name = "ex_nihilo",
   suit = Card.Heart,
@@ -317,10 +425,46 @@ extension:addCards({
   nullification:clone(Card.Diamond, 12),
 })
 
+local savageAssaultSkill = fk.CreateActiveSkill{
+  name = "savage_assault_skill",
+  on_use = function(self, room, cardUseEvent)
+    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      local targets = {}
+      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+        table.insert(targets, { player.id })
+      end
+
+      cardUseEvent.tos = { targets }
+    end
+  end,
+  on_effect = function(self, room, effect)
+    local cardIdResponded = nil
+    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
+      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
+    end
+
+    if cardIdResponded then
+      room:responseCard({
+        from = effect.to,
+        cardId = cardIdResponded,
+        responseToEvent = effect,
+      })
+    else
+      room:damage({
+        from = effect.from,
+        to = effect.to,
+        damage = 1 + (effect.addtionalDamage or 0),
+        damageType = fk.NormalDamage,
+        skillName = self.name,
+      })
+    end
+  end
+}
 local savageAssault = fk.CreateTrickCard{
   name = "savage_assault",
   suit = Card.Spade,
   number = 7,
+  skill = savageAssaultSkill,
 }
 Fk:loadTranslationTable{
   ["savage_assault"] = "南蛮入侵",
@@ -332,10 +476,46 @@ extension:addCards({
   savageAssault:clone(Card.Club, 7),
 })
 
+local archeryAttackSkill = fk.CreateActiveSkill{
+  name = "archery_attack_skill",
+  on_use = function(self, room, cardUseEvent)
+    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      local targets = {}
+      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+        table.insert(targets, { player.id })
+      end
+
+      cardUseEvent.tos = { targets }
+    end
+  end,
+  on_effect = function(self, room, effect)
+    local cardIdResponded = nil
+    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
+      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink')
+    end
+
+    if cardIdResponded then
+      room:responseCard({
+        from = effect.to,
+        cardId = cardIdResponded,
+        responseToEvent = effect,
+      })
+    else
+      room:damage({
+        from = effect.from,
+        to = effect.to,
+        damage = 1 + (effect.addtionalDamage or 0),
+        damageType = fk.NormalDamage,
+        skillName = self.name,
+      })
+    end
+  end
+}
 local archeryAttack = fk.CreateTrickCard{
   name = "archery_attack",
   suit = Card.Heart,
   number = 1,
+  skill = archeryAttackSkill,
 }
 Fk:loadTranslationTable{
   ["archery_attack"] = "万箭齐发",
@@ -345,10 +525,31 @@ extension:addCards({
   archeryAttack,
 })
 
+local godSalvationSkill = fk.CreateActiveSkill{
+  name = "god_salvation_skill",
+  on_use = function(self, room, cardUseEvent)
+    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      local targets = {}
+      for _, player in ipairs(room:getAlivePlayers()) do
+        table.insert(targets, { player.id })
+      end
+
+      cardUseEvent.tos = { targets }
+    end
+  end,
+  on_effect = function(self, room, cardEffectEvent)
+    room:recover({
+      who = cardEffectEvent.to,
+      num = 1,
+      skillName = self.name,
+    })
+  end
+}
 local godSalvation = fk.CreateTrickCard{
   name = "god_salvation",
   suit = Card.Heart,
   number = 1,
+  skill = godSalvationSkill,
 }
 Fk:loadTranslationTable{
   ["god_salvation"] = "桃园结义",
@@ -358,10 +559,27 @@ extension:addCards({
   godSalvation,
 })
 
+local amazingGraceSkill = fk.CreateActiveSkill{
+  name = "amazing_grace_skill",
+  on_use = function(self, room, cardUseEvent)
+    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+      local targets = {}
+      for _, player in ipairs(room:getAlivePlayers()) do
+        table.insert(targets, { player.id })
+      end
+
+      cardUseEvent.tos = { targets }
+    end
+  end,
+  on_effect = function(self, room, cardEffectEvent)
+    room:getPlayerById(cardEffectEvent.to):drawCards(1, 'god_salvation')
+  end
+}
 local amazingGrace = fk.CreateTrickCard{
   name = "amazing_grace",
   suit = Card.Heart,
   number = 3,
+  skill = amazingGraceSkill,
 }
 Fk:loadTranslationTable{
   ["amazing_grace"] = "五谷丰登",

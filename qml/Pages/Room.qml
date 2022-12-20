@@ -77,6 +77,7 @@ Item {
           progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
+          respond_play = false;
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
@@ -100,6 +101,7 @@ Item {
           progress.visible = true;
           okCancel.visible = true;
           endPhaseButton.visible = true;
+          respond_play = false;
         }
       }
     },
@@ -123,6 +125,7 @@ Item {
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;
+          respond_play = false;
         }
       }
     }

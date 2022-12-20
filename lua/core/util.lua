@@ -263,6 +263,14 @@ end
 function AimGroup.static:addTargets(room, aimEvent, playerIds)
   local playerId = type(playerIds) == "table" and playerIds[1] or playerIds
   table.insert(aimEvent.tos[AimGroup.Undone], playerId)
+
+  if type(playerIds) == "table" then
+    for i = 2, #playerIds do
+      aimEvent.subTargets = aimEvent.subTargets or {}
+      table.insert(aimEvent.subTargets, playerIds[i])
+    end
+  end
+
   room:sortPlayersByAction(aimEvent.tos[AimGroup.Undone])
   if aimEvent.targetGroup then
     TargetGroup:pushTargets(aimEvent.targetGroup, playerIds)
