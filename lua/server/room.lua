@@ -927,7 +927,7 @@ function Room:useCard(cardUseEvent)
         local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
         if not self:getPlayerById(target).dead then
           local findSameCard = false
-          for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Equip)) do
+          for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Judge)) do
             if Fk:getCardById(cardId).trueName == Fk:getCardById(cardUseEvent.cardId) then
               findSameCard = true
             end

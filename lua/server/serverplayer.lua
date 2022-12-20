@@ -8,6 +8,7 @@
 ---@field reply_ready boolean
 ---@field reply_cancel boolean
 ---@field phases Phase[]
+---@field skipped_phases Phase[]
 ---@field phase_state table[]
 ---@field phase_index integer
 local ServerPlayer = Player:subclass("ServerPlayer")
@@ -26,6 +27,7 @@ function ServerPlayer:initialize(_self)
   self.reply_ready = false
   self.reply_cancel = false
   self.phases = {}
+  self.skipped_phases = {}
 end
 
 ---@param command string
@@ -161,7 +163,7 @@ function ServerPlayer:play(phase_table)
   for i = 1, #phases do
     phase_state[i] = {
       phase = phases[i],
-      skipped = false
+      skipped = self.skipped_phases[phases[i]] or false
     }
   end
 
@@ -201,7 +203,33 @@ function ServerPlayer:play(phase_table)
 
       if self.phase ~= Player.NotActive then
         logic:trigger(fk.EventPhaseEnd, self)
-      else break end
+      else
+        self.skipped_phases = {}
+      end
+    else
+      room:sendLog{
+        type = "#PhaseSkipped",
+        from = self.id,
+        arg = self.phase,
+      }
+    end
+  end
+end
+
+---@param phase Phase
+function ServerPlayer:skip(phase)
+  if not table.contains({
+    Player.Judge,
+    Player.Draw,
+    Player.Play,
+    Player.Discard
+  }, phase) then
+    return
+  end
+  self.skipped_phases[phase] = true
+  for _, t in ipairs(self.phase_state) do
+    if t.phase == phase then
+      t.skipped = true
     end
   end
 end

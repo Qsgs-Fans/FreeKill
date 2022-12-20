@@ -290,6 +290,11 @@ Fk:loadTranslationTable{
   ["normal_damage"] = "无属性",
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
+
+  ["phase_judge"] = "判定阶段",
+  ["phase_draw"] = "摸牌阶段",
+  ["phase_play"] = "出牌阶段",
+  ["phase_discard"] = "弃牌阶段",
 }
 
 -- related to sendLog
@@ -318,6 +323,9 @@ Fk:loadTranslationTable{
   
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+
+  -- phase
+  ["#PhaseSkipped"] = "%from 跳过了 %arg",
 
   -- useCard
   ["#UseCard"] = "%from 使用了牌 %card",
