@@ -133,12 +133,18 @@ function Room:deadPlayerFilter(playerIds)
   return newPlayerIds
 end
 
----@param sortBySeat boolean
 ---@return ServerPlayer[]
-function Room:getAlivePlayers(sortBySeat)
-  sortBySeat = sortBySeat or true
-
-  return self.alive_players
+function Room:getAlivePlayers()
+  local current = self.current
+  local temp = current.next
+  local ret = {current}
+  while temp ~= current do
+    if not temp.dead then
+      table.insert(ret, temp)
+    end
+    temp = temp.next
+  end
+  return ret
 end
 
 ---@param player ServerPlayer
@@ -1486,25 +1492,15 @@ function Room:enterDying(dyingStruct)
   self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
 
   if dyingPlayer.hp < 1 then
-    local alivePlayers = self:getAlivePlayers()
-    for _, player in ipairs(alivePlayers) do
-      self.logic:trigger(fk.Dying, player, dyingStruct)
-  
-      if player.hp > 0 then
-        break
-      end
-    end
-
-    if dyingPlayer.hp < 1 then
-      ---@type DeathStruct
-      local deathData = {
-        who = dyingPlayer.id,
-        damage = dyingStruct.damage,
-      }
-      self:killPlayer(deathData)
-    end
+    self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
+    self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
+    self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
   end
   
+  if not dyingPlayer.dead then
+    dyingPlayer.dying = false
+    self:broadcastProperty(dyingPlayer, "dying")
+  end
   self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
 end
 

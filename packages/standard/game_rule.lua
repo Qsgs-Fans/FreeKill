@@ -41,6 +41,7 @@ GameRule = fk.CreateTriggerSkill{
   events = {
     fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
+    fk.AskForPeaches, fk.AskForPeachesDone,
     fk.GameOverJudge, fk.BuryVictim,
   },
   priority = 0,
@@ -173,6 +174,28 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseChanging] = function()
       -- TODO: copy but dont copy all
+    end,
+    [fk.AskForPeaches] = function()
+      local savers = room:getAlivePlayers()
+      for _, p in ipairs(savers) do
+        if player.hp > 0 or player.dead then break end
+        while player.hp < 1 do
+          local peach_use = room:askForUseCard(p, "peach")
+          if not peach_use then break end
+          peach_use.tos = { {player.id} }
+          room:useCard(peach_use)
+        end
+      end
+    end,
+    [fk.AskForPeachesDone] = function()
+      if player.hp < 1 then
+        ---@type DeathStruct
+        local deathData = {
+          who = player.id,
+          damage = data.damage,
+        }
+        room:killPlayer(deathData)
+      end
     end,
     [fk.GameOverJudge] = function()
       local winner = getWinner(player)
