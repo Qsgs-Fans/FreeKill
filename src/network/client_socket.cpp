@@ -24,6 +24,7 @@ void ClientSocket::init()
           this, &ClientSocket::getMessage);
   connect(socket, &QTcpSocket::errorOccurred,
           this, &ClientSocket::raiseError);
+  socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
 }
 
 void ClientSocket::connectToHost(const QString &address, ushort port)

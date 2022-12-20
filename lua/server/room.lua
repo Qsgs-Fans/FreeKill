@@ -812,7 +812,7 @@ function Room:useCard(cardUseEvent)
     from = from,
     to = cardUseEvent.tos or {},
   })
-  if cardUseEvent.tos then
+  if cardUseEvent.tos and #cardUseEvent.tos > 0 then
     local to = {}
     for _, t in ipairs(cardUseEvent.tos) do
       table.insert(to, t[1])
@@ -927,7 +927,7 @@ function Room:useCard(cardUseEvent)
         local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
         if not self:getPlayerById(target).dead then
           local findSameCard = false
-          for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Equip)) do
+          for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Judge)) do
             if Fk:getCardById(cardId).trueName == Fk:getCardById(cardUseEvent.cardId) then
               findSameCard = true
             end
@@ -1026,7 +1026,9 @@ end
 function Room:doCardEffect(cardEffectEvent)
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
     if cardEffectEvent.isCancellOut then
-      self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      if cardEffectEvent.from then
+        self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      end
       break
     end
     
@@ -1038,7 +1040,7 @@ function Room:doCardEffect(cardEffectEvent)
       break
     end
 
-    if self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+    if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
       return
     end
 
@@ -1252,7 +1254,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     to = target.id
   end
 
-  self.moveCards{
+  self:moveCards{
     ids = ids,
     from = self.owner_map[ids[1]],
     to = to,
@@ -1620,10 +1622,19 @@ function Room:judge(data)
   local who = data.who
   self.logic:trigger(fk.StartJudge, who, data)
   data.card = Fk:getCardById(self:getNCards(1)[1])
+
+  if data.reason ~= "" then
+    self:sendLog{
+      type = "#StartJudgeReason",
+      from = who.id,
+      arg = data.reason,
+    }
+  end
+
   self:sendLog{
     type = "#InitialJudge",
     from = who.id,
-    card = {data.card},
+    card = {data.card.id},
   }
   self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
 
@@ -1632,7 +1643,7 @@ function Room:judge(data)
   self:sendLog{
     type = "#JudgeResult",
     from = who.id,
-    card = {data.card},
+    card = {data.card.id},
   }
 
   self.logic:trigger(fk.FinishJudge, who, data)

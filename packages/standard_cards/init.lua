@@ -125,6 +125,11 @@ local peachSkill = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:isWounded()
   end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
@@ -367,10 +372,64 @@ extension:addCards({
   amazingGrace:clone(Card.Heart, 4),
 })
 
+local lightningSkill = fk.CreateActiveSkill{
+  name = "lightning_skill",
+  can_use = function(self, player)
+    local judge = player:getCardIds(Player.Judge)
+    for _, id in ipairs(judge) do
+      local cd = Fk:getCardById(id)
+      if cd.name == "lightning" then
+        return false
+      end
+    end
+    return true
+  end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local judge = {
+      who = to,
+      reason = "lightning",
+    }
+    room:judge(judge)
+    local result = judge.card
+    if result.suit == Card.Spade and result.number >= 2 and result.number <= 9 then
+      room:damage{
+        to = to.id,
+        damage = 3,
+        damageType = fk.ThunderDamage,
+        skillName = self.name,
+      }
+
+      room:moveCards{
+        ids = { effect.cardId },
+        toArea = Card.DiscardPile,
+        moveReason = fk.ReasonPutIntoDiscardPile
+      }
+    else
+      self:onNullified(room, effect)
+    end
+  end,
+  on_nullified = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local nextp = to:getNextAlive()
+    room:moveCards{
+      ids = { effect.cardId },
+      to = nextp.id,
+      toArea = Card.PlayerJudge,
+      moveReason = fk.ReasonPut
+    }
+  end,
+}
 local lightning = fk.CreateDelayedTrickCard{
   name = "lightning",
   suit = Card.Spade,
   number = 1,
+  skill = lightningSkill,
 }
 Fk:loadTranslationTable{
   ["lightning"] = "闪电",
@@ -381,10 +440,53 @@ extension:addCards({
   lightning:clone(Card.Heart, 12),
 })
 
+local indulgenceSkill = fk.CreateActiveSkill{
+  name = "indulgence_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      if Self ~= player then
+        local judge = player:getCardIds(Player.Judge)
+        for _, id in ipairs(judge) do
+          local cd = Fk:getCardById(id)
+          if cd.name == "indulgence" then
+            return false
+          end
+        end
+        return true
+      end
+    end
+    return false
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local judge = {
+      who = to,
+      reason = "indulgence",
+    }
+    room:judge(judge)
+    local result = judge.card
+    if result.suit ~= Card.Heart then
+      to:skip(Player.Play)
+    end
+    self:onNullified(room, effect)
+  end,
+  on_nullified = function(self, room, effect)
+    room:moveCards{
+      ids = { effect.cardId },
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile
+    }
+  end,
+}
 local indulgence = fk.CreateDelayedTrickCard{
   name = "indulgence",
   suit = Card.Spade,
   number = 6,
+  skill = indulgenceSkill,
 }
 Fk:loadTranslationTable{
   ["indulgence"] = "乐不思蜀",
