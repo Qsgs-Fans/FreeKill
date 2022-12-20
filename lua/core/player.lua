@@ -294,6 +294,10 @@ function Player:isAllNude()
   return #self:getCardIds() == 0
 end
 
+function Player:isWounded()
+  return self.hp < self.maxHp
+end
+
 ---@param skill string | Skill
 ---@return Skill
 local function getActualSkill(skill)

@@ -120,10 +120,28 @@ extension:addCards({
   jink:clone(Card.Diamond, 11),
 })
 
+local peachSkill = fk.CreateActiveSkill{
+  name = "peach_skill",
+  can_use = function(self, player)
+    return player:isWounded()
+  end,
+  on_effect = function(self, room, effect)
+    local to = effect.to
+    local from = effect.from
+    
+    room:recover{
+      who = to,
+      num = 1,
+      recoverBy = from,
+      skillName = self.name
+    }
+  end
+}
 local peach = fk.CreateBasicCard{
   name = "peach",
   suit = Card.Heart,
   number = 3,
+  skill = peachSkill,
 }
 Fk:loadTranslationTable{
   ["peach"] = "桃",
