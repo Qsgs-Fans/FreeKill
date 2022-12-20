@@ -19,8 +19,6 @@ function ServerPlayer:initialize(_self)
   self.state = _self:getStateString()
   self.room = nil
 
-  self.next = nil
-
   -- Below are for doBroadcastRequest
   self.request_data = ""
   self.client_reply = ""
@@ -206,6 +204,46 @@ function ServerPlayer:play(phase_table)
       else break end
     end
   end
+end
+
+function ServerPlayer:drawCards(num, skillName, fromPlace)
+  return self.room:drawCards(self, num, skillName, fromPlace)
+end
+
+function ServerPlayer:bury()
+  -- self:clearFlags()
+  -- self:clearHistory()
+  self:throwAllCards()
+  -- self:throwAllMarks()
+  -- self:clearPiles()
+
+  -- self.room:clearPlayerCardLimitation(self, false)
+end
+
+function ServerPlayer:throwAllCards(flag)
+  local room = self.room
+  flag = flag or "hej"
+  if string.find(flag, "h") then
+    room:throwCard(self.player_cards[Player.Hand], "", self)
+  end
+
+  if string.find(flag, "e") then
+    room:throwCard(self.player_cards[Player.Equip], "", self)
+  end
+
+  if string.find(flag, "j") then
+    room:throwCard(self.player_cards[Player.Judge], "", self)
+  end
+end
+
+function ServerPlayer:addCardUseHistory(cardName, num)
+  Player.addCardUseHistory(self, cardName, num)
+  self:doNotify("AddCardUseHistory", json.encode{cardName, num})
+end
+
+function ServerPlayer:resetCardUseHistory(cardName)
+  Player.resetCardUseHistory(self, cardName)
+  self:doNotify("ResetCardUseHistory", cardName or "")
 end
 
 return ServerPlayer

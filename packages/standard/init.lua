@@ -101,7 +101,9 @@ local zhiheng = fk.CreateActiveSkill{
     return #selected == 0 and #selected_cards > 0
   end,
   on_effect = function(self, room, effect)
-    room:drawCards(room:getPlayerById(effect.from), #effect.cards, "zhiheng")
+    local from = room:getPlayerById(effect.from)
+    room:throwCard(effect.cards, self.name, from)
+    room:drawCards(from, #effect.cards, self.name)
   end
 }
 local sunquan = General:new(extension, "sunquan", "wu", 4)

@@ -4,6 +4,8 @@ import QtQuick.Layouts
 import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
+import "skin-bank.js" as SkinBank
+
 
 Item {
   id: roomScene
@@ -159,7 +161,7 @@ Item {
         maxHp: model.maxHp
         hp: model.hp
         seatNumber: model.seatNumber
-        isDead: model.isDead
+        dead: model.dead
         dying: model.dying
         faceup: model.faceup
         chained: model.chained
@@ -224,7 +226,7 @@ Item {
     self.maxHp: dashboardModel.maxHp
     self.hp: dashboardModel.hp
     self.seatNumber: dashboardModel.seatNumber
-    self.isDead: dashboardModel.isDead
+    self.dead: dashboardModel.dead
     self.dying: dashboardModel.dying
     self.faceup: dashboardModel.faceup
     self.chained: dashboardModel.chained
@@ -460,6 +462,15 @@ Item {
   }
 
   Shortcut {
+    sequence: "D"
+    property bool show_distance: false
+    onActivated: {
+      show_distance = !show_distance;
+      showDistance(show_distance);
+    }
+  }
+
+  Shortcut {
     sequence: "Esc"
     onActivated: {
       easyChat.visible = false;
@@ -491,6 +502,18 @@ Item {
     log.append(msg);
   }
 
+  function showDistance(show) {
+    for (let i = 0; i < photoModel.count; i++) {
+      let item = photos.itemAt(i);
+      if (show) {
+        let dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
+        item.distance = parseInt(dis);
+      } else {
+        item.distance = 0;
+      }
+    }
+  }
+
   Component.onCompleted: {
     toast.show(Backend.translate("$EnterRoom"));
 
@@ -504,7 +527,7 @@ Item {
       maxHp: 0,
       hp: 0,
       seatNumber: 1,
-      isDead: false,
+      dead: false,
       dying: false,
       faceup: true,
       chained: false,
@@ -527,7 +550,7 @@ Item {
         maxHp: 0,
         hp: 0,
         seatNumber: i + 1,
-        isDead: false,
+        dead: false,
         dying: false,
         faceup: true,
         chained: false,

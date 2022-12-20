@@ -71,4 +71,12 @@ fk.CardEffecting = 56
 fk.CardEffectFinished = 57
 fk.CardEffectCancelledOut = 58
 
-fk.NumOfEvents = 59
+fk.AskForPeaches = 59
+fk.AskForPeachesDone = 60
+fk.Death = 61
+fk.BuryVictim = 62
+fk.BeforeGameOverJudge = 63
+fk.GameOverJudge = 64
+fk.GameFinished = 65
+
+fk.NumOfEvents = 66

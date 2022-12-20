@@ -7,6 +7,7 @@
 ---@field general string
 ---@field handcard_num integer
 ---@field seat integer
+---@field next Player
 ---@field phase Phase
 ---@field faceup boolean
 ---@field chained boolean
@@ -50,6 +51,7 @@ function Player:initialize()
   self.role = ""
   self.general = ""
   self.seat = 0
+  self.next = nil
   self.phase = Player.PhaseNone
   self.faceup = true
   self.chained = false
@@ -240,7 +242,15 @@ end
 
 ---@param other Player
 function Player:distanceTo(other)
-  local right = math.abs(self.seat - other.seat)
+  assert(other:isInstanceOf(Player))
+  local right = 0
+  local temp = self
+  while temp ~= other do
+    if not temp.dead then
+      right = right + 1
+    end
+    temp = temp.next
+  end
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)
   -- TODO: corrent distance here using skills
@@ -260,9 +270,16 @@ function Player:addCardUseHistory(cardName, num)
 end
 
 function Player:resetCardUseHistory(cardName)
+  if not cardName then
+    self.cardUsedHistory = {}
+  end
   if self.cardUsedHistory[cardName] then
     self.cardUsedHistory[cardName] = 0
   end
+end
+
+function Player:usedTimes(cardName)
+  return self.cardUsedHistory[cardName] or 0
 end
 
 function Player:isKongcheng()
@@ -275,6 +292,10 @@ end
 
 function Player:isAllNude()
   return #self:getCardIds() == 0
+end
+
+function Player:isWounded()
+  return self.hp < self.maxHp
 end
 
 ---@param skill string | Skill

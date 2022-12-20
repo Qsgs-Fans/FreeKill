@@ -77,6 +77,12 @@ function GetCards(pack_name)
   return json.encode(ret)
 end
 
+function DistanceTo(from, to)
+  local a = ClientInstance:getPlayerById(from)
+  local b = ClientInstance:getPlayerById(to)
+  return a:distanceTo(b)
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)
@@ -96,6 +102,9 @@ end
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
 function CanUseCardToTarget(card, to_select, selected)
+  if ClientInstance:getPlayerById(to_select).dead then
+    return "false"
+  end
   local c   ---@type Card
   local selected_cards
   if type(card) == "number" then
@@ -264,6 +273,23 @@ Fk:loadTranslationTable{
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+
+  ["$GameOver"] = "游戏结束",
+  ["$Winner"] = "%1 获胜",
+  ["Back To Lobby"] = "返回大厅",
+}
+
+-- Game concepts
+Fk:loadTranslationTable{
+  ["lord"] = "主公",
+  ["loyalist"] = "忠臣",
+  ["rebel"] = "反贼",
+  ["renegade"] = "内奸",
+  ["lord+loyalist"] = "主忠",
+
+  ["normal_damage"] = "无属性",
+  ["fire_damage"] = "火属性",
+  ["thunder_damage"] = "雷属性",
 }
 
 -- related to sendLog
@@ -296,6 +322,9 @@ Fk:loadTranslationTable{
   -- useCard
   ["#UseCard"] = "%from 使用了牌 %card",
   ["#UseCardToTargets"] = "%from 使用了牌 %card，目标是 %to",
+  ["#CardUseCollaborator"] = "%from 在此次 %card 中的子目标是 %to",
+  ["#UseCardToCard"] = "%from 使用了牌 %card，目标是 %arg",
+  ["#ResponsePlayCard"] = "%from 打出了牌 %card",
 
   -- judge
   ["#InitialJudge"] = "%from 的判定牌为 %card",
@@ -306,4 +335,16 @@ Fk:loadTranslationTable{
   ["#TurnOver"] = "%from 将武将牌翻面，现在是 %arg",
 	["face_up"] = "正面朝上",
 	["face_down"] = "背面朝上",
+
+  -- damage, heal and lose HP
+  ["#Damage"] = "%to 对 %from 造成了 %arg 点 %arg2 伤害",
+  ["#DamageWithNoFrom"] = "%from 受到了 %arg 点 %arg2 伤害",
+  ["#LoseHP"] = "%from 失去了 %arg 点体力",
+  ["#HealHP"] = "%from 回复了 %arg 点体力",
+  ["#ShowHPAndMaxHP"] = "%from 现在的体力值为 %arg，体力上限为 %arg2",
+
+  -- dying and death
+  ["#EnterDying"] = "%from 进入了濒死阶段",
+  ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
+  ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
 }

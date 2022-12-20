@@ -74,7 +74,7 @@ function GameLogic:chooseGenerals()
     room:broadcastProperty(lord, "general")
   end
 
-  local nonlord = room:getOtherPlayers(lord)
+  local nonlord = room:getOtherPlayers(lord, true)
   local generals = Fk:getGeneralsRandomly(#nonlord * 3, Fk.generals, {lord_general})
   table.shuffle(generals)
   for _, p in ipairs(nonlord) do
@@ -150,7 +150,7 @@ function GameLogic:action()
   self:trigger(fk.GameStart)
   local room = self.room
 
-  for _, p in ipairs(room.players) do
+  for _, p in ipairs(room.alive_players) do
     self:trigger(fk.DrawInitialCards, p, { num = 4 })
   end
 

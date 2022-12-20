@@ -7,26 +7,31 @@ Fk:loadTranslationTable{
 
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
+  can_use = function(self, player)
+    -- TODO: tmd skill
+    return player:usedTimes("slash") < 1
+  end,
   target_filter = function(self, to_select, selected)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player
+      return Self ~= player and Self:inMyAttackRange(player)
     end
   end,
   feasible = function(self, selected)
+    -- TODO: tmd
     return #selected == 1
   end,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
-    local cid = room:askForCardChosen(
-      room:getPlayerById(from),
-      room:getPlayerById(to),
-      "hej",
-      "snatch"
-    )
-
-    room:obtainCard(from, cid)
+    
+    room:damage({
+      from = from,
+      to = to,
+      damage = 1,
+      damageType = fk.NormalDamage,
+      skillName = self.name
+    })
   end
 }
 local slash = fk.CreateBasicCard{
@@ -115,10 +120,28 @@ extension:addCards({
   jink:clone(Card.Diamond, 11),
 })
 
+local peachSkill = fk.CreateActiveSkill{
+  name = "peach_skill",
+  can_use = function(self, player)
+    return player:isWounded()
+  end,
+  on_effect = function(self, room, effect)
+    local to = effect.to
+    local from = effect.from
+    
+    room:recover{
+      who = to,
+      num = 1,
+      recoverBy = from,
+      skillName = self.name
+    }
+  end
+}
 local peach = fk.CreateBasicCard{
   name = "peach",
   suit = Card.Heart,
   number = 3,
+  skill = peachSkill,
 }
 Fk:loadTranslationTable{
   ["peach"] = "桃",
@@ -261,6 +284,9 @@ extension:addCards({
 
 local nullificationSkill = fk.CreateActiveSkill{
   name = "nullification_skill",
+  can_use = function()
+    return false
+  end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true
@@ -374,6 +400,7 @@ local crossbow = fk.CreateWeapon{
   name = "crossbow",
   suit = Card.Club,
   number = 1,
+  attack_range = 1,
 }
 Fk:loadTranslationTable{
   ["crossbow"] = "诸葛连弩",
@@ -388,6 +415,7 @@ local qingGang = fk.CreateWeapon{
   name = "qinggang_sword",
   suit = Card.Spade,
   number = 6,
+  attack_range = 2,
 }
 Fk:loadTranslationTable{
   ["qinggang_sword"] = "青釭剑",
@@ -401,6 +429,7 @@ local iceSword = fk.CreateWeapon{
   name = "ice_sword",
   suit = Card.Spade,
   number = 2,
+  attack_range = 2,
 }
 Fk:loadTranslationTable{
   ["ice_sword"] = "寒冰剑",
@@ -414,6 +443,7 @@ local doubleSwords = fk.CreateWeapon{
   name = "double_swords",
   suit = Card.Spade,
   number = 2,
+  attack_range = 2,
 }
 Fk:loadTranslationTable{
   ["double_swords"] = "雌雄双股剑",
@@ -427,6 +457,7 @@ local blade = fk.CreateWeapon{
   name = "blade",
   suit = Card.Spade,
   number = 5,
+  attack_range = 3,
 }
 Fk:loadTranslationTable{
   ["blade"] = "青龙偃月刀",
@@ -440,6 +471,7 @@ local spear = fk.CreateWeapon{
   name = "spear",
   suit = Card.Spade,
   number = 12,
+  attack_range = 3,
 }
 Fk:loadTranslationTable{
   ["spear"] = "丈八蛇矛",
@@ -453,6 +485,7 @@ local axe = fk.CreateWeapon{
   name = "axe",
   suit = Card.Diamond,
   number = 5,
+  attack_range = 3,
 }
 Fk:loadTranslationTable{
   ["axe"] = "贯石斧",
@@ -466,6 +499,7 @@ local halberd = fk.CreateWeapon{
   name = "halberd",
   suit = Card.Diamond,
   number = 12,
+  attack_range = 4,
 }
 Fk:loadTranslationTable{
   ["halberd"] = "方天画戟",
@@ -479,6 +513,7 @@ local kylinBow = fk.CreateWeapon{
   name = "kylin_bow",
   suit = Card.Heart,
   number = 5,
+  attack_range = 5,
 }
 Fk:loadTranslationTable{
   ["kylin_bow"] = "麒麟弓",
