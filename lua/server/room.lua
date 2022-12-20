@@ -812,7 +812,7 @@ function Room:useCard(cardUseEvent)
     from = from,
     to = cardUseEvent.tos or {},
   })
-  if cardUseEvent.tos then
+  if cardUseEvent.tos and #cardUseEvent.tos > 0 then
     local to = {}
     for _, t in ipairs(cardUseEvent.tos) do
       table.insert(to, t[1])

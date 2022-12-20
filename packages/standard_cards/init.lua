@@ -125,6 +125,11 @@ local peachSkill = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:isWounded()
   end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
