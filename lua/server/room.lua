@@ -1026,7 +1026,9 @@ end
 function Room:doCardEffect(cardEffectEvent)
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
     if cardEffectEvent.isCancellOut then
-      self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      if cardEffectEvent.from then
+        self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      end
       break
     end
     
@@ -1038,7 +1040,7 @@ function Room:doCardEffect(cardEffectEvent)
       break
     end
 
-    if self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+    if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
       return
     end
 
@@ -1623,7 +1625,7 @@ function Room:judge(data)
   self:sendLog{
     type = "#InitialJudge",
     from = who.id,
-    card = {data.card},
+    card = {data.card.id},
   }
   self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
 
@@ -1632,11 +1634,13 @@ function Room:judge(data)
   self:sendLog{
     type = "#JudgeResult",
     from = who.id,
-    card = {data.card},
+    card = {data.card.id},
   }
 
   self.logic:trigger(fk.FinishJudge, who, data)
+  p(self:getCardArea(data.card.id))
   if self:getCardArea(data.card.id) == Card.Processing then
+    print("sdsdsdsd")
     self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
   end
 end

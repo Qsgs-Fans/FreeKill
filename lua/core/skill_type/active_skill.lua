@@ -54,4 +54,9 @@ function ActiveSkill:onUse(room, cardUseEvent) end
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onEffect(room, cardEffectEvent) end
 
+-- Delayed Trick Only
+---@param room Room
+---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
+function ActiveSkill:onNullified(room, cardEffectEvent) end
+
 return ActiveSkill

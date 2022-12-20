@@ -386,20 +386,63 @@ extension:addCards({
   lightning:clone(Card.Heart, 12),
 })
 
+local indulgenceSkill = fk.CreateActiveSkill{
+  name = "indulgence_skill",
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      if Self ~= player then
+        local judge = player:getCardIds(Player.Judge)
+        for _, id in ipairs(judge) do
+          local cd = Fk:getCardById(id)
+          if cd.name == "indulgence" then
+            return false
+          end
+        end
+        return true
+      end
+    end
+    return false
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local judge = {
+      who = to
+    }
+    room:judge(judge)
+    local result = judge.card
+    if result.suit ~= Card.Heart then
+      to:skip(Player.Play)
+    end
+    self:onNullified(room, effect)
+  end,
+  on_nullified = function(self, room, effect)
+    room:moveCards{
+      ids = { effect.cardId },
+      from = effect.to,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile
+    }
+  end,
+}
 local indulgence = fk.CreateDelayedTrickCard{
   name = "indulgence",
   suit = Card.Spade,
   number = 6,
+  skill = indulgenceSkill,
 }
 Fk:loadTranslationTable{
   ["indulgence"] = "乐不思蜀",
 }
-
+for iiii=30,1,-1 do
 extension:addCards({
   indulgence,
   indulgence:clone(Card.Club, 6),
   indulgence:clone(Card.Heart, 6),
-})
+})end
 
 local crossbow = fk.CreateWeapon{
   name = "crossbow",
