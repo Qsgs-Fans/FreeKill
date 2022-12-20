@@ -15,6 +15,8 @@
 ---@alias CardEffectEvent { from: integer, tos: TargetGroup, cardId: integer, toCardId: integer|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardIdsResponded: integer[]|null }
 ---@alias SkillEffectEvent { from: integer, tos: integer[], cards: integer[] }
 
+---@alias JudgeStruct { who: ServerPlayer, card: Card, reason: string }
+
 ---@alias CardMoveReason integer
 
 fk.ReasonJustMove = 1

@@ -90,6 +90,7 @@ end
 ---@field feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
 ---@field on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
 ---@field on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
+---@field on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 
 ---@param spec ActiveSkillSpec
 ---@return ActiveSkill
@@ -102,6 +103,7 @@ function fk.CreateActiveSkill(spec)
   if spec.feasible then skill.feasible = spec.feasible end
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.on_effect then skill.onEffect = spec.on_effect end
+  if spec.on_nullified then skill.onNullified = spec.on_nullified end
   return skill
 end
 

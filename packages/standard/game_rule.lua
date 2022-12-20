@@ -118,7 +118,22 @@ GameRule = fk.CreateTriggerSkill{
         
       end,
       [Player.Judge] = function()
-        
+        local cards = player:getCardIds(Player.Judge)
+        for i = #cards, 1, -1 do
+          local card = Fk:getCardById(cards[i])
+          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+
+          ---@type CardEffectEvent
+          local effect_data = {
+            cardId = cards[i],
+            to = player.id,
+            tos = { {player.id} },
+          }
+          room:doCardEffect(effect_data)
+          if effect_data.isCancellOut and card.skill then
+            card.skill:onNullified(room, effect_data)
+          end
+        end
       end,
       [Player.Draw] = function()
         room:drawCards(player, 2, self.name)
