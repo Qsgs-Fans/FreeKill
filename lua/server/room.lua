@@ -1388,12 +1388,14 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
   self.logic:trigger(fk.HpChanged, player, data)
 
   if player.hp < 1 then
-    ---@type DyingStruct
-    local dyingStruct = {
-      who = player.id,
-      damage = damageStruct,
-    }
-    self:enterDying(dyingStruct)
+    if num < 0 then
+      ---@type DyingStruct
+      local dyingStruct = {
+        who = player.id,
+        damage = damageStruct,
+      }
+      self:enterDying(dyingStruct)
+    end
   elseif player.dying then
     player.dying = false
   end
