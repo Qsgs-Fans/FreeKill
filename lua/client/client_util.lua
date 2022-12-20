@@ -335,6 +335,7 @@ Fk:loadTranslationTable{
   ["#ResponsePlayCard"] = "%from 打出了牌 %card",
 
   -- judge
+  ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",
   ["#InitialJudge"] = "%from 的判定牌为 %card",
   ["#ChangedJudge"] = "%from 发动“%arg”把 %to 的判定牌改为 %card",
   ["#JudgeResult"] = "%from 的判定结果为 %card",

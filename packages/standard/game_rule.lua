@@ -121,6 +121,8 @@ GameRule = fk.CreateTriggerSkill{
         local cards = player:getCardIds(Player.Judge)
         for i = #cards, 1, -1 do
           local card = Fk:getCardById(cards[i])
+          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+
           ---@type CardEffectEvent
           local effect_data = {
             cardId = cards[i],

@@ -1622,6 +1622,15 @@ function Room:judge(data)
   local who = data.who
   self.logic:trigger(fk.StartJudge, who, data)
   data.card = Fk:getCardById(self:getNCards(1)[1])
+
+  if data.reason ~= "" then
+    self:sendLog{
+      type = "#StartJudgeReason",
+      from = who.id,
+      arg = data.reason,
+    }
+  end
+
   self:sendLog{
     type = "#InitialJudge",
     from = who.id,

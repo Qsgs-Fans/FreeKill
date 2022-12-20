@@ -372,10 +372,64 @@ extension:addCards({
   amazingGrace:clone(Card.Heart, 4),
 })
 
+local lightningSkill = fk.CreateActiveSkill{
+  name = "lightning_skill",
+  can_use = function(self, player)
+    local judge = player:getCardIds(Player.Judge)
+    for _, id in ipairs(judge) do
+      local cd = Fk:getCardById(id)
+      if cd.name == "lightning" then
+        return false
+      end
+    end
+    return true
+  end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local judge = {
+      who = to,
+      reason = "lightning",
+    }
+    room:judge(judge)
+    local result = judge.card
+    if result.suit == Card.Spade and result.number >= 2 and result.number <= 9 then
+      room:damage{
+        to = to.id,
+        damage = 3,
+        damageType = fk.ThunderDamage,
+        skillName = self.name,
+      }
+
+      room:moveCards{
+        ids = { effect.cardId },
+        toArea = Card.DiscardPile,
+        moveReason = fk.ReasonPutIntoDiscardPile
+      }
+    else
+      self:onNullified(room, effect)
+    end
+  end,
+  on_nullified = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local nextp = to:getNextAlive()
+    room:moveCards{
+      ids = { effect.cardId },
+      to = nextp.id,
+      toArea = Card.PlayerJudge,
+      moveReason = fk.ReasonPut
+    }
+  end,
+}
 local lightning = fk.CreateDelayedTrickCard{
   name = "lightning",
   suit = Card.Spade,
   number = 1,
+  skill = lightningSkill,
 }
 Fk:loadTranslationTable{
   ["lightning"] = "闪电",
@@ -410,7 +464,8 @@ local indulgenceSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     local judge = {
-      who = to
+      who = to,
+      reason = "indulgence",
     }
     room:judge(judge)
     local result = judge.card
@@ -422,7 +477,6 @@ local indulgenceSkill = fk.CreateActiveSkill{
   on_nullified = function(self, room, effect)
     room:moveCards{
       ids = { effect.cardId },
-      from = effect.to,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile
     }
