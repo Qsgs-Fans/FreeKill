@@ -1254,7 +1254,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     to = target.id
   end
 
-  self.moveCards{
+  self:moveCards{
     ids = ids,
     from = self.owner_map[ids[1]],
     to = to,
@@ -1638,9 +1638,7 @@ function Room:judge(data)
   }
 
   self.logic:trigger(fk.FinishJudge, who, data)
-  p(self:getCardArea(data.card.id))
   if self:getCardArea(data.card.id) == Card.Processing then
-    print("sdsdsdsd")
     self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
   end
 end
