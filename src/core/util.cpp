@@ -61,6 +61,7 @@ void Dumpstack(lua_State *L)
   }
 }
 
+#ifndef Q_OS_WASM
 sqlite3 *OpenDatabase(const QString &filename)
 {
   sqlite3 *ret;
@@ -151,6 +152,7 @@ RSA *InitServerRSA() {
   fclose(keyFile);
   return rsa;
 }
+#endif
 
 static void writeFileMD5(QFile &dest, const QString &fname) {
   QFile f(fname);
