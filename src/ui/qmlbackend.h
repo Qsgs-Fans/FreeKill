@@ -49,8 +49,8 @@ signals:
 
 private:
   QQmlApplicationEngine *engine;
-#ifndef Q_OS_WASM
   RSA *rsa;
+#ifndef Q_OS_WASM
   fkp_parser *parser;
 #endif
   QHash<QString, QString> generals;

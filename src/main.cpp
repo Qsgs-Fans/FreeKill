@@ -110,8 +110,7 @@ int main(int argc, char *argv[])
     return app->exec();
   }
 #else
-  copyPath(":/lua", QDir::currentPath() + "/lua");
-  copyPath(":/packages", QDir::currentPath() + "/packages");
+  copyPath(":/", QDir::currentPath());
 #endif
 
   app = new QApplication(argc, argv);
@@ -155,13 +154,8 @@ int main(int argc, char *argv[])
   engine->rootContext()->setContextProperty("Android", false);
 #endif
 
-#ifdef Q_OS_WASM
-  engine->rootContext()->setContextProperty("AppPath", "");
-  engine->load(QUrl("qrc:/qml/main.qml"));
-#else
   engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
   engine->load("qml/main.qml");
-#endif
 
   if (engine->rootObjects().isEmpty())
     return -1;

@@ -277,6 +277,28 @@ void Router::handlePacket(const QByteArray& rawPacket)
     locker.unlock();
     emit replyReady();
   }
+#else
+  QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
+  if (packet.isNull() || !packet.isArray())
+    return;
+
+  int requestId = packet[0].toInt();
+  int type = packet[1].toInt();
+  QString command = packet[2].toString();
+  QString jsonData = packet[3].toString();
+
+  if (type & TYPE_NOTIFICATION) {
+    if (type & DEST_CLIENT) {
+      ClientInstance->callLua(command, jsonData);
+    }
+  } else if (type & TYPE_REQUEST) {
+    this->requestId = requestId;
+    this->requestTimeout = packet[4].toInt();
+
+    if (type & DEST_CLIENT) {
+      qobject_cast<Client *>(parent())->callLua(command, jsonData);
+    }
+  }
 #endif
 }
 

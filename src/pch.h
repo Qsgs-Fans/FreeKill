@@ -15,9 +15,7 @@ typedef int LuaFunction;
 #include "lua.hpp"
 #include "sqlite3.h"
 
-#ifndef Q_OS_WASM
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
-#endif
 
 #endif // _PCH_H

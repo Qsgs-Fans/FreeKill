@@ -33,6 +33,11 @@ include_directories(src/network)
 include_directories(src/server)
 include_directories(src/ui)
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+# Fix include problem
+include_directories("/usr/include/openssl-1.1/")
+endif()
+
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-wasm.i)
@@ -54,7 +59,8 @@ qt_add_executable(FreeKill)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 file(GLOB_RECURSE FK_RESOURCE_FILES
   RELATIVE ${PROJECT_SOURCE_DIR}
-  *.lua *.qml *.js *.png *.jpg *.mp3)
+  *.lua *.qml *.js *.png *.jpg *.mp3
+)
 qt_add_resources(FreeKill "qrc"
   PREFIX "/"
   FILES ${FK_RESOURCE_FILES}

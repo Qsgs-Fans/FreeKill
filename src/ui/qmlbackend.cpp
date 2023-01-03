@@ -12,8 +12,8 @@ QmlBackend::QmlBackend(QObject* parent)
 {
   Backend = this;
   engine = nullptr;
-#ifndef Q_OS_WASM
   rsa = RSA_new();
+#ifndef Q_OS_WASM
   parser = fkp_new_parser();
 #endif
 }
@@ -21,8 +21,8 @@ QmlBackend::QmlBackend(QObject* parent)
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
-#ifndef Q_OS_WASM
   RSA_free(rsa);
+#ifndef Q_OS_WASM
   fkp_close(parser);
 #endif
 }
@@ -177,16 +177,16 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
 }
 
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
-#ifndef Q_OS_WASM
-  BIO *keyio = BIO_new_mem_buf(key.toLatin1().data(), -1);
+  auto key_bytes = key.toLatin1();
+  BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
   PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
   BIO_free_all(keyio);
 
+  auto data_bytes = data.toUtf8();
   unsigned char buf[RSA_size(rsa)];
-  RSA_public_encrypt(data.length(), (const unsigned char *)data.toUtf8().data(),
+  RSA_public_encrypt(data.length(), (const unsigned char *)data_bytes.constData(),
     buf, rsa, RSA_PKCS1_PADDING);
   return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
-#endif
 }
 
 QString QmlBackend::loadConf() {
