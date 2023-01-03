@@ -148,11 +148,19 @@ int main(int argc, char *argv[])
   engine->rootContext()->setContextProperty("Debugging", debugging);
 
 
-#ifdef Q_OS_ANDROID
-  engine->rootContext()->setContextProperty("Android", true);
+  QString system;
+#if defined(Q_OS_ANDROID)
+  system = "Android";
+#elif defined(Q_OS_WASM)
+  system = "Web";
+#elif defined(Q_OS_WIN32)
+  system = "Win";
+#elif defined(Q_OS_LINUX)
+  system = "Linux";
 #else
-  engine->rootContext()->setContextProperty("Android", false);
+  system = "Other";
 #endif
+  engine->rootContext()->setContextProperty("OS", system);
 
   engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
   engine->load("qml/main.qml");
