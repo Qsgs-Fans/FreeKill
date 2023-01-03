@@ -61,6 +61,7 @@ file(GLOB_RECURSE FK_RESOURCE_FILES
   RELATIVE ${PROJECT_SOURCE_DIR}
   *.lua *.qml *.js *.png *.jpg *.mp3
 )
+list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
 qt_add_resources(FreeKill "qrc"
   PREFIX "/"
   FILES ${FK_RESOURCE_FILES}

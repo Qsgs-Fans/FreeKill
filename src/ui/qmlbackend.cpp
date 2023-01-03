@@ -89,7 +89,7 @@ void QmlBackend::cd(const QString &path) {
 }
 
 QStringList QmlBackend::ls(const QString &dir) {
-  return QDir(dir).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+  return QDir(QUrl(dir).path()).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 }
 
 QString QmlBackend::pwd() {
