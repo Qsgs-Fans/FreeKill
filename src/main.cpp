@@ -13,8 +13,9 @@
 
 #include <QSplashScreen>
 #include <QScreen>
+#include <QFileDialog>
 
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 {
   QFileInfo srcFileInfo(srcFilePath);
@@ -108,6 +109,9 @@ int main(int argc, char *argv[])
     }
     return app->exec();
   }
+#else
+  copyPath(":/lua", QDir::currentPath() + "/lua");
+  copyPath(":/packages", QDir::currentPath() + "/packages");
 #endif
 
   app = new QApplication(argc, argv);
