@@ -1,5 +1,7 @@
 #include "qmlbackend.h"
+#ifndef Q_OS_WASM
 #include "server.h"
+#endif
 #include "client.h"
 #include "util.h"
 
@@ -11,14 +13,18 @@ QmlBackend::QmlBackend(QObject* parent)
   Backend = this;
   engine = nullptr;
   rsa = RSA_new();
+#ifndef Q_OS_WASM
   parser = fkp_new_parser();
+#endif
 }
 
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
   RSA_free(rsa);
+#ifndef Q_OS_WASM
   fkp_close(parser);
+#endif
 }
 
 QQmlApplicationEngine *QmlBackend::getEngine() const
@@ -33,6 +39,7 @@ void QmlBackend::setEngine(QQmlApplicationEngine *engine)
 
 void QmlBackend::startServer(ushort port)
 {
+#ifndef Q_OS_WASM
   if (!ServerInstance) {
     Server *server = new Server(this);
 
@@ -41,6 +48,7 @@ void QmlBackend::startServer(ushort port)
       emit notifyUI("ErrorMsg", tr("Cannot start server!"));
     }
   }
+#endif
 }
 
 void QmlBackend::joinServer(QString address)
@@ -81,7 +89,7 @@ void QmlBackend::cd(const QString &path) {
 }
 
 QStringList QmlBackend::ls(const QString &dir) {
-  return QDir(dir).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+  return QDir(QUrl(dir).path()).entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
 }
 
 QString QmlBackend::pwd() {
@@ -169,12 +177,14 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
 }
 
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
-  BIO *keyio = BIO_new_mem_buf(key.toLatin1().data(), -1);
+  auto key_bytes = key.toLatin1();
+  BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
   PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
   BIO_free_all(keyio);
 
+  auto data_bytes = data.toUtf8();
   unsigned char buf[RSA_size(rsa)];
-  RSA_public_encrypt(data.length(), (const unsigned char *)data.toUtf8().data(),
+  RSA_public_encrypt(data.length(), (const unsigned char *)data_bytes.constData(),
     buf, rsa, RSA_PKCS1_PADDING);
   return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
 }
@@ -209,6 +219,7 @@ void QmlBackend::saveConf(const QString &conf) {
 }
 
 void QmlBackend::parseFkp(const QString &fileName) {
+#ifndef Q_OS_WASM
   if (!QFile::exists(fileName)) {
 //    errorEdit->setText(tr("File does not exist!"));
     return;
@@ -245,8 +256,10 @@ void QmlBackend::parseFkp(const QString &fileName) {
   }
 */
   QDir::setCurrent(cwd);
+#endif
 }
 
+#ifndef Q_OS_WASM
 static void copyFkpHash2QHash(QHash<QString, QString> &dst, fkp_hash *from) {
   dst.clear();
   for (size_t i = 0; i < from->capacity; i++) {
@@ -261,6 +274,7 @@ void QmlBackend::readHashFromParser() {
   copyFkpHash2QHash(skills, parser->skills);
   copyFkpHash2QHash(marks, parser->marks);
 }
+#endif
 
 QString QmlBackend::calcFileMD5() {
   return ::calcFileMD5();

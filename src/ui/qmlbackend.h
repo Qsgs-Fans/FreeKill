@@ -1,7 +1,9 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
+#ifndef Q_OS_WASM
 #include "fkparse.h"
+#endif
 #include <qtmetamacros.h>
 
 class QmlBackend : public QObject {
@@ -48,7 +50,9 @@ signals:
 private:
   QQmlApplicationEngine *engine;
   RSA *rsa;
+#ifndef Q_OS_WASM
   fkp_parser *parser;
+#endif
   QHash<QString, QString> generals;
   QHash<QString, QString> skills;
   QHash<QString, QString> marks;

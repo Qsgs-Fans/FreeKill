@@ -91,3 +91,30 @@ ___
 ## 编译安卓版
 
 用Qt安装器装好Android库，然后配置一下android-sdk就能编译了。
+
+___
+
+## WASM下编译
+
+WASM大概就是能在浏览器中跑C++。编译用Qt Creator即可。
+
+### 1. 条件与局限性
+
+如果程序运行在网页上的话，那么理应只有客户端，然后提供网页的服务器上自然也运行着一个后端服务器。所以说在编译时应该舍弃掉服务端相关的代码。因此依赖库就不再需要sqlite3。
+
+总之是编译个纯客户端的FK。
+
+### 2. 编译OpenSSL
+
+进入OpenSSL的src目录，然后
+
+    $ ./config -no-asm -no-engine -no-dso
+    $ emmake make -j8 build_generated libssl.a libcrypto.a
+
+编译Lua的话直接emmake make就行了，总之库已经传到仓库了。
+
+### 3. 部署资源文件
+
+由于CMake中`file(GLOB_RECURSE)`所带来的缺陷，每当资源文件变动时，需要手动更新。
+
+把构建目录中的.rcc目录删掉然后重新执行CMake->make即可。每次编译资源文件总要消耗相当多的时间。

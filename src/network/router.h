@@ -29,7 +29,9 @@ public:
   ClientSocket *getSocket() const;
   void setSocket(ClientSocket *socket);
 
+#ifndef Q_OS_WASM
   void setReplyReadySemaphore(QSemaphore *semaphore);
+#endif
 
   void request(int type, const QString &command,
               const QString &jsonData, int timeout);
@@ -66,8 +68,10 @@ private:
   int expectedReplyId;
   int replyTimeout;
   QString m_reply;    // should be json string
+#ifndef Q_OS_WASM
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
+#endif
 
   // Two Lua global table for callbacks and interactions
   // stored in the lua_State of the sender
