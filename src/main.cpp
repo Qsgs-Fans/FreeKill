@@ -1,5 +1,7 @@
 #include "qmlbackend.h"
+#ifndef Q_OS_WASM
 #include "server.h"
+#endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "shell.h"
@@ -11,8 +13,9 @@
 
 #include <QSplashScreen>
 #include <QScreen>
+#include <QFileDialog>
 
-#ifdef Q_OS_ANDROID
+#if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 {
   QFileInfo srcFileInfo(srcFilePath);
@@ -48,19 +51,19 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
   auto threadName = QThread::currentThread()->objectName().toLatin1().constData();
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/\e[1;30mDEBUG\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/DEBUG] %s\n", threadName, localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/\e[1;32mINFO\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/INFO] %s\n", threadName, localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/\e[1;33mWARNING\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/WARNING] %s\n", threadName, localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/\e[1;31mCRITICAL\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/CRITICAL] %s\n", threadName, localMsg.constData());
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/FATAL] %s\n", threadName, localMsg.constData());
     break;
   }
 }
@@ -73,6 +76,7 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
+#ifndef Q_OS_WASM
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -105,6 +109,9 @@ int main(int argc, char *argv[])
     }
     return app->exec();
   }
+#else
+  copyPath(":/", QDir::currentPath());
+#endif
 
   app = new QApplication(argc, argv);
 
@@ -132,19 +139,32 @@ int main(int argc, char *argv[])
   backend.setEngine(engine);
   
   engine->rootContext()->setContextProperty("Backend", &backend);
-  engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
+
 #ifdef QT_DEBUG
   bool debugging = true;
 #else
   bool debugging = false;
 #endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
-#ifdef Q_OS_ANDROID
-  engine->rootContext()->setContextProperty("Android", true);
+
+
+  QString system;
+#if defined(Q_OS_ANDROID)
+  system = "Android";
+#elif defined(Q_OS_WASM)
+  system = "Web";
+#elif defined(Q_OS_WIN32)
+  system = "Win";
+#elif defined(Q_OS_LINUX)
+  system = "Linux";
 #else
-  engine->rootContext()->setContextProperty("Android", false);
+  system = "Other";
 #endif
+  engine->rootContext()->setContextProperty("OS", system);
+
+  engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
   engine->load("qml/main.qml");
+
   if (engine->rootObjects().isEmpty())
     return -1;
 

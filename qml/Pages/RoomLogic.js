@@ -170,7 +170,14 @@ function moveCards(moves) {
 }
 
 function setEmotion(id, emotion) {
-  let path = (SkinBank.PIXANIM_DIR + emotion).replace("file://", "");
+  let path;
+  if (OS === "Win") {
+    // Windows: file:/C:/xxx/xxxx
+    path = (SkinBank.PIXANIM_DIR + emotion).replace("file:/", "");
+  } else {
+    path = (SkinBank.PIXANIM_DIR + emotion).replace("file://", "");
+  }
+
   if (!Backend.exists(path)) {
     return;
   }

@@ -1,8 +1,10 @@
 #include "router.h"
 #include "client.h"
 #include "client_socket.h"
+#ifndef Q_OS_WASM
 #include "server.h"
 #include "serverplayer.h"
+#endif
 #include "util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
@@ -13,7 +15,9 @@ Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
   setSocket(socket);
   expectedReplyId = -1;
   replyTimeout = 0;
+#ifndef Q_OS_WASM
   extraReplyReadySemaphore = nullptr;
+#endif
 }
 
 Router::~Router()
@@ -44,14 +48,17 @@ void Router::setSocket(ClientSocket *socket)
   }
 }
 
+#ifndef Q_OS_WASM
 void Router::setReplyReadySemaphore(QSemaphore *semaphore)
 {
   extraReplyReadySemaphore = semaphore;
 }
+#endif
 
 void Router::request(int type, const QString& command,
            const QString& jsonData, int timeout)
 {
+#ifndef Q_OS_WASM
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
@@ -74,6 +81,7 @@ void Router::request(int type, const QString& command,
   body << timeout;
 
   emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+#endif
 }
 
 void Router::reply(int type, const QString& command, const QString& jsonData)
@@ -106,6 +114,7 @@ int Router::getTimeout() const
 // cancel last request from the sender
 void Router::cancelRequest()
 {
+#ifndef Q_OS_WASM
   replyMutex.lock();
   expectedReplyId = -1;
   replyTimeout = 0;
@@ -114,22 +123,28 @@ void Router::cancelRequest()
 
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
+#endif
 }
 
 QString Router::waitForReply()
 {
+#ifndef Q_OS_WASM
   replyReadySemaphore.acquire();
   return m_reply;
+#endif
 }
 
 QString Router::waitForReply(int timeout)
 {
+#ifndef Q_OS_WASM
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
   return m_reply;
+#endif
 }
 
 void Router::abortRequest()
 {
+#ifndef Q_OS_WASM
   replyMutex.lock();
   if (expectedReplyId != -1) {
     replyReadySemaphore.release();
@@ -139,10 +154,12 @@ void Router::abortRequest()
     extraReplyReadySemaphore = nullptr;
   }
   replyMutex.unlock();
+#endif
 }
 
 void Router::handlePacket(const QByteArray& rawPacket)
 {
+#ifndef Q_OS_WASM
   static QMap<QString, void (*)(ServerPlayer *, const QString &)> lobby_actions;
   if (lobby_actions.size() <= 0) {
     lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
@@ -260,5 +277,28 @@ void Router::handlePacket(const QByteArray& rawPacket)
     locker.unlock();
     emit replyReady();
   }
+#else
+  QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
+  if (packet.isNull() || !packet.isArray())
+    return;
+
+  int requestId = packet[0].toInt();
+  int type = packet[1].toInt();
+  QString command = packet[2].toString();
+  QString jsonData = packet[3].toString();
+
+  if (type & TYPE_NOTIFICATION) {
+    if (type & DEST_CLIENT) {
+      ClientInstance->callLua(command, jsonData);
+    }
+  } else if (type & TYPE_REQUEST) {
+    this->requestId = requestId;
+    this->requestTimeout = packet[4].toInt();
+
+    if (type & DEST_CLIENT) {
+      qobject_cast<Client *>(parent())->callLua(command, jsonData);
+    }
+  }
+#endif
 }
 

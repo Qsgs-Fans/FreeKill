@@ -1,5 +1,4 @@
 import QtQuick
-import Qt.labs.folderlistmodel
 import "../skin-bank.js" as SkinBank
 
 Item {
@@ -18,12 +17,8 @@ Item {
   width: childrenRect.width
   height: childrenRect.height
 
-  FolderListModel {
-    id: fileModel
-    folder: SkinBank.PIXANIM_DIR + source
-    nameFilters: ["*.png"]
-    showDirs: false
-  }
+  property string folder: SkinBank.PIXANIM_DIR + source
+  property int fileModel
 
   Repeater {
     id: frames
@@ -35,7 +30,7 @@ Item {
       onStatusChanged: {
         if (status == Image.Ready) {
           loadedFrameCount++;
-          if (loadedFrameCount == fileModel.count)
+          if (loadedFrameCount == fileModel)
             root.loaded();
         }
       }
@@ -52,8 +47,8 @@ Item {
     interval: 50
     repeat: true
     onTriggered: {
-      if (currentFrame >= fileModel.count) {
-        frames.itemAt(fileModel.count - 1).visible = false;
+      if (currentFrame >= fileModel) {
+        frames.itemAt(fileModel - 1).visible = false;
         if (loop) {
           currentFrame = 0;
         } else {
@@ -73,7 +68,7 @@ Item {
 
   function start()
   {
-    if (loadedFrameCount == fileModel.count) {
+    if (loadedFrameCount == fileModel) {
       timer.start();
     } else {
       root.loaded.connect(function(){
@@ -85,5 +80,9 @@ Item {
   function stop()
   {
     timer.stop();
+  }
+
+  Component.onCompleted: {
+    fileModel = Backend.ls(folder).length;
   }
 }

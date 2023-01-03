@@ -37,11 +37,12 @@ Item {
   StackView {
     id: mainStack
     visible: !mainWindow.busy
-    initialItem: init
+    initialItem: OS !== "Web" ? init : webinit
     anchors.fill: parent
   }
 
   Component { id: init; Init {} }
+  Component { id: webinit; WebInit {} }
   Component { id: lobby; Lobby {} }
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
@@ -152,7 +153,7 @@ Item {
   }
 
   Component.onCompleted: {
-    if (!Android) {
+    if (OS !== "Android" && OS !== "Web") {
       width = config.winWidth;
       height = config.winHeight;
     }

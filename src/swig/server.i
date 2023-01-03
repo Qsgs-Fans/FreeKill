@@ -93,3 +93,21 @@ void Room::roomStart() {
   
 %}
 
+%nodefaultctor ServerPlayer;
+%nodefaultdtor ServerPlayer;
+class ServerPlayer : public Player {
+public:
+  Server *getServer() const;
+  Room *getRoom() const;
+  void setRoom(Room *room);
+
+  void speak(const QString &message);
+
+  void doRequest(const QString &command,
+           const QString &json_data, int timeout);
+  QString waitForReply();
+  QString waitForReply(int timeout);
+  void doNotify(const QString &command, const QString &json_data);
+
+  void prepareForRequest(const QString &command, const QString &data);
+};
