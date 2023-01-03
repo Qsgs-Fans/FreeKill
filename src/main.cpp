@@ -50,19 +50,19 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
   auto threadName = QThread::currentThread()->objectName().toLatin1().constData();
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/\e[1;30mDEBUG\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/DEBUG] %s\n", threadName, localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/\e[1;32mINFO\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/INFO] %s\n", threadName, localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/\e[1;33mWARNING\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/WARNING] %s\n", threadName, localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/\e[1;31mCRITICAL\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/CRITICAL] %s\n", threadName, localMsg.constData());
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/\e[1;31mFATAL\e[0m] %s\n", threadName, localMsg.constData());
+    fprintf(stderr, "[%s/FATAL] %s\n", threadName, localMsg.constData());
     break;
   }
 }
