@@ -136,19 +136,29 @@ int main(int argc, char *argv[])
   backend.setEngine(engine);
   
   engine->rootContext()->setContextProperty("Backend", &backend);
-  engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
+
 #ifdef QT_DEBUG
   bool debugging = true;
 #else
   bool debugging = false;
 #endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
+
+
 #ifdef Q_OS_ANDROID
   engine->rootContext()->setContextProperty("Android", true);
 #else
   engine->rootContext()->setContextProperty("Android", false);
 #endif
+
+#ifdef Q_OS_WASM
+  engine->rootContext()->setContextProperty("AppPath", "");
+  engine->load(QUrl("qrc:/qml/main.qml"));
+#else
+  engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
   engine->load("qml/main.qml");
+#endif
+
   if (engine->rootObjects().isEmpty())
     return -1;
 

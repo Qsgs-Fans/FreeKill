@@ -50,4 +50,14 @@ add_custom_command(
 )
 
 qt_add_executable(FreeKill)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
+file(GLOB_RECURSE FK_RESOURCE_FILES
+  RELATIVE ${PROJECT_SOURCE_DIR}
+  *.lua *.qml *.js *.png *.jpg *.mp3)
+qt_add_resources(FreeKill "qrc"
+  PREFIX "/"
+  FILES ${FK_RESOURCE_FILES}
+)
+endif()
 add_subdirectory(src)
