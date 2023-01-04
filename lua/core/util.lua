@@ -10,7 +10,7 @@ function fk.qlist(list)
 end
 
 function table:contains(element)
-  if #self == 0 or type(self[1]) ~= type(element) then return false end
+  if #self == 0 then return false end
   for _, e in ipairs(self) do
     if e == element then return true end
   end

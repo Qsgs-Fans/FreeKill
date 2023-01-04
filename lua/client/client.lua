@@ -4,6 +4,7 @@
 ---@field alive_players ClientPlayer[]
 ---@field current ClientPlayer
 ---@field discard_pile integer[]
+---@field status_skills Skill[]
 Client = class('Client')
 
 -- load client classes
@@ -28,6 +29,10 @@ function Client:initialize()
   self.players = {}     -- ClientPlayer[]
   self.alive_players = {}
   self.discard_pile = {}
+  self.status_skills = {}
+  for class, skills in pairs(Fk.global_status_skill) do
+    self.status_skills[class] = {table.unpack(skills)}
+  end
 end
 
 ---@param id integer
