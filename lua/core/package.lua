@@ -41,7 +41,7 @@ end
 ---@param general General
 function Package:addGeneral(general)
   assert(general.class and general:isInstanceOf(General))
-  table.insert(self.generals, general)
+  table.insertIfNeed(self.generals, general)
 end
 
 ---@param card Card

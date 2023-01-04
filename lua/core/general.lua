@@ -24,6 +24,8 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
 
   self.skills = {}    -- skills first added to this general
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
+
+  package:addGeneral(self)
 end
 
 ---@param skill Skill
