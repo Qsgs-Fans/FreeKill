@@ -22,6 +22,7 @@
 ---@field player_cards table<integer, integer[]>
 ---@field special_cards table<string, integer[]>
 ---@field cardUsedHistory table<string, integer>
+---@field fixedDistance table<Player, integer>
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -72,6 +73,7 @@ function Player:initialize()
   self.special_cards = {}
 
   self.cardUsedHistory = {}
+  self.fixedDistance = {}
 end
 
 ---@param general General
@@ -227,6 +229,17 @@ function Player:getAttackRange()
 end
 
 ---@param other Player
+---@param num integer
+function Player:setFixedDistance(other, num)
+  self.fixedDistance[other] = num
+end
+
+---@param other Player
+function Player:removeFixedDistance(other)
+  self.fixedDistance[other] = nil
+end
+
+---@param other Player
 function Player:distanceTo(other)
   assert(other:isInstanceOf(Player))
   local right = 0
@@ -245,7 +258,11 @@ function Player:distanceTo(other)
     local correct = skill:getCorrect(self, other)
     ret = ret + correct
   end
-  -- TODO: if have fixed skill, return fixed value
+  
+  if self.fixedDistance[other] then
+    ret = self.fixedDistance[other]
+  end
+
   return math.max(ret, 1)
 end
 
