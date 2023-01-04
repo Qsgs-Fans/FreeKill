@@ -4,6 +4,7 @@
 ---@field skills table<string, Skill>
 ---@field related_skills table<string, Skill[]>
 ---@field global_trigger TriggerSkill[]
+---@field global_status_skill table<class, Skill[]>
 ---@field generals table<string, General>
 ---@field lords string[]
 ---@field cards Card[]
@@ -24,6 +25,7 @@ function Engine:initialize()
   self.skills = {}    -- name --> Skill
   self.related_skills = {} -- skillName --> relatedSkill[]
   self.global_trigger = {}
+  self.global_status_skill = {}
   self.generals = {}    -- name --> General
   self.lords = {}     -- lordName[]
   self.cards = {}     -- Card[]
@@ -97,6 +99,16 @@ function Engine:addSkill(skill)
     error(string.format("Duplicate skill %s detected", skill.name))
   end
   self.skills[skill.name] = skill
+
+  if skill.global then
+    if skill:isInstanceOf(TriggerSkill) then
+      table.insert(self.global_trigger, skill)
+    else
+      local t = self.global_status_skill
+      t[skill.class] = t[skill.class] or {}
+      table.insert(t[skill.class], skill)
+    end
+  end
 end
 
 ---@param skills Skill[]

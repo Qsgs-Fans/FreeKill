@@ -22,6 +22,7 @@
 ---@field player_cards table<integer, integer[]>
 ---@field special_cards table<string, integer[]>
 ---@field cardUsedHistory table<string, integer>
+---@field fixedDistance table<Player, integer>
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -72,6 +73,7 @@ function Player:initialize()
   self.special_cards = {}
 
   self.cardUsedHistory = {}
+  self.fixedDistance = {}
 end
 
 ---@param general General
@@ -227,6 +229,17 @@ function Player:getAttackRange()
 end
 
 ---@param other Player
+---@param num integer
+function Player:setFixedDistance(other, num)
+  self.fixedDistance[other] = num
+end
+
+---@param other Player
+function Player:removeFixedDistance(other)
+  self.fixedDistance[other] = nil
+end
+
+---@param other Player
 function Player:distanceTo(other)
   assert(other:isInstanceOf(Player))
   local right = 0
@@ -239,7 +252,17 @@ function Player:distanceTo(other)
   end
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)
-  -- TODO: corrent distance here using skills
+
+  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    local correct = skill:getCorrect(self, other)
+    ret = ret + correct
+  end
+  
+  if self.fixedDistance[other] then
+    ret = self.fixedDistance[other]
+  end
+
   return math.max(ret, 1)
 end
 
@@ -334,12 +357,21 @@ end
 function Player:addSkill(skill, source_skill)
   skill = getActualSkill(skill)
 
-  local toget = table.clone(skill.related_skills)
+  local toget = {table.unpack(skill.related_skills)}
   table.insert(toget, skill)
+
+  local room = Fk:currentRoom()
   local ret = {}
   for _, s in ipairs(toget) do
     if not self:hasSkill(s) then
       table.insert(ret, s)
+      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
+        room.logic:addTriggerSkill(skill)
+      end
+      if table.contains(StatusSkills, skill.class) then
+        room.status_skills[skill.class] = room.status_skills[skill.class] or {}
+        table.insertIfNeed(room.status_skills[skill.class], skill)
+      end
     end
   end
 
