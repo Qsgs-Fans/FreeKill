@@ -71,7 +71,7 @@ Flickable {
       "GetSkillData",
       [skill_name]
     ));
-    if (data.freq = "active") {
+    if (data.freq === "active") {
       active_skills.append(data);
     } else {
       not_active_skills.append(data);

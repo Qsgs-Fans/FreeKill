@@ -340,12 +340,21 @@ end
 function Player:addSkill(skill, source_skill)
   skill = getActualSkill(skill)
 
-  local toget = table.clone(skill.related_skills)
+  local toget = {table.unpack(skill.related_skills)}
   table.insert(toget, skill)
+
+  local room = Fk:currentRoom()
   local ret = {}
   for _, s in ipairs(toget) do
     if not self:hasSkill(s) then
       table.insert(ret, s)
+      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
+        room.logic:addTriggerSkill(skill)
+      end
+      if table.contains(StatusSkills, skill.class) then
+        room.status_skills[skill.class] = room.status_skills[skill.class] or {}
+        table.insertIfNeed(room.status_skills[skill.class], skill)
+      end
     end
   end
 

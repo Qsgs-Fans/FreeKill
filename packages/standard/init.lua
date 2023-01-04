@@ -83,10 +83,20 @@ Fk:loadTranslationTable{
   ["zhaoyun"] = "赵云",
 }
 
+local mashu = fk.CreateDistanceSkill{
+  name = "mashu",
+  correct_func = function(self, from, to)
+    if from:hasSkill(self.name) then
+      return -1
+    end
+  end,
+}
 local machao = General:new(extension, "machao", "shu", 4)
+machao:addSkill(mashu)
 extension:addGeneral(machao)
 Fk:loadTranslationTable{
   ["machao"] = "马超",
+  ["mashu"] = "马术",
 }
 
 local huangyueying = General:new(extension, "huangyueying", "shu", 3)

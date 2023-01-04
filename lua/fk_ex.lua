@@ -5,6 +5,9 @@ dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active_skill"
 DistanceSkill = require "core.skill_type.distance"
+StatusSkills = {
+  DistanceSkill,
+}
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
