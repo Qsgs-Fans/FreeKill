@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
   system = "Android";
 #elif defined(Q_OS_WASM)
   system = "Web";
+  engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9530");
 #elif defined(Q_OS_WIN32)
   system = "Win";
 #elif defined(Q_OS_LINUX)

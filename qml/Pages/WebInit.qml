@@ -6,7 +6,7 @@ Item {
   scale: 2
 
   // Change this to your server's IP or domain name
-  property string server_addr: "127.0.0.1:9530"
+  property string server_addr: ServerAddr
 
   Frame {
     id: join_server
