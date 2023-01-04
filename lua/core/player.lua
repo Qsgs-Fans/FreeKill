@@ -239,7 +239,13 @@ function Player:distanceTo(other)
   end
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)
-  -- TODO: corrent distance here using skills
+
+  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    local correct = skill:getCorrect(self, other)
+    ret = ret + correct
+  end
+  -- TODO: if have fixed skill, return fixed value
   return math.max(ret, 1)
 end
 

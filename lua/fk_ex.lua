@@ -4,6 +4,7 @@ dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active_skill"
+DistanceSkill = require "core.skill_type.distance"
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
@@ -104,6 +105,25 @@ function fk.CreateActiveSkill(spec)
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
+  return skill
+end
+
+---@class DistanceSpec: SkillSpec
+---@field correct_func fun(self: DistanceSkill, from: Player, to: Player)
+---@field global boolean
+
+---@param spec DistanceSpec
+---@return DistanceSkill
+function fk.CreateDistanceSkill(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.correct_func) == "function")
+
+  local skill = DistanceSkill:new(spec.name)
+  skill.getCorrect = spec.correct_func
+  if spec.global then
+    skill.global = spec.global
+  end
+
   return skill
 end
 

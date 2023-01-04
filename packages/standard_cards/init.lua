@@ -862,6 +862,24 @@ extension:addCards({
   niohShield,
 })
 
+local horseSkill = fk.CreateDistanceSkill{
+  name = "horse_skill",
+  global = true,
+  correct_func = function(self, from, to)
+    local ret = 0
+    if from:getEquipment(Card.SubtypeOffensiveRide) then
+      ret = ret - 1
+    end
+    if to:getEquipment(Card.SubtypeDefensiveRide) then
+      ret = ret + 1
+    end
+    return ret
+  end,
+}
+if not Fk.skills["horse_skill"] then
+  Fk:addSkill(horseSkill)
+end
+
 local diLu = fk.CreateDefensiveRide{
   name = "dilu",
   suit = Card.Club,

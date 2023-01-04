@@ -12,6 +12,7 @@
 ---@field void integer[]
 ---@field card_place table<integer, CardArea>
 ---@field owner_map table<integer, integer>
+---@field status_skills Skill[]
 local Room = class("Room")
 
 -- load classes used by the game
@@ -71,6 +72,10 @@ function Room:initialize(_room)
   self.void = {}
   self.card_place = {}
   self.owner_map = {}
+  self.status_skills = {}
+  for class, skills in pairs(Fk.global_status_skill) do
+    self.status_skills[class] = {table.unpack(skills)}
+  end
 end
 
 -- When this function returns, the Room(C++) thread stopped.
