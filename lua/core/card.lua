@@ -76,6 +76,15 @@ function Card:initialize(name, suit, number, color)
   self.skill = nil
 end
 
+---@param suit Suit
+---@param number integer
+---@return Card
+function Card:clone(suit, number)
+  local newCard = self.class:new(self.name, suit, number)
+  newCard.skill = self.skill
+  return newCard
+end
+
 function Card:getSuitString()
   local suit = self.suit
   if suit == Card.Spade then
