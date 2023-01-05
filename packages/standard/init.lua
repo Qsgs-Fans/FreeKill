@@ -51,9 +51,27 @@ Fk:loadTranslationTable{
   ["liubei"] = "刘备",
 }
 
+local wusheng = fk.CreateViewAsSkill{
+  name = "wusheng",
+  available_cards = "slash",
+  card_filter = function(self, to_select, selected)
+    if #selected == 1 then return false end
+    return Fk:getCardById(to_select).color == Card.Red
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    local c = Fk:cloneCard("slash")
+    c:addSubcard(cards[1])
+    return c
+  end,
+}
 local guanyu = General:new(extension, "guanyu", "shu", 4)
+guanyu:addSkill(wusheng)
 Fk:loadTranslationTable{
   ["guanyu"] = "关羽",
+  ["wusheng"] = "武圣",
 }
 
 local zhangfei = General:new(extension, "zhangfei", "shu", 4)

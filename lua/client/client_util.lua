@@ -160,7 +160,7 @@ end
 function GetSkillData(skill_name)
   local skill = Fk.skills[skill_name]
   local freq = "notactive"
-  if skill:isInstanceOf(ActiveSkill) then
+  if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
   end
   return json.encode{
