@@ -9,6 +9,7 @@
 ---@field type CardType
 ---@field sub_type CardSubtype
 ---@field area CardArea
+---@field subcards integer[]
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -74,6 +75,7 @@ function Card:initialize(name, suit, number, color)
   self.type = 0
   self.sub_type = Card.SubTypeNone
   self.skill = nil
+  self.subcards = {}
 end
 
 ---@param suit Suit
@@ -83,6 +85,57 @@ function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
   return newCard
+end
+
+function Card:isVirtual()
+  return self.id <= 0
+end
+
+local function updateColorAndNumber(card)
+  local color = Card.NoColor
+  local number = 0
+  local different_color = false
+  for _, id in ipairs(card.subcards) do
+    local c = Fk:getCardById(id)
+    number = math.min(number + c.number, 13)
+    if color ~= c.color then
+      if not different_color then
+        if color ~= Card.NoColor then
+          different_color = true
+        end
+        color = c.color
+      else
+        color = Card.NoColor
+      end
+    end
+  end
+
+  card.color = color
+  card.number = number
+end
+
+---@param card integer|Card
+function Card:addSubcard(card)
+  if type(card) == "number" then
+    table.insert(self.subcards, card)
+  else
+    assert(card:isInstanceOf(Card))
+    assert(not card:isVirtual(), "Can not add virtual card as subcard")
+    table.insert(self.subcards, card.id)
+  end
+
+  updateColorAndNumber(self)
+end
+
+function Card:addSubcards(cards)
+  for _, c in ipairs(cards) do
+    self:addSubcard(c)
+  end
+end
+
+function Card:clearSubcards()
+  self.subcards = {}
+  updateColorAndNumber(self)
 end
 
 function Card:getSuitString()
