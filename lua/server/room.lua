@@ -604,6 +604,52 @@ function Room:askForSkillInvoke(player, skill_name, data)
 end
 
 ---@param player ServerPlayer
+---@param data string
+---@return CardUseStruct
+function Room:handleUseCardReply(player, data)
+  data = json.decode(data)
+  local card = data.card
+  local targets = data.targets
+  if type(card) == "string" then
+    local card_data = json.decode(card)
+    local skill = Fk.skills[card_data.skill]
+    local selected_cards = card_data.subcards
+    if skill:isInstanceOf(ActiveSkill) then
+      skill:onEffect(self, {
+        from = player.id,
+        cards = selected_cards,
+        tos = targets,
+      })
+      return nil
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local c = skill:viewAs(selected_cards)
+      if c then
+        local use = {}    ---@type CardUseStruct
+        use.from = player.id
+        use.tos = {}
+        for _, target in ipairs(targets) do
+          table.insert(use.tos, { target })
+        end
+        use.card = c
+        return use
+      end
+    end
+  else
+    local use = {}    ---@type CardUseStruct
+    use.from = player.id
+    use.tos = {}
+    for _, target in ipairs(targets) do
+      table.insert(use.tos, { target })
+    end
+    if #use.tos == 0 then
+      use.tos = nil
+    end
+    use.card = Fk:getCardById(card)
+    return use
+  end
+end
+
+---@param player ServerPlayer
 ---@return CardUseStruct
 function Room:askForUseCard(player, card_name, prompt, cancelable, extra_data)
   local command = "AskForUseCard"
@@ -615,25 +661,7 @@ function Room:askForUseCard(player, card_name, prompt, cancelable, extra_data)
   local data = {card_name, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
   if result ~= "" then
-    data = json.decode(result)
-    local card = data.card
-    local targets = data.targets
-    if type(card) == "string" then
-      -- TODO: ViewAsSkill
-      return nil
-    else
-      local use = {}    ---@type CardUseStruct
-      use.from = player.id
-      use.tos = {}
-      for _, target in ipairs(targets) do
-        table.insert(use.tos, { target })
-      end
-      if #use.tos == 0 then
-        use.tos = nil
-      end
-      use.cardId = card
-      return use
-    end
+    return self:handleUseCardReply(player, result)
   end
   return nil
 end
@@ -679,25 +707,7 @@ function Room:askForNullification(players, card_name, prompt, cancelable, extra_
   local winner = self:doRaceRequest(command, players, json.encode(data))
   if winner then
     local result = winner.client_reply
-    data = json.decode(result)
-    local card = data.card
-    local targets = data.targets
-    if type(card) == "string" then
-      -- TODO: ViewAsSkill
-      return nil
-    else
-      local use = {}    ---@type CardUseStruct
-      use.from = winner.id
-      use.tos = {}
-      for _, target in ipairs(targets) do
-        table.insert(use.tos, { target })
-      end
-      if #use.tos == 0 then
-        use.tos = nil
-      end
-      use.cardId = card
-      return use
-    end
+    return self:handleUseCardReply(winner, result)
   end
   return nil
 end
@@ -732,7 +742,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       if not aimEventCollaborators[toId] or collaboratorsIndex[toId] > #aimEventCollaborators[toId] then
         aimStruct = {
           from = cardUseEvent.from,
-          cardId = cardUseEvent.cardId,
+          card = cardUseEvent.card,
           to = toId,
           targetGroup = cardUseEvent.tos,
           nullifiedTargets = cardUseEvent.nullifiedTargets or {},
@@ -760,7 +770,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       else
         aimStruct = aimEventCollaborators[toId][collaboratorsIndex[toId]]
         aimStruct.from = cardUseEvent.from
-        aimStruct.cardId = cardUseEvent.cardId
+        aimStruct.card = cardUseEvent.card
         aimStruct.tos = aimGroup
         aimStruct.targetGroup = cardUseEvent.tos
         aimStruct.nullifiedTargets = cardUseEvent.nullifiedTargets or {}
@@ -820,17 +830,19 @@ end
 function Room:useCard(cardUseEvent)
   local from = cardUseEvent.from
   self:moveCards({
-    ids = { cardUseEvent.cardId },
+    ids = cardUseEvent.card:isVirtual()
+          and cardUseEvent.card.subcards
+          or { cardUseEvent.card.id },
     from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
 
-  if Fk:getCardById(cardUseEvent.cardId).skill then
-    Fk:getCardById(cardUseEvent.cardId).skill:onUse(self, cardUseEvent)
+  if cardUseEvent.card.skill then
+    cardUseEvent.card.skill:onUse(self, cardUseEvent)
   end
 
-  self:setEmotion(self:getPlayerById(from), Fk:getCardById(cardUseEvent.cardId).name)
+  self:setEmotion(self:getPlayerById(from), cardUseEvent.card.name)
   self:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
@@ -878,16 +890,16 @@ function Room:useCard(cardUseEvent)
   end
 
   if not cardUseEvent.extraUse then
-    self:getPlayerById(cardUseEvent.from):addCardUseHistory(Fk:getCardById(cardUseEvent.cardId).trueName, 1)
+    self:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
   end
 
   if cardUseEvent.responseToEvent then
     cardUseEvent.responseToEvent.cardIdsResponded = cardUseEvent.responseToEvent.cardIdsResponded or {}
-    table.insert(cardUseEvent.responseToEvent.cardIdsResponded, cardUseEvent.cardId)
+    table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
-    if not cardUseEvent.toCardId and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    if not cardUseEvent.toCard and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       break
     end
 
@@ -899,8 +911,8 @@ function Room:useCard(cardUseEvent)
         break
       end
 
-      if Fk:getCardById(cardUseEvent.cardId).type == Card.TypeEquip then
-        if self:getCardArea(cardUseEvent.cardId) ~= Card.Processing then
+      if cardUseEvent.card.type == Card.TypeEquip then
+        if self:getCardArea(cardUseEvent.card:getEffectiveId()) ~= Card.Processing then
           break
         end
 

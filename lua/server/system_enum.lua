@@ -10,9 +10,9 @@
 ---@alias DyingStruct { who: integer, damage: DamageStruct }
 ---@alias DeathStruct { who: integer, damage: DamageStruct }
 
----@alias CardUseStruct { from: integer, tos: TargetGroup, cardId: integer, toCardId: integer|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardIdsResponded: integer[]|null }
----@alias AimStruct { from: integer, cardId: integer, tos: AimGroup, to: integer, subTargets: integer[]|null, targetGroup: TargetGroup|null, nullifiedTargets: integer[]|null, firstTarget: boolean, additionalDamage: integer|null, disresponsive: boolean|null, unoffsetableList: boolean|null }
----@alias CardEffectEvent { from: integer, to: integer, subTargets: integer[]|null, tos: TargetGroup, cardId: integer, toCardId: integer|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardIdsResponded: integer[]|null, disresponsive: boolean|null, unoffsetable: boolean|null }
+---@alias CardUseStruct { from: integer, tos: TargetGroup, card: Card, toCard: Card|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardsResponded: Card[]|null }
+---@alias AimStruct { from: integer, card: Card, tos: AimGroup, to: integer, subTargets: integer[]|null, targetGroup: TargetGroup|null, nullifiedTargets: integer[]|null, firstTarget: boolean, additionalDamage: integer|null, disresponsive: boolean|null, unoffsetableList: boolean|null }
+---@alias CardEffectEvent { from: integer, to: integer, subTargets: integer[]|null, tos: TargetGroup, card: Card, toCard: Card|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardIdsResponded: integer[]|null, disresponsive: boolean|null, unoffsetable: boolean|null }
 ---@alias SkillEffectEvent { from: integer, tos: integer[], cards: integer[] }
 
 ---@alias JudgeStruct { who: ServerPlayer, card: Card, reason: string }

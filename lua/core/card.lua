@@ -91,6 +91,13 @@ function Card:isVirtual()
   return self.id <= 0
 end
 
+function Card:getEffectiveId()
+  if self:isVirtual() then
+    return #self.subcards > 0 and self.subcards[1] or nil
+  end
+  return self.id
+end
+
 local function updateColorAndNumber(card)
   local color = Card.NoColor
   local number = 0

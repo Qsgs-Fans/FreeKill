@@ -115,7 +115,9 @@ end
 ---@class ViewAsSkillSpec: SkillSpec
 ---@field card_filter fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean
 ---@field view_as fun(self: ViewAsSkill, cards: integer[])
----@field available_cards string
+---@field pattern string
+---@field enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
+---@field enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
 
 ---@param spec ViewAsSkillSpec
 ---@return ViewAsSkill
@@ -128,8 +130,14 @@ function fk.CreateViewAsSkill(spec)
   if spec.card_filter then
     skill.cardFilter = spec.card_filter
   end
-  if type(spec.available_cards) == "string" then
-    skill.available_cards = spec.available_cards
+  if type(spec.pattern) == "string" then
+    skill.pattern = spec.pattern
+  end
+  if type(spec.enabled_at_play) == "function" then
+    skill.enabledAtPlay = spec.enabled_at_play
+  end
+  if type(spec.enabled_at_response) == "function" then
+    skill.enabledAtResponse = spec.enabled_at_response
   end
 
   return skill

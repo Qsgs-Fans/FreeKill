@@ -173,8 +173,12 @@ end
 function ActiveCanUse(skill_name)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:canUse(Self)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:canUse(Self)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:enabledAtPlay(Self)
+    end
   end
   return json.encode(ret)
 end
@@ -182,8 +186,12 @@ end
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:cardFilter(to_select, selected, selected_targets)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:cardFilter(to_select, selected, selected_targets)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:cardFilter(to_select, selected)
+    end
   end
   return json.encode(ret)
 end
@@ -191,8 +199,15 @@ end
 function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:targetFilter(to_select, selected, selected_cards)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:targetFilter(to_select, selected, selected_cards)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local card = skill:viewAs(selected_cards)
+      if card then
+        ret = card.skill:targetFilter(to_select, selected, selected_cards)
+      end
+    end
   end
   return json.encode(ret)
 end
@@ -200,8 +215,15 @@ end
 function ActiveFeasible(skill_name, selected, selected_cards)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:feasible(selected, selected_cards)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:feasible(selected, selected_cards)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local card = skill:viewAs(selected_cards)
+      if card then
+        ret = card.skill:feasible(selected, selected_cards)
+      end
+    end
   end
   return json.encode(ret)
 end
