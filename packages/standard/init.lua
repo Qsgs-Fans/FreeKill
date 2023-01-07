@@ -21,22 +21,22 @@ local fankui = fk.CreateTriggerSkill{
   events = {fk.Damaged},
   frequency = Skill.NotFrequent,
   can_trigger = function(self, event, target, player, data)
-    return target:hasSkill(self.name)
+    local room = target.room
+    local from = room:getPlayerById(data.from)
+    return from ~= nil and
+      target == player and
+      target:hasSkill(self.name)
   end,
   on_trigger = function(self, event, target, player, data)
-    local damage = data.damage
     local room = player.room
-    local from = room:getPlayerById(damage.from)
-    if event == fk.Damaged then
-      if from:isNude() then return false end
-      if room:askForSkillInvoke(target, self.name) then
-        local card = room:askForCardChosen(target, from, "he", self.name)
-        room:obtainCard(target.id, card, false, fk.ReasonPrey)
-      end
+    local from = room:getPlayerById(data.from)
+    if (not from) or from:isNude() then return false end
+    if room:askForSkillInvoke(player, self.name) then
+      local card = room:askForCardChosen(player, from, "he", self.name)
+      room:obtainCard(player.id, card, false, fk.ReasonPrey)
     end
   end
 }
-
 local simayi = General:new(extension, "simayi", "wei", 3)
 simayi:addSkill(fankui)
 Fk:loadTranslationTable{

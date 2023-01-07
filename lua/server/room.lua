@@ -1475,12 +1475,13 @@ function Room:damage(damageStruct)
   assert(type(damageStruct.to) == "number")
 
   local stages = {
-    [fk.PreDamage] = damageStruct.from,
-    [fk.DamageCaused] = damageStruct.from,
-    [fk.DamageInflicted] = damageStruct.to,
+    {fk.PreDamage, damageStruct.from},
+    {fk.DamageCaused, damageStruct.from},
+    {fk.DamageInflicted, damageStruct.to},
   }
 
-  for event, playerId in ipairs(stages) do
+  for _, struct in ipairs(stages) do
+    local event, playerId = table.unpack(struct)
     local player = playerId and self:getPlayerById(playerId) or nil
     if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
       return false
@@ -1500,12 +1501,13 @@ function Room:damage(damageStruct)
   end
 
   stages = {
-    [fk.Damage] = damageStruct.from,
-    [fk.Damaged] = damageStruct.to,
-    [fk.DamageFinished] = damageStruct.from,
+    {fk.Damage, damageStruct.from},
+    {fk.Damaged, damageStruct.to},
+    {fk.DamageFinished, damageStruct.from},
   }
 
-  for event, playerId in ipairs(stages) do
+  for _, struct in ipairs(stages) do
+    local event, playerId = table.unpack(struct)
     local player = playerId and self:getPlayerById(playerId) or nil
     self.logic:trigger(event, player, damageStruct)
   end
