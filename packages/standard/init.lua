@@ -16,9 +16,32 @@ Fk:loadTranslationTable{
   ["caocao"] = "曹操",
 }
 
+local fankui = fk.CreateTriggerSkill{
+  name = "fankui",
+  events = {fk.Damaged},
+  frequency = Skill.NotFrequent,
+  can_trigger = function(self, event, target, player, data)
+    local room = target.room
+    local from = room:getPlayerById(data.from)
+    return from ~= nil and
+      target == player and
+      target:hasSkill(self.name)
+  end,
+  on_trigger = function(self, event, target, player, data)
+    local room = player.room
+    local from = room:getPlayerById(data.from)
+    if (not from) or from:isNude() then return false end
+    if room:askForSkillInvoke(player, self.name) then
+      local card = room:askForCardChosen(player, from, "he", self.name)
+      room:obtainCard(player.id, card, false, fk.ReasonPrey)
+    end
+  end
+}
 local simayi = General:new(extension, "simayi", "wei", 3)
+simayi:addSkill(fankui)
 Fk:loadTranslationTable{
   ["simayi"] = "司马懿",
+  ["fankui"] = "反馈",
 }
 
 local xiahoudun = General:new(extension, "xiahoudun", "wei", 4)
