@@ -135,7 +135,7 @@ function GameLogic:prepareForStart()
   end
 
   for _, p in ipairs(room.alive_players) do
-    room:handleAddLoseSkills(p, "zhiheng|mashu", nil, false)
+    room:handleAddLoseSkills(p, "zhiheng|mashu|fankui", nil, false)
   end
 
   self:addTriggerSkill(GameRule)
