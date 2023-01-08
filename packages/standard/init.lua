@@ -149,8 +149,10 @@ local kurou = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    room:drawCards(from, 2, self.name)
     room:loseHp(from, 1, self.name)
+    if from:isAlive() then
+      room:drawCards(from, 2, self.name)
+    end
   end
 }
 local huanggai = General:new(extension, "huanggai", "wu", 4)
