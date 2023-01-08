@@ -138,33 +138,62 @@ function Room:deadPlayerFilter(playerIds)
   return newPlayerIds
 end
 
+---@param sortBySeat boolean
 ---@return ServerPlayer[]
-function Room:getAlivePlayers()
-  local current = self.current
-  local temp = current.next
-  local ret = {current}
-  while temp ~= current do
-    if not temp.dead then
+function Room:getAllPlayers(sortBySeat)
+  if sortBySeat == nil or sortBySeat then
+    local current = self.current
+    local temp = current.next
+    local ret = {current}
+    while temp ~= current do
       table.insert(ret, temp)
+      temp = temp.next
     end
-    temp = temp.next
+
+    return ret
+  else
+    return { table.unpack(self.players) }
   end
-  return ret
+end
+
+---@param sortBySeat boolean
+---@return ServerPlayer[]
+function Room:getAlivePlayers(sortBySeat)
+  if sortBySeat == nil or sortBySeat then
+    local current = self.current
+    local temp = current.next
+    local ret = {current}
+    while temp ~= current do
+      if not temp.dead then
+        table.insert(ret, temp)
+      end
+      temp = temp.next
+    end
+
+    return ret
+  else
+    return { table.unpack(self.alive_players) }
+  end
 end
 
 ---@param player ServerPlayer
 ---@param sortBySeat boolean
+---@param include_dead boolean
 ---@return ServerPlayer[]
-function Room:getOtherPlayers(player, sortBySeat)
-  local alivePlayers = self:getAlivePlayers(sortBySeat)
-  for _, p in ipairs(alivePlayers) do
+function Room:getOtherPlayers(player, sortBySeat, include_dead)
+  if sortBySeat == nil then
+    sortBySeat = true
+  end
+
+  local players = include_dead and self:getAllPlayers(sortBySeat) or self:getAlivePlayers(sortBySeat)
+  for _, p in ipairs(players) do
     if p.id == player.id then
-      table.removeOne(alivePlayers, player)
+      table.removeOne(players, player)
       break
     end
   end
 
-  return alivePlayers
+  return players
 end
 
 ---@return ServerPlayer | null
