@@ -142,9 +142,22 @@ Fk:loadTranslationTable{
   ["lvmeng"] = "吕蒙",
 }
 
+local kurou = fk.CreateActiveSkill{
+  name = "kurou",
+  card_filter = function(to_select, selected, selected_targets)
+    return false
+  end,
+  on_effect = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    room:drawCards(from, 2, self.name)
+    room:loseHp(from, 1, self.name)
+  end
+}
 local huanggai = General:new(extension, "huanggai", "wu", 4)
+huanggai:addSkill(kurou)
 Fk:loadTranslationTable{
   ["huanggai"] = "黄盖",
+  ["kurou"] = "苦肉",
 }
 
 local zhouyu = General:new(extension, "zhouyu", "wu", 3)
