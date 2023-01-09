@@ -64,7 +64,7 @@ Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",
 }
 
-local zhenji = General:new(extension, "zhenji", "wei", 3)
+local zhenji = General:new(extension, "zhenji", "wei", 3, 3, General.Female)
 Fk:loadTranslationTable{
   ["zhenji"] = "甄姬",
 }
@@ -109,7 +109,7 @@ Fk:loadTranslationTable{
   ["mashu"] = "马术",
 }
 
-local huangyueying = General:new(extension, "huangyueying", "shu", 3)
+local huangyueying = General:new(extension, "huangyueying", "shu", 3, 3, General.Female)
 Fk:loadTranslationTable{
   ["huangyueying"] = "黄月英",
 }
@@ -144,7 +144,7 @@ Fk:loadTranslationTable{
 
 local kurou = fk.CreateActiveSkill{
   name = "kurou",
-  card_filter = function(to_select, selected, selected_targets)
+  card_filter = function(self, to_select, selected, selected_targets)
     return false
   end,
   on_effect = function(self, room, effect)
@@ -167,7 +167,7 @@ Fk:loadTranslationTable{
   ["zhouyu"] = "周瑜",
 }
 
-local daqiao = General:new(extension, "daqiao", "wu", 3)
+local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
 Fk:loadTranslationTable{
   ["daqiao"] = "大乔",
 }
@@ -177,9 +177,46 @@ Fk:loadTranslationTable{
   ["luxun"] = "陆逊",
 }
 
-local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3)
+local jieyin = fk.CreateActiveSkill{
+  name = "jieyin",
+  card_filter = function(self, to_select, selected)
+    return #selected < 2  -- TODO:choose equip
+  end,
+  target_filter = function(self, to_select, selected)
+    local target = Fk:currentRoom():getPlayerById(to_select)
+    local name = target.general
+    return target:isWounded() and
+      Fk.generals[name].gender == General.Male
+      and #selected < 1
+      -- and not target:hasSkill(self.name)
+  end,
+  feasible = function(self, selected, selected_cards)
+    return #selected == 1 and #selected_cards == 2
+  end,
+  on_effect = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    room:throwCard(effect.cards, self.name, from)
+    room:recover({
+      who = effect.tos[1],
+      num = 1,
+      recoverBy = effect.from,
+      skillName = self.name
+    })
+    if from:isWounded() then
+      room:recover({
+        who = effect.from,
+        num = 1,
+        recoverBy = effect.from,
+        skillName = self.name
+      })
+    end
+   end
+}
+local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3, 3, General.Female)
+sunshangxiang:addSkill(jieyin)
 Fk:loadTranslationTable{
   ["sunshangxiang"] = "孙尚香",
+  ["jieyin"] = "结姻",
 }
 
 local huatuo = General:new(extension, "huatuo", "qun", 3)
@@ -192,7 +229,7 @@ Fk:loadTranslationTable{
   ["lvbu"] = "吕布",
 }
 
-local diaochan = General:new(extension, "diaochan", "qun", 3)
+local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
 Fk:loadTranslationTable{
   ["diaochan"] = "貂蝉",
 }
