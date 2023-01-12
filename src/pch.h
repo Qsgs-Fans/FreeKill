@@ -18,4 +18,8 @@ typedef int LuaFunction;
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 
+#if !defined (Q_OS_ANDROID) && !defined (Q_OS_WASM)
+#define DESKTOP_BUILD
+#endif
+
 #endif // _PCH_H

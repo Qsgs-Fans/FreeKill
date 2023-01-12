@@ -114,6 +114,9 @@ int main(int argc, char *argv[])
 #endif
 
   app = new QApplication(argc, argv);
+#ifdef DESKTOP_BUILD
+  ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
+#endif
 
 #define SHOW_SPLASH_MSG(msg) \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
