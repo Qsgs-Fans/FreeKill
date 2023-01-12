@@ -69,7 +69,7 @@ Item {
   RowLayout {
     anchors.fill: parent
     Item {
-      Layout.preferredWidth: root.width * 0.7
+      Layout.preferredWidth: root.width * 0.6
       Layout.fillHeight: true
       Rectangle {
         width: parent.width * 0.8
@@ -95,42 +95,55 @@ Item {
       }
     }
 
-    ColumnLayout {
-      Button {
+    GridLayout {
+      flow: GridLayout.TopToBottom
+      rows: 4
+      TileButton {
+        iconSource: "configure"
         text: Backend.translate("Edit Profile")
         onClicked: {
           globalPopup.source = "EditProfile.qml";
           globalPopup.open();
         }
       }
-      Button {
+      TileButton {
+        iconSource: "create_room"
         text: Backend.translate("Create Room")
         onClicked: {
           globalPopup.source = "CreateRoom.qml";
           globalPopup.open();
         }
       }
-      Button {
+      TileButton {
+        iconSource: "general_overview"
         text: Backend.translate("Generals Overview")
         onClicked: {
           mainStack.push(mainWindow.generalsOverviewPage);
           mainStack.currentItem.loadPackages();
         }
       }
-      Button {
+      TileButton {
+        iconSource: "card_overview"
         text: Backend.translate("Cards Overview")
         onClicked: {
           mainStack.push(mainWindow.cardsOverviewPage);
           mainStack.currentItem.loadPackages();
         }
       }
-      Button {
+      TileButton {
+        iconSource: "rule_summary"
         text: Backend.translate("Scenarios Overview")
       }
-      Button {
+      TileButton {
+        iconSource: "replay"
+        text: Backend.translate("Replay")
+      }
+      TileButton {
+        iconSource: "about"
         text: Backend.translate("About")
       }
-      Button {
+      TileButton {
+        iconSource: "quit"
         text: Backend.translate("Exit Lobby")
         onClicked: {
           toast.show("Goodbye.");

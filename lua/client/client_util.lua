@@ -232,6 +232,7 @@ Fk:loadTranslationTable{
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
   ["Scenarios Overview"] = "玩法一览",
+  ["Replay"] = "录像",
   ["About"] = "关于",
   ["Exit Lobby"] = "退出大厅",
 
