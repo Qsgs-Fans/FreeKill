@@ -232,7 +232,32 @@ Fk:loadTranslationTable{
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
   ["Scenarios Overview"] = "玩法一览",
+  ["Replay"] = "录像",
   ["About"] = "关于",
+  ["about_freekill_description"] = "<b>关于FreeKill</b><br/>" ..
+    "以便于DIY为首要目的的开源三国杀游戏。<br/>" ..
+    "<br/>项目链接： https://github.com/Notify-ctrl/FreeKill",
+  ["about_qt_description"] = "<b>关于Qt</b><br/>" ..
+    "Qt是一个C++图形界面应用程序开发框架，拥有强大的跨平台能力以及易于使用的API。<br/>" ..
+    "<br/>本程序使用Qt 6.2+，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。<br/>" ..
+    "<br/>官网： https://www.qt.io",
+  ["about_lua_description"] = "<b>关于Lua</b><br/>" ..
+    "Lua是一种小巧、灵活、高效的脚本语言，广泛用于游戏开发中。<br/>" ..
+    "<br/>本程序使用Lua 5.4，利用其完全实现了整个游戏逻辑。<br/>" ..
+    "<br/>官网： https://www.lua.org",
+  ["about_ossl_description"] = "<b>关于OpenSSL</b><br/>" ..
+    "OpenSSL是一个开源包，用来提供安全通信与各种加密支持。<br/>" ..
+    "<br/>本程序目前用到了crypto库，以获得RSA加密算法支持。<br/>" ..
+    "<br/>官网： https://www.openssl.org",
+  ["about_gplv3_description"] = "<b>关于GPLv3</b><br/>" ..
+    "GNU通用公共许可协议（简称GPL）是一个广泛使用的自由软件许可证条款，它确保广大用户自由地使用、学习、共享或修改软件。<br/>" ..
+    "<br/>由于Qt是按照GPLv3协议开源的库，与此同时本程序用到的readline库也属于GPLv3库，再加上QSanguosha也是以GPLv3协议开源的软件（从中借鉴了不少代码和思路），因此这个项目也使用GPLv3协议开源。<br/>" ..
+    "<br/>官网： https://gplv3.fsf.org",
+  ["about_sqlite_description"] = "<b>关于SQLite</b><br/>" ..
+    "SQLite是一个轻量级的数据库，具有占用资源低、运行效率快、嵌入性好等优点。<br/>" ..
+    "<br/>FreeKill使用sqlite3在服务端保存用户的各种信息。<br/>" ..
+    "<br/>官网： https://www.sqlite.org",
+
   ["Exit Lobby"] = "退出大厅",
 
   ["OK"] = "确定",

@@ -13,3 +13,4 @@ var CARD_SUIT_DIR = AppPath + "/image/card/suit/";
 var DELAYED_TRICK_DIR = AppPath + "/image/card/delayedTrick/";
 var EQUIP_ICON_DIR = AppPath + "/image/card/equipIcon/";
 var PIXANIM_DIR = AppPath + "/image/anim/"
+var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
