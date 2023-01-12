@@ -141,6 +141,9 @@ Item {
       TileButton {
         iconSource: "about"
         text: Backend.translate("About")
+        onClicked: {
+          mainStack.push(mainWindow.aboutPage);
+        }
       }
       TileButton {
         iconSource: "quit"
