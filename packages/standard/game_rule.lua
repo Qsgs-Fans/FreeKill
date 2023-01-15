@@ -125,7 +125,7 @@ GameRule = fk.CreateTriggerSkill{
 
           ---@type CardEffectEvent
           local effect_data = {
-            cardId = cards[i],
+            card = card,
             to = player.id,
             tos = { {player.id} },
           }
