@@ -26,6 +26,8 @@ _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 ---@field priority number | table<Event, number>
 ---@field on_trigger TrigFunc
 ---@field can_trigger TrigFunc
+---@field on_cost TrigFunc
+---@field on_use TrigFunc
 ---@field on_refresh TrigFunc
 ---@field can_refresh TrigFunc
 
@@ -58,6 +60,9 @@ function fk.CreateTriggerSkill(spec)
   if spec.can_trigger then
     skill.triggerable = spec.can_trigger
   end
+
+  if spec.on_cost then skill.cost = spec.on_cost end
+  if spec.on_use then skill.use = spec.on_use end
 
   if spec.can_refresh then
     skill.canRefresh = spec.can_refresh
