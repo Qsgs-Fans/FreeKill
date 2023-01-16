@@ -31,16 +31,14 @@ local fankui = fk.CreateTriggerSkill{
     local from = room:getPlayerById(data.from)
     return from ~= nil and
       target == player and
-      target:hasSkill(self.name)
+      target:hasSkill(self.name) and
+      not target.dead
   end,
-  on_trigger = function(self, event, target, player, data)
+  on_use = function(self, event, target, player, data)
     local room = player.room
     local from = room:getPlayerById(data.from)
-    if (not from) or from:isNude() then return false end
-    if room:askForSkillInvoke(player, self.name) then
-      local card = room:askForCardChosen(player, from, "he", self.name)
-      room:obtainCard(player.id, card, false, fk.ReasonPrey)
-    end
+    local card = room:askForCardChosen(player, from, "he", self.name)
+    room:obtainCard(player.id, card, false)
   end
 }
 local simayi = General:new(extension, "simayi", "wei", 3)

@@ -38,7 +38,7 @@ end
 
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
-  events = {
+  refresh_events = {
     fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
     fk.AskForPeaches, fk.AskForPeachesDone,
@@ -46,11 +46,11 @@ GameRule = fk.CreateTriggerSkill{
   },
   priority = 0,
 
-  can_trigger = function(self, event, target, player, data)
+  can_refresh = function(self, event, target, player, data)
     return (target == player) or (target == nil)
   end,
 
-  on_trigger = function(self, event, target, player, data)
+  on_refresh = function(self, event, target, player, data)
     if RoomInstance.tag["SkipGameRule"] then
       RoomInstance.tag["SkipGameRule"] = false
       return false
