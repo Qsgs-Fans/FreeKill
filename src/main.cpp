@@ -14,6 +14,7 @@
 #include <QSplashScreen>
 #include <QScreen>
 #include <QFileDialog>
+#include <QQuickStyle>
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
@@ -137,6 +138,7 @@ int main(int argc, char *argv[])
 
   SHOW_SPLASH_MSG("Loading qml files...");
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
+  QQuickStyle::setStyle("Material");
   
   QmlBackend backend;
   backend.setEngine(engine);
