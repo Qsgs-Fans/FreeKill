@@ -137,12 +137,14 @@ function Engine:addGenerals(generals)
 end
 
 local cardId = 1
+local _card_name_table = {}
 ---@param card Card
 function Engine:addCard(card)
   assert(card.class:isSubclassOf(Card))
   card.id = cardId
   cardId = cardId + 1
   table.insert(self.cards, card)
+  _card_name_table[card.name] = card
 end
 
 ---@param cards Card[]
@@ -150,6 +152,16 @@ function Engine:addCards(cards)
   for _, card in ipairs(cards) do
     self:addCard(card)
   end
+end
+
+---@param name string
+---@param suit Suit
+---@param number integer
+---@return Card
+function Engine:cloneCard(name, suit, number)
+  local cd = _card_name_table[name]
+  assert(cd, "Attempt to clone a card that not added to engine")
+  return cd:clone(suit, number)
 end
 
 ---@param num integer

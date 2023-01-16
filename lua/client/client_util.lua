@@ -160,7 +160,7 @@ end
 function GetSkillData(skill_name)
   local skill = Fk.skills[skill_name]
   local freq = "notactive"
-  if skill:isInstanceOf(ActiveSkill) then
+  if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
   end
   return json.encode{
@@ -173,8 +173,12 @@ end
 function ActiveCanUse(skill_name)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:canUse(Self)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:canUse(Self)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:enabledAtPlay(Self)
+    end
   end
   return json.encode(ret)
 end
@@ -182,8 +186,12 @@ end
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:cardFilter(to_select, selected, selected_targets)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:cardFilter(to_select, selected, selected_targets)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:cardFilter(to_select, selected)
+    end
   end
   return json.encode(ret)
 end
@@ -191,8 +199,15 @@ end
 function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:targetFilter(to_select, selected, selected_cards)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:targetFilter(to_select, selected, selected_cards)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local card = skill:viewAs(selected_cards)
+      if card then
+        ret = card.skill:targetFilter(to_select, selected, selected_cards)
+      end
+    end
   end
   return json.encode(ret)
 end
@@ -200,15 +215,46 @@ end
 function ActiveFeasible(skill_name, selected, selected_cards)
   local skill = Fk.skills[skill_name]
   local ret = false
-  if skill and skill:isInstanceOf(ActiveSkill) then
-    ret = skill:feasible(selected, selected_cards)
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:feasible(selected, selected_cards)
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local card = skill:viewAs(selected_cards)
+      if card then
+        ret = card.skill:feasible(selected, selected_cards)
+      end
+    end
   end
   return json.encode(ret)
 end
 
--- ViewAsSkill (Todo)
 function CanViewAs(skill_name, card_ids)
-  return "true"
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill then
+    if skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:viewAs(card_ids) ~= nil
+    elseif skill:isInstanceOf(ActiveSkill) then
+      ret = true
+    end
+  end
+  return json.encode(ret)
+end
+
+function CardFitPattern(card_name, pattern)
+  local exp = Exppattern:Parse(pattern)
+  local ret = exp:matchExp(card_name)
+  return json.encode(ret)
+end
+
+function SkillFitPattern(skill_name, pattern)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill.pattern then
+    local exp = Exppattern:Parse(pattern)
+    ret = exp:matchExp(skill.pattern)
+  end
+  return json.encode(ret)
 end
 
 Fk:loadTranslationTable{
@@ -355,9 +401,21 @@ Fk:loadTranslationTable{
   -- useCard
   ["#UseCard"] = "%from 使用了牌 %card",
   ["#UseCardToTargets"] = "%from 使用了牌 %card，目标是 %to",
-  ["#CardUseCollaborator"] = "%from 在此次 %card 中的子目标是 %to",
+  ["#CardUseCollaborator"] = "%from 在此次 %arg 中的子目标是 %to",
   ["#UseCardToCard"] = "%from 使用了牌 %card，目标是 %arg",
   ["#ResponsePlayCard"] = "%from 打出了牌 %card",
+
+  ["#UseVCard"] = "%from 将 %card 当 %arg 使用",
+  ["#UseVCardToTargets"] = "%from 将 %card 当 %arg 使用，目标是 %to",
+  ["#UseVCardToCard"] = "%from 将 %card 当 %arg2 使用，目标是 %arg",
+  ["#ResponsePlayVCard"] = "%from 将 %card 当 %arg 打出",
+  ["#UseV0Card"] = "%from 使用了 %arg",
+  ["#UseV0CardToTargets"] = "%from 使用了 %arg，目标是 %to",
+  ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
+  ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
+
+  -- skill
+  ["#InvokeSkill"] = "%from 发动了 “%arg”",
 
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",

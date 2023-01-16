@@ -20,6 +20,7 @@ Engine = require "core.engine"
 Package = require "core.package"
 General = require "core.general"
 Card = require "core.card"
+Exppattern = require "core.exppattern"
 Skill = require "core.skill"
 Player = require "core.player"
 

@@ -125,7 +125,7 @@ GameRule = fk.CreateTriggerSkill{
 
           ---@type CardEffectEvent
           local effect_data = {
-            cardId = cards[i],
+            card = card,
             to = player.id,
             tos = { {player.id} },
           }
@@ -144,26 +144,8 @@ GameRule = fk.CreateTriggerSkill{
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
 
-          local data = json.decode(result)
-          local card = data.card
-          local targets = data.targets
-          if type(card) == "string" then
-            local card_data = json.decode(card)
-            local skill = Fk.skills[card_data.skill]
-            local selected_cards = card_data.subcards
-            skill:onEffect(room, {
-              from = player.id,
-              cards = selected_cards,
-              tos = targets,
-            })
-          else
-            local use = {}    ---@type CardUseStruct
-            use.from = player.id
-            use.tos = {}
-            for _, target in ipairs(targets) do
-              table.insert(use.tos, { target })
-            end
-            use.cardId = card
+          local use = room:handleUseCardReply(player, result)
+          if use then
             room:useCard(use)
           end
         end

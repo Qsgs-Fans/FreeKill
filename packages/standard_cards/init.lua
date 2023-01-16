@@ -195,6 +195,7 @@ local dismantlement = fk.CreateTrickCard{
 }
 Fk:loadTranslationTable{
   ["dismantlement"] = "过河拆桥",
+  ["dismantlement_skill"] = "过河拆桥",
 }
 
 extension:addCards({
@@ -241,6 +242,7 @@ local snatch = fk.CreateTrickCard{
 }
 Fk:loadTranslationTable{
   ["snatch"] = "顺手牵羊",
+  ["snatch_skill"] = "顺手牵羊",
 }
 
 extension:addCards({
@@ -275,11 +277,11 @@ local duelSkill = fk.CreateActiveSkill{
         break
       end
 
-      local cardIdResponded = room:askForResponse(currentResponser, 'slash')
-      if cardIdResponded then
+      local cardResponded = room:askForResponse(currentResponser, 'slash')
+      if cardResponded then
         room:responseCard({
           from = currentResponser.id,
-          cardId = cardIdResponded,
+          card = cardResponded,
           responseToEvent = effect,
         })
       else
@@ -336,17 +338,13 @@ local collateralSkill = fk.CreateActiveSkill{
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
   on_effect = function(self, room, effect)
-    local cardIdResponded = nil
-    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
-    end
+    local use = room:askForUseCard(
+      room:getPlayerById(effect.to),
+      "slash", nil, nil, nil, { must_targets = effect.subTargets }
+    )
 
-    if cardIdResponded then
-      room:useCard({
-        from = effect.to,
-        tos = { { effect.subTargets[1] } },
-        cardId = cardIdResponded,
-      })
+    if use then
+      room:useCard(use)
     else
       room:obtainCard(effect.from, room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon), true, fk.ReasonGive)
     end
@@ -436,15 +434,15 @@ local savageAssaultSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    local cardIdResponded = nil
+    local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
+      cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
     end
 
-    if cardIdResponded then
+    if cardResponded then
       room:responseCard({
         from = effect.to,
-        cardId = cardIdResponded,
+        card = cardResponded,
         responseToEvent = effect,
       })
     else
@@ -485,15 +483,15 @@ local archeryAttackSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    local cardIdResponded = nil
+    local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardIdResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink')
+      cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink')
     end
 
-    if cardIdResponded then
+    if cardResponded then
       room:responseCard({
         from = effect.to,
-        cardId = cardIdResponded,
+        card = cardResponded,
         responseToEvent = effect,
       })
     else
@@ -628,7 +626,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local to = room:getPlayerById(effect.to)
     local nextp = to:getNextAlive()
     room:moveCards{
-      ids = { effect.cardId },
+      ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       to = nextp.id,
       toArea = Card.PlayerJudge,
       moveReason = fk.ReasonPut
@@ -686,7 +684,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
   end,
   on_nullified = function(self, room, effect)
     room:moveCards{
-      ids = { effect.cardId },
+      ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile
     }
