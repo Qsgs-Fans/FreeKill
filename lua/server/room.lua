@@ -426,6 +426,19 @@ function Room:sendLogEvent(type, data, players)
   self:doBroadcastNotify("LogEvent", json.encode(data), players)
 end
 
+---@param player ServerPlayer
+---@param skill_name string
+---@param skill_type nil
+function Room:notifySkillInvoked(player, skill_name, skill_type)
+  self:sendLog{
+    type = "#InvokeSkill",
+    from = player.id,
+    arg = skill_name,
+  }
+
+  -- TODO: notifySkill animation
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -615,6 +628,7 @@ function Room:handleUseCardReply(player, data)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
     if skill:isInstanceOf(ActiveSkill) then
+      self:notifySkillInvoked(player, skill.name)
       skill:onEffect(self, {
         from = player.id,
         cards = selected_cards,
@@ -624,6 +638,7 @@ function Room:handleUseCardReply(player, data)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local c = skill:viewAs(selected_cards)
       if c then
+        self:notifySkillInvoked(player, skill.name)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}

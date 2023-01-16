@@ -365,6 +365,9 @@ Fk:loadTranslationTable{
   ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
   ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
 
+  -- skill
+  ["#InvokeSkill"] = "%from 发动了 “%arg”",
+
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",
   ["#InitialJudge"] = "%from 的判定牌为 %card",
