@@ -298,6 +298,14 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled) {
+      if (roomScene.extra_data instanceof Object) {
+        let must = roomScene.extra_data.must_targets;
+        if (must instanceof Array) {
+          okButton.enabled = (must.length === 0);
+        }
+      }
+    }
   } else {
     all_photos.forEach(photo => {
       photo.state = "normal";
@@ -337,6 +345,16 @@ function updateSelectedTargets(playerid, selected) {
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled) {
+      if (roomScene.extra_data instanceof Object) {
+        let must = roomScene.extra_data.must_targets;
+        if (must instanceof Array) {
+          okButton.enabled = (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length === 0);
+        }
+      }
+    }
   } else {
     all_photos.forEach(photo => {
       photo.state = "normal";
@@ -628,14 +646,19 @@ callbacks["GameLog"] = function(jsonData) {
 }
 
 callbacks["AskForUseCard"] = function(jsonData) {
-  // jsonData: card, prompt, cancelable, {}
+  // jsonData: card, pattern, prompt, cancelable, {}
   let data = JSON.parse(jsonData);
   let cardname = data[0];
-  let prompt = data[1];
+  let pattern = data[1];
+  let prompt = data[2];
+  let extra_data = data[4];
+  if (extra_data != null) {
+    roomScene.extra_data = extra_data;
+  }
 
   roomScene.promptText = Backend.translate(prompt)
     .arg(Backend.translate(cardname));
-  roomScene.responding_card = cardname;
+  roomScene.responding_card = pattern;
   roomScene.respond_play = false;
   roomScene.state = "responding";
   okButton.enabled = false;
@@ -643,14 +666,15 @@ callbacks["AskForUseCard"] = function(jsonData) {
 }
 
 callbacks["AskForResponseCard"] = function(jsonData) {
-  // jsonData: card, prompt, cancelable, {}
+  // jsonData: card_name, pattern, prompt, cancelable, {}
   let data = JSON.parse(jsonData);
   let cardname = data[0];
-  let prompt = data[1];
+  let pattern = data[1];
+  let prompt = data[2];
 
   roomScene.promptText = Backend.translate(prompt)
     .arg(Backend.translate(cardname));
-  roomScene.responding_card = cardname;
+  roomScene.responding_card = pattern;
   roomScene.respond_play = true;
   roomScene.state = "responding";
   okButton.enabled = false;

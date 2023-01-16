@@ -26,6 +26,7 @@ Item {
   property var selected_targets: []
   property string responding_card
   property bool respond_play: false
+  property var extra_data: ({})
 
   Image {
     source: AppPath + "/image/gamebg"

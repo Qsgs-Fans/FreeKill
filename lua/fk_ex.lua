@@ -4,6 +4,7 @@ dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active_skill"
+ViewAsSkill = require "core.skill_type.view_as"
 DistanceSkill = require "core.skill_type.distance"
 StatusSkills = {
   DistanceSkill,
@@ -108,6 +109,37 @@ function fk.CreateActiveSkill(spec)
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
+  return skill
+end
+
+---@class ViewAsSkillSpec: SkillSpec
+---@field card_filter fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean
+---@field view_as fun(self: ViewAsSkill, cards: integer[])
+---@field pattern string
+---@field enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
+---@field enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
+
+---@param spec ViewAsSkillSpec
+---@return ViewAsSkill
+function fk.CreateViewAsSkill(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.view_as) == "function")
+
+  local skill = ViewAsSkill:new(spec.name)
+  skill.viewAs = spec.view_as
+  if spec.card_filter then
+    skill.cardFilter = spec.card_filter
+  end
+  if type(spec.pattern) == "string" then
+    skill.pattern = spec.pattern
+  end
+  if type(spec.enabled_at_play) == "function" then
+    skill.enabledAtPlay = spec.enabled_at_play
+  end
+  if type(spec.enabled_at_response) == "function" then
+    skill.enabledAtResponse = spec.enabled_at_response
+  end
+
   return skill
 end
 
