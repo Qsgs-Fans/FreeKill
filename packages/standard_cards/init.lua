@@ -195,6 +195,7 @@ local dismantlement = fk.CreateTrickCard{
 }
 Fk:loadTranslationTable{
   ["dismantlement"] = "过河拆桥",
+  ["dismantlement_skill"] = "过河拆桥",
 }
 
 extension:addCards({
@@ -241,6 +242,7 @@ local snatch = fk.CreateTrickCard{
 }
 Fk:loadTranslationTable{
   ["snatch"] = "顺手牵羊",
+  ["snatch_skill"] = "顺手牵羊",
 }
 
 extension:addCards({
@@ -336,17 +338,13 @@ local collateralSkill = fk.CreateActiveSkill{
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
   on_effect = function(self, room, effect)
-    local cardResponded = nil
-    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
-    end
+    local use = room:askForUseCard(
+      room:getPlayerById(effect.to),
+      "slash", nil, nil, nil, { must_targets = effect.subTargets }
+    )
 
-    if cardResponded then
-      room:useCard({
-        from = effect.to,
-        tos = { { effect.subTargets[1] } },
-        cardId = cardResponded,
-      })
+    if use then
+      room:useCard(use)
     else
       room:obtainCard(effect.from, room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon), true, fk.ReasonGive)
     end

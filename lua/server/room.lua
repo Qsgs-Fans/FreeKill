@@ -61,7 +61,7 @@ function Room:initialize(_room)
       if ret == false then
         fk.qCritical(err_msg)
         print(debug.traceback(co))
-        self.game_finished = true
+        break
       end
     end
   end
@@ -670,6 +670,8 @@ function Room:handleUseCardReply(player, data)
   end
 end
 
+-- available extra_data:
+-- * must_targets: integer[]
 ---@param player ServerPlayer
 ---@param card_name string
 ---@param pattern string
@@ -1221,11 +1223,29 @@ function Room:responseCard(cardResponseEvent)
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
   local card = cardResponseEvent.card
   local cardIds = self:getSubcardsByRule(card)
-  self:sendLog{
-    type = "#ResponsePlayCard",
-    from = from,
-    card = cardIds,
-  }
+
+  if card:isVirtual() then
+    if #cardIds == 0 then
+      self:sendLog{
+        type = "#ResponsePlayV0Card",
+        from = from,
+        arg = card:toLogString(),
+      }
+    else
+      self:sendLog{
+        type = "#ResponsePlayVCard",
+        from = from,
+        card = cardIds,
+        arg = card:toLogString(),
+      }
+    end
+  else
+    self:sendLog{
+      type = "#ResponsePlayCard",
+      from = from,
+      card = cardIds,
+    }
+  end
   self:moveCards({
     ids = cardIds,
     from = from,
@@ -1239,7 +1259,7 @@ function Room:responseCard(cardResponseEvent)
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
   end
 
-  local realCardIds = self:getSubcardsByRule(card, { Card.Processing })
+  local realCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
   if #realCardIds > 0 and not cardResponseEvent.skipDrop then
     self:moveCards({
       ids = realCardIds,
