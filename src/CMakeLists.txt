@@ -77,4 +77,5 @@ target_link_libraries(FreeKill PRIVATE
   Qt6::Widgets
   Qt6::Network
   Qt6::Multimedia
+  Qt6::QuickControls2
 )
