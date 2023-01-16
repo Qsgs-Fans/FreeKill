@@ -41,15 +41,42 @@ function TriggerSkill:triggerable(event, target, player, data)
     and (self.global or (target:isAlive() and target:hasSkill(self)))
 end
 
----Trigger this skill
+-- Determine how to cost this skill.
 ---@param event Event @ TriggerEvent
 ---@param target ServerPlayer @ Player who triggered this event
 ---@param player ServerPlayer @ Player who is operating
 ---@param data any @ useful data of the event
 ---@return boolean @ returns true if trigger is broken
 function TriggerSkill:trigger(event, target, player, data)
+  return self:doCost(event, target, player, data)
+end
+
+-- do cost and skill effect.
+-- DO NOT modify this function
+function TriggerSkill:doCost(event, target, player, data)
+  local ret = self:cost(event, target, player, data)
+  if ret then
+    local room = player.room
+    room:notifySkillInvoked(player, self.name)
+    ret = self:use(event, target, player, data)
+    return ret
+  end
+end
+
+-- ask player how to use this skill.
+---@param event Event @ TriggerEvent
+---@param target ServerPlayer @ Player who triggered this event
+---@param player ServerPlayer @ Player who is operating
+---@param data any @ useful data of the event
+---@return boolean @ returns true if trigger is broken
+function TriggerSkill:cost(event, target, player, data)
+  local ret = false
+  if self.frequency == Skill.Compulsory then
+    return true
+  end
+
   if player.room:askForSkillInvoke(player, self.name) then
-    return self:use(event, target, player, data)
+    return true
   end
   return false
 end
