@@ -55,9 +55,15 @@ function Room:initialize(_room)
     end
     local co = coroutine.create(co_func)
     while not self.game_finished do
-      coroutine.resume(co)
+      local ret, err_msg = coroutine.resume(co)
+
+      -- handle error
+      if ret == false then
+        fk.qCritical(err_msg)
+        print(debug.traceback(co))
+        self.game_finished = true
+      end
     end
-    fk.qInfo("Game Finished.")
   end
 
   self.players = {}
@@ -665,15 +671,19 @@ function Room:handleUseCardReply(player, data)
 end
 
 ---@param player ServerPlayer
+---@param card_name string
+---@param pattern string
+---@param prompt string
 ---@return CardUseStruct
-function Room:askForUseCard(player, card_name, prompt, cancelable, extra_data)
+function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data)
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = cancelable or false
   extra_data = extra_data or {}
+  pattern = pattern or card_name
   prompt = prompt or "#AskForUseCard"
 
-  local data = {card_name, prompt, cancelable, extra_data}
+  local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
   if result ~= "" then
     return self:handleUseCardReply(player, result)
@@ -681,30 +691,31 @@ function Room:askForUseCard(player, card_name, prompt, cancelable, extra_data)
   return nil
 end
 
-function Room:askForResponse(player, card_name, prompt, cancelable, extra_data)
+---@param player ServerPlayer
+---@param card_name string
+---@param pattern string
+---@param prompt string
+---@param cancelable string
+function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data)
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = cancelable or false
   extra_data = extra_data or {}
+  pattern = pattern or card_name
   prompt = prompt or "#AskForResponseCard"
 
-  local data = {card_name, prompt, cancelable, extra_data}
+  local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
   if result ~= "" then
-    data = json.decode(result)
-    local card = data.card
-    local targets = data.targets
-    if type(card) == "string" then
-      -- TODO: ViewAsSkill
-      return nil
-    else
-      return card
+    local use = self:handleUseCardReply(player, result)
+    if use then
+      return use.card
     end
   end
   return nil
 end
 
-function Room:askForNullification(players, card_name, prompt, cancelable, extra_data)
+function Room:askForNullification(players, card_name, pattern, prompt, cancelable, extra_data)
   if #players == 0 then
     return nil
   end
@@ -714,11 +725,12 @@ function Room:askForNullification(players, card_name, prompt, cancelable, extra_
   cancelable = cancelable or false
   extra_data = extra_data or {}
   prompt = prompt or "#AskForUseCard"
+  pattern = pattern or card_name
 
   self:notifyMoveFocus(self.alive_players, card_name)
   self:doBroadcastNotify("WaitForNullification", "")
 
-  local data = {card_name, prompt, cancelable, extra_data}
+  local data = {card_name, pattern, prompt, cancelable, extra_data}
   local winner = self:doRaceRequest(command, players, json.encode(data))
   if winner then
     local result = winner.client_reply
@@ -1206,22 +1218,28 @@ end
 
 ---@param cardResponseEvent CardResponseEvent
 function Room:responseCard(cardResponseEvent)
-  print(type(cardResponseEvent.card))
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
+  local card = cardResponseEvent.card
+  local cardIds = self:getSubcardsByRule(card)
+  self:sendLog{
+    type = "#ResponsePlayCard",
+    from = from,
+    card = cardIds,
+  }
   self:moveCards({
-    ids = self:getSubcardsByRule(cardResponseEvent.card),
+    ids = cardIds,
     from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonResonpse,
   })
 
-  self:setEmotion(self:getPlayerById(from), cardResponseEvent.card.name)
+  self:setEmotion(self:getPlayerById(from), card.name)
 
   for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
   end
 
-  local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
+  local realCardIds = self:getSubcardsByRule(card, { Card.Processing })
   if #realCardIds > 0 and not cardResponseEvent.skipDrop then
     self:moveCards({
       ids = realCardIds,

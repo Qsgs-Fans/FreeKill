@@ -228,9 +228,33 @@ function ActiveFeasible(skill_name, selected, selected_cards)
   return json.encode(ret)
 end
 
--- ViewAsSkill (Todo)
 function CanViewAs(skill_name, card_ids)
-  return "true"
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill then
+    if skill:isInstanceOf(ViewAsSkill) then
+      ret = skill:viewAs(card_ids) ~= nil
+    elseif skill:isInstanceOf(ActiveSkill) then
+      ret = true
+    end
+  end
+  return json.encode(ret)
+end
+
+function CardFitPattern(card_name, pattern)
+  local exp = Exppattern:Parse(pattern)
+  local ret = exp:matchExp(card_name)
+  return json.encode(ret)
+end
+
+function SkillFitPattern(skill_name, pattern)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill.pattern then
+    local exp = Exppattern:Parse(pattern)
+    ret = exp:matchExp(skill.pattern)
+  end
+  return json.encode(ret)
 end
 
 Fk:loadTranslationTable{

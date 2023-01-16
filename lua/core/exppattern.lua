@@ -78,6 +78,45 @@ local function matchCard(matcher, card)
   return true
 end
 
+local function hasIntersection(a, b)
+  if a == nil or b == nil then
+    return true
+  end
+
+  local tmp = {}
+  for _, e in ipairs(a) do
+    tmp[e] = true
+  end
+  for _, e in ipairs(b) do
+    if tmp[e] then
+      return true
+    end
+  end
+  return false
+end
+
+---@param a Matcher
+---@param b Matcher
+local function matchMatcher(a, b)
+  local keys = {
+    "name",
+    "number",
+    "suit",
+    "place",
+    "generalName",
+    "cardType",
+    "id",
+  }
+
+  for _, k in ipairs(keys) do
+    if not hasIntersection(a[k], b[k]) then
+      return false
+    end
+  end
+
+  return true
+end
+
 local function parseMatcher(str)
   local t = str:split("|")
   if #t < 7 then
@@ -182,6 +221,25 @@ function Exppattern:match(card)
       return true
     end
   end
+  return false
+end
+
+function Exppattern:matchExp(exp)
+  if type(exp) == "string" then
+    exp = Exppattern:Parse(exp)
+  end
+
+  local a = self.matchers
+  local b = exp.matchers
+
+  for _, m in ipairs(a) do
+    for _, n in ipairs(b) do
+      if matchMatcher(m, n) then
+        return true
+      end
+    end
+  end
+
   return false
 end
 

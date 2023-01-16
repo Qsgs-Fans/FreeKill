@@ -628,14 +628,15 @@ callbacks["GameLog"] = function(jsonData) {
 }
 
 callbacks["AskForUseCard"] = function(jsonData) {
-  // jsonData: card, prompt, cancelable, {}
+  // jsonData: card, pattern, prompt, cancelable, {}
   let data = JSON.parse(jsonData);
   let cardname = data[0];
-  let prompt = data[1];
+  let pattern = data[1];
+  let prompt = data[2];
 
   roomScene.promptText = Backend.translate(prompt)
     .arg(Backend.translate(cardname));
-  roomScene.responding_card = cardname;
+  roomScene.responding_card = pattern;
   roomScene.respond_play = false;
   roomScene.state = "responding";
   okButton.enabled = false;
@@ -643,14 +644,15 @@ callbacks["AskForUseCard"] = function(jsonData) {
 }
 
 callbacks["AskForResponseCard"] = function(jsonData) {
-  // jsonData: card, prompt, cancelable, {}
+  // jsonData: card_name, pattern, prompt, cancelable, {}
   let data = JSON.parse(jsonData);
   let cardname = data[0];
-  let prompt = data[1];
+  let pattern = data[1];
+  let prompt = data[2];
 
   roomScene.promptText = Backend.translate(prompt)
     .arg(Backend.translate(cardname));
-  roomScene.responding_card = cardname;
+  roomScene.responding_card = pattern;
   roomScene.respond_play = true;
   roomScene.state = "responding";
   okButton.enabled = false;

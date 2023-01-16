@@ -13,7 +13,6 @@ RowLayout {
 
   property bool selected: selfPhoto.selected
 
-  property bool is_pending: false
   property string pending_skill: ""
   property var pending_card
   property var pendings: [] // int[], store cid
@@ -116,7 +115,7 @@ RowLayout {
     if (cname) {
       let ids = [], cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
-        if (cards[i].name === cname)
+        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].name, cname])))
           ids.push(cards[i].cid);
       }
       handcardAreaItem.enableCards(ids);
@@ -242,7 +241,10 @@ RowLayout {
 
   function enableSkills(cname) {
     if (cname) {
-      // TODO: vs skill
+      for (let i = 0; i < skillButtons.count; i++) {
+        let item = skillButtons.itemAt(i);
+        item.enabled = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+      }
       return;
     }
     for (let i = 0; i < skillButtons.count; i++) {

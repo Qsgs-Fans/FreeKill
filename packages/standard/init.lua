@@ -59,7 +59,7 @@ Fk:loadTranslationTable{
 
 local wusheng = fk.CreateViewAsSkill{
   name = "wusheng",
-  available_cards = "slash",
+  pattern = "slash",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Red
