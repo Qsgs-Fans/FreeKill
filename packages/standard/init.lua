@@ -11,6 +11,12 @@ Fk:loadTranslationTable{
   ["qun"] = "群",
 }
 
+Fk:loadTranslationTable{
+  ["black"] = "黑色",
+  ["red"] = '<font color="#CC3131">红色</font>',
+  ["nocolor"] = '<font color="grey">无色</font>',
+}
+
 local caocao = General:new(extension, "caocao", "wei", 4)
 Fk:loadTranslationTable{
   ["caocao"] = "曹操",

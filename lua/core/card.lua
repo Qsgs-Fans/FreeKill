@@ -160,6 +160,16 @@ function Card:getSuitString()
   end
 end
 
+function Card:getColorString()
+  local color = self.color
+  if color == Card.Black then
+    return "black"
+  elseif color == Card.Red then
+    return "red"
+  end
+  return "nocolor"
+end
+
 local function getNumberStr(num)
   if num == 1 then
     return "A"
@@ -176,9 +186,13 @@ end
 -- for sendLog
 function Card:toLogString()
   local ret = string.format('<font color="#0598BC"><b>%s</b></font>', Fk:translate(self.name) .. "[")
-  ret = ret .. Fk:translate("log_" .. self:getSuitString())
-  if self.number > 0 then
-    ret = ret .. string.format('<font color="%s"><b>%s</b></font>', self.color == Card.Red and "#CC3131" or "black", getNumberStr(self.number))
+  if self:isVirtual() then
+    ret = ret .. Fk:translate(self:getColorString())
+  else
+    ret = ret .. Fk:translate("log_" .. self:getSuitString())
+    if self.number > 0 then
+      ret = ret .. string.format('<font color="%s"><b>%s</b></font>', self.color == Card.Red and "#CC3131" or "black", getNumberStr(self.number))
+    end
   end
   ret = ret .. '<font color="#0598BC"><b>]</b></font>'
   return ret

@@ -352,9 +352,18 @@ Fk:loadTranslationTable{
   -- useCard
   ["#UseCard"] = "%from 使用了牌 %card",
   ["#UseCardToTargets"] = "%from 使用了牌 %card，目标是 %to",
-  ["#CardUseCollaborator"] = "%from 在此次 %card 中的子目标是 %to",
+  ["#CardUseCollaborator"] = "%from 在此次 %arg 中的子目标是 %to",
   ["#UseCardToCard"] = "%from 使用了牌 %card，目标是 %arg",
   ["#ResponsePlayCard"] = "%from 打出了牌 %card",
+
+  ["#UseVCard"] = "%from 将 %card 当 %arg 使用",
+  ["#UseVCardToTargets"] = "%from 将 %card 当 %arg 使用，目标是 %to",
+  ["#UseVCardToCard"] = "%from 将 %card 当 %arg2 使用，目标是 %arg",
+  ["#ResponsePlayVCard"] = "%from 将 %card 当 %arg 打出",
+  ["#UseV0Card"] = "%from 使用了 %arg",
+  ["#UseV0CardToTargets"] = "%from 使用了 %arg，目标是 %to",
+  ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
+  ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
 
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",

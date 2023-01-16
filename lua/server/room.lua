@@ -720,24 +720,46 @@ end
 ---@param cardUseEvent CardUseStruct
 local sendCardEmotionAndLog = function(room, cardUseEvent)
   local from = cardUseEvent.from
-  room:setEmotion(room:getPlayerById(from), cardUseEvent.card.name)
+  local card = cardUseEvent.card
+  room:setEmotion(room:getPlayerById(from), card.name)
   room:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
   })
 
-  local useCardIds = cardUseEvent.card:isVirtual() and cardUseEvent.card.subcards or { cardUseEvent.card.id }
+  local useCardIds = card:isVirtual() and card.subcards or { card.id }
   if cardUseEvent.tos and #cardUseEvent.tos > 0 then
     local to = {}
     for _, t in ipairs(cardUseEvent.tos) do
       table.insert(to, t[1])
     end
-    room:sendLog{
-      type = "#UseCardToTargets",
-      from = from,
-      to = to,
-      card = useCardIds
-    }
+
+    if card:isVirtual() then
+      if #useCardIds == 0 then
+        room:sendLog{
+          type = "#UseV0CardToTargets",
+          from = from,
+          to = to,
+          arg = card:toLogString(),
+        }
+      else
+        room:sendLog{
+          type = "#UseVCardToTargets",
+          from = from,
+          to = to,
+          card = useCardIds,
+          arg = card:toLogString(),
+        }
+      end
+    else
+      room:sendLog{
+        type = "#UseCardToTargets",
+        from = from,
+        to = to,
+        card = useCardIds
+      }
+    end
+
     for _, t in ipairs(cardUseEvent.tos) do
       if t[2] then
         local temp = {table.unpack(t)}
@@ -746,23 +768,59 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
           type = "#CardUseCollaborator",
           from = t[1],
           to = temp,
-          card = useCardIds,
+          arg = card.name,
         }
       end
     end
   elseif cardUseEvent.toCard then
-    room:sendLog{
-      type = "#UseCardToCard",
-      from = from,
-      card = useCardIds,
-      arg = cardUseEvent.toCard.name,
-    }
+    if card:isVirtual() then
+      if #useCardIds == 0 then
+        room:sendLog{
+          type = "#UseV0CardToCard",
+          from = from,
+          arg = cardUseEvent.toCard.name,
+          arg2 = card:toLogString(),
+        }
+      else
+        room:sendLog{
+          type = "#UseVCardToCard",
+          from = from,
+          card = useCardIds,
+          arg = cardUseEvent.toCard.name,
+          arg2 = card:toLogString(),
+        }
+      end
+    else
+      room:sendLog{
+        type = "#UseCardToCard",
+        from = from,
+        card = useCardIds,
+        arg = cardUseEvent.toCard.name,
+      }
+    end
   else
-    room:sendLog{
-      type = "#UseCard",
-      from = from,
-      card = useCardIds,
-    }
+    if card:isVirtual() then
+      if #useCardIds == 0 then
+        room:sendLog{
+          type = "#UseV0Card",
+          from = from,
+          arg = card:toLogString(),
+        }
+      else
+        room:sendLog{
+          type = "#UseVCard",
+          from = from,
+          card = useCardIds,
+          arg = card:toLogString(),
+        }
+      end
+    else
+      room:sendLog{
+        type = "#UseCard",
+        from = from,
+        card = useCardIds,
+      }
+    end
   end
 end
 
