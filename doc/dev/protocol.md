@@ -133,7 +133,21 @@ ___
 - ServerPlayer:waitForReplay()
 - Room:delay()
 
-在这里让出主线程，然后调度函数查找目前的请求列表。
+在这里让出主线程，然后调度函数查找目前的请求列表。事实上，整个Room的游戏主流程就是一个协程：
+
+```lua
+-- room.lua:53
+local co_func = function()
+  self:run()
+end
+local co = coroutine.create(co_func)
+while not self.game_finished do
+  local ret, err_msg = coroutine.resume(co)
+  ...
+end
+```
+
+如果在游戏流程中调用yield的话，那么这里的resume会返回true，然后可以带有额外的返回值。不过只要返回true就好了，这时候lua就可以做一些简单的任务。而这个简单的任务其实也可以另外写个协程解决。
 
 ___
 
