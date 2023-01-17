@@ -35,8 +35,7 @@ void ClientSocket::connectToHost(const QString &address, ushort port)
 void ClientSocket::getMessage()
 {
   while (socket->canReadLine()) {
-    char msg[16000];  // buffer
-    socket->readLine(msg, sizeof(msg));
+    auto msg = socket->readLine();
     emit message_got(msg);
   }
 }

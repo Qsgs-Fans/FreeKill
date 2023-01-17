@@ -168,7 +168,7 @@ function GameLogic:action()
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
     if checkNoHuman() then
-      room:gameOver()
+      room:gameOver("")
     end
   end
 end
