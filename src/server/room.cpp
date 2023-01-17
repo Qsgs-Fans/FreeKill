@@ -302,6 +302,22 @@ void Room::gameOver()
   owner = nullptr;
 }
 
+QString Room::fetchRequest() {
+  request_queue_mutex.lock();
+  QString ret = "";
+  if (!request_queue.isEmpty()) {
+    ret = request_queue.dequeue();
+  }
+  request_queue_mutex.unlock();
+  return ret;
+}
+
+void Room::pushRequest(const QString &req) {
+  request_queue_mutex.lock();
+  request_queue.enqueue(req);
+  request_queue_mutex.unlock();
+}
+
 void Room::run()
 {
   gameStarted = true;

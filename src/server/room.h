@@ -57,6 +57,9 @@ public:
   void roomStart();
   LuaFunction startGame;
 
+  QString fetchRequest();
+  void pushRequest(const QString &req); 
+
 signals:
   void abandoned();
 
@@ -82,7 +85,8 @@ private:
   int timeout;
 
   lua_State *L;
-  QMutex lua_mutex;
+  QMutex request_queue_mutex;
+  QQueue<QString> request_queue;  // json string
 };
 
 #endif // _ROOM_H

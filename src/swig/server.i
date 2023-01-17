@@ -53,6 +53,7 @@ public:
   void gameOver();
 
   LuaFunction startGame;
+  QString fetchRequest();
 };
 
 %{
@@ -105,7 +106,6 @@ public:
 
   void doRequest(const QString &command,
            const QString &json_data, int timeout);
-  QString waitForReply();
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
 

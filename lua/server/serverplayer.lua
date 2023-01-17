@@ -50,18 +50,28 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
+local function _waitForReply(player, timeout)
+  local result
+  local start = fk.GetMicroSecond()
+  while true do
+    result = player.serverplayer:waitForReply(0)
+    if result ~= "__notready" then
+      return result
+    end
+    if timeout and (fk.GetMicroSecond() - start) / 1000 >= timeout * 1000 then
+      return ""
+    end
+    coroutine.yield()
+  end
+end
+
 --- Wait for at most *timeout* seconds for reply from client.
 ---
 --- If *timeout* is negative or **nil**, the function will wait forever until get reply.
 ---@param timeout integer @ seconds to wait
 ---@return string @ JSON data
 function ServerPlayer:waitForReply(timeout)
-  local result = ""
-  if timeout == nil then
-    result = self.serverplayer:waitForReply()
-  else
-    result = self.serverplayer:waitForReply(timeout)
-  end
+  local result = _waitForReply(self, timeout)
   self.request_data = ""
   self.client_reply = result
   if result == "__cancel" then

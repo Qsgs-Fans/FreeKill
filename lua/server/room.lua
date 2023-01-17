@@ -395,7 +395,10 @@ end
 -- main loop for the request handling coroutine
 function Room:requestLoop()
   while true do
-    print('Hello world')
+    local request = self.room:fetchRequest()
+    if request ~= "" then
+      -- TODO: handle the request
+    end
     coroutine.yield()
   end
 end
