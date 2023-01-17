@@ -29,9 +29,7 @@ Room::Room(Server* server)
 
 Room::~Room()
 {
-  // TODO
   if (isRunning()) {
-    terminate();
     wait();
   }
   if (L) lua_close(L);
@@ -257,16 +255,6 @@ void Room::setTimeout(int timeout)
 bool Room::isStarted() const
 {
   return gameStarted;
-}
-
-void Room::doRequest(const QList<ServerPlayer *> targets, int timeout)
-{
-  // TODO
-}
-
-void Room::doNotify(const QList<ServerPlayer *> targets, int timeout)
-{
-  // TODO
 }
 
 void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,

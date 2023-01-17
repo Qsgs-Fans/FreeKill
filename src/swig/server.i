@@ -42,8 +42,6 @@ public:
   bool isStarted() const;
   // ====================================}
 
-  void doRequest(const QList<ServerPlayer *> targets, int timeout);
-  void doNotify(const QList<ServerPlayer *> targets, int timeout);
   void doBroadcastNotify(
     const QList<ServerPlayer *> targets,
     const QString &command,
