@@ -43,7 +43,6 @@ public:
   void cancelRequest();
   void abortRequest();
 
-  QString waitForReply();
   QString waitForReply(int timeout);
 
 signals:

@@ -70,7 +70,7 @@ void Router::request(int type, const QString& command,
   expectedReplyId = requestId;
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
-  m_reply = QString();
+  m_reply = "__notready";
   replyMutex.unlock();
 
   QJsonArray body;
@@ -123,14 +123,6 @@ void Router::cancelRequest()
 
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
-#endif
-}
-
-QString Router::waitForReply()
-{
-#ifndef Q_OS_WASM
-  replyReadySemaphore.acquire();
-  return m_reply;
 #endif
 }
 

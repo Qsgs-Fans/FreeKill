@@ -50,17 +50,26 @@ function Room:initialize(_room)
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data  
-    local co_func = function()
+    local main_co = coroutine.create(function()
       self:run()
-    end
-    local co = coroutine.create(co_func)
+    end)
+    local request_co = coroutine.create(function()
+      self:requestLoop()
+    end)
     while not self.game_finished do
-      local ret, err_msg = coroutine.resume(co)
+      local ret, err_msg = coroutine.resume(main_co)
 
       -- handle error
       if ret == false then
         fk.qCritical(err_msg)
-        print(debug.traceback(co))
+        print(debug.traceback(main_co))
+        break
+      end
+
+      ret, err_msg = coroutine.resume(request_co)
+      if ret == false then
+        fk.qCritical(err_msg)
+        print(debug.traceback(request_co))
         break
       end
     end
@@ -380,6 +389,33 @@ function Room:doRaceRequest(command, players, jsonData)
     if #players == #canceled_players then
       return nil
     end
+  end
+end
+
+-- main loop for the request handling coroutine
+function Room:requestLoop()
+  while true do
+    local request = self.room:fetchRequest()
+    if request ~= "" then
+      local id, command = table.unpack(request:split(","))
+      id = tonumber(id)
+      if command == "reconnect" then
+        self:getPlayerById(id):reconnect()
+      end
+    end
+    coroutine.yield()
+  end
+end
+
+-- delay function, should only be used in main coroutine
+---@param ms integer @ millisecond to be delayed
+function Room:delay(ms)
+  local start = fk.GetMicroSecond()
+  while true do
+    if fk.GetMicroSecond() - start >= ms * 1000 then
+      break
+    end
+    coroutine.yield()
   end
 end
 

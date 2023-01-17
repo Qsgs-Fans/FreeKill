@@ -29,9 +29,7 @@ Room::Room(Server* server)
 
 Room::~Room()
 {
-  // TODO
   if (isRunning()) {
-    terminate();
     wait();
   }
   if (L) lua_close(L);
@@ -259,16 +257,6 @@ bool Room::isStarted() const
   return gameStarted;
 }
 
-void Room::doRequest(const QList<ServerPlayer *> targets, int timeout)
-{
-  // TODO
-}
-
-void Room::doNotify(const QList<ServerPlayer *> targets, int timeout)
-{
-  // TODO
-}
-
 void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
                const QString& command, const QString& jsonData)
 {
@@ -300,6 +288,22 @@ void Room::gameOver()
   }
   players.clear();
   owner = nullptr;
+}
+
+QString Room::fetchRequest() {
+  request_queue_mutex.lock();
+  QString ret = "";
+  if (!request_queue.isEmpty()) {
+    ret = request_queue.dequeue();
+  }
+  request_queue_mutex.unlock();
+  return ret;
+}
+
+void Room::pushRequest(const QString &req) {
+  request_queue_mutex.lock();
+  request_queue.enqueue(req);
+  request_queue_mutex.unlock();
 }
 
 void Room::run()

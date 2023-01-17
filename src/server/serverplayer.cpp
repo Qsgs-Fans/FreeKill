@@ -80,20 +80,6 @@ void ServerPlayer::abortRequest()
   router->abortRequest();
 }
 
-QString ServerPlayer::waitForReply()
-{
-  QString ret;
-  Player::State state = getState();
-  if (state != Player::Online) {
-    if (state != Player::Run)
-      QThread::sleep(1);
-    ret = QString("__state=%1").arg(getStateString());
-  } else {
-    ret = router->waitForReply();
-  }
-  return ret;
-}
-
 QString ServerPlayer::waitForReply(int timeout)
 {
   QString ret;

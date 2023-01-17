@@ -240,8 +240,16 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
         passed = (passwordHash == arr[0].toString());
         if (!passed) error_msg = "username or password error";
       } else {
-        // TODO: reconnect here
-        error_msg = "others logged in with this name";
+        auto player = players.value(id);
+        if (player->getState() == Player::Offline) {
+          auto room = player->getRoom();
+          player->setSocket(client);
+          client->disconnect(this);
+          room->pushRequest(QString("%1,reconnect").arg(id));
+          return;
+        } else {
+          error_msg = "others logged in with this name";
+        }
       }
     }
   } else {
@@ -289,7 +297,6 @@ void Server::onRoomAbandoned()
   updateRoomList();
   //room->deleteLater();
   if (room->isRunning()) {
-    room->terminate();
     room->wait();
   }
   idle_rooms.push(room);
@@ -306,6 +313,7 @@ void Server::onUserDisconnected()
   Room *room = player->getRoom();
   if (room->isStarted()) {
     player->setState(Player::Offline);
+    player->setSocket(nullptr);
     // TODO: add a robot
   } else {
     player->deleteLater();

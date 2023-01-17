@@ -42,8 +42,6 @@ public:
   bool isStarted() const;
   // ====================================}
 
-  void doRequest(const QList<ServerPlayer *> targets, int timeout);
-  void doNotify(const QList<ServerPlayer *> targets, int timeout);
   void doBroadcastNotify(
     const QList<ServerPlayer *> targets,
     const QString &command,
@@ -53,6 +51,7 @@ public:
   void gameOver();
 
   LuaFunction startGame;
+  QString fetchRequest();
 };
 
 %{
@@ -105,7 +104,6 @@ public:
 
   void doRequest(const QString &command,
            const QString &json_data, int timeout);
-  QString waitForReply();
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
 

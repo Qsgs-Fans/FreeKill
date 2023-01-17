@@ -40,9 +40,6 @@ public:
   bool isStarted() const;
   // ====================================}
 
-  void doRequest(const QList<ServerPlayer *> targets, int timeout);
-  void doNotify(const QList<ServerPlayer *> targets, int timeout);
-
   void doBroadcastNotify(
     const QList<ServerPlayer *> targets,
     const QString &command,
@@ -56,6 +53,9 @@ public:
 
   void roomStart();
   LuaFunction startGame;
+
+  QString fetchRequest();
+  void pushRequest(const QString &req); 
 
 signals:
   void abandoned();
@@ -82,7 +82,8 @@ private:
   int timeout;
 
   lua_State *L;
-  QMutex lua_mutex;
+  QMutex request_queue_mutex;
+  QQueue<QString> request_queue;  // json string
 };
 
 #endif // _ROOM_H

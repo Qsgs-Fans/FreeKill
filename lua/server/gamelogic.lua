@@ -47,6 +47,7 @@ function GameLogic:assignRoles()
     local p = room.players[i]
     p.role = roles[i]
     if p.role == "lord" then
+      p.role_shown = true
       room:broadcastProperty(p, "role")
     else
       room:notifyProperty(p, p, "role")
@@ -168,7 +169,7 @@ function GameLogic:action()
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
     if checkNoHuman() then
-      room:gameOver()
+      room:gameOver("")
     end
   end
 end
