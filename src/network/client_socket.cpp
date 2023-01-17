@@ -35,8 +35,11 @@ void ClientSocket::connectToHost(const QString &address, ushort port)
 void ClientSocket::getMessage()
 {
   while (socket->canReadLine()) {
-    char msg[16000];  // buffer
-    socket->readLine(msg, sizeof(msg));
+    auto msg = socket->readLine();
+    if (msg.startsWith("Compressed")) {
+      msg = msg.sliced(10);
+      msg = qUncompress(QByteArray::fromBase64(msg));
+    }
     emit message_got(msg);
   }
 }
@@ -48,6 +51,12 @@ void ClientSocket::disconnectFromHost()
 
 void ClientSocket::send(const QByteArray &msg)
 {
+  if (msg.length() >= 1024) {
+    auto comp = qCompress(msg);
+    auto _msg = "Compressed" + comp.toBase64() + "\n";
+    socket->write(_msg);
+    socket->flush();
+  }
   socket->write(msg);
   if (!msg.endsWith("\n"))
     socket->write("\n");
