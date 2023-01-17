@@ -397,7 +397,11 @@ function Room:requestLoop()
   while true do
     local request = self.room:fetchRequest()
     if request ~= "" then
-      -- TODO: handle the request
+      local id, command = table.unpack(request:split(","))
+      id = tonumber(id)
+      if command == "reconnect" then
+        self:getPlayerById(id):reconnect()
+      end
     end
     coroutine.yield()
   end

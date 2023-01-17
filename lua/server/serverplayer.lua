@@ -11,6 +11,7 @@
 ---@field skipped_phases Phase[]
 ---@field phase_state table[]
 ---@field phase_index integer
+---@field role_shown boolean
 local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
@@ -80,6 +81,130 @@ function ServerPlayer:waitForReply(timeout)
   end
   if result ~= "" then self.reply_ready = true end
   return result
+end
+
+---@param player ServerPlayer
+function ServerPlayer:marshal(player)
+  local room = self.room
+  room:notifyProperty(player, self, "maxHp")
+  room:notifyProperty(player, self, "hp")
+  -- TODO
+  --room:notifyProperty(player, self, "gender")
+
+  if self.kingdom ~= Fk.generals[self.general].kingdom then
+    room:notifyProperty(player, self, "kingdom")
+  end
+
+  if self.dead then
+    room:notifyProperty(player, self, "dead")
+    room:notifyProperty(player, self, "role")
+  else
+    room:notifyProperty(player, self, "seat")
+    room:notifyProperty(player, self, "phase")
+  end
+
+  if not self.faceup then
+    room:notifyProperty(player, self, "faceup")
+  end
+
+  if self.chained then
+    room:notifyProperty(player, self, "chained")
+  end
+
+  local card_moves = {}
+  if #self.player_cards[Player.Hand] ~= 0 then
+    local info = {}
+    for _, i in ipairs(self.player_cards[Player.Hand]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerHand
+    }
+    table.insert(card_moves, move)
+  end
+  if #self.player_cards[Player.Equip] ~= 0 then
+    local info = {}
+    for _, i in ipairs(self.player_cards[Player.Equip]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerEquip
+    }
+    table.insert(card_moves, move)
+  end
+  if #self.player_cards[Player.Judge] ~= 0 then
+    local info = {}
+    for _, i in ipairs(self.player_cards[Player.Judge]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerJudge
+    }
+    table.insert(card_moves, move)
+  end
+  if #card_moves > 0 then
+    room:notifyMoveCards({ player }, card_moves)
+  end
+
+  -- TODO: pile, mark
+
+  for _, s in ipairs(self.player_skills) do
+    player:doNotify("AddSkill", json.encode{self.id, s.name})
+  end
+
+  for k, v in pairs(self.cardUsedHistory) do
+    player:doNotify("AddCardUseHistory", json.encode{k, v})
+  end
+
+  if self.role_shown then
+    room:notifyProperty(player, self, "role")
+  end
+end
+
+function ServerPlayer:reconnect()
+  local room = self.room
+  self.serverplayer:setStateString("online")
+
+  self:doNotify("Setup", json.encode{
+    self.id,
+    self.serverplayer:getScreenName(),
+    self.serverplayer:getAvatar(),
+  })
+  self:doNotify("EnterLobby", "")
+  self:doNotify("EnterRoom", json.encode{
+    #room.players, room.timeout,
+  })
+  room:notifyProperty(self, self, "role")
+
+  -- send player data
+  for _, p in ipairs(room:getOtherPlayers(self)) do
+    self:doNotify("AddPlayer", json.encode{
+      p.id,
+      p.serverplayer:getScreenName(),
+      p.serverplayer:getAvatar(),
+    })
+  end
+
+  local player_circle = {}
+  for i = 1, #room.players do
+    table.insert(player_circle, room.players[i].id)
+  end
+  self:doNotify("ArrangeSeats", json.encode(player_circle))
+
+  for _, p in ipairs(room.players) do
+    room:notifyProperty(self, p, "general")
+    p:marshal(self)
+  end
+
+  -- TODO: tell drawPile
+
+  room:broadcastProperty(self, "state")
 end
 
 function ServerPlayer:isAlive()
