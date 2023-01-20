@@ -61,6 +61,7 @@ end
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
+  local state = self.serverplayer:getStateString()
   while true do
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
