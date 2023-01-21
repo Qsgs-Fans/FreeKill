@@ -218,7 +218,23 @@ end
 function Player:getMaxCards()
   local baseValue = math.max(self.hp, 0)
 
-  return baseValue
+  local status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+  local max_fixed = nil
+  for _, skill in ipairs(status_skills) do
+    local f = skill:getFixed(self)
+    if f ~= nil then
+      max_fixed = max_fixed and math.max(max_fixed, f) or f
+    end
+  end
+
+  if max_fixed then baseValue = math.max(max_fixed, 0) end
+  
+  for _, skill in ipairs(status_skills) do
+    local c = skill:getCorrect(self)
+    baseValue = baseValue + c
+  end
+
+  return math.max(baseValue, 0)
 end
 
 function Player:getAttackRange()
@@ -268,7 +284,16 @@ end
 
 ---@param other Player
 function Player:inMyAttackRange(other)
-  return self ~= other and self:distanceTo(other) <= self:getAttackRange()
+  if self == other then
+    return false
+  end
+  local baseAttackRange = self:getAttackRange()
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    local correct = skill:getCorrect(self, other)
+    baseAttackRange = baseAttackRange + correct
+  end
+  return self:distanceTo(other) <= baseAttackRange
 end
 
 function Player:addCardUseHistory(cardName, num)

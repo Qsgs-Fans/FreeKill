@@ -6,8 +6,14 @@ TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active_skill"
 ViewAsSkill = require "core.skill_type.view_as"
 DistanceSkill = require "core.skill_type.distance"
+ProhibitSkill = require "core.skill_type.prohibit"
+AttackRangeSkill = require "core.skill_type.attack_range"
+MaxCardsSkill = require "core.skill_type.max_cards"
 StatusSkills = {
   DistanceSkill,
+  ProhibitSkill,
+  AttackRangeSkill,
+  MaxCardsSkill,
 }
 
 BasicCard = require "core.card_type.basic"
@@ -160,6 +166,69 @@ function fk.CreateDistanceSkill(spec)
 
   local skill = DistanceSkill:new(spec.name)
   skill.getCorrect = spec.correct_func
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class ProhibitSpec: SkillSpec
+---@field is_prohibited fun(self: ProhibitSkill, from: Player, to: Player, card: Card)
+---@field global boolean
+
+---@param spec ProhibitSpec
+---@return ProhibitSkill
+function fk.CreateProhibitSkill(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.is_prohibited) == "function")
+
+  local skill = ProhibitSkill:new(spec.name)
+  skill.isProhibited = spec.is_prohibited
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class AttackRangeSpec: SkillSpec
+---@field correct_func fun(self: AttackRangeSkill, from: Player, to: Player)
+---@field global boolean
+
+---@param spec AttackRangeSpec
+---@return AttackRangeSkill
+function fk.CreateAttackRangeSkill(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.correct_func) == "function")
+
+  local skill = AttackRangeSkill:new(spec.name)
+  skill.getCorrect = spec.correct_func
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class MaxCardsSpec: SkillSpec
+---@field correct_func fun(self: MaxCardsSkill, player: Player)
+---@field fixed_func fun(self: MaxCardsSkill, from: Player)
+---@field global boolean
+
+---@param spec MaxCardsSpec
+---@return MaxCardsSkill
+function fk.CreateMaxCardsSkill(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
+
+  local skill = MaxCardsSkill:new(spec.name)
+  if spec.correct_func then
+    skill.getCorrect = spec.correct_func
+  end
+  if spec.fixed_func then
+    skill.getFixed = spec.fixed_func
+  end
   if spec.global then
     skill.global = spec.global
   end

@@ -28,6 +28,7 @@ local slashSkill = fk.CreateActiveSkill{
     room:damage({
       from = from,
       to = to,
+      card = effect.card,
       damage = 1 + (effect.addtionalDamage or 0),
       damageType = fk.NormalDamage,
       skillName = self.name
@@ -296,6 +297,7 @@ local duelSkill = fk.CreateActiveSkill{
       room:damage({
         from = responsers[currentTurn % 2 + 1].id,
         to = currentResponser.id,
+        card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
@@ -449,6 +451,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
       room:damage({
         from = effect.from,
         to = effect.to,
+        card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
@@ -498,6 +501,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
       room:damage({
         from = effect.from,
         to = effect.to,
+        card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
@@ -609,6 +613,7 @@ local lightningSkill = fk.CreateActiveSkill{
       room:damage{
         to = to.id,
         damage = 3,
+        card = effect.card,
         damageType = fk.ThunderDamage,
         skillName = self.name,
       }
