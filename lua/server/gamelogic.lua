@@ -136,7 +136,10 @@ function GameLogic:prepareForStart()
   end
 
   for _, p in ipairs(room.alive_players) do
-    room:handleAddLoseSkills(p, "zhiheng|mashu|fankui|kurou|jieyin", nil, false)
+    local skills = Fk.generals[p.general]
+    for _, s in ipairs(skills) do
+      room:handleAddLoseSkills(p, s.name, nil, false)
+    end
   end
 
   self:addTriggerSkill(GameRule)
