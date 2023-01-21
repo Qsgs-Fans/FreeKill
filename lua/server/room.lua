@@ -117,9 +117,13 @@ function Room:setCardArea(cardId, cardArea, owner)
   self.owner_map[cardId] = owner
 end
 
----@param cardId integer
+---@param cardId integer | card
 ---@return CardArea
 function Room:getCardArea(cardId)
+  if type(cardId) ~= "number" then
+    assert(cardId and cardId:isInstanceOf(Card))
+    cardId = cardId:getEffectiveId()
+  end
   return self.card_place[cardId] or Card.Unknown
 end
 
@@ -585,6 +589,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
   end
 
   self:throwCard(toDiscard, skillName, player, player)
+  return toDiscard
 end
 
 ---@param player ServerPlayer
@@ -1438,12 +1443,19 @@ function Room:moveCards(...)
 end
 
 ---@param player integer
----@param cid integer
+---@param cid integer|Card
 ---@param unhide boolean
 ---@param reason CardMoveReason
 function Room:obtainCard(player, cid, unhide, reason)
+  if type(cid) ~= "number" then
+    assert(cid and cid:isInstanceOf(Card))
+    cid = cid:isVirtual() and {cid.id} or cid.subcards
+  else
+    cid = {cid}
+  end
+  if #cid == 0 then return end
   self:moveCards({
-    ids = {cid},
+    ids = cid,
     from = self.owner_map[cid],
     to = player,
     toArea = Card.PlayerHand,
@@ -1868,7 +1880,7 @@ end
 
 -- judge
 
----@param data JudgeData
+---@param data JudgeStruct
 ---@return Card
 function Room:judge(data)
   local who = data.who

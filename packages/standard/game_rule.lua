@@ -136,7 +136,12 @@ GameRule = fk.CreateTriggerSkill{
         end
       end,
       [Player.Draw] = function()
-        room:drawCards(player, 2, self.name)
+        local data = {
+          n = 2
+        }
+        room.logic:trigger(fk.DrawNCards, player, data)
+        room:drawCards(player, data.n, self.name)
+        room.logic:trigger(fk.AfterDrawNCards, player, data)
       end,
       [Player.Play] = function()
         while not player.dead do

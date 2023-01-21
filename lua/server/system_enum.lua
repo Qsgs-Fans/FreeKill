@@ -4,7 +4,7 @@
 
 ---@alias HpChangedData { num: integer, reason: string, skillName: string }
 ---@alias HpLostData { num: integer, skillName: string }
----@alias DamageStruct { from: integer|null, to: integer, damage: integer, damageType: DamageType, skillName: string }
+---@alias DamageStruct { from: integer|null, to: integer, damage: integer, card: Card, damageType: DamageType, skillName: string }
 ---@alias RecoverStruct { who: integer, num: integer, recoverBy: integer|null, skillName: string|null }
 
 ---@alias DyingStruct { who: integer, damage: DamageStruct }
