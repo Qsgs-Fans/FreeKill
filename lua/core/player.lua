@@ -293,7 +293,7 @@ function Player:inMyAttackRange(other)
     local correct = skill:getCorrect(self, other)
     baseAttackRange = baseAttackRange + correct
   end
-  return self:distanceTo(other) < baseAttackRange
+  return self:distanceTo(other) <= baseAttackRange
 end
 
 function Player:addCardUseHistory(cardName, num)

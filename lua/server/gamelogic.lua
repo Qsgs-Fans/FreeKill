@@ -136,7 +136,7 @@ function GameLogic:prepareForStart()
   end
 
   for _, p in ipairs(room.alive_players) do
-    local skills = Fk.generals[p.general]
+    local skills = Fk.generals[p.general].skills
     for _, s in ipairs(skills) do
       room:handleAddLoseSkills(p, s.name, nil, false)
     end

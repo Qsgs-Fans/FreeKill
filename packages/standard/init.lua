@@ -17,9 +17,27 @@ Fk:loadTranslationTable{
   ["nocolor"] = '<font color="grey">无色</font>',
 }
 
+local jianxiong = fk.CreateTriggerSkill{
+  name = "jianxiong",
+  events = {fk.Damaged},
+  can_trigger = function(self, event, target, player, data)
+    local room = target.room
+    return data.card ~= nil and
+      target == player and
+      target:hasSkill(self.name) and
+      room:getCardArea(data.card) == Card.Processing and
+      not target.dead
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:obtainCard(player.id, data.card, false)
+  end,
+}
 local caocao = General:new(extension, "caocao", "wei", 4)
+caocao:addSkill(jianxiong)
 Fk:loadTranslationTable{
   ["caocao"] = "曹操",
+  ["jianxiong"] = "奸雄",
 }
 
 local fankui = fk.CreateTriggerSkill{
@@ -48,9 +66,42 @@ Fk:loadTranslationTable{
   ["fankui"] = "反馈",
 }
 
+local ganglie = fk.CreateTriggerSkill{
+  name = "ganglie",
+  events = {fk.Damaged},
+  can_trigger = function(self, event, target, player, data)
+    local room = target.room
+    return data.from ~= nil and
+      target == player and
+      target:hasSkill(self.name) and
+      not target.dead
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local from = room:getPlayerById(data.from)
+    local judge = {
+      who = from,
+      reason = self.name,
+    }
+    room:judge(judge)
+    if judge.card.suit ~= Card.Heart then
+      local discards = room:askForDiscard(from, 2, 2, false, self.name)
+      if #discards == 0 then
+        room:damage{
+          from = player.id,
+          to = from.id,
+          damage = 1,
+          skillName = self.name,
+        }
+      end
+    end
+  end,
+}
 local xiahoudun = General:new(extension, "xiahoudun", "wei", 4)
+xiahoudun:addSkill(ganglie)
 Fk:loadTranslationTable{
   ["xiahoudun"] = "夏侯惇",
+  ["ganglie"] = "刚烈",
 }
 
 local zhangliao = General:new(extension, "zhangliao", "wei", 4)
@@ -109,7 +160,7 @@ Fk:loadTranslationTable{
 local kongcheng = fk.CreateProhibitSkill{
   name = "kongcheng",
   is_prohibited = function(self, from, to, card)
-    if to:isKongcheng() then
+    if to:hasSkill(self.name) and to:isKongcheng() then
       return card.name == "slash" or card.name == "duel"
     end
   end,
@@ -118,11 +169,37 @@ local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
 zhugeliang:addSkill(kongcheng)
 Fk:loadTranslationTable{
   ["zhugeliang"] = "诸葛亮",
+  ["kongcheng"] = "空城",
 }
 
+local longdan = fk.CreateViewAsSkill{
+  name = "longdan",
+  pattern = "slash,jink",
+  card_filter = function(self, to_select, selected)
+    if #selected == 1 then return false end
+    local c = Fk:getCardById(to_select)
+    return c.name == "slash" or c.name == "jink"
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    local _c = Fk:getCardById(cards[1])
+    local c
+    if _c.name == "slash" then
+      c = Fk:cloneCard("jink")
+    elseif _c.name == "jink" then
+      c = Fk:cloneCard("slash")
+    end
+    c:addSubcard(cards[1])
+    return c
+  end,
+}
 local zhaoyun = General:new(extension, "zhaoyun", "shu", 4)
+zhaoyun:addSkill(longdan)
 Fk:loadTranslationTable{
   ["zhaoyun"] = "赵云",
+  ["longdan"] = "龙胆",
 }
 
 local mashu = fk.CreateDistanceSkill{
@@ -140,9 +217,23 @@ Fk:loadTranslationTable{
   ["mashu"] = "马术",
 }
 
+local jizhi = fk.CreateTriggerSkill{
+  name = "jizhi",
+  events = {fk.CardUsing},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card.type == Card.TypeTrick and
+      data.card.sub_type ~= Card.SubtypeDelayedTrick
+  end,
+  on_use = function(self, event, target, player, data)
+    player:drawCards(1, self.name)
+  end,
+}
 local huangyueying = General:new(extension, "huangyueying", "shu", 3, 3, General.Female)
+huangyueying:addSkill(jizhi)
 Fk:loadTranslationTable{
   ["huangyueying"] = "黄月英",
+  ["jizhi"] = "集智",
 }
 
 local zhiheng = fk.CreateActiveSkill{
@@ -163,14 +254,67 @@ Fk:loadTranslationTable{
   ["zhiheng"] = "制衡",
 }
 
+local qixi = fk.CreateViewAsSkill{
+  name = "qixi",
+  pattern = "dismantlement",
+  card_filter = function(self, to_select, selected)
+    if #selected == 1 then return false end
+    return Fk:getCardById(to_select).color == Card.Black
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    local c = Fk:cloneCard("dismantlement")
+    c:addSubcard(cards[1])
+    return c
+  end,
+}
 local ganning = General:new(extension, "ganning", "wu", 4)
+ganning:addSkill(qixi)
 Fk:loadTranslationTable{
   ["ganning"] = "甘宁",
+  ["qixi"] = "奇袭",
 }
 
+local keji = fk.CreateTriggerSkill{
+  name = "keji",
+  events = {fk.EventPhaseChanging},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.to == Player.Discard and
+      player:usedTimes("slash") < 1 and
+      player:getMark("_keji_played_slash") == 0
+  end,
+  on_use = function(self, event, target, player, data)
+    return true
+  end,
+
+  refresh_events = {fk.CardResponding, fk.EventPhaseStart},
+  can_refresh = function(self, event, target, player, data)
+    if not (target == player and player:hasSkill(self.name)) then
+      return false
+    end 
+    if event == fk.CardResponding then
+      return data.card.name == "slash"
+    elseif event == fk.EventPhaseStart then
+      return player.phase == player.NotActive
+    end
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.CardResponding then
+      room:addPlayerMark(player, "_keji_played_slash", 1)
+    elseif event == fk.EventPhaseStart then
+      room:setPlayerMark(player, "_keji_played_slash", 0)
+    end
+  end
+}
 local lvmeng = General:new(extension, "lvmeng", "wu", 4)
+lvmeng:addSkill(keji)
 Fk:loadTranslationTable{
   ["lvmeng"] = "吕蒙",
+  ["keji"] = "克己",
 }
 
 local kurou = fk.CreateActiveSkill{
@@ -193,9 +337,18 @@ Fk:loadTranslationTable{
   ["kurou"] = "苦肉",
 }
 
+local yingzi = fk.CreateTriggerSkill{
+  name = "yingzi",
+  events = {fk.DrawNCards},
+  on_use = function(self, event, target, player, data)
+    data.n = data.n + 1
+  end,
+}
 local zhouyu = General:new(extension, "zhouyu", "wu", 3)
+zhouyu:addSkill(yingzi)
 Fk:loadTranslationTable{
   ["zhouyu"] = "周瑜",
+  ["yingzi"] = "英姿",
 }
 
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
@@ -203,15 +356,25 @@ Fk:loadTranslationTable{
   ["daqiao"] = "大乔",
 }
 
+local qianxun = fk.CreateProhibitSkill{
+  name = "qianxun",
+  is_prohibited = function(self, from, to, card)
+    if to:hasSkill(self.name) then
+      return card.name == "indulgence" or card.name == "snatch"
+    end
+  end,
+}
 local luxun = General:new(extension, "luxun", "wu", 3)
+luxun:addSkill(qianxun)
 Fk:loadTranslationTable{
   ["luxun"] = "陆逊",
+  ["qianxun"] = "谦逊",
 }
 
 local jieyin = fk.CreateActiveSkill{
   name = "jieyin",
   card_filter = function(self, to_select, selected)
-    return #selected < 2  -- TODO:choose equip
+    return #selected < 2
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -219,7 +382,6 @@ local jieyin = fk.CreateActiveSkill{
     return target:isWounded() and
       Fk.generals[name].gender == General.Male
       and #selected < 1
-      -- and not target:hasSkill(self.name)
   end,
   feasible = function(self, selected, selected_cards)
     return #selected == 1 and #selected_cards == 2
