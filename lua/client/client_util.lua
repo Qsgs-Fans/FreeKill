@@ -116,6 +116,16 @@ function CanUseCardToTarget(card, to_select, selected)
   end
 
   local ret = c.skill:targetFilter(to_select, selected, selected_cards)
+  if ret then
+    local r = Fk:currentRoom()
+    local status_skills = r.status_skills[ProhibitSkill] or {}
+    for _, skill in ipairs(status_skills) do
+      if skill:isProhibited(Self, r:getPlayerById(to_select), c) then
+        ret = false
+        break
+      end
+    end
+  end
   return json.encode(ret)
 end
 
