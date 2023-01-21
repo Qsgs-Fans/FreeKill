@@ -218,6 +218,22 @@ end
 function Player:getMaxCards()
   local baseValue = math.max(self.hp, 0)
 
+  local status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+  local max_fixed = nil
+  for _, skill in ipairs(status_skills) do
+    local f = skill:getFixed(self)
+    if f ~= nil then
+      max_fixed = max_fixed and math.max(max_fixed, f) or f
+    end
+  end
+
+  if max_fixed then baseValue = math.max(max_fixed, 0) end
+  
+  for _, skill in ipairs(status_skills) do
+    local c = skill:getCorrect(self)
+    baseValue = baseValue + c
+  end
+
   return baseValue
 end
 
