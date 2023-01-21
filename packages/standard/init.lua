@@ -106,7 +106,16 @@ Fk:loadTranslationTable{
   ["zhangfei"] = "张飞",
 }
 
+local kongcheng = fk.CreateProhibitSkill{
+  name = "kongcheng",
+  is_prohibited = function(self, from, to, card)
+    if to:isKongcheng() then
+      return card.name == "slash" or card.name == "duel"
+    end
+  end,
+}
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
+zhugeliang:addSkill(kongcheng)
 Fk:loadTranslationTable{
   ["zhugeliang"] = "诸葛亮",
 }
