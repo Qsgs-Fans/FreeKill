@@ -470,9 +470,21 @@ Fk:loadTranslationTable{
   ["lvbu"] = "吕布",
 }
 
+local biyue = fk.CreateTriggerSkill{
+  name = "biyue",
+  events = {fk.EventPhaseStart},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name)
+      and player.phase == Player.Finish
+  end,
+  on_use = function(self, event, target, player, data)
+    player:drawCards(1)
+  end,
+}
 local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
 Fk:loadTranslationTable{
   ["diaochan"] = "貂蝉",
+  ["biyue"] = "闭月",
 }
 
 return extension
