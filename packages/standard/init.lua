@@ -482,6 +482,7 @@ local biyue = fk.CreateTriggerSkill{
   end,
 }
 local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
+diaochan:addSkill(biyue)
 Fk:loadTranslationTable{
   ["diaochan"] = "貂蝉",
   ["biyue"] = "闭月",
