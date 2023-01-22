@@ -412,9 +412,57 @@ Fk:loadTranslationTable{
   ["jieyin"] = "结姻",
 }
 
+local qingnang = fk.CreateActiveSkill{
+  name = "qingnang",
+  card_filter = function(self, to_select, selected, targets)
+    return #selected == 0
+  end,
+  target_filter = function(self, to_select, selected, cards)
+    return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
+  end,
+  feasible = function(self, targets, cards)
+    return #targets == 1 and #cards == 1
+  end,
+  on_effect = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    room:throwCard(effect.cards, self.name, from)
+    room:recover({
+      who = effect.tos[1],
+      num = 1,
+      recoverBy = effect.from,
+      skillName = self.name
+    })
+  end,
+}
+local jijiu = fk.CreateViewAsSkill{
+  name = "jijiu",
+  pattern = "peach",
+  card_filter = function(self, to_select, selected)
+    if #selected == 1 then return false end
+    return Fk:getCardById(to_select).color == Card.Red
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    local c = Fk:cloneCard("peach")
+    c:addSubcard(cards[1])
+    return c
+  end,
+  enabled_at_play = function(self, player)
+    return false
+  end,
+  enabled_at_response = function(self, player)
+    return player.phase == Player.NotActive
+  end,
+}
 local huatuo = General:new(extension, "huatuo", "qun", 3)
+huatuo:addSkill(qingnang)
+huatuo:addSkill(jijiu)
 Fk:loadTranslationTable{
   ["huatuo"] = "华佗",
+  ["qingnang"] = "青囊",
+  ["jijiu"] = "急救",
 }
 
 local lvbu = General:new(extension, "lvbu", "qun", 4)
