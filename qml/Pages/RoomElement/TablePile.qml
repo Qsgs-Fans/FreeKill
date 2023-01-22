@@ -54,6 +54,9 @@ Item {
     for (let i = 0; i < inputs.length; i++) {
       inputs[i].footnoteVisible = true
       inputs[i].selectable = true
+      inputs[i].height = inputs[i].height * 0.8
+      inputs[i].width = inputs[i].width * 0.8
+      inputs[i].rotation = (Math.random() - 0.5) * 5
     }
   }
 
