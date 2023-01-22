@@ -5,6 +5,7 @@
 ---@field kingdom string
 ---@field role string
 ---@field general string
+---@field gender integer
 ---@field handcard_num integer
 ---@field seat integer
 ---@field next Player
@@ -51,6 +52,7 @@ function Player:initialize()
   self.kingdom = "qun"
   self.role = ""
   self.general = ""
+  self.gender = General.Male
   self.seat = 0
   self.next = nil
   self.phase = Player.PhaseNone

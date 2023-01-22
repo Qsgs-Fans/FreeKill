@@ -88,8 +88,7 @@ function ServerPlayer:marshal(player)
   local room = self.room
   room:notifyProperty(player, self, "maxHp")
   room:notifyProperty(player, self, "hp")
-  -- TODO
-  --room:notifyProperty(player, self, "gender")
+  room:notifyProperty(player, self, "gender")
 
   if self.kingdom ~= Fk.generals[self.general].kingdom then
     room:notifyProperty(player, self, "kingdom")

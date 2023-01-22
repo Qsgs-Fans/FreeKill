@@ -380,7 +380,7 @@ local jieyin = fk.CreateActiveSkill{
     local target = Fk:currentRoom():getPlayerById(to_select)
     local name = target.general
     return target:isWounded() and
-      Fk.generals[name].gender == General.Male
+      target.gender == General.Male
       and #selected < 1
   end,
   feasible = function(self, selected, selected_cards)
