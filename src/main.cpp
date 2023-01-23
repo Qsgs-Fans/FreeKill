@@ -140,7 +140,9 @@ int main(int argc, char *argv[])
 
   SHOW_SPLASH_MSG("Loading qml files...");
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
+#ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
+#endif
   
   QmlBackend backend;
   backend.setEngine(engine);
