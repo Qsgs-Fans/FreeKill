@@ -20,7 +20,6 @@ public:
     Bold,
     UnderLine
   };
-  static const char *ColoredText(const char *input, Color color, TextType type = NoType);
 
 protected:
   virtual void run();

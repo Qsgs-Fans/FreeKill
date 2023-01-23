@@ -14,35 +14,12 @@ static void sigintHandler(int) {
   rl_redisplay();
 }
 
-const char *Shell::ColoredText(const char *input, Color color, TextType type) {
-  QString str(input);
-  str.append("\e[0m");
-  QString header = "\e[";
-  switch (type) {
-  case NoType:
-    header.append("0");
-    break;
-  case Bold:
-    header.append("1");
-    break;
-  case UnderLine:
-    header.append("4");
-    break;
-  }
-  header.append(";");
-  header.append(QString::number(30 + color));
-  header.append("m");
-  header.append(str);
-  auto bytes = header.toUtf8();
-  return bytes.constData();
-}
-
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
-  qInfo("%s: Display this help message.", ColoredText("help", Blue));
-  qInfo("%s: Shut down the server.", ColoredText("quit", Blue));
-  qInfo("%s: List all online players.", ColoredText("lsplayer", Blue));
-  qInfo("%s: List all running rooms.", ColoredText("lsroom", Blue));
+  qInfo("%s: Display this help message.", "help");
+  qInfo("%s: Shut down the server.", "quit");
+  qInfo("%s: List all online players.", "lsplayer");
+  qInfo("%s: List all running rooms.", "lsroom");
   qInfo("For more commands, check the documentation.");
 }
 
@@ -51,7 +28,7 @@ void Shell::lspCommand(QStringList &) {
     qInfo("No online player.");
     return;
   }
-  qInfo("Current %d online player(s) are:", ServerInstance->players.size());
+  qInfo("Current %lld online player(s) are:", ServerInstance->players.size());
   foreach (auto player, ServerInstance->players) {
     qInfo() << player->getId() << "," << player->getScreenName();
   }
@@ -62,7 +39,7 @@ void Shell::lsrCommand(QStringList &) {
     qInfo("No running room.");
     return;
   }
-  qInfo("Current %d running rooms are:", ServerInstance->rooms.size());
+  qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
   foreach (auto room, ServerInstance->rooms) {
     qInfo() << room->getId() << "," << room->getName();
   }

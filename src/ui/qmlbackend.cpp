@@ -59,7 +59,7 @@ void QmlBackend::joinServer(QString address)
 {
   if (ClientInstance != nullptr) return;
   Client *client = new Client(this);
-  connect(client, &Client::error_message, [this, client](const QString &msg){
+  connect(client, &Client::error_message, this, [=](const QString &msg){
     client->deleteLater();
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
@@ -315,7 +315,7 @@ void QmlBackend::playSound(const QString &name, int index) {
   player->setAudioOutput(output);
   player->setSource(QUrl::fromLocalFile(fname));
   output->setVolume(50); // TODO: volume config
-  connect(player, &QMediaPlayer::playbackStateChanged, [=](){
+  connect(player, &QMediaPlayer::playbackStateChanged, this, [=](){
     if (player->playbackState() == QMediaPlayer::StoppedState) {
       player->deleteLater();
       output->deleteLater();
