@@ -11,6 +11,7 @@ if [ ! -e assets/res ]; then
   mkdir -p assets/res
 fi
 
+cp -r ../audio assets/res
 cp -r ../fonts assets/res
 cp -r ../image assets/res
 cp -r ../lua assets/res

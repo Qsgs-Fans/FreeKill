@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtMultimedia
 import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
@@ -32,6 +33,14 @@ Item {
     source: AppPath + "/image/gamebg"
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
+  }
+
+  MediaPlayer {
+    id: bgm
+    source: "https://web.sanguosha.com/10/pc/res/assets/runtime/voice/bgm/bgm_1.mp3"
+    loops: MediaPlayer.Infinite
+    audioOutput: AudioOutput {}
+    Component.onCompleted: play();
   }
 
   // tmp
