@@ -842,7 +842,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   local soundName
   if card.type == Card.TypeEquip then
     local subTypeStr
-    if card.sub_type == Card.SubtypeDefensiveRide or card.type == Card.SubtypeOffensiveRide then
+    if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
       subTypeStr = "horse"
     elseif card.sub_type == Card.SubtypeWeapon then
       subTypeStr = "weapon"
@@ -1484,14 +1484,14 @@ end
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
-    cid = cid:isVirtual() and {cid.id} or cid.subcards
+    cid = cid:isVirtual() and cid.subcards or {cid.id}
   else
     cid = {cid}
   end
   if #cid == 0 then return end
   self:moveCards({
     ids = cid,
-    from = self.owner_map[cid],
+    from = self.owner_map[cid[1]],
     to = player,
     toArea = Card.PlayerHand,
     moveReason = reason or fk.ReasonJustMove,

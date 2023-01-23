@@ -746,4 +746,5 @@ callbacks["GameOver"] = function(jsonData) {
   roomScene.popupBox.source = "RoomElement/GameOverBox.qml";
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
+  roomScene.isStarted = false;
 }

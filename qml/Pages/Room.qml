@@ -37,10 +37,22 @@ Item {
 
   MediaPlayer {
     id: bgm
-    source: "https://web.sanguosha.com/10/pc/res/assets/runtime/voice/bgm/bgm_1.mp3"
-    loops: MediaPlayer.Infinite
+    source: AppPath + "/audio/system/bgm.mp3"
+    
+    // loops: MediaPlayer.Infinite
+    onPlaybackStateChanged: {
+      if (playbackState == MediaPlayer.StoppedState && roomScene.isStarted)
+        play();
+    }
     audioOutput: AudioOutput {}
-    Component.onCompleted: play();
+  }
+
+  onIsStartedChanged: {
+    if (isStarted) {
+      bgm.play();
+    } else {
+      // bgm.stop();
+    }
   }
 
   // tmp
