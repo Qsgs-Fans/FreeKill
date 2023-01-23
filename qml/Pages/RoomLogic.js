@@ -713,17 +713,28 @@ callbacks["LogEvent"] = function(jsonData) {
   // jsonData: [Object object]
   let data = JSON.parse(jsonData);
   switch (data.type) {
-    case "Damage":
+    case "Damage": {
       let item = getPhotoOrDashboard(data.to);
       setEmotion(data.to, "damage");
       item.tremble();
       break;
-    case "PlaySkillSound":
+    }
+    case "PlaySkillSound": {
       Backend.playSound("./audio/skill/" + data.name, data.i);
       break;
-    case "PlaySound":
-      Backend.playSound(data.name, 0);
+    }
+    case "PlaySound": {
+      Backend.playSound(data.name);
       break;
+    }
+    case "Death": {
+      console.log(jsonData)
+      let item = getPhoto(data.to);
+      if (data.to === dashboardModel.id) {
+        item = dashboard.self;
+      }
+      Backend.playSound("./audio/death/" + item.general);
+    }
     default:
       break;
   }
