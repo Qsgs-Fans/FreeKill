@@ -29,6 +29,14 @@ set(freekill_HEADERS
 )
 
 set(FKP_LIB fkparse)
+set(QT_LIB
+  Qt6::Qml
+  Qt6::Gui
+  Qt6::Widgets
+  Qt6::Network
+  Qt6::Multimedia
+  Qt6::QuickControls2
+)
 if (WIN32)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
@@ -41,6 +49,7 @@ elseif (ANDROID)
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
     QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB}"
   )
+  list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # WASM
   list(REMOVE_ITEM freekill_SRCS
@@ -72,10 +81,5 @@ target_link_libraries(FreeKill PRIVATE
   ${CRYPTO_LIB}
   ${READLINE_LIB}
   ${FKP_LIB}
-  Qt6::Qml
-  Qt6::Gui
-  Qt6::Widgets
-  Qt6::Network
-  Qt6::Multimedia
-  Qt6::QuickControls2
+  ${QT_LIB}
 )

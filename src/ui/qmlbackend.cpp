@@ -2,7 +2,7 @@
 #include <qaudiooutput.h>
 #include <qmediaplayer.h>
 #include <qrandom.h>
-#include <QMediaPlayer>>
+#include <QMediaPlayer>
 #ifndef Q_OS_WASM
 #include "server.h"
 #endif

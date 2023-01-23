@@ -14,7 +14,9 @@
 #include <QSplashScreen>
 #include <QScreen>
 #include <QFileDialog>
+#ifndef Q_OS_ANDROID
 #include <QQuickStyle>
+#endif
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
