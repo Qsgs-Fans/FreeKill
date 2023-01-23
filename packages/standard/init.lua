@@ -40,6 +40,25 @@ Fk:loadTranslationTable{
   ["jianxiong"] = "奸雄",
 }
 
+local guicai = fk.CreateTriggerSkill{
+  name = "guicai",
+  events = {fk.AskForRetrial},
+  can_trigger = function(self, event, target, player, data)
+    return player:hasSkill(self.name) and not player:isKongcheng()
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local card = room:askForResponse(player, self.name, ".", nil, true)
+    if card ~= nil then
+      self.cost_data = card
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:retrial(self.cost_data, player, data, self.name)
+  end,
+}
 local fankui = fk.CreateTriggerSkill{
   name = "fankui",
   events = {fk.Damaged},
@@ -60,9 +79,11 @@ local fankui = fk.CreateTriggerSkill{
   end
 }
 local simayi = General:new(extension, "simayi", "wei", 3)
+simayi:addSkill(guicai)
 simayi:addSkill(fankui)
 Fk:loadTranslationTable{
   ["simayi"] = "司马懿",
+  ["guicai"] = "鬼才",
   ["fankui"] = "反馈",
 }
 

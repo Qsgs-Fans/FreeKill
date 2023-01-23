@@ -130,6 +130,7 @@ end
 ---@param id integer
 ---@return ServerPlayer
 function Room:getPlayerById(id)
+  if not id then return nil end
   assert(type(id) == "number")
 
   for _, p in ipairs(self.players) do
@@ -1905,6 +1906,57 @@ function Room:judge(data)
   self.logic:trigger(fk.FinishJudge, who, data)
   if self:getCardArea(data.card.id) == Card.Processing then
     self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
+  end
+end
+
+---@param card Card
+---@param player ServerPlayer
+---@param judge JudgeStruct
+---@param skillName string
+---@param exchange boolean
+function Room:retrial(card, player, judge, skillName, exchange)
+  if not card then return end
+  local triggerResponded = self.owner_map[card:getEffectiveId()] == player
+  local isHandcard = (triggerResponded and self:getCardArea(card:getEffectiveId()) == Card.PlayerHand)
+
+  local oldJudge = judge.card
+  judge.card = Fk:getCardById(card:getEffectiveId())
+  local rebyre = judge.retrial_by_response
+  judge.retrial_by_response = player
+
+  local resp = {} ---@type CardResponseEvent
+  resp.from = player.id
+  resp.card = card
+
+  if triggerResponded then
+    self.logic:trigger(fk.PreCardRespond, player, resp)
+  end
+
+  local move1 = {} ---@type CardsMoveInfo
+  move1.ids = { card:getEffectiveId() }
+  move1.from = player.id
+  move1.toArea = Card.Processing
+  move1.moveReason = fk.ReasonResonpse
+  move1.skillName = skillName
+
+  local move2 = {} ---@type CardsMoveInfo
+  move2.ids = { oldJudge:getEffectiveId() }
+  move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
+  move2.moveReason = fk.ReasonJustMove
+  move2.to = exchange and player.id or nil
+
+  self:sendLog{
+    type = "#ChangedJudge",
+    from = player.id,
+    to = { judge.who.id },
+    card = { card:getEffectiveId() },
+    arg = skillName,
+  }
+
+  self:moveCards(move1, move2)
+
+  if triggerResponded then
+    self.logic:trigger(fk.CardRespondFinished, player, resp)
   end
 end
 
