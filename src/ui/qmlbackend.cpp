@@ -1,4 +1,8 @@
 #include "qmlbackend.h"
+#include <qaudiooutput.h>
+#include <qmediaplayer.h>
+#include <qrandom.h>
+#include <QMediaPlayer>>
 #ifndef Q_OS_WASM
 #include "server.h"
 #endif
@@ -283,5 +287,40 @@ void QmlBackend::readHashFromParser() {
 
 QString QmlBackend::calcFileMD5() {
   return ::calcFileMD5();
+}
+
+void QmlBackend::playSound(const QString &name, int index) {
+  QString fname(name);
+  if (index == -1) {
+    int i = 1;
+    while (true) {
+      if (!QFile::exists(name + QString::number(i) + ".mp3")) {
+        i--;
+        break;
+      }
+      i++;
+    }
+
+    index = i == 0 ? 0 : (QRandomGenerator::global()->generate()) % i + 1; 
+  }
+  if (index != 0)
+    fname = fname + QString::number(index) + ".mp3";
+  else
+    fname = fname + ".mp3";
+
+  if (!QFile::exists(fname)) return;
+ 
+  auto player = new QMediaPlayer;
+  auto output = new QAudioOutput;
+  player->setAudioOutput(output);
+  player->setSource(QUrl::fromLocalFile(fname));
+  output->setVolume(50); // TODO: volume config
+  connect(player, &QMediaPlayer::playbackStateChanged, [=](){
+    if (player->playbackState() == QMediaPlayer::StoppedState) {
+      player->deleteLater();
+      output->deleteLater();
+    }
+  });
+  player->play();
 }
 

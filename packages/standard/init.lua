@@ -69,6 +69,7 @@ local fankui = fk.CreateTriggerSkill{
     return from ~= nil and
       target == player and
       target:hasSkill(self.name) and
+      (not from:isNude()) and
       not target.dead
   end,
   on_use = function(self, event, target, player, data)

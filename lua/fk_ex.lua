@@ -46,6 +46,7 @@ function fk.CreateTriggerSkill(spec)
 
   local frequency = spec.frequency or Skill.NotFrequent
   local skill = TriggerSkill:new(spec.name, frequency)
+  skill.mute = spec.mute
 
   if type(spec.events) == "number" then
     table.insert(skill.events, spec.events)
@@ -113,6 +114,7 @@ end
 function fk.CreateActiveSkill(spec)
   assert(type(spec.name) == "string")
   local skill = ActiveSkill:new(spec.name)
+  skill.mute = spec.mute
   if spec.can_use then skill.canUse = spec.can_use end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
@@ -137,6 +139,7 @@ function fk.CreateViewAsSkill(spec)
   assert(type(spec.view_as) == "function")
 
   local skill = ViewAsSkill:new(spec.name)
+  skill.mute = spec.mute
   skill.viewAs = spec.view_as
   if spec.card_filter then
     skill.cardFilter = spec.card_filter

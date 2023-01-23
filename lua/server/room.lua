@@ -494,6 +494,16 @@ function Room:sendLogEvent(type, data, players)
   self:doBroadcastNotify("LogEvent", json.encode(data), players)
 end
 
+---@param skill_name string
+---@param index integer
+function Room:broadcastSkillInvoke(skill_name, index)
+  index = index or -1
+  self:sendLogEvent("PlaySkillSound", {
+    name = skill_name,
+    i = index
+  })
+end
+
 ---@param player ServerPlayer
 ---@param skill_name string
 ---@param skill_type nil
@@ -697,6 +707,9 @@ function Room:handleUseCardReply(player, data)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
     if skill:isInstanceOf(ActiveSkill) then
+      if not skill.mute then
+        self:broadcastSkillInvoke(skill.name)
+      end
       self:notifySkillInvoked(player, skill.name)
       skill:onEffect(self, {
         from = player.id,
@@ -707,6 +720,9 @@ function Room:handleUseCardReply(player, data)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local c = skill:viewAs(selected_cards)
       if c then
+        if not skill.mute then
+          self:broadcastSkillInvoke(skill.name)
+        end
         self:notifySkillInvoked(player, skill.name)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
