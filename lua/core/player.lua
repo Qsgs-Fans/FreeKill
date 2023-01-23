@@ -274,6 +274,7 @@ function Player:distanceTo(other)
   local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or {}
   for _, skill in ipairs(status_skills) do
     local correct = skill:getCorrect(self, other)
+    if correct == nil then correct = 0 end
     ret = ret + correct
   end
   

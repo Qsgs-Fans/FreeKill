@@ -181,6 +181,11 @@ function Room:getAlivePlayers(sortBySeat)
   if sortBySeat == nil or sortBySeat then
     local current = self.current
     local temp = current.next
+
+    -- did not arrange seat, use default
+    if temp == nil then
+      return { table.unpack(self.players) }
+    end
     local ret = {current}
     while temp ~= current do
       if not temp.dead then
@@ -224,19 +229,6 @@ function Room:getLord()
   end
 
   return nil
-end
-
----@param expect ServerPlayer
----@return ServerPlayer[]
-function Room:getOtherPlayers(expect, include_dead)
-  local ret
-  if include_dead then
-    ret = {table.unpack(self.players)}
-  else
-    ret = {table.unpack(self.alive_players)}
-  end
-  table.removeOne(ret, expect)
-  return ret
 end
 
 ---@param num integer
