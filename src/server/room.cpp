@@ -306,6 +306,10 @@ void Room::pushRequest(const QString &req) {
   request_queue_mutex.unlock();
 }
 
+bool Room::hasRequest() const {
+  return !request_queue.isEmpty();
+}
+
 void Room::run()
 {
   gameStarted = true;

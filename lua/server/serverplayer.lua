@@ -62,7 +62,9 @@ local function _waitForReply(player, timeout)
     if timeout and (fk.GetMicroSecond() - start) / 1000 >= timeout * 1000 then
       return ""
     end
-    coroutine.yield()
+    if player.room.room:hasRequest() then
+      coroutine.yield()
+    end
   end
 end
 
