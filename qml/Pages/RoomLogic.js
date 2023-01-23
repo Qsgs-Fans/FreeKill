@@ -721,6 +721,9 @@ callbacks["LogEvent"] = function(jsonData) {
     case "PlaySkillSound":
       Backend.playSound("./audio/skill/" + data.name, data.i);
       break;
+    case "PlaySound":
+      Backend.playSound(data.name, 0);
+      break;
     default:
       break;
   }

@@ -504,6 +504,14 @@ function Room:broadcastSkillInvoke(skill_name, index)
   })
 end
 
+---@param skill_name string
+---@param index integer
+function Room:broadcastPlaySound(path)
+  self:sendLogEvent("PlaySound", {
+    name = path,
+  })
+end
+
 ---@param player ServerPlayer
 ---@param skill_name string
 ---@param skill_type nil
@@ -830,6 +838,24 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   local from = cardUseEvent.from
   local card = cardUseEvent.card
   room:setEmotion(room:getPlayerById(from), card.name)
+
+  local soundName
+  if card.type == Card.TypeEquip then
+    local subTypeStr
+    if card.sub_type == Card.SubtypeDefensiveRide or card.type == Card.SubtypeOffensiveRide then
+      subTypeStr = "horse"
+    elseif card.sub_type == Card.SubtypeWeapon then
+      subTypeStr = "weapon"
+    else
+      subTypeStr = "armor"
+    end
+
+    soundName = "common/" .. subTypeStr
+  else
+    soundName = (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+  end
+  room:broadcastPlaySound("./audio/card/" .. soundName)
+
   room:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
