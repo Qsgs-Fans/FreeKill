@@ -1614,6 +1614,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
     self:sendLogEvent("Damage", {
       to = player.id,
       damageType = damage_nature_table[damageStruct.damageType],
+      damageNum = damageStruct.damage,
     })
   elseif reason == "loseHp" then
     self:sendLog{
