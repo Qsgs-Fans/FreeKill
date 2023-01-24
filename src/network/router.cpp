@@ -80,7 +80,7 @@ void Router::request(int type, const QString& command,
   body << jsonData;
   body << timeout;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 #endif
 }
 
@@ -92,7 +92,7 @@ void Router::reply(int type, const QString& command, const QString& jsonData)
   body << command;
   body << jsonData;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 void Router::notify(int type, const QString& command, const QString& jsonData)
@@ -103,7 +103,7 @@ void Router::notify(int type, const QString& command, const QString& jsonData)
   body << command;
   body << jsonData;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 int Router::getTimeout() const

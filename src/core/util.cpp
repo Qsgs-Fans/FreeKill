@@ -116,7 +116,7 @@ QJsonObject SelectFromDatabase(sqlite3 *db, const QString &sql) {
 
 QString SelectFromDb(sqlite3 *db, const QString &sql) {
   QJsonObject obj = SelectFromDatabase(db, sql);
-  return QJsonDocument(obj).toJson();
+  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 
 void ExecSQL(sqlite3 *db, const QString &sql) {
@@ -202,3 +202,7 @@ QString calcFileMD5() {
   return ret.toHex();
 }
 
+QByteArray JsonArray2Bytes(const QJsonArray &arr) {
+  auto doc = QJsonDocument(arr);
+  return doc.toJson(QJsonDocument::Compact);
+}
