@@ -729,7 +729,6 @@ callbacks["LogEvent"] = function(jsonData) {
       break;
     }
     case "Death": {
-      console.log(jsonData)
       let item = getPhoto(data.to);
       if (data.to === dashboardModel.id) {
         item = dashboard.self;

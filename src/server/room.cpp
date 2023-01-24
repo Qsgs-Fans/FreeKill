@@ -182,12 +182,14 @@ void Room::addRobot(ServerPlayer *player)
 void Room::removePlayer(ServerPlayer *player)
 {
   if (!gameStarted) {
-    players.removeOne(player);
-    emit playerRemoved(player);
+    if (!isAbandoned()) {
+      players.removeOne(player);
+      emit playerRemoved(player);
 
-    QJsonArray jsonData;
-    jsonData << player->getId();
-    doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+      QJsonArray jsonData;
+      jsonData << player->getId();
+      doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    }
 
     if (isLobby()) return;
   } else {
