@@ -514,15 +514,24 @@ end
 
 ---@param player ServerPlayer
 ---@param skill_name string
----@param skill_type nil
+---@param skill_type string
 function Room:notifySkillInvoked(player, skill_name, skill_type)
+  if not skill_type then
+    local skill = Fk.skills[skill_name]
+    if not skill then skill_type = "" end
+    skill_type = skill.anim_type
+  end
   self:sendLog{
     type = "#InvokeSkill",
     from = player.id,
     arg = skill_name,
   }
 
-  -- TODO: notifySkill animation
+  self:doAnimate("InvokeSkill", {
+    name = skill_name,
+    player = player.id,
+    skill_type = skill_type,
+  })
 end
 
 ------------------------------------------------------------------------

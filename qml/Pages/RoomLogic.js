@@ -704,6 +704,29 @@ callbacks["Animate"] = function(jsonData) {
       break;
     case "SuperLightBox":
       break;
+    case "InvokeSkill": {
+      let id = data.player;
+      let component = Qt.createComponent("RoomElement/SkillInvokeAnimation.qml");
+      if (component.status !== Component.Ready)
+        return;
+
+      let photo = getPhoto(id);
+      if (!photo) {
+        if (id === dashboardModel.id) {
+          photo = dashboard.self;
+        } else {
+          return null;
+        }
+      }
+
+      let animation = component.createObject(photo, {
+        skill_name: Backend.translate(data.name),
+        skill_type: (data.skill_type ? data.skill_type : "special"),
+      });
+      animation.anchors.centerIn = photo;
+      animation.finished.connect(() => animation.destroy());
+      break;
+    }
     default:
       break;
   }

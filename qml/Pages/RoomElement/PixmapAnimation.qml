@@ -8,6 +8,7 @@ Item {
   property int loadedFrameCount: 0
   property bool autoStart: false
   property bool loop: false
+  property bool keepAtStop: false
 
   signal loaded()
   signal started()
@@ -48,7 +49,9 @@ Item {
     repeat: true
     onTriggered: {
       if (currentFrame >= fileModel) {
-        frames.itemAt(fileModel - 1).visible = false;
+        if (!keepAtStop) {
+          frames.itemAt(fileModel - 1).visible = false;
+        }
         if (loop) {
           currentFrame = 0;
         } else {

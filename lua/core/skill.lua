@@ -3,6 +3,7 @@
 ---@field frequency Frequency
 ---@field visible boolean
 ---@field mute boolean
+---@field anim_type string
 ---@field related_skills Skill[]
 local Skill = class("Skill")
 
@@ -20,6 +21,7 @@ function Skill:initialize(name, frequency)
   self.frequency = frequency
   self.visible = true
   self.mute = false
+  self.anim_type = ""
   self.related_skills = {}
 end
 

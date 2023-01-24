@@ -30,7 +30,6 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
 
-  FontLoader { id: fontLiSu; source: AppPath + "/fonts/simli.ttf" }
   FontLoader { id: fontLibian; source: AppPath + "/fonts/FZLBGBK.ttf" }
   FontLoader { id: fontLi2; source: AppPath + "/fonts/FZLE.ttf" }
 

@@ -19,6 +19,7 @@ Fk:loadTranslationTable{
 
 local jianxiong = fk.CreateTriggerSkill{
   name = "jianxiong",
+  anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
     local room = target.room
@@ -42,6 +43,7 @@ Fk:loadTranslationTable{
 
 local guicai = fk.CreateTriggerSkill{
   name = "guicai",
+  anim_type = "control",
   events = {fk.AskForRetrial},
   can_trigger = function(self, event, target, player, data)
     return player:hasSkill(self.name) and not player:isKongcheng()
@@ -61,6 +63,7 @@ local guicai = fk.CreateTriggerSkill{
 }
 local fankui = fk.CreateTriggerSkill{
   name = "fankui",
+  anim_type = "masochism",
   events = {fk.Damaged},
   frequency = Skill.NotFrequent,
   can_trigger = function(self, event, target, player, data)
@@ -90,6 +93,7 @@ Fk:loadTranslationTable{
 
 local ganglie = fk.CreateTriggerSkill{
   name = "ganglie",
+  anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
     local room = target.room
@@ -143,6 +147,7 @@ Fk:loadTranslationTable{
 
 local qingguo = fk.CreateViewAsSkill{
   name = "qingguo",
+  anim_type = "defensive",
   pattern = "jink",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
@@ -174,6 +179,7 @@ Fk:loadTranslationTable{
 
 local wusheng = fk.CreateViewAsSkill{
   name = "wusheng",
+  anim_type = "offensive",
   pattern = "slash",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
@@ -262,6 +268,7 @@ Fk:loadTranslationTable{
 
 local jizhi = fk.CreateTriggerSkill{
   name = "jizhi",
+  anim_type = "drawcard",
   events = {fk.CardUsing},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
@@ -281,6 +288,7 @@ Fk:loadTranslationTable{
 
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
+  anim_type = "drawcard",
   feasible = function(self, selected, selected_cards)
     return #selected == 0 and #selected_cards > 0
   end,
@@ -299,6 +307,7 @@ Fk:loadTranslationTable{
 
 local qixi = fk.CreateViewAsSkill{
   name = "qixi",
+  anim_type = "control",
   pattern = "dismantlement",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
@@ -322,6 +331,7 @@ Fk:loadTranslationTable{
 
 local keji = fk.CreateTriggerSkill{
   name = "keji",
+  anim_type = "defensive",
   events = {fk.EventPhaseChanging},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
@@ -362,6 +372,7 @@ Fk:loadTranslationTable{
 
 local kurou = fk.CreateActiveSkill{
   name = "kurou",
+  anim_type = "drawcard",
   card_filter = function(self, to_select, selected, selected_targets)
     return false
   end,
@@ -382,6 +393,7 @@ Fk:loadTranslationTable{
 
 local yingzi = fk.CreateTriggerSkill{
   name = "yingzi",
+  anim_type = "drawcard",
   events = {fk.DrawNCards},
   on_use = function(self, event, target, player, data)
     data.n = data.n + 1
@@ -416,6 +428,7 @@ Fk:loadTranslationTable{
 
 local jieyin = fk.CreateActiveSkill{
   name = "jieyin",
+  anim_type = "support",
   card_filter = function(self, to_select, selected)
     return #selected < 2
   end,
@@ -457,6 +470,7 @@ Fk:loadTranslationTable{
 
 local qingnang = fk.CreateActiveSkill{
   name = "qingnang",
+  anim_type = "support",
   card_filter = function(self, to_select, selected, targets)
     return #selected == 0
   end,
@@ -479,6 +493,7 @@ local qingnang = fk.CreateActiveSkill{
 }
 local jijiu = fk.CreateViewAsSkill{
   name = "jijiu",
+  anim_type = "support",
   pattern = "peach",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
@@ -515,6 +530,7 @@ Fk:loadTranslationTable{
 
 local biyue = fk.CreateTriggerSkill{
   name = "biyue",
+  anim_type = "drawcard",
   events = {fk.EventPhaseStart},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name)
