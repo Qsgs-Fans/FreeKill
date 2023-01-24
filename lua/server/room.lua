@@ -412,9 +412,7 @@ function Room:delay(ms)
     if fk.GetMicroSecond() - start >= ms * 1000 then
       break
     end
-    if self.room:hasRequest() then
-      coroutine.yield()
-    end
+    coroutine.yield()
   end
 end
 
