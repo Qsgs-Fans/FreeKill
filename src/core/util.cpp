@@ -206,3 +206,8 @@ QByteArray JsonArray2Bytes(const QJsonArray &arr) {
   auto doc = QJsonDocument(arr);
   return doc.toJson(QJsonDocument::Compact);
 }
+
+QJsonDocument String2Json(const QString &str) {
+  auto bytes = str.toUtf8();
+  return QJsonDocument::fromJson(bytes);
+}

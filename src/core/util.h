@@ -19,5 +19,6 @@ RSA *InitServerRSA();
 
 QString calcFileMD5();
 QByteArray JsonArray2Bytes(const QJsonArray &arr);
+QJsonDocument String2Json(const QString &str);
 
 #endif // _GLOBAL_H

@@ -160,7 +160,7 @@ void Server::processRequest(const QByteArray& msg)
     )
       valid = false;
     else
-      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 3);
+      valid = (String2Json(doc[3].toString()).array().size() == 3);
   }
 
   if (!valid) {
@@ -175,7 +175,7 @@ void Server::processRequest(const QByteArray& msg)
     return;
   }
 
-  QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
+  QJsonArray arr = String2Json(doc[3].toString()).array();
 
   if (md5 != arr[2].toString()) {
     qWarning() << "MD5 check failed!";

@@ -268,7 +268,7 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 }
 
 void Room::chat(ServerPlayer *sender, const QString &jsonData) {
-  auto doc = QJsonDocument::fromJson(jsonData.toUtf8()).object();
+  auto doc = String2Json(jsonData).object();
   auto type = doc["type"].toInt();
   doc["type"] = sender->getId();
   if (type == 1) {
