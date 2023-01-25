@@ -26,21 +26,28 @@ Item {
       if (toVanish) {
         for (i = 0; i < discardedCards.length; i++) {
           card = discardedCards[i];
+          if (card.busy) {
+            discardedCards.splice(i, 1);
+            continue;
+          }
           card.origOpacity = 0;
           card.goBack(true);
           card.destroyOnStop()
         }
 
-        cards.splice(0, discardedCards.length);
+        cards = cards.filter((c) => discardedCards.indexOf(c) === -1);
         updateCardPosition(true);
 
-        discardedCards = new Array(cards.length);
-        for (i = 0; i < cards.length; i++)
-          discardedCards[i] = cards[i];
-        toVanish = false
+        discardedCards = [];
+        for (i = 0; i < cards.length; i++) {
+          if (cards[i].busy)
+            continue;
+          discardedCards.push(cards[i]);
+        }
+        toVanish = false;
       } else {
         for (i = 0; i < discardedCards.length; i++) {
-          discardedCards[i].selectable = false
+          discardedCards[i].selectable = false;
         }
         toVanish = true
       }
@@ -52,11 +59,12 @@ Item {
     area.add(inputs);
     // if (!inputs instanceof Array)
     for (let i = 0; i < inputs.length; i++) {
-      inputs[i].footnoteVisible = true;
-      inputs[i].selectable = true;
-      inputs[i].height = inputs[i].height * 0.8;
-      inputs[i].width = inputs[i].width * 0.8;
-      inputs[i].rotation = (Math.random() - 0.5) * 5;
+      let c = inputs[i];
+      c.footnoteVisible = true;
+      c.selectable = true;
+      c.height = c.height * 0.8;
+      c.width = c.width * 0.8;
+      c.rotation = (Math.random() - 0.5) * 5;
     }
   }
 
@@ -66,11 +74,12 @@ Item {
 
     let result = area.remove(outputs);
     for (let i = 0; i < result.length; i++) {
-      inputs[i].footnoteVisible = false;
-      inputs[i].selectable = false;
-      inputs[i].height = inputs[i].height / 0.8;
-      inputs[i].width = inputs[i].width / 0.8;
-      inputs[i].rotation = 0;
+      let c = result[i];
+      c.footnoteVisible = false;
+      c.selectable = false;
+      c.height = c.height / 0.8;
+      c.width = c.width / 0.8;
+      c.rotation = 0;
     }
     let vanished = [];
     if (result.length < outputs.length) {

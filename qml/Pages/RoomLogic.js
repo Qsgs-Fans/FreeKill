@@ -169,7 +169,7 @@ function moveCards(moves) {
   }
 }
 
-function setEmotion(id, emotion) {
+function setEmotion(id, emotion, isCardId) {
   let path;
   if (OS === "Win") {
     // Windows: file:///C:/xxx/xxxx
@@ -189,18 +189,38 @@ function setEmotion(id, emotion) {
   if (component.status !== Component.Ready)
     return;
 
-  let photo = getPhoto(id);
-  if (!photo) {
-    if (id === dashboardModel.id) {
-      photo = dashboard.self;
-    } else {
-      return null;
+  let photo;
+  if (isCardId === true) {
+    roomScene.tableCards.forEach((v) => {
+      if (v.cid === id) {
+        photo = v;
+        return;
+      }
+    })
+    if (!photo)
+      return;
+  } else {
+    photo = getPhoto(id);
+    if (!photo) {
+      if (id === dashboardModel.id) {
+        photo = dashboard.self;
+      } else {
+        return null;
+      }
     }
   }
 
   let animation = component.createObject(photo, {source: emotion});
   animation.anchors.centerIn = photo;
-  animation.finished.connect(() => animation.destroy());
+  if (isCardId) {
+    animation.started.connect(() => photo.busy = true);
+    animation.finished.connect(() => {
+      photo.busy = false;
+      animation.destroy()
+    });
+  } else {
+    animation.finished.connect(() => animation.destroy());
+  }
   animation.start();
 }
 
@@ -698,7 +718,7 @@ callbacks["Animate"] = function(jsonData) {
       })
       break;
     case "Emotion":
-      setEmotion(data.player, data.emotion);
+      setEmotion(data.player, data.emotion, data.is_card);
       break;
     case "LightBox":
       break;

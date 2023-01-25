@@ -23,6 +23,7 @@ Item {
   property alias okButton: okButton
   property alias cancelButton: cancelButton
   property alias dynamicCardArea: dynamicCardArea
+  property alias tableCards: tablePile.cards
 
   property var selected_targets: []
   property string responding_card

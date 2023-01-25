@@ -49,6 +49,7 @@ Item {
   property bool moveAborted: false
   property alias goBackAnim: goBackAnimation
   property int goBackDuration: 500
+  property bool busy: false // whether there is a running emotion on the card
 
   signal toggleDiscards()
   signal clicked()

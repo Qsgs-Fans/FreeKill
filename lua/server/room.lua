@@ -488,6 +488,14 @@ function Room:setEmotion(player, name)
   })
 end
 
+function Room:setCardEmotion(cid, name)
+  self:doAnimate("Emotion", {
+    player = cid,
+    emotion = name,
+    is_card = true,
+  })
+end
+
 function Room:sendLogEvent(type, data, players)
   players = players or self.players
   data.type = type
@@ -1368,6 +1376,8 @@ function Room:responseCard(cardResponseEvent)
   })
 
   self:setEmotion(self:getPlayerById(from), card.name)
+  local soundName = (self:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+  self:broadcastPlaySound("./audio/card/" .. soundName)
 
   for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -1956,6 +1966,12 @@ function Room:judge(data)
     from = who.id,
     card = {data.card.id},
   }
+
+  if data.pattern then
+    self:delay(400);
+    self:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
+    self:delay(900);
+  end
 
   self.logic:trigger(fk.FinishJudge, who, data)
   if self:getCardArea(data.card.id) == Card.Processing then

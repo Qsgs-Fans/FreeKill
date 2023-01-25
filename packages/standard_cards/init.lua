@@ -606,6 +606,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "lightning",
+      pattern = ".|2~9|spade",
     }
     room:judge(judge)
     local result = judge.card
@@ -679,6 +680,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "indulgence",
+      pattern = ".|.|spade,club,diamond",
     }
     room:judge(judge)
     local result = judge.card

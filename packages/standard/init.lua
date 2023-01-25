@@ -108,6 +108,7 @@ local ganglie = fk.CreateTriggerSkill{
     local judge = {
       who = from,
       reason = self.name,
+      pattern = ".|.|spade,club,diamond",
     }
     room:judge(judge)
     if judge.card.suit ~= Card.Heart then
@@ -145,6 +146,43 @@ Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",
 }
 
+local luoshen = fk.CreateTriggerSkill{
+  name = "luoshen",
+  anim_type = "drawcard",
+  events = {fk.EventPhaseStart},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      player.phase == Player.Start
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    while true do
+      local judge = {
+        who = player,
+        reason = self.name,
+        pattern = ".|A~K|spade,club",
+      }
+      room:judge(judge)
+      if judge.card.color ~= Card.Black then
+        break
+      end
+
+      if not room:askForSkillInvoke(player, self.name) then
+        break
+      end
+    end
+  end,
+
+  refresh_events = {fk.FinishJudge},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.reason == self.name and data.card.color == Card.Black
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:obtainCard(player.id, data.card)
+  end,
+}
 local qingguo = fk.CreateViewAsSkill{
   name = "qingguo",
   anim_type = "defensive",
@@ -166,9 +204,11 @@ local qingguo = fk.CreateViewAsSkill{
   end,
 }
 local zhenji = General:new(extension, "zhenji", "wei", 3, 3, General.Female)
+zhenji:addSkill(luoshen)
 zhenji:addSkill(qingguo)
 Fk:loadTranslationTable{
   ["zhenji"] = "甄姬",
+  ["luoshen"] = "洛神",
   ["qingguo"] = "倾国",
 }
 

@@ -145,6 +145,10 @@ function Card:clearSubcards()
   updateColorAndNumber(self)
 end
 
+function Card:matchPattern(pattern)
+  return Exppattern:Parse(pattern):match(self)
+end
+
 function Card:getSuitString()
   local suit = self.suit
   if suit == Card.Spade then

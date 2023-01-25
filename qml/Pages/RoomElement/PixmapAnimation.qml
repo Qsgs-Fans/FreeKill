@@ -39,8 +39,10 @@ Item {
   }
 
   onLoaded: {
-    if (autoStart)
+    if (autoStart) {
+      root.started();
       timer.start();
+    }
   }
 
   Timer {
@@ -72,9 +74,11 @@ Item {
   function start()
   {
     if (loadedFrameCount == fileModel) {
+      root.started();
       timer.start();
     } else {
-      root.loaded.connect(function(){
+      root.loaded.connect(() => {
+        root.started();
         timer.start();
       });
     }
