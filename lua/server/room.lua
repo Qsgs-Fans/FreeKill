@@ -1688,6 +1688,8 @@ function Room:loseHp(player, num, skillName)
     return false
   end
 
+  self:sendLogEvent("LoseHP", {})
+
   self.logic:trigger(fk.HpLost, player, data)
   return true
 end

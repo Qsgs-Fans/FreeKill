@@ -52,11 +52,11 @@ Item {
     area.add(inputs);
     // if (!inputs instanceof Array)
     for (let i = 0; i < inputs.length; i++) {
-      inputs[i].footnoteVisible = true
-      inputs[i].selectable = true
-      inputs[i].height = inputs[i].height * 0.8
-      inputs[i].width = inputs[i].width * 0.8
-      inputs[i].rotation = (Math.random() - 0.5) * 5
+      inputs[i].footnoteVisible = true;
+      inputs[i].selectable = true;
+      inputs[i].height = inputs[i].height * 0.8;
+      inputs[i].width = inputs[i].width * 0.8;
+      inputs[i].rotation = (Math.random() - 0.5) * 5;
     }
   }
 
@@ -65,6 +65,13 @@ Item {
     let i, j;
 
     let result = area.remove(outputs);
+    for (let i = 0; i < result.length; i++) {
+      inputs[i].footnoteVisible = false;
+      inputs[i].selectable = false;
+      inputs[i].height = inputs[i].height / 0.8;
+      inputs[i].width = inputs[i].width / 0.8;
+      inputs[i].rotation = 0;
+    }
     let vanished = [];
     if (result.length < outputs.length) {
       for (i = 0; i < outputs.length; i++) {

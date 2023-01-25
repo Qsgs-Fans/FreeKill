@@ -743,6 +743,10 @@ callbacks["LogEvent"] = function(jsonData) {
       Backend.playSound("./audio/system/" + data.damageType + (data.damageNum > 1 ? "2" : ""));
       break;
     }
+    case "LoseHP": {
+      Backend.playSound("./audio/system/losehp");
+      break;
+    }
     case "PlaySkillSound": {
       Backend.playSound("./audio/skill/" + data.name, data.i);
       break;
