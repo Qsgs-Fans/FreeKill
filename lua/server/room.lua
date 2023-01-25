@@ -755,6 +755,9 @@ function Room:handleUseCardReply(player, data)
         for _, target in ipairs(targets) do
           table.insert(use.tos, { target })
         end
+        if #use.tos == 0 then
+          use.tos = nil
+        end
         use.card = c
         return use
       end
