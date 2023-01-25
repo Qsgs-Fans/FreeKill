@@ -128,10 +128,14 @@ void Router::cancelRequest()
 
 QString Router::waitForReply(int timeout)
 {
+  QString ret;
 #ifndef Q_OS_WASM
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
-  return m_reply;
+  replyMutex.lock();
+  ret = m_reply;
+  replyMutex.unlock();
 #endif
+  return ret;
 }
 
 void Router::abortRequest()
