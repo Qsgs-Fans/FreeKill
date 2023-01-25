@@ -1641,6 +1641,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
       from = player.id,
       arg = 0 - num,
     }
+    self:sendLogEvent("LoseHP", {})
   elseif reason == "recover" then
     self:sendLog{
       type = "#HealHP",
@@ -1697,8 +1698,6 @@ function Room:loseHp(player, num, skillName)
   if not self:changeHp(player, -num, "loseHp", skillName) then
     return false
   end
-
-  self:sendLogEvent("LoseHP", {})
 
   self.logic:trigger(fk.HpLost, player, data)
   return true
