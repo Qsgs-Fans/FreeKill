@@ -141,9 +141,19 @@ Fk:loadTranslationTable{
   ["xuchu"] = "许褚",
 }
 
+local tiandu = fk.CreateTriggerSkill{
+  name = "tiandu",
+  events = {fk.FinishJudge},
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:obtainCard(player.id, data.card)
+  end,
+}
 local guojia = General:new(extension, "guojia", "wei", 3)
+guojia:addSkill(tiandu)
 Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",
+  ["tiandu"] = "天妒",
 }
 
 local luoshen = fk.CreateTriggerSkill{
