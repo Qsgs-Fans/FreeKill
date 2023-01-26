@@ -67,9 +67,12 @@ Item {
         card.y -= card.height / 2;
         items.push(card);
         if (checkExisting) {
-          //@to-do: remove it from cards
-          cards.splice(i, 1);
-          i--;
+          for (let j = 0; j < length; j++) {
+            if (cards[j].cid == card.cid) {
+              cards.splice(j, 1);
+              break;
+            }
+          }
         }
       }
     }
