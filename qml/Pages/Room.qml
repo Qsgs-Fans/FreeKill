@@ -149,6 +149,9 @@ Item {
           dashboard.disableSkills();
           progress.visible = true;
           respond_play = false;
+          roomScene.okCancel.visible = false;
+          roomScene.okButton.enabled = false;
+          roomScene.cancelButton.enabled = false;
         }
       }
     }

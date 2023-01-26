@@ -20,6 +20,7 @@ Column {
 
   InvisibleCardArea {
     id: area
+    anchors.centerIn: parent
     checkExisting: true
   }
 
