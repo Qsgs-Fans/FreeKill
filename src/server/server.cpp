@@ -178,7 +178,6 @@ void Server::processRequest(const QByteArray& msg)
   QJsonArray arr = String2Json(doc[3].toString()).array();
 
   if (md5 != arr[2].toString()) {
-    qWarning() << "MD5 check failed!";
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);

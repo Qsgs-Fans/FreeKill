@@ -48,4 +48,24 @@
     <translation>单机启动</translation>
   </message>
 </context>
+
+<context>
+  <name>Logic</name>
+  <message>
+    <source>MD5 check failed!</source>
+    <translation>MD5检测失败！请与服务端保持一致后再登入</translation>
+  </message>
+  <message>
+    <source>others logged in with this name</source>
+    <translation>已经有人用这个名字登入了</translation>
+  </message>
+  <message>
+    <source>invalid user name</source>
+    <translation>用户名不合法，只能含有英数字和汉字</translation>
+  </message>
+  <message>
+    <source>username or password error</source>
+    <translation>用户名或密码错误</translation>
+  </message>
+</context>
 </TS>
