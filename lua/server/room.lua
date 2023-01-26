@@ -542,6 +542,20 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
   })
 end
 
+---@param source integer
+---@param targets integer[]
+function Room:doIndicate(source, targets)
+  local target_group = {}
+  for _, id in ipairs(targets) do
+    table.insert(target_group, { id })
+  end
+  p(target_group)
+  self:doAnimate("Indicate", {
+    from = source,
+    to = target_group,
+  })
+end
+
 ------------------------------------------------------------------------
 -- interactive functions
 ------------------------------------------------------------------------
@@ -575,7 +589,8 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
-  skill:onEffect(room, {
+  self:doIndicate(player.id, targets)
+  skill:onEffect(self, {
     from = player.id,
     cards = selected_cards,
     tos = targets,
@@ -621,13 +636,13 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
 end
 
 ---@param player ServerPlayer
----@param targets ServerPlayer[]
+---@param targets integer[]
 ---@param minNum integer
 ---@param maxNum integer
 ---@return integer[]
 function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
-  if minNum < 1 then
-    return nil
+  if maxNum < 1 then
+    return {}
   end
 
   local data = {
@@ -737,6 +752,7 @@ function Room:handleUseCardReply(player, data)
       end
       self:notifySkillInvoked(player, skill.name)
       player:addSkillUseHistory(skill.name)
+      self:doIndicate(player.id, targets)
       skill:onEffect(self, {
         from = player.id,
         cards = selected_cards,

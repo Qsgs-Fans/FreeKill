@@ -131,9 +131,52 @@ Fk:loadTranslationTable{
   ["ganglie"] = "刚烈",
 }
 
+local tuxi = fk.CreateTriggerSkill{
+  name = "tuxi",
+  anim_type = "control",
+  events = {fk.EventPhaseStart},
+  can_trigger = function(self, event, target, player, data)
+    local ret = (target == player and player:hasSkill(self.name) and player.phase == Player.Draw)
+    if ret then
+      local room = player.room
+      for _, p in ipairs(room:getOtherPlayers(player)) do
+        if not p:isKongcheng() then
+          return true
+        end
+      end
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local other = room:getOtherPlayers(player)
+    local targets = {}
+    for _, p in ipairs(other) do
+      if not p:isKongcheng() then
+        table.insert(targets, p.id)
+      end
+    end
+
+    local result = room:askForChoosePlayers(player, targets, 1, 2, self.name)
+    if #result > 0 then
+      self.cost_data = result
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    for _, id in ipairs(self.cost_data) do
+      local p = room:getPlayerById(id)
+      local c = room:askForCardChosen(player, p, "h", self.name)
+      room:obtainCard(player.id, c, false)
+    end
+    return true
+  end,
+}
 local zhangliao = General:new(extension, "zhangliao", "wei", 4)
+zhangliao:addSkill(tuxi)
 Fk:loadTranslationTable{
   ["zhangliao"] = "张辽",
+  ["tuxi"] = "突袭",
 }
 
 local luoyi = fk.CreateTriggerSkill{
