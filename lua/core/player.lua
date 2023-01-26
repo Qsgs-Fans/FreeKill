@@ -22,7 +22,8 @@
 ---@field mark table<string, integer>
 ---@field player_cards table<integer, integer[]>
 ---@field special_cards table<string, integer[]>
----@field cardUsedHistory table<string, integer>
+---@field cardUsedHistory table<string, integer[]>
+---@field skillUsedHistory table<string, integer[]>
 ---@field fixedDistance table<Player, integer>
 local Player = class("Player")
 
@@ -44,6 +45,11 @@ Player.Hand = 1
 Player.Equip = 2
 Player.Judge = 3
 Player.Special = 4
+
+Player.HistoryPhase = 1
+Player.HistoryTurn = 2
+Player.HistoryRound = 3
+Player.HistoryGame = 4
 
 function Player:initialize()
   self.id = 114514
@@ -75,6 +81,7 @@ function Player:initialize()
   self.special_cards = {}
 
   self.cardUsedHistory = {}
+  self.skillUsedHistory = {}
   self.fixedDistance = {}
 end
 
@@ -300,23 +307,79 @@ function Player:inMyAttackRange(other)
 end
 
 function Player:addCardUseHistory(cardName, num)
+  num = num or 1
   assert(type(num) == "number" and num ~= 0)
 
-  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or 0
-  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] + num
+  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or {0, 0, 0, 0}
+  local t = self.cardUsedHistory[cardName]
+  for i, _ in ipairs(t) do
+    t[i] = t[i] + num
+  end
 end
 
-function Player:resetCardUseHistory(cardName)
-  if not cardName then
+function Player:setCardUseHistory(cardName, num, scope)
+  if cardName == "" and num == nil and scope == nil then
     self.cardUsedHistory = {}
+    return
   end
+
+  num = num or 0
+  if cardName == "" then
+    for _, v in pairs(self.cardUsedHistory) do
+      v[scope] = num
+    end
+    return
+  end
+
   if self.cardUsedHistory[cardName] then
-    self.cardUsedHistory[cardName] = 0
+    self.cardUsedHistory[cardName][scope] = num
   end
 end
 
-function Player:usedTimes(cardName)
-  return self.cardUsedHistory[cardName] or 0
+function Player:addSkillUseHistory(skill_name, num)
+  num = num or 1
+  assert(type(num) == "number" and num ~= 0)
+
+  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or {0, 0, 0, 0}
+  local t = self.skillUsedHistory[skill_name]
+  for i, _ in ipairs(t) do
+    t[i] = t[i] + num
+  end
+end
+
+function Player:setSkillUseHistory(skill_name, num, scope)
+  if skill_name == "" and num == nil and scope == nil then
+    self.skillUsedHistory = {}
+    return
+  end
+
+  num = num or 0
+  if skill_name == "" then
+    for _, v in pairs(self.skillUsedHistory) do
+      v[scope] = num
+    end
+    return
+  end
+
+  if self.skillUsedHistory[skill_name] then
+    self.skillUsedHistory[skill_name][scope] = num
+  end
+end
+
+function Player:usedCardTimes(cardName, scope)
+  if not self.cardUsedHistory[cardName] then
+    return 0
+  end
+  scope = scope or Player.HistoryTurn
+  return self.cardUsedHistory[cardName][scope]
+end
+
+function Player:usedSkillTimes(cardName, scope)
+  if not self.skillUsedHistory[cardName] then
+    return 0
+  end
+  scope = scope or Player.HistoryTurn
+  return self.skillUsedHistory[cardName][scope]
 end
 
 function Player:isKongcheng()

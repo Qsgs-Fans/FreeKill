@@ -339,6 +339,9 @@ Fk:loadTranslationTable{
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
   anim_type = "drawcard",
+  can_use = function(self, player)
+    return player:usedSkillTimes(self.name) == 0
+  end,
   feasible = function(self, selected, selected_cards)
     return #selected == 0 and #selected_cards > 0
   end,
@@ -386,7 +389,7 @@ local keji = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
       data.to == Player.Discard and
-      player:usedTimes("slash") < 1 and
+      player:usedCardTimes("slash") < 1 and
       player:getMark("_keji_played_slash") == 0
   end,
   on_use = function(self, event, target, player, data)
@@ -479,6 +482,9 @@ Fk:loadTranslationTable{
 local jieyin = fk.CreateActiveSkill{
   name = "jieyin",
   anim_type = "support",
+  can_use = function(self, player)
+    return player:usedSkillTimes(self.name) == 0
+  end,
   card_filter = function(self, to_select, selected)
     return #selected < 2
   end,
@@ -521,6 +527,9 @@ Fk:loadTranslationTable{
 local qingnang = fk.CreateActiveSkill{
   name = "qingnang",
   anim_type = "support",
+  can_use = function(self, player)
+    return player:usedSkillTimes(self.name) == 0
+  end,
   card_filter = function(self, to_select, selected, targets)
     return #selected == 0
   end,

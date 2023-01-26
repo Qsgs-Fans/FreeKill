@@ -413,9 +413,19 @@ function ServerPlayer:addCardUseHistory(cardName, num)
   self:doNotify("AddCardUseHistory", json.encode{cardName, num})
 end
 
-function ServerPlayer:resetCardUseHistory(cardName)
-  Player.resetCardUseHistory(self, cardName)
-  self:doNotify("ResetCardUseHistory", cardName or "")
+function ServerPlayer:setCardUseHistory(cardName, num, scope)
+  Player.setCardUseHistory(self, cardName)
+  self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
+end
+
+function ServerPlayer:addSkillUseHistory(cardName, num)
+  Player.addSkillUseHistory(self, cardName, num)
+  self:doNotify("AddSkillUseHistory", json.encode{cardName, num})
+end
+
+function ServerPlayer:setSkillUseHistory(cardName, num, scope)
+  Player.setSkillUseHistory(self, cardName, num, scope)
+  self:doNotify("SetSkillUseHistory", json.encode{cardName, num, scope})
 end
 
 return ServerPlayer

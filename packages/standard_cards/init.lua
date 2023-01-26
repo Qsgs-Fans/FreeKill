@@ -9,7 +9,7 @@ local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   can_use = function(self, player)
     -- TODO: tmd skill
-    return player:usedTimes("slash") < 1
+    return player:usedCardTimes("slash", Player.HistoryPhase) < 1
   end,
   target_filter = function(self, to_select, selected)
     if #selected == 0 then

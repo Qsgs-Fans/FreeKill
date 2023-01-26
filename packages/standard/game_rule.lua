@@ -96,6 +96,13 @@ GameRule = fk.CreateTriggerSkill{
         player:setFlag("Global_FirstRound")
       end
 
+      if player.seat == 1 then
+        for _, p in ipairs(room.players) do
+          p:setCardUseHistory("", 0, Player.HistoryRound)
+          p:setSkillUseHistory("", 0, Player.HistoryRound)
+        end
+      end
+
       room:sendLog{ type = "$AppendSeparator" }
       
       player:addMark("Global_TurnCount")
@@ -171,11 +178,16 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseEnd] = function()
       if player.phase == Player.Play then
-        player:resetCardUseHistory()
+        player:setCardUseHistory("", 0, Player.HistoryPhase)
+        player:setSkillUseHistory("", 0, Player.HistoryPhase)
       end
     end,
     [fk.EventPhaseChanging] = function()
       -- TODO: copy but dont copy all
+      if data.to == Player.NotActive then
+        player:setCardUseHistory("", 0, Player.HistoryTurn)
+        player:setSkillUseHistory("", 0, Player.HistoryTurn)
+      end
     end,
     [fk.AskForPeaches] = function()
       local savers = room:getAlivePlayers()

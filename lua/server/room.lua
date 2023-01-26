@@ -736,6 +736,7 @@ function Room:handleUseCardReply(player, data)
         self:broadcastSkillInvoke(skill.name)
       end
       self:notifySkillInvoked(player, skill.name)
+      player:addSkillUseHistory(skill.name)
       skill:onEffect(self, {
         from = player.id,
         cards = selected_cards,
@@ -749,6 +750,7 @@ function Room:handleUseCardReply(player, data)
           self:broadcastSkillInvoke(skill.name)
         end
         self:notifySkillInvoked(player, skill.name)
+        player:addSkillUseHistory(skill.name)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}

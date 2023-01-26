@@ -61,6 +61,7 @@ function TriggerSkill:doCost(event, target, player, data)
       room:broadcastSkillInvoke(self.name)
     end
     room:notifySkillInvoked(player, self.name)
+    player:addSkillUseHistory(self.name)
     ret = self:use(event, target, player, data)
     return ret
   end

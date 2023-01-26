@@ -90,7 +90,18 @@ function CanUseCard(card, player)
   if type(card) == "number" then
     c = Fk:getCardById(card)
   else
-    error()
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+      if not c then
+        return "false"
+      end
+    else
+      -- ActiveSkill should return true here
+      return "true"
+    end
   end
 
   local ret = c.skill:canUse(ClientInstance:getPlayerById(player))
@@ -268,6 +279,8 @@ function CardFitPattern(card_name, pattern)
       if c then
         ret = exp:match(c)
       end
+    else
+      return "true"
     end
   else
     ret = exp:matchExp(card_name)

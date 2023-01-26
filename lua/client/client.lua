@@ -383,9 +383,19 @@ fk.client_callback["AddCardUseHistory"] = function(jsonData)
   Self:addCardUseHistory(data[1], data[2])
 end
 
-fk.client_callback["ResetCardUseHistory"] = function(jsonData)
-  if jsonData == "" then jsonData = nil end
-  Self:resetCardUseHistory(jsonData)
+fk.client_callback["SetCardUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:setCardUseHistory(data[1], data[2], data[3])
+end
+
+fk.client_callback["AddSkillUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:addSkillUseHistory(data[1], data[2])
+end
+
+fk.client_callback["SetSkillUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:setSkillUseHistory(data[1], data[2], data[3])
 end
 
 -- Create ClientInstance (used by Lua)

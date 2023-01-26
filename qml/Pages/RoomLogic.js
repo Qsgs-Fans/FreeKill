@@ -332,6 +332,9 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       ));
     }
     if (okButton.enabled) {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
+    }
+    if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         let must = roomScene.extra_data.must_targets;
         if (must instanceof Array) {
@@ -383,6 +386,9 @@ function updateSelectedTargets(playerid, selected) {
         "CardFitPattern",
         [card, roomScene.responding_card]
       ));
+    }
+    if (okButton.enabled) {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
