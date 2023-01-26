@@ -83,6 +83,8 @@ RowLayout {
         data.x = parentPos.x;
         data.y = parentPos.y;
         let card = component.createObject(roomScene, data);
+        card.footnoteVisible = true;
+        card.footnote = Backend.translate("$Equip");
         handcardAreaItem.add(card);
       })
       handcardAreaItem.updateCardPosition();
