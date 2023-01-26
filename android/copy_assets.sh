@@ -20,6 +20,7 @@ cp -r ../qml assets/res
 cp -r ../server assets/res
 rm assets/res/server/users.db
 cp ../LICENSE assets/res
+cp ../zh_CN.qm assets/res
 
 # Due to Qt Android's bug, we need make sure every directory has a subfile (not subdir)
 function fixDir() {

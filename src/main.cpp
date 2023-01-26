@@ -121,6 +121,10 @@ int main(int argc, char *argv[])
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
 
+  QTranslator translator;
+  Q_UNUSED(translator.load("zh_CN.qm"));
+  QCoreApplication::installTranslator(&translator);
+
 #define SHOW_SPLASH_MSG(msg) \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 

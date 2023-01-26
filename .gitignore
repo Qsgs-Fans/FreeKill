@@ -1,6 +1,7 @@
 # Compile output
 build/
 *.o
+zh_CN.qm
 
 # IDE & LSP
 .kdev4/
