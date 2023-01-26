@@ -209,9 +209,6 @@ local qingguo = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
-  enabled_at_play = function(self, player)
-    return false
-  end,
 }
 local zhenji = General:new(extension, "zhenji", "wei", 3, 3, General.Female)
 zhenji:addSkill(luoshen)

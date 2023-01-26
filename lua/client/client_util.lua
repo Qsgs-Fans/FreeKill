@@ -199,6 +199,18 @@ function ActiveCanUse(skill_name)
       ret = skill:canUse(Self)
     elseif skill:isInstanceOf(ViewAsSkill) then
       ret = skill:enabledAtPlay(Self)
+      if ret then
+        local exp = Exppattern:Parse(skill.pattern)
+        local cnames = {}
+        for _, m in ipairs(exp.matchers) do
+          if m.name then table.insertTable(cnames, m.name) end
+        end
+        for _, n in ipairs(cnames) do
+          local c = Fk:cloneCard(n)
+          ret = c.skill:canUse(Self)
+          if ret then break end
+        end
+      end
     end
   end
   return json.encode(ret)
