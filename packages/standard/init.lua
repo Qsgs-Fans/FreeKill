@@ -136,9 +136,39 @@ Fk:loadTranslationTable{
   ["zhangliao"] = "张辽",
 }
 
+local luoyi = fk.CreateTriggerSkill{
+  name = "luoyi",
+  anim_type = "offensive",
+  events = {fk.DrawNCards},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and data.n > 0
+  end,
+  on_use = function(self, event, target, player, data)
+    data.n = data.n - 1
+  end,
+
+  refresh_events = {fk.DamageCaused},
+  can_refresh = function(self, event, target, player, data)
+    if not (target == player and player:hasSkill(self.name) and
+      player:usedSkillTimes(self.name) > 0) then
+      return
+    end
+
+    local c = data.card
+    return c and c.name == "slash" or c.name == "duel"
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:broadcastSkillInvoke(self.name)
+    room:notifySkillInvoked(player, self.name)
+    data.damage = data.damage + 1
+  end,
+}
 local xuchu = General:new(extension, "xuchu", "wei", 4)
+xuchu:addSkill(luoyi)
 Fk:loadTranslationTable{
   ["xuchu"] = "许褚",
+  ["luoyi"] = "裸衣",
 }
 
 local tiandu = fk.CreateTriggerSkill{
