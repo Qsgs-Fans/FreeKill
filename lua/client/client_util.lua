@@ -251,9 +251,27 @@ function CanViewAs(skill_name, card_ids)
   return json.encode(ret)
 end
 
+-- card_name may be id, name of card, or json string
 function CardFitPattern(card_name, pattern)
   local exp = Exppattern:Parse(pattern)
-  local ret = exp:matchExp(card_name)
+  local c
+  local ret = false
+  if type(card_name) == "number" then
+    c = Fk:getCardById(card_name)
+    ret = exp:match(c)
+  elseif string.sub(card_name, 1, 1) == "{" then
+    local data = json.decode(card_name)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+      if c then
+        ret = exp:match(c)
+      end
+    end
+  else
+    ret = exp:matchExp(card_name)
+  end
   return json.encode(ret)
 end
 
@@ -263,6 +281,15 @@ function SkillFitPattern(skill_name, pattern)
   if skill and skill.pattern then
     local exp = Exppattern:Parse(pattern)
     ret = exp:matchExp(skill.pattern)
+  end
+  return json.encode(ret)
+end
+
+function SkillCanResponse(skill_name)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ViewAsSkill) then
+    ret = skill:enabledAtResponse(Self)
   end
   return json.encode(ret)
 end

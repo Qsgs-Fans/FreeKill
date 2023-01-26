@@ -284,7 +284,14 @@ callbacks["AddPlayer"] = function(jsonData) {
 function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   if (roomScene.respond_play) {
     let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-    okButton.enabled = candidate;
+    if (candidate) {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    } else {
+      okButton.enabled = false;
+    }
     return;
   }
 
@@ -318,6 +325,12 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled && roomScene.state === "responding") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         let must = roomScene.extra_data.must_targets;
@@ -365,6 +378,12 @@ function updateSelectedTargets(playerid, selected) {
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled && roomScene.state === "responding") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         let must = roomScene.extra_data.must_targets;

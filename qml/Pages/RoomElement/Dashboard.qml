@@ -241,9 +241,12 @@ RowLayout {
 
   function enableSkills(cname) {
     if (cname) {
+      // if cname is presented, we are responding use or play.
       for (let i = 0; i < skillButtons.count; i++) {
         let item = skillButtons.itemAt(i);
-        item.enabled = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+        let fitpattern = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+        let canresp = JSON.parse(Backend.callLuaFunction("SkillCanResponse", [item.orig]));
+        item.enabled = fitpattern && canresp;
       }
       return;
     }
