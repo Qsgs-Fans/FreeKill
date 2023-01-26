@@ -5,6 +5,10 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
+    if not self.include_equip then
+      return ClientInstance:getCardArea(to_select) ~= Player.Equip
+    end
+
     return true
   end,
   feasible = function(self, _, selected)

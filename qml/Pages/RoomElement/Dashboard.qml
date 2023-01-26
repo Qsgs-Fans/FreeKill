@@ -178,6 +178,19 @@ RowLayout {
       )))
         enabled_cards.push(card.cid);
     });
+
+    let cards = selfPhoto.equipArea.getAllCards();
+    cards.forEach(c => {
+      if (JSON.parse(Backend.callLuaFunction(
+        "ActiveCardFilter",
+        [pending_skill, c.cid, pendings, targets]
+      ))) {
+        enabled_cards.push(c.cid);
+        if (!expanded_piles["_equip"]) {
+          expandPile("_equip");
+        }
+      }
+    })
     handcardAreaItem.enableCards(enabled_cards);
 
     if (JSON.parse(Backend.callLuaFunction(
@@ -204,10 +217,6 @@ RowLayout {
       item.enabled = item.pressed;
     }
 
-    // TODO: expand pile
-
-    // TODO: equipment
-
     updatePending();
   }
 
@@ -221,9 +230,9 @@ RowLayout {
     pending_skill = "";
     pending_card = -1;
 
-    // TODO: expand pile
-
-    // TODO: equipment
+    for (let key in expanded_piles) {
+      retractPile(key);
+    }
 
     pendings = [];
     handcardAreaItem.adjustCards();

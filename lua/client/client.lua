@@ -44,6 +44,22 @@ function Client:getPlayerById(id)
   return nil
 end
 
+---@param cardId integer | card
+---@return CardArea
+function Client:getCardArea(cardId)
+  if type(cardId) ~= "number" then
+    assert(cardId and cardId:isInstanceOf(Card))
+    cardId = cardId:getEffectiveId()
+  end
+  if table.contains(Self.player_cards[Player.Hand], cardId) then
+    return Card.PlayerHand
+  end
+  if table.contains(Self.player_cards[Player.Equip], cardId) then
+    return Card.PlayerEquip
+  end
+  error("Client:getCardArea can only judge cards in your hand or equip area")
+end
+
 function Client:moveCards(moves)
   for _, move in ipairs(moves) do
     if move.from and move.fromArea then

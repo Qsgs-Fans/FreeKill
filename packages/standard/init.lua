@@ -273,6 +273,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
+      and ClientInstance:getCardArea(to_select) ~= Player.Equip
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -556,7 +557,7 @@ local jieyin = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected)
-    return #selected < 2
+    return #selected < 2 and ClientInstance:getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -601,7 +602,7 @@ local qingnang = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected, targets)
-    return #selected == 0
+    return #selected == 0 and ClientInstance:getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
