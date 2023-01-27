@@ -39,6 +39,11 @@ local suittable = {
   [Card.Diamond] = "diamond",
 }
 
+local placetable = {
+  [Card.PlayerHand] = "hand",
+  [Card.PlayerEquip] = "equip",
+}
+
 local typetable = {
   [Card.TypeBasic] = "basic",
   [Card.TypeTrick] = "trick",
@@ -64,7 +69,12 @@ local function matchCard(matcher, card)
     return false
   end
 
-  -- TODO: place
+  if matcher.place and not table.contains(
+    matcher.place,
+    placetable[Fk:currentRoom():getCardArea(card.id)]
+  ) then
+    return false
+  end
   -- TODO: generalName
   
   if matcher.cardType and not table.contains(matcher.cardType, typetable[card.type]) then

@@ -50,7 +50,7 @@ local guicai = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local card = room:askForResponse(player, self.name, ".", nil, true)
+    local card = room:askForResponse(player, self.name, ".|.|.|hand", nil, true)
     if card ~= nil then
       self.cost_data = card
       return true

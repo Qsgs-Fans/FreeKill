@@ -112,14 +112,33 @@ RowLayout {
     }
   }
 
+  function retractAllPiles() {
+    for (let key in expanded_piles) {
+      retractPile(key);
+    }
+  }
+
   // If cname is set, we are responding card.
   function enableCards(cname) {
     if (cname) {
       let ids = [], cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
-        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].name, cname])))
+        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].cid, cname])))
           ids.push(cards[i].cid);
       }
+      cards = selfPhoto.equipArea.getAllCards();
+      cards.forEach(c => {
+        if (JSON.parse(Backend.callLuaFunction(
+          "CardFitPattern",
+          [c.cid, cname]
+        ))) {
+          ids.push(c.cid);
+          if (!expanded_piles["_equip"]) {
+            expandPile("_equip");
+          }
+        }
+      });
+
       handcardAreaItem.enableCards(ids);
       return;
     }
@@ -232,9 +251,7 @@ RowLayout {
     pending_skill = "";
     pending_card = -1;
 
-    for (let key in expanded_piles) {
-      retractPile(key);
-    }
+    retractAllPiles();
 
     pendings = [];
     handcardAreaItem.adjustCards();

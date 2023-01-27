@@ -97,6 +97,7 @@ Item {
             dashboard.stopPending();
           dashboard.disableAllCards();
           dashboard.disableSkills();
+          dashboard.retractAllPiles();
           selected_targets = [];
 
           if (popupBox.item != null) {
