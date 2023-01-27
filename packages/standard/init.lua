@@ -340,7 +340,7 @@ local guanxing = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:askForGuanxing(player, room:getNCards(5))
+    room:askForGuanxing(player, room:getNCards(math.min(5, #room.alive_players)))
   end,
 }
 local kongcheng = fk.CreateProhibitSkill{

@@ -68,6 +68,7 @@ GraphicsBox {
 
     CardItem {
       x: index
+      y: -1
       cid: modelData.cid
       name: modelData.name
       suit: modelData.suit
@@ -125,7 +126,7 @@ GraphicsBox {
       let t2 = [];
       t.forEach(v => t2.push(v.cid));
       ret.push(t2);
-    })
+    });
     return ret;
   }
 }
