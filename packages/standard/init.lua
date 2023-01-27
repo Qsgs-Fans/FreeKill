@@ -398,11 +398,34 @@ local mashu = fk.CreateDistanceSkill{
     end
   end,
 }
+local tieqi = fk.CreateTriggerSkill{
+  name = "tieqi",
+  anim_type = "offensive",
+  events = {fk.TargetSpecified},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card.name == "slash"
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local judge = {
+      who = player,
+      reason = self.name,
+      pattern = ".|.|heart,diamond",
+    }
+    room:judge(judge)
+    if judge.card.color == Card.Red then
+      data.disresponsive = true
+    end
+  end,
+}
 local machao = General:new(extension, "machao", "shu", 4)
 machao:addSkill(mashu)
+machao:addSkill(tieqi)
 Fk:loadTranslationTable{
   ["machao"] = "马超",
   ["mashu"] = "马术",
+  ["tieqi"] = "铁骑",
 }
 
 local jizhi = fk.CreateTriggerSkill{
