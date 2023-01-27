@@ -582,8 +582,13 @@ callbacks["AskForChoice"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let choices = data[0];
   let skill_name = data[1];
-  roomScene.promptText = Backend.translate("#AskForChoice")
-    .arg(Backend.translate(jsonData));;
+  let prompt = data[2];
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChoice")
+      .arg(Backend.translate(skill_name));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
   let box = roomScene.popupBox.item;

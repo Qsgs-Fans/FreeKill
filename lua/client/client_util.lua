@@ -385,6 +385,8 @@ Fk:loadTranslationTable{
   ["#AskForGeneral"] = "请选择 1 名武将",
   ["#AskForSkillInvoke"] = "你想发动技能“%1”吗？",
   ["#AskForChoice"] = "%1：请选择",
+  ["#choose-trigger"] = "请选择一项技能发动",
+  ["trigger"] = "选择技能",
 
   [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "选择武将",

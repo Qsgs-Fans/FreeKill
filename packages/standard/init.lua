@@ -330,6 +330,19 @@ Fk:loadTranslationTable{
   ["zhangfei"] = "张飞",
 }
 
+local guanxing = fk.CreateTriggerSkill{
+  name = "guanxing",
+  anim_type = "control",
+  events = {fk.EventPhaseStart},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      player.phase == Player.Start
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:askForGuanxing(player)
+  end,
+}
 local kongcheng = fk.CreateProhibitSkill{
   name = "kongcheng",
   is_prohibited = function(self, from, to, card)
