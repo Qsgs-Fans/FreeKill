@@ -571,7 +571,40 @@ Fk:loadTranslationTable{
   ["yingzi"] = "英姿",
 }
 
+local liuli = fk.CreateTriggerSkill{
+  name = "liuli",
+  anim_type = "defensive",
+  events = {fk.TargetConfirming},
+  can_trigger = function(self, event, target, player, data)
+    local ret = target == player and player:hasSkill(self.name) and
+      data.card.name == "slash"
+    if ret then
+      self.target_list = {}
+      local room = player.room
+      for _, p in ipairs(room:getOtherPlayers(player)) do
+        if p.id ~= data.from and player:inMyAttackRange(p) then
+          table.insert(self.target_list, p.id)
+        end
+      end
+      return #self.target_list > 0
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local p = room:askForChoosePlayers(player, self.target_list, 1, 1, prompt, self.name)
+    if #p > 0 then
+      self.cost_data = p[1]
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:doIndicate(player.id, { self.cost_data })
+    data.to = self.cost_data    -- TODO
+  end,
+}
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
+daqiao:addSkill(liuli)
 Fk:loadTranslationTable{
   ["daqiao"] = "大乔",
 }
