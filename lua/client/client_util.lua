@@ -387,6 +387,7 @@ Fk:loadTranslationTable{
   ["#AskForChoice"] = "%1：请选择",
   ["#choose-trigger"] = "请选择一项技能发动",
   ["trigger"] = "选择技能",
+  ["Please arrange cards"] = "请拖拽移动卡牌",
 
   [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "选择武将",
@@ -506,4 +507,7 @@ Fk:loadTranslationTable{
   ["#EnterDying"] = "%from 进入了濒死阶段",
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
+
+  -- misc
+  ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
 }

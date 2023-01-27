@@ -340,7 +340,7 @@ local guanxing = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:askForGuanxing(player)
+    room:askForGuanxing(player, room:getNCards(5))
   end,
 }
 local kongcheng = fk.CreateProhibitSkill{
@@ -352,9 +352,11 @@ local kongcheng = fk.CreateProhibitSkill{
   end,
 }
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
+zhugeliang:addSkill(guanxing)
 zhugeliang:addSkill(kongcheng)
 Fk:loadTranslationTable{
   ["zhugeliang"] = "诸葛亮",
+  ["guanxing"] = "观星",
   ["kongcheng"] = "空城",
 }
 

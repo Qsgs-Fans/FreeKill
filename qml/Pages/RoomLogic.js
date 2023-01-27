@@ -576,6 +576,26 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   roomScene.cancelButton.enabled = true;
 }
 
+callbacks["AskForGuanxing"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let cards = [];
+
+  roomScene.state = "replying";
+  roomScene.popupBox.source = "RoomElement/GuanxingBox.qml";
+  data.cards.forEach(id => {
+    let d = Backend.callLuaFunction("GetCardData", [id]);
+    cards.push(JSON.parse(d));
+  });
+  let box = roomScene.popupBox.item;
+  box.areaCapacities = [cards.length, cards.length];
+  box.areaNames = ["Top", "Bottom"];
+  box.cards = cards;
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
+  });
+}
+
 callbacks["AskForChoice"] = function(jsonData) {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol

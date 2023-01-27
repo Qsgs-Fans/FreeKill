@@ -738,6 +738,44 @@ function Room:askForSkillInvoke(player, skill_name, data)
   return invoked
 end
 
+-- TODO: guanxing type
+function Room:askForGuanxing(player, cards)
+  if #cards == 1 then
+    table.insert(self.draw_pile, 1, cards[1])
+    return
+  end
+  local command = "AskForGuanxing"
+  self:notifyMoveFocus(player, command)
+  local data = {
+    cards = cards,
+  }
+
+  local result = self:doRequest(player, command, json.encode(data))
+  local top, bottom
+  if result ~= "" then
+    local d = json.decode(result)
+    top = d[1]
+    bottom = d[2]
+  else
+    top = cards
+    bottom = {}
+  end
+
+  for i = #top, 1, -1 do
+    table.insert(self.draw_pile, 1, top[i])
+  end
+  for _, id in ipairs(bottom) do
+    table.insert(self.draw_pile, id)
+  end
+
+  self:sendLog{
+    type = "#GuanxingResult",
+    from = player.id,
+    arg = #top,
+    arg2 = #bottom,
+  }
+end
+
 ---@param player ServerPlayer
 ---@param data string
 ---@return CardUseStruct
