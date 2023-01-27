@@ -50,7 +50,8 @@ local guicai = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local card = room:askForResponse(player, self.name, ".|.|.|hand", nil, true)
+    local prompt = "#guicai-ask::" .. target.id
+    local card = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true)
     if card ~= nil then
       self.cost_data = card
       return true
@@ -88,6 +89,7 @@ simayi:addSkill(fankui)
 Fk:loadTranslationTable{
   ["simayi"] = "司马懿",
   ["guicai"] = "鬼才",
+  ["#guicai-ask"] = "是否发动“鬼才”，打出一张手牌修改 %dest 的判定？",
   ["fankui"] = "反馈",
 }
 
@@ -156,7 +158,7 @@ local tuxi = fk.CreateTriggerSkill{
       end
     end
 
-    local result = room:askForChoosePlayers(player, targets, 1, 2, self.name)
+    local result = room:askForChoosePlayers(player, targets, 1, 2, "#tuxi-ask", self.name)
     if #result > 0 then
       self.cost_data = result
       return true
@@ -177,6 +179,7 @@ zhangliao:addSkill(tuxi)
 Fk:loadTranslationTable{
   ["zhangliao"] = "张辽",
   ["tuxi"] = "突袭",
+  ["#tuxi-ask"] = "是否发动“突袭”，改为获得1-2名角色各一张牌？",
 }
 
 local luoyi = fk.CreateTriggerSkill{

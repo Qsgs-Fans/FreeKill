@@ -129,6 +129,15 @@ function getPhotoOrDashboard(id) {
   return photo;
 }
 
+function getPhotoOrSelf(id) {
+  let photo = getPhoto(id);
+  if (!photo) {
+    if (id === Self.id)
+      return dashboard.self;
+  }
+  return photo;
+}
+
 function getAreaItem(area, id) {
   if (area === Card.DrawPile) {
     return drawPile;
@@ -662,6 +671,19 @@ callbacks["AddSkill"] = function(jsonData) {
   }
 }
 
+// prompt: 'string:<src>:<dest>:<arg>:<arg2>'
+function processPrompt(prompt) {
+  let data = prompt.split(":");
+  let raw = Backend.translate(data[0]);
+  let src = parseInt(data[1]);
+  let dest = parseInt(data[2]);
+  if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhotoOrSelf(src).general));
+  if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhotoOrSelf(dest).general));
+  if (raw.match("%arg")) raw = raw.replace("%arg", Backend.translate(data[3]));
+  if (raw.match("%arg2")) raw = raw.replace("%arg2", Backend.translate(data[4]));
+  return raw;
+}
+
 callbacks["AskForUseActiveSkill"] = function(jsonData) {
   // jsonData: string skill_name, string prompt
   let data = JSON.parse(jsonData);
@@ -671,8 +693,9 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
       .arg(Backend.translate(skill_name));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
   }
-  // TODO: process prompt
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
@@ -699,8 +722,12 @@ callbacks["AskForUseCard"] = function(jsonData) {
     roomScene.extra_data = extra_data;
   }
 
-  roomScene.promptText = Backend.translate(prompt)
-    .arg(Backend.translate(cardname));
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForUseCard")
+      .arg(Backend.translate(cardname));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.responding_card = pattern;
   roomScene.respond_play = false;
   roomScene.state = "responding";
@@ -715,8 +742,12 @@ callbacks["AskForResponseCard"] = function(jsonData) {
   let pattern = data[1];
   let prompt = data[2];
 
-  roomScene.promptText = Backend.translate(prompt)
-    .arg(Backend.translate(cardname));
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForResponseCard")
+      .arg(Backend.translate(cardname));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.responding_card = pattern;
   roomScene.respond_play = true;
   roomScene.state = "responding";

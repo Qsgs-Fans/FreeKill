@@ -43,6 +43,7 @@ local slash = fk.CreateBasicCard{
 }
 Fk:loadTranslationTable{
   ["slash"] = "杀",
+  ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
 }
 
 extension:addCards({

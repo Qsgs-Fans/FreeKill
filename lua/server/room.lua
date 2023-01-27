@@ -619,7 +619,8 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     include_equip = includeEquip,
     reason = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "discard_skill", "", true, data)
+  local prompt = "#AskForDiscard:::" .. maxNum .. ":" .. minNum
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, true, data)
   if ret then
     toDiscard = ret.cards
   else
@@ -639,8 +640,9 @@ end
 ---@param targets integer[]
 ---@param minNum integer
 ---@param maxNum integer
+---@param prompt string
 ---@return integer[]
-function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName)
   if maxNum < 1 then
     return {}
   end
@@ -651,7 +653,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
     min_num = minNum,
     reason = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", "", true, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
   if ret then
     return ret.targets
   else
@@ -808,7 +810,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   cancelable = cancelable or false
   extra_data = extra_data or {}
   pattern = pattern or card_name
-  prompt = prompt or "#AskForUseCard"
+  prompt = prompt or ""
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
@@ -829,7 +831,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   cancelable = cancelable or false
   extra_data = extra_data or {}
   pattern = pattern or card_name
-  prompt = prompt or "#AskForResponseCard"
+  prompt = prompt or ""
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
@@ -851,7 +853,7 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   card_name = card_name or "nullification"
   cancelable = cancelable or false
   extra_data = extra_data or {}
-  prompt = prompt or "#AskForUseCard"
+  prompt = prompt or ""
   pattern = pattern or card_name
 
   self:notifyMoveFocus(self.alive_players, card_name)
@@ -1326,7 +1328,11 @@ function Room:doCardEffect(cardEffectEvent)
           table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
         ) then
         local to = self:getPlayerById(cardEffectEvent.to)
-        local use = self:askForUseCard(to, "jink")
+        local prompt = ""
+        if cardEffectEvent.from then
+          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+        end
+        local use = self:askForUseCard(to, "jink", nil, prompt)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
@@ -1344,7 +1350,13 @@ function Room:doCardEffect(cardEffectEvent)
           end
         end
 
-        local use = self:askForNullification(players)
+        local prompt = ""
+        if cardEffectEvent.to then
+          prompt = "#AskForNullification::" .. cardEffectEvent.to .. ":" .. cardEffectEvent.card.name
+        elseif cardEffectEvent.from then
+          prompt = "#AskForNullificationWithoutTo:" .. cardEffectEvent.from .. "::" .. cardEffectEvent.card.name
+        end
+        local use = self:askForNullification(players, nil, nil, prompt)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent

@@ -400,7 +400,10 @@ Fk:loadTranslationTable{
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
   ["#AskForUseCard"] = "请使用卡牌 %1",
   ["#AskForResponseCard"] = "请打出卡牌 %1",
-  ["#AskForNullification"] = "无懈",
+  ["#AskForNullification"] = "是否为目标为 %dest 的 %arg 使用无懈可击？",
+  ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
+
+  ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",

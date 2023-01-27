@@ -414,7 +414,7 @@ function ServerPlayer:addCardUseHistory(cardName, num)
 end
 
 function ServerPlayer:setCardUseHistory(cardName, num, scope)
-  Player.setCardUseHistory(self, cardName)
+  Player.setCardUseHistory(self, cardName, num, scope)
   self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
 end
 

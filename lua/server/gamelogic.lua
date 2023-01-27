@@ -142,7 +142,6 @@ function GameLogic:prepareForStart()
     for _, s in ipairs(skills) do
       room:handleAddLoseSkills(p, s.name, nil, false)
     end
-    room:handleAddLoseSkills(p, 'guicai', nil, false)
   end
 
   self:addTriggerSkill(GameRule)
