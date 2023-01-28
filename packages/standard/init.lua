@@ -617,11 +617,34 @@ local qianxun = fk.CreateProhibitSkill{
     end
   end,
 }
+local lianying = fk.CreateTriggerSkill{
+  name = "lianying",
+  anim_type = "drawcard",
+  events = {fk.AfterCardsMove},
+  can_trigger = function(self, event, target, player, data)
+    if not player:hasSkill(self.name) then return end
+    if not player:isKongcheng() then return end
+    for _, move in ipairs(data) do
+      if move.from == player.id then
+        for _, info in ipairs(move.moveInfo) do
+          if info.fromArea == Card.PlayerHand then
+            return true
+          end
+        end
+      end
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    player:drawCards(1, self.name)
+  end,
+}
 local luxun = General:new(extension, "luxun", "wu", 3)
 luxun:addSkill(qianxun)
+luxun:addSkill(lianying)
 Fk:loadTranslationTable{
   ["luxun"] = "陆逊",
   ["qianxun"] = "谦逊",
+  ["lianying"] = "连营",
 }
 
 local xiaoji = fk.CreateTriggerSkill{
@@ -632,9 +655,11 @@ local xiaoji = fk.CreateTriggerSkill{
     if not player:hasSkill(self.name) then return end
     self.trigger_times = 0
     for _, move in ipairs(data) do
-      for _, info in ipairs(move.moveInfo) do
-        if info.fromArea == Card.PlayerEquip then
-          self.trigger_times = self.trigger_times + 1
+      if move.from == player.id then
+        for _, info in ipairs(move.moveInfo) do
+          if info.fromArea == Card.PlayerEquip then
+            self.trigger_times = self.trigger_times + 1
+          end
         end
       end
     end
