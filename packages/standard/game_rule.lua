@@ -56,11 +56,9 @@ GameRule = fk.CreateTriggerSkill{
       return false
     end
 
-    if target == nil then
-      if event == fk.GameStart then
-        fk.qInfo("Game started")
-        RoomInstance.tag["FirstRound"] = true
-      end
+    if event == fk.GameStart then
+      fk.qInfo("Game started")
+      RoomInstance.tag["FirstRound"] = true
       return false
     end
 

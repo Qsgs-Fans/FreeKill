@@ -624,6 +624,33 @@ Fk:loadTranslationTable{
   ["qianxun"] = "谦逊",
 }
 
+local xiaoji = fk.CreateTriggerSkill{
+  name = "xiaoji",
+  anim_type = "drawcard",
+  events = {fk.AfterCardsMove},
+  can_trigger = function(self, event, target, player, data)
+    if not player:hasSkill(self.name) then return end
+    self.trigger_times = 0
+    for _, move in ipairs(data) do
+      for _, info in ipairs(move.moveInfo) do
+        if info.fromArea == Card.PlayerEquip then
+          self.trigger_times = self.trigger_times + 1
+        end
+      end
+    end
+    return self.trigger_times > 0
+  end,
+  on_trigger = function(self, event, target, player, data)
+    local ret
+    for i = 1, self.trigger_times do
+      ret = self:doCost(event, target, player, data)
+      if ret then return ret end
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    player:drawCards(2, self.name)
+  end,
+}
 local jieyin = fk.CreateActiveSkill{
   name = "jieyin",
   anim_type = "support",
@@ -663,9 +690,11 @@ local jieyin = fk.CreateActiveSkill{
    end
 }
 local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3, 3, General.Female)
+sunshangxiang:addSkill(xiaoji)
 sunshangxiang:addSkill(jieyin)
 Fk:loadTranslationTable{
   ["sunshangxiang"] = "孙尚香",
+  ["xiaoji"] = "枭姬",
   ["jieyin"] = "结姻",
 }
 

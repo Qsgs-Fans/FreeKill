@@ -92,6 +92,7 @@ Item {
           okCancel.visible = false;
           endPhaseButton.visible = false;
           respond_play = false;
+          extra_data = {};
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();

@@ -549,7 +549,6 @@ function Room:doIndicate(source, targets)
   for _, id in ipairs(targets) do
     table.insert(target_group, { id })
   end
-  p(target_group)
   self:doAnimate("Indicate", {
     from = source,
     to = target_group,
