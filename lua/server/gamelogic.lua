@@ -226,21 +226,6 @@ function GameLogic:trigger(event, target, data)
   if target == nil then
     target = room.current
     player = target
---    for _, skill in ipairs(skills_to_refresh) do
---      if skill:canRefresh(event, target, player, data) then
---        skill:refresh(event, target, player, data)
---      end
---    end
---
---    for _, skill in ipairs(skills) do
---      if skill:triggerable(event, target, player, data) then
---        broken = skill:trigger(event, target, player, data)
---        if broken then break end
---      end
---    end
---
---    self.event_stack:pop()
---    return broken
   end
 
   repeat do

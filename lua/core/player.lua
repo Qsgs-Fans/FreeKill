@@ -456,12 +456,12 @@ function Player:addSkill(skill, source_skill)
   for _, s in ipairs(toget) do
     if not self:hasSkill(s) then
       table.insert(ret, s)
-      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
-        room.logic:addTriggerSkill(skill)
+      if s:isInstanceOf(TriggerSkill) and RoomInstance then
+        room.logic:addTriggerSkill(s)
       end
-      if table.contains(StatusSkills, skill.class) then
+      if table.contains(StatusSkills, s.class) then
         room.status_skills[skill.class] = room.status_skills[skill.class] or {}
-        table.insertIfNeed(room.status_skills[skill.class], skill)
+        table.insertIfNeed(room.status_skills[skill.class], s)
       end
     end
   end

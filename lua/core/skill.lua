@@ -23,6 +23,10 @@ function Skill:initialize(name, frequency)
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
+
+  if string.sub(name, 1, 1) == "#" then
+    self.visible = false
+  end
 end
 
 ---@param skill Skill

@@ -296,9 +296,54 @@ Fk:loadTranslationTable{
   ["qingguo"] = "倾国",
 }
 
+local rendetrig = fk.CreateTriggerSkill{
+  name = "#rendetrig",
+  mute = true,
+  refresh_events = {fk.EventPhaseStart},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and player.phase == Player.NotActive
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:setPlayerMark(player, "_rende_cards", 0)
+  end,
+}
+local rende = fk.CreateActiveSkill{
+  name = "rende",
+  anim_type = "support",
+  card_filter = function(self, to_select, selected)
+    return ClientInstance:getCardArea(to_select) ~= Card.PlayerEquip
+  end,
+  target_filter = function(self, to_select, selected)
+    return #selected == 0 and to_select ~= Self.id
+  end,
+  feasible = function(self, targets, cards)
+    return #targets == 1 and #cards > 0
+  end,
+  on_effect = function(self, room, effect)
+    local target = room:getPlayerById(effect.tos[1])
+    local player = room:getPlayerById(effect.from)
+    local cards = effect.cards
+    local marks = player:getMark("_rende_cards")
+    local dummy = Fk:cloneCard'slash'
+    dummy:addSubcards(cards)
+    room:obtainCard(target.id, dummy, false, fk.ReasonGive)
+    room:addPlayerMark(player, "_rende_cards", #cards)
+    if marks < 2 and marks + #cards >= 2 and player:isWounded() then
+      room:recover{
+        who = player.id,
+        num = 1,
+        skillName = self.name
+      }
+    end
+  end,
+}
+rende:addRelatedSkill(rendetrig)
 local liubei = General:new(extension, "liubei", "shu", 4)
+liubei:addSkill(rende)
 Fk:loadTranslationTable{
   ["liubei"] = "刘备",
+  ["rende"] = "仁德",
 }
 
 local wusheng = fk.CreateViewAsSkill{
@@ -343,6 +388,31 @@ local guanxing = fk.CreateTriggerSkill{
     room:askForGuanxing(player, room:getNCards(math.min(5, #room.alive_players)))
   end,
 }
+local kongchengAudio = fk.CreateTriggerSkill{
+  name = "#kongchengAudio",
+  refresh_events = {fk.AfterCardsMove},
+  can_refresh = function(self, event, target, player, data)
+    if not player:hasSkill(self.name) then return end
+    if not player:isKongcheng() then return end
+    for _, move in ipairs(data) do
+      if move.from == player.id then
+        for _, info in ipairs(move.moveInfo) do
+          if info.fromArea == Card.PlayerHand then
+            return true
+          end
+        end
+      end
+    end
+  end,
+  on_refresh = function(self, event, target, player, data)
+    player.room:broadcastSkillInvoke("kongcheng")
+    player.room:doAnimate("InvokeSkill", {
+      name = "kongcheng",
+      player = player.id,
+      skill_type = "defensive",
+    })
+  end,
+}
 local kongcheng = fk.CreateProhibitSkill{
   name = "kongcheng",
   is_prohibited = function(self, from, to, card)
@@ -351,6 +421,7 @@ local kongcheng = fk.CreateProhibitSkill{
     end
   end,
 }
+kongcheng:addRelatedSkill(kongchengAudio)
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
 zhugeliang:addSkill(guanxing)
 zhugeliang:addSkill(kongcheng)
@@ -571,7 +642,7 @@ local fanjian = fk.CreateActiveSkill{
   end,
   card_filter = function() return false end,
   target_filter = function(self, to_select, selected)
-    return to_select ~= Self.id
+    return #selected == 0 and to_select ~= Self.id
   end,
   feasible = function(self, selected)
     return #selected == 1
