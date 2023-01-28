@@ -564,11 +564,41 @@ local yingzi = fk.CreateTriggerSkill{
     data.n = data.n + 1
   end,
 }
+local fanjian = fk.CreateActiveSkill{
+  name = "fanjian",
+  can_use = function(self, player)
+    return player:usedSkillTimes(self.name) < 1 and not player:isKongcheng()
+  end,
+  card_filter = function() return false end,
+  target_filter = function(self, to_select, selected)
+    return to_select ~= Self.id
+  end,
+  feasible = function(self, selected)
+    return #selected == 1
+  end,
+  on_effect = function(self, room, effect)
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    local choice = room:askForChoice(target, {"spade", "heart", "club", "diamond"}, self.name)
+    local card = room:askForCardChosen(target, player, 'h', self.name)
+    room:obtainCard(target.id, card, true)
+    if Fk:getCardById(card):getSuitString() ~= choice then
+      room:damage{
+        from = player.id,
+        to = target.id,
+        damage = 1,
+        skillName = self.name,
+      }
+    end
+  end,
+}
 local zhouyu = General:new(extension, "zhouyu", "wu", 3)
 zhouyu:addSkill(yingzi)
+zhouyu:addSkill(fanjian)
 Fk:loadTranslationTable{
   ["zhouyu"] = "周瑜",
   ["yingzi"] = "英姿",
+  ["fanjian"] = "反间",
 }
 
 local liuli = fk.CreateTriggerSkill{
@@ -607,6 +637,7 @@ local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
 daqiao:addSkill(liuli)
 Fk:loadTranslationTable{
   ["daqiao"] = "大乔",
+  ["liuli"] = "流离",
 }
 
 local qianxun = fk.CreateProhibitSkill{
