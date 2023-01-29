@@ -541,11 +541,23 @@ local jizhi = fk.CreateTriggerSkill{
     player:drawCards(1, self.name)
   end,
 }
+local qicai = fk.CreateTargetModSkill{
+  name = "qicai",
+  distance_limit_func =  function(self, player, skill)
+    local card_name = string.sub(skill.name, 1, -7) -- assuming all card skill is named with name_skill
+    local card = Fk:cloneCard(card_name)
+    if player:hasSkill(self.name) and card.type == Card.TypeTrick then
+      return 999
+    end
+  end,
+}
 local huangyueying = General:new(extension, "huangyueying", "shu", 3, 3, General.Female)
 huangyueying:addSkill(jizhi)
+huangyueying:addSkill(qicai)
 Fk:loadTranslationTable{
   ["huangyueying"] = "黄月英",
   ["jizhi"] = "集智",
+  ["qicai"] = "奇才",
 }
 
 local zhiheng = fk.CreateActiveSkill{
