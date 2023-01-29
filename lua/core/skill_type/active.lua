@@ -2,7 +2,7 @@
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
+  UsableSkill.initialize(self, name, Skill.NotFrequent)
 end
 
 ---------

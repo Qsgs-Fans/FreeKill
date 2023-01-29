@@ -7,19 +7,19 @@ Fk:loadTranslationTable{
 
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
+  max_phase_use_time = 1,
+  target_num = 1,
   can_use = function(self, player)
-    -- TODO: tmd skill
-    return player:usedCardTimes("slash", Player.HistoryPhase) < 1
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Player.HistoryPhase)
   end,
   target_filter = function(self, to_select, selected)
-    if #selected == 0 then
+    if #selected < self:getMaxTargetNum() then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:inMyAttackRange(player)
     end
   end,
   feasible = function(self, selected)
-    -- TODO: tmd
-    return #selected == 1
+    return #selected >= self:getMinTargetNum()
   end,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -167,17 +167,19 @@ extension:addCards({
 
 local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
+  target_num = 1,
   target_filter = function(self, to_select, selected)
-    if #selected == 0 then
+    if #selected < self:getMaxTargetNum() then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and not player:isAllNude()
     end
   end,
   feasible = function(self, selected)
-    return #selected == 1
+    return #selected >= self:getMinTargetNum()
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
+    if to:isAllNude() then return end
     local from = room:getPlayerById(effect.from)
     local cid = room:askForCardChosen(
       from,

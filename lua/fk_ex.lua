@@ -16,10 +16,16 @@ TrickCard, DelayedTrickCard = table.unpack(Trick)
 local Equip = require "core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
----@class SkillSpec: Skill
+---@class UsableSkillSpec: UsableSkill
+---@field max_phase_use_time integer
+---@field max_turn_use_time integer
+---@field max_round_use_time integer
+---@field max_game_use_time integer
+
+---@class StatusSkillSpec: StatusSkill
 
 ---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
----@class TriggerSkillSpec: SkillSpec
+---@class TriggerSkillSpec: UsableSkillSpec
 ---@field global boolean
 ---@field events Event | Event[]
 ---@field refresh_events Event | Event[]
@@ -42,6 +48,14 @@ function fk.CreateTriggerSkill(spec)
   local skill = TriggerSkill:new(spec.name, frequency)
   skill.mute = spec.mute
   skill.anim_type = spec.anim_type
+  skill.target_num = spec.target_num or skill.target_num
+  skill.max_use_time = {
+    spec.max_phase_use_time or 9999,
+    spec.max_turn_use_time or 9999,
+    spec.max_round_use_time or 9999,
+    spec.max_game_use_time or 9999,
+  }
+  skill.distance_limit = spec.distance_limit or skill.distance_limit
 
   if type(spec.events) == "number" then
     table.insert(skill.events, spec.events)
@@ -95,7 +109,7 @@ function fk.CreateTriggerSkill(spec)
   return skill
 end
 
----@class ActiveSkillSpec: SkillSpec
+---@class ActiveSkillSpec: UsableSkillSpec
 ---@field can_use fun(self: ActiveSkill, player: Player): boolean
 ---@field card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean
 ---@field target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[]): boolean
@@ -111,6 +125,15 @@ function fk.CreateActiveSkill(spec)
   local skill = ActiveSkill:new(spec.name)
   skill.mute = spec.mute
   skill.anim_type = spec.anim_type
+  skill.target_num = spec.target_num or skill.target_num
+  skill.max_use_time = {
+    spec.max_phase_use_time or 9999,
+    spec.max_turn_use_time or 9999,
+    spec.max_round_use_time or 9999,
+    spec.max_game_use_time or 9999,
+  }
+  skill.distance_limit = spec.distance_limit or skill.distance_limit
+
   if spec.can_use then skill.canUse = spec.can_use end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
@@ -121,7 +144,7 @@ function fk.CreateActiveSkill(spec)
   return skill
 end
 
----@class ViewAsSkillSpec: SkillSpec
+---@class ViewAsSkillSpec: UsableSkillSpec
 ---@field card_filter fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean
 ---@field view_as fun(self: ViewAsSkill, cards: integer[])
 ---@field pattern string
@@ -137,6 +160,15 @@ function fk.CreateViewAsSkill(spec)
   local skill = ViewAsSkill:new(spec.name)
   skill.mute = spec.mute
   skill.anim_type = spec.anim_type
+  skill.target_num = spec.target_num or skill.target_num
+  skill.max_use_time = {
+    spec.max_phase_use_time or 9999,
+    spec.max_turn_use_time or 9999,
+    spec.max_round_use_time or 9999,
+    spec.max_game_use_time or 9999,
+  }
+  skill.distance_limit = spec.distance_limit or skill.distance_limit
+
   skill.viewAs = spec.view_as
   if spec.card_filter then
     skill.cardFilter = spec.card_filter
@@ -154,9 +186,8 @@ function fk.CreateViewAsSkill(spec)
   return skill
 end
 
----@class DistanceSpec: SkillSpec
+---@class DistanceSpec: StatusSkillSpec
 ---@field correct_func fun(self: DistanceSkill, from: Player, to: Player)
----@field global boolean
 
 ---@param spec DistanceSpec
 ---@return DistanceSkill
@@ -173,9 +204,8 @@ function fk.CreateDistanceSkill(spec)
   return skill
 end
 
----@class ProhibitSpec: SkillSpec
+---@class ProhibitSpec: StatusSkillSpec
 ---@field is_prohibited fun(self: ProhibitSkill, from: Player, to: Player, card: Card)
----@field global boolean
 
 ---@param spec ProhibitSpec
 ---@return ProhibitSkill
@@ -192,9 +222,8 @@ function fk.CreateProhibitSkill(spec)
   return skill
 end
 
----@class AttackRangeSpec: SkillSpec
+---@class AttackRangeSpec: StatusSkillSpec
 ---@field correct_func fun(self: AttackRangeSkill, from: Player, to: Player)
----@field global boolean
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
@@ -211,10 +240,9 @@ function fk.CreateAttackRangeSkill(spec)
   return skill
 end
 
----@class MaxCardsSpec: SkillSpec
+---@class MaxCardsSpec: StatusSkillSpec
 ---@field correct_func fun(self: MaxCardsSkill, player: Player)
 ---@field fixed_func fun(self: MaxCardsSkill, from: Player)
----@field global boolean
 
 ---@param spec MaxCardsSpec
 ---@return MaxCardsSkill
