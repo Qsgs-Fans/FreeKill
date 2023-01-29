@@ -27,7 +27,16 @@ SWIG_arg ++;
 %{ $1 = lua_tostring(L, $input); %}
 
 %typemap(out) QString
-%{ lua_pushstring(L, $1.toUtf8()); SWIG_arg++; %}
+%{
+  if ($1.isEmpty()) {
+    lua_pushstring(L, "");
+  } else if ($1 == "__notready") {
+    lua_pushstring(L, "__notready");
+  } else {
+    lua_pushstring(L, $1.toUtf8());
+  }
+  SWIG_arg++;
+%}
 
 // const QString &
 %typemap(arginit) QString const &
@@ -40,7 +49,16 @@ SWIG_arg ++;
 %}
 
 %typemap(out) QString const &
-%{ lua_pushstring(L, $1.toUtf8()); SWIG_arg++; %}
+%{
+  if ($1.isEmpty()) {
+    lua_pushstring(L, "");
+  } else if ($1 == "__notready") {
+    lua_pushstring(L, "__notready");
+  } else {
+    lua_pushstring(L, $1.toUtf8());
+  }
+  SWIG_arg++;
+%}
 
 // QStringList
 %naturalvar QStringList;

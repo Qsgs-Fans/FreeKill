@@ -109,10 +109,11 @@ void Server::updateRoomList()
     obj << room->getCapacity();  // capacity
     arr << obj;
   }
+  auto jsonData = JsonArray2Bytes(arr);
   lobby()->doBroadcastNotify(
     lobby()->getPlayers(),
     "UpdateRoomList",
-    QJsonDocument(arr).toJson()
+    QString(jsonData)
   );
 }
 
@@ -135,7 +136,7 @@ void Server::processNewConnection(ClientSocket* client)
   body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
   body << "NetworkDelayTest";
   body << public_key;
-  client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  client->send(JsonArray2Bytes(body));
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, this, &Server::processRequest);
   client->timerSignup.start(30000);
@@ -159,7 +160,7 @@ void Server::processRequest(const QByteArray& msg)
     )
       valid = false;
     else
-      valid = (QJsonDocument::fromJson(doc[3].toString().toUtf8()).array().size() == 3);
+      valid = (String2Json(doc[3].toString()).array().size() == 3);
   }
 
   if (!valid) {
@@ -169,21 +170,20 @@ void Server::processRequest(const QByteArray& msg)
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
     body << "ErrorMsg";
     body << "INVALID SETUP STRING";
-    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    client->send(JsonArray2Bytes(body));
     client->disconnectFromHost();
     return;
   }
 
-  QJsonArray arr = QJsonDocument::fromJson(doc[3].toString().toUtf8()).array();
+  QJsonArray arr = String2Json(doc[3].toString()).array();
 
   if (md5 != arr[2].toString()) {
-    qWarning() << "MD5 check failed!";
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
     body << "ErrorMsg";
     body << "MD5 check failed!";
-    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    client->send(JsonArray2Bytes(body));
     client->disconnectFromHost();
     return;
   }
@@ -273,7 +273,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     arr << player->getId();
     arr << player->getScreenName();
     arr << player->getAvatar();
-    player->doNotify("Setup", QJsonDocument(arr).toJson());
+    player->doNotify("Setup", JsonArray2Bytes(arr));
 
     lobby()->addPlayer(player);
   } else {
@@ -283,7 +283,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT);
     body << "ErrorMsg";
     body << error_msg;
-    client->send(QJsonDocument(body).toJson(QJsonDocument::Compact));
+    client->send(JsonArray2Bytes(body));
     client->disconnectFromHost();
     return;
   }

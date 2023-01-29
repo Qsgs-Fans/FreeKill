@@ -109,6 +109,10 @@ function Engine:addSkill(skill)
       table.insert(t[skill.class], skill)
     end
   end
+
+  for _, s in ipairs(skill.related_skills) do
+    self:addSkill(s)
+  end
 end
 
 ---@param skills Skill[]

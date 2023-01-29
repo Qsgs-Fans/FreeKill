@@ -56,6 +56,7 @@ public:
 
   QString fetchRequest();
   void pushRequest(const QString &req); 
+  bool hasRequest() const;
 
 signals:
   void abandoned();

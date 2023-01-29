@@ -80,7 +80,7 @@ void Router::request(int type, const QString& command,
   body << jsonData;
   body << timeout;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 #endif
 }
 
@@ -92,7 +92,7 @@ void Router::reply(int type, const QString& command, const QString& jsonData)
   body << command;
   body << jsonData;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 void Router::notify(int type, const QString& command, const QString& jsonData)
@@ -103,7 +103,7 @@ void Router::notify(int type, const QString& command, const QString& jsonData)
   body << command;
   body << jsonData;
 
-  emit messageReady(QJsonDocument(body).toJson(QJsonDocument::Compact));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 int Router::getTimeout() const
@@ -128,10 +128,14 @@ void Router::cancelRequest()
 
 QString Router::waitForReply(int timeout)
 {
+  QString ret;
 #ifndef Q_OS_WASM
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
-  return m_reply;
+  replyMutex.lock();
+  ret = m_reply;
+  replyMutex.unlock();
 #endif
+  return ret;
 }
 
 void Router::abortRequest()
@@ -155,7 +159,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
   static QMap<QString, void (*)(ServerPlayer *, const QString &)> lobby_actions;
   if (lobby_actions.size() <= 0) {
     lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
-      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto arr = String2Json(jsonData).array();
       auto avatar = arr[0].toString();
       static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
       if (!nameExp.match(avatar).hasMatch()) {
@@ -167,7 +171,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
       }
     };
     lobby_actions["UpdatePassword"] = [](ServerPlayer *sender, const QString &jsonData){
-      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto arr = String2Json(jsonData).array();
       auto oldpw = arr[0].toString();
       auto newpw = arr[1].toString();
       auto sql_find = QString("SELECT password, salt FROM userinfo WHERE id=%1;")
@@ -191,13 +195,13 @@ void Router::handlePacket(const QByteArray& rawPacket)
       sender->doNotify("UpdatePassword", passed ? "1" : "0");
     };
     lobby_actions["CreateRoom"] = [](ServerPlayer *sender, const QString &jsonData){
-      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto arr = String2Json(jsonData).array();
       auto name = arr[0].toString();
       auto capacity = arr[1].toInt();
       ServerInstance->createRoom(sender, name, capacity);
     };
     lobby_actions["EnterRoom"] = [](ServerPlayer *sender, const QString &jsonData){
-      auto arr = QJsonDocument::fromJson(jsonData.toUtf8()).array();
+      auto arr = String2Json(jsonData).array();
       auto roomId = arr[0].toInt();
       ServerInstance->findRoom(roomId)->addPlayer(sender);
     };

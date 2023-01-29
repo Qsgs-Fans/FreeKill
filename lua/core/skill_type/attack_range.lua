@@ -1,12 +1,5 @@
----@class AttackRangeSkill : Skill
----@field global boolean
-local AttackRangeSkill = Skill:subclass("AttackRangeSkill")
-
-function AttackRangeSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
-
-  self.global = false
-end
+---@class AttackRangeSkill : StatusSkill
+local AttackRangeSkill = StatusSkill:subclass("AttackRangeSkill")
 
 ---@param from Player
 ---@param to Player

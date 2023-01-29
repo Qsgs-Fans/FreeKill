@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 
 Flickable {
   id: root
@@ -11,6 +12,12 @@ Flickable {
   contentWidth: textEdit.width
   contentHeight: textEdit.height
   clip: true
+  ScrollBar.vertical: ScrollBar {
+    parent: root.parent
+    anchors.top: root.top
+    anchors.right: root.right
+    anchors.bottom: root.bottom
+  }
 
   TextEdit {
     id: textEdit

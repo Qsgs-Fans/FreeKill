@@ -109,7 +109,7 @@ void Room::setOwner(ServerPlayer *owner)
   this->owner = owner;
   QJsonArray jsonData;
   jsonData << owner->getId();
-  doBroadcastNotify(players, "RoomOwner", QJsonDocument(jsonData).toJson());
+  doBroadcastNotify(players, "RoomOwner", JsonArray2Bytes(jsonData));
 }
 
 void Room::addPlayer(ServerPlayer *player)
@@ -131,7 +131,7 @@ void Room::addPlayer(ServerPlayer *player)
     jsonData << player->getId();
     jsonData << player->getScreenName();
     jsonData << player->getAvatar();
-    doBroadcastNotify(getPlayers(), "AddPlayer", QJsonDocument(jsonData).toJson());
+    doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
   }
 
   players.append(player);
@@ -143,20 +143,20 @@ void Room::addPlayer(ServerPlayer *player)
     jsonData = QJsonArray();
     jsonData << this->capacity;
     jsonData << this->timeout;
-    player->doNotify("EnterRoom", QJsonDocument(jsonData).toJson());
+    player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
 
     foreach (ServerPlayer *p, getOtherPlayers(player)) {
       jsonData = QJsonArray();
       jsonData << p->getId();
       jsonData << p->getScreenName();
       jsonData << p->getAvatar();
-      player->doNotify("AddPlayer", QJsonDocument(jsonData).toJson());
+      player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
     }
 
     if (this->owner != nullptr) {
       jsonData = QJsonArray();
       jsonData << this->owner->getId();
-      player->doNotify("RoomOwner", QJsonDocument(jsonData).toJson());
+      player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
     }
 
     if (isFull() && !gameStarted)
@@ -182,12 +182,14 @@ void Room::addRobot(ServerPlayer *player)
 void Room::removePlayer(ServerPlayer *player)
 {
   if (!gameStarted) {
-    players.removeOne(player);
+    if (players.contains(player)) {
+      players.removeOne(player);
+    }
     emit playerRemoved(player);
 
     QJsonArray jsonData;
     jsonData << player->getId();
-    doBroadcastNotify(getPlayers(), "RemovePlayer", QJsonDocument(jsonData).toJson());
+    doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes(jsonData));
 
     if (isLobby()) return;
   } else {
@@ -266,7 +268,7 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 }
 
 void Room::chat(ServerPlayer *sender, const QString &jsonData) {
-  auto doc = QJsonDocument::fromJson(jsonData.toUtf8()).object();
+  auto doc = String2Json(jsonData).object();
   auto type = doc["type"].toInt();
   doc["type"] = sender->getId();
   if (type == 1) {
@@ -304,6 +306,10 @@ void Room::pushRequest(const QString &req) {
   request_queue_mutex.lock();
   request_queue.enqueue(req);
   request_queue_mutex.unlock();
+}
+
+bool Room::hasRequest() const {
+  return !request_queue.isEmpty();
 }
 
 void Room::run()

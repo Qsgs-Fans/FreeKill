@@ -60,7 +60,9 @@ function GameLogic:chooseGenerals()
   local function setPlayerGeneral(player, general)
     if Fk.generals[general] == nil then return end
     player.general = general
+    player.gender = Fk.generals[general].gender
     self.room:notifyProperty(player, player, "general")
+    self.room:notifyProperty(player, player, "gender")
   end
   local lord = room:getLord()
   local lord_general = nil
@@ -222,21 +224,8 @@ function GameLogic:trigger(event, target, data)
   self.event_stack:push({event, target, data})
 
   if target == nil then
-    for _, skill in ipairs(skills_to_refresh) do
-      if skill:canRefresh(event, target, player, data) then
-        skill:refresh(event, target, player, data)
-      end
-    end
-
-    for _, skill in ipairs(skills) do
-      if skill:triggerable(event, target, player, data) then
-        broken = skill:trigger(event, target, player, data)
-        if broken then break end
-      end
-    end
-
-    self.event_stack:pop()
-    return broken
+    target = room.current
+    player = target
   end
 
   repeat do
@@ -280,7 +269,7 @@ function GameLogic:trigger(event, target, data)
       end
 
       while #skill_names > 0 do
-        local skill_name = room:askForChoice(player, skill_names, "trigger")
+        local skill_name = room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
         local skill = triggerables[table.indexOf(skill_names, skill_name)]
         broken = skill:trigger(event, target, player, data)
         if broken then break end

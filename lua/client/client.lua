@@ -44,6 +44,22 @@ function Client:getPlayerById(id)
   return nil
 end
 
+---@param cardId integer | card
+---@return CardArea
+function Client:getCardArea(cardId)
+  if type(cardId) ~= "number" then
+    assert(cardId and cardId:isInstanceOf(Card))
+    cardId = cardId:getEffectiveId()
+  end
+  if table.contains(Self.player_cards[Player.Hand], cardId) then
+    return Card.PlayerHand
+  end
+  if table.contains(Self.player_cards[Player.Equip], cardId) then
+    return Card.PlayerEquip
+  end
+  error("Client:getCardArea can only judge cards in your hand or equip area")
+end
+
 function Client:moveCards(moves)
   for _, move in ipairs(moves) do
     if move.from and move.fromArea then
@@ -383,9 +399,35 @@ fk.client_callback["AddCardUseHistory"] = function(jsonData)
   Self:addCardUseHistory(data[1], data[2])
 end
 
-fk.client_callback["ResetCardUseHistory"] = function(jsonData)
-  if jsonData == "" then jsonData = nil end
-  Self:resetCardUseHistory(jsonData)
+fk.client_callback["SetCardUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:setCardUseHistory(data[1], data[2], data[3])
+end
+
+fk.client_callback["AddSkillUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:addSkillUseHistory(data[1], data[2])
+end
+
+fk.client_callback["SetSkillUseHistory"] = function(jsonData)
+  local data = json.decode(jsonData)
+  Self:setSkillUseHistory(data[1], data[2], data[3])
+end
+
+fk.client_callback["AddVirtualEquip"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local cname = data.name
+  local player = ClientInstance:getPlayerById(data.player)
+  local subcards = data.subcards
+  local c = Fk:cloneCard(cname)
+  c:addSubcards(subcards)
+  player:addVirtualEquip(c)
+end
+
+fk.client_callback["RemoveVirtualEquip"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player = ClientInstance:getPlayerById(data.player)
+  player:removeVirtualEquip(data.id)
 end
 
 -- Create ClientInstance (used by Lua)

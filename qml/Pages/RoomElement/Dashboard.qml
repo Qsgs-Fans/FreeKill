@@ -83,6 +83,8 @@ RowLayout {
         data.x = parentPos.x;
         data.y = parentPos.y;
         let card = component.createObject(roomScene, data);
+        card.footnoteVisible = true;
+        card.footnote = Backend.translate("$Equip");
         handcardAreaItem.add(card);
       })
       handcardAreaItem.updateCardPosition();
@@ -110,14 +112,33 @@ RowLayout {
     }
   }
 
+  function retractAllPiles() {
+    for (let key in expanded_piles) {
+      retractPile(key);
+    }
+  }
+
   // If cname is set, we are responding card.
   function enableCards(cname) {
     if (cname) {
       let ids = [], cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
-        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].name, cname])))
+        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].cid, cname])))
           ids.push(cards[i].cid);
       }
+      cards = selfPhoto.equipArea.getAllCards();
+      cards.forEach(c => {
+        if (JSON.parse(Backend.callLuaFunction(
+          "CardFitPattern",
+          [c.cid, cname]
+        ))) {
+          ids.push(c.cid);
+          if (!expanded_piles["_equip"]) {
+            expandPile("_equip");
+          }
+        }
+      });
+
       handcardAreaItem.enableCards(ids);
       return;
     }
@@ -178,6 +199,19 @@ RowLayout {
       )))
         enabled_cards.push(card.cid);
     });
+
+    let cards = selfPhoto.equipArea.getAllCards();
+    cards.forEach(c => {
+      if (JSON.parse(Backend.callLuaFunction(
+        "ActiveCardFilter",
+        [pending_skill, c.cid, pendings, targets]
+      ))) {
+        enabled_cards.push(c.cid);
+        if (!expanded_piles["_equip"]) {
+          expandPile("_equip");
+        }
+      }
+    })
     handcardAreaItem.enableCards(enabled_cards);
 
     if (JSON.parse(Backend.callLuaFunction(
@@ -204,10 +238,6 @@ RowLayout {
       item.enabled = item.pressed;
     }
 
-    // TODO: expand pile
-
-    // TODO: equipment
-
     updatePending();
   }
 
@@ -221,9 +251,7 @@ RowLayout {
     pending_skill = "";
     pending_card = -1;
 
-    // TODO: expand pile
-
-    // TODO: equipment
+    retractAllPiles();
 
     pendings = [];
     handcardAreaItem.adjustCards();
@@ -241,9 +269,12 @@ RowLayout {
 
   function enableSkills(cname) {
     if (cname) {
+      // if cname is presented, we are responding use or play.
       for (let i = 0; i < skillButtons.count; i++) {
         let item = skillButtons.itemAt(i);
-        item.enabled = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+        let fitpattern = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+        let canresp = JSON.parse(Backend.callLuaFunction("SkillCanResponse", [item.orig]));
+        item.enabled = fitpattern && canresp;
       }
       return;
     }

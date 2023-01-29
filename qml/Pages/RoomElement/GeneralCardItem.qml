@@ -59,7 +59,7 @@ CardItem {
     y: lineCount > 6 ? 30 : 34
     text: Backend.translate(name)
     color: "white"
-    font.family: fontLiSu.name
+    font.family: fontLibian.name
     font.pixelSize: 18
     lineHeight: Math.max(1.4 - lineCount / 10, 0.6)
     style: Text.Outline

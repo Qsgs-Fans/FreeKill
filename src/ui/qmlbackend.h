@@ -43,6 +43,7 @@ public:
   Q_INVOKABLE void parseFkp(const QString &filename);
 
   Q_INVOKABLE QString calcFileMD5();
+  Q_INVOKABLE void playSound(const QString &name, int index = 0);
 
 signals:
   void notifyUI(const QString &command, const QString &jsonData);

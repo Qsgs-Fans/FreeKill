@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtMultimedia
 import "Common"
 import "RoomElement"
 import "RoomLogic.js" as Logic
@@ -22,6 +23,7 @@ Item {
   property alias okButton: okButton
   property alias cancelButton: cancelButton
   property alias dynamicCardArea: dynamicCardArea
+  property alias tableCards: tablePile.cards
 
   property var selected_targets: []
   property string responding_card
@@ -32,6 +34,26 @@ Item {
     source: AppPath + "/image/gamebg"
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
+  }
+
+  MediaPlayer {
+    id: bgm
+    source: AppPath + "/audio/system/bgm.mp3"
+    
+    // loops: MediaPlayer.Infinite
+    onPlaybackStateChanged: {
+      if (playbackState == MediaPlayer.StoppedState && roomScene.isStarted)
+        play();
+    }
+    audioOutput: AudioOutput {}
+  }
+
+  onIsStartedChanged: {
+    if (isStarted) {
+      bgm.play();
+    } else {
+      // bgm.stop();
+    }
   }
 
   // tmp
@@ -52,15 +74,6 @@ Item {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
-  Button {
-    text: "test"
-    onClicked: dashboard.expandPile("_equip");
-  }
-  Button {
-    text: "test2"
-    x: 60
-    onClicked: dashboard.retractPile("_equip");
-  }
 
   states: [
     State { name: "notactive" }, // Normal status
@@ -79,11 +92,13 @@ Item {
           okCancel.visible = false;
           endPhaseButton.visible = false;
           respond_play = false;
+          extra_data = {};
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
           dashboard.disableAllCards();
           dashboard.disableSkills();
+          dashboard.retractAllPiles();
           selected_targets = [];
 
           if (popupBox.item != null) {
@@ -127,6 +142,9 @@ Item {
           dashboard.disableSkills();
           progress.visible = true;
           respond_play = false;
+          roomScene.okCancel.visible = false;
+          roomScene.okButton.enabled = false;
+          roomScene.cancelButton.enabled = false;
         }
       }
     }
@@ -192,7 +210,7 @@ Item {
       width: parent.width * 0.6
       height: 150
       x: parent.width * 0.2
-      y: parent.height * 0.6 + 20
+      y: parent.height * 0.6 + 10
     }
   }
 

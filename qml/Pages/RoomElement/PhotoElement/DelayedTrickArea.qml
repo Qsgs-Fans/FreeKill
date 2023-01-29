@@ -33,11 +33,18 @@ Item {
   function add(inputs)
   {
     area.add(inputs);
-    if (inputs instanceof Array) {
-      cards.append(...inputs);
-    } else {
-      cards.append(inputs);
+    if (!(inputs instanceof Array)) {
+      inputs = [inputs];
     }
+    inputs.forEach(card => {
+      let v = JSON.parse(Backend.callLuaFunction("GetVirtualEquip", [parent.playerid, card.cid]));
+      console.log(JSON.stringify(v));
+      if (v !== null) {
+        cards.append(v);
+      } else {
+        cards.append(card);
+      }
+    });
   }
 
   function remove(outputs)

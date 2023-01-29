@@ -8,6 +8,7 @@ Item {
   property int loadedFrameCount: 0
   property bool autoStart: false
   property bool loop: false
+  property bool keepAtStop: false
 
   signal loaded()
   signal started()
@@ -38,8 +39,10 @@ Item {
   }
 
   onLoaded: {
-    if (autoStart)
+    if (autoStart) {
+      root.started();
       timer.start();
+    }
   }
 
   Timer {
@@ -48,7 +51,9 @@ Item {
     repeat: true
     onTriggered: {
       if (currentFrame >= fileModel) {
-        frames.itemAt(fileModel - 1).visible = false;
+        if (!keepAtStop) {
+          frames.itemAt(fileModel - 1).visible = false;
+        }
         if (loop) {
           currentFrame = 0;
         } else {
@@ -69,9 +74,11 @@ Item {
   function start()
   {
     if (loadedFrameCount == fileModel) {
+      root.started();
       timer.start();
     } else {
-      root.loaded.connect(function(){
+      root.loaded.connect(() => {
+        root.started();
         timer.start();
       });
     }

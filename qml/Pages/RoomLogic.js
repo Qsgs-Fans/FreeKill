@@ -129,6 +129,15 @@ function getPhotoOrDashboard(id) {
   return photo;
 }
 
+function getPhotoOrSelf(id) {
+  let photo = getPhoto(id);
+  if (!photo) {
+    if (id === Self.id)
+      return dashboard.self;
+  }
+  return photo;
+}
+
 function getAreaItem(area, id) {
   if (area === Card.DrawPile) {
     return drawPile;
@@ -169,7 +178,7 @@ function moveCards(moves) {
   }
 }
 
-function setEmotion(id, emotion) {
+function setEmotion(id, emotion, isCardId) {
   let path;
   if (OS === "Win") {
     // Windows: file:///C:/xxx/xxxx
@@ -189,18 +198,38 @@ function setEmotion(id, emotion) {
   if (component.status !== Component.Ready)
     return;
 
-  let photo = getPhoto(id);
-  if (!photo) {
-    if (id === dashboardModel.id) {
-      photo = dashboard.self;
-    } else {
-      return null;
+  let photo;
+  if (isCardId === true) {
+    roomScene.tableCards.forEach((v) => {
+      if (v.cid === id) {
+        photo = v;
+        return;
+      }
+    })
+    if (!photo)
+      return;
+  } else {
+    photo = getPhoto(id);
+    if (!photo) {
+      if (id === dashboardModel.id) {
+        photo = dashboard.self;
+      } else {
+        return null;
+      }
     }
   }
 
   let animation = component.createObject(photo, {source: emotion});
   animation.anchors.centerIn = photo;
-  animation.finished.connect(() => animation.destroy());
+  if (isCardId) {
+    animation.started.connect(() => photo.busy = true);
+    animation.finished.connect(() => {
+      photo.busy = false;
+      animation.destroy()
+    });
+  } else {
+    animation.finished.connect(() => animation.destroy());
+  }
   animation.start();
 }
 
@@ -264,7 +293,14 @@ callbacks["AddPlayer"] = function(jsonData) {
 function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   if (roomScene.respond_play) {
     let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-    okButton.enabled = candidate;
+    if (candidate) {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    } else {
+      okButton.enabled = false;
+    }
     return;
   }
 
@@ -298,6 +334,14 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled && roomScene.state === "responding") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    } else if (okButton.enabled && roomScene.state == "playing") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
+    }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         let must = roomScene.extra_data.must_targets;
@@ -345,6 +389,14 @@ function updateSelectedTargets(playerid, selected) {
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
       "CardFeasible", [card, selected_targets]
     ));
+    if (okButton.enabled && roomScene.state === "responding") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern",
+        [card, roomScene.responding_card]
+      ));
+    } else if (okButton.enabled && roomScene.state == "playing") {
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
+    }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         let must = roomScene.extra_data.must_targets;
@@ -524,14 +576,39 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   roomScene.cancelButton.enabled = true;
 }
 
+callbacks["AskForGuanxing"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let cards = [];
+
+  roomScene.state = "replying";
+  roomScene.popupBox.source = "RoomElement/GuanxingBox.qml";
+  data.cards.forEach(id => {
+    let d = Backend.callLuaFunction("GetCardData", [id]);
+    cards.push(JSON.parse(d));
+  });
+  let box = roomScene.popupBox.item;
+  box.areaCapacities = [cards.length, cards.length];
+  box.areaNames = ["Top", "Bottom"];
+  box.cards = cards;
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
+  });
+}
+
 callbacks["AskForChoice"] = function(jsonData) {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
   let data = JSON.parse(jsonData);
   let choices = data[0];
   let skill_name = data[1];
-  roomScene.promptText = Backend.translate("#AskForChoice")
-    .arg(Backend.translate(jsonData));;
+  let prompt = data[2];
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChoice")
+      .arg(Backend.translate(skill_name));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
   let box = roomScene.popupBox.item;
@@ -619,6 +696,19 @@ callbacks["AddSkill"] = function(jsonData) {
   }
 }
 
+// prompt: 'string:<src>:<dest>:<arg>:<arg2>'
+function processPrompt(prompt) {
+  let data = prompt.split(":");
+  let raw = Backend.translate(data[0]);
+  let src = parseInt(data[1]);
+  let dest = parseInt(data[2]);
+  if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhotoOrSelf(src).general));
+  if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhotoOrSelf(dest).general));
+  if (raw.match("%arg")) raw = raw.replace("%arg", Backend.translate(data[3]));
+  if (raw.match("%arg2")) raw = raw.replace("%arg2", Backend.translate(data[4]));
+  return raw;
+}
+
 callbacks["AskForUseActiveSkill"] = function(jsonData) {
   // jsonData: string skill_name, string prompt
   let data = JSON.parse(jsonData);
@@ -628,8 +718,9 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
       .arg(Backend.translate(skill_name));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
   }
-  // TODO: process prompt
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
@@ -656,8 +747,12 @@ callbacks["AskForUseCard"] = function(jsonData) {
     roomScene.extra_data = extra_data;
   }
 
-  roomScene.promptText = Backend.translate(prompt)
-    .arg(Backend.translate(cardname));
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForUseCard")
+      .arg(Backend.translate(cardname));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.responding_card = pattern;
   roomScene.respond_play = false;
   roomScene.state = "responding";
@@ -672,8 +767,12 @@ callbacks["AskForResponseCard"] = function(jsonData) {
   let pattern = data[1];
   let prompt = data[2];
 
-  roomScene.promptText = Backend.translate(prompt)
-    .arg(Backend.translate(cardname));
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForResponseCard")
+      .arg(Backend.translate(cardname));
+  } else {
+    roomScene.promptText = processPrompt(prompt);
+  }
   roomScene.responding_card = pattern;
   roomScene.respond_play = true;
   roomScene.state = "responding";
@@ -698,12 +797,35 @@ callbacks["Animate"] = function(jsonData) {
       })
       break;
     case "Emotion":
-      setEmotion(data.player, data.emotion);
+      setEmotion(data.player, data.emotion, data.is_card);
       break;
     case "LightBox":
       break;
     case "SuperLightBox":
       break;
+    case "InvokeSkill": {
+      let id = data.player;
+      let component = Qt.createComponent("RoomElement/SkillInvokeAnimation.qml");
+      if (component.status !== Component.Ready)
+        return;
+
+      let photo = getPhoto(id);
+      if (!photo) {
+        if (id === dashboardModel.id) {
+          photo = dashboard.self;
+        } else {
+          return null;
+        }
+      }
+
+      let animation = component.createObject(photo, {
+        skill_name: Backend.translate(data.name),
+        skill_type: (data.skill_type ? data.skill_type : "special"),
+      });
+      animation.anchors.centerIn = photo;
+      animation.finished.connect(() => animation.destroy());
+      break;
+    }
     default:
       break;
   }
@@ -713,10 +835,32 @@ callbacks["LogEvent"] = function(jsonData) {
   // jsonData: [Object object]
   let data = JSON.parse(jsonData);
   switch (data.type) {
-    case "Damage":
+    case "Damage": {
       let item = getPhotoOrDashboard(data.to);
       setEmotion(data.to, "damage");
       item.tremble();
+      Backend.playSound("./audio/system/" + data.damageType + (data.damageNum > 1 ? "2" : ""));
+      break;
+    }
+    case "LoseHP": {
+      Backend.playSound("./audio/system/losehp");
+      break;
+    }
+    case "PlaySkillSound": {
+      Backend.playSound("./audio/skill/" + data.name, data.i);
+      break;
+    }
+    case "PlaySound": {
+      Backend.playSound(data.name);
+      break;
+    }
+    case "Death": {
+      let item = getPhoto(data.to);
+      if (data.to === dashboardModel.id) {
+        item = dashboard.self;
+      }
+      Backend.playSound("./audio/death/" + item.general);
+    }
     default:
       break;
   }
@@ -727,4 +871,5 @@ callbacks["GameOver"] = function(jsonData) {
   roomScene.popupBox.source = "RoomElement/GameOverBox.qml";
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
+  roomScene.isStarted = false;
 }
