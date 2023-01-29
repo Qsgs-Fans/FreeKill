@@ -56,11 +56,9 @@ GameRule = fk.CreateTriggerSkill{
       return false
     end
 
-    if target == nil then
-      if event == fk.GameStart then
-        fk.qInfo("Game started")
-        RoomInstance.tag["FirstRound"] = true
-      end
+    if event == fk.GameStart then
+      fk.qInfo("Game started")
+      RoomInstance.tag["FirstRound"] = true
       return false
     end
 
@@ -96,6 +94,13 @@ GameRule = fk.CreateTriggerSkill{
         player:setFlag("Global_FirstRound")
       end
 
+      if player.seat == 1 then
+        for _, p in ipairs(room.players) do
+          p:setCardUseHistory("", 0, Player.HistoryRound)
+          p:setSkillUseHistory("", 0, Player.HistoryRound)
+        end
+      end
+
       room:sendLog{ type = "$AppendSeparator" }
       
       player:addMark("Global_TurnCount")
@@ -120,7 +125,11 @@ GameRule = fk.CreateTriggerSkill{
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
         for i = #cards, 1, -1 do
-          local card = Fk:getCardById(cards[i])
+          local card
+          card = player:removeVirtualEquip(cards[i])
+          if not card then
+            card = Fk:getCardById(cards[i])
+          end
           room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
           ---@type CardEffectEvent
@@ -171,11 +180,16 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseEnd] = function()
       if player.phase == Player.Play then
-        player:resetCardUseHistory()
+        player:setCardUseHistory("", 0, Player.HistoryPhase)
+        player:setSkillUseHistory("", 0, Player.HistoryPhase)
       end
     end,
     [fk.EventPhaseChanging] = function()
       -- TODO: copy but dont copy all
+      if data.to == Player.NotActive then
+        player:setCardUseHistory("", 0, Player.HistoryTurn)
+        player:setSkillUseHistory("", 0, Player.HistoryTurn)
+      end
     end,
     [fk.AskForPeaches] = function()
       local savers = room:getAlivePlayers()

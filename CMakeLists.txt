@@ -14,6 +14,7 @@ find_package(Qt6 REQUIRED COMPONENTS
   Network
   Multimedia
   QuickControls2
+  LinguistTools
 )
 
 find_package(OpenSSL)
@@ -56,6 +57,10 @@ add_custom_command(
 )
 
 qt_add_executable(FreeKill)
+qt_add_translations(FreeKill
+  TS_FILES lang/zh_CN.ts
+  QM_FILES_OUTPUT_VARIABLE zh_CN.qm
+)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 file(GLOB_RECURSE FK_RESOURCE_FILES

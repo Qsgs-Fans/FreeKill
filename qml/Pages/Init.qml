@@ -32,7 +32,8 @@ Item {
       }
       TextField {
         id: screenNameEdit
-        text: "player"
+        placeholderText: qsTr("Username")
+        text: ""
         onTextChanged: {
           passwordEdit.text = "";
           let data = config.savedPassword[server_addr.editText];
@@ -49,12 +50,13 @@ Item {
       }*/
       TextField {
         id: passwordEdit
+        placeholderText: qsTr("Password")
         text: ""
         echoMode: TextInput.Password
         passwordCharacter: "*"
       }
       Button {
-        text: "Join Server"
+        text: qsTr("Join Server")
         enabled: passwordEdit.text !== ""
         onClicked: {
           config.serverAddr = server_addr.editText;
@@ -65,7 +67,7 @@ Item {
         }
       }
       Button {
-        text: "Console start"
+        text: qsTr("Console start")
         enabled: passwordEdit.text !== ""
         onClicked: {
           config.serverAddr = "127.0.0.1";

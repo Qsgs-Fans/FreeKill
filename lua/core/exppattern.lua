@@ -19,10 +19,10 @@
 ---@class Matcher
 ---@field name string[]
 ---@field number integer[]
----@field suit integer[]
+---@field suit string[]
 ---@field place string[]
 ---@field generalName string[]
----@field cardType integer[]
+---@field cardType string[]
 ---@field id integer[]
 
 local numbertable = {
@@ -37,6 +37,11 @@ local suittable = {
   [Card.Club] = "club",
   [Card.Heart] = "heart",
   [Card.Diamond] = "diamond",
+}
+
+local placetable = {
+  [Card.PlayerHand] = "hand",
+  [Card.PlayerEquip] = "equip",
 }
 
 local typetable = {
@@ -64,7 +69,12 @@ local function matchCard(matcher, card)
     return false
   end
 
-  -- TODO: place
+  if matcher.place and not table.contains(
+    matcher.place,
+    placetable[Fk:currentRoom():getCardArea(card.id)]
+  ) then
+    return false
+  end
   -- TODO: generalName
   
   if matcher.cardType and not table.contains(matcher.cardType, typetable[card.type]) then
@@ -142,38 +152,29 @@ local function parseMatcher(str)
       if n then
         table.insertIfNeed(ret.number, n)
       else
-        if string.find(n, "~") then
-          local start, _end = table.unpack(n:split("~"))
+        if string.find(num, "~") then
+          local s, e = table.unpack(num:split("~"))
+          local start = tonumber(s)
+          if not start then
+            start = numbertable[s]
+          end
+          local _end = tonumber(e)
+          if not _end then
+            _end = numbertable[e]
+          end
+
           for i = start, _end do
-            table.insertIfNeed(ret.number, n)
+            table.insertIfNeed(ret.number, i)
           end
         end
       end
     end
   end
 
-  if not table.contains(t[3], ".") then
-    ret.suit = {}
-    for _, num in ipairs(t[3]) do
-      local n = suittable[num]
-      if n then
-        table.insertIfNeed(ret.suit, n)
-      end
-    end
-  end
-
+  ret.suit = not table.contains(t[3], ".") and t[3] or nil
   ret.place = not table.contains(t[4], ".") and t[4] or nil
   ret.generalName = not table.contains(t[5], ".") and t[5] or nil
-
-  if not table.contains(t[6], ".") then
-    ret.cardType = {}
-    for _, num in ipairs(t[6]) do
-      local n = typetable[num]
-      if n then
-        table.insertIfNeed(ret.cardType, n)
-      end
-    end
-  end
+  ret.cardType = not table.contains(t[6], ".") and t[6] or nil
 
   if not table.contains(t[7], ".") then
     ret.id = {}

@@ -5,6 +5,10 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
+    if not self.include_equip then
+      return ClientInstance:getCardArea(to_select) ~= Player.Equip
+    end
+
     return true
   end,
   feasible = function(self, _, selected)
@@ -19,7 +23,7 @@ local choosePlayersSkill = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     if #selected < self.num then
-      return table.contains(self.player_ids, to_select)
+      return table.contains(self.targets, to_select)
     end
   end,
   feasible = function(self, selected)

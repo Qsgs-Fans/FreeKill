@@ -7,19 +7,19 @@ Fk:loadTranslationTable{
 
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
+  max_phase_use_time = 1,
+  target_num = 1,
   can_use = function(self, player)
-    -- TODO: tmd skill
-    return player:usedTimes("slash") < 1
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
   end,
   target_filter = function(self, to_select, selected)
-    if #selected == 0 then
+    if #selected < self:getMaxTargetNum(Self) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:inMyAttackRange(player)
     end
   end,
   feasible = function(self, selected)
-    -- TODO: tmd
-    return #selected == 1
+    return #selected >= self:getMinTargetNum()
   end,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -43,6 +43,7 @@ local slash = fk.CreateBasicCard{
 }
 Fk:loadTranslationTable{
   ["slash"] = "杀",
+  ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
 }
 
 extension:addCards({
@@ -166,17 +167,19 @@ extension:addCards({
 
 local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
+  target_num = 1,
   target_filter = function(self, to_select, selected)
-    if #selected == 0 then
+    if #selected < self:getMaxTargetNum() then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and not player:isAllNude()
     end
   end,
   feasible = function(self, selected)
-    return #selected == 1
+    return #selected >= self:getMinTargetNum()
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
+    if to:isAllNude() then return end
     local from = room:getPlayerById(effect.from)
     local cid = room:askForCardChosen(
       from,
@@ -212,10 +215,11 @@ extension:addCards({
 
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
+  distance_limit = 1,
   target_filter = function(self, to_select, selected)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:distanceTo(player) <= 1
+      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self)
         and not player:isAllNude()
     end
   end,
@@ -587,14 +591,7 @@ extension:addCards({
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
   can_use = function(self, player)
-    local judge = player:getCardIds(Player.Judge)
-    for _, id in ipairs(judge) do
-      local cd = Fk:getCardById(id)
-      if cd.name == "lightning" then
-        return false
-      end
-    end
-    return true
+    return not Self:hasDelayedTrick("lightning")
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -606,6 +603,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "lightning",
+      pattern = ".|2~9|spade",
     }
     room:judge(judge)
     local result = judge.card
@@ -659,14 +657,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
-        local judge = player:getCardIds(Player.Judge)
-        for _, id in ipairs(judge) do
-          local cd = Fk:getCardById(id)
-          if cd.name == "indulgence" then
-            return false
-          end
-        end
-        return true
+        return not player:hasDelayedTrick("indulgence")
       end
     end
     return false
@@ -679,6 +670,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "indulgence",
+      pattern = ".|.|spade,club,diamond",
     }
     room:judge(judge)
     local result = judge.card

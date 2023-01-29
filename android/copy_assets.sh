@@ -11,6 +11,7 @@ if [ ! -e assets/res ]; then
   mkdir -p assets/res
 fi
 
+cp -r ../audio assets/res
 cp -r ../fonts assets/res
 cp -r ../image assets/res
 cp -r ../lua assets/res
@@ -19,6 +20,7 @@ cp -r ../qml assets/res
 cp -r ../server assets/res
 rm assets/res/server/users.db
 cp ../LICENSE assets/res
+cp ../zh_CN.qm assets/res
 
 # Due to Qt Android's bug, we need make sure every directory has a subfile (not subdir)
 function fixDir() {

@@ -1,12 +1,5 @@
----@class ProhibitSkill : Skill
----@field global boolean
-local ProhibitSkill = Skill:subclass("ProhibitSkill")
-
-function ProhibitSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
-
-  self.global = false
-end
+---@class ProhibitSkill : StatusSkill
+local ProhibitSkill = StatusSkill:subclass("ProhibitSkill")
 
 ---@param from Player
 ---@param to Player

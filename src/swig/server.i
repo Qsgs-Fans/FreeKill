@@ -52,6 +52,7 @@ public:
 
   LuaFunction startGame;
   QString fetchRequest();
+  bool hasRequest() const;
 };
 
 %{

@@ -88,8 +88,7 @@ function ServerPlayer:marshal(player)
   local room = self.room
   room:notifyProperty(player, self, "maxHp")
   room:notifyProperty(player, self, "hp")
-  -- TODO
-  --room:notifyProperty(player, self, "gender")
+  room:notifyProperty(player, self, "gender")
 
   if self.kingdom ~= Fk.generals[self.general].kingdom then
     room:notifyProperty(player, self, "kingdom")
@@ -409,14 +408,42 @@ function ServerPlayer:throwAllCards(flag)
   end
 end
 
+function ServerPlayer:addVirtualEquip(card)
+  Player.addVirtualEquip(self, card)
+  self.room:doBroadcastNotify("AddVirtualEquip", json.encode{
+    player = self.id,
+    name = card.name,
+    subcards = card.subcards,
+  })
+end
+
+function ServerPlayer:removeVirtualEquip(cid)
+  local ret = Player.removeVirtualEquip(self, cid)
+  self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode{
+    player = self.id,
+    id = cid,
+  })
+  return ret
+end
+
 function ServerPlayer:addCardUseHistory(cardName, num)
   Player.addCardUseHistory(self, cardName, num)
   self:doNotify("AddCardUseHistory", json.encode{cardName, num})
 end
 
-function ServerPlayer:resetCardUseHistory(cardName)
-  Player.resetCardUseHistory(self, cardName)
-  self:doNotify("ResetCardUseHistory", cardName or "")
+function ServerPlayer:setCardUseHistory(cardName, num, scope)
+  Player.setCardUseHistory(self, cardName, num, scope)
+  self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
+end
+
+function ServerPlayer:addSkillUseHistory(cardName, num)
+  Player.addSkillUseHistory(self, cardName, num)
+  self:doNotify("AddSkillUseHistory", json.encode{cardName, num})
+end
+
+function ServerPlayer:setSkillUseHistory(cardName, num, scope)
+  Player.setSkillUseHistory(self, cardName, num, scope)
+  self:doNotify("SetSkillUseHistory", json.encode{cardName, num, scope})
 end
 
 return ServerPlayer

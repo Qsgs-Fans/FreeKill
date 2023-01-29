@@ -90,7 +90,18 @@ function CanUseCard(card, player)
   if type(card) == "number" then
     c = Fk:getCardById(card)
   else
-    error()
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+      if not c then
+        return "false"
+      end
+    else
+      -- ActiveSkill should return true here
+      return "true"
+    end
   end
 
   local ret = c.skill:canUse(ClientInstance:getPlayerById(player))
@@ -188,6 +199,18 @@ function ActiveCanUse(skill_name)
       ret = skill:canUse(Self)
     elseif skill:isInstanceOf(ViewAsSkill) then
       ret = skill:enabledAtPlay(Self)
+      if ret then
+        local exp = Exppattern:Parse(skill.pattern)
+        local cnames = {}
+        for _, m in ipairs(exp.matchers) do
+          if m.name then table.insertTable(cnames, m.name) end
+        end
+        for _, n in ipairs(cnames) do
+          local c = Fk:cloneCard(n)
+          ret = c.skill:canUse(Self)
+          if ret then break end
+        end
+      end
     end
   end
   return json.encode(ret)
@@ -251,9 +274,29 @@ function CanViewAs(skill_name, card_ids)
   return json.encode(ret)
 end
 
+-- card_name may be id, name of card, or json string
 function CardFitPattern(card_name, pattern)
   local exp = Exppattern:Parse(pattern)
-  local ret = exp:matchExp(card_name)
+  local c
+  local ret = false
+  if type(card_name) == "number" then
+    c = Fk:getCardById(card_name)
+    ret = exp:match(c)
+  elseif string.sub(card_name, 1, 1) == "{" then
+    local data = json.decode(card_name)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+      if c then
+        ret = exp:match(c)
+      end
+    else
+      return "true"
+    end
+  else
+    ret = exp:matchExp(card_name)
+  end
   return json.encode(ret)
 end
 
@@ -265,6 +308,24 @@ function SkillFitPattern(skill_name, pattern)
     ret = exp:matchExp(skill.pattern)
   end
   return json.encode(ret)
+end
+
+function SkillCanResponse(skill_name)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill and skill:isInstanceOf(ViewAsSkill) then
+    ret = skill:enabledAtResponse(Self)
+  end
+  return json.encode(ret)
+end
+
+function GetVirtualEquip(player, cid)
+  local c = ClientInstance:getPlayerById(player):getVirualEquip(cid)
+  if not c then return "null" end
+  return json.encode{
+    name = c.name,
+    cid = c.subcards[1],
+  }
 end
 
 Fk:loadTranslationTable{
@@ -333,6 +394,9 @@ Fk:loadTranslationTable{
   ["#AskForGeneral"] = "请选择 1 名武将",
   ["#AskForSkillInvoke"] = "你想发动技能“%1”吗？",
   ["#AskForChoice"] = "%1：请选择",
+  ["#choose-trigger"] = "请选择一项技能发动",
+  ["trigger"] = "选择技能",
+  ["Please arrange cards"] = "请拖拽移动卡牌",
 
   [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "选择武将",
@@ -348,7 +412,10 @@ Fk:loadTranslationTable{
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
   ["#AskForUseCard"] = "请使用卡牌 %1",
   ["#AskForResponseCard"] = "请打出卡牌 %1",
-  ["#AskForNullification"] = "无懈",
+  ["#AskForNullification"] = "是否为目标为 %dest 的 %arg 使用无懈可击？",
+  ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
+
+  ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
@@ -449,4 +516,7 @@ Fk:loadTranslationTable{
   ["#EnterDying"] = "%from 进入了濒死阶段",
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
+
+  -- misc
+  ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
 }

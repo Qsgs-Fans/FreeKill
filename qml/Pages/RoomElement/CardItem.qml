@@ -24,7 +24,7 @@ Item {
   property string subtype: ""
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
-  property bool footnoteVisible: true
+  property bool footnoteVisible: false
   property bool known: true     // if false it only show a card back
   property bool enabled: true   // if false the card will be grey
   property alias card: cardItem
@@ -49,6 +49,7 @@ Item {
   property bool moveAborted: false
   property alias goBackAnim: goBackAnimation
   property int goBackDuration: 500
+  property bool busy: false // whether there is a running emotion on the card
 
   signal toggleDiscards()
   signal clicked()

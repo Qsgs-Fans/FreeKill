@@ -5,6 +5,7 @@
 ---@field kingdom string
 ---@field role string
 ---@field general string
+---@field gender integer
 ---@field handcard_num integer
 ---@field seat integer
 ---@field next Player
@@ -20,8 +21,10 @@
 ---@field tag table<string, any>
 ---@field mark table<string, integer>
 ---@field player_cards table<integer, integer[]>
+---@field virtual_equips Card[]
 ---@field special_cards table<string, integer[]>
----@field cardUsedHistory table<string, integer>
+---@field cardUsedHistory table<string, integer[]>
+---@field skillUsedHistory table<string, integer[]>
 ---@field fixedDistance table<Player, integer>
 local Player = class("Player")
 
@@ -44,6 +47,11 @@ Player.Equip = 2
 Player.Judge = 3
 Player.Special = 4
 
+Player.HistoryPhase = 1
+Player.HistoryTurn = 2
+Player.HistoryRound = 3
+Player.HistoryGame = 4
+
 function Player:initialize()
   self.id = 114514
   self.hp = 0
@@ -51,6 +59,7 @@ function Player:initialize()
   self.kingdom = "qun"
   self.role = ""
   self.general = ""
+  self.gender = General.Male
   self.seat = 0
   self.next = nil
   self.phase = Player.PhaseNone
@@ -70,9 +79,11 @@ function Player:initialize()
     [Player.Equip] = {},
     [Player.Judge] = {},
   }
+  self.virtual_equips = {}
   self.special_cards = {}
 
   self.cardUsedHistory = {}
+  self.skillUsedHistory = {}
   self.fixedDistance = {}
 end
 
@@ -182,6 +193,47 @@ function Player:removeCards(playerArea, cardIds, specialName)
   end
 end
 
+-- virtual delayed trick can use these functions too
+
+---@param card Card
+function Player:addVirtualEquip(card)
+  assert(card and card:isInstanceOf(Card) and card:isVirtual())
+  table.insertIfNeed(self.virtual_equips, card)
+end
+
+---@param cid integer
+function Player:removeVirtualEquip(cid)
+  for _, c in ipairs(self.virtual_equips) do
+    for _, id in ipairs(c.subcards) do
+      if id == cid then
+        table.removeOne(self.virtual_equips, c)
+        return c
+      end
+    end
+  end
+end
+
+---@param cid integer
+function Player:getVirualEquip(cid)
+  for _, c in ipairs(self.virtual_equips) do
+    for _, id in ipairs(c.subcards) do
+      if id == cid then
+        return c
+      end
+    end
+  end
+end
+
+function Player:hasDelayedTrick(card_name)
+  for _, id in ipairs(self:getCardIds(Player.Judge)) do
+    local c = self:getVirualEquip(id)
+    if not c then c = Fk:getCardById(id) end
+    if c.name == card_name then
+      return true
+    end
+  end
+end
+
 ---@param playerAreas PlayerCardArea
 ---@param specialName string
 ---@return integer[]
@@ -272,6 +324,7 @@ function Player:distanceTo(other)
   local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or {}
   for _, skill in ipairs(status_skills) do
     local correct = skill:getCorrect(self, other)
+    if correct == nil then correct = 0 end
     ret = ret + correct
   end
   
@@ -297,23 +350,79 @@ function Player:inMyAttackRange(other)
 end
 
 function Player:addCardUseHistory(cardName, num)
+  num = num or 1
   assert(type(num) == "number" and num ~= 0)
 
-  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or 0
-  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] + num
+  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or {0, 0, 0, 0}
+  local t = self.cardUsedHistory[cardName]
+  for i, _ in ipairs(t) do
+    t[i] = t[i] + num
+  end
 end
 
-function Player:resetCardUseHistory(cardName)
-  if not cardName then
+function Player:setCardUseHistory(cardName, num, scope)
+  if cardName == "" and num == nil and scope == nil then
     self.cardUsedHistory = {}
+    return
   end
+
+  num = num or 0
+  if cardName == "" then
+    for _, v in pairs(self.cardUsedHistory) do
+      v[scope] = num
+    end
+    return
+  end
+
   if self.cardUsedHistory[cardName] then
-    self.cardUsedHistory[cardName] = 0
+    self.cardUsedHistory[cardName][scope] = num
   end
 end
 
-function Player:usedTimes(cardName)
-  return self.cardUsedHistory[cardName] or 0
+function Player:addSkillUseHistory(skill_name, num)
+  num = num or 1
+  assert(type(num) == "number" and num ~= 0)
+
+  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or {0, 0, 0, 0}
+  local t = self.skillUsedHistory[skill_name]
+  for i, _ in ipairs(t) do
+    t[i] = t[i] + num
+  end
+end
+
+function Player:setSkillUseHistory(skill_name, num, scope)
+  if skill_name == "" and num == nil and scope == nil then
+    self.skillUsedHistory = {}
+    return
+  end
+
+  num = num or 0
+  if skill_name == "" then
+    for _, v in pairs(self.skillUsedHistory) do
+      v[scope] = num
+    end
+    return
+  end
+
+  if self.skillUsedHistory[skill_name] then
+    self.skillUsedHistory[skill_name][scope] = num
+  end
+end
+
+function Player:usedCardTimes(cardName, scope)
+  if not self.cardUsedHistory[cardName] then
+    return 0
+  end
+  scope = scope or Player.HistoryTurn
+  return self.cardUsedHistory[cardName][scope]
+end
+
+function Player:usedSkillTimes(cardName, scope)
+  if not self.skillUsedHistory[cardName] then
+    return 0
+  end
+  scope = scope or Player.HistoryTurn
+  return self.skillUsedHistory[cardName][scope]
 end
 
 function Player:isKongcheng()
@@ -390,12 +499,12 @@ function Player:addSkill(skill, source_skill)
   for _, s in ipairs(toget) do
     if not self:hasSkill(s) then
       table.insert(ret, s)
-      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
-        room.logic:addTriggerSkill(skill)
+      if s:isInstanceOf(TriggerSkill) and RoomInstance then
+        room.logic:addTriggerSkill(s)
       end
-      if table.contains(StatusSkills, skill.class) then
+      if s:isInstanceOf(StatusSkill) then
         room.status_skills[skill.class] = room.status_skills[skill.class] or {}
-        table.insertIfNeed(room.status_skills[skill.class], skill)
+        table.insertIfNeed(room.status_skills[skill.class], s)
       end
     end
   end

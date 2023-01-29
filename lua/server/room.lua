@@ -130,6 +130,7 @@ end
 ---@param id integer
 ---@return ServerPlayer
 function Room:getPlayerById(id)
+  if not id then return nil end
   assert(type(id) == "number")
 
   for _, p in ipairs(self.players) do
@@ -181,6 +182,11 @@ function Room:getAlivePlayers(sortBySeat)
   if sortBySeat == nil or sortBySeat then
     local current = self.current
     local temp = current.next
+
+    -- did not arrange seat, use default
+    if temp == nil then
+      return { table.unpack(self.players) }
+    end
     local ret = {current}
     while temp ~= current do
       if not temp.dead then
@@ -224,19 +230,6 @@ function Room:getLord()
   end
 
   return nil
-end
-
----@param expect ServerPlayer
----@return ServerPlayer[]
-function Room:getOtherPlayers(expect, include_dead)
-  local ret
-  if include_dead then
-    ret = {table.unpack(self.players)}
-  else
-    ret = {table.unpack(self.alive_players)}
-  end
-  table.removeOne(ret, expect)
-  return ret
 end
 
 ---@param num integer
@@ -495,23 +488,71 @@ function Room:setEmotion(player, name)
   })
 end
 
+function Room:setCardEmotion(cid, name)
+  self:doAnimate("Emotion", {
+    player = cid,
+    emotion = name,
+    is_card = true,
+  })
+end
+
 function Room:sendLogEvent(type, data, players)
   players = players or self.players
   data.type = type
   self:doBroadcastNotify("LogEvent", json.encode(data), players)
 end
 
+---@param skill_name string
+---@param index integer
+function Room:broadcastSkillInvoke(skill_name, index)
+  index = index or -1
+  self:sendLogEvent("PlaySkillSound", {
+    name = skill_name,
+    i = index
+  })
+end
+
+---@param skill_name string
+---@param index integer
+function Room:broadcastPlaySound(path)
+  self:sendLogEvent("PlaySound", {
+    name = path,
+  })
+end
+
 ---@param player ServerPlayer
 ---@param skill_name string
----@param skill_type nil
+---@param skill_type string
 function Room:notifySkillInvoked(player, skill_name, skill_type)
+  if not skill_type then
+    local skill = Fk.skills[skill_name]
+    if not skill then skill_type = "" end
+    skill_type = skill.anim_type
+  end
   self:sendLog{
     type = "#InvokeSkill",
     from = player.id,
     arg = skill_name,
   }
 
-  -- TODO: notifySkill animation
+  self:doAnimate("InvokeSkill", {
+    name = skill_name,
+    player = player.id,
+    skill_type = skill_type,
+  })
+end
+
+---@param source integer
+---@param targets integer[]
+function Room:doIndicate(source, targets)
+  local target_group = {}
+  for _, id in ipairs(targets) do
+    table.insert(target_group, { id })
+  end
+  self:doAnimate("Indicate", {
+    from = source,
+    to = target_group,
+  })
 end
 
 ------------------------------------------------------------------------
@@ -547,7 +588,8 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
-  skill:onEffect(room, {
+  self:doIndicate(player.id, targets)
+  skill:onEffect(self, {
     from = player.id,
     cards = selected_cards,
     tos = targets,
@@ -576,7 +618,8 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     include_equip = includeEquip,
     reason = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "discard_skill", "", true, data)
+  local prompt = "#AskForDiscard:::" .. maxNum .. ":" .. minNum
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, true, data)
   if ret then
     toDiscard = ret.cards
   else
@@ -593,13 +636,14 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
 end
 
 ---@param player ServerPlayer
----@param targets ServerPlayer[]
+---@param targets integer[]
 ---@param minNum integer
 ---@param maxNum integer
+---@param prompt string
 ---@return integer[]
-function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
-  if minNum < 1 then
-    return nil
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName)
+  if maxNum < 1 then
+    return {}
   end
 
   local data = {
@@ -608,7 +652,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, skillName)
     min_num = minNum,
     reason = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", "", true, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
   if ret then
     return ret.targets
   else
@@ -669,12 +713,13 @@ end
 ---@param player ServerPlayer
 ---@param choices string[]
 ---@param skill_name string
-function Room:askForChoice(player, choices, skill_name, data)
+function Room:askForChoice(player, choices, skill_name, prompt, data)
   if #choices == 1 then return choices[1] end
   local command = "AskForChoice"
+  prompt = prompt or ""
   self:notifyMoveFocus(player, skill_name)
   local result = self:doRequest(player, command, json.encode{
-    choices, skill_name
+    choices, skill_name, prompt
   })
   if result == "" then result = choices[1] end
   return result
@@ -692,6 +737,44 @@ function Room:askForSkillInvoke(player, skill_name, data)
   return invoked
 end
 
+-- TODO: guanxing type
+function Room:askForGuanxing(player, cards)
+  if #cards == 1 then
+    table.insert(self.draw_pile, 1, cards[1])
+    return
+  end
+  local command = "AskForGuanxing"
+  self:notifyMoveFocus(player, command)
+  local data = {
+    cards = cards,
+  }
+
+  local result = self:doRequest(player, command, json.encode(data))
+  local top, bottom
+  if result ~= "" then
+    local d = json.decode(result)
+    top = d[1]
+    bottom = d[2]
+  else
+    top = cards
+    bottom = {}
+  end
+
+  for i = #top, 1, -1 do
+    table.insert(self.draw_pile, 1, top[i])
+  end
+  for _, id in ipairs(bottom) do
+    table.insert(self.draw_pile, id)
+  end
+
+  self:sendLog{
+    type = "#GuanxingResult",
+    from = player.id,
+    arg = #top,
+    arg2 = #bottom,
+  }
+end
+
 ---@param player ServerPlayer
 ---@param data string
 ---@return CardUseStruct
@@ -704,7 +787,12 @@ function Room:handleUseCardReply(player, data)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
     if skill:isInstanceOf(ActiveSkill) then
+      if not skill.mute then
+        self:broadcastSkillInvoke(skill.name)
+      end
       self:notifySkillInvoked(player, skill.name)
+      player:addSkillUseHistory(skill.name)
+      self:doIndicate(player.id, targets)
       skill:onEffect(self, {
         from = player.id,
         cards = selected_cards,
@@ -714,12 +802,19 @@ function Room:handleUseCardReply(player, data)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local c = skill:viewAs(selected_cards)
       if c then
+        if not skill.mute then
+          self:broadcastSkillInvoke(skill.name)
+        end
         self:notifySkillInvoked(player, skill.name)
+        player:addSkillUseHistory(skill.name)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
         for _, target in ipairs(targets) do
           table.insert(use.tos, { target })
+        end
+        if #use.tos == 0 then
+          use.tos = nil
         end
         use.card = c
         return use
@@ -753,7 +848,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   cancelable = cancelable or false
   extra_data = extra_data or {}
   pattern = pattern or card_name
-  prompt = prompt or "#AskForUseCard"
+  prompt = prompt or ""
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
@@ -774,7 +869,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   cancelable = cancelable or false
   extra_data = extra_data or {}
   pattern = pattern or card_name
-  prompt = prompt or "#AskForResponseCard"
+  prompt = prompt or ""
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
   local result = self:doRequest(player, command, json.encode(data))
@@ -796,7 +891,7 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   card_name = card_name or "nullification"
   cancelable = cancelable or false
   extra_data = extra_data or {}
-  prompt = prompt or "#AskForUseCard"
+  prompt = prompt or ""
   pattern = pattern or card_name
 
   self:notifyMoveFocus(self.alive_players, card_name)
@@ -821,6 +916,24 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   local from = cardUseEvent.from
   local card = cardUseEvent.card
   room:setEmotion(room:getPlayerById(from), card.name)
+
+  local soundName
+  if card.type == Card.TypeEquip then
+    local subTypeStr
+    if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
+      subTypeStr = "horse"
+    elseif card.sub_type == Card.SubtypeWeapon then
+      subTypeStr = "weapon"
+    else
+      subTypeStr = "armor"
+    end
+
+    soundName = "common/" .. subTypeStr
+  else
+    soundName = (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+  end
+  room:broadcastPlaySound("./audio/card/" .. soundName)
+
   room:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
@@ -1131,6 +1244,10 @@ function Room:useCard(cardUseEvent)
           end
 
           if not findSameCard then
+            if cardUseEvent.card:isVirtual() then
+              self:getPlayerById(target):addVirtualEquip(cardUseEvent.card)
+            end
+
             self:moveCards({
               ids = realCardIds,
               to = target,
@@ -1253,7 +1370,11 @@ function Room:doCardEffect(cardEffectEvent)
           table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
         ) then
         local to = self:getPlayerById(cardEffectEvent.to)
-        local use = self:askForUseCard(to, "jink")
+        local prompt = ""
+        if cardEffectEvent.from then
+          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+        end
+        local use = self:askForUseCard(to, "jink", nil, prompt)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
@@ -1271,7 +1392,13 @@ function Room:doCardEffect(cardEffectEvent)
           end
         end
 
-        local use = self:askForNullification(players)
+        local prompt = ""
+        if cardEffectEvent.to then
+          prompt = "#AskForNullification::" .. cardEffectEvent.to .. ":" .. cardEffectEvent.card.name
+        elseif cardEffectEvent.from then
+          prompt = "#AskForNullificationWithoutTo:" .. cardEffectEvent.from .. "::" .. cardEffectEvent.card.name
+        end
+        local use = self:askForNullification(players, nil, nil, prompt)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
@@ -1324,6 +1451,8 @@ function Room:responseCard(cardResponseEvent)
   })
 
   self:setEmotion(self:getPlayerById(from), card.name)
+  local soundName = (self:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+  self:broadcastPlaySound("./audio/card/" .. soundName)
 
   for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -1449,14 +1578,14 @@ end
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
-    cid = cid:isVirtual() and {cid.id} or cid.subcards
+    cid = cid:isVirtual() and cid.subcards or {cid.id}
   else
     cid = {cid}
   end
   if #cid == 0 then return end
   self:moveCards({
     ids = cid,
-    from = self.owner_map[cid],
+    from = self.owner_map[cid[1]],
     to = player,
     toArea = Card.PlayerHand,
     moveReason = reason or fk.ReasonJustMove,
@@ -1496,11 +1625,11 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
   special_name = special_name or ""
   local ids = {}
   if card[1] ~= nil then
-    for i, cd in ipairs(card) do
-      ids[i] = cd.id
+    for _, cd in ipairs(card) do
+      table.insertTable(ids, self:getSubcardsByRule(card))
     end
   else
-    ids[1] = card.id
+    ids = self:getSubcardsByRule(card)
   end
 
   local to
@@ -1579,6 +1708,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
     self:sendLogEvent("Damage", {
       to = player.id,
       damageType = damage_nature_table[damageStruct.damageType],
+      damageNum = damageStruct.damage,
     })
   elseif reason == "loseHp" then
     self:sendLog{
@@ -1586,6 +1716,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
       from = player.id,
       arg = 0 - num,
     }
+    self:sendLogEvent("LoseHP", {})
   elseif reason == "recover" then
     self:sendLog{
       type = "#HealHP",
@@ -1910,9 +2041,66 @@ function Room:judge(data)
     card = {data.card.id},
   }
 
+  if data.pattern then
+    self:delay(400);
+    self:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
+    self:delay(900);
+  end
+
   self.logic:trigger(fk.FinishJudge, who, data)
   if self:getCardArea(data.card.id) == Card.Processing then
     self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
+  end
+end
+
+---@param card Card
+---@param player ServerPlayer
+---@param judge JudgeStruct
+---@param skillName string
+---@param exchange boolean
+function Room:retrial(card, player, judge, skillName, exchange)
+  if not card then return end
+  local triggerResponded = self.owner_map[card:getEffectiveId()] == player
+  local isHandcard = (triggerResponded and self:getCardArea(card:getEffectiveId()) == Card.PlayerHand)
+
+  local oldJudge = judge.card
+  judge.card = Fk:getCardById(card:getEffectiveId())
+  local rebyre = judge.retrial_by_response
+  judge.retrial_by_response = player
+
+  local resp = {} ---@type CardResponseEvent
+  resp.from = player.id
+  resp.card = card
+
+  if triggerResponded then
+    self.logic:trigger(fk.PreCardRespond, player, resp)
+  end
+
+  local move1 = {} ---@type CardsMoveInfo
+  move1.ids = { card:getEffectiveId() }
+  move1.from = player.id
+  move1.toArea = Card.Processing
+  move1.moveReason = fk.ReasonResonpse
+  move1.skillName = skillName
+
+  local move2 = {} ---@type CardsMoveInfo
+  move2.ids = { oldJudge:getEffectiveId() }
+  move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
+  move2.moveReason = fk.ReasonJustMove
+  move2.to = exchange and player.id or nil
+
+  self:sendLog{
+    type = "#ChangedJudge",
+    from = player.id,
+    to = { judge.who.id },
+    card = { card:getEffectiveId() },
+    arg = skillName,
+  }
+
+  self:moveCards(move1, move2)
+
+  if triggerResponded then
+    self.logic:trigger(fk.CardRespondFinished, player, resp)
   end
 end
 
