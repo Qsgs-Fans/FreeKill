@@ -1,9 +1,9 @@
----@class ViewAsSkill
+---@class ViewAsSkill : UsableSkill
 ---@field pattern string @ cards that can be viewAs'ed by this skill
-local ViewAsSkill = Skill:subclass("ViewAsSkill")
+local ViewAsSkill = UsableSkill:subclass("ViewAsSkill")
 
 function ViewAsSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
+  UsableSkill.initialize(self, name, Skill.NotFrequent)
   self.pattern = ""
 end
 

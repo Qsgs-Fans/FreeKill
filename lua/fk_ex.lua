@@ -3,18 +3,12 @@
 dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
-ActiveSkill = require "core.skill_type.active_skill"
+ActiveSkill = require "core.skill_type.active"
 ViewAsSkill = require "core.skill_type.view_as"
 DistanceSkill = require "core.skill_type.distance"
 ProhibitSkill = require "core.skill_type.prohibit"
 AttackRangeSkill = require "core.skill_type.attack_range"
 MaxCardsSkill = require "core.skill_type.max_cards"
-StatusSkills = {
-  DistanceSkill,
-  ProhibitSkill,
-  AttackRangeSkill,
-  MaxCardsSkill,
-}
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"

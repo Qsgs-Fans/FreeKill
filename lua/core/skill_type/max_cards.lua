@@ -1,12 +1,5 @@
----@class MaxCardsSkill : Skill
----@field global boolean
-local MaxCardsSkill = Skill:subclass("MaxCardsSkill")
-
-function MaxCardsSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
-
-  self.global = false
-end
+---@class MaxCardsSkill : StatusSkill
+local MaxCardsSkill = StatusSkill:subclass("MaxCardsSkill")
 
 ---@param from Player
 ---@param to Player

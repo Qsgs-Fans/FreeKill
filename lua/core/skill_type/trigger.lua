@@ -1,12 +1,12 @@
----@class TriggerSkill : Skill
+---@class TriggerSkill : UsableSkill
 ---@field global boolean
 ---@field events Event[]
 ---@field refresh_events Event[]
 ---@field priority_table table<Event, number>
-local TriggerSkill = Skill:subclass("TriggerSkill")
+local TriggerSkill = UsableSkill:subclass("TriggerSkill")
 
 function TriggerSkill:initialize(name, frequency)
-  Skill.initialize(self, name, frequency)
+  UsableSkill.initialize(self, name, frequency)
 
   self.global = false
   self.events = {}

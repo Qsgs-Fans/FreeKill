@@ -1,7 +1,5 @@
---- ActiveSkill is a skill type like SkillCard+ViewAsSkill in QSanguosha
----
----@class ActiveSkill : Skill
-local ActiveSkill = Skill:subclass("ActiveSkill")
+---@class ActiveSkill : UsableSkill
+local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name)
   Skill.initialize(self, name, Skill.NotFrequent)

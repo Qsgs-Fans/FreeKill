@@ -1,12 +1,5 @@
----@class DistanceSkill : Skill
----@field global boolean
-local DistanceSkill = Skill:subclass("DistanceSkill")
-
-function DistanceSkill:initialize(name)
-  Skill.initialize(self, name, Skill.NotFrequent)
-
-  self.global = false
-end
+---@class DistanceSkill : StatusSkill
+local DistanceSkill = StatusSkill:subclass("DistanceSkill")
 
 ---@param from Player
 ---@param to Player

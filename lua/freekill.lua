@@ -22,6 +22,8 @@ General = require "core.general"
 Card = require "core.card"
 Exppattern = require "core.exppattern"
 Skill = require "core.skill"
+UsableSkill = require "core.skill_type.usable_skill"
+StatusSkill = require "core.skill_type.status_skill"
 Player = require "core.player"
 
 -- load packages
