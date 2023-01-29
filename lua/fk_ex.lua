@@ -9,6 +9,7 @@ DistanceSkill = require "core.skill_type.distance"
 ProhibitSkill = require "core.skill_type.prohibit"
 AttackRangeSkill = require "core.skill_type.attack_range"
 MaxCardsSkill = require "core.skill_type.max_cards"
+TargetModSkill = require "core.skill_type.target_mod"
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
@@ -256,6 +257,33 @@ function fk.CreateMaxCardsSkill(spec)
   end
   if spec.fixed_func then
     skill.getFixed = spec.fixed_func
+  end
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class TargetModSpec: StatusSkillSpec
+---@field residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer)
+---@field distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill)
+---@field extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill)
+
+---@param spec TargetModSpec
+---@return TargetModSkill
+function fk.CreateTargetModSkill(spec)
+  assert(type(spec.name) == "string")
+
+  local skill = TargetModSkill:new(spec.name)
+  if spec.residue_func then
+    skill.getResidueNum = spec.residue_func
+  end
+  if spec.distance_limit_func then
+    skill.getDistanceLimit = spec.distance_limit_func
+  end
+  if spec.extra_target_func then
+    skill.getExtraTargetNum = spec.extra_target_func
   end
   if spec.global then
     skill.global = spec.global

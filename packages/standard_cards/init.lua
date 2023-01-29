@@ -10,10 +10,10 @@ local slashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player)
-    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Player.HistoryPhase)
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
   end,
   target_filter = function(self, to_select, selected)
-    if #selected < self:getMaxTargetNum() then
+    if #selected < self:getMaxTargetNum(Self) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:inMyAttackRange(player)
     end

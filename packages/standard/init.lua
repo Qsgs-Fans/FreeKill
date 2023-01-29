@@ -370,9 +370,38 @@ Fk:loadTranslationTable{
   ["wusheng"] = "武圣",
 }
 
+local paoxiaoAudio = fk.CreateTriggerSkill{
+  name = "#paoxiaoAudio",
+  refresh_events = {fk.CardUsing},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card.name == "slash" and
+      player:usedCardTimes("slash") > 1
+  end,
+  on_refresh = function(self, event, target, player, data)
+    player.room:broadcastSkillInvoke("paoxiao")
+    player.room:doAnimate("InvokeSkill", {
+      name = "paoxiao",
+      player = player.id,
+      skill_type = "offensive",
+    })
+  end,
+}
+local paoxiao = fk.CreateTargetModSkill{
+  name = "paoxiao",
+  residue_func = function(self, player, skill, scope)
+    if player:hasSkill(self.name) and skill.name == "slash_skill"
+      and scope == Player.HistoryPhase then
+      return 999
+    end
+  end,
+}
+paoxiao:addRelatedSkill(paoxiaoAudio)
 local zhangfei = General:new(extension, "zhangfei", "shu", 4)
+zhangfei:addSkill(paoxiao)
 Fk:loadTranslationTable{
   ["zhangfei"] = "张飞",
+  ["paoxiao"] = "咆哮",
 }
 
 local guanxing = fk.CreateTriggerSkill{
