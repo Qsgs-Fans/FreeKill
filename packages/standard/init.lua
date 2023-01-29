@@ -225,11 +225,36 @@ local tiandu = fk.CreateTriggerSkill{
     room:obtainCard(player.id, data.card)
   end,
 }
+local yiji = fk.CreateTriggerSkill{
+  name = "yiji",
+  anim_type = "masochism",
+  events = {fk.Damaged},
+  on_trigger = function(self, event, target, player, data)
+    self.cancel_cost = false
+    for i = 1, data.damage do
+      if self.cancel_cost then break end
+      self:doCost(event, target, player, data)
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    if room:askForSkillInvoke(player, self.name, data) then
+      return true
+    end
+    self.cancel_cost = true
+  end,
+  on_use = function(self, event, target, player, data)
+    -- TODO: yiji logic
+    player:drawCards(2)
+  end,
+}
 local guojia = General:new(extension, "guojia", "wei", 3)
 guojia:addSkill(tiandu)
+guojia:addSkill(yiji)
 Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",
   ["tiandu"] = "天妒",
+  ["yiji"] = "遗计",
 }
 
 local luoshen = fk.CreateTriggerSkill{
