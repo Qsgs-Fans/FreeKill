@@ -21,6 +21,7 @@
 ---@field tag table<string, any>
 ---@field mark table<string, integer>
 ---@field player_cards table<integer, integer[]>
+---@field virtual_equips Card[]
 ---@field special_cards table<string, integer[]>
 ---@field cardUsedHistory table<string, integer[]>
 ---@field skillUsedHistory table<string, integer[]>
@@ -78,6 +79,7 @@ function Player:initialize()
     [Player.Equip] = {},
     [Player.Judge] = {},
   }
+  self.virtual_equips = {}
   self.special_cards = {}
 
   self.cardUsedHistory = {}
@@ -187,6 +189,47 @@ function Player:removeCards(playerArea, cardIds, specialName)
       end
 
       table.removeOne(fromAreaIds, id)
+    end
+  end
+end
+
+-- virtual delayed trick can use these functions too
+
+---@param card Card
+function Player:addVirtualEquip(card)
+  assert(card and card:isInstanceOf(Card) and card:isVirtual())
+  table.insertIfNeed(self.virtual_equips, card)
+end
+
+---@param cid integer
+function Player:removeVirtualEquip(cid)
+  for _, c in ipairs(self.virtual_equips) do
+    for _, id in ipairs(c.subcards) do
+      if id == cid then
+        table.removeOne(self.virtual_equips, c)
+        return c
+      end
+    end
+  end
+end
+
+---@param cid integer
+function Player:getVirualEquip(cid)
+  for _, c in ipairs(self.virtual_equips) do
+    for _, id in ipairs(c.subcards) do
+      if id == cid then
+        return c
+      end
+    end
+  end
+end
+
+function Player:hasDelayedTrick(card_name)
+  for _, id in ipairs(self:getCardIds(Player.Judge)) do
+    local c = self:getVirualEquip(id)
+    if not c then c = Fk:getCardById(id) end
+    if c.name == card_name then
+      return true
     end
   end
 end

@@ -591,14 +591,7 @@ extension:addCards({
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
   can_use = function(self, player)
-    local judge = player:getCardIds(Player.Judge)
-    for _, id in ipairs(judge) do
-      local cd = Fk:getCardById(id)
-      if cd.name == "lightning" then
-        return false
-      end
-    end
-    return true
+    return not Self:hasDelayedTrick("lightning")
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -664,14 +657,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
-        local judge = player:getCardIds(Player.Judge)
-        for _, id in ipairs(judge) do
-          local cd = Fk:getCardById(id)
-          if cd.name == "indulgence" then
-            return false
-          end
-        end
-        return true
+        return not player:hasDelayedTrick("indulgence")
       end
     end
     return false

@@ -414,6 +414,22 @@ fk.client_callback["SetSkillUseHistory"] = function(jsonData)
   Self:setSkillUseHistory(data[1], data[2], data[3])
 end
 
+fk.client_callback["AddVirtualEquip"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local cname = data.name
+  local player = ClientInstance:getPlayerById(data.player)
+  local subcards = data.subcards
+  local c = Fk:cloneCard(cname)
+  c:addSubcards(subcards)
+  player:addVirtualEquip(c)
+end
+
+fk.client_callback["RemoveVirtualEquip"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player = ClientInstance:getPlayerById(data.player)
+  player:removeVirtualEquip(data.id)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

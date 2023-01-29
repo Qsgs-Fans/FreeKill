@@ -125,7 +125,11 @@ GameRule = fk.CreateTriggerSkill{
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
         for i = #cards, 1, -1 do
-          local card = Fk:getCardById(cards[i])
+          local card
+          card = player:removeVirtualEquip(cards[i])
+          if not card then
+            card = Fk:getCardById(cards[i])
+          end
           room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
           ---@type CardEffectEvent

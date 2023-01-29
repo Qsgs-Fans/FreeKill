@@ -713,6 +713,23 @@ Fk:loadTranslationTable{
   ["fanjian"] = "反间",
 }
 
+local guose = fk.CreateViewAsSkill{
+  name = "guose",
+  anim_type = "control",
+  pattern = "indulgence",
+  card_filter = function(self, to_select, selected)
+    if #selected == 1 then return false end
+    return Fk:getCardById(to_select).suit == Card.Diamond
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    local c = Fk:cloneCard("indulgence")
+    c:addSubcard(cards[1])
+    return c
+  end,
+}
 local liuli = fk.CreateTriggerSkill{
   name = "liuli",
   anim_type = "defensive",
@@ -746,9 +763,11 @@ local liuli = fk.CreateTriggerSkill{
   end,
 }
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
+daqiao:addSkill(guose)
 daqiao:addSkill(liuli)
 Fk:loadTranslationTable{
   ["daqiao"] = "大乔",
+  ["guose"] = "国色",
   ["liuli"] = "流离",
 }
 

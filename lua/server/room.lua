@@ -1244,6 +1244,10 @@ function Room:useCard(cardUseEvent)
           end
 
           if not findSameCard then
+            if cardUseEvent.card:isVirtual() then
+              self:getPlayerById(target):addVirtualEquip(cardUseEvent.card)
+            end
+
             self:moveCards({
               ids = realCardIds,
               to = target,
@@ -1621,11 +1625,11 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
   special_name = special_name or ""
   local ids = {}
   if card[1] ~= nil then
-    for i, cd in ipairs(card) do
-      ids[i] = cd.id
+    for _, cd in ipairs(card) do
+      table.insertTable(ids, self:getSubcardsByRule(card))
     end
   else
-    ids[1] = card.id
+    ids = self:getSubcardsByRule(card)
   end
 
   local to

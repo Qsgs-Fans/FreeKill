@@ -319,6 +319,15 @@ function SkillCanResponse(skill_name)
   return json.encode(ret)
 end
 
+function GetVirtualEquip(player, cid)
+  local c = ClientInstance:getPlayerById(player):getVirualEquip(cid)
+  if not c then return "null" end
+  return json.encode{
+    name = c.name,
+    cid = c.subcards[1],
+  }
+end
+
 Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",

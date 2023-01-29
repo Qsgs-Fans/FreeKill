@@ -408,6 +408,24 @@ function ServerPlayer:throwAllCards(flag)
   end
 end
 
+function ServerPlayer:addVirtualEquip(card)
+  Player.addVirtualEquip(self, card)
+  self.room:doBroadcastNotify("AddVirtualEquip", json.encode{
+    player = self.id,
+    name = card.name,
+    subcards = card.subcards,
+  })
+end
+
+function ServerPlayer:removeVirtualEquip(cid)
+  local ret = Player.removeVirtualEquip(self, cid)
+  self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode{
+    player = self.id,
+    id = cid,
+  })
+  return ret
+end
+
 function ServerPlayer:addCardUseHistory(cardName, num)
   Player.addCardUseHistory(self, cardName, num)
   self:doNotify("AddCardUseHistory", json.encode{cardName, num})
