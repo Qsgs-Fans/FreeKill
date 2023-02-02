@@ -202,18 +202,7 @@ QString QmlBackend::loadConf() {
   QFile conf("freekill.client.config.json");
   if (!conf.exists()) {
     conf.open(QIODevice::WriteOnly);
-    static const char *init_conf = "{\
-      \"winWidth\": 960,\
-      \"winHeight\": 540,\
-      \"lastLoginServer\": \"127.0.0.1\",\
-      \"savedPassword\": {\
-        \"127.0.0.1\": {\
-          \"username\": \"player\",\
-          \"password\": \"\",\
-          \"shorten_password\": \"\"\
-        }\
-      }\
-    }";
+    static const char *init_conf = "{}";
     conf.write(init_conf);
     return init_conf;
   }

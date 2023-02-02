@@ -20,10 +20,10 @@ QtObject {
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
-    winWidth = conf.winWidth;
-    winHeight = conf.winHeight;
-    lastLoginServer = conf.lastLoginServer;
-    savedPassword = conf.savedPassword;
+    winWidth = conf.winWidth || 960;
+    winHeight = conf.winHeight || 540;
+    lastLoginServer = conf.lastLoginServer || "127.0.0.1";
+    savedPassword = conf.savedPassword || {};
   }
 
   function saveConf() {
