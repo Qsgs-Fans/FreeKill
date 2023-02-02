@@ -142,6 +142,9 @@ function GameLogic:prepareForStart()
     for _, s in ipairs(skills) do
       room:handleAddLoseSkills(p, s.name, nil, false)
     end
+    for _, sname in ipairs(Fk.generals[p.general].other_skills) do
+      room:handleAddLoseSkills(p, sname, nil, false)
+    end
   end
 
   self:addTriggerSkill(GameRule)

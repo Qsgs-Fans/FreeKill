@@ -5,64 +5,72 @@
 -- In most cases, fk's basic modules are loaded before extension calls
 -- "require 'fkparser'", so we needn't to import lua modules here.
 
-fkp = {
-  functions = {},
-  newlist = function(t)
-    t.length = function(self)
-      return #self
-    end,
+local fkp = { functions = {} }
 
-    t.prepend = function(self, element)
-      if #self > 0 and type(self[1]) ~= type(element) then return end
-      for i = #self, 1, -1 do
-        self[i + 1] = self[i]
-      end
-      self[1] = element
-    end,
+fkp.functions.prepend = function(arr, e) table.insert(arr, 1, e) end
+fkp.functions.append = function(arr, e) table.insert(arr, e) end
+fkp.functions.drawCards = function(p, n) p:drawCards(n) end
 
-    t.append = function(self, element)
-      if #self > 0 and type(self[1]) ~= type(element) then return end
-      table.insert(self, element)
-    end,
-
-    t.removeOne = function(self, element)
-      if #self == 0 or type(self[1]) ~= type(element) then return false end
-
-      for i = 1, #self do
-        if self[i] == element then
-          table.remove(self, i)
-          return true
-        end
-      end
-      return false
-    end,
-
-    t.at = function(self, index)
-      return self[index + 1]
-    end,
-
-    t.replace = function(self, index, value)
-      self[index + 1] = value
-    end,
-    return t
-  end,
-}
-
-fkp.functions.prepend = function(arr, e)
-  if arr:length() == 0 then
-    arr = fkp.newlist{e}
-  else
-    arr:prepend(e)
+fkp.CreateTriggerSkill = function(spec)
+  local eve = {}
+  local refresh_eve = {}
+  local specs = spec.specs
+  local re_specs = spec.refresh_specs
+  for event, _ in pairs(specs) do
+    table.insert(eve, event)
   end
-  return arr
-end,
-
-fkp.functions.append = function(arr, e)
-  if arr:length() == 0 then
-    arr = fkp.newlist{e}
-  else
-    arr:append(e)
+  for event, _ in pairs(re_specs) do
+    table.insert(refresh_eve, event)
   end
-  return arr
-end,
+  return fk.CreateTriggerSkill{
+    name = spec.name,
+    frequency = spec.frequency or Skill.NotFrequent,
+    events = eve,
+    can_trigger = function(self, event, target, player, data)
+      local func = specs[event] and specs[event][1] or nil
+      if not func then
+        return TriggerSkill.triggerable(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
+    on_trigger = function(self, event, target, player, data)
+      local func = specs[event] and specs[event][4] or nil
+      if not func then
+        return TriggerSkill.trigger(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
+    on_cost = function(self, event, target, player, data)
+      local func = specs[event] and specs[event][3] or nil
+      if not func then
+        return TriggerSkill.cost(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
+    on_use = function(self, event, target, player, data)
+      local func = specs[event] and specs[event][2] or nil
+      if not func then
+        return TriggerSkill.use(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
 
+    refresh_events = refresh_eve,
+    can_refresh = function(self, event, target, player, data)
+      local func = re_specs[event] and re_specs[event][1] or nil
+      if not func then
+        return TriggerSkill.canRefresh(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
+    on_refresh = function(self, event, target, player, data)
+      local func = re_specs[event] and re_specs[event][2] or nil
+      if not func then
+        return TriggerSkill.refresh(self, event, target, player, data)
+      end
+      return func(self, target, player, data)
+    end,
+  }
+end
+
+return fkp

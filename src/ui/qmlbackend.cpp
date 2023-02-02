@@ -244,7 +244,7 @@ void QmlBackend::parseFkp(const QString &fileName) {
   bool error = fkp_parse(
     parser,
     shortFileName.toUtf8().data(),
-    FKP_QSAN_LUA
+    FKP_FK_LUA
   );
 /*  setError(error);
 

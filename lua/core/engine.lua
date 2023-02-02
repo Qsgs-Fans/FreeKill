@@ -53,6 +53,13 @@ function Engine:loadPackage(pack)
   self:addSkills(pack:getSkills())
 end
 
+local function tryParseFkp(dir)
+  local fname = string.format("packages/%s/%s.fkp", dir, dir)
+  if FileIO.exists(fname) then
+    fk.Backend:parseFkp(fname)
+  end
+end
+
 function Engine:loadPackages()
   local directories = FileIO.ls("packages")
 
@@ -64,6 +71,7 @@ function Engine:loadPackages()
 
   for _, dir in ipairs(directories) do
     if FileIO.isDir("packages/" .. dir) then
+      tryParseFkp(dir)
       local pack = require(string.format("packages.%s", dir))
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
