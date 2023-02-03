@@ -365,7 +365,9 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   local player, mark, value = data[1], data[2], data[3]
   ClientInstance:getPlayerById(player):setMark(mark, value)
 
-  -- TODO: if mark is visible, update the UI.
+  if string.sub(mark, 1, 1) == "@" then
+    ClientInstance:notifyUI("SetPlayerMark", jsonData)
+  end
 end
 
 fk.client_callback["Chat"] = function(jsonData)

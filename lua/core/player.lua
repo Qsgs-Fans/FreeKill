@@ -127,6 +127,10 @@ function Player:clearFlags()
   self.flag = {}
 end
 
+-- mark name and UI:
+-- 'xxx': invisible mark
+-- '@mark': mark with extra data (maybe string or number)
+-- '@@mark': mark without data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]

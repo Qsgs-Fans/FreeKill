@@ -784,6 +784,18 @@ callbacks["WaitForNullification"] = function() {
   roomScene.state = "notactive";
 }
 
+callbacks["SetPlayerMark"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let player = getPhotoOrSelf(data[0]);
+  let mark = data[1];
+  let value = data[2];
+  if (value == 0) {
+    player.markArea.removeMark(mark);
+  } else {
+    player.markArea.setMark(mark, mark.startsWith("@@") ? "" : value);
+  }
+}
+
 callbacks["Animate"] = function(jsonData) {
   // jsonData: [Object object]
   let data = JSON.parse(jsonData);
