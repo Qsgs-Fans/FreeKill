@@ -29,6 +29,7 @@ Flickable {
     selectByMouse: true
     wrapMode: TextEdit.WrapAnywhere
     textFormat: TextEdit.RichText
+    font.pixelSize: 16
   }
 
   function append(text) {

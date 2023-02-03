@@ -390,11 +390,13 @@ Item {
 
   Drawer {
     id: roomDrawer
-    width: parent.width * 0.3
-    height: parent.height
+    width: parent.width * 0.3 / mainWindow.scale
+    height: parent.height / mainWindow.scale
     dim: false
     clip: true
     dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopLeft
     
     ColumnLayout {
       anchors.fill: parent
