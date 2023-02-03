@@ -942,8 +942,8 @@ extension:addCards({
 
 local ziXing = fk.CreateOffensiveRide{
   name = "zixing",
-  suit = Card.Heart,
-  number = 5,
+  suit = Card.Diamond,
+  number = 13,
 }
 Fk:loadTranslationTable{
   ["zixing"] = "紫骍",
