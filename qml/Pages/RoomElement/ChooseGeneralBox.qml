@@ -117,7 +117,8 @@ GraphicsBox {
       }
 
       onRightClicked: {
-        roomScene.startCheat("RoomElement/Cheat/FreeAssign.qml", { card: this });
+        if (selectedItem.indexOf(this) === -1)
+          roomScene.startCheat("RoomElement/Cheat/FreeAssign.qml", { card: this });
       }
 
       onReleased: {

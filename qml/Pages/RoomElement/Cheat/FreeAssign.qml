@@ -10,10 +10,13 @@ Item {
   signal finish()
 
   Flickable {
-    anchors.fill: parent
-    contentHeight: childrenRect.height
+    height: parent.height
+    width: generalButtons.width
+    anchors.centerIn: parent
+    contentHeight: generalButtons.height
     ScrollBar.vertical: ScrollBar {}
     ColumnLayout {
+      id: generalButtons
       Repeater {
         model: ListModel {
           id: packages
