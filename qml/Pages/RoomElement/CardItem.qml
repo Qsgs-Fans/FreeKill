@@ -53,6 +53,7 @@ Item {
 
   signal toggleDiscards()
   signal clicked()
+  signal rightClicked()
   signal doubleClicked()
   signal thrown()
   signal released()
@@ -135,6 +136,7 @@ Item {
 
   MouseArea {
     anchors.fill: parent
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     drag.target: draggable ? parent : undefined
     drag.axis: Drag.XAndYAxis
     hoverEnabled: true
@@ -162,9 +164,17 @@ Item {
       }
     }
 
-    onClicked: {
-      selected = selectable ? !selected : false;
-      parent.clicked();
+    onClicked: (mouse) => {
+      if (mouse.button == Qt.LeftButton) {
+        selected = selectable ? !selected : false;
+        parent.clicked();
+      } else if (mouse.button === Qt.RightButton) {
+        parent.rightClicked();
+      }
+    }
+
+    onPressAndHold: {
+      parent.rightClicked();
     }
   }
 

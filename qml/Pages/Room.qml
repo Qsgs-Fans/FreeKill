@@ -435,6 +435,30 @@ Item {
     }
   }
 
+  Drawer {
+    id: cheatDrawer
+    edge: Qt.RightEdge
+    width: parent.width * 0.6 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopRight
+
+    Loader {
+      id: cheatLoader
+      anchors.fill: parent
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finish.connect(() => {
+          cheatDrawer.close();
+        });
+      }
+    }
+  }
+
   Item {
     id: dynamicCardArea
     anchors.fill: parent
@@ -536,6 +560,12 @@ Item {
         item.distance = 0;
       }
     }
+  }
+
+  function startCheat(source, data) {
+    cheatLoader.source = source;
+    cheatLoader.item.extra_data = data;
+    cheatDrawer.open();
   }
 
   Component.onCompleted: {

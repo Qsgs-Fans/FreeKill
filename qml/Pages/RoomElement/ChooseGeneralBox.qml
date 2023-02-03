@@ -116,6 +116,10 @@ GraphicsBox {
         updatePosition();
       }
 
+      onRightClicked: {
+        roomScene.startCheat("RoomElement/Cheat/FreeAssign.qml", { card: this });
+      }
+
       onReleased: {
         if (!isClicked)
           arrangeCards();
