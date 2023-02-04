@@ -1,3 +1,6 @@
 [submodule "fkparse"]
 	path = fkparse
 	url = https://github.com/Notify-ctrl/fkparse
+[submodule "packages/fk_official"]
+	path = packages/fk_official
+	url = https://github.com/Notify-ctrl/fk_official
