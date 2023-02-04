@@ -75,4 +75,62 @@ fkp.CreateTriggerSkill = function(spec)
   }
 end
 
+fkp.CreateActiveSkill = function(spec)
+  return fk.CreateActiveSkill{
+    name = spec.name,
+    can_use = spec.can_use,
+    card_filter = function(self, to_select, selected)
+      local card = Fk:getCardById(to_select)
+      local clist = {}
+      for _, id in ipairs(selected) do
+        table.insert(clist, Fk:getCardById(id))
+      end
+      return spec.card_filter(self, clist, card)
+    end,
+    target_filter = function(self, to_select, selected, cards)
+      local room = Fk:currentRoom()
+      local target = room:getPlayerById(to_select)
+      local plist = {}
+      for _, id in ipairs(selected) do
+        table.insert(plist, room:getPlayerById(id))
+      end
+      local clist = {}
+      for _, id in ipairs(cards) do
+        table.insert(clist, Fk:getCardById(id))
+      end
+      return spec.target_filter(self, plist, target, clist)
+    end,
+    feasible = function(self, targets, cards)
+      local room = Fk:currentRoom()
+      local plist = {}
+      for _, id in ipairs(targets) do
+        table.insert(plist, room:getPlayerById(id))
+      end
+      local clist = {}
+      for _, id in ipairs(cards) do
+        table.insert(clist, Fk:getCardById(id))
+      end
+      return spec.feasible(self, plist, clist)
+    end,
+    on_use = function(self, room, use)
+      local cards = use.cards
+      local from = use.from
+      local targets = use.tos
+      local source = room:getPlayerById(from)
+      local plist = {}
+      for _, id in ipairs(targets) do
+        table.insert(plist, room:getPlayerById(id))
+      end
+      local clist = {}
+      for _, id in ipairs(cards) do
+        table.insert(clist, Fk:getCardById(id))
+      end
+      return spec.on_use(self, source, plist, clist)
+    end,
+    on_effect = function(self, room, effect)
+      -- TODO: active skill for card!
+    end,
+  }
+end
+
 return fkp

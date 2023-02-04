@@ -1,6 +1,5 @@
---local fkp_extensions = require "packages.test.test"
---local extension = fkp_extensions[1]
-local extension = Package("test")
+local fkp_extensions = require "packages.test.test"
+local extension = fkp_extensions[1]
 
 test2 = General(extension, "mouxusheng", "wu", 4)
 
@@ -9,5 +8,4 @@ Fk:loadTranslationTable{
   ["mouxusheng"] = "谋徐盛",
 }
 
---return fkp_extensions
-return {extension}
+return fkp_extensions
