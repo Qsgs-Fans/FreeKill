@@ -102,16 +102,16 @@ Item {
         iconSource: "configure"
         text: Backend.translate("Edit Profile")
         onClicked: {
-          globalPopup.source = "EditProfile.qml";
-          globalPopup.open();
+          lobby_dialog.source = "LobbyElement/EditProfile.qml";
+          lobby_drawer.open();
         }
       }
       TileButton {
         iconSource: "create_room"
         text: Backend.translate("Create Room")
         onClicked: {
-          globalPopup.source = "CreateRoom.qml";
-          globalPopup.open();
+          lobby_dialog.source = "LobbyElement/CreateRoom.qml";
+          lobby_drawer.open();
         }
       }
       TileButton {
@@ -157,28 +157,27 @@ Item {
     }
   }
 
-  Loader {
-    id: lobby_dialog
-    z: 1000
-    onSourceChanged: {
-      if (item === null)
-        return;
-      item.finished.connect(function(){
-        source = "";
-      });
-      item.widthChanged.connect(function(){
-        lobby_dialog.moveToCenter();
-      });
-      item.heightChanged.connect(function(){
-        lobby_dialog.moveToCenter();
-      });
-      moveToCenter();
-    }
+  Drawer {
+    id: lobby_drawer
+    width: parent.width * 0.6 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopLeft
 
-    function moveToCenter()
-    {
-      item.x = Math.round((root.width - item.width) / 2);
-      item.y = Math.round(root.height * 0.67 - item.height / 2);
+    Loader {
+      id: lobby_dialog
+      anchors.centerIn: parent
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finished.connect(() => {
+          source = "";
+          lobby_drawer.close();
+        });
+      }
     }
   }
 

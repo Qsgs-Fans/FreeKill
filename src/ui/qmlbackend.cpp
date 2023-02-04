@@ -100,11 +100,13 @@ QString QmlBackend::pwd() {
 }
 
 bool QmlBackend::exists(const QString &file) {
-  return QFile::exists(file);
+  QUrl u(file);
+  auto s = u.path();
+  return QFile::exists(QUrl(file).path());
 }
 
 bool QmlBackend::isDir(const QString &file) {
-  return QFileInfo(file).isDir();
+  return QFileInfo(QUrl(file).path()).isDir();
 }
 
 QString QmlBackend::translate(const QString &src) {
