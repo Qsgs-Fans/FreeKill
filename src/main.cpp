@@ -169,6 +169,7 @@ int main(int argc, char *argv[])
   engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9530");
 #elif defined(Q_OS_WIN32)
   system = "Win";
+  ::system("chcp 65001");
 #elif defined(Q_OS_LINUX)
   system = "Linux";
 #else
