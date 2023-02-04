@@ -1692,7 +1692,7 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
     if damageStruct.from then
       self:sendLog{
         type = "#Damage",
-        to = {damageStruct.from},
+        to = {damageStruct.from.id},
         from = player.id,
         arg = 0 - num,
         arg2 = damage_nature_table[damageStruct.damageType],
@@ -1810,11 +1810,11 @@ function Room:damage(damageStruct)
     return false
   end
 
-  if damageStruct.from and not self:getPlayerById(damageStruct.from):isAlive() then
+  if damageStruct.from and not damageStruct.from:isAlive() then
     damageStruct.from = nil
   end
 
-  assert(type(damageStruct.to) == "number")
+  assert(damageStruct.to:isInstanceOf(ServerPlayer))
 
   local stages = {
     {fk.PreDamage, damageStruct.from},
@@ -1823,22 +1823,19 @@ function Room:damage(damageStruct)
   }
 
   for _, struct in ipairs(stages) do
-    local event, playerId = table.unpack(struct)
-    local player = playerId and self:getPlayerById(playerId) or nil
+    local event, player = table.unpack(struct)
     if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
       return false
     end
 
-    assert(type(damageStruct.to) == "number")
+    assert(damageStruct.to:isInstanceOf(ServerPlayer))
   end
 
-  assert(self:getPlayerById(damageStruct.to))
-  local victim = self:getPlayerById(damageStruct.to)
-  if not victim:isAlive() then
+  if not damageStruct.to:isAlive() then
     return false
   end
 
-  if not self:changeHp(victim, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
+  if not self:changeHp(damageStruct.to, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
     return false
   end
 
@@ -1849,8 +1846,7 @@ function Room:damage(damageStruct)
   }
 
   for _, struct in ipairs(stages) do
-    local event, playerId = table.unpack(struct)
-    local player = playerId and self:getPlayerById(playerId) or nil
+    local event, player = table.unpack(struct)
     self.logic:trigger(event, player, damageStruct)
   end
 
@@ -1864,7 +1860,7 @@ function Room:recover(recoverStruct)
     return false
   end
 
-  local who = self:getPlayerById(recoverStruct.who)
+  local who = recoverStruct.who
   if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
     return false
   end

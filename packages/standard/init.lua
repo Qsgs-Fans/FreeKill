@@ -69,7 +69,7 @@ local fankui = fk.CreateTriggerSkill{
   frequency = Skill.NotFrequent,
   can_trigger = function(self, event, target, player, data)
     local room = target.room
-    local from = room:getPlayerById(data.from)
+    local from = data.from
     return from ~= nil and
       target == player and
       target:hasSkill(self.name) and
@@ -78,7 +78,7 @@ local fankui = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local from = room:getPlayerById(data.from)
+    local from = data.from
     local card = room:askForCardChosen(player, from, "he", self.name)
     room:obtainCard(player.id, card, false)
   end
@@ -106,7 +106,7 @@ local ganglie = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local from = room:getPlayerById(data.from)
+    local from = data.from
     local judge = {
       who = from,
       reason = self.name,
@@ -117,8 +117,8 @@ local ganglie = fk.CreateTriggerSkill{
       local discards = room:askForDiscard(from, 2, 2, false, self.name)
       if #discards == 0 then
         room:damage{
-          from = player.id,
-          to = from.id,
+          from = player,
+          to = from,
           damage = 1,
           skillName = self.name,
         }
@@ -356,7 +356,7 @@ local rende = fk.CreateActiveSkill{
     room:addPlayerMark(player, "_rende_cards", #cards)
     if marks < 2 and marks + #cards >= 2 and player:isWounded() then
       room:recover{
-        who = player.id,
+        who = player,
         num = 1,
         skillName = self.name
       }
@@ -721,8 +721,8 @@ local fanjian = fk.CreateActiveSkill{
     room:obtainCard(target.id, card, true)
     if Fk:getCardById(card):getSuitString() ~= choice then
       room:damage{
-        from = player.id,
-        to = target.id,
+        from = player,
+        to = target,
         damage = 1,
         skillName = self.name,
       }
@@ -886,14 +886,14 @@ local jieyin = fk.CreateActiveSkill{
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
     room:recover({
-      who = effect.tos[1],
+      who = room:getPlayerById(effect.tos[1]),
       num = 1,
       recoverBy = effect.from,
       skillName = self.name
     })
     if from:isWounded() then
       room:recover({
-        who = effect.from,
+        who = room:getPlayerById(effect.from),
         num = 1,
         recoverBy = effect.from,
         skillName = self.name
@@ -929,7 +929,7 @@ local qingnang = fk.CreateActiveSkill{
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
     room:recover({
-      who = effect.tos[1],
+      who = room:getPlayerById(effect.tos[1]),
       num = 1,
       recoverBy = effect.from,
       skillName = self.name

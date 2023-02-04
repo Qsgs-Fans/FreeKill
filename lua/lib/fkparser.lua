@@ -12,6 +12,60 @@ fkp.functions.append = function(arr, e) table.insert(arr, e) end
 fkp.functions.drawCards = function(p, n) p:drawCards(n) end
 fkp.functions.loseHp = function(p, n) p.room:loseHp(p, n) end
 fkp.functions.loseMaxHp = function(p, n) p.room:changeMaxHp(p, -n) end
+fkp.functions.damage = function(from, to, n, nature, card, reason)
+  local damage = {}
+  damage.from = from
+  damage.to = to
+  damage.damage = n
+  damage.damageType = nature
+  damage.card = card
+  damage.skillName = reason
+  to.room:damage(damage)
+end
+
+fkp.functions.recover = function(player, int, who, card)
+  local recover = {}
+  recover.who = player
+  recover.num = int
+  recover.recoverBy = who
+  recover.card = card
+  player.room:recover(recover)
+end
+
+fkp.functions.recoverMaxHp = function(p, n) p.room:changeMaxHp(p, n) end
+fkp.functions.acquireSkill = function(player, skill)
+  player.room:handleAddLoseSkills(player, skill)
+end
+
+fkp.functions.loseSkill = function(player, skill)
+  player.room:handleAddLoseSkills(player, "-" .. skill)
+end
+
+fkp.functions.addMark = function(player, mark, count, hidden)
+  local room = player.room
+  if hidden then
+    mark = string.gsub(mark, "@", "_")
+  end
+
+  room:addPlayerMark(player, mark, count)
+end
+
+fkp.functions.loseMark = function(player, mark, count, hidden)
+  local room = player.room
+  if hidden then
+    mark = string.gsub(mark, "@", "_")
+  end
+
+  room:removePlayerMark(player, mark, count)
+end
+
+fkp.functions.getMark = function(player, mark, hidden)
+  if hidden then
+    mark = string.gsub(mark, "@", "_")
+  end
+
+  return player:getMark(mark)
+end
 
 fkp.CreateTriggerSkill = function(spec)
   local eve = {}
