@@ -606,10 +606,11 @@ end
 ---@param maxNum integer
 ---@param includeEquip boolean
 ---@param skillName string
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable)
   if minNum < 1 then
     return nil
   end
+  cancelable = cancelable or false
 
   local toDiscard = {}
   local data = {
@@ -619,11 +620,15 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName)
     reason = skillName
   }
   local prompt = "#AskForDiscard:::" .. maxNum .. ":" .. minNum
-  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, true, data)
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
   if ret then
     toDiscard = ret.cards
   else
+    if cancelable then return {} end
     local hands = player:getCardIds(Player.Hand)
+    if includeEquip then
+      table.insertTable(hands, player:getCardIds(Player.Equip))
+    end
     for i = 1, minNum do
       local randomId = hands[math.random(1, #hands)]
       table.insert(toDiscard, randomId)
@@ -1910,7 +1915,7 @@ function Room:killPlayer(deathStruct)
   if killer then
     self:sendLog{
       type = "#KillPlayer",
-      to = {killer},
+      to = {killer.id},
       from = victim.id,
       arg = victim.role,
     }

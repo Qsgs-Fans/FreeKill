@@ -114,7 +114,7 @@ local ganglie = fk.CreateTriggerSkill{
     }
     room:judge(judge)
     if judge.card.suit ~= Card.Heart then
-      local discards = room:askForDiscard(from, 2, 2, false, self.name)
+      local discards = room:askForDiscard(from, 2, 2, false, self.name, true)
       if #discards == 0 then
         room:damage{
           from = player,
