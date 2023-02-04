@@ -589,7 +589,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
   self:doIndicate(player.id, targets)
-  skill:onEffect(self, {
+  skill:onUse(self, {
     from = player.id,
     cards = selected_cards,
     tos = targets,
@@ -793,7 +793,7 @@ function Room:handleUseCardReply(player, data)
       self:notifySkillInvoked(player, skill.name)
       player:addSkillUseHistory(skill.name)
       self:doIndicate(player.id, targets)
-      skill:onEffect(self, {
+      skill:onUse(self, {
         from = player.id,
         cards = selected_cards,
         tos = targets,

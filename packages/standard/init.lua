@@ -345,7 +345,7 @@ local rende = fk.CreateActiveSkill{
   feasible = function(self, targets, cards)
     return #targets == 1 and #cards > 0
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local target = room:getPlayerById(effect.tos[1])
     local player = room:getPlayerById(effect.from)
     local cards = effect.cards
@@ -594,7 +594,7 @@ local zhiheng = fk.CreateActiveSkill{
   feasible = function(self, selected, selected_cards)
     return #selected == 0 and #selected_cards > 0
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
     room:drawCards(from, #effect.cards, self.name)
@@ -678,7 +678,7 @@ local kurou = fk.CreateActiveSkill{
   card_filter = function(self, to_select, selected, selected_targets)
     return false
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:loseHp(from, 1, self.name)
     if from:isAlive() then
@@ -713,7 +713,7 @@ local fanjian = fk.CreateActiveSkill{
   feasible = function(self, selected)
     return #selected == 1
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local player = room:getPlayerById(effect.from)
     local target = room:getPlayerById(effect.tos[1])
     local choice = room:askForChoice(target, {"spade", "heart", "club", "diamond"}, self.name)
@@ -882,7 +882,7 @@ local jieyin = fk.CreateActiveSkill{
   feasible = function(self, selected, selected_cards)
     return #selected == 1 and #selected_cards == 2
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
     room:recover({
@@ -925,7 +925,7 @@ local qingnang = fk.CreateActiveSkill{
   feasible = function(self, targets, cards)
     return #targets == 1 and #cards == 1
   end,
-  on_effect = function(self, room, effect)
+  on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
     room:recover({

@@ -10,6 +10,8 @@ local fkp = { functions = {} }
 fkp.functions.prepend = function(arr, e) table.insert(arr, 1, e) end
 fkp.functions.append = function(arr, e) table.insert(arr, e) end
 fkp.functions.drawCards = function(p, n) p:drawCards(n) end
+fkp.functions.loseHp = function(p, n) p.room:loseHp(p, n) end
+fkp.functions.loseMaxHp = function(p, n) p.room:changeMaxHp(p, -n) end
 
 fkp.CreateTriggerSkill = function(spec)
   local eve = {}
