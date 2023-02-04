@@ -2,6 +2,7 @@ set(freekill_SRCS
   "main.cpp"
   "core/player.cpp"
   "core/util.cpp"
+  "core/parser.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"

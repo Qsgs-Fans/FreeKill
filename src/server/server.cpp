@@ -5,6 +5,7 @@
 #include "router.h"
 #include "serverplayer.h"
 #include "util.h"
+#include "parser.h"
 
 Server *ServerInstance;
 
@@ -18,6 +19,7 @@ Server::Server(QObject* parent)
   file.open(QIODevice::ReadOnly);
   QTextStream in(&file);
   public_key = in.readAll();
+  Parser::parseFkp();
   md5 = calcFileMD5();
 
   server = new ServerSocket();

@@ -17,18 +17,12 @@ QmlBackend::QmlBackend(QObject* parent)
   Backend = this;
   engine = nullptr;
   rsa = RSA_new();
-#ifndef Q_OS_WASM
-  parser = fkp_new_parser();
-#endif
 }
 
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
   RSA_free(rsa);
-#ifndef Q_OS_WASM
-  fkp_close(parser);
-#endif
 }
 
 QQmlApplicationEngine *QmlBackend::getEngine() const
@@ -215,64 +209,6 @@ void QmlBackend::saveConf(const QString &conf) {
   c.open(QIODevice::WriteOnly);
   c.write(conf.toUtf8());
 }
-
-void QmlBackend::parseFkp(const QString &fileName) {
-#ifndef Q_OS_WASM
-  if (!QFile::exists(fileName)) {
-//    errorEdit->setText(tr("File does not exist!"));
-    return;
-  }
-  QString cwd = QDir::currentPath();
-
-  QStringList strlist = fileName.split('/');
-  QString shortFileName = strlist.last();
-  strlist.removeLast();
-  QString path = strlist.join('/');
-  QDir::setCurrent(path);
-
-  bool error = fkp_parse(
-    parser,
-    shortFileName.toUtf8().data(),
-    FKP_FK_LUA
-  );
-/*  setError(error);
-
-  if (error) {
-    QStringList tmplist = shortFileName.split('.');
-    tmplist.removeLast();
-    QString fName = tmplist.join('.') + "-error.txt";
-    if (!QFile::exists(fName)) {
-      errorEdit->setText(tr("Unknown compile error."));
-    } else {
-      QFile f(fName);
-      f.open(QIODevice::ReadOnly);
-      errorEdit->setText(f.readAll());
-      f.remove();
-    }
-  } else {
-    errorEdit->setText(tr("Successfully compiled chosen file."));
-  }
-*/
-  QDir::setCurrent(cwd);
-#endif
-}
-
-#ifndef Q_OS_WASM
-static void copyFkpHash2QHash(QHash<QString, QString> &dst, fkp_hash *from) {
-  dst.clear();
-  for (size_t i = 0; i < from->capacity; i++) {
-    if (from->entries[i].key != NULL) {
-      dst[from->entries[i].key] = QString((const char *)from->entries[i].value);
-    }
-  }
-}
-
-void QmlBackend::readHashFromParser() {
-  copyFkpHash2QHash(generals, parser->generals);
-  copyFkpHash2QHash(skills, parser->skills);
-  copyFkpHash2QHash(marks, parser->marks);
-}
-#endif
 
 QString QmlBackend::calcFileMD5() {
   return ::calcFileMD5();

@@ -1,11 +1,6 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
-#ifndef Q_OS_WASM
-#include "fkparse.h"
-#endif
-#include <qtmetamacros.h>
-
 class QmlBackend : public QObject {
   Q_OBJECT
 public:
@@ -39,8 +34,6 @@ public:
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();
   Q_INVOKABLE void saveConf(const QString &conf);
-  // support fkp
-  Q_INVOKABLE void parseFkp(const QString &filename);
 
   Q_INVOKABLE QString calcFileMD5();
   Q_INVOKABLE void playSound(const QString &name, int index = 0);
@@ -51,15 +44,8 @@ signals:
 private:
   QQmlApplicationEngine *engine;
   RSA *rsa;
-#ifndef Q_OS_WASM
-  fkp_parser *parser;
-#endif
-  QHash<QString, QString> generals;
-  QHash<QString, QString> skills;
-  QHash<QString, QString> marks;
 
   void pushLuaValue(lua_State *L, QVariant v);
-  void readHashFromParser();
 };
 
 extern QmlBackend *Backend;
