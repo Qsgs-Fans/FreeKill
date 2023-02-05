@@ -31,14 +31,14 @@ Item {
   property var extra_data: ({})
 
   Image {
-    source: AppPath + "/image/gamebg"
+    source: config.roomBg
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
   }
 
   MediaPlayer {
     id: bgm
-    source: AppPath + "/audio/system/bgm.mp3"
+    source: config.bgmFile
     
     // loops: MediaPlayer.Infinite
     onPlaybackStateChanged: {

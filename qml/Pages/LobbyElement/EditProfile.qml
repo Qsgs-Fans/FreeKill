@@ -1,6 +1,7 @@
-import QtQuick 2.15
-import QtQuick.Controls 2.0
-import QtQuick.Layouts 1.15
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Dialogs
 
 Item {
   id: root
@@ -36,6 +37,17 @@ Item {
         font.pixelSize: 18
         text: Self.avatar
       }
+      Button {
+        text: Backend.translate("Update Avatar")
+        enabled: avatarName.text !== ""
+        onClicked: {
+          mainWindow.busy = true;
+          ClientInstance.notifyServer(
+            "UpdateAvatar",
+            JSON.stringify([avatarName.text])
+          );
+        }
+      }
     }
 
     RowLayout {
@@ -62,22 +74,6 @@ Item {
         echoMode: TextInput.Password
         passwordCharacter: "*"
       }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Button {
-        text: Backend.translate("Update Avatar")
-        enabled: avatarName.text !== ""
-        onClicked: {
-          mainWindow.busy = true;
-          ClientInstance.notifyServer(
-            "UpdateAvatar",
-            JSON.stringify([avatarName.text])
-          );
-        }
-      }
       Button {
         text: Backend.translate("Update Password")
         enabled: oldPassword.text !== "" && newPassword.text !== ""
@@ -89,12 +85,69 @@ Item {
           );
         }
       }
+    }
+
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Lobby BG")
+      }
+      TextField {
+        text: config.lobbyBg
+      }
       Button {
-        text: Backend.translate("Quit")
+        text: "..."
         onClicked: {
-          root.finished();
+          fdialog.nameFilters = ["Image Files (*.jpg *.png)"];
+          fdialog.configKey = "lobbyBg";
+          fdialog.open();
         }
       }
     }
+
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Room BG")
+      }
+      TextField {
+        text: config.roomBg
+      }
+      Button {
+        text: "..."
+        onClicked: {
+          fdialog.nameFilters = ["Image Files (*.jpg *.png)"];
+          fdialog.configKey = "roomBg";
+          fdialog.open();
+        }
+      }
+    }
+
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Game BGM")
+      }
+      TextField {
+        text: config.bgmFile
+      }
+      Button {
+        text: "..."
+        onClicked: {
+          fdialog.nameFilters = ["Music Files (*.mp3)"];
+          fdialog.configKey = "bgmFile";
+          fdialog.open();
+        }
+      }
+    }
+  }
+
+  FileDialog {
+    id: fdialog
+    property string configKey
+    onAccepted: { config[configKey] = selectedFile; }
   }
 }

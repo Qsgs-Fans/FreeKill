@@ -25,7 +25,7 @@ Item {
   }
 
   Image {
-    source: AppPath + "/image/background"
+    source: config.lobbyBg
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
   }

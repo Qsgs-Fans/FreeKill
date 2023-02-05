@@ -159,7 +159,7 @@ Item {
 
   Drawer {
     id: lobby_drawer
-    width: parent.width * 0.6 / mainWindow.scale
+    width: parent.width * 0.4 / mainWindow.scale
     height: parent.height / mainWindow.scale
     dim: false
     clip: true

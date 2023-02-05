@@ -340,6 +340,9 @@ Fk:loadTranslationTable{
   ["New Password"] = "新密码",
   ["Update Avatar"] = "更新头像",
   ["Update Password"] = "更新密码",
+  ["Lobby BG"] = "大厅壁纸",
+  ["Room BG"] = "房间背景",
+  ["Game BGM"] = "游戏BGM",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",
