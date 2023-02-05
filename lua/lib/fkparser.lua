@@ -5,6 +5,16 @@
 -- In most cases, fk's basic modules are loaded before extension calls
 -- "require 'fkparser'", so we needn't to import lua modules here.
 
+local string2suit = {
+  spade = Card.Spade,
+  club = Card.Club,
+  heart = Card.Heart,
+  diamond = Card.Diamond,
+  no_suit = Card.NoSuit,
+  no_suit_black = Card.NoSuitBlack,
+  no_suit_red = Card.NoSuitRed,
+}
+
 local fkp = { functions = {} }
 
 fkp.functions.prepend = function(arr, e) table.insert(arr, 1, e) end
@@ -184,6 +194,55 @@ fkp.CreateActiveSkill = function(spec)
     on_effect = function(self, room, effect)
       -- TODO: active skill for card!
     end,
+  }
+end
+
+fkp.functions.newVirtualCard = function(number, suit, name, subcards, skill)
+  subcards = subcards or {}
+  local ret = Fk:cloneCard(name, string2suit[suit], number)
+  if not ret then
+    ret = Fk:cloneCard("slash", string2suit[suit], number)
+  end
+  ret.skillName = skill
+  ret:addSubcards(subcards)
+  return ret
+end
+
+fkp.functions.buildPattern = function(names, suits, numbers)
+  if not names then names = {"."} end
+  if not suits then suits = {"."} end
+  if not numbers then numbers = {"."} end
+
+  names = table.concat(names, ",")
+  suits = table.concat(suits, ",")
+  numbers = table.concat(numbers, ",")
+  return string.format("%s|%s|%s", names, numbers, suits)
+end
+
+fkp.CreateViewAsSkill = function(spec)
+  return fk.CreateViewAsSkill{
+    name = spec.name,
+    card_filter = function(self, to_select, selected)
+      local card = Fk:getCardById(to_select)
+      local clist = {}
+      for _, id in ipairs(selected) do
+        table.insert(clist, Fk:getCardById(id))
+      end
+      return spec.card_filter(self, clist, card)
+    end,
+    view_as = function(self, cards)
+      local clist = {}
+      for _, c in ipairs(cards) do
+        table.insert(clist, Fk:getCardById(c))
+      end
+      if spec.feasible(self, clist) then
+        return spec.view_as(self, clist)
+      end
+      return nil
+    end,
+    enabled_at_play = spec.can_use,
+    enabled_at_response = spec.can_response,
+    pattern = table.concat(spec.response_patterns, ";"),
   }
 end
 

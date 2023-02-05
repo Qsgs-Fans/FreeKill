@@ -10,6 +10,7 @@
 ---@field sub_type CardSubtype
 ---@field area CardArea
 ---@field subcards integer[]
+---@field skillName string @ for virtual cards
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -76,6 +77,7 @@ function Card:initialize(name, suit, number, color)
   self.sub_type = Card.SubTypeNone
   self.skill = nil
   self.subcards = {}
+  self.skillName = ""
 end
 
 ---@param suit Suit
