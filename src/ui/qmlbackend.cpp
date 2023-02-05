@@ -100,9 +100,12 @@ QString QmlBackend::pwd() {
 }
 
 bool QmlBackend::exists(const QString &file) {
-  QUrl u(file);
-  auto s = u.path();
-  return QFile::exists(QUrl(file).path());
+  QString s = file;
+#ifdef Q_OS_WIN
+  if (s.startsWith("file:///"))
+    s.replace(0, 8, "file://");
+#endif
+  return QFile::exists(QUrl(s).path());
 }
 
 bool QmlBackend::isDir(const QString &file) {
