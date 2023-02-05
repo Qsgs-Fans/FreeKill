@@ -2,6 +2,7 @@
 #include "serverplayer.h"
 #include "server.h"
 #include "util.h"
+#include <qjsondocument.h>
 
 Room::Room(Server* server)
 {
@@ -80,6 +81,14 @@ bool Room::isFull() const
   return players.count() == capacity;
 }
 
+const QByteArray Room::getSettings() const {
+  return settings;
+}
+
+void Room::setSettings(QByteArray settings) {
+  this->settings = settings;
+}
+
 bool Room::isAbandoned() const
 {
   if (isLobby())
@@ -143,6 +152,7 @@ void Room::addPlayer(ServerPlayer *player)
     jsonData = QJsonArray();
     jsonData << this->capacity;
     jsonData << this->timeout;
+    jsonData << QJsonDocument::fromJson(this->settings).object();
     player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
 
     foreach (ServerPlayer *p, getOtherPlayers(player)) {

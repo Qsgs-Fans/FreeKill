@@ -47,7 +47,7 @@ bool Server::listen(const QHostAddress& address, ushort port)
   return server->listen(address, port);
 }
 
-void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
+void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity, const QByteArray &settings)
 {
   Room *room;
   if (!idle_rooms.isEmpty()) {
@@ -67,6 +67,7 @@ void Server::createRoom(ServerPlayer* owner, const QString &name, int capacity)
 
   room->setName(name);
   room->setCapacity(capacity);
+  room->setSettings(settings);
   room->addPlayer(owner);
   if (!room->isLobby()) room->setOwner(owner);
 }

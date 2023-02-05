@@ -1,6 +1,7 @@
 #include "router.h"
 #include "client.h"
 #include "client_socket.h"
+#include <qjsondocument.h>
 #ifndef Q_OS_WASM
 #include "server.h"
 #include "serverplayer.h"
@@ -198,7 +199,8 @@ void Router::handlePacket(const QByteArray& rawPacket)
       auto arr = String2Json(jsonData).array();
       auto name = arr[0].toString();
       auto capacity = arr[1].toInt();
-      ServerInstance->createRoom(sender, name, capacity);
+      auto settings = QJsonDocument(arr[2].toObject()).toJson(QJsonDocument::Compact);
+      ServerInstance->createRoom(sender, name, capacity, settings);
     };
     lobby_actions["EnterRoom"] = [](ServerPlayer *sender, const QString &jsonData){
       auto arr = String2Json(jsonData).array();

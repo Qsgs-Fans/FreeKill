@@ -20,6 +20,7 @@ QtObject {
   // Client data
   property int roomCapacity: 0
   property int roomTimeout: 0
+  property bool enableFreeAssign: false
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());

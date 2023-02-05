@@ -39,6 +39,12 @@ Item {
       }
     }
 
+    CheckBox {
+      id: freeAssignCheck
+      checked: Debugging ? true : false
+      text: Backend.translate("Enable free assign")
+    }
+
     RowLayout {
       anchors.rightMargin: 8
       spacing: 16
@@ -49,7 +55,9 @@ Item {
           mainWindow.busy = true;
           ClientInstance.notifyServer(
             "CreateRoom",
-            JSON.stringify([roomName.text, playerNum.value])
+            JSON.stringify([roomName.text, playerNum.value, {
+              enableFreeAssign: freeAssignCheck.checked
+            }])
           );
         }
       }

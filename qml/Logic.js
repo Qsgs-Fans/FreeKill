@@ -67,6 +67,8 @@ callbacks["EnterRoom"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   config.roomCapacity = data[0];
   config.roomTimeout = data[1] - 1;
+  let roomSettings = data[2];
+  config.enableFreeAssign = roomSettings.enableFreeAssign;
   mainStack.push(room);
   mainWindow.busy = false;
 }

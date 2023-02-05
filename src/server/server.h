@@ -16,7 +16,7 @@ public:
 
   bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);
 
-  void createRoom(ServerPlayer *owner, const QString &name, int capacity);
+  void createRoom(ServerPlayer *owner, const QString &name, int capacity, const QByteArray &settings = "{}");
   Room *findRoom(int id) const;
   Room *lobby() const;
 

@@ -21,6 +21,8 @@ public:
   int getCapacity() const;
   void setCapacity(int capacity);
   bool isFull() const;
+  const QByteArray getSettings() const;
+  void setSettings(QByteArray settings);
   bool isAbandoned() const;
   void setAbandoned(bool abandoned);  // never use this function
 
@@ -72,6 +74,7 @@ private:
   int id;     // Lobby's id is 0
   QString name;   // “阴间大乱斗”
   int capacity;   // by default is 5, max is 8
+  QByteArray settings;   // JSON string
   bool m_abandoned;   // If room is empty, delete it
 
   ServerPlayer *owner;  // who created this room?

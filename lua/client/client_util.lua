@@ -348,6 +348,7 @@ Fk:loadTranslationTable{
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
+  ["Enable free assign"] = "自由选将",
 
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
