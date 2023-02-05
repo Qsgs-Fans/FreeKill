@@ -227,7 +227,7 @@ GameRule = fk.CreateTriggerSkill{
       end
       local damage = data.damage
       if damage and damage.from then
-        local killer = room:getPlayerById(damage.from)
+        local killer = damage.from
         rewardAndPunish(killer, player);
       end
     end,
