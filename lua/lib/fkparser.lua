@@ -77,6 +77,25 @@ fkp.functions.getMark = function(player, mark, hidden)
   return player:getMark(mark)
 end
 
+fkp.functions.judge = function(player, reason, pattern, good, play_animation)
+  local judge = {}
+  judge.who = player
+  judge.reason = reason
+  judge.pattern = pattern
+  -- judge.good = good
+  -- judge.play_animation = play_animation
+  player.room:judge(judge)
+  return judge.card
+end
+
+fkp.functions.retrial = function(card, player, judge, skill_name, exchange)
+  local room = player.room
+  return room:retrial(card, player, judge, skill_name, exchange)
+end
+
+-- skill prototypes
+--------------------------------------------
+
 fkp.CreateTriggerSkill = function(spec)
   local eve = {}
   local refresh_eve = {}
