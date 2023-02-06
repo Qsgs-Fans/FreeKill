@@ -1436,6 +1436,7 @@ function Room:doCardEffect(cardEffectEvent)
     end
 
     if event == fk.PreCardEffect then
+      if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
       if cardEffectEvent.card.name == 'slash' and
         not (
           cardEffectEvent.disresponsive or

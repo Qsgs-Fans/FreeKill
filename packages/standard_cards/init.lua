@@ -537,6 +537,11 @@ local godSalvationSkill = fk.CreateActiveSkill{
       end
     end
   end,
+  about_to_effect = function(self, room, effect)
+    if not room:getPlayerById(effect.to):isWounded() then
+      return true
+    end
+  end,
   on_effect = function(self, room, effect)
     room:recover({
       who = room:getPlayerById(effect.to),

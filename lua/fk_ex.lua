@@ -116,6 +116,7 @@ end
 ---@field target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[]): boolean
 ---@field feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
 ---@field on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
+---@field about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 
@@ -140,6 +141,7 @@ function fk.CreateActiveSkill(spec)
   if spec.target_filter then skill.targetFilter = spec.target_filter end
   if spec.feasible then skill.feasible = spec.feasible end
   if spec.on_use then skill.onUse = spec.on_use end
+  if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
   return skill
