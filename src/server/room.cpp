@@ -2,6 +2,7 @@
 #include "serverplayer.h"
 #include "server.h"
 #include "util.h"
+#include <qjsonarray.h>
 #include <qjsondocument.h>
 
 Room::Room(Server* server)
@@ -191,6 +192,11 @@ void Room::addRobot(ServerPlayer *player)
 
 void Room::removePlayer(ServerPlayer *player)
 {
+  if (observers.contains(player)) {
+    removeObserver(player);
+    return;
+  }
+
   if (!gameStarted) {
     if (players.contains(player)) {
       players.removeOne(player);
@@ -254,6 +260,34 @@ ServerPlayer *Room::findPlayer(int id) const
   return nullptr;
 }
 
+void Room::addObserver(ServerPlayer *player) {
+  if (!gameStarted) {
+    player->doNotify("ErrorMsg", "Can only observe running room.");
+    return;
+  }
+  observers.append(player);
+  player->setRoom(this);
+  pushRequest(QString("%1,observe").arg(player->getId()));
+}
+
+void Room::removeObserver(ServerPlayer *player) {
+  observers.removeOne(player);
+  player->setRoom(server->lobby());
+  if (player->getState() == Player::Online) {
+    QJsonArray arr;
+    arr << player->getId();
+    arr << player->getScreenName();
+    arr << player->getAvatar();
+    player->doNotify("Setup", JsonArray2Bytes(arr));
+    player->doNotify("EnterLobby", "");
+  }
+  pushRequest(QString("%1,leave").arg(player->getId()));
+}
+
+QList<ServerPlayer *> Room::getObservers() const {
+  return observers;
+}
+
 int Room::getTimeout() const
 {
   return timeout;
@@ -284,7 +318,9 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   if (type == 1) {
     // TODO: server chatting
   } else {
-    doBroadcastNotify(players, "Chat", QJsonDocument(doc).toJson(QJsonDocument::Compact));
+    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
+    doBroadcastNotify(players, "Chat", json);
+    doBroadcastNotify(observers, "Chat", json);
   }
 }
 

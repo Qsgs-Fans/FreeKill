@@ -264,6 +264,14 @@ Item {
     }
   }
 
+  GlowText {
+    text: Backend.translate("Observing ...")
+    visible: config.observing
+    color: "#4B83CD"
+    font.family: fontLi2.name
+    font.pixelSize: 48
+  }
+
   Item {
     id: controls
     anchors.bottom: dashboard.top
@@ -540,9 +548,9 @@ Item {
 
   function addToChat(pid, raw, msg) {
     chat.append(msg);
-    let photo = Logic.getPhoto(pid);
+    let photo = Logic.getPhotoOrSelf(pid);
     if (photo === undefined)
-      photo = dashboard.self;
+      return;
     photo.chat(raw.msg);
   }
 

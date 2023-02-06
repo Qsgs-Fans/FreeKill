@@ -21,6 +21,7 @@ QtObject {
   property int roomCapacity: 0
   property int roomTimeout: 0
   property bool enableFreeAssign: false
+  property bool observing: false
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());

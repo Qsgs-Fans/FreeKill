@@ -2,6 +2,7 @@
 ---@field room fk.Room
 ---@field players ServerPlayer[]
 ---@field alive_players ServerPlayer[]
+---@field observers fk.ServerPlayer[]
 ---@field current ServerPlayer
 ---@field game_finished boolean
 ---@field timeout integer
@@ -77,6 +78,7 @@ function Room:initialize(_room)
 
   self.players = {}
   self.alive_players = {}
+  self.observers = {}
   self.current = nil
   self.game_finished = false
   self.timeout = _room:getTimeout()
@@ -309,11 +311,9 @@ end
 ---@param players ServerPlayer[] | nil @ default all players
 function Room:doBroadcastNotify(command, jsonData, players)
   players = players or self.players
-  local tolist = fk.SPlayerList()
   for _, p in ipairs(players) do
-    tolist:append(p.serverplayer)
+    p:doNotify(command, jsonData)
   end
-  self.room:doBroadcastNotify(tolist, command, jsonData)
 end
 
 ---@param player ServerPlayer
@@ -391,6 +391,71 @@ end
 
 -- main loop for the request handling coroutine
 function Room:requestLoop()
+  local function tellRoomToObserver(player)
+    local observee = self.players[1]
+    player:doNotify("Setup", json.encode{
+      observee.id,
+      player:getScreenName(),
+      player:getAvatar(),
+    })
+    player:doNotify("EnterRoom", json.encode{
+      #self.players, self.timeout,
+      -- FIXME: use real room settings here
+      { enableFreeAssign = false }
+    })
+
+    -- send player data
+    for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do
+      player:doNotify("AddPlayer", json.encode{
+        p.id,
+        p.serverplayer:getScreenName(),
+        p.serverplayer:getAvatar(),
+      })
+    end
+
+    local player_circle = {}
+    for i = 1, #self.players do
+      table.insert(player_circle, self.players[i].id)
+    end
+    player:doNotify("ArrangeSeats", json.encode(player_circle))
+
+    for _, p in ipairs(self.players) do
+      self:notifyProperty(player, p, "general")
+      p:marshal(player)
+    end
+
+    -- TODO: tell drawPile
+    table.insert(self.observers, {observee.id, player})
+  end
+
+  local function addObserver(id)
+    local all_observers = self.room:getObservers()
+    for _, p in fk.qlist(all_observers) do
+      if p:getId() == id then
+        tellRoomToObserver(p)
+        self:doBroadcastNotify("AddObserver", json.encode{
+          p:getId(),
+          p:getScreenName(),
+          p:getAvatar()
+        })
+        break
+      end
+    end
+  end
+
+  local function removeObserver(id)
+    for _, t in ipairs(self.observers) do
+      local __, p = table.unpack(t)
+      if p:getId() == id then
+        table.removeOne(self.observers, t)
+        self:doBroadcastNotify("RemoveObserver", json.encode{
+          p:getId(),
+        })
+        break
+      end
+    end
+  end
+
   while true do
     local request = self.room:fetchRequest()
     if request ~= "" then
@@ -398,6 +463,10 @@ function Room:requestLoop()
       id = tonumber(id)
       if command == "reconnect" then
         self:getPlayerById(id):reconnect()
+      elseif command == "observe" then
+        addObserver(id)
+      elseif command == "leave" then
+        removeObserver(id)
       end
     end
     coroutine.yield()

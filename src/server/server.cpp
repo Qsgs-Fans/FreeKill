@@ -315,6 +315,11 @@ void Server::onUserDisconnected()
   qInfo() << "Player" << player->getId() << "disconnected";
   Room *room = player->getRoom();
   if (room->isStarted()) {
+    if (room->getObservers().contains(player)) {
+      room->removeObserver(player);
+      player->deleteLater();
+      return;
+    }
     player->setState(Player::Offline);
     player->setSocket(nullptr);
     // TODO: add a robot

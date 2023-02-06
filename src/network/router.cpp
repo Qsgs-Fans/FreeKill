@@ -207,10 +207,16 @@ void Router::handlePacket(const QByteArray& rawPacket)
       auto roomId = arr[0].toInt();
       ServerInstance->findRoom(roomId)->addPlayer(sender);
     };
+    lobby_actions["ObserveRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+      auto arr = String2Json(jsonData).array();
+      auto roomId = arr[0].toInt();
+      ServerInstance->findRoom(roomId)->addObserver(sender);
+    };
     lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData){
       sender->getRoom()->chat(sender, jsonData);
     };
   }
+#endif
 
   QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
   if (packet.isNull() || !packet.isArray())
@@ -224,7 +230,10 @@ void Router::handlePacket(const QByteArray& rawPacket)
   if (type & TYPE_NOTIFICATION) {
     if (type & DEST_CLIENT) {
       ClientInstance->callLua(command, jsonData);
-    } else {
+    }
+#ifndef Q_OS_WASM
+    else
+    {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
 
       Room *room = player->getRoom();
@@ -240,6 +249,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
         }
       }
     }
+#endif
   }
   else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
@@ -252,6 +262,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
       Q_ASSERT(false);
     }
   }
+#ifndef Q_OS_WASM
   else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
 
@@ -274,28 +285,6 @@ void Router::handlePacket(const QByteArray& rawPacket)
     }
     locker.unlock();
     emit replyReady();
-  }
-#else
-  QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
-  if (packet.isNull() || !packet.isArray())
-    return;
-
-  int requestId = packet[0].toInt();
-  int type = packet[1].toInt();
-  QString command = packet[2].toString();
-  QString jsonData = packet[3].toString();
-
-  if (type & TYPE_NOTIFICATION) {
-    if (type & DEST_CLIENT) {
-      ClientInstance->callLua(command, jsonData);
-    }
-  } else if (type & TYPE_REQUEST) {
-    this->requestId = requestId;
-    this->requestTimeout = packet[4].toInt();
-
-    if (type & DEST_CLIENT) {
-      qobject_cast<Client *>(parent())->callLua(command, jsonData);
-    }
   }
 #endif
 }

@@ -36,6 +36,10 @@ public:
   QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
   ServerPlayer *findPlayer(int id) const;
 
+  void addObserver(ServerPlayer *player);
+  void removeObserver(ServerPlayer *player);
+  QList<ServerPlayer*> getObservers() const;
+
   int getTimeout() const;
   void setTimeout(int timeout);
 
@@ -79,6 +83,7 @@ private:
 
   ServerPlayer *owner;  // who created this room?
   QList<ServerPlayer *> players;
+  QList<ServerPlayer *> observers;
   QList<int> runned_players;
   int robot_id;
   bool gameStarted;

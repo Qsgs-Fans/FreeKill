@@ -332,6 +332,7 @@ Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",
   ["Enter"] = "进入",
+  ["Observe"] = "旁观",
 
   ["Edit Profile"] = "编辑个人信息",
   ["Username"] = "用户名",
@@ -425,6 +426,8 @@ Fk:loadTranslationTable{
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+  ["Trusting ..."] = "托管中 ...",
+  ["Observing ..."] = "旁观中 ...",
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",

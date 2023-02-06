@@ -11,31 +11,8 @@ Item {
     id: roomDelegate
 
     Item {
-      height: 18
+      height: 22
       width: roomList.width
-
-      Rectangle {
-        anchors.fill: parent
-        color: "white"
-        opacity: 0
-        radius: 2
-        Behavior on opacity {
-          NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
-        }
-        MouseArea {
-          anchors.fill: parent
-          hoverEnabled: true
-          onEntered: parent.opacity = 1;
-          onExited: parent.opacity = 0;
-          onClicked: {
-            mainWindow.busy = true;
-            ClientInstance.notifyServer(
-              "EnterRoom",
-              JSON.stringify([roomId])
-            );
-          }
-        }
-      }
 
       RowLayout {
         anchors.fill: parent
@@ -57,6 +34,38 @@ Item {
         Text {
           color: (playerNum == capacity) ? "red" : "black"
           text: playerNum + "/" + capacity
+        }
+
+        Text {
+          text: Backend.translate("Enter")
+          font.pixelSize: 24
+          MouseArea {
+            anchors.fill: parent
+            onClicked: {
+              config.observing = false;
+              mainWindow.busy = true;
+              ClientInstance.notifyServer(
+                "EnterRoom",
+                JSON.stringify([roomId])
+              );
+            }
+          }
+        }
+
+        Text {
+          text: Backend.translate("Observe")
+          font.pixelSize: 24
+          MouseArea {
+            anchors.fill: parent
+            onClicked: {
+              config.observing = true;
+              mainWindow.busy = true;
+              ClientInstance.notifyServer(
+                "ObserveRoom",
+                JSON.stringify([roomId])
+              );
+            }
+          }
         }
       }
     }
