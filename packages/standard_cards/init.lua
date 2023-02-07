@@ -722,11 +722,26 @@ extension:addCards({
   indulgence:clone(Card.Heart, 6),
 })
 
+local crossbowSkill = fk.CreateTargetModSkill{
+  name = "#crossbow_skill",
+  attached_equip = "crossbow",
+  residue_func = function(self, player, skill, scope)
+    if player:hasSkill(self.name) and skill.name == "slash_skill"
+      and scope == Player.HistoryPhase then
+      return 999
+    end
+  end,
+}
+if not Fk.skills["#crossbow_skill"] then
+  Fk:addSkill(crossbowSkill)
+end
+
 local crossbow = fk.CreateWeapon{
   name = "crossbow",
   suit = Card.Club,
   number = 1,
   attack_range = 1,
+  equip_skill = crossbowSkill,
 }
 Fk:loadTranslationTable{
   ["crossbow"] = "诸葛连弩",
@@ -750,6 +765,20 @@ Fk:loadTranslationTable{
 extension:addCards({
   qingGang,
 })
+
+local crossbowSkill = fk.CreateTargetModSkill{
+  name = "#crossbow_skill",
+  attached_equip = "crossbow",
+  residue_func = function(self, player, skill, scope)
+    if player:hasSkill(self.name) and skill.name == "slash_skill"
+      and scope == Player.HistoryPhase then
+      return 999
+    end
+  end,
+}
+if not Fk.skills["#crossbow_skill"] then
+  Fk:addSkill(crossbowSkill)
+end
 
 local iceSword = fk.CreateWeapon{
   name = "ice_sword",

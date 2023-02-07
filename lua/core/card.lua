@@ -86,6 +86,7 @@ end
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
+  newCard.equip_skill = self.equip_skill
   return newCard
 end
 

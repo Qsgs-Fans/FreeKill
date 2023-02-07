@@ -1660,6 +1660,19 @@ function Room:moveCards(...)
         end
         self:setCardArea(info.cardId, data.toArea, data.to)
         Fk:filterCard(info.cardId, self:getPlayerById(data.to))
+
+        local currentCard = Fk:getCardById(info.cardId)
+        if 
+          data.toArea == Player.Equip and
+          currentCard.type == Card.TypeEquip and
+          data.to ~= nil and
+          self:getPlayerById(data.to):isAlive() and
+          currentCard.equip_skill
+        then
+          currentCard:onInstall(self, self:getPlayerById(data.to))
+        elseif realFromArea == Player.Equip and currentCard.type == Card.TypeEquip and data.from ~= nil and currentCard.equip_skill then
+          currentCard:onUninstall(self, self:getPlayerById(data.from))
+        end
       end
     end
   end
@@ -2032,8 +2045,9 @@ end
 
 ---@param player ServerPlayer
 ---@param skill_names string[] | string
----@param source_skill string | Skill | nil
-function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog)
+---@param source_skill string | Skill | null
+---@param no_trigger boolean | null
+function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no_trigger)
   if type(skill_names) == "string" then
     skill_names = skill_names:split("|")
   end
@@ -2094,7 +2108,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog)
     end
   end
 
-  if #triggers > 0 then
+  if not no_trigger and #triggers > 0 then
     for i = 1, #triggers do
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])

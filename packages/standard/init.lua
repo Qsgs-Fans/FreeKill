@@ -605,6 +605,54 @@ Fk:loadTranslationTable{
   [":qicai"] = "锁定技。你使用锦囊牌无距离限制。",
 }
 
+local cheat = fk.CreateActiveSkill{
+  name = "cheat",
+  anim_type = "drawcard",
+  can_use = function(self, player)
+    return true
+  end,
+  feasible = function(self, selected, selected_cards)
+    return #selected == 0 and #selected_cards == 0
+  end,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    local cardTypeName = room:askForChoice(from, { 'BasicCard', 'TrickCard', 'Equip' }, "cheat")
+    local cardType = Card.TypeBasic
+    if cardTypeName == 'TrickCard' then
+      cardType = Card.TypeTrick
+    elseif cardTypeName == 'Equip' then
+      cardType = Card.TypeEquip
+    end
+
+    local allCardIds = Fk:getAllCardIds()
+    local allCardMapper = {}
+    local allCardNames = {}
+    for _, id in ipairs(allCardIds) do
+      local card = Fk:getCardById(id)
+      if card.type == cardType then
+        if allCardMapper[card.name] == nil then
+          table.insert(allCardNames, card.name)
+        end
+
+        allCardMapper[card.name] = allCardMapper[card.name] or {}
+        table.insert(allCardMapper[card.name], id)
+      end
+    end
+
+    if #allCardNames == 0 then
+      return
+    end
+
+    local cardName = room:askForChoice(from, allCardNames, "cheat")
+    local toGain = nil
+    if #allCardMapper[cardName] > 0 then
+      toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
+    end
+
+    room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
+  end
+}
+
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
   anim_type = "drawcard",
@@ -622,6 +670,7 @@ local zhiheng = fk.CreateActiveSkill{
 }
 local sunquan = General:new(extension, "sunquan", "wu", 4)
 sunquan:addSkill(zhiheng)
+sunquan:addSkill(cheat)
 Fk:loadTranslationTable{
   ["sunquan"] = "孙权",
   ["zhiheng"] = "制衡",
