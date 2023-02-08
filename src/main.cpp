@@ -154,7 +154,6 @@ int main(int argc, char *argv[])
   QObject::connect(qApp, &QCoreApplication::aboutToQuit, [=](){
     delete Pacman;
   });
-  Pacman->downloadNewPack("https://gitee.com/notify-ctrl/FreeKill");
 #endif
   
   QmlBackend backend;
