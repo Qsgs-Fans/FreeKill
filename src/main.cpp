@@ -1,6 +1,7 @@
 #include "qmlbackend.h"
 #ifndef Q_OS_WASM
 #include "server.h"
+#include "packman.h"
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -146,6 +147,14 @@ int main(int argc, char *argv[])
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
+#endif
+
+#ifndef Q_OS_WASM
+  Pacman = new PackMan;
+  QObject::connect(qApp, &QCoreApplication::aboutToQuit, [=](){
+    delete Pacman;
+  });
+  Pacman->downloadNewPack("https://gitee.com/notify-ctrl/FreeKill");
 #endif
   
   QmlBackend backend;

@@ -3,6 +3,7 @@ set(freekill_SRCS
   "core/player.cpp"
   "core/util.cpp"
   "core/parser.cpp"
+  "core/packman.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
@@ -70,6 +71,7 @@ else ()
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(READLINE_LIB readline)
   list(APPEND freekill_SRCS "server/shell.cpp")
+  set(GIT_LIB git2)
 endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})
@@ -83,4 +85,5 @@ target_link_libraries(FreeKill PRIVATE
   ${READLINE_LIB}
   ${FKP_LIB}
   ${QT_LIB}
+  ${GIT_LIB}
 )
