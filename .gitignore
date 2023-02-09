@@ -34,6 +34,7 @@ QtQuick/
 QtQuick.2/
 Qt5Compat/
 QtQml/
+QtMultimedia/
 sqldrivers/
 styles/
 tls/
