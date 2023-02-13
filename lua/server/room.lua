@@ -2117,6 +2117,7 @@ function Room:judge(data)
 
   self.logic:trigger(fk.AskForRetrial, who, data)
   self.logic:trigger(fk.FinishRetrial, who, data)
+  Fk:filterCard(data.card.id, who, data)
   self:sendLog{
     type = "#JudgeResult",
     from = who.id,
