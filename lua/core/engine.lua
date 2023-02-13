@@ -315,4 +315,8 @@ function Engine:currentRoom()
   return RoomInstance
 end
 
+function Engine:getDescription(name)
+  return self:translate(":" .. name)
+end
+
 return Engine

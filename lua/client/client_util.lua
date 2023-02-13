@@ -14,6 +14,30 @@ function GetGeneralData(name)
   }
 end
 
+function GetGeneralDetail(name)
+  local general = Fk.generals[name]
+  if general == nil then general = Fk.generals["diaochan"] end
+  local ret = {
+    kingdom = general.kingdom,
+    hp = general.hp,
+    maxHp = general.maxHp,
+    skill = {}
+  }
+  for _, s in ipairs(general.skills) do
+    table.insert(ret.skill, {
+      name = s.name,
+      description = Fk:getDescription(s.name)
+    })
+  end
+  for _, s in ipairs(general.other_skills) do
+    table.insert(ret.skill, {
+      name = s,
+      description = Fk:getDescription(s)
+    })
+  end
+  return json.encode(ret)
+end
+
 local cardSubtypeStrings = {
   [Card.SubtypeNone] = "none",
   [Card.SubtypeDelayedTrick] = "delayed_trick",

@@ -26,6 +26,11 @@ Item {
           GeneralCardItem { 
             autoBack: false
             name: modelData
+            onClicked: {
+              generalText.clear();
+              generalText.general = modelData;
+              generalDetail.open();
+            }
           }
         }
       }
@@ -37,6 +42,54 @@ Item {
     anchors.right: parent.right
     onClicked: {
       mainStack.pop();
+    }
+  }
+
+  Drawer {
+    id: generalDetail
+    edge: Qt.RightEdge
+    width: parent.width * 0.4 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopRight
+
+    Flickable {
+      flickableDirection: Flickable.VerticalFlick
+      contentWidth: generalText.width
+      contentHeight: generalText.height
+      width: parent.width * 0.8
+      height: parent.height * 0.8
+      clip: true
+      anchors.centerIn: parent
+      ScrollBar.vertical: ScrollBar {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+      }
+
+      TextEdit {
+        id: generalText
+
+        property string general: ""
+        width: generalDetail.width * 0.75
+        readOnly: true
+        selectByKeyboard: true
+        selectByMouse: true
+        wrapMode: TextEdit.WordWrap
+        textFormat: TextEdit.RichText
+        font.pixelSize: 16
+
+        onGeneralChanged: {
+          let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+          this.append(Backend.translate(data.kingdom) + " " + Backend.translate(general) + " " + data.hp + "/" + data.maxHp);
+          data.skill.forEach(t => {
+            this.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+          });
+        }
+      }
     }
   }
 
