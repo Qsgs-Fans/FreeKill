@@ -384,6 +384,10 @@ Fk:loadTranslationTable{
     "SQLite是一个轻量级的数据库，具有占用资源低、运行效率快、嵌入性好等优点。<br/>" ..
     "<br/>FreeKill使用sqlite3在服务端保存用户的各种信息。<br/>" ..
     "<br/>官网： https://www.sqlite.org",
+  ["about_git2_description"] = "<b>关于Libgit2</b><br/>" ..
+    "Libgit2是一个轻量级的、跨平台的、纯C实现的库，支持Git的大部分核心操作，并且支持几乎任何能与C语言交互的编程语言。<br/>" ..
+    "<br/>FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下载、更新、管理等等功能。<br/>" ..
+    "<br/>官网： https://libgit2.org",
 
   ["Exit Lobby"] = "退出大厅",
 

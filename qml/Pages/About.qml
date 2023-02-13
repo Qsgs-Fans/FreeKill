@@ -13,6 +13,7 @@ Item {
     ListElement { dest: "gplv3" }
     ListElement { dest: "sqlite" }
     ListElement { dest: "ossl" }
+    ListElement { dest: "git2" }
   }
 
   ColumnLayout {
