@@ -222,14 +222,10 @@ function GameLogic:trigger(event, target, data)
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or {}
-  local player = target
+  local _target = target or room.current -- for iteration
+  local player = _target
 
   self.event_stack:push({event, target, data})
-
-  if target == nil then
-    target = room.current
-    player = target
-  end
 
   repeat do
     -- refresh skills. This should not be broken
@@ -239,7 +235,7 @@ function GameLogic:trigger(event, target, data)
       end
     end
     player = player.next
-  end until player == target
+  end until player == _target
 
   ---@param a TriggerSkill
   ---@param b TriggerSkill
@@ -284,7 +280,7 @@ function GameLogic:trigger(event, target, data)
     if broken then break end
 
     player = player.next
-  end until player == target
+  end until player == _target
 
   self.event_stack:pop()
   return broken
