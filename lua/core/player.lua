@@ -564,4 +564,15 @@ function Player:loseSkill(skill, source_skill)
   return ret
 end
 
+-- return all skills that xxx:hasSkill() == true
+function Player:getAllSkills()
+  local ret = {table.unpack(self.player_skills)}
+  for _, t in pairs(self.derivative_skills) do
+    for _, s in ipairs(t) do
+      table.insertIfNeed(ret, s)
+    end
+  end
+  return ret
+end
+
 return Player

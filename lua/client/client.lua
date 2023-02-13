@@ -82,6 +82,8 @@ function Client:moveCards(moves)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
     end
+
+    Fk:filterCard(move.ids[1], move.to == Self.id and Self or nil)
   end
 end
 
@@ -124,7 +126,7 @@ function Client:appendLog(msg)
   else
     local card_str = {}
     for _, id in ipairs(card) do
-      table.insert(card_str, Fk:getCardById(id):toLogString())
+      table.insert(card_str, Fk:getCardById(id, true):toLogString())
     end
     if unknownCount > 0 then
       table.insert(card_str, Fk:translate("unknown_card")

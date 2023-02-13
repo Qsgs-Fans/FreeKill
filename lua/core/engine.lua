@@ -232,10 +232,80 @@ function Engine:getAllCardIds(except)
   return result
 end
 
+local filtered_cards = {}
+
 ---@param id integer
+---@param ignoreFilter boolean
 ---@return Card
-function Engine:getCardById(id)
-  return self.cards[id]
+function Engine:getCardById(id, ignoreFilter)
+  local ret = self.cards[id]
+  if not ignoreFilter then
+    ret = filtered_cards[id] or self.cards[id]
+  end
+  return ret
+end
+
+---@param id integer
+---@param player Player
+---@param data any @ may be JudgeStruct
+function Engine:filterCard(id, player, data)
+  local card = self:getCardById(id, true)
+  if player == nil then
+    filtered_cards[id] = nil
+    return
+  end
+  local skills = player:getAllSkills()
+  local filters = {}
+  for _, s in ipairs(skills) do
+    if s:isInstanceOf(FilterSkill) then
+      table.insert(filters, s)
+    end
+  end
+  if #filters == 0 then
+    return
+  end
+
+  local modify = false
+  if data and type(data) == "table" and data.card
+    and type(data.card) == "table" and data.card:isInstanceOf(Card) then
+    modify = true
+  end
+
+  for _, f in ipairs(filters) do
+    if f:cardFilter(card) then
+      local _card = f:viewAs(card)
+      _card.id = id
+      _card.skillName = f.name
+      if modify and RoomInstance then
+        if not f.mute then
+          RoomInstance:broadcastSkillInvoke(f.name)
+        end
+        RoomInstance:doAnimate("InvokeSkill", {
+          name = f.name,
+          player = player.id,
+          skill_type = f.anim_type,
+        })
+        RoomInstance:sendLog{
+          type = "#FilterCard",
+          arg = f.name,
+          from = player.id,
+          arg2 = card:toLogString(),
+          arg3 = _card:toLogString(),
+        }
+      end
+      card = _card
+    end
+    if card == nil then
+      card = self:getCardById(id)
+    end
+    filtered_cards[id] = card
+  end
+
+  if modify then
+    filtered_cards[id] = nil
+    data.card = card
+    return
+  end
 end
 
 function Engine:currentRoom()

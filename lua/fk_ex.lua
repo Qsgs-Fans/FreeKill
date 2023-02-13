@@ -10,6 +10,7 @@ ProhibitSkill = require "core.skill_type.prohibit"
 AttackRangeSkill = require "core.skill_type.attack_range"
 MaxCardsSkill = require "core.skill_type.max_cards"
 TargetModSkill = require "core.skill_type.target_mod"
+FilterSkill = require "core.skill_type.filter"
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
@@ -287,6 +288,27 @@ function fk.CreateTargetModSkill(spec)
   if spec.extra_target_func then
     skill.getExtraTargetNum = spec.extra_target_func
   end
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class FilterSpec: StatusSkillSpec
+---@field card_filter fun(self: FilterSkill, card: Card)
+---@field view_as fun(self: FilterSkill, card: Card)
+
+---@param spec FilterSpec
+---@return FilterSkill
+function fk.CreateFilterSkill(spec)
+  assert(type(spec.name) == "string")
+
+  local skill = FilterSkill:new(spec.name)
+  skill.mute = spec.mute
+  skill.anim_type = spec.anim_type
+  skill.cardFilter = spec.card_filter
+  skill.viewAs = spec.view_as
   if spec.global then
     skill.global = spec.global
   end

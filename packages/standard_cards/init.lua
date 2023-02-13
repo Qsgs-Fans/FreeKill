@@ -5,6 +5,20 @@ Fk:loadTranslationTable{
   ["standard_cards"] = "标+EX"
 }
 
+Fk:loadTranslationTable{
+  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
+  ["log_spade"] = "♠",
+  ["log_heart"] = '<font color="#CC3131">♥</font>',
+  ["log_club"] = "♣",
+  ["log_diamond"] = '<font color="#CC3131">♦</font>',
+  ["log_nosuit"] = "无花色",
+  ["nosuit"] = "无花色",
+  ["spade"] = "黑桃",
+  ["heart"] = "红桃",
+  ["club"] = "梅花",
+  ["diamond"] = "方块",
+}
+
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,

@@ -21,6 +21,7 @@ Item {
   property string suit: "club"
   property int number: 7
   property string name: "slash"
+  property string virt_name: ""
   property string subtype: ""
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
@@ -107,6 +108,17 @@ Item {
     visible: known && suit == ""
     source: (visible && color != "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
     x: 1
+  }
+
+  Rectangle {
+    visible: root.virt_name !== ""
+    width: parent.width
+    height: 14
+    anchors.verticalCenter: parent.verticalCenter
+    Text {
+      anchors.centerIn: parent
+      text: Backend.translate(root.virt_name)
+    }
   }
 
   GlowText {

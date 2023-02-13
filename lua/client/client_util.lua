@@ -25,7 +25,7 @@ local cardSubtypeStrings = {
 }
 
 function GetCardData(id)
-  local card = Fk.cards[id]
+  local card = Fk:getCardById(id)
   if card == nil then return json.encode{
     cid = id,
     known = false
@@ -38,6 +38,11 @@ function GetCardData(id)
     color = card.color,
     subtype = cardSubtypeStrings[card.sub_type]
   }
+  if card.skillName ~= "" then
+    local orig = Fk:getCardById(id, true)
+    ret.name = orig.name
+    ret.virt_name = card.name
+  end
   return json.encode(ret)
 end
 
@@ -464,17 +469,6 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能“%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
-  ["log_spade"] = "♠",
-  ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = "♣",
-  ["log_diamond"] = '<font color="#CC3131">♦</font>',
-  ["log_nosuit"] = "无花色",
-  ["nosuit"] = "无花色",
-  ["spade"] = "黑桃",
-  ["heart"] = "红桃",
-  ["club"] = "梅花",
-  ["diamond"] = "方块",
   
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
@@ -497,6 +491,8 @@ Fk:loadTranslationTable{
   ["#UseV0CardToTargets"] = "%from 使用了 %arg，目标是 %to",
   ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
   ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
+
+  ["#FilterCard"] = "由于 %arg 的效果，与 %from 相关的 %arg2 被视为了 %arg3",
 
   -- skill
   ["#InvokeSkill"] = "%from 发动了 “%arg”",

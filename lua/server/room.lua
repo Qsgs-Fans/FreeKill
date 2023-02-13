@@ -141,7 +141,7 @@ function Room:getPlayerById(id)
     end
   end
 
-  error("cannot find player by " .. id)
+  return nil
 end
 
 ---@param playerIds integer[]
@@ -988,7 +988,17 @@ end
 ---@param cardUseEvent CardUseStruct
 local sendCardEmotionAndLog = function(room, cardUseEvent)
   local from = cardUseEvent.from
-  local card = cardUseEvent.card
+  local _card = cardUseEvent.card
+
+  -- when this function is called, card is already in PlaceTable and no filter skill is applied.
+  -- So filter this card manually here to get 'real' use.card
+  local card = _card
+  if not _card:isVirtual() then
+    local temp = { card = _card }
+    Fk:filterCard(_card.id, room:getPlayerById(from), temp)
+    card = temp.card
+  end
+
   room:setEmotion(room:getPlayerById(from), card.name)
 
   local soundName
@@ -1020,7 +1030,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       table.insert(to, t[1])
     end
 
-    if card:isVirtual() then
+    if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0CardToTargets",
@@ -1059,7 +1069,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       end
     end
   elseif cardUseEvent.toCard then
-    if card:isVirtual() then
+    if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0CardToCard",
@@ -1085,7 +1095,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       }
     end
   else
-    if card:isVirtual() then
+    if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0Card",
@@ -1638,6 +1648,7 @@ function Room:moveCards(...)
           table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
         end
         self:setCardArea(info.cardId, data.toArea, data.to)
+        Fk:filterCard(info.cardId, self:getPlayerById(data.to))
       end
     end
   end

@@ -69,6 +69,9 @@ GameRule = fk.CreateTriggerSkill{
         -- TODO: need a new function to call the UI
         local cardIds = room:getNCards(data.num)
         player:addCards(Player.Hand, cardIds)
+        for _, id in ipairs(cardIds) do
+          Fk:filterCard(id, player)
+        end
         local move_to_notify = {}   ---@type CardsMoveStruct
         move_to_notify.toArea = Card.PlayerHand
         move_to_notify.to = player.id
