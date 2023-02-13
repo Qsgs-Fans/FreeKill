@@ -259,6 +259,11 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
+-- for fkp only
+function Player:getHandcardNum()
+  return #self:getCardIds(Player.Hand)
+end
+
 ---@param cardSubtype CardSubtype
 ---@return integer|null
 function Player:getEquipment(cardSubtype)

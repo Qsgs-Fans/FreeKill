@@ -176,6 +176,18 @@ function Card:getColorString()
   return "nocolor"
 end
 
+function Card:getTypeString()
+  local t = self.type
+  if t == Card.TypeBasic then
+    return "basic"
+  elseif t == Card.TypeTrick then
+    return "trick"
+  elseif t == Card.TypeEquip then
+    return "equip"
+  end
+  return "nocolor"
+end
+
 local function getNumberStr(num)
   if num == 1 then
     return "A"

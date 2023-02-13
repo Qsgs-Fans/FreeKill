@@ -129,6 +129,16 @@ function Room:getCardArea(cardId)
   return self.card_place[cardId] or Card.Unknown
 end
 
+---@param cardId integer | card
+---@return ServerPlayer
+function Room:getCardOwner(cardId)
+  if type(cardId) ~= "number" then
+    assert(cardId and cardId:isInstanceOf(Card))
+    cardId = cardId:getEffectiveId()
+  end
+  return self.owner_map[cardId] and self:getPlayerById(self.owner_map[cardId]) or nil
+end
+
 ---@param id integer
 ---@return ServerPlayer
 function Room:getPlayerById(id)

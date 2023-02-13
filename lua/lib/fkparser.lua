@@ -265,4 +265,35 @@ fkp.CreateViewAsSkill = function(spec)
   }
 end
 
+fkp.CreateTargetModSkill = function(_spec)
+  local spec = { name = _spec.name }
+  local function getVCardFromActiveSkill(skill)
+    if not string.find(skill.name, "_skill") then return 0 end
+    local str = string.gsub(skill.name, "_skill", "")
+    return Fk:cloneCard(str)
+  end
+  if _spec.residue_func then
+    spec.residue_func = function(self, target, skill, scope)
+      return _spec.residue_func(self, target, getVCardFromActiveSkill(skill))
+    end
+  end
+  if _spec.distance_limit_func then
+    spec.distance_limit_func = function(self, target, skill)
+      return _spec.distance_limit_func(self, target, getVCardFromActiveSkill(skill))
+    end
+  end
+  if _spec.extra_target_func then
+    spec.extra_target_func = function(self, target, skill)
+      return _spec.extra_target_func(self, target, getVCardFromActiveSkill(skill))
+    end
+  end
+  return fk.CreateTargetModSkill(spec)
+end
+
+fkp.CreateFilterSkill = fk.CreateFilterSkill
+fkp.CreateProhibitSkill = fk.CreateProhibitSkill
+fkp.CreateDistanceSkill = fk.CreateDistanceSkill
+fkp.CreateMaxCardsSkill = fk.CreateMaxCardsSkill
+fkp.CreateAttackRangeSkill = fk.CreateAttackRangeSkill
+
 return fkp
