@@ -9,7 +9,7 @@
 #include "client.h"
 #include "util.h"
 
-QmlBackend *Backend;
+QmlBackend *Backend = nullptr;
 
 QmlBackend::QmlBackend(QObject* parent)
   : QObject(parent)

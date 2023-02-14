@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
+import QtQuick.Dialogs
 import "Logic.js" as Logic
 import "Pages"
 
@@ -133,6 +134,25 @@ Item {
   Connections {
     target: Backend
     function onNotifyUI(command, jsonData) {
+      if (command == "ErrorDialog") {
+        let text = jsonData;
+        // only show 3 lines in main text
+        let lines = text.split("\n");
+        let brief = "";
+        let detail = "";
+        for (let i = 0; i < lines.length; i++) {
+          if (i < 3) {
+            brief += lines[i] + "\n";
+          }
+        }
+        if (lines.length > 3) {
+          detail = text;
+        }
+        errDialog.text = brief;
+        errDialog.detailedText = detail;
+        errDialog.open();
+        return;
+      }
       let cb = callbacks[command]
       if (typeof(cb) === "function") {
         cb(jsonData);
@@ -158,6 +178,11 @@ Item {
       width = config.winWidth;
       height = config.winHeight;
     }
+  }
+
+  MessageDialog {
+    id: errDialog
+    buttons: MessageDialog.Ok
   }
 
   onClosing: {

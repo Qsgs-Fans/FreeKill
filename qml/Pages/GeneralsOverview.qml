@@ -64,11 +64,7 @@ Item {
       height: parent.height * 0.8
       clip: true
       anchors.centerIn: parent
-      ScrollBar.vertical: ScrollBar {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-      }
+      ScrollBar.vertical: ScrollBar {}
 
       TextEdit {
         id: generalText
