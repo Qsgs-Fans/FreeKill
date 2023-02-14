@@ -143,10 +143,7 @@ Item {
     smooth: true
     visible: false
     fillMode: Image.PreserveAspectCrop
-    source: (general != "") ? (Backend.exists(SkinBank.GENERAL_DIR + general + ".jpg")
-      ? SkinBank.GENERAL_DIR + general
-      : SkinBank.GENERAL_DIR + "0"
-    ) : ""
+    source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
   }
 
   Rectangle {

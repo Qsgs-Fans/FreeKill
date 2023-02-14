@@ -1,5 +1,6 @@
 ---@class Skill : Object
 ---@field name string
+---@field package Package
 ---@field frequency Frequency
 ---@field visible boolean
 ---@field mute boolean
@@ -18,6 +19,10 @@ Skill.Wake = 5
 function Skill:initialize(name, frequency)
   -- TODO: visible, lord, etc
   self.name = name
+  -- skill's package is assigned when calling General:addSkill
+  -- if you need skills that not belongs to any general (like 'jixi')
+  -- then you should assign skill.package explicitly
+  self.package = { extensionName = "standard" }
   self.frequency = frequency
   self.visible = true
   self.mute = false

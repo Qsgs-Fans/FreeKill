@@ -20,9 +20,7 @@ CardItem {
   suit: ""
   number: 0
   footnote: ""
-  card.source: Backend.exists(SkinBank.GENERAL_DIR + name + ".jpg")
-    ? SkinBank.GENERAL_DIR + name
-    : SkinBank.GENERAL_DIR + "0"
+  card.source: SkinBank.getGeneralPicture(name)
   glow.color: "white" //Engine.kingdomColor[kingdom]
 
   Image {

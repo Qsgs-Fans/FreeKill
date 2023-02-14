@@ -8,6 +8,8 @@ function GetGeneralData(name)
   local general = Fk.generals[name]
   if general == nil then general = Fk.generals["diaochan"] end
   return json.encode {
+    package = general.package.name,
+    extension = general.package.extensionName,
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp
@@ -18,6 +20,8 @@ function GetGeneralDetail(name)
   local general = Fk.generals[name]
   if general == nil then general = Fk.generals["diaochan"] end
   local ret = {
+    package = general.package.name,
+    extension = general.package.extensionName,
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
@@ -216,6 +220,7 @@ function GetSkillData(skill_name)
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
+    extension = skill.package.extensionName,
     freq = freq
   }
 end
