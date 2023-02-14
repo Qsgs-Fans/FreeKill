@@ -93,6 +93,10 @@ fkp.functions.retrial = function(card, player, judge, skill_name, exchange)
   return room:retrial(card, player, judge, skill_name, exchange)
 end
 
+fkp.functions.hasSkill = function(p, s) return p:hasSkill(s) end
+fkp.functions.turnOver = function(p) p:turnOver() end
+fkp.functions.distanceTo = function(p1, p2) return p1:distanceTo(p2) end
+
 -- skill prototypes
 --------------------------------------------
 
