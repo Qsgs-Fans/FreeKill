@@ -18,14 +18,12 @@ FreeKill使用git进行包管理，具体而言是使用libgit2库进行管理�
 
 首先，packages中除了基本的三个包之外，其他的包都要从仓库中排除掉。这方面由一个.gitignore文件控制。
 
-然后，在packages目录下，有一个名为packages.txt的文件统领所有拓展包。这个文本文件中，每一行描述一个拓展包，其形式为：
-
-    <拓展包名字> <git仓库url> <HEAD指针所在的commit Hash> <0或者1，表示是否启用>
+然后，在packages目录下，有一个名为packages.db的文件统领所有拓展包。这是个sqlite数据库，结构详见[数据库](./database.md)。
 
 下面从连接过程中简要分析这个文件的作用：
 
 1. 当一个客户端尝试对服务端发起连接请求的时候，首先它们之间会先比较MD5值。
-2. 如果MD5通过则无事发生，否则服务端会把自己的packages.txt发送给客户端。
+2. 如果MD5通过则无事发生，否则服务端会把自己的packages.db中的关键信息发送给客户端。
 3. 客户端根据文件内容检查自己的拓展包。如果那个文件夹存在，那么就git fetch -> git checkout \<hash\>。
 4. 如果文件夹不存在，那么先git clone，然后再checkout。
 5. 做完这些后，客户端再次发起请求。若仍不通过，则向用户通知错误信息。
@@ -38,7 +36,7 @@ FreeKill使用git进行包管理，具体而言是使用libgit2库进行管理�
 
 一般来说都是推荐将项目放在github上面的，但由于FreeKill暂且不考虑国际化且必须照顾广大玩家的体验，因此将拓展包托管到github可能不是一个明智的选择。推荐将拓展包托管到gitee平台，或者其他的好办法也行。
 
-总之有一点要注意的是，packages.txt中的url需要是国内访问比较方便的网站才行。
+总之有一点要注意的是，packages.db中的url需要是国内访问比较方便的网站才行。
 
 ## 包的部署
 
@@ -50,4 +48,4 @@ FreeKill使用git进行包管理，具体而言是使用libgit2库进行管理�
 
 ## 包的下载与更新（TODO）
 
-客户端使用GUI，服务端使用Fk shell或者直接编辑packages.txt。
+客户端使用GUI，服务端使用Fk shell或者直接编辑packages.db。

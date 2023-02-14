@@ -62,14 +62,14 @@ void Dumpstack(lua_State *L)
 }
 
 #ifndef Q_OS_WASM
-sqlite3 *OpenDatabase(const QString &filename)
+sqlite3 *OpenDatabase(const QString &filename, const QString &initSql)
 {
   sqlite3 *ret;
   int rc;
   if (!QFile::exists(filename)) {
-    QFile file("./server/init.sql");
+    QFile file(initSql);
     if (!file.open(QIODevice::ReadOnly)) {
-      qFatal("cannot open init.sql. Quit now.");
+      qFatal("cannot open %s. Quit now.", initSql.toUtf8().data());
       qApp->exit(1);
     }
 

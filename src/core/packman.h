@@ -5,20 +5,17 @@ class PackMan {
 public:
   PackMan();
   ~PackMan();
-
+/*
   void readConfig();
   void writeConfig();
   void loadConfString(const QString &conf);
-
+*/
   void downloadNewPack(const QString &url);
   void enablePack(const QString &pack);
   void disablePack(const QString &pack);
   void updatePack(const QString &pack);
 private:
-  QStringList pack_list;
-  QStringList pack_url_list;
-  QStringList hash_list;
-  QList<int> enabled_list;
+  sqlite3 *db;
 
   int clone(const QString &url);
   int pull(const QString &name);

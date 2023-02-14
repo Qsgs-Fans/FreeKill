@@ -4,3 +4,4 @@
 !test/
 !manuvering/
 !.gitignore
+!init.sql

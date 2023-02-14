@@ -1,18 +1,19 @@
 #include "packman.h"
+#include "util.h"
 #include "git2.h"
 
 PackMan *Pacman;
 
 PackMan::PackMan() {
   git_libgit2_init();
-  readConfig();
+  db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
 }
 
 PackMan::~PackMan() {
   git_libgit2_shutdown();
-  writeConfig();
+  sqlite3_close(db);
 }
-
+/*
 void PackMan::readConfig() {
   QFile f("packages/packages.txt");
   if (!f.exists())
@@ -70,44 +71,40 @@ void PackMan::loadConfString(const QString &conf) {
     }
   }
 }
-
+*/
 void PackMan::downloadNewPack(const QString &url) {
   clone(url);
   QString fileName = QUrl(url).fileName();
   if (fileName.endsWith(".git"))
     fileName.chop(4);
 
-  QString hash = head(fileName);
-  pack_list << fileName;
-  pack_url_list << url;
-  hash_list << hash;
-  enabled_list << 1;
+  auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
+  WHERE name = '%1';").arg(fileName));
+  if (result["name"].toArray().isEmpty()) {
+    ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
+    VALUES ('%1','%2','%3',1);").arg(fileName).arg(url).arg(head(fileName)));
+  }
 }
 
 void PackMan::enablePack(const QString &pack) {
-  int idx = pack_list.indexOf(pack);
-  if (idx < 0)
-    return;
-  enabled_list[idx] = 1;
+  ExecSQL(db, QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
   QDir d(QString("packages/%1"));
   d.rename(pack + ".disabled", pack);
 }
 
 void PackMan::disablePack(const QString &pack) {
-  int idx = pack_list.indexOf(pack);
-  if (idx < 0)
-    return;
-  enabled_list[idx] = 0;
+  ExecSQL(db, QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
   QDir d(QString("packages/%1"));
   d.rename(pack, pack + ".disabled");
 }
 
 void PackMan::updatePack(const QString &pack) {
-  int idx = pack_list.indexOf(pack);
-  if (idx < 0)
-    return;
+  auto result = SelectFromDatabase(db, QString("SELECT hash FROM packages \
+  WHERE name = '%1';").arg(pack));
+  auto arr = result["hash"].toArray();
+  if (arr.isEmpty()) return;
   pull(pack);
-  checkout(pack, hash_list[idx]);
+  checkout(pack, arr[0].toString());
 }
 
 #define GIT_FAIL                                                               \
