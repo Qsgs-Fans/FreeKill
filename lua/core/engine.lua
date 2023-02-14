@@ -262,6 +262,7 @@ function Engine:filterCard(id, player, data)
     end
   end
   if #filters == 0 then
+    filtered_cards[id] = nil
     return
   end
 
