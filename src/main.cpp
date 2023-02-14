@@ -151,9 +151,6 @@ int main(int argc, char *argv[])
 
 #ifndef Q_OS_WASM
   Pacman = new PackMan;
-  QObject::connect(qApp, &QCoreApplication::aboutToQuit, [=](){
-    delete Pacman;
-  });
 #endif
   
   QmlBackend backend;
@@ -197,6 +194,7 @@ int main(int argc, char *argv[])
   // delete the engine first
   // to avoid "TypeError: Cannot read property 'xxx' of null"
   delete engine;
+  delete Pacman;
 
   return ret;
 }

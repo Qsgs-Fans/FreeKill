@@ -69,7 +69,6 @@ else ()
   set(SQLITE3_LIB sqlite3)
   set(READLINE_LIB readline)
   list(APPEND freekill_SRCS "server/shell.cpp")
-  set(GIT_LIB git2)
 endif ()
 
 source_group("Include" FILES ${freekill_HEADERS})
