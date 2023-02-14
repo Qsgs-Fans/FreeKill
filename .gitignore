@@ -1,5 +1,6 @@
 # Compile output
 build/
+lib/libgit2/
 *.o
 zh_CN.qm
 

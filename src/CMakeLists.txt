@@ -42,15 +42,12 @@ set(QT_LIB
 if (WIN32)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
-  set(CRYPTO_LIB OpenSSL::Crypto)
-  set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/win/libgit2.dll)
 elseif (ANDROID)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
-  set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto_1_1.so)
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
-    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB}"
+    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${OPENSSL_CRYPTO_LIBRARY};${OPENSSL_SSL_LIBRARY}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
@@ -66,10 +63,10 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   set(FKP_LIB "")
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
   set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
+  set(GIT_LIB "")
 else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)
-  set(CRYPTO_LIB OpenSSL::Crypto)
   set(READLINE_LIB readline)
   list(APPEND freekill_SRCS "server/shell.cpp")
   set(GIT_LIB git2)
@@ -82,7 +79,8 @@ target_precompile_headers(FreeKill PRIVATE "pch.h")
 target_link_libraries(FreeKill PRIVATE
   ${LUA_LIB}
   ${SQLITE3_LIB}
-  ${CRYPTO_LIB}
+  ${OPENSSL_CRYPTO_LIBRARY}
+  ${OPENSSL_SSL_LIBRARY}
   ${READLINE_LIB}
   ${FKP_LIB}
   ${QT_LIB}

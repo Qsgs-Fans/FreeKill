@@ -2,9 +2,27 @@ cmake_minimum_required(VERSION 3.16)
 
 project(FreeKill VERSION 0.0.1)
 
+find_package(OpenSSL)
+find_package(Lua)
+find_package(SQLite3)
+
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-include_directories(fkparse/src)
-add_subdirectory(fkparse)
+  set(CMAKE_C_STANDARD 99)
+  include_directories(fkparse/src)
+  add_subdirectory(fkparse)
+  if (ANDROID)
+    # Use pre-compiled openssl binary here
+    set(OPENSSL_CRYPTO_LIBRARY ${PROJECT_SOURCE_DIR}/lib/android/libcrypto-1.1.so)
+    set(OPENSSL_SSL_LIBRARY ${PROJECT_SOURCE_DIR}/lib/android/libssl-1.1.so)
+  endif ()
+  if (WIN32 OR ANDROID)
+    include_directories(lib/libgit2/include)
+    add_subdirectory(lib/libgit2)
+    set(GIT_LIB libgit2package)
+  else ()
+    # Linux users should install libgit2 or libgit2-dev from package manager.
+    set(GIT_LIB git2)
+  endif ()
 endif ()
 
 find_package(Qt6 REQUIRED COMPONENTS
@@ -17,10 +35,6 @@ find_package(Qt6 REQUIRED COMPONENTS
   LinguistTools
 )
 
-find_package(OpenSSL)
-find_package(Lua)
-find_package(SQLite3)
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -28,7 +42,6 @@ set(REQUIRED_QT_VERSION "6.3")
 
 include_directories(include/lua)
 include_directories(include)
-include_directories(include/libgit2)
 include_directories(src)
 include_directories(src/client)
 include_directories(src/core)
