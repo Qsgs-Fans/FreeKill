@@ -52,7 +52,7 @@ elseif (ANDROID)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
-    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB}"
+    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
