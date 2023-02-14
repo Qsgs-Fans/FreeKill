@@ -21,6 +21,7 @@ Item {
   property string suit: "club"
   property int number: 7
   property string name: "slash"
+  property string extension: ""
   property string virt_name: ""
   property string subtype: ""
   property string color: ""  // only use when suit is empty
@@ -76,7 +77,7 @@ Item {
 
   Image {
     id: cardItem
-    source: known ? (name != "" ? SkinBank.CARD_DIR + name : "")
+    source: known ? SkinBank.getCardPicture(cid)
             : (SkinBank.CARD_DIR + "card-back")
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop

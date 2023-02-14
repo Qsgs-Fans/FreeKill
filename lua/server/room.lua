@@ -1022,11 +1022,12 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       subTypeStr = "armor"
     end
 
-    soundName = "common/" .. subTypeStr
+    soundName = "./audio/card/common/" .. subTypeStr
   else
-    soundName = (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
+      .. (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
   end
-  room:broadcastPlaySound("./audio/card/" .. soundName)
+  room:broadcastPlaySound(soundName)
 
   room:doAnimate("Indicate", {
     from = from,

@@ -148,7 +148,9 @@ function Engine:addCard(card)
   card.id = cardId
   cardId = cardId + 1
   table.insert(self.cards, card)
-  _card_name_table[card.name] = card
+  if _card_name_table[card.name] == nil then
+    _card_name_table[card.name] = card
+  end
 end
 
 ---@param cards Card[]
@@ -165,7 +167,9 @@ end
 function Engine:cloneCard(name, suit, number)
   local cd = _card_name_table[name]
   assert(cd, "Attempt to clone a card that not added to engine")
-  return cd:clone(suit, number)
+  local ret = cd:clone(suit, number)
+  ret.package = cd.package
+  return ret
 end
 
 ---@param num integer

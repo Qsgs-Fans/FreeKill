@@ -61,6 +61,7 @@ function GetCardData(id)
   local ret = {
     cid = id,
     name = card.name,
+    extension = card.package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
     color = card.color,

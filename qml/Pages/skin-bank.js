@@ -24,3 +24,14 @@ function getGeneralPicture(name) {
   }
   return GENERAL_DIR + "0.jpg";
 }
+
+function getCardPicture(cid) {
+  let data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+  let extension = data.extension;
+  let name = data.name;
+  let path = AppPath + "/packages/" + extension + "/image/card/" + name + ".png";
+  if (Backend.exists(path)) {
+    return path;
+  }
+  return CARD_DIR + "unknown.png";
+}
