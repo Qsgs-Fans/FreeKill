@@ -2,6 +2,7 @@
 #include "client_socket.h"
 #include "clientplayer.h"
 #include "util.h"
+#include "parser.h"
 
 Client *ClientInstance;
 ClientPlayer *Self;
@@ -18,6 +19,8 @@ Client::Client(QObject* parent)
   ClientSocket *socket = new ClientSocket;
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
   router = new Router(this, socket, Router::TYPE_CLIENT);
+
+  Parser::parseFkp();
 
   L = CreateLuaState();
   DoLuaScript(L, "lua/freekill.lua");

@@ -1,5 +1,6 @@
 # Compile output
 build/
+lib/libgit2/
 *.o
 zh_CN.qm
 
@@ -34,6 +35,7 @@ QtQuick/
 QtQuick.2/
 Qt5Compat/
 QtQml/
+QtMultimedia/
 sqldrivers/
 styles/
 tls/

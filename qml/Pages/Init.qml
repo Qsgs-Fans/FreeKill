@@ -3,11 +3,11 @@ import QtQuick.Controls
 
 Item {
   id: root
-  scale: 2
 
   Frame {
     id: join_server
     anchors.centerIn: parent
+    scale: 1.5
     background: Rectangle {
       color: "#88888888"
       radius: 2
@@ -78,6 +78,15 @@ Item {
           Backend.joinServer("127.0.0.1");
         }
       }
+    }
+  }
+
+  Button {
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    text: qsTr("PackageManage")
+    onClicked: {
+      mainStack.push(packageManage);
     }
   }
 

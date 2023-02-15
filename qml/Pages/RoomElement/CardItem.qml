@@ -21,6 +21,8 @@ Item {
   property string suit: "club"
   property int number: 7
   property string name: "slash"
+  property string extension: ""
+  property string virt_name: ""
   property string subtype: ""
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
@@ -53,6 +55,7 @@ Item {
 
   signal toggleDiscards()
   signal clicked()
+  signal rightClicked()
   signal doubleClicked()
   signal thrown()
   signal released()
@@ -74,7 +77,7 @@ Item {
 
   Image {
     id: cardItem
-    source: known ? (name != "" ? SkinBank.CARD_DIR + name : "")
+    source: known ? SkinBank.getCardPicture(cid)
             : (SkinBank.CARD_DIR + "card-back")
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
@@ -108,6 +111,17 @@ Item {
     x: 1
   }
 
+  Rectangle {
+    visible: root.virt_name !== ""
+    width: parent.width
+    height: 14
+    anchors.verticalCenter: parent.verticalCenter
+    Text {
+      anchors.centerIn: parent
+      text: Backend.translate(root.virt_name)
+    }
+  }
+
   GlowText {
     id: footnoteItem
     text: footnote
@@ -135,6 +149,7 @@ Item {
 
   MouseArea {
     anchors.fill: parent
+    acceptedButtons: Qt.LeftButton | Qt.RightButton
     drag.target: draggable ? parent : undefined
     drag.axis: Drag.XAndYAxis
     hoverEnabled: true
@@ -162,9 +177,17 @@ Item {
       }
     }
 
-    onClicked: {
-      selected = selectable ? !selected : false;
-      parent.clicked();
+    onClicked: (mouse) => {
+      if (mouse.button == Qt.LeftButton) {
+        selected = selectable ? !selected : false;
+        parent.clicked();
+      } else if (mouse.button === Qt.RightButton) {
+        parent.rightClicked();
+      }
+    }
+
+    onPressAndHold: {
+      parent.rightClicked();
     }
   }
 

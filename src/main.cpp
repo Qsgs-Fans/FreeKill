@@ -1,6 +1,7 @@
 #include "qmlbackend.h"
 #ifndef Q_OS_WASM
 #include "server.h"
+#include "packman.h"
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -61,9 +62,16 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
     break;
   case QtWarningMsg:
     fprintf(stderr, "[%s/WARNING] %s\n", threadName.constData(), localMsg.constData());
+    if (Backend != nullptr) {
+      Backend->notifyUI("ErrorDialog", localMsg);
+    }
     break;
   case QtCriticalMsg:
     fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(), localMsg.constData());
+    if (Backend != nullptr) {
+      Backend->notifyUI("ErrorDialog", QString("⛔ %1/Error occured!\n  %2")
+        .arg(threadName).arg(localMsg));
+    }
     break;
   case QtFatalMsg:
     fprintf(stderr, "[%s/FATAL] %s\n", threadName.constData(), localMsg.constData());
@@ -107,6 +115,7 @@ int main(int argc, char *argv[])
       qInfo("Server is listening on port %d", serverPort);
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       auto shell = new Shell;
+      Pacman = new PackMan;
       shell->start();
 #endif
     }
@@ -120,10 +129,6 @@ int main(int argc, char *argv[])
 #ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
-
-  QTranslator translator;
-  Q_UNUSED(translator.load("zh_CN.qm"));
-  QCoreApplication::installTranslator(&translator);
 
 #define SHOW_SPLASH_MSG(msg) \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
@@ -147,11 +152,20 @@ int main(int argc, char *argv[])
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
 #endif
+
+  QTranslator translator;
+  Q_UNUSED(translator.load("zh_CN.qm"));
+  QCoreApplication::installTranslator(&translator);
   
   QmlBackend backend;
   backend.setEngine(engine);
+
+#ifndef Q_OS_WASM
+  Pacman = new PackMan;
+#endif
   
   engine->rootContext()->setContextProperty("Backend", &backend);
+  engine->rootContext()->setContextProperty("Pacman", Pacman);
 
 #ifdef QT_DEBUG
   bool debugging = true;
@@ -169,6 +183,7 @@ int main(int argc, char *argv[])
   engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9530");
 #elif defined(Q_OS_WIN32)
   system = "Win";
+  ::system("chcp 65001");
 #elif defined(Q_OS_LINUX)
   system = "Linux";
 #else
@@ -188,6 +203,7 @@ int main(int argc, char *argv[])
   // delete the engine first
   // to avoid "TypeError: Cannot read property 'xxx' of null"
   delete engine;
+  delete Pacman;
 
   return ret;
 }

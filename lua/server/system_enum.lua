@@ -1,22 +1,133 @@
----@alias CardsMoveInfo {ids: integer[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null }
----@alias MoveInfo {cardId: integer, fromArea: CardArea}
----@alias CardsMoveStruct {moveInfo: MoveInfo[], from: integer|null, to: integer|null, toArea: CardArea, moveReason: CardMoveReason, proposer: integer|null, skillName: string|null, moveVisible: boolean|null, specialName: string|null, specialVisible: boolean|null, fromSpecialName: string|null }
+---@class CardsMoveInfo
+---@field ids integer[]
+---@field from integer|null
+---@field to integer|null
+---@field toArea CardArea
+---@field moveReason CardMoveReason
+---@field proposer integer
+---@field skillName string|null
+---@field moveVisible boolean|null
+---@field specialName string|null
+---@field specialVisible boolean|null
 
----@alias HpChangedData { num: integer, reason: string, skillName: string }
----@alias HpLostData { num: integer, skillName: string }
----@alias DamageStruct { from: integer|null, to: integer, damage: integer, card: Card, damageType: DamageType, skillName: string }
----@alias RecoverStruct { who: integer, num: integer, recoverBy: integer|null, skillName: string|null }
+---@class MoveInfo
+---@field cardId integer
+---@field fromArea CardArea
 
----@alias DyingStruct { who: integer, damage: DamageStruct }
----@alias DeathStruct { who: integer, damage: DamageStruct }
+---@class CardsMoveStruct
+---@field moveInfo MoveInfo[]
+---@field from integer|null
+---@field to integer|null
+---@field toArea CardArea
+---@field moveReason CardMoveReason
+---@field proposer integer|null
+---@field skillName string|null
+---@field moveVisible boolean|null
+---@field specialName string|null
+---@field specialVisible boolean|null
+---@field fromSpecialName string|null
 
----@alias CardUseStruct { from: integer, tos: TargetGroup, card: Card, toCard: Card|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardsResponded: Card[]|null }
----@alias AimStruct { from: integer, card: Card, tos: AimGroup, to: integer, subTargets: integer[]|null, targetGroup: TargetGroup|null, nullifiedTargets: integer[]|null, firstTarget: boolean, additionalDamage: integer|null, disresponsive: boolean|null, unoffsetableList: boolean|null }
----@alias CardEffectEvent { from: integer, to: integer, subTargets: integer[]|null, tos: TargetGroup, card: Card, toCard: Card|null, responseToEvent: CardUseStruct|null, nullifiedTargets: interger[]|null, extraUse: boolean|null, disresponsiveList: integer[]|null, unoffsetableList: integer[]|null, addtionalDamage: integer|null, customFrom: integer|null, cardsResponded: Card[]|null, disresponsive: boolean|null, unoffsetable: boolean|null }
----@alias SkillEffectEvent { from: integer, tos: integer[], cards: integer[] }
+---@class HpChangedData
+---@field num integer
+---@field reason string
+---@field skillName string
 
----@alias JudgeStruct { who: ServerPlayer, card: Card, reason: string, pattern: string }
----@alias CardResponseEvent { from: integer, card: Card, responseToEvent: CardEffectEvent|null, skipDrop: boolean|null, customFrom: integer|null }
+---@class HpLostData
+---@field num integer
+---@field skillName string
+
+---@alias DamageType integer
+
+fk.NormalDamage = 1
+fk.ThunderDamage = 2
+fk.FireDamage = 3
+
+---@class DamageStruct
+---@field from ServerPlayer|null
+---@field to ServerPlayer
+---@field damage integer
+---@field card Card
+---@field damageType DamageType
+---@field skillName string
+
+---@class RecoverStruct
+---@field who ServerPlayer
+---@field num integer
+---@field recoverBy ServerPlayer|null
+---@field skillName string|null
+---@field card Card|null
+
+---@class DyingStruct
+---@field who integer
+---@field damage DamageStruct
+
+---@class DeathStruct
+---@field who integer
+---@field damage DamageStruct
+
+---@class CardUseStruct
+---@field from integer
+---@field tos TargetGroup
+---@field card Card
+---@field toCard Card|null
+---@field responseToEvent CardUseStruct|null
+---@field nullifiedTargets interger[]|null
+---@field extraUse boolean|null
+---@field disresponsiveList integer[]|null
+---@field unoffsetableList integer[]|null
+---@field addtionalDamage integer|null
+---@field customFrom integer|null
+---@field cardsResponded Card[]|null
+
+---@class AimStruct
+---@field from integer
+---@field card Card
+---@field tos AimGroup
+---@field to integer
+---@field subTargets integer[]|null
+---@field targetGroup TargetGroup|null
+---@field nullifiedTargets integer[]|null
+---@field firstTarget boolean
+---@field additionalDamage integer|null
+---@field disresponsive boolean|null
+---@field unoffsetableList boolean|null
+
+---@class CardEffectEvent
+---@field from integer
+---@field to integer
+---@field subTargets integer[]|null
+---@field tos TargetGroup
+---@field card Card
+---@field toCard Card|null
+---@field responseToEvent CardEffectStruct|null
+---@field nullifiedTargets interger[]|null
+---@field extraUse boolean|null
+---@field disresponsiveList integer[]|null
+---@field unoffsetableList integer[]|null
+---@field addtionalDamage integer|null
+---@field customFrom integer|null
+---@field cardsResponded Card[]|null
+---@field disresponsive boolean|null
+---@field unoffsetable boolean|null
+---@field isCancellOut boolean|null
+
+---@class SkillEffectEvent
+---@field from integer
+---@field tos integer[]
+---@field cards integer[]
+
+---@class JudgeStruct
+---@field who ServerPlayer
+---@field card Card
+---@field reason string
+---@field pattern string
+
+---@class CardResponseEvent
+---@field from integer
+---@field card Card
+---@field responseToEvent CardEffectEvent|null
+---@field skipDrop boolean|null
+---@field customFrom integer|null
 
 ---@alias CardMoveReason integer
 
@@ -31,10 +142,11 @@ fk.ReasonExchange = 8
 fk.ReasonUse = 9
 fk.ReasonResonpse = 10
 
----@alias DamageType integer
-
-fk.NormalDamage = 1
-fk.ThunderDamage = 2
-fk.FireDamage = 3
-
----@alias LogMessage {type: string, from: integer, to: integer[], card: integer[], arg: any, arg2: any, arg3: any}
+---@class LogMessage
+---@field type string
+---@field from integer
+---@field to integer[]
+---@field card integer[]
+---@field arg any
+---@field arg2 any
+---@field arg3 any

@@ -11,31 +11,8 @@ Item {
     id: roomDelegate
 
     Item {
-      height: 18
+      height: 22
       width: roomList.width
-
-      Rectangle {
-        anchors.fill: parent
-        color: "white"
-        opacity: 0
-        radius: 2
-        Behavior on opacity {
-          NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
-        }
-        MouseArea {
-          anchors.fill: parent
-          hoverEnabled: true
-          onEntered: parent.opacity = 1;
-          onExited: parent.opacity = 0;
-          onClicked: {
-            mainWindow.busy = true;
-            ClientInstance.notifyServer(
-              "EnterRoom",
-              JSON.stringify([roomId])
-            );
-          }
-        }
-      }
 
       RowLayout {
         anchors.fill: parent
@@ -57,6 +34,38 @@ Item {
         Text {
           color: (playerNum == capacity) ? "red" : "black"
           text: playerNum + "/" + capacity
+        }
+
+        Text {
+          text: Backend.translate("Enter")
+          font.pixelSize: 24
+          MouseArea {
+            anchors.fill: parent
+            onClicked: {
+              config.observing = false;
+              mainWindow.busy = true;
+              ClientInstance.notifyServer(
+                "EnterRoom",
+                JSON.stringify([roomId])
+              );
+            }
+          }
+        }
+
+        Text {
+          text: Backend.translate("Observe")
+          font.pixelSize: 24
+          MouseArea {
+            anchors.fill: parent
+            onClicked: {
+              config.observing = true;
+              mainWindow.busy = true;
+              ClientInstance.notifyServer(
+                "ObserveRoom",
+                JSON.stringify([roomId])
+              );
+            }
+          }
         }
       }
     }
@@ -102,16 +111,16 @@ Item {
         iconSource: "configure"
         text: Backend.translate("Edit Profile")
         onClicked: {
-          globalPopup.source = "EditProfile.qml";
-          globalPopup.open();
+          lobby_dialog.source = "LobbyElement/EditProfile.qml";
+          lobby_drawer.open();
         }
       }
       TileButton {
         iconSource: "create_room"
         text: Backend.translate("Create Room")
         onClicked: {
-          globalPopup.source = "CreateRoom.qml";
-          globalPopup.open();
+          lobby_dialog.source = "LobbyElement/CreateRoom.qml";
+          lobby_drawer.open();
         }
       }
       TileButton {
@@ -157,28 +166,27 @@ Item {
     }
   }
 
-  Loader {
-    id: lobby_dialog
-    z: 1000
-    onSourceChanged: {
-      if (item === null)
-        return;
-      item.finished.connect(function(){
-        source = "";
-      });
-      item.widthChanged.connect(function(){
-        lobby_dialog.moveToCenter();
-      });
-      item.heightChanged.connect(function(){
-        lobby_dialog.moveToCenter();
-      });
-      moveToCenter();
-    }
+  Drawer {
+    id: lobby_drawer
+    width: parent.width * 0.4 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopLeft
 
-    function moveToCenter()
-    {
-      item.x = Math.round((root.width - item.width) / 2);
-      item.y = Math.round(root.height * 0.67 - item.height / 2);
+    Loader {
+      id: lobby_dialog
+      anchors.centerIn: parent
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finished.connect(() => {
+          source = "";
+          lobby_drawer.close();
+        });
+      }
     }
   }
 

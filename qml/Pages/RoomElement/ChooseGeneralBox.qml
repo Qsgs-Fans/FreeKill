@@ -116,6 +116,11 @@ GraphicsBox {
         updatePosition();
       }
 
+      onRightClicked: {
+        if (selectedItem.indexOf(this) === -1 && config.enableFreeAssign)
+          roomScene.startCheat("RoomElement/Cheat/FreeAssign.qml", { card: this });
+      }
+
       onReleased: {
         if (!isClicked)
           arrangeCards();

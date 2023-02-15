@@ -784,6 +784,18 @@ callbacks["WaitForNullification"] = function() {
   roomScene.state = "notactive";
 }
 
+callbacks["SetPlayerMark"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let player = getPhotoOrSelf(data[0]);
+  let mark = data[1];
+  let value = data[2];
+  if (value == 0) {
+    player.markArea.removeMark(mark);
+  } else {
+    player.markArea.setMark(mark, mark.startsWith("@@") ? "" : value);
+  }
+}
+
 callbacks["Animate"] = function(jsonData) {
   // jsonData: [Object object]
   let data = JSON.parse(jsonData);
@@ -847,7 +859,13 @@ callbacks["LogEvent"] = function(jsonData) {
       break;
     }
     case "PlaySkillSound": {
-      Backend.playSound("./audio/skill/" + data.name, data.i);
+      let skill = data.name;
+      let extension = data.extension;
+      if (!extension) {
+        let data = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+        extension = data.extension;
+      }
+      Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, data.i);
       break;
     }
     case "PlaySound": {
@@ -859,7 +877,8 @@ callbacks["LogEvent"] = function(jsonData) {
       if (data.to === dashboardModel.id) {
         item = dashboard.self;
       }
-      Backend.playSound("./audio/death/" + item.general);
+      let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [item.general])).extension;
+      Backend.playSound("./packages/" + extension + "/audio/death/" + item.general);
     }
     default:
       break;

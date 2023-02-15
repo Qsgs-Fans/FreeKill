@@ -30,6 +30,7 @@ Item {
 
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
+  property alias markArea: markAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem
   property alias specialArea: handcardAreaItem
 
@@ -142,7 +143,7 @@ Item {
     smooth: true
     visible: false
     fillMode: Image.PreserveAspectCrop
-    source: (general != "") ? SkinBank.GENERAL_DIR + general : ""
+    source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
   }
 
   Rectangle {
@@ -201,6 +202,14 @@ Item {
 
     x: 31
     y: 139
+  }
+
+  MarkArea {
+    id: markAreaItem
+
+    anchors.bottom: equipAreaItem.top
+    anchors.bottomMargin: -18
+    x: 31
   }
 
   Image {

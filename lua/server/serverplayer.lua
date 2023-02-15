@@ -35,6 +35,13 @@ end
 ---@param jsonData string
 function ServerPlayer:doNotify(command, jsonData)
   self.serverplayer:doNotify(command, jsonData)
+  local room = self.room
+  for _, t in ipairs(room.observers) do
+    local id, p = table.unpack(t)
+    if id == self.id then
+      p:doNotify(command, jsonData)
+    end
+  end
 end
 
 --- Send a request to client, and allow client to reply within *timeout* seconds.
@@ -178,11 +185,13 @@ function ServerPlayer:reconnect()
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
     #room.players, room.timeout,
+    -- FIXME: use real room settings here
+    { enableFreeAssign = false }
   })
   room:notifyProperty(self, self, "role")
 
   -- send player data
-  for _, p in ipairs(room:getOtherPlayers(self)) do
+  for _, p in ipairs(room:getOtherPlayers(self, true, true)) do
     self:doNotify("AddPlayer", json.encode{
       p.id,
       p.serverplayer:getScreenName(),

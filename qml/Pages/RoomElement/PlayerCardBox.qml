@@ -64,6 +64,7 @@ GraphicsBox {
             suit: ""
             number: 0
             autoBack: false
+            known: false
             selectable: true
             onClicked: root.cardSelected(cid);
           }

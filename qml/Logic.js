@@ -38,6 +38,15 @@ callbacks["ErrorMsg"] = function(jsonData) {
   mainWindow.busy = false;
 }
 
+callbacks["UpdateBusyText"] = function(jsonData) {
+  mainWindow.busyText = jsonData;
+}
+
+callbacks["DownloadComplete"] = function() {
+  mainWindow.busy = false;
+  mainStack.currentItem.downloadComplete(); // should be pacman page
+}
+
 callbacks["BackToStart"] = function(jsonData) {
   while (mainStack.depth > 1) {
     mainStack.pop();
@@ -67,6 +76,8 @@ callbacks["EnterRoom"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   config.roomCapacity = data[0];
   config.roomTimeout = data[1] - 1;
+  let roomSettings = data[2];
+  config.enableFreeAssign = roomSettings.enableFreeAssign;
   mainStack.push(room);
   mainWindow.busy = false;
 }

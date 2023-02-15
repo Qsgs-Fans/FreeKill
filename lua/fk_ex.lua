@@ -10,6 +10,7 @@ ProhibitSkill = require "core.skill_type.prohibit"
 AttackRangeSkill = require "core.skill_type.attack_range"
 MaxCardsSkill = require "core.skill_type.max_cards"
 TargetModSkill = require "core.skill_type.target_mod"
+FilterSkill = require "core.skill_type.filter"
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
@@ -116,6 +117,7 @@ end
 ---@field target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[]): boolean
 ---@field feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
 ---@field on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
+---@field about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 
@@ -140,6 +142,7 @@ function fk.CreateActiveSkill(spec)
   if spec.target_filter then skill.targetFilter = spec.target_filter end
   if spec.feasible then skill.feasible = spec.feasible end
   if spec.on_use then skill.onUse = spec.on_use end
+  if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
   return skill
@@ -285,6 +288,27 @@ function fk.CreateTargetModSkill(spec)
   if spec.extra_target_func then
     skill.getExtraTargetNum = spec.extra_target_func
   end
+  if spec.global then
+    skill.global = spec.global
+  end
+
+  return skill
+end
+
+---@class FilterSpec: StatusSkillSpec
+---@field card_filter fun(self: FilterSkill, card: Card)
+---@field view_as fun(self: FilterSkill, card: Card)
+
+---@param spec FilterSpec
+---@return FilterSkill
+function fk.CreateFilterSkill(spec)
+  assert(type(spec.name) == "string")
+
+  local skill = FilterSkill:new(spec.name)
+  skill.mute = spec.mute
+  skill.anim_type = spec.anim_type
+  skill.cardFilter = spec.card_filter
+  skill.viewAs = spec.view_as
   if spec.global then
     skill.global = spec.global
   end

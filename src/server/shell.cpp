@@ -2,6 +2,7 @@
 #include "shell.h"
 #include "server.h"
 #include "serverplayer.h"
+#include "packman.h"
 #include <signal.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -20,6 +21,12 @@ void Shell::helpCommand(QStringList &) {
   qInfo("%s: Shut down the server.", "quit");
   qInfo("%s: List all online players.", "lsplayer");
   qInfo("%s: List all running rooms.", "lsroom");
+  qInfo("%s: Install a new package from <url>.", "install");
+  qInfo("%s: Remove a package.", "remove");
+  qInfo("%s: List all packages.", "lspkg");
+  qInfo("%s: Enable a package.", "enable");
+  qInfo("%s: Disable a package.", "disable");
+  qInfo("%s: Upgrade a package.", "upgrade");
   qInfo("For more commands, check the documentation.");
 }
 
@@ -45,6 +52,69 @@ void Shell::lsrCommand(QStringList &) {
   }
 }
 
+void Shell::installCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'install' command need a URL to install.");
+    return;
+  }
+
+  auto url = list[0];
+  Pacman->downloadNewPack(url);
+}
+
+void Shell::removeCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'remove' command need a package name to remove.");
+    return;
+  }
+
+  auto pack = list[0];
+  Pacman->removePack(pack);
+}
+
+void Shell::upgradeCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'upgrade' command need a package name to upgrade.");
+    return;
+  }
+
+  auto pack = list[0];
+  Pacman->upgradePack(pack);
+}
+
+void Shell::enableCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'enable' command need a package name to enable.");
+    return;
+  }
+
+  auto pack = list[0];
+  Pacman->enablePack(pack);
+}
+
+void Shell::disableCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'disable' command need a package name to disable.");
+    return;
+  }
+
+  auto pack = list[0];
+  Pacman->disablePack(pack);
+}
+
+void Shell::lspkgCommand(QStringList &) {
+  auto arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
+  qInfo("Name\tVersion\t\tEnabled");
+  qInfo("------------------------------");
+  foreach (auto a, arr) {
+    auto obj = a.toObject();
+    auto hash = obj["hash"].toString();
+    qInfo() << obj["name"].toString().toUtf8().constData() << "\t"
+            << hash.first(8).toUtf8().constData() << "\t"
+            << obj["enabled"].toString().toUtf8().constData();
+  }
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -55,6 +125,12 @@ Shell::Shell() {
     handlers["?"] = &Shell::helpCommand;
     handlers["lsplayer"] = &Shell::lspCommand;
     handlers["lsroom"] = &Shell::lsrCommand;
+    handlers["install"] = &Shell::installCommand;
+    handlers["remove"] = &Shell::removeCommand;
+    handlers["upgrade"] = &Shell::upgradeCommand;
+    handlers["lspkg"] = &Shell::lspkgCommand;
+    handlers["enable"] = &Shell::enableCommand;
+    handlers["disable"] = &Shell::disableCommand;
   }
   handler_map = handlers;
 }
