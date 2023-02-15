@@ -444,6 +444,7 @@ Fk:loadTranslationTable{
 
   [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "选择武将",
+  ["AskForGuanxiong"] = "观星",
   ["AskForChoice"] = "选择",
   ["PlayCard"] = "出牌",
 
