@@ -179,15 +179,16 @@ void Router::handlePacket(const QByteArray& rawPacket)
         .arg(sender->getId());
 
       auto passed = false;
-      auto result = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
-      passed = (result["password"].toArray()[0].toString() ==
+      auto arr2 = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
+      auto result = arr2[0].toObject();
+      passed = (result["password"].toString() ==
         QCryptographicHash::hash(
-          oldpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+          oldpw.append(result["salt"].toString()).toLatin1(),
           QCryptographicHash::Sha256).toHex());
       if (passed) {
         auto sql_update = QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
           .arg(QCryptographicHash::hash(
-            newpw.append(result["salt"].toArray()[0].toString()).toLatin1(),
+            newpw.append(result["salt"].toString()).toLatin1(),
             QCryptographicHash::Sha256).toHex())
           .arg(sender->getId());
         ExecSQL(ServerInstance->getDatabase(), sql_update);

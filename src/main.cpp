@@ -88,6 +88,10 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
 #ifndef Q_OS_WASM
+  Pacman = new PackMan;
+#endif
+
+#ifndef Q_OS_WASM
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -150,10 +154,6 @@ int main(int argc, char *argv[])
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
-#endif
-
-#ifndef Q_OS_WASM
-  Pacman = new PackMan;
 #endif
 
   QTranslator translator;

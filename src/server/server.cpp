@@ -207,15 +207,15 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
   auto decrypted_pw = QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
   bool passed = false;
   QString error_msg;
-  QJsonObject result;
+  QJsonArray result;
+  QJsonObject obj;
 
   if (!nameExp.match(name).hasMatch() && !name.isEmpty()) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';").arg(name);
     result = SelectFromDatabase(db, sql_find);
-    QJsonArray arr = result["password"].toArray();
-    if (arr.isEmpty()) {
+    if (result.isEmpty()) {
       auto salt_gen = QRandomGenerator::securelySeeded();
       auto salt = QByteArray::number(salt_gen(), 16);
       decrypted_pw.append(salt);
@@ -231,16 +231,18 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
       .arg("FALSE");
       ExecSQL(db, sql_reg);
       result = SelectFromDatabase(db, sql_find);  // refresh result
+      obj = result[0].toObject();
       passed = true;
     } else {
+      obj = result[0].toObject();
       // check if this username already login
-      int id = result["id"].toArray()[0].toString().toInt();
+      int id = obj["id"].toString().toInt();
       if (!players.value(id)) {
         // check if password is the same
-        auto salt = result["salt"].toArray()[0].toString().toLatin1();
+        auto salt = obj["salt"].toString().toLatin1();
         decrypted_pw.append(salt);
         auto passwordHash = QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
-        passed = (passwordHash == arr[0].toString());
+        passed = (passwordHash == obj["password"].toString());
         if (!passed) error_msg = "username or password error";
       } else {
         auto player = players.value(id);
@@ -267,8 +269,8 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
     connect(player, &ServerPlayer::disconnected, this, &Server::onUserDisconnected);
     connect(player, &Player::stateChanged, this, &Server::onUserStateChanged);
     player->setScreenName(name);
-    player->setAvatar(result["avatar"].toArray()[0].toString());
-    player->setId(result["id"].toArray()[0].toString().toInt());
+    player->setAvatar(obj["avatar"].toString());
+    player->setId(obj["id"].toString().toInt());
     players.insert(player->getId(), player);
 
     // tell the lobby player's basic property

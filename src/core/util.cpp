@@ -99,23 +99,21 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql)
 static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
   QJsonObject obj;
   for (int i = 0; i < argc; i++) {
-    QJsonArray arr = obj[QString(cols[i])].toArray();
-    arr << QString(argv[i] ? argv[i] : "#null");
-    obj[QString(cols[i])] = arr;
+    obj[QString(cols[i])] = QString(argv[i] ? argv[i] : "#null");
   }
-  ((QJsonObject *)jsonDoc)->swap(obj);
+  ((QJsonArray *)jsonDoc)->append(obj);
   return 0;
 }
 
-QJsonObject SelectFromDatabase(sqlite3 *db, const QString &sql) {
-  QJsonObject obj;
+QJsonArray SelectFromDatabase(sqlite3 *db, const QString &sql) {
+  QJsonArray arr;
   auto bytes = sql.toUtf8();
-  sqlite3_exec(db, bytes.data(), callback, (void *)&obj, nullptr);
-  return obj;
+  sqlite3_exec(db, bytes.data(), callback, (void *)&arr, nullptr);
+  return arr;
 }
 
 QString SelectFromDb(sqlite3 *db, const QString &sql) {
-  QJsonObject obj = SelectFromDatabase(db, sql);
+  auto obj = SelectFromDatabase(db, sql);
   return QJsonDocument(obj).toJson(QJsonDocument::Compact);
 }
 
@@ -171,7 +169,7 @@ static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) 
   auto entries = d.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
   auto re = QRegularExpression::fromWildcard(filter);
   foreach (QFileInfo info, entries) {
-    if (info.isDir()) {
+    if (info.isDir() && !info.fileName().endsWith(".disabled")) {
       writeDirMD5(dest, info.filePath(), filter);
     } else {
       if (re.match(info.fileName()).hasMatch()) {

@@ -1,5 +1,6 @@
 #include "packman.h"
 #include "util.h"
+#include "qmlbackend.h"
 #include "git2.h"
 
 PackMan *Pacman;
@@ -73,14 +74,15 @@ void PackMan::loadConfString(const QString &conf) {
 }
 */
 void PackMan::downloadNewPack(const QString &url) {
-  clone(url);
+  int error = clone(url);
+  if (error < 0) return;
   QString fileName = QUrl(url).fileName();
   if (fileName.endsWith(".git"))
     fileName.chop(4);
 
   auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
   WHERE name = '%1';").arg(fileName));
-  if (result["name"].toArray().isEmpty()) {
+  if (result.isEmpty()) {
     ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
     VALUES ('%1','%2','%3',1);").arg(fileName).arg(url).arg(head(fileName)));
   }
@@ -88,28 +90,80 @@ void PackMan::downloadNewPack(const QString &url) {
 
 void PackMan::enablePack(const QString &pack) {
   ExecSQL(db, QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages/%1"));
+  QDir d(QString("packages"));
   d.rename(pack + ".disabled", pack);
 }
 
 void PackMan::disablePack(const QString &pack) {
   ExecSQL(db, QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages/%1"));
+  QDir d(QString("packages"));
   d.rename(pack, pack + ".disabled");
 }
 
 void PackMan::updatePack(const QString &pack) {
   auto result = SelectFromDatabase(db, QString("SELECT hash FROM packages \
   WHERE name = '%1';").arg(pack));
-  auto arr = result["hash"].toArray();
-  if (arr.isEmpty()) return;
-  pull(pack);
-  checkout(pack, arr[0].toString());
+  if (result.isEmpty()) return;
+  int error;
+  error = pull(pack);
+  if (error < 0) return;
+  error = checkout(pack, result[0].toObject()["hash"].toString());
+  if (error < 0) return;
+}
+
+void PackMan::upgradePack(const QString &pack) {
+  int error;
+  error = checkout_branch(pack, "master");
+  if (error < 0) return;
+  error = pull(pack);
+  if (error < 0) return;
+  ExecSQL(db, QString("UPDATE packages SET hash = '%1' WHERE name = '%2';").arg(head(pack)).arg(pack));
+}
+
+void PackMan::removePack(const QString &pack) {
+  auto result = SelectFromDatabase(db, QString("SELECT * FROM packages \
+  WHERE name = '%1';").arg(pack));
+  if (result.isEmpty()) return;
+  ExecSQL(db, QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
+  QDir d(QString("packages/%1").arg(pack));
+  d.removeRecursively();
+}
+
+QString PackMan::listPackages() {
+  auto obj = SelectFromDatabase(db, QString("SELECT * FROM packages;"));
+  return QJsonDocument(obj).toJson();
 }
 
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
+
+static int transfer_progress_cb(const git_indexer_progress *stats, void *payload)
+{
+  (void)payload;
+
+  if (Backend == nullptr) {
+    if (stats->received_objects == stats->total_objects) {
+      printf("Resolving deltas %u/%u\r",
+            stats->indexed_deltas, stats->total_deltas);
+    } else if (stats->total_objects > 0) {
+      printf("Received %u/%u objects (%u) in %zu bytes\r",
+            stats->received_objects, stats->total_objects,
+            stats->indexed_objects, stats->received_bytes);
+    }
+  } else {
+    if (stats->received_objects == stats->total_objects) {
+      qWarning("Resolving deltas %u/%u",
+            stats->indexed_deltas, stats->total_deltas);
+    } else if (stats->total_objects > 0) {
+      qWarning("Received %u/%u objects (%u) in %zu bytes",
+            stats->received_objects, stats->total_objects,
+            stats->indexed_objects, stats->received_bytes);
+    }
+  }
+
+  return 0;
+}
 
 int PackMan::clone(const QString &url) {
   git_repository *repo = NULL;
@@ -120,9 +174,18 @@ int PackMan::clone(const QString &url) {
   fileName = "packages/" + fileName;
   const char *path = fileName.toUtf8().constData();
 
-  int error = git_clone(&repo, u, path, NULL);
+  git_clone_options opt = GIT_CLONE_OPTIONS_INIT;
+  opt.fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
+  int error = git_clone(&repo, u, path, &opt);
   if (error < 0) {
     GIT_FAIL;
+    QDir(fileName).removeRecursively();
+    QDir(".").rmdir(fileName);
+  } else {
+    if (Backend == nullptr)
+      printf("\n");
+    else
+      qWarning("Completed.");
   }
   git_repository_free(repo);
   return error;
@@ -133,6 +196,8 @@ int PackMan::pull(const QString &name) {
   int error;
   git_remote *remote = NULL;
   const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  git_fetch_options opt = GIT_FETCH_OPTIONS_INIT;
+  opt.callbacks.transfer_progress = transfer_progress_cb;
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
@@ -143,10 +208,15 @@ int PackMan::pull(const QString &name) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_remote_fetch(remote, NULL, NULL, "pull");
+  error = git_remote_fetch(remote, NULL, &opt, "pull");
   if (error < 0) {
     GIT_FAIL;
     goto clean;
+  } else {
+    if (Backend == nullptr)
+      printf("\n");
+    else
+      qWarning("Completed.");
   }
 
 clean:
@@ -189,6 +259,34 @@ clean:
   return error;
 }
 
+int PackMan::checkout_branch(const QString &name, const QString &branch) {
+  git_repository *repo = NULL;
+  git_oid oid = {0};
+  int error;
+  git_object *obj = NULL;
+  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  error = git_repository_open(&repo, path);
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+  error = git_revparse_single(&obj, repo, branch.toUtf8().constData());
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+  error = git_checkout_tree(repo, obj, NULL);
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+
+clean:
+  git_object_free(obj);
+  git_repository_free(repo);
+  return error;
+}
+
 int PackMan::status(const QString &name) {
   git_repository *repo = NULL;
   int error;
@@ -223,28 +321,28 @@ clean:
 QString PackMan::head(const QString &name) {
   git_repository *repo = NULL;
   int error;
-  git_revwalk *walker = NULL;
-  git_oid oid = {0};
+  git_object *obj = NULL;
   const char *path = QString("packages/%1").arg(name).toUtf8().constData();
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
+    git_object_free(obj);
+    git_repository_free(repo);
     return QString();
   }
-  error = git_revwalk_new(&walker, repo);
+  error = git_revparse_single(&obj, repo, "HEAD");
   if (error < 0) {
     GIT_FAIL;
+    git_object_free(obj);
+    git_repository_free(repo);
     return QString();
   }
-  error = git_revwalk_push_range(walker, "HEAD^..HEAD");
-  if (error < 0) {
-    GIT_FAIL;
-    return QString();
-  }
-  git_revwalk_next(&oid, walker);
 
+  const git_oid *oid = git_object_id(obj);
   char buf[42];
-  git_oid_tostr(buf, 41, &oid);
+  git_oid_tostr(buf, 41, oid);
+  git_object_free(obj);
+  git_repository_free(repo);
   return QString(buf);
 }
 

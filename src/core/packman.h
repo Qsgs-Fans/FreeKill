@@ -14,12 +14,16 @@ public:
   void enablePack(const QString &pack);
   void disablePack(const QString &pack);
   void updatePack(const QString &pack);
+  void upgradePack(const QString &pack);
+  void removePack(const QString &pack);
+  QString listPackages();
 private:
   sqlite3 *db;
 
   int clone(const QString &url);
   int pull(const QString &name);
   int checkout(const QString &name, const QString &hash);
+  int checkout_branch(const QString &name, const QString &branch);
   int status(const QString &name); // return 1 if the workdir is modified
   QString head(const QString &name); // get commit hash of HEAD
 };
