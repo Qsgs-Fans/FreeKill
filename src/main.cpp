@@ -49,6 +49,26 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 }
 #endif
 
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#include <stdlib.h>
+#include <unistd.h>
+static void prepareForLinux() {
+  // if user executes /usr/bin/FreeKill, that means freekill is installed by
+  // package manager, and then we need to copy assets to ~/.local and change cwd
+  char buf[256] = {0};
+  int len = readlink("/proc/self/exe", buf, 256);
+  if (!strcmp(buf, "/usr/bin/FreeKill")) {
+    system("mkdir -p ~/.local/share/FreeKill");
+    system("cp -r /usr/share/FreeKill ~/.local/share");
+    chdir("~/.local/share/FreeKill");
+  } else if (!strcmp(buf, "/usr/local/bin/FreeKill")) {
+    system("mkdir -p ~/.local/share/FreeKill");
+    system("cp -r /usr/local/share/FreeKill ~/.local/share");
+    chdir("~/.local/share/FreeKill");
+  }
+}
+#endif
+
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
   fprintf(stderr, "\r[%s] ", QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
   auto localMsg = msg.toUtf8();
@@ -86,6 +106,10 @@ int main(int argc, char *argv[])
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+  prepareForLinux();
+#endif
 
 #ifndef Q_OS_WASM
   QCommandLineParser parser;
