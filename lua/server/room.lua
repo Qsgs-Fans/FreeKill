@@ -1427,7 +1427,7 @@ function Room:useCard(cardUseEvent)
 
                 collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
 
-                self:doCardEffect(cardEffectEvent)
+                self:doCardEffect(table.simpleClone(cardEffectEvent))
               end
             end
           end
