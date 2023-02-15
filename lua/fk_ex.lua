@@ -97,11 +97,10 @@ function fk.CreateTriggerSkill(spec)
     if not spec.priority then
       spec.priority = 0.1
     end
-  end
-
-  if not spec.priority then
+  elseif not spec.priority then
     spec.priority = 1
   end
+
   if type(spec.priority) == "number" then
     for _, event in ipairs(skill.events) do
       skill.priority_table[event] = spec.priority

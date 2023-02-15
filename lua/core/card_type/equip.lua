@@ -12,7 +12,6 @@ end
 ---@param player Player
 function EquipCard:onInstall(room, player)
   if self.equip_skill then
-    print(self.equip_skill.name)
     room:handleAddLoseSkills(player, self.equip_skill.name, nil, false, true)
   end
 end

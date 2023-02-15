@@ -732,9 +732,7 @@ local crossbowSkill = fk.CreateTargetModSkill{
     end
   end,
 }
-if not Fk.skills["#crossbow_skill"] then
-  Fk:addSkill(crossbowSkill)
-end
+Fk:addSkill(crossbowSkill)
 
 local crossbow = fk.CreateWeapon{
   name = "crossbow",
@@ -765,20 +763,6 @@ Fk:loadTranslationTable{
 extension:addCards({
   qingGang,
 })
-
-local crossbowSkill = fk.CreateTargetModSkill{
-  name = "#crossbow_skill",
-  attached_equip = "crossbow",
-  residue_func = function(self, player, skill, scope)
-    if player:hasSkill(self.name) and skill.name == "slash_skill"
-      and scope == Player.HistoryPhase then
-      return 999
-    end
-  end,
-}
-if not Fk.skills["#crossbow_skill"] then
-  Fk:addSkill(crossbowSkill)
-end
 
 local iceSword = fk.CreateWeapon{
   name = "ice_sword",

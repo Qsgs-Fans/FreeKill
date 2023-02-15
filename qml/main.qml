@@ -9,6 +9,8 @@ Window {
   visible: true
   width: 960
   height: 540
+  minimumWidth: 160
+  minimumHeight: 90
   property var callbacks: Logic.callbacks
 
 Item {
@@ -36,7 +38,8 @@ Item {
   StackView {
     id: mainStack
     visible: !mainWindow.busy
-    initialItem: OS !== "Web" ? init : webinit
+    // If error occurs during loading initialItem, the program will fall into "polish()" loop
+    // initialItem: OS !== "Web" ? init : webinit
     anchors.fill: parent
   }
 
@@ -151,7 +154,7 @@ Item {
     anchors.centerIn: parent
     width: Math.min(contentWidth + 24, realMainWin.width * 0.9)
     height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
-    closePolicy: Popup.CloseOnEscape
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     padding: 12
     contentItem: Text {
       text: errDialog.txt
@@ -197,6 +200,11 @@ Item {
   }
 
   Component.onCompleted: {
+    if (OS !== "Web") {
+      mainStack.push(init);
+    } else {
+      mainStack.push(webinit);
+    }
     if (OS !== "Android" && OS !== "Web") {
       width = config.winWidth;
       height = config.winHeight;

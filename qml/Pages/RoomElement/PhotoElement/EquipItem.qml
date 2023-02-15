@@ -122,7 +122,11 @@ Item {
       icon = "horse";
     } else {
       text = Backend.translate(name);
-      icon = name;
+      if (card.virt_name) {
+        icon = card.virt_name;
+      } else {
+        icon = name;
+      }
     }
   }
 

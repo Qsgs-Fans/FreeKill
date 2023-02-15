@@ -2108,7 +2108,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
     end
   end
 
-  if not no_trigger and #triggers > 0 then
+  if (not no_trigger) and #triggers > 0 then
     for i = 1, #triggers do
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])

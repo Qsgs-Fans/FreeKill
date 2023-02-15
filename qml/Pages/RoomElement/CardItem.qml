@@ -241,6 +241,8 @@ Item {
     suit = data.suit;
     number = data.number;
     color = data.color;
+    subtype = data.subtype ? data.subtype : "";
+    virt_name = data.virt_name ? data.virt_name : "";
   }
 
   function toData()
@@ -250,7 +252,9 @@ Item {
       name: name,
       suit: suit,
       number: number,
-      color: color
+      color: color,
+      subtype: subtype,
+      virt_name: virt_name,
     };
     return data;
   }

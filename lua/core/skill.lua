@@ -6,6 +6,7 @@
 ---@field mute boolean
 ---@field anim_type string
 ---@field related_skills Skill[]
+---@field attached_equip string
 local Skill = class("Skill")
 
 ---@alias Frequency integer
