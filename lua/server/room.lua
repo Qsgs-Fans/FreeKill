@@ -4,6 +4,7 @@
 ---@field alive_players ServerPlayer[]
 ---@field observers fk.ServerPlayer[]
 ---@field current ServerPlayer
+---@field game_started boolean
 ---@field game_finished boolean
 ---@field timeout integer
 ---@field tag table<string, any>
@@ -80,6 +81,7 @@ function Room:initialize(_room)
   self.alive_players = {}
   self.observers = {}
   self.current = nil
+  self.game_started = false
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
@@ -173,6 +175,9 @@ end
 ---@param sortBySeat boolean
 ---@return ServerPlayer[]
 function Room:getAllPlayers(sortBySeat)
+  if not self.game_started then
+    return { table.unpack(self.players) }
+  end
   if sortBySeat == nil or sortBySeat then
     local current = self.current
     local temp = current.next
@@ -2276,6 +2281,7 @@ function Room:shuffleDrawPile()
 end
 
 function Room:gameOver(winner)
+  self.game_started = false
   self.game_finished = true
 
   for _, p in ipairs(self.players) do
