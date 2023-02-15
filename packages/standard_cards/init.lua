@@ -5,6 +5,20 @@ Fk:loadTranslationTable{
   ["standard_cards"] = "标+EX"
 }
 
+Fk:loadTranslationTable{
+  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
+  ["log_spade"] = "♠",
+  ["log_heart"] = '<font color="#CC3131">♥</font>',
+  ["log_club"] = "♣",
+  ["log_diamond"] = '<font color="#CC3131">♦</font>',
+  ["log_nosuit"] = "无花色",
+  ["nosuit"] = "无花色",
+  ["spade"] = "黑桃",
+  ["heart"] = "红桃",
+  ["club"] = "梅花",
+  ["diamond"] = "方块",
+}
+
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
@@ -26,8 +40,8 @@ local slashSkill = fk.CreateActiveSkill{
     local from = effect.from
     
     room:damage({
-      from = from,
-      to = to,
+      from = room:getPlayerById(from),
+      to = room:getPlayerById(to),
       card = effect.card,
       damage = 1 + (effect.addtionalDamage or 0),
       damageType = fk.NormalDamage,
@@ -137,7 +151,7 @@ local peachSkill = fk.CreateActiveSkill{
     local from = effect.from
     
     room:recover({
-      who = to,
+      who = room:getPlayerById(to),
       num = 1,
       recoverBy = from,
       skillName = self.name
@@ -299,8 +313,8 @@ local duelSkill = fk.CreateActiveSkill{
 
     if currentResponser:isAlive() then
       room:damage({
-        from = responsers[currentTurn % 2 + 1].id,
-        to = currentResponser.id,
+        from = responsers[currentTurn % 2 + 1],
+        to = currentResponser,
         card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
@@ -453,8 +467,8 @@ local savageAssaultSkill = fk.CreateActiveSkill{
       })
     else
       room:damage({
-        from = effect.from,
-        to = effect.to,
+        from = room:getPlayerById(effect.from),
+        to = room:getPlayerById(effect.to),
         card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
@@ -503,8 +517,8 @@ local archeryAttackSkill = fk.CreateActiveSkill{
       })
     else
       room:damage({
-        from = effect.from,
-        to = effect.to,
+        from = room:getPlayerById(effect.from),
+        to = room:getPlayerById(effect.to),
         card = effect.card,
         damage = 1 + (effect.addtionalDamage or 0),
         damageType = fk.NormalDamage,
@@ -537,9 +551,14 @@ local godSalvationSkill = fk.CreateActiveSkill{
       end
     end
   end,
-  on_effect = function(self, room, cardEffectEvent)
+  about_to_effect = function(self, room, effect)
+    if not room:getPlayerById(effect.to):isWounded() then
+      return true
+    end
+  end,
+  on_effect = function(self, room, effect)
     room:recover({
-      who = cardEffectEvent.to,
+      who = room:getPlayerById(effect.to),
       num = 1,
       skillName = self.name,
     })
@@ -609,7 +628,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local result = judge.card
     if result.suit == Card.Spade and result.number >= 2 and result.number <= 9 then
       room:damage{
-        to = to.id,
+        to = to,
         damage = 3,
         card = effect.card,
         damageType = fk.ThunderDamage,
@@ -942,8 +961,8 @@ extension:addCards({
 
 local ziXing = fk.CreateOffensiveRide{
   name = "zixing",
-  suit = Card.Heart,
-  number = 5,
+  suit = Card.Diamond,
+  number = 13,
 }
 Fk:loadTranslationTable{
   ["zixing"] = "紫骍",

@@ -1,5 +1,6 @@
 ---@class Package : Object
 ---@field name string
+---@field extensionName string
 ---@field type PackageType
 ---@field generals General[]
 ---@field extra_skills Skill[]
@@ -17,6 +18,7 @@ function Package:initialize(name, _type)
   assert(type(name) == "string")
   assert(type(_type) == "nil" or type(_type) == "number")
   self.name = name
+  self.extensionName = name -- used for get assets
   self.type = _type or Package.GeneralPack
 
   self.generals = {}

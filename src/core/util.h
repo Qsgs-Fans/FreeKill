@@ -7,8 +7,8 @@ lua_State *CreateLuaState();
 bool DoLuaScript(lua_State *L, const char *script);
 
 #ifndef Q_OS_WASM
-sqlite3 *OpenDatabase(const QString &filename = "./server/users.db");
-QJsonObject SelectFromDatabase(sqlite3 *db, const QString &sql);
+sqlite3 *OpenDatabase(const QString &filename = "./server/users.db", const QString &initSql = "./server/init.sql");
+QJsonArray SelectFromDatabase(sqlite3 *db, const QString &sql);
 // For Lua
 QString SelectFromDb(sqlite3 *db, const QString &sql);
 void ExecSQL(sqlite3 *db, const QString &sql);

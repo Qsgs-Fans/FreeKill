@@ -57,7 +57,6 @@ GameRule = fk.CreateTriggerSkill{
     end
 
     if event == fk.GameStart then
-      fk.qInfo("Game started")
       RoomInstance.tag["FirstRound"] = true
       return false
     end
@@ -69,6 +68,9 @@ GameRule = fk.CreateTriggerSkill{
         -- TODO: need a new function to call the UI
         local cardIds = room:getNCards(data.num)
         player:addCards(Player.Hand, cardIds)
+        for _, id in ipairs(cardIds) do
+          Fk:filterCard(id, player)
+        end
         local move_to_notify = {}   ---@type CardsMoveStruct
         move_to_notify.toArea = Card.PlayerHand
         move_to_notify.to = player.id
@@ -227,7 +229,7 @@ GameRule = fk.CreateTriggerSkill{
       end
       local damage = data.damage
       if damage and damage.from then
-        local killer = room:getPlayerById(damage.from)
+        local killer = damage.from
         rewardAndPunish(killer, player);
       end
     end,

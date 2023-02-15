@@ -25,7 +25,7 @@ Item {
   }
 
   Image {
-    source: AppPath + "/image/background"
+    source: config.lobbyBg
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
   }
@@ -42,6 +42,7 @@ Item {
 
   Component { id: init; Init {} }
   Component { id: webinit; WebInit {} }
+  Component { id: packageManage; PackageManage {} }
   Component { id: lobby; Lobby {} }
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
@@ -51,12 +52,29 @@ Item {
   property var generalsOverviewPage
   property var cardsOverviewPage
   property alias aboutPage: aboutPage
-
   property bool busy: false
+  property string busyText: ""
+  onBusyChanged: busyText = "";
+
   BusyIndicator {
     running: true
     anchors.centerIn: parent
     visible: mainWindow.busy === true
+  }
+  Item {
+    visible: mainWindow.busy === true && mainWindow.busyText !== ""
+    anchors.bottom: parent.bottom
+    height: 32
+    width: parent.width
+    Rectangle {
+      anchors.fill: parent
+      color: "#88888888"
+    }
+    Text {
+      anchors.centerIn: parent
+      text: mainWindow.busyText
+      font.pixelSize: 24
+    }
   }
 
   // global popup. it is modal and just lower than toast
@@ -126,6 +144,26 @@ Item {
     }
   }
 
+  Popup {
+    id: errDialog
+    property string txt: ""
+    modal: true
+    anchors.centerIn: parent
+    width: Math.min(contentWidth + 24, realMainWin.width * 0.9)
+    height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
+    closePolicy: Popup.CloseOnEscape
+    padding: 12
+    contentItem: Text {
+      text: errDialog.txt
+      wrapMode: Text.WordWrap
+
+      MouseArea {
+        anchors.fill: parent
+        onClicked: errDialog.close();
+      }
+    }
+  }
+
   ToastManager {
     id: toast
   }
@@ -133,6 +171,11 @@ Item {
   Connections {
     target: Backend
     function onNotifyUI(command, jsonData) {
+      if (command === "ErrorDialog") {
+        errDialog.txt = jsonData;
+        errDialog.open();
+        return;
+      }
       let cb = callbacks[command]
       if (typeof(cb) === "function") {
         cb(jsonData);

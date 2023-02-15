@@ -31,14 +31,14 @@ Item {
   property var extra_data: ({})
 
   Image {
-    source: AppPath + "/image/gamebg"
+    source: config.roomBg
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
   }
 
   MediaPlayer {
     id: bgm
-    source: AppPath + "/audio/system/bgm.mp3"
+    source: config.bgmFile
     
     // loops: MediaPlayer.Infinite
     onPlaybackStateChanged: {
@@ -264,6 +264,14 @@ Item {
     }
   }
 
+  GlowText {
+    text: Backend.translate("Observing ...")
+    visible: config.observing
+    color: "#4B83CD"
+    font.family: fontLi2.name
+    font.pixelSize: 48
+  }
+
   Item {
     id: controls
     anchors.bottom: dashboard.top
@@ -390,11 +398,13 @@ Item {
 
   Drawer {
     id: roomDrawer
-    width: parent.width * 0.3
-    height: parent.height
+    width: parent.width * 0.3 / mainWindow.scale
+    height: parent.height / mainWindow.scale
     dim: false
     clip: true
     dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopLeft
     
     ColumnLayout {
       anchors.fill: parent
@@ -429,6 +439,30 @@ Item {
           width: roomDrawer.width / 2
           text: Backend.translate("Chat")
         }
+      }
+    }
+  }
+
+  Drawer {
+    id: cheatDrawer
+    edge: Qt.RightEdge
+    width: parent.width * 0.4 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopRight
+
+    Loader {
+      id: cheatLoader
+      anchors.fill: parent
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finish.connect(() => {
+          cheatDrawer.close();
+        });
       }
     }
   }
@@ -514,9 +548,9 @@ Item {
 
   function addToChat(pid, raw, msg) {
     chat.append(msg);
-    let photo = Logic.getPhoto(pid);
+    let photo = Logic.getPhotoOrSelf(pid);
     if (photo === undefined)
-      photo = dashboard.self;
+      return;
     photo.chat(raw.msg);
   }
 
@@ -534,6 +568,12 @@ Item {
         item.distance = 0;
       }
     }
+  }
+
+  function startCheat(source, data) {
+    cheatLoader.source = source;
+    cheatLoader.item.extra_data = data;
+    cheatDrawer.open();
   }
 
   Component.onCompleted: {

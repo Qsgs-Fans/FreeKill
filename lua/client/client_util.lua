@@ -8,10 +8,38 @@ function GetGeneralData(name)
   local general = Fk.generals[name]
   if general == nil then general = Fk.generals["diaochan"] end
   return json.encode {
+    package = general.package.name,
+    extension = general.package.extensionName,
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp
   }
+end
+
+function GetGeneralDetail(name)
+  local general = Fk.generals[name]
+  if general == nil then general = Fk.generals["diaochan"] end
+  local ret = {
+    package = general.package.name,
+    extension = general.package.extensionName,
+    kingdom = general.kingdom,
+    hp = general.hp,
+    maxHp = general.maxHp,
+    skill = {}
+  }
+  for _, s in ipairs(general.skills) do
+    table.insert(ret.skill, {
+      name = s.name,
+      description = Fk:getDescription(s.name)
+    })
+  end
+  for _, s in ipairs(general.other_skills) do
+    table.insert(ret.skill, {
+      name = s,
+      description = Fk:getDescription(s)
+    })
+  end
+  return json.encode(ret)
 end
 
 local cardSubtypeStrings = {
@@ -25,7 +53,7 @@ local cardSubtypeStrings = {
 }
 
 function GetCardData(id)
-  local card = Fk.cards[id]
+  local card = Fk:getCardById(id)
   if card == nil then return json.encode{
     cid = id,
     known = false
@@ -33,11 +61,17 @@ function GetCardData(id)
   local ret = {
     cid = id,
     name = card.name,
+    extension = card.package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
     color = card.color,
     subtype = cardSubtypeStrings[card.sub_type]
   }
+  if card.skillName ~= "" then
+    local orig = Fk:getCardById(id, true)
+    ret.name = orig.name
+    ret.virt_name = card.name
+  end
   return json.encode(ret)
 end
 
@@ -187,6 +221,7 @@ function GetSkillData(skill_name)
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
+    extension = skill.package.extensionName,
     freq = freq
   }
 end
@@ -332,6 +367,7 @@ Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",
   ["Enter"] = "进入",
+  ["Observe"] = "旁观",
 
   ["Edit Profile"] = "编辑个人信息",
   ["Username"] = "用户名",
@@ -340,11 +376,15 @@ Fk:loadTranslationTable{
   ["New Password"] = "新密码",
   ["Update Avatar"] = "更新头像",
   ["Update Password"] = "更新密码",
+  ["Lobby BG"] = "大厅壁纸",
+  ["Room BG"] = "房间背景",
+  ["Game BGM"] = "游戏BGM",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
+  ["Enable free assign"] = "自由选将",
 
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
@@ -374,6 +414,10 @@ Fk:loadTranslationTable{
     "SQLite是一个轻量级的数据库，具有占用资源低、运行效率快、嵌入性好等优点。<br/>" ..
     "<br/>FreeKill使用sqlite3在服务端保存用户的各种信息。<br/>" ..
     "<br/>官网： https://www.sqlite.org",
+  ["about_git2_description"] = "<b>关于Libgit2</b><br/>" ..
+    "Libgit2是一个轻量级的、跨平台的、纯C实现的库，支持Git的大部分核心操作，并且支持几乎任何能与C语言交互的编程语言。<br/>" ..
+    "<br/>FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下载、更新、管理等等功能。<br/>" ..
+    "<br/>官网： https://libgit2.org",
 
   ["Exit Lobby"] = "退出大厅",
 
@@ -421,6 +465,8 @@ Fk:loadTranslationTable{
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+  ["Trusting ..."] = "托管中 ...",
+  ["Observing ..."] = "旁观中 ...",
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",
@@ -457,17 +503,6 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能“%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
-  ["log_spade"] = "♠",
-  ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = "♣",
-  ["log_diamond"] = '<font color="#CC3131">♦</font>',
-  ["log_nosuit"] = "无花色",
-  ["nosuit"] = "无花色",
-  ["spade"] = "黑桃",
-  ["heart"] = "红桃",
-  ["club"] = "梅花",
-  ["diamond"] = "方块",
   
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
@@ -490,6 +525,8 @@ Fk:loadTranslationTable{
   ["#UseV0CardToTargets"] = "%from 使用了 %arg，目标是 %to",
   ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
   ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
+
+  ["#FilterCard"] = "由于 %arg 的效果，与 %from 相关的 %arg2 被视为了 %arg3",
 
   -- skill
   ["#InvokeSkill"] = "%from 发动了 “%arg”",

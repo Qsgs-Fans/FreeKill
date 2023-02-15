@@ -1,5 +1,4 @@
 import QtQuick
-import Qt5Compat.GraphicalEffects
 
 Item {
   property alias title: titleItem
@@ -11,22 +10,11 @@ Item {
   Rectangle {
     id: background
     anchors.fill: parent
-    color: "#B0000000"
+    color: "#020302"
+    opacity: 0.8
     radius: 5
     border.color: "#A6967A"
     border.width: 1
-  }
-
-  DropShadow {
-    source: background
-    anchors.fill: background
-    color: "#B0000000"
-    radius: 5
-    //samples: 12
-    spread: 0.2
-    horizontalOffset: 5
-    verticalOffset: 4
-    transparentBorder: true
   }
 
   Text {

@@ -15,7 +15,13 @@ cp -r ../audio assets/res
 cp -r ../fonts assets/res
 cp -r ../image assets/res
 cp -r ../lua assets/res
-cp -r ../packages assets/res
+# TODO: Windows hosts machine
+cp -r /etc/ca-certificates/extracted/cadir assets/res/certs
+mkdir assets/res/packages
+cp -r ../packages/standard assets/res/packages
+cp -r ../packages/standard_cards assets/res/packages
+cp -r ../packages/test assets/res/packages
+cp ../packages/init.sql assets/res/packages
 cp -r ../qml assets/res
 cp -r ../server assets/res
 rm assets/res/server/users.db

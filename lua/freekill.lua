@@ -4,6 +4,13 @@
 package.path = package.path .. ";./lua/lib/?.lua"
                             .. ";./lua/?.lua"
 
+-- disable dangerous functions
+os.remove = nil
+os.execute = nil
+os.exit = nil
+os.rename = nil
+io = nil
+
 -- load libraries
 
 class = require "middleclass"

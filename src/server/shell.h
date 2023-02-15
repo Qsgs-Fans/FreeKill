@@ -30,6 +30,12 @@ private:
   void quitCommand(QStringList &);
   void lspCommand(QStringList &);
   void lsrCommand(QStringList &);
+  void installCommand(QStringList &);
+  void removeCommand(QStringList &);
+  void upgradeCommand(QStringList &);
+  void lspkgCommand(QStringList &);
+  void enableCommand(QStringList &);
+  void disableCommand(QStringList &);
 };
 
 #endif

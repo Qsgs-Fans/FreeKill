@@ -127,6 +127,10 @@ function Player:clearFlags()
   self.flag = {}
 end
 
+-- mark name and UI:
+-- 'xxx': invisible mark
+-- '@mark': mark with extra data (maybe string or number)
+-- '@@mark': mark without data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
@@ -253,6 +257,11 @@ function Player:getCardIds(playerAreas, specialName)
   end
 
   return cardIds
+end
+
+-- for fkp only
+function Player:getHandcardNum()
+  return #self:getCardIds(Player.Hand)
 end
 
 ---@param cardSubtype CardSubtype
@@ -555,6 +564,17 @@ function Player:loseSkill(skill, source_skill)
   for _, s in ipairs(tolose) do
     if not self:hasSkill(s) then
       table.insert(ret, s)
+    end
+  end
+  return ret
+end
+
+-- return all skills that xxx:hasSkill() == true
+function Player:getAllSkills()
+  local ret = {table.unpack(self.player_skills)}
+  for _, t in pairs(self.derivative_skills) do
+    for _, s in ipairs(t) do
+      table.insertIfNeed(ret, s)
     end
   end
   return ret

@@ -3,13 +3,14 @@
 #include <qmediaplayer.h>
 #include <qrandom.h>
 #include <QMediaPlayer>
+#include <QClipboard>
 #ifndef Q_OS_WASM
 #include "server.h"
 #endif
 #include "client.h"
 #include "util.h"
 
-QmlBackend *Backend;
+QmlBackend *Backend = nullptr;
 
 QmlBackend::QmlBackend(QObject* parent)
   : QObject(parent)
@@ -17,18 +18,12 @@ QmlBackend::QmlBackend(QObject* parent)
   Backend = this;
   engine = nullptr;
   rsa = RSA_new();
-#ifndef Q_OS_WASM
-  parser = fkp_new_parser();
-#endif
 }
 
 QmlBackend::~QmlBackend()
 {
   Backend = nullptr;
   RSA_free(rsa);
-#ifndef Q_OS_WASM
-  fkp_close(parser);
-#endif
 }
 
 QQmlApplicationEngine *QmlBackend::getEngine() const
@@ -82,6 +77,8 @@ void QmlBackend::quitLobby()
 {
   if (ClientInstance)
     delete ClientInstance;
+  if (ServerInstance)
+    delete ServerInstance;
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
@@ -106,11 +103,16 @@ QString QmlBackend::pwd() {
 }
 
 bool QmlBackend::exists(const QString &file) {
-  return QFile::exists(file);
+  QString s = file;
+#ifdef Q_OS_WIN
+  if (s.startsWith("file:///"))
+    s.replace(0, 8, "file://");
+#endif
+  return QFile::exists(QUrl(s).path());
 }
 
 bool QmlBackend::isDir(const QString &file) {
-  return QFileInfo(file).isDir();
+  return QFileInfo(QUrl(file).path()).isDir();
 }
 
 QString QmlBackend::translate(const QString &src) {
@@ -202,18 +204,7 @@ QString QmlBackend::loadConf() {
   QFile conf("freekill.client.config.json");
   if (!conf.exists()) {
     conf.open(QIODevice::WriteOnly);
-    static const char *init_conf = "{\
-      \"winWidth\": 960,\
-      \"winHeight\": 540,\
-      \"lastLoginServer\": \"127.0.0.1\",\
-      \"savedPassword\": {\
-        \"127.0.0.1\": {\
-          \"username\": \"player\",\
-          \"password\": \"\",\
-          \"shorten_password\": \"\"\
-        }\
-      }\
-    }";
+    static const char *init_conf = "{}";
     conf.write(init_conf);
     return init_conf;
   }
@@ -226,64 +217,6 @@ void QmlBackend::saveConf(const QString &conf) {
   c.open(QIODevice::WriteOnly);
   c.write(conf.toUtf8());
 }
-
-void QmlBackend::parseFkp(const QString &fileName) {
-#ifndef Q_OS_WASM
-  if (!QFile::exists(fileName)) {
-//    errorEdit->setText(tr("File does not exist!"));
-    return;
-  }
-  QString cwd = QDir::currentPath();
-
-  QStringList strlist = fileName.split('/');
-  QString shortFileName = strlist.last();
-  strlist.removeLast();
-  QString path = strlist.join('/');
-  QDir::setCurrent(path);
-
-  bool error = fkp_parse(
-    parser,
-    shortFileName.toUtf8().data(),
-    FKP_QSAN_LUA
-  );
-/*  setError(error);
-
-  if (error) {
-    QStringList tmplist = shortFileName.split('.');
-    tmplist.removeLast();
-    QString fName = tmplist.join('.') + "-error.txt";
-    if (!QFile::exists(fName)) {
-      errorEdit->setText(tr("Unknown compile error."));
-    } else {
-      QFile f(fName);
-      f.open(QIODevice::ReadOnly);
-      errorEdit->setText(f.readAll());
-      f.remove();
-    }
-  } else {
-    errorEdit->setText(tr("Successfully compiled chosen file."));
-  }
-*/
-  QDir::setCurrent(cwd);
-#endif
-}
-
-#ifndef Q_OS_WASM
-static void copyFkpHash2QHash(QHash<QString, QString> &dst, fkp_hash *from) {
-  dst.clear();
-  for (size_t i = 0; i < from->capacity; i++) {
-    if (from->entries[i].key != NULL) {
-      dst[from->entries[i].key] = QString((const char *)from->entries[i].value);
-    }
-  }
-}
-
-void QmlBackend::readHashFromParser() {
-  copyFkpHash2QHash(generals, parser->generals);
-  copyFkpHash2QHash(skills, parser->skills);
-  copyFkpHash2QHash(marks, parser->marks);
-}
-#endif
 
 QString QmlBackend::calcFileMD5() {
   return ::calcFileMD5();
@@ -324,3 +257,6 @@ void QmlBackend::playSound(const QString &name, int index) {
   player->play();
 }
 
+void QmlBackend::copyToClipboard(const QString &s) {
+  QGuiApplication::clipboard()->setText(s);
+}

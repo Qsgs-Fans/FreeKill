@@ -47,6 +47,10 @@
     <source>Console start</source>
     <translation>单机启动</translation>
   </message>
+  <message>
+    <source>PackageManage</source>
+    <translation>管理拓展包</translation>
+  </message>
 </context>
 
 <context>
@@ -66,6 +70,58 @@
   <message>
     <source>username or password error</source>
     <translation>用户名或密码错误</translation>
+  </message>
+</context>
+
+<context>
+  <name>PackageManage</name>
+  <message>
+    <source>Quit</source>
+    <translation>退出</translation>
+  </message>
+  <message>
+    <source>Install From URL</source>
+    <translation>从URL安装</translation>
+  </message>
+  <message>
+    <source>Enable</source>
+    <translation>启用</translation>
+  </message>
+  <message>
+    <source>Disable</source>
+    <translation>禁用</translation>
+  </message>
+  <message>
+    <source>Enabled</source>
+    <translation>已启用</translation>
+  </message>
+  <message>
+    <source>Disabled</source>
+    <translation>已禁用</translation>
+  </message>
+  <message>
+    <source>Remove</source>
+    <translation>删除</translation>
+  </message>
+  <message>
+    <source>Upgrade</source>
+    <translation>更新</translation>
+  </message>
+  <message>
+    <source>Name</source>
+    <translation>名称</translation>
+  </message>
+  <message>
+    <source>Version</source>
+    <translation>版本</translation>
+  </message>
+  <message>
+    <source>Copy URL</source>
+    <translation>复制URL</translation>
+  </message>
+  <message>
+    <source>Copied.</source>
+    <translation>已复制。</translation>
   </message>
 </context>
 </TS>

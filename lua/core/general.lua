@@ -34,6 +34,7 @@ function General:addSkill(skill)
     table.insert(self.other_skills, skill)
   elseif (skill.class and skill.class:isSubclassOf(Skill)) then
     table.insert(self.skills, skill)
+    skill.package = self.package
   end
 end
 

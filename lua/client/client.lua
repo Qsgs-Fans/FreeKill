@@ -2,6 +2,7 @@
 ---@field client fk.Client
 ---@field players ClientPlayer[]
 ---@field alive_players ClientPlayer[]
+---@field observers ClientPlayer[]
 ---@field current ClientPlayer
 ---@field discard_pile integer[]
 ---@field status_skills Skill[]
@@ -28,6 +29,7 @@ function Client:initialize()
 
   self.players = {}     -- ClientPlayer[]
   self.alive_players = {}
+  self.observers = {}
   self.discard_pile = {}
   self.status_skills = {}
   for class, skills in pairs(Fk.global_status_skill) do
@@ -80,6 +82,8 @@ function Client:moveCards(moves)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
     end
+
+    Fk:filterCard(move.ids[1], move.to == Self.id and Self or nil)
   end
 end
 
@@ -122,7 +126,7 @@ function Client:appendLog(msg)
   else
     local card_str = {}
     for _, id in ipairs(card) do
-      table.insert(card_str, Fk:getCardById(id):toLogString())
+      table.insert(card_str, Fk:getCardById(id, true):toLogString())
     end
     if unknownCount > 0 then
       table.insert(card_str, Fk:translate("unknown_card")
@@ -197,6 +201,31 @@ fk.client_callback["RemovePlayer"] = function(jsonData)
   if id ~= Self.id then
     fk.ClientInstance:removePlayer(id)
     ClientInstance:notifyUI("RemovePlayer", jsonData)
+  end
+end
+
+fk.client_callback["AddObserver"] = function(jsonData)
+  -- jsonData: [ int id, string screenName, string avatar ]
+  -- when observer enter the room, we create lua clientplayer for them
+  local data = json.decode(jsonData)
+  local id, name, avatar = data[1], data[2], data[3]
+  local player = {
+    getId = function() return id end,
+    getScreenName = function() return name end,
+    getAvatar = function() return avatar end,
+  }
+  local p = ClientPlayer:new(player)
+  table.insert(ClientInstance.observers, p)
+end
+
+fk.client_callback["RemoveObserver"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local id = data[1]
+  for _, p in ipairs(ClientInstance.observers) do
+    if p.player:getId() == id then
+      table.removeOne(ClientInstance.observers, p)
+      break
+    end
   end
 end
 
@@ -365,15 +394,28 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   local player, mark, value = data[1], data[2], data[3]
   ClientInstance:getPlayerById(player):setMark(mark, value)
 
-  -- TODO: if mark is visible, update the UI.
+  if string.sub(mark, 1, 1) == "@" then
+    ClientInstance:notifyUI("SetPlayerMark", jsonData)
+  end
 end
 
 fk.client_callback["Chat"] = function(jsonData)
   -- jsonData: { int type, string msg }
   local data = json.decode(jsonData)
   local p = ClientInstance:getPlayerById(data.type)
+  -- TODO: observer chatting
+  if not p then
+    for _, pl in ipairs(ClientInstance.observers) do
+      if pl.id == data.type then
+        p = pl; break
+      end
+    end
+    if not p then return end
+    data.general = ""
+  else
+    data.general = p.general
+  end
   data.userName = p.player:getScreenName()
-  data.general = p.general
   data.time = os.date("%H:%M:%S")
   ClientInstance:notifyUI("Chat", json.encode(data))
 end

@@ -20,7 +20,7 @@ CardItem {
   suit: ""
   number: 0
   footnote: ""
-  card.source: SkinBank.GENERAL_DIR + name
+  card.source: SkinBank.getGeneralPicture(name)
   glow.color: "white" //Engine.kingdomColor[kingdom]
 
   Image {
