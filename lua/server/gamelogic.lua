@@ -34,6 +34,7 @@ function GameLogic:run()
 
   self:chooseGenerals()
   self:prepareForStart()
+  self.room.game_started = true
   self:action()
 end
 
