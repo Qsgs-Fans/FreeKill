@@ -93,6 +93,17 @@ end
 ---@param player ServerPlayer
 function ServerPlayer:marshal(player)
   local room = self.room
+  if not room.game_started then
+    -- If game does not starts, that mean we are entering room that
+    -- all players are choosing their generals.
+    -- Note that when we are in this function, the main thread must be
+    -- calling delay() or waiting for reply.
+    if self.role_shown then
+      room:notifyProperty(player, self, "role")
+    end
+    return
+  end
+
   room:notifyProperty(player, self, "maxHp")
   room:notifyProperty(player, self, "hp")
   room:notifyProperty(player, self, "gender")
