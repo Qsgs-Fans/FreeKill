@@ -1,0 +1,9 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Name=FreeKill
+Comment=A Bang!-like card game
+Comment[zh_CN]=一款玩法类似Bang!的桌游
+Icon=freekill_logo
+Exec=/usr/bin/FreeKill
+Type=Application
+Terminal=false
