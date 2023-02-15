@@ -88,10 +88,6 @@ int main(int argc, char *argv[])
   QCoreApplication::setApplicationVersion("Alpha 0.0.1");
 
 #ifndef Q_OS_WASM
-  Pacman = new PackMan;
-#endif
-
-#ifndef Q_OS_WASM
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -119,6 +115,7 @@ int main(int argc, char *argv[])
       qInfo("Server is listening on port %d", serverPort);
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       auto shell = new Shell;
+      Pacman = new PackMan;
       shell->start();
 #endif
     }
@@ -162,6 +159,10 @@ int main(int argc, char *argv[])
   
   QmlBackend backend;
   backend.setEngine(engine);
+
+#ifndef Q_OS_WASM
+  Pacman = new PackMan;
+#endif
   
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("Pacman", Pacman);

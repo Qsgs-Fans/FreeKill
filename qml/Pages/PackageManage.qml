@@ -68,9 +68,9 @@ Item {
 
   RowLayout {
     Layout.fillHeight: true
-    Layout.fillWidth: true
+    Layout.alignment: Qt.AlignHCenter
     Item {
-      Layout.fillWidth: true
+      Layout.preferredWidth: root.width * 0.9
       Layout.fillHeight: true
       Rectangle {
         anchors.fill: parent

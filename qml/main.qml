@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
-import QtQuick.Dialogs
 import "Logic.js" as Logic
 import "Pages"
 
@@ -145,6 +144,26 @@ Item {
     }
   }
 
+  Popup {
+    id: errDialog
+    property string txt: ""
+    modal: true
+    anchors.centerIn: parent
+    width: Math.min(contentWidth + 24, realMainWin.width * 0.9)
+    height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
+    closePolicy: Popup.CloseOnEscape
+    padding: 12
+    contentItem: Text {
+      text: errDialog.txt
+      wrapMode: Text.WordWrap
+
+      MouseArea {
+        anchors.fill: parent
+        onClicked: errDialog.close();
+      }
+    }
+  }
+
   ToastManager {
     id: toast
   }
@@ -152,23 +171,8 @@ Item {
   Connections {
     target: Backend
     function onNotifyUI(command, jsonData) {
-      if (command == "ErrorDialog") {
-        let text = jsonData;
-        // only show 3 lines in main text
-        let lines = text.split("\n");
-        let brief = "";
-        let detail = "";
-        for (let i = 0; i < lines.length; i++) {
-          if (i < 3) {
-            brief += lines[i] + "\n";
-          }
-        }
-        if (lines.length > 3) {
-          detail = text;
-        }
-        errDialog.text = brief;
-        errDialog.detailedText = detail;
-        errDialog.close();
+      if (command === "ErrorDialog") {
+        errDialog.txt = jsonData;
         errDialog.open();
         return;
       }
@@ -197,11 +201,6 @@ Item {
       width = config.winWidth;
       height = config.winHeight;
     }
-  }
-
-  MessageDialog {
-    id: errDialog
-    buttons: MessageDialog.Ok
   }
 
   onClosing: {
