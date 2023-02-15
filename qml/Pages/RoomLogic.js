@@ -154,12 +154,13 @@ function getAreaItem(area, id) {
 
   if (area === Card.PlayerHand) {
     return photo.handcardArea;
-  } else if (area === Card.PlayerEquip)
+  } else if (area === Card.PlayerEquip) {
     return photo.equipArea;
-  else if (area === Card.PlayerJudge)
+  } else if (area === Card.PlayerJudge) {
     return photo.delayedTrickArea;
-  else if (area === Card.PlayerSpecial)
+  } else if (area === Card.PlayerSpecial) {
     return photo.specialArea;
+  }
 
   return null;
 }

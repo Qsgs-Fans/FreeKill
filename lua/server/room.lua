@@ -510,19 +510,28 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
     for _, move in ipairs(arg) do
       -- local to = self:getPlayerById(move.to)
 
+      local function infosContainArea(info, area)
+        for _, i in ipairs(info) do
+          if i.fromArea == area then
+            return true
+          end
+        end
+        return false
+      end
+
       -- forceVisible make the move visible
       -- FIXME: move.moveInfo is an array, fix this
       move.moveVisible = (forceVisible)
         -- if move is relevant to player, it should be open
         or ((move.from == p.id) or (move.to == p.id and move.toArea ~= Card.PlayerSpecial))
         -- cards move from/to equip/judge/discard/processing should be open
-        or move.moveInfo.fromArea == Card.PlayerEquip
+        or infosContainArea(move.moveInfo, Card.PlayerEquip)
         or move.toArea == Card.PlayerEquip
-        or move.moveInfo.fromArea == Card.PlayerJudge
+        or infosContainArea(move.moveInfo, Card.PlayerJudge)
         or move.toArea == Card.PlayerJudge
-        or move.moveInfo.fromArea == Card.DiscardPile
+        or infosContainArea(move.moveInfo, Card.DiscardPile)
         or move.toArea == Card.DiscardPile
-        or move.moveInfo.fromArea == Card.Processing
+        or infosContainArea(move.moveInfo, Card.Processing)
         or move.toArea == Card.Processing
         -- TODO: PlayerSpecial
       
