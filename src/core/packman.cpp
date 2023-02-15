@@ -5,7 +5,7 @@
 
 PackMan *Pacman;
 
-PackMan::PackMan() {
+PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();
   db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
 }
@@ -73,18 +73,30 @@ void PackMan::loadConfString(const QString &conf) {
   }
 }
 */
-void PackMan::downloadNewPack(const QString &url) {
-  int error = clone(url);
-  if (error < 0) return;
-  QString fileName = QUrl(url).fileName();
-  if (fileName.endsWith(".git"))
-    fileName.chop(4);
+void PackMan::downloadNewPack(const QString &url, bool useThread) {
+  auto threadFunc = [=](){
+    int error = clone(url);
+    if (error < 0) return;
+    QString fileName = QUrl(url).fileName();
+    if (fileName.endsWith(".git"))
+      fileName.chop(4);
 
-  auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
-  WHERE name = '%1';").arg(fileName));
-  if (result.isEmpty()) {
-    ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
-    VALUES ('%1','%2','%3',1);").arg(fileName).arg(url).arg(head(fileName)));
+    auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
+    WHERE name = '%1';").arg(fileName));
+    if (result.isEmpty()) {
+      ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
+      VALUES ('%1','%2','%3',1);").arg(fileName).arg(url).arg(head(fileName)));
+    }
+  };
+  if (useThread) {
+    auto thread = QThread::create(threadFunc);
+    thread->start();
+    connect(thread, &QThread::finished, [=](){
+      thread->deleteLater();
+      Backend->emitNotifyUI("DownloadComplete", "");
+    });
+  } else {
+    threadFunc();
   }
 }
 
@@ -121,11 +133,12 @@ void PackMan::upgradePack(const QString &pack) {
 }
 
 void PackMan::removePack(const QString &pack) {
-  auto result = SelectFromDatabase(db, QString("SELECT * FROM packages \
+  auto result = SelectFromDatabase(db, QString("SELECT enabled FROM packages \
   WHERE name = '%1';").arg(pack));
   if (result.isEmpty()) return;
+  bool enabled = result[0].toObject()["enabled"].toString().toInt() == 1;
   ExecSQL(db, QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages/%1").arg(pack));
+  QDir d(QString("packages/%1%2").arg(pack).arg(enabled ? "" : ".disabled"));
   d.removeRecursively();
 }
 
@@ -153,12 +166,14 @@ static int transfer_progress_cb(const git_indexer_progress *stats, void *payload
     }
   } else {
     if (stats->received_objects == stats->total_objects) {
-      qWarning("Resolving deltas %u/%u",
-            stats->indexed_deltas, stats->total_deltas);
+      auto msg = QString("Resolving deltas %1/%2")
+            .arg(stats->indexed_deltas).arg(stats->total_deltas);
+      Backend->emitNotifyUI("UpdateBusyText", msg);
     } else if (stats->total_objects > 0) {
-      qWarning("Received %u/%u objects (%u) in %zu bytes",
-            stats->received_objects, stats->total_objects,
-            stats->indexed_objects, stats->received_bytes);
+      auto msg = QString("Received %1/%2 objects (%3) in %4 KiB")
+            .arg(stats->received_objects).arg(stats->total_objects)
+            .arg(stats->indexed_objects).arg(stats->received_bytes / 1024);
+      Backend->emitNotifyUI("UpdateBusyText", msg);
     }
   }
 

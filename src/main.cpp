@@ -164,6 +164,7 @@ int main(int argc, char *argv[])
   backend.setEngine(engine);
   
   engine->rootContext()->setContextProperty("Backend", &backend);
+  engine->rootContext()->setContextProperty("Pacman", Pacman);
 
 #ifdef QT_DEBUG
   bool debugging = true;

@@ -38,6 +38,15 @@ callbacks["ErrorMsg"] = function(jsonData) {
   mainWindow.busy = false;
 }
 
+callbacks["UpdateBusyText"] = function(jsonData) {
+  mainWindow.busyText = jsonData;
+}
+
+callbacks["DownloadComplete"] = function() {
+  mainWindow.busy = false;
+  mainStack.currentItem.downloadComplete(); // should be pacman page
+}
+
 callbacks["BackToStart"] = function(jsonData) {
   while (mainStack.depth > 1) {
     mainStack.pop();

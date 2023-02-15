@@ -43,6 +43,7 @@ Item {
 
   Component { id: init; Init {} }
   Component { id: webinit; WebInit {} }
+  Component { id: packageManage; PackageManage {} }
   Component { id: lobby; Lobby {} }
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
@@ -52,12 +53,29 @@ Item {
   property var generalsOverviewPage
   property var cardsOverviewPage
   property alias aboutPage: aboutPage
-
   property bool busy: false
+  property string busyText: ""
+  onBusyChanged: busyText = "";
+
   BusyIndicator {
     running: true
     anchors.centerIn: parent
     visible: mainWindow.busy === true
+  }
+  Item {
+    visible: mainWindow.busy === true && mainWindow.busyText !== ""
+    anchors.bottom: parent.bottom
+    height: 32
+    width: parent.width
+    Rectangle {
+      anchors.fill: parent
+      color: "#88888888"
+    }
+    Text {
+      anchors.centerIn: parent
+      text: mainWindow.busyText
+      font.pixelSize: 24
+    }
   }
 
   // global popup. it is modal and just lower than toast
@@ -150,6 +168,7 @@ Item {
         }
         errDialog.text = brief;
         errDialog.detailedText = detail;
+        errDialog.close();
         errDialog.open();
         return;
       }

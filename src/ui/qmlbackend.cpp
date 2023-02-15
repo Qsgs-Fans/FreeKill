@@ -3,6 +3,7 @@
 #include <qmediaplayer.h>
 #include <qrandom.h>
 #include <QMediaPlayer>
+#include <QClipboard>
 #ifndef Q_OS_WASM
 #include "server.h"
 #endif
@@ -76,6 +77,8 @@ void QmlBackend::quitLobby()
 {
   if (ClientInstance)
     delete ClientInstance;
+  if (ServerInstance)
+    delete ServerInstance;
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
@@ -254,3 +257,6 @@ void QmlBackend::playSound(const QString &name, int index) {
   player->play();
 }
 
+void QmlBackend::copyToClipboard(const QString &s) {
+  QGuiApplication::clipboard()->setText(s);
+}

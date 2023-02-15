@@ -38,6 +38,8 @@ public:
   Q_INVOKABLE QString calcFileMD5();
   Q_INVOKABLE void playSound(const QString &name, int index = 0);
 
+  Q_INVOKABLE void copyToClipboard(const QString &s);
+
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
 

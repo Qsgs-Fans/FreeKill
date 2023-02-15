@@ -1,22 +1,23 @@
 #ifndef _PACKMAN_H
 #define _PACKMAN_H
 
-class PackMan {
+class PackMan : public QObject {
+  Q_OBJECT
 public:
-  PackMan();
+  PackMan(QObject *parent = nullptr);
   ~PackMan();
 /*
   void readConfig();
   void writeConfig();
   void loadConfString(const QString &conf);
 */
-  void downloadNewPack(const QString &url);
-  void enablePack(const QString &pack);
-  void disablePack(const QString &pack);
-  void updatePack(const QString &pack);
-  void upgradePack(const QString &pack);
-  void removePack(const QString &pack);
-  QString listPackages();
+  Q_INVOKABLE void downloadNewPack(const QString &url, bool useThread = false);
+  Q_INVOKABLE void enablePack(const QString &pack);
+  Q_INVOKABLE void disablePack(const QString &pack);
+  Q_INVOKABLE void updatePack(const QString &pack);
+  Q_INVOKABLE void upgradePack(const QString &pack);
+  Q_INVOKABLE void removePack(const QString &pack);
+  Q_INVOKABLE QString listPackages();
 private:
   sqlite3 *db;
 
