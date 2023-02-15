@@ -6,6 +6,7 @@
 ---@field mute boolean
 ---@field anim_type string
 ---@field related_skills Skill[]
+---@field attached_equip string
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -32,11 +33,18 @@ function Skill:initialize(name, frequency)
   if string.sub(name, 1, 1) == "#" then
     self.visible = false
   end
+
+  self.attached_equip = nil
 end
 
 ---@param skill Skill
 function Skill:addRelatedSkill(skill)
   table.insert(self.related_skills, skill)
+end
+
+---@return boolean
+function Skill:isEquipmentSkill()
+  return self.attached_equip and type(self.attached_equip) == 'string' and self.attached_equip ~= ""
 end
 
 return Skill
