@@ -15,6 +15,8 @@ cp -r ../audio assets/res
 cp -r ../fonts assets/res
 cp -r ../image assets/res
 cp -r ../lua assets/res
+# TODO: Windows hosts machine
+cp -r /etc/ca-certificates/extracted/cadir assets/res/certs
 mkdir assets/res/packages
 cp -r ../packages/standard assets/res/packages
 cp -r ../packages/standard_cards assets/res/packages

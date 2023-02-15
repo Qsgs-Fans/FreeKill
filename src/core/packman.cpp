@@ -8,6 +8,9 @@ PackMan *Pacman;
 PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();
   db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
+#ifdef Q_OS_ANDROID
+  git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS, NULL, "./certs");
+#endif
 }
 
 PackMan::~PackMan() {
