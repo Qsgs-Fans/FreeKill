@@ -92,6 +92,20 @@ ___
 
 用Qt安装器装好Android库，然后配置一下android-sdk就能编译了。
 
+(Qt 6.4的刘海屏bug，手动往QActivity.java的onCreate函数追加如下代码即可实现完全全屏。这里做个笔记方便复制粘贴，等Qt修了再说)
+
+```java
+getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
+if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+    getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+}
+if (Build.VERSION.SDK_INT > 28) {
+    WindowManager.LayoutParams lp = getWindow().getAttributes();
+    lp.layoutInDisplayCutoutMode = LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+    getWindow().setAttributes(lp);
+}
+```
+
 ___
 
 ## WASM下编译
