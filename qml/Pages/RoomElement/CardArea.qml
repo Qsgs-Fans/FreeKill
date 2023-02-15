@@ -24,6 +24,8 @@ Item {
     for (let i = 0; i < cards.length; i++) {
       for (let j = 0; j < outputs.length; j++) {
         if (outputs[j] === cards[i].cid) {
+          let state = JSON.parse(Backend.callLuaFunction("GetCardData", [cards[i].cid]));
+          cards[i].setData(state);
           result.push(cards[i]);
           cards.splice(i, 1);
           i--;

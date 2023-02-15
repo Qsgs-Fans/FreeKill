@@ -83,7 +83,9 @@ function Client:moveCards(moves)
       table.insert(self.discard_pile, move.ids[1])
     end
 
-    Fk:filterCard(move.ids[1], move.to == Self.id and Self or nil)
+    if (move.ids[1] ~= -1) then
+      Fk:filterCard(move.ids[1], ClientInstance:getPlayerById(move.to))
+    end
   end
 end
 

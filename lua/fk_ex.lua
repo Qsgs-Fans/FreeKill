@@ -90,15 +90,17 @@ function fk.CreateTriggerSkill(spec)
     skill.refresh = spec.on_refresh
   end
 
-  if not spec.priority then
-    if frequency == Skill.Wake then
-      spec.priority = 3
-    elseif frequency == Skill.Compulsory then
-      spec.priority = 2
-    else
-      spec.priority = 1
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+
+    if not spec.priority then
+      spec.priority = 0.1
     end
+  elseif not spec.priority then
+    spec.priority = 1
   end
+
   if type(spec.priority) == "number" then
     for _, event in ipairs(skill.events) do
       skill.priority_table[event] = spec.priority
@@ -137,6 +139,11 @@ function fk.CreateActiveSkill(spec)
   }
   skill.distance_limit = spec.distance_limit or skill.distance_limit
 
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+  end
+
   if spec.can_use then skill.canUse = spec.can_use end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
@@ -173,6 +180,11 @@ function fk.CreateViewAsSkill(spec)
   }
   skill.distance_limit = spec.distance_limit or skill.distance_limit
 
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+  end
+
   skill.viewAs = spec.view_as
   if spec.card_filter then
     skill.cardFilter = spec.card_filter
@@ -205,6 +217,11 @@ function fk.CreateDistanceSkill(spec)
     skill.global = spec.global
   end
 
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+  end
+
   return skill
 end
 
@@ -223,6 +240,11 @@ function fk.CreateProhibitSkill(spec)
     skill.global = spec.global
   end
 
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+  end
+
   return skill
 end
 
@@ -239,6 +261,11 @@ function fk.CreateAttackRangeSkill(spec)
   skill.getCorrect = spec.correct_func
   if spec.global then
     skill.global = spec.global
+  end
+
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
   end
 
   return skill
@@ -263,6 +290,11 @@ function fk.CreateMaxCardsSkill(spec)
   end
   if spec.global then
     skill.global = spec.global
+  end
+
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
   end
 
   return skill
@@ -290,6 +322,11 @@ function fk.CreateTargetModSkill(spec)
   end
   if spec.global then
     skill.global = spec.global
+  end
+
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
   end
 
   return skill
@@ -382,6 +419,10 @@ function fk.CreateWeapon(spec)
 
   local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
   card.skill = spec.skill or defaultCardSkill
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
   return card
 end
 
@@ -396,6 +437,10 @@ function fk.CreateArmor(spec)
 
   local card = Armor:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
   return card
 end
 
@@ -410,6 +455,10 @@ function fk.CreateDefensiveRide(spec)
 
   local card = DefensiveRide:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
   return card
 end
 
@@ -424,6 +473,10 @@ function fk.CreateOffensiveRide(spec)
 
   local card = OffensiveRide:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
   return card
 end
 
@@ -438,5 +491,9 @@ function fk.CreateTreasure(spec)
 
   local card = Treasure:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
   return card
 end

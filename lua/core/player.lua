@@ -461,25 +461,8 @@ local function getActualSkill(skill)
 end
 
 ---@param skill string | Skill
-function Player:hasEquipSkill(skill)
-  skill = getActualSkill(skill)
-  local equips = self.player_cards[Player.Equip]
-  for _, id in ipairs(equips) do
-    local card = Fk:getCardById(id)
-    if card.skill == skill then
-      return true
-    end
-  end
-  return false
-end
-
----@param skill string | Skill
 function Player:hasSkill(skill)
   skill = getActualSkill(skill)
-
-  if self:hasEquipSkill(skill) then
-    return true
-  end
 
   if table.contains(self.player_skills, skill) then
     return true
