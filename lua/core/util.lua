@@ -66,6 +66,15 @@ function table.clone(self)
   return ret
 end
 
+-- similar to table.clone but not recursively
+function table.simpleClone(self)
+  local ret = {}
+  for k, v in pairs(self) do
+    ret[k] = v
+  end
+  return ret
+end
+
 -- if table does not contain the element, we insert it
 function table:insertIfNeed(element)
   if not table.contains(self, element) then

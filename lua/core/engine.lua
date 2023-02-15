@@ -185,6 +185,9 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
 
   generalPool = generalPool or self.generals
   except = except or {}
+  for _, g in ipairs(self.packages["test_p_0"].generals) do
+    table.insert(except, g.name)
+  end
 
   local availableGenerals = {}
   for _, general in pairs(generalPool) do
