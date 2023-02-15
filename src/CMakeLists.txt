@@ -91,3 +91,6 @@ target_link_libraries(FreeKill PRIVATE
   ${QT_LIB}
   ${GIT_LIB}
 )
+
+install(TARGETS FreeKill DESTINATION bin)
+install(TARGETS fkparse DESTINATION lib)
