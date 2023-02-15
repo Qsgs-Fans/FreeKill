@@ -57,6 +57,7 @@ static void prepareForLinux() {
   // package manager, and then we need to copy assets to ~/.local and change cwd
   char buf[256] = {0};
   int len = readlink("/proc/self/exe", buf, 256);
+  puts(buf);
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
     system("cp -r /usr/share/FreeKill ~/.local/share");
