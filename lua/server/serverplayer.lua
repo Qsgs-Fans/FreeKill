@@ -60,13 +60,13 @@ end
 
 local function _waitForReply(player, timeout)
   local result
-  local start = fk.GetMicroSecond()
+  local start = os.getms()
   while true do
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
       return result
     end
-    if timeout and (fk.GetMicroSecond() - start) / 1000 >= timeout * 1000 then
+    if timeout and (os.getms() - start) / 1000 >= timeout * 1000 then
       return ""
     end
     coroutine.yield()
