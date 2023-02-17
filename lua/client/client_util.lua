@@ -138,7 +138,7 @@ function CanUseCard(card, player)
     end
   end
 
-  local ret = c.skill:canUse(ClientInstance:getPlayerById(player))
+  local ret = c.skill:canUse(ClientInstance:getPlayerById(player), c)
   return json.encode(ret)
 end
 
@@ -160,7 +160,7 @@ function CanUseCardToTarget(card, to_select, selected)
     return ActiveTargetFilter(t.skill, to_select, selected, t.subcards)
   end
 
-  local ret = c.skill:targetFilter(to_select, selected, selected_cards)
+  local ret = c.skill:targetFilter(to_select, selected, selected_cards, c)
   if ret then
     local r = Fk:currentRoom()
     local status_skills = r.status_skills[ProhibitSkill] or {}
@@ -242,7 +242,7 @@ function ActiveCanUse(skill_name)
         end
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)
-          ret = c.skill:canUse(Self)
+          ret = c.skill:canUse(Self, c)
           if ret then break end
         end
       end

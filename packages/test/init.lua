@@ -57,8 +57,8 @@ local test_filter = fk.CreateFilterSkill{
     return Fk:cloneCard("crossbow", card.suit, card.number)
   end,
 }
-local test2 = General(extension, "mouxusheng", "wu", 4)
-test2:addSkill(test_filter)
+local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
+test2:addSkill("rende")
 test2:addSkill(cheat)
 
 Fk:loadTranslationTable{

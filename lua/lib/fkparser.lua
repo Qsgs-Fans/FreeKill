@@ -277,18 +277,18 @@ fkp.CreateTargetModSkill = function(_spec)
     return Fk:cloneCard(str)
   end
   if _spec.residue_func then
-    spec.residue_func = function(self, target, skill, scope)
-      return _spec.residue_func(self, target, getVCardFromActiveSkill(skill))
+    spec.residue_func = function(self, target, skill, scope, card)
+      return _spec.residue_func(self, target, card or getVCardFromActiveSkill(skill))
     end
   end
   if _spec.distance_limit_func then
-    spec.distance_limit_func = function(self, target, skill)
-      return _spec.distance_limit_func(self, target, getVCardFromActiveSkill(skill))
+    spec.distance_limit_func = function(self, target, skill, card)
+      return _spec.distance_limit_func(self, target, card or getVCardFromActiveSkill(skill))
     end
   end
   if _spec.extra_target_func then
-    spec.extra_target_func = function(self, target, skill)
-      return _spec.extra_target_func(self, target, getVCardFromActiveSkill(skill))
+    spec.extra_target_func = function(self, target, skill, card)
+      return _spec.extra_target_func(self, target, card or getVCardFromActiveSkill(skill))
     end
   end
   return fk.CreateTargetModSkill(spec)

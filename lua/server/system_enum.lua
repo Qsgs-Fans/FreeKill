@@ -99,7 +99,7 @@ fk.FireDamage = 3
 ---@field tos TargetGroup
 ---@field card Card
 ---@field toCard Card|null
----@field responseToEvent CardEffectStruct|null
+---@field responseToEvent CardEffectEvent|null
 ---@field nullifiedTargets interger[]|null
 ---@field extraUse boolean|null
 ---@field disresponsiveList integer[]|null

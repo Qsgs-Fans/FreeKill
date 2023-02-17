@@ -355,6 +355,7 @@ end
 
 ---@class CardSpec: Card
 ---@field skill Skill
+---@field equip_skill Skill
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",

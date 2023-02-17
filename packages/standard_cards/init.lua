@@ -26,8 +26,8 @@ local slashSkill = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
   end,
-  target_filter = function(self, to_select, selected)
-    if #selected < self:getMaxTargetNum(Self) then
+  target_filter = function(self, to_select, selected, _, card)
+    if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:inMyAttackRange(player)
     end
@@ -764,81 +764,209 @@ extension:addCards({
   qingGang,
 })
 
+local iceSwordSkill = fk.CreateTriggerSkill{
+  name = "#ice_sword_skill",
+  attached_equip = "ice_sword",
+  events = {fk.DamageCaused},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card and data.card.name == "slash" and not data.to:isNude()
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local to = data.to
+    for i = 1, 2 do
+      if to:isNude() then break end
+      local card = room:askForCardChosen(player, to, "he", self.name)
+      room:throwCard(card, self.name, to, player)
+    end
+    return true
+  end
+}
+Fk:addSkill(iceSwordSkill)
+
 local iceSword = fk.CreateWeapon{
   name = "ice_sword",
   suit = Card.Spade,
   number = 2,
   attack_range = 2,
+  equip_skill = iceSwordSkill,
 }
 Fk:loadTranslationTable{
   ["ice_sword"] = "寒冰剑",
+  ["#ice_sword_skill"] = "寒冰剑",
 }
 
 extension:addCards({
   iceSword,
 })
 
+local doubleSwordsSkill = fk.CreateTriggerSkill{
+  name = "#double_swords_skill",
+  attached_equip = "double_swords",
+  events = {fk.TargetSpecified},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card and data.card.name == "slash" and
+      (player.room:getPlayerById(data.to).gender ~= player.gender)
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local to = player.room:getPlayerById(data.to)
+    local result = room:askForDiscard(to, 1, 1, false, self.name, true)
+    if #result == 0 then
+      player:drawCards(1, self.name)
+    end
+  end,
+}
+Fk:addSkill(doubleSwordsSkill)
 local doubleSwords = fk.CreateWeapon{
   name = "double_swords",
   suit = Card.Spade,
   number = 2,
   attack_range = 2,
+  equip_skill = doubleSwordsSkill,
 }
 Fk:loadTranslationTable{
   ["double_swords"] = "雌雄双股剑",
+  ["#double_swords_skill"] = "雌雄双股剑",
 }
 
 extension:addCards({
   doubleSwords,
 })
 
+local bladeSkill = fk.CreateTriggerSkill{
+  name = "#blade_skill",
+  attached_equip = "blade",
+  events = {fk.CardUseFinished},
+  can_trigger = function(self, event, target, player, data)
+    if not player:hasSkill(self.name) then return end
+    local use = data ---@type CardUseStruct
+    if use.card.name == "jink" and use.toCard and use.toCard.name == "slash" then
+      local effect = use.responseToEvent
+      return effect.from == player.id
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
+      true, { must_targets = {target.id} })
+    if use then
+      self.cost_data = use
+      return true
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    player.room:useCard(self.cost_data)
+  end,
+}
+Fk:addSkill(bladeSkill)
 local blade = fk.CreateWeapon{
   name = "blade",
   suit = Card.Spade,
   number = 5,
   attack_range = 3,
+  equip_skill = bladeSkill,
 }
 Fk:loadTranslationTable{
   ["blade"] = "青龙偃月刀",
+  ["#blade_skill"] = "青龙偃月刀",
+  ["#blade_slash"] = "你可以发动“青龙偃月刀”对 %src 再使用一张杀",
 }
 
 extension:addCards({
   blade,
 })
 
+local spearSkill = fk.CreateViewAsSkill{
+  name = "spear_skill",
+  attached_equip = "spear",
+  pattern = "slash",
+  card_filter = function(self, to_select, selected)
+    if #selected == 2 then return false end
+    return ClientInstance:getCardArea(to_select) ~= Player.Equip
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 2 then
+      return nil
+    end
+    local c = Fk:cloneCard("slash")
+    c:addSubcards(cards)
+    return c
+  end,
+}
+Fk:addSkill(spearSkill)
 local spear = fk.CreateWeapon{
   name = "spear",
   suit = Card.Spade,
   number = 12,
   attack_range = 3,
+  equip_skill = spearSkill,
 }
 Fk:loadTranslationTable{
   ["spear"] = "丈八蛇矛",
+  ["spear_skill"] = "丈八矛",
 }
 
 extension:addCards({
   spear,
 })
 
+local axeSkill = fk.CreateTriggerSkill{
+  name = "#axe_skill",
+  attached_equip = "axe",
+  events = {fk.CardEffecting},
+  can_trigger = function(self, event, target, player, data)
+    if not player:hasSkill(self.name) then return end
+    local effect = data ---@type CardEffectEvent
+    return effect.card.name == "jink" and effect.responseToEvent and
+      effect.responseToEvent.from == player.id and
+      effect.toCard.name == "slash"
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    local ret = room:askForDiscard(player, 2, 2, true, self.name, true)
+    if #ret > 0 then return true end
+  end,
+  on_use = function() return true end,
+}
+Fk:addSkill(axeSkill)
 local axe = fk.CreateWeapon{
   name = "axe",
   suit = Card.Diamond,
   number = 5,
   attack_range = 3,
+  equip_skill = axeSkill,
 }
 Fk:loadTranslationTable{
   ["axe"] = "贯石斧",
+  ["#axe_skill"] = "贯石斧",
 }
 
 extension:addCards({
   axe,
 })
 
+local halberdSkill = fk.CreateTargetModSkill{
+  name = "#halberd_skill",
+  attached_equip = "halberd",
+  extra_target_func = function(self, player, skill, card)
+    p(card.id)
+    if player:hasSkill(self.name) and skill.name == "slash_skill"
+      and #player:getCardIds(Player.Hand) == 1
+      and player:getCardIds(Player.Hand)[1] == card.id then
+      return 2
+    end
+  end,
+}
+Fk:addSkill(halberdSkill)
 local halberd = fk.CreateWeapon{
   name = "halberd",
   suit = Card.Diamond,
   number = 12,
   attack_range = 4,
+  equip_skill = halberdSkill,
 }
 Fk:loadTranslationTable{
   ["halberd"] = "方天画戟",
@@ -848,14 +976,50 @@ extension:addCards({
   halberd,
 })
 
+local kylinBowSkill = fk.CreateTriggerSkill{
+  name = "#kylin_bow_skill",
+  attached_equip = "kylinBow",
+  events = {fk.DamageCaused},
+  can_trigger = function(self, event, target, player, data)
+    local ret = target == player and player:hasSkill(self.name) and
+      data.card and data.card.name == "slash"
+    if ret then
+      ---@type ServerPlayer
+      local to = data.to
+      return to:getEquipment(Card.SubtypeDefensiveRide) or
+        to:getEquipment(Card.SubtypeOffensiveRide)
+    end
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local to = data.to
+    local ride_tab = {}
+    if to:getEquipment(Card.SubtypeDefensiveRide) then
+      table.insert(ride_tab, "+1")
+    end
+    if to:getEquipment(Card.SubtypeOffensiveRide) then
+      table.insert(ride_tab, "-1")
+    end
+    if #ride_tab == 0 then return end
+    local choice = room:askForChoice(player, ride_tab, self.name)
+    if choice == "+1" then
+      room:throwCard(to:getEquipment(Card.SubtypeDefensiveRide), self.name, to, player)
+    else
+      room:throwCard(to:getEquipment(Card.SubtypeOffensiveRide), self.name, to, player)
+    end
+  end
+}
+Fk:addSkill(kylinBowSkill)
 local kylinBow = fk.CreateWeapon{
   name = "kylin_bow",
   suit = Card.Heart,
   number = 5,
   attack_range = 5,
+  equip_skill = kylinBowSkill,
 }
 Fk:loadTranslationTable{
   ["kylin_bow"] = "麒麟弓",
+  ["#kylin_bow_skill"] = "麒麟弓",
 }
 
 extension:addCards({
