@@ -1271,7 +1271,7 @@ function Room:useCard(cardUseEvent)
   sendCardEmotionAndLog(self, cardUseEvent)
 
   if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    return false
+    goto clean
   end
 
   if not cardUseEvent.extraUse then
@@ -1296,6 +1296,7 @@ function Room:useCard(cardUseEvent)
 
   self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
 
+::clean::
   local leftRealCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
   if #leftRealCardIds > 0 then
     self:moveCards({
