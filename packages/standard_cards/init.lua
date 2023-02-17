@@ -722,6 +722,20 @@ extension:addCards({
   indulgence:clone(Card.Heart, 6),
 })
 
+local crossbowAudio = fk.CreateTriggerSkill{
+  name = "#crossbowAudio",
+  refresh_events = {fk.CardUsing},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card.name == "slash" and
+      player:usedCardTimes("slash") > 1
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:broadcastPlaySound("./packages/standard_cards/audio/card/crossbow")
+    room:setEmotion(player, "./packages/standard_cards/image/anim/crossbow")
+  end,
+}
 local crossbowSkill = fk.CreateTargetModSkill{
   name = "#crossbow_skill",
   attached_equip = "crossbow",
@@ -732,6 +746,7 @@ local crossbowSkill = fk.CreateTargetModSkill{
     end
   end,
 }
+crossbowSkill:addRelatedSkill(crossbowAudio)
 Fk:addSkill(crossbowSkill)
 
 local crossbow = fk.CreateWeapon{
@@ -948,6 +963,19 @@ extension:addCards({
   axe,
 })
 
+local halberdAudio = fk.CreateTriggerSkill{
+  name = "#halberdAudio",
+  refresh_events = {fk.CardUsing},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card.name == "slash" and #TargetGroup:getRealTargets(data.tos) > 1
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    room:broadcastPlaySound("./packages/standard_cards/audio/card/halberd")
+    room:setEmotion(player, "./packages/standard_cards/image/anim/halberd")
+  end,
+}
 local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
@@ -960,6 +988,7 @@ local halberdSkill = fk.CreateTargetModSkill{
     end
   end,
 }
+halberdSkill:addRelatedSkill(halberdAudio)
 Fk:addSkill(halberdSkill)
 local halberd = fk.CreateWeapon{
   name = "halberd",
