@@ -48,6 +48,12 @@ ClientSocket *ServerPlayer::getSocket() const
   return socket;
 }
 
+void ServerPlayer::removeSocket() {
+  // this->socket will be used by other ServerPlayer instance
+  // so do not delete it here
+  this->socket = nullptr;
+}
+
 Server *ServerPlayer::getServer() const
 {
   return server;

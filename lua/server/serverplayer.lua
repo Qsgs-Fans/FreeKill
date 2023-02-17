@@ -176,7 +176,9 @@ function ServerPlayer:marshal(player)
   end
 
   for k, v in pairs(self.cardUsedHistory) do
-    player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+    if v[1] > 0 then
+      player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+    end
   end
 
   if self.role_shown then

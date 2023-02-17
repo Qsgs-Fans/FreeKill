@@ -15,6 +15,7 @@ public:
   ~ServerPlayer();
 
   void setSocket(ClientSocket *socket);
+  void removeSocket();  // For the running players
   ClientSocket *getSocket() const;
 
   Server *getServer() const;
