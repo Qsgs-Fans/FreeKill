@@ -978,7 +978,7 @@ extension:addCards({
 
 local kylinBowSkill = fk.CreateTriggerSkill{
   name = "#kylin_bow_skill",
-  attached_equip = "kylinBow",
+  attached_equip = "kylin_bow",
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     local ret = target == player and player:hasSkill(self.name) and

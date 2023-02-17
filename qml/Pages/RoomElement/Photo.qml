@@ -90,7 +90,7 @@ Item {
 
   PixmapAnimation {
     id: animPlaying
-    source: "playing"
+    source: SkinBank.PIXANIM_DIR + "playing"
     anchors.centerIn: parent
     loop: true
     scale: 1.1
@@ -99,7 +99,7 @@ Item {
 
   PixmapAnimation {
     id: animSelected
-    source: "selected"
+    source: SkinBank.PIXANIM_DIR + "selected"
     anchors.centerIn: parent
     loop: true
     scale: 1.1
@@ -358,7 +358,7 @@ Item {
 
   PixmapAnimation {
     id: animSelectable
-    source: "selectable"
+    source: SkinBank.PIXANIM_DIR + "selectable"
     anchors.centerIn: parent
     loop: true
     visible: root.state === "candidate" && selectable

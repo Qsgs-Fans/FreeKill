@@ -189,7 +189,15 @@ function setEmotion(id, emotion, isCardId) {
   }
 
   if (!Backend.exists(path)) {
-    return;
+    // Try absolute path again
+    if (OS === "Win") {
+      // Windows: file:///C:/xxx/xxxx
+      path = (AppPath + "/" + emotion).replace("file:///", "");
+    } else {
+      path = (AppPath + "/" + emotion).replace("file://", "");
+    }
+    if (!Backend.exists(path))
+      return;
   }
   if (!Backend.isDir(path)) {
     // TODO: set picture emotion
@@ -220,7 +228,7 @@ function setEmotion(id, emotion, isCardId) {
     }
   }
 
-  let animation = component.createObject(photo, {source: emotion});
+  let animation = component.createObject(photo, {source: path});
   animation.anchors.centerIn = photo;
   if (isCardId) {
     animation.started.connect(() => photo.busy = true);

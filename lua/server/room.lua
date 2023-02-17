@@ -885,26 +885,19 @@ function Room:handleUseCardReply(player, data)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
     if skill:isInstanceOf(ActiveSkill) then
-      if not skill.mute then
-        self:broadcastSkillInvoke(skill.name)
-      end
-      self:notifySkillInvoked(player, skill.name)
-      player:addSkillUseHistory(skill.name)
-      self:doIndicate(player.id, targets)
-      skill:onUse(self, {
-        from = player.id,
-        cards = selected_cards,
-        tos = targets,
-      })
+      self:useSkill(player, skill, function()
+        self:doIndicate(player.id, targets)
+        skill:onUse(self, {
+          from = player.id,
+          cards = selected_cards,
+          tos = targets,
+        })
+      end)
       return nil
     elseif skill:isInstanceOf(ViewAsSkill) then
       local c = skill:viewAs(selected_cards)
       if c then
-        if not skill.mute then
-          self:broadcastSkillInvoke(skill.name)
-        end
-        self:notifySkillInvoked(player, skill.name)
-        player:addSkillUseHistory(skill.name)
+        self:useSkill(player, skill)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
@@ -1008,22 +1001,11 @@ end
 -- use card logic, and wrappers
 ------------------------------------------------------------------------
 
----@param room Room
----@param cardUseEvent CardUseStruct
-local sendCardEmotionAndLog = function(room, cardUseEvent)
-  local from = cardUseEvent.from
-  local _card = cardUseEvent.card
-
-  -- when this function is called, card is already in PlaceTable and no filter skill is applied.
-  -- So filter this card manually here to get 'real' use.card
-  local card = _card
-  if not _card:isVirtual() then
-    local temp = { card = _card }
-    Fk:filterCard(_card.id, room:getPlayerById(from), temp)
-    card = temp.card
+local playCardEmotionAndSound = function(room, player, card)
+  if card.type ~= Card.TypeEquip then
+    room:setEmotion(player, "./packages/" ..
+      card.package.extensionName .. "/image/anim/" .. card.name)
   end
-
-  room:setEmotion(room:getPlayerById(from), card.name)
 
   local soundName
   if card.type == Card.TypeEquip then
@@ -1039,10 +1021,27 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
     soundName = "./audio/card/common/" .. subTypeStr
   else
     soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
-      .. (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
+      .. (player.gender == General.Male and "male/" or "female/") .. card.name
   end
   room:broadcastPlaySound(soundName)
+end
 
+---@param room Room
+---@param cardUseEvent CardUseStruct
+local sendCardEmotionAndLog = function(room, cardUseEvent)
+  local from = cardUseEvent.from
+  local _card = cardUseEvent.card
+
+  -- when this function is called, card is already in PlaceTable and no filter skill is applied.
+  -- So filter this card manually here to get 'real' use.card
+  local card = _card
+  if not _card:isVirtual() then
+    local temp = { card = _card }
+    Fk:filterCard(_card.id, room:getPlayerById(from), temp)
+    card = temp.card
+  end
+
+  playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
@@ -1572,9 +1571,7 @@ function Room:responseCard(cardResponseEvent)
     moveReason = fk.ReasonResonpse,
   })
 
-  self:setEmotion(self:getPlayerById(from), card.name)
-  local soundName = (self:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
-  self:broadcastPlaySound("./audio/card/" .. soundName)
+  playCardEmotionAndSound(self, self:getPlayerById(from), card)
 
   for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -2299,6 +2296,28 @@ function Room:shuffleDrawPile()
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
+end
+
+---@param player ServerPlayer
+---@param skill Skill
+---@param effect_cb fun()
+function Room:useSkill(player, skill, effect_cb)
+  if not skill.mute then
+    if skill.attached_equip then
+      local equip = Fk:cloneCard(skill.attached_equip)
+      local pkgPath = "./packages/" .. equip.package.extensionName
+      local soundName = pkgPath .. "/audio/card/" .. equip.name
+      self:broadcastPlaySound(soundName)
+      self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
+    else
+      self:broadcastSkillInvoke(skill.name)
+      self:notifySkillInvoked(player, skill.name)
+    end
+  end
+  player:addSkillUseHistory(skill.name)
+  if effect_cb then
+    return effect_cb()
+  end
 end
 
 function Room:gameOver(winner)

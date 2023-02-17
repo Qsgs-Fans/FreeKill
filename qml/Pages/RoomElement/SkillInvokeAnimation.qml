@@ -1,4 +1,5 @@
 import QtQuick
+import "../skin-bank.js" as SkinBank
 
 Item {
   id: root
@@ -9,7 +10,7 @@ Item {
   PixmapAnimation {
     id: typeAnim
     anchors.centerIn: parent
-    source: "skillInvoke/" + skill_type
+    source: SkinBank.PIXANIM_DIR + "skillInvoke/" + skill_type
     keepAtStop: true
   }
 
