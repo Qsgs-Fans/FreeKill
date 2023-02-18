@@ -13,6 +13,7 @@
 ---@class MoveInfo
 ---@field cardId integer
 ---@field fromArea CardArea
+---@field fromSpecialName string|null
 
 ---@class CardsMoveStruct
 ---@field moveInfo MoveInfo[]
@@ -25,7 +26,6 @@
 ---@field moveVisible boolean|null
 ---@field specialName string|null
 ---@field specialVisible boolean|null
----@field fromSpecialName string|null
 
 ---@class HpChangedData
 ---@field num integer
@@ -141,6 +141,16 @@ fk.ReasonPrey = 7
 fk.ReasonExchange = 8
 fk.ReasonUse = 9
 fk.ReasonResonpse = 10
+
+---@class PindianStruct
+---@field from ServerPlayer
+---@field to ServerPlayer
+---@field from_card Card
+---@field to_card Card
+---@field from_number integer
+---@field to_number integer
+---@field reason string
+---@field winner ServerPlayer|null
 
 ---@class LogMessage
 ---@field type string

@@ -172,9 +172,9 @@ function moveCards(moves) {
     let to = getAreaItem(move.toArea, move.to);
     if (!from || !to || from === to)
       continue;
-    let items = from.remove(move.ids);
+    let items = from.remove(move.ids, move.fromSpecialName);
     if (items.length > 0)
-      to.add(items);
+      to.add(items, move.specialName);
     to.updateCardPosition(true);
   }
 }

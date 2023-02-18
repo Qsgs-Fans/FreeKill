@@ -117,6 +117,10 @@ function DistanceTo(from, to)
   return a:distanceTo(b)
 end
 
+function GetPile(id, name)
+  return json.encode(ClientInstance:getPlayerById(id):getPile(name) or {})
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)

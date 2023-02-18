@@ -32,7 +32,7 @@ Item {
   property alias equipArea: equipAreaItem
   property alias markArea: markAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem
-  property alias specialArea: handcardAreaItem
+  property alias specialArea: specialAreaItem
 
   property alias progressBar: progressBar
   property alias progressTip: progressTip.text
@@ -202,6 +202,41 @@ Item {
 
     x: 31
     y: 139
+  }
+
+  Item {
+    id: specialAreaItem
+
+    x: 31
+    y: 139
+
+    InvisibleCardArea {
+      id: specialContainer
+      // checkExisting: true
+    }
+
+    function updatePileInfo(areaName) {
+      let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.playerid, areaName]));
+      if (data.length === 0) {
+        root.markArea.removeMark(areaName);
+      } else {
+        root.markArea.setMark(areaName, data.length);
+      }
+    }
+
+    function add(inputs, areaName) {
+      updatePileInfo(areaName);
+      specialContainer.add(inputs);
+    }
+
+    function remove(inputs, areaName) {
+      updatePileInfo(areaName);
+      return specialContainer.remove(inputs);
+    }
+
+    function updateCardPosition(a) {
+      specialContainer.updateCardPosition(a);
+    }
   }
 
   MarkArea {

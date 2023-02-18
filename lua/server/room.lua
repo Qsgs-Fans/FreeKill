@@ -521,9 +521,9 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
 
       -- forceVisible make the move visible
       -- FIXME: move.moveInfo is an array, fix this
-      move.moveVisible = (forceVisible)
+      move.moveVisible = move.moveVisible or (forceVisible)
         -- if move is relevant to player, it should be open
-        or ((move.from == p.id) or (move.to == p.id and move.toArea ~= Card.PlayerSpecial))
+        or ((move.from == p.id) or (move.to == p.id))
         -- cards move from/to equip/judge/discard/processing should be open
         or infosContainArea(move.moveInfo, Card.PlayerEquip)
         or move.toArea == Card.PlayerEquip
@@ -1609,7 +1609,11 @@ function Room:moveCards(...)
       ---@type MoveInfo[]
       local infos = {}
       for _, id in ipairs(cardsMoveInfo.ids) do
-        table.insert(infos, { cardId = id, fromArea = self:getCardArea(id) })
+        table.insert(infos, {
+          cardId = id,
+          fromArea = self:getCardArea(id),
+          fromSpecialName = cardsMoveInfo.from and self:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
+        })
       end
   
       ---@type CardsMoveStruct
@@ -1650,7 +1654,7 @@ function Room:moveCards(...)
         local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
 
         if table.contains(playerAreas, realFromArea) and data.from then
-          self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, data.specialName)
+          self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, info.fromSpecialName)
         elseif realFromArea ~= Card.Unknown then
           local fromAreaIds = {}
           if realFromArea == Card.Processing then
@@ -1753,18 +1757,12 @@ end
 ---@param reason integer
 ---@param skill_name string
 ---@param special_name string
-function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name)
+---@param visible boolean
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
-  local ids = {}
-  if card[1] ~= nil then
-    for _, cd in ipairs(card) do
-      table.insertTable(ids, self:getSubcardsByRule(card))
-    end
-  else
-    ids = self:getSubcardsByRule(card)
-  end
+  local ids = Card:getIdList(card)
 
   local to
   if table.contains(
@@ -1780,7 +1778,8 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     toArea = to_place,
     moveReason = reason,
     skillName = skill_name,
-    specialName = special_name
+    specialName = special_name,
+    moveVisible = visible, 
   }
 end
 
@@ -2254,6 +2253,11 @@ function Room:throwCard(card_ids, skillName, who, thrower)
     proposer = thrower.id,
     skillName = skillName
   })
+end
+
+---@param pindianStruct PindianStruct
+function Room:pindian(pindianStruct)
+
 end
 
 -- other helpers

@@ -404,6 +404,15 @@ function ServerPlayer:drawCards(num, skillName, fromPlace)
   return self.room:drawCards(self, num, skillName, fromPlace)
 end
 
+---@param pile_name string
+---@param card integer|Card
+---@param visible boolean
+---@param skillName string
+function ServerPlayer:addToPile(pile_name, card, visible, skillName)
+  local room = self.room
+  room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
+end
+
 function ServerPlayer:bury()
   -- self:clearFlags()
   -- self:clearHistory()

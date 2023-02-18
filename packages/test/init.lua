@@ -45,6 +45,8 @@ local cheat = fk.CreateActiveSkill{
       toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
     end
 
+    from:addToPile(self.name, toGain, true, self.name)
+    room:delay(1000)
     room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
   end
 }

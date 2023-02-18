@@ -217,4 +217,26 @@ function Card:toLogString()
   return ret
 end
 
+---@param c integer|integer[]|Card|Card[]
+---@return integer[]
+function Card.static:getIdList(c)
+  if type(c) == "number" then
+    return {c}
+  end
+  if c.class and c:isInstanceOf(Card) then
+    if c:isVirtual() then
+      return table.clone(c.subcards)
+    else
+      return {c.id}
+    end
+  end
+
+  -- array
+  local ret = {}
+  for _, c2 in ipairs(c) do
+    table.insertTable(ret, Card:getIdList(c))
+  end
+  return ret
+end
+
 return Card
