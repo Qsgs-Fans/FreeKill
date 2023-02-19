@@ -291,9 +291,12 @@ Item {
 
   MouseArea {
     anchors.fill: parent
-    onClicked: {
-      if (parent.state != "candidate" || !parent.selectable)
+    propagateComposedEvents: true
+    onClicked: (mouse) => {
+      if (parent.state != "candidate" || !parent.selectable) {
+        mouse.accepted = false;
         return;
+      }
       parent.selected = !parent.selected;
     }
   }
