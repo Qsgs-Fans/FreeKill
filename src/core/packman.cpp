@@ -107,7 +107,7 @@ void PackMan::updatePack(const QString &pack) {
   if (result.isEmpty()) return;
   int error;
   error = status(pack);
-  if (error < 0) {
+  if (error != 0) {
     qCritical("Workspace is dirty, or some error occured.");
     return;
   }
@@ -122,7 +122,7 @@ void PackMan::upgradePack(const QString &pack) {
   error = checkout_branch(pack, "master");
   if (error < 0) return;
   error = status(pack);
-  if (error < 0) {
+  if (error != 0) {
     qCritical("Workspace is dirty, or some error occured.");
     return;
   }
