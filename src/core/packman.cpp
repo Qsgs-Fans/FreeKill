@@ -2,6 +2,7 @@
 #include "util.h"
 #include "qmlbackend.h"
 #include "git2.h"
+#include <qjsondocument.h>
 
 PackMan *Pacman;
 
@@ -17,65 +18,34 @@ PackMan::~PackMan() {
   git_libgit2_shutdown();
   sqlite3_close(db);
 }
-/*
-void PackMan::readConfig() {
-  QFile f("packages/packages.txt");
-  if (!f.exists())
-    return;
 
-  if (!f.open(QIODevice::ReadOnly)) {
-    qFatal("cannot open packages.txt. Quit now.");
-    qApp->exit(1);
-  }
-
-  while (true) {
-    auto data = f.readLine();
-    if (data.isEmpty())
-      break;
-    auto data_list = data.split(' ');
-    pack_list << data_list[0];
-    pack_url_list << data_list[1];
-    hash_list << data_list[2];
-    enabled_list << data_list[3].toInt();
-  }
-  f.close();
+QString PackMan::getPackSummary() {
+  return SelectFromDb(db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
 }
 
-void PackMan::writeConfig() {
-  QFile f("packages/packages.txt");
-  if (!f.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-    qFatal("Cannot open packages.txt for write. Quitting.");
+void PackMan::loadSummary(const QString &jsonData) {
+  // First, disable all packages
+  foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
+    disablePack(e.toObject()["name"].toString());
   }
 
-  for (int i = 0; i < pack_list.length(); i++) {
-    QStringList l;
-    l << pack_list[i];
-    l << pack_url_list[i];
-    l << hash_list[i];
-    l << QString::number(enabled_list[i]);
-    f.write(l.join(" ").toUtf8() + '\n');
-  }
-  f.close();
-}
-
-void PackMan::loadConfString(const QString &conf) {
-  auto lines = conf.split('\n');
-  foreach (QString s, lines) {
-    auto data_list = s.split(' ');
-    int idx = pack_list.indexOf(data_list[0]);
-    if (idx == -1) {
-      pack_list << data_list[0];
-      pack_url_list << data_list[1];
-      hash_list << data_list[2];
-      enabled_list << data_list[3].toInt();
-    } else {
-      pack_url_list[idx] = data_list[1];
-      hash_list[idx] = data_list[2];
-      enabled_list[idx] = data_list[3].toInt();
+  // Then read conf from string
+  auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
+  auto arr = doc.array();
+  foreach (auto e, arr) {
+    auto obj = e.toObject();
+    auto name = obj["name"].toString();
+    if (SelectFromDatabase(db, QString("SELECT name FROM packages WHERE name='%1';")
+          .arg(name)).isEmpty()) {
+      downloadNewPack(obj["url"].toString());
     }
+    ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
+        .arg(obj["hash"].toString()).arg(name));
+    enablePack(name);
+    updatePack(name);
   }
 }
-*/
+
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
   auto threadFunc = [=](){
     int error = clone(url);
@@ -275,6 +245,7 @@ clean:
 int PackMan::checkout(const QString &name, const QString &hash) {
   git_repository *repo = NULL;
   int error;
+  git_oid oid = {0};
   git_checkout_options opt = GIT_CHECKOUT_OPTIONS_INIT;
   opt.checkout_strategy = GIT_CHECKOUT_FORCE;
   auto path = QString("packages/%1").arg(name).toUtf8();
@@ -284,7 +255,12 @@ int PackMan::checkout(const QString &name, const QString &hash) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_repository_set_head(repo, sha);
+  error = git_oid_fromstr(&oid, sha);
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+  error = git_repository_set_head_detached(repo, &oid);
   if (error < 0) {
     GIT_FAIL;
     goto clean;

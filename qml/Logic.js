@@ -38,6 +38,13 @@ callbacks["ErrorMsg"] = function(jsonData) {
   mainWindow.busy = false;
 }
 
+callbacks["UpdatePackage"] = (jsonData) => {
+  mainWindow.busy = true;
+  Pacman.loadSummary(jsonData);
+  mainWindow.busy = false;
+  toast.show(qsTr("updated packages for md5"));
+}
+
 callbacks["UpdateBusyText"] = function(jsonData) {
   mainWindow.busyText = jsonData;
 }

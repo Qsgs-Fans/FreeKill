@@ -71,6 +71,10 @@
     <source>username or password error</source>
     <translation>用户名或密码错误</translation>
   </message>
+  <message>
+    <source>updated packages for md5</source>
+    <translation>已为您与服务器同步拓展包，请尝试再次连入</translation>
+  </message>
 </context>
 
 <context>
