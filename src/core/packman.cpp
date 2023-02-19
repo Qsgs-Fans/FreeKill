@@ -23,26 +23,38 @@ QString PackMan::getPackSummary() {
   return SelectFromDb(db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
 }
 
-void PackMan::loadSummary(const QString &jsonData) {
-  // First, disable all packages
-  foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
-    disablePack(e.toObject()["name"].toString());
-  }
-
-  // Then read conf from string
-  auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
-  auto arr = doc.array();
-  foreach (auto e, arr) {
-    auto obj = e.toObject();
-    auto name = obj["name"].toString();
-    if (SelectFromDatabase(db, QString("SELECT name FROM packages WHERE name='%1';")
-          .arg(name)).isEmpty()) {
-      downloadNewPack(obj["url"].toString());
+void PackMan::loadSummary(const QString &jsonData, bool useThread) {
+  auto f = [=](){
+    // First, disable all packages
+    foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
+      disablePack(e.toObject()["name"].toString());
     }
-    ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
-        .arg(obj["hash"].toString()).arg(name));
-    enablePack(name);
-    updatePack(name);
+
+    // Then read conf from string
+    auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
+    auto arr = doc.array();
+    foreach (auto e, arr) {
+      auto obj = e.toObject();
+      auto name = obj["name"].toString();
+      if (SelectFromDatabase(db, QString("SELECT name FROM packages WHERE name='%1';")
+            .arg(name)).isEmpty()) {
+        downloadNewPack(obj["url"].toString());
+      }
+      ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
+          .arg(obj["hash"].toString()).arg(name));
+      enablePack(name);
+      updatePack(name);
+    }
+  };
+  if (useThread) {
+    auto thread = QThread::create(f);
+    thread->start();
+    connect(thread, &QThread::finished, [=](){
+      thread->deleteLater();
+      Backend->emitNotifyUI("DownloadComplete", "");
+    });
+  } else {
+    f();
   }
 }
 
@@ -50,7 +62,11 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
   auto threadFunc = [=](){
     int error = clone(url);
     if (error < 0) return;
-    QString fileName = QUrl(url).fileName();
+    auto u = url;
+    while (u.endsWith('/')) {
+      u.chop(1);
+    }
+    QString fileName = QUrl(u).fileName();
     if (fileName.endsWith(".git"))
       fileName.chop(4);
 
@@ -184,8 +200,6 @@ int PackMan::clone(const QString &u) {
   } else {
     if (Backend == nullptr)
       printf("\n");
-    else
-      qWarning("Completed.");
   }
   git_repository_free(repo);
   return error;
@@ -232,8 +246,6 @@ int PackMan::pull(const QString &name) {
   } else {
     if (Backend == nullptr)
       printf("\n");
-    else
-      qWarning("Completed.");
   }
 
 clean:

@@ -8,7 +8,7 @@ public:
   ~PackMan();
 
   QString getPackSummary();
-  Q_INVOKABLE void loadSummary(const QString &);
+  Q_INVOKABLE void loadSummary(const QString &, bool useThread = false);
   Q_INVOKABLE void downloadNewPack(const QString &url, bool useThread = false);
   Q_INVOKABLE void enablePack(const QString &pack);
   Q_INVOKABLE void disablePack(const QString &pack);

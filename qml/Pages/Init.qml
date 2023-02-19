@@ -90,6 +90,10 @@ Item {
     }
   }
 
+  function downloadComplete() {
+    toast.show(qsTr("updated packages for md5"));
+  }
+
   Component.onCompleted: {
     config.loadConf();
     server_addr.model = Object.keys(config.savedPassword);
