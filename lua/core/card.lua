@@ -59,7 +59,9 @@ function Card:initialize(name, suit, number, color)
   self.name = name
   self.suit = suit or Card.NoSuit
   self.number = number or 0
-  self.trueName = name
+
+  local name_splited = name:split("__")
+  self.trueName = name_splited[#name_splited]
 
   if suit == Card.Spade or suit == Card.Club then
     self.color = Card.Black

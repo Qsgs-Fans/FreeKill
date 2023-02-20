@@ -1069,10 +1069,24 @@ extension:addCards({
   eightDiagram:clone(Card.Club, 2),
 })
 
+local niohShieldSkill = fk.CreateTriggerSkill{
+  name = "#nioh_shield_skill",
+  attached_equip = "nioh_shield",
+  frequency = Skill.Compulsory,
+  events = {fk.PreCardEffect},
+  can_trigger = function(self, event, target, player, data)
+    local effect = data ---@type CardEffectEvent
+    return player.id == effect.to and player:hasSkill(self.name) and
+      effect.card.name == "slash" and effect.card.color == Card.Black
+  end,
+  on_use = function() return true end,
+}
+Fk:addSkill(niohShieldSkill)
 local niohShield = fk.CreateArmor{
   name = "nioh_shield",
   suit = Card.Club,
   number = 2,
+  equip_skill = niohShieldSkill,
 }
 Fk:loadTranslationTable{
   ["nioh_shield"] = "仁王盾",
