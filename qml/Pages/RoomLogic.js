@@ -822,8 +822,15 @@ callbacks["Animate"] = function(jsonData) {
       break;
     case "LightBox":
       break;
-    case "SuperLightBox":
+    case "SuperLightBox": {
+      let path = data.path;
+      let jsonData = data.data;
+      roomScene.bigAnim.source = AppPath + "/" + path;
+      if (jsonData && jsonData !== "") {
+        roomScene.bigAnim.item.loadData(jsonData);
+      }
       break;
+    }
     case "InvokeSkill": {
       let id = data.player;
       let component = Qt.createComponent("RoomElement/SkillInvokeAnimation.qml");
@@ -900,4 +907,15 @@ callbacks["GameOver"] = function(jsonData) {
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
   roomScene.isStarted = false;
+}
+
+callbacks["CustomDialog"] = (j) => {
+  let data = JSON.parse(j);
+  let path = data.path;
+  let dat = data.data;
+  roomScene.state = "replying";
+  roomScene.popupBox.source = AppPath + "/" + path;
+  if (dat) {
+    roomScene.popupBox.item.loadData(dat);
+  }
 }

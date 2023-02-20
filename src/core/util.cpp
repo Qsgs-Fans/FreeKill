@@ -195,6 +195,8 @@ QString calcFileMD5() {
   }
 
   writeDirMD5(flist, "packages", "*.lua");
+  writeDirMD5(flist, "packages", "*.qml");
+  writeDirMD5(flist, "packages", "*.js");
   writeDirMD5(flist, "lua", "*.lua");
   writeDirMD5(flist, "qml", "*.qml");
   writeDirMD5(flist, "qml", "*.js");

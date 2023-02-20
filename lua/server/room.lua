@@ -589,6 +589,14 @@ function Room:setCardEmotion(cid, name)
   })
 end
 
+function Room:doSuperLightBox(path, extra_data)
+  path = path or "RoomElement/SuperLightBox.qml"
+  self:doAnimate("SuperLightBox", {
+    path = path,
+    data = extra_data,
+  })
+end
+
 function Room:sendLogEvent(type, data, players)
   players = players or self.players
   data.type = type
@@ -995,6 +1003,23 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
     return self:handleUseCardReply(winner, result)
   end
   return nil
+end
+
+-- Show a qml dialog and return qml's ClientInstance.replyToServer
+-- Do anything you like through this function
+
+---@param player ServerPlayer
+---@param focustxt string
+---@param qmlPath string
+---@param extra_data any
+---@return string
+function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
+  local command = "CustomDialog"
+  self:notifyMoveFocus(player, focustxt)
+  return self:doRequest(player, command, json.encode{
+    path = qmlPath,
+    data = extra_data,
+  })
 end
 
 ------------------------------------------------------------------------
