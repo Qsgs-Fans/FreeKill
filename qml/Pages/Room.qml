@@ -391,6 +391,7 @@ Item {
   Loader {
     id: bigAnim
     anchors.fill: parent
+    z: 999
   }
 
   function activateSkill(skill_name, pressed) {
