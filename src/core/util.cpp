@@ -153,7 +153,14 @@ RSA *InitServerRSA() {
 #endif
 
 static void writeFileMD5(QFile &dest, const QString &fname) {
-  QFile f(fname);
+  QString name = fname;
+  // If the is a corresponding fkp file, check fkp's MD5 instead.
+  if (name.endsWith(".lua")) {
+    name.chop(4);
+    name = name + ".fkp";
+    if (!QFile::exists(name)) name = fname;
+  }
+  QFile f(name);
   if (!f.open(QIODevice::ReadOnly)) {
     return;
   }
@@ -161,7 +168,7 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   auto data = f.readAll();
   data.replace(QByteArray("\r\n"), QByteArray("\n"));
   auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
-  dest.write(fname.toUtf8() + '=' + hash + ';');
+  dest.write(name.toUtf8() + '=' + hash + ';');
 }
 
 static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) {
@@ -183,7 +190,7 @@ QString calcFileMD5() {
   // First, generate flist.txt
   // flist.txt is a file contains all md5sum for code files
   QFile flist("flist.txt");
-  if (!flist.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+  if (!flist.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
     qFatal("Cannot open flist.txt. Quitting.");
   }
 

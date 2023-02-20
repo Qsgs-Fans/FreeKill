@@ -96,6 +96,62 @@ end
 fkp.functions.hasSkill = function(p, s) return p:hasSkill(s) end
 fkp.functions.turnOver = function(p) p:turnOver() end
 fkp.functions.distanceTo = function(p1, p2) return p1:distanceTo(p2) end
+fkp.functions.getCards = function(p, area)
+  return table.map(p:getCardIds(area), function(id) return Fk:getCardById(id) end)
+end
+
+-- interactive methods
+
+fkp.functions.buildPrompt = function(base, src, dest, arg, arg2)
+  if src == nil then
+    src = ""
+  else
+    src = src.id
+  end
+  if dest == nil then
+    dest = ""
+  else
+    dest = dest.id
+  end
+  if arg == nil then arg = "" end
+  if arg2 == nil then arg2 = "" end
+
+  local prompt_tab = {src, dest, arg, arg2}
+  if arg2 == "" then
+    table.remove(prompt_tab, 4)
+    if arg == "" then
+      table.remove(prompt_tab, 3)
+      if dest == "" then
+        table.remove(prompt_tab, 2)
+        if src == "" then
+          table.remove(prompt_tab, 1)
+        end
+      end
+    end
+  end
+
+  for _, str in ipairs(prompt_tab) do
+    base = base .. ":" .. str
+  end
+
+  return base
+end
+
+fkp.functions.askForChoice = function(player, choices, reason)
+  return player.room:askForChoice(player, choices, reason) 
+end
+
+fkp.functions.askForPlayerChosen = function(player, targets, reason, prompt, optional, notify)
+  return player.room:askForChoosePlayers(player, targets, 1, 1, prompt, reason)
+end
+
+fkp.functions.askForSkillInvoke = function(player, skill)
+  return player:askForSkillInvoke(skill)
+end
+
+fkp.functions.askRespondForCard = function(player, pattern, prompt, isRetrial, skill_name)
+  return player.room:askForResponse(player, skill_name, pattern, prompt, true)
+end
 
 -- skill prototypes
 --------------------------------------------
