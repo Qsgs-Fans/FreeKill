@@ -1024,6 +1024,7 @@ local lijian = fk.CreateActiveSkill{
     return #targets == 2 and #cards > 0
   end,
   on_use = function(self, room, use)
+    room:throwCard(use.cards, self.name, room:getPlayerById(use.from))
     local duel = Fk:cloneCard("duel")
     local new_use = {} ---@type CardUseStruct
     new_use.from = use.tos[2]
