@@ -84,9 +84,9 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
     break;
   case QtWarningMsg:
     fprintf(stderr, "[%s/WARNING] %s\n", threadName.constData(), localMsg.constData());
-    if (Backend != nullptr) {
-      Backend->notifyUI("ErrorDialog", localMsg);
-    }
+    // if (Backend != nullptr) {
+    //   Backend->notifyUI("ErrorDialog", localMsg);
+    // }
     break;
   case QtCriticalMsg:
     fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(), localMsg.constData());
