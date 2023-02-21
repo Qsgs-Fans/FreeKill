@@ -6,6 +6,7 @@
 #include "serverplayer.h"
 #include "util.h"
 #include "parser.h"
+#include "packman.h"
 
 Server *ServerInstance;
 
@@ -187,6 +188,13 @@ void Server::processRequest(const QByteArray& msg)
     body << "ErrorMsg";
     body << "MD5 check failed!";
     client->send(JsonArray2Bytes(body));
+
+    body.removeLast();
+    body.removeLast();
+    body << "UpdatePackage";
+    body << Pacman->getPackSummary();
+    client->send(JsonArray2Bytes(body));
+
     client->disconnectFromHost();
     return;
   }

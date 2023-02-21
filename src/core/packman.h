@@ -6,11 +6,9 @@ class PackMan : public QObject {
 public:
   PackMan(QObject *parent = nullptr);
   ~PackMan();
-/*
-  void readConfig();
-  void writeConfig();
-  void loadConfString(const QString &conf);
-*/
+
+  QString getPackSummary();
+  Q_INVOKABLE void loadSummary(const QString &, bool useThread = false);
   Q_INVOKABLE void downloadNewPack(const QString &url, bool useThread = false);
   Q_INVOKABLE void enablePack(const QString &pack);
   Q_INVOKABLE void disablePack(const QString &pack);

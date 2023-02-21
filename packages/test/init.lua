@@ -45,6 +45,7 @@ local cheat = fk.CreateActiveSkill{
       toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
     end
 
+    from:addToPile(self.name, toGain, true, self.name)
     room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
   end
 }
@@ -57,9 +58,22 @@ local test_filter = fk.CreateFilterSkill{
     return Fk:cloneCard("crossbow", card.suit, card.number)
   end,
 }
-local test2 = General(extension, "mouxusheng", "wu", 4)
-test2:addSkill(test_filter)
+local test_active = fk.CreateActiveSkill{
+  name = "test_active",
+  can_use = function(self, player)
+    return true
+  end,
+  on_use = function(self, room, effect)
+    --room:doSuperLightBox("packages/test/qml/Test.qml")
+    local from = room:getPlayerById(effect.from)
+    local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
+    print(result)
+  end,
+}
+local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
+test2:addSkill("rende")
 test2:addSkill(cheat)
+test2:addSkill(test_active)
 
 Fk:loadTranslationTable{
   ["test"] = "测试",

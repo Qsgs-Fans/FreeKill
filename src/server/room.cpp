@@ -203,17 +203,18 @@ void Room::removePlayer(ServerPlayer *player)
     }
     emit playerRemoved(player);
 
+    if (isLobby()) return;
+
     QJsonArray jsonData;
     jsonData << player->getId();
     doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes(jsonData));
-
-    if (isLobby()) return;
   } else {
     // TODO: if the player is died..
 
     // change the socket and state to runned player
     ClientSocket *socket = player->getSocket();
     player->setState(Player::Run);
+    player->removeSocket();
 
     // and then create a new ServerPlayer for the runner
     ServerPlayer *runner = new ServerPlayer(this);
@@ -228,7 +229,6 @@ void Room::removePlayer(ServerPlayer *player)
     server->addPlayer(runner);
 
     emit playerRemoved(runner);
-    player->abortRequest();
   }
 
   if (isAbandoned() && !m_abandoned) {
@@ -266,20 +266,20 @@ void Room::addObserver(ServerPlayer *player) {
     return;
   }
   observers.append(player);
+  server->lobby()->removePlayer(player);
   player->setRoom(this);
   pushRequest(QString("%1,observe").arg(player->getId()));
 }
 
 void Room::removeObserver(ServerPlayer *player) {
   observers.removeOne(player);
-  player->setRoom(server->lobby());
+  server->lobby()->addPlayer(player);
   if (player->getState() == Player::Online) {
     QJsonArray arr;
     arr << player->getId();
     arr << player->getScreenName();
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
-    player->doNotify("EnterLobby", "");
   }
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
@@ -334,6 +334,7 @@ void Room::gameOver()
       p->deleteLater();
     }
   }
+  observers.clear();
   players.clear();
   owner = nullptr;
 }

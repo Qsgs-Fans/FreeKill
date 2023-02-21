@@ -491,9 +491,9 @@ end
 -- delay function, should only be used in main coroutine
 ---@param ms integer @ millisecond to be delayed
 function Room:delay(ms)
-  local start = fk.GetMicroSecond()
+  local start = os.getms()
   while true do
-    if fk.GetMicroSecond() - start >= ms * 1000 then
+    if os.getms() - start >= ms * 1000 then
       break
     end
     coroutine.yield()
@@ -521,9 +521,9 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
 
       -- forceVisible make the move visible
       -- FIXME: move.moveInfo is an array, fix this
-      move.moveVisible = (forceVisible)
+      move.moveVisible = move.moveVisible or (forceVisible)
         -- if move is relevant to player, it should be open
-        or ((move.from == p.id) or (move.to == p.id and move.toArea ~= Card.PlayerSpecial))
+        or ((move.from == p.id) or (move.to == p.id))
         -- cards move from/to equip/judge/discard/processing should be open
         or infosContainArea(move.moveInfo, Card.PlayerEquip)
         or move.toArea == Card.PlayerEquip
@@ -586,6 +586,14 @@ function Room:setCardEmotion(cid, name)
     player = cid,
     emotion = name,
     is_card = true,
+  })
+end
+
+function Room:doSuperLightBox(path, extra_data)
+  path = path or "RoomElement/SuperLightBox.qml"
+  self:doAnimate("SuperLightBox", {
+    path = path,
+    data = extra_data,
   })
 end
 
@@ -885,26 +893,19 @@ function Room:handleUseCardReply(player, data)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
     if skill:isInstanceOf(ActiveSkill) then
-      if not skill.mute then
-        self:broadcastSkillInvoke(skill.name)
-      end
-      self:notifySkillInvoked(player, skill.name)
-      player:addSkillUseHistory(skill.name)
-      self:doIndicate(player.id, targets)
-      skill:onUse(self, {
-        from = player.id,
-        cards = selected_cards,
-        tos = targets,
-      })
+      self:useSkill(player, skill, function()
+        self:doIndicate(player.id, targets)
+        skill:onUse(self, {
+          from = player.id,
+          cards = selected_cards,
+          tos = targets,
+        })
+      end)
       return nil
     elseif skill:isInstanceOf(ViewAsSkill) then
       local c = skill:viewAs(selected_cards)
       if c then
-        if not skill.mute then
-          self:broadcastSkillInvoke(skill.name)
-        end
-        self:notifySkillInvoked(player, skill.name)
-        player:addSkillUseHistory(skill.name)
+        self:useSkill(player, skill)
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
@@ -1004,9 +1005,51 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   return nil
 end
 
+-- Show a qml dialog and return qml's ClientInstance.replyToServer
+-- Do anything you like through this function
+
+---@param player ServerPlayer
+---@param focustxt string
+---@param qmlPath string
+---@param extra_data any
+---@return string
+function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
+  local command = "CustomDialog"
+  self:notifyMoveFocus(player, focustxt)
+  return self:doRequest(player, command, json.encode{
+    path = qmlPath,
+    data = extra_data,
+  })
+end
+
 ------------------------------------------------------------------------
 -- use card logic, and wrappers
 ------------------------------------------------------------------------
+
+local playCardEmotionAndSound = function(room, player, card)
+  if card.type ~= Card.TypeEquip then
+    room:setEmotion(player, "./packages/" ..
+      card.package.extensionName .. "/image/anim/" .. card.name)
+  end
+
+  local soundName
+  if card.type == Card.TypeEquip then
+    local subTypeStr
+    if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
+      subTypeStr = "horse"
+    elseif card.sub_type == Card.SubtypeWeapon then
+      subTypeStr = "weapon"
+    else
+      subTypeStr = "armor"
+    end
+
+    soundName = "./audio/card/common/" .. subTypeStr
+  else
+    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
+      .. (player.gender == General.Male and "male/" or "female/") .. card.name
+  end
+  room:broadcastPlaySound(soundName)
+end
 
 ---@param room Room
 ---@param cardUseEvent CardUseStruct
@@ -1023,26 +1066,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
     card = temp.card
   end
 
-  room:setEmotion(room:getPlayerById(from), card.name)
-
-  local soundName
-  if card.type == Card.TypeEquip then
-    local subTypeStr
-    if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
-      subTypeStr = "horse"
-    elseif card.sub_type == Card.SubtypeWeapon then
-      subTypeStr = "weapon"
-    else
-      subTypeStr = "armor"
-    end
-
-    soundName = "./audio/card/common/" .. subTypeStr
-  else
-    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
-      .. (room:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
-  end
-  room:broadcastPlaySound(soundName)
-
+  playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
     from = from,
     to = cardUseEvent.tos or {},
@@ -1272,7 +1296,7 @@ function Room:useCard(cardUseEvent)
   sendCardEmotionAndLog(self, cardUseEvent)
 
   if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    return false
+    goto clean
   end
 
   if not cardUseEvent.extraUse then
@@ -1291,153 +1315,13 @@ function Room:useCard(cardUseEvent)
 
     self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
     if event == fk.CardUsing then
-      ---@type table<string, AimStruct>
-      local aimEventCollaborators = {}
-      if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) then
-        break
-      end
-
-      local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
-      if cardUseEvent.card.type == Card.TypeEquip then
-        if #realCardIds == 0 then
-          break
-        end
-
-        if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
-          self.moveCards({
-            ids = realCardIds,
-            toArea = Card.DiscardPile,
-            moveReason = fk.ReasonPutIntoDiscardPile,
-          })
-        else
-          local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
-          local existingEquipId = self:getPlayerById(target):getEquipment(cardUseEvent.card.sub_type)
-          if existingEquipId then
-            self:moveCards(
-              {
-                ids = { existingEquipId },
-                from = target,
-                toArea = Card.DiscardPile,
-                moveReason = fk.ReasonPutIntoDiscardPile,
-              },
-              {
-                ids = realCardIds,
-                to = target,
-                toArea = Card.PlayerEquip,
-                moveReason = fk.ReasonUse,
-              }
-            )
-          else
-            self:moveCards({
-              ids = realCardIds,
-              to = target,
-              toArea = Card.PlayerEquip,
-              moveReason = fk.ReasonUse,
-            })
-          end
-        end
-
-        break
-      elseif cardUseEvent.card.sub_type == Card.SubtypeDelayedTrick then
-        if #realCardIds == 0 then
-          break
-        end
-        
-        local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
-        if not self:getPlayerById(target).dead then
-          local findSameCard = false
-          for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Judge)) do
-            if Fk:getCardById(cardId).trueName == cardUseEvent.card.trueName then
-              findSameCard = true
-            end
-          end
-
-          if not findSameCard then
-            if cardUseEvent.card:isVirtual() then
-              self:getPlayerById(target):addVirtualEquip(cardUseEvent.card)
-            end
-
-            self:moveCards({
-              ids = realCardIds,
-              to = target,
-              toArea = Card.PlayerJudge,
-              moveReason = fk.ReasonUse,
-            })
-
-            break
-          end
-        end
-
-        self:moveCards({
-          ids = realCardIds,
-          toArea = Card.DiscardPile,
-          moveReason = fk.ReasonPutIntoDiscardPile,
-        })
-
-        break
-      end
-
-      if cardUseEvent.card.skill then
-        ---@type CardEffectEvent
-        local cardEffectEvent = {
-          from = cardUseEvent.from,
-          tos = cardUseEvent.tos,
-          card = cardUseEvent.card,
-          toCard = cardUseEvent.toCard,
-          responseToEvent = cardUseEvent.responseToEvent,
-          nullifiedTargets = cardUseEvent.nullifiedTargets,
-          disresponsiveList = cardUseEvent.disresponsiveList,
-          unoffsetableList = cardUseEvent.unoffsetableList,
-          addtionalDamage = cardUseEvent.addtionalDamage,
-          cardIdsResponded = cardUseEvent.nullifiedTargets,
-        }
-
-        if cardUseEvent.toCard ~= nil then
-          self:doCardEffect(cardEffectEvent)
-        else
-          local collaboratorsIndex = {}
-          for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
-            if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
-              if aimEventCollaborators[toId] then
-                cardEffectEvent.to = toId
-                collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
-                local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
-
-                cardEffectEvent.subTargets = curAimEvent.subTargets
-                cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
-
-                if curAimEvent.disresponsiveList then
-                  for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
-                    if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
-                      table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
-                    end
-                  end
-                end
-
-                if curAimEvent.unoffsetableList then
-                  for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
-                    if not table.contains(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer) then
-                      table.insert(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer)
-                    end
-                  end
-                end
-
-                cardEffectEvent.disresponsive = curAimEvent.disresponsive
-                cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
-
-                collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
-
-                self:doCardEffect(table.simpleClone(cardEffectEvent))
-              end
-            end
-          end
-        end
-      end
+      self:doCardUseEffect(cardUseEvent)
     end
   end
 
   self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
 
+::clean::
   local leftRealCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
   if #leftRealCardIds > 0 then
     self:moveCards({
@@ -1445,6 +1329,159 @@ function Room:useCard(cardUseEvent)
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
+  end
+end
+
+---@param cardUseEvent CardUseStruct
+function Room:doCardUseEffect(cardUseEvent)
+  ---@type table<string, AimStruct>
+  local aimEventCollaborators = {}
+  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) then
+    return
+  end
+
+  local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
+
+  -- If using Equip or Delayed trick, move them to the area and return
+  if cardUseEvent.card.type == Card.TypeEquip then
+    if #realCardIds == 0 then
+      return
+    end
+
+    if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
+      self.moveCards({
+        ids = realCardIds,
+        toArea = Card.DiscardPile,
+        moveReason = fk.ReasonPutIntoDiscardPile,
+      })
+    else
+      local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
+      local existingEquipId = self:getPlayerById(target):getEquipment(cardUseEvent.card.sub_type)
+      if existingEquipId then
+        self:moveCards(
+          {
+            ids = { existingEquipId },
+            from = target,
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonPutIntoDiscardPile,
+          },
+          {
+            ids = realCardIds,
+            to = target,
+            toArea = Card.PlayerEquip,
+            moveReason = fk.ReasonUse,
+          }
+        )
+      else
+        self:moveCards({
+          ids = realCardIds,
+          to = target,
+          toArea = Card.PlayerEquip,
+          moveReason = fk.ReasonUse,
+        })
+      end
+    end
+
+    return
+  elseif cardUseEvent.card.sub_type == Card.SubtypeDelayedTrick then
+    if #realCardIds == 0 then
+      return
+    end
+    
+    local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
+    if not self:getPlayerById(target).dead then
+      local findSameCard = false
+      for _, cardId in ipairs(self:getPlayerById(target):getCardIds(Player.Judge)) do
+        if Fk:getCardById(cardId).trueName == cardUseEvent.card.trueName then
+          findSameCard = true
+        end
+      end
+
+      if not findSameCard then
+        if cardUseEvent.card:isVirtual() then
+          self:getPlayerById(target):addVirtualEquip(cardUseEvent.card)
+        end
+
+        self:moveCards({
+          ids = realCardIds,
+          to = target,
+          toArea = Card.PlayerJudge,
+          moveReason = fk.ReasonUse,
+        })
+
+        return
+      end
+    end
+
+    self:moveCards({
+      ids = realCardIds,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile,
+    })
+
+    return
+  end
+
+  if not cardUseEvent.card.skill then
+    return
+  end
+
+  ---@type CardEffectEvent
+  local cardEffectEvent = {
+    from = cardUseEvent.from,
+    tos = cardUseEvent.tos,
+    card = cardUseEvent.card,
+    toCard = cardUseEvent.toCard,
+    responseToEvent = cardUseEvent.responseToEvent,
+    nullifiedTargets = cardUseEvent.nullifiedTargets,
+    disresponsiveList = cardUseEvent.disresponsiveList,
+    unoffsetableList = cardUseEvent.unoffsetableList,
+    addtionalDamage = cardUseEvent.addtionalDamage,
+    cardIdsResponded = cardUseEvent.nullifiedTargets,
+  }
+
+  -- If using card to other card (like jink or nullification), simply effect and return
+  if cardUseEvent.toCard ~= nil then
+    self:doCardEffect(cardEffectEvent)
+    return
+  end
+
+  -- Else: do effect to all targets
+  local collaboratorsIndex = {}
+  for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
+    if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
+      if aimEventCollaborators[toId] then
+        cardEffectEvent.to = toId
+        collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
+        local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
+
+        cardEffectEvent.subTargets = curAimEvent.subTargets
+        cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
+
+        if curAimEvent.disresponsiveList then
+          for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
+            if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
+              table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
+            end
+          end
+        end
+
+        if curAimEvent.unoffsetableList then
+          for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
+            if not table.contains(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer) then
+              table.insert(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer)
+            end
+          end
+        end
+
+        cardEffectEvent.disresponsive = curAimEvent.disresponsive
+        cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
+
+        collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
+
+        self:doCardEffect(table.simpleClone(cardEffectEvent))
+      end
+    end
   end
 end
 
@@ -1490,12 +1527,14 @@ function Room:doCardEffect(cardEffectEvent)
           use.responseToEvent = cardEffectEvent
           self:useCard(use)
         end
-      elseif cardEffectEvent.card.type == Card.TypeTrick then
+      elseif cardEffectEvent.card.type == Card.TypeTrick and
+        not cardEffectEvent.disresponsive then
         local players = {}
         for _, p in ipairs(self.alive_players) do
-          local cards = p.player_cards[Player.Hand]
+          local cards = p:getCardIds(Player.Hand)
           for _, cid in ipairs(cards) do
-            if Fk:getCardById(cid).name == "nullification" then
+            if Fk:getCardById(cid).name == "nullification" and
+              not table.contains(cardEffectEvent.disresponsiveList or {}, p.id) then
               table.insert(players, p)
               break
             end
@@ -1560,9 +1599,7 @@ function Room:responseCard(cardResponseEvent)
     moveReason = fk.ReasonResonpse,
   })
 
-  self:setEmotion(self:getPlayerById(from), card.name)
-  local soundName = (self:getPlayerById(from).gender == General.Male and "male/" or "female/") .. card.name
-  self:broadcastPlaySound("./audio/card/" .. soundName)
+  playCardEmotionAndSound(self, self:getPlayerById(from), card)
 
   for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
     self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -1599,7 +1636,11 @@ function Room:moveCards(...)
       ---@type MoveInfo[]
       local infos = {}
       for _, id in ipairs(cardsMoveInfo.ids) do
-        table.insert(infos, { cardId = id, fromArea = self:getCardArea(id) })
+        table.insert(infos, {
+          cardId = id,
+          fromArea = self:getCardArea(id),
+          fromSpecialName = cardsMoveInfo.from and self:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
+        })
       end
   
       ---@type CardsMoveStruct
@@ -1640,7 +1681,7 @@ function Room:moveCards(...)
         local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
 
         if table.contains(playerAreas, realFromArea) and data.from then
-          self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, data.specialName)
+          self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, info.fromSpecialName)
         elseif realFromArea ~= Card.Unknown then
           local fromAreaIds = {}
           if realFromArea == Card.Processing then
@@ -1743,18 +1784,12 @@ end
 ---@param reason integer
 ---@param skill_name string
 ---@param special_name string
-function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name)
+---@param visible boolean
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
-  local ids = {}
-  if card[1] ~= nil then
-    for _, cd in ipairs(card) do
-      table.insertTable(ids, self:getSubcardsByRule(card))
-    end
-  else
-    ids = self:getSubcardsByRule(card)
-  end
+  local ids = Card:getIdList(card)
 
   local to
   if table.contains(
@@ -1770,7 +1805,8 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     toArea = to_place,
     moveReason = reason,
     skillName = skill_name,
-    specialName = special_name
+    specialName = special_name,
+    moveVisible = visible, 
   }
 end
 
@@ -1933,6 +1969,7 @@ function Room:damage(damageStruct)
   if damageStruct.damage < 1 then
     return false
   end
+  damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
 
   if damageStruct.from and not damageStruct.from:isAlive() then
     damageStruct.from = nil
@@ -2246,6 +2283,11 @@ function Room:throwCard(card_ids, skillName, who, thrower)
   })
 end
 
+---@param pindianStruct PindianStruct
+function Room:pindian(pindianStruct)
+
+end
+
 -- other helpers
 
 function Room:adjustSeats()
@@ -2289,7 +2331,30 @@ function Room:shuffleDrawPile()
   table.shuffle(self.draw_pile)
 end
 
+---@param player ServerPlayer
+---@param skill Skill
+---@param effect_cb fun()
+function Room:useSkill(player, skill, effect_cb)
+  if not skill.mute then
+    if skill.attached_equip then
+      local equip = Fk:cloneCard(skill.attached_equip)
+      local pkgPath = "./packages/" .. equip.package.extensionName
+      local soundName = pkgPath .. "/audio/card/" .. equip.name
+      self:broadcastPlaySound(soundName)
+      self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
+    else
+      self:broadcastSkillInvoke(skill.name)
+      self:notifySkillInvoked(player, skill.name)
+    end
+  end
+  player:addSkillUseHistory(skill.name)
+  if effect_cb then
+    return effect_cb()
+  end
+end
+
 function Room:gameOver(winner)
+  self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
   self.game_finished = true
 

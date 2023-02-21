@@ -121,6 +121,7 @@ Item {
         onClicked: {
           lobby_dialog.source = "LobbyElement/CreateRoom.qml";
           lobby_drawer.open();
+          config.observing = false;
         }
       }
       TileButton {

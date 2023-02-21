@@ -60,13 +60,13 @@ end
 
 local function _waitForReply(player, timeout)
   local result
-  local start = fk.GetMicroSecond()
+  local start = os.getms()
   while true do
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
       return result
     end
-    if timeout and (fk.GetMicroSecond() - start) / 1000 >= timeout * 1000 then
+    if timeout and (os.getms() - start) / 1000 >= timeout * 1000 then
       return ""
     end
     coroutine.yield()
@@ -176,7 +176,9 @@ function ServerPlayer:marshal(player)
   end
 
   for k, v in pairs(self.cardUsedHistory) do
-    player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+    if v[1] > 0 then
+      player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+    end
   end
 
   if self.role_shown then
@@ -400,6 +402,15 @@ end
 
 function ServerPlayer:drawCards(num, skillName, fromPlace)
   return self.room:drawCards(self, num, skillName, fromPlace)
+end
+
+---@param pile_name string
+---@param card integer|Card
+---@param visible boolean
+---@param skillName string
+function ServerPlayer:addToPile(pile_name, card, visible, skillName)
+  local room = self.room
+  room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
 end
 
 function ServerPlayer:bury()

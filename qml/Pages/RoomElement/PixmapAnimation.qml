@@ -18,7 +18,7 @@ Item {
   width: childrenRect.width
   height: childrenRect.height
 
-  property string folder: SkinBank.PIXANIM_DIR + source
+  property string folder: source
   property int fileModel
 
   Repeater {
@@ -26,7 +26,7 @@ Item {
     model: fileModel
 
     Image {
-      source: SkinBank.PIXANIM_DIR + root.source + "/" + index
+      source: root.source + "/" + index
       visible: false
       onStatusChanged: {
         if (status == Image.Ready) {

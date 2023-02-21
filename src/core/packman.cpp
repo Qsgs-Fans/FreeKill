@@ -2,6 +2,7 @@
 #include "util.h"
 #include "qmlbackend.h"
 #include "git2.h"
+#include <qjsondocument.h>
 
 PackMan *Pacman;
 
@@ -17,70 +18,55 @@ PackMan::~PackMan() {
   git_libgit2_shutdown();
   sqlite3_close(db);
 }
-/*
-void PackMan::readConfig() {
-  QFile f("packages/packages.txt");
-  if (!f.exists())
-    return;
 
-  if (!f.open(QIODevice::ReadOnly)) {
-    qFatal("cannot open packages.txt. Quit now.");
-    qApp->exit(1);
-  }
-
-  while (true) {
-    auto data = f.readLine();
-    if (data.isEmpty())
-      break;
-    auto data_list = data.split(' ');
-    pack_list << data_list[0];
-    pack_url_list << data_list[1];
-    hash_list << data_list[2];
-    enabled_list << data_list[3].toInt();
-  }
-  f.close();
+QString PackMan::getPackSummary() {
+  return SelectFromDb(db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
 }
 
-void PackMan::writeConfig() {
-  QFile f("packages/packages.txt");
-  if (!f.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
-    qFatal("Cannot open packages.txt for write. Quitting.");
-  }
-
-  for (int i = 0; i < pack_list.length(); i++) {
-    QStringList l;
-    l << pack_list[i];
-    l << pack_url_list[i];
-    l << hash_list[i];
-    l << QString::number(enabled_list[i]);
-    f.write(l.join(" ").toUtf8() + '\n');
-  }
-  f.close();
-}
-
-void PackMan::loadConfString(const QString &conf) {
-  auto lines = conf.split('\n');
-  foreach (QString s, lines) {
-    auto data_list = s.split(' ');
-    int idx = pack_list.indexOf(data_list[0]);
-    if (idx == -1) {
-      pack_list << data_list[0];
-      pack_url_list << data_list[1];
-      hash_list << data_list[2];
-      enabled_list << data_list[3].toInt();
-    } else {
-      pack_url_list[idx] = data_list[1];
-      hash_list[idx] = data_list[2];
-      enabled_list[idx] = data_list[3].toInt();
+void PackMan::loadSummary(const QString &jsonData, bool useThread) {
+  auto f = [=](){
+    // First, disable all packages
+    foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
+      disablePack(e.toObject()["name"].toString());
     }
+
+    // Then read conf from string
+    auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
+    auto arr = doc.array();
+    foreach (auto e, arr) {
+      auto obj = e.toObject();
+      auto name = obj["name"].toString();
+      if (SelectFromDatabase(db, QString("SELECT name FROM packages WHERE name='%1';")
+            .arg(name)).isEmpty()) {
+        downloadNewPack(obj["url"].toString());
+      }
+      ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
+          .arg(obj["hash"].toString()).arg(name));
+      enablePack(name);
+      updatePack(name);
+    }
+  };
+  if (useThread) {
+    auto thread = QThread::create(f);
+    thread->start();
+    connect(thread, &QThread::finished, [=](){
+      thread->deleteLater();
+      Backend->emitNotifyUI("DownloadComplete", "");
+    });
+  } else {
+    f();
   }
 }
-*/
+
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
   auto threadFunc = [=](){
     int error = clone(url);
     if (error < 0) return;
-    QString fileName = QUrl(url).fileName();
+    auto u = url;
+    while (u.endsWith('/')) {
+      u.chop(1);
+    }
+    QString fileName = QUrl(u).fileName();
     if (fileName.endsWith(".git"))
       fileName.chop(4);
 
@@ -120,6 +106,11 @@ void PackMan::updatePack(const QString &pack) {
   WHERE name = '%1';").arg(pack));
   if (result.isEmpty()) return;
   int error;
+  error = status(pack);
+  if (error != 0) {
+    qCritical("Workspace is dirty, or some error occured.");
+    return;
+  }
   error = pull(pack);
   if (error < 0) return;
   error = checkout(pack, result[0].toObject()["hash"].toString());
@@ -130,6 +121,11 @@ void PackMan::upgradePack(const QString &pack) {
   int error;
   error = checkout_branch(pack, "master");
   if (error < 0) return;
+  error = status(pack);
+  if (error != 0) {
+    qCritical("Workspace is dirty, or some error occured.");
+    return;
+  }
   error = pull(pack);
   if (error < 0) return;
   ExecSQL(db, QString("UPDATE packages SET hash = '%1' WHERE name = '%2';").arg(head(pack)).arg(pack));
@@ -183,18 +179,20 @@ static int transfer_progress_cb(const git_indexer_progress *stats, void *payload
   return 0;
 }
 
-int PackMan::clone(const QString &url) {
+int PackMan::clone(const QString &u) {
   git_repository *repo = NULL;
-  const char *u = url.toUtf8().constData();
+  auto url = u;
+  while (url.endsWith('/')) {
+    url.chop(1);
+  }
   QString fileName = QUrl(url).fileName();
   if (fileName.endsWith(".git"))
     fileName.chop(4);
   fileName = "packages/" + fileName;
-  const char *path = fileName.toUtf8().constData();
 
   git_clone_options opt = GIT_CLONE_OPTIONS_INIT;
   opt.fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
-  int error = git_clone(&repo, u, path, &opt);
+  int error = git_clone(&repo, url.toUtf8(), fileName.toUtf8(), &opt);
   if (error < 0) {
     GIT_FAIL;
     QDir(fileName).removeRecursively();
@@ -202,8 +200,6 @@ int PackMan::clone(const QString &url) {
   } else {
     if (Backend == nullptr)
       printf("\n");
-    else
-      qWarning("Completed.");
   }
   git_repository_free(repo);
   return error;
@@ -213,28 +209,43 @@ int PackMan::pull(const QString &name) {
   git_repository *repo = NULL;
   int error;
   git_remote *remote = NULL;
-  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  auto path = QString("packages/%1").arg(name).toUtf8();
   git_fetch_options opt = GIT_FETCH_OPTIONS_INIT;
   opt.callbacks.transfer_progress = transfer_progress_cb;
+  git_checkout_options opt2 = GIT_CHECKOUT_OPTIONS_INIT;
+  opt2.checkout_strategy = GIT_CHECKOUT_FORCE;
+
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   }
+
+  // first git fetch origin
   error = git_remote_lookup(&remote, repo, "origin");
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_remote_fetch(remote, NULL, &opt, "pull");
+  error = git_remote_fetch(remote, NULL, &opt, NULL);
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+
+  // then git checkout FETCH_HEAD
+  error = git_repository_set_head(repo, "FETCH_HEAD");
+  if (error < 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+  error = git_checkout_head(repo, &opt2);
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   } else {
     if (Backend == nullptr)
       printf("\n");
-    else
-      qWarning("Completed.");
   }
 
 clean:
@@ -245,11 +256,12 @@ clean:
 
 int PackMan::checkout(const QString &name, const QString &hash) {
   git_repository *repo = NULL;
-  git_oid oid = {0};
   int error;
-  git_commit *commit = NULL;
-  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
-  const char *sha = hash.toLatin1().constData();
+  git_oid oid = {0};
+  git_checkout_options opt = GIT_CHECKOUT_OPTIONS_INIT;
+  opt.checkout_strategy = GIT_CHECKOUT_FORCE;
+  auto path = QString("packages/%1").arg(name).toUtf8();
+  auto sha = hash.toLatin1();
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
@@ -260,19 +272,18 @@ int PackMan::checkout(const QString &name, const QString &hash) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_commit_lookup(&commit, repo, &oid);
+  error = git_repository_set_head_detached(repo, &oid);
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_checkout_tree(repo, (git_object *)commit, NULL);
+  error = git_checkout_head(repo, &opt);
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   }
 
 clean:
-  git_commit_free(commit);
   git_repository_free(repo);
   return error;
 }
@@ -282,13 +293,13 @@ int PackMan::checkout_branch(const QString &name, const QString &branch) {
   git_oid oid = {0};
   int error;
   git_object *obj = NULL;
-  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
     goto clean;
   }
-  error = git_revparse_single(&obj, repo, branch.toUtf8().constData());
+  error = git_revparse_single(&obj, repo, branch.toUtf8());
   if (error < 0) {
     GIT_FAIL;
     goto clean;
@@ -311,7 +322,7 @@ int PackMan::status(const QString &name) {
   git_status_list *status_list;
   size_t i, maxi;
   const git_status_entry *s;
-  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;
@@ -340,7 +351,7 @@ QString PackMan::head(const QString &name) {
   git_repository *repo = NULL;
   int error;
   git_object *obj = NULL;
-  const char *path = QString("packages/%1").arg(name).toUtf8().constData();
+  auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
   if (error < 0) {
     GIT_FAIL;

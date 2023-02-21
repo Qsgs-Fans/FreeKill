@@ -17,6 +17,7 @@ cp -r ../image assets/res
 cp -r ../lua assets/res
 # TODO: Windows hosts machine
 cp -r /etc/ca-certificates/extracted/cadir assets/res/certs
+chmod 644 assets/res/certs/*
 mkdir assets/res/packages
 cp -r ../packages/standard assets/res/packages
 cp -r ../packages/standard_cards assets/res/packages

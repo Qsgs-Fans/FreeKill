@@ -32,7 +32,7 @@ Item {
   property alias equipArea: equipAreaItem
   property alias markArea: markAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem
-  property alias specialArea: handcardAreaItem
+  property alias specialArea: specialAreaItem
 
   property alias progressBar: progressBar
   property alias progressTip: progressTip.text
@@ -90,7 +90,7 @@ Item {
 
   PixmapAnimation {
     id: animPlaying
-    source: "playing"
+    source: SkinBank.PIXANIM_DIR + "playing"
     anchors.centerIn: parent
     loop: true
     scale: 1.1
@@ -99,7 +99,7 @@ Item {
 
   PixmapAnimation {
     id: animSelected
-    source: "selected"
+    source: SkinBank.PIXANIM_DIR + "selected"
     anchors.centerIn: parent
     loop: true
     scale: 1.1
@@ -204,6 +204,41 @@ Item {
     y: 139
   }
 
+  Item {
+    id: specialAreaItem
+
+    x: 31
+    y: 139
+
+    InvisibleCardArea {
+      id: specialContainer
+      // checkExisting: true
+    }
+
+    function updatePileInfo(areaName) {
+      let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.playerid, areaName]));
+      if (data.length === 0) {
+        root.markArea.removeMark(areaName);
+      } else {
+        root.markArea.setMark(areaName, data.length);
+      }
+    }
+
+    function add(inputs, areaName) {
+      updatePileInfo(areaName);
+      specialContainer.add(inputs);
+    }
+
+    function remove(inputs, areaName) {
+      updatePileInfo(areaName);
+      return specialContainer.remove(inputs);
+    }
+
+    function updateCardPosition(a) {
+      specialContainer.updateCardPosition(a);
+    }
+  }
+
   MarkArea {
     id: markAreaItem
 
@@ -256,9 +291,12 @@ Item {
 
   MouseArea {
     anchors.fill: parent
-    onClicked: {
-      if (parent.state != "candidate" || !parent.selectable)
+    propagateComposedEvents: true
+    onClicked: (mouse) => {
+      if (parent.state != "candidate" || !parent.selectable) {
+        mouse.accepted = false;
         return;
+      }
       parent.selected = !parent.selected;
     }
   }
@@ -358,7 +396,7 @@ Item {
 
   PixmapAnimation {
     id: animSelectable
-    source: "selectable"
+    source: SkinBank.PIXANIM_DIR + "selectable"
     anchors.centerIn: parent
     loop: true
     visible: root.state === "candidate" && selectable

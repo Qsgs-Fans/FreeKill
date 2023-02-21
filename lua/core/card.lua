@@ -59,7 +59,9 @@ function Card:initialize(name, suit, number, color)
   self.name = name
   self.suit = suit or Card.NoSuit
   self.number = number or 0
-  self.trueName = name
+
+  local name_splited = name:split("__")
+  self.trueName = name_splited[#name_splited]
 
   if suit == Card.Spade or suit == Card.Club then
     self.color = Card.Black
@@ -214,6 +216,28 @@ function Card:toLogString()
     end
   end
   ret = ret .. '<font color="#0598BC"><b>]</b></font>'
+  return ret
+end
+
+---@param c integer|integer[]|Card|Card[]
+---@return integer[]
+function Card.static:getIdList(c)
+  if type(c) == "number" then
+    return {c}
+  end
+  if c.class and c:isInstanceOf(Card) then
+    if c:isVirtual() then
+      return table.clone(c.subcards)
+    else
+      return {c.id}
+    end
+  end
+
+  -- array
+  local ret = {}
+  for _, c2 in ipairs(c) do
+    table.insertTable(ret, Card:getIdList(c))
+  end
   return ret
 end
 
