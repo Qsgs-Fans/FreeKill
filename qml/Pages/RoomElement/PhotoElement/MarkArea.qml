@@ -39,10 +39,21 @@ Item {
           textFormat: Text.RichText
         }
 
-        // TODO: for pile
-        // MouseArea {
-        //   anchors.fill: parent
-        // }
+        MouseArea {
+          anchors.fill: parent
+          onClicked: {
+            let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
+            data = data.filter((e) => e !== -1);
+            if (data.length === 0)
+              return;
+
+            // Just for using room's right drawer
+            roomScene.startCheat("RoomElement/ViewPile.qml", {
+              name: mark_name,
+              ids: data
+            });
+          }
+        }
       }
     }
   }

@@ -9,6 +9,57 @@ function fk.qlist(list)
   return qlist_iterator, list, -1
 end
 
+---@param func fun(element, index, array)
+function table:forEach(func)
+  for i, v in ipairs(self) do
+    func(v, i, self)
+  end
+end
+
+---@param func fun(element, index, array)
+function table:every(func)
+  for i, v in ipairs(self) do
+    if not func(v, i, self) then
+      return false
+    end
+  end
+  return true
+end
+
+---@generic T
+---@param self T[]
+---@param func fun(element, index, array)
+---@return T[]
+function table.filter(self, func)
+  local ret = {}
+  for i, v in ipairs(self) do
+    if func(v, i, self) then
+      table.insert(ret, v)
+    end
+  end
+  return ret
+end
+
+---@param func fun(element, index, array)
+function table.map(self, func)
+  local ret = {}
+  for i, v in ipairs(self) do
+    table.insert(ret, func(v, i, self))
+  end
+  return ret
+end
+
+---@generic T
+---@param self T[]
+---@return T[]
+function table.reverse(self)
+  local ret = {}
+  for _, e in ipairs(self) do
+    table.insert(ret, 1, e)
+  end
+  return ret
+end
+
 function table:contains(element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
@@ -120,7 +171,7 @@ Sql = {
   --- Execute a `SELECT` SQL statement.
   ---@param db fk.SQLite3
   ---@param sql string
-  ---@return table @ { [columnName] --> result : string[] }
+  ---@return table[] @ Array of Json object, the key is column name and value is row value
   exec_select = function(db, sql)
     return json.decode(fk.SelectFromDb(db, sql))
   end,

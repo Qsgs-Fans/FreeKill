@@ -71,14 +71,14 @@ function Client:moveCards(moves)
           table.remove(from.player_cards[Player.Hand])
         end
       else
-        from:removeCards(move.fromArea, move.ids)
+        from:removeCards(move.fromArea, move.ids, move.fromSpecialName)
       end
     elseif move.fromArea == Card.DiscardPile then
       table.removeOne(self.discard_pile, move.ids[1])
     end
 
     if move.to and move.toArea then
-      self:getPlayerById(move.to):addCards(move.toArea, move.ids)
+      self:getPlayerById(move.to):addCards(move.toArea, move.ids, move.specialName)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
     end
@@ -294,6 +294,8 @@ local function separateMoves(moves)
         toArea = move.toArea,
         fromArea = info.fromArea,
         moveReason = move.moveReason,
+        specialName = move.specialName,
+        fromSpecialName = info.fromSpecialName,
       })
     end
   end
@@ -305,8 +307,9 @@ local function mergeMoves(moves)
   local ret = {}
   local temp = {}
   for _, move in ipairs(moves) do
-    local info = string.format("%q,%q,%q,%q", 
-      move.from, move.to, move.fromArea, move.toArea)
+    local info = string.format("%q,%q,%q,%q,%s,%s", 
+      move.from, move.to, move.fromArea, move.toArea,
+      move.specialName, move.fromSpecialName)
     if temp[info] == nil then 
       temp[info] = {
         ids = {},
@@ -315,6 +318,8 @@ local function mergeMoves(moves)
         fromArea = move.fromArea,
         toArea = move.toArea,
         moveReason = move.moveReason,
+        specialName = move.specialName,
+        fromSpecialName = move.fromSpecialName,
       }
     end
     table.insert(temp[info].ids, move.ids[1])

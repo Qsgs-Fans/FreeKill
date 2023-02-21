@@ -122,6 +122,34 @@ ___
 
 ## 移动牌
 
+移动牌的核心函数是`Room:moveCards(...)`。这是个变长参数函数，根据Emmy注解可知所有的参数都应该是CardsMoveInfo类型。CardsMoveInfo在[system_enum.lua](../../lua/server/system_enum.lua)里面有类型注解，来看看：
+
+```lua
+---@class CardsMoveInfo
+---@field ids integer[]
+---@field from integer|null
+---@field to integer|null
+---@field toArea CardArea
+---@field moveReason CardMoveReason
+---@field proposer integer
+---@field skillName string|null
+---@field moveVisible boolean|null
+---@field specialName string|null
+---@field specialVisible boolean|null
+```
+
+moveCards函数的第一步是将参数中所有的moveInfo都转化为CardsMoveStruct。CardsMoveStruct与CardsMoveInfo几乎没有区别，除了它将每一张牌都单独划分出了一个moveinfo之外。这么做是为了在同时移动来源不同的牌的时候，让牌能该明牌明牌，该暗牌暗牌。
+
+全部转化完成后，先针对这个CardsMoveStruct[]触发一次BeforeCardsMove，给各种奇怪的触发技修改移动牌信息的机会。如此如此之后就正式开始移动牌了，移动完了之后再触发AfterCardsMove，这样就完成了对卡牌的移动。
+
+正式移牌中，首先服务器会向各个客户端发送一条消息让客户端知道牌被移动了。
+
+然后，对所有的CardsMoveStruct进行遍历，根据move.from和move.fromArea获取这张牌的id实际所在的数组，然后将这个id移动到目标数组中。如此就在服务端的数据层面移动了一张牌。移牌OK后，Room会更新这张牌的位置信息，然后视情况更新这张牌的锁定视为技信息。如果是装备牌的话，那么就做一些跟装备技能有关的事情。
+
 ___
 
 ## 使用牌
+
+使用一张牌应该是全游戏最复杂而又最常见的一种事件了。说他复杂，其实也是被狗卡各种乱七八糟的技能和规则搞得很复杂的。
+
+使用牌的核心函数是`Room:useCard`，接收的参数是CardUseStruct。不行太复杂了，过一阵子再来看吧。

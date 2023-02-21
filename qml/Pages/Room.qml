@@ -18,6 +18,7 @@ Item {
   property bool isStarted: false
 
   property alias popupBox: popupBox
+  property alias bigAnim: bigAnim
   property alias promptText: prompt.text
   property alias okCancel: okCancel
   property alias okButton: okButton
@@ -385,6 +386,12 @@ Item {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
     }
+  }
+
+  Loader {
+    id: bigAnim
+    anchors.fill: parent
+    z: 999
   }
 
   function activateSkill(skill_name, pressed) {

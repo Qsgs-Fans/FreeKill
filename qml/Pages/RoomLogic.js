@@ -172,9 +172,9 @@ function moveCards(moves) {
     let to = getAreaItem(move.toArea, move.to);
     if (!from || !to || from === to)
       continue;
-    let items = from.remove(move.ids);
+    let items = from.remove(move.ids, move.fromSpecialName);
     if (items.length > 0)
-      to.add(items);
+      to.add(items, move.specialName);
     to.updateCardPosition(true);
   }
 }
@@ -189,7 +189,15 @@ function setEmotion(id, emotion, isCardId) {
   }
 
   if (!Backend.exists(path)) {
-    return;
+    // Try absolute path again
+    if (OS === "Win") {
+      // Windows: file:///C:/xxx/xxxx
+      path = (AppPath + "/" + emotion).replace("file:///", "");
+    } else {
+      path = (AppPath + "/" + emotion).replace("file://", "");
+    }
+    if (!Backend.exists(path))
+      return;
   }
   if (!Backend.isDir(path)) {
     // TODO: set picture emotion
@@ -220,7 +228,7 @@ function setEmotion(id, emotion, isCardId) {
     }
   }
 
-  let animation = component.createObject(photo, {source: emotion});
+  let animation = component.createObject(photo, {source: path});
   animation.anchors.centerIn = photo;
   if (isCardId) {
     animation.started.connect(() => photo.busy = true);
@@ -814,8 +822,15 @@ callbacks["Animate"] = function(jsonData) {
       break;
     case "LightBox":
       break;
-    case "SuperLightBox":
+    case "SuperLightBox": {
+      let path = data.path;
+      let jsonData = data.data;
+      roomScene.bigAnim.source = AppPath + "/" + path;
+      if (jsonData && jsonData !== "") {
+        roomScene.bigAnim.item.loadData(jsonData);
+      }
       break;
+    }
     case "InvokeSkill": {
       let id = data.player;
       let component = Qt.createComponent("RoomElement/SkillInvokeAnimation.qml");
@@ -852,6 +867,7 @@ callbacks["LogEvent"] = function(jsonData) {
       let item = getPhotoOrDashboard(data.to);
       setEmotion(data.to, "damage");
       item.tremble();
+      data.damageType = data.damageType || "normal_damage";
       Backend.playSound("./audio/system/" + data.damageType + (data.damageNum > 1 ? "2" : ""));
       break;
     }
@@ -892,4 +908,15 @@ callbacks["GameOver"] = function(jsonData) {
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
   roomScene.isStarted = false;
+}
+
+callbacks["CustomDialog"] = (j) => {
+  let data = JSON.parse(j);
+  let path = data.path;
+  let dat = data.data;
+  roomScene.state = "replying";
+  roomScene.popupBox.source = AppPath + "/" + path;
+  if (dat) {
+    roomScene.popupBox.item.loadData(dat);
+  }
 }

@@ -63,7 +63,7 @@ function GameLogic:chooseGenerals()
     player.general = general
     player.gender = Fk.generals[general].gender
     self.room:notifyProperty(player, player, "general")
-    self.room:notifyProperty(player, player, "gender")
+    self.room:broadcastProperty(player, "gender")
   end
   local lord = room:getLord()
   local lord_general = nil

@@ -14,39 +14,39 @@ function UsableSkill:initialize(name, frequency)
 end
 
 ---@param player Player
-function UsableSkill:getMinTargetNum(player)
+function UsableSkill:getMinTargetNum(player, card)
   local ret = type(self.target_num) == "table" and self.target_num[1] or self.target_num
   return ret
 end
 
-function UsableSkill:getMaxTargetNum(player)
+function UsableSkill:getMaxTargetNum(player, card)
   local ret = type(self.target_num) == "table" and self.target_num[2] or self.target_num
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getExtraTargetNum(player, self)
+    local correct = skill:getExtraTargetNum(player, self, card)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end
   return ret
 end
 
-function UsableSkill:getMaxUseTime(player, scope)
+function UsableSkill:getMaxUseTime(player, scope, card)
   scope = scope or Player.HistoryTurn
   local ret = self.max_use_time[scope]
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getResidueNum(player, self, scope)
+    local correct = skill:getResidueNum(player, self, scope, card)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end
   return ret
 end
 
-function UsableSkill:getDistanceLimit(player)
+function UsableSkill:getDistanceLimit(player, card)
   local ret = self.distance_limit
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getDistanceLimit(player, self)
+    local correct = skill:getDistanceLimit(player, self, card)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end

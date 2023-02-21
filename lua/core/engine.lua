@@ -68,12 +68,14 @@ function Engine:loadPackages()
       local pack = require(string.format("packages.%s", dir))
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
-      if pack[1] ~= nil then
-        for _, p in ipairs(pack) do
-          self:loadPackage(p)
+      if type(pack) == "table" then
+        if pack[1] ~= nil then
+          for _, p in ipairs(pack) do
+            self:loadPackage(p)
+          end
+        else
+          self:loadPackage(pack)
         end
-      else
-        self:loadPackage(pack)
       end
     end
   end

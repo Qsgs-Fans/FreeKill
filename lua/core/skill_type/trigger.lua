@@ -56,14 +56,9 @@ end
 function TriggerSkill:doCost(event, target, player, data)
   local ret = self:cost(event, target, player, data)
   if ret then
-    local room = player.room
-    if not self.mute then
-      room:broadcastSkillInvoke(self.name)
-    end
-    room:notifySkillInvoked(player, self.name)
-    player:addSkillUseHistory(self.name)
-    ret = self:use(event, target, player, data)
-    return ret
+    return player.room:useSkill(player, self, function()
+      return self:use(event, target, player, data)
+    end)
   end
 end
 

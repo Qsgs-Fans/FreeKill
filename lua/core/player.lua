@@ -259,6 +259,19 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
+---@param name string
+function Player:getPile(name)
+  return self.special_cards[name] or {}
+end
+
+---@param id integer
+---@return string|null
+function Player:getPileNameOfId(id)
+  for k, v in pairs(self.special_cards) do
+    if table.contains(v, id) then return k end
+  end
+end
+
 -- for fkp only
 function Player:getHandcardNum()
   return #self:getCardIds(Player.Hand)

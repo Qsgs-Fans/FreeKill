@@ -13,6 +13,7 @@ function createClientPages() {
 }
 
 var callbacks = {};
+let sheduled_download = "";
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
   // jsonData: RSA pub key
@@ -36,7 +37,14 @@ callbacks["ErrorMsg"] = function(jsonData) {
   console.log("ERROR: " + jsonData);
   toast.show(qsTr(jsonData), 5000);
   mainWindow.busy = false;
+  if (sheduled_download !== "") {
+    mainWindow.busy = true;
+    Pacman.loadSummary(sheduled_download, true);
+    sheduled_download = "";
+  }
 }
+
+callbacks["UpdatePackage"] = (jsonData) => sheduled_download = jsonData;
 
 callbacks["UpdateBusyText"] = function(jsonData) {
   mainWindow.busyText = jsonData;

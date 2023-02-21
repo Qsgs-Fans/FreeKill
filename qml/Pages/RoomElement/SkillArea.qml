@@ -80,14 +80,14 @@ Flickable {
 
   function loseSkill(skill_name) {
     for (let i = 0; i < active_skills.count; i++) {
-      let item = active_skills.at(i);
-      if (item.skill == skill_name) {
+      let item = active_skills.get(i);
+      if (item.orig_skill == skill_name) {
         active_skills.remove(i);
       }
     }
     for (let i = 0; i < not_active_skills.count; i++) {
       let item = not_active_skills.at(i);
-      if (item.skill == skill_name) {
+      if (item.orig_skill == skill_name) {
         not_active_skills.remove(i);
       }
     }
