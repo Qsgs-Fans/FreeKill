@@ -1969,6 +1969,7 @@ function Room:damage(damageStruct)
   if damageStruct.damage < 1 then
     return false
   end
+  damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
 
   if damageStruct.from and not damageStruct.from:isAlive() then
     damageStruct.from = nil
@@ -2353,6 +2354,7 @@ function Room:useSkill(player, skill, effect_cb)
 end
 
 function Room:gameOver(winner)
+  self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
   self.game_finished = true
 

@@ -867,6 +867,7 @@ callbacks["LogEvent"] = function(jsonData) {
       let item = getPhotoOrDashboard(data.to);
       setEmotion(data.to, "damage");
       item.tremble();
+      data.damageType = data.damageType || "normal_damage";
       Backend.playSound("./audio/system/" + data.damageType + (data.damageNum > 1 ? "2" : ""));
       break;
     }
