@@ -1527,12 +1527,14 @@ function Room:doCardEffect(cardEffectEvent)
           use.responseToEvent = cardEffectEvent
           self:useCard(use)
         end
-      elseif cardEffectEvent.card.type == Card.TypeTrick then
+      elseif cardEffectEvent.card.type == Card.TypeTrick and
+        not cardEffectEvent.disresponsive then
         local players = {}
         for _, p in ipairs(self.alive_players) do
-          local cards = p.player_cards[Player.Hand]
+          local cards = p:getCardIds(Player.Hand)
           for _, cid in ipairs(cards) do
-            if Fk:getCardById(cid).name == "nullification" then
+            if Fk:getCardById(cid).name == "nullification" and
+              not table.contains(cardEffectEvent.disresponsiveList or {}, p.id) then
               table.insert(players, p)
               break
             end

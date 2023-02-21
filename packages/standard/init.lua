@@ -1007,6 +1007,34 @@ Fk:loadTranslationTable{
   ["lvbu"] = "吕布",
 }
 
+local lijian = fk.CreateActiveSkill{
+  name = "lijian",
+  anim_type = "offensive",
+  can_use = function(self, player)
+    return player:usedSkillTimes(self.name) == 0
+  end,
+  card_filter = function(self, to_select, selected)
+    return #selected == 0
+  end,
+  target_filter = function(self, to_select, selected)
+    return #selected < 2 and to_select ~= Self.id and
+      ClientInstance:getPlayerById(to_select).gender == General.Male
+  end,
+  feasible = function(self, targets, cards)
+    return #targets == 2 and #cards > 0
+  end,
+  on_use = function(self, room, use)
+    local duel = Fk:cloneCard("duel")
+    local new_use = {} ---@type CardUseStruct
+    new_use.from = use.tos[2]
+    new_use.tos = { { use.tos[1] } }
+    new_use.card = duel
+    new_use.disresponsiveList = table.map(room:getAlivePlayers(), function(e)
+      return e.id
+    end)
+    room:useCard(new_use)
+  end,
+}
 local biyue = fk.CreateTriggerSkill{
   name = "biyue",
   anim_type = "drawcard",
@@ -1020,9 +1048,12 @@ local biyue = fk.CreateTriggerSkill{
   end,
 }
 local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
+diaochan:addSkill(lijian)
 diaochan:addSkill(biyue)
 Fk:loadTranslationTable{
   ["diaochan"] = "貂蝉",
+  ["lijian"] = "离间",
+  [":lijian"] = "阶段技，你可以弃置一张牌并选择两名其他男性角色，后选择的角色视为对先选择的角色使用了一张不能被无懈可击的决斗。",
   ["biyue"] = "闭月",
   [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
 }
