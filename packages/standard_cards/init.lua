@@ -980,7 +980,6 @@ local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
   extra_target_func = function(self, player, skill, card)
-    p(card.id)
     if player:hasSkill(self.name) and skill.name == "slash_skill"
       and #player:getCardIds(Player.Hand) == 1
       and player:getCardIds(Player.Hand)[1] == card.id then
