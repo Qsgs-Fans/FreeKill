@@ -55,8 +55,8 @@ function Room:initialize(_room)
     local main_co = coroutine.create(function()
       self:run()
     end)
-    local request_co = coroutine.create(function()
-      self:requestLoop()
+    local request_co = coroutine.create(function(rest)
+      self:requestLoop(rest)
     end)
     while not self.game_finished do
       local ret, err_msg = coroutine.resume(main_co)
@@ -68,7 +68,9 @@ function Room:initialize(_room)
         break
       end
 
-      ret, err_msg = coroutine.resume(request_co)
+      -- If ret == true, then err_msg is the millisecond left
+
+      ret, err_msg = coroutine.resume(request_co, err_msg)
       if ret == false then
         fk.qCritical(err_msg)
         print(debug.traceback(request_co))
@@ -405,7 +407,7 @@ function Room:doRaceRequest(command, players, jsonData)
 end
 
 -- main loop for the request handling coroutine
-function Room:requestLoop()
+function Room:requestLoop(rest_time)
   local function tellRoomToObserver(player)
     local observee = self.players[1]
     player:doNotify("Setup", json.encode{
@@ -483,6 +485,10 @@ function Room:requestLoop()
       elseif command == "leave" then
         removeObserver(id)
       end
+    elseif rest_time > 10 then
+      -- let current thread sleep 10ms
+      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
+      fk.QThread_msleep(10)
     end
     coroutine.yield()
   end
@@ -493,10 +499,11 @@ end
 function Room:delay(ms)
   local start = os.getms()
   while true do
-    if os.getms() - start >= ms * 1000 then
+    local rest = ms - (os.getms() - start) / 1000
+    if rest >= 0 then
       break
     end
-    coroutine.yield()
+    coroutine.yield(rest)
   end
 end
 

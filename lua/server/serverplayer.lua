@@ -61,16 +61,17 @@ end
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
-  local state = self.serverplayer:getStateString()
+  local state = player.serverplayer:getStateString()
   while true do
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
       return result
     end
-    if timeout and (os.getms() - start) / 1000 >= timeout * 1000 then
+    local rest = timeout * 1000 - (os.getms() - start) / 1000
+    if timeout and rest <= 0 then
       return ""
     end
-    coroutine.yield()
+    coroutine.yield(rest)
   end
 end
 
