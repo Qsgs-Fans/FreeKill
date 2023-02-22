@@ -183,7 +183,7 @@ local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
   target_num = 1,
   target_filter = function(self, to_select, selected)
-    if #selected < self:getMaxTargetNum() then
+    if #selected < self:getMaxTargetNum(Self) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and not player:isAllNude()
     end

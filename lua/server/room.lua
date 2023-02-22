@@ -20,6 +20,9 @@ local Room = class("Room")
 -- load classes used by the game
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
+
+---@type Player
+Self = nil -- `Self' is client-only, but we need it in AI
 dofile "lua/server/ai/init.lua"
 
 --[[--------------------------------------------------------------------

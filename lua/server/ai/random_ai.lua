@@ -5,7 +5,7 @@ local random_cb = {}
 
 random_cb.AskForUseActiveSkill = function(self, jsonData) end
 random_cb.AskForGeneral = function(self, jsonData)
-  return table.random(json.decode(jsonData))
+  return json.encode{table.random(json.decode(jsonData))}
 end
 
 random_cb.AskForCardChosen = function(self, jsonData) end
@@ -31,8 +31,6 @@ random_cb.PlayCard = function(self, jsonData)
     local card = table.random(cards)
     local skill = card.skill
     if skill:canUse(self.player) then
-      --TODO
-      return ""
       local selected_targets = {}
       local max_try_time = 1000
       while not skill:feasible(selected_targets) do
@@ -40,10 +38,16 @@ random_cb.PlayCard = function(self, jsonData)
           break
         end
         local avail_targets = table.filter(self.room:getAlivePlayers(),
-          function(p) return skill:targetFilter({}, p.id) end)
+          function(p) return skill:targetFilter(p.id, {}) end)
+        break
       end
       if skill:feasible(selected_targets) then
-        return json.encode{}
+        local ret = json.encode{
+          card = card.id,
+          targets = {},
+        }
+        print(ret)
+        return ret
       else
         table.removeOne(cards, card)
       end

@@ -140,7 +140,7 @@ end
 function table.random(tab, n)
   n = n or 1
   if #tab == 0 then return nil end
-  local tmp = table.clone(tab)
+  local tmp = {table.unpack(tab)}
   local ret = {}
   while n > 0 do
     local i = math.random(1, #tmp)

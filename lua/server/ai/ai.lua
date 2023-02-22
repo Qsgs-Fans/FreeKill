@@ -31,10 +31,13 @@ function AI:readRequestData()
 end
 
 function AI:makeReply()
+  Self = self.player
   local start = os.getms()
   local ret = self.cb_table[self.command] and self.cb_table[self.command](self, self.jsonData) or ""
-  self.room:delay(700 - (os.getms() - start) / 1000)
-  return ""
+  local to_delay = 700 - (os.getms() - start) / 1000
+  print(to_delay)
+  self.room:delay(to_delay)
+  return ret
 end
 
 return AI
