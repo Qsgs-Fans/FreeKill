@@ -12,6 +12,8 @@
 ---@field phase_state table[]
 ---@field phase_index integer
 ---@field role_shown boolean
+---@field ai AI
+---@field ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
@@ -29,6 +31,7 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+  self.ai = RandomAI:new(self)
 end
 
 ---@param command string
@@ -55,6 +58,10 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
   self.reply_cancel = false
+  self.ai_data = {
+    command = command,
+    jsonData = jsonData,
+  }
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
@@ -62,6 +69,18 @@ local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
   local state = player.serverplayer:getStateString()
+  if state ~= "online" then
+    -- Let AI make reply. First handle request
+    local ret_msg = true
+    while ret_msg do
+      -- when ret_msg is false, that means there is no request in the queue
+      ret_msg = coroutine.yield(1)
+    end
+
+    player.ai:readRequestData()
+    local reply = player.ai:makeReply()
+    return reply
+  end
   while true do
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then

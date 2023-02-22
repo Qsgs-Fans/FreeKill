@@ -147,7 +147,7 @@ function fk.CreateActiveSkill(spec)
   if spec.can_use then skill.canUse = spec.can_use end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
-  if spec.feasible then skill.feasible = spec.feasible end
+  if spec.feasible then print(spec.name .. ": feasible is deprecated. Use target_num and card_num instead.") end --skill.feasible = spec.feasible end
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end

@@ -20,6 +20,7 @@ local Room = class("Room")
 -- load classes used by the game
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
+dofile "lua/server/ai/init.lua"
 
 --[[--------------------------------------------------------------------
   Room stores all information for server side game room, such as player,
@@ -58,8 +59,9 @@ function Room:initialize(_room)
     local request_co = coroutine.create(function(rest)
       self:requestLoop(rest)
     end)
+    local ret, err_msg = true, true
     while not self.game_finished do
-      local ret, err_msg = coroutine.resume(main_co)
+      ret, err_msg = coroutine.resume(main_co, err_msg)
 
       -- handle error
       if ret == false then
@@ -76,6 +78,8 @@ function Room:initialize(_room)
         print(debug.traceback(request_co))
         break
       end
+
+      -- If ret == true, then when err_msg is true, that means no request
     end
   end
 
@@ -474,8 +478,10 @@ function Room:requestLoop(rest_time)
   end
 
   while true do
+    local ret = false
     local request = self.room:fetchRequest()
     if request ~= "" then
+      ret = true
       local id, command = table.unpack(request:split(","))
       id = tonumber(id)
       if command == "reconnect" then
@@ -490,7 +496,7 @@ function Room:requestLoop(rest_time)
       -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
       fk.QThread_msleep(10)
     end
-    coroutine.yield()
+    coroutine.yield(ret)
   end
 end
 
@@ -500,7 +506,7 @@ function Room:delay(ms)
   local start = os.getms()
   while true do
     local rest = ms - (os.getms() - start) / 1000
-    if rest >= 0 then
+    if rest <= 0 then
       break
     end
     coroutine.yield(rest)

@@ -133,6 +133,23 @@ function table:insertIfNeed(element)
   end
 end
 
+---@generic T
+---@param self T[]
+---@param n integer
+---@return T|T[]
+function table.random(tab, n)
+  n = n or 1
+  if #tab == 0 then return nil end
+  local tmp = table.clone(tab)
+  local ret = {}
+  while n > 0 do
+    local i = math.random(1, #tmp)
+    table.insert(ret, table.remove(tmp, i))
+    n = n - 1
+  end
+  return #ret == 1 and ret[1] or ret
+end
+
 ---@param delimiter string
 ---@return string[]
 function string:split(delimiter)
