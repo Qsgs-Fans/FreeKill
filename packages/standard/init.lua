@@ -309,7 +309,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
-      and ClientInstance:getCardArea(to_select) ~= Player.Equip
+      and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -347,7 +347,7 @@ local rende = fk.CreateActiveSkill{
   name = "rende",
   anim_type = "support",
   card_filter = function(self, to_select, selected)
-    return ClientInstance:getCardArea(to_select) ~= Card.PlayerEquip
+    return Fk:currentRoom():getCardArea(to_select) ~= Card.PlayerEquip
   end,
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
@@ -896,7 +896,7 @@ local jieyin = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected)
-    return #selected < 2 and ClientInstance:getCardArea(to_select) ~= Player.Equip
+    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -944,7 +944,7 @@ local qingnang = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected, targets)
-    return #selected == 0 and ClientInstance:getCardArea(to_select) ~= Player.Equip
+    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
@@ -1012,7 +1012,7 @@ local lijian = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     return #selected < 2 and to_select ~= Self.id and
-      ClientInstance:getPlayerById(to_select).gender == General.Male
+      Fk:currentRoom():getPlayerById(to_select).gender == General.Male
   end,
   target_num = 2,
   min_card_num = 1,
@@ -1023,7 +1023,7 @@ local lijian = fk.CreateActiveSkill{
     new_use.from = use.tos[2]
     new_use.tos = { { use.tos[1] } }
     new_use.card = duel
-    new_use.disresponsiveList = table.map(room:getAlivePlayers(), function(e)
+    new_use.unoffsetableList = table.map(room:getAlivePlayers(), function(e)
       return e.id
     end)
     room:useCard(new_use)

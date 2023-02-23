@@ -818,14 +818,18 @@ function Room:askForCardChosen(chooser, target, flag, reason)
   local result = self:doRequest(chooser, command, json.encode(data))
 
   if result == "" then
-    -- FIXME: generate a random card according to flag
     result = -1
   else
     result = tonumber(result)
   end
 
   if result == -1 then
-    local handcards = target.player_cards[Player.Hand]
+    local areas = {}
+    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+    local handcards = target:getCardIds(areas)
+    if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
   end
 

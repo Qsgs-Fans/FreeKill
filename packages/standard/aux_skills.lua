@@ -6,7 +6,7 @@ local discardSkill = fk.CreateActiveSkill{
     end
 
     if not self.include_equip then
-      return ClientInstance:getCardArea(to_select) ~= Player.Equip
+      return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
     end
 
     return true
