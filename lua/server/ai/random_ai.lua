@@ -32,8 +32,9 @@ random_cb.PlayCard = function(self, jsonData)
     local skill = card.skill
     if skill:canUse(self.player) then
       local selected_targets = {}
+      local selected_cards = {}
       local max_try_time = 1000
-      while not skill:feasible(selected_targets) do
+      while not skill:feasible(selected_targets, selected_cards, self.player, card) do
         if max_try_time <= 0 then
           break
         end
@@ -41,7 +42,7 @@ random_cb.PlayCard = function(self, jsonData)
           function(p) return skill:targetFilter(p.id, {}) end)
         break
       end
-      if skill:feasible(selected_targets) then
+      if skill:feasible(selected_targets, selected_cards, self.player, card) then
         local ret = json.encode{
           card = card.id,
           targets = {},

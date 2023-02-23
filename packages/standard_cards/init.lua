@@ -32,9 +32,6 @@ local slashSkill = fk.CreateActiveSkill{
       return Self ~= player and Self:inMyAttackRange(player)
     end
   end,
-  feasible = function(self, selected)
-    return #selected >= self:getMinTargetNum()
-  end,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
@@ -188,9 +185,6 @@ local dismantlementSkill = fk.CreateActiveSkill{
       return Self ~= player and not player:isAllNude()
     end
   end,
-  feasible = function(self, selected)
-    return #selected >= self:getMinTargetNum()
-  end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     if to:isAllNude() then return end
@@ -237,9 +231,7 @@ local snatchSkill = fk.CreateActiveSkill{
         and not player:isAllNude()
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
@@ -281,9 +273,7 @@ local duelSkill = fk.CreateActiveSkill{
       return Self ~= player
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     local from = room:getPlayerById(effect.from)
@@ -351,9 +341,7 @@ local collateralSkill = fk.CreateActiveSkill{
       return Fk:currentRoom():getPlayerById(selected[1]):inMyAttackRange(player)
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 2
-  end,
+  target_num = 2,
   on_use = function(self, room, cardUseEvent)
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
@@ -681,9 +669,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     end
     return false
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     local judge = {

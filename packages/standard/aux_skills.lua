@@ -11,9 +11,7 @@ local discardSkill = fk.CreateActiveSkill{
 
     return true
   end,
-  feasible = function(self, _, selected)
-    return #selected >= self.min_num
-  end,
+  min_card_num = function(self) return self.min_num end,
 }
 
 local choosePlayersSkill = fk.CreateActiveSkill{
@@ -26,9 +24,7 @@ local choosePlayersSkill = fk.CreateActiveSkill{
       return table.contains(self.targets, to_select)
     end
   end,
-  feasible = function(self, selected)
-    return #selected >= self.min_num
-  end,
+  min_card_num = function(self) return self.min_num end,
 }
 
 Fk:loadTranslationTable{

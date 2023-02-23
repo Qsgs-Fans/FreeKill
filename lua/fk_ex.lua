@@ -18,6 +18,42 @@ TrickCard, DelayedTrickCard = table.unpack(Trick)
 local Equip = require "core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
+local function readCommonSpecToSkill(skill, spec)
+  skill.mute = spec.mute
+  skill.anim_type = spec.anim_type
+
+  if spec.attached_equip then
+    assert(type(spec.attached_equip) == "string") 
+    skill.attached_equip = spec.attached_equip
+  end
+end
+
+local function readUsableSpecToSkill(skill, spec)
+  readCommonSpecToSkill(skill, spec)
+  skill.target_num = spec.target_num or skill.target_num
+  skill.min_target_num = spec.min_target_num or skill.min_target_num
+  skill.max_target_num = spec.max_target_num or skill.max_target_num
+  skill.target_num_table = spec.target_num_table or skill.target_num_table
+  skill.card_num = spec.card_num or skill.card_num
+  skill.min_card_num = spec.min_card_num or skill.min_card_num
+  skill.max_card_num = spec.max_card_num or skill.max_card_num
+  skill.card_num_table = spec.card_num_table or skill.card_num_table
+  skill.max_use_time = {
+    spec.max_phase_use_time or 9999,
+    spec.max_turn_use_time or 9999,
+    spec.max_round_use_time or 9999,
+    spec.max_game_use_time or 9999,
+  }
+  skill.distance_limit = spec.distance_limit or skill.distance_limit
+end
+
+local function readStatusSpecToSkill(skill, spec)
+  readCommonSpecToSkill(skill, spec)
+  if spec.global then
+    skill.global = spec.global
+  end
+end
+
 ---@class UsableSkillSpec: UsableSkill
 ---@field max_phase_use_time integer
 ---@field max_turn_use_time integer
@@ -48,16 +84,7 @@ function fk.CreateTriggerSkill(spec)
 
   local frequency = spec.frequency or Skill.NotFrequent
   local skill = TriggerSkill:new(spec.name, frequency)
-  skill.mute = spec.mute
-  skill.anim_type = spec.anim_type
-  skill.target_num = spec.target_num or skill.target_num
-  skill.max_use_time = {
-    spec.max_phase_use_time or 9999,
-    spec.max_turn_use_time or 9999,
-    spec.max_round_use_time or 9999,
-    spec.max_game_use_time or 9999,
-  }
-  skill.distance_limit = spec.distance_limit or skill.distance_limit
+  readUsableSpecToSkill(skill, spec)
 
   if type(spec.events) == "number" then
     table.insert(skill.events, spec.events)
@@ -91,9 +118,6 @@ function fk.CreateTriggerSkill(spec)
   end
 
   if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-
     if not spec.priority then
       spec.priority = 0.1
     end
@@ -128,21 +152,7 @@ end
 function fk.CreateActiveSkill(spec)
   assert(type(spec.name) == "string")
   local skill = ActiveSkill:new(spec.name)
-  skill.mute = spec.mute
-  skill.anim_type = spec.anim_type
-  skill.target_num = spec.target_num or skill.target_num
-  skill.max_use_time = {
-    spec.max_phase_use_time or 9999,
-    spec.max_turn_use_time or 9999,
-    spec.max_round_use_time or 9999,
-    spec.max_game_use_time or 9999,
-  }
-  skill.distance_limit = spec.distance_limit or skill.distance_limit
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-  end
+  readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then skill.canUse = spec.can_use end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
@@ -172,21 +182,7 @@ function fk.CreateViewAsSkill(spec)
   assert(type(spec.view_as) == "function")
 
   local skill = ViewAsSkill:new(spec.name)
-  skill.mute = spec.mute
-  skill.anim_type = spec.anim_type
-  skill.target_num = spec.target_num or skill.target_num
-  skill.max_use_time = {
-    spec.max_phase_use_time or 9999,
-    spec.max_turn_use_time or 9999,
-    spec.max_round_use_time or 9999,
-    spec.max_game_use_time or 9999,
-  }
-  skill.distance_limit = spec.distance_limit or skill.distance_limit
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-  end
+  readUsableSpecToSkill(skill, spec)
 
   skill.viewAs = spec.view_as
   if spec.card_filter then
@@ -215,15 +211,8 @@ function fk.CreateDistanceSkill(spec)
   assert(type(spec.correct_func) == "function")
 
   local skill = DistanceSkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
   skill.getCorrect = spec.correct_func
-  if spec.global then
-    skill.global = spec.global
-  end
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-  end
 
   return skill
 end
@@ -238,15 +227,8 @@ function fk.CreateProhibitSkill(spec)
   assert(type(spec.is_prohibited) == "function")
 
   local skill = ProhibitSkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
   skill.isProhibited = spec.is_prohibited
-  if spec.global then
-    skill.global = spec.global
-  end
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-  end
 
   return skill
 end
@@ -261,15 +243,8 @@ function fk.CreateAttackRangeSkill(spec)
   assert(type(spec.correct_func) == "function")
 
   local skill = AttackRangeSkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
   skill.getCorrect = spec.correct_func
-  if spec.global then
-    skill.global = spec.global
-  end
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
-  end
 
   return skill
 end
@@ -285,19 +260,12 @@ function fk.CreateMaxCardsSkill(spec)
   assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
 
   local skill = MaxCardsSkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
   if spec.correct_func then
     skill.getCorrect = spec.correct_func
   end
   if spec.fixed_func then
     skill.getFixed = spec.fixed_func
-  end
-  if spec.global then
-    skill.global = spec.global
-  end
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
   end
 
   return skill
@@ -314,6 +282,7 @@ function fk.CreateTargetModSkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = TargetModSkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
   if spec.residue_func then
     skill.getResidueNum = spec.residue_func
   end
@@ -322,14 +291,6 @@ function fk.CreateTargetModSkill(spec)
   end
   if spec.extra_target_func then
     skill.getExtraTargetNum = spec.extra_target_func
-  end
-  if spec.global then
-    skill.global = spec.global
-  end
-
-  if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
-    skill.attached_equip = spec.attached_equip
   end
 
   return skill
@@ -345,13 +306,9 @@ function fk.CreateFilterSkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = FilterSkill:new(spec.name)
-  skill.mute = spec.mute
-  skill.anim_type = spec.anim_type
+  readStatusSpecToSkill(skill, spec)
   skill.cardFilter = spec.card_filter
   skill.viewAs = spec.view_as
-  if spec.global then
-    skill.global = spec.global
-  end
 
   return skill
 end

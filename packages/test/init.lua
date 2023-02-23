@@ -7,9 +7,6 @@ local cheat = fk.CreateActiveSkill{
   can_use = function(self, player)
     return true
   end,
-  feasible = function(self, selected, selected_cards)
-    return #selected == 0 and #selected_cards == 0
-  end,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     local cardTypeName = room:askForChoice(from, { 'BasicCard', 'TrickCard', 'Equip' }, "cheat")

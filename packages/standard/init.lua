@@ -352,9 +352,8 @@ local rende = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 1 and #cards > 0
-  end,
+  target_num = 1,
+  min_card_num = 1,
   on_use = function(self, room, effect)
     local target = room:getPlayerById(effect.tos[1])
     local player = room:getPlayerById(effect.from)
@@ -611,9 +610,8 @@ local zhiheng = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:usedSkillTimes(self.name) == 0
   end,
-  feasible = function(self, selected, selected_cards)
-    return #selected == 0 and #selected_cards > 0
-  end,
+  target_num = 0,
+  min_card_num = 1,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -734,9 +732,7 @@ local fanjian = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_use = function(self, room, effect)
     local player = room:getPlayerById(effect.from)
     local target = room:getPlayerById(effect.tos[1])
@@ -909,9 +905,8 @@ local jieyin = fk.CreateActiveSkill{
       target.gender == General.Male
       and #selected < 1
   end,
-  feasible = function(self, selected, selected_cards)
-    return #selected == 1 and #selected_cards == 2
-  end,
+  target_num = 1,
+  card_num = 2,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -954,9 +949,8 @@ local qingnang = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 1 and #cards == 1
-  end,
+  target_num = 1,
+  card_num = 1,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -1020,9 +1014,8 @@ local lijian = fk.CreateActiveSkill{
     return #selected < 2 and to_select ~= Self.id and
       ClientInstance:getPlayerById(to_select).gender == General.Male
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 2 and #cards > 0
-  end,
+  target_num = 2,
+  min_card_num = 1,
   on_use = function(self, room, use)
     room:throwCard(use.cards, self.name, room:getPlayerById(use.from))
     local duel = Fk:cloneCard("duel")

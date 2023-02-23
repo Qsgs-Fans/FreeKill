@@ -33,7 +33,7 @@ end
 function AI:makeReply()
   Self = self.player
   local start = os.getms()
-  local ret = self.cb_table[self.command] and self.cb_table[self.command](self, self.jsonData) or ""
+  local ret = self.cb_table[self.command] and self.cb_table[self.command](self, self.jsonData) or "__cancel"
   local to_delay = 700 - (os.getms() - start) / 1000
   print(to_delay)
   self.room:delay(to_delay)
