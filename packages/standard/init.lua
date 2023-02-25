@@ -797,16 +797,20 @@ local liuli = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local p = room:askForChoosePlayers(player, self.target_list, 1, 1, prompt, self.name)
-    if #p > 0 then
-      self.cost_data = p[1]
+    local prompt = "#liuli-target"
+    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name)
+    if #plist > 0 then
+      self.cost_data = {plist[1], cid}
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:doIndicate(player.id, { self.cost_data })
-    data.to = self.cost_data    -- TODO
+    local to = self.cost_data[1]
+    room:doIndicate(player.id, { to })
+    room:throwCard(self.cost_data[2], self.name, player, player)
+    TargetGroup:removeTarget(data.targetGroup, player.id)
+    TargetGroup:pushTargets(data.targetGroup, to)
   end,
 }
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
@@ -818,6 +822,7 @@ Fk:loadTranslationTable{
   [":guose"] = "你可以将一张方块牌当【乐不思蜀】使用。",
   ["liuli"] = "流离",
   [":liuli"] = "每当你成为【杀】的目标时，你可以弃置一张牌并选择你攻击范围内为此【杀】合法目标（无距离限制）的一名角色：若如此做，该角色代替你成为此【杀】的目标。",
+  ["#liuli-target"] = "流离：你可以弃置一张牌，将【杀】的目标转移给一名其他角色",
 }
 
 local qianxun = fk.CreateProhibitSkill{

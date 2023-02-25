@@ -692,7 +692,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   end
 
   local command = "AskForUseActiveSkill"
-  self:notifyMoveFocus(player, skill_name)  -- for display skill name instead of command name
+  self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
   local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
   local result = self:doRequest(player, command, json.encode(data))
 
@@ -772,11 +772,40 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     targets = targets,
     num = maxNum,
     min_num = minNum,
-    reason = skillName
+    pattern = "",
+    skillName = skillName
   }
   local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
   if ret then
     return ret.targets
+  else
+    -- TODO: default
+    return {}
+  end
+end
+
+---@param player ServerPlayer
+---@param targets integer[]
+---@param minNum integer
+---@param maxNum integer
+---@param pattern string
+---@param prompt string
+---@return integer[], integer
+function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName)
+  if maxNum < 1 then
+    return {}
+  end
+
+  local data = {
+    targets = targets,
+    num = maxNum,
+    min_num = minNum,
+    pattern = pattern or ".",
+    skillName = skillName
+  }
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
+  if ret then
+    return ret.targets, ret.cards[1]
   else
     -- TODO: default
     return {}
