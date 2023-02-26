@@ -253,9 +253,9 @@ function switch(param, case_table)
 end
 
 ---@class TargetGroup : Object
-local TargetGroup = class("TargetGroup")
+local TargetGroup = {}
 
-function TargetGroup.static:getRealTargets(targetGroup)
+function TargetGroup:getRealTargets(targetGroup)
   if not targetGroup then
     return {}
   end
@@ -268,7 +268,7 @@ function TargetGroup.static:getRealTargets(targetGroup)
   return realTargets
 end
 
-function TargetGroup.static:includeRealTargets(targetGroup, playerId)
+function TargetGroup:includeRealTargets(targetGroup, playerId)
   if not targetGroup then
     return false
   end
@@ -282,7 +282,7 @@ function TargetGroup.static:includeRealTargets(targetGroup, playerId)
   return false
 end
 
-function TargetGroup.static:removeTarget(targetGroup, playerId)
+function TargetGroup:removeTarget(targetGroup, playerId)
   if not targetGroup then
     return
   end
@@ -295,7 +295,7 @@ function TargetGroup.static:removeTarget(targetGroup, playerId)
   end
 end
 
-function TargetGroup.static:pushTargets(targetGroup, playerIds)
+function TargetGroup:pushTargets(targetGroup, playerIds)
   if not targetGroup then
     return
   end
@@ -308,28 +308,28 @@ function TargetGroup.static:pushTargets(targetGroup, playerIds)
 end
 
 ---@class AimGroup : Object
-local AimGroup = class("AimGroup")
+local AimGroup = {}
 
 AimGroup.Undone = 1
 AimGroup.Done = 2
 AimGroup.Cancelled = 3
 
-function AimGroup.static:initAimGroup(playerIds)
+function AimGroup:initAimGroup(playerIds)
   return { [AimGroup.Undone] = playerIds, [AimGroup.Done] = {}, [AimGroup.Cancelled] = {} }
 end
 
-function AimGroup.static:getAllTargets(aimGroup)
+function AimGroup:getAllTargets(aimGroup)
   local targets = {}
   table.insertTable(targets, aimGroup[AimGroup.Undone])
   table.insertTable(targets, aimGroup[AimGroup.Done])
   return targets
 end
 
-function AimGroup.static:getUndoneOrDoneTargets(aimGroup, done)
+function AimGroup:getUndoneOrDoneTargets(aimGroup, done)
   return done and aimGroup[AimGroup.Done] or aimGroup[AimGroup.Undone]
 end
 
-function AimGroup.static:setTargetDone(aimGroup, playerId)
+function AimGroup:setTargetDone(aimGroup, playerId)
   local index = table.indexOf(aimGroup[AimGroup.Undone], playerId)
   if index ~= -1 then
     table.remove(aimGroup[AimGroup.Undone], index)
@@ -337,7 +337,7 @@ function AimGroup.static:setTargetDone(aimGroup, playerId)
   end
 end
 
-function AimGroup.static:addTargets(room, aimEvent, playerIds)
+function AimGroup:addTargets(room, aimEvent, playerIds)
   local playerId = type(playerIds) == "table" and playerIds[1] or playerIds
   table.insert(aimEvent.tos[AimGroup.Undone], playerId)
 
@@ -354,7 +354,7 @@ function AimGroup.static:addTargets(room, aimEvent, playerIds)
   end
 end
 
-function AimGroup.static:cancelTarget(aimEvent, playerId)
+function AimGroup:cancelTarget(aimEvent, playerId)
   local cancelled = false
   for status = AimGroup.Undone, AimGroup.Done do
     local indexList = {}
@@ -380,7 +380,7 @@ function AimGroup.static:cancelTarget(aimEvent, playerId)
   end
 end
 
-function AimGroup.static:removeDeadTargets(room, aimEvent)
+function AimGroup:removeDeadTargets(room, aimEvent)
   for index = AimGroup.Undone, AimGroup.Done do
     aimEvent.tos[index] = room:deadPlayerFilter(aimEvent.tos[index])
   end
@@ -395,7 +395,7 @@ function AimGroup.static:removeDeadTargets(room, aimEvent)
   end
 end
 
-function AimGroup.static:getCancelledTargets(aimGroup)
+function AimGroup:getCancelledTargets(aimGroup)
   return aimGroup[AimGroup.Cancelled]
 end
 
