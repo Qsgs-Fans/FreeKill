@@ -19,7 +19,13 @@ function fk:GetMicroSecond()end
 function fk:SPlayerList()end
 
 function fk.QmlBackend_pwd()end
+
+---@return string[]
 function fk.QmlBackend_ls(filename)end
 function fk.QmlBackend_cd(dir)end
+
+---@return boolean
 function fk.QmlBackend_exists(file)end
+
+---@return boolean
 function fk.QmlBackend_isDir(file)end

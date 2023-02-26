@@ -309,7 +309,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
-      and ClientInstance:getCardArea(to_select) ~= Player.Equip
+      and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -347,14 +347,13 @@ local rende = fk.CreateActiveSkill{
   name = "rende",
   anim_type = "support",
   card_filter = function(self, to_select, selected)
-    return ClientInstance:getCardArea(to_select) ~= Card.PlayerEquip
+    return Fk:currentRoom():getCardArea(to_select) ~= Card.PlayerEquip
   end,
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 1 and #cards > 0
-  end,
+  target_num = 1,
+  min_card_num = 1,
   on_use = function(self, room, effect)
     local target = room:getPlayerById(effect.tos[1])
     local player = room:getPlayerById(effect.from)
@@ -611,9 +610,8 @@ local zhiheng = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:usedSkillTimes(self.name) == 0
   end,
-  feasible = function(self, selected, selected_cards)
-    return #selected == 0 and #selected_cards > 0
-  end,
+  target_num = 0,
+  min_card_num = 1,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -734,9 +732,7 @@ local fanjian = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_use = function(self, room, effect)
     local player = room:getPlayerById(effect.from)
     local target = room:getPlayerById(effect.tos[1])
@@ -801,16 +797,20 @@ local liuli = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local p = room:askForChoosePlayers(player, self.target_list, 1, 1, prompt, self.name)
-    if #p > 0 then
-      self.cost_data = p[1]
+    local prompt = "#liuli-target"
+    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name)
+    if #plist > 0 then
+      self.cost_data = {plist[1], cid}
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:doIndicate(player.id, { self.cost_data })
-    data.to = self.cost_data    -- TODO
+    local to = self.cost_data[1]
+    room:doIndicate(player.id, { to })
+    room:throwCard(self.cost_data[2], self.name, player, player)
+    TargetGroup:removeTarget(data.targetGroup, player.id)
+    TargetGroup:pushTargets(data.targetGroup, to)
   end,
 }
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
@@ -822,6 +822,7 @@ Fk:loadTranslationTable{
   [":guose"] = "你可以将一张方块牌当【乐不思蜀】使用。",
   ["liuli"] = "流离",
   [":liuli"] = "每当你成为【杀】的目标时，你可以弃置一张牌并选择你攻击范围内为此【杀】合法目标（无距离限制）的一名角色：若如此做，该角色代替你成为此【杀】的目标。",
+  ["#liuli-target"] = "流离：你可以弃置一张牌，将【杀】的目标转移给一名其他角色",
 }
 
 local qianxun = fk.CreateProhibitSkill{
@@ -900,7 +901,7 @@ local jieyin = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected)
-    return #selected < 2 and ClientInstance:getCardArea(to_select) ~= Player.Equip
+    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -909,9 +910,8 @@ local jieyin = fk.CreateActiveSkill{
       target.gender == General.Male
       and #selected < 1
   end,
-  feasible = function(self, selected, selected_cards)
-    return #selected == 1 and #selected_cards == 2
-  end,
+  target_num = 1,
+  card_num = 2,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -949,14 +949,13 @@ local qingnang = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name) == 0
   end,
   card_filter = function(self, to_select, selected, targets)
-    return #selected == 0 and ClientInstance:getCardArea(to_select) ~= Player.Equip
+    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 1 and #cards == 1
-  end,
+  target_num = 1,
+  card_num = 1,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from)
@@ -1018,11 +1017,10 @@ local lijian = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     return #selected < 2 and to_select ~= Self.id and
-      ClientInstance:getPlayerById(to_select).gender == General.Male
+      Fk:currentRoom():getPlayerById(to_select).gender == General.Male
   end,
-  feasible = function(self, targets, cards)
-    return #targets == 2 and #cards > 0
-  end,
+  target_num = 2,
+  min_card_num = 1,
   on_use = function(self, room, use)
     room:throwCard(use.cards, self.name, room:getPlayerById(use.from))
     local duel = Fk:cloneCard("duel")
@@ -1030,7 +1028,7 @@ local lijian = fk.CreateActiveSkill{
     new_use.from = use.tos[2]
     new_use.tos = { { use.tos[1] } }
     new_use.card = duel
-    new_use.disresponsiveList = table.map(room:getAlivePlayers(), function(e)
+    new_use.unoffsetableList = table.map(room:getAlivePlayers(), function(e)
       return e.id
     end)
     room:useCard(new_use)

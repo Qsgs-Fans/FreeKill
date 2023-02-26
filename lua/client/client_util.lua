@@ -210,7 +210,7 @@ function CardFeasible(card, selected_targets)
     return ActiveFeasible(t.skill, selected_targets, t.subcards)
   end
 
-  local ret = c.skill:feasible(selected_targets, selected_cards)
+  local ret = c.skill:feasible(selected_targets, selected_cards, Self, c)
   return json.encode(ret)
 end
 
@@ -289,11 +289,11 @@ function ActiveFeasible(skill_name, selected, selected_cards)
   local ret = false
   if skill then
     if skill:isInstanceOf(ActiveSkill) then
-      ret = skill:feasible(selected, selected_cards)
+      ret = skill:feasible(selected, selected_cards, Self, nil)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local card = skill:viewAs(selected_cards)
       if card then
-        ret = card.skill:feasible(selected, selected_cards)
+        ret = card.skill:feasible(selected, selected_cards, Self, card)
       end
     end
   end

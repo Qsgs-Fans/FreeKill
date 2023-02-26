@@ -1,6 +1,9 @@
 // Make the base classes look like "complete"
 class QObject {};
-class QThread {};
+class QThread {
+public:
+  static void msleep(long msec);
+};
 
 template <class T>
 class QList {

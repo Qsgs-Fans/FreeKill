@@ -32,9 +32,6 @@ local slashSkill = fk.CreateActiveSkill{
       return Self ~= player and Self:inMyAttackRange(player)
     end
   end,
-  feasible = function(self, selected)
-    return #selected >= self:getMinTargetNum()
-  end,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
@@ -183,13 +180,10 @@ local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
   target_num = 1,
   target_filter = function(self, to_select, selected)
-    if #selected < self:getMaxTargetNum() then
+    if #selected < self:getMaxTargetNum(Self) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and not player:isAllNude()
     end
-  end,
-  feasible = function(self, selected)
-    return #selected >= self:getMinTargetNum()
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
@@ -237,9 +231,7 @@ local snatchSkill = fk.CreateActiveSkill{
         and not player:isAllNude()
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
@@ -281,9 +273,7 @@ local duelSkill = fk.CreateActiveSkill{
       return Self ~= player
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     local from = room:getPlayerById(effect.from)
@@ -351,9 +341,7 @@ local collateralSkill = fk.CreateActiveSkill{
       return Fk:currentRoom():getPlayerById(selected[1]):inMyAttackRange(player)
     end
   end,
-  feasible = function(self, selected)
-    return #selected == 2
-  end,
+  target_num = 2,
   on_use = function(self, room, cardUseEvent)
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
@@ -681,9 +669,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     end
     return false
   end,
-  feasible = function(self, selected)
-    return #selected == 1
-  end,
+  target_num = 1,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     local judge = {
@@ -900,7 +886,7 @@ local spearSkill = fk.CreateViewAsSkill{
   pattern = "slash",
   card_filter = function(self, to_select, selected)
     if #selected == 2 then return false end
-    return ClientInstance:getCardArea(to_select) ~= Player.Equip
+    return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
   end,
   view_as = function(self, cards)
     if #cards ~= 2 then
@@ -980,7 +966,6 @@ local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
   extra_target_func = function(self, player, skill, card)
-    p(card.id)
     if player:hasSkill(self.name) and skill.name == "slash_skill"
       and #player:getCardIds(Player.Hand) == 1
       and player:getCardIds(Player.Hand)[1] == card.id then

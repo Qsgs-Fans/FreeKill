@@ -5,13 +5,13 @@
 --- middleclass
 class = {}
 
----@param class class
+---@param class class|Object
 ---@return boolean
 function class:isSubclassOf(class) end
 
 ---@class Object
 ---@field class class
-Object = {}
+Object = { static = {} }
 
 ---@generic T
 ---@param self T
@@ -25,7 +25,7 @@ function Object:new(...)end
 ---@param name string
 function Object:subclass(name)end
 
----@param class class
+---@param class class|Object
 ---@return boolean
 function Object:isInstanceOf(class) end
 
@@ -42,5 +42,5 @@ function json.encode(obj)end
 
 --- convert JSON string to lua types
 ---@param str string @ JSON string to decode
----@return table|number|string
+---@return any
 function json.decode(str)end
