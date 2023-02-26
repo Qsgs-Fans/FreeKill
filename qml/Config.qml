@@ -2,6 +2,8 @@ import QtQuick
 
 QtObject {
   // Client configuration
+  property real winX
+  property real winY
   property real winWidth
   property real winHeight
   property var conf: ({})
@@ -25,6 +27,8 @@ QtObject {
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
+    winX = conf.winX || 100;
+    winY = conf.winY || 100;
     winWidth = conf.winWidth || 960;
     winHeight = conf.winHeight || 540;
     lastLoginServer = conf.lastLoginServer || "127.0.0.1";
@@ -35,6 +39,8 @@ QtObject {
   }
 
   function saveConf() {
+    conf.winX = realMainWin.x;
+    conf.winY = realMainWin.y;
     conf.winWidth = realMainWin.width;
     conf.winHeight = realMainWin.height;
     conf.lastLoginServer = lastLoginServer;
