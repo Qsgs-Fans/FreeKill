@@ -234,7 +234,7 @@ void QmlBackend::playSound(const QString &name, int index) {
       i++;
     }
 
-    index = i == 0 ? 0 : (QRandomGenerator::global()->generate()) % i + 1; 
+    index = i == 0 ? 0 : (QRandomGenerator::global()->generate()) % i + 1;
   }
   if (index != 0)
     fname = fname + QString::number(index) + ".mp3";
@@ -242,7 +242,7 @@ void QmlBackend::playSound(const QString &name, int index) {
     fname = fname + ".mp3";
 
   if (!QFile::exists(fname)) return;
- 
+
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
   player->setAudioOutput(output);
