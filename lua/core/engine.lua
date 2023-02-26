@@ -8,7 +8,7 @@
 ---@field generals table<string, General>
 ---@field lords string[]
 ---@field cards Card[]
----@field translations table<string, string>
+---@field translations table<string, table<string, string>>
 local Engine = class("Engine")
 
 function Engine:initialize()
@@ -82,17 +82,20 @@ function Engine:loadPackages()
 end
 
 ---@param t table
-function Engine:loadTranslationTable(t)
+function Engine:loadTranslationTable(t, lang)
   assert(type(t) == "table")
+  lang = lang or "zh_CN"
+  self.translations[lang] = self.translations[lang] or {}
   for k, v in pairs(t) do
-    self.translations[k] = v
+    self.translations[lang][k] = v
   end
 end
 
 function Engine:translate(src)
-  local ret = self.translations[src]
-  if not ret then return src end
-  return ret
+  local lang = Config.language or "zh_CN"
+  if not self.translations[lang] then lang = "zh_CN" end
+  local ret = self.translations[lang][src]
+  return ret or src
 end
 
 ---@param skill Skill

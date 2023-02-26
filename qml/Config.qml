@@ -12,6 +12,7 @@ QtObject {
   property string lobbyBg
   property string roomBg
   property string bgmFile
+  property string language
 
   // Player property of client
   property string serverAddr
@@ -36,6 +37,7 @@ QtObject {
     lobbyBg = conf.lobbyBg || AppPath + "/image/background";
     roomBg = conf.roomBg || AppPath + "/image/gamebg";
     bgmFile = conf.bgmFile || AppPath + "/audio/system/bgm.mp3";
+    language = conf.language || "zh_CN";
   }
 
   function saveConf() {
@@ -48,6 +50,7 @@ QtObject {
     conf.lobbyBg = lobbyBg;
     conf.roomBg = roomBg;
     conf.bgmFile = bgmFile;
+    conf.language = language;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }
