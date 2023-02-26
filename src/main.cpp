@@ -182,14 +182,14 @@ int main(int argc, char *argv[])
   QTranslator translator;
   Q_UNUSED(translator.load("zh_CN.qm"));
   QCoreApplication::installTranslator(&translator);
-  
+
   QmlBackend backend;
   backend.setEngine(engine);
 
 #ifndef Q_OS_WASM
   Pacman = new PackMan;
 #endif
-  
+
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
 

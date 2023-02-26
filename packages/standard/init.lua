@@ -669,7 +669,7 @@ local keji = fk.CreateTriggerSkill{
   can_refresh = function(self, event, target, player, data)
     if not (target == player and player:hasSkill(self.name)) then
       return false
-    end 
+    end
     if event == fk.CardResponding then
       return data.card.name == "slash"
     elseif event == fk.EventPhaseStart then

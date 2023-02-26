@@ -310,7 +310,7 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   self.phase = to_phase
   room:notifyProperty(self, self, "phase")
 
-  if #self.phases > 0 then 
+  if #self.phases > 0 then
     table.remove(self.phases, 1)
   end
 

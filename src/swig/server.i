@@ -48,7 +48,7 @@ public:
     const QString &command,
     const QString &jsonData
   );
-  
+
   void gameOver();
 
   LuaFunction startGame;
@@ -91,7 +91,7 @@ void Room::roomStart() {
   }
   lua_pop(L, 1);
 }
-  
+
 %}
 
 %nodefaultctor ServerPlayer;

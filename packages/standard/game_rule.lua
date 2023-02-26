@@ -77,7 +77,7 @@ GameRule = fk.CreateTriggerSkill{
         move_to_notify.moveInfo = {}
         move_to_notify.moveReason = fk.ReasonDraw
         for _, id in ipairs(cardIds) do
-          table.insert(move_to_notify.moveInfo, 
+          table.insert(move_to_notify.moveInfo,
           { cardId = id, fromArea = Card.DrawPile })
         end
         room:notifyMoveCards(nil, {move_to_notify})
@@ -104,7 +104,7 @@ GameRule = fk.CreateTriggerSkill{
       end
 
       room:sendLog{ type = "$AppendSeparator" }
-      
+
       player:addMark("Global_TurnCount")
       if not player.faceup then
         player:setFlag("-Global_FirstRound")
@@ -119,10 +119,10 @@ GameRule = fk.CreateTriggerSkill{
         error("You should never proceed PhaseNone")
       end,
       [Player.RoundStart] = function()
-        
+
       end,
       [Player.Start] = function()
-        
+
       end,
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
@@ -173,10 +173,10 @@ GameRule = fk.CreateTriggerSkill{
         end
       end,
       [Player.Finish] = function()
-        
+
       end,
       [Player.NotActive] = function()
-        
+
       end,
       })
     end,

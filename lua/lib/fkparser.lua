@@ -138,7 +138,7 @@ fkp.functions.buildPrompt = function(base, src, dest, arg, arg2)
 end
 
 fkp.functions.askForChoice = function(player, choices, reason)
-  return player.room:askForChoice(player, choices, reason) 
+  return player.room:askForChoice(player, choices, reason)
 end
 
 fkp.functions.askForPlayerChosen = function(player, targets, reason, prompt, optional, notify)

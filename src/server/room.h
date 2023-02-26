@@ -61,7 +61,7 @@ public:
   LuaFunction startGame;
 
   QString fetchRequest();
-  void pushRequest(const QString &req); 
+  void pushRequest(const QString &req);
   bool hasRequest() const;
 
 signals:

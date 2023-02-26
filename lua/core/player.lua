@@ -109,7 +109,7 @@ end
 
 ---@param flag string
 function Player:setFlag(flag)
-  if flag == "." then 
+  if flag == "." then
     self:clearFlags()
     return
   end
@@ -302,7 +302,7 @@ function Player:getMaxCards()
   end
 
   if max_fixed then baseValue = math.max(max_fixed, 0) end
-  
+
   for _, skill in ipairs(status_skills) do
     local c = skill:getCorrect(self)
     baseValue = baseValue + c
@@ -349,7 +349,7 @@ function Player:distanceTo(other)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end
-  
+
   if self.fixedDistance[other] then
     ret = self.fixedDistance[other]
   end

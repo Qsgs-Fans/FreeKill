@@ -9,7 +9,7 @@ function createClientPages() {
 
     mainWindow.generalsOverviewPage = generalsOverviewPage;
     mainWindow.cardsOverviewPage = cardsOverviewPage;
-  }  
+  }
 }
 
 var callbacks = {};

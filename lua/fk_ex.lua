@@ -23,7 +23,7 @@ local function readCommonSpecToSkill(skill, spec)
   skill.anim_type = spec.anim_type
 
   if spec.attached_equip then
-    assert(type(spec.attached_equip) == "string") 
+    assert(type(spec.attached_equip) == "string")
     skill.attached_equip = spec.attached_equip
   end
 end
@@ -355,7 +355,7 @@ function fk.CreateTrickCard(spec)
   if spec.suit then assert(type(spec.suit) == "number") end
   if spec.number then assert(type(spec.number) == "number") end
 
-  local card = TrickCard:new(spec.name, spec.suit, spec.number)  
+  local card = TrickCard:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
   return card
 end
