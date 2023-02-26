@@ -13,4 +13,4 @@ jobs:
     - uses: actions/checkout@v1
     - name: Check space
       run: if grep -rIn "[[:blank:]]$"; then exit 2; else echo OK; fi
-    
+
