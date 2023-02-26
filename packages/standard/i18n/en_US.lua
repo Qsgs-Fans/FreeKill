@@ -134,3 +134,9 @@ Fk:loadTranslationTable({
   ["biyue"] = "闭月",
   [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
 }, "en_US")
+
+-- aux skills
+Fk:loadTranslationTable{
+  ["discard_skill"] = "弃牌",
+  ["choose_players_skill"] = "选择角色",
+}
