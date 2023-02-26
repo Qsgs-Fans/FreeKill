@@ -10,4 +10,4 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - run: greo -rIn "[[:blank:]]$"
+    - run: ! grep -rIn "[[:blank:]]$"
