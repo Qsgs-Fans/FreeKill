@@ -10,5 +10,5 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - run: if not grep -rIn "[[:blank:]]$"; then exit 1; fi
+    - run: if grep -rIn "[[:blank:]]$"; then; else exit 1; fi
     
