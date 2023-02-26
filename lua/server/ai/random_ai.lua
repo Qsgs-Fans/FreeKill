@@ -7,7 +7,7 @@ local RandomAI = AI:subclass("RandomAI")
 local function useActiveSkill(self, skill, card)
   local room = self.room
   local player = self.player
- 
+
   local filter_func = skill.cardFilter
   if card then
     filter_func = function() return false end
@@ -111,7 +111,7 @@ local function useVSSkill(self, skill, pattern, cancelable, extra_data)
     end
     max_try_time = max_try_time - 1
   end
-  return nil 
+  return nil
 end
 
 local random_cb = {}

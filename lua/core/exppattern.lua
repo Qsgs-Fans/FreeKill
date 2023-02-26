@@ -76,11 +76,11 @@ local function matchCard(matcher, card)
     return false
   end
   -- TODO: generalName
-  
+
   if matcher.cardType and not table.contains(matcher.cardType, typetable[card.type]) then
     return false
   end
-  
+
   if matcher.id and not table.contains(matcher.id, card.id) then
     return false
   end

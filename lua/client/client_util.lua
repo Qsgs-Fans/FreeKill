@@ -508,7 +508,7 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能“%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  
+
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
 
