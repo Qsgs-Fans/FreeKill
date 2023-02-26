@@ -219,6 +219,9 @@ end
 
 ---@class ProhibitSpec: StatusSkillSpec
 ---@field is_prohibited fun(self: ProhibitSkill, from: Player, to: Player, card: Card)
+---@field prohibit_use fun(self: ProhibitSkill, player: Player, card: Card)
+---@field prohibit_response fun(self: ProhibitSkill, player: Player, card: Card)
+---@field prohibit_discard fun(self: ProhibitSkill, player: Player, card: Card)
 
 ---@param spec ProhibitSpec
 ---@return ProhibitSkill
@@ -228,7 +231,10 @@ function fk.CreateProhibitSkill(spec)
 
   local skill = ProhibitSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
-  skill.isProhibited = spec.is_prohibited
+  skill.isProhibited = spec.is_prohibited or skill.isProhibited
+  skill.prohibitUse = spec.prohibit_use or skill.prohibitUse
+  skill.prohibitResponse = spec.prohibit_response or skill.prohibitResponse
+  skill.prohibitDiscard = spec.prohibit_discard or skill.prohibitDiscard
 
   return skill
 end
