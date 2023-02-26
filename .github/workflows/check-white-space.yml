@@ -10,5 +10,4 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - name: Find Trailing Whitespace
-      uses: harupy/find-trailing-whitespace@v1.0
+    - run: greo -rIn "[[:blank:]]$"
