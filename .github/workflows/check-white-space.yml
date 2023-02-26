@@ -14,5 +14,5 @@ jobs:
     - name: Check trailing space
       run: if grep -rIn "[[:blank:]]$"; then exit 2; else echo OK; fi
     - name: Check no new line at EOF
-      run: fail=1; for f in $(grep -rIl ""); do if test $(tail -c 1 $f); then echo $f; fail=0; fi; done; if $fail; then exit 1; fi
+      run: for f in $(grep -rIl "*"); do if test $(tail -c 1 $f); then echo $f; fail=1; fi; done; if test $fail; then exit 1; fi
 
