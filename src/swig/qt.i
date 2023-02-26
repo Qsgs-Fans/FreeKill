@@ -47,7 +47,7 @@ static int GetMicroSecond(lua_State *L) {
   long microsecond = tv.tv_sec * 1000000 + tv.tv_usec;
   lua_pushnumber(L, microsecond);
   return 1;
-}  
+}
 %}
 
 void qDebug(const char *msg, ...);

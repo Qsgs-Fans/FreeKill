@@ -72,7 +72,7 @@ function doOkButton() {
       }
     ));
     return;
-  } 
+  }
   replyToServer("1");
 }
 
@@ -91,7 +91,7 @@ function doCancelButton() {
     replyToServer("__cancel");
     return;
   }
-   
+
   replyToServer("__cancel");
 }
 
@@ -486,7 +486,7 @@ callbacks["ArrangeSeats"] = function(jsonData) {
   dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
   dashboardModel.general = "";
   roomScene.dashboardModelChanged();
-  
+
   // make Self to the first of list, then reorder photomodel
   let selfIndex = order.indexOf(Self.id);
   let after = order.splice(selfIndex);
@@ -497,7 +497,7 @@ callbacks["ArrangeSeats"] = function(jsonData) {
     let item = photoModel.get(i);
     item.index = photoOrder.indexOf(item.id);
   }
-  
+
   arrangePhotos();
 }
 
@@ -516,14 +516,14 @@ callbacks["MoveFocus"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let focuses = data[0];
   let command = data[1];
-  
+
   let item, model;
   for (let i = 0; i < playerNum - 1; i++) {
     model = photoModel.get(i);
     if (focuses.indexOf(model.id) != -1) {
       item = photos.itemAt(i);
       item.progressBar.visible = true;
-      item.progressTip = Backend.translate(command) 
+      item.progressTip = Backend.translate(command)
         + Backend.translate(" thinking...");
 
       if (command === "PlayCard") {

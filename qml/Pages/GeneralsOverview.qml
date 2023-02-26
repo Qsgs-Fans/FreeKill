@@ -23,7 +23,7 @@ Item {
         columns: root.width / 98
         Repeater {
           model: JSON.parse(Backend.callLuaFunction("GetGenerals", [name]))
-          GeneralCardItem { 
+          GeneralCardItem {
             autoBack: false
             name: modelData
             onClicked: {

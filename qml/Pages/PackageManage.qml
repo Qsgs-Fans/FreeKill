@@ -79,7 +79,7 @@ Item {
       ListView {
         id: packageList
         anchors.fill: parent
-        
+
         contentHeight: packageDelegate.height * count
         ScrollBar.vertical: ScrollBar {}
         header: RowLayout {

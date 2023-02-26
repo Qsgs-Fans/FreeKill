@@ -5,7 +5,7 @@ class Shell: public QThread {
   Q_OBJECT
 public:
   Shell();
-  
+
   enum Color {
     Black,
     Red,

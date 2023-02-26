@@ -1,0 +1,18 @@
+name: Check Whitespace and New Line
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Check trailing space
+      run: if grep -rIn "[[:blank:]]$"; then exit 2; else echo OK; fi
+    - name: Check no new line at EOF
+      run: for f in $(grep -rIl ""); do if test $(tail -c 1 $f); then echo $f; fail=1; fi; done; if test $fail; then exit 1; fi
+

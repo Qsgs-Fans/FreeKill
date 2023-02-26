@@ -38,7 +38,7 @@ end
 ---@param pack Package
 function Engine:loadPackage(pack)
   assert(pack:isInstanceOf(Package))
-  if self.packages[pack.name] ~= nil then 
+  if self.packages[pack.name] ~= nil then
     error(string.format("Duplicate package %s detected", pack.name))
   end
   self.packages[pack.name] = pack

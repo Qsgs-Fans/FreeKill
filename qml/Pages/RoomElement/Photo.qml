@@ -351,7 +351,7 @@ Item {
       duration: 100
     }
   }
-  
+
   function tremble() {
     trembleAnimation.start()
   }

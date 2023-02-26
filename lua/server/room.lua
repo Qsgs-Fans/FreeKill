@@ -55,7 +55,7 @@ function Room:initialize(_room)
   self.room = _room
 
   self.room.startGame = function(_self)
-    Room.initialize(self, _room)  -- clear old data  
+    Room.initialize(self, _room)  -- clear old data
     local main_co = coroutine.create(function()
       self:run()
     end)
@@ -550,7 +550,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
         or infosContainArea(move.moveInfo, Card.Processing)
         or move.toArea == Card.Processing
         -- TODO: PlayerSpecial
-      
+
       if not move.moveVisible then
         for _, info in ipairs(move.moveInfo) do
           info.cardId = -1
@@ -1436,7 +1436,7 @@ function Room:doCardUseEffect(cardUseEvent)
     if #realCardIds == 0 then
       return
     end
-    
+
     local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
     if not self:getPlayerById(target).dead then
       local findSameCard = false
@@ -1543,7 +1543,7 @@ function Room:doCardEffect(cardEffectEvent)
       end
       break
     end
-    
+
     if not cardEffectEvent.toCard and (not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
       break
     end
@@ -1691,7 +1691,7 @@ function Room:moveCards(...)
           fromSpecialName = cardsMoveInfo.from and self:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
         })
       end
-  
+
       ---@type CardsMoveStruct
       local cardsMoveStruct = {
         moveInfo = infos,
@@ -1705,7 +1705,7 @@ function Room:moveCards(...)
         specialName = cardsMoveInfo.specialName,
         specialVisible = cardsMoveInfo.specialVisible,
       }
-  
+
       table.insert(cardsMoveStructs, cardsMoveStruct)
     end
   end
@@ -1766,7 +1766,7 @@ function Room:moveCards(...)
         Fk:filterCard(info.cardId, self:getPlayerById(data.to))
 
         local currentCard = Fk:getCardById(info.cardId)
-        if 
+        if
           data.toArea == Player.Equip and
           currentCard.type == Card.TypeEquip and
           data.to ~= nil and
@@ -1855,7 +1855,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     moveReason = reason,
     skillName = skill_name,
     specialName = special_name,
-    moveVisible = visible, 
+    moveVisible = visible,
   }
 end
 
@@ -2099,7 +2099,7 @@ function Room:enterDying(dyingStruct)
     self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
     self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
   end
-  
+
   if not dyingPlayer.dead then
     dyingPlayer.dying = false
     self:broadcastProperty(dyingPlayer, "dying")
@@ -2112,7 +2112,7 @@ function Room:killPlayer(deathStruct)
   local victim = self:getPlayerById(deathStruct.who)
   victim.dead = true
   table.removeOne(self.alive_players, victim)
-  
+
   local logic = self.logic
   logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
 
@@ -2132,7 +2132,7 @@ function Room:killPlayer(deathStruct)
     }
   end
   self:sendLogEvent("Death", {to = victim.id})
-  
+
   self:broadcastProperty(victim, "role")
   self:broadcastProperty(victim, "dead")
 

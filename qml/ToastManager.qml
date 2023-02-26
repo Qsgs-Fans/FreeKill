@@ -26,7 +26,7 @@ ListView {
       easing.type: Easing.InOutQuad
     }
   }
-  
+
   delegate: Toast {
     Component.onCompleted: {
       show(text, duration);

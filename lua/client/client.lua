@@ -307,10 +307,10 @@ local function mergeMoves(moves)
   local ret = {}
   local temp = {}
   for _, move in ipairs(moves) do
-    local info = string.format("%q,%q,%q,%q,%s,%s", 
+    local info = string.format("%q,%q,%q,%q,%s,%s",
       move.from, move.to, move.fromArea, move.toArea,
       move.specialName, move.fromSpecialName)
-    if temp[info] == nil then 
+    if temp[info] == nil then
       temp[info] = {
         ids = {},
         from = move.from,

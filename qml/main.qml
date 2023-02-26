@@ -90,16 +90,16 @@ Item {
 
     property bool stateVisible: false
     states: [
-      State { 
+      State {
         when: globalPopupDim.stateVisible
         PropertyChanges { target: globalPopupDim; opacity: 0.5 }
       },
-      State { 
+      State {
         when: !globalPopupDim.stateVisible
         PropertyChanges { target: globalPopupDim; opacity: 0.0 }
       }
     ]
-    
+
     transitions: Transition {
       NumberAnimation { properties: "opacity"; easing.type: Easing.InOutQuad }
     }
@@ -109,7 +109,7 @@ Item {
     id: globalPopup
     property string source: ""
     modal: true
-    dim: false    // cannot animate the dim 
+    dim: false    // cannot animate the dim
     focus: true
     opacity: mainWindow.busy ? 0 : 1
     closePolicy: Popup.CloseOnEscape

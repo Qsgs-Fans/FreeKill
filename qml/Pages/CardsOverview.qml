@@ -8,7 +8,7 @@ Item {
 
   property bool loaded: false
 
-  ListView {    
+  ListView {
     width: Math.floor(root.width / 98) * 98
     height: parent.height
     anchors.centerIn: parent
@@ -23,7 +23,7 @@ Item {
         columns: root.width / 98
         Repeater {
           model: JSON.parse(Backend.callLuaFunction("GetCards", [name]))
-          CardItem { 
+          CardItem {
             autoBack: false
             Component.onCompleted: {
               let data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
