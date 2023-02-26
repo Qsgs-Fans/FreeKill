@@ -17,7 +17,7 @@ GraphicsBox {
     spacing: 10
 
     Text {
-      text: root.custom_string 
+      text: root.custom_string
       color: "#E4D5A0"
     }
 

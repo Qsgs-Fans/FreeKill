@@ -35,7 +35,7 @@ local slashSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
-    
+
     room:damage({
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
@@ -146,7 +146,7 @@ local peachSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
-    
+
     room:recover({
       who = room:getPlayerById(to),
       num = 1,
