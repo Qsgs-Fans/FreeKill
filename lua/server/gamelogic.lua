@@ -164,22 +164,10 @@ function GameLogic:action()
     self:trigger(fk.DrawInitialCards, p, { num = 4 })
   end
 
-  local function checkNoHuman()
-    for _, p in ipairs(room.players) do
-      if p.serverplayer:getStateString() == "online" then
-        return false
-      end
-    end
-    return true
-  end
-
   while true do
     self:trigger(fk.TurnStart, room.current)
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
-    if checkNoHuman() then
-      room:gameOver("")
-    end
   end
 end
 
