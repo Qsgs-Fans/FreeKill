@@ -40,7 +40,7 @@ Item {
   MediaPlayer {
     id: bgm
     source: config.bgmFile
-    
+
     // loops: MediaPlayer.Infinite
     onPlaybackStateChanged: {
       if (playbackState == MediaPlayer.StoppedState && roomScene.isStarted)
@@ -104,7 +104,7 @@ Item {
 
           if (popupBox.item != null) {
             popupBox.item.finished();
-          } 
+          }
         }
       }
     },
@@ -412,7 +412,7 @@ Item {
     dragMargin: 0
     scale: mainWindow.scale
     transformOrigin: Item.TopLeft
-    
+
     ColumnLayout {
       anchors.fill: parent
 

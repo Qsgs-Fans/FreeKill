@@ -12,7 +12,7 @@ Item {
       color: "#88888888"
       radius: 2
     }
-    
+
     Column {
       spacing: 8
       ComboBox {
