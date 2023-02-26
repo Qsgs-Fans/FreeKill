@@ -320,10 +320,10 @@ function Engine:filterCard(id, player, data)
 end
 
 function Engine:currentRoom()
-  if ClientInstance then
-    return ClientInstance
+  if RoomInstance then
+    return RoomInstance
   end
-  return RoomInstance
+  return ClientInstance
 end
 
 function Engine:getDescription(name)

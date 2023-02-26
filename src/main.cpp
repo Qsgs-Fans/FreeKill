@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
   system = "Android";
 #elif defined(Q_OS_WASM)
   system = "Web";
-  engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9530");
+  engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9527");
 #elif defined(Q_OS_WIN32)
   system = "Win";
   ::system("chcp 65001");

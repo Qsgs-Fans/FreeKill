@@ -21,6 +21,10 @@ local Room = class("Room")
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
 
+---@type Player
+Self = nil -- `Self' is client-only, but we need it in AI
+dofile "lua/server/ai/init.lua"
+
 --[[--------------------------------------------------------------------
   Room stores all information for server side game room, such as player,
   cards, and other properties.
@@ -55,11 +59,12 @@ function Room:initialize(_room)
     local main_co = coroutine.create(function()
       self:run()
     end)
-    local request_co = coroutine.create(function()
-      self:requestLoop()
+    local request_co = coroutine.create(function(rest)
+      self:requestLoop(rest)
     end)
+    local ret, err_msg = true, true
     while not self.game_finished do
-      local ret, err_msg = coroutine.resume(main_co)
+      ret, err_msg = coroutine.resume(main_co, err_msg)
 
       -- handle error
       if ret == false then
@@ -68,12 +73,16 @@ function Room:initialize(_room)
         break
       end
 
-      ret, err_msg = coroutine.resume(request_co)
+      -- If ret == true, then err_msg is the millisecond left
+
+      ret, err_msg = coroutine.resume(request_co, err_msg)
       if ret == false then
         fk.qCritical(err_msg)
         print(debug.traceback(request_co))
         break
       end
+
+      -- If ret == true, then when err_msg is true, that means no request
     end
   end
 
@@ -405,7 +414,7 @@ function Room:doRaceRequest(command, players, jsonData)
 end
 
 -- main loop for the request handling coroutine
-function Room:requestLoop()
+function Room:requestLoop(rest_time)
   local function tellRoomToObserver(player)
     local observee = self.players[1]
     player:doNotify("Setup", json.encode{
@@ -472,8 +481,10 @@ function Room:requestLoop()
   end
 
   while true do
+    local ret = false
     local request = self.room:fetchRequest()
     if request ~= "" then
+      ret = true
       local id, command = table.unpack(request:split(","))
       id = tonumber(id)
       if command == "reconnect" then
@@ -483,8 +494,12 @@ function Room:requestLoop()
       elseif command == "leave" then
         removeObserver(id)
       end
+    elseif rest_time > 10 then
+      -- let current thread sleep 10ms
+      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
+      fk.QThread_msleep(10)
     end
-    coroutine.yield()
+    coroutine.yield(ret)
   end
 end
 
@@ -493,10 +508,11 @@ end
 function Room:delay(ms)
   local start = os.getms()
   while true do
-    if os.getms() - start >= ms * 1000 then
+    local rest = ms - (os.getms() - start) / 1000
+    if rest <= 0 then
       break
     end
-    coroutine.yield()
+    coroutine.yield(rest)
   end
 end
 
@@ -676,7 +692,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   end
 
   local command = "AskForUseActiveSkill"
-  self:notifyMoveFocus(player, skill_name)  -- for display skill name instead of command name
+  self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
   local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
   local result = self:doRequest(player, command, json.encode(data))
 
@@ -756,11 +772,40 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     targets = targets,
     num = maxNum,
     min_num = minNum,
-    reason = skillName
+    pattern = "",
+    skillName = skillName
   }
   local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
   if ret then
     return ret.targets
+  else
+    -- TODO: default
+    return {}
+  end
+end
+
+---@param player ServerPlayer
+---@param targets integer[]
+---@param minNum integer
+---@param maxNum integer
+---@param pattern string
+---@param prompt string
+---@return integer[], integer
+function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName)
+  if maxNum < 1 then
+    return {}
+  end
+
+  local data = {
+    targets = targets,
+    num = maxNum,
+    min_num = minNum,
+    pattern = pattern or ".",
+    skillName = skillName
+  }
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
+  if ret then
+    return ret.targets, ret.cards[1]
   else
     -- TODO: default
     return {}
@@ -802,14 +847,18 @@ function Room:askForCardChosen(chooser, target, flag, reason)
   local result = self:doRequest(chooser, command, json.encode(data))
 
   if result == "" then
-    -- FIXME: generate a random card according to flag
     result = -1
   else
     result = tonumber(result)
   end
 
   if result == -1 then
-    local handcards = target.player_cards[Player.Hand]
+    local areas = {}
+    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+    local handcards = target:getCardIds(areas)
+    if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
   end
 

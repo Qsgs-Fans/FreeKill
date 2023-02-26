@@ -12,3 +12,4 @@ FreeKill采用Qt框架提供底层支持，在上层使用lua语言开发。在U
 - [数据库](./database.md)
 - [UI](./ui.md)
 - [包管理](./package.md)
+- [AI](./ai.md)
