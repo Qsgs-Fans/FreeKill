@@ -1054,6 +1054,51 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   return nil
 end
 
+-- AG(a.k.a. Amazing Grace) functions
+-- Popup a box that contains many cards, then ask player to choose one
+
+---@param player ServerPlayer
+---@param id_list integer[] | Card[]
+---@param cancelable boolean
+---@param reason string
+---@return integer
+function Room:askForAG(player, id_list, cancelable, reason)
+  id_list = Card:getIdList(id_list)
+  if #id_list == 1 and not cancelable then
+    return id_list[1]
+  end
+
+  local command = "AskForAG"
+  self:notifyMoveFocus(player, reason or command)
+  local data = { id_list, cancelable, reason }
+  local ret = self:doRequest(player, command, json.encode(data))
+  if ret == "" and not cancelable then
+    ret = table.random(id_list)
+  end
+  return tonumber(ret)
+end
+
+---@param player ServerPlayer
+---@param id_list integer[] | Card[]
+---@param disable_ids integer[] | Card[]
+function Room:fillAG(player, id_list, disable_ids)
+  id_list = Card:getIdList(id_list)
+  -- disable_ids = Card:getIdList(disable_ids)
+  player:doNotify("FillAG", json.encode{ id_list, disable_ids })
+end
+
+---@param player ServerPlayer
+---@param id integer
+function Room:takeAG(taker, id, notify_list)
+  self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
+end
+
+---@param player ServerPlayer
+function Room:closeAG(player)
+  if player then player:doNotify("CloseAG", "")
+  else self:doBroadcastNotify("CloseAG", "") end
+end
+
 -- Show a qml dialog and return qml's ClientInstance.replyToServer
 -- Do anything you like through this function
 

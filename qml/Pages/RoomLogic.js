@@ -910,6 +910,32 @@ callbacks["GameOver"] = function(jsonData) {
   roomScene.isStarted = false;
 }
 
+callbacks["FillAG"] = (j) => {
+  let data = JSON.parse(j);
+  let ids = data[0];
+  roomScene.manualBox.source = "RoomElement/AG.qml";
+  roomScene.manualBox.item.addIds(ids);
+}
+
+callbacks["AskForAG"] = (j) => {
+  roomScene.state = "replying";
+  roomScene.manualBox.item.interactive = true;
+}
+
+callbacks["TakeAG"] = (j) => {
+  if (!roomScene.manualBox.item) return;
+  let data = JSON.parse(j);
+  let pid = data[0];
+  let cid = data[1];
+  let item = getPhotoOrSelf(pid);
+  let general = Backend.translate(item.general);
+
+  // the item should be AG box
+  roomScene.manualBox.item.takeAG(general, cid);
+}
+
+callbacks["CloseAG"] = () => roomScene.manualBox.item.close();
+
 callbacks["CustomDialog"] = (j) => {
   let data = JSON.parse(j);
   let path = data.path;

@@ -63,8 +63,14 @@ local test_active = fk.CreateActiveSkill{
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
-    local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
-    print(result)
+    -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
+    -- print(result)
+
+    room:fillAG(from, { 1, 43, 77 })
+    local id = room:askForAG(from, { 1, 43, 77 })
+    room:takeAG(from, id)
+    room:delay(2000)
+    room:closeAG(from)
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
