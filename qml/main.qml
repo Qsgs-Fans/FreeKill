@@ -206,6 +206,8 @@ Item {
       mainStack.push(webinit);
     }
     if (OS !== "Android" && OS !== "Web") {
+      x = config.winX;
+      y = config.winY;
       width = config.winWidth;
       height = config.winHeight;
     }

@@ -4,13 +4,6 @@
 package.path = package.path .. ";./lua/lib/?.lua"
                             .. ";./lua/?.lua"
 
--- disable dangerous functions
-os.remove = nil
-os.execute = nil
-os.exit = nil
-os.rename = nil
-io = nil
-
 -- load libraries
 
 class = require "middleclass"
@@ -32,6 +25,29 @@ Skill = require "core.skill"
 UsableSkill = require "core.skill_type.usable_skill"
 StatusSkill = require "core.skill_type.status_skill"
 Player = require "core.player"
+
+-- load config
+local function loadConf()
+  local cfg = io.open("freekill.client.config.json")
+  local ret
+  if cfg == nil then
+    ret = {
+      language = "zh_CN",
+    }
+  else
+    ret = json.decode(cfg:read("a"))
+    cfg:close()
+  end
+  return ret
+end
+Config = loadConf()
+
+-- disable dangerous functions
+os.remove = nil
+os.execute = nil
+os.exit = nil
+os.rename = nil
+io = nil
 
 -- load packages
 dofile "lua/fk_ex.lua"

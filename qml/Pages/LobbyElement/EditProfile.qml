@@ -143,6 +143,19 @@ Item {
         }
       }
     }
+
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: "Language"
+      }
+      ComboBox {
+        model: ["zh_CN", "en_US"]
+        currentIndex: model.indexOf(config.language)
+        onCurrentTextChanged: { config.language = currentText; }
+      }
+    }
   }
 
   FileDialog {

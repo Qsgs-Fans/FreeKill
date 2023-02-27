@@ -13,8 +13,8 @@ Item {
       pressed = false;
   }
 
-  width: type === "active" ? 120 * 0.66 : 72 * 0.66
-  height: type === "active" ? 55 * 0.66 : 36 * 0.66
+  width: type === "active" ? Math.max(80, skill.width + 8) : skill.width
+  height: type === "active" ? 36 : 24
 
   Image {
     x: -13 - 120 * 0.166
@@ -29,7 +29,7 @@ Item {
     anchors.centerIn: parent
     id: skill
     font.family: fontLi2.name
-    font.pixelSize: 36 * 0.66
+    font.pixelSize: Math.max(26 - text.length, 18)
     visible: false
   }
 
