@@ -58,12 +58,26 @@ CardItem {
     x: 2
     y: lineCount > 6 ? 30 : 34
     text: Backend.translate(name)
+    visible: Backend.translate(name).length <= 6
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
     lineHeight: Math.max(1.4 - lineCount / 10, 0.6)
     style: Text.Outline
     wrapMode: Text.WrapAnywhere
+  }
+
+  Text {
+    x: 0
+    y: 12
+    rotation: 90
+    transformOrigin: Item.BottomLeft
+    text: Backend.translate(name)
+    visible: Backend.translate(name).length > 6
+    color: "white"
+    font.family: fontLibian.name
+    font.pixelSize: 18
+    style: Text.Outline
   }
 
   onNameChanged: {

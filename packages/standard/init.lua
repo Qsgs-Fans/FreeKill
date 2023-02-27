@@ -3,20 +3,6 @@ extension.metadata = require "packages.standard.metadata"
 dofile "packages/standard/game_rule.lua"
 dofile "packages/standard/aux_skills.lua"
 
-Fk:loadTranslationTable{
-  ["standard"] = "标准包",
-  ["wei"] = "魏",
-  ["shu"] = "蜀",
-  ["wu"] = "吴",
-  ["qun"] = "群",
-}
-
-Fk:loadTranslationTable{
-  ["black"] = "黑色",
-  ["red"] = '<font color="#CC3131">红色</font>',
-  ["nocolor"] = '<font color="grey">无色</font>',
-}
-
 local jianxiong = fk.CreateTriggerSkill{
   name = "jianxiong",
   anim_type = "masochism",
@@ -36,11 +22,6 @@ local jianxiong = fk.CreateTriggerSkill{
 }
 local caocao = General:new(extension, "caocao", "wei", 4)
 caocao:addSkill(jianxiong)
-Fk:loadTranslationTable{
-  ["caocao"] = "曹操",
-  ["jianxiong"] = "奸雄",
-  [":jianxiong"] = "当你受到伤害后，你可以获得对你造成伤害的牌。",
-}
 
 local guicai = fk.CreateTriggerSkill{
   name = "guicai",
@@ -87,14 +68,6 @@ local fankui = fk.CreateTriggerSkill{
 local simayi = General:new(extension, "simayi", "wei", 3)
 simayi:addSkill(guicai)
 simayi:addSkill(fankui)
-Fk:loadTranslationTable{
-  ["simayi"] = "司马懿",
-  ["guicai"] = "鬼才",
-  [":guicai"] = "当一名角色的判定牌生效前，你可以打出一张手牌代替之。",
-  ["#guicai-ask"] = "是否发动“鬼才”，打出一张手牌修改 %dest 的判定？",
-  ["fankui"] = "反馈",
-  [":fankui"] = "当你受到伤害后，你可以获得伤害来源的一张牌。",
-}
 
 local ganglie = fk.CreateTriggerSkill{
   name = "ganglie",
@@ -131,11 +104,6 @@ local ganglie = fk.CreateTriggerSkill{
 }
 local xiahoudun = General:new(extension, "xiahoudun", "wei", 4)
 xiahoudun:addSkill(ganglie)
-Fk:loadTranslationTable{
-  ["xiahoudun"] = "夏侯惇",
-  ["ganglie"] = "刚烈",
-  [":ganglie"] = "当你受到伤害后，你可以进行判定：若结果不为红桃，则伤害来源选择一项：弃置两张手牌，或受到1点伤害。",
-}
 
 local tuxi = fk.CreateTriggerSkill{
   name = "tuxi",
@@ -180,12 +148,6 @@ local tuxi = fk.CreateTriggerSkill{
 }
 local zhangliao = General:new(extension, "zhangliao", "wei", 4)
 zhangliao:addSkill(tuxi)
-Fk:loadTranslationTable{
-  ["zhangliao"] = "张辽",
-  ["tuxi"] = "突袭",
-  [":tuxi"] = "摸牌阶段，你可以改为获得至多两名其他角色的各一张手牌。",
-  ["#tuxi-ask"] = "是否发动“突袭”，改为获得1-2名角色各一张手牌？",
-}
 
 local luoyi = fk.CreateTriggerSkill{
   name = "luoyi",
@@ -217,11 +179,6 @@ local luoyi = fk.CreateTriggerSkill{
 }
 local xuchu = General:new(extension, "xuchu", "wei", 4)
 xuchu:addSkill(luoyi)
-Fk:loadTranslationTable{
-  ["xuchu"] = "许褚",
-  ["luoyi"] = "裸衣",
-  [":luoyi"] = "摸牌阶段，你可以少摸一张牌，若如此做，本回合你使用【杀】或【决斗】对目标角色造成伤害时，此伤害+1。",
-}
 
 local tiandu = fk.CreateTriggerSkill{
   name = "tiandu",
@@ -257,13 +214,6 @@ local yiji = fk.CreateTriggerSkill{
 local guojia = General:new(extension, "guojia", "wei", 3)
 guojia:addSkill(tiandu)
 guojia:addSkill(yiji)
-Fk:loadTranslationTable{
-  ["guojia"] = "郭嘉",
-  ["tiandu"] = "天妒",
-  [":tiandu"] = "当你的判定牌生效后，你可以获得之。",
-  ["yiji"] = "遗计",
-  [":yiji"] = "每当你受到1点伤害后，你可以观看牌堆顶的两张牌并任意分配它们。",
-}
 
 local luoshen = fk.CreateTriggerSkill{
   name = "luoshen",
@@ -323,13 +273,6 @@ local qingguo = fk.CreateViewAsSkill{
 local zhenji = General:new(extension, "zhenji", "wei", 3, 3, General.Female)
 zhenji:addSkill(luoshen)
 zhenji:addSkill(qingguo)
-Fk:loadTranslationTable{
-  ["zhenji"] = "甄姬",
-  ["luoshen"] = "洛神",
-  [":luoshen"] = "准备阶段开始时，你可以进行判定：若结果为黑色，判定牌生效后你获得之，然后你可以再次发动“洛神”。",
-  ["qingguo"] = "倾国",
-  [":qingguo"] = "你可以将一张黑色手牌当【闪】使用或打出。",
-}
 
 local rendetrig = fk.CreateTriggerSkill{
   name = "#rendetrig",
@@ -375,11 +318,6 @@ local rende = fk.CreateActiveSkill{
 rende:addRelatedSkill(rendetrig)
 local liubei = General:new(extension, "liubei", "shu", 4)
 liubei:addSkill(rende)
-Fk:loadTranslationTable{
-  ["liubei"] = "刘备",
-  ["rende"] = "仁德",
-  [":rende"] = "出牌阶段，你可以将至少一张手牌任意分配给其他角色。你于本阶段内以此法给出的手牌首次达到两张或更多后，你回复1点体力。",
-}
 
 local wusheng = fk.CreateViewAsSkill{
   name = "wusheng",
@@ -400,11 +338,6 @@ local wusheng = fk.CreateViewAsSkill{
 }
 local guanyu = General:new(extension, "guanyu", "shu", 4)
 guanyu:addSkill(wusheng)
-Fk:loadTranslationTable{
-  ["guanyu"] = "关羽",
-  ["wusheng"] = "武圣",
-  [":wusheng"] = "你可以将一张红色牌当【杀】使用或打出。",
-}
 
 local paoxiaoAudio = fk.CreateTriggerSkill{
   name = "#paoxiaoAudio",
@@ -435,11 +368,6 @@ local paoxiao = fk.CreateTargetModSkill{
 paoxiao:addRelatedSkill(paoxiaoAudio)
 local zhangfei = General:new(extension, "zhangfei", "shu", 4)
 zhangfei:addSkill(paoxiao)
-Fk:loadTranslationTable{
-  ["zhangfei"] = "张飞",
-  ["paoxiao"] = "咆哮",
-  [":paoxiao"] = "锁定技，出牌阶段，你使用【杀】无次数限制。",
-}
 
 local guanxing = fk.CreateTriggerSkill{
   name = "guanxing",
@@ -491,13 +419,6 @@ kongcheng:addRelatedSkill(kongchengAudio)
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
 zhugeliang:addSkill(guanxing)
 zhugeliang:addSkill(kongcheng)
-Fk:loadTranslationTable{
-  ["zhugeliang"] = "诸葛亮",
-  ["guanxing"] = "观星",
-  [":guanxing"] = "准备阶段开始时，你可以观看牌堆顶的X张牌，然后将任意数量的牌置于牌堆顶，将其余的牌置于牌堆底。（X为存活角色数且至多为5）",
-  ["kongcheng"] = "空城",
-  [":kongcheng"] = "锁定技，若你没有手牌，你不能被选择为【杀】或【决斗】的目标。",
-}
 
 local longdan = fk.CreateViewAsSkill{
   name = "longdan",
@@ -524,11 +445,6 @@ local longdan = fk.CreateViewAsSkill{
 }
 local zhaoyun = General:new(extension, "zhaoyun", "shu", 4)
 zhaoyun:addSkill(longdan)
-Fk:loadTranslationTable{
-  ["zhaoyun"] = "赵云",
-  ["longdan"] = "龙胆",
-  [":longdan"] = "你可以将一张【杀】当【闪】使用或打出，或将一张【闪】当普通【杀】使用或打出。",
-}
 
 local mashu = fk.CreateDistanceSkill{
   name = "mashu",
@@ -562,13 +478,6 @@ local tieqi = fk.CreateTriggerSkill{
 local machao = General:new(extension, "machao", "shu", 4)
 machao:addSkill(mashu)
 machao:addSkill(tieqi)
-Fk:loadTranslationTable{
-  ["machao"] = "马超",
-  ["mashu"] = "马术",
-  [":mashu"] = "锁定技。你与其他角色的距离-1。",
-  ["tieqi"] = "铁骑",
-  [":tieqi"] = "每当你指定【杀】的目标后，你可以进行判定：若结果为红色，该角色不能使用【闪】响应此【杀】。",
-}
 
 local jizhi = fk.CreateTriggerSkill{
   name = "jizhi",
@@ -596,13 +505,6 @@ local qicai = fk.CreateTargetModSkill{
 local huangyueying = General:new(extension, "huangyueying", "shu", 3, 3, General.Female)
 huangyueying:addSkill(jizhi)
 huangyueying:addSkill(qicai)
-Fk:loadTranslationTable{
-  ["huangyueying"] = "黄月英",
-  ["jizhi"] = "集智",
-  [":jizhi"] = "每当你使用一张非延时锦囊牌时，你可以摸一张牌。",
-  ["qicai"] = "奇才",
-  [":qicai"] = "锁定技。你使用锦囊牌无距离限制。",
-}
 
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
@@ -620,11 +522,6 @@ local zhiheng = fk.CreateActiveSkill{
 }
 local sunquan = General:new(extension, "sunquan", "wu", 4)
 sunquan:addSkill(zhiheng)
-Fk:loadTranslationTable{
-  ["sunquan"] = "孙权",
-  ["zhiheng"] = "制衡",
-  [":zhiheng"] = "阶段技，你可以弃置至少一张牌然后摸等量的牌。",
-}
 
 local qixi = fk.CreateViewAsSkill{
   name = "qixi",
@@ -645,11 +542,6 @@ local qixi = fk.CreateViewAsSkill{
 }
 local ganning = General:new(extension, "ganning", "wu", 4)
 ganning:addSkill(qixi)
-Fk:loadTranslationTable{
-  ["ganning"] = "甘宁",
-  ["qixi"] = "奇袭",
-  [":qixi"] = "你可以将一张黑色牌当【过河拆桥】使用。",
-}
 
 local keji = fk.CreateTriggerSkill{
   name = "keji",
@@ -687,11 +579,6 @@ local keji = fk.CreateTriggerSkill{
 }
 local lvmeng = General:new(extension, "lvmeng", "wu", 4)
 lvmeng:addSkill(keji)
-Fk:loadTranslationTable{
-  ["lvmeng"] = "吕蒙",
-  ["keji"] = "克己",
-  [":keji"] = "若你未于出牌阶段内使用或打出【杀】，你可以跳过弃牌阶段。",
-}
 
 local kurou = fk.CreateActiveSkill{
   name = "kurou",
@@ -709,11 +596,6 @@ local kurou = fk.CreateActiveSkill{
 }
 local huanggai = General:new(extension, "huanggai", "wu", 4)
 huanggai:addSkill(kurou)
-Fk:loadTranslationTable{
-  ["huanggai"] = "黄盖",
-  ["kurou"] = "苦肉",
-  [":kurou"] = "出牌阶段，你可以失去1点体力然后摸两张牌。",
-}
 
 local yingzi = fk.CreateTriggerSkill{
   name = "yingzi",
@@ -752,13 +634,6 @@ local fanjian = fk.CreateActiveSkill{
 local zhouyu = General:new(extension, "zhouyu", "wu", 3)
 zhouyu:addSkill(yingzi)
 zhouyu:addSkill(fanjian)
-Fk:loadTranslationTable{
-  ["zhouyu"] = "周瑜",
-  ["yingzi"] = "英姿",
-  [":yingzi"] = "摸牌阶段，你可以多摸一张牌。",
-  ["fanjian"] = "反间",
-  [":fanjian"] = "阶段技。你可以令一名其他角色选择一种花色，然后正面朝上获得你的一张手牌。若此牌花色与该角色所选花色不同，你对其造成1点伤害。",
-}
 
 local guose = fk.CreateViewAsSkill{
   name = "guose",
@@ -816,14 +691,6 @@ local liuli = fk.CreateTriggerSkill{
 local daqiao = General:new(extension, "daqiao", "wu", 3, 3, General.Female)
 daqiao:addSkill(guose)
 daqiao:addSkill(liuli)
-Fk:loadTranslationTable{
-  ["daqiao"] = "大乔",
-  ["guose"] = "国色",
-  [":guose"] = "你可以将一张方块牌当【乐不思蜀】使用。",
-  ["liuli"] = "流离",
-  [":liuli"] = "每当你成为【杀】的目标时，你可以弃置一张牌并选择你攻击范围内为此【杀】合法目标（无距离限制）的一名角色：若如此做，该角色代替你成为此【杀】的目标。",
-  ["#liuli-target"] = "流离：你可以弃置一张牌，将【杀】的目标转移给一名其他角色",
-}
 
 local qianxun = fk.CreateProhibitSkill{
   name = "qianxun",
@@ -857,13 +724,6 @@ local lianying = fk.CreateTriggerSkill{
 local luxun = General:new(extension, "luxun", "wu", 3)
 luxun:addSkill(qianxun)
 luxun:addSkill(lianying)
-Fk:loadTranslationTable{
-  ["luxun"] = "陆逊",
-  ["qianxun"] = "谦逊",
-  [":qianxun"] = "锁定技，你不能被选择为【顺手牵羊】与【乐不思蜀】的目标。",
-  ["lianying"] = "连营",
-  [":lianying"] = "每当你失去最后的手牌后，你可以摸一张牌。",
-}
 
 local xiaoji = fk.CreateTriggerSkill{
   name = "xiaoji",
@@ -934,13 +794,6 @@ local jieyin = fk.CreateActiveSkill{
 local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3, 3, General.Female)
 sunshangxiang:addSkill(xiaoji)
 sunshangxiang:addSkill(jieyin)
-Fk:loadTranslationTable{
-  ["sunshangxiang"] = "孙尚香",
-  ["xiaoji"] = "枭姬",
-  [":xiaoji"] = "每当你失去一张装备区的装备牌后，你可以摸两张牌。",
-  ["jieyin"] = "结姻",
-  [":jieyin"] = "阶段技，你可以弃置两张手牌并选择一名已受伤的男性角色：若如此做，你和该角色各回复1点体力。",
-}
 
 local qingnang = fk.CreateActiveSkill{
   name = "qingnang",
@@ -993,18 +846,8 @@ local jijiu = fk.CreateViewAsSkill{
 local huatuo = General:new(extension, "huatuo", "qun", 3)
 huatuo:addSkill(qingnang)
 huatuo:addSkill(jijiu)
-Fk:loadTranslationTable{
-  ["huatuo"] = "华佗",
-  ["qingnang"] = "青囊",
-  [":qingnang"] = "阶段技，你可以弃置一张手牌并选择一名已受伤的角色：若如此做，该角色回复1点体力。",
-  ["jijiu"] = "急救",
-  [":jijiu"] = "你的回合外，你可以将一张红色牌当【桃】使用。",
-}
 
 local lvbu = General:new(extension, "lvbu", "qun", 4)
-Fk:loadTranslationTable{
-  ["lvbu"] = "吕布",
-}
 
 local lijian = fk.CreateActiveSkill{
   name = "lijian",
@@ -1049,12 +892,8 @@ local biyue = fk.CreateTriggerSkill{
 local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
 diaochan:addSkill(lijian)
 diaochan:addSkill(biyue)
-Fk:loadTranslationTable{
-  ["diaochan"] = "貂蝉",
-  ["lijian"] = "离间",
-  [":lijian"] = "阶段技，你可以弃置一张牌并选择两名其他男性角色，后选择的角色视为对先选择的角色使用了一张不能被无懈可击的决斗。",
-  ["biyue"] = "闭月",
-  [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
-}
+
+-- load translations of this package
+dofile "packages/standard/i18n/init.lua"
 
 return extension

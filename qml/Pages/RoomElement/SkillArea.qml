@@ -8,7 +8,8 @@ Flickable {
   clip: true
   contentWidth: panel.width
   contentHeight: panel.height
-  width: panel.width
+  contentX: contentWidth - width
+  width: Math.min(150, panel.width)
   height: Math.min(180, panel.height)
   flickableDirection: Flickable.AutoFlickIfNeeded
 

@@ -1,24 +1,6 @@
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
-Fk:loadTranslationTable{
-  ["standard_cards"] = "标+EX"
-}
-
-Fk:loadTranslationTable{
-  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
-  ["log_spade"] = "♠",
-  ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = "♣",
-  ["log_diamond"] = '<font color="#CC3131">♦</font>',
-  ["log_nosuit"] = "无花色",
-  ["nosuit"] = "无花色",
-  ["spade"] = "黑桃",
-  ["heart"] = "红桃",
-  ["club"] = "梅花",
-  ["diamond"] = "方块",
-}
-
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
@@ -51,10 +33,6 @@ local slash = fk.CreateBasicCard{
   number = 7,
   suit = Card.Spade,
   skill = slashSkill,
-}
-Fk:loadTranslationTable{
-  ["slash"] = "杀",
-  ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
 }
 
 extension:addCards({
@@ -110,9 +88,6 @@ local jink = fk.CreateBasicCard{
   number = 2,
   skill = jinkSkill,
 }
-Fk:loadTranslationTable{
-  ["jink"] = "闪",
-}
 
 extension:addCards({
   jink,
@@ -161,9 +136,6 @@ local peach = fk.CreateBasicCard{
   number = 3,
   skill = peachSkill,
 }
-Fk:loadTranslationTable{
-  ["peach"] = "桃",
-}
 
 extension:addCards({
   peach,
@@ -204,10 +176,6 @@ local dismantlement = fk.CreateTrickCard{
   suit = Card.Spade,
   number = 3,
   skill = dismantlementSkill,
-}
-Fk:loadTranslationTable{
-  ["dismantlement"] = "过河拆桥",
-  ["dismantlement_skill"] = "过河拆桥",
 }
 
 extension:addCards({
@@ -250,10 +218,6 @@ local snatch = fk.CreateTrickCard{
   suit = Card.Spade,
   number = 3,
   skill = snatchSkill,
-}
-Fk:loadTranslationTable{
-  ["snatch"] = "顺手牵羊",
-  ["snatch_skill"] = "顺手牵羊",
 }
 
 extension:addCards({
@@ -319,9 +283,6 @@ local duel = fk.CreateTrickCard{
   number = 1,
   skill = duelSkill,
 }
-Fk:loadTranslationTable{
-  ["duel"] = "决斗",
-}
 
 extension:addCards({
   duel,
@@ -364,9 +325,6 @@ local collateral = fk.CreateTrickCard{
   number = 12,
   skill = collateralSkill,
 }
-Fk:loadTranslationTable{
-  ["collateral"] = "借刀杀人",
-}
 
 extension:addCards({
   collateral,
@@ -389,9 +347,6 @@ local exNihilo = fk.CreateTrickCard{
   suit = Card.Heart,
   number = 7,
   skill = exNihiloSkill,
-}
-Fk:loadTranslationTable{
-  ["ex_nihilo"] = "无中生有",
 }
 
 extension:addCards({
@@ -417,9 +372,6 @@ local nullification = fk.CreateTrickCard{
   suit = Card.Spade,
   number = 11,
   skill = nullificationSkill,
-}
-Fk:loadTranslationTable{
-  ["nullification"] = "无懈可击",
 }
 
 extension:addCards({
@@ -471,9 +423,6 @@ local savageAssault = fk.CreateTrickCard{
   number = 7,
   skill = savageAssaultSkill,
 }
-Fk:loadTranslationTable{
-  ["savage_assault"] = "南蛮入侵",
-}
 
 extension:addCards({
   savageAssault,
@@ -521,9 +470,6 @@ local archeryAttack = fk.CreateTrickCard{
   number = 1,
   skill = archeryAttackSkill,
 }
-Fk:loadTranslationTable{
-  ["archery_attack"] = "万箭齐发",
-}
 
 extension:addCards({
   archeryAttack,
@@ -558,9 +504,6 @@ local godSalvation = fk.CreateTrickCard{
   number = 1,
   skill = godSalvationSkill,
 }
-Fk:loadTranslationTable{
-  ["god_salvation"] = "桃园结义",
-}
 
 extension:addCards({
   godSalvation,
@@ -585,9 +528,6 @@ local amazingGrace = fk.CreateTrickCard{
   suit = Card.Heart,
   number = 3,
   skill = amazingGraceSkill,
-}
-Fk:loadTranslationTable{
-  ["amazing_grace"] = "五谷丰登",
 }
 
 extension:addCards({
@@ -649,9 +589,6 @@ local lightning = fk.CreateDelayedTrickCard{
   number = 1,
   skill = lightningSkill,
 }
-Fk:loadTranslationTable{
-  ["lightning"] = "闪电",
-}
 
 extension:addCards({
   lightning,
@@ -698,9 +635,6 @@ local indulgence = fk.CreateDelayedTrickCard{
   number = 6,
   skill = indulgenceSkill,
 }
-Fk:loadTranslationTable{
-  ["indulgence"] = "乐不思蜀",
-}
 
 extension:addCards({
   indulgence,
@@ -742,9 +676,6 @@ local crossbow = fk.CreateWeapon{
   attack_range = 1,
   equip_skill = crossbowSkill,
 }
-Fk:loadTranslationTable{
-  ["crossbow"] = "诸葛连弩",
-}
 
 extension:addCards({
   crossbow,
@@ -756,9 +687,6 @@ local qingGang = fk.CreateWeapon{
   suit = Card.Spade,
   number = 6,
   attack_range = 2,
-}
-Fk:loadTranslationTable{
-  ["qinggang_sword"] = "青釭剑",
 }
 
 extension:addCards({
@@ -793,10 +721,6 @@ local iceSword = fk.CreateWeapon{
   attack_range = 2,
   equip_skill = iceSwordSkill,
 }
-Fk:loadTranslationTable{
-  ["ice_sword"] = "寒冰剑",
-  ["#ice_sword_skill"] = "寒冰剑",
-}
 
 extension:addCards({
   iceSword,
@@ -827,10 +751,6 @@ local doubleSwords = fk.CreateWeapon{
   number = 2,
   attack_range = 2,
   equip_skill = doubleSwordsSkill,
-}
-Fk:loadTranslationTable{
-  ["double_swords"] = "雌雄双股剑",
-  ["#double_swords_skill"] = "雌雄双股剑",
 }
 
 extension:addCards({
@@ -870,11 +790,6 @@ local blade = fk.CreateWeapon{
   attack_range = 3,
   equip_skill = bladeSkill,
 }
-Fk:loadTranslationTable{
-  ["blade"] = "青龙偃月刀",
-  ["#blade_skill"] = "青龙偃月刀",
-  ["#blade_slash"] = "你可以发动“青龙偃月刀”对 %src 再使用一张杀",
-}
 
 extension:addCards({
   blade,
@@ -904,10 +819,6 @@ local spear = fk.CreateWeapon{
   number = 12,
   attack_range = 3,
   equip_skill = spearSkill,
-}
-Fk:loadTranslationTable{
-  ["spear"] = "丈八蛇矛",
-  ["spear_skill"] = "丈八矛",
 }
 
 extension:addCards({
@@ -939,10 +850,6 @@ local axe = fk.CreateWeapon{
   number = 5,
   attack_range = 3,
   equip_skill = axeSkill,
-}
-Fk:loadTranslationTable{
-  ["axe"] = "贯石斧",
-  ["#axe_skill"] = "贯石斧",
 }
 
 extension:addCards({
@@ -981,9 +888,6 @@ local halberd = fk.CreateWeapon{
   number = 12,
   attack_range = 4,
   equip_skill = halberdSkill,
-}
-Fk:loadTranslationTable{
-  ["halberd"] = "方天画戟",
 }
 
 extension:addCards({
@@ -1031,10 +935,6 @@ local kylinBow = fk.CreateWeapon{
   attack_range = 5,
   equip_skill = kylinBowSkill,
 }
-Fk:loadTranslationTable{
-  ["kylin_bow"] = "麒麟弓",
-  ["#kylin_bow_skill"] = "麒麟弓",
-}
 
 extension:addCards({
   kylinBow,
@@ -1044,9 +944,6 @@ local eightDiagram = fk.CreateArmor{
   name = "eight_diagram",
   suit = Card.Spade,
   number = 2,
-}
-Fk:loadTranslationTable{
-  ["eight_diagram"] = "八卦阵",
 }
 
 extension:addCards({
@@ -1072,9 +969,6 @@ local niohShield = fk.CreateArmor{
   suit = Card.Club,
   number = 2,
   equip_skill = niohShieldSkill,
-}
-Fk:loadTranslationTable{
-  ["nioh_shield"] = "仁王盾",
 }
 
 extension:addCards({
@@ -1104,9 +998,6 @@ local diLu = fk.CreateDefensiveRide{
   suit = Card.Club,
   number = 5,
 }
-Fk:loadTranslationTable{
-  ["dilu"] = "的卢",
-}
 
 extension:addCards({
   diLu,
@@ -1116,9 +1007,6 @@ local jueYing = fk.CreateDefensiveRide{
   name = "jueying",
   suit = Card.Spade,
   number = 5,
-}
-Fk:loadTranslationTable{
-  ["jueying"] = "绝影",
 }
 
 extension:addCards({
@@ -1130,9 +1018,6 @@ local zhuaHuangFeiDian = fk.CreateDefensiveRide{
   suit = Card.Heart,
   number = 13,
 }
-Fk:loadTranslationTable{
-  ["zhuahuangfeidian"] = "爪黄飞电",
-}
 
 extension:addCards({
   zhuaHuangFeiDian,
@@ -1142,9 +1027,6 @@ local chiTu = fk.CreateOffensiveRide{
   name = "chitu",
   suit = Card.Heart,
   number = 5,
-}
-Fk:loadTranslationTable{
-  ["chitu"] = "赤兔",
 }
 
 extension:addCards({
@@ -1156,9 +1038,6 @@ local daYuan = fk.CreateOffensiveRide{
   suit = Card.Spade,
   number = 13,
 }
-Fk:loadTranslationTable{
-  ["dayuan"] = "大宛",
-}
 
 extension:addCards({
   daYuan,
@@ -1169,12 +1048,11 @@ local ziXing = fk.CreateOffensiveRide{
   suit = Card.Diamond,
   number = 13,
 }
-Fk:loadTranslationTable{
-  ["zixing"] = "紫骍",
-}
 
 extension:addCards({
   ziXing,
 })
+
+dofile "packages/standard_cards/i18n/init.lua"
 
 return extension

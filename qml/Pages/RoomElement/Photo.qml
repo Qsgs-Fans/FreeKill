@@ -127,6 +127,22 @@ Item {
     text: ""
   }
 
+  Text {
+    id: longGeneralName
+    x: 5
+    y: 6
+    font.family: fontLibian.name
+    font.pixelSize: 22
+    rotation: 90
+    transformOrigin: Item.BottomLeft
+    opacity: 0.7
+    horizontalAlignment: Text.AlignHCenter
+    lineHeight: 18
+    lineHeightMode: Text.FixedHeight
+    color: "white"
+    text: ""
+  }
+
   HpBar {
     id: hp
     x: 8
@@ -471,7 +487,14 @@ Item {
 
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
-    generalName.text = Backend.translate(general);
+    let text = Backend.translate(general);
+    if (text.length > 6) {
+      generalName.text = "";
+      longGeneralName.text = text;
+    } else {
+      generalName.text = text;
+      longGeneralName.text = "";
+    }
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
     kingdom = data.kingdom;
   }

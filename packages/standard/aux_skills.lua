@@ -31,11 +31,6 @@ local choosePlayersSkill = fk.CreateActiveSkill{
   max_target_num = function(self) return self.num end,
 }
 
-Fk:loadTranslationTable{
-  ["discard_skill"] = "弃牌",
-  ["choose_players_skill"] = "选择角色",
-}
-
 AuxSkills = {
   discardSkill,
   choosePlayersSkill,
