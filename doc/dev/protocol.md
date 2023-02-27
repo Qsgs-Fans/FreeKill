@@ -62,6 +62,106 @@ ___
 
 ___
 
+## 对游戏内交互的实例分析
+
+下面围绕着askForSkillInvoke对游戏内的交互进行简析，其他交互也是一样的原理。
+
+```lua
+function Room:askForSkillInvoke(player, skill_name, data)
+  local command = "AskForSkillInvoke"
+  self:notifyMoveFocus(player, skill_name)
+  local invoked = false
+  local result = self:doRequest(player, command, skill_name)
+  if result ~= "" then invoked = true end
+  return invoked
+end
+```
+
+在这期间，一共涉及两步走：
+
+1. Room向所有玩家发送消息，让大家看到进度条和进度条上显示的原因（notifyMoveFocus）
+2. Room向询问的玩家发送一次Request信息，进行询问，然后返回玩家发回的reply。
+
+首先看第一步：通知。这里涉及的函数是doNotify。（调查notifyMoveFocus的代码即可知道）
+
+调查`ServerPlayer:doNotify`发现：
+
+```lua
+  self.serverplayer:doNotify(command, jsonData)
+```
+
+这里的self.serverplayer，其实指的是C++中的ServerPlayer实例，因此这一行代码实际上调用的是C++中的ServerPlayer::doNotify。调查C++中对应的函数，发现实际上调用了Router::notify，调查Router::notify，发现发送了一个信号量，调查Router::setSocket发现这个信号量连接到了ClientSocket::send。调查ClientSocket::send后发现：
+
+```cpp
+void ClientSocket::send(const QByteArray &msg)
+{
+  if (msg.length() >= 1024) {
+    auto comp = qCompress(msg);
+    auto _msg = "Compressed" + comp.toBase64() + "\n";
+    socket->write(_msg);
+    socket->flush();
+  }
+  socket->write(msg);
+  if (!msg.endsWith("\n"))
+    socket->write("\n");
+  socket->flush();
+}
+```
+
+核心在于socket->write，这里其实就调用了QTcpSocket::write，正式向网络中发送数据。从前面的分析也慢慢可以发现，发送的其实就是json字符串。
+
+那么问题又来了，客户端接收到服务端发送的通知时，如何进行响应呢？
+
+这就涉及到Router::handlePacket函数，具体的信号槽连接方式不赘述，这个函数在socket接收到消息时就会自行调用。
+
+其中有这样的一段：
+
+```cpp
+  if (type & TYPE_NOTIFICATION) {
+    if (type & DEST_CLIENT) {
+      ClientInstance->callLua(command, jsonData);
+    }
+```
+
+调用了ClientInstance::callLua函数，这个函数不做详细追究，只要知道他调用了这个lua函数即可：
+
+```lua
+  self.client.callback = function(_self, command, jsonData)
+    local cb = fk.client_callback[command]
+    if (type(cb) == "function") then
+      cb(jsonData)
+    else
+      self:notifyUI(command, jsonData);
+    end
+  end
+```
+
+至此，我们已经可以基本得出结论：Client在接收到信息时就根据信息的command类型调用相应的函数，若无则直接调用qml中的函数。
+
+接下来聊聊doRequest。和前面类似，doRequest最终也是向玩家发送了一个JSON字符串，但是然后它就进入了等待回复的状态。在此期间，可以使用waitForReply函数尝试获取对方的reply，若无则得到默认结果__notready，然后在Lua侧进行进一步处理。
+
+客户在收到request类型的消息后，可以用reply对服务端进行答复。reply本身也是JSON字符串，服务端在handlePacket环节发觉这个是reply后，就知道自己已经收到回复了。这时用waitForReply即可得到正确的回复结果。
+
+在Lua侧，对waitForReply其实有所封装：
+
+```lua
+  while true do
+    result = player.serverplayer:waitForReply(0)
+    if result ~= "__notready" then
+      return result
+    end
+    local rest = timeout * 1000 - (os.getms() - start) / 1000
+    if timeout and rest <= 0 then
+      return ""
+    end
+    coroutine.yield(rest)
+  end
+```
+
+这里就是一个死循环，不断的试图读取玩家的回复，直到超时为止。因为waitForReply指定的等待时间为0，所以会立刻返回（这也是为什么waitForReply在读取reply时需要加锁的原因，因为读取操作很频繁），此时若lua发现玩家并未给出答复，就会调用coroutine.yield切换到其他线程去做点别的事情（比如处理旁观请求，调用QThread::msleep睡眠一阵子等等），别的协程办完事情后再次切换回这个协程（yield函数返回），然后开启新一轮循环，如此往复直到等待时间耗尽或者收到了回复。
+
+___
+
 ## 对掉线的处理
 
 因为每个连接都对应着一个`new ClientSocket`和`new ServerPlayer`，所以对于掉线的处理要慎重，处理不当会导致内存泄漏以及各种奇怪的错误。

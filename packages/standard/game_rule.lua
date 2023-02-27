@@ -182,15 +182,19 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.EventPhaseEnd] = function()
       if player.phase == Player.Play then
-        player:setCardUseHistory("", 0, Player.HistoryPhase)
-        player:setSkillUseHistory("", 0, Player.HistoryPhase)
+        for _, p in ipairs(room.players) do
+          p:setCardUseHistory("", 0, Player.HistoryPhase)
+          p:setSkillUseHistory("", 0, Player.HistoryPhase)
+        end
       end
     end,
     [fk.EventPhaseChanging] = function()
       -- TODO: copy but dont copy all
       if data.to == Player.NotActive then
-        player:setCardUseHistory("", 0, Player.HistoryTurn)
-        player:setSkillUseHistory("", 0, Player.HistoryTurn)
+        for _, p in ipairs(room.players) do
+          p:setCardUseHistory("", 0, Player.HistoryTurn)
+          p:setSkillUseHistory("", 0, Player.HistoryTurn)
+        end
       end
     end,
     [fk.AskForPeaches] = function()
