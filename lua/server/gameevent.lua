@@ -27,7 +27,7 @@ function GameEvent:exec()
   local ret = false -- false or nil means this event is running normally
   local extra_ret
   logic.game_event_stack:push(self)
-  
+
   local co = coroutine.create(self.main_func)
   while true do
     local err, yield_result, extra_yield_result = coroutine.resume(co)
