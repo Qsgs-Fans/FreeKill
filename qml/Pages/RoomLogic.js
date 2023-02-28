@@ -669,6 +669,52 @@ callbacks["AskForCardChosen"] = function(jsonData) {
   });
 }
 
+callbacks["AskForCardsChosen"] = function(jsonData) {
+  // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
+  //  int min, int max, string reason ]
+  let data = JSON.parse(jsonData);
+  let handcard_ids = data[0];
+  let equip_ids = data[1];
+  let delayedTrick_ids = data[2];
+  let min = data[3];
+  let max = data[4];
+  let reason = data[5];
+  let handcards = [];
+  let equips = [];
+  let delayedTricks = [];
+
+  handcard_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    handcards.push(card_data);
+  });
+
+  equip_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    equips.push(card_data);
+  });
+
+  delayedTrick_ids.forEach(id => {
+    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    delayedTricks.push(card_data);
+  });
+
+  roomScene.promptText = Backend.translate("#AskForChooseCard")
+    .arg(Backend.translate(reason));
+  roomScene.state = "replying";
+  roomScene.popupBox.source = "RoomElement/PlayerCardBox.qml";
+  let box = roomScene.popupBox.item;
+  box.multiChoose = true;
+  box.min = min;
+  box.max = max;
+  box.addHandcards(handcards);
+  box.addEquips(equips);
+  box.addDelayedTricks(delayedTricks);
+  roomScene.popupBox.moveToCenter();
+  box.cardsSelected.connect((ids) => {
+    replyToServer(JSON.stringify(ids));
+  });
+}
+
 callbacks["MoveCards"] = function(jsonData) {
   // jsonData: merged moves
   let moves = JSON.parse(jsonData);

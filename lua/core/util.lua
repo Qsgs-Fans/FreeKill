@@ -142,12 +142,12 @@ function table.random(tab, n)
   if #tab == 0 then return nil end
   local tmp = {table.unpack(tab)}
   local ret = {}
-  while n > 0 do
+  while n > 0 and #tmp > 0 do
     local i = math.random(1, #tmp)
     table.insert(ret, table.remove(tmp, i))
     n = n - 1
   end
-  return #ret == 1 and ret[1] or ret
+  return n == 1 and ret[1] or ret
 end
 
 ---@param delimiter string

@@ -1,15 +1,20 @@
 import QtQuick
 import QtQuick.Layouts
-
+import ".."
 
 GraphicsBox {
-  signal cardSelected(int cid)
-
   id: root
   title.text: Backend.translate("$ChooseCard")
-  //@to-do: Adjust the UI design in case there are more than 7 cards
+  // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + Math.min(7, Math.max(1, handcards.count, equips.count, delayedTricks.count)) * 100
   height: 50 + (handcards.count > 0 ? 150 : 0) + (equips.count > 0 ? 150 : 0) + (delayedTricks.count > 0 ? 150 : 0)
+
+  signal cardSelected(int cid)
+  signal cardsSelected(var ids)
+  property bool multiChoose: false
+  property int min: 0
+  property int max: 1
+  property var selected_ids: []
 
   ListModel {
     id: handcards
@@ -66,7 +71,23 @@ GraphicsBox {
             autoBack: false
             known: false
             selectable: true
-            onClicked: root.cardSelected(cid);
+            onClicked: {
+              if (!root.multiChoose) {
+                root.cardSelected(cid);
+              }
+            }
+            onSelectedChanged: {
+              if (selected) {
+                origY = origY - 20;
+                root.selected_ids.push(cid);
+              } else {
+                origY = origY + 20;
+                root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
+              }
+              origX = x;
+              goBack(true);
+              root.selected_ids = root.selected_ids;
+            }
           }
         }
       }
@@ -107,7 +128,23 @@ GraphicsBox {
             number: model.number
             autoBack: false
             selectable: true
-            onClicked: root.cardSelected(cid);
+            onClicked: {
+              if (!root.multiChoose) {
+                root.cardSelected(cid);
+              }
+            }
+            onSelectedChanged: {
+              if (selected) {
+                origY = origY - 20;
+                root.selected_ids.push(cid);
+              } else {
+                origY = origY + 20;
+                root.selected_ids.splice(root.selected_ids.indexOf(cid));
+              }
+              origX = x;
+              goBack(true);
+              root.selected_ids = root.selected_ids;
+            }
           }
         }
       }
@@ -148,10 +185,33 @@ GraphicsBox {
             number: model.number
             autoBack: false
             selectable: true
-            onClicked: root.cardSelected(cid);
+            onClicked: {
+              if (!root.multiChoose) {
+                root.cardSelected(cid);
+              }
+            }
+            onSelectedChanged: {
+              if (selected) {
+                origY = origY - 20;
+                root.selected_ids.push(cid);
+              } else {
+                origY = origY + 20;
+                root.selected_ids.splice(root.selected_ids.indexOf(cid));
+              }
+              origX = x;
+              goBack(true);
+              root.selected_ids = root.selected_ids;
+            }
           }
         }
       }
+    }
+
+    MetroButton {
+      text: Backend.translate("OK")
+      visible: root.multiChoose
+      enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
+      onClicked: root.cardsSelected(root.selected_ids)
     }
   }
 
