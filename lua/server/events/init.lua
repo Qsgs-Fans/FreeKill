@@ -14,6 +14,15 @@ dofile "lua/server/events/death.lua"
 GameEvent.MoveCards = 8
 dofile "lua/server/events/movecard.lua"
 
+GameEvent.UseCard = 9
+GameEvent.RespondCard = 10
+dofile "lua/server/events/usecard.lua"
+
+GameEvent.SkillEffect = 11
+-- GameEvent.AddSkill = 12
+-- GameEvent.LoseSkill = 13
+dofile "lua/server/events/skill.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
