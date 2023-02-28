@@ -4,6 +4,7 @@
 ---@field refresh_skill_table table<Event, TriggerSkill[]>
 ---@field skills string[]
 ---@field event_stack Stack
+---@field game_event_stack Stack
 ---@field role_table string[][]
 local GameLogic = class("GameLogic")
 
@@ -13,6 +14,7 @@ function GameLogic:initialize(room)
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
   self.event_stack = Stack:new()
+  self.game_event_stack = Stack:new()
 
   self.role_table = {
     { "lord" },
@@ -273,6 +275,10 @@ function GameLogic:trigger(event, target, data)
 
   self.event_stack:pop()
   return broken
+end
+
+function GameLogic:breakEvent(ret)
+  coroutine.yield("__breakEvent", false)
 end
 
 return GameLogic
