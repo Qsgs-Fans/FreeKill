@@ -5,6 +5,7 @@
 local GameEvent = class("GameEvent")
 
 GameEvent.functions = {}
+GameEvent.cleaners = {}
 local function wrapCoFunc(f, ...)
   if not f then return nil end
   local args = {...}
@@ -16,9 +17,8 @@ function GameEvent:initialize(event, ...)
   self.room = RoomInstance
   self.event = event
   self.data = { ... }
-  local func_tab = GameEvent.functions[event] or {}
-  self.main_func = wrapCoFunc(func_tab[1], self) or dummyFunc
-  self.clear_func = wrapCoFunc(func_tab[2], self) or dummyFunc
+  self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
+  self.clear_func = wrapCoFunc(GameEvent.cleaners[event], self) or dummyFunc
 end
 
 function GameEvent:exec()

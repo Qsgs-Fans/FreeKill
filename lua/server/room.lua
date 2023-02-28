@@ -1077,6 +1077,12 @@ end
 -- use card logic, and wrappers
 ------------------------------------------------------------------------
 
+local function execGameEvent(type, ...)
+  local event = GameEvent:new(type, ...)
+  local _, ret = event:exec()
+  return ret
+end
+
 local playCardEmotionAndSound = function(room, player, card)
   if card.type ~= Card.TypeEquip then
     room:setEmotion(player, "./packages/" ..
@@ -1874,9 +1880,7 @@ end
 ---@param damageStruct DamageStruct|null
 ---@return boolean
 function Room:changeHp(player, num, reason, skillName, damageStruct)
-  local event = GameEvent:new(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
-  local _, ret = event:exec()
-  return ret
+  return execGameEvent(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
 end
 
 ---@param player ServerPlayer
@@ -1884,123 +1888,26 @@ end
 ---@param skillName string
 ---@return boolean
 function Room:loseHp(player, num, skillName)
-  if num == nil then
-    num = 1
-  elseif num < 1 then
-    return false
-  end
-
-  ---@type HpLostData
-  local data = {
-    num = num,
-    skillName = skillName,
-  }
-  if self.logic:trigger(fk.PreHpLost, player, data) or data.num < 1 then
-    return false
-  end
-
-  if not self:changeHp(player, -num, "loseHp", skillName) then
-    return false
-  end
-
-  self.logic:trigger(fk.HpLost, player, data)
-  return true
+  return execGameEvent(GameEvent.LoseHp, player, num, skillName)
 end
 
 ---@param player ServerPlayer
 ---@param num integer
 ---@return boolean
 function Room:changeMaxHp(player, num)
-  if num == 0 then
-    return false
-  end
-
-  player.maxHp = math.max(player.maxHp + num, 0)
-  self:broadcastProperty(player, "maxHp")
-  local diff = player.hp - player.maxHp
-  if diff > 0 then
-    if not self:changeHp(player, -diff) then
-      player.hp = player.hp - diff
-    end
-  end
-
-  if player.maxHp == 0 then
-    self:killPlayer({ who = player.id })
-  end
-
-  self.logic:trigger(fk.MaxHpChanged, player, { num = num })
-  return true
+  return execGameEvent(GameEvent.ChangeMaxHp, player, num)
 end
 
 ---@param damageStruct DamageStruct
 ---@return boolean
 function Room:damage(damageStruct)
-  if damageStruct.damage < 1 then
-    return false
-  end
-  damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
-
-  if damageStruct.from and not damageStruct.from:isAlive() then
-    damageStruct.from = nil
-  end
-
-  assert(damageStruct.to:isInstanceOf(ServerPlayer))
-
-  local stages = {
-    {fk.PreDamage, damageStruct.from},
-    {fk.DamageCaused, damageStruct.from},
-    {fk.DamageInflicted, damageStruct.to},
-  }
-
-  for _, struct in ipairs(stages) do
-    local event, player = table.unpack(struct)
-    if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
-      return false
-    end
-
-    assert(damageStruct.to:isInstanceOf(ServerPlayer))
-  end
-
-  if not damageStruct.to:isAlive() then
-    return false
-  end
-
-  if not self:changeHp(damageStruct.to, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
-    return false
-  end
-
-  stages = {
-    {fk.Damage, damageStruct.from},
-    {fk.Damaged, damageStruct.to},
-    {fk.DamageFinished, damageStruct.from},
-  }
-
-  for _, struct in ipairs(stages) do
-    local event, player = table.unpack(struct)
-    self.logic:trigger(event, player, damageStruct)
-  end
-
-  return true
+  return execGameEvent(GameEvent.Damage, damageStruct)
 end
 
 ---@param recoverStruct RecoverStruct
 ---@return boolean
 function Room:recover(recoverStruct)
-  if recoverStruct.num < 1 then
-    return false
-  end
-
-  local who = recoverStruct.who
-  if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
-    return false
-  end
-
-  if not self:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
-    return false
-  end
-
-  self.logic:trigger(fk.HpRecover, who, recoverStruct)
-  return true
+  return execGameEvent(GameEvent.Recover, recoverStruct)
 end
 
 ---@param dyingStruct DyingStruct
