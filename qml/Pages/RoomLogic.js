@@ -228,7 +228,7 @@ function setEmotion(id, emotion, isCardId) {
     }
   }
 
-  let animation = component.createObject(photo, {source: path});
+  let animation = component.createObject(photo, {source: (OS === "Win" ? "file:///" : "") + path});
   animation.anchors.centerIn = photo;
   if (isCardId) {
     animation.started.connect(() => photo.busy = true);
