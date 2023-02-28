@@ -1424,7 +1424,9 @@ function Room:doCardEffect(cardEffectEvent)
 
     if event == fk.CardEffecting then
       if cardEffectEvent.card.skill then
-        cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
+        execGameEvent(GameEvent.SkillEffect, function ()
+          cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
+        end)
       end
     end
   end
@@ -1649,46 +1651,8 @@ end
 -- judge
 
 ---@param data JudgeStruct
----@return Card
 function Room:judge(data)
-  local who = data.who
-  self.logic:trigger(fk.StartJudge, who, data)
-  data.card = Fk:getCardById(self:getNCards(1)[1])
-
-  if data.reason ~= "" then
-    self:sendLog{
-      type = "#StartJudgeReason",
-      from = who.id,
-      arg = data.reason,
-    }
-  end
-
-  self:sendLog{
-    type = "#InitialJudge",
-    from = who.id,
-    card = {data.card.id},
-  }
-  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
-
-  self.logic:trigger(fk.AskForRetrial, who, data)
-  self.logic:trigger(fk.FinishRetrial, who, data)
-  Fk:filterCard(data.card.id, who, data)
-  self:sendLog{
-    type = "#JudgeResult",
-    from = who.id,
-    card = {data.card.id},
-  }
-
-  if data.pattern then
-    self:delay(400);
-    self:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
-    self:delay(900);
-  end
-
-  self.logic:trigger(fk.FinishJudge, who, data)
-  if self:getCardArea(data.card.id) == Card.Processing then
-    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
-  end
+  return execGameEvent(GameEvent.Judge, data)
 end
 
 ---@param card Card
@@ -1828,7 +1792,7 @@ function Room:useSkill(player, skill, effect_cb)
   end
   player:addSkillUseHistory(skill.name)
   if effect_cb then
-    return effect_cb()
+    return execGameEvent(GameEvent.SkillEffect, effect_cb)
   end
 end
 

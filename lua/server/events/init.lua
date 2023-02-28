@@ -23,6 +23,9 @@ GameEvent.SkillEffect = 11
 -- GameEvent.LoseSkill = 13
 dofile "lua/server/events/skill.lua"
 
+GameEvent.Judge = 14
+dofile "lua/server/events/judge.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 

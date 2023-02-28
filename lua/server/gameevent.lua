@@ -34,7 +34,7 @@ function GameEvent:exec()
 
     if err == false then
       -- handle error, then break
-      if yield_result ~= "__manuallyBreak" then
+      if not string.find(yield_result, "__manuallyBreak") then
         fk.qCritical(yield_result)
         print(debug.traceback(co))
       end
