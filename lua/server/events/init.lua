@@ -9,7 +9,7 @@ dofile "lua/server/events/hp.lua"
 
 GameEvent.Dying = 6
 GameEvent.Death = 7
---dofile "lua/server/events/death.lua"
+dofile "lua/server/events/death.lua"
 
 -- TODO: fix this
 GameEvent.BreakEvent = 999

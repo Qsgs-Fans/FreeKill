@@ -1912,60 +1912,12 @@ end
 
 ---@param dyingStruct DyingStruct
 function Room:enterDying(dyingStruct)
-  local dyingPlayer = self:getPlayerById(dyingStruct.who)
-  dyingPlayer.dying = true
-  self:broadcastProperty(dyingPlayer, "dying")
-  self:sendLog{
-    type = "#EnterDying",
-    from = dyingPlayer.id,
-  }
-  self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
-
-  if dyingPlayer.hp < 1 then
-    self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
-    self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
-    self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
-  end
-
-  if not dyingPlayer.dead then
-    dyingPlayer.dying = false
-    self:broadcastProperty(dyingPlayer, "dying")
-  end
-  self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
+  return execGameEvent(GameEvent.Dying, dyingStruct)
 end
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
-  local victim = self:getPlayerById(deathStruct.who)
-  victim.dead = true
-  table.removeOne(self.alive_players, victim)
-
-  local logic = self.logic
-  logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
-
-  local killer = deathStruct.damage and deathStruct.damage.from or nil
-  if killer then
-    self:sendLog{
-      type = "#KillPlayer",
-      to = {killer.id},
-      from = victim.id,
-      arg = victim.role,
-    }
-  else
-    self:sendLog{
-      type = "#KillPlayerWithNoKiller",
-      from = victim.id,
-      arg = victim.role,
-    }
-  end
-  self:sendLogEvent("Death", {to = victim.id})
-
-  self:broadcastProperty(victim, "role")
-  self:broadcastProperty(victim, "dead")
-
-  logic:trigger(fk.GameOverJudge, victim, deathStruct)
-  logic:trigger(fk.Death, victim, deathStruct)
-  logic:trigger(fk.BuryVictim, victim, deathStruct)
+  return execGameEvent(GameEvent.Death, deathStruct)
 end
 
 -- lose/acquire skill actions
