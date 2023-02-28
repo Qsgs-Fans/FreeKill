@@ -45,7 +45,7 @@ function GameEvent:exec()
 
     if yield_result == "__handleRequest" then
       -- yield to requestLoop
-      coroutine.yield(yield_result)
+      coroutine.yield(yield_result, extra_yield_result)
 
     elseif type(yield_result) == "table" and yield_result.class
       and yield_result:isInstanceOf(GameEvent) then

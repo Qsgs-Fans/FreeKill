@@ -66,7 +66,7 @@ function Room:initialize(_room)
     end)
     local ret, err_msg = true, true
     while not self.game_finished do
-      ret, err_msg = coroutine.resume(main_co, err_msg)
+      ret, _, err_msg = coroutine.resume(main_co, err_msg)
 
       -- handle error
       if ret == false then
@@ -514,7 +514,7 @@ function Room:delay(ms)
     if rest <= 0 then
       break
     end
-    coroutine.yield(rest)
+    coroutine.yield("__handleRequest", rest)
   end
 end
 
@@ -2333,7 +2333,7 @@ function Room:gameOver(winner)
   self:doBroadcastNotify("GameOver", winner)
 
   self.room:gameOver()
-  coroutine.yield()
+  coroutine.yield("__handleRequest")
 end
 
 ---@param card Card
