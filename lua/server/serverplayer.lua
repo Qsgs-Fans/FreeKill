@@ -85,7 +85,7 @@ local function _waitForReply(player, timeout)
     local ret_msg = true
     while ret_msg do
       -- when ret_msg is false, that means there is no request in the queue
-      ret_msg = coroutine.yield(1)
+      ret_msg = coroutine.yield("__handleRequest", 1)
     end
 
     checkNoHuman(player.room)
@@ -102,7 +102,7 @@ local function _waitForReply(player, timeout)
     if timeout and rest <= 0 then
       return ""
     end
-    coroutine.yield(rest)
+    coroutine.yield("__handleRequest", rest)
   end
 end
 

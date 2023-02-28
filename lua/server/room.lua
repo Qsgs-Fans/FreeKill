@@ -18,6 +18,8 @@
 local Room = class("Room")
 
 -- load classes used by the game
+GameEvent = require "server.gameevent"
+dofile "lua/server/events/init.lua"
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
 
@@ -64,7 +66,7 @@ function Room:initialize(_room)
     end)
     local ret, err_msg = true, true
     while not self.game_finished do
-      ret, err_msg = coroutine.resume(main_co, err_msg)
+      ret, _, err_msg = coroutine.resume(main_co, err_msg)
 
       -- handle error
       if ret == false then
@@ -512,7 +514,7 @@ function Room:delay(ms)
     if rest <= 0 then
       break
     end
-    coroutine.yield(rest)
+    coroutine.yield("__handleRequest", rest)
   end
 end
 
@@ -1075,147 +1077,16 @@ end
 -- use card logic, and wrappers
 ------------------------------------------------------------------------
 
-local playCardEmotionAndSound = function(room, player, card)
-  if card.type ~= Card.TypeEquip then
-    room:setEmotion(player, "./packages/" ..
-      card.package.extensionName .. "/image/anim/" .. card.name)
-  end
-
-  local soundName
-  if card.type == Card.TypeEquip then
-    local subTypeStr
-    if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
-      subTypeStr = "horse"
-    elseif card.sub_type == Card.SubtypeWeapon then
-      subTypeStr = "weapon"
-    else
-      subTypeStr = "armor"
-    end
-
-    soundName = "./audio/card/common/" .. subTypeStr
-  else
-    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
-      .. (player.gender == General.Male and "male/" or "female/") .. card.name
-  end
-  room:broadcastPlaySound(soundName)
+local function execGameEvent(type, ...)
+  local event = GameEvent:new(type, ...)
+  local _, ret = event:exec()
+  return ret
 end
 
----@param room Room
 ---@param cardUseEvent CardUseStruct
-local sendCardEmotionAndLog = function(room, cardUseEvent)
-  local from = cardUseEvent.from
-  local _card = cardUseEvent.card
-
-  -- when this function is called, card is already in PlaceTable and no filter skill is applied.
-  -- So filter this card manually here to get 'real' use.card
-  local card = _card
-  if not _card:isVirtual() then
-    local temp = { card = _card }
-    Fk:filterCard(_card.id, room:getPlayerById(from), temp)
-    card = temp.card
-  end
-
-  playCardEmotionAndSound(room, room:getPlayerById(from), card)
-  room:doAnimate("Indicate", {
-    from = from,
-    to = cardUseEvent.tos or {},
-  })
-
-  local useCardIds = card:isVirtual() and card.subcards or { card.id }
-  if cardUseEvent.tos and #cardUseEvent.tos > 0 then
-    local to = {}
-    for _, t in ipairs(cardUseEvent.tos) do
-      table.insert(to, t[1])
-    end
-
-    if card:isVirtual() or (card ~= _card) then
-      if #useCardIds == 0 then
-        room:sendLog{
-          type = "#UseV0CardToTargets",
-          from = from,
-          to = to,
-          arg = card:toLogString(),
-        }
-      else
-        room:sendLog{
-          type = "#UseVCardToTargets",
-          from = from,
-          to = to,
-          card = useCardIds,
-          arg = card:toLogString(),
-        }
-      end
-    else
-      room:sendLog{
-        type = "#UseCardToTargets",
-        from = from,
-        to = to,
-        card = useCardIds
-      }
-    end
-
-    for _, t in ipairs(cardUseEvent.tos) do
-      if t[2] then
-        local temp = {table.unpack(t)}
-        table.remove(temp, 1)
-        room:sendLog{
-          type = "#CardUseCollaborator",
-          from = t[1],
-          to = temp,
-          arg = card.name,
-        }
-      end
-    end
-  elseif cardUseEvent.toCard then
-    if card:isVirtual() or (card ~= _card) then
-      if #useCardIds == 0 then
-        room:sendLog{
-          type = "#UseV0CardToCard",
-          from = from,
-          arg = cardUseEvent.toCard.name,
-          arg2 = card:toLogString(),
-        }
-      else
-        room:sendLog{
-          type = "#UseVCardToCard",
-          from = from,
-          card = useCardIds,
-          arg = cardUseEvent.toCard.name,
-          arg2 = card:toLogString(),
-        }
-      end
-    else
-      room:sendLog{
-        type = "#UseCardToCard",
-        from = from,
-        card = useCardIds,
-        arg = cardUseEvent.toCard.name,
-      }
-    end
-  else
-    if card:isVirtual() or (card ~= _card) then
-      if #useCardIds == 0 then
-        room:sendLog{
-          type = "#UseV0Card",
-          from = from,
-          arg = card:toLogString(),
-        }
-      else
-        room:sendLog{
-          type = "#UseVCard",
-          from = from,
-          card = useCardIds,
-          arg = card:toLogString(),
-        }
-      end
-    else
-      room:sendLog{
-        type = "#UseCard",
-        from = from,
-        card = useCardIds,
-      }
-    end
-  end
+---@return boolean
+function Room:useCard(cardUseEvent)
+  return execGameEvent(GameEvent.UseCard, cardUseEvent)
 end
 
 ---@param room Room
@@ -1325,60 +1196,6 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
   end
 
   return true
-end
-
----@param cardUseEvent CardUseStruct
----@return boolean
-function Room:useCard(cardUseEvent)
-  local from = cardUseEvent.from
-  self:moveCards({
-    ids = self:getSubcardsByRule(cardUseEvent.card),
-    from = from,
-    toArea = Card.Processing,
-    moveReason = fk.ReasonUse,
-  })
-
-  if cardUseEvent.card.skill then
-    cardUseEvent.card.skill:onUse(self, cardUseEvent)
-  end
-
-  sendCardEmotionAndLog(self, cardUseEvent)
-
-  if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    goto clean
-  end
-
-  if not cardUseEvent.extraUse then
-    self:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
-  end
-
-  if cardUseEvent.responseToEvent then
-    cardUseEvent.responseToEvent.cardsResponded = cardUseEvent.responseToEvent.cardsResponded or {}
-    table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
-  end
-
-  for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
-    if not cardUseEvent.toCard and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      break
-    end
-
-    self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
-    if event == fk.CardUsing then
-      self:doCardUseEffect(cardUseEvent)
-    end
-  end
-
-  self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
-
-::clean::
-  local leftRealCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
-  if #leftRealCardIds > 0 then
-    self:moveCards({
-      ids = leftRealCardIds,
-      toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
-    })
-  end
 end
 
 ---@param cardUseEvent CardUseStruct
@@ -1607,7 +1424,9 @@ function Room:doCardEffect(cardEffectEvent)
 
     if event == fk.CardEffecting then
       if cardEffectEvent.card.skill then
-        cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
+        execGameEvent(GameEvent.SkillEffect, function ()
+          cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
+        end)
       end
     end
   end
@@ -1615,53 +1434,7 @@ end
 
 ---@param cardResponseEvent CardResponseEvent
 function Room:responseCard(cardResponseEvent)
-  local from = cardResponseEvent.customFrom or cardResponseEvent.from
-  local card = cardResponseEvent.card
-  local cardIds = self:getSubcardsByRule(card)
-
-  if card:isVirtual() then
-    if #cardIds == 0 then
-      self:sendLog{
-        type = "#ResponsePlayV0Card",
-        from = from,
-        arg = card:toLogString(),
-      }
-    else
-      self:sendLog{
-        type = "#ResponsePlayVCard",
-        from = from,
-        card = cardIds,
-        arg = card:toLogString(),
-      }
-    end
-  else
-    self:sendLog{
-      type = "#ResponsePlayCard",
-      from = from,
-      card = cardIds,
-    }
-  end
-  self:moveCards({
-    ids = cardIds,
-    from = from,
-    toArea = Card.Processing,
-    moveReason = fk.ReasonResonpse,
-  })
-
-  playCardEmotionAndSound(self, self:getPlayerById(from), card)
-
-  for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
-    self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
-  end
-
-  local realCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
-  if #realCardIds > 0 and not cardResponseEvent.skipDrop then
-    self:moveCards({
-      ids = realCardIds,
-      toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
-    })
-  end
+  return execGameEvent(GameEvent.RespondCard, cardResponseEvent)
 end
 ------------------------------------------------------------------------
 -- move cards, and wrappers
@@ -1670,119 +1443,7 @@ end
 ---@vararg CardsMoveInfo
 ---@return boolean
 function Room:moveCards(...)
-  ---@type CardsMoveStruct[]
-  local cardsMoveStructs = {}
-  local infoCheck = function(info)
-    assert(table.contains({ Card.PlayerHand, Card.PlayerEquip, Card.PlayerJudge, Card.PlayerSpecial, Card.Processing, Card.DrawPile, Card.DiscardPile, Card.Void }, info.toArea))
-    assert(info.toArea ~= Card.PlayerSpecial or type(info.specialName) == "string")
-    assert(type(info.moveReason) == "number")
-  end
-
-  for _, cardsMoveInfo in ipairs({...}) do
-    if #cardsMoveInfo.ids > 0 then
-      infoCheck(cardsMoveInfo)
-
-      ---@type MoveInfo[]
-      local infos = {}
-      for _, id in ipairs(cardsMoveInfo.ids) do
-        table.insert(infos, {
-          cardId = id,
-          fromArea = self:getCardArea(id),
-          fromSpecialName = cardsMoveInfo.from and self:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
-        })
-      end
-
-      ---@type CardsMoveStruct
-      local cardsMoveStruct = {
-        moveInfo = infos,
-        from = cardsMoveInfo.from,
-        to = cardsMoveInfo.to,
-        toArea = cardsMoveInfo.toArea,
-        moveReason = cardsMoveInfo.moveReason,
-        proposer = cardsMoveInfo.proposer,
-        skillName = cardsMoveInfo.skillName,
-        moveVisible = cardsMoveInfo.moveVisible,
-        specialName = cardsMoveInfo.specialName,
-        specialVisible = cardsMoveInfo.specialVisible,
-      }
-
-      table.insert(cardsMoveStructs, cardsMoveStruct)
-    end
-  end
-
-  if #cardsMoveStructs < 1 then
-    return false
-  end
-
-  if self.logic:trigger(fk.BeforeCardsMove, nil, cardsMoveStructs) then
-    return false
-  end
-
-  self:notifyMoveCards(nil, cardsMoveStructs)
-
-  for _, data in ipairs(cardsMoveStructs) do
-    if #data.moveInfo > 0 then
-      infoCheck(data)
-
-      ---@param info MoveInfo
-      for _, info in ipairs(data.moveInfo) do
-        local realFromArea = self:getCardArea(info.cardId)
-        local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-
-        if table.contains(playerAreas, realFromArea) and data.from then
-          self:getPlayerById(data.from):removeCards(realFromArea, { info.cardId }, info.fromSpecialName)
-        elseif realFromArea ~= Card.Unknown then
-          local fromAreaIds = {}
-          if realFromArea == Card.Processing then
-            fromAreaIds = self.processing_area
-          elseif realFromArea == Card.DrawPile then
-            fromAreaIds = self.draw_pile
-          elseif realFromArea == Card.DiscardPile then
-            fromAreaIds = self.discard_pile
-          elseif realFromArea == Card.Void then
-            fromAreaIds = self.void
-          end
-
-          table.removeOne(fromAreaIds, info.cardId)
-        end
-
-        if table.contains(playerAreas, data.toArea) and data.to then
-          self:getPlayerById(data.to):addCards(data.toArea, { info.cardId }, data.specialName)
-        else
-          local toAreaIds = {}
-          if data.toArea == Card.Processing then
-            toAreaIds = self.processing_area
-          elseif data.toArea == Card.DrawPile then
-            toAreaIds = self.draw_pile
-          elseif data.toArea == Card.DiscardPile then
-            toAreaIds = self.discard_pile
-          elseif data.toArea == Card.Void then
-            toAreaIds = self.void
-          end
-
-          table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
-        end
-        self:setCardArea(info.cardId, data.toArea, data.to)
-        Fk:filterCard(info.cardId, self:getPlayerById(data.to))
-
-        local currentCard = Fk:getCardById(info.cardId)
-        if
-          data.toArea == Player.Equip and
-          currentCard.type == Card.TypeEquip and
-          data.to ~= nil and
-          self:getPlayerById(data.to):isAlive() and
-          currentCard.equip_skill
-        then
-          currentCard:onInstall(self, self:getPlayerById(data.to))
-        elseif realFromArea == Player.Equip and currentCard.type == Card.TypeEquip and data.from ~= nil and currentCard.equip_skill then
-          currentCard:onUninstall(self, self:getPlayerById(data.from))
-        end
-      end
-    end
-  end
-
-  self.logic:trigger(fk.AfterCardsMove, nil, cardsMoveStructs)
-  return true
+  return execGameEvent(GameEvent.MoveCards, ...)
 end
 
 ---@param player integer
@@ -1872,91 +1533,7 @@ end
 ---@param damageStruct DamageStruct|null
 ---@return boolean
 function Room:changeHp(player, num, reason, skillName, damageStruct)
-  if num == 0 then
-    return false
-  end
-  assert(reason == nil or table.contains({ "loseHp", "damage", "recover" }, reason))
-
-  ---@type HpChangedData
-  local data = {
-    num = num,
-    reason = reason,
-    skillName = skillName,
-  }
-
-  if self.logic:trigger(fk.BeforeHpChanged, player, data) then
-    return false
-  end
-
-  assert(not (data.reason == "recover" and data.num < 0))
-  player.hp = math.min(player.hp + data.num, player.maxHp)
-  self:broadcastProperty(player, "hp")
-
-  if reason == "damage" then
-    local damage_nature_table = {
-      [fk.NormalDamage] = "normal_damage",
-      [fk.FireDamage] = "fire_damage",
-      [fk.ThunderDamage] = "thunder_damage",
-    }
-    if damageStruct.from then
-      self:sendLog{
-        type = "#Damage",
-        to = {damageStruct.from.id},
-        from = player.id,
-        arg = 0 - num,
-        arg2 = damage_nature_table[damageStruct.damageType],
-      }
-    else
-      self:sendLog{
-        type = "#DamageWithNoFrom",
-        from = player.id,
-        arg = 0 - num,
-        arg2 = damage_nature_table[damageStruct.damageType],
-      }
-    end
-    self:sendLogEvent("Damage", {
-      to = player.id,
-      damageType = damage_nature_table[damageStruct.damageType],
-      damageNum = damageStruct.damage,
-    })
-  elseif reason == "loseHp" then
-    self:sendLog{
-      type = "#LoseHP",
-      from = player.id,
-      arg = 0 - num,
-    }
-    self:sendLogEvent("LoseHP", {})
-  elseif reason == "recover" then
-    self:sendLog{
-      type = "#HealHP",
-      from = player.id,
-      arg = num,
-    }
-  end
-
-  self:sendLog{
-    type = "#ShowHPAndMaxHP",
-    from = player.id,
-    arg = player.hp,
-    arg2 = player.maxHp,
-  }
-
-  self.logic:trigger(fk.HpChanged, player, data)
-
-  if player.hp < 1 then
-    if num < 0 then
-      ---@type DyingStruct
-      local dyingStruct = {
-        who = player.id,
-        damage = damageStruct,
-      }
-      self:enterDying(dyingStruct)
-    end
-  elseif player.dying then
-    player.dying = false
-  end
-
-  return true
+  return execGameEvent(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
 end
 
 ---@param player ServerPlayer
@@ -1964,181 +1541,36 @@ end
 ---@param skillName string
 ---@return boolean
 function Room:loseHp(player, num, skillName)
-  if num == nil then
-    num = 1
-  elseif num < 1 then
-    return false
-  end
-
-  ---@type HpLostData
-  local data = {
-    num = num,
-    skillName = skillName,
-  }
-  if self.logic:trigger(fk.PreHpLost, player, data) or data.num < 1 then
-    return false
-  end
-
-  if not self:changeHp(player, -num, "loseHp", skillName) then
-    return false
-  end
-
-  self.logic:trigger(fk.HpLost, player, data)
-  return true
+  return execGameEvent(GameEvent.LoseHp, player, num, skillName)
 end
 
 ---@param player ServerPlayer
 ---@param num integer
 ---@return boolean
 function Room:changeMaxHp(player, num)
-  if num == 0 then
-    return false
-  end
-
-  player.maxHp = math.max(player.maxHp + num, 0)
-  self:broadcastProperty(player, "maxHp")
-  local diff = player.hp - player.maxHp
-  if diff > 0 then
-    if not self:changeHp(player, -diff) then
-      player.hp = player.hp - diff
-    end
-  end
-
-  if player.maxHp == 0 then
-    self:killPlayer({ who = player.id })
-  end
-
-  self.logic:trigger(fk.MaxHpChanged, player, { num = num })
-  return true
+  return execGameEvent(GameEvent.ChangeMaxHp, player, num)
 end
 
 ---@param damageStruct DamageStruct
 ---@return boolean
 function Room:damage(damageStruct)
-  if damageStruct.damage < 1 then
-    return false
-  end
-  damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
-
-  if damageStruct.from and not damageStruct.from:isAlive() then
-    damageStruct.from = nil
-  end
-
-  assert(damageStruct.to:isInstanceOf(ServerPlayer))
-
-  local stages = {
-    {fk.PreDamage, damageStruct.from},
-    {fk.DamageCaused, damageStruct.from},
-    {fk.DamageInflicted, damageStruct.to},
-  }
-
-  for _, struct in ipairs(stages) do
-    local event, player = table.unpack(struct)
-    if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
-      return false
-    end
-
-    assert(damageStruct.to:isInstanceOf(ServerPlayer))
-  end
-
-  if not damageStruct.to:isAlive() then
-    return false
-  end
-
-  if not self:changeHp(damageStruct.to, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
-    return false
-  end
-
-  stages = {
-    {fk.Damage, damageStruct.from},
-    {fk.Damaged, damageStruct.to},
-    {fk.DamageFinished, damageStruct.from},
-  }
-
-  for _, struct in ipairs(stages) do
-    local event, player = table.unpack(struct)
-    self.logic:trigger(event, player, damageStruct)
-  end
-
-  return true
+  return execGameEvent(GameEvent.Damage, damageStruct)
 end
 
 ---@param recoverStruct RecoverStruct
 ---@return boolean
 function Room:recover(recoverStruct)
-  if recoverStruct.num < 1 then
-    return false
-  end
-
-  local who = recoverStruct.who
-  if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
-    return false
-  end
-
-  if not self:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
-    return false
-  end
-
-  self.logic:trigger(fk.HpRecover, who, recoverStruct)
-  return true
+  return execGameEvent(GameEvent.Recover, recoverStruct)
 end
 
 ---@param dyingStruct DyingStruct
 function Room:enterDying(dyingStruct)
-  local dyingPlayer = self:getPlayerById(dyingStruct.who)
-  dyingPlayer.dying = true
-  self:broadcastProperty(dyingPlayer, "dying")
-  self:sendLog{
-    type = "#EnterDying",
-    from = dyingPlayer.id,
-  }
-  self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
-
-  if dyingPlayer.hp < 1 then
-    self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
-    self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
-    self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
-  end
-
-  if not dyingPlayer.dead then
-    dyingPlayer.dying = false
-    self:broadcastProperty(dyingPlayer, "dying")
-  end
-  self.logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
+  return execGameEvent(GameEvent.Dying, dyingStruct)
 end
 
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
-  local victim = self:getPlayerById(deathStruct.who)
-  victim.dead = true
-  table.removeOne(self.alive_players, victim)
-
-  local logic = self.logic
-  logic:trigger(fk.BeforeGameOverJudge, victim, deathStruct)
-
-  local killer = deathStruct.damage and deathStruct.damage.from or nil
-  if killer then
-    self:sendLog{
-      type = "#KillPlayer",
-      to = {killer.id},
-      from = victim.id,
-      arg = victim.role,
-    }
-  else
-    self:sendLog{
-      type = "#KillPlayerWithNoKiller",
-      from = victim.id,
-      arg = victim.role,
-    }
-  end
-  self:sendLogEvent("Death", {to = victim.id})
-
-  self:broadcastProperty(victim, "role")
-  self:broadcastProperty(victim, "dead")
-
-  logic:trigger(fk.GameOverJudge, victim, deathStruct)
-  logic:trigger(fk.Death, victim, deathStruct)
-  logic:trigger(fk.BuryVictim, victim, deathStruct)
+  return execGameEvent(GameEvent.Death, deathStruct)
 end
 
 -- lose/acquire skill actions
@@ -2219,46 +1651,8 @@ end
 -- judge
 
 ---@param data JudgeStruct
----@return Card
 function Room:judge(data)
-  local who = data.who
-  self.logic:trigger(fk.StartJudge, who, data)
-  data.card = Fk:getCardById(self:getNCards(1)[1])
-
-  if data.reason ~= "" then
-    self:sendLog{
-      type = "#StartJudgeReason",
-      from = who.id,
-      arg = data.reason,
-    }
-  end
-
-  self:sendLog{
-    type = "#InitialJudge",
-    from = who.id,
-    card = {data.card.id},
-  }
-  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
-
-  self.logic:trigger(fk.AskForRetrial, who, data)
-  self.logic:trigger(fk.FinishRetrial, who, data)
-  Fk:filterCard(data.card.id, who, data)
-  self:sendLog{
-    type = "#JudgeResult",
-    from = who.id,
-    card = {data.card.id},
-  }
-
-  if data.pattern then
-    self:delay(400);
-    self:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
-    self:delay(900);
-  end
-
-  self.logic:trigger(fk.FinishJudge, who, data)
-  if self:getCardArea(data.card.id) == Card.Processing then
-    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
-  end
+  return execGameEvent(GameEvent.Judge, data)
 end
 
 ---@param card Card
@@ -2398,7 +1792,7 @@ function Room:useSkill(player, skill, effect_cb)
   end
   player:addSkillUseHistory(skill.name)
   if effect_cb then
-    return effect_cb()
+    return execGameEvent(GameEvent.SkillEffect, effect_cb)
   end
 end
 
@@ -2413,7 +1807,7 @@ function Room:gameOver(winner)
   self:doBroadcastNotify("GameOver", winner)
 
   self.room:gameOver()
-  coroutine.yield()
+  coroutine.yield("__handleRequest")
 end
 
 ---@param card Card
