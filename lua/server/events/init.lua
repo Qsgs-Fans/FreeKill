@@ -11,6 +11,9 @@ GameEvent.Dying = 6
 GameEvent.Death = 7
 dofile "lua/server/events/death.lua"
 
+GameEvent.MoveCards = 8
+dofile "lua/server/events/movecard.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
