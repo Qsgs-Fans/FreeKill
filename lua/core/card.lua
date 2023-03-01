@@ -236,7 +236,7 @@ function Card.static:getIdList(c)
   -- array
   local ret = {}
   for _, c2 in ipairs(c) do
-    table.insertTable(ret, Card:getIdList(c))
+    table.insertTable(ret, Card:getIdList(c2))
   end
   return ret
 end

@@ -842,6 +842,7 @@ end
 ---@param target ServerPlayer
 ---@param flag string @ "hej", h for handcard, e for equip, j for judge
 ---@param reason string
+---@return integer
 function Room:askForCardChosen(chooser, target, flag, reason)
   local command = "AskForCardChosen"
   self:notifyMoveFocus(chooser, command)
@@ -849,12 +850,6 @@ function Room:askForCardChosen(chooser, target, flag, reason)
   local result = self:doRequest(chooser, command, json.encode(data))
 
   if result == "" then
-    result = -1
-  else
-    result = tonumber(result)
-  end
-
-  if result == -1 then
     local areas = {}
     if string.find(flag, "h") then table.insert(areas, Player.Hand) end
     if string.find(flag, "e") then table.insert(areas, Player.Equip) end
@@ -862,9 +857,53 @@ function Room:askForCardChosen(chooser, target, flag, reason)
     local handcards = target:getCardIds(areas)
     if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
+  else
+    result = tonumber(result)
+  end
+
+  if result == -1 then
+    local handcards = target:getCardIds(Player.Hand)
+    if #handcards == 0 then return end
+    result = table.random(handcards)
   end
 
   return result
+end
+
+---@param chooser ServerPlayer
+---@param target ServerPlayer
+---@param min integer
+---@param max integer
+---@param flag string @ "hej", h for handcard, e for equip, j for judge
+---@param reason string
+---@return integer[]
+function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
+  if min == 1 and max == 1 then
+    return { self:askForCardChosen(chooser, target, flag, reason) }
+  end
+
+  local command = "AskForCardsChosen"
+  self:notifyMoveFocus(chooser, command)
+  local data = {target.id, min, max, flag, reason}
+  local result = self:doRequest(chooser, command, json.encode(data))
+
+  local ret
+  if result ~= "" then
+    ret = json.decode(result)
+  else
+    local areas = {}
+    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+    local handcards = target:getCardIds(areas)
+    if #handcards == 0 then return {} end
+    ret = table.random(handcards, math.min(min, #handcards))
+  end
+
+  local new_ret = table.filter(ret, function(id) return id ~= -1 end)
+  table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), #ret - #new_ret))
+
+  return new_ret
 end
 
 ---@param player ServerPlayer
@@ -1054,6 +1093,51 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
     return self:handleUseCardReply(winner, result)
   end
   return nil
+end
+
+-- AG(a.k.a. Amazing Grace) functions
+-- Popup a box that contains many cards, then ask player to choose one
+
+---@param player ServerPlayer
+---@param id_list integer[] | Card[]
+---@param cancelable boolean
+---@param reason string
+---@return integer
+function Room:askForAG(player, id_list, cancelable, reason)
+  id_list = Card:getIdList(id_list)
+  if #id_list == 1 and not cancelable then
+    return id_list[1]
+  end
+
+  local command = "AskForAG"
+  self:notifyMoveFocus(player, reason or command)
+  local data = { id_list, cancelable, reason }
+  local ret = self:doRequest(player, command, json.encode(data))
+  if ret == "" and not cancelable then
+    ret = table.random(id_list)
+  end
+  return tonumber(ret)
+end
+
+---@param player ServerPlayer
+---@param id_list integer[] | Card[]
+---@param disable_ids integer[] | Card[]
+function Room:fillAG(player, id_list, disable_ids)
+  id_list = Card:getIdList(id_list)
+  -- disable_ids = Card:getIdList(disable_ids)
+  player:doNotify("FillAG", json.encode{ id_list, disable_ids })
+end
+
+---@param player ServerPlayer
+---@param id integer
+function Room:takeAG(taker, id, notify_list)
+  self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
+end
+
+---@param player ServerPlayer
+function Room:closeAG(player)
+  if player then player:doNotify("CloseAG", "")
+  else self:doBroadcastNotify("CloseAG", "") end
 end
 
 -- Show a qml dialog and return qml's ClientInstance.replyToServer

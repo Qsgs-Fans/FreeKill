@@ -281,6 +281,27 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
   ClientInstance:notifyUI("AskForCardChosen", json.encode(ui_data))
 end
 
+fk.client_callback["AskForCardsChosen"] = function(jsonData)
+  -- jsonData: [ int target_id, int min, int max, string flag, int reason ]
+  local data = json.decode(jsonData)
+  local id, min, max, flag, reason = data[1], data[2], data[3], data[4], data[5]
+  local target = ClientInstance:getPlayerById(id)
+  local hand = target.player_cards[Player.Hand]
+  local equip = target.player_cards[Player.Equip]
+  local judge = target.player_cards[Player.Judge]
+  if not string.find(flag, "h") then
+    hand = {}
+  end
+  if not string.find(flag, "e") then
+    equip = {}
+  end
+  if not string.find(flag, "j") then
+    judge = {}
+  end
+  local ui_data = {hand, equip, judge, min, max, reason}
+  ClientInstance:notifyUI("AskForCardsChosen", json.encode(ui_data))
+end
+
 --- separated moves to many moves(one card per move)
 ---@param moves CardsMoveStruct[]
 local function separateMoves(moves)
