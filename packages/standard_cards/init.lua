@@ -574,7 +574,12 @@ local lightningSkill = fk.CreateActiveSkill{
   end,
   on_nullified = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
-    local nextp = to:getNextAlive()
+    local nextp
+    repeat
+      nextp = to:getNextAlive()
+      if nextp == to then return end
+    until not nextp:hasDelayedTrick("lightning")
+
     room:moveCards{
       ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       to = nextp.id,
