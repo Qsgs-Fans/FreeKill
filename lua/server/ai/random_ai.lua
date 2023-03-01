@@ -27,7 +27,7 @@ local function useActiveSkill(self, skill, card)
   while not skill:feasible(selected_targets, selected_cards, self.player, card) do
     if max_try_times <= 0 then break end
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
-      local ret = skill:targetFilter(p.id, selected_targets, selected_cards)
+      local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
         local r = self.room
         local status_skills = r.status_skills[ProhibitSkill] or {}
@@ -58,7 +58,7 @@ local function useActiveSkill(self, skill, card)
       },
       targets = selected_targets,
     }
-    print(ret)
+    -- print(ret)
     return ret
   end
   return ""

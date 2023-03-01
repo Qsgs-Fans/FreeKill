@@ -72,7 +72,7 @@ local test_active = fk.CreateActiveSkill{
     -- room:takeAG(from, id)
     -- room:delay(2000)
     -- room:closeAG(from)
-    local cards = room:askForCardsChosen(from, room:getPlayerById(effect.tos[1]), 2, 3, "hej", "")
+    local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
     p(cards)
   end,
 }

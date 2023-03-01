@@ -73,6 +73,7 @@ local function matchCard(matcher, card)
     matcher.place,
     placetable[Fk:currentRoom():getCardArea(card.id)]
   ) then
+    -- maybe is from special pile?
     return false
   end
   -- TODO: generalName

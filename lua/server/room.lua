@@ -64,9 +64,9 @@ function Room:initialize(_room)
     local request_co = coroutine.create(function(rest)
       self:requestLoop(rest)
     end)
-    local ret, err_msg = true, true
+    local ret, err_msg, rest_time = true, true
     while not self.game_finished do
-      ret, _, err_msg = coroutine.resume(main_co, err_msg)
+      ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
 
       -- handle error
       if ret == false then
@@ -75,9 +75,7 @@ function Room:initialize(_room)
         break
       end
 
-      -- If ret == true, then err_msg is the millisecond left
-
-      ret, err_msg = coroutine.resume(request_co, err_msg)
+      ret, err_msg = coroutine.resume(request_co, rest_time)
       if ret == false then
         fk.qCritical(err_msg)
         print(debug.traceback(request_co))
