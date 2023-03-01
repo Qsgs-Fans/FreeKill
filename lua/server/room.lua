@@ -848,12 +848,6 @@ function Room:askForCardChosen(chooser, target, flag, reason)
   local result = self:doRequest(chooser, command, json.encode(data))
 
   if result == "" then
-    result = -1
-  else
-    result = tonumber(result)
-  end
-
-  if result == -1 then
     local areas = {}
     if string.find(flag, "h") then table.insert(areas, Player.Hand) end
     if string.find(flag, "e") then table.insert(areas, Player.Equip) end
@@ -861,6 +855,14 @@ function Room:askForCardChosen(chooser, target, flag, reason)
     local handcards = target:getCardIds(areas)
     if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
+  else
+    result = tonumber(result)
+  end
+
+  if result == -1 then
+    local handcards = target:getCardIds(Player.Hand)
+    if #handcards == 0 then return end
+    result = table.random(handcards)
   end
 
   return result
