@@ -59,6 +59,11 @@ function Client:getCardArea(cardId)
   if table.contains(Self.player_cards[Player.Equip], cardId) then
     return Card.PlayerEquip
   end
+  for _, t in pairs(Self.special_cards) do
+    if table.contains(t, cardId) then
+      return Card.PlayerSpecial
+    end
+  end
   error("Client:getCardArea can only judge cards in your hand or equip area")
 end
 

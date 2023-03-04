@@ -74,6 +74,11 @@ local function matchCard(matcher, card)
     placetable[Fk:currentRoom():getCardArea(card.id)]
   ) then
     -- maybe is from special pile?
+    for k, t in pairs(Self.special_cards) do
+      if table.contains(t, card.id) then
+        return table.contains(matcher.place, k)
+      end
+    end
     return false
   end
   -- TODO: generalName
