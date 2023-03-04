@@ -75,7 +75,6 @@ RowLayout {
     let component = Qt.createComponent("CardItem.qml");
     let parentPos = roomScene.mapFromItem(selfPhoto, 0, 0);
 
-    // FIXME: only expand equip area here. modify this if need true pile
     expanded_piles[pile] = [];
     if (pile === "_equip") {
       let equips = selfPhoto.equipArea.getAllCards();
@@ -87,6 +86,18 @@ RowLayout {
         card.footnote = Backend.translate("$Equip");
         handcardAreaItem.add(card);
       })
+      handcardAreaItem.updateCardPosition();
+    } else {
+      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+      ids.forEach(id => {
+        let data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+        data.x = parentPos.x;
+        data.y = parentPos.y;
+        let card = component.createObject(roomScene, data);
+        card.footnoteVisible = true;
+        card.footnote = Backend.translate(pile);
+        handcardAreaItem.add(card);
+      });
       handcardAreaItem.updateCardPosition();
     }
   }
@@ -108,6 +119,16 @@ RowLayout {
         card.destroyOnStop();
         card.goBack(true);
       })
+      handcardAreaItem.updateCardPosition();
+    } else {
+      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+      ids.forEach(id => {
+        let card = handcardAreaItem.remove([id])[0];
+        card.origX = parentPos.x;
+        card.origY = parentPos.y;
+        card.destroyOnStop();
+        card.goBack(true);
+      });
       handcardAreaItem.updateCardPosition();
     }
   }
@@ -138,6 +159,23 @@ RowLayout {
           }
         }
       });
+
+      let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [selfPhoto.playerid]));
+      if (!(pile_data instanceof Array)) {
+        for (let pile_name in pile_data) {
+          pile_data[pile_name].forEach(cid => {
+            if (JSON.parse(Backend.callLuaFunction(
+              "CardFitPattern",
+              [cid, cname]
+            ))) {
+              ids.push(cid);
+              if (!expanded_piles[pile_name]) {
+                expandPile(pile_name);
+              }
+            }
+          });
+        }
+      }
 
       handcardAreaItem.enableCards(ids);
       return;
@@ -212,6 +250,24 @@ RowLayout {
         }
       }
     })
+
+    let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [selfPhoto.playerid]));
+    if (!(pile_data instanceof Array)) {
+      for (let pile_name in pile_data) {
+        pile_data[pile_name].forEach(cid => {
+          if (JSON.parse(Backend.callLuaFunction(
+            "ActiveCardFilter",
+            [pending_skill, cid, pendings, targets]
+          ))) {
+            enabled_cards.push(cid);
+            if (!expanded_piles[pile_name]) {
+              expandPile(pile_name);
+            }
+          }
+        });
+      }
+    }
+
     handcardAreaItem.enableCards(enabled_cards);
 
     if (JSON.parse(Backend.callLuaFunction(

@@ -41,7 +41,8 @@ end
 ---@param to_select integer @ id of the target
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
-function ActiveSkill:targetFilter(to_select, selected, selected_cards)
+---@param card Card @ helper
+function ActiveSkill:targetFilter(to_select, selected, selected_cards, card)
   return false
 end
 

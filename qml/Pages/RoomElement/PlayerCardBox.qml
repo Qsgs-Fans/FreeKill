@@ -64,12 +64,12 @@ GraphicsBox {
           model: handcards
 
           CardItem {
-            name: "card-back"
-            cid: -1
-            suit: ""
-            number: 0
+            cid: model.cid
+            name: model.name || ""
+            suit: model.suit || ""
+            number: model.number || 0
             autoBack: false
-            known: false
+            known: model.cid !== -1
             selectable: true
             onClicked: {
               if (!root.multiChoose) {
@@ -220,7 +220,7 @@ GraphicsBox {
   function addHandcards(cards)
   {
     if (cards instanceof Array) {
-      for (var i = 0; i < cards.length; i++)
+      for (let i = 0; i < cards.length; i++)
         handcards.append(cards[i]);
     } else {
       handcards.append(cards);
@@ -230,7 +230,7 @@ GraphicsBox {
   function addEquips(cards)
   {
     if (cards instanceof Array) {
-      for (var i = 0; i < cards.length; i++)
+      for (let i = 0; i < cards.length; i++)
         equips.append(cards[i]);
     } else {
       equips.append(cards);
@@ -240,7 +240,7 @@ GraphicsBox {
   function addDelayedTricks(cards)
   {
     if (cards instanceof Array) {
-      for (var i = 0; i < cards.length; i++)
+      for (let i = 0; i < cards.length; i++)
         delayedTricks.append(cards[i]);
     } else {
       delayedTricks.append(cards);

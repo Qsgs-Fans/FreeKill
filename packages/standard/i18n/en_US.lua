@@ -136,7 +136,7 @@ Fk:loadTranslationTable({
 }, "en_US")
 
 -- aux skills
-Fk:loadTranslationTable{
+Fk:loadTranslationTable({
   ["discard_skill"] = "Discard",
   ["choose_players_skill"] = "Choose players",
-}
+}, "en_US")

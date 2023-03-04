@@ -277,8 +277,12 @@ function GameLogic:trigger(event, target, data)
   return broken
 end
 
+function GameLogic:getCurrentEvent()
+  return self.game_event_stack.t[self.game_event_stack.p]
+end
+
 function GameLogic:breakEvent(ret)
-  coroutine.yield("__breakEvent", false)
+  coroutine.yield("__breakEvent", ret)
 end
 
 return GameLogic
