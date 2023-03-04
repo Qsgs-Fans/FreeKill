@@ -73,14 +73,17 @@ local function matchCard(matcher, card)
     matcher.place,
     placetable[Fk:currentRoom():getCardArea(card.id)]
   ) then
-    -- maybe is from special pile?
-    for k, t in pairs(Self.special_cards) do
-      if table.contains(t, card.id) then
-        return table.contains(matcher.place, k)
+    if ClientInstance then
+      return Self:getPileNameOfId(card.id) and true or false
+    else
+      for _, p in ipairs(RoomInstance.alive_players) do
+        local pile = p:getPileNameOfId(card.id)
+        if pile then return true end
       end
     end
     return false
   end
+
   -- TODO: generalName
 
   if matcher.cardType and not table.contains(matcher.cardType, typetable[card.type]) then
@@ -178,7 +181,7 @@ local function parseMatcher(str)
   end
 
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
-  ret.place = not table.contains(t[4], ".") and t[4] or nil
+  ret.place = not table.contains(t[4], ".") and t[4] or { "hand", "equip" }
   ret.generalName = not table.contains(t[5], ".") and t[5] or nil
   ret.cardType = not table.contains(t[6], ".") and t[6] or nil
 

@@ -121,6 +121,10 @@ function GetPile(id, name)
   return json.encode(ClientInstance:getPlayerById(id):getPile(name) or {})
 end
 
+function GetAllPiles(id)
+  return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)

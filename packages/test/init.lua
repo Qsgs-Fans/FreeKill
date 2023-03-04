@@ -60,6 +60,10 @@ local test_active = fk.CreateActiveSkill{
   can_use = function(self, player)
     return true
   end,
+  card_filter = function(self, card)
+    local c = Fk:getCardById(card)
+    return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
+  end,
   target_filter = function() return true end,
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
@@ -73,7 +77,8 @@ local test_active = fk.CreateActiveSkill{
     -- room:delay(2000)
     -- room:closeAG(from)
     local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
-    p(cards)
+    from:addToPile(self.name, cards)
+    -- p(cards)
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
