@@ -160,6 +160,9 @@ int main(int argc, char *argv[])
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 
 #ifdef Q_OS_ANDROID
+  QJniObject::callStaticMethod <void>("org/notify/FreeKill/Helper", "InitView", "()V");
+  QDir::setCurrent("/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+
   QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
   QRect screenGeometry = screen->geometry();
   int screenWidth = screenGeometry.width();
