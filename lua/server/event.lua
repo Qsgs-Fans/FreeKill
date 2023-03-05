@@ -79,4 +79,7 @@ fk.BeforeGameOverJudge = 63
 fk.GameOverJudge = 64
 fk.GameFinished = 65
 
-fk.NumOfEvents = 66
+fk.AskForCardUse = 66
+fk.AskForCardResponse = 67
+
+fk.NumOfEvents = 68

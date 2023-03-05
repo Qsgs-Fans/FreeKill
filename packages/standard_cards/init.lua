@@ -250,14 +250,37 @@ local duelSkill = fk.CreateActiveSkill{
         break
       end
 
-      local cardResponded = room:askForResponse(currentResponser, 'slash')
-      if cardResponded then
-        room:responseCard({
-          from = currentResponser.id,
-          card = cardResponded,
-          responseToEvent = effect,
-        })
-      else
+      local loopTimes = 1
+      if effect.fixedResponseTimes then
+        local canFix = currentResponser == to
+        if effect.fixedAddTimesResponsors then
+          canFix = table.contains(effect.fixedAddTimesResponsors, currentResponser.id)
+        end
+
+        if canFix then
+          if type(effect.fixedResponseTimes) == 'table' then
+            loopTimes = effect.fixedResponseTimes["slash"] or 1
+          elseif type(effect.fixedResponseTimes) == 'number' then
+            loopTimes = effect.fixedResponseTimes
+          end
+        end
+      end
+
+      local cardResponded
+      for i = 1, loopTimes do
+        cardResponded = room:askForResponse(currentResponser, 'slash')
+        if cardResponded then
+          room:responseCard({
+            from = currentResponser.id,
+            card = cardResponded,
+            responseToEvent = effect,
+          })
+        else
+          break
+        end
+      end
+
+      if not cardResponded then
         break
       end
 
@@ -833,13 +856,11 @@ extension:addCards({
 local axeSkill = fk.CreateTriggerSkill{
   name = "#axe_skill",
   attached_equip = "axe",
-  events = {fk.CardEffecting},
+  events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
     if not player:hasSkill(self.name) then return end
     local effect = data ---@type CardEffectEvent
-    return effect.card.name == "jink" and effect.responseToEvent and
-      effect.responseToEvent.from == player.id and
-      effect.toCard.name == "slash"
+    return effect.card.name == "slash" and effect.from == player.id
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
@@ -945,10 +966,48 @@ extension:addCards({
   kylinBow,
 })
 
+local eightDiagramSkill = fk.CreateTriggerSkill{
+  name = "#eight_diagram_skill",
+  attached_equip = "eight_diagram",
+  events = {fk.AskForCardUse, fk.AskForCardResponse},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink")))
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    local judgeData = {
+      who = player,
+      reason = self.name,
+      pattern = ".|.|heart,diamond",
+    }
+    room:judge(judgeData)
+
+    if judgeData.card.color == Card.Red then
+      if event == fk.AskForCardUse then
+        data.result = {
+          from = player.id,
+          card = Fk:cloneCard('jink'),
+        }
+
+        if data.eventData then
+          data.result.toCard = data.eventData.toCard
+          data.result.responseToEvent = data.eventData.responseToEvent
+        end
+      else
+        data.result = Fk:cloneCard('jink')
+      end
+
+      return true
+    end
+  end
+}
+Fk:addSkill(eightDiagramSkill)
 local eightDiagram = fk.CreateArmor{
   name = "eight_diagram",
   suit = Card.Spade,
   number = 2,
+  equip_skill = eightDiagramSkill,
 }
 
 extension:addCards({
