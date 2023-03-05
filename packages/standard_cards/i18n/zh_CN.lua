@@ -72,6 +72,7 @@ Fk:loadTranslationTable{
   ["#kylin_bow_skill"] = "麒麟弓",
 
   ["eight_diagram"] = "八卦阵",
+  ["#eight_diagram_skill"] = "八卦阵",
 
   ["nioh_shield"] = "仁王盾",
 

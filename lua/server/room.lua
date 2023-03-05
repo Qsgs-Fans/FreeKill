@@ -1028,8 +1028,11 @@ end
 ---@param card_name string
 ---@param pattern string
 ---@param prompt string
+---@param cancelable boolean
+---@param extra_data integer
+---@param event_data CardEffectEvent|null
 ---@return CardUseStruct
-function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data)
+function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = cancelable or false
@@ -1037,10 +1040,23 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   pattern = pattern or card_name
   prompt = prompt or ""
 
-  local data = {card_name, pattern, prompt, cancelable, extra_data}
-  local result = self:doRequest(player, command, json.encode(data))
-  if result ~= "" then
-    return self:handleUseCardReply(player, result)
+  local askForUseCardData = {
+    user = player,
+    cardName = card_name,
+    pattern = pattern,
+    extraData = extra_data,
+    eventData = event_data,
+  }
+  self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
+
+  if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
+    return askForUseCardData.result
+  else
+    local data = {card_name, pattern, prompt, cancelable, extra_data}
+    local result = self:doRequest(player, command, json.encode(data))
+    if result ~= "" then
+      return self:handleUseCardReply(player, result)
+    end
   end
   return nil
 end
@@ -1058,12 +1074,24 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   pattern = pattern or card_name
   prompt = prompt or ""
 
-  local data = {card_name, pattern, prompt, cancelable, extra_data}
-  local result = self:doRequest(player, command, json.encode(data))
-  if result ~= "" then
-    local use = self:handleUseCardReply(player, result)
-    if use then
-      return use.card
+  local eventData = {
+    user = player,
+    cardName = card_name,
+    pattern = pattern,
+    extraData = extra_data,
+  }
+  self.logic:trigger(fk.AskForCardResponse, player, eventData)
+
+  if eventData.result then
+    return eventData.result
+  else
+    local data = {card_name, pattern, prompt, cancelable, extra_data}
+    local result = self:doRequest(player, command, json.encode(data))
+    if result ~= "" then
+      local use = self:handleUseCardReply(player, result)
+      if use then
+        return use.card
+      end
     end
   end
   return nil
@@ -1424,6 +1452,8 @@ function Room:doCardUseEffect(cardUseEvent)
 
         cardEffectEvent.disresponsive = curAimEvent.disresponsive
         cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
+        cardEffectEvent.fixedResponseTimes = curAimEvent.fixedResponseTimes
+        cardEffectEvent.fixedAddTimesResponsors = curAimEvent.fixedAddTimesResponsors
 
         collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
 
@@ -1437,10 +1467,12 @@ end
 function Room:doCardEffect(cardEffectEvent)
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
     if cardEffectEvent.isCancellOut then
-      if cardEffectEvent.from then
-        self.logic:trigger(fk.CardEffectCancelledOut, self:getPlayerById(cardEffectEvent.from), cardEffectEvent)
+      local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
+      if self.logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
+        cardEffectEvent.isCancellOut = false
+      else
+        break
       end
-      break
     end
 
     if not cardEffectEvent.toCard and (not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
@@ -1457,23 +1489,49 @@ function Room:doCardEffect(cardEffectEvent)
 
     if event == fk.PreCardEffect then
       if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
-      if cardEffectEvent.card.name == 'slash' and
+      if cardEffectEvent.card.name == "slash" and
         not (
           cardEffectEvent.disresponsive or
           cardEffectEvent.unoffsetable or
           table.contains(cardEffectEvent.disresponsiveList or {}, cardEffectEvent.to) or
           table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to)
         ) then
-        local to = self:getPlayerById(cardEffectEvent.to)
-        local prompt = ""
-        if cardEffectEvent.from then
-          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+        local loopTimes = 1
+        if cardEffectEvent.fixedResponseTimes then
+          if type(cardEffectEvent.fixedResponseTimes) == "table" then
+            loopTimes = cardEffectEvent.fixedResponseTimes["jink"] or 1
+          elseif type(cardEffectEvent.fixedResponseTimes) == "number" then
+            loopTimes = cardEffectEvent.fixedResponseTimes
+          end
         end
-        local use = self:askForUseCard(to, "jink", nil, prompt)
-        if use then
-          use.toCard = cardEffectEvent.card
-          use.responseToEvent = cardEffectEvent
-          self:useCard(use)
+
+        for i = 1, loopTimes do
+          local to = self:getPlayerById(cardEffectEvent.to)
+          local prompt = ""
+          if cardEffectEvent.from then
+            prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+          end
+
+          local use = self:askForUseCard(
+            to,
+            "jink",
+            nil,
+            prompt,
+            true,
+            nil,
+            cardEffectEvent
+          )
+          if use then
+            use.toCard = cardEffectEvent.card
+            use.responseToEvent = cardEffectEvent
+            self:useCard(use)
+          end
+
+          if not cardEffectEvent.isCancellOut then
+            break
+          end
+
+          cardEffectEvent.isCancellOut = i == loopTimes
         end
       elseif cardEffectEvent.card.type == Card.TypeTrick and
         not cardEffectEvent.disresponsive then

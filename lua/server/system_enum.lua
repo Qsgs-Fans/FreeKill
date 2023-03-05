@@ -91,6 +91,8 @@ fk.FireDamage = 3
 ---@field additionalDamage integer|null
 ---@field disresponsive boolean|null
 ---@field unoffsetableList boolean|null
+---@field additionalResponseTimes table<string, integer>|integer|null
+---@field fixedAddTimesResponsors integer[]
 
 ---@class CardEffectEvent
 ---@field from integer
@@ -110,6 +112,8 @@ fk.FireDamage = 3
 ---@field disresponsive boolean|null
 ---@field unoffsetable boolean|null
 ---@field isCancellOut boolean|null
+---@field fixedResponseTimes table<string, integer>|integer|null
+---@field fixedAddTimesResponsors integer[]
 
 ---@class SkillEffectEvent
 ---@field from integer
@@ -128,6 +132,18 @@ fk.FireDamage = 3
 ---@field responseToEvent CardEffectEvent|null
 ---@field skipDrop boolean|null
 ---@field customFrom integer|null
+
+---@class AskForCardUse
+---@field user ServerPlayer
+---@field cardName string
+---@field pattern string
+---@field result CardUseStruct
+
+---@class AskForCardResponse
+---@field user ServerPlayer
+---@field cardName string
+---@field pattern string
+---@field result Card
 
 ---@alias CardMoveReason integer
 
