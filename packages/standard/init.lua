@@ -870,7 +870,7 @@ local wushuang = fk.CreateTriggerSkill{
     else
       data.fixedResponseTimes["slash"] = 2
       data.fixedAddTimesResponsors = data.fixedAddTimesResponsors or {}
-      table.insert(data.fixedAddTimesResponsors, (event == fk.TargetSpecified and data.to or data.from)) 
+      table.insert(data.fixedAddTimesResponsors, (event == fk.TargetSpecified and data.to or data.from))
     end
   end,
 }
