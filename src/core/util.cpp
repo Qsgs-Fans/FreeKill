@@ -205,6 +205,7 @@ QString calcFileMD5() {
   flist.close();
   flist.open(QIODevice::ReadOnly);
   auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
+  flist.remove(); // delete flist.txt
   flist.close();
   return ret.toHex();
 }
