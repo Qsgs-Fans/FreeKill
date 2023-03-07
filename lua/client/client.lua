@@ -84,7 +84,7 @@ function Client:moveCards(moves)
 
     if move.to and move.toArea then
       local ids = move.ids
-      if move.toArea == Card.PlayerHand or table.contains(ids, -1) then
+      if (move.to ~= Self.id and move.toArea == Card.PlayerHand) or table.contains(ids, -1) then
         ids = table.map(ids, function() return -1 end)
       end
       self:getPlayerById(move.to):addCards(move.toArea, ids, move.specialName)
