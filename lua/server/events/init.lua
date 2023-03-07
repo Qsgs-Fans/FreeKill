@@ -26,6 +26,10 @@ dofile "lua/server/events/skill.lua"
 GameEvent.Judge = 14
 dofile "lua/server/events/judge.lua"
 
+GameEvent.DrawInitial = 15
+GameEvent.Turn = 16
+dofile "lua/server/events/gameflow.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 

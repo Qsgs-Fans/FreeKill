@@ -2,6 +2,10 @@
 ---@field room Room
 ---@field event integer
 ---@field data any
+---@field main_func fun(self: GameEvent)
+---@field clear_func fun(self: GameEvent)
+---@field extra_clear_funcs any[]
+---@field interrupted boolean
 local GameEvent = class("GameEvent")
 
 GameEvent.functions = {}
@@ -19,6 +23,15 @@ function GameEvent:initialize(event, ...)
   self.data = { ... }
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
   self.clear_func = wrapCoFunc(GameEvent.cleaners[event], self) or dummyFunc
+  self.extra_clear_funcs = {}
+  self.interrupted = false
+end
+
+function GameEvent:clear()
+  for _, f in ipairs(self.extra_clear_funcs) do
+    if type(f) == "function" then f(self) end
+  end
+  self:clear_func()
 end
 
 function GameEvent:exec()
@@ -38,7 +51,8 @@ function GameEvent:exec()
         fk.qCritical(yield_result)
         print(debug.traceback(co))
       end
-      self.clear_func()
+      self.interrupted = true
+      self:clear()
       ret = true
       break
     end
@@ -50,7 +64,8 @@ function GameEvent:exec()
     elseif type(yield_result) == "table" and yield_result.class
       and yield_result:isInstanceOf(GameEvent) then
       -- yield to corresponding GameEvent, first pop self from stack
-      self.clear_func()
+      self.interrupted = true
+      self:clear()
       logic.game_event_stack:pop(self)
 
       -- then, call yield
@@ -61,7 +76,8 @@ function GameEvent:exec()
       local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
       local notcanceled = cancelEvent:exec()
       if not notcanceled then
-        self.clear_func()
+        self.interrupted = true
+        self:clear()
         ret = true
         extra_ret = extra_yield_result
         break
@@ -69,6 +85,7 @@ function GameEvent:exec()
 
     else
       -- normally exit, simply break the loop
+      self:clear()
       extra_ret = yield_result
       break
     end

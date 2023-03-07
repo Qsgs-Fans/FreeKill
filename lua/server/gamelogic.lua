@@ -40,6 +40,13 @@ function GameLogic:run()
   self:action()
 end
 
+local function execGameEvent(type, ...)
+  local event = GameEvent:new(type, ...)
+  local _, ret = event:exec()
+  return ret
+end
+
+
 function GameLogic:assignRoles()
   local room = self.room
   local n = #room.players
@@ -162,12 +169,10 @@ function GameLogic:action()
   self:trigger(fk.GameStart)
   local room = self.room
 
-  for _, p in ipairs(room.alive_players) do
-    self:trigger(fk.DrawInitialCards, p, { num = 4 })
-  end
+  execGameEvent(GameEvent.DrawInitial)
 
   while true do
-    self:trigger(fk.TurnStart, room.current)
+    execGameEvent(GameEvent.Turn)
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
   end
