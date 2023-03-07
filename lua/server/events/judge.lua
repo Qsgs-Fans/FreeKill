@@ -49,6 +49,7 @@ GameEvent.cleaners[GameEvent.Judge] = function(self)
   if self:getCardArea(data.card.id) == Card.Processing then
     self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
   end
+  if not self.interrupted then return end
 
   -- prohibit access to judge.card
   setmetatable(data, {
