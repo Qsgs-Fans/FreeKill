@@ -675,7 +675,7 @@ local crossbowAudio = fk.CreateTriggerSkill{
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card.name == "slash" and
+      data.card.trueName == "slash" and
       player:usedCardTimes("slash") > 1
   end,
   on_refresh = function(self, event, target, player, data)
@@ -688,7 +688,7 @@ local crossbowSkill = fk.CreateTargetModSkill{
   name = "#crossbow_skill",
   attached_equip = "crossbow",
   residue_func = function(self, player, skill, scope)
-    if player:hasSkill(self.name) and skill.name == "slash_skill"
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
       return 999
     end
@@ -727,7 +727,7 @@ local iceSwordSkill = fk.CreateTriggerSkill{
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card and data.card.name == "slash" and not data.to:isNude()
+      data.card and data.card.trueName == "slash" and not data.to:isNude()
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
@@ -760,7 +760,7 @@ local doubleSwordsSkill = fk.CreateTriggerSkill{
   events = {fk.TargetSpecified},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card and data.card.name == "slash" and
+      data.card and data.card.trueName == "slash" and
       (player.room:getPlayerById(data.to).gender ~= player.gender)
   end,
   on_use = function(self, event, target, player, data)
@@ -792,7 +792,7 @@ local bladeSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     if not player:hasSkill(self.name) then return end
     local use = data ---@type CardUseStruct
-    if use.card.name == "jink" and use.toCard and use.toCard.name == "slash" then
+    if use.card.name == "jink" and use.toCard and use.toCard.trueName == "slash" then
       local effect = use.responseToEvent
       return effect.from == player.id
     end
@@ -860,7 +860,7 @@ local axeSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     if not player:hasSkill(self.name) then return end
     local effect = data ---@type CardEffectEvent
-    return effect.card.name == "slash" and effect.from == player.id
+    return effect.card.trueName == "slash" and effect.from == player.id
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
@@ -887,7 +887,7 @@ local halberdAudio = fk.CreateTriggerSkill{
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card.name == "slash" and #TargetGroup:getRealTargets(data.tos) > 1
+      data.card.trueName == "slash" and #TargetGroup:getRealTargets(data.tos) > 1
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
@@ -899,7 +899,7 @@ local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
   extra_target_func = function(self, player, skill, card)
-    if player:hasSkill(self.name) and skill.name == "slash_skill"
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and #player:getCardIds(Player.Hand) == 1
       and player:getCardIds(Player.Hand)[1] == card.id then
       return 2
@@ -926,7 +926,7 @@ local kylinBowSkill = fk.CreateTriggerSkill{
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     local ret = target == player and player:hasSkill(self.name) and
-      data.card and data.card.name == "slash"
+      data.card and data.card.trueName == "slash"
     if ret then
       ---@type ServerPlayer
       local to = data.to
@@ -1023,7 +1023,7 @@ local niohShieldSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     local effect = data ---@type CardEffectEvent
     return player.id == effect.to and player:hasSkill(self.name) and
-      effect.card.name == "slash" and effect.card.color == Card.Black
+      effect.card.trueName == "slash" and effect.card.color == Card.Black
   end,
   on_use = function() return true end,
 }
