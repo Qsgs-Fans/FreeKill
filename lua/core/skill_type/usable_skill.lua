@@ -1,5 +1,6 @@
 ---@class UsableSkill : Skill
 ---@field max_use_time integer[]
+---@field expand_pile string
 local UsableSkill = Skill:subclass("UsableSkill")
 
 function UsableSkill:initialize(name, frequency)

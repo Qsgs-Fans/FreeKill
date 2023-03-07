@@ -45,6 +45,7 @@ local function readUsableSpecToSkill(skill, spec)
     spec.max_game_use_time or 9999,
   }
   skill.distance_limit = spec.distance_limit or skill.distance_limit
+  skill.expand_pile = spec.expand_pile
 end
 
 local function readStatusSpecToSkill(skill, spec)

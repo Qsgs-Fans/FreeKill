@@ -371,4 +371,9 @@ function GetVirtualEquip(player, cid)
   }
 end
 
+function GetExpandPileOfSkill(skillName)
+  local skill = Fk.skills[skillName]
+  return skill and (skill.expand_pile or "") or ""
+end
+
 dofile "lua/client/i18n/init.lua"
