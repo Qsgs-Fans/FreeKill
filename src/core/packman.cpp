@@ -195,8 +195,8 @@ int PackMan::clone(const QString &u) {
   int error = git_clone(&repo, url.toUtf8(), fileName.toUtf8(), &opt);
   if (error < 0) {
     GIT_FAIL;
-    QDir(fileName).removeRecursively();
-    QDir(".").rmdir(fileName);
+    // QDir(fileName).removeRecursively();
+    // QDir(".").rmdir(fileName);
   } else {
     if (Backend == nullptr)
       printf("\n");

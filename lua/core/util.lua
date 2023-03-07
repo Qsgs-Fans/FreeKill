@@ -138,8 +138,8 @@ end
 ---@param n integer
 ---@return T|T[]
 function table.random(tab, n)
-  n = n or 1
   local n0 = n
+  n = n or 1
   if #tab == 0 then return nil end
   local tmp = {table.unpack(tab)}
   local ret = {}
@@ -148,7 +148,7 @@ function table.random(tab, n)
     table.insert(ret, table.remove(tmp, i))
     n = n - 1
   end
-  return n0 == 1 and ret[1] or ret
+  return n0 == nil and ret[1] or ret
 end
 
 ---@param delimiter string

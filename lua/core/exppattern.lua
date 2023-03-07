@@ -73,12 +73,17 @@ local function matchCard(matcher, card)
     matcher.place,
     placetable[Fk:currentRoom():getCardArea(card.id)]
   ) then
-    if ClientInstance then
-      return Self:getPileNameOfId(card.id) and true or false
-    else
-      for _, p in ipairs(RoomInstance.alive_players) do
-        local pile = p:getPileNameOfId(card.id)
-        if pile then return true end
+    local piles = table.filter(matcher.place, function(e)
+      return not table.contains(placetable, e)
+    end)
+    for _, pi in ipairs(piles) do
+      if ClientInstance then
+        if Self:getPileNameOfId(card.id) == pi then return true end
+      else
+        for _, p in ipairs(RoomInstance.alive_players) do
+          local pile = p:getPileNameOfId(card.id)
+          if pile == pi then return true end
+        end
       end
     end
     return false
@@ -181,7 +186,7 @@ local function parseMatcher(str)
   end
 
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
-  ret.place = not table.contains(t[4], ".") and t[4] or { "hand", "equip" }
+  ret.place = not table.contains(t[4], ".") and t[4] or nil
   ret.generalName = not table.contains(t[5], ".") and t[5] or nil
   ret.cardType = not table.contains(t[6], ".") and t[6] or nil
 

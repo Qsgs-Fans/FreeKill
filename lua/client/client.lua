@@ -83,7 +83,11 @@ function Client:moveCards(moves)
     end
 
     if move.to and move.toArea then
-      self:getPlayerById(move.to):addCards(move.toArea, move.ids, move.specialName)
+      local ids = move.ids
+      if (move.to ~= Self.id and move.toArea == Card.PlayerHand) or table.contains(ids, -1) then
+        ids = table.map(ids, function() return -1 end)
+      end
+      self:getPlayerById(move.to):addCards(move.toArea, ids, move.specialName)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
     end
@@ -176,6 +180,7 @@ end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
   Self = ClientPlayer:new(fk.Self)
+  ClientInstance = Client:new() -- clear old client data
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
@@ -275,6 +280,9 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
   local judge = target.player_cards[Player.Judge]
   if not string.find(flag, "h") then
     hand = {}
+  elseif target.id ~= Self.id then
+    -- FIXME: can not see other's handcard
+    hand = table.map(hand, function() return -1 end)
   end
   if not string.find(flag, "e") then
     equip = {}

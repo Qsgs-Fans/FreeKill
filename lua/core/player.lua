@@ -62,7 +62,7 @@ function Player:initialize()
   self.gender = General.Male
   self.seat = 0
   self.next = nil
-  self.phase = Player.PhaseNone
+  self.phase = Player.NotActive
   self.faceup = true
   self.chained = false
   self.dying = false

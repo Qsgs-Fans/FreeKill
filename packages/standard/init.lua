@@ -168,7 +168,7 @@ local luoyi = fk.CreateTriggerSkill{
     end
 
     local c = data.card
-    return c and c.name == "slash" or c.name == "duel"
+    return c and c.trueName == "slash" or c.name == "duel"
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
@@ -344,7 +344,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card.name == "slash" and
+      data.card.trueName == "slash" and
       player:usedCardTimes("slash") > 1
   end,
   on_refresh = function(self, event, target, player, data)
@@ -359,7 +359,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
 local paoxiao = fk.CreateTargetModSkill{
   name = "paoxiao",
   residue_func = function(self, player, skill, scope)
-    if player:hasSkill(self.name) and skill.name == "slash_skill"
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
       return 999
     end
@@ -411,7 +411,7 @@ local kongcheng = fk.CreateProhibitSkill{
   name = "kongcheng",
   is_prohibited = function(self, from, to, card)
     if to:hasSkill(self.name) and to:isKongcheng() then
-      return card.name == "slash" or card.name == "duel"
+      return card.trueName == "slash" or card.name == "duel"
     end
   end,
 }
@@ -426,7 +426,7 @@ local longdan = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     local c = Fk:getCardById(to_select)
-    return c.name == "slash" or c.name == "jink"
+    return c.trueName == "slash" or c.name == "jink"
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -434,7 +434,7 @@ local longdan = fk.CreateViewAsSkill{
     end
     local _c = Fk:getCardById(cards[1])
     local c
-    if _c.name == "slash" then
+    if _c.trueName == "slash" then
       c = Fk:cloneCard("jink")
     elseif _c.name == "jink" then
       c = Fk:cloneCard("slash")
@@ -460,7 +460,7 @@ local tieqi = fk.CreateTriggerSkill{
   events = {fk.TargetSpecified},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      data.card.name == "slash"
+      data.card.trueName == "slash"
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
@@ -563,7 +563,7 @@ local keji = fk.CreateTriggerSkill{
       return false
     end
     if event == fk.CardResponding then
-      return data.card.name == "slash"
+      return data.card.trueName == "slash"
     elseif event == fk.EventPhaseStart then
       return player.phase == player.NotActive
     end
@@ -658,7 +658,7 @@ local liuli = fk.CreateTriggerSkill{
   events = {fk.TargetConfirming},
   can_trigger = function(self, event, target, player, data)
     local ret = target == player and player:hasSkill(self.name) and
-      data.card.name == "slash"
+      data.card.trueName == "slash"
     if ret then
       self.target_list = {}
       local room = player.room
@@ -865,7 +865,7 @@ local wushuang = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     data.fixedResponseTimes = data.fixedResponseTimes or {}
-    if data.card.name == "slash" then
+    if data.card.trueName == "slash" then
       data.fixedResponseTimes["jink"] = 2
     else
       data.fixedResponseTimes["slash"] = 2

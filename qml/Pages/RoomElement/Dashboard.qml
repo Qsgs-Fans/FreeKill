@@ -160,10 +160,13 @@ RowLayout {
         }
       });
 
+      // Must manually analyze pattern here
+      let pile_list = cname.split("|")[4];
       let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [selfPhoto.playerid]));
-      if (!(pile_data instanceof Array)) {
-        for (let pile_name in pile_data) {
-          pile_data[pile_name].forEach(cid => {
+      if (pile_list && pile_list !== "." && !(pile_data instanceof Array)) {
+        pile_list = pile_list.split(",");
+        for (let pile_name of pile_list) {
+          pile_data[pile_name] && pile_data[pile_name].forEach(cid => {
             if (JSON.parse(Backend.callLuaFunction(
               "CardFitPattern",
               [cid, cname]
@@ -180,7 +183,7 @@ RowLayout {
       handcardAreaItem.enableCards(ids);
       return;
     }
-    // TODO: expand pile
+
     let ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
       if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id])))
@@ -251,22 +254,19 @@ RowLayout {
       }
     })
 
-    let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [selfPhoto.playerid]));
-    if (!(pile_data instanceof Array)) {
-      for (let pile_name in pile_data) {
-        pile_data[pile_name].forEach(cid => {
-          if (JSON.parse(Backend.callLuaFunction(
-            "ActiveCardFilter",
-            [pending_skill, cid, pendings, targets]
-          ))) {
-            enabled_cards.push(cid);
-            if (!expanded_piles[pile_name]) {
-              expandPile(pile_name);
-            }
-          }
-        });
+    let pile = Backend.callLuaFunction("GetExpandPileOfSkill", [pending_skill]);
+    let pile_ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+    pile_ids.forEach(cid => {
+      if (JSON.parse(Backend.callLuaFunction(
+        "ActiveCardFilter",
+        [pending_skill, cid, pendings, targets]
+      ))) {
+        enabled_cards.push(cid);
+        if (!expanded_piles[pile_name]) {
+          expandPile(pile_name);
+        }
       }
-    }
+    });
 
     handcardAreaItem.enableCards(enabled_cards);
 

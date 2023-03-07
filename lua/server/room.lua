@@ -1489,7 +1489,7 @@ function Room:doCardEffect(cardEffectEvent)
 
     if event == fk.PreCardEffect then
       if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
-      if cardEffectEvent.card.name == "slash" and
+      if cardEffectEvent.card.trueName == "slash" and
         not (
           cardEffectEvent.disresponsive or
           cardEffectEvent.unoffsetable or
