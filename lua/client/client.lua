@@ -176,6 +176,7 @@ end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
   Self = ClientPlayer:new(fk.Self)
+  ClientInstance = Client:new() -- clear old client data
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
