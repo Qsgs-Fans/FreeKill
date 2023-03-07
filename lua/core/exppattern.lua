@@ -57,7 +57,8 @@ local function matchCard(matcher, card)
     card = Fk:getCardById(card)
   end
 
-  if matcher.name and not table.contains(matcher.name, card.name) then
+  if matcher.name and not table.contains(matcher.name, card.name) and
+    not table.contains(matcher.name, card.trueName) then
     return false
   end
 

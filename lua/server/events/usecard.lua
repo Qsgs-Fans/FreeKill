@@ -1,7 +1,13 @@
 local playCardEmotionAndSound = function(room, player, card)
   if card.type ~= Card.TypeEquip then
-    room:setEmotion(player, "./packages/" ..
-      card.package.extensionName .. "/image/anim/" .. card.name)
+    local anim_path = "./packages/" .. card.package.extensionName .. "/image/anim/" .. card.name
+    if not FileIO.exists(anim_path) then
+      for _, dir in ipairs(FileIO.ls("./packages/")) do
+        anim_path = "./packages/" .. dir .. "/image/anim/" .. card.name
+        if FileIO.exists(anim_path) then break end
+      end
+    end
+    if FileIO.exists(anim_path) then room:setEmotion(player, anim_path) end
   end
 
   local soundName
@@ -19,6 +25,13 @@ local playCardEmotionAndSound = function(room, player, card)
   else
     soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
       .. (player.gender == General.Male and "male/" or "female/") .. card.name
+    if not FileIO.exists(soundName .. ".mp3") then
+      for _, dir in ipairs(FileIO.ls("./packages/")) do
+        soundName = "./packages/" .. dir .. "/audio/card/"
+          .. (player.gender == General.Male and "male/" or "female/") .. card.name
+        if FileIO.exists(soundName .. ".mp3") then break end
+      end
+    end
   end
   room:broadcastPlaySound(soundName)
 end
