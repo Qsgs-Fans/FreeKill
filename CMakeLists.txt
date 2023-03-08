@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.0.1)
+project(FreeKill VERSION 0.0.4)
+add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 include_directories(fkparse/src)
@@ -61,6 +62,12 @@ qt_add_executable(FreeKill)
 qt_add_translations(FreeKill
   TS_FILES lang/zh_CN.ts
   QM_FILES_OUTPUT_VARIABLE zh_CN.qm
+)
+add_custom_command(
+  TARGET FreeKill
+  POST_BUILD
+  COMMENT "Generating version file .fk_ver"
+  COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/.fk_ver
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

@@ -49,6 +49,21 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 }
 #endif
 
+static void installFkAssets(const QString &src, const QString &dest) {
+  QFile f(dest + "/.fk_ver");
+  if (f.exists() && f.open(QIODevice::ReadOnly)) {
+    auto ver = f.readAll();
+    if (ver == FK_VERSION) {
+      return;
+    }
+  }
+#ifdef Q_OS_ANDROID
+  copyPath(src, dest);
+#elif defined(Q_OS_LINUX)
+  system(QString("cp -r %1 %2").arg(src).arg(dest).toUtf8());
+#endif
+}
+
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include <stdlib.h>
 #include <unistd.h>
@@ -59,12 +74,12 @@ static void prepareForLinux() {
   int len = readlink("/proc/self/exe", buf, 256);
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    system("cp -r /usr/share/FreeKill ~/.local/share");
+    installFkAssets("/usr/share/FreeKill", "~/.local/share");
     chdir(getenv("HOME"));
     chdir(".local/share/FreeKill");
   } else if (!strcmp(buf, "/usr/local/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    system("cp -r /usr/local/share/FreeKill ~/.local/share");
+    installFkAssets("/usr/local/share/FreeKill", "~/.local/share");
     chdir(getenv("HOME"));
     chdir(".local/share/FreeKill");
   }
@@ -170,7 +185,7 @@ int main(int argc, char *argv[])
   QSplashScreen splash(QPixmap("assets:/res/image/splash.jpg").scaled(screenWidth, screenHeight));
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
-  copyPath("assets:/res", QDir::currentPath());
+  installFkAssets("assets:/res", QDir::currentPath());
 #else
   QSplashScreen splash(QPixmap("image/splash.jpg"));
   splash.show();
