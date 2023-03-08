@@ -1,4 +1,3 @@
-#include "qmlbackend.h"
 #ifndef Q_OS_WASM
 #include "server.h"
 #include "packman.h"
@@ -12,11 +11,14 @@
 #include "applink.c"
 #endif
 
+#ifndef FK_SERVER_ONLY
 #include <QSplashScreen>
 #include <QScreen>
 #include <QFileDialog>
-#ifndef Q_OS_ANDROID
-#include <QQuickStyle>
+# ifndef Q_OS_ANDROID
+# include <QQuickStyle>
+# endif
+#include "qmlbackend.h"
 #endif
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
@@ -105,10 +107,12 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QStri
     break;
   case QtCriticalMsg:
     fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(), localMsg.constData());
+#ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
       Backend->notifyUI("ErrorDialog", QString("⛔ %1/Error occured!\n  %2")
         .arg(threadName).arg(localMsg));
     }
+#endif
     break;
   case QtFatalMsg:
     fprintf(stderr, "[%s/FATAL] %s\n", threadName.constData(), localMsg.constData());
@@ -122,13 +126,13 @@ int main(int argc, char *argv[])
   qInstallMessageHandler(fkMsgHandler);
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
-  QCoreApplication::setApplicationVersion("Alpha 0.0.1");
+  QCoreApplication::setApplicationVersion(FK_VERSION);
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
 #endif
 
-#ifndef Q_OS_WASM
+#ifndef FK_CLIENT_ONLY
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -154,27 +158,34 @@ int main(int argc, char *argv[])
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+# if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       auto shell = new Shell;
       Pacman = new PackMan;
       shell->start();
-#endif
+# endif
     }
     return app->exec();
   }
-#else
-  copyPath(":/", QDir::currentPath());
 #endif
+
+#ifdef FK_SERVER_ONLY
+  qFatal("This is server-only build and have no GUI support.\n\
+      Please use ./FreeKill -s to start a server in command line.");
+#else
+
+# ifdef Q_OS_WASM
+  copyPath(":/", QDir::currentPath());
+# endif
 
   app = new QApplication(argc, argv);
-#ifdef DESKTOP_BUILD
+# ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
-#endif
+# endif
 
-#define SHOW_SPLASH_MSG(msg) \
+# define SHOW_SPLASH_MSG(msg) \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 
-#ifdef Q_OS_ANDROID
+# ifdef Q_OS_ANDROID
   QJniObject::callStaticMethod <void>("org/notify/FreeKill/Helper", "InitView", "()V");
   QDir::setCurrent("/storage/emulated/0/Android/data/org.notify.FreeKill/files");
 
@@ -186,16 +197,16 @@ int main(int argc, char *argv[])
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
-#else
+# else
   QSplashScreen splash(QPixmap("image/splash.jpg"));
   splash.show();
-#endif
+# endif
 
   SHOW_SPLASH_MSG("Loading qml files...");
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
-#ifndef Q_OS_ANDROID
+# ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
-#endif
+# endif
 
   QTranslator translator;
   Q_UNUSED(translator.load("zh_CN.qm"));
@@ -204,35 +215,35 @@ int main(int argc, char *argv[])
   QmlBackend backend;
   backend.setEngine(engine);
 
-#ifndef Q_OS_WASM
+# ifndef Q_OS_WASM
   Pacman = new PackMan;
-#endif
+# endif
 
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
 
-#ifdef QT_DEBUG
+# ifdef QT_DEBUG
   bool debugging = true;
-#else
+# else
   bool debugging = false;
-#endif
+# endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
 
 
   QString system;
-#if defined(Q_OS_ANDROID)
+# if defined(Q_OS_ANDROID)
   system = "Android";
-#elif defined(Q_OS_WASM)
+# elif defined(Q_OS_WASM)
   system = "Web";
   engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9527");
-#elif defined(Q_OS_WIN32)
+# elif defined(Q_OS_WIN32)
   system = "Win";
   ::system("chcp 65001");
-#elif defined(Q_OS_LINUX)
+# elif defined(Q_OS_LINUX)
   system = "Linux";
-#else
+# else
   system = "Other";
-#endif
+# endif
   engine->rootContext()->setContextProperty("OS", system);
 
   engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
@@ -250,4 +261,5 @@ int main(int argc, char *argv[])
   delete Pacman;
 
   return ret;
+#endif
 }

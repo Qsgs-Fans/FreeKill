@@ -10,35 +10,32 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
-  "client/client.cpp"
-  "client/clientplayer.cpp"
-  "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
 
-set(freekill_HEADERS
-  "core/util.h"
-  "core/player.h"
-  "network/server_socket.h"
-  "network/client_socket.h"
-  "network/router.h"
-  "server/server.h"
-  "server/serverplayer.h"
-  "server/room.h"
-  "client/client.h"
-  "client/clientplayer.h"
-  "ui/qmlbackend.h"
-)
+if (NOT DEFINED FK_SERVER_ONLY)
+  list(APPEND freekill_SRCS
+    "client/client.cpp"
+    "client/clientplayer.cpp"
+    "ui/qmlbackend.cpp"
+  )
+endif ()
 
 set(FKP_LIB fkparse)
 set(QT_LIB
-  Qt6::Qml
-  Qt6::Gui
-  Qt6::Widgets
   Qt6::Network
-  Qt6::Multimedia
-  Qt6::QuickControls2
 )
+
+if (NOT DEFINED FK_SERVER_ONLY)
+  list(APPEND QT_LIB
+    Qt6::Qml
+    Qt6::Gui
+    Qt6::Widgets
+    Qt6::Multimedia
+    Qt6::QuickControls2
+  )
+endif()
+
 if (WIN32)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
@@ -78,8 +75,6 @@ else ()
   list(APPEND freekill_SRCS "server/shell.cpp")
   set(GIT_LIB git2)
 endif ()
-
-source_group("Include" FILES ${freekill_HEADERS})
 
 target_sources(FreeKill PRIVATE ${freekill_SRCS})
 target_precompile_headers(FreeKill PRIVATE "pch.h")
