@@ -124,6 +124,51 @@ extension:addCards{
   ironChain:clone(Card.Club, 13),
 }
 
+local supplyShortageSkill = fk.CreateActiveSkill{
+  name = "supply_shortage_skill",
+  distance_limit = 1,
+  target_filter = function(self, to_select, selected)
+    if #selected == 0 then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      if Self ~= player then
+        return not player:hasDelayedTrick("supply_shortage") and
+          Self:distanceTo(player) <= self:getDistanceLimit(Self)
+      end
+    end
+    return false
+  end,
+  target_num = 1,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    local judge = {
+      who = to,
+      reason = "supply_shortage",
+      pattern = ".|.|spade,heart,diamond",
+    }
+    room:judge(judge)
+    local result = judge.card
+    if result.suit ~= Card.Club then
+      to:skip(Player.Draw)
+    end
+    self:onNullified(room, effect)
+  end,
+  on_nullified = function(self, room, effect)
+    room:moveCards{
+      ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile
+    }
+  end,
+}
+local supplyShortage = fk.CreateDelayedTrickCard{
+  name = "supply_shortage",
+  skill = supplyShortageSkill,
+}
+extension:addCards{
+  supplyShortage:clone(Card.Spade, 10),
+  supplyShortage:clone(Card.Club, 4),
+}
+
 local gudingSkill = fk.CreateTriggerSkill{
   name = "#guding_blade_skill",
   attached_equip = "guding_blade",
@@ -183,6 +228,7 @@ Fk:loadTranslationTable{
   ["thunder__slash"] = "雷杀",
   ["fire__slash"] = "火杀",
   ["iron_chain"] = "铁锁连环",
+  ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",
   ["hualiu"] = "骅骝",
 }
