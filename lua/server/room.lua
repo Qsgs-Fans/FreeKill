@@ -899,7 +899,10 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
   end
 
   local new_ret = table.filter(ret, function(id) return id ~= -1 end)
-  table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), #ret - #new_ret))
+  local hand_num = #ret - #new_ret
+  if hand_num > 0 then
+    table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hand_num))
+  end
 
   return new_ret
 end
