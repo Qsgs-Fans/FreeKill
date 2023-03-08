@@ -3,7 +3,10 @@
 
 #include "router.h"
 #include "clientplayer.h"
+
+#ifndef FK_SERVER_ONLY
 #include "qmlbackend.h"
+#endif
 
 class Client : public QObject {
   Q_OBJECT

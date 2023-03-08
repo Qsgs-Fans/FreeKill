@@ -1,8 +1,13 @@
 #include "packman.h"
 #include "util.h"
-#include "qmlbackend.h"
 #include "git2.h"
 #include <qjsondocument.h>
+
+#ifndef FK_SERVER_ONLY
+#include "qmlbackend.h"
+#else
+static void *Backend = nullptr;
+#endif
 
 PackMan *Pacman;
 
@@ -51,7 +56,9 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
     thread->start();
     connect(thread, &QThread::finished, [=](){
       thread->deleteLater();
+#ifndef FK_SERVER_ONLY
       Backend->emitNotifyUI("DownloadComplete", "");
+#endif
     });
   } else {
     f();
@@ -82,7 +89,9 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
     thread->start();
     connect(thread, &QThread::finished, [=](){
       thread->deleteLater();
+#ifndef FK_SERVER_ONLY
       Backend->emitNotifyUI("DownloadComplete", "");
+#endif
     });
   } else {
     threadFunc();
@@ -164,6 +173,7 @@ static int transfer_progress_cb(const git_indexer_progress *stats, void *payload
             stats->indexed_objects, stats->received_bytes);
     }
   } else {
+#ifndef FK_SERVER_ONLY
     if (stats->received_objects == stats->total_objects) {
       auto msg = QString("Resolving deltas %1/%2")
             .arg(stats->indexed_deltas).arg(stats->total_deltas);
@@ -174,6 +184,7 @@ static int transfer_progress_cb(const git_indexer_progress *stats, void *payload
             .arg(stats->indexed_objects).arg(stats->received_bytes / 1024);
       Backend->emitNotifyUI("UpdateBusyText", msg);
     }
+#endif
   }
 
   return 0;

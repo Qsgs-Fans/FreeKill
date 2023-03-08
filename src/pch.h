@@ -3,8 +3,6 @@
 
 // core gui qml
 #include <QtCore>
-#include <QApplication>
-#include <QtQml>
 
 // network
 #include <QTcpServer>
@@ -20,6 +18,16 @@ typedef int LuaFunction;
 
 #if !defined (Q_OS_ANDROID) && !defined (Q_OS_WASM)
 #define DESKTOP_BUILD
+#endif
+
+#if defined(Q_OS_WASM)
+#define FK_CLIENT_ONLY
+#endif
+
+// You may define FK_SERVER_ONLY with cmake .. -D...
+#ifndef FK_SERVER_ONLY
+#include <QApplication>
+#include <QtQml>
 #endif
 
 #endif // _PCH_H

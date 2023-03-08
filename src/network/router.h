@@ -29,7 +29,7 @@ public:
   ClientSocket *getSocket() const;
   void setSocket(ClientSocket *socket);
 
-#ifndef Q_OS_WASM
+#ifndef FK_CLIENT_ONLY
   void setReplyReadySemaphore(QSemaphore *semaphore);
 #endif
 
@@ -67,7 +67,7 @@ private:
   int expectedReplyId;
   int replyTimeout;
   QString m_reply;    // should be json string
-#ifndef Q_OS_WASM
+#ifndef FK_CLIENT_ONLY
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
 #endif

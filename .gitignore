@@ -3,6 +3,7 @@ build/
 lib/libgit2/
 *.o
 zh_CN.qm
+.fk_ver
 
 # IDE & LSP
 .kdev4/
