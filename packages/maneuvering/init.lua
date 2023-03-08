@@ -72,6 +72,35 @@ extension:addCards{
   fireSlash:clone(Card.Diamond, 5),
 }
 
+local ironChainEffect = fk.CreateTriggerSkill{
+  name = "iron_chain_effect",
+  global = true,
+  priority = 0, -- game rule
+  refresh_events = {fk.DamageFinished},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and data.damageType ~= fk.NormalDamage
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    if data.to.chained then
+      data.to:setChainState(false)
+    else
+      return
+    end
+    if data.chain then return end
+
+    local targets = table.filter(room:getAlivePlayers(), function(p)
+      return p.chained
+    end)
+    for _, p in ipairs(targets) do
+      local dmg = table.simpleClone(data)
+      dmg.to = p
+      dmg.chain = true
+      room:damage(dmg)
+    end
+  end,
+}
+Fk:addSkill(ironChainEffect)
 local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
