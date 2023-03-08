@@ -72,6 +72,29 @@ extension:addCards{
   fireSlash:clone(Card.Diamond, 5),
 }
 
+local ironChainCardSkill = fk.CreateActiveSkill{
+  name = "iron_chain_skill",
+  min_target_num = 1,
+  max_target_num = 2,
+  target_filter = function() return true end,
+  on_effect = function(self, room, cardEffectEvent)
+    local to = room:getPlayerById(cardEffectEvent.to)
+    to:setChainState(not to.chained)
+  end,
+}
+local ironChain = fk.CreateTrickCard{
+  name = "iron_chain",
+  skill = ironChainCardSkill,
+}
+extension:addCards{
+  ironChain:clone(Card.Spade, 11),
+  ironChain:clone(Card.Spade, 12),
+  ironChain:clone(Card.Club, 10),
+  ironChain:clone(Card.Club, 11),
+  ironChain:clone(Card.Club, 12),
+  ironChain:clone(Card.Club, 13),
+}
+
 local gudingSkill = fk.CreateTriggerSkill{
   name = "#guding_blade_skill",
   attached_equip = "guding_blade",
@@ -130,6 +153,7 @@ extension:addCards{
 Fk:loadTranslationTable{
   ["thunder__slash"] = "雷杀",
   ["fire__slash"] = "火杀",
+  ["iron_chain"] = "铁锁连环",
   ["guding_blade"] = "古锭刀",
   ["hualiu"] = "骅骝",
 }

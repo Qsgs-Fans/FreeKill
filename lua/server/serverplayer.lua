@@ -510,4 +510,15 @@ function ServerPlayer:setSkillUseHistory(cardName, num, scope)
   self:doNotify("SetSkillUseHistory", json.encode{cardName, num, scope})
 end
 
+---@param chained boolean
+function ServerPlayer:setChainState(chained)
+  self.chained = chained
+  self.room:broadcastProperty(self, "chained")
+  self.room:sendLog{
+    type = "#ChainStateChange",
+    from = self.id,
+    arg = self.chained and "chained" or "not-chained"
+  }
+end
+
 return ServerPlayer
