@@ -194,6 +194,46 @@ local gudingBlade = fk.CreateWeapon{
 
 extension:addCard(gudingBlade)
 
+local vineSkill = fk.CreateTriggerSkill{
+  name = "#vine_skill",
+  attached_equip = "vine",
+  mute = true,
+  frequency = Skill.Compulsory,
+
+  events = {fk.PreCardEffect, fk.DamageInflicted},
+  can_trigger = function(self, event, target, player, data)
+    if event == fk.DamageInflicted then
+      return target == player and player:hasSkill(self.name) and
+        data.damageType == fk.FireDamage
+    end
+    local effect = data ---@type CardEffectEvent
+    return player.id == effect.to and player:hasSkill(self.name) and
+      (effect.card.name == "slash" or effect.card.name == "savage_assault" or
+      effect.card.name == "archery_attack")
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.DamageInflicted then
+      room:broadcastPlaySound("./packages/maneuvering/audio/card/vineburn")
+      room:setEmotion(player, "./packages/maneuvering/image/anim/vineburn")
+      data.damage = data.damage + 1
+    else
+      room:broadcastPlaySound("./packages/maneuvering/audio/card/vine")
+      room:setEmotion(player, "./packages/maneuvering/image/anim/vine")
+      return true
+    end
+  end,
+}
+Fk:addSkill(vineSkill)
+local vine = fk.CreateArmor{
+  name = "vine",
+  equip_skill = vineSkill,
+}
+extension:addCards{
+  vine:clone(Card.Spade, 2),
+  vine:clone(Card.Club, 2),
+}
+
 local huaLiu = fk.CreateDefensiveRide{
   name = "hualiu",
   suit = Card.Diamond,
@@ -230,6 +270,7 @@ Fk:loadTranslationTable{
   ["iron_chain"] = "铁锁连环",
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",
+  ["vine"] = "藤甲",
   ["hualiu"] = "骅骝",
 }
 
