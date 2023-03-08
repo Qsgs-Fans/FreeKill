@@ -72,6 +72,31 @@ extension:addCards{
   fireSlash:clone(Card.Diamond, 5),
 }
 
+local gudingSkill = fk.CreateTriggerSkill{
+  name = "#guding_blade_skill",
+  attached_equip = "guding_blade",
+  frequency = Skill.Compulsory,
+  events = {fk.DamageCaused},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
+      not data.chain
+  end,
+  on_use = function(_, _, _, _, data)
+    data.damage = data.damage + 1
+  end,
+}
+Fk:addSkill(gudingSkill)
+local gudingBlade = fk.CreateWeapon{
+  name = "guding_blade",
+  suit = Card.Spade,
+  number = 1,
+  attack_range = 2,
+  equip_skill = gudingSkill,
+}
+
+extension:addCard(gudingBlade)
+
 local huaLiu = fk.CreateDefensiveRide{
   name = "hualiu",
   suit = Card.Diamond,
@@ -100,6 +125,13 @@ extension:addCards{
 
   Fk:cloneCard("nullification", Card.Heart, 1),
   Fk:cloneCard("nullification", Card.Spade, 13),
+}
+
+Fk:loadTranslationTable{
+  ["thunder__slash"] = "雷杀",
+  ["fire__slash"] = "火杀",
+  ["guding_blade"] = "古锭刀",
+  ["hualiu"] = "骅骝",
 }
 
 return extension
