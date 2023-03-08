@@ -234,6 +234,39 @@ extension:addCards{
   vine:clone(Card.Club, 2),
 }
 
+local silverLionSkill = fk.CreateTriggerSkill{
+  name = "#silver_lion_skill",
+  attached_equip = "silver_lion",
+  frequency = Skill.Compulsory,
+  events = {fk.DamageInflicted},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and data.damage > 1
+  end,
+  on_use = function(_, _, _, _, data)
+    data.damage = 1
+  end,
+}
+Fk:addSkill(silverLionSkill)
+local silverLion = fk.CreateArmor{
+  name = "silver_lion",
+  suit = Card.Club,
+  number = 1,
+  equip_skill = silverLionSkill,
+  on_uninstall = function(self, room, player)
+    Armor.onUninstall(self, room, player)
+    if player:isWounded() then
+      room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
+      room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
+      room:recover{
+        who = player,
+        num = 1,
+        skillName = self.name
+      }
+    end
+  end,
+}
+extension:addCard(silverLion)
+
 local huaLiu = fk.CreateDefensiveRide{
   name = "hualiu",
   suit = Card.Diamond,
@@ -261,6 +294,7 @@ extension:addCards{
   Fk:cloneCard("peach", Card.Diamond, 3),
 
   Fk:cloneCard("nullification", Card.Heart, 1),
+  Fk:cloneCard("nullification", Card.Heart, 13),
   Fk:cloneCard("nullification", Card.Spade, 13),
 }
 
@@ -271,6 +305,7 @@ Fk:loadTranslationTable{
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",
   ["vine"] = "藤甲",
+  ["silver_lion"] = "白银狮子",
   ["hualiu"] = "骅骝",
 }
 
