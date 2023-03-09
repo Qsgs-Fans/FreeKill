@@ -93,6 +93,10 @@ local ironChainEffect = fk.CreateTriggerSkill{
       return p.chained
     end)
     for _, p in ipairs(targets) do
+      room:sendLog{
+        type = "#ChainDamage",
+        from = p.id
+      }
       local dmg = table.simpleClone(data)
       dmg.to = p
       dmg.chain = true
