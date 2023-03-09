@@ -79,8 +79,8 @@ endif()
 add_custom_command(
   TARGET FreeKill
   POST_BUILD
-  COMMENT "Generating version file .fk_ver"
-  COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/.fk_ver
+  COMMENT "Generating version file fk_ver"
+  COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/fk_ver
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

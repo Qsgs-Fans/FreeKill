@@ -30,7 +30,7 @@ mkdir assets/res/server
 cp ../server/init.sql assets/res/server
 cp ../LICENSE assets/res
 cp ../zh_CN.qm assets/res
-cp ../.fk_ver assets/res
+cp ../fk_ver assets/res
 
 # Due to Qt Android's bug, we need make sure every directory has a subfile (not subdir)
 function fixDir() {

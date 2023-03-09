@@ -52,9 +52,9 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
 #endif
 
 static void installFkAssets(const QString &src, const QString &dest) {
-  QFile f(dest + "/.fk_ver");
+  QFile f(dest + "/fk_ver");
   if (f.exists() && f.open(QIODevice::ReadOnly)) {
-    auto ver = f.readAll();
+    auto ver = f.readLine().simplified();
     if (ver == FK_VERSION) {
       return;
     }
