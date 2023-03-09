@@ -597,9 +597,9 @@ local lightningSkill = fk.CreateActiveSkill{
   end,
   on_nullified = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
-    local nextp
+    local nextp = to
     repeat
-      nextp = to:getNextAlive()
+      nextp = nextp:getNextAlive()
       if nextp == to then return end
     until not nextp:hasDelayedTrick("lightning")
 

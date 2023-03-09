@@ -47,6 +47,7 @@ fk.FireDamage = 3
 ---@field to ServerPlayer
 ---@field damage integer
 ---@field card Card
+---@field chain boolean
 ---@field damageType DamageType
 ---@field skillName string
 

@@ -463,6 +463,10 @@ function Player:isWounded()
   return self.hp < self.maxHp
 end
 
+function Player:getLostHp()
+  return math.min(self.maxHp - self.hp, self.maxHp)
+end
+
 ---@param skill string | Skill
 ---@return Skill
 local function getActualSkill(skill)

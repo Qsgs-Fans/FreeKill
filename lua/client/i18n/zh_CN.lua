@@ -125,6 +125,9 @@ Fk:loadTranslationTable{
   ["phase_draw"] = "摸牌阶段",
   ["phase_play"] = "出牌阶段",
   ["phase_discard"] = "弃牌阶段",
+
+  ["chained"] = "横置",
+  ["not-chained"] = "重置",
 }
 
 -- related to sendLog
@@ -142,6 +145,8 @@ Fk:loadTranslationTable{
 
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+  ["$InstallEquip"] = "%from 装备了 %card",
+  ["$UninstallEquip"] = "%from 卸载了 %card",
 
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",
@@ -192,4 +197,6 @@ Fk:loadTranslationTable{
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
+  ["#ChainStateChange"] = "%from %arg 了武将牌",
+  ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
 }

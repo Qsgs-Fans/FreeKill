@@ -32,6 +32,11 @@ function getCardPicture(cid) {
   let path = AppPath + "/packages/" + extension + "/image/card/" + name + ".png";
   if (Backend.exists(path)) {
     return path;
+  } else {
+    for (let dir of Backend.ls(AppPath + "/packages/")) {
+      path = AppPath + "/packages/" + dir + "/image/card/" + name + ".png";
+      if (Backend.exists(path)) return path;
+    }
   }
   return CARD_DIR + "unknown.png";
 }
