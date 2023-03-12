@@ -161,12 +161,6 @@ Item {
     fillMode: Image.PreserveAspectCrop
     source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
 
-    Rectangle {
-      anchors.fill: parent
-      visible: !root.drank
-      color: "red"
-      opacity: 0.5
-    }
   }
 
   Rectangle {
@@ -190,6 +184,18 @@ Item {
     source: generalImage
     saturation: 0
     visible: root.dead
+  }
+
+  Rectangle {
+    x: 31
+    y: 5
+    width: 138
+    height: 222
+    radius: 8
+
+    visible: root.drank > 0
+    color: "red"
+    opacity: 0.5
   }
 
   Image {
@@ -504,10 +510,6 @@ Item {
     }
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
     kingdom = data.kingdom;
-  }
-
-  onDrankChanged: {
-    console.log('property drank change to: ' + root.drank);
   }
 
   function chat(msg) {
