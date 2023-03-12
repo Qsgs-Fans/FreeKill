@@ -805,6 +805,45 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
 end
 
 ---@param player ServerPlayer
+---@param minNum integer
+---@param maxNum integer
+---@param includeEquip boolean
+---@param skillName string
+---@param cancelable boolean
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable)
+  if minNum < 1 then
+    return nil
+  end
+  cancelable = cancelable or false
+
+  local chosenCards = {}
+  local data = {
+    num = maxNum,
+    min_num = minNum,
+    include_equip = includeEquip,
+    reason = skillName
+  }
+  local prompt = "#askForCard:::" .. maxNum .. ":" .. minNum
+  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)
+  if ret then
+    chosenCards = ret.cards
+  else
+    if cancelable then return {} end
+    local hands = player:getCardIds(Player.Hand)
+    if includeEquip then
+      table.insertTable(hands, player:getCardIds(Player.Equip))
+    end
+    for i = 1, minNum do
+      local randomId = hands[math.random(1, #hands)]
+      table.insert(chosenCards, randomId)
+      table.removeOne(hands, randomId)
+    end
+  end
+
+  return chosenCards
+end
+
+---@param player ServerPlayer
 ---@param targets integer[]
 ---@param minNum integer
 ---@param maxNum integer
@@ -1255,7 +1294,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
           nullifiedTargets = cardUseEvent.nullifiedTargets or {},
           tos = aimGroup,
           firstTarget = firstTarget,
-          additionalDamage = cardUseEvent.addtionalDamage
+          additionalDamage = cardUseEvent.additionalDamage
         }
 
         local index = 1
@@ -1436,8 +1475,9 @@ function Room:doCardUseEffect(cardUseEvent)
     nullifiedTargets = cardUseEvent.nullifiedTargets,
     disresponsiveList = cardUseEvent.disresponsiveList,
     unoffsetableList = cardUseEvent.unoffsetableList,
-    addtionalDamage = cardUseEvent.addtionalDamage,
+    additionalDamage = cardUseEvent.additionalDamage,
     cardIdsResponded = cardUseEvent.nullifiedTargets,
+    extra_data = cardUseEvent.extra_data,
   }
 
   -- If using card to other card (like jink or nullification), simply effect and return
@@ -1456,7 +1496,7 @@ function Room:doCardUseEffect(cardUseEvent)
         local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
 
         cardEffectEvent.subTargets = curAimEvent.subTargets
-        cardEffectEvent.addtionalDamage = curAimEvent.additionalDamage
+        cardEffectEvent.additionalDamage = curAimEvent.additionalDamage
 
         if curAimEvent.disresponsiveList then
           for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
@@ -1890,9 +1930,9 @@ function Room:throwCard(card_ids, skillName, who, thrower)
   })
 end
 
----@param pindianStruct PindianStruct
-function Room:pindian(pindianStruct)
-
+---@param pindianData PindianStruct
+function Room:pindian(pindianData)
+  return execGameEvent(GameEvent.Pindian, pindianData)
 end
 
 -- other helpers

@@ -22,7 +22,7 @@ local slashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.addtionalDamage or 0),
+      damage = 1 + (effect.additionalDamage or 0),
       damageType = fk.NormalDamage,
       skillName = self.name
     })
@@ -293,7 +293,7 @@ local duelSkill = fk.CreateActiveSkill{
         from = responsers[currentTurn % 2 + 1],
         to = currentResponser,
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -433,7 +433,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -480,7 +480,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -541,6 +541,9 @@ local amazingGraceSkill = fk.CreateActiveSkill{
         TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
     end
+  end,
+  pre_action = function(self, room, cardUseEvent)
+    
   end,
   on_effect = function(self, room, cardEffectEvent)
     room:getPlayerById(cardEffectEvent.to):drawCards(1, 'god_salvation')

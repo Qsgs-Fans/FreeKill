@@ -459,7 +459,7 @@ callbacks["PropertyUpdate"] = function(jsonData) {
   let uid = data[0];
   let property_name = data[1];
   let value = data[2];
-
+  
   if (Self.id === uid) {
     dashboardModel[property_name] = value;
     roomScene.dashboardModelChanged();

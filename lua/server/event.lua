@@ -33,8 +33,8 @@ fk.AskForRetrial = 25
 fk.FinishRetrial = 26
 fk.FinishJudge = 27
 
-fk.PindianVerifying = 28
-fk.Pindian = 29
+fk.Empty28 = 28
+fk.Empty29 = 29
 
 fk.TurnedOver = 30
 fk.ChainStateChanged = 31
@@ -82,4 +82,9 @@ fk.GameFinished = 65
 fk.AskForCardUse = 66
 fk.AskForCardResponse = 67
 
-fk.NumOfEvents = 68
+fk.StartPindian = 68
+fk.PindianCardsDisplayed = 69
+fk.PindianResultConfirmed = 70
+fk.PindianFinished = 71
+
+fk.NumOfEvents = 72

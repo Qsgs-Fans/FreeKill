@@ -202,9 +202,13 @@ GameRule = fk.CreateTriggerSkill{
       for _, p in ipairs(savers) do
         if player.hp > 0 or player.dead then break end
         while player.hp < 1 do
-          local peach_use = room:askForUseCard(p, "peach")
+          local peach_use = room:askForUseCard(p, "", "peach,analeptic")
           if not peach_use then break end
           peach_use.tos = { {player.id} }
+          if peach_use.card.trueName == "analeptic" then
+            peach_use.extra_data = peach_use.extra_data or {}
+            peach_use.extra_data.analepticRecover = true
+          end
           room:useCard(peach_use)
         end
       end

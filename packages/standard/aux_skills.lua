@@ -15,6 +15,23 @@ local discardSkill = fk.CreateActiveSkill{
   max_card_num = function(self) return self.num end,
 }
 
+local chooseCardsSkill = fk.CreateActiveSkill{
+  name = "choose_cards_skill",
+  card_filter = function(self, to_select, selected)
+    if #selected >= self.num then
+      return false
+    end
+
+    if not self.include_equip then
+      return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    end
+
+    return true
+  end,
+  min_card_num = function(self) return self.min_num end,
+  max_card_num = function(self) return self.num end,
+}
+
 local choosePlayersSkill = fk.CreateActiveSkill{
   name = "choose_players_skill",
   card_filter = function(self, to_select)
@@ -33,5 +50,6 @@ local choosePlayersSkill = fk.CreateActiveSkill{
 
 AuxSkills = {
   discardSkill,
+  chooseCardsSkill,
   choosePlayersSkill,
 }

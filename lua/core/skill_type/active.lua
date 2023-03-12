@@ -146,6 +146,10 @@ end
 function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
+---@param cardUseEvent CardUseStruct
+function ActiveSkill:preAction(room, cardUseEvent) end
+
+---@param room Room
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:aboutToEffect(room, cardEffectEvent) end
 

@@ -68,6 +68,7 @@ function Player:initialize()
   self.dying = false
   self.dead = false
   self.state = ""
+  self.drank = 0
 
   self.player_skills = {}
   self.derivative_skills = {}

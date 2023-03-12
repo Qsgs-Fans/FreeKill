@@ -30,6 +30,9 @@ GameEvent.DrawInitial = 15
 GameEvent.Turn = 16
 dofile "lua/server/events/gameflow.lua"
 
+GameEvent.Pindian = 17
+dofile "lua/server/events/pindian.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 

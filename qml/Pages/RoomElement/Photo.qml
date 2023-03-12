@@ -23,7 +23,7 @@ Item {
   property bool dying: false
   property bool faceup: true
   property bool chained: false
-  property bool drank: false
+  property int drank: 0
   property bool isOwner: false
   property int distance: 0
   property string status: "normal"
@@ -160,6 +160,13 @@ Item {
     visible: false
     fillMode: Image.PreserveAspectCrop
     source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+
+    Rectangle {
+      anchors.fill: parent
+      visible: !root.drank
+      color: "red"
+      opacity: 0.5
+    }
   }
 
   Rectangle {
@@ -497,6 +504,10 @@ Item {
     }
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
     kingdom = data.kingdom;
+  }
+
+  onDrankChanged: {
+    console.log('property drank change to: ' + root.drank);
   }
 
   function chat(msg) {
