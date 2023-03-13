@@ -116,6 +116,7 @@ bool QmlBackend::isDir(const QString &file) {
 }
 
 QString QmlBackend::translate(const QString &src) {
+  if (!ClientInstance) return src;
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, "Translate");
   auto bytes = src.toUtf8();
