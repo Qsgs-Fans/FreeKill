@@ -136,7 +136,7 @@ Fk:loadTranslationTable{
   ["biyue"] = "闭月",
   [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
 
-  ["role_mode"] = "身份模式",
+  ["aaa_role_mode"] = "身份模式",
 }
 
 -- aux skills

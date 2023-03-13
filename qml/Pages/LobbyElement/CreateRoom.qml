@@ -47,6 +47,16 @@ Item {
       }
       ComboBox {
         id: gameModeCombo
+        textRole: "name"
+        model: ListModel {
+          id: gameModeList
+        }
+
+        onCurrentIndexChanged: {
+          let data = gameModeList.get(currentIndex);
+          playerNum.from = data.minPlayer;
+          playerNum.to = data.maxPlayer;
+        }
       }
     }
 
@@ -80,5 +90,13 @@ Item {
         }
       }
     }
+  }
+
+  Component.onCompleted: {
+    let mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+    for (let d of mode_data) {
+      gameModeList.append(d);
+    }
+    gameModeCombo.currentIndex = 0;
   }
 }

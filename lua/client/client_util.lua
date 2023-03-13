@@ -376,4 +376,18 @@ function GetExpandPileOfSkill(skillName)
   return skill and (skill.expand_pile or "") or ""
 end
 
+function GetGameModes()
+  local ret = {}
+  for k, v in pairs(Fk.game_modes) do
+    table.insert(ret, {
+      name = Fk:translate(v.name),
+      orig_name = v.name,
+      minPlayer = v.minPlayer,
+      maxPlayer = v.maxPlayer,
+    })
+  end
+  table.sort(ret, function(a, b) return a.name < b.name end)
+  return json.encode(ret)
+end
+
 dofile "lua/client/i18n/init.lua"
