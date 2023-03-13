@@ -78,7 +78,7 @@ Item {
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value, {
               enableFreeAssign: freeAssignCheck.checked,
-              gameMode: gameModeCombo.text,
+              gameMode: gameModeList.get(gameModeCombo.currentIndex).orig_name,
             }])
           );
         }

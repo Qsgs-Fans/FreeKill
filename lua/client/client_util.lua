@@ -386,7 +386,7 @@ function GetGameModes()
       maxPlayer = v.maxPlayer,
     })
   end
-  table.sort(ret, function(a, b) return a.name < b.name end)
+  table.sort(ret, function(a, b) return a.name > b.name end)
   return json.encode(ret)
 end
 

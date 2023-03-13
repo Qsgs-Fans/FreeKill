@@ -56,6 +56,12 @@ public:
   bool hasRequest() const;
 };
 
+%extend Room {
+  QString settings() {
+    return $self->getSettings();
+  }
+}
+
 %{
 void Room::initLua()
 {
