@@ -3,7 +3,7 @@
 ---@field minPlayer integer
 ---@field maxPlayer integer
 ---@field rule TriggerSkill
----@field logic GameLogic
+---@field logic fun()
 local GameMode = class("GameMode")
 
 function GameMode:initialize(name, min, max)
