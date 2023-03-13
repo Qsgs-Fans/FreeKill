@@ -466,13 +466,13 @@ function fk.CreateTreasure(spec)
   return card
 end
 
----@param spec ScenarioSpec
----@return Scenario
-function fk.CreateScenario(spec)
+---@param spec GameMode
+---@return GameMode
+function fk.CreateGameMode(spec)
   assert(type(spec.name) == "string")
   assert(type(spec.minPlayer) == "number")
   assert(type(spec.maxPlayer) == "number")
-  local ret = Scenario:new(spec.name, spec.minPlayer, spec.maxPlayer)
+  local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
   ret.rule = spec.rule
   ret.logic = spec.logic
   return ret

@@ -6,6 +6,7 @@
 ---@field extra_skills Skill[]
 ---@field related_skills table<string, string>
 ---@field cards Card[]
+---@field game_modes GameMode[]
 local Package = class("Package")
 
 ---@alias PackageType integer
@@ -25,6 +26,7 @@ function Package:initialize(name, _type)
   self.extra_skills = {}  -- skill not belongs to any generals, like "jixi"
   self.related_skills = {}
   self.cards = {}
+  self.game_modes = {}
 end
 
 ---@return Skill[]
@@ -58,6 +60,10 @@ function Package:addCards(cards)
   for _, card in ipairs(cards) do
     self:addCard(card)
   end
+end
+
+function Package:addGameMode(game_mode)
+  table.insert(self.game_modes, game_mode)
 end
 
 return Package

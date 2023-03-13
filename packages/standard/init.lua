@@ -921,6 +921,13 @@ local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
 diaochan:addSkill(lijian)
 diaochan:addSkill(biyue)
 
+local role_mode = fk.CreateGameMode{
+  name = "role_mode",
+  minPlayer = 2,
+  maxPlayer = 8,
+}
+extension:addGameMode(role_mode)
+
 -- load translations of this package
 dofile "packages/standard/i18n/init.lua"
 

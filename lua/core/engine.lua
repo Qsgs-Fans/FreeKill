@@ -9,6 +9,7 @@
 ---@field lords string[]
 ---@field cards Card[]
 ---@field translations table<string, table<string, string>>
+---@field game_modes table<string, GameMode>
 local Engine = class("Engine")
 
 function Engine:initialize()
@@ -30,6 +31,7 @@ function Engine:initialize()
   self.lords = {}     -- lordName[]
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
+  self.game_modes = {}
 
   self:loadPackages()
   self:addSkills(AuxSkills)
@@ -51,6 +53,7 @@ function Engine:loadPackage(pack)
     self:addGenerals(pack.generals)
   end
   self:addSkills(pack:getSkills())
+  self:addGameModes(pack.game_modes)
 end
 
 function Engine:loadPackages()
@@ -176,6 +179,22 @@ function Engine:cloneCard(name, suit, number)
   local ret = cd:clone(suit, number)
   ret.package = cd.package
   return ret
+end
+
+---@param game_modes GameMode[]
+function Engine:addGameModes(game_modes)
+  for _, s in ipairs(game_modes) do
+    self:addGameMode(s)
+  end
+end
+
+---@param game_mode GameMode
+function Engine:addGameMode(game_mode)
+  assert(game_mode:isInstanceOf(GameMode))
+  if self.game_modes[game_mode.name] ~= nil then
+    error(string.format("Duplicate game_mode %s detected", game_mode.name))
+  end
+  self.game_modes[game_mode.name] = game_mode
 end
 
 ---@param num integer

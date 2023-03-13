@@ -39,6 +39,17 @@ Item {
       }
     }
 
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Game Mode")
+      }
+      ComboBox {
+        id: gameModeCombo
+      }
+    }
+
     CheckBox {
       id: freeAssignCheck
       checked: Debugging ? true : false
@@ -56,7 +67,8 @@ Item {
           ClientInstance.notifyServer(
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value, {
-              enableFreeAssign: freeAssignCheck.checked
+              enableFreeAssign: freeAssignCheck.checked,
+              gameMode: gameModeCombo.text,
             }])
           );
         }
