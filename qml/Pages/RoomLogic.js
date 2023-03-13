@@ -843,7 +843,7 @@ callbacks["SetPlayerMark"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let player = getPhotoOrSelf(data[0]);
   let mark = data[1];
-  let value = data[2];
+  let value = data[2].toString();
   if (value == 0) {
     player.markArea.removeMark(mark);
   } else {

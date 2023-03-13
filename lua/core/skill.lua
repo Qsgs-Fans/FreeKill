@@ -1,5 +1,6 @@
 ---@class Skill : Object
 ---@field name string
+---@field trueName string
 ---@field package Package
 ---@field frequency Frequency
 ---@field visible boolean
@@ -29,6 +30,9 @@ function Skill:initialize(name, frequency)
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
+
+  local name_splited = name:split("__")
+  self.trueName = name_splited[#name_splited]
 
   if string.sub(name, 1, 1) == "#" then
     self.visible = false

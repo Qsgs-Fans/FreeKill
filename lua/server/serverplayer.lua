@@ -433,6 +433,19 @@ function ServerPlayer:skip(phase)
   end
 end
 
+function ServerPlayer:gainAnExtraTurn()
+  local room = self.room
+  room:sendLog{
+    type = "#GainAnExtraTurn",
+    from = self.id
+  }
+
+  local current = room.current
+  room.current = self
+  GameEvent(GameEvent.Turn):exec()
+  room.current = current
+end
+
 function ServerPlayer:drawCards(num, skillName, fromPlace)
   return self.room:drawCards(self, num, skillName, fromPlace)
 end

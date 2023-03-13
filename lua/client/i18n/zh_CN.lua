@@ -150,6 +150,7 @@ Fk:loadTranslationTable{
 
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",
+  ["#GainAnExtraTurn"] = "%from 开始进行一个额外的回合",
 
   -- useCard
   ["#UseCard"] = "%from 使用了牌 %card",

@@ -994,6 +994,7 @@ function Room:handleUseCardReply(player, data)
       end)
       return nil
     elseif skill:isInstanceOf(ViewAsSkill) then
+      Self = player
       local c = skill:viewAs(selected_cards)
       if c then
         self:useSkill(player, skill)

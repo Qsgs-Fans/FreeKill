@@ -3,7 +3,7 @@ local extension = Package:new("maneuvering", Package.CardPack)
 local slash = Fk:cloneCard("slash")
 
 local thunderSlashSkill = fk.CreateActiveSkill{
-  name = "thunder_slash_skill",
+  name = "thunder__slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
@@ -40,7 +40,7 @@ extension:addCards{
 }
 
 local fireSlashSkill = fk.CreateActiveSkill{
-  name = "fire_slash_skill",
+  name = "fire__slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
