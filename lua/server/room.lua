@@ -307,6 +307,21 @@ function Room:removePlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num - count, 0))
 end
 
+---@param tag_name string
+function Room:setTag(tag_name, value)
+  self.tag[tag_name] = value
+end
+
+---@param tag_name string
+function Room:getTag(tag_name)
+  return self.tag[tag_name]
+end
+
+---@param tag_name string
+function Room:removeTag(tag_name)
+  self.tag[tag_name] = nil
+end
+
 ------------------------------------------------------------------------
 -- network functions, notify function
 ------------------------------------------------------------------------
