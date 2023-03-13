@@ -15,6 +15,7 @@
 ---@field card_place table<integer, CardArea>
 ---@field owner_map table<integer, integer>
 ---@field status_skills Skill[]
+---@field settings table
 local Room = class("Room")
 
 -- load classes used by the game
@@ -58,6 +59,7 @@ function Room:initialize(_room)
 
   self.room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data
+    self.settings = json.decode(_room:settings())
     local main_co = coroutine.create(function()
       self:run()
     end)
@@ -114,7 +116,9 @@ function Room:run()
     table.insert(self.players, player)
   end
 
-  self.logic = GameLogic:new(self)
+  local mode = Fk.game_modes[self.settings.gameMode]
+  self.logic = (mode.logic or GameLogic):new(self)
+  if mode.rule then self.logic:addTriggerSkill(mode.rule) end
   self.logic:run()
 end
 
@@ -305,6 +309,21 @@ function Room:removePlayerMark(player, mark, count)
   local num = player:getMark(mark)
   num = num or 0
   self:setPlayerMark(player, mark, math.max(num - count, 0))
+end
+
+---@param tag_name string
+function Room:setTag(tag_name, value)
+  self.tag[tag_name] = value
+end
+
+---@param tag_name string
+function Room:getTag(tag_name)
+  return self.tag[tag_name]
+end
+
+---@param tag_name string
+function Room:removeTag(tag_name)
+  self.tag[tag_name] = nil
 end
 
 ------------------------------------------------------------------------

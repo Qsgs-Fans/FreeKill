@@ -39,6 +39,27 @@ Item {
       }
     }
 
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Game Mode")
+      }
+      ComboBox {
+        id: gameModeCombo
+        textRole: "name"
+        model: ListModel {
+          id: gameModeList
+        }
+
+        onCurrentIndexChanged: {
+          let data = gameModeList.get(currentIndex);
+          playerNum.from = data.minPlayer;
+          playerNum.to = data.maxPlayer;
+        }
+      }
+    }
+
     CheckBox {
       id: freeAssignCheck
       checked: Debugging ? true : false
@@ -56,7 +77,8 @@ Item {
           ClientInstance.notifyServer(
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value, {
-              enableFreeAssign: freeAssignCheck.checked
+              enableFreeAssign: freeAssignCheck.checked,
+              gameMode: gameModeList.get(gameModeCombo.currentIndex).orig_name,
             }])
           );
         }
@@ -68,5 +90,13 @@ Item {
         }
       }
     }
+  }
+
+  Component.onCompleted: {
+    let mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+    for (let d of mode_data) {
+      gameModeList.append(d);
+    }
+    gameModeCombo.currentIndex = 0;
   }
 }

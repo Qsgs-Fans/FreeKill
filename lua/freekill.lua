@@ -25,6 +25,7 @@ Skill = require "core.skill"
 UsableSkill = require "core.skill_type.usable_skill"
 StatusSkill = require "core.skill_type.status_skill"
 Player = require "core.player"
+GameMode = require "core.game_mode"
 
 -- load config
 local function loadConf()
