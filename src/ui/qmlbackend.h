@@ -35,7 +35,7 @@ public:
   Q_INVOKABLE QString loadConf();
   Q_INVOKABLE void saveConf(const QString &conf);
 
-  Q_INVOKABLE QString calcFileMD5();
+  Q_INVOKABLE void replyDelayTest(const QString &screenName, const QString &cipher);
   Q_INVOKABLE void playSound(const QString &name, int index = 0);
 
   Q_INVOKABLE void copyToClipboard(const QString &s);
