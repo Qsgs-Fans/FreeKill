@@ -179,7 +179,7 @@ Item {
 
     Loader {
       id: lobby_dialog
-      anchors.centerIn: parent
+      anchors.fill: parent
       onSourceChanged: {
         if (item === null)
           return;
