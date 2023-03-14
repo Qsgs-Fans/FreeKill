@@ -219,8 +219,12 @@ void QmlBackend::saveConf(const QString &conf) {
   c.write(conf.toUtf8());
 }
 
-QString QmlBackend::calcFileMD5() {
-  return ::calcFileMD5();
+void QmlBackend::replyDelayTest(const QString &screenName, const QString &cipher) {
+  auto md5 = calcFileMD5();
+
+  QJsonArray arr;
+  arr << screenName << cipher << md5;
+  ClientInstance->notifyServer("Setup", JsonArray2Bytes(arr));
 }
 
 void QmlBackend::playSound(const QString &name, int index) {
