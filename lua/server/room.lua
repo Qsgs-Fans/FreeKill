@@ -378,7 +378,6 @@ end
 ---@param players ServerPlayer[]
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
-  self:notifyMoveFocus(players, command)
   for _, p in ipairs(players) do
     self:doRequest(p, command, jsonData or p.request_data, false)
   end

@@ -195,7 +195,7 @@ Item {
 
     visible: root.drank > 0
     color: "red"
-    opacity: 0.5
+    opacity: 0.4 + Math.log(root.drank) * 0.12
   }
 
   Image {

@@ -107,16 +107,33 @@ local analepticEffect = fk.CreateTriggerSkill{
   name = "analeptic_effect",
   global = true,
   priority = 0, -- game rule
-  refresh_events = {fk.PreCardUse},
+  refresh_events = { fk.PreCardUse, fk.EventPhaseStart },
   can_refresh = function(self, event, target, player, data)
-    return target == player and data.card.trueName == "slash"
+    if target ~= player then
+      return false
+    end
+
+    if event == fk.PreCardUse then
+      return data.card.trueName == "slash" and player.drank > 0
+    else
+      return player.phase == Player.NotActive
+    end
   end,
   on_refresh = function(self, event, target, player, data)
-    data.additionalDamage = (data.additionalDamage or 0) + player.drank
-    data.extra_data = data.extra_data or {}
-    data.extra_data.drankBuff = player.drank
-    player.drank = 0
-    player.room:broadcastProperty(player, "drank")
+    if event == fk.PreCardUse then
+      data.additionalDamage = (data.additionalDamage or 0) + player.drank
+      data.extra_data = data.extra_data or {}
+      data.extra_data.drankBuff = player.drank
+      player.drank = 0
+      player.room:broadcastProperty(player, "drank")
+    else
+      for _, p in ipairs(player.room:getAlivePlayers(true)) do
+        if p.drank > 0 then
+          p.drank = 0
+          p.room:broadcastProperty(player, "drank")
+        end
+      end
+    end
   end,
 }
 Fk:addSkill(analepticEffect)

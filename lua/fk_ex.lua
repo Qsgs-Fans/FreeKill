@@ -163,7 +163,6 @@ function fk.CreateActiveSkill(spec)
     skill.feasible = spec.feasible
   end
   if spec.on_use then skill.onUse = spec.on_use end
-  if spec.pre_action then skill.preAction = spec.pre_action end
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end

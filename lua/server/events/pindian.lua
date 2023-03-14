@@ -17,7 +17,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     include_equip = false,
     reason = pindianData.reason
   }
-  local prompt = "#askForCard:::" .. 1 .. ":" .. 1
+  local prompt = "#askForPindian"
   local data = { "choose_cards_skill", prompt, true, json.encode(extraData) }
 
   local targets = {}
@@ -32,6 +32,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     end
   end
 
+  self:notifyMoveFocus(targets, "AskForPindian")
   self:doBroadcastRequest("AskForUseActiveSkill", targets)
 
   local moveInfos = {}
@@ -72,10 +73,17 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
       pindianData.results[toId].winner = Fk:getCardById(toId)
     end
 
-    self.logic:trigger(fk.PindianResultConfirmed, nil, pindianData)
+    local singlePindianData = {
+      from = pindianData.from,
+      to = self:getPlayerById(toId),
+      fromCard = pindianData.fromCard,
+      toCard = result.toCard,
+      winner = pindianData.results[toId].winner,
+    }
+    self.logic:trigger(fk.PindianResultConfirmed, nil, singlePindianData)
   end
 
-  if self.logic:trigger(fk.PindianFinished, pindianData.from, data) then
+  if self.logic:trigger(fk.PindianFinished, pindianData.from, pindianData) then
     self.logic:breakEvent()
   end
 end
@@ -98,7 +106,6 @@ GameEvent.cleaners[GameEvent.Pindian] = function(self)
   end
 
   if #toProcessingArea > 0 then
-    print(tostring(#toProcessingArea) .. "broken")
     self:moveCards({
       ids = toProcessingArea,
       toArea = Card.DiscardPile,
