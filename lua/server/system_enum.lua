@@ -29,7 +29,7 @@
 
 ---@class PindianResult
 ---@field toCard Card
----@field winner ServerPlayer|null 
+---@field winner ServerPlayer|null
 
 ---@class HpChangedData
 ---@field num integer
