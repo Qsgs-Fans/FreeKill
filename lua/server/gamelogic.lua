@@ -100,6 +100,7 @@ function GameLogic:chooseGenerals()
     p.default_reply = arg[1]
   end
 
+  room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then

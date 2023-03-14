@@ -23,7 +23,7 @@ Item {
   property bool dying: false
   property bool faceup: true
   property bool chained: false
-  property bool drank: false
+  property int drank: 0
   property bool isOwner: false
   property int distance: 0
   property string status: "normal"
@@ -160,6 +160,7 @@ Item {
     visible: false
     fillMode: Image.PreserveAspectCrop
     source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+
   }
 
   Rectangle {
@@ -183,6 +184,18 @@ Item {
     source: generalImage
     saturation: 0
     visible: root.dead
+  }
+
+  Rectangle {
+    x: 31
+    y: 5
+    width: 138
+    height: 222
+    radius: 8
+
+    visible: root.drank > 0
+    color: "red"
+    opacity: 0.4 + Math.log(root.drank) * 0.12
   }
 
   Image {

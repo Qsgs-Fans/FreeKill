@@ -563,9 +563,9 @@ local keji = fk.CreateTriggerSkill{
       return false
     end
     if event == fk.CardResponding then
-      return data.card.trueName == "slash"
+      return player.phase == Player.Play and data.card.trueName == "slash"
     elseif event == fk.EventPhaseStart then
-      return player.phase == player.NotActive
+      return player.phase == Player.NotActive
     end
   end,
   on_refresh = function(self, event, target, player, data)

@@ -16,7 +16,7 @@ local thunderSlashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.addtionalDamage or 0),
+      damage = 1 + (effect.additionalDamage or 0),
       damageType = fk.ThunderDamage,
       skillName = self.name
     })
@@ -53,7 +53,7 @@ local fireSlashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.addtionalDamage or 0),
+      damage = 1 + (effect.additionalDamage or 0),
       damageType = fk.FireDamage,
       skillName = self.name
     })
@@ -71,6 +71,87 @@ extension:addCards{
   fireSlash:clone(Card.Diamond, 4),
   fireSlash:clone(Card.Diamond, 5),
 }
+
+local analepticSkill = fk.CreateActiveSkill{
+  name = "analeptic_skill",
+  max_turn_use_time = 1,
+  can_use = function(self, player)
+    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn)
+  end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+
+    if use.extra_data and use.extra_data.analepticRecover then
+      use.extraUse = true
+    end
+  end,
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    if effect.extra_data and effect.extra_data.analepticRecover then
+      room:recover({
+        who = to,
+        num = 1,
+        recoverBy = room:getPlayerById(effect.from),
+        card = effect.card,
+      })
+    else
+      to.drank = to.drank + 1
+      room:broadcastProperty(to, "drank")
+    end
+  end
+}
+
+local analepticEffect = fk.CreateTriggerSkill{
+  name = "analeptic_effect",
+  global = true,
+  priority = 0, -- game rule
+  refresh_events = { fk.PreCardUse, fk.EventPhaseStart },
+  can_refresh = function(self, event, target, player, data)
+    if target ~= player then
+      return false
+    end
+
+    if event == fk.PreCardUse then
+      return data.card.trueName == "slash" and player.drank > 0
+    else
+      return player.phase == Player.NotActive
+    end
+  end,
+  on_refresh = function(self, event, target, player, data)
+    if event == fk.PreCardUse then
+      data.additionalDamage = (data.additionalDamage or 0) + player.drank
+      data.extra_data = data.extra_data or {}
+      data.extra_data.drankBuff = player.drank
+      player.drank = 0
+      player.room:broadcastProperty(player, "drank")
+    else
+      for _, p in ipairs(player.room:getAlivePlayers(true)) do
+        if p.drank > 0 then
+          p.drank = 0
+          p.room:broadcastProperty(player, "drank")
+        end
+      end
+    end
+  end,
+}
+Fk:addSkill(analepticEffect)
+
+local analeptic = fk.CreateBasicCard{
+  name = "analeptic",
+  suit = Card.Spade,
+  number = 3,
+  skill = analepticSkill,
+}
+
+extension:addCards({
+  analeptic,
+  analeptic:clone(Card.Spade, 9),
+  analeptic:clone(Card.Club, 3),
+  analeptic:clone(Card.Club, 9),
+  analeptic:clone(Card.Diamond, 9),
+})
 
 local ironChainEffect = fk.CreateTriggerSkill{
   name = "iron_chain_effect",
@@ -307,6 +388,7 @@ Fk:loadTranslationTable{
 
   ["thunder__slash"] = "雷杀",
   ["fire__slash"] = "火杀",
+  ["analeptic"] = "酒",
   ["iron_chain"] = "铁锁连环",
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",

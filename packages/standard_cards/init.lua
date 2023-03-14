@@ -22,7 +22,7 @@ local slashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.addtionalDamage or 0),
+      damage = 1 + (effect.additionalDamage or 0),
       damageType = fk.NormalDamage,
       skillName = self.name
     })
@@ -293,7 +293,7 @@ local duelSkill = fk.CreateActiveSkill{
         from = responsers[currentTurn % 2 + 1],
         to = currentResponser,
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -433,7 +433,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -480,7 +480,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.addtionalDamage or 0),
+        damage = 1 + (effect.additionalDamage or 0),
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -542,10 +542,73 @@ local amazingGraceSkill = fk.CreateActiveSkill{
       end
     end
   end,
-  on_effect = function(self, room, cardEffectEvent)
-    room:getPlayerById(cardEffectEvent.to):drawCards(1, 'god_salvation')
+  on_effect = function(self, room, effect)
+    local to = room:getPlayerById(effect.to)
+    if not (effect.extra_data and effect.extra_data.AGFilled) then
+      return
+    end
+
+    local chosen = room:askForAG(to, effect.extra_data.AGFilled, false, self.name)
+    room:takeAG(to, chosen, room.players)
+    room:obtainCard(effect.to, chosen, true, fk.ReasonPrey)
+    table.removeOne(effect.extra_data.AGFilled, chosen)
   end
 }
+
+local amazingGraceAction = fk.CreateTriggerSkill{
+  name = "amazing_grace_action",
+  global = true,
+  priority = { [fk.BeforeCardUseEffect] = 0, [fk.CardUseFinished] = 10 }, -- game rule
+  refresh_events = { fk.BeforeCardUseEffect, fk.CardUseFinished },
+  can_refresh = function(self, event, target, player, data)
+    local frameFilled = data.extra_data and data.extra_data.AGFilled
+    if event == fk.BeforeCardUseEffect then
+      return data.card.trueName == 'amazing_grace' and not frameFilled
+    else
+      return frameFilled
+    end
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.BeforeCardUseEffect then
+      local toDisplay = room:getNCards(#TargetGroup:getRealTargets(data.tos))
+      room:moveCards({
+        ids = toDisplay,
+        toArea = Card.Processing,
+        moveReason = fk.ReasonPut,
+      })
+
+      table.forEach(room.players, function(p)
+        room:fillAG(p, toDisplay)
+      end)
+
+      data.extra_data = data.extra_data or {}
+      data.extra_data.AGFilled = toDisplay
+    else
+      table.forEach(room.players, function(p)
+        room:closeAG(p)
+      end)
+
+      if data.extra_data and data.extra_data.AGFilled then
+        local toDiscard = table.filter(data.extra_data.AGFilled, function(id)
+          return room:getCardArea(id) == Card.Processing
+        end)
+
+        if #toDiscard > 0 then
+          room:moveCards({
+            ids = toDiscard,
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonPutIntoDiscardPile,
+          })
+        end
+      end
+
+      data.extra_data.AGFilled = nil
+    end
+  end,
+}
+Fk:addSkill(amazingGraceAction)
+
 local amazingGrace = fk.CreateTrickCard{
   name = "amazing_grace",
   suit = Card.Heart,
