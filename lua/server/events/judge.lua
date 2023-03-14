@@ -3,7 +3,7 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   local self = self.room
   local who = data.who
   self.logic:trigger(fk.StartJudge, who, data)
-  data.card = Fk:getCardById(self:getNCards(1)[1])
+  data.card = data.card or Fk:getCardById(self:getNCards(1)[1])
 
   if data.reason ~= "" then
     self:sendLog{
@@ -18,7 +18,7 @@ GameEvent.functions[GameEvent.Judge] = function(self)
     from = who.id,
     card = {data.card.id},
   }
-  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPrey)
+  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPut)
 
   self.logic:trigger(fk.AskForRetrial, who, data)
   self.logic:trigger(fk.FinishRetrial, who, data)

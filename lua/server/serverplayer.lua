@@ -534,4 +534,15 @@ function ServerPlayer:setChainState(chained)
   }
 end
 
+---@param from ServerPlayer
+---@param tos ServerPlayer[]
+---@param skillName string
+---@param initialCard Card
+---@return PindianStruct
+function ServerPlayer:pindian(tos, skillName, initialCard)
+  local pindianData = { from = self, tos = tos, reson = skillName, fromCard = initialCard, results = {} }
+  self.room:pindian(pindianData)
+  return pindianData
+end
+
 return ServerPlayer

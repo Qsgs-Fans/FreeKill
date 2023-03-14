@@ -53,6 +53,9 @@ GameEvent.functions[GameEvent.Death] = function(self)
   self:broadcastProperty(victim, "role")
   self:broadcastProperty(victim, "dead")
 
+  victim.drank = 0
+  self:broadcastProperty(victim, "drank")
+
   logic:trigger(fk.GameOverJudge, victim, deathStruct)
   logic:trigger(fk.Death, victim, deathStruct)
   logic:trigger(fk.BuryVictim, victim, deathStruct)

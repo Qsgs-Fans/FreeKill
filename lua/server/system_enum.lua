@@ -27,6 +27,10 @@
 ---@field specialName string|null
 ---@field specialVisible boolean|null
 
+---@class PindianResult
+---@field toCard Card
+---@field winner ServerPlayer|null
+
 ---@class HpChangedData
 ---@field num integer
 ---@field reason string
@@ -76,7 +80,7 @@ fk.FireDamage = 3
 ---@field extraUse boolean|null
 ---@field disresponsiveList integer[]|null
 ---@field unoffsetableList integer[]|null
----@field addtionalDamage integer|null
+---@field additionalDamage integer|null
 ---@field customFrom integer|null
 ---@field cardsResponded Card[]|null
 
@@ -107,7 +111,7 @@ fk.FireDamage = 3
 ---@field extraUse boolean|null
 ---@field disresponsiveList integer[]|null
 ---@field unoffsetableList integer[]|null
----@field addtionalDamage integer|null
+---@field additionalDamage integer|null
 ---@field customFrom integer|null
 ---@field cardsResponded Card[]|null
 ---@field disresponsive boolean|null
@@ -161,13 +165,10 @@ fk.ReasonResonpse = 10
 
 ---@class PindianStruct
 ---@field from ServerPlayer
----@field to ServerPlayer
----@field from_card Card
----@field to_card Card
----@field from_number integer
----@field to_number integer
+---@field tos ServerPlayer[]
+---@field fromCard Card
+---@field results table<integer, PindianResult>
 ---@field reason string
----@field winner ServerPlayer|null
 
 ---@class LogMessage
 ---@field type string

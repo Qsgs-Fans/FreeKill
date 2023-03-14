@@ -621,7 +621,7 @@ Item {
       dying: false,
       faceup: true,
       chained: false,
-      drank: false,
+      drank: 0,
       isOwner: false
     }
 
@@ -644,7 +644,7 @@ Item {
         dying: false,
         faceup: true,
         chained: false,
-        drank: false,
+        drank: 0,
         isOwner: false
       });
     }

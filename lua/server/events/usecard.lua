@@ -195,13 +195,13 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
       self:doCardUseEffect(cardUseEvent)
     end
   end
-
-  self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
 end
 
 GameEvent.cleaners[GameEvent.UseCard] = function(self)
   local cardUseEvent = table.unpack(self.data)
   local self = self.room
+
+  self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
 
   local leftRealCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
   if #leftRealCardIds > 0 then

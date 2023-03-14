@@ -86,6 +86,7 @@ Fk:loadTranslationTable{
   ["AskForGeneral"] = "选择武将",
   ["AskForGuanxing"] = "观星",
   ["AskForChoice"] = "选择",
+  ["AskForPindian"] = "拼点",
   ["PlayCard"] = "出牌",
 
   ["AskForCardChosen"] = "选牌",
@@ -101,6 +102,7 @@ Fk:loadTranslationTable{
   ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
+  ["#askForPindian"] = "请选择一张手牌作为拼点牌",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
