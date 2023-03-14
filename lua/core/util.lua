@@ -49,6 +49,11 @@ function table.map(self, func)
   return ret
 end
 
+-- frequenly used filter & map functions
+IdMapper = function(e) return e.id end
+Id2CardMapper = function(id) return Fk:getCardById(id) end
+Id2PlayerMapper = function(id) return Fk:currentRoom():getPlayerById(id) end
+
 ---@generic T
 ---@param self T[]
 ---@return T[]
