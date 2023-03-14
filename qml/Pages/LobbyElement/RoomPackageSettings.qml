@@ -86,7 +86,7 @@ Flickable {
       }
     }
   }
-  
+
   Component.onCompleted: {
     let g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     for (let orig of g) {

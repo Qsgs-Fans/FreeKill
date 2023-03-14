@@ -303,6 +303,8 @@ extension:addCards{
 }
 
 Fk:loadTranslationTable{
+  ["maneuvering"] = "军争",
+
   ["thunder__slash"] = "雷杀",
   ["fire__slash"] = "火杀",
   ["iron_chain"] = "铁锁连环",
