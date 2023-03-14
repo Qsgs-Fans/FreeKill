@@ -10,6 +10,7 @@
 ---@field cards Card[]
 ---@field translations table<string, table<string, string>>
 ---@field game_modes table<string, GameMode>
+---@field disabled_packs string[]
 local Engine = class("Engine")
 
 function Engine:initialize()
@@ -32,6 +33,7 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
+  self.disabled_packs = {}
 
   self:loadPackages()
   self:addSkills(AuxSkills)
@@ -207,7 +209,7 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     assert(type(filter) == "function")
   end
 
-  generalPool = generalPool or self.generals
+  generalPool = generalPool or self:getAllGenerals()
   except = except or {}
   for _, g in ipairs(self.packages["test_p_0"].generals) do
     table.insert(except, g.name)
@@ -242,9 +244,11 @@ end
 ---@return General[]
 function Engine:getAllGenerals(except)
   local result = {}
-  for _, general in ipairs(self.generals) do
+  for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      table.insert(result, general)
+      if not table.contains(self.disabled_packs, general.package.name) then
+        table.insert(result, general)
+      end
     end
   end
 
@@ -257,7 +261,9 @@ function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
     if not (except and table.contains(except, card.id)) then
-      table.insert(result, card.id)
+      if not table.contains(self.disabled_packs, card.package.name) then
+        table.insert(result, card.id)
+      end
     end
   end
 

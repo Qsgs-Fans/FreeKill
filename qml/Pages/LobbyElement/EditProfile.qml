@@ -6,13 +6,11 @@ import QtQuick.Dialogs
 Item {
   id: root
 
-  width: childrenRect.width
-  height: childrenRect.height
-
   signal finished()
 
   ColumnLayout {
     spacing: 20
+    anchors.centerIn: parent
 
     RowLayout {
       anchors.rightMargin: 8

@@ -184,6 +184,9 @@ fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
+
+  local data = json.decode(jsonData)[3]
+  Fk.disabled_packs = data.disabledPack
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 

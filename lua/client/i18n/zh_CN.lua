@@ -21,6 +21,10 @@ Fk:loadTranslationTable{
   ["Player num"] = "玩家数目",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
+  ["General Settings"] = "通常设置",
+  ["Package Settings"] = "拓展包设置",
+  ["General Packages"] = "武将拓展包",
+  ["Card Packages"] = "卡牌拓展包",
 
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
