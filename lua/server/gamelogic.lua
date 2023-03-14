@@ -88,7 +88,7 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * 3, Fk.generals, {lord_general})
+  local generals = Fk:getGeneralsRandomly(#nonlord * 3, nil, {lord_general})
   table.shuffle(generals)
   for _, p in ipairs(nonlord) do
     local arg = {
