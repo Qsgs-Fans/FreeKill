@@ -551,6 +551,7 @@ local amazingGraceSkill = fk.CreateActiveSkill{
     local chosen = room:askForAG(to, effect.extra_data.AGFilled, false, self.name)
     room:takeAG(to, chosen, room.players)
     room:obtainCard(effect.to, chosen, true, fk.ReasonPrey)
+    table.removeOne(effect.extra_data.AGFilled, chosen)
   end
 }
 
