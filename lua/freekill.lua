@@ -44,11 +44,18 @@ end
 Config = loadConf()
 
 -- disable dangerous functions
-os.remove = nil
-os.execute = nil
-os.exit = nil
-os.rename = nil
+local _os = {
+  time = os.time,
+  date = os.date,
+  clock = os.clock,
+  difftime = os.difftime,
+  getms = os.getms,
+}
+os = _os
 io = nil
+package = nil
+load = nil
+loadfile = nil
 
 -- load packages
 dofile "lua/fk_ex.lua"
