@@ -156,6 +156,41 @@ function table.random(tab, n)
   return n0 == nil and ret[1] or ret
 end
 
+-- allow a = "Hello"; a[1] == "H"
+local str_mt = getmetatable("")
+str_mt.__index = function(str, k)
+  if type(k) == "number" then
+    if math.abs(k) > str:len() then
+      error("string index out of range")
+    end
+    local start, _end
+    if k > 0 then
+      start, _end = utf8.offset(str, k), utf8.offset(str, k + 1)
+    elseif k < 0 then
+      local len = str:len()
+      start, _end = utf8.offset(str, len + k + 1), utf8.offset(str, len + k + 2)
+    else
+      error("str[0] is undefined behavior")
+    end
+    return str:sub(start, _end - 1)
+  end
+  return string[k]
+end
+
+str_mt.__add = function(a, b)
+  return a .. b
+end
+
+str_mt.__mul = function(a, b)
+  return a:rep(b)
+end
+
+-- override default string.len
+string.rawlen = string.len
+function string:len()
+  return utf8.len(self)
+end
+
 ---@param delimiter string
 ---@return string[]
 function string:split(delimiter)
