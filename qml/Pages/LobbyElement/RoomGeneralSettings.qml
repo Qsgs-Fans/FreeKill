@@ -28,6 +28,10 @@ ColumnLayout {
       id: playerNum
       from: 2
       to: 8
+
+      onValueChanged: {
+        config.preferedPlayerNum = value;
+      }
     }
   }
 
@@ -48,6 +52,8 @@ ColumnLayout {
         let data = gameModeList.get(currentIndex);
         playerNum.from = data.minPlayer;
         playerNum.to = data.maxPlayer;
+
+        config.preferedMode = data.orig_name;
       }
     }
   }
@@ -70,7 +76,8 @@ ColumnLayout {
           "CreateRoom",
           JSON.stringify([roomName.text, playerNum.value, {
             enableFreeAssign: freeAssignCheck.checked,
-            gameMode: gameModeList.get(gameModeCombo.currentIndex).orig_name,
+            gameMode: config.preferedMode,
+            disabledPack: config.disabledPack,
           }])
         );
       }
@@ -85,9 +92,15 @@ ColumnLayout {
 
   Component.onCompleted: {
     let mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+    let i = 0;
     for (let d of mode_data) {
       gameModeList.append(d);
+      if (d.orig_name == config.preferedMode) {
+        gameModeCombo.currentIndex = i;
+      }
+      i += 1;
     }
-    gameModeCombo.currentIndex = 0;
+
+    playerNum.value = config.preferedPlayerNum;
   }
 }

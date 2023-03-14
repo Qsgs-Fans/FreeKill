@@ -10,18 +10,15 @@ Item {
 
   TabBar {
     id: bar
-    y: parent.height
-    transformOrigin: Item.TopLeft
-    rotation: -90
+    y: -height
+    transformOrigin: Item.BottomLeft
+    rotation: 90
     width: root.height
-    TabButton {
-      text: Backend.translate("Package Settings")
-    }
     TabButton {
       text: Backend.translate("General Settings")
     }
-    Component.onCompleted: {
-      currentIndex = count;
+    TabButton {
+      text: Backend.translate("Package Settings")
     }
   }
 
@@ -31,8 +28,12 @@ Item {
     height: root.height
     interactive: false
     orientation: Qt.Vertical
-    currentIndex: bar.count - bar.currentIndex
+    currentIndex: bar.currentIndex
     RoomGeneralSettings {}
-    RoomPackageSettings {}
+    Item {
+      RoomPackageSettings {
+        anchors.fill: parent
+      }
+    }
   }
 }

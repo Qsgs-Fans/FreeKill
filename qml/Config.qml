@@ -13,6 +13,9 @@ QtObject {
   property string roomBg
   property string bgmFile
   property string language
+  property var disabledPack: []
+  property string preferedMode
+  property int preferedPlayerNum
 
   // Player property of client
   property string serverAddr
@@ -38,6 +41,9 @@ QtObject {
     roomBg = conf.roomBg || AppPath + "/image/gamebg";
     bgmFile = conf.bgmFile || AppPath + "/audio/system/bgm.mp3";
     language = conf.language || "zh_CN";
+    disabledPack = conf.disabledPack || [ "test_p_0" ];
+    preferedMode = conf.preferedMode || "aaa_role_mode";
+    preferedPlayerNum = conf.preferedPlayerNum || 2;
   }
 
   function saveConf() {
@@ -51,6 +57,9 @@ QtObject {
     conf.roomBg = roomBg;
     conf.bgmFile = bgmFile;
     conf.language = language;
+    conf.disabledPack = disabledPack;
+    conf.preferedMode = preferedMode;
+    conf.preferedPlayerNum = preferedPlayerNum;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }
