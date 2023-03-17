@@ -318,12 +318,9 @@ Item {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    propagateComposedEvents: true
-    onClicked: (mouse) => {
+  TapHandler {
+    onTapped: {
       if (parent.state != "candidate" || !parent.selectable) {
-        mouse.accepted = false;
         return;
       }
       parent.selected = !parent.selected;

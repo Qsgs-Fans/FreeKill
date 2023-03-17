@@ -160,9 +160,8 @@ Item {
       text: errDialog.txt
       wrapMode: Text.WordWrap
 
-      MouseArea {
-        anchors.fill: parent
-        onClicked: errDialog.close();
+      TapHandler {
+        onTapped: errDialog.close();
       }
     }
   }

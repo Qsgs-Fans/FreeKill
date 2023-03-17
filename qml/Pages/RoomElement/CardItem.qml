@@ -47,7 +47,7 @@ Item {
   property int origX: 0
   property int origY: 0
   property real origOpacity: 1
-  property bool isClicked: false
+  // property bool isClicked: false
   property bool moveAborted: false
   property alias goBackAnim: goBackAnimation
   property int goBackDuration: 500
@@ -147,47 +147,47 @@ Item {
     opacity: 0.7
   }
 
-  MouseArea {
-    anchors.fill: parent
-    acceptedButtons: Qt.LeftButton | Qt.RightButton
-    drag.target: draggable ? parent : undefined
-    drag.axis: Drag.XAndYAxis
-    hoverEnabled: true
+  TapHandler {
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
 
-    onReleased: function(mouse) {
-      root.isClicked = mouse.isClick;
-      parent.released();
-      if (autoBack)
-        goBackAnimation.start();
-    }
-
-    onEntered: {
-      parent.entered();
-      if (draggable) {
-        glow.visible = true;
-        root.z++;
-      }
-    }
-
-    onExited: {
-      parent.exited();
-      if (draggable) {
-        glow.visible = false;
-        root.z--;
-      }
-    }
-
-    onClicked: (mouse) => {
-      if (mouse.button == Qt.LeftButton) {
+    onTapped: (p, btn) => {
+      if (btn === Qt.LeftButton || btn === Qt.NoButton) {
         selected = selectable ? !selected : false;
         parent.clicked();
-      } else if (mouse.button === Qt.RightButton) {
+      } else if (btn === Qt.RightButton) {
         parent.rightClicked();
       }
     }
 
-    onPressAndHold: {
+    onLongPressed: {
       parent.rightClicked();
+    }
+  }
+
+  DragHandler {
+    enabled: draggable
+    xAxis.enabled: true
+    yAxis.enabled: true
+
+    onGrabChanged: (transtition, point) => {
+      if (transtition !== PointerDevice.UngrabExclusive) return;
+      parent.released();
+      if (autoBack)
+        goBackAnimation.start();
+    }
+  }
+
+  HoverHandler {
+    id: hover
+    onHoveredChanged: {
+      if (!draggable) return;
+      if (hovered) {
+        glow.visible = true;
+        root.z++;
+      } else {
+        glow.visible = false;
+        root.z--;
+      }
     }
   }
 
