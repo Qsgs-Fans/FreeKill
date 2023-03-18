@@ -72,6 +72,7 @@ Fk:loadTranslationTable{
   ["$EnterRoom"] = "成功加入房间。",
   ["$Choice"] = "%1：请选择",
   ["$ChooseGeneral"] = "请选择 %1 名武将",
+  ["Same General Convert"] = "替换武将",
   ["Fight"] = "出战",
 
   ["#PlayCard"] = "出牌阶段，请使用一张牌",

@@ -1,6 +1,7 @@
 ---@class General : Object
 ---@field package Package
 ---@field name string
+---@field trueName string
 ---@field kingdom string
 ---@field hp integer
 ---@field maxHp integer
@@ -17,6 +18,9 @@ General.Female = 2
 function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.package = package
   self.name = name
+  local name_splited = name:split("__")
+  self.trueName = name_splited[#name_splited]
+
   self.kingdom = kingdom
   self.hp = hp
   self.maxHp = maxHp or hp
