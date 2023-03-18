@@ -42,6 +42,10 @@ function GetGeneralDetail(name)
   return json.encode(ret)
 end
 
+function GetSameGenerals(name)
+  return json.encode(Fk:getSameGenerals(name))
+end
+
 local cardSubtypeStrings = {
   [Card.SubtypeNone] = "none",
   [Card.SubtypeDelayedTrick] = "delayed_trick",

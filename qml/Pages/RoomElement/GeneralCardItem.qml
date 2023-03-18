@@ -16,6 +16,7 @@ CardItem {
   property string kingdom
   property int hp
   property int maxHp
+  property string pkgName: ""
   name: ""
   // description: Sanguosha.getGeneralDescription(name)
   suit: ""
@@ -81,10 +82,42 @@ CardItem {
     style: Text.Outline
   }
 
+  Rectangle {
+    visible: pkgName !== ""
+    height: 16
+    width: childrenRect.width + 4
+    anchors.bottom: parent.bottom
+    anchors.bottomMargin: 4
+    anchors.right: parent.right
+    anchors.rightMargin: 4
+
+    color: "#3C3229"
+    opacity: 0.8
+    radius: 4
+    border.color: "white"
+    border.width: 1
+    Text {
+      text: Backend.translate(pkgName)
+      x: 2; y: 1
+      font.family: fontLibian.name
+      font.pixelSize: 14
+      color: "white"
+      style: Text.Outline
+      textFormat: Text.RichText
+    }
+  }
+
   onNameChanged: {
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
     kingdom = data.kingdom;
     hp = data.hp;
     maxHp = data.maxHp;
+
+    let splited = name.split("__");
+    if (splited.length > 1) {
+      pkgName = splited[0];
+    } else {
+      pkgName = "";
+    }
   }
 }

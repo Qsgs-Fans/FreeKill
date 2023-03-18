@@ -80,16 +80,29 @@ GraphicsBox {
       width: parent.width
       height: 40
 
-      MetroButton {
-        id: fightButton
+      Row {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        text: Backend.translate("Fight")
-        width: 120
-        height: 35
-        enabled: false
+        spacing: 8
 
-        onClicked: close();
+        MetroButton {
+          id: convertBtn
+          text: Backend.translate("Same General Convert")
+          onClicked: roomScene.startCheat(
+            "RoomElement/Cheat/SameConvert.qml",
+            { cards: generalList }
+          );
+        }
+
+        MetroButton {
+          id: fightButton
+          text: Backend.translate("Fight")
+          width: 120
+          height: 35
+          enabled: false
+
+          onClicked: close();
+        }
       }
     }
   }
@@ -177,5 +190,15 @@ GraphicsBox {
         item.goBack(true);
       }
     }
+
+    for (let i = 0; i < generalList.count; i++) {
+      if (JSON.parse(Backend.callLuaFunction(
+        "GetSameGenerals", [generalList.get(i).name])
+      ).length > 0) {
+        convertBtn.visible = true;
+        return;
+      }
+    }
+    convertBtn.visible = false;
   }
 }

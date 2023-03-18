@@ -6,6 +6,7 @@
 ---@field global_trigger TriggerSkill[]
 ---@field global_status_skill table<class, Skill[]>
 ---@field generals table<string, General>
+---@field same_generals table<string, string[]>
 ---@field lords string[]
 ---@field cards Card[]
 ---@field translations table<string, table<string, string>>
@@ -29,6 +30,7 @@ function Engine:initialize()
   self.global_trigger = {}
   self.global_status_skill = {}
   self.generals = {}    -- name --> General
+  self.same_generals = {}
   self.lords = {}     -- lordName[]
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
@@ -141,6 +143,12 @@ function Engine:addGeneral(general)
     error(string.format("Duplicate general %s detected", general.name))
   end
   self.generals[general.name] = general
+
+  if general.name ~= general.trueName then
+    local tName = general.trueName
+    self.same_generals[tName] = self.same_generals[tName] or { tName }
+    table.insert(self.same_generals[tName], general.name)
+  end
 end
 
 ---@param generals General[]
@@ -149,6 +157,16 @@ function Engine:addGenerals(generals)
   for _, general in ipairs(generals) do
     self:addGeneral(general)
   end
+end
+
+---@param name string
+function Engine:getSameGenerals(name)
+  local tmp = name:split("__")
+  local tName = tmp[#tmp]
+  local ret = self.same_generals[tName] or {}
+  return table.filter(ret, function(g)
+    return self.generals[g] ~= nil
+  end)
 end
 
 local cardId = 1
@@ -218,7 +236,11 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   local availableGenerals = {}
   for _, general in pairs(generalPool) do
     if not table.contains(except, general.name) and not (filter and filter(general)) then
-      table.insert(availableGenerals, general)
+      if #table.filter(availableGenerals, function(g)
+        return g.trueName == general.trueName
+      end) == 0 then
+        table.insert(availableGenerals, general)
+      end
     end
   end
 
