@@ -368,14 +368,83 @@ local function mergeMoves(moves)
 end
 
 local function sendMoveCardLog(move)
-  if move.moveReason == fk.ReasonDraw then
+  if #move.ids == 0 then return end
+  local hidden = table.contains(move.ids, -1)
+  local msgtype
+
+  if move.from and move.toArea == Card.DrawPile then
+    msgtype = hidden and "$PutCard" or "$PutKnownCard"
+    ClientInstance:appendLog{
+      type = msgtype,
+      from = move.from,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  elseif move.toArea == Card.PlayerSpecial then
+    msgtype = hidden and "$RemoveCardFromGame" or "$AddToPile"
+    ClientInstance:appendLog{
+      type = msgtype,
+      arg = move.specialName,
+      arg2 = #move.ids,
+      card = move.ids,
+    }
+  elseif move.fromArea == Card.PlayerSpecial and move.to then
+    ClientInstance:appendLog{
+      type = "$GetCardsFromPile",
+      from = move.to,
+      arg = move.fromSpecialName,
+      arg2 = #move.ids,
+      card = move.ids,
+    }
+  elseif move.fromArea == Card.DrawPile and move.toArea == Card.PlayerHand then
     ClientInstance:appendLog{
       type = "$DrawCards",
       from = move.to,
       card = move.ids,
       arg = #move.ids,
     }
-  elseif move.moveReason == fk.ReasonDiscard then
+  elseif (move.fromArea == Card.Processing or move.fromArea == Card.PlayerJudge)
+    and move.toArea == Card.PlayerHand then
+    ClientInstance:appendLog{
+      type = "$GotCardBack",
+      from = move.to,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  elseif move.fromArea == Card.DiscardPile and move.toArea == Card.PlayerHand then
+    ClientInstance:appendLog{
+      type = "$RecycleCard",
+      from = move.to,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  elseif move.from and move.fromArea ~= Card.PlayerJudge and
+    move.toArea ~= Card.PlayerJudge and move.to and move.from ~= move.to then
+    ClientInstance:appendLog{
+      type = "$MoveCards",
+      from = move.from,
+      to = { move.to },
+      arg = #move.ids,
+      card = move.ids,
+    }
+  elseif move.from and move.to and move.toArea == Card.PlayerJudge then
+    if move.fromArea == Card.PlayerJudge and move.from ~= move.to then
+      msgtype = "$LightningMove"
+    elseif move.fromArea ~= Card.PlayerJudge then
+      msgtype = "$PasteCard"
+    end
+    if msgtype then
+      ClientInstance:appendLog{
+        type = msgtype,
+        from = move.from,
+        to = { move.to },
+        card = move.ids,
+      }
+    end
+  end
+
+  -- TODO ...
+  if move.moveReason == fk.ReasonDiscard then
     ClientInstance:appendLog{
       type = "$DiscardCards",
       from = move.from,
