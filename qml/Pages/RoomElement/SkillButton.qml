@@ -51,10 +51,8 @@ Item {
     }
   }
 
-  MouseArea {
-    id: mouseArea
-    anchors.fill: parent
+  TapHandler {
     enabled: root.type === "active" && root.enabled
-    onClicked: parent.pressed = !parent.pressed;
+    onTapped: parent.pressed = !parent.pressed;
   }
 }

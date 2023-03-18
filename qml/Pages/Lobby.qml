@@ -39,9 +39,8 @@ Item {
         Text {
           text: Backend.translate("Enter")
           font.pixelSize: 24
-          MouseArea {
-            anchors.fill: parent
-            onClicked: {
+          TapHandler {
+            onTapped: {
               config.observing = false;
               mainWindow.busy = true;
               ClientInstance.notifyServer(
@@ -55,9 +54,8 @@ Item {
         Text {
           text: Backend.translate("Observe")
           font.pixelSize: 24
-          MouseArea {
-            anchors.fill: parent
-            onClicked: {
+          TapHandler {
+            onTapped: {
               config.observing = true;
               mainWindow.busy = true;
               ClientInstance.notifyServer(

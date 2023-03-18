@@ -46,9 +46,8 @@ Item {
         }
       }
 
-      MouseArea {
-        anchors.fill: parent
-        onClicked: {
+      TapHandler {
+        onTapped: {
           if (packageList.currentIndex === index) {
             packageList.currentIndex = -1;
           } else {

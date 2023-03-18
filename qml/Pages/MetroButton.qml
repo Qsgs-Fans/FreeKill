@@ -27,7 +27,7 @@ Item {
 
   states: [
     State {
-      name: "hovered"; when: mouse.containsMouse
+      name: "hovered"; when: hover.hovered
       PropertyChanges { target: bg; color: "white" }
       PropertyChanges { target: title; color: "black" }
     },
@@ -37,11 +37,14 @@ Item {
     }
   ]
 
-  MouseArea {
+  TapHandler {
     id: mouse
-    anchors.fill: parent
-    hoverEnabled: parent.enabled
-    onReleased: if (parent.enabled) parent.clicked()
+    onTapped: if (parent.enabled) parent.clicked()
+  }
+
+  HoverHandler {
+    id: hover
+    cursorShape: Qt.PointingHandCursor
   }
 
   Row {

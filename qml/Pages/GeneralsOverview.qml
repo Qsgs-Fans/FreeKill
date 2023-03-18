@@ -29,6 +29,7 @@ Item {
             onClicked: {
               generalText.clear();
               generalText.general = modelData;
+              generalText.updateGeneral();
               generalDetail.open();
             }
           }
@@ -78,7 +79,7 @@ Item {
         textFormat: TextEdit.RichText
         font.pixelSize: 16
 
-        onGeneralChanged: {
+        function updateGeneral() {
           let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
           this.append(Backend.translate(data.kingdom) + " " + Backend.translate(general) + " " + data.hp + "/" + data.maxHp);
           data.skill.forEach(t => {
