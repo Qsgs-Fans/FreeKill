@@ -15,6 +15,7 @@ import "../skin-bank.js" as SkinBank
 CardItem {
   property string kingdom
   property int hp
+  property int maxHp
   name: ""
   // description: Sanguosha.getGeneralDescription(name)
   suit: ""
@@ -36,15 +37,15 @@ CardItem {
     y: 4
     spacing: 1
     Repeater {
-      model: hp > 5 ? 1 : hp
+      model: (hp > 5 || hp !== maxHp) ? 1 : hp
       Image {
         source: SkinBank.GENERALCARD_DIR + kingdom + "-magatama"
       }
     }
 
     Text {
-      visible: hp > 5
-      text: "x" + hp
+      visible: hp > 5 || hp !== maxHp
+      text: hp === maxHp ? ("x" + hp) : (" " + hp + "/" + maxHp)
       color: "white"
       font.pixelSize: 14
       style: Text.Outline
@@ -84,5 +85,6 @@ CardItem {
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
     kingdom = data.kingdom;
     hp = data.hp;
+    maxHp = data.maxHp;
   }
 }

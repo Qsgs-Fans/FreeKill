@@ -460,13 +460,11 @@ function ServerPlayer:addToPile(pile_name, card, visible, skillName)
 end
 
 function ServerPlayer:bury()
-  -- self:clearFlags()
-  -- self:clearHistory()
+  self:setCardUseHistory("")
+  self:setSkillUseHistory("")
   self:throwAllCards()
-  -- self:throwAllMarks()
-  -- self:clearPiles()
-
-  -- self.room:clearPlayerCardLimitation(self, false)
+  self:throwAllMarks()
+  self:clearPiles()
 end
 
 function ServerPlayer:throwAllCards(flag)
@@ -482,6 +480,18 @@ function ServerPlayer:throwAllCards(flag)
 
   if string.find(flag, "j") then
     room:throwCard(self.player_cards[Player.Judge], "", self)
+  end
+end
+
+function ServerPlayer:throwAllMarks()
+  for name, _ in pairs(self.mark) do
+    self.room:setPlayerMark(self, name, 0)
+  end
+end
+
+function ServerPlayer:clearPiles()
+  for _, ids in pairs(self.special_cards) do
+    self.room:throwCard(ids, "", self)
   end
 end
 

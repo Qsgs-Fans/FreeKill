@@ -306,7 +306,7 @@ function Player:getMaxCards()
 
   for _, skill in ipairs(status_skills) do
     local c = skill:getCorrect(self)
-    baseValue = baseValue + c
+    baseValue = baseValue + (c or 0)
   end
 
   return math.max(baseValue, 0)

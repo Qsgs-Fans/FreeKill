@@ -87,7 +87,7 @@ Flickable {
       }
     }
     for (let i = 0; i < not_active_skills.count; i++) {
-      let item = not_active_skills.at(i);
+      let item = not_active_skills.get(i);
       if (item.orig_skill == skill_name) {
         not_active_skills.remove(i);
       }
