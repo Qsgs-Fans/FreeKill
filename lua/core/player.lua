@@ -513,8 +513,8 @@ function Player:addSkill(skill, source_skill)
         room.logic:addTriggerSkill(s)
       end
       if s:isInstanceOf(StatusSkill) then
-        room.status_skills[skill.class] = room.status_skills[skill.class] or {}
-        table.insertIfNeed(room.status_skills[skill.class], s)
+        room.status_skills[s.class] = room.status_skills[s.class] or {}
+        table.insertIfNeed(room.status_skills[s.class], s)
       end
     end
   end
