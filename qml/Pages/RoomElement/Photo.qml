@@ -336,6 +336,18 @@ Item {
     anchors.rightMargin: -4
   }
 
+  GlowText {
+    id: playerName
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: 2
+
+    font.pixelSize: 16
+    text: screenName
+
+    glow.radius: 8
+  }
+
   Image {
     visible: root.state === "candidate" && !selectable && !selected
     source: SkinBank.PHOTO_DIR + "disable"
