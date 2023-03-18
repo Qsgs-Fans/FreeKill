@@ -1649,7 +1649,7 @@ function Room:moveCards(...)
   return execGameEvent(GameEvent.MoveCards, ...)
 end
 
----@param player integer
+---@param player integer|Player
 ---@param cid integer|Card
 ---@param unhide boolean
 ---@param reason CardMoveReason
@@ -1661,6 +1661,11 @@ function Room:obtainCard(player, cid, unhide, reason)
     cid = {cid}
   end
   if #cid == 0 then return end
+
+  if type(player) == "table" then
+    player = player.id
+  end
+
   self:moveCards({
     ids = cid,
     from = self.owner_map[cid[1]],

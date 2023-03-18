@@ -39,9 +39,9 @@ Item {
           textFormat: Text.RichText
         }
 
-        MouseArea {
-          anchors.fill: parent
-          onClicked: {
+        TapHandler {
+          enabled: root.parent.state != "candidate" || !root.parent.selectable
+          onTapped: {
             let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
             data = data.filter((e) => e !== -1);
             if (data.length === 0)

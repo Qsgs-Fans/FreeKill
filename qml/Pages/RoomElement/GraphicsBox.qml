@@ -27,10 +27,9 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
   }
 
-  MouseArea {
-    anchors.fill: parent
-    drag.target: parent
-    drag.axis: Drag.XAndYAxis
+  DragHandler {
+    xAxis.enabled: true
+    yAxis.enabled: true
   }
 
   function close()

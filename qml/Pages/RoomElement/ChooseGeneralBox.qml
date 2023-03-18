@@ -122,8 +122,7 @@ GraphicsBox {
       }
 
       onReleased: {
-        if (!isClicked)
-          arrangeCards();
+        arrangeCards();
       }
     }
   }

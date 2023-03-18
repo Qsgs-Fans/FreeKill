@@ -249,7 +249,7 @@ Item {
       if (data.length === 0) {
         root.markArea.removeMark(areaName);
       } else {
-        root.markArea.setMark(areaName, data.length);
+        root.markArea.setMark(areaName, data.length.toString());
       }
     }
 
@@ -318,12 +318,9 @@ Item {
     }
   }
 
-  MouseArea {
-    anchors.fill: parent
-    propagateComposedEvents: true
-    onClicked: (mouse) => {
+  TapHandler {
+    onTapped: {
       if (parent.state != "candidate" || !parent.selectable) {
-        mouse.accepted = false;
         return;
       }
       parent.selected = !parent.selected;
@@ -337,6 +334,18 @@ Item {
     anchors.topMargin: -4
     anchors.right: parent.right
     anchors.rightMargin: -4
+  }
+
+  GlowText {
+    id: playerName
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: 2
+
+    font.pixelSize: 16
+    text: screenName
+
+    glow.radius: 8
   }
 
   Image {

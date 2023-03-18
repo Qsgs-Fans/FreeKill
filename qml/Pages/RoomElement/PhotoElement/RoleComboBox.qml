@@ -16,9 +16,8 @@ Image {
     source: SkinBank.ROLE_DIR + value
     visible: root.value == "unknown"
 
-    MouseArea {
-      anchors.fill: parent
-      onClicked: optionPopupBox.visible = true;
+    TapHandler {
+      onTapped: optionPopupBox.visible = true;
     }
   }
 
@@ -33,9 +32,8 @@ Image {
       Image {
         source: SkinBank.ROLE_DIR + modelData
 
-        MouseArea {
-          anchors.fill: parent
-          onClicked: {
+        TapHandler {
+          onTapped: {
             optionPopupBox.visible = false;
             assumptionBox.value = modelData;
           }
