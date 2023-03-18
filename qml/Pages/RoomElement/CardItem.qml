@@ -149,6 +149,7 @@ Item {
 
   TapHandler {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+    gesturePolicy: TapHandler.WithinBounds
 
     onTapped: (p, btn) => {
       if (btn === Qt.LeftButton || btn === Qt.NoButton) {
