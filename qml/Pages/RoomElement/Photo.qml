@@ -249,7 +249,7 @@ Item {
       if (data.length === 0) {
         root.markArea.removeMark(areaName);
       } else {
-        root.markArea.setMark(areaName, data.length);
+        root.markArea.setMark(areaName, data.length.toString());
       }
     }
 
