@@ -1808,7 +1808,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
             s.name
           })
 
-          if sendlog then
+          if sendlog and s.visible then
             self:sendLog{
               type = "#LoseSkill",
               from = player.id,
@@ -1833,7 +1833,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
             s.name
           })
 
-          if sendlog then
+          if sendlog and s.visible then
             self:sendLog{
               type = "#AcquireSkill",
               from = player.id,
