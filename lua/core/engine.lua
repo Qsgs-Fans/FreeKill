@@ -165,7 +165,8 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return self.generals[g] ~= nil
+    return g ~= name and self.generals[g] ~= nil and not
+      table.contains(self.disabled_packs, self.generals[g].package.name)
   end)
 end
 
