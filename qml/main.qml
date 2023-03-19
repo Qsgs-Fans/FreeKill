@@ -198,9 +198,20 @@ Item {
     }
   }
 
+  Loader {
+    id: splashLoader
+    anchors.fill: parent
+  }
+
   Component.onCompleted: {
     if (OS !== "Web") {
       mainStack.push(init);
+      if (!Debugging) {
+        splashLoader.source = "Splash.qml";
+        splashLoader.item.disappeared.connect(() => {
+          splashLoader.source = "";
+        });
+      }
     } else {
       mainStack.push(webinit);
     }

@@ -82,6 +82,26 @@
 </context>
 
 <context>
+  <name>Splash</name>
+  <message>
+    <source>Free</source>
+    <translation>自由</translation>
+  </message>
+  <message>
+    <source>Open</source>
+    <translation>开放</translation>
+  </message>
+  <message>
+    <source>Flexible</source>
+    <translation>可拓展</translation>
+  </message>
+  <message>
+    <source>Press Any Key...</source>
+    <translation>请按任意键...</translation>
+  </message>
+</context>
+
+<context>
   <name>Logic</name>
   <message>
     <source>MD5 check failed!</source>

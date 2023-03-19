@@ -182,14 +182,17 @@ Item {
 
   Component.onCompleted: {
     config.loadConf();
+
+    lady.source = config.ladyImg;
+
     server_addr.model = Object.keys(config.savedPassword);
     server_addr.onModelChanged();
     server_addr.currentIndex = server_addr.model.indexOf(config.lastLoginServer);
 
     let data = config.savedPassword[config.lastLoginServer];
-    screenNameEdit.text = data.username;
-    passwordEdit.text = data.shorten_password;
-
-    lady.source = config.ladyImg;
+    if (data) {
+      screenNameEdit.text = data.username;
+      passwordEdit.text = data.shorten_password;
+    }
   }
 }
