@@ -71,7 +71,7 @@ Item {
     width: parent.width
     Rectangle {
       anchors.fill: parent
-      color: "#88888888"
+      color: "#88EEEEEE"
     }
     Text {
       anchors.centerIn: parent

@@ -16,6 +16,7 @@ QtObject {
   property var disabledPack: []
   property string preferedMode
   property int preferedPlayerNum
+  property string ladyImg
 
   // Player property of client
   property string serverAddr
@@ -44,6 +45,7 @@ QtObject {
     disabledPack = conf.disabledPack || [ "test_p_0" ];
     preferedMode = conf.preferedMode || "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum || 2;
+    ladyImg = conf.ladyImg || AppPath + "/image/lady";
   }
 
   function saveConf() {
@@ -60,6 +62,7 @@ QtObject {
     conf.disabledPack = disabledPack;
     conf.preferedMode = preferedMode;
     conf.preferedPlayerNum = preferedPlayerNum;
+    conf.ladyImg = ladyImg;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

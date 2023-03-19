@@ -88,7 +88,7 @@ Item {
         width: parent.width * 0.8
         height: parent.height * 0.8
         anchors.centerIn: parent
-        color: "#88888888"
+        color: "#88EEEEEE"
         radius: 16
         Text {
           width: parent.width

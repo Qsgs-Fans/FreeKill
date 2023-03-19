@@ -29,7 +29,7 @@ Item {
         Item {
           Rectangle {
             anchors.centerIn: parent
-            color: "#88888888"
+            color: "#88EEEEEE"
             radius: 2
             width: root.width * 0.8
             height: root.height * 0.8

@@ -14,6 +14,7 @@ Fk:loadTranslationTable{
   ["Lobby BG"] = "大厅壁纸",
   ["Room BG"] = "房间背景",
   ["Game BGM"] = "游戏BGM",
+  ["Poster Girl"] = "看板娘",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",

@@ -9,7 +9,6 @@ Item {
   signal finished()
 
   ColumnLayout {
-    spacing: 20
     anchors.centerIn: parent
 
     RowLayout {
@@ -137,6 +136,25 @@ Item {
         onClicked: {
           fdialog.nameFilters = ["Music Files (*.mp3)"];
           fdialog.configKey = "bgmFile";
+          fdialog.open();
+        }
+      }
+    }
+
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Poster Girl")
+      }
+      TextField {
+        text: config.ladyImg
+      }
+      Button {
+        text: "..."
+        onClicked: {
+          fdialog.nameFilters = ["Image Files (*.jpg *.png)"];
+          fdialog.configKey = "ladyImg";
           fdialog.open();
         }
       }

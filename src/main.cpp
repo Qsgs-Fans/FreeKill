@@ -1,3 +1,4 @@
+#include "client.h"
 #ifndef Q_OS_WASM
 #include "server.h"
 #include "packman.h"
@@ -219,6 +220,7 @@ int main(int argc, char *argv[])
   Pacman = new PackMan;
 # endif
 
+  engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
 

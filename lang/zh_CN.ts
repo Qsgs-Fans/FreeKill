@@ -52,6 +52,30 @@
     <translation>管理拓展包</translation>
   </message>
   <message>
+    <source>Welcome back!</source>
+    <translation>欢迎回来！</translation>
+  </message>
+  <message>
+    <source>Server Addr</source>
+    <translation>服务器IP</translation>
+  </message>
+  <message>
+    <source>FAQ</source>
+    <translation>常见疑问</translation>
+  </message>
+  <message>
+    <source>$LoginFAQ</source>
+    <translation>
+      登录过程中的常见问题：
+      
+      1. 怎么联机？
+      将服务器IP输入到指定区域，然后填用户名和密码即可加入服务器。
+
+      2. 怎么注册？
+      无需注册，只要填写好用户名和密码，服务器就会自动为您注册。你的用户名和密码保存在服务端，下次登入还是需要输入一样的用户名和密码。但是无需担心，FK会自动为你记住密码。
+    </translation>
+  </message>
+  <message>
     <source>updated packages for md5</source>
     <translation>已为您与服务器同步拓展包，请尝试再次连入</translation>
   </message>
