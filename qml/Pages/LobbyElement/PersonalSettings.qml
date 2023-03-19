@@ -10,9 +10,9 @@ Item {
   Image {
     id: bg
     x: -32
+    height: 69
     source: SkinBank.LOBBY_IMG_DIR + "profile"
-    transformOrigin: Item.TopLeft
-    scale: 0.4
+    fillMode: Image.PreserveAspectFit
   }
 
   RowLayout {
