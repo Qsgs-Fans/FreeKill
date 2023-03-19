@@ -50,7 +50,7 @@ Item {
               width: parent.width * 0.65
               text: Backend.translate("about_" + dest + "_description")
               wrapMode: Text.WordWrap
-              textFormat: Text.RichText
+              textFormat: Text.MarkdownText
               font.pixelSize: 18
             }
           }
