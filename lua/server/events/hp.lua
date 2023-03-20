@@ -11,6 +11,7 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
     num = num,
     reason = reason,
     skillName = skillName,
+    damageEvent = damageStruct,
   }
 
   if self.logic:trigger(fk.BeforeHpChanged, player, data) then

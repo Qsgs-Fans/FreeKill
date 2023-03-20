@@ -35,6 +35,7 @@
 ---@field num integer
 ---@field reason string
 ---@field skillName string
+---@field damageEvent DamageStruct|null
 
 ---@class HpLostData
 ---@field num integer
@@ -54,6 +55,7 @@ fk.FireDamage = 3
 ---@field chain boolean
 ---@field damageType DamageType
 ---@field skillName string
+---@field beginnerOfTheDamage boolean|null
 
 ---@class RecoverStruct
 ---@field who ServerPlayer

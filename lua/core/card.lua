@@ -191,7 +191,7 @@ function Card:getTypeString()
   elseif t == Card.TypeEquip then
     return "equip"
   end
-  return "nocolor"
+  return "notype"
 end
 
 local function getNumberStr(num)

@@ -11,6 +11,7 @@ AttackRangeSkill = require "core.skill_type.attack_range"
 MaxCardsSkill = require "core.skill_type.max_cards"
 TargetModSkill = require "core.skill_type.target_mod"
 FilterSkill = require "core.skill_type.filter"
+InvaliditySkill = require "lua.core.skill_type.invalidity"
 
 BasicCard = require "core.card_type.basic"
 local Trick = require "core.card_type.trick"
@@ -316,6 +317,21 @@ function fk.CreateFilterSkill(spec)
   readStatusSpecToSkill(skill, spec)
   skill.cardFilter = spec.card_filter
   skill.viewAs = spec.view_as
+
+  return skill
+end
+
+---@class InvaliditySpec: StatusSkillSpec
+---@field invalidity_func fun(self: InvaliditySkill, from: Player, skill: Skill)
+
+---@param spec InvaliditySpec
+---@return InvaliditySkill
+function fk.CreateInvaliditySkill(spec)
+  assert(type(spec.name) == "string")
+
+  local skill = InvaliditySkill:new(spec.name)
+  readStatusSpecToSkill(skill, spec)
+  skill.getInvalidity = spec.invalidity_func
 
   return skill
 end

@@ -773,11 +773,62 @@ extension:addCards({
   crossbow:clone(Card.Diamond, 1),
 })
 
+fk.MarkArmorNullified = "mark__armor_nullified"
+
+local armorInvalidity = fk.CreateInvaliditySkill {
+  name = "armor_invalidity_skill",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    return
+      from:getMark(fk.MarkArmorNullified) > 0 and
+      from:getEquipment(Card.SubtypeArmor) ~= nil and
+      skill.attached_equip == Fk:getCardById(from:getEquipment(Card.SubtypeArmor)).name
+  end
+}
+Fk:addSkill(armorInvalidity)
+
+local qingGangSkill = fk.CreateTriggerSkill{
+  name = "#qinggang_sword_skill",
+  attached_equip = "qinggang_sword",
+  frequency = Skill.Compulsory,
+  events = { fk.TargetSpecified },
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and
+      data.card and data.card.trueName == "slash"
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:addPlayerMark(room:getPlayerById(data.to), fk.MarkArmorNullified)
+
+    data.extra_data = data.extra_data or {}
+    data.extra_data.qinggangNullified = data.extra_data.qinggangNullified or {}
+    data.extra_data.qinggangNullified[tostring(data.to)] = (data.extra_data.qinggangNullified[tostring(data.to)] or 0) + 1
+  end,
+
+  refresh_events = { fk.CardUseFinished },
+  can_refresh = function(self, event, target, player, data)
+    return data.extra_data and data.extra_data.qinggangNullified
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    for key, num in pairs(data.extra_data.qinggangNullified) do
+      local p = room:getPlayerById(tonumber(key))
+      if p:getMark(fk.MarkArmorNullified) > 0 then
+        room:removePlayerMark(p, fk.MarkArmorNullified, num)
+      end
+    end
+
+    data.qinggangNullified = nil
+  end,
+}
+Fk:addSkill(qingGangSkill)
+
 local qingGang = fk.CreateWeapon{
   name = "qinggang_sword",
   suit = Card.Spade,
   number = 6,
   attack_range = 2,
+  equip_skill = qingGangSkill,
 }
 
 extension:addCards({
@@ -1035,7 +1086,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
   events = {fk.AskForCardUse, fk.AskForCardResponse},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink")))
+      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none")))
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room

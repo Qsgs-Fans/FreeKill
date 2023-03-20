@@ -479,8 +479,16 @@ local function getActualSkill(skill)
 end
 
 ---@param skill string | Skill
-function Player:hasSkill(skill)
+function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
+  if not ignoreAlive and self.dead then
+    return false
+  end
+
   skill = getActualSkill(skill)
+
+  if not (ignoreNullified or skill:isEffectable(self)) then
+    return false
+  end
 
   if table.contains(self.player_skills, skill) then
     return true
@@ -507,7 +515,7 @@ function Player:addSkill(skill, source_skill)
   local room = Fk:currentRoom()
   local ret = {}
   for _, s in ipairs(toget) do
-    if not self:hasSkill(s) then
+    if not self:hasSkill(s, true, true) then
       table.insert(ret, s)
       if s:isInstanceOf(TriggerSkill) and RoomInstance then
         room.logic:addTriggerSkill(s)
@@ -563,7 +571,7 @@ function Player:loseSkill(skill, source_skill)
 
   local ret = {}  ---@type Skill[]
   for _, s in ipairs(tolose) do
-    if not self:hasSkill(s) then
+    if not self:hasSkill(s, true, true) then
       table.insert(ret, s)
     end
   end
