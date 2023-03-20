@@ -20,6 +20,7 @@ Fk:loadTranslationTable{
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
+  ["Select general num"] = "选将数目",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["General Settings"] = "通常设置",
@@ -149,6 +150,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",
+  ["$NoWinner"] = "平局！",
   ["Back To Lobby"] = "返回大厅",
 }
 

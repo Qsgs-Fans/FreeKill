@@ -16,6 +16,7 @@ QtObject {
   property var disabledPack: []
   property string preferedMode
   property int preferedPlayerNum
+  property int preferredGeneralNum
   property string ladyImg
 
   // Player property of client
@@ -45,6 +46,7 @@ QtObject {
     disabledPack = conf.disabledPack || [ "test_p_0" ];
     preferedMode = conf.preferedMode || "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum || 2;
+    preferredGeneralNum = conf.preferredGeneralNum || 3;
     ladyImg = conf.ladyImg || AppPath + "/image/lady";
   }
 
@@ -63,6 +65,7 @@ QtObject {
     conf.preferedMode = preferedMode;
     conf.preferedPlayerNum = preferedPlayerNum;
     conf.ladyImg = ladyImg;
+    conf.preferredGeneralNum = preferredGeneralNum;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

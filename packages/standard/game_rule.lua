@@ -6,7 +6,7 @@ local function getWinner(victim)
 
   if victim.role == "lord" then
     if #alive == 1 and alive[1].role == "renegade" then
-      winner = "renegede"
+      winner = "renegade"
     else
       winner = "rebel"
     end
