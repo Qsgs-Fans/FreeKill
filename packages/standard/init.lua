@@ -167,6 +167,8 @@ local luoyi = fk.CreateTriggerSkill{
       return
     end
 
+    if data.chain then return end
+
     local c = data.card
     return c and c.trueName == "slash" or c.name == "duel"
   end,

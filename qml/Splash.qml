@@ -148,15 +148,12 @@ Rectangle {
     PropertyAction { target: splash; property: "loading"; value: false }
   }
 
-  /*
   Text {
-    text: qsTr("Powered by Mogara")
-    color: "#f39292"
+    text: "FK联机交流群：531553435"
     font.pixelSize: 20
     anchors.bottom: parent.bottom
     anchors.right: parent.right
   }
-  */
 
   //--------------------Disappear--------------
   Behavior on opacity {

@@ -789,7 +789,7 @@ local iceSwordSkill = fk.CreateTriggerSkill{
   attached_equip = "ice_sword",
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
+    return target == player and player:hasSkill(self.name) and (not data.chain) and
       data.card and data.card.trueName == "slash" and not data.to:isNude()
   end,
   on_use = function(self, event, target, player, data)
@@ -989,7 +989,7 @@ local kylinBowSkill = fk.CreateTriggerSkill{
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     local ret = target == player and player:hasSkill(self.name) and
-      data.card and data.card.trueName == "slash"
+      data.card and data.card.trueName == "slash" and (not data.chain)
     if ret then
       ---@type ServerPlayer
       local to = data.to

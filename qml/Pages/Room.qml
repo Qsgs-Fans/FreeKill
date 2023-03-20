@@ -622,7 +622,6 @@ Item {
       let item = specialCardSkills.itemAt(i);
       if (item.checked) {
         let ret = item.orig_text;
-        console.log(ret);
         return ret;
       }
     }
