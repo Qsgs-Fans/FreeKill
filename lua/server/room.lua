@@ -1084,6 +1084,16 @@ function Room:handleUseCardReply(player, data)
       end
     end
   else
+    if data.special_skill then
+      local skill = Fk.skills[data.special_skill]
+      assert(skill:isInstanceOf(ActiveSkill))
+      skill:onUse(self, {
+        from = player.id,
+        cards = { card },
+        tos = targets,
+      })
+      return nil
+    end
     local use = {}    ---@type CardUseStruct
     use.from = player.id
     use.tos = {}

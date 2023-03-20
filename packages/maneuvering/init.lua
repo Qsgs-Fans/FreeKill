@@ -199,6 +199,8 @@ local ironChainCardSkill = fk.CreateActiveSkill{
 local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
+  -- FIXME! FIXME! FIXME!
+  special_skills = { "zhiheng" },
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
@@ -429,6 +431,8 @@ Fk:loadTranslationTable{
   ["fire__slash"] = "火杀",
   ["analeptic"] = "酒",
   ["iron_chain"] = "铁锁连环",
+  ["_normal_use"] = "正常使用",
+  ["recast"] = "重铸",
   ["fire_attack"] = "火攻",
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",

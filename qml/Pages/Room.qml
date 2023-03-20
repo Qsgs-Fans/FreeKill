@@ -263,6 +263,14 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
+
+      if (typeof card === "number" && card !== -1 && roomScene.state === "playing") {
+        let skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
+        skills.unshift("_normal_use");
+        specialCardSkills.model = skills;
+      } else {
+        specialCardSkills.model = [];
+      }
     }
   }
 
@@ -331,6 +339,41 @@ Item {
         }
       }
     }
+
+    Rectangle {
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: 8
+      anchors.right: okCancel.left
+      anchors.rightMargin: 20
+      color: "#88EEEEEE"
+      radius: 8
+      visible: roomScene.state == "playing" && specialCardSkills.count > 1
+      width: childrenRect.width
+      height: childrenRect.height - 20
+
+      RowLayout {
+        y: -10
+        Repeater {
+          id: specialCardSkills
+          RadioButton {
+            property string orig_text: modelData
+            text: Backend.translate(modelData)
+            checked: index === 0
+            onCheckedChanged: {
+              if (modelData === "_normal_use") {
+                Logic.enableTargets(dashboard.selected_card);
+              } else {
+                Logic.enableTargets(JSON.stringify({
+                  skill: modelData,
+                  subcards: [dashboard.selected_card],
+                }));
+              }
+            }
+          }
+        }
+      }
+    }
+
 
     Row {
       id: okCancel
@@ -572,6 +615,17 @@ Item {
     sequence: "Space"
     enabled: cancelButton.enabled
     onActivated: Logic.doCancelButton();
+  }
+
+  function getCurrentCardUseMethod() {
+    for (let i = 1; i < specialCardSkills.count; i++) {
+      let item = specialCardSkills.itemAt(i);
+      if (item.checked) {
+        let ret = item.orig_text;
+        console.log(ret);
+        return ret;
+      }
+    }
   }
 
   function addToChat(pid, raw, msg) {
