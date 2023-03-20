@@ -1317,7 +1317,8 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
           nullifiedTargets = cardUseEvent.nullifiedTargets or {},
           tos = aimGroup,
           firstTarget = firstTarget,
-          additionalDamage = cardUseEvent.additionalDamage
+          additionalDamage = cardUseEvent.additionalDamage,
+          extra_data = cardUseEvent.extra_data,
         }
 
         local index = 1
@@ -1344,6 +1345,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
         aimStruct.targetGroup = cardUseEvent.tos
         aimStruct.nullifiedTargets = cardUseEvent.nullifiedTargets or {}
         aimStruct.firstTarget = firstTarget
+        aimStruct.extra_data = cardUseEvent.extra_data
       end
 
       firstTarget = false
@@ -1361,6 +1363,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       cardUseEvent.from = aimStruct.from
       cardUseEvent.tos = aimEventTargetGroup
       cardUseEvent.nullifiedTargets = aimStruct.nullifiedTargets
+      cardUseEvent.extra_data = aimStruct.extra_data
 
       if #AimGroup:getAllTargets(aimStruct.tos) == 0 then
         return false
@@ -1824,7 +1827,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
   for _, skill in ipairs(skill_names) do
     if string.sub(skill, 1, 1) == "-" then
       local actual_skill = string.sub(skill, 2, #skill)
-      if player:hasSkill(actual_skill) then
+      if player:hasSkill(actual_skill, true, true) then
         local lost_skills = player:loseSkill(actual_skill, source_skill)
         for _, s in ipairs(lost_skills) do
           self:doBroadcastNotify("LoseSkill", json.encode{
@@ -1846,7 +1849,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
       end
     else
       local sk = Fk.skills[skill]
-      if sk and not player:hasSkill(sk) then
+      if sk and not player:hasSkill(sk, true, true) then
         local got_skills = player:addSkill(sk)
 
         for _, s in ipairs(got_skills) do

@@ -156,32 +156,34 @@ extension:addCards({
 local ironChainEffect = fk.CreateTriggerSkill{
   name = "iron_chain_effect",
   global = true,
-  priority = 0, -- game rule
-  refresh_events = {fk.DamageFinished},
+  priority = { [fk.BeforeHpChanged] = 10, [fk.DamageFinished] = 0 }, -- game rule
+  refresh_events = { fk.BeforeHpChanged, fk.DamageFinished },
   can_refresh = function(self, event, target, player, data)
-    return target == player and data.damageType ~= fk.NormalDamage
+    if event == fk.BeforeHpChanged then
+      return target == player and data.damageEvent and data.damageEvent.damageType ~= fk.NormalDamage and player.chained
+    else
+      return target == player and data.beginnerOfTheDamage and not data.chain
+    end
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
-    if data.to.chained then
-      data.to:setChainState(false)
+    if event == fk.BeforeHpChanged then
+      data.damageEvent.beginnerOfTheDamage = true
+      player:setChainState(false)
     else
-      return
-    end
-    if data.chain then return end
-
-    local targets = table.filter(room:getAlivePlayers(), function(p)
-      return p.chained
-    end)
-    for _, p in ipairs(targets) do
-      room:sendLog{
-        type = "#ChainDamage",
-        from = p.id
-      }
-      local dmg = table.simpleClone(data)
-      dmg.to = p
-      dmg.chain = true
-      room:damage(dmg)
+      local targets = table.filter(room:getAlivePlayers(), function(p)
+        return p.chained
+      end)
+      for _, p in ipairs(targets) do
+        room:sendLog{
+          type = "#ChainDamage",
+          from = p.id
+        }
+        local dmg = table.simpleClone(data)
+        dmg.to = p
+        dmg.chain = true
+        room:damage(dmg)
+      end
     end
   end,
 }
@@ -320,6 +322,30 @@ local gudingBlade = fk.CreateWeapon{
 
 extension:addCard(gudingBlade)
 
+local fanSkill = fk.CreateTriggerSkill{
+  name = "#fan_skill",
+  attached_equip = "fan",
+  events = { fk.AfterCardUseDeclared },
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and data.card.name == "slash"
+  end,
+  on_use = function(_, _, _, _, data)
+    local fireSlash = Fk:cloneCard("fire__slash")
+    fireSlash:addSubcard(data.card)
+    data.card = fireSlash
+  end,
+}
+Fk:addSkill(fanSkill)
+local fan = fk.CreateWeapon{
+  name = "fan",
+  suit = Card.Diamond,
+  number = 1,
+  attack_range = 4,
+  equip_skill = fanSkill,
+}
+
+extension:addCard(fan)
+
 local vineSkill = fk.CreateTriggerSkill{
   name = "#vine_skill",
   attached_equip = "vine",
@@ -380,7 +406,7 @@ local silverLion = fk.CreateArmor{
   equip_skill = silverLionSkill,
   on_uninstall = function(self, room, player)
     Armor.onUninstall(self, room, player)
-    if player:isWounded() then
+    if player:isWounded() and self.equip_skill:isEffectable(player) then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
       room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
       room:recover{
@@ -436,6 +462,8 @@ Fk:loadTranslationTable{
   ["fire_attack"] = "火攻",
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",
+  ["fan"] = "朱雀羽扇",
+  ["#fan_skill"] = "朱雀羽扇",
   ["vine"] = "藤甲",
   ["silver_lion"] = "白银狮子",
   ["hualiu"] = "骅骝",

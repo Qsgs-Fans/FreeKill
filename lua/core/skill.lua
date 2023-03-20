@@ -51,4 +51,17 @@ function Skill:isEquipmentSkill()
   return self.attached_equip and type(self.attached_equip) == 'string' and self.attached_equip ~= ""
 end
 
+---@param player Player
+---@return boolean
+function Skill:isEffectable(player)
+  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or {}
+  for _, nullifySkill in ipairs(nullifySkills) do
+    if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then
+      return false
+    end
+  end
+
+  return true
+end
+
 return Skill
