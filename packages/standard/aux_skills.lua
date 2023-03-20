@@ -5,11 +5,15 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
+    local checkpoint = true
     if not self.include_equip then
-      return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+      checkpoint = checkpoint and (Fk:currentRoom():getCardArea(to_select) ~= Player.Equip)
     end
 
-    return true
+    if self.pattern ~= "" then
+      checkpoint = checkpoint and (Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)))
+    end
+    return checkpoint
   end,
   min_card_num = function(self) return self.min_num end,
   max_card_num = function(self) return self.num end,
@@ -17,17 +21,7 @@ local discardSkill = fk.CreateActiveSkill{
 
 local chooseCardsSkill = fk.CreateActiveSkill{
   name = "choose_cards_skill",
-  card_filter = function(self, to_select, selected)
-    if #selected >= self.num then
-      return false
-    end
-
-    if not self.include_equip then
-      return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
-    end
-
-    return true
-  end,
+  card_filter = discardSkill.cardFilter,
   min_card_num = function(self) return self.min_num end,
   max_card_num = function(self) return self.num end,
 }

@@ -290,6 +290,20 @@ function ServerPlayer:turnOver()
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 
+function ServerPlayer:showCards(cards)
+  cards = Card:getIdList(cards)
+  local room = self.room
+  room:sendLog{
+    type = "#ShowCard",
+    from = self.id,
+    card = cards,
+  }
+  room:doBroadcastNotify("ShowCard", json.encode{
+    from = self.id,
+    cards = cards,
+  })
+end
+
 ---@param from_phase Phase
 ---@param to_phase Phase
 function ServerPlayer:changePhase(from_phase, to_phase)

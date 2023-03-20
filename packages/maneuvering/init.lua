@@ -199,6 +199,8 @@ local ironChainCardSkill = fk.CreateActiveSkill{
 local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
+  -- FIXME! FIXME! FIXME!
+  special_skills = { "zhiheng" },
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
@@ -207,6 +209,45 @@ extension:addCards{
   ironChain:clone(Card.Club, 11),
   ironChain:clone(Card.Club, 12),
   ironChain:clone(Card.Club, 13),
+}
+
+local fireAttackSkill = fk.CreateActiveSkill{
+  name = "fire_attack_skill",
+  target_num = 1,
+  target_filter = function(self, to_select)
+    return not Fk:currentRoom():getPlayerById(to_select):isKongcheng()
+  end,
+  on_effect = function(self, room, cardEffectEvent)
+    local from = room:getPlayerById(cardEffectEvent.from)
+    local to = room:getPlayerById(cardEffectEvent.to)
+    if to:isKongcheng() then return end
+
+    local showCard = room:askForCard(to, 1, 1, false, self.name, false)[1]
+    to:showCards(showCard)
+
+    showCard = Fk:getCardById(showCard)
+    local cards = room:askForDiscard(from, 1, 1, false, self.name, true,
+                                    ".|.|" .. showCard:getSuitString())
+    if #cards > 0 then
+      room:damage({
+        from = from,
+        to = to,
+        card = cardEffectEvent.card,
+        damage = 1,
+        damageType = fk.FireDamage,
+        skillName = self.name
+      })
+    end
+  end,
+}
+local fireAttack = fk.CreateTrickCard{
+  name = "fire_attack",
+  skill = fireAttackSkill,
+}
+extension:addCards{
+  fireAttack:clone(Card.Heart, 2),
+  fireAttack:clone(Card.Heart, 3),
+  fireAttack:clone(Card.Diamond, 12),
 }
 
 local supplyShortageSkill = fk.CreateActiveSkill{
@@ -390,6 +431,9 @@ Fk:loadTranslationTable{
   ["fire__slash"] = "火杀",
   ["analeptic"] = "酒",
   ["iron_chain"] = "铁锁连环",
+  ["_normal_use"] = "正常使用",
+  ["recast"] = "重铸",
+  ["fire_attack"] = "火攻",
   ["supply_shortage"] = "兵粮寸断",
   ["guding_blade"] = "古锭刀",
   ["vine"] = "藤甲",

@@ -11,6 +11,8 @@
 ---@field area CardArea
 ---@field subcards integer[]
 ---@field skillName string @ for virtual cards
+---@field skill Skill
+---@field special_skills string[] | nil
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -88,6 +90,7 @@ end
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
+  newCard.special_skills = self.special_skills
   newCard.equip_skill = self.equip_skill
   return newCard
 end

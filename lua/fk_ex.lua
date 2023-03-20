@@ -344,6 +344,7 @@ function fk.CreateBasicCard(spec)
 
   local card = BasicCard:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   return card
 end
 
@@ -358,6 +359,7 @@ function fk.CreateTrickCard(spec)
 
   local card = TrickCard:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   return card
 end
 
@@ -372,6 +374,7 @@ function fk.CreateDelayedTrickCard(spec)
 
   local card = DelayedTrickCard:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   return card
 end
 
@@ -387,6 +390,7 @@ function fk.CreateWeapon(spec)
 
   local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   card.equip_skill = spec.equip_skill
 
   if spec.on_install then card.onInstall = spec.on_install end
@@ -406,6 +410,7 @@ function fk.CreateArmor(spec)
   local card = Armor:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
   card.equip_skill = spec.equip_skill
+  card.special_skills = spec.special_skills
 
   if spec.on_install then card.onInstall = spec.on_install end
   if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
@@ -423,6 +428,7 @@ function fk.CreateDefensiveRide(spec)
 
   local card = DefensiveRide:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   card.equip_skill = spec.equip_skill
 
   if spec.on_install then card.onInstall = spec.on_install end
@@ -441,6 +447,7 @@ function fk.CreateOffensiveRide(spec)
 
   local card = OffensiveRide:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   card.equip_skill = spec.equip_skill
 
   if spec.on_install then card.onInstall = spec.on_install end
@@ -459,6 +466,7 @@ function fk.CreateTreasure(spec)
 
   local card = Treasure:new(spec.name, spec.suit, spec.number)
   card.skill = spec.skill or defaultCardSkill
+  card.special_skills = spec.special_skills
   card.equip_skill = spec.equip_skill
 
   if spec.on_install then card.onInstall = spec.on_install end

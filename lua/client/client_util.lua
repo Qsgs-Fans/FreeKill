@@ -115,6 +115,10 @@ function GetCards(pack_name)
   return json.encode(ret)
 end
 
+function GetCardSpecialSkills(cid)
+  return json.encode(Fk:getCardById(cid).special_skills or {})
+end
+
 function DistanceTo(from, to)
   local a = ClientInstance:getPlayerById(from)
   local b = ClientInstance:getPlayerById(to)

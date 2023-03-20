@@ -750,18 +750,21 @@ end
 ---@param maxNum integer
 ---@param includeEquip boolean
 ---@param skillName string
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable)
+---@param pattern string
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
   if minNum < 1 then
     return nil
   end
   cancelable = cancelable or false
+  pattern = pattern or ""
 
   local toDiscard = {}
   local data = {
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName
+    reason = skillName,
+    pattern = pattern,
   }
   local prompt = "#AskForDiscard:::" .. maxNum .. ":" .. minNum
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
@@ -817,18 +820,21 @@ end
 ---@param includeEquip boolean
 ---@param skillName string
 ---@param cancelable boolean
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable)
+---@param pattern string
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
   if minNum < 1 then
     return nil
   end
   cancelable = cancelable or false
+  pattern = pattern or ""
 
   local chosenCards = {}
   local data = {
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName
+    reason = skillName,
+    pattern = pattern,
   }
   local prompt = "#askForCard:::" .. maxNum .. ":" .. minNum
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)
@@ -1078,6 +1084,16 @@ function Room:handleUseCardReply(player, data)
       end
     end
   else
+    if data.special_skill then
+      local skill = Fk.skills[data.special_skill]
+      assert(skill:isInstanceOf(ActiveSkill))
+      skill:onUse(self, {
+        from = player.id,
+        cards = { card },
+        tos = targets,
+      })
+      return nil
+    end
     local use = {}    ---@type CardUseStruct
     use.from = player.id
     use.tos = {}

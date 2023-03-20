@@ -68,7 +68,8 @@ function doOkButton() {
     replyToServer(JSON.stringify(
       {
         card: dashboard.getSelectedCard(),
-        targets: selected_targets
+        targets: selected_targets,
+        special_skill: roomScene.getCurrentCardUseMethod(),
       }
     ));
     return;

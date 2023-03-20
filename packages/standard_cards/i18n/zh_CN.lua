@@ -41,6 +41,7 @@ Fk:loadTranslationTable{
   ["god_salvation"] = "桃园结义",
 
   ["amazing_grace"] = "五谷丰登",
+  ["amazing_grace_skill"] = "五谷选牌",
 
   ["lightning"] = "闪电",
 
