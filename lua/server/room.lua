@@ -87,6 +87,11 @@ function Room:initialize(_room)
 
       -- If ret == true, then when err_msg is true, that means no request
     end
+
+    if not self.game_finished then
+      self:doBroadcastNotify("GameOver", "")
+      self.room:gameOver()
+    end
   end
 
   self.players = {}
@@ -274,6 +279,9 @@ function Room:getNCards(num, from)
   while num > 0 do
     if #self.draw_pile < 1 then
       self:shuffleDrawPile()
+      if #self.draw_pile < 1 then
+        self:gameOver("")
+      end
     end
 
     local index = from == "top" and 1 or #self.draw_pile

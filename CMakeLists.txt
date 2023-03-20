@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.0.4)
+project(FreeKill VERSION 0.0.6)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

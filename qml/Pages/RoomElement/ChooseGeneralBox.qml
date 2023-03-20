@@ -27,8 +27,8 @@ GraphicsBox {
 
     Item {
       id: generalArea
-      width: (generalList.count >= 5 ? Math.ceil(generalList.count / 2) : Math.max(3, generalList.count)) * 97
-      height: generalList.count >= 5 ? 290 : 150
+      width: (generalList.count > 8 ? Math.ceil(generalList.count / 2) : Math.max(3, generalList.count)) * 97
+      height: generalList.count > 8 ? 290 : 150
       z: 1
 
       Repeater {
@@ -38,8 +38,8 @@ GraphicsBox {
         Item {
           width: 93
           height: 130
-          x: (index % Math.ceil(generalList.count / (generalList.count >= 5 ? 2 : 1))) * 98 + (generalList.count >= 5 && index > generalList.count / 2 && generalList.count % 2 == 1 ? 50 : 0)
-          y: generalList.count < 5 ? 0 : (index < generalList.count / 2 ? 0 : 135)
+          x: (index % Math.ceil(generalList.count / (generalList.count > 8 ? 2 : 1))) * 98 + (generalList.count > 8 && index > generalList.count / 2 && generalList.count % 2 == 1 ? 50 : 0)
+          y: generalList.count <= 8 ? 0 : (index < generalList.count / 2 ? 0 : 135)
         }
       }
     }

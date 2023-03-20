@@ -49,11 +49,13 @@ Item {
   Component { id: lobby; Lobby {} }
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
+  Component { id: modesOverview; ModesOverview {} }
   Component { id: room; Room {} }
   Component { id: aboutPage; About {} }
 
   property var generalsOverviewPage
   property var cardsOverviewPage
+  property alias modesOverviewPage: modesOverview
   property alias aboutPage: aboutPage
   property bool busy: false
   property string busyText: ""
@@ -71,7 +73,7 @@ Item {
     width: parent.width
     Rectangle {
       anchors.fill: parent
-      color: "#88888888"
+      color: "#88EEEEEE"
     }
     Text {
       anchors.centerIn: parent
@@ -198,9 +200,20 @@ Item {
     }
   }
 
+  Loader {
+    id: splashLoader
+    anchors.fill: parent
+  }
+
   Component.onCompleted: {
     if (OS !== "Web") {
       mainStack.push(init);
+      if (!Debugging) {
+        splashLoader.source = "Splash.qml";
+        splashLoader.item.disappeared.connect(() => {
+          splashLoader.source = "";
+        });
+      }
     } else {
       mainStack.push(webinit);
     }

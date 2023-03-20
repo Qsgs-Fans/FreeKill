@@ -14,6 +14,7 @@ var DELAYED_TRICK_DIR = AppPath + "/image/card/delayedTrick/";
 var EQUIP_ICON_DIR = AppPath + "/image/card/equipIcon/";
 var PIXANIM_DIR = AppPath + "/image/anim/"
 var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
+var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
 
 function getGeneralPicture(name) {
   let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));

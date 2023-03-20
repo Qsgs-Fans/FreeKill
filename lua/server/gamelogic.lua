@@ -67,6 +67,7 @@ end
 
 function GameLogic:chooseGenerals()
   local room = self.room
+  local generalNum = room.settings.generalNum
   local function setPlayerGeneral(player, general)
     if Fk.generals[general] == nil then return end
     player.general = general
@@ -78,7 +79,7 @@ function GameLogic:chooseGenerals()
   local lord_general = nil
   if lord ~= nil then
     room.current = lord
-    local generals = Fk:getGeneralsRandomly(3)
+    local generals = Fk:getGeneralsRandomly(generalNum)
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
@@ -88,14 +89,13 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * 3, nil, {lord_general})
+  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, {lord_general})
   table.shuffle(generals)
   for _, p in ipairs(nonlord) do
-    local arg = {
-      (table.remove(generals, 1)).name,
-      (table.remove(generals, 1)).name,
-      (table.remove(generals, 1)).name,
-    }
+    local arg = {}
+    for i = 1, generalNum do
+      table.insert(arg, table.remove(generals, 1).name)
+    end
     p.request_data = json.encode(arg)
     p.default_reply = arg[1]
   end

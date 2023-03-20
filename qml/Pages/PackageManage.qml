@@ -73,7 +73,7 @@ Item {
       Layout.fillHeight: true
       Rectangle {
         anchors.fill: parent
-        color: "#88888888"
+        color: "#88EEEEEE"
       }
       ListView {
         id: packageList

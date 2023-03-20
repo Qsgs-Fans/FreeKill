@@ -16,7 +16,7 @@ GraphicsBox {
     spacing: 10
 
     Text {
-      text: Backend.translate("$Winner").arg(Backend.translate(winner))
+      text: winner !== "" ? Backend.translate("$Winner").arg(Backend.translate(winner)) : Backend.translate("$NoWinner")
       color: "#E4D5A0"
     }
 

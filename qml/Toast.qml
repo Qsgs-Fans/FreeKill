@@ -19,11 +19,9 @@ Rectangle {
   radius: 16
 
   opacity: 0
-  color: "#F2808A87"
 
   Text {
     id: message
-    color: "white"
     horizontalAlignment: Text.AlignHCenter
     anchors.centerIn: parent
   }

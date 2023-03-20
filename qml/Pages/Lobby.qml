@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 import QtQuick.Layouts
+import "LobbyElement"
 import "Logic.js" as Logic
 
 Item {
@@ -73,8 +74,13 @@ Item {
     id: roomModel
   }
 
+  PersonalSettings {
+  }
+
   RowLayout {
-    anchors.fill: parent
+    anchors.centerIn: parent
+    width: childrenRect.width
+    height: parent.height
     Item {
       Layout.preferredWidth: root.width * 0.6
       Layout.fillHeight: true
@@ -82,7 +88,7 @@ Item {
         width: parent.width * 0.8
         height: parent.height * 0.8
         anchors.centerIn: parent
-        color: "#88888888"
+        color: "#88EEEEEE"
         radius: 16
         Text {
           width: parent.width
@@ -101,7 +107,7 @@ Item {
         }
       }
     }
-
+/*
     GridLayout {
       flow: GridLayout.TopToBottom
       rows: 4
@@ -161,6 +167,57 @@ Item {
           Backend.quitLobby();
           mainStack.pop();
         }
+      }
+    }
+*/
+  }
+
+  RowLayout {
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    Button {
+      text: Backend.translate("Create Room")
+      onClicked: {
+        lobby_dialog.source = "LobbyElement/CreateRoom.qml";
+        lobby_drawer.open();
+        config.observing = false;
+      }
+    }
+    Button {
+      text: Backend.translate("Generals Overview")
+      onClicked: {
+        mainStack.push(mainWindow.generalsOverviewPage);
+        mainStack.currentItem.loadPackages();
+      }
+    }
+    Button {
+      text: Backend.translate("Cards Overview")
+      onClicked: {
+        mainStack.push(mainWindow.cardsOverviewPage);
+        mainStack.currentItem.loadPackages();
+      }
+    }
+    Button {
+      text: Backend.translate("Scenarios Overview")
+      onClicked: {
+        mainStack.push(mainWindow.modesOverviewPage);
+      }
+    }
+    Button {
+      text: Backend.translate("Replay")
+    }
+    Button {
+      text: Backend.translate("About")
+      onClicked: {
+        mainStack.push(mainWindow.aboutPage);
+      }
+    }
+    Button {
+      text: Backend.translate("Exit Lobby")
+      onClicked: {
+        toast.show("Goodbye.");
+        Backend.quitLobby();
+        mainStack.pop();
       }
     }
   }

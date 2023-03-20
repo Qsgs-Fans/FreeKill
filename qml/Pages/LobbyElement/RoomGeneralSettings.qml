@@ -28,6 +28,7 @@ ColumnLayout {
       id: playerNum
       from: 2
       to: 8
+      value: config.preferedPlayerNum
 
       onValueChanged: {
         config.preferedPlayerNum = value;
@@ -58,6 +59,24 @@ ColumnLayout {
     }
   }
 
+  RowLayout {
+    anchors.rightMargin: 8
+    spacing: 16
+    Text {
+      text: Backend.translate("Select general num")
+    }
+    SpinBox {
+      id: generalNum
+      from: 3
+      to: 8
+      value: config.preferredGeneralNum
+
+      onValueChanged: {
+        config.preferredGeneralNum = value;
+      }
+    }
+  }
+
   CheckBox {
     id: freeAssignCheck
     checked: Debugging ? true : false
@@ -78,6 +97,7 @@ ColumnLayout {
             enableFreeAssign: freeAssignCheck.checked,
             gameMode: config.preferedMode,
             disabledPack: config.disabledPack,
+            generalNum: config.preferredGeneralNum,
           }])
         );
       }
