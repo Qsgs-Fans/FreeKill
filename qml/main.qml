@@ -49,11 +49,13 @@ Item {
   Component { id: lobby; Lobby {} }
   Component { id: generalsOverview; GeneralsOverview {} }
   Component { id: cardsOverview; CardsOverview {} }
+  Component { id: modesOverview; ModesOverview {} }
   Component { id: room; Room {} }
   Component { id: aboutPage; About {} }
 
   property var generalsOverviewPage
   property var cardsOverviewPage
+  property alias modesOverviewPage: modesOverview
   property alias aboutPage: aboutPage
   property bool busy: false
   property string busyText: ""

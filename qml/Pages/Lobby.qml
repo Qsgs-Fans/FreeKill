@@ -199,6 +199,9 @@ Item {
     }
     Button {
       text: Backend.translate("Scenarios Overview")
+      onClicked: {
+        mainStack.push(mainWindow.modesOverviewPage);
+      }
     }
     Button {
       text: Backend.translate("Replay")
