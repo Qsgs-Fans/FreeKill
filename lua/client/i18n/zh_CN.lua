@@ -202,6 +202,8 @@ Fk:loadTranslationTable{
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
 
+  ["#ShowCard"] = "%from 展示了牌 %card",
+
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",
   ["#GainAnExtraTurn"] = "%from 开始进行一个额外的回合",

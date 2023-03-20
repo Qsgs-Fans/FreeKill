@@ -466,6 +466,19 @@ fk.client_callback["MoveCards"] = function(jsonData)
   ClientInstance:notifyUI("MoveCards", json.encode(merged))
 end
 
+fk.client_callback["ShowCard"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local from = data.from
+  local cards = data.cards
+  ClientInstance:notifyUI("MoveCards", json.encode{
+    {
+      ids = cards,
+      fromArea = Card.DrawPile,
+      toArea = Card.Processing,
+    }
+  })
+end
+
 fk.client_callback["LoseSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
