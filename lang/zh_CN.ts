@@ -67,7 +67,7 @@
     <source>$LoginFAQ</source>
     <translation>
       登录过程中的常见问题：
-      
+
       1. 怎么联机？
       将服务器IP输入到指定区域，然后填用户名和密码即可加入服务器。
 
