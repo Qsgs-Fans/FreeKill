@@ -112,6 +112,8 @@ Item {
         Button {
           text: qsTr("Join Server")
           Layout.fillWidth: true
+          display: AbstractButton.TextBesideIcon
+          icon.name: "go-next"
           enabled: passwordEdit.text !== ""
           onClicked: {
             config.serverAddr = server_addr.editText;

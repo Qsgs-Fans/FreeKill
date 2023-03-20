@@ -172,17 +172,24 @@ Item {
 */
   }
 
+  Button {
+    anchors.bottom: buttonRow.top
+    anchors.right: parent.right
+    width: 120
+    display: AbstractButton.TextUnderIcon
+    icon.name: "media-playback-start"
+    text: Backend.translate("Create Room")
+    onClicked: {
+      lobby_dialog.source = "LobbyElement/CreateRoom.qml";
+      lobby_drawer.open();
+      config.observing = false;
+    }
+  }
+
   RowLayout {
+    id: buttonRow
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    Button {
-      text: Backend.translate("Create Room")
-      onClicked: {
-        lobby_dialog.source = "LobbyElement/CreateRoom.qml";
-        lobby_drawer.open();
-        config.observing = false;
-      }
-    }
     Button {
       text: Backend.translate("Generals Overview")
       onClicked: {
@@ -212,13 +219,17 @@ Item {
         mainStack.push(mainWindow.aboutPage);
       }
     }
-    Button {
-      text: Backend.translate("Exit Lobby")
-      onClicked: {
-        toast.show("Goodbye.");
-        Backend.quitLobby();
-        mainStack.pop();
-      }
+  }
+
+  Button {
+    anchors.right: parent.right
+    text: Backend.translate("Exit Lobby")
+    display: AbstractButton.TextBesideIcon
+    icon.name: "application-exit"
+    onClicked: {
+      toast.show("Goodbye.");
+      Backend.quitLobby();
+      mainStack.pop();
     }
   }
 
