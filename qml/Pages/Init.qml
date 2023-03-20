@@ -95,15 +95,16 @@ Item {
             }
           }
 
-          Text {
-            text: qsTr("Password")
+          CheckBox {
+            id: showPasswordCheck
+            text: qsTr("Show Password")
           }
           TextField {
             id: passwordEdit
             Layout.fillWidth: true
             placeholderText: qsTr("Password")
             text: ""
-            echoMode: TextInput.Password
+            echoMode: showPasswordCheck.checked ? TextInput.Normal : TextInput.Password
             passwordCharacter: "*"
           }
         }

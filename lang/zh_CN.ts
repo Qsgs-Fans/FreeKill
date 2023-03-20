@@ -36,8 +36,8 @@
     <translation>用户名</translation>
   </message>
   <message>
-    <source>Password</source>
-    <translation>密码</translation>
+    <source>Show Password</source>
+    <translation>显示密码</translation>
   </message>
   <message>
     <source>Join Server</source>
