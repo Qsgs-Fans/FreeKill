@@ -11,12 +11,17 @@ GameEvent.functions[GameEvent.Dying] = function(self)
   self.logic:trigger(fk.EnterDying, dyingPlayer, dyingStruct)
 
   if dyingPlayer.hp < 1 then
-    self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
-    self.logic:trigger(fk.AskForPeaches, dyingPlayer, dyingStruct)
+    -- self.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
+    local savers = self:getAlivePlayers()
+    for _, p in ipairs(savers) do
+      if dyingPlayer.hp > 0 or dyingPlayer.dead or self.logic:trigger(fk.AskForPeaches, p, dyingStruct) then
+        break
+      end
+    end
     self.logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
   end
 
-  if not dyingPlayer.dead then
+  if not dyingPlayer.dead and dyingPlayer.dying then
     dyingPlayer.dying = false
     self:broadcastProperty(dyingPlayer, "dying")
   end

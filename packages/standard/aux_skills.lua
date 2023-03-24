@@ -21,6 +21,7 @@ local discardSkill = fk.CreateActiveSkill{
 
 local chooseCardsSkill = fk.CreateActiveSkill{
   name = "choose_cards_skill",
+  expand_pile = function(self) return self.expand_pile end,
   card_filter = discardSkill.cardFilter,
   min_card_num = function(self) return self.min_num end,
   max_card_num = function(self) return self.num end,

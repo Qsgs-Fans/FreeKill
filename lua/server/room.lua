@@ -928,8 +928,9 @@ end
 ---@param cancelable boolean @ 能不能点取消
 ---@param pattern string @ 选牌规则
 ---@param prompt string @ 提示信息
+---@param expand_pile string @ 可选私人牌堆名称
 ---@return integer[] @ 选择的牌的id列表，可能是空的
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt)
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile)
   if minNum < 1 then
     return nil
   end
@@ -943,6 +944,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     include_equip = includeEquip,
     reason = skillName,
     pattern = pattern,
+    expand_pile = expand_pile,
   }
   local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)

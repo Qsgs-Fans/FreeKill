@@ -1,4 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 
 Item {
   id: root
@@ -6,9 +9,81 @@ Item {
   property var extra_data: ({})
   signal finish()
 
-  // TODO: complete this ......
-  Text {
+  Rectangle {
     anchors.fill: parent
-    text: JSON.stringify(extra_data)
+    color: "black"
+
+    GlowText {
+      id: pileName
+      text: Backend.translate(extra_data.name)
+      width: parent.width
+      anchors.topMargin: 10
+      horizontalAlignment: Text.AlignHCenter
+      font.family: fontLibian.name
+      color: "#E4D5A0"
+      font.pixelSize: 30
+      font.weight: Font.Medium
+      glow.color: "black"
+      glow.spread: 0.3
+      glow.radius: 5
+    }
+
+    LinearGradient  {
+      anchors.fill: pileName
+      source: pileName
+      gradient: Gradient {
+        GradientStop {
+          position: 0
+          color: "#FEF7C2"
+        }
+
+        GradientStop {
+          position: 0.5
+          color: "#D2AD4A"
+        }
+
+        GradientStop {
+          position: 1
+          color: "#BE9878"
+        }
+      }
+    }
+
+    Flickable {
+      id: flickableContainer
+      ScrollBar.vertical: ScrollBar {}
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: 40
+      flickableDirection: Flickable.VerticalFlick
+      width: parent.width - 20
+      height: parent.height - 40
+      contentWidth: cardsList.width
+      contentHeight: cardsList.height
+      clip: true 
+
+      ColumnLayout {
+        id: cardsList
+
+        GridLayout {
+          columns: 4
+
+          Repeater {
+            model: extra_data.ids
+
+            CardItem {
+              id: cardItem
+              width: (flickableContainer.width - 15) / 4
+              height: cardItem.width * 1.4
+              autoBack: false
+              Component.onCompleted: {
+                let data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
+                setData(data);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
