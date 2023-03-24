@@ -821,7 +821,8 @@ end
 ---@param skillName string
 ---@param cancelable boolean
 ---@param pattern string
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
+---@param expand_pile string
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, expand_pile)
   if minNum < 1 then
     return nil
   end
@@ -835,6 +836,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     include_equip = includeEquip,
     reason = skillName,
     pattern = pattern,
+    expand_pile = expand_pile,
   }
   local prompt = "#askForCard:::" .. maxNum .. ":" .. minNum
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)

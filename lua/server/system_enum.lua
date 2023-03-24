@@ -36,6 +36,7 @@
 ---@field reason string
 ---@field skillName string
 ---@field damageEvent DamageStruct|null
+---@field preventDying boolean|null
 
 ---@class HpLostData
 ---@field num integer
@@ -67,6 +68,7 @@ fk.FireDamage = 3
 ---@class DyingStruct
 ---@field who integer
 ---@field damage DamageStruct
+---@field ignoreDeath boolean|null
 
 ---@class DeathStruct
 ---@field who integer

@@ -198,28 +198,25 @@ GameRule = fk.CreateTriggerSkill{
       end
     end,
     [fk.AskForPeaches] = function()
-      local savers = room:getAlivePlayers()
-      for _, p in ipairs(savers) do
-        if player.hp > 0 or player.dead then break end
-        while player.hp < 1 do
-          local pattern = "peach"
-          if p == player then
-            pattern = pattern .. ",analeptic"
-          end
-
-          local peach_use = room:askForUseCard(p, "peach", pattern)
-          if not peach_use then break end
-          peach_use.tos = { {player.id} }
-          if peach_use.card.trueName == "analeptic" then
-            peach_use.extra_data = peach_use.extra_data or {}
-            peach_use.extra_data.analepticRecover = true
-          end
-          room:useCard(peach_use)
+      local dyingPlayer = room:getPlayerById(data.who)
+      while dyingPlayer.hp < 1 do
+        local pattern = "peach"
+        if player == dyingPlayer then
+          pattern = pattern .. ",analeptic"
         end
+
+        local peach_use = room:askForUseCard(player, "peach", pattern)
+        if not peach_use then break end
+        peach_use.tos = { {dyingPlayer.id} }
+        if peach_use.card.trueName == "analeptic" then
+          peach_use.extra_data = peach_use.extra_data or {}
+          peach_use.extra_data.analepticRecover = true
+        end
+        room:useCard(peach_use)
       end
     end,
     [fk.AskForPeachesDone] = function()
-      if player.hp < 1 then
+      if player.hp < 1 and not data.ignoreDeath then
         ---@type DeathStruct
         local deathData = {
           who = player.id,
