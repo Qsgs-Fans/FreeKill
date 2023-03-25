@@ -1,12 +1,12 @@
 ---@class Package : Object
----@field name string
----@field extensionName string
----@field type PackageType
----@field generals General[]
----@field extra_skills Skill[]
----@field related_skills table<string, string>
----@field cards Card[]
----@field game_modes GameMode[]
+---@field public name string
+---@field public extensionName string
+---@field public type PackageType
+---@field public generals General[]
+---@field public extra_skills Skill[]
+---@field public related_skills table<string, string>
+---@field public cards Card[]
+---@field public game_modes GameMode[]
 local Package = class("Package")
 
 ---@alias PackageType integer

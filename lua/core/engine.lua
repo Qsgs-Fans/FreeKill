@@ -1,17 +1,17 @@
 ---@class Engine : Object
----@field packages table<string, Package>
----@field package_names string[]
----@field skills table<string, Skill>
----@field related_skills table<string, Skill[]>
----@field global_trigger TriggerSkill[]
----@field global_status_skill table<class, Skill[]>
----@field generals table<string, General>
----@field same_generals table<string, string[]>
----@field lords string[]
----@field cards Card[]
----@field translations table<string, table<string, string>>
----@field game_modes table<string, GameMode>
----@field disabled_packs string[]
+---@field public packages table<string, Package>
+---@field public package_names string[]
+---@field public skills table<string, Skill>
+---@field public related_skills table<string, Skill[]>
+---@field public global_trigger TriggerSkill[]
+---@field public global_status_skill table<class, Skill[]>
+---@field public generals table<string, General>
+---@field public same_generals table<string, string[]>
+---@field public lords string[]
+---@field public cards Card[]
+---@field public translations table<string, table<string, string>>
+---@field public game_modes table<string, GameMode>
+---@field public disabled_packs string[]
 local Engine = class("Engine")
 
 function Engine:initialize()

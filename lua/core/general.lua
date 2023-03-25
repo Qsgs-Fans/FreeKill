@@ -1,13 +1,13 @@
 ---@class General : Object
----@field package Package
----@field name string
----@field trueName string
----@field kingdom string
----@field hp integer
----@field maxHp integer
----@field gender Gender
----@field skills Skill[]
----@field other_skills string[]
+---@field public package Package
+---@field public name string
+---@field public trueName string
+---@field public kingdom string
+---@field public hp integer
+---@field public maxHp integer
+---@field public gender Gender
+---@field public skills Skill[]
+---@field public other_skills string[]
 General = class("General")
 
 ---@alias Gender integer

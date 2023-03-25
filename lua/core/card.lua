@@ -1,18 +1,18 @@
 ---@class Card : Object
----@field package Package
----@field name string
----@field suit Suit
----@field number integer
----@field trueName string
----@field color Color
----@field id integer
----@field type CardType
----@field sub_type CardSubtype
----@field area CardArea
----@field subcards integer[]
----@field skillName string @ for virtual cards
----@field skill Skill
----@field special_skills string[] | nil
+---@field public id integer
+---@field public package Package
+---@field public name string
+---@field public suit Suit
+---@field public number integer
+---@field public trueName string
+---@field public color Color
+---@field public type CardType
+---@field public sub_type CardSubtype
+---@field public area CardArea
+---@field public subcards integer[]
+---@field public skillName string @ for virtual cards
+---@field public skill Skill
+---@field public special_skills string[] | nil
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -222,8 +222,6 @@ function Card:toLogString()
   return ret
 end
 
----@param c integer|integer[]|Card|Card[]
----@return integer[]
 function Card.static:getIdList(c)
   if type(c) == "number" then
     return {c}

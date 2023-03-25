@@ -1,11 +1,11 @@
 ---@class GameEvent: Object
----@field room Room
----@field event integer
----@field data any
----@field main_func fun(self: GameEvent)
----@field clear_func fun(self: GameEvent)
----@field extra_clear_funcs any[]
----@field interrupted boolean
+---@field public room Room
+---@field public event integer
+---@field public data any
+---@field public main_func fun(self: GameEvent)
+---@field public clear_func fun(self: GameEvent)
+---@field public extra_clear_funcs any[]
+---@field public interrupted boolean
 local GameEvent = class("GameEvent")
 
 GameEvent.functions = {}

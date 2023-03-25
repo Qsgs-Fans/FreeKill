@@ -1,11 +1,11 @@
 ---@class GameLogic: Object
----@field room Room
----@field skill_table table<Event, TriggerSkill[]>
----@field refresh_skill_table table<Event, TriggerSkill[]>
----@field skills string[]
----@field event_stack Stack
----@field game_event_stack Stack
----@field role_table string[][]
+---@field public room Room
+---@field public skill_table table<Event, TriggerSkill[]>
+---@field public refresh_skill_table table<Event, TriggerSkill[]>
+---@field public skills string[]
+---@field public event_stack Stack
+---@field public game_event_stack Stack
+---@field public role_table string[][]
 local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)

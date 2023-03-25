@@ -1,19 +1,19 @@
 ---@class ServerPlayer : Player
----@field serverplayer fk.ServerPlayer
----@field room Room
----@field next ServerPlayer
----@field request_data string
----@field client_reply string
----@field default_reply string
----@field reply_ready boolean
----@field reply_cancel boolean
----@field phases Phase[]
----@field skipped_phases Phase[]
----@field phase_state table[]
----@field phase_index integer
----@field role_shown boolean
----@field ai AI
----@field ai_data any
+---@field public serverplayer fk.ServerPlayer
+---@field public room Room
+---@field public next ServerPlayer
+---@field public request_data string
+---@field public client_reply string
+---@field public default_reply string
+---@field public reply_ready boolean
+---@field public reply_cancel boolean
+---@field public phases Phase[]
+---@field public skipped_phases Phase[]
+---@field public phase_state table[]
+---@field public phase_index integer
+---@field public role_shown boolean
+---@field public ai AI
+---@field public ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)

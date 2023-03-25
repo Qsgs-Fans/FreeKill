@@ -41,7 +41,7 @@ function table.filter(self, func)
 end
 
 ---@param func fun(element, index, array)
-function table.map(self, func)
+function table:map(func)
   local ret = {}
   for i, v in ipairs(self) do
     table.insert(ret, func(v, i, self))
@@ -142,11 +142,11 @@ end
 ---@param self T[]
 ---@param n integer
 ---@return T|T[]
-function table.random(tab, n)
+function table:random(n)
   local n0 = n
   n = n or 1
-  if #tab == 0 then return nil end
-  local tmp = {table.unpack(tab)}
+  if #self == 0 then return nil end
+  local tmp = {table.unpack(self)}
   local ret = {}
   while n > 0 and #tmp > 0 do
     local i = math.random(1, #tmp)

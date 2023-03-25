@@ -1,31 +1,31 @@
 ---@class Player : Object
----@field id integer
----@field hp integer
----@field maxHp integer
----@field kingdom string
----@field role string
----@field general string
----@field gender integer
----@field handcard_num integer
----@field seat integer
----@field next Player
----@field phase Phase
----@field faceup boolean
----@field chained boolean
----@field dying boolean
----@field dead boolean
----@field state string
----@field player_skills Skill[]
----@field derivative_skills table<Skill, Skill[]>
----@field flag string[]
----@field tag table<string, any>
----@field mark table<string, integer>
----@field player_cards table<integer, integer[]>
----@field virtual_equips Card[]
----@field special_cards table<string, integer[]>
----@field cardUsedHistory table<string, integer[]>
----@field skillUsedHistory table<string, integer[]>
----@field fixedDistance table<Player, integer>
+---@field public id integer
+---@field public hp integer
+---@field public maxHp integer
+---@field public kingdom string
+---@field public role string
+---@field public general string
+---@field public gender integer
+---@field public handcard_num integer
+---@field public seat integer
+---@field public next Player
+---@field public phase Phase
+---@field public faceup boolean
+---@field public chained boolean
+---@field public dying boolean
+---@field public dead boolean
+---@field public state string
+---@field public player_skills Skill[]
+---@field public derivative_skills table<Skill, Skill[]>
+---@field public flag string[]
+---@field public tag table<string, any>
+---@field public mark table<string, integer>
+---@field public player_cards table<integer, integer[]>
+---@field public virtual_equips Card[]
+---@field public special_cards table<string, integer[]>
+---@field public cardUsedHistory table<string, integer[]>
+---@field public skillUsedHistory table<string, integer[]>
+---@field public fixedDistance table<Player, integer>
 local Player = class("Player")
 
 ---@alias Phase integer
