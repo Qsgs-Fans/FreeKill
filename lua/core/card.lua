@@ -222,6 +222,12 @@ function Card:toLogString()
   return ret
 end
 
+---@param c integer|integer[]|Card|Card[]
+---@return integer[]
+function Card:getIdList(c)
+  error("This is a static method. Please use Card:getIdList instead")
+end
+
 function Card.static:getIdList(c)
   if type(c) == "number" then
     return {c}

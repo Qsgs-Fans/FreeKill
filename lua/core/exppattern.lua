@@ -219,6 +219,12 @@ function Exppattern:initialize(spec)
   end
 end
 
+---@param pattern string
+---@return Exppattern
+function Exppattern:Parse(pattern)
+  error("This is a static method. Please use Exppattern:Parse instead")
+end
+
 function Exppattern.static:Parse(str)
   local ret = Exppattern:new()
   local t = str:split(";")
