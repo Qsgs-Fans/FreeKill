@@ -76,3 +76,21 @@ html_theme = 'sphinx_book_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# PDF option
+latex_engine = 'xelatex'
+latex_elements = {
+  'papersize': 'a4paper',
+  'pointsize': '12pt',
+  'fontpkg': r'''
+''',
+  'fncychap': r'\usepackage[Sonny]{fncychap}',
+  'preamble': r'''
+''',
+}
+
+latex_documents = [
+  ('index', 'manual.tex', 'FreeKill Handbook',
+   'By FreeKill 制作组', 'manual', False),
+]
+
