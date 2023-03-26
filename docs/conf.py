@@ -87,6 +87,7 @@ latex_elements = {
   'fncychap': r'\usepackage[Sonny]{fncychap}',
   'preamble': r'''
 ''',
+  'figure_align': 'H',
 }
 
 latex_documents = [
