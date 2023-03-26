@@ -1,19 +1,29 @@
+--- Engine是整个FreeKill赖以运行的核心。
+---
+--- 它包含了FreeKill涉及的所有武将、卡牌、游戏模式等等
+---
+--- 同时也提供了许多常用的函数。
+---
 ---@class Engine : Object
----@field public packages table<string, Package>
----@field public package_names string[]
----@field public skills table<string, Skill>
----@field public related_skills table<string, Skill[]>
----@field public global_trigger TriggerSkill[]
----@field public global_status_skill table<class, Skill[]>
----@field public generals table<string, General>
----@field public same_generals table<string, string[]>
----@field public lords string[]
----@field public cards Card[]
----@field public translations table<string, table<string, string>>
----@field public game_modes table<string, GameMode>
----@field public disabled_packs string[]
+---@field public packages table<string, Package> @ 所有拓展包的列表
+---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
+---@field public skills table<string, Skill> @ 所有的技能
+---@field public related_skills table<string, Skill[]> @ 所有技能的关联技能
+---@field public global_trigger TriggerSkill[] @ 所有的全局触发技
+---@field public global_status_skill table<class, Skill[]> @ 所有的全局状态技
+---@field public generals table<string, General> @ 所有武将
+---@field public same_generals table<string, string[]> @ 所有同名武将组合
+---@field public lords string[] @ 所有主公武将，用于常备主公
+---@field public cards Card[] @ 所有卡牌
+---@field public translations table<string, table<string, string>> @ 翻译表
+---@field public game_modes table<string, GameMode> @ 所有游戏模式
+---@field public disabled_packs string[] @ 禁用的拓展包列表
 local Engine = class("Engine")
 
+--- Engine的构造函数。
+---
+--- 这个函数只应该被执行一次。执行了之后，会创建一个Engine实例，并放入全局变量Fk中。
+---@return nil
 function Engine:initialize()
   -- Engine should be singleton
   if Fk ~= nil then
@@ -41,7 +51,10 @@ function Engine:initialize()
   self:addSkills(AuxSkills)
 end
 
----@param pack Package
+--- 向Engine中加载一个拓展包。
+---
+--- 会加载这个拓展包含有的所有武将、卡牌以及游戏模式。
+---@param pack Package @ 要加载的拓展包
 function Engine:loadPackage(pack)
   assert(pack:isInstanceOf(Package))
   if self.packages[pack.name] ~= nil then
@@ -60,6 +73,14 @@ function Engine:loadPackage(pack)
   self:addGameModes(pack.game_modes)
 end
 
+--- 加载所有拓展包。
+---
+--- Engine会在packages/下搜索所有含有init.lua的文件夹，并把它们作为拓展包加载进来。
+---
+--- 这样的init.lua可以返回单个拓展包，也可以返回拓展包数组，或者什么都不返回。
+---
+--- 标包和标准卡牌包比较特殊，它们永远会在第一个加载。
+---@return nil
 function Engine:loadPackages()
   local directories = FileIO.ls("packages")
 
@@ -88,7 +109,9 @@ function Engine:loadPackages()
   end
 end
 
----@param t table
+--- 向翻译表中加载新的翻译表。
+---@param t table @ 要加载的翻译表，这是一个 原文 --> 译文 的键值对表
+---@param lang string|nil @ 目标语言，默认为zh_CN
 function Engine:loadTranslationTable(t, lang)
   assert(type(t) == "table")
   lang = lang or "zh_CN"
@@ -98,6 +121,8 @@ function Engine:loadTranslationTable(t, lang)
   end
 end
 
+--- 翻译一段文本。其实就是从翻译表中去找
+---@param src string @ 要翻译的文本
 function Engine:translate(src)
   local lang = Config.language or "zh_CN"
   if not self.translations[lang] then lang = "zh_CN" end
@@ -105,7 +130,12 @@ function Engine:translate(src)
   return ret or src
 end
 
----@param skill Skill
+--- 向Engine中加载一个技能。
+---
+--- 如果技能是global的，那么同时会将其放到那些global技能表中。
+---
+--- 如果技能有关联技能，那么递归地加载那些关联技能。
+---@param skill Skill @ 要加载的技能
 function Engine:addSkill(skill)
   assert(skill.class:isSubclassOf(Skill))
   if self.skills[skill.name] ~= nil then
@@ -128,7 +158,8 @@ function Engine:addSkill(skill)
   end
 end
 
----@param skills Skill[]
+--- 加载一系列技能。
+---@param skills Skill[] @ 要加载的技能数组
 function Engine:addSkills(skills)
   assert(type(skills) == "table")
   for _, skill in ipairs(skills) do
@@ -136,7 +167,10 @@ function Engine:addSkills(skills)
   end
 end
 
----@param general General
+--- 加载一个武将到Engine中。
+---
+--- 如果武将的trueName和name不同的话，那么也会将其加到同将清单中。
+---@param general General @ 要添加的武将
 function Engine:addGeneral(general)
   assert(general:isInstanceOf(General))
   if self.generals[general.name] ~= nil then
@@ -151,7 +185,8 @@ function Engine:addGeneral(general)
   end
 end
 
----@param generals General[]
+--- 加载一系列武将。
+---@param generals General[] @ 要加载的武将列表
 function Engine:addGenerals(generals)
   assert(type(generals) == "table")
   for _, general in ipairs(generals) do
@@ -159,7 +194,11 @@ function Engine:addGenerals(generals)
   end
 end
 
----@param name string
+--- 根据武将名称，获取它的同名武将。
+---
+--- 注意以此法返回的同名武将列表不包含他自己。
+---@param name string @ 要查询的武将名字
+---@return string[] @ 这个武将对应的同名武将列表
 function Engine:getSameGenerals(name)
   local tmp = name:split("__")
   local tName = tmp[#tmp]
@@ -172,7 +211,11 @@ end
 
 local cardId = 1
 local _card_name_table = {}
----@param card Card
+
+--- 向Engine中加载一张卡牌。
+---
+--- 卡牌在加载的时候，会被赋予一个唯一的id。（从1开始）
+---@param card Card @ 要加载的卡牌
 function Engine:addCard(card)
   assert(card.class:isSubclassOf(Card))
   card.id = cardId
@@ -183,16 +226,20 @@ function Engine:addCard(card)
   end
 end
 
----@param cards Card[]
+--- 向Engine中加载一系列卡牌。
+---@param cards Card[] @ 要加载的卡牌列表
 function Engine:addCards(cards)
   for _, card in ipairs(cards) do
     self:addCard(card)
   end
 end
 
----@param name string
----@param suit Suit
----@param number integer
+--- 根据牌名、花色、点数，复制一张牌。
+---
+--- 返回的牌是一张虚拟牌。
+---@param name string @ 牌名
+---@param suit Suit @ 花色
+---@param number integer @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = _card_name_table[name]
@@ -202,14 +249,16 @@ function Engine:cloneCard(name, suit, number)
   return ret
 end
 
----@param game_modes GameMode[]
+--- 向Engine中添加一系列游戏模式。
+---@param game_modes GameMode[] @ 要添加的游戏模式列表
 function Engine:addGameModes(game_modes)
   for _, s in ipairs(game_modes) do
     self:addGameMode(s)
   end
 end
 
----@param game_mode GameMode
+--- 向Engine中添加一个游戏模式。
+---@param game_mode GameMode @ 要添加的游戏模式
 function Engine:addGameMode(game_mode)
   assert(game_mode:isInstanceOf(GameMode))
   if self.game_modes[game_mode.name] ~= nil then
@@ -218,11 +267,16 @@ function Engine:addGameMode(game_mode)
   self.game_modes[game_mode.name] = game_mode
 end
 
----@param num integer
----@param generalPool General[]
----@param except string[]
----@param filter function
----@return General[]
+--- 从已经开启的拓展包中，随机选出若干名武将。
+---
+--- 对于同名武将不会重复选取。
+---
+--- 如果符合条件的武将不够，那么就不能保证能选出那么多武将。
+---@param num integer @ 要选出的武将数量
+---@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
+---@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
+---@param filter fun(g: General): boolean | nil @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
     assert(type(filter) == "function")
@@ -263,8 +317,9 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   return result
 end
 
----@param except General[]
----@return General[]
+--- 获取已经启用的所有武将的列表。
+---@param except General[] | nil @ 特别指明要排除在外的武将
+---@return General[] @ 所有武将的列表
 function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
@@ -278,8 +333,9 @@ function Engine:getAllGenerals(except)
   return result
 end
 
----@param except integer[]
----@return integer[]
+--- 获取当前已经启用的所有卡牌。
+---@param except integer[] | nil @ 特别指定要排除在外的id列表
+---@return integer[] @ 所有卡牌id的列表
 function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
@@ -295,9 +351,10 @@ end
 
 local filtered_cards = {}
 
----@param id integer
----@param ignoreFilter boolean
----@return Card
+--- 根据id返回相应的卡牌。
+---@param id integer @ 牌的id
+---@param ignoreFilter boolean @ 是否要无视掉锁定视为技，直接获得真牌
+---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   local ret = self.cards[id]
   if not ignoreFilter then
@@ -306,9 +363,10 @@ function Engine:getCardById(id, ignoreFilter)
   return ret
 end
 
----@param id integer
----@param player Player
----@param data any @ may be JudgeStruct
+--- 对那个id应用锁定视为技，将它变成要被锁定视为的牌。
+---@param id integer @ 要处理的id
+---@param player Player @ 和这张牌扯上关系的那名玩家
+---@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
 function Engine:filterCard(id, player, data)
   local card = self:getCardById(id, true)
   if player == nil then
@@ -370,6 +428,8 @@ function Engine:filterCard(id, player, data)
   end
 end
 
+--- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。
+---@return Room | Client
 function Engine:currentRoom()
   if RoomInstance then
     return RoomInstance
@@ -377,6 +437,11 @@ function Engine:currentRoom()
   return ClientInstance
 end
 
+--- 根据字符串获得这个技能或者这张牌的描述
+---
+--- 其实就是翻译了 ":" .. name 罢了
+---@param name string @ 要获得描述的名字
+---@return string @ 描述
 function Engine:getDescription(name)
   return self:translate(":" .. name)
 end
