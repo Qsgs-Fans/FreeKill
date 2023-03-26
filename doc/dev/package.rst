@@ -19,7 +19,7 @@ TODO
 
 首先，packages中除了基本的三个包之外，其他的包都要从仓库中排除掉。这方面由一个.gitignore文件控制。
 
-然后，在packages目录下，有一个名为packages.db的文件统领所有拓展包。这是个sqlite数据库，结构详见\ `数据库 <./database.md>`__\ 。
+然后，在packages目录下，有一个名为packages.db的文件统领所有拓展包。这是个sqlite数据库，结构详见\ :doc:`./database`\ 。
 
 下面从连接过程中简要分析这个文件的作用：
 

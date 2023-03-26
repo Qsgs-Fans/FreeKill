@@ -4,7 +4,7 @@ Fk DIY - 环境搭建
 DIY总览
 -------
 
-正如\ `项目README <../../README.md>`__\ 所言，FreeKill“试图打造一个最适合diy玩家游玩的民间三国杀”。即便是最开始游戏功能尚未完善，FreeKill也已经具备了对DIY的支持。所有拓展包都列在packages/文件夹下，感兴趣者可以自行查看。
+正如项目README所言，FreeKill“试图打造一个最适合diy玩家游玩的民间三国杀”。即便是最开始游戏功能尚未完善，FreeKill也已经具备了对DIY的支持。所有拓展包都列在packages/文件夹下，感兴趣者可以自行查看。
 
 欲为FreeKill进行DIY，需要使用的编程语言为Lua。若您对Lua语言完全不熟悉，推荐去\ `菜鸟教程 <https://www.runoob.com/lua/lua-tutorial.html>`__\ 速通一遍基本语法。剩下的就基本是在实践中慢慢领会了。
 
@@ -160,7 +160,7 @@ id_rsa.pub中，出来的那一堆以ssh-rsa的输出，就是这里要用到的
 
 这样就配置好了ssh公钥。进行验证，在bash中使用命令：
 
-.. code:: bash
+::
 
    $ ssh -T git@gitee.com
    Hi xxxx! You've successfully authenticated, but GITEE.COM does not provide shell access.
@@ -237,5 +237,3 @@ push后，实际上就已经完成更新了，可以让大伙点点更新按钮�
 --------------
 
 以上介绍了大致的创建mod以及更新的流程。至于资源文件组织等等杂七杂八的问题，请参考已有的例子拓展包。
-
-下一篇： `fk技能类型总览 <./02-skilltype.md>`__
