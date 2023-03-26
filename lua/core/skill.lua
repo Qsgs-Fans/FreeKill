@@ -1,13 +1,13 @@
 ---@class Skill : Object
----@field name string
----@field trueName string
----@field package Package
----@field frequency Frequency
----@field visible boolean
----@field mute boolean
----@field anim_type string
----@field related_skills Skill[]
----@field attached_equip string
+---@field public name string
+---@field public trueName string
+---@field public package Package
+---@field public frequency Frequency
+---@field public visible boolean
+---@field public mute boolean
+---@field public anim_type string
+---@field public related_skills Skill[]
+---@field public attached_equip string
 local Skill = class("Skill")
 
 ---@alias Frequency integer

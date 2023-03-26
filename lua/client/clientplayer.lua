@@ -1,7 +1,7 @@
 ---@class ClientPlayer: Player
----@field player fk.Player
----@field known_cards integer[]
----@field global_known_cards integer[]
+---@field public player fk.Player
+---@field public known_cards integer[]
+---@field public global_known_cards integer[]
 local ClientPlayer = Player:subclass("ClientPlayer")
 
 function ClientPlayer:initialize(cp)

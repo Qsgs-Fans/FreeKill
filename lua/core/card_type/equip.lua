@@ -1,5 +1,5 @@
 ---@class EquipCard : Card
----@field equip_skill Skill
+---@field public equip_skill Skill
 local EquipCard = Card:subclass("EquipCard")
 
 function EquipCard:initialize(name, suit, number)

@@ -1,12 +1,12 @@
 ---@class ActiveSkill : UsableSkill
----@field min_target_num integer
----@field max_target_num integer
----@field target_num integer
----@field target_num_table integer[]
----@field min_card_num integer
----@field max_card_num integer
----@field card_num integer
----@field card_num_table integer[]
+---@field public min_target_num integer
+---@field public max_target_num integer
+---@field public target_num integer
+---@field public target_num_table integer[]
+---@field public min_card_num integer
+---@field public max_card_num integer
+---@field public card_num integer
+---@field public card_num_table integer[]
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name)

@@ -1,7 +1,7 @@
 ---@meta
 
 ---@class class
----@field static any
+---@field public static any
 --- middleclass
 class = {}
 
@@ -10,7 +10,7 @@ class = {}
 function class:isSubclassOf(class) end
 
 ---@class Object
----@field class class
+---@field public class class
 Object = { static = {} }
 
 ---@generic T

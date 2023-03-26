@@ -1,21 +1,21 @@
 ---@class Room : Object
----@field room fk.Room
----@field players ServerPlayer[]
----@field alive_players ServerPlayer[]
----@field observers fk.ServerPlayer[]
----@field current ServerPlayer
----@field game_started boolean
----@field game_finished boolean
----@field timeout integer
----@field tag table<string, any>
----@field draw_pile integer[]
----@field discard_pile integer[]
----@field processing_area integer[]
----@field void integer[]
----@field card_place table<integer, CardArea>
----@field owner_map table<integer, integer>
----@field status_skills Skill[]
----@field settings table
+---@field public room fk.Room
+---@field public players ServerPlayer[]
+---@field public alive_players ServerPlayer[]
+---@field public observers fk.ServerPlayer[]
+---@field public current ServerPlayer
+---@field public game_started boolean
+---@field public game_finished boolean
+---@field public timeout integer
+---@field public tag table<string, any>
+---@field public draw_pile integer[]
+---@field public discard_pile integer[]
+---@field public processing_area integer[]
+---@field public void integer[]
+---@field public card_place table<integer, CardArea>
+---@field public owner_map table<integer, integer>
+---@field public status_skills Skill[]
+---@field public settings table
 local Room = class("Room")
 
 -- load classes used by the game
@@ -1707,7 +1707,7 @@ end
 ---@param player ServerPlayer
 ---@param num integer
 ---@param skillName string
----@param fromPlace "top"|"bottom"
+---@param fromPlace string
 ---@return integer[]
 function Room:drawCards(player, num, skillName, fromPlace)
   local topCards = self:getNCards(num, fromPlace)
@@ -1763,7 +1763,7 @@ end
 
 ---@param player ServerPlayer
 ---@param num integer
----@param reason "loseHp"|"damage"|"recover"|null
+---@param reason string|nil
 ---@param skillName string
 ---@param damageStruct DamageStruct|null
 ---@return boolean

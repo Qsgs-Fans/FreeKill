@@ -1,11 +1,11 @@
 ---@class Client
----@field client fk.Client
----@field players ClientPlayer[]
----@field alive_players ClientPlayer[]
----@field observers ClientPlayer[]
----@field current ClientPlayer
----@field discard_pile integer[]
----@field status_skills Skill[]
+---@field public client fk.Client
+---@field public players ClientPlayer[]
+---@field public alive_players ClientPlayer[]
+---@field public observers ClientPlayer[]
+---@field public current ClientPlayer
+---@field public discard_pile integer[]
+---@field public status_skills Skill[]
 Client = class('Client')
 
 -- load client classes

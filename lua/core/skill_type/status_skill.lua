@@ -1,5 +1,5 @@
 ---@class StatusSkill : Skill
----@field global boolean
+---@field public global boolean
 local StatusSkill = Skill:subclass("StatusSkill")
 
 function StatusSkill:initialize(name, frequency)

@@ -1,45 +1,45 @@
 ---@class CardsMoveInfo
----@field ids integer[]
----@field from integer|null
----@field to integer|null
----@field toArea CardArea
----@field moveReason CardMoveReason
----@field proposer integer
----@field skillName string|null
----@field moveVisible boolean|null
----@field specialName string|null
----@field specialVisible boolean|null
+---@field public ids integer[]
+---@field public from integer|null
+---@field public to integer|null
+---@field public toArea CardArea
+---@field public moveReason CardMoveReason
+---@field public proposer integer
+---@field public skillName string|null
+---@field public moveVisible boolean|null
+---@field public specialName string|null
+---@field public specialVisible boolean|null
 
 ---@class MoveInfo
----@field cardId integer
----@field fromArea CardArea
----@field fromSpecialName string|null
+---@field public cardId integer
+---@field public fromArea CardArea
+---@field public fromSpecialName string|null
 
 ---@class CardsMoveStruct
----@field moveInfo MoveInfo[]
----@field from integer|null
----@field to integer|null
----@field toArea CardArea
----@field moveReason CardMoveReason
----@field proposer integer|null
----@field skillName string|null
----@field moveVisible boolean|null
----@field specialName string|null
----@field specialVisible boolean|null
+---@field public moveInfo MoveInfo[]
+---@field public from integer|null
+---@field public to integer|null
+---@field public toArea CardArea
+---@field public moveReason CardMoveReason
+---@field public proposer integer|null
+---@field public skillName string|null
+---@field public moveVisible boolean|null
+---@field public specialName string|null
+---@field public specialVisible boolean|null
 
 ---@class PindianResult
----@field toCard Card
----@field winner ServerPlayer|null
+---@field public toCard Card
+---@field public winner ServerPlayer|null
 
 ---@class HpChangedData
----@field num integer
----@field reason string
----@field skillName string
----@field damageEvent DamageStruct|null
+---@field public num integer
+---@field public reason string
+---@field public skillName string
+---@field public damageEvent DamageStruct|null
 
 ---@class HpLostData
----@field num integer
----@field skillName string
+---@field public num integer
+---@field public skillName string
 
 ---@alias DamageType integer
 
@@ -48,109 +48,109 @@ fk.ThunderDamage = 2
 fk.FireDamage = 3
 
 ---@class DamageStruct
----@field from ServerPlayer|null
----@field to ServerPlayer
----@field damage integer
----@field card Card
----@field chain boolean
----@field damageType DamageType
----@field skillName string
----@field beginnerOfTheDamage boolean|null
+---@field public from ServerPlayer|null
+---@field public to ServerPlayer
+---@field public damage integer
+---@field public card Card
+---@field public chain boolean
+---@field public damageType DamageType
+---@field public skillName string
+---@field public beginnerOfTheDamage boolean|null
 
 ---@class RecoverStruct
----@field who ServerPlayer
----@field num integer
----@field recoverBy ServerPlayer|null
----@field skillName string|null
----@field card Card|null
+---@field public who ServerPlayer
+---@field public num integer
+---@field public recoverBy ServerPlayer|null
+---@field public skillName string|null
+---@field public card Card|null
 
 ---@class DyingStruct
----@field who integer
----@field damage DamageStruct
+---@field public who integer
+---@field public damage DamageStruct
 
 ---@class DeathStruct
----@field who integer
----@field damage DamageStruct
+---@field public who integer
+---@field public damage DamageStruct
 
 ---@class CardUseStruct
----@field from integer
----@field tos TargetGroup
----@field card Card
----@field toCard Card|null
----@field responseToEvent CardUseStruct|null
----@field nullifiedTargets interger[]|null
----@field extraUse boolean|null
----@field disresponsiveList integer[]|null
----@field unoffsetableList integer[]|null
----@field additionalDamage integer|null
----@field customFrom integer|null
----@field cardsResponded Card[]|null
+---@field public from integer
+---@field public tos TargetGroup
+---@field public card Card
+---@field public toCard Card|null
+---@field public responseToEvent CardUseStruct|null
+---@field public nullifiedTargets interger[]|null
+---@field public extraUse boolean|null
+---@field public disresponsiveList integer[]|null
+---@field public unoffsetableList integer[]|null
+---@field public additionalDamage integer|null
+---@field public customFrom integer|null
+---@field public cardsResponded Card[]|null
 
 ---@class AimStruct
----@field from integer
----@field card Card
----@field tos AimGroup
----@field to integer
----@field subTargets integer[]|null
----@field targetGroup TargetGroup|null
----@field nullifiedTargets integer[]|null
----@field firstTarget boolean
----@field additionalDamage integer|null
----@field disresponsive boolean|null
----@field unoffsetableList boolean|null
----@field additionalResponseTimes table<string, integer>|integer|null
----@field fixedAddTimesResponsors integer[]
+---@field public from integer
+---@field public card Card
+---@field public tos AimGroup
+---@field public to integer
+---@field public subTargets integer[]|null
+---@field public targetGroup TargetGroup|null
+---@field public nullifiedTargets integer[]|null
+---@field public firstTarget boolean
+---@field public additionalDamage integer|null
+---@field public disresponsive boolean|null
+---@field public unoffsetableList boolean|null
+---@field public additionalResponseTimes table<string, integer>|integer|null
+---@field public fixedAddTimesResponsors integer[]
 
 ---@class CardEffectEvent
----@field from integer
----@field to integer
----@field subTargets integer[]|null
----@field tos TargetGroup
----@field card Card
----@field toCard Card|null
----@field responseToEvent CardEffectEvent|null
----@field nullifiedTargets interger[]|null
----@field extraUse boolean|null
----@field disresponsiveList integer[]|null
----@field unoffsetableList integer[]|null
----@field additionalDamage integer|null
----@field customFrom integer|null
----@field cardsResponded Card[]|null
----@field disresponsive boolean|null
----@field unoffsetable boolean|null
----@field isCancellOut boolean|null
----@field fixedResponseTimes table<string, integer>|integer|null
----@field fixedAddTimesResponsors integer[]
+---@field public from integer
+---@field public to integer
+---@field public subTargets integer[]|null
+---@field public tos TargetGroup
+---@field public card Card
+---@field public toCard Card|null
+---@field public responseToEvent CardEffectEvent|null
+---@field public nullifiedTargets interger[]|null
+---@field public extraUse boolean|null
+---@field public disresponsiveList integer[]|null
+---@field public unoffsetableList integer[]|null
+---@field public additionalDamage integer|null
+---@field public customFrom integer|null
+---@field public cardsResponded Card[]|null
+---@field public disresponsive boolean|null
+---@field public unoffsetable boolean|null
+---@field public isCancellOut boolean|null
+---@field public fixedResponseTimes table<string, integer>|integer|null
+---@field public fixedAddTimesResponsors integer[]
 
 ---@class SkillEffectEvent
----@field from integer
----@field tos integer[]
----@field cards integer[]
+---@field public from integer
+---@field public tos integer[]
+---@field public cards integer[]
 
 ---@class JudgeStruct
----@field who ServerPlayer
----@field card Card
----@field reason string
----@field pattern string
+---@field public who ServerPlayer
+---@field public card Card
+---@field public reason string
+---@field public pattern string
 
 ---@class CardResponseEvent
----@field from integer
----@field card Card
----@field responseToEvent CardEffectEvent|null
----@field skipDrop boolean|null
----@field customFrom integer|null
+---@field public from integer
+---@field public card Card
+---@field public responseToEvent CardEffectEvent|null
+---@field public skipDrop boolean|null
+---@field public customFrom integer|null
 
 ---@class AskForCardUse
----@field user ServerPlayer
----@field cardName string
----@field pattern string
----@field result CardUseStruct
+---@field public user ServerPlayer
+---@field public cardName string
+---@field public pattern string
+---@field public result CardUseStruct
 
 ---@class AskForCardResponse
----@field user ServerPlayer
----@field cardName string
----@field pattern string
----@field result Card
+---@field public user ServerPlayer
+---@field public cardName string
+---@field public pattern string
+---@field public result Card
 
 ---@alias CardMoveReason integer
 
@@ -166,17 +166,17 @@ fk.ReasonUse = 9
 fk.ReasonResonpse = 10
 
 ---@class PindianStruct
----@field from ServerPlayer
----@field tos ServerPlayer[]
----@field fromCard Card
----@field results table<integer, PindianResult>
----@field reason string
+---@field public from ServerPlayer
+---@field public tos ServerPlayer[]
+---@field public fromCard Card
+---@field public results table<integer, PindianResult>
+---@field public reason string
 
 ---@class LogMessage
----@field type string
----@field from integer
----@field to integer[]
----@field card integer[]
----@field arg any
----@field arg2 any
----@field arg3 any
+---@field public type string
+---@field public from integer
+---@field public to integer[]
+---@field public card integer[]
+---@field public arg any
+---@field public arg2 any
+---@field public arg3 any

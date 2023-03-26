@@ -17,13 +17,13 @@
 ]]--
 
 ---@class Matcher
----@field name string[]
----@field number integer[]
----@field suit string[]
----@field place string[]
----@field generalName string[]
----@field cardType string[]
----@field id integer[]
+---@field public name string[]
+---@field public number integer[]
+---@field public suit string[]
+---@field public place string[]
+---@field public generalName string[]
+---@field public cardType string[]
+---@field public id integer[]
 
 local numbertable = {
   ["A"] = 1,
@@ -205,7 +205,7 @@ local function parseMatcher(str)
 end
 
 ---@class Exppattern: Object
----@field matchers Matcher[]
+---@field public matchers Matcher[]
 local Exppattern = class("Exppattern")
 
 function Exppattern:initialize(spec)
@@ -219,7 +219,12 @@ function Exppattern:initialize(spec)
   end
 end
 
----@param str string
+---@param pattern string
+---@return Exppattern
+function Exppattern:Parse(pattern)
+  error("This is a static method. Please use Exppattern:Parse instead")
+end
+
 function Exppattern.static:Parse(str)
   local ret = Exppattern:new()
   local t = str:split(";")
