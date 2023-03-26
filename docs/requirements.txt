@@ -1,0 +1,2 @@
+sphinx-lua
+sphinx-rtd-theme
