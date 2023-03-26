@@ -1,28 +1,29 @@
-# Fk的游戏事件
+Fk的游戏事件
+============
 
-___
-
-在Fk中，“事件”指的大约是像`room:judge`, `room:damage`之类的操作。这些操作一般和某个游戏术语挂钩（“判定”、“伤害”），然后其中包含着一系列操作，比如伤害事件包含了与伤害事件有关的各种触发时机、以及扣减等实际的动作等。
+在Fk中，“事件”指的大约是像\ ``room:judge``,
+``room:damage``\ 之类的操作。这些操作一般和某个游戏术语挂钩（“判定”、“伤害”），然后其中包含着一系列操作，比如伤害事件包含了与伤害事件有关的各种触发时机、以及扣减等实际的动作等。
 
 之所以要把事件单独挑出来聊聊，是因为有以下几点需求：
 
-* 事件要能够被半路中止。
-* 对于被中止的事件，要能判断它能不能中止事件栈中的更低层事件。
-* 对于被中止的事件，需要做“垃圾回收”（例如将处于处理区的相关卡牌移动到弃牌堆等等）
+-  事件要能够被半路中止。
+-  对于被中止的事件，要能判断它能不能中止事件栈中的更低层事件。
+-  对于被中止的事件，需要做“垃圾回收”（例如将处于处理区的相关卡牌移动到弃牌堆等等）
 
-___
+--------------
 
-## 对于如何实现的构想
+对于如何实现的构想
+------------------
 
 （施工完成后再来修改这一节）
 
 首先是如何实现事件类。初步构想一下，应该有以下的属性/方法：
 
-* 事件名（也可以是枚举值）
-* 事件数据（一个表，内含所有要用到的数据）
-* 事件id（在一局游戏中唯一标记某个事件）
-* 事件的函数体，也就是具体要做的事情
-* 事件被中止或者正常结束时，用来清理现场的函数
+-  事件名（也可以是枚举值）
+-  事件数据（一个表，内含所有要用到的数据）
+-  事件id（在一局游戏中唯一标记某个事件）
+-  事件的函数体，也就是具体要做的事情
+-  事件被中止或者正常结束时，用来清理现场的函数
 
 问题来了，既然事件本质上还是个函数体，那要怎么才能中止呢？
 
@@ -30,104 +31,113 @@ ___
 
 事件必然会发生嵌套。所以对此更要慎重考虑。
 
-现在只是设想！假设以`room:judge`入手：
+现在只是设想！假设以\ ``room:judge``\ 入手：
 
-```lua
-function Room:judge(judgeStruct)
-  local judgeEvent = GameEvent:new(GameEvent.Judge, judgeStruct)
-  judgeEvent:exec()
-end
-```
+.. code:: lua
+
+   function Room:judge(judgeStruct)
+     local judgeEvent = GameEvent:new(GameEvent.Judge, judgeStruct)
+     judgeEvent:exec()
+   end
 
 总之可能是这样的吧。exec()就是实际执行事件，可能如下：
 
-```lua
-function GameEvent:exec()
-  local event_f = self.event_f
-  local co = coroutine.create(event_f)
-  while true do
-    local yield_result = coroutine.resume(co)
-    if yield_result == "__handleRequest" then
-      -- 正常yield掉，如此层层yield最后到Room的主循环，然后进requestLoop协程处理事务
-      -- 最后返回这里继续resume
-      coroutine.yield(yield_result)
-    else
-      -- 事件被中止，考虑做点什么
-      break
-    end
-  end
-end
-```
+.. code:: lua
+
+   function GameEvent:exec()
+     local event_f = self.event_f
+     local co = coroutine.create(event_f)
+     while true do
+       local yield_result = coroutine.resume(co)
+       if yield_result == "__handleRequest" then
+         -- 正常yield掉，如此层层yield最后到Room的主循环，然后进requestLoop协程处理事务
+         -- 最后返回这里继续resume
+         coroutine.yield(yield_result)
+       else
+         -- 事件被中止，考虑做点什么
+         break
+       end
+     end
+   end
 
 现在考虑嵌套的情况，event1和event2嵌套，也就是event1的体里面又创建了event2并exec，此时的协程调用关系如下：
 
-    RoomLogic -> event1 -> event2 | RequestLoop
+::
+
+   RoomLogic -> event1 -> event2 | RequestLoop
 
 此时event2中调用了某个耗时的函数，比如room:delay或者各种request，这时候就触发了yield。然后在上面的函数中就获取了yield返回值，然后判断是正常yield后，就进一步yield，此时协程到了event1中。event1继续yield，于是到了Room主协程，主协程其实也调用了exec，所以被yield切回到真正的主线程，然后执行requestloop的协程。乍一看似乎没问题，除了这个跳跃链有够长的。
 
-这种开销看起来应该不大吧，而且在AI Random Play这种非常需要性能的场所也根本不会发生这种类型的yield（画饼），总之先不考虑这块。
+这种开销看起来应该不大吧，而且在AI Random
+Play这种非常需要性能的场所也根本不会发生这种类型的yield（画饼），总之先不考虑这块。
 
-如果事件被中止（按目前的实现来说就是在特定的时机return true了），那么事件的本体也应该调用yield（这就如同在目前--v0.0.1实现中，那些函数常见的遇到true就直接返回了一样），这样相当于从函数返回了。这种yield就会进入那个else分支，进行这个事件类的有关清扫工作。
+如果事件被中止（按目前的实现来说就是在特定的时机return
+true了），那么事件的本体也应该调用yield（这就如同在目前–v0.0.1实现中，那些函数常见的遇到true就直接返回了一样），这样相当于从函数返回了。这种yield就会进入那个else分支，进行这个事件类的有关清扫工作。
 
-___
+--------------
 
-## 构想2 类似无懈可击的事件
+构想2 类似无懈可击的事件
+------------------------
 
 考虑一类特殊的事件：“取消其他事件的事件”。它和普通事件一样，能被中止之类的，而它的作用在于取消掉其他事件。
 
 接着上面的else分支继续考虑：
 
-```lua
-  else
-    local cancelEvent = GameEvent:new(GameEvent.CancelEvent, self)
-    local ret = cancelEvent:exec()
-    if ret then break end
-```
+.. code:: lua
+
+     else
+       local cancelEvent = GameEvent:new(GameEvent.CancelEvent, self)
+       local ret = cancelEvent:exec()
+       if ret then break end
 
 似乎也没什么非常特殊的内容啊。
 
 exec()的返回值哪里来？这好像真的是个问题呢。可以考虑返回布尔值表示事件是否中止了？或者更详细的，返回一个状态码，毕竟本质上身为协程自然能有协程该有的种种状态。这里只是初步考虑而已，就考虑前者好了。
 
-___
+--------------
 
-## 落实 - 手杀皇甫嵩
+落实 - 手杀皇甫嵩
+-----------------
 
-手杀皇甫嵩是重构整个事件体系的罪魁祸首（雾）。其技能为：若blah blah，你可以终止本次判定，然后blah blah。
+手杀皇甫嵩是重构整个事件体系的罪魁祸首（雾）。其技能为：若blah
+blah，你可以终止本次判定，然后blah blah。
 
 而终止本次判定是目前的体系做不到的。
 
 考虑如下技能片段：
 
-```lua
-  on_effect = function(xxx)
-    local judge = {}
-    room:judge(judge)
-    if judge.card.number > 5 then xxx end
-  end
-```
+.. code:: lua
+
+     on_effect = function(xxx)
+       local judge = {}
+       room:judge(judge)
+       if judge.card.number > 5 then xxx end
+     end
 
 皇甫嵩能终止判定，就算他在fk.Judge时机返回true算了。前文已经考虑过judge了，他创建了新event并执行之。而今judge事件遭到打断，room:judge可能可以返回一个返回值来告诉玩家已经被中断之类的。但是Luaer，特别是像我这样的Luaer，懒得考虑事件的合法性之类的，而既然judge已经被终止，那么judge.card就不应该被使用才行。
 
-为此可以为judge表添加__index元方法，当对key="card"进行取值时，就直接yield掉，除此之外的就rawget。
+为此可以为judge表添加\__index元方法，当对key=“card”进行取值时，就直接yield掉，除此之外的就rawget。
 
 还有更复杂的情况呢。当皇甫嵩判乐的时候，如果是黑桃，那么他发动技能终止了判定，然后像个无事人一样出牌呢。乐都还贴在他头上。考察一下Fk里面的乐是怎么写的，哦，原来是on_effect的末尾才移走啊，那没事了。也就是说，如果对judge.card的非法访问使得事件被中止了，那么照这个逻辑，乐是下不来的，符合手刹了这下。
 
-___
+--------------
 
-## 考虑 事件为何中止？
+考虑 事件为何中止？
+-------------------
 
 事件是协程，因此协程中止的方法就是事件中止的方法。有这两种：
 
-* yield, 落实到Fk就是触发技的各种返回true
-* error, 这不就是我经常发生的事情吗
+-  yield, 落实到Fk就是触发技的各种返回true
+-  error, 这不就是我经常发生的事情吗
 
 前面也提到过发生yield的时候会有cancelEvent产生，方便玩家反悔中止这次事件，但因为error而中断事件是无法恢复的。试图resume一个报错的协程的话，他会立刻因为error而自动yield。这个可以在exec函数里面多加考虑，如果resume函数返回了true和特定值，那就是正常情况。否则就是报错，输出错误信息并返回。
 
 那前文那个judge.card怎么办呢？这种严格来说得算在error的范畴，因为不是人为中止本次effect的。但是error的话势必要输出到屏幕，而我个人聚德直接拿judge.card算是合法行为。这种情况或许可以定一个约定好的特殊错误信息，在处理错误的时候如果是这个错误的话就不输出。
 
-___
+--------------
 
-## 考虑 有哪些事件
+考虑 有哪些事件
+---------------
 
 在最开始的时候，“依赖关系”这个现象的存在使得触发技多了个on_cost（消耗），但是现在on_cost已经成为界定skill是否发动了的标准。而在skill的effect环节，依然存在着一环扣一环的关系，比如前面举的room:judge例子。
 
@@ -138,23 +148,27 @@ ___
 总之，事件不止room.lua里面那些。就拿前面的考虑来说，由于要中断on_effect，所以on_effect肯定会算成一个事件，可能叫SkillEffect事件吧。
 再考虑万恶之源武将——老朱然，直接结束你的回合。（他只要回合内造成了伤害就能结束回合，但没说在谁的回合造成了伤害）所以进行回合也理应算是个事件。
 
-___
+--------------
 
-## 考虑 老朱然
+考虑 老朱然
+-----------
 
 对于老朱然这种人而言，他想要杀掉的是回合事件，而能发动这个技能的时候，事件栈想必已经很深了，稍微模拟一下这个情景：老朱然杀界徐盛并打掉他一滴血，此时事件栈大概如下（还没正式设计各种事件，所以可能不妥）：
 
-* 伤害事件 - room:damage - 询问技能：是否发动胆守，点确定
-* 技能生效事件 - activeskill:onEffect - 【杀】的effect
-* 使用牌事件 - room:useCard - 出杀
-* 进行阶段事件 - ? - 在出牌阶段
-* 回合事件 - ? - 在回合
+-  伤害事件 - room:damage - 询问技能：是否发动胆守，点确定
+-  技能生效事件 - activeskill:onEffect - 【杀】的effect
+-  使用牌事件 - room:useCard - 出杀
+-  进行阶段事件 - ? - 在出牌阶段
+-  回合事件 - ? - 在回合
 
 我们的限制条件：无法获得room:damage的返回值，或者说根本没想去获得，其他同理。
 
 coroutine.yield的功能也只有挂起协程并让相应的resume调用返回而已，那么该怎么办呢？由于以上种种限制的存在（主要还是想把Luaer惯着），我们不能对杀的onEffect下手，其他函数都是核心函数，改改也无妨咯。
 
-还是结合情景考虑吧。胆守点了确定，此时最直接的感受应该是return true。但是return true的意思是防止伤害（都已经是“造成伤害后”了，怎么防止哦，return true也不会有人管你的），所以这里要另辟蹊径。考虑直接yield：此时会处于DamageEvent的exec()中，也就是处于room:damage中，他在处理中止信息。正常的中止的话，会使用break跳出循环；那么如果我访问调用栈，直接让他一路yield到我们想要的那个事件，如同yield到requestLoop那样呢？
+还是结合情景考虑吧。胆守点了确定，此时最直接的感受应该是return
+true。但是return
+true的意思是防止伤害（都已经是“造成伤害后”了，怎么防止哦，return
+true也不会有人管你的），所以这里要另辟蹊径。考虑直接yield：此时会处于DamageEvent的exec()中，也就是处于room:damage中，他在处理中止信息。正常的中止的话，会使用break跳出循环；那么如果我访问调用栈，直接让他一路yield到我们想要的那个事件，如同yield到requestLoop那样呢？
 
 没错，访问事件栈确实是个解决办法的可能方案。（这时候用id指示事件的重要性就出来了，可以传一个id表示事件，不过话说回来传那个事件本身也没有任何关系就是了咯）如果yield函数返回了一个GameEvent类的实例，那么就在处理环节将其和self进行比较，如果不同，就继续yield，直到退到相应的事件中。
 
@@ -162,9 +176,10 @@ coroutine.yield的功能也只有挂起协程并让相应的resume调用返回�
 
 总之这不考虑如何防止这种直接结束回合了，毕竟这种不断yield的方式无法用事件进行描述。
 
-___
+--------------
 
-## 考虑 内存泄漏的应对
+考虑 内存泄漏的应对
+-------------------
 
 首先声明，Lua没有内存泄漏。但是如果有些东西用户不想要，但是又不告诉lua的话，lua就会觉得用户想要，然后一直保存着它，这在某种意义上也相当于内存泄漏了。拿实例来说，如果事件被中止了，那么在很多情况下确实就不需要了，但Lua会认为协程是挂起的，用户可能想要恢复，于是一直保存着。
 

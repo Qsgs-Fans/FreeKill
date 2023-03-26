@@ -1,49 +1,49 @@
-# FreeKill 的通信
+FreeKill 的通信
+===============
 
-> [dev](./index.md) > 通信
-
-___
-
-## 概述
+概述
+----
 
 FreeKill使用UTF-8文本进行通信。基本的通信格式为JSON数组：
 
-`[requestId, packetType, command, jsonData]`
+``[requestId, packetType, command, jsonData]``
 
 其中：
 
-- requestId用来在request型通信使用，用来确保收到的回复和发出的请求相对应。
-- packetType用来确定这条消息的类型以及发送的目的地。
-- command用来表示消息的类型。使用首字母大写的驼峰式命名，因为下划线命名会造成额外的网络开销。
-- jsonData保存着这个消息的额外信息，必须是一个JSON数组。数组中的具体内容详见源码及注释。
+-  requestId用来在request型通信使用，用来确保收到的回复和发出的请求相对应。
+-  packetType用来确定这条消息的类型以及发送的目的地。
+-  command用来表示消息的类型。使用首字母大写的驼峰式命名，因为下划线命名会造成额外的网络开销。
+-  jsonData保存着这个消息的额外信息，必须是一个JSON数组。数组中的具体内容详见源码及注释。
 
 FreeKill通信有三大类型：请求（Request）、回复（Reply）和通知（Notification）。
 
-___
+--------------
 
-## 从连接上到进入大厅
+从连接上到进入大厅
+------------------
 
 想要启动服务器，需要通过命令行终端：
 
-```sh
-$ ./FreeKill -s <port>
-```
+.. code:: sh
 
-`<port>`是服务器运行的端口号，如果不带任何参数则启动GUI界面，在GUI界面里面只能加入服务器或者单机游戏。
+   $ ./FreeKill -s <port>
+
+``<port>``\ 是服务器运行的端口号，如果不带任何参数则启动GUI界面，在GUI界面里面只能加入服务器或者单机游戏。
 
 服务器以TCP方式监听。在默认情况下（比如单机启动），服务器的端口号是9527。
 
 每当任何一个客户端连接上了之后，游戏会先进行以下流程：
 
-1. 检查IP是否被封禁。   // TODO: 数据库
+1. 检查IP是否被封禁。 // TODO: 数据库
 2. 服务端将RSA公钥发给客户端，然后检查客户端的延迟是否小于30秒。
 3. 在网络检测环节，若客户端网速达标的话，客户端应该会发回一个字符串。这个字符串保存着用户的用户名和RSA公钥加密后的密码，服务端检查这个字符串是否合法。如果合法，检查密码是否正确。
 4. 上述检查都通过后，重连（TODO:）
-5. 不要重连的话，服务端便为新连接新建一个`ServerPlayer`对象，并将其添加到大厅中。
+5. 不要重连的话，服务端便为新连接新建一个\ ``ServerPlayer``\ 对象，并将其添加到大厅中。
 
-___
+--------------
 
-## 大厅和房间
+大厅和房间
+----------
 
 大厅（Lobby）是一个比较特殊的房间。除了大厅之外，所有的房间都被作为游戏房间对待。
 
@@ -58,24 +58,27 @@ ___
 1. 只要有玩家进入，就刷新一次房间列表。
 2. 只要玩家变动，就更新大厅内人数（TODO:）
 
-> 因为上述特点都是通过信号槽实现的，通过阅读代码不易发现，故记录之。
+..
 
-___
+   因为上述特点都是通过信号槽实现的，通过阅读代码不易发现，故记录之。
 
-## 对游戏内交互的实例分析
+--------------
+
+对游戏内交互的实例分析
+----------------------
 
 下面围绕着askForSkillInvoke对游戏内的交互进行简析，其他交互也是一样的原理。
 
-```lua
-function Room:askForSkillInvoke(player, skill_name, data)
-  local command = "AskForSkillInvoke"
-  self:notifyMoveFocus(player, skill_name)
-  local invoked = false
-  local result = self:doRequest(player, command, skill_name)
-  if result ~= "" then invoked = true end
-  return invoked
-end
-```
+.. code:: lua
+
+   function Room:askForSkillInvoke(player, skill_name, data)
+     local command = "AskForSkillInvoke"
+     self:notifyMoveFocus(player, skill_name)
+     local invoked = false
+     local result = self:doRequest(player, command, skill_name)
+     if result ~= "" then invoked = true end
+     return invoked
+   end
 
 在这期间，一共涉及两步走：
 
@@ -84,29 +87,29 @@ end
 
 首先看第一步：通知。这里涉及的函数是doNotify。（调查notifyMoveFocus的代码即可知道）
 
-调查`ServerPlayer:doNotify`发现：
+调查\ ``ServerPlayer:doNotify``\ 发现：
 
-```lua
-  self.serverplayer:doNotify(command, jsonData)
-```
+.. code:: lua
+
+     self.serverplayer:doNotify(command, jsonData)
 
 这里的self.serverplayer，其实指的是C++中的ServerPlayer实例，因此这一行代码实际上调用的是C++中的ServerPlayer::doNotify。调查C++中对应的函数，发现实际上调用了Router::notify，调查Router::notify，发现发送了一个信号量，调查Router::setSocket发现这个信号量连接到了ClientSocket::send。调查ClientSocket::send后发现：
 
-```cpp
-void ClientSocket::send(const QByteArray &msg)
-{
-  if (msg.length() >= 1024) {
-    auto comp = qCompress(msg);
-    auto _msg = "Compressed" + comp.toBase64() + "\n";
-    socket->write(_msg);
-    socket->flush();
-  }
-  socket->write(msg);
-  if (!msg.endsWith("\n"))
-    socket->write("\n");
-  socket->flush();
-}
-```
+.. code:: cpp
+
+   void ClientSocket::send(const QByteArray &msg)
+   {
+     if (msg.length() >= 1024) {
+       auto comp = qCompress(msg);
+       auto _msg = "Compressed" + comp.toBase64() + "\n";
+       socket->write(_msg);
+       socket->flush();
+     }
+     socket->write(msg);
+     if (!msg.endsWith("\n"))
+       socket->write("\n");
+     socket->flush();
+   }
 
 核心在于socket->write，这里其实就调用了QTcpSocket::write，正式向网络中发送数据。从前面的分析也慢慢可以发现，发送的其实就是json字符串。
 
@@ -116,55 +119,56 @@ void ClientSocket::send(const QByteArray &msg)
 
 其中有这样的一段：
 
-```cpp
-  if (type & TYPE_NOTIFICATION) {
-    if (type & DEST_CLIENT) {
-      ClientInstance->callLua(command, jsonData);
-    }
-```
+.. code:: cpp
+
+     if (type & TYPE_NOTIFICATION) {
+       if (type & DEST_CLIENT) {
+         ClientInstance->callLua(command, jsonData);
+       }
 
 调用了ClientInstance::callLua函数，这个函数不做详细追究，只要知道他调用了这个lua函数即可：
 
-```lua
-  self.client.callback = function(_self, command, jsonData)
-    local cb = fk.client_callback[command]
-    if (type(cb) == "function") then
-      cb(jsonData)
-    else
-      self:notifyUI(command, jsonData);
-    end
-  end
-```
+.. code:: lua
+
+     self.client.callback = function(_self, command, jsonData)
+       local cb = fk.client_callback[command]
+       if (type(cb) == "function") then
+         cb(jsonData)
+       else
+         self:notifyUI(command, jsonData);
+       end
+     end
 
 至此，我们已经可以基本得出结论：Client在接收到信息时就根据信息的command类型调用相应的函数，若无则直接调用qml中的函数。
 
-接下来聊聊doRequest。和前面类似，doRequest最终也是向玩家发送了一个JSON字符串，但是然后它就进入了等待回复的状态。在此期间，可以使用waitForReply函数尝试获取对方的reply，若无则得到默认结果__notready，然后在Lua侧进行进一步处理。
+接下来聊聊doRequest。和前面类似，doRequest最终也是向玩家发送了一个JSON字符串，但是然后它就进入了等待回复的状态。在此期间，可以使用waitForReply函数尝试获取对方的reply，若无则得到默认结果\__notready，然后在Lua侧进行进一步处理。
 
 客户在收到request类型的消息后，可以用reply对服务端进行答复。reply本身也是JSON字符串，服务端在handlePacket环节发觉这个是reply后，就知道自己已经收到回复了。这时用waitForReply即可得到正确的回复结果。
 
 在Lua侧，对waitForReply其实有所封装：
 
-```lua
-  while true do
-    result = player.serverplayer:waitForReply(0)
-    if result ~= "__notready" then
-      return result
-    end
-    local rest = timeout * 1000 - (os.getms() - start) / 1000
-    if timeout and rest <= 0 then
-      return ""
-    end
-    coroutine.yield(rest)
-  end
-```
+.. code:: lua
+
+     while true do
+       result = player.serverplayer:waitForReply(0)
+       if result ~= "__notready" then
+         return result
+       end
+       local rest = timeout * 1000 - (os.getms() - start) / 1000
+       if timeout and rest <= 0 then
+         return ""
+       end
+       coroutine.yield(rest)
+     end
 
 这里就是一个死循环，不断的试图读取玩家的回复，直到超时为止。因为waitForReply指定的等待时间为0，所以会立刻返回（这也是为什么waitForReply在读取reply时需要加锁的原因，因为读取操作很频繁），此时若lua发现玩家并未给出答复，就会调用coroutine.yield切换到其他线程去做点别的事情（比如处理旁观请求，调用QThread::msleep睡眠一阵子等等），别的协程办完事情后再次切换回这个协程（yield函数返回），然后开启新一轮循环，如此往复直到等待时间耗尽或者收到了回复。
 
-___
+--------------
 
-## 对掉线的处理
+对掉线的处理
+------------
 
-因为每个连接都对应着一个`new ClientSocket`和`new ServerPlayer`，所以对于掉线的处理要慎重，处理不当会导致内存泄漏以及各种奇怪的错误。
+因为每个连接都对应着一个\ ``new ClientSocket``\ 和\ ``new ServerPlayer``\ ，所以对于掉线的处理要慎重，处理不当会导致内存泄漏以及各种奇怪的错误。
 
 一般来说掉线有以下几种情况：
 
@@ -173,25 +177,26 @@ ___
 3. 在未开始游戏的房间里面掉线。
 4. 在已开始游戏的房间里掉线。
 
-首先对所有的这些情况，都应该把ClientSocket释放掉。这部分代码写在[server_socket.cpp](../../src/network/server_socket.cpp)里面。
+首先对所有的这些情况，都应该把ClientSocket释放掉。这部分代码写在\ `server_socket.cpp <../../src/network/server_socket.cpp>`__\ 里面。
 
 对于2、3两种情况，都算是在游戏开始之前的房间中掉线。这种情况下直接从房间中删除这个玩家，并告诉其他玩家一声，然后从服务器玩家列表中也删除那名玩家。但对于情况3，因为从普通房间删除玩家的话，那名玩家会自动进入大厅，所以需要大厅再删除一次玩家。
 
 对于情况4，因为游戏已经开始，所以不能直接删除玩家，需要把玩家的状态设为“离线”并继续游戏。在游戏结束后，若玩家仍未重连，则按情况2、3处理。
 
-> Note: 这部分处理见于ServerPlayer类的析构函数。
+   Note: 这部分处理见于ServerPlayer类的析构函数。
 
-___
+--------------
 
-## 断线重连
+断线重连
+--------
 
 根据用户id找到掉线的那位玩家，将玩家的状态设置为“在线”，并将房间的状态都发送给他即可。
 
-但是为了[UI不出错](./ui.md#mainStack)，依然需要对重连的玩家走一遍进大厅的流程。
+但是为了\ `UI不出错 <./ui.md#mainStack>`__\ ，依然需要对重连的玩家走一遍进大厅的流程。
 
 重连的流程应为：
 
-1. 总之先新建`ServerPlayer`并加到大厅
+1. 总之先新建\ ``ServerPlayer``\ 并加到大厅
 2. 在默认的处理流程中，此时会提醒玩家“已经有同名玩家加入”，然后断掉连接。
 3. 在这时可以改成：如果这个已经在线的玩家是Offline状态，那么就继续，否则断开。
 4. pass之后，走一遍流程，把玩家加到大厅里面先。
@@ -204,10 +209,10 @@ ___
 
 直接从UI着手：
 
-1. 首先EnterRoom消息，需要**人数**和**操作时长**。
-2. 既然需要人数了，那么就需要**所有玩家**。
+1. 首先EnterRoom消息，需要\ **人数**\ 和\ **操作时长**\ 。
+2. 既然需要人数了，那么就需要\ **所有玩家**\ 。
 3. 此外还需要让玩家知道牌堆、弃牌堆、轮数之类的。
-4. 玩家的信息就更多了，武将、身份、血量、id...
+4. 玩家的信息就更多了，武将、身份、血量、id…
 
 所以Lua要在某时候让出一段时间，处理重连等其他内容，可能还会处理一下AI。
 
@@ -215,28 +220,29 @@ ___
 
 会阻塞住lua代码的函数有：
 
-- ServerPlayer:waitForReplay()
-- Room:delay()
+-  ServerPlayer:waitForReplay()
+-  Room:delay()
 
 在这里让出主线程，然后调度函数查找目前的请求列表。事实上，整个Room的游戏主流程就是一个协程：
 
-```lua
--- room.lua:53
-local co_func = function()
-  self:run()
-end
-local co = coroutine.create(co_func)
-while not self.game_finished do
-  local ret, err_msg = coroutine.resume(co)
-  ...
-end
-```
+.. code:: lua
+
+   -- room.lua:53
+   local co_func = function()
+     self:run()
+   end
+   local co = coroutine.create(co_func)
+   while not self.game_finished do
+     local ret, err_msg = coroutine.resume(co)
+     ...
+   end
 
 如果在游戏流程中调用yield的话，那么这里的resume会返回true，然后可以带有额外的返回值。不过只要返回true就好了，这时候lua就可以做一些简单的任务。而这个简单的任务其实也可以另外写个协程解决。
 
-___
+--------------
 
-## 旁观（TODO）
+旁观（TODO）
+------------
 
 因为房间不允许加入比玩家上限的玩家，可以考虑在房间里新建一个列表存储旁观中的玩家。但是这样或许会让某些处理（如掉线）变得复杂化。
 

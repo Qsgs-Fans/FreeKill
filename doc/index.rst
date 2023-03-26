@@ -7,9 +7,32 @@
 ====================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: API文档
+    :maxdepth: 1
+    :caption: Diy文档
 
-   api/core.rst
-   api/server.rst
-   api/client.rst
+    diy/01-env.rst
+    diy/02-skilltype.rst
+    diy/03-events.rst
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Dev文档
+
+    dev/ai.rst
+    dev/compile.rst
+    dev/database.rst
+    dev/gameevent.rst
+    dev/gamelogic.rst
+    dev/package.rst
+    dev/protocol.rst
+    dev/scenario.rst
+    dev/todo.rst
+    dev/ui.rst
+
+.. toctree::
+    :maxdepth: 1
+    :caption: API文档
+
+    api/core.rst
+    api/server.rst
+    api/client.rst
