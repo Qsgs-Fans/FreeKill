@@ -92,6 +92,6 @@ latex_elements = {
 
 latex_documents = [
   ('index', 'manual.tex', 'FreeKill Handbook',
-   'By FreeKill 制作组', 'manual', False),
+   'Notify', 'manual', False),
 ]
 
