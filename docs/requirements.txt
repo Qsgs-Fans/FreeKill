@@ -1,2 +1,2 @@
 sphinx-lua
-sphinx-rtd-theme
+sphinx-book-theme
