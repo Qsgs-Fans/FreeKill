@@ -10,9 +10,8 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+fk_repo_path = os.path.abspath('.')
 
 
 # -- Project information -----------------------------------------------------
@@ -42,8 +41,8 @@ extensions = [
 ]
 
 lua_source_path = [
-  "../lua",
-  "../packages",
+  fk_repo_path + "/../lua",
+  fk_repo_path + "/../packages",
 ]
 
 lua_source_encoding = 'utf8'
