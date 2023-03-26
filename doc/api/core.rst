@@ -1,0 +1,15 @@
+Core
+========
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API
+
+   core/engine.rst
+   core/card.rst
+   core/general.rst
+   core/package.rst
+   core/skill.rst
+   core/game_mode.rst
+   core/player.rst
+

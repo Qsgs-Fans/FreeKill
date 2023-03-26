@@ -1,0 +1,4 @@
+Skill
+==============
+
+.. lua:autoclass:: Skill
