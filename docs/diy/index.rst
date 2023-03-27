@@ -8,4 +8,5 @@ Diy文档
     02-skilltype.rst
     03-newgeneral.rst
     04-newskill.rst
+    05-trigger.rst
     03-events.rst
