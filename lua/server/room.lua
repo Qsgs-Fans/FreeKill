@@ -1,21 +1,25 @@
+--- Room是fk游戏逻辑运行的主要场所，同时也提供了许多API函数供编写技能使用。
+---
+--- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
 ---@class Room : Object
----@field public room fk.Room
----@field public players ServerPlayer[]
----@field public alive_players ServerPlayer[]
----@field public observers fk.ServerPlayer[]
----@field public current ServerPlayer
----@field public game_started boolean
----@field public game_finished boolean
----@field public timeout integer
----@field public tag table<string, any>
----@field public draw_pile integer[]
----@field public discard_pile integer[]
----@field public processing_area integer[]
----@field public void integer[]
----@field public card_place table<integer, CardArea>
----@field public owner_map table<integer, integer>
----@field public status_skills Skill[]
----@field public settings table
+---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
+---@field public players ServerPlayer[] @ 这个房间中所有参战玩家
+---@field public alive_players ServerPlayer[] @ 所有还活着的玩家
+---@field public observers fk.ServerPlayer[] @ 旁观者清单，这是c++玩家列表，别乱动
+---@field public current ServerPlayer @ 当前回合玩家
+---@field public game_started boolean @ 游戏是否已经开始
+---@field public game_finished boolean @ 游戏是否已经结束
+---@field public timeout integer @ 出牌时长上限
+---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
+---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
+---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
+---@field public processing_area integer[] @ 处理区，依然是卡牌id数组
+---@field public void integer[] @ 从游戏中除外区，一样的是卡牌id数组
+---@field public card_place table<integer, CardArea> @ 每个卡牌的id对应的区域，一张表
+---@field public owner_map table<integer, integer> @ 每个卡牌id对应的主人，表的值是那个玩家的id，可能是nil
+---@field public status_skills Skill[] @ 这个房间中含有的状态技列表
+---@field public settings table @ 房间的额外设置，差不多是json对象
+---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 local Room = class("Room")
 
 -- load classes used by the game
@@ -53,6 +57,7 @@ dofile "lua/server/ai/init.lua"
 -- constructor
 ------------------------------------------------------------------------
 
+--- 构造函数。别去构造
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
@@ -114,7 +119,10 @@ function Room:initialize(_room)
   end
 end
 
--- When this function returns, the Room(C++) thread stopped.
+--- 正式在这个房间中开始游戏。
+---
+--- 当这个函数返回之后，整个Room线程也宣告结束。
+---@return nil
 function Room:run()
   for _, p in fk.qlist(self.room:getPlayers()) do
     local player = ServerPlayer:new(p)
@@ -132,6 +140,7 @@ end
 -- getters and setters
 ------------------------------------------------------------------------
 
+--- 基本算是私有函数，别去用
 ---@param cardId integer
 ---@param cardArea CardArea
 ---@param integer owner
@@ -140,8 +149,9 @@ function Room:setCardArea(cardId, cardArea, owner)
   self.owner_map[cardId] = owner
 end
 
----@param cardId integer | card
----@return CardArea
+--- 获取一张牌所处的区域。
+---@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
+---@return CardArea @ 这张牌的区域
 function Room:getCardArea(cardId)
   if type(cardId) ~= "number" then
     assert(cardId and cardId:isInstanceOf(Card))
@@ -150,8 +160,9 @@ function Room:getCardArea(cardId)
   return self.card_place[cardId] or Card.Unknown
 end
 
----@param cardId integer | card
----@return ServerPlayer
+--- 获得拥有某一张牌的玩家。
+---@param cardId integer | card @ 要获得主人的那张牌，可以是Card实例或者id
+---@return ServerPlayer | nil @ 这张牌的主人，可能返回nil
 function Room:getCardOwner(cardId)
   if type(cardId) ~= "number" then
     assert(cardId and cardId:isInstanceOf(Card))
@@ -160,8 +171,9 @@ function Room:getCardOwner(cardId)
   return self.owner_map[cardId] and self:getPlayerById(self.owner_map[cardId]) or nil
 end
 
----@param id integer
----@return ServerPlayer
+--- 根据玩家id，获得那名玩家本人。
+---@param id integer @ 玩家的id
+---@return ServerPlayer @ 这个id对应的ServerPlayer实例
 function Room:getPlayerById(id)
   if not id then return nil end
   assert(type(id) == "number")
@@ -175,7 +187,8 @@ function Room:getPlayerById(id)
   return nil
 end
 
----@param playerIds integer[]
+--- 将房间中的玩家按照座位顺序重新排序。
+---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
 function Room:sortPlayersByAction(playerIds)
 
 end
@@ -191,8 +204,11 @@ function Room:deadPlayerFilter(playerIds)
   return newPlayerIds
 end
 
----@param sortBySeat boolean
----@return ServerPlayer[]
+--- 获得当前房间中的所有玩家。
+---
+--- 返回的数组的第一个元素是当前回合玩家，并且按行动顺序进行排序。
+---@param sortBySeat boolean @ 是否无视按座位排序直接返回
+---@return ServerPlayer[] @ 房间中玩家的数组
 function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
     return { table.unpack(self.players) }
@@ -212,6 +228,7 @@ function Room:getAllPlayers(sortBySeat)
   end
 end
 
+--- 获得所有存活玩家，参看getAllPlayers
 ---@param sortBySeat boolean
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
@@ -237,10 +254,11 @@ function Room:getAlivePlayers(sortBySeat)
   end
 end
 
----@param player ServerPlayer
----@param sortBySeat boolean
----@param include_dead boolean
----@return ServerPlayer[]
+--- 获得除一名玩家外的其他玩家。
+---@param player ServerPlayer @ 要排除的玩家
+---@param sortBySeat boolean @ 是否要按座位排序？
+---@param include_dead boolean @ 是否要把死人也算进去？
+---@return ServerPlayer[] @ 其他玩家列表
 function Room:getOtherPlayers(player, sortBySeat, include_dead)
   if sortBySeat == nil then
     sortBySeat = true
@@ -257,7 +275,10 @@ function Room:getOtherPlayers(player, sortBySeat, include_dead)
   return players
 end
 
----@return ServerPlayer | null
+--- 获得当前房间中的主公。
+---
+--- 由于某些游戏模式没有主公，该函数可能返回nil。
+---@return ServerPlayer | nil @ 主公
 function Room:getLord()
   local lord = self.players[1]
   if lord.role == "lord" then return lord end
@@ -268,9 +289,14 @@ function Room:getLord()
   return nil
 end
 
----@param num integer
----@param from string
----@return integer[]
+--- 从摸牌堆中获取若干张牌。
+---
+--- 注意了，这个函数会对牌堆进行实际操作，也就是说它返回一系列id后，牌堆中就会少这么多id。
+---
+--- 如果牌堆中没有足够的牌可以获得，那么会触发洗牌；还是不够的话，游戏就平局。
+---@param num integer @ 要获得的牌的数量
+---@param from string @ 获得牌的位置，可以是 ``"top"`` 或者 ``"bottom"``，表示牌堆顶还是牌堆底
+---@return integer[] @ 得到的id
 function Room:getNCards(num, from)
   from = from or "top"
   assert(from == "top" or from == "bottom")
@@ -294,9 +320,12 @@ function Room:getNCards(num, from)
   return cardIds
 end
 
----@param player ServerPlayer
----@param mark string
----@param value integer
+--- 将一名玩家的某种标记数量相应的值。
+---
+--- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
+---@param player ServerPlayer @ 要被更新标记的那个玩家
+---@param mark string @ 标记的名称
+---@param value integer @ 要设为的值，其实也可以设为字符串
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
   self:doBroadcastNotify("SetPlayerMark", json.encode{
@@ -306,6 +335,10 @@ function Room:setPlayerMark(player, mark, value)
   })
 end
 
+--- 将一名玩家的mark标记增加count个。
+---@param player ServerPlayer @ 要加标记的玩家
+---@param mark string @ 标记名称
+---@param count integer | nil @ 要增加的数量，默认为1
 function Room:addPlayerMark(player, mark, count)
   count = count or 1
   local num = player:getMark(mark)
@@ -313,6 +346,10 @@ function Room:addPlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num + count, 0))
 end
 
+--- 将一名玩家的mark标记减少count个。
+---@param player ServerPlayer @ 要减标记的玩家
+---@param mark string @ 标记名称
+---@param count integer | nil @ 要减少的数量，默认为1
 function Room:removePlayerMark(player, mark, count)
   count = count or 1
   local num = player:getMark(mark)
@@ -320,17 +357,23 @@ function Room:removePlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num - count, 0))
 end
 
----@param tag_name string
+--- 将房间中某个tag设为特定值。
+---
+--- 当在编程中想在服务端搞点全局变量的时候哦，不要自己设置全局变量或者上值，而是应该使用room的tag。
+---@param tag_name string @ tag名字
+---@param value any @ 值
 function Room:setTag(tag_name, value)
   self.tag[tag_name] = value
 end
 
----@param tag_name string
+--- 获得某个tag的值。
+---@param tag_name string @ tag名字
 function Room:getTag(tag_name)
   return self.tag[tag_name]
 end
 
----@param tag_name string
+--- 删除某个tag。
+---@param tag_name string @ tag名字
 function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
 end
@@ -339,17 +382,19 @@ end
 -- network functions, notify function
 ------------------------------------------------------------------------
 
----@param player ServerPlayer
----@param property string
+--- 向所有角色广播一名角色的某个property，让大家都知道
+---@param player ServerPlayer @ 要被广而告之的那名角色
+---@param property string @ 这名角色的某种属性，像是"hp"之类的，其实就是Player类的属性名
 function Room:broadcastProperty(player, property)
   for _, p in ipairs(self.players) do
     self:notifyProperty(p, player, property)
   end
 end
 
----@param p ServerPlayer
----@param player ServerPlayer
----@param property string
+--- 将player的属性property告诉p。
+---@param p ServerPlayer @ 要被告知相应属性的那名玩家
+---@param player ServerPlayer @ 拥有那个属性的玩家
+---@param property string @ 属性名称
 function Room:notifyProperty(p, player, property)
   p:doNotify("PropertyUpdate", json.encode{
     player.id,
@@ -358,9 +403,10 @@ function Room:notifyProperty(p, player, property)
   })
 end
 
----@param command string
----@param jsonData string
----@param players ServerPlayer[] | nil @ default all players
+--- 向多名玩家广播一条消息。
+---@param command string @ 发出这条消息的消息类型
+---@param jsonData string @ 消息的数据，一般是JSON字符串，也可以是普通字符串，取决于client怎么处理了
+---@param players ServerPlayer[] | nil @ 要告知的玩家列表，默认为所有人
 function Room:doBroadcastNotify(command, jsonData, players)
   players = players or self.players
   for _, p in ipairs(players) do
@@ -368,11 +414,12 @@ function Room:doBroadcastNotify(command, jsonData, players)
   end
 end
 
----@param player ServerPlayer
----@param command string
----@param jsonData string
----@param wait boolean @ default true
----@return string | nil
+--- 向某个玩家发起一次Request。
+---@param player ServerPlayer @ 发出这个请求的目标玩家
+---@param command string @ 请求的类型
+---@param jsonData string @ 请求的数据
+---@param wait boolean @ 是否要等待答复，默认为true
+---@return string | nil @ 收到的答复，如果wait为false的话就返回nil
 function Room:doRequest(player, command, jsonData, wait)
   if wait == nil then wait = true end
   player:doRequest(command, jsonData, self.timeout)
@@ -382,8 +429,10 @@ function Room:doRequest(player, command, jsonData, wait)
   end
 end
 
----@param command string
----@param players ServerPlayer[]
+--- 向多名玩家发出请求。
+---@param command string @ 请求类型
+---@param players ServerPlayer[] @ 发出请求的玩家列表
+---@param jsonData string @ 请求数据
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   for _, p in ipairs(players) do
@@ -399,8 +448,15 @@ function Room:doBroadcastRequest(command, players, jsonData)
   end
 end
 
----@param command string
----@param players ServerPlayer[]
+--- 向多名玩家发出竞争请求。
+---
+--- 他们都可以做出答复，但是服务器只认可第一个做出回答的角色。
+---
+--- 返回获胜的角色，可以通过属性获得回复的具体内容。
+---@param command string @ 请求类型
+---@param players ServerPlayer[] @ 要竞争这次请求的玩家列表
+---@param jsonData string @ 请求数据
+---@return ServerPlayer | nil @ 在这次竞争请求中获胜的角色，可能是nil
 function Room:doRaceRequest(command, players, jsonData)
   players = players or self.players
   -- self:notifyMoveFocus(players, command)
@@ -441,6 +497,7 @@ function Room:doRaceRequest(command, players, jsonData)
 end
 
 -- main loop for the request handling coroutine
+--- 这是个私有函数，不用管。
 function Room:requestLoop(rest_time)
   local function tellRoomToObserver(player)
     local observee = self.players[1]
@@ -530,8 +587,10 @@ function Room:requestLoop(rest_time)
   end
 end
 
--- delay function, should only be used in main coroutine
----@param ms integer @ millisecond to be delayed
+--- 延迟一段时间。
+---
+--- 这个函数只应该在主协程中使用。
+---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
   local start = os.getms()
   while true do
@@ -543,9 +602,10 @@ function Room:delay(ms)
   end
 end
 
----@param players ServerPlayer[]
----@param card_moves CardsMoveStruct[]
----@param forceVisible boolean
+--- 向多名玩家告知一次移牌行为。
+---@param players ServerPlayer[] | nil @ 要被告知的玩家列表，默认为全员
+---@param card_moves CardsMoveStruct[] @ 要告知的移牌信息列表
+---@param forceVisible boolean @ 是否让所有牌对告知目标可见
 function Room:notifyMoveCards(players, card_moves, forceVisible)
   if players == nil or players == {} then players = self.players end
   for _, p in ipairs(players) do
@@ -588,8 +648,11 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
   end
 end
 
----@param players ServerPlayer | ServerPlayer[]
----@param command string
+--- 将焦点转移给一名或者多名角色，并广而告之。
+---
+--- 形象点说，就是在那些玩家下面显示一个“弃牌 思考中...”之类的烧条提示。
+---@param players ServerPlayer | ServerPlayer[] @ 要获得焦点的一名或者多名角色
+---@param command string @ 烧条的提示文字
 function Room:notifyMoveFocus(players, command)
   if (players.class) then
     players = {players}
@@ -606,17 +669,27 @@ function Room:notifyMoveFocus(players, command)
   })
 end
 
----@param log LogMessage
+--- 向战报中发送一条log。
+---@param log LogMessage @ Log的实际内容
 function Room:sendLog(log)
   self:doBroadcastNotify("GameLog", json.encode(log))
 end
 
+--- 播放某种动画效果给players看。
+---@param type string @ 动画名字
+---@param data any @ 这个动画附加的额外信息，在这个函数将会被转成json字符串
+---@param players ServerPlayer[] | nil @ 要观看动画的玩家们，默认为全员
 function Room:doAnimate(type, data, players)
   players = players or self.players
   data.type = type
   self:doBroadcastNotify("Animate", json.encode(data), players)
 end
 
+--- 在player脸上展示名为name的emotion动效。
+---
+--- 这就是“杀”、“闪”之类的那个动画。
+---@param player ServerPlayer @ 被播放动画的那个角色
+---@param name string @ emotion名字，可以是一个路径
 function Room:setEmotion(player, name)
   self:doAnimate("Emotion", {
     player = player.id,
@@ -624,6 +697,11 @@ function Room:setEmotion(player, name)
   })
 end
 
+--- 在一张card上播放一段emotion动效。
+---
+--- 这张card必须在处理区里面，或者至少客户端觉得它在处理区。
+---@param cid integer @ 被播放动效的那个牌的id
+---@param name string @ emotion名字，可以是一个路径
 function Room:setCardEmotion(cid, name)
   self:doAnimate("Emotion", {
     player = cid,
@@ -632,6 +710,9 @@ function Room:setCardEmotion(cid, name)
   })
 end
 
+--- 播放一个全屏大动画。可以自己指定qml文件路径和额外的信息。
+---@param path string @ qml文件的路径，有默认值
+---@param extra_data any @ 要传递的额外信息
 function Room:doSuperLightBox(path, extra_data)
   path = path or "RoomElement/SuperLightBox.qml"
   self:doAnimate("SuperLightBox", {
@@ -640,14 +721,16 @@ function Room:doSuperLightBox(path, extra_data)
   })
 end
 
+--- 基本上是个不常用函数就是了
 function Room:sendLogEvent(type, data, players)
   players = players or self.players
   data.type = type
   self:doBroadcastNotify("LogEvent", json.encode(data), players)
 end
 
----@param skill_name string
----@param index integer
+--- 播放技能的语音。
+---@param skill_name string @ 技能名
+---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function Room:broadcastSkillInvoke(skill_name, index)
   index = index or -1
   self:sendLogEvent("PlaySkillSound", {
@@ -656,17 +739,20 @@ function Room:broadcastSkillInvoke(skill_name, index)
   })
 end
 
----@param skill_name string
----@param index integer
+--- 播放一段音频。
+---@param path string @ 音频文件路径
 function Room:broadcastPlaySound(path)
   self:sendLogEvent("PlaySound", {
     name = path,
   })
 end
 
----@param player ServerPlayer
----@param skill_name string
----@param skill_type string
+--- 在player的脸上播放技能发动的特效。
+---
+--- 与此同时，在战报里面发一条“xxx发动了xxx”
+---@param player ServerPlayer @ 发动技能的那个玩家
+---@param skill_name string @ 技能名
+---@param skill_type string | nil @ 技能的动画效果，默认是那个技能的anim_type
 function Room:notifySkillInvoked(player, skill_name, skill_type)
   if not skill_type then
     local skill = Fk.skills[skill_name]
@@ -686,8 +772,9 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
   })
 end
 
----@param source integer
----@param targets integer[]
+--- 播放从source指到targets的指示线效果。
+---@param source integer @ 指示线开始的那个玩家的id
+---@param targets integer[] @ 指示线目标玩家的id列表
 function Room:doIndicate(source, targets)
   local target_group = {}
   for _, id in ipairs(targets) do
@@ -703,11 +790,15 @@ end
 -- interactive functions
 ------------------------------------------------------------------------
 
----@param player ServerPlayer
----@param skill_name string
----@param prompt string
----@param cancelable boolean
----@param extra_data table
+--- 询问player是否要发动一个主动技。
+---
+--- 如果发动的话，那么会执行一下技能的onUse函数，然后返回选择的牌和目标等。
+---@param player ServerPlayer @ 询问目标
+---@param skill_name string @ 主动技的技能名
+---@param prompt string @ 烧条上面显示的提示文本内容
+---@param cancelable boolean @ 是否可以点取消
+---@param extra_data table @ 额外信息，因技能而异了
+---@return boolean, table
 function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data)
   prompt = prompt or ""
   cancelable = cancelable or false
@@ -745,12 +836,17 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   }
 end
 
----@param player ServerPlayer
----@param minNum integer
----@param maxNum integer
----@param includeEquip boolean
----@param skillName string
----@param pattern string
+--- 询问一名角色弃牌。
+---
+--- 在这个函数里面牌已经被弃掉了。
+---@param player ServerPlayer @ 弃牌角色
+---@param minNum integer @ 最小值
+---@param maxNum integer @ 最大值
+---@param includeEquip boolean @ 能不能弃装备区？
+---@param skillName string @ 引发弃牌的技能名
+---@param cancelable boolean @ 能不能点取消？
+---@param pattern string @ 弃牌需要符合的规则
+---@return integer[] @ 弃掉的牌的id列表，可能是空的
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
   if minNum < 1 then
     return nil
@@ -787,12 +883,14 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   return toDiscard
 end
 
----@param player ServerPlayer
----@param targets integer[]
----@param minNum integer
----@param maxNum integer
----@param prompt string
----@return integer[]
+--- 询问一名玩家从targets中选择若干名玩家出来。
+---@param player ServerPlayer @ 要做选择的玩家
+---@param targets integer[] @ 可以选的目标范围，是玩家id数组
+---@param minNum integer @ 最小值
+---@param maxNum integer @ 最大值
+---@param prompt string @ 提示信息
+---@param skillName string @ 技能名
+---@return integer[] @ 选择的玩家id列表，可能为空
 function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName)
   if maxNum < 1 then
     return {}
@@ -814,13 +912,17 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
   end
 end
 
----@param player ServerPlayer
----@param minNum integer
----@param maxNum integer
----@param includeEquip boolean
----@param skillName string
----@param cancelable boolean
----@param pattern string
+--- 询问一名玩家选择自己的几张牌。
+---
+--- 与askForDiscard类似，但是不对选择的牌进行操作就是了。
+---@param player ServerPlayer @ 要询问的玩家
+---@param minNum integer @ 最小值
+---@param maxNum integer @ 最大值
+---@param includeEquip boolean @ 能不能选装备
+---@param skillName string @ 技能名
+---@param cancelable boolean @ 能不能点取消
+---@param pattern string @ 选牌规则
+---@return integer[] @ 选择的牌的id列表，可能是空的
 function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
   if minNum < 1 then
     return nil
@@ -856,12 +958,15 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
   return chosenCards
 end
 
----@param player ServerPlayer
----@param targets integer[]
----@param minNum integer
----@param maxNum integer
----@param pattern string
----@param prompt string
+--- 询问玩家选择1张牌和若干名角色。
+---
+--- 返回两个值，第一个是选择的目标列表，第二个是选择的那张牌的id
+---@param player ServerPlayer @ 要询问的玩家
+---@param targets integer[] @ 选择目标的id范围
+---@param minNum integer @ 选目标最小值
+---@param maxNum integer @ 选目标最大值
+---@param pattern string @ 选牌规则
+---@param prompt string @ 提示信息
 ---@return integer[], integer
 function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName)
   if maxNum < 1 then
@@ -884,9 +989,10 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   end
 end
 
----@param player ServerPlayer
----@param generals string[]
----@return string
+--- 询问玩家选择一名武将。
+---@param player ServerPlayer @ 询问目标
+---@param generals string[] @ 可选武将
+---@return string @ 选择的武将
 function Room:askForGeneral(player, generals)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
@@ -908,11 +1014,12 @@ function Room:askForGeneral(player, generals)
   return defaultChoice
 end
 
----@param chooser ServerPlayer
----@param target ServerPlayer
----@param flag string @ "hej", h for handcard, e for equip, j for judge
----@param reason string
----@return integer
+--- 询问chooser，选择target的一张牌。
+---@param chooser ServerPlayer @ 要被询问的人
+---@param target ServerPlayer @ 被选牌的人
+---@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param reason string @ 原因，一般是技能名
+---@return integer @ 选择的卡牌id
 function Room:askForCardChosen(chooser, target, flag, reason)
   local command = "AskForCardChosen"
   self:notifyMoveFocus(chooser, command)
@@ -940,13 +1047,15 @@ function Room:askForCardChosen(chooser, target, flag, reason)
   return result
 end
 
----@param chooser ServerPlayer
----@param target ServerPlayer
----@param min integer
----@param max integer
----@param flag string @ "hej", h for handcard, e for equip, j for judge
----@param reason string
----@return integer[]
+--- 完全类似askForCardChosen，但是可以选择多张牌。
+--- 相应的，返回的是id的数组而不是单个id。
+---@param chooser ServerPlayer @ 要被询问的人
+---@param target ServerPlayer @ 被选牌的人
+---@param min integer @ 最小选牌数
+---@param max integer @ 最大选牌数
+---@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param reason string @ 原因，一般是技能名
+---@return integer[] @ 选择的id
 function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
   if min == 1 and max == 1 then
     return { self:askForCardChosen(chooser, target, flag, reason) }
@@ -979,9 +1088,13 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
   return new_ret
 end
 
----@param player ServerPlayer
----@param choices string[]
----@param skill_name string
+--- 询问一名玩家从众多选项中选择一个。
+---@param player ServerPlayer @ 要询问的玩家
+---@param choices string[] @ 可选选项列表
+---@param skill_name string @ 技能名
+---@param prompt string @ 提示信息
+---@param data any @ 暂未使用
+---@return string @ 选择的选项
 function Room:askForChoice(player, choices, skill_name, prompt, data)
   if #choices == 1 then return choices[1] end
   local command = "AskForChoice"
@@ -994,8 +1107,10 @@ function Room:askForChoice(player, choices, skill_name, prompt, data)
   return result
 end
 
----@param player ServerPlayer
----@param skill_name string
+--- 询问玩家是否发动技能。
+---@param player ServerPlayer @ 要询问的玩家
+---@param skill_name string @ 技能名
+---@param data any @ 未使用
 ---@return boolean
 function Room:askForSkillInvoke(player, skill_name, data)
   local command = "AskForSkillInvoke"
@@ -1007,6 +1122,11 @@ function Room:askForSkillInvoke(player, skill_name, data)
 end
 
 -- TODO: guanxing type
+--- 询问玩家对若干牌进行观星。
+---
+--- 观星完成后，相关的牌会被置于牌堆顶或者牌堆底。所以这些cards最好不要来自牌堆，一般先用getNCards从牌堆拿出一些牌。
+---@param player ServerPlayer @ 要询问的玩家
+---@param cards integer[] @ 可以被观星的卡牌id列表
 function Room:askForGuanxing(player, cards)
   if #cards == 1 then
     table.insert(self.draw_pile, 1, cards[1])
@@ -1044,6 +1164,7 @@ function Room:askForGuanxing(player, cards)
   }
 end
 
+--- 平时写DIY用不到的函数。
 ---@param player ServerPlayer
 ---@param data string
 ---@return CardUseStruct
@@ -1110,14 +1231,15 @@ end
 
 -- available extra_data:
 -- * must_targets: integer[]
----@param player ServerPlayer
----@param card_name string
----@param pattern string
----@param prompt string
----@param cancelable boolean
----@param extra_data integer
----@param event_data CardEffectEvent|null
----@return CardUseStruct
+--- 询问玩家使用一张牌。
+---@param player ServerPlayer @ 要询问的玩家
+---@param card_name string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
+---@param pattern string @ 使用牌的规则，默认就是card_name的值
+---@param prompt string @ 提示信息
+---@param cancelable boolean @ 能否点取消
+---@param extra_data integer @ 额外信息
+---@param event_data CardEffectEvent|nil @ 事件信息
+---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
@@ -1147,11 +1269,14 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   return nil
 end
 
----@param player ServerPlayer
----@param card_name string
----@param pattern string
----@param prompt string
----@param cancelable string
+--- 询问一名玩家打出一张牌。
+---@param player ServerPlayer @ 要询问的玩家
+---@param card_name string @ 牌名
+---@param pattern string @ 牌的规则
+---@param prompt string @ 提示信息
+---@param cancelable boolean @ 能否取消
+---@param extra_data any @ 额外数据
+---@return Card | nil @ 打出的牌
 function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data)
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
@@ -1183,6 +1308,16 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   return nil
 end
 
+--- 同时询问多名玩家是否使用某一张牌。
+---
+--- 函数名字虽然是“询问无懈可击”，不过其实也可以给别的牌用就是了。
+---@param players ServerPlayer[] @ 要询问的玩家列表
+---@param card_name string @ 询问的牌名，默认为无懈
+---@param pattern string @ 牌的规则
+---@param prompt string @ 提示信息
+---@param cancelable boolean @ 能否点取消
+---@param extra_data any @ 额外信息
+---@return CardUseStruct | nil @ 最终决胜出的卡牌使用信息
 function Room:askForNullification(players, card_name, pattern, prompt, cancelable, extra_data)
   if #players == 0 then
     return nil
@@ -1210,11 +1345,12 @@ end
 -- AG(a.k.a. Amazing Grace) functions
 -- Popup a box that contains many cards, then ask player to choose one
 
----@param player ServerPlayer
----@param id_list integer[] | Card[]
----@param cancelable boolean
----@param reason string
----@return integer
+--- 询问玩家从AG中选择一张牌。
+---@param player ServerPlayer @ 要询问的玩家
+---@param id_list integer[] | Card[] @ 可选的卡牌列表
+---@param cancelable boolean @ 能否点取消
+---@param reason string @ 原因
+---@return integer @ 选择的卡牌
 function Room:askForAG(player, id_list, cancelable, reason)
   id_list = Card:getIdList(id_list)
   if #id_list == 1 and not cancelable then
@@ -1231,22 +1367,28 @@ function Room:askForAG(player, id_list, cancelable, reason)
   return tonumber(ret)
 end
 
----@param player ServerPlayer
----@param id_list integer[] | Card[]
----@param disable_ids integer[] | Card[]
+--- 给player发一条消息，在他的窗口中用一系列卡牌填充一个AG。
+---@param player ServerPlayer @ 要通知的玩家
+---@param id_list integer[] | Card[] @ 要填充的卡牌
+---@param disable_ids integer[] | Card[] @ 未使用
 function Room:fillAG(player, id_list, disable_ids)
   id_list = Card:getIdList(id_list)
   -- disable_ids = Card:getIdList(disable_ids)
   player:doNotify("FillAG", json.encode{ id_list, disable_ids })
 end
 
----@param player ServerPlayer
----@param id integer
+--- 告诉一些玩家，AG中的牌被taker取走了。
+---@param taker ServerPlayer @ 拿走牌的玩家
+---@param id integer @ 被拿走的牌
+---@param notify_list ServerPlayer[] @ 要告知的玩家，默认为全员
 function Room:takeAG(taker, id, notify_list)
   self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
 end
 
----@param player ServerPlayer
+--- 关闭player那侧显示的AG。
+---
+--- 若不传参（即player为nil），那么关闭所有玩家的AG。
+---@param player ServerPlayer @ 要关闭AG的玩家
 function Room:closeAG(player)
   if player then player:doNotify("CloseAG", "")
   else self:doBroadcastNotify("CloseAG", "") end
@@ -1279,7 +1421,8 @@ local function execGameEvent(type, ...)
   return ret
 end
 
----@param cardUseEvent CardUseStruct
+--- 根据卡牌使用数据，去实际使用这个卡牌。
+---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
   return execGameEvent(GameEvent.UseCard, cardUseEvent)
@@ -1397,6 +1540,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
   return true
 end
 
+--- 对卡牌使用数据进行生效
 ---@param cardUseEvent CardUseStruct
 function Room:doCardUseEffect(cardUseEvent)
   ---@type table<string, AimStruct>
@@ -1553,6 +1697,7 @@ function Room:doCardUseEffect(cardUseEvent)
   end
 end
 
+--- 对卡牌效果数据进行生效
 ---@param cardEffectEvent CardEffectEvent
 function Room:doCardEffect(cardEffectEvent)
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
@@ -1662,24 +1807,28 @@ function Room:doCardEffect(cardEffectEvent)
   end
 end
 
+--- 对“打出牌”进行处理
 ---@param cardResponseEvent CardResponseEvent
 function Room:responseCard(cardResponseEvent)
   return execGameEvent(GameEvent.RespondCard, cardResponseEvent)
 end
+
 ------------------------------------------------------------------------
 -- move cards, and wrappers
 ------------------------------------------------------------------------
 
+--- 传入一系列移牌信息，去实际移动这些牌
 ---@vararg CardsMoveInfo
 ---@return boolean
 function Room:moveCards(...)
   return execGameEvent(GameEvent.MoveCards, ...)
 end
 
----@param player integer|Player
----@param cid integer|Card
----@param unhide boolean
----@param reason CardMoveReason
+--- 让一名玩家获得一张牌
+---@param player integer|ServerPlayer @ 要拿牌的玩家
+---@param cid integer|Card @ 要拿到的卡牌
+---@param unhide boolean @ 是否明着拿
+---@param reason CardMoveReason @ 卡牌移动的原因
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
@@ -1704,11 +1853,12 @@ function Room:obtainCard(player, cid, unhide, reason)
   })
 end
 
----@param player ServerPlayer
----@param num integer
----@param skillName string
----@param fromPlace string
----@return integer[]
+--- 让玩家摸牌
+---@param player ServerPlayer @ 摸牌的玩家
+---@param num integer @ 摸牌数
+---@param skillName string @ 技能名
+---@param fromPlace string @ 摸牌的位置，"top" 或者 "bottom"
+---@return integer[] @ 摸到的牌
 function Room:drawCards(player, num, skillName, fromPlace)
   local topCards = self:getNCards(num, fromPlace)
   self:moveCards({
@@ -1723,13 +1873,14 @@ function Room:drawCards(player, num, skillName, fromPlace)
   return { table.unpack(topCards) }
 end
 
----@param card Card | Card[]
----@param to_place integer
----@param target ServerPlayer
----@param reason integer
----@param skill_name string
----@param special_name string
----@param visible boolean
+--- 将一张或多张牌移动到某处
+---@param card Card | Card[] @ 要移动的牌
+---@param to_place integer @ 移动的目标位置
+---@param target ServerPlayer @ 移动的目标玩家
+---@param reason integer @ 移动时使用的移牌原因
+---@param skill_name string @ 技能名
+---@param special_name string @ 私人牌堆名
+---@param visible boolean @ 是否明置
 function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
@@ -1761,48 +1912,55 @@ end
 
 -- actions related to hp
 
----@param player ServerPlayer
----@param num integer
----@param reason string|nil
----@param skillName string
----@param damageStruct DamageStruct|null
+--- 改变一名玩家的体力。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 变化量
+---@param reason string|nil @ 原因
+---@param skillName string @ 技能名
+---@param damageStruct DamageStruct|null @ 伤害数据
 ---@return boolean
 function Room:changeHp(player, num, reason, skillName, damageStruct)
   return execGameEvent(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
 end
 
----@param player ServerPlayer
----@param num integer
----@param skillName string
+--- 令一名玩家失去体力。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 失去的数量
+---@param skillName string @ 技能名
 ---@return boolean
 function Room:loseHp(player, num, skillName)
   return execGameEvent(GameEvent.LoseHp, player, num, skillName)
 end
 
----@param player ServerPlayer
----@param num integer
+--- 改变一名玩家的体力上限。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 变化量
 ---@return boolean
 function Room:changeMaxHp(player, num)
   return execGameEvent(GameEvent.ChangeMaxHp, player, num)
 end
 
+--- 根据伤害数据造成伤害。
 ---@param damageStruct DamageStruct
 ---@return boolean
 function Room:damage(damageStruct)
   return execGameEvent(GameEvent.Damage, damageStruct)
 end
 
+--- 根据回复数据回复体力。
 ---@param recoverStruct RecoverStruct
 ---@return boolean
 function Room:recover(recoverStruct)
   return execGameEvent(GameEvent.Recover, recoverStruct)
 end
 
+--- 根据濒死数据让人进入濒死。
 ---@param dyingStruct DyingStruct
 function Room:enterDying(dyingStruct)
   return execGameEvent(GameEvent.Dying, dyingStruct)
 end
 
+--- 根据死亡数据杀死角色。
 ---@param deathStruct DeathStruct
 function Room:killPlayer(deathStruct)
   return execGameEvent(GameEvent.Death, deathStruct)
@@ -1810,10 +1968,15 @@ end
 
 -- lose/acquire skill actions
 
----@param player ServerPlayer
----@param skill_names string[] | string
----@param source_skill string | Skill | null
----@param no_trigger boolean | null
+--- 令一名玩家获得/失去技能。
+---
+--- skill_names 是字符串数组或者用管道符号(|)分割的字符串。
+---
+--- 每个skill_name都是要获得的技能的名。如果在skill_name前面加上"-"，那就是失去技能。
+---@param player ServerPlayer @ 玩家
+---@param skill_names string[] | string @ 要获得/失去的技能
+---@param source_skill string | Skill | null @ 源技能
+---@param no_trigger boolean | null @ 是否不触发相关时机
 function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no_trigger)
   if type(skill_names) == "string" then
     skill_names = skill_names:split("|")
@@ -1885,16 +2048,18 @@ end
 
 -- judge
 
+--- 根据判定数据进行判定。判定的结果直接保存在这个数据中。
 ---@param data JudgeStruct
 function Room:judge(data)
   return execGameEvent(GameEvent.Judge, data)
 end
 
----@param card Card
----@param player ServerPlayer
----@param judge JudgeStruct
----@param skillName string
----@param exchange boolean
+--- 改判。
+---@param card Card @ 改判的牌
+---@param player ServerPlayer @ 改判的玩家
+---@param judge JudgeStruct @ 要被改判的判定数据
+---@param skillName string @ 技能名
+---@param exchange boolean @ 是否要替换原有判定牌（即类似鬼道那样）
 function Room:retrial(card, player, judge, skillName, exchange)
   if not card then return end
   local triggerResponded = self.owner_map[card:getEffectiveId()] == player
@@ -1941,10 +2106,11 @@ function Room:retrial(card, player, judge, skillName, exchange)
   end
 end
 
----@param card_ids integer[]
----@param skillName string
----@param who ServerPlayer
----@param thrower ServerPlayer
+--- 弃置一名玩家的牌。
+---@param card_ids integer[] @ 被弃掉的牌
+---@param skillName string @ 技能名
+---@param who ServerPlayer @ 被弃牌的人
+---@param thrower ServerPlayer @ 弃别人牌的人
 function Room:throwCard(card_ids, skillName, who, thrower)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
@@ -1961,6 +2127,7 @@ function Room:throwCard(card_ids, skillName, who, thrower)
   })
 end
 
+--- 根据拼点信息开始拼点。
 ---@param pindianData PindianStruct
 function Room:pindian(pindianData)
   return execGameEvent(GameEvent.Pindian, pindianData)
@@ -1996,6 +2163,7 @@ function Room:adjustSeats()
   self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
 end
 
+--- 洗牌。
 function Room:shuffleDrawPile()
   if #self.draw_pile + #self.discard_pile == 0 then
     return
@@ -2009,9 +2177,10 @@ function Room:shuffleDrawPile()
   table.shuffle(self.draw_pile)
 end
 
----@param player ServerPlayer
----@param skill Skill
----@param effect_cb fun()
+--- 使用技能。先增加技能发动次数，再执行相应的函数。
+---@param player ServerPlayer @ 发动技能的玩家
+---@param skill Skill @ 发动的技能
+---@param effect_cb fun() @ 实际要调用的函数
 function Room:useSkill(player, skill, effect_cb)
   if not skill.mute then
     if skill.attached_equip then
@@ -2031,6 +2200,8 @@ function Room:useSkill(player, skill, effect_cb)
   end
 end
 
+--- 结束一局游戏。
+---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
   self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false

@@ -1,0 +1,4 @@
+Room
+=============
+
+.. lua:autoclass:: Room
