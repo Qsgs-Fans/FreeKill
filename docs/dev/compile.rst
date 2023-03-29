@@ -13,7 +13,7 @@ Qt安装的流程不赘述。为了编译FreeKill，至少需要安装以下的�
 - Qt 6: MinGW 11.2.0 64-bit （不支持MSVC）
 - Qt 6: Qt5 Compat
 - Qt 6: Shader Tools （为了使用GraphicalEffects）
-- Qt 6: Multimedia 
+- Qt 6: Multimedia
 - QtCreator（这个是安装器强制要你安装的）
 - CMake、Ninja
 - OpenSSL 1.1.1
