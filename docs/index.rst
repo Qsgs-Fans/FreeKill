@@ -9,6 +9,7 @@
 .. toctree::
     :maxdepth: 1
 
+    usr/index.rst
     diy/index.rst
     dev/index.rst
     api/index.rst
