@@ -107,7 +107,7 @@ fk本身不内置多少技能，但玩家还是可以给武将添加已有的技
 
 保存一下，进游戏就能发现多了个技能。
 
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-da0d53b6996941de.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
+.. figure:: ../pic/diy3-pic1.webp
    :alt: 添加已有技能
 
    添加已有技能
@@ -123,22 +123,12 @@ fk本身不内置多少技能，但玩家还是可以给武将添加已有的技
 
 fk中，武将的图片应该为250x292分辨率，并且是jpg格式。为了观感舒适，武将的人脸应该位于图片的中上方。
 
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-7b08fd53820d4160.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
+.. figure:: ../pic/diy3-pic2.webp
    :alt: 使用GIMP切图。我倾向于开5x5参考线，并让人脸位于2行3列的格子里面
 
    使用GIMP切图。我倾向于开5x5参考线，并让人脸位于2行3列的格子里面
 
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-a629150ce8a4eac8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
-   :alt: 使用GIMP切图后，将尺寸缩到需要的分辨率
-
-   使用GIMP切图后，将尺寸缩到需要的分辨率
-
 最后用jpg格式导出图片，图片的名字是武将的内部名称，在这里就是study_sunce。
-
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-7093b57e9cb53118.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
-   :alt: 导出JPG
-
-   导出JPG
 
 注意了，JPG图片的质量不能拉到100%，不然图片体积会很大，给他人下载你的拓展包带来不便。一般质量为90为好，此时图片大约三四十KB大小。这里图像质量只调了60，这样看起来不至于完全失真，图片的体积也相当较小。
 
@@ -154,12 +144,7 @@ fk中，武将的图片应该为250x292分辨率，并且是jpg格式。为了�
    │       └── study_sunce.jpg
    └── init.lua
 
-然后打开游戏就能看到武将的图片了：
-
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-faafcd3e899f241b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
-   :alt: 效果还不错吧
-
-   效果还不错吧
+然后打开游戏，进入武将一览，就能看到武将的图片了。
 
 --------------
 
@@ -170,12 +155,7 @@ fk中，武将的图片应该为250x292分辨率，并且是jpg格式。为了�
 
 怎么处理mp3音频就不叙述了，可以考虑用audacity这款软件调节mp3的音量、去掉首尾的延迟等等。但是依然需要注意一点——mp3语音的体积不能太大了。为此我的建议是使用格式工厂对mp3文件再进行一次格式转换，将转换后mp3文件的码率设为128kbps，这样一来一句语音差不多就是三四十KB的感觉，而音质却不至于非常模糊。
 
-阵亡语音放到拓展包文件夹下的audio/death里面，命名规则是武将的内部名称。如图所示：
-
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-1ce5c371b425638e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
-   :alt: 阵亡语音的命名，以及存放位置
-
-   阵亡语音的命名，以及存放位置
+阵亡语音放到拓展包文件夹下的audio/death里面，命名规则是武将的内部名称。
 
 --------------
 

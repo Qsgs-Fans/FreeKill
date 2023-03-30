@@ -61,9 +61,7 @@ Card.DrawPile = 6
 Card.DiscardPile = 7
 Card.Void = 8
 
---- Card的构造函数。
----
---- 具体负责构建Card实例的函数，请参见fk_ex部分。
+--- Card的构造函数。具体负责构建Card实例的函数，请参见fk_ex部分。
 function Card:initialize(name, suit, number, color)
   self.name = name
   self.suit = suit or Card.NoSuit
@@ -94,9 +92,9 @@ end
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
----@param suit Suit
----@param number integer
----@return Card
+---@param suit Suit @ 克隆后的牌的花色
+---@param number integer @ 克隆后的牌的点数
+---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
@@ -111,6 +109,9 @@ function Card:isVirtual()
 end
 
 --- 获取卡牌的ID。
+---
+--- 如果牌是虚拟牌，则返回其第一张子卡的id，没有子卡就返回nil
+---@return integer | nil
 function Card:getEffectiveId()
   if self:isVirtual() then
     return #self.subcards > 0 and self.subcards[1] or nil
@@ -142,7 +143,7 @@ local function updateColorAndNumber(card)
 end
 
 --- 将一张子卡牌加入某张牌中（是addSubcards的基础函数，常用addSubcards）。
----@param card integer|Card
+---@param card integer|Card @ 要加入的子卡
 function Card:addSubcard(card)
   if type(card) == "number" then
     table.insert(self.subcards, card)
@@ -156,6 +157,7 @@ function Card:addSubcard(card)
 end
 
 --- 将一批子卡牌加入某张牌中（常用于将这批牌弃置/交给某个角色···）。
+---@param cards integer[] | Card[] @ 要加入的子卡列表
 function Card:addSubcards(cards)
   for _, c in ipairs(cards) do
     self:addSubcard(c)
@@ -168,11 +170,13 @@ function Card:clearSubcards()
   updateColorAndNumber(self)
 end
 
+--- 判断此牌能否符合一个卡牌规则。
 function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
 --- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+---@return string @ 描述花色的字符串
 function Card:getSuitString()
   local suit = self.suit
   if suit == Card.Spade then
@@ -189,6 +193,7 @@ function Card:getSuitString()
 end
 
 --- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
+---@return string @ 描述颜色的字符串
 function Card:getColorString()
   local color = self.color
   if color == Card.Black then
@@ -242,6 +247,7 @@ function Card:toLogString()
   return ret
 end
 
+--- 静态方法。传入下列类型之一的参数，返回id列表。
 ---@param c integer|integer[]|Card|Card[]
 ---@return integer[]
 function Card:getIdList(c)

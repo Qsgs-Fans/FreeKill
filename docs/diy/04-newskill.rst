@@ -45,7 +45,7 @@ fk体量实在太小，只有标包，欲玩到更多技能，还是得自己亲
 
 启动游戏试试看，却给我们甩了个报错：
 
-.. image:: https://upload-images.jianshu.io/upload_images/21666547-b032b4f43ad13b58.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
+.. image:: ../pic/diy4-pic1.webp
 
 原来是这个复制粘贴的技能和已有的英姿重复了。解法很简单，换个名字就行了，这里改名为“激姿”好了。按照命名习惯，为他起一个内部名称”study_jizi”。然后把所有的yingzi都改成这个名，改名后如下：
 
@@ -77,11 +77,6 @@ fk体量实在太小，只有标包，欲玩到更多技能，还是得自己亲
      [":study_jizi"] = "摸牌阶段，你可以多摸4张牌。",
 
 至此完事了。别忘了更新一下git，后面不赘述关于git的事情了。
-
-.. figure:: https://upload-images.jianshu.io/upload_images/21666547-f4c76ee91f8c15ae.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240
-   :alt: 搞定，一摸就是6张，薄纱神郭嘉
-
-   搞定，一摸就是6张，薄纱神郭嘉
 
 --------------
 

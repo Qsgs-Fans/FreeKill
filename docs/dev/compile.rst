@@ -8,10 +8,15 @@ FreeKill采用最新的Qt进行构建，因此需要先安装Qt6的开发环境�
 
 无论是Win还是Linux，都建议用\ `Qt官方的下载器 <https://download.qt.io/official_releases/online_installers/>`__\ 进行安装。当然了，在一些软件更新很频繁的Linux发行版里面，可能已经能从包管理器安装Qt6，对此后文细说。这个环节介绍用Qt安装器安装的步骤。
 
-Qt安装的流程不赘述。为了编译FreeKill，至少需要安装以下的组件： - Qt 6:
-MinGW 11.2.0 64-bit （不支持MSVC） - Qt 6: Qt5 Compat - Qt 6: Shader
-Tools （为了使用GraphicalEffects） - Qt 6: Multimedia -
-QtCreator（这个是安装器强制要你安装的） - CMake、Ninja - OpenSSL 1.1.1
+Qt安装的流程不赘述。为了编译FreeKill，至少需要安装以下的组件：
+
+- Qt 6: MinGW 11.2.0 64-bit （不支持MSVC）
+- Qt 6: Qt5 Compat
+- Qt 6: Shader Tools （为了使用GraphicalEffects）
+- Qt 6: Multimedia
+- QtCreator（这个是安装器强制要你安装的）
+- CMake、Ninja
+- OpenSSL 1.1.1
 
 接下来根据平台的不同，步骤也稍有区别。
 
@@ -26,15 +31,9 @@ Windows
 
 接下来使用QtCreator打开项目，然后尝试编译。
 
-这时遇到cmake报错：OpenSSL:Crypto not found.
-这是因为我们还没有告诉编译器OpenSSL的位置，点左侧“项目”，查看构建选项，在CMake的Initial
-Configuration中，点击添加按钮，新增String型环境变量OPENSSL_ROOT_DIR，将其值设为跟Qt一同安装的OpenSSL的位置（如C:/Qt/Tools/OpenSSL/Win_x64）。然后点下方的Re-configure
-with Initial Parameters，这样就能正常编译了。
+这时遇到cmake报错：OpenSSL:Crypto not found.  这是因为我们还没有告诉编译器OpenSSL的位置，点左侧“项目”，查看构建选项，在CMake的Initial Configuration中，点击添加按钮，新增String型环境变量OPENSSL_ROOT_DIR，将其值设为跟Qt一同安装的OpenSSL的位置（如C:/Qt/Tools/OpenSSL/Win_x64）。然后点下方的Re-configure with Initial Parameters，这样就能正常编译了。
 
-运行的话，在Qt
-Creator的项目选项->运行中，先将工作目录改为项目所在的目录（git仓库的目录）。然后先将编译好了的FreeKill.exe放到项目目录中，在目录下打开CMD，执行windeployqt
-FreeKill.exe。调整目录下的dll文件直到能运行起来为止，之后就可以在Qt
-Creator中正常运行和调试了。
+运行的话，在Qt Creator的项目选项->运行中，先将工作目录改为项目所在的目录（git仓库的目录）。然后先将编译好了的FreeKill.exe放到项目目录中，在目录下打开CMD，执行windeployqt FreeKill.exe。调整目录下的dll文件直到能运行起来为止，之后就可以在Qt Creator中正常运行和调试了。
 
 --------------
 
