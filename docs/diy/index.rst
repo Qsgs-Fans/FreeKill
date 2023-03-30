@@ -9,4 +9,5 @@ Diy文档
     03-newgeneral.rst
     04-newskill.rst
     05-trigger.rst
+    06-active.rst
     03-events.rst

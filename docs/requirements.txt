@@ -1,2 +1,2 @@
 sphinx-lua
-sphinx-book-theme
+furo
