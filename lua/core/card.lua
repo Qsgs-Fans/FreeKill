@@ -88,17 +88,33 @@ function Card:initialize(name, suit, number, color)
   self.skill = nil
   self.subcards = {}
   self.skillName = nil -- ""
+  self._skillName = ""
   self.skillNames = {}
 
-  local mt = getmetatable(self)
+  local mt = table.simpleClone(getmetatable(self))
   local newidx = mt.__newindex or rawset
   mt.__newindex = function(t, k, v)
     if k == "skillName" then
       table.insertIfNeed(self.skillNames, v)
+      t._skillName = v
     else
       return newidx(t, k, v)
     end
   end
+
+  local idx = mt.__index or rawget
+  mt.__index = function(t, k)
+    if k == "skillName" then
+      return t._skillName
+    end
+    if type(idx) == "table" then
+      return idx[k]
+    end
+    if type(idx) == "function" then
+      return idx(t, k)
+    end
+  end
+  setmetatable(self, mt)
 end
 
 --- 克隆特定卡牌并赋予花色与点数。
