@@ -15,6 +15,7 @@
 ---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
 ---@field public subcards integer[]
 ---@field public skillName string @ for virtual cards
+---@field public skillNames string[]
 ---@field public skill Skill
 ---@field public special_skills string[] | nil
 local Card = class("Card")
@@ -86,7 +87,18 @@ function Card:initialize(name, suit, number, color)
   self.sub_type = Card.SubTypeNone
   self.skill = nil
   self.subcards = {}
-  self.skillName = ""
+  self.skillName = nil -- ""
+  self.skillNames = {}
+
+  local mt = getmetatable(self)
+  local newidx = mt.__newindex or rawset
+  mt.__newindex = function(t, k, v)
+    if k == "skillName" then
+      table.insertIfNeed(self.skillNames, v)
+    else
+      return newidx(t, k, v)
+    end
+  end
 end
 
 --- 克隆特定卡牌并赋予花色与点数。

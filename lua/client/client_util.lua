@@ -71,7 +71,7 @@ function GetCardData(id)
     color = card.color,
     subtype = cardSubtypeStrings[card.sub_type]
   }
-  if card.skillName ~= "" then
+  if #card.skillNames > 0 then
     local orig = Fk:getCardById(id, true)
     ret.name = orig.name
     ret.virt_name = card.name
