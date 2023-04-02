@@ -1,0 +1,49 @@
+name: Build For Windows 10+
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+
+    - name: Install MinGW 11.2, swig, winflexbison3
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install mingw --version=11.2.0 winflexbison3 swig -y
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.4.3'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_mingw'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+        tools: 'tools_openssl_x64 tools_cmake tools_ninja'
+
+    - name: Set Qt path and refresh
+      run: |
+        echo "${{github.workspace}}/qt/Qt/6.4.3/mingw1120_64/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        refreshenv
+  
+    - name: Configure CMake Proyect
+      working-directory: ${{github.workspace}}
+      env:
+        CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+      run: cmake -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" -B ${{github.workspace}}/build
+
+    - name: Build proyect
+      working-directory: ${{github.workspace}}/build
+      run: |
+        mingw32-make.exe
