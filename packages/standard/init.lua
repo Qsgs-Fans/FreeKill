@@ -268,6 +268,7 @@ local qingguo = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("jink")
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -334,6 +335,7 @@ local wusheng = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("slash")
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -441,6 +443,7 @@ local longdan = fk.CreateViewAsSkill{
     elseif _c.name == "jink" then
       c = Fk:cloneCard("slash")
     end
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -538,6 +541,7 @@ local qixi = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("dismantlement")
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -650,6 +654,7 @@ local guose = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("indulgence")
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -835,6 +840,7 @@ local jijiu = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("peach")
+    c.skillName = self.name
     c:addSubcard(cards[1])
     return c
   end,
@@ -897,6 +903,7 @@ local lijian = fk.CreateActiveSkill{
   on_use = function(self, room, use)
     room:throwCard(use.cards, self.name, room:getPlayerById(use.from))
     local duel = Fk:cloneCard("duel")
+    duel.skillName = self.name
     local new_use = {} ---@type CardUseStruct
     new_use.from = use.tos[2]
     new_use.tos = { { use.tos[1] } }

@@ -331,6 +331,7 @@ local fanSkill = fk.CreateTriggerSkill{
   end,
   on_use = function(_, _, _, _, data)
     local fireSlash = Fk:cloneCard("fire__slash")
+    fireSlash.skillName = "fan"
     fireSlash:addSubcard(data.card)
     data.card = fireSlash
   end,
