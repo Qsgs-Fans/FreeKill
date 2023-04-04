@@ -577,9 +577,12 @@ callbacks["AskForGeneral"] = function(jsonData) {
 }
 
 callbacks["AskForSkillInvoke"] = function(jsonData) {
-  // jsonData: string name
-  roomScene.promptText = Backend.translate("#AskForSkillInvoke")
-    .arg(Backend.translate(jsonData));
+  // jsonData: [ string name, string prompt ]
+  let data = JSON.parse(jsonData);
+  let skill = data[0];
+  let prompt = data[1];
+  roomScene.promptText = prompt ? processPrompt(prompt) : Backend.translate("#AskForSkillInvoke")
+    .arg(Backend.translate(skill));
   roomScene.state = "replying";
   roomScene.okCancel.visible = true;
   roomScene.okButton.enabled = true;

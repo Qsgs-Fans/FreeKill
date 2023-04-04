@@ -846,8 +846,9 @@ end
 ---@param skillName string @ 引发弃牌的技能名
 ---@param cancelable boolean @ 能不能点取消？
 ---@param pattern string @ 弃牌需要符合的规则
+---@param prompt string @ 提示信息
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt)
   if minNum < 1 then
     return nil
   end
@@ -862,7 +863,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     reason = skillName,
     pattern = pattern,
   }
-  local prompt = "#AskForDiscard:::" .. maxNum .. ":" .. minNum
+  local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
   if ret then
     toDiscard = ret.cards
@@ -891,10 +892,11 @@ end
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName)
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable)
   if maxNum < 1 then
     return {}
   end
+  cancelable = (not cancelable) and false or true
 
   local data = {
     targets = targets,
@@ -903,12 +905,15 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     pattern = "",
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
   if ret then
     return ret.targets
   else
-    -- TODO: default
-    return {}
+    if cancelable then
+      return {}
+    else
+      return table.random(targets, minNum)
+    end
   end
 end
 
@@ -922,8 +927,9 @@ end
 ---@param skillName string @ 技能名
 ---@param cancelable boolean @ 能不能点取消
 ---@param pattern string @ 选牌规则
+---@param prompt string @ 提示信息
 ---@return integer[] @ 选择的牌的id列表，可能是空的
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern)
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt)
   if minNum < 1 then
     return nil
   end
@@ -938,7 +944,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     reason = skillName,
     pattern = pattern,
   }
-  local prompt = "#askForCard:::" .. maxNum .. ":" .. minNum
+  local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)
   if ret then
     chosenCards = ret.cards
@@ -967,11 +973,18 @@ end
 ---@param maxNum integer @ 选目标最大值
 ---@param pattern string @ 选牌规则
 ---@param prompt string @ 提示信息
+---@param cancelable boolean @ 能否点取消
 ---@return integer[], integer
-function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName)
+function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable)
   if maxNum < 1 then
     return {}
   end
+
+  local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
+    local c = Fk:getCardById(id)
+    return c:matchPattern(pattern)
+  end)
+  if #pcards == 0 then return {} end
 
   local data = {
     targets = targets,
@@ -984,8 +997,11 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   if ret then
     return ret.targets, ret.cards[1]
   else
-    -- TODO: default
-    return {}
+    if cancelable then
+      return {}
+    else
+      return table.random(targets, minNum), table.random(pcards)
+    end
   end
 end
 
@@ -1111,12 +1127,13 @@ end
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param skill_name string @ 技能名
 ---@param data any @ 未使用
+---@param prompt string @ 提示信息
 ---@return boolean
-function Room:askForSkillInvoke(player, skill_name, data)
+function Room:askForSkillInvoke(player, skill_name, data, prompt)
   local command = "AskForSkillInvoke"
   self:notifyMoveFocus(player, skill_name)
   local invoked = false
-  local result = self:doRequest(player, command, skill_name)
+  local result = self:doRequest(player, command, json.encode{ skill_name, prompt })
   if result ~= "" then invoked = true end
   return invoked
 end
