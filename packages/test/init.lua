@@ -61,13 +61,17 @@ local test_active = fk.CreateActiveSkill{
     return true
   end,
   card_filter = function(self, card)
-    local c = Fk:getCardById(card)
-    return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
+    if self.interaction.data == "joy" then
+      --local c = Fk:getCardById(card)
+      --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
+      return true
+    end
   end,
+  card_num = 2,
   target_filter = function() return true end,
   interaction = UI.ComboBox {
-    choices = { "caocao", "guanyu", "zhangfei" },
-    default = "guanyu",
+    choices = Fk.package_names,
+    -- default = "guanyu",
   },
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
