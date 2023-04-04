@@ -525,8 +525,8 @@ Item {
       generalName.text = text;
       longGeneralName.text = "";
     }
-    let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
-    kingdom = data.kingdom;
+    // let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+    // kingdom = data.kingdom;
   }
 
   function chat(msg) {
