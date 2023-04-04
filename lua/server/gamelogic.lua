@@ -268,6 +268,7 @@ function GameLogic:trigger(event, target, data)
         local skill_name = room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
         local skill = triggerables[table.indexOf(skill_names, skill_name)]
         broken = skill:trigger(event, target, player, data)
+        broken = broken or (event == fk.AskForPeaches and room:getPlayerById(data.who).hp > 0)
         if broken then break end
         table.removeOne(skill_names, skill_name)
         table.removeOne(triggerables, skill)
