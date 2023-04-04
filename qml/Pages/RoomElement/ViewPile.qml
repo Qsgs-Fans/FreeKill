@@ -60,7 +60,7 @@ Item {
       height: parent.height - 40
       contentWidth: cardsList.width
       contentHeight: cardsList.height
-      clip: true 
+      clip: true
 
       ColumnLayout {
         id: cardsList
