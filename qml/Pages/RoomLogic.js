@@ -998,7 +998,6 @@ callbacks["CustomDialog"] = (j) => {
 }
 
 callbacks["UpdateLimitSkill"] = (j) => {
-  console.log(j);
   let data = JSON.parse(j);
   let id = data[0];
   let skill = data[1];

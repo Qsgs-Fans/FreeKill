@@ -16,7 +16,6 @@ ColumnLayout {
   }
 
   function update(skill, times) {
-    console.log(skill, times);
     for (let i = 0; i < rep.count; i++) {
       let data = skills.get(i);
       if (data.skillname_ === skill) {
