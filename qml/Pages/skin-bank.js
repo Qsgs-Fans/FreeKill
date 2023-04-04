@@ -8,6 +8,7 @@ var STATUS_DIR = AppPath + "/image/photo/status/";
 var ROLE_DIR = AppPath + "/image/photo/role/";
 var DEATH_DIR = AppPath + "/image/photo/death/";
 var MAGATAMA_DIR = AppPath + "/image/photo/magatama/";
+var LIMIT_SKILL_DIR = AppPath + "/image/photo/skill/";
 var CARD_DIR = AppPath + "/image/card/";
 var CARD_SUIT_DIR = AppPath + "/image/card/suit/";
 var DELAYED_TRICK_DIR = AppPath + "/image/card/delayedTrick/";

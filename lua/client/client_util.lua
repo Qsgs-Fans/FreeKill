@@ -231,11 +231,18 @@ function GetSkillData(skill_name)
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
   end
+  local frequency
+  if skill.frequency == Skill.Limited then
+    frequency = "limit"
+  elseif skill.frequency == Skill.Wake then
+    frequency = "wake"
+  end
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
     extension = skill.package.extensionName,
-    freq = freq
+    freq = freq,
+    frequency = frequency,
   }
 end
 

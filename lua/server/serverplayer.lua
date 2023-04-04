@@ -540,12 +540,12 @@ end
 
 function ServerPlayer:addSkillUseHistory(cardName, num)
   Player.addSkillUseHistory(self, cardName, num)
-  self:doNotify("AddSkillUseHistory", json.encode{cardName, num})
+  self.room:doBroadcastNotify("AddSkillUseHistory", json.encode{self.id, cardName, num})
 end
 
 function ServerPlayer:setSkillUseHistory(cardName, num, scope)
   Player.setSkillUseHistory(self, cardName, num, scope)
-  self:doNotify("SetSkillUseHistory", json.encode{cardName, num, scope})
+  self.room:doBroadcastNotify("SetSkillUseHistory", json.encode{self.id, cardName, num, scope})
 end
 
 ---@param chained boolean
