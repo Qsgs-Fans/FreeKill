@@ -291,10 +291,14 @@ Item {
     Text {
       id: prompt
       visible: progress.visible
-      anchors.top: progress.top
-      anchors.topMargin: -2
-      color: "white"
+      anchors.bottom: progress.bottom
       z: 1
+      color: "#F0E5DA"
+      font.pixelSize: 16
+      font.family: fontLibian.name
+      style: Text.Outline
+      styleColor: "#3D2D1C"
+      textFormat: TextEdit.RichText
       anchors.horizontalCenter: progress.horizontalCenter
     }
 
@@ -311,20 +315,25 @@ Item {
 
       background: Rectangle {
         implicitWidth: 200
-        implicitHeight: 14
+        implicitHeight: 12
         color: "black"
-        radius: 3
+        radius: 6
       }
 
       contentItem: Item {
-        implicitWidth: 200
-        implicitHeight: 12
+        implicitWidth: 196
+        implicitHeight: 10
 
         Rectangle {
           width: progress.visualPosition * parent.width
           height: parent.height
-          radius: 2
-          color: "red"
+          radius: 6
+          gradient: Gradient {
+            GradientStop { position: 0.0; color: "orange" }
+            GradientStop { position: 0.3; color: "red" }
+            GradientStop { position: 0.7; color: "red" }
+            GradientStop { position: 1.0; color: "orange" }
+          }
         }
       }
 
