@@ -19,7 +19,7 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     x: 3
 
-    source: icon ? SkinBank.EQUIP_ICON_DIR + icon : ""
+    source: icon ? SkinBank.getEquipIcon(cid, icon) : ""
   }
 
   Image {

@@ -42,3 +42,19 @@ function getCardPicture(cid) {
   }
   return CARD_DIR + "unknown.png";
 }
+
+function getEquipIcon(cid, icon) {
+  let data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+  let extension = data.extension;
+  let name = icon || data.name;
+  let path = AppPath + "/packages/" + extension + "/image/card/equipIcon/" + name + ".png";
+  if (Backend.exists(path)) {
+    return path;
+  } else {
+    for (let dir of Backend.ls(AppPath + "/packages/")) {
+      path = AppPath + "/packages/" + dir + "/image/card/equipIcon/" + name + ".png";
+      if (Backend.exists(path)) return path;
+    }
+  }
+  return EQUIP_ICON_DIR + "unknown.png";
+}
