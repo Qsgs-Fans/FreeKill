@@ -336,6 +336,14 @@ Item {
     anchors.rightMargin: -4
   }
 
+  LimitSkillArea {
+    id: limitSkills
+    anchors.top: role.bottom
+    anchors.left: role.left
+    anchors.topMargin: 2
+    anchors.leftMargin: -2
+  }
+
   GlowText {
     id: playerName
     anchors.horizontalCenter: parent.horizontalCenter
@@ -525,5 +533,9 @@ Item {
     chat.text = msg;
     chat.visible = true;
     chatAnim.restart();
+  }
+
+  function updateLimitSkill(skill, time) {
+    limitSkills.update(skill, time);
   }
 }

@@ -996,3 +996,16 @@ callbacks["CustomDialog"] = (j) => {
     roomScene.popupBox.item.loadData(dat);
   }
 }
+
+callbacks["UpdateLimitSkill"] = (j) => {
+  console.log(j);
+  let data = JSON.parse(j);
+  let id = data[0];
+  let skill = data[1];
+  let time = data[2];
+
+  let photo = getPhotoOrSelf(id);
+  if (photo) {
+    photo.updateLimitSkill(skill, time);
+  }
+}

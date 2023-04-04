@@ -491,6 +491,16 @@ fk.client_callback["LoseSkill"] = function(jsonData)
   end
 end
 
+-- 说是限定技，其实也适用于觉醒技、转换技、使命技
+---@param skill Skill
+---@param times integer
+local function updateLimitSkill(pid, skill, times)
+  if not skill.visible then return end
+  if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
+  end
+end
+
 fk.client_callback["AddSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
@@ -501,6 +511,8 @@ fk.client_callback["AddSkill"] = function(jsonData)
   if skill.visible then
     ClientInstance:notifyUI("AddSkill", jsonData)
   end
+
+  updateLimitSkill(id, skill, target:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
@@ -574,12 +586,20 @@ end
 
 fk.client_callback["AddSkillUseHistory"] = function(jsonData)
   local data = json.decode(jsonData)
-  Self:addSkillUseHistory(data[1], data[2])
+  local playerid, skill_name, time = data[1], data[2], data[3]
+  local player = ClientInstance:getPlayerById(playerid)
+  player:addSkillUseHistory(skill_name, time)
+  if not Fk.skills[skill_name] then return end
+  updateLimitSkill(playerid, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["SetSkillUseHistory"] = function(jsonData)
   local data = json.decode(jsonData)
-  Self:setSkillUseHistory(data[1], data[2], data[3])
+  local id, skill_name, time, scope = data[1], data[2], data[3], data[4]
+  local player = ClientInstance:getPlayerById(id)
+  player:setSkillUseHistory(skill_name, time, scope)
+  if not Fk.skills[skill_name] then return end
+  updateLimitSkill(id, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["AddVirtualEquip"] = function(jsonData)

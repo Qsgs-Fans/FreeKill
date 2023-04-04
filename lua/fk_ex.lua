@@ -153,7 +153,7 @@ end
 ---@return ActiveSkill
 function fk.CreateActiveSkill(spec)
   assert(type(spec.name) == "string")
-  local skill = ActiveSkill:new(spec.name)
+  local skill = ActiveSkill:new(spec.name, spec.frequency or Skill.NotFrequent)
   readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then skill.canUse = spec.can_use end
