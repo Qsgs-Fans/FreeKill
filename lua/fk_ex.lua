@@ -167,6 +167,7 @@ function fk.CreateActiveSkill(spec)
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
+  skill.interaction = spec.interaction
   return skill
 end
 
@@ -200,6 +201,7 @@ function fk.CreateViewAsSkill(spec)
     skill.enabledAtResponse = spec.enabled_at_response
   end
 
+  skill.interaction = spec.interaction
   return skill
 end
 

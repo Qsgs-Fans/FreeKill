@@ -7,6 +7,7 @@
 ---@field public max_card_num integer
 ---@field public card_num integer
 ---@field public card_num_table integer[]
+---@field public interaction any
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name)

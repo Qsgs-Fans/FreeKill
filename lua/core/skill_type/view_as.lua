@@ -1,5 +1,6 @@
 ---@class ViewAsSkill : UsableSkill
 ---@field public pattern string @ cards that can be viewAs'ed by this skill
+---@field public interaction any
 local ViewAsSkill = UsableSkill:subclass("ViewAsSkill")
 
 function ViewAsSkill:initialize(name)
