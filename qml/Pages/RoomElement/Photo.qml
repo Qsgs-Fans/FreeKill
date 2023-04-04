@@ -108,7 +108,7 @@ Item {
 
   Image {
     id: back
-    source: SkinBank.PHOTO_BACK_DIR + root.kingdom
+    source: SkinBank.getPhotoBack(root.kingdom)
   }
 
   Text {
@@ -525,8 +525,8 @@ Item {
       generalName.text = text;
       longGeneralName.text = "";
     }
-    let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
-    kingdom = data.kingdom;
+    // let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+    // kingdom = data.kingdom;
   }
 
   function chat(msg) {

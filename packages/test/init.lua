@@ -86,6 +86,8 @@ local test_active = fk.CreateActiveSkill{
     -- room:closeAG(from)
     local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
     from:addToPile(self.name, cards)
+    from.kingdom = "wei"
+    room:broadcastProperty(from, "kingdom")
     -- p(cards)
   end,
 }

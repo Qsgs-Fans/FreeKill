@@ -68,13 +68,6 @@ end
 function GameLogic:chooseGenerals()
   local room = self.room
   local generalNum = room.settings.generalNum
-  local function setPlayerGeneral(player, general)
-    if Fk.generals[general] == nil then return end
-    player.general = general
-    player.gender = Fk.generals[general].gender
-    self.room:notifyProperty(player, player, "general")
-    self.room:broadcastProperty(player, "gender")
-  end
   local lord = room:getLord()
   local lord_general = nil
   if lord ~= nil then
@@ -84,7 +77,7 @@ function GameLogic:chooseGenerals()
       generals[i] = generals[i].name
     end
     lord_general = room:askForGeneral(lord, generals)
-    setPlayerGeneral(lord, lord_general)
+    room:setPlayerGeneral(lord, lord_general, true)
     room:broadcastProperty(lord, "general")
   end
 
@@ -105,9 +98,9 @@ function GameLogic:chooseGenerals()
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
       local general = json.decode(p.client_reply)[1]
-      setPlayerGeneral(p, general)
+      room:setPlayerGeneral(p, general, true)
     else
-      setPlayerGeneral(p, p.default_reply)
+      room:setPlayerGeneral(p, p.default_reply, true)
     end
     p.default_reply = ""
   end

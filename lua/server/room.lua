@@ -378,6 +378,22 @@ function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
 end
 
+---@param player ServerPlayer
+---@param general string
+---@param changeKingdom boolean
+function Room:setPlayerGeneral(player, general, changeKingdom)
+  if Fk.generals[general] == nil then return end
+  player.general = general
+  player.gender = Fk.generals[general].gender
+  self:notifyProperty(player, player, "general")
+  self:broadcastProperty(player, "gender")
+
+  if changeKingdom then
+    player.kingdom = Fk.generals[general].kingdom
+    self:broadcastProperty(player, "kingdom")
+  end
+end
+
 ------------------------------------------------------------------------
 -- network functions, notify function
 ------------------------------------------------------------------------

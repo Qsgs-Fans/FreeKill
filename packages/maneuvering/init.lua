@@ -188,6 +188,18 @@ local ironChainEffect = fk.CreateTriggerSkill{
   end,
 }
 Fk:addSkill(ironChainEffect)
+
+local recast = fk.CreateActiveSkill{
+  name = "recast",
+  target_num = 0,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    room:throwCard(effect.cards, self.name, from)
+    room:drawCards(from, #effect.cards, self.name)
+  end
+}
+Fk:addSkill(recast)
+
 local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
@@ -198,11 +210,11 @@ local ironChainCardSkill = fk.CreateActiveSkill{
     to:setChainState(not to.chained)
   end,
 }
+
 local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
-  -- FIXME! FIXME! FIXME!
-  special_skills = { "zhiheng" },
+  special_skills = { "recast" },
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
