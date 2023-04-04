@@ -30,7 +30,7 @@ CardItem {
   }
 
   Image {
-    source: SkinBank.GENERALCARD_DIR + kingdom
+    source: SkinBank.getGeneralCardDir(kingdom) + kingdom
   }
 
   Row {
@@ -40,7 +40,7 @@ CardItem {
     Repeater {
       model: (hp > 5 || hp !== maxHp) ? 1 : hp
       Image {
-        source: SkinBank.GENERALCARD_DIR + kingdom + "-magatama"
+        source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama"
       }
     }
 

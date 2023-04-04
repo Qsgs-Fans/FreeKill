@@ -108,7 +108,7 @@ Item {
 
   Image {
     id: back
-    source: SkinBank.PHOTO_BACK_DIR + root.kingdom
+    source: SkinBank.getPhotoBack(root.kingdom)
   }
 
   Text {
