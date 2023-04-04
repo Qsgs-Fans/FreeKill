@@ -26,6 +26,7 @@ Item {
   property alias cancelButton: cancelButton
   property alias dynamicCardArea: dynamicCardArea
   property alias tableCards: tablePile.cards
+  property alias dashboard: dashboard
 
   property var selected_targets: []
   property string responding_card
@@ -89,6 +90,7 @@ Item {
       from: "*"; to: "notactive"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           promptText = "";
           progress.visible = false;
           okCancel.visible = false;
@@ -114,6 +116,7 @@ Item {
       from: "*"; to: "playing"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.enableCards();
           dashboard.enableSkills();
           progress.visible = true;
@@ -128,6 +131,7 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card);
           progress.visible = true;
@@ -140,6 +144,7 @@ Item {
       from: "*"; to: "replying"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;
@@ -383,6 +388,14 @@ Item {
       }
     }
 
+    Loader {
+      id: skillInteraction
+      visible: dashboard.pending_skill !== ""
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: 8
+      anchors.right: okCancel.left
+      anchors.rightMargin: 20
+    }
 
     Row {
       id: okCancel
@@ -469,9 +482,28 @@ Item {
 
   function activateSkill(skill_name, pressed) {
     if (pressed) {
+      let data = JSON.parse(Backend.callLuaFunction("GetInteractionOfSkill", [skill_name]));
+      if (data) {
+        Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
+        switch (data.type) {
+        case "combo":
+          skillInteraction.source = "RoomElement/SkillInteraction/SkillCombo.qml";
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.default_choice = data["default"];
+          skillInteraction.item.choices = data.choices;
+          break;
+        default:
+          skillInteraction.source = "";
+          break;
+        }
+      } else {
+        skillInteraction.source = "";
+      }
+
       dashboard.startPending(skill_name);
       cancelButton.enabled = true;
     } else {
+      skillInteraction.source = "";
       Logic.doCancelButton();
     }
   }

@@ -395,4 +395,16 @@ function GetGameModes()
   return json.encode(ret)
 end
 
+function GetInteractionOfSkill(skill_name)
+  local skill = Fk.skills[skill_name]
+  return skill and json.encode(skill.interaction) or "null"
+end
+
+function SetInteractionDataOfSkill(skill_name, data)
+  local skill = Fk.skills[skill_name]
+  if skill and type(skill.interaction) == "table" then
+    skill.interaction.data = json.decode(data)
+  end
+end
+
 dofile "lua/client/i18n/init.lua"
