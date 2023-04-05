@@ -1,4 +1,5 @@
 #include "server.h"
+#include "player.h"
 #include "server_socket.h"
 #include "client_socket.h"
 #include "room.h"
@@ -34,6 +35,28 @@ Server::Server(QObject* parent)
   createRoom(nullptr, "Lobby", INT32_MAX);
   connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
   connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
+
+  auto heartbeatThread = QThread::create([=](){
+    while (true) {
+      foreach (auto p, this->players.values()) {
+        if (p->getState() == Player::Online) {
+          p->alive = false;
+          p->doNotify("Heartbeat", "");
+        }
+      }
+
+      // wait for reply
+      QThread::sleep(5);
+
+      foreach (auto p, this->players.values()) {
+        if (p->getState() == Player::Online && !p->alive) {
+          p->kicked();
+        }
+      }
+    }
+  });
+  heartbeatThread->setObjectName("Heartbeat");
+  heartbeatThread->start();
 }
 
 Server::~Server()

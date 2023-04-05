@@ -115,6 +115,24 @@ void Shell::lspkgCommand(QStringList &) {
   }
 }
 
+void Shell::kickCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'kick' command needs a player id.");
+    return;
+  }
+
+  auto pid = list[0];
+  bool ok;
+  int id = pid.toInt(&ok);
+  if (!ok) return;
+
+  auto p = ServerInstance->findPlayer(id);
+  if (p) {
+    p->kicked();
+    qInfo("Success");
+  }
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -131,6 +149,7 @@ Shell::Shell() {
     handlers["lspkg"] = &Shell::lspkgCommand;
     handlers["enable"] = &Shell::enableCommand;
     handlers["disable"] = &Shell::disableCommand;
+    handlers["kick"] = &Shell::kickCommand;
   }
   handler_map = handlers;
 }

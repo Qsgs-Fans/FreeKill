@@ -33,8 +33,12 @@ public:
   void prepareForRequest(const QString &command,
                         const QString &data);
 
+  volatile bool alive; // For heartbeat
+  void kick();
+
 signals:
   void disconnected();
+  void kicked();
 
 private:
   ClientSocket *socket;   // socket for communicating with client

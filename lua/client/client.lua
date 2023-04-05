@@ -625,6 +625,10 @@ fk.client_callback["RemoveVirtualEquip"] = function(jsonData)
   player:removeVirtualEquip(data.id)
 end
 
+fk.client_callback["Heartbeat"] = function()
+  ClientInstance.client:notifyServer("Heartbeat", "")
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

@@ -238,6 +238,10 @@ void Router::handlePacket(const QByteArray& rawPacket)
     else
     {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
+      if (command == "Heartbeat") {
+        player->alive = true;
+        return;
+      }
 
       Room *room = player->getRoom();
       if (room->isLobby() && lobby_actions.contains(command))
