@@ -216,7 +216,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 {
   // First check the name and password
   // Matches a string that does not contain special characters
-  static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+  static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
 
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
