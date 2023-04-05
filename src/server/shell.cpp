@@ -27,6 +27,7 @@ void Shell::helpCommand(QStringList &) {
   qInfo("%s: Enable a package.", "enable");
   qInfo("%s: Disable a package.", "disable");
   qInfo("%s: Upgrade a package.", "upgrade");
+  qInfo("%s: Kick a player by his id.", "kick");
   qInfo("For more commands, check the documentation.");
 }
 
