@@ -7,6 +7,7 @@
 #include "util.h"
 #include "parser.h"
 #include "packman.h"
+#include <qjsonarray.h>
 
 Server *ServerInstance;
 
@@ -118,6 +119,15 @@ void Server::updateRoomList()
     lobby()->getPlayers(),
     "UpdateRoomList",
     QString(jsonData)
+  );
+
+  lobby()->doBroadcastNotify(
+    lobby()->getPlayers(),
+    "UpdatePlayerNum",
+    QString(JsonArray2Bytes(QJsonArray({
+      lobby()->getPlayers().length(),
+      this->players.count(),
+    })))
   );
 }
 

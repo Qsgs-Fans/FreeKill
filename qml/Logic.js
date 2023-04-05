@@ -101,6 +101,15 @@ callbacks["UpdateRoomList"] = function(jsonData) {
   });
 }
 
+callbacks["UpdatePlayerNum"] = (j) => {
+  let current = mainStack.currentItem;  // should be lobby
+  let data = JSON.parse(j);
+  let l = data[0];
+  let s = data[1];
+  current.lobbyPlayerNum = l;
+  current.serverPlayerNum = s;
+}
+
 callbacks["Chat"] = function(jsonData) {
   // jsonData: { string userName, string general, string time, string msg }
   let current = mainStack.currentItem;  // lobby(TODO) or room
