@@ -669,6 +669,7 @@ Item {
   }
 
   function addToChat(pid, raw, msg) {
+    if (raw.type === 1) return;
     chat.append(msg);
     let photo = Logic.getPhotoOrSelf(pid);
     if (photo === undefined)

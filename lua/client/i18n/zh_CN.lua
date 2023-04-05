@@ -28,6 +28,8 @@ Fk:loadTranslationTable{
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
 
+  ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
+
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
   ["Scenarios Overview"] = "玩法一览",

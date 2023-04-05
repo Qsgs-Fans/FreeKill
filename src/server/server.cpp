@@ -1,4 +1,5 @@
 #include "server.h"
+#include "player.h"
 #include "server_socket.h"
 #include "client_socket.h"
 #include "room.h"
@@ -7,6 +8,7 @@
 #include "util.h"
 #include "parser.h"
 #include "packman.h"
+#include <qjsonarray.h>
 
 Server *ServerInstance;
 
@@ -33,6 +35,28 @@ Server::Server(QObject* parent)
   createRoom(nullptr, "Lobby", INT32_MAX);
   connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
   connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
+
+  auto heartbeatThread = QThread::create([=](){
+    while (true) {
+      foreach (auto p, this->players.values()) {
+        if (p->getState() == Player::Online) {
+          p->alive = false;
+          p->doNotify("Heartbeat", "");
+        }
+      }
+
+      // wait for reply
+      QThread::sleep(5);
+
+      foreach (auto p, this->players.values()) {
+        if (p->getState() == Player::Online && !p->alive) {
+          p->kicked();
+        }
+      }
+    }
+  });
+  heartbeatThread->setObjectName("Heartbeat");
+  heartbeatThread->start();
 }
 
 Server::~Server()
@@ -118,6 +142,15 @@ void Server::updateRoomList()
     lobby()->getPlayers(),
     "UpdateRoomList",
     QString(jsonData)
+  );
+
+  lobby()->doBroadcastNotify(
+    lobby()->getPlayers(),
+    "UpdatePlayerNum",
+    QString(JsonArray2Bytes(QJsonArray({
+      lobby()->getPlayers().length(),
+      this->players.count(),
+    })))
   );
 }
 
@@ -206,7 +239,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString& name, co
 {
   // First check the name and password
   // Matches a string that does not contain special characters
-  static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+  static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
 
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};

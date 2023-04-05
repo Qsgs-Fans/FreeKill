@@ -162,7 +162,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
     lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
       auto arr = String2Json(jsonData).array();
       auto avatar = arr[0].toString();
-      static QRegularExpression nameExp("[\\000-\\057\\072-\\100\\133-\\140\\173-\\177]");
+      static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
       if (!nameExp.match(avatar).hasMatch()) {
         auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
           .arg(avatar).arg(sender->getId());
@@ -238,6 +238,10 @@ void Router::handlePacket(const QByteArray& rawPacket)
     else
     {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
+      if (command == "Heartbeat") {
+        player->alive = true;
+        return;
+      }
 
       Room *room = player->getRoom();
       if (room->isLobby() && lobby_actions.contains(command))

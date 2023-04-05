@@ -44,7 +44,7 @@ Rectangle {
             ClientInstance.notifyServer(
               "Chat",
               JSON.stringify({
-                type: isLobby,
+                type: isLobby ? 1 : 2,
                 msg: text
               })
             );

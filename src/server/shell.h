@@ -36,6 +36,7 @@ private:
   void lspkgCommand(QStringList &);
   void enableCommand(QStringList &);
   void disableCommand(QStringList &);
+  void kickCommand(QStringList &);
 };
 
 #endif
