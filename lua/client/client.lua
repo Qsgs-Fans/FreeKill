@@ -538,13 +538,20 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
 end
 
 fk.client_callback["Chat"] = function(jsonData)
-  -- jsonData: { int type, string msg }
+  -- jsonData: { int type, int sender, string msg }
   local data = json.decode(jsonData)
-  local p = ClientInstance:getPlayerById(data.type)
+  if data.type == 1 then
+    data.general = ""
+    data.time = os.date("%H:%M:%S")
+    ClientInstance:notifyUI("Chat", json.encode(data))
+    return
+  end
+
+  local p = ClientInstance:getPlayerById(data.sender)
   -- TODO: observer chatting
   if not p then
     for _, pl in ipairs(ClientInstance.observers) do
-      if pl.id == data.type then
+      if pl.id == data.sender then
         p = pl; break
       end
     end

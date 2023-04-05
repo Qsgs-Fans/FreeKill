@@ -114,7 +114,7 @@ callbacks["Chat"] = function(jsonData) {
   // jsonData: { string userName, string general, string time, string msg }
   let current = mainStack.currentItem;  // lobby(TODO) or room
   let data = JSON.parse(jsonData);
-  let pid = data.type;
+  let pid = data.sender;
   let userName = data.userName;
   let general = Backend.translate(data.general);
   let time = data.time;

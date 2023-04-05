@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Window
 import QtQuick.Layouts
 import "LobbyElement"
+import "Common"
 import "Logic.js" as Logic
 
 Item {
@@ -219,6 +220,22 @@ Item {
         .arg(lobbyPlayerNum).arg(serverPlayerNum) + "\n"
         + "Powered by FreeKill " + FkVersion
     }
+  }
+
+  ChatBox {
+    id: lobbyChat
+    anchors.bottom: info.top
+    width: info.width
+    height: root.height * 0.6
+    isLobby: true
+    color: "#88EEEEEE"
+    radius: 4
+  }
+
+  function addToChat(pid, raw, msg) {
+    if (raw.type !== 1) return;
+    lobbyChat.append(msg);
+    toast.show("<b>" + raw.userName + "</b>: " + raw.msg);
   }
 
   Component.onCompleted: {
