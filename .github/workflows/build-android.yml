@@ -1,0 +1,74 @@
+name: Build For Android
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install swig, flex, bison
+      run: |
+        sudo apt-get install -y swig flex bison
+    - name: Install Qt for Host
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.4.3'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'gcc_64'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Install Qt for Android
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.4.3'
+        host: 'linux'
+        target: 'android'
+        arch: 'android_arm64_v8a'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+        
+    # - name: Install NDK for Qt 6.4
+    #  run: sdkmanager "ndk;23.1.7779620"
+    
+    # 快点TM升级到OpenSSL 3！1.1.1今年就走到生命期末尾了！
+    - name: Setup OpenSSL 1.1.1 headers
+      run: |
+        cd ..
+        wget https://www.openssl.org/source/openssl-1.1.1t.tar.gz
+        tar xf ./openssl-1.1.1t.tar.gz
+        cd openssl-1.1.1t
+        ./config
+        make include/openssl/opensslconf.h
+        cd ../FreeKill
+        cp -r ../openssl-1.1.1t/include/openssl ./include
+    
+    #- name: Setup Debug Session
+    #  uses: csexton/debugger-action@master
+
+    - name: Configure CMake Project
+      working-directory: ${{github.workspace}}
+      run: |
+        export QT_HOST_PATH=${{github.workspace}}/../Qt/6.4.3/gcc_64/
+        export ANDROID_SDK_ROOT=$ANDROID_HOME
+        # export ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/23.1.7779620
+        sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
+        ${Qt6_DIR}/bin/qt-cmake -B ${{github.workspace}}/build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DQT_ANDROID_ABIS=arm64-v8a \
+          -DQT_ANDROID_TARGET_SDK_VERSION=29 \
+          -DQT_ANDROID_SDK_BUILD_TOOLS_REVISION=31
+    - name: Build project
+      working-directory: ${{github.workspace}}/build
+      run: make -j2
