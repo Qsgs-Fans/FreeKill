@@ -5,6 +5,7 @@ on:
 
 jobs:
   build:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -13,16 +14,23 @@ jobs:
       uses: actions/checkout@v3
       with:
         submodules: true
-
+        
+    #- name: Setup Debug Session
+    #  uses: csexton/debugger-action@master
+    - name: Pull tags
+      run: |
+        git pull --tags
+        echo $(git describe --tags)
     - name: Install swig, flex, bison
       run: |
         sudo apt-get install -y swig flex bison
+        
     - name: Install Qt for Host
       uses: jurplel/install-qt-action@v3
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.3'
+        version: '6.4.2'
         host: 'linux'
         target: 'desktop'
         arch: 'gcc_64'
@@ -33,42 +41,109 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.3'
+        version: '6.4.2'
         host: 'linux'
         target: 'android'
         arch: 'android_arm64_v8a'
         modules: 'qtmultimedia qt5compat qtshadertools'
-        
-    # - name: Install NDK for Qt 6.4
-    #  run: sdkmanager "ndk;23.1.7779620"
     
     # 快点TM升级到OpenSSL 3！1.1.1今年就走到生命期末尾了！
     - name: Setup OpenSSL 1.1.1 headers
       run: |
         cd ..
-        wget https://www.openssl.org/source/openssl-1.1.1t.tar.gz
+        wget --quiet https://www.openssl.org/source/openssl-1.1.1t.tar.gz
         tar xf ./openssl-1.1.1t.tar.gz
         cd openssl-1.1.1t
         ./config
         make include/openssl/opensslconf.h
         cd ../FreeKill
         cp -r ../openssl-1.1.1t/include/openssl ./include
-    
-    #- name: Setup Debug Session
-    #  uses: csexton/debugger-action@master
-
+        
+    - name: Setup Android for Qt 6.4.x
+      run: |
+        cd ..
+        mkdir android
+        cd android
+        wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip commandlinetools-linux-9477386_latest.zip
+        yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
+          "platforms;android-31" \
+          "platform-tools" \
+          "build-tools;31.0.0" \
+          "ndk;23.1.7779620"
+    - name: Copy android assets
+      run: |
+        ../Qt/6.4.3/gcc_64/bin/lrelease lang/zh_CN.ts
+        cp lang/zh_CN.qm .
+        FKVER=$(git describe --abbrev=0 --tags)
+        cd android
+        sed -i 's/function //g' copy_assets.sh  # FIX THIS
+        ./copy_assets.sh || echo "" # fail on copy cert, ubuntu is not arch
+        cd assets/res
+        cp -r /etc/ssl/certs .
+        cp /usr/share/ca-certificates/mozilla/* certs/
+        echo ${FKVER#v} > fk_ver
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
       run: |
-        export QT_HOST_PATH=${{github.workspace}}/../Qt/6.4.3/gcc_64/
-        export ANDROID_SDK_ROOT=$ANDROID_HOME
-        # export ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/23.1.7779620
+        export QT_HOST_PATH=$(pwd)/../Qt/6.4.3/gcc_64/
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.1.7779620
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
-        ${Qt6_DIR}/bin/qt-cmake -B ${{github.workspace}}/build \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DQT_ANDROID_ABIS=arm64-v8a \
-          -DQT_ANDROID_TARGET_SDK_VERSION=29 \
-          -DQT_ANDROID_SDK_BUILD_TOOLS_REVISION=31
+        ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
     - name: Build project
       working-directory: ${{github.workspace}}/build
       run: make -j2
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: apk
+        path: build/android-build/build/outputs/apk/debug/android-build-debug.apk
+  
+  release:
+    name: Release APK
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+      
+    - name: Get Previous tag
+      id: previoustag
+      uses: WyriHaximus/github-action-get-previous-tag@v1
+      with:
+        fallback: 0.0.1
+    
+    - name: Download APK from build
+      uses: actions/download-artifact@v3
+      with:
+        name: apk
+        path: apk
+        
+    - uses: r0adkll/sign-android-release@v1
+      name: Sign app APK
+      # ID used to access action output
+      id: sign_app
+      with:
+        releaseDirectory: apk
+        signingKeyBase64: ${{ secrets.KEY_STORE }}
+        alias: ${{ secrets.KEY_STORE_ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+      env:
+        # override default build-tools version (29.0.3) -- optional
+        BUILD_TOOLS_VERSION: "31.0.0"
+        
+    - name: Rename APK
+      run: |
+        mv ${{ steps.sign_app.outputs.signedReleaseFile }} \
+          apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
+        
+    - name: Upload Release APK
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.MY_TOKEN }}
+        tag_name: ${{ steps.previoustag.outputs.tag }}
+        files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
