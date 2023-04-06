@@ -17,10 +17,6 @@ jobs:
 
     #- name: Setup Debug Session
     #  uses: csexton/debugger-action@master
-    - name: Pull tags
-      run: |
-        git pull --tags
-        echo $(git describe --tags --abbrev=0)
 
     - name: Install swig, flex, bison
       run: |
@@ -77,19 +73,19 @@ jobs:
       run: |
         ${Qt6_DIR}/../gcc_64/bin/lrelease lang/zh_CN.ts
         cp lang/zh_CN.qm .
-        FKVER=$(git describe --abbrev=0 --tags)
+        FKVER=$(cat CMakeLists.txt | grep 'project(FreeKill' | cut -d ' ' -f 3)
         cd android
         sed -i 's/function //g' copy_assets.sh  # FIX THIS
         ./copy_assets.sh || echo "" # fail on copy cert, ubuntu is not arch
         cd assets/res
         cp -r /etc/ssl/certs .
         cp /usr/share/ca-certificates/mozilla/* certs/
-        echo ${FKVER#v} > fk_ver
+        echo ${FKVER%)} > fk_ver
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
       run: |
-        export QT_HOST_PATH=$(Qt6_DIR)/../gcc_64/
+        export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
         export ANDROID_SDK_ROOT=$(pwd)/../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.1.7779620
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
@@ -151,3 +147,4 @@ jobs:
         token: ${{ secrets.MY_TOKEN }}
         tag_name: ${{ steps.previoustag.outputs.tag }}
         files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
+
