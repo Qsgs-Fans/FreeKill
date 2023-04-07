@@ -71,6 +71,12 @@ Arch Linux：
    $ cmake ..
    $ make -j8
 
+如果你使用 Nix/NixOs 的话，可以直接使用 nix flake：
+
+.. code:: sh
+   
+   $ nix build '.?submodules=1'
+
 --------------
 
 Linux服务器
