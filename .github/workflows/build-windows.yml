@@ -1,0 +1,62 @@
+name: Build For Windows 10+
+# 调试不好，放弃
+# 辣鸡Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install swig, winflexbison3
+      uses: crazy-max/ghaction-chocolatey@v1
+      with:
+        args: install winflexbison3 swig -y
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.4.3'
+        host: 'windows'
+        target: 'desktop'
+        arch: 'win64_mingw'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+        tools: 'tools_openssl_x64 tools_cmake'
+
+    - name: Configure CMake Project
+      working-directory: ${{github.workspace}}
+      env:
+        CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        OPENSSL_ROOT_DIR: ${{github.workspace}}/../Qt/tools/OpenSSL/bin
+      run: |
+        ls ../Qt
+        ls ../Qt/tools
+        cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" -B ${{github.workspace}}/build
+
+    - name: Build project
+      working-directory: ${{github.workspace}}/build
+      run: mingw32-make.exe
+
+    - name: Compress portable program
+      working-directory: ${{github.workspace}}
+      run: |
+        mkdir build/all
+        cp build/FreeKill.exe build/all
+        cp build/zh_CN.qm build/all
+        cp build/fkparse/libfkparse.dll build/all
+        cp -r audio fonts image lua packages qml server build/all
+        cp lib/win/* build/all
+        cd build/all
+        windeployqt.exe FreeKill.exe --release
+        ls
+        Compress-Archive -Path ${{github.workspace}}\build\all\ -DestinationPath ${{github.workspace}}\build\final.zip
