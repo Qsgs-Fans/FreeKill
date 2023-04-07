@@ -44,7 +44,7 @@ ___
 
 ## 如何构建
 
-关于如何从头构建FreeKill，详见[编译教程](./doc/dev/compile.md)。
+关于如何从头构建FreeKill，详见[编译教程](./docs/dev/compile.md)。
 
 ___
 
