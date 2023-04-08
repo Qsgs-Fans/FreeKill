@@ -46,7 +46,7 @@ Server::Server(QObject* parent)
       }
 
       // wait for reply
-      QThread::sleep(5);
+      QThread::sleep(150);
 
       foreach (auto p, this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
