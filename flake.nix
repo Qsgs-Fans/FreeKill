@@ -30,7 +30,9 @@
         ];
         nativeBuildInputs = [ cmake qt6.wrapQtAppsHook ];
 
-        meta = with lib; { };
+        postPatch = ''
+          substituteInPlace src/CMakeLists.txt --replace "LUA_LIB lua5.4" "LUA_LIB lua";
+        '';
       };
   };
 }
