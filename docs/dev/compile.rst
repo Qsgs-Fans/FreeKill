@@ -74,7 +74,7 @@ Arch Linux：
 如果你使用 Nix/NixOs 的话，可以在clone repo后直接使用 nix flake 构建：
 
 .. code:: sh
-   
+
    $ git clone https://github.com/Notify-ctrl/FreeKill
    $ nix build '.?submodules=1'
 

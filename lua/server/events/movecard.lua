@@ -105,7 +105,14 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           currentCard.equip_skill
         then
           currentCard:onInstall(self, self:getPlayerById(data.to))
-        elseif realFromArea == Player.Equip and currentCard.type == Card.TypeEquip and data.from ~= nil and currentCard.equip_skill then
+        end
+
+        if
+          realFromArea == Player.Equip and
+          currentCard.type == Card.TypeEquip and
+          data.from ~= nil and
+          currentCard.equip_skill
+        then
           currentCard:onUninstall(self, self:getPlayerById(data.from))
         end
       end

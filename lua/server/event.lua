@@ -33,8 +33,8 @@ fk.AskForRetrial = 25
 fk.FinishRetrial = 26
 fk.FinishJudge = 27
 
-fk.Empty28 = 28
-fk.Empty29 = 29
+fk.RoundStart = 28
+fk.RoundEnd = 29
 
 fk.TurnedOver = 30
 fk.ChainStateChanged = 31

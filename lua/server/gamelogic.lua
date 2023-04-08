@@ -166,9 +166,8 @@ function GameLogic:action()
   execGameEvent(GameEvent.DrawInitial)
 
   while true do
-    execGameEvent(GameEvent.Turn)
+    execGameEvent(GameEvent.Round)
     if room.game_finished then break end
-    room.current = room.current:getNextAlive()
   end
 end
 
