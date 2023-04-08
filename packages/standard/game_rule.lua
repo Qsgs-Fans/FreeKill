@@ -100,6 +100,11 @@ GameRule = fk.CreateTriggerSkill{
         for _, p in ipairs(room.players) do
           p:setCardUseHistory("", 0, Player.HistoryRound)
           p:setSkillUseHistory("", 0, Player.HistoryRound)
+          for name, _ in pairs(p.mark) do
+            if name:endsWith("-round") then
+              room:setPlayerMark(p, name, 0)
+            end
+          end
         end
       end
 
@@ -185,6 +190,11 @@ GameRule = fk.CreateTriggerSkill{
         for _, p in ipairs(room.players) do
           p:setCardUseHistory("", 0, Player.HistoryPhase)
           p:setSkillUseHistory("", 0, Player.HistoryPhase)
+          for name, _ in pairs(p.mark) do
+            if name:endsWith("-phase") then
+              room:setPlayerMark(p, name, 0)
+            end
+          end
         end
       end
     end,
@@ -194,6 +204,11 @@ GameRule = fk.CreateTriggerSkill{
         for _, p in ipairs(room.players) do
           p:setCardUseHistory("", 0, Player.HistoryTurn)
           p:setSkillUseHistory("", 0, Player.HistoryTurn)
+          for name, _ in pairs(p.mark) do
+            if name:endsWith("-turn") then
+              room:setPlayerMark(p, name, 0)
+            end
+          end
         end
       end
     end,
