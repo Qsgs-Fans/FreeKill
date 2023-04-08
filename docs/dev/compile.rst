@@ -52,7 +52,7 @@ Arch Linux：
 
 .. code:: sh
 
-   $ sudo pacman -Sy lua sqlite swig openssl flex bison readline libgit2
+   $ sudo pacman -Sy lua sqlite swig openssl flex bison libgit2
 
 然后使用配置好的QtCreator环境即可编译。
 
@@ -71,10 +71,11 @@ Arch Linux：
    $ cmake ..
    $ make -j8
 
-如果你使用 Nix/NixOs 的话，可以直接使用 nix flake：
+如果你使用 Nix/NixOs 的话，可以在clone repo后直接使用 nix flake 构建：
 
 .. code:: sh
    
+   $ git clone https://github.com/Notify-ctrl/FreeKill
    $ nix build '.?submodules=1'
 
 --------------
