@@ -997,7 +997,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   if maxNum < 1 then
     return {}
   end
-  pattern = pattern or ".",
+  pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
     local c = Fk:getCardById(id)
