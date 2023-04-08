@@ -509,6 +509,8 @@ function Room:doRaceRequest(command, players, jsonData)
     if #players == #canceled_players then
       return nil
     end
+
+    fk.QThread_msleep(10)
   end
 end
 
