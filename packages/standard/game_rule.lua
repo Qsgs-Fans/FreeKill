@@ -41,6 +41,7 @@ GameRule = fk.CreateTriggerSkill{
   refresh_events = {
     fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
+    fk.RoundStart,
     fk.AskForPeaches, fk.AskForPeachesDone,
     fk.GameOverJudge, fk.BuryVictim,
   },
@@ -51,17 +52,18 @@ GameRule = fk.CreateTriggerSkill{
   end,
 
   on_refresh = function(self, event, target, player, data)
-    if RoomInstance.tag["SkipGameRule"] then
-      RoomInstance.tag["SkipGameRule"] = false
+    local room = player.room
+    if room:getTag("SkipGameRule") then
+      room:setTag("SkipGameRule", false)
       return false
     end
 
     if event == fk.GameStart then
-      RoomInstance.tag["FirstRound"] = true
+      room:setTag("FirstRound", true)
+      room:setTag("RoundCount", 0)
       return false
     end
 
-    local room = player.room
     switch(event, {
     [fk.DrawInitialCards] = function()
       if data.num > 0 then
@@ -89,30 +91,27 @@ GameRule = fk.CreateTriggerSkill{
         room.logic:trigger(fk.AfterDrawInitialCards, player, data)
       end
     end,
-    [fk.TurnStart] = function()
-      player = room.current
-      if room.tag["FirstRound"] == true then
-        room.tag["FirstRound"] = false
-        player:setFlag("Global_FirstRound")
+    [fk.RoundStart] = function()
+      if room:getTag("FirstRound") then
+        room:setTag("FirstRound", false)
       end
 
-      if player.seat == 1 then
-        for _, p in ipairs(room.players) do
-          p:setCardUseHistory("", 0, Player.HistoryRound)
-          p:setSkillUseHistory("", 0, Player.HistoryRound)
-          for name, _ in pairs(p.mark) do
-            if name:endsWith("-round") then
-              room:setPlayerMark(p, name, 0)
-            end
+      room:setTag("RoundCount", room:getTag("RoundCount") + 1)
+
+      for _, p in ipairs(room.players) do
+        p:setCardUseHistory("", 0, Player.HistoryRound)
+        p:setSkillUseHistory("", 0, Player.HistoryRound)
+        for name, _ in pairs(p.mark) do
+          if name:endsWith("-round") then
+            room:setPlayerMark(p, name, 0)
           end
         end
       end
 
       room:sendLog{ type = "$AppendSeparator" }
-
-      player:addMark("Global_TurnCount")
+    end,
+    [fk.TurnStart] = function()
       if not player.faceup then
-        player:setFlag("-Global_FirstRound")
         player:turnOver()
       elseif not player.dead then
         player:play()

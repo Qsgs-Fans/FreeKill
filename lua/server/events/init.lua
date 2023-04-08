@@ -27,10 +27,11 @@ GameEvent.Judge = 14
 dofile "lua/server/events/judge.lua"
 
 GameEvent.DrawInitial = 15
-GameEvent.Turn = 16
+GameEvent.Round = 16
+GameEvent.Turn = 17
 dofile "lua/server/events/gameflow.lua"
 
-GameEvent.Pindian = 17
+GameEvent.Pindian = 18
 dofile "lua/server/events/pindian.lua"
 
 -- TODO: fix this
