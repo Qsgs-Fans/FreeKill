@@ -997,6 +997,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   if maxNum < 1 then
     return {}
   end
+  pattern = pattern or ".",
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
     local c = Fk:getCardById(id)
@@ -1008,7 +1009,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     targets = targets,
     num = maxNum,
     min_num = minNum,
-    pattern = pattern or ".",
+    pattern = pattern,
     skillName = skillName
   }
   local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)

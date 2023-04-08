@@ -50,7 +50,7 @@ Item {
   onUsedtimesChanged: {
     x.visible = false;
     if (skilltype === "wake") {
-      visible = (usedtimes < 1);
+      visible = (usedtimes > 0);
     } else if (skilltype === "limit") {
       visible = true;
       if (usedtimes >= 1) {
