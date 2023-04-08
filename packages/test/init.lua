@@ -91,10 +91,37 @@ local test_active = fk.CreateActiveSkill{
     -- p(cards)
   end,
 }
+local test_vs = fk.CreateViewAsSkill{
+  name = "test_vs",
+  card_filter = function(self, to_select, selected)
+    return #selected == 0
+  end,
+  interaction = UI.ComboBox {
+    choices = {
+      "ex_nihilo",
+      "duel",
+      "snatch",
+      "dismantlement",
+      "savage_assault",
+      "archery_attack",
+    }
+  },
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    if not self.interaction.data then return end
+    local c = Fk:cloneCard(self.interaction.data)
+    c.skillName = self.name
+    c:addSubcard(cards[1])
+    return c
+  end,
+}
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(test_active)
+test2:addSkill(test_vs)
 
 Fk:loadTranslationTable{
   ["test"] = "测试",

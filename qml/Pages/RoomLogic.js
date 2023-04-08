@@ -70,6 +70,7 @@ function doOkButton() {
         card: dashboard.getSelectedCard(),
         targets: selected_targets,
         special_skill: roomScene.getCurrentCardUseMethod(),
+        interaction_data: roomScene.skillInteraction.item ? roomScene.skillInteraction.item.answer : undefined,
       }
     ));
     return;

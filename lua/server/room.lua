@@ -1214,6 +1214,7 @@ function Room:handleUseCardReply(player, data)
     local card_data = json.decode(card)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
+    if skill.interaction then skill.interaction.data = data.interaction_data end
     if skill:isInstanceOf(ActiveSkill) then
       self:useSkill(player, skill, function()
         self:doIndicate(player.id, targets)

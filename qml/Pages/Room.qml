@@ -27,6 +27,7 @@ Item {
   property alias dynamicCardArea: dynamicCardArea
   property alias tableCards: tablePile.cards
   property alias dashboard: dashboard
+  property alias skillInteraction: skillInteraction
 
   property var selected_targets: []
   property string responding_card
