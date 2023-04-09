@@ -70,7 +70,7 @@ end
 ---@return boolean @ returns true if trigger is broken
 function TriggerSkill:cost(event, target, player, data)
   local ret = false
-  if self.frequency == Skill.Compulsory then
+  if self.frequency == Skill.Compulsory or self.frequency == Skill.Wake then
     return true
   end
 

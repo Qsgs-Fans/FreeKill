@@ -37,3 +37,25 @@ dofile "lua/server/events/pindian.lua"
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
+local eventTranslations = {
+  [GameEvent.ChangeHp] = "GameEvent.ChangeHp",
+  [GameEvent.Damage] = "GameEvent.Damage",
+  [GameEvent.LoseHp] = "GameEvent.LoseHp",
+  [GameEvent.Recover] = "GameEvent.Recover",
+  [GameEvent.ChangeMaxHp] = "GameEvent.ChangeMaxHp",
+  [GameEvent.Dying] = "GameEvent.Dying",
+  [GameEvent.Death] = "GameEvent.Death",
+  [GameEvent.MoveCards] = "GameEvent.MoveCards",
+  [GameEvent.UseCard] = "GameEvent.UseCard",
+  [GameEvent.RespondCard] = "GameEvent.RespondCard",
+  [GameEvent.SkillEffect] = "GameEvent.SkillEffect",
+  [GameEvent.Judge] = "GameEvent.Judge",
+  [GameEvent.DrawInitial] = "GameEvent.DrawInitial",
+  [GameEvent.Round] = "GameEvent.Round",
+  [GameEvent.Turn] = "GameEvent.Turn",
+  [GameEvent.Pindian] = "GameEvent.Pindian",
+}
+
+function GameEvent.static:translate(id)
+  return eventTranslations[id]
+end

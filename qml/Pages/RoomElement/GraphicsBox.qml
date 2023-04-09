@@ -28,6 +28,7 @@ Item {
   }
 
   DragHandler {
+    grabPermissions: PointHandler.TakeOverForbidden
     xAxis.enabled: true
     yAxis.enabled: true
   }

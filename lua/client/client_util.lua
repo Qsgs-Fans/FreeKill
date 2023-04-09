@@ -133,6 +133,16 @@ function GetAllPiles(id)
   return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
 end
 
+function GetPlayerSkills(id)
+  local p = ClientInstance:getPlayerById(id)
+  return json.encode(table.map(p.player_skills, function(s)
+    return s.visible and {
+      name = s.name,
+      description = Fk:getDescription(s.name),
+    } or nil
+  end))
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)

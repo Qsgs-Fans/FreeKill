@@ -93,6 +93,10 @@ function Player:initialize()
   self.fixedDistance = {}
 end
 
+function Player:__tostring()
+  return string.format("%s #%d", self.id < 0 and "Bot" or "Player", math.abs(self.id))
+end
+
 --- 设置角色、体力、技能。
 ---@param general General @ 角色类型
 ---@param setHp boolean @ 是否设置体力

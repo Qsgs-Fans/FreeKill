@@ -167,6 +167,7 @@ Item {
 
   DragHandler {
     enabled: draggable
+    grabPermissions: PointHandler.TakeOverForbidden
     xAxis.enabled: true
     yAxis.enabled: true
 
