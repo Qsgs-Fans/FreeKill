@@ -419,7 +419,7 @@ local silverLion = fk.CreateArmor{
   equip_skill = silverLionSkill,
   on_uninstall = function(self, room, player)
     Armor.onUninstall(self, room, player)
-    if player:isWounded() and self.equip_skill:isEffectable(player) then
+    if player:isAlive() and player:isWounded() and self.equip_skill:isEffectable(player) then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
       room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
       room:recover{
