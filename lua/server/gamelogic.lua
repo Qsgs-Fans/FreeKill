@@ -276,8 +276,43 @@ function GameLogic:trigger(event, target, data)
   return broken
 end
 
+---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
+end
+
+function GameLogic:dumpEventStack(detailed)
+  local top = self:getCurrentEvent()
+  local i = self.game_event_stack.p
+  local inspect = p
+  if not top then return end
+
+  print("===== Start of event stack dump =====")
+  if not detailed then print("") end
+
+  repeat
+    local printable_data
+    if type(top.data) ~= "table" then
+      printable_data = top.data
+    else
+      printable_data = table.cloneWithoutClass(top.data)
+    end
+
+    if not detailed then
+      print("Stack level #" .. i .. ": " .. GameEvent:translate(top.event))
+    else
+      print("\nStack level #" .. i .. ":")
+      inspect{
+        eventId = GameEvent:translate(top.event),
+        data = printable_data or "nil",
+      }
+    end
+
+    top = top.parent
+    i = i - 1
+  until not top
+
+  print("\n===== End of event stack dump =====")
 end
 
 function GameLogic:breakEvent(ret)

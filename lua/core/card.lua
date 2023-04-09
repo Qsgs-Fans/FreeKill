@@ -117,6 +117,10 @@ function Card:initialize(name, suit, number, color)
   setmetatable(self, mt)
 end
 
+function Card:__tostring()
+  return string.format("%s[%s %d]", self.name, self:getSuitString(), self.number)
+end
+
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
