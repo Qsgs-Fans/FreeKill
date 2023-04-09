@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class ServerPlayer : Player
 ---@field public serverplayer fk.ServerPlayer
 ---@field public room Room

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- 主动技/视为技用。
 -- 能创造一个简单的组件供UI使用。
 

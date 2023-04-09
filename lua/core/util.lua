@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- the iterator of QList object
 local qlist_iterator = function(list, n)
   if n < list:length() - 1 then

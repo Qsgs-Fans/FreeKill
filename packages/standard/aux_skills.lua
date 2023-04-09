@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local discardSkill = fk.CreateActiveSkill{
   name = "discard_skill",
   card_filter = function(self, to_select, selected)

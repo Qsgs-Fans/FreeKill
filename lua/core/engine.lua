@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --- Engine是整个FreeKill赖以运行的核心。
 ---
 --- 它包含了FreeKill涉及的所有武将、卡牌、游戏模式等等

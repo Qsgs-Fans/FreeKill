@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@alias Event integer
 
 fk.NonTrigger = 1

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class EquipCard : Card
 ---@field public equip_skill Skill
 local EquipCard = Card:subclass("EquipCard")

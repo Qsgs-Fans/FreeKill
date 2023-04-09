@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class ActiveSkill : UsableSkill
 ---@field public min_target_num integer
 ---@field public max_target_num integer

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class GameMode: Object
 ---@field public name string
 ---@field public minPlayer integer

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- All functions in this file are used by Qml
 
 function Translate(src)

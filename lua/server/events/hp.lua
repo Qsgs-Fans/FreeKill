@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 GameEvent.functions[GameEvent.ChangeHp] = function(self)
   local player, num, reason, skillName, damageStruct = table.unpack(self.data)
   local self = self.room

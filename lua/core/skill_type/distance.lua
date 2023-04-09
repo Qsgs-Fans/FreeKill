@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class DistanceSkill : StatusSkill
 local DistanceSkill = StatusSkill:subclass("DistanceSkill")
 

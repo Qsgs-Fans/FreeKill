@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- Fundemental script for FreeKill
 -- Load mods, init the engine, etc.
 

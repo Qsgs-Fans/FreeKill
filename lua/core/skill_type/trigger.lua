@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class TriggerSkill : UsableSkill
 ---@field public global boolean
 ---@field public events Event[]

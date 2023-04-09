@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class Client
 ---@field public client fk.Client
 ---@field public players ClientPlayer[]

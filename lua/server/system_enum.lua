@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class CardsMoveInfo
 ---@field public ids integer[]
 ---@field public from integer|null

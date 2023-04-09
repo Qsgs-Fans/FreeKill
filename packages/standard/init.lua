@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local extension = Package:new("standard")
 extension.metadata = require "packages.standard.metadata"
 dofile "packages/standard/game_rule.lua"

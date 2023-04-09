@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 GameEvent.functions[GameEvent.MoveCards] = function(self)
   local args = self.data
   local self = self.room
