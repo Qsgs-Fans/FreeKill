@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 callbacks["UpdateAvatar"] = function(jsonData) {
   mainWindow.busy = false;
   Self.avatar = jsonData;

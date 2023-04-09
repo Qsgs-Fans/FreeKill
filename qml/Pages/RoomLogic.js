@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 var Card = {
   Unknown : 0,
   PlayerHand : 1,
