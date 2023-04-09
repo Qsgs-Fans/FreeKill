@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 关于扩展FreeKill玩法的思考
 ==========================
 

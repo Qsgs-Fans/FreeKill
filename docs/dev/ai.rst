@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 FreeKill 的 AI 系统
 ===================
 
