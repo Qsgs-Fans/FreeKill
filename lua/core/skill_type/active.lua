@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class ActiveSkill : UsableSkill
 ---@field public min_target_num integer
 ---@field public max_target_num integer
@@ -7,10 +9,11 @@
 ---@field public max_card_num integer
 ---@field public card_num integer
 ---@field public card_num_table integer[]
+---@field public interaction any
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
-function ActiveSkill:initialize(name)
-  UsableSkill.initialize(self, name, Skill.NotFrequent)
+function ActiveSkill:initialize(name, frequency)
+  UsableSkill.initialize(self, name, frequency)
   self.min_target_num = 0
   self.max_target_num = 999
   self.min_card_num = 0

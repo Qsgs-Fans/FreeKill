@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "client.h"
 #ifndef Q_OS_WASM
 #include "server.h"

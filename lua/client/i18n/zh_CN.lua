@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",
@@ -27,6 +29,8 @@ Fk:loadTranslationTable{
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
+
+  ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
@@ -140,6 +144,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
+  ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
   ["#askForPindian"] = "请选择一张手牌作为拼点牌",
 
   ["Trust"] = "托管",

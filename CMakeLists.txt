@@ -1,6 +1,8 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.0.6)
+project(FreeKill VERSION 0.0.7)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")

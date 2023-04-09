@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@param victim ServerPlayer
 local function getWinner(victim)
   local room = victim.room
@@ -41,6 +43,7 @@ GameRule = fk.CreateTriggerSkill{
   refresh_events = {
     fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
+    fk.RoundStart,
     fk.AskForPeaches, fk.AskForPeachesDone,
     fk.GameOverJudge, fk.BuryVictim,
   },
@@ -51,17 +54,18 @@ GameRule = fk.CreateTriggerSkill{
   end,
 
   on_refresh = function(self, event, target, player, data)
-    if RoomInstance.tag["SkipGameRule"] then
-      RoomInstance.tag["SkipGameRule"] = false
+    local room = player.room
+    if room:getTag("SkipGameRule") then
+      room:setTag("SkipGameRule", false)
       return false
     end
 
     if event == fk.GameStart then
-      RoomInstance.tag["FirstRound"] = true
+      room:setTag("FirstRound", true)
+      room:setTag("RoundCount", 0)
       return false
     end
 
-    local room = player.room
     switch(event, {
     [fk.DrawInitialCards] = function()
       if data.num > 0 then
@@ -89,25 +93,27 @@ GameRule = fk.CreateTriggerSkill{
         room.logic:trigger(fk.AfterDrawInitialCards, player, data)
       end
     end,
-    [fk.TurnStart] = function()
-      player = room.current
-      if room.tag["FirstRound"] == true then
-        room.tag["FirstRound"] = false
-        player:setFlag("Global_FirstRound")
+    [fk.RoundStart] = function()
+      if room:getTag("FirstRound") then
+        room:setTag("FirstRound", false)
       end
 
-      if player.seat == 1 then
-        for _, p in ipairs(room.players) do
-          p:setCardUseHistory("", 0, Player.HistoryRound)
-          p:setSkillUseHistory("", 0, Player.HistoryRound)
+      room:setTag("RoundCount", room:getTag("RoundCount") + 1)
+
+      for _, p in ipairs(room.players) do
+        p:setCardUseHistory("", 0, Player.HistoryRound)
+        p:setSkillUseHistory("", 0, Player.HistoryRound)
+        for name, _ in pairs(p.mark) do
+          if name:endsWith("-round") then
+            room:setPlayerMark(p, name, 0)
+          end
         end
       end
 
       room:sendLog{ type = "$AppendSeparator" }
-
-      player:addMark("Global_TurnCount")
+    end,
+    [fk.TurnStart] = function()
       if not player.faceup then
-        player:setFlag("-Global_FirstRound")
         player:turnOver()
       elseif not player.dead then
         player:play()
@@ -185,6 +191,11 @@ GameRule = fk.CreateTriggerSkill{
         for _, p in ipairs(room.players) do
           p:setCardUseHistory("", 0, Player.HistoryPhase)
           p:setSkillUseHistory("", 0, Player.HistoryPhase)
+          for name, _ in pairs(p.mark) do
+            if name:endsWith("-phase") then
+              room:setPlayerMark(p, name, 0)
+            end
+          end
         end
       end
     end,
@@ -194,32 +205,34 @@ GameRule = fk.CreateTriggerSkill{
         for _, p in ipairs(room.players) do
           p:setCardUseHistory("", 0, Player.HistoryTurn)
           p:setSkillUseHistory("", 0, Player.HistoryTurn)
+          for name, _ in pairs(p.mark) do
+            if name:endsWith("-turn") then
+              room:setPlayerMark(p, name, 0)
+            end
+          end
         end
       end
     end,
     [fk.AskForPeaches] = function()
-      local savers = room:getAlivePlayers()
-      for _, p in ipairs(savers) do
-        if player.hp > 0 or player.dead then break end
-        while player.hp < 1 do
-          local pattern = "peach"
-          if p == player then
-            pattern = pattern .. ",analeptic"
-          end
-
-          local peach_use = room:askForUseCard(p, "peach", pattern)
-          if not peach_use then break end
-          peach_use.tos = { {player.id} }
-          if peach_use.card.trueName == "analeptic" then
-            peach_use.extra_data = peach_use.extra_data or {}
-            peach_use.extra_data.analepticRecover = true
-          end
-          room:useCard(peach_use)
+      local dyingPlayer = room:getPlayerById(data.who)
+      while dyingPlayer.hp < 1 do
+        local pattern = "peach"
+        if player == dyingPlayer then
+          pattern = pattern .. ",analeptic"
         end
+
+        local peach_use = room:askForUseCard(player, "peach", pattern)
+        if not peach_use then break end
+        peach_use.tos = { {dyingPlayer.id} }
+        if peach_use.card.trueName == "analeptic" then
+          peach_use.extra_data = peach_use.extra_data or {}
+          peach_use.extra_data.analepticRecover = true
+        end
+        room:useCard(peach_use)
       end
     end,
     [fk.AskForPeachesDone] = function()
-      if player.hp < 1 then
+      if player.hp < 1 and not data.ignoreDeath then
         ---@type DeathStruct
         local deathData = {
           who = player.id,

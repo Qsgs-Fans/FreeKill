@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 var generalsOverviewPage, cardsOverviewPage;
 var clientPageCreated = false;
 function createClientPages() {
@@ -101,11 +103,20 @@ callbacks["UpdateRoomList"] = function(jsonData) {
   });
 }
 
+callbacks["UpdatePlayerNum"] = (j) => {
+  let current = mainStack.currentItem;  // should be lobby
+  let data = JSON.parse(j);
+  let l = data[0];
+  let s = data[1];
+  current.lobbyPlayerNum = l;
+  current.serverPlayerNum = s;
+}
+
 callbacks["Chat"] = function(jsonData) {
   // jsonData: { string userName, string general, string time, string msg }
   let current = mainStack.currentItem;  // lobby(TODO) or room
   let data = JSON.parse(jsonData);
-  let pid = data.type;
+  let pid = data.sender;
   let userName = data.userName;
   let general = Backend.translate(data.general);
   let time = data.time;

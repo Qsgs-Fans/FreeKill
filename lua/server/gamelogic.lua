@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class GameLogic: Object
 ---@field public room Room
 ---@field public skill_table table<Event, TriggerSkill[]>
@@ -68,13 +70,6 @@ end
 function GameLogic:chooseGenerals()
   local room = self.room
   local generalNum = room.settings.generalNum
-  local function setPlayerGeneral(player, general)
-    if Fk.generals[general] == nil then return end
-    player.general = general
-    player.gender = Fk.generals[general].gender
-    self.room:notifyProperty(player, player, "general")
-    self.room:broadcastProperty(player, "gender")
-  end
   local lord = room:getLord()
   local lord_general = nil
   if lord ~= nil then
@@ -84,7 +79,7 @@ function GameLogic:chooseGenerals()
       generals[i] = generals[i].name
     end
     lord_general = room:askForGeneral(lord, generals)
-    setPlayerGeneral(lord, lord_general)
+    room:setPlayerGeneral(lord, lord_general, true)
     room:broadcastProperty(lord, "general")
   end
 
@@ -105,9 +100,9 @@ function GameLogic:chooseGenerals()
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
       local general = json.decode(p.client_reply)[1]
-      setPlayerGeneral(p, general)
+      room:setPlayerGeneral(p, general, true)
     else
-      setPlayerGeneral(p, p.default_reply)
+      room:setPlayerGeneral(p, p.default_reply, true)
     end
     p.default_reply = ""
   end
@@ -173,9 +168,8 @@ function GameLogic:action()
   execGameEvent(GameEvent.DrawInitial)
 
   while true do
-    execGameEvent(GameEvent.Turn)
+    execGameEvent(GameEvent.Round)
     if room.game_finished then break end
-    room.current = room.current:getNextAlive()
   end
 end
 
@@ -268,6 +262,7 @@ function GameLogic:trigger(event, target, data)
         local skill_name = room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
         local skill = triggerables[table.indexOf(skill_names, skill_name)]
         broken = skill:trigger(event, target, player, data)
+        broken = broken or (event == fk.AskForPeaches and room:getPlayerById(data.who).hp > 0)
         if broken then break end
         table.removeOne(skill_names, skill_name)
         table.removeOne(triggerables, skill)
@@ -283,8 +278,43 @@ function GameLogic:trigger(event, target, data)
   return broken
 end
 
+---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
+end
+
+function GameLogic:dumpEventStack(detailed)
+  local top = self:getCurrentEvent()
+  local i = self.game_event_stack.p
+  local inspect = p
+  if not top then return end
+
+  print("===== Start of event stack dump =====")
+  if not detailed then print("") end
+
+  repeat
+    local printable_data
+    if type(top.data) ~= "table" then
+      printable_data = top.data
+    else
+      printable_data = table.cloneWithoutClass(top.data)
+    end
+
+    if not detailed then
+      print("Stack level #" .. i .. ": " .. GameEvent:translate(top.event))
+    else
+      print("\nStack level #" .. i .. ":")
+      inspect{
+        eventId = GameEvent:translate(top.event),
+        data = printable_data or "nil",
+      }
+    end
+
+    top = top.parent
+    i = i - 1
+  until not top
+
+  print("\n===== End of event stack dump =====")
 end
 
 function GameLogic:breakEvent(ret)

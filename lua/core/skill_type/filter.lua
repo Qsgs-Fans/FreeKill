@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class FilterSkill: StatusSkill
 local FilterSkill = StatusSkill:subclass("FilterSkill")
 

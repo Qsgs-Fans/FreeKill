@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 
 Item {
@@ -28,6 +30,7 @@ Item {
   }
 
   DragHandler {
+    grabPermissions: PointHandler.TakeOverForbidden
     xAxis.enabled: true
     yAxis.enabled: true
   }

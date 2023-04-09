@@ -1,16 +1,23 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
+--- Card记录了FreeKill所有卡牌的基础信息。
+---
+--- 它包含了ID、所属包、牌名、花色、点数等等
+---
 ---@class Card : Object
----@field public id integer
----@field public package Package
----@field public name string
----@field public suit Suit
----@field public number integer
----@field public trueName string
----@field public color Color
----@field public type CardType
----@field public sub_type CardSubtype
----@field public area CardArea
+---@field public id integer @ 标志某一张卡牌唯一的数字，从1开始。若此牌是虚拟牌，则其id为0。服务器启动时为卡牌赋予ID。
+---@field public package Package @ 卡牌所属的扩展包
+---@field public name string @ 卡牌的名字
+---@field public suit Suit @ 卡牌的花色（四色及无花色）
+---@field public number integer @ 卡牌的点数（0到K）
+---@field public trueName string @ 卡牌的真名，一般用于分辨杀。
+---@field public color Color @ 卡牌的颜色（分为黑色、红色、无色）
+---@field public type CardType @ 卡牌的种类（基本牌、锦囊牌、装备牌）
+---@field public sub_type CardSubtype @ 卡牌的子种类（例如延时锦囊牌、武器、防具等）
+---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
 ---@field public subcards integer[]
 ---@field public skillName string @ for virtual cards
+---@field public skillNames string[]
 ---@field public skill Skill
 ---@field public special_skills string[] | nil
 local Card = class("Card")
@@ -57,6 +64,7 @@ Card.DrawPile = 6
 Card.DiscardPile = 7
 Card.Void = 8
 
+--- Card的构造函数。具体负责构建Card实例的函数，请参见fk_ex部分。
 function Card:initialize(name, suit, number, color)
   self.name = name
   self.suit = suit or Card.NoSuit
@@ -81,12 +89,46 @@ function Card:initialize(name, suit, number, color)
   self.sub_type = Card.SubTypeNone
   self.skill = nil
   self.subcards = {}
-  self.skillName = ""
+  self.skillName = nil -- ""
+  self._skillName = ""
+  self.skillNames = {}
+
+  local mt = table.simpleClone(getmetatable(self))
+  local newidx = mt.__newindex or rawset
+  mt.__newindex = function(t, k, v)
+    if k == "skillName" then
+      table.insertIfNeed(self.skillNames, v)
+      t._skillName = v
+    else
+      return newidx(t, k, v)
+    end
+  end
+
+  local idx = mt.__index or rawget
+  mt.__index = function(t, k)
+    if k == "skillName" then
+      return t._skillName
+    end
+    if type(idx) == "table" then
+      return idx[k]
+    end
+    if type(idx) == "function" then
+      return idx(t, k)
+    end
+  end
+  setmetatable(self, mt)
 end
 
----@param suit Suit
----@param number integer
----@return Card
+function Card:__tostring()
+  return string.format("%s[%s %d]", self.name, self:getSuitString(), self.number)
+end
+
+--- 克隆特定卡牌并赋予花色与点数。
+---
+--- 会将skill/special_skills/equip_skill继承到克隆牌中。
+---@param suit Suit @ 克隆后的牌的花色
+---@param number integer @ 克隆后的牌的点数
+---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
@@ -95,10 +137,15 @@ function Card:clone(suit, number)
   return newCard
 end
 
+--- 检测是否为虚拟卡牌，如果其ID为0及以下，则为虚拟卡牌。
 function Card:isVirtual()
   return self.id <= 0
 end
 
+--- 获取卡牌的ID。
+---
+--- 如果牌是虚拟牌，则返回其第一张子卡的id，没有子卡就返回nil
+---@return integer | nil
 function Card:getEffectiveId()
   if self:isVirtual() then
     return #self.subcards > 0 and self.subcards[1] or nil
@@ -129,7 +176,8 @@ local function updateColorAndNumber(card)
   card.number = number
 end
 
----@param card integer|Card
+--- 将一张子卡牌加入某张牌中（是addSubcards的基础函数，常用addSubcards）。
+---@param card integer|Card @ 要加入的子卡
 function Card:addSubcard(card)
   if type(card) == "number" then
     table.insert(self.subcards, card)
@@ -142,21 +190,27 @@ function Card:addSubcard(card)
   updateColorAndNumber(self)
 end
 
+--- 将一批子卡牌加入某张牌中（常用于将这批牌弃置/交给某个角色···）。
+---@param cards integer[] | Card[] @ 要加入的子卡列表
 function Card:addSubcards(cards)
   for _, c in ipairs(cards) do
     self:addSubcard(c)
   end
 end
 
+--- 清空加入某张牌中的子卡牌。
 function Card:clearSubcards()
   self.subcards = {}
   updateColorAndNumber(self)
 end
 
+--- 判断此牌能否符合一个卡牌规则。
 function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
+--- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+---@return string @ 描述花色的字符串
 function Card:getSuitString()
   local suit = self.suit
   if suit == Card.Spade then
@@ -172,6 +226,8 @@ function Card:getSuitString()
   end
 end
 
+--- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
+---@return string @ 描述颜色的字符串
 function Card:getColorString()
   local color = self.color
   if color == Card.Black then
@@ -182,6 +238,7 @@ function Card:getColorString()
   return "nocolor"
 end
 
+--- 获取卡牌类型并返回点数类型描述（例如基本牌/锦囊牌/装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then
@@ -194,6 +251,7 @@ function Card:getTypeString()
   return "notype"
 end
 
+--- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K）。
 local function getNumberStr(num)
   if num == 1 then
     return "A"
@@ -208,6 +266,7 @@ local function getNumberStr(num)
 end
 
 -- for sendLog
+--- 获取卡牌的文字信息并准备作为log发送。
 function Card:toLogString()
   local ret = string.format('<font color="#0598BC"><b>%s</b></font>', Fk:translate(self.name) .. "[")
   if self:isVirtual() then
@@ -222,6 +281,7 @@ function Card:toLogString()
   return ret
 end
 
+--- 静态方法。传入下列类型之一的参数，返回id列表。
 ---@param c integer|integer[]|Card|Card[]
 ---@return integer[]
 function Card:getIdList(c)

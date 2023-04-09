@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "serverplayer.h"
 #include "room.h"
 #include "server.h"
@@ -11,6 +13,9 @@ ServerPlayer::ServerPlayer(Room *room)
   setState(Player::Online);
   this->room = room;
   server = room->getServer();
+  connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
+
+  alive = true;
 }
 
 ServerPlayer::~ServerPlayer()
@@ -111,4 +116,11 @@ void ServerPlayer::prepareForRequest(const QString& command, const QString& data
 {
   requestCommand = command;
   requestData = data;
+}
+
+void ServerPlayer::kick() {
+  if (socket != nullptr) {
+    socket->disconnectFromHost();
+  }
+  setSocket(nullptr);
 }

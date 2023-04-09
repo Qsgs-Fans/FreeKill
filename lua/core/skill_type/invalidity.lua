@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class InvaliditySkill : StatusSkill
 local InvaliditySkill = StatusSkill:subclass("InvaliditySkill")
 

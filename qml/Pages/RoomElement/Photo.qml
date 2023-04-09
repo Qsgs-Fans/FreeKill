@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import QtQuick.Controls
@@ -9,7 +11,7 @@ Item {
   width: 175
   height: 233
   scale: 0.75
-  property int playerid
+  property int playerid: 0
   property string general: ""
   property string screenName: ""
   property string role: "unknown"
@@ -108,7 +110,7 @@ Item {
 
   Image {
     id: back
-    source: SkinBank.PHOTO_BACK_DIR + root.kingdom
+    source: SkinBank.getPhotoBack(root.kingdom)
   }
 
   Text {
@@ -319,11 +321,22 @@ Item {
   }
 
   TapHandler {
-    onTapped: {
-      if (parent.state != "candidate" || !parent.selectable) {
-        return;
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+    gesturePolicy: TapHandler.WithinBounds
+
+    onTapped: (p, btn) => {
+      if (btn === Qt.LeftButton || btn === Qt.NoButton) {
+        if (parent.state != "candidate" || !parent.selectable) {
+          return;
+        }
+        parent.selected = !parent.selected;
+      } else if (btn === Qt.RightButton) {
+        parent.showDetail();
       }
-      parent.selected = !parent.selected;
+    }
+
+    onLongPressed: {
+      parent.showDetail();
     }
   }
 
@@ -334,6 +347,14 @@ Item {
     anchors.topMargin: -4
     anchors.right: parent.right
     anchors.rightMargin: -4
+  }
+
+  LimitSkillArea {
+    id: limitSkills
+    anchors.top: role.bottom
+    anchors.left: role.left
+    anchors.topMargin: 2
+    anchors.leftMargin: -2
   }
 
   GlowText {
@@ -517,13 +538,21 @@ Item {
       generalName.text = text;
       longGeneralName.text = "";
     }
-    let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
-    kingdom = data.kingdom;
+    // let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+    // kingdom = data.kingdom;
   }
 
   function chat(msg) {
     chat.text = msg;
     chat.visible = true;
     chatAnim.restart();
+  }
+
+  function updateLimitSkill(skill, time) {
+    limitSkills.update(skill, time);
+  }
+
+  function showDetail() {
+    roomScene.startCheat("RoomElement/Cheat/PlayerDetail.qml", { photo: this });
   }
 }

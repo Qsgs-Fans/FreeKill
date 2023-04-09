@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _SHELL_H
 #define _SHELL_H
 
@@ -36,6 +38,7 @@ private:
   void lspkgCommand(QStringList &);
   void enableCommand(QStringList &);
   void disableCommand(QStringList &);
+  void kickCommand(QStringList &);
 };
 
 #endif

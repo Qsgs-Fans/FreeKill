@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --- Package用来描述一个FreeKill拓展包。
 ---
 --- 所谓拓展包，就是武将/卡牌/游戏模式的一个集合而已。

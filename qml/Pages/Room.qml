@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -26,6 +28,8 @@ Item {
   property alias cancelButton: cancelButton
   property alias dynamicCardArea: dynamicCardArea
   property alias tableCards: tablePile.cards
+  property alias dashboard: dashboard
+  property alias skillInteraction: skillInteraction
 
   property var selected_targets: []
   property string responding_card
@@ -89,6 +93,7 @@ Item {
       from: "*"; to: "notactive"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           promptText = "";
           progress.visible = false;
           okCancel.visible = false;
@@ -114,6 +119,7 @@ Item {
       from: "*"; to: "playing"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.enableCards();
           dashboard.enableSkills();
           progress.visible = true;
@@ -128,6 +134,7 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card);
           progress.visible = true;
@@ -140,6 +147,7 @@ Item {
       from: "*"; to: "replying"
       ScriptAction {
         script: {
+          skillInteraction.source = "";
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;
@@ -291,10 +299,14 @@ Item {
     Text {
       id: prompt
       visible: progress.visible
-      anchors.top: progress.top
-      anchors.topMargin: -2
-      color: "white"
+      anchors.bottom: progress.bottom
       z: 1
+      color: "#F0E5DA"
+      font.pixelSize: 16
+      font.family: fontLibian.name
+      style: Text.Outline
+      styleColor: "#3D2D1C"
+      textFormat: TextEdit.RichText
       anchors.horizontalCenter: progress.horizontalCenter
     }
 
@@ -311,20 +323,25 @@ Item {
 
       background: Rectangle {
         implicitWidth: 200
-        implicitHeight: 14
+        implicitHeight: 12
         color: "black"
-        radius: 3
+        radius: 6
       }
 
       contentItem: Item {
-        implicitWidth: 200
-        implicitHeight: 12
+        implicitWidth: 196
+        implicitHeight: 10
 
         Rectangle {
           width: progress.visualPosition * parent.width
           height: parent.height
-          radius: 2
-          color: "red"
+          radius: 6
+          gradient: Gradient {
+            GradientStop { position: 0.0; color: "orange" }
+            GradientStop { position: 0.3; color: "red" }
+            GradientStop { position: 0.7; color: "red" }
+            GradientStop { position: 1.0; color: "orange" }
+          }
         }
       }
 
@@ -374,6 +391,14 @@ Item {
       }
     }
 
+    Loader {
+      id: skillInteraction
+      visible: dashboard.pending_skill !== ""
+      anchors.bottom: parent.bottom
+      anchors.bottomMargin: 8
+      anchors.right: okCancel.left
+      anchors.rightMargin: 20
+    }
 
     Row {
       id: okCancel
@@ -460,9 +485,28 @@ Item {
 
   function activateSkill(skill_name, pressed) {
     if (pressed) {
+      let data = JSON.parse(Backend.callLuaFunction("GetInteractionOfSkill", [skill_name]));
+      if (data) {
+        Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
+        switch (data.type) {
+        case "combo":
+          skillInteraction.source = "RoomElement/SkillInteraction/SkillCombo.qml";
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.default_choice = data["default"];
+          skillInteraction.item.choices = data.choices;
+          break;
+        default:
+          skillInteraction.source = "";
+          break;
+        }
+      } else {
+        skillInteraction.source = "";
+      }
+
       dashboard.startPending(skill_name);
       cancelButton.enabled = true;
     } else {
+      skillInteraction.source = "";
       Logic.doCancelButton();
     }
   }
@@ -628,6 +672,7 @@ Item {
   }
 
   function addToChat(pid, raw, msg) {
+    if (raw.type === 1) return;
     chat.append(msg);
     let photo = Logic.getPhotoOrSelf(pid);
     if (photo === undefined)

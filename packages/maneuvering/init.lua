@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local extension = Package:new("maneuvering", Package.CardPack)
 
 local slash = Fk:cloneCard("slash")
@@ -188,6 +190,18 @@ local ironChainEffect = fk.CreateTriggerSkill{
   end,
 }
 Fk:addSkill(ironChainEffect)
+
+local recast = fk.CreateActiveSkill{
+  name = "recast",
+  target_num = 0,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    room:throwCard(effect.cards, self.name, from)
+    room:drawCards(from, #effect.cards, self.name)
+  end
+}
+Fk:addSkill(recast)
+
 local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
@@ -198,11 +212,11 @@ local ironChainCardSkill = fk.CreateActiveSkill{
     to:setChainState(not to.chained)
   end,
 }
+
 local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
-  -- FIXME! FIXME! FIXME!
-  special_skills = { "zhiheng" },
+  special_skills = { "recast" },
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
@@ -331,6 +345,7 @@ local fanSkill = fk.CreateTriggerSkill{
   end,
   on_use = function(_, _, _, _, data)
     local fireSlash = Fk:cloneCard("fire__slash")
+    fireSlash.skillName = "fan"
     fireSlash:addSubcard(data.card)
     data.card = fireSlash
   end,
@@ -406,7 +421,7 @@ local silverLion = fk.CreateArmor{
   equip_skill = silverLionSkill,
   on_uninstall = function(self, room, player)
     Armor.onUninstall(self, room, player)
-    if player:isWounded() and self.equip_skill:isEffectable(player) then
+    if player:isAlive() and player:isWounded() and self.equip_skill:isEffectable(player) then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
       room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
       room:recover{

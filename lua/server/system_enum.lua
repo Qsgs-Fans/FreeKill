@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class CardsMoveInfo
 ---@field public ids integer[]
 ---@field public from integer|null
@@ -31,15 +33,18 @@
 ---@field public toCard Card
 ---@field public winner ServerPlayer|null
 
+--- 描述和一次体力变化有关的数据
 ---@class HpChangedData
----@field public num integer
----@field public reason string
----@field public skillName string
----@field public damageEvent DamageStruct|null
+---@field public num integer @ 体力变化量，可能是正数或者负数
+---@field public reason string @ 体力变化原因
+---@field public skillName string @ 引起体力变化的技能名
+---@field public damageEvent DamageStruct|nil @ 引起这次体力变化的伤害数据
+---@field public preventDying boolean|null @ 是否阻止本次体力变更流程引发濒死流程
 
+--- 描述跟失去体力有关的数据
 ---@class HpLostData
----@field public num integer
----@field public skillName string
+---@field public num integer @ 失去体力的数值
+---@field public skillName string @ 导致这次失去的技能名
 
 ---@alias DamageType integer
 
@@ -47,26 +52,29 @@ fk.NormalDamage = 1
 fk.ThunderDamage = 2
 fk.FireDamage = 3
 
+--- DamageStruct 用来描述和伤害事件有关的数据。
 ---@class DamageStruct
----@field public from ServerPlayer|null
----@field public to ServerPlayer
----@field public damage integer
----@field public card Card
----@field public chain boolean
----@field public damageType DamageType
----@field public skillName string
----@field public beginnerOfTheDamage boolean|null
+---@field public from ServerPlayer|null @ 伤害来源
+---@field public to ServerPlayer @ 伤害目标
+---@field public damage integer @ 伤害值
+---@field public card Card | nil @ 造成伤害的牌
+---@field public chain boolean @ 伤害是否是铁索传导的伤害
+---@field public damageType DamageType @ 伤害的属性
+---@field public skillName string @ 造成本次伤害的技能名
+---@field public beginnerOfTheDamage boolean @ 是否是本次铁索传导的起点
 
+--- 用来描述和回复体力有关的数据。
 ---@class RecoverStruct
----@field public who ServerPlayer
----@field public num integer
----@field public recoverBy ServerPlayer|null
----@field public skillName string|null
----@field public card Card|null
+---@field public who ServerPlayer @ 回复体力的角色
+---@field public num integer @ 回复值
+---@field public recoverBy ServerPlayer|nil @ 此次回复的回复来源
+---@field public skillName string|nil @ 因何种技能而回复
+---@field public card Card|nil @ 造成此次回复的卡牌
 
 ---@class DyingStruct
 ---@field public who integer
 ---@field public damage DamageStruct
+---@field public ignoreDeath boolean|null
 
 ---@class DeathStruct
 ---@field public who integer

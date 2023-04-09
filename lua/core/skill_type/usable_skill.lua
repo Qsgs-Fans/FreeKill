@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class UsableSkill : Skill
 ---@field public max_use_time integer[]
 ---@field public expand_pile string

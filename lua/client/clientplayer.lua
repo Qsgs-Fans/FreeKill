@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class ClientPlayer: Player
 ---@field public player fk.Player
 ---@field public known_cards integer[]

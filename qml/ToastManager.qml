@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 
 // copy from https://gist.github.com/jonmcclung/bae669101d17b103e94790341301c129

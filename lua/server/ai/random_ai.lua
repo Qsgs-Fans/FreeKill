@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class RandomAI: AI
 local RandomAI = AI:subclass("RandomAI")
 

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- All functions in this file are used by Qml
 
 function Translate(src)
@@ -133,6 +135,16 @@ function GetAllPiles(id)
   return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
 end
 
+function GetPlayerSkills(id)
+  local p = ClientInstance:getPlayerById(id)
+  return json.encode(table.map(p.player_skills, function(s)
+    return s.visible and {
+      name = s.name,
+      description = Fk:getDescription(s.name),
+    } or nil
+  end))
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)
@@ -231,11 +243,18 @@ function GetSkillData(skill_name)
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
   end
+  local frequency
+  if skill.frequency == Skill.Limited then
+    frequency = "limit"
+  elseif skill.frequency == Skill.Wake then
+    frequency = "wake"
+  end
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
     extension = skill.package.extensionName,
-    freq = freq
+    freq = freq,
+    frequency = frequency,
   }
 end
 
@@ -393,6 +412,18 @@ function GetGameModes()
   end
   table.sort(ret, function(a, b) return a.name > b.name end)
   return json.encode(ret)
+end
+
+function GetInteractionOfSkill(skill_name)
+  local skill = Fk.skills[skill_name]
+  return skill and json.encode(skill.interaction) or "null"
+end
+
+function SetInteractionDataOfSkill(skill_name, data)
+  local skill = Fk.skills[skill_name]
+  if skill and type(skill.interaction) == "table" then
+    skill.interaction.data = json.decode(data)
+  end
 end
 
 dofile "lua/client/i18n/init.lua"

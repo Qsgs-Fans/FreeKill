@@ -1,7 +1,10 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class GameEvent: Object
 ---@field public room Room
 ---@field public event integer
 ---@field public data any
+---@field public parent GameEvent
 ---@field public main_func fun(self: GameEvent)
 ---@field public clear_func fun(self: GameEvent)
 ---@field public extra_clear_funcs any[]
@@ -27,6 +30,15 @@ function GameEvent:initialize(event, ...)
   self.interrupted = false
 end
 
+function GameEvent:findParent(eventType)
+  local e = self.parent
+  repeat
+    if e.event == eventType then return e end
+    e = e.parent
+  until not e
+  return nil
+end
+
 function GameEvent:clear()
   for _, f in ipairs(self.extra_clear_funcs) do
     if type(f) == "function" then f(self) end
@@ -39,6 +51,7 @@ function GameEvent:exec()
   local logic = room.logic
   local ret = false -- false or nil means this event is running normally
   local extra_ret
+  self.parent = logic:getCurrentEvent()
   logic.game_event_stack:push(self)
 
   local co = coroutine.create(self.main_func)

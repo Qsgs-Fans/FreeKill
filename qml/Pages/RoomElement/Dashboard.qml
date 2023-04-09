@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
@@ -262,8 +264,8 @@ RowLayout {
         [pending_skill, cid, pendings, targets]
       ))) {
         enabled_cards.push(cid);
-        if (!expanded_piles[pile_name]) {
-          expandPile(pile_name);
+        if (!expanded_piles[pile]) {
+          expandPile(pile);
         }
       }
     });
