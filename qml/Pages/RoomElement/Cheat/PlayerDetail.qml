@@ -45,8 +45,6 @@ Flickable {
     let id = extra_data.photo.playerid;
     if (id == 0) return;
 
-    screenName.text = "<b>" + extra_data.photo.screenName + "</b>"
-
     let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {
       skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
