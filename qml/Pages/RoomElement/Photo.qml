@@ -9,7 +9,7 @@ Item {
   width: 175
   height: 233
   scale: 0.75
-  property int playerid
+  property int playerid: 0
   property string general: ""
   property string screenName: ""
   property string role: "unknown"
@@ -319,11 +319,22 @@ Item {
   }
 
   TapHandler {
-    onTapped: {
-      if (parent.state != "candidate" || !parent.selectable) {
-        return;
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+    gesturePolicy: TapHandler.WithinBounds
+
+    onTapped: (p, btn) => {
+      if (btn === Qt.LeftButton || btn === Qt.NoButton) {
+        if (parent.state != "candidate" || !parent.selectable) {
+          return;
+        }
+        parent.selected = !parent.selected;
+      } else if (btn === Qt.RightButton) {
+        parent.showDetail();
       }
-      parent.selected = !parent.selected;
+    }
+
+    onLongPressed: {
+      parent.showDetail();
     }
   }
 
@@ -537,5 +548,9 @@ Item {
 
   function updateLimitSkill(skill, time) {
     limitSkills.update(skill, time);
+  }
+
+  function showDetail() {
+    roomScene.startCheat("RoomElement/Cheat/PlayerDetail.qml", { photo: this });
   }
 }
