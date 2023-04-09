@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 %nodefaultctor QmlBackend;
 %nodefaultdtor QmlBackend;
 class QmlBackend : public QObject {

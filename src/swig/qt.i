@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Make the base classes look like "complete"
 class QObject {};
 class QThread {

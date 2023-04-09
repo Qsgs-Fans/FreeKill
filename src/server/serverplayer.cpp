@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "serverplayer.h"
 #include "room.h"
 #include "server.h"

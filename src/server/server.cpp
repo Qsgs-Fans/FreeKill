@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "server.h"
 #include "player.h"
 #include "server_socket.h"

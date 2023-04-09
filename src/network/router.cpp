@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "router.h"
 #include "client.h"
 #include "client_socket.h"

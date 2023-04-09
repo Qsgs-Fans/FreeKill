@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "parser.h"
 
 static Parser *p = nullptr;

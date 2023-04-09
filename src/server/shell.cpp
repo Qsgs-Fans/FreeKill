@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "shell.h"
 #include "server.h"
