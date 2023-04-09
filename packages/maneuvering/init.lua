@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local extension = Package:new("maneuvering", Package.CardPack)
 
 local slash = Fk:cloneCard("slash")

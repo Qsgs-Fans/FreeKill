@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- load types for extension
 
 dofile "lua/server/event.lua"

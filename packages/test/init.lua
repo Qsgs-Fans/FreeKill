@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local fkp_extensions = require "packages.test.test"
 local extension = fkp_extensions[1]
 

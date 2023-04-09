@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "client_socket.h"
 
 ClientSocket::ClientSocket() : socket(new QTcpSocket(this))

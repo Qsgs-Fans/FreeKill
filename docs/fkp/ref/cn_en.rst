@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 关键词中英文对照
 ================
 

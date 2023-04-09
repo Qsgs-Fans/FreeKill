@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _SERVERPLAYER_H
 #define _SERVERPLAYER_H
 

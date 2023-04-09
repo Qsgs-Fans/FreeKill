@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 技能解析：主动技
 ================
 

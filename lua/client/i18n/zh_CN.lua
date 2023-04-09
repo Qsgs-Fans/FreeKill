@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 Fk:loadTranslationTable{
   -- Lobby
   ["Room List"] = "房间列表",

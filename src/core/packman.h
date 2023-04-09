@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _PACKMAN_H
 #define _PACKMAN_H
 

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --- Room是fk游戏逻辑运行的主要场所，同时也提供了许多API函数供编写技能使用。
 ---
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。

@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --- Card记录了FreeKill所有卡牌的基础信息。
 ---
 --- 它包含了ID、所属包、牌名、花色、点数等等

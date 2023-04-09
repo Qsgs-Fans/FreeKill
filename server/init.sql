@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
 CREATE TABLE userinfo (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name VARCHAR(255),

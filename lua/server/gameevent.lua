@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class GameEvent: Object
 ---@field public room Room
 ---@field public event integer

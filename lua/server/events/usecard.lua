@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local playCardEmotionAndSound = function(room, player, card)
   if card.type ~= Card.TypeEquip then
     local anim_path = "./packages/" .. card.package.extensionName .. "/image/anim/" .. card.name

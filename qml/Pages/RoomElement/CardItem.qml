@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import "../skin-bank.js" as SkinBank

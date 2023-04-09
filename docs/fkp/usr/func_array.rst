@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 函数定义和调用，以及数组
 ========================
 

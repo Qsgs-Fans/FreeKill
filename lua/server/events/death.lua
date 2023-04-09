@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 GameEvent.functions[GameEvent.Dying] = function(self)
   local dyingStruct = table.unpack(self.data)
   local self = self.room

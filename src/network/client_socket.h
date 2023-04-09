@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _CLIENT_SOCKET_H
 #define _CLIENT_SOCKET_H
 

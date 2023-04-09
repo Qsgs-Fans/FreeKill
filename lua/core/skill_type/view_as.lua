@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class ViewAsSkill : UsableSkill
 ---@field public pattern string @ cards that can be viewAs'ed by this skill
 ---@field public interaction any

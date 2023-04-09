@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 //var AppPath = "file:///home/notify/develop/FreeKill";
 var PHOTO_BACK_DIR = AppPath + "/image/photo/back/";
 var PHOTO_DIR = AppPath + "/image/photo/";

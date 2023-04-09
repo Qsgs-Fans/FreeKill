@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- Definitions of game events
 
 GameEvent.ChangeHp = 1

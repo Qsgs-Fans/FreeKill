@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@param victim ServerPlayer
 local function getWinner(victim)
   local room = victim.room

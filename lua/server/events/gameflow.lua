@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local room = self.room
   for _, p in ipairs(room.alive_players) do

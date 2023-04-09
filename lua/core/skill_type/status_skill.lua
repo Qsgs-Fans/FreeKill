@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class StatusSkill : Skill
 ---@field public global boolean
 local StatusSkill = Skill:subclass("StatusSkill")

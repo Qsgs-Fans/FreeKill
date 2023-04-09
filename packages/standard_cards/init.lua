@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
