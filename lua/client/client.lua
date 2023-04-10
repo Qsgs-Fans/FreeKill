@@ -22,6 +22,10 @@ function Client:initialize()
   end
   self.client.callback = function(_self, command, jsonData)
     local cb = fk.client_callback[command]
+
+    Fk.currentResponsePattern = nil
+    Fk.currentResponseReason = nil
+
     if (type(cb) == "function") then
       cb(jsonData)
     else
@@ -525,7 +529,19 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   for k, v in pairs(extra_data) do
     skill[k] = v
   end
+
+  Fk.currentResponseReason = extra_data.skillName
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)
+end
+
+fk.client_callback["AskForUseCard"] = function(jsonData)
+  Fk.currentResponsePattern = json.decode(jsonData)[2]
+  ClientInstance:notifyUI("AskForUseCard", jsonData)
+end
+
+fk.client_callback["AskForResponseCard"] = function(jsonData)
+  Fk.currentResponsePattern = json.decode(jsonData)[2]
+  ClientInstance:notifyUI("AskForResponseCard", jsonData)
 end
 
 fk.client_callback["SetPlayerMark"] = function(jsonData)
