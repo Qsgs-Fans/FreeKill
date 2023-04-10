@@ -262,6 +262,7 @@ end
 
 function GetSkillData(skill_name)
   local skill = Fk.skills[skill_name]
+  if not skill then return "null" end
   local freq = "notactive"
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"

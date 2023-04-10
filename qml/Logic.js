@@ -121,6 +121,7 @@ callbacks["Chat"] = function(jsonData) {
   let general = Backend.translate(data.general);
   let time = data.time;
   let msg = data.msg;
+
   if (general === "")
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
   else
