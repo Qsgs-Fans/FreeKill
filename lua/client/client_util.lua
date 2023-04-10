@@ -166,7 +166,30 @@ function CanUseCard(card, player)
     end
   end
 
-  local ret = c.skill:canUse(ClientInstance:getPlayerById(player), c)
+  player = ClientInstance:getPlayerById(player)
+  local ret = c.skill:canUse(player, c)
+  if ret then
+    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+    for _, skill in ipairs(status_skills) do
+      if skill:prohibitUse(player, c) then
+        ret = false
+        break
+      end
+    end
+  end
+  return json.encode(ret)
+end
+
+function CardProhibitedUse(cid)
+  local c = Fk:getCardById(cid)
+  local ret = false
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitUse(Self, c) then
+      ret = true
+      break
+    end
+  end
   return json.encode(ret)
 end
 
@@ -373,6 +396,19 @@ function SkillFitPattern(skill_name, pattern)
   if skill and skill.pattern then
     local exp = Exppattern:Parse(pattern)
     ret = exp:matchExp(skill.pattern)
+  end
+  return json.encode(ret)
+end
+
+function CardProhibitedResponse(cid)
+  local c = Fk:getCardById(cid)
+  local ret = false
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitResponse(Self, c) then
+      ret = true
+      break
+    end
   end
   return json.encode(ret)
 end

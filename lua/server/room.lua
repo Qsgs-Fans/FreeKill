@@ -832,7 +832,10 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local command = "AskForUseActiveSkill"
   self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
   local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
+
+  Fk.currentResponseReason = extra_data.skillName
   local result = self:doRequest(player, command, json.encode(data))
+  Fk.currentResponseReason = nil
 
   if result == "" then
     return false
@@ -869,35 +872,52 @@ end
 ---@param prompt string @ 提示信息
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt)
+  cancelable = cancelable or false
+  pattern = pattern or ""
+
+  local canDiscards = table.filter(
+    player:getCardIds{ Player.Hand, includeEquip and Player.Equip or nil }, function(id)
+      local checkpoint = true
+      local card = Fk:getCardById(id)
+
+      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+      for _, skill in ipairs(status_skills) do
+        if skill:prohibitDiscard(player, card) then
+          return false
+        end
+      end
+
+      if pattern ~= "" then
+        checkpoint = checkpoint and (Exppattern:Parse(pattern):match(card))
+      end
+      return checkpoint
+    end
+  )
+
+  maxNum = math.min(#canDiscards, maxNum)
+  minNum = math.min(#canDiscards, minNum)
+
   if minNum < 1 then
     return nil
   end
-  cancelable = cancelable or false
-  pattern = pattern or ""
 
   local toDiscard = {}
   local data = {
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName,
+    skillName = skillName,
     pattern = pattern,
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
+
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
+
   if ret then
     toDiscard = ret.cards
   else
     if cancelable then return {} end
-    local hands = player:getCardIds(Player.Hand)
-    if includeEquip then
-      table.insertTable(hands, player:getCardIds(Player.Equip))
-    end
-    for i = 1, minNum do
-      local randomId = hands[math.random(1, #hands)]
-      table.insert(toDiscard, randomId)
-      table.removeOne(hands, randomId)
-    end
+    toDiscard = table.random(canDiscards, minNum)
   end
 
   self:throwCard(toDiscard, skillName, player, player)
@@ -962,7 +982,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName,
+    skillName = skillName,
     pattern = pattern,
     expand_pile = expand_pile,
   }
@@ -1302,7 +1322,11 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+    Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
+
     if result ~= "" then
       return self:handleUseCardReply(player, result)
     end
@@ -1338,7 +1362,11 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
     return eventData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+    Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
+
     if result ~= "" then
       local use = self:handleUseCardReply(player, result)
       if use then
@@ -1375,7 +1403,11 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   self:doBroadcastNotify("WaitForNullification", "")
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+  Fk.currentResponsePattern = pattern
   local winner = self:doRaceRequest(command, players, json.encode(data))
+  Fk.currentResponsePattern = nil
+
   if winner then
     local result = winner.client_reply
     return self:handleUseCardReply(winner, result)

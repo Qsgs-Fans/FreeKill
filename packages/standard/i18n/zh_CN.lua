@@ -311,4 +311,6 @@ Fk:loadTranslationTable{
   ["discard_skill"] = "弃牌",
   ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "选择角色",
+
+  ["game_rule"] = "弃牌阶段",
 }
