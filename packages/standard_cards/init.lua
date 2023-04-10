@@ -13,7 +13,10 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:inMyAttackRange(player)
+      return Self ~= player and
+        (self:getDistanceLimit(Self, card) -- for no distance limit for slash
+        + Self:getAttackRange()
+        >= Self:distanceTo(player))
     end
   end,
   on_effect = function(self, room, effect)
