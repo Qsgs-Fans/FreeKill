@@ -20,6 +20,8 @@
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
 ---@field public disabled_packs string[] @ 禁用的拓展包列表
+---@field public currentResponsePattern string
+---@field public currentResponseReason string
 local Engine = class("Engine")
 
 --- Engine的构造函数。

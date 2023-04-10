@@ -832,7 +832,10 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local command = "AskForUseActiveSkill"
   self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
   local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
+
+  Fk.currentResponseReason = extra_data.skillName
   local result = self:doRequest(player, command, json.encode(data))
+  Fk.currentResponseReason = nil
 
   if result == "" then
     return false
@@ -903,11 +906,13 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName,
+    skillName = skillName,
     pattern = pattern,
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
+
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
+
   if ret then
     toDiscard = ret.cards
   else
@@ -977,7 +982,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     num = maxNum,
     min_num = minNum,
     include_equip = includeEquip,
-    reason = skillName,
+    skillName = skillName,
     pattern = pattern,
     expand_pile = expand_pile,
   }
@@ -1317,7 +1322,11 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+    Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
+
     if result ~= "" then
       return self:handleUseCardReply(player, result)
     end
@@ -1353,7 +1362,11 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
     return eventData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+    Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
+
     if result ~= "" then
       local use = self:handleUseCardReply(player, result)
       if use then
@@ -1390,7 +1403,11 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   self:doBroadcastNotify("WaitForNullification", "")
 
   local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+  Fk.currentResponsePattern = pattern
   local winner = self:doRaceRequest(command, players, json.encode(data))
+  Fk.currentResponsePattern = nil
+
   if winner then
     local result = winner.client_reply
     return self:handleUseCardReply(winner, result)
