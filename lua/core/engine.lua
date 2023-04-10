@@ -378,7 +378,7 @@ function Engine:filterCard(id, player, data)
     return
   end
   local skills = player:getAllSkills()
-  local filters = self:currentRoom().status_skills[FilterSkill]
+  local filters = self:currentRoom().status_skills[FilterSkill] or {}
 
   if #filters == 0 then
     filtered_cards[id] = nil
