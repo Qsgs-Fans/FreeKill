@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 var Card = {
   Unknown : 0,
   PlayerHand : 1,
@@ -70,6 +72,7 @@ function doOkButton() {
         card: dashboard.getSelectedCard(),
         targets: selected_targets,
         special_skill: roomScene.getCurrentCardUseMethod(),
+        interaction_data: roomScene.skillInteraction.item ? roomScene.skillInteraction.item.answer : undefined,
       }
     ));
     return;
@@ -577,9 +580,12 @@ callbacks["AskForGeneral"] = function(jsonData) {
 }
 
 callbacks["AskForSkillInvoke"] = function(jsonData) {
-  // jsonData: string name
-  roomScene.promptText = Backend.translate("#AskForSkillInvoke")
-    .arg(Backend.translate(jsonData));
+  // jsonData: [ string name, string prompt ]
+  let data = JSON.parse(jsonData);
+  let skill = data[0];
+  let prompt = data[1];
+  roomScene.promptText = prompt ? processPrompt(prompt) : Backend.translate("#AskForSkillInvoke")
+    .arg(Backend.translate(skill));
   roomScene.state = "replying";
   roomScene.okCancel.visible = true;
   roomScene.okButton.enabled = true;
@@ -991,5 +997,17 @@ callbacks["CustomDialog"] = (j) => {
   roomScene.popupBox.source = AppPath + "/" + path;
   if (dat) {
     roomScene.popupBox.item.loadData(dat);
+  }
+}
+
+callbacks["UpdateLimitSkill"] = (j) => {
+  let data = JSON.parse(j);
+  let id = data[0];
+  let skill = data[1];
+  let time = data[2];
+
+  let photo = getPhotoOrSelf(id);
+  if (photo) {
+    photo.updateLimitSkill(skill, time);
   }
 }

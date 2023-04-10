@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 与体力值相关的事件
 ==================
 

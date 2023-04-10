@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class Client
 ---@field public client fk.Client
 ---@field public players ClientPlayer[]
@@ -20,6 +22,10 @@ function Client:initialize()
   end
   self.client.callback = function(_self, command, jsonData)
     local cb = fk.client_callback[command]
+
+    Fk.currentResponsePattern = nil
+    Fk.currentResponseReason = nil
+
     if (type(cb) == "function") then
       cb(jsonData)
     else
@@ -491,6 +497,16 @@ fk.client_callback["LoseSkill"] = function(jsonData)
   end
 end
 
+-- 说是限定技，其实也适用于觉醒技、转换技、使命技
+---@param skill Skill
+---@param times integer
+local function updateLimitSkill(pid, skill, times)
+  if not skill.visible then return end
+  if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
+  end
+end
+
 fk.client_callback["AddSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
@@ -501,6 +517,8 @@ fk.client_callback["AddSkill"] = function(jsonData)
   if skill.visible then
     ClientInstance:notifyUI("AddSkill", jsonData)
   end
+
+  updateLimitSkill(id, skill, target:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
@@ -511,7 +529,19 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   for k, v in pairs(extra_data) do
     skill[k] = v
   end
+
+  Fk.currentResponseReason = extra_data.skillName
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)
+end
+
+fk.client_callback["AskForUseCard"] = function(jsonData)
+  Fk.currentResponsePattern = json.decode(jsonData)[2]
+  ClientInstance:notifyUI("AskForUseCard", jsonData)
+end
+
+fk.client_callback["AskForResponseCard"] = function(jsonData)
+  Fk.currentResponsePattern = json.decode(jsonData)[2]
+  ClientInstance:notifyUI("AskForResponseCard", jsonData)
 end
 
 fk.client_callback["SetPlayerMark"] = function(jsonData)
@@ -526,13 +556,20 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
 end
 
 fk.client_callback["Chat"] = function(jsonData)
-  -- jsonData: { int type, string msg }
+  -- jsonData: { int type, int sender, string msg }
   local data = json.decode(jsonData)
-  local p = ClientInstance:getPlayerById(data.type)
+  if data.type == 1 then
+    data.general = ""
+    data.time = os.date("%H:%M:%S")
+    ClientInstance:notifyUI("Chat", json.encode(data))
+    return
+  end
+
+  local p = ClientInstance:getPlayerById(data.sender)
   -- TODO: observer chatting
   if not p then
     for _, pl in ipairs(ClientInstance.observers) do
-      if pl.id == data.type then
+      if pl.id == data.sender then
         p = pl; break
       end
     end
@@ -574,12 +611,20 @@ end
 
 fk.client_callback["AddSkillUseHistory"] = function(jsonData)
   local data = json.decode(jsonData)
-  Self:addSkillUseHistory(data[1], data[2])
+  local playerid, skill_name, time = data[1], data[2], data[3]
+  local player = ClientInstance:getPlayerById(playerid)
+  player:addSkillUseHistory(skill_name, time)
+  if not Fk.skills[skill_name] then return end
+  updateLimitSkill(playerid, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["SetSkillUseHistory"] = function(jsonData)
   local data = json.decode(jsonData)
-  Self:setSkillUseHistory(data[1], data[2], data[3])
+  local id, skill_name, time, scope = data[1], data[2], data[3], data[4]
+  local player = ClientInstance:getPlayerById(id)
+  player:setSkillUseHistory(skill_name, time, scope)
+  if not Fk.skills[skill_name] then return end
+  updateLimitSkill(id, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
 fk.client_callback["AddVirtualEquip"] = function(jsonData)
@@ -596,6 +641,10 @@ fk.client_callback["RemoveVirtualEquip"] = function(jsonData)
   local data = json.decode(jsonData)
   local player = ClientInstance:getPlayerById(data.player)
   player:removeVirtualEquip(data.id)
+end
+
+fk.client_callback["Heartbeat"] = function()
+  ClientInstance.client:notifyServer("Heartbeat", "")
 end
 
 -- Create ClientInstance (used by Lua)

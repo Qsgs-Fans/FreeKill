@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _SERVERPLAYER_H
 #define _SERVERPLAYER_H
 
@@ -33,8 +35,12 @@ public:
   void prepareForRequest(const QString &command,
                         const QString &data);
 
+  volatile bool alive; // For heartbeat
+  void kick();
+
 signals:
   void disconnected();
+  void kicked();
 
 private:
   ClientSocket *socket;   // socket for communicating with client

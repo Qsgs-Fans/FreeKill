@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- Definitions of game events
 
 GameEvent.ChangeHp = 1
@@ -27,12 +29,35 @@ GameEvent.Judge = 14
 dofile "lua/server/events/judge.lua"
 
 GameEvent.DrawInitial = 15
-GameEvent.Turn = 16
+GameEvent.Round = 16
+GameEvent.Turn = 17
 dofile "lua/server/events/gameflow.lua"
 
-GameEvent.Pindian = 17
+GameEvent.Pindian = 18
 dofile "lua/server/events/pindian.lua"
 
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
+local eventTranslations = {
+  [GameEvent.ChangeHp] = "GameEvent.ChangeHp",
+  [GameEvent.Damage] = "GameEvent.Damage",
+  [GameEvent.LoseHp] = "GameEvent.LoseHp",
+  [GameEvent.Recover] = "GameEvent.Recover",
+  [GameEvent.ChangeMaxHp] = "GameEvent.ChangeMaxHp",
+  [GameEvent.Dying] = "GameEvent.Dying",
+  [GameEvent.Death] = "GameEvent.Death",
+  [GameEvent.MoveCards] = "GameEvent.MoveCards",
+  [GameEvent.UseCard] = "GameEvent.UseCard",
+  [GameEvent.RespondCard] = "GameEvent.RespondCard",
+  [GameEvent.SkillEffect] = "GameEvent.SkillEffect",
+  [GameEvent.Judge] = "GameEvent.Judge",
+  [GameEvent.DrawInitial] = "GameEvent.DrawInitial",
+  [GameEvent.Round] = "GameEvent.Round",
+  [GameEvent.Turn] = "GameEvent.Turn",
+  [GameEvent.Pindian] = "GameEvent.Pindian",
+}
+
+function GameEvent.static:translate(id)
+  return eventTranslations[id]
+end

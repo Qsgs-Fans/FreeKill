@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
@@ -950,6 +952,7 @@ local spearSkill = fk.CreateViewAsSkill{
       return nil
     end
     local c = Fk:cloneCard("slash")
+    c.skillName = "spear"
     c:addSubcards(cards)
     return c
   end,
@@ -1103,6 +1106,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
           from = player.id,
           card = Fk:cloneCard('jink'),
         }
+        data.result.card.skillName = "eight_diagram"
 
         if data.eventData then
           data.result.toCard = data.eventData.toCard
@@ -1110,6 +1114,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
         end
       else
         data.result = Fk:cloneCard('jink')
+        data.result.skillName = "eight_diagram"
       end
 
       return true

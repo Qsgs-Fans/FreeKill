@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 local fkp_extensions = require "packages.test.test"
 local extension = fkp_extensions[1]
 
@@ -61,10 +63,18 @@ local test_active = fk.CreateActiveSkill{
     return true
   end,
   card_filter = function(self, card)
-    local c = Fk:getCardById(card)
-    return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
+    if self.interaction.data == "joy" then
+      --local c = Fk:getCardById(card)
+      --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
+      return true
+    end
   end,
+  card_num = 2,
   target_filter = function() return true end,
+  interaction = UI.ComboBox {
+    choices = Fk.package_names,
+    -- default = "guanyu",
+  },
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
@@ -78,13 +88,42 @@ local test_active = fk.CreateActiveSkill{
     -- room:closeAG(from)
     local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
     from:addToPile(self.name, cards)
+    from.kingdom = "wei"
+    room:broadcastProperty(from, "kingdom")
     -- p(cards)
+  end,
+}
+local test_vs = fk.CreateViewAsSkill{
+  name = "test_vs",
+  card_filter = function(self, to_select, selected)
+    return #selected == 0
+  end,
+  interaction = UI.ComboBox {
+    choices = {
+      "ex_nihilo",
+      "duel",
+      "snatch",
+      "dismantlement",
+      "savage_assault",
+      "archery_attack",
+    }
+  },
+  view_as = function(self, cards)
+    if #cards ~= 1 then
+      return nil
+    end
+    if not self.interaction.data then return end
+    local c = Fk:cloneCard(self.interaction.data)
+    c.skillName = self.name
+    c:addSubcard(cards[1])
+    return c
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(test_active)
+test2:addSkill(test_vs)
 
 Fk:loadTranslationTable{
   ["test"] = "测试",

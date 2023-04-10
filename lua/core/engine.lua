@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --- Engine是整个FreeKill赖以运行的核心。
 ---
 --- 它包含了FreeKill涉及的所有武将、卡牌、游戏模式等等
@@ -18,6 +20,8 @@
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
 ---@field public disabled_packs string[] @ 禁用的拓展包列表
+---@field public currentResponsePattern string
+---@field public currentResponseReason string
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -374,12 +378,8 @@ function Engine:filterCard(id, player, data)
     return
   end
   local skills = player:getAllSkills()
-  local filters = {}
-  for _, s in ipairs(skills) do
-    if s:isInstanceOf(FilterSkill) then
-      table.insert(filters, s)
-    end
-  end
+  local filters = self:currentRoom().status_skills[FilterSkill] or {}
+
   if #filters == 0 then
     filtered_cards[id] = nil
     return
@@ -392,8 +392,8 @@ function Engine:filterCard(id, player, data)
   end
 
   for _, f in ipairs(filters) do
-    if f:cardFilter(card) then
-      local _card = f:viewAs(card)
+    if f:cardFilter(card, player) then
+      local _card = f:viewAs(card, player)
       _card.id = id
       _card.skillName = f.name
       if modify and RoomInstance then

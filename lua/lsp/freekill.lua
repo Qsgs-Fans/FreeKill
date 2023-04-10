@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@meta
 
 -- Note: these files are not used by FreeKill.

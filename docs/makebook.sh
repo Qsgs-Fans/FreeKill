@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 #!/bin/bash
 
 TEX_FILE=manual.tex

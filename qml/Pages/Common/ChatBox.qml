@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Layouts
 
@@ -44,7 +46,7 @@ Rectangle {
             ClientInstance.notifyServer(
               "Chat",
               JSON.stringify({
-                type: isLobby,
+                type: isLobby ? 1 : 2,
                 msg: text
               })
             );

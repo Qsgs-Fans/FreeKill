@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: GFDL-1.3-or-later
+
 Diy文档
 ===============
 
@@ -9,4 +11,5 @@ Diy文档
     03-newgeneral.rst
     04-newskill.rst
     05-trigger.rst
+    06-active.rst
     03-events.rst

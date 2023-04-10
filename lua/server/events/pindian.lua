@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 GameEvent.functions[GameEvent.Pindian] = function(self)
   local pindianData = table.unpack(self.data)
   local self = self.room

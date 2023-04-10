@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class CardsMoveInfo
 ---@field public ids integer[]
 ---@field public from integer|null
@@ -37,6 +39,7 @@
 ---@field public reason string @ 体力变化原因
 ---@field public skillName string @ 引起体力变化的技能名
 ---@field public damageEvent DamageStruct|nil @ 引起这次体力变化的伤害数据
+---@field public preventDying boolean|null @ 是否阻止本次体力变更流程引发濒死流程
 
 --- 描述跟失去体力有关的数据
 ---@class HpLostData
@@ -71,6 +74,7 @@ fk.FireDamage = 3
 ---@class DyingStruct
 ---@field public who integer
 ---@field public damage DamageStruct
+---@field public ignoreDeath boolean|null
 
 ---@class DeathStruct
 ---@field public who integer

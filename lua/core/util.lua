@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- the iterator of QList object
 local qlist_iterator = function(list, n)
   if n < list:length() - 1 then
@@ -131,6 +133,23 @@ function table.simpleClone(self)
   return ret
 end
 
+-- similar to table.clone but convert all class/instances to string
+function table.cloneWithoutClass(self)
+  local ret = {}
+  for k, v in pairs(self) do
+    if type(v) == "table" then
+      if v.class or v.super then
+        ret[k] = tostring(v)
+      else
+        ret[k] = table.cloneWithoutClass(v)
+      end
+    else
+      ret[k] = v
+    end
+  end
+  return ret
+end
+
 -- if table does not contain the element, we insert it
 function table:insertIfNeed(element)
   if not table.contains(self, element) then
@@ -205,6 +224,14 @@ function string:split(delimiter)
   end
   table.insert(result, string.sub(self, from))
   return result
+end
+
+function string:startsWith(start)
+  return self:sub(1, #start) == start
+end
+
+function string:endsWith(e)
+  return e == "" or self:sub(-#e) == e
 end
 
 ---@class Sql

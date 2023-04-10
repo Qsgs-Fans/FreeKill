@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 -- All functions in this file are used by Qml
 
 function Translate(src)
@@ -133,6 +135,16 @@ function GetAllPiles(id)
   return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
 end
 
+function GetPlayerSkills(id)
+  local p = ClientInstance:getPlayerById(id)
+  return json.encode(table.map(p.player_skills, function(s)
+    return s.visible and {
+      name = s.name,
+      description = Fk:getDescription(s.name),
+    } or nil
+  end))
+end
+
 ---@param card string | integer
 ---@param player integer
 function CanUseCard(card, player)
@@ -154,7 +166,30 @@ function CanUseCard(card, player)
     end
   end
 
-  local ret = c.skill:canUse(ClientInstance:getPlayerById(player), c)
+  player = ClientInstance:getPlayerById(player)
+  local ret = c.skill:canUse(player, c)
+  if ret then
+    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+    for _, skill in ipairs(status_skills) do
+      if skill:prohibitUse(player, c) then
+        ret = false
+        break
+      end
+    end
+  end
+  return json.encode(ret)
+end
+
+function CardProhibitedUse(cid)
+  local c = Fk:getCardById(cid)
+  local ret = false
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitUse(Self, c) then
+      ret = true
+      break
+    end
+  end
   return json.encode(ret)
 end
 
@@ -231,11 +266,18 @@ function GetSkillData(skill_name)
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
   end
+  local frequency
+  if skill.frequency == Skill.Limited then
+    frequency = "limit"
+  elseif skill.frequency == Skill.Wake then
+    frequency = "wake"
+  end
   return json.encode{
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
     extension = skill.package.extensionName,
-    freq = freq
+    freq = freq,
+    frequency = frequency,
   }
 end
 
@@ -358,6 +400,19 @@ function SkillFitPattern(skill_name, pattern)
   return json.encode(ret)
 end
 
+function CardProhibitedResponse(cid)
+  local c = Fk:getCardById(cid)
+  local ret = false
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitResponse(Self, c) then
+      ret = true
+      break
+    end
+  end
+  return json.encode(ret)
+end
+
 function SkillCanResponse(skill_name)
   local skill = Fk.skills[skill_name]
   local ret = false
@@ -393,6 +448,18 @@ function GetGameModes()
   end
   table.sort(ret, function(a, b) return a.name > b.name end)
   return json.encode(ret)
+end
+
+function GetInteractionOfSkill(skill_name)
+  local skill = Fk.skills[skill_name]
+  return skill and json.encode(skill.interaction) or "null"
+end
+
+function SetInteractionDataOfSkill(skill_name, data)
+  local skill = Fk.skills[skill_name]
+  if skill and type(skill.interaction) == "table" then
+    skill.interaction.data = json.decode(data)
+  end
 end
 
 dofile "lua/client/i18n/init.lua"

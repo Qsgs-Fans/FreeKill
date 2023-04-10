@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 ---@class AttackRangeSkill : StatusSkill
 local AttackRangeSkill = StatusSkill:subclass("AttackRangeSkill")
 

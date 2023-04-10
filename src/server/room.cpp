@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "room.h"
 #include "serverplayer.h"
 #include "server.h"
@@ -314,9 +316,11 @@ void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
 void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   auto doc = String2Json(jsonData).object();
   auto type = doc["type"].toInt();
-  doc["type"] = sender->getId();
+  doc["sender"] = sender->getId();
   if (type == 1) {
-    // TODO: server chatting
+    doc["userName"] = sender->getScreenName();
+    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
+    doBroadcastNotify(players, "Chat", json);
   } else {
     auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
     doBroadcastNotify(players, "Chat", json);

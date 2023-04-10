@@ -1,3 +1,5 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
 --[[
 
   Exppattern is a string that describes cards of a same 'type', e.g. name,

@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Window
 import QtQuick.Layouts
 import "LobbyElement"
+import "Common"
 import "Logic.js" as Logic
 
 Item {
@@ -107,69 +110,6 @@ Item {
         }
       }
     }
-/*
-    GridLayout {
-      flow: GridLayout.TopToBottom
-      rows: 4
-      TileButton {
-        iconSource: "configure"
-        text: Backend.translate("Edit Profile")
-        onClicked: {
-          lobby_dialog.source = "LobbyElement/EditProfile.qml";
-          lobby_drawer.open();
-        }
-      }
-      TileButton {
-        iconSource: "create_room"
-        text: Backend.translate("Create Room")
-        onClicked: {
-          lobby_dialog.source = "LobbyElement/CreateRoom.qml";
-          lobby_drawer.open();
-          config.observing = false;
-        }
-      }
-      TileButton {
-        iconSource: "general_overview"
-        text: Backend.translate("Generals Overview")
-        onClicked: {
-          mainStack.push(mainWindow.generalsOverviewPage);
-          mainStack.currentItem.loadPackages();
-        }
-      }
-      TileButton {
-        iconSource: "card_overview"
-        text: Backend.translate("Cards Overview")
-        onClicked: {
-          mainStack.push(mainWindow.cardsOverviewPage);
-          mainStack.currentItem.loadPackages();
-        }
-      }
-      TileButton {
-        iconSource: "rule_summary"
-        text: Backend.translate("Scenarios Overview")
-      }
-      TileButton {
-        iconSource: "replay"
-        text: Backend.translate("Replay")
-      }
-      TileButton {
-        iconSource: "about"
-        text: Backend.translate("About")
-        onClicked: {
-          mainStack.push(mainWindow.aboutPage);
-        }
-      }
-      TileButton {
-        iconSource: "quit"
-        text: Backend.translate("Exit Lobby")
-        onClicked: {
-          toast.show("Goodbye.");
-          Backend.quitLobby();
-          mainStack.pop();
-        }
-      }
-    }
-*/
   }
 
   Button {
@@ -255,6 +195,49 @@ Item {
         });
       }
     }
+  }
+
+  property int lobbyPlayerNum: 0
+  property int serverPlayerNum: 0
+
+  function updateOnlineInfo() {
+  }
+
+  onLobbyPlayerNumChanged: updateOnlineInfo();
+  onServerPlayerNumChanged: updateOnlineInfo();
+
+  Rectangle {
+    id: info
+    color: "#88EEEEEE"
+    width: childrenRect.width + 8
+    height: childrenRect.height + 4
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    radius: 4
+
+    Text {
+      x: 4; y: 2
+      font.pixelSize: 16
+      text: Backend.translate("$OnlineInfo")
+        .arg(lobbyPlayerNum).arg(serverPlayerNum) + "\n"
+        + "Powered by FreeKill " + FkVersion
+    }
+  }
+
+  ChatBox {
+    id: lobbyChat
+    anchors.bottom: info.top
+    width: info.width
+    height: root.height * 0.6
+    isLobby: true
+    color: "#88EEEEEE"
+    radius: 4
+  }
+
+  function addToChat(pid, raw, msg) {
+    if (raw.type !== 1) return;
+    lobbyChat.append(msg);
+    toast.show("<b>" + raw.userName + "</b>: " + raw.msg);
   }
 
   Component.onCompleted: {

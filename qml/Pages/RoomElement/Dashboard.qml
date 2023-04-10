@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
@@ -141,18 +143,32 @@ RowLayout {
 
   // If cname is set, we are responding card.
   function enableCards(cname) {
+    const cardValid = (cid, cname) => {
+      let ret = JSON.parse(Backend.callLuaFunction(
+        "CardFitPattern", [cid, cname]));
+
+      if (ret) {
+        if (roomScene.respond_play) {
+          ret = ret && !JSON.parse(Backend.callLuaFunction(
+            "CardProhibitedResponse", [cid]));
+        } else {
+          ret = ret && !JSON.parse(Backend.callLuaFunction(
+            "CardProhibitedUse", [cid]));
+        }
+      }
+
+      return ret;
+    }
     if (cname) {
       let ids = [], cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
-        if (JSON.parse(Backend.callLuaFunction("CardFitPattern", [cards[i].cid, cname])))
+        if (cardValid(cards[i].cid, cname)) {
           ids.push(cards[i].cid);
+        }
       }
       cards = selfPhoto.equipArea.getAllCards();
       cards.forEach(c => {
-        if (JSON.parse(Backend.callLuaFunction(
-          "CardFitPattern",
-          [c.cid, cname]
-        ))) {
+        if (cardValid(c.cid, cname)) {
           ids.push(c.cid);
           if (!expanded_piles["_equip"]) {
             expandPile("_equip");
@@ -167,10 +183,7 @@ RowLayout {
         pile_list = pile_list.split(",");
         for (let pile_name of pile_list) {
           pile_data[pile_name] && pile_data[pile_name].forEach(cid => {
-            if (JSON.parse(Backend.callLuaFunction(
-              "CardFitPattern",
-              [cid, cname]
-            ))) {
+            if (cardValid(cid, cname)) {
               ids.push(cid);
               if (!expanded_piles[pile_name]) {
                 expandPile(pile_name);
@@ -262,8 +275,8 @@ RowLayout {
         [pending_skill, cid, pendings, targets]
       ))) {
         enabled_cards.push(cid);
-        if (!expanded_piles[pile_name]) {
-          expandPile(pile_name);
+        if (!expanded_piles[pile]) {
+          expandPile(pile);
         }
       }
     });

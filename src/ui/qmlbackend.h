@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
