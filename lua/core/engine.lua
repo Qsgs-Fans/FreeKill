@@ -378,12 +378,8 @@ function Engine:filterCard(id, player, data)
     return
   end
   local skills = player:getAllSkills()
-  local filters = {}
-  for _, s in ipairs(skills) do
-    if s:isInstanceOf(FilterSkill) then
-      table.insert(filters, s)
-    end
-  end
+  local filters = self:currentRoom().status_skills[FilterSkill]
+
   if #filters == 0 then
     filtered_cards[id] = nil
     return
@@ -396,8 +392,8 @@ function Engine:filterCard(id, player, data)
   end
 
   for _, f in ipairs(filters) do
-    if f:cardFilter(card) then
-      local _card = f:viewAs(card)
+    if f:cardFilter(card, player) then
+      local _card = f:viewAs(card, player)
       _card.id = id
       _card.skillName = f.name
       if modify and RoomInstance then

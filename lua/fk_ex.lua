@@ -309,8 +309,8 @@ function fk.CreateTargetModSkill(spec)
 end
 
 ---@class FilterSpec: StatusSkillSpec
----@field public card_filter fun(self: FilterSkill, card: Card)
----@field public view_as fun(self: FilterSkill, card: Card)
+---@field public card_filter fun(self: FilterSkill, card: Card, player: Player)
+---@field public view_as fun(self: FilterSkill, card: Card, player: Player)
 
 ---@param spec FilterSpec
 ---@return FilterSkill
