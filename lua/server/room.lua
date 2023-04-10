@@ -869,11 +869,34 @@ end
 ---@param prompt string @ 提示信息
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt)
+  cancelable = cancelable or false
+  pattern = pattern or ""
+
+  local canDiscards = table.filter(
+    player:getCardIds{ Player.Hand, includeEquip and Player.Equip or nil }, function(id)
+      local checkpoint = true
+      local card = Fk:getCardById(id)
+
+      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+      for _, skill in ipairs(status_skills) do
+        if skill:prohibitDiscard(player, card) then
+          return false
+        end
+      end
+
+      if pattern ~= "" then
+        checkpoint = checkpoint and (Exppattern:Parse(pattern):match(card))
+      end
+      return checkpoint
+    end
+  )
+
+  maxNum = math.min(#canDiscards, maxNum)
+  minNum = math.min(#canDiscards, minNum)
+
   if minNum < 1 then
     return nil
   end
-  cancelable = cancelable or false
-  pattern = pattern or ""
 
   local toDiscard = {}
   local data = {
@@ -889,15 +912,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     toDiscard = ret.cards
   else
     if cancelable then return {} end
-    local hands = player:getCardIds(Player.Hand)
-    if includeEquip then
-      table.insertTable(hands, player:getCardIds(Player.Equip))
-    end
-    for i = 1, minNum do
-      local randomId = hands[math.random(1, #hands)]
-      table.insert(toDiscard, randomId)
-      table.removeOne(hands, randomId)
-    end
+    toDiscard = table.random(canDiscards, minNum)
   end
 
   self:throwCard(toDiscard, skillName, player, player)
