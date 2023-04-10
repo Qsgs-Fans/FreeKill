@@ -898,7 +898,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   minNum = math.min(#canDiscards, minNum)
 
   if minNum < 1 then
-    return nil
+    return {}
   end
 
   local toDiscard = {}

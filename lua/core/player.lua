@@ -356,6 +356,12 @@ function Player:getAttackRange()
   local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
   local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
 
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    local correct = skill:getCorrect(self, other)
+    baseAttackRange = baseAttackRange + correct
+  end
+
   return math.max(baseAttackRange, 0)
 end
 
@@ -410,11 +416,6 @@ function Player:inMyAttackRange(other)
     return false
   end
   local baseAttackRange = self:getAttackRange()
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self, other)
-    baseAttackRange = baseAttackRange + correct
-  end
   return self:distanceTo(other) <= baseAttackRange
 end
 
