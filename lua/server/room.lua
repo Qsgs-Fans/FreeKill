@@ -509,6 +509,7 @@ function Room:doRaceRequest(command, players, jsonData)
       return nil
     end
 
+    coroutine.yield("__handleRequest", remainTime - elapsed)
     fk.QThread_msleep(10)
   end
 end
