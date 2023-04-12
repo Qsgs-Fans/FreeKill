@@ -208,6 +208,7 @@ local snatchSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local to = effect.to
     local from = effect.from
+    if to:isAllNude() then return end
     local cid = room:askForCardChosen(
       room:getPlayerById(from),
       room:getPlayerById(to),
@@ -335,15 +336,17 @@ local collateralSkill = fk.CreateActiveSkill{
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
   on_effect = function(self, room, effect)
-    local use = room:askForUseCard(
-      room:getPlayerById(effect.to),
-      "slash", nil, nil, nil, { must_targets = effect.subTargets }
-    )
+    local to = room:getPlayerById(effect.to)
+    if not to:getEquipment(Card.SubtypeWeapon) then return end
+    local use = room:askForUseCard(to, "slash", nil, nil, nil,
+                                   { must_targets = effect.subTargets })
 
     if use then
       room:useCard(use)
     else
-      room:obtainCard(effect.from, room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon), true, fk.ReasonGive)
+      room:obtainCard(effect.from,
+        room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon),
+        true, fk.ReasonGive)
     end
   end
 }
@@ -973,6 +976,12 @@ extension:addCards({
   spear,
 })
 
+local axeProhibit = fk.CreateProhibitSkill{
+  name = "#axe_prohibit",
+  prohibit_discard = function(self, player, card)
+    return player:hasSkill(self.name) and card.name == "axe"
+  end,
+}
 local axeSkill = fk.CreateTriggerSkill{
   name = "#axe_skill",
   attached_equip = "axe",
@@ -989,6 +998,7 @@ local axeSkill = fk.CreateTriggerSkill{
   end,
   on_use = function() return true end,
 }
+axeSkill:addRelatedSkill(axeProhibit)
 Fk:addSkill(axeSkill)
 local axe = fk.CreateWeapon{
   name = "axe",
