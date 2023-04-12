@@ -102,7 +102,8 @@ void Room::addPlayer(ServerPlayer *player) {
     if (runned_players.contains(player->getId())) {
       player->doNotify("ErrorMsg", "Running away is shameful.");
     }
-    // FIXME: add to lobby again
+    // 此时player仍在lobby中，别管就行了
+    // emit playerRemoved(player);
     return;
   }
 
@@ -166,8 +167,6 @@ void Room::addRobot(ServerPlayer *player) {
 
 void Room::removePlayer(ServerPlayer *player) {
   // 如果是旁观者的话，就清旁观者
-  // FIXME: 游戏结束后，旁观者若退出房间，则不会调用此处，遂导致bug(大厅加人)
-  // FIXME: 考虑一下把gameOver处的observers.clear()去掉
   if (observers.contains(player)) {
     removeObserver(player);
     return;
@@ -247,15 +246,17 @@ void Room::addObserver(ServerPlayer *player) {
 
   // 向observers中追加player，并从大厅移除player，然后将player的room设为this
   observers.append(player);
-  server->lobby()->removePlayer(player);
   player->setRoom(this);
+  emit playerAdded(player);
   pushRequest(QString("%1,observe").arg(player->getId()));
 }
 
 void Room::removeObserver(ServerPlayer *player) {
-  // FIXME: 判断一下有没有
-  observers.removeOne(player);
-  server->lobby()->addPlayer(player);
+  if (observers.contains(player)) {
+    observers.removeOne(player);
+  }
+  emit playerRemoved(player);
+
   if (player->getState() == Player::Online) {
     QJsonArray arr;
     arr << player->getId();
@@ -263,8 +264,6 @@ void Room::removeObserver(ServerPlayer *player) {
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
   }
-  // FIXME: 游戏结束后就别加request了，Lua已经没了
-  // FIXME: 但是按理说这东西在Lua没了之后/Lua创建时应该自动清空才对啊
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
 
@@ -307,12 +306,15 @@ void Room::gameOver() {
       p->deleteLater();
     }
   }
-  observers.clear();
+  // 旁观者不能在这清除，因为removePlayer逻辑不一样
+  // observers.clear();
   players.clear();
+  clearRequest();
   owner = nullptr;
 }
 
 QString Room::fetchRequest() {
+  if (!gameStarted) return "";
   request_queue_mutex.lock();
   QString ret = "";
   if (!request_queue.isEmpty()) {
@@ -323,8 +325,15 @@ QString Room::fetchRequest() {
 }
 
 void Room::pushRequest(const QString &req) {
+  if (!gameStarted) return;
   request_queue_mutex.lock();
   request_queue.enqueue(req);
+  request_queue_mutex.unlock();
+}
+
+void Room::clearRequest() {
+  request_queue_mutex.lock();
+  request_queue.clear();
   request_queue_mutex.unlock();
 }
 
@@ -332,6 +341,13 @@ bool Room::hasRequest() const { return !request_queue.isEmpty(); }
 
 void Room::run() {
   gameStarted = true;
+
+  // 开新游戏了，把赖着不走的旁观者全踢了
+  foreach (auto p, observers) {
+    removePlayer(p);
+  }
+  clearRequest();
+
   // 此处调用了Lua Room:run()函数
   roomStart();
 }

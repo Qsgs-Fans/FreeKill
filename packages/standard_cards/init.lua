@@ -206,12 +206,12 @@ local snatchSkill = fk.CreateActiveSkill{
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
-    local to = effect.to
+    local to = room:getPlayerById(effect.to)
     local from = effect.from
     if to:isAllNude() then return end
     local cid = room:askForCardChosen(
       room:getPlayerById(from),
-      room:getPlayerById(to),
+      to,
       "hej",
       self.name
     )
