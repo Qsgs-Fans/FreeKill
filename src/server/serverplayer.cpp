@@ -48,9 +48,9 @@ void ServerPlayer::setSocket(ClientSocket *socket) {
 
 ClientSocket *ServerPlayer::getSocket() const { return socket; }
 
+// 处理跑路玩家专用，就单纯把socket置为null
+// 因为后面还会用到socket所以不删除
 void ServerPlayer::removeSocket() {
-  // this->socket will be used by other ServerPlayer instance
-  // so do not delete it here
   this->socket = nullptr;
 }
 

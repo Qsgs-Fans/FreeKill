@@ -96,17 +96,19 @@ void Room::addPlayer(ServerPlayer *player) {
   if (!player)
     return;
 
+  // 如果要加入的房间满员了，或者已经开战了，就不能再加入
   if (isFull() || gameStarted) {
     player->doNotify("ErrorMsg", "Room is full or already started!");
     if (runned_players.contains(player->getId())) {
       player->doNotify("ErrorMsg", "Running away is shameful.");
     }
+    // FIXME: add to lobby again
     return;
   }
 
   QJsonArray jsonData;
 
-  // First, notify other players the new player is entering
+  // 告诉房里所有玩家有新人进来了
   if (!isLobby()) {
     jsonData << player->getId();
     jsonData << player->getScreenName();
@@ -116,6 +118,7 @@ void Room::addPlayer(ServerPlayer *player) {
 
   players.append(player);
   player->setRoom(this);
+
   if (isLobby()) {
     player->doNotify("EnterLobby", "[]");
   } else {
@@ -157,16 +160,21 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
   robot_id--;
 
+  // FIXME: 会触发Lobby:removePlayer
   addPlayer(robot);
 }
 
 void Room::removePlayer(ServerPlayer *player) {
+  // 如果是旁观者的话，就清旁观者
+  // FIXME: 游戏结束后，旁观者若退出房间，则不会调用此处，遂导致bug(大厅加人)
+  // FIXME: 考虑一下把gameOver处的observers.clear()去掉
   if (observers.contains(player)) {
     removeObserver(player);
     return;
   }
 
   if (!gameStarted) {
+    // 游戏还没开始的话，直接删除这名玩家
     if (players.contains(player)) {
       players.removeOne(player);
     }
@@ -179,14 +187,15 @@ void Room::removePlayer(ServerPlayer *player) {
     jsonData << player->getId();
     doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes(jsonData));
   } else {
+    // 否则给跑路玩家召唤个AI代打
     // TODO: if the player is died..
 
-    // change the socket and state to runned player
+    // 首先拿到跑路玩家的socket，然后把玩家的状态设为逃跑，这样自动被机器人接管
     ClientSocket *socket = player->getSocket();
     player->setState(Player::Run);
     player->removeSocket();
 
-    // and then create a new ServerPlayer for the runner
+    // 然后基于跑路玩家的socket，创建一个新ServerPlayer对象用来通信
     ServerPlayer *runner = new ServerPlayer(this);
     runner->setSocket(socket);
     connect(runner, &ServerPlayer::disconnected, server,
@@ -196,12 +205,15 @@ void Room::removePlayer(ServerPlayer *player) {
     runner->setAvatar(player->getAvatar());
     runner->setId(player->getId());
 
-    // finally update Server's player list and clean
+    // 最后向服务器玩家列表中增加这个人
+    // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
+    // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
   }
 
+  // 如果房间空了，就把房间标为废弃，Server有信号处理函数的
   if (isAbandoned() && !m_abandoned) {
     m_abandoned = true;
     emit abandoned();
@@ -227,10 +239,13 @@ ServerPlayer *Room::findPlayer(int id) const {
 }
 
 void Room::addObserver(ServerPlayer *player) {
+  // 首先只能旁观在运行的房间，因为旁观是由Lua处理的
   if (!gameStarted) {
     player->doNotify("ErrorMsg", "Can only observe running room.");
     return;
   }
+
+  // 向observers中追加player，并从大厅移除player，然后将player的room设为this
   observers.append(player);
   server->lobby()->removePlayer(player);
   player->setRoom(this);
@@ -238,6 +253,7 @@ void Room::addObserver(ServerPlayer *player) {
 }
 
 void Room::removeObserver(ServerPlayer *player) {
+  // FIXME: 判断一下有没有
   observers.removeOne(player);
   server->lobby()->addPlayer(player);
   if (player->getState() == Player::Online) {
@@ -247,6 +263,8 @@ void Room::removeObserver(ServerPlayer *player) {
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
   }
+  // FIXME: 游戏结束后就别加request了，Lua已经没了
+  // FIXME: 但是按理说这东西在Lua没了之后/Lua创建时应该自动清空才对啊
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
 
@@ -283,7 +301,7 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
 void Room::gameOver() {
   gameStarted = false;
   runned_players.clear();
-  // clean not online players
+  // 清理所有状态不是“在线”的玩家
   foreach (ServerPlayer *p, players) {
     if (p->getState() != Player::Online) {
       p->deleteLater();
@@ -314,5 +332,6 @@ bool Room::hasRequest() const { return !request_queue.isEmpty(); }
 
 void Room::run() {
   gameStarted = true;
+  // 此处调用了Lua Room:run()函数
   roomStart();
 }
