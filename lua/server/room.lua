@@ -35,28 +35,25 @@ Self = nil -- `Self' is client-only, but we need it in AI
 dofile "lua/server/ai/init.lua"
 
 --[[--------------------------------------------------------------------
-  Room stores all information for server side game room, such as player,
-  cards, and other properties.
-  It also have a lots of functions that make sure the room run properly.
+  Room 保存着服务器端游戏房间的所有信息，比如说玩家、卡牌，以及其他信息。
+  同时它也提供大量方法，以便于游戏能够顺利运转。
 
-  content of class Room:
-  * contructor
+  class Room 的大概内容：
+  * 构造方法
   * getter/setters
-  * Basic network functions, notify functions
-  * Interactive methods
-  * simple game actions, like judge, damage...
-  * using cards
-  * moving cards
+  * 基本的网络通信相关方法、通知用方法
+  * 交互式方法
+  * 各种触发游戏事件的方法
 
-  callbacks (not part of Room)
-  see also:
-    gamelogic.lua (for the game's main loop and trigger event)
-    game_rule.lua (draw initial cards, proceed phase, etc.)
-    aux_skills.lua (useful ActiveSkill for some interactive functions)
+  另请参考：
+    gamelogic.lua (游戏逻辑的主循环、触发时机等)
+    gameevent.lua (游戏事件的执行逻辑，以及各种事件的执行方法)
+    game_rule.lua (基础游戏规则，包括执行阶段、决胜负等)
+    aux_skills.lua (某些交互方法是套壳askForUseActiveSkill，就是在这定义的)
 ]]----------------------------------------------------------------------
 
 ------------------------------------------------------------------------
--- constructor
+-- 构造函数
 ------------------------------------------------------------------------
 
 --- 构造函数。别去构造
@@ -139,7 +136,7 @@ function Room:run()
 end
 
 ------------------------------------------------------------------------
--- getters and setters
+-- getters/setters
 ------------------------------------------------------------------------
 
 --- 基本算是私有函数，别去用
@@ -397,7 +394,7 @@ function Room:setPlayerGeneral(player, general, changeKingdom)
 end
 
 ------------------------------------------------------------------------
--- network functions, notify function
+-- 网络通信有关
 ------------------------------------------------------------------------
 
 --- 向所有角色广播一名角色的某个property，让大家都知道
@@ -807,7 +804,7 @@ function Room:doIndicate(source, targets)
 end
 
 ------------------------------------------------------------------------
--- interactive functions
+-- 交互方法
 ------------------------------------------------------------------------
 
 --- 询问player是否要发动一个主动技。
@@ -1485,7 +1482,7 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
 end
 
 ------------------------------------------------------------------------
--- use card logic, and wrappers
+-- 使用牌
 ------------------------------------------------------------------------
 
 local function execGameEvent(type, ...)
@@ -1887,7 +1884,7 @@ function Room:responseCard(cardResponseEvent)
 end
 
 ------------------------------------------------------------------------
--- move cards, and wrappers
+-- 移动牌
 ------------------------------------------------------------------------
 
 --- 传入一系列移牌信息，去实际移动这些牌
@@ -1980,10 +1977,10 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
 end
 
 ------------------------------------------------------------------------
--- some easier actions
+-- 其他游戏事件
 ------------------------------------------------------------------------
 
--- actions related to hp
+-- 与体力值等有关的事件
 
 --- 改变一名玩家的体力。
 ---@param player ServerPlayer @ 玩家
@@ -2039,7 +2036,7 @@ function Room:killPlayer(deathStruct)
   return execGameEvent(GameEvent.Death, deathStruct)
 end
 
--- lose/acquire skill actions
+-- 与失去/获得技能有关的事件
 
 --- 令一名玩家获得/失去技能。
 ---
@@ -2119,7 +2116,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
   end
 end
 
--- judge
+-- 判定
 
 --- 根据判定数据进行判定。判定的结果直接保存在这个数据中。
 ---@param data JudgeStruct
@@ -2206,7 +2203,7 @@ function Room:pindian(pindianData)
   return execGameEvent(GameEvent.Pindian, pindianData)
 end
 
--- other helpers
+-- 杂项函数
 
 function Room:adjustSeats()
   local players = {}

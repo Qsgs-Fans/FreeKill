@@ -51,8 +51,7 @@ static QStringList findFile(const QString &path, const QString &filename) {
   QDir dir;
   QStringList filters;
 
-  filters
-      << filename;
+  filters << filename;
   dir.setPath(path);
   dir.setNameFilters(filters);
   QDirIterator iter(dir, QDirIterator::Subdirectories);

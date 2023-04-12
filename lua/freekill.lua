@@ -1,23 +1,27 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
--- Fundemental script for FreeKill
--- Load mods, init the engine, etc.
+-- 用于初始化FreeKill的最基本脚本
+-- 向Lua虚拟机中加载库、游戏中的类，以及加载Mod等等。
 
+-- 加载第三方库
 package.path = package.path .. ";./lua/lib/?.lua"
                             .. ";./lua/?.lua"
 
--- load libraries
-
+-- middleclass: 轻量级的面向对象库
 class = require "middleclass"
+
+-- json: 提供json处理支持，能解析JSON和生成JSON
 json = require "json"
 
+-- 初始化随机数种子
+math.randomseed(os.time())
+
+-- 加载实用类，让Lua编写起来更轻松。
 local GroupUtils = require "core.util"
 TargetGroup, AimGroup = table.unpack(GroupUtils)
 dofile "lua/core/debug.lua"
 
-math.randomseed(os.time())
-
--- load core classes
+-- 加载游戏核心类
 Engine = require "core.engine"
 Package = require "core.package"
 General = require "core.general"
@@ -30,7 +34,8 @@ Player = require "core.player"
 GameMode = require "core.game_mode"
 UI = require "ui-util"
 
--- load config
+-- 读取配置文件。
+-- 因为io马上就要被禁用了，所以赶紧先在这里读取配置文件。
 local function loadConf()
   local cfg = io.open("freekill.client.config.json")
   local ret
@@ -46,7 +51,7 @@ local function loadConf()
 end
 Config = loadConf()
 
--- disable dangerous functions
+-- 禁用各种危险的函数，尽可能让Lua执行安全的代码。
 local _os = {
   time = os.time,
   date = os.date,
@@ -60,6 +65,6 @@ package = nil
 load = nil
 loadfile = nil
 
--- load packages
+-- 初始化Engine类并置于Fk全局变量中，这里会加载拓展包
 dofile "lua/fk_ex.lua"
 Fk = Engine:new()
