@@ -682,7 +682,8 @@ local liuli = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#liuli-target"
-    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name)
+    local plist, cid = room:askForChooseCardAndPlayers(player,
+                          self.target_list, 1, 1, nil, prompt, self.name, true)
     if #plist > 0 then
       self.cost_data = {plist[1], cid}
       return true
