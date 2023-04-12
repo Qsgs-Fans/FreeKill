@@ -342,10 +342,6 @@ bool Room::hasRequest() const { return !request_queue.isEmpty(); }
 void Room::run() {
   gameStarted = true;
 
-  // 开新游戏了，把赖着不走的旁观者全踢了
-  foreach (auto p, observers) {
-    removePlayer(p);
-  }
   clearRequest();
 
   // 此处调用了Lua Room:run()函数
