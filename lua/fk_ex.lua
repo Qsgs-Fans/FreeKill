@@ -1,7 +1,10 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
--- load types for extension
+-- fk_ex.lua对标太阳神三国杀的sgs_ex.lua
+-- 目的是提供类似太阳神三国杀拓展般的拓展语法。
+-- 关于各种CreateXXXSkill的介绍，请见相应文档，这里不做赘述。
 
+-- 首先加载所有详细的技能类型、卡牌类型等等，以及时机列表
 dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"

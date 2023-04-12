@@ -132,8 +132,6 @@ function GameLogic:prepareForStart()
     end
     room:broadcastProperty(p, "maxHp")
     room:broadcastProperty(p, "hp")
-
-    -- TODO: add skills to player
   end
 
   local allCardIds = Fk:getAllCardIds()

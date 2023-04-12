@@ -2,18 +2,18 @@
 
 --[[
 
-  Exppattern is a string that describes cards of a same 'type', e.g. name,
-  suit, etc.
+  Exppattern 是一个用来描述卡牌的字符串。
+  pattern 字符串会被用来构建新的 Exppattern 对象，然后可以用它来检查一张牌。
 
-  The string will be parsed and construct a new Exppattern instance.
-  Then we can use this instance to check the card.
+  pattern 字符串的语法：
+  1. 整个字符串可以被分号 (';') 切割，每一个分割就是一个 Matcher
+  2. 对于 Matcher 字符串，它是用 ('|') 分割的
+  3. 然后在 Matcher 的每一个细分中，又可以用 ',' 来进行更进一步的分割
 
-  Syntax for the string form:
-  1. the whole string can be splited by ';'. Every slice stands for a Matcher
-  2. For the matcher string, it can be splited by '|'.
-  3. And the arrays in class Match is concated by ',' in string.
+  其中 Matcher 的格式为 牌名|花色|点数|位置|详细牌名|类型|牌的id
+  更进一步，“点数” 可以用 '~' 符号表示数字的范围，并且可以用 AJQK 表示对应点数
 
-  Example:
+  例如：
   slash,jink|2~4|spade;.|.|.|.|.|trick
 
 ]]--
