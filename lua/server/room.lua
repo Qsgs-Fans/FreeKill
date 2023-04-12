@@ -509,6 +509,7 @@ function Room:doRaceRequest(command, players, jsonData)
       return nil
     end
 
+    coroutine.yield("__handleRequest", remainTime - elapsed)
     fk.QThread_msleep(10)
   end
 end
@@ -520,13 +521,11 @@ function Room:requestLoop(rest_time)
     local observee = self.players[1]
     player:doNotify("Setup", json.encode{
       observee.id,
-      player:getScreenName(),
-      player:getAvatar(),
+      observee.serverplayer:getScreenName(),
+      observee.serverplayer:getAvatar(),
     })
     player:doNotify("EnterRoom", json.encode{
-      #self.players, self.timeout,
-      -- FIXME: use real room settings here
-      { enableFreeAssign = false }
+      #self.players, self.timeout, self.settings
     })
 
     -- send player data

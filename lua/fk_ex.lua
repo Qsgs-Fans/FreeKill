@@ -236,7 +236,6 @@ end
 ---@return ProhibitSkill
 function fk.CreateProhibitSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.is_prohibited) == "function")
 
   local skill = ProhibitSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)

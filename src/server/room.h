@@ -61,6 +61,7 @@ class Room : public QThread {
 
   QString fetchRequest();
   void pushRequest(const QString &req);
+  void clearRequest();
   bool hasRequest() const;
 
  signals:

@@ -57,7 +57,6 @@ Item {
 
         Text {
           text: Backend.translate("Observe")
-          visible: false // FIXME
           font.pixelSize: 24
           TapHandler {
             onTapped: {
