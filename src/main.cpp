@@ -2,8 +2,8 @@
 
 #include "client.h"
 #ifndef Q_OS_WASM
-#include "server.h"
 #include "packman.h"
+#include "server.h"
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -15,18 +15,17 @@
 #endif
 
 #ifndef FK_SERVER_ONLY
-#include <QSplashScreen>
-#include <QScreen>
 #include <QFileDialog>
-# ifndef Q_OS_ANDROID
-# include <QQuickStyle>
-# endif
+#include <QScreen>
+#include <QSplashScreen>
+#ifndef Q_OS_ANDROID
+#include <QQuickStyle>
+#endif
 #include "qmlbackend.h"
 #endif
 
 #if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
-static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
-{
+static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath) {
   QFileInfo srcFileInfo(srcFilePath);
   if (srcFileInfo.isDir()) {
     QDir targetDir(tgtFilePath);
@@ -36,12 +35,12 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath)
         return false;
     }
     QDir sourceDir(srcFilePath);
-    QStringList fileNames = sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System);
+    QStringList fileNames =
+        sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot |
+                            QDir::Hidden | QDir::System);
     foreach (const QString &fileName, fileNames) {
-      const QString newSrcFilePath
-          = srcFilePath + QLatin1Char('/') + fileName;
-      const QString newTgtFilePath
-          = tgtFilePath + QLatin1Char('/') + fileName;
+      const QString newSrcFilePath = srcFilePath + QLatin1Char('/') + fileName;
+      const QString newTgtFilePath = tgtFilePath + QLatin1Char('/') + fileName;
       if (!copyPath(newSrcFilePath, newTgtFilePath))
         return false;
     }
@@ -73,8 +72,9 @@ static void installFkAssets(const QString &src, const QString &dest) {
 #include <stdlib.h>
 #include <unistd.h>
 static void prepareForLinux() {
-  // if user executes /usr/bin/FreeKill, that means freekill is installed by
-  // package manager, and then we need to copy assets to ~/.local and change cwd
+  // 如果用户执行的是 /usr/bin/FreeKill，那么这意味着 freekill 是被包管理器安装
+  // 的，所以我们就需要把资源文件都复制到 ~/.local 中，并且切换当前目录
+  // TODO: AppImage
   char buf[256] = {0};
   int len = readlink("/proc/self/exe", buf, 256);
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
@@ -91,40 +91,46 @@ static void prepareForLinux() {
 }
 #endif
 
-void fkMsgHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-  fprintf(stderr, "\r[%s] ", QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
+void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
+                  const QString &msg) {
+  fprintf(stderr, "\r[%s] ",
+          QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
   auto localMsg = msg.toUtf8();
   auto threadName = QThread::currentThread()->objectName().toLatin1();
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/DEBUG] %s\n", threadName.constData(), localMsg.constData());
+    fprintf(stderr, "[%s/DEBUG] %s\n", threadName.constData(),
+            localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/INFO] %s\n", threadName.constData(), localMsg.constData());
+    fprintf(stderr, "[%s/INFO] %s\n", threadName.constData(),
+            localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/WARNING] %s\n", threadName.constData(), localMsg.constData());
-    // if (Backend != nullptr) {
-    //   Backend->notifyUI("ErrorDialog", localMsg);
-    // }
+    fprintf(stderr, "[%s/WARNING] %s\n", threadName.constData(),
+            localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(), localMsg.constData());
+    fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(),
+            localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
-      Backend->notifyUI("ErrorDialog", QString("⛔ %1/Error occured!\n  %2")
-        .arg(threadName).arg(localMsg));
+      Backend->notifyUI(
+          "ErrorDialog",
+          QString("⛔ %1/Error occured!\n  %2").arg(threadName).arg(localMsg));
     }
 #endif
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/FATAL] %s\n", threadName.constData(), localMsg.constData());
+    fprintf(stderr, "[%s/FATAL] %s\n", threadName.constData(),
+            localMsg.constData());
     break;
   }
 }
 
-int main(int argc, char *argv[])
-{
+// FreeKill 的程序主入口。整个程序就是从这里开始执行的。
+int main(int argc, char *argv[]) {
+  // 初始化一下各种杂项信息
   QThread::currentThread()->setObjectName("Main");
   qInstallMessageHandler(fkMsgHandler);
   QCoreApplication *app;
@@ -136,6 +142,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifndef FK_CLIENT_ONLY
+  // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
   parser.addHelpOption();
@@ -161,56 +168,66 @@ int main(int argc, char *argv[])
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-# if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+      // Linux 服务器的话可以启用一个 Shell 来操作服务器。
       auto shell = new Shell;
       Pacman = new PackMan;
       shell->start();
-# endif
+#endif
     }
     return app->exec();
   }
 #endif
 
 #ifdef FK_SERVER_ONLY
+  // 根本没编译 GUI 相关的功能，直接在此退出
   qFatal("This is server-only build and have no GUI support.\n\
       Please use ./FreeKill -s to start a server in command line.");
 #else
 
-# ifdef Q_OS_WASM
+#ifdef Q_OS_WASM
   copyPath(":/", QDir::currentPath());
-# endif
+#endif
 
   app = new QApplication(argc, argv);
-# ifdef DESKTOP_BUILD
+#ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
-# endif
+#endif
 
-# define SHOW_SPLASH_MSG(msg) \
+#define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 
-# ifdef Q_OS_ANDROID
-  QJniObject::callStaticMethod <void>("org/notify/FreeKill/Helper", "InitView", "()V");
-  QDir::setCurrent("/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+#ifdef Q_OS_ANDROID
+  // 安卓：先切换到我们安装程序的那个外部存储目录去
+  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView",
+                                     "()V");
+  QDir::setCurrent(
+      "/storage/emulated/0/Android/data/org.notify.FreeKill/files");
 
+  // 然后显示欢迎界面，并在需要时复制资源素材等
   QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
   QRect screenGeometry = screen->geometry();
   int screenWidth = screenGeometry.width();
   int screenHeight = screenGeometry.height();
-  QSplashScreen splash(QPixmap("assets:/res/image/splash.jpg").scaled(screenWidth, screenHeight));
+  QSplashScreen splash(QPixmap("assets:/res/image/splash.jpg")
+                           .scaled(screenWidth, screenHeight));
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
-# else
+#else
+  // 不是安卓，那么直接启动欢迎界面，也就是不复制东西了
   QSplashScreen splash(QPixmap("image/splash.jpg"));
   splash.show();
-# endif
+#endif
 
   SHOW_SPLASH_MSG("Loading qml files...");
   QQmlApplicationEngine *engine = new QQmlApplicationEngine;
-# ifndef Q_OS_ANDROID
+#ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
-# endif
+#endif
 
+  // 加载 zh_CN.qm 翻译文件
+  // TODO: i18n
   QTranslator translator;
   Q_UNUSED(translator.load("zh_CN.qm"));
   QCoreApplication::installTranslator(&translator);
@@ -218,49 +235,54 @@ int main(int argc, char *argv[])
   QmlBackend backend;
   backend.setEngine(engine);
 
-# ifndef Q_OS_WASM
+#ifndef Q_OS_WASM
   Pacman = new PackMan;
-# endif
+#endif
 
+  // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
 
-# ifdef QT_DEBUG
+#ifdef QT_DEBUG
   bool debugging = true;
-# else
+#else
   bool debugging = false;
-# endif
+#endif
   engine->rootContext()->setContextProperty("Debugging", debugging);
 
-
   QString system;
-# if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID)
   system = "Android";
-# elif defined(Q_OS_WASM)
+#elif defined(Q_OS_WASM)
   system = "Web";
   engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9527");
-# elif defined(Q_OS_WIN32)
+#elif defined(Q_OS_WIN32)
   system = "Win";
   ::system("chcp 65001");
-# elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX)
   system = "Linux";
-# else
+#else
   system = "Other";
-# endif
+#endif
   engine->rootContext()->setContextProperty("OS", system);
 
-  engine->rootContext()->setContextProperty("AppPath", QUrl::fromLocalFile(QDir::currentPath()));
+  engine->rootContext()->setContextProperty(
+      "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
+
+  // 加载完全局变量后，就再去加载 main.qml，此时UI界面正式显示
   engine->load("qml/main.qml");
 
+  // qml 报错了就直接退出吧
   if (engine->rootObjects().isEmpty())
     return -1;
 
+  // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
 
-  // delete the engine first
-  // to avoid "TypeError: Cannot read property 'xxx' of null"
+  // 先删除 engine
+  // 防止报一堆错 "TypeError: Cannot read property 'xxx' of null"
   delete engine;
   delete Pacman;
 

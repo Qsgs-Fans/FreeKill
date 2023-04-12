@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "serverplayer.h"
-#include "room.h"
-#include "server.h"
-#include "router.h"
 #include "client_socket.h"
+#include "room.h"
+#include "router.h"
+#include "server.h"
 
-ServerPlayer::ServerPlayer(Room *room)
-{
+ServerPlayer::ServerPlayer(Room *room) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
   setState(Player::Online);
@@ -18,8 +17,7 @@ ServerPlayer::ServerPlayer(Room *room)
   alive = true;
 }
 
-ServerPlayer::~ServerPlayer()
-{
+ServerPlayer::~ServerPlayer() {
   // clean up, quit room and server
   room->removePlayer(this);
   if (room != nullptr) {
@@ -31,8 +29,7 @@ ServerPlayer::~ServerPlayer()
   router->deleteLater();
 }
 
-void ServerPlayer::setSocket(ClientSocket *socket)
-{
+void ServerPlayer::setSocket(ClientSocket *socket) {
   if (this->socket != nullptr) {
     this->socket->disconnect(this);
     disconnect(this->socket);
@@ -41,17 +38,15 @@ void ServerPlayer::setSocket(ClientSocket *socket)
 
   this->socket = nullptr;
   if (socket != nullptr) {
-    connect(socket, &ClientSocket::disconnected, this, &ServerPlayer::disconnected);
+    connect(socket, &ClientSocket::disconnected, this,
+            &ServerPlayer::disconnected);
     this->socket = socket;
   }
 
   router->setSocket(socket);
 }
 
-ClientSocket *ServerPlayer::getSocket() const
-{
-  return socket;
-}
+ClientSocket *ServerPlayer::getSocket() const { return socket; }
 
 void ServerPlayer::removeSocket() {
   // this->socket will be used by other ServerPlayer instance
@@ -59,40 +54,25 @@ void ServerPlayer::removeSocket() {
   this->socket = nullptr;
 }
 
-Server *ServerPlayer::getServer() const
-{
-  return server;
-}
+Server *ServerPlayer::getServer() const { return server; }
 
-Room *ServerPlayer::getRoom() const
-{
-  return room;
-}
+Room *ServerPlayer::getRoom() const { return room; }
 
-void ServerPlayer::setRoom(Room* room)
-{
-  this->room = room;
-}
+void ServerPlayer::setRoom(Room *room) { this->room = room; }
 
-void ServerPlayer::speak(const QString& message)
-{
-  ;
-}
+void ServerPlayer::speak(const QString &message) { ; }
 
-void ServerPlayer::doRequest(const QString& command, const QString& jsonData, int timeout)
-{
-  if (getState() != Player::Online) return;
+void ServerPlayer::doRequest(const QString &command, const QString &jsonData,
+                             int timeout) {
+  if (getState() != Player::Online)
+    return;
   int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
   router->request(type, command, jsonData, timeout);
 }
 
-void ServerPlayer::abortRequest()
-{
-  router->abortRequest();
-}
+void ServerPlayer::abortRequest() { router->abortRequest(); }
 
-QString ServerPlayer::waitForReply(int timeout)
-{
+QString ServerPlayer::waitForReply(int timeout) {
   QString ret;
   if (getState() != Player::Online) {
 #ifndef QT_DEBUG
@@ -105,15 +85,16 @@ QString ServerPlayer::waitForReply(int timeout)
   return ret;
 }
 
-void ServerPlayer::doNotify(const QString& command, const QString& jsonData)
-{
-  if (getState() != Player::Online) return;
-  int type = Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
+void ServerPlayer::doNotify(const QString &command, const QString &jsonData) {
+  if (getState() != Player::Online)
+    return;
+  int type =
+      Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;
   router->notify(type, command, jsonData);
 }
 
-void ServerPlayer::prepareForRequest(const QString& command, const QString& data)
-{
+void ServerPlayer::prepareForRequest(const QString &command,
+                                     const QString &data) {
   requestCommand = command;
   requestData = data;
 }

@@ -2,12 +2,12 @@
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "shell.h"
+#include "packman.h"
 #include "server.h"
 #include "serverplayer.h"
-#include "packman.h"
-#include <signal.h>
-#include <readline/readline.h>
 #include <readline/history.h>
+#include <readline/readline.h>
+#include <signal.h>
 
 static void sigintHandler(int) {
   fprintf(stderr, "\n");
@@ -127,7 +127,8 @@ void Shell::kickCommand(QStringList &list) {
   auto pid = list[0];
   bool ok;
   int id = pid.toInt(&ok);
-  if (!ok) return;
+  if (!ok)
+    return;
 
   auto p = ServerInstance->findPlayer(id);
   if (p) {
@@ -160,8 +161,10 @@ Shell::Shell() {
 void Shell::run() {
   printf("\rFreeKill, Copyright (C) 2022, GNU GPL'd, by Notify et al.\n");
   printf("This program comes with ABSOLUTELY NO WARRANTY.\n");
-  printf("This is free software, and you are welcome to redistribute it under\n");
-  printf("certain conditions; For more information visit http://www.gnu.org/licenses.\n\n");
+  printf(
+      "This is free software, and you are welcome to redistribute it under\n");
+  printf("certain conditions; For more information visit "
+         "http://www.gnu.org/licenses.\n\n");
   printf("This is server cli. Enter \"help\" for usage hints.\n");
 
   while (true) {
@@ -180,7 +183,8 @@ void Shell::run() {
     auto func = handler_map[command_list.first()];
     if (!func) {
       auto bytes = command_list.first().toUtf8();
-      qWarning("Unknown command \"%s\". Type \"help\" for hints.", bytes.constData());
+      qWarning("Unknown command \"%s\". Type \"help\" for hints.",
+               bytes.constData());
     } else {
       command_list.removeFirst();
       (this->*func)(command_list);
