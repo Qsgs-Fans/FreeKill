@@ -63,11 +63,11 @@ local test_active = fk.CreateActiveSkill{
     return true
   end,
   card_filter = function(self, card)
-    if self.interaction.data == "joy" then
+    -- if self.interaction.data == "joy" then
       --local c = Fk:getCardById(card)
       --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
       return true
-    end
+    -- end
   end,
   card_num = 2,
   target_filter = function() return true end,
@@ -86,11 +86,12 @@ local test_active = fk.CreateActiveSkill{
     -- room:takeAG(from, id)
     -- room:delay(2000)
     -- room:closeAG(from)
-    local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
-    from:addToPile(self.name, cards)
-    from.kingdom = "wei"
-    room:broadcastProperty(from, "kingdom")
+    -- local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
+    -- from:addToPile(self.name, cards)
+    -- from.kingdom = "wei"
+    -- room:broadcastProperty(from, "kingdom")
     -- p(cards)
+    room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
   end,
 }
 local test_vs = fk.CreateViewAsSkill{

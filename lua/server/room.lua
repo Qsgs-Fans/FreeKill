@@ -1882,6 +1882,39 @@ function Room:responseCard(cardResponseEvent)
   return execGameEvent(GameEvent.RespondCard, cardResponseEvent)
 end
 
+---@param card_name string @ 想要视为使用的牌名
+---@param subcards integer[] @ 子卡，可以留空或者直接nil
+---@param from ServerPlayer @ 使用来源
+---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
+---@param skillName string @ 技能名
+---@param extra boolean @ 是否计入次数
+function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
+  local card = Fk:cloneCard(card_name)
+  card.skillName = skillName
+
+  if from:prohibitUse(card) then return false end
+
+  if tos.class then tos = { tos } end
+  for i, p in ipairs(tos) do
+    if from:isProhibited(p, card) then
+      table.remove(tos, i)
+    end
+  end
+
+  if #tos == 0 then return false end
+
+  if subcards then card:addSubcards(Card:getIdList(subcards)) end
+
+  local use = {} ---@type CardUseStruct
+  use.from = from.id
+  use.tos = table.map(tos, function(p) return { p.id } end)
+  use.card = card
+  use.extraUse = extra
+  self:useCard(use)
+
+  return true
+end
+
 ------------------------------------------------------------------------
 -- 移动牌
 ------------------------------------------------------------------------

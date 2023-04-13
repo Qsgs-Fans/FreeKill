@@ -667,4 +667,50 @@ function Player:getAllSkills()
   return ret
 end
 
+---@param to Player
+---@param card Card
+function Player:isProhibited(to, card)
+  local r = Fk:currentRoom()
+  local status_skills = r.status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:isProhibited(self, to, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitUse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitUse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitResponse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitResponse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitDiscard(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitDiscard(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
 return Player

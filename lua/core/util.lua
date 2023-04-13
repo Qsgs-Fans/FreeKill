@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+local Util = {}
+
 -- the iterator of QList object
 local qlist_iterator = function(list, n)
   if n < list:length() - 1 then
@@ -52,9 +54,11 @@ function table:map(func)
 end
 
 -- frequenly used filter & map functions
-IdMapper = function(e) return e.id end
-Id2CardMapper = function(id) return Fk:getCardById(id) end
-Id2PlayerMapper = function(id) return Fk:currentRoom():getPlayerById(id) end
+Util.IdMapper = function(e) return e.id end
+Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
+Util.Id2PlayerMapper = function(id)
+  return Fk:currentRoom():getPlayerById(id)
+end
 
 ---@generic T
 ---@param self T[]
@@ -467,4 +471,4 @@ function AimGroup:getCancelledTargets(aimGroup)
   return aimGroup[AimGroup.Cancelled]
 end
 
-return { TargetGroup, AimGroup }
+return { TargetGroup, AimGroup, Util }
