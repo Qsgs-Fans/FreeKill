@@ -345,6 +345,7 @@ end
 ---@class CardSpec: Card
 ---@field public skill Skill
 ---@field public equip_skill Skill
+---@field public is_damage_card boolean
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
@@ -355,144 +356,105 @@ local defaultCardSkill = fk.CreateActiveSkill{
   end
 }
 
----@param spec CardSpec
----@return BasicCard
-function fk.CreateBasicCard(spec)
+local function preprocessCardSpec(spec)
   assert(type(spec.name) == "string" or type(spec.class_name) == "string")
   if not spec.name then spec.name = spec.class_name
   elseif not spec.class_name then spec.class_name = spec.name end
   if spec.suit then assert(type(spec.suit) == "number") end
   if spec.number then assert(type(spec.number) == "number") end
+end
 
-  local card = BasicCard:new(spec.name, spec.suit, spec.number)
+local function readCardSpecToCard(card, spec)
   card.skill = spec.skill or defaultCardSkill
   card.special_skills = spec.special_skills
+  card.is_damage_card = spec.is_damage_card
+end
+
+---@param spec CardSpec
+---@return BasicCard
+function fk.CreateBasicCard(spec)
+  preprocessCardSpec(spec)
+  local card = BasicCard:new(spec.name, spec.suit, spec.number)
+  readCardSpecToCard(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return TrickCard
 function fk.CreateTrickCard(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = TrickCard:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
+  readCardSpecToCard(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return DelayedTrickCard
 function fk.CreateDelayedTrickCard(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = DelayedTrickCard:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
+  readCardSpecToCard(card, spec)
   return card
+end
+
+local function readCardSpecToEquip(card, spec)
+  card.equip_skill = spec.equip_skill
+
+  if spec.on_install then card.onInstall = spec.on_install end
+  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
 end
 
 ---@param spec CardSpec
 ---@return Weapon
 function fk.CreateWeapon(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-  if spec.attack_range then assert(type(spec.attack_range) == "number" and spec.attack_range >= 0) end
+  preprocessCardSpec(spec)
+  if spec.attack_range then
+    assert(type(spec.attack_range) == "number" and spec.attack_range >= 0)
+  end
 
   local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
-  card.equip_skill = spec.equip_skill
-
-  if spec.on_install then card.onInstall = spec.on_install end
-  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
+  readCardSpecToCard(card, spec)
+  readCardSpecToEquip(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return Armor
 function fk.CreateArmor(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = Armor:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.equip_skill = spec.equip_skill
-  card.special_skills = spec.special_skills
-
-  if spec.on_install then card.onInstall = spec.on_install end
-  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
+  readCardSpecToCard(card, spec)
+  readCardSpecToEquip(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return DefensiveRide
 function fk.CreateDefensiveRide(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = DefensiveRide:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
-  card.equip_skill = spec.equip_skill
-
-  if spec.on_install then card.onInstall = spec.on_install end
-  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
+  readCardSpecToCard(card, spec)
+  readCardSpecToEquip(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return OffensiveRide
 function fk.CreateOffensiveRide(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = OffensiveRide:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
-  card.equip_skill = spec.equip_skill
-
-  if spec.on_install then card.onInstall = spec.on_install end
-  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
+  readCardSpecToCard(card, spec)
+  readCardSpecToEquip(card, spec)
   return card
 end
 
 ---@param spec CardSpec
 ---@return Treasure
 function fk.CreateTreasure(spec)
-  assert(type(spec.name) == "string" or type(spec.class_name) == "string")
-  if not spec.name then spec.name = spec.class_name
-  elseif not spec.class_name then spec.class_name = spec.name end
-  if spec.suit then assert(type(spec.suit) == "number") end
-  if spec.number then assert(type(spec.number) == "number") end
-
+  preprocessCardSpec(spec)
   local card = Treasure:new(spec.name, spec.suit, spec.number)
-  card.skill = spec.skill or defaultCardSkill
-  card.special_skills = spec.special_skills
-  card.equip_skill = spec.equip_skill
-
-  if spec.on_install then card.onInstall = spec.on_install end
-  if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
+  readCardSpecToCard(card, spec)
+  readCardSpecToEquip(card, spec)
   return card
 end
 

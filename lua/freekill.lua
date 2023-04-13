@@ -17,8 +17,8 @@ json = require "json"
 math.randomseed(os.time())
 
 -- 加载实用类，让Lua编写起来更轻松。
-local GroupUtils = require "core.util"
-TargetGroup, AimGroup = table.unpack(GroupUtils)
+local Utils = require "core.util"
+TargetGroup, AimGroup, Util = table.unpack(Utils)
 dofile "lua/core/debug.lua"
 
 -- 加载游戏核心类

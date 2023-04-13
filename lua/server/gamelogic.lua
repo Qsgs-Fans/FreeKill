@@ -122,6 +122,7 @@ function GameLogic:prepareForStart()
     local general = Fk.generals[p.general]
     p.maxHp = general.maxHp
     p.hp = general.hp
+    p.shield = general.shield
     -- TODO: setup AI here
 
     if p.role ~= "lord" then
@@ -132,6 +133,7 @@ function GameLogic:prepareForStart()
     end
     room:broadcastProperty(p, "maxHp")
     room:broadcastProperty(p, "hp")
+    room:broadcastProperty(p, "shield")
   end
 
   local allCardIds = Fk:getAllCardIds()

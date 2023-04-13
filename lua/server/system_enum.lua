@@ -51,6 +51,7 @@
 fk.NormalDamage = 1
 fk.ThunderDamage = 2
 fk.FireDamage = 3
+fk.IceDamage = 4
 
 --- DamageStruct 用来描述和伤害事件有关的数据。
 ---@class DamageStruct

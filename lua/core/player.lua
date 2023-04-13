@@ -10,6 +10,7 @@
 ---@field public id integer @ 玩家的id，每名玩家的id是唯一的。机器人的id是负数。
 ---@field public hp integer @ 体力值
 ---@field public maxHp integer @ 体力上限
+---@field public shield integer @ 护甲数
 ---@field public kingdom string @ 势力
 ---@field public role string @ 身份
 ---@field public general string @ 武将
@@ -665,6 +666,52 @@ function Player:getAllSkills()
     end
   end
   return ret
+end
+
+---@param to Player
+---@param card Card
+function Player:isProhibited(to, card)
+  local r = Fk:currentRoom()
+  local status_skills = r.status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:isProhibited(self, to, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitUse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitUse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitResponse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitResponse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+---@param card Card
+function Player:prohibitDiscard(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitDiscard(self, card) then
+      return true
+    end
+  end
+  return false
 end
 
 return Player

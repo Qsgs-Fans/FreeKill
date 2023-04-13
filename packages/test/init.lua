@@ -63,11 +63,11 @@ local test_active = fk.CreateActiveSkill{
     return true
   end,
   card_filter = function(self, card)
-    if self.interaction.data == "joy" then
+    -- if self.interaction.data == "joy" then
       --local c = Fk:getCardById(card)
       --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
       return true
-    end
+    -- end
   end,
   card_num = 2,
   target_filter = function() return true end,
@@ -86,11 +86,12 @@ local test_active = fk.CreateActiveSkill{
     -- room:takeAG(from, id)
     -- room:delay(2000)
     -- room:closeAG(from)
-    local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
-    from:addToPile(self.name, cards)
-    from.kingdom = "wei"
-    room:broadcastProperty(from, "kingdom")
+    -- local cards = room:askForCardsChosen(from, from, 2, 3, "hej", "")
+    -- from:addToPile(self.name, cards)
+    -- from.kingdom = "wei"
+    -- room:broadcastProperty(from, "kingdom")
     -- p(cards)
+    room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
   end,
 }
 local test_vs = fk.CreateViewAsSkill{
@@ -98,16 +99,18 @@ local test_vs = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     return #selected == 0
   end,
-  interaction = UI.ComboBox {
-    choices = {
-      "ex_nihilo",
-      "duel",
-      "snatch",
-      "dismantlement",
-      "savage_assault",
-      "archery_attack",
+  interaction = function(self)
+    return UI.ComboBox {
+      choices = {
+        "ex_nihilo",
+        "duel",
+        "snatch",
+        "dismantlement",
+        "savage_assault",
+        "archery_attack",
+      }
     }
-  },
+  end,
   view_as = function(self, cards)
     if #cards ~= 1 then
       return nil
@@ -120,6 +123,7 @@ local test_vs = fk.CreateViewAsSkill{
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
+test2.shield = 4
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(test_active)
