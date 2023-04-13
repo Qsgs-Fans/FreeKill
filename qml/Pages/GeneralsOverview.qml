@@ -87,6 +87,9 @@ Item {
           data.skill.forEach(t => {
             this.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
           });
+          data.related_skill.forEach(t => {
+            this.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
+          });
         }
       }
     }

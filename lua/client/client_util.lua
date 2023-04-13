@@ -27,7 +27,8 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
-    skill = {}
+    skill = {},
+    related_skill = {}
   }
   for _, s in ipairs(general.skills) do
     table.insert(ret.skill, {
@@ -37,6 +38,18 @@ function GetGeneralDetail(name)
   end
   for _, s in ipairs(general.other_skills) do
     table.insert(ret.skill, {
+      name = s,
+      description = Fk:getDescription(s)
+    })
+  end
+  for _, s in ipairs(general.related_skills) do
+    table.insert(ret.related_skill, {
+      name = s.name,
+      description = Fk:getDescription(s.name)
+    })
+  end
+  for _, s in ipairs(general.related_other_skills) do
+    table.insert(ret.related_skill, {
       name = s,
       description = Fk:getDescription(s)
     })
