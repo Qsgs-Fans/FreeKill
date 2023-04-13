@@ -163,7 +163,7 @@ local function updateColorAndNumber(card)
     number = math.min(number + c.number, 13)
     if color ~= c.color then
       if not different_color then
-        if color ~= Card.NoColor then
+        if c.color ~= Card.NoColor then
           different_color = true
         end
         color = c.color
@@ -184,8 +184,16 @@ function Card:addSubcard(card)
     table.insert(self.subcards, card)
   else
     assert(card:isInstanceOf(Card))
-    assert(not card:isVirtual(), "Can not add virtual card as subcard")
-    table.insert(self.subcards, card.id)
+    -- assert(not card:isVirtual(), "Can not add virtual card as subcard")
+    if card:isVirtual() then
+      table.insertTable(self.subcards, card.subcards)
+    else
+      table.insert(self.subcards, card.id)
+    end
+
+    for _, skill in ipairs(card.skillNames) do
+      self.skillName = skill
+    end
   end
 
   updateColorAndNumber(self)
