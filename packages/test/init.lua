@@ -99,16 +99,18 @@ local test_vs = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     return #selected == 0
   end,
-  interaction = UI.ComboBox {
-    choices = {
-      "ex_nihilo",
-      "duel",
-      "snatch",
-      "dismantlement",
-      "savage_assault",
-      "archery_attack",
+  interaction = function(self)
+    return UI.ComboBox {
+      choices = {
+        "ex_nihilo",
+        "duel",
+        "snatch",
+        "dismantlement",
+        "savage_assault",
+        "archery_attack",
+      }
     }
-  },
+  end,
   view_as = function(self, cards)
     if #cards ~= 1 then
       return nil

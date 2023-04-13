@@ -423,12 +423,19 @@ end
 
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
-  return skill and json.encode(skill.interaction) or "null"
+  if skill and skill.interaction then
+    if type(skill.interaction) == "function" then
+      return json.encode(skill:interaction())
+    else
+      return json.encode(skill.interaction)
+    end
+  end
+  return "null"
 end
 
 function SetInteractionDataOfSkill(skill_name, data)
   local skill = Fk.skills[skill_name]
-  if skill and type(skill.interaction) == "table" then
+  if skill and skill.interaction then
     skill.interaction.data = json.decode(data)
   end
 end
