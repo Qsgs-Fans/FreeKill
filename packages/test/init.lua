@@ -121,6 +121,7 @@ local test_vs = fk.CreateViewAsSkill{
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
+test2.shield = 4
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(test_active)

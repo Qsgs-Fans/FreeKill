@@ -13,6 +13,7 @@
 ---@field public kingdom string @ 武将所属势力
 ---@field public hp integer @ 武将初始体力
 ---@field public maxHp integer @ 武将初始最大体力
+---@field public shield integer @ 初始护甲
 ---@field public gender Gender @ 武将性别
 ---@field public skills Skill[] @ 武将技能
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
@@ -40,6 +41,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.hp = hp
   self.maxHp = maxHp or hp
   self.gender = gender or General.Male
+  self.shield = 0
 
   self.skills = {}    -- skills first added to this general
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde

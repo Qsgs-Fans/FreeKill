@@ -14,7 +14,8 @@ function GetGeneralData(name)
     extension = general.package.extensionName,
     kingdom = general.kingdom,
     hp = general.hp,
-    maxHp = general.maxHp
+    maxHp = general.maxHp,
+    shield = general.shield,
   }
 end
 

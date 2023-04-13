@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import "PhotoElement"
 import "../skin-bank.js" as SkinBank
 
 /* Layout of general card:
@@ -18,6 +19,7 @@ CardItem {
   property string kingdom
   property int hp
   property int maxHp
+  property int shieldNum
   property string pkgName: ""
   name: ""
   // description: Sanguosha.getGeneralDescription(name)
@@ -40,6 +42,7 @@ CardItem {
     y: 4
     spacing: 1
     Repeater {
+      id: hpRepeater
       model: (hp > 5 || hp !== maxHp) ? 1 : hp
       Image {
         source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama"
@@ -54,6 +57,14 @@ CardItem {
       style: Text.Outline
       y: -6
     }
+  }
+
+  Shield {
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.topMargin: hpRepeater.model > 4 ? 16 : 0
+    scale: 0.8
+    value: shieldNum
   }
 
   Text {
@@ -114,6 +125,7 @@ CardItem {
     kingdom = data.kingdom;
     hp = data.hp;
     maxHp = data.maxHp;
+    shieldNum = data.shield;
 
     let splited = name.split("__");
     if (splited.length > 1) {
