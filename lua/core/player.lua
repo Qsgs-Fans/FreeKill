@@ -10,6 +10,7 @@
 ---@field public id integer @ 玩家的id，每名玩家的id是唯一的。机器人的id是负数。
 ---@field public hp integer @ 体力值
 ---@field public maxHp integer @ 体力上限
+---@field public shield integer @ 护甲数
 ---@field public kingdom string @ 势力
 ---@field public role string @ 身份
 ---@field public general string @ 武将

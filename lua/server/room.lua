@@ -2025,6 +2025,16 @@ function Room:changeHp(player, num, reason, skillName, damageStruct)
   return execGameEvent(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
 end
 
+--- 改变玩家的护甲数
+---@param player ServerPlayer
+---@param num integer @ 变化量
+function Room:changeShield(player, num)
+  if num == 0 then return end
+  player.shield = math.max(player.shield + num, 0)
+  player.shield = math.min(player.shield, 5)
+  self:broadcastProperty(player, "shield")
+end
+
 --- 令一名玩家失去体力。
 ---@param player ServerPlayer @ 玩家
 ---@param num integer @ 失去的数量

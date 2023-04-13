@@ -1,5 +1,35 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+local damage_nature_table = {
+  [fk.NormalDamage] = "normal_damage",
+  [fk.FireDamage] = "fire_damage",
+  [fk.ThunderDamage] = "thunder_damage",
+}
+
+local function sendDamageLog(room, damageStruct)
+  if damageStruct.from then
+    room:sendLog{
+      type = "#Damage",
+      to = {damageStruct.from.id},
+      from = damageStruct.to.id,
+      arg = damageStruct.damage,
+      arg2 = damage_nature_table[damageStruct.damageType],
+    }
+  else
+    room:sendLog{
+      type = "#DamageWithNoFrom",
+      from = damageStruct.to.id,
+      arg = damageStruct.damage,
+      arg2 = damage_nature_table[damageStruct.damageType],
+    }
+  end
+  room:sendLogEvent("Damage", {
+    to = damageStruct.to.id,
+    damageType = damage_nature_table[damageStruct.damageType],
+    damageNum = damageStruct.damage,
+  })
+end
+
 GameEvent.functions[GameEvent.ChangeHp] = function(self)
   local player, num, reason, skillName, damageStruct = table.unpack(self.data)
   local self = self.room
@@ -25,32 +55,7 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
   self:broadcastProperty(player, "hp")
 
   if reason == "damage" then
-    local damage_nature_table = {
-      [fk.NormalDamage] = "normal_damage",
-      [fk.FireDamage] = "fire_damage",
-      [fk.ThunderDamage] = "thunder_damage",
-    }
-    if damageStruct.from then
-      self:sendLog{
-        type = "#Damage",
-        to = {damageStruct.from.id},
-        from = player.id,
-        arg = 0 - num,
-        arg2 = damage_nature_table[damageStruct.damageType],
-      }
-    else
-      self:sendLog{
-        type = "#DamageWithNoFrom",
-        from = player.id,
-        arg = 0 - num,
-        arg2 = damage_nature_table[damageStruct.damageType],
-      }
-    end
-    self:sendLogEvent("Damage", {
-      to = player.id,
-      damageType = damage_nature_table[damageStruct.damageType],
-      damageNum = damageStruct.damage,
-    })
+    sendDamageLog(self, damageStruct)
   elseif reason == "loseHp" then
     self:sendLog{
       type = "#LoseHP",
@@ -125,8 +130,21 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     return false
   end
 
-  if not self:changeHp(damageStruct.to, -damageStruct.damage, "damage", damageStruct.skillName, damageStruct) then
-    self.logic:breakEvent(false)
+  -- 先扣减护甲，再扣体力值
+  local shield_to_lose = math.min(damageStruct.damage, damageStruct.to.shield)
+  self:changeShield(damageStruct.to, -shield_to_lose)
+
+  if shield_to_lose < damageStruct.damage then
+    if not self:changeHp(
+      damageStruct.to,
+      shield_to_lose - damageStruct.damage,
+      "damage",
+      damageStruct.skillName,
+      damageStruct) then
+      self.logic:breakEvent(false)
+    end
+  else
+    sendDamageLog(self, damageStruct)
   end
 
   stages = {

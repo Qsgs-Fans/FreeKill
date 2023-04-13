@@ -192,6 +192,7 @@ Item {
         netstate: model.netstate
         maxHp: model.maxHp
         hp: model.hp
+        shield: model.shield
         seatNumber: model.seatNumber
         dead: model.dead
         dying: model.dying
@@ -256,6 +257,7 @@ Item {
     self.kingdom: dashboardModel.kingdom
     self.netstate: dashboardModel.netstate
     self.maxHp: dashboardModel.maxHp
+    self.shield: dashboardModel.shield
     self.hp: dashboardModel.hp
     self.seatNumber: dashboardModel.seatNumber
     self.dead: dashboardModel.dead
@@ -785,6 +787,7 @@ Item {
       netstate: "online",
       maxHp: 0,
       hp: 0,
+      shield: 0,
       seatNumber: 1,
       dead: false,
       dying: false,
@@ -808,6 +811,7 @@ Item {
         netstate: "online",
         maxHp: 0,
         hp: 0,
+        shield: 0,
         seatNumber: i + 1,
         dead: false,
         dying: false,
