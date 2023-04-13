@@ -37,6 +37,7 @@ local slash = fk.CreateBasicCard{
   name = "slash",
   number = 7,
   suit = Card.Spade,
+  is_damage_card = true,
   skill = slashSkill,
 }
 
@@ -310,6 +311,7 @@ local duel = fk.CreateTrickCard{
   name = "duel",
   suit = Card.Spade,
   number = 1,
+  is_damage_card = true,
   skill = duelSkill,
 }
 
@@ -452,6 +454,7 @@ local savageAssault = fk.CreateTrickCard{
   name = "savage_assault",
   suit = Card.Spade,
   number = 7,
+  is_damage_card = true,
   skill = savageAssaultSkill,
 }
 
@@ -499,6 +502,7 @@ local archeryAttack = fk.CreateTrickCard{
   name = "archery_attack",
   suit = Card.Heart,
   number = 1,
+  is_damage_card = true,
   skill = archeryAttackSkill,
 }
 

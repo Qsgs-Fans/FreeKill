@@ -20,6 +20,7 @@
 ---@field public skillNames string[]
 ---@field public skill Skill
 ---@field public special_skills string[] | nil
+---@field public is_damage_card boolean
 local Card = class("Card")
 
 ---@alias Suit integer
