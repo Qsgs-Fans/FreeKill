@@ -4,6 +4,7 @@ local damage_nature_table = {
   [fk.NormalDamage] = "normal_damage",
   [fk.FireDamage] = "fire_damage",
   [fk.ThunderDamage] = "thunder_damage",
+  [fk.IceDamage] = "ice_damage",
 }
 
 local function sendDamageLog(room, damageStruct)

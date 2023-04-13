@@ -171,6 +171,7 @@ Fk:loadTranslationTable{
   ["normal_damage"] = "无属性",
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
+  ["ice_damage"] = "冰属性",
 
   ["phase_judge"] = "判定阶段",
   ["phase_draw"] = "摸牌阶段",
