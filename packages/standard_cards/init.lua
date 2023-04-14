@@ -131,7 +131,8 @@ local peachSkill = fk.CreateActiveSkill{
     room:recover({
       who = room:getPlayerById(to),
       num = 1,
-      recoverBy = from,
+      card = effect.card,
+      recoverBy = room:getPlayerById(from),
       skillName = self.name
     })
   end

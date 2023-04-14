@@ -172,11 +172,11 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.card.skill:onUse(self, cardUseEvent)
   end
 
-  sendCardEmotionAndLog(self, cardUseEvent)
-
   if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
     self.logic:breakEvent()
   end
+
+  sendCardEmotionAndLog(self, cardUseEvent)
 
   if not cardUseEvent.extraUse then
     self:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
@@ -251,16 +251,25 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     moveReason = fk.ReasonResonpse,
   })
 
-  playCardEmotionAndSound(self, self:getPlayerById(from), card)
-
-  for _, event in ipairs({ fk.PreCardRespond, fk.CardResponding, fk.CardRespondFinished }) do
-    self.logic:trigger(event, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+  if self.logic:trigger(fk.PreCardRespond, self:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    self.logic:breakEvent()
   end
 
-  local realCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
-  if #realCardIds > 0 and not cardResponseEvent.skipDrop then
+  playCardEmotionAndSound(self, self:getPlayerById(from), card)
+
+  self.logic:trigger(fk.CardResponding, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+end
+
+GameEvent.cleaners[GameEvent.RespondCard] = function(self)
+  local cardResponseEvent = table.unpack(self.data)
+  local self = self.room
+
+  self.logic:trigger(fk.CardRespondFinished, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+
+  local leftRealCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
+  if #leftRealCardIds > 0 then
     self:moveCards({
-      ids = realCardIds,
+      ids = leftRealCardIds,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })

@@ -143,13 +143,21 @@ function GameLogic:prepareForStart()
     self.room:setCardArea(id, Card.DrawPile, nil)
   end
 
+  local addRoleModSkills = function(player, skillName)
+    local skill = Fk.skills[skillName]
+    if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+      return
+    end
+
+    room:handleAddLoseSkills(player, skillName, nil, false)
+  end
   for _, p in ipairs(room.alive_players) do
     local skills = Fk.generals[p.general].skills
     for _, s in ipairs(skills) do
-      room:handleAddLoseSkills(p, s.name, nil, false)
+      addRoleModSkills(p, s.name)
     end
     for _, sname in ipairs(Fk.generals[p.general].other_skills) do
-      room:handleAddLoseSkills(p, sname, nil, false)
+      addRoleModSkills(p, sname)
     end
   end
 
