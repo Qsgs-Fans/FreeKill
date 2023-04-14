@@ -191,17 +191,17 @@ QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
 
   auto data_bytes = data.toUtf8();
   auto rand_generator = QRandomGenerator::securelySeeded();
-  QByteArray aes_key_and_iv;
-  for (int i = 0; i < 4; i++) {
-    aes_key_and_iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  QByteArray aes_key_;
+  for (int i = 0; i < 2; i++) {
+    aes_key_.append(QByteArray::number(rand_generator.generate64(), 16));
   }
 
-  aes_key = aes_key_and_iv;
+  aes_key = aes_key_;
 
-  data_bytes.prepend(aes_key_and_iv);
+  data_bytes.prepend(aes_key_);
 
   unsigned char buf[RSA_size(rsa)];
-  RSA_public_encrypt(data.length() + 64,
+  RSA_public_encrypt(data.length() + 32,
                      (const unsigned char *)data_bytes.constData(), buf, rsa,
                      RSA_PKCS1_PADDING);
   return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();

@@ -36,7 +36,6 @@ private:
   QByteArray aesEncrypt(const QByteArray &in);
   QByteArray aesDecrypt(const QByteArray &out);
   AES_KEY aes_key;
-  QByteArray aes_iv;
   bool aes_ready;
   QTcpSocket *socket;
   void init();

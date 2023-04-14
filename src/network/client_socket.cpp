@@ -2,6 +2,7 @@
 
 #include "client_socket.h"
 #include <openssl/aes.h>
+#include <qrandom.h>
 
 ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) {
   aes_ready = false;
@@ -44,15 +45,15 @@ void ClientSocket::getMessage() {
 void ClientSocket::disconnectFromHost() { socket->disconnectFromHost(); }
 
 void ClientSocket::send(const QByteArray &msg) {
-  if (msg.length() >= 300) {
+  QByteArray _msg;
+  if (msg.length() >= 1024) {
     auto comp = qCompress(msg);
-    auto _msg = "Compressed" + comp.toBase64();
+    _msg = "Compressed" + comp.toBase64();
     _msg = aesEncrypt(_msg) + "\n";
-    socket->write(_msg);
-    socket->flush();
-    return;
+  } else {
+    _msg = aesEncrypt(msg) + "\n";
   }
-  auto _msg = aesEncrypt(msg) + "\n";
+
   socket->write(_msg);
   socket->flush();
 }
@@ -104,14 +105,12 @@ void ClientSocket::raiseError(QAbstractSocket::SocketError socket_error) {
 }
 
 void ClientSocket::installAESKey(const QByteArray &key) {
-  if (key.length() != 64) {
+  if (key.length() != 32) {
     return;
   }
-  auto key_ = QByteArray::fromHex(key.first(32));
-  auto iv = QByteArray::fromHex(key.last(32));
+  auto key_ = QByteArray::fromHex(key);
 
   AES_set_encrypt_key((const unsigned char *)key_.data(), 16 * 8, &aes_key);
-  aes_iv = iv;
   aes_ready = true;
 }
 
@@ -122,13 +121,21 @@ QByteArray ClientSocket::aesEncrypt(const QByteArray &in) {
   int num = 0;
   QByteArray out;
   out.resize(in.length());
+
+  auto rand_generator = QRandomGenerator::securelySeeded();
+
+  QByteArray iv;
+  iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  auto iv_raw = QByteArray::fromHex(iv);
+
   unsigned char tempIv[16];
-  strncpy((char *)tempIv, aes_iv.constData(), 16);
+  strncpy((char *)tempIv, iv_raw.constData(), 16);
   AES_cfb128_encrypt((const unsigned char *)in.constData(),
                      (unsigned char *)out.data(), in.length(), &aes_key, tempIv,
                      &num, AES_ENCRYPT);
 
-  return out.toBase64();
+  return iv + out.toBase64();
 }
 QByteArray ClientSocket::aesDecrypt(const QByteArray &in) {
   if (!aes_ready) {
@@ -136,7 +143,12 @@ QByteArray ClientSocket::aesDecrypt(const QByteArray &in) {
   }
 
   int num = 0;
-  auto inenc = QByteArray::fromBase64(in);
+  auto iv = in.first(32);
+  auto aes_iv = QByteArray::fromHex(iv);
+
+  auto real_in = in;
+  real_in.remove(0, 32);
+  auto inenc = QByteArray::fromBase64(real_in);
   QByteArray out;
   out.resize(inenc.length());
   unsigned char tempIv[16];

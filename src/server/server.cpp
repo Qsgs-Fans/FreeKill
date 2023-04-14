@@ -228,10 +228,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
   auto decrypted_pw =
       QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
 
-  if (decrypted_pw.length() > 64) {
-    auto aes_bytes = decrypted_pw.first(64);
+  if (decrypted_pw.length() > 32) {
+    auto aes_bytes = decrypted_pw.first(32);
     client->installAESKey(aes_bytes);
-    decrypted_pw.remove(0, 64);
+    decrypted_pw.remove(0, 32);
   } else {
     decrypted_pw = "\xFF";
   }
