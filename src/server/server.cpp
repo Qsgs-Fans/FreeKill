@@ -227,6 +227,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
                       buf, rsa, RSA_PKCS1_PADDING);
   auto decrypted_pw =
       QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
+
+  auto aes_bytes = decrypted_pw.first(64);
+  decrypted_pw.remove(0, 64);
+
   bool passed = false;
   QString error_msg;
   QJsonArray result;
