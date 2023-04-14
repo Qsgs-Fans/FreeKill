@@ -3,6 +3,8 @@
 #ifndef _CLIENT_SOCKET_H
 #define _CLIENT_SOCKET_H
 
+#include <openssl/aes.h>
+
 class ClientSocket : public QObject {
   Q_OBJECT
 
@@ -13,6 +15,7 @@ public:
 
   void connectToHost(const QString &address = "127.0.0.1", ushort port = 9527u);
   void disconnectFromHost();
+  void installAESKey(const QByteArray &key);
   void send(const QByteArray& msg);
   bool isConnected() const;
   QString peerName() const;
@@ -30,6 +33,11 @@ private slots:
   void raiseError(QAbstractSocket::SocketError error);
 
 private:
+  QByteArray aesEncrypt(const QByteArray &in);
+  QByteArray aesDecrypt(const QByteArray &out);
+  AES_KEY aes_key;
+  QByteArray aes_iv;
+  bool aes_ready;
   QTcpSocket *socket;
   void init();
 };

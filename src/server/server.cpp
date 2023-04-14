@@ -229,6 +229,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
       QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
 
   auto aes_bytes = decrypted_pw.first(64);
+  client->installAESKey(aes_bytes);
   decrypted_pw.remove(0, 64);
 
   bool passed = false;

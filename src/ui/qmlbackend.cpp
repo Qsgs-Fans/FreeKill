@@ -196,6 +196,8 @@ QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
     aes_key_and_iv.append(QByteArray::number(rand_generator.generate64(), 16));
   }
 
+  aes_key = aes_key_and_iv;
+
   data_bytes.prepend(aes_key_and_iv);
 
   unsigned char buf[RSA_size(rsa)];
@@ -270,4 +272,12 @@ void QmlBackend::playSound(const QString &name, int index) {
 
 void QmlBackend::copyToClipboard(const QString &s) {
   QGuiApplication::clipboard()->setText(s);
+}
+
+void QmlBackend::setAESKey(const QString &key) { aes_key = key; }
+
+QString QmlBackend::getAESKey() const { return aes_key; }
+
+void QmlBackend::installAESKey() {
+  ClientInstance->installAESKey(aes_key.toLatin1());
 }
