@@ -195,6 +195,9 @@ QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
   for (int i = 0; i < 2; i++) {
     aes_key_.append(QByteArray::number(rand_generator.generate64(), 16));
   }
+  if (aes_key_.length() < 32) {
+    aes_key_.append(QByteArray("0").repeated(32 - aes_key_.length()));
+  }
 
   aes_key = aes_key_;
 

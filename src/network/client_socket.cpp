@@ -42,7 +42,10 @@ void ClientSocket::getMessage() {
   }
 }
 
-void ClientSocket::disconnectFromHost() { socket->disconnectFromHost(); }
+void ClientSocket::disconnectFromHost() {
+  aes_ready = false;
+  socket->disconnectFromHost();
+}
 
 void ClientSocket::send(const QByteArray &msg) {
   QByteArray _msg;
@@ -127,6 +130,9 @@ QByteArray ClientSocket::aesEncrypt(const QByteArray &in) {
   QByteArray iv;
   iv.append(QByteArray::number(rand_generator.generate64(), 16));
   iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  if (iv.length() < 32) {
+    iv.append(QByteArray("0").repeated(32 - iv.length()));
+  }
   auto iv_raw = QByteArray::fromHex(iv);
 
   unsigned char tempIv[16];
