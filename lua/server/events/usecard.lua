@@ -266,10 +266,10 @@ GameEvent.cleaners[GameEvent.RespondCard] = function(self)
 
   self.logic:trigger(fk.CardRespondFinished, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 
-  local leftRealCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
-  if #leftRealCardIds > 0 then
+  local realCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
+  if #realCardIds > 0 and not cardResponseEvent.skipDrop then
     self:moveCards({
-      ids = leftRealCardIds,
+      ids = realCardIds,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
