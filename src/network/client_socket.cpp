@@ -104,6 +104,9 @@ void ClientSocket::raiseError(QAbstractSocket::SocketError socket_error) {
 }
 
 void ClientSocket::installAESKey(const QByteArray &key) {
+  if (key.length() != 64) {
+    return;
+  }
   auto key_ = QByteArray::fromHex(key.first(32));
   auto iv = QByteArray::fromHex(key.last(32));
 
