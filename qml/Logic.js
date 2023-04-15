@@ -25,7 +25,7 @@ callbacks["NetworkDelayTest"] = function(jsonData) {
     && config.savedPassword[config.serverAddr].shorten_password === config.password) {
     cipherText = config.savedPassword[config.serverAddr].password;
     aeskey = config.savedPassword[config.serverAddr].key;
-    config.aeskey = aeskey;
+    config.aeskey = aeskey ?? "";
     Backend.setAESKey(aeskey);
     if (Debugging)
       console.log("use remembered password", config.password);
