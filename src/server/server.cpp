@@ -193,30 +193,13 @@ void Server::processRequest(const QByteArray &msg) {
 
   QJsonArray arr = String2Json(doc[3].toString()).array();
 
-  if (md5 != arr[2].toString()) {
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << "MD5 check failed!";
-    client->send(JsonArray2Bytes(body));
-
-    body.removeLast();
-    body.removeLast();
-    body << "UpdatePackage";
-    body << Pacman->getPackSummary();
-    client->send(JsonArray2Bytes(body));
-
-    client->disconnectFromHost();
-    return;
-  }
-
-  handleNameAndPassword(client, arr[0].toString(), arr[1].toString());
+  handleNameAndPassword(client, arr[0].toString(), arr[1].toString(),
+                        arr[2].toString());
 }
 
 void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
-                                   const QString &password) {
+                                   const QString &password,
+                                   const QString &md5_str) {
   // First check the name and password
   // Matches a string that does not contain special characters
   static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
@@ -234,6 +217,25 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     decrypted_pw.remove(0, 32);
   } else {
     decrypted_pw = "\xFF";
+  }
+
+  if (md5 != md5_str) {
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "MD5 check failed!";
+    client->send(JsonArray2Bytes(body));
+
+    body.removeLast();
+    body.removeLast();
+    body << "UpdatePackage";
+    body << Pacman->getPackSummary();
+    client->send(JsonArray2Bytes(body));
+
+    client->disconnectFromHost();
+    return;
   }
 
   bool passed = false;

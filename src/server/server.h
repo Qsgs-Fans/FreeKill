@@ -19,8 +19,8 @@ public:
   bool listen(const QHostAddress &address = QHostAddress::Any,
               ushort port = 9527u);
 
-  void createRoom(ServerPlayer *owner, const QString &name,
-                  int capacity, const QByteArray &settings = "{}");
+  void createRoom(ServerPlayer *owner, const QString &name, int capacity,
+                  const QByteArray &settings = "{}");
 
   Room *findRoom(int id) const;
   Room *lobby() const;
@@ -61,8 +61,8 @@ private:
   sqlite3 *db;
   QString md5;
 
-  void handleNameAndPassword(ClientSocket *client,
-                             const QString &name, const QString &password);
+  void handleNameAndPassword(ClientSocket *client, const QString &name,
+                             const QString &password, const QString &md5_str);
 };
 
 extern Server *ServerInstance;
