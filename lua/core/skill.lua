@@ -34,6 +34,7 @@ function Skill:initialize(name, frequency)
   self.package = { extensionName = "standard" }
   self.frequency = frequency
   self.visible = true
+  self.lordSkill = false
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
@@ -43,6 +44,10 @@ function Skill:initialize(name, frequency)
 
   if string.sub(name, 1, 1) == "#" then
     self.visible = false
+  end
+  if string.sub(name, #name) == "$" then
+    self.name = string.sub(name, 1, #name - 1)
+    self.lordSkill = true
   end
 
   self.attached_equip = nil
