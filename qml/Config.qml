@@ -26,6 +26,7 @@ QtObject {
   property string screenName: ""
   property string password: ""
   property string cipherText
+  property string aeskey
 
   // Client data
   property int roomCapacity: 0

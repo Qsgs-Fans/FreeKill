@@ -43,6 +43,10 @@ void Router::setSocket(ClientSocket *socket) {
   }
 }
 
+void Router::installAESKey(const QByteArray &key) {
+  socket->installAESKey(key);
+}
+
 #ifndef FK_CLIENT_ONLY
 void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;

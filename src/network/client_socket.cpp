@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "client_socket.h"
+#include <openssl/aes.h>
+#include <qrandom.h>
 
-ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) { init(); }
+ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) {
+  aes_ready = false;
+  init();
+}
 
 ClientSocket::ClientSocket(QTcpSocket *socket) {
   socket->setParent(this);
@@ -28,6 +33,7 @@ void ClientSocket::connectToHost(const QString &address, ushort port) {
 void ClientSocket::getMessage() {
   while (socket->canReadLine()) {
     auto msg = socket->readLine();
+    msg = aesDecrypt(msg);
     if (msg.startsWith("Compressed")) {
       msg = msg.sliced(10);
       msg = qUncompress(QByteArray::fromBase64(msg));
@@ -36,18 +42,22 @@ void ClientSocket::getMessage() {
   }
 }
 
-void ClientSocket::disconnectFromHost() { socket->disconnectFromHost(); }
+void ClientSocket::disconnectFromHost() {
+  aes_ready = false;
+  socket->disconnectFromHost();
+}
 
 void ClientSocket::send(const QByteArray &msg) {
+  QByteArray _msg;
   if (msg.length() >= 1024) {
     auto comp = qCompress(msg);
-    auto _msg = "Compressed" + comp.toBase64() + "\n";
-    socket->write(_msg);
-    socket->flush();
+    _msg = "Compressed" + comp.toBase64();
+    _msg = aesEncrypt(_msg) + "\n";
+  } else {
+    _msg = aesEncrypt(msg) + "\n";
   }
-  socket->write(msg);
-  if (!msg.endsWith("\n"))
-    socket->write("\n");
+
+  socket->write(_msg);
   socket->flush();
 }
 
@@ -95,4 +105,63 @@ void ClientSocket::raiseError(QAbstractSocket::SocketError socket_error) {
   emit error_message(tr("Connection failed, error code = %1\n reason: %2")
                          .arg(socket_error)
                          .arg(reason));
+}
+
+void ClientSocket::installAESKey(const QByteArray &key) {
+  if (key.length() != 32) {
+    return;
+  }
+  auto key_ = QByteArray::fromHex(key);
+
+  AES_set_encrypt_key((const unsigned char *)key_.data(), 16 * 8, &aes_key);
+  aes_ready = true;
+}
+
+QByteArray ClientSocket::aesEncrypt(const QByteArray &in) {
+  if (!aes_ready) {
+    return in;
+  }
+  int num = 0;
+  QByteArray out;
+  out.resize(in.length());
+
+  auto rand_generator = QRandomGenerator::securelySeeded();
+
+  QByteArray iv;
+  iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  iv.append(QByteArray::number(rand_generator.generate64(), 16));
+  if (iv.length() < 32) {
+    iv.append(QByteArray("0").repeated(32 - iv.length()));
+  }
+  auto iv_raw = QByteArray::fromHex(iv);
+
+  unsigned char tempIv[16];
+  strncpy((char *)tempIv, iv_raw.constData(), 16);
+  AES_cfb128_encrypt((const unsigned char *)in.constData(),
+                     (unsigned char *)out.data(), in.length(), &aes_key, tempIv,
+                     &num, AES_ENCRYPT);
+
+  return iv + out.toBase64();
+}
+QByteArray ClientSocket::aesDecrypt(const QByteArray &in) {
+  if (!aes_ready) {
+    return in;
+  }
+
+  int num = 0;
+  auto iv = in.first(32);
+  auto aes_iv = QByteArray::fromHex(iv);
+
+  auto real_in = in;
+  real_in.remove(0, 32);
+  auto inenc = QByteArray::fromBase64(real_in);
+  QByteArray out;
+  out.resize(inenc.length());
+  unsigned char tempIv[16];
+  strncpy((char *)tempIv, aes_iv.constData(), 16);
+  AES_cfb128_encrypt((const unsigned char *)inenc.constData(),
+                     (unsigned char *)out.data(), inenc.length(), &aes_key,
+                     tempIv, &num, AES_DECRYPT);
+
+  return out;
 }

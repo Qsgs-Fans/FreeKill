@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "qmlbackend.h"
-#include <QClipboard>
-#include <QMediaPlayer>
+
 #include <qaudiooutput.h>
 #include <qmediaplayer.h>
 #include <qrandom.h>
+
+#include <QClipboard>
+#include <QMediaPlayer>
+#include <cstdlib>
 #ifndef Q_OS_WASM
 #include "server.h"
 #endif
@@ -179,14 +182,29 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
 }
 
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
+  // 在用公钥加密口令时，也随机生成AES密钥/IV，并随着口令一起加密
+  // AES密钥和IV都是固定16字节的，所以可以放在开头
   auto key_bytes = key.toLatin1();
   BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
   PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
   BIO_free_all(keyio);
 
   auto data_bytes = data.toUtf8();
+  auto rand_generator = QRandomGenerator::securelySeeded();
+  QByteArray aes_key_;
+  for (int i = 0; i < 2; i++) {
+    aes_key_.append(QByteArray::number(rand_generator.generate64(), 16));
+  }
+  if (aes_key_.length() < 32) {
+    aes_key_.append(QByteArray("0").repeated(32 - aes_key_.length()));
+  }
+
+  aes_key = aes_key_;
+
+  data_bytes.prepend(aes_key_);
+
   unsigned char buf[RSA_size(rsa)];
-  RSA_public_encrypt(data.length(),
+  RSA_public_encrypt(data.length() + 32,
                      (const unsigned char *)data_bytes.constData(), buf, rsa,
                      RSA_PKCS1_PADDING);
   return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
@@ -257,4 +275,12 @@ void QmlBackend::playSound(const QString &name, int index) {
 
 void QmlBackend::copyToClipboard(const QString &s) {
   QGuiApplication::clipboard()->setText(s);
+}
+
+void QmlBackend::setAESKey(const QString &key) { aes_key = key; }
+
+QString QmlBackend::getAESKey() const { return aes_key; }
+
+void QmlBackend::installAESKey() {
+  ClientInstance->installAESKey(aes_key.toLatin1());
 }

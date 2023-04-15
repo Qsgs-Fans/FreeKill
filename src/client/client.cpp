@@ -68,3 +68,5 @@ void Client::removePlayer(int id) {
 void Client::clearPlayers() { players.clear(); }
 
 lua_State *Client::getLuaState() { return L; }
+
+void Client::installAESKey(const QByteArray &key) { router->installAESKey(key); }

@@ -3,6 +3,7 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
+#include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
 public:
@@ -42,12 +43,17 @@ public:
 
   Q_INVOKABLE void copyToClipboard(const QString &s);
 
+  Q_INVOKABLE void setAESKey(const QString &key);
+  Q_INVOKABLE QString getAESKey() const;
+  Q_INVOKABLE void installAESKey();
+
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
 
 private:
   QQmlApplicationEngine *engine;
   RSA *rsa;
+  QString aes_key;
 
   void pushLuaValue(lua_State *L, QVariant v);
 };

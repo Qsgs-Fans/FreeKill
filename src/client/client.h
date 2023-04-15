@@ -29,6 +29,7 @@ public:
   Q_INVOKABLE void clearPlayers();
 
   lua_State *getLuaState();
+  void installAESKey(const QByteArray &key);
 
 signals:
   void error_message(const QString &msg);
