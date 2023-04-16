@@ -30,10 +30,11 @@ function Skill:initialize(name, frequency)
   self.name = name
   -- skill's package is assigned when calling General:addSkill
   -- if you need skills that not belongs to any general (like 'jixi')
-  -- then you should assign skill.package explicitly
+  -- then you should use general function addRelatedSkill to assign them
   self.package = { extensionName = "standard" }
   self.frequency = frequency
   self.visible = true
+  self.lordSkill = false
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
@@ -43,6 +44,10 @@ function Skill:initialize(name, frequency)
 
   if string.sub(name, 1, 1) == "#" then
     self.visible = false
+  end
+  if string.sub(name, #name) == "$" then
+    self.name = string.sub(name, 1, #name - 1)
+    self.lordSkill = true
   end
 
   self.attached_equip = nil

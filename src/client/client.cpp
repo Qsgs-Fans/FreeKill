@@ -3,15 +3,13 @@
 #include "client.h"
 #include "client_socket.h"
 #include "clientplayer.h"
-#include "util.h"
 #include "parser.h"
+#include "util.h"
 
 Client *ClientInstance;
 ClientPlayer *Self;
 
-Client::Client(QObject* parent)
-  : QObject(parent), callback(0)
-{
+Client::Client(QObject *parent) : QObject(parent), callback(0) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
   QQmlApplicationEngine *engine = Backend->getEngine();
@@ -29,32 +27,30 @@ Client::Client(QObject* parent)
   DoLuaScript(L, "lua/client/client.lua");
 }
 
-Client::~Client()
-{
+Client::~Client() {
   ClientInstance = nullptr;
   lua_close(L);
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
 }
 
-void Client::connectToHost(const QString &server, ushort port)
-{
+void Client::connectToHost(const QString &server, ushort port) {
   router->getSocket()->connectToHost(server, port);
 }
 
-void Client::replyToServer(const QString& command, const QString& jsonData)
-{
+void Client::replyToServer(const QString &command, const QString &jsonData) {
   int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;
   router->reply(type, command, jsonData);
 }
 
-void Client::notifyServer(const QString& command, const QString& jsonData)
-{
-  int type = Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
+void Client::notifyServer(const QString &command, const QString &jsonData) {
+  int type =
+      Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
   router->notify(type, command, jsonData);
 }
 
-ClientPlayer *Client::addPlayer(int id, const QString &name, const QString &avatar) {
+ClientPlayer *Client::addPlayer(int id, const QString &name,
+                                const QString &avatar) {
   ClientPlayer *player = new ClientPlayer(id);
   player->setScreenName(name);
   player->setAvatar(avatar);
@@ -69,10 +65,8 @@ void Client::removePlayer(int id) {
   players[id] = nullptr;
 }
 
-void Client::clearPlayers() {
-  players.clear();
-}
+void Client::clearPlayers() { players.clear(); }
 
-lua_State *Client::getLuaState() {
-  return L;
-}
+lua_State *Client::getLuaState() { return L; }
+
+void Client::installAESKey(const QByteArray &key) { router->installAESKey(key); }

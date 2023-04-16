@@ -35,28 +35,25 @@ Self = nil -- `Self' is client-only, but we need it in AI
 dofile "lua/server/ai/init.lua"
 
 --[[--------------------------------------------------------------------
-  Room stores all information for server side game room, such as player,
-  cards, and other properties.
-  It also have a lots of functions that make sure the room run properly.
+  Room 保存着服务器端游戏房间的所有信息，比如说玩家、卡牌，以及其他信息。
+  同时它也提供大量方法，以便于游戏能够顺利运转。
 
-  content of class Room:
-  * contructor
+  class Room 的大概内容：
+  * 构造方法
   * getter/setters
-  * Basic network functions, notify functions
-  * Interactive methods
-  * simple game actions, like judge, damage...
-  * using cards
-  * moving cards
+  * 基本的网络通信相关方法、通知用方法
+  * 交互式方法
+  * 各种触发游戏事件的方法
 
-  callbacks (not part of Room)
-  see also:
-    gamelogic.lua (for the game's main loop and trigger event)
-    game_rule.lua (draw initial cards, proceed phase, etc.)
-    aux_skills.lua (useful ActiveSkill for some interactive functions)
+  另请参考：
+    gamelogic.lua (游戏逻辑的主循环、触发时机等)
+    gameevent.lua (游戏事件的执行逻辑，以及各种事件的执行方法)
+    game_rule.lua (基础游戏规则，包括执行阶段、决胜负等)
+    aux_skills.lua (某些交互方法是套壳askForUseActiveSkill，就是在这定义的)
 ]]----------------------------------------------------------------------
 
 ------------------------------------------------------------------------
--- constructor
+-- 构造函数
 ------------------------------------------------------------------------
 
 --- 构造函数。别去构造
@@ -139,7 +136,7 @@ function Room:run()
 end
 
 ------------------------------------------------------------------------
--- getters and setters
+-- getters/setters
 ------------------------------------------------------------------------
 
 --- 基本算是私有函数，别去用
@@ -397,7 +394,7 @@ function Room:setPlayerGeneral(player, general, changeKingdom)
 end
 
 ------------------------------------------------------------------------
--- network functions, notify function
+-- 网络通信有关
 ------------------------------------------------------------------------
 
 --- 向所有角色广播一名角色的某个property，让大家都知道
@@ -512,6 +509,7 @@ function Room:doRaceRequest(command, players, jsonData)
       return nil
     end
 
+    coroutine.yield("__handleRequest", remainTime - elapsed)
     fk.QThread_msleep(10)
   end
 end
@@ -523,13 +521,11 @@ function Room:requestLoop(rest_time)
     local observee = self.players[1]
     player:doNotify("Setup", json.encode{
       observee.id,
-      player:getScreenName(),
-      player:getAvatar(),
+      observee.serverplayer:getScreenName(),
+      observee.serverplayer:getAvatar(),
     })
     player:doNotify("EnterRoom", json.encode{
-      #self.players, self.timeout,
-      -- FIXME: use real room settings here
-      { enableFreeAssign = false }
+      #self.players, self.timeout, self.settings
     })
 
     -- send player data
@@ -807,7 +803,7 @@ function Room:doIndicate(source, targets)
 end
 
 ------------------------------------------------------------------------
--- interactive functions
+-- 交互方法
 ------------------------------------------------------------------------
 
 --- 询问player是否要发动一个主动技。
@@ -897,8 +893,8 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   maxNum = math.min(#canDiscards, maxNum)
   minNum = math.min(#canDiscards, minNum)
 
-  if minNum < 1 then
-    return nil
+  if minNum < 1 and not cancelable then
+    return {}
   end
 
   local toDiscard = {}
@@ -1484,7 +1480,7 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
 end
 
 ------------------------------------------------------------------------
--- use card logic, and wrappers
+-- 使用牌
 ------------------------------------------------------------------------
 
 local function execGameEvent(type, ...)
@@ -1885,8 +1881,41 @@ function Room:responseCard(cardResponseEvent)
   return execGameEvent(GameEvent.RespondCard, cardResponseEvent)
 end
 
+---@param card_name string @ 想要视为使用的牌名
+---@param subcards integer[] @ 子卡，可以留空或者直接nil
+---@param from ServerPlayer @ 使用来源
+---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
+---@param skillName string @ 技能名
+---@param extra boolean @ 是否计入次数
+function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
+  local card = Fk:cloneCard(card_name)
+  card.skillName = skillName
+
+  if from:prohibitUse(card) then return false end
+
+  if tos.class then tos = { tos } end
+  for i, p in ipairs(tos) do
+    if from:isProhibited(p, card) then
+      table.remove(tos, i)
+    end
+  end
+
+  if #tos == 0 then return false end
+
+  if subcards then card:addSubcards(Card:getIdList(subcards)) end
+
+  local use = {} ---@type CardUseStruct
+  use.from = from.id
+  use.tos = table.map(tos, function(p) return { p.id } end)
+  use.card = card
+  use.extraUse = extra
+  self:useCard(use)
+
+  return true
+end
+
 ------------------------------------------------------------------------
--- move cards, and wrappers
+-- 移动牌
 ------------------------------------------------------------------------
 
 --- 传入一系列移牌信息，去实际移动这些牌
@@ -1979,10 +2008,10 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
 end
 
 ------------------------------------------------------------------------
--- some easier actions
+-- 其他游戏事件
 ------------------------------------------------------------------------
 
--- actions related to hp
+-- 与体力值等有关的事件
 
 --- 改变一名玩家的体力。
 ---@param player ServerPlayer @ 玩家
@@ -1993,6 +2022,16 @@ end
 ---@return boolean
 function Room:changeHp(player, num, reason, skillName, damageStruct)
   return execGameEvent(GameEvent.ChangeHp, player, num, reason, skillName, damageStruct)
+end
+
+--- 改变玩家的护甲数
+---@param player ServerPlayer
+---@param num integer @ 变化量
+function Room:changeShield(player, num)
+  if num == 0 then return end
+  player.shield = math.max(player.shield + num, 0)
+  player.shield = math.min(player.shield, 5)
+  self:broadcastProperty(player, "shield")
 end
 
 --- 令一名玩家失去体力。
@@ -2038,7 +2077,7 @@ function Room:killPlayer(deathStruct)
   return execGameEvent(GameEvent.Death, deathStruct)
 end
 
--- lose/acquire skill actions
+-- 与失去/获得技能有关的事件
 
 --- 令一名玩家获得/失去技能。
 ---
@@ -2118,7 +2157,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
   end
 end
 
--- judge
+-- 判定
 
 --- 根据判定数据进行判定。判定的结果直接保存在这个数据中。
 ---@param data JudgeStruct
@@ -2205,7 +2244,7 @@ function Room:pindian(pindianData)
   return execGameEvent(GameEvent.Pindian, pindianData)
 end
 
--- other helpers
+-- 杂项函数
 
 function Room:adjustSeats()
   local players = {}

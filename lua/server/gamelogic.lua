@@ -122,6 +122,7 @@ function GameLogic:prepareForStart()
     local general = Fk.generals[p.general]
     p.maxHp = general.maxHp
     p.hp = general.hp
+    p.shield = general.shield
     -- TODO: setup AI here
 
     if p.role ~= "lord" then
@@ -132,8 +133,7 @@ function GameLogic:prepareForStart()
     end
     room:broadcastProperty(p, "maxHp")
     room:broadcastProperty(p, "hp")
-
-    -- TODO: add skills to player
+    room:broadcastProperty(p, "shield")
   end
 
   local allCardIds = Fk:getAllCardIds()
@@ -143,13 +143,21 @@ function GameLogic:prepareForStart()
     self.room:setCardArea(id, Card.DrawPile, nil)
   end
 
+  local addRoleModSkills = function(player, skillName)
+    local skill = Fk.skills[skillName]
+    if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+      return
+    end
+
+    room:handleAddLoseSkills(player, skillName, nil, false)
+  end
   for _, p in ipairs(room.alive_players) do
     local skills = Fk.generals[p.general].skills
     for _, s in ipairs(skills) do
-      room:handleAddLoseSkills(p, s.name, nil, false)
+      addRoleModSkills(p, s.name)
     end
     for _, sname in ipairs(Fk.generals[p.general].other_skills) do
-      room:handleAddLoseSkills(p, sname, nil, false)
+      addRoleModSkills(p, sname)
     end
   end
 

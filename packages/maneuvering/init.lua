@@ -27,6 +27,7 @@ local thunderSlashSkill = fk.CreateActiveSkill{
 local thunderSlash = fk.CreateBasicCard{
   name = "thunder__slash",
   skill = thunderSlashSkill,
+  is_damage_card = true,
 }
 
 extension:addCards{
@@ -64,6 +65,7 @@ local fireSlashSkill = fk.CreateActiveSkill{
 local fireSlash = fk.CreateBasicCard{
   name = "fire__slash",
   skill = fireSlashSkill,
+  is_damage_card = true,
 }
 
 extension:addCards{
@@ -259,6 +261,7 @@ local fireAttackSkill = fk.CreateActiveSkill{
 local fireAttack = fk.CreateTrickCard{
   name = "fire_attack",
   skill = fireAttackSkill,
+  is_damage_card = true,
 }
 extension:addCards{
   fireAttack:clone(Card.Heart, 2),

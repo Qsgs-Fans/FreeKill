@@ -13,7 +13,10 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:inMyAttackRange(player)
+      return Self ~= player and
+        (self:getDistanceLimit(Self, card) -- for no distance limit for slash
+        + Self:getAttackRange()
+        >= Self:distanceTo(player))
     end
   end,
   on_effect = function(self, room, effect)
@@ -34,6 +37,7 @@ local slash = fk.CreateBasicCard{
   name = "slash",
   number = 7,
   suit = Card.Spade,
+  is_damage_card = true,
   skill = slashSkill,
 }
 
@@ -127,7 +131,8 @@ local peachSkill = fk.CreateActiveSkill{
     room:recover({
       who = room:getPlayerById(to),
       num = 1,
-      recoverBy = from,
+      card = effect.card,
+      recoverBy = room:getPlayerById(from),
       skillName = self.name
     })
   end
@@ -203,11 +208,12 @@ local snatchSkill = fk.CreateActiveSkill{
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
-    local to = effect.to
+    local to = room:getPlayerById(effect.to)
     local from = effect.from
+    if to:isAllNude() then return end
     local cid = room:askForCardChosen(
       room:getPlayerById(from),
-      room:getPlayerById(to),
+      to,
       "hej",
       self.name
     )
@@ -306,6 +312,7 @@ local duel = fk.CreateTrickCard{
   name = "duel",
   suit = Card.Spade,
   number = 1,
+  is_damage_card = true,
   skill = duelSkill,
 }
 
@@ -332,15 +339,17 @@ local collateralSkill = fk.CreateActiveSkill{
     cardUseEvent.tos = { { cardUseEvent.tos[1][1], cardUseEvent.tos[2][1] } }
   end,
   on_effect = function(self, room, effect)
-    local use = room:askForUseCard(
-      room:getPlayerById(effect.to),
-      "slash", nil, nil, nil, { must_targets = effect.subTargets }
-    )
+    local to = room:getPlayerById(effect.to)
+    if not to:getEquipment(Card.SubtypeWeapon) then return end
+    local use = room:askForUseCard(to, "slash", nil, nil, nil,
+                                   { must_targets = effect.subTargets })
 
     if use then
       room:useCard(use)
     else
-      room:obtainCard(effect.from, room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon), true, fk.ReasonGive)
+      room:obtainCard(effect.from,
+        room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon),
+        true, fk.ReasonGive)
     end
   end
 }
@@ -414,7 +423,9 @@ local savageAssaultSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -446,6 +457,7 @@ local savageAssault = fk.CreateTrickCard{
   name = "savage_assault",
   suit = Card.Spade,
   number = 7,
+  is_damage_card = true,
   skill = savageAssaultSkill,
 }
 
@@ -461,7 +473,9 @@ local archeryAttackSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -493,6 +507,7 @@ local archeryAttack = fk.CreateTrickCard{
   name = "archery_attack",
   suit = Card.Heart,
   number = 1,
+  is_damage_card = true,
   skill = archeryAttackSkill,
 }
 
@@ -506,7 +521,9 @@ local godSalvationSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -540,7 +557,9 @@ local amazingGraceSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -970,6 +989,14 @@ extension:addCards({
   spear,
 })
 
+local axeProhibit = fk.CreateProhibitSkill{
+  name = "#axe_prohibit",
+  prohibit_discard = function(self, player, card)
+    return player:hasSkill(self.name) and card.name == "axe" and
+      Fk.currentResponseReason == "#axe_skill" and
+      Fk:currentRoom():getCardArea(card.id) == Player.Equip
+  end,
+}
 local axeSkill = fk.CreateTriggerSkill{
   name = "#axe_skill",
   attached_equip = "axe",
@@ -986,6 +1013,7 @@ local axeSkill = fk.CreateTriggerSkill{
   end,
   on_use = function() return true end,
 }
+axeSkill:addRelatedSkill(axeProhibit)
 Fk:addSkill(axeSkill)
 local axe = fk.CreateWeapon{
   name = "axe",

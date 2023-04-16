@@ -192,6 +192,7 @@ Item {
         netstate: model.netstate
         maxHp: model.maxHp
         hp: model.hp
+        shield: model.shield
         seatNumber: model.seatNumber
         dead: model.dead
         dying: model.dying
@@ -256,6 +257,7 @@ Item {
     self.kingdom: dashboardModel.kingdom
     self.netstate: dashboardModel.netstate
     self.maxHp: dashboardModel.maxHp
+    self.shield: dashboardModel.shield
     self.hp: dashboardModel.hp
     self.seatNumber: dashboardModel.seatNumber
     self.dead: dashboardModel.dead
@@ -673,11 +675,82 @@ Item {
 
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
+
+    if (raw.msg.startsWith("$")) {
+      if (specialChat(pid, data, raw.msg.slice(1))) return;
+    }
     chat.append(msg);
     let photo = Logic.getPhotoOrSelf(pid);
     if (photo === undefined)
       return;
     photo.chat(raw.msg);
+  }
+
+  function specialChat(pid, data, msg) {
+    // skill audio: %s%d
+    // death audio: ~%s
+    // something special: .%s:...
+
+    let time = data.time;
+    let userName = data.userName;
+    let general = Backend.translate(data.general);
+
+    if (msg.startsWith(".")) {
+      let splited = msg.split(":");
+      let type = splited[0].slice(1);
+      switch (type) {
+        case "egg": {
+          return true;
+        }
+        case "flower": {
+          return true;
+        }
+        default:
+          return false;
+      }
+    } else if (msg.startsWith("~")) {
+      let g = msg.slice(1);
+      let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [g])).extension;
+      Backend.playSound("./packages/" + extension + "/audio/death/" + g);
+
+      let m = Backend.translate("~" + g);
+      if (general === "")
+        chat.append(`[${time}] ${userName}: ${m}`);
+      else
+        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+
+      let photo = Logic.getPhotoOrSelf(pid);
+      if (photo === undefined)
+        return true;
+      photo.chat(m);
+
+      return true;
+    } else {
+      let splited = msg.split(":");
+      if (splited.length < 2) return false;
+      let skill = splited[0];
+      let idx = parseInt(splited[1]);
+
+      let data2 = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      if (!data2) return false;
+      let extension = data2.extension;
+      Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, idx);
+
+      let m = Backend.translate("$" + skill + idx.toString());
+      if (general === "")
+        chat.append(`[${time}] ${userName}: ${m}`);
+      else
+        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+
+      let photo = Logic.getPhotoOrSelf(pid);
+      if (photo === undefined)
+        return true;
+      photo.chat(m);
+
+      return true;
+    }
+
+    return false;
   }
 
   function addToLog(msg) {
@@ -714,6 +787,7 @@ Item {
       netstate: "online",
       maxHp: 0,
       hp: 0,
+      shield: 0,
       seatNumber: 1,
       dead: false,
       dying: false,
@@ -737,6 +811,7 @@ Item {
         netstate: "online",
         maxHp: 0,
         hp: 0,
+        shield: 0,
         seatNumber: i + 1,
         dead: false,
         dying: false,

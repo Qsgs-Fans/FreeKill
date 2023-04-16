@@ -14,7 +14,8 @@ function GetGeneralData(name)
     extension = general.package.extensionName,
     kingdom = general.kingdom,
     hp = general.hp,
-    maxHp = general.maxHp
+    maxHp = general.maxHp,
+    shield = general.shield,
   }
 end
 
@@ -27,7 +28,8 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
-    skill = {}
+    skill = {},
+    related_skill = {}
   }
   for _, s in ipairs(general.skills) do
     table.insert(ret.skill, {
@@ -37,6 +39,18 @@ function GetGeneralDetail(name)
   end
   for _, s in ipairs(general.other_skills) do
     table.insert(ret.skill, {
+      name = s,
+      description = Fk:getDescription(s)
+    })
+  end
+  for _, s in ipairs(general.related_skills) do
+    table.insert(ret.related_skill, {
+      name = s.name,
+      description = Fk:getDescription(s.name)
+    })
+  end
+  for _, s in ipairs(general.related_other_skills) do
+    table.insert(ret.related_skill, {
       name = s,
       description = Fk:getDescription(s)
     })
@@ -168,28 +182,13 @@ function CanUseCard(card, player)
 
   player = ClientInstance:getPlayerById(player)
   local ret = c.skill:canUse(player, c)
-  if ret then
-    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
-    for _, skill in ipairs(status_skills) do
-      if skill:prohibitUse(player, c) then
-        ret = false
-        break
-      end
-    end
-  end
+  ret = ret and not player:prohibitUse(c)
   return json.encode(ret)
 end
 
 function CardProhibitedUse(cid)
   local c = Fk:getCardById(cid)
-  local ret = false
-  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
-  for _, skill in ipairs(status_skills) do
-    if skill:prohibitUse(Self, c) then
-      ret = true
-      break
-    end
-  end
+  local ret = Self:prohibitUse(c)
   return json.encode(ret)
 end
 
@@ -211,16 +210,7 @@ function CanUseCardToTarget(card, to_select, selected)
   end
 
   local ret = c.skill:targetFilter(to_select, selected, selected_cards, c)
-  if ret then
-    local r = Fk:currentRoom()
-    local status_skills = r.status_skills[ProhibitSkill] or {}
-    for _, skill in ipairs(status_skills) do
-      if skill:isProhibited(Self, r:getPlayerById(to_select), c) then
-        ret = false
-        break
-      end
-    end
-  end
+  ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), c)
   return json.encode(ret)
 end
 
@@ -262,6 +252,7 @@ end
 
 function GetSkillData(skill_name)
   local skill = Fk.skills[skill_name]
+  if not skill then return "null" end
   local freq = "notactive"
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
@@ -402,14 +393,7 @@ end
 
 function CardProhibitedResponse(cid)
   local c = Fk:getCardById(cid)
-  local ret = false
-  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
-  for _, skill in ipairs(status_skills) do
-    if skill:prohibitResponse(Self, c) then
-      ret = true
-      break
-    end
-  end
+  local ret = Self:prohibitResponse(c)
   return json.encode(ret)
 end
 
@@ -452,12 +436,19 @@ end
 
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
-  return skill and json.encode(skill.interaction) or "null"
+  if skill and skill.interaction then
+    if type(skill.interaction) == "function" then
+      return json.encode(skill:interaction())
+    else
+      return json.encode(skill.interaction)
+    end
+  end
+  return "null"
 end
 
 function SetInteractionDataOfSkill(skill_name, data)
   local skill = Fk.skills[skill_name]
-  if skill and type(skill.interaction) == "table" then
+  if skill and skill.interaction then
     skill.interaction.data = json.decode(data)
   end
 end

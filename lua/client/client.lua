@@ -82,7 +82,9 @@ function Client:moveCards(moves)
           table.remove(from.player_cards[Player.Hand])
         end
       else
-        from:removeCards(move.fromArea, move.ids, move.fromSpecialName)
+        if table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, move.fromArea) then
+          from:removeCards(move.fromArea, move.ids, move.fromSpecialName)
+        end
       end
     elseif move.fromArea == Card.DiscardPile then
       table.removeOne(self.discard_pile, move.ids[1])

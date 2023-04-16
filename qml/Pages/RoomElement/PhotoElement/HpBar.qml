@@ -2,23 +2,31 @@
 
 import QtQuick
 import ".."
+import "../../skin-bank.js" as SkinBank
 
 Column {
   id: root
   property int maxValue: 4
   property int value: 4
   property var colors: ["#F4180E", "#F4180E", "#E3B006", "#25EC27"]
+  property int shieldNum: 0
+
+  Shield {
+    id: shield
+    value: shieldNum
+  }
 
   Repeater {
     id: repeater
-    model: maxValue <= 4 ? maxValue : 0
+    model: column.visible ? 0 : maxValue
     Magatama {
       state: (maxValue - 1 - index) >= value ? 0 : (value >= 3 || value >= maxValue ? 3 : (value <= 0 ? 0 : value))
     }
   }
 
   Column {
-    visible: maxValue > 4
+    id: column
+    visible: maxValue > 4 || value > maxValue || (shieldNum > 0 && maxValue > 3)
     spacing: -4
 
     Magatama {
@@ -43,11 +51,15 @@ Column {
 
     GlowText {
       id: splitter
+      height: 12
       width: root.width
       text: "/"
       z: -10
+      rotation: 40
       color: hpItem.color
-      font: hpItem.font
+      font.family: fontLibian.name
+      font.pixelSize: 14
+      font.bold: true
       horizontalAlignment: hpItem.horizontalAlignment
 
       glow.color: hpItem.glow.color

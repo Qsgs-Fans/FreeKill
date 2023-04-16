@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "packman.h"
-#include "util.h"
 #include "git2.h"
+#include "util.h"
 #include <qjsondocument.h>
 
 #ifndef FK_SERVER_ONLY
@@ -27,11 +27,12 @@ PackMan::~PackMan() {
 }
 
 QString PackMan::getPackSummary() {
-  return SelectFromDb(db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
+  return SelectFromDb(
+      db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
-  auto f = [=](){
+  auto f = [=]() {
     // First, disable all packages
     foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
       disablePack(e.toObject()["name"].toString());
@@ -43,12 +44,15 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
     foreach (auto e, arr) {
       auto obj = e.toObject();
       auto name = obj["name"].toString();
-      if (SelectFromDatabase(db, QString("SELECT name FROM packages WHERE name='%1';")
-            .arg(name)).isEmpty()) {
+      if (SelectFromDatabase(
+              db,
+              QString("SELECT name FROM packages WHERE name='%1';").arg(name))
+              .isEmpty()) {
         downloadNewPack(obj["url"].toString());
       }
       ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
-          .arg(obj["hash"].toString()).arg(name));
+                      .arg(obj["hash"].toString())
+                      .arg(name));
       enablePack(name);
       updatePack(name);
     }
@@ -56,7 +60,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
   if (useThread) {
     auto thread = QThread::create(f);
     thread->start();
-    connect(thread, &QThread::finished, [=](){
+    connect(thread, &QThread::finished, [=]() {
       thread->deleteLater();
 #ifndef FK_SERVER_ONLY
       Backend->emitNotifyUI("DownloadComplete", "");
@@ -68,9 +72,10 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
 }
 
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
-  auto threadFunc = [=](){
+  auto threadFunc = [=]() {
     int error = clone(url);
-    if (error < 0) return;
+    if (error < 0)
+      return;
     auto u = url;
     while (u.endsWith('/')) {
       u.chop(1);
@@ -80,16 +85,20 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
       fileName.chop(4);
 
     auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
-    WHERE name = '%1';").arg(fileName));
+    WHERE name = '%1';")
+                                             .arg(fileName));
     if (result.isEmpty()) {
       ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
-      VALUES ('%1','%2','%3',1);").arg(fileName).arg(url).arg(head(fileName)));
+      VALUES ('%1','%2','%3',1);")
+                      .arg(fileName)
+                      .arg(url)
+                      .arg(head(fileName)));
     }
   };
   if (useThread) {
     auto thread = QThread::create(threadFunc);
     thread->start();
-    connect(thread, &QThread::finished, [=](){
+    connect(thread, &QThread::finished, [=]() {
       thread->deleteLater();
 #ifndef FK_SERVER_ONLY
       Backend->emitNotifyUI("DownloadComplete", "");
@@ -101,21 +110,27 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
 }
 
 void PackMan::enablePack(const QString &pack) {
-  ExecSQL(db, QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
+  ExecSQL(
+      db,
+      QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
   QDir d(QString("packages"));
   d.rename(pack + ".disabled", pack);
 }
 
 void PackMan::disablePack(const QString &pack) {
-  ExecSQL(db, QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
+  ExecSQL(
+      db,
+      QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
   QDir d(QString("packages"));
   d.rename(pack, pack + ".disabled");
 }
 
 void PackMan::updatePack(const QString &pack) {
   auto result = SelectFromDatabase(db, QString("SELECT hash FROM packages \
-  WHERE name = '%1';").arg(pack));
-  if (result.isEmpty()) return;
+  WHERE name = '%1';")
+                                           .arg(pack));
+  if (result.isEmpty())
+    return;
   int error;
   error = status(pack);
   if (error != 0) {
@@ -123,29 +138,37 @@ void PackMan::updatePack(const QString &pack) {
     return;
   }
   error = pull(pack);
-  if (error < 0) return;
+  if (error < 0)
+    return;
   error = checkout(pack, result[0].toObject()["hash"].toString());
-  if (error < 0) return;
+  if (error < 0)
+    return;
 }
 
 void PackMan::upgradePack(const QString &pack) {
   int error;
   error = checkout_branch(pack, "master");
-  if (error < 0) return;
+  if (error < 0)
+    return;
   error = status(pack);
   if (error != 0) {
     qCritical("Workspace is dirty, or some error occured.");
     return;
   }
   error = pull(pack);
-  if (error < 0) return;
-  ExecSQL(db, QString("UPDATE packages SET hash = '%1' WHERE name = '%2';").arg(head(pack)).arg(pack));
+  if (error < 0)
+    return;
+  ExecSQL(db, QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
+                  .arg(head(pack))
+                  .arg(pack));
 }
 
 void PackMan::removePack(const QString &pack) {
   auto result = SelectFromDatabase(db, QString("SELECT enabled FROM packages \
-  WHERE name = '%1';").arg(pack));
-  if (result.isEmpty()) return;
+  WHERE name = '%1';")
+                                           .arg(pack));
+  if (result.isEmpty())
+    return;
   bool enabled = result[0].toObject()["enabled"].toString().toInt() == 1;
   ExecSQL(db, QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
   QDir d(QString("packages/%1%2").arg(pack).arg(enabled ? "" : ".disabled"));
@@ -161,29 +184,32 @@ QString PackMan::listPackages() {
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
 
-static int transfer_progress_cb(const git_indexer_progress *stats, void *payload)
-{
+static int transfer_progress_cb(const git_indexer_progress *stats,
+                                void *payload) {
   (void)payload;
 
   if (Backend == nullptr) {
     if (stats->received_objects == stats->total_objects) {
-      printf("Resolving deltas %u/%u\r",
-            stats->indexed_deltas, stats->total_deltas);
+      printf("Resolving deltas %u/%u\r", stats->indexed_deltas,
+             stats->total_deltas);
     } else if (stats->total_objects > 0) {
       printf("Received %u/%u objects (%u) in %zu bytes\r",
-            stats->received_objects, stats->total_objects,
-            stats->indexed_objects, stats->received_bytes);
+             stats->received_objects, stats->total_objects,
+             stats->indexed_objects, stats->received_bytes);
     }
   } else {
 #ifndef FK_SERVER_ONLY
     if (stats->received_objects == stats->total_objects) {
       auto msg = QString("Resolving deltas %1/%2")
-            .arg(stats->indexed_deltas).arg(stats->total_deltas);
+                     .arg(stats->indexed_deltas)
+                     .arg(stats->total_deltas);
       Backend->emitNotifyUI("UpdateBusyText", msg);
     } else if (stats->total_objects > 0) {
       auto msg = QString("Received %1/%2 objects (%3) in %4 KiB")
-            .arg(stats->received_objects).arg(stats->total_objects)
-            .arg(stats->indexed_objects).arg(stats->received_bytes / 1024);
+                     .arg(stats->received_objects)
+                     .arg(stats->total_objects)
+                     .arg(stats->indexed_objects)
+                     .arg(stats->received_bytes / 1024);
       Backend->emitNotifyUI("UpdateBusyText", msg);
     }
 #endif

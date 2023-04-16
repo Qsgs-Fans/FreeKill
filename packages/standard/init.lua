@@ -22,8 +22,80 @@ local jianxiong = fk.CreateTriggerSkill{
     room:obtainCard(player.id, data.card, false)
   end,
 }
+
+local hujia = fk.CreateViewAsSkill{
+  name = "hujia$",
+  anim_type = "defensive",
+  pattern = "jink",
+  card_filter = function(self, to_select, selected)
+    return false
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 0 then
+      return nil
+    end
+    local c = Fk:cloneCard("jink")
+    c.skillName = self.name
+    return c
+  end,
+  enabled_at_play = function(self, player)
+    return false
+  end,
+  enabled_at_response = function(self, player)
+    return not table.every(Fk:currentRoom().alive_players, function(p)
+      return p == player or p.kingdom ~= "wei"
+    end)
+  end,
+}
+local hujiaResponse = fk.CreateTriggerSkill{
+  name = "#hujiaResponse",
+  events = {fk.PreCardUse, fk.PreCardRespond},
+  mute = true,
+  priority = 10,
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name, true) and table.contains(data.card.skillNames, "hujia")
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    room:doIndicate(player.id, TargetGroup:getRealTargets(data.tos))
+    return true
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    for _, p in ipairs(room:getOtherPlayers(player)) do
+      if p.kingdom == "wei" then
+        local cardResponded = room:askForResponse(p, "jink", "jink", "#hujia-ask:%s", player.id)
+        if cardResponded then
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          data.card = cardResponded
+          return false
+        end
+      end
+    end
+
+    if event == fk.PreCardUse and player.phase == Player.Play then
+      room:setPlayerMark(player, "hujia-failed-phase", 1)
+    end
+    return true
+  end,
+  refresh_events = {fk.CardUsing},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name, true) and player:getMark("hujia-failed-phase") > 0
+  end,
+  on_refresh = function(self, event, target, player, data)
+    player.room:setPlayerMark(player, "hujia-failed-phase", 0)
+  end,
+}
+hujia:addRelatedSkill(hujiaResponse)
+
 local caocao = General:new(extension, "caocao", "wei", 4)
 caocao:addSkill(jianxiong)
+caocao:addSkill(hujia)
 
 local guicai = fk.CreateTriggerSkill{
   name = "guicai",
@@ -321,8 +393,82 @@ local rende = fk.CreateActiveSkill{
   end,
 }
 rende:addRelatedSkill(rendetrig)
+
+local jijiang = fk.CreateViewAsSkill{
+  name = "jijiang$",
+  anim_type = "offensive",
+  pattern = "slash",
+  card_filter = function(self, to_select, selected)
+    return false
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 0 then
+      return nil
+    end
+    local c = Fk:cloneCard("slash")
+    c.skillName = self.name
+    return c
+  end,
+  enabled_at_play = function(self, player)
+    return player:getMark("jijiang-failed-phase") == 0 and not table.every(Fk:currentRoom().alive_players, function(p)
+      return p == player or p.kingdom ~= "shu"
+    end)
+  end,
+  enabled_at_response = function(self, player)
+    return not table.every(Fk:currentRoom().alive_players, function(p)
+      return p == player or p.kingdom ~= "shu"
+    end)
+  end,
+}
+local jijiangResponse = fk.CreateTriggerSkill{
+  name = "#jijiangResponse",
+  events = {fk.PreCardUse, fk.PreCardRespond},
+  mute = true,
+  priority = 10,
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name, true) and table.contains(data.card.skillNames, "jijiang")
+  end,
+  on_cost = function(self, event, target, player, data)
+    local room = player.room
+    room:doIndicate(player.id, TargetGroup:getRealTargets(data.tos))
+    return true
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    for _, p in ipairs(room:getOtherPlayers(player)) do
+      if p.kingdom == "shu" then
+        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:%s", player.id)
+        if cardResponded then
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          data.card = cardResponded
+          return false
+        end
+      end
+    end
+
+    if event == fk.PreCardUse and player.phase == Player.Play then
+      room:setPlayerMark(player, "jijiang-failed-phase", 1)
+    end
+    return true
+  end,
+  refresh_events = {fk.CardUsing},
+  can_refresh = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name, true) and player:getMark("jijiang-failed-phase") > 0
+  end,
+  on_refresh = function(self, event, target, player, data)
+    player.room:setPlayerMark(player, "jijiang-failed-phase", 0)
+  end,
+}
+jijiang:addRelatedSkill(jijiangResponse)
+
 local liubei = General:new(extension, "liubei", "shu", 4)
 liubei:addSkill(rende)
+liubei:addSkill(jijiang)
 
 local wusheng = fk.CreateViewAsSkill{
   name = "wusheng",
@@ -527,8 +673,30 @@ local zhiheng = fk.CreateActiveSkill{
     room:drawCards(from, #effect.cards, self.name)
   end
 }
+
+local jiuyuan = fk.CreateTriggerSkill{
+  name = "jiuyuan$",
+  anim_type = "support",
+  frequency = fk.Compulsory,
+  events = {fk.PreHpRecover},
+  can_trigger = function(self, event, target, player, data)
+    return
+      target == player and
+      player:hasSkill(self.name) and
+      data.card and
+      data.card.trueName == "peach" and
+      data.recoverBy and
+      data.recoverBy.kingdom == "wu" and
+      data.recoverBy ~= player
+  end,
+  on_use = function(self, event, target, player, data)
+    data.num = data.num + 1
+  end,
+}
+
 local sunquan = General:new(extension, "sunquan", "wu", 4)
 sunquan:addSkill(zhiheng)
+sunquan:addSkill(jiuyuan)
 
 local qixi = fk.CreateViewAsSkill{
   name = "qixi",
@@ -682,7 +850,8 @@ local liuli = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#liuli-target"
-    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name)
+    local plist, cid = room:askForChooseCardAndPlayers(player,
+                          self.target_list, 1, 1, nil, prompt, self.name, true)
     if #plist > 0 then
       self.cost_data = {plist[1], cid}
       return true

@@ -8,7 +8,7 @@ class ServerPlayer;
 
 class Room : public QThread {
   Q_OBJECT
-public:
+ public:
   explicit Room(Server *m_server);
   ~Room();
 
@@ -34,13 +34,13 @@ public:
   void addPlayer(ServerPlayer *player);
   void addRobot(ServerPlayer *player);
   void removePlayer(ServerPlayer *player);
-  QList<ServerPlayer*> getPlayers() const;
+  QList<ServerPlayer *> getPlayers() const;
   QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
   ServerPlayer *findPlayer(int id) const;
 
   void addObserver(ServerPlayer *player);
   void removeObserver(ServerPlayer *player);
-  QList<ServerPlayer*> getObservers() const;
+  QList<ServerPlayer *> getObservers() const;
 
   int getTimeout() const;
   void setTimeout(int timeout);
@@ -48,11 +48,8 @@ public:
   bool isStarted() const;
   // ====================================}
 
-  void doBroadcastNotify(
-    const QList<ServerPlayer *> targets,
-    const QString &command,
-    const QString &jsonData
-  );
+  void doBroadcastNotify(const QList<ServerPlayer *> targets,
+                         const QString &command, const QString &jsonData);
   void chat(ServerPlayer *sender, const QString &jsonData);
 
   void gameOver();
@@ -64,24 +61,25 @@ public:
 
   QString fetchRequest();
   void pushRequest(const QString &req);
+  void clearRequest();
   bool hasRequest() const;
 
-signals:
+ signals:
   void abandoned();
 
   void playerAdded(ServerPlayer *player);
   void playerRemoved(ServerPlayer *player);
 
-protected:
+ protected:
   virtual void run();
 
-private:
+ private:
   Server *server;
-  int id;     // Lobby's id is 0
-  QString name;   // “阴间大乱斗”
-  int capacity;   // by default is 5, max is 8
-  QByteArray settings;   // JSON string
-  bool m_abandoned;   // If room is empty, delete it
+  int id;               // Lobby's id is 0
+  QString name;         // “阴间大乱斗”
+  int capacity;         // by default is 5, max is 8
+  QByteArray settings;  // JSON string
+  bool m_abandoned;     // If room is empty, delete it
 
   ServerPlayer *owner;  // who created this room?
   QList<ServerPlayer *> players;
@@ -97,4 +95,4 @@ private:
   QQueue<QString> request_queue;  // json string
 };
 
-#endif // _ROOM_H
+#endif  // _ROOM_H

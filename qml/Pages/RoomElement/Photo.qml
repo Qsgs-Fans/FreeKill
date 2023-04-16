@@ -20,6 +20,7 @@ Item {
   property alias handcards: handcardAreaItem.length
   property int maxHp: 0
   property int hp: 0
+  property int shield: 0
   property int seatNumber: 1
   property bool dead: false
   property bool dying: false
@@ -150,6 +151,7 @@ Item {
     x: 8
     value: root.hp
     maxValue: root.maxHp
+    shieldNum: root.shield
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 36
   }

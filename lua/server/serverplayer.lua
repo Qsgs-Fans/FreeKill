@@ -141,7 +141,9 @@ function ServerPlayer:marshal(player)
 
   room:notifyProperty(player, self, "maxHp")
   room:notifyProperty(player, self, "hp")
+  room:notifyProperty(player, self, "shield")
   room:notifyProperty(player, self, "gender")
+  room:notifyProperty(player, self, "kingdom")
 
   if self.kingdom ~= Fk.generals[self.general].kingdom then
     self.kingdom = Fk.generals[self.general].kingdom

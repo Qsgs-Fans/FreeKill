@@ -19,17 +19,23 @@ let sheduled_download = "";
 
 callbacks["NetworkDelayTest"] = function(jsonData) {
   // jsonData: RSA pub key
-  let cipherText
+  let cipherText;
+  let aeskey;
   if (config.savedPassword[config.serverAddr] !== undefined
     && config.savedPassword[config.serverAddr].shorten_password === config.password) {
     cipherText = config.savedPassword[config.serverAddr].password;
+    aeskey = config.savedPassword[config.serverAddr].key;
+    config.aeskey = aeskey ?? "";
+    Backend.setAESKey(aeskey);
     if (Debugging)
       console.log("use remembered password", config.password);
   } else {
     cipherText = Backend.pubEncrypt(jsonData, config.password);
+    config.aeskey = Backend.getAESKey();
   }
   config.cipherText = cipherText;
   Backend.replyDelayTest(config.screenName, cipherText);
+  Backend.installAESKey();
 }
 
 callbacks["ErrorMsg"] = function(jsonData) {
@@ -69,6 +75,7 @@ callbacks["EnterLobby"] = function(jsonData) {
     config.savedPassword[config.serverAddr] = {
       username: config.screenName,
       password: config.cipherText,
+      key: config.aeskey,
       shorten_password: config.cipherText.slice(0, 8)
     }
     mainStack.push(lobby);
@@ -121,6 +128,7 @@ callbacks["Chat"] = function(jsonData) {
   let general = Backend.translate(data.general);
   let time = data.time;
   let msg = data.msg;
+
   if (general === "")
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
   else

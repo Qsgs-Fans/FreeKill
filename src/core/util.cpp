@@ -6,11 +6,10 @@
 #include <qregularexpression.h>
 
 extern "C" {
-  int luaopen_fk(lua_State *);
+int luaopen_fk(lua_State *);
 }
 
-lua_State *CreateLuaState()
-{
+lua_State *CreateLuaState() {
   lua_State *L = luaL_newstate();
   luaL_openlibs(L);
   luaopen_fk(L);
@@ -18,8 +17,7 @@ lua_State *CreateLuaState()
   return L;
 }
 
-bool DoLuaScript(lua_State *L, const char *script)
-{
+bool DoLuaScript(lua_State *L, const char *script) {
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
@@ -38,17 +36,16 @@ bool DoLuaScript(lua_State *L, const char *script)
 }
 
 // For Lua debugging
-void Dumpstack(lua_State *L)
-{
+void Dumpstack(lua_State *L) {
   int top = lua_gettop(L);
   for (int i = 1; i <= top; i++) {
     printf("%d\t%s\t", i, luaL_typename(L, i));
     switch (lua_type(L, i)) {
     case LUA_TNUMBER:
-      printf("%g\n",lua_tonumber(L, i));
+      printf("%g\n", lua_tonumber(L, i));
       break;
     case LUA_TSTRING:
-      printf("%s\n",lua_tostring(L, i));
+      printf("%s\n", lua_tostring(L, i));
       break;
     case LUA_TBOOLEAN:
       printf("%s\n", (lua_toboolean(L, i) ? "true" : "false"));
@@ -57,15 +54,14 @@ void Dumpstack(lua_State *L)
       printf("%s\n", "nil");
       break;
     default:
-      printf("%p\n",lua_topointer(L, i));
+      printf("%p\n", lua_topointer(L, i));
       break;
     }
   }
 }
 
 #ifndef Q_OS_WASM
-sqlite3 *OpenDatabase(const QString &filename, const QString &initSql)
-{
+sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
   sqlite3 *ret;
   int rc;
   if (!QFile::exists(filename)) {
@@ -78,9 +74,10 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql)
     QTextStream in(&file);
     char *err_msg;
     sqlite3_open(filename.toLatin1().data(), &ret);
-    rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr, &err_msg);
+    rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr,
+                      &err_msg);
 
-    if (rc != SQLITE_OK ) {
+    if (rc != SQLITE_OK) {
       qCritical() << "sqlite error:" << err_msg;
       sqlite3_free(err_msg);
       sqlite3_close(ret);
@@ -124,9 +121,7 @@ void ExecSQL(sqlite3 *db, const QString &sql) {
   sqlite3_exec(db, bytes.data(), nullptr, nullptr, nullptr);
 }
 
-void CloseDatabase(sqlite3 *db) {
-  sqlite3_close(db);
-}
+void CloseDatabase(sqlite3 *db) { sqlite3_close(db); }
 
 RSA *InitServerRSA() {
   RSA *rsa = RSA_new();
@@ -160,7 +155,8 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   if (name.endsWith(".lua")) {
     name.chop(4);
     name = name + ".fkp";
-    if (!QFile::exists(name)) name = fname;
+    if (!QFile::exists(name))
+      name = fname;
   }
   QFile f(name);
   if (!f.open(QIODevice::ReadOnly)) {
@@ -173,9 +169,11 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   dest.write(name.toUtf8() + '=' + hash + ';');
 }
 
-static void writeDirMD5(QFile &dest, const QString &dir, const QString &filter) {
+static void writeDirMD5(QFile &dest, const QString &dir,
+                        const QString &filter) {
   QDir d(dir);
-  auto entries = d.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  auto entries = d.entryInfoList(
+      QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
   auto re = QRegularExpression::fromWildcard(filter);
   foreach (QFileInfo info, entries) {
     if (info.isDir() && !info.fileName().endsWith(".disabled")) {

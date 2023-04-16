@@ -10,6 +10,7 @@
 ---@field public id integer @ 玩家的id，每名玩家的id是唯一的。机器人的id是负数。
 ---@field public hp integer @ 体力值
 ---@field public maxHp integer @ 体力上限
+---@field public shield integer @ 护甲数
 ---@field public kingdom string @ 势力
 ---@field public role string @ 身份
 ---@field public general string @ 武将
@@ -356,6 +357,12 @@ function Player:getAttackRange()
   local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
   local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
 
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    local correct = skill:getCorrect(self, other)
+    baseAttackRange = baseAttackRange + correct
+  end
+
   return math.max(baseAttackRange, 0)
 end
 
@@ -410,11 +417,6 @@ function Player:inMyAttackRange(other)
     return false
   end
   local baseAttackRange = self:getAttackRange()
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self, other)
-    baseAttackRange = baseAttackRange + correct
-  end
   return self:distanceTo(other) <= baseAttackRange
 end
 
@@ -664,6 +666,56 @@ function Player:getAllSkills()
     end
   end
   return ret
+end
+
+--- 确认玩家使用某种牌时是否可以指定某个特定角色为目标。
+---@param to Player @ 某个特定角色
+---@param card Card @ 某种牌
+function Player:isProhibited(to, card)
+  local r = Fk:currentRoom()
+  local status_skills = r.status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:isProhibited(self, to, card) then
+      return true
+    end
+  end
+  return false
+end
+
+--- 确认玩家是否可以使用某种牌。
+---@param card Card @ 某种牌
+function Player:prohibitUse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitUse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+--- 确认玩家是否可以打出某种牌。
+---@param card Card @ 某种牌
+function Player:prohibitResponse(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitResponse(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+--- 确认玩家是否可以弃置某种牌。
+---@param card Card @ 某种牌
+function Player:prohibitDiscard(card)
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitDiscard(self, card) then
+      return true
+    end
+  end
+  return false
 end
 
 return Player

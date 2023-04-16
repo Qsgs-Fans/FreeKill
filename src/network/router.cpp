@@ -11,8 +11,7 @@
 #include "util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
-  : QObject(parent)
-{
+    : QObject(parent) {
   this->type = type;
   this->socket = nullptr;
   setSocket(socket);
@@ -23,18 +22,11 @@ Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
 #endif
 }
 
-Router::~Router()
-{
-  abortRequest();
-}
+Router::~Router() { abortRequest(); }
 
-ClientSocket* Router::getSocket() const
-{
-  return socket;
-}
+ClientSocket *Router::getSocket() const { return socket; }
 
-void Router::setSocket(ClientSocket *socket)
-{
+void Router::setSocket(ClientSocket *socket) {
   if (this->socket != nullptr) {
     this->socket->disconnect(this);
     disconnect(this->socket);
@@ -51,16 +43,18 @@ void Router::setSocket(ClientSocket *socket)
   }
 }
 
+void Router::installAESKey(const QByteArray &key) {
+  socket->installAESKey(key);
+}
+
 #ifndef FK_CLIENT_ONLY
-void Router::setReplyReadySemaphore(QSemaphore *semaphore)
-{
+void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;
 }
 #endif
 
-void Router::request(int type, const QString& command,
-           const QString& jsonData, int timeout)
-{
+void Router::request(int type, const QString &command, const QString &jsonData,
+                     int timeout) {
 #ifndef FK_CLIENT_ONLY
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
@@ -87,8 +81,7 @@ void Router::request(int type, const QString& command,
 #endif
 }
 
-void Router::reply(int type, const QString& command, const QString& jsonData)
-{
+void Router::reply(int type, const QString &command, const QString &jsonData) {
   QJsonArray body;
   body << this->requestId;
   body << type;
@@ -98,10 +91,9 @@ void Router::reply(int type, const QString& command, const QString& jsonData)
   emit messageReady(JsonArray2Bytes(body));
 }
 
-void Router::notify(int type, const QString& command, const QString& jsonData)
-{
+void Router::notify(int type, const QString &command, const QString &jsonData) {
   QJsonArray body;
-  body << -2;     // requestId = -2 mean this is for notification
+  body << -2; // requestId = -2 mean this is for notification
   body << type;
   body << command;
   body << jsonData;
@@ -109,14 +101,10 @@ void Router::notify(int type, const QString& command, const QString& jsonData)
   emit messageReady(JsonArray2Bytes(body));
 }
 
-int Router::getTimeout() const
-{
-  return requestTimeout;
-}
+int Router::getTimeout() const { return requestTimeout; }
 
 // cancel last request from the sender
-void Router::cancelRequest()
-{
+void Router::cancelRequest() {
 #ifndef FK_CLIENT_ONLY
   replyMutex.lock();
   expectedReplyId = -1;
@@ -129,8 +117,7 @@ void Router::cancelRequest()
 #endif
 }
 
-QString Router::waitForReply(int timeout)
-{
+QString Router::waitForReply(int timeout) {
   QString ret;
 #ifndef FK_CLIENT_ONLY
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
@@ -141,8 +128,7 @@ QString Router::waitForReply(int timeout)
   return ret;
 }
 
-void Router::abortRequest()
-{
+void Router::abortRequest() {
 #ifndef FK_CLIENT_ONLY
   replyMutex.lock();
   if (expectedReplyId != -1) {
@@ -156,66 +142,76 @@ void Router::abortRequest()
 #endif
 }
 
-void Router::handlePacket(const QByteArray& rawPacket)
-{
+void Router::handlePacket(const QByteArray &rawPacket) {
 #ifndef FK_CLIENT_ONLY
   static QMap<QString, void (*)(ServerPlayer *, const QString &)> lobby_actions;
   if (lobby_actions.size() <= 0) {
-    lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["UpdateAvatar"] = [](ServerPlayer *sender,
+                                       const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto avatar = arr[0].toString();
       static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
       if (!nameExp.match(avatar).hasMatch()) {
         auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
-          .arg(avatar).arg(sender->getId());
+                       .arg(avatar)
+                       .arg(sender->getId());
         ExecSQL(ServerInstance->getDatabase(), sql);
         sender->setAvatar(avatar);
         sender->doNotify("UpdateAvatar", avatar);
       }
     };
-    lobby_actions["UpdatePassword"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["UpdatePassword"] = [](ServerPlayer *sender,
+                                         const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto oldpw = arr[0].toString();
       auto newpw = arr[1].toString();
-      auto sql_find = QString("SELECT password, salt FROM userinfo WHERE id=%1;")
-        .arg(sender->getId());
+      auto sql_find =
+          QString("SELECT password, salt FROM userinfo WHERE id=%1;")
+              .arg(sender->getId());
 
       auto passed = false;
       auto arr2 = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
       auto result = arr2[0].toObject();
       passed = (result["password"].toString() ==
-        QCryptographicHash::hash(
-          oldpw.append(result["salt"].toString()).toLatin1(),
-          QCryptographicHash::Sha256).toHex());
+                QCryptographicHash::hash(
+                    oldpw.append(result["salt"].toString()).toLatin1(),
+                    QCryptographicHash::Sha256)
+                    .toHex());
       if (passed) {
-        auto sql_update = QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
-          .arg(QCryptographicHash::hash(
-            newpw.append(result["salt"].toString()).toLatin1(),
-            QCryptographicHash::Sha256).toHex())
-          .arg(sender->getId());
+        auto sql_update =
+            QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
+                .arg(QCryptographicHash::hash(
+                         newpw.append(result["salt"].toString()).toLatin1(),
+                         QCryptographicHash::Sha256)
+                         .toHex())
+                .arg(sender->getId());
         ExecSQL(ServerInstance->getDatabase(), sql_update);
       }
 
       sender->doNotify("UpdatePassword", passed ? "1" : "0");
     };
-    lobby_actions["CreateRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["CreateRoom"] = [](ServerPlayer *sender,
+                                     const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto name = arr[0].toString();
       auto capacity = arr[1].toInt();
-      auto settings = QJsonDocument(arr[2].toObject()).toJson(QJsonDocument::Compact);
+      auto settings =
+          QJsonDocument(arr[2].toObject()).toJson(QJsonDocument::Compact);
       ServerInstance->createRoom(sender, name, capacity, settings);
     };
-    lobby_actions["EnterRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["EnterRoom"] = [](ServerPlayer *sender,
+                                    const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto roomId = arr[0].toInt();
       ServerInstance->findRoom(roomId)->addPlayer(sender);
     };
-    lobby_actions["ObserveRoom"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["ObserveRoom"] = [](ServerPlayer *sender,
+                                      const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto roomId = arr[0].toInt();
       ServerInstance->findRoom(roomId)->addObserver(sender);
     };
-    lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData){
+    lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData) {
       sender->getRoom()->chat(sender, jsonData);
     };
   }
@@ -237,8 +233,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
 #endif
     }
 #ifndef FK_CLIENT_ONLY
-    else
-    {
+    else {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
       if (command == "Heartbeat") {
         player->alive = true;
@@ -259,8 +254,7 @@ void Router::handlePacket(const QByteArray& rawPacket)
       }
     }
 #endif
-  }
-  else if (type & TYPE_REQUEST) {
+  } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
     this->requestTimeout = packet[4].toInt();
 
@@ -282,8 +276,8 @@ void Router::handlePacket(const QByteArray& rawPacket)
 
     this->expectedReplyId = -1;
 
-    if (replyTimeout >= 0 && replyTimeout <
-      requestStartTime.secsTo(QDateTime::currentDateTime()))
+    if (replyTimeout >= 0 &&
+        replyTimeout < requestStartTime.secsTo(QDateTime::currentDateTime()))
       return;
 
     m_reply = jsonData;
@@ -299,4 +293,3 @@ void Router::handlePacket(const QByteArray& rawPacket)
   }
 #endif
 }
-
