@@ -59,7 +59,7 @@ Fk:loadTranslationTable{
   ["guojia"] = "郭嘉",
   ["~guojia"] = "咳，咳……",
   ["$tiandu1"] = "就这样吧。",
-  ["$tiandu2"] = "哦。",
+  ["$tiandu2"] = "哦？",
   ["tiandu"] = "天妒",
   [":tiandu"] = "当你的判定牌生效后，你可以获得之。",
   ["$yiji1"] = "也好。",
@@ -151,7 +151,7 @@ Fk:loadTranslationTable{
   [":jiuyuan"] = "主公技，其他吴势力角色使用【桃】令你回复体力时，回复值+1。",
 
   ["ganning"] = "甘宁",
-  ["~ganning"] = "二十年后，又是一条好汉。",
+  ["~ganning"] = "二十年后，又是一条好汉……",
   ["$qixi1"] = "接招吧！",
   ["$qixi2"] = "你的牌太多啦！",
   ["qixi"] = "奇袭",
