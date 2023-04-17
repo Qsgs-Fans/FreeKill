@@ -198,7 +198,18 @@ local recast = fk.CreateActiveSkill{
   target_num = 0,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    room:throwCard(effect.cards, self.name, from)
+    room:moveCards({
+      ids = effect.cards,
+      from = effect.from,
+      toArea = Card.DiscardPile,
+      skillName = "recast",
+      moveReason = fk.ReasonPutIntoDiscardPile,
+    })
+    room:sendLog{
+      type = "#Recast",
+      from = effect.from,
+      card = effect.cards,
+    }
     room:drawCards(from, #effect.cards, self.name)
   end
 }
