@@ -211,6 +211,7 @@ Fk:loadTranslationTable{
 
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",
+  ["#RecastBySkill"] = "%from 发动了 “%arg” 重铸了 %card",
 
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",
