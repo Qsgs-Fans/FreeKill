@@ -5,18 +5,22 @@ local TargetModSkill = StatusSkill:subclass("TargetModSkill")
 
 ---@param player Player
 ---@param card_skill ActiveSkill
+---@param scope integer
+---@param card Card
 function TargetModSkill:getResidueNum(player, card_skill, scope, card)
   return 0
 end
 
 ---@param player Player
 ---@param card_skill ActiveSkill
+---@param card Card
 function TargetModSkill:getDistanceLimit(player, card_skill, card)
   return 0
 end
 
 ---@param player Player
 ---@param card_skill ActiveSkill
+---@param card Card
 function TargetModSkill:getExtraTargetNum(player, card_skill, card)
   return 0
 end

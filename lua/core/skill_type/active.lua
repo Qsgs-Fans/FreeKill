@@ -26,7 +26,8 @@ end
 
 --- Determine whether the skill can be used in playing phase
 ---@param player Player
-function ActiveSkill:canUse(player)
+---@param card Card @ helper
+function ActiveSkill:canUse(player, card)
   return true
 end
 

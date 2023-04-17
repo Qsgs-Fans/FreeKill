@@ -7,8 +7,8 @@ local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
-  can_use = function(self, player)
-    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
+  can_use = function(self, player, card)
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then

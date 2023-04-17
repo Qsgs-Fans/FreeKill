@@ -286,9 +286,9 @@ function fk.CreateMaxCardsSkill(spec)
 end
 
 ---@class TargetModSpec: StatusSkillSpec
----@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer)
----@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill)
----@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill)
+---@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card)
+---@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
+---@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
 
 ---@param spec TargetModSpec
 ---@return TargetModSkill
