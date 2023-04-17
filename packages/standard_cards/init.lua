@@ -199,10 +199,10 @@ extension:addCards({
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
   distance_limit = 1,
-  target_filter = function(self, to_select, selected)
+  target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self)
+      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self, card) -- for no distance limit for snatch
         and not player:isAllNude()
     end
   end,
