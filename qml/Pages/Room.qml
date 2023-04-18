@@ -625,6 +625,11 @@ Item {
     }
   }
 
+  Danmaku {
+    id: danmaku
+    width: parent.width
+  }
+
   Shortcut {
     sequence: "T"
     onActivated: {
@@ -681,8 +686,12 @@ Item {
     }
     chat.append(msg);
     let photo = Logic.getPhotoOrSelf(pid);
-    if (photo === undefined)
+    if (photo === undefined) {
+      let user = raw.userName;
+      let m = raw.msg;
+      danmaku.sendLog(`${user}: ${m}`);
       return;
+    }
     photo.chat(raw.msg);
   }
 
@@ -720,8 +729,10 @@ Item {
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
       let photo = Logic.getPhotoOrSelf(pid);
-      if (photo === undefined)
+      if (photo === undefined) {
+        danmaku.sendLog(`${userName}: ${m}`);
         return true;
+      }
       photo.chat(m);
 
       return true;
@@ -743,8 +754,10 @@ Item {
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
       let photo = Logic.getPhotoOrSelf(pid);
-      if (photo === undefined)
+      if (photo === undefined) {
+        danmaku.sendLog(`${userName}: ${m}`);
         return true;
+      }
       photo.chat(m);
 
       return true;
