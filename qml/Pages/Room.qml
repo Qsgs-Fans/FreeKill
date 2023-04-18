@@ -677,7 +677,7 @@ Item {
     if (raw.type === 1) return;
 
     if (raw.msg.startsWith("$")) {
-      if (specialChat(pid, data, raw.msg.slice(1))) return;
+      if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
     chat.append(msg);
     let photo = Logic.getPhotoOrSelf(pid);
