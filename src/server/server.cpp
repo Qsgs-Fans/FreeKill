@@ -50,10 +50,12 @@ Server::Server(QObject *parent) : QObject(parent) {
         }
       }
 
-      if (!this->isListening) {
-        return;
+      for (int i = 0; i < 10; i++) {
+        if (!this->isListening) {
+          return;
+        }
+        QThread::sleep(2);
       }
-      QThread::sleep(2);
 
       foreach (auto p, this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
