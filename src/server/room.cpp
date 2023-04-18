@@ -295,6 +295,9 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
     doBroadcastNotify(players, "Chat", json);
     doBroadcastNotify(observers, "Chat", json);
   }
+
+  qInfo("[Chat] %s: %s", sender->getScreenName().toUtf8().constData(),
+      doc["msg"].toString().toUtf8().constData());
 }
 
 void Room::gameOver() {

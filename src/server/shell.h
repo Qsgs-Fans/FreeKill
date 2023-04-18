@@ -39,6 +39,7 @@ private:
   void enableCommand(QStringList &);
   void disableCommand(QStringList &);
   void kickCommand(QStringList &);
+  void msgCommand(QStringList &);
 };
 
 #endif

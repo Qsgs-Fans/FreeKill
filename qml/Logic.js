@@ -121,7 +121,7 @@ callbacks["UpdatePlayerNum"] = (j) => {
 
 callbacks["Chat"] = function(jsonData) {
   // jsonData: { string userName, string general, string time, string msg }
-  let current = mainStack.currentItem;  // lobby(TODO) or room
+  let current = mainStack.currentItem;  // lobby or room
   let data = JSON.parse(jsonData);
   let pid = data.sender;
   let userName = data.userName;
@@ -133,4 +133,9 @@ callbacks["Chat"] = function(jsonData) {
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
   else
     current.addToChat(pid, data, `[${time}] ${userName}(${general}): ${msg}`);
+}
+
+callbacks["ServerMessage"] = function(jsonData) {
+  let current = mainStack.currentItem;  // lobby or room
+  current.sendDanmaku('<font color="gold"><b>[Server] </b></font>' + jsonData);
 }
