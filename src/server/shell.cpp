@@ -143,7 +143,7 @@ void Shell::msgCommand(QStringList &list) {
     return;
   }
 
-  auto msg = list[0];
+  auto msg = list.join(' ');
   ServerInstance->broadcast("ServerMessage", msg);
 }
 
