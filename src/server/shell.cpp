@@ -30,6 +30,7 @@ void Shell::helpCommand(QStringList &) {
   qInfo("%s: Disable a package.", "disable");
   qInfo("%s: Upgrade a package.", "upgrade");
   qInfo("%s: Kick a player by his id.", "kick");
+  qInfo("%s: Broadcast message.", "msg");
   qInfo("For more commands, check the documentation.");
 }
 
@@ -133,8 +134,17 @@ void Shell::kickCommand(QStringList &list) {
   auto p = ServerInstance->findPlayer(id);
   if (p) {
     p->kicked();
-    qInfo("Success");
   }
+}
+
+void Shell::msgCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'msg' command needs message body.");
+    return;
+  }
+
+  auto msg = list[0];
+  ServerInstance->broadcast("ServerMessage", msg);
 }
 
 Shell::Shell() {
@@ -154,6 +164,7 @@ Shell::Shell() {
     handlers["enable"] = &Shell::enableCommand;
     handlers["disable"] = &Shell::disableCommand;
     handlers["kick"] = &Shell::kickCommand;
+    handlers["msg"] = &Shell::msgCommand;
   }
   handler_map = handlers;
 }

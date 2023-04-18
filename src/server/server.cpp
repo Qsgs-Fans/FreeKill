@@ -3,6 +3,7 @@
 #include "server.h"
 
 #include <qjsonarray.h>
+#include <qobject.h>
 
 #include "client_socket.h"
 #include "packman.h"
@@ -49,7 +50,10 @@ Server::Server(QObject *parent) : QObject(parent) {
         }
       }
 
-      QThread::sleep(20);
+      if (!this->isListening) {
+        return;
+      }
+      QThread::sleep(2);
 
       foreach (auto p, this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
@@ -58,6 +62,7 @@ Server::Server(QObject *parent) : QObject(parent) {
       }
     }
   });
+  heartbeatThread->setParent(this);
   heartbeatThread->setObjectName("Heartbeat");
   heartbeatThread->start();
 }
@@ -70,7 +75,9 @@ Server::~Server() {
 }
 
 bool Server::listen(const QHostAddress &address, ushort port) {
-  return server->listen(address, port);
+  bool ret =  server->listen(address, port);
+  isListening = ret;
+  return ret;
 }
 
 void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
@@ -138,6 +145,12 @@ void Server::updateRoomList() {
 }
 
 sqlite3 *Server::getDatabase() { return db; }
+
+void Server::broadcast(const QString &command, const QString &jsonData) {
+  foreach (ServerPlayer *p, players.values()) {
+    p->doNotify(command, jsonData);
+  }
+}
 
 void Server::processNewConnection(ClientSocket *client) {
   qInfo() << client->peerAddress() << "connected";

@@ -33,6 +33,8 @@ public:
 
   sqlite3 *getDatabase();
 
+  void broadcast(const QString &command, const QString &jsonData);
+  bool isListening;
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);

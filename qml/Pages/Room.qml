@@ -770,6 +770,10 @@ Item {
     log.append(msg);
   }
 
+  function sendDanmaku(msg) {
+    danmaku.sendLog(msg);
+  }
+
   function showDistance(show) {
     for (let i = 0; i < photoModel.count; i++) {
       let item = photos.itemAt(i);

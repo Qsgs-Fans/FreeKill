@@ -245,6 +245,10 @@ Item {
     danmaku.sendLog("<b>" + raw.userName + "</b>: " + raw.msg);
   }
 
+  function sendDanmaku(msg) {
+    danmaku.sendLog(msg);
+  }
+
   Component.onCompleted: {
     toast.show(Backend.translate("$WelcomeToLobby"));
   }
