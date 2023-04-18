@@ -234,10 +234,15 @@ Item {
     radius: 4
   }
 
+  Danmaku {
+    id: danmaku
+    width: parent.width
+  }
+
   function addToChat(pid, raw, msg) {
     if (raw.type !== 1) return;
     lobbyChat.append(msg);
-    toast.show("<b>" + raw.userName + "</b>: " + raw.msg);
+    danmaku.sendLog("<b>" + raw.userName + "</b>: " + raw.msg);
   }
 
   Component.onCompleted: {
