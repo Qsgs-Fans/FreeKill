@@ -7,8 +7,8 @@ local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
-  can_use = function(self, player, card)
-    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card)
+  can_use = function(self, player)
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -199,10 +199,10 @@ extension:addCards({
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
   distance_limit = 1,
-  target_filter = function(self, to_select, selected, _, card)
+  target_filter = function(self, to_select, selected)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self, card) -- for no distance limit for snatch
+      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self)
         and not player:isAllNude()
     end
   end,
@@ -423,7 +423,9 @@ local savageAssaultSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -471,7 +473,9 @@ local archeryAttackSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -517,7 +521,9 @@ local godSalvationSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,
@@ -551,7 +557,9 @@ local amazingGraceSkill = fk.CreateActiveSkill{
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       cardUseEvent.tos = {}
       for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+        end
       end
     end
   end,

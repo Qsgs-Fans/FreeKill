@@ -557,6 +557,17 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   end
 end
 
+fk.client_callback["SetCardMark"] = function(jsonData)
+  -- jsonData: [ int id, string mark, int value ]
+  local data = json.decode(jsonData)
+  local card, mark, value = data[1], data[2], data[3]
+  ClientInstance:getCardById(card):setMark(mark, value)
+
+  if string.sub(mark, 1, 1) == "@" then
+    ClientInstance:notifyUI("SetCardMark", jsonData)
+  end
+end
+
 fk.client_callback["Chat"] = function(jsonData)
   -- jsonData: { int type, int sender, string msg }
   local data = json.decode(jsonData)
