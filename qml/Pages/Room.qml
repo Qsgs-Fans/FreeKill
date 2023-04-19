@@ -34,6 +34,7 @@ Item {
   property var selected_targets: []
   property string responding_card
   property bool respond_play: false
+  property bool autoPending: false
   property var extra_data: ({})
 
   Image {
@@ -137,6 +138,7 @@ Item {
           skillInteraction.source = "";
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card);
+          autoPending = false;
           progress.visible = true;
           okCancel.visible = true;
         }

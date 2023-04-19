@@ -93,7 +93,7 @@ function doCancelButton() {
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    if (p == "") {
+    if (roomScene.autoPending || !p) {
       replyToServer("__cancel");
     } else {
       dashboard.enableCards(roomScene.responding_card);
@@ -794,6 +794,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
+  roomScene.autoPending = true;
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
 }
