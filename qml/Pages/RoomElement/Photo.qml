@@ -156,15 +156,30 @@ Item {
     anchors.bottomMargin: 36
   }
 
-  Image {
-    id: generalImage
+  Item {
     width: 138
     height: 222
-    smooth: true
     visible: false
-    fillMode: Image.PreserveAspectCrop
-    source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    id: generalImgItem
 
+    Image {
+      id: generalImage
+      width: parent.width / 2
+      height: parent.height
+      smooth: true
+      fillMode: Image.PreserveAspectCrop
+      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    }
+
+    Image {
+      id: deputyGeneralImage
+      anchors.left: generalImage.right
+      width: parent.width / 2
+      height: parent.height
+      smooth: true
+      fillMode: Image.PreserveAspectCrop
+      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    }
   }
 
   Rectangle {
@@ -179,13 +194,13 @@ Item {
 
   OpacityMask {
     anchors.fill: photoMask
-    source: generalImage
+    source: generalImgItem
     maskSource: photoMask
   }
 
   Colorize {
     anchors.fill: photoMask
-    source: generalImage
+    source: generalImgItem
     saturation: 0
     visible: root.dead
   }
