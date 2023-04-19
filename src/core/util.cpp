@@ -219,3 +219,17 @@ QJsonDocument String2Json(const QString &str) {
   auto bytes = str.toUtf8();
   return QJsonDocument::fromJson(bytes);
 }
+
+QString Color(const QString &raw, fkShell::TextColor color,
+              fkShell::TextType type) {
+#ifndef Q_OS_WIN32
+  static const char *suffix = "\e[0;0m";
+  int col = 30 + color;
+  int t = type == fkShell::Bold ? 1 : 0;
+  auto prefix = QString("\e[%2;%1m").arg(col).arg(t);
+
+  return prefix + raw + suffix;
+#else
+  return raw;
+#endif
+}

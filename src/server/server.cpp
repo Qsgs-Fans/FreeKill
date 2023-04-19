@@ -3,6 +3,8 @@
 #include "server.h"
 
 #include <qjsonarray.h>
+#include <qjsondocument.h>
+#include <qjsonvalue.h>
 #include <qobject.h>
 
 #include "client_socket.h"
@@ -27,6 +29,7 @@ Server::Server(QObject *parent) : QObject(parent) {
   public_key = in.readAll();
   Parser::parseFkp();
   md5 = calcFileMD5();
+  readConfig();
 
   server = new ServerSocket();
   server->setParent(this);
@@ -385,3 +388,18 @@ void Server::onUserDisconnected() {
 }
 
 void Server::onUserStateChanged() {}
+
+void Server::readConfig() {
+  QFile file("freekill.server.config.json");
+  if (!file.open(QIODevice::ReadOnly)) {
+    return;
+  }
+  auto json = file.readAll();
+  config = QJsonDocument::fromJson(json).object();
+
+  // defaults
+}
+
+QJsonValue Server::getConfig(const QString &key) {
+  return config.value(key);
+}

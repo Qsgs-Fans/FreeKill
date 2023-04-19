@@ -8,21 +8,6 @@ class Shell: public QThread {
 public:
   Shell();
 
-  enum Color {
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-  };
-  enum TextType {
-    NoType,
-    Bold,
-    UnderLine
-  };
-
 protected:
   virtual void run();
 
