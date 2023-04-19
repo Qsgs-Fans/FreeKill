@@ -106,20 +106,20 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/D] %s\n", threadName.constData(),
+    fprintf(stderr, "%s[D] %s\n", threadName.constData(),
             localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("I", Green).toUtf8().constData(), localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("W", Yellow, Bold).toUtf8().constData(),
             localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
@@ -130,7 +130,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #endif
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
     break;
   }
