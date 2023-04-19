@@ -30,6 +30,7 @@ Item {
   property alias tableCards: tablePile.cards
   property alias dashboard: dashboard
   property alias skillInteraction: skillInteraction
+  property alias miscStatus: miscStatus
 
   property var selected_targets: []
   property string responding_card
@@ -65,6 +66,7 @@ Item {
 
   // tmp
   Button {
+    id: quitButton
     text: "quit"
     anchors.top: parent.top
     anchors.right: parent.right
@@ -627,6 +629,14 @@ Item {
         }
       }
     }
+  }
+
+  MiscStatus {
+    id: miscStatus
+    anchors.right: quitButton.left
+    anchors.top: parent.top
+    anchors.rightMargin: 16
+    anchors.topMargin: 8
   }
 
   Danmaku {

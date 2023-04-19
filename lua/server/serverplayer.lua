@@ -235,9 +235,7 @@ function ServerPlayer:reconnect()
   })
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
-    #room.players, room.timeout,
-    -- FIXME: use real room settings here
-    { enableFreeAssign = false }
+    #room.players, room.timeout, room.settings,
   })
   room:notifyProperty(self, self, "role")
 
@@ -258,10 +256,12 @@ function ServerPlayer:reconnect()
 
   for _, p in ipairs(room.players) do
     room:notifyProperty(self, p, "general")
+    room:notifyProperty(self, p, "deputyGeneral")
     p:marshal(self)
   end
 
-  -- TODO: tell drawPile
+  self:doNotify("UpdateDrawPile", #room.draw_pile)
+  self:doNotify("UpdateRoundNum", room:getTag("RoundCount"))
 
   room:broadcastProperty(self, "state")
 end

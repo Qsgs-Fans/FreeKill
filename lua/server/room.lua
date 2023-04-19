@@ -316,6 +316,8 @@ function Room:getNCards(num, from)
     num = num - 1
   end
 
+  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
+
   return cardIds
 end
 
@@ -553,10 +555,13 @@ function Room:requestLoop(rest_time)
 
     for _, p in ipairs(self.players) do
       self:notifyProperty(player, p, "general")
+      self:notifyProperty(player, p, "deputyGeneral")
       p:marshal(player)
     end
 
-    -- TODO: tell drawPile
+    player:doNotify("UpdateDrawPile", #self.draw_pile)
+    player:doNotify("UpdateRoundNum", self:getTag("RoundCount"))
+
     table.insert(self.observers, {observee.id, player})
   end
 

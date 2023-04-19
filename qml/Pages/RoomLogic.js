@@ -1020,3 +1020,13 @@ callbacks["UpdateLimitSkill"] = (j) => {
     photo.updateLimitSkill(skill, time);
   }
 }
+
+callbacks["UpdateDrawPile"] = (j) => {
+  let data = parseInt(j);
+  roomScene.miscStatus.pileNum = data;
+}
+
+callbacks["UpdateRoundNum"] = (j) => {
+  let data = parseInt(j);
+  roomScene.miscStatus.roundNum = data;
+}

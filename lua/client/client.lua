@@ -568,7 +568,6 @@ fk.client_callback["Chat"] = function(jsonData)
   end
 
   local p = ClientInstance:getPlayerById(data.sender)
-  -- TODO: observer chatting
   if not p then
     for _, pl in ipairs(ClientInstance.observers) do
       if pl.id == data.sender then
