@@ -96,6 +96,10 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
         end
         self:setCardArea(info.cardId, data.toArea, data.to)
+        if data.toArea == Card.DrawPile or realFromArea == Card.DrawPile then
+          self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
+        end
+
         Fk:filterCard(info.cardId, self:getPlayerById(data.to))
 
         local currentCard = Fk:getCardById(info.cardId)

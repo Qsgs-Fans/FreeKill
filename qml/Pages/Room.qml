@@ -30,10 +30,12 @@ Item {
   property alias tableCards: tablePile.cards
   property alias dashboard: dashboard
   property alias skillInteraction: skillInteraction
+  property alias miscStatus: miscStatus
 
   property var selected_targets: []
   property string responding_card
   property bool respond_play: false
+  property bool autoPending: false
   property var extra_data: ({})
 
   Image {
@@ -64,6 +66,7 @@ Item {
 
   // tmp
   Button {
+    id: quitButton
     text: "quit"
     anchors.top: parent.top
     anchors.right: parent.right
@@ -137,6 +140,7 @@ Item {
           skillInteraction.source = "";
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card);
+          autoPending = false;
           progress.visible = true;
           okCancel.visible = true;
         }
@@ -625,6 +629,14 @@ Item {
         }
       }
     }
+  }
+
+  MiscStatus {
+    id: miscStatus
+    anchors.right: quitButton.left
+    anchors.top: parent.top
+    anchors.rightMargin: 16
+    anchors.topMargin: 8
   }
 
   Danmaku {

@@ -84,7 +84,7 @@ function GetCardData(id)
     extension = card.package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
-    color = card.color,
+    color = card:getColorString(),
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then
@@ -437,11 +437,7 @@ end
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
   if skill and skill.interaction then
-    if type(skill.interaction) == "function" then
-      return json.encode(skill:interaction())
-    else
-      return json.encode(skill.interaction)
-    end
+    return json.encode(skill:interaction())
   end
   return "null"
 end

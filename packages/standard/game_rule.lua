@@ -99,6 +99,7 @@ GameRule = fk.CreateTriggerSkill{
       end
 
       room:setTag("RoundCount", room:getTag("RoundCount") + 1)
+      room:doBroadcastNotify("UpdateRoundNum", room:getTag("RoundCount"))
 
       for _, p in ipairs(room.players) do
         p:setCardUseHistory("", 0, Player.HistoryRound)

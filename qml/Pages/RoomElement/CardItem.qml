@@ -88,7 +88,7 @@ Item {
   Image {
     id: suitItem
     visible: known
-    source: suit != "" ? SkinBank.CARD_SUIT_DIR + suit : ""
+    source: (suit !== "" && suit !== "nosuit") ? SkinBank.CARD_SUIT_DIR + suit : ""
     x: 3
     y: 19
     width: 21
@@ -108,8 +108,8 @@ Item {
 
   Image {
     id: colorItem
-    visible: known && suit == ""
-    source: (visible && color != "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
+    visible: known && (suit === "" || suit === "nosuit")
+    source: (visible && color !== "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
     x: 1
   }
 

@@ -89,10 +89,16 @@ function doCancelButton() {
     dashboard.enableSkills();
     return;
   } else if (roomScene.state == "responding") {
+    let p = dashboard.pending_skill;
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    replyToServer("__cancel");
+    if (roomScene.autoPending || !p) {
+      replyToServer("__cancel");
+    } else {
+      dashboard.enableCards(roomScene.responding_card);
+      dashboard.enableSkills(roomScene.responding_card);
+    }
     return;
   }
 
@@ -788,6 +794,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
+  roomScene.autoPending = true;
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
 }
@@ -1012,4 +1019,14 @@ callbacks["UpdateLimitSkill"] = (j) => {
   if (photo) {
     photo.updateLimitSkill(skill, time);
   }
+}
+
+callbacks["UpdateDrawPile"] = (j) => {
+  let data = parseInt(j);
+  roomScene.miscStatus.pileNum = data;
+}
+
+callbacks["UpdateRoundNum"] = (j) => {
+  let data = parseInt(j);
+  roomScene.miscStatus.roundNum = data;
 }

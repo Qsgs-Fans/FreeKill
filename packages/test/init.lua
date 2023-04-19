@@ -71,13 +71,14 @@ local test_active = fk.CreateActiveSkill{
   end,
   card_num = 2,
   target_filter = function() return true end,
-  interaction = UI.ComboBox {
+  interaction = function()return UI.ComboBox {
     choices = Fk.package_names,
     -- default = "guanyu",
-  },
+  }end,
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
+    print(self.interaction.data)
     -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
     -- print(result)
 
