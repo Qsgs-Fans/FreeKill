@@ -3,6 +3,8 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
+#include <qjsonobject.h>
+#include <qjsonvalue.h>
 class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
@@ -35,6 +37,8 @@ public:
 
   void broadcast(const QString &command, const QString &jsonData);
   bool isListening;
+
+  QJsonValue getConfig(const QString &command);
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -62,6 +66,9 @@ private:
   QString public_key;
   sqlite3 *db;
   QString md5;
+
+  QJsonObject config;
+  void readConfig();
 
   void handleNameAndPassword(ClientSocket *client, const QString &name,
                              const QString &password, const QString &md5_str);

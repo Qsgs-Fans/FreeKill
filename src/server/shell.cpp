@@ -5,6 +5,7 @@
 #include "packman.h"
 #include "server.h"
 #include "serverplayer.h"
+#include "util.h"
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <signal.h>
@@ -19,19 +20,26 @@ static void sigintHandler(int) {
 
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
-  qInfo("%s: Display this help message.", "help");
-  qInfo("%s: Shut down the server.", "quit");
-  qInfo("%s: List all online players.", "lsplayer");
-  qInfo("%s: List all running rooms.", "lsroom");
-  qInfo("%s: Install a new package from <url>.", "install");
-  qInfo("%s: Remove a package.", "remove");
-  qInfo("%s: List all packages.", "lspkg");
-  qInfo("%s: Enable a package.", "enable");
-  qInfo("%s: Disable a package.", "disable");
-  qInfo("%s: Upgrade a package.", "upgrade");
-  qInfo("%s: Kick a player by his id.", "kick");
-  qInfo("%s: Broadcast message.", "msg");
+#define HELP_MSG(a, b) \
+  qInfo((a), Color((b), fkShell::Cyan).toUtf8().constData());
+
+  HELP_MSG("%s: Display this help message.", "help");
+  HELP_MSG("%s: Shut down the server.", "quit");
+  HELP_MSG("%s: List all online players.", "lsplayer");
+  HELP_MSG("%s: List all running rooms.", "lsroom");
+  HELP_MSG("%s: Kick a player by his id.", "kick");
+  HELP_MSG("%s: Broadcast message.", "msg");
+  qInfo();
+  qInfo("===== Package commands =====");
+  HELP_MSG("%s: Install a new package from <url>.", "install");
+  HELP_MSG("%s: Remove a package.", "remove");
+  HELP_MSG("%s: List all packages.", "lspkg");
+  HELP_MSG("%s: Enable a package.", "enable");
+  HELP_MSG("%s: Disable a package.", "disable");
+  HELP_MSG("%s: Upgrade a package.", "upgrade");
   qInfo("For more commands, check the documentation.");
+
+#undef HELP_MSG
 }
 
 void Shell::lspCommand(QStringList &) {
@@ -170,7 +178,7 @@ Shell::Shell() {
 }
 
 void Shell::run() {
-  printf("\rFreeKill, Copyright (C) 2022, GNU GPL'd, by Notify et al.\n");
+  printf("\rFreeKill, Copyright (C) 2022-2023, GNU GPL'd, by Notify et al.\n");
   printf("This program comes with ABSOLUTELY NO WARRANTY.\n");
   printf(
       "This is free software, and you are welcome to redistribute it under\n");

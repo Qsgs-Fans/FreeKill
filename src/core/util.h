@@ -23,4 +23,24 @@ QString calcFileMD5();
 QByteArray JsonArray2Bytes(const QJsonArray &arr);
 QJsonDocument String2Json(const QString &str);
 
+namespace fkShell {
+  enum TextColor {
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+  };
+  enum TextType {
+    NoType,
+    Bold,
+    UnderLine
+  };
+}
+
+QString Color(const QString &raw, fkShell::TextColor color,
+                                  fkShell::TextType type = fkShell::NoType);
+
 #endif // _GLOBAL_H

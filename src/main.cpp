@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "client.h"
+#include "util.h"
+using namespace fkShell;
+
 #ifndef Q_OS_WASM
 #include "packman.h"
 #include "server.h"
@@ -93,26 +96,31 @@ static void prepareForLinux() {
 
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
                   const QString &msg) {
-  fprintf(stderr, "\r[%s] ",
+  auto date = QDate::currentDate();
+  fprintf(stderr, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(stderr, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
+
   auto localMsg = msg.toUtf8();
   auto threadName = QThread::currentThread()->objectName().toLatin1();
+
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "[%s/DEBUG] %s\n", threadName.constData(),
+    fprintf(stderr, "[%s/D] %s\n", threadName.constData(),
             localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "[%s/INFO] %s\n", threadName.constData(),
-            localMsg.constData());
+    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+            Color("I", Green).toUtf8().constData(), localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "[%s/WARNING] %s\n", threadName.constData(),
+    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+            Color("W", Yellow, Bold).toUtf8().constData(),
             localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "[%s/CRITICAL] %s\n", threadName.constData(),
-            localMsg.constData());
+    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+            Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
       Backend->notifyUI(
@@ -122,8 +130,8 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #endif
     break;
   case QtFatalMsg:
-    fprintf(stderr, "[%s/FATAL] %s\n", threadName.constData(),
-            localMsg.constData());
+    fprintf(stderr, "[%s/%s] %s\n", threadName.constData(),
+            Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
     break;
   }
 }
