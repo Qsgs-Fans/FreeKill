@@ -13,6 +13,7 @@ Item {
   scale: 0.75
   property int playerid: 0
   property string general: ""
+  property string deputyGeneral: ""
   property string screenName: ""
   property string role: "unknown"
   property string kingdom: "qun"
@@ -164,7 +165,7 @@ Item {
 
     Image {
       id: generalImage
-      width: parent.width / 2
+      width: deputyGeneral ? parent.width / 2 : parent.width
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
@@ -178,17 +179,20 @@ Item {
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
-      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+      source: (deputyGeneral != "") ?
+        SkinBank.getGeneralPicture(deputyGeneral) : ""
     }
 
     Image {
+      id: deputySplit
       source: SkinBank.PHOTO_DIR + "deputy-split"
+      opacity: deputyGeneral ? 1 : 0
     }
 
     Text {
       id: deputyGeneralName
       anchors.left: generalImage.right
-      anchors.leftMargin: -12
+      anchors.leftMargin: -14
       y: 23
       font.family: fontLibian.name
       font.pixelSize: 22
@@ -199,7 +203,7 @@ Item {
       color: "white"
       width: 24
       wrapMode: Text.WordWrap
-      text: Backend.translate(general)
+      text: Backend.translate(deputyGeneral)
       style: Text.Outline
     }
   }

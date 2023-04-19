@@ -25,6 +25,7 @@ Fk:loadTranslationTable{
   ["Select general num"] = "选将数目",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
+  ["Enable deputy general"] = "启用副将机制",
   ["General Settings"] = "通常设置",
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",

@@ -564,18 +564,20 @@ callbacks["PlayerRunned"] = function(jsonData) {
 
 callbacks["AskForGeneral"] = function(jsonData) {
   // jsonData: string[] Generals
-  // TODO: choose multiple generals
   let data = JSON.parse(jsonData);
+  let generals = data[0];
+  let n = data[1];
   roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChooseGeneralBox.qml";
   let box = roomScene.popupBox.item;
   box.choiceNum = 1;
   box.accepted.connect(() => {
-    replyToServer(JSON.stringify([box.choices[0]]));
+    replyToServer(JSON.stringify(box.choices));
   });
-  for (let i = 0; i < data.length; i++)
-    box.generalList.append({ "name": data[i] });
+  box.choiceNum = n;
+  for (let i = 0; i < generals.length; i++)
+    box.generalList.append({ "name": generals[i] });
   box.updatePosition();
 }
 

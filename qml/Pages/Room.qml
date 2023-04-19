@@ -186,6 +186,7 @@ Item {
       Photo {
         playerid: model.id
         general: model.general
+        deputyGeneral: model.deputyGeneral
         screenName: model.screenName
         role: model.role
         kingdom: model.kingdom
@@ -253,6 +254,7 @@ Item {
     self.playerid: dashboardModel.id
     self.general: dashboardModel.general
     self.screenName: dashboardModel.screenName
+    self.deputyGeneral: dashboardModel.deputyGeneral
     self.role: dashboardModel.role
     self.kingdom: dashboardModel.kingdom
     self.netstate: dashboardModel.netstate
@@ -798,6 +800,7 @@ Item {
     dashboardModel = {
       id: Self.id,
       general: Self.avatar,
+      deputyGeneral: "",
       screenName: Self.screenName,
       role: "unknown",
       kingdom: "qun",
@@ -822,6 +825,7 @@ Item {
         id: -1,
         index: i - 1,   // For animating seat swap
         general: "",
+        deputyGeneral: "",
         screenName: "",
         role: "unknown",
         kingdom: "qun",
