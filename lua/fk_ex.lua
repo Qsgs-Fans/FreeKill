@@ -172,7 +172,18 @@ function fk.CreateActiveSkill(spec)
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
-  skill.interaction = spec.interaction
+
+  if spec.interaction then
+    skill.interaction = setmetatable({}, {
+      __call = function(self)
+        if type(spec.interaction) == "function" then
+          return spec.interaction(self)
+        else
+          return spec.interaction
+        end
+      end,
+    })
+  end
   return skill
 end
 
@@ -206,7 +217,18 @@ function fk.CreateViewAsSkill(spec)
     skill.enabledAtResponse = spec.enabled_at_response
   end
 
-  skill.interaction = spec.interaction
+  if spec.interaction then
+    skill.interaction = setmetatable({}, {
+      __call = function()
+        if type(spec.interaction) == "function" then
+          return spec.interaction(skill)
+        else
+          return spec.interaction
+        end
+      end,
+    })
+  end
+
   return skill
 end
 

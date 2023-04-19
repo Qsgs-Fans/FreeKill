@@ -437,11 +437,7 @@ end
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
   if skill and skill.interaction then
-    if type(skill.interaction) == "function" then
-      return json.encode(skill:interaction())
-    else
-      return json.encode(skill.interaction)
-    end
+    return json.encode(skill:interaction())
   end
   return "null"
 end
