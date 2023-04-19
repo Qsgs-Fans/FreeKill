@@ -158,9 +158,15 @@ local function updateColorAndNumber(card)
   local color = Card.NoColor
   local number = 0
   local different_color = false
-  for _, id in ipairs(card.subcards) do
+  for i, id in ipairs(card.subcards) do
     local c = Fk:getCardById(id)
     number = math.min(number + c.number, 13)
+    if i == 1 then
+      card.suit = c.suit
+    else
+      card.suit = Card.NoSuit
+    end
+
     if color ~= c.color then
       if not different_color then
         if c.color ~= Card.NoColor then
@@ -278,7 +284,7 @@ end
 --- 获取卡牌的文字信息并准备作为log发送。
 function Card:toLogString()
   local ret = string.format('<font color="#0598BC"><b>%s</b></font>', Fk:translate(self.name) .. "[")
-  if self:isVirtual() then
+  if self:isVirtual() and #self.subcards ~= 1 then
     ret = ret .. Fk:translate(self:getColorString())
   else
     ret = ret .. Fk:translate("log_" .. self:getSuitString())
