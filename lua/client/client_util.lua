@@ -84,7 +84,7 @@ function GetCardData(id)
     extension = card.package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
-    color = card.color,
+    color = card:getColorString(),
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then
