@@ -120,7 +120,7 @@ Item {
     y: 28
     font.family: fontLibian.name
     font.pixelSize: 22
-    opacity: 0.7
+    opacity: 0.9
     horizontalAlignment: Text.AlignHCenter
     lineHeight: 18
     lineHeightMode: Text.FixedHeight
@@ -138,7 +138,7 @@ Item {
     font.pixelSize: 22
     rotation: 90
     transformOrigin: Item.BottomLeft
-    opacity: 0.7
+    opacity: 0.9
     horizontalAlignment: Text.AlignHCenter
     lineHeight: 18
     lineHeightMode: Text.FixedHeight
@@ -179,6 +179,28 @@ Item {
       smooth: true
       fillMode: Image.PreserveAspectCrop
       source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    }
+
+    Image {
+      source: SkinBank.PHOTO_DIR + "deputy-split"
+    }
+
+    Text {
+      id: deputyGeneralName
+      anchors.left: generalImage.right
+      anchors.leftMargin: -12
+      y: 23
+      font.family: fontLibian.name
+      font.pixelSize: 22
+      opacity: 0.9
+      horizontalAlignment: Text.AlignHCenter
+      lineHeight: 18
+      lineHeightMode: Text.FixedHeight
+      color: "white"
+      width: 24
+      wrapMode: Text.WordWrap
+      text: Backend.translate(general)
+      style: Text.Outline
     }
   }
 
