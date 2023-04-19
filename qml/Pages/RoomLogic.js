@@ -89,10 +89,16 @@ function doCancelButton() {
     dashboard.enableSkills();
     return;
   } else if (roomScene.state == "responding") {
+    let p = dashboard.pending_skill;
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
-    replyToServer("__cancel");
+    if (p == "") {
+      replyToServer("__cancel");
+    } else {
+      dashboard.enableCards(roomScene.responding_card);
+      dashboard.enableSkills(roomScene.responding_card);
+    }
     return;
   }
 
