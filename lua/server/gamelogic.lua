@@ -70,6 +70,7 @@ end
 function GameLogic:chooseGenerals()
   local room = self.room
   local generalNum = room.settings.generalNum
+  local n = room.settings.enableDeputy and 2 or 1
   local lord = room:getLord()
   local lord_general = nil
   if lord ~= nil then
@@ -78,9 +79,17 @@ function GameLogic:chooseGenerals()
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
-    lord_general = room:askForGeneral(lord, generals)
+    lord_general = room:askForGeneral(lord, generals, n)
+    local deputy
+    if type(lord_general) == "table" then
+      deputy = lord_general[2]
+      lord_general = lord_general[1]
+    end
+
     room:setPlayerGeneral(lord, lord_general, true)
     room:broadcastProperty(lord, "general")
+    room:setDeputyGeneral(lord, deputy)
+    room:broadcastProperty(lord, "deputyGeneral")
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
@@ -91,18 +100,22 @@ function GameLogic:chooseGenerals()
     for i = 1, generalNum do
       table.insert(arg, table.remove(generals, 1).name)
     end
-    p.request_data = json.encode(arg)
-    p.default_reply = arg[1]
+    p.request_data = json.encode{ arg, n }
+    p.default_reply = table.random(arg, n)
   end
 
   room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
-      local general = json.decode(p.client_reply)[1]
+      local generals = json.decode(p.client_reply)
+      local general = generals[1]
+      local deputy = generals[2]
       room:setPlayerGeneral(p, general, true)
+      room:setDeputyGeneral(p, deputy)
     else
-      room:setPlayerGeneral(p, p.default_reply, true)
+      room:setPlayerGeneral(p, p.default_reply[1], true)
+      room:setDeputyGeneral(p, p.default_reply[2])
     end
     p.default_reply = ""
   end
@@ -120,13 +133,16 @@ function GameLogic:prepareForStart()
   for _, p in ipairs(players) do
     assert(p.general ~= "")
     local general = Fk.generals[p.general]
-    p.maxHp = general.maxHp
-    p.hp = general.hp
-    p.shield = general.shield
+    local deputy = Fk.generals[p.deputyGeneral]
+    p.maxHp = deputy and math.floor((deputy.maxHp + general.maxHp) / 2)
+      or general.maxHp
+    p.hp = deputy and math.floor((deputy.hp + general.hp) / 2) or general.hp
+    p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
     -- TODO: setup AI here
 
     if p.role ~= "lord" then
       room:broadcastProperty(p, "general")
+      room:broadcastProperty(p, "deputyGeneral")
     elseif #players >= 5 then
       p.maxHp = p.maxHp + 1
       p.hp = p.hp + 1
@@ -158,6 +174,17 @@ function GameLogic:prepareForStart()
     end
     for _, sname in ipairs(Fk.generals[p.general].other_skills) do
       addRoleModSkills(p, sname)
+    end
+
+    local deputy = Fk.generals[p.deputyGeneral]
+    if deputy then
+      skills = deputy.skills
+      for _, s in ipairs(skills) do
+        addRoleModSkills(p, s.name)
+      end
+      for _, sname in ipairs(deputy.other_skills) do
+        addRoleModSkills(p, sname)
+      end
     end
   end
 

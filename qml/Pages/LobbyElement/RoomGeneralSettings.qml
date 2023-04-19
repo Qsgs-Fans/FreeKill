@@ -85,6 +85,12 @@ ColumnLayout {
     text: Backend.translate("Enable free assign")
   }
 
+  CheckBox {
+    id: deputyCheck
+    checked: Debugging ? true : false
+    text: Backend.translate("Enable deputy general")
+  }
+
   RowLayout {
     anchors.rightMargin: 8
     spacing: 16
@@ -97,6 +103,7 @@ ColumnLayout {
           "CreateRoom",
           JSON.stringify([roomName.text, playerNum.value, {
             enableFreeAssign: freeAssignCheck.checked,
+            enableDeputy: deputyCheck.checked,
             gameMode: config.preferedMode,
             disabledPack: config.disabledPack,
             generalNum: config.preferredGeneralNum,

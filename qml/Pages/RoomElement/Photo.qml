@@ -13,6 +13,7 @@ Item {
   scale: 0.75
   property int playerid: 0
   property string general: ""
+  property string deputyGeneral: ""
   property string screenName: ""
   property string role: "unknown"
   property string kingdom: "qun"
@@ -120,7 +121,7 @@ Item {
     y: 28
     font.family: fontLibian.name
     font.pixelSize: 22
-    opacity: 0.7
+    opacity: 0.9
     horizontalAlignment: Text.AlignHCenter
     lineHeight: 18
     lineHeightMode: Text.FixedHeight
@@ -138,7 +139,7 @@ Item {
     font.pixelSize: 22
     rotation: 90
     transformOrigin: Item.BottomLeft
-    opacity: 0.7
+    opacity: 0.9
     horizontalAlignment: Text.AlignHCenter
     lineHeight: 18
     lineHeightMode: Text.FixedHeight
@@ -156,15 +157,55 @@ Item {
     anchors.bottomMargin: 36
   }
 
-  Image {
-    id: generalImage
+  Item {
     width: 138
     height: 222
-    smooth: true
     visible: false
-    fillMode: Image.PreserveAspectCrop
-    source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    id: generalImgItem
 
+    Image {
+      id: generalImage
+      width: deputyGeneral ? parent.width / 2 : parent.width
+      height: parent.height
+      smooth: true
+      fillMode: Image.PreserveAspectCrop
+      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+    }
+
+    Image {
+      id: deputyGeneralImage
+      anchors.left: generalImage.right
+      width: parent.width / 2
+      height: parent.height
+      smooth: true
+      fillMode: Image.PreserveAspectCrop
+      source: (deputyGeneral != "") ?
+        SkinBank.getGeneralPicture(deputyGeneral) : ""
+    }
+
+    Image {
+      id: deputySplit
+      source: SkinBank.PHOTO_DIR + "deputy-split"
+      opacity: deputyGeneral ? 1 : 0
+    }
+
+    Text {
+      id: deputyGeneralName
+      anchors.left: generalImage.right
+      anchors.leftMargin: -14
+      y: 23
+      font.family: fontLibian.name
+      font.pixelSize: 22
+      opacity: 0.9
+      horizontalAlignment: Text.AlignHCenter
+      lineHeight: 18
+      lineHeightMode: Text.FixedHeight
+      color: "white"
+      width: 24
+      wrapMode: Text.WordWrap
+      text: Backend.translate(deputyGeneral)
+      style: Text.Outline
+    }
   }
 
   Rectangle {
@@ -179,13 +220,13 @@ Item {
 
   OpacityMask {
     anchors.fill: photoMask
-    source: generalImage
+    source: generalImgItem
     maskSource: photoMask
   }
 
   Colorize {
     anchors.fill: photoMask
-    source: generalImage
+    source: generalImgItem
     saturation: 0
     visible: root.dead
   }

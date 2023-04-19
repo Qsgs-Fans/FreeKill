@@ -393,6 +393,14 @@ function Room:setPlayerGeneral(player, general, changeKingdom)
   end
 end
 
+---@param player ServerPlayer
+---@param general string
+function Room:setDeputyGeneral(player, general)
+  if Fk.generals[general] == nil then return end
+  player.deputyGeneral = general
+  self:notifyProperty(player, player, "deputyGeneral")
+end
+
 ------------------------------------------------------------------------
 -- 网络通信有关
 ------------------------------------------------------------------------
@@ -1048,22 +1056,24 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@return string @ 选择的武将
-function Room:askForGeneral(player, generals)
+function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
 
-  if #generals == 1 then return generals[1] end
-  local defaultChoice = generals[1]
+  n = n or 1
+  if #generals == n then return n == 1 and generals[1] or generals end
+  local defaultChoice = table.random(generals, n)
 
   if (player.state == "online") then
-    local result = self:doRequest(player, command, json.encode(generals))
+    local result = self:doRequest(player, command, json.encode{ generals, n })
+    local choices
     if result == "" then
-      return defaultChoice
+      choices = defaultChoice
     else
-      -- TODO: result is a JSON array
-      -- update here when choose multiple generals
-      return json.decode(result)[1]
+      choices = json.decode(result)
     end
+    if #choices == 1 then return choices[1] end
+    return choices
   end
 
   return defaultChoice

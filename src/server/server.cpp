@@ -73,6 +73,7 @@ Server::Server(QObject *parent) : QObject(parent) {
 }
 
 Server::~Server() {
+  isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
   sqlite3_close(db);
