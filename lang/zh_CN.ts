@@ -30,6 +30,18 @@
 </context>
 
 <context>
+  <name>Server</name>
+  <message>
+    <source>%1 logged in</source>
+    <translation>玩家 &lt;b>%1&lt;/b> 加入服务器</translation>
+  </message>
+  <message>
+    <source>%1 logged out</source>
+    <translation>玩家 &lt;b>%1&lt;/b> 离开服务器</translation>
+  </message>
+</context>
+
+<context>
   <name>Init</name>
   <message>
     <source>Username</source>
