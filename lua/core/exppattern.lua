@@ -269,6 +269,34 @@ local function parseMatcher(str)
   return ret
 end
 
+local function matcherKeyToString(tab)
+  if not tab then return "." end
+  local ret = table.concat(tab, ",")
+  if tab.neg then
+    for _, t in ipairs(tab.neg) do
+      if ret ~= "" then ret = ret .. "," end
+      if type(t) == "table" then
+        ret = ret .. ("^(" .. table.concat(t, ",") .. ")")
+      else
+        ret = ret .. "^" .. t
+      end
+    end
+  end
+  return ret
+end
+
+local function matcherToString(matcher)
+  return table.concat({
+    matcherKeyToString(matcher.trueName),
+    matcherKeyToString(matcher.number),
+    matcherKeyToString(matcher.suit),
+    matcherKeyToString(matcher.place),
+    matcherKeyToString(matcher.name),
+    matcherKeyToString(matcher.cardType),
+    matcherKeyToString(matcher.id),
+  }, "|")
+end
+
 ---@class Exppattern: Object
 ---@field public matchers Matcher[]
 local Exppattern = class("Exppattern")
@@ -327,6 +355,15 @@ function Exppattern:matchExp(exp)
   end
 
   return false
+end
+
+function Exppattern:__tostring()
+  local ret = ""
+  for i, matcher in ipairs(self.matchers) do
+    if i > 1 then ret = ret .. ";" end
+    ret = ret .. matcherToString(matcher)
+  end
+  return ret
 end
 
 return Exppattern
