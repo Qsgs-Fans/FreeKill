@@ -39,6 +39,10 @@
     <source>%1 logged out</source>
     <translation>玩家 &lt;b>%1&lt;/b> 离开服务器</translation>
   </message>
+  <message>
+    <source>%1 backed</source>
+    <translation>玩家 &lt;b>%1&lt;/b> 回到了游戏</translation>
+  </message>
 </context>
 
 <context>

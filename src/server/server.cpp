@@ -307,7 +307,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
         if (player->getState() == Player::Offline) {
           auto room = player->getRoom();
           player->setSocket(client);
+          player->alive = true;
           client->disconnect(this);
+          broadcast("ServerMessage",
+              tr("%1 backed").arg(player->getScreenName()));
           room->pushRequest(QString("%1,reconnect").arg(id));
           return;
         } else {
