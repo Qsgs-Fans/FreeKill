@@ -195,7 +195,7 @@ local function parseMatcher(str)
 
   if not table.contains(t[7], ".") then
     ret.id = {}
-    for _, num in ipairs(t[6]) do
+    for _, num in ipairs(t[7]) do
       local n = tonumber(num)
       if n and n > 0 then
         table.insertIfNeed(ret.id, n)
