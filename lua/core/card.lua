@@ -121,7 +121,7 @@ function Card:initialize(name, suit, number, color)
 end
 
 function Card:__tostring()
-  return string.format("%s[%s %d]", self.name, self:getSuitString(), self.number)
+  return string.format("<Card %s[%s %d]>", self.name, self:getSuitString(), self.number)
 end
 
 --- 克隆特定卡牌并赋予花色与点数。

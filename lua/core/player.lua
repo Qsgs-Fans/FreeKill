@@ -99,7 +99,7 @@ function Player:initialize()
 end
 
 function Player:__tostring()
-  return string.format("%s #%d", self.id < 0 and "Bot" or "Player", math.abs(self.id))
+  return string.format("<%s %d>", self.id < 0 and "Bot" or "Player", math.abs(self.id))
 end
 
 --- 设置角色、体力、技能。

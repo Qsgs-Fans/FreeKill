@@ -53,6 +53,10 @@ function Skill:initialize(name, frequency)
   self.attached_equip = nil
 end
 
+function Skill:__tostring()
+  return "<Skill " .. self.name .. ">"
+end
+
 --- 为一个技能增加相关技能。
 ---@param skill Skill @ 技能
 function Skill:addRelatedSkill(skill)
