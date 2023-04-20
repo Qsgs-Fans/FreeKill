@@ -247,6 +247,7 @@ Item {
 
   function sendDanmaku(msg) {
     danmaku.sendLog(msg);
+    lobbyChat.append(msg);
   }
 
   Component.onCompleted: {

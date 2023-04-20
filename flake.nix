@@ -10,7 +10,7 @@
       with import nixpkgs { system = "x86_64-linux"; };
       stdenv.mkDerivation {
         name = "freekill";
-        version = "0.1.1";
+        version = "0.1.2";
         src = self;
 
         buildInputs = with qt6; [

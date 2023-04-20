@@ -786,6 +786,7 @@ Item {
 
   function sendDanmaku(msg) {
     danmaku.sendLog(msg);
+    chat.append(msg);
   }
 
   function showDistance(show) {
