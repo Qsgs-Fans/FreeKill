@@ -1,9 +1,10 @@
 name: Build For Windows 10+
-# 调试不好，放弃
-# 辣鸡Windows
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -26,37 +27,93 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.3'
+        version: '6.4.2'
         host: 'windows'
         target: 'desktop'
         arch: 'win64_mingw'
         modules: 'qtmultimedia qt5compat qtshadertools'
-        tools: 'tools_openssl_x64 tools_cmake'
+        tools: 'tools_openssl_x64'
+
+    - name: Disable PCH
+      shell: bash
+      run: |
+        cd src
+        find -name "*.cpp" -exec sed -i '1i #include "pch.h"' "{}" \;
+        find -name "*.h" -exec sed -i '1i #include "pch.h"' "{}" \;
+        sed -i '1d' pch.h
+        sed -i '/pch.h/d' CMakeLists.txt
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
-        OPENSSL_ROOT_DIR: ${{github.workspace}}/../Qt/tools/OpenSSL/bin
+        OPENSSL_ROOT_DIR: ${{github.workspace}}/../Qt/tools/OpenSSL/Win_x64
       run: |
-        ls ../Qt
-        ls ../Qt/tools
-        cmake -DCMAKE_BUILD_TYPE=Release -G "MinGW Makefiles" -B ${{github.workspace}}/build
+        cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" -B ${{github.workspace}}/build
 
     - name: Build project
       working-directory: ${{github.workspace}}/build
-      run: mingw32-make.exe
+      run: mingw32-make -j2
+
+   # - name: Setup tmate session
+   #   uses: mxschmitt/action-tmate@v3
+   #   timeout-minutes: 15
 
     - name: Compress portable program
       working-directory: ${{github.workspace}}
+      shell: bash
       run: |
-        mkdir build/all
-        cp build/FreeKill.exe build/all
-        cp build/zh_CN.qm build/all
-        cp build/fkparse/libfkparse.dll build/all
-        cp -r audio fonts image lua packages qml server build/all
-        cp lib/win/* build/all
-        cd build/all
-        windeployqt.exe FreeKill.exe --release
-        ls
-        Compress-Archive -Path ${{github.workspace}}\build\all\ -DestinationPath ${{github.workspace}}\build\final.zip
+        mkdir FreeKill-release
+        cp build/FreeKill.exe FreeKill-release
+        cp -r qml FreeKill-release
+        cd FreeKill-release
+        windeployqt FreeKill.exe
+        cp -r ../.git .
+        git restore .
+        rm -rf .git* android doc fkparse lib lang translations src
+        cd ..
+        cp lib/win/* FreeKill-release
+        cp build/zh_CN.qm FreeKill-release
+        cp build/fkparse/libfkparse.dll FreeKill-release
+        cp ../Qt/6.4.2/mingw_64/bin/li*.dll FreeKill-release
+        cp '/c/Program Files/OpenSSL/bin/libcrypto-1_1-x64.dll' FreeKill-release
+        7z a -t7z FreeKill-release.7z FreeKill-release -r -mx=9 -m0=LZMA2 -ms=10m -mf=on -mhc=on -mmt=on
+
+    - name: Upload Release
+      uses: actions/upload-artifact@v3
+      with:
+        name: zip
+        path: FreeKill-release.7z
+
+  release:
+    name: Release APK
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Get Previous tag
+      id: previoustag
+      uses: WyriHaximus/github-action-get-previous-tag@v1
+      with:
+        fallback: 0.0.1
+
+    - name: Download APK from build
+      uses: actions/download-artifact@v3
+      with:
+        name: zip
+        path: zip
+
+    - name: Rename 7z
+      run: |
+        mv zip/FreeKill-release.7z zip/FreeKill-${{ steps.previoustag.outputs.tag }}.7z
+
+    - name: Upload Release APK
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.MY_TOKEN }}
+        tag_name: ${{ steps.previoustag.outputs.tag }}
+        files: zip/FreeKill-${{ steps.previoustag.outputs.tag }}.7z

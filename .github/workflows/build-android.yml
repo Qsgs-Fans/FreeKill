@@ -2,6 +2,9 @@ name: Build For Android
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - '*'
 
 jobs:
   build:
