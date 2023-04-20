@@ -16,14 +16,19 @@
   例如：
   slash,jink|2~4|spade;.|.|.|.|.|trick
 
+  你可以使用 '^' 符号表示否定，比如 ^heart 表示除了红桃之外的所有花色。
+  否定型一样的可以与其他表达式并用，用 ',' 分割。
+  如果要同时否定多项，则需要用括号： ^(heart, club) 等。
+  注：这种括号不支持嵌套否定。
+
 ]]--
 
 ---@class Matcher
----@field public name string[]
+---@field public trueName string[]
 ---@field public number integer[]
 ---@field public suit string[]
 ---@field public place string[]
----@field public generalName string[]
+---@field public name string[]
 ---@field public cardType string[]
 ---@field public id integer[]
 
@@ -34,23 +39,44 @@ local numbertable = {
   ["K"] = 13,
 }
 
-local suittable = {
-  [Card.Spade] = "spade",
-  [Card.Club] = "club",
-  [Card.Heart] = "heart",
-  [Card.Diamond] = "diamond",
-}
-
 local placetable = {
   [Card.PlayerHand] = "hand",
   [Card.PlayerEquip] = "equip",
 }
 
-local typetable = {
-  [Card.TypeBasic] = "basic",
-  [Card.TypeTrick] = "trick",
-  [Card.TypeEquip] = "equip",
-}
+local function matchSingleKey(matcher, card, key)
+  local match = matcher[key]
+  if not match then return true end
+  local val = card[key]
+  if key == "suit" then
+    val = card:getSuitString()
+  elseif key == "cardType" then
+    val = card:getTypeString()
+  elseif key == "place" then
+    val = placetable[Fk:currentRoom():getCardArea(card.id)]
+    if not val then
+      for _, p in ipairs(Fk:currentRoom().alive_players) do
+        val = p:getPileNameOfId(card.id)
+        if val then break end
+      end
+    end
+  end
+
+  if table.contains(match, val) then
+    return true
+  else
+    local neg = match.neg
+    if not neg then return false end
+    for _, t in ipairs(neg) do
+      if type(t) == "table" then
+        if not table.contains(t, val) then return true end
+      else
+        if t ~= val then return true end
+      end
+    end
+  end
+  return false
+end
 
 ---@param matcher Matcher
 ---@param card Card
@@ -59,50 +85,13 @@ local function matchCard(matcher, card)
     card = Fk:getCardById(card)
   end
 
-  if matcher.name and not table.contains(matcher.name, card.name) and
-    not table.contains(matcher.name, card.trueName) then
-    return false
-  end
-
-  if matcher.number and not table.contains(matcher.number, card.number) then
-    return false
-  end
-
-  if matcher.suit and not table.contains(matcher.suit, card:getSuitString()) then
-    return false
-  end
-
-  if matcher.place and not table.contains(
-    matcher.place,
-    placetable[Fk:currentRoom():getCardArea(card.id)]
-  ) then
-    local piles = table.filter(matcher.place, function(e)
-      return not table.contains(placetable, e)
-    end)
-    for _, pi in ipairs(piles) do
-      if ClientInstance then
-        if Self:getPileNameOfId(card.id) == pi then return true end
-      else
-        for _, p in ipairs(RoomInstance.alive_players) do
-          local pile = p:getPileNameOfId(card.id)
-          if pile == pi then return true end
-        end
-      end
-    end
-    return false
-  end
-
-  -- TODO: generalName
-
-  if matcher.cardType and not table.contains(matcher.cardType, typetable[card.type]) then
-    return false
-  end
-
-  if matcher.id and not table.contains(matcher.id, card.id) then
-    return false
-  end
-
-  return true
+  return matchSingleKey(matcher, card, "trueName")
+     and matchSingleKey(matcher, card, "number")
+     and matchSingleKey(matcher, card, "suit")
+     and matchSingleKey(matcher, card, "place")
+     and matchSingleKey(matcher, card, "name")
+     and matchSingleKey(matcher, card, "cardType")
+     and matchSingleKey(matcher, card, "id")
 end
 
 local function hasIntersection(a, b)
@@ -119,6 +108,9 @@ local function hasIntersection(a, b)
       return true
     end
   end
+
+  -- TODO: 判断含有neg的两个matcher
+
   return false
 end
 
@@ -126,11 +118,11 @@ end
 ---@param b Matcher
 local function matchMatcher(a, b)
   local keys = {
-    "name",
+    "trueName",
     "number",
     "suit",
     "place",
-    "generalName",
+    "name",
     "cardType",
     "id",
   }
@@ -142,6 +134,104 @@ local function matchMatcher(a, b)
   end
 
   return true
+end
+
+local function parseNegative(list)
+  local bracket = nil
+  local toRemove = {}
+  for i, element in ipairs(list) do
+    if element[1] == "^" or bracket then
+      list.neg = list.neg or {}
+      table.insert(toRemove, 1, i)
+      if element[1] == "^" and element[2] == "(" then
+        if bracket then
+          error("pattern syntax error. Cannot use nested bracket.")
+        else
+          bracket = {}
+        end
+        element = element:sub(3)
+      else
+        if element[1] == "^" then
+          element = element:sub(2)
+        end
+      end
+
+      local eofBracket
+      if element:endsWith(")") then
+        eofBracket = true
+        element = element:sub(1, -2)
+      end
+
+      if eofBracket then
+        if not bracket then
+          error('pattern syntax error. No matching bracket.')
+        else
+          table.insert(bracket, element)
+          table.insert(list.neg, bracket)
+          bracket = nil
+        end
+      else
+        if bracket then
+          table.insert(bracket, element)
+        else
+          table.insert(list.neg, element)
+        end
+      end
+    end
+  end
+
+  for _, i in ipairs(toRemove) do
+    table.remove(list, i)
+  end
+end
+
+local function parseNumToTable(from, dest)
+  for _, num in ipairs(from) do
+    if type(num) ~= "string" then goto continue end
+    local n = tonumber(num)
+    if not n then
+      n = numbertable[num]
+    end
+    if n then
+      table.insertIfNeed(dest, n)
+    else
+      if string.find(num, "~") then
+        local s, e = table.unpack(num:split("~"))
+        local start = tonumber(s)
+        if not start then
+          start = numbertable[s]
+        end
+        local _end = tonumber(e)
+        if not _end then
+          _end = numbertable[e]
+        end
+
+        for i = start, _end do
+          table.insertIfNeed(dest, i)
+        end
+      end
+    end
+    ::continue::
+  end
+end
+
+local function parseRawNumTable(tab)
+  local ret = {}
+  parseNumToTable(tab, ret)
+
+  if tab.neg then
+    ret.neg = {}
+    parseNumToTable(tab.neg, ret.neg)
+
+    for _, t in ipairs(tab.neg) do
+      if type(t) == "table" then
+        local tmp = {}
+        parseNumToTable(t, tmp)
+        table.insert(ret.neg, tmp)
+      end
+    end
+  end
+  return ret
 end
 
 local function parseMatcher(str)
@@ -156,51 +246,24 @@ local function parseMatcher(str)
     t[i] = item:split(",")
   end
 
+  for _, list in ipairs(t) do
+    parseNegative(list)
+  end
+
   local ret = {} ---@type Matcher
-  ret.name = not table.contains(t[1], ".") and t[1] or nil
+  ret.trueName = not table.contains(t[1], ".") and t[1] or nil
 
   if not table.contains(t[2], ".") then
-    ret.number = {}
-    for _, num in ipairs(t[2]) do
-      local n = tonumber(num)
-      if not n then
-        n = numbertable[num]
-      end
-      if n then
-        table.insertIfNeed(ret.number, n)
-      else
-        if string.find(num, "~") then
-          local s, e = table.unpack(num:split("~"))
-          local start = tonumber(s)
-          if not start then
-            start = numbertable[s]
-          end
-          local _end = tonumber(e)
-          if not _end then
-            _end = numbertable[e]
-          end
-
-          for i = start, _end do
-            table.insertIfNeed(ret.number, i)
-          end
-        end
-      end
-    end
+    ret.number = parseRawNumTable(t[2])
   end
 
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
   ret.place = not table.contains(t[4], ".") and t[4] or nil
-  ret.generalName = not table.contains(t[5], ".") and t[5] or nil
+  ret.name = not table.contains(t[5], ".") and t[5] or nil
   ret.cardType = not table.contains(t[6], ".") and t[6] or nil
 
   if not table.contains(t[7], ".") then
-    ret.id = {}
-    for _, num in ipairs(t[7]) do
-      local n = tonumber(num)
-      if n and n > 0 then
-        table.insertIfNeed(ret.id, n)
-      end
-    end
+    ret.id = parseRawNumTable(t[7])
   end
 
   return ret
