@@ -10,6 +10,7 @@ ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) {
 }
 
 ClientSocket::ClientSocket(QTcpSocket *socket) {
+  aes_ready = false;
   socket->setParent(this);
   this->socket = socket;
   timerSignup.setSingleShot(true);
