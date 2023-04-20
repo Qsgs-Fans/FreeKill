@@ -13,3 +13,5 @@ Diy文档
     05-trigger.rst
     06-active.rst
     07-events.rst
+    08-debugging.rst
+    09-exppattern.rst
