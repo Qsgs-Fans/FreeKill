@@ -17,7 +17,7 @@ end
 local aoe_on_use = function(self, room, cardUseEvent)
   if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
     cardUseEvent.tos = {}
-    for _, player in ipairs(room:getOtherPlayers()) do
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
       if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
         TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
