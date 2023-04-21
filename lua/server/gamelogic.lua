@@ -309,8 +309,8 @@ function GameLogic:trigger(event, target, data)
       end)
 
       while #skill_names > 0 do
-        local skill_name = room:askForChoice(player, skill_names,
-          "trigger", "#choose-trigger")
+        local skill_name = prio <= 0 and table.random(skill_names) or
+          room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
 
         local skill = skill_name == "game_rule" and GameRule
           or Fk.skills[skill_name]
