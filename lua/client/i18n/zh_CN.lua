@@ -35,6 +35,8 @@ Fk:loadTranslationTable{
 
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
+  ["Special card skills:"] = "<b>卡牌的特殊用法:</b>",
+  ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
   ["About"] = "关于",
