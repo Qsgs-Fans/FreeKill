@@ -3,12 +3,23 @@
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
+local aoe_on_use = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
-  can_use = function(self, player)
-    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase)
+  can_use = function(self, player, card)
+    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -199,10 +210,10 @@ extension:addCards({
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
   distance_limit = 1,
-  target_filter = function(self, to_select, selected)
+  target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self)
+      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self, card) -- for no distance limit for snatch
         and not player:isAllNude()
     end
   end,
@@ -419,16 +430,7 @@ extension:addCards({
 
 local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-        end
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
@@ -469,16 +471,7 @@ extension:addCards({
 
 local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-        end
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
@@ -517,16 +510,7 @@ extension:addCards({
 
 local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getAlivePlayers()) do
-        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-        end
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   about_to_effect = function(self, room, effect)
     if not room:getPlayerById(effect.to):isWounded() then
       return true
@@ -553,16 +537,7 @@ extension:addCards({
 
 local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getAlivePlayers()) do
-        if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-          TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-        end
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     if not (effect.extra_data and effect.extra_data.AGFilled) then
