@@ -30,6 +30,16 @@ function table:every(func)
   return true
 end
 
+---@param func fun(element, index, array)
+function table:find(func)
+  for i, v in ipairs(self) do
+    if func(v, i, self) then
+      return v
+    end
+  end
+  return nil
+end
+
 ---@generic T
 ---@param self T[]
 ---@param func fun(element, index, array)
