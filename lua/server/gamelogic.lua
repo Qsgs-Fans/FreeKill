@@ -253,7 +253,7 @@ function GameLogic:trigger(event, target, data)
 
   self.event_stack:push({event, target, data})
 
-  repeat do
+  if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
     for _, skill in ipairs(skills_to_refresh) do
       if skill:canRefresh(event, target, player, data) then
@@ -261,7 +261,9 @@ function GameLogic:trigger(event, target, data)
       end
     end
     player = player.next
-  end until player == _target
+  end until player == _target end
+
+  if #skills == 0 then return end
 
   ---@param a TriggerSkill
   ---@param b TriggerSkill
