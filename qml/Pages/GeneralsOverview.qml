@@ -10,31 +10,163 @@ Item {
 
   property bool loaded: false
 
+  Rectangle {
+    anchors.fill: listView
+    color: "#88EEEEEE"
+    radius: 6
+  }
+
   ListView {
-    width: Math.floor(root.width / 98) * 98
-    height: parent.height
-    anchors.centerIn: parent
+    id: listView
+    width: 130
+    height: parent.height - 20
+    y: 10
     ScrollBar.vertical: ScrollBar {}
     model: ListModel {
       id: packages
     }
 
-    delegate: ColumnLayout {
-      Text { text: Backend.translate(name) }
-      GridLayout {
-        columns: root.width / 98
-        Repeater {
-          model: JSON.parse(Backend.callLuaFunction("GetGenerals", [name]))
-          GeneralCardItem {
-            autoBack: false
-            name: modelData
-            onClicked: {
-              generalText.clear();
-              generalText.general = modelData;
-              generalText.updateGeneral();
-              generalDetail.open();
-            }
-          }
+    highlight: Rectangle { color: "#E91E63"; radius: 5 }
+    highlightMoveDuration: 500
+
+    delegate: Item {
+      width: listView.width
+      height: 40
+
+      Text {
+        text: Backend.translate(name)
+        anchors.centerIn: parent
+      }
+
+      TapHandler {
+        onTapped: {
+          listView.currentIndex = index;
+        }
+      }
+    }
+
+    onCurrentIndexChanged: { vanishAnim.start(); }
+  }
+
+  GridView {
+    id: gridView
+    width: root.width - listView.width - generalDetail.width - 16
+    height: parent.height - 20
+    y: 10
+    anchors.left: listView.right
+    anchors.leftMargin: 8 + (width % 100) / 2
+    cellHeight: 140
+    cellWidth: 100
+
+    delegate: GeneralCardItem {
+      autoBack: false
+      name: modelData
+      onClicked: {
+        generalText.clear();
+        generalDetail.general = modelData;
+        generalDetail.updateGeneral();
+       // generalDetail.open();
+      }
+    }
+  }
+
+  ParallelAnimation {
+    id: vanishAnim
+    PropertyAnimation {
+      target: gridView
+      property: "opacity"
+      to: 0
+      duration: 150
+      easing.type: Easing.InOutQuad
+    }
+    PropertyAnimation {
+      target: gridView
+      property: "y"
+      to: 30
+      duration: 150
+      easing.type: Easing.InOutQuad
+    }
+    onFinished: {
+      gridView.model = JSON.parse(Backend.callLuaFunction("GetGenerals",
+        [listView.model.get(listView.currentIndex).name]));
+      appearAnim.start();
+    }
+  }
+
+  SequentialAnimation {
+    id: appearAnim
+    PauseAnimation { duration: 200 }
+    ParallelAnimation {
+      PropertyAnimation {
+        target: gridView
+        property: "opacity"
+        to: 1
+        duration: 150
+        easing.type: Easing.InOutQuad
+      }
+      PropertyAnimation {
+        target: gridView
+        property: "y"
+        from: 20
+        to: 10
+        duration: 150
+        easing.type: Easing.InOutQuad
+      }
+    }
+  }
+
+  Rectangle {
+    id: generalDetail
+    width: 310
+    height: parent.height - 20
+    y: 10
+    anchors.right: parent.right
+    anchors.rightMargin: 10
+    color: "#88EEEEEE"
+    radius: 8
+
+    property string general: "caocao"
+    function updateGeneral() {
+      detailGeneralCard.name = general;
+      let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+      generalText.clear();
+      data.skill.forEach(t => {
+        generalText.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+      });
+      data.related_skill.forEach(t => {
+        generalText.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
+      });
+    }
+
+    Flickable {
+      flickableDirection: Flickable.VerticalFlick
+      contentHeight: detailLayout.height
+      width: parent.width - 40
+      height: parent.height - 40
+      clip: true
+      anchors.centerIn: parent
+      ScrollBar.vertical: ScrollBar {}
+
+      ColumnLayout {
+        id: detailLayout
+        width: parent.width
+
+        GeneralCardItem {
+          id: detailGeneralCard
+          Layout.alignment: Qt.AlignHCenter
+          name: "caocao"
+        }
+
+        TextEdit {
+          id: generalText
+
+          Layout.fillWidth: true
+          readOnly: true
+          selectByKeyboard: true
+          selectByMouse: false
+          wrapMode: TextEdit.WordWrap
+          textFormat: TextEdit.RichText
+          font.pixelSize: 16
         }
       }
     }
@@ -48,57 +180,11 @@ Item {
     }
   }
 
-  Drawer {
-    id: generalDetail
-    edge: Qt.RightEdge
-    width: parent.width * 0.4 / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    dim: false
-    clip: true
-    dragMargin: 0
-    scale: mainWindow.scale
-    transformOrigin: Item.TopRight
-
-    Flickable {
-      flickableDirection: Flickable.VerticalFlick
-      contentWidth: generalText.width
-      contentHeight: generalText.height
-      width: parent.width * 0.8
-      height: parent.height * 0.8
-      clip: true
-      anchors.centerIn: parent
-      ScrollBar.vertical: ScrollBar {}
-
-      TextEdit {
-        id: generalText
-
-        property string general: ""
-        width: generalDetail.width * 0.75
-        readOnly: true
-        selectByKeyboard: true
-        selectByMouse: true
-        wrapMode: TextEdit.WordWrap
-        textFormat: TextEdit.RichText
-        font.pixelSize: 16
-
-        function updateGeneral() {
-          let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
-          this.append(Backend.translate(data.kingdom) + " " + Backend.translate(general) + " " + data.hp + "/" + data.maxHp);
-          data.skill.forEach(t => {
-            this.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
-          });
-          data.related_skill.forEach(t => {
-            this.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
-          });
-        }
-      }
-    }
-  }
-
   function loadPackages() {
     if (loaded) return;
     let packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     packs.forEach((name) => packages.append({ name: name }));
+    generalDetail.updateGeneral();
     loaded = true;
   }
 }
