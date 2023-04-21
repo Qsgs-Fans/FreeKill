@@ -135,6 +135,7 @@ function Card:clone(suit, number)
   newCard.skill = self.skill
   newCard.special_skills = self.special_skills
   newCard.equip_skill = self.equip_skill
+  newCard.is_damage_card = self.is_damage_card
   return newCard
 end
 

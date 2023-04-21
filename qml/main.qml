@@ -13,6 +13,7 @@ Window {
   height: 540
   minimumWidth: 160
   minimumHeight: 90
+  title: "FreeKill v" + FkVersion
   property var callbacks: Logic.callbacks
 
 Item {
