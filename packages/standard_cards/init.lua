@@ -3,6 +3,28 @@
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
+local global_on_use = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+local aoe_on_use = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
   max_phase_use_time = 1,
@@ -419,14 +441,7 @@ extension:addCards({
 
 local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
@@ -467,14 +482,7 @@ extension:addCards({
 
 local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end,
+  on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = nil
     if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
@@ -513,14 +521,7 @@ extension:addCards({
 
 local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end,
+  on_use = global_on_use,
   about_to_effect = function(self, room, effect)
     if not room:getPlayerById(effect.to):isWounded() then
       return true
@@ -547,14 +548,7 @@ extension:addCards({
 
 local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
-  on_use = function(self, room, cardUseEvent)
-    if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-      cardUseEvent.tos = {}
-      for _, player in ipairs(room:getAlivePlayers()) do
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end,
+  on_use = global_on_use,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     if not (effect.extra_data and effect.extra_data.AGFilled) then

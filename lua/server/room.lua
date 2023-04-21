@@ -358,6 +358,44 @@ function Room:removePlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num - count, 0))
 end
 
+--- 将一张卡牌的某种标记数量相应的值。
+---
+--- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
+---@param card Card @ 要被更新标记的那张牌
+---@param mark string @ 标记的名称
+---@param value integer @ 要设为的值，其实也可以设为字符串
+function Room:setCardMark(card, mark, value)
+  card:setMark(mark, value)
+  self:doBroadcastNotify("SetCardMark", json.encode{
+    card.id,
+    mark,
+    value
+  })
+end
+
+--- 将一张卡牌的mark标记增加count个。
+---@param card Card @ 要被增加标记的那张牌
+---@param mark string @ 标记名称
+---@param count integer | nil @ 要增加的数量，默认为1
+function Room:addCardMark(card, mark, count)
+  count = count or 1
+  local num = card:getMark(mark)
+  num = num or 0
+  self:setCardMark(card, mark, math.max(num + count, 0))
+end
+
+--- 将一名玩家的mark标记减少count个。
+---@param card Card @ 要被减少标记的那张牌
+---@param mark string @ 标记名称
+---@param count integer | nil @ 要减少的数量，默认为1
+function Room:removeCardMark(card, mark, count)
+  count = count or 1
+  local num = card:getMark(mark)
+  num = num or 0
+  self:setCardMark(card, mark, math.max(num - count, 0))
+end
+
+
 --- 将房间中某个tag设为特定值。
 ---
 --- 当在编程中想在服务端搞点全局变量的时候哦，不要自己设置全局变量或者上值，而是应该使用room的tag。
@@ -919,7 +957,6 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     pattern = pattern,
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
-
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
 
   if ret then

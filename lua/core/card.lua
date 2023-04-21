@@ -15,6 +15,7 @@
 ---@field public type CardType @ 卡牌的种类（基本牌、锦囊牌、装备牌）
 ---@field public sub_type CardSubtype @ 卡牌的子种类（例如延时锦囊牌、武器、防具等）
 ---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
+---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[]
 ---@field public skillName string @ for virtual cards
 ---@field public skillNames string[]
@@ -93,6 +94,7 @@ function Card:initialize(name, suit, number, color)
   self.skillName = nil -- ""
   self._skillName = ""
   self.skillNames = {}
+  self.mark = {}
 
   local mt = table.simpleClone(getmetatable(self))
   local newidx = mt.__newindex or rawset
@@ -279,6 +281,55 @@ local function getNumberStr(num)
     return "K"
   end
   return tostring(num)
+end
+
+--- 为卡牌赋予Mark。
+---@param mark string @ 标记
+---@param count integer @ 为标记赋予的数量
+-- mark name and UI:
+-- 'xxx': invisible mark
+-- '@mark': mark with extra data (maybe string or number)
+-- '@@mark': mark without data
+function Card:addMark(mark, count)
+  count = count or 1
+  local num = self.mark[mark]
+  num = num or 0
+  self:setMark(mark, math.max(num + count, 0))
+end
+
+--- 为卡牌移除Mark。
+---@param mark string @ 标记
+---@param count integer @ 为标记删除的数量
+function Card:removeMark(mark, count)
+  count = count or 1
+  local num = self.mark[mark]
+  num = num or 0
+  self:setMark(mark, math.max(num - count, 0))
+end
+
+--- 为卡牌设置Mark至指定数量。
+---@param mark string @ 标记
+---@param count integer @ 为标记删除的数量
+function Card:setMark(mark, count)
+  if self.mark[mark] ~= count then
+    self.mark[mark] = count
+  end
+end
+
+--- 获取卡牌对应Mark的数量。
+---@param mark string @ 标记
+---@param count integer @ 为标记删除的数量
+function Card:getMark(mark)
+  return (self.mark[mark] or 0)
+end
+
+--- 获取卡牌有哪些Mark。
+function Card:getMarkNames()
+  local ret = {}
+  for k, _ in pairs(self.mark) do
+    table.insert(ret, k)
+  end
+  return ret
 end
 
 -- for sendLog
