@@ -179,6 +179,22 @@ function table:random(n)
   return n0 == nil and ret[1] or ret
 end
 
+function table:slice(begin, _end)
+  local len = #self
+  begin = begin or 1
+  _end = _end or len + 1
+
+  if begin <= 0 then begin = len + 1 + begin end
+  if _end <= 0 then _end = len + 1 + _end end
+  if begin >= _end then return {} end
+
+  local ret = {}
+  for i = begin, _end - 1, 1 do
+    table.insert(ret, self[i])
+  end
+  return ret
+end
+
 -- allow a = "Hello"; a[1] == "H"
 local str_mt = getmetatable("")
 str_mt.__index = function(str, k)
