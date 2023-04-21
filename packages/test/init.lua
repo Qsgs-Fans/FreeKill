@@ -123,12 +123,18 @@ local test_vs = fk.CreateViewAsSkill{
     return c
   end,
 }
+local test_trig = fk.CreateTriggerSkill{
+  name = "test_trig",
+  events = {fk.TurnStart},
+  can_trigger = function() p("a") end,
+}
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 4
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(test_active)
 test2:addSkill(test_vs)
+test2:addSkill(test_trig)
 
 Fk:loadTranslationTable{
   ["test"] = "测试",
