@@ -10,6 +10,12 @@ Item {
 
   property bool loaded: false
 
+  Rectangle {
+    anchors.fill: listView
+    color: "#88EEEEEE"
+    radius: 6
+  }
+
   ListView {
     id: listView
     width: 130
@@ -20,7 +26,7 @@ Item {
       id: packages
     }
 
-    highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
+    highlight: Rectangle { color: "#E91E63"; radius: 5 }
     highlightMoveDuration: 500
 
     delegate: Item {
