@@ -27,4 +27,11 @@ end
 GameEvent.functions[GameEvent.Turn] = function(self)
   local room = self.room
   room.logic:trigger(fk.TurnStart, room.current)
+
+  local player = room.current
+  if not player.faceup then
+    player:turnOver()
+  elseif not player.dead then
+    player:play()
+  end
 end

@@ -41,7 +41,7 @@ end
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
   events = {
-    fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
+    fk.GameStart, fk.DrawInitialCards,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
     fk.RoundStart,
     fk.AskForPeaches, fk.AskForPeachesDone,
@@ -112,13 +112,6 @@ GameRule = fk.CreateTriggerSkill{
       end
 
       room:sendLog{ type = "$AppendSeparator" }
-    end,
-    [fk.TurnStart] = function()
-      if not player.faceup then
-        player:turnOver()
-      elseif not player.dead then
-        player:play()
-      end
     end,
     [fk.EventPhaseProceeding] = function()
       switch(player.phase, {
