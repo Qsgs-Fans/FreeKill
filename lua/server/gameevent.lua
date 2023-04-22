@@ -131,7 +131,7 @@ function GameEvent:exec()
   return ret, extra_ret
 end
 
-function GameEvent:breakDown()
+function GameEvent:shutdown()
   -- yield to self and break
   coroutine.yield(self, "__breakEvent")
 end

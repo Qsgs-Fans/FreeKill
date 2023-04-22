@@ -99,8 +99,14 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
   end
 
   if self.interrupted then
+    room.current.phase = Player.Finish
+    room.logic:trigger(fk.EventPhaseStart, room.current, nil, true)
+    room.logic:trigger(fk.EventPhaseEnd, room.current, nil, true)
+
     room.current.phase = Player.NotActive
     room:notifyProperty(room.current, room.current, "phase")
+    room.logic:trigger(fk.EventPhaseStart, room.current, nil, true)
+
     room.current.skipped_phases = {}
 
     room.logic:trigger(fk.TurnEnd, room.current, nil, true)
