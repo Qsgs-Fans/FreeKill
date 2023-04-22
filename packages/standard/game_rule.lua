@@ -40,8 +40,8 @@ end
 
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
-  refresh_events = {
-    fk.GameStart, fk.DrawInitialCards, fk.TurnStart,
+  events = {
+    fk.GameStart, fk.DrawInitialCards,
     fk.EventPhaseProceeding, fk.EventPhaseEnd, fk.EventPhaseChanging,
     fk.RoundStart,
     fk.AskForPeaches, fk.AskForPeachesDone,
@@ -49,11 +49,11 @@ GameRule = fk.CreateTriggerSkill{
   },
   priority = 0,
 
-  can_refresh = function(self, event, target, player, data)
+  can_trigger = function(self, event, target, player, data)
     return (target == player) or (target == nil)
   end,
 
-  on_refresh = function(self, event, target, player, data)
+  on_trigger = function(self, event, target, player, data)
     local room = player.room
     if room:getTag("SkipGameRule") then
       room:setTag("SkipGameRule", false)
@@ -112,13 +112,6 @@ GameRule = fk.CreateTriggerSkill{
       end
 
       room:sendLog{ type = "$AppendSeparator" }
-    end,
-    [fk.TurnStart] = function()
-      if not player.faceup then
-        player:turnOver()
-      elseif not player.dead then
-        player:play()
-      end
     end,
     [fk.EventPhaseProceeding] = function()
       switch(player.phase, {

@@ -30,6 +30,16 @@ function table:every(func)
   return true
 end
 
+---@param func fun(element, index, array)
+function table:find(func)
+  for i, v in ipairs(self) do
+    if func(v, i, self) then
+      return v
+    end
+  end
+  return nil
+end
+
 ---@generic T
 ---@param self T[]
 ---@param func fun(element, index, array)
@@ -177,6 +187,22 @@ function table:random(n)
     n = n - 1
   end
   return n0 == nil and ret[1] or ret
+end
+
+function table:slice(begin, _end)
+  local len = #self
+  begin = begin or 1
+  _end = _end or len + 1
+
+  if begin <= 0 then begin = len + 1 + begin end
+  if _end <= 0 then _end = len + 1 + _end end
+  if begin >= _end then return {} end
+
+  local ret = {}
+  for i = begin, _end - 1, 1 do
+    table.insert(ret, self[i])
+  end
+  return ret
 end
 
 -- allow a = "Hello"; a[1] == "H"

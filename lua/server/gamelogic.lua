@@ -3,6 +3,7 @@
 ---@class GameLogic: Object
 ---@field public room Room
 ---@field public skill_table table<Event, TriggerSkill[]>
+---@field public skill_priority_table<Event, number[]>
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
 ---@field public event_stack Stack
@@ -13,6 +14,7 @@ local GameLogic = class("GameLogic")
 function GameLogic:initialize(room)
   self.room = room
   self.skill_table = {}   -- TriggerEvent --> TriggerSkill[]
+  self.skill_priority_table = {}
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
   self.event_stack = Stack:new()
@@ -228,6 +230,32 @@ function GameLogic:addTriggerSkill(skill)
       self.skill_table[event] = {}
     end
     table.insert(self.skill_table[event], skill)
+
+    if self.skill_priority_table[event] == nil then
+      self.skill_priority_table[event] = {}
+    end
+
+    local priority_tab = self.skill_priority_table[event]
+    local prio = skill.priority_table[event]
+    if not table.contains(priority_tab, prio) then
+      for i, v in ipairs(priority_tab) do
+        if v < prio then
+          table.insert(priority_tab, i, prio)
+          break
+        end
+      end
+
+      if not table.contains(priority_tab, prio) then
+        table.insert(priority_tab, prio)
+      end
+    end
+
+    if not table.contains(self.skill_priority_table[event],
+      skill.priority_table[event]) then
+
+      table.insert(self.skill_priority_table[event],
+        skill.priority_table[event])
+    end
   end
 
   if skill.visible then
@@ -248,12 +276,12 @@ function GameLogic:trigger(event, target, data)
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or {}
-  local _target = target or room.current -- for iteration
+  local _target = room.current -- for iteration
   local player = _target
 
   self.event_stack:push({event, target, data})
 
-  repeat do
+  if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
     for _, skill in ipairs(skills_to_refresh) do
       if skill:canRefresh(event, target, player, data) then
@@ -261,53 +289,57 @@ function GameLogic:trigger(event, target, data)
       end
     end
     player = player.next
-  end until player == _target
+  end until player == _target end
 
-  ---@param a TriggerSkill
-  ---@param b TriggerSkill
-  local compare_func = function (a, b)
-    return a.priority_table[event] > b.priority_table[event]
-  end
-  table.sort(skills, compare_func)
+  if #skills == 0 then return end
 
-  repeat do
-    local triggerable_skills = {}   ---@type table<number, TriggerSkill[]>
-    local priority_table = {}     ---@type number[]
-    for _, skill in ipairs(skills) do
-      if skill:triggerable(event, target, player, data) then
-        local priority = skill.priority_table[event]
-        if triggerable_skills[priority] == nil then
-          triggerable_skills[priority] = {}
-        end
-        table.insert(triggerable_skills[priority], skill)
-        if not table.contains(priority_table, priority) then
-          table.insert(priority_table, priority)
-        end
-      end
+  local prio_tab = self.skill_priority_table[event]
+  local prev_prio = math.huge
+
+  for _, prio in ipairs(prio_tab) do
+    if broken then break end
+    if prio >= prev_prio then
+      -- continue
+      goto trigger_loop_continue
     end
 
-    for _, priority in ipairs(priority_table) do
-      local triggerables = triggerable_skills[priority]
-      local skill_names = {}     ---@type string[]
-      for _, skill in ipairs(triggerables) do
-        table.insert(skill_names, skill.name)
-      end
+    repeat do
+      local triggerables = table.filter(skills, function(skill)
+        return skill.priority_table[event] == prio and
+          skill:triggerable(event, target, player, data)
+      end)
+
+      local skill_names = table.map(triggerables, function(skill)
+        return skill.name
+      end)
 
       while #skill_names > 0 do
-        local skill_name = room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
-        local skill = triggerables[table.indexOf(skill_names, skill_name)]
+        local skill_name = prio <= 0 and table.random(skill_names) or
+          room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
+
+        local skill = skill_name == "game_rule" and GameRule
+          or Fk.skills[skill_name]
+
+        local len = #skills
         broken = skill:trigger(event, target, player, data)
-        broken = broken or (event == fk.AskForPeaches and room:getPlayerById(data.who).hp > 0)
+        table.insertTable(skill_names, table.map(
+          table.slice(skills, len - #skills), function(s) return s.name end))
+
+        broken = broken or (event == fk.AskForPeaches
+          and room:getPlayerById(data.who).hp > 0)
+
         if broken then break end
         table.removeOne(skill_names, skill_name)
-        table.removeOne(triggerables, skill)
       end
-    end
 
-    if broken then break end
+      if broken then break end
 
-    player = player.next
-  end until player == _target
+      player = player.next
+    end until player == _target
+
+    prev_prio = prio
+    ::trigger_loop_continue::
+  end
 
   self.event_stack:pop()
   return broken

@@ -111,8 +111,8 @@ local analepticEffect = fk.CreateTriggerSkill{
   name = "analeptic_effect",
   global = true,
   priority = 0, -- game rule
-  refresh_events = { fk.PreCardUse, fk.EventPhaseStart },
-  can_refresh = function(self, event, target, player, data)
+  events = { fk.PreCardUse, fk.EventPhaseStart },
+  can_trigger = function(self, event, target, player, data)
     if target ~= player then
       return false
     end
@@ -123,7 +123,7 @@ local analepticEffect = fk.CreateTriggerSkill{
       return player.phase == Player.NotActive
     end
   end,
-  on_refresh = function(self, event, target, player, data)
+  on_trigger = function(self, event, target, player, data)
     if event == fk.PreCardUse then
       data.additionalDamage = (data.additionalDamage or 0) + player.drank
       data.extra_data = data.extra_data or {}
@@ -161,15 +161,15 @@ local ironChainEffect = fk.CreateTriggerSkill{
   name = "iron_chain_effect",
   global = true,
   priority = { [fk.BeforeHpChanged] = 10, [fk.DamageFinished] = 0 }, -- game rule
-  refresh_events = { fk.BeforeHpChanged, fk.DamageFinished },
-  can_refresh = function(self, event, target, player, data)
+  events = { fk.BeforeHpChanged, fk.DamageFinished },
+  can_trigger = function(self, event, target, player, data)
     if event == fk.BeforeHpChanged then
       return target == player and data.damageEvent and data.damageEvent.damageType ~= fk.NormalDamage and player.chained
     else
       return target == player and data.beginnerOfTheDamage and not data.chain
     end
   end,
-  on_refresh = function(self, event, target, player, data)
+  on_trigger = function(self, event, target, player, data)
     local room = player.room
     if event == fk.BeforeHpChanged then
       data.damageEvent.beginnerOfTheDamage = true

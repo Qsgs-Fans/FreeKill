@@ -566,8 +566,8 @@ local amazingGraceAction = fk.CreateTriggerSkill{
   name = "amazing_grace_action",
   global = true,
   priority = { [fk.BeforeCardUseEffect] = 0, [fk.CardUseFinished] = 10 }, -- game rule
-  refresh_events = { fk.BeforeCardUseEffect, fk.CardUseFinished },
-  can_refresh = function(self, event, target, player, data)
+  events = { fk.BeforeCardUseEffect, fk.CardUseFinished },
+  can_trigger = function(self, event, target, player, data)
     local frameFilled = data.extra_data and data.extra_data.AGFilled
     if event == fk.BeforeCardUseEffect then
       return data.card.trueName == 'amazing_grace' and not frameFilled
@@ -575,7 +575,7 @@ local amazingGraceAction = fk.CreateTriggerSkill{
       return frameFilled
     end
   end,
-  on_refresh = function(self, event, target, player, data)
+  on_trigger = function(self, event, target, player, data)
     local room = player.room
     if event == fk.BeforeCardUseEffect then
       local toDisplay = room:getNCards(#TargetGroup:getRealTargets(data.tos))
