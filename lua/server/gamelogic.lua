@@ -388,4 +388,9 @@ function GameLogic:breakEvent(ret)
   coroutine.yield("__breakEvent", ret)
 end
 
+function GameLogic:breakTurn()
+  local event = self:getCurrentEvent():findParent(GameEvent.Turn)
+  event:shutdown()
+end
+
 return GameLogic

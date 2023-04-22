@@ -127,13 +127,8 @@ local test_trig = fk.CreateTriggerSkill{
   name = "test_trig",
   events = {fk.Damage},
   on_use = function(self, event, target, player, data)
-    local room = player.room
-    local logic = room.logic
-    local currentEvent = logic:getCurrentEvent()
-    local turnEvent = currentEvent:findParent(GameEvent.Turn)
-
     player:drawCards(1, self.name)
-    turnEvent:shutdown()
+    player.room.logic:breakTurn()
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
