@@ -34,4 +34,6 @@ GameEvent.functions[GameEvent.Turn] = function(self)
   elseif not player.dead then
     player:play()
   end
+
+  room.logic:trigger(fk.TurnEnd, room.current)
 end
