@@ -16,3 +16,4 @@ Dev文档
     scenario.rst
     todo.rst
     ui.rst
+    hegemony.rst
