@@ -261,7 +261,7 @@ function ServerPlayer:reconnect()
   end
 
   self:doNotify("UpdateDrawPile", #room.draw_pile)
-  self:doNotify("UpdateRoundNum", room:getTag("RoundCount"))
+  self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
 
   room:broadcastProperty(self, "state")
 end

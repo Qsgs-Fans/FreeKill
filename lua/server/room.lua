@@ -601,7 +601,7 @@ function Room:requestLoop(rest_time)
     end
 
     player:doNotify("UpdateDrawPile", #self.draw_pile)
-    player:doNotify("UpdateRoundNum", self:getTag("RoundCount"))
+    player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
     table.insert(self.observers, {observee.id, player})
   end

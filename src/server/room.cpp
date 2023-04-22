@@ -286,6 +286,12 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   auto doc = String2Json(jsonData).object();
   auto type = doc["type"].toInt();
   doc["sender"] = sender->getId();
+
+  // 屏蔽.号，防止有人在HTML文本发链接，而正常发链接看不出来有啥改动
+  auto msg = doc["msg"].toString();
+  msg.replace(".", "․");
+  doc["msg"] = msg;
+
   if (type == 1) {
     doc["userName"] = sender->getScreenName();
     auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
@@ -295,6 +301,7 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
     doBroadcastNotify(players, "Chat", json);
     doBroadcastNotify(observers, "Chat", json);
   }
+
 
   qInfo("[Chat] %s: %s", sender->getScreenName().toUtf8().constData(),
       doc["msg"].toString().toUtf8().constData());
