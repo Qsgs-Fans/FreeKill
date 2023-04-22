@@ -368,7 +368,7 @@ function GameLogic:dumpEventStack(detailed)
     end
 
     if not detailed then
-      print("Stack level #" .. i .. ": " .. GameEvent:translate(top.event))
+      print("Stack level #" .. i .. ": " .. tostring(top))
     else
       print("\nStack level #" .. i .. ":")
       inspect{

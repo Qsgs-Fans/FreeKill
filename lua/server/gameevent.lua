@@ -25,7 +25,7 @@ function GameEvent:initialize(event, ...)
   self.event = event
   self.data = { ... }
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
-  self.clear_func = wrapCoFunc(GameEvent.cleaners[event], self) or dummyFunc
+  self.clear_func = GameEvent.cleaners[event] or dummyFunc
   self.extra_clear_funcs = {}
   self.interrupted = false
 end
