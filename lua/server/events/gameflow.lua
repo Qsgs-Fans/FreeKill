@@ -37,3 +37,21 @@ GameEvent.functions[GameEvent.Turn] = function(self)
 
   room.logic:trigger(fk.TurnEnd, room.current)
 end
+
+GameEvent.functions[GameEvent.Phase] = function(self)
+  local room = self.room
+  local logic = room.logic
+
+  local self = self.data[1]
+  if not logic:trigger(fk.EventPhaseStart, self) then
+    if self.phase ~= Player.NotActive then
+      logic:trigger(fk.EventPhaseProceeding, self)
+    end
+  end
+
+  if self.phase ~= Player.NotActive then
+    logic:trigger(fk.EventPhaseEnd, self)
+  else
+    self.skipped_phases = {}
+  end
+end

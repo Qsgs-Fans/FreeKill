@@ -413,17 +413,7 @@ function ServerPlayer:play(phase_table)
     end
 
     if (not skip) or (cancel_skip) then
-      if not logic:trigger(fk.EventPhaseStart, self) then
-        if self.phase ~= Player.NotActive then
-          logic:trigger(fk.EventPhaseProceeding, self)
-        end
-      end
-
-      if self.phase ~= Player.NotActive then
-        logic:trigger(fk.EventPhaseEnd, self)
-      else
-        self.skipped_phases = {}
-      end
+      GameEvent(GameEvent.Phase, self):exec()
     else
       room:sendLog{
         type = "#PhaseSkipped",
