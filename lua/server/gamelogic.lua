@@ -276,7 +276,7 @@ function GameLogic:trigger(event, target, data)
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or {}
-  local _target = target or room.current -- for iteration
+  local _target = room.current -- for iteration
   local player = _target
 
   self.event_stack:push({event, target, data})
@@ -296,8 +296,13 @@ function GameLogic:trigger(event, target, data)
   local prio_tab = self.skill_priority_table[event]
   local prev_prio = math.huge
 
-  local function trigger_circle(skills, prio)
-    local broken = false
+  for _, prio in ipairs(prio_tab) do
+    if broken then break end
+    if prio >= prev_prio then
+      -- continue
+      goto trigger_loop_continue
+    end
+
     repeat do
       local triggerables = table.filter(skills, function(skill)
         return skill.priority_table[event] == prio and
@@ -315,38 +320,22 @@ function GameLogic:trigger(event, target, data)
         local skill = skill_name == "game_rule" and GameRule
           or Fk.skills[skill_name]
 
+        local len = #skills
         broken = skill:trigger(event, target, player, data)
+        table.insertTable(skill_names, table.map(
+          table.slice(skills, len - #skills), function(s) return s.name end))
+
         broken = broken or (event == fk.AskForPeaches
           and room:getPlayerById(data.who).hp > 0)
 
         if broken then break end
         table.removeOne(skill_names, skill_name)
-        table.removeOne(triggerables, skill)
       end
 
       if broken then break end
 
       player = player.next
     end until player == _target
-
-    return broken
-  end
-
-  for _, prio in ipairs(prio_tab) do
-    if broken then break end
-    if prio >= prev_prio then
-      -- continue
-      goto trigger_loop_continue
-    end
-
-    local current_skills = skills
-    local len
-    repeat
-      len = #skills
-      broken = trigger_circle(current_skills, prio)
-      if broken then break end
-      current_skills = table.slice(skills, len - #skills)
-    until len == #skills
 
     prev_prio = prio
     ::trigger_loop_continue::
