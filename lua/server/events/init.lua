@@ -31,9 +31,10 @@ dofile "lua/server/events/judge.lua"
 GameEvent.DrawInitial = 15
 GameEvent.Round = 16
 GameEvent.Turn = 17
+GameEvent.Phase = 18
 dofile "lua/server/events/gameflow.lua"
 
-GameEvent.Pindian = 18
+GameEvent.Pindian = 19
 dofile "lua/server/events/pindian.lua"
 
 -- TODO: fix this
@@ -55,7 +56,10 @@ local eventTranslations = {
   [GameEvent.DrawInitial] = "GameEvent.DrawInitial",
   [GameEvent.Round] = "GameEvent.Round",
   [GameEvent.Turn] = "GameEvent.Turn",
+  [GameEvent.Phase] = "GameEvent.Phase",
   [GameEvent.Pindian] = "GameEvent.Pindian",
+
+  [GameEvent.BreakEvent] = "GameEvent.BreakEvent",
 }
 
 function GameEvent.static:translate(id)

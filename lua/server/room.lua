@@ -92,6 +92,9 @@ function Room:initialize(_room)
       -- If ret == true, then when err_msg is true, that means no request
     end
 
+    coroutine.close(main_co)
+    coroutine.close(request_co)
+
     if not self.game_finished then
       self:doBroadcastNotify("GameOver", "")
       self.room:gameOver()

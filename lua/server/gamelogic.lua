@@ -271,7 +271,7 @@ end
 ---@param event Event
 ---@param target ServerPlayer
 ---@param data any
-function GameLogic:trigger(event, target, data)
+function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false
   local skills = self.skill_table[event] or {}
@@ -291,7 +291,7 @@ function GameLogic:trigger(event, target, data)
     player = player.next
   end until player == _target end
 
-  if #skills == 0 then return end
+  if #skills == 0 or refresh_only then return end
 
   local prio_tab = self.skill_priority_table[event]
   local prev_prio = math.huge
@@ -368,7 +368,7 @@ function GameLogic:dumpEventStack(detailed)
     end
 
     if not detailed then
-      print("Stack level #" .. i .. ": " .. GameEvent:translate(top.event))
+      print("Stack level #" .. i .. ": " .. tostring(top))
     else
       print("\nStack level #" .. i .. ":")
       inspect{
@@ -386,6 +386,11 @@ end
 
 function GameLogic:breakEvent(ret)
   coroutine.yield("__breakEvent", ret)
+end
+
+function GameLogic:breakTurn()
+  local event = self:getCurrentEvent():findParent(GameEvent.Turn)
+  event:shutdown()
 end
 
 return GameLogic

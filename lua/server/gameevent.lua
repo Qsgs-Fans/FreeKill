@@ -25,9 +25,13 @@ function GameEvent:initialize(event, ...)
   self.event = event
   self.data = { ... }
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
-  self.clear_func = wrapCoFunc(GameEvent.cleaners[event], self) or dummyFunc
+  self.clear_func = GameEvent.cleaners[event] or dummyFunc
   self.extra_clear_funcs = {}
   self.interrupted = false
+end
+
+function GameEvent:__tostring()
+  return GameEvent:translate(self.event)
 end
 
 function GameEvent:findParent(eventType)
@@ -44,6 +48,19 @@ function GameEvent:clear()
     if type(f) == "function" then f(self) end
   end
   self:clear_func()
+end
+
+local function breakEvent(self, extra_yield_result)
+  local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
+  local notcanceled = cancelEvent:exec()
+  local ret, extra_ret = false, nil
+  if not notcanceled then
+    self.interrupted = true
+    self:clear()
+    ret = true
+    extra_ret = extra_yield_result
+  end
+  return ret, extra_ret
 end
 
 function GameEvent:exec()
@@ -67,6 +84,7 @@ function GameEvent:exec()
       self.interrupted = true
       self:clear()
       ret = true
+      coroutine.close(co)
       break
     end
 
@@ -76,23 +94,27 @@ function GameEvent:exec()
 
     elseif type(yield_result) == "table" and yield_result.class
       and yield_result:isInstanceOf(GameEvent) then
-      -- yield to corresponding GameEvent, first pop self from stack
-      self.interrupted = true
-      self:clear()
-      logic.game_event_stack:pop(self)
 
-      -- then, call yield
-      coroutine.yield(yield_result)
+      if self ~= yield_result then
+        -- yield to corresponding GameEvent, first pop self from stack
+        self.interrupted = true
+        self:clear()
+        logic.game_event_stack:pop(self)
+        coroutine.close(co)
+
+        -- then, call yield
+        coroutine.yield(yield_result, extra_yield_result)
+      elseif extra_yield_result == "__breakEvent" then
+        if breakEvent(self) then
+          coroutine.close(co)
+          break
+        end
+      end
 
     elseif yield_result == "__breakEvent" then
       -- try to break this event
-      local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
-      local notcanceled = cancelEvent:exec()
-      if not notcanceled then
-        self.interrupted = true
-        self:clear()
-        ret = true
-        extra_ret = extra_yield_result
+      if breakEvent(self) then
+        coroutine.close(co)
         break
       end
 
@@ -100,12 +122,18 @@ function GameEvent:exec()
       -- normally exit, simply break the loop
       self:clear()
       extra_ret = yield_result
+      coroutine.close(co)
       break
     end
   end
 
   logic.game_event_stack:pop(self)
   return ret, extra_ret
+end
+
+function GameEvent:shutdown()
+  -- yield to self and break
+  coroutine.yield(self, "__breakEvent")
 end
 
 return GameEvent
