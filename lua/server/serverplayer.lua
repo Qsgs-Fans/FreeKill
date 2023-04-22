@@ -333,17 +333,21 @@ function ServerPlayer:changePhase(from_phase, to_phase)
     table.remove(self.phases, 1)
   end
 
-  if not logic:trigger(fk.EventPhaseStart, self) then
-    if self.phase ~= Player.NotActive then
-      logic:trigger(fk.EventPhaseProceeding, self)
-    end
-  end
-
-  if self.phase ~= Player.NotActive then
-    logic:trigger(fk.EventPhaseEnd, self)
-  end
+  GameEvent(GameEvent.Phase, self):exec()
 
   return false
+end
+
+function ServerPlayer:gainAnExtraPhase(phase)
+  local room = self.room
+  local current = self.phase
+  self.phase = phase
+  room:notifyProperty(self, self, "phase")
+
+  GameEvent(GameEvent.Phase, self):exec()
+
+  self.phase = current
+  room:notifyProperty(self, self, "phase")
 end
 
 local phase_name_table = {

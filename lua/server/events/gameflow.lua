@@ -105,6 +105,8 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
 
     room.current.phase = Player.NotActive
     room:notifyProperty(room.current, room.current, "phase")
+    room.logic:trigger(fk.EventPhaseChanging, room.current,
+      { from = Player.Finish, to = Player.NotActive }, true)
     room.logic:trigger(fk.EventPhaseStart, room.current, nil, true)
 
     room.current.skipped_phases = {}
