@@ -16,6 +16,8 @@ function GetGeneralData(name)
     hp = general.hp,
     maxHp = general.maxHp,
     shield = general.shield,
+    hidden = general.hidden,
+    total_hidden = general.total_hidden,
   }
 end
 
@@ -108,7 +110,9 @@ end
 function GetGenerals(pack_name)
   local ret = {}
   for _, g in ipairs(Fk.packages[pack_name].generals) do
-    table.insert(ret, g.name)
+    if not g.total_hidden then
+      table.insert(ret, g.name)
+    end
   end
   return json.encode(ret)
 end

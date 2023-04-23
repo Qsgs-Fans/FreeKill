@@ -295,7 +295,8 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   local availableGenerals = {}
   for _, general in pairs(generalPool) do
     if not table.contains(except, general.name) and not (filter and filter(general)) then
-      if #table.filter(availableGenerals, function(g)
+      if (not general.hidden and not general.total_hidden) and
+        #table.filter(availableGenerals, function(g)
         return g.trueName == general.trueName
       end) == 0 then
         table.insert(availableGenerals, general)

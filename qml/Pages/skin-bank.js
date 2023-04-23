@@ -71,7 +71,7 @@ function getPhotoBack(kingdom) {
   } else {
     return path;
   }
-  return PHOTO_BACK_DIR + "qun";
+  return PHOTO_BACK_DIR + "unknown";
 }
 
 function getGeneralCardDir(kingdom) {
