@@ -573,15 +573,16 @@ callbacks["AskForGeneral"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let generals = data[0];
   let n = data[1];
+  let heg = data[2];
   roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/ChooseGeneralBox.qml";
   let box = roomScene.popupBox.item;
-  box.choiceNum = 1;
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
   });
   box.choiceNum = n;
+  box.needSameKingdom = !!heg;
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });
   box.updatePosition();

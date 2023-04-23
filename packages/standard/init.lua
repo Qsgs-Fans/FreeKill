@@ -1109,6 +1109,7 @@ local role_mode = fk.CreateGameMode{
 extension:addGameMode(role_mode)
 
 local anjiang = General(extension, "anjiang", "unknown", 5)
+anjiang.gender = General.Agender
 anjiang.total_hidden = true
 
 Fk:loadTranslationTable{
