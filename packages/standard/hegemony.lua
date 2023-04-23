@@ -88,23 +88,23 @@ local heg_description = [==[
 处于暗置状态的武将牌没有任何武将技能、性别以及势力。当暗置的武将牌发动技能时，将武将牌明置，然后发动相应的技能。
 
 暗置的武将牌只有两个时机可以将武将牌明置：1. 回合开始阶段开始时；2. 发动武将牌的技能时。
- 
+
 例：郭嘉、司马懿等，受到伤害后发动技能时明置武将牌；
 马超、黄忠等，使用【杀】指定一名角色为目标后，发动技能并明置武将牌；
 孙权、甘宁等，在出牌阶段发动技能时明置武将牌；
- 
+
 没有明置武将牌的角色没有性别，任何与性别有关的技能和武器效果均不能对其发动。
 
 有一张武将牌明置时，角色性别与明置的武将牌相同。当一名角色的两张武将牌均亮明后，性别与主将的武将牌相同。
 
 没有明置武将牌的角色没有势力，明置一张武将牌后确定势力：与武将牌左上角所示的势力相同，或成为野心家。野心家用“野心家牌”表示。
- 
+
 野心家规则：
 
 当一名角色明置武将牌确定势力时，若该势力的角色超过了游戏总玩家数的一半，则他视为野心家，拿取一张野心家牌表示。若之后仍然有该势力的角色明置武将牌，均视为野心家。野心家为单独的一种势力，与其他角色的势力均不同。他（们）需要杀死所有其他角色，成为唯一的存活者。
 
 注意：野心家与野心家之间也是不同势力。
- 
+
 例：
 
 ★ 6 人、7 人游戏时，当出现第四名同势力角色时，该角色及之后明置的该势力角色均成为野心家。
@@ -231,7 +231,7 @@ function HegLogic:attachSkillToPlayers()
 
     -- room:handleAddLoseSkills(player, skillName, nil, false)
     player:doNotify("AddSkill", json.encode{ player.id, skillName })
-    
+
     if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
       function(s) return s:isInstanceOf(TriggerSkill) end) then
       player:doNotify("AddSkill", json.encode{ player.id, skillName, true })
