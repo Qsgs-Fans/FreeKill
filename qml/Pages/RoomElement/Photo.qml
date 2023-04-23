@@ -394,10 +394,10 @@ Item {
 
   LimitSkillArea {
     id: limitSkills
-    anchors.top: role.bottom
-    anchors.left: role.left
-    anchors.topMargin: 2
-    anchors.leftMargin: -2
+    anchors.top: parent.top
+    anchors.right: parent.right
+    anchors.topMargin: role.height + 2
+    anchors.rightMargin: 30
   }
 
   GlowText {

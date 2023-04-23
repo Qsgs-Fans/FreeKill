@@ -113,10 +113,20 @@ function Client:appendLog(msg)
     if not pid then
       return ""
     end
-    local ret = self:getPlayerById(pid)
-    ret = ret.general
+    local p = self:getPlayerById(pid)
+    local str <const> = '<font color="%s"><b>%s</b></font>'
+    if p.general == "anjiang" and (p.deputyGeneral == "anjiang"
+      or not p.deputyGeneral) then
+      local ret = Fk:translate("seat#" .. p.seat)
+      return string.format(str, color, ret)
+    end
+
+    local ret = p.general
     ret = Fk:translate(ret)
-    ret = string.format('<font color="' .. color .. '"><b>%s</b></font>', ret)
+    if p.deputyGeneral then
+      ret = ret .. "/" .. Fk:translate(p.deputyGeneral)
+    end
+    ret = string.format(str, color, ret)
     return ret
   end
 
@@ -490,10 +500,13 @@ end
 fk.client_callback["LoseSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
-  local id, skill_name = data[1], data[2]
+  local id, skill_name, prelight = data[1], data[2], data[3]
   local target = ClientInstance:getPlayerById(id)
   local skill = Fk.skills[skill_name]
-  target:loseSkill(skill)
+  if not prelight then
+    target:loseSkill(skill)
+  end
+
   if skill.visible then
     ClientInstance:notifyUI("LoseSkill", jsonData)
   end

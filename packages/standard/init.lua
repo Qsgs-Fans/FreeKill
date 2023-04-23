@@ -1108,6 +1108,17 @@ local role_mode = fk.CreateGameMode{
 }
 extension:addGameMode(role_mode)
 
+local anjiang = General(extension, "anjiang", "unknown", 5)
+anjiang.gender = General.Agender
+anjiang.total_hidden = true
+
+Fk:loadTranslationTable{
+  ["anjiang"] = "暗将",
+}
+
+local heg_mode = require "packages.standard.hegemony"
+extension:addGameMode(heg_mode)
+
 -- load translations of this package
 dofile "packages/standard/i18n/init.lua"
 

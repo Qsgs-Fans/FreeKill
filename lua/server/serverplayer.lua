@@ -261,7 +261,7 @@ function ServerPlayer:reconnect()
   end
 
   self:doNotify("UpdateDrawPile", #room.draw_pile)
-  self:doNotify("UpdateRoundNum", room:getTag("RoundCount"))
+  self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
 
   room:broadcastProperty(self, "state")
 end
@@ -566,6 +566,84 @@ function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reson = skillName, fromCard = initialCard, results = {} }
   self.room:pindian(pindianData)
   return pindianData
+end
+
+-- Hegemony func
+
+function ServerPlayer:prelightSkill(skill, isPrelight)
+  if isPrelight then
+    self:addSkill(skill)
+  else
+    self:loseSkill(skill)
+  end
+  self:doNotify("PrelightSkill", json.encode{ skill, isPrelight })
+end
+
+function ServerPlayer:revealGeneral(isDeputy)
+  local room = self.room
+  local generalName
+  if isDeputy then
+    if self.deputyGeneral ~= "anjiang" then return end
+    generalName = self:getMark("__heg_deputy")
+  else
+    if self.general ~= "anjiang" then return end
+    generalName = self:getMark("__heg_general")
+  end
+
+  local general = Fk.generals[generalName]
+  for _, s in ipairs(general:getSkillNameList()) do
+    local skill = Fk.skills[s]
+    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
+      function(s) return s:isInstanceOf(TriggerSkill) end) then
+      self:doNotify("LoseSkill", json.encode{ self.id, s, true })
+    end
+  end
+
+  local oldKingdom = self.kingdom
+  room:changeHero(self, generalName, false, isDeputy)
+  local kingdom = general.kingdom
+  if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self),
+    function(p)
+      return p.kingdom == kingdom
+    end) >= #room.alive_players // 2 then
+
+    self.kingdom = "wild"
+    room:broadcastProperty(self, "kingdom")
+  end
+
+  if self.gender ~= General.Male and self.gender ~= General.Female then
+    self.gender = general.gender
+  end
+
+  room:sendLog{
+    type = "#RevealGeneral",
+    from = self.id,
+    arg = isDeputy and "deputyGeneral" or "mainGeneral",
+    arg2 = generalName,
+  }
+
+  -- TODO: 阴阳鱼摸牌
+end
+
+function ServerPlayer:revealBySkillName(skill_name)
+  local main = self.general == "anjiang"
+  local deputy = self.deputyGeneral == "anjiang"
+
+  if main then
+    if table.contains(Fk.generals[self:getMark("__heg_general")]
+      :getSkillNameList(), skill_name) then
+      self:revealGeneral(false)
+      return
+    end
+  end
+
+  if deputy then
+    if table.contains(Fk.generals[self:getMark("__heg_deputy")]
+      :getSkillNameList(), skill_name) then
+      self:revealGeneral(true)
+      return
+    end
+  end
 end
 
 return ServerPlayer

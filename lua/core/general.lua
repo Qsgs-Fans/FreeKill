@@ -19,6 +19,8 @@
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
+---@field public hidden boolean
+---@field public total_hidden boolean
 General = class("General")
 
 ---@alias Gender integer
@@ -76,6 +78,15 @@ function General:addRelatedSkill(skill)
     Fk:addSkill(skill)
     skill.package = self.package
   end
+end
+
+function General:getSkillNameList(include_lord)
+  local ret = table.map(self.skills, Util.NameMapper)
+  table.insertTable(ret, self.other_skills)
+
+  if not include_lord then
+  end
+  return ret
 end
 
 return General

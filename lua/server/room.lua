@@ -444,6 +444,47 @@ function Room:setDeputyGeneral(player, general)
   self:notifyProperty(player, player, "deputyGeneral")
 end
 
+---@param player ServerPlayer @ 要换将的玩家
+---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策也不存在则nil错
+---@param full boolean @ 是否血量满状态变身
+---@param isDeputy boolean @ 是否变的是副将
+---@param sendLog boolean @ 是否发Log
+function Room:changeHero(player, new_general, full, isDeputy, sendLog)
+  local orig = isDeputy and (player.deputyGeneral or "") or player.general
+
+  orig = Fk.generals[orig]
+  local orig_skills = orig and orig:getSkillNameList() or {}
+
+  local new = Fk.generals[new_general] or Fk.generals["sunce"]
+  local new_skills = new:getSkillNameList()
+
+  table.insertTable(new_skills, table.map(orig_skills, function(e)
+    return "-" .. e
+  end))
+
+  self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
+
+  if isDeputy then
+    player.deputyGeneral = new_general
+    self:broadcastProperty(player, "deputyGeneral")
+  else
+    player.general = new_general
+    self:broadcastProperty(player, "general")
+  end
+
+  if player.kingdom == "unknown" then
+    player.kingdom = new.kingdom
+    self:broadcastProperty(player, "kingdom")
+  end
+
+  player.maxHp = player:getGeneralMaxHp()
+  self:broadcastProperty(player, "hp")
+  if full then
+    player.hp = player.maxHp
+    self:broadcastProperty(player, "maxHp")
+  end
+end
+
 ------------------------------------------------------------------------
 -- 网络通信有关
 ------------------------------------------------------------------------
@@ -601,7 +642,7 @@ function Room:requestLoop(rest_time)
     end
 
     player:doNotify("UpdateDrawPile", #self.draw_pile)
-    player:doNotify("UpdateRoundNum", self:getTag("RoundCount"))
+    player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
     table.insert(self.observers, {observee.id, player})
   end
@@ -639,14 +680,17 @@ function Room:requestLoop(rest_time)
     local request = self.room:fetchRequest()
     if request ~= "" then
       ret = true
-      local id, command = table.unpack(request:split(","))
-      id = tonumber(id)
+      local reqlist = request:split(",")
+      local id = tonumber(reqlist[1])
+      local command = reqlist[2]
       if command == "reconnect" then
         self:getPlayerById(id):reconnect()
       elseif command == "observe" then
         addObserver(id)
       elseif command == "leave" then
         removeObserver(id)
+      elseif command == "prelight" then
+        self:getPlayerById(id):prelightSkill(reqlist[3], reqlist[4] == "true")
       end
     elseif rest_time > 10 then
       -- let current thread sleep 10ms
@@ -2349,6 +2393,7 @@ end
 ---@param skill Skill @ 发动的技能
 ---@param effect_cb fun() @ 实际要调用的函数
 function Room:useSkill(player, skill, effect_cb)
+  player:revealBySkillName(skill.name)
   if not skill.mute then
     if skill.attached_equip then
       local equip = Fk:cloneCard(skill.attached_equip)

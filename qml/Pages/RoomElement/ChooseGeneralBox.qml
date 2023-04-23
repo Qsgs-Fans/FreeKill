@@ -11,6 +11,7 @@ GraphicsBox {
   property var choices: []
   property var selectedItem: []
   property bool loaded: false
+  property bool needSameKingdom: false
 
   ListModel {
     id: generalList
@@ -115,10 +116,12 @@ GraphicsBox {
 
     GeneralCardItem {
       name: model.name
-      selectable: true
+      //enabled: //!(choices[0] && choices[0].kingdom !== this.kingdom)
+      selectable: !(selectedItem[0] && selectedItem[0].kingdom !== kingdom)
       draggable: true
 
       onClicked: {
+        if (!selectable) return;
         let toSelect = true;
         for (let i = 0; i < selectedItem.length; i++) {
           if (selectedItem[i] === this) {
@@ -149,7 +152,7 @@ GraphicsBox {
     selectedItem = [];
     for (i = 0; i < generalList.count; i++) {
       item = generalCardList.itemAt(i);
-      if (item.y > splitLine.y)
+      if (item.y > splitLine.y && item.selectable)
         selectedItem.push(item);
     }
 
@@ -181,6 +184,7 @@ GraphicsBox {
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
+      item.selectable = needSameKingdom ? !(selectedItem[0] && (selectedItem[0].kingdom !== item.kingdom)) : true;
       if (selectedItem.indexOf(item) != -1)
         continue;
 

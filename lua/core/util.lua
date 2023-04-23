@@ -69,6 +69,9 @@ Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
 Util.Id2PlayerMapper = function(id)
   return Fk:currentRoom():getPlayerById(id)
 end
+Util.NameMapper = function(e) return e.name end
+Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
+Util.Name2SkillMapper = function(e) return Fk.skills[e] end
 
 ---@generic T
 ---@param self T[]
