@@ -6,14 +6,19 @@ import QtQuick.Layouts
 Flickable {
   id: root
   property alias skill_buttons: skill_buttons
+  property alias prelight_buttons: prelight_buttons
 
   clip: true
   contentWidth: panel.width
   contentHeight: panel.height
   contentX: contentWidth - width
-  width: Math.min(150, panel.width)
-  height: Math.min(180, panel.height)
+  width: Math.min(180, panel.width)
+  height: Math.min(200, panel.height)
   flickableDirection: Flickable.AutoFlickIfNeeded
+
+  ListModel {
+    id: prelight_skills
+  }
 
   ListModel {
     id: active_skills
@@ -25,10 +30,37 @@ Flickable {
 
   Item {
     id: panel
-    width: Math.max(grid1.width, grid2.width)
-    height: grid1.height + grid2.height
+    width: Math.max(grid0.width, grid1.width, grid2.width)
+    height: grid0.height + grid1.height + grid2.height
+    Grid {
+      id: grid0
+      columns: 2
+      columnSpacing: 2
+      rowSpacing: 2
+      Repeater {
+        id: prelight_buttons
+        model: prelight_skills
+        onItemAdded: parent.forceLayout()
+        SkillButton {
+          skill: model.skill
+          type: "prelight"
+          enabled: !config.observing
+          orig: model.orig_skill
+
+          onPressedChanged: {
+            if (!pressed) return;
+            enabled = false;
+            ClientInstance.notifyServer("PrelightSkill", [
+              "prelight", orig, (!prelighted).toString()
+            ].join(","));
+          }
+        }
+      }
+    }
+
     Grid {
       id: grid1
+      anchors.top: grid0.bottom
       columns: 2
       columnSpacing: 2
       rowSpacing: 2
@@ -69,7 +101,7 @@ Flickable {
     }
   }
 
-  function addSkill(skill_name) {
+  function addSkill(skill_name, prelight) {
     const modelContains = (m, e) => {
       for (let i = 0; i < m.count; i++) {
         if (m.get(i).orig_skill === e.orig_skill) {
@@ -83,6 +115,13 @@ Flickable {
       "GetSkillData",
       [skill_name]
     ));
+
+    if (prelight) {
+      if (!modelContains(prelight_skills, data))
+        prelight_skills.append(data);
+      return;
+    }
+
     if (data.freq === "active") {
       if (!modelContains(active_skills, data)) active_skills.append(data);
     } else {
@@ -91,7 +130,17 @@ Flickable {
     }
   }
 
-  function loseSkill(skill_name) {
+  function loseSkill(skill_name, prelight) {
+    if (prelight) {
+      for (let i = 0; i < prelight_skills.count; i++) {
+        let item = prelight_skills.get(i);
+        if (item.orig_skill == skill_name) {
+          prelight_skills.remove(i);
+        }
+      }
+      return;
+    }
+
     for (let i = 0; i < active_skills.count; i++) {
       let item = active_skills.get(i);
       if (item.orig_skill == skill_name) {

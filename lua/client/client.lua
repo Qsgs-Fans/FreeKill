@@ -500,10 +500,13 @@ end
 fk.client_callback["LoseSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
-  local id, skill_name = data[1], data[2]
+  local id, skill_name, prelight = data[1], data[2], data[3]
   local target = ClientInstance:getPlayerById(id)
   local skill = Fk.skills[skill_name]
-  target:loseSkill(skill)
+  if not prelight then
+    target:loseSkill(skill)
+  end
+
   if skill.visible then
     ClientInstance:notifyUI("LoseSkill", jsonData)
   end

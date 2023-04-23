@@ -751,8 +751,9 @@ callbacks["LoseSkill"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let id = data[0];
   let skill_name = data[1];
+  let prelight = data[2];
   if (id === Self.id) {
-    dashboard.loseSkill(skill_name);
+    dashboard.loseSkill(skill_name, prelight);
   }
 }
 
@@ -761,9 +762,18 @@ callbacks["AddSkill"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let id = data[0];
   let skill_name = data[1];
+  let prelight = data[2];
   if (id === Self.id) {
-    dashboard.addSkill(skill_name);
+    dashboard.addSkill(skill_name, prelight);
   }
+}
+
+callbacks["PrelightSkill"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let skill_name = data[0];
+  let prelight = data[1];
+
+  dashboard.prelightSkill(skill_name, prelight);
 }
 
 // prompt: 'string:<src>:<dest>:<arg>:<arg2>'

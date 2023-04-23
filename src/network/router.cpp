@@ -250,6 +250,8 @@ void Router::handlePacket(const QByteArray &rawPacket) {
           room->addRobot(player);
         } else if (command == "Chat") {
           room->chat(player, jsonData);
+        } else if (command == "PrelightSkill") {
+          room->pushRequest(QString("%1,").arg(player->getId()) + jsonData);
         }
       }
     }

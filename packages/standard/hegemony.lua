@@ -106,7 +106,12 @@ function HegLogic:attachSkillToPlayers()
     end
 
     -- room:handleAddLoseSkills(player, skillName, nil, false)
-    player:doNotify("AddSkill", json.encode{ player.id, skillName})
+    player:doNotify("AddSkill", json.encode{ player.id, skillName })
+    
+    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
+      function(s) return s:isInstanceOf(TriggerSkill) end) then
+      player:doNotify("AddSkill", json.encode{ player.id, skillName, true })
+    end
   end
 
   for _, p in ipairs(room.alive_players) do

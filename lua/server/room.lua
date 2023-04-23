@@ -680,14 +680,17 @@ function Room:requestLoop(rest_time)
     local request = self.room:fetchRequest()
     if request ~= "" then
       ret = true
-      local id, command = table.unpack(request:split(","))
-      id = tonumber(id)
+      local reqlist = request:split(",")
+      local id = tonumber(reqlist[1])
+      local command = reqlist[2]
       if command == "reconnect" then
         self:getPlayerById(id):reconnect()
       elseif command == "observe" then
         addObserver(id)
       elseif command == "leave" then
         removeObserver(id)
+      elseif command == "prelight" then
+        self:getPlayerById(id):prelightSkill(reqlist[3], reqlist[4] == "true")
       end
     elseif rest_time > 10 then
       -- let current thread sleep 10ms

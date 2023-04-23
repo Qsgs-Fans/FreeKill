@@ -328,12 +328,23 @@ RowLayout {
     cardSelected(-1);
   }
 
-  function addSkill(skill_name) {
-    skillPanel.addSkill(skill_name);
+  function addSkill(skill_name, prelight) {
+    skillPanel.addSkill(skill_name, prelight);
   }
 
-  function loseSkill(skill_name) {
-    skillPanel.loseSkill(skill_name);
+  function loseSkill(skill_name, prelight) {
+    skillPanel.loseSkill(skill_name, prelight);
+  }
+
+  function prelightSkill(skill_name, prelight) {
+    let btns = skillPanel.prelight_buttons;
+    for (let i = 0; i < btns.count; i++) {
+      let btn = btns.itemAt(i);
+      if (btn.orig === skill_name) {
+        btn.prelighted = prelight;
+        btn.enabled = true;
+      }
+    }
   }
 
   function enableSkills(cname) {

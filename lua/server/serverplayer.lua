@@ -570,6 +570,15 @@ end
 
 -- Hegemony func
 
+function ServerPlayer:prelightSkill(skill, isPrelight)
+  if isPrelight then
+    self:addSkill(skill)
+  else
+    self:loseSkill(skill)
+  end
+  self:doNotify("PrelightSkill", json.encode{ skill, isPrelight })
+end
+
 function ServerPlayer:revealGeneral(isDeputy)
   local room = self.room
   local generalName
@@ -579,6 +588,15 @@ function ServerPlayer:revealGeneral(isDeputy)
   else
     if self.general ~= "anjiang" then return end
     generalName = self:getMark("__heg_general")
+  end
+
+  local general = Fk.generals[generalName]
+  for _, s in ipairs(general:getSkillNameList()) do
+    local skill = Fk.skills[s]
+    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
+      function(s) return s:isInstanceOf(TriggerSkill) end) then
+      self:doNotify("LoseSkill", json.encode{ self.id, s, true })
+    end
   end
 
   room:changeHero(self, generalName, false, isDeputy)
