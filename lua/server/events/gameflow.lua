@@ -98,20 +98,22 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     end
   end
 
+  local current = room.current
+  local logic = room.logic
   if self.interrupted then
-    room.current.phase = Player.Finish
-    room.logic:trigger(fk.EventPhaseStart, room.current, nil, true)
-    room.logic:trigger(fk.EventPhaseEnd, room.current, nil, true)
+    current.phase = Player.Finish
+    logic:trigger(fk.EventPhaseStart, current, nil, true)
+    logic:trigger(fk.EventPhaseEnd, current, nil, true)
 
-    room.current.phase = Player.NotActive
-    room:notifyProperty(room.current, room.current, "phase")
-    room.logic:trigger(fk.EventPhaseChanging, room.current,
+    current.phase = Player.NotActive
+    room:notifyProperty(current, current, "phase")
+    logic:trigger(fk.EventPhaseChanging, current,
       { from = Player.Finish, to = Player.NotActive }, true)
-    room.logic:trigger(fk.EventPhaseStart, room.current, nil, true)
+    logic:trigger(fk.EventPhaseStart, current, nil, true)
 
-    room.current.skipped_phases = {}
+    current.skipped_phases = {}
 
-    room.logic:trigger(fk.TurnEnd, room.current, nil, true)
+    logic:trigger(fk.TurnEnd, current, nil, true)
   end
 end
 
@@ -185,17 +187,14 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       [Player.Finish] = function()
 
       end,
-      [Player.NotActive] = function()
-
-      end,
       })
     end
   end
 
-  if self.phase ~= Player.NotActive then
-    logic:trigger(fk.EventPhaseEnd, self)
+  if player.phase ~= Player.NotActive then
+    logic:trigger(fk.EventPhaseEnd, player)
   else
-    self.skipped_phases = {}
+    player.skipped_phases = {}
   end
 end
 

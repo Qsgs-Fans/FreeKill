@@ -59,10 +59,10 @@ function HegLogic:chooseGenerals()
       deputy = p.default_reply[2]
     end
 
-    p:setMark("heg_general", general)
-    p:setMark("heg_deputy", deputy)
-    p:doNotify("SetPlayerMark", json.encode{ p.id, "heg_general", general})
-    p:doNotify("SetPlayerMark", json.encode{ p.id, "heg_deputy", deputy})
+    p:setMark("__heg_general", general)
+    p:setMark("__heg_deputy", deputy)
+    p:doNotify("SetPlayerMark", json.encode{ p.id, "__heg_general", general})
+    p:doNotify("SetPlayerMark", json.encode{ p.id, "__heg_deputy", deputy})
 
     room:setPlayerGeneral(p, "anjiang", true)
     room:setDeputyGeneral(p, "anjiang")
@@ -71,7 +71,65 @@ function HegLogic:chooseGenerals()
   end
 end
 
-local heg_choose_generals = function(self)
+function HegLogic:broadcastGeneral()
+  local room = self.room
+  local players = room.players
+
+  for _, p in ipairs(players) do
+    assert(p.general ~= "")
+    local general = Fk.generals[p:getMark("__heg_general")]
+    local deputy = Fk.generals[p:getMark("__heg_deputy")]
+    p.maxHp = math.floor((deputy.maxHp + general.maxHp) / 2)
+    p.hp = math.floor((deputy.hp + general.hp) / 2)
+    -- p.shield = math.min(general.shield + deputy.shield, 5)
+    p.shield = 0
+    -- TODO: setup AI here
+
+    room:broadcastProperty(p, "general")
+    room:broadcastProperty(p, "deputyGeneral")
+    room:broadcastProperty(p, "maxHp")
+    room:broadcastProperty(p, "hp")
+     room:broadcastProperty(p, "shield")
+  end
+end
+
+function HegLogic:attachSkillToPlayers()
+  local room = self.room
+  local players = room.players
+
+  room:handleAddLoseSkills(players[1], "#_heg_invalid", nil, false, true)
+
+  local addHegSkills = function(player, skillName)
+    local skill = Fk.skills[skillName]
+    if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+      return
+    end
+
+    -- room:handleAddLoseSkills(player, skillName, nil, false)
+    player:doNotify("AddSkill", json.encode{ player.id, skillName})
+  end
+
+  for _, p in ipairs(room.alive_players) do
+    local general = Fk.generals[p:getMark("__heg_general")]
+    local skills = general.skills
+    for _, s in ipairs(skills) do
+      addHegSkills(p, s.name)
+    end
+    for _, sname in ipairs(general.other_skills) do
+      addHegSkills(p, sname)
+    end
+
+    local deputy = Fk.generals[p:getMark("__heg_deputy")]
+    if deputy then
+      skills = deputy.skills
+      for _, s in ipairs(skills) do
+        addHegSkills(p, s.name)
+      end
+      for _, sname in ipairs(deputy.other_skills) do
+        addHegSkills(p, sname)
+      end
+    end
+  end
 end
 
 local heg_getlogic = function()
@@ -81,6 +139,12 @@ local heg_getlogic = function()
   end
   return h
 end
+
+local heg_invalid = fk.CreateInvaliditySkill{
+  name = "#_heg_invalid",
+  invalidity_func = function(self, player, skill)
+  end,
+}
 
 heg = fk.CreateGameMode{
   name = "heg_mode",

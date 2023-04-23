@@ -568,4 +568,47 @@ function ServerPlayer:pindian(tos, skillName, initialCard)
   return pindianData
 end
 
+-- Hegemony func
+
+function ServerPlayer:revealGeneral(isDeputy)
+  local room = self.room
+  local generalName
+  if isDeputy then
+    if self.deputyGeneral ~= "anjiang" then return end
+    generalName = self:getMark("__heg_deputy")
+  else
+    if self.general ~= "anjiang" then return end
+    generalName = self:getMark("__heg_general")
+  end
+
+  room:changeHero(self, generalName, false, isDeputy)
+  room:sendLog{
+    type = "#RevealGeneral",
+    from = self.id,
+    arg = isDeputy and "deputyGeneral" or "mainGeneral",
+    arg2 = generalName,
+  }
+end
+
+function ServerPlayer:revealBySkillName(skill_name)
+  local main = self.general == "anjiang"
+  local deputy = self.deputyGeneral == "anjiang"
+
+  if main then
+    if table.contains(Fk.generals[self:getMark("__heg_general")]
+      :getSkillNameList(), skill_name) then
+      self:revealGeneral(false)
+      return
+    end
+  end
+
+  if deputy then
+    if table.contains(Fk.generals[self:getMark("__heg_deputy")]
+      :getSkillNameList(), skill_name) then
+      self:revealGeneral(true)
+      return
+    end
+  end
+end
+
 return ServerPlayer

@@ -69,11 +69,9 @@ function Skill:isEquipmentSkill()
   return self.attached_equip and type(self.attached_equip) == 'string' and self.attached_equip ~= ""
 end
 
---- 确认技能是否对特定玩家生效。
+--- 判断技能是不是对于某玩家而言失效了。
 ---
---- 据说你一般用不到这个，只要你把on_cost（代价）和on_use（效果）区分得当，
----
---- 涉及技能无效时，不需要这个函数也可以实现效果。
+--- 它影响的是hasSkill，但也可以单独拿出来判断。
 ---@param player Player @ 玩家
 ---@return boolean
 function Skill:isEffectable(player)

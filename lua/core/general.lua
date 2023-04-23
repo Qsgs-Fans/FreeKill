@@ -80,4 +80,13 @@ function General:addRelatedSkill(skill)
   end
 end
 
+function General:getSkillNameList(include_lord)
+  local ret = table.map(self.skills, Util.NameMapper)
+  table.insertTable(ret, self.other_skills)
+
+  if not include_lord then
+  end
+  return ret
+end
+
 return General

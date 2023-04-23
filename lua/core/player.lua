@@ -118,6 +118,17 @@ function Player:setGeneral(general, setHp, addSkills)
   end
 end
 
+function Player:getGeneralMaxHp()
+  local general = Fk.generals[self:getMark("__heg_general") or self.general]
+  local deputy = Fk.generals[self:getMark("__heg_deputy") or self.deputy]
+
+  if not deputy then
+    return general.maxHp
+  else
+    return (general.maxHp + deputy.maxHp) // 2
+  end
+end
+
 --- 查询角色是否存在flag。
 ---@param flag string @ 一种标记
 function Player:hasFlag(flag)

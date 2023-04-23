@@ -70,14 +70,24 @@ Flickable {
   }
 
   function addSkill(skill_name) {
+    const modelContains = (m, e) => {
+      for (let i = 0; i < m.count; i++) {
+        if (m.get(i).orig_skill === e.orig_skill) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     let data = JSON.parse(Backend.callLuaFunction(
       "GetSkillData",
       [skill_name]
     ));
     if (data.freq === "active") {
-      active_skills.append(data);
+      if (!modelContains(active_skills, data)) active_skills.append(data);
     } else {
-      not_active_skills.append(data);
+      if (!modelContains(not_active_skills, data))
+        not_active_skills.append(data);
     }
   }
 

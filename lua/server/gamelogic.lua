@@ -39,7 +39,13 @@ function GameLogic:run()
   self.room:adjustSeats()
 
   self:chooseGenerals()
+
+  self:buildPlayerCircle()
+  self:broadcastGeneral()
+  self:prepareDrawPile()
+  self:attachSkillToPlayers()
   self:prepareForStart()
+
   self.room.game_started = true
   self:action()
 end
@@ -123,7 +129,7 @@ function GameLogic:chooseGenerals()
   end
 end
 
-function GameLogic:prepareForStart()
+function GameLogic:buildPlayerCircle()
   local room = self.room
   local players = room.players
   room.alive_players = {table.unpack(players)}
@@ -131,6 +137,11 @@ function GameLogic:prepareForStart()
     players[i].next = players[i + 1]
   end
   players[#players].next = players[1]
+end
+
+function GameLogic:broadcastGeneral()
+  local room = self.room
+  local players = room.players
 
   for _, p in ipairs(players) do
     assert(p.general ~= "")
@@ -153,13 +164,21 @@ function GameLogic:prepareForStart()
     room:broadcastProperty(p, "hp")
     room:broadcastProperty(p, "shield")
   end
+end
 
+function GameLogic:prepareDrawPile()
+  local room = self.room
   local allCardIds = Fk:getAllCardIds()
   table.shuffle(allCardIds)
   room.draw_pile = allCardIds
   for _, id in ipairs(room.draw_pile) do
     self.room:setCardArea(id, Card.DrawPile, nil)
   end
+end
+
+function GameLogic:attachSkillToPlayers()
+  local room = self.room
+  local players = room.players
 
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
@@ -189,6 +208,11 @@ function GameLogic:prepareForStart()
       end
     end
   end
+end
+
+function GameLogic:prepareForStart()
+  local room = self.room
+  local players = room.players
 
   self:addTriggerSkill(GameRule)
   for _, trig in ipairs(Fk.global_trigger) do
