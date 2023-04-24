@@ -1317,8 +1317,13 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
   local top, bottom
   if result ~= "" then
     local d = json.decode(result)
-    top = d[1] or {}
-    bottom = d[2] or {}
+    if #top_limit > 0 and top_limit[1] == 0 then
+      top = {}
+      bottom = d[1]
+    else
+      top = d[1]
+      bottom = d[2]
+    end
   else
     top = cards
     bottom = {}

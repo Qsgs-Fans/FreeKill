@@ -615,9 +615,15 @@ callbacks["AskForGuanxing"] = function(jsonData) {
     cards.push(JSON.parse(d));
   });
   let box = roomScene.popupBox.item;
-  box.areaCapacities = [max_top_cards, max_bottom_cards];
-  box.areaLimits = [min_top_cards, min_bottom_cards];
-  box.areaNames = ["Top", "Bottom"];
+  if (max_top_cards == 0) {
+    box.areaCapacities = [max_bottom_cards];
+    box.areaLimits = [min_bottom_cards];
+    box.areaNames = ["Bottom"];
+  } else {
+    box.areaCapacities = [max_top_cards, max_bottom_cards];
+    box.areaLimits = [min_top_cards, min_bottom_cards];
+    box.areaNames = ["Top", "Bottom"];
+  }
   box.cards = cards;
   box.arrangeCards();
   box.accepted.connect(() => {
