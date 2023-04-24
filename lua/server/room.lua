@@ -1282,7 +1282,23 @@ end
 --- 观星完成后，相关的牌会被置于牌堆顶或者牌堆底。所以这些cards最好不要来自牌堆，一般先用getNCards从牌堆拿出一些牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param cards integer[] @ 可以被观星的卡牌id列表
-function Room:askForGuanxing(player, cards)
+---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
+---@param bottom_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
+  -- 这一大堆都是来提前报错的
+  top_limit = top_limit or {}
+  bottom_limit = bottom_limit or {}
+  if #top_limit > 0 then
+    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "牌堆顶区间设置错误：数值小于0")
+    assert(top_limit[1] <= top_limit[2], "牌堆顶区间设置错误：上限小于下限")
+  end
+  if #bottom_limit > 0 then
+    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "牌堆底区间设置错误：数值小于0")
+    assert(bottom_limit[1] <= bottom_limit[2], "牌堆底区间设置错误：上限小于下限")
+  end
+  if #top_limit > 0 and #bottom_limit > 0 then
+    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
+  end
   if #cards == 1 then
     table.insert(self.draw_pile, 1, cards[1])
     return
@@ -1291,14 +1307,18 @@ function Room:askForGuanxing(player, cards)
   self:notifyMoveFocus(player, command)
   local data = {
     cards = cards,
+    min_top_cards = top_limit and top_limit[1] or 0,
+    max_top_cards = top_limit and top_limit[2] or #cards,
+    min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
+    max_bottom_cards = bottom_limit and bottom_limit[2] or #cards,
   }
 
   local result = self:doRequest(player, command, json.encode(data))
   local top, bottom
   if result ~= "" then
     local d = json.decode(result)
-    top = d[1]
-    bottom = d[2]
+    top = d[1] or {}
+    bottom = d[2] or {}
   else
     top = cards
     bottom = {}

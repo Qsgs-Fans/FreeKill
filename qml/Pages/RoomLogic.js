@@ -604,7 +604,10 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
 callbacks["AskForGuanxing"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let cards = [];
-
+  let min_top_cards = data.min_top_cards;
+  let max_top_cards = data.max_top_cards;
+  let min_bottom_cards = data.min_bottom_cards;
+  let max_bottom_cards = data.max_bottom_cards;
   roomScene.state = "replying";
   roomScene.popupBox.source = "RoomElement/GuanxingBox.qml";
   data.cards.forEach(id => {
@@ -612,7 +615,8 @@ callbacks["AskForGuanxing"] = function(jsonData) {
     cards.push(JSON.parse(d));
   });
   let box = roomScene.popupBox.item;
-  box.areaCapacities = [cards.length, cards.length];
+  box.areaCapacities = [max_top_cards, max_bottom_cards];
+  box.areaLimits = [min_top_cards, min_bottom_cards];
   box.areaNames = ["Top", "Bottom"];
   box.cards = cards;
   box.arrangeCards();
