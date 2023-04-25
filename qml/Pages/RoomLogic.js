@@ -17,7 +17,7 @@ function arrangePhotos() {
    * +---------------+
    * |   6 5 4 3 2   |
    * | 7           1 |
-   * |   dashboard   |
+   * |             0 |
    * +---------------+
    */
 
@@ -32,6 +32,7 @@ function arrangePhotos() {
   let startX = verticalPadding + verticalSpacing;
   let padding = photoWidth + verticalSpacing;
   let regions = [
+    { x: startX + padding * 6, y: roomScene.height - 220 },
     { x: startX + padding * 6, y: roomAreaPadding + horizontalSpacing * 3 },
     { x: startX + padding * 5, y: roomAreaPadding + horizontalSpacing },
     { x: startX + padding * 4, y: roomAreaPadding },
@@ -42,24 +43,24 @@ function arrangePhotos() {
   ];
 
   const regularSeatIndex = [
-    [4],
-    [3, 5],
-    [1, 4, 7],
-    [1, 3, 5, 7],
-    [1, 3, 4, 5, 7],
-    [1, 2, 3, 5, 6, 7],
-    [1, 2, 3, 4, 5, 6, 7],
+    [0, 4],
+    [0, 3, 5],
+    [0, 1, 4, 7],
+    [0, 1, 3, 5, 7],
+    [0, 1, 3, 4, 5, 7],
+    [0, 1, 2, 3, 5, 6, 7],
+    [0, 1, 2, 3, 4, 5, 6, 7],
   ];
   let seatIndex = regularSeatIndex[playerNum - 2];
 
   let item, region, i;
 
-  for (i = 0; i < playerNum - 1; i++) {
+  for (i = 0; i < playerNum; i++) {
     item = photos.itemAt(i);
     if (!item)
       continue;
 
-    region = regions[seatIndex[photoModel.get(i).index] - 1];
+    region = regions[seatIndex[photoModel.get(i).index]];
     item.x = region.x;
     item.y = region.y;
   }
@@ -131,21 +132,9 @@ function getPhoto(id) {
 }
 
 function getPhotoOrDashboard(id) {
-  let photo = getPhoto(id);
-  if (!photo) {
-    if (id === Self.id)
-      return dashboard;
-  }
-  return photo;
-}
-
-function getPhotoOrSelf(id) {
-  let photo = getPhoto(id);
-  if (!photo) {
-    if (id === Self.id)
-      return dashboard.self;
-  }
-  return photo;
+  if (id === Self.id)
+    return dashboard;
+  return getPhoto(id);
 }
 
 function getAreaItem(area, id) {
@@ -157,13 +146,13 @@ function getAreaItem(area, id) {
     return popupBox.item;
   }
 
-  let photo = getPhotoOrDashboard(id);
+  let photo = getPhoto(id);
   if (!photo) {
     return null;
   }
 
   if (area === Card.PlayerHand) {
-    return photo.handcardArea;
+    return id === Self.id ? dashboard.handcardArea : photo.handcardArea;
   } else if (area === Card.PlayerEquip) {
     return photo.equipArea;
   } else if (area === Card.PlayerJudge) {
@@ -230,11 +219,7 @@ function setEmotion(id, emotion, isCardId) {
   } else {
     photo = getPhoto(id);
     if (!photo) {
-      if (id === dashboardModel.id) {
-        photo = dashboard.self;
-      } else {
-        return null;
-      }
+      return null;
     }
   }
 
@@ -255,11 +240,7 @@ function setEmotion(id, emotion, isCardId) {
 function changeHp(id, delta, losthp) {
   let photo = getPhoto(id);
   if (!photo) {
-    if (id === dashboardModel.id) {
-      photo = dashboard.self;
-    } else {
-      return null;
-    }
+    return null;
   }
   if (delta < 0) {
     if (!losthp) {
@@ -325,8 +306,8 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
 
   let i = 0;
   let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  let all_photos = [dashboard.self];
-  for (i = 0; i < playerNum - 1; i++) {
+  let all_photos = [];
+  for (i = 0; i < playerNum; i++) {
     all_photos.push(photos.itemAt(i))
   }
   selected_targets = [];
@@ -383,8 +364,8 @@ function updateSelectedTargets(playerid, selected) {
   let i = 0;
   let card = dashboard.getSelectedCard();
   let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  let all_photos = [dashboard.self]
-  for (i = 0; i < playerNum - 1; i++) {
+  let all_photos = [];
+  for (i = 0; i < playerNum; i++) {
     all_photos.push(photos.itemAt(i))
   }
 
@@ -451,10 +432,8 @@ callbacks["RoomOwner"] = function(jsonData) {
   // jsonData: int uid of the owner
   let uid = JSON.parse(jsonData)[0];
 
-  if (dashboardModel.id === uid) {
-    dashboardModel.isOwner = true;
-    roomScene.dashboardModelChanged();
-    return;
+  if (Self.id === uid) {
+    roomScene.isOwner = true;
   }
 
   let model = getPhotoModel(uid);
@@ -469,12 +448,6 @@ callbacks["PropertyUpdate"] = function(jsonData) {
   let uid = data[0];
   let property_name = data[1];
   let value = data[2];
-
-  if (Self.id === uid) {
-    dashboardModel[property_name] = value;
-    roomScene.dashboardModelChanged();
-    return;
-  }
 
   let model = getPhotoModel(uid);
   if (typeof(model) !== "undefined") {
@@ -493,15 +466,11 @@ callbacks["ArrangeSeats"] = function(jsonData) {
     item.general = "";
   }
 
-  dashboardModel.seatNumber = order.indexOf(Self.id) + 1;
-  dashboardModel.general = "";
-  roomScene.dashboardModelChanged();
-
   // make Self to the first of list, then reorder photomodel
   let selfIndex = order.indexOf(Self.id);
   let after = order.splice(selfIndex);
   after.push(...order);
-  let photoOrder = after.slice(1);
+  let photoOrder = after;
 
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
@@ -544,14 +513,6 @@ callbacks["MoveFocus"] = function(jsonData) {
       if (command === "PlayCard") {
         item.playing = false;
       }
-    }
-  }
-
-  if (command === "PlayCard") {
-    if (focuses.indexOf(Self.id) != -1) {
-      dashboard.self.playing = true;
-    } else {
-      dashboard.self.playing = false;
     }
   }
 }
@@ -793,8 +754,8 @@ function processPrompt(prompt) {
   let raw = Backend.translate(data[0]);
   let src = parseInt(data[1]);
   let dest = parseInt(data[2]);
-  if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhotoOrSelf(src).general));
-  if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhotoOrSelf(dest).general));
+  if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhoto(src).general));
+  if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhoto(dest).general));
   if (raw.match("%arg")) raw = raw.replace("%arg", Backend.translate(data[3]));
   if (raw.match("%arg2")) raw = raw.replace("%arg2", Backend.translate(data[4]));
   return raw;
@@ -878,7 +839,7 @@ callbacks["WaitForNullification"] = function() {
 
 callbacks["SetPlayerMark"] = function(jsonData) {
   let data = JSON.parse(jsonData);
-  let player = getPhotoOrSelf(data[0]);
+  let player = getPhoto(data[0]);
   let mark = data[1];
   let value = data[2].toString();
   if (value == 0) {
@@ -922,11 +883,7 @@ callbacks["Animate"] = function(jsonData) {
 
       let photo = getPhoto(id);
       if (!photo) {
-        if (id === dashboardModel.id) {
-          photo = dashboard.self;
-        } else {
-          return null;
-        }
+        return null;
       }
 
       let animation = component.createObject(photo, {
@@ -974,9 +931,6 @@ callbacks["LogEvent"] = function(jsonData) {
     }
     case "Death": {
       let item = getPhoto(data.to);
-      if (data.to === dashboardModel.id) {
-        item = dashboard.self;
-      }
       let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [item.general])).extension;
       Backend.playSound("./packages/" + extension + "/audio/death/" + item.general);
     }
@@ -1010,7 +964,7 @@ callbacks["TakeAG"] = (j) => {
   let data = JSON.parse(j);
   let pid = data[0];
   let cid = data[1];
-  let item = getPhotoOrSelf(pid);
+  let item = getPhoto(pid);
   let general = Backend.translate(item.general);
 
   // the item should be AG box
@@ -1036,7 +990,7 @@ callbacks["UpdateLimitSkill"] = (j) => {
   let skill = data[1];
   let time = data[2];
 
-  let photo = getPhotoOrSelf(id);
+  let photo = getPhoto(id);
   if (photo) {
     photo.updateLimitSkill(skill, time);
   }

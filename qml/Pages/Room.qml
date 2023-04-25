@@ -14,7 +14,7 @@ Item {
   id: roomScene
 
   property int playerNum: 0
-  property var dashboardModel
+  // property var dashboardModel
 
   property bool isOwner: false
   property bool isStarted: false
@@ -77,7 +77,7 @@ Item {
   }
   Button {
     text: "add robot"
-    visible: dashboardModel.isOwner && !isStarted
+    visible: isOwner && !isStarted
     anchors.centerIn: parent
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
@@ -209,6 +209,10 @@ Item {
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
         }
+
+        Component.onCompleted: {
+          if (index === 0) dashboard.self = this;
+        }
       }
     }
 
@@ -254,28 +258,6 @@ Item {
     width: roomScene.width - dashboardBtn.width
     anchors.top: roomArea.bottom
     anchors.left: dashboardBtn.right
-
-    self.playerid: dashboardModel.id
-    self.general: dashboardModel.general
-    self.screenName: dashboardModel.screenName
-    self.deputyGeneral: dashboardModel.deputyGeneral
-    self.role: dashboardModel.role
-    self.kingdom: dashboardModel.kingdom
-    self.netstate: dashboardModel.netstate
-    self.maxHp: dashboardModel.maxHp
-    self.shield: dashboardModel.shield
-    self.hp: dashboardModel.hp
-    self.seatNumber: dashboardModel.seatNumber
-    self.dead: dashboardModel.dead
-    self.dying: dashboardModel.dying
-    self.faceup: dashboardModel.faceup
-    self.chained: dashboardModel.chained
-    self.drank: dashboardModel.drank
-    self.isOwner: dashboardModel.isOwner
-
-    onSelectedChanged: {
-      Logic.updateSelectedTargets(self.playerid, selected);
-    }
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
@@ -809,37 +791,15 @@ Item {
 
   Component.onCompleted: {
     toast.show(Backend.translate("$EnterRoom"));
-
-    dashboardModel = {
-      id: Self.id,
-      general: Self.avatar,
-      deputyGeneral: "",
-      screenName: Self.screenName,
-      role: "unknown",
-      kingdom: "unknown",
-      netstate: "online",
-      maxHp: 0,
-      hp: 0,
-      shield: 0,
-      seatNumber: 1,
-      dead: false,
-      dying: false,
-      faceup: true,
-      chained: false,
-      drank: 0,
-      isOwner: false
-    }
-
     playerNum = config.roomCapacity;
 
-    let i;
-    for (i = 1; i < playerNum; i++) {
+    for (let i = 0; i < playerNum; i++) {
       photoModel.append({
-        id: -1,
-        index: i - 1,   // For animating seat swap
-        general: "",
+        id: i ? -1 : Self.id,
+        index: i,   // For animating seat swap
+        general: i ? "" : Self.avatar,
         deputyGeneral: "",
-        screenName: "",
+        screenName: i ? "" : Self.screenName,
         role: "unknown",
         kingdom: "unknown",
         netstate: "online",
