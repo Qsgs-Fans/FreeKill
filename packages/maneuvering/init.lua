@@ -497,7 +497,7 @@ Fk:loadTranslationTable{
   ["fire_attack_skill"] = "火攻",
 	[":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与所展示牌花色相同的手牌令其受到1点火焰伤害。",
   ["#fire_attack-show"] = "%src 对你使用了火攻，请展示一张手牌",
-  ["#fire_attack-discard"] = "你可弃置一张 %arg 手牌，对 %src 造成1点伤害",
+  ["#fire_attack-discard"] = "你可弃置一张 %arg 手牌，对 %src 造成1点火属性伤害",
   ["supply_shortage"] = "兵粮寸断",
 	[":supply_shortage"] = "延时锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：距离1的一名其他角色<br /><b>效果</b>：将此牌置于目标角色判定区内。其判定阶段进行判定：若结果不为梅花，其跳过摸牌阶段。然后将【兵粮寸断】置入弃牌堆。",
   ["guding_blade"] = "古锭刀",
