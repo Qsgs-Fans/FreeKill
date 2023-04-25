@@ -1103,7 +1103,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
   events = {fk.AskForCardUse, fk.AskForCardResponse},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-      (data.cardName == "jink" or (data.pattern and string.find(data.pattern, "jink")))
+      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none")))
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
