@@ -2399,6 +2399,33 @@ function Room:adjustSeats()
   self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
 end
 
+---@param a ServerPlayer
+---@param b ServerPlayer
+function Room:swapSeat(a, b)
+  local ai, bi
+  local players = self.players
+  for i, v in ipairs(self.players) do
+    if v == a then ai = i end
+    if v == b then bi = i end
+  end
+
+  players[ai] = b
+  players[bi] = a
+  a.seat, b.seat = b.seat, a.seat
+
+  local player_circle = {}
+  for _, v in ipairs(players) do
+    table.insert(player_circle, v.id)
+  end
+
+  for i = 1, #players - 1 do
+    players[i].next = players[i + 1]
+  end
+  players[#players].next = players[1]
+
+  self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+end
+
 --- 洗牌。
 function Room:shuffleDrawPile()
   if #self.draw_pile + #self.discard_pile == 0 then

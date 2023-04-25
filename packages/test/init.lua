@@ -78,7 +78,9 @@ local test_active = fk.CreateActiveSkill{
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
-    print(self.interaction.data)
+    --print(self.interaction.data)
+    local to = room:getPlayerById(effect.tos[1])
+    room:swapSeat(from, to)
     -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
     -- print(result)
 
@@ -92,7 +94,7 @@ local test_active = fk.CreateActiveSkill{
     -- from.kingdom = "wei"
     -- room:broadcastProperty(from, "kingdom")
     -- p(cards)
-    room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
+    -- room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
   end,
 }
 local test_vs = fk.CreateViewAsSkill{

@@ -455,15 +455,22 @@ callbacks["PropertyUpdate"] = function(jsonData) {
   }
 }
 
-callbacks["ArrangeSeats"] = function(jsonData) {
-  // jsonData: seat order
-  let order = JSON.parse(jsonData);
+callbacks["StartGame"] = function(jsonData) {
   roomScene.isStarted = true;
 
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
-    item.seatNumber = order.indexOf(item.id) + 1;
     item.general = "";
+  }
+}
+
+callbacks["ArrangeSeats"] = function(jsonData) {
+  // jsonData: seat order
+  let order = JSON.parse(jsonData);
+
+  for (let i = 0; i < photoModel.count; i++) {
+    let item = photoModel.get(i);
+    item.seatNumber = order.indexOf(item.id) + 1;
   }
 
   // make Self to the first of list, then reorder photomodel

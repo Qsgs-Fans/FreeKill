@@ -188,6 +188,8 @@ Item {
       id: photos
       model: photoModel
       Photo {
+        x: (roomArea.width - 175) / 2
+        y: (roomArea.height - 233) / 2
         playerid: model.id
         general: model.general
         deputyGeneral: model.deputyGeneral
@@ -242,6 +244,7 @@ Item {
     ColumnLayout {
       MetroButton {
         text: Backend.translate("Trust")
+        onClicked: ;
       }
       MetroButton {
         text: Backend.translate("Sort Cards")
