@@ -154,4 +154,10 @@ Flickable {
       }
     }
   }
+
+  function clearSkills() {
+    prelight_skills.clear();
+    active_skills.clear();
+    not_active_skills.clear();
+  }
 }

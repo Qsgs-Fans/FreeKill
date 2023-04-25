@@ -273,6 +273,24 @@ function doIndicate(from, tos) {
   line.running = true;
 }
 
+function changeSelf(id) {
+  Backend.callLuaFunction("ChangeSelf", [id]);
+
+  // move new selfPhoto to dashboard
+  let order = new Array(photoModel.count);
+  for (let i = 0; i < photoModel.count; i++) {
+    let item = photoModel.get(i);
+    order[item.seatNumber - 1] = item.id;
+    if (item.id === Self.id) {
+      dashboard.self = photos.itemAt(i);
+    }
+  }
+  callbacks["ArrangeSeats"](JSON.stringify(order));
+
+  // update dashboard
+  dashboard.update();
+}
+
 callbacks["AddPlayer"] = function(jsonData) {
   // jsonData: int id, string screenName, string avatar
   for (let i = 0; i < photoModel.count; i++) {

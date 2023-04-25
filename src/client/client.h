@@ -27,6 +27,7 @@ public:
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
   Q_INVOKABLE void clearPlayers();
+  void changeSelf(int id);
 
   lua_State *getLuaState();
   void installAESKey(const QByteArray &key);

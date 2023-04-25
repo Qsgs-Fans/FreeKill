@@ -29,6 +29,7 @@ Item {
   property alias dynamicCardArea: dynamicCardArea
   property alias tableCards: tablePile.cards
   property alias dashboard: dashboard
+  property alias drawPile: drawPile
   property alias skillInteraction: skillInteraction
   property alias miscStatus: miscStatus
 
@@ -244,7 +245,6 @@ Item {
     ColumnLayout {
       MetroButton {
         text: Backend.translate("Trust")
-        onClicked: ;
       }
       MetroButton {
         text: Backend.translate("Sort Cards")

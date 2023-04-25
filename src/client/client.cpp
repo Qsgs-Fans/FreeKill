@@ -67,6 +67,12 @@ void Client::removePlayer(int id) {
 
 void Client::clearPlayers() { players.clear(); }
 
+void Client::changeSelf(int id) {
+  auto p = players[id];
+  Self = p;
+  Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
+}
+
 lua_State *Client::getLuaState() { return L; }
 
 void Client::installAESKey(const QByteArray &key) { router->installAESKey(key); }

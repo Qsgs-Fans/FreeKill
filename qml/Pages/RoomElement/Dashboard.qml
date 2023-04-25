@@ -371,4 +371,30 @@ RowLayout {
   function tremble() {
     self.tremble();
   }
+
+  function update() {
+    unSelectAll();
+    disableSkills();
+
+    let cards = handcardAreaItem.cards;
+    let toRemove = [];
+    for (let c of cards) {
+      toRemove.push(c.cid);
+      c.origY += 30;
+      c.origOpacity = 0
+      c.goBack(true);
+      c.destroyOnStop();
+    }
+    handcardAreaItem.remove(toRemove);
+
+    skillPanel.clearSkills();
+
+    let skills = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [Self.id]));
+    for (let s of skills) {
+      addSkill(s.name);
+    }
+
+    cards = roomScene.drawPile.remove(JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])));
+    handcardAreaItem.add(cards);
+  }
 }
