@@ -116,19 +116,16 @@ GraphicsBox {
       result[i].sort((a, b) => a.x - b.x);
 
 
-    console.log(result[0]);
-    console.log(result[1]);
 
     let box, pos, pile;
     for (j = 0; j < areaRepeater.count; j++) {
       pile = areaRepeater.itemAt(j);
+      if (pile.y === 0){
+        pile.y = j * 150
+      }
       for (i = 0; i < result[j].length; i++) {
         box = pile.cardRepeater.itemAt(i);
         pos = mapFromItem(pile, box.x, box.y);
-        console.log(pile);
-        console.log(pile.x+","+pile.y);
-        console.log(box);
-        console.log(pos);
         card = result[j][i];
         card.origX = pos.x;
         card.origY = pos.y;
