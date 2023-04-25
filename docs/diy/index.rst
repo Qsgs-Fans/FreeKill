@@ -15,3 +15,4 @@ Diy文档
     07-events.rst
     08-debugging.rst
     09-exppattern.rst
+    10-eventstack.rst
