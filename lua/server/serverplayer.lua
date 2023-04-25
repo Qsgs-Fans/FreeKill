@@ -20,7 +20,8 @@ local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
   Player.initialize(self)
-  self.serverplayer = _self
+  self.serverplayer = _self -- 实际在玩的控制者
+  self._splayer = _self -- 真正的控制者
   self.id = _self:getId()
   self.state = _self:getStateString()
   self.room = nil
@@ -644,6 +645,15 @@ function ServerPlayer:revealBySkillName(skill_name)
       return
     end
   end
+end
+
+-- 神貂蝉
+
+function ServerPlayer:control(p)
+  local data = tostring(self.id)
+  p:doNotify("LoseControl", data)
+  p.serverplayer = self._splayer
+  p:doNotify("StartControl", data)
 end
 
 return ServerPlayer

@@ -38,6 +38,7 @@ signals:
 private:
   Router *router;
   QMap<int, ClientPlayer *> players;
+  ClientPlayer *self;
 
   lua_State *L;
 };

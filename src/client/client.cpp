@@ -12,6 +12,7 @@ ClientPlayer *Self;
 Client::Client(QObject *parent) : QObject(parent), callback(0) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
+  self = Self;
   QQmlApplicationEngine *engine = Backend->getEngine();
   engine->rootContext()->setContextProperty("ClientInstance", ClientInstance);
   engine->rootContext()->setContextProperty("Self", Self);
