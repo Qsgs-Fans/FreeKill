@@ -9,6 +9,7 @@ GraphicsBox {
   property var cards: []
   property var result: []
   property var areaCapacities: []
+  property var areaLimits: []
   property var areaNames: []
   property int padding: 25
 
@@ -56,6 +57,7 @@ GraphicsBox {
 
     MetroButton {
       Layout.alignment: Qt.AlignHCenter
+      id: buttonConfirm
       text: Backend.translate("OK")
       width: 120
       height: 35
@@ -83,8 +85,9 @@ GraphicsBox {
   function arrangeCards() {
     result = new Array(areaCapacities.length);
     let i;
-    for (i = 0; i < result.length; i++)
+    for (i = 0; i < result.length; i++){
       result[i] = [];
+    }
 
     let card, j, area, cards, stay;
     for (i = 0; i < cardItem.count; i++) {
@@ -101,16 +104,25 @@ GraphicsBox {
         }
       }
 
-      if (stay)
-        result[0].push(card);
+      if (stay) {
+        if (result[0].length >= areaCapacities[0]) {
+          result[1].push(card);
+        } else {
+          result[0].push(card);
+        }
+      }
     }
-
     for(i = 0; i < result.length; i++)
       result[i].sort((a, b) => a.x - b.x);
+
+
 
     let box, pos, pile;
     for (j = 0; j < areaRepeater.count; j++) {
       pile = areaRepeater.itemAt(j);
+      if (pile.y === 0){
+        pile.y = j * 150
+      }
       for (i = 0; i < result[j].length; i++) {
         box = pile.cardRepeater.itemAt(i);
         pos = mapFromItem(pile, box.x, box.y);
@@ -119,6 +131,14 @@ GraphicsBox {
         card.origY = pos.y;
         card.goBack(true);
       }
+    }
+
+    for (i = 0; i < areaRepeater.count; i++) {
+      if (result[i].length < areaLimits[i]) {
+        buttonConfirm.enabled = false;
+        break;
+      }
+      buttonConfirm.enabled = true;
     }
   }
 
