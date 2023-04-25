@@ -478,6 +478,7 @@ function ServerPlayer:bury()
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
+  self:setChainState(false)
 end
 
 function ServerPlayer:throwAllCards(flag)
