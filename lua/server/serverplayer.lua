@@ -478,6 +478,8 @@ function ServerPlayer:bury()
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
+  self:setChainState(false)
+  if not self.faceup then self:turnOver() end
 end
 
 function ServerPlayer:throwAllCards(flag)

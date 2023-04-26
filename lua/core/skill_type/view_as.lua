@@ -27,12 +27,12 @@ end
 
 ---@param player Player
 function ViewAsSkill:enabledAtPlay(player)
-  return true
+  return player:hasSkill(self)
 end
 
 ---@param player Player
 function ViewAsSkill:enabledAtResponse(player)
-  return true
+  return player:hasSkill(self)
 end
 
 return ViewAsSkill
