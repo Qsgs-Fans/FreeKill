@@ -44,10 +44,34 @@ function GameEvent:findParent(eventType)
 end
 
 function GameEvent:clear()
-  for _, f in ipairs(self.extra_clear_funcs) do
-    if type(f) == "function" then f(self) end
+  local clear_co = coroutine.create(function()
+    for _, f in ipairs(self.extra_clear_funcs) do
+      if type(f) == "function" then f(self) end
+    end
+    self:clear_func()
+  end)
+
+  while true do
+    local err, yield_result, extra_yield_result = coroutine.resume(clear_co)
+
+    if err == false then
+      -- handle error, then break
+      if not string.find(yield_result, "__manuallyBreak") then
+        fk.qCritical(yield_result)
+        print(debug.traceback(co))
+      end
+      coroutine.close(clear_co)
+      break
+    end
+
+    if yield_result == "__handleRequest" then
+      -- yield to requestLoop
+      coroutine.yield(yield_result, extra_yield_result)
+    else
+      coroutine.close(clear_co)
+      break
+    end
   end
-  self:clear_func()
 end
 
 local function breakEvent(self, extra_yield_result)
