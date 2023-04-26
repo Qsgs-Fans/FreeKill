@@ -107,8 +107,13 @@ function doCancelButton() {
 }
 
 function replyToServer(jsonData) {
-  roomScene.state = "notactive";
   ClientInstance.replyToServer("", jsonData);
+  if (!mainWindow.is_pending) {
+    roomScene.state = "notactive";
+  } else {
+    let data = mainWindow.pending_message.splice(0, 1);
+    return mainWindow.handleMessage(data.command, data.jsonData);
+  }
 }
 
 function getPhotoModel(id) {
@@ -289,6 +294,12 @@ function changeSelf(id) {
 
   // update dashboard
   dashboard.update();
+
+  // handle pending messages
+  if (mainWindow.is_pending) {
+    let data = mainWindow.fetchMessage();
+    return mainWindow.handleMessage(data.command, data.jsonData);
+  }
 }
 
 callbacks["AddPlayer"] = function(jsonData) {
@@ -1029,4 +1040,17 @@ callbacks["UpdateDrawPile"] = (j) => {
 callbacks["UpdateRoundNum"] = (j) => {
   let data = parseInt(j);
   roomScene.miscStatus.roundNum = data;
+}
+
+// 神貂蝉
+
+callbacks["StartChangeSelf"] = (j) => {
+  let id = parseInt(j);
+  mainWindow.is_pending = true;
+  ClientInstance.notifyServer("PushRequest", "changeself," + j);
+}
+
+callbacks["ChangeSelf"] = (j) => {
+  let data = parseInt(j);
+  changeSelf(data);
 }

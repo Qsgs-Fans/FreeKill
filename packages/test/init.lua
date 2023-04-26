@@ -80,7 +80,8 @@ local test_active = fk.CreateActiveSkill{
     local from = room:getPlayerById(effect.from)
     --print(self.interaction.data)
     local to = room:getPlayerById(effect.tos[1])
-    room:swapSeat(from, to)
+    -- room:swapSeat(from, to)
+    from:control(to)
     -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
     -- print(result)
 

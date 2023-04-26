@@ -672,6 +672,12 @@ fk.client_callback["Heartbeat"] = function()
   ClientInstance.client:notifyServer("Heartbeat", "")
 end
 
+fk.client_callback["ChangeSelf"] = function(jsonData)
+  local data = json.decode(jsonData)
+  ClientInstance:getPlayerById(data.id).player_cards[Player.Hand] = data.handcards
+  ClientInstance:notifyUI("ChangeSelf", data.id)
+end
+
 -- Create ClientInstance (used by Lua)
 ClientInstance = Client:new()
 dofile "lua/client/client_util.lua"

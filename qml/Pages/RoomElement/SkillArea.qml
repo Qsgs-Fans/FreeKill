@@ -50,7 +50,7 @@ Flickable {
           onPressedChanged: {
             if (!pressed) return;
             enabled = false;
-            ClientInstance.notifyServer("PrelightSkill", [
+            ClientInstance.notifyServer("PushRequest", [
               "prelight", orig, (!prelighted).toString()
             ].join(","));
           }

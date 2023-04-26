@@ -20,8 +20,9 @@ local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
   Player.initialize(self)
-  self.serverplayer = _self -- 实际在玩的控制者
-  self._splayer = _self -- 真正的控制者
+  self.serverplayer = _self -- 控制者
+  self._splayer = _self -- 真正在玩的玩家
+  self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
   self.state = _self:getStateString()
   self.room = nil
@@ -40,7 +41,10 @@ end
 ---@param command string
 ---@param jsonData string
 function ServerPlayer:doNotify(command, jsonData)
-  self.serverplayer:doNotify(command, jsonData)
+  for _, p in ipairs(self._observers) do
+    p:doNotify(command, jsonData)
+  end
+
   local room = self.room
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
@@ -57,6 +61,10 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
+  if not table.contains(self._observers, self.serverplayer) then
+    self.serverplayer:doNotify("StartChangeSelf", tostring(self.id))
+  end
+
   timeout = timeout or self.room.timeout
   self.client_reply = ""
   self.reply_ready = false

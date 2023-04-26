@@ -691,6 +691,25 @@ function Room:requestLoop(rest_time)
         removeObserver(id)
       elseif command == "prelight" then
         self:getPlayerById(id):prelightSkill(reqlist[3], reqlist[4] == "true")
+      elseif command == "changeself" then
+        local toId = tonumber(reqlist[3])
+        local from = self:getPlayerById(id)
+        local to = self:getPlayerById(toId)
+        local from_sp = from._splayer
+
+        -- 注意发来信息的玩家的主视角可能已经不是自己了
+        -- 先换成正确的玩家
+        from = table.find(self.players, function(p)
+          return table.contains(p._observers, from_sp)
+        end)
+
+        -- 切换视角
+        table.removeOne(from._observers, from_sp)
+        table.insert(to._observers, from_sp)
+        from_sp:doNotify("ChangeSelf", json.encode {
+          id = toId,
+          handcards = to:getCardIds(Player.Hand),
+        })
       end
     elseif rest_time > 10 then
       -- let current thread sleep 10ms

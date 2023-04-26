@@ -70,7 +70,7 @@ void Client::clearPlayers() { players.clear(); }
 
 void Client::changeSelf(int id) {
   auto p = players[id];
-  Self = p;
+  Self = p ? p : self;
   Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
 }
 

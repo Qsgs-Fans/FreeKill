@@ -104,6 +104,8 @@ Item {
           endPhaseButton.visible = false;
           respond_play = false;
           extra_data = {};
+          mainWindow.pending_message = [];
+          mainWindow.is_pending = false;
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();

@@ -24,6 +24,8 @@ Item {
     ? 540 : 960 * parent.height / parent.width
   scale: parent.width / width
   anchors.centerIn: parent
+  property bool is_pending: false
+  property var pending_message: []
 
   Config {
     id: config
@@ -183,12 +185,29 @@ Item {
         errDialog.open();
         return;
       }
-      let cb = callbacks[command]
-      if (typeof(cb) === "function") {
-        cb(jsonData);
+      if (mainWindow.is_pending && command !== "ChangeSelf") {
+        console.log(command, jsonData)
+        mainWindow.pending_message.push({ command: command, jsonData: jsonData });
       } else {
-        callbacks["ErrorMsg"]("Unknown command " + command + "!");
+        mainWindow.handleMessage(command, jsonData);
       }
+    }
+  }
+
+  function fetchMessage() {
+    let ret = pending_message.splice(0, 1)[0];
+    if (pending_message.length === 0) {
+      is_pending = false;
+    }
+    return ret;
+  }
+
+  function handleMessage(command, jsonData) {
+    let cb = callbacks[command]
+    if (typeof(cb) === "function") {
+      cb(jsonData);
+    } else {
+      callbacks["ErrorMsg"]("Unknown command " + command + "!");
     }
   }
 }
