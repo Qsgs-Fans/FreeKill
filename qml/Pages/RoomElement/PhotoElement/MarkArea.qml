@@ -20,6 +20,10 @@ Item {
     radius: 4
     border.color: "white"
     border.width: 1
+
+    Behavior on height {
+      NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
+    }
   }
 
   Repeater {
@@ -36,6 +40,14 @@ Item {
         color: "white"
         style: Text.Outline
         textFormat: Text.RichText
+      }
+
+      Behavior on x {
+        NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
+      }
+
+      Behavior on y {
+        NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
       }
 
       TapHandler {
