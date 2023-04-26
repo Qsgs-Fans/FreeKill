@@ -324,6 +324,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
       local card = skill:viewAs(selected_cards)
       if card then
         ret = card.skill:targetFilter(to_select, selected, selected_cards)
+        ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
       end
     end
   end
