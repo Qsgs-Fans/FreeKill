@@ -36,21 +36,21 @@ QtObject {
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
-    winX = conf.winX || 100;
-    winY = conf.winY || 100;
-    winWidth = conf.winWidth || 960;
-    winHeight = conf.winHeight || 540;
-    lastLoginServer = conf.lastLoginServer || "127.0.0.1";
-    savedPassword = conf.savedPassword || {};
-    lobbyBg = conf.lobbyBg || AppPath + "/image/background";
-    roomBg = conf.roomBg || AppPath + "/image/gamebg";
-    bgmFile = conf.bgmFile || AppPath + "/audio/system/bgm.mp3";
-    language = conf.language || "zh_CN";
-    disabledPack = conf.disabledPack || [ "test_p_0" ];
-    preferedMode = conf.preferedMode || "aaa_role_mode";
-    preferedPlayerNum = conf.preferedPlayerNum || 2;
-    preferredGeneralNum = conf.preferredGeneralNum || 3;
-    ladyImg = conf.ladyImg || AppPath + "/image/lady";
+    winX = conf.winX ?? 100;
+    winY = conf.winY ?? 100;
+    winWidth = conf.winWidth ?? 960;
+    winHeight = conf.winHeight ?? 540;
+    lastLoginServer = conf.lastLoginServer ?? "127.0.0.1";
+    savedPassword = conf.savedPassword ?? {};
+    lobbyBg = conf.lobbyBg ?? AppPath + "/image/background";
+    roomBg = conf.roomBg ?? AppPath + "/image/gamebg";
+    bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
+    language = conf.language ?? "zh_CN";
+    disabledPack = conf.disabledPack ?? [ "test_p_0" ];
+    preferedMode = conf.preferedMode ?? "aaa_role_mode";
+    preferedPlayerNum = conf.preferedPlayerNum ?? 2;
+    preferredGeneralNum = conf.preferredGeneralNum ?? 3;
+    ladyImg = conf.ladyImg ?? AppPath + "/image/lady";
   }
 
   function saveConf() {

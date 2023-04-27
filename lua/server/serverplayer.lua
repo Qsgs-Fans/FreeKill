@@ -5,6 +5,8 @@
 ---@field public room Room
 ---@field public next ServerPlayer
 ---@field public request_data string
+---@field public request_queue table[]
+---@field public busy boolean
 ---@field public client_reply string
 ---@field public default_reply string
 ---@field public reply_ready boolean
@@ -29,6 +31,8 @@ function ServerPlayer:initialize(_self)
 
   -- Below are for doBroadcastRequest
   self.request_data = ""
+  self.request_queue = {} -- 一控多的时候，多个同时进行的请求改为依次询问
+  self.busy = false
   self.client_reply = ""
   self.default_reply = ""
   self.reply_ready = false
@@ -61,11 +65,17 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
+  -- if self.busy then
+  --   table.insert(self.request_queue, { command, jsonData, timeout })
+  --   return
+  -- end
+
   if not table.contains(self._observers, self.serverplayer) then
     self.serverplayer:doNotify("StartChangeSelf", tostring(self.id))
   end
 
   timeout = timeout or self.room.timeout
+  -- self.busy = true
   self.client_reply = ""
   self.reply_ready = false
   self.reply_cancel = false
@@ -124,13 +134,24 @@ end
 ---@return string @ JSON data
 function ServerPlayer:waitForReply(timeout)
   local result = _waitForReply(self, timeout)
+
   self.request_data = ""
   self.client_reply = result
   if result == "__cancel" then
     result = ""
     self.reply_cancel = true
+    self.busy = false
   end
-  if result ~= "" then self.reply_ready = true end
+  if result ~= "" then
+    self.reply_ready = true
+    self.busy = false
+  end
+
+  -- if #self.request_queue > 0 and not self.busy then
+  --   local c, j, t = table.unpack(table.remove(self.request_queue, 1))
+  --   self:doRequest(c, j, t)
+  -- end
+
   return result
 end
 
@@ -658,10 +679,7 @@ end
 -- 神貂蝉
 
 function ServerPlayer:control(p)
-  local data = tostring(self.id)
-  p:doNotify("LoseControl", data)
   p.serverplayer = self._splayer
-  p:doNotify("StartControl", data)
 end
 
 return ServerPlayer

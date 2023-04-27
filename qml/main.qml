@@ -186,9 +186,11 @@ Item {
         return;
       }
       if (mainWindow.is_pending && command !== "ChangeSelf") {
-        console.log(command, jsonData)
         mainWindow.pending_message.push({ command: command, jsonData: jsonData });
       } else {
+        if (command === "StartChangeSelf") {
+          mainWindow.is_pending = true;
+        }
         mainWindow.handleMessage(command, jsonData);
       }
     }

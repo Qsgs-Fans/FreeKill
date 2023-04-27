@@ -111,7 +111,8 @@ function replyToServer(jsonData) {
   if (!mainWindow.is_pending) {
     roomScene.state = "notactive";
   } else {
-    let data = mainWindow.pending_message.splice(0, 1);
+    roomScene.state = "";
+    let data = mainWindow.fetchMessage();
     return mainWindow.handleMessage(data.command, data.jsonData);
   }
 }
@@ -1046,11 +1047,16 @@ callbacks["UpdateRoundNum"] = (j) => {
 
 callbacks["StartChangeSelf"] = (j) => {
   let id = parseInt(j);
-  mainWindow.is_pending = true;
   ClientInstance.notifyServer("PushRequest", "changeself," + j);
 }
 
 callbacks["ChangeSelf"] = (j) => {
   let data = parseInt(j);
+  if (Self.id === data) {
+    let msg = mainWindow.fetchMessage();
+    if (!msg) return;
+    mainWindow.handleMessage(msg.command, msg.jsonData);
+    return;
+  }
   changeSelf(data);
 }

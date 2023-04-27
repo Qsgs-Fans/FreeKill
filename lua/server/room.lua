@@ -543,6 +543,7 @@ end
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   for _, p in ipairs(players) do
+    p.request_queue = {}
     self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
@@ -566,8 +567,11 @@ end
 ---@return ServerPlayer | nil @ 在这次竞争请求中获胜的角色，可能是nil
 function Room:doRaceRequest(command, players, jsonData)
   players = players or self.players
+  players = table.simpleClone(players)
+  local player_len = #players
   -- self:notifyMoveFocus(players, command)
   for _, p in ipairs(players) do
+    p.request_queue = {}
     self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
@@ -589,6 +593,7 @@ function Room:doRaceRequest(command, players, jsonData)
       end
 
       if p.reply_cancel then
+        table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
       end
     end
@@ -597,7 +602,7 @@ function Room:doRaceRequest(command, players, jsonData)
       return winner
     end
 
-    if #players == #canceled_players then
+    if player_len == #canceled_players then
       return nil
     end
 
