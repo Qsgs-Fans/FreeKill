@@ -533,7 +533,7 @@ function Room:doRequest(player, command, jsonData, wait)
 
   if wait then
     local ret = player:waitForReply(self.timeout)
-    player.busy = false
+    player.serverplayer:setBusy(false)
     return ret
   end
 end
@@ -555,6 +555,10 @@ function Room:doBroadcastRequest(command, players, jsonData)
   for _, p in ipairs(players) do
     elapsed = os.time() - currentTime
     p:waitForReply(remainTime - elapsed)
+  end
+
+  for _, p in ipairs(players) do
+    p.serverplayer:setBusy(false)
   end
 end
 
@@ -610,6 +614,10 @@ function Room:doRaceRequest(command, players, jsonData)
 
     coroutine.yield("__handleRequest", remainTime - elapsed)
     fk.QThread_msleep(10)
+  end
+
+  for _, p in ipairs(self.players) do
+    p.serverplayer:setBusy(false)
   end
 end
 

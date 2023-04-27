@@ -118,4 +118,7 @@ public:
   void doNotify(const QString &command, const QString &json_data);
 
   void prepareForRequest(const QString &command, const QString &data);
+
+  bool busy() const;
+  void setBusy(bool busy);
 };

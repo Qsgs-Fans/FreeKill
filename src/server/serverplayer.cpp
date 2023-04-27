@@ -15,6 +15,7 @@ ServerPlayer::ServerPlayer(Room *room) {
   connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
 
   alive = true;
+  m_busy = false;
 }
 
 ServerPlayer::~ServerPlayer() {
