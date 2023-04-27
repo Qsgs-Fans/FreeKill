@@ -26,6 +26,7 @@ public:
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
+  void changeSelf(int id);
 };
 
 extern Client *ClientInstance;

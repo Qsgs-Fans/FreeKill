@@ -7,13 +7,8 @@ import Qt5Compat.GraphicalEffects
 RowLayout {
   id: root
 
-  property alias self: selfPhoto
+  property var self
   property alias handcardArea: handcardAreaItem
-  property alias equipArea: selfPhoto.equipArea
-  property alias delayedTrickArea: selfPhoto.delayedTrickArea
-  property alias specialArea: selfPhoto.specialArea
-
-  property bool selected: selfPhoto.selected
 
   property string pending_skill: ""
   property var pending_card
@@ -48,16 +43,20 @@ RowLayout {
     id: skillPanel
   }
 
-  Photo {
-    id: selfPhoto
+  Item {
+    width: 175
+    height: 233
     Layout.rightMargin: -175 / 8 + (roomArea.width - 175 * 0.75 * 7) / 8
-    handcards: handcardAreaItem.length
+    // handcards: handcardAreaItem.length
   }
 
   Connections {
     target: handcardAreaItem
     function onCardSelected(cardId, selected) {
       dashboard.selectCard(cardId, selected);
+    }
+    function onLengthChanged() {
+      self.handcards = handcardAreaItem.length;
     }
   }
 
@@ -75,11 +74,11 @@ RowLayout {
       return;
 
     let component = Qt.createComponent("CardItem.qml");
-    let parentPos = roomScene.mapFromItem(selfPhoto, 0, 0);
+    let parentPos = roomScene.mapFromItem(self, 0, 0);
 
     expanded_piles[pile] = [];
     if (pile === "_equip") {
-      let equips = selfPhoto.equipArea.getAllCards();
+      let equips = self.equipArea.getAllCards();
       equips.forEach(data => {
         data.x = parentPos.x;
         data.y = parentPos.y;
@@ -90,7 +89,7 @@ RowLayout {
       })
       handcardAreaItem.updateCardPosition();
     } else {
-      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
       ids.forEach(id => {
         let data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
         data.x = parentPos.x;
@@ -109,11 +108,11 @@ RowLayout {
     if (expanded_pile_names.indexOf(pile) === -1)
       return;
 
-    let parentPos = roomScene.mapFromItem(selfPhoto, 0, 0);
+    let parentPos = roomScene.mapFromItem(self, 0, 0);
 
     delete expanded_piles[pile];
     if (pile === "_equip") {
-      let equips = selfPhoto.equipArea.getAllCards();
+      let equips = self.equipArea.getAllCards();
       equips.forEach(data => {
         let card = handcardAreaItem.remove([data.cid])[0];
         card.origX = parentPos.x;
@@ -123,7 +122,7 @@ RowLayout {
       })
       handcardAreaItem.updateCardPosition();
     } else {
-      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
       ids.forEach(id => {
         let card = handcardAreaItem.remove([id])[0];
         card.origX = parentPos.x;
@@ -166,7 +165,7 @@ RowLayout {
           ids.push(cards[i].cid);
         }
       }
-      cards = selfPhoto.equipArea.getAllCards();
+      cards = self.equipArea.getAllCards();
       cards.forEach(c => {
         if (cardValid(c.cid, cname)) {
           ids.push(c.cid);
@@ -178,7 +177,7 @@ RowLayout {
 
       // Must manually analyze pattern here
       let pile_list = cname.split("|")[4];
-      let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [selfPhoto.playerid]));
+      let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
       if (pile_list && pile_list !== "." && !(pile_data instanceof Array)) {
         pile_list = pile_list.split(",");
         for (let pile_name of pile_list) {
@@ -254,7 +253,7 @@ RowLayout {
         enabled_cards.push(card.cid);
     });
 
-    let cards = selfPhoto.equipArea.getAllCards();
+    let cards = self.equipArea.getAllCards();
     cards.forEach(c => {
       if (JSON.parse(Backend.callLuaFunction(
         "ActiveCardFilter",
@@ -268,7 +267,7 @@ RowLayout {
     })
 
     let pile = Backend.callLuaFunction("GetExpandPileOfSkill", [pending_skill]);
-    let pile_ids = JSON.parse(Backend.callLuaFunction("GetPile", [selfPhoto.playerid, pile]));
+    let pile_ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
     pile_ids.forEach(cid => {
       if (JSON.parse(Backend.callLuaFunction(
         "ActiveCardFilter",
@@ -370,6 +369,32 @@ RowLayout {
   }
 
   function tremble() {
-    selfPhoto.tremble();
+    self.tremble();
+  }
+
+  function update() {
+    unSelectAll();
+    disableSkills();
+
+    let cards = handcardAreaItem.cards;
+    let toRemove = [];
+    for (let c of cards) {
+      toRemove.push(c.cid);
+      c.origY += 30;
+      c.origOpacity = 0
+      c.goBack(true);
+      c.destroyOnStop();
+    }
+    handcardAreaItem.remove(toRemove);
+
+    skillPanel.clearSkills();
+
+    let skills = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [Self.id]));
+    for (let s of skills) {
+      addSkill(s.name);
+    }
+
+    cards = roomScene.drawPile.remove(JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])));
+    handcardAreaItem.add(cards);
   }
 }

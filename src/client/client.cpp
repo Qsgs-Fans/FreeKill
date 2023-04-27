@@ -12,6 +12,7 @@ ClientPlayer *Self;
 Client::Client(QObject *parent) : QObject(parent), callback(0) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
+  self = Self;
   QQmlApplicationEngine *engine = Backend->getEngine();
   engine->rootContext()->setContextProperty("ClientInstance", ClientInstance);
   engine->rootContext()->setContextProperty("Self", Self);
@@ -66,6 +67,12 @@ void Client::removePlayer(int id) {
 }
 
 void Client::clearPlayers() { players.clear(); }
+
+void Client::changeSelf(int id) {
+  auto p = players[id];
+  Self = p ? p : self;
+  Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
+}
 
 lua_State *Client::getLuaState() { return L; }
 

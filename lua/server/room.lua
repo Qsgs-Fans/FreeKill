@@ -22,6 +22,8 @@
 ---@field public status_skills Skill[] @ 这个房间中含有的状态技列表
 ---@field public settings table @ 房间的额外设置，差不多是json对象
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
+---@field public request_queue table<userdata, table>
+---@field public request_self table<integer, integer>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -119,6 +121,8 @@ function Room:initialize(_room)
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+  self.request_queue = {}
+  self.request_self = {}
 end
 
 --- 正式在这个房间中开始游戏。
@@ -529,10 +533,13 @@ end
 ---@return string | nil @ 收到的答复，如果wait为false的话就返回nil
 function Room:doRequest(player, command, jsonData, wait)
   if wait == nil then wait = true end
+  self.request_queue = {}
   player:doRequest(command, jsonData, self.timeout)
 
   if wait then
-    return player:waitForReply(self.timeout)
+    local ret = player:waitForReply(self.timeout)
+    player.serverplayer:setBusy(false)
+    return ret
   end
 end
 
@@ -542,8 +549,9 @@ end
 ---@param jsonData string @ 请求数据
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
+  self.request_queue = {}
   for _, p in ipairs(players) do
-    self:doRequest(p, command, jsonData or p.request_data, false)
+    p:doRequest(command, jsonData or p.request_data)
   end
 
   local remainTime = self.timeout
@@ -552,6 +560,10 @@ function Room:doBroadcastRequest(command, players, jsonData)
   for _, p in ipairs(players) do
     elapsed = os.time() - currentTime
     p:waitForReply(remainTime - elapsed)
+  end
+
+  for _, p in ipairs(players) do
+    p.serverplayer:setBusy(false)
   end
 end
 
@@ -566,9 +578,12 @@ end
 ---@return ServerPlayer | nil @ 在这次竞争请求中获胜的角色，可能是nil
 function Room:doRaceRequest(command, players, jsonData)
   players = players or self.players
+  players = table.simpleClone(players)
+  local player_len = #players
   -- self:notifyMoveFocus(players, command)
+  self.request_queue = {}
   for _, p in ipairs(players) do
-    self:doRequest(p, command, jsonData or p.request_data, false)
+    p:doRequest(command, jsonData or p.request_data)
   end
 
   local remainTime = self.timeout
@@ -576,10 +591,11 @@ function Room:doRaceRequest(command, players, jsonData)
   local elapsed = 0
   local winner
   local canceled_players = {}
+  local ret
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
-      return nil
+      break
     end
     for _, p in ipairs(players) do
       p:waitForReply(0)
@@ -589,21 +605,29 @@ function Room:doRaceRequest(command, players, jsonData)
       end
 
       if p.reply_cancel then
+        table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
       end
     end
     if winner then
       self:doBroadcastNotify("CancelRequest", "")
-      return winner
+      ret = winner
+      break
     end
 
-    if #players == #canceled_players then
-      return nil
+    if player_len == #canceled_players then
+      break
     end
 
     coroutine.yield("__handleRequest", remainTime - elapsed)
     fk.QThread_msleep(10)
   end
+
+  for _, p in ipairs(self.players) do
+    p.serverplayer:setBusy(false)
+  end
+
+  return ret
 end
 
 -- main loop for the request handling coroutine
@@ -691,6 +715,25 @@ function Room:requestLoop(rest_time)
         removeObserver(id)
       elseif command == "prelight" then
         self:getPlayerById(id):prelightSkill(reqlist[3], reqlist[4] == "true")
+      elseif command == "changeself" then
+        local toId = tonumber(reqlist[3])
+        local from = self:getPlayerById(id)
+        local to = self:getPlayerById(toId)
+        local from_sp = from._splayer
+
+        -- 注意发来信息的玩家的主视角可能已经不是自己了
+        -- 先换成正确的玩家
+        from = table.find(self.players, function(p)
+          return table.contains(p._observers, from_sp)
+        end)
+
+        -- 切换视角
+        table.removeOne(from._observers, from_sp)
+        table.insert(to._observers, from_sp)
+        from_sp:doNotify("ChangeSelf", json.encode {
+          id = toId,
+          handcards = to:getCardIds(Player.Hand),
+        })
       end
     elseif rest_time > 10 then
       -- let current thread sleep 10ms
@@ -2395,6 +2438,33 @@ function Room:adjustSeats()
     self.players[i].seat = i
     table.insert(player_circle, self.players[i].id)
   end
+
+  self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+end
+
+---@param a ServerPlayer
+---@param b ServerPlayer
+function Room:swapSeat(a, b)
+  local ai, bi
+  local players = self.players
+  for i, v in ipairs(self.players) do
+    if v == a then ai = i end
+    if v == b then bi = i end
+  end
+
+  players[ai] = b
+  players[bi] = a
+  a.seat, b.seat = b.seat, a.seat
+
+  local player_circle = {}
+  for _, v in ipairs(players) do
+    table.insert(player_circle, v.id)
+  end
+
+  for i = 1, #players - 1 do
+    players[i].next = players[i + 1]
+  end
+  players[#players].next = players[1]
 
   self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
 end

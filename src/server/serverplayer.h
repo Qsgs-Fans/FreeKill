@@ -38,6 +38,8 @@ public:
   volatile bool alive; // For heartbeat
   void kick();
 
+  bool busy() const { return m_busy; }
+  void setBusy(bool busy) { m_busy = busy; }
 signals:
   void disconnected();
   void kicked();
@@ -47,6 +49,7 @@ private:
   Router *router;
   Server *server;
   Room *room;       // Room that player is in, maybe lobby
+  bool m_busy;
 
   QString requestCommand;
   QString requestData;

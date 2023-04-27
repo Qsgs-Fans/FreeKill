@@ -324,6 +324,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
       local card = skill:viewAs(selected_cards)
       if card then
         ret = card.skill:targetFilter(to_select, selected, selected_cards)
+        ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
       end
     end
   end
@@ -451,6 +452,18 @@ function SetInteractionDataOfSkill(skill_name, data)
   if skill and skill.interaction then
     skill.interaction.data = json.decode(data)
   end
+end
+
+function ChangeSelf(pid)
+  local c = ClientInstance
+  c.client:changeSelf(pid) -- for qml
+  Self = c:getPlayerById(pid)
+end
+
+function GetPlayerHandcards(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  return json.encode(p.player_cards[Player.Hand])
 end
 
 dofile "lua/client/i18n/init.lua"

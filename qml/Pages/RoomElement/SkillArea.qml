@@ -50,7 +50,7 @@ Flickable {
           onPressedChanged: {
             if (!pressed) return;
             enabled = false;
-            ClientInstance.notifyServer("PrelightSkill", [
+            ClientInstance.notifyServer("PushRequest", [
               "prelight", orig, (!prelighted).toString()
             ].join(","));
           }
@@ -153,5 +153,11 @@ Flickable {
         not_active_skills.remove(i);
       }
     }
+  }
+
+  function clearSkills() {
+    prelight_skills.clear();
+    active_skills.clear();
+    not_active_skills.clear();
   }
 }

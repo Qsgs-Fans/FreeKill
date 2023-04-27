@@ -20,7 +20,9 @@ local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
   Player.initialize(self)
-  self.serverplayer = _self
+  self.serverplayer = _self -- 控制者
+  self._splayer = _self -- 真正在玩的玩家
+  self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
   self.state = _self:getStateString()
   self.room = nil
@@ -39,7 +41,10 @@ end
 ---@param command string
 ---@param jsonData string
 function ServerPlayer:doNotify(command, jsonData)
-  self.serverplayer:doNotify(command, jsonData)
+  for _, p in ipairs(self._observers) do
+    p:doNotify(command, jsonData)
+  end
+
   local room = self.room
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
@@ -56,10 +61,24 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
-  timeout = timeout or self.room.timeout
   self.client_reply = ""
   self.reply_ready = false
   self.reply_cancel = false
+
+  if self.serverplayer:busy() then
+    self.room.request_queue[self.serverplayer] = self.room.request_queue[self.serverplayer] or {}
+    table.insert(self.room.request_queue[self.serverplayer], { self.id, command, jsonData, timeout })
+    return
+  end
+
+  self.room.request_self[self.serverplayer:getId()] = self.id
+
+  if not table.contains(self._observers, self.serverplayer) then
+    self.serverplayer:doNotify("StartChangeSelf", tostring(self.id))
+  end
+
+  timeout = timeout or self.room.timeout
+  self.serverplayer:setBusy(true)
   self.ai_data = {
     command = command,
     jsonData = jsonData,
@@ -115,13 +134,30 @@ end
 ---@return string @ JSON data
 function ServerPlayer:waitForReply(timeout)
   local result = _waitForReply(self, timeout)
+  local sid = self.serverplayer:getId()
+  local id = self.id
+  if self.room.request_self[sid] ~= id then
+    result = ""
+  end
+
   self.request_data = ""
   self.client_reply = result
   if result == "__cancel" then
     result = ""
     self.reply_cancel = true
+    self.serverplayer:setBusy(false)
   end
-  if result ~= "" then self.reply_ready = true end
+  if result ~= "" then
+    self.reply_ready = true
+    self.serverplayer:setBusy(false)
+  end
+
+  local queue = self.room.request_queue[self.serverplayer]
+  if queue and #queue > 0 and not self.serverplayer:busy() then
+    local i, c, j, t = table.unpack(table.remove(queue, 1))
+    self.room:getPlayerById(i):doRequest(c, j, t)
+  end
+
   return result
 end
 
@@ -646,6 +682,17 @@ function ServerPlayer:revealBySkillName(skill_name)
       return
     end
   end
+end
+
+-- 神貂蝉
+
+function ServerPlayer:control(p)
+  if self == p then
+    self.room:setPlayerMark(p, "@ControledBy", 0)
+  else
+    self.room:setPlayerMark(p, "@ControledBy", "seat#" .. self.seat)
+  end
+  p.serverplayer = self._splayer
 end
 
 return ServerPlayer
