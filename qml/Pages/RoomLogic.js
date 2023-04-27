@@ -519,7 +519,7 @@ callbacks["ArrangeSeats"] = function(jsonData) {
 
 function cancelAllFocus() {
   let item;
-  for (let i = 0; i < playerNum - 1; i++) {
+  for (let i = 0; i < playerNum; i++) {
     item = photos.itemAt(i);
     item.progressBar.visible = false;
     item.progressTip = "";
@@ -534,7 +534,7 @@ callbacks["MoveFocus"] = function(jsonData) {
   let command = data[1];
 
   let item, model;
-  for (let i = 0; i < playerNum - 1; i++) {
+  for (let i = 0; i < playerNum; i++) {
     model = photoModel.get(i);
     if (focuses.indexOf(model.id) != -1) {
       item = photos.itemAt(i);
