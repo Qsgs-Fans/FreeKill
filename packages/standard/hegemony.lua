@@ -342,7 +342,7 @@ local heg_rule = fk.CreateTriggerSkill{
         if killer.kingdom == "unknown" then return end
 
         local victim = damage.to
-        if killer.kingdom == victim.kingdom then
+        if killer.kingdom ~= "wild" and killer.kingdom == victim.kingdom then
           killer:throwAllCards("he")
         else
           killer:drawCards(victim.kingdom == "wild" and 1 or

@@ -643,7 +643,7 @@ function ServerPlayer:revealGeneral(isDeputy)
   if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self),
     function(p)
       return p.kingdom == kingdom
-    end) >= #room.alive_players // 2 then
+    end) >= #room.players // 2 then
 
     self.kingdom = "wild"
     room:broadcastProperty(self, "kingdom")
