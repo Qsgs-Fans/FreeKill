@@ -22,6 +22,7 @@
 ---@field public status_skills Skill[] @ 这个房间中含有的状态技列表
 ---@field public settings table @ 房间的额外设置，差不多是json对象
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
+---@field public request_queue table<userdata, table>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -119,6 +120,7 @@ function Room:initialize(_room)
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+  self.request_queue = {}
 end
 
 --- 正式在这个房间中开始游戏。
@@ -544,8 +546,8 @@ end
 ---@param jsonData string @ 请求数据
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
+  self.request_queue = {}
   for _, p in ipairs(players) do
-    p.request_queue = {}
     self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
@@ -576,8 +578,8 @@ function Room:doRaceRequest(command, players, jsonData)
   players = table.simpleClone(players)
   local player_len = #players
   -- self:notifyMoveFocus(players, command)
+  self.request_queue = {}
   for _, p in ipairs(players) do
-    p.request_queue = {}
     self:doRequest(p, command, jsonData or p.request_data, false)
   end
 
