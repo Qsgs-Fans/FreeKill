@@ -532,7 +532,9 @@ function Room:doRequest(player, command, jsonData, wait)
   player:doRequest(command, jsonData, self.timeout)
 
   if wait then
-    return player:waitForReply(self.timeout)
+    local ret = player:waitForReply(self.timeout)
+    player.busy = false
+    return ret
   end
 end
 
