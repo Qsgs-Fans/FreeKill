@@ -685,6 +685,11 @@ end
 -- 神貂蝉
 
 function ServerPlayer:control(p)
+  if self == p then
+    self.room:setPlayerMark(p, "@ControledBy", 0)
+  else
+    self.room:setPlayerMark(p, "@ControledBy", "seat#" .. self.seat)
+  end
   p.serverplayer = self._splayer
 end
 

@@ -114,7 +114,7 @@ function Client:appendLog(msg)
       return ""
     end
     local p = self:getPlayerById(pid)
-    local str <const> = '<font color="%s"><b>%s</b></font>'
+    local str = '<font color="%s"><b>%s</b></font>'
     if p.general == "anjiang" and (p.deputyGeneral == "anjiang"
       or not p.deputyGeneral) then
       local ret = Fk:translate("seat#" .. p.seat)
@@ -123,7 +123,7 @@ function Client:appendLog(msg)
 
     local ret = p.general
     ret = Fk:translate(ret)
-    if p.deputyGeneral then
+    if p.deputyGeneral and p.deputyGeneral ~= "" then
       ret = ret .. "/" .. Fk:translate(p.deputyGeneral)
     end
     ret = string.format(str, color, ret)
