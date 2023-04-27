@@ -23,6 +23,7 @@
 ---@field public settings table @ 房间的额外设置，差不多是json对象
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
+---@field public request_self table<integer, integer>
 local Room = class("Room")
 
 -- load classes used by the game
@@ -121,6 +122,7 @@ function Room:initialize(_room)
     self.status_skills[class] = {table.unpack(skills)}
   end
   self.request_queue = {}
+  self.request_self = {}
 end
 
 --- 正式在这个房间中开始游戏。
@@ -531,6 +533,7 @@ end
 ---@return string | nil @ 收到的答复，如果wait为false的话就返回nil
 function Room:doRequest(player, command, jsonData, wait)
   if wait == nil then wait = true end
+  self.request_queue = {}
   player:doRequest(command, jsonData, self.timeout)
 
   if wait then
@@ -548,7 +551,7 @@ function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   self.request_queue = {}
   for _, p in ipairs(players) do
-    self:doRequest(p, command, jsonData or p.request_data, false)
+    p:doRequest(command, jsonData or p.request_data)
   end
 
   local remainTime = self.timeout
@@ -580,7 +583,7 @@ function Room:doRaceRequest(command, players, jsonData)
   -- self:notifyMoveFocus(players, command)
   self.request_queue = {}
   for _, p in ipairs(players) do
-    self:doRequest(p, command, jsonData or p.request_data, false)
+    p:doRequest(command, jsonData or p.request_data)
   end
 
   local remainTime = self.timeout
@@ -588,10 +591,11 @@ function Room:doRaceRequest(command, players, jsonData)
   local elapsed = 0
   local winner
   local canceled_players = {}
+  local ret
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
-      return nil
+      break
     end
     for _, p in ipairs(players) do
       p:waitForReply(0)
@@ -607,11 +611,12 @@ function Room:doRaceRequest(command, players, jsonData)
     end
     if winner then
       self:doBroadcastNotify("CancelRequest", "")
-      return winner
+      ret = winner
+      break
     end
 
     if player_len == #canceled_players then
-      return nil
+      break
     end
 
     coroutine.yield("__handleRequest", remainTime - elapsed)
@@ -621,6 +626,8 @@ function Room:doRaceRequest(command, players, jsonData)
   for _, p in ipairs(self.players) do
     p.serverplayer:setBusy(false)
   end
+
+  return ret
 end
 
 -- main loop for the request handling coroutine

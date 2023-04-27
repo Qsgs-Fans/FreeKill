@@ -71,6 +71,8 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
     return
   end
 
+  self.room.request_self[self.serverplayer:getId()] = self.id
+
   if not table.contains(self._observers, self.serverplayer) then
     self.serverplayer:doNotify("StartChangeSelf", tostring(self.id))
   end
@@ -132,6 +134,11 @@ end
 ---@return string @ JSON data
 function ServerPlayer:waitForReply(timeout)
   local result = _waitForReply(self, timeout)
+  local sid = self.serverplayer:getId()
+  local id = self.id
+  if self.room.request_self[sid] ~= id then
+    result = ""
+  end
 
   self.request_data = ""
   self.client_reply = result
