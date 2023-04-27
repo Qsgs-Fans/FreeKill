@@ -61,6 +61,10 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
+  self.client_reply = ""
+  self.reply_ready = false
+  self.reply_cancel = false
+
   if self.serverplayer:busy() then
     self.room.request_queue[self.serverplayer] = self.room.request_queue[self.serverplayer] or {}
     table.insert(self.room.request_queue[self.serverplayer], { self.id, command, jsonData, timeout })
@@ -73,9 +77,6 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
 
   timeout = timeout or self.room.timeout
   self.serverplayer:setBusy(true)
-  self.client_reply = ""
-  self.reply_ready = false
-  self.reply_cancel = false
   self.ai_data = {
     command = command,
     jsonData = jsonData,
