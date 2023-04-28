@@ -20,6 +20,8 @@ QtObject {
   property int preferedPlayerNum
   property int preferredGeneralNum
   property string ladyImg
+  property real bgmVolume
+  property bool disableMsgAudio
 
   // Player property of client
   property string serverAddr
@@ -51,6 +53,9 @@ QtObject {
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;
     preferredGeneralNum = conf.preferredGeneralNum ?? 3;
     ladyImg = conf.ladyImg ?? AppPath + "/image/lady";
+    Backend.volume = conf.effectVolume ?? 50.;
+    bgmVolume = conf.bgmVolume ?? 50.;
+    disableMsgAudio = conf.disableMsgAudio ?? false;
   }
 
   function saveConf() {
@@ -69,6 +74,9 @@ QtObject {
     conf.preferedPlayerNum = preferedPlayerNum;
     conf.ladyImg = ladyImg;
     conf.preferredGeneralNum = preferredGeneralNum;
+    conf.effectVolume = Backend.volume;
+    conf.bgmVolume = bgmVolume;
+    conf.disableMsgAudio = disableMsgAudio;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

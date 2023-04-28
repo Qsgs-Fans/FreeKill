@@ -6,6 +6,8 @@
 #include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
+  Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
+
 public:
   QmlBackend(QObject *parent = nullptr);
   ~QmlBackend();
@@ -47,13 +49,18 @@ public:
   Q_INVOKABLE QString getAESKey() const;
   Q_INVOKABLE void installAESKey();
 
+  qreal volume() const { return m_volume; }
+  void setVolume(qreal v) { m_volume = v; }
+
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
+  void volumeChanged(qreal);
 
 private:
   QQmlApplicationEngine *engine;
   RSA *rsa;
   QString aes_key;
+  qreal m_volume;
 
   void pushLuaValue(lua_State *L, QVariant v);
 };

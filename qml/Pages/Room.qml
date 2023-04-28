@@ -54,7 +54,9 @@ Item {
       if (playbackState == MediaPlayer.StoppedState && roomScene.isStarted)
         play();
     }
-    audioOutput: AudioOutput {}
+    audioOutput: AudioOutput {
+      volume: config.bgmVolume / 100
+    }
   }
 
   onIsStartedChanged: {
@@ -719,7 +721,8 @@ Item {
     } else if (msg.startsWith("~")) {
       let g = msg.slice(1);
       let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [g])).extension;
-      Backend.playSound("./packages/" + extension + "/audio/death/" + g);
+      if (!config.disableMsgAudio)
+        Backend.playSound("./packages/" + extension + "/audio/death/" + g);
 
       let m = Backend.translate("~" + g);
       if (general === "")
@@ -744,7 +747,8 @@ Item {
       let data2 = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
       if (!data2) return false;
       let extension = data2.extension;
-      Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, idx);
+      if (!config.disableMsgAudio)
+        Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, idx);
 
       let m = Backend.translate("$" + skill + idx.toString());
       if (general === "")

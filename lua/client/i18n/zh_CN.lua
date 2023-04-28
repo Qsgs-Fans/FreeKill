@@ -17,6 +17,12 @@ Fk:loadTranslationTable{
   ["Room BG"] = "房间背景",
   ["Game BGM"] = "游戏BGM",
   ["Poster Girl"] = "看板娘",
+  ["BGM Volume"] = "BGM音量",
+  ["Effect Volume"] = "音效音量",
+  ["Userinfo Settings"] = "个人信息",
+  ["BG Settings"] = "游戏背景",
+  ["Audio Settings"] = "音频",
+  ["Disable message audio"] = "禁用聊天语音",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",

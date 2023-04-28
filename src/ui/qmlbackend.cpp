@@ -263,7 +263,8 @@ void QmlBackend::playSound(const QString &name, int index) {
   auto output = new QAudioOutput;
   player->setAudioOutput(output);
   player->setSource(QUrl::fromLocalFile(fname));
-  output->setVolume(50); // TODO: volume config
+  qDebug() << m_volume;
+  output->setVolume(m_volume / 100);
   connect(player, &QMediaPlayer::playbackStateChanged, this, [=]() {
     if (player->playbackState() == QMediaPlayer::StoppedState) {
       player->deleteLater();
