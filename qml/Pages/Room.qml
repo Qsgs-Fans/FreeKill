@@ -684,7 +684,7 @@ Item {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
     chat.append(msg);
-    let photo = Logic.getPhotoOrSelf(pid);
+    let photo = Logic.getPhoto(pid);
     if (photo === undefined) {
       let user = raw.userName;
       let m = raw.msg;
@@ -727,7 +727,7 @@ Item {
       else
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
-      let photo = Logic.getPhotoOrSelf(pid);
+      let photo = Logic.getPhoto(pid);
       if (photo === undefined) {
         danmaku.sendLog(`${userName}: ${m}`);
         return true;
@@ -752,7 +752,7 @@ Item {
       else
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
-      let photo = Logic.getPhotoOrSelf(pid);
+      let photo = Logic.getPhoto(pid);
       if (photo === undefined) {
         danmaku.sendLog(`${userName}: ${m}`);
         return true;

@@ -2,11 +2,12 @@
 
 GameEvent.functions[GameEvent.Pindian] = function(self)
   local pindianData = table.unpack(self.data)
-  local self = self.room
-  self.logic:trigger(fk.StartPindian, pindianData.from, pindianData)
+  local room = self.room
+  local logic = room.logic
+  logic:trigger(fk.StartPindian, pindianData.from, pindianData)
 
   if pindianData.reason ~= "" then
-    self:sendLog{
+    room:sendLog{
       type = "#StartPindianReason",
       from = pindianData.from.id,
       arg = pindianData.reason,
@@ -17,7 +18,8 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     num = 1,
     min_num = 1,
     include_equip = false,
-    reason = pindianData.reason
+    pattern = ".",
+    reason = pindianData.reason,
   }
   local prompt = "#askForPindian"
   local data = { "choose_cards_skill", prompt, true, json.encode(extraData) }
@@ -34,8 +36,8 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     end
   end
 
-  self:notifyMoveFocus(targets, "AskForPindian")
-  self:doBroadcastRequest("AskForUseActiveSkill", targets)
+  room:notifyMoveFocus(targets, "AskForPindian")
+  room:doBroadcastRequest("AskForUseActiveSkill", targets)
 
   local moveInfos = {}
   for _, p in ipairs(targets) do
@@ -62,53 +64,67 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
       skillName = pindianData.reason,
       moveVisible = true,
     })
+
+    room:sendLog{
+      type = "#ShowPindianCard",
+      from = p.id,
+      card = { pindianCard.id },
+    }
   end
 
-  self:moveCards(table.unpack(moveInfos))
+  room:moveCards(table.unpack(moveInfos))
 
-  self.logic:trigger(fk.PindianCardsDisplayed, nil, pindianData)
+  logic:trigger(fk.PindianCardsDisplayed, nil, pindianData)
 
   for toId, result in pairs(pindianData.results) do
+    local to = room:getPlayerById(toId)
     if pindianData.fromCard.number > result.toCard.number then
-      pindianData.results[toId].winner = pindianData.from
-    elseif pindianData.fromCard.number > result.toCard.number then
-      pindianData.results[toId].winner = Fk:getCardById(toId)
+      result.winner = pindianData.from
+    elseif pindianData.fromCard.number < result.toCard.number then
+      result.winner = to
     end
 
     local singlePindianData = {
       from = pindianData.from,
-      to = self:getPlayerById(toId),
+      to = to,
       fromCard = pindianData.fromCard,
       toCard = result.toCard,
-      winner = pindianData.results[toId].winner,
+      winner = result.winner,
     }
-    self.logic:trigger(fk.PindianResultConfirmed, nil, singlePindianData)
+
+    room:sendLog{
+      type = "#ShowPindianResult",
+      from = pindianData.from.id,
+      to = { toId },
+      arg = result.winner == pindianData.from and "pindianwin" or "pindiannotwin"
+    }
+    logic:trigger(fk.PindianResultConfirmed, nil, singlePindianData)
   end
 
-  if self.logic:trigger(fk.PindianFinished, pindianData.from, pindianData) then
-    self.logic:breakEvent()
+  if logic:trigger(fk.PindianFinished, pindianData.from, pindianData) then
+    logic:breakEvent()
   end
 end
 
 GameEvent.cleaners[GameEvent.Pindian] = function(self)
   local pindianData = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
 
   local toProcessingArea = {}
-  local leftFromCardIds = self:getSubcardsByRule(pindianData.fromCard, { Card.Processing })
+  local leftFromCardIds = room:getSubcardsByRule(pindianData.fromCard, { Card.Processing })
   if #leftFromCardIds > 0 then
     table.insertTable(toProcessingArea, leftFromCardIds)
   end
 
   for _, result in pairs(pindianData.results) do
-    local leftToCardIds = self:getSubcardsByRule(result.toCard, { Card.Processing })
+    local leftToCardIds = room:getSubcardsByRule(result.toCard, { Card.Processing })
     if #leftToCardIds > 0 then
       table.insertTable(toProcessingArea, leftToCardIds)
     end
   end
 
   if #toProcessingArea > 0 then
-    self:moveCards({
+    room:moveCards({
       ids = toProcessingArea,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonPutIntoDiscardPile,

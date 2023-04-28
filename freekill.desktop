@@ -7,3 +7,4 @@ Icon=freekill_logo
 Exec=/usr/bin/FreeKill
 Type=Application
 Terminal=false
+Categories=Game
