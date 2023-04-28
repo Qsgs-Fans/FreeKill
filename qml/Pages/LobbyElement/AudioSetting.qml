@@ -33,7 +33,7 @@ ColumnLayout {
     }
   }
 
-  CheckBox {
+  Switch {
     text: Backend.translate("Disable message audio")
     checked: config.disableMsgAudio
     onCheckedChanged: config.disableMsgAudio = checked;

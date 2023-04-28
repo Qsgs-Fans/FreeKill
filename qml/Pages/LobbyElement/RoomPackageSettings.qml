@@ -21,7 +21,7 @@ Flickable {
     anchors.top: parent.top
     anchors.topMargin: 8
 
-    CheckBox {
+    Switch {
       text: "禁用Lua拓展 (重启后生效)"
     }
 

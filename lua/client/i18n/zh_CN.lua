@@ -23,6 +23,7 @@ Fk:loadTranslationTable{
   ["BG Settings"] = "游戏背景",
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
+  ["Back"] = "返回",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",

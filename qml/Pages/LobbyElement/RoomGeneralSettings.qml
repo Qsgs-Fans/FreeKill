@@ -79,13 +79,13 @@ ColumnLayout {
     }
   }
 
-  CheckBox {
+  Switch {
     id: freeAssignCheck
     checked: Debugging ? true : false
     text: Backend.translate("Enable free assign")
   }
 
-  CheckBox {
+  Switch {
     id: deputyCheck
     checked: Debugging ? true : false
     text: Backend.translate("Enable deputy general")

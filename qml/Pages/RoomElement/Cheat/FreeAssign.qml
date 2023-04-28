@@ -3,41 +3,105 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import ".."
 
 Item {
   id: root
   anchors.fill: parent
+  property var generalModel
   property var extra_data: ({})
 
   signal finish()
 
-  Flickable {
-    height: parent.height
-    width: generalButtons.width
-    anchors.centerIn: parent
-    contentHeight: generalButtons.height
-    ScrollBar.vertical: ScrollBar {}
-    ColumnLayout {
-      id: generalButtons
-      Repeater {
-        model: ListModel {
-          id: packages
+  ToolBar {
+    id: bar
+    width: parent.width
+    RowLayout {
+      anchors.fill: parent
+      ToolButton {
+        opacity: stack.depth > 1 ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 100 } }
+        text: Backend.translate("Back")
+        onClicked: stack.pop()
+      }
+      Label {
+        text: Backend.translate("Enable free assign")
+        elide: Label.ElideRight
+        horizontalAlignment: Qt.AlignHCenter
+        verticalAlignment: Qt.AlignVCenter
+        Layout.fillWidth: true
+      }
+      ToolButton {
+        opacity: 0
+      }
+    }
+  }
+
+  StackView {
+    id: stack
+    width: parent.width
+    height: parent.height - bar.height
+    anchors.top: bar.bottom
+    initialItem: pkgList
+  }
+
+  ListModel {
+    id: packages
+  }
+
+  Component {
+    id: pkgList
+    GridView {
+      id: listView
+      width: parent.width
+      height: stack.height
+      ScrollBar.vertical: ScrollBar {}
+      model: packages
+      clip: true
+      cellWidth: width / 3
+      cellHeight: 40
+
+      delegate: ItemDelegate {
+        width: listView.width / 3
+        height: 40
+
+        Text {
+          text: Backend.translate(name)
+          anchors.centerIn: parent
         }
 
-        ColumnLayout {
-          Text { text: Backend.translate(name) }
-          GridLayout {
-            columns: 5
-            Repeater {
-              model: JSON.parse(Backend.callLuaFunction("GetGenerals", [name]))
-              Button {
-                text: Backend.translate(modelData)
-                onClicked: {
-                  extra_data.card.name = modelData;
-                  root.finish();
-                }
-              }
-            }
+        onClicked: {
+          generalModel = JSON.parse(Backend.callLuaFunction("GetGenerals",
+            [packages.get(index).name]));
+          stack.push(generalList);
+        }
+      }
+    }
+  }
+
+  Component {
+    id: generalList
+    ColumnLayout {
+      clip: true
+      width: stack.width
+      height: stack.height
+      Item { height: 6 }
+      GridView {
+        Layout.preferredWidth: stack.width - stack.width % 100 + 10
+        Layout.fillHeight: true
+        Layout.alignment: Qt.AlignHCenter
+        model: generalModel
+        ScrollBar.vertical: ScrollBar {}
+
+        cellHeight: 140
+        cellWidth: 100
+
+        delegate: GeneralCardItem {
+          autoBack: false
+          name: modelData
+          onClicked: {
+            extra_data.card.name = modelData;
+            root.finish();
           }
         }
       }
