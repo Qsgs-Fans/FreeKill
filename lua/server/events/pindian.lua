@@ -77,15 +77,16 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
   logic:trigger(fk.PindianCardsDisplayed, nil, pindianData)
 
   for toId, result in pairs(pindianData.results) do
+    local to = room:getPlayerById(toId)
     if pindianData.fromCard.number > result.toCard.number then
       result.winner = pindianData.from
     elseif pindianData.fromCard.number < result.toCard.number then
-      result.winner = room:getPlayerById(toId)
+      result.winner = to
     end
 
     local singlePindianData = {
       from = pindianData.from,
-      to = room:getPlayerById(toId),
+      to = to,
       fromCard = pindianData.fromCard,
       toCard = result.toCard,
       winner = result.winner,
