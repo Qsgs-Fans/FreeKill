@@ -100,6 +100,7 @@ Item {
           autoBack: false
           name: modelData
           onClicked: {
+            stack.pop();
             extra_data.card.name = modelData;
             root.finish();
           }
