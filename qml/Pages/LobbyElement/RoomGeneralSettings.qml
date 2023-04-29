@@ -70,7 +70,7 @@ ColumnLayout {
     SpinBox {
       id: generalNum
       from: 3
-      to: 8
+      to: 18
       value: config.preferredGeneralNum
 
       onValueChanged: {
