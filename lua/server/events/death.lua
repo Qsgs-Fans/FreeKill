@@ -66,4 +66,6 @@ GameEvent.functions[GameEvent.Death] = function(self)
   logic:trigger(fk.GameOverJudge, victim, deathStruct)
   logic:trigger(fk.Death, victim, deathStruct)
   logic:trigger(fk.BuryVictim, victim, deathStruct)
+
+  logic:trigger(fk.Deathed, victim, deathStruct)
 end

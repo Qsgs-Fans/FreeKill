@@ -161,7 +161,11 @@ function fk.CreateActiveSkill(spec)
   local skill = ActiveSkill:new(spec.name, spec.frequency or Skill.NotFrequent)
   readUsableSpecToSkill(skill, spec)
 
-  if spec.can_use then skill.canUse = spec.can_use end
+  if spec.can_use then
+    skill.canUse = function(curSkill, player)
+      return spec.can_use(curSkill, player) and curSkill:isEffectable(player)
+    end
+  end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
   if spec.feasible then
@@ -193,6 +197,7 @@ end
 ---@field public pattern string
 ---@field public enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
 ---@field public enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
+---@field public before_use fun(self: ViewAsSkill, player: Player)
 
 ---@param spec ViewAsSkillSpec
 ---@return ViewAsSkill
@@ -211,10 +216,14 @@ function fk.CreateViewAsSkill(spec)
     skill.pattern = spec.pattern
   end
   if type(spec.enabled_at_play) == "function" then
-    skill.enabledAtPlay = spec.enabled_at_play
+    skill.enabledAtPlay = function(curSkill, player)
+      return spec.enabled_at_play(curSkill, player) and curSkill:isEffectable(player)
+    end
   end
   if type(spec.enabled_at_response) == "function" then
-    skill.enabledAtResponse = spec.enabled_at_response
+    skill.enabledAtResponse = function(curSkill, player)
+      return spec.enabled_at_response(curSkill, player) and curSkill:isEffectable(player)
+    end
   end
 
   if spec.interaction then
@@ -227,6 +236,10 @@ function fk.CreateViewAsSkill(spec)
         end
       end,
     })
+  end
+
+  if spec.before_use and type(spec.before_use) == "function" then
+    skill.beforeUse = spec.before_use
   end
 
   return skill

@@ -37,6 +37,7 @@ General.Agender = 4
 ---@param hp integer @ 武将初始体力
 ---@param maxHp integer @ 武将初始最大体力
 ---@param gender Gender @ 武将性别
+---@param subkingdom string @ 武将副势力
 function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.package = package
   self.name = name
@@ -48,6 +49,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.maxHp = maxHp or hp
   self.gender = gender or General.Male
   self.shield = 0
+  self.subkingdom = nil
 
   self.skills = {}    -- skills first added to this general
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
@@ -87,6 +89,10 @@ function General:getSkillNameList(include_lord)
   if not include_lord then
   end
   return ret
+end
+
+function General:setSubkingdom(kingdom)
+  self.subkingdom = kingdom
 end
 
 return General

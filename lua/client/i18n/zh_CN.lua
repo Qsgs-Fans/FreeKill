@@ -138,6 +138,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGeneral"] = "选择武将",
   ["AskForGuanxing"] = "观星",
   ["AskForChoice"] = "选择",
+  ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
   ["PlayCard"] = "出牌",
 
@@ -162,6 +163,8 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#ShowPindianResult"] = "%from 在 %from 和 %to 之间的拼点中 %arg",
   ["pindianwin"] = "赢",
   ["pindiannotwin"] = "没赢",
+
+  ["#ChooseInitialKingdom"] = "请选择初始势力（不可变更）",
 
   ["#RevealGeneral"] = "%from 亮出 %arg %arg2",
   ["mainGeneral"] = "主将",

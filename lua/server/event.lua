@@ -81,18 +81,19 @@ fk.AskForPeaches = 59
 fk.AskForPeachesDone = 60
 fk.Death = 61
 fk.BuryVictim = 62
-fk.BeforeGameOverJudge = 63
-fk.GameOverJudge = 64
-fk.GameFinished = 65
+fk.Deathed = 63
+fk.BeforeGameOverJudge = 64
+fk.GameOverJudge = 65
+fk.GameFinished = 66
 
-fk.AskForCardUse = 66
-fk.AskForCardResponse = 67
+fk.AskForCardUse = 67
+fk.AskForCardResponse = 68
 
-fk.StartPindian = 68
-fk.PindianCardsDisplayed = 69
-fk.PindianResultConfirmed = 70
-fk.PindianFinished = 71
+fk.StartPindian = 69
+fk.PindianCardsDisplayed = 70
+fk.PindianResultConfirmed = 71
+fk.PindianFinished = 72
 
 -- 72 = TurnEnd
 
-fk.NumOfEvents = 72
+fk.NumOfEvents = 73

@@ -38,6 +38,7 @@ function Skill:initialize(name, frequency)
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
+  self.attachedKingdom = {}
 
   local name_splited = name:split("__")
   self.trueName = name_splited[#name_splited]
@@ -83,6 +84,10 @@ function Skill:isEffectable(player)
   end
 
   return true
+end
+
+function Skill:addAttachedKingdom(kingdom)
+  table.insertIfNeed(self.attachedKingdom, kingdom)
 end
 
 return Skill

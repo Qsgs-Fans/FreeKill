@@ -427,7 +427,8 @@ end
 ---@param player ServerPlayer
 ---@param general string
 ---@param changeKingdom boolean
-function Room:setPlayerGeneral(player, general, changeKingdom)
+---@param noBroadcast boolean|null
+function Room:setPlayerGeneral(player, general, changeKingdom, noBroadcast)
   if Fk.generals[general] == nil then return end
   player.general = general
   player.gender = Fk.generals[general].gender
@@ -436,7 +437,11 @@ function Room:setPlayerGeneral(player, general, changeKingdom)
 
   if changeKingdom then
     player.kingdom = Fk.generals[general].kingdom
-    self:broadcastProperty(player, "kingdom")
+    if noBroadcast then
+      self:notifyProperty(player, player, "kingdom")
+    else
+      self:broadcastProperty(player, "kingdom")
+    end
   end
 end
 
@@ -1303,6 +1308,7 @@ function Room:handleUseCardReply(player, data)
       local c = skill:viewAs(selected_cards)
       if c then
         self:useSkill(player, skill)
+
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
@@ -1313,6 +1319,8 @@ function Room:handleUseCardReply(player, data)
           use.tos = nil
         end
         use.card = c
+
+        skill:beforeUse(player, use)
         return use
       end
     end
@@ -2399,6 +2407,7 @@ function Room:useSkill(player, skill, effect_cb)
     end
   end
   player:addSkillUseHistory(skill.name)
+
   if effect_cb then
     return execGameEvent(GameEvent.SkillEffect, effect_cb)
   end
