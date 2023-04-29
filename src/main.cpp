@@ -149,12 +149,6 @@ int main(int argc, char *argv[]) {
   prepareForLinux();
 #endif
 
-  // 加载 zh_CN.qm 翻译文件
-  // TODO: i18n
-  QTranslator translator;
-  Q_UNUSED(translator.load("zh_CN.qm"));
-  QCoreApplication::installTranslator(&translator);
-
 #ifndef FK_CLIENT_ONLY
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
@@ -173,6 +167,10 @@ int main(int argc, char *argv[]) {
 
   if (startServer) {
     app = new QCoreApplication(argc, argv);
+    QTranslator translator;
+    Q_UNUSED(translator.load("zh_CN.qm"));
+    QCoreApplication::installTranslator(&translator);
+
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
       serverPort = parser.value("server").toInt();
@@ -239,6 +237,10 @@ int main(int argc, char *argv[]) {
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
 #endif
+
+  QTranslator translator;
+  Q_UNUSED(translator.load("zh_CN.qm"));
+  QCoreApplication::installTranslator(&translator);
 
   QmlBackend backend;
   backend.setEngine(engine);
