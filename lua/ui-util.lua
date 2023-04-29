@@ -20,4 +20,15 @@ UI.ComboBox = function(spec)
   return spec
 end
 
+-- Spin: 一个能用两侧加减号调整某些数值的组件，见于奇谋等技能
+-- 可以赋值的属性有：
+-- * from: 最小值
+-- * to: 最大值
+-- * default: 默认值 默认为最小的
+UI.Spin = function(spec)
+  assert(spec.from <= spec.to)
+  spec.type = "spin"
+  return spec
+end
+
 return UI
