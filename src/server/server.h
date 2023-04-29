@@ -22,7 +22,7 @@ public:
               ushort port = 9527u);
 
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
-                  const QByteArray &settings = "{}");
+                  int timeout = 15, const QByteArray &settings = "{}");
 
   Room *findRoom(int id) const;
   Room *lobby() const;
