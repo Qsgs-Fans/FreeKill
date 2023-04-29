@@ -6,12 +6,19 @@
 #include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
-  Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
 public:
   QmlBackend(QObject *parent = nullptr);
   ~QmlBackend();
 
+  // File used by both Lua and Qml
+  static Q_INVOKABLE void cd(const QString &path);
+  static Q_INVOKABLE QStringList ls(const QString &dir = "");
+  static Q_INVOKABLE QString pwd();
+  static Q_INVOKABLE bool exists(const QString &file);
+  static Q_INVOKABLE bool isDir(const QString &file);
+
+#ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
   void setEngine(QQmlApplicationEngine *engine);
 
@@ -23,13 +30,6 @@ public:
 
   // lua --> qml
   void emitNotifyUI(const QString &command, const QString &jsonData);
-
-  // File used by both Lua and Qml
-  static Q_INVOKABLE void cd(const QString &path);
-  static Q_INVOKABLE QStringList ls(const QString &dir = "");
-  static Q_INVOKABLE QString pwd();
-  static Q_INVOKABLE bool exists(const QString &file);
-  static Q_INVOKABLE bool isDir(const QString &file);
 
   // read data from lua, call lua functions
   Q_INVOKABLE QString translate(const QString &src);
@@ -57,12 +57,15 @@ signals:
   void volumeChanged(qreal);
 
 private:
+  Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
+
   QQmlApplicationEngine *engine;
   RSA *rsa;
   QString aes_key;
   qreal m_volume;
 
   void pushLuaValue(lua_State *L, QVariant v);
+#endif
 };
 
 extern QmlBackend *Backend;

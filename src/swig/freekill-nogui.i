@@ -8,11 +8,13 @@
 #include "clientplayer.h"
 #include "room.h"
 #include "util.h"
+#include "qmlbackend.h"
 class ClientPlayer *Self = nullptr;
 %}
 
 %include "naturalvar.i"
 %include "qt.i"
+%include "qml-nogui.i"
 %include "player.i"
 %include "server.i"
 %include "sqlite3.i"

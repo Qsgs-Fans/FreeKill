@@ -2,12 +2,15 @@
 
 #include "qmlbackend.h"
 
+#ifndef FK_SERVER_ONLY
 #include <qaudiooutput.h>
 #include <qmediaplayer.h>
 #include <qrandom.h>
 
 #include <QClipboard>
 #include <QMediaPlayer>
+#endif
+
 #include <cstdlib>
 #ifndef Q_OS_WASM
 #include "server.h"
@@ -19,14 +22,47 @@ QmlBackend *Backend = nullptr;
 
 QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
+#ifndef FK_SERVER_ONLY
   engine = nullptr;
   rsa = RSA_new();
+#endif
 }
 
 QmlBackend::~QmlBackend() {
   Backend = nullptr;
+#ifndef FK_SERVER_ONLY
   RSA_free(rsa);
+#endif
 }
+
+void QmlBackend::cd(const QString &path) { QDir::setCurrent(path); }
+
+QStringList QmlBackend::ls(const QString &dir) {
+  QString d = dir;
+#ifdef Q_OS_WIN
+  if (d.startsWith("file:///"))
+    d.replace(0, 8, "file://");
+#endif
+  return QDir(QUrl(d).path())
+      .entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+}
+
+QString QmlBackend::pwd() { return QDir::currentPath(); }
+
+bool QmlBackend::exists(const QString &file) {
+  QString s = file;
+#ifdef Q_OS_WIN
+  if (s.startsWith("file:///"))
+    s.replace(0, 8, "file://");
+#endif
+  return QFile::exists(QUrl(s).path());
+}
+
+bool QmlBackend::isDir(const QString &file) {
+  return QFileInfo(QUrl(file).path()).isDir();
+}
+
+#ifndef FK_SERVER_ONLY
 
 QQmlApplicationEngine *QmlBackend::getEngine() const { return engine; }
 
@@ -79,33 +115,6 @@ void QmlBackend::quitLobby() {
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
   emit notifyUI(command, jsonData);
-}
-
-void QmlBackend::cd(const QString &path) { QDir::setCurrent(path); }
-
-QStringList QmlBackend::ls(const QString &dir) {
-  QString d = dir;
-#ifdef Q_OS_WIN
-  if (d.startsWith("file:///"))
-    d.replace(0, 8, "file://");
-#endif
-  return QDir(QUrl(d).path())
-      .entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
-}
-
-QString QmlBackend::pwd() { return QDir::currentPath(); }
-
-bool QmlBackend::exists(const QString &file) {
-  QString s = file;
-#ifdef Q_OS_WIN
-  if (s.startsWith("file:///"))
-    s.replace(0, 8, "file://");
-#endif
-  return QFile::exists(QUrl(s).path());
-}
-
-bool QmlBackend::isDir(const QString &file) {
-  return QFileInfo(QUrl(file).path()).isDir();
 }
 
 QString QmlBackend::translate(const QString &src) {
@@ -284,3 +293,5 @@ QString QmlBackend::getAESKey() const { return aes_key; }
 void QmlBackend::installAESKey() {
   ClientInstance->installAESKey(aes_key.toLatin1());
 }
+
+#endif

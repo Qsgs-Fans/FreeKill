@@ -12,6 +12,7 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
+  "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
 
@@ -19,7 +20,6 @@ if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
     "client/client.cpp"
     "client/clientplayer.cpp"
-    "ui/qmlbackend.cpp"
   )
 endif ()
 
