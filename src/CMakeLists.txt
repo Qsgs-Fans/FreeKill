@@ -66,9 +66,10 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     "server/serverplayer.cpp"
     "server/room.cpp"
   )
-  set(FKP_LIB "")
-  set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
-  set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
+  # set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
+  # set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
+  # set other libs by yourself
+  include(${FK_WASM_TOOLCHAIN})
 else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)

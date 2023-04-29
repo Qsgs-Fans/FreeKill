@@ -60,7 +60,6 @@ void Dumpstack(lua_State *L) {
   }
 }
 
-#ifndef Q_OS_WASM
 sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
   sqlite3 *ret;
   int rc;
@@ -123,6 +122,7 @@ void ExecSQL(sqlite3 *db, const QString &sql) {
 
 void CloseDatabase(sqlite3 *db) { sqlite3_close(db); }
 
+#ifndef Q_OS_WASM
 RSA *InitServerRSA() {
   RSA *rsa = RSA_new();
   if (!QFile::exists("server/rsa_pub")) {

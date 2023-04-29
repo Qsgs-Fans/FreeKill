@@ -4,8 +4,8 @@
 #include "util.h"
 using namespace fkShell;
 
-#ifndef Q_OS_WASM
 #include "packman.h"
+#ifndef Q_OS_WASM
 #include "server.h"
 #endif
 
@@ -245,9 +245,7 @@ int main(int argc, char *argv[]) {
   QmlBackend backend;
   backend.setEngine(engine);
 
-#ifndef Q_OS_WASM
   Pacman = new PackMan;
-#endif
 
   // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);

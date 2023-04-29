@@ -5,10 +5,8 @@ cmake_minimum_required(VERSION 3.16)
 project(FreeKill VERSION 0.1.6)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  include_directories(fkparse/src)
-  add_subdirectory(fkparse)
-endif ()
+include_directories(fkparse/src)
+add_subdirectory(fkparse)
 
 find_package(Qt6 REQUIRED COMPONENTS
   Network
@@ -88,7 +86,7 @@ add_custom_command(
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 file(GLOB_RECURSE FK_RESOURCE_FILES
   RELATIVE ${PROJECT_SOURCE_DIR}
-  *.lua *.qml *.js *.png *.jpg *.mp3
+  *.lua *.qml *.js *.fkp *.sql
 )
 list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
 qt_add_resources(FreeKill "qrc"
