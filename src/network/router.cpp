@@ -43,6 +43,11 @@ void Router::setSocket(ClientSocket *socket) {
   }
 }
 
+void Router::removeSocket() {
+  socket->disconnect(this);
+  socket = nullptr;
+}
+
 void Router::installAESKey(const QByteArray &key) {
   socket->installAESKey(key);
 }

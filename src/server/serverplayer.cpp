@@ -52,7 +52,9 @@ ClientSocket *ServerPlayer::getSocket() const { return socket; }
 // 处理跑路玩家专用，就单纯把socket置为null
 // 因为后面还会用到socket所以不删除
 void ServerPlayer::removeSocket() {
-  this->socket = nullptr;
+  socket->disconnect(this);
+  socket = nullptr;
+  router->removeSocket();
 }
 
 Server *ServerPlayer::getServer() const { return server; }
