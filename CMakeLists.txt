@@ -84,14 +84,22 @@ add_custom_command(
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-file(GLOB_RECURSE FK_RESOURCE_FILES
-  RELATIVE ${PROJECT_SOURCE_DIR}
-  *.lua *.qml *.js *.fkp *.sql
-)
-list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
-qt_add_resources(FreeKill "qrc"
-  PREFIX "/"
-  FILES ${FK_RESOURCE_FILES}
-)
+
+  set(CMAKE_MODULE_LINKER_FLAGS
+    ${CMAKE_MODULE_LINKER_FLAGS}
+    "--pre-js pre.js"
+    # "-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$ccall"
+  )
+  file(GLOB_RECURSE FK_RESOURCE_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    *.lua *.qml *.js *.fkp *.sql
+  )
+  # list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
+  qt_add_resources(FreeKill "qrc"
+    PREFIX "/"
+    FILES ${FK_RESOURCE_FILES}
+  )
+
 endif()
+
 add_subdirectory(src)

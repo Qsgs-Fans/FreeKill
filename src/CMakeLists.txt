@@ -69,6 +69,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
   # set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
   # set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
   # set other libs by yourself
+  set(IDBFS_LIB idbfs.js)
   include(${FK_WASM_TOOLCHAIN})
 else ()
   set(LUA_LIB lua5.4)
@@ -90,6 +91,7 @@ target_link_libraries(FreeKill PRIVATE
   ${FKP_LIB}
   ${QT_LIB}
   ${GIT_LIB}
+  ${IDBFS_LIB}
 )
 
 install(TARGETS FreeKill DESTINATION bin)

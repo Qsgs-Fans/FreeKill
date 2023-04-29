@@ -7,6 +7,8 @@ using namespace fkShell;
 #include "packman.h"
 #ifndef Q_OS_WASM
 #include "server.h"
+#else
+#include <emscripten.h>
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -198,6 +200,13 @@ int main(int argc, char *argv[]) {
 #else
 
 #ifdef Q_OS_WASM
+  EM_ASM (
+    FS.mkdir('/assets');
+    FS.mount(IDBFS, {}, '/assets');
+    FS.chdir('/assets');
+    FS.syncfs(true, function(err) {
+    });
+  );
   copyPath(":/", QDir::currentPath());
 #endif
 
@@ -293,6 +302,12 @@ int main(int argc, char *argv[]) {
   // 防止报一堆错 "TypeError: Cannot read property 'xxx' of null"
   delete engine;
   delete Pacman;
+
+#ifdef Q_OS_WASM
+  EM_ASM (
+    FS.syncfs(function(err) {});
+  );
+#endif
 
   return ret;
 #endif
