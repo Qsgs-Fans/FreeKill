@@ -222,7 +222,7 @@ QJsonDocument String2Json(const QString &str) {
 
 QString Color(const QString &raw, fkShell::TextColor color,
               fkShell::TextType type) {
-#ifndef Q_OS_WIN32
+#ifdef Q_OS_LINUX
   static const char *suffix = "\e[0;0m";
   int col = 30 + color;
   int t = type == fkShell::Bold ? 1 : 0;

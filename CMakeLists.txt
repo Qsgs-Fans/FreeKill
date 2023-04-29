@@ -85,19 +85,50 @@ add_custom_command(
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
 
-  set(CMAKE_MODULE_LINKER_FLAGS
-    ${CMAKE_MODULE_LINKER_FLAGS}
-    "--pre-js pre.js"
-    # "-sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=$ccall"
+  set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS}
+    "-s INITIAL_MEMORY=64MB"
   )
-  file(GLOB_RECURSE FK_RESOURCE_FILES
+
+  file(GLOB_RECURSE FK_SCRIPT_FILES
     RELATIVE ${PROJECT_SOURCE_DIR}
-    *.lua *.qml *.js *.fkp *.sql
+    *.lua *.qml *.js *.fkp *.sql zh_CN.qm
   )
-  # list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
-  qt_add_resources(FreeKill "qrc"
+  qt_add_resources(FreeKill "scripts_qrc"
     PREFIX "/"
-    FILES ${FK_RESOURCE_FILES}
+    FILES ${FK_SCRIPT_FILES}
+  )
+
+  qt_add_resources(FreeKill "font_qrc"
+    PREFIX "/"
+    FILES "fonts/FZLBGBK.ttf"
+  )
+
+  file(GLOB_RECURSE FK_IMG_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/image/*.jpg
+    ${PROJECT_SOURCE_DIR}/image/*.png
+  )
+  qt_add_resources(FreeKill "img_qrc"
+    PREFIX "/"
+    FILES ${FK_IMG_FILES}
+  )
+  file(GLOB_RECURSE FK_AUDIO_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/audio/*.mp3
+  )
+  qt_add_resources(FreeKill "audio_qrc"
+    PREFIX "/"
+    FILES ${FK_AUDIO_FILES}
+  )
+  file(GLOB_RECURSE FK_PKG_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/packages/*.mp3
+    ${PROJECT_SOURCE_DIR}/packages/*.jpg
+    ${PROJECT_SOURCE_DIR}/packages/*.png
+  )
+  qt_add_resources(FreeKill "pkg_qrc"
+    PREFIX "/"
+    FILES ${FK_PKG_FILES}
   )
 
 endif()
