@@ -50,6 +50,7 @@ function Engine:initialize()
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
   self.disabled_packs = {}
+  self.kingdoms = {}
 
   self:loadPackages()
   self:addSkills(AuxSkills)
@@ -181,6 +182,10 @@ function Engine:addGeneral(general)
     error(string.format("Duplicate general %s detected", general.name))
   end
   self.generals[general.name] = general
+
+  if general.kingdom ~= "unknown" then
+    table.insertIfNeed(self.kingdoms, general.kingdom)
+  end
 
   if general.name ~= general.trueName then
     local tName = general.trueName

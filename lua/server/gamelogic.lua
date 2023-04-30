@@ -83,6 +83,7 @@ function GameLogic:chooseGenerals()
   local n = room.settings.enableDeputy and 2 or 1
   local lord = room:getLord()
   local lord_general = nil
+
   if lord ~= nil then
     room.current = lord
     local generals = Fk:getGeneralsRandomly(generalNum)
@@ -97,6 +98,23 @@ function GameLogic:chooseGenerals()
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
+    if lord.kingdom == "god" or Fk.generals[lord_general].subkingdom then
+      local allKingdoms = {}
+      if lord.kingdom == "god" then
+        allKingdoms = table.simpleClone(Fk.kingdoms)
+
+        local exceptedKingdoms = { "god" }
+        for _, kingdom in ipairs(exceptedKingdoms) do
+          table.removeOne(allKingdoms, kingdom)
+        end
+      else
+        local curGeneral = Fk.generals[lord_general]
+        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      end
+
+      lord.kingdom = room:askForChoice(lord, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+      room:broadcastProperty(lord, "kingdom")
+    end
     room:broadcastProperty(lord, "general")
     room:setDeputyGeneral(lord, deputy)
     room:broadcastProperty(lord, "deputyGeneral")
@@ -116,18 +134,61 @@ function GameLogic:chooseGenerals()
 
   room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
+
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
       local generals = json.decode(p.client_reply)
       local general = generals[1]
       local deputy = generals[2]
-      room:setPlayerGeneral(p, general, true)
+      room:setPlayerGeneral(p, general, true, true)
       room:setDeputyGeneral(p, deputy)
     else
-      room:setPlayerGeneral(p, p.default_reply[1], true)
+      room:setPlayerGeneral(p, p.default_reply[1], true, true)
       room:setDeputyGeneral(p, p.default_reply[2])
     end
     p.default_reply = ""
+  end
+
+  local specialKingdomPlayers = table.filter(nonlord, function(p)
+    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+  end)
+
+  if #specialKingdomPlayers > 0 then
+    local choiceMap = {}
+    for _, p in ipairs(specialKingdomPlayers) do
+      local allKingdoms = {}
+      if p.kingdom == "god" then
+        allKingdoms = table.simpleClone(Fk.kingdoms)
+
+        local exceptedKingdoms = { "god" }
+        for _, kingdom in ipairs(exceptedKingdoms) do
+          table.removeOne(allKingdoms, kingdom)
+        end
+      else
+        local curGeneral = Fk.generals[p.general]
+        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      end
+
+      choiceMap[p.id] = allKingdoms
+
+      local data = json.encode({ allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+      p.request_data = data
+    end
+
+    room:notifyMoveFocus(nonlord, "AskForKingdom")
+    room:doBroadcastRequest("AskForChoice", specialKingdomPlayers)
+
+    for _, p in ipairs(specialKingdomPlayers) do
+      local kingdomChosen
+      if p.reply_ready then
+        kingdomChosen = p.client_reply
+      else
+        kingdomChosen = choiceMap[p.id][1]
+      end
+
+      p.kingdom = kingdomChosen
+      room:notifyProperty(p, p, "kingdom")
+    end
   end
 end
 
@@ -157,6 +218,7 @@ function GameLogic:broadcastGeneral()
 
     if p.role ~= "lord" then
       room:broadcastProperty(p, "general")
+      room:broadcastProperty(p, "kingdom")
       room:broadcastProperty(p, "deputyGeneral")
     elseif #players >= 5 then
       p.maxHp = p.maxHp + 1
@@ -185,6 +247,10 @@ function GameLogic:attachSkillToPlayers()
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
     if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+      return
+    end
+
+    if #skill.attachedKingdom > 0 and not table.contains(skill.attachedKingdom, player.kingdom) then
       return
     end
 

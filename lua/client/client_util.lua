@@ -13,6 +13,7 @@ function GetGeneralData(name)
     package = general.package.name,
     extension = general.package.extensionName,
     kingdom = general.kingdom,
+    subkingdom = general.subkingdom,
     hp = general.hp,
     maxHp = general.maxHp,
     shield = general.shield,
@@ -323,7 +324,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local card = skill:viewAs(selected_cards)
       if card then
-        ret = card.skill:targetFilter(to_select, selected, selected_cards)
+        ret = card.skill:targetFilter(to_select, selected, selected_cards, card)
         ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
       end
     end
@@ -402,11 +403,11 @@ function CardProhibitedResponse(cid)
   return json.encode(ret)
 end
 
-function SkillCanResponse(skill_name)
+function SkillCanResponse(skill_name, cardResponsing)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill and skill:isInstanceOf(ViewAsSkill) then
-    ret = skill:enabledAtResponse(Self)
+    ret = skill:enabledAtResponse(Self, cardResponsing)
   end
   return json.encode(ret)
 end

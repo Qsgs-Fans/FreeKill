@@ -145,7 +145,7 @@ Item {
         script: {
           skillInteraction.source = "";
           dashboard.enableCards(responding_card);
-          dashboard.enableSkills(responding_card);
+          dashboard.enableSkills(responding_card, respond_play);
           autoPending = false;
           progress.visible = true;
           okCancel.visible = true;
