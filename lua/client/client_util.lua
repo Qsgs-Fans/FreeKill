@@ -13,6 +13,7 @@ function GetGeneralData(name)
     package = general.package.name,
     extension = general.package.extensionName,
     kingdom = general.kingdom,
+    subkingdom = general.subkingdom,
     hp = general.hp,
     maxHp = general.maxHp,
     shield = general.shield,

@@ -11,6 +11,7 @@
 ---@field public name string @ 武将名字
 ---@field public trueName string @ 武将真名，也许可以分辨标界？
 ---@field public kingdom string @ 武将所属势力
+---@field public subkingdom string @ 武将副势力
 ---@field public hp integer @ 武将初始体力
 ---@field public maxHp integer @ 武将初始最大体力
 ---@field public shield integer @ 初始护甲
@@ -37,7 +38,6 @@ General.Agender = 4
 ---@param hp integer @ 武将初始体力
 ---@param maxHp integer @ 武将初始最大体力
 ---@param gender Gender @ 武将性别
----@param subkingdom string @ 武将副势力
 function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.package = package
   self.name = name
@@ -89,10 +89,6 @@ function General:getSkillNameList(include_lord)
   if not include_lord then
   end
   return ret
-end
-
-function General:setSubkingdom(kingdom)
-  self.subkingdom = kingdom
 end
 
 return General

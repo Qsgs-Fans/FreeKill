@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import Qt5Compat.GraphicalEffects
 import "PhotoElement"
 import "../skin-bank.js" as SkinBank
 
@@ -17,6 +18,7 @@ import "../skin-bank.js" as SkinBank
 
 CardItem {
   property string kingdom
+  property string subkingdom: "wei"
   property int hp
   property int maxHp
   property int shieldNum
@@ -34,7 +36,15 @@ CardItem {
   }
 
   Image {
+    scale: subkingdom ? 0.6 : 1
+    transformOrigin: Item.TopLeft
     source: SkinBank.getGeneralCardDir(kingdom) + kingdom
+  }
+
+  Image {
+    scale: 0.6; x: 9; y: 12
+    transformOrigin: Item.TopLeft
+    source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom : ""
   }
 
   Row {
@@ -44,8 +54,32 @@ CardItem {
     Repeater {
       id: hpRepeater
       model: (hp > 5 || hp !== maxHp) ? 1 : hp
-      Image {
-        source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama"
+      Item {
+        width: childrenRect.width
+        height: childrenRect.height
+        Image {
+          source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama"
+        }
+        Image {
+          id: subkingdomMagatama
+          visible: false
+          source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom + "-magatama" : ""
+        }
+        LinearGradient {
+          id: subkingdomMask
+          visible: false
+          anchors.fill: subkingdomMagatama
+          gradient: Gradient {
+            GradientStop { position: 0.35; color: "transparent" }
+            GradientStop { position: 0.50; color: "white" }
+          }
+        }
+        OpacityMask {
+          anchors.fill: subkingdomMagatama
+          source: subkingdomMagatama
+          maskSource: subkingdomMask
+          visible: subkingdom
+        }
       }
     }
 
@@ -123,6 +157,7 @@ CardItem {
   onNameChanged: {
     let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
     kingdom = data.kingdom;
+    subkingdom = (data.subkingdom !== kingdom && data.subkingdom) || "";
     hp = data.hp;
     maxHp = data.maxHp;
     shieldNum = data.shield;
