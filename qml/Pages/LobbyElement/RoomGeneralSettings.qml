@@ -15,6 +15,7 @@ ColumnLayout {
     }
     TextField {
       id: roomName
+      maximumLength: 64
       font.pixelSize: 18
       text: Backend.translate("$RoomName").arg(Self.screenName)
     }

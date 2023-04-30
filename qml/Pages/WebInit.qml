@@ -22,6 +22,7 @@ Item {
       spacing: 8
       TextField {
         id: screenNameEdit
+        maximumLength: 32
         text: "player"
         onTextChanged: {
           passwordEdit.text = "";
@@ -35,6 +36,7 @@ Item {
       }
       TextField {
         id: passwordEdit
+        maximumLength: 64
         text: ""
         echoMode: TextInput.Password
         passwordCharacter: "*"
