@@ -1904,6 +1904,15 @@ function Room:doCardEffect(cardEffectEvent)
               break
             end
           end
+          if not table.contains(players, p) then
+            for _, s in ipairs(p.player_skills) do
+              if s.pattern and Exppattern:Parse("nullification"):matchExp(s.pattern)
+                and not table.contains(cardEffectEvent.disresponsiveList or {}, p.id) then
+                table.insert(players, p)
+                break
+              end
+            end
+          end
         end
 
         local prompt = ""
