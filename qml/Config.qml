@@ -23,6 +23,8 @@ QtObject {
   property real bgmVolume
   property bool disableMsgAudio
 
+  property int preferredTimeout
+
   // Player property of client
   property string serverAddr
   property string screenName: ""
@@ -56,6 +58,7 @@ QtObject {
     Backend.volume = conf.effectVolume ?? 50.;
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
+    preferredTimeout = conf.preferredTimeout ?? 15;
   }
 
   function saveConf() {
@@ -77,6 +80,7 @@ QtObject {
     conf.effectVolume = Backend.volume;
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
+    conf.preferredTimeout = preferredTimeout;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

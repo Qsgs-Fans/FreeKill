@@ -43,6 +43,11 @@ void Router::setSocket(ClientSocket *socket) {
   }
 }
 
+void Router::removeSocket() {
+  socket->disconnect(this);
+  socket = nullptr;
+}
+
 void Router::installAESKey(const QByteArray &key) {
   socket->installAESKey(key);
 }
@@ -195,9 +200,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       auto arr = String2Json(jsonData).array();
       auto name = arr[0].toString();
       auto capacity = arr[1].toInt();
+      auto timeout = arr[2].toInt();
       auto settings =
-          QJsonDocument(arr[2].toObject()).toJson(QJsonDocument::Compact);
-      ServerInstance->createRoom(sender, name, capacity, settings);
+          QJsonDocument(arr[3].toObject()).toJson(QJsonDocument::Compact);
+      ServerInstance->createRoom(sender, name, capacity, timeout, settings);
     };
     lobby_actions["EnterRoom"] = [](ServerPlayer *sender,
                                     const QString &jsonData) {

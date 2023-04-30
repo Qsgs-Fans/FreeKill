@@ -30,6 +30,7 @@ public:
 
   ClientSocket *getSocket() const;
   void setSocket(ClientSocket *socket);
+  void removeSocket();
   void installAESKey(const QByteArray &key);
 
 #ifndef FK_CLIENT_ONLY

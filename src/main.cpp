@@ -4,9 +4,11 @@
 #include "util.h"
 using namespace fkShell;
 
-#ifndef Q_OS_WASM
 #include "packman.h"
+#ifndef Q_OS_WASM
 #include "server.h"
+#else
+#include <emscripten.h>
 #endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
@@ -80,15 +82,16 @@ static void prepareForLinux() {
   // TODO: AppImage
   char buf[256] = {0};
   int len = readlink("/proc/self/exe", buf, 256);
+  const char *home = getenv("HOME");
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/share/FreeKill", "~/.local/share");
-    chdir(getenv("HOME"));
+    installFkAssets("/usr/share/FreeKill", QString("%1/.local/share").arg(home));
+    chdir(home);
     chdir(".local/share/FreeKill");
   } else if (!strcmp(buf, "/usr/local/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/local/share/FreeKill", "~/.local/share");
-    chdir(getenv("HOME"));
+    installFkAssets("/usr/local/share/FreeKill", QString("%1/.local/share").arg(home));
+    chdir(home);
     chdir(".local/share/FreeKill");
   }
 }
@@ -167,6 +170,10 @@ int main(int argc, char *argv[]) {
 
   if (startServer) {
     app = new QCoreApplication(argc, argv);
+    QTranslator translator;
+    Q_UNUSED(translator.load("zh_CN.qm"));
+    QCoreApplication::installTranslator(&translator);
+
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
       serverPort = parser.value("server").toInt();
@@ -194,6 +201,13 @@ int main(int argc, char *argv[]) {
 #else
 
 #ifdef Q_OS_WASM
+  EM_ASM (
+    FS.mkdir('/assets');
+    FS.mount(IDBFS, {}, '/assets');
+    FS.chdir('/assets');
+    FS.syncfs(true, function(err) {
+    });
+  );
   copyPath(":/", QDir::currentPath());
 #endif
 
@@ -234,8 +248,6 @@ int main(int argc, char *argv[]) {
   QQuickStyle::setStyle("Material");
 #endif
 
-  // 加载 zh_CN.qm 翻译文件
-  // TODO: i18n
   QTranslator translator;
   Q_UNUSED(translator.load("zh_CN.qm"));
   QCoreApplication::installTranslator(&translator);
@@ -243,9 +255,7 @@ int main(int argc, char *argv[]) {
   QmlBackend backend;
   backend.setEngine(engine);
 
-#ifndef Q_OS_WASM
   Pacman = new PackMan;
-#endif
 
   // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
@@ -293,6 +303,12 @@ int main(int argc, char *argv[]) {
   // 防止报一堆错 "TypeError: Cannot read property 'xxx' of null"
   delete engine;
   delete Pacman;
+
+#ifdef Q_OS_WASM
+  EM_ASM (
+    FS.syncfs(function(err) {});
+  );
+#endif
 
   return ret;
 #endif

@@ -5,10 +5,8 @@ cmake_minimum_required(VERSION 3.16)
 project(FreeKill VERSION 0.1.6)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
-if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  include_directories(fkparse/src)
-  add_subdirectory(fkparse)
-endif ()
+include_directories(fkparse/src)
+add_subdirectory(fkparse)
 
 find_package(Qt6 REQUIRED COMPONENTS
   Network
@@ -86,14 +84,53 @@ add_custom_command(
 )
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-file(GLOB_RECURSE FK_RESOURCE_FILES
-  RELATIVE ${PROJECT_SOURCE_DIR}
-  *.lua *.qml *.js *.png *.jpg *.mp3
-)
-list(APPEND FK_RESOURCE_FILES "fonts/FZLBGBK.ttf")
-qt_add_resources(FreeKill "qrc"
-  PREFIX "/"
-  FILES ${FK_RESOURCE_FILES}
-)
+
+  set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS}
+    "-s INITIAL_MEMORY=64MB"
+  )
+
+  file(GLOB_RECURSE FK_SCRIPT_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    *.lua *.qml *.js *.fkp *.sql zh_CN.qm
+  )
+  qt_add_resources(FreeKill "scripts_qrc"
+    PREFIX "/"
+    FILES ${FK_SCRIPT_FILES}
+  )
+
+  qt_add_resources(FreeKill "font_qrc"
+    PREFIX "/"
+    FILES "fonts/FZLBGBK.ttf"
+  )
+
+  file(GLOB_RECURSE FK_IMG_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/image/*.jpg
+    ${PROJECT_SOURCE_DIR}/image/*.png
+  )
+  qt_add_resources(FreeKill "img_qrc"
+    PREFIX "/"
+    FILES ${FK_IMG_FILES}
+  )
+  file(GLOB_RECURSE FK_AUDIO_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/audio/*.mp3
+  )
+  qt_add_resources(FreeKill "audio_qrc"
+    PREFIX "/"
+    FILES ${FK_AUDIO_FILES}
+  )
+  file(GLOB_RECURSE FK_PKG_FILES
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/packages/*.mp3
+    ${PROJECT_SOURCE_DIR}/packages/*.jpg
+    ${PROJECT_SOURCE_DIR}/packages/*.png
+  )
+  qt_add_resources(FreeKill "pkg_qrc"
+    PREFIX "/"
+    FILES ${FK_PKG_FILES}
+  )
+
 endif()
+
 add_subdirectory(src)

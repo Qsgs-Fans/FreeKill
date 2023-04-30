@@ -12,6 +12,7 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
+  "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
 
@@ -19,7 +20,6 @@ if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
     "client/client.cpp"
     "client/clientplayer.cpp"
-    "ui/qmlbackend.cpp"
   )
 endif ()
 
@@ -66,9 +66,11 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
     "server/serverplayer.cpp"
     "server/room.cpp"
   )
-  set(FKP_LIB "")
-  set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
-  set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
+  # set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
+  # set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
+  # set other libs by yourself
+  set(IDBFS_LIB idbfs.js)
+  include(${FK_WASM_TOOLCHAIN})
 else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)
@@ -89,6 +91,7 @@ target_link_libraries(FreeKill PRIVATE
   ${FKP_LIB}
   ${QT_LIB}
   ${GIT_LIB}
+  ${IDBFS_LIB}
 )
 
 install(TARGETS FreeKill DESTINATION bin)

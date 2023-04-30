@@ -30,6 +30,7 @@ Fk:loadTranslationTable{
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
   ["Select general num"] = "选将数目",
+  ["Operation timeout"] = "操作时长(秒)",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "启用副将机制",

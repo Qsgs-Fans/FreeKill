@@ -5,8 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 ColumnLayout {
-  spacing: 20
-
   RowLayout {
     anchors.rightMargin: 8
     spacing: 16
@@ -80,6 +78,24 @@ ColumnLayout {
     }
   }
 
+  RowLayout {
+    anchors.rightMargin: 8
+    spacing: 16
+    Text {
+      text: Backend.translate("Operation timeout")
+    }
+    SpinBox {
+      from: 10
+      to: 60
+      editable: true
+      value: config.preferredTimeout
+
+      onValueChanged: {
+        config.preferredTimeout = value;
+      }
+    }
+  }
+
   Switch {
     id: freeAssignCheck
     checked: Debugging ? true : false
@@ -102,7 +118,7 @@ ColumnLayout {
         mainWindow.busy = true;
         ClientInstance.notifyServer(
           "CreateRoom",
-          JSON.stringify([roomName.text, playerNum.value, {
+          JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
             enableFreeAssign: freeAssignCheck.checked,
             enableDeputy: deputyCheck.checked,
             gameMode: config.preferedMode,
