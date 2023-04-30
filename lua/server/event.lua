@@ -8,7 +8,7 @@
 fk.NonTrigger = 1
 fk.GameStart = 2
 fk.TurnStart = 3
-fk.TurnEnd = 72
+fk.TurnEnd = 73
 fk.EventPhaseStart = 4
 fk.EventPhaseProceeding = 5
 fk.EventPhaseEnd = 6
@@ -94,6 +94,6 @@ fk.PindianCardsDisplayed = 70
 fk.PindianResultConfirmed = 71
 fk.PindianFinished = 72
 
--- 72 = TurnEnd
+-- 73 = TurnEnd
 
-fk.NumOfEvents = 73
+fk.NumOfEvents = 74
