@@ -82,15 +82,16 @@ static void prepareForLinux() {
   // TODO: AppImage
   char buf[256] = {0};
   int len = readlink("/proc/self/exe", buf, 256);
+  const char *home = getenv("HOME");
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/share/FreeKill", "~/.local/share");
-    chdir(getenv("HOME"));
+    installFkAssets("/usr/share/FreeKill", QString("%1/.local/share").arg(home));
+    chdir(home);
     chdir(".local/share/FreeKill");
   } else if (!strcmp(buf, "/usr/local/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/local/share/FreeKill", "~/.local/share");
-    chdir(getenv("HOME"));
+    installFkAssets("/usr/local/share/FreeKill", QString("%1/.local/share").arg(home));
+    chdir(home);
     chdir(".local/share/FreeKill");
   }
 }
