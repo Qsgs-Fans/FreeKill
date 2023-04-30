@@ -64,6 +64,14 @@ io = nil
 package = nil
 load = nil
 loadfile = nil
+local _dofile = dofile
+dofile = function(f)
+  local errmsg = "Refusing dofile that not in game directory"
+  assert(not f:startsWith("/"), errmsg)
+  assert(not f:startsWith(".."), errmsg)
+  assert(not f:find(":"), errmsg)
+  return _dofile(f)
+end
 
 -- 初始化Engine类并置于Fk全局变量中，这里会加载拓展包
 dofile "lua/fk_ex.lua"
