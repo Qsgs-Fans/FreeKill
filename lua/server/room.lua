@@ -2386,6 +2386,8 @@ function Room:shuffleDrawPile()
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
+
+  self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end
 
 --- 使用技能。先增加技能发动次数，再执行相应的函数。
@@ -2446,6 +2448,49 @@ function Room:getSubcardsByRule(card, fromAreas)
   end
 
   return cardIds
+end
+
+
+function Room:getCardFromPileByRule(pattern, num, fromPile)
+  num = num or 1
+  local pileToSearch = fromPile == Card.DiscardPile and self.discard_pile or self.draw_pile
+
+  local cardPack = {}
+  if num < 3 then
+    for i = 1, num do
+      local randomIndex = math.random(1, #pileToSearch)
+      local curIndex = randomIndex
+      repeat
+        local curCardId = pileToSearch[curIndex]
+        if Fk:getCardById(curCardId):matchPattern(pattern) and not table.contains(cardPack, curCardId) then
+          table.insert(cardPack, pileToSearch[curIndex])
+          break
+        end
+
+        curIndex = curIndex + 1
+      until curIndex == randomIndex
+
+      if #cardPack < num then
+        break
+      end
+    end
+  else
+    local matchedIds = {}
+    for _, id in ipairs(pileToSearch) do
+      if Fk:getCardById(id):matchPattern(pattern) then
+        table.insert(matchedIds, id)
+      end
+    end
+
+    local loopTimes = math.min(num, #matchedIds)
+    for i = 1, loopTimes do
+      local randomCardId = matchedIds[math.random(1, #matchedIds)]
+      table.insert(cardPack, randomCardId)
+      table.removeOne(matchedIds, randomCardId)
+    end
+  end
+
+  return cardPack
 end
 
 function CreateRoom(_room)
