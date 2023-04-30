@@ -113,6 +113,7 @@ local test_vs = fk.CreateViewAsSkill{
         "dismantlement",
         "savage_assault",
         "archery_attack",
+        "lightning",
       }
     }
   end,

@@ -670,8 +670,12 @@ local lightningSkill = fk.CreateActiveSkill{
     local nextp = to
     repeat
       nextp = nextp:getNextAlive()
-      if nextp == to then return end
+      if nextp == to then break end
     until not nextp:hasDelayedTrick("lightning")
+
+    if effect.card:isVirtual() then
+      nextp:addVirtualEquip(effect.card)
+    end
 
     room:moveCards{
       ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
