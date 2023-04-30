@@ -403,11 +403,11 @@ function CardProhibitedResponse(cid)
   return json.encode(ret)
 end
 
-function SkillCanResponse(skill_name)
+function SkillCanResponse(skill_name, cardResponsing)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill and skill:isInstanceOf(ViewAsSkill) then
-    ret = skill:enabledAtResponse(Self)
+    ret = skill:enabledAtResponse(Self, cardResponsing)
   end
   return json.encode(ret)
 end

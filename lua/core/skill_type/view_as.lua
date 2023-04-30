@@ -31,7 +31,7 @@ function ViewAsSkill:enabledAtPlay(player)
 end
 
 ---@param player Player
-function ViewAsSkill:enabledAtResponse(player)
+function ViewAsSkill:enabledAtResponse(player, cardResponsing)
   return player:hasSkill(self)
 end
 

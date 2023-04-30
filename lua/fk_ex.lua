@@ -221,8 +221,8 @@ function fk.CreateViewAsSkill(spec)
     end
   end
   if type(spec.enabled_at_response) == "function" then
-    skill.enabledAtResponse = function(curSkill, player)
-      return spec.enabled_at_response(curSkill, player) and curSkill:isEffectable(player)
+    skill.enabledAtResponse = function(curSkill, player, cardResponsing)
+      return spec.enabled_at_response(curSkill, player, cardResponsing) and curSkill:isEffectable(player)
     end
   end
 
