@@ -68,12 +68,13 @@ Item {
   }
 
   // tmp
-  Button {
+  DelayButton {
     id: quitButton
     text: "quit"
     anchors.top: parent.top
     anchors.right: parent.right
-    onClicked: {
+    delay: Debugging ? 10 : 1000
+    onActivated: {
       // ClientInstance.clearPlayers();
       ClientInstance.notifyServer("QuitRoom", "[]");
     }
@@ -489,6 +490,13 @@ Item {
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
+          skillInteraction.item.clicked();
+          break;
+        case "spin":
+          skillInteraction.source = "RoomElement/SkillInteraction/SkillSpin.qml";
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.from = data.from;
+          skillInteraction.item.to = data.to;
           break;
         default:
           skillInteraction.source = "";

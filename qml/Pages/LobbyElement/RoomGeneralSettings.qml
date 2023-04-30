@@ -13,6 +13,7 @@ ColumnLayout {
     }
     TextField {
       id: roomName
+      maximumLength: 64
       font.pixelSize: 18
       text: Backend.translate("$RoomName").arg(Self.screenName)
     }
@@ -68,7 +69,7 @@ ColumnLayout {
     SpinBox {
       id: generalNum
       from: 3
-      to: 8
+      to: 18
       value: config.preferredGeneralNum
 
       onValueChanged: {

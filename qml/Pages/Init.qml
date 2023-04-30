@@ -83,6 +83,7 @@ Item {
           }
           TextField {
             id: screenNameEdit
+            maximumLength: 32
             Layout.fillWidth: true
             placeholderText: qsTr("Username")
             text: ""
@@ -103,6 +104,7 @@ Item {
           }
           TextField {
             id: passwordEdit
+            maximumLength: 64
             Layout.fillWidth: true
             placeholderText: qsTr("Password")
             text: ""
