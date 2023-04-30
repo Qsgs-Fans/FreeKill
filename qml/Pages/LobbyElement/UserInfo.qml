@@ -27,6 +27,7 @@ ColumnLayout {
     }
     TextField {
       id: avatarName
+      maximumLength: 64
       font.pixelSize: 18
       text: Self.avatar
     }

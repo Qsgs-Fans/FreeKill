@@ -630,119 +630,7 @@ function Room:doRaceRequest(command, players, jsonData)
   return ret
 end
 
--- main loop for the request handling coroutine
---- 这是个私有函数，不用管。
-function Room:requestLoop(rest_time)
-  local function tellRoomToObserver(player)
-    local observee = self.players[1]
-    player:doNotify("Setup", json.encode{
-      observee.id,
-      observee.serverplayer:getScreenName(),
-      observee.serverplayer:getAvatar(),
-    })
-    player:doNotify("EnterRoom", json.encode{
-      #self.players, self.timeout, self.settings
-    })
-
-    -- send player data
-    for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do
-      player:doNotify("AddPlayer", json.encode{
-        p.id,
-        p.serverplayer:getScreenName(),
-        p.serverplayer:getAvatar(),
-      })
-    end
-
-    local player_circle = {}
-    for i = 1, #self.players do
-      table.insert(player_circle, self.players[i].id)
-    end
-    player:doNotify("ArrangeSeats", json.encode(player_circle))
-
-    for _, p in ipairs(self.players) do
-      self:notifyProperty(player, p, "general")
-      self:notifyProperty(player, p, "deputyGeneral")
-      p:marshal(player)
-    end
-
-    player:doNotify("UpdateDrawPile", #self.draw_pile)
-    player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
-
-    table.insert(self.observers, {observee.id, player})
-  end
-
-  local function addObserver(id)
-    local all_observers = self.room:getObservers()
-    for _, p in fk.qlist(all_observers) do
-      if p:getId() == id then
-        tellRoomToObserver(p)
-        self:doBroadcastNotify("AddObserver", json.encode{
-          p:getId(),
-          p:getScreenName(),
-          p:getAvatar()
-        })
-        break
-      end
-    end
-  end
-
-  local function removeObserver(id)
-    for _, t in ipairs(self.observers) do
-      local __, p = table.unpack(t)
-      if p:getId() == id then
-        table.removeOne(self.observers, t)
-        self:doBroadcastNotify("RemoveObserver", json.encode{
-          p:getId(),
-        })
-        break
-      end
-    end
-  end
-
-  while true do
-    local ret = false
-    local request = self.room:fetchRequest()
-    if request ~= "" then
-      ret = true
-      local reqlist = request:split(",")
-      local id = tonumber(reqlist[1])
-      local command = reqlist[2]
-      if command == "reconnect" then
-        self:getPlayerById(id):reconnect()
-      elseif command == "observe" then
-        addObserver(id)
-      elseif command == "leave" then
-        removeObserver(id)
-      elseif command == "prelight" then
-        self:getPlayerById(id):prelightSkill(reqlist[3], reqlist[4] == "true")
-      elseif command == "changeself" then
-        local toId = tonumber(reqlist[3])
-        local from = self:getPlayerById(id)
-        local to = self:getPlayerById(toId)
-        local from_sp = from._splayer
-
-        -- 注意发来信息的玩家的主视角可能已经不是自己了
-        -- 先换成正确的玩家
-        from = table.find(self.players, function(p)
-          return table.contains(p._observers, from_sp)
-        end)
-
-        -- 切换视角
-        table.removeOne(from._observers, from_sp)
-        table.insert(to._observers, from_sp)
-        from_sp:doNotify("ChangeSelf", json.encode {
-          id = toId,
-          handcards = to:getCardIds(Player.Hand),
-        })
-      end
-    elseif rest_time > 10 then
-      -- let current thread sleep 10ms
-      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
-      fk.QThread_msleep(10)
-    end
-    coroutine.yield(ret)
-  end
-end
+Room.requestLoop = require "server.request"
 
 --- 延迟一段时间。
 ---
@@ -2014,6 +1902,15 @@ function Room:doCardEffect(cardEffectEvent)
               not table.contains(cardEffectEvent.disresponsiveList or {}, p.id) then
               table.insert(players, p)
               break
+            end
+          end
+          if not table.contains(players, p) then
+            for _, s in ipairs(p.player_skills) do
+              if s.pattern and Exppattern:Parse("nullification"):matchExp(s.pattern)
+                and not table.contains(cardEffectEvent.disresponsiveList or {}, p.id) then
+                table.insert(players, p)
+                break
+              end
             end
           end
         end

@@ -101,6 +101,7 @@ local test_active = fk.CreateActiveSkill{
 }
 local test_vs = fk.CreateViewAsSkill{
   name = "test_vs",
+  pattern = "nullification",
   card_filter = function(self, to_select, selected)
     return #selected == 0
   end,
@@ -113,6 +114,8 @@ local test_vs = fk.CreateViewAsSkill{
         "dismantlement",
         "savage_assault",
         "archery_attack",
+        "lightning",
+        "nullification",
       }
     }
   end,
