@@ -68,12 +68,13 @@ Item {
   }
 
   // tmp
-  Button {
+  DelayButton {
     id: quitButton
     text: "quit"
     anchors.top: parent.top
     anchors.right: parent.right
-    onClicked: {
+    delay: 1000
+    onActivated: {
       // ClientInstance.clearPlayers();
       ClientInstance.notifyServer("QuitRoom", "[]");
     }
