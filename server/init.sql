@@ -36,7 +36,9 @@ CREATE VIEW IF NOT EXISTS playerWinRate AS
     SUM(win + lose + draw) AS 'total',
     ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
       AS 'winRate'
-  FROM winRate, userinfo where winRate.id = userinfo.id GROUP BY winRate.id;
+  FROM winRate, userinfo
+  WHERE winRate.id = userinfo.id
+  GROUP BY winRate.id, mode;
 
 CREATE VIEW IF NOT EXISTS generalWinRate AS
   SELECT general, mode,
@@ -46,4 +48,4 @@ CREATE VIEW IF NOT EXISTS generalWinRate AS
     SUM(win + lose + draw) AS 'total',
     ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
       AS 'winRate'
-  FROM winRate GROUP BY general;
+  FROM winRate GROUP BY general, mode;
