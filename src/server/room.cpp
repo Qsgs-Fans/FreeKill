@@ -302,9 +302,68 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
     doBroadcastNotify(observers, "Chat", json);
   }
 
-
   qInfo("[Chat] %s: %s", sender->getScreenName().toUtf8().constData(),
-      doc["msg"].toString().toUtf8().constData());
+        doc["msg"].toString().toUtf8().constData());
+}
+
+void Room::updateWinRate(int id, const QString &general, const QString &mode,
+                         int game_result) {
+  static const QString findWinRate =
+      QString("SELECT win, lose, draw "
+              "FROM winRate WHERE id = %1 and general = '%2' and mode = '%3';");
+
+  static const QString updateRate =
+      QString("UPDATE winRate "
+              "SET win = %4, lose = %5, draw = %6 "
+              "WHERE id = %1 and general = '%2' and mode = '%3';");
+
+  static const QString insertRate =
+      QString("INSERT INTO winRate "
+              "(id, general, mode, win, lose, draw) "
+              "VALUES (%1, '%2', '%3', %4, %5, %6);");
+
+  if (!CheckSqlString(general))
+    return;
+  if (!CheckSqlString(mode))
+    return;
+
+  int win = 0;
+  int lose = 0;
+  int draw = 0;
+
+  switch (game_result) {
+  case 1:
+    win++;
+    break;
+  case 2:
+    lose++;
+    break;
+  case 3:
+    draw++;
+    break;
+  default:
+    break;
+  }
+
+  QJsonArray result =
+      SelectFromDatabase(server->getDatabase(),
+                         findWinRate.arg(QString::number(id), general, mode));
+
+  if (result.isEmpty()) {
+    ExecSQL(server->getDatabase(),
+            insertRate.arg(QString::number(id), general, mode,
+                           QString::number(win), QString::number(lose),
+                           QString::number(draw)));
+  } else {
+    auto obj = result[0].toObject();
+    win += obj["win"].toString().toInt();
+    lose += obj["lose"].toString().toInt();
+    draw += obj["draw"].toString().toInt();
+    ExecSQL(server->getDatabase(),
+            updateRate.arg(QString::number(id), general, mode,
+                           QString::number(win), QString::number(lose),
+                           QString::number(draw)));
+  }
 }
 
 void Room::gameOver() {
@@ -324,7 +383,8 @@ void Room::gameOver() {
 }
 
 QString Room::fetchRequest() {
-  if (!gameStarted) return "";
+  if (!gameStarted)
+    return "";
   request_queue_mutex.lock();
   QString ret = "";
   if (!request_queue.isEmpty()) {
@@ -335,7 +395,8 @@ QString Room::fetchRequest() {
 }
 
 void Room::pushRequest(const QString &req) {
-  if (!gameStarted) return;
+  if (!gameStarted)
+    return;
   request_queue_mutex.lock();
   request_queue.enqueue(req);
   request_queue_mutex.unlock();

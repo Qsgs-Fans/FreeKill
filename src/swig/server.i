@@ -51,6 +51,8 @@ public:
     const QString &jsonData
   );
 
+  void updateWinRate(int id, const QString &general, const QString &mode,
+                     int result);
   void gameOver();
 
   LuaFunction startGame;

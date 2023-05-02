@@ -105,6 +105,11 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
   return ret;
 }
 
+bool CheckSqlString(const QString &str) {
+  static const QRegularExpression exp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
+  return (!exp.match(str).hasMatch() && !str.isEmpty());
+}
+
 // callback for handling SELECT expression
 static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
   QJsonObject obj;

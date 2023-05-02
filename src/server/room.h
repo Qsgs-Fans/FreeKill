@@ -52,6 +52,8 @@ class Room : public QThread {
                          const QString &command, const QString &jsonData);
   void chat(ServerPlayer *sender, const QString &jsonData);
 
+  void updateWinRate(int id, const QString &general, const QString &mode,
+                     int result);
   void gameOver();
 
   void initLua();
