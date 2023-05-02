@@ -2413,6 +2413,18 @@ function Room:useSkill(player, skill, effect_cb)
   end
 end
 
+---@param room Room
+local function shouldUpdateWinRate(room)
+  if room.settings.gameMode == "heg_mode" then return false end
+  if room.settings.gameMode == "aaa_role_mode" and #room.players < 5 then
+    return false
+  end
+  for _, p in ipairs(room.players) do
+    if p.id < 0 then return false end
+  end
+  return true
+end
+
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
@@ -2424,6 +2436,24 @@ function Room:gameOver(winner)
     self:broadcastProperty(p, "role")
   end
   self:doBroadcastNotify("GameOver", winner)
+
+  if shouldUpdateWinRate(self) then
+    for _, p in ipairs(self.players) do
+      local id = p.id
+      local general = p.general
+      local mode = self.settings.gameMode
+
+      if p.id > 0 then
+        if table.contains(winner:split("+"), p.role) then
+          self.room:updateWinRate(id, general, mode, 1)
+        elseif winner == "" then
+          self.room:updateWinRate(id, general, mode, 3)
+        else
+          self.room:updateWinRate(id, general, mode, 2)
+        end
+      end
+    end
+  end
 
   self.room:gameOver()
   coroutine.yield("__handleRequest")

@@ -29,14 +29,14 @@ CREATE TABLE IF NOT EXISTS winRate (
 );
 
 CREATE VIEW IF NOT EXISTS playerWinRate AS
-  SELECT id, mode,
+  SELECT winRate.id, name, mode,
     SUM(win) AS 'win',
     SUM(lose) AS 'lose',
     SUM(draw) AS 'draw',
     SUM(win + lose + draw) AS 'total',
     ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
       AS 'winRate'
-  FROM winRate GROUP BY id;
+  FROM winRate, userinfo where winRate.id = userinfo.id GROUP BY winRate.id;
 
 CREATE VIEW IF NOT EXISTS generalWinRate AS
   SELECT general, mode,
