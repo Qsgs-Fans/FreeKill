@@ -8,4 +8,5 @@
 .. toctree::
     :maxdepth: 1
 
-    01-main.rst
+    01-compile.rst
+    02-main.rst

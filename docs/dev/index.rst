@@ -1,13 +1,14 @@
 .. SPDX-License-Identifier: GFDL-1.3-or-later
 
-Dev文档
-============
+开发过程的碎碎念
+================
+
+某人写出来的整理思路用的文档= =
 
 .. toctree::
     :maxdepth: 1
 
     ai.rst
-    compile.rst
     database.rst
     gameevent.rst
     gamelogic.rst
@@ -17,3 +18,4 @@ Dev文档
     todo.rst
     ui.rst
     hegemony.rst
+    shendiaochan.rst
