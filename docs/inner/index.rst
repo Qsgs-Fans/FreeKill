@@ -10,3 +10,4 @@
 
     01-compile.rst
     02-main.rst
+    04-coroutine.rst
