@@ -1146,7 +1146,7 @@ function Room:askForLuckCard(players, limit)
         from = player.id,
       }
       self:notifyMoveCards(nil, {move_to_notify})
-  
+
       for _, id in ipairs(cardIds) do
         self:setCardArea(id, Card.PlayerHand, player.id)
       end
