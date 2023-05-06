@@ -1109,6 +1109,7 @@ end
 ---@param limit Interger @ 上限
 ---@return boolean
 function Room:askForLuckCard(players, limit)
+  if limit == 0 then return end
   players = players or self.players
   local pdata = {}
   for i, p in ipairs(players) do
