@@ -148,22 +148,21 @@ local ganglie = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    local room = target.room
-    return data.from ~= nil and
-      target == player and
+    return target == player and
       target:hasSkill(self.name) and
       not target.dead
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
     local from = data.from
+    if from then room:doIndicate(player.id, {from.id}) end
     local judge = {
       who = player,
       reason = self.name,
-      pattern = ".|.|spade,club,diamond",
+      pattern = ".|.|^heart",
     }
     room:judge(judge)
-    if judge.card.suit ~= Card.Heart then
+    if judge.card.suit ~= Card.Heart and from then
       local discards = room:askForDiscard(from, 2, 2, false, self.name, true)
       if #discards == 0 then
         room:damage{
@@ -232,12 +231,12 @@ local luoyi = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     data.n = data.n - 1
+    player.room:addPlayerMark(player, "_luoyi-turn")
   end,
 
   refresh_events = {fk.DamageCaused},
   can_refresh = function(self, event, target, player, data)
-    if not (target == player and player:hasSkill(self.name) and
-      player:usedSkillTimes(self.name) > 0) then
+    if target ~= player or player:getMark("_luoyi-turn") == 0 then
       return
     end
 
