@@ -1152,7 +1152,7 @@ function Room:askForLuckCard(players, limit)
       end
       for i, p in ipairs(players) do
         if p == player then
-          pdata[i] = { (pdata[i][1] ~= -1 and pdata[i][1] - 1), pdata[i][2] - 1 }
+          pdata[i] = { (pdata[i][1] ~= -1 and pdata[i][1] - 1 or -1), pdata[i][2] - 1 }
         end
         p.request_data = json.encode(pdata[i])
       end
