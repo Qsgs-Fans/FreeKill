@@ -162,8 +162,8 @@ function fk.CreateActiveSkill(spec)
   readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then
-    skill.canUse = function(curSkill, player)
-      return spec.can_use(curSkill, player) and curSkill:isEffectable(player)
+    skill.canUse = function(curSkill, player, card)
+      return spec.can_use(curSkill, player, card) and curSkill:isEffectable(player)
     end
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
@@ -205,7 +205,7 @@ function fk.CreateViewAsSkill(spec)
   assert(type(spec.name) == "string")
   assert(type(spec.view_as) == "function")
 
-  local skill = ViewAsSkill:new(spec.name)
+  local skill = ViewAsSkill:new(spec.name, spec.frequency or Skill.NotFrequent)
   readUsableSpecToSkill(skill, spec)
 
   skill.viewAs = spec.view_as

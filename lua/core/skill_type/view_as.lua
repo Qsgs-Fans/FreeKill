@@ -5,8 +5,8 @@
 ---@field public interaction any
 local ViewAsSkill = UsableSkill:subclass("ViewAsSkill")
 
-function ViewAsSkill:initialize(name)
-  UsableSkill.initialize(self, name, Skill.NotFrequent)
+function ViewAsSkill:initialize(name, frequency)
+  UsableSkill.initialize(self, name, frequency)
   self.pattern = ""
 end
 
