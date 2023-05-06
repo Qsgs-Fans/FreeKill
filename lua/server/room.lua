@@ -2286,7 +2286,7 @@ function Room:retrial(card, player, judge, skillName, exchange)
   end
 end
 
---- 弃置一名玩家的牌。
+--- 弃置一名角色的牌。
 ---@param card_ids integer[] @ 被弃掉的牌
 ---@param skillName string @ 技能名
 ---@param who ServerPlayer @ 被弃牌的人
@@ -2305,6 +2305,32 @@ function Room:throwCard(card_ids, skillName, who, thrower)
     proposer = thrower.id,
     skillName = skillName
   })
+end
+
+--- 重铸一名角色的牌。
+---@param card_ids integer[] @ 被重铸的牌
+---@param who ServerPlayer @ 重铸的角色
+------@param skillName string @ 技能名，默认为“重铸”
+function Room:recastCard(card_ids, who, skillName)
+  if type(card_ids) == "number" then
+    card_ids = {card_ids}
+  end
+  skillName = skillName or "recast"
+  self:moveCards({
+    ids = card_ids,
+    from = who.id,
+    toArea = Card.DiscardPile,
+    skillName = skillName,
+    moveReason = fk.ReasonPutIntoDiscardPile,
+    skillName = skillName
+  })
+  self:sendLog{
+    type = skillName == "recast" and "#Recast" or "#RecastBySkill",
+    from = who.id,
+    card = card_ids,
+    arg = skillName,
+  }
+  self:drawCards(who, #card_ids, skillName)
 end
 
 --- 根据拼点信息开始拼点。
