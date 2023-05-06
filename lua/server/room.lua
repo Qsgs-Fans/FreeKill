@@ -1235,10 +1235,6 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
   if #top_limit > 0 and #bottom_limit > 0 then
     assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
   end
-  if #cards == 1 then
-    table.insert(self.draw_pile, 1, cards[1])
-    return
-  end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, command)
   local data = {
