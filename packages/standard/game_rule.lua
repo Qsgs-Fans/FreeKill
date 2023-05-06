@@ -69,11 +69,13 @@ GameRule = fk.CreateTriggerSkill{
       local dyingPlayer = room:getPlayerById(data.who)
       while dyingPlayer.hp < 1 do
         local pattern = "peach"
+        local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. tostring(1 - dyingPlayer.hp)
         if player == dyingPlayer then
           pattern = pattern .. ",analeptic"
+          prompt = "#AskForPeachesSelf:::" .. tostring(1 - dyingPlayer.hp)
         end
 
-        local peach_use = room:askForUseCard(player, "peach", pattern)
+        local peach_use = room:askForUseCard(player, "peach", pattern, prompt)
         if not peach_use then break end
         peach_use.tos = { {dyingPlayer.id} }
         if peach_use.card.trueName == "analeptic" then
