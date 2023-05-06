@@ -237,6 +237,7 @@ Fk:loadTranslationTable{
   ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
   ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
