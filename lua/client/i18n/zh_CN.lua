@@ -206,11 +206,13 @@ Fk:loadTranslationTable{
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
 
+  ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
   ["phase_draw"] = "摸牌阶段",
   ["phase_play"] = "出牌阶段",
   ["phase_discard"] = "弃牌阶段",
-
+  ["phase_finish"] = "结束阶段",
+  
   ["chained"] = "横置",
   ["not-chained"] = "重置",
 }
@@ -288,6 +290,8 @@ Fk:loadTranslationTable{
   ["#LoseHP"] = "%from 失去了 %arg 点体力",
   ["#HealHP"] = "%from 回复了 %arg 点体力",
   ["#ShowHPAndMaxHP"] = "%from 现在的体力值为 %arg，体力上限为 %arg2",
+  ["#LoseMaxHP"] = "%from 减了 %arg 点体力上限",
+  ["#HealMaxHP"] = "%from 加了 %arg 点体力上限",
 
   -- dying and death
   ["#EnterDying"] = "%from 进入了濒死阶段",
