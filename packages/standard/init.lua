@@ -576,8 +576,16 @@ local longdan = fk.CreateViewAsSkill{
   pattern = "slash,jink",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
-    local c = Fk:getCardById(to_select)
-    return c.trueName == "slash" or c.name == "jink"
+    local _c = Fk:getCardById(to_select)
+    local c
+    if _c.trueName == "slash" then
+      c = Fk:cloneCard("jink")
+    elseif _c.name == "jink" then
+      c = Fk:cloneCard("slash")
+    else
+      return false
+    end
+    return (Fk.currentResponsePattern == nil and c.skill:canUse(Self)) or (Fk.currentResponsePattern and Exppattern:Parse(Fk.currentResponsePattern):match(c))
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
