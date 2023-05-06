@@ -10,7 +10,7 @@
   2. 对于 Matcher 字符串，它是用 ('|') 分割的
   3. 然后在 Matcher 的每一个细分中，又可以用 ',' 来进行更进一步的分割
 
-  其中 Matcher 的格式为 牌名|花色|点数|位置|详细牌名|类型|牌的id
+  其中 Matcher 的格式为 牌名|花色|点数|位置|详细牌名|类别|牌的id|子类别
   更进一步，“点数” 可以用 '~' 符号表示数字的范围，并且可以用 AJQK 表示对应点数
 
   例如：
@@ -31,6 +31,7 @@
 ---@field public name string[]
 ---@field public cardType string[]
 ---@field public id integer[]
+---@field public cardSubtype string[]
 
 local numbertable = {
   ["A"] = 1,
@@ -52,6 +53,8 @@ local function matchSingleKey(matcher, card, key)
     val = card:getSuitString()
   elseif key == "cardType" then
     val = card:getTypeString()
+  elseif key == "cardSubtype" then
+    val = card:getSubtypeString()
   elseif key == "place" then
     val = placetable[Fk:currentRoom():getCardArea(card.id)]
     if not val then
@@ -92,6 +95,7 @@ local function matchCard(matcher, card)
      and matchSingleKey(matcher, card, "name")
      and matchSingleKey(matcher, card, "cardType")
      and matchSingleKey(matcher, card, "id")
+     and matchSingleKey(matcher, card, "cardSubtype")
 end
 
 local function hasIntersection(a, b)
@@ -125,6 +129,7 @@ local function matchMatcher(a, b)
     "name",
     "cardType",
     "id",
+    "cardSubtype",
   }
 
   for _, k in ipairs(keys) do
@@ -236,8 +241,8 @@ end
 
 local function parseMatcher(str)
   local t = str:split("|")
-  if #t < 7 then
-    for i = 1, 7 - #t do
+  if #t < 8 then
+    for i = 1, 8 - #t do
       table.insert(t, ".")
     end
   end
@@ -261,6 +266,7 @@ local function parseMatcher(str)
   ret.place = not table.contains(t[4], ".") and t[4] or nil
   ret.name = not table.contains(t[5], ".") and t[5] or nil
   ret.cardType = not table.contains(t[6], ".") and t[6] or nil
+  ret.cardSubtype = not table.contains(t[8], ".") and t[8] or nil
 
   if not table.contains(t[7], ".") then
     ret.id = parseRawNumTable(t[7])
@@ -294,6 +300,7 @@ local function matcherToString(matcher)
     matcherKeyToString(matcher.name),
     matcherKeyToString(matcher.cardType),
     matcherKeyToString(matcher.id),
+    matcherKeyToString(matcher.cardSubtype),
   }, "|")
 end
 

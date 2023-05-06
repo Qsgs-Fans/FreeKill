@@ -12,8 +12,8 @@
 ---@field public number integer @ 卡牌的点数（0到K）
 ---@field public trueName string @ 卡牌的真名，一般用于分辨杀。
 ---@field public color Color @ 卡牌的颜色（分为黑色、红色、无色）
----@field public type CardType @ 卡牌的种类（基本牌、锦囊牌、装备牌）
----@field public sub_type CardSubtype @ 卡牌的子种类（例如延时锦囊牌、武器、防具等）
+---@field public type CardType @ 卡牌的类别（基本牌、锦囊牌、装备牌）
+---@field public sub_type CardSubtype @ 卡牌的子类别（例如延时锦囊牌、武器、防具等）
 ---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[]
@@ -244,7 +244,7 @@ function Card:getSuitString()
   end
 end
 
---- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
+--- 获取卡牌颜色并返回颜色文字描述（例如黑色/红色/无色）。
 ---@return string @ 描述颜色的字符串
 function Card:getColorString()
   local color = self.color
@@ -256,7 +256,7 @@ function Card:getColorString()
   return "nocolor"
 end
 
---- 获取卡牌类型并返回点数类型描述（例如基本牌/锦囊牌/装备牌）。
+--- 获取卡牌类别并返回类别文字描述（例如基本牌/锦囊牌/装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then
@@ -267,6 +267,25 @@ function Card:getTypeString()
     return "equip"
   end
   return "notype"
+end
+
+--- 获取卡牌子类别并返回子类别文字描述（例如延时类锦囊牌/武器牌/防具牌）。
+function Card:getSubtypeString()
+  local t = self.sub_type
+  if t == Card.SubtypeDelayedTrick then
+    return "delayedtrick"
+  elseif t == Card.SubtypeWeapon then
+    return "weapon"
+  elseif t == Card.SubtypeArmor then
+    return "armor"
+  elseif t == Card.SubtypeDefensiveRide then
+    return "defensiveride"
+  elseif t == Card.SubtypeOffensiveRide then
+    return "offensiveride"
+  elseif t == Card.SubtypeTreasure then
+    return "treasure"
+  end
+  return "nosubtype"
 end
 
 --- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K）。
