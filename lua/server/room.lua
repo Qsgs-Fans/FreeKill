@@ -2310,7 +2310,7 @@ end
 --- 重铸一名角色的牌。
 ---@param card_ids integer[] @ 被重铸的牌
 ---@param who ServerPlayer @ 重铸的角色
-------@param skillName string @ 技能名，默认为“重铸”
+---@param skillName string @ 技能名，默认为“重铸”
 function Room:recastCard(card_ids, who, skillName)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
