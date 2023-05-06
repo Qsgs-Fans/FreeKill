@@ -96,6 +96,24 @@ ColumnLayout {
     }
   }
 
+  RowLayout {
+    anchors.rightMargin: 8
+    spacing: 16
+    Text {
+      text: Backend.translate("Lucky redraw")
+    }
+    SpinBox {
+      from: -1
+      to: 8
+      editable: true
+      value: config.redrawLimit
+
+      onValueChanged: {
+        config.redrawLimit = value;
+      }
+    }
+  }
+
   Switch {
     id: freeAssignCheck
     checked: Debugging ? true : false
@@ -124,6 +142,7 @@ ColumnLayout {
             gameMode: config.preferedMode,
             disabledPack: config.disabledPack,
             generalNum: config.preferredGeneralNum,
+            redrawLimit: config.redrawLimit,
           }])
         );
       }

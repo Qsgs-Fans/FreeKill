@@ -25,6 +25,7 @@ QtObject {
 
   property int preferredTimeout
 
+  property int redrawLimit
   // Player property of client
   property string serverAddr
   property string screenName: ""
@@ -59,6 +60,7 @@ QtObject {
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
+    redrawLimit = conf.redrawLimit ?? 0;
   }
 
   function saveConf() {
@@ -81,6 +83,7 @@ QtObject {
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
     conf.preferredTimeout = preferredTimeout;
+    redrawLimit = conf.redrawLimit;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

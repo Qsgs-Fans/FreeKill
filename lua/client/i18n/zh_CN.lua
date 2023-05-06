@@ -31,6 +31,7 @@ Fk:loadTranslationTable{
   ["Player num"] = "玩家数目",
   ["Select general num"] = "选将数目",
   ["Operation timeout"] = "操作时长(秒)",
+  ["Lucky redraw"] = "手气卡(-1=无限)",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "启用副将机制",
@@ -126,6 +127,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$ChooseGeneral"] = "请选择 %1 名武将",
   ["Same General Convert"] = "替换武将",
   ["Fight"] = "出战",
+
+  ["AskForLuckCard"] = "你想使用手气卡吗？",
+  ["#AskForLuckCard"] = "本场还可更换%1次手牌（每次消耗1张手气卡，当前还有%2张）",
+  ["#AskForLuckCard-I"] = "本场可以更换手牌",
+	["#UseLuckCard"] = "%from 使用了手气卡",
 
   ["#PlayCard"] = "出牌阶段，请使用一张牌",
   ["#AskForGeneral"] = "请选择 1 名武将",

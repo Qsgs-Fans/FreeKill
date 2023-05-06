@@ -1104,6 +1104,72 @@ function Room:askForGeneral(player, generals, n)
   return defaultChoice
 end
 
+--- 询问玩家是否开手气卡。
+---@param players ServerPlayer[] @ 询问目标
+---@param limit Interger @ 上限
+---@return boolean
+function Room:askForLuckCard(players, limit)
+  players = players or self.players
+  local pdata = {}
+  for i, p in ipairs(players) do
+    table.insert(pdata, { limit, math.random(10, 1000) })
+    p.request_data = json.encode(pdata[i])
+  end
+  local command = "AskForLuckCard"
+  while #players > 0 do
+    p(pdata)
+    local player = self:doRaceRequest(command, players)
+    if player == nil then break else
+      local cards = {}
+      table.forEach(player:getCardIds(Player.Hand), function(id)
+        table.insert(cards, Fk:getCardById(id))
+      end)
+      local cardnum = #cards
+      self:moveCardTo(cards, Card.DrawPile, null, fk.ReasonPut)
+      self:shuffleDrawPile()
+      local cardIds = self:getNCards(cardnum)
+      player:addCards(Player.Hand, cardIds)
+      for _, id in ipairs(cardIds) do
+        Fk:filterCard(id, player)
+      end
+      local move_to_notify = {}   ---@type CardsMoveStruct
+      move_to_notify.toArea = Card.PlayerHand
+      move_to_notify.to = player.id
+      move_to_notify.moveInfo = {}
+      move_to_notify.moveReason = fk.ReasonDraw
+      for _, id in ipairs(cardIds) do
+        table.insert(move_to_notify.moveInfo,
+        { cardId = id, fromArea = Card.DrawPile })
+      end
+      self:sendLog{
+        type = "#UseLuckCard",
+        from = player.id,
+      }
+      self:notifyMoveCards(nil, {move_to_notify})
+  
+      for _, id in ipairs(cardIds) do
+        self:setCardArea(id, Card.PlayerHand, player.id)
+      end
+      for i, p in ipairs(players) do
+        if p == player then
+          pdata[i] = { (pdata[i][1] ~= -1 and pdata[i][1] - 1), pdata[i][2] - 1 }
+        end
+        p.request_data = json.encode(pdata[i])
+      end
+      local t_players = {}
+      local t_pdata = {}
+      for i, d in ipairs(pdata) do
+        if d[1] ~= 0 then
+          table.insert(t_players, players[i])
+          table.insert(t_pdata, pdata[i])
+        end
+      end
+      pdata = t_pdata
+      players = t_players
+    end
+  end
+end
+
 --- 询问chooser，选择target的一张牌。
 ---@param chooser ServerPlayer @ 要被询问的人
 ---@param target ServerPlayer @ 被选牌的人

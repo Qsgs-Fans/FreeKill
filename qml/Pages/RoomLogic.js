@@ -599,6 +599,24 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   roomScene.cancelButton.enabled = true;
 }
 
+callbacks["AskForLuckCard"] = function(jsonData) {
+  // jsonData: [ string name, string prompt ]
+  let data = JSON.parse(jsonData);
+  let limit = data[0];
+  let count = data[1];
+  if (limit == -1) {
+    roomScene.promptText = Backend.translate("#AskForLuckCard-I");
+  } else {
+    roomScene.promptText = Backend.translate("#AskForLuckCard")
+      .arg(limit)
+      .arg(count);
+  }
+  roomScene.state = "replying";
+  roomScene.okCancel.visible = true;
+  roomScene.okButton.enabled = true;
+  roomScene.cancelButton.enabled = true;
+}
+
 callbacks["AskForGuanxing"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let cards = [];

@@ -30,6 +30,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
       room.logic:trigger(fk.AfterDrawInitialCards, player, data)
     end
   end
+  room:askForLuckCard(room.alive_players, room.settings.redrawLimit)
 end
 
 GameEvent.functions[GameEvent.Round] = function(self)
