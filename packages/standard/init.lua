@@ -231,12 +231,11 @@ local luoyi = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     data.n = data.n - 1
-    player.room:addPlayerMark(player, "_luoyi-turn")
   end,
 
   refresh_events = {fk.DamageCaused},
   can_refresh = function(self, event, target, player, data)
-    if target ~= player or player:getMark("_luoyi-turn") == 0 then
+    if target ~= player or player:usedSkillTimes(self.name) == 0 then
       return
     end
 
