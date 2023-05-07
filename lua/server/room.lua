@@ -2322,7 +2322,7 @@ function Room:recastCard(card_ids, who, skillName)
     toArea = Card.DiscardPile,
     skillName = skillName,
     moveReason = fk.ReasonPutIntoDiscardPile,
-    skillName = skillName
+    proposer = who.id
   })
   self:sendLog{
     type = skillName == "recast" and "#Recast" or "#RecastBySkill",
