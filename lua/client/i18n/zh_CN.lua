@@ -214,7 +214,7 @@ Fk:loadTranslationTable{
   ["phase_play"] = "出牌阶段",
   ["phase_discard"] = "弃牌阶段",
   ["phase_finish"] = "结束阶段",
-  
+
   ["chained"] = "横置",
   ["not-chained"] = "重置",
 }
@@ -227,8 +227,8 @@ Fk:loadTranslationTable{
   ["$GameEnd"] = "== 游戏结束 ==",
 
   -- get/lose skill
-  ["#AcquireSkill"] = "%from 获得了技能“%arg”",
-	["#LoseSkill"] = "%from 失去了技能“%arg”",
+  ["#AcquireSkill"] = "%from 获得了技能 “%arg”",
+	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
   ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆顶",
