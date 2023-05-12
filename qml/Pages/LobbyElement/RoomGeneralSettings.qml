@@ -121,12 +121,13 @@ ColumnLayout {
         if (disabledGenerals.length) {
           const availablePack = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", [])).
             filter((pack) => !config.disabledPack.includes(pack));
-          disabledGenerals = disabledGenerals.filter((general) => { 
+          disabledGenerals = disabledGenerals.filter((general) => {
             return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGeneralsInPackage", [pack])).includes(general));
           });
+
+          disabledGenerals = Array.from(new Set(disabledGenerals));
         }
 
-        console.log(disabledGenerals);
         ClientInstance.notifyServer(
           "CreateRoom",
           JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {

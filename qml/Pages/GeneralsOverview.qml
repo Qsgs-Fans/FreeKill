@@ -207,7 +207,6 @@ Item {
     Button {
       id: banButton
       text: Backend.translate(config.disabledGenerals.includes(detailGeneralCard.name) ? 'ResumeGeneral' : 'BanGeneral')
-      
       visible: detailGeneralCard.name
       onClicked: {
         const { disabledGenerals } = config;
