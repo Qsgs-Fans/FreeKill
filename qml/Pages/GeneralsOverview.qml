@@ -65,7 +65,29 @@ Item {
         generalText.clear();
         generalDetail.general = modelData;
         generalDetail.updateGeneral();
-       // generalDetail.open();
+      // generalDetail.open();
+      }
+
+      Rectangle {
+        anchors.fill: parent
+        color: "black"
+        opacity: config.disabledGenerals.includes(modelData) ? 0.7 : 0
+        Behavior on opacity {
+          NumberAnimation {}
+        }
+      }
+
+      GlowText {
+        visible: config.disabledGenerals.includes(modelData)
+        text: '禁'
+        anchors.centerIn: parent
+        font.family: fontLi2.name
+        color: "#E4D5A0"
+        font.pixelSize: 36
+        font.weight: Font.Medium
+        glow.color: "black"
+        glow.spread: 0.3
+        glow.radius: 5
       }
     }
   }
@@ -172,11 +194,41 @@ Item {
     }
   }
 
-  Button {
-    text: Backend.translate("Quit")
+  ColumnLayout {
     anchors.right: parent.right
-    onClicked: {
-      mainStack.pop();
+    Button {
+      text: Backend.translate("Quit")
+      onClicked: {
+        mainStack.pop();
+        config.saveConf();
+      }
+    }
+
+    Button {
+      id: banButton
+      text: Backend.translate(config.disabledGenerals.includes(detailGeneralCard.name) ? 'ResumeGeneral' : 'BanGeneral')
+      
+      visible: detailGeneralCard.name
+      onClicked: {
+        const { disabledGenerals } = config;
+        const { name } = detailGeneralCard;
+
+        if (banButton.text === Backend.translate('ResumeGeneral')) {
+          const deleteIndex = disabledGenerals.findIndex((general) => general === name);
+          if (deleteIndex === -1) {
+            return;
+          }
+
+          disabledGenerals.splice(deleteIndex, 1);
+        } else {
+          if (disabledGenerals.includes(name)) {
+            return;
+          }
+
+          disabledGenerals.push(name);
+        }
+        config.disabledGeneralsChanged();
+      }
     }
   }
 

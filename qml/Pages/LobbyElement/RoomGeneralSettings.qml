@@ -116,6 +116,17 @@ ColumnLayout {
       onClicked: {
         root.finished();
         mainWindow.busy = true;
+
+        let disabledGenerals = config.disabledGenerals.slice();
+        if (disabledGenerals.length) {
+          const availablePack = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", [])).
+            filter((pack) => !config.disabledPack.includes(pack));
+          disabledGenerals = disabledGenerals.filter((general) => { 
+            return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGeneralsInPackage", [pack])).includes(general));
+          });
+        }
+
+        console.log(disabledGenerals);
         ClientInstance.notifyServer(
           "CreateRoom",
           JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
@@ -124,6 +135,7 @@ ColumnLayout {
             gameMode: config.preferedMode,
             disabledPack: config.disabledPack,
             generalNum: config.preferredGeneralNum,
+            disabledGenerals,
           }])
         );
       }
