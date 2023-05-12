@@ -274,6 +274,7 @@ function GetSkillData(skill_name)
     extension = skill.package.extensionName,
     freq = freq,
     frequency = frequency,
+    switchSkillName = skill.switchSkillName,
   }
 end
 

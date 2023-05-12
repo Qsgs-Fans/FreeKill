@@ -414,8 +414,15 @@ function GameLogic:trigger(event, target, data, refresh_only)
 
         local len = #skills
         broken = skill:trigger(event, target, player, data)
-        table.insertTable(skill_names, table.map(
-          table.slice(skills, len - #skills), function(s) return s.name end))
+
+        table.insertTable(
+          skill_names,
+          table.map(table.filter(table.slice(skills, len - #skills), function(s)
+            return
+              s.priority_table[event] == prio and
+              s:triggerable(event, target, player, data)
+          end), function(s) return s.name end)
+        )
 
         broken = broken or (event == fk.AskForPeaches
           and room:getPlayerById(data.who).hp > 0)

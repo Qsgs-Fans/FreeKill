@@ -283,6 +283,12 @@ local function getNumberStr(num)
   return tostring(num)
 end
 
+--- 判断卡牌是否为普通锦囊牌
+---@return boolean
+function Card:isCommonTrick()
+  return self.type == Card.TypeTrick and self.sub_type ~= Card.SubtypeDelayedTrick
+end
+
 --- 为卡牌赋予Mark。
 ---@param mark string @ 标记
 ---@param count integer @ 为标记赋予的数量
@@ -330,6 +336,51 @@ function Card:getMarkNames()
     table.insert(ret, k)
   end
   return ret
+end
+
+---@param anotherCard Card
+---@param diff boolean
+---@return boolean
+function Card:compareSuitWith(anotherCard, diff)
+  if table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
+    return false
+  end
+
+  if diff then
+    return self.suit ~= anotherCard.suit
+  else
+    return self.suit == anotherCard.suit
+  end
+end
+
+---@param anotherCard Card
+---@param diff boolean
+---@return boolean
+function Card:compareColorWith(anotherCard, diff)
+  if table.contains({ self.color, anotherCard.color }, Card.NoColor) then
+    return false
+  end
+
+  if diff then
+    return self.color ~= anotherCard.color
+  else
+    return self.color == anotherCard.color
+  end
+end
+
+---@param anotherCard Card
+---@param diff boolean
+---@return boolean
+function Card:compareNumberWith(anotherCard, diff)
+  if self.number < 1 or anotherCard.number < 1 then
+    return false
+  end
+
+  if diff then
+    return self.number ~= anotherCard.number
+  else
+    return self.number == anotherCard.number
+  end
 end
 
 -- for sendLog

@@ -191,6 +191,10 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$Winner"] = "%1 获胜",
   ["$NoWinner"] = "平局！",
   ["Back To Lobby"] = "返回大厅",
+
+  ["basic_char"] = "基",
+  ["trick_char"] = "锦",
+  ["equip_char"] = "装",
 }
 
 -- Game concepts

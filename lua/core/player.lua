@@ -119,8 +119,8 @@ function Player:setGeneral(general, setHp, addSkills)
 end
 
 function Player:getGeneralMaxHp()
-  local general = Fk.generals[self:getMark("__heg_general") or self.general]
-  local deputy = Fk.generals[self:getMark("__heg_deputy") or self.deputy]
+  local general = Fk.generals[type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
+  local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputy]
 
   if not deputy then
     return general.maxHp
@@ -725,6 +725,21 @@ function Player:prohibitDiscard(card)
     end
   end
   return false
+end
+
+---@field SwitchYang number @ 转换技状态阳
+fk.SwitchYang = 0
+---@field SwitchYin number @ 转换技状态阴
+fk.SwitchYin = 1
+
+---@param skillName string
+---@return number
+function Player:getSwitchSkillState(skillName, afterUse)
+  if afterUse then
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and fk.SwitchYin or fk.SwitchYang
+  else
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and fk.SwitchYang or fk.SwitchYin
+  end
 end
 
 return Player
