@@ -13,6 +13,7 @@
 
     usr/index.rst
     diy/index.rst
+    inner/index.rst
     dev/index.rst
     api/index.rst
     fkp/usr/index.rst
