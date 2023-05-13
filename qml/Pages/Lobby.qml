@@ -38,7 +38,7 @@ Item {
       Text {
         anchors.fill: parent
         wrapMode: TextEdit.WrapAnywhere
-        text: '<h1>公告测试</h1><br>● 更新跳过觉醒（神郭嘉）、转换技概念（许攸）。<br>● 武将一览中增加禁将功能。'
+        text: Backend.translate('Bulletin Info')
       }
     }
   }
