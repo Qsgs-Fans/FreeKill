@@ -3,16 +3,16 @@
 import QtQuick
 import QtQuick.Controls
 
-Flickable {
+ListView {
   id: root
-  property alias font: textEdit.font
-  property alias text: textEdit.text
-  property alias color: textEdit.color
-  property alias textFormat: textEdit.textFormat
+  //property alias font: textEdit.font
+  //property alias text: textEdit.text
+  //property alias color: textEdit.color
+  //property alias textFormat: textEdit.textFormat
 
-  flickableDirection: Flickable.VerticalFlick
-  contentWidth: textEdit.width
-  contentHeight: textEdit.height
+  //flickableDirection: Flickable.VerticalFlick
+  //contentWidth: textEdit.width
+  //contentHeight: textEdit.height
   clip: true
   ScrollBar.vertical: ScrollBar {
     parent: root.parent
@@ -21,9 +21,11 @@ Flickable {
     anchors.bottom: root.bottom
   }
 
-  TextEdit {
+  model: ListModel { id: logModel }
+  delegate: TextEdit {
     id: textEdit
 
+    text: logText
     width: root.width
     clip: true
     readOnly: true
@@ -36,7 +38,7 @@ Flickable {
 
   function append(text) {
     let autoScroll = atYEnd;
-    textEdit.append(text);
+    logModel.append({ logText: text });
     if (autoScroll && contentHeight > contentY + height) {
       contentY = contentHeight - height;
     }
