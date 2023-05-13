@@ -11,6 +11,38 @@ import "Logic.js" as Logic
 Item {
   id: root
   property alias roomModel: roomModel
+
+  Rectangle {
+    width: parent.width / 2 - roomListLayout.width / 2
+    height: parent.height * 0.7
+    anchors.top: exitButton.bottom
+    anchors.bottom: createRoomButton.top
+    anchors.right: parent.right
+    anchors.rightMargin: 20
+    color: "#88EEEEEE"
+    radius: 6
+
+    Flickable {
+      id: flickableContainer
+      ScrollBar.vertical: ScrollBar {}
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: 10
+      flickableDirection: Flickable.VerticalFlick
+      width: parent.width - 10
+      height: parent.height - 10
+      contentWidth: flickableContainer.width
+      contentHeight: flickableContainer.height
+      clip: true
+
+      Text {
+        anchors.fill: parent
+        wrapMode: TextEdit.WrapAnywhere
+        text: '<h1>公告测试</h1><br>● 更新跳过觉醒（神郭嘉）、转换技概念（许攸）。<br>● 武将一览中增加禁将功能。'
+      }
+    }
+  }
+
   Component {
     id: roomDelegate
 
@@ -81,6 +113,7 @@ Item {
   }
 
   RowLayout {
+    id: roomListLayout
     anchors.centerIn: parent
     width: childrenRect.width
     height: parent.height
@@ -113,6 +146,7 @@ Item {
   }
 
   Button {
+    id: createRoomButton
     anchors.bottom: buttonRow.top
     anchors.right: parent.right
     width: 120
@@ -162,6 +196,7 @@ Item {
   }
 
   Button {
+    id: exitButton
     anchors.right: parent.right
     text: Backend.translate("Exit Lobby")
     display: AbstractButton.TextBesideIcon
