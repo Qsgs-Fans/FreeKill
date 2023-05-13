@@ -122,7 +122,7 @@ ColumnLayout {
           const availablePack = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", [])).
             filter((pack) => !config.disabledPack.includes(pack));
           disabledGenerals = disabledGenerals.filter((general) => {
-            return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGeneralsInPackage", [pack])).includes(general));
+            return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGenerals", [pack])).includes(general));
           });
 
           disabledGenerals = Array.from(new Set(disabledGenerals));

@@ -467,10 +467,4 @@ function GetPlayerHandcards(pid)
   return json.encode(p.player_cards[Player.Hand])
 end
 
-function GetGeneralsInPackage(packName)
-  return json.encode(table.map(Fk.packages[packName].generals, function(general)
-    return general.name
-  end))
-end
-
 dofile "lua/client/i18n/init.lua"
