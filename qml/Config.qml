@@ -22,6 +22,7 @@ QtObject {
   property string ladyImg
   property real bgmVolume
   property bool disableMsgAudio
+  property var disabledGenerals: []
 
   property int preferredTimeout
 
@@ -59,6 +60,7 @@ QtObject {
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
+    disabledGenerals = conf.disabledGenerals ?? [];
   }
 
   function saveConf() {
@@ -81,6 +83,7 @@ QtObject {
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
     conf.preferredTimeout = preferredTimeout;
+    conf.disabledGenerals = disabledGenerals;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

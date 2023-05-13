@@ -67,6 +67,7 @@ function Room:initialize(_room)
     Room.initialize(self, _room)  -- clear old data
     self.settings = json.decode(_room:settings())
     Fk.disabled_packs = self.settings.disabledPack
+    Fk.disabled_generals = self.settings.disabledGenerals
     local main_co = coroutine.create(function()
       self:run()
     end)

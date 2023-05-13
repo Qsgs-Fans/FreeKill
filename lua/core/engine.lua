@@ -50,6 +50,7 @@ function Engine:initialize()
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
   self.disabled_packs = {}
+  self.disabled_generals = {}
   self.kingdoms = {}
 
   self:loadPackages()
@@ -213,8 +214,9 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and not
-      table.contains(self.disabled_packs, self.generals[g].package.name)
+    return g ~= name and self.generals[g] ~= nil and
+      not table.contains(self.disabled_packs, self.generals[g].package.name) and
+      not table.contains(self.disabled_generals, g)
   end)
 end
 
@@ -334,7 +336,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if not table.contains(self.disabled_packs, general.package.name) then
+      if not table.contains(self.disabled_packs, general.package.name) and not table.contains(self.disabled_generals, general.name) then
         table.insert(result, general)
       end
     end
