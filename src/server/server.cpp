@@ -220,10 +220,6 @@ void Server::processRequest(const QByteArray &msg) {
 void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
                                    const QString &password,
                                    const QString &md5_str) {
-  // First check the name and password
-  // Matches a string that does not contain special characters
-  static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
-
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
   RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
@@ -263,7 +259,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
   QJsonArray result;
   QJsonObject obj;
 
-  if (!nameExp.match(name).hasMatch() && !name.isEmpty()) {
+  if (CheckSqlString(name)) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';")
@@ -311,7 +307,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           player->alive = true;
           client->disconnect(this);
           broadcast("ServerMessage",
-              tr("%1 backed").arg(player->getScreenName()));
+                    tr("%1 backed").arg(player->getScreenName()));
           room->pushRequest(QString("%1,reconnect").arg(id));
           return;
         } else {

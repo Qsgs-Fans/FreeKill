@@ -63,14 +63,15 @@ void Dumpstack(lua_State *L) {
 sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
   sqlite3 *ret;
   int rc;
-  if (!QFile::exists(filename)) {
-    QFile file(initSql);
-    if (!file.open(QIODevice::ReadOnly)) {
-      qFatal("cannot open %s. Quit now.", initSql.toUtf8().data());
-      qApp->exit(1);
-    }
 
-    QTextStream in(&file);
+  QFile file(initSql);
+  if (!file.open(QIODevice::ReadOnly)) {
+    qFatal("cannot open %s. Quit now.", initSql.toUtf8().data());
+    qApp->exit(1);
+  }
+  QTextStream in(&file);
+
+  if (!QFile::exists(filename)) {
     char *err_msg;
     sqlite3_open(filename.toLatin1().data(), &ret);
     rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr,
@@ -89,8 +90,24 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
       sqlite3_close(ret);
       qApp->exit(1);
     }
+
+    char *err_msg;
+    rc = sqlite3_exec(ret, in.readAll().toLatin1().data(), nullptr, nullptr,
+                      &err_msg);
+
+    if (rc != SQLITE_OK) {
+      qCritical() << "sqlite error:" << err_msg;
+      sqlite3_free(err_msg);
+      sqlite3_close(ret);
+      qApp->exit(1);
+    }
   }
   return ret;
+}
+
+bool CheckSqlString(const QString &str) {
+  static const QRegularExpression exp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
+  return (!exp.match(str).hasMatch() && !str.isEmpty());
 }
 
 // callback for handling SELECT expression

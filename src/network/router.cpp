@@ -155,8 +155,8 @@ void Router::handlePacket(const QByteArray &rawPacket) {
                                        const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto avatar = arr[0].toString();
-      static QRegularExpression nameExp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
-      if (!nameExp.match(avatar).hasMatch()) {
+
+      if (CheckSqlString(avatar)) {
         auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
                        .arg(avatar)
                        .arg(sender->getId());
