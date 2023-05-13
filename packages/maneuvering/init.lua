@@ -79,8 +79,8 @@ extension:addCards{
 local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
-  can_use = function(self, player)
-    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn)
+  can_use = function(self, player, card)
+    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -120,21 +120,22 @@ local analepticEffect = fk.CreateTriggerSkill{
     if event == fk.PreCardUse then
       return data.card.trueName == "slash" and player.drank > 0
     else
-      return player.phase == Player.NotActive
+      return target.phase == Player.NotActive
     end
   end,
   on_trigger = function(self, event, target, player, data)
+    local room = player.room
     if event == fk.PreCardUse then
       data.additionalDamage = (data.additionalDamage or 0) + player.drank
       data.extra_data = data.extra_data or {}
       data.extra_data.drankBuff = player.drank
       player.drank = 0
-      player.room:broadcastProperty(player, "drank")
+      room:broadcastProperty(player, "drank")
     else
-      for _, p in ipairs(player.room:getAlivePlayers(true)) do
+      for _, p in ipairs(room:getAlivePlayers(true)) do
         if p.drank > 0 then
           p.drank = 0
-          p.room:broadcastProperty(player, "drank")
+          room:broadcastProperty(p, "drank")
         end
       end
     end
@@ -270,12 +271,12 @@ extension:addCards{
 local supplyShortageSkill = fk.CreateActiveSkill{
   name = "supply_shortage_skill",
   distance_limit = 1,
-  target_filter = function(self, to_select, selected)
+  target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
         return not player:hasDelayedTrick("supply_shortage") and
-          Self:distanceTo(player) <= self:getDistanceLimit(Self)
+          Self:distanceTo(player) <= self:getDistanceLimit(Self, card)
       end
     end
     return false

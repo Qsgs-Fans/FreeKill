@@ -9,6 +9,10 @@
 ---FreeKill's lua API
 fk = {}
 
+---@class MarkEnum
+---Special marks
+MarkEnum = {}
+
 ---@class fk.SPlayerList
 SPlayerList = {}
 

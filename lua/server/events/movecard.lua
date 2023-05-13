@@ -100,7 +100,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
             toAreaIds = self.void
           end
 
-          table.insert(toAreaIds, toAreaIds == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
+          table.insert(toAreaIds, data.toArea == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
         end
         self:setCardArea(info.cardId, data.toArea, data.to)
         if data.toArea == Card.DrawPile or realFromArea == Card.DrawPile then

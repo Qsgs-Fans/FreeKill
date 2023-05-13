@@ -195,8 +195,25 @@ end
 
 --- 将房间中的玩家按照座位顺序重新排序。
 ---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
-function Room:sortPlayersByAction(playerIds)
+function Room:sortPlayersByAction(playerIds, isTargetGroup)
+  table.sort(playerIds, function(prev, next)
+    local prevSeat = self:getPlayerById(isTargetGroup and prev[1] or prev).seat
+    local nextSeat = self:getPlayerById(isTargetGroup and next[1] or next).seat
 
+    return prevSeat < nextSeat
+  end)
+
+  if
+    self.current and
+    table.find(isTargetGroup and TargetGroup:getRealTargets(playerIds) or playerIds, function(id)
+      return self:getPlayerById(id).seat >= self.current.seat
+    end)
+  then
+    while self:getPlayerById(isTargetGroup and playerIds[1][1] or playerIds[1]).seat < self.current.seat do
+      local toPlayerId = table.remove(playerIds, 1)
+      table.insert(playerIds, toPlayerId)
+    end
+  end
 end
 
 function Room:deadPlayerFilter(playerIds)
@@ -487,10 +504,10 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   end
 
   player.maxHp = player:getGeneralMaxHp()
-  self:broadcastProperty(player, "hp")
+  self:broadcastProperty(player, "maxHp")
   if full then
     player.hp = player.maxHp
-    self:broadcastProperty(player, "maxHp")
+    self:broadcastProperty(player, "hp")
   end
 end
 
@@ -1220,7 +1237,10 @@ end
 ---@param cards integer[] @ 可以被观星的卡牌id列表
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
-function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
+---@param customNotify string|null @ 自定义读条操作提示
+---@param noPut boolean|null @ 是否进行放置牌操作
+---@return table<top|bottom, cardId[]>
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or {}
   bottom_limit = bottom_limit or {}
@@ -1236,7 +1256,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
     assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
   end
   local command = "AskForGuanxing"
-  self:notifyMoveFocus(player, command)
+  self:notifyMoveFocus(player, customNotify or command)
   local data = {
     cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
@@ -1261,19 +1281,23 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit)
     bottom = {}
   end
 
-  for i = #top, 1, -1 do
-    table.insert(self.draw_pile, 1, top[i])
-  end
-  for _, id in ipairs(bottom) do
-    table.insert(self.draw_pile, id)
+  if not noPut then
+    for i = #top, 1, -1 do
+      table.insert(self.draw_pile, 1, top[i])
+    end
+    for _, id in ipairs(bottom) do
+      table.insert(self.draw_pile, id)
+    end
+
+    self:sendLog{
+      type = "#GuanxingResult",
+      from = player.id,
+      arg = #top,
+      arg2 = #bottom,
+    }
   end
 
-  self:sendLog{
-    type = "#GuanxingResult",
-    from = player.id,
-    arg = #top,
-    arg2 = #bottom,
-  }
+  return { top = top, bottom = bottom }
 end
 
 --- 平时写DIY用不到的函数。
@@ -1567,7 +1591,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       return false
     end
 
-    room:sortPlayersByAction(cardUseEvent.tos)
+    room:sortPlayersByAction(cardUseEvent.tos, true)
     local aimGroup = AimGroup:initAimGroup(TargetGroup:getRealTargets(cardUseEvent.tos))
 
     local collaboratorsIndex = {}
@@ -1628,7 +1652,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
 
       local aimEventTargetGroup = aimStruct.targetGroup
       if aimEventTargetGroup then
-        room:sortPlayersByAction(aimEventTargetGroup)
+        room:sortPlayersByAction(aimEventTargetGroup, true)
       end
 
       cardUseEvent.from = aimStruct.from
@@ -2030,6 +2054,17 @@ end
 ---@param fromPlace string @ 摸牌的位置，"top" 或者 "bottom"
 ---@return integer[] @ 摸到的牌
 function Room:drawCards(player, num, skillName, fromPlace)
+  local drawData = {
+    who = player,
+    num = num,
+    skillName = skillName,
+    fromPlace = fromPlace,
+  }
+  self.logic:trigger(fk.BeforeDrawCard, player, drawData)
+
+  num = drawData.num
+  fromPlace = drawData.fromPlace
+
   local topCards = self:getNCards(num, fromPlace)
   self:moveCards({
     ids = topCards,
@@ -2408,6 +2443,8 @@ function Room:shuffleDrawPile()
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
+
+  self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end
 
 --- 使用技能。先增加技能发动次数，再执行相应的函数。
@@ -2427,6 +2464,15 @@ function Room:useSkill(player, skill, effect_cb)
       self:broadcastSkillInvoke(skill.name)
       self:notifySkillInvoked(player, skill.name)
     end
+  end
+
+  if skill:isSwitchSkill() then
+    local switchSkillName = skill.switchSkillName
+    self:setPlayerMark(
+      player,
+      MarkEnum.SwithSkillPreName .. switchSkillName,
+      player:getSwitchSkillState(switchSkillName, true)
+    )
   end
   player:addSkillUseHistory(skill.name)
 
@@ -2468,6 +2514,55 @@ function Room:getSubcardsByRule(card, fromAreas)
   end
 
   return cardIds
+end
+
+---@param pattern string
+---@param num number|null
+---@param fromPile number|null
+---@return cardId[]
+function Room:getCardFromPileByRule(pattern, num, fromPile)
+  num = num or 1
+  local pileToSearch = fromPile == Card.DiscardPile and self.discard_pile or self.draw_pile
+
+  local cardPack = {}
+  if num < 3 then
+    for i = 1, num do
+      local randomIndex = math.random(1, #pileToSearch)
+      local curIndex = randomIndex
+      repeat
+        local curCardId = pileToSearch[curIndex]
+        if Fk:getCardById(curCardId):matchPattern(pattern) and not table.contains(cardPack, curCardId) then
+          table.insert(cardPack, pileToSearch[curIndex])
+          break
+        end
+
+        curIndex = curIndex + 1
+        if curIndex > #pileToSearch then
+          curIndex = 1
+        end
+      until curIndex == randomIndex
+
+      if #cardPack < num then
+        break
+      end
+    end
+  else
+    local matchedIds = {}
+    for _, id in ipairs(pileToSearch) do
+      if Fk:getCardById(id):matchPattern(pattern) then
+        table.insert(matchedIds, id)
+      end
+    end
+
+    local loopTimes = math.min(num, #matchedIds)
+    for i = 1, loopTimes do
+      local randomCardId = matchedIds[math.random(1, #matchedIds)]
+      table.insert(cardPack, randomCardId)
+      table.removeOne(matchedIds, randomCardId)
+    end
+  end
+
+  return cardPack
 end
 
 function CreateRoom(_room)

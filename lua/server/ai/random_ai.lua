@@ -15,7 +15,7 @@ local function useActiveSkill(self, skill, card)
     filter_func = function() return false end
   end
 
-  if self.command == "PlayCard" and not skill:canUse(player) then
+  if self.command == "PlayCard" and not skill:canUse(player, card) then
     return ""
   end
 

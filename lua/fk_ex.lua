@@ -7,6 +7,7 @@
 -- 首先加载所有详细的技能类型、卡牌类型等等，以及时机列表
 dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
+dofile "lua/server/mark_enum.lua"
 TriggerSkill = require "core.skill_type.trigger"
 ActiveSkill = require "core.skill_type.active"
 ViewAsSkill = require "core.skill_type.view_as"
@@ -31,6 +32,11 @@ local function readCommonSpecToSkill(skill, spec)
   if spec.attached_equip then
     assert(type(spec.attached_equip) == "string")
     skill.attached_equip = spec.attached_equip
+  end
+
+  if spec.switch_skill_name then
+    assert(type(spec.switch_skill_name) == "string")
+    skill.switchSkillName = spec.switch_skill_name
   end
 end
 
@@ -110,7 +116,18 @@ function fk.CreateTriggerSkill(spec)
   if spec.on_trigger then skill.trigger = spec.on_trigger end
 
   if spec.can_trigger then
-    skill.triggerable = spec.can_trigger
+    if spec.frequency == Skill.Wake then
+      skill.triggerable = function(self, event, target, player, data)
+        return spec.can_trigger(self, event, target, player, data) and
+          skill:enableToWake(event, target, player, data)
+      end
+    else
+      skill.triggerable = spec.can_trigger
+    end
+  end
+
+  if skill.frequency == Skill.Wake and spec.can_wake then
+    skill.canWake = spec.can_wake
   end
 
   if spec.on_cost then skill.cost = spec.on_cost end
@@ -197,7 +214,7 @@ end
 ---@field public pattern string
 ---@field public enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
 ---@field public enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
----@field public before_use fun(self: ViewAsSkill, player: Player)
+---@field public before_use fun(self: ViewAsSkill, player: ServerPlayer)
 
 ---@param spec ViewAsSkillSpec
 ---@return ViewAsSkill

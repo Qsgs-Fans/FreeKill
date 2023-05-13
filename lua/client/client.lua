@@ -525,7 +525,10 @@ end
 ---@param times integer
 local function updateLimitSkill(pid, skill, times)
   if not skill.visible then return end
-  if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+  if skill:isSwitchSkill() then
+    times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
+    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.switchSkillName, times })
+  elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
     ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
   end
 end

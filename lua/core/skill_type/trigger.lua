@@ -57,8 +57,14 @@ end
 -- DO NOT modify this function
 function TriggerSkill:doCost(event, target, player, data)
   local ret = self:cost(event, target, player, data)
+  local room = player.room
+
+  local cost_data_bak = self.cost_data
+  room.logic:trigger(fk.BeforeTriggerSkillUse, player, { skill = self, willUse = ret })
+  self.cost_data = cost_data_bak
+
   if ret then
-    return player.room:useSkill(player, self, function()
+    return room:useSkill(player, self, function()
       return self:use(event, target, player, data)
     end)
   end
@@ -89,5 +95,23 @@ end
 ---@param data any @ useful data of the event
 ---@return boolean
 function TriggerSkill:use(event, target, player, data) end
+
+function TriggerSkill:canWake(event, target, player, data)
+  return true
+end
+
+---@param event Event @ TriggerEvent
+---@param target ServerPlayer @ Player who triggered this event
+---@param player ServerPlayer @ Player who is operating
+---@param data any @ useful data of the event
+---@return boolean
+function TriggerSkill:enableToWake(event, target, player, data)
+  return
+    type(player:getMark(MarkEnum.StraightToWake)) == "table" and
+    table.find(player:getMark(MarkEnum.StraightToWake), function(skillName)
+      return self.name == skillName
+    end) or
+    self:canWake(event, target, player, data)
+end
 
 return TriggerSkill

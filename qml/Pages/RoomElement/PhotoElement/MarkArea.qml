@@ -33,7 +33,7 @@ Item {
       width: childrenRect.width
       height: 22
       Text {
-        text: Backend.translate(mark_name) + ' ' + Backend.translate(mark_extra)
+        text: Backend.translate(mark_name) + ' ' + mark_extra
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -82,6 +82,8 @@ Item {
         break;
       }
     }
+
+    data = (data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data));
     if (modelItem)
       modelItem.mark_extra = data;
     else

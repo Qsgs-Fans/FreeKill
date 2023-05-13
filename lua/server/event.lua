@@ -95,5 +95,10 @@ fk.PindianResultConfirmed = 71
 fk.PindianFinished = 72
 
 -- 73 = TurnEnd
+fk.AfterDrawPileShuffle = 74
 
-fk.NumOfEvents = 74
+fk.BeforeTriggerSkillUse = 75
+
+fk.BeforeDrawCard = 76
+
+fk.NumOfEvents = 77

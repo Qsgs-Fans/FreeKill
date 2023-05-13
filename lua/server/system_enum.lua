@@ -141,6 +141,7 @@ fk.IceDamage = 4
 ---@field public card Card
 ---@field public reason string
 ---@field public pattern string
+---@field public skipDrop boolean|null
 
 ---@class CardResponseEvent
 ---@field public from integer
@@ -189,3 +190,13 @@ fk.ReasonResonpse = 10
 ---@field public arg any
 ---@field public arg2 any
 ---@field public arg3 any
+
+---@class SkillUseStruct
+---@field public skill Skill
+---@field public willUse boolean
+
+---@class DrawCardStruct
+---@field public who ServerPlayer
+---@field public num number
+---@field public skillName string
+---@field public fromPlace "top"|"bottom"

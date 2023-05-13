@@ -41,8 +41,8 @@ Item {
   onSkillnameChanged: {
     let data = Backend.callLuaFunction("GetSkillData", [skillname]);
     data = JSON.parse(data);
-    if (data.frequency) {
-      skilltype = data.frequency;
+    if (data.frequency || data.switchSkillName) {
+      skilltype = data.switchSkillName ? 'switch' : data.frequency;
       visible = true;
     } else {
       visible = false;
@@ -59,6 +59,9 @@ Item {
         x.visible = true;
         bg.source = SkinBank.LIMIT_SKILL_DIR + "limit-used";
       }
+    } else if (skilltype === 'switch') {
+      visible = true;
+      bg.source = SkinBank.LIMIT_SKILL_DIR + (usedtimes < 1 ? 'switch' : 'switch-yin');
     }
   }
 }
