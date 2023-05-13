@@ -155,6 +155,8 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForResponseCard"] = "请打出卡牌 %1",
   ["#AskForNullification"] = "是否为目标为 %dest 的 %arg 使用无懈可击？",
   ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
+  ["#AskForPeaches"] = "%src 生命危急，需要 %arg 个桃",
+  ["#AskForPeachesSelf"] = "你生命危急，需要 %arg 个桃或酒",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
@@ -206,10 +208,12 @@ Fk:loadTranslationTable{
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
 
+  ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
   ["phase_draw"] = "摸牌阶段",
   ["phase_play"] = "出牌阶段",
   ["phase_discard"] = "弃牌阶段",
+  ["phase_finish"] = "结束阶段",
 
   ["chained"] = "横置",
   ["not-chained"] = "重置",
@@ -223,8 +227,8 @@ Fk:loadTranslationTable{
   ["$GameEnd"] = "== 游戏结束 ==",
 
   -- get/lose skill
-  ["#AcquireSkill"] = "%from 获得了技能“%arg”",
-	["#LoseSkill"] = "%from 失去了技能“%arg”",
+  ["#AcquireSkill"] = "%from 获得了技能 “%arg”",
+	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
   ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆顶",
@@ -233,6 +237,7 @@ Fk:loadTranslationTable{
   ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
   ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
@@ -288,6 +293,8 @@ Fk:loadTranslationTable{
   ["#LoseHP"] = "%from 失去了 %arg 点体力",
   ["#HealHP"] = "%from 回复了 %arg 点体力",
   ["#ShowHPAndMaxHP"] = "%from 现在的体力值为 %arg，体力上限为 %arg2",
+  ["#LoseMaxHP"] = "%from 减了 %arg 点体力上限",
+  ["#HealMaxHP"] = "%from 加了 %arg 点体力上限",
 
   -- dying and death
   ["#EnterDying"] = "%from 进入了濒死阶段",

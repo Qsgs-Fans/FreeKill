@@ -148,22 +148,21 @@ local ganglie = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    local room = target.room
-    return data.from ~= nil and
-      target == player and
+    return target == player and
       target:hasSkill(self.name) and
       not target.dead
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
     local from = data.from
+    if from then room:doIndicate(player.id, {from.id}) end
     local judge = {
       who = player,
       reason = self.name,
-      pattern = ".|.|spade,club,diamond",
+      pattern = ".|.|^heart",
     }
     room:judge(judge)
-    if judge.card.suit ~= Card.Heart then
+    if judge.card.suit ~= Card.Heart and from then
       local discards = room:askForDiscard(from, 2, 2, false, self.name, true)
       if #discards == 0 then
         room:damage{
@@ -236,8 +235,7 @@ local luoyi = fk.CreateTriggerSkill{
 
   refresh_events = {fk.DamageCaused},
   can_refresh = function(self, event, target, player, data)
-    if not (target == player and player:hasSkill(self.name) and
-      player:usedSkillTimes(self.name) > 0) then
+    if target ~= player or player:usedSkillTimes(self.name) == 0 then
       return
     end
 
@@ -577,8 +575,16 @@ local longdan = fk.CreateViewAsSkill{
   pattern = "slash,jink",
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
-    local c = Fk:getCardById(to_select)
-    return c.trueName == "slash" or c.name == "jink"
+    local _c = Fk:getCardById(to_select)
+    local c
+    if _c.trueName == "slash" then
+      c = Fk:cloneCard("jink")
+    elseif _c.name == "jink" then
+      c = Fk:cloneCard("slash")
+    else
+      return false
+    end
+    return (Fk.currentResponsePattern == nil and c.skill:canUse(Self)) or (Fk.currentResponsePattern and Exppattern:Parse(Fk.currentResponsePattern):match(c))
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then

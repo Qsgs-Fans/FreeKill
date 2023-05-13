@@ -228,6 +228,19 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
     end
   end
 
+  self:sendLog{
+    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
+    from = player.id,
+    arg = num > 0 and num or - num,
+  }
+
+  self:sendLog{
+    type = "#ShowHPAndMaxHP",
+    from = player.id,
+    arg = player.hp,
+    arg2 = player.maxHp,
+  }
+
   self.logic:trigger(fk.MaxHpChanged, player, { num = num })
   return true
 end

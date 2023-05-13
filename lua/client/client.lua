@@ -414,9 +414,17 @@ local function sendMoveCardLog(move)
       arg2 = #move.ids,
       card = move.ids,
     }
-  elseif move.fromArea == Card.DrawPile and move.toArea == Card.PlayerHand then
+  elseif move.moveReason == fk.ReasonDraw then
     ClientInstance:appendLog{
       type = "$DrawCards",
+      from = move.to,
+      card = move.ids,
+      arg = #move.ids,
+    }
+  elseif (move.fromArea == Card.DrawPile or move.fromArea == Card.DiscardPile)
+    and move.moveReason == fk.ReasonPrey then
+    ClientInstance:appendLog{
+      type = "$PreyCardsFromPile",
       from = move.to,
       card = move.ids,
       arg = #move.ids,
