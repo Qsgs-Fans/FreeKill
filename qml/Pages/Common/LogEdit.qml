@@ -40,7 +40,7 @@ ListView {
     let autoScroll = atYEnd;
     logModel.append({ logText: text });
     if (autoScroll && contentHeight > contentY + height) {
-      contentY = contentHeight - height;
+      root.currentIndex++;
     }
   }
 }

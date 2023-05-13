@@ -29,6 +29,7 @@ Flickable {
       id: skillDesc
 
       Layout.fillWidth: true
+      leftPadding: 16
       font.pixelSize: 18
 
       readOnly: true
@@ -49,7 +50,7 @@ Flickable {
 
     let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {
-      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+      skillDesc.append("<b>【" + Backend.translate(t.name) + "】</b> " + t.description)
     });
   }
 }
