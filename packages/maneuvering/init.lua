@@ -249,7 +249,7 @@ local fireAttackSkill = fk.CreateActiveSkill{
         from = from,
         to = to,
         card = cardEffectEvent.card,
-        damage = 1,
+        damage = 1 + (cardEffectEvent.additionalDamage or 0),
         damageType = fk.FireDamage,
         skillName = self.name
       })

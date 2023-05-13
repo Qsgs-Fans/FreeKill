@@ -70,8 +70,39 @@ local choosePlayersSkill = fk.CreateActiveSkill{
   max_target_num = function(self) return self.num end,
 }
 
+local maxCardsSkill = fk.CreateMaxCardsSkill{
+  name = "max_cards_skill",
+  global = true,
+  correct_func = function(self, player)
+    return player:getMark("AddMaxCards") + player:getMark("AddMaxCards-turn") - player:getMark("MinusMaxCards") - player:getMark("MinusMaxCards-turn")
+  end,
+}
+
+local moveTokenSkill = fk.CreateTriggerSkill{
+  name = "move_token_skill",
+  global = true,
+
+  refresh_events = {fk.GameStart},  --refresh优先于on_use，不要在正常的游戏开始发牌技能refresh中拿牌
+  can_refresh = function(self, event, target, player, data)
+    return player.seat == 1
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    for i = #room.draw_pile, 1, -1 do
+      if Fk:getCardById(room.draw_pile[i]).name[1] == "&" then
+        local id = room.draw_pile[i]
+        table.removeOne(room.draw_pile, id)
+        table.insert(room.void, id)
+        room:setCardArea(id, Card.Void, nil)
+      end
+    end
+  end,
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
   choosePlayersSkill,
+  maxCardsSkill,
+  moveTokenSkill,
 }

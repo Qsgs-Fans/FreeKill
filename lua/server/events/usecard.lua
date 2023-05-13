@@ -210,7 +210,7 @@ GameEvent.cleaners[GameEvent.UseCard] = function(self)
     self:moveCards({
       ids = leftRealCardIds,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
+      moveReason = fk.ReasonUse,
     })
   end
 end
@@ -271,7 +271,7 @@ GameEvent.cleaners[GameEvent.RespondCard] = function(self)
     self:moveCards({
       ids = realCardIds,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
+      moveReason = fk.ReasonResonpse,
     })
   end
 end

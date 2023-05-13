@@ -22,7 +22,7 @@ Rectangle {
         id: chatLogBox
         anchors.fill: parent
         anchors.margins: 10
-        font.pixelSize: 14
+        //font.pixelSize: 14
       }
     }
 
