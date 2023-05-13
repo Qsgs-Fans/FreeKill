@@ -146,7 +146,7 @@ function getPhotoOrDashboard(id) {
 function getAreaItem(area, id) {
   if (area === Card.DrawPile) {
     return drawPile;
-  } else if (area === Card.DiscardPile || area === Card.Processing) {
+  } else if (area === Card.DiscardPile || area === Card.Processing || area === Card.Void) {
     return tablePile;
   } else if (area === Card.AG) {
     return popupBox.item;
