@@ -87,18 +87,15 @@ local moveTokenSkill = fk.CreateTriggerSkill{
     return player.seat == 1
   end,
   on_refresh = function(self, event, target, player, data)
-    local room = Fk:currentRoom()
-    local tokens = {}
-    for _, id in ipairs(room.draw_pile) do
-      if Fk:getCardById(id).name[1] == "&" then
-        table.insertIfNeed(tokens, id)
+    local room = player.room
+    for i = #room.draw_pile, 1, -1 do
+      if Fk:getCardById(room.draw_pile[i]).name[1] == "&" then
+        local id = room.draw_pile[i]
+        table.removeOne(room.draw_pile, id)
+        table.insert(room.void, id)
+        room:setCardArea(id, Card.Void, nil)
       end
     end
-    room:moveCards({
-      ids = tokens,
-      toArea = Card.Void,
-      moveReason = fk.ReasonJustMove,
-    })
   end,
 }
 
