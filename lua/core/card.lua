@@ -343,7 +343,7 @@ end
 ---@param diff boolean
 ---@return boolean
 function Card:compareSuitWith(anotherCard, diff)
-  if table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
+  if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
     return false
   end
 
@@ -358,7 +358,7 @@ end
 ---@param diff boolean
 ---@return boolean
 function Card:compareColorWith(anotherCard, diff)
-  if table.contains({ self.color, anotherCard.color }, Card.NoColor) then
+  if self ~= anotherCard and table.contains({ self.color, anotherCard.color }, Card.NoColor) then
     return false
   end
 
@@ -373,7 +373,7 @@ end
 ---@param diff boolean
 ---@return boolean
 function Card:compareNumberWith(anotherCard, diff)
-  if self.number < 1 or anotherCard.number < 1 then
+  if self ~= anotherCard and self.number < 1 or anotherCard.number < 1 then
     return false
   end
 

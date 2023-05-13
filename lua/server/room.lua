@@ -2549,11 +2549,17 @@ end
 
 ---@param pattern string
 ---@param num number|null
----@param fromPile number|null
+---@param fromPile string|null @ 查找的来源区域，值为drawPile|discardPile|allPiles
 ---@return cardId[]
-function Room:getCardFromPileByRule(pattern, num, fromPile)
+function Room:getCardsFromPileByRule(pattern, num, fromPile)
   num = num or 1
-  local pileToSearch = fromPile == Card.DiscardPile and self.discard_pile or self.draw_pile
+  local pileToSearch = self.draw_pile
+  if fromPile == "discardPile" then
+    pileToSearch = self.discard_pile
+  elseif fromPile == "allPiles" then
+    pileToSearch = table.clone(self.draw_pile)
+    table.insertTable(pileToSearch, self.discard_pile)
+  end
 
   local cardPack = {}
   if num < 3 then
