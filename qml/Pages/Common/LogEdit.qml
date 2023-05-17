@@ -5,15 +5,12 @@ import QtQuick.Controls
 
 ListView {
   id: root
-  //property alias font: textEdit.font
-  //property alias text: textEdit.text
-  //property alias color: textEdit.color
-  //property alias textFormat: textEdit.textFormat
 
-  //flickableDirection: Flickable.VerticalFlick
-  //contentWidth: textEdit.width
-  //contentHeight: textEdit.height
   clip: true
+
+  highlight: Rectangle { color: "#EEEEEE"; radius: 5 }
+  highlightMoveDuration: 500
+
   ScrollBar.vertical: ScrollBar {
     parent: root.parent
     anchors.top: root.top
@@ -30,17 +27,27 @@ ListView {
     clip: true
     readOnly: true
     selectByKeyboard: true
-    selectByMouse: true
+    selectByMouse: false
     wrapMode: TextEdit.WrapAnywhere
     textFormat: TextEdit.RichText
     font.pixelSize: 16
+
+    TapHandler {
+      onTapped: root.currentIndex = index;
+    }
+  }
+
+  Button {
+    text: "Return to Bottom"
+    visible: root.currentIndex !== logModel.count - 1
+    onClicked: root.currentIndex = logModel.count - 1;
   }
 
   function append(text) {
-    let autoScroll = atYEnd;
+    let autoScroll = root.currentIndex === logModel.count - 1;
     logModel.append({ logText: text });
-    if (autoScroll && contentHeight > contentY + height) {
-      contentY = contentHeight - height;
+    if (autoScroll) {
+      root.currentIndex = logModel.count - 1;
     }
   }
 }
