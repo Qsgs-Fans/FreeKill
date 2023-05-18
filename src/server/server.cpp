@@ -9,7 +9,6 @@
 
 #include "client_socket.h"
 #include "packman.h"
-#include "parser.h"
 #include "player.h"
 #include "room.h"
 #include "router.h"
@@ -27,7 +26,6 @@ Server::Server(QObject *parent) : QObject(parent) {
   file.open(QIODevice::ReadOnly);
   QTextStream in(&file);
   public_key = in.readAll();
-  Parser::parseFkp();
   md5 = calcFileMD5();
   readConfig();
 

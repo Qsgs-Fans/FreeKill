@@ -16,6 +16,3 @@
     inner/index.rst
     dev/index.rst
     api/index.rst
-    fkp/usr/index.rst
-    fkp/ref/index.rst
-    fkp/dev/index.rst
