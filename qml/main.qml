@@ -87,6 +87,7 @@ Item {
     font.family: fontLibian.name
     style: Text.Outline
     styleColor: "#3D2D1C"
+    textFormat: Text.RichText
     width: parent.width * 0.7
     horizontalAlignment: Text.AlignHCenter
     wrapMode: Text.WrapAnywhere
