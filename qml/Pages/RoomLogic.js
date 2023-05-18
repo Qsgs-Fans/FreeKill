@@ -78,6 +78,18 @@ function doOkButton() {
     ));
     return;
   }
+  if (roomScene.extra_data.luckCard) {
+    okButton.enabled = false;
+    ClientInstance.notifyServer("PushRequest", [
+      "luckcard", true
+    ].join(","));
+
+    if (roomScene.extra_data.time == 1) {
+      roomScene.state = "notactive";
+    }
+
+    return;
+  }
   replyToServer("1");
 }
 
@@ -103,6 +115,13 @@ function doCancelButton() {
     return;
   }
 
+  if (roomScene.extra_data.luckCard) {
+    ClientInstance.notifyServer("PushRequest", [
+      "luckcard", false
+    ].join(","));
+    roomScene.state = "notactive";
+    return;
+  }
   replyToServer("__cancel");
 }
 
@@ -1059,4 +1078,18 @@ callbacks["ChangeSelf"] = (j) => {
     return;
   }
   changeSelf(data);
+}
+
+callbacks["AskForLuckCard"] = (j) => {
+  // jsonData: int time
+  const time = parseInt(j);
+  roomScene.promptText = Backend.translate("#AskForLuckCard").arg(time);
+  roomScene.state = "replying";
+  roomScene.extra_data = {
+    luckCard: true,
+    time: time,
+  };
+  roomScene.okCancel.visible = true;
+  roomScene.okButton.enabled = true;
+  roomScene.cancelButton.enabled = true;
 }

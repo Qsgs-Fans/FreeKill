@@ -85,6 +85,27 @@ request_handlers["prelight"] = function(room, id, reqlist)
   p:prelightSkill(reqlist[3], reqlist[4] == "true")
 end
 
+request_handlers["luckcard"] = function(room, id, reqlist)
+  local p = room:getPlayerById(id)
+  local cancel = reqlist[3] == "false"
+  local luck_data = room:getTag("LuckCardData")
+  local pdata = luck_data[id]
+
+  if not cancel then
+    pdata.luckTime = pdata.luckTime - 1
+    luck_data.discardInit(room, p)
+    luck_data.drawInit(room, p, pdata.num)
+  else
+    pdata.luckTime = 0
+  end
+
+  if pdata.luckTime > 0 then
+    p:doNotify("AskForLuckCard", pdata.luckTime)
+  end
+
+  room:setTag("LuckCardData", luck_data)
+end
+
 request_handlers["changeself"] = function(room, id, reqlist)
   local p = room:getPlayerById(id)
   local toId = tonumber(reqlist[3])
@@ -107,7 +128,8 @@ request_handlers["changeself"] = function(room, id, reqlist)
   })
 end
 
-local function requestLoop(self, rest_time)
+local function requestLoop(self)
+  local rest_time = 0
   while true do
     local ret = false
     local request = self.room:fetchRequest()
@@ -122,7 +144,7 @@ local function requestLoop(self, rest_time)
       -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
       fk.QThread_msleep(10)
     end
-    coroutine.yield(ret)
+    rest_time = coroutine.yield(ret)
   end
 end
 

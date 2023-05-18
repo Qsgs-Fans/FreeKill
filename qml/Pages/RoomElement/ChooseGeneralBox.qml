@@ -106,6 +106,16 @@ GraphicsBox {
 
           onClicked: close();
         }
+
+        MetroButton {
+          id: detailBtn
+          enabled: choices.length > 0
+          text: Backend.translate("Show General Detail")
+          onClicked: roomScene.startCheat(
+            "RoomElement/Cheat/GeneralDetail.qml",
+            { generals: choices }
+          );
+        }
       }
     }
   }
@@ -179,6 +189,7 @@ GraphicsBox {
         item.goBack(true);
       }
     }
+    root.choicesChanged();
 
     fightButton.enabled = (choices.length == choiceNum);
 
@@ -201,10 +212,10 @@ GraphicsBox {
       if (JSON.parse(Backend.callLuaFunction(
         "GetSameGenerals", [generalList.get(i).name])
       ).length > 0) {
-        convertBtn.visible = true;
+        convertBtn.enabled = true;
         return;
       }
     }
-    convertBtn.visible = false;
+    convertBtn.enabled = false;
   }
 }

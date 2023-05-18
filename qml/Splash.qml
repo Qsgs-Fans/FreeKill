@@ -151,10 +151,13 @@ Rectangle {
   }
 
   Text {
-    text: "FK联机交流群：531553435"
+    text: "常用联机IP：175.178.66.93\nFK联机交流群：531553435"
     font.pixelSize: 20
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 20
     anchors.right: parent.right
+    anchors.rightMargin: 20
+    horizontalAlignment: Text.AlignRight
   }
 
   //--------------------Disappear--------------

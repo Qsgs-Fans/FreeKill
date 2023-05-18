@@ -96,6 +96,23 @@ ColumnLayout {
     }
   }
 
+  RowLayout {
+    anchors.rightMargin: 8
+    spacing: 16
+    Text {
+      text: Backend.translate("Luck Card Times")
+    }
+    SpinBox {
+      from: 0
+      to: 8
+      value: config.preferredLuckTime
+
+      onValueChanged: {
+        config.preferredLuckTime = value;
+      }
+    }
+  }
+
   Switch {
     id: freeAssignCheck
     checked: Debugging ? true : false
@@ -136,6 +153,7 @@ ColumnLayout {
             gameMode: config.preferedMode,
             disabledPack: config.disabledPack,
             generalNum: config.preferredGeneralNum,
+            luckTime: config.preferredLuckTime,
             disabledGenerals,
           }])
         );

@@ -71,8 +71,8 @@ function Room:initialize(_room)
     local main_co = coroutine.create(function()
       self:run()
     end)
-    local request_co = coroutine.create(function(rest)
-      self:requestLoop(rest)
+    local request_co = coroutine.create(function()
+      self:requestLoop()
     end)
     local ret, err_msg, rest_time = true, true
     while not self.game_finished do
@@ -642,8 +642,7 @@ function Room:doRaceRequest(command, players, jsonData)
       break
     end
 
-    coroutine.yield("__handleRequest", remainTime - elapsed)
-    fk.QThread_msleep(10)
+    coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
   end
 
   for _, p in ipairs(self.players) do
@@ -2525,7 +2524,7 @@ function Room:gameOver(winner)
   end
 
   self.room:gameOver()
-  coroutine.yield("__handleRequest")
+  coroutine.yield("__handleRequest", 0)
 end
 
 ---@param card Card

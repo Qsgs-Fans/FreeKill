@@ -15,6 +15,7 @@ Window {
   minimumHeight: 90
   title: "FreeKill v" + FkVersion
   property var callbacks: Logic.callbacks
+  property var tipList: []
 
 Item {
   id: mainWindow
@@ -67,10 +68,45 @@ Item {
   onBusyChanged: busyText = "";
 
   BusyIndicator {
+    id: busyIndicator
     running: true
     anchors.centerIn: parent
     visible: mainWindow.busy === true
   }
+
+  Text {
+    anchors.top: busyIndicator.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.topMargin: 8
+    visible: mainWindow.busy === true
+
+    property int idx: 1
+    text: tipList[idx - 1] ?? ""
+    color: "#F0E5DA"
+    font.pixelSize: 20
+    font.family: fontLibian.name
+    style: Text.Outline
+    styleColor: "#3D2D1C"
+    textFormat: Text.RichText
+    width: parent.width * 0.7
+    horizontalAlignment: Text.AlignHCenter
+    wrapMode: Text.WrapAnywhere
+
+    onVisibleChanged: idx = 0;
+
+    Timer {
+      running: parent.visible
+      interval: 3600
+      repeat: true
+      onTriggered: {
+        const oldIdx = parent.idx;
+        while (parent.idx === oldIdx) {
+          parent.idx = Math.floor(Math.random() * tipList.length) + 1;
+        }
+      }
+    }
+  }
+
   Item {
     visible: mainWindow.busy === true && mainWindow.busyText !== ""
     anchors.bottom: parent.bottom
@@ -247,6 +283,9 @@ Item {
       width = config.winWidth;
       height = config.winHeight;
     }
+
+    const tips = Backend.loadTips();
+    tipList = tips.trim().split("\n");
   }
 
   onClosing: {

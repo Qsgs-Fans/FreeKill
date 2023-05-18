@@ -19,13 +19,6 @@ Flickable {
     width: parent.width - 40
     x: 20
 
-    // TODO: player details
-    Text {
-      id: screenName
-      Layout.fillWidth: true
-      font.pixelSize: 18
-    }
-
     TextEdit {
       id: skillDesc
 
@@ -41,16 +34,19 @@ Flickable {
   }
 
   onExtra_dataChanged: {
-    if (!extra_data.photo) return;
-    screenName.text = "";
+    if (!extra_data.generals) return;
     skillDesc.text = "";
 
-    let id = extra_data.photo.playerid;
-    if (id == 0) return;
-
-    let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
-    data.forEach(t => {
-      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+    extra_data.generals.forEach((g) => {
+      let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
+      skillDesc.append(Backend.translate(data.kingdom) + " " + Backend.translate(g) + " " + data.hp + "/" + data.maxHp);
+      data.skill.forEach(t => {
+        skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+      });
+      data.related_skill.forEach(t => {
+        skillDesc.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
+      });
+      skillDesc.append("\n");
     });
   }
 }

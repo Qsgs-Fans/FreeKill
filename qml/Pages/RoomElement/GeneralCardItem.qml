@@ -111,7 +111,7 @@ CardItem {
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
-    lineHeight: Math.max(1.4 - lineCount / 10, 0.6)
+    lineHeight: Math.max(1.4 - lineCount / 8, 0.6)
     style: Text.Outline
     wrapMode: Text.WrapAnywhere
   }

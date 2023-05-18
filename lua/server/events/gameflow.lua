@@ -1,35 +1,113 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+local function drawInit(room, player, n)
+  -- TODO: need a new function to call the UI
+  local cardIds = room:getNCards(n)
+  player:addCards(Player.Hand, cardIds)
+  for _, id in ipairs(cardIds) do
+    Fk:filterCard(id, player)
+  end
+  local move_to_notify = {}   ---@type CardsMoveStruct
+  move_to_notify.toArea = Card.PlayerHand
+  move_to_notify.to = player.id
+  move_to_notify.moveInfo = {}
+  move_to_notify.moveReason = fk.ReasonDraw
+  for _, id in ipairs(cardIds) do
+    table.insert(move_to_notify.moveInfo,
+    { cardId = id, fromArea = Card.DrawPile })
+  end
+  room:notifyMoveCards(nil, {move_to_notify})
+
+  for _, id in ipairs(cardIds) do
+    room:setCardArea(id, Card.PlayerHand, player.id)
+  end
+end
+
+local function discardInit(room, player)
+  local cardIds = player:getCardIds(Player.Hand)
+  player:removeCards(Player.Hand, cardIds)
+  table.insertTable(room.draw_pile, cardIds)
+  for _, id in ipairs(cardIds) do
+    Fk:filterCard(id, nil)
+  end
+
+  local move_to_notify = {}   ---@type CardsMoveStruct
+  move_to_notify.from = player.id
+  move_to_notify.toArea = Card.DrawPile
+  move_to_notify.moveInfo = {}
+  move_to_notify.moveReason = fk.ReasonJustMove
+  for _, id in ipairs(cardIds) do
+    table.insert(move_to_notify.moveInfo,
+    { cardId = id, fromArea = Card.PlayerHand })
+  end
+  room:notifyMoveCards(nil, {move_to_notify})
+
+  for _, id in ipairs(cardIds) do
+    room:setCardArea(id, Card.DrawPile, nil)
+  end
+end
+
 GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local room = self.room
+
+  local luck_data = {
+    drawInit = drawInit,
+    discardInit = discardInit,
+    playerList = table.map(room.alive_players, Util.IdMapper),
+  }
+
   for _, player in ipairs(room.alive_players) do
     local draw_data = { num = 4 }
     room.logic:trigger(fk.DrawInitialCards, player, draw_data)
+    luck_data[player.id] = draw_data
+    luck_data[player.id].luckTime = room.settings.luckTime
+    if player.id < 0 then -- Robot
+      luck_data[player.id].luckTime = 0
+    end
     if draw_data.num > 0 then
-      -- TODO: need a new function to call the UI
-      local cardIds = room:getNCards(draw_data.num)
-      player:addCards(Player.Hand, cardIds)
-      for _, id in ipairs(cardIds) do
-        Fk:filterCard(id, player)
-      end
-      local move_to_notify = {}   ---@type CardsMoveStruct
-      move_to_notify.toArea = Card.PlayerHand
-      move_to_notify.to = player.id
-      move_to_notify.moveInfo = {}
-      move_to_notify.moveReason = fk.ReasonDraw
-      for _, id in ipairs(cardIds) do
-        table.insert(move_to_notify.moveInfo,
-        { cardId = id, fromArea = Card.DrawPile })
-      end
-      room:notifyMoveCards(nil, {move_to_notify})
-
-      for _, id in ipairs(cardIds) do
-        room:setCardArea(id, Card.PlayerHand, player.id)
-      end
-
-      room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+      drawInit(room, player, draw_data.num)
     end
   end
+
+  if room.settings.luckTime <= 0 then
+    for _, player in ipairs(room.alive_players) do
+      local draw_data = luck_data[player.id]
+      draw_data.luckTime = nil
+      room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+    end
+    return
+  end
+
+  room:setTag("LuckCardData", luck_data)
+  room:notifyMoveFocus(room.alive_players, "AskForLuckCard")
+  room:doBroadcastNotify("AskForLuckCard", room.settings.luckTime or 4)
+
+  local remainTime = room.timeout
+  local currentTime = os.time()
+  local elapsed = 0
+
+  while true do
+    elapsed = os.time() - currentTime
+    if remainTime - elapsed <= 0 then
+      break
+    end
+
+    if table.every(room:getTag("LuckCardData").playerList, function(id)
+      return room:getTag("LuckCardData")[id].luckTime == 0
+    end) then
+      break
+    end
+
+    coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
+  end
+
+  for _, player in ipairs(room.alive_players) do
+    local draw_data = luck_data[player.id]
+    draw_data.luckTime = nil
+    room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+  end
+
+  room:removeTag("LuckCardData")
 end
 
 GameEvent.functions[GameEvent.Round] = function(self)
