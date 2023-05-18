@@ -46,6 +46,18 @@
 </context>
 
 <context>
+  <name>PackMan</name>
+  <message>
+    <source>Syncing packages, please do not close the application.</source>
+    <translation>正在自动同步拓展包，请千万不要中途关闭程序。</translation>
+  </message>
+  <message>
+    <source>[%1/%2] upgrading package '%3'</source>
+    <translation>[%1/%2] 更新拓展包 '%3'</translation>
+  </message>
+</context>
+
+<context>
   <name>Init</name>
   <message>
     <source>Username</source>

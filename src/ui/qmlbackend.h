@@ -52,6 +52,8 @@ public:
   qreal volume() const { return m_volume; }
   void setVolume(qreal v) { m_volume = v; }
 
+  void showToast(const QString &s) { emit notifyUI("ShowToast", s); }
+
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
   void volumeChanged(qreal);

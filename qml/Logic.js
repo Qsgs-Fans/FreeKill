@@ -139,3 +139,5 @@ callbacks["ServerMessage"] = function(jsonData) {
   let current = mainStack.currentItem;  // lobby or room
   current.sendDanmaku('<font color="gold"><b>[Server] </b></font>' + jsonData);
 }
+
+callbacks["ShowToast"] = (j) => toast.show(j);

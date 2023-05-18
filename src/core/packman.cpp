@@ -32,18 +32,27 @@ QString PackMan::getPackSummary() {
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
-  auto f = [=]() {
+  static const auto f = [=]() {
     // First, disable all packages
     foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
       disablePack(e.toObject()["name"].toString());
     }
 
+#ifndef FK_SERVER_ONLY
+    Backend->showToast(tr("Syncing packages, please do not close the application."));
+#endif
+
     // Then read conf from string
     auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
     auto arr = doc.array();
+    int i = 0;
     foreach (auto e, arr) {
+      i++;
       auto obj = e.toObject();
       auto name = obj["name"].toString();
+#ifndef FK_SERVER_ONLY
+      Backend->showToast(tr("[%1/%2] upgrading package '%3'").arg(i).arg(arr.count()).arg(name));
+#endif
       if (SelectFromDatabase(
               db,
               QString("SELECT name FROM packages WHERE name='%1';").arg(name))
@@ -72,7 +81,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
 }
 
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
-  auto threadFunc = [=]() {
+  static const auto threadFunc = [=]() {
     int error = clone(url);
     if (error < 0)
       return;
