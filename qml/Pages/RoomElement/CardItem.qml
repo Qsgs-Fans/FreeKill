@@ -46,6 +46,7 @@ Item {
   property bool selected: false
   property bool draggable: false
   property bool autoBack: true
+  property bool showDetail: false
   property int origX: 0
   property int origY: 0
   property real origOpacity: 1
@@ -66,6 +67,11 @@ Item {
   signal moveFinished()
   signal generalChanged()   // For choose general freely
   signal hoverChanged(bool enter)
+
+  onRightClicked: {
+    if (!showDetail) return;
+    roomScene.startCheat("RoomElement/Cheat/CardDetail.qml", { card: this });
+  }
 
   RectangularGlow {
     id: glowItem

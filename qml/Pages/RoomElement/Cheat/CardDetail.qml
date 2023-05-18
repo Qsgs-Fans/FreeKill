@@ -41,16 +41,10 @@ Flickable {
   }
 
   onExtra_dataChanged: {
-    if (!extra_data.photo) return;
-    screenName.text = "";
-    skillDesc.text = "";
-
-    let id = extra_data.photo.playerid;
-    if (id == 0) return;
-
-    let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
-    data.forEach(t => {
-      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
-    });
+    const card = extra_data.card;
+    if (!card) return;
+    const name = card.virt_name ? card.virt_name : card.name;
+    screenName.text = Backend.translate(name);
+    skillDesc.text = Backend.translate(":" + name);
   }
 }
