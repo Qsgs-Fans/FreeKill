@@ -5,9 +5,6 @@ cmake_minimum_required(VERSION 3.16)
 project(FreeKill VERSION 0.1.8)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
-include_directories(fkparse/src)
-add_subdirectory(fkparse)
-
 find_package(Qt6 REQUIRED COMPONENTS
   Network
 )

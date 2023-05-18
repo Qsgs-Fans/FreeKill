@@ -1,6 +1,3 @@
-[submodule "fkparse"]
-	path = fkparse
-	url = https://github.com/Notify-ctrl/fkparse
 [submodule "include"]
 	path = include
 	url = https://github.com/Notify-ctrl/fk_headers

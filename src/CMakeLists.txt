@@ -4,7 +4,6 @@ set(freekill_SRCS
   "main.cpp"
   "core/player.cpp"
   "core/util.cpp"
-  "core/parser.cpp"
   "core/packman.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"
@@ -23,7 +22,6 @@ if (NOT DEFINED FK_SERVER_ONLY)
   )
 endif ()
 
-set(FKP_LIB fkparse)
 set(QT_LIB
   Qt6::Network
 )
@@ -88,11 +86,9 @@ target_link_libraries(FreeKill PRIVATE
   ${CRYPTO_LIB}
   ${SSL_LIB}
   ${READLINE_LIB}
-  ${FKP_LIB}
   ${QT_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
 )
 
 install(TARGETS FreeKill DESTINATION bin)
-install(TARGETS fkparse DESTINATION lib)
