@@ -106,6 +106,16 @@ GraphicsBox {
 
           onClicked: close();
         }
+
+        MetroButton {
+          id: detailBtn
+          visible: choices.length > 0
+          text: Backend.translate("Show General Detail")
+          onClicked: roomScene.startCheat(
+            "RoomElement/Cheat/GeneralDetail.qml",
+            { generals: choices }
+          );
+        }
       }
     }
   }
@@ -179,6 +189,7 @@ GraphicsBox {
         item.goBack(true);
       }
     }
+    root.choicesChanged();
 
     fightButton.enabled = (choices.length == choiceNum);
 
