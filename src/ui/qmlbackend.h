@@ -38,6 +38,7 @@ public:
 
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();
+  Q_INVOKABLE QString loadTips();
   Q_INVOKABLE void saveConf(const QString &conf);
 
   Q_INVOKABLE void replyDelayTest(const QString &screenName, const QString &cipher);

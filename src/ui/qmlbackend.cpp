@@ -231,6 +231,18 @@ QString QmlBackend::loadConf() {
   return conf.readAll();
 }
 
+QString QmlBackend::loadTips() {
+  QFile conf("waiting_tips.txt");
+  if (!conf.exists()) {
+    conf.open(QIODevice::WriteOnly);
+    static const char *init_conf = "转啊~ 转啊~";
+    conf.write(init_conf);
+    return init_conf;
+  }
+  conf.open(QIODevice::ReadOnly);
+  return conf.readAll();
+}
+
 void QmlBackend::saveConf(const QString &conf) {
   QFile c("freekill.client.config.json");
   c.open(QIODevice::WriteOnly);
