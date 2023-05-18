@@ -92,6 +92,8 @@ Item {
     horizontalAlignment: Text.AlignHCenter
     wrapMode: Text.WrapAnywhere
 
+    onVisibleChanged: idx = 0;
+
     Timer {
       running: parent.visible
       interval: 3600
