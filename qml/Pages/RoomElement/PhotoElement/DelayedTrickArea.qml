@@ -5,9 +5,6 @@ import ".."
 import "../../skin-bank.js" as SkinBank
 
 Item {
-  property alias rows: grid.rows
-  property alias columns: grid.columns
-
   InvisibleCardArea {
     id: area
     checkExisting: true
@@ -17,16 +14,17 @@ Item {
     id: cards
   }
 
-  Grid {
+  Row {
     id: grid
     anchors.fill: parent
-    rows: 100
-    columns: 100
+    spacing: -4
 
     Repeater {
       model: cards
 
       Image {
+        height: 55 * 0.8
+        width: 47 * 0.8
         source: SkinBank.DELAYED_TRICK_DIR + name
       }
     }

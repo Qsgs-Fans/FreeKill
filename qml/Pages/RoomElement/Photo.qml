@@ -511,7 +511,6 @@ Item {
 
   DelayedTrickArea {
     id: delayedTrickAreaItem
-    rows: 1
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 8
   }
