@@ -25,6 +25,7 @@ QtObject {
   property var disabledGenerals: []
 
   property int preferredTimeout
+  property int preferredLuckTime
 
   // Player property of client
   property string serverAddr
@@ -60,6 +61,7 @@ QtObject {
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
+    preferredLuckTime = conf.preferredLuckTime ?? 0;
     disabledGenerals = conf.disabledGenerals ?? [];
   }
 
@@ -83,6 +85,7 @@ QtObject {
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
     conf.preferredTimeout = preferredTimeout;
+    conf.preferredLuckTime = preferredLuckTime;
     conf.disabledGenerals = disabledGenerals;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
