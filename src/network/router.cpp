@@ -209,13 +209,23 @@ void Router::handlePacket(const QByteArray &rawPacket) {
                                     const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto roomId = arr[0].toInt();
-      ServerInstance->findRoom(roomId)->addPlayer(sender);
+      auto room = ServerInstance->findRoom(roomId);
+      if (room) {
+        room->addPlayer(sender);
+      } else {
+        sender->doNotify("ErrorMsg", "no such room");
+      }
     };
     lobby_actions["ObserveRoom"] = [](ServerPlayer *sender,
                                       const QString &jsonData) {
       auto arr = String2Json(jsonData).array();
       auto roomId = arr[0].toInt();
-      ServerInstance->findRoom(roomId)->addObserver(sender);
+      auto room = ServerInstance->findRoom(roomId);
+      if (room) {
+        room->addObserver(sender);
+      } else {
+        sender->doNotify("ErrorMsg", "no such room");
+      }
     };
     lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData) {
       sender->getRoom()->chat(sender, jsonData);
