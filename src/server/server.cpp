@@ -6,6 +6,7 @@
 #include <qjsondocument.h>
 #include <qjsonvalue.h>
 #include <qobject.h>
+#include <qversionnumber.h>
 
 #include "client_socket.h"
 #include "packman.h"
@@ -195,7 +196,7 @@ void Server::processRequest(const QByteArray &msg) {
         doc[2] != "Setup")
       valid = false;
     else
-      valid = (String2Json(doc[3].toString()).array().size() == 3);
+      valid = (String2Json(doc[3].toString()).array().size() == 4);
   }
 
   if (!valid) {
@@ -213,6 +214,30 @@ void Server::processRequest(const QByteArray &msg) {
 
   QJsonArray arr = String2Json(doc[3].toString()).array();
 
+  auto client_ver = QVersionNumber::fromString(arr[3].toString());
+  auto ver = QVersionNumber::fromString(FK_VERSION);
+  int cmp = QVersionNumber::compare(ver, client_ver);
+  if (cmp != 0) {
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body
+        << (cmp < 0
+                ? QString("[\"server is still on version %%2\",\"%1\"]")
+                      .arg(FK_VERSION)
+                      .arg("1")
+                : QString(
+                      "[\"server is using version %%2, please update\",\"%1\"]")
+                      .arg(FK_VERSION)
+                      .arg("1"));
+
+    client->send(JsonArray2Bytes(body));
+    client->disconnectFromHost();
+    return;
+  }
+
   handleNameAndPassword(client, arr[0].toString(), arr[1].toString(),
                         arr[2].toString());
 }
@@ -229,6 +254,16 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
   if (decrypted_pw.length() > 32) {
     auto aes_bytes = decrypted_pw.first(32);
+
+    // tell client to install aes key
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "InstallKey";
+    body << "";
+    client->send(JsonArray2Bytes(body));
+
     client->installAESKey(aes_bytes);
     decrypted_pw.remove(0, 32);
   } else {

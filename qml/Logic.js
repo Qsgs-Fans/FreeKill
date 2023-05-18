@@ -35,12 +35,19 @@ callbacks["NetworkDelayTest"] = function(jsonData) {
   }
   config.cipherText = cipherText;
   Backend.replyDelayTest(config.screenName, cipherText);
-  Backend.installAESKey();
 }
 
 callbacks["ErrorMsg"] = function(jsonData) {
-  console.log("ERROR: " + jsonData);
-  toast.show(qsTr(jsonData), 5000);
+  let log;
+  try {
+    let a = JSON.parse(jsonData);
+    log = qsTr(a[0]).arg(a[1]);
+  } catch (e) {
+    log = qsTr(jsonData);
+  }
+
+  console.log("ERROR: " + log);
+  toast.show(log, 5000);
   mainWindow.busy = false;
   if (sheduled_download !== "") {
     mainWindow.busy = true;
@@ -141,3 +148,4 @@ callbacks["ServerMessage"] = function(jsonData) {
 }
 
 callbacks["ShowToast"] = (j) => toast.show(j);
+callbacks["InstallKey"] = (j) => Backend.installAESKey();
