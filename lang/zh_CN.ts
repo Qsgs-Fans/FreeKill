@@ -46,6 +46,18 @@
 </context>
 
 <context>
+  <name>PackMan</name>
+  <message>
+    <source>Syncing packages, please do not close the application.</source>
+    <translation>正在自动同步拓展包，请千万不要中途关闭程序。</translation>
+  </message>
+  <message>
+    <source>[%1/%2] upgrading package '%3'</source>
+    <translation>[%1/%2] 更新拓展包 '%3'</translation>
+  </message>
+</context>
+
+<context>
   <name>Init</name>
   <message>
     <source>Username</source>
@@ -134,6 +146,18 @@
   <message>
     <source>username or password error</source>
     <translation>用户名或密码错误</translation>
+  </message>
+  <message>
+    <source>INVALID SETUP STRING</source>
+    <translation>登录字符串不同，可能由于服务端版本太旧或者太新导致，建议联系服主解决</translation>
+  </message>
+  <message>
+    <source>server is still on version %1</source>
+    <translation>服务端使用的是旧版(%1)，请使用该版本进行联机或者通知服主更新版本</translation>
+  </message>
+  <message>
+    <source>server is using version %1, please update</source>
+    <translation>服务端使用的是版本%1，该更新你的客户端了</translation>
   </message>
 </context>
 
