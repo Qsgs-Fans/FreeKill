@@ -109,7 +109,7 @@ GraphicsBox {
 
         MetroButton {
           id: detailBtn
-          visible: choices.length > 0
+          enabled: choices.length > 0
           text: Backend.translate("Show General Detail")
           onClicked: roomScene.startCheat(
             "RoomElement/Cheat/GeneralDetail.qml",
@@ -212,10 +212,10 @@ GraphicsBox {
       if (JSON.parse(Backend.callLuaFunction(
         "GetSameGenerals", [generalList.get(i).name])
       ).length > 0) {
-        convertBtn.visible = true;
+        convertBtn.enabled = true;
         return;
       }
     }
-    convertBtn.visible = false;
+    convertBtn.enabled = false;
   }
 }
