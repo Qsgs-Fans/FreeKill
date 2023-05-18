@@ -1,7 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-local fkp_extensions = require "packages.test.test"
-local extension = fkp_extensions[1]
+local extension = Package("test_p_0")
 
 local cheat = fk.CreateActiveSkill{
   name = "cheat",
@@ -147,6 +146,7 @@ test2:addSkill(test_vs)
 test2:addSkill(test_trig)
 
 Fk:loadTranslationTable{
+  ["test_p_0"] = "测试包",
   ["test"] = "测试",
   ["test_filter"] = "破军",
   [":test_filter"] = "你的点数大于11的牌视为无中生有。",
@@ -155,4 +155,4 @@ Fk:loadTranslationTable{
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
 }
 
-return fkp_extensions
+return { extension }
