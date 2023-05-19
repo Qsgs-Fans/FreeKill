@@ -68,14 +68,15 @@ function arrangePhotos() {
 
 function doOkButton() {
   if (roomScene.state == "playing" || roomScene.state == "responding") {
-    replyToServer(JSON.stringify(
+    const reply = JSON.stringify(
       {
         card: dashboard.getSelectedCard(),
         targets: selected_targets,
         special_skill: roomScene.getCurrentCardUseMethod(),
         interaction_data: roomScene.skillInteraction.item ? roomScene.skillInteraction.item.answer : undefined,
       }
-    ));
+    );
+    replyToServer(reply);
     return;
   }
   if (roomScene.extra_data.luckCard) {
@@ -823,6 +824,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   let skill_name = data[0];
   let prompt = data[1];
   let cancelable = data[2];
+  let extra_data = data[3] ?? {};
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
       .arg(Backend.translate(skill_name));
@@ -834,7 +836,9 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   roomScene.state = "responding";
   roomScene.responding_card = ".";
   roomScene.autoPending = true;
-  dashboard.startPending(skill_name);
+  roomScene.extra_data = extra_data;
+  // dashboard.startPending(skill_name);
+  roomScene.activateSkill(skill_name, true);
   cancelButton.enabled = cancelable;
 }
 

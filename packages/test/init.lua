@@ -81,9 +81,9 @@ local test_active = fk.CreateActiveSkill{
     --local to = room:getPlayerById(effect.tos[1])
     -- room:swapSeat(from, to)
     --from:control(to)
-    local success, dat = room:askForUseViewAsSkill(from, "wusheng", nil, true)
+    local success, dat = room:askForUseViewAsSkill(from, "test_vs", nil, true)
     if success then
-      local card = Fk.skills["wusheng"]:viewAs(dat.cards)
+      local card = Fk.skills["test_vs"]:viewAs(dat.cards)
       room:useCard{
         from = from.id,
         tos = table.map(dat.targets, function(e) return {e} end),

@@ -895,6 +895,10 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local selected_cards = card_data.subcards
   self:doIndicate(player.id, targets)
 
+  if skill.interaction then
+    skill.interaction.data = data.interaction_data
+  end
+
   if skill:isInstanceOf(ActiveSkill) then
     skill:onUse(self, {
       from = player.id,
