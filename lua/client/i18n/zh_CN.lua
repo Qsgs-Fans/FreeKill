@@ -40,6 +40,9 @@ Fk:loadTranslationTable{
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
 
+  ["Give Flower"] = "送花",
+  ["Give Egg"] = "砸蛋",
+
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
   ["Generals Overview"] = "武将一览",
