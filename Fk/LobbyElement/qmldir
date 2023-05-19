@@ -1,0 +1,9 @@
+module Fk.LobbyElement
+AudioSetting 1.0 AudioSetting.qml
+BGSetting 1.0 BGSetting.qml
+CreateRoom 1.0 CreateRoom.qml
+EditProfile 1.0 EditProfile.qml
+PersonalSettings 1.0 PersonalSettings.qml
+RoomGeneralSettings 1.0 RoomGeneralSettings.qml
+RoomPackageSettings 1.0 RoomPackageSettings.qml
+UserInfo 1.0 UserInfo.qml

@@ -1,0 +1,3 @@
+module Fk.Common
+ChatBox 1.0 ChatBox.qml
+LogEdit 1.0 LogEdit.qml
