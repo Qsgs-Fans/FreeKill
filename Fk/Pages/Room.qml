@@ -9,7 +9,6 @@ import Fk.Common
 import Fk.RoomElement
 import "RoomLogic.js" as Logic
 
-
 Item {
   id: roomScene
 
@@ -713,20 +712,32 @@ Item {
   function specialChat(pid, data, msg) {
     // skill audio: %s%d
     // death audio: ~%s
-    // something special: .%s:...
+    // something special: !%s:...
 
     let time = data.time;
     let userName = data.userName;
     let general = Backend.translate(data.general);
 
-    if (msg.startsWith(".")) {
+    if (msg.startsWith("!")) {
       let splited = msg.split(":");
       let type = splited[0].slice(1);
       switch (type) {
-        case "egg": {
-          return true;
-        }
-        case "flower": {
+        case "Egg":
+        case "Flower": {
+          const fromId = pid;
+          const toId = parseInt(splited[1]);
+          const component = Qt.createComponent("../ChatAnim/" + type + ".qml");
+          //if (component.status !== Component.Ready)
+          //  return false;
+
+          const fromItem = Logic.getPhoto(fromId);
+          const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+          const toItem = Logic.getPhoto(toId);
+          const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
+          const egg = component.createObject(roomScene, { start: fromPos, end: toPos });
+          egg.finished.connect(() => egg.destroy());
+          egg.running = true;
+
           return true;
         }
         default:
