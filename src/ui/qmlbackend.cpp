@@ -106,10 +106,10 @@ void QmlBackend::joinServer(QString address) {
   client->connectToHost(addr, port);
 }
 
-void QmlBackend::quitLobby() {
+void QmlBackend::quitLobby(bool close) {
   if (ClientInstance)
-    ClientInstance->deleteLater();
-  if (ServerInstance)
+    delete ClientInstance;
+  if (ServerInstance && close)
     ServerInstance->deleteLater();
 }
 
