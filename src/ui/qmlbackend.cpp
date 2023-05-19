@@ -108,9 +108,9 @@ void QmlBackend::joinServer(QString address) {
 
 void QmlBackend::quitLobby() {
   if (ClientInstance)
-    delete ClientInstance;
-  // if (ServerInstance)
-  //   delete ServerInstance;
+    ClientInstance->deleteLater();
+  if (ServerInstance)
+    ServerInstance->deleteLater();
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
@@ -120,6 +120,7 @@ void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
 QString QmlBackend::translate(const QString &src) {
   if (!ClientInstance)
     return src;
+
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, "Translate");
   auto bytes = src.toUtf8();
@@ -172,6 +173,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
 
 QString QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params) {
+  if (!ClientInstance) return "{}";
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, func_name.toLatin1().data());
 

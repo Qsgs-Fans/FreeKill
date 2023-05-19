@@ -52,11 +52,11 @@ Server::Server(QObject *parent) : QObject(parent) {
         }
       }
 
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 20; i++) {
         if (!this->isListening) {
           return;
         }
-        QThread::sleep(2);
+        QThread::sleep(1);
       }
 
       foreach (auto p, this->players.values()) {
@@ -75,6 +75,12 @@ Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
+  foreach (auto room, idle_rooms) {
+    room->deleteLater();
+  }
+  foreach (auto room, rooms) {
+    room->deleteLater();
+  }
   sqlite3_close(db);
   RSA_free(rsa);
 }
@@ -390,13 +396,13 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
 void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
+  if (room->isRunning()) {
+    room->wait();
+  }
   room->gameOver();
   rooms.remove(room->getId());
   updateRoomList();
   // room->deleteLater();
-  if (room->isRunning()) {
-    room->wait();
-  }
   idle_rooms.push(room);
 #ifdef QT_DEBUG
   qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
