@@ -277,6 +277,8 @@ Item {
 
   function addToChat(pid, raw, msg) {
     if (raw.type !== 1) return;
+    msg = msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
     lobbyChat.append(msg);
     danmaku.sendLog("<b>" + raw.userName + "</b>: " + raw.msg);
   }

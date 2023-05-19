@@ -871,7 +871,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   cancelable = cancelable or false
   extra_data = extra_data or {}
   local skill = Fk.skills[skill_name]
-  if not (skill and skill:isInstanceOf(ActiveSkill)) then
+  if not (skill and (skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill))) then
     print("Attempt ask for use non-active skill: " .. skill_name)
     return false
   end
@@ -894,17 +894,26 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
   self:doIndicate(player.id, targets)
-  skill:onUse(self, {
-    from = player.id,
-    cards = selected_cards,
-    tos = targets,
-  })
+
+  if skill.interaction then
+    skill.interaction.data = data.interaction_data
+  end
+
+  if skill:isInstanceOf(ActiveSkill) then
+    skill:onUse(self, {
+      from = player.id,
+      cards = selected_cards,
+      tos = targets,
+    })
+  end
 
   return true, {
     cards = selected_cards,
     targets = targets
   }
 end
+
+Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 
 --- 询问一名角色弃牌。
 ---

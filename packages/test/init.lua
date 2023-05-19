@@ -78,9 +78,18 @@ local test_active = fk.CreateActiveSkill{
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
-    local to = room:getPlayerById(effect.tos[1])
+    --local to = room:getPlayerById(effect.tos[1])
     -- room:swapSeat(from, to)
-    from:control(to)
+    --from:control(to)
+    local success, dat = room:askForUseViewAsSkill(from, "test_vs", nil, true)
+    if success then
+      local card = Fk.skills["test_vs"]:viewAs(dat.cards)
+      room:useCard{
+        from = from.id,
+        tos = table.map(dat.targets, function(e) return {e} end),
+        card = card,
+      }
+    end
     -- from:pindian({to})
     -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
     -- print(result)

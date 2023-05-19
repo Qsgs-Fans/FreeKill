@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
+import Fk.Pages
 
 Rectangle {
   property bool isLobby: false
@@ -26,33 +28,65 @@ Rectangle {
       }
     }
 
-    Rectangle {
+    GridView {
+      id: emojiSelector
       Layout.fillWidth: true
-      Layout.preferredHeight: 28
-      color: "#040403"
-      radius: 3
-      border.width: 1
-      border.color: "#A6967A"
+      Layout.preferredHeight: 120
+      cellHeight: 48
+      cellWidth: 48
+      model: 49
+      visible: false
+      delegate: ItemDelegate {
+        Image {
+          height: 32; width: 32
+          anchors.centerIn: parent
+          source: "../../image/emoji/" + index
+        }
+        onClicked: chatEdit.insert(chatEdit.cursorPosition, "{emoji" + index + "}");
+      }
+    }
 
-      TextInput {
-        anchors.fill: parent
-        anchors.margins: 6
-        color: "white"
-        clip: true
-        font.pixelSize: 14
+    RowLayout {
+      Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 28
+        color: "#040403"
+        radius: 3
+        border.width: 1
+        border.color: "#A6967A"
 
-        onAccepted: {
-          if (text != "") {
-            ClientInstance.notifyServer(
-              "Chat",
-              JSON.stringify({
-                type: isLobby ? 1 : 2,
-                msg: text
-              })
-            );
-            text = "";
+        TextInput {
+          id: chatEdit
+          anchors.fill: parent
+          anchors.margins: 6
+          color: "white"
+          clip: true
+          font.pixelSize: 14
+
+          onAccepted: {
+            if (text != "") {
+              ClientInstance.notifyServer(
+                "Chat",
+                JSON.stringify({
+                  type: isLobby ? 1 : 2,
+                  msg: text
+                })
+              );
+              text = "";
+            }
           }
         }
+      }
+
+      MetroButton {
+        id: emojiBtn
+        text: "😃"
+        onClicked: emojiSelector.visible = !emojiSelector.visible;
+      }
+
+      MetroButton {
+        text: "✔️"
+        onClicked: chatEdit.accepted();
       }
     }
   }

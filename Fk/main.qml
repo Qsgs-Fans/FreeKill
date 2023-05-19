@@ -220,6 +220,6 @@ Item {
     config.winWidth = width;
     config.winHeight = height;
     config.saveConf();
-    Backend.quitLobby();
+    Backend.quitLobby(false);
   }
 }

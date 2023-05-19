@@ -26,7 +26,7 @@ public:
   Q_INVOKABLE void joinServer(QString address);
 
   // Lobby
-  Q_INVOKABLE void quitLobby();
+  Q_INVOKABLE void quitLobby(bool close = true);
 
   // lua --> qml
   void emitNotifyUI(const QString &command, const QString &jsonData);

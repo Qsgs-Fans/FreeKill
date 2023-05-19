@@ -8,6 +8,7 @@ Flickable {
   id: root
   anchors.fill: parent
   property var extra_data: ({})
+  property int pid
 
   signal finish()
 
@@ -18,6 +19,24 @@ Flickable {
     id: details
     width: parent.width - 40
     x: 20
+
+    RowLayout {
+      Button {
+        text: Backend.translate("Give Flower")
+        onClicked: {
+          root.givePresent("Flower");
+          root.finish();
+        }
+      }
+
+      Button {
+        text: Backend.translate("Give Egg")
+        onClicked: {
+          root.givePresent("Egg");
+          root.finish();
+        }
+      }
+    }
 
     // TODO: player details
     Text {
@@ -40,6 +59,16 @@ Flickable {
     }
   }
 
+  function givePresent(p) {
+    ClientInstance.notifyServer(
+      "Chat",
+      JSON.stringify({
+        type: 2,
+        msg: "$!" + p + ":" + pid
+      })
+    );
+  }
+
   onExtra_dataChanged: {
     if (!extra_data.photo) return;
     screenName.text = "";
@@ -47,6 +76,9 @@ Flickable {
 
     let id = extra_data.photo.playerid;
     if (id == 0) return;
+    root.pid = id;
+
+    screenName.text = extra_data.photo.screenName;
 
     let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {
