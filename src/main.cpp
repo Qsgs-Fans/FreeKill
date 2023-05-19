@@ -85,12 +85,12 @@ static void prepareForLinux() {
   const char *home = getenv("HOME");
   if (!strcmp(buf, "/usr/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/share/FreeKill", QString("%1/.local/share").arg(home));
+    installFkAssets("/usr/share/FreeKill", QString("%1/.local/share/FreeKill").arg(home));
     chdir(home);
     chdir(".local/share/FreeKill");
   } else if (!strcmp(buf, "/usr/local/bin/FreeKill")) {
     system("mkdir -p ~/.local/share/FreeKill");
-    installFkAssets("/usr/local/share/FreeKill", QString("%1/.local/share").arg(home));
+    installFkAssets("/usr/local/share/FreeKill", QString("%1/.local/share/FreeKill").arg(home));
     chdir(home);
     chdir(".local/share/FreeKill");
   }
