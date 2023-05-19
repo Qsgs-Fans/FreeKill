@@ -227,7 +227,7 @@ function setEmotion(id, emotion, isCardId) {
     // TODO: set picture emotion
     return;
   }
-  let component = Qt.createComponent("RoomElement/PixmapAnimation.qml");
+  let component = Qt.createComponent("Fk.RoomElement", "PixmapAnimation");
   if (component.status !== Component.Ready)
     return;
 
@@ -276,7 +276,7 @@ function changeHp(id, delta, losthp) {
 }
 
 function doIndicate(from, tos) {
-  let component = Qt.createComponent("RoomElement/IndicatorLine.qml");
+  let component = Qt.createComponent("Fk.RoomElement", "IndicatorLine");
   if (component.status !== Component.Ready)
     return;
 
@@ -593,7 +593,7 @@ callbacks["AskForGeneral"] = function(jsonData) {
   let heg = data[2];
   roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
-  roomScene.popupBox.source = "RoomElement/ChooseGeneralBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "ChooseGeneralBox");
   let box = roomScene.popupBox.item;
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
@@ -626,7 +626,7 @@ callbacks["AskForGuanxing"] = function(jsonData) {
   let min_bottom_cards = data.min_bottom_cards;
   let max_bottom_cards = data.max_bottom_cards;
   roomScene.state = "replying";
-  roomScene.popupBox.source = "RoomElement/GuanxingBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "GuanxingBox");
   data.cards.forEach(id => {
     let d = Backend.callLuaFunction("GetCardData", [id]);
     cards.push(JSON.parse(d));
@@ -662,7 +662,7 @@ callbacks["AskForChoice"] = function(jsonData) {
     roomScene.promptText = processPrompt(prompt);
   }
   roomScene.state = "replying";
-  roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "ChoiceBox");
   let box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;
@@ -701,7 +701,7 @@ callbacks["AskForCardChosen"] = function(jsonData) {
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
-  roomScene.popupBox.source = "RoomElement/PlayerCardBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "PlayerCardBox");
   let box = roomScene.popupBox.item;
   box.addHandcards(handcards);
   box.addEquips(equips);
@@ -744,7 +744,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
-  roomScene.popupBox.source = "RoomElement/PlayerCardBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "PlayerCardBox");
   let box = roomScene.popupBox.item;
   box.multiChoose = true;
   box.min = min;
@@ -933,7 +933,7 @@ callbacks["Animate"] = function(jsonData) {
     }
     case "InvokeSkill": {
       let id = data.player;
-      let component = Qt.createComponent("RoomElement/SkillInvokeAnimation.qml");
+      let component = Qt.createComponent("Fk.RoomElement", "SkillInvokeAnimation");
       if (component.status !== Component.Ready)
         return;
 
@@ -997,7 +997,7 @@ callbacks["LogEvent"] = function(jsonData) {
 
 callbacks["GameOver"] = function(jsonData) {
   roomScene.state = "notactive";
-  roomScene.popupBox.source = "RoomElement/GameOverBox.qml";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "GameOverBox");
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
   roomScene.isStarted = false;
@@ -1006,7 +1006,7 @@ callbacks["GameOver"] = function(jsonData) {
 callbacks["FillAG"] = (j) => {
   let data = JSON.parse(j);
   let ids = data[0];
-  roomScene.manualBox.source = "RoomElement/AG.qml";
+  roomScene.manualBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "AG");
   roomScene.manualBox.item.addIds(ids);
 }
 

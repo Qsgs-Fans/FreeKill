@@ -91,10 +91,7 @@ GraphicsBox {
         MetroButton {
           id: convertBtn
           text: Backend.translate("Same General Convert")
-          onClicked: roomScene.startCheat(
-            "RoomElement/Cheat/SameConvert.qml",
-            { cards: generalList }
-          );
+          onClicked: roomScene.startCheat("SameConvert", { cards: generalList });
         }
 
         MetroButton {
@@ -112,7 +109,7 @@ GraphicsBox {
           enabled: choices.length > 0
           text: Backend.translate("Show General Detail")
           onClicked: roomScene.startCheat(
-            "RoomElement/Cheat/GeneralDetail.qml",
+            "GeneralDetail",
             { generals: choices }
           );
         }
@@ -146,7 +143,7 @@ GraphicsBox {
 
       onRightClicked: {
         if (selectedItem.indexOf(this) === -1 && config.enableFreeAssign)
-          roomScene.startCheat("RoomElement/Cheat/FreeAssign.qml", { card: this });
+          roomScene.startCheat("FreeAssign", { card: this });
       }
 
       onReleased: {

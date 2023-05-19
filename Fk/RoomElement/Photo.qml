@@ -595,6 +595,6 @@ Item {
   }
 
   function showDetail() {
-    roomScene.startCheat("RoomElement/Cheat/PlayerDetail.qml", { photo: this });
+    roomScene.startCheat("PlayerDetail", { photo: this });
   }
 }

@@ -154,7 +154,7 @@ Item {
     icon.name: "media-playback-start"
     text: Backend.translate("Create Room")
     onClicked: {
-      lobby_dialog.source = "LobbyElement/CreateRoom.qml";
+      lobby_dialog.sourceComponent = Qt.createComponent("Fk.LobbyElement", "CreateRoom");
       lobby_drawer.open();
       config.observing = false;
     }
@@ -225,10 +225,11 @@ Item {
         if (item === null)
           return;
         item.finished.connect(() => {
-          source = "";
+          sourceComponent = undefined;
           lobby_drawer.close();
         });
       }
+      onSourceComponentChanged: sourceChanged();
     }
   }
 

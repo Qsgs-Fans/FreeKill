@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import Fk.Pages
 
 MetroButton {
   id: root
@@ -20,7 +21,7 @@ MetroButton {
   }
 
   onClicked: {
-    roomScene.popupBox.source = "RoomElement/ChoiceBox.qml";
+    roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "ChoiceBox");
     let box = roomScene.popupBox.item;
     box.options = choices;
     box.accepted.connect(() => {

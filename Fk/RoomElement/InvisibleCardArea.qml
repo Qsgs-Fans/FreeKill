@@ -50,7 +50,7 @@ Item {
 
   function remove(outputs)
   {
-    let component = Qt.createComponent("CardItem.qml");
+    let component = Qt.createComponent("Fk.RoomElement", "CardItem");
     if (component.status !== Component.Ready)
       return [];
 

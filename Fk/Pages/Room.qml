@@ -100,7 +100,7 @@ Item {
       from: "*"; to: "notactive"
       ScriptAction {
         script: {
-          skillInteraction.source = "";
+          skillInteraction.sourceComponent = undefined;
           promptText = "";
           progress.visible = false;
           okCancel.visible = false;
@@ -128,7 +128,7 @@ Item {
       from: "*"; to: "playing"
       ScriptAction {
         script: {
-          skillInteraction.source = "";
+          skillInteraction.sourceComponent = undefined;
           dashboard.enableCards();
           dashboard.enableSkills();
           progress.visible = true;
@@ -143,7 +143,7 @@ Item {
       from: "*"; to: "responding"
       ScriptAction {
         script: {
-          skillInteraction.source = "";
+          skillInteraction.sourceComponent = undefined;
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card, respond_play);
           autoPending = false;
@@ -157,7 +157,7 @@ Item {
       from: "*"; to: "replying"
       ScriptAction {
         script: {
-          skillInteraction.source = "";
+          skillInteraction.sourceComponent = undefined;
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;
@@ -435,7 +435,7 @@ Item {
       if (item === null)
         return;
       item.finished.connect(function(){
-        source = "";
+        sourceComponent = undefined;
       });
       item.widthChanged.connect(function(){
         popupBox.moveToCenter();
@@ -445,6 +445,7 @@ Item {
       });
       moveToCenter();
     }
+    onSourceComponentChanged: sourceChanged();
 
     function moveToCenter()
     {
@@ -460,11 +461,12 @@ Item {
     onSourceChanged: {
       if (item === null)
         return;
-      item.finished.connect(() => source = "");
+      item.finished.connect(() => sourceComponent = undefined);
       item.widthChanged.connect(() => manualBox.moveToCenter());
       item.heightChanged.connect(() => manualBox.moveToCenter());
       moveToCenter();
     }
+    onSourceComponentChanged: sourceChanged();
 
     function moveToCenter()
     {
@@ -486,30 +488,30 @@ Item {
         Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
         switch (data.type) {
         case "combo":
-          skillInteraction.source = "RoomElement/SkillInteraction/SkillCombo.qml";
+          skillInteraction.sourceComponent = Qt.createComponent("Fk.SkillInteraction", "SkillCombo");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
-          skillInteraction.item.clicked();
+          // skillInteraction.item.clicked();
           break;
         case "spin":
-          skillInteraction.source = "RoomElement/SkillInteraction/SkillSpin.qml";
+          skillInteraction.sourceComponent = Qt.createComponent("Fk.SkillInteraction", "SkillSpin");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.from = data.from;
           skillInteraction.item.to = data.to;
           break;
         default:
-          skillInteraction.source = "";
+          skillInteraction.sourceComponent = undefined;
           break;
         }
       } else {
-        skillInteraction.source = "";
+        skillInteraction.sourceComponent = undefined;
       }
 
       dashboard.startPending(skill_name);
       cancelButton.enabled = true;
     } else {
-      skillInteraction.source = "";
+      skillInteraction.sourceComponent = undefined;
       Logic.doCancelButton();
     }
   }
@@ -582,6 +584,7 @@ Item {
           cheatDrawer.close();
         });
       }
+      onSourceComponentChanged: sourceChanged();
     }
   }
 
@@ -798,8 +801,8 @@ Item {
     }
   }
 
-  function startCheat(source, data) {
-    cheatLoader.source = source;
+  function startCheat(type, data) {
+    cheatLoader.sourceComponent = Qt.createComponent("Fk.Cheat", type);
     cheatLoader.item.extra_data = data;
     cheatDrawer.open();
   }

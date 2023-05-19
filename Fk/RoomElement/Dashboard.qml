@@ -73,7 +73,7 @@ RowLayout {
     if (expanded_pile_names.indexOf(pile) !== -1)
       return;
 
-    let component = Qt.createComponent("CardItem.qml");
+    let component = Qt.createComponent("Fk.RoomElement", "CardItem");
     let parentPos = roomScene.mapFromItem(self, 0, 0);
 
     expanded_piles[pile] = [];

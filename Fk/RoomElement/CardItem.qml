@@ -70,7 +70,7 @@ Item {
 
   onRightClicked: {
     if (!showDetail) return;
-    roomScene.startCheat("RoomElement/Cheat/CardDetail.qml", { card: this });
+    roomScene.startCheat("CardDetail", { card: this });
   }
 
   RectangularGlow {

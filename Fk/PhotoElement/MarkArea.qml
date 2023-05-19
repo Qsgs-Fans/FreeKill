@@ -59,7 +59,7 @@ Item {
             return;
 
           // Just for using room's right drawer
-          roomScene.startCheat("RoomElement/ViewPile.qml", {
+          roomScene.startCheat("ViewPile", {
             name: mark_name,
             ids: data
           });
