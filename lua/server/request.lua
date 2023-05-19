@@ -10,6 +10,7 @@ local function tellRoomToObserver(self, player)
   player:doNotify("EnterRoom", json.encode{
     #self.players, self.timeout, self.settings
   })
+  player:doNotify("StartGame", "")
 
   -- send player data
   for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do

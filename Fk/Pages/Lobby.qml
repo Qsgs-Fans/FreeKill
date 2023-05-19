@@ -203,8 +203,8 @@ Item {
     icon.name: "application-exit"
     onClicked: {
       toast.show("Goodbye.");
-      Backend.quitLobby();
       mainStack.pop();
+      Backend.quitLobby();
     }
   }
 

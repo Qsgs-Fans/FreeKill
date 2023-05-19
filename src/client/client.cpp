@@ -8,6 +8,8 @@
 Client *ClientInstance;
 ClientPlayer *Self;
 
+static ClientPlayer dummyPlayer(0, nullptr);
+
 Client::Client(QObject *parent) : QObject(parent), callback(0) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
@@ -27,6 +29,9 @@ Client::Client(QObject *parent) : QObject(parent), callback(0) {
 
 Client::~Client() {
   ClientInstance = nullptr;
+  // Self->deleteLater();
+  Self = nullptr;
+  Backend->getEngine()->rootContext()->setContextProperty("Self", &dummyPlayer);
   lua_close(L);
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();

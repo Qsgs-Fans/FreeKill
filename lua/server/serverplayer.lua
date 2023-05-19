@@ -273,6 +273,7 @@ function ServerPlayer:reconnect()
   self:doNotify("EnterRoom", json.encode{
     #room.players, room.timeout, room.settings,
   })
+  self:doNotify("StartGame", "")
   room:notifyProperty(self, self, "role")
 
   -- send player data
