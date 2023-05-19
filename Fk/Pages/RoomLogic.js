@@ -832,6 +832,7 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
+  roomScene.responding_card = ".";
   roomScene.autoPending = true;
   dashboard.startPending(skill_name);
   cancelButton.enabled = cancelable;
