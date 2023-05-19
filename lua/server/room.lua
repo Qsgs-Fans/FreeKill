@@ -1572,6 +1572,28 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   })
 end
 
+function Room:askForMoveCardInBoard(player, targetOne, targetTwo)
+  local cards = {}
+  local cardsPosition = {}
+  for _, equipId in ipairs(targetOne:getCardIds(Player.Equip)) do
+    if not targetTwo:getEquipment(Fk:getCardById(equipId).sub_type) then
+      table.insert(cards, equipId)
+      table.insert(cardsPosition, 0)
+    end
+  end
+  for _, equipId in ipairs(targetTwo:getCardIds(Player.Equip)) do
+    if not targetOne:getEquipment(Fk:getCardById(equipId).sub_type) then
+      table.insert(cards, equipId)
+      table.insert(cardsPosition, 1)
+    end
+  end
+
+  local data = { cards = cards, cardsPosition = cardsPosition }
+  local command = "AskForMoveCardInBoard"
+  self:notifyMoveFocus(player, command)
+  local result = self:doRequest(player, command, json.encode(data))
+end
+
 ------------------------------------------------------------------------
 -- 使用牌
 ------------------------------------------------------------------------

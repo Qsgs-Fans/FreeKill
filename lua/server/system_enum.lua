@@ -28,6 +28,7 @@
 ---@field public moveVisible boolean|null
 ---@field public specialName string|null
 ---@field public specialVisible boolean|null
+---@field public drawPilePosition number|null
 
 ---@class PindianResult
 ---@field public toCard Card

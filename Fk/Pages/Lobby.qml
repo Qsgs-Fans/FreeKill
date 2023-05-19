@@ -154,7 +154,7 @@ Item {
     icon.name: "media-playback-start"
     text: Backend.translate("Create Room")
     onClicked: {
-      lobby_dialog.sourceComponent = Qt.createComponent("Fk.LobbyElement", "CreateRoom");
+      lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/CreateRoom.qml");
       lobby_drawer.open();
       config.observing = false;
     }

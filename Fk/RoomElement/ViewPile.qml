@@ -71,7 +71,7 @@ Item {
           columns: 4
 
           Repeater {
-            model: extra_data.ids
+            model: extra_data.ids || extra_data.cardNames
 
             CardItem {
               id: cardItem
@@ -79,7 +79,16 @@ Item {
               height: cardItem.width * 1.4
               autoBack: false
               Component.onCompleted: {
-                let data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
+                let data = {}
+                if (extra_data.ids) {
+                  data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
+                } else {
+                  data.cid = 0;
+                  data.name = modelData;
+                  data.suit = '';
+                  data.number = 0;
+                  data.color = '';
+                }
                 setData(data);
               }
             }

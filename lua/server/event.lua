@@ -101,4 +101,6 @@ fk.BeforeTriggerSkillUse = 75
 
 fk.BeforeDrawCard = 76
 
-fk.NumOfEvents = 77
+fk.CardShown = 77
+
+fk.NumOfEvents = 78
