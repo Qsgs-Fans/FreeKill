@@ -217,6 +217,8 @@ QString calcFileMD5() {
   writeDirMD5(flist, "lua", "*.lua");
   writeDirMD5(flist, "qml", "*.qml");
   writeDirMD5(flist, "qml", "*.js");
+  writeDirMD5(flist, "Fk", "*.qml");
+  writeDirMD5(flist, "Fk", "*.js");
 
   // then, return flist.txt's md5
   flist.close();

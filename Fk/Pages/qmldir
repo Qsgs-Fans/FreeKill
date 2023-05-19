@@ -1,0 +1,12 @@
+module Fk.Pages
+About 1.0 About.qml
+CardsOverview 1.0 CardsOverview.qml
+Danmaku 1.0 Danmaku.qml
+GeneralsOverview 1.0 GeneralsOverview.qml
+Init 1.0 Init.qml
+Lobby 1.0 Lobby.qml
+MetroButton 1.0 MetroButton.qml
+ModesOverview 1.0 ModesOverview.qml
+PackageManage 1.0 PackageManage.qml
+Room 1.0 Room.qml
+TileButton 1.0 TileButton.qml

@@ -288,8 +288,10 @@ int main(int argc, char *argv[]) {
   engine->rootContext()->setContextProperty(
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
+  engine->addImportPath(QDir::currentPath());
+
   // 加载完全局变量后，就再去加载 main.qml，此时UI界面正式显示
-  engine->load("qml/main.qml");
+  engine->load("Fk/main.qml");
 
   // qml 报错了就直接退出吧
   if (engine->rootObjects().isEmpty())

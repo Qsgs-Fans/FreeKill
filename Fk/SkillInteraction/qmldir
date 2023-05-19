@@ -1,0 +1,3 @@
+module Fk.SkillInteraction
+SkillCombo 1.0 SkillCombo.qml
+SkillSpin 1.0 SkillSpin.qml

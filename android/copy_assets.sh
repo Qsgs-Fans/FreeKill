@@ -27,6 +27,7 @@ cp -r ../packages/test assets/res/packages
 rm assets/res/packages/test/test.lua
 cp ../packages/init.sql assets/res/packages
 cp -r ../qml assets/res
+cp -r ../Fk assets/res
 mkdir assets/res/server
 cp ../server/init.sql assets/res/server
 cp ../LICENSE assets/res
