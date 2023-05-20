@@ -49,7 +49,7 @@ Item {
 
   TapHandler {
     onTapped: {
-      lobby_dialog.sourceComponent = Qt.createComponent("Fk.LobbyElement", "EditProfile");
+      lobby_dialog.sourceComponent = Qt.createComponent("EditProfile.qml");
       lobby_drawer.open();
     }
   }

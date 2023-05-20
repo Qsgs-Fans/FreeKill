@@ -208,6 +208,20 @@ function table:slice(begin, _end)
   return ret
 end
 
+function table:assign(targetTbl)
+  for key, value in pairs(targetTbl) do
+    if self[key] then
+      if type(value) == "table" then
+        table.insertTable(self[key], value)
+      else
+        table.insert(self[key], value)
+      end
+    else
+      self[key] = value
+    end
+  end
+end
+
 -- allow a = "Hello"; a[1] == "H"
 local str_mt = getmetatable("")
 str_mt.__index = function(str, k)

@@ -85,7 +85,7 @@ Item {
 
   Image {
     id: cardItem
-    source: known ? SkinBank.getCardPicture(cid)
+    source: known ? SkinBank.getCardPicture(cid || name)
             : (SkinBank.CARD_DIR + "card-back")
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop

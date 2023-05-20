@@ -33,7 +33,7 @@ Item {
       width: childrenRect.width
       height: 22
       Text {
-        text: Backend.translate(mark_name) + ' ' + mark_extra
+        text: Backend.translate(mark_name) + ' ' + (special_value !== '' ? special_value : mark_extra)
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -53,16 +53,20 @@ Item {
       TapHandler {
         enabled: root.parent.state != "candidate" || !root.parent.selectable
         onTapped: {
-          let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
-          data = data.filter((e) => e !== -1);
-          if (data.length === 0)
-            return;
+          const params = { name: mark_name };
+          if (mark_name.startsWith('@$')) {
+            params.cardNames = mark_extra.split(',');
+          } else {
+            let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
+            data = data.filter((e) => e !== -1);
+            if (data.length === 0)
+              return;
+
+            params.ids = data;
+          }
 
           // Just for using room's right drawer
-          roomScene.startCheat("ViewPile", {
-            name: mark_name,
-            ids: data
-          });
+          roomScene.startCheat("../RoomElement/ViewPile", params);
         }
       }
     }
@@ -83,11 +87,18 @@ Item {
       }
     }
 
-    data = (data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data));
+    let special_value = '';
+    if (mark.startsWith('@$')) {
+      special_value = data.length;
+      data = data.join(',');
+    } else {
+      data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
+    }
+
     if (modelItem)
       modelItem.mark_extra = data;
     else
-      markList.append({ mark_name: mark, mark_extra: data });
+      markList.append({ mark_name: mark, mark_extra: data, special_value });
 
     arrangeMarks();
   }

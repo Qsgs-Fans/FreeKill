@@ -98,6 +98,14 @@ function GetCardData(id)
   return json.encode(ret)
 end
 
+function GetCardExtensionByName(cardName)
+  local card = table.find(Fk.cards, function(card)
+    return card.name == cardName
+  end)
+
+  return card and card.package.extensionName or ""
+end
+
 function GetAllGeneralPack()
   local ret = {}
   for _, name in ipairs(Fk.package_names) do

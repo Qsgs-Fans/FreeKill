@@ -41,7 +41,7 @@ end
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
   events = {
-    fk.GameStart,
+    fk.GamePrepared,
     fk.AskForPeaches, fk.AskForPeachesDone,
     fk.GameOverJudge, fk.BuryVictim,
   },
@@ -58,7 +58,7 @@ GameRule = fk.CreateTriggerSkill{
       return false
     end
 
-    if event == fk.GameStart then
+    if event == fk.GamePrepared then
       room:setTag("FirstRound", true)
       room:setTag("RoundCount", 0)
       return false

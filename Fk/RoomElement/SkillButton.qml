@@ -39,27 +39,41 @@ Item {
 
   Text {
     anchors.centerIn: parent
+    topPadding: 5
     id: skill
     font.family: fontLi2.name
     font.pixelSize: Math.max(26 - text.length, 18)
     visible: false
+    font.bold: true
   }
 
   Glow {
     id: glowItem
     source: skill
     anchors.fill: skill
-    radius: 6
-    //samples: 8
-    color: "grey"
+    color: "black"
+    spread: 0.3
+    radius: 5
   }
 
   LinearGradient  {
     anchors.fill: skill
     source: skill
     gradient: Gradient {
-      GradientStop { position: 0; color: "#FFE07C" }
-      GradientStop { position: 1; color: "#B79A5F" }
+      GradientStop {
+        position: 0
+        color: "#FEF7C2"
+      }
+
+      GradientStop {
+        position: 0.5
+        color: "#D2AD4A"
+      }
+
+      GradientStop {
+        position: 1
+        color: "#BE9878"
+      }
     }
   }
 

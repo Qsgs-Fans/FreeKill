@@ -37,6 +37,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
         moveVisible = cardsMoveInfo.moveVisible,
         specialName = cardsMoveInfo.specialName,
         specialVisible = cardsMoveInfo.specialVisible,
+        drawPilePosition = cardsMoveInfo.drawPilePosition,
       }
 
       table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -100,7 +101,18 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
             toAreaIds = self.void
           end
 
-          table.insert(toAreaIds, data.toArea == Card.DrawPile and 1 or #toAreaIds + 1, info.cardId)
+          if data.toArea == Card.DrawPile then
+            local putIndex = data.drawPilePosition or 1
+            if putIndex == -1 then
+              putIndex = #self.draw_pile + 1
+            elseif putIndex < 1 or putIndex > #self.draw_pile + 1 then
+              putIndex = 1
+            end
+
+            table.insert(toAreaIds, putIndex, info.cardId)
+          else
+            table.insert(toAreaIds, info.cardId)
+          end
         end
         self:setCardArea(info.cardId, data.toArea, data.to)
         if data.toArea == Card.DrawPile or realFromArea == Card.DrawPile then

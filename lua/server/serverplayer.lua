@@ -343,6 +343,8 @@ function ServerPlayer:showCards(cards)
     from = self.id,
     cards = cards,
   })
+
+  room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end
 
 ---@param from_phase Phase

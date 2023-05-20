@@ -92,7 +92,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   room:notifyMoveFocus(room.alive_players, "AskForLuckCard")
   room:doBroadcastNotify("AskForLuckCard", room.settings.luckTime or 4)
 
-  local remainTime = room.timeout
+  local remainTime = room.timeout + 1
   local currentTime = os.time()
   local elapsed = 0
 
@@ -127,11 +127,16 @@ GameEvent.functions[GameEvent.Round] = function(self)
   local logic = room.logic
   local p
 
-  if room:getTag("FirstRound") then
+  local isFirstRound = room:getTag("FirstRound")
+  if isFirstRound then
     room:setTag("FirstRound", false)
   end
   room:setTag("RoundCount", room:getTag("RoundCount") + 1)
   room:doBroadcastNotify("UpdateRoundNum", room:getTag("RoundCount"))
+
+  if isFirstRound then
+    logic:trigger(fk.GameStart, room.current)
+  end
 
   logic:trigger(fk.RoundStart, room.current)
 

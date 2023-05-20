@@ -22,6 +22,7 @@
 ---@field public skill Skill
 ---@field public special_skills string[] | nil
 ---@field public is_damage_card boolean
+---@field public is_derived boolean|null
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -96,6 +97,11 @@ function Card:initialize(name, suit, number, color)
   self.skillNames = {}
   self.mark = {}
 
+  if string.sub(name, 1, 1) == "&" then
+    self.name = string.sub(name, 2, #name)
+    self.is_derived = true
+  end
+
   local mt = table.simpleClone(getmetatable(self))
   local newidx = mt.__newindex or rawset
   mt.__newindex = function(t, k, v)
@@ -139,6 +145,7 @@ function Card:clone(suit, number)
   newCard.equip_skill = self.equip_skill
   newCard.attack_range = self.attack_range
   newCard.is_damage_card = self.is_damage_card
+  newCard.is_derived = self.is_derived
   return newCard
 end
 

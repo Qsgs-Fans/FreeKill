@@ -487,14 +487,14 @@ Item {
         Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
         switch (data.type) {
         case "combo":
-          skillInteraction.sourceComponent = Qt.createComponent("Fk.SkillInteraction", "SkillCombo");
+          skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillCombo.qml");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
           // skillInteraction.item.clicked();
           break;
         case "spin":
-          skillInteraction.sourceComponent = Qt.createComponent("Fk.SkillInteraction", "SkillSpin");
+          skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillSpin.qml");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.from = data.from;
           skillInteraction.item.to = data.to;
@@ -816,7 +816,7 @@ Item {
   }
 
   function startCheat(type, data) {
-    cheatLoader.sourceComponent = Qt.createComponent("Fk.Cheat", type);
+    cheatLoader.sourceComponent = Qt.createComponent(`../Cheat/${type}.qml`);
     cheatLoader.item.extra_data = data;
     cheatDrawer.open();
   }

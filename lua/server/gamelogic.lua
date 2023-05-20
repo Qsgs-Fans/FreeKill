@@ -233,6 +233,16 @@ end
 function GameLogic:prepareDrawPile()
   local room = self.room
   local allCardIds = Fk:getAllCardIds()
+
+  for i = #allCardIds, 1, -1 do
+    if Fk:getCardById(allCardIds[i]).is_derived then
+      local id = allCardIds[i]
+      table.removeOne(allCardIds, id)
+      table.insert(room.void, id)
+      room:setCardArea(id, Card.Void, nil)
+    end
+  end
+
   table.shuffle(allCardIds)
   room.draw_pile = allCardIds
   for _, id in ipairs(room.draw_pile) do
@@ -291,7 +301,7 @@ function GameLogic:prepareForStart()
 end
 
 function GameLogic:action()
-  self:trigger(fk.GameStart)
+  self:trigger(fk.GamePrepared)
   local room = self.room
 
   execGameEvent(GameEvent.DrawInitial)

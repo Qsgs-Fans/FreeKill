@@ -228,7 +228,7 @@ function setEmotion(id, emotion, isCardId) {
     // TODO: set picture emotion
     return;
   }
-  let component = Qt.createComponent("Fk.RoomElement", "PixmapAnimation");
+  let component = Qt.createComponent("../RoomElement/PixmapAnimation.qml");
   if (component.status !== Component.Ready)
     return;
 
@@ -277,7 +277,7 @@ function changeHp(id, delta, losthp) {
 }
 
 function doIndicate(from, tos) {
-  let component = Qt.createComponent("Fk.RoomElement", "IndicatorLine");
+  let component = Qt.createComponent("../RoomElement/IndicatorLine.qml");
   if (component.status !== Component.Ready)
     return;
 
@@ -594,7 +594,7 @@ callbacks["AskForGeneral"] = function(jsonData) {
   let heg = data[2];
   roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "ChooseGeneralBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   let box = roomScene.popupBox.item;
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
@@ -627,7 +627,7 @@ callbacks["AskForGuanxing"] = function(jsonData) {
   let min_bottom_cards = data.min_bottom_cards;
   let max_bottom_cards = data.max_bottom_cards;
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "GuanxingBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   data.cards.forEach(id => {
     let d = Backend.callLuaFunction("GetCardData", [id]);
     cards.push(JSON.parse(d));
@@ -663,7 +663,7 @@ callbacks["AskForChoice"] = function(jsonData) {
     roomScene.promptText = processPrompt(prompt);
   }
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "ChoiceBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
   let box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;
@@ -702,7 +702,7 @@ callbacks["AskForCardChosen"] = function(jsonData) {
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "PlayerCardBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   let box = roomScene.popupBox.item;
   box.addHandcards(handcards);
   box.addEquips(equips);
@@ -745,7 +745,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "PlayerCardBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   let box = roomScene.popupBox.item;
   box.multiChoose = true;
   box.min = min;
@@ -756,6 +756,33 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {
     replyToServer(JSON.stringify(ids));
+  });
+}
+
+callbacks["AskForMoveCardInBoard"] = function(jsonData) {
+  const data = JSON.parse(jsonData);
+  const { cards, cardsPosition, generalNames } = data;
+
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
+
+  const boxCards = [];
+  cards.forEach(id => {
+    let d = Backend.callLuaFunction("GetCardData", [id]);
+    boxCards.push(JSON.parse(d));
+  });
+
+  const box = roomScene.popupBox.item;
+  box.cards = boxCards;
+  box.cardsPosition = cardsPosition;
+  box.generalNames = generalNames.map(name => {
+    const namesSplited = name.split('/');
+    return namesSplited.length > 1 ? namesSplited.map(nameSplited => Backend.translate(nameSplited)).join('/') : Backend.translate(name)
+  });
+
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
   });
 }
 
@@ -938,7 +965,7 @@ callbacks["Animate"] = function(jsonData) {
     }
     case "InvokeSkill": {
       let id = data.player;
-      let component = Qt.createComponent("Fk.RoomElement", "SkillInvokeAnimation");
+      let component = Qt.createComponent("../RoomElement/SkillInvokeAnimation.qml");
       if (component.status !== Component.Ready)
         return;
 
@@ -1002,7 +1029,7 @@ callbacks["LogEvent"] = function(jsonData) {
 
 callbacks["GameOver"] = function(jsonData) {
   roomScene.state = "notactive";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "GameOverBox");
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GameOverBox.qml");
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
   roomScene.isStarted = false;
@@ -1011,7 +1038,7 @@ callbacks["GameOver"] = function(jsonData) {
 callbacks["FillAG"] = (j) => {
   let data = JSON.parse(j);
   let ids = data[0];
-  roomScene.manualBox.sourceComponent = Qt.createComponent("Fk.RoomElement", "AG");
+  roomScene.manualBox.sourceComponent = Qt.createComponent("../RoomElement/AG.qml");
   roomScene.manualBox.item.addIds(ids);
 }
 

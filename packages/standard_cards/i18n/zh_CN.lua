@@ -15,6 +15,17 @@ Fk:loadTranslationTable{
   ["club"] = "梅花",
   ["diamond"] = "方块",
 
+  ["basic_char"] = "基",
+  ["trick_char"] = "锦",
+  ["equip_char"] = "装",
+
+  ["weapon"] = "武器牌",
+  ["armor"] = "防具牌",
+  ["defensive_horse"] = "防御坐骑牌",
+  ["offensive_horse"] = "进攻坐骑牌",
+  ["treasure"] = "宝物牌",
+  ["delayed_trick"] = "延时类锦囊牌",
+
   ["slash"] = "杀",
   [":slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名其他角色<br /><b>效果</b>：对目标角色造成1点伤害。",
   ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
