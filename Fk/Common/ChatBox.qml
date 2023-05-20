@@ -34,7 +34,7 @@ Rectangle {
       Layout.preferredHeight: 120
       cellHeight: 48
       cellWidth: 48
-      model: 49
+      model: 50
       visible: false
       delegate: ItemDelegate {
         Image {

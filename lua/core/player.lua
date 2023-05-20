@@ -742,4 +742,17 @@ function Player:getSwitchSkillState(skillName, afterUse)
   end
 end
 
+function Player:canMoveCardInBoardTo(to, id)
+  local card = Fk:getCardById(id)
+  assert(card.type == Card.TypeEquip or card.sub_type == Card.SubtypeDelayedTrick)
+
+  if card.type == Card.TypeEquip then
+    return not to:getEquipment(card.sub_type)
+  else
+    return not table.find(to:getCardIds(Player.Judge), function(cardId)
+      return Fk:getCardById(cardId).name == card.name
+    end)
+  end
+end
+
 return Player

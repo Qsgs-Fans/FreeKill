@@ -1572,26 +1572,74 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   })
 end
 
-function Room:askForMoveCardInBoard(player, targetOne, targetTwo)
+---@field player ServerPlayer
+---@field targetOne ServerPlayer
+---@field targetTwo ServerPlayer
+---@field skillName string
+---@return cardId
+function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName)
   local cards = {}
   local cardsPosition = {}
   for _, equipId in ipairs(targetOne:getCardIds(Player.Equip)) do
-    if not targetTwo:getEquipment(Fk:getCardById(equipId).sub_type) then
+    if targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
       table.insert(cards, equipId)
       table.insert(cardsPosition, 0)
     end
   end
   for _, equipId in ipairs(targetTwo:getCardIds(Player.Equip)) do
-    if not targetOne:getEquipment(Fk:getCardById(equipId).sub_type) then
+    if targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
       table.insert(cards, equipId)
       table.insert(cardsPosition, 1)
     end
   end
 
-  local data = { cards = cards, cardsPosition = cardsPosition }
+  if #cards > 0 then
+    table.sort(cards, function(prev, next)
+      local prevSubType = Fk:getCardById(prev).sub_type
+      local nextSubType = Fk:getCardById(next).sub_type
+
+      return prevSubType < nextSubType
+    end)
+  end
+
+  for _, trickId in ipairs(targetOne:getCardIds(Player.Judge)) do
+    if targetOne:canMoveCardInBoardTo(targetTwo, trickId) then
+      table.insert(cards, trickId)
+      table.insert(cardsPosition, 0)
+    end
+  end
+  for _, trickId in ipairs(targetTwo:getCardIds(Player.Judge)) do
+    if targetTwo:canMoveCardInBoardTo(targetOne, trickId) then
+      table.insert(cards, trickId)
+      table.insert(cardsPosition, 1)
+    end
+  end
+
+  local firstGeneralName = targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
+  local secGeneralName = targetTwo.general + (targetTwo.deputyGeneral ~= "" and ("/" .. targetTwo.deputyGeneral) or "")
+
+  local data = { cards = cards, cardsPosition = cardsPosition, generalNames = { firstGeneralName, secGeneralName } }
   local command = "AskForMoveCardInBoard"
   self:notifyMoveFocus(player, command)
   local result = self:doRequest(player, command, json.encode(data))
+
+  if result == "" then
+    local randomIndex = math.random(1, #cards)
+    result = { cardId = cards[randomIndex], pos = cardsPosition[randomIndex] }
+  else
+    result = json.decode(result)
+  end
+
+  local cardToMove = Fk:getCardById(result.cardId)
+  self:moveCardTo(
+    cardToMove,
+    cardToMove.type == Card.TypeEquip and Player.Equip or Player.Judge,
+    result.pos == 0 and targetTwo or targetOne,
+    fk.ReasonPut,
+    skillName,
+    nil,
+    true
+  )
 end
 
 ------------------------------------------------------------------------

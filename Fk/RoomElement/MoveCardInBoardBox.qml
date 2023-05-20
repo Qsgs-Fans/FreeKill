@@ -7,8 +7,9 @@ import Fk.Pages
 GraphicsBox {
   id: root
   property var cards: []
-  property var result
   property var cardsPosition: []
+  property var generalNames: []
+  property var result
   property int padding: 25
 
   title.text: Backend.translate("Please arrange cards")
@@ -23,10 +24,29 @@ GraphicsBox {
 
     Repeater {
       id: areaRepeater
-      model: 2
+      model: generalNames
 
       Row {
         spacing: 5
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          color: "gray"
+          width: 20
+          height: 100
+          radius: 5
+          Text {
+            width: 20
+            height: 100
+            text: modelData
+            color: "white"
+            font.family: fontLibian.name
+            font.pixelSize: 18
+            lineHeight: Math.max(1.4 - lineCount / 8, 1.6)
+            style: Text.Outline
+            wrapMode: Text.WrapAnywhere
+          }
+        }
 
         Repeater {
           id: cardRepeater
@@ -56,6 +76,7 @@ GraphicsBox {
       text: Backend.translate("OK")
       width: 120
       height: 35
+      enabled: false
 
       onClicked: close();
     }
@@ -73,13 +94,13 @@ GraphicsBox {
       suit: modelData.suit
       number: modelData.number
 
-      selectable: !result || result === this
+      selectable: !result || result.item === this
       onClicked: {
         if (!selectable) return;
-        if (result === this) {
+        if ((result || {}).item === this) {
           result = undefined;
         } else {
-          result = this;
+          result = { item: this };
         }
 
         updatePosition(this);
@@ -90,8 +111,8 @@ GraphicsBox {
   function arrangeCards() {
     for (let i = 0; i < cards.length; i++) {
       const curCard = cardItem.itemAt(i);
-      curCard.origX = i * 98;
-      curCard.origY = cardsPosition[i] * 300;
+      curCard.origX = i * 98 + 50;
+      curCard.origY = cardsPosition[i] * 150 + body.y;
       curCard.goBack(true);
     }
   }
@@ -99,6 +120,8 @@ GraphicsBox {
   function updatePosition(item) {
     for (let i = 0; i < 2; i++) {
       const index = cards.findIndex(data => item.cid === data.cid);
+      result && (result.pos = cardsPosition[index]);
+
       const cardPos = cardsPosition[index] === 0 ? (result ? 1 : 0) : (result ? 0 : 1);
       const curArea = areaRepeater.itemAt(cardPos);
       const curBox = curArea.cardRepeater.itemAt(index);
@@ -113,6 +136,6 @@ GraphicsBox {
   }
 
   function getResult() {
-    return result.cid;
+    return result ? { cardId: result.item.cid, pos: result.pos } : '';
   }
 }

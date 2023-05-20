@@ -761,7 +761,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
 
 callbacks["AskForMoveCardInBoard"] = function(jsonData) {
   const data = JSON.parse(jsonData);
-  const { cards, cardsPosition } = data;
+  const { cards, cardsPosition, generalNames } = data;
   
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
@@ -775,6 +775,10 @@ callbacks["AskForMoveCardInBoard"] = function(jsonData) {
   const box = roomScene.popupBox.item;
   box.cards = boxCards;
   box.cardsPosition = cardsPosition;
+  box.generalNames = generalNames.map(name => {
+    const namesSplited = name.split('/');
+    return namesSplited.length > 1 ? namesSplited.map(nameSplited => Backend.translate(nameSplited)).join('/') : Backend.translate(name)
+  });
 
   box.arrangeCards();
   box.accepted.connect(() => {

@@ -95,7 +95,6 @@ Item {
       data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
     }
 
-    console.log(data);
     if (modelItem)
       modelItem.mark_extra = data;
     else

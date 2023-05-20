@@ -92,7 +92,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   room:notifyMoveFocus(room.alive_players, "AskForLuckCard")
   room:doBroadcastNotify("AskForLuckCard", room.settings.luckTime or 4)
 
-  local remainTime = room.timeout
+  local remainTime = room.timeout + 1
   local currentTime = os.time()
   local elapsed = 0
 
