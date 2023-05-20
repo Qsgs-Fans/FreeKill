@@ -40,7 +40,7 @@ function getCardPicture(cidOrName) {
     extension = data.extension;
     name = data.name;
   }
-  
+
   let path = AppPath + "/packages/" + extension + "/image/card/" + name + ".png";
   if (Backend.exists(path)) {
     return path;

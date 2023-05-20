@@ -762,7 +762,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
 callbacks["AskForMoveCardInBoard"] = function(jsonData) {
   const data = JSON.parse(jsonData);
   const { cards, cardsPosition, generalNames } = data;
-  
+
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
 

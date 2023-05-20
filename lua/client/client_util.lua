@@ -99,7 +99,7 @@ function GetCardData(id)
 end
 
 function GetCardExtensionByName(cardName)
-  local card = table.find(Fk.cards, function(card) 
+  local card = table.find(Fk.cards, function(card)
     return card.name == cardName
   end)
 
