@@ -167,15 +167,7 @@ RSA *InitServerRSA() {
 #endif
 
 static void writeFileMD5(QFile &dest, const QString &fname) {
-  QString name = fname;
-  // If the is a corresponding fkp file, check fkp's MD5 instead.
-  if (name.endsWith(".lua")) {
-    name.chop(4);
-    name = name + ".fkp";
-    if (!QFile::exists(name))
-      name = fname;
-  }
-  QFile f(name);
+  QFile f(fname);
   if (!f.open(QIODevice::ReadOnly)) {
     return;
   }
@@ -183,7 +175,7 @@ static void writeFileMD5(QFile &dest, const QString &fname) {
   auto data = f.readAll();
   data.replace(QByteArray("\r\n"), QByteArray("\n"));
   auto hash = QCryptographicHash::hash(data, QCryptographicHash::Md5).toHex();
-  dest.write(name.toUtf8() + '=' + hash + ';');
+  dest.write(fname.toUtf8() + '=' + hash + ';');
 }
 
 static void writeDirMD5(QFile &dest, const QString &dir,
@@ -222,7 +214,7 @@ QString calcFileMD5() {
   flist.close();
   flist.open(QIODevice::ReadOnly);
   auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
-  flist.remove(); // delete flist.txt
+  // flist.remove(); // delete flist.txt
   flist.close();
   return ret.toHex();
 }

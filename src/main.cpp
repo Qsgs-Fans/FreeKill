@@ -69,7 +69,7 @@ static void installFkAssets(const QString &src, const QString &dest) {
 #ifdef Q_OS_ANDROID
   copyPath(src, dest);
 #elif defined(Q_OS_LINUX)
-  system(QString("cp -r %1 %2").arg(src).arg(dest).toUtf8());
+  system(QString("cp -r %1 %2/..").arg(src).arg(dest).toUtf8());
 #endif
 }
 

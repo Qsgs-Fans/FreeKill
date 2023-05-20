@@ -32,7 +32,7 @@ QString PackMan::getPackSummary() {
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
-  static const auto f = [=]() {
+  auto f = [=]() {
     // First, disable all packages
     foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
       disablePack(e.toObject()["name"].toString());
@@ -50,6 +50,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       i++;
       auto obj = e.toObject();
       auto name = obj["name"].toString();
+      auto url = obj["url"].toString();
 #ifndef FK_SERVER_ONLY
       Backend->showToast(tr("[%1/%2] upgrading package '%3'").arg(i).arg(arr.count()).arg(name));
 #endif
@@ -57,7 +58,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
               db,
               QString("SELECT name FROM packages WHERE name='%1';").arg(name))
               .isEmpty()) {
-        downloadNewPack(obj["url"].toString());
+        downloadNewPack(url);
       }
       ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
                       .arg(obj["hash"].toString())
@@ -81,7 +82,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
 }
 
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
-  static const auto threadFunc = [=]() {
+  auto threadFunc = [=]() {
     int error = clone(url);
     if (error < 0)
       return;

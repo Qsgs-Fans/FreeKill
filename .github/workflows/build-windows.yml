@@ -65,7 +65,7 @@ jobs:
       run: |
         mkdir FreeKill-release
         cp build/FreeKill.exe FreeKill-release
-        cp -r qml Fk FreeKill-release
+        cp -r Fk FreeKill-release
         cd FreeKill-release
         windeployqt FreeKill.exe
         cp -r ../.git .

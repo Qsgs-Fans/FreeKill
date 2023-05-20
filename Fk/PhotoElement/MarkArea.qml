@@ -89,16 +89,18 @@ Item {
 
     let special_value = '';
     if (mark.startsWith('@$')) {
-      special_value = data.length;
+      special_value += data.length;
       data = data.join(',');
     } else {
       data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
     }
 
-    if (modelItem)
+    if (modelItem) {
+      modelItem.special_value = special_value;
       modelItem.mark_extra = data;
-    else
+    } else {
       markList.append({ mark_name: mark, mark_extra: data, special_value });
+    }
 
     arrangeMarks();
   }
