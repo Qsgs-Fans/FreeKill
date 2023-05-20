@@ -143,6 +143,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#choose-trigger"] = "请选择一项技能发动",
   ["trigger"] = "选择技能",
   ["Please arrange cards"] = "请拖拽移动卡牌",
+  ["Please click to move card"] = "请点击移动卡牌",
 
   [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "选择武将",
@@ -202,10 +203,6 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$Winner"] = "%1 获胜",
   ["$NoWinner"] = "平局！",
   ["Back To Lobby"] = "返回大厅",
-
-  ["basic_char"] = "基",
-  ["trick_char"] = "锦",
-  ["equip_char"] = "装",
 
   ["Bulletin Info"] = "<h2>更新说明</h2>\
   1. 实现禁将功能；（在武将一览中，点击查看武将并点击退出按钮下方的“禁将/解禁”进行操作）；<br>\

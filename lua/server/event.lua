@@ -6,6 +6,7 @@
 ---@alias Event integer
 
 fk.NonTrigger = 1
+fk.GamePrepared = 78
 fk.GameStart = 2
 fk.TurnStart = 3
 fk.TurnEnd = 73
@@ -103,4 +104,6 @@ fk.BeforeDrawCard = 76
 
 fk.CardShown = 77
 
-fk.NumOfEvents = 78
+-- 78 = GamePrepared
+
+fk.NumOfEvents = 79

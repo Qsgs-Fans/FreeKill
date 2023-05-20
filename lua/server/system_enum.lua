@@ -28,7 +28,7 @@
 ---@field public moveVisible boolean|null
 ---@field public specialName string|null
 ---@field public specialVisible boolean|null
----@field public drawPilePosition number|null
+---@field public drawPilePosition number|null @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
 
 ---@class PindianResult
 ---@field public toCard Card

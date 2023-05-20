@@ -301,7 +301,7 @@ function GameLogic:prepareForStart()
 end
 
 function GameLogic:action()
-  self:trigger(fk.GameStart)
+  self:trigger(fk.GamePrepared)
   local room = self.room
 
   execGameEvent(GameEvent.DrawInitial)

@@ -127,11 +127,16 @@ GameEvent.functions[GameEvent.Round] = function(self)
   local logic = room.logic
   local p
 
-  if room:getTag("FirstRound") then
+  local isFirstRound = room:getTag("FirstRound")
+  if isFirstRound then
     room:setTag("FirstRound", false)
   end
   room:setTag("RoundCount", room:getTag("RoundCount") + 1)
   room:doBroadcastNotify("UpdateRoundNum", room:getTag("RoundCount"))
+
+  if isFirstRound then
+    logic:trigger(fk.GameStart, room.current)
+  end
 
   logic:trigger(fk.RoundStart, room.current)
 

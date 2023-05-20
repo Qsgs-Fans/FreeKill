@@ -187,7 +187,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
 
-  for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.BeforeCardUseEffect, fk.CardUsing }) do
+  for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do
     if not cardUseEvent.toCard and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       break
     end

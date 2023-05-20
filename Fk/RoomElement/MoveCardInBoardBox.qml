@@ -12,7 +12,7 @@ GraphicsBox {
   property var result
   property int padding: 25
 
-  title.text: Backend.translate("Please arrange cards")
+  title.text: Backend.translate("Please click to move card")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
@@ -31,20 +31,23 @@ GraphicsBox {
 
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
-          color: "gray"
+          color: "#6B5D42"
           width: 20
           height: 100
           radius: 5
+
           Text {
+            anchors.fill: parent
             width: 20
             height: 100
             text: modelData
             color: "white"
             font.family: fontLibian.name
             font.pixelSize: 18
-            lineHeight: Math.max(1.4 - lineCount / 8, 1.6)
             style: Text.Outline
             wrapMode: Text.WrapAnywhere
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
           }
         }
 
@@ -53,14 +56,18 @@ GraphicsBox {
           model: cards
 
           Rectangle {
-            color: "#1D1E19"
+            color: "#4A4139"
             width: 93
             height: 130
+            opacity: 0.5
 
             Text {
+              horizontalAlignment: Text.AlignHCenter
               anchors.centerIn: parent
               text: Backend.translate(JSON.parse(Backend.callLuaFunction("GetCardData", [modelData.cid])).subtype)
-              color: "#59574D"
+              color: "#90765F"
+              font.family: fontLibian.name
+               font.pixelSize: 16
               width: parent.width * 0.8
               wrapMode: Text.WordWrap
             }
@@ -113,7 +120,7 @@ GraphicsBox {
       const curCard = cardItem.itemAt(i);
       curCard.origX = i * 98 + 50;
       curCard.origY = cardsPosition[i] * 150 + body.y;
-      curCard.goBack(true);
+      curCard.goBack();
     }
   }
 

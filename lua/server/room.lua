@@ -1583,13 +1583,11 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName)
   for _, equipId in ipairs(targetOne:getCardIds(Player.Equip)) do
     if targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
       table.insert(cards, equipId)
-      table.insert(cardsPosition, 0)
     end
   end
   for _, equipId in ipairs(targetTwo:getCardIds(Player.Equip)) do
     if targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
       table.insert(cards, equipId)
-      table.insert(cardsPosition, 1)
     end
   end
 
@@ -1600,6 +1598,10 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName)
 
       return prevSubType < nextSubType
     end)
+
+    for _, id in ipairs(cards) do
+      table.insert(cardsPosition, self:getCardOwner(id) == targetOne and 0 or 1)
+    end
   end
 
   for _, trickId in ipairs(targetOne:getCardIds(Player.Judge)) do
@@ -1613,6 +1615,10 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName)
       table.insert(cards, trickId)
       table.insert(cardsPosition, 1)
     end
+  end
+
+  if #cards == 0 then
+    return
   end
 
   local firstGeneralName = targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
@@ -1782,6 +1788,7 @@ function Room:doCardUseEffect(cardUseEvent)
 
   local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
 
+  self.logic:trigger(fk.BeforeCardUseEffect, cardUseEvent.from, cardUseEvent)
   -- If using Equip or Delayed trick, move them to the area and return
   if cardUseEvent.card.type == Card.TypeEquip then
     if #realCardIds == 0 then

@@ -66,7 +66,7 @@ Item {
           }
 
           // Just for using room's right drawer
-          roomScene.startCheat("RoomElement/ViewPile.qml", params);
+          roomScene.startCheat("../RoomElement/ViewPile", params);
         }
       }
     }
