@@ -139,33 +139,6 @@ void ExecSQL(sqlite3 *db, const QString &sql) {
 
 void CloseDatabase(sqlite3 *db) { sqlite3_close(db); }
 
-#ifndef Q_OS_WASM
-RSA *InitServerRSA() {
-  RSA *rsa = RSA_new();
-  if (!QFile::exists("server/rsa_pub")) {
-    BIGNUM *bne = BN_new();
-    BN_set_word(bne, RSA_F4);
-    RSA_generate_key_ex(rsa, 2048, bne, NULL);
-
-    BIO *bp_pub = BIO_new_file("server/rsa_pub", "w+");
-    PEM_write_bio_RSAPublicKey(bp_pub, rsa);
-    BIO *bp_pri = BIO_new_file("server/rsa", "w+");
-    PEM_write_bio_RSAPrivateKey(bp_pri, rsa, NULL, NULL, 0, NULL, NULL);
-
-    BIO_free_all(bp_pub);
-    BIO_free_all(bp_pri);
-    BN_free(bne);
-  }
-  FILE *keyFile = fopen("server/rsa_pub", "r");
-  PEM_read_RSAPublicKey(keyFile, &rsa, NULL, NULL);
-  fclose(keyFile);
-  keyFile = fopen("server/rsa", "r");
-  PEM_read_RSAPrivateKey(keyFile, &rsa, NULL, NULL);
-  fclose(keyFile);
-  return rsa;
-}
-#endif
-
 static void writeFileMD5(QFile &dest, const QString &fname) {
   QFile f(fname);
   if (!f.open(QIODevice::ReadOnly)) {

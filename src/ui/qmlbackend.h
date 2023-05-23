@@ -3,6 +3,9 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 #include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
