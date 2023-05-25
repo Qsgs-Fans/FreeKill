@@ -10,9 +10,11 @@ public:
   DIYMaker(QObject *parent = nullptr);
   ~DIYMaker();
 
-  static void initSSHKeyPair();
 private:
   sqlite3 *db;
+
+  // git functions
+  int init(const QString &pkg);
 };
 
 #endif

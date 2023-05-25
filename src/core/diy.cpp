@@ -45,7 +45,7 @@ static int SshEncodeBuffer(unsigned char *pEncoding, int bufferLen, unsigned cha
   return index + bufferLen;
 }
 
-void DIYMaker::initSSHKeyPair() {
+static void initSSHKeyPair() {
   if (!QFile::exists("mymod/id_rsa.pub")) {
     RSA *rsa = RSA_new();
     BIGNUM *bne = BN_new();
@@ -97,9 +97,27 @@ void DIYMaker::initSSHKeyPair() {
   }
 }
 
+#define GIT_FAIL                                                               \
+  const git_error *e = git_error_last();                                       \
+  qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
+
 static int fk_cred_cb(git_cred **out, const char *url, const char *name,
     unsigned int allowed_types, void *payload)
 {
-  DIYMaker::initSSHKeyPair();
+  initSSHKeyPair();
   return git_cred_ssh_key_new(out, "git", "mymod/id_rsa.pub", "mymod/id_rsa", "");
+}
+
+int DIYMaker::init(const QString &pkg) {
+  QString path = "mymod/" + pkg;
+  int error;
+  git_repository *repo = NULL;
+  git_repository_init_options opts = GIT_REPOSITORY_INIT_OPTIONS_INIT;
+  opts.flags |= GIT_REPOSITORY_INIT_MKPATH; /* mkdir as needed to create repo */
+  error = git_repository_init_ext(&repo, path.toLatin1().constData(), &opts);
+  if (error < 0) {
+    GIT_FAIL;
+  }
+  git_repository_free(repo);
+  return error;
 }
