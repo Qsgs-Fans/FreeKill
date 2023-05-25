@@ -19,7 +19,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
     "client/client.cpp"
     "client/clientplayer.cpp"
-    "core/diy.cpp"
+    "core/mod.cpp"
   )
 endif ()
 

@@ -3,12 +3,11 @@
 #ifndef _DIY_H
 #define _DIY_H
 
-
-class DIYMaker : public QObject {
+class ModMaker : public QObject {
   Q_OBJECT
 public:
-  DIYMaker(QObject *parent = nullptr);
-  ~DIYMaker();
+  ModMaker(QObject *parent = nullptr);
+  ~ModMaker();
 
 private:
   sqlite3 *db;

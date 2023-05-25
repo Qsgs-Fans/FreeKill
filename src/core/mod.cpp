@@ -1,4 +1,4 @@
-#include "diy.h"
+#include "mod.h"
 #include "git2.h"
 #include "util.h"
 #include <openssl/rsa.h>
@@ -6,7 +6,7 @@
 #include <openssl/pem.h>
 #include <qfiledevice.h>
 
-DIYMaker::DIYMaker(QObject *parent) : QObject(parent) {
+ModMaker::ModMaker(QObject *parent) : QObject(parent) {
   git_libgit2_init();
 #ifdef Q_OS_ANDROID
   git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS, NULL, "./certs");
@@ -19,7 +19,7 @@ DIYMaker::DIYMaker(QObject *parent) : QObject(parent) {
   db = OpenDatabase("mymod/packages.db", "packages/mymod.sql");
 }
 
-DIYMaker::~DIYMaker() {
+ModMaker::~ModMaker() {
   // git_libgit2_shutdown();
   sqlite3_close(db);
 }
@@ -108,7 +108,7 @@ static int fk_cred_cb(git_cred **out, const char *url, const char *name,
   return git_cred_ssh_key_new(out, "git", "mymod/id_rsa.pub", "mymod/id_rsa", "");
 }
 
-int DIYMaker::init(const QString &pkg) {
+int ModMaker::init(const QString &pkg) {
   QString path = "mymod/" + pkg;
   int error;
   git_repository *repo = NULL;
