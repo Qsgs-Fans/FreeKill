@@ -228,10 +228,13 @@ QString QmlBackend::loadConf() {
     conf.open(QIODevice::WriteOnly);
     static const char *init_conf = "{}";
     conf.write(init_conf);
+    conf.close();
     return init_conf;
   }
   conf.open(QIODevice::ReadOnly);
-  return conf.readAll();
+  auto ret = conf.readAll();
+  conf.close();
+  return ret;
 }
 
 QString QmlBackend::loadTips() {
@@ -240,16 +243,20 @@ QString QmlBackend::loadTips() {
     conf.open(QIODevice::WriteOnly);
     static const char *init_conf = "转啊~ 转啊~";
     conf.write(init_conf);
+    conf.close();
     return init_conf;
   }
   conf.open(QIODevice::ReadOnly);
-  return conf.readAll();
+  auto ret = conf.readAll();
+  conf.close();
+  return ret;
 }
 
 void QmlBackend::saveConf(const QString &conf) {
   QFile c("freekill.client.config.json");
   c.open(QIODevice::WriteOnly);
   c.write(conf.toUtf8());
+  c.close();
 }
 
 void QmlBackend::replyDelayTest(const QString &screenName,
