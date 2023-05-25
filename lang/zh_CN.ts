@@ -80,6 +80,10 @@
     <translation>管理拓展包</translation>
   </message>
   <message>
+    <source>Mod Making</source>
+    <translation>制作Mod</translation>
+  </message>
+  <message>
     <source>Welcome back!</source>
     <translation>欢迎回来！</translation>
   </message>
@@ -210,6 +214,20 @@
   <message>
     <source>Copied.</source>
     <translation>已复制。</translation>
+  </message>
+</context>
+
+<context>
+  <name>ModInit</name>
+  <message>
+    <source>ModMaker</source>
+    <translation>Mod制作器</translation>
+  </message>
+  <message>
+    <source>config is incomplete</source>
+    <translation>
+    Mod制作器还未正确配置！
+请点击右上角配置好用户名和邮箱</translation>
   </message>
 </context>
 </TS>
