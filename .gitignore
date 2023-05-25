@@ -16,6 +16,7 @@ tags
 
 # file produced by game
 /FreeKill
+/mymod
 FreeKill.exe
 freekill-wrap.cxx
 server/users.db

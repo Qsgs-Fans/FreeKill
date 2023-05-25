@@ -445,6 +445,7 @@ RSA *Server::initServerRSA() {
 
     BIO_free_all(bp_pub);
     BIO_free_all(bp_pri);
+    QFile("server/rsa").setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     BN_free(bne);
   }
   FILE *keyFile = fopen("server/rsa_pub", "r");
