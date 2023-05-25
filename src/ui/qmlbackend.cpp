@@ -9,6 +9,7 @@
 
 #include <QClipboard>
 #include <QMediaPlayer>
+#include "mod.h"
 #endif
 
 #include <cstdlib>
@@ -306,6 +307,10 @@ QString QmlBackend::getAESKey() const { return aes_key; }
 
 void QmlBackend::installAESKey() {
   ClientInstance->installAESKey(aes_key.toLatin1());
+}
+
+void QmlBackend::createModBackend() {
+  engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
 }
 
 #endif

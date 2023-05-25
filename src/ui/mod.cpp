@@ -97,6 +97,26 @@ static void initSSHKeyPair() {
   }
 }
 
+void ModMaker::initKey() { initSSHKeyPair(); }
+
+QString ModMaker::readFile(const QString &fileName) {
+  QFile conf(fileName);
+  if (!conf.exists()) {
+    conf.open(QIODevice::WriteOnly);
+    static const char *init_conf = "{}";
+    conf.write(init_conf);
+    return init_conf;
+  }
+  conf.open(QIODevice::ReadOnly);
+  return conf.readAll();
+}
+
+void ModMaker::saveToFile(const QString &fName, const QString &content) {
+  QFile c(fName);
+  c.open(QIODevice::WriteOnly);
+  c.write(content.toUtf8());
+}
+
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
