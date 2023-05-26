@@ -41,6 +41,7 @@ if (WIN32)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/win/lua54.dll)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
   set(CRYPTO_LIB OpenSSL::Crypto)
+  set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.dll)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/win/libgit2.dll)
   set(app_icon_resource_windows "${PROJECT_SOURCE_DIR}/image/icon.rc")
   list(APPEND freekill_SRCS ${app_icon_resource_windows})
@@ -49,10 +50,12 @@ elseif (ANDROID)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
   set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto.so)
   set(SSL_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssl.so)
+  # 自己编译
+  set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.so)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
-    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${GIT_LIB}"
+    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${SSH_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
@@ -88,6 +91,7 @@ target_link_libraries(FreeKill PRIVATE
   ${SSL_LIB}
   ${READLINE_LIB}
   ${QT_LIB}
+  ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
 )
