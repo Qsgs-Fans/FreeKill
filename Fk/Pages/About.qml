@@ -54,6 +54,7 @@ Item {
               wrapMode: Text.WordWrap
               textFormat: Text.MarkdownText
               font.pixelSize: 18
+              onLinkActivated: Qt.openUrlExternally(link);
             }
           }
         }

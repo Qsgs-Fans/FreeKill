@@ -22,6 +22,10 @@ Item {
       }
       ToolButton {
         icon.source: AppPath + "/image/modmaker/menu"
+        onClicked: {
+          dialog.source = "UserInfo.qml";
+          drawer.open();
+        }
       }
     }
   }
@@ -46,5 +50,36 @@ Item {
     anchors.margins: 40
     scale: 2
     icon.source: AppPath + "/image/modmaker/add"
+    onClicked: {
+      dialog.source = "CreateSomething.qml";
+      dialog.item.head = "create_mod";
+      dialog.item.hint = "create_mod_hint";
+      drawer.open();
+    }
+  }
+
+  Drawer {
+    id: drawer
+    width: parent.width * 0.4 / mainWindow.scale
+    height: parent.height / mainWindow.scale
+    dim: false
+    clip: true
+    dragMargin: 0
+    scale: mainWindow.scale
+    transformOrigin: Item.TopLeft
+
+    Loader {
+      id: dialog
+      anchors.fill: parent
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finished.connect(() => {
+          sourceComponent = undefined;
+          drawer.close();
+        });
+      }
+      onSourceComponentChanged: sourceChanged();
+    }
   }
 }

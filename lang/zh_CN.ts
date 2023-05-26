@@ -221,7 +221,7 @@
   <name>ModInit</name>
   <message>
     <source>ModMaker</source>
-    <translation>Mod制作器</translation>
+    <translation>Mod制作器 - 首页</translation>
   </message>
   <message>
     <source>config is incomplete</source>
@@ -230,4 +230,49 @@
 请点击右上角配置好用户名和邮箱</translation>
   </message>
 </context>
+
+<context>
+  <name>UserInfo</name>
+  <message>
+    <source>help_text</source>
+    <translation>用户名和邮箱需要填入和git服务器上相同的名字和邮箱。</translation>
+  </message>
+  <message>
+    <source>username</source>
+    <translation>用户名</translation>
+  </message>
+  <message>
+    <source>email</source>
+    <translation>邮箱</translation>
+  </message>
+  <message>
+    <source>key_help_text</source>
+    <translation>公钥是你向git服务器证明身份的手段。请点击按钮复制公钥，然后在网页中添加SSH密钥。详见新月杀Mod制作器教程。</translation>
+  </message>
+  <message>
+    <source>copy pubkey</source>
+    <translation>复制公钥</translation>
+  </message>
+  <message>
+    <source>pubkey copied</source>
+    <translation>公钥已经复制到剪贴板。</translation>
+  </message>
+</context>
+
+<context>
+  <name>CreateSomething</name>
+  <message>
+    <source>validator_hint</source>
+    <translation>注意：你仅可以输入大小写字母、数字和下划线，且长度至少为4。这里输入的只是内部名称，它的中文名你可以稍后指定。</translation>
+  </message>
+  <message>
+    <source>create_mod</source>
+    <translation>新建Mod</translation>
+  </message>
+  <message>
+    <source>create_mod_hint</source>
+    <translation>请输入mod的名称。</translation>
+  </message>
+</context>
+
 </TS>
