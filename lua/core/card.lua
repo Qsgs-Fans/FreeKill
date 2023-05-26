@@ -86,13 +86,13 @@ function Card:initialize(name, suit, number, color)
     self.color = Card.NoColor
   end
 
-  self.package = nil
+  -- self.package = nil
   self.id = 0
   self.type = 0
   self.sub_type = Card.SubTypeNone
-  self.skill = nil
+  -- self.skill = nil
   self.subcards = {}
-  self.skillName = nil -- ""
+  -- self.skillName = nil
   self._skillName = ""
   self.skillNames = {}
   self.mark = {}
@@ -101,31 +101,21 @@ function Card:initialize(name, suit, number, color)
     self.name = string.sub(name, 2, #name)
     self.is_derived = true
   end
+end
 
-  local mt = table.simpleClone(getmetatable(self))
-  local newidx = mt.__newindex or rawset
-  mt.__newindex = function(t, k, v)
-    if k == "skillName" then
-      table.insertIfNeed(self.skillNames, v)
-      t._skillName = v
-    else
-      return newidx(t, k, v)
-    end
+function Card:__index(k)
+  if k == "skillName" then
+    return self._skillName
   end
+end
 
-  local idx = mt.__index or rawget
-  mt.__index = function(t, k)
-    if k == "skillName" then
-      return t._skillName
-    end
-    if type(idx) == "table" then
-      return idx[k]
-    end
-    if type(idx) == "function" then
-      return idx(t, k)
-    end
+function Card:__newindex(k, v)
+  if k == "skillName" then
+    table.insertIfNeed(self.skillNames, v)
+    self._skillName = v
+  else
+    rawset(self, k, v)
   end
-  setmetatable(self, mt)
 end
 
 function Card:__tostring()

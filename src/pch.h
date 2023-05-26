@@ -14,9 +14,7 @@
 typedef int LuaFunction;
 #include "lua.hpp"
 #include "sqlite3.h"
-
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
+#define OPENSSL_API_COMPAT 0x10101000L
 
 #if !defined (Q_OS_ANDROID) && !defined (Q_OS_WASM)
 #define DESKTOP_BUILD

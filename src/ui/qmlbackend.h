@@ -3,6 +3,9 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 #include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
@@ -49,6 +52,8 @@ public:
   Q_INVOKABLE void setAESKey(const QString &key);
   Q_INVOKABLE QString getAESKey() const;
   Q_INVOKABLE void installAESKey();
+
+  Q_INVOKABLE void createModBackend();
 
   qreal volume() const { return m_volume; }
   void setVolume(qreal v) { m_volume = v; }

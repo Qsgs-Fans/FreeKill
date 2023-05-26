@@ -183,6 +183,16 @@ Item {
     }
   }
 
+  // Temp
+  Button {
+    text: qsTr("Mod Making")
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    onClicked: {
+      mainStack.push(modMaker);
+    }
+  }
+
   function downloadComplete() {
     toast.show(qsTr("updated packages for md5"));
   }

@@ -260,6 +260,7 @@ int main(int argc, char *argv[]) {
   // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
   engine->rootContext()->setContextProperty("Backend", &backend);
+  engine->rootContext()->setContextProperty("ModBackend", nullptr);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
 
 #ifdef QT_DEBUG
