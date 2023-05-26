@@ -8,6 +8,8 @@
 #include <qobject.h>
 #include <qversionnumber.h>
 
+#include <openssl/bn.h>
+
 #include "client_socket.h"
 #include "packman.h"
 #include "player.h"
