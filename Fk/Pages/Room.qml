@@ -724,6 +724,7 @@ Item {
       switch (type) {
         case "Egg":
         case "GiantEgg":
+        case "Shoe":
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);
@@ -731,7 +732,7 @@ Item {
           //if (component.status !== Component.Ready)
           //  return false;
 
-          const fromItem = Logic.getPhoto(fromId);
+          const fromItem = Logic.getPhotoOrDashboard(fromId);
           const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
           const toItem = Logic.getPhoto(toId);
           const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);

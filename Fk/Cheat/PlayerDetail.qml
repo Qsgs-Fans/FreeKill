@@ -40,6 +40,15 @@ Flickable {
           root.finish();
         }
       }
+
+      Button {
+        text: Backend.translate("Give Shoe")
+        enabled: Math.random() < 0.5
+        onClicked: {
+          root.givePresent("Shoe");
+          root.finish();
+        }
+      }
     }
 
     // TODO: player details
