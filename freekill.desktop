@@ -1,6 +1,7 @@
 #!/usr/bin/env xdg-open
 [Desktop Entry]
 Name=FreeKill
+Name[zh_CN]=新月杀
 Comment=A Bang!-like card game
 Comment[zh_CN]=一款玩法类似Bang!的桌游
 Icon=freekill_logo

@@ -53,7 +53,7 @@ Fk:loadTranslationTable{
   ["Replay"] = "录像",
   ["About"] = "关于",
   ["about_freekill_description"] = [[
-# 关于FreeKill
+# 关于新月杀
 
 以便于DIY为首要目的的开源三国杀游戏。
 
