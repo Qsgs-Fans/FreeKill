@@ -42,6 +42,7 @@ Fk:loadTranslationTable{
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
+  ["Give Shoe"] = "拖鞋",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
