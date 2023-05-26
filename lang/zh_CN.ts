@@ -221,13 +221,17 @@
   <name>ModInit</name>
   <message>
     <source>ModMaker</source>
-    <translation>Mod制作器 - 首页</translation>
+    <translation>新月杀Mod制作器 - 首页</translation>
   </message>
   <message>
     <source>config is incomplete</source>
     <translation>
     Mod制作器还未正确配置！
 请点击右上角配置好用户名和邮箱</translation>
+  </message>
+  <message>
+    <source>cannot use this mod name</source>
+    <translation>不能给mod取这个名字</translation>
   </message>
 </context>
 

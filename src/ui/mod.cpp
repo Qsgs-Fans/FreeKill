@@ -121,9 +121,28 @@ void ModMaker::saveToFile(const QString &fName, const QString &content) {
   c.close();
 }
 
+void ModMaker::createMod(const QString &name) {
+  init(name);
+}
+
+void ModMaker::commitChanges(const QString &name, const QString &msg,
+    const QString &user, const QString &email)
+{
+  auto userBytes = user.toUtf8();
+  auto emailBytes = email.toUtf8();
+  commit(name, msg, userBytes, emailBytes);
+}
+
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
+
+#define GIT_CHK(s) do { \
+  error = (s); \
+  if (error < 0) { \
+    GIT_FAIL; \
+    goto clean; \
+  }} while (0)
 
 static int fk_cred_cb(git_cred **out, const char *url, const char *name,
     unsigned int allowed_types, void *payload)
@@ -143,5 +162,69 @@ int ModMaker::init(const QString &pkg) {
     GIT_FAIL;
   }
   git_repository_free(repo);
+  return error;
+}
+
+int ModMaker::add(const QString &pkg) {
+  QString path = "mymod/" + pkg;
+  int error;
+  git_repository *repo = NULL;
+  git_index *index = NULL;
+
+  GIT_CHK(git_repository_open(&repo, path.toLatin1()));
+  GIT_CHK(git_repository_index(&index, repo));
+  GIT_CHK(git_index_add_all(index, NULL, GIT_INDEX_ADD_DEFAULT, NULL, NULL));
+  GIT_CHK(git_index_write(index));
+
+clean:
+  git_repository_free(repo);
+  git_index_free(index);
+  return error;
+}
+
+int ModMaker::commit(const QString &pkg, const QString &msg, const char *user, const char *email) {
+  QString path = "mymod/" + pkg;
+  int error;
+  git_repository *repo = NULL;
+  git_oid commit_oid,tree_oid;
+  git_tree *tree;
+  git_index *index;
+  git_object *parent = NULL;
+  git_reference *ref = NULL;
+  git_signature *signature;
+
+  GIT_CHK(git_repository_open(&repo, path.toLatin1()));
+  error = git_revparse_ext(&parent, &ref, repo, "HEAD");
+  if (error == GIT_ENOTFOUND) {
+    // printf("HEAD not found. Creating first commit\n");
+    error = 0;
+  } else if (error != 0) {
+    GIT_FAIL;
+    goto clean;
+  }
+
+  GIT_CHK(git_repository_index(&index, repo));
+  GIT_CHK(git_index_write_tree(&tree_oid, index));
+  GIT_CHK(git_index_write(index));
+  GIT_CHK(git_tree_lookup(&tree, repo, &tree_oid));
+  GIT_CHK(git_signature_now(&signature, user, email));
+  GIT_CHK(git_commit_create_v(
+        &commit_oid,
+        repo,
+        "HEAD",
+        signature,
+        signature,
+        NULL,
+        msg.toUtf8(),
+        tree,
+        parent ? 1 : 0, parent));
+
+clean:
+  git_repository_free(repo);
+  git_index_free(index);
+  git_signature_free(signature);
+  git_tree_free(tree);
+  git_object_free(parent);
+  git_reference_free(ref);
   return error;
 }

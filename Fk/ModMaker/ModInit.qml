@@ -41,6 +41,12 @@ Item {
       anchors.centerIn: parent
       text: root.configOK ? "" : qsTr("config is incomplete")
     }
+
+    ListView {
+      anchors.fill: parent
+      model: modConfig.modList
+      delegate: Text { text: modelData }
+    }
   }
 
   RoundButton {
@@ -55,6 +61,9 @@ Item {
       dialog.item.head = "create_mod";
       dialog.item.hint = "create_mod_hint";
       drawer.open();
+      dialog.item.accepted.connect((name) => {
+        createNewMod(name);
+      });
     }
   }
 
@@ -81,5 +90,24 @@ Item {
       }
       onSourceComponentChanged: sourceChanged();
     }
+  }
+
+  function createNewMod(name) {
+    const banned = [ "test", "standard", "standard_cards", "maneuvering" ];
+    if (banned.indexOf(name) !== -1 || modConfig.modList.indexOf(name) !== -1) {
+      toast.show(qsTr("cannot use this mod name"));
+      return;
+    }
+    ModBackend.createMod(name);
+    const modInfo = {
+      name: name,
+      descrption: "",
+      author: modConfig.userName,
+    };
+    ModBackend.saveToFile(`mymod/${name}/mod.json`, JSON.stringify(modInfo, undefined, 2));
+    ModBackend.saveToFile(`mymod/${name}/.gitignore`, "init.lua");
+    ModBackend.stageFiles(name);
+    ModBackend.commitChanges(name, "Initial commit", modConfig.userName, modConfig.email);
+    modConfig.addMod(name);
   }
 }
