@@ -723,6 +723,7 @@ Item {
       let type = splited[0].slice(1);
       switch (type) {
         case "Egg":
+        case "GiantEgg":
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);
