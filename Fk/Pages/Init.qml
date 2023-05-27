@@ -158,7 +158,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.leftMargin: 12
         anchors.bottomMargin: 12
-        text: "FreeKill " + FkVersion
+        text: qsTr("FreeKill") + " v" + FkVersion
         font.pixelSize: 16
         font.bold: true
       }
@@ -188,6 +188,7 @@ Item {
     text: qsTr("Mod Making")
     anchors.right: parent.right
     anchors.bottom: parent.bottom
+    visible: Debugging
     onClicked: {
       mainStack.push(modMaker);
     }

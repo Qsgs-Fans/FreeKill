@@ -45,7 +45,28 @@ Item {
     ListView {
       anchors.fill: parent
       model: modConfig.modList
-      delegate: Text { text: modelData }
+      delegate: SwipeDelegate {
+        width: root.width
+        text: modelData
+
+        swipe.right: Label {
+          id: deleteLabel
+          text: qsTr("Delete")
+          color: "white"
+          verticalAlignment: Label.AlignVCenter
+          padding: 12
+          height: parent.height
+          anchors.right: parent.right
+          opacity: swipe.complete ? 1 : 0
+          Behavior on opacity { NumberAnimation { } }
+
+          SwipeDelegate.onClicked: deleteMod(modelData);
+
+          background: Rectangle {
+            color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
+          }
+        }
+      }
     }
   }
 
@@ -109,5 +130,10 @@ Item {
     ModBackend.stageFiles(name);
     ModBackend.commitChanges(name, "Initial commit", modConfig.userName, modConfig.email);
     modConfig.addMod(name);
+  }
+
+  function deleteMod(name) {
+    ModBackend.removeMod(name);
+    modConfig.removeMod(name);
   }
 }

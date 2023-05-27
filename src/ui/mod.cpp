@@ -125,6 +125,10 @@ void ModMaker::createMod(const QString &name) {
   init(name);
 }
 
+void ModMaker::removeMod(const QString &name) {
+  QDir("mymod/" + name).removeRecursively();
+}
+
 void ModMaker::commitChanges(const QString &name, const QString &msg,
     const QString &user, const QString &email)
 {

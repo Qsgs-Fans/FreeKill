@@ -16,6 +16,7 @@ public:
   Q_INVOKABLE void saveToFile(const QString &fileName, const QString &content);
 
   Q_INVOKABLE void createMod(const QString &name);
+  Q_INVOKABLE void removeMod(const QString &name);
   Q_INVOKABLE void stageFiles(const QString &name) { add(name); }
   Q_INVOKABLE void commitChanges(const QString &name, const QString &msg,
       const QString &user, const QString &email);

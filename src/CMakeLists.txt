@@ -49,10 +49,11 @@ elseif (ANDROID)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
   set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto.so)
   set(SSL_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssl.so)
+  set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.so)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
-    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${GIT_LIB}"
+    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${SSH_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
@@ -88,6 +89,7 @@ target_link_libraries(FreeKill PRIVATE
   ${SSL_LIB}
   ${READLINE_LIB}
   ${QT_LIB}
+  ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
 )
