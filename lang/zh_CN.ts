@@ -163,6 +163,10 @@
     <source>server is using version %1, please update</source>
     <translation>服务端使用的是版本%1，该更新你的客户端了</translation>
   </message>
+  <message>
+    <source>room password error</source>
+    <translation>房间密码错误</translation>
+  </message>
 </context>
 
 <context>

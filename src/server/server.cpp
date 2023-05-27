@@ -139,11 +139,14 @@ void Server::updateRoomList() {
   foreach (Room *room, rooms) {
     QJsonArray obj;
     auto settings = QJsonDocument::fromJson(room->getSettings());
+    auto password = settings["password"].toString();
+
     obj << room->getId();              // roomId
     obj << room->getName();            // roomName
-    obj << settings["gameMode"];                     // gameMode
+    obj << settings["gameMode"];       // gameMode
     obj << room->getPlayers().count(); // playerNum
     obj << room->getCapacity();        // capacity
+    obj << !password.isEmpty();
     arr << obj;
   }
   auto jsonData = JsonArray2Bytes(arr);

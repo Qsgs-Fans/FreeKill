@@ -211,7 +211,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       auto roomId = arr[0].toInt();
       auto room = ServerInstance->findRoom(roomId);
       if (room) {
-        room->addPlayer(sender);
+        auto settings = QJsonDocument::fromJson(room->getSettings());
+        auto password = settings["password"].toString();
+        if (password.isEmpty() || arr[1].toString() == password) {
+          room->addPlayer(sender);
+        } else {
+          sender->doNotify("ErrorMsg", "room password error");
+        }
       } else {
         sender->doNotify("ErrorMsg", "no such room");
       }
@@ -222,7 +228,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       auto roomId = arr[0].toInt();
       auto room = ServerInstance->findRoom(roomId);
       if (room) {
-        room->addObserver(sender);
+        auto settings = QJsonDocument::fromJson(room->getSettings());
+        auto password = settings["password"].toString();
+        if (password.isEmpty() || arr[1].toString() == password) {
+          room->addObserver(sender);
+        } else {
+          sender->doNotify("ErrorMsg", "room password error");
+        }
       } else {
         sender->doNotify("ErrorMsg", "no such room");
       }
