@@ -60,6 +60,10 @@
 <context>
   <name>Init</name>
   <message>
+    <source>FreeKill</source>
+    <translation>新月杀</translation>
+  </message>
+  <message>
     <source>Username</source>
     <translation>用户名</translation>
   </message>
@@ -222,6 +226,10 @@
   <message>
     <source>ModMaker</source>
     <translation>新月杀Mod制作器 - 首页</translation>
+  </message>
+  <message>
+    <source>Delete</source>
+    <translation>删除</translation>
   </message>
   <message>
     <source>config is incomplete</source>
