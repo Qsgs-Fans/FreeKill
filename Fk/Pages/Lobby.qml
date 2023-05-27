@@ -12,6 +12,8 @@ Item {
   id: root
   property alias roomModel: roomModel
 
+  property string password
+
   Rectangle {
     width: parent.width / 2 - roomListLayout.width / 2
     height: parent.height * 0.7
@@ -47,7 +49,7 @@ Item {
     id: roomDelegate
 
     Item {
-      height: 22
+      height: 48
       width: roomList.width
 
       RowLayout {
@@ -55,49 +57,40 @@ Item {
         spacing: 16
         Text {
           text: roomId
+          color: "grey"
         }
 
         Text {
-          horizontalAlignment: Text.AlignHCenter
+          horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: roomName
+          text: roomName + (hasPassword ? "(🔒)" : "")
+          font.pixelSize: 20
         }
 
         Text {
-          text: gameMode
+          text: Backend.translate(gameMode)
         }
 
         Text {
           color: (playerNum == capacity) ? "red" : "black"
           text: playerNum + "/" + capacity
+          font.pixelSize: 20
+          font.bold: true
         }
 
-        Text {
-          text: Backend.translate("Enter")
-          font.pixelSize: 24
-          TapHandler {
-            onTapped: {
-              config.observing = false;
-              mainWindow.busy = true;
-              ClientInstance.notifyServer(
-                "EnterRoom",
-                JSON.stringify([roomId])
-              );
-            }
-          }
-        }
+        Button {
+          text: (playerNum < capacity) ? Backend.translate("Enter") :
+          Backend.translate("Observe")
 
-        Text {
-          text: Backend.translate("Observe")
-          font.pixelSize: 24
-          TapHandler {
-            onTapped: {
-              config.observing = true;
-              mainWindow.busy = true;
-              ClientInstance.notifyServer(
-                "ObserveRoom",
-                JSON.stringify([roomId])
-              );
+          onClicked: {
+            if (hasPassword) {
+              lobby_dialog.sourceComponent = enterPassword;
+              lobby_dialog.item.roomId = roomId;
+              lobby_dialog.item.playerNum = playerNum;
+              lobby_dialog.item.capacity = capacity;
+              lobby_drawer.open();
+            } else {
+              enterRoom(roomId, playerNum, capacity, "");
             }
           }
         }
@@ -230,6 +223,57 @@ Item {
         });
       }
       onSourceComponentChanged: sourceChanged();
+    }
+  }
+
+  Component {
+    id: enterPassword
+    ColumnLayout {
+      property int roomId
+      property int playerNum
+      property int capacity
+      signal finished()
+      anchors.fill: parent
+      anchors.margins: 16
+
+      Text {
+        text: Backend.translate("Please input room's password")
+      }
+
+      TextField {
+        id: passwordEdit
+        onTextChanged: root.password = text;
+      }
+
+      Button {
+        text: "OK"
+        onClicked: {
+          enterRoom(roomId, playerNum, capacity, root.password);
+          parent.finished();
+        }
+      }
+
+      Component.onCompleted: {
+        passwordEdit.text = "";
+      }
+    }
+  }
+
+  function enterRoom(roomId, playerNum, capacity, pw) {
+    if (playerNum < capacity) {
+      config.observing = false;
+      mainWindow.busy = true;
+      ClientInstance.notifyServer(
+        "EnterRoom",
+        JSON.stringify([roomId, pw])
+      );
+    } else {
+      config.observing = true;
+      mainWindow.busy = true;
+      ClientInstance.notifyServer(
+        "ObserveRoom",
+        JSON.stringify([roomId, pw])
+      );
     }
   }
 
