@@ -47,7 +47,7 @@ Item {
     id: roomDelegate
 
     Item {
-      height: 22
+      height: 48
       width: roomList.width
 
       RowLayout {
@@ -58,40 +58,36 @@ Item {
         }
 
         Text {
-          horizontalAlignment: Text.AlignHCenter
+          horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
           text: roomName
+          font.pixelSize: 20
         }
 
         Text {
-          text: gameMode
+          text: Backend.translate(gameMode)
         }
 
         Text {
           color: (playerNum == capacity) ? "red" : "black"
           text: playerNum + "/" + capacity
+          font.pixelSize: 20
+          font.bold: true
         }
 
-        Text {
-          text: Backend.translate("Enter")
-          font.pixelSize: 24
-          TapHandler {
-            onTapped: {
+        Button {
+          text: (playerNum < capacity) ? Backend.translate("Enter") :
+          Backend.translate("Observe")
+
+          onClicked: {
+            if (playerNum < capacity) {
               config.observing = false;
               mainWindow.busy = true;
               ClientInstance.notifyServer(
                 "EnterRoom",
                 JSON.stringify([roomId])
               );
-            }
-          }
-        }
-
-        Text {
-          text: Backend.translate("Observe")
-          font.pixelSize: 24
-          TapHandler {
-            onTapped: {
+            } else {
               config.observing = true;
               mainWindow.busy = true;
               ClientInstance.notifyServer(
