@@ -425,10 +425,13 @@ end
 
 --- 获取其他玩家是否在玩家的攻击距离内。
 ---@param other Player @ 其他玩家
-function Player:inMyAttackRange(other)
+---@param fixLimit number|null @ 卡牌距离限制增加专用
+function Player:inMyAttackRange(other, fixLimit)
   if self == other then
     return false
   end
+
+  fixLimit = fixLimit or 0
 
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
   for _, skill in ipairs(status_skills) do
@@ -438,7 +441,7 @@ function Player:inMyAttackRange(other)
   end
 
   local baseAttackRange = self:getAttackRange()
-  return self:distanceTo(other) <= baseAttackRange
+  return self:distanceTo(other) <= (baseAttackRange + fixLimit)
 end
 
 --- 增加玩家使用特定牌的历史次数。

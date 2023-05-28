@@ -183,6 +183,10 @@
     <source>room password error</source>
     <translation>房间密码错误</translation>
   </message>
+  <message>
+    <source>no such room</source>
+    <translation>房间不存在</translation>
+  </message>
 </context>
 
 <context>

@@ -276,7 +276,7 @@ local supplyShortageSkill = fk.CreateActiveSkill{
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
         return not player:hasDelayedTrick("supply_shortage") and
-          Self:distanceTo(player) <= self:getDistanceLimit(Self, card, Fk:currentRoom():getPlayerById(to_select))
+          Self:distanceTo(player) <= self:getDistanceLimit(Self, card, player)
       end
     end
     return false
