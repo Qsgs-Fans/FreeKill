@@ -154,6 +154,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForChoice"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
+  ["AskForMoveCardInBoard"] = "移动卡牌",
   ["PlayCard"] = "出牌",
 
   ["AskForCardChosen"] = "选牌",
