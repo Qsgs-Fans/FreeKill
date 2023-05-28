@@ -113,7 +113,7 @@ callbacks["UpdateRoomList"] = function(jsonData) {
     gameMode: room[2],
     playerNum: room[3],
     capacity: room[4],
-    hasPassword: room[5],
+    hasPassword: room[5] ? true : false,
     });
   });
 }

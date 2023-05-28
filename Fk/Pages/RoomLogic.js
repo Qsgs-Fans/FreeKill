@@ -300,16 +300,13 @@ function doIndicate(from, tos) {
 }
 
 callbacks["MaxCard"] = function(jsonData) {
-  
   let data = JSON.parse(jsonData);
   let id = data.id;
   let cardMax = data.pcardMax;
   let photo = getPhoto(id);
-  if (!photo) {
-    return null;
+  if (photo) {
+    photo.maxCard = cardMax;
   }
-  photo.maxCard = cardMax;
-
 }
 
 function changeSelf(id) {

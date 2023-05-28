@@ -361,7 +361,8 @@ Item {
       anchors.rightMargin: 20
       color: "#88EEEEEE"
       radius: 8
-      visible: roomScene.state == "playing" && (specialCardSkills.count > 1 || specialCardSkills.model[0] !== "_normal_use")
+      visible: roomScene.state == "playing" && (specialCardSkills.count > 1
+        || (specialCardSkills.model && specialCardSkills.model[0] !== "_normal_use"))
       width: childrenRect.width
       height: childrenRect.height - 20
 
