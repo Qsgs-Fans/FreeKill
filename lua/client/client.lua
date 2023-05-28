@@ -77,6 +77,7 @@ function Client:moveCards(moves)
   for _, move in ipairs(moves) do
     if move.from and move.fromArea then
       local from = self:getPlayerById(move.from)
+      ClientInstance:notifyUI("MaxCard", json.encode{ pcardMax = from:getMaxCards(),id = move.from})
       if from.id ~= Self.id and move.fromArea == Card.PlayerHand then
         for i = 1, #move.ids do
           table.remove(from.player_cards[Player.Hand])
@@ -290,6 +291,7 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
   local id, name, value = data[1], data[2], data[3]
   ClientInstance:getPlayerById(id)[name] = value
   ClientInstance:notifyUI("PropertyUpdate", jsonData)
+  ClientInstance:notifyUI("MaxCard", json.encode{ pcardMax =  ClientInstance:getPlayerById(data[1]):getMaxCards(), id = data[1]})
 end
 
 fk.client_callback["AskForCardChosen"] = function(jsonData)

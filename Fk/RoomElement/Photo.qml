@@ -31,6 +31,7 @@ Item {
   property bool isOwner: false
   property int distance: 0
   property string status: "normal"
+    property int maxCard: 0
 
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
@@ -351,9 +352,9 @@ Item {
     x: -6
 
     Text {
-      text: root.handcards
+      text: root.maxCard==root.hp ? root.handcards : root.handcards + "/" +root.maxCard
       font.family: fontLibian.name
-      font.pixelSize: 32
+      font.pixelSize: root.maxCard==root.hp ? 32 : 27
       //font.weight: 30
       color: "white"
       anchors.horizontalCenter: parent.horizontalCenter
