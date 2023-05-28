@@ -18,7 +18,7 @@ local thunderSlashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.additionalDamage or 0),
+      damage = 1,
       damageType = fk.ThunderDamage,
       skillName = self.name
     })
@@ -56,7 +56,7 @@ local fireSlashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.additionalDamage or 0),
+      damage = 1,
       damageType = fk.FireDamage,
       skillName = self.name
     })
@@ -80,7 +80,7 @@ local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
   can_use = function(self, player, card)
-    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn, card)
+    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn, card, Self)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -250,7 +250,7 @@ local fireAttackSkill = fk.CreateActiveSkill{
         from = from,
         to = to,
         card = cardEffectEvent.card,
-        damage = 1 + (cardEffectEvent.additionalDamage or 0),
+        damage = 1,
         damageType = fk.FireDamage,
         skillName = self.name
       })
@@ -276,7 +276,7 @@ local supplyShortageSkill = fk.CreateActiveSkill{
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
         return not player:hasDelayedTrick("supply_shortage") and
-          Self:distanceTo(player) <= self:getDistanceLimit(Self, card)
+          Self:distanceTo(player) <= self:getDistanceLimit(Self, card, Fk:currentRoom():getPlayerById(to_select))
       end
     end
     return false

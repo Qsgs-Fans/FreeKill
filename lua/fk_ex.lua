@@ -300,17 +300,23 @@ function fk.CreateProhibitSkill(spec)
 end
 
 ---@class AttackRangeSpec: StatusSkillSpec
----@field public correct_func fun(self: AttackRangeSkill, from: Player, to: Player)
+---@field public correct_func fun(self: AttackRangeSkill, from: Player)
+---@field public within_func fun(self: AttackRangeSkill, from: Player, to: Player)
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
 function fk.CreateAttackRangeSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.within_func) == "function")
 
   local skill = AttackRangeSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
-  skill.getCorrect = spec.correct_func
+  if spec.correct_func then
+    skill.getCorrect = spec.correct_func
+  end
+  if spec.within_func then
+    skill.withinAttackRange = spec.within_func
+  end
 
   return skill
 end
@@ -338,8 +344,8 @@ function fk.CreateMaxCardsSkill(spec)
 end
 
 ---@class TargetModSpec: StatusSkillSpec
----@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card)
----@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
+---@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player)
+---@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player)
 ---@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
 
 ---@param spec TargetModSpec

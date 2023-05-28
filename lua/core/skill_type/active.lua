@@ -120,11 +120,11 @@ function ActiveSkill:getMaxCardNum()
   end
 end
 
-function ActiveSkill:getDistanceLimit(player, card)
+function ActiveSkill:getDistanceLimit(player, card, to)
   local ret = self.distance_limit or 0
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getDistanceLimit(player, self, card)
+    local correct = skill:getDistanceLimit(player, self, card, to)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end

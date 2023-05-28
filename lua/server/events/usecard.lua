@@ -275,3 +275,39 @@ GameEvent.cleaners[GameEvent.RespondCard] = function(self)
     })
   end
 end
+
+GameEvent.functions[GameEvent.CardEffect] = function(self)
+  local cardEffectEvent = table.unpack(self.data)
+  local self = self.room
+
+  for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
+    if cardEffectEvent.isCancellOut then
+      local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
+      if self.logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
+        cardEffectEvent.isCancellOut = false
+      else
+        self.logic:breakEvent()
+      end
+    end
+
+    if
+      not cardEffectEvent.toCard and
+      (
+        not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to)
+        or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0
+      )
+    then
+      self.logic:breakEvent()
+    end
+
+    if table.contains((cardEffectEvent.nullifiedTargets or {}), cardEffectEvent.to) then
+      self.logic:breakEvent()
+    end
+
+    if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+      self.logic:breakEvent()
+    end
+
+    self:handleCardEffect(event, cardEffectEvent)
+  end
+end

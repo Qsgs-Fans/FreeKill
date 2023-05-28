@@ -18,6 +18,7 @@ dofile "lua/server/events/movecard.lua"
 
 GameEvent.UseCard = 9
 GameEvent.RespondCard = 10
+GameEvent.CardEffect = 20
 dofile "lua/server/events/usecard.lua"
 
 GameEvent.SkillEffect = 11
@@ -51,6 +52,7 @@ local eventTranslations = {
   [GameEvent.MoveCards] = "GameEvent.MoveCards",
   [GameEvent.UseCard] = "GameEvent.UseCard",
   [GameEvent.RespondCard] = "GameEvent.RespondCard",
+  [GameEvent.CardEffect] = "GameEvent.CardEffect",
   [GameEvent.SkillEffect] = "GameEvent.SkillEffect",
   [GameEvent.Judge] = "GameEvent.Judge",
   [GameEvent.DrawInitial] = "GameEvent.DrawInitial",

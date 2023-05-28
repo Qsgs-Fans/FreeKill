@@ -93,8 +93,11 @@ fk.IceDamage = 4
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
 ---@field public additionalDamage integer|null
+---@field public additionalRecover integer|null
 ---@field public customFrom integer|null
 ---@field public cardsResponded Card[]|null
+---@field public prohibitedCardNames string[]|null
+---@field public damageDealt table<PlayerId, number>|null
 
 ---@class AimStruct
 ---@field public from integer
@@ -106,6 +109,7 @@ fk.IceDamage = 4
 ---@field public nullifiedTargets integer[]|null
 ---@field public firstTarget boolean
 ---@field public additionalDamage integer|null
+---@field public additionalRecover integer|null
 ---@field public disresponsive boolean|null
 ---@field public unoffsetableList boolean|null
 ---@field public additionalResponseTimes table<string, integer>|integer|null
@@ -124,6 +128,7 @@ fk.IceDamage = 4
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
 ---@field public additionalDamage integer|null
+---@field public additionalRecover integer|null
 ---@field public customFrom integer|null
 ---@field public cardsResponded Card[]|null
 ---@field public disresponsive boolean|null
@@ -131,6 +136,7 @@ fk.IceDamage = 4
 ---@field public isCancellOut boolean|null
 ---@field public fixedResponseTimes table<string, integer>|integer|null
 ---@field public fixedAddTimesResponsors integer[]
+---@field public prohibitedCardNames string[]|null
 
 ---@class SkillEffectEvent
 ---@field public from integer

@@ -324,6 +324,10 @@ function ServerPlayer:getNextAlive()
 end
 
 function ServerPlayer:turnOver()
+  if self.room.logic:trigger(fk.BeforeTurnOver, self) then
+    return
+  end
+
   self.faceup = not self.faceup
   self.room:broadcastProperty(self, "faceup")
 
@@ -332,6 +336,7 @@ function ServerPlayer:turnOver()
     from = self.id,
     arg = self.faceup and "face_up" or "face_down",
   }
+
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 
@@ -593,6 +598,10 @@ end
 
 ---@param chained boolean
 function ServerPlayer:setChainState(chained)
+  if self.room.logic:trigger(fk.BeforeChainStateChange, self) then
+    return
+  end
+
   self.chained = chained
   self.room:broadcastProperty(self, "chained")
   self.room:sendLog{
@@ -600,6 +609,8 @@ function ServerPlayer:setChainState(chained)
     from = self.id,
     arg = self.chained and "chained" or "not-chained"
   }
+
+  self.room.logic:trigger(fk.ChainStateChanged, self)
 end
 
 ---@param from ServerPlayer

@@ -22,6 +22,7 @@ Skill.NotFrequent = 2
 Skill.Compulsory = 3
 Skill.Limited = 4
 Skill.Wake = 5
+Skill.Quest = 6
 
 --- 构造函数，不可随意调用。
 ---@param name string @ 技能名

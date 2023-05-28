@@ -30,13 +30,16 @@ local slashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player, card)
-    return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card)
+    return
+      table.find(Fk:currentRoom().alive_players, function(p) 
+        return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, p)
+      end)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and
-        (self:getDistanceLimit(Self, card) -- for no distance limit for slash
+        (self:getDistanceLimit(Self, card, Fk:currentRoom():getPlayerById(to_select)) -- for no distance limit for slash
         + Self:getAttackRange()
         >= Self:distanceTo(player))
     end
@@ -49,7 +52,7 @@ local slashSkill = fk.CreateActiveSkill{
       from = room:getPlayerById(from),
       to = room:getPlayerById(to),
       card = effect.card,
-      damage = 1 + (effect.additionalDamage or 0),
+      damage = 1,
       damageType = fk.NormalDamage,
       skillName = self.name
     })
@@ -224,8 +227,10 @@ local snatchSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:distanceTo(player) <= self:getDistanceLimit(Self, card) -- for no distance limit for snatch
-        and not player:isAllNude()
+      return
+        Self ~= player and
+        Self:distanceTo(player) <= self:getDistanceLimit(Self, card, Fk:currentRoom():getPlayerById(to_select)) and -- for no distance limit for snatch
+        not player:isAllNude()
     end
   end,
   target_num = 1,
@@ -276,10 +281,6 @@ local duelSkill = fk.CreateActiveSkill{
     local currentResponser = to
 
     while currentResponser:isAlive() do
-      if effect.disresponsive or table.contains(effect.disresponsiveList or {}, currentResponser.id) then
-        break
-      end
-
       local loopTimes = 1
       if effect.fixedResponseTimes then
         local canFix = currentResponser == to
@@ -298,7 +299,7 @@ local duelSkill = fk.CreateActiveSkill{
 
       local cardResponded
       for i = 1, loopTimes do
-        cardResponded = room:askForResponse(currentResponser, 'slash')
+        cardResponded = room:askForResponse(currentResponser, 'slash', nil, nil, false, nil, effect)
         if cardResponded then
           room:responseCard({
             from = currentResponser.id,
@@ -323,7 +324,7 @@ local duelSkill = fk.CreateActiveSkill{
         from = responsers[currentTurn % 2 + 1],
         to = currentResponser,
         card = effect.card,
-        damage = 1 + (effect.additionalDamage or 0),
+        damage = 1,
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -364,7 +365,7 @@ local collateralSkill = fk.CreateActiveSkill{
     local to = room:getPlayerById(effect.to)
     if not to:getEquipment(Card.SubtypeWeapon) then return end
     local use = room:askForUseCard(to, "slash", nil, nil, nil,
-                                   { must_targets = effect.subTargets })
+                                   { must_targets = effect.subTargets }, effect)
 
     if use then
       room:useCard(use)
@@ -443,10 +444,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
   on_use = aoe_on_use,
   on_effect = function(self, room, effect)
-    local cardResponded = nil
-    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash')
-    end
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect)
 
     if cardResponded then
       room:responseCard({
@@ -459,7 +457,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.additionalDamage or 0),
+        damage = 1,
         damageType = fk.NormalDamage,
         skillName = self.name,
       })
@@ -484,10 +482,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
   on_use = aoe_on_use,
   on_effect = function(self, room, effect)
-    local cardResponded = nil
-    if not (effect.disresponsive or table.contains(effect.disresponsiveList or {}, effect.to)) then
-      cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink')
-    end
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect)
 
     if cardResponded then
       room:responseCard({
@@ -500,7 +495,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
         from = room:getPlayerById(effect.from),
         to = room:getPlayerById(effect.to),
         card = effect.card,
-        damage = 1 + (effect.additionalDamage or 0),
+        damage = 1,
         damageType = fk.NormalDamage,
         skillName = self.name,
       })

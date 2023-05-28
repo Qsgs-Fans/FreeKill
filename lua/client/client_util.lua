@@ -286,6 +286,8 @@ function GetSkillData(skill_name)
     frequency = "limit"
   elseif skill.frequency == Skill.Wake then
     frequency = "wake"
+  elseif skill.frequency == Skill.Quest then
+    frequency = "quest"
   end
   return json.encode{
     skill = Fk:translate(skill_name),
