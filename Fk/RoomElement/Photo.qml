@@ -31,7 +31,10 @@ Item {
   property bool isOwner: false
   property int distance: 0
   property string status: "normal"
-  property int cardMax: 0
+<<<<<<< HEAD
+  property int maxCard: 0
+=======
+>>>>>>> parent of 179bc69 (CardMax)
 
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
@@ -352,9 +355,13 @@ Item {
     x: -6
 
     Text {
-      text: root.handcards + "/" +root.cardMax
+<<<<<<< HEAD
+      text: root.maxCard==root.hp ? root.handcards : root.handcards + "/" +root.maxCard
+=======
+      text: root.handcards
+>>>>>>> parent of 179bc69 (CardMax)
       font.family: fontLibian.name
-      font.pixelSize: 32
+      font.pixelSize: root.maxCard==root.hp ? 32 : 27
       //font.weight: 30
       color: "white"
       anchors.horizontalCenter: parent.horizontalCenter
