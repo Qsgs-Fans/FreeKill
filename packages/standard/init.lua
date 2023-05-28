@@ -1043,7 +1043,7 @@ local wushuang = fk.CreateTriggerSkill{
     end
 
     if event == fk.TargetSpecified then
-      return target == player and table.contains({ "slash", "duel" }, data.card.name)
+      return target == player and table.contains({ "slash", "duel" }, data.card.trueName)
     else
       return data.to == player.id and data.card.name == "duel"
     end

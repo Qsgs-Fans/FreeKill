@@ -8,6 +8,8 @@
 #include <qobject.h>
 #include <qversionnumber.h>
 
+#include <openssl/bn.h>
+
 #include "client_socket.h"
 #include "packman.h"
 #include "player.h"
@@ -22,7 +24,7 @@ Server *ServerInstance;
 Server::Server(QObject *parent) : QObject(parent) {
   ServerInstance = this;
   db = OpenDatabase();
-  rsa = InitServerRSA();
+  rsa = initServerRSA();
   QFile file("server/rsa_pub");
   file.open(QIODevice::ReadOnly);
   QTextStream in(&file);
@@ -138,11 +140,15 @@ void Server::updateRoomList() {
   QJsonArray arr;
   foreach (Room *room, rooms) {
     QJsonArray obj;
+    auto settings = QJsonDocument::fromJson(room->getSettings());
+    auto password = settings["password"].toString();
+
     obj << room->getId();              // roomId
     obj << room->getName();            // roomName
-    obj << "Role";                     // gameMode
+    obj << settings["gameMode"];       // gameMode
     obj << room->getPlayers().count(); // playerNum
     obj << room->getCapacity();        // capacity
+    obj << !password.isEmpty();
     arr << obj;
   }
   auto jsonData = JsonArray2Bytes(arr);
@@ -430,6 +436,32 @@ void Server::onUserDisconnected() {
 }
 
 void Server::onUserStateChanged() {}
+
+RSA *Server::initServerRSA() {
+  RSA *rsa = RSA_new();
+  if (!QFile::exists("server/rsa_pub")) {
+    BIGNUM *bne = BN_new();
+    BN_set_word(bne, RSA_F4);
+    RSA_generate_key_ex(rsa, 2048, bne, NULL);
+
+    BIO *bp_pub = BIO_new_file("server/rsa_pub", "w+");
+    PEM_write_bio_RSAPublicKey(bp_pub, rsa);
+    BIO *bp_pri = BIO_new_file("server/rsa", "w+");
+    PEM_write_bio_RSAPrivateKey(bp_pri, rsa, NULL, NULL, 0, NULL, NULL);
+
+    BIO_free_all(bp_pub);
+    BIO_free_all(bp_pri);
+    QFile("server/rsa").setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    BN_free(bne);
+  }
+  FILE *keyFile = fopen("server/rsa_pub", "r");
+  PEM_read_RSAPublicKey(keyFile, &rsa, NULL, NULL);
+  fclose(keyFile);
+  keyFile = fopen("server/rsa", "r");
+  PEM_read_RSAPrivateKey(keyFile, &rsa, NULL, NULL);
+  fclose(keyFile);
+  return rsa;
+}
 
 void Server::readConfig() {
   QFile file("freekill.server.config.json");

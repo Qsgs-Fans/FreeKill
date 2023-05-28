@@ -113,6 +113,19 @@ ColumnLayout {
     }
   }
 
+  RowLayout {
+    anchors.rightMargin: 8
+    spacing: 16
+    Text {
+      text: Backend.translate("Room Password")
+    }
+    TextField {
+      id: roomPassword
+      maximumLength: 16
+      font.pixelSize: 18
+    }
+  }
+
   Switch {
     id: freeAssignCheck
     checked: Debugging ? true : false
@@ -154,6 +167,7 @@ ColumnLayout {
             disabledPack: config.disabledPack,
             generalNum: config.preferredGeneralNum,
             luckTime: config.preferredLuckTime,
+            password: roomPassword.text,
             disabledGenerals,
           }])
         );

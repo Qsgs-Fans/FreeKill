@@ -269,7 +269,9 @@ Item {
 
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing") {
         let skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
-        skills.unshift("_normal_use");
+        if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
+          skills.unshift("_normal_use");
+        }
         specialCardSkills.model = skills;
       } else {
         specialCardSkills.model = [];
@@ -359,7 +361,7 @@ Item {
       anchors.rightMargin: 20
       color: "#88EEEEEE"
       radius: 8
-      visible: roomScene.state == "playing" && specialCardSkills.count > 1
+      visible: roomScene.state == "playing" && (specialCardSkills.count > 1 || specialCardSkills.model[0] !== "_normal_use")
       width: childrenRect.width
       height: childrenRect.height - 20
 
@@ -680,6 +682,10 @@ Item {
   }
 
   function getCurrentCardUseMethod() {
+    if (specialCardSkills.count === 1 && specialCardSkills.model[0] !== "_normal_use") {
+      return specialCardSkills.model[0];
+    }
+
     for (let i = 1; i < specialCardSkills.count; i++) {
       let item = specialCardSkills.itemAt(i);
       if (item.checked) {
@@ -723,6 +729,8 @@ Item {
       let type = splited[0].slice(1);
       switch (type) {
         case "Egg":
+        case "GiantEgg":
+        case "Shoe":
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);
@@ -730,7 +738,7 @@ Item {
           //if (component.status !== Component.Ready)
           //  return false;
 
-          const fromItem = Logic.getPhoto(fromId);
+          const fromItem = Logic.getPhotoOrDashboard(fromId);
           const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
           const toItem = Logic.getPhoto(toId);
           const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);

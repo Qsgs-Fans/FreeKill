@@ -3,6 +3,9 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 #include <qjsonobject.h>
 #include <qjsonvalue.h>
 class ServerSocket;
@@ -66,6 +69,8 @@ private:
   QString public_key;
   sqlite3 *db;
   QString md5;
+
+  static RSA *initServerRSA();
 
   QJsonObject config;
   void readConfig();

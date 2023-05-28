@@ -90,6 +90,7 @@ request_handlers["luckcard"] = function(room, id, reqlist)
   local p = room:getPlayerById(id)
   local cancel = reqlist[3] == "false"
   local luck_data = room:getTag("LuckCardData")
+  if not (p and luck_data) then return end
   local pdata = luck_data[id]
 
   if not cancel then

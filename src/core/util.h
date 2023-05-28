@@ -16,10 +16,6 @@ QString SelectFromDb(sqlite3 *db, const QString &sql);
 void ExecSQL(sqlite3 *db, const QString &sql);
 void CloseDatabase(sqlite3 *db);
 
-#ifndef Q_OS_WASM
-RSA *InitServerRSA();
-#endif
-
 QString calcFileMD5();
 QByteArray JsonArray2Bytes(const QJsonArray &arr);
 QJsonDocument String2Json(const QString &str);

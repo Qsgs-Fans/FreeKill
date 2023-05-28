@@ -196,6 +196,17 @@ function CanUseCard(card, player)
   player = ClientInstance:getPlayerById(player)
   local ret = c.skill:canUse(player, c)
   ret = ret and not player:prohibitUse(c)
+  if ret then
+    local min_target = c.skill:getMinTargetNum()
+    if min_target > 0 then
+      for _, p in ipairs(ClientInstance.players) do
+        if c.skill:targetFilter(p.id, {}, {}, c) then
+          return "true"
+        end
+      end
+      return "false"
+    end
+  end
   return json.encode(ret)
 end
 
@@ -298,7 +309,11 @@ function ActiveCanUse(skill_name)
         local exp = Exppattern:Parse(skill.pattern)
         local cnames = {}
         for _, m in ipairs(exp.matchers) do
-          if m.name then table.insertTable(cnames, m.name) end
+          if m.name then
+            table.insertTable(cnames, m.name)
+          elseif m.trueName then
+            table.insertTable(cnames, m.trueName)
+          end
         end
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)

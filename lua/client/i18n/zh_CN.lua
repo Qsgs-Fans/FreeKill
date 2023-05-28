@@ -32,6 +32,8 @@ Fk:loadTranslationTable{
   ["Select general num"] = "选将数目",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
+  ["Room Password"] = "房间密码",
+  ["Please input room's password"] = "请输入房间的密码",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "启用副将机制",
@@ -42,6 +44,7 @@ Fk:loadTranslationTable{
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
+  ["Give Shoe"] = "拖鞋",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 

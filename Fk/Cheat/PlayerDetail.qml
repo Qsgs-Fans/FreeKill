@@ -32,7 +32,20 @@ Flickable {
       Button {
         text: Backend.translate("Give Egg")
         onClicked: {
-          root.givePresent("Egg");
+          if (Math.random() < 0.03) {
+            root.givePresent("GiantEgg");
+          } else {
+            root.givePresent("Egg");
+          }
+          root.finish();
+        }
+      }
+
+      Button {
+        text: Backend.translate("Give Shoe")
+        enabled: Math.random() < 0.5
+        onClicked: {
+          root.givePresent("Shoe");
           root.finish();
         }
       }

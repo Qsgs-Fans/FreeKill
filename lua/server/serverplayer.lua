@@ -243,7 +243,11 @@ function ServerPlayer:marshal(player)
     room:notifyMoveCards({ player }, card_moves)
   end
 
-  -- TODO: pile, mark
+  -- TODO: pile
+
+  for k, v in pairs(self.mark) do
+    player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
+  end
 
   for _, s in ipairs(self.player_skills) do
     player:doNotify("AddSkill", json.encode{self.id, s.name})
