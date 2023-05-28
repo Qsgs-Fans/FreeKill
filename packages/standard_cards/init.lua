@@ -31,7 +31,7 @@ local slashSkill = fk.CreateActiveSkill{
   target_num = 1,
   can_use = function(self, player, card)
     return
-      table.find(Fk:currentRoom().alive_players, function(p) 
+      table.find(Fk:currentRoom().alive_players, function(p)
         return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, p)
       end)
   end,
