@@ -299,6 +299,22 @@ function doIndicate(from, tos) {
   line.running = true;
 }
 
+<<<<<<< HEAD
+callbacks["MaxCard"] = function(jsonData) {
+  
+  let data = JSON.parse(jsonData);
+  let id = data.id;
+  let cardMax = data.pcardMax;
+  let photo = getPhoto(id);
+  if (!photo) {
+    return null;
+  }
+  photo.maxCard = cardMax;
+
+}
+
+=======
+>>>>>>> parent of 179bc69 (CardMax)
 function changeSelf(id) {
   Backend.callLuaFunction("ChangeSelf", [id]);
 
