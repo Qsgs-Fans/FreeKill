@@ -118,7 +118,19 @@
 </context>
 
 <context>
+  <name>main</name>
+  <message>
+    <source>FreeKill</source>
+    <translation>新月杀</translation>
+  </message>
+</context>
+
+<context>
   <name>Splash</name>
+  <message>
+    <source>FreeKill</source>
+    <translation>新月杀</translation>
+  </message>
   <message>
     <source>Free</source>
     <translation>自由</translation>

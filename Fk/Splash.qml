@@ -36,7 +36,7 @@ Rectangle {
 
       Text {
         id: fktext
-        text: "FreeKill"
+        text: qsTr("FreeKill")
         // color: "#ffffff"
         font.pixelSize: 40
         opacity: 0
@@ -151,7 +151,7 @@ Rectangle {
   }
 
   Text {
-    text: "常用联机IP：175.178.66.93\nFK联机交流群：531553435"
+    text: "常用联机IP：175.178.66.93\n新月杀联机交流群：531553435"
     font.pixelSize: 20
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 20

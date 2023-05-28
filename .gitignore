@@ -1,45 +1,45 @@
 # Compile output
-build/
-lib/libgit2/
-*.o
-zh_CN.qm
-fk_ver
+/build/
+/docs/build
+/*.o
+/zh_CN.qm
+/fk_ver
 
 # IDE & LSP
-.kdev4/
-.vscode/
-*.user
+/.kdev4/
+/.vscode/
+/*.user
 *-swp
-*.kdev4
-.cache/
-tags
+/*.kdev4
+/.cache/
+/tags
 
 # file produced by game
 /FreeKill
+/FreeKill.exe
 /mymod
-FreeKill.exe
 freekill-wrap.cxx
-server/users.db
-server/rsa
-server/rsa_pub
-freekill.client.config.json
-freekill.server.config.json
-flist.txt
+/server/users.db
+/server/rsa
+/server/rsa_pub
+/freekill.client.config.json
+/freekill.server.config.json
+/flist.txt
 
 # windeployqt
-bearer/
-iconengines/
-imageformats/
-platforms/
-Qt/
-QtGraphicalEffects/
-QtQuick/
-QtQuick.2/
-Qt5Compat/
-QtQml/
-QtMultimedia/
-sqldrivers/
-styles/
-tls/
-translations/
-*.dll
+/bearer/
+/iconengines/
+/imageformats/
+/platforms/
+/Qt/
+/QtGraphicalEffects/
+/QtQuick/
+/QtQuick.2/
+/Qt5Compat/
+/QtQml/
+/QtMultimedia/
+/sqldrivers/
+/styles/
+/tls/
+/translations/
+/*.dll
