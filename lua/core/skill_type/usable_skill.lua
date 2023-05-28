@@ -12,12 +12,12 @@ function UsableSkill:initialize(name, frequency)
   self.max_use_time = {9999, 9999, 9999, 9999}
 end
 
-function UsableSkill:getMaxUseTime(player, scope, card)
+function UsableSkill:getMaxUseTime(player, scope, card, to)
   scope = scope or Player.HistoryTurn
   local ret = self.max_use_time[scope]
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getResidueNum(player, self, scope, card)
+    local correct = skill:getResidueNum(player, self, scope, card, to)
     if correct == nil then correct = 0 end
     ret = ret + correct
   end

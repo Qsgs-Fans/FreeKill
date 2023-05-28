@@ -30,7 +30,7 @@ Item {
 
   Text {
     id: x
-    opacity: skilltype === "limit" ? 1 : 0
+    opacity: (skilltype === "limit" || skilltype === "quest") ? 1 : 0
     text: "X"
     font.family: fontLibian.name
     font.pixelSize: 28
@@ -62,6 +62,12 @@ Item {
     } else if (skilltype === 'switch') {
       visible = true;
       bg.source = SkinBank.LIMIT_SKILL_DIR + (usedtimes < 1 ? 'switch' : 'switch-yin');
+    } else if (skilltype === 'quest') {
+      visible = true
+      if (usedtimes > 1) {
+        x.visible = true;
+        bg.source = SkinBank.LIMIT_SKILL_DIR + "limit-used";
+      }
     }
   }
 }

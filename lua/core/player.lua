@@ -372,7 +372,7 @@ function Player:getAttackRange()
 
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self, other)
+    local correct = skill:getCorrect(self)
     baseAttackRange = baseAttackRange + correct
   end
 
@@ -429,6 +429,14 @@ function Player:inMyAttackRange(other)
   if self == other then
     return false
   end
+
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  for _, skill in ipairs(status_skills) do
+    if skill:withinAttackRange(self, other) then
+      return true
+    end
+  end
+
   local baseAttackRange = self:getAttackRange()
   return self:distanceTo(other) <= baseAttackRange
 end
@@ -743,6 +751,10 @@ function Player:getSwitchSkillState(skillName, afterUse)
 end
 
 function Player:canMoveCardInBoardTo(to, id)
+  if self == to then
+    return false
+  end
+
   local card = Fk:getCardById(id)
   assert(card.type == Card.TypeEquip or card.sub_type == Card.SubtypeDelayedTrick)
 
@@ -753,6 +765,36 @@ function Player:canMoveCardInBoardTo(to, id)
       return Fk:getCardById(cardId).name == card.name
     end)
   end
+end
+
+function Player:canMoveCardsInBoardTo(to, flag)
+  if self == to then
+    return false
+  end
+
+  assert(flag == nil or flag == "e" or flag == "j")
+
+  local areas = {}
+  if flag == "e" then
+    table.insert(areas, Player.Equip)
+  elseif flag == "j" then
+    table.insert(areas, Player.Judge)
+  else
+    areas = { Player.Equip, Player.Judge }
+  end
+
+  for _, cardId in ipairs(self:getCardIds(areas)) do
+    if self:canMoveCardInBoardTo(to, cardId) then
+      return true
+    end
+  end
+
+  return false
+end
+
+function Player:getQuestSkillState(skillName)
+  local questSkillState = self:getMark(MarkEnum.QuestSkillPreName .. skillName)
+  return type(questSkillState) == "string" and questSkillState or nil
 end
 
 return Player

@@ -74,7 +74,27 @@ local maxCardsSkill = fk.CreateMaxCardsSkill{
   name = "max_cards_skill",
   global = true,
   correct_func = function(self, player)
-    return player:getMark("AddMaxCards") + player:getMark("AddMaxCards-turn") - player:getMark("MinusMaxCards") - player:getMark("MinusMaxCards-turn")
+    return
+      player:getMark(MarkEnum.AddMaxCards) +
+      player:getMark(MarkEnum.AddMaxCardsInTurn) -
+      player:getMark(MarkEnum.MinusMaxCards) -
+      player:getMark(MarkEnum.MinusMaxCardsInTurn)
+  end,
+}
+
+local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
+  name = "choose_players_to_move_card_in_board",
+  target_num = 2,
+  card_filter = function(self, to_select)
+    return false
+  end,
+  target_filter = function(self, to_select, selected, cards)
+    local target = Fk:currentRoom():getPlayerById(to_select)
+    if #selected > 0 then
+      return Fk:currentRoom():getPlayerById(selected[1]):canMoveCardsInBoardTo(target, self.flag)
+    end
+
+    return #target:getCardIds({ Player.Equip, Player.Judge }) > 0
   end,
 }
 
@@ -83,4 +103,5 @@ AuxSkills = {
   chooseCardsSkill,
   choosePlayersSkill,
   maxCardsSkill,
+  choosePlayersToMoveCardInBoardSkill,
 }

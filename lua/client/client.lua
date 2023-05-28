@@ -541,7 +541,7 @@ local function updateLimitSkill(pid, skill, times)
   if skill:isSwitchSkill() then
     times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
     ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.switchSkillName, times })
-  elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+  elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake or skill.frequency == Skill.Quest then
     ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
   end
 end
@@ -555,6 +555,10 @@ fk.client_callback["AddSkill"] = function(jsonData)
   target:addSkill(skill)
   if skill.visible then
     ClientInstance:notifyUI("AddSkill", jsonData)
+  end
+
+  if skill.frequency == Skill.Quest then
+    return
   end
 
   updateLimitSkill(id, skill, target:usedSkillTimes(skill_name, Player.HistoryGame))
@@ -663,7 +667,9 @@ fk.client_callback["AddSkillUseHistory"] = function(jsonData)
   local playerid, skill_name, time = data[1], data[2], data[3]
   local player = ClientInstance:getPlayerById(playerid)
   player:addSkillUseHistory(skill_name, time)
-  if not Fk.skills[skill_name] then return end
+
+  local skill = Fk.skills[skill_name]
+  if not skill or skill.frequency == Skill.Quest then return end
   updateLimitSkill(playerid, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
@@ -672,7 +678,9 @@ fk.client_callback["SetSkillUseHistory"] = function(jsonData)
   local id, skill_name, time, scope = data[1], data[2], data[3], data[4]
   local player = ClientInstance:getPlayerById(id)
   player:setSkillUseHistory(skill_name, time, scope)
-  if not Fk.skills[skill_name] then return end
+
+  local skill = Fk.skills[skill_name]
+  if not skill or skill.frequency == Skill.Quest then return end
   updateLimitSkill(id, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
@@ -700,6 +708,12 @@ fk.client_callback["ChangeSelf"] = function(jsonData)
   local data = json.decode(jsonData)
   ClientInstance:getPlayerById(data.id).player_cards[Player.Hand] = data.handcards
   ClientInstance:notifyUI("ChangeSelf", data.id)
+end
+
+fk.client_callback["UpdateQuestSkillUI"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player, skillName, usedTimes = data[1], data[2], data[3]
+  updateLimitSkill(player, Fk.skills[skillName], usedTimes)
 end
 
 -- Create ClientInstance (used by Lua)

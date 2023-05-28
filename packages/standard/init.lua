@@ -1085,9 +1085,7 @@ local lijian = fk.CreateActiveSkill{
     new_use.from = use.tos[2]
     new_use.tos = { { use.tos[1] } }
     new_use.card = duel
-    new_use.unoffsetableList = table.map(room:getAlivePlayers(), function(e)
-      return e.id
-    end)
+    new_use.prohibitedCardNames = { "nullification" }
     room:useCard(new_use)
   end,
 }

@@ -43,7 +43,9 @@ fk.FinishJudge = 27
 fk.RoundStart = 28
 fk.RoundEnd = 29
 
+fk.BeforeTurnOver = 79
 fk.TurnedOver = 30
+fk.BeforeChainStateChange = 80
 fk.ChainStateChanged = 31
 
 fk.PreDamage = 32
@@ -106,4 +108,7 @@ fk.CardShown = 77
 
 -- 78 = GamePrepared
 
-fk.NumOfEvents = 79
+-- 79 = BeforeTurnOver
+-- 80 = BeforeChainStateChange
+
+fk.NumOfEvents = 81

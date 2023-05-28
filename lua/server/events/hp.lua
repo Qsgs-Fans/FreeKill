@@ -101,6 +101,14 @@ end
 GameEvent.functions[GameEvent.Damage] = function(self)
   local damageStruct = table.unpack(self.data)
   local self = self.room
+  if damageStruct.card and damageStruct.skillName == damageStruct.card.name .. "_skill" and not damageStruct.chain then
+    local cardEffectData = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect)
+    if cardEffectData then
+      local cardEffectEvent = cardEffectData.data[1]
+      damageStruct.damage = damageStruct.damage + (cardEffectEvent.additionalDamage or 0)
+    end
+  end
+
   if damageStruct.damage < 1 then
     return false
   end
@@ -129,6 +137,15 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
   if not damageStruct.to:isAlive() then
     return false
+  end
+
+  if damageStruct.card and damageStruct.damage > 0 then
+    local parentUseData = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
+    if parentUseData then
+      local cardUseEvent = parentUseData.data[1]
+      cardUseEvent.damageDealt = cardUseEvent.damageDealt or {}
+      cardUseEvent.damageDealt[damageStruct.to.id] = (cardUseEvent.damageDealt[damageStruct.to.id] or 0) + damageStruct.damage
+    end
   end
 
   -- 先扣减护甲，再扣体力值
@@ -191,6 +208,14 @@ end
 GameEvent.functions[GameEvent.Recover] = function(self)
   local recoverStruct = table.unpack(self.data)
   local self = self.room
+  if recoverStruct.card then
+    local cardEffectData = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect)
+    if cardEffectData then
+      local cardEffectEvent = cardEffectData.data[1]
+      recoverStruct.num = recoverStruct.num + (cardEffectEvent.additionalRecover or 0)
+    end
+  end
+
   if recoverStruct.num < 1 then
     return false
   end

@@ -418,6 +418,7 @@ Fk:loadTranslationTable{
   ["discard_skill"] = "弃牌",
   ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "选择角色",
+  ["choose_players_to_move_card_in_board"] = "选择角色",
 
   ["game_rule"] = "弃牌阶段",
 }
