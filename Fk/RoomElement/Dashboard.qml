@@ -198,8 +198,19 @@ RowLayout {
 
     let ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
-      if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id])))
+      if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id]))) {
         ids.push(cards[i].cid);
+      } else {
+        // cannot use? considering special_skills
+        let skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [cards[i].cid]));
+        for (let j = 0; j < skills.length; j++) {
+          let s = skills[j];
+          if (JSON.parse(Backend.callLuaFunction("ActiveCanUse", [s]))) {
+            ids.push(cards[i].cid);
+            break;
+          }
+        }
+      }
     }
     handcardAreaItem.enableCards(ids)
     if (pending_skill === "") {
