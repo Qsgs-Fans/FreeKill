@@ -510,6 +510,7 @@ callbacks["PropertyUpdate"] = function(jsonData) {
   let value = data[2];
 
   let model = getPhotoModel(uid);
+
   if (typeof(model) !== "undefined") {
     model[property_name] = value;
   }
@@ -1011,6 +1012,12 @@ callbacks["LogEvent"] = function(jsonData) {
     }
     case "LoseHP": {
       Backend.playSound("./audio/system/losehp");
+      break;
+    }
+    case "ChangeMaxHp": {
+      if (data.num < 0) {
+        Backend.playSound("./audio/system/losemaxhp");
+      }
       break;
     }
     case "PlaySkillSound": {
