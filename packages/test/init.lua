@@ -155,6 +155,56 @@ local test_trig = fk.CreateTriggerSkill{
     player.room:throwCard(self.cost_data, self.name, player, player)
   end,
 }
+local damage_maker = fk.CreateActiveSkill{
+  name = "damage_maker",
+  can_use = function(self, player)
+    return true
+  end,
+  card_filter = function(self, card)
+    return false
+  end,
+  card_num = 0,
+  target_filter = function(self)
+    return true
+  end,
+  target_num = 1,
+  interaction = function()return UI.ComboBox {
+    choices = {"normal_damage", "fire_damage", "thunder_damage", "ice_damage", "lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp"}
+  }end,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    local choice = self.interaction.data
+    local choices = {}
+    for i = 1, 99 do
+      table.insert(choices, tostring(i))
+    end
+    local number = tonumber(room:askForChoice(from, choices, self.name, nil))
+    if choice == "heal_hp" then
+      room:recover{
+        who = target,
+        num = number,
+        recoverBy = from,
+        skillName = self.name
+      }
+    elseif choice == "heal_max_hp" then
+      room:changeMaxHp(target, number)
+    elseif choice == "lose_max_hp" then
+      room:changeMaxHp(target, -number)
+    elseif choice == "lose_hp" then
+      room:loseHp(target, number, self.name)
+    else
+      choices = {"normal_damage", "fire_damage", "thunder_damage", "ice_damage"}
+      room:damage({
+        from = from,
+        to = target,
+        damage = number,
+        damageType = table.indexOf(choices, choice),
+        skillName = self.name
+      })
+    end
+  end,
+}
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 4
 test2:addSkill("rende")
@@ -162,6 +212,7 @@ test2:addSkill(cheat)
 test2:addSkill(test_active)
 test2:addSkill(test_vs)
 test2:addSkill(test_trig)
+test2:addSkill(damage_maker)
 
 Fk:loadTranslationTable{
   ["test_p_0"] = "测试包",
@@ -172,6 +223,7 @@ Fk:loadTranslationTable{
   --["cheat"] = "开挂",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
   ["#test_trig-ask"] = "你可弃置一张手牌",
+  ["damage_maker"] = "伤害制造器",
 }
 
 return { extension }
