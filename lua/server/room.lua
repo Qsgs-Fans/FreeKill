@@ -1608,12 +1608,12 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   })
 end
 
----@field player ServerPlayer
----@field targetOne ServerPlayer
----@field targetTwo ServerPlayer
----@field skillName string
----@field flag string|null
----@field moveFrom ServerPlayer|null
+---@param player ServerPlayer @ 移动的操作
+---@param targetOne ServerPlayer @ 移动的目标1玩家
+---@param targetTwo ServerPlayer @ 移动的目标2玩家
+---@param skillName string @ 技能名
+---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
+---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
 ---@return cardId
 function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
   if flag then
@@ -1703,12 +1703,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   )
 end
 
---- 询问一名玩家从targets中选择若干名玩家出来。
+--- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
 ---@param player ServerPlayer @ 要做选择的玩家
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@param cancelable boolean|null @ 是否可以取消选择
----@param flag string|null @ 限定可移动的区域，值为‘e’或‘j’
+---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@return integer[] @ 选择的玩家id列表，可能为空
 function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag)
   if flag then
@@ -2750,7 +2750,7 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
         end
       until curIndex == randomIndex
 
-      if #cardPack < num then
+      if #cardPack == 0 then
         break
       end
     end
