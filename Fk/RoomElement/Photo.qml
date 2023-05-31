@@ -352,9 +352,9 @@ Item {
     x: -6
 
     Text {
-      text: (root.maxCard === root.hp) ? (root.handcards) : (root.handcards + "/" + root.maxCard)
+      text: (root.maxCard === root.hp || root.hp < 0 ) ? (root.handcards) : (root.handcards + "/" + root.maxCard)
       font.family: fontLibian.name
-      font.pixelSize: root.maxCard === root.hp ? 32 : 27
+      font.pixelSize: (root.maxCard === root.hp || root.hp < 0 ) ? 32 : 27
       //font.weight: 30
       color: "white"
       anchors.horizontalCenter: parent.horizontalCenter
