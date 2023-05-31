@@ -140,10 +140,19 @@ local test_vs = fk.CreateViewAsSkill{
 }
 local test_trig = fk.CreateTriggerSkill{
   name = "test_trig",
-  events = {fk.Damage},
+  events = {fk.EventPhaseEnd},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and player:hasSkill(self.name) and player.phase == Player.Discard
+  end,
+  on_cost = function(self, event, target, player, data)
+    local cards = player.room:askForDiscard(player, 1, 1, false, self.name, true, nil, "#test_trig-ask", true)
+    if #cards > 0 then
+      self.cost_data = cards
+      return true
+    end
+  end,
   on_use = function(self, event, target, player, data)
-    player:drawCards(1, self.name)
-    player.room.logic:breakTurn()
+    player.room:throwCard(self.cost_data, self.name, player, player)
   end,
 }
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
@@ -162,6 +171,7 @@ Fk:loadTranslationTable{
   ["mouxusheng"] = "谋徐盛",
   --["cheat"] = "开挂",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
+  ["#test_trig-ask"] = "你可弃置一张手牌",
 }
 
 return { extension }
