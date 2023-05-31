@@ -13,18 +13,21 @@ end
 
 ---@param player Player
 ---@param card Card
+---@return boolean
 function ProhibitSkill:prohibitUse(player, card)
   return false
 end
 
 ---@param player Player
 ---@param card Card
+---@return boolean
 function ProhibitSkill:prohibitResponse(player, card)
   return false
 end
 
 ---@param player Player
 ---@param card Card
+---@return boolean
 function ProhibitSkill:prohibitDiscard(player, card)
   return false
 end
