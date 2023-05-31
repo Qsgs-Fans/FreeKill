@@ -683,7 +683,7 @@ local zhiheng = fk.CreateActiveSkill{
 local jiuyuan = fk.CreateTriggerSkill{
   name = "jiuyuan$",
   anim_type = "support",
-  frequency = fk.Compulsory,
+  frequency = Skill.Compulsory,
   events = {fk.PreHpRecover},
   can_trigger = function(self, event, target, player, data)
     return
