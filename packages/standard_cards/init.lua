@@ -975,7 +975,7 @@ extension:addCards({
 local axeProhibit = fk.CreateProhibitSkill{
   name = "#axe_prohibit",
   prohibit_discard = function(self, player, card)
-    return player:hasSkill(self.name) and card.name == "axe" and
+    return player:hasSkill(self.name) and card and card.name == "axe" and
       Fk.currentResponseReason == "#axe_skill" and
       Fk:currentRoom():getCardArea(card.id) == Player.Equip
   end,
