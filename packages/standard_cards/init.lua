@@ -523,6 +523,7 @@ local godSalvationSkill = fk.CreateActiveSkill{
     room:recover({
       who = room:getPlayerById(effect.to),
       num = 1,
+      recoverBy = room:getPlayerById(effect.from),
       skillName = self.name,
     })
   end
