@@ -259,6 +259,12 @@ function ServerPlayer:marshal(player)
     end
   end
 
+  for k, v in pairs(self.skillUsedHistory) do
+    if v[1] > 0 then
+      player:doNotify("AddSkillUseHistory", json.encode{self.id, k, v[1]})
+    end
+  end
+
   if self.role_shown then
     room:notifyProperty(player, self, "role")
   end
