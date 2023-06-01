@@ -138,18 +138,28 @@ void Server::removePlayer(int id) { players.remove(id); }
 
 void Server::updateRoomList() {
   QJsonArray arr;
+  QJsonArray avail_arr;
   foreach (Room *room, rooms) {
     QJsonArray obj;
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
+    auto count = room->getPlayers().count(); // playerNum
+    auto cap = room->getCapacity();        // capacity
 
     obj << room->getId();              // roomId
     obj << room->getName();            // roomName
     obj << settings["gameMode"];       // gameMode
-    obj << room->getPlayers().count(); // playerNum
-    obj << room->getCapacity();        // capacity
+    obj << count;
+    obj << cap;
     obj << !password.isEmpty();
-    arr << obj;
+
+    if (count == cap)
+      arr << obj;
+    else
+      avail_arr << obj;
+  }
+  foreach (auto v, avail_arr) {
+    arr.prepend(v);
   }
   auto jsonData = JsonArray2Bytes(arr);
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdateRoomList",
@@ -351,8 +361,8 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           player->setSocket(client);
           player->alive = true;
           client->disconnect(this);
-          broadcast("ServerMessage",
-                    tr("%1 backed").arg(player->getScreenName()));
+          // broadcast("ServerMessage",
+          //          tr("%1 backed").arg(player->getScreenName()));
           room->pushRequest(QString("%1,reconnect").arg(id));
           return;
         } else {
@@ -375,7 +385,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     player->setScreenName(name);
     player->setAvatar(obj["avatar"].toString());
     player->setId(obj["id"].toString().toInt());
-    broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
+    // broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
     players.insert(player->getId(), player);
 
     // tell the lobby player's basic property
@@ -410,6 +420,11 @@ void Server::onRoomAbandoned() {
   updateRoomList();
   // room->deleteLater();
   idle_rooms.push(room);
+  if (idle_rooms.length() > 10) {
+    auto junk = idle_rooms[0];
+    idle_rooms.removeFirst();
+    junk->deleteLater();
+  }
 #ifdef QT_DEBUG
   qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
            << "idle room(s).";
@@ -419,7 +434,7 @@ void Server::onRoomAbandoned() {
 void Server::onUserDisconnected() {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
   qInfo() << "Player" << player->getId() << "disconnected";
-  broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
+  // broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
   Room *room = player->getRoom();
   if (room->isStarted()) {
     if (room->getObservers().contains(player)) {

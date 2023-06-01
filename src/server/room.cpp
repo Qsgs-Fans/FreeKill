@@ -174,7 +174,7 @@ void Room::removePlayer(ServerPlayer *player) {
 
   if (!gameStarted) {
     // 游戏还没开始的话，直接删除这名玩家
-    if (players.contains(player)) {
+    if (players.contains(player) && !players.isEmpty()) {
       players.removeOne(player);
     }
     emit playerRemoved(player);

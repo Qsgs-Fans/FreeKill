@@ -97,11 +97,31 @@ static void prepareForLinux() {
 }
 #endif
 
+static FILE *info_log = nullptr;
+static FILE *err_log = nullptr;
+
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
                   const QString &msg) {
   auto date = QDate::currentDate();
+
+  FILE *file;
+  switch (type) {
+  case QtDebugMsg:
+  case QtInfoMsg:
+    file = info_log;
+    break;
+  case QtWarningMsg:
+  case QtCriticalMsg:
+  case QtFatalMsg:
+    file = err_log;
+    break;
+  }
+
   fprintf(stderr, "\r%02d/%02d ", date.month(), date.day());
   fprintf(stderr, "%s ",
+          QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
+  fprintf(file, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(file, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
 
   auto localMsg = msg.toUtf8();
@@ -111,19 +131,27 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   case QtDebugMsg:
     fprintf(stderr, "%s[D] %s\n", threadName.constData(),
             localMsg.constData());
+    fprintf(file, "%s[D] %s\n", threadName.constData(),
+            localMsg.constData());
     break;
   case QtInfoMsg:
     fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("I", Green).toUtf8().constData(), localMsg.constData());
+    fprintf(file, "%s[%s] %s\n", threadName.constData(),
+            "I", localMsg.constData());
     break;
   case QtWarningMsg:
     fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("W", Yellow, Bold).toUtf8().constData(),
             localMsg.constData());
+    fprintf(file, "%s[%s] %s\n", threadName.constData(),
+            "W", localMsg.constData());
     break;
   case QtCriticalMsg:
     fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
+    fprintf(file, "%s[%s] %s\n", threadName.constData(),
+            "C", localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
       Backend->notifyUI(
@@ -135,6 +163,8 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   case QtFatalMsg:
     fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
             Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
+    fprintf(file, "%s[%s] %s\n", threadName.constData(),
+            "E", localMsg.constData());
     break;
   }
 }
@@ -143,6 +173,19 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 int main(int argc, char *argv[]) {
   // 初始化一下各种杂项信息
   QThread::currentThread()->setObjectName("Main");
+  if (!info_log) {
+    info_log = fopen("freekill.server.info.log", "a+");
+    if (!info_log) {
+      qFatal("Cannot open info.log");
+    }
+  }
+  if (!err_log) {
+    err_log = fopen("freekill.server.error.log", "a+");
+    if (!err_log) {
+      qFatal("Cannot open error.log");
+    }
+  }
+
   qInstallMessageHandler(fkMsgHandler);
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
@@ -312,6 +355,15 @@ int main(int argc, char *argv[]) {
     FS.syncfs(function(err) {});
   );
 #endif
+
+  if (info_log) {
+    fclose(info_log);
+    info_log = nullptr;
+  }
+  if (err_log) {
+    fclose(err_log);
+    info_log = nullptr;
+  }
 
   return ret;
 #endif

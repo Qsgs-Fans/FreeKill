@@ -36,7 +36,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: List all packages.", "lspkg");
   HELP_MSG("%s: Enable a package.", "enable");
   HELP_MSG("%s: Disable a package.", "disable");
-  HELP_MSG("%s: Upgrade a package.", "upgrade");
+  HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade");
   qInfo("For more commands, check the documentation.");
 
 #undef HELP_MSG
@@ -86,7 +86,12 @@ void Shell::removeCommand(QStringList &list) {
 
 void Shell::upgradeCommand(QStringList &list) {
   if (list.isEmpty()) {
-    qWarning("The 'upgrade' command need a package name to upgrade.");
+    // qWarning("The 'upgrade' command need a package name to upgrade.");
+    auto arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
+    foreach (auto a, arr) {
+      auto obj = a.toObject();
+      Pacman->upgradePack(obj["name"].toString());
+    }
     return;
   }
 
