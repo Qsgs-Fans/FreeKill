@@ -420,11 +420,14 @@ void Server::onRoomAbandoned() {
   updateRoomList();
   // room->deleteLater();
   idle_rooms.push(room);
-  if (idle_rooms.length() > 10) {
-    auto junk = idle_rooms[0];
-    idle_rooms.removeFirst();
-    junk->deleteLater();
-  }
+  // 懒得改了！
+  // 这里出bug的原因还是在于room的销毁工作没做好
+  // room销毁这块bug很多
+  // if (idle_rooms.length() > 10) {
+  //   auto junk = idle_rooms[0];
+  //   idle_rooms.removeFirst();
+  //   junk->deleteLater();
+  // }
 #ifdef QT_DEBUG
   qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
            << "idle room(s).";
