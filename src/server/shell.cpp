@@ -236,8 +236,7 @@ static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
   auto addr = obj["lastLoginIp"].toString();
 
   if (banned) {
-    ExecSQL(db, QString("INSERT INTO banip VALUES('%1');")
-        .arg(addr));
+    ExecSQL(db, QString("INSERT INTO banip VALUES('%1');").arg(addr));
 
     auto p = ServerInstance->findPlayer(id);
     if (p) {
@@ -245,8 +244,7 @@ static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
     }
     qInfo("Banned IP %s.", addr.toUtf8().constData());
   } else {
-    ExecSQL(db, QString("DELETE FROM banip WHERE ip='%1';")
-        .arg(addr));
+    ExecSQL(db, QString("DELETE FROM banip WHERE ip='%1';").arg(addr));
     qInfo("Unbanned IP %s.", addr.toUtf8().constData());
   }
 }

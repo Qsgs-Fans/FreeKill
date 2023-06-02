@@ -144,11 +144,11 @@ void Server::updateRoomList() {
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
     auto count = room->getPlayers().count(); // playerNum
-    auto cap = room->getCapacity();        // capacity
+    auto cap = room->getCapacity();          // capacity
 
-    obj << room->getId();              // roomId
-    obj << room->getName();            // roomName
-    obj << settings["gameMode"];       // gameMode
+    obj << room->getId();        // roomId
+    obj << room->getName();      // roomName
+    obj << settings["gameMode"]; // gameMode
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
@@ -183,7 +183,8 @@ void Server::broadcast(const QString &command, const QString &jsonData) {
 void Server::processNewConnection(ClientSocket *client) {
   auto addr = client->peerAddress();
   qInfo() << addr << "connected";
-  auto result = SelectFromDatabase(db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
+  auto result = SelectFromDatabase(
+      db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
   if (!result.isEmpty()) {
     QJsonArray body;
     body << -2;
@@ -391,6 +392,13 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
   }
 
   if (passed) {
+    // update lastLoginIp
+    auto sql_update =
+        QString("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
+            .arg(client->peerAddress())
+            .arg(obj["id"].toString().toInt());
+    ExecSQL(db, sql_update);
+
     // create new ServerPlayer and setup
     ServerPlayer *player = new ServerPlayer(lobby());
     player->setSocket(client);
@@ -401,7 +409,8 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     player->setScreenName(name);
     player->setAvatar(obj["avatar"].toString());
     player->setId(obj["id"].toString().toInt());
-    // broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
+    // broadcast("ServerMessage", tr("%1 logged
+    // in").arg(player->getScreenName()));
     players.insert(player->getId(), player);
 
     // tell the lobby player's basic property
@@ -453,7 +462,8 @@ void Server::onRoomAbandoned() {
 void Server::onUserDisconnected() {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
   qInfo() << "Player" << player->getId() << "disconnected";
-  // broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
+  // broadcast("ServerMessage", tr("%1 logged
+  // out").arg(player->getScreenName()));
   Room *room = player->getRoom();
   if (room->isStarted()) {
     if (room->getObservers().contains(player)) {
@@ -485,7 +495,8 @@ RSA *Server::initServerRSA() {
 
     BIO_free_all(bp_pub);
     BIO_free_all(bp_pri);
-    QFile("server/rsa").setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    QFile("server/rsa")
+        .setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     BN_free(bne);
   }
   FILE *keyFile = fopen("server/rsa_pub", "r");
