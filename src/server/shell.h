@@ -25,6 +25,10 @@ private:
   void disableCommand(QStringList &);
   void kickCommand(QStringList &);
   void msgCommand(QStringList &);
+  void banCommand(QStringList &);
+  void banipCommand(QStringList &);
+  void unbanCommand(QStringList &);
+  void unbanipCommand(QStringList &);
 };
 
 #endif

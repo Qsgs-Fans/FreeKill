@@ -181,8 +181,21 @@ void Server::broadcast(const QString &command, const QString &jsonData) {
 }
 
 void Server::processNewConnection(ClientSocket *client) {
-  qInfo() << client->peerAddress() << "connected";
-  // version check, file check, ban IP, reconnect, etc
+  auto addr = client->peerAddress();
+  qInfo() << addr << "connected";
+  auto result = SelectFromDatabase(db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
+  if (!result.isEmpty()) {
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "you have been banned!";
+    client->send(JsonArray2Bytes(body));
+    qInfo() << "Refused banned IP:" << addr;
+    client->disconnectFromHost();
+    return;
+  }
 
   connect(client, &ClientSocket::disconnected, this,
           [client]() { qInfo() << client->peerAddress() << "disconnected"; });
@@ -344,7 +357,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
       obj = result[0].toObject();
       // check if this username already login
       int id = obj["id"].toString().toInt();
-      if (!players.value(id)) {
+      passed = obj["banned"].toString().toInt() == 0;
+      if (!passed) {
+        error_msg = "you have been banned!";
+      } else if (!players.value(id)) {
         // check if password is the same
         auto salt = obj["salt"].toString().toLatin1();
         decrypted_pw.append(salt);

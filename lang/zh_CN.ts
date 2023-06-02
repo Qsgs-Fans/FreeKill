@@ -187,6 +187,10 @@
     <source>no such room</source>
     <translation>房间不存在</translation>
   </message>
+  <message>
+    <source>you have been banned!</source>
+    <translation>你已经被该服务器封禁！</translation>
+  </message>
 </context>
 
 <context>
