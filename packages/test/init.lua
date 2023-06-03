@@ -209,7 +209,7 @@ local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 4
 test2:addSkill("rende")
 test2:addSkill(cheat)
-test2:addSkill(test_active)
+--test2:addSkill(test_active)
 test2:addSkill(test_vs)
 test2:addSkill(test_trig)
 test2:addSkill(damage_maker)
@@ -223,7 +223,7 @@ Fk:loadTranslationTable{
   --["cheat"] = "开挂",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
   ["#test_trig-ask"] = "你可弃置一张手牌",
-  ["damage_maker"] = "伤害制造器",
+  ["damage_maker"] = "造伤器",
 }
 
 return { extension }
