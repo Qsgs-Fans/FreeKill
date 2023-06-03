@@ -692,8 +692,9 @@ function Player:getAllSkills()
   return ret
 end
 
----@param to Player
----@param card Card
+--- 确认玩家是否可以对特定玩家使用特定牌。
+---@param to Player @ 特定玩家
+---@param card Card @ 特定牌
 function Player:isProhibited(to, card)
   local r = Fk:currentRoom()
   local status_skills = r.status_skills[ProhibitSkill] or {}
@@ -705,7 +706,8 @@ function Player:isProhibited(to, card)
   return false
 end
 
----@param card Card
+--- 确认玩家是否可以使用特定牌。
+---@param card Card @ 特定的牌
 function Player:prohibitUse(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
   for _, skill in ipairs(status_skills) do
@@ -716,7 +718,8 @@ function Player:prohibitUse(card)
   return false
 end
 
----@param card Card
+--- 确认玩家是否可以打出特定牌。
+---@param card Card @ 特定的牌
 function Player:prohibitResponse(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
   for _, skill in ipairs(status_skills) do
@@ -727,7 +730,8 @@ function Player:prohibitResponse(card)
   return false
 end
 
----@param card Card
+--- 确认玩家是否可以弃置特定牌。
+---@param card Card @ 特定的牌
 function Player:prohibitDiscard(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
   for _, skill in ipairs(status_skills) do
@@ -743,8 +747,9 @@ fk.SwitchYang = 0
 ---@field SwitchYin number @ 转换技状态阴
 fk.SwitchYin = 1
 
----@param skillName string
----@return number
+--- 获取转换技状态
+---@param skillName string @ 技能名
+---@return number @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse)
   if afterUse then
     return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and fk.SwitchYin or fk.SwitchYang
