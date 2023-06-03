@@ -20,8 +20,8 @@
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
 ---@field public disabled_packs string[] @ 禁用的拓展包列表
----@field public currentResponsePattern string
----@field public currentResponseReason string
+---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
+---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 local Engine = class("Engine")
 
 --- Engine的构造函数。

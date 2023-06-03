@@ -16,13 +16,13 @@
 ---@field public sub_type CardSubtype @ 卡牌的子种类（例如延时锦囊牌、武器、防具等）
 ---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
----@field public subcards integer[]
----@field public skillName string @ for virtual cards
----@field public skillNames string[]
----@field public skill Skill
----@field public special_skills string[] | nil
----@field public is_damage_card boolean
----@field public is_derived boolean|null
+---@field public subcards integer[] @ 子卡ID表
+---@field public skillName string @ 虚拟牌的技能名 for virtual cards
+---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
+---@field public skill Skill @ 技能（用于实现卡牌效果）
+---@field public special_skills string[] | nil @ 衍生技能，如重铸
+---@field public is_damage_card boolean @ 是否为会造成伤害的牌
+---@field public is_derived boolean|null @ 判断是否为衍生牌
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -336,9 +336,10 @@ function Card:getMarkNames()
   return ret
 end
 
----@param anotherCard Card
----@param diff boolean
----@return boolean
+--- 比较两张卡牌的花色是否相同
+---@param anotherCard Card @ 另一张卡牌
+---@param diff boolean @ 比较二者相同还是不同
+---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
     return false
@@ -351,9 +352,10 @@ function Card:compareSuitWith(anotherCard, diff)
   end
 end
 
----@param anotherCard Card
----@param diff boolean
----@return boolean
+--- 比较两张卡牌的颜色是否相同
+---@param anotherCard Card @ 另一张卡牌
+---@param diff boolean @ 比较二者相同还是不同
+---@return boolean 返回比较结果
 function Card:compareColorWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.color, anotherCard.color }, Card.NoColor) then
     return false
@@ -366,9 +368,10 @@ function Card:compareColorWith(anotherCard, diff)
   end
 end
 
----@param anotherCard Card
----@param diff boolean
----@return boolean
+--- 比较两张卡牌的点数是否相同
+---@param anotherCard Card @ 另一张卡牌
+---@param diff boolean @ 比较二者相同还是不同
+---@return boolean 返回比较结果
 function Card:compareNumberWith(anotherCard, diff)
   if self ~= anotherCard and self.number < 1 or anotherCard.number < 1 then
     return false

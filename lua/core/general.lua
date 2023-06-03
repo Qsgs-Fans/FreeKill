@@ -82,6 +82,7 @@ function General:addRelatedSkill(skill)
   end
 end
 
+--- 获取武将所有技能。
 function General:getSkillNameList(include_lord)
   local ret = table.map(self.skills, Util.NameMapper)
   table.insertTable(ret, self.other_skills)

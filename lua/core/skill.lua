@@ -12,7 +12,7 @@
 ---@field public anim_type string @ 技能类型定义
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
----@field public switchSkillName string
+---@field public switchSkillName string @ 转换技名字
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -88,10 +88,13 @@ function Skill:isEffectable(player)
   return true
 end
 
+--- 为技能增加所属势力，需要在隶属特定势力时才能使用此技能。
+--- 案例：手杀文鸯
 function Skill:addAttachedKingdom(kingdom)
   table.insertIfNeed(self.attachedKingdom, kingdom)
 end
 
+--- 判断某个技能是否为转换技
 function Skill:isSwitchSkill()
   return self.switchSkillName and type(self.switchSkillName) == 'string' and self.switchSkillName ~= ""
 end
