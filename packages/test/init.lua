@@ -223,7 +223,7 @@ Fk:loadTranslationTable{
   --["cheat"] = "开挂",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
   ["#test_trig-ask"] = "你可弃置一张手牌",
-  ["damage_maker"] = "造伤器",
+  ["damage_maker"] = "制伤器",
 }
 
 return { extension }
