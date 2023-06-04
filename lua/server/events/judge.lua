@@ -20,7 +20,7 @@ GameEvent.functions[GameEvent.Judge] = function(self)
     from = who.id,
     card = {data.card.id},
   }
-  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonPut)
+  self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonJudge)
 
   self.logic:trigger(fk.AskForRetrial, who, data)
   self.logic:trigger(fk.FinishRetrial, who, data)
@@ -46,7 +46,7 @@ GameEvent.cleaners[GameEvent.Judge] = function(self)
   local data = table.unpack(self.data)
   local self = self.room
   if (self.interrupted or not data.skipDrop) and self:getCardArea(data.card.id) == Card.Processing then
-    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile)
+    self:moveCardTo(data.card, Card.DiscardPile, nil, fk.ReasonJudge)
   end
   if not self.interrupted then return end
 

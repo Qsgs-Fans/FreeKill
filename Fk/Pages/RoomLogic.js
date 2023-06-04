@@ -928,7 +928,11 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
 
   roomScene.respond_play = false;
   roomScene.state = "responding";
-  roomScene.responding_card = ".";
+
+  if (JSON.parse(Backend.callLuaFunction('GetSkillData', [skill_name])).isViewAsSkill) {
+    roomScene.responding_card = ".";
+  }
+
   roomScene.autoPending = true;
   roomScene.extra_data = extra_data;
   // dashboard.startPending(skill_name);

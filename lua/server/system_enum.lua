@@ -181,6 +181,7 @@ fk.ReasonPrey = 7
 fk.ReasonExchange = 8
 fk.ReasonUse = 9
 fk.ReasonResonpse = 10
+fk.ReasonJudge = 11
 
 ---@class PindianStruct
 ---@field public from ServerPlayer
