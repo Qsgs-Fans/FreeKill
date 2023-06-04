@@ -19,7 +19,7 @@
 #include "serverplayer.h"
 #include "util.h"
 
-Server *ServerInstance;
+Server *ServerInstance = nullptr;
 
 Server::Server(QObject *parent) : QObject(parent) {
   ServerInstance = this;
