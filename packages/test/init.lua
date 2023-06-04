@@ -56,8 +56,8 @@ local test_filter = fk.CreateFilterSkill{
     return Fk:cloneCard("crossbow", card.suit, card.number)
   end,
 }
-local test_active = fk.CreateActiveSkill{
-  name = "test_active",
+local control = fk.CreateActiveSkill{
+  name = "control",
   can_use = function(self, player)
     return true
   end,
@@ -65,31 +65,42 @@ local test_active = fk.CreateActiveSkill{
     -- if self.interaction.data == "joy" then
       --local c = Fk:getCardById(card)
       --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
-      return true
+      return false
     -- end
   end,
-  card_num = 2,
-  target_filter = function() return true end,
-  interaction = function()return UI.Spin {
+  card_num = 0,
+  target_filter = function(self, to_select)
+    return to_select ~= Self.id
+  end,
+  min_target_num = 1,
+  --interaction = function()return UI.Spin {
     --choices = Fk.package_names,
-    from=2,to=8,
+    --from=2,to=8,
     -- default = "guanyu",
-  }end,
+  --}end,
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
-    --local to = room:getPlayerById(effect.tos[1])
     -- room:swapSeat(from, to)
-    --from:control(to)
-    local success, dat = room:askForUseViewAsSkill(from, "test_vs", nil, true)
-    if success then
-      local card = Fk.skills["test_vs"]:viewAs(dat.cards)
-      room:useCard{
-        from = from.id,
-        tos = table.map(dat.targets, function(e) return {e} end),
-        card = card,
-      }
+    for _, pid in ipairs(effect.tos) do
+      local to = room:getPlayerById(pid)
+      if to:getMark("mouxushengcontrolled") == 0 then
+        room:addPlayerMark(to, "mouxushengcontrolled")
+        from:control(to)
+      else
+        room:setPlayerMark(to, "mouxushengcontrolled", 0)
+        to:control(to)
+      end
     end
+    --local success, dat = room:askForUseViewAsSkill(from, "test_vs", nil, true)
+    --if success then
+      --local card = Fk.skills["test_vs"]:viewAs(dat.cards)
+      --room:useCard{
+        --from = from.id,
+        --tos = table.map(dat.targets, function(e) return {e} end),
+        --card = card,
+      --}
+    --end
     -- from:pindian({to})
     -- local result = room:askForCustomDialog(from, "simayi", "packages/test/qml/TestDialog.qml", "Hello, world. FROM LUA")
     -- print(result)
@@ -205,14 +216,39 @@ local damage_maker = fk.CreateActiveSkill{
     end
   end,
 }
+local change_hero = fk.CreateActiveSkill{
+  name = "change_hero",
+  can_use = function(self, player)
+    return true
+  end,
+  card_filter = function(self, card)
+    return false
+  end,
+  card_num = 0,
+  target_filter = function(self, to_select, selected)
+    return #selected < 1
+  end,
+  target_num = 1,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    local generals = table.map(Fk:getGeneralsRandomly(8, Fk:getAllGenerals()), function(p) return p.name end)
+    local general = room:askForGeneral(from, generals, 1)
+    if general == nil then
+      general = table.random(generals)
+    end
+    room:changeHero(target, general, false, false, true)
+  end,
+}
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 4
 test2:addSkill("rende")
 test2:addSkill(cheat)
---test2:addSkill(test_active)
+test2:addSkill(control)
 test2:addSkill(test_vs)
-test2:addSkill(test_trig)
+--test2:addSkill(test_trig)
 test2:addSkill(damage_maker)
+test2:addSkill(change_hero)
 
 Fk:loadTranslationTable{
   ["test_p_0"] = "测试包",
@@ -222,8 +258,10 @@ Fk:loadTranslationTable{
   ["mouxusheng"] = "谋徐盛",
   --["cheat"] = "开挂",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
-  ["#test_trig-ask"] = "你可弃置一张手牌",
+  --["#test_trig-ask"] = "你可弃置一张手牌",
+  ["control"] = "控制",
   ["damage_maker"] = "制伤器",
+  ["change_hero"] = "变更",
 }
 
 return { extension }
