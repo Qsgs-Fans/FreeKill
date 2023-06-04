@@ -6,193 +6,168 @@ import QtQuick.Layouts
 
 Item {
   id: root
-  Button {
-    text: qsTr("Quit")
-    anchors.right: parent.right
-    onClicked: {
-      mainStack.pop();
-    }
-  }
 
-  Component {
-    id: packageDelegate
-
-    Item {
-      height: 22
-      width: packageList.width
-
-      RowLayout {
-        anchors.fill: parent
-        spacing: 16
-        Text {
-          font.pixelSize: 20
-          text: pkgName
-        }
-
-        Text {
-          font.pixelSize: 20
-          Layout.fillWidth: true
-          horizontalAlignment: Text.AlignHCenter
-          text: pkgURL
-        }
-
-        Text {
-          font.pixelSize: 20
-          text: pkgVersion
-        }
-
-        Text {
-          font.pixelSize: 20
-          color: pkgEnabled === "1" ? "green" : "red"
-          text: pkgEnabled === "1" ? qsTr("Enabled") : qsTr("Disabled")
-        }
+  ToolBar {
+    id: bar
+    width: parent.width
+    RowLayout {
+      anchors.fill: parent
+      ToolButton {
+        icon.source: AppPath + "/image/modmaker/back"
+        onClicked: mainStack.pop();
       }
+      Label {
+        text: qsTr("Package Manager")
+        horizontalAlignment: Qt.AlignHCenter
+        Layout.fillWidth: true
+      }
+      ToolButton {
+        icon.source: AppPath + "/image/modmaker/menu"
+        onClicked: menu.open()
 
-      TapHandler {
-        onTapped: {
-          if (packageList.currentIndex === index) {
-            packageList.currentIndex = -1;
-          } else {
-            packageList.currentIndex = index;
+        Menu {
+          id: menu
+          y: bar.height
+
+          MenuItem {
+            text: qsTr("Enable All")
+            onTriggered: {
+              for (let i = 0; i < packageModel.count; i++) {
+                let name = packageModel.get(i).pkgName;
+                Pacman.enablePack(name);
+              }
+              updatePackageList();
+            }
+          }
+          MenuItem {
+            text: qsTr("Disable All")
+            onTriggered: {
+              for (let i = 0; i < packageModel.count; i++) {
+                let name = packageModel.get(i).pkgName;
+                Pacman.disablePack(name);
+              }
+              updatePackageList();
+            }
+          }
+          MenuItem {
+            text: qsTr("Upgrade All")
+            onTriggered: {
+              for (let i = 0; i < packageModel.count; i++) {
+                let name = packageModel.get(i).pkgName;
+                Pacman.upgradePack(name);
+              }
+              updatePackageList();
+            }
           }
         }
       }
     }
   }
 
-  ListModel {
-    id: packageModel
-  }
+  Rectangle {
+    width: parent.width
+    height: parent.height - bar.height - urlInstaller.height
+    anchors.top: bar.bottom
+    color: "snow"
+    opacity: 0.75
+    clip: true
 
-  ColumnLayout {
-    anchors.fill: parent
-
-  RowLayout {
-    Layout.fillHeight: true
-    Layout.alignment: Qt.AlignHCenter
-    Item {
-      Layout.preferredWidth: root.width * 0.9
-      Layout.fillHeight: true
-      Rectangle {
-        anchors.fill: parent
-        color: "#88EEEEEE"
+    ListView {
+      id: packageList
+      anchors.fill: parent
+      model: ListModel {
+        id: packageModel
       }
-      ListView {
-        id: packageList
-        anchors.fill: parent
+      delegate: ItemDelegate {
+        width: root.width
+        height: 64
 
-        contentHeight: packageDelegate.height * count
-        ScrollBar.vertical: ScrollBar {}
-        header: RowLayout {
-          height: 22
-          width: packageList.width
-          spacing: 16
+        ColumnLayout {
+          anchors.fill: parent
+          anchors.margins: 8
           Text {
-            font.pixelSize: 20
-            text: qsTr("Name")
+            text: "<b>" + pkgName + "</b> (" + pkgVersion + ")"
+            font.pixelSize: 18
+            textFormat: Text.RichText
+            color: pkgEnabled === "1" ? "black" : "grey"
           }
-
           Text {
-            font.pixelSize: 20
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: "URL"
-          }
-
-          Text {
-            font.pixelSize: 20
-            text: qsTr("Version")
-          }
-
-          Text {
-            font.pixelSize: 20
-            text: qsTr("Enable")
+            text: pkgURL
+            color: pkgEnabled === "1" ? "black" : "grey"
           }
         }
-        delegate: packageDelegate
-        model: packageModel
-        highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
-        Component.onCompleted: { currentIndex = -1; }
-      }
-    }
 
-    ColumnLayout {
-      Button {
-        enabled: packageList.currentItem
-        text: qsTr("Enable")
-        onClicked: {
-          let idx = packageList.currentIndex;
-          let name = packageModel.get(idx).pkgName;
-          Pacman.enablePack(name);
-          updatePackageList();
-          packageList.currentIndex = idx;
+        Button {
+          id: enableBtn
+          text: pkgEnabled === "0" ? qsTr("Enable") : qsTr("Disable")
+          anchors.right: upgradeBtn.left
+          anchors.rightMargin: 8
+          onClicked: {
+            if (pkgEnabled === "0") {
+              Pacman.enablePack(pkgName);
+            } else {
+              Pacman.disablePack(pkgName);
+            }
+            updatePackageList();
+          }
         }
-      }
-      Button {
-        enabled: packageList.currentItem
-        text: qsTr("Disable")
-        onClicked: {
-          let idx = packageList.currentIndex;
-          let name = packageModel.get(idx).pkgName;
-          Pacman.disablePack(name);
-          updatePackageList();
-          packageList.currentIndex = idx;
+
+        Button {
+          id: upgradeBtn
+          text: qsTr("Upgrade")
+          anchors.right: delBtn.left
+          anchors.rightMargin: 8
+          onClicked: {
+            Pacman.upgradePack(pkgName);
+            updatePackageList();
+          }
         }
-      }
-      Button {
-        enabled: packageList.currentItem
-        text: qsTr("Upgrade")
-        onClicked: {
-          let idx = packageList.currentIndex;
-          let name = packageModel.get(idx).pkgName;
-          Pacman.upgradePack(name);
-          updatePackageList();
-          packageList.currentIndex = idx;
+
+        Button {
+          id: delBtn
+          text: qsTr("Remove")
+          anchors.right: parent.right
+          anchors.rightMargin: 8
+          onClicked: {
+            Pacman.removePack(pkgName);
+            updatePackageList();
+          }
         }
-      }
-      Button {
-        enabled: packageList.currentItem
-        text: qsTr("Remove")
+
         onClicked: {
-          let idx = packageList.currentIndex;
-          let name = packageModel.get(idx).pkgName;
-          Pacman.removePack(name);
-          updatePackageList();
-          packageList.currentIndex = idx;
-        }
-      }
-      Button {
-        enabled: packageList.currentItem
-        text: qsTr("Copy URL")
-        onClicked: {
-          let idx = packageList.currentIndex;
-          let name = packageModel.get(idx).pkgURL;
-          Backend.copyToClipboard(name);
-          toast.show(qsTr("Copied."));
+          Backend.copyToClipboard(pkgURL);
+          toast.show(qsTr("Copied %1.").arg(pkgURL));
         }
       }
     }
   }
 
-  RowLayout {
-    Layout.fillWidth: true
-    TextField {
-      id: urlEdit
-      Layout.fillWidth: true
-      clip: true
-    }
+  Rectangle {
+    id: urlInstaller
+    width: parent.width
+    height: childrenRect.height
+    color: "snow"
+    opacity: 0.75
+    anchors.bottom: parent.bottom
 
-    Button {
-      text: qsTr("Install From URL")
-      enabled: urlEdit.text !== ""
-      onClicked: {
-        let url = urlEdit.text;
-        mainWindow.busy = true;
-        Pacman.downloadNewPack(url, true);
+    RowLayout {
+      width: parent.width
+      TextField {
+        id: urlEdit
+        Layout.fillWidth: true
+        clip: true
+      }
+
+      Button {
+        text: qsTr("Install From URL")
+        enabled: urlEdit.text !== ""
+        onClicked: {
+          let url = urlEdit.text;
+          mainWindow.busy = true;
+          Pacman.downloadNewPack(url, true);
+        }
       }
     }
-  }
-
   }
 
   function updatePackageList() {

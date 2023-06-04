@@ -248,10 +248,6 @@
 <context>
   <name>PackageManage</name>
   <message>
-    <source>Quit</source>
-    <translation>退出</translation>
-  </message>
-  <message>
     <source>Install From URL</source>
     <translation>从URL安装</translation>
   </message>
@@ -264,14 +260,6 @@
     <translation>禁用</translation>
   </message>
   <message>
-    <source>Enabled</source>
-    <translation>已启用</translation>
-  </message>
-  <message>
-    <source>Disabled</source>
-    <translation>已禁用</translation>
-  </message>
-  <message>
     <source>Remove</source>
     <translation>删除</translation>
   </message>
@@ -280,20 +268,24 @@
     <translation>更新</translation>
   </message>
   <message>
-    <source>Name</source>
-    <translation>名称</translation>
+    <source>Copied %1.</source>
+    <translation>已复制到剪贴板。(%1)</translation>
   </message>
   <message>
-    <source>Version</source>
-    <translation>版本</translation>
+    <source>Package Manager</source>
+    <translation>新月杀拓展包管理器</translation>
   </message>
   <message>
-    <source>Copy URL</source>
-    <translation>复制URL</translation>
+    <source>Enable All</source>
+    <translation>全部启用</translation>
   </message>
   <message>
-    <source>Copied.</source>
-    <translation>已复制。</translation>
+    <source>Disable All</source>
+    <translation>全部禁用</translation>
+  </message>
+  <message>
+    <source>Upgrade All</source>
+    <translation>全部更新</translation>
   </message>
 </context>
 
