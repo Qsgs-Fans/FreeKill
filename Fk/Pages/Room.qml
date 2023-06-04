@@ -879,7 +879,6 @@ Item {
 
   function loadPlayerData(datalist) {
     datalist.forEach(d => {
-      console.log(JSON.stringify(d));
       if (d.id == Self.id) {
         roomScene.isOwner = d.isOwner;
       } else {

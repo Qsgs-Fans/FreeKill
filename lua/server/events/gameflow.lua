@@ -101,7 +101,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     if remainTime - elapsed <= 0 then
       break
     end
-    
+
     -- local ldata = room:getTag("LuckCardData")
     local ldata = luck_data
 
