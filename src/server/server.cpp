@@ -134,7 +134,11 @@ void Server::addPlayer(ServerPlayer *player) {
   players.insert(id, player);
 }
 
-void Server::removePlayer(int id) { players.remove(id); }
+void Server::removePlayer(int id) {
+  if (players[id]) {
+    players.remove(id);
+  }
+}
 
 void Server::updateRoomList() {
   QJsonArray arr;
@@ -380,10 +384,19 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           client->disconnect(this);
           // broadcast("ServerMessage",
           //          tr("%1 backed").arg(player->getScreenName()));
-          room->pushRequest(QString("%1,reconnect").arg(id));
+
+          if (room && !room->isLobby()) {
+            room->pushRequest(QString("%1,reconnect").arg(id));
+          } else {
+            // 懒得处理掉线玩家在大厅了！踢掉得了
+            player->doNotify("ErrorMsg", "Unknown Error");
+            player->kicked();
+          }
+
           return;
         } else {
           error_msg = "others logged in with this name";
+          passed = false;
         }
       }
     }

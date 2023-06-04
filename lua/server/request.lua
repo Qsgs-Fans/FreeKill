@@ -70,7 +70,9 @@ end
 local request_handlers = {}
 request_handlers["reconnect"] = function(room, id, reqlist)
   local p = room:getPlayerById(id)
-  p:reconnect()
+  if p then
+    p:reconnect()
+  end
 end
 
 request_handlers["observe"] = function(room, id, reqlist)

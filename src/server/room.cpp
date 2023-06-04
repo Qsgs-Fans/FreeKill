@@ -114,6 +114,7 @@ void Room::addPlayer(ServerPlayer *player) {
     jsonData << player->getId();
     jsonData << player->getScreenName();
     jsonData << player->getAvatar();
+    jsonData << player->isReady();
     doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
   }
 
@@ -121,7 +122,13 @@ void Room::addPlayer(ServerPlayer *player) {
   player->setRoom(this);
 
   if (isLobby()) {
-    player->doNotify("EnterLobby", "[]");
+    // 有机器人进入大厅（可能因为被踢），那么改为销毁
+    if (player->getState() == Player::Robot) {
+      removePlayer(player);
+      player->deleteLater();
+    } else {
+      player->doNotify("EnterLobby", "[]");
+    }
   } else {
     // Second, let the player enter room and add other players
     jsonData = QJsonArray();
@@ -135,6 +142,7 @@ void Room::addPlayer(ServerPlayer *player) {
       jsonData << p->getId();
       jsonData << p->getScreenName();
       jsonData << p->getAvatar();
+      jsonData << p->isReady();
       player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
     }
 
@@ -144,8 +152,9 @@ void Room::addPlayer(ServerPlayer *player) {
       player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
     }
 
-    if (isFull() && !gameStarted)
-      start();
+    // 玩家手动启动
+    // if (isFull() && !gameStarted)
+    //  start();
   }
   emit playerAdded(player);
 }
@@ -159,6 +168,7 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setId(robot_id);
   robot->setAvatar("guanyu");
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
+  robot->setReady(true);
   robot_id--;
 
   // FIXME: 会触发Lobby:removePlayer
@@ -213,9 +223,13 @@ void Room::removePlayer(ServerPlayer *player) {
   }
 
   // 如果房间空了，就把房间标为废弃，Server有信号处理函数的
-  if (isAbandoned() && !m_abandoned) {
+  if (isAbandoned()) {
+    bool tmp = m_abandoned;
     m_abandoned = true;
-    emit abandoned();
+    // 只释放一次信号就行了，他销毁机器人的时候会多次调用removePlayer
+    if (!tmp) {
+      emit abandoned();
+    }
   } else if (player == owner) {
     setOwner(players.first());
   }
@@ -377,9 +391,19 @@ void Room::gameOver() {
   }
   // 旁观者不能在这清除，因为removePlayer逻辑不一样
   // observers.clear();
-  players.clear();
+  // 玩家也不能在这里清除，因为要能返回原来房间继续玩呢
+  // players.clear();
+  // owner = nullptr;
   clearRequest();
-  owner = nullptr;
+}
+
+void Room::manuallyStart() {
+  if (isFull() && !gameStarted) {
+    foreach (auto p, players) {
+      p->setReady(false);
+    }
+    start();
+  }
 }
 
 QString Room::fetchRequest() {

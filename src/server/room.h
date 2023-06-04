@@ -59,6 +59,7 @@ class Room : public QThread {
   void initLua();
 
   void roomStart();
+  void manuallyStart();
   LuaFunction startGame;
 
   QString fetchRequest();

@@ -334,7 +334,7 @@ function changeSelf(id) {
 }
 
 callbacks["AddPlayer"] = function(jsonData) {
-  // jsonData: int id, string screenName, string avatar
+  // jsonData: int id, string screenName, string avatar, bool ready
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
     if (item.id === -1) {
@@ -342,9 +342,22 @@ callbacks["AddPlayer"] = function(jsonData) {
       let uid = data[0];
       let name = data[1];
       let avatar = data[2];
+      let ready = data[3];
+
       item.id = uid;
       item.screenName = name;
       item.general = avatar;
+      item.avatar = avatar;
+      item.ready = ready;
+
+      checkAllReady();
+
+      if (getPhoto(-1)) {
+        roomScene.isFull = false;
+      } else {
+        roomScene.isFull = true;
+      }
+
       return;
     }
   }
@@ -485,6 +498,8 @@ callbacks["RemovePlayer"] = function(jsonData) {
     model.id = -1;
     model.screenName = "";
     model.general = "";
+    model.isOwner = false;
+    roomScene.isFull = false;
   }
 }
 
@@ -492,13 +507,39 @@ callbacks["RoomOwner"] = function(jsonData) {
   // jsonData: int uid of the owner
   let uid = JSON.parse(jsonData)[0];
 
-  if (Self.id === uid) {
-    roomScene.isOwner = true;
-  }
+  roomScene.isOwner = (Self.id === uid);
 
   let model = getPhotoModel(uid);
   if (typeof(model) !== "undefined") {
     model.isOwner = true;
+  }
+}
+
+function checkAllReady() {
+  let allReady = true;
+  for (let i = 0; i < photoModel.count; i++) {
+    let item = photoModel.get(i);
+    if (!item.isOwner && !item.ready) {
+      allReady = false;
+      break;
+    }
+  }
+  roomScene.isAllReady = allReady;
+}
+
+callbacks["ReadyChanged"] = (j) => {
+  const data = JSON.parse(j);
+  const id = data[0];
+  const ready = data[1];
+
+  if (id === Self.id) {
+    roomScene.isReady = ready === 1;
+  }
+
+  let model = getPhotoModel(id);
+  if (typeof(model) !== "undefined") {
+    model.ready = ready ? true : false;
+    checkAllReady();
   }
 }
 
@@ -521,6 +562,7 @@ callbacks["StartGame"] = function(jsonData) {
 
   for (let i = 0; i < photoModel.count; i++) {
     let item = photoModel.get(i);
+    item.ready = false;
     item.general = "";
   }
 }
@@ -1049,7 +1091,7 @@ callbacks["GameOver"] = function(jsonData) {
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GameOverBox.qml");
   let box = roomScene.popupBox.item;
   box.winner = jsonData;
-  roomScene.isStarted = false;
+  // roomScene.isStarted = false;
 }
 
 callbacks["FillAG"] = (j) => {

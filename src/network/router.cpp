@@ -276,6 +276,16 @@ void Router::handlePacket(const QByteArray &rawPacket) {
           room->removePlayer(player);
         } else if (command == "AddRobot") {
           room->addRobot(player);
+        } else if (command == "KickPlayer") {
+          int i = jsonData.toInt();
+          auto p = room->findPlayer(i);
+          if (p) room->removePlayer(p);
+        } else if (command == "Ready") {
+          player->setReady(!player->isReady());
+          room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+              QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
+        } else if (command == "StartGame") {
+          room->manuallyStart();
         } else if (command == "Chat") {
           room->chat(player, jsonData);
         } else if (command == "PushRequest") {
