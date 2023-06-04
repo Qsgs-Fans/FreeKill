@@ -15,7 +15,59 @@
   </message>
   <message>
     <source>Socket access error</source>
-    <translation>套接字访问错误</translation>
+    <translation>无权访问套接字文件</translation>
+  </message>
+  <message>
+    <source>Socket resource error</source>
+    <translation>系统资源不足</translation>
+  </message>
+  <message>
+    <source>Socket timeout error</source>
+    <translation>连接超时</translation>
+  </message>
+  <message>
+    <source>Datagram too large error</source>
+    <translation>报文过长</translation>
+  </message>
+  <message>
+    <source>Network error</source>
+    <translation>网络错误</translation>
+  </message>
+  <message>
+    <source>Unsupprted socket operation</source>
+    <translation>不支持的套接字操作</translation>
+  </message>
+  <message>
+    <source>Unfinished socket operation</source>
+    <translation>未完成的套接字操作</translation>
+  </message>
+  <message>
+    <source>Proxy auth error</source>
+    <translation>代理服务器认证失败</translation>
+  </message>
+  <message>
+    <source>Proxy refused</source>
+    <translation>代理服务器拒绝连接</translation>
+  </message>
+  <message>
+    <source>Proxy closed</source>
+    <translation>代理服务器已关闭连接</translation>
+  </message>
+  <message>
+    <source>Proxy timeout</source>
+    <translation>代理服务器连接超时</translation>
+  </message>
+  <message>
+    <source>Proxy protocol error</source>
+    <translation>代理服务器协议错误</translation>
+  </message>
+  <message>
+    <source>Operation error</source>
+    <translation>不允许的操作</translation>
+  </message>
+  <message>
+    <source>Temporary error</source>
+    <translation>网络暂时出现故障，请稍后重试</translation>
   </message>
   <message>
     <source>Unknown error</source>

@@ -2,6 +2,7 @@
 
 #include "client_socket.h"
 #include <openssl/aes.h>
+#include <qabstractsocket.h>
 #include <qrandom.h>
 
 ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) {
@@ -96,8 +97,45 @@ void ClientSocket::raiseError(QAbstractSocket::SocketError socket_error) {
   case QAbstractSocket::SocketAccessError:
     reason = tr("Socket access error");
     break;
+  case QAbstractSocket::SocketResourceError:
+    reason = tr("Socket resource error");
+    break;
+  case QAbstractSocket::SocketTimeoutError:
+    reason = tr("Socket timeout error");
+    break;
+  case QAbstractSocket::DatagramTooLargeError:
+    reason = tr("Datagram too large error");
+    break;
   case QAbstractSocket::NetworkError:
-    return; // this error is ignored ...
+    reason = tr("Network error");
+    break;
+  case QAbstractSocket::UnsupportedSocketOperationError:
+    reason = tr("Unsupprted socket operation");
+    break;
+  case QAbstractSocket::UnfinishedSocketOperationError:
+    reason = tr("Unfinished socket operation");
+    break;
+  case QAbstractSocket::ProxyAuthenticationRequiredError:
+    reason = tr("Proxy auth error");
+    break;
+  case QAbstractSocket::ProxyConnectionRefusedError:
+    reason = tr("Proxy refused");
+    break;
+  case QAbstractSocket::ProxyConnectionClosedError:
+    reason = tr("Proxy closed");
+    break;
+  case QAbstractSocket::ProxyConnectionTimeoutError:
+    reason = tr("Proxy timeout");
+    break;
+  case QAbstractSocket::ProxyProtocolError:
+    reason = tr("Proxy protocol error");
+    break;
+  case QAbstractSocket::OperationError:
+    reason = tr("Operation error");
+    break;
+  case QAbstractSocket::TemporaryError:
+    reason = tr("Temporary error");
+    break;
   default:
     reason = tr("Unknown error");
     break;
