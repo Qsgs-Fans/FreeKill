@@ -570,7 +570,6 @@ kongcheng:addRelatedSkill(kongchengAudio)
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
 zhugeliang:addSkill(guanxing)
 zhugeliang:addSkill(kongcheng)
-zhugeliang:addSkill("cunmu")
 
 local longdan = fk.CreateViewAsSkill{
   name = "longdan",
