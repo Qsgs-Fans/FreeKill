@@ -212,6 +212,7 @@ fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.discard_pile = {}
 
   local data = json.decode(jsonData)[3]
+  ClientInstance.room_settings = data
   Fk.disabled_packs = data.disabledPack
   Fk.disabled_generals = data.disabledGenerals
   ClientInstance:notifyUI("EnterRoom", jsonData)
@@ -296,7 +297,17 @@ fk.client_callback["PropertyUpdate"] = function(jsonData)
   -- jsonData: [ int id, string property_name, value ]
   local data = json.decode(jsonData)
   local id, name, value = data[1], data[2], data[3]
-  ClientInstance:getPlayerById(id)[name] = value
+  local p = ClientInstance:getPlayerById(id)
+  p[name] = value
+
+  if name == "dead" then
+    if value == true then
+      table.removeOne(ClientInstance.alive_players, p)
+    else
+      table.insertIfNeed(ClientInstance.alive_players, p)
+    end
+  end
+
   ClientInstance:notifyUI("PropertyUpdate", jsonData)
   ClientInstance:notifyUI("MaxCard", json.encode{
     pcardMax = ClientInstance:getPlayerById(id):getMaxCards(),

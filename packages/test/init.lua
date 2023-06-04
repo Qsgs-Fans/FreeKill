@@ -58,6 +58,7 @@ local test_filter = fk.CreateFilterSkill{
 }
 local control = fk.CreateActiveSkill{
   name = "control",
+  anim_type = "control",
   can_use = function(self, player)
     return true
   end,
@@ -168,6 +169,7 @@ local test_trig = fk.CreateTriggerSkill{
 }
 local damage_maker = fk.CreateActiveSkill{
   name = "damage_maker",
+  anim_type = "offensive",
   can_use = function(self, player)
     return true
   end,
@@ -256,12 +258,20 @@ Fk:loadTranslationTable{
   ["test_filter"] = "破军",
   [":test_filter"] = "你的点数大于11的牌视为无中生有。",
   ["mouxusheng"] = "谋徐盛",
-  --["cheat"] = "开挂",
+  -- ["cheat"] = "小开",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
   --["#test_trig-ask"] = "你可弃置一张手牌",
   ["control"] = "控制",
-  ["damage_maker"] = "制伤器",
+  [":control"] = "出牌阶段，你可以控制/解除控制若干名其他角色。",
+
+  ["test_vs"] = "视为",
+  [":test_vs"] = "你可以将牌当包含无懈在内的某张锦囊使用。",
+
+  ["damage_maker"] = "制伤",
+  [":damage_maker"] = "出牌阶段，你可以进行一次伤害制造器。",
+
   ["change_hero"] = "变更",
+  [":change_hero"] = "出牌阶段，你可以变更一名角色武将牌。",
 }
 
 return { extension }

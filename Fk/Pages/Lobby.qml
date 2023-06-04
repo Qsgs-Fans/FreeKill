@@ -33,13 +33,14 @@ Item {
       flickableDirection: Flickable.VerticalFlick
       width: parent.width - 10
       height: parent.height - 10
-      contentWidth: flickableContainer.width
-      contentHeight: flickableContainer.height
+      contentHeight: bulletin_info.height
       clip: true
 
       Text {
-        anchors.fill: parent
+        id: bulletin_info
+        width: parent.width
         wrapMode: TextEdit.WrapAnywhere
+        textFormat: Text.MarkdownText
         text: Backend.translate('Bulletin Info')
       }
     }

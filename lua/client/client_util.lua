@@ -494,4 +494,26 @@ function GetPlayerHandcards(pid)
   return json.encode(p.player_cards[Player.Hand])
 end
 
+function ResetClientLua()
+  local data = ClientInstance.room_settings
+  Self = ClientPlayer:new(fk.Self)
+  ClientInstance = Client:new() -- clear old client data
+  ClientInstance.players = {Self}
+  ClientInstance.alive_players = {Self}
+  ClientInstance.discard_pile = {}
+  ClientInstance.room_settings = data
+
+  Fk.disabled_packs = data.disabledPack
+  Fk.disabled_generals = data.disabledGenerals
+  -- ClientInstance:notifyUI("EnterRoom", jsonData)
+end
+
+function ResetAddPlayer(j)
+  fk.client_callback["AddPlayer"](j)
+end
+
+function GetRoomConfig()
+  return json.encode(ClientInstance.room_settings)
+end
+
 dofile "lua/client/i18n/init.lua"

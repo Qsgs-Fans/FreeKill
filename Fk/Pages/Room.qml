@@ -112,6 +112,25 @@ Item {
       ClientInstance.notifyServer("Ready", "");
     }
   }
+  Rectangle {
+    x: parent.width / 2 + 80
+    y: parent.height / 2
+    color: "snow"
+    opacity: 0.8
+    radius: 6
+    height: childrenRect.height + 16
+    width: childrenRect.width + 16
+    visible: !isStarted
+
+    Text {
+      x: 8; y: 8
+      Component.onCompleted: {
+        let data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
+        text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
+          + "<br />选将框数：" + data.generalNum
+      }
+    }
+  }
 
   states: [
     State { name: "notactive" }, // Normal status
@@ -873,6 +892,7 @@ Item {
       }
     }
     mainStack.pop();
+    Backend.callLuaFunction("ResetClientLua", []);
     mainStack.push(room);
     mainStack.currentItem.loadPlayerData(datalist);
   }
@@ -882,7 +902,7 @@ Item {
       if (d.id == Self.id) {
         roomScene.isOwner = d.isOwner;
       } else {
-        callbacks["AddPlayer"](JSON.stringify([d.id, d.name, d.avatar, d.ready]));
+        Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
       }
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;
     });

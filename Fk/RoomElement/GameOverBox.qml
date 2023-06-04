@@ -25,6 +25,7 @@ GraphicsBox {
     MetroButton {
       text: Backend.translate("Back To Room")
       anchors.horizontalCenter: parent.horizontalCenter
+      visible: !config.observing
 
       onClicked: {
         roomScene.resetToInit();
