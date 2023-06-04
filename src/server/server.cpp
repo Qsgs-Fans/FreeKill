@@ -492,7 +492,15 @@ void Server::onUserDisconnected() {
   }
 }
 
-void Server::onUserStateChanged() {}
+void Server::onUserStateChanged() {
+  ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
+  auto room = player->getRoom();
+  if (!room || room->isLobby() || room->isAbandoned()) {
+    return;
+  }
+  room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
+      QString("[%1,\"%2\"]").arg(player->getId()).arg(player->getStateString()));
+}
 
 RSA *Server::initServerRSA() {
   RSA *rsa = RSA_new();

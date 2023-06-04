@@ -102,7 +102,10 @@ local function _waitForReply(player, timeout)
   local start = os.getms()
   local state = player.serverplayer:getStateString()
   if state ~= "online" then
-    if state == "run" then return "__cancel" end
+    if state == "run" then
+      checkNoHuman(player.room)
+      return "__cancel"
+    end
     -- Let AI make reply. First handle request
     local ret_msg = true
     while ret_msg do

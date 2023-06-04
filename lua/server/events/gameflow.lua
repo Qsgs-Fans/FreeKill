@@ -101,12 +101,23 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     if remainTime - elapsed <= 0 then
       break
     end
+    
+    -- local ldata = room:getTag("LuckCardData")
+    local ldata = luck_data
 
-    if table.every(room:getTag("LuckCardData").playerList, function(id)
-      return room:getTag("LuckCardData")[id].luckTime == 0
+    if table.every(ldata.playerList, function(id)
+      return ldata[id].luckTime == 0
     end) then
       break
     end
+
+    for _, id in ipairs(ldata.playerList) do
+      if room:getPlayerById(id)._splayer:getStateString() ~= "online" then
+        ldata[id].luckTime = 0
+      end
+    end
+
+    -- room:setTag("LuckCardData", ldata)
 
     checkNoHuman(room)
 

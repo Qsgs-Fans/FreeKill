@@ -344,6 +344,8 @@ Item {
     source: SkinBank.STATE_DIR + root.netstate
     x: photoMask.x
     y: photoMask.y
+    scale: 0.9
+    transformOrigin: Item.TopLeft
   }
 
   Image {

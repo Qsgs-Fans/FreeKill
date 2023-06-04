@@ -543,6 +543,18 @@ callbacks["ReadyChanged"] = (j) => {
   }
 }
 
+callbacks["NetStateChanged"] = (j) => {
+  const data = JSON.parse(j);
+  const id = data[0];
+  let state = data[1];
+
+  let model = getPhotoModel(id);
+  if (state == "run" && model.dead) {
+    state = "leave";
+  }
+  model.netstate = state;
+}
+
 callbacks["PropertyUpdate"] = function(jsonData) {
   // jsonData: int id, string property_name, value
   let data = JSON.parse(jsonData);
