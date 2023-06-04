@@ -13,13 +13,14 @@ local jianxiong = fk.CreateTriggerSkill{
     local room = target.room
     return data.card ~= nil and
       target == player and
-      target:hasSkill(self.name) and
-      room:getCardArea(data.card) == Card.Processing and
-      not target.dead
+      target:hasSkill(self.name) and not target.dead and
+      table.find(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:obtainCard(player.id, data.card, false)
+    local dummy = Fk:cloneCard("jueying")
+    dummy:addSubcards(table.filter(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end))
+    room:obtainCard(player.id, dummy, false)
   end,
 }
 
@@ -569,6 +570,7 @@ kongcheng:addRelatedSkill(kongchengAudio)
 local zhugeliang = General:new(extension, "zhugeliang", "shu", 3)
 zhugeliang:addSkill(guanxing)
 zhugeliang:addSkill(kongcheng)
+zhugeliang:addSkill("cunmu")
 
 local longdan = fk.CreateViewAsSkill{
   name = "longdan",
