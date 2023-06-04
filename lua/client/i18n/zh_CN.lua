@@ -126,7 +126,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
 
-  ["$WelcomeToLobby"] = "欢迎进入FreeKill游戏大厅！",
+  ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
 
   -- Room
   ["$EnterRoom"] = "成功加入房间。",
@@ -244,6 +244,9 @@ Fk:loadTranslationTable{
 
   ["chained"] = "横置",
   ["not-chained"] = "重置",
+
+  ["Top"] = "牌堆顶",
+  ["Bottom"] = "牌堆底",
 }
 
 -- related to sendLog
