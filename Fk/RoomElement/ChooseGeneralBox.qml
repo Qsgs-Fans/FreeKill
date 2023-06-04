@@ -18,7 +18,8 @@ GraphicsBox {
   }
 
   id: root
-  title.text: Backend.translate("$ChooseGeneral").arg(choiceNum)
+  title.text: Backend.translate("$ChooseGeneral").arg(choiceNum) +
+    (config.enableFreeAssign ? "(" + Backend.translate("Enable free assign") + ")" : "")
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
   height: body.implicitHeight + body.anchors.topMargin + body.anchors.bottomMargin
 
