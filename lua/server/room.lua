@@ -499,10 +499,11 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
     self:broadcastProperty(player, "general")
   end
 
-  if player.kingdom == "unknown" then
-    player.kingdom = new.kingdom
-    self:broadcastProperty(player, "kingdom")
-  end
+  player.gender = new.gender
+  self:broadcastProperty(player, "gender")
+
+  player.kingdom = new.kingdom
+  self:broadcastProperty(player, "kingdom")
 
   player.maxHp = player:getGeneralMaxHp()
   self:broadcastProperty(player, "maxHp")
@@ -1120,6 +1121,7 @@ end
 --- 询问玩家选择一名武将。
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
+---@param n integer @ 可选数量，默认为1
 ---@return string @ 选择的武将
 function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
@@ -1259,11 +1261,12 @@ end
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param cards integer[] @ 可以被观星的卡牌id列表
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
----@param bottom_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
+---@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
 ---@param noPut boolean|null @ 是否进行放置牌操作
+---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<top|bottom, cardId[]>
-function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut)
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or {}
   bottom_limit = bottom_limit or {}
@@ -1278,6 +1281,9 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   if #top_limit > 0 and #bottom_limit > 0 then
     assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
   end
+  if areaNames then
+    assert(#areaNames > 1, "左侧提示信息设置错误：应有Top和Bottom两个提示信息")
+  end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
@@ -1286,13 +1292,15 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     max_top_cards = top_limit and top_limit[2] or #cards,
     min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
     max_bottom_cards = bottom_limit and bottom_limit[2] or #cards,
+    top_area_name = areaNames and areaNames[1] or "Top",
+    bottom_area_name = areaNames and areaNames[2] or "Bottom",
   }
 
   local result = self:doRequest(player, command, json.encode(data))
   local top, bottom
   if result ~= "" then
     local d = json.decode(result)
-    if #top_limit > 0 and top_limit[1] == 0 then
+    if #top_limit > 0 and top_limit[2] == 0 then
       top = {}
       bottom = d[1]
     else
@@ -1300,16 +1308,16 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       bottom = d[2]
     end
   else
-    top = cards
-    bottom = {}
+    top = table.random(cards, top_limit and top_limit[2] or #cards)
+    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end))
   end
 
   if not noPut then
     for i = #top, 1, -1 do
       table.insert(self.draw_pile, 1, top[i])
     end
-    for _, id in ipairs(bottom) do
-      table.insert(self.draw_pile, id)
+    for i = #bottom, 1, -1 do
+      table.insert(self.draw_pile, bottom[i])
     end
 
     self:sendLog{
