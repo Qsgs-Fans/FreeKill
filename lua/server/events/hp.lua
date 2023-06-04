@@ -242,6 +242,10 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
 
   player.maxHp = math.max(player.maxHp + num, 0)
   self:broadcastProperty(player, "maxHp")
+  self:sendLogEvent("ChangeMaxHp", {
+    player = player.id,
+    num = num,
+  })
   if player.maxHp == 0 then
     self:killPlayer({ who = player.id })
   end

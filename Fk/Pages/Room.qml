@@ -17,6 +17,9 @@ Item {
 
   property bool isOwner: false
   property bool isStarted: false
+  property bool isFull: false
+  property bool isAllReady: false
+  property bool isReady: false
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -79,11 +82,34 @@ Item {
     }
   }
   Button {
-    text: "add robot"
-    visible: isOwner && !isStarted
+    text: Backend.translate("Add Robot")
+    visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
+    }
+  }
+  Button {
+    text: Backend.translate("Start Game")
+    visible: isOwner && !isStarted && isFull
+    enabled: isAllReady
+    anchors.centerIn: parent
+    onClicked: {
+      ClientInstance.notifyServer("StartGame", "[]");
+    }
+  }
+  Timer {
+    id: opTimer
+    interval: 1000
+  }
+  Button {
+    text: isReady ? Backend.translate("Cancel Ready") : Backend.translate("Ready")
+    visible: !isOwner && !isStarted
+    enabled: !opTimer.running
+    anchors.centerIn: parent
+    onClicked: {
+      opTimer.start();
+      ClientInstance.notifyServer("Ready", "");
     }
   }
 
@@ -195,6 +221,7 @@ Item {
       Photo {
         playerid: model.id
         general: model.general
+        avatar: model.avatar
         deputyGeneral: model.deputyGeneral
         screenName: model.screenName
         role: model.role
@@ -210,6 +237,7 @@ Item {
         chained: model.chained
         drank: model.drank
         isOwner: model.isOwner
+        ready: model.ready
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -830,6 +858,36 @@ Item {
     cheatDrawer.open();
   }
 
+  function resetToInit() {
+    let datalist = [];
+    for (let i = 0; i < photoModel.count; i++) {
+      let item = photoModel.get(i);
+      if (item.id > 0) {
+        datalist.push({
+          id: item.id,
+          avatar: item.avatar,
+          name: item.screenName,
+          isOwner: item.isOwner,
+          ready: item.ready,
+        });
+      }
+    }
+    mainStack.pop();
+    mainStack.push(room);
+    mainStack.currentItem.loadPlayerData(datalist);
+  }
+
+  function loadPlayerData(datalist) {
+    datalist.forEach(d => {
+      if (d.id == Self.id) {
+        roomScene.isOwner = d.isOwner;
+      } else {
+        callbacks["AddPlayer"](JSON.stringify([d.id, d.name, d.avatar, d.ready]));
+      }
+      Logic.getPhotoModel(d.id).isOwner = d.isOwner;
+    });
+  }
+
   Component.onCompleted: {
     toast.show(Backend.translate("$EnterRoom"));
     playerNum = config.roomCapacity;
@@ -839,6 +897,7 @@ Item {
         id: i ? -1 : Self.id,
         index: i,   // For animating seat swap
         general: i ? "" : Self.avatar,
+        avatar: i ? "" : Self.avatar,
         deputyGeneral: "",
         screenName: i ? "" : Self.screenName,
         role: "unknown",
@@ -853,7 +912,8 @@ Item {
         faceup: true,
         chained: false,
         drank: 0,
-        isOwner: false
+        isOwner: false,
+        ready: false,
       });
     }
 

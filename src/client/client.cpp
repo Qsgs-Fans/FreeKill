@@ -5,8 +5,8 @@
 #include "clientplayer.h"
 #include "util.h"
 
-Client *ClientInstance;
-ClientPlayer *Self;
+Client *ClientInstance = nullptr;
+ClientPlayer *Self = nullptr;
 
 static ClientPlayer dummyPlayer(0, nullptr);
 

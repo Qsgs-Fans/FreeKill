@@ -15,7 +15,59 @@
   </message>
   <message>
     <source>Socket access error</source>
-    <translation>套接字访问错误</translation>
+    <translation>无权访问套接字文件</translation>
+  </message>
+  <message>
+    <source>Socket resource error</source>
+    <translation>系统资源不足</translation>
+  </message>
+  <message>
+    <source>Socket timeout error</source>
+    <translation>连接超时</translation>
+  </message>
+  <message>
+    <source>Datagram too large error</source>
+    <translation>报文过长</translation>
+  </message>
+  <message>
+    <source>Network error</source>
+    <translation>网络错误</translation>
+  </message>
+  <message>
+    <source>Unsupprted socket operation</source>
+    <translation>不支持的套接字操作</translation>
+  </message>
+  <message>
+    <source>Unfinished socket operation</source>
+    <translation>未完成的套接字操作</translation>
+  </message>
+  <message>
+    <source>Proxy auth error</source>
+    <translation>代理服务器认证失败</translation>
+  </message>
+  <message>
+    <source>Proxy refused</source>
+    <translation>代理服务器拒绝连接</translation>
+  </message>
+  <message>
+    <source>Proxy closed</source>
+    <translation>代理服务器已关闭连接</translation>
+  </message>
+  <message>
+    <source>Proxy timeout</source>
+    <translation>代理服务器连接超时</translation>
+  </message>
+  <message>
+    <source>Proxy protocol error</source>
+    <translation>代理服务器协议错误</translation>
+  </message>
+  <message>
+    <source>Operation error</source>
+    <translation>不允许的操作</translation>
+  </message>
+  <message>
+    <source>Temporary error</source>
+    <translation>网络暂时出现故障，请稍后重试</translation>
   </message>
   <message>
     <source>Unknown error</source>
@@ -187,14 +239,14 @@
     <source>no such room</source>
     <translation>房间不存在</translation>
   </message>
+  <message>
+    <source>you have been banned!</source>
+    <translation>你已经被该服务器封禁！</translation>
+  </message>
 </context>
 
 <context>
   <name>PackageManage</name>
-  <message>
-    <source>Quit</source>
-    <translation>退出</translation>
-  </message>
   <message>
     <source>Install From URL</source>
     <translation>从URL安装</translation>
@@ -208,14 +260,6 @@
     <translation>禁用</translation>
   </message>
   <message>
-    <source>Enabled</source>
-    <translation>已启用</translation>
-  </message>
-  <message>
-    <source>Disabled</source>
-    <translation>已禁用</translation>
-  </message>
-  <message>
     <source>Remove</source>
     <translation>删除</translation>
   </message>
@@ -224,20 +268,24 @@
     <translation>更新</translation>
   </message>
   <message>
-    <source>Name</source>
-    <translation>名称</translation>
+    <source>Copied %1.</source>
+    <translation>已复制到剪贴板。(%1)</translation>
   </message>
   <message>
-    <source>Version</source>
-    <translation>版本</translation>
+    <source>Package Manager</source>
+    <translation>新月杀拓展包管理器</translation>
   </message>
   <message>
-    <source>Copy URL</source>
-    <translation>复制URL</translation>
+    <source>Enable All</source>
+    <translation>全部启用</translation>
   </message>
   <message>
-    <source>Copied.</source>
-    <translation>已复制。</translation>
+    <source>Disable All</source>
+    <translation>全部禁用</translation>
+  </message>
+  <message>
+    <source>Upgrade All</source>
+    <translation>全部更新</translation>
   </message>
 </context>
 

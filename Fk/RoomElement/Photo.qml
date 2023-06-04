@@ -13,6 +13,7 @@ Item {
   scale: 0.75
   property int playerid: 0
   property string general: ""
+  property string avatar: ""
   property string deputyGeneral: ""
   property string screenName: ""
   property string role: "unknown"
@@ -29,6 +30,7 @@ Item {
   property bool chained: false
   property int drank: 0
   property bool isOwner: false
+  property bool ready: false
   property int distance: 0
   property string status: "normal"
   property int maxCard: 0
@@ -249,7 +251,7 @@ Item {
     anchors.right: parent.right
     anchors.bottomMargin: 8
     anchors.rightMargin: 4
-    source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : "ready")
+    source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : (ready ? "ready" : "notready"))
     visible: screenName != "" && !roomScene.isStarted
   }
 
@@ -342,6 +344,8 @@ Item {
     source: SkinBank.STATE_DIR + root.netstate
     x: photoMask.x
     y: photoMask.y
+    scale: 0.9
+    transformOrigin: Item.TopLeft
   }
 
   Image {
@@ -596,6 +600,10 @@ Item {
   }
 
   function showDetail() {
+    if (playerid === 0 || playerid === -1) {
+      return;
+    }
+
     roomScene.startCheat("PlayerDetail", { photo: this });
   }
 }

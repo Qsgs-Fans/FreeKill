@@ -43,9 +43,19 @@ Flickable {
 
       Button {
         text: Backend.translate("Give Shoe")
-        enabled: Math.random() < 0.5
+        enabled: Math.random() < 0.3
         onClicked: {
           root.givePresent("Shoe");
+          root.finish();
+        }
+      }
+
+      Button {
+        text: Backend.translate("Kick From Room")
+        visible: !roomScene.isStarted && roomScene.isOwner
+        enabled: pid !== Self.id
+        onClicked: {
+          ClientInstance.notifyServer("KickPlayer", pid.toString());
           root.finish();
         }
       }

@@ -53,6 +53,22 @@ function getCardPicture(cidOrName) {
   return CARD_DIR + "unknown.png";
 }
 
+function getDelayedTrickPicture(name) {
+  let extension = Backend.callLuaFunction("GetCardExtensionByName", [name]);
+
+  let path = AppPath + "/packages/" + extension + "/image/card/delayedTrick/" + name + ".png";
+  if (Backend.exists(path)) {
+    return path;
+  } else {
+    for (let dir of Backend.ls(AppPath + "/packages/")) {
+      path = AppPath + "/packages/" + dir + "/image/card/delayedTrick/" + name + ".png";
+      if (Backend.exists(path)) return path;
+    }
+  }
+  return DELAYED_TRICK_DIR + "unknown.png";
+}
+
+
 function getEquipIcon(cid, icon) {
   let data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
   let extension = data.extension;

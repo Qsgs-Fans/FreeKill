@@ -102,6 +102,11 @@ local function _waitForReply(player, timeout)
   local start = os.getms()
   local state = player.serverplayer:getStateString()
   if state ~= "online" then
+    if state ~= "robot" then
+      checkNoHuman(player.room)
+      player.room:delay(500)
+      return "__cancel"
+    end
     -- Let AI make reply. First handle request
     local ret_msg = true
     while ret_msg do
@@ -256,6 +261,12 @@ function ServerPlayer:marshal(player)
   for k, v in pairs(self.cardUsedHistory) do
     if v[1] > 0 then
       player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+    end
+  end
+
+  for k, v in pairs(self.skillUsedHistory) do
+    if v[1] > 0 then
+      player:doNotify("AddSkillUseHistory", json.encode{self.id, k, v[1]})
     end
   end
 

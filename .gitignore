@@ -24,6 +24,8 @@ freekill-wrap.cxx
 /server/rsa_pub
 /freekill.client.config.json
 /freekill.server.config.json
+/freekill.server.error.log
+/freekill.server.info.log
 /flist.txt
 
 # windeployqt

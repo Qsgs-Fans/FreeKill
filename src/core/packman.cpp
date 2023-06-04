@@ -82,10 +82,16 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
 }
 
 void PackMan::downloadNewPack(const QString &url, bool useThread) {
+  static auto sql_select = QString("SELECT name FROM packages \
+    WHERE name = '%1';");
+  static auto sql_update = QString("INSERT INTO packages (name,url,hash,enabled) \
+      VALUES ('%1','%2','%3',1);");
+
   auto threadFunc = [=]() {
     int error = clone(url);
-    if (error < 0)
-      return;
+    // if (error < 0)
+    //   return;
+
     auto u = url;
     while (u.endsWith('/')) {
       u.chop(1);
@@ -94,15 +100,11 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
     if (fileName.endsWith(".git"))
       fileName.chop(4);
 
-    auto result = SelectFromDatabase(db, QString("SELECT name FROM packages \
-    WHERE name = '%1';")
-                                             .arg(fileName));
+    auto result = SelectFromDatabase(db, sql_select.arg(fileName));
     if (result.isEmpty()) {
-      ExecSQL(db, QString("INSERT INTO packages (name,url,hash,enabled) \
-      VALUES ('%1','%2','%3',1);")
-                      .arg(fileName)
+      ExecSQL(db, sql_update.arg(fileName)
                       .arg(url)
-                      .arg(head(fileName)));
+                      .arg(error < 0 ? "XXXXXXXX" : head(fileName)));
     }
   };
   if (useThread) {

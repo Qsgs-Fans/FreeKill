@@ -34,6 +34,10 @@ Fk:loadTranslationTable{
   ["Luck Card Times"] = "手气卡次数",
   ["Room Password"] = "房间密码",
   ["Please input room's password"] = "请输入房间的密码",
+  ["Add Robot"] = "添加机器人",
+  ["Start Game"] = "开始游戏",
+  ["Ready"] = "准备",
+  ["Cancel Ready"] = "取消准备",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "启用副将机制",
@@ -45,6 +49,7 @@ Fk:loadTranslationTable{
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
   ["Give Shoe"] = "拖鞋",
+  ["Kick From Room"] = "踢出房间",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -206,6 +211,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",
   ["$NoWinner"] = "平局！",
+  ["Back To Room"] = "回到房间",
   ["Back To Lobby"] = "返回大厅",
 
   ["Bulletin Info"] = [==[<h2>v0.2.0 更新说明</h2>

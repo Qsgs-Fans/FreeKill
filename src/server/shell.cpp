@@ -20,15 +20,25 @@ static void sigintHandler(int) {
 
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
-#define HELP_MSG(a, b) \
+#define HELP_MSG(a, b)                                                         \
   qInfo((a), Color((b), fkShell::Cyan).toUtf8().constData());
 
   HELP_MSG("%s: Display this help message.", "help");
   HELP_MSG("%s: Shut down the server.", "quit");
   HELP_MSG("%s: List all online players.", "lsplayer");
   HELP_MSG("%s: List all running rooms.", "lsroom");
-  HELP_MSG("%s: Kick a player by his id.", "kick");
+  HELP_MSG("%s: Kick a player by his <id>.", "kick");
   HELP_MSG("%s: Broadcast message.", "msg");
+  HELP_MSG("%s: Ban 1 or more accounts by their <name>.", "ban");
+  HELP_MSG("%s: Unban 1 or more accounts by their <name>.", "unban");
+  HELP_MSG(
+      "%s: Ban 1 or more IP address according to somebody's 'lastLoginIp'. "
+      "At least 1 <name> required.",
+      "banip");
+  HELP_MSG(
+      "%s: Unban 1 or more IP address according to somebody's 'lastLoginIp'. "
+      "At least 1 <name> required.",
+      "unbanip");
   qInfo();
   qInfo("===== Package commands =====");
   HELP_MSG("%s: Install a new package from <url>.", "install");
@@ -36,7 +46,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: List all packages.", "lspkg");
   HELP_MSG("%s: Enable a package.", "enable");
   HELP_MSG("%s: Disable a package.", "disable");
-  HELP_MSG("%s: Upgrade a package.", "upgrade");
+  HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade");
   qInfo("For more commands, check the documentation.");
 
 #undef HELP_MSG
@@ -86,7 +96,12 @@ void Shell::removeCommand(QStringList &list) {
 
 void Shell::upgradeCommand(QStringList &list) {
   if (list.isEmpty()) {
-    qWarning("The 'upgrade' command need a package name to upgrade.");
+    // qWarning("The 'upgrade' command need a package name to upgrade.");
+    auto arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
+    foreach (auto a, arr) {
+      auto obj = a.toObject();
+      Pacman->upgradePack(obj["name"].toString());
+    }
     return;
   }
 
@@ -155,6 +170,111 @@ void Shell::msgCommand(QStringList &list) {
   ServerInstance->broadcast("ServerMessage", msg);
 }
 
+static void banAccount(sqlite3 *db, const QString &name, bool banned) {
+  if (!CheckSqlString(name))
+    return;
+  QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE name='%1';")
+                         .arg(name);
+  auto result = SelectFromDatabase(db, sql_find);
+  if (result.isEmpty())
+    return;
+  auto obj = result[0].toObject();
+  int id = obj["id"].toString().toInt();
+  ExecSQL(db, QString("UPDATE userinfo SET banned=%2 WHERE id=%1;")
+                  .arg(id)
+                  .arg(banned ? 1 : 0));
+
+  if (banned) {
+    auto p = ServerInstance->findPlayer(id);
+    if (p) {
+      p->kicked();
+    }
+    qInfo("Banned %s.", name.toUtf8().constData());
+  } else {
+    qInfo("Unbanned %s.", name.toUtf8().constData());
+  }
+}
+
+void Shell::banCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'ban' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banAccount(db, name, true);
+  }
+}
+
+void Shell::unbanCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'unban' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banAccount(db, name, false);
+  }
+}
+static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
+  if (!CheckSqlString(name))
+    return;
+
+  QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE name='%1';")
+                         .arg(name);
+  auto result = SelectFromDatabase(db, sql_find);
+  if (result.isEmpty())
+    return;
+  auto obj = result[0].toObject();
+  int id = obj["id"].toString().toInt();
+  auto addr = obj["lastLoginIp"].toString();
+
+  if (banned) {
+    ExecSQL(db, QString("INSERT INTO banip VALUES('%1');").arg(addr));
+
+    auto p = ServerInstance->findPlayer(id);
+    if (p) {
+      p->kicked();
+    }
+    qInfo("Banned IP %s.", addr.toUtf8().constData());
+  } else {
+    ExecSQL(db, QString("DELETE FROM banip WHERE ip='%1';").arg(addr));
+    qInfo("Unbanned IP %s.", addr.toUtf8().constData());
+  }
+}
+
+void Shell::banipCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'banip' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banIPByName(db, name, true);
+  }
+}
+
+void Shell::unbanipCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'unbanip' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banIPByName(db, name, false);
+  }
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -173,6 +293,10 @@ Shell::Shell() {
     handlers["disable"] = &Shell::disableCommand;
     handlers["kick"] = &Shell::kickCommand;
     handlers["msg"] = &Shell::msgCommand;
+    handlers["ban"] = &Shell::banCommand;
+    handlers["unban"] = &Shell::unbanCommand;
+    handlers["banip"] = &Shell::banipCommand;
+    handlers["unbanip"] = &Shell::unbanipCommand;
   }
   handler_map = handlers;
 }

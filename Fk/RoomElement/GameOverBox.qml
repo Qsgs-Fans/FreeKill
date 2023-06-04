@@ -23,6 +23,16 @@ GraphicsBox {
     }
 
     MetroButton {
+      text: Backend.translate("Back To Room")
+      anchors.horizontalCenter: parent.horizontalCenter
+
+      onClicked: {
+        roomScene.resetToInit();
+        finished();
+      }
+    }
+
+    MetroButton {
       text: Backend.translate("Back To Lobby")
       anchors.horizontalCenter: parent.horizontalCenter
 
