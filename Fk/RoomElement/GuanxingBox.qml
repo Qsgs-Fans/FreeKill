@@ -105,10 +105,11 @@ GraphicsBox {
       }
 
       if (stay) {
-        if (result[0].length >= areaCapacities[0]) {
-          result[1].push(card);
-        } else {
-          result[0].push(card);
+        for (j = 0; j < areaRepeater.count; j++) {
+          if (result[j].length < areaCapacities[j]) {
+            result[j].push(card);
+            break;
+          }
         }
       }
     }
