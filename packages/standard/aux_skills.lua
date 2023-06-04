@@ -16,6 +16,14 @@ local discardSkill = fk.CreateActiveSkill{
         return false
       end
     end
+    if Fk.currentResponseReason == "game_rule" then
+      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+      for _, skill in ipairs(status_skills) do
+        if skill:excludeFrom(Self, card) then
+          return false
+        end
+      end
+    end
 
     if not self.include_equip then
       checkpoint = checkpoint and (Fk:currentRoom():getCardArea(to_select) ~= Player.Equip)

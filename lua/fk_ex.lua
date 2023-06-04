@@ -323,13 +323,14 @@ end
 
 ---@class MaxCardsSpec: StatusSkillSpec
 ---@field public correct_func fun(self: MaxCardsSkill, player: Player)
----@field public fixed_func fun(self: MaxCardsSkill, from: Player)
+---@field public fixed_func fun(self: MaxCardsSkill, player: Player)
+---@field public exclude_from fun(self: MaxCardsSkill, player: Player, card: Card)
 
 ---@param spec MaxCardsSpec
 ---@return MaxCardsSkill
 function fk.CreateMaxCardsSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or type(spec.exclude_from) == "function")
 
   local skill = MaxCardsSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
@@ -339,6 +340,7 @@ function fk.CreateMaxCardsSkill(spec)
   if spec.fixed_func then
     skill.getFixed = spec.fixed_func
   end
+  skill.excludeFrom = spec.exclude_from or skill.excludeFrom
 
   return skill
 end

@@ -285,9 +285,16 @@ GameEvent.functions[GameEvent.Phase] = function(self)
         end
       end,
       [Player.Discard] = function()
-        local discardNum = #player:getCardIds(Player.Hand) - player:getMaxCards()
+        local discardNum = #table.filter(
+          player:getCardIds(Player.Hand), function(id)
+            local card = Fk:getCardById(id)
+            return table.every(room.status_skills[MaxCardsSkill] or {}, function(skill)
+              return not skill:excludeFrom(player, card)
+            end)
+          end
+        ) - player:getMaxCards()
         if discardNum > 0 then
-          room:askForDiscard(player, discardNum, discardNum, false, self.name)
+          room:askForDiscard(player, discardNum, discardNum, false, "game_rule")
         end
       end,
       [Player.Finish] = function()

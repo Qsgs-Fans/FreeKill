@@ -499,10 +499,11 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
     self:broadcastProperty(player, "general")
   end
 
-  if player.kingdom == "unknown" then
-    player.kingdom = new.kingdom
-    self:broadcastProperty(player, "kingdom")
-  end
+  player.gender = new.gender
+  self:broadcastProperty(player, "gender")
+
+  player.kingdom = new.kingdom
+  self:broadcastProperty(player, "kingdom")
 
   player.maxHp = player:getGeneralMaxHp()
   self:broadcastProperty(player, "maxHp")
@@ -917,7 +918,7 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 
 --- 询问一名角色弃牌。
 ---
---- 在这个函数里面牌已经被弃掉了。
+--- 在这个函数里面牌已经被弃掉了（除非skipDiscard为true）。
 ---@param player ServerPlayer @ 弃牌角色
 ---@param minNum integer @ 最小值
 ---@param maxNum integer @ 最大值
@@ -926,6 +927,7 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param cancelable boolean @ 能不能点取消？
 ---@param pattern string @ 弃牌需要符合的规则
 ---@param prompt string @ 提示信息
+---@param skipDiscard boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard)
   cancelable = cancelable or false
@@ -940,6 +942,14 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
       for _, skill in ipairs(status_skills) do
         if skill:prohibitDiscard(player, card) then
           return false
+        end
+      end
+      if skillName == "game_rule" then
+        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+        for _, skill in ipairs(status_skills) do
+          if skill:excludeFrom(player, card) then
+            return false
+          end
         end
       end
 
@@ -989,12 +999,13 @@ end
 ---@param maxNum integer @ 最大值
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
+---@param cancelable boolean @ 能否点取消
 ---@return integer[] @ 选择的玩家id列表，可能为空
 function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable)
   if maxNum < 1 then
     return {}
   end
-  cancelable = (not cancelable) and false or true
+  cancelable = cancelable or false
 
   local data = {
     targets = targets,
@@ -1023,7 +1034,7 @@ end
 ---@param maxNum integer @ 最大值
 ---@param includeEquip boolean @ 能不能选装备
 ---@param skillName string @ 技能名
----@param cancelable boolean @ 能不能点取消
+---@param cancelable boolean @ 能否点取消
 ---@param pattern string @ 选牌规则
 ---@param prompt string @ 提示信息
 ---@param expand_pile string @ 可选私人牌堆名称
@@ -1079,6 +1090,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   if maxNum < 1 then
     return {}
   end
+  cancelable = cancelable or false
   pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
@@ -1094,7 +1106,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     pattern = pattern,
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", true, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
   if ret then
     return ret.targets, ret.cards[1]
   else
@@ -1109,6 +1121,7 @@ end
 --- 询问玩家选择一名武将。
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
+---@param n integer @ 可选数量，默认为1
 ---@return string @ 选择的武将
 function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
@@ -1248,11 +1261,12 @@ end
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param cards integer[] @ 可以被观星的卡牌id列表
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
----@param bottom_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
+---@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
 ---@param noPut boolean|null @ 是否进行放置牌操作
+---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<top|bottom, cardId[]>
-function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut)
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or {}
   bottom_limit = bottom_limit or {}
@@ -1267,6 +1281,9 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   if #top_limit > 0 and #bottom_limit > 0 then
     assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
   end
+  if areaNames then
+    assert(#areaNames > 1, "左侧提示信息设置错误：应有Top和Bottom两个提示信息")
+  end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
@@ -1275,13 +1292,15 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     max_top_cards = top_limit and top_limit[2] or #cards,
     min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
     max_bottom_cards = bottom_limit and bottom_limit[2] or #cards,
+    top_area_name = areaNames and areaNames[1] or "Top",
+    bottom_area_name = areaNames and areaNames[2] or "Bottom",
   }
 
   local result = self:doRequest(player, command, json.encode(data))
   local top, bottom
   if result ~= "" then
     local d = json.decode(result)
-    if #top_limit > 0 and top_limit[1] == 0 then
+    if #top_limit > 0 and top_limit[2] == 0 then
       top = {}
       bottom = d[1]
     else
@@ -1289,16 +1308,16 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       bottom = d[2]
     end
   else
-    top = cards
-    bottom = {}
+    top = table.random(cards, top_limit and top_limit[2] or #cards)
+    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end))
   end
 
   if not noPut then
     for i = #top, 1, -1 do
       table.insert(self.draw_pile, 1, top[i])
     end
-    for _, id in ipairs(bottom) do
-      table.insert(self.draw_pile, id)
+    for i = #bottom, 1, -1 do
+      table.insert(self.draw_pile, bottom[i])
     end
 
     self:sendLog{
@@ -1597,12 +1616,12 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   })
 end
 
----@field player ServerPlayer
----@field targetOne ServerPlayer
----@field targetTwo ServerPlayer
----@field skillName string
----@field flag string|null
----@field moveFrom ServerPlayer|null
+---@param player ServerPlayer @ 移动的操作
+---@param targetOne ServerPlayer @ 移动的目标1玩家
+---@param targetTwo ServerPlayer @ 移动的目标2玩家
+---@param skillName string @ 技能名
+---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
+---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
 ---@return cardId
 function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
   if flag then
@@ -1692,12 +1711,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   )
 end
 
---- 询问一名玩家从targets中选择若干名玩家出来。
+--- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
 ---@param player ServerPlayer @ 要做选择的玩家
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@param cancelable boolean|null @ 是否可以取消选择
----@param flag string|null @ 限定可移动的区域，值为‘e’或‘j’
+---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@return integer[] @ 选择的玩家id列表，可能为空
 function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag)
   if flag then
@@ -2739,7 +2758,7 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
         end
       until curIndex == randomIndex
 
-      if #cardPack < num then
+      if #cardPack == 0 then
         break
       end
     end

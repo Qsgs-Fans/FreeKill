@@ -13,13 +13,14 @@ local jianxiong = fk.CreateTriggerSkill{
     local room = target.room
     return data.card ~= nil and
       target == player and
-      target:hasSkill(self.name) and
-      room:getCardArea(data.card) == Card.Processing and
-      not target.dead
+      target:hasSkill(self.name) and not target.dead and
+      table.find(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:obtainCard(player.id, data.card, false)
+    local dummy = Fk:cloneCard("jueying")
+    dummy:addSubcards(table.filter(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end))
+    room:obtainCard(player.id, dummy, false)
   end,
 }
 
@@ -683,7 +684,7 @@ local zhiheng = fk.CreateActiveSkill{
 local jiuyuan = fk.CreateTriggerSkill{
   name = "jiuyuan$",
   anim_type = "support",
-  frequency = fk.Compulsory,
+  frequency = Skill.Compulsory,
   events = {fk.PreHpRecover},
   can_trigger = function(self, event, target, player, data)
     return
