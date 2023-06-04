@@ -651,7 +651,7 @@ local lightningSkill = fk.CreateActiveSkill{
       room:moveCards{
         ids = { effect.cardId },
         toArea = Card.DiscardPile,
-        moveReason = fk.ReasonPutIntoDiscardPile
+        moveReason = fk.ReasonUse
       }
     else
       self:onNullified(room, effect)
@@ -719,7 +719,7 @@ local indulgenceSkill = fk.CreateActiveSkill{
     room:moveCards{
       ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile
+      moveReason = fk.ReasonUse
     }
   end,
 }
@@ -919,6 +919,7 @@ local bladeSkill = fk.CreateTriggerSkill{
     local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
       true, { must_targets = {target.id} })
     if use then
+      use.extraUse = true
       self.cost_data = use
       return true
     end

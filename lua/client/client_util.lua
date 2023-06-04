@@ -296,6 +296,7 @@ function GetSkillData(skill_name)
     freq = freq,
     frequency = frequency,
     switchSkillName = skill.switchSkillName,
+    isViewAsSkill = skill:isInstanceOf(ViewAsSkill),
   }
 end
 

@@ -1991,6 +1991,8 @@ function Room:doCardUseEffect(cardUseEvent)
         cardEffectEvent.additionalRecover = curAimEvent.additionalRecover
 
         if curAimEvent.disresponsiveList then
+          cardEffectEvent.disresponsiveList = cardEffectEvent.disresponsiveList or {}
+
           for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
             if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
               table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
@@ -1999,9 +2001,11 @@ function Room:doCardUseEffect(cardUseEvent)
         end
 
         if curAimEvent.unoffsetableList then
+          cardEffectEvent.unoffsetableList = cardEffectEvent.unoffsetableList or {}
+
           for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
-            if not table.contains(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer) then
-              table.insert(cardEffectEvent.unoffsetablePlayer, unoffsetablePlayer)
+            if not table.contains(cardEffectEvent.unoffsetableList, unoffsetablePlayer) then
+              table.insert(cardEffectEvent.unoffsetableList, unoffsetablePlayer)
             end
           end
         end
@@ -2095,6 +2099,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
             if
               s.pattern and
               Exppattern:Parse("nullification"):matchExp(s.pattern) and
+              not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
               not (
                 table.contains(cardEffectEvent.disresponsiveList or {}, p.id) or
                 table.contains(cardEffectEvent.unoffsetableList or {}, p.id)
@@ -2739,7 +2744,7 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
         end
       until curIndex == randomIndex
 
-      if #cardPack < num then
+      if #cardPack == 0 then
         break
       end
     end

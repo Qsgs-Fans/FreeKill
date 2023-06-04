@@ -73,6 +73,11 @@ function Card:initialize(name, suit, number, color)
   self.suit = suit or Card.NoSuit
   self.number = number or 0
 
+  if string.sub(name, 1, 1) == "&" then
+    self.name = string.sub(name, 2, #name)
+    self.is_derived = true
+  end
+
   local name_splited = name:split("__")
   self.trueName = name_splited[#name_splited]
 
@@ -96,11 +101,6 @@ function Card:initialize(name, suit, number, color)
   self._skillName = ""
   self.skillNames = {}
   self.mark = {}
-
-  if string.sub(name, 1, 1) == "&" then
-    self.name = string.sub(name, 2, #name)
-    self.is_derived = true
-  end
 end
 
 function Card:__index(k)

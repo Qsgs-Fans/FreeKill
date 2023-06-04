@@ -75,6 +75,14 @@ GameRule = fk.CreateTriggerSkill{
           prompt = "#AskForPeachesSelf:::" .. tostring(1 - dyingPlayer.hp)
         end
 
+        local cardNames = pattern:split(",")
+        for _, cardName in ipairs(cardNames) do
+          local cardCloned = Fk:cloneCard(cardName)
+          if player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned) then
+            return
+          end
+        end
+
         local peach_use = room:askForUseCard(player, "peach", pattern, prompt)
         if not peach_use then break end
         peach_use.tos = { {dyingPlayer.id} }
