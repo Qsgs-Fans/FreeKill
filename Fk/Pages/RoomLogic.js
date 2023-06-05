@@ -719,22 +719,27 @@ callbacks["AskForGuanxing"] = function(jsonData) {
 callbacks["AskForExchange"] = function(jsonData) {
   let data = JSON.parse(jsonData);
   let cards = [];
-  let cards_name = data.cards_name;
+  let cards_name = [];
+  let capacities = [];
+  let limits = [];
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
-  data.cards.forEach(ids => {
+  let box = roomScene.popupBox.item;
+  data.piles.forEach(ids => {
     ids.forEach(id => {
       let d = Backend.callLuaFunction("GetCardData", [id]);
       cards.push(JSON.parse(d));
     });
-    box.areaCapacities.push(ids.length);
-    box.areaLimits.push(0);
-    box.areaNames.push(Backend.translate(cards_name[for_i]));
-    for_i ++
+    capacities.push(ids.length);
+    limits.push(0);
+    cards_name.push(Backend.translate(data.piles_name[for_i]));
+    for_i ++;
   });
-  let box = roomScene.popupBox.item;
-  box.cards = cards.flat(1);
+  box.areaCapacities = capacities
+  box.areaLimits = limits
+  box.areaNames = cards_name
+  box.cards = cards;
   box.arrangeCards();
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.getResult()));
