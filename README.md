@@ -14,6 +14,10 @@ ___
 
 FreeKill是一款开源的三国杀游戏，但其目的不在于补完官方所有武将，而是着力于提供一个最适合DIY的框架。
 
+## 项目文档
+
+[FreeKill文档](https://qsgs-fans.github.io/FreeKill/usr/index.html)
+
 ### 依赖的库
 
 以下是FreeKill运行所必不可少的依赖库：
@@ -38,13 +42,11 @@ Linux用户则需要从头开始编译，不过对于ArchLinux上，可以从AUR
 
 初始界面是连入服务器的界面，可以选择加入服务器，也可以单机开始游戏。
 
-DIY教程仍在施工中……
-
 ___
 
 ## 如何构建
 
-关于如何从头构建FreeKill，详见[编译教程](https://notify-ctrl.github.io/FreeKill/dev/compile.html)。
+关于如何从头构建FreeKill，详见[编译教程](https://qsgs-fans.github.io/FreeKill/inner/01-compile.html)。
 
 ___
 
