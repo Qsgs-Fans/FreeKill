@@ -66,6 +66,7 @@ Item {
   property bool busy: false
   property string busyText: ""
   onBusyChanged: busyText = "";
+  property bool closing: false
 
   BusyIndicator {
     id: busyIndicator
@@ -217,10 +218,23 @@ Item {
     tipList = tips.trim().split("\n");
   }
 
+  MessageDialog {
+      id: exitMessageDialogId
+      icon: StandardIcon.Question
+      text: "Are you sure to exit?"
+      standardButtons: StandardButton.Yes | StandardButton.No
+      onYes: {
+        closing = true
+        config.winWidth = width;
+        config.winHeight = height;
+        config.saveConf();
+        Backend.quitLobby(false);
+        mainWindow.close();
+      }
+  }
+
   onClosing: {
-    config.winWidth = width;
-    config.winHeight = height;
-    config.saveConf();
-    Backend.quitLobby(false);
+      close.accepted = closing
+      onTriggered: if(!closing) exitMessageDialogId.open()
   }
 }
