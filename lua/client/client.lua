@@ -23,7 +23,7 @@ function Client:initialize()
   self.client.callback = function(_self, command, jsonData)
     local cb = fk.client_callback[command]
 
-    if command ~= "Heartbeat" then
+    if command ~= "Heartbeat" and command ~= "changeSelf" then
       Fk.currentResponsePattern = nil
       Fk.currentResponseReason = nil
     end
