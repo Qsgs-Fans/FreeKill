@@ -220,21 +220,21 @@ Window {
   }
 
   MessageDialog {
-    id: exitMessageDialog;
-    title: realMainWin.title;
-    informativeText: qsTr("是否确认退出？")
-    buttons: MessageDialog.Ok | MessageDialog.Cancel;
+    id: exitMessageDialog
+    title: realMainWin.title
+    informativeText: qsTr("Are you sure to exit?")
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
     onAccepted: {
       mainWindow.closing = true;
       config.winWidth = width;
       config.winHeight = height;
       config.saveConf();
       Backend.quitLobby(false);
-      realMainWin.close()
+      realMainWin.close();
     }
   }
 
-  onClosing: function(closeEvent) {
+  onClosing: (closeEvent) => {
     if (!mainWindow.closing) {
       closeEvent.accepted = false;
       exitMessageDialog.open();
