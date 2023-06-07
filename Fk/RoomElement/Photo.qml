@@ -320,7 +320,6 @@ Item {
     id: markAreaItem
 
     anchors.bottom: equipAreaItem.top
-    anchors.bottomMargin: -18
     x: 31
   }
 
