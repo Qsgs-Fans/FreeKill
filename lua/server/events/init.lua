@@ -2,6 +2,9 @@
 
 -- Definitions of game events
 
+-- 某类事件对应的结束事件，其id刚好就是那个事件的相反数
+-- GameEvent.EventFinish = -1
+
 GameEvent.ChangeHp = 1
 GameEvent.Damage = 2
 GameEvent.LoseHp = 3

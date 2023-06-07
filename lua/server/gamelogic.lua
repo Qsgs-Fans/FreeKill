@@ -3,12 +3,15 @@
 ---@class GameLogic: Object
 ---@field public room Room
 ---@field public skill_table table<Event, TriggerSkill[]>
----@field public skill_priority_table<Event, number[]>
+---@field public skill_priority_table table<Event, number[]>
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
 ---@field public event_stack Stack
 ---@field public game_event_stack Stack
 ---@field public role_table string[][]
+---@field public all_game_events GameEvent[]
+---@field public event_recorder table<integer, GameEvent>
+---@field public current_event_id integer
 local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)
@@ -19,6 +22,9 @@ function GameLogic:initialize(room)
   self.skills = {}    -- skillName[]
   self.event_stack = Stack:new()
   self.game_event_stack = Stack:new()
+  self.all_game_events = {}
+  self.event_recorder = {}
+  self.current_event_id = 0
 
   self.role_table = {
     { "lord" },
@@ -491,6 +497,28 @@ function GameLogic:dumpEventStack(detailed)
   until not top
 
   print("\n===== End of event stack dump =====")
+end
+
+function GameLogic:dumpAllEvents(from, to)
+  from = from or 1
+  to = to or #self.all_game_events
+  assert(from <= to)
+
+  local indent = 0
+  local tab = "  "
+  for i = from, to, 1 do
+    local v = self.all_game_events[i]
+    if type(v) == "number" then
+      indent = math.max(indent - 1, 0)
+      -- v = "End"
+      -- print(tab:rep(indent) .. string.format("#%d: %s", i, v))
+    else
+      print(tab:rep(indent) .. string.format("#%d: %s", i, tostring(v):sub(11)))
+      if v.id ~= v.end_id then
+        indent = indent + 1
+      end
+    end
+  end
 end
 
 function GameLogic:breakEvent(ret)

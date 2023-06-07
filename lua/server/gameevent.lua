@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class GameEvent: Object
+---@field public id integer
+---@field public end_id integer
 ---@field public room Room
 ---@field public event integer
 ---@field public data any
@@ -21,6 +23,8 @@ end
 local function dummyFunc() end
 
 function GameEvent:initialize(event, ...)
+  self.id = -1
+  self.end_id = -1
   self.room = RoomInstance
   self.event = event
   self.data = { ... }
@@ -72,6 +76,16 @@ function GameEvent:clear()
       break
     end
   end
+
+  local logic = RoomInstance.logic
+  local end_id = logic.current_event_id + 1
+  if self.id ~= end_id - 1 then
+    logic.all_game_events[end_id] = -self.event
+    logic.current_event_id = end_id
+    self.end_id = end_id
+  else
+    self.end_id = self.id
+  end
 end
 
 local function breakEvent(self, extra_yield_result)
@@ -94,6 +108,12 @@ function GameEvent:exec()
   local extra_ret
   self.parent = logic:getCurrentEvent()
   logic.game_event_stack:push(self)
+
+  logic.current_event_id = logic.current_event_id + 1
+  self.id = logic.current_event_id
+  logic.all_game_events[self.id] = self
+  logic.event_recorder[self.event] = logic.event_recorder[self.event] or {}
+  table.insert(logic.event_recorder[self.event], self)
 
   local co = coroutine.create(self.main_func)
   while true do
