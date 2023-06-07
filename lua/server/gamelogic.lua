@@ -465,6 +465,29 @@ function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
 end
 
+-- 在指定历史范围中找至多n个符合条件的事件
+---@param eventType integer @ 要查找的事件类型
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param scope integer @ 查询历史范围，只能是当前阶段/回合/轮次
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+function GameLogic:getEventsOfScope(eventType, n, func, scope)
+  scope = scope or Player.HistoryTurn
+  local event = self:getCurrentEvent()
+  local start_event ---@type GameEvent
+  if scope == Player.HistoryGame then
+    start_event = self.all_game_events[1]
+  elseif scope == Player.HistoryRound then
+    start_event = event:findParent(GameEvent.Round)
+  elseif scope == Player.HistoryTurn then
+    start_event = event:findParent(GameEvent.Turn)
+  elseif scope == Player.HistoryPhase then
+    start_event = event:findParent(GameEvent.Phase)
+  end
+
+  return start_event:searchEvents(eventType, n, func)
+end
+
 function GameLogic:dumpEventStack(detailed)
   local top = self:getCurrentEvent()
   local i = self.game_event_stack.p

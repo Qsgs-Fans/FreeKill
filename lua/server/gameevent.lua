@@ -47,6 +47,77 @@ function GameEvent:findParent(eventType)
   return nil
 end
 
+-- 找n个id介于from和to之间的事件。
+local function bin_search(events, from, to, n, func)
+  local left = 1
+  local right = #events
+  local mid
+  local ret = {}
+
+  if from < events[1].id then
+    mid = 1
+  elseif from > events[right].id then
+    return ret
+  else
+    while true do
+      if left > right then return ret end
+      mid = (left + right) // 2
+      local id = events[mid].id
+      local id_left = mid == 1 and -math.huge or events[mid - 1].id
+
+      if from < id then
+        if from >= id_left then
+          break
+        end
+        right = mid - 1
+      else
+        left = mid + 1
+      end
+    end
+  end
+
+  for i = mid, #events do
+    local v = events[i]
+    if v.id < to and func(v) then
+      table.insert(ret, v)
+    end
+    if #ret >= n then break end
+  end
+
+  return ret
+end
+
+-- 从某个区间中，找出类型符合且符合func函数检测的至多n个事件。
+---@param eventType integer @ 要查找的事件类型
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param endEvent GameEvent|nil @ 区间终止点，默认为本事件结束
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+function GameEvent:searchEvents(eventType, n, func, endEvent)
+  local logic = self.room.logic
+  local events = logic.event_recorder[eventType]
+  local from = self.id
+  local to = endEvent and endEvent.id or self.end_id
+  if to == -1 then to = #logic.all_game_events end
+  n = n or 1
+  func = func or function() return true end
+
+  local ret
+  if #events < 6 then
+    ret = {}
+    for _, v in ipairs(events) do
+      if v.id > from and v.id < to and func(v) then
+        table.insert(ret, v)
+      end
+      if #ret >= n then break end
+    end
+  else
+    ret = bin_search(events, from, to, n, func)
+  end
+
+  return ret
+end
+
 function GameEvent:clear()
   local clear_co = coroutine.create(function()
     for _, f in ipairs(self.extra_clear_funcs) do

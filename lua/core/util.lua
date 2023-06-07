@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 local Util = {}
+Util.DummyFunc = function() end
 
 -- the iterator of QList object
 local qlist_iterator = function(list, n)
