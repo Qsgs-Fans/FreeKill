@@ -1331,6 +1331,35 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   return { top = top, bottom = bottom }
 end
 
+--- 询问玩家任意交换几堆牌堆。
+---
+---@param player ServerPlayer @ 要询问的玩家
+---@param piles table<cardIds, cardId[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
+---@param piles_name string[] @ 牌堆名，必须一一对应，否则统一替换为“牌堆X”
+---@param customNotify string|null @ 自定义读条操作提示
+---@return table<cardIds, cardId[]>
+function Room:AskForExchange(player, piles, piles_name, customNotify)
+  local command = "AskForExchange"
+  piles_name = piles_name or {}
+  if #piles_name ~= #piles then
+    piles_name = {}
+    for i, _ in ipairs(piles) do
+      table.insert(piles_name, "牌堆" .. i)
+    end
+  end
+  self:notifyMoveFocus(player, customNotify or command)
+  local data = {
+    piles = piles,
+    piles_name = piles_name,
+  }
+  local result = self:doRequest(player, command, json.encode(data))
+  if result ~= "" then
+    local d = json.decode(result)
+    return d
+  else
+    return piles
+  end
+end
 --- 平时写DIY用不到的函数。
 ---@param player ServerPlayer
 ---@param data string

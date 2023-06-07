@@ -716,6 +716,35 @@ callbacks["AskForGuanxing"] = function(jsonData) {
   });
 }
 
+callbacks["AskForExchange"] = function(jsonData) {
+  let data = JSON.parse(jsonData);
+  let cards = [];
+  let cards_name = [];
+  let capacities = [];
+  let limits = [];
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
+  let for_i = 0;
+  let box = roomScene.popupBox.item;
+  data.piles.forEach(ids => {
+    ids.forEach(id => {
+      let d = Backend.callLuaFunction("GetCardData", [id]);
+      cards.push(JSON.parse(d));
+    });
+    capacities.push(ids.length);
+    limits.push(0);
+    cards_name.push(Backend.translate(data.piles_name[for_i]));
+    for_i ++;
+  });
+  box.areaCapacities = capacities
+  box.areaLimits = limits
+  box.areaNames = cards_name
+  box.cards = cards;
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
+  });
+}
 callbacks["AskForChoice"] = function(jsonData) {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
