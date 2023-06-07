@@ -120,10 +120,10 @@ end
 
 function GameEvent:clear()
   local clear_co = coroutine.create(function()
+    self:clear_func()
     for _, f in ipairs(self.extra_clear_funcs) do
       if type(f) == "function" then f(self) end
     end
-    self:clear_func()
   end)
 
   while true do
