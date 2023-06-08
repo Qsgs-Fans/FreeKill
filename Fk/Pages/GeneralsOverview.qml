@@ -150,7 +150,7 @@ Item {
     property string general: "caocao"
     function updateGeneral() {
       detailGeneralCard.name = general;
-      let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+      const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
       generalText.clear();
       data.skill.forEach(t => {
         generalText.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
@@ -233,7 +233,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    let packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     packs.forEach((name) => packages.append({ name: name }));
     generalDetail.updateGeneral();
     loaded = true;

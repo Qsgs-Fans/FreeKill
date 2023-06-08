@@ -71,7 +71,7 @@ Item {
               if (model.indexOf(editText) === -1) {
                 passwordEdit.text = "";
               } else {
-                let data = config.savedPassword[editText];
+                const data = config.savedPassword[editText];
                 screenNameEdit.text = data.username;
                 passwordEdit.text = data.shorten_password;
               }
@@ -89,7 +89,7 @@ Item {
             text: ""
             onTextChanged: {
               passwordEdit.text = "";
-              let data = config.savedPassword[server_addr.editText];
+              const data = config.savedPassword[server_addr.editText];
               if (data) {
                 if (text === data.username) {
                   passwordEdit.text = data.shorten_password;
@@ -207,7 +207,7 @@ Item {
     server_addr.onModelChanged();
     server_addr.currentIndex = server_addr.model.indexOf(config.lastLoginServer);
 
-    let data = config.savedPassword[config.lastLoginServer];
+    const data = config.savedPassword[config.lastLoginServer];
     if (data) {
       screenNameEdit.text = data.username;
       passwordEdit.text = data.shorten_password;
