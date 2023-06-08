@@ -716,7 +716,6 @@ callbacks["AskForGuanxing"] = (jsonData) => {
   });
 }
 
-<<<<<<< HEAD
 callbacks["AskForExchange"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const cards = [];
@@ -738,27 +737,6 @@ callbacks["AskForExchange"] = (jsonData) => {
       cards_name.push(Backend.translate(data.piles_name[for_i]));
       for_i ++;
     }
-=======
-callbacks["AskForExchange"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let cards = [];
-  let cards_name = [];
-  let capacities = [];
-  let limits = [];
-  roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
-  let for_i = 0;
-  let box = roomScene.popupBox.item;
-  data.piles.forEach(ids => {
-    ids.forEach(id => {
-      let d = Backend.callLuaFunction("GetCardData", [id]);
-      cards.push(JSON.parse(d));
-    });
-    capacities.push(ids.length);
-    limits.push(0);
-    cards_name.push(Backend.translate(data.piles_name[for_i]));
-    for_i ++;
->>>>>>> 73fcb765d4938d8b2ffa17fb5c27cd289dadc0fa
   });
   box.areaCapacities = capacities
   box.areaLimits = limits
@@ -769,11 +747,7 @@ callbacks["AskForExchange"] = function(jsonData) {
     replyToServer(JSON.stringify(box.getResult()));
   });
 }
-<<<<<<< HEAD
 callbacks["AskForChoice"] = (jsonData) => {
-=======
-callbacks["AskForChoice"] = function(jsonData) {
->>>>>>> 73fcb765d4938d8b2ffa17fb5c27cd289dadc0fa
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
   const data = JSON.parse(jsonData);
