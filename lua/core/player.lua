@@ -201,7 +201,7 @@ end
 ---@param mark string @ 标记
 ---@return boolean
 function Player:hasMark(mark)
-  return (self.mark[mark] or 0) ~= 0 --self.mark.hasKey(mark)
+  return self:getMark(mark) ~= 0 --self.mark.hasKey(mark)
 end
 
 --- 获取角色有哪些Mark。
