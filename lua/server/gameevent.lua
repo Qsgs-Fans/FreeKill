@@ -1,20 +1,29 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class GameEvent: Object
----@field public id integer
----@field public end_id integer
----@field public room Room
----@field public event integer
----@field public data any
----@field public parent GameEvent
----@field public main_func fun(self: GameEvent)
----@field public clear_func fun(self: GameEvent)
----@field public extra_clear_funcs any[]
----@field public interrupted boolean
+---@field public id integer @ 事件的id，随着时间推移自动增加并分配给新事件
+---@field public end_id integer @ 事件的对应结束id，如果整个事件中未插入事件，那么end_id就是自己的id
+---@field public room Room @ room实例
+---@field public event integer @ 该事件对应的EventType
+---@field public data any @ 事件的附加数据，视类型而定
+---@field public parent GameEvent @ 事件的父事件（栈中的上一层事件）
+---@field public main_func fun(self: GameEvent) @ 事件的主函数
+---@field public clear_func fun(self: GameEvent) @ 事件结束时执行的函数
+---@field public extra_clear_funcs fun(self:GameEvent)[] @ 事件结束时执行的自定义函数列表
+---@field public exit_func fun(self: GameEvent) @ 事件结束后执行的函数
+---@field public extra_exit_funcs fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
+---@field public interrupted boolean @ 事件是否是因为被强行中断而结束的
 local GameEvent = class("GameEvent")
 
+---@type fun(self: GameEvent)[]
 GameEvent.functions = {}
+
+---@type fun(self: GameEvent)[]
 GameEvent.cleaners = {}
+
+---@type fun(self: GameEvent)[]
+GameEvent.exit_funcs = {}
+
 local function wrapCoFunc(f, ...)
   if not f then return nil end
   local args = {...}
@@ -31,6 +40,8 @@ function GameEvent:initialize(event, ...)
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
   self.clear_func = GameEvent.cleaners[event] or dummyFunc
   self.extra_clear_funcs = {}
+  self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
+  self.extra_exit_funcs = {}
   self.interrupted = false
 end
 
@@ -157,6 +168,17 @@ function GameEvent:clear()
   else
     self.end_id = self.id
   end
+
+  logic.game_event_stack:pop(self)
+  local err, msg
+  err, msg = xpcall(self.exit_func, debug.traceback, self)
+  if err == false then fk.qCritical(msg) end
+  for _, f in ipairs(self.extra_exit_funcs) do
+    if type(f) == "function" then
+      err, msg = xpcall(f, debug.traceback, self)
+      if err == false then fk.qCritical(msg) end
+    end
+  end
 end
 
 local function breakEvent(self, extra_yield_result)
@@ -214,7 +236,7 @@ function GameEvent:exec()
         -- yield to corresponding GameEvent, first pop self from stack
         self.interrupted = true
         self:clear()
-        logic.game_event_stack:pop(self)
+        -- logic.game_event_stack:pop(self)
         coroutine.close(co)
 
         -- then, call yield
@@ -242,7 +264,6 @@ function GameEvent:exec()
     end
   end
 
-  logic.game_event_stack:pop(self)
   return ret, extra_ret
 end
 
