@@ -531,7 +531,7 @@ function GameLogic:dumpAllEvents(from, to)
       -- v = "End"
       -- print(tab:rep(indent) .. string.format("#%d: %s", i, v))
     else
-      print(tab:rep(indent) .. string.format("#%d: %s", i, tostring(v):sub(11)))
+      print(tab:rep(indent) .. string.format("%s", tostring(v)))
       if v.id ~= v.end_id then
         indent = indent + 1
       end

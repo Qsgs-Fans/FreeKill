@@ -1386,7 +1386,7 @@ function Room:handleUseCardReply(player, data)
       Self = player
       local c = skill:viewAs(selected_cards)
       if c then
-        self:useSkill(player, skill)
+        self:useSkill(player, skill, Util.DummyFunc)
 
         local use = {}    ---@type CardUseStruct
         use.from = player.id
@@ -2176,7 +2176,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
     if cardEffectEvent.card.skill then
       execGameEvent(GameEvent.SkillEffect, function ()
         cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
-      end)
+      end, self:getPlayerById(cardEffectEvent.from), cardEffectEvent.card.skill)
     end
   end
 end
@@ -2690,7 +2690,7 @@ function Room:useSkill(player, skill, effect_cb)
   player:addSkillUseHistory(skill.name)
 
   if effect_cb then
-    return execGameEvent(GameEvent.SkillEffect, effect_cb)
+    return execGameEvent(GameEvent.SkillEffect, effect_cb, player, skill)
   end
 end
 

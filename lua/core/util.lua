@@ -176,13 +176,13 @@ function table.simpleClone(self)
   return ret
 end
 
--- similar to table.clone but convert all class/instances to string
+-- similar to table.clone but not clone class/instances
 function table.cloneWithoutClass(self)
   local ret = {}
   for k, v in pairs(self) do
     if type(v) == "table" then
       if v.class or v.super then
-        ret[k] = tostring(v)
+        ret[k] = v
       else
         ret[k] = table.cloneWithoutClass(v)
       end

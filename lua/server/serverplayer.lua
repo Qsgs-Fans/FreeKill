@@ -397,8 +397,18 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   return false
 end
 
-function ServerPlayer:gainAnExtraPhase(phase)
+function ServerPlayer:gainAnExtraPhase(phase, delay)
   local room = self.room
+  delay = (delay == nil) and true or delay
+  if delay then
+    local logic = room.logic
+    local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
+    if turn then
+      turn:addExitFunc(function() self:gainAnExtraPhase(phase, false) end)
+      return
+    end
+  end
+
   local current = self.phase
   self.phase = phase
   room:notifyProperty(self, self, "phase")
@@ -505,8 +515,18 @@ function ServerPlayer:skip(phase)
   end
 end
 
-function ServerPlayer:gainAnExtraTurn()
+function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
+  delay = (delay == nil) and true or delay
+  if delay then
+    local logic = room.logic
+    local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
+    if turn then
+      turn:addExitFunc(function() self:gainAnExtraTurn(false) end)
+      return
+    end
+  end
+
   room:sendLog{
     type = "#GainAnExtraTurn",
     from = self.id
