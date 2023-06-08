@@ -84,11 +84,20 @@ function table.reverse(self)
   return ret
 end
 
+function table:hasKey(key)
+  if #self == 0 then return false end
+  for k, _ in ipairs(self) do
+    if k == key then return true end
+  end
+  return false
+end
+
 function table:contains(element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
     if e == element then return true end
   end
+  return false
 end
 
 function table:shuffle()
