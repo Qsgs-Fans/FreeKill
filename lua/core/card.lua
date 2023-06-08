@@ -322,9 +322,16 @@ end
 
 --- 获取卡牌对应Mark的数量。
 ---@param mark string @ 标记
----@param count integer @ 为标记删除的数量
+---@return integer
 function Card:getMark(mark)
   return (self.mark[mark] or 0)
+end
+
+--- 判定卡牌是否拥有对应的Mark。
+---@param mark string @ 标记
+---@return boolean
+function Card:hasMark(mark)
+  return (self.mark[mark] or 0) ~= 0 --self.mark.hasKey(mark)
 end
 
 --- 获取卡牌有哪些Mark。
