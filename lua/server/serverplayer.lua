@@ -322,18 +322,6 @@ function ServerPlayer:isAlive()
   return self.dead == false
 end
 
-function ServerPlayer:getNextAlive()
-  if #self.room.alive_players == 0 then
-    return self
-  end
-
-  local ret = self.next
-  while ret.dead do
-    ret = ret.next
-  end
-  return ret
-end
-
 function ServerPlayer:turnOver()
   if self.room.logic:trigger(fk.BeforeTurnOver, self) then
     return
@@ -367,6 +355,13 @@ function ServerPlayer:showCards(cards)
   room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end
 
+local phase_name_table = {
+  [Player.Judge] = "phase_judge",
+  [Player.Draw] = "phase_draw",
+  [Player.Play] = "phase_play",
+  [Player.Discard] = "phase_discard",
+}
+
 ---@param from_phase Phase
 ---@param to_phase Phase
 function ServerPlayer:changePhase(from_phase, to_phase)
@@ -397,24 +392,34 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   return false
 end
 
-function ServerPlayer:gainAnExtraPhase(phase)
+function ServerPlayer:gainAnExtraPhase(phase, delay)
   local room = self.room
+  delay = (delay == nil) and true or delay
+  if delay then
+    local logic = room.logic
+    local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
+    if turn then
+      turn:addExitFunc(function() self:gainAnExtraPhase(phase, false) end)
+      return
+    end
+  end
+
   local current = self.phase
   self.phase = phase
   room:notifyProperty(self, self, "phase")
+
+  room:sendLog{
+    type = "#GainAnExtraPhase",
+    from = self.id,
+    arg = phase_name_table[phase],
+  }
+
 
   GameEvent(GameEvent.Phase, self):exec()
 
   self.phase = current
   room:notifyProperty(self, self, "phase")
 end
-
-local phase_name_table = {
-  [Player.Judge] = "phase_judge",
-  [Player.Draw] = "phase_draw",
-  [Player.Play] = "phase_play",
-  [Player.Discard] = "phase_discard",
-}
 
 ---@param phase_table Phase[]
 function ServerPlayer:play(phase_table)
@@ -505,8 +510,18 @@ function ServerPlayer:skip(phase)
   end
 end
 
-function ServerPlayer:gainAnExtraTurn()
+function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
+  delay = (delay == nil) and true or delay
+  if delay then
+    local logic = room.logic
+    local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
+    if turn then
+      turn:addExitFunc(function() self:gainAnExtraTurn(false) end)
+      return
+    end
+  end
+
   room:sendLog{
     type = "#GainAnExtraTurn",
     from = self.id

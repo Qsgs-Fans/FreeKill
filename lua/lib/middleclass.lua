@@ -77,6 +77,9 @@ local function _call(self, ...) return self:new(...) end
 local function _createClass(name, super)
   local dict = {}
   dict.__index = dict
+  --[[ debug
+  dict.__gc = function(t) printf("%s destructed", tostring(t)) end
+  --]]
 
   local aClass = { name = name, super = super, static = {},
                    __instanceDict = dict, __declaredMethods = {},
