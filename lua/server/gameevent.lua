@@ -29,7 +29,7 @@ local function wrapCoFunc(f, ...)
   local args = {...}
   return function() return f(table.unpack(args)) end
 end
-local function dummyFunc() end
+local dummyFunc = Util.DummyFunc
 
 function GameEvent:initialize(event, ...)
   self.id = -1
@@ -39,14 +39,28 @@ function GameEvent:initialize(event, ...)
   self.data = { ... }
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
   self.clear_func = GameEvent.cleaners[event] or dummyFunc
-  self.extra_clear_funcs = {}
+  self.extra_clear_funcs = Util.DummyTable
   self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
-  self.extra_exit_funcs = {}
+  self.extra_exit_funcs = Util.DummyTable
   self.interrupted = false
 end
 
 function GameEvent:__tostring()
-  return GameEvent:translate(self.event)
+  return string.format("<%s #%d>", GameEvent:translate(self.event), self.id)
+end
+
+function GameEvent:addCleaner(f)
+  if self.extra_clear_funcs == Util.DummyTable then
+    self.extra_clear_funcs = {}
+  end
+  table.insert(self.extra_clear_funcs, f)
+end
+
+function GameEvent:addExitFunc(f)
+  if self.extra_exit_funcs == Util.DummyTable then
+    self.extra_exit_funcs = {}
+  end
+  table.insert(self.extra_exit_funcs, f)
 end
 
 function GameEvent:findParent(eventType)
@@ -169,7 +183,8 @@ function GameEvent:clear()
     self.end_id = self.id
   end
 
-  logic.game_event_stack:pop(self)
+  logic.game_event_stack:pop()
+
   local err, msg
   err, msg = xpcall(self.exit_func, debug.traceback, self)
   if err == false then fk.qCritical(msg) end

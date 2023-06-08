@@ -2,6 +2,31 @@
 
 local Util = {}
 Util.DummyFunc = function() end
+Util.DummyTable = setmetatable({}, {
+  __newindex = function() error("Cannot assign to dummy table") end
+})
+
+local metamethods = {
+  "__add", "__sub", "__mul", "__div", "__mod", "__pow", "__unm", "__idiv",
+  "__band", "__bor", "__bxor", "__bnot", "__shl", "__shr",
+  "__concat", "__len", "__eq", "__lt", "__le", "__call",
+  -- "__index", "__newindex",
+}
+-- 别对类用 暂且会弄坏isSubclassOf 懒得研究先
+Util.lockTable = function(t)
+  local mt = getmetatable(t) or Util.DummyTable
+  local new_mt = {
+    __index = t,
+    __newindex = function() error("Cannot assign to locked table") end,
+    __metatable = false,
+  }
+  for _, e in ipairs(metamethods) do
+    new_mt[e] = mt[e]
+  end
+  return setmetatable({}, new_mt)
+end
+
+function printf(fmt, ...) print(string.format(fmt, ...)) end
 
 -- the iterator of QList object
 local qlist_iterator = function(list, n)

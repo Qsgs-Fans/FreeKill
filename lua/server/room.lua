@@ -62,8 +62,7 @@ dofile "lua/server/ai/init.lua"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-
-  self.room.startGame = function(_self)
+  _room.startGame = function(_self)
     Room.initialize(self, _room)  -- clear old data
     self.settings = json.decode(_room:settings())
     Fk.disabled_packs = self.settings.disabledPack
