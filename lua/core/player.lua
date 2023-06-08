@@ -404,7 +404,8 @@ end
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
 ---@param other Player @ 其他玩家
 function Player:distanceTo(other)
-  assert(other:isInstanceOf(Player))
+  -- assert(other:isInstanceOf(Player))
+  if other == self then return 0 end
   local right = 0
   local temp = self
   while temp ~= other do
@@ -449,6 +450,18 @@ function Player:inMyAttackRange(other, fixLimit)
 
   local baseAttackRange = self:getAttackRange()
   return self:distanceTo(other) <= (baseAttackRange + fixLimit)
+end
+
+function Player:getNextAlive()
+  if Fk:currentRoom().alive_players == 0 then
+    return self
+  end
+
+  local ret = self.next
+  while ret.dead do
+    ret = ret.next
+  end
+  return ret
 end
 
 --- 增加玩家使用特定牌的历史次数。

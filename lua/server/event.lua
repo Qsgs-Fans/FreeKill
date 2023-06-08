@@ -111,4 +111,7 @@ fk.CardShown = 77
 -- 79 = BeforeTurnOver
 -- 80 = BeforeChainStateChange
 
-fk.NumOfEvents = 81
+fk.SkillEffect = 81
+fk.AfterSkillEffect = 82
+
+fk.NumOfEvents = 83

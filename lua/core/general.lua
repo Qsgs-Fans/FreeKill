@@ -59,6 +59,10 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   package:addGeneral(self)
 end
 
+function General:__tostring()
+  return string.format("<General %s>", self.name)
+end
+
 --- 为武将增加技能，需要注意增加其他武将技能时的处理方式。
 ---@param skill Skill @ （单个）武将技能
 function General:addSkill(skill)

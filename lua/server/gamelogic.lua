@@ -3,12 +3,14 @@
 ---@class GameLogic: Object
 ---@field public room Room
 ---@field public skill_table table<Event, TriggerSkill[]>
----@field public skill_priority_table<Event, number[]>
+---@field public skill_priority_table table<Event, number[]>
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
----@field public event_stack Stack
 ---@field public game_event_stack Stack
 ---@field public role_table string[][]
+---@field public all_game_events GameEvent[]
+---@field public event_recorder table<integer, GameEvent>
+---@field public current_event_id integer
 local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)
@@ -17,8 +19,10 @@ function GameLogic:initialize(room)
   self.skill_priority_table = {}
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
-  self.event_stack = Stack:new()
   self.game_event_stack = Stack:new()
+  self.all_game_events = {}
+  self.event_recorder = {}
+  self.current_event_id = 0
 
   self.role_table = {
     { "lord" },
@@ -381,8 +385,6 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local _target = room.current -- for iteration
   local player = _target
 
-  self.event_stack:push({event, target, data})
-
   if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
     for _, skill in ipairs(skills_to_refresh) do
@@ -450,13 +452,35 @@ function GameLogic:trigger(event, target, data, refresh_only)
     ::trigger_loop_continue::
   end
 
-  self.event_stack:pop()
   return broken
 end
 
 ---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
+end
+
+-- 在指定历史范围中找至多n个符合条件的事件
+---@param eventType integer @ 要查找的事件类型
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param scope integer @ 查询历史范围，只能是当前阶段/回合/轮次
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+function GameLogic:getEventsOfScope(eventType, n, func, scope)
+  scope = scope or Player.HistoryTurn
+  local event = self:getCurrentEvent()
+  local start_event ---@type GameEvent
+  if scope == Player.HistoryGame then
+    start_event = self.all_game_events[1]
+  elseif scope == Player.HistoryRound then
+    start_event = event:findParent(GameEvent.Round)
+  elseif scope == Player.HistoryTurn then
+    start_event = event:findParent(GameEvent.Turn)
+  elseif scope == Player.HistoryPhase then
+    start_event = event:findParent(GameEvent.Phase)
+  end
+
+  return start_event:searchEvents(eventType, n, func)
 end
 
 function GameLogic:dumpEventStack(detailed)
@@ -491,6 +515,28 @@ function GameLogic:dumpEventStack(detailed)
   until not top
 
   print("\n===== End of event stack dump =====")
+end
+
+function GameLogic:dumpAllEvents(from, to)
+  from = from or 1
+  to = to or #self.all_game_events
+  assert(from <= to)
+
+  local indent = 0
+  local tab = "  "
+  for i = from, to, 1 do
+    local v = self.all_game_events[i]
+    if type(v) == "number" then
+      indent = math.max(indent - 1, 0)
+      -- v = "End"
+      -- print(tab:rep(indent) .. string.format("#%d: %s", i, v))
+    else
+      print(tab:rep(indent) .. string.format("%s", tostring(v)))
+      if v.id ~= v.end_id then
+        indent = indent + 1
+      end
+    end
+  end
 end
 
 function GameLogic:breakEvent(ret)
