@@ -331,7 +331,7 @@ end
 ---@param mark string @ 标记
 ---@return boolean
 function Card:hasMark(mark)
-  return self:getMark(mark) ~= 0 --self.mark.hasKey(mark)
+  return self:getMark(mark) ~= 0
 end
 
 --- 获取卡牌有哪些Mark。
