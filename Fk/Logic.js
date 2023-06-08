@@ -17,7 +17,7 @@ function createClientPages() {
 var callbacks = {};
 let sheduled_download = "";
 
-callbacks["NetworkDelayTest"] = function(jsonData) {
+callbacks["NetworkDelayTest"] = (jsonData) => {
   // jsonData: RSA pub key
   let cipherText;
   let aeskey;
@@ -37,10 +37,10 @@ callbacks["NetworkDelayTest"] = function(jsonData) {
   Backend.replyDelayTest(config.screenName, cipherText);
 }
 
-callbacks["ErrorMsg"] = function(jsonData) {
+callbacks["ErrorMsg"] = (jsonData) => {
   let log;
   try {
-    let a = JSON.parse(jsonData);
+    const a = JSON.parse(jsonData);
     log = qsTr(a[0]).arg(a[1]);
   } catch (e) {
     log = qsTr(jsonData);
@@ -58,22 +58,22 @@ callbacks["ErrorMsg"] = function(jsonData) {
 
 callbacks["UpdatePackage"] = (jsonData) => sheduled_download = jsonData;
 
-callbacks["UpdateBusyText"] = function(jsonData) {
+callbacks["UpdateBusyText"] = (jsonData) => {
   mainWindow.busyText = jsonData;
 }
 
-callbacks["DownloadComplete"] = function() {
+callbacks["DownloadComplete"] = () => {
   mainWindow.busy = false;
   mainStack.currentItem.downloadComplete(); // should be pacman page
 }
 
-callbacks["BackToStart"] = function(jsonData) {
+callbacks["BackToStart"] = (jsonData) => {
   while (mainStack.depth > 1) {
     mainStack.pop();
   }
 }
 
-callbacks["EnterLobby"] = function(jsonData) {
+callbacks["EnterLobby"] = (jsonData) => {
   // depth == 1 means the lobby page is not present in mainStack
   createClientPages();
   if (mainStack.depth === 1) {
@@ -92,50 +92,54 @@ callbacks["EnterLobby"] = function(jsonData) {
   mainWindow.busy = false;
 }
 
-callbacks["EnterRoom"] = function(jsonData) {
+callbacks["EnterRoom"] = (jsonData) => {
   // jsonData: int capacity, int timeout
-  let data = JSON.parse(jsonData);
+  const data = JSON.parse(jsonData);
   config.roomCapacity = data[0];
   config.roomTimeout = data[1] - 1;
-  let roomSettings = data[2];
+  const roomSettings = data[2];
   config.enableFreeAssign = roomSettings.enableFreeAssign;
   mainStack.push(room);
   mainWindow.busy = false;
 }
 
-callbacks["UpdateRoomList"] = function(jsonData) {
-  let current = mainStack.currentItem;  // should be lobby
-  current.roomModel.clear();
-  JSON.parse(jsonData).forEach(function(room) {
-    current.roomModel.append({
-    roomId: room[0],
-    roomName: room[1],
-    gameMode: room[2],
-    playerNum: room[3],
-    capacity: room[4],
-    hasPassword: room[5] ? true : false,
+callbacks["UpdateRoomList"] = (jsonData) => {
+  const current = mainStack.currentItem;  // should be lobby
+  if (mainStack.currentItem === lobby) {
+    current.roomModel.clear();
+    JSON.parse(jsonData).forEach(function (room) {
+      current.roomModel.append({
+        roomId: room[0],
+        roomName: room[1],
+        gameMode: room[2],
+        playerNum: room[3],
+        capacity: room[4],
+        hasPassword: room[5] ? true : false,
+      });
     });
-  });
+  }
 }
 
 callbacks["UpdatePlayerNum"] = (j) => {
-  let current = mainStack.currentItem;  // should be lobby
-  let data = JSON.parse(j);
-  let l = data[0];
-  let s = data[1];
-  current.lobbyPlayerNum = l;
-  current.serverPlayerNum = s;
+  const current = mainStack.currentItem;  // should be lobby
+  if (mainStack.currentItem === lobby) {
+    const data = JSON.parse(j);
+    const l = data[0];
+    const s = data[1];
+    current.lobbyPlayerNum = l;
+    current.serverPlayerNum = s;
+  }
 }
 
-callbacks["Chat"] = function(jsonData) {
+callbacks["Chat"] = (jsonData) => {
   // jsonData: { string userName, string general, string time, string msg }
-  let current = mainStack.currentItem;  // lobby or room
-  let data = JSON.parse(jsonData);
-  let pid = data.sender;
-  let userName = data.userName;
-  let general = Backend.translate(data.general);
-  let time = data.time;
-  let msg = data.msg;
+  const current = mainStack.currentItem;  // lobby or room
+  const data = JSON.parse(jsonData);
+  const pid = data.sender;
+  const userName = data.userName;
+  const general = Backend.translate(data.general);
+  const time = data.time;
+  const msg = data.msg;
 
   if (general === "")
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
@@ -143,8 +147,8 @@ callbacks["Chat"] = function(jsonData) {
     current.addToChat(pid, data, `[${time}] ${userName}(${general}): ${msg}`);
 }
 
-callbacks["ServerMessage"] = function(jsonData) {
-  let current = mainStack.currentItem;  // lobby or room
+callbacks["ServerMessage"] = (jsonData) => {
+  const current = mainStack.currentItem;  // lobby or room
   current.sendDanmaku('<font color="gold"><b>[Server] </b></font>' + jsonData);
 }
 

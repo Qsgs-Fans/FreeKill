@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-var Card = {
+const Card = {
   Unknown : 0,
   PlayerHand : 1,
   PlayerEquip : 2,
@@ -26,12 +26,12 @@ function arrangePhotos() {
   const roomAreaPadding = -16;
   const verticalPadding = -175 / 8;
   const horizontalSpacing = 32;
-  let verticalSpacing = (roomArea.width - photoWidth * 7) / 8;
+  const verticalSpacing = (roomArea.width - photoWidth * 7) / 8;
 
   // Position 1-7
-  let startX = verticalPadding + verticalSpacing;
-  let padding = photoWidth + verticalSpacing;
-  let regions = [
+  const startX = verticalPadding + verticalSpacing;
+  const padding = photoWidth + verticalSpacing;
+  const regions = [
     { x: startX + padding * 6, y: roomScene.height - 220 },
     { x: startX + padding * 6, y: roomAreaPadding + horizontalSpacing * 3 },
     { x: startX + padding * 5, y: roomAreaPadding + horizontalSpacing },
@@ -51,7 +51,7 @@ function arrangePhotos() {
     [0, 1, 2, 3, 5, 6, 7],
     [0, 1, 2, 3, 4, 5, 6, 7],
   ];
-  let seatIndex = regularSeatIndex[playerNum - 2];
+  const seatIndex = regularSeatIndex[playerNum - 2];
 
   let item, region, i;
 
@@ -67,7 +67,7 @@ function arrangePhotos() {
 }
 
 function doOkButton() {
-  if (roomScene.state == "playing" || roomScene.state == "responding") {
+  if (roomScene.state === "playing" || roomScene.state === "responding") {
     const reply = JSON.stringify(
       {
         card: dashboard.getSelectedCard(),
@@ -85,7 +85,7 @@ function doOkButton() {
       "luckcard", true
     ].join(","));
 
-    if (roomScene.extra_data.time == 1) {
+    if (roomScene.extra_data.time === 1) {
       roomScene.state = "notactive";
     }
 
@@ -95,15 +95,15 @@ function doOkButton() {
 }
 
 function doCancelButton() {
-  if (roomScene.state == "playing") {
+  if (roomScene.state === "playing") {
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
     dashboard.enableCards();
     dashboard.enableSkills();
     return;
-  } else if (roomScene.state == "responding") {
-    let p = dashboard.pending_skill;
+  } else if (roomScene.state === "responding") {
+    const p = dashboard.pending_skill;
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
@@ -132,14 +132,14 @@ function replyToServer(jsonData) {
     roomScene.state = "notactive";
   } else {
     roomScene.state = "";
-    let data = mainWindow.fetchMessage();
+    const data = mainWindow.fetchMessage();
     return mainWindow.handleMessage(data.command, data.jsonData);
   }
 }
 
 function getPhotoModel(id) {
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     if (item.id === id) {
       return item;
     }
@@ -149,7 +149,7 @@ function getPhotoModel(id) {
 
 function getPhoto(id) {
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     if (item.id === id) {
       return photos.itemAt(i);
     }
@@ -172,7 +172,7 @@ function getAreaItem(area, id) {
     return popupBox.item;
   }
 
-  let photo = getPhoto(id);
+  const photo = getPhoto(id);
   if (!photo) {
     return null;
   }
@@ -192,12 +192,12 @@ function getAreaItem(area, id) {
 
 function moveCards(moves) {
   for (let i = 0; i < moves.length; i++) {
-    let move = moves[i];
-    let from = getAreaItem(move.fromArea, move.from);
-    let to = getAreaItem(move.toArea, move.to);
+    const move = moves[i];
+    const from = getAreaItem(move.fromArea, move.from);
+    const to = getAreaItem(move.toArea, move.to);
     if (!from || !to || from === to)
       continue;
-    let items = from.remove(move.ids, move.fromSpecialName);
+    const items = from.remove(move.ids, move.fromSpecialName);
     if (items.length > 0)
       to.add(items, move.specialName);
     to.updateCardPosition(true);
@@ -228,7 +228,7 @@ function setEmotion(id, emotion, isCardId) {
     // TODO: set picture emotion
     return;
   }
-  let component = Qt.createComponent("../RoomElement/PixmapAnimation.qml");
+  const component = Qt.createComponent("../RoomElement/PixmapAnimation.qml");
   if (component.status !== Component.Ready)
     return;
 
@@ -249,7 +249,7 @@ function setEmotion(id, emotion, isCardId) {
     }
   }
 
-  let animation = component.createObject(photo, {source: (OS === "Win" ? "file:///" : "") + path});
+  const animation = component.createObject(photo, {source: (OS === "Win" ? "file:///" : "") + path});
   animation.anchors.centerIn = photo;
   if (isCardId) {
     animation.started.connect(() => photo.busy = true);
@@ -264,7 +264,7 @@ function setEmotion(id, emotion, isCardId) {
 }
 
 function changeHp(id, delta, losthp) {
-  let photo = getPhoto(id);
+  const photo = getPhoto(id);
   if (!photo) {
     return null;
   }
@@ -277,14 +277,14 @@ function changeHp(id, delta, losthp) {
 }
 
 function doIndicate(from, tos) {
-  let component = Qt.createComponent("../RoomElement/IndicatorLine.qml");
+  const component = Qt.createComponent("../RoomElement/IndicatorLine.qml");
   if (component.status !== Component.Ready)
     return;
 
-  let fromItem = getPhotoOrDashboard(from);
-  let fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+  const fromItem = getPhotoOrDashboard(from);
+  const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
 
-  let end = [];
+  const end = [];
   for (let i = 0; i < tos.length; i++) {
     if (from === tos[i])
       continue;
@@ -293,17 +293,17 @@ function doIndicate(from, tos) {
     end.push(toPos);
   }
 
-  let color = "#96943D";
-  let line = component.createObject(roomScene, {start: fromPos, end: end, color: color});
+  const color = "#96943D";
+  const line = component.createObject(roomScene, {start: fromPos, end: end, color: color});
   line.finished.connect(() => line.destroy());
   line.running = true;
 }
 
-callbacks["MaxCard"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let id = data.id;
-  let cardMax = data.pcardMax;
-  let photo = getPhoto(id);
+callbacks["MaxCard"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const id = data.id;
+  const cardMax = data.pcardMax;
+  const photo = getPhoto(id);
   if (photo) {
     photo.maxCard = cardMax;
   }
@@ -328,21 +328,21 @@ function changeSelf(id) {
 
   // handle pending messages
   if (mainWindow.is_pending) {
-    let data = mainWindow.fetchMessage();
+    const data = mainWindow.fetchMessage();
     return mainWindow.handleMessage(data.command, data.jsonData);
   }
 }
 
-callbacks["AddPlayer"] = function(jsonData) {
+callbacks["AddPlayer"] = (jsonData) => {
   // jsonData: int id, string screenName, string avatar, bool ready
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     if (item.id === -1) {
-      let data = JSON.parse(jsonData);
-      let uid = data[0];
-      let name = data[1];
-      let avatar = data[2];
-      let ready = data[3];
+      const data = JSON.parse(jsonData);
+      const uid = data[0];
+      const name = data[1];
+      const avatar = data[2];
+      const ready = data[3];
 
       item.id = uid;
       item.screenName = name;
@@ -365,7 +365,7 @@ callbacks["AddPlayer"] = function(jsonData) {
 
 function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   if (roomScene.respond_play) {
-    let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
+    const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
     if (candidate) {
       okButton.enabled = JSON.parse(Backend.callLuaFunction(
         "CardFitPattern",
@@ -378,8 +378,8 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   }
 
   let i = 0;
-  let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  let all_photos = [];
+  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
+  const all_photos = [];
   for (i = 0; i < playerNum; i++) {
     all_photos.push(photos.itemAt(i))
   }
@@ -396,8 +396,8 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
 
     all_photos.forEach(photo => {
       photo.state = "candidate";
-      let id = photo.playerid;
-      let ret = JSON.parse(Backend.callLuaFunction(
+      const id = photo.playerid;
+      const ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
         [card, id, selected_targets]
       ));
@@ -412,12 +412,12 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
         "CardFitPattern",
         [card, roomScene.responding_card]
       ));
-    } else if (okButton.enabled && roomScene.state == "playing") {
+    } else if (okButton.enabled && roomScene.state === "playing") {
       okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
-        let must = roomScene.extra_data.must_targets;
+        const must = roomScene.extra_data.must_targets;
         if (must instanceof Array) {
           okButton.enabled = (must.length === 0);
         }
@@ -435,9 +435,9 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
 
 function updateSelectedTargets(playerid, selected) {
   let i = 0;
-  let card = dashboard.getSelectedCard();
-  let candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  let all_photos = [];
+  const card = dashboard.getSelectedCard();
+  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
+  const all_photos = [];
   for (i = 0; i < playerNum; i++) {
     all_photos.push(photos.itemAt(i))
   }
@@ -451,8 +451,8 @@ function updateSelectedTargets(playerid, selected) {
   if (candidate) {
     all_photos.forEach(photo => {
       if (photo.selected) return;
-      let id = photo.playerid;
-      let ret = JSON.parse(Backend.callLuaFunction(
+      const id = photo.playerid;
+      const ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
         [card, id, selected_targets]
       ));
@@ -467,12 +467,12 @@ function updateSelectedTargets(playerid, selected) {
         "CardFitPattern",
         [card, roomScene.responding_card]
       ));
-    } else if (okButton.enabled && roomScene.state == "playing") {
+    } else if (okButton.enabled && roomScene.state === "playing") {
       okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
-        let must = roomScene.extra_data.must_targets;
+        const must = roomScene.extra_data.must_targets;
         if (must instanceof Array) {
           okButton.enabled = (must.filter((val) => {
             return selected_targets.indexOf(val) === -1;
@@ -490,10 +490,10 @@ function updateSelectedTargets(playerid, selected) {
   }
 }
 
-callbacks["RemovePlayer"] = function(jsonData) {
+callbacks["RemovePlayer"] = (jsonData) => {
   // jsonData: int uid
-  let uid = JSON.parse(jsonData)[0];
-  let model = getPhotoModel(uid);
+  const uid = JSON.parse(jsonData)[0];
+  const model = getPhotoModel(uid);
   if (typeof(model) !== "undefined") {
     model.id = -1;
     model.screenName = "";
@@ -503,13 +503,13 @@ callbacks["RemovePlayer"] = function(jsonData) {
   }
 }
 
-callbacks["RoomOwner"] = function(jsonData) {
+callbacks["RoomOwner"] = (jsonData) => {
   // jsonData: int uid of the owner
-  let uid = JSON.parse(jsonData)[0];
+  const uid = JSON.parse(jsonData)[0];
 
   roomScene.isOwner = (Self.id === uid);
 
-  let model = getPhotoModel(uid);
+  const model = getPhotoModel(uid);
   if (typeof(model) !== "undefined") {
     model.isOwner = true;
   }
@@ -518,7 +518,7 @@ callbacks["RoomOwner"] = function(jsonData) {
 function checkAllReady() {
   let allReady = true;
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     if (!item.isOwner && !item.ready) {
       allReady = false;
       break;
@@ -536,7 +536,7 @@ callbacks["ReadyChanged"] = (j) => {
     roomScene.isReady = ready === 1;
   }
 
-  let model = getPhotoModel(id);
+  const model = getPhotoModel(id);
   if (typeof(model) !== "undefined") {
     model.ready = ready ? true : false;
     checkAllReady();
@@ -548,19 +548,19 @@ callbacks["NetStateChanged"] = (j) => {
   const id = data[0];
   let state = data[1];
 
-  let model = getPhotoModel(id);
-  if (state == "run" && model.dead) {
+  const model = getPhotoModel(id);
+  if (state === "run" && model.dead) {
     state = "leave";
   }
   model.netstate = state;
 }
 
-callbacks["PropertyUpdate"] = function(jsonData) {
+callbacks["PropertyUpdate"] = (jsonData) => {
   // jsonData: int id, string property_name, value
-  let data = JSON.parse(jsonData);
-  let uid = data[0];
-  let property_name = data[1];
-  let value = data[2];
+  const data = JSON.parse(jsonData);
+  const uid = data[0];
+  const property_name = data[1];
+  const value = data[2];
 
   let model = getPhotoModel(uid);
 
@@ -569,33 +569,33 @@ callbacks["PropertyUpdate"] = function(jsonData) {
   }
 }
 
-callbacks["StartGame"] = function(jsonData) {
+callbacks["StartGame"] = (jsonData) => {
   roomScene.isStarted = true;
 
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     item.ready = false;
     item.general = "";
   }
 }
 
-callbacks["ArrangeSeats"] = function(jsonData) {
+callbacks["ArrangeSeats"] = (jsonData) => {
   // jsonData: seat order
-  let order = JSON.parse(jsonData);
+  const order = JSON.parse(jsonData);
 
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     item.seatNumber = order.indexOf(item.id) + 1;
   }
 
   // make Self to the first of list, then reorder photomodel
-  let selfIndex = order.indexOf(Self.id);
-  let after = order.splice(selfIndex);
+  const selfIndex = order.indexOf(Self.id);
+  const after = order.splice(selfIndex);
   after.push(...order);
-  let photoOrder = after;
+  const photoOrder = after;
 
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     item.index = photoOrder.indexOf(item.id);
   }
 
@@ -611,12 +611,12 @@ function cancelAllFocus() {
   }
 }
 
-callbacks["MoveFocus"] = function(jsonData) {
+callbacks["MoveFocus"] = (jsonData) => {
   // jsonData: int[] focuses, string command
   cancelAllFocus();
-  let data = JSON.parse(jsonData);
-  let focuses = data[0];
-  let command = data[1];
+  const data = JSON.parse(jsonData);
+  const focuses = data[0];
+  const command = data[1];
 
   let item, model;
   for (let i = 0; i < playerNum; i++) {
@@ -639,28 +639,28 @@ callbacks["MoveFocus"] = function(jsonData) {
   }
 }
 
-callbacks["PlayerRunned"] = function(jsonData) {
+callbacks["PlayerRunned"] = (jsonData) => {
   // jsonData: int runner, int robot
-  let data = JSON.parse(jsonData);
-  let runner = data[0];
-  let robot = data[1];
+  const data = JSON.parse(jsonData);
+  const runner = data[0];
+  const robot = data[1];
 
-  let model = getPhotoModel(runner);
+  const model = getPhotoModel(runner);
   if (typeof(model) !== "undefined") {
     model.id = robot;
   }
 }
 
-callbacks["AskForGeneral"] = function(jsonData) {
+callbacks["AskForGeneral"] = (jsonData) => {
   // jsonData: string[] Generals
-  let data = JSON.parse(jsonData);
-  let generals = data[0];
-  let n = data[1];
-  let heg = data[2];
+  const data = JSON.parse(jsonData);
+  const generals = data[0];
+  const n = data[1];
+  const heg = data[2];
   roomScene.promptText = Backend.translate("#AskForGeneral");
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
   });
@@ -671,11 +671,11 @@ callbacks["AskForGeneral"] = function(jsonData) {
   box.updatePosition();
 }
 
-callbacks["AskForSkillInvoke"] = function(jsonData) {
+callbacks["AskForSkillInvoke"] = (jsonData) => {
   // jsonData: [ string name, string prompt ]
-  let data = JSON.parse(jsonData);
-  let skill = data[0];
-  let prompt = data[1];
+  const data = JSON.parse(jsonData);
+  const skill = data[0];
+  const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt) : Backend.translate("#AskForSkillInvoke")
     .arg(Backend.translate(skill));
   roomScene.state = "replying";
@@ -684,23 +684,23 @@ callbacks["AskForSkillInvoke"] = function(jsonData) {
   roomScene.cancelButton.enabled = true;
 }
 
-callbacks["AskForGuanxing"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let cards = [];
-  let min_top_cards = data.min_top_cards;
-  let max_top_cards = data.max_top_cards;
-  let min_bottom_cards = data.min_bottom_cards;
-  let max_bottom_cards = data.max_bottom_cards;
-  let top_area_name = data.top_area_name;
-  let bottom_area_name = data.bottom_area_name;
+callbacks["AskForGuanxing"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const cards = [];
+  const min_top_cards = data.min_top_cards;
+  const max_top_cards = data.max_top_cards;
+  const min_bottom_cards = data.min_bottom_cards;
+  const max_bottom_cards = data.max_bottom_cards;
+  const top_area_name = data.top_area_name;
+  const bottom_area_name = data.bottom_area_name;
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   data.cards.forEach(id => {
-    let d = Backend.callLuaFunction("GetCardData", [id]);
+    const d = Backend.callLuaFunction("GetCardData", [id]);
     cards.push(JSON.parse(d));
   });
-  let box = roomScene.popupBox.item;
-  if (max_top_cards == 0) {
+  const box = roomScene.popupBox.item;
+  if (max_top_cards === 0) {
     box.areaCapacities = [max_bottom_cards];
     box.areaLimits = [min_bottom_cards];
     box.areaNames = [Backend.translate(bottom_area_name)];
@@ -716,25 +716,27 @@ callbacks["AskForGuanxing"] = function(jsonData) {
   });
 }
 
-callbacks["AskForExchange"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let cards = [];
-  let cards_name = [];
-  let capacities = [];
-  let limits = [];
+callbacks["AskForExchange"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const cards = [];
+  const cards_name = [];
+  const capacities = [];
+  const limits = [];
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   data.piles.forEach(ids => {
-    ids.forEach(id => {
-      let d = Backend.callLuaFunction("GetCardData", [id]);
-      cards.push(JSON.parse(d));
-    });
-    capacities.push(ids.length);
-    limits.push(0);
-    cards_name.push(Backend.translate(data.piles_name[for_i]));
-    for_i ++;
+    if (ids.length > 0) {
+      ids.forEach(id => {
+        const d = Backend.callLuaFunction("GetCardData", [id]);
+        cards.push(JSON.parse(d));
+      });
+      capacities.push(ids.length);
+      limits.push(0);
+      cards_name.push(Backend.translate(data.piles_name[for_i]));
+      for_i ++;
+    }
   });
   box.areaCapacities = capacities
   box.areaLimits = limits
@@ -745,13 +747,13 @@ callbacks["AskForExchange"] = function(jsonData) {
     replyToServer(JSON.stringify(box.getResult()));
   });
 }
-callbacks["AskForChoice"] = function(jsonData) {
+callbacks["AskForChoice"] = (jsonData) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
-  let data = JSON.parse(jsonData);
-  let choices = data[0];
-  let skill_name = data[1];
-  let prompt = data[2];
+  const data = JSON.parse(jsonData);
+  const choices = data[0];
+  const skill_name = data[1];
+  const prompt = data[2];
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForChoice")
       .arg(Backend.translate(skill_name));
@@ -760,7 +762,7 @@ callbacks["AskForChoice"] = function(jsonData) {
   }
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;
   box.accepted.connect(() => {
@@ -768,30 +770,30 @@ callbacks["AskForChoice"] = function(jsonData) {
   });
 }
 
-callbacks["AskForCardChosen"] = function(jsonData) {
+callbacks["AskForCardChosen"] = (jsonData) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  string reason ]
-  let data = JSON.parse(jsonData);
-  let handcard_ids = data[0];
-  let equip_ids = data[1];
-  let delayedTrick_ids = data[2];
-  let reason = data[3];
-  let handcards = [];
-  let equips = [];
-  let delayedTricks = [];
+  const data = JSON.parse(jsonData);
+  const handcard_ids = data[0];
+  const equip_ids = data[1];
+  const delayedTrick_ids = data[2];
+  const reason = data[3];
+  const handcards = [];
+  const equips = [];
+  const delayedTricks = [];
 
   handcard_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     handcards.push(card_data);
   });
 
   equip_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     equips.push(card_data);
   });
 
   delayedTrick_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     delayedTricks.push(card_data);
   });
 
@@ -799,7 +801,7 @@ callbacks["AskForCardChosen"] = function(jsonData) {
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   box.addHandcards(handcards);
   box.addEquips(equips);
   box.addDelayedTricks(delayedTricks);
@@ -809,32 +811,32 @@ callbacks["AskForCardChosen"] = function(jsonData) {
   });
 }
 
-callbacks["AskForCardsChosen"] = function(jsonData) {
+callbacks["AskForCardsChosen"] = (jsonData) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  int min, int max, string reason ]
-  let data = JSON.parse(jsonData);
-  let handcard_ids = data[0];
-  let equip_ids = data[1];
-  let delayedTrick_ids = data[2];
-  let min = data[3];
-  let max = data[4];
-  let reason = data[5];
-  let handcards = [];
-  let equips = [];
-  let delayedTricks = [];
+  const data = JSON.parse(jsonData);
+  const handcard_ids = data[0];
+  const equip_ids = data[1];
+  const delayedTrick_ids = data[2];
+  const min = data[3];
+  const max = data[4];
+  const reason = data[5];
+  const handcards = [];
+  const equips = [];
+  const delayedTricks = [];
 
   handcard_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     handcards.push(card_data);
   });
 
   equip_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     equips.push(card_data);
   });
 
   delayedTrick_ids.forEach(id => {
-    let card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
     delayedTricks.push(card_data);
   });
 
@@ -842,7 +844,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   box.multiChoose = true;
   box.min = min;
   box.max = max;
@@ -855,7 +857,7 @@ callbacks["AskForCardsChosen"] = function(jsonData) {
   });
 }
 
-callbacks["AskForMoveCardInBoard"] = function(jsonData) {
+callbacks["AskForMoveCardInBoard"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const { cards, cardsPosition, generalNames } = data;
 
@@ -882,58 +884,58 @@ callbacks["AskForMoveCardInBoard"] = function(jsonData) {
   });
 }
 
-callbacks["MoveCards"] = function(jsonData) {
+callbacks["MoveCards"] = (jsonData) => {
   // jsonData: merged moves
-  let moves = JSON.parse(jsonData);
+  const moves = JSON.parse(jsonData);
   moveCards(moves);
 }
 
-callbacks["PlayCard"] = function(jsonData) {
+callbacks["PlayCard"] = (jsonData) => {
   // jsonData: int playerId
-  let playerId = parseInt(jsonData);
-  if (playerId == Self.id) {
+  const playerId = parseInt(jsonData);
+  if (playerId === Self.id) {
     roomScene.promptText = Backend.translate("#PlayCard");
     roomScene.state = "playing";
     okButton.enabled = false;
   }
 }
 
-callbacks["LoseSkill"] = function(jsonData) {
+callbacks["LoseSkill"] = (jsonData) => {
   // jsonData: [ int player_id, string skill_name ]
-  let data = JSON.parse(jsonData);
-  let id = data[0];
-  let skill_name = data[1];
-  let prelight = data[2];
+  const data = JSON.parse(jsonData);
+  const id = data[0];
+  const skill_name = data[1];
+  const prelight = data[2];
   if (id === Self.id) {
     dashboard.loseSkill(skill_name, prelight);
   }
 }
 
-callbacks["AddSkill"] = function(jsonData) {
+callbacks["AddSkill"] = (jsonData) => {
   // jsonData: [ int player_id, string skill_name ]
-  let data = JSON.parse(jsonData);
-  let id = data[0];
-  let skill_name = data[1];
-  let prelight = data[2];
+  const data = JSON.parse(jsonData);
+  const id = data[0];
+  const skill_name = data[1];
+  const prelight = data[2];
   if (id === Self.id) {
     dashboard.addSkill(skill_name, prelight);
   }
 }
 
-callbacks["PrelightSkill"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let skill_name = data[0];
-  let prelight = data[1];
+callbacks["PrelightSkill"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const skill_name = data[0];
+  const prelight = data[1];
 
   dashboard.prelightSkill(skill_name, prelight);
 }
 
 // prompt: 'string:<src>:<dest>:<arg>:<arg2>'
 function processPrompt(prompt) {
-  let data = prompt.split(":");
+  const data = prompt.split(":");
   let raw = Backend.translate(data[0]);
-  let src = parseInt(data[1]);
-  let dest = parseInt(data[2]);
+  const src = parseInt(data[1]);
+  const dest = parseInt(data[2]);
   if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhoto(src).general));
   if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhoto(dest).general));
   if (raw.match("%arg")) raw = raw.replace("%arg", Backend.translate(data[3]));
@@ -941,13 +943,13 @@ function processPrompt(prompt) {
   return raw;
 }
 
-callbacks["AskForUseActiveSkill"] = function(jsonData) {
+callbacks["AskForUseActiveSkill"] = (jsonData) => {
   // jsonData: string skill_name, string prompt
-  let data = JSON.parse(jsonData);
-  let skill_name = data[0];
-  let prompt = data[1];
-  let cancelable = data[2];
-  let extra_data = data[3] ?? {};
+  const data = JSON.parse(jsonData);
+  const skill_name = data[0];
+  const prompt = data[1];
+  const cancelable = data[2];
+  const extra_data = data[3] ?? {};
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
       .arg(Backend.translate(skill_name));
@@ -969,21 +971,21 @@ callbacks["AskForUseActiveSkill"] = function(jsonData) {
   cancelButton.enabled = cancelable;
 }
 
-callbacks["CancelRequest"] = function() {
+callbacks["CancelRequest"] = () => {
   roomScene.state = "notactive";
 }
 
-callbacks["GameLog"] = function(jsonData) {
+callbacks["GameLog"] = (jsonData) => {
   roomScene.addToLog(jsonData)
 }
 
-callbacks["AskForUseCard"] = function(jsonData) {
+callbacks["AskForUseCard"] = (jsonData) => {
   // jsonData: card, pattern, prompt, cancelable, {}
-  let data = JSON.parse(jsonData);
-  let cardname = data[0];
-  let pattern = data[1];
-  let prompt = data[2];
-  let extra_data = data[4];
+  const data = JSON.parse(jsonData);
+  const cardname = data[0];
+  const pattern = data[1];
+  const prompt = data[2];
+  const extra_data = data[4];
   if (extra_data != null) {
     roomScene.extra_data = extra_data;
   }
@@ -1001,12 +1003,12 @@ callbacks["AskForUseCard"] = function(jsonData) {
   cancelButton.enabled = true;
 }
 
-callbacks["AskForResponseCard"] = function(jsonData) {
+callbacks["AskForResponseCard"] = (jsonData) => {
   // jsonData: card_name, pattern, prompt, cancelable, {}
-  let data = JSON.parse(jsonData);
-  let cardname = data[0];
-  let pattern = data[1];
-  let prompt = data[2];
+  const data = JSON.parse(jsonData);
+  const cardname = data[0];
+  const pattern = data[1];
+  const prompt = data[2];
 
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForResponseCard")
@@ -1021,25 +1023,25 @@ callbacks["AskForResponseCard"] = function(jsonData) {
   cancelButton.enabled = true;
 }
 
-callbacks["WaitForNullification"] = function() {
+callbacks["WaitForNullification"] = () => {
   roomScene.state = "notactive";
 }
 
-callbacks["SetPlayerMark"] = function(jsonData) {
-  let data = JSON.parse(jsonData);
-  let player = getPhoto(data[0]);
-  let mark = data[1];
-  let value = data[2] instanceof Array ? data[2] : data[2].toString();
-  if (value == 0) {
+callbacks["SetPlayerMark"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const player = getPhoto(data[0]);
+  const mark = data[1];
+  const value = data[2] instanceof Array ? data[2] : data[2].toString();
+  if (value === 0) {
     player.markArea.removeMark(mark);
   } else {
     player.markArea.setMark(mark, mark.startsWith("@@") ? "" : value);
   }
 }
 
-callbacks["Animate"] = function(jsonData) {
+callbacks["Animate"] = (jsonData) => {
   // jsonData: [Object object]
-  let data = JSON.parse(jsonData);
+  const data = JSON.parse(jsonData);
   switch (data.type) {
     case "Indicate":
       data.to.forEach(item => {
@@ -1055,8 +1057,8 @@ callbacks["Animate"] = function(jsonData) {
     case "LightBox":
       break;
     case "SuperLightBox": {
-      let path = data.path;
-      let jsonData = data.data;
+      const path = data.path;
+      const jsonData = data.data;
       roomScene.bigAnim.source = AppPath + "/" + path;
       if (jsonData && jsonData !== "") {
         roomScene.bigAnim.item.loadData(jsonData);
@@ -1064,17 +1066,17 @@ callbacks["Animate"] = function(jsonData) {
       break;
     }
     case "InvokeSkill": {
-      let id = data.player;
-      let component = Qt.createComponent("../RoomElement/SkillInvokeAnimation.qml");
+      const id = data.player;
+      const component = Qt.createComponent("../RoomElement/SkillInvokeAnimation.qml");
       if (component.status !== Component.Ready)
         return;
 
-      let photo = getPhoto(id);
+      const photo = getPhoto(id);
       if (!photo) {
         return null;
       }
 
-      let animation = component.createObject(photo, {
+      const animation = component.createObject(photo, {
         skill_name: Backend.translate(data.name),
         skill_type: (data.skill_type ? data.skill_type : "special"),
       });
@@ -1087,12 +1089,12 @@ callbacks["Animate"] = function(jsonData) {
   }
 }
 
-callbacks["LogEvent"] = function(jsonData) {
+callbacks["LogEvent"] = (jsonData) => {
   // jsonData: [Object object]
-  let data = JSON.parse(jsonData);
+  const data = JSON.parse(jsonData);
   switch (data.type) {
     case "Damage": {
-      let item = getPhotoOrDashboard(data.to);
+      const item = getPhotoOrDashboard(data.to);
       setEmotion(data.to, "damage");
       item.tremble();
       data.damageType = data.damageType || "normal_damage";
@@ -1110,10 +1112,10 @@ callbacks["LogEvent"] = function(jsonData) {
       break;
     }
     case "PlaySkillSound": {
-      let skill = data.name;
+      const skill = data.name;
       let extension = data.extension;
       if (!extension) {
-        let data = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+        const data = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
         extension = data.extension;
       }
       Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, data.i);
@@ -1124,8 +1126,8 @@ callbacks["LogEvent"] = function(jsonData) {
       break;
     }
     case "Death": {
-      let item = getPhoto(data.to);
-      let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [item.general])).extension;
+      const item = getPhoto(data.to);
+      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [item.general])).extension;
       Backend.playSound("./packages/" + extension + "/audio/death/" + item.general);
     }
     default:
@@ -1133,17 +1135,17 @@ callbacks["LogEvent"] = function(jsonData) {
   }
 }
 
-callbacks["GameOver"] = function(jsonData) {
+callbacks["GameOver"] = (jsonData) => {
   roomScene.state = "notactive";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GameOverBox.qml");
-  let box = roomScene.popupBox.item;
+  const box = roomScene.popupBox.item;
   box.winner = jsonData;
   // roomScene.isStarted = false;
 }
 
 callbacks["FillAG"] = (j) => {
-  let data = JSON.parse(j);
-  let ids = data[0];
+  const data = JSON.parse(j);
+  const ids = data[0];
   roomScene.manualBox.sourceComponent = Qt.createComponent("../RoomElement/AG.qml");
   roomScene.manualBox.item.addIds(ids);
 }
@@ -1155,11 +1157,11 @@ callbacks["AskForAG"] = (j) => {
 
 callbacks["TakeAG"] = (j) => {
   if (!roomScene.manualBox.item) return;
-  let data = JSON.parse(j);
-  let pid = data[0];
-  let cid = data[1];
-  let item = getPhoto(pid);
-  let general = Backend.translate(item.general);
+  const data = JSON.parse(j);
+  const pid = data[0];
+  const cid = data[1];
+  const item = getPhoto(pid);
+  const general = Backend.translate(item.general);
 
   // the item should be AG box
   roomScene.manualBox.item.takeAG(general, cid);
@@ -1168,9 +1170,9 @@ callbacks["TakeAG"] = (j) => {
 callbacks["CloseAG"] = () => roomScene.manualBox.item.close();
 
 callbacks["CustomDialog"] = (j) => {
-  let data = JSON.parse(j);
-  let path = data.path;
-  let dat = data.data;
+  const data = JSON.parse(j);
+  const path = data.path;
+  const dat = data.data;
   roomScene.state = "replying";
   roomScene.popupBox.source = AppPath + "/" + path;
   if (dat) {
@@ -1179,38 +1181,38 @@ callbacks["CustomDialog"] = (j) => {
 }
 
 callbacks["UpdateLimitSkill"] = (j) => {
-  let data = JSON.parse(j);
-  let id = data[0];
-  let skill = data[1];
-  let time = data[2];
+  const data = JSON.parse(j);
+  const id = data[0];
+  const skill = data[1];
+  const time = data[2];
 
-  let photo = getPhoto(id);
+  const photo = getPhoto(id);
   if (photo) {
     photo.updateLimitSkill(skill, time);
   }
 }
 
 callbacks["UpdateDrawPile"] = (j) => {
-  let data = parseInt(j);
+  const data = parseInt(j);
   roomScene.miscStatus.pileNum = data;
 }
 
 callbacks["UpdateRoundNum"] = (j) => {
-  let data = parseInt(j);
+  const data = parseInt(j);
   roomScene.miscStatus.roundNum = data;
 }
 
 // 神貂蝉
 
 callbacks["StartChangeSelf"] = (j) => {
-  let id = parseInt(j);
+  const id = parseInt(j);
   ClientInstance.notifyServer("PushRequest", "changeself," + j);
 }
 
 callbacks["ChangeSelf"] = (j) => {
-  let data = parseInt(j);
+  const data = parseInt(j);
   if (Self.id === data) {
-    let msg = mainWindow.fetchMessage();
+    const msg = mainWindow.fetchMessage();
     if (!msg) return;
     mainWindow.handleMessage(msg.command, msg.jsonData);
     return;
