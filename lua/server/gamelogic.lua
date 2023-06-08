@@ -6,7 +6,6 @@
 ---@field public skill_priority_table table<Event, number[]>
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
----@field public event_stack Stack
 ---@field public game_event_stack Stack
 ---@field public role_table string[][]
 ---@field public all_game_events GameEvent[]
@@ -20,7 +19,6 @@ function GameLogic:initialize(room)
   self.skill_priority_table = {}
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
-  self.event_stack = Stack:new()
   self.game_event_stack = Stack:new()
   self.all_game_events = {}
   self.event_recorder = {}
@@ -387,8 +385,6 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local _target = room.current -- for iteration
   local player = _target
 
-  self.event_stack:push({event, target, data})
-
   if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
     for _, skill in ipairs(skills_to_refresh) do
@@ -456,7 +452,6 @@ function GameLogic:trigger(event, target, data, refresh_only)
     ::trigger_loop_continue::
   end
 
-  self.event_stack:pop()
   return broken
 end
 
