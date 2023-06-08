@@ -69,32 +69,32 @@ RowLayout {
   }
 
   function expandPile(pile) {
-    let expanded_pile_names = Object.keys(expanded_piles);
+    const expanded_pile_names = Object.keys(expanded_piles);
     if (expanded_pile_names.indexOf(pile) !== -1)
       return;
 
-    let component = Qt.createComponent("../RoomElement/CardItem.qml");
-    let parentPos = roomScene.mapFromItem(self, 0, 0);
+    const component = Qt.createComponent("../RoomElement/CardItem.qml");
+    const parentPos = roomScene.mapFromItem(self, 0, 0);
 
     expanded_piles[pile] = [];
     if (pile === "_equip") {
-      let equips = self.equipArea.getAllCards();
+      const equips = self.equipArea.getAllCards();
       equips.forEach(data => {
         data.x = parentPos.x;
         data.y = parentPos.y;
-        let card = component.createObject(roomScene, data);
+        const card = component.createObject(roomScene, data);
         card.footnoteVisible = true;
         card.footnote = Backend.translate("$Equip");
         handcardAreaItem.add(card);
       })
       handcardAreaItem.updateCardPosition();
     } else {
-      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
+      const ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
       ids.forEach(id => {
-        let data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+        const data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
         data.x = parentPos.x;
         data.y = parentPos.y;
-        let card = component.createObject(roomScene, data);
+        const card = component.createObject(roomScene, data);
         card.footnoteVisible = true;
         card.footnote = Backend.translate(pile);
         handcardAreaItem.add(card);
@@ -104,17 +104,17 @@ RowLayout {
   }
 
   function retractPile(pile) {
-    let expanded_pile_names = Object.keys(expanded_piles);
+    const expanded_pile_names = Object.keys(expanded_piles);
     if (expanded_pile_names.indexOf(pile) === -1)
       return;
 
-    let parentPos = roomScene.mapFromItem(self, 0, 0);
+    const parentPos = roomScene.mapFromItem(self, 0, 0);
 
     delete expanded_piles[pile];
     if (pile === "_equip") {
-      let equips = self.equipArea.getAllCards();
+      const equips = self.equipArea.getAllCards();
       equips.forEach(data => {
-        let card = handcardAreaItem.remove([data.cid])[0];
+        const card = handcardAreaItem.remove([data.cid])[0];
         card.origX = parentPos.x;
         card.origY = parentPos.y;
         card.destroyOnStop();
@@ -122,9 +122,9 @@ RowLayout {
       })
       handcardAreaItem.updateCardPosition();
     } else {
-      let ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
+      const ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
       ids.forEach(id => {
-        let card = handcardAreaItem.remove([id])[0];
+        const card = handcardAreaItem.remove([id])[0];
         card.origX = parentPos.x;
         card.origY = parentPos.y;
         card.destroyOnStop();
@@ -159,7 +159,8 @@ RowLayout {
       return ret;
     }
     if (cname) {
-      let ids = [], cards = handcardAreaItem.cards;
+      const ids = [];
+      let cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
         if (cardValid(cards[i].cid, cname)) {
           ids.push(cards[i].cid);
@@ -177,7 +178,7 @@ RowLayout {
 
       // Must manually analyze pattern here
       let pile_list = cname.split("|")[4];
-      let pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
+      const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
       if (pile_list && pile_list !== "." && !(pile_data instanceof Array)) {
         pile_list = pile_list.split(",");
         for (let pile_name of pile_list) {
@@ -196,15 +197,15 @@ RowLayout {
       return;
     }
 
-    let ids = [], cards = handcardAreaItem.cards;
+    const ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
       if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id]))) {
         ids.push(cards[i].cid);
       } else {
         // cannot use? considering special_skills
-        let skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [cards[i].cid]));
+        const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [cards[i].cid]));
         for (let j = 0; j < skills.length; j++) {
-          let s = skills[j];
+          const s = skills[j];
           if (JSON.parse(Backend.callLuaFunction("ActiveCanUse", [s]))) {
             ids.push(cards[i].cid);
             break;
@@ -253,8 +254,8 @@ RowLayout {
   function updatePending() {
     if (pending_skill === "") return;
 
-    let enabled_cards = [];
-    let targets = roomScene.selected_targets;
+    const enabled_cards = [];
+    const targets = roomScene.selected_targets;
 
     handcardAreaItem.cards.forEach((card) => {
       if (card.selected || JSON.parse(Backend.callLuaFunction(
@@ -264,7 +265,7 @@ RowLayout {
         enabled_cards.push(card.cid);
     });
 
-    let cards = self.equipArea.getAllCards();
+    const cards = self.equipArea.getAllCards();
     cards.forEach(c => {
       if (JSON.parse(Backend.callLuaFunction(
         "ActiveCardFilter",
@@ -277,8 +278,8 @@ RowLayout {
       }
     })
 
-    let pile = Backend.callLuaFunction("GetExpandPileOfSkill", [pending_skill]);
-    let pile_ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
+    const pile = Backend.callLuaFunction("GetExpandPileOfSkill", [pending_skill]);
+    const pile_ids = JSON.parse(Backend.callLuaFunction("GetPile", [self.playerid, pile]));
     pile_ids.forEach(cid => {
       if (JSON.parse(Backend.callLuaFunction(
         "ActiveCardFilter",
@@ -313,7 +314,7 @@ RowLayout {
     pendings = [];
     handcardAreaItem.unselectAll();
     for (let i = 0; i < skillButtons.count; i++) {
-      let item = skillButtons.itemAt(i);
+      const item = skillButtons.itemAt(i);
       item.enabled = item.pressed;
     }
 
@@ -347,9 +348,9 @@ RowLayout {
   }
 
   function prelightSkill(skill_name, prelight) {
-    let btns = skillPanel.prelight_buttons;
+    const btns = skillPanel.prelight_buttons;
     for (let i = 0; i < btns.count; i++) {
-      let btn = btns.itemAt(i);
+      const btn = btns.itemAt(i);
       if (btn.orig === skill_name) {
         btn.prelighted = prelight;
         btn.enabled = true;
@@ -361,15 +362,15 @@ RowLayout {
     if (cname) {
       // if cname is presented, we are responding use or play.
       for (let i = 0; i < skillButtons.count; i++) {
-        let item = skillButtons.itemAt(i);
-        let fitpattern = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
-        let canresp = JSON.parse(Backend.callLuaFunction("SkillCanResponse", [item.orig, cardResponsing]));
+        const item = skillButtons.itemAt(i);
+        const fitpattern = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
+        const canresp = JSON.parse(Backend.callLuaFunction("SkillCanResponse", [item.orig, cardResponsing]));
         item.enabled = fitpattern && canresp;
       }
       return;
     }
     for (let i = 0; i < skillButtons.count; i++) {
-      let item = skillButtons.itemAt(i);
+      const item = skillButtons.itemAt(i);
       item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig]));
     }
   }
@@ -387,8 +388,8 @@ RowLayout {
     unSelectAll();
     disableSkills();
 
-    let cards = handcardAreaItem.cards;
-    let toRemove = [];
+    const cards = handcardAreaItem.cards;
+    const toRemove = [];
     for (let c of cards) {
       toRemove.push(c.cid);
       c.origY += 30;
@@ -400,7 +401,7 @@ RowLayout {
 
     skillPanel.clearSkills();
 
-    let skills = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [Self.id]));
+    const skills = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [Self.id]));
     for (let s of skills) {
       addSkill(s.name);
     }

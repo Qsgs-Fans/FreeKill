@@ -155,14 +155,14 @@ CardItem {
   }
 
   onNameChanged: {
-    let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+    const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
     kingdom = data.kingdom;
     subkingdom = (data.subkingdom !== kingdom && data.subkingdom) || "";
     hp = data.hp;
     maxHp = data.maxHp;
     shieldNum = data.shield;
 
-    let splited = name.split("__");
+    const splited = name.split("__");
     if (splited.length > 1) {
       pkgName = splited[0];
     } else {

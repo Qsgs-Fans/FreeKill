@@ -45,9 +45,9 @@ Flickable {
           enabled: orig_name !== "test_p_0"
 
           onCheckedChanged: {
-            let packs = config.disabledPack;
+            const packs = config.disabledPack;
             if (checked) {
-              let idx = packs.indexOf(orig_name);
+              const idx = packs.indexOf(orig_name);
               if (idx !== -1) packs.splice(idx, 1);
             } else {
               packs.push(orig_name);
@@ -76,9 +76,9 @@ Flickable {
           checked: pkg_enabled
 
           onCheckedChanged: {
-            let packs = config.disabledPack;
+            const packs = config.disabledPack;
             if (checked) {
-              let idx = packs.indexOf(orig_name);
+              const idx = packs.indexOf(orig_name);
               if (idx !== -1) packs.splice(idx, 1);
             } else {
               packs.push(orig_name);
@@ -90,7 +90,7 @@ Flickable {
   }
 
   Component.onCompleted: {
-    let g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     for (let orig of g) {
       gpacklist.append({
         name: Backend.translate(orig),
@@ -99,7 +99,7 @@ Flickable {
       });
     }
 
-    let c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
+    const c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
     for (let orig of c) {
       cpacklist.append({
         name: Backend.translate(orig),

@@ -293,7 +293,7 @@ Item {
     }
 
     function updatePileInfo(areaName) {
-      let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.playerid, areaName]));
+      const data = JSON.parse(Backend.callLuaFunction("GetPile", [root.playerid, areaName]));
       if (data.length === 0) {
         root.markArea.removeMark(areaName);
       } else {
@@ -576,7 +576,7 @@ Item {
 
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
-    let text = Backend.translate(general);
+    const text = Backend.translate(general);
     if (text.length > 6) {
       generalName.text = "";
       longGeneralName.text = text;

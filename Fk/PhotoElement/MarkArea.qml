@@ -120,17 +120,17 @@ Item {
     let x = 0;
     let y = 0;
     let i;
-    let marks = [];
-    let long_marks = [];
+    const marks = [];
+    const long_marks = [];
     for (i = 0; i < markRepeater.count; i++) {
-      let item = markRepeater.itemAt(i);
-      let w = item.width;
+      const item = markRepeater.itemAt(i);
+      const w = item.width;
       if (w < width / 2) marks.push(item);
       else long_marks.push(item);
     }
 
     marks.concat(long_marks).forEach(item => {
-      let w = item.width;
+      const w = item.width;
       if (x === 0) {
         item.x = x; item.y = y;
 

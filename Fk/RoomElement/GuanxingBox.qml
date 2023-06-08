@@ -144,9 +144,9 @@ GraphicsBox {
   }
 
   function getResult() {
-    let ret = [];
+    const ret = [];
     result.forEach(t => {
-      let t2 = [];
+      const t2 = [];
       t.forEach(v => t2.push(v.cid));
       ret.push(t2);
     });

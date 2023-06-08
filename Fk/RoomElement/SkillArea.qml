@@ -111,7 +111,7 @@ Flickable {
       return false;
     };
 
-    let data = JSON.parse(Backend.callLuaFunction(
+    const data = JSON.parse(Backend.callLuaFunction(
       "GetSkillData",
       [skill_name]
     ));
@@ -133,7 +133,7 @@ Flickable {
   function loseSkill(skill_name, prelight) {
     if (prelight) {
       for (let i = 0; i < prelight_skills.count; i++) {
-        let item = prelight_skills.get(i);
+        const item = prelight_skills.get(i);
         if (item.orig_skill == skill_name) {
           prelight_skills.remove(i);
         }
@@ -142,13 +142,13 @@ Flickable {
     }
 
     for (let i = 0; i < active_skills.count; i++) {
-      let item = active_skills.get(i);
+      const item = active_skills.get(i);
       if (item.orig_skill == skill_name) {
         active_skills.remove(i);
       }
     }
     for (let i = 0; i < not_active_skills.count; i++) {
-      let item = not_active_skills.get(i);
+      const item = not_active_skills.get(i);
       if (item.orig_skill == skill_name) {
         not_active_skills.remove(i);
       }

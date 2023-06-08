@@ -19,7 +19,7 @@ ColumnLayout {
 
   function update(skill, times) {
     for (let i = 0; i < rep.count; i++) {
-      let data = skills.get(i);
+      const data = skills.get(i);
       if (data.skillname_ === skill) {
         data.times = times;
         return;

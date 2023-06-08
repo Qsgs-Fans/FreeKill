@@ -20,9 +20,9 @@ var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
 var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
 
 function getGeneralPicture(name) {
-  let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
-  let extension = data.extension;
-  let path = AppPath + "/packages/" + extension + "/image/generals/" + name + ".jpg";
+  const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+  const extension = data.extension;
+  const path = AppPath + "/packages/" + extension + "/image/generals/" + name + ".jpg";
   if (Backend.exists(path)) {
     return path;
   }
@@ -54,7 +54,7 @@ function getCardPicture(cidOrName) {
 }
 
 function getDelayedTrickPicture(name) {
-  let extension = Backend.callLuaFunction("GetCardExtensionByName", [name]);
+  const extension = Backend.callLuaFunction("GetCardExtensionByName", [name]);
 
   let path = AppPath + "/packages/" + extension + "/image/card/delayedTrick/" + name + ".png";
   if (Backend.exists(path)) {
@@ -70,9 +70,9 @@ function getDelayedTrickPicture(name) {
 
 
 function getEquipIcon(cid, icon) {
-  let data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
-  let extension = data.extension;
-  let name = icon || data.name;
+  const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+  const extension = data.extension;
+  const name = icon || data.name;
   let path = AppPath + "/packages/" + extension + "/image/card/equipIcon/" + name + ".png";
   if (Backend.exists(path)) {
     return path;

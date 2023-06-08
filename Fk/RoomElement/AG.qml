@@ -56,7 +56,7 @@ GraphicsBox {
 
   function takeAG(g, cid) {
     for (let i = 0; i < cards.count; i++) {
-      let item = cards.get(i);
+      const item = cards.get(i);
       if (item.cid !== cid) continue;
       item.footnote = g;
       item.selectable = false;

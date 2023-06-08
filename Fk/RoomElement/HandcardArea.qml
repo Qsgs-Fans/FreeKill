@@ -40,7 +40,7 @@ Item {
 
   function remove(outputs)
   {
-    let result = cardArea.remove(outputs);
+    const result = cardArea.remove(outputs);
     let card;
     for (let i = 0; i < result.length; i++) {
       card = result[i];
@@ -87,7 +87,7 @@ Item {
     area.updateCardPosition(true);
 
     for (let i = 0; i < cards.length; i++) {
-      let card = cards[i];
+      const card = cards[i];
       if (card.selected) {
         if (!selectedCards.contains(card))
           selectCard(card);

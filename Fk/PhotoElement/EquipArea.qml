@@ -100,11 +100,11 @@ Column {
 
   function remove(outputs)
   {
-    let result = area.remove(outputs);
+    const result = area.remove(outputs);
     for (let i = 0; i < result.length; i++) {
-      let card = result[i];
+      const card = result[i];
       for (let j = 0; j < items.length; j++) {
-        let item = items[j];
+        const item = items[j];
         if (item.cid === card.cid) {
           item.reset();
           item.hide();

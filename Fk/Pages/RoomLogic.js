@@ -288,8 +288,8 @@ function doIndicate(from, tos) {
   for (let i = 0; i < tos.length; i++) {
     if (from === tos[i])
       continue;
-    let toItem = getPhotoOrDashboard(tos[i]);
-    let toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
+    const toItem = getPhotoOrDashboard(tos[i]);
+    const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
     end.push(toPos);
   }
 
@@ -315,7 +315,7 @@ function changeSelf(id) {
   // move new selfPhoto to dashboard
   let order = new Array(photoModel.count);
   for (let i = 0; i < photoModel.count; i++) {
-    let item = photoModel.get(i);
+    const item = photoModel.get(i);
     order[item.seatNumber - 1] = item.id;
     if (item.id === Self.id) {
       dashboard.self = photos.itemAt(i);
@@ -389,7 +389,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
   }
 
   if (candidate) {
-    let data = {
+    const data = {
       ok_enabled: false,
       enabled_targets: []
     }
@@ -866,7 +866,7 @@ callbacks["AskForMoveCardInBoard"] = (jsonData) => {
 
   const boxCards = [];
   cards.forEach(id => {
-    let d = Backend.callLuaFunction("GetCardData", [id]);
+    const d = Backend.callLuaFunction("GetCardData", [id]);
     boxCards.push(JSON.parse(d));
   });
 
