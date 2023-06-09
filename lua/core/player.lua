@@ -445,6 +445,18 @@ function Player:inMyAttackRange(other, fixLimit)
   return self:distanceTo(other) <= (baseAttackRange + fixLimit)
 end
 
+function Player:getNextAlive()
+  if Fk:currentRoom().alive_players == 0 then
+    return self
+  end
+
+  local ret = self.next
+  while ret.dead do
+    ret = ret.next
+  end
+  return ret
+end
+
 --- 增加玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
 ---@param num integer @ 次数

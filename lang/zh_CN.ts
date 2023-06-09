@@ -167,10 +167,6 @@
     <source>updated packages for md5</source>
     <translation>已为您与服务器同步拓展包，请尝试再次连入</translation>
   </message>
-  <message>
-    <source>Are you sure to exit?</source>
-    <translation>是否确认退出？</translation>
-  </message>
 </context>
 
 <context>
@@ -178,6 +174,10 @@
   <message>
     <source>FreeKill</source>
     <translation>新月杀</translation>
+  </message>
+  <message>
+    <source>Are you sure to exit?</source>
+    <translation>是否确认退出？</translation>
   </message>
 </context>
 
