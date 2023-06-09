@@ -278,7 +278,7 @@ Item {
     id: equipAreaItem
 
     x: 31
-    y: 139
+    y: 157
   }
 
   Item {
