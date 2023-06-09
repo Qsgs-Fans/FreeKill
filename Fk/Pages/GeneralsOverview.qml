@@ -151,6 +151,7 @@ Item {
 
     function addSkillAudio(skill) {
       const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      if (!skilldata) return;
       const extension = skilldata.extension;
       for (let i = 0; i < 999; i++) {
         let fname = AppPath + "/packages/" + extension + "/audio/skill/" +
@@ -181,6 +182,8 @@ Item {
 
         addSkillAudio(t.name);
       });
+
+      addSkillAudio(general + "_win_audio");
     }
 
     Flickable {
