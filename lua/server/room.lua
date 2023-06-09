@@ -1237,15 +1237,15 @@ end
 ---@param choices string[] @ 可选选项列表
 ---@param skill_name string @ 技能名
 ---@param prompt string @ 提示信息
----@param data any @ 暂未使用
+---@param detailed boolean @ 暂未使用
 ---@return string @ 选择的选项
-function Room:askForChoice(player, choices, skill_name, prompt, data)
+function Room:askForChoice(player, choices, skill_name, prompt, detailed)
   if #choices == 1 then return choices[1] end
   local command = "AskForChoice"
   prompt = prompt or ""
   self:notifyMoveFocus(player, skill_name)
   local result = self:doRequest(player, command, json.encode{
-    choices, skill_name, prompt
+    choices, skill_name, prompt, detailed
   })
   if result == "" then result = choices[1] end
   return result

@@ -801,6 +801,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   const choices = data[0];
   const skill_name = data[1];
   const prompt = data[2];
+  const detailed = data[3];
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForChoice")
       .arg(Backend.translate(skill_name));
@@ -808,7 +809,13 @@ callbacks["AskForChoice"] = (jsonData) => {
     roomScene.promptText = processPrompt(prompt);
   }
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
+  let qmlSrc;
+  if (!detailed) {
+    qmlSrc = "../RoomElement/ChoiceBox.qml";
+  } else {
+    qmlSrc = "../RoomElement/DetailedChoiceBox.qml";
+  }
+  roomScene.popupBox.sourceComponent = Qt.createComponent(qmlSrc);
   const box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;

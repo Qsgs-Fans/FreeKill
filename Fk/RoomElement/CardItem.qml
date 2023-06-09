@@ -145,7 +145,7 @@ Item {
     id: footnoteItem
     text: footnote
     x: 0
-    y: parent.height - height - 12
+    y: parent.height - height - 10
     width: root.width - x * 2
     color: "#E4D5A0"
     // color: "white"
