@@ -13,8 +13,8 @@ Item {
     if (!newTxtAvailable || stashedTxt.length === 0) {
       return;
     }
-    let t = stashedTxt.splice(0, 1)[0];
-    let obj = txtComponent.createObject(root, { text: t });
+    const t = stashedTxt.splice(0, 1)[0];
+    const obj = txtComponent.createObject(root, { text: t });
     obj.finished.connect(() => obj.destroy());
     obj.start();
   }

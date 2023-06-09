@@ -67,7 +67,7 @@ Item {
   }
 
   Component.onCompleted: {
-    let mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+    const mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
     for (let d of mode_data) {
       modeList.append(d);
     }

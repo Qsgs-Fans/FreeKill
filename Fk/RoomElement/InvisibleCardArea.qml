@@ -50,16 +50,16 @@ Item {
 
   function remove(outputs)
   {
-    let component = Qt.createComponent("CardItem.qml");
+    const component = Qt.createComponent("CardItem.qml");
     if (component.status !== Component.Ready)
       return [];
 
-    let parentPos = roomScene.mapFromItem(root, 0, 0);
+    const parentPos = roomScene.mapFromItem(root, 0, 0);
     let card;
-    let items = [];
+    const items = [];
     for (let i = 0; i < outputs.length; i++) {
       if (_contains(outputs[i])) {
-        let state = JSON.parse(Backend.callLuaFunction("GetCardData", [outputs[i]]))
+        const state = JSON.parse(Backend.callLuaFunction("GetCardData", [outputs[i]]))
         state.x = parentPos.x;
         state.y = parentPos.y;
         state.opacity = 0;
@@ -90,7 +90,7 @@ Item {
     let i, card;
 
     if (animated) {
-      let parentPos = roomScene.mapFromItem(root, 0, 0);
+      const parentPos = roomScene.mapFromItem(root, 0, 0);
       for (i = 0; i < pendingInput.length; i++) {
         card = pendingInput[i];
         card.origX = parentPos.x - card.width / 2 + ((i - pendingInput.length / 2) * 15);

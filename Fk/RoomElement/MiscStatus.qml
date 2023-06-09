@@ -9,9 +9,9 @@ Item {
   visible: roundNum || pileNum
 
   function getTimeString(time) {
-    let s = time % 60;
-    let m = (time - s) / 60;
-    let h = (time - s - m * 60) / 3600;
+    const s = time % 60;
+    const m = (time - s) / 60;
+    const h = (time - s - m * 60) / 3600;
     return h ? `${h}:${m}:${s}` : `${m}:${s}`;
   }
 

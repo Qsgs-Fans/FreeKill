@@ -57,7 +57,7 @@ Flickable {
         }
 
         onCurrentIndexChanged: {
-          let data = gameModeList.get(currentIndex);
+          const data = gameModeList.get(currentIndex);
           playerNum.from = data.minPlayer;
           playerNum.to = data.maxPlayer;
 
@@ -188,7 +188,7 @@ Flickable {
     }
 
     Component.onCompleted: {
-      let mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+      const mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
       let i = 0;
       for (let d of mode_data) {
         gameModeList.append(d);

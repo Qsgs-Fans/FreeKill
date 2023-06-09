@@ -97,13 +97,13 @@ Flickable {
     screenName.text = "";
     skillDesc.text = "";
 
-    let id = extra_data.photo.playerid;
+    const id = extra_data.photo.playerid;
     if (id == 0) return;
     root.pid = id;
 
     screenName.text = extra_data.photo.screenName;
 
-    let data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
+    const data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {
       skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
     });

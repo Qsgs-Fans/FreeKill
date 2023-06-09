@@ -110,7 +110,7 @@ Item {
   }
 
   function load() {
-    let packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     packs.forEach((name) => packages.append({ name: name }));
   }
 

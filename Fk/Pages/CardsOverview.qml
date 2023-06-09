@@ -72,7 +72,7 @@ Item {
       }
 
       Component.onCompleted: {
-        let data = modelData;
+        const data = modelData;
         if (!data.cards) {
           name = data.name;
           suit = data.suit;
@@ -113,15 +113,15 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      let pkg = [listView.model.get(listView.currentIndex).name];
-      let idList = JSON.parse(Backend.callLuaFunction("GetCards", pkg));
-      let cardList = idList.map(id => JSON.parse(Backend.callLuaFunction
+      const pkg = [listView.model.get(listView.currentIndex).name];
+      const idList = JSON.parse(Backend.callLuaFunction("GetCards", pkg));
+      const cardList = idList.map(id => JSON.parse(Backend.callLuaFunction
         ("GetCardData",[id])));
 
-      let groupedCardList = [];
+      const groupedCardList = [];
       let groupedCards = {};
       cardList.forEach(c => {
-        let name = c.name;
+        const name = c.name;
         if (!groupedCards[name]) {
           groupedCardList.push(name);
           groupedCards[name] = [];
@@ -133,9 +133,9 @@ Item {
         });
       });
 
-      let model = [];
+      const model = [];
       groupedCardList.forEach(name => {
-        let cards = groupedCards[name];
+        const cards = groupedCards[name];
         if (cards.length === 1) {
           model.push({
             name: name,
@@ -192,7 +192,7 @@ Item {
     property int cid: 1
     property var cards
     function updateCard() {
-      let data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+      const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
       const suitTable = {
         spade: "♠", heart: '<font color="red">♥</font>',
         club: "♣", diamond: '<font color="red">♦</font>',
@@ -226,7 +226,7 @@ Item {
       cardText.clear();
       cardText.append(Backend.translate(":" + data.name));
 
-      let skills = JSON.parse(Backend.callLuaFunction
+      const skills = JSON.parse(Backend.callLuaFunction
         ("GetCardSpecialSkills", [cid]));
       if (skills.length > 0) {
         cardText.append("<br/>" + Backend.translate("Special card skills:"));
@@ -299,7 +299,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    let packs = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
+    const packs = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
     packs.forEach((name) => packages.append({ name: name }));
     loaded = true;
   }

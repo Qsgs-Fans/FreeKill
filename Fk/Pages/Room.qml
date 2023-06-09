@@ -125,7 +125,7 @@ Item {
     Text {
       x: 8; y: 8
       Component.onCompleted: {
-        let data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
+        const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
         text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
           + "<br />选将框数：" + data.generalNum
       }
@@ -315,7 +315,7 @@ Item {
       Logic.enableTargets(card);
 
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing") {
-        let skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
+        const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
         if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
           skills.unshift("_normal_use");
         }
@@ -532,7 +532,7 @@ Item {
 
   function activateSkill(skill_name, pressed) {
     if (pressed) {
-      let data = JSON.parse(Backend.callLuaFunction("GetInteractionOfSkill", [skill_name]));
+      const data = JSON.parse(Backend.callLuaFunction("GetInteractionOfSkill", [skill_name]));
       if (data) {
         Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
         switch (data.type) {
@@ -735,9 +735,9 @@ Item {
     }
 
     for (let i = 1; i < specialCardSkills.count; i++) {
-      let item = specialCardSkills.itemAt(i);
+      const item = specialCardSkills.itemAt(i);
       if (item.checked) {
-        let ret = item.orig_text;
+        const ret = item.orig_text;
         return ret;
       }
     }
@@ -753,10 +753,10 @@ Item {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
     chat.append(msg);
-    let photo = Logic.getPhoto(pid);
+    const photo = Logic.getPhoto(pid);
     if (photo === undefined) {
-      let user = raw.userName;
-      let m = raw.msg;
+      const user = raw.userName;
+      const m = raw.msg;
       danmaku.sendLog(`${user}: ${m}`);
       return;
     }
@@ -768,13 +768,13 @@ Item {
     // death audio: ~%s
     // something special: !%s:...
 
-    let time = data.time;
-    let userName = data.userName;
-    let general = Backend.translate(data.general);
+    const time = data.time;
+    const userName = data.userName;
+    const general = Backend.translate(data.general);
 
     if (msg.startsWith("!")) {
-      let splited = msg.split(":");
-      let type = splited[0].slice(1);
+      const splited = msg.split(":");
+      const type = splited[0].slice(1);
       switch (type) {
         case "Egg":
         case "GiantEgg":
@@ -800,18 +800,18 @@ Item {
           return false;
       }
     } else if (msg.startsWith("~")) {
-      let g = msg.slice(1);
-      let extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [g])).extension;
+      const g = msg.slice(1);
+      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [g])).extension;
       if (!config.disableMsgAudio)
         Backend.playSound("./packages/" + extension + "/audio/death/" + g);
 
-      let m = Backend.translate("~" + g);
+      const m = Backend.translate("~" + g);
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`);
       else
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
-      let photo = Logic.getPhoto(pid);
+      const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
         danmaku.sendLog(`${userName}: ${m}`);
         return true;
@@ -820,24 +820,24 @@ Item {
 
       return true;
     } else {
-      let splited = msg.split(":");
+      const splited = msg.split(":");
       if (splited.length < 2) return false;
-      let skill = splited[0];
-      let idx = parseInt(splited[1]);
+      const skill = splited[0];
+      const idx = parseInt(splited[1]);
 
-      let data2 = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      const data2 = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
       if (!data2) return false;
-      let extension = data2.extension;
+      const extension = data2.extension;
       if (!config.disableMsgAudio)
         Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, idx);
 
-      let m = Backend.translate("$" + skill + idx.toString());
+      const m = Backend.translate("$" + skill + idx.toString());
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`);
       else
         chat.append(`[${time}] ${userName}(${general}): ${m}`);
 
-      let photo = Logic.getPhoto(pid);
+      const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
         danmaku.sendLog(`${userName}: ${m}`);
         return true;
@@ -861,9 +861,9 @@ Item {
 
   function showDistance(show) {
     for (let i = 0; i < photoModel.count; i++) {
-      let item = photos.itemAt(i);
+      const item = photos.itemAt(i);
       if (show) {
-        let dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
+        const dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
         item.distance = parseInt(dis);
       } else {
         item.distance = 0;
@@ -878,9 +878,9 @@ Item {
   }
 
   function resetToInit() {
-    let datalist = [];
+    const datalist = [];
     for (let i = 0; i < photoModel.count; i++) {
-      let item = photoModel.get(i);
+      const item = photoModel.get(i);
       if (item.id > 0) {
         datalist.push({
           id: item.id,

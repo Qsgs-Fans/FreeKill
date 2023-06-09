@@ -35,7 +35,7 @@ MetroButton {
 
   onClicked: {
     roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
-    let box = roomScene.popupBox.item;
+    const box = roomScene.popupBox.item;
     box.options = choices;
     box.accepted.connect(() => {
       answer = choices[box.result];

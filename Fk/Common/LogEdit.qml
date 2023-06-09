@@ -44,7 +44,7 @@ ListView {
   }
 
   function append(text) {
-    let autoScroll = root.currentIndex === logModel.count - 1;
+    const autoScroll = root.currentIndex === logModel.count - 1;
     logModel.append({ logText: text });
     if (autoScroll) {
       root.currentIndex = logModel.count - 1;

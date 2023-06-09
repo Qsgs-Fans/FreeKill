@@ -168,7 +168,7 @@ Window {
     }
 
     function fetchMessage() {
-      let ret = pending_message.splice(0, 1)[0];
+      const ret = pending_message.splice(0, 1)[0];
       if (pending_message.length === 0) {
         is_pending = false;
       }
@@ -176,7 +176,7 @@ Window {
     }
 
     function handleMessage(command, jsonData) {
-      let cb = callbacks[command]
+      const cb = callbacks[command]
       if (typeof(cb) === "function") {
         cb(jsonData);
       } else {

@@ -37,7 +37,7 @@ Item {
       inputs = [inputs];
     }
     inputs.forEach(card => {
-      let v = JSON.parse(Backend.callLuaFunction("GetVirtualEquip", [parent.playerid, card.cid]));
+      const v = JSON.parse(Backend.callLuaFunction("GetVirtualEquip", [parent.playerid, card.cid]));
       if (v !== null) {
         cards.append(v);
       } else {
@@ -51,11 +51,11 @@ Item {
 
   function remove(outputs)
   {
-    let result = area.remove(outputs);
+    const result = area.remove(outputs);
     for (let i = 0; i < result.length; i++) {
-      let item = result[i];
+      const item = result[i];
       for (let j = 0; j < cards.count; j++) {
-        let icon = cards.get(j);
+        const icon = cards.get(j);
         if (icon.cid === item.cid) {
           cards.remove(j, 1);
           break;

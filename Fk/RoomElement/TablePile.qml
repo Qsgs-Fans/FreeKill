@@ -61,7 +61,7 @@ Item {
     area.add(inputs);
     // if (!inputs instanceof Array)
     for (let i = 0; i < inputs.length; i++) {
-      let c = inputs[i];
+      const c = inputs[i];
       c.footnoteVisible = true;
       c.selectable = true;
       c.height = c.height * 0.8;
@@ -76,14 +76,14 @@ Item {
 
     let result = area.remove(outputs);
     for (let i = 0; i < result.length; i++) {
-      let c = result[i];
+      const c = result[i];
       c.footnoteVisible = false;
       c.selectable = false;
       c.height = c.height / 0.8;
       c.width = c.width / 0.8;
       c.rotation = 0;
     }
-    let vanished = [];
+    const vanished = [];
     if (result.length < outputs.length) {
       for (i = 0; i < outputs.length; i++) {
         let exists = false;
@@ -131,8 +131,8 @@ Item {
 
     if (overflow) {
       //@to-do: Adjust cards in multiple lines if there are too many cards
-      let xLimit = root.width - card.width;
-      let spacing = xLimit / (cards.length - 1);
+      const xLimit = root.width - card.width;
+      const spacing = xLimit / (cards.length - 1);
       for (i = 0; i < cards.length; i++) {
         card = cards[i];
         card.origX = i * spacing;
@@ -140,8 +140,8 @@ Item {
       }
     }
 
-    let offsetX = Math.max(0, (root.width - cards.length * card.width) / 2);
-    let parentPos = roomScene.mapFromItem(root, 0, 0);
+    const offsetX = Math.max(0, (root.width - cards.length * card.width) / 2);
+    const parentPos = roomScene.mapFromItem(root, 0, 0);
     for (i = 0; i < cards.length; i++) {
       card = cards[i];
       card.origX += parentPos.x + offsetX;

@@ -33,7 +33,7 @@ Item {
             text: qsTr("Enable All")
             onTriggered: {
               for (let i = 0; i < packageModel.count; i++) {
-                let name = packageModel.get(i).pkgName;
+                const name = packageModel.get(i).pkgName;
                 Pacman.enablePack(name);
               }
               updatePackageList();
@@ -43,7 +43,7 @@ Item {
             text: qsTr("Disable All")
             onTriggered: {
               for (let i = 0; i < packageModel.count; i++) {
-                let name = packageModel.get(i).pkgName;
+                const name = packageModel.get(i).pkgName;
                 Pacman.disablePack(name);
               }
               updatePackageList();
@@ -53,7 +53,7 @@ Item {
             text: qsTr("Upgrade All")
             onTriggered: {
               for (let i = 0; i < packageModel.count; i++) {
-                let name = packageModel.get(i).pkgName;
+                const name = packageModel.get(i).pkgName;
                 Pacman.upgradePack(name);
               }
               updatePackageList();
@@ -162,7 +162,7 @@ Item {
         text: qsTr("Install From URL")
         enabled: urlEdit.text !== ""
         onClicked: {
-          let url = urlEdit.text;
+          const url = urlEdit.text;
           mainWindow.busy = true;
           Pacman.downloadNewPack(url, true);
         }
@@ -172,7 +172,7 @@ Item {
 
   function updatePackageList() {
     packageModel.clear();
-    let data = JSON.parse(Pacman.listPackages());
+    const data = JSON.parse(Pacman.listPackages());
     data.forEach(e => packageModel.append({
       pkgName: e.name,
       pkgURL: e.url,
@@ -182,7 +182,7 @@ Item {
   }
 
   function downloadComplete() {
-    let idx = packageList.currentIndex;
+    const idx = packageList.currentIndex;
     updatePackageList();
     packageList.currentIndex = idx;
   }
