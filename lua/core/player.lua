@@ -192,9 +192,16 @@ end
 
 --- 获取角色对应Mark的数量。
 ---@param mark string @ 标记
----@param count integer @ 为标记删除的数量
+---@return integer
 function Player:getMark(mark)
   return (self.mark[mark] or 0)
+end
+
+--- 判定角色是否拥有对应的Mark。
+---@param mark string @ 标记
+---@return boolean
+function Player:hasMark(mark)
+  return self:getMark(mark) ~= 0
 end
 
 --- 获取角色有哪些Mark。
