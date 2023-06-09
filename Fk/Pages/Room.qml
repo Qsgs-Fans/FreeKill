@@ -866,7 +866,7 @@ Item {
         const dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
         item.distance = parseInt(dis);
       } else {
-        item.distance = 0;
+        item.distance = -1;
       }
     }
   }
