@@ -4,7 +4,13 @@ import QtQuick.Layouts
 
 Item {
   id: root
-  property bool configOK: modConfig.userName !== "" && modConfig.email !== ""
+  property var mod: ({})
+  property string modName
+  property string modPath: "mymod/" + modName + "/"
+
+  onModNameChanged: {
+    mod = JSON.parse(ModBackend.readFile(modPath + "mod.json"));
+  }
 
   ToolBar {
     id: bar
@@ -13,18 +19,16 @@ Item {
       anchors.fill: parent
       ToolButton {
         icon.source: AppPath + "/image/modmaker/back"
-        onClicked: mainStack.pop();
+        onClicked: modStack.pop();
       }
       Label {
-        text: qsTr("ModMaker")
+        text: qsTr("ModMaker") + " - " + modName
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
       ToolButton {
         icon.source: AppPath + "/image/modmaker/menu"
         onClicked: {
-          dialog.source = "UserInfo.qml";
-          drawer.open();
         }
       }
     }
@@ -37,26 +41,12 @@ Item {
     color: "snow"
     opacity: 0.75
 
-    Text {
-      anchors.centerIn: parent
-      text: root.configOK ? "" : qsTr("config is incomplete")
-    }
-
     ListView {
       anchors.fill: parent
-      model: modConfig.modList
+      model: mod.packages ?? []
       delegate: SwipeDelegate {
         width: root.width
         text: modelData
-
-        onClicked: {
-          const component = Qt.createComponent("ModDetail.qml");
-          if (component.status !== Component.Ready) {
-            return;
-          }
-          const page = component.createObject(null, { modName: modelData });
-          modStack.push(page);
-        }
 
         swipe.right: Label {
           id: deleteLabel
@@ -69,7 +59,7 @@ Item {
           opacity: swipe.complete ? 1 : 0
           Behavior on opacity { NumberAnimation { } }
 
-          SwipeDelegate.onClicked: deleteMod(modelData);
+          SwipeDelegate.onClicked: deletePackage(modelData);
 
           background: Rectangle {
             color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
@@ -80,7 +70,6 @@ Item {
   }
 
   RoundButton {
-    visible: root.configOK
     anchors.right: parent.right
     anchors.bottom: parent.bottom
     anchors.margins: 40
@@ -88,11 +77,11 @@ Item {
     icon.source: AppPath + "/image/modmaker/add"
     onClicked: {
       dialog.source = "CreateSomething.qml";
-      dialog.item.head = "create_mod";
-      dialog.item.hint = "create_mod_hint";
+      dialog.item.head = "create_package";
+      dialog.item.hint = "create_package_hint";
       drawer.open();
       dialog.item.accepted.connect((name) => {
-        createNewMod(name);
+        createNewPackage(name);
       });
     }
   }
@@ -122,27 +111,29 @@ Item {
     }
   }
 
-  function createNewMod(name) {
-    const banned = [ "test", "standard", "standard_cards", "maneuvering" ];
-    if (banned.indexOf(name) !== -1 || modConfig.modList.indexOf(name) !== -1) {
-      toast.show(qsTr("cannot use this mod name"));
+  function createNewPackage(name) {
+    const new_name = modName + "_" + name;
+    mod.packages = mod.packages ?? [];
+    if (mod.packages.indexOf(new_name) !== -1) {
+      toast.show(qsTr("cannot use this package name"));
       return;
     }
-    ModBackend.createMod(name);
-    const modInfo = {
-      name: name,
-      descrption: "",
-      author: modConfig.userName,
+    const path = modPath + new_name + "/";
+    ModBackend.mkdir(path);
+    mod.packages.push(new_name);
+    ModBackend.saveToFile(modPath + "mod.json", JSON.stringify(mod, undefined, 2));
+    const pkgInfo = {
+      name: new_name,
     };
-    ModBackend.saveToFile(`mymod/${name}/mod.json`, JSON.stringify(modInfo, undefined, 2));
-    ModBackend.saveToFile(`mymod/${name}/.gitignore`, "init.lua");
-    ModBackend.stageFiles(name);
-    ModBackend.commitChanges(name, "Initial commit", modConfig.userName, modConfig.email);
-    modConfig.addMod(name);
+    ModBackend.saveToFile(path + "pkg.json", JSON.stringify(pkgInfo, undefined, 2));
+    root.modChanged();
   }
 
-  function deleteMod(name) {
-    ModBackend.removeMod(name);
-    modConfig.removeMod(name);
+  function deletePackage(name) {
+    const path = modPath + name + "/";
+    ModBackend.rmrf(path);
+    mod.packages.splice(mod.packages.indexOf(name), 1);
+    ModBackend.saveToFile(modPath + "mod.json", JSON.stringify(mod, undefined, 2));
+    root.modChanged();
   }
 }

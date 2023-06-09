@@ -357,6 +357,14 @@
     <source>create_mod_hint</source>
     <translation>请输入mod的名称。</translation>
   </message>
+  <message>
+    <source>create_package</source>
+    <translation>新建拓展包</translation>
+  </message>
+  <message>
+    <source>create_package_hint</source>
+    <translation>请输入拓展包的内部名称。</translation>
+  </message>
 </context>
 
 </TS>
