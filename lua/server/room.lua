@@ -751,6 +751,10 @@ function Room:sendFootnote(ids, log)
   self:doBroadcastNotify("SetCardFootnote", json.encode{ ids, log })
 end
 
+function Room:sendCardVirtName(ids, name)
+  self:doBroadcastNotify("SetCardVirtName", json.encode{ ids, name })
+end
+
 --- 播放某种动画效果给players看。
 ---@param type string @ 动画名字
 ---@param data any @ 这个动画附加的额外信息，在这个函数将会被转成json字符串

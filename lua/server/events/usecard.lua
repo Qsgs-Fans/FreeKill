@@ -163,11 +163,17 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       from = from,
       to = tos,
     })
+    if card:isVirtual() then
+      room:sendCardVirtName(useCardIds, card.name)
+    end
   else
     room:sendFootnote(useCardIds, {
       type = "##UseCard",
       from = from,
     })
+    if card:isVirtual() then
+      room:sendCardVirtName(useCardIds, card.name)
+    end
   end
 end
 
@@ -270,6 +276,9 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
       type = "##ResponsePlayCard",
       from = from,
     })
+    if card:isVirtual() then
+      self:sendCardVirtName(cardIds, card.name)
+    end
   end
 
   if self.logic:trigger(fk.PreCardRespond, self:getPlayerById(cardResponseEvent.from), cardResponseEvent) then

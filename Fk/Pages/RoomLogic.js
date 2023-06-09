@@ -287,6 +287,29 @@ callbacks["SetCardFootnote"] = (j) => {
   setCardFootnote(id, note);
 }
 
+function setCardVirtName(id, name) {
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    return;
+  }
+
+  card.virt_name = name;
+}
+
+callbacks["SetCardVirtName"] = (j) => {
+  const data = JSON.parse(j);
+  const ids = data[0];
+  const note = data[1];
+  ids.forEach(id => setCardVirtName(id, note));
+}
+
 function changeHp(id, delta, losthp) {
   const photo = getPhoto(id);
   if (!photo) {

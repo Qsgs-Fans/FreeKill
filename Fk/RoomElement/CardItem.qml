@@ -120,14 +120,25 @@ Item {
   }
 
   Rectangle {
+    id: virt_rect
     visible: root.virt_name !== ""
     width: parent.width
-    height: 14
-    anchors.verticalCenter: parent.verticalCenter
-    Text {
-      anchors.centerIn: parent
-      text: Backend.translate(root.virt_name)
-    }
+    height: 20
+    y: 40
+    color: "snow"
+    opacity: 0.8
+    radius: 4
+    border.color: "black"
+    border.width: 1
+  }
+
+  Text {
+    visible: virt_rect.visible
+    anchors.centerIn: virt_rect
+    font.pixelSize: 16
+    font.family: fontLibian.name
+    font.letterSpacing: -0.6
+    text: Backend.translate(root.virt_name)
   }
 
   Text {
