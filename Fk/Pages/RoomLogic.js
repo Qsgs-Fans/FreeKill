@@ -263,6 +263,30 @@ function setEmotion(id, emotion, isCardId) {
   animation.start();
 }
 
+function setCardFootnote(id, footnote) {
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    return;
+  }
+
+  card.footnote = footnote;
+  card.footnoteVisible = true;
+}
+
+callbacks["SetCardFootnote"] = (j) => {
+  const data = JSON.parse(j);
+  const id = data[0];
+  const note = data[1];
+  setCardFootnote(id, note);
+}
+
 function changeHp(id, delta, losthp) {
   const photo = getPhoto(id);
   if (!photo) {

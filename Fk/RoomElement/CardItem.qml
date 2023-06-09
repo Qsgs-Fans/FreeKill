@@ -130,21 +130,23 @@ Item {
     }
   }
 
-  GlowText {
+  Text {
     id: footnoteItem
     text: footnote
-    x: 6
-    y: parent.height - height - 6
+    x: 0
+    y: parent.height - height - 12
     width: root.width - x * 2
     color: "#E4D5A0"
+    // color: "white"
     visible: footnoteVisible
+    style: Text.Outline
     wrapMode: Text.WrapAnywhere
     horizontalAlignment: Text.AlignHCenter
     font.family: fontLibian.name
     font.pixelSize: 14
-    glow.color: "black"
-    glow.spread: 1
-    glow.radius: 1
+    // glow.color: "black"
+    // glow.spread: 1
+    // glow.radius: 1
     //glow.samples: 12
   }
 

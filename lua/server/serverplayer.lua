@@ -351,6 +351,10 @@ function ServerPlayer:showCards(cards)
     from = self.id,
     cards = cards,
   })
+  room:sendFootnote(cards, {
+    type = "##ShowCard",
+    from = self.id,
+  })
 
   room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end

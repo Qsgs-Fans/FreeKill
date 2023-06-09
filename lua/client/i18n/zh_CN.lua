@@ -357,3 +357,15 @@ Fk:loadTranslationTable{
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
 }
+
+-- card footnote
+Fk:loadTranslationTable{
+  ["$$DiscardCards"] = "%from弃置",
+  ["$$PutCard"] = "%from置于",
+
+  ["##UseCard"] = "%from使用",
+  ["##UseCardTo"] = "%from对%to",
+  ["##ResponsePlayCard"] = "%from打出",
+  ["##ShowCard"] = "%from展示",
+  ["##JudgeCard"] = "%arg判定",
+}
