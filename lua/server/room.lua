@@ -419,6 +419,11 @@ function Room:removeCardMark(card, mark, count)
   self:setCardMark(card, mark, math.max(num - count, 0))
 end
 
+---@param player ServerPlayer
+function Room:setPlayerProperty(player, property, value)
+  player[property] = value
+  self:broadcastProperty(player, property)
+end
 
 --- 将房间中某个tag设为特定值。
 ---
@@ -868,7 +873,7 @@ end
 ---@return boolean, table
 function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data)
   prompt = prompt or ""
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or {}
   local skill = Fk.skills[skill_name]
   if not (skill and (skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill))) then
@@ -929,7 +934,7 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param skipDiscard boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard)
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   pattern = pattern or ""
 
   local canDiscards = table.filter(
@@ -1004,7 +1009,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
   if maxNum < 1 then
     return {}
   end
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
 
   local data = {
     targets = targets,
@@ -1042,7 +1047,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
   if minNum < 1 then
     return nil
   end
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   pattern = pattern or ""
 
   local chosenCards = {}
@@ -1089,7 +1094,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   if maxNum < 1 then
     return {}
   end
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
@@ -1459,7 +1464,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or {}
   pattern = pattern or card_name
   prompt = prompt or ""
@@ -1505,7 +1510,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
 
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or {}
   pattern = pattern or card_name
   prompt = prompt or ""
@@ -1554,7 +1559,7 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
 
   local command = "AskForUseCard"
   card_name = card_name or "nullification"
-  cancelable = cancelable or false
+  cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or {}
   prompt = prompt or ""
   pattern = pattern or card_name
@@ -1750,7 +1755,7 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
   if flag then
     assert(flag == "e" or flag == "j")
   end
-  cancelable = (not cancelable) and false or true
+  cancelable = (cancelable == nil) and true or cancelable
 
   local data = {
     flag = flag,
@@ -2691,6 +2696,21 @@ function Room:useSkill(player, skill, effect_cb)
 
   if effect_cb then
     return execGameEvent(GameEvent.SkillEffect, effect_cb, player, skill)
+  end
+end
+
+---@param player ServerPlayer
+---@param sendLog boolean|nil
+function Room:revivePlayer(player, sendLog)
+  if not player.dead then return end
+  self:setPlayerProperty(player, "dead", false)
+  self:setPlayerProperty(player, "dying", false)
+  self:setPlayerProperty(player, "hp", player.maxHp)
+  table.insertIfNeed(self.alive_players, player)
+
+  sendLog = (sendLog == nil) and true or sendLog
+  if sendLog then
+    self:sendLog { type = "#Revive", from = player.id }
   end
 end
 

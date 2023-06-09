@@ -350,6 +350,7 @@ Fk:loadTranslationTable{
   ["#EnterDying"] = "%from 进入了濒死阶段",
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
+  ["#Revive"] = "%from 竟然复活了",
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
