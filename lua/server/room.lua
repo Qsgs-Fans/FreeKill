@@ -1308,8 +1308,8 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       bottom = d[2]
     end
   else
-    top = table.random(cards, top_limit and top_limit[2] or #cards)
-    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end))
+    top = table.random(cards, top_limit and top_limit[2] or #cards) or {}
+    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or {}
   end
 
   if not noPut then

@@ -105,7 +105,7 @@ callbacks["EnterRoom"] = (jsonData) => {
 
 callbacks["UpdateRoomList"] = (jsonData) => {
   const current = mainStack.currentItem;  // should be lobby
-  if (mainStack.currentItem === lobby) {
+  if (mainStack.currentItem == lobby) {
     current.roomModel.clear();
     JSON.parse(jsonData).forEach(function (room) {
       current.roomModel.append({
@@ -122,7 +122,7 @@ callbacks["UpdateRoomList"] = (jsonData) => {
 
 callbacks["UpdatePlayerNum"] = (j) => {
   const current = mainStack.currentItem;  // should be lobby
-  if (mainStack.currentItem === lobby) {
+  if (mainStack.currentItem == lobby) {
     const data = JSON.parse(j);
     const l = data[0];
     const s = data[1];
