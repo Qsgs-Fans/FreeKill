@@ -117,9 +117,11 @@ function Client:moveCards(moves)
 end
 
 ---@param msg LogMessage
-function Client:appendLog(msg)
+local function parseMsg(msg, nocolor)
+  local self = ClientInstance
   local data = msg
   local function getPlayerStr(pid, color)
+    if nocolor then color = "white" end
     if not pid then
       return ""
     end
@@ -177,7 +179,7 @@ function Client:appendLog(msg)
   local function parseArg(arg)
     arg = arg or ""
     arg = Fk:translate(arg)
-    arg = string.format('<font color="#0598BC"><b>%s</b></font>', arg)
+    arg = string.format('<font color="%s"><b>%s</b></font>', nocolor and "white" or "#0598BC", arg)
     return arg
   end
 
@@ -192,7 +194,26 @@ function Client:appendLog(msg)
   log = string.gsub(log, "%%arg2", arg2)
   log = string.gsub(log, "%%arg3", arg3)
   log = string.gsub(log, "%%arg", arg)
-  self:notifyUI("GameLog", log)
+  return log
+end
+
+---@param msg LogMessage
+function Client:appendLog(msg)
+  self:notifyUI("GameLog", parseMsg(msg))
+end
+
+---@param msg LogMessage
+function Client:setCardNote(ids, msg)
+  for _, id in ipairs(ids) do
+    if id ~= -1 then
+      self:notifyUI("SetCardFootnote", json.encode{ id, parseMsg(msg, true) })
+    end
+  end
+end
+
+fk.client_callback["SetCardFootnote"] = function(jsonData)
+  local data = json.decode(jsonData)
+  ClientInstance:setCardNote(data[1], data[2]);
 end
 
 fk.client_callback["Setup"] = function(jsonData)
@@ -412,28 +433,33 @@ local function mergeMoves(moves)
 end
 
 local function sendMoveCardLog(move)
+  local client = ClientInstance
   if #move.ids == 0 then return end
   local hidden = table.contains(move.ids, -1)
   local msgtype
 
   if move.from and move.toArea == Card.DrawPile then
     msgtype = hidden and "$PutCard" or "$PutKnownCard"
-    ClientInstance:appendLog{
+    client:appendLog{
       type = msgtype,
       from = move.from,
       card = move.ids,
       arg = #move.ids,
     }
+    client:setCardNote(move.ids, {
+      type = "$$PutCard",
+      from = move.from,
+    })
   elseif move.toArea == Card.PlayerSpecial then
     msgtype = hidden and "$RemoveCardFromGame" or "$AddToPile"
-    ClientInstance:appendLog{
+    client:appendLog{
       type = msgtype,
       arg = move.specialName,
       arg2 = #move.ids,
       card = move.ids,
     }
   elseif move.fromArea == Card.PlayerSpecial and move.to then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$GetCardsFromPile",
       from = move.to,
       arg = move.fromSpecialName,
@@ -441,7 +467,7 @@ local function sendMoveCardLog(move)
       card = move.ids,
     }
   elseif move.moveReason == fk.ReasonDraw then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$DrawCards",
       from = move.to,
       card = move.ids,
@@ -449,7 +475,7 @@ local function sendMoveCardLog(move)
     }
   elseif (move.fromArea == Card.DrawPile or move.fromArea == Card.DiscardPile)
     and move.moveReason == fk.ReasonPrey then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$PreyCardsFromPile",
       from = move.to,
       card = move.ids,
@@ -457,14 +483,14 @@ local function sendMoveCardLog(move)
     }
   elseif (move.fromArea == Card.Processing or move.fromArea == Card.PlayerJudge)
     and move.toArea == Card.PlayerHand then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$GotCardBack",
       from = move.to,
       card = move.ids,
       arg = #move.ids,
     }
   elseif move.fromArea == Card.DiscardPile and move.toArea == Card.PlayerHand then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$RecycleCard",
       from = move.to,
       card = move.ids,
@@ -472,7 +498,7 @@ local function sendMoveCardLog(move)
     }
   elseif move.from and move.fromArea ~= Card.PlayerJudge and
     move.toArea ~= Card.PlayerJudge and move.to and move.from ~= move.to then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$MoveCards",
       from = move.from,
       to = { move.to },
@@ -486,7 +512,7 @@ local function sendMoveCardLog(move)
       msgtype = "$PasteCard"
     end
     if msgtype then
-      ClientInstance:appendLog{
+      client:appendLog{
         type = msgtype,
         from = move.from,
         to = { move.to },
@@ -497,12 +523,16 @@ local function sendMoveCardLog(move)
 
   -- TODO ...
   if move.moveReason == fk.ReasonDiscard then
-    ClientInstance:appendLog{
+    client:appendLog{
       type = "$DiscardCards",
       from = move.from,
       card = move.ids,
       arg = #move.ids,
     }
+    client:setCardNote(move.ids, {
+      type = "$$DiscardCards",
+      from = move.from
+    })
   end
 end
 
@@ -512,10 +542,10 @@ fk.client_callback["MoveCards"] = function(jsonData)
   local separated = separateMoves(raw_moves)
   ClientInstance:moveCards(separated)
   local merged = mergeMoves(separated)
+  ClientInstance:notifyUI("MoveCards", json.encode(merged))
   for _, move in ipairs(merged) do
     sendMoveCardLog(move)
   end
-  ClientInstance:notifyUI("MoveCards", json.encode(merged))
 end
 
 fk.client_callback["ShowCard"] = function(jsonData)

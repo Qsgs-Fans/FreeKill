@@ -154,6 +154,27 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       }
     end
   end
+
+  if #useCardIds == 0 then return end
+  if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
+    local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
+    room:sendFootnote(useCardIds, {
+      type = "##UseCardTo",
+      from = from,
+      to = tos,
+    })
+    if card:isVirtual() then
+      room:sendCardVirtName(useCardIds, card.name)
+    end
+  else
+    room:sendFootnote(useCardIds, {
+      type = "##UseCard",
+      from = from,
+    })
+    if card:isVirtual() then
+      room:sendCardVirtName(useCardIds, card.name)
+    end
+  end
 end
 
 ---@param self GameEvent
@@ -250,6 +271,15 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     toArea = Card.Processing,
     moveReason = fk.ReasonResonpse,
   })
+  if #cardIds > 0 then
+    self:sendFootnote(cardIds, {
+      type = "##ResponsePlayCard",
+      from = from,
+    })
+    if card:isVirtual() then
+      self:sendCardVirtName(cardIds, card.name)
+    end
+  end
 
   if self.logic:trigger(fk.PreCardRespond, self:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
     self.logic:breakEvent()

@@ -130,6 +130,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
 
@@ -350,9 +351,22 @@ Fk:loadTranslationTable{
   ["#EnterDying"] = "%from 进入了濒死阶段",
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
+  ["#Revive"] = "%from 竟然复活了",
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+}
+
+-- card footnote
+Fk:loadTranslationTable{
+  ["$$DiscardCards"] = "%from弃置",
+  ["$$PutCard"] = "%from置于",
+
+  ["##UseCard"] = "%from使用",
+  ["##UseCardTo"] = "%from对%to",
+  ["##ResponsePlayCard"] = "%from打出",
+  ["##ShowCard"] = "%from展示",
+  ["##JudgeCard"] = "%arg判定",
 }
