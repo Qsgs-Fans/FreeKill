@@ -130,6 +130,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
 

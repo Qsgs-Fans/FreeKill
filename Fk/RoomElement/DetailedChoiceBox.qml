@@ -57,7 +57,7 @@ GraphicsBox {
           width: parent.width
           text: Backend.translate(":" + modelData)
           color: "white"
-          wrapMode: Text.WrapAnywhere
+          wrapMode: Text.WordWrap
           font.pixelSize: 16
           textFormat: TextEdit.RichText
         }

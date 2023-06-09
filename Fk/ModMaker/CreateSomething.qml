@@ -17,19 +17,19 @@ ColumnLayout {
     font.pixelSize: 20
     font.bold: true
     Layout.fillWidth: true
-    wrapMode: Text.WrapAnywhere
+    wrapMode: Text.WordWrap
   }
 
   Text {
     text: qsTr(hint)
     Layout.fillWidth: true
-    wrapMode: Text.WrapAnywhere
+    wrapMode: Text.WordWrap
   }
 
   Text {
     text: qsTr("validator_hint")
     Layout.fillWidth: true
-    wrapMode: Text.WrapAnywhere
+    wrapMode: Text.WordWrap
   }
 
   TextField {

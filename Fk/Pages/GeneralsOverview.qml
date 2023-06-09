@@ -148,15 +148,38 @@ Item {
     radius: 8
 
     property string general: "caocao"
+
+    function addSkillAudio(skill) {
+      const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      const extension = skilldata.extension;
+      for (let i = 0; i < 999; i++) {
+        let fname = AppPath + "/packages/" + extension + "/audio/skill/" +
+          skill + (i !== 0 ? i.toString() : "") + ".mp3";
+
+        if (Backend.exists(fname)) {
+          audioModel.append({ name: skill, idx: i });
+        } else {
+          if (i > 0) break;
+        }
+      }
+    }
+
     function updateGeneral() {
       detailGeneralCard.name = general;
       const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
       generalText.clear();
+      audioModel.clear();
       data.skill.forEach(t => {
-        generalText.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+        generalText.append("<b>" + Backend.translate(t.name) +
+          "</b>: " + t.description);
+
+        addSkillAudio(t.name);
       });
       data.related_skill.forEach(t => {
-        generalText.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
+        generalText.append("<font color=\"purple\"><b>" + Backend.translate(t.name) +
+          "</b>: " + t.description + "</font>");
+
+        addSkillAudio(t.name);
       });
     }
 
@@ -189,6 +212,58 @@ Item {
           wrapMode: TextEdit.WordWrap
           textFormat: TextEdit.RichText
           font.pixelSize: 16
+        }
+
+        Repeater {
+          model: ListModel {
+            id: audioModel
+          }
+          Button {
+            Layout.fillWidth: true
+            contentItem: ColumnLayout {
+              Text {
+                Layout.fillWidth: true
+                text: Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "")
+                font.bold: true
+                font.pixelSize: 14
+              }
+              Text {
+                Layout.fillWidth: true
+                text: Backend.translate("$" + name + (idx ? idx.toString() : ""))
+                wrapMode: Text.WordWrap
+              }
+            }
+
+            onClicked: {
+              const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [name]));
+              const extension = skilldata.extension;
+              Backend.playSound("./packages/" + extension +
+                "/audio/skill/" + name, idx);
+            }
+          }
+        }
+
+        Button {
+          Layout.fillWidth: true
+          contentItem: ColumnLayout {
+            Text {
+              Layout.fillWidth: true
+              text: Backend.translate("Death audio")
+              font.bold: true
+              font.pixelSize: 14
+            }
+            Text {
+              Layout.fillWidth: true
+              text: Backend.translate("~" + generalDetail.general)
+              wrapMode: Text.WordWrap
+            }
+          }
+
+          onClicked: {
+            const general = generalDetail.general
+            const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
+            Backend.playSound("./packages/" + extension + "/audio/death/" + general);
+          }
         }
       }
     }

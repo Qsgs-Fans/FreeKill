@@ -39,7 +39,7 @@ Item {
       Text {
         id: bulletin_info
         width: parent.width
-        wrapMode: TextEdit.WrapAnywhere
+        wrapMode: TextEdit.WordWrap
         textFormat: Text.MarkdownText
         text: Backend.translate('Bulletin Info')
       }
