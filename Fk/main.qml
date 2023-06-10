@@ -224,13 +224,21 @@ Window {
     title: realMainWin.title
     informativeText: qsTr("Are you sure to exit?")
     buttons: MessageDialog.Ok | MessageDialog.Cancel
-    onAccepted: {
-      mainWindow.closing = true;
-      config.winWidth = width;
-      config.winHeight = height;
-      config.saveConf();
-      Backend.quitLobby(false);
-      realMainWin.close();
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          mainWindow.closing = true;
+          config.winWidth = width;
+          config.winHeight = height;
+          config.saveConf();
+          Backend.quitLobby(false);
+          realMainWin.close();
+          break;
+        }
+        case MessageDialog.Cancel: {
+          exitMessageDialog.close();
+        }
+      }
     }
   }
 
