@@ -45,7 +45,7 @@ GraphicsBox {
             font.family: fontLibian.name
             font.pixelSize: 18
             style: Text.Outline
-            wrapMode: Text.WrapAnywhere
+            wrapMode: Text.WordWrap
             verticalAlignment: Text.AlignVCenter
             horizontalAlignment: Text.AlignHCenter
           }

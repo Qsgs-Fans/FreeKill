@@ -12,7 +12,7 @@ ColumnLayout {
   Text {
     text: qsTr("help_text")
     Layout.fillWidth: true
-    wrapMode: Text.WrapAnywhere
+    wrapMode: Text.WordWrap
   }
 
   RowLayout {
@@ -54,7 +54,7 @@ ColumnLayout {
   Text {
     text: qsTr("key_help_text")
     Layout.fillWidth: true
-    wrapMode: Text.WrapAnywhere
+    wrapMode: Text.WordWrap
     textFormat: Text.RichText
     onLinkActivated: Qt.openUrlExternally(link);
   }

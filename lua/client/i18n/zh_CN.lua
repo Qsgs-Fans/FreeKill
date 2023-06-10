@@ -130,6 +130,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
 
@@ -216,28 +217,21 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Back To Lobby"] = "返回大厅",
 
   ["Bulletin Info"] = [==[
-  ## v0.2.1
+## v0.2.2
 
-  大引流之后的第一次更新。感觉很仓促。
-
-  - 扣上限心碎
-  - 进服维护的各种跟后端稳定性有关的代码
-  - 断线重连/旁观时候计入技能次数
-  - ban人和banip，相应的也有解禁
-  - 开房设置现在可以滑动
-  - 完善网络错误报错
-  - 现在开始游戏之前需要等待和所有人准备
-  - 指示掉线之人和走小道之人
-  - 掉线和走小道的人不再被AI接管
-  - 延时锦囊牌素材从拓展包找
-  - 拓展包管理界面UI优化，下载失败的包可以在管理拓展包中删除
-  - 手牌上限显示：体力值为负数和手牌上限为无限时显示优化
-  - 观星新增提示，修复观星
-  - 手牌上限技中，增加不计入手牌上限技
-  - 修复变更武将
-  - 修复奸雄和救援
-  - 修复选角色的cancelble
-  - 增强谋徐盛
+1. 增加退出时确定
+2. 修因心跳引起的贯石斧飞刀
+3. 修标记区遮住宝物牌
+4. exchangePile (我还没仔细测试)
+5. 事件记录器与相应的查找函数
+6. Qml/JS大部分let能改的都改成const了，顺便修一些三等号bug
+7. 增加hasMark函数，等效于getMark ~= 0
+8. 复活
+9. 修正cancelable默认
+10. move私有牌的-1时其他人视角正常
+11. 处理区的牌增加脚注和转化牌牌名（未完全完善）
+12. askForChoices堆一个detailed参数以显示详情
+13. 武将一览界面上新播放语音
   ]==],
 }
 
@@ -350,9 +344,22 @@ Fk:loadTranslationTable{
   ["#EnterDying"] = "%from 进入了濒死阶段",
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
+  ["#Revive"] = "%from 竟然复活了",
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+}
+
+-- card footnote
+Fk:loadTranslationTable{
+  ["$$DiscardCards"] = "%from弃置",
+  ["$$PutCard"] = "%from置于",
+
+  ["##UseCard"] = "%from使用",
+  ["##UseCardTo"] = "%from对%to",
+  ["##ResponsePlayCard"] = "%from打出",
+  ["##ShowCard"] = "%from展示",
+  ["##JudgeCard"] = "%arg判定",
 }

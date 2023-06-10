@@ -263,6 +263,53 @@ function setEmotion(id, emotion, isCardId) {
   animation.start();
 }
 
+function setCardFootnote(id, footnote) {
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    return;
+  }
+
+  card.footnote = footnote;
+  card.footnoteVisible = true;
+}
+
+callbacks["SetCardFootnote"] = (j) => {
+  const data = JSON.parse(j);
+  const id = data[0];
+  const note = data[1];
+  setCardFootnote(id, note);
+}
+
+function setCardVirtName(id, name) {
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    return;
+  }
+
+  card.virt_name = name;
+}
+
+callbacks["SetCardVirtName"] = (j) => {
+  const data = JSON.parse(j);
+  const ids = data[0];
+  const note = data[1];
+  ids.forEach(id => setCardVirtName(id, note));
+}
+
 function changeHp(id, delta, losthp) {
   const photo = getPhoto(id);
   if (!photo) {
@@ -754,6 +801,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   const choices = data[0];
   const skill_name = data[1];
   const prompt = data[2];
+  const detailed = data[3];
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForChoice")
       .arg(Backend.translate(skill_name));
@@ -761,7 +809,13 @@ callbacks["AskForChoice"] = (jsonData) => {
     roomScene.promptText = processPrompt(prompt);
   }
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
+  let qmlSrc;
+  if (!detailed) {
+    qmlSrc = "../RoomElement/ChoiceBox.qml";
+  } else {
+    qmlSrc = "../RoomElement/DetailedChoiceBox.qml";
+  }
+  roomScene.popupBox.sourceComponent = Qt.createComponent(qmlSrc);
   const box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;
