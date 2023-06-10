@@ -185,6 +185,7 @@ end
 ---@param mark string @ 标记
 ---@param count integer @ 为标记删除的数量
 function Player:setMark(mark, count)
+  if count == 0 then count = nil end
   if self.mark[mark] ~= count then
     self.mark[mark] = count
   end
