@@ -163,6 +163,12 @@ Item {
           if (i > 0) break;
         }
       }
+      let fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
+      if (Backend.exists(fname)) {
+        audioDeath.visible = true;
+      } else {
+        audioDeath.visible = false;
+      }
     }
 
     function updateGeneral() {
@@ -247,6 +253,7 @@ Item {
         }
 
         Button {
+          id: audioDeath
           Layout.fillWidth: true
           contentItem: ColumnLayout {
             Text {
