@@ -130,7 +130,7 @@ Item {
     lineHeightMode: Text.FixedHeight
     color: "white"
     width: 24
-    wrapMode: Text.WordWrap
+    wrapMode: Text.WrapAnywhere
     text: ""
   }
 
@@ -205,7 +205,7 @@ Item {
       lineHeightMode: Text.FixedHeight
       color: "white"
       width: 24
-      wrapMode: Text.WordWrap
+      wrapMode: Text.WrapAnywhere
       text: Backend.translate(deputyGeneral)
       style: Text.Outline
     }
@@ -278,7 +278,7 @@ Item {
     id: equipAreaItem
 
     x: 31
-    y: 139
+    y: 157
   }
 
   Item {

@@ -13,9 +13,9 @@ import Fk.RoomElement
  */
 
 Column {
-  height: 88
+  height: 70
   width: 138
-  property int itemHeight: Math.floor(height / 4)
+  property int itemHeight: treasureItem.name === "" ? height / 3 : height / 4
   property var items: [treasureItem, weaponItem, armorItem, defensiveHorseItem, offensiveHorseItem]
   property var subtypes: ["treasure", "weapon", "armor", "defensive_horse", "offensive_horse"]
   property int length: area.length
@@ -29,7 +29,7 @@ Column {
   EquipItem {
     id: treasureItem
     width: parent.width
-    height: itemHeight
+    height: name === "" ? 0 : itemHeight
     opacity: 0
   }
 

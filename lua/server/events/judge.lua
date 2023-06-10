@@ -21,6 +21,10 @@ GameEvent.functions[GameEvent.Judge] = function(self)
     card = {data.card.id},
   }
   self:moveCardTo(data.card, Card.Processing, nil, fk.ReasonJudge)
+  self:sendFootnote({ data.card.id }, {
+    type = "##JudgeCard",
+    arg = data.reason,
+  })
 
   self.logic:trigger(fk.AskForRetrial, who, data)
   self.logic:trigger(fk.FinishRetrial, who, data)
@@ -30,6 +34,10 @@ GameEvent.functions[GameEvent.Judge] = function(self)
     from = who.id,
     card = {data.card.id},
   }
+  self:sendFootnote({ data.card.id }, {
+    type = "##JudgeCard",
+    arg = data.reason,
+  })
 
   if data.pattern then
     self:delay(400);

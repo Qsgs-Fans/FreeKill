@@ -66,7 +66,7 @@ Item {
       c.selectable = true;
       c.height = c.height * 0.8;
       c.width = c.width * 0.8;
-      c.rotation = (Math.random() - 0.5) * 5;
+      // c.rotation = (Math.random() - 0.5) * 5;
     }
   }
 
@@ -81,7 +81,7 @@ Item {
       c.selectable = false;
       c.height = c.height / 0.8;
       c.width = c.width / 0.8;
-      c.rotation = 0;
+      // c.rotation = 0;
     }
     const vanished = [];
     if (result.length < outputs.length) {
