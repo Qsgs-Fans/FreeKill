@@ -1295,18 +1295,18 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   top_limit = top_limit or Util.DummyTable
   bottom_limit = bottom_limit or Util.DummyTable
   if #top_limit > 0 then
-    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "牌堆顶区间设置错误：数值小于0")
-    assert(top_limit[1] <= top_limit[2], "牌堆顶区间设置错误：上限小于下限")
+    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(top_limit[1] <= top_limit[2], "limits error: The upper limit should be less than the lower limit")
   end
   if #bottom_limit > 0 then
-    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "牌堆底区间设置错误：数值小于0")
-    assert(bottom_limit[1] <= bottom_limit[2], "牌堆底区间设置错误：上限小于下限")
+    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(bottom_limit[1] <= bottom_limit[2], "limits error: The upper limit should be less than the lower limit")
   end
   if #top_limit > 0 and #bottom_limit > 0 then
-    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
+    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "limits Error: No enough space")
   end
   if areaNames then
-    assert(#areaNames > 1, "左侧提示信息设置错误：应有Top和Bottom两个提示信息")
+    assert(#areaNames == 2, "areaNames error: Should have 2 elements")
   end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
