@@ -294,7 +294,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           end
         ) - player:getMaxCards()
         if discardNum > 0 then
-          room:askForDiscard(player, discardNum, discardNum, false, "game_rule")
+          room:askForDiscard(player, discardNum, discardNum, false, "game_rule", false)
         end
       end,
       [Player.Finish] = function()

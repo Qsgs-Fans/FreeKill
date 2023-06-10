@@ -242,8 +242,8 @@ local change_hero = fk.CreateActiveSkill{
     room:changeHero(target, general, false, false, true)
   end,
 }
-local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
-test2.shield = 4
+local test2 = General(extension, "mouxusheng", "wu", 100, 100, General.Female)
+test2.shield = 5
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(control)
