@@ -288,7 +288,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
         local discardNum = #table.filter(
           player:getCardIds(Player.Hand), function(id)
             local card = Fk:getCardById(id)
-            return table.every(room.status_skills[MaxCardsSkill] or {}, function(skill)
+            return table.every(room.status_skills[MaxCardsSkill] or Util.DummyTable, function(skill)
               return not skill:excludeFrom(player, card)
             end)
           end

@@ -78,7 +78,7 @@ end
 ---@param player Player @ 玩家
 ---@return boolean
 function Skill:isEffectable(player)
-  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or {}
+  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
   for _, nullifySkill in ipairs(nullifySkills) do
     if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then
       return false

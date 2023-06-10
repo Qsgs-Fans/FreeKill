@@ -112,7 +112,7 @@ local function _includeMixin(aClass, mixin)
     if name ~= "included" and name ~= "static" then aClass[name] = method end
   end
 
-  for name,method in pairs(mixin.static or {}) do
+  for name,method in pairs(mixin.static or Util.DummyTable) do
     aClass.static[name] = method
   end
 

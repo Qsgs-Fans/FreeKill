@@ -582,7 +582,7 @@ local amazingGraceAction = fk.CreateTriggerSkill{
         room:fillAG(p, toDisplay)
       end)
 
-      data.extra_data = data.extra_data or {}
+      data.extra_data = data.extra_data or Util.DummyTable
       data.extra_data.AGFilled = toDisplay
     else
       table.forEach(room.players, function(p)
@@ -804,7 +804,7 @@ local qingGangSkill = fk.CreateTriggerSkill{
     local room = player.room
     room:addPlayerMark(room:getPlayerById(data.to), fk.MarkArmorNullified)
 
-    data.extra_data = data.extra_data or {}
+    data.extra_data = data.extra_data or Util.DummyTable
     data.extra_data.qinggangNullified = data.extra_data.qinggangNullified or {}
     data.extra_data.qinggangNullified[tostring(data.to)] = (data.extra_data.qinggangNullified[tostring(data.to)] or 0) + 1
   end,

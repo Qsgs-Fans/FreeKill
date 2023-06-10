@@ -484,7 +484,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList() or {}
+  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
   local new = Fk.generals[new_general] or Fk.generals["sunce"]
   local new_skills = new:getSkillNameList()
@@ -884,7 +884,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   prompt = prompt or ""
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = (no_indicate == nil) and true or no_indicate
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   local skill = Fk.skills[skill_name]
   if not (skill and (skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill))) then
     print("Attempt ask for use non-active skill: " .. skill_name)
@@ -956,14 +956,14 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
       local checkpoint = true
       local card = Fk:getCardById(id)
 
-      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:prohibitDiscard(player, card) then
           return false
         end
       end
       if skillName == "game_rule" then
-        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
         for _, skill in ipairs(status_skills) do
           if skill:excludeFrom(player, card) then
             return false
@@ -1292,8 +1292,8 @@ end
 ---@return table<top|bottom, cardId[]>
 function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
-  top_limit = top_limit or {}
-  bottom_limit = bottom_limit or {}
+  top_limit = top_limit or Util.DummyTable
+  bottom_limit = bottom_limit or Util.DummyTable
   if #top_limit > 0 then
     assert(top_limit[1] >= 0 and top_limit[2] >= 0, "牌堆顶区间设置错误：数值小于0")
     assert(top_limit[1] <= top_limit[2], "牌堆顶区间设置错误：上限小于下限")
@@ -1332,8 +1332,8 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       bottom = d[2]
     end
   else
-    top = table.random(cards, top_limit and top_limit[2] or #cards) or {}
-    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or {}
+    top = table.random(cards, top_limit and top_limit[2] or #cards) or Util.DummyTable
+    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or Util.DummyTable
   end
 
   if not noPut then
@@ -1364,7 +1364,7 @@ end
 ---@return table<cardIds, cardId[]>
 function Room:AskForExchange(player, piles, piles_name, customNotify)
   local command = "AskForExchange"
-  piles_name = piles_name or {}
+  piles_name = piles_name or Util.DummyTable
   if #piles_name ~= #piles then
     piles_name = {}
     for i, _ in ipairs(piles) do
@@ -1465,7 +1465,7 @@ end
 ---@param event_data CardEffectEvent|nil @ 事件信息
 ---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
-  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or {}, player.id)) then
+  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
@@ -1485,7 +1485,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
@@ -1524,14 +1524,14 @@ end
 ---@param effectData CardEffectEvent @ 关联的卡牌生效流程
 ---@return Card | nil @ 打出的牌
 function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData)
-  if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or {}, player.id)) then
+  if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
@@ -1580,7 +1580,7 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   local command = "AskForUseCard"
   card_name = card_name or "nullification"
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   prompt = prompt or ""
   pattern = pattern or card_name
 
@@ -2110,7 +2110,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
     if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
     if
       cardEffectEvent.card.trueName == "slash" and
-      not (cardEffectEvent.unoffsetable or table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to))
+      not (cardEffectEvent.unoffsetable or table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, cardEffectEvent.to))
     then
       local loopTimes = 1
       if cardEffectEvent.fixedResponseTimes then
@@ -2152,7 +2152,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and
       not (cardEffectEvent.disresponsive or cardEffectEvent.unoffsetable) and
-      not table.contains(cardEffectEvent.prohibitedCardNames or {}, "nullification")
+      not table.contains(cardEffectEvent.prohibitedCardNames or Util.DummyTable, "nullification")
     then
       local players = {}
       for _, p in ipairs(self.alive_players) do
@@ -2161,8 +2161,8 @@ function Room:handleCardEffect(event, cardEffectEvent)
           if
             Fk:getCardById(cid).name == "nullification" and
             not (
-              table.contains(cardEffectEvent.disresponsiveList or {}, p.id) or
-              table.contains(cardEffectEvent.unoffsetableList or {}, p.id)
+              table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+              table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
             )
           then
             table.insert(players, p)
@@ -2176,8 +2176,8 @@ function Room:handleCardEffect(event, cardEffectEvent)
               Exppattern:Parse("nullification"):matchExp(s.pattern) and
               not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
               not (
-                table.contains(cardEffectEvent.disresponsiveList or {}, p.id) or
-                table.contains(cardEffectEvent.unoffsetableList or {}, p.id)
+                table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+                table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
               )
             then
               table.insert(players, p)
@@ -2792,7 +2792,7 @@ function Room:getSubcardsByRule(card, fromAreas)
   end
 
   local cardIds = {}
-  fromAreas = fromAreas or {}
+  fromAreas = fromAreas or Util.DummyTable
   for _, cardId in ipairs(card:isVirtual() and card.subcards or { card.id }) do
     if #fromAreas == 0 or table.contains(fromAreas, self:getCardArea(cardId)) then
       table.insert(cardIds, cardId)

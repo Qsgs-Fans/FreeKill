@@ -127,7 +127,7 @@ local analepticEffect = fk.CreateTriggerSkill{
     local room = player.room
     if event == fk.PreCardUse then
       data.additionalDamage = (data.additionalDamage or 0) + player.drank
-      data.extra_data = data.extra_data or {}
+      data.extra_data = data.extra_data or Util.DummyTable
       data.extra_data.drankBuff = player.drank
       player.drank = 0
       room:broadcastProperty(player, "drank")

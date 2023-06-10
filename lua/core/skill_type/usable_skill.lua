@@ -15,7 +15,7 @@ end
 function UsableSkill:getMaxUseTime(player, scope, card, to)
   scope = scope or Player.HistoryTurn
   local ret = self.max_use_time[scope]
-  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getResidueNum(player, self, scope, card, to)
     if correct == nil then correct = 0 end

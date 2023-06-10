@@ -299,7 +299,7 @@ end
 
 
 function inspect.inspect(root, options)
-   options = options or {}
+   options = options or Util.DummyTable
 
    local depth = options.depth or (math.huge)
    local newline = options.newline or '\n'

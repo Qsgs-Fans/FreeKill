@@ -10,14 +10,14 @@ local discardSkill = fk.CreateActiveSkill{
     local checkpoint = true
     local card = Fk:getCardById(to_select)
 
-    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
     for _, skill in ipairs(status_skills) do
       if skill:prohibitDiscard(Self, card) then
         return false
       end
     end
     if Fk.currentResponseReason == "game_rule" then
-      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:excludeFrom(Self, card) then
           return false
