@@ -305,6 +305,9 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   auto msg = doc["msg"].toString();
   msg.replace(".", "․");
   doc["msg"] = msg;
+  if (!server->checkBanWord(msg)) {
+    return;
+  }
 
   if (type == 1) {
     doc["userName"] = sender->getScreenName();

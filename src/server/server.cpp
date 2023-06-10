@@ -95,6 +95,12 @@ bool Server::listen(const QHostAddress &address, ushort port) {
 
 void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
                         int timeout, const QByteArray &settings) {
+  if (!checkBanWord(name)) {
+    if (owner) {
+      owner->doNotify("ErrorMsg", "unk error");
+    }
+    return;
+  }
   Room *room;
   if (!idle_rooms.isEmpty()) {
     room = idle_rooms.pop();
@@ -332,7 +338,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
   QJsonArray result;
   QJsonObject obj;
 
-  if (CheckSqlString(name)) {
+  if (CheckSqlString(name) && checkBanWord(name)) {
     // Then we check the database,
     QString sql_find = QString("SELECT * FROM userinfo \
     WHERE name='%1';")
@@ -541,3 +547,17 @@ void Server::readConfig() {
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
+
+bool Server::checkBanWord(const QString &str) {
+  auto arr = getConfig("banwords").toArray();
+  if (arr.isEmpty()) {
+    return true;
+  }
+  foreach (auto v, arr) {
+    auto s = v.toString();
+    if (str.indexOf(s) != -1) {
+      return false;
+    }
+  }
+  return true;
+}
