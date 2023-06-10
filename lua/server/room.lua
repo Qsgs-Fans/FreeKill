@@ -1362,13 +1362,13 @@ end
 ---@param piles_name string[] @ 牌堆名，必须一一对应，否则统一替换为“牌堆X”
 ---@param customNotify string|null @ 自定义读条操作提示
 ---@return table<cardIds, cardId[]>
-function Room:AskForExchange(player, piles, piles_name, customNotify)
+function Room:askForExchange(player, piles, piles_name, customNotify)
   local command = "AskForExchange"
   piles_name = piles_name or Util.DummyTable
   if #piles_name ~= #piles then
     piles_name = {}
     for i, _ in ipairs(piles) do
-      table.insert(piles_name, "牌堆" .. i)
+      table.insert(piles_name, "Pile" .. i)
     end
   end
   self:notifyMoveFocus(player, customNotify or command)
