@@ -31,7 +31,7 @@ Item {
   property int drank: 0
   property bool isOwner: false
   property bool ready: false
-  property int distance: 0
+  property int distance: -1
   property string status: "normal"
   property int maxCard: 0
 
@@ -567,7 +567,7 @@ Item {
     color: "white"
     height: 20
     width: 20
-    visible: distance != 0
+    visible: distance != -1
     Text {
       text: distance
       anchors.centerIn: parent

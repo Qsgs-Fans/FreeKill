@@ -878,10 +878,12 @@ end
 ---@param prompt string @ 烧条上面显示的提示文本内容
 ---@param cancelable boolean @ 是否可以点取消
 ---@param extra_data table @ 额外信息，因技能而异了
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return boolean, table
-function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data)
+function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data, no_indicate)
   prompt = prompt or ""
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = (no_indicate == nil) and true or no_indicate
   extra_data = extra_data or {}
   local skill = Fk.skills[skill_name]
   if not (skill and (skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill))) then
@@ -906,7 +908,9 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
-  self:doIndicate(player.id, targets)
+  if not no_indicate then
+    self:doIndicate(player.id, targets)
+  end
 
   if skill.interaction then
     skill.interaction.data = data.interaction_data
@@ -940,9 +944,11 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param pattern string @ 弃牌需要符合的规则
 ---@param prompt string @ 提示信息
 ---@param skipDiscard boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard)
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
   pattern = pattern or ""
 
   local canDiscards = table.filter(
@@ -988,7 +994,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     pattern = pattern,
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
-  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data, no_indicate)
 
   if ret then
     toDiscard = ret.cards
@@ -1012,12 +1018,14 @@ end
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@param cancelable boolean @ 能否点取消
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable)
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable, no_indicate)
   if maxNum < 1 then
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
 
   local data = {
     targets = targets,
@@ -1026,7 +1034,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     pattern = "",
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
     return ret.targets
   else
@@ -1050,12 +1058,14 @@ end
 ---@param pattern string @ 选牌规则
 ---@param prompt string @ 提示信息
 ---@param expand_pile string @ 可选私人牌堆名称
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的牌的id列表，可能是空的
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile)
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
   if minNum < 1 then
     return nil
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
   pattern = pattern or ""
 
   local chosenCards = {}
@@ -1068,7 +1078,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     expand_pile = expand_pile,
   }
   local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
-  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, no_indicate)
   if ret then
     chosenCards = ret.cards
   else
@@ -1097,12 +1107,14 @@ end
 ---@param pattern string @ 选牌规则
 ---@param prompt string @ 提示信息
 ---@param cancelable boolean @ 能否点取消
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[], integer
-function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable)
+function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable, no_indicate)
   if maxNum < 1 then
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
   pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
@@ -1118,7 +1130,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     pattern = pattern,
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
     return ret.targets, ret.cards[1]
   else
@@ -1758,12 +1770,14 @@ end
 ---@param skillName string @ 技能名
 ---@param cancelable boolean|null @ 是否可以取消选择
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
+---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag)
+function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate)
   if flag then
     assert(flag == "e" or flag == "j")
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = (no_indicate == nil) and true or no_indicate
 
   local data = {
     flag = flag,
@@ -1774,7 +1788,8 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
     "choose_players_to_move_card_in_board",
     prompt or "",
     cancelable,
-    data
+    data,
+    no_indicate
   )
 
   if ret then
