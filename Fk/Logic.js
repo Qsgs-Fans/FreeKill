@@ -90,6 +90,7 @@ callbacks["EnterLobby"] = (jsonData) => {
     mainStack.pop();
   }
   mainWindow.busy = false;
+  config.saveConf();
 }
 
 callbacks["EnterRoom"] = (jsonData) => {

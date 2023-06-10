@@ -388,7 +388,7 @@ RowLayout {
     unSelectAll();
     disableSkills();
 
-    const cards = handcardAreaItem.cards;
+    let cards = handcardAreaItem.cards;
     const toRemove = [];
     for (let c of cards) {
       toRemove.push(c.cid);
