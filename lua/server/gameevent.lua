@@ -121,7 +121,7 @@ end
 ---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameEvent:searchEvents(eventType, n, func, endEvent)
   local logic = self.room.logic
-  local events = logic.event_recorder[eventType]
+  local events = logic.event_recorder[eventType] or Util.DummyTable
   local from = self.id
   local to = endEvent and endEvent.id or self.end_id
   if to == -1 then to = #logic.all_game_events end
