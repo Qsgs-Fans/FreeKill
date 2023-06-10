@@ -37,6 +37,7 @@ function Skill:initialize(name, frequency)
   self.frequency = frequency
   self.visible = true
   self.lordSkill = false
+  self.cardSkill = false
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
@@ -78,6 +79,10 @@ end
 ---@param player Player @ 玩家
 ---@return boolean
 function Skill:isEffectable(player)
+  if self.cardSkill then
+    return true
+  end
+
   local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or {}
   for _, nullifySkill in ipairs(nullifySkills) do
     if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then

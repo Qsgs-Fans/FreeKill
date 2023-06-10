@@ -18,3 +18,6 @@ MarkEnum.AddMaxCardsInTurn = "AddMaxCards-turn"
 MarkEnum.MinusMaxCards = "MinusMaxCards"
 ---@field AddMaxCards string @ 于本回合内减少标记值数量的手牌上限
 MarkEnum.MinusMaxCardsInTurn = "MinusMaxCards-turn"
+
+---@field uncompulsoryInvalidity string @ 非锁定技失效，可带清除标记后缀
+MarkEnum.UncompulsoryInvalidity = "uncompulsoryInvalidity"

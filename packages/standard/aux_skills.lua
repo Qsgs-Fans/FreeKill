@@ -106,10 +106,28 @@ local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
   end,
 }
 
+local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
+  name = "uncompulsory_invalidity",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    local suffix = { "-phase", "-turn", "-round" }
+    return
+      (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
+      not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
+      (
+        from:hasMark(MarkEnum.UncompulsoryInvalidity) or
+        table.find(suffix, function(s)
+          return from:hasMark(MarkEnum.UncompulsoryInvalidity .. s)
+        end)
+      )
+  end
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
   choosePlayersSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
+  uncompulsoryInvalidity,
 }
