@@ -946,9 +946,9 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param skipDiscard boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
 ---@param no_indicate boolean @ 是否不显示指示线
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, no_indicate, skipDiscard, no_indicate)
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
-  no_indicate = (no_indicate == nil) and false or no_indicate
+  no_indicate = no_indicate or false
   pattern = pattern or ""
 
   local canDiscards = table.filter(
@@ -1025,7 +1025,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
-  no_indicate = (no_indicate == nil) and false or no_indicate
+  no_indicate = no_indicate or false
 
   local data = {
     targets = targets,
@@ -1065,7 +1065,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     return nil
   end
   cancelable = (cancelable == nil) and true or cancelable
-  no_indicate = (no_indicate == nil) and false or no_indicate
+  no_indicate = no_indicate or false
   pattern = pattern or ""
 
   local chosenCards = {}
@@ -1114,7 +1114,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
-  no_indicate = (no_indicate == nil) and false or no_indicate
+  no_indicate = no_indicate or false
   pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
