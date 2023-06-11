@@ -1078,7 +1078,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     expand_pile = expand_pile,
   }
   local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
-  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, no_indicate)
+  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data, no_indicate)
   if ret then
     chosenCards = ret.cards
   else
