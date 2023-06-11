@@ -115,9 +115,9 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
       (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
       not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
       (
-        from:hasMark(MarkEnum.UncompulsoryInvalidity) or
+        from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
         table.find(suffix, function(s)
-          return from:hasMark(MarkEnum.UncompulsoryInvalidity .. s)
+          return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
         end)
       )
   end
