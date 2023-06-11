@@ -28,7 +28,7 @@ end
 ---@param player Player
 ---@param card Card @ helper
 function ActiveSkill:canUse(player, card)
-  return true
+  return self:isEffectable(player)
 end
 
 --- Determine whether a card can be selected by this skill

@@ -205,7 +205,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
 
   if cardUseEvent.responseToEvent then
     cardUseEvent.responseToEvent.cardsResponded = cardUseEvent.responseToEvent.cardsResponded or {}
-    table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
+    table.insertIfNeed(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do

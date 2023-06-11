@@ -426,6 +426,7 @@ end
 
 local function readCardSpecToCard(card, spec)
   card.skill = spec.skill or defaultCardSkill
+  card.skill.cardSkill = true
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
 end
