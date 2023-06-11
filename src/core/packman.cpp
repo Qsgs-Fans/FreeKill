@@ -146,7 +146,7 @@ void PackMan::updatePack(const QString &pack) {
   int error;
   error = status(pack);
   if (error != 0) {
-    qCritical("Workspace is dirty, or some error occured.");
+    qCritical("packages/%s: Workspace is dirty, or some error occured.", pack.toLatin1().constData());
     return;
   }
   error = pull(pack);
