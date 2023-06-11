@@ -381,7 +381,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false
   local skills = self.skill_table[event] or {}
-  local skills_to_refresh = self.refresh_skill_table[event] or {}
+  local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
   local _target = room.current -- for iteration
   local player = _target
 

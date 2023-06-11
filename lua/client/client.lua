@@ -144,14 +144,14 @@ local function parseMsg(msg, nocolor)
 
   local from = getPlayerStr(data.from, "#0C8F0C")
 
-  local to = data.to or {}
+  local to = data.to or Util.DummyTable
   local to_str = {}
   for _, id in ipairs(to) do
     table.insert(to_str, getPlayerStr(id, "#CC3131"))
   end
   to = table.concat(to_str, ", ")
 
-  local card = data.card or {}
+  local card = data.card or Util.DummyTable
   local allUnknown = true
   local unknownCount = 0
   for _, id in ipairs(card) do

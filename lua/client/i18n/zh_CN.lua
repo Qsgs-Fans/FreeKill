@@ -158,6 +158,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGeneral"] = "选择武将",
   ["AskForGuanxing"] = "观星",
   ["AskForExchange"] = "换牌",
+  ["Pile"] = "牌堆",
   ["AskForChoice"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",

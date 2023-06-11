@@ -386,7 +386,7 @@ function Engine:filterCard(id, player, data)
     return
   end
   local skills = player:getAllSkills()
-  local filters = self:currentRoom().status_skills[FilterSkill] or {}
+  local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
 
   if #filters == 0 then
     filtered_cards[id] = nil

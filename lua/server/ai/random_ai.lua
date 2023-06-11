@@ -32,7 +32,7 @@ local function useActiveSkill(self, skill, card)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
         local r = self.room
-        local status_skills = r.status_skills[ProhibitSkill] or {}
+        local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
         for _, skill in ipairs(status_skills) do
           if skill:isProhibited(self.player, p, card) then
             ret = false

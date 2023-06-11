@@ -33,6 +33,28 @@ GraphicsBox {
         property int areaCapacity: modelData
         property string areaName: index < areaNames.length ? qsTr(areaNames[index]) : ""
 
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          color: "#6B5D42"
+          width: 20
+          height: 100
+          radius: 5
+
+          Text {
+            anchors.fill: parent
+            width: 20
+            height: 100
+            text: areaName
+            color: "white"
+            font.family: fontLibian.name
+            font.pixelSize: 18
+            style: Text.Outline
+            wrapMode: Text.WordWrap
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+          }
+        }
+
         Repeater {
           id: cardRepeater
           model: areaCapacity

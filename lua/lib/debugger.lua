@@ -318,7 +318,7 @@ local function cmd_eval(code)
 	if chunk == nil then return false end
 
 	-- Call the chunk and collect the results.
-	local success, err = pcall(chunk, unpack(rawget(env, "...") or {}))
+	local success, err = pcall(chunk, unpack(rawget(env, "...") or Util.DummyTable))
 	if not success then
 		dbg_writeln(COLOR_RED.."错误:"..COLOR_RESET.." "..tostring(err))
 	end
