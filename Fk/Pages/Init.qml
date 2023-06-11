@@ -185,7 +185,7 @@ Item {
 
   // Temp
   Button {
-    text: qsTr("Mod Making")
+    text: qsTr("Making Mod")
     anchors.right: parent.right
     anchors.bottom: parent.bottom
     visible: Debugging

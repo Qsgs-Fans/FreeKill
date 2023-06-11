@@ -136,7 +136,7 @@
     <translation>管理拓展包</translation>
   </message>
   <message>
-    <source>Mod Making</source>
+    <source>Making Mod</source>
     <translation>制作Mod</translation>
   </message>
   <message>
