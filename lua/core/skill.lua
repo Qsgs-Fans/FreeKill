@@ -82,7 +82,7 @@ function Skill:isEffectable(player)
   if self.cardSkill then
     return true
   end
-  
+
   local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
   for _, nullifySkill in ipairs(nullifySkills) do
     if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then
