@@ -2041,7 +2041,7 @@ function Room:doCardUseEffect(cardUseEvent)
     unoffsetableList = cardUseEvent.unoffsetableList,
     additionalDamage = cardUseEvent.additionalDamage,
     additionalRecover = cardUseEvent.additionalRecover,
-    cardIdsResponded = cardUseEvent.nullifiedTargets,
+    cardsResponded = cardUseEvent.cardsResponded,
     prohibitedCardNames = cardUseEvent.prohibitedCardNames,
     extra_data = cardUseEvent.extra_data,
   }
@@ -2092,7 +2092,15 @@ function Room:doCardUseEffect(cardUseEvent)
 
         collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
 
-        self:doCardEffect(table.simpleClone(cardEffectEvent))
+        local curCardEffectEvent = table.simpleClone(cardEffectEvent)
+        self:doCardEffect(curCardEffectEvent)
+
+        if curCardEffectEvent.cardsResponded then
+          cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
+          for _, card in ipairs(curCardEffectEvent.cardsResponded) do
+            table.insertIfNeed(cardUseEvent.cardsResponded, card)
+          end
+        end
       end
     end
   end
@@ -2814,6 +2822,10 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
   elseif fromPile == "allPiles" then
     pileToSearch = table.clone(self.draw_pile)
     table.insertTable(pileToSearch, self.discard_pile)
+  end
+
+  if #pileToSearch == 0 then
+    return {}
   end
 
   local cardPack = {}

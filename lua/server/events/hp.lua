@@ -148,6 +148,11 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     end
   end
 
+  if damageStruct.damageType ~= fk.NormalDamage and damageStruct.to.chained then
+    damageStruct.beginnerOfTheDamage = true
+    damageStruct.to:setChainState(false)
+  end
+
   -- 先扣减护甲，再扣体力值
   local shield_to_lose = math.min(damageStruct.damage, damageStruct.to.shield)
   self:changeShield(damageStruct.to, -shield_to_lose)
@@ -177,6 +182,29 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
 
   return true
+end
+
+GameEvent.exit_funcs[GameEvent.Damage] = function(self)
+  local room = self.room
+  local damageStruct = self.data[1]
+
+  room.logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
+
+  if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
+    local targets = table.filter(room:getAlivePlayers(), function(p)
+      return p.chained
+    end)
+    for _, p in ipairs(targets) do
+      room:sendLog{
+        type = "#ChainDamage",
+        from = p.id
+      }
+      local dmg = table.simpleClone(damageStruct)
+      dmg.to = p
+      dmg.chain = true
+      room:damage(dmg)
+    end
+  end
 end
 
 GameEvent.functions[GameEvent.LoseHp] = function(self)

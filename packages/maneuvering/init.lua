@@ -158,42 +158,6 @@ extension:addCards({
   analeptic:clone(Card.Diamond, 9),
 })
 
-local ironChainEffect = fk.CreateTriggerSkill{
-  name = "iron_chain_effect",
-  global = true,
-  priority = { [fk.BeforeHpChanged] = 10, [fk.DamageFinished] = 0 }, -- game rule
-  events = { fk.BeforeHpChanged, fk.DamageFinished },
-  can_trigger = function(self, event, target, player, data)
-    if event == fk.BeforeHpChanged then
-      return target == player and data.damageEvent and data.damageEvent.damageType ~= fk.NormalDamage and player.chained
-    else
-      return target == player and data.beginnerOfTheDamage and not data.chain
-    end
-  end,
-  on_trigger = function(self, event, target, player, data)
-    local room = player.room
-    if event == fk.BeforeHpChanged then
-      data.damageEvent.beginnerOfTheDamage = true
-      player:setChainState(false)
-    else
-      local targets = table.filter(room:getAlivePlayers(), function(p)
-        return p.chained
-      end)
-      for _, p in ipairs(targets) do
-        room:sendLog{
-          type = "#ChainDamage",
-          from = p.id
-        }
-        local dmg = table.simpleClone(data)
-        dmg.to = p
-        dmg.chain = true
-        room:damage(dmg)
-      end
-    end
-  end,
-}
-Fk:addSkill(ironChainEffect)
-
 local recast = fk.CreateActiveSkill{
   name = "recast",
   target_num = 0,
