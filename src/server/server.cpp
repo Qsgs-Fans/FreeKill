@@ -428,8 +428,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     player->setScreenName(name);
     player->setAvatar(obj["avatar"].toString());
     player->setId(obj["id"].toString().toInt());
-    // broadcast("ServerMessage", tr("%1 logged
-    // in").arg(player->getScreenName()));
+    if (players.count() <= 10) {
+      broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
+    }
     players.insert(player->getId(), player);
 
     // tell the lobby player's basic property
@@ -481,8 +482,9 @@ void Server::onRoomAbandoned() {
 void Server::onUserDisconnected() {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
   qInfo() << "Player" << player->getId() << "disconnected";
-  // broadcast("ServerMessage", tr("%1 logged
-  // out").arg(player->getScreenName()));
+  if (players.count() <= 10) {
+    broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
+  }
   Room *room = player->getRoom();
   if (room->isStarted()) {
     if (room->getObservers().contains(player)) {
