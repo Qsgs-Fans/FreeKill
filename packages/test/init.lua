@@ -242,7 +242,19 @@ local change_hero = fk.CreateActiveSkill{
     room:changeHero(target, general, false, false, true)
   end,
 }
-local test2 = General(extension, "mouxusheng", "wu", 100, 100, General.Female)
+local test_zhenggong = fk.CreateTriggerSkill{
+  name = "test_zhenggong",
+  events = {fk.RoundStart},
+  frequency = Skill.Compulsory,
+  anim_type = "negative",
+  can_trigger = function(self, event, target, player, data)
+    return player:hasSkill(self.name) and player.room:getTag("RoundCount") == 1
+  end,
+  on_use = function(self, event, target, player, data)
+    player:gainAnExtraTurn()
+  end,
+}
+local test2 = General(extension, "mouxusheng", "wu", 99, 99, General.Female)
 test2.shield = 5
 test2:addSkill("rende")
 test2:addSkill(cheat)
@@ -251,6 +263,7 @@ test2:addSkill(test_vs)
 --test2:addSkill(test_trig)
 test2:addSkill(damage_maker)
 test2:addSkill(change_hero)
+test2:addSkill(test_zhenggong)
 
 Fk:loadTranslationTable{
   ["test_p_0"] = "测试包",
@@ -272,6 +285,9 @@ Fk:loadTranslationTable{
 
   ["change_hero"] = "变更",
   [":change_hero"] = "出牌阶段，你可以变更一名角色武将牌。",
+
+  ["test_zhenggong"] = "迅测",
+  [":test_zhenggong"] = "锁定技，首轮开始时，你执行额外的回合。",
 }
 
 return { extension }
