@@ -166,7 +166,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
     }
     break;
   default:
-    qCritical() << "cannot handle QVariant type" << v.typeId();
+    // qCritical() << "cannot handle QVariant type" << v.typeId();
     lua_pushnil(L);
     break;
   }
