@@ -560,6 +560,7 @@ local kongchengAudio = fk.CreateTriggerSkill{
 }
 local kongcheng = fk.CreateProhibitSkill{
   name = "kongcheng",
+  frequency = Skill.Compulsory,
   is_prohibited = function(self, from, to, card)
     if to:hasSkill(self.name) and to:isKongcheng() then
       return card.trueName == "slash" or card.name == "duel"
@@ -608,6 +609,7 @@ zhaoyun:addSkill(longdan)
 
 local mashu = fk.CreateDistanceSkill{
   name = "mashu",
+  frequency = Skill.Compulsory,
   correct_func = function(self, from, to)
     if from:hasSkill(self.name) then
       return -1
@@ -654,6 +656,7 @@ local jizhi = fk.CreateTriggerSkill{
 }
 local qicai = fk.CreateTargetModSkill{
   name = "qicai",
+  frequency = Skill.Compulsory,
   distance_limit_func =  function(self, player, skill)
     local card_name = string.sub(skill.name, 1, -7) -- assuming all card skill is named with name_skill
     local card = Fk:cloneCard(card_name)
@@ -879,6 +882,7 @@ daqiao:addSkill(liuli)
 
 local qianxun = fk.CreateProhibitSkill{
   name = "qianxun",
+  frequency = Skill.Compulsory,
   is_prohibited = function(self, from, to, card)
     if to:hasSkill(self.name) then
       return card.name == "indulgence" or card.name == "snatch"
