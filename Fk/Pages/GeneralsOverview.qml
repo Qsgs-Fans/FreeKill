@@ -154,7 +154,7 @@ Item {
       if (!skilldata) return;
       const extension = skilldata.extension;
       for (let i = 0; i < 999; i++) {
-        let fname = AppPath + "/packages/" + extension + "/audio/skill/" +
+        const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
           skill + (i !== 0 ? i.toString() : "") + ".mp3";
 
         if (Backend.exists(fname)) {
@@ -163,7 +163,7 @@ Item {
           if (i > 0) break;
         }
       }
-      let fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
+      const fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
       } else {
