@@ -163,6 +163,10 @@ Item {
           if (i > 0) break;
         }
       }
+    }
+
+    function findDeathAudio(general) {
+      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
       const fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
@@ -188,6 +192,7 @@ Item {
 
         addSkillAudio(t.name);
       });
+      findDeathAudio(general);
 
       addSkillAudio(general + "_win_audio");
     }
