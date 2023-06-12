@@ -226,19 +226,20 @@ function Card:matchPattern(pattern)
 end
 
 --- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+---@param symbol boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
-function Card:getSuitString()
+function Card:getSuitString(symbol)
   local suit = self.suit
   if suit == Card.Spade then
-    return "spade"
+    return symbol and "log_spade" or "spade"
   elseif suit == Card.Heart then
-    return "heart"
+    return symbol and "log_heart" or "heart"
   elseif suit == Card.Club then
-    return "club"
+    return symbol and "log_club" or "club"
   elseif suit == Card.Diamond then
-    return "diamond"
+    return symbol and "log_diamond" or "diamond"
   else
-    return "nosuit"
+    return symbol and "log_nosuit" or "nosuit"
   end
 end
 
