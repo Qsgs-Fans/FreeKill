@@ -257,7 +257,7 @@ function Card:getColorString()
   return "nocolor"
 end
 
---- 获取卡牌类型并返回点数类型描述（例如基本牌/锦囊牌/装备牌）。
+--- 获取卡牌类型并返回类型描述（例如基本牌/锦囊牌/装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then
@@ -282,6 +282,13 @@ local function getNumberStr(num)
     return "K"
   end
   return tostring(num)
+end
+
+--- 获取卡牌的完整点数(花色+点数)，如（黑桃A/♠A）。
+---@param symbol boolean @ 是否以符号形式显示花色
+---@return string @ 完整点数（字符串）
+function Card:getSuitCompletedString(symbol)
+  return self:getSuitString(symbol) .. getNumberStr(self.number)
 end
 
 --- 判断卡牌是否为普通锦囊牌

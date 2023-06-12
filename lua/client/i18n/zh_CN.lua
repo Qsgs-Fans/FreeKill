@@ -289,6 +289,8 @@ Fk:loadTranslationTable{
   ["Damage"] = "伤害",
   ["Lost"] = "失去",
   ["Distance"] = "距离",
+  ["Judge"] = "判定",
+  ["Retrial"] = "改判",
 }
 
 -- related to sendLog

@@ -14,7 +14,6 @@ Fk:loadTranslationTable{
   ["heart"] = "红桃",
   ["club"] = "梅花",
   ["diamond"] = "方块",
-  ["nocolororsuit"] = "无色",
   ["suit"] = "花色",
   ["color"] = "颜色",
   ["figure"] = "点数",
@@ -43,6 +42,7 @@ Fk:loadTranslationTable{
   ["method_use"] = "使用",
   ["method_response_play"] = "打出",
   ["method_response"] = "响应",
+  ["method_draw"] = "摸",
   ["method_discard"] = "弃置",
 
   ["slash"] = "杀",
