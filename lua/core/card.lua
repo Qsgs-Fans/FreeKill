@@ -225,7 +225,7 @@ function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
---- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+--- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
 ---@param symbol boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
