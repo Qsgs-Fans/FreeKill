@@ -282,7 +282,7 @@ Fk:loadTranslationTable{
   ["Top"] = "牌堆顶",
   ["Bottom"] = "牌堆底",
   ["Shuffle"] = "洗牌",
-  
+
   ["general_card"] = "武将牌",
   ["General"] = "武将",
   ["Hp"] = "体力",
