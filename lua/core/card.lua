@@ -230,17 +230,19 @@ end
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
   local suit = self.suit
+  local ret
   if suit == Card.Spade then
-    return symbol and "log_spade" or "spade"
+    ret = "spade"
   elseif suit == Card.Heart then
-    return symbol and "log_heart" or "heart"
+    ret = "heart"
   elseif suit == Card.Club then
-    return symbol and "log_club" or "club"
+    ret = "club"
   elseif suit == Card.Diamond then
-    return symbol and "log_diamond" or "diamond"
+    ret = "diamond"
   else
-    return symbol and "log_nosuit" or "nosuit"
+    ret = "nosuit"
   end
+  return symbol and "log_" .. ret or ret
 end
 
 --- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
