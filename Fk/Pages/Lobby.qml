@@ -198,6 +198,7 @@ Item {
     onClicked: {
       toast.show("Goodbye.");
       mainStack.pop();
+      config.saveConf();
       Backend.quitLobby();
     }
   }

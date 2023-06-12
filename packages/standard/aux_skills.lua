@@ -10,14 +10,14 @@ local discardSkill = fk.CreateActiveSkill{
     local checkpoint = true
     local card = Fk:getCardById(to_select)
 
-    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
     for _, skill in ipairs(status_skills) do
       if skill:prohibitDiscard(Self, card) then
         return false
       end
     end
     if Fk.currentResponseReason == "game_rule" then
-      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:excludeFrom(Self, card) then
           return false
@@ -106,10 +106,28 @@ local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
   end,
 }
 
+local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
+  name = "uncompulsory_invalidity",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    local suffix = { "-phase", "-turn", "-round" }
+    return
+      (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
+      not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
+      (
+        from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
+        table.find(suffix, function(s)
+          return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
+        end)
+      )
+  end
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
   choosePlayersSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
+  uncompulsoryInvalidity,
 }

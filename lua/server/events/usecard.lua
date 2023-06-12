@@ -56,7 +56,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
     from = from,
-    to = cardUseEvent.tos or {},
+    to = cardUseEvent.tos or Util.DummyTable,
   })
 
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
@@ -205,7 +205,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
 
   if cardUseEvent.responseToEvent then
     cardUseEvent.responseToEvent.cardsResponded = cardUseEvent.responseToEvent.cardsResponded or {}
-    table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
+    table.insertIfNeed(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do
@@ -330,7 +330,7 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
       self.logic:breakEvent()
     end
 
-    if table.contains((cardEffectEvent.nullifiedTargets or {}), cardEffectEvent.to) then
+    if table.contains((cardEffectEvent.nullifiedTargets or Util.DummyTable), cardEffectEvent.to) then
       self.logic:breakEvent()
     end
 

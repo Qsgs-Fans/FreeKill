@@ -185,6 +185,7 @@ end
 ---@param mark string @ 标记
 ---@param count integer @ 为标记删除的数量
 function Player:setMark(mark, count)
+  if count == 0 then count = nil end
   if self.mark[mark] ~= count then
     self.mark[mark] = count
   end
@@ -201,6 +202,7 @@ end
 ---@param mark string @ 标记
 ---@return boolean
 function Player:hasMark(mark)
+  fk.qWarning("hasMark will be deleted in future version!")
   return self:getMark(mark) ~= 0
 end
 
@@ -360,7 +362,7 @@ end
 function Player:getMaxCards()
   local baseValue = math.max(self.hp, 0)
 
-  local status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
   local max_fixed = nil
   for _, skill in ipairs(status_skills) do
     local f = skill:getFixed(self)
@@ -384,7 +386,7 @@ function Player:getAttackRange()
   local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
   local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getCorrect(self)
     baseAttackRange = baseAttackRange + correct
@@ -424,7 +426,7 @@ function Player:distanceTo(other)
   local left = #Fk:currentRoom().alive_players - right
   local ret = math.min(left, right)
 
-  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getCorrect(self, other)
     if correct == nil then correct = 0 end
@@ -448,7 +450,7 @@ function Player:inMyAttackRange(other, fixLimit)
 
   fixLimit = fixLimit or 0
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:withinAttackRange(self, other) then
       return true
@@ -724,7 +726,7 @@ end
 ---@param card Card @ 特定牌
 function Player:isProhibited(to, card)
   local r = Fk:currentRoom()
-  local status_skills = r.status_skills[ProhibitSkill] or {}
+  local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:isProhibited(self, to, card) then
       return true
@@ -736,7 +738,7 @@ end
 --- 确认玩家是否可以使用特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitUse(card)
-  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitUse(self, card) then
       return true
@@ -748,7 +750,7 @@ end
 --- 确认玩家是否可以打出特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitResponse(card)
-  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitResponse(self, card) then
       return true
@@ -760,7 +762,7 @@ end
 --- 确认玩家是否可以弃置特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitDiscard(card)
-  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitDiscard(self, card) then
       return true

@@ -408,8 +408,10 @@ Item {
       anchors.rightMargin: 20
       color: "#88EEEEEE"
       radius: 8
-      visible: roomScene.state == "playing" && specialCardSkills && (specialCardSkills.count > 1
-        || (specialCardSkills.model && specialCardSkills.model[0] !== "_normal_use"))
+      visible: roomScene.state === "playing" && (specialCardSkills ?? false)
+        && (specialCardSkills.count > 1
+          || ((specialCardSkills.model ?? false)
+            && specialCardSkills.model[0] !== "_normal_use"))
       width: childrenRect.width
       height: childrenRect.height - 20
 
@@ -567,7 +569,7 @@ Item {
 
   Drawer {
     id: roomDrawer
-    width: parent.width * 0.3 / mainWindow.scale
+    width: roomScene.width * 0.3 / mainWindow.scale
     height: parent.height / mainWindow.scale
     dim: false
     clip: true
@@ -866,7 +868,7 @@ Item {
         const dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
         item.distance = parseInt(dis);
       } else {
-        item.distance = 0;
+        item.distance = -1;
       }
     }
   }

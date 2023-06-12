@@ -145,7 +145,7 @@ function GetCards(pack_name)
 end
 
 function GetCardSpecialSkills(cid)
-  return json.encode(Fk:getCardById(cid).special_skills or {})
+  return json.encode(Fk:getCardById(cid).special_skills or Util.DummyTable)
 end
 
 function DistanceTo(from, to)
@@ -159,7 +159,7 @@ function GetPile(id, name)
 end
 
 function GetAllPiles(id)
-  return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
+  return json.encode(ClientInstance:getPlayerById(id).special_cards or Util.DummyTable)
 end
 
 function GetPlayerSkills(id)

@@ -780,7 +780,7 @@ extension:addCards({
 fk.MarkArmorNullified = "mark__armor_nullified"
 
 local armorInvalidity = fk.CreateInvaliditySkill {
-  name = "armor_invalidity_skill",
+  name = "armor_invalidity",
   global = true,
   invalidity_func = function(self, from, skill)
     return

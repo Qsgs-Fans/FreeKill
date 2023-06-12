@@ -42,6 +42,7 @@ public:
   bool isListening;
 
   QJsonValue getConfig(const QString &command);
+  bool checkBanWord(const QString &str);
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);

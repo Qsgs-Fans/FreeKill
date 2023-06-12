@@ -381,7 +381,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false
   local skills = self.skill_table[event] or {}
-  local skills_to_refresh = self.refresh_skill_table[event] or {}
+  local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
   local _target = room.current -- for iteration
   local player = _target
 
@@ -473,11 +473,11 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
   if scope == Player.HistoryGame then
     start_event = self.all_game_events[1]
   elseif scope == Player.HistoryRound then
-    start_event = event:findParent(GameEvent.Round)
+    start_event = event:findParent(GameEvent.Round, true)
   elseif scope == Player.HistoryTurn then
-    start_event = event:findParent(GameEvent.Turn)
+    start_event = event:findParent(GameEvent.Turn, true)
   elseif scope == Player.HistoryPhase then
-    start_event = event:findParent(GameEvent.Phase)
+    start_event = event:findParent(GameEvent.Phase, true)
   end
 
   return start_event:searchEvents(eventType, n, func)
