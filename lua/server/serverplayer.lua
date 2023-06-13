@@ -736,9 +736,9 @@ end
 
 function ServerPlayer:control(p)
   if self == p then
-    self.room:setPlayerMark(p, "@ControlledBy", 0)
+    self.room:setPlayerMark(p, "@ControledBy", 0)
   else
-    self.room:setPlayerMark(p, "@ControlledBy", "seat#" .. self.seat)
+    self.room:setPlayerMark(p, "@ControledBy", "seat#" .. self.seat)
   end
   p.serverplayer = self._splayer
 end

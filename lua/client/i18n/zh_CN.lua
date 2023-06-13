@@ -201,7 +201,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#6"] = "六号位",
   ["seat#7"] = "七号位",
   ["seat#8"] = "八号位",
-  ["ControlledBy"] = "控制者",
+  ["@ControledBy"] = "控制者",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
