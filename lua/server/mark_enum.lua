@@ -22,6 +22,5 @@ MarkEnum.MinusMaxCardsInTurn = "MinusMaxCards-turn"
 ---@field UncompulsoryInvalidity string @ 非锁定技失效，可带清除标记后缀
 MarkEnum.UncompulsoryInvalidity = "uncompulsoryInvalidity"
 
-
 ---@field TempMarkSuffix string[] @ 各种清除标记后缀
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
