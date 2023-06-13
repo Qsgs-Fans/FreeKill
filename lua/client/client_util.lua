@@ -5,6 +5,14 @@
 function Translate(src)
   return Fk:translate(src)
 end
+function TranslateMark(src)
+  if Fk:translate(src) ~= src then return Fk:translate(src) end
+  local suf = table.find(MarkEnum.TempMarkSuffix, function(suf)
+    return string.find(src, suf)
+  end)
+  if suf then src = string.gsub(src, suf, "") end
+  return Fk:translate(string.gsub(src, "@+", ""))
+end
 
 function GetGeneralData(name)
   local general = Fk.generals[name]

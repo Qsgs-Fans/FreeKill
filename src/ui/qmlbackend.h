@@ -36,6 +36,7 @@ public:
 
   // read data from lua, call lua functions
   Q_INVOKABLE QString translate(const QString &src);
+  Q_INVOKABLE QString translatemark(const QString &src);
   Q_INVOKABLE QString callLuaFunction(const QString &func_name,
                                       QVariantList params);
 

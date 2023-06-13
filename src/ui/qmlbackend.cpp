@@ -138,6 +138,26 @@ QString QmlBackend::translate(const QString &src) {
   return QString(result);
 }
 
+QString QmlBackend::translatemark(const QString &src) {
+  if (!ClientInstance)
+    return src;
+
+  lua_State *L = ClientInstance->getLuaState();
+  lua_getglobal(L, "TranslateMark");
+  auto bytes = src.toUtf8();
+  lua_pushstring(L, bytes.data());
+
+  int err = lua_pcall(L, 1, 1, 0);
+  const char *result = lua_tostring(L, -1);
+  if (err) {
+    qCritical() << result;
+    lua_pop(L, 1);
+    return "";
+  }
+  lua_pop(L, 1);
+  return QString(result);
+}
+
 void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   QVariantList list;
   switch (v.typeId()) {
