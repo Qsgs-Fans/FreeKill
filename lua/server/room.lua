@@ -2128,6 +2128,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
           loopTimes = cardEffectEvent.fixedResponseTimes
         end
       end
+      Fk.currentResponsePattern = "jink"
 
       for i = 1, loopTimes do
         local to = self:getPlayerById(cardEffectEvent.to)
@@ -2163,6 +2164,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
       not table.contains(cardEffectEvent.prohibitedCardNames or Util.DummyTable, "nullification")
     then
       local players = {}
+      Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
         local cards = p:getCardIds(Player.Hand)
         for _, cid in ipairs(cards) do
@@ -2208,6 +2210,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
         self:useCard(use)
       end
     end
+    Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then
     if cardEffectEvent.card.skill then
       execGameEvent(GameEvent.SkillEffect, function ()
