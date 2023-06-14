@@ -1,6 +1,7 @@
 # Compile output
 /build/
 /docs/build
+/docs/.venv
 /*.o
 /zh_CN.qm
 /fk_ver
