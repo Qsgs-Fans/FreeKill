@@ -981,7 +981,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   -- maxNum = math.min(#canDiscards, maxNum)
   -- minNum = math.min(#canDiscards, minNum)
 
-  if minNum < #canDiscards and not cancelable then
+  if minNum > #canDiscards and not cancelable then
     return {}
   end
 
