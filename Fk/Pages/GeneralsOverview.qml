@@ -243,7 +243,7 @@ Item {
               }
               Text {
                 Layout.fillWidth: true
-                text: Backend.translate("$" + name + (idx ? idx.toString() : ""))
+                text: (Backend.translate("$" + name + (idx ? idx.toString() : "")) == "$" + name + (idx ? idx.toString() : "") ? "" : Backend.translate("$" + name + (idx ? idx.toString() : "")))
                 wrapMode: Text.WordWrap
               }
             }
@@ -269,7 +269,7 @@ Item {
             }
             Text {
               Layout.fillWidth: true
-              text: Backend.translate("~" + generalDetail.general)
+              text: Backend.translate("~" + generalDetail.general) == "~" + generalDetail.general ? "" : Backend.translate("~" + generalDetail.general)
               wrapMode: Text.WordWrap
             }
           }
