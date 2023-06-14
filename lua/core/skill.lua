@@ -57,6 +57,20 @@ function Skill:initialize(name, frequency)
   self.attached_equip = nil
 end
 
+function Skill:__index(k)
+  if k == "cost_data" then
+    return Fk:currentRoom().skill_costs[self.name]
+  end
+end
+
+function Skill:__newindex(k, v)
+  if k == "cost_data" then
+    Fk:currentRoom().skill_costs[self.name] = v
+  else
+    rawset(self, k, v)
+  end
+end
+
 function Skill:__tostring()
   return "<Skill " .. self.name .. ">"
 end

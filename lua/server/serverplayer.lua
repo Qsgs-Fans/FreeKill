@@ -101,6 +101,8 @@ local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
   local state = player.serverplayer:getStateString()
+  player.request_timeout = timeout
+  player.request_start = start
   if state ~= "online" then
     if state ~= "robot" then
       checkNoHuman(player.room)
@@ -108,7 +110,7 @@ local function _waitForReply(player, timeout)
       return "__cancel"
     end
     -- Let AI make reply. First handle request
-    coroutine.yield("__handleRequest", 0)
+    -- coroutine.yield("__handleRequest", 0)
 
     checkNoHuman(player.room)
     player.ai:readRequestData()

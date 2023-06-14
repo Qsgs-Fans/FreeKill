@@ -26,7 +26,7 @@ local requestRoom = setmetatable({
       fk.qCritical(msg)
       print(debug.traceback(requestCo))
     end
-    return nil, nil
+    return nil, 0
   end,
   isReady = function(self)
     return self.thread:hasRequest()
@@ -46,11 +46,16 @@ runningRooms[-1] = requestRoom
 
 local function refreshReadyRooms()
   for k, v in pairs(runningRooms) do
-    if v:isReady() then
+    local ready, rest = v:isReady()
+    if ready then
       table.insertIfNeed(readyRooms, v)
+    elseif rest and rest >= 0 then
+      local time = requestRoom.minDelayTime
+      time = math.min((time <= 0 and 9999999 or time), rest)
+      requestRoom.minDelayTime = math.ceil(time)
     end
   end
-  printf('now have %d ready rooms...', #readyRooms)
+  -- printf('now have %d ready rooms...', #readyRooms)
 end
 
 local function mainLoop()
@@ -70,17 +75,14 @@ local function mainLoop()
         time = -1
       end
       requestRoom.minDelayTime = math.ceil(time)
-      if requestRoom.minDelayTime > 0 then
-        requestRoom.minDelayTime = requestRoom.minDelayTime + 1
-      end
-      printf("minDelay is %d ms...", requestRoom.minDelayTime)
+      -- printf("minDelay is %d ms...", requestRoom.minDelayTime)
     else
       refreshReadyRooms()
       if #readyRooms == 0 then
         refreshReadyRooms()
         if #readyRooms == 0 then
           local time = requestRoom.minDelayTime
-          printf('sleep for %f ms...', time)
+          printf('sleep for %d ms...', time)
           requestRoom.thread:trySleep(time)
           print 'wake up ...'
           requestRoom.minDelayTime = -1

@@ -26,6 +26,7 @@
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
+---@field public skill_costs table<string, any> @ 存放skill.cost_data用
 local Room = class("Room")
 
 -- load classes used by the game
@@ -86,6 +87,7 @@ function Room:initialize(_room)
   end
   self.request_queue = {}
   self.request_self = {}
+  self.skill_costs = {}
 
   self.settings = json.decode(self.room:settings())
   Fk.disabled_packs = self.settings.disabledPack
@@ -131,9 +133,18 @@ function Room:isReady()
     return false
   end
   for _, p in ipairs(self.players) do
+    local ret = true
     if p.serverplayer:thinking() then
-      return false
+      ret = false
+      -- 烧条烧光了的话就把thinking设为false
+      local rest = p.request_timeout * 1000 - (os.getms() -
+        p.request_start) / 1000
+
+      if rest <= 0 then
+        p.serverplayer:setThinking(false)
+      end
     end
+    return ret
   end
   return true
 end
@@ -677,20 +688,14 @@ end
 
 --- 延迟一段时间。
 ---
---- 这个函数只应该在主协程中使用。
+--- 这个函数不应该在请求处理协程中使用。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
   local start = os.getms()
   self.delay_start = start
   self.delay_duration = ms
   self.in_delay = true
-  while true do
-    local rest = ms - (os.getms() - start) / 1000
-    if rest <= 0 then
-      break
-    end
-    coroutine.yield("__handleRequest", rest)
-  end
+  coroutine.yield("__handleRequest", ms)
 end
 
 --- 向多名玩家告知一次移牌行为。

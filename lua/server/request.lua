@@ -142,7 +142,6 @@ local function requestLoop(self)
     local request = self.thread:fetchRequest()
     if request ~= "" then
       ret = true
-      printf('start handling request "%s" ...', request)
       local reqlist = request:split(",")
       local roomId = tonumber(table.remove(reqlist, 1))
       local room = self:getRoom(roomId)
@@ -154,7 +153,6 @@ local function requestLoop(self)
       end
     end
     if not ret then
-      print 'request handling over...'
       coroutine.yield()
     end
   end
