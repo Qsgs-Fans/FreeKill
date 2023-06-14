@@ -2231,7 +2231,7 @@ end
 ---@param from ServerPlayer @ 使用来源
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName string @ 技能名
----@param extra boolean @ 是否计入次数
+---@param extra boolean @ 是否不计入次数
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName

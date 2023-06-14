@@ -126,6 +126,28 @@ function GetGenerals(pack_name)
   return json.encode(ret)
 end
 
+function GetAvailableGeneralsNum()
+  local generalPool = Fk:getAllGenerals()
+  local except = {}
+  for _, g in ipairs(Fk.packages["test_p_0"].generals) do
+    table.insert(except, g.name)
+  end
+
+  local availableGenerals = {}
+  for _, general in pairs(generalPool) do
+    if not table.contains(except, general.name) then
+      if (not general.hidden and not general.total_hidden) and
+        #table.filter(availableGenerals, function(g)
+        return g.trueName == general.trueName
+      end) == 0 then
+        table.insert(availableGenerals, general)
+      end
+    end
+  end
+
+  return json.encode(#(#availableGenerals == 0 and Util.DummyTable or availableGenerals))
+end
+
 function GetAllCardPack()
   local ret = {}
   for _, name in ipairs(Fk.package_names) do
