@@ -2,9 +2,6 @@
 
 local Room = require "server.room"
 
--- C++的RoomThread实例。利用它与C++代码交互。
-local roomThread
-
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type Room[]
 local runningRooms = {}
@@ -13,15 +10,13 @@ local runningRooms = {}
 ---@type Room[]
 local readyRooms = {}
 
--- 距离下个房间就绪的最短等待时间，为-1表示不确定。
-local minDelayTime = -1
-
 local requestCo = coroutine.create(function(room)
   require "server.request"(room)
 end)
 
 -- 仿照Room接口编写的request协程处理器
 local requestRoom = setmetatable({
+  minDelayTime = -1,
   getRoom = function(_, roomId)
     return runningRooms[roomId]
   end,
@@ -31,12 +26,13 @@ local requestRoom = setmetatable({
       fk.qCritical(msg)
       print(debug.traceback(requestCo))
     end
+    return nil, nil
   end,
-  isReady = function()
-    return roomThread:hasRequest()
+  isReady = function(self)
+    return self.thread:hasRequest()
   end,
-  registerRoom = function(_, id)
-    local cRoom = roomThread:getRoom(id)
+  registerRoom = function(self, id)
+    local cRoom = self.thread:getRoom(id)
     local room = Room:new(cRoom)
     runningRooms[room.id] = room
   end,
@@ -51,7 +47,7 @@ runningRooms[-1] = requestRoom
 local function refreshReadyRooms()
   for k, v in pairs(runningRooms) do
     if v:isReady() then
-      table.insert(readyRooms, v)
+      table.insertIfNeed(readyRooms, v)
     end
   end
   printf('now have %d ready rooms...', #readyRooms)
@@ -63,17 +59,26 @@ local function mainLoop()
     if room then
       printf('switching to room %s...', tostring(room))
       RoomInstance = (room ~= requestRoom and room or nil)
-      local over = room:resume()
+      local over, rest = room:resume()
       if over then
         runningRooms[room.id] = nil
       end
+      local time = requestRoom.minDelayTime
+      if rest then
+        time = math.min((time == -1 and 9999999 or time), rest)
+      else
+        time = -1
+      end
+      requestRoom.minDelayTime = math.floor(time)
+      printf("minDelay is %d ms...", requestRoom.minDelayTime)
     else
       refreshReadyRooms()
       if #readyRooms == 0 then
         refreshReadyRooms()
         if #readyRooms == 0 then
-          print 'sleep ...'
-          roomThread:trySleep(minDelayTime)
+          local time = requestRoom.minDelayTime
+          printf('sleep for %f ms...', time)
+          requestRoom.thread:trySleep(time)
           print 'wake up ...'
         end
       end
@@ -82,7 +87,6 @@ local function mainLoop()
 end
 
 function InitScheduler(_thread)
-  roomThread = _thread
   requestRoom.thread = _thread
   mainLoop()
 end

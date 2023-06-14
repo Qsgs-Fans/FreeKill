@@ -111,7 +111,7 @@ function Room:resume()
       print(debug.traceback(main_co))
       return true
     end
-    return false
+    return false, rest_time
   else
     coroutine.close(main_co)
     self.main_co = nil

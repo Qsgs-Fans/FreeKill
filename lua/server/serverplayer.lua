@@ -61,6 +61,7 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
+  print(self.id, command, jsonData)
   self.client_reply = ""
   self.reply_ready = false
   self.reply_cancel = false
@@ -120,6 +121,7 @@ local function _waitForReply(player, timeout)
     return reply
   end
   while true do
+    -- player.serverplayer:setThinking(true)
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
       return result

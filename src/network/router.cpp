@@ -312,6 +312,11 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
 
+    ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
+    player->setThinking(false);
+    qDebug() << "wake up!";
+    player->getRoom()->getThread()->wakeUp();
+
     if (requestId != this->expectedReplyId)
       return;
 
@@ -329,11 +334,6 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       extraReplyReadySemaphore->release();
       extraReplyReadySemaphore = nullptr;
     }
-
-    ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
-    player->setThinking(false);
-    qDebug() << "wake up!";
-    player->getRoom()->getThread()->wakeUp();
 
     locker.unlock();
     emit replyReady();

@@ -26,7 +26,9 @@ Util.lockTable = function(t)
   return setmetatable({}, new_mt)
 end
 
-function printf(fmt, ...) print(string.format(fmt, ...)) end
+function printf(fmt, ...)
+  print(string.format(fmt, ...))
+end
 
 -- the iterator of QList object
 local qlist_iterator = function(list, n)

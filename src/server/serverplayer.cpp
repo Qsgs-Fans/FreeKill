@@ -85,7 +85,6 @@ QString ServerPlayer::waitForReply(int timeout) {
 #endif
     ret = "__cancel";
   } else {
-    m_thinking = true;
     ret = router->waitForReply(timeout);
   }
   return ret;
