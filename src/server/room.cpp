@@ -214,6 +214,8 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
+    m_thread->wakeUp();
+
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
   }
@@ -401,16 +403,11 @@ void Room::manuallyStart() {
     foreach (auto p, players) {
       p->setReady(false);
     }
+    gameStarted = true;
     m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
   }
 }
 
 void Room::pushRequest(const QString &req) {
   m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
-}
-
-bool Room::isReady() const { return m_ready; }
-
-void Room::setReady(bool ready) {
-  m_ready = ready;
 }

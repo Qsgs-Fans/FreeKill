@@ -26,6 +26,9 @@ class RoomThread : public QThread {
   void trySleep(int ms);
   void wakeUp();
 
+  void tryTerminate();
+  bool isTerminated() const;
+
  protected:
   virtual void run();
 
@@ -38,6 +41,7 @@ class RoomThread : public QThread {
   QMutex request_queue_mutex;
   QQueue<QString> request_queue;  // json string
   QSemaphore sema_wake;
+  volatile bool terminated;
 };
 
 #endif // _ROOMTHREAD_H

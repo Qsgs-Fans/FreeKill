@@ -68,9 +68,6 @@ class Room : public QObject {
   void pushRequest(const QString &req);
   // void clearRequest();
   // bool hasRequest() const;
-  //
-  bool isReady() const;
-  void setReady(bool ready);
 
  signals:
   void abandoned();

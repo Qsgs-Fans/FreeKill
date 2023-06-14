@@ -56,10 +56,11 @@ local function refreshReadyRooms()
     end
   end
   printf('now have %d ready rooms...', #readyRooms)
+  pt(runningRooms)
 end
 
 local function mainLoop()
-  while true do
+  while not requestRoom.thread:isTerminated() do
     local room = table.remove(readyRooms, 1)
     if room then
       printf('switching to room %s...', tostring(room))

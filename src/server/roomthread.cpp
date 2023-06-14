@@ -8,6 +8,7 @@ RoomThread::RoomThread(Server *m_server) {
   setObjectName("Room");
   this->m_server = m_server;
   m_capacity = 100; // TODO: server cfg
+  terminated = false;
 
   L = CreateLuaState();
   DoLuaScript(L, "lua/freekill.lua");
@@ -16,6 +17,10 @@ RoomThread::RoomThread(Server *m_server) {
 }
 
 RoomThread::~RoomThread() {
+  tryTerminate();
+  if (isRunning()) {
+    wait();
+  }
   lua_close(L);
   foreach (auto room, room_list) {
     room->deleteLater();
@@ -78,4 +83,12 @@ void RoomThread::trySleep(int ms) {
 
 void RoomThread::wakeUp() {
   sema_wake.release(1);
+}
+
+void RoomThread::tryTerminate() {
+  terminated = true;
+}
+
+bool RoomThread::isTerminated() const {
+  return terminated;
 }

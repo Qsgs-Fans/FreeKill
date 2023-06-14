@@ -135,6 +135,11 @@ function Room:resume()
 end
 
 function Room:isReady()
+  if self:checkNoHuman() then
+    -- 赶紧告诉他已经就绪啦，然后恢复的时候直接杀了
+    return true
+  end
+
   if self.in_delay then
     local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
     if rest <= 0 then
@@ -170,7 +175,6 @@ function Room:checkNoHuman()
     end
   end
 
-  print "No human, exiting!"
   self:gameOver("")
   return true
 end
@@ -2819,6 +2823,8 @@ end
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
+  if not self.game_started then return end
+
   self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
   self.game_finished = true
@@ -2848,7 +2854,7 @@ function Room:gameOver(winner)
 
   self.room:gameOver()
 
-  if coroutine.running == self.main_co then
+  if RoomInstance == self then
     coroutine.yield("__handleRequest", "over")
   else
     coroutine.close(self.main_co)

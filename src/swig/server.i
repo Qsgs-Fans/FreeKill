@@ -29,7 +29,6 @@ public:
   void setCapacity(int capacity);
   bool isFull() const;
   bool isAbandoned() const;
-  bool isReady() const;
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -74,6 +73,7 @@ public:
   bool hasRequest();
 
   void trySleep(int ms);
+  bool isTerminated() const;
 };
 
 %{
