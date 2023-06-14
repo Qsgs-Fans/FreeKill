@@ -19,3 +19,4 @@
     ui.rst
     hegemony.rst
     shendiaochan.rst
+    schedule.rst

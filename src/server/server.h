@@ -11,6 +11,7 @@
 class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
+class RoomThread;
 
 #include "room.h"
 
@@ -61,9 +62,10 @@ private:
   ServerSocket *server;
   Room *m_lobby;
   QMap<int, Room *> rooms;
-  QStack<Room *> idle_rooms;
+  // QStack<Room *> idle_rooms;
+  QList<RoomThread *> threads;
   int nextRoomId;
-  friend Room::Room(Server *server);
+  friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players;
 
   RSA *rsa;

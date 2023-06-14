@@ -8,6 +8,7 @@
 #include "serverplayer.h"
 #include "clientplayer.h"
 #include "room.h"
+#include "roomthread.h"
 #include "qmlbackend.h"
 #include "util.h"
 %}

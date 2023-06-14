@@ -16,7 +16,7 @@ extern Server *ServerInstance;
 
 %nodefaultctor Room;
 %nodefaultdtor Room;
-class Room : public QThread {
+class Room : public QObject {
 public:
   // Property reader & setter
   // ==================================={
@@ -29,6 +29,7 @@ public:
   void setCapacity(int capacity);
   bool isFull() const;
   bool isAbandoned() const;
+  bool isReady() const;
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -54,10 +55,6 @@ public:
   void updateWinRate(int id, const QString &general, const QString &mode,
                      int result);
   void gameOver();
-
-  LuaFunction startGame;
-  QString fetchRequest();
-  bool hasRequest() const;
 };
 
 %extend Room {
@@ -66,14 +63,27 @@ public:
   }
 }
 
+%nodefaultctor RoomThread;
+%nodefaultdtor RoomThread;
+class RoomThread : public QThread {
+public:
+  Room *getRoom(int id);
+
+  QString fetchRequest();
+  void clearRequest();
+  bool hasRequest();
+
+  void trySleep(int ms);
+};
+
 %{
-void Room::initLua()
+void RoomThread::run()
 {
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
-  lua_getglobal(L, "CreateRoom");
-  SWIG_NewPointerObj(L, this, SWIGTYPE_p_Room, 0);
+  lua_getglobal(L, "InitScheduler");
+  SWIG_NewPointerObj(L, this, SWIGTYPE_p_RoomThread, 0);
   int error = lua_pcall(L, 1, 0, -2);
   lua_pop(L, 1);
   if (error) {
@@ -81,27 +91,6 @@ void Room::initLua()
     qCritical() << error_msg;
   }
 }
-
-void Room::roomStart() {
-  Q_ASSERT(startGame);
-
-  lua_getglobal(L, "debug");
-  lua_getfield(L, -1, "traceback");
-  lua_replace(L, -2);
-
-  lua_rawgeti(L, LUA_REGISTRYINDEX, startGame);
-  SWIG_NewPointerObj(L, this, SWIGTYPE_p_Room, 0);
-
-  int error = lua_pcall(L, 1, 0, -3);
-
-  if (error) {
-    const char *error_msg = lua_tostring(L, -1);
-    qCritical() << error_msg;
-    lua_pop(L, 2);
-  }
-  lua_pop(L, 1);
-}
-
 %}
 
 %nodefaultctor ServerPlayer;
@@ -123,4 +112,7 @@ public:
 
   bool busy() const;
   void setBusy(bool busy);
+
+  bool thinking() const;
+  void setThinking(bool t);
 };

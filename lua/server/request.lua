@@ -132,23 +132,31 @@ request_handlers["changeself"] = function(room, id, reqlist)
   })
 end
 
+request_handlers["newroom"] = function(s, id)
+  s:registerRoom(id)
+end
+
 local function requestLoop(self)
-  local rest_time = 0
   while true do
     local ret = false
-    local request = self.room:fetchRequest()
+    local request = self.thread:fetchRequest()
     if request ~= "" then
       ret = true
+      printf('start handling request "%s" ...', request)
       local reqlist = request:split(",")
-      local id = tonumber(reqlist[1])
-      local command = reqlist[2]
-      request_handlers[command](self, id, reqlist)
-    elseif rest_time > 10 then
-      -- let current thread sleep 10ms
-      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
-      fk.QThread_msleep(10)
+      local roomId = tonumber(table.remove(reqlist, 1))
+      local room = self:getRoom(roomId)
+
+      if room then
+        local id = tonumber(reqlist[1])
+        local command = reqlist[2]
+        request_handlers[command](room, id, reqlist)
+      end
     end
-    rest_time = coroutine.yield(ret)
+    if not ret then
+      print 'request handling over...'
+      coroutine.yield()
+    end
   end
 end
 

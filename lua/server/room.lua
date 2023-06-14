@@ -5,6 +5,8 @@
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
 ---@class Room : Object
 ---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
+---@field public id integer @ 房间的id
+---@field private main_co any @ 本房间的主协程
 ---@field public players ServerPlayer[] @ 这个房间中所有参战玩家
 ---@field public alive_players ServerPlayer[] @ 所有还活着的玩家
 ---@field public observers fk.ServerPlayer[] @ 旁观者清单，这是c++玩家列表，别乱动
@@ -62,46 +64,7 @@ dofile "lua/server/ai/init.lua"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-  _room.startGame = function(_self)
-    Room.initialize(self, _room)  -- clear old data
-    self.settings = json.decode(_room:settings())
-    Fk.disabled_packs = self.settings.disabledPack
-    Fk.disabled_generals = self.settings.disabledGenerals
-    local main_co = coroutine.create(function()
-      self:run()
-    end)
-    local request_co = coroutine.create(function()
-      self:requestLoop()
-    end)
-    local ret, err_msg, rest_time = true, true
-    while not self.game_finished do
-      ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
-
-      -- handle error
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(main_co))
-        break
-      end
-
-      ret, err_msg = coroutine.resume(request_co, rest_time)
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(request_co))
-        break
-      end
-
-      -- If ret == true, then when err_msg is true, that means no request
-    end
-
-    coroutine.close(main_co)
-    coroutine.close(request_co)
-
-    if not self.game_finished then
-      self:doBroadcastNotify("GameOver", "")
-      self.room:gameOver()
-    end
-  end
+  self.id = _room:getId()
 
   self.players = {}
   self.alive_players = {}
@@ -123,6 +86,50 @@ function Room:initialize(_room)
   end
   self.request_queue = {}
   self.request_self = {}
+
+  self.settings = json.decode(self.room:settings())
+  Fk.disabled_packs = self.settings.disabledPack
+  Fk.disabled_generals = self.settings.disabledGenerals
+end
+
+function Room:resume()
+  if not self.main_co then
+    self.main_co = coroutine.create(function()
+      self:run()
+    end)
+  end
+
+  local ret, err_msg, rest_time = true, true
+  local main_co = self.main_co
+
+  if not self.game_finished then
+    ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
+
+    -- handle error
+    if ret == false then
+      fk.qCritical(err_msg)
+      print(debug.traceback(main_co))
+      return true
+    end
+    return false
+  else
+    coroutine.close(main_co)
+    self.main_co = nil
+    return true
+  end
+end
+
+function Room:isReady()
+  for _, p in ipairs(self.players) do
+    if p.serverplayer:thinking() then
+      return false
+    end
+  end
+  return true
+end
+
+function Room:__tostring()
+  return string.format("<Room #%d>", self.id)
 end
 
 --- 正式在这个房间中开始游戏。
@@ -657,7 +664,6 @@ function Room:doRaceRequest(command, players, jsonData)
   return ret
 end
 
-Room.requestLoop = require "server.request"
 
 --- 延迟一段时间。
 ---
@@ -2910,6 +2916,4 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
-function CreateRoom(_room)
-  RoomInstance = Room:new(_room)
-end
+return Room

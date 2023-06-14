@@ -5,47 +5,43 @@
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 
+#include "roomthread.h"
 #include "server.h"
 #include "serverplayer.h"
 #include "util.h"
 
-Room::Room(Server *server) {
-  setObjectName("Room");
+Room::Room(RoomThread *m_thread) {
+  auto server = ServerInstance;
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
+  this->m_thread = m_thread;
   setParent(server);
+
   m_abandoned = false;
   owner = nullptr;
   gameStarted = false;
   robot_id = -2; // -1 is reserved in UI logic
   timeout = 15;
 
+  m_ready = true;
+
   // 如果是普通房间而不是大厅，就初始化Lua，否则置Lua为nullptr
-  L = nullptr;
   if (!isLobby()) {
     // 如果不是大厅，那么：
     // * 只要房间添加人了，那么从大厅中移掉这个人
     // * 只要有人离开房间，那就把他加到大厅去
     connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
     connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
-
-    L = CreateLuaState();
-    DoLuaScript(L, "lua/freekill.lua");
-    DoLuaScript(L, "lua/server/room.lua");
-    initLua();
   }
 }
 
 Room::~Room() {
-  if (isRunning()) {
-    wait();
-  }
-  if (L)
-    lua_close(L);
 }
 
 Server *Room::getServer() const { return server; }
+
+RoomThread *Room::getThread() const { return m_thread; }
 
 int Room::getId() const { return id; }
 
@@ -397,7 +393,7 @@ void Room::gameOver() {
   // 玩家也不能在这里清除，因为要能返回原来房间继续玩呢
   // players.clear();
   // owner = nullptr;
-  clearRequest();
+  // clearRequest();
 }
 
 void Room::manuallyStart() {
@@ -405,43 +401,16 @@ void Room::manuallyStart() {
     foreach (auto p, players) {
       p->setReady(false);
     }
-    start();
+    m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
   }
-}
-
-QString Room::fetchRequest() {
-  if (!gameStarted)
-    return "";
-  request_queue_mutex.lock();
-  QString ret = "";
-  if (!request_queue.isEmpty()) {
-    ret = request_queue.dequeue();
-  }
-  request_queue_mutex.unlock();
-  return ret;
 }
 
 void Room::pushRequest(const QString &req) {
-  if (!gameStarted)
-    return;
-  request_queue_mutex.lock();
-  request_queue.enqueue(req);
-  request_queue_mutex.unlock();
+  m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
 }
 
-void Room::clearRequest() {
-  request_queue_mutex.lock();
-  request_queue.clear();
-  request_queue_mutex.unlock();
-}
+bool Room::isReady() const { return m_ready; }
 
-bool Room::hasRequest() const { return !request_queue.isEmpty(); }
-
-void Room::run() {
-  gameStarted = true;
-
-  clearRequest();
-
-  // 此处调用了Lua Room:run()函数
-  roomStart();
+void Room::setReady(bool ready) {
+  m_ready = ready;
 }

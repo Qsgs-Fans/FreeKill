@@ -14,6 +14,7 @@
 #include "packman.h"
 #include "player.h"
 #include "room.h"
+#include "roomthread.h"
 #include "router.h"
 #include "server_socket.h"
 #include "serverplayer.h"
@@ -44,6 +45,8 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
   connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
 
+  threads.append(new RoomThread(this));
+
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
     while (true) {
@@ -63,7 +66,7 @@ Server::Server(QObject *parent) : QObject(parent) {
 
       foreach (auto p, this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
-          p->kicked();
+          emit p->kicked();
         }
       }
     }
@@ -77,11 +80,11 @@ Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
-  foreach (auto room, idle_rooms) {
-    room->deleteLater();
-  }
-  foreach (auto room, rooms) {
-    room->deleteLater();
+//  foreach (auto room, idle_rooms) {
+//    room->deleteLater();
+//  }
+  foreach (auto thread, threads) {
+    thread->deleteLater();
   }
   sqlite3_close(db);
   RSA_free(rsa);
@@ -102,20 +105,24 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     return;
   }
   Room *room;
-  if (!idle_rooms.isEmpty()) {
-    room = idle_rooms.pop();
-    room->setId(nextRoomId);
-    nextRoomId++;
-    room->setAbandoned(false);
-    rooms.insert(room->getId(), room);
-  } else {
-    room = new Room(this);
-    connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-    if (room->isLobby())
-      m_lobby = room;
-    else
-      rooms.insert(room->getId(), room);
+  RoomThread *thread = nullptr;
+
+  foreach (auto t, threads) {
+    if (!t->isFull()) {
+      thread = t;
+    }
   }
+  if (!thread && nextRoomId != 0) {
+    thread = new RoomThread(this);
+    threads.append(thread);
+  }
+
+  room = new Room(thread);
+  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
+  if (room->isLobby())
+    m_lobby = room;
+  else
+    rooms.insert(room->getId(), room);
 
   room->setName(name);
   room->setCapacity(capacity);
@@ -270,12 +277,10 @@ void Server::processRequest(const QByteArray &msg) {
     body
         << (cmp < 0
                 ? QString("[\"server is still on version %%2\",\"%1\"]")
-                      .arg(FK_VERSION)
-                      .arg("1")
+                      .arg(FK_VERSION, "1")
                 : QString(
                       "[\"server is using version %%2, please update\",\"%1\"]")
-                      .arg(FK_VERSION)
-                      .arg("1"));
+                      .arg(FK_VERSION, "1"));
 
     client->send(JsonArray2Bytes(body));
     client->disconnectFromHost();
@@ -458,14 +463,14 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
 void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
-  if (room->isRunning()) {
-    room->wait();
-  }
+//  if (room->isRunning()) {
+//    room->wait();
+//  }
   room->gameOver();
   rooms.remove(room->getId());
   updateRoomList();
   // room->deleteLater();
-  idle_rooms.push(room);
+  // idle_rooms.push(room);
   // 懒得改了！
   // 这里出bug的原因还是在于room的销毁工作没做好
   // room销毁这块bug很多
@@ -474,10 +479,10 @@ void Server::onRoomAbandoned() {
   //   idle_rooms.removeFirst();
   //   junk->deleteLater();
   // }
-#ifdef QT_DEBUG
-  qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
-           << "idle room(s).";
-#endif
+//#ifdef QT_DEBUG
+//  qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
+//           << "idle room(s).";
+//#endif
 }
 
 void Server::onUserDisconnected() {

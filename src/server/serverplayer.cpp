@@ -3,6 +3,7 @@
 #include "serverplayer.h"
 #include "client_socket.h"
 #include "room.h"
+#include "roomthread.h"
 #include "router.h"
 #include "server.h"
 
@@ -16,6 +17,7 @@ ServerPlayer::ServerPlayer(Room *room) {
 
   alive = true;
   m_busy = false;
+  m_thinking = false;
 }
 
 ServerPlayer::~ServerPlayer() {
@@ -83,6 +85,7 @@ QString ServerPlayer::waitForReply(int timeout) {
 #endif
     ret = "__cancel";
   } else {
+    m_thinking = true;
     ret = router->waitForReply(timeout);
   }
   return ret;
@@ -107,4 +110,13 @@ void ServerPlayer::kick() {
     socket->disconnectFromHost();
   }
   setSocket(nullptr);
+}
+
+bool ServerPlayer::thinking() const {
+  qDebug() << getId() << "thinking" << m_thinking;
+  return m_thinking;
+}
+
+void ServerPlayer::setThinking(bool t) {
+  m_thinking = t;
 }

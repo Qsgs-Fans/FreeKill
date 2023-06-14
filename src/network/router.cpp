@@ -3,6 +3,7 @@
 #include "router.h"
 #include "client.h"
 #include "client_socket.h"
+#include "roomthread.h"
 #include <qjsondocument.h>
 #ifndef FK_CLIENT_ONLY
 #include "server.h"
@@ -328,6 +329,12 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       extraReplyReadySemaphore->release();
       extraReplyReadySemaphore = nullptr;
     }
+
+    ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
+    player->setThinking(false);
+    qDebug() << "wake up!";
+    player->getRoom()->getThread()->wakeUp();
+
     locker.unlock();
     emit replyReady();
   }

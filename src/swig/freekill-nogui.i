@@ -7,6 +7,7 @@
 #include "serverplayer.h"
 #include "clientplayer.h"
 #include "room.h"
+#include "roomthread.h"
 #include "util.h"
 #include "qmlbackend.h"
 class ClientPlayer *Self = nullptr;

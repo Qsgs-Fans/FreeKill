@@ -40,6 +40,9 @@ public:
 
   bool busy() const { return m_busy; }
   void setBusy(bool busy) { m_busy = busy; }
+
+  bool thinking() const;
+  void setThinking(bool t);
 signals:
   void disconnected();
   void kicked();
@@ -50,6 +53,7 @@ private:
   Server *server;
   Room *room;       // Room that player is in, maybe lobby
   bool m_busy;
+  bool m_thinking;
 
   QString requestCommand;
   QString requestData;
