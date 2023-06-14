@@ -115,6 +115,7 @@ local function _waitForReply(player, timeout)
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
+      player.serverplayer:setThinking(false)
       return ""
     end
     coroutine.yield("__handleRequest", rest)

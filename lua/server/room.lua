@@ -143,8 +143,9 @@ function Room:isReady()
     end
     return false, rest
   end
+
+  local ret = true
   for _, p in ipairs(self.players) do
-    local ret = true
     if p.serverplayer:thinking() then
       ret = false
       -- 烧条烧光了的话就把thinking设为false
@@ -155,9 +156,8 @@ function Room:isReady()
         p.serverplayer:setThinking(false)
       end
     end
-    return ret, (rest and rest > 1) and rest or nil
   end
-  return true
+  return ret, (rest and rest > 1) and rest or nil
 end
 
 function Room:checkNoHuman()
@@ -689,6 +689,12 @@ function Room:doRaceRequest(command, players, jsonData)
       if p.reply_cancel then
         table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
+      end
+
+      -- 骗过调度器让他以为自己尚未就绪
+      if p.id > 0 then
+        p.request_timeout = remainTime - elapsed
+        p.serverplayer:setThinking(true)
       end
     end
     if winner then
