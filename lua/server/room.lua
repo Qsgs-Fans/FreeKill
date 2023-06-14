@@ -486,7 +486,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   orig = Fk.generals[orig]
   local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
-  local new = Fk.generals[new_general] or Fk.generals["sunce"]
+  local new = Fk.generals[new_general] or Fk.generals["liubei"]
   local new_skills = new:getSkillNameList()
 
   table.insertTable(new_skills, table.map(orig_skills, function(e)
