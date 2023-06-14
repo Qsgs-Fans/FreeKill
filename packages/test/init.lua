@@ -126,7 +126,7 @@ local test_vs = fk.CreateViewAsSkill{
     return #selected == 0
   end,
   interaction = function(self)
-    return UI.ComboBox {
+    return UI.DetailedComboBox {
       choices = {
         "ex_nihilo",
         "duel",
