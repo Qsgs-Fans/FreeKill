@@ -112,7 +112,6 @@ void ServerPlayer::kick() {
 }
 
 bool ServerPlayer::thinking() const {
-  qDebug() << getId() << "thinking" << m_thinking;
   return m_thinking;
 }
 

@@ -109,6 +109,8 @@ function Room:resume()
     if ret == false then
       fk.qCritical(err_msg)
       print(debug.traceback(main_co))
+      coroutine.close(main_co)
+      self.main_co = nil
       return true
     end
     return false, rest_time
@@ -120,6 +122,14 @@ function Room:resume()
 end
 
 function Room:isReady()
+  if self.in_delay then
+    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
+    if rest <= 0 then
+      self.in_delay = false
+      return true
+    end
+    return false
+  end
   for _, p in ipairs(self.players) do
     if p.serverplayer:thinking() then
       return false
@@ -671,6 +681,9 @@ end
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
   local start = os.getms()
+  self.delay_start = start
+  self.delay_duration = ms
+  self.in_delay = true
   while true do
     local rest = ms - (os.getms() - start) / 1000
     if rest <= 0 then

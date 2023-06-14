@@ -64,12 +64,15 @@ local function mainLoop()
         runningRooms[room.id] = nil
       end
       local time = requestRoom.minDelayTime
-      if rest then
-        time = math.min((time == -1 and 9999999 or time), rest)
+      if rest and rest >= 0 then
+        time = math.min((time <= 0 and 9999999 or time), rest)
       else
         time = -1
       end
-      requestRoom.minDelayTime = math.floor(time)
+      requestRoom.minDelayTime = math.ceil(time)
+      if requestRoom.minDelayTime > 0 then
+        requestRoom.minDelayTime = requestRoom.minDelayTime + 1
+      end
       printf("minDelay is %d ms...", requestRoom.minDelayTime)
     else
       refreshReadyRooms()
@@ -80,6 +83,7 @@ local function mainLoop()
           printf('sleep for %f ms...', time)
           requestRoom.thread:trySleep(time)
           print 'wake up ...'
+          requestRoom.minDelayTime = -1
         end
       end
     end

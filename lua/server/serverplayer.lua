@@ -61,7 +61,6 @@ end
 ---@param jsonData string
 ---@param timeout integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
-  print(self.id, command, jsonData)
   self.client_reply = ""
   self.reply_ready = false
   self.reply_cancel = false
@@ -109,11 +108,7 @@ local function _waitForReply(player, timeout)
       return "__cancel"
     end
     -- Let AI make reply. First handle request
-    local ret_msg = true
-    while ret_msg do
-      -- when ret_msg is false, that means there is no request in the queue
-      ret_msg = coroutine.yield("__handleRequest", 1)
-    end
+    coroutine.yield("__handleRequest", 0)
 
     checkNoHuman(player.room)
     player.ai:readRequestData()
@@ -121,9 +116,10 @@ local function _waitForReply(player, timeout)
     return reply
   end
   while true do
-    -- player.serverplayer:setThinking(true)
+    player.serverplayer:setThinking(true)
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
+      player.serverplayer:setThinking(false)
       return result
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
