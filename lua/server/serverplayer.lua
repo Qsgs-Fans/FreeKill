@@ -86,17 +86,6 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
-local function checkNoHuman(room)
-  for _, p in ipairs(room.players) do
-    -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
-      return
-    end
-  end
-  room:gameOver("")
-end
-
-
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
@@ -105,14 +94,14 @@ local function _waitForReply(player, timeout)
   player.request_start = start
   if state ~= "online" then
     if state ~= "robot" then
-      checkNoHuman(player.room)
+      player.room:checkNoHuman()
       player.room:delay(500)
       return "__cancel"
     end
     -- Let AI make reply. First handle request
     -- coroutine.yield("__handleRequest", 0)
 
-    checkNoHuman(player.room)
+    player.room:checkNoHuman()
     player.ai:readRequestData()
     local reply = player.ai:makeReply()
     return reply

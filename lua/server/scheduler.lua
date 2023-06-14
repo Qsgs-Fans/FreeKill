@@ -94,5 +94,5 @@ end
 
 function InitScheduler(_thread)
   requestRoom.thread = _thread
-  mainLoop()
+  xpcall(mainLoop, debug.traceback)
 end

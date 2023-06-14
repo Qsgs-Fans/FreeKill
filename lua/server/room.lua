@@ -104,6 +104,10 @@ function Room:resume()
   local ret, err_msg, rest_time = true, true
   local main_co = self.main_co
 
+  if self:checkNoHuman() then
+    return true
+  end
+
   if not self.game_finished then
     ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
 
@@ -151,8 +155,23 @@ function Room:isReady()
         p.serverplayer:setThinking(false)
       end
     end
-    return ret, rest > 1 and rest or nil
+    return ret, (rest and rest > 1) and rest or nil
   end
+  return true
+end
+
+function Room:checkNoHuman()
+  if #self.players == 0 then return end
+
+  for _, p in ipairs(self.players) do
+    -- TODO: trust
+    if p.serverplayer:getStateString() == "online" then
+      return
+    end
+  end
+
+  print "No human, exiting!"
+  self:gameOver("")
   return true
 end
 
@@ -2822,7 +2841,13 @@ function Room:gameOver(winner)
   end
 
   self.room:gameOver()
-  coroutine.yield("__handleRequest", "over")
+
+  if coroutine.running == self.main_co then
+    coroutine.yield("__handleRequest", "over")
+  else
+    coroutine.close(self.main_co)
+    self.main_co = nil
+  end
 end
 
 ---@param card Card
