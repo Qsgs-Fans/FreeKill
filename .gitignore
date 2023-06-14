@@ -40,8 +40,11 @@ freekill-wrap.cxx
 /Qt5Compat/
 /QtQml/
 /QtMultimedia/
+/multimedia/
+/qmltooling/
 /sqldrivers/
 /styles/
 /tls/
 /translations/
 /*.dll
+/*.bat

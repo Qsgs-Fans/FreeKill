@@ -158,7 +158,6 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGeneral"] = "选择武将",
   ["AskForGuanxing"] = "观星",
   ["AskForExchange"] = "换牌",
-  ["Pile"] = "牌堆",
   ["AskForChoice"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
@@ -265,6 +264,7 @@ Fk:loadTranslationTable{
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
+  ["hp_lost"] = "体力流失",
 
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
@@ -276,8 +276,21 @@ Fk:loadTranslationTable{
   ["chained"] = "横置",
   ["not-chained"] = "重置",
 
+  ["pile_draw"] = "牌堆",
+  ["pile_discard"] = "弃牌堆",
+  ["processing_area"] = "处理区",
   ["Top"] = "牌堆顶",
   ["Bottom"] = "牌堆底",
+  ["Shuffle"] = "洗牌",
+
+  ["general_card"] = "武将牌",
+  ["General"] = "武将",
+  ["Hp"] = "体力",
+  ["Damage"] = "伤害",
+  ["Lost"] = "失去",
+  ["Distance"] = "距离",
+  ["Judge"] = "判定",
+  ["Retrial"] = "改判",
 }
 
 -- related to sendLog

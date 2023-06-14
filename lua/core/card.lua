@@ -225,21 +225,24 @@ function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
---- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+--- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
+---@param symbol boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
-function Card:getSuitString()
+function Card:getSuitString(symbol)
   local suit = self.suit
+  local ret
   if suit == Card.Spade then
-    return "spade"
+    ret = "spade"
   elseif suit == Card.Heart then
-    return "heart"
+    ret = "heart"
   elseif suit == Card.Club then
-    return "club"
+    ret = "club"
   elseif suit == Card.Diamond then
-    return "diamond"
+    ret = "diamond"
   else
-    return "nosuit"
+    ret = "nosuit"
   end
+  return symbol and "log_" .. ret or ret
 end
 
 --- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
@@ -254,7 +257,7 @@ function Card:getColorString()
   return "nocolor"
 end
 
---- 获取卡牌类型并返回点数类型描述（例如基本牌/锦囊牌/装备牌）。
+--- 获取卡牌类型并返回类型描述（例如基本牌/锦囊牌/装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then
@@ -279,6 +282,13 @@ local function getNumberStr(num)
     return "K"
   end
   return tostring(num)
+end
+
+--- 获取卡牌的完整点数(花色+点数)，如（黑桃A/♠A）。
+---@param symbol boolean @ 是否以符号形式显示花色
+---@return string @ 完整点数（字符串）
+function Card:getSuitCompletedString(symbol)
+  return self:getSuitString(symbol) .. getNumberStr(self.number)
 end
 
 --- 判断卡牌是否为普通锦囊牌
