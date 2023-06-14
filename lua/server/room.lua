@@ -115,6 +115,13 @@ function Room:resume()
       self.main_co = nil
       return true
     end
+
+    if rest_time == "over" then
+      coroutine.close(main_co)
+      self.main_co = nil
+      return true
+    end
+
     return false, rest_time
   else
     coroutine.close(main_co)
@@ -130,7 +137,7 @@ function Room:isReady()
       self.in_delay = false
       return true
     end
-    return false
+    return false, rest
   end
   for _, p in ipairs(self.players) do
     local ret = true
@@ -144,7 +151,7 @@ function Room:isReady()
         p.serverplayer:setThinking(false)
       end
     end
-    return ret
+    return ret, rest > 1 and rest or nil
   end
   return true
 end
@@ -2815,7 +2822,7 @@ function Room:gameOver(winner)
   end
 
   self.room:gameOver()
-  coroutine.yield("__handleRequest", 0)
+  coroutine.yield("__handleRequest", "over")
 end
 
 ---@param card Card

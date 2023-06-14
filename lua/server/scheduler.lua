@@ -55,7 +55,7 @@ local function refreshReadyRooms()
       requestRoom.minDelayTime = math.ceil(time)
     end
   end
-  -- printf('now have %d ready rooms...', #readyRooms)
+  printf('now have %d ready rooms...', #readyRooms)
 end
 
 local function mainLoop()
@@ -75,7 +75,7 @@ local function mainLoop()
         time = -1
       end
       requestRoom.minDelayTime = math.ceil(time)
-      -- printf("minDelay is %d ms...", requestRoom.minDelayTime)
+      printf("minDelay is %d ms...", requestRoom.minDelayTime)
     else
       refreshReadyRooms()
       if #readyRooms == 0 then
