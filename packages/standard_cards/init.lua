@@ -664,7 +664,8 @@ local lightningSkill = fk.CreateActiveSkill{
     repeat
       nextp = nextp:getNextAlive()
       if nextp == to then break end
-    until not nextp:hasDelayedTrick("lightning")
+    until not nextp:hasDelayedTrick("lightning") and not nextp:isProhibited(nextp, effect.card)
+
 
     if effect.card:isVirtual() then
       nextp:addVirtualEquip(effect.card)
