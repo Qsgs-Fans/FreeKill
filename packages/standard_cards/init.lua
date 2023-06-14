@@ -31,14 +31,15 @@ local slashSkill = fk.CreateActiveSkill{
   target_num = 1,
   can_use = function(self, player, card)
     return
-      table.find(Fk:currentRoom().alive_players, function(p)
+      Fk.currentResponsePattern ~= nil or table.find(Fk:currentRoom().alive_players, function(p)
         return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, p)
       end)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player))
+      return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
+      (#selected > 0 or Self:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, player))
     end
   end,
   on_effect = function(self, room, effect)
