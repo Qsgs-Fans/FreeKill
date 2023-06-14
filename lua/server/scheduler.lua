@@ -2,6 +2,11 @@
 
 local Room = require "server.room"
 
+local verbose = function(...)
+  -- do return end
+  printf(...)
+end
+
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type Room[]
 local runningRooms = {}
@@ -38,13 +43,14 @@ local requestRoom = setmetatable({
   end,
 }, {
   __tostring = function()
-    return "<Request handling Room>"
+    return "<Request Room>"
   end,
 })
 
 runningRooms[-1] = requestRoom
 
 local function refreshReadyRooms()
+  -- verbose '[+] Refreshing ready queue...'
   for k, v in pairs(runningRooms) do
     local ready, rest = v:isReady()
     if ready then
@@ -55,42 +61,52 @@ local function refreshReadyRooms()
       requestRoom.minDelayTime = math.ceil(time)
     end
   end
-  printf('now have %d ready rooms...', #readyRooms)
-  pt(runningRooms)
+  -- verbose('[+] now have %d ready rooms...', #readyRooms)
 end
 
 local function mainLoop()
   while not requestRoom.thread:isTerminated() do
     local room = table.remove(readyRooms, 1)
     if room then
-      printf('switching to room %s...', tostring(room))
+      verbose '============= LOOP =============='
+      verbose('[*] Switching to %s...', tostring(room))
+
       RoomInstance = (room ~= requestRoom and room or nil)
       local over, rest = room:resume()
+      RoomInstance = nil
+
       if over then
+        verbose('[#] %s is finished, removing ...', tostring(room))
         runningRooms[room.id] = nil
-      end
-      local time = requestRoom.minDelayTime
-      if rest and rest >= 0 then
-        time = math.min((time <= 0 and 9999999 or time), rest)
       else
-        time = -1
+        local time = requestRoom.minDelayTime
+        if rest and rest >= 0 then
+          time = math.min((time <= 0 and 9999999 or time), rest)
+        else
+          time = -1
+        end
+        requestRoom.minDelayTime = math.ceil(time)
+        -- verbose("[+] minDelay is %d ms...", requestRoom.minDelayTime)
+        verbose('[-] %s successfully yielded, %d ready rooms left...',
+          tostring(room), #readyRooms)
       end
-      requestRoom.minDelayTime = math.ceil(time)
-      printf("minDelay is %d ms...", requestRoom.minDelayTime)
     else
       refreshReadyRooms()
       if #readyRooms == 0 then
         refreshReadyRooms()
         if #readyRooms == 0 then
           local time = requestRoom.minDelayTime
-          printf('sleep for %d ms...', time)
+          verbose('[.] Sleeping for %d ms...', time)
+          local cur = os.getms()
           requestRoom.thread:trySleep(time)
-          print 'wake up ...'
+          verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
           requestRoom.minDelayTime = -1
         end
       end
     end
   end
+  verbose '=========== LOOP END ============'
+  verbose '[:)] Goodbye!'
 end
 
 function InitScheduler(_thread)

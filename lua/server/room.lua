@@ -115,27 +115,24 @@ function Room:resume()
     if ret == false then
       fk.qCritical(err_msg)
       print(debug.traceback(main_co))
-      coroutine.close(main_co)
-      self.main_co = nil
-      return true
+      goto GAME_OVER
     end
 
     if rest_time == "over" then
-      coroutine.close(main_co)
-      self.main_co = nil
-      return true
+      goto GAME_OVER
     end
 
     return false, rest_time
-  else
-    coroutine.close(main_co)
-    self.main_co = nil
-    return true
   end
+
+  ::GAME_OVER::
+  coroutine.close(main_co)
+  self.main_co = nil
+  return true
 end
 
 function Room:isReady()
-  if self:checkNoHuman() then
+  if self:checkNoHuman(true) then
     -- 赶紧告诉他已经就绪啦，然后恢复的时候直接杀了
     return true
   end
@@ -165,7 +162,7 @@ function Room:isReady()
   return ret, (rest and rest > 1) and rest or nil
 end
 
-function Room:checkNoHuman()
+function Room:checkNoHuman(chkOnly)
   if #self.players == 0 then return end
 
   for _, p in ipairs(self.players) do
@@ -175,7 +172,9 @@ function Room:checkNoHuman()
     end
   end
 
-  self:gameOver("")
+  if not chkOnly then
+    self:gameOver("")
+  end
   return true
 end
 
@@ -2854,7 +2853,10 @@ function Room:gameOver(winner)
 
   self.room:gameOver()
 
-  if RoomInstance == self then
+  if table.contains(
+    { "running", "normal" },
+    coroutine.status(self.main_co)
+  ) then
     coroutine.yield("__handleRequest", "over")
   else
     coroutine.close(self.main_co)

@@ -105,6 +105,8 @@ request_handlers["luckcard"] = function(room, id, reqlist)
 
   if pdata.luckTime > 0 then
     p:doNotify("AskForLuckCard", pdata.luckTime)
+  else
+    p.serverplayer:setThinking(false)
   end
 
   room:setTag("LuckCardData", luck_data)
@@ -147,9 +149,11 @@ local function requestLoop(self)
       local room = self:getRoom(roomId)
 
       if room then
+        RoomInstance = room
         local id = tonumber(reqlist[1])
         local command = reqlist[2]
         request_handlers[command](room, id, reqlist)
+        RoomInstance = nil
       end
     end
     if not ret then

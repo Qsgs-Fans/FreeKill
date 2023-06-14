@@ -87,6 +87,7 @@ void RoomThread::wakeUp() {
 
 void RoomThread::tryTerminate() {
   terminated = true;
+  wakeUp();
 }
 
 bool RoomThread::isTerminated() const {
