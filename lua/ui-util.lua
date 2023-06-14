@@ -27,10 +27,7 @@ end
 UI.DetailedComboBox = function(spec)
   assert(type(spec.choices) == "table", "Choices is not a table")
   assert(#spec.choices > 0, "Choices is empty")
-  spec.detailed = {}
-  for _, choice in ipairs(spec.choices) do
-    table.insert(spec.detailed, ":" .. choice)
-  end
+  spec.detailed = true
   spec.default = spec.default or spec.choices[1]
   spec.type = "combo"
   return spec
