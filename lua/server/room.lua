@@ -1235,7 +1235,7 @@ function Room:askForGeneral(player, generals, n)
   if #generals == n then return n == 1 and generals[1] or generals end
   local defaultChoice = table.random(generals, n)
 
-  if (player.state == "online") then
+  if (player.serverplayer:getState() == fk.Player_Online) then
     local result = self:doRequest(player, command, json.encode{ generals, n })
     local choices
     if result == "" then
