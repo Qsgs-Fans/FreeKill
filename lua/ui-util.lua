@@ -14,8 +14,9 @@ local UI = {}
 -- * default: string，默认的选项，默认为choices的第一个
 -- * detailed: bool，为真的话送详细信息
 UI.ComboBox = function(spec)
-  assert(type(spec.choices) == "table", "Choices is not a table")
-  assert(#spec.choices > 0, "Choices is empty")
+  -- assert(type(spec.choices) == "table", "Choices is not a table")
+  -- assert(#spec.choices > 0, "Choices is empty")
+  spec.choices = type(spec.choices) == "table" and spec.choices or Util.DummyTable
   spec.default = spec.default or spec.choices[1]
   spec.detailed = spec.detailed
   spec.type = "combo"

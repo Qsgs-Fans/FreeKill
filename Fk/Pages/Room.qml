@@ -539,12 +539,14 @@ Item {
         Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
         switch (data.type) {
         case "combo":
-          skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillCombo.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.default_choice = data["default"];
-          skillInteraction.item.choices = data.choices;
-          skillInteraction.item.detailed = data.detailed;
-          // skillInteraction.item.clicked();
+          if (data.choices.length > 0) {
+            skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+            skillInteraction.item.skill = skill_name;
+            skillInteraction.item.default_choice = data["default"];
+            skillInteraction.item.choices = data.choices;
+            skillInteraction.item.detailed = data.detailed;
+            // skillInteraction.item.clicked();
+          }
           break;
         case "spin":
           skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillSpin.qml");
