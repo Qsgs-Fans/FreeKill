@@ -3,6 +3,24 @@
 local extension = Package:new("standard_cards", Package.CardPack)
 extension.metadata = require "packages.standard_cards.metadata"
 
+local global_can_use = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if not player:isProhibited(p, card) then
+      return true
+    end
+  end
+end
+
+local aoe_can_use = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if p ~= player and not player:isProhibited(p, card) then
+      return true
+    end
+  end
+end
+
 local global_on_use = function(self, room, cardUseEvent)
   if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
     cardUseEvent.tos = {}
@@ -38,7 +56,8 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player))
+      return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
+      (#selected > 0 or Self:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, player))
     end
   end,
   on_effect = function(self, room, effect)
@@ -439,6 +458,7 @@ extension:addCards({
 
 local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
+  can_use = aoe_can_use,
   on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect)
@@ -477,6 +497,7 @@ extension:addCards({
 
 local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
+  can_use = aoe_can_use,
   on_use = aoe_on_use,
   on_effect = function(self, room, effect)
     local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect)
@@ -513,6 +534,7 @@ extension:addCards({
 
 local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
+  can_use = global_can_use,
   on_use = global_on_use,
   about_to_effect = function(self, room, effect)
     if not room:getPlayerById(effect.to):isWounded() then
@@ -541,6 +563,7 @@ extension:addCards({
 
 local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
+  can_use = global_can_use,
   on_use = global_on_use,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
@@ -664,7 +687,8 @@ local lightningSkill = fk.CreateActiveSkill{
     repeat
       nextp = nextp:getNextAlive()
       if nextp == to then break end
-    until not nextp:hasDelayedTrick("lightning")
+    until not nextp:hasDelayedTrick("lightning") and not nextp:isProhibited(nextp, effect.card)
+
 
     if effect.card:isVirtual() then
       nextp:addVirtualEquip(effect.card)
@@ -918,7 +942,7 @@ local bladeSkill = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
-      true, { must_targets = {target.id} })
+      true, { must_targets = {target.id}, exclusive_targets = {target.id} })
     if use then
       use.extraUse = true
       self.cost_data = use

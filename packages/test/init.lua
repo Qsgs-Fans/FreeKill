@@ -136,7 +136,8 @@ local test_vs = fk.CreateViewAsSkill{
         "archery_attack",
         "lightning",
         "nullification",
-      }
+      },
+      detailed = true,
     }
   end,
   view_as = function(self, cards)

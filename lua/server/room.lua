@@ -555,7 +555,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   orig = Fk.generals[orig]
   local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
-  local new = Fk.generals[new_general] or Fk.generals["sunce"]
+  local new = Fk.generals[new_general] or Fk.generals["liubei"]
   local new_skills = new:getSkillNameList()
 
   table.insertTable(new_skills, table.map(orig_skills, function(e)
@@ -1052,8 +1052,11 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   -- maxNum = math.min(#canDiscards, maxNum)
   -- minNum = math.min(#canDiscards, minNum)
 
-  if minNum < #canDiscards and not cancelable then
-    return {}
+  if minNum >= #canDiscards and not cancelable then
+    if not skipDiscard then
+      self:throwCard(canDiscards, skillName, player, player)
+    end
+    return canDiscards
   end
 
   local toDiscard = {}
@@ -1526,6 +1529,7 @@ end
 
 -- available extra_data:
 -- * must_targets: integer[]
+-- * exclusive_targets: integer[]
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
@@ -1576,11 +1580,11 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
-    Fk.currentResponsePattern = nil
 
     if result ~= "" then
       return self:handleUseCardReply(player, result)
     end
+    Fk.currentResponsePattern = nil
   end
   return nil
 end
@@ -1621,7 +1625,6 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
 
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
-    Fk.currentResponsePattern = nil
 
     if result ~= "" then
       local use = self:handleUseCardReply(player, result)
@@ -1629,6 +1632,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
         return use.card
       end
     end
+    Fk.currentResponsePattern = nil
   end
   return nil
 end
@@ -1662,12 +1666,12 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
 
   Fk.currentResponsePattern = pattern
   local winner = self:doRaceRequest(command, players, json.encode(data))
-  Fk.currentResponsePattern = nil
 
   if winner then
     local result = winner.client_reply
     return self:handleUseCardReply(winner, result)
   end
+  Fk.currentResponsePattern = nil
   return nil
 end
 
@@ -2281,7 +2285,6 @@ function Room:handleCardEffect(event, cardEffectEvent)
         self:useCard(use)
       end
     end
-    Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then
     if cardEffectEvent.card.skill then
       execGameEvent(GameEvent.SkillEffect, function ()
@@ -2302,7 +2305,7 @@ end
 ---@param from ServerPlayer @ 使用来源
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName string @ 技能名
----@param extra boolean @ 是否计入次数
+---@param extra boolean @ 是否不计入次数
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName

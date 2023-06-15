@@ -543,6 +543,7 @@ Item {
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
+          skillInteraction.item.detailed = data.detailed;
           // skillInteraction.item.clicked();
           break;
         case "spin":
