@@ -946,7 +946,7 @@ local bladeSkill = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
-      true, { must_targets = {target.id} })
+      true, { must_targets = {target.id}, exclusive_targets = {target.id} })
     if use then
       use.extraUse = true
       self.cost_data = use
