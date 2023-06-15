@@ -1,55 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-%nodefaultctor Server;
-%nodefaultdtor Server;
-class Server : public QObject {
-public:
-  Room *lobby() const;
-  void createRoom(ServerPlayer *owner, const QString &name, int capacity);
-  Room *findRoom(int id) const;
-  ServerPlayer *findPlayer(int id) const;
-
-  sqlite3 *getDatabase();
-};
-
-extern Server *ServerInstance;
-
 %nodefaultctor Room;
 %nodefaultdtor Room;
 class Room : public QObject {
 public:
   // Property reader & setter
   // ==================================={
-  Server *getServer() const;
   int getId() const;
-  bool isLobby() const;
-  QString getName() const;
-  void setName(const QString &name);
-  int getCapacity() const;
-  void setCapacity(int capacity);
-  bool isFull() const;
-  bool isAbandoned() const;
 
-  ServerPlayer *getOwner() const;
-  void setOwner(ServerPlayer *owner);
-
-  void addPlayer(ServerPlayer *player);
-  void addRobot(ServerPlayer *player);
-  void removePlayer(ServerPlayer *player);
   QList<ServerPlayer *> getPlayers() const;
-  ServerPlayer *findPlayer(int id) const;
 
   QList<ServerPlayer *> getObservers() const;
   int getTimeout() const;
-
-  bool isStarted() const;
-  // ====================================}
-
-  void doBroadcastNotify(
-    const QList<ServerPlayer *> targets,
-    const QString &command,
-    const QString &jsonData
-  );
+  void checkAbandoned();
 
   void updateWinRate(int id, const QString &general, const QString &mode,
                      int result);
@@ -97,18 +60,10 @@ void RoomThread::run()
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {
 public:
-  Server *getServer() const;
-  Room *getRoom() const;
-  void setRoom(Room *room);
-
-  void speak(const QString &message);
-
   void doRequest(const QString &command,
            const QString &json_data, int timeout);
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
-
-  void prepareForRequest(const QString &command, const QString &data);
 
   bool busy() const;
   void setBusy(bool busy);

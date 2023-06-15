@@ -18,4 +18,3 @@ class ClientPlayer *Self = nullptr;
 %include "qml-nogui.i"
 %include "player.i"
 %include "server.i"
-%include "sqlite3.i"

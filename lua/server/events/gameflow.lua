@@ -110,7 +110,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
 
     for _, id in ipairs(ldata.playerList) do
       local pl = room:getPlayerById(id)
-      if pl._splayer:getStateString() ~= "online" then
+      if pl._splayer:getState() ~= fk.Player_Online then
         ldata[id].luckTime = 0
         pl.serverplayer:setThinking(false)
       end

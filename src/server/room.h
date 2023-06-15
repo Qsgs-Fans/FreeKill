@@ -28,7 +28,7 @@ class Room : public QObject {
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
-  void setAbandoned(bool abandoned);  // never use this function
+  void checkAbandoned();
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -57,17 +57,8 @@ class Room : public QObject {
   void updateWinRate(int id, const QString &general, const QString &mode,
                      int result);
   void gameOver();
-
-  // void initLua();
-
-  // void roomStart();
   void manuallyStart();
-  // LuaFunction startGame;
-
-  // QString fetchRequest();
   void pushRequest(const QString &req);
-  // void clearRequest();
-  // bool hasRequest() const;
 
  signals:
   void abandoned();
@@ -93,10 +84,6 @@ class Room : public QObject {
   bool m_ready;
 
   int timeout;
-
-  // lua_State *L;
-  // QMutex request_queue_mutex;
-  // QQueue<QString> request_queue;  // json string
 };
 
 #endif  // _ROOM_H

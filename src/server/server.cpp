@@ -469,26 +469,13 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
 void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
-//  if (room->isRunning()) {
-//    room->wait();
-//  }
   room->gameOver();
   rooms.remove(room->getId());
   updateRoomList();
+  // 按理说这时候就可以删除了，但是这里肯定比Lua先检测到。
+  // 倘若在Lua的Room:gameOver时C++的Room被删除了问题就大了。
+  // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
   // room->deleteLater();
-  // idle_rooms.push(room);
-  // 懒得改了！
-  // 这里出bug的原因还是在于room的销毁工作没做好
-  // room销毁这块bug很多
-  // if (idle_rooms.length() > 10) {
-  //   auto junk = idle_rooms[0];
-  //   idle_rooms.removeFirst();
-  //   junk->deleteLater();
-  // }
-//#ifdef QT_DEBUG
-//  qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
-//           << "idle room(s).";
-//#endif
 }
 
 void Server::onUserDisconnected() {

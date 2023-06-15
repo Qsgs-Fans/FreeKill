@@ -24,7 +24,6 @@ function ServerPlayer:initialize(_self)
   self._splayer = _self -- 真正在玩的玩家
   self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
-  self.state = _self:getStateString()
   self.room = nil
 
   -- Below are for doBroadcastRequest
@@ -89,11 +88,11 @@ end
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
-  local state = player.serverplayer:getStateString()
+  local state = player.serverplayer:getState()
   player.request_timeout = timeout
   player.request_start = start
-  if state ~= "online" then
-    if state ~= "robot" then
+  if state ~= fk.Player_Online then
+    if state ~= fk.Player_Robot then
       player.room:checkNoHuman()
       player.room:delay(500)
       return "__cancel"
@@ -267,7 +266,7 @@ end
 
 function ServerPlayer:reconnect()
   local room = self.room
-  self.serverplayer:setStateString("online")
+  self.serverplayer:setState(fk.Player_Online)
 
   self:doNotify("Setup", json.encode{
     self.id,

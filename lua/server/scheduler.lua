@@ -94,6 +94,7 @@ local function mainLoop()
 
       if over then
         -- verbose('[#] %s is finished, removing ...', tostring(room))
+        room.logic = nil
         runningRooms[room.id] = nil
       else
         local time = requestRoom.minDelayTime
@@ -113,6 +114,7 @@ local function mainLoop()
       end
     else
       refreshReadyRooms()
+      collectgarbage()
       if #readyRooms == 0 then
         refreshReadyRooms()
         if #readyRooms == 0 then

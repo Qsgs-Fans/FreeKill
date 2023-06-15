@@ -17,6 +17,8 @@ class RoomThread : public QThread {
   bool isFull() const;
 
   Room *getRoom(int id) const;
+  void addRoom(Room *room);
+  void removeRoom(Room *room);
 
   QString fetchRequest();
   void pushRequest(const QString &req);
@@ -34,7 +36,7 @@ class RoomThread : public QThread {
 
  private:
   Server *m_server;
-  QList<Room *> room_list;
+  // QList<Room *> room_list;
   int m_capacity;
 
   lua_State *L;

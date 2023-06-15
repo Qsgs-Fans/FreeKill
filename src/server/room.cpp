@@ -16,6 +16,9 @@ Room::Room(RoomThread *m_thread) {
   server->nextRoomId++;
   this->server = server;
   this->m_thread = m_thread;
+  if (m_thread) { // In case of lobby
+    m_thread->addRoom(this);
+  }
   setParent(server);
 
   m_abandoned = false;
@@ -37,6 +40,17 @@ Room::Room(RoomThread *m_thread) {
 }
 
 Room::~Room() {
+  if (gameStarted) {
+    gameOver();
+  }
+
+  if (m_thread) {
+    m_thread->removeRoom(this);
+  }
+
+#ifdef QT_DEBUG
+  qDebug() << "Room" << id << "destructed";
+#endif
 }
 
 Server *Room::getServer() const { return server; }
@@ -77,7 +91,18 @@ bool Room::isAbandoned() const {
   return true;
 }
 
-void Room::setAbandoned(bool abandoned) { m_abandoned = abandoned; }
+// Lua专用，lua room销毁时检查c++的Room是不是也差不多可以销毁了
+void Room::checkAbandoned() {
+  if (isAbandoned()) {
+    bool tmp = m_abandoned;
+    m_abandoned = true;
+    if (!tmp) {
+      emit abandoned();
+    } else {
+      deleteLater();
+    }
+  }
+}
 
 ServerPlayer *Room::getOwner() const { return owner; }
 

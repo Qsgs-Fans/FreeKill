@@ -309,34 +309,6 @@ function string:endsWith(e)
   return e == "" or self:sub(-#e) == e
 end
 
----@class Sql
-Sql = {
-  ---@param filename string
-  open = function(filename)
-    return fk.OpenDatabase(filename)
-  end,
-
-  ---@param db fk.SQLite3
-  close = function(db)
-    fk.CloseDatabase(db)
-  end,
-
-  --- Execute an SQL statement.
-  ---@param db fk.SQLite3
-  ---@param sql string
-  exec = function(db, sql)
-    fk.ExecSQL(db, sql)
-  end,
-
-  --- Execute a `SELECT` SQL statement.
-  ---@param db fk.SQLite3
-  ---@param sql string
-  ---@return table[] @ Array of Json object, the key is column name and value is row value
-  exec_select = function(db, sql)
-    return json.decode(fk.SelectFromDb(db, sql))
-  end,
-}
-
 FileIO = {
   pwd = fk.QmlBackend_pwd,
   ls = function(filename)

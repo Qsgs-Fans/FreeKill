@@ -179,7 +179,7 @@ function Room:checkNoHuman(chkOnly)
 
   for _, p in ipairs(self.players) do
     -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
+    if p.serverplayer:getState() == fk.Player_Online then
       return
     end
   end
@@ -192,6 +192,11 @@ end
 
 function Room:__tostring()
   return string.format("<Room #%d>", self.id)
+end
+
+function Room:__gc()
+  print(tostring(self), "__gc")
+  self.room:checkAbandoned()
 end
 
 --- 正式在这个房间中开始游戏。

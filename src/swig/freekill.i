@@ -18,4 +18,3 @@
 %include "player.i"
 %include "client.i"
 %include "server.i"
-%include "sqlite3.i"

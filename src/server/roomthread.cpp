@@ -3,6 +3,7 @@
 #include "roomthread.h"
 #include "server.h"
 #include "util.h"
+#include <qtpreprocessorsupport.h>
 
 RoomThread::RoomThread(Server *m_server) {
   setObjectName("Room");
@@ -22,9 +23,9 @@ RoomThread::~RoomThread() {
     wait();
   }
   lua_close(L);
-  foreach (auto room, room_list) {
-    room->deleteLater();
-  }
+  // foreach (auto room, room_list) {
+  //   room->deleteLater();
+  // }
 }
 
 Server *RoomThread::getServer() const {
@@ -32,11 +33,22 @@ Server *RoomThread::getServer() const {
 }
 
 bool RoomThread::isFull() const {
-  return room_list.count() >= m_capacity;
+  // return room_list.count() >= m_capacity;
+  return m_capacity <= 0;
 }
 
 Room *RoomThread::getRoom(int id) const {
   return m_server->findRoom(id);
+}
+
+void RoomThread::addRoom(Room *room) {
+  Q_UNUSED(room);
+  m_capacity--;
+}
+
+void RoomThread::removeRoom(Room *room) {
+  Q_UNUSED(room);
+  m_capacity++;
 }
 
 QString RoomThread::fetchRequest() {
