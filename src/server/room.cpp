@@ -19,7 +19,7 @@ Room::Room(RoomThread *m_thread) {
   if (m_thread) { // In case of lobby
     m_thread->addRoom(this);
   }
-  setParent(server);
+  // setParent(server);
 
   m_abandoned = false;
   owner = nullptr;

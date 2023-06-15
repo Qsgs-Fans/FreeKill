@@ -114,7 +114,6 @@ local function mainLoop()
       end
     else
       refreshReadyRooms()
-      collectgarbage()
       if #readyRooms == 0 then
         refreshReadyRooms()
         if #readyRooms == 0 then

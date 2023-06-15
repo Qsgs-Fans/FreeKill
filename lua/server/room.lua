@@ -194,10 +194,11 @@ function Room:__tostring()
   return string.format("<Room #%d>", self.id)
 end
 
+--[[ 敢删就寄，算了
 function Room:__gc()
-  print(tostring(self), "__gc")
   self.room:checkAbandoned()
 end
+--]]
 
 --- 正式在这个房间中开始游戏。
 ---
