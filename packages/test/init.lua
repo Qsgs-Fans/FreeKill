@@ -254,27 +254,6 @@ local test_zhenggong = fk.CreateTriggerSkill{
     player:gainAnExtraTurn()
   end,
 }
-local test_hunqian = fk.CreateTriggerSkill{
-  name = "test_hunqian",
-  events = {fk.GameStart},
-  frequency = Skill.Compulsory,
-  anim_type = "control",
-  can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self.name)
-  end,
-  on_use = function(self, event, target, player, data)
-    local room = player.room
-    for _, p in ipairs(room:getOtherPlayers(player)) do
-      if p:getMark("mouxushengcontrolled") == 0 then
-        room:addPlayerMark(p, "mouxushengcontrolled")
-        player:control(p)
-      else
-        room:setPlayerMark(p, "mouxushengcontrolled", 0)
-        p:control(p)
-      end
-    end
-  end,
-}
 local test2 = General(extension, "mouxusheng", "wu", 99, 99, General.Female)
 test2.shield = 5
 test2:addSkill("rende")
@@ -285,7 +264,6 @@ test2:addSkill(test_vs)
 test2:addSkill(damage_maker)
 test2:addSkill(change_hero)
 test2:addSkill(test_zhenggong)
-test2:addSkill(test_hunqian)
 
 Fk:loadTranslationTable{
   ["test_p_0"] = "测试包",
@@ -310,9 +288,6 @@ Fk:loadTranslationTable{
 
   ["test_zhenggong"] = "迅测",
   [":test_zhenggong"] = "锁定技，首轮开始时，你执行额外的回合。",
-
-  ["test_hunqian"] = "魂牵",
-  [":test_hunqian"] = "锁定技，游戏开始时，你控制所有其他角色。",
 }
 
 return { extension }
