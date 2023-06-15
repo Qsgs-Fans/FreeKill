@@ -21,10 +21,15 @@ end)
 
 -- 仿照Room接口编写的request协程处理器
 local requestRoom = setmetatable({
+
+  -- minDelayTime 是当没有任何就绪房间时，可以睡眠的时间。
+  -- 因为这个时间是所有房间预期就绪用时的最小值，故称为minDelayTime。
   minDelayTime = -1,
+
   getRoom = function(_, roomId)
     return runningRooms[roomId]
   end,
+
   resume = function(self)
     local err, msg = coroutine.resume(requestCo, self)
     if err == false then
@@ -33,14 +38,17 @@ local requestRoom = setmetatable({
     end
     return nil, 0
   end,
+
   isReady = function(self)
     return self.thread:hasRequest()
   end,
+
   registerRoom = function(self, id)
     local cRoom = self.thread:getRoom(id)
     local room = Room:new(cRoom)
     runningRooms[room.id] = room
   end,
+
 }, {
   __tostring = function()
     return "<Request Room>"
@@ -49,6 +57,8 @@ local requestRoom = setmetatable({
 
 runningRooms[-1] = requestRoom
 
+-- 从所有运行中房间中挑出就绪的房间。
+-- 方法暂时就是最简单的遍历。
 local function refreshReadyRooms()
   -- verbose '[+] Refreshing ready queue...'
   for k, v in pairs(runningRooms) do
@@ -64,6 +74,9 @@ local function refreshReadyRooms()
   -- verbose('[+] now have %d ready rooms...', #readyRooms)
 end
 
+-- 主循环。只要线程没有被杀掉，就一直循环下去。
+-- 函数每轮循环会从队列中取一个元素并交给控制权，
+-- 如果没有，则尝试刷新队列，无法刷新则开始睡眠。
 local function mainLoop()
   while not requestRoom.thread:isTerminated() do
     local room = table.remove(readyRooms, 1)
@@ -98,7 +111,10 @@ local function mainLoop()
           local time = requestRoom.minDelayTime
           verbose('[.] Sleeping for %d ms...', time)
           local cur = os.getms()
+
+          -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
+
           verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
           requestRoom.minDelayTime = -1
         end
@@ -109,6 +125,8 @@ local function mainLoop()
   verbose '[:)] Goodbye!'
 end
 
+-- 当Cpp侧的RoomThread运行时，以下这个函数就是这个线程的主函数。
+-- 而这个函数里面又调用了上面的mainLoop。
 function InitScheduler(_thread)
   requestRoom.thread = _thread
   xpcall(mainLoop, debug.traceback)

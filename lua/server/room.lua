@@ -94,14 +94,16 @@ function Room:initialize(_room)
   Fk.disabled_generals = self.settings.disabledGenerals
 end
 
+-- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
 function Room:resume()
+  -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
       self:run()
     end)
   end
 
-  local ret, err_msg, rest_time = true, true
+  local ret, err_msg, rest_time = true, true, nil
   local main_co = self.main_co
 
   if self:checkNoHuman() then
@@ -131,12 +133,16 @@ function Room:resume()
   return true
 end
 
+-- 供调度器使用的函数，用来指示房间是否就绪。
+-- 如果没有就绪的话，可能会返回第二个值来告诉调度器自己还有多久就绪。
 function Room:isReady()
+  -- 没有活人了？那就告诉调度器我就绪了，恢复时候就会自己杀掉
   if self:checkNoHuman(true) then
-    -- 赶紧告诉他已经就绪啦，然后恢复的时候直接杀了
     return true
   end
 
+  -- 因为delay函数而延时：判断延时是否已经结束。
+  -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
   if self.in_delay then
     local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
     if rest <= 0 then
@@ -146,6 +152,10 @@ function Room:isReady()
     return false, rest
   end
 
+  -- 剩下的就是因为等待应答而未就绪了
+  -- 检查所有正在等回答的玩家，如果已经过了烧条时间
+  -- 那么就不认为他还需要时间就绪了
+  -- 然后在调度器第二轮刷新的时候就应该能返回自己已就绪
   local ret = true
   for _, p in ipairs(self.players) do
     if p.serverplayer:thinking() then
