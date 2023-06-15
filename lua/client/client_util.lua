@@ -352,6 +352,19 @@ function ActiveCanUse(skill_name)
   return json.encode(ret)
 end
 
+function ActiveSkillPrompt(skill_name, selected, selected_targets)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill then
+    if type(skill.prompt) == "function" then
+      ret = skill:prompt(selected, selected_targets)
+    else
+      ret = skill.prompt
+    end
+  end
+  return json.encode(ret)
+end
+
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
   local skill = Fk.skills[skill_name]
   local ret = false
@@ -493,10 +506,8 @@ end
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
   if skill and skill.interaction then
-    local ret = skill:interaction()
-    if ret then return json.encode() end
+    return json.encode(skill:interaction())
   end
-  return "null"
 end
 
 function SetInteractionDataOfSkill(skill_name, data)

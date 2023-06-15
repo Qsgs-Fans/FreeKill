@@ -150,6 +150,7 @@ local test_vs = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
+  prompt = "#test_vs",
 }
 local test_trig = fk.CreateTriggerSkill{
   name = "test_trig",
@@ -280,6 +281,7 @@ Fk:loadTranslationTable{
 
   ["test_vs"] = "视为",
   [":test_vs"] = "你可以将牌当包含无懈在内的某张锦囊使用。",
+  ["#test_vs"] = "视为：你可以学习锦囊牌的用法",
 
   ["damage_maker"] = "制伤",
   [":damage_maker"] = "出牌阶段，你可以进行一次伤害制造器。",

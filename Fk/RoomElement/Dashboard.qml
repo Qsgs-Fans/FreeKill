@@ -251,11 +251,33 @@ RowLayout {
     }
   }
 
+  function processPrompt(prompt) {
+    const data = prompt.split(":");
+    let raw = Backend.translate(data[0]);
+    const src = parseInt(data[1]);
+    const dest = parseInt(data[2]);
+    if (raw.match("%src")) raw = raw.replace("%src", Backend.translate(getPhoto(src).general));
+    if (raw.match("%dest")) raw = raw.replace("%dest", Backend.translate(getPhoto(dest).general));
+    if (raw.match("%arg")) raw = raw.replace("%arg", Backend.translate(data[3]));
+    if (raw.match("%arg2")) raw = raw.replace("%arg2", Backend.translate(data[4]));
+    return raw;
+  }
+
   function updatePending() {
-    if (pending_skill === "") return;
+    if (pending_skill === ""){
+      roomScene.promptText = "";
+      return;
+    }
 
     const enabled_cards = [];
     const targets = roomScene.selected_targets;
+    const prompt = JSON.parse(Backend.callLuaFunction(
+      "ActiveSkillPrompt",
+      [pending_skill, pendings, targets]
+    ));
+    if (prompt !== "") {
+      roomScene.promptText = processPrompt(prompt);
+    }
 
     handcardAreaItem.cards.forEach((card) => {
       if (card.selected || JSON.parse(Backend.callLuaFunction(
