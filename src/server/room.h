@@ -17,6 +17,7 @@ class Room : public QObject {
   // ==================================={
   Server *getServer() const;
   RoomThread *getThread() const;
+  void setThread(RoomThread *t);
   int getId() const;
   void setId(int id);
   bool isLobby() const;
@@ -29,6 +30,7 @@ class Room : public QObject {
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
   void checkAbandoned();
+  void setAbandoned(bool a);
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);

@@ -62,7 +62,7 @@ private:
   ServerSocket *server;
   Room *m_lobby;
   QMap<int, Room *> rooms;
-  // QStack<Room *> idle_rooms;
+  QStack<Room *> idle_rooms;
   QList<RoomThread *> threads;
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);

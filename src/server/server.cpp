@@ -117,12 +117,21 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     threads.append(thread);
   }
 
-  room = new Room(thread);
-  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-  if (room->isLobby())
-    m_lobby = room;
-  else
+  if (!idle_rooms.isEmpty()) {
+    room = idle_rooms.pop();
+    room->setId(nextRoomId);
+    nextRoomId++;
+    room->setAbandoned(false);
+    room->setThread(thread);
     rooms.insert(room->getId(), room);
+  } else {
+    room = new Room(thread);
+    connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
+    if (room->isLobby())
+      m_lobby = room;
+    else
+      rooms.insert(room->getId(), room);
+  }
 
   room->setName(name);
   room->setCapacity(capacity);
@@ -476,6 +485,8 @@ void Server::onRoomAbandoned() {
   // 倘若在Lua的Room:gameOver时C++的Room被删除了问题就大了。
   // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
   // room->deleteLater();
+  idle_rooms.push(room);
+  room->getThread()->removeRoom(room);
 }
 
 void Server::onUserDisconnected() {

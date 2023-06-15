@@ -47,7 +47,7 @@ void RoomThread::addRoom(Room *room) {
 }
 
 void RoomThread::removeRoom(Room *room) {
-  Q_UNUSED(room);
+  room->setThread(nullptr);
   m_capacity++;
 }
 

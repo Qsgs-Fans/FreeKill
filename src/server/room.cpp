@@ -47,15 +47,13 @@ Room::~Room() {
   if (m_thread) {
     m_thread->removeRoom(this);
   }
-
-#ifdef QT_DEBUG
-  qDebug() << "Room" << id << "destructed";
-#endif
 }
 
 Server *Room::getServer() const { return server; }
 
 RoomThread *Room::getThread() const { return m_thread; }
+
+void Room::setThread(RoomThread *t) { m_thread = t; }
 
 int Room::getId() const { return id; }
 
@@ -103,6 +101,8 @@ void Room::checkAbandoned() {
     }
   }
 }
+
+void Room::setAbandoned(bool a) { m_abandoned = a; }
 
 ServerPlayer *Room::getOwner() const { return owner; }
 
