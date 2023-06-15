@@ -41,7 +41,7 @@ public:
   bool busy() const { return m_busy; }
   void setBusy(bool busy) { m_busy = busy; }
 
-  bool thinking() const;
+  bool thinking();
   void setThinking(bool t);
 signals:
   void disconnected();
@@ -52,8 +52,9 @@ private:
   Router *router;
   Server *server;
   Room *room;       // Room that player is in, maybe lobby
-  bool m_busy;
-  bool m_thinking;
+  bool m_busy; // (Lua专用) 是否有doRequest没处理完？见于神貂蝉这种一控多的
+  bool m_thinking; // 是否在烧条？
+  QMutex m_thinking_mutex; // 注意setBusy只在Lua使用，所以不需要锁。
 
   QString requestCommand;
   QString requestData;

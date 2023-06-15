@@ -113,6 +113,6 @@ public:
   bool busy() const;
   void setBusy(bool busy);
 
-  bool thinking() const;
+  bool thinking();
   void setThinking(bool t);
 };

@@ -157,15 +157,17 @@ function Room:isReady()
   -- 那么就不认为他还需要时间就绪了
   -- 然后在调度器第二轮刷新的时候就应该能返回自己已就绪
   local ret = true
+  local rest
   for _, p in ipairs(self.players) do
-    if p.serverplayer:thinking() then
+    -- 这里判断的话需要用_splayer了，不然一控多的情况下会导致重复判断
+    if p._splayer:thinking() then
       ret = false
       -- 烧条烧光了的话就把thinking设为false
-      local rest = p.request_timeout * 1000 - (os.getms() -
+      rest = p.request_timeout * 1000 - (os.getms() -
         p.request_start) / 1000
 
       if rest <= 0 then
-        p.serverplayer:setThinking(false)
+        p._splayer:setThinking(false)
       end
     end
   end

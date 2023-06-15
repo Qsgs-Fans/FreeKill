@@ -111,10 +111,15 @@ void ServerPlayer::kick() {
   setSocket(nullptr);
 }
 
-bool ServerPlayer::thinking() const {
-  return m_thinking;
+bool ServerPlayer::thinking() {
+  m_thinking_mutex.lock();
+  bool ret = m_thinking;
+  m_thinking_mutex.unlock();
+  return ret;
 }
 
 void ServerPlayer::setThinking(bool t) {
+  m_thinking_mutex.lock();
   m_thinking = t;
+  m_thinking_mutex.unlock();
 }

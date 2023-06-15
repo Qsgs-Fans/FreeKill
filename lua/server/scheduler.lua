@@ -3,12 +3,11 @@
 local Room = require "server.room"
 
 local verbose = function(...)
-  -- do return end
   printf(...)
 end
 
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
----@type Room[]
+---@type table<integer, Room>
 local runningRooms = {}
 
 -- 所有处于就绪态的房间，以及request协程（如果就绪的话）
@@ -96,9 +95,11 @@ local function mainLoop()
         runningRooms[room.id] = nil
       else
         local time = requestRoom.minDelayTime
-        if room == requestRoom and rest_sleep_time then
-          time = rest_sleep_time
-        elseif rest and rest >= 0 then
+        if room == requestRoom then
+          rest = rest_sleep_time
+        end
+
+        if rest and rest >= 0 then
           time = math.min((time <= 0 and 9999999 or time), rest)
         else
           time = -1
@@ -141,5 +142,5 @@ end
 -- 而这个函数里面又调用了上面的mainLoop。
 function InitScheduler(_thread)
   requestRoom.thread = _thread
-  xpcall(mainLoop, debug.traceback)
+  Pcall(mainLoop)
 end
