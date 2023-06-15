@@ -78,6 +78,9 @@ end
 -- 函数每轮循环会从队列中取一个元素并交给控制权，
 -- 如果没有，则尝试刷新队列，无法刷新则开始睡眠。
 local function mainLoop()
+  -- request协程的专用特判变量。因为处理request不应当重置睡眠时长
+  local rest_sleep_time
+
   while not requestRoom.thread:isTerminated() do
     local room = table.remove(readyRooms, 1)
     if room then
@@ -93,7 +96,9 @@ local function mainLoop()
         runningRooms[room.id] = nil
       else
         local time = requestRoom.minDelayTime
-        if rest and rest >= 0 then
+        if room == requestRoom and rest_sleep_time then
+          time = rest_sleep_time
+        elseif rest and rest >= 0 then
           time = math.min((time <= 0 and 9999999 or time), rest)
         else
           time = -1
@@ -116,6 +121,13 @@ local function mainLoop()
           requestRoom.thread:trySleep(time)
 
           verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
+
+          if time > 0 then
+            rest_sleep_time = math.floor(time - (os.getms() - cur) / 1000)
+          else
+            rest_sleep_time = -1
+          end
+
           requestRoom.minDelayTime = -1
         end
       end

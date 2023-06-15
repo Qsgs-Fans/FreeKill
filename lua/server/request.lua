@@ -138,6 +138,9 @@ request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
 end
 
+-- 处理异步请求的协程，本身也是个死循环就是了。
+-- 为了适应调度器，目前又暂且将请求分为“耗时请求”和不耗时请求。
+-- 耗时请求处理后会立刻挂起。不耗时的请求则会不断处理直到请求队列空后再挂起。
 local function requestLoop(self)
   while true do
     local ret = false
