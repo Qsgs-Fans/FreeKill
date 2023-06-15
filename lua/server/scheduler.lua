@@ -2,9 +2,11 @@
 
 local Room = require "server.room"
 
+--[[
 local verbose = function(...)
   printf(...)
 end
+--]]
 
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type table<integer, Room>
@@ -83,15 +85,15 @@ local function mainLoop()
   while not requestRoom.thread:isTerminated() do
     local room = table.remove(readyRooms, 1)
     if room then
-      verbose '============= LOOP =============='
-      verbose('[*] Switching to %s...', tostring(room))
+      -- verbose '============= LOOP =============='
+      -- verbose('[*] Switching to %s...', tostring(room))
 
       RoomInstance = (room ~= requestRoom and room or nil)
       local over, rest = room:resume()
       RoomInstance = nil
 
       if over then
-        verbose('[#] %s is finished, removing ...', tostring(room))
+        -- verbose('[#] %s is finished, removing ...', tostring(room))
         runningRooms[room.id] = nil
       else
         local time = requestRoom.minDelayTime
@@ -106,8 +108,8 @@ local function mainLoop()
         end
         requestRoom.minDelayTime = math.ceil(time)
         -- verbose("[+] minDelay is %d ms...", requestRoom.minDelayTime)
-        verbose('[-] %s successfully yielded, %d ready rooms left...',
-          tostring(room), #readyRooms)
+        -- verbose('[-] %s successfully yielded, %d ready rooms left...',
+        --   tostring(room), #readyRooms)
       end
     else
       refreshReadyRooms()
@@ -115,13 +117,13 @@ local function mainLoop()
         refreshReadyRooms()
         if #readyRooms == 0 then
           local time = requestRoom.minDelayTime
-          verbose('[.] Sleeping for %d ms...', time)
+          -- verbose('[.] Sleeping for %d ms...', time)
           local cur = os.getms()
 
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
 
-          verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
+          -- verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
 
           if time > 0 then
             rest_sleep_time = math.floor(time - (os.getms() - cur) / 1000)
@@ -134,8 +136,8 @@ local function mainLoop()
       end
     end
   end
-  verbose '=========== LOOP END ============'
-  verbose '[:)] Goodbye!'
+  -- verbose '=========== LOOP END ============'
+  -- verbose '[:)] Goodbye!'
 end
 
 -- 当Cpp侧的RoomThread运行时，以下这个函数就是这个线程的主函数。
