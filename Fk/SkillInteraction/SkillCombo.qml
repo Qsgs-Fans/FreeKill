@@ -9,6 +9,7 @@ MetroButton {
   property var choices: []
   property string default_choice
   property string answer: default_choice
+  property bool detailed: false
 
   function processPrompt(prompt) {
     const data = prompt.split(":");
@@ -34,7 +35,11 @@ MetroButton {
   }
 
   onClicked: {
-    roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
+    if (detailed) {
+      roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/DetailedChoiceBox.qml");
+    } else {
+      roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
+    }
     const box = roomScene.popupBox.item;
     box.options = choices;
     box.accepted.connect(() => {

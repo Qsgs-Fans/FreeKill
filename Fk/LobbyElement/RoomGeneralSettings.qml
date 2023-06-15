@@ -70,7 +70,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Select general num")
+        text: Backend.translate("Select generals num")
       }
       SpinBox {
         id: generalNum
@@ -82,6 +82,14 @@ Flickable {
           config.preferredGeneralNum = value;
         }
       }
+    }
+
+    Text {
+      id: warning
+      anchors.rightMargin: 8
+      visible: JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", [])) < config.preferredGeneralNum * config.preferedPlayerNum
+      text: Backend.translate("No enough generals")
+      color: "red"
     }
 
     RowLayout {
@@ -149,6 +157,7 @@ Flickable {
       spacing: 16
       Button {
         text: Backend.translate("OK")
+        enabled: !(warning.visible)
         onClicked: {
           root.finished();
           mainWindow.busy = true;
