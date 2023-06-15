@@ -264,10 +264,8 @@ RowLayout {
   }
 
   function updatePending() {
-    if (pending_skill === ""){
-      roomScene.promptText = "";
-      return;
-    }
+    roomScene.resetPrompt();
+    if (pending_skill === "") return;
 
     const enabled_cards = [];
     const targets = roomScene.selected_targets;
@@ -276,7 +274,7 @@ RowLayout {
       [pending_skill, pendings, targets]
     ));
     if (prompt !== "") {
-      roomScene.promptText = processPrompt(prompt);
+      roomScene.setPrompt(processPrompt(prompt));
     }
 
     handcardAreaItem.cards.forEach((card) => {
@@ -359,6 +357,7 @@ RowLayout {
     handcardAreaItem.adjustCards();
     handcardAreaItem.unselectAll();
     cardSelected(-1);
+    roomScene.resetPrompt();
   }
 
   function addSkill(skill_name, prelight) {

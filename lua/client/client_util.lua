@@ -508,6 +508,7 @@ function GetInteractionOfSkill(skill_name)
   if skill and skill.interaction then
     return json.encode(skill:interaction())
   end
+  return "null"
 end
 
 function SetInteractionDataOfSkill(skill_name, data)
