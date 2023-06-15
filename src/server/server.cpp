@@ -389,7 +389,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           player->alive = true;
           client->disconnect(this);
           if (players.count() <= 10) {
-              broadcast("ServerMessage", tr("%1 backed").arg(player->getScreenName()));
+            broadcast("ServerMessage", tr("%1 backed").arg(player->getScreenName()));
             if (room->getOwner() == player) {
               auto owner = room->getOwner();
               auto jsonData = QJsonArray();

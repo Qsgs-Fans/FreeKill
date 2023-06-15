@@ -129,6 +129,7 @@ end
 function GetAvailableGeneralsNum()
   local generalPool = Fk:getAllGenerals()
   local except = {}
+  local ret = 0
   for _, g in ipairs(Fk.packages["test_p_0"].generals) do
     table.insert(except, g.name)
   end
@@ -140,12 +141,12 @@ function GetAvailableGeneralsNum()
         #table.filter(availableGenerals, function(g)
         return g.trueName == general.trueName
       end) == 0 then
-        table.insert(availableGenerals, general)
+        ret = ret + 1
       end
     end
   end
 
-  return json.encode(#(#availableGenerals == 0 and Util.DummyTable or availableGenerals))
+  return ret
 end
 
 function GetAllCardPack()

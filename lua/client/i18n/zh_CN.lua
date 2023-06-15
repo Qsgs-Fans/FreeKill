@@ -30,7 +30,7 @@ Fk:loadTranslationTable{
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
   ["Select generals num"] = "选将数目",
-  ["No enough generals"] = "警告：可用武将不足！",
+  ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
   ["Room Password"] = "房间密码",

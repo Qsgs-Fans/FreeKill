@@ -84,15 +84,12 @@ Flickable {
       }
     }
 
-    RowLayout {
+    Text {
       id: warning
       anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        visible: JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", [])) < config.preferredGeneralNum * config.preferedPlayerNum
-        text: Backend.translate("No enough generals")
-        color: "red"
-      }
+      visible: JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", [])) < config.preferredGeneralNum * config.preferedPlayerNum
+      text: Backend.translate("No enough generals")
+      color: "red"
     }
 
     RowLayout {
@@ -160,6 +157,7 @@ Flickable {
       spacing: 16
       Button {
         text: Backend.translate("OK")
+        enabled: !(warning.visible)
         onClicked: {
           root.finished();
           mainWindow.busy = true;

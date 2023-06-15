@@ -126,7 +126,7 @@ local test_vs = fk.CreateViewAsSkill{
     return #selected == 0
   end,
   interaction = function(self)
-    return UI.DetailedComboBox {
+    return UI.ComboBox {
       choices = {
         "ex_nihilo",
         "duel",
@@ -136,7 +136,8 @@ local test_vs = fk.CreateViewAsSkill{
         "archery_attack",
         "lightning",
         "nullification",
-      }
+      },
+      detailed = true,
     }
   end,
   view_as = function(self, cards)

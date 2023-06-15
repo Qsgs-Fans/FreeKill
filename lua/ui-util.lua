@@ -12,23 +12,12 @@ local UI = {}
 -- 可以赋值的属性有：
 -- * choices: string[] 类型，保存着可选项，会被前端翻译
 -- * default: string，默认的选项，默认为choices的第一个
+-- * detailed: bool，为真的话送详细信息
 UI.ComboBox = function(spec)
   assert(type(spec.choices) == "table", "Choices is not a table")
   assert(#spec.choices > 0, "Choices is empty")
   spec.default = spec.default or spec.choices[1]
-  spec.type = "combo"
-  return spec
-end
-
--- DetailedComboBox: 一个按钮，点击后会显示比askForChoice更花里胡哨(指带描述)的框供选择
--- 可以赋值的属性有：
--- * choices: string[] 类型，保存着可选项，会被前端翻译，送一个代码同技能的描述
--- * default: string，默认的选项，默认为choices的第一个
-UI.DetailedComboBox = function(spec)
-  assert(type(spec.choices) == "table", "Choices is not a table")
-  assert(#spec.choices > 0, "Choices is empty")
-  spec.detailed = true
-  spec.default = spec.default or spec.choices[1]
+  spec.detailed = spec.detailed
   spec.type = "combo"
   return spec
 end
