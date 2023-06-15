@@ -982,6 +982,9 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   -- minNum = math.min(#canDiscards, minNum)
 
   if minNum >= #canDiscards and not cancelable then
+    if not skipDiscard then
+      self:throwCard(canDiscards, skillName, player, player)
+    end
     return canDiscards
   end
 
