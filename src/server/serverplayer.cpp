@@ -3,6 +3,7 @@
 #include "serverplayer.h"
 #include "client_socket.h"
 #include "room.h"
+#include "roomthread.h"
 #include "router.h"
 #include "server.h"
 
@@ -16,6 +17,7 @@ ServerPlayer::ServerPlayer(Room *room) {
 
   alive = true;
   m_busy = false;
+  m_thinking = false;
 }
 
 ServerPlayer::~ServerPlayer() {
@@ -107,4 +109,17 @@ void ServerPlayer::kick() {
     socket->disconnectFromHost();
   }
   setSocket(nullptr);
+}
+
+bool ServerPlayer::thinking() {
+  m_thinking_mutex.lock();
+  bool ret = m_thinking;
+  m_thinking_mutex.unlock();
+  return ret;
+}
+
+void ServerPlayer::setThinking(bool t) {
+  m_thinking_mutex.lock();
+  m_thinking = t;
+  m_thinking_mutex.unlock();
 }

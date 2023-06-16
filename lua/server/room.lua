@@ -5,6 +5,8 @@
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
 ---@class Room : Object
 ---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
+---@field public id integer @ 房间的id
+---@field private main_co any @ 本房间的主协程
 ---@field public players ServerPlayer[] @ 这个房间中所有参战玩家
 ---@field public alive_players ServerPlayer[] @ 所有还活着的玩家
 ---@field public observers fk.ServerPlayer[] @ 旁观者清单，这是c++玩家列表，别乱动
@@ -24,6 +26,7 @@
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
+---@field public skill_costs table<string, any> @ 存放skill.cost_data用
 local Room = class("Room")
 
 -- load classes used by the game
@@ -62,46 +65,7 @@ dofile "lua/server/ai/init.lua"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-  _room.startGame = function(_self)
-    Room.initialize(self, _room)  -- clear old data
-    self.settings = json.decode(_room:settings())
-    Fk.disabled_packs = self.settings.disabledPack
-    Fk.disabled_generals = self.settings.disabledGenerals
-    local main_co = coroutine.create(function()
-      self:run()
-    end)
-    local request_co = coroutine.create(function()
-      self:requestLoop()
-    end)
-    local ret, err_msg, rest_time = true, true
-    while not self.game_finished do
-      ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
-
-      -- handle error
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(main_co))
-        break
-      end
-
-      ret, err_msg = coroutine.resume(request_co, rest_time)
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(request_co))
-        break
-      end
-
-      -- If ret == true, then when err_msg is true, that means no request
-    end
-
-    coroutine.close(main_co)
-    coroutine.close(request_co)
-
-    if not self.game_finished then
-      self:doBroadcastNotify("GameOver", "")
-      self.room:gameOver()
-    end
-  end
+  self.id = _room:getId()
 
   self.players = {}
   self.alive_players = {}
@@ -123,7 +87,118 @@ function Room:initialize(_room)
   end
   self.request_queue = {}
   self.request_self = {}
+  self.skill_costs = {}
+
+  self.settings = json.decode(self.room:settings())
+  Fk.disabled_packs = self.settings.disabledPack
+  Fk.disabled_generals = self.settings.disabledGenerals
 end
+
+-- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
+function Room:resume()
+  -- 如果还没运行的话就先创建自己的主协程
+  if not self.main_co then
+    self.main_co = coroutine.create(function()
+      self:run()
+    end)
+  end
+
+  local ret, err_msg, rest_time = true, true, nil
+  local main_co = self.main_co
+
+  if self:checkNoHuman() then
+    return true
+  end
+
+  if not self.game_finished then
+    ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
+
+    -- handle error
+    if ret == false then
+      fk.qCritical(err_msg)
+      print(debug.traceback(main_co))
+      goto GAME_OVER
+    end
+
+    if rest_time == "over" then
+      goto GAME_OVER
+    end
+
+    return false, rest_time
+  end
+
+  ::GAME_OVER::
+  coroutine.close(main_co)
+  self.main_co = nil
+  return true
+end
+
+-- 供调度器使用的函数，用来指示房间是否就绪。
+-- 如果没有就绪的话，可能会返回第二个值来告诉调度器自己还有多久就绪。
+function Room:isReady()
+  -- 没有活人了？那就告诉调度器我就绪了，恢复时候就会自己杀掉
+  if self:checkNoHuman(true) then
+    return true
+  end
+
+  -- 因为delay函数而延时：判断延时是否已经结束。
+  -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
+  if self.in_delay then
+    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
+    if rest <= 0 then
+      self.in_delay = false
+      return true
+    end
+    return false, rest
+  end
+
+  -- 剩下的就是因为等待应答而未就绪了
+  -- 检查所有正在等回答的玩家，如果已经过了烧条时间
+  -- 那么就不认为他还需要时间就绪了
+  -- 然后在调度器第二轮刷新的时候就应该能返回自己已就绪
+  local ret = true
+  local rest
+  for _, p in ipairs(self.players) do
+    -- 这里判断的话需要用_splayer了，不然一控多的情况下会导致重复判断
+    if p._splayer:thinking() then
+      ret = false
+      -- 烧条烧光了的话就把thinking设为false
+      rest = p.request_timeout * 1000 - (os.getms() -
+        p.request_start) / 1000
+
+      if rest <= 0 then
+        p._splayer:setThinking(false)
+      end
+    end
+  end
+  return ret, (rest and rest > 1) and rest or nil
+end
+
+function Room:checkNoHuman(chkOnly)
+  if #self.players == 0 then return end
+
+  for _, p in ipairs(self.players) do
+    -- TODO: trust
+    if p.serverplayer:getState() == fk.Player_Online then
+      return
+    end
+  end
+
+  if not chkOnly then
+    self:gameOver("")
+  end
+  return true
+end
+
+function Room:__tostring()
+  return string.format("<Room #%d>", self.id)
+end
+
+--[[ 敢删就寄，算了
+function Room:__gc()
+  self.room:checkAbandoned()
+end
+--]]
 
 --- 正式在这个房间中开始游戏。
 ---
@@ -636,6 +711,12 @@ function Room:doRaceRequest(command, players, jsonData)
         table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
       end
+
+      -- 骗过调度器让他以为自己尚未就绪
+      if p.id > 0 then
+        p.request_timeout = remainTime - elapsed
+        p.serverplayer:setThinking(true)
+      end
     end
     if winner then
       self:doBroadcastNotify("CancelRequest", "")
@@ -657,21 +738,17 @@ function Room:doRaceRequest(command, players, jsonData)
   return ret
 end
 
-Room.requestLoop = require "server.request"
 
 --- 延迟一段时间。
 ---
---- 这个函数只应该在主协程中使用。
+--- 这个函数不应该在请求处理协程中使用。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
   local start = os.getms()
-  while true do
-    local rest = ms - (os.getms() - start) / 1000
-    if rest <= 0 then
-      break
-    end
-    coroutine.yield("__handleRequest", rest)
-  end
+  self.delay_start = start
+  self.delay_duration = ms
+  self.in_delay = true
+  coroutine.yield("__handleRequest", ms)
 end
 
 --- 向多名玩家告知一次移牌行为。
@@ -1158,7 +1235,7 @@ function Room:askForGeneral(player, generals, n)
   if #generals == n then return n == 1 and generals[1] or generals end
   local defaultChoice = table.random(generals, n)
 
-  if (player.state == "online") then
+  if (player.serverplayer:getState() == fk.Player_Online) then
     local result = self:doRequest(player, command, json.encode{ generals, n })
     local choices
     if result == "" then
@@ -2766,6 +2843,8 @@ end
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
+  if not self.game_started then return end
+
   self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
   self.game_finished = true
@@ -2794,7 +2873,16 @@ function Room:gameOver(winner)
   end
 
   self.room:gameOver()
-  coroutine.yield("__handleRequest", 0)
+
+  if table.contains(
+    { "running", "normal" },
+    coroutine.status(self.main_co)
+  ) then
+    coroutine.yield("__handleRequest", "over")
+  else
+    coroutine.close(self.main_co)
+    self.main_co = nil
+  end
 end
 
 ---@param card Card
@@ -2913,6 +3001,4 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
-function CreateRoom(_room)
-  RoomInstance = Room:new(_room)
-end
+return Room

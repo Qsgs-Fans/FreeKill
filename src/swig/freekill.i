@@ -8,6 +8,7 @@
 #include "serverplayer.h"
 #include "clientplayer.h"
 #include "room.h"
+#include "roomthread.h"
 #include "qmlbackend.h"
 #include "util.h"
 %}
@@ -17,4 +18,3 @@
 %include "player.i"
 %include "client.i"
 %include "server.i"
-%include "sqlite3.i"

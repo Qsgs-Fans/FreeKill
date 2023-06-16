@@ -105,6 +105,8 @@ request_handlers["luckcard"] = function(room, id, reqlist)
 
   if pdata.luckTime > 0 then
     p:doNotify("AskForLuckCard", pdata.luckTime)
+  else
+    p.serverplayer:setThinking(false)
   end
 
   room:setTag("LuckCardData", luck_data)
@@ -132,23 +134,34 @@ request_handlers["changeself"] = function(room, id, reqlist)
   })
 end
 
+request_handlers["newroom"] = function(s, id)
+  s:registerRoom(id)
+end
+
+-- 处理异步请求的协程，本身也是个死循环就是了。
+-- 为了适应调度器，目前又暂且将请求分为“耗时请求”和不耗时请求。
+-- 耗时请求处理后会立刻挂起。不耗时的请求则会不断处理直到请求队列空后再挂起。
 local function requestLoop(self)
-  local rest_time = 0
   while true do
     local ret = false
-    local request = self.room:fetchRequest()
+    local request = self.thread:fetchRequest()
     if request ~= "" then
       ret = true
       local reqlist = request:split(",")
-      local id = tonumber(reqlist[1])
-      local command = reqlist[2]
-      request_handlers[command](self, id, reqlist)
-    elseif rest_time > 10 then
-      -- let current thread sleep 10ms
-      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
-      fk.QThread_msleep(10)
+      local roomId = tonumber(table.remove(reqlist, 1))
+      local room = self:getRoom(roomId)
+
+      if room then
+        RoomInstance = room
+        local id = tonumber(reqlist[1])
+        local command = reqlist[2]
+        request_handlers[command](room, id, reqlist)
+        RoomInstance = nil
+      end
     end
-    rest_time = coroutine.yield(ret)
+    if not ret then
+      coroutine.yield()
+    end
   end
 end
 

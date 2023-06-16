@@ -11,6 +11,7 @@ set(freekill_SRCS
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"
+  "server/roomthread.cpp"
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )

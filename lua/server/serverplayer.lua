@@ -24,7 +24,6 @@ function ServerPlayer:initialize(_self)
   self._splayer = _self -- 真正在玩的玩家
   self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
-  self.state = _self:getStateString()
   self.room = nil
 
   -- Below are for doBroadcastRequest
@@ -86,46 +85,36 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
-local function checkNoHuman(room)
-  for _, p in ipairs(room.players) do
-    -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
-      return
-    end
-  end
-  room:gameOver("")
-end
-
-
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
-  local state = player.serverplayer:getStateString()
-  if state ~= "online" then
-    if state ~= "robot" then
-      checkNoHuman(player.room)
+  local state = player.serverplayer:getState()
+  player.request_timeout = timeout
+  player.request_start = start
+  if state ~= fk.Player_Online then
+    if state ~= fk.Player_Robot then
+      player.room:checkNoHuman()
       player.room:delay(500)
       return "__cancel"
     end
     -- Let AI make reply. First handle request
-    local ret_msg = true
-    while ret_msg do
-      -- when ret_msg is false, that means there is no request in the queue
-      ret_msg = coroutine.yield("__handleRequest", 1)
-    end
+    -- coroutine.yield("__handleRequest", 0)
 
-    checkNoHuman(player.room)
+    player.room:checkNoHuman()
     player.ai:readRequestData()
     local reply = player.ai:makeReply()
     return reply
   end
   while true do
+    player.serverplayer:setThinking(true)
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
+      player.serverplayer:setThinking(false)
       return result
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
+      player.serverplayer:setThinking(false)
       return ""
     end
     coroutine.yield("__handleRequest", rest)
@@ -277,7 +266,7 @@ end
 
 function ServerPlayer:reconnect()
   local room = self.room
-  self.serverplayer:setStateString("online")
+  self.serverplayer:setState(fk.Player_Online)
 
   self:doNotify("Setup", json.encode{
     self.id,

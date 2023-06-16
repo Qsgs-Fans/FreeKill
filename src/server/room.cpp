@@ -5,47 +5,55 @@
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 
+#include "roomthread.h"
 #include "server.h"
 #include "serverplayer.h"
 #include "util.h"
 
-Room::Room(Server *server) {
-  setObjectName("Room");
+Room::Room(RoomThread *m_thread) {
+  auto server = ServerInstance;
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  setParent(server);
+  this->m_thread = m_thread;
+  if (m_thread) { // In case of lobby
+    m_thread->addRoom(this);
+  }
+  // setParent(server);
+
   m_abandoned = false;
   owner = nullptr;
   gameStarted = false;
   robot_id = -2; // -1 is reserved in UI logic
   timeout = 15;
 
+  m_ready = true;
+
   // 如果是普通房间而不是大厅，就初始化Lua，否则置Lua为nullptr
-  L = nullptr;
   if (!isLobby()) {
     // 如果不是大厅，那么：
     // * 只要房间添加人了，那么从大厅中移掉这个人
     // * 只要有人离开房间，那就把他加到大厅去
     connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
     connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
-
-    L = CreateLuaState();
-    DoLuaScript(L, "lua/freekill.lua");
-    DoLuaScript(L, "lua/server/room.lua");
-    initLua();
   }
 }
 
 Room::~Room() {
-  if (isRunning()) {
-    wait();
+  if (gameStarted) {
+    gameOver();
   }
-  if (L)
-    lua_close(L);
+
+  if (m_thread) {
+    m_thread->removeRoom(this);
+  }
 }
 
 Server *Room::getServer() const { return server; }
+
+RoomThread *Room::getThread() const { return m_thread; }
+
+void Room::setThread(RoomThread *t) { m_thread = t; }
 
 int Room::getId() const { return id; }
 
@@ -81,7 +89,20 @@ bool Room::isAbandoned() const {
   return true;
 }
 
-void Room::setAbandoned(bool abandoned) { m_abandoned = abandoned; }
+// Lua专用，lua room销毁时检查c++的Room是不是也差不多可以销毁了
+void Room::checkAbandoned() {
+  if (isAbandoned()) {
+    bool tmp = m_abandoned;
+    m_abandoned = true;
+    if (!tmp) {
+      emit abandoned();
+    } else {
+      deleteLater();
+    }
+  }
+}
+
+void Room::setAbandoned(bool a) { m_abandoned = a; }
 
 ServerPlayer *Room::getOwner() const { return owner; }
 
@@ -217,6 +238,8 @@ void Room::removePlayer(ServerPlayer *player) {
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
+
+    m_thread->wakeUp();
 
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
@@ -397,7 +420,7 @@ void Room::gameOver() {
   // 玩家也不能在这里清除，因为要能返回原来房间继续玩呢
   // players.clear();
   // owner = nullptr;
-  clearRequest();
+  // clearRequest();
 }
 
 void Room::manuallyStart() {
@@ -405,43 +428,11 @@ void Room::manuallyStart() {
     foreach (auto p, players) {
       p->setReady(false);
     }
-    start();
+    gameStarted = true;
+    m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
   }
-}
-
-QString Room::fetchRequest() {
-  if (!gameStarted)
-    return "";
-  request_queue_mutex.lock();
-  QString ret = "";
-  if (!request_queue.isEmpty()) {
-    ret = request_queue.dequeue();
-  }
-  request_queue_mutex.unlock();
-  return ret;
 }
 
 void Room::pushRequest(const QString &req) {
-  if (!gameStarted)
-    return;
-  request_queue_mutex.lock();
-  request_queue.enqueue(req);
-  request_queue_mutex.unlock();
-}
-
-void Room::clearRequest() {
-  request_queue_mutex.lock();
-  request_queue.clear();
-  request_queue_mutex.unlock();
-}
-
-bool Room::hasRequest() const { return !request_queue.isEmpty(); }
-
-void Room::run() {
-  gameStarted = true;
-
-  clearRequest();
-
-  // 此处调用了Lua Room:run()函数
-  roomStart();
+  m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
 }

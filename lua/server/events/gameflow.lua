@@ -47,16 +47,6 @@ local function discardInit(room, player)
   end
 end
 
-local function checkNoHuman(room)
-  for _, p in ipairs(room.players) do
-    -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
-      return
-    end
-  end
-  room:gameOver("")
-end
-
 GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local room = self.room
 
@@ -96,6 +86,13 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local currentTime = os.time()
   local elapsed = 0
 
+  for _, id in ipairs(luck_data.playerList) do
+    local pl = room:getPlayerById(id)
+    if luck_data[id].luckTime > 0 then
+      pl.serverplayer:setThinking(true)
+    end
+  end
+
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
@@ -112,14 +109,16 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     end
 
     for _, id in ipairs(ldata.playerList) do
-      if room:getPlayerById(id)._splayer:getStateString() ~= "online" then
+      local pl = room:getPlayerById(id)
+      if pl._splayer:getState() ~= fk.Player_Online then
         ldata[id].luckTime = 0
+        pl.serverplayer:setThinking(false)
       end
     end
 
     -- room:setTag("LuckCardData", ldata)
 
-    checkNoHuman(room)
+    room:checkNoHuman()
 
     coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
   end

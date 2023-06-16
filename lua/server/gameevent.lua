@@ -186,13 +186,10 @@ function GameEvent:clear()
 
   logic.game_event_stack:pop()
 
-  local err, msg
-  err, msg = xpcall(self.exit_func, debug.traceback, self)
-  if err == false then fk.qCritical(msg) end
+  Pcall(self.exit_func, self)
   for _, f in ipairs(self.extra_exit_funcs) do
     if type(f) == "function" then
-      err, msg = xpcall(f, debug.traceback, self)
-      if err == false then fk.qCritical(msg) end
+      Pcall(f, self)
     end
   end
 end
