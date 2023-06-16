@@ -254,8 +254,11 @@ function ServerPlayer:marshal(player)
   end
 
   for k, v in pairs(self.skillUsedHistory) do
-    if v[1] > 0 then
-      player:doNotify("AddSkillUseHistory", json.encode{self.id, k, v[1]})
+    if v[4] > 0 then
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[1], 1})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[2], 2})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[3], 3})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[4], 4})
     end
   end
 
