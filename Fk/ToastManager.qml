@@ -13,6 +13,7 @@ ListView {
   }
 
   id: root
+  clip: true
 
   z: Infinity
   spacing: 5

@@ -87,6 +87,7 @@ Item {
       height: stack.height
       Item { height: 6 }
       GridView {
+        clip: true
         Layout.preferredWidth: stack.width - stack.width % 100 + 10
         Layout.fillHeight: true
         Layout.alignment: Qt.AlignHCenter

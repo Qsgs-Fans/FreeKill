@@ -133,6 +133,7 @@ Item {
           ScrollBar.vertical: ScrollBar {}
           anchors.centerIn: parent
           delegate: roomDelegate
+          clip: true
           model: roomModel
         }
       }

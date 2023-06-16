@@ -18,6 +18,7 @@ Item {
 
   ListView {
     id: listView
+    clip: true
     width: 130
     height: parent.height - 20
     y: 10
@@ -50,6 +51,7 @@ Item {
 
   GridView {
     id: gridView
+    clip: true
     width: root.width - listView.width - generalDetail.width - 16
     height: parent.height - 20
     y: 10
@@ -350,7 +352,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    const packs = JSON.parse(Backend.callLuaFunction("SearchGeneralPack", [word.text]));
+    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     packs.forEach((name) => packages.append({ name: name }));
     generalDetail.updateGeneral();
     loaded = true;
