@@ -105,6 +105,7 @@ void ServerPlayer::prepareForRequest(const QString &command,
 }
 
 void ServerPlayer::kick() {
+  setState(Player::Offline);
   if (socket != nullptr) {
     socket->disconnectFromHost();
   }
