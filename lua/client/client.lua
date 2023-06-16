@@ -239,8 +239,8 @@ fk.client_callback["EnterRoom"] = function(jsonData)
 
   local data = json.decode(jsonData)[3]
   ClientInstance.room_settings = data
-  Fk.disabled_packs = data.disabledPack
-  Fk.disabled_generals = data.disabledGenerals
+  ClientInstance.disabled_packs = data.disabledPack
+  ClientInstance.disabled_generals = data.disabledGenerals
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 

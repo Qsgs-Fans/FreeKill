@@ -52,6 +52,8 @@ Flickable {
             } else {
               packs.push(orig_name);
             }
+            Backend.callLuaFunction("UpdatePackageEnable", [orig_name, checked]);
+            config.disabledPackChanged();
           }
         }
       }
@@ -83,6 +85,8 @@ Flickable {
             } else {
               packs.push(orig_name);
             }
+            Backend.callLuaFunction("UpdatePackageEnable", [orig_name, checked]);
+            config.disabledPackChanged();
           }
         }
       }

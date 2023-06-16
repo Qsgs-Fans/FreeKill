@@ -126,6 +126,14 @@ function GetGenerals(pack_name)
   return json.encode(ret)
 end
 
+function UpdatePackageEnable(pkg, enabled)
+  if enabled then
+    table.removeOne(ClientInstance.disabled_packs, pkg)
+  else
+    table.insertIfNeed(ClientInstance.disabled_packs, pkg)
+  end
+end
+
 function GetAvailableGeneralsNum()
   local generalPool = Fk:getAllGenerals()
   local except = {}
@@ -552,8 +560,8 @@ function ResetClientLua()
   ClientInstance.discard_pile = {}
   ClientInstance.room_settings = data
 
-  Fk.disabled_packs = data.disabledPack
-  Fk.disabled_generals = data.disabledGenerals
+  ClientInstance.disabled_packs = data.disabledPack
+  ClientInstance.disabled_generals = data.disabledGenerals
   -- ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 

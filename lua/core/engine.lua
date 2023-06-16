@@ -48,8 +48,6 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
-  -- self.disabled_packs = {}
-  -- self.disabled_generals = {}
   self.kingdoms = {}
 
   self:loadPackages()
@@ -57,8 +55,6 @@ function Engine:initialize()
 end
 
 local _foreign_keys = {
-  "disabled_packs",
-  "disabled_generals",
   "currentResponsePattern",
   "currentResponseReason",
 }
@@ -224,6 +220,12 @@ function Engine:addGenerals(generals)
   end
 end
 
+local function canUseGeneral(g)
+  local r = Fk:currentRoom()
+  return not table.contains(r.disabled_packs, Fk.generals[g].package.name) and
+    not table.contains(r.disabled_generals, g)
+end
+
 --- 根据武将名称，获取它的同名武将。
 ---
 --- 注意以此法返回的同名武将列表不包含他自己。
@@ -234,9 +236,7 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and
-      not table.contains(self.disabled_packs, self.generals[g].package.name) and
-      not table.contains(self.disabled_generals, g)
+    return g ~= name and self.generals[g] ~= nil and canUseGeneral(g)
   end)
 end
 
@@ -356,7 +356,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if not table.contains(self.disabled_packs, general.package.name) and not table.contains(self.disabled_generals, general.name) then
+      if canUseGeneral(general.name) then
         table.insert(result, general)
       end
     end
@@ -372,7 +372,7 @@ function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
     if not (except and table.contains(except, card.id)) then
-      if not table.contains(self.disabled_packs, card.package.name) then
+      if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
         table.insert(result, card.id)
       end
     end
