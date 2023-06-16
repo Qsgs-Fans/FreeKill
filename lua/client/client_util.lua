@@ -380,10 +380,10 @@ function ActiveSkillPrompt(skill_name, selected, selected_targets)
     if type(skill.prompt) == "function" then
       ret = skill:prompt(selected, selected_targets)
     else
-      ret = skill.prompt or ""
+      ret = skill.prompt
     end
   end
-  return json.encode(ret)
+  return json.encode(ret or "")
 end
 
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
