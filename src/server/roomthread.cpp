@@ -3,7 +3,6 @@
 #include "roomthread.h"
 #include "server.h"
 #include "util.h"
-#include <qtpreprocessorsupport.h>
 
 RoomThread::RoomThread(Server *m_server) {
   setObjectName("Room");
