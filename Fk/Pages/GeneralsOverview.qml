@@ -111,8 +111,14 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
-        [listView.model.get(listView.currentIndex).name, word.text]));
+      if (word.text !== "") {
+        gridView.model = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
+          [word.text]));
+      } else {
+        gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
+          [listView.model.get(listView.currentIndex).name, word.text]));
+      }
+      word.text = "";
       appearAnim.start();
     }
   }
