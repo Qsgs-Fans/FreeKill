@@ -2818,6 +2818,7 @@ end
 function Room:revivePlayer(player, sendLog)
   if not player.dead then return end
   self:setPlayerProperty(player, "dead", false)
+  player._splayer:setDied(false)
   self:setPlayerProperty(player, "dying", false)
   self:setPlayerProperty(player, "hp", player.maxHp)
   table.insertIfNeed(self.alive_players, player)
@@ -2862,11 +2863,11 @@ function Room:gameOver(winner)
 
       if p.id > 0 then
         if table.contains(winner:split("+"), p.role) then
-          self.room:updateWinRate(id, general, mode, 1)
+          self.room:updateWinRate(id, general, mode, 1, p.dead)
         elseif winner == "" then
-          self.room:updateWinRate(id, general, mode, 3)
+          self.room:updateWinRate(id, general, mode, 3, p.dead)
         else
-          self.room:updateWinRate(id, general, mode, 2)
+          self.room:updateWinRate(id, general, mode, 2, p.dead)
         end
       end
     end

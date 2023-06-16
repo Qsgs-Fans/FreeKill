@@ -35,6 +35,7 @@ GameEvent.functions[GameEvent.Death] = function(self)
   local self = self.room
   local victim = self:getPlayerById(deathStruct.who)
   victim.dead = true
+  victim._splayer:setDied(true)
   table.removeOne(self.alive_players, victim)
 
   local logic = self.logic

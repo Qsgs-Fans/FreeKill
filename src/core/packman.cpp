@@ -64,7 +64,10 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
                       .arg(obj["hash"].toString())
                       .arg(name));
       enablePack(name);
-      updatePack(name);
+
+      if (head(name) != obj["hash"].toString()) {
+        updatePack(name);
+      }
     }
   };
   if (useThread) {

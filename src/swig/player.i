@@ -9,6 +9,7 @@ public:
     Online,
     Trust,
     Run,
+    Leave,
     Robot,  // only for real robot
     Offline
   };
@@ -24,6 +25,12 @@ public:
 
   State getState() const;
   void setState(State state);
+
+  QList<int> getGameData();
+  void setGameData(int total, int win, int run);
+
+  bool isDied() const;
+  void setDied(bool died);
 };
 
 %nodefaultctor ClientPlayer;

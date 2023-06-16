@@ -129,6 +129,8 @@ void Room::addPlayer(ServerPlayer *player) {
   }
 
   QJsonArray jsonData;
+  auto settings = QJsonDocument::fromJson(getSettings());
+  auto mode = settings["gameMode"].toString();
 
   // 告诉房里所有玩家有新人进来了
   if (!isLobby()) {
@@ -165,6 +167,13 @@ void Room::addPlayer(ServerPlayer *player) {
       jsonData << p->getAvatar();
       jsonData << p->isReady();
       player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
+
+      jsonData = QJsonArray();
+      jsonData << p->getId();
+      foreach (int i, p->getGameData()) {
+        jsonData << i;
+      }
+      player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
     }
 
     if (this->owner != nullptr) {
@@ -173,6 +182,17 @@ void Room::addPlayer(ServerPlayer *player) {
       player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
     }
 
+    if (player->getLastGameMode() != mode) {
+      player->setLastGameMode(mode);
+      updatePlayerGameData(player->getId(), mode);
+    } else {
+      auto jsonData = QJsonArray();
+      jsonData << player->getId();
+      foreach (int i, player->getGameData()) {
+        jsonData << i;
+      }
+      doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
+    }
     // 玩家手动启动
     // if (isFull() && !gameStarted)
     //  start();
@@ -225,6 +245,10 @@ void Room::removePlayer(ServerPlayer *player) {
     player->setState(Player::Run);
     player->removeSocket();
 
+    if (!player->isDied()) {
+      runned_players << player->getId();
+    }
+
     // 然后基于跑路玩家的socket，创建一个新ServerPlayer对象用来通信
     ServerPlayer *runner = new ServerPlayer(this);
     runner->setSocket(socket);
@@ -234,6 +258,8 @@ void Room::removePlayer(ServerPlayer *player) {
     runner->setScreenName(player->getScreenName());
     runner->setAvatar(player->getAvatar());
     runner->setId(player->getId());
+    auto gamedata = player->getGameData();
+    runner->setGameData(gamedata[0], gamedata[1], gamedata[2]);
 
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
@@ -346,22 +372,36 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
         doc["msg"].toString().toUtf8().constData());
 }
 
+static const QString findWinRate =
+    QString("SELECT win, lose, draw "
+            "FROM winRate WHERE id = %1 and general = '%2' and mode = '%3';");
+
+static const QString updateWinRate =
+    QString("UPDATE winRate "
+            "SET win = %4, lose = %5, draw = %6 "
+            "WHERE id = %1 and general = '%2' and mode = '%3';");
+
+static const QString insertWinRate =
+    QString("INSERT INTO winRate "
+            "(id, general, mode, win, lose, draw) "
+            "VALUES (%1, '%2', '%3', %4, %5, %6);");
+
+static const QString findRunRate =
+  QString("SELECT run "
+      "FROM runRate WHERE id = %1 and mode = '%2';");
+
+static const QString updateRunRate =
+    QString("UPDATE runRate "
+            "SET run = %3 "
+            "WHERE id = %1 and mode = '%2';");
+
+static const QString insertRunRate =
+    QString("INSERT INTO runRate "
+            "(id, mode, run) "
+            "VALUES (%1, '%2', %3);");
+
 void Room::updateWinRate(int id, const QString &general, const QString &mode,
-                         int game_result) {
-  static const QString findWinRate =
-      QString("SELECT win, lose, draw "
-              "FROM winRate WHERE id = %1 and general = '%2' and mode = '%3';");
-
-  static const QString updateRate =
-      QString("UPDATE winRate "
-              "SET win = %4, lose = %5, draw = %6 "
-              "WHERE id = %1 and general = '%2' and mode = '%3';");
-
-  static const QString insertRate =
-      QString("INSERT INTO winRate "
-              "(id, general, mode, win, lose, draw) "
-              "VALUES (%1, '%2', '%3', %4, %5, %6);");
-
+                         int game_result, bool dead) {
   if (!CheckSqlString(general))
     return;
   if (!CheckSqlString(mode))
@@ -370,6 +410,7 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
   int win = 0;
   int lose = 0;
   int draw = 0;
+  int run = 0;
 
   switch (game_result) {
   case 1:
@@ -391,7 +432,7 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
 
   if (result.isEmpty()) {
     ExecSQL(server->getDatabase(),
-            insertRate.arg(QString::number(id), general, mode,
+            insertWinRate.arg(QString::number(id), general, mode,
                            QString::number(win), QString::number(lose),
                            QString::number(draw)));
   } else {
@@ -400,9 +441,75 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
     lose += obj["lose"].toString().toInt();
     draw += obj["draw"].toString().toInt();
     ExecSQL(server->getDatabase(),
-            updateRate.arg(QString::number(id), general, mode,
+            ::updateWinRate.arg(QString::number(id), general, mode,
                            QString::number(win), QString::number(lose),
                            QString::number(draw)));
+  }
+
+  if (runned_players.contains(id)) {
+    addRunRate(id, mode);
+  }
+
+  auto player = server->findPlayer(id);
+  if (players.contains(player)) {
+    player->setLastGameMode(mode);
+    updatePlayerGameData(id, mode);
+  }
+}
+
+void Room::addRunRate(int id, const QString &mode) {
+  int run = 1;
+  QJsonArray result =
+      SelectFromDatabase(server->getDatabase(),
+                         findRunRate.arg(QString::number(id), mode));
+
+  if (result.isEmpty()) {
+    ExecSQL(server->getDatabase(),
+            insertRunRate.arg(QString::number(id), mode,
+                           QString::number(run)));
+  } else {
+    auto obj = result[0].toObject();
+    run += obj["run"].toString().toInt();
+    ExecSQL(server->getDatabase(),
+            updateRunRate.arg(QString::number(id), mode,
+                           QString::number(run)));
+  }
+}
+
+void Room::updatePlayerGameData(int id, const QString &mode) {
+  static const QString findModeRate = QString("SELECT win, total FROM playerWinRate "
+            "WHERE id = %1 and mode = '%2';");
+
+  if (id < 0) return;
+  auto player = server->findPlayer(id);
+  if (player->getState() == Player::Robot || !player->getRoom()) {
+    return;
+  }
+
+  int total = 0;
+  int win = 0;
+  int run = 0;
+
+  auto result = SelectFromDatabase(server->getDatabase(),
+      findRunRate.arg(QString::number(id), mode));
+
+  if (!result.isEmpty()) {
+    run = result[0].toObject()["run"].toString().toInt();
+  }
+
+  result = SelectFromDatabase(server->getDatabase(),
+      findModeRate.arg(QString::number(id), mode));
+
+  if (!result.isEmpty()) {
+    total = result[0].toObject()["total"].toString().toInt();
+    win = result[0].toObject()["win"].toString().toInt();
+  }
+
+  auto room = player->getRoom();
+  player->setGameData(total, win, run);
+  auto data_arr = QJsonArray({ player->getId(), total, win, run });
+  if (!room->isLobby()) {
+    room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", JsonArray2Bytes(data_arr));
   }
 }
 
@@ -427,6 +534,7 @@ void Room::manuallyStart() {
   if (isFull() && !gameStarted) {
     foreach (auto p, players) {
       p->setReady(false);
+      p->setDied(false);
     }
     gameStarted = true;
     m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));

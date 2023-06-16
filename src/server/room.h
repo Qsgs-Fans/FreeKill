@@ -57,7 +57,7 @@ class Room : public QObject {
   void chat(ServerPlayer *sender, const QString &jsonData);
 
   void updateWinRate(int id, const QString &general, const QString &mode,
-                     int result);
+                     int result, bool dead);
   void gameOver();
   void manuallyStart();
   void pushRequest(const QString &req);
@@ -86,6 +86,9 @@ class Room : public QObject {
   bool m_ready;
 
   int timeout;
+
+  void addRunRate(int id, const QString &mode);
+  void updatePlayerGameData(int id, const QString &mode);
 };
 
 #endif  // _ROOM_H
