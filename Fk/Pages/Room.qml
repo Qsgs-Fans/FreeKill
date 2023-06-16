@@ -25,6 +25,7 @@ Item {
   property alias manualBox: manualBox
   property alias bigAnim: bigAnim
   property alias promptText: prompt.text
+  property var currentPrompt
   property alias okCancel: okCancel
   property alias okButton: okButton
   property alias cancelButton: cancelButton
@@ -146,6 +147,7 @@ Item {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
+          currentPrompt = "";
           progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
@@ -898,6 +900,15 @@ Item {
     Backend.callLuaFunction("ResetClientLua", []);
     mainStack.push(room);
     mainStack.currentItem.loadPlayerData(datalist);
+  }
+
+  function setPrompt(text, iscur) {
+    promptText = text;
+    if (iscur) currentPrompt = text;
+  }
+
+  function resetPrompt() {
+    promptText = currentPrompt;
   }
 
   function loadPlayerData(datalist) {

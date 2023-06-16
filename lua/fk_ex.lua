@@ -170,6 +170,7 @@ end
 ---@field public about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field public on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
+---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ActiveSkillSpec
 ---@return ActiveSkill
@@ -193,6 +194,7 @@ function fk.CreateActiveSkill(spec)
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
+  if spec.prompt then skill.prompt = spec.prompt end
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
@@ -215,6 +217,7 @@ end
 ---@field public enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
 ---@field public enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
 ---@field public before_use fun(self: ViewAsSkill, player: ServerPlayer)
+---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ViewAsSkillSpec
 ---@return ViewAsSkill
@@ -242,6 +245,7 @@ function fk.CreateViewAsSkill(spec)
       return spec.enabled_at_response(curSkill, player, cardResponsing) and curSkill:isEffectable(player)
     end
   end
+  if spec.prompt then skill.prompt = spec.prompt end
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {

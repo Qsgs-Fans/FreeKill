@@ -187,12 +187,25 @@ end
 
 function GetPlayerSkills(id)
   local p = ClientInstance:getPlayerById(id)
-  return json.encode(table.map(p.player_skills, function(s)
-    return s.visible and {
-      name = s.name,
-      description = Fk:getDescription(s.name),
-    } or nil
+  local equip = {}
+  local ret = {}
+  table.forEach(p.player_skills, function(s)
+    if s:isEquipmentSkill() then
+      table.insert(equip, s.attached_equip)
+    elseif s.visible then
+      table.insert(ret, {
+        name = s.name,
+        description = Fk:getDescription(s.name),
+      })
+    end
+  end)
+  table.insertTable(ret, table.map(equip, function(e)
+    return {
+      name = e,
+      description = Fk:getDescription(e),
+    }
   end))
+  return json.encode(ret)
 end
 
 ---@param card string | integer
@@ -347,6 +360,19 @@ function ActiveCanUse(skill_name)
           if ret then break end
         end
       end
+    end
+  end
+  return json.encode(ret)
+end
+
+function ActiveSkillPrompt(skill_name, selected, selected_targets)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill then
+    if type(skill.prompt) == "function" then
+      ret = skill:prompt(selected, selected_targets)
+    else
+      ret = skill.prompt
     end
   end
   return json.encode(ret)

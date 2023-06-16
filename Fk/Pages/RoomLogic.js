@@ -708,7 +708,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
   const generals = data[0];
   const n = data[1];
   const heg = data[2];
-  roomScene.promptText = Backend.translate("#AskForGeneral");
+  roomScene.setPrompt(Backend.translate("#AskForGeneral"), true);
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   const box = roomScene.popupBox.item;
@@ -810,7 +810,7 @@ callbacks["AskForChoice"] = (jsonData) => {
     roomScene.promptText = Backend.translate("#AskForChoice")
       .arg(Backend.translate(skill_name));
   } else {
-    roomScene.promptText = processPrompt(prompt);
+    roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.state = "replying";
   let qmlSrc;
@@ -952,7 +952,7 @@ callbacks["PlayCard"] = (jsonData) => {
   // jsonData: int playerId
   const playerId = parseInt(jsonData);
   if (playerId === Self.id) {
-    roomScene.promptText = Backend.translate("#PlayCard");
+    roomScene.setPrompt(Backend.translate("#PlayCard"), true);
     roomScene.state = "playing";
     okButton.enabled = false;
   }
@@ -1012,7 +1012,7 @@ callbacks["AskForUseActiveSkill"] = (jsonData) => {
     roomScene.promptText = Backend.translate("#AskForUseActiveSkill")
       .arg(Backend.translate(skill_name));
   } else {
-    roomScene.promptText = processPrompt(prompt);
+    roomScene.setPrompt(processPrompt(prompt), true);
   }
 
   roomScene.respond_play = false;
@@ -1052,7 +1052,7 @@ callbacks["AskForUseCard"] = (jsonData) => {
     roomScene.promptText = Backend.translate("#AskForUseCard")
       .arg(Backend.translate(cardname));
   } else {
-    roomScene.promptText = processPrompt(prompt);
+    roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = false;
@@ -1072,7 +1072,7 @@ callbacks["AskForResponseCard"] = (jsonData) => {
     roomScene.promptText = Backend.translate("#AskForResponseCard")
       .arg(Backend.translate(cardname));
   } else {
-    roomScene.promptText = processPrompt(prompt);
+    roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = true;
@@ -1281,7 +1281,7 @@ callbacks["ChangeSelf"] = (j) => {
 callbacks["AskForLuckCard"] = (j) => {
   // jsonData: int time
   const time = parseInt(j);
-  roomScene.promptText = Backend.translate("#AskForLuckCard").arg(time);
+  roomScene.setPrompt(Backend.translate("#AskForLuckCard").arg(time), true);
   roomScene.state = "replying";
   roomScene.extra_data = {
     luckCard: true,
