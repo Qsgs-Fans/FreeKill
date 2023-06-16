@@ -98,6 +98,7 @@ function GetCardData(id)
     suit = card:getSuitString(),
     color = card:getColorString(),
     mark = mark,
+    type = card.type,
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then

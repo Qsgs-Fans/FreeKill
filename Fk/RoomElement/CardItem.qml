@@ -26,6 +26,7 @@ Item {
   property string name: "slash"
   property string extension: ""
   property string virt_name: ""
+  property int type: 0
   property string subtype: ""
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
@@ -51,6 +52,8 @@ Item {
   property bool showDetail: false
   property int origX: 0
   property int origY: 0
+  property int initialZ: 0
+  property int maxZ: 0
   property real origOpacity: 1
   // property bool isClicked: false
   property bool moveAborted: false
@@ -259,10 +262,12 @@ Item {
       if (!draggable) return;
       if (hovered) {
         glow.visible = true;
-        root.z++;
+
+        root.z = root.maxZ ? root.maxZ + 1 : root.z + 1;
       } else {
         glow.visible = false;
-        root.z--;
+
+        root.z = root.initialZ ? root.initialZ : root.z - 1
       }
     }
   }
@@ -317,6 +322,7 @@ Item {
     suit = data.suit;
     number = data.number;
     color = data.color;
+    type = data.type ? data.type : 0
     subtype = data.subtype ? data.subtype : "";
     virt_name = data.virt_name ? data.virt_name : "";
     mark = data.mark ?? {};
@@ -330,6 +336,7 @@ Item {
       suit: suit,
       number: number,
       color: color,
+      type: type,
       subtype: subtype,
       virt_name: virt_name,
       mark: mark,

@@ -314,6 +314,7 @@ Item {
       MetroButton {
         text: Backend.translate("Sort Cards")
         textFont.pixelSize: 28
+        onClicked: Logic.resortHandcards();
       }
       MetroButton {
         text: Backend.translate("Chat")
