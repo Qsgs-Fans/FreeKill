@@ -45,8 +45,6 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
   connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
 
-  threads.append(new RoomThread(this));
-
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
     while (true) {
