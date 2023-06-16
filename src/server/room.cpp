@@ -185,6 +185,13 @@ void Room::addPlayer(ServerPlayer *player) {
     if (player->getLastGameMode() != mode) {
       player->setLastGameMode(mode);
       updatePlayerGameData(player->getId(), mode);
+    } else {
+      auto jsonData = QJsonArray();
+      jsonData << player->getId();
+      foreach (int i, player->getGameData()) {
+        jsonData << i;
+      }
+      doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
     }
     // 玩家手动启动
     // if (isFull() && !gameStarted)
@@ -251,6 +258,8 @@ void Room::removePlayer(ServerPlayer *player) {
     runner->setScreenName(player->getScreenName());
     runner->setAvatar(player->getAvatar());
     runner->setId(player->getId());
+    auto gamedata = player->getGameData();
+    runner->setGameData(gamedata[0], gamedata[1], gamedata[2]);
 
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
@@ -437,7 +446,6 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
                            QString::number(draw)));
   }
 
-  qDebug() << runned_players << id;
   if (runned_players.contains(id)) {
     addRunRate(id, mode);
   }
@@ -498,6 +506,7 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
   }
 
   auto room = player->getRoom();
+  player->setGameData(total, win, run);
   auto data_arr = QJsonArray({ player->getId(), total, win, run });
   if (!room->isLobby()) {
     room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", JsonArray2Bytes(data_arr));
