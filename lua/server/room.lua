@@ -2291,6 +2291,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
         self:useCard(use)
       end
     end
+    Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then
     if cardEffectEvent.card.skill then
       execGameEvent(GameEvent.SkillEffect, function ()
