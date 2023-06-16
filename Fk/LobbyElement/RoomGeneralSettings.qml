@@ -164,6 +164,7 @@ Flickable {
         text: Backend.translate("OK")
         enabled: !(warning.visible)
         onClicked: {
+          config.saveConf();
           root.finished();
           mainWindow.busy = true;
 
