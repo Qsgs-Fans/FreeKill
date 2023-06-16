@@ -109,8 +109,8 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      gridView.model = JSON.parse(Backend.callLuaFunction("GetGenerals",
-        [listView.model.get(listView.currentIndex).name]));
+      gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
+        [listView.model.get(listView.currentIndex).name, word.text]));
       appearAnim.start();
     }
   }
@@ -140,7 +140,7 @@ Item {
   Rectangle {
     id: generalDetail
     width: 310
-    height: parent.height - 20
+    height: parent.height - searcher.height - 20
     y: 10
     anchors.right: parent.right
     anchors.rightMargin: 10
@@ -282,6 +282,33 @@ Item {
         }
       }
     }
+    Rectangle {
+      id: searcher
+      width: parent.width
+      height: childrenRect.height
+      color: "snow"
+      opacity: 0.75
+      anchors.top: parent.bottom
+      radius: 8
+
+      RowLayout {
+        width: parent.width
+        TextField {
+          id: word
+          Layout.fillWidth: true
+          clip: true
+        }
+
+        Button {
+          text: qsTr("Search")
+          enabled: word.text !== ""
+          onClicked: {
+            listView.currentIndex = 0;
+            vanishAnim.start();
+          }
+        }
+      }
+    }
   }
 
   ColumnLayout {
@@ -323,7 +350,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const packs = JSON.parse(Backend.callLuaFunction("SearchGeneralPack", [word.text]));
     packs.forEach((name) => packages.append({ name: name }));
     generalDetail.updateGeneral();
     loaded = true;

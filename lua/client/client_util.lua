@@ -126,6 +126,33 @@ function GetGenerals(pack_name)
   return json.encode(ret)
 end
 
+function SearchGeneralPack(word)
+  local ret = {}
+  if word == "" then return GetAllGeneralPack() end
+  for _, name in ipairs(Fk.package_names) do
+    if Fk.packages[name].type == Package.GeneralPack then
+      for _, g in ipairs(Fk.packages[name].generals) do
+        if not g.total_hidden and string.find(Fk:translate(g.name), word) then
+          table.insert(ret, name)
+          break
+        end
+      end
+    end
+  end
+  return json.encode(ret)
+end
+
+function SearchGenerals(pack_name, word)
+  local ret = {}
+  if word == "" then return GetGenerals(pack_name) end
+  for _, g in ipairs(Fk.packages[pack_name].generals) do
+    if not g.total_hidden and string.find(Fk:translate(g.name), word) then
+      table.insert(ret, g.name)
+    end
+  end
+  return json.encode(ret)
+end
+
 function UpdatePackageEnable(pkg, enabled)
   if enabled then
     table.removeOne(ClientInstance.disabled_packs, pkg)
