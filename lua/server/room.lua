@@ -1586,11 +1586,11 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
 
     if result ~= "" then
       return self:handleUseCardReply(player, result)
     end
-    Fk.currentResponsePattern = nil
   end
   return nil
 end
@@ -1631,6 +1631,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
 
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
+    Fk.currentResponsePattern = nil
 
     if result ~= "" then
       local use = self:handleUseCardReply(player, result)
@@ -1638,7 +1639,6 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
         return use.card
       end
     end
-    Fk.currentResponsePattern = nil
   end
   return nil
 end
