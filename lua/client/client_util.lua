@@ -380,7 +380,7 @@ function ActiveSkillPrompt(skill_name, selected, selected_targets)
     if type(skill.prompt) == "function" then
       ret = skill:prompt(selected, selected_targets)
     else
-      ret = skill.prompt
+      ret = skill.prompt or ""
     end
   end
   return json.encode(ret)
