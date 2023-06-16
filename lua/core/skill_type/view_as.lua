@@ -41,6 +41,6 @@ function ViewAsSkill:beforeUse(player, cardUseStruct) end
 
 ---@param selected integer[] @ ids of selected players
 ---@param selected_cards integer[] @ ids of selected cards
-function ActiveSkill:prompt(selected, selected_cards) return "" end
+function ViewAsSkill:prompt(selected, selected_cards) return "" end
 
 return ViewAsSkill
