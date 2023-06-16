@@ -5,6 +5,7 @@ local extension = Package("test_p_0")
 local cheat = fk.CreateActiveSkill{
   name = "cheat",
   anim_type = "drawcard",
+  prompt = "#cheat",
   can_use = function(self, player)
     return true
   end,
@@ -122,6 +123,7 @@ local control = fk.CreateActiveSkill{
 local test_vs = fk.CreateViewAsSkill{
   name = "test_vs",
   pattern = "nullification",
+  prompt = "#test_vs",
   card_filter = function(self, to_select, selected)
     return #selected == 0
   end,
@@ -150,7 +152,6 @@ local test_vs = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
-  prompt = "#test_vs",
 }
 local test_trig = fk.CreateTriggerSkill{
   name = "test_trig",
@@ -275,6 +276,7 @@ Fk:loadTranslationTable{
   ["mouxusheng"] = "谋徐盛",
   -- ["cheat"] = "小开",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
+  ["#cheat"] = "cheat：你可以获得一张想要的牌",
   --["#test_trig-ask"] = "你可弃置一张手牌",
   ["control"] = "控制",
   [":control"] = "出牌阶段，你可以控制/解除控制若干名其他角色。",
