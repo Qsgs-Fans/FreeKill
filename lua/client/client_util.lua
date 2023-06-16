@@ -573,4 +573,15 @@ function GetRoomConfig()
   return json.encode(ClientInstance.room_settings)
 end
 
+function GetPlayerGameData(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  local raw = p.player:getGameData()
+  local ret = {}
+  for _, i in fk.qlist(raw) do
+    table.insert(ret, i)
+  end
+  return json.encode(ret)
+end
+
 dofile "lua/client/i18n/init.lua"

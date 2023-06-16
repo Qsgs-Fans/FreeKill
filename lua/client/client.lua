@@ -51,6 +51,7 @@ end
 ---@param id integer
 ---@return ClientPlayer
 function Client:getPlayerById(id)
+  if id == Self.id then return Self end
   for _, p in ipairs(self.players) do
     if p.id == id then return p end
   end
@@ -248,7 +249,7 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   -- jsonData: [ int id, string screenName, string avatar ]
   -- when other player enter the room, we create clientplayer(C and lua) for them
   local data = json.decode(jsonData)
-  local id, name, avatar = data[1], data[2], data[3]
+  local id, name, avatar, gameData = data[1], data[2], data[3]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.players, p)
@@ -761,6 +762,15 @@ fk.client_callback["UpdateQuestSkillUI"] = function(jsonData)
   local data = json.decode(jsonData)
   local player, skillName, usedTimes = data[1], data[2], data[3]
   updateLimitSkill(player, Fk.skills[skillName], usedTimes)
+end
+
+fk.client_callback["UpdateGameData"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player, total, win, run = data[1], data[2], data[3], data[4]
+  player = ClientInstance:getPlayerById(player)
+  if player then
+    player.player:setGameData(total, win, run)
+  end
 end
 
 -- Create ClientInstance (used by Lua)

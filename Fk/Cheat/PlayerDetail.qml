@@ -62,10 +62,18 @@ Flickable {
     }
 
     // TODO: player details
-    Text {
-      id: screenName
-      Layout.fillWidth: true
-      font.pixelSize: 18
+    RowLayout {
+      spacing: 16
+      Text {
+        id: screenName
+        font.pixelSize: 18
+      }
+
+      Text {
+        id: playerGameData
+        Layout.fillWidth: true
+        font.pixelSize: 18
+      }
     }
 
     TextEdit {
@@ -95,6 +103,7 @@ Flickable {
   onExtra_dataChanged: {
     if (!extra_data.photo) return;
     screenName.text = "";
+    playerGameData.text = "";
     skillDesc.text = "";
 
     const id = extra_data.photo.playerid;
@@ -102,6 +111,15 @@ Flickable {
     root.pid = id;
 
     screenName.text = extra_data.photo.screenName;
+
+    const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [id]));
+    const total = gamedata[0];
+    const win = gamedata[1];
+    const run = gamedata[2];
+    const winRate = (win / total) * 100;
+    const runRate = (run / total) * 100;
+    playerGameData.text = Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+      .arg(runRate.toFixed(2)).arg(total);
 
     const data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {

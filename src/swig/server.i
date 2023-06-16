@@ -15,7 +15,7 @@ public:
   void checkAbandoned();
 
   void updateWinRate(int id, const QString &general, const QString &mode,
-                     int result);
+                     int result, bool dead);
   void gameOver();
 };
 

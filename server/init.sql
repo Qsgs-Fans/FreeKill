@@ -28,6 +28,13 @@ CREATE TABLE IF NOT EXISTS winRate (
   PRIMARY KEY (id, general, mode)
 );
 
+CREATE TABLE IF NOT EXISTS runRate (
+  id INTEGER,
+  mode VARCHAR(16),
+  run INTEGER,
+  PRIMARY KEY (id, mode)
+);
+
 CREATE VIEW IF NOT EXISTS playerWinRate AS
   SELECT winRate.id, name, mode,
     SUM(win) AS 'win',
