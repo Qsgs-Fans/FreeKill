@@ -541,9 +541,8 @@ function Player:setSkillUseHistory(skill_name, num, scope)
     return
   end
 
-  if self.skillUsedHistory[skill_name] then
-    self.skillUsedHistory[skill_name][scope] = num
-  end
+  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or {0, 0, 0, 0}
+  self.skillUsedHistory[skill_name][scope] = num
 end
 
 --- 获取玩家使用特定牌的历史次数。
