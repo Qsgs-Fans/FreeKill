@@ -397,6 +397,12 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           error_msg = "username or password error";
       } else {
         auto player = players.value(id);
+        // 顶号机制，如果在线的话就让他变成不在线
+        if (player->getState() == Player::Online) {
+          player->doNotify("ErrorMsg", "others logged in again with this name");
+          emit player->kicked();
+        }
+
         if (player->getState() == Player::Offline) {
           auto room = player->getRoom();
           player->setSocket(client);
@@ -417,7 +423,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           } else {
             // 懒得处理掉线玩家在大厅了！踢掉得了
             player->doNotify("ErrorMsg", "Unknown Error");
-            player->kicked();
+            emit player->kicked();
           }
 
           return;

@@ -90,8 +90,8 @@ function Room:initialize(_room)
   self.skill_costs = {}
 
   self.settings = json.decode(self.room:settings())
-  Fk.disabled_packs = self.settings.disabledPack
-  Fk.disabled_generals = self.settings.disabledGenerals
+  self.disabled_packs = self.settings.disabledPack
+  self.disabled_generals = self.settings.disabledGenerals
 end
 
 -- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。

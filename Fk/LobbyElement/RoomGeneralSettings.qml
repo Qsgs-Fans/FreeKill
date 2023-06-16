@@ -87,7 +87,12 @@ Flickable {
     Text {
       id: warning
       anchors.rightMargin: 8
-      visible: JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", [])) < config.preferredGeneralNum * config.preferedPlayerNum
+      visible: {
+        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
+        config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
+        const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
+        return ret;
+      }
       text: Backend.translate("No enough generals")
       color: "red"
     }
@@ -159,6 +164,7 @@ Flickable {
         text: Backend.translate("OK")
         enabled: !(warning.visible)
         onClicked: {
+          config.saveConf();
           root.finished();
           mainWindow.busy = true;
 
@@ -208,6 +214,11 @@ Flickable {
       }
 
       playerNum.value = config.preferedPlayerNum;
+
+      config.disabledPack.forEach(p => {
+        Backend.callLuaFunction("UpdatePackageEnable", [p, false]);
+      });
+      config.disabledPackChanged();
     }
   }
 }

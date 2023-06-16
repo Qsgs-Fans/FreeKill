@@ -19,7 +19,6 @@
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
----@field public disabled_packs string[] @ 禁用的拓展包列表
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 local Engine = class("Engine")
@@ -49,12 +48,29 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
-  self.disabled_packs = {}
-  self.disabled_generals = {}
   self.kingdoms = {}
 
   self:loadPackages()
   self:addSkills(AuxSkills)
+end
+
+local _foreign_keys = {
+  "currentResponsePattern",
+  "currentResponseReason",
+}
+
+function Engine:__index(k)
+  if table.contains(_foreign_keys, k) then
+    return self:currentRoom()[k]
+  end
+end
+
+function Engine:__newindex(k, v)
+  if table.contains(_foreign_keys, k) then
+    self:currentRoom()[k] = v
+  else
+    rawset(self, k, v)
+  end
 end
 
 --- 向Engine中加载一个拓展包。
@@ -204,6 +220,12 @@ function Engine:addGenerals(generals)
   end
 end
 
+local function canUseGeneral(g)
+  local r = Fk:currentRoom()
+  return not table.contains(r.disabled_packs, Fk.generals[g].package.name) and
+    not table.contains(r.disabled_generals, g)
+end
+
 --- 根据武将名称，获取它的同名武将。
 ---
 --- 注意以此法返回的同名武将列表不包含他自己。
@@ -214,9 +236,7 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and
-      not table.contains(self.disabled_packs, self.generals[g].package.name) and
-      not table.contains(self.disabled_generals, g)
+    return g ~= name and self.generals[g] ~= nil and canUseGeneral(g)
   end)
 end
 
@@ -336,7 +356,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if not table.contains(self.disabled_packs, general.package.name) and not table.contains(self.disabled_generals, general.name) then
+      if canUseGeneral(general.name) then
         table.insert(result, general)
       end
     end
@@ -352,7 +372,7 @@ function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
     if not (except and table.contains(except, card.id)) then
-      if not table.contains(self.disabled_packs, card.package.name) then
+      if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
         table.insert(result, card.id)
       end
     end

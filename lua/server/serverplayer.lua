@@ -233,11 +233,25 @@ function ServerPlayer:marshal(player)
     }
     table.insert(card_moves, move)
   end
+
+  for k, v in pairs(self.special_cards) do
+    local info = {}
+    for _, i in ipairs(v) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerSpecial,
+      specialName = k,
+      specialVisible = self == player,
+    }
+    table.insert(card_moves, move)
+  end
+
   if #card_moves > 0 then
     room:notifyMoveCards({ player }, card_moves)
   end
-
-  -- TODO: pile
 
   for k, v in pairs(self.mark) do
     player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
@@ -254,8 +268,11 @@ function ServerPlayer:marshal(player)
   end
 
   for k, v in pairs(self.skillUsedHistory) do
-    if v[1] > 0 then
-      player:doNotify("AddSkillUseHistory", json.encode{self.id, k, v[1]})
+    if v[4] > 0 then
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[1], 1})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[2], 2})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[3], 3})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[4], 4})
     end
   end
 

@@ -43,6 +43,9 @@ function Client:initialize()
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+
+  self.disabled_packs = {}
+  self.disabled_generals = {}
 end
 
 ---@param id integer
@@ -236,8 +239,8 @@ fk.client_callback["EnterRoom"] = function(jsonData)
 
   local data = json.decode(jsonData)[3]
   ClientInstance.room_settings = data
-  Fk.disabled_packs = data.disabledPack
-  Fk.disabled_generals = data.disabledGenerals
+  ClientInstance.disabled_packs = data.disabledPack
+  ClientInstance.disabled_generals = data.disabledGenerals
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
@@ -750,6 +753,7 @@ end
 fk.client_callback["ChangeSelf"] = function(jsonData)
   local data = json.decode(jsonData)
   ClientInstance:getPlayerById(data.id).player_cards[Player.Hand] = data.handcards
+  ClientInstance:getPlayerById(data.id).special_cards = data.special_cards
   ClientInstance:notifyUI("ChangeSelf", data.id)
 end
 

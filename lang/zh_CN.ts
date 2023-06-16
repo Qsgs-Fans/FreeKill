@@ -216,6 +216,10 @@
     <translation>已经有人用这个名字登入了</translation>
   </message>
   <message>
+    <source>others logged in again with this name</source>
+    <translation>其他人用你的用户名和密码登陆到了服务器，请检查密码是否泄漏</translation>
+  </message>
+  <message>
     <source>invalid user name</source>
     <translation>用户名不合法，只能含有英数字和汉字</translation>
   </message>
