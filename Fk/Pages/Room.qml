@@ -410,10 +410,19 @@ Item {
       anchors.rightMargin: 20
       color: "#88EEEEEE"
       radius: 8
-      visible: roomScene.state === "playing" && (specialCardSkills ?? false)
-        && (specialCardSkills.count > 1
-          || ((specialCardSkills.model ?? false)
-            && specialCardSkills.model[0] !== "_normal_use"))
+      visible: {
+        if (roomScene.state !== "playing") {
+          return false;
+        }
+        if (!specialCardSkills) {
+          return false;
+        }
+        if (specialCardSkills.count > 1) {
+          return true;
+        }
+        return (specialCardSkills.model ?? false)
+            && specialCardSkills.model[0] !== "_normal_use"
+      }
       width: childrenRect.width
       height: childrenRect.height - 20
 
@@ -487,21 +496,20 @@ Item {
     onSourceChanged: {
       if (item === null)
         return;
-      item.finished.connect(function(){
+      item.finished.connect(() => {
         sourceComponent = undefined;
       });
-      item.widthChanged.connect(function(){
+      item.widthChanged.connect(() => {
         popupBox.moveToCenter();
       });
-      item.heightChanged.connect(function(){
+      item.heightChanged.connect(() => {
         popupBox.moveToCenter();
       });
       moveToCenter();
     }
     onSourceComponentChanged: sourceChanged();
 
-    function moveToCenter()
-    {
+    function moveToCenter() {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
     }
