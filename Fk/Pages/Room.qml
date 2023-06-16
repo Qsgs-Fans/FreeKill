@@ -129,6 +129,7 @@ Item {
         const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
         text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
           + "<br />选将框数：" + data.generalNum + (data.enableFreeAssign ? "<br /><font color=\"red\">可自由点将</font>" : "")
+          + (data.enableDeputy ? "<br /><font color=\"red\">启用副将机制</font>" : "")
       }
     }
   }
