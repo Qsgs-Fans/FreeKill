@@ -43,6 +43,9 @@ function Client:initialize()
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+
+  self.disabled_packs = {}
+  self.disabled_generals = {}
 end
 
 ---@param id integer

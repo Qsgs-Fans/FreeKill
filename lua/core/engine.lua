@@ -19,7 +19,6 @@
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
----@field public disabled_packs string[] @ 禁用的拓展包列表
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 local Engine = class("Engine")
@@ -49,12 +48,33 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
-  self.disabled_packs = {}
-  self.disabled_generals = {}
+  -- self.disabled_packs = {}
+  -- self.disabled_generals = {}
   self.kingdoms = {}
 
   self:loadPackages()
   self:addSkills(AuxSkills)
+end
+
+local _foreign_keys = {
+  "disabled_packs",
+  "disabled_generals",
+  "currentResponsePattern",
+  "currentResponseReason",
+}
+
+function Engine:__index(k)
+  if table.contains(_foreign_keys, k) then
+    return self:currentRoom()[k]
+  end
+end
+
+function Engine:__newindex(k, v)
+  if table.contains(_foreign_keys, k) then
+    self:currentRoom()[k] = v
+  else
+    rawset(self, k, v)
+  end
 end
 
 --- 向Engine中加载一个拓展包。
