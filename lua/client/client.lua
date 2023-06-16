@@ -753,6 +753,7 @@ end
 fk.client_callback["ChangeSelf"] = function(jsonData)
   local data = json.decode(jsonData)
   ClientInstance:getPlayerById(data.id).player_cards[Player.Hand] = data.handcards
+  ClientInstance:getPlayerById(data.id).special_cards = data.special_cards
   ClientInstance:notifyUI("ChangeSelf", data.id)
 end
 

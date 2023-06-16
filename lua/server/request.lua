@@ -131,6 +131,7 @@ request_handlers["changeself"] = function(room, id, reqlist)
   from_sp:doNotify("ChangeSelf", json.encode {
     id = toId,
     handcards = to:getCardIds(Player.Hand),
+    special_cards = to.special_cards,
   })
 end
 

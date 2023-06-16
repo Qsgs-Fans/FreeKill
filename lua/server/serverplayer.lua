@@ -233,11 +233,25 @@ function ServerPlayer:marshal(player)
     }
     table.insert(card_moves, move)
   end
+
+  for k, v in pairs(self.special_cards) do
+    local info = {}
+    for _, i in ipairs(v) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerSpecial,
+      specialName = k,
+      specialVisible = self == player,
+    }
+    table.insert(card_moves, move)
+  end
+
   if #card_moves > 0 then
     room:notifyMoveCards({ player }, card_moves)
   end
-
-  -- TODO: pile
 
   for k, v in pairs(self.mark) do
     player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
