@@ -444,9 +444,11 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     all_photos.forEach(photo => {
       photo.state = "candidate";
       const id = photo.playerid;
-      const exclusived = roomScene.extra_data.exclusive_targets;
-      if (exclusived instanceof Array) {
-        if (exclusived.indexOf(id) === -1) return;
+      if (roomScene.extra_data instanceof Object) {
+        const exclusived = roomScene.extra_data.exclusive_targets;
+        if (exclusived instanceof Array) {
+          if (exclusived.indexOf(id) === -1) return;
+        }
       }
       const ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
