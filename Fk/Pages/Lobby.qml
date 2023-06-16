@@ -64,7 +64,7 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: roomName + (hasPassword ? "(🔒)" : "")
+          text: roomName + (hasPassword ? "（有密码）" : "")
           font.pixelSize: 20
         }
 
@@ -133,6 +133,7 @@ Item {
           ScrollBar.vertical: ScrollBar {}
           anchors.centerIn: parent
           delegate: roomDelegate
+          clip: true
           model: roomModel
         }
       }

@@ -45,6 +45,7 @@ Item {
     ListView {
       anchors.fill: parent
       model: modConfig.modList
+      clip: true
       delegate: SwipeDelegate {
         width: root.width
         text: modelData

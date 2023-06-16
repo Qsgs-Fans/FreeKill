@@ -36,6 +36,7 @@ Rectangle {
       cellWidth: 48
       model: 50
       visible: false
+      clip: true
       delegate: ItemDelegate {
         Image {
           height: 32; width: 32

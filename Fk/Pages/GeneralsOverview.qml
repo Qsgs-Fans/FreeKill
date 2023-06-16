@@ -18,6 +18,7 @@ Item {
 
   ListView {
     id: listView
+    clip: true
     width: 130
     height: parent.height - 20
     y: 10
@@ -50,6 +51,7 @@ Item {
 
   GridView {
     id: gridView
+    clip: true
     width: root.width - listView.width - generalDetail.width - 16
     height: parent.height - 20
     y: 10
@@ -109,8 +111,14 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      gridView.model = JSON.parse(Backend.callLuaFunction("GetGenerals",
-        [listView.model.get(listView.currentIndex).name]));
+      if (word.text !== "") {
+        gridView.model = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
+          [word.text]));
+      } else {
+        gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
+          [listView.model.get(listView.currentIndex).name, word.text]));
+      }
+      word.text = "";
       appearAnim.start();
     }
   }
@@ -140,7 +148,7 @@ Item {
   Rectangle {
     id: generalDetail
     width: 310
-    height: parent.height - 20
+    height: parent.height - searcher.height - 20
     y: 10
     anchors.right: parent.right
     anchors.rightMargin: 10
@@ -278,6 +286,33 @@ Item {
             const general = generalDetail.general
             const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
             Backend.playSound("./packages/" + extension + "/audio/death/" + general);
+          }
+        }
+      }
+    }
+    Rectangle {
+      id: searcher
+      width: parent.width
+      height: childrenRect.height
+      color: "snow"
+      opacity: 0.75
+      anchors.top: parent.bottom
+      radius: 8
+
+      RowLayout {
+        width: parent.width
+        TextField {
+          id: word
+          Layout.fillWidth: true
+          clip: true
+        }
+
+        Button {
+          text: qsTr("Search")
+          enabled: word.text !== ""
+          onClicked: {
+            listView.currentIndex = 0;
+            vanishAnim.start();
           }
         }
       }

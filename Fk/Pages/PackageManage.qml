@@ -74,6 +74,7 @@ Item {
 
     ListView {
       id: packageList
+      clip: true
       anchors.fill: parent
       model: ListModel {
         id: packageModel
