@@ -199,14 +199,21 @@ int main(int argc, char *argv[]) {
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
-  parser.addHelpOption();
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
+  parser.addOption({{"h", "help"}, "display help information"});
   QStringList cliOptions;
   for (int i = 0; i < argc; i++)
     cliOptions << argv[i];
 
   parser.parse(cliOptions);
+  if (parser.isSet("version")) {
+    parser.showVersion();
+    return 0;
+  } else if (parser.isSet("help")) {
+    parser.showHelp();
+    return 0;
+  }
 
   bool startServer = parser.isSet("server");
   ushort serverPort = 9527;
