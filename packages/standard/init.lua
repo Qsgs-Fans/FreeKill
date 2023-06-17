@@ -509,10 +509,10 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
 }
 local paoxiao = fk.CreateTargetModSkill{
   name = "paoxiao",
-  residue_func = function(self, player, skill, scope)
+  unlimited = function(self, player, skill, scope)
     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
-      return 999
+      return true
     end
   end,
 }
