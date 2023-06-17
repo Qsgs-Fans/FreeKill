@@ -87,6 +87,7 @@ bool RoomThread::hasRequest() {
 void RoomThread::trySleep(int ms) {
   if (sema_wake.available() > 0) {
     sema_wake.acquire(sema_wake.available());
+    return;
   }
 
   sema_wake.tryAcquire(1, ms);
