@@ -1367,10 +1367,11 @@ end
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
+---@param prompt string|null @ 观星框的标题
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<top|bottom, cardId[]>
-function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, prompt, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or Util.DummyTable
   bottom_limit = bottom_limit or Util.DummyTable
@@ -1391,6 +1392,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
+    prompt = prompt or "",
     cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,

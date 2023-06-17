@@ -6,6 +6,7 @@ import Fk.Pages
 
 GraphicsBox {
   id: root
+  property string prompt
   property var cards: []
   property var result: []
   property var areaCapacities: []
@@ -13,7 +14,7 @@ GraphicsBox {
   property var areaNames: []
   property int padding: 25
 
-  title.text: Backend.translate("Please arrange cards")
+  title.text: Backend.translate(prompt !== "" ? prompt : "Please arrange cards")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
