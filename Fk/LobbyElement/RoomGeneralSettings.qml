@@ -88,8 +88,8 @@ Flickable {
       id: warning
       anchors.rightMargin: 8
       visible: {
-        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
         config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
+        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
         const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
         return ret;
       }
