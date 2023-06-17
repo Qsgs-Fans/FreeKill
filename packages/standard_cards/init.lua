@@ -50,14 +50,14 @@ local slashSkill = fk.CreateActiveSkill{
   can_use = function(self, player, card)
     return
       table.find(Fk:currentRoom().alive_players, function(p)
-        return player:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, p)
+        return self:isInLimit(player, Player.HistoryPhase, card, p)
       end)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
-      (#selected > 0 or Self:usedCardTimes("slash", Player.HistoryPhase) < self:getMaxUseTime(Self, Player.HistoryPhase, card, player))
+      (#selected > 0 or self:isInLimit(Self, Player.HistoryPhase, card, player))
     end
   end,
   on_effect = function(self, room, effect)
@@ -125,7 +125,7 @@ local jinkSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCancellOut = true
+      effect.responseToEvent.isCancelOut = true
     end
   end
 }
@@ -436,7 +436,7 @@ local nullificationSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCancellOut = true
+      effect.responseToEvent.isCancelOut = true
     end
   end
 }

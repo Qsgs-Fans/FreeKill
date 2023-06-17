@@ -2235,11 +2235,11 @@ function Room:handleCardEffect(event, cardEffectEvent)
           self:useCard(use)
         end
 
-        if not cardEffectEvent.isCancellOut then
+        if not cardEffectEvent.isCancelOut then
           break
         end
 
-        cardEffectEvent.isCancellOut = i == loopTimes
+        cardEffectEvent.isCancelOut = i == loopTimes
       end
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and
