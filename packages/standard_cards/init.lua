@@ -56,7 +56,7 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
+      return Fk.currentResponsePattern ~= nil or Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
       (#selected > 0 or self:isInLimit(Self, Player.HistoryPhase, card, player))
     end
   end,
