@@ -778,10 +778,10 @@ local crossbowAudio = fk.CreateTriggerSkill{
 local crossbowSkill = fk.CreateTargetModSkill{
   name = "#crossbow_skill",
   attached_equip = "crossbow",
-  residue_func = function(self, player, skill, scope)
+  unlimited = function(self, player, skill, scope)
     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
-      return 999
+      return true
     end
   end,
 }
