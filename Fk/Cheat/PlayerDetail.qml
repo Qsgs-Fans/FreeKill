@@ -112,18 +112,27 @@ Flickable {
 
     screenName.text = extra_data.photo.screenName;
 
-    const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [id]));
-    const total = gamedata[0];
-    const win = gamedata[1];
-    const run = gamedata[2];
-    const winRate = (win / total) * 100;
-    const runRate = (run / total) * 100;
-    playerGameData.text = Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
-      .arg(runRate.toFixed(2)).arg(total);
+    if (!config.observing) {
+      const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [id]));
+      const total = gamedata[0];
+      const win = gamedata[1];
+      const run = gamedata[2];
+      const winRate = (win / total) * 100;
+      const runRate = (run / total) * 100;
+      playerGameData.text = Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+        .arg(runRate.toFixed(2)).arg(total);
+    }
 
     const data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
     data.forEach(t => {
       skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+    });
+
+    const equips = JSON.parse(Backend.callLuaFunction("GetPlayerEquips", [id]));
+    equips.forEach(cid => {
+      const t = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+      skillDesc.append("--------------------");
+      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + Backend.translate(":" + t.name));
     });
   }
 }
