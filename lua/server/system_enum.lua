@@ -133,7 +133,7 @@ fk.IceDamage = 4
 ---@field public cardsResponded Card[]|null
 ---@field public disresponsive boolean|null
 ---@field public unoffsetable boolean|null
----@field public isCancellOut boolean|null
+---@field public isCanCellout boolean|null
 ---@field public fixedResponseTimes table<string, integer>|integer|null
 ---@field public fixedAddTimesResponsors integer[]
 ---@field public prohibitedCardNames string[]|null

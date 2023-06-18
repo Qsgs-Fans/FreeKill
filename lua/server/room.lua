@@ -642,6 +642,7 @@ function Room:doRequest(player, command, jsonData, wait)
   if wait then
     local ret = player:waitForReply(self.timeout)
     player.serverplayer:setBusy(false)
+    player.serverplayer:setThinking(false)
     return ret
   end
 end
@@ -667,6 +668,7 @@ function Room:doBroadcastRequest(command, players, jsonData)
 
   for _, p in ipairs(players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 end
 
@@ -731,6 +733,7 @@ function Room:doRaceRequest(command, players, jsonData)
 
   for _, p in ipairs(self.players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 
   return ret
@@ -1365,6 +1368,7 @@ end
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
+---@param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<top|bottom, cardId[]>
@@ -1389,6 +1393,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
+    prompt = prompt or "",
     cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,
@@ -2231,11 +2236,11 @@ function Room:handleCardEffect(event, cardEffectEvent)
           self:useCard(use)
         end
 
-        if not cardEffectEvent.isCancellOut then
+        if not cardEffectEvent.isCanCellout then
           break
         end
 
-        cardEffectEvent.isCancellOut = i == loopTimes
+        cardEffectEvent.isCanCellout = i == loopTimes
       end
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and

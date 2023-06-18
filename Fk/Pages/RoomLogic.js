@@ -746,6 +746,7 @@ callbacks["AskForGuanxing"] = (jsonData) => {
   const max_bottom_cards = data.max_bottom_cards;
   const top_area_name = data.top_area_name;
   const bottom_area_name = data.bottom_area_name;
+  const prompt = data.prompt;
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   data.cards.forEach(id => {
@@ -753,6 +754,7 @@ callbacks["AskForGuanxing"] = (jsonData) => {
     cards.push(JSON.parse(d));
   });
   const box = roomScene.popupBox.item;
+  box.prompt = prompt;
   if (max_top_cards === 0) {
     box.areaCapacities = [max_bottom_cards];
     box.areaLimits = [min_bottom_cards];

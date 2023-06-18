@@ -258,7 +258,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
             tos = { {player.id} },
           }
           room:doCardEffect(effect_data)
-          if effect_data.isCancellOut and card.skill then
+          if effect_data.isCanCellout and card.skill then
             card.skill:onNullified(room, effect_data)
           end
         end

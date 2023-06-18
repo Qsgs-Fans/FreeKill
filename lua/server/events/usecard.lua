@@ -311,10 +311,10 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
   local self = self.room
 
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
-    if cardEffectEvent.isCancellOut then
+    if cardEffectEvent.isCanCellout then
       local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
       if self.logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
-        cardEffectEvent.isCancellOut = false
+        cardEffectEvent.isCanCellout = false
       else
         self.logic:breakEvent()
       end

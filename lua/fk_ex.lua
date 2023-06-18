@@ -350,6 +350,7 @@ function fk.CreateMaxCardsSkill(spec)
 end
 
 ---@class TargetModSpec: StatusSkillSpec
+---@field public unlimited fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player)
 ---@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player)
 ---@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player)
 ---@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
@@ -361,6 +362,9 @@ function fk.CreateTargetModSkill(spec)
 
   local skill = TargetModSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
+  if spec.unlimited then
+    skill.isUnlimited = spec.unlimited
+  end
   if spec.residue_func then
     skill.getResidueNum = spec.residue_func
   end
