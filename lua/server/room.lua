@@ -710,10 +710,8 @@ function Room:doRaceRequest(command, players, jsonData)
       if p.reply_cancel then
         table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
-      end
-
-      -- 骗过调度器让他以为自己尚未就绪
-      if p.id > 0 then
+      elseif p.id > 0 then
+        -- 骗过调度器让他以为自己尚未就绪
         p.request_timeout = remainTime - elapsed
         p.serverplayer:setThinking(true)
       end

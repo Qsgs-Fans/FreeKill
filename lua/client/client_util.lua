@@ -216,25 +216,12 @@ end
 
 function GetPlayerSkills(id)
   local p = ClientInstance:getPlayerById(id)
-  local equip = {}
-  local ret = {}
-  table.forEach(p.player_skills, function(s)
-    if s:isEquipmentSkill() then
-      table.insert(equip, s.attached_equip)
-    elseif s.visible then
-      table.insert(ret, {
-        name = s.name,
-        description = Fk:getDescription(s.name),
-      })
-    end
-  end)
-  table.insertTable(ret, table.map(equip, function(e)
-    return {
-      name = e,
-      description = Fk:getDescription(e),
-    }
+  return json.encode(table.map(p.player_skills, function(s)
+    return s.visible and {
+      name = s.name,
+      description = Fk:getDescription(s.name),
+    } or nil
   end))
-  return json.encode(ret)
 end
 
 ---@param card string | integer
@@ -570,6 +557,12 @@ function GetPlayerHandcards(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
   return json.encode(p.player_cards[Player.Hand])
+end
+
+function GetPlayerEquips(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  return json.encode(p.player_cards[Player.Equip])
 end
 
 function ResetClientLua()
