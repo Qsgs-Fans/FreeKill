@@ -19,6 +19,10 @@ MarkEnum.MinusMaxCards = "MinusMaxCards"
 ---@field AddMaxCards string @ 于本回合内减少标记值数量的手牌上限
 MarkEnum.MinusMaxCardsInTurn = "MinusMaxCards-turn"
 
+---@field BypassTimesLimit string @ 对其使用牌无次数限制，可带清除标记后缀
+MarkEnum.BypassTimesLimit = "bypasstimeslimit"
+---@field BypassDistanceLimit string @ 对其使用牌无距离限制，可带清除标记后缀
+MarkEnum.BypassDistanceLimit = "bypassdistancelimit"
 ---@field UncompulsoryInvalidity string @ 非锁定技失效，可带清除标记后缀
 MarkEnum.UncompulsoryInvalidity = "uncompulsoryInvalidity"
 

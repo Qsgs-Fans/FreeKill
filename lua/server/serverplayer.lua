@@ -140,10 +140,12 @@ function ServerPlayer:waitForReply(timeout)
     result = ""
     self.reply_cancel = true
     self.serverplayer:setBusy(false)
+    self.serverplayer:setThinking(false)
   end
   if result ~= "" then
     self.reply_ready = true
     self.serverplayer:setBusy(false)
+    self.serverplayer:setThinking(false)
   end
 
   local queue = self.room.request_queue[self.serverplayer]

@@ -7,7 +7,7 @@ local TargetModSkill = StatusSkill:subclass("TargetModSkill")
 ---@param card_skill ActiveSkill
 ---@param scope integer
 ---@param card Card
-function TargetModSkill:IsUnlimited(player, card_skill, scope, card, to)
+function TargetModSkill:isUnlimited(player, card_skill, scope, card, to)
   return false
 end
 

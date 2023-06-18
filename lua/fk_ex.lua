@@ -363,7 +363,7 @@ function fk.CreateTargetModSkill(spec)
   local skill = TargetModSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
   if spec.unlimited then
-    skill.IsUnlimited = spec.unlimited
+    skill.isUnlimited = spec.unlimited
   end
   if spec.residue_func then
     skill.getResidueNum = spec.residue_func

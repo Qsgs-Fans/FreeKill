@@ -50,14 +50,14 @@ local slashSkill = fk.CreateActiveSkill{
   can_use = function(self, player, card)
     return
       table.find(Fk:currentRoom().alive_players, function(p)
-        return self:isInLimit(player, Player.HistoryPhase, card, p)
+        return self:withinTimesLimit(player, Player.HistoryPhase, card, p)
       end)
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return Fk.currentResponsePattern ~= nil or Self ~= player and Self:inMyAttackRange(player, self:getDistanceLimit(Self, card, player)) and
-      (#selected > 0 or self:isInLimit(Self, Player.HistoryPhase, card, player))
+      return Self ~= player and self:withinDistanceLimit(Self, true, card, player) and
+      (#selected > 0 or self:withinTimesLimit(Self, Player.HistoryPhase, card, player))
     end
   end,
   on_effect = function(self, room, effect)
@@ -125,7 +125,7 @@ local jinkSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCancelOut = true
+      effect.responseToEvent.isCanCellout = true
     end
   end
 }
@@ -245,7 +245,7 @@ local snatchSkill = fk.CreateActiveSkill{
       local player = Fk:currentRoom():getPlayerById(to_select)
       return
         Self ~= player and
-        Self:distanceTo(player) <= self:getDistanceLimit(Self, card, player) and -- for no distance limit for snatch
+        self:withinDistanceLimit(Self, false, card, player) and -- for no distance limit for snatch
         not player:isAllNude()
     end
   end,
@@ -436,7 +436,7 @@ local nullificationSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCancelOut = true
+      effect.responseToEvent.isCanCellout = true
     end
   end
 }
@@ -941,8 +941,12 @@ local bladeSkill = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
+    room:setPlayerMark(target, MarkEnum.BypassDistanceLimit, 1)
+    room:setPlayerMark(target, MarkEnum.BypassTimesLimit, 1)
     local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
       true, { must_targets = {target.id}, exclusive_targets = {target.id} })
+      room:setPlayerMark(target, MarkEnum.BypassDistanceLimit, 0)
+      room:setPlayerMark(target, MarkEnum.BypassTimesLimit, 0)
     if use then
       use.extraUse = true
       self.cost_data = use

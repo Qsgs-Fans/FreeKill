@@ -642,6 +642,7 @@ function Room:doRequest(player, command, jsonData, wait)
   if wait then
     local ret = player:waitForReply(self.timeout)
     player.serverplayer:setBusy(false)
+    player.serverplayer:setThinking(false)
     return ret
   end
 end
@@ -667,6 +668,7 @@ function Room:doBroadcastRequest(command, players, jsonData)
 
   for _, p in ipairs(players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 end
 
@@ -733,6 +735,7 @@ function Room:doRaceRequest(command, players, jsonData)
 
   for _, p in ipairs(self.players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 
   return ret
@@ -1367,11 +1370,11 @@ end
 ---@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
----@param prompt string|null @ 观星框的标题
+---@param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<top|bottom, cardId[]>
-function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, prompt, noPut, areaNames)
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or Util.DummyTable
   bottom_limit = bottom_limit or Util.DummyTable
@@ -1538,7 +1541,6 @@ end
 -- available extra_data:
 -- * must_targets: integer[]
 -- * exclusive_targets: integer[]
--- * no_limit: boolean
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
@@ -2236,11 +2238,11 @@ function Room:handleCardEffect(event, cardEffectEvent)
           self:useCard(use)
         end
 
-        if not cardEffectEvent.isCancelOut then
+        if not cardEffectEvent.isCanCellout then
           break
         end
 
-        cardEffectEvent.isCancelOut = i == loopTimes
+        cardEffectEvent.isCanCellout = i == loopTimes
       end
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and

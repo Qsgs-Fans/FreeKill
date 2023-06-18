@@ -80,7 +80,7 @@ local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
   can_use = function(self, player, card)
-    return self:isInLimit(player, Player.HistoryTurn, card, player)
+    return self:withinTimesLimit(player, Player.HistoryTurn, card, player)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -240,7 +240,7 @@ local supplyShortageSkill = fk.CreateActiveSkill{
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
         return not player:hasDelayedTrick("supply_shortage") and
-          Self:distanceTo(player) <= self:getDistanceLimit(Self, card, player)
+          self:withinDistanceLimit(Self, false, card, player)
       end
     end
     return false
