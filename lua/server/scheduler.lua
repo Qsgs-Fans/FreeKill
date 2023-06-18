@@ -121,6 +121,8 @@ local function mainLoop()
           -- verbose('[.] Sleeping for %d ms...', time)
           local cur = os.getms()
 
+          time = math.min((time <= 0 and 9999999 or time), 200)
+
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
 
