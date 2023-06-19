@@ -125,7 +125,7 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
 local noTimesLimit = fk.CreateTargetModSkill{
   name = "noTimesLimit",
   global = true,
-  unlimited = function(self, player, skill, scope, card, to)
+  bypass_times = function(self, player, skill, scope, card, to)
     return to:getMark(MarkEnum.BypassTimesLimit) ~= 0 or
     table.find(MarkEnum.TempMarkSuffix, function(s)
       return to:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0

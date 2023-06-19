@@ -509,7 +509,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
 }
 local paoxiao = fk.CreateTargetModSkill{
   name = "paoxiao",
-  unlimited = function(self, player, skill, scope)
+  bypass_times = function(self, player, skill, scope)
     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
       return true
@@ -657,11 +657,11 @@ local jizhi = fk.CreateTriggerSkill{
 local qicai = fk.CreateTargetModSkill{
   name = "qicai",
   frequency = Skill.Compulsory,
-  distance_limit_func =  function(self, player, skill)
+  bypass_distances = function(self, player, skill)
     local card_name = string.sub(skill.name, 1, -7) -- assuming all card skill is named with name_skill
     local card = Fk:cloneCard(card_name)
     if player:hasSkill(self.name) and card.type == Card.TypeTrick then
-      return 999
+      return true
     end
   end,
 }

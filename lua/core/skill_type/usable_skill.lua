@@ -28,16 +28,16 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   scope = scope or Player.HistoryTurn
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
-    if skill:isUnlimited(player, self, scope, card, to) then return true end
+    if skill:bypassTimesCheck(player, self, scope, card, to) then return true end
   end
   card_name = card_name or card.trueName
   return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to)
 end
 
 function UsableSkill:withinDistanceLimit(player, isattack, card, to)
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
-    if skill:withinAttackRange(player, to) then return true end
+    if skill:bypassDistancesCheck(player, self, card, to) then return true end
   end
   return isattack and player:inMyAttackRange(to, self:getDistanceLimit(player, card, to)) or player:distanceTo(to) <= self:getDistanceLimit(player, card, to)
 end
