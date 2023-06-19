@@ -598,4 +598,10 @@ function GetPlayerGameData(pid)
   return json.encode(ret)
 end
 
+function SetPlayerGameData(pid, data)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  p.player:setGameData(table.unpack(data))
+end
+
 dofile "lua/client/i18n/init.lua"

@@ -80,7 +80,7 @@ local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
   can_use = function(self, player, card)
-    return self:withinTimesLimit(player, Player.HistoryTurn, card, player)
+    return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
