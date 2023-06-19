@@ -581,7 +581,7 @@ Item {
 
   Drawer {
     id: roomDrawer
-    width: roomScene.width * 0.3 / mainWindow.scale
+    width: parent.width * 0.3 / mainWindow.scale
     height: parent.height / mainWindow.scale
     dim: false
     clip: true
