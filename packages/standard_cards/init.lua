@@ -125,7 +125,7 @@ local jinkSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCanCellout = true
+      effect.responseToEvent.isCancellOut = true
     end
   end
 }
@@ -436,7 +436,7 @@ local nullificationSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
-      effect.responseToEvent.isCanCellout = true
+      effect.responseToEvent.isCancellOut = true
     end
   end
 }
