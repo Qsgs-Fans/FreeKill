@@ -895,6 +895,13 @@ Item {
     const datalist = [];
     for (let i = 0; i < photoModel.count; i++) {
       const item = photoModel.get(i);
+      let gameData;
+      try {
+        gameData = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [item.id]));
+      } catch (e) {
+        console.log(e);
+        gameData = [0, 0, 0];
+      }
       if (item.id > 0) {
         datalist.push({
           id: item.id,
@@ -902,6 +909,7 @@ Item {
           name: item.screenName,
           isOwner: item.isOwner,
           ready: item.ready,
+          gameData: gameData,
         });
       }
     }
@@ -926,6 +934,7 @@ Item {
         roomScene.isOwner = d.isOwner;
       } else {
         Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
+        Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
       }
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;
     });
