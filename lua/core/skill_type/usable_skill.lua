@@ -24,13 +24,14 @@ function UsableSkill:getMaxUseTime(player, scope, card, to)
   return ret
 end
 
-function UsableSkill:withinTimesLimit(player, scope, card, to)
+function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   scope = scope or Player.HistoryTurn
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:isUnlimited(player, self, scope, card, to) then return true end
   end
-  return player:usedCardTimes(card.trueName, scope) < self:getMaxUseTime(player, scope, card, to)
+  card_name = card_name or card.trueName
+  return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to)
 end
 
 function UsableSkill:withinDistanceLimit(player, isattack, card, to)
