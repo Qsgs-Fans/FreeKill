@@ -108,6 +108,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   foreach (auto t, threads) {
     if (!t->isFull()) {
       thread = t;
+      break;
     }
   }
   if (!thread && nextRoomId != 0) {

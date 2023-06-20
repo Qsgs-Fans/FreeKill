@@ -542,5 +542,7 @@ void Room::manuallyStart() {
 }
 
 void Room::pushRequest(const QString &req) {
-  m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
+  if (m_thread) {
+    m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
+  }
 }
