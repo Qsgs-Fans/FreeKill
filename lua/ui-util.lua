@@ -18,7 +18,7 @@ UI.ComboBox = function(spec)
   -- assert(#spec.choices > 0, "Choices is empty")
   spec.choices = type(spec.choices) == "table" and spec.choices or Util.DummyTable
   spec.default = spec.default or spec.choices[1]
-  spec.detailed = spec.detailed
+  spec.detailed = spec.detailed or false
   spec.type = "combo"
   return spec
 end

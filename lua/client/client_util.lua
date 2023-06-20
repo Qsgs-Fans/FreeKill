@@ -590,6 +590,7 @@ end
 function GetPlayerGameData(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
+  if not p then return "[0, 0, 0]" end
   local raw = p.player:getGameData()
   local ret = {}
   for _, i in fk.qlist(raw) do

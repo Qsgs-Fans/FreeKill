@@ -15,6 +15,14 @@ ClientPlayer = require "client.clientplayer"
 
 fk.client_callback = {}
 
+-- 总而言之就是会让roomScene.state变为responding或者playing的状态
+local pattern_refresh_commands = {
+  "PlayCard",
+  "AskForUseActiveSkill",
+  "AskForUseCard",
+  "AskForResponseCard",
+}
+
 function Client:initialize()
   self.client = fk.ClientInstance
   self.notifyUI = function(self, command, jsonData)
@@ -23,7 +31,7 @@ function Client:initialize()
   self.client.callback = function(_self, command, jsonData)
     local cb = fk.client_callback[command]
 
-    if command ~= "Heartbeat" and command ~= "StartChangeSelf" and command ~= "ChangeSelf" then
+    if table.contains(pattern_refresh_commands, command) then
       Fk.currentResponsePattern = nil
       Fk.currentResponseReason = nil
     end
