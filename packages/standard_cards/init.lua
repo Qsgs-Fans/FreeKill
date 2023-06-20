@@ -941,12 +941,8 @@ local bladeSkill = fk.CreateTriggerSkill{
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    room:setPlayerMark(target, MarkEnum.BypassDistanceLimit, 1)
-    room:setPlayerMark(target, MarkEnum.BypassTimesLimit, 1)
     local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
-      true, { must_targets = {target.id}, exclusive_targets = {target.id} })
-      room:setPlayerMark(target, MarkEnum.BypassDistanceLimit, 0)
-      room:setPlayerMark(target, MarkEnum.BypassTimesLimit, 0)
+      true, { must_targets = {target.id}, exclusive_targets = {target.id}, bypass_distances = true, bypass_times = true })
     if use then
       use.extraUse = true
       self.cost_data = use
