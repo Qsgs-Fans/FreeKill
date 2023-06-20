@@ -122,27 +122,6 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
   end
 }
 
-local noTimesLimit = fk.CreateTargetModSkill{
-  name = "noTimesLimit",
-  global = true,
-  bypass_times = function(self, player, skill, scope, card, to)
-    return to:getMark(MarkEnum.BypassTimesLimit) ~= 0 or
-    table.find(MarkEnum.TempMarkSuffix, function(s)
-      return to:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
-    end)
-  end
-}
-
-local noDistanceLimit = fk.CreateAttackRangeSkill{
-  name = "noDistanceLimit",
-  global = true,
-  within_func = function(self, player, to)
-    return to:getMark(MarkEnum.BypassDistanceLimit) ~= 0 or
-    table.find(MarkEnum.TempMarkSuffix, function(s)
-      return to:getMark(MarkEnum.BypassDistanceLimit .. s) ~= 0
-    end)
-  end
-}
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
@@ -150,6 +129,4 @@ AuxSkills = {
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,
-  noTimesLimit,
-  noDistanceLimit,
 }
