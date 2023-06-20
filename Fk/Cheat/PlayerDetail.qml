@@ -119,7 +119,7 @@ Flickable {
       const run = gamedata[2];
       const winRate = (win / total) * 100;
       const runRate = (run / total) * 100;
-      playerGameData.text = total === 0 ? "Newbie" : "<br/>" + Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+      playerGameData.text = total === 0 ? Backend.translate("Newbie") : "<br/>" + Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
         .arg(runRate.toFixed(2)).arg(total);
     }
 
