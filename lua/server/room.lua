@@ -1539,6 +1539,8 @@ end
 -- available extra_data:
 -- * must_targets: integer[]
 -- * exclusive_targets: integer[]
+-- * bypass_distances: boolean
+-- * bypass_times: boolean
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
@@ -1566,6 +1568,14 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     card_name = table.concat(splitedCardNames, ",")
   end
 
+  if extra_data then
+    if extra_data.bypass_distances then
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 1)
+    end
+    if extra_data.bypass_times then
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 1)
+    end
+  end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
@@ -1583,6 +1593,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
@@ -1592,9 +1604,13 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     Fk.currentResponsePattern = nil
 
     if result ~= "" then
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
       return self:handleUseCardReply(player, result)
     end
   end
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
   return nil
 end
 

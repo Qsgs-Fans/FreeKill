@@ -32,9 +32,13 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   end
   card_name = card_name or card.trueName
   return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to) or
-  (to:getMark(MarkEnum.BypassTimesLimit) ~= 0 or
+  (player:getMark(MarkEnum.BypassTimesLimit) ~= 0 or
   table.find(MarkEnum.TempMarkSuffix, function(s)
-    return to:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
+    return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
+  end)) or
+  (to:getMark(MarkEnum.BypassTimesLimitTo) ~= 0 or
+  table.find(MarkEnum.TempMarkSuffix, function(s)
+    return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
   end))
 end
 
@@ -44,9 +48,13 @@ function UsableSkill:withinDistanceLimit(player, isattack, card, to)
     if skill:bypassDistancesCheck(player, self, card, to) then return true end
   end
   return isattack and player:inMyAttackRange(to, self:getDistanceLimit(player, card, to)) or player:distanceTo(to) <= self:getDistanceLimit(player, card, to) or
-  (to:getMark(MarkEnum.BypassDistanceLimit) ~= 0 or
+  (player:getMark(MarkEnum.BypassDistancesLimit) ~= 0 or
   table.find(MarkEnum.TempMarkSuffix, function(s)
-    return to:getMark(MarkEnum.BypassDistanceLimit .. s) ~= 0
+    return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  end)) or
+  (to:getMark(MarkEnum.BypassDistancesLimitTo) ~= 0 or
+  table.find(MarkEnum.TempMarkSuffix, function(s)
+    return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
   end))
 end
 
