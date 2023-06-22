@@ -52,6 +52,7 @@ function Client:initialize()
     self.status_skills[class] = {table.unpack(skills)}
   end
 
+  self.skill_costs = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 end
