@@ -27,6 +27,7 @@
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
 ---@field public skill_costs table<string, any> @ 存放skill.cost_data用
+---@field public card_marks table<integer, any> @ 存放card.mark之用
 local Room = class("Room")
 
 -- load classes used by the game
@@ -88,6 +89,7 @@ function Room:initialize(_room)
   self.request_queue = {}
   self.request_self = {}
   self.skill_costs = {}
+  self.card_marks = {}
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
@@ -465,11 +467,13 @@ end
 ---@param value integer @ 要设为的值，其实也可以设为字符串
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
-  self:doBroadcastNotify("SetCardMark", json.encode{
-    card.id,
-    mark,
-    value
-  })
+  if not card:isVirtual() then
+    self:doBroadcastNotify("SetCardMark", json.encode{
+      card.id,
+      mark,
+      value
+    })
+  end
 end
 
 --- 将一张卡牌的mark标记增加count个。

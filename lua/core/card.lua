@@ -100,12 +100,21 @@ function Card:initialize(name, suit, number, color)
   -- self.skillName = nil
   self._skillName = ""
   self.skillNames = {}
-  self.mark = {}
+  -- self.mark = {}   -- 这个视情况了，只有虚拟牌才有真正的self.mark，真牌的话挂在currentRoom
 end
 
 function Card:__index(k)
   if k == "skillName" then
     return self._skillName
+  elseif k == "mark" then
+    if not self:isVirtual() then
+      local mark_tab = Fk:currentRoom().card_marks
+      mark_tab[self.id] = mark_tab[self.id] or {}
+      return mark_tab[self.id]
+    else
+      self.mark = {}
+      return self.mark
+    end
   end
 end
 

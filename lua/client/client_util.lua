@@ -81,6 +81,14 @@ function GetCardData(id)
     cid = id,
     known = false
   } end
+  local mark = {}
+  for k, v in pairs(card.mark) do
+    if k and k:startsWith("@") and v and v ~= 0 then
+      table.insert(mark, {
+        k = k, v = v,
+      })
+    end
+  end
   local ret = {
     cid = id,
     name = card.name,
@@ -88,6 +96,7 @@ function GetCardData(id)
     number = card.number,
     suit = card:getSuitString(),
     color = card:getColorString(),
+    mark = mark,
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then

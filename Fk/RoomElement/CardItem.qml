@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Fk
 
@@ -33,6 +34,7 @@ Item {
   property bool enabled: true   // if false the card will be grey
   property alias card: cardItem
   property alias glow: glowItem
+  property var mark: ({})
 
   function getColor() {
     if (suit != "")
@@ -161,6 +163,57 @@ Item {
     //glow.samples: 12
   }
 
+  Component {
+    id: cardMarkDelegate
+    Item {
+      width: root.width / 2
+      height: 16
+      Rectangle {
+        id: mark_rect
+        width: mark_text.width + 12
+        height: 16
+        // color: "#A50330"
+        radius: 4
+        // border.color: "snow"
+        // border.width: 1
+        gradient: Gradient {
+          orientation: Gradient.Horizontal
+          GradientStop { position: 0.7; color: "#A50330" }
+          GradientStop { position: 1.0; color: "transparent" }
+        }
+      }
+      Text {
+        id: mark_text
+        x: 2
+        font.pixelSize: 16
+        font.family: fontLibian.name
+        font.letterSpacing: -0.6
+        text: {
+          let ret = Backend.translate(modelData.k);
+          if (!modelData.k.startsWith("@@")) {
+            ret += modelData.v.toString();
+          }
+          return ret;
+        }
+        color: "white"
+        style: Text.Outline
+        styleColor: "purple"
+      }
+    }
+  }
+
+  GridLayout {
+    width: root.width
+    y: 60
+    columns: 2
+    rowSpacing: 1
+    columnSpacing: 0
+    Repeater {
+      model: mark
+      delegate: cardMarkDelegate
+    }
+  }
+
   Rectangle {
     visible: !root.selectable
     anchors.fill: parent
@@ -266,6 +319,7 @@ Item {
     color = data.color;
     subtype = data.subtype ? data.subtype : "";
     virt_name = data.virt_name ? data.virt_name : "";
+    mark = data.mark ?? {};
   }
 
   function toData()
@@ -278,6 +332,7 @@ Item {
       color: color,
       subtype: subtype,
       virt_name: virt_name,
+      mark: mark,
     };
     return data;
   }
