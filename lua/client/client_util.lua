@@ -614,4 +614,8 @@ function SetPlayerGameData(pid, data)
   p.player:setGameData(table.unpack(data))
 end
 
+function FilterMyHandcards()
+  Self:filterHandcards()
+end
+
 dofile "lua/client/i18n/init.lua"

@@ -52,6 +52,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
     Fk:filterCard(_card.id, room:getPlayerById(from), temp)
     card = temp.card
   end
+  cardUseEvent.card = card
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
