@@ -405,6 +405,14 @@ RowLayout {
     self.tremble();
   }
 
+  function updateHandcards() {
+    Backend.callLuaFunction("FilterMyHandcards", []);
+    handcardAreaItem.cards.forEach(v => {
+      const data = JSON.parse(Backend.callLuaFunction("GetCardData", [v.cid]));
+      v.setData(data);
+    });
+  }
+
   function update() {
     unSelectAll();
     disableSkills();

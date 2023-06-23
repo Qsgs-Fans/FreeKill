@@ -159,6 +159,7 @@ Item {
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
+          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
           dashboard.retractAllPiles();
@@ -176,6 +177,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.enableCards();
           dashboard.enableSkills();
           progress.visible = true;
@@ -191,6 +193,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card, respond_play);
           autoPending = false;
@@ -205,6 +208,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;

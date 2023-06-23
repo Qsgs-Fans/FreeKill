@@ -18,6 +18,7 @@
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[] @ 子卡ID表
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
+---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
 ---@field public special_skills string[] | nil @ 衍生技能，如重铸
@@ -94,18 +95,27 @@ function Card:initialize(name, suit, number, color)
   -- self.package = nil
   self.id = 0
   self.type = 0
-  self.sub_type = Card.SubTypeNone
+  self.sub_type = Card.SubtypeNone
   -- self.skill = nil
   self.subcards = {}
   -- self.skillName = nil
   self._skillName = ""
   self.skillNames = {}
-  self.mark = {}
+  -- self.mark = {}   -- 这个视情况了，只有虚拟牌才有真正的self.mark，真牌的话挂在currentRoom
 end
 
 function Card:__index(k)
   if k == "skillName" then
     return self._skillName
+  elseif k == "mark" then
+    if not self:isVirtual() then
+      local mark_tab = Fk:currentRoom().card_marks
+      mark_tab[self.id] = mark_tab[self.id] or {}
+      return mark_tab[self.id]
+    else
+      self.mark = {}
+      return self.mark
+    end
   end
 end
 
@@ -322,6 +332,15 @@ function Card:removeMark(mark, count)
 end
 
 --- 为卡牌设置Mark至指定数量。
+---
+--- 关于标记的说明：
+---
+--- * @开头的为可见标记，其余为隐藏标记。
+--- * -turn结尾、-phase结尾、-round结尾的如同玩家标记一样在这个时机自动清理。
+--- * -noclear结尾的表示不要自动清理。
+--- * 默认的自动清理策略是当卡牌离开手牌区后清除所有的标记。
+--- * -turn之类的后缀会覆盖默认清理的方式。
+--- * (TODO: 以上皆为画饼)
 ---@param mark string @ 标记
 ---@param count integer @ 为标记删除的数量
 function Card:setMark(mark, count)
@@ -335,7 +354,11 @@ end
 ---@param mark string @ 标记
 ---@return integer
 function Card:getMark(mark)
-  return (self.mark[mark] or 0)
+  local ret = (self.mark[mark] or 0)
+  if (not self:isVirtual()) and next(self.mark) == nil then
+    self.mark = nil
+  end
+  return ret
 end
 
 --- 判定卡牌是否拥有对应的Mark。

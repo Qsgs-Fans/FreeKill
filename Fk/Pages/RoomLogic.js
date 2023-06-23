@@ -622,6 +622,33 @@ callbacks["PropertyUpdate"] = (jsonData) => {
   }
 }
 
+callbacks["UpdateCard"] = (j) => {
+  const id = parseInt(j);
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    roomScene.dashboard.handcardArea.cards.forEach((v) => {
+      if (v.cid === id) {
+        card = v;
+        return;
+      }
+    });
+  }
+
+  if (!card) {
+    return;
+  }
+
+  const data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+  card.setData(data);
+}
+
 callbacks["StartGame"] = (jsonData) => {
   roomScene.isStarted = true;
 

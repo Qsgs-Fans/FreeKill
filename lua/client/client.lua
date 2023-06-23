@@ -52,6 +52,9 @@ function Client:initialize()
     self.status_skills[class] = {table.unpack(skills)}
   end
 
+  self.skill_costs = {}
+  self.card_marks = {}
+  self.filtered_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 end
@@ -657,11 +660,9 @@ fk.client_callback["SetCardMark"] = function(jsonData)
   -- jsonData: [ int id, string mark, int value ]
   local data = json.decode(jsonData)
   local card, mark, value = data[1], data[2], data[3]
-  ClientInstance:getCardById(card):setMark(mark, value)
+  Fk:getCardById(card):setMark(mark, value)
 
-  if string.sub(mark, 1, 1) == "@" then
-    ClientInstance:notifyUI("SetCardMark", jsonData)
-  end
+  ClientInstance:notifyUI("UpdateCard", tostring(card))
 end
 
 fk.client_callback["Chat"] = function(jsonData)

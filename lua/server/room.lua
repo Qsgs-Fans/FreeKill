@@ -27,6 +27,7 @@
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
 ---@field public skill_costs table<string, any> @ 存放skill.cost_data用
+---@field public card_marks table<integer, any> @ 存放card.mark之用
 local Room = class("Room")
 
 -- load classes used by the game
@@ -88,6 +89,8 @@ function Room:initialize(_room)
   self.request_queue = {}
   self.request_self = {}
   self.skill_costs = {}
+  self.card_marks = {}
+  self.filtered_cards = {}
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
@@ -465,11 +468,13 @@ end
 ---@param value integer @ 要设为的值，其实也可以设为字符串
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
-  self:doBroadcastNotify("SetCardMark", json.encode{
-    card.id,
-    mark,
-    value
-  })
+  if not card:isVirtual() then
+    self:doBroadcastNotify("SetCardMark", json.encode{
+      card.id,
+      mark,
+      value
+    })
+  end
 end
 
 --- 将一张卡牌的mark标记增加count个。
@@ -1168,7 +1173,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     if includeEquip then
       table.insertTable(hands, player:getCardIds(Player.Equip))
     end
-    for i = 1, minNum do
+    for _ = 1, minNum do
       local randomId = hands[math.random(1, #hands)]
       table.insert(chosenCards, randomId)
       table.removeOne(hands, randomId)
@@ -1371,7 +1376,7 @@ end
 ---@param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
----@return table<top|bottom, cardId[]>
+---@return table<"top"|"bottom", integer[]>
 function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   top_limit = top_limit or Util.DummyTable
@@ -1441,10 +1446,10 @@ end
 --- 询问玩家任意交换几堆牌堆。
 ---
 ---@param player ServerPlayer @ 要询问的玩家
----@param piles table<cardIds, cardId[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
+---@param piles table<cardIds, integer[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
 ---@param piles_name string[] @ 牌堆名，必须一一对应，否则统一替换为“牌堆X”
 ---@param customNotify string|null @ 自定义读条操作提示
----@return table<cardIds, cardId[]>
+---@return table<cardIds, integer[]>
 function Room:askForExchange(player, piles, piles_name, customNotify)
   local command = "AskForExchange"
   piles_name = piles_name or Util.DummyTable
@@ -1775,7 +1780,7 @@ end
 ---@param skillName string @ 技能名
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
----@return cardId
+---@return integer
 function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
   if flag then
     assert(flag == "e" or flag == "j")
