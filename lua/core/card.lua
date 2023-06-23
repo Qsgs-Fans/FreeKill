@@ -332,6 +332,15 @@ function Card:removeMark(mark, count)
 end
 
 --- 为卡牌设置Mark至指定数量。
+---
+--- 关于标记的说明：
+---
+--- * @开头的为可见标记，其余为隐藏标记。
+--- * -turn结尾、-phase结尾、-round结尾的如同玩家标记一样在这个时机自动清理。
+--- * -noclear结尾的表示不要自动清理。
+--- * 默认的自动清理策略是当卡牌离开手牌区后清除所有的标记。
+--- * -turn之类的后缀会覆盖默认清理的方式。
+--- * (TODO: 以上皆为画饼)
 ---@param mark string @ 标记
 ---@param count integer @ 为标记删除的数量
 function Card:setMark(mark, count)
