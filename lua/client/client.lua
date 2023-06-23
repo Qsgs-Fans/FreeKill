@@ -54,6 +54,7 @@ function Client:initialize()
 
   self.skill_costs = {}
   self.card_marks = {}
+  self.filtered_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 end

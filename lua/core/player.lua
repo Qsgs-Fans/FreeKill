@@ -344,6 +344,12 @@ function Player:getHandcardNum()
   return #self:getCardIds(Player.Hand)
 end
 
+function Player:filterHandcards()
+  for _, id in ipairs(self:getCardIds(Player.Hand)) do
+    Fk:filterCard(id, self)
+  end
+end
+
 --- 检索玩家装备区是否存在对应类型的装备。
 ---@param cardSubtype CardSubtype @ 卡牌子类
 ---@return integer|null @ 返回卡牌ID或nil

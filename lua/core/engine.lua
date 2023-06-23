@@ -21,6 +21,7 @@
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
+---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -57,6 +58,7 @@ end
 local _foreign_keys = {
   "currentResponsePattern",
   "currentResponseReason",
+  "filtered_cards",
 }
 
 function Engine:__index(k)
@@ -381,8 +383,6 @@ function Engine:getAllCardIds(except)
   return result
 end
 
-local filtered_cards = {}
-
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
 ---@param ignoreFilter boolean @ 是否要无视掉锁定视为技，直接获得真牌
@@ -390,7 +390,7 @@ local filtered_cards = {}
 function Engine:getCardById(id, ignoreFilter)
   local ret = self.cards[id]
   if not ignoreFilter then
-    ret = filtered_cards[id] or self.cards[id]
+    ret = self.filtered_cards[id] or self.cards[id]
   end
   return ret
 end
@@ -402,14 +402,14 @@ end
 function Engine:filterCard(id, player, data)
   local card = self:getCardById(id, true)
   if player == nil then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     return
   end
   local skills = player:getAllSkills()
   local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
 
   if #filters == 0 then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     return
   end
 
@@ -446,11 +446,11 @@ function Engine:filterCard(id, player, data)
     if card == nil then
       card = self:getCardById(id)
     end
-    filtered_cards[id] = card
+    self.filtered_cards[id] = card
   end
 
   if modify then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     data.card = card
     return
   end

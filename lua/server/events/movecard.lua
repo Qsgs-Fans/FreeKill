@@ -119,7 +119,9 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
         end
 
-        Fk:filterCard(info.cardId, self:getPlayerById(data.to))
+        if not (data.to and data.toArea ~= Card.PlayerHand) then
+          Fk:filterCard(info.cardId, self:getPlayerById(data.to))
+        end
 
         local currentCard = Fk:getCardById(info.cardId)
         if

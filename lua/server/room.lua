@@ -90,6 +90,7 @@ function Room:initialize(_room)
   self.request_self = {}
   self.skill_costs = {}
   self.card_marks = {}
+  self.filtered_cards = {}
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
