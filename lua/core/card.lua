@@ -18,6 +18,7 @@
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[] @ 子卡ID表
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
+---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
 ---@field public special_skills string[] | nil @ 衍生技能，如重铸
@@ -94,7 +95,7 @@ function Card:initialize(name, suit, number, color)
   -- self.package = nil
   self.id = 0
   self.type = 0
-  self.sub_type = Card.SubTypeNone
+  self.sub_type = Card.SubtypeNone
   -- self.skill = nil
   self.subcards = {}
   -- self.skillName = nil
@@ -344,7 +345,11 @@ end
 ---@param mark string @ 标记
 ---@return integer
 function Card:getMark(mark)
-  return (self.mark[mark] or 0)
+  local ret = (self.mark[mark] or 0)
+  if (not self:isVirtual()) and next(self.mark) == nil then
+    self.mark = nil
+  end
+  return ret
 end
 
 --- 判定卡牌是否拥有对应的Mark。

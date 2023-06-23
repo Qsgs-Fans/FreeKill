@@ -5,6 +5,8 @@
 -- Note: these files are not used by FreeKill.
 -- Just for convenience when using sumneko.lua
 
+---@alias null nil
+
 ---@class fk
 ---FreeKill's lua API
 fk = {}
@@ -35,3 +37,8 @@ function fk.QmlBackend_exists(file)end
 
 ---@return boolean
 function fk.QmlBackend_isDir(file)end
+
+function fk.qCritical(msg) end
+function fk.qInfo(msg) end
+function fk.qDebug(msg) end
+function fk.qWarning(msg) end

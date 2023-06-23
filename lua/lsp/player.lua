@@ -14,6 +14,9 @@ function FPlayer:getScreenName()end
 ---@return string avatar
 function FPlayer:getAvatar()end
 
+---@class fk.ServerPlayer : fk.Player
+FServerPlayer = {}
+
 --- Send a request to client, and allow client to reply within *timeout* seconds.
 ---
 --- *timeout* must not be negative or **nil**.
@@ -34,3 +37,9 @@ function FServerPlayer:waitForReply(timeout)end
 ---@param command string
 ---@param jsonData string
 function FServerPlayer:doNotify(command,jsonData)end
+
+function FServerPlayer:setBusy(_) end
+function FServerPlayer:isBusy(_) end
+function FServerPlayer:setThinking(_) end
+
+function FServerPlayer:getState() end
