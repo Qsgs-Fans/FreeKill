@@ -797,6 +797,7 @@ Item {
         case "Egg":
         case "GiantEgg":
         case "Shoe":
+        case "Wine":
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);

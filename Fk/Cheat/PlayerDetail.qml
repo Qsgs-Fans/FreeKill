@@ -44,6 +44,16 @@ Flickable {
       }
 
       Button {
+        text: Backend.translate("Give Wine")
+        enabled: Math.random() < 0.3
+        onClicked: {
+          enabled = false;
+          root.givePresent("Wine");
+          root.finish();
+        }
+      }
+
+      Button {
         text: Backend.translate("Give Shoe")
         enabled: Math.random() < 0.3
         onClicked: {

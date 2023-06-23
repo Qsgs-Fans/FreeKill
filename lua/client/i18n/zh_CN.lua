@@ -51,6 +51,7 @@ Fk:loadTranslationTable{
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
+  ["Give Wine"] = "酒杯",
   ["Give Shoe"] = "拖鞋",
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
