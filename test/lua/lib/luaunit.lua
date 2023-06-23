@@ -30,7 +30,7 @@ M.LINE_LENGTH = 80
 M.TABLE_DIFF_ANALYSIS_THRESHOLD = 10    -- display deep analysis for more than 10 items
 M.LIST_DIFF_ANALYSIS_THRESHOLD  = 10    -- display deep analysis for more than 10 items
 
--- this setting allow to remove entries from the stack-trace, for 
+-- this setting allow to remove entries from the stack-trace, for
 -- example to hide a call to a framework which would be calling luaunit
 M.STRIP_EXTRA_ENTRIES_IN_STACK_TRACE = 0
 
@@ -118,14 +118,14 @@ exit the framework while we are running. When we are not running, it behaves nor
 ]]
 
 M.oldOsExit = os.exit
-os.exit = function(...) 
+os.exit = function(...)
     if M.LuaUnit and #M.LuaUnit.instances ~= 0 then
         local msg = [[You are trying to exit but there is still a running instance of LuaUnit.
 LuaUnit expects to run until the end before exiting with a complete status of successful/failed tests.
 
 To force exit LuaUnit while running, please call before os.exit (assuming lu is the luaunit module loaded):
 
-    lu.unregisterCurrentSuite() 
+    lu.unregisterCurrentSuite()
 
 ]]
         M.private.error_fmt(2, msg)
@@ -308,7 +308,7 @@ M.private.strMatch = strMatch
 local function patternFilter(patterns, expr)
     -- Run `expr` through the inclusion and exclusion rules defined in patterns
     -- and return true if expr shall be included, false for excluded.
-    -- Inclusion pattern are defined as normal patterns, exclusions 
+    -- Inclusion pattern are defined as normal patterns, exclusions
     -- patterns start with `!` and are followed by a normal pattern
 
     -- result: nil = UNKNOWN (not matched yet), true = ACCEPT, false = REJECT
@@ -399,7 +399,7 @@ local function extractFileLineInfo( s )
         return s
     end
 
-    return s2:sub(1, secondColon-1) 
+    return s2:sub(1, secondColon-1)
 end
 M.private.extractFileLineInfo = extractFileLineInfo
 
@@ -571,7 +571,7 @@ end
 M.prettystr = prettystr
 
 function M.adjust_err_msg_with_iter( err_msg, iter_msg )
-    --[[ Adjust the error message err_msg: trim the FAILURE_PREFIX or SUCCESS_PREFIX information if needed, 
+    --[[ Adjust the error message err_msg: trim the FAILURE_PREFIX or SUCCESS_PREFIX information if needed,
     add the iteration message if any and return the result.
 
     err_msg:  string, error message captured with pcall
@@ -591,7 +591,7 @@ function M.adjust_err_msg_with_iter( err_msg, iter_msg )
 
     local RE_FILE_LINE = '.*:%d+: '
 
-    -- error message is not necessarily a string, 
+    -- error message is not necessarily a string,
     -- so convert the value to string with prettystr()
     if type( err_msg ) ~= 'string' then
         err_msg = prettystr( err_msg )
@@ -623,7 +623,7 @@ function M.adjust_err_msg_with_iter( err_msg, iter_msg )
     if iter_msg then
         local match
         -- "./test\\test_luaunit.lua:2241: some error msg
-        match = err_msg:match( '(.*:%d+: ).*' ) 
+        match = err_msg:match( '(.*:%d+: ).*' )
         if match then
             err_msg = err_msg:gsub( match, match .. iter_msg )
         else
@@ -636,7 +636,7 @@ end
 
 local function tryMismatchFormatting( table_a, table_b, doDeepAnalysis, margin )
     --[[
-    Prepares a nice error message when comparing tables, performing a deeper 
+    Prepares a nice error message when comparing tables, performing a deeper
     analysis.
 
     Arguments:
@@ -648,7 +648,7 @@ local function tryMismatchFormatting( table_a, table_b, doDeepAnalysis, margin )
     * margin: supplied only for almost equality
 
     Returns: {success, result}
-    * success: false if deep analysis could not be performed 
+    * success: false if deep analysis could not be performed
                in this case, just use standard assertion message
     * result: if success is true, a multi-line string with deep analysis of the two lists
     ]]
@@ -711,11 +711,11 @@ end
 
 local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
     --[[
-    Prepares a nice error message when comparing tables which are not pure lists, performing a deeper 
+    Prepares a nice error message when comparing tables which are not pure lists, performing a deeper
     analysis.
 
     Returns: {success, result}
-    * success: false if deep analysis could not be performed 
+    * success: false if deep analysis could not be performed
                in this case, just use standard assertion message
     * result: if success is true, a multi-line string with deep analysis of the two lists
     ]]
@@ -735,7 +735,7 @@ local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
     for k,v in pairs( table_a ) do
         if is_equal( v, table_b[k] ) then
             table.insert( keysCommon, k )
-        else 
+        else
             if table_b[k] == nil then
                 table.insert( keysOnlyTa, k )
             else
@@ -783,7 +783,7 @@ local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
             end
         end
 
-        extendWithStrFmt( result, 'Table A has %d keys not present in table B and table B has %d keys not present in table A', #keysOnlyTa, #keysOnlyTb ) 
+        extendWithStrFmt( result, 'Table A has %d keys not present in table B and table B has %d keys not present in table A', #keysOnlyTa, #keysOnlyTb )
     end
 
     local function keytostring(k)
@@ -799,7 +799,7 @@ local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
             extendWithStrFmt( result, '  - A[%s]: %s', keytostring(v), prettystr(table_a[v]) )
             extendWithStrFmt( result, '  + B[%s]: %s', keytostring(v), prettystr(table_b[v]) )
         end
-    end    
+    end
 
     if #keysOnlyTa ~= 0 then
         table.insert( result, 'Items only in table A:' )
@@ -820,7 +820,7 @@ local function mismatchFormattingMapping( table_a, table_b, doDeepAnalysis )
         for k,v in sortedPairs( keysCommon ) do
             extendWithStrFmt( result, '  = A and B [%s]: %s', keytostring(v), prettystr(table_a[v]) )
         end
-    end    
+    end
 
     return true, table.concat( result, '\n')
     ]]
@@ -829,13 +829,13 @@ M.private.mismatchFormattingMapping = mismatchFormattingMapping
 
 local function mismatchFormattingPureList( table_a, table_b, margin )
     --[[
-    Prepares a nice error message when comparing tables which are lists, performing a deeper 
+    Prepares a nice error message when comparing tables which are lists, performing a deeper
     analysis.
 
     margin is supplied only for almost equality
 
     Returns: {success, result}
-    * success: false if deep analysis could not be performed 
+    * success: false if deep analysis could not be performed
                in this case, just use standard assertion message
     * result: if success is true, a multi-line string with deep analysis of the two lists
     ]]
@@ -865,15 +865,15 @@ local function mismatchFormattingPureList( table_a, table_b, margin )
     end
 
 
-    table.insert( result, 'List difference analysis:' )    
+    table.insert( result, 'List difference analysis:' )
     if len_a == len_b then
         -- TODO: handle expected/actual naming
         extendWithStrFmt( result, '* lists %sA (%s) and %sB (%s) have the same size', refa, descrTa, refb, descrTb )
-    else 
+    else
         extendWithStrFmt( result, '* list sizes differ: list %sA (%s) has %d items, list %sB (%s) has %d items', refa, descrTa, len_a, refb, descrTb, len_b )
     end
 
-    extendWithStrFmt( result, '* lists A and B start differing at index %d', commonUntil+1 ) 
+    extendWithStrFmt( result, '* lists A and B start differing at index %d', commonUntil+1 )
     if commonBackTo >= 0 then
         if deltalv > 0 then
             extendWithStrFmt( result, '* lists A and B are equal again from index %d for A, %d for B', len_a-commonBackTo, len_b-commonBackTo )
@@ -977,7 +977,7 @@ local function table_ref( t )
         if not success then
             -- protected table, if __tostring is defined, we can
             -- not get the reference. And we can not know in advance.
-            ref = tostring(t) 
+            ref = tostring(t)
             if not ref:match( 'table: 0?x?[%x]+' ) then
                 return UNKNOWN_REF
             end
@@ -1051,7 +1051,7 @@ local function _table_tostring( tbl, indentLevel, printTableRefs, cycleDetectTab
                 entry = keytostring(k) .. "="
             end
 
-            -- value part 
+            -- value part
             if cycleDetectTable[v] then
                 -- recursion in the value detected!
                 cycleDetectTable.detected = true
@@ -1078,7 +1078,7 @@ M.private._table_tostring_format_multiline_string = _table_tostring_format_multi
 
 
 local function _table_tostring_format_result( tbl, result, indentLevel, printTableRefs )
-    -- final function called in _table_to_string() to format the resulting list of 
+    -- final function called in _table_to_string() to format the resulting list of
     -- string describing the table.
 
     local dispOnMultLines = false
@@ -1107,12 +1107,12 @@ local function _table_tostring_format_result( tbl, result, indentLevel, printTab
     -- now reformat the result table (currently holding element strings)
     if dispOnMultLines then
         local indentString = string.rep("    ", indentLevel - 1)
-        result = {  
-                    "{\n    ", 
+        result = {
+                    "{\n    ",
                     indentString,
-                    table.concat(result, ",\n    " .. indentString), 
+                    table.concat(result, ",\n    " .. indentString),
                     "\n",
-                    indentString, 
+                    indentString,
                     "}"
                 }
     else
@@ -1207,7 +1207,7 @@ local _recursion_cache_MT = {
 local function _is_table_equals(actual, expected, cycleDetectTable, marginForAlmostEqual)
     --[[Returns true if both table are equal.
 
-    If argument marginForAlmostEqual is suppied, number comparison is done using alomstEqual instead 
+    If argument marginForAlmostEqual is suppied, number comparison is done using alomstEqual instead
     of strict equality.
 
     cycleDetectTable is an internal argument used during recursion on tables.
@@ -1341,7 +1341,7 @@ local function errorMsgEquality(actual, expected, doDeepAnalysis, margin)
         -- extend with mismatch analysis if possible:
         local success, mismatchResult
         success, mismatchResult = tryMismatchFormatting( actual, expected, doDeepAnalysis, margin )
-        if success then 
+        if success then
             result = table.concat( { result, mismatchResult }, '\n' )
         end
         return result
@@ -1446,7 +1446,7 @@ function M.assertAlmostEquals( actual, expected, margin, extra_msg_or_nil )
             if not M.ORDER_ACTUAL_EXPECTED then
                 expected, actual = actual, expected
             end
-            local delta = math.abs(actual - expected) 
+            local delta = math.abs(actual - expected)
             fail_fmt(2, extra_msg_or_nil, 'Values are not almost equal\n' ..
                         'Actual: %s, expected: %s, delta %s above margin of %s',
                         actual, expected, delta, margin)
@@ -2100,34 +2100,34 @@ function genericOutput.new(runner, default_verbosity)
 end
 
 -- abstract ("empty") methods
-function genericOutput:startSuite() 
+function genericOutput:startSuite()
     -- Called once, when the suite is started
 end
 
-function genericOutput:startClass(className) 
+function genericOutput:startClass(className)
     -- Called each time a new test class is started
 end
 
-function genericOutput:startTest(testName) 
+function genericOutput:startTest(testName)
     -- called each time a new test is started, right before the setUp()
     -- the current test status node is already created and available in: self.result.currentNode
 end
 
-function genericOutput:updateStatus(node) 
+function genericOutput:updateStatus(node)
     -- called with status failed or error as soon as the error/failure is encountered
     -- this method is NOT called for a successful test because a test is marked as successful by default
     -- and does not need to be updated
 end
 
-function genericOutput:endTest(node) 
+function genericOutput:endTest(node)
     -- called when the test is finished, after the tearDown() method
 end
 
-function genericOutput:endClass() 
+function genericOutput:endClass()
     -- called when executing the class is finished, before moving on to the next class of at the end of the test execution
 end
 
-function genericOutput:endSuite() 
+function genericOutput:endSuite()
     -- called at the end of the test suite execution
 end
 
