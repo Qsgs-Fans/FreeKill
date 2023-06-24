@@ -250,6 +250,10 @@ function table:assign(targetTbl)
   end
 end
 
+function table.empty(t)
+  return next(t) == nil
+end
+
 -- allow a = "Hello"; a[1] == "H"
 local str_mt = getmetatable("")
 str_mt.__index = function(str, k)

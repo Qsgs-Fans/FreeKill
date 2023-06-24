@@ -79,7 +79,7 @@ function Card:initialize(name, suit, number, color)
     self.is_derived = true
   end
 
-  local name_splited = name:split("__")
+  local name_splited = self.name:split("__")
   self.trueName = name_splited[#name_splited]
 
   if suit == Card.Spade or suit == Card.Club then
@@ -278,6 +278,29 @@ function Card:getTypeString()
     return "equip"
   end
   return "notype"
+end
+
+local subtype_string_table = {
+  [Card.SubtypeArmor] = "armor",
+  [Card.SubtypeWeapon] = "weapon",
+  [Card.SubtypeTreasure] = "treasure",
+  [Card.SubtypeDelayedTrick] = "delayed_trick",
+  [Card.SubtypeDefensiveRide] = "defensive_ride",
+  [Card.SubtypeOffensiveRide] = "offensive_ride",
+}
+
+function Card:getSubtypeString()
+  local t = self.sub_type
+  local ret = subtype_string_table[t]
+  if ret == nil then
+    if self.type == Card.TypeTrick then
+      return "normal_trick"
+    elseif self.type == Card.TypeBasic then
+      return "basic"
+    end
+  else
+    return ret
+  end
 end
 
 --- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K）。
