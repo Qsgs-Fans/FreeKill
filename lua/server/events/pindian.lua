@@ -41,13 +41,16 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
 
   local moveInfos = {}
   for _, p in ipairs(targets) do
-    local pindianCard
+    local _pindianCard
     if p.reply_ready then
       local replyCard = json.decode(p.client_reply).card
-      pindianCard = Fk:getCardById(json.decode(replyCard).subcards[1])
+      _pindianCard = Fk:getCardById(json.decode(replyCard).subcards[1])
     else
-      pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
+      _pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
     end
+
+    local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+    pindianCard:addSubcard(_pindianCard.id)
 
     if p == pindianData.from then
       pindianData.fromCard = pindianCard
@@ -57,7 +60,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     end
 
     table.insert(moveInfos, {
-      ids = { pindianCard.id },
+      ids = { _pindianCard.id },
       from = p.id,
       toArea = Card.Processing,
       moveReason = fk.ReasonPut,
@@ -68,7 +71,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     room:sendLog{
       type = "#ShowPindianCard",
       from = p.id,
-      card = { pindianCard.id },
+      card = { _pindianCard.id },
     }
   end
 
