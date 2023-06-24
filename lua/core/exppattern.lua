@@ -32,6 +32,8 @@
 ---@field public cardType string[]
 ---@field public id integer[]
 
+-- v0.2.6改动： cardType会被解析为trueName数组和name数组，而不是自己单独成立
+
 local numbertable = {
   ["A"] = 1,
   ["J"] = 11,
@@ -44,14 +46,34 @@ local placetable = {
   [Card.PlayerEquip] = "equip",
 }
 
+local card_type_table = {}
+
+local function fillCardTypeTable()
+  local tmp = {}
+  for _, cd in ipairs(Fk.cards) do
+    local t = cd:getTypeString()
+    local st = cd:getSubtypeString()
+    local tn = cd.trueName
+    -- TODO: local n = cd.name
+
+    if not tmp[tn] then
+      card_type_table[t] = card_type_table[t] or {}
+      card_type_table[st] = card_type_table[st] or {}
+      table.insertIfNeed(card_type_table[t], tn)
+      table.insertIfNeed(card_type_table[st], tn)
+      tmp[tn] = true
+    end
+  end
+end
+
 local function matchSingleKey(matcher, card, key)
   local match = matcher[key]
   if not match then return true end
   local val = card[key]
   if key == "suit" then
     val = card:getSuitString()
-  elseif key == "cardType" then
-    val = card:getTypeString()
+  -- elseif key == "cardType" then
+  --   val = card:getTypeString()
   elseif key == "place" then
     val = placetable[Fk:currentRoom():getCardArea(card.id)]
     if not val then
@@ -90,7 +112,7 @@ local function matchCard(matcher, card)
      and matchSingleKey(matcher, card, "suit")
      and matchSingleKey(matcher, card, "place")
      and matchSingleKey(matcher, card, "name")
-     and matchSingleKey(matcher, card, "cardType")
+     -- and matchSingleKey(matcher, card, "cardType")
      and matchSingleKey(matcher, card, "id")
 end
 
@@ -123,7 +145,7 @@ local function matchMatcher(a, b)
     "suit",
     "place",
     "name",
-    "cardType",
+    -- "cardType",
     "id",
   }
 
@@ -260,7 +282,18 @@ local function parseMatcher(str)
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
   ret.place = not table.contains(t[4], ".") and t[4] or nil
   ret.name = not table.contains(t[5], ".") and t[5] or nil
-  ret.cardType = not table.contains(t[6], ".") and t[6] or nil
+  -- ret.cardType = not table.contains(t[6], ".") and t[6] or nil
+  if table.empty(card_type_table) then
+    fillCardTypeTable()
+  end
+  for _, ctype in ipairs(t[6]) do
+    if ctype ~= "." then
+      for _, n in ipairs(card_type_table[ctype] or {}) do
+        if not ret.trueName then ret.trueName = {} end
+        table.insertIfNeed(ret.trueName, n)
+      end
+    end
+  end
 
   if not table.contains(t[7], ".") then
     ret.id = parseRawNumTable(t[7])
