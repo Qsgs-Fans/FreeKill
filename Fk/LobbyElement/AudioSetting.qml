@@ -38,4 +38,13 @@ ColumnLayout {
     checked: config.disableMsgAudio
     onCheckedChanged: config.disableMsgAudio = checked;
   }
+
+  Switch {
+    text: Backend.translate("Hide unselectable cards")
+    checked: config.hideUseless
+    onCheckedChanged: {
+      config.hideUseless = checked;
+    }
+  }
+
 }

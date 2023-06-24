@@ -300,8 +300,13 @@ Item {
     anchors.bottom: parent.bottom
     ColumnLayout {
       MetroButton {
-        text: Backend.translate("Trust")
+        text: Backend.translate("Revert Selection")
+        enabled: dashboard.pending_skill !== ""
+        onClicked: dashboard.revertSelection();
       }
+      // MetroButton {
+      //   text: Backend.translate("Trust")
+      // }
       MetroButton {
         text: Backend.translate("Sort Cards")
       }

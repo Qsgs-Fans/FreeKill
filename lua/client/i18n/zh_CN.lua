@@ -23,6 +23,7 @@ Fk:loadTranslationTable{
   ["BG Settings"] = "游戏背景",
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
+  ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Back"] = "返回",
 
   ["Create Room"] = "创建房间",
