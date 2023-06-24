@@ -240,6 +240,26 @@ RowLayout {
     }
   }
 
+  function revertSelection() {
+    if (pending_skill !== "") {
+      let to_select_cards = handcardAreaItem.cards.filter(cd => {
+        if (pendings.indexOf(cd.cid) === -1) {
+          return true;
+        } else {
+          cd.selected = !cd.selected;
+          cd.clicked();
+        }
+      });
+
+      to_select_cards.forEach(cd => {
+        if (cd.selectable) {
+          cd.selected = !cd.selected;
+          cd.clicked();
+        }
+      });
+    }
+  }
+
   function getSelectedCard() {
     if (pending_skill !== "") {
       return JSON.stringify({

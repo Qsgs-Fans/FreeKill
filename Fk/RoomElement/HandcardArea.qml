@@ -55,30 +55,33 @@ Item {
   function enableCards(cardIds)
   {
     let card, i;
-    for (i = 0; i < cards.length; i++) {
-      card = cards[i];
+    cards.forEach(card => {
       card.selectable = cardIds.contains(card.cid);
       if (!card.selectable) {
         card.selected = false;
         unselectCard(card);
       }
-    }
+    });
+    updateCardPosition(true);
   }
 
   function updateCardPosition(animated)
   {
     cardArea.updateCardPosition(false);
 
-    let i, card;
-    for (i = 0; i < cards.length; i++) {
-      card = cards[i];
-      if (card.selected)
+    cards.forEach(card => {
+      if (card.selected) {
         card.origY -= 20;
-    }
+      }
+      if (!card.selectable) {
+        if (config.hideUseless) {
+          card.origY += 60;
+        }
+      }
+    });
 
     if (animated) {
-      for (i = 0; i < cards.length; i++)
-        cards[i].goBack(true)
+      cards.forEach(card => card.goBack(true));
     }
   }
 

@@ -22,6 +22,7 @@ QtObject {
   property string ladyImg
   property real bgmVolume
   property bool disableMsgAudio
+  property bool hideUseless
   property var disabledGenerals: []
 
   property int preferredTimeout
@@ -60,6 +61,7 @@ QtObject {
     Backend.volume = conf.effectVolume ?? 50.;
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
+    hideUseless = conf.hideUseless ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     disabledGenerals = conf.disabledGenerals ?? [];
@@ -84,6 +86,7 @@ QtObject {
     conf.effectVolume = Backend.volume;
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
+    conf.hideUseless = hideUseless;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.disabledGenerals = disabledGenerals;
