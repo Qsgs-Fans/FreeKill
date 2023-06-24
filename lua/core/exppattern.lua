@@ -116,6 +116,27 @@ local function matchCard(matcher, card)
      and matchSingleKey(matcher, card, "id")
 end
 
+local function hasNegIntersection(a, b)
+  local neg_pass = false
+
+  -- 第一次比较： 比较neg和正常值，如有不同即认为可以匹配
+  -- 比如 ^jink 可以匹配 slash,jink
+  for _, neg in ipairs(a.neg or Util.DummyTable) do
+    for _, e in ipairs(b) do
+      if type(neg) == "table" then
+        neg_pass = not table.contains(neg, e)
+      else
+        neg_pass = neg ~= e
+      end
+      if neg_pass then return true end
+    end
+  end
+
+  -- 第二次比较： 比较双方neg
+  -- 比如 ^jink 可以匹配 ^slash
+  -- 暂时想不出好方案
+end
+
 local function hasIntersection(a, b)
   if a == nil or b == nil then
     return true
@@ -131,9 +152,9 @@ local function hasIntersection(a, b)
     end
   end
 
-  -- TODO: 判断含有neg的两个matcher
+  local neg_pass = hasNegIntersection(a, b) or hasNegIntersection(b, a)
 
-  return false
+  return neg_pass
 end
 
 ---@param a Matcher
@@ -287,12 +308,21 @@ local function parseMatcher(str)
     fillCardTypeTable()
   end
   for _, ctype in ipairs(t[6]) do
-    if ctype ~= "." then
-      for _, n in ipairs(card_type_table[ctype] or {}) do
-        if not ret.trueName then ret.trueName = {} end
-        table.insertIfNeed(ret.trueName, n)
-      end
+    for _, n in ipairs(card_type_table[ctype] or Util.DummyTable) do
+      if not ret.trueName then ret.trueName = {} end
+      table.insertIfNeed(ret.trueName, n)
     end
+  end
+  for _, neg in ipairs(t[6].neg or Util.DummyTable) do
+    if type(neg) ~= "table" then neg = { neg } end
+    if not ret.trueName then ret.trueName = {} end
+    if not ret.trueName.neg then ret.trueName.neg = {} end
+
+    local temp = {}
+    for _, ctype in ipairs(neg) do
+      table.insertTable(temp, card_type_table[ctype] or Util.DummyTable)
+    end
+    table.insert(ret.trueName.neg, temp)
   end
 
   if not table.contains(t[7], ".") then
