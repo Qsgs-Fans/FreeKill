@@ -344,6 +344,10 @@ end
 
 function ServerPlayer:showCards(cards)
   cards = Card:getIdList(cards)
+  for _, id in ipairs(cards) do
+    Fk:filterCard(id, self)
+  end
+
   local room = self.room
   room:sendLog{
     type = "#ShowCard",

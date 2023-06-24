@@ -27,6 +27,9 @@ end
 function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   scope = scope or Player.HistoryTurn
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  if not card and self.name:endsWith("_skill") then
+    card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
+  end
   for _, skill in ipairs(status_skills) do
     if skill:bypassTimesCheck(player, self, scope, card, to) then return true end
   end
@@ -44,6 +47,9 @@ end
 
 function UsableSkill:withinDistanceLimit(player, isattack, card, to)
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  if not card and self.name:endsWith("_skill") then
+    card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
+  end
   for _, skill in ipairs(status_skills) do
     if skill:bypassDistancesCheck(player, self, card, to) then return true end
   end

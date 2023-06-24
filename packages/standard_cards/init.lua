@@ -6,7 +6,7 @@ extension.metadata = require "packages.standard_cards.metadata"
 local global_can_use = function(self, player, card)
   local room = Fk:currentRoom()
   for _, p in ipairs(room.alive_players) do
-    if not player:isProhibited(p, card) then
+    if not (card and player:isProhibited(p, card)) then
       return true
     end
   end
@@ -15,7 +15,7 @@ end
 local aoe_can_use = function(self, player, card)
   local room = Fk:currentRoom()
   for _, p in ipairs(room.alive_players) do
-    if p ~= player and not player:isProhibited(p, card) then
+    if p ~= player and not (card and player:isProhibited(p, card)) then
       return true
     end
   end
