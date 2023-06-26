@@ -780,6 +780,8 @@ fk.client_callback["UpdateGameData"] = function(jsonData)
   if player then
     player.player:setGameData(total, win, run)
   end
+
+  ClientInstance:notifyUI("UpdateGameData", jsonData)
 end
 
 -- Create ClientInstance (used by Lua)

@@ -612,6 +612,8 @@ function SetPlayerGameData(pid, data)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
   p.player:setGameData(table.unpack(data))
+  table.insert(data, 1, pid)
+  ClientInstance:notifyUI("UpdateGameData", json.encode(data))
 end
 
 function FilterMyHandcards()

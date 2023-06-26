@@ -944,8 +944,8 @@ Item {
         roomScene.isOwner = d.isOwner;
       } else {
         Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
-        Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
       }
+      Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;
     });
   }
