@@ -256,9 +256,9 @@ Item {
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 6
     height: childrenRect.height + 8
-    color: "#EEEEEEEE"
+    color: "#CC3C3229"
     radius: 8
-    border.color: "black"
+    border.color: "white"
     border.width: 1
     visible: screenName != "" && !roomScene.isStarted
 
@@ -267,7 +267,8 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       font.pixelSize: 20
       font.family: fontLibian.name
-      color: (totalGame > 0 && runGame / totalGame > 0.2) ? "red" : "black"
+      color: (totalGame > 0 && runGame / totalGame > 0.2) ? "red" : "white"
+      style: Text.Outline
       text: {
         if (totalGame === 0) {
           return Backend.translate("Newbie");
