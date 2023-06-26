@@ -2860,6 +2860,9 @@ local function shouldUpdateWinRate(room)
   if room.settings.gameMode == "aaa_role_mode" and #room.players < 5 then
     return false
   end
+  if room.settings.enableFreeAssign then
+    return false
+  end
   for _, p in ipairs(room.players) do
     if p.id < 0 then return false end
   end
