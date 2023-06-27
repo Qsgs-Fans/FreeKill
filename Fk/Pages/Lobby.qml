@@ -265,6 +265,7 @@ Item {
   function enterRoom(roomId, playerNum, capacity, pw) {
     if (playerNum < capacity) {
       config.observing = false;
+      Backend.callLuaFunction("SetObserving", [false]);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
@@ -272,6 +273,7 @@ Item {
       );
     } else {
       config.observing = true;
+      Backend.callLuaFunction("SetObserving", [true]);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",

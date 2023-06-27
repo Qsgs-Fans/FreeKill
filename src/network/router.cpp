@@ -258,7 +258,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   if (type & TYPE_NOTIFICATION) {
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      ClientInstance->callLua(command, jsonData);
+      ClientInstance->callLua(command, jsonData, false);
 #endif
     }
 #ifndef FK_CLIENT_ONLY
@@ -301,7 +301,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      qobject_cast<Client *>(parent())->callLua(command, jsonData);
+      qobject_cast<Client *>(parent())->callLua(command, jsonData, true);
 #endif
     } else {
       // requesting server is not allowed

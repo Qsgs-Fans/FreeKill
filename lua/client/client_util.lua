@@ -620,4 +620,8 @@ function FilterMyHandcards()
   Self:filterHandcards()
 end
 
+function SetObserving(o)
+  ClientInstance.observing = o
+end
+
 dofile "lua/client/i18n/init.lua"

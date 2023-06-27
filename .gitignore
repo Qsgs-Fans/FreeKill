@@ -19,6 +19,7 @@
 /FreeKill
 /FreeKill.exe
 /mymod
+/recording
 freekill-wrap.cxx
 /server/users.db
 /server/rsa
