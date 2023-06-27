@@ -8,6 +8,7 @@
 ---@field public current ClientPlayer
 ---@field public discard_pile integer[]
 ---@field public status_skills Skill[]
+---@field public observing boolean
 Client = class('Client')
 
 -- load client classes
@@ -28,7 +29,11 @@ function Client:initialize()
   self.notifyUI = function(self, command, jsonData)
     fk.Backend:emitNotifyUI(command, jsonData)
   end
-  self.client.callback = function(_self, command, jsonData)
+  self.client.callback = function(_self, command, jsonData, isRequest)
+    if self.recording and not self.observing then
+      table.insert(self.record, {os.getms() / 1000, isRequest, command, jsonData})
+    end
+
     local cb = fk.client_callback[command]
 
     if table.contains(pattern_refresh_commands, command) then
@@ -57,6 +62,8 @@ function Client:initialize()
   self.filtered_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
+
+  self.recording = false
 end
 
 ---@param id integer
@@ -780,6 +787,64 @@ fk.client_callback["UpdateGameData"] = function(jsonData)
   if player then
     player.player:setGameData(total, win, run)
   end
+
+  ClientInstance:notifyUI("UpdateGameData", jsonData)
+end
+
+fk.client_callback["StartGame"] = function(jsonData)
+  local c = ClientInstance
+  c.record = { fk.FK_VER, os.date("%Y%m%d%H%M%S") }
+  for _, p in ipairs(c.players) do
+    if p.id ~= Self.id then
+      table.insert(c.record, {
+        os.getms() / 100,
+        false,
+        "AddPlayer",
+        json.encode {
+          p.player:getId(),
+          p.player:getScreenName(),
+          p.player:getAvatar(),
+          true,
+        },
+      })
+    end
+  end
+  c.recording = true
+  c:notifyUI("StartGame", jsonData)
+end
+
+fk.client_callback["GameOver"] = function(jsonData)
+  local c = ClientInstance
+  if c.recording and not c.observing then
+    c.recording = false
+    c.record[2] = table.concat({
+      c.record[2],
+      Self.player:getScreenName(),
+      c.room_settings.gameMode,
+      Self.general,
+      Self.role,
+      jsonData,
+    }, ".")
+    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+  end
+  c:notifyUI("GameOver", jsonData)
+end
+
+fk.client_callback["EnterLobby"] = function(jsonData)
+  local c = ClientInstance
+  if c.recording and not c.observing then
+    c.recording = false
+    c.record[2] = table.concat({
+      c.record[2],
+      Self.player:getScreenName(),
+      c.room_settings.gameMode,
+      Self.general,
+      Self.role,
+      "",
+    }, ".")
+    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+  end
+  c:notifyUI("EnterLobby", jsonData)
 end
 
 -- Create ClientInstance (used by Lua)

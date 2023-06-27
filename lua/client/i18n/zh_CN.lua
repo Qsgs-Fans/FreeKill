@@ -57,6 +57,7 @@ Fk:loadTranslationTable{
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
+  ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 

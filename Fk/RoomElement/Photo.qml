@@ -31,6 +31,10 @@ Item {
   property int drank: 0
   property bool isOwner: false
   property bool ready: false
+  property int winGame: 0
+  property int runGame: 0
+  property int totalGame: 0
+
   property int distance: -1
   property string status: "normal"
   property int maxCard: 0
@@ -246,10 +250,43 @@ Item {
     opacity: 0.4 + Math.log(root.drank) * 0.12
   }
 
-  Image {
+  Rectangle {
+    id: winRateRect
+    width: 138; x: 31
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 6
+    height: childrenRect.height + 8
+    color: "#CC3C3229"
+    radius: 8
+    border.color: "white"
+    border.width: 1
+    visible: screenName != "" && !roomScene.isStarted
+
+    Text {
+      y: 4
+      anchors.horizontalCenter: parent.horizontalCenter
+      font.pixelSize: 20
+      font.family: fontLibian.name
+      color: (totalGame > 0 && runGame / totalGame > 0.2) ? "red" : "white"
+      style: Text.Outline
+      text: {
+        if (totalGame === 0) {
+          return Backend.translate("Newbie");
+        }
+        const winRate = (winGame / totalGame) * 100;
+        const runRate = (runGame / totalGame) * 100;
+        return Backend.translate("Win=%1\nRun=%2\nTotal=%3")
+          .arg(winRate.toFixed(2))
+          .arg(runRate.toFixed(2))
+          .arg(totalGame);
+      }
+    }
+  }
+
+  Image {
+    anchors.bottom: winRateRect.top
     anchors.right: parent.right
-    anchors.bottomMargin: 8
+    anchors.bottomMargin: -8
     anchors.rightMargin: 4
     source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : (ready ? "ready" : "notready"))
     visible: screenName != "" && !roomScene.isStarted

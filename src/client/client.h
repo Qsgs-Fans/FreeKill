@@ -21,7 +21,7 @@ public:
   Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
-  Q_INVOKABLE void callLua(const QString &command, const QString &jsonData);
+  Q_INVOKABLE void callLua(const QString &command, const QString &jsonData, bool isRequest = false);
   LuaFunction callback;
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
@@ -32,6 +32,7 @@ public:
   lua_State *getLuaState();
   void installAESKey(const QByteArray &key);
 
+  void saveRecord(const QString &json, const QString &fname);
 signals:
   void error_message(const QString &msg);
 

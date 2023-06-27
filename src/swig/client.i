@@ -27,12 +27,14 @@ public:
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
   void changeSelf(int id);
+
+  void saveRecord(const QString &json, const QString &fname);
 };
 
 extern Client *ClientInstance;
 
 %{
-void Client::callLua(const QString& command, const QString& json_data)
+void Client::callLua(const QString& command, const QString& json_data, bool isRequest)
 {
   Q_ASSERT(callback);
 
@@ -44,8 +46,9 @@ void Client::callLua(const QString& command, const QString& json_data)
   SWIG_NewPointerObj(L, this, SWIGTYPE_p_Client, 0);
   lua_pushstring(L, command.toUtf8());
   lua_pushstring(L, json_data.toUtf8());
+  lua_pushboolean(L, isRequest);
 
-  int error = lua_pcall(L, 3, 0, -5);
+  int error = lua_pcall(L, 4, 0, -6);
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);

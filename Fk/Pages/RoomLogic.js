@@ -1291,6 +1291,20 @@ callbacks["UpdateRoundNum"] = (j) => {
   roomScene.miscStatus.roundNum = data;
 }
 
+callbacks["UpdateGameData"] = (j) => {
+  const data = JSON.parse(j);
+  const id = data[0];
+  const total = data[1];
+  const win = data[2];
+  const run = data[3];
+  const photo = getPhoto(id);
+  if (photo) {
+    photo.totalGame = total;
+    photo.winGame = win;
+    photo.runGame = run;
+  }
+}
+
 // 神貂蝉
 
 callbacks["StartChangeSelf"] = (j) => {
