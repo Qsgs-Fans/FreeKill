@@ -725,7 +725,14 @@ function Player:getAllSkills()
   return ret
 end
 
---- 确认玩家是否可以对特定玩家使用特定牌。
+--- 确认玩家是否可以使用特定牌。
+---@param card Card @ 特定牌
+function Player:canUse(card)
+  assert(card, "Error: No Card")
+  return card.skill.canUse(self, card)
+end
+
+--- 确认玩家是否被禁止对特定玩家使用特定牌。
 ---@param to Player @ 特定玩家
 ---@param card Card @ 特定牌
 function Player:isProhibited(to, card)
@@ -739,7 +746,7 @@ function Player:isProhibited(to, card)
   return false
 end
 
---- 确认玩家是否可以使用特定牌。
+--- 确认玩家是否被禁止使用特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitUse(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
@@ -751,7 +758,7 @@ function Player:prohibitUse(card)
   return false
 end
 
---- 确认玩家是否可以打出特定牌。
+--- 确认玩家是否被禁止打出特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitResponse(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
@@ -763,7 +770,7 @@ function Player:prohibitResponse(card)
   return false
 end
 
---- 确认玩家是否可以弃置特定牌。
+--- 确认玩家是否被禁止弃置特定牌。
 ---@param card Card @ 特定的牌
 function Player:prohibitDiscard(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable

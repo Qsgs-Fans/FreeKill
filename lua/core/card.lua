@@ -303,7 +303,7 @@ function Card:getSubtypeString()
   end
 end
 
---- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K）。
+--- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K/X）。
 local function getNumberStr(num)
   if num == 1 then
     return "A"
@@ -313,8 +313,33 @@ local function getNumberStr(num)
     return "Q"
   elseif num == 13 then
     return "K"
+  elseif num == 0 then
+    return "X"
   end
   return tostring(num)
+end
+
+--- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K/X）。
+---@param num integer @ 当你只想翻译点数为文字时(优先检查，请注意)
+function Card:getNumberStr(num)
+  return tostring(getNumberStr(num and num or self.number))
+end
+
+--- 根据点数文字描述返回数字。
+---@param str integer @ 只能翻译文字为点数
+function Card:strToNumber(str)
+  if str == "A" then
+    return 1
+  elseif str == "J" then
+    return 11
+  elseif str == "Q" then
+    return 12
+  elseif str == "K" then
+    return 13
+  elseif str == "X" then
+    return 0
+  end
+  return tonumber(str)
 end
 
 --- 获取卡牌的完整点数(花色+点数)，如（黑桃A/♠A）。
