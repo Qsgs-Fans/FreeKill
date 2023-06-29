@@ -253,7 +253,13 @@ Fk:loadTranslationTable{
   ["phase_finish"] = "结束阶段",
 
   ["chained"] = "横置",
+  ["un-chained"] = "竖置",
   ["not-chained"] = "重置",
+
+  ["yang"] = "阳",
+  ["yin"] = "阴",
+  ["quest_succeed"] = "成功",
+  ["quest_failed"] = "失败",
 
   ["pile_draw"] = "牌堆",
   ["pile_discard"] = "弃牌堆",
