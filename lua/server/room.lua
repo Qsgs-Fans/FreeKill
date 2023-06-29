@@ -169,7 +169,7 @@ function Room:isReady()
       rest = p.request_timeout * 1000 - (os.getms() -
         p.request_start) / 1000
 
-      if rest <= 0 then
+      if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
         p._splayer:setThinking(false)
       end
     end
