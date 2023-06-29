@@ -561,15 +561,21 @@ RSA *Server::initServerRSA() {
   return rsa;
 }
 
+#define SET_DEFAULT_CONFIG(k, v) do {\
+  if (config.value(k).isUndefined()) { \
+    config[k] = (v); \
+  } } while (0)
+
 void Server::readConfig() {
   QFile file("freekill.server.config.json");
-  if (!file.open(QIODevice::ReadOnly)) {
-    return;
+  QByteArray json = "{}";
+  if (file.open(QIODevice::ReadOnly)) {
+    json = file.readAll();
   }
-  auto json = file.readAll();
   config = QJsonDocument::fromJson(json).object();
 
   // defaults
+  SET_DEFAULT_CONFIG("tempBanTime", 20);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
@@ -597,7 +603,9 @@ void Server::temporarilyBan(int playerId) {
 
   auto addr = socket->peerAddress();
   temp_banlist.append(addr);
-  QTimer::singleShot(5000, this, [=]() {
+
+  auto time = getConfig("tempBanTime").toInt();
+  QTimer::singleShot(time * 60000, this, [=]() {
       temp_banlist.removeOne(addr);
       });
   emit player->kicked();
