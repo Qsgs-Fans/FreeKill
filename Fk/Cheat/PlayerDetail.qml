@@ -75,18 +75,15 @@ Flickable {
     }
 
     // TODO: player details
-    RowLayout {
-      spacing: 16
-      Text {
-        id: screenName
-        font.pixelSize: 18
-      }
+    Text {
+      id: screenName
+      font.pixelSize: 18
+    }
 
-      Text {
-        id: playerGameData
-        Layout.fillWidth: true
-        font.pixelSize: 18
-      }
+    Text {
+      id: playerGameData
+      Layout.fillWidth: true
+      font.pixelSize: 18
     }
 
     TextEdit {
@@ -132,7 +129,8 @@ Flickable {
       const run = gamedata[2];
       const winRate = (win / total) * 100;
       const runRate = (run / total) * 100;
-      playerGameData.text = total === 0 ? Backend.translate("Newbie") : "<br/>" + Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+      playerGameData.text = total === 0 ? Backend.translate("Newbie") :
+        Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
         .arg(runRate.toFixed(2)).arg(total);
     }
 
