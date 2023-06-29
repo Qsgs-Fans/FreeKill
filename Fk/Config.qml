@@ -40,6 +40,7 @@ QtObject {
   property int roomTimeout: 0
   property bool enableFreeAssign: false
   property bool observing: false
+  property var blockedUsers: []
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());

@@ -5,6 +5,7 @@
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 
+#include "client_socket.h"
 #include "roomthread.h"
 #include "server.h"
 #include "serverplayer.h"
@@ -264,6 +265,11 @@ void Room::removePlayer(ServerPlayer *player) {
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
+
+    // 如果走小道的人不是单机启动玩家 那么直接ban
+    if (!runner->getSocket()->peerAddress().contains("127.0.0.1")) {
+      server->temporarilyBan(runner->getId());
+    }
 
     m_thread->wakeUp();
 

@@ -315,7 +315,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
     player->setThinking(false);
     // qDebug() << "wake up!";
-    player->getRoom()->getThread()->wakeUp();
+    auto room = player->getRoom();
+    if (room->getThread()) {
+      room->getThread()->wakeUp();
+    }
 
     if (requestId != this->expectedReplyId)
       return;

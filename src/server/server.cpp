@@ -210,13 +210,22 @@ void Server::processNewConnection(ClientSocket *client) {
   qInfo() << addr << "connected";
   auto result = SelectFromDatabase(
       db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
+
+  auto errmsg = QString();
+
   if (!result.isEmpty()) {
+    errmsg = "you have been banned!";
+  } else if (temp_banlist.contains(addr)) {
+    errmsg = "you have been temporarily banned!";
+  }
+
+  if (!errmsg.isEmpty()) {
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
              Router::DEST_CLIENT);
     body << "ErrorMsg";
-    body << "you have been banned!";
+    body << errmsg;
     client->send(JsonArray2Bytes(body));
     qInfo() << "Refused banned IP:" << addr;
     client->disconnectFromHost();
@@ -552,15 +561,21 @@ RSA *Server::initServerRSA() {
   return rsa;
 }
 
+#define SET_DEFAULT_CONFIG(k, v) do {\
+  if (config.value(k).isUndefined()) { \
+    config[k] = (v); \
+  } } while (0)
+
 void Server::readConfig() {
   QFile file("freekill.server.config.json");
-  if (!file.open(QIODevice::ReadOnly)) {
-    return;
+  QByteArray json = "{}";
+  if (file.open(QIODevice::ReadOnly)) {
+    json = file.readAll();
   }
-  auto json = file.readAll();
   config = QJsonDocument::fromJson(json).object();
 
   // defaults
+  SET_DEFAULT_CONFIG("tempBanTime", 20);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
@@ -577,4 +592,21 @@ bool Server::checkBanWord(const QString &str) {
     }
   }
   return true;
+}
+
+void Server::temporarilyBan(int playerId) {
+  auto player = findPlayer(playerId);
+  if (!player) return;
+
+  auto socket = player->getSocket();
+  if (!socket) return;
+
+  auto addr = socket->peerAddress();
+  temp_banlist.append(addr);
+
+  auto time = getConfig("tempBanTime").toInt();
+  QTimer::singleShot(time * 60000, this, [=]() {
+      temp_banlist.removeOne(addr);
+      });
+  emit player->kicked();
 }

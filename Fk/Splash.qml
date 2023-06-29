@@ -150,6 +150,7 @@ Rectangle {
     PropertyAction { target: splash; property: "loading"; value: false }
   }
 
+  /**
   Text {
     text: "常用联机IP：175.178.66.93\n新月杀联机交流群：531553435"
     font.pixelSize: 20
@@ -159,6 +160,7 @@ Rectangle {
     anchors.rightMargin: 20
     horizontalAlignment: Text.AlignRight
   }
+  **/
 
   //--------------------Disappear--------------
   Behavior on opacity {

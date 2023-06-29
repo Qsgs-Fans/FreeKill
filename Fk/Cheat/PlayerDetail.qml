@@ -20,6 +20,31 @@ Flickable {
     width: parent.width - 40
     x: 20
 
+    // TODO: player details
+    Text {
+      id: screenName
+      font.pixelSize: 18
+    }
+
+    Text {
+      id: playerGameData
+      Layout.fillWidth: true
+      font.pixelSize: 18
+    }
+
+    TextEdit {
+      id: skillDesc
+
+      Layout.fillWidth: true
+      font.pixelSize: 18
+
+      readOnly: true
+      selectByKeyboard: true
+      selectByMouse: false
+      wrapMode: TextEdit.WordWrap
+      textFormat: TextEdit.RichText
+    }
+
     RowLayout {
       Button {
         text: Backend.translate("Give Flower")
@@ -62,7 +87,22 @@ Flickable {
           root.finish();
         }
       }
+    }
 
+    RowLayout {
+      Button {
+        text: config.blockedUsers.indexOf(screenName.text) === -1 ? Backend.translate("Block Chatter") : Backend.translate("Unblock Chatter")
+        enabled: pid !== Self.id && pid > 0
+        onClicked: {
+          const idx = config.blockedUsers.indexOf(screenName.text);
+          if (idx === -1) {
+            config.blockedUsers.push(screenName.text);
+          } else {
+            config.blockedUsers.splice(idx, 1);
+          }
+          config.blockedUsersChanged();
+        }
+      }
       Button {
         text: Backend.translate("Kick From Room")
         visible: !roomScene.isStarted && roomScene.isOwner
@@ -72,34 +112,6 @@ Flickable {
           root.finish();
         }
       }
-    }
-
-    // TODO: player details
-    RowLayout {
-      spacing: 16
-      Text {
-        id: screenName
-        font.pixelSize: 18
-      }
-
-      Text {
-        id: playerGameData
-        Layout.fillWidth: true
-        font.pixelSize: 18
-      }
-    }
-
-    TextEdit {
-      id: skillDesc
-
-      Layout.fillWidth: true
-      font.pixelSize: 18
-
-      readOnly: true
-      selectByKeyboard: true
-      selectByMouse: false
-      wrapMode: TextEdit.WordWrap
-      textFormat: TextEdit.RichText
     }
   }
 
@@ -132,7 +144,8 @@ Flickable {
       const run = gamedata[2];
       const winRate = (win / total) * 100;
       const runRate = (run / total) * 100;
-      playerGameData.text = total === 0 ? Backend.translate("Newbie") : "<br/>" + Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+      playerGameData.text = total === 0 ? Backend.translate("Newbie") :
+        Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
         .arg(runRate.toFixed(2)).arg(total);
     }
 

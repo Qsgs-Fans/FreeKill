@@ -251,6 +251,10 @@
     <source>you have been banned!</source>
     <translation>你已经被该服务器封禁！</translation>
   </message>
+  <message>
+    <source>you have been temporarily banned!</source>
+    <translation>由于逃跑或者其他不正当行为，你已经被暂时封禁！</translation>
+  </message>
 </context>
 
 <context>
