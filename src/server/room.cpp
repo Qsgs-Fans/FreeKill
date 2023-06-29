@@ -267,7 +267,7 @@ void Room::removePlayer(ServerPlayer *player) {
     server->addPlayer(runner);
 
     // 如果走小道的人不是单机启动玩家 那么直接ban
-    if (!runner->getSocket()->peerAddress().contains("127.0.0.1")) {
+    if (!runner->getSocket()->peerAddress().contains("127.0.0.1") && !player->isDied()) {
       server->temporarilyBan(runner->getId());
     }
 
