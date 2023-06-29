@@ -142,6 +142,10 @@ callbacks["Chat"] = (jsonData) => {
   const time = data.time;
   const msg = data.msg;
 
+  if (config.blockedUsers.indexOf(userName) !== -1) {
+    return;
+  }
+
   if (general === "")
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
   else
