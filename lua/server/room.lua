@@ -208,6 +208,7 @@ end
 --- 当这个函数返回之后，整个Room线程也宣告结束。
 ---@return nil
 function Room:run()
+  self.start_time = os.time()
   for _, p in fk.qlist(self.room:getPlayers()) do
     local player = ServerPlayer:new(p)
     player.room = self
@@ -2861,6 +2862,9 @@ local function shouldUpdateWinRate(room)
     return false
   end
   if room.settings.enableFreeAssign then
+    return false
+  end
+  if os.time() - room.start_time < 45 then
     return false
   end
   for _, p in ipairs(room.players) do
