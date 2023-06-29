@@ -520,6 +520,7 @@ void Server::onUserDisconnected() {
     player->setSocket(nullptr);
     // TODO: add a robot
   } else {
+    player->setState(Player::Robot); // 大厅！然而又不能设Offline
     player->deleteLater();
   }
 }
