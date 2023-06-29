@@ -44,6 +44,8 @@ public:
 
   QJsonValue getConfig(const QString &command);
   bool checkBanWord(const QString &str);
+  void temporarilyBan(int playerId);
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -67,6 +69,7 @@ private:
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players;
+  QList<QString> temp_banlist;
 
   RSA *rsa;
   QString public_key;

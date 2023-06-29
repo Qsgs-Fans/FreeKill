@@ -265,6 +265,8 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
+    server->temporarilyBan(runner->getId());
+
     m_thread->wakeUp();
 
     // 发出信号，让大厅添加这个人
