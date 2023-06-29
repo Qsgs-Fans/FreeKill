@@ -789,12 +789,14 @@ fk.SwitchYin = 1
 
 --- 获取转换技状态
 ---@param skillName string @ 技能名
+---@param afterUse boolean @ 是否提前计算转换后状态
+---@param inWord boolean @ 是否返回文字
 ---@return number @ 转换技状态
-function Player:getSwitchSkillState(skillName, afterUse)
+function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then
-    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and fk.SwitchYin or fk.SwitchYang
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yin" or fk.SwitchYin) or (inWord and "yang" or fk.SwitchYang)
   else
-    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and fk.SwitchYang or fk.SwitchYin
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yang" or fk.SwitchYang) or (inWord and "yin" or fk.SwitchYin)
   end
 end
 
