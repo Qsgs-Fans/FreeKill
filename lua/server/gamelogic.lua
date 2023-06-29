@@ -41,6 +41,7 @@ function GameLogic:run()
   local room = self.room
   table.shuffle(self.room.players)
   self:assignRoles()
+  self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   room:adjustSeats()
 
@@ -52,7 +53,6 @@ function GameLogic:run()
   self:attachSkillToPlayers()
   self:prepareForStart()
 
-  self.room.game_started = true
   self:action()
 end
 

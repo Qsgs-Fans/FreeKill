@@ -131,8 +131,9 @@ function Room:resume()
   end
 
   ::GAME_OVER::
-  coroutine.close(main_co)
-  self.main_co = nil
+  self:gameOver("")
+  -- coroutine.close(main_co)
+  -- self.main_co = nil
   return true
 end
 
