@@ -271,6 +271,10 @@
 <context>
   <name>Logic</name>
   <message>
+    <source>Detected Server %1</source>
+    <translation>检测到新月杀服务器 - %1</translation>
+  </message>
+  <message>
     <source>MD5 check failed!</source>
     <translation>MD5检测失败！请与服务端保持一致后再登入</translation>
   </message>

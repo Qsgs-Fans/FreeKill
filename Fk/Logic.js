@@ -24,7 +24,7 @@ callbacks["ServerDetected"] = (j) => {
   }
   const item = serverDialog.item;
   if (item) {
-    console.log(j)
+    toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
   }
 }
 
