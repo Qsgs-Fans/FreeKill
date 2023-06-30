@@ -116,14 +116,6 @@
     <translation>新月杀</translation>
   </message>
   <message>
-    <source>Username</source>
-    <translation>用户名</translation>
-  </message>
-  <message>
-    <source>Show Password</source>
-    <translation>显示密码</translation>
-  </message>
-  <message>
     <source>Join Server</source>
     <translation>加入服务器</translation>
   </message>
@@ -142,10 +134,6 @@
   <message>
     <source>Welcome back!</source>
     <translation>欢迎回来！</translation>
-  </message>
-  <message>
-    <source>Server Addr</source>
-    <translation>服务器IP</translation>
   </message>
   <message>
     <source>FAQ</source>
@@ -199,6 +187,44 @@
   <message>
     <source>Server not up</source>
     <translation>服务器似乎没有启动。</translation>
+  </message>
+
+  <message>
+    <source>@NewServer</source>
+    <translation>添加新服务器</translation>
+  </message>
+  <message>
+    <source>@NewServerHint</source>
+    <translation>请输入服务器的IP或者域名，并输入你在这个服务器所使用的用户名与密码。如果你之前并未游玩过该服务器，则服务器会为你自动注册一个账号。以后登陆到该服务器都需要同样的用户名和密码，请不要忘记密码！</translation>
+  </message>
+  <message>
+    <source>Server Addr</source>
+    <translation>服务器IP</translation>
+  </message>
+  <message>
+    <source>Username</source>
+    <translation>用户名</translation>
+  </message>
+  <message>
+    <source>Password</source>
+    <translation>密码</translation>
+  </message>
+  <message>
+    <source>Show Password</source>
+    <translation>显示密码</translation>
+  </message>
+  <message>
+    <source>@EditServer</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>@EditServerHint</source>
+    <translation>你可以修改在该服务器使用的用户名与密码。
+    你不能直接修改服务器的IP；如确实需要，请删除此服务器然后新增一个。</translation>
+  </message>
+  <message>
+    <source>Delete Server</source>
+    <translation>删除服务器</translation>
   </message>
 </context>
 
