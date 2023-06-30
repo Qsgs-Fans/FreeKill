@@ -138,8 +138,9 @@ Item {
             // enabled: passwordEdit.text !== ""
             onClicked: {
               config.serverAddr = "127.0.0.1";
-              config.screenName = screenNameEdit.text;
-              config.password = passwordEdit.text;
+              const serverCfg = config.savedPassword["127.0.0.1"] ?? {};
+              config.screenName = serverCfg.username ?? "player";
+              config.password = serverCfg.shorten_password ?? "1234";
               mainWindow.busy = true;
               Backend.startServer(9527);
               Backend.joinServer("127.0.0.1");
@@ -223,7 +224,6 @@ Item {
 
     MouseArea {
       anchors.fill: parent
-      onClicked: serverDialog.hide()
     }
 
     Loader {

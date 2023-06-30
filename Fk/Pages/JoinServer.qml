@@ -90,7 +90,17 @@ Item {
     Button {
       id: joinButton
       Layout.fillWidth: true
+      enabled: serverList.currentIndex !== -1
       text: qsTr("Join Server")
+      onClicked: {
+        const item = serverModel.get(serverList.currentIndex);
+        const serverCfg = config.savedPassword[item.serverIP];
+        config.serverAddr = item.serverIP;
+        config.screenName = serverCfg.username;
+        config.password = serverCfg.shorten_password;
+        mainWindow.busy = true;
+        Backend.joinServer(item.serverIP);
+      }
     }
 
     Button {
@@ -100,6 +110,7 @@ Item {
 
     Button {
       Layout.fillWidth: true
+      enabled: serverList.currentIndex !== -1
       text: qsTr("Edit Server")
     }
 
@@ -119,6 +130,11 @@ Item {
     Button {
       Layout.fillWidth: true
       text: qsTr("Detect LAN")
+      enabled: !opTimer.running
+      onClicked: {
+        opTimer.start();
+        Backend.detectServer();
+      }
     }
 
     Button {
@@ -146,9 +162,6 @@ Item {
       return;
     }
     for (let key in config.savedPassword) {
-      if (!Debugging && key === "127.0.0.1") {
-        continue;
-      }
       serverModel.append({
         serverIP: key,
         description: qsTr("Server not up"),

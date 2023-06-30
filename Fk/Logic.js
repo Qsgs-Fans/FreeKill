@@ -17,6 +17,17 @@ function createClientPages() {
 var callbacks = {};
 let sheduled_download = "";
 
+callbacks["ServerDetected"] = (j) => {
+  const serverDialog = mainStack.currentItem.serverDialog;
+  if (!serverDialog) {
+    return;
+  }
+  const item = serverDialog.item;
+  if (item) {
+    console.log(j)
+  }
+}
+
 callbacks["GetServerDetail"] = (j) => {
   const [addr, ver, icon, desc, capacity, count] = JSON.parse(j);
   const serverDialog = mainStack.currentItem.serverDialog;
