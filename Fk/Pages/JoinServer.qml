@@ -269,7 +269,7 @@ Item {
 
       Button {
         Layout.fillWidth: true
-        text: "Delete Server"
+        text: qsTr("Delete Server")
         onClicked: {
           root.deleteCurrentServer();
           finished();

@@ -55,63 +55,17 @@ Item {
           Layout.alignment: Qt.AlignHCenter
         }
 
-        /*
-        GridLayout {
-          columns: 2
-          rowSpacing: 20
-
-          Text {
-            text: qsTr("Server Addr")
-          }
-          ComboBox {
-            id: server_addr
-            Layout.fillWidth: true
-            model: []
-            editable: true
-
-            onEditTextChanged: {
-              if (model.indexOf(editText) === -1) {
-                passwordEdit.text = "";
-              } else {
-                const data = config.savedPassword[editText];
-                screenNameEdit.text = data.username;
-                passwordEdit.text = data.shorten_password;
-              }
-            }
-          }
-
-          Text {
-            text: qsTr("Username")
-          }
-          TextField {
-            id: screenNameEdit
-            maximumLength: 32
-            Layout.fillWidth: true
-            placeholderText: qsTr("Username")
-            text: ""
-            onTextChanged: {
-              passwordEdit.text = "";
-              const data = config.savedPassword[server_addr.editText];
-              if (data) {
-                if (text === data.username) {
-                  passwordEdit.text = data.shorten_password;
-                }
-              }
-            }
-          }
-
-          CheckBox {
-            id: showPasswordCheck
-            text: qsTr("Show Password")
-          }
-          TextField {
-            id: passwordEdit
-            maximumLength: 64
-            Layout.fillWidth: true
-            placeholderText: qsTr("Password")
-            text: ""
-            echoMode: showPasswordCheck.checked ? TextInput.Normal : TextInput.Password
-            passwordCharacter: "*"
+        Button {
+          Layout.fillWidth: true
+          text: qsTr("Console start")
+          onClicked: {
+            config.serverAddr = "127.0.0.1";
+            const serverCfg = config.savedPassword["127.0.0.1"] ?? {};
+            config.screenName = serverCfg.username ?? "player";
+            config.password = serverCfg.shorten_password ?? "1234";
+            mainWindow.busy = true;
+            Backend.startServer(9527);
+            Backend.joinServer("127.0.0.1");
           }
         }
 
@@ -119,62 +73,27 @@ Item {
           text: qsTr("Join Server")
           Layout.fillWidth: true
           display: AbstractButton.TextBesideIcon
-          icon.name: "go-next"
-          enabled: passwordEdit.text !== ""
-          onClicked: {
-            config.serverAddr = server_addr.editText;
-            config.screenName = screenNameEdit.text;
-            config.password = passwordEdit.text;
-            mainWindow.busy = true;
-            Backend.joinServer(server_addr.editText);
-          }
-        }
-        */
-
-       // RowLayout {
-          Button {
-            Layout.fillWidth: true
-            text: qsTr("Console start")
-            // enabled: passwordEdit.text !== ""
-            onClicked: {
-              config.serverAddr = "127.0.0.1";
-              const serverCfg = config.savedPassword["127.0.0.1"] ?? {};
-              config.screenName = serverCfg.username ?? "player";
-              config.password = serverCfg.shorten_password ?? "1234";
-              mainWindow.busy = true;
-              Backend.startServer(9527);
-              Backend.joinServer("127.0.0.1");
-            }
-          }
-
-        Button {
-          text: qsTr("Join Server")
-          Layout.fillWidth: true
-          display: AbstractButton.TextBesideIcon
-          /*
-          icon.name: "go-next"
-          enabled: passwordEdit.text !== ""
-          onClicked: {
-            config.serverAddr = server_addr.editText;
-            config.screenName = screenNameEdit.text;
-            config.password = passwordEdit.text;
-            mainWindow.busy = true;
-            Backend.joinServer(server_addr.editText);
-          }
-          */
           onClicked: {
             serverDialog.show();
           }
         }
 
-          Button {
-            Layout.fillWidth: true
-            text: qsTr("PackageManage")
-            onClicked: {
-              mainStack.push(packageManage);
-            }
+        Button {
+          Layout.fillWidth: true
+          text: qsTr("PackageManage")
+          onClicked: {
+            mainStack.push(packageManage);
           }
-        // }
+        }
+
+        Button {
+          Layout.fillWidth: true
+          text: qsTr("Quit Game")
+          onClicked: {
+            config.saveConf();
+            Qt.quit();
+          }
+        }
       }
 
       Text {
@@ -283,17 +202,5 @@ Item {
     config.loadConf();
 
     lady.source = config.ladyImg;
-
-    /*
-    server_addr.model = Object.keys(config.savedPassword);
-    server_addr.onModelChanged();
-    server_addr.currentIndex = server_addr.model.indexOf(config.lastLoginServer);
-
-    const data = config.savedPassword[config.lastLoginServer];
-    if (data) {
-      screenNameEdit.text = data.username;
-      passwordEdit.text = data.shorten_password;
-    }
-    */
   }
 }

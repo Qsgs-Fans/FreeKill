@@ -128,6 +128,10 @@
     <translation>管理拓展包</translation>
   </message>
   <message>
+    <source>Quit Game</source>
+    <translation>退出游戏</translation>
+  </message>
+  <message>
     <source>Making Mod</source>
     <translation>制作Mod</translation>
   </message>
