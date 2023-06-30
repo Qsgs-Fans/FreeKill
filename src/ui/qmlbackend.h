@@ -55,6 +55,9 @@ public:
 
   Q_INVOKABLE void createModBackend();
 
+  Q_INVOKABLE void detectServer();
+  Q_INVOKABLE void getServerInfo(const QString &addr);
+
   qreal volume() const { return m_volume; }
   void setVolume(qreal v) { m_volume = v; }
 
@@ -64,10 +67,15 @@ signals:
   void notifyUI(const QString &command, const QString &jsonData);
   void volumeChanged(qreal);
 
+private slots:
+  void readPendingDatagrams();
+
 private:
   Q_PROPERTY(qreal volume READ volume WRITE setVolume NOTIFY volumeChanged)
 
   QQmlApplicationEngine *engine;
+
+  QUdpSocket *udpSocket;
   RSA *rsa;
   QString aes_key;
   qreal m_volume;

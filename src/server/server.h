@@ -54,6 +54,7 @@ signals:
 public slots:
   void processNewConnection(ClientSocket *client);
   void processRequest(const QByteArray &msg);
+  void readPendingDatagrams();
 
   void onRoomAbandoned();
   void onUserDisconnected();
@@ -62,6 +63,8 @@ public slots:
 private:
   friend class Shell;
   ServerSocket *server;
+  QUdpSocket *udpSocket;
+
   Room *m_lobby;
   QMap<int, Room *> rooms;
   QStack<Room *> idle_rooms;
@@ -83,6 +86,7 @@ private:
 
   void handleNameAndPassword(ClientSocket *client, const QString &name,
                              const QString &password, const QString &md5_str);
+  void processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port);
 };
 
 extern Server *ServerInstance;

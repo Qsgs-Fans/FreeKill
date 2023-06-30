@@ -26,6 +26,10 @@ QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
 #ifndef FK_SERVER_ONLY
   engine = nullptr;
   rsa = RSA_new();
+  udpSocket = new QUdpSocket(this);
+  udpSocket->bind(0);
+  connect(udpSocket, &QUdpSocket::readyRead,
+          this, &QmlBackend::readPendingDatagrams);
 #endif
 }
 
@@ -318,6 +322,50 @@ void QmlBackend::installAESKey() {
 
 void QmlBackend::createModBackend() {
   engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
+}
+
+
+void QmlBackend::detectServer() {
+  static const char *ask_str = "fkDetectServer";
+  udpSocket->writeDatagram(ask_str,
+      strlen(ask_str),
+      QHostAddress::Broadcast,
+      9527);
+}
+
+void QmlBackend::getServerInfo(const QString &address) {
+  QString addr = "127.0.0.1";
+  ushort port = 9527u;
+  static const char *ask_str = "fkGetDetail";
+
+  if (address.contains(QChar(':'))) {
+    QStringList texts = address.split(QChar(':'));
+    addr = texts.value(0);
+    port = texts.value(1).toUShort();
+  } else {
+    addr = address;
+  }
+
+  udpSocket->writeDatagram(ask_str,
+      strlen(ask_str),
+      QHostAddress(addr), port);
+}
+
+void QmlBackend::readPendingDatagrams() {
+  while (udpSocket->hasPendingDatagrams()) {
+    QNetworkDatagram datagram = udpSocket->receiveDatagram();
+    if (datagram.isValid()) {
+      auto data = datagram.data();
+      auto addr = datagram.senderAddress();
+      // auto port = datagram.senderPort();
+
+      if (data == "me") {
+        emit notifyUI("ServerDetected", addr.toString());
+      } else {
+        emit notifyUI("GetServerDetail", data);
+      }
+    }
+  }
 }
 
 #endif
