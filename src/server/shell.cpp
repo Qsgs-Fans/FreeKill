@@ -318,6 +318,11 @@ void Shell::run() {
       return;
     }
 
+    if (!strcmp(bytes, "crash")) {
+      qFatal("Crashing."); // should dump core
+      return;
+    }
+
     if (*bytes)
       add_history(bytes);
 
