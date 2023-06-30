@@ -284,8 +284,8 @@ function ServerPlayer:reconnect()
 
   self:doNotify("Setup", json.encode{
     self.id,
-    self.serverplayer:getScreenName(),
-    self.serverplayer:getAvatar(),
+    self._splayer:getScreenName(),
+    self._splayer:getAvatar(),
   })
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
@@ -298,8 +298,8 @@ function ServerPlayer:reconnect()
   for _, p in ipairs(room:getOtherPlayers(self, true, true)) do
     self:doNotify("AddPlayer", json.encode{
       p.id,
-      p.serverplayer:getScreenName(),
-      p.serverplayer:getAvatar(),
+      p._splayer:getScreenName(),
+      p._splayer:getAvatar(),
     })
   end
 
