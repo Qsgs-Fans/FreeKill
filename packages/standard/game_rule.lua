@@ -130,3 +130,8 @@ GameRule = fk.CreateTriggerSkill{
   end,
 
 }
+
+local fastchat_m = fk.CreateActiveSkill{ name = "fastchat_m" }
+local fastchat_f = fk.CreateActiveSkill{ name = "fastchat_f" }
+Fk:addSkill(fastchat_m)
+Fk:addSkill(fastchat_f)
