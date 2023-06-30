@@ -582,6 +582,7 @@ void Server::readConfig() {
 
   // defaults
   SET_DEFAULT_CONFIG("description", "FreeKill Server");
+  SET_DEFAULT_CONFIG("iconUrl", "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png");
   SET_DEFAULT_CONFIG("capacity", 100);
   SET_DEFAULT_CONFIG("tempBanTime", 20);
 }
@@ -634,6 +635,7 @@ void Server::processDatagram(const QByteArray &msg, const QHostAddress &addr, ui
   } else if (msg == "fkGetDetail") {
     udpSocket->writeDatagram(JsonArray2Bytes(QJsonArray({
             FK_VERSION,
+            getConfig("iconUrl"),
             getConfig("description"),
             getConfig("capacity"),
             players.count(),
