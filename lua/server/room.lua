@@ -131,8 +131,9 @@ function Room:resume()
   end
 
   ::GAME_OVER::
-  coroutine.close(main_co)
-  self.main_co = nil
+  self:gameOver("")
+  -- coroutine.close(main_co)
+  -- self.main_co = nil
   return true
 end
 
@@ -169,7 +170,7 @@ function Room:isReady()
       rest = p.request_timeout * 1000 - (os.getms() -
         p.request_start) / 1000
 
-      if rest <= 0 then
+      if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
         p._splayer:setThinking(false)
       end
     end
@@ -208,6 +209,7 @@ end
 --- 当这个函数返回之后，整个Room线程也宣告结束。
 ---@return nil
 function Room:run()
+  self.start_time = os.time()
   for _, p in fk.qlist(self.room:getPlayers()) do
     local player = ServerPlayer:new(p)
     player.room = self
@@ -2861,6 +2863,9 @@ local function shouldUpdateWinRate(room)
     return false
   end
   if room.settings.enableFreeAssign then
+    return false
+  end
+  if os.time() - room.start_time < 45 then
     return false
   end
   for _, p in ipairs(room.players) do

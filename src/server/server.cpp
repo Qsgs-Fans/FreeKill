@@ -38,6 +38,11 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
 
+  udpSocket = new QUdpSocket(this);
+  udpSocket->bind(9527);
+  connect(udpSocket, &QUdpSocket::readyRead,
+          this, &Server::readPendingDatagrams);
+
   // 创建第一个房间，这个房间作为“大厅房间”
   nextRoomId = 0;
   createRoom(nullptr, "Lobby", INT32_MAX);
@@ -520,6 +525,7 @@ void Server::onUserDisconnected() {
     player->setSocket(nullptr);
     // TODO: add a robot
   } else {
+    player->setState(Player::Robot); // 大厅！然而又不能设Offline
     player->deleteLater();
   }
 }
@@ -575,6 +581,9 @@ void Server::readConfig() {
   config = QJsonDocument::fromJson(json).object();
 
   // defaults
+  SET_DEFAULT_CONFIG("description", "FreeKill Server");
+  SET_DEFAULT_CONFIG("iconUrl", "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png");
+  SET_DEFAULT_CONFIG("capacity", 100);
   SET_DEFAULT_CONFIG("tempBanTime", 20);
 }
 
@@ -609,4 +618,28 @@ void Server::temporarilyBan(int playerId) {
       temp_banlist.removeOne(addr);
       });
   emit player->kicked();
+}
+
+void Server::readPendingDatagrams() {
+  while (udpSocket->hasPendingDatagrams()) {
+    QNetworkDatagram datagram = udpSocket->receiveDatagram();
+    if (datagram.isValid()) {
+      processDatagram(datagram.data(), datagram.senderAddress(), datagram.senderPort());
+    }
+  }
+}
+
+void Server::processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port) {
+  if (msg == "fkDetectServer") {
+    udpSocket->writeDatagram("me", addr, port);
+  } else if (msg == "fkGetDetail") {
+    udpSocket->writeDatagram(JsonArray2Bytes(QJsonArray({
+            FK_VERSION,
+            getConfig("iconUrl"),
+            getConfig("description"),
+            getConfig("capacity"),
+            players.count(),
+            })), addr, port);
+  }
+  udpSocket->flush();
 }

@@ -116,24 +116,20 @@
     <translation>新月杀</translation>
   </message>
   <message>
-    <source>Username</source>
-    <translation>用户名</translation>
-  </message>
-  <message>
-    <source>Show Password</source>
-    <translation>显示密码</translation>
-  </message>
-  <message>
     <source>Join Server</source>
     <translation>加入服务器</translation>
   </message>
   <message>
     <source>Console start</source>
-    <translation>单机启动</translation>
+    <translation>单机启动（不推荐）</translation>
   </message>
   <message>
     <source>PackageManage</source>
     <translation>管理拓展包</translation>
+  </message>
+  <message>
+    <source>Quit Game</source>
+    <translation>退出游戏</translation>
   </message>
   <message>
     <source>Making Mod</source>
@@ -142,10 +138,6 @@
   <message>
     <source>Welcome back!</source>
     <translation>欢迎回来！</translation>
-  </message>
-  <message>
-    <source>Server Addr</source>
-    <translation>服务器IP</translation>
   </message>
   <message>
     <source>FAQ</source>
@@ -166,6 +158,77 @@
   <message>
     <source>updated packages for md5</source>
     <translation>已为您与服务器同步拓展包，请尝试再次连入</translation>
+  </message>
+</context>
+
+<context>
+  <name>JoinServer</name>
+  <message>
+    <source>Join Server</source>
+    <translation>加入服务器</translation>
+  </message>
+  <message>
+    <source>Add New Server</source>
+    <translation>添加服务器</translation>
+  </message>
+  <message>
+    <source>Edit Server</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>Refresh List</source>
+    <translation>刷新列表</translation>
+  </message>
+  <message>
+    <source>Detect LAN</source>
+    <translation>探测局域网</translation>
+  </message>
+  <message>
+    <source>Go Back</source>
+    <translation>返回</translation>
+  </message>
+
+  <message>
+    <source>Server not up</source>
+    <translation>服务器似乎没有启动。</translation>
+  </message>
+
+  <message>
+    <source>@NewServer</source>
+    <translation>添加新服务器</translation>
+  </message>
+  <message>
+    <source>@NewServerHint</source>
+    <translation>请输入服务器的IP或者域名，并输入你在这个服务器所使用的用户名与密码。如果你之前并未游玩过该服务器，则服务器会为你自动注册一个账号。以后登陆到该服务器都需要同样的用户名和密码，请不要忘记密码！</translation>
+  </message>
+  <message>
+    <source>Server Addr</source>
+    <translation>服务器IP</translation>
+  </message>
+  <message>
+    <source>Username</source>
+    <translation>用户名</translation>
+  </message>
+  <message>
+    <source>Password</source>
+    <translation>密码</translation>
+  </message>
+  <message>
+    <source>Show Password</source>
+    <translation>显示密码</translation>
+  </message>
+  <message>
+    <source>@EditServer</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>@EditServerHint</source>
+    <translation>你可以修改在该服务器使用的用户名与密码。
+    你不能直接修改服务器的IP；如确实需要，请删除此服务器然后新增一个。</translation>
+  </message>
+  <message>
+    <source>Delete Server</source>
+    <translation>删除服务器</translation>
   </message>
 </context>
 
@@ -207,6 +270,10 @@
 
 <context>
   <name>Logic</name>
+  <message>
+    <source>Detected Server %1</source>
+    <translation>检测到新月杀服务器 - %1</translation>
+  </message>
   <message>
     <source>MD5 check failed!</source>
     <translation>MD5检测失败！请与服务端保持一致后再登入</translation>

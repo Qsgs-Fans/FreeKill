@@ -4,8 +4,8 @@ local function tellRoomToObserver(self, player)
   local observee = self.players[1]
   player:doNotify("Setup", json.encode{
     observee.id,
-    observee.serverplayer:getScreenName(),
-    observee.serverplayer:getAvatar(),
+    observee._splayer:getScreenName(),
+    observee._splayer:getAvatar(),
   })
   player:doNotify("EnterRoom", json.encode{
     #self.players, self.timeout, self.settings
@@ -16,8 +16,8 @@ local function tellRoomToObserver(self, player)
   for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do
     player:doNotify("AddPlayer", json.encode{
       p.id,
-      p.serverplayer:getScreenName(),
-      p.serverplayer:getAvatar(),
+      p._splayer:getScreenName(),
+      p._splayer:getAvatar(),
     })
   end
 

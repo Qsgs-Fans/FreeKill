@@ -17,6 +17,29 @@ function createClientPages() {
 var callbacks = {};
 let sheduled_download = "";
 
+callbacks["ServerDetected"] = (j) => {
+  const serverDialog = mainStack.currentItem.serverDialog;
+  if (!serverDialog) {
+    return;
+  }
+  const item = serverDialog.item;
+  if (item) {
+    toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+  }
+}
+
+callbacks["GetServerDetail"] = (j) => {
+  const [addr, ver, icon, desc, capacity, count] = JSON.parse(j);
+  const serverDialog = mainStack.currentItem.serverDialog;
+  if (!serverDialog) {
+    return;
+  }
+  const item = serverDialog.item;
+  if (item) {
+    item.updateServerDetail(addr, [ver, icon, desc, capacity, count]);
+  }
+}
+
 callbacks["NetworkDelayTest"] = (jsonData) => {
   // jsonData: RSA pub key
   let cipherText;
