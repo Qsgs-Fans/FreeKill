@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "qmlbackend.h"
+#include <qjsondocument.h>
 
 #ifndef FK_SERVER_ONLY
 #include <qaudiooutput.h>
@@ -362,7 +363,9 @@ void QmlBackend::readPendingDatagrams() {
       if (data == "me") {
         emit notifyUI("ServerDetected", addr.toString());
       } else {
-        emit notifyUI("GetServerDetail", data);
+        auto arr = QJsonDocument::fromJson(data).array();
+        arr.prepend(addr.toString());
+        emit notifyUI("GetServerDetail", JsonArray2Bytes(arr));
       }
     }
   }

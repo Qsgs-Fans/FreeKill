@@ -6,6 +6,7 @@ import QtQuick.Controls
 
 Item {
   id: root
+  property alias serverDialog: serverDialogLoader
 
   Item {
     width: 960 * 0.8
@@ -54,6 +55,7 @@ Item {
           Layout.alignment: Qt.AlignHCenter
         }
 
+        /*
         GridLayout {
           columns: 2
           rowSpacing: 20
@@ -127,12 +129,13 @@ Item {
             Backend.joinServer(server_addr.editText);
           }
         }
+        */
 
-        RowLayout {
+       // RowLayout {
           Button {
-            Layout.preferredWidth: 180
+            Layout.fillWidth: true
             text: qsTr("Console start")
-            enabled: passwordEdit.text !== ""
+            // enabled: passwordEdit.text !== ""
             onClicked: {
               config.serverAddr = "127.0.0.1";
               config.screenName = screenNameEdit.text;
@@ -143,6 +146,26 @@ Item {
             }
           }
 
+        Button {
+          text: qsTr("Join Server")
+          Layout.fillWidth: true
+          display: AbstractButton.TextBesideIcon
+          /*
+          icon.name: "go-next"
+          enabled: passwordEdit.text !== ""
+          onClicked: {
+            config.serverAddr = server_addr.editText;
+            config.screenName = screenNameEdit.text;
+            config.password = passwordEdit.text;
+            mainWindow.busy = true;
+            Backend.joinServer(server_addr.editText);
+          }
+          */
+          onClicked: {
+            serverDialog.show();
+          }
+        }
+
           Button {
             Layout.fillWidth: true
             text: qsTr("PackageManage")
@@ -150,7 +173,7 @@ Item {
               mainStack.push(packageManage);
             }
           }
-        }
+        // }
       }
 
       Text {
@@ -183,6 +206,64 @@ Item {
     }
   }
 
+  Item {
+    id: serverDialog
+    width: parent.width * 0.8
+    height: parent.height * 0.9
+    anchors.centerIn: parent
+    visible: false
+
+    Rectangle {
+      anchors.fill: parent
+      opacity: 0.9
+      radius: 8
+      color: "snow"
+      border.color: "black"
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      onClicked: serverDialog.hide()
+    }
+
+    Loader {
+      id: serverDialogLoader
+      anchors.fill: parent
+      source: "JoinServer.qml"
+    }
+
+    PropertyAnimation on opacity {
+      id: showAnim
+      from: 0
+      to: 1
+      duration: 400
+      running: false
+      onStarted: {
+        serverDialogLoader.item.loadConfig();
+      }
+    }
+
+    PropertyAnimation on opacity {
+      id: hideAnim
+      from: 1
+      to: 0
+      duration: 400
+      running: false
+      onFinished: {
+        serverDialog.visible = false;
+      }
+    }
+
+    function show() {
+      visible = true;
+      showAnim.start();
+    }
+
+    function hide() {
+      hideAnim.start();
+    }
+  }
+
   // Temp
   Button {
     text: qsTr("Making Mod")
@@ -203,6 +284,7 @@ Item {
 
     lady.source = config.ladyImg;
 
+    /*
     server_addr.model = Object.keys(config.savedPassword);
     server_addr.onModelChanged();
     server_addr.currentIndex = server_addr.model.indexOf(config.lastLoginServer);
@@ -212,5 +294,6 @@ Item {
       screenNameEdit.text = data.username;
       passwordEdit.text = data.shorten_password;
     }
+    */
   }
 }

@@ -129,7 +129,7 @@
   </message>
   <message>
     <source>Console start</source>
-    <translation>单机启动</translation>
+    <translation>单机启动（不推荐）</translation>
   </message>
   <message>
     <source>PackageManage</source>
