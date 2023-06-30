@@ -298,9 +298,13 @@ Item {
     width: childrenRect.width
     height: childrenRect.height
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 8
+    anchors.left: parent.left
+    anchors.leftMargin: 8
     ColumnLayout {
       MetroButton {
         text: Backend.translate("Revert Selection")
+        textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
         onClicked: dashboard.revertSelection();
       }
@@ -309,9 +313,11 @@ Item {
       // }
       MetroButton {
         text: Backend.translate("Sort Cards")
+        textFont.pixelSize: 28
       }
       MetroButton {
         text: Backend.translate("Chat")
+        textFont.pixelSize: 28
         onClicked: roomDrawer.open();
       }
     }
