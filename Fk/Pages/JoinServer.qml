@@ -8,6 +8,11 @@ Item {
   id: root
   anchors.fill: parent
 
+  Timer {
+    id: opTimer
+    interval: 5000
+  }
+
   Component {
     id: serverDelegate
 
@@ -53,9 +58,11 @@ Item {
 
   ListView {
     id: serverList
-    height: parent.height * 0.9
-    width: parent.width * 0.95
-    anchors.centerIn: parent
+    height: parent.height - controlPanel.height - 30
+    width: parent.width - 80
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    anchors.topMargin: 10
     contentHeight: serverDelegate.height * count
     model: ListModel {
       id: serverModel
@@ -67,12 +74,58 @@ Item {
       color: "transparent"; radius: 5
       border.color: "black"; border.width: 2
     }
+    highlightMoveDuration: 0
     currentIndex: -1
   }
 
-  Button {
-    text: "close"
-    onClicked: serverDialog.hide();
+  GridLayout {
+    id: controlPanel
+    anchors.top: serverList.bottom
+    anchors.topMargin: 10
+    width: parent.width - 80
+    anchors.horizontalCenter: parent.horizontalCenter
+    height: joinButton.height * 2 + 10
+    columns: 3
+
+    Button {
+      id: joinButton
+      Layout.fillWidth: true
+      text: qsTr("Join Server")
+    }
+
+    Button {
+      Layout.fillWidth: true
+      text: qsTr("Add New Server")
+    }
+
+    Button {
+      Layout.fillWidth: true
+      text: qsTr("Edit Server")
+    }
+
+    Button {
+      Layout.fillWidth: true
+      text: qsTr("Refresh List")
+      enabled: !opTimer.running
+      onClicked: {
+        opTimer.start();
+        for (let i = 0; i < serverModel.count; i++) {
+          const item = serverModel.get(i);
+          Backend.getServerInfo(item.serverIP);
+        }
+      }
+    }
+
+    Button {
+      Layout.fillWidth: true
+      text: qsTr("Detect LAN")
+    }
+
+    Button {
+      Layout.fillWidth: true
+      text: qsTr("Go Back")
+      onClicked: serverDialog.hide();
+    }
   }
 
   function updateServerDetail(addr, data) {
@@ -89,11 +142,16 @@ Item {
   }
 
   function loadConfig() {
-    serverModel.clear();
+    if (serverModel.count > 0) {
+      return;
+    }
     for (let key in config.savedPassword) {
+      if (!Debugging && key === "127.0.0.1") {
+        continue;
+      }
       serverModel.append({
         serverIP: key,
-        description: "Server not up",
+        description: qsTr("Server not up"),
         online: "-",
         capacity: "-",
         favicon: "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png",

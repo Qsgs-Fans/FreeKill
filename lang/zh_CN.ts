@@ -170,6 +170,39 @@
 </context>
 
 <context>
+  <name>JoinServer</name>
+  <message>
+    <source>Join Server</source>
+    <translation>加入服务器</translation>
+  </message>
+  <message>
+    <source>Add New Server</source>
+    <translation>添加服务器</translation>
+  </message>
+  <message>
+    <source>Edit Server</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>Refresh List</source>
+    <translation>刷新列表</translation>
+  </message>
+  <message>
+    <source>Detect LAN</source>
+    <translation>探测局域网</translation>
+  </message>
+  <message>
+    <source>Go Back</source>
+    <translation>返回</translation>
+  </message>
+
+  <message>
+    <source>Server not up</source>
+    <translation>服务器似乎没有启动。</translation>
+  </message>
+</context>
+
+<context>
   <name>main</name>
   <message>
     <source>FreeKill</source>
