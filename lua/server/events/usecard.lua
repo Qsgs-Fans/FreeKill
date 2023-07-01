@@ -47,12 +47,14 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   -- when this function is called, card is already in PlaceTable and no filter skill is applied.
   -- So filter this card manually here to get 'real' use.card
   local card = _card
+  ---[[
   if not _card:isVirtual() then
     local temp = { card = _card }
     Fk:filterCard(_card.id, room:getPlayerById(from), temp)
     card = temp.card
   end
   cardUseEvent.card = card
+  --]]
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {

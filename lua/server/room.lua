@@ -1539,6 +1539,7 @@ function Room:handleUseCardReply(player, data)
     if #use.tos == 0 then
       use.tos = nil
     end
+    Fk:filterCard(card, player)
     use.card = Fk:getCardById(card)
     return use
   end
