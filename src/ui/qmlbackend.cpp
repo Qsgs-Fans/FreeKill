@@ -337,7 +337,7 @@ void QmlBackend::detectServer() {
 void QmlBackend::getServerInfo(const QString &address) {
   QString addr = "127.0.0.1";
   ushort port = 9527u;
-  static const char *ask_str = "fkGetDetail";
+  static const char *ask_str = "fkGetDetail,";
 
   if (address.contains(QChar(':'))) {
     QStringList texts = address.split(QChar(':'));
@@ -347,8 +347,10 @@ void QmlBackend::getServerInfo(const QString &address) {
     addr = address;
   }
 
-  udpSocket->writeDatagram(ask_str,
-      strlen(ask_str),
+  QByteArray ask(ask_str);
+  ask.append(address.toLatin1());
+
+  udpSocket->writeDatagram(ask, ask.size(),
       QHostAddress(addr), port);
 }
 
@@ -364,7 +366,6 @@ void QmlBackend::readPendingDatagrams() {
         emit notifyUI("ServerDetected", addr.toString());
       } else {
         auto arr = QJsonDocument::fromJson(data).array();
-        arr.prepend(addr.toString());
         emit notifyUI("GetServerDetail", JsonArray2Bytes(arr));
       }
     }

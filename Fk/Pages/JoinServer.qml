@@ -19,6 +19,7 @@ Item {
     Item {
       height: 64
       width: serverList.width - 48
+      clip: true
 
       RowLayout {
         anchors.fill: parent
@@ -31,16 +32,26 @@ Item {
           source: favicon
         }
 
-        Text {
-          text: serverIP
-        }
+        ColumnLayout {
+          Layout.fillWidth: true
+          Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignLeft
+            text: serverIP
+            font.bold: true
+          }
 
-        Text {
-          text: description
+          Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignLeft
+            text: description
+            textFormat: TextEdit.RichText
+          }
         }
 
         Text {
           text: online + "/" + capacity
+          font.pixelSize: 30
         }
       }
 
@@ -357,7 +368,8 @@ Item {
     const [ver, icon, desc, capacity, count] = data;
     for (let i = 0; i < serverModel.count; i++) {
       const item = serverModel.get(i);
-      if (addr.endsWith(item.serverIP)) { // endsWith是为了应付IPv6格式的ip
+      const ip = item.serverIP;
+      if (addr.endsWith(ip)) { // endsWith是为了应付IPv6格式的ip
         item.description = FkVersion === ver ? desc : "Ver " + ver;
         item.favicon = icon;
         item.online = count.toString();
@@ -376,7 +388,7 @@ Item {
         description: qsTr("Server not up"),
         online: "-",
         capacity: "-",
-        favicon: "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png",
+        favicon: "",
       });
       Backend.getServerInfo(key);
     }

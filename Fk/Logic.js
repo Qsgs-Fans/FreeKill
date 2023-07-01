@@ -29,7 +29,7 @@ callbacks["ServerDetected"] = (j) => {
 }
 
 callbacks["GetServerDetail"] = (j) => {
-  const [addr, ver, icon, desc, capacity, count] = JSON.parse(j);
+  const [ver, icon, desc, capacity, count, addr] = JSON.parse(j);
   const serverDialog = mainStack.currentItem.serverDialog;
   if (!serverDialog) {
     return;
