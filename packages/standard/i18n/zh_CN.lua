@@ -245,6 +245,9 @@ Fk:loadTranslationTable{
   ["biyue"] = "闭月",
   [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
 
+  ["fastchat_m"] = "快捷短语",
+  ["fastchat_f"] = "快捷短语",
+
   ["$fastchat_m1"] = "能不能快一点啊，兵贵神速啊。",
   ["$fastchat_m2"] = "主公，别开枪，自己人！",
   ["$fastchat_m3"] = "小内再不跳，后面还怎么玩啊？",
