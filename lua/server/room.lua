@@ -1501,8 +1501,6 @@ function Room:handleUseCardReply(player, data)
       Self = player
       local c = skill:viewAs(selected_cards)
       if c then
-        self:useSkill(player, skill, Util.DummyFunc)
-
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
@@ -1515,6 +1513,9 @@ function Room:handleUseCardReply(player, data)
         use.card = c
 
         skill:beforeUse(player, use)
+
+        self:useSkill(player, skill, Util.DummyFunc)
+
         return use
       end
     end
