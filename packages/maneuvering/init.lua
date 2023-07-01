@@ -203,7 +203,7 @@ local fireAttackSkill = fk.CreateActiveSkill{
     local to = room:getPlayerById(cardEffectEvent.to)
     if to:isKongcheng() then return end
 
-    local showCard = room:askForCard(to, 1, 1, false, self.name, false, nil, "#fire_attack-show:" .. from.id)[1]
+    local showCard = room:askForCard(to, 1, 1, false, self.name, false, ".|.|.|hand", "#fire_attack-show:" .. from.id)[1]
     to:showCards(showCard)
 
     showCard = Fk:getCardById(showCard)
