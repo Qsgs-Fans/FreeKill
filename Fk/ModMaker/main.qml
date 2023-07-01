@@ -7,6 +7,7 @@ Item {
   StackView {
     id: modStack
     anchors.fill: parent
+    /*
     pushEnter: Transition {
       PropertyAnimation {
         property: "opacity"
@@ -39,6 +40,7 @@ Item {
         duration: 200
       }
     }
+    */
   }
 
   ModConfig {

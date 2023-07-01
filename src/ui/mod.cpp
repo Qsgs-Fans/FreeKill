@@ -121,6 +121,14 @@ void ModMaker::saveToFile(const QString &fName, const QString &content) {
   c.close();
 }
 
+void ModMaker::mkdir(const QString &path) {
+  QDir(".").mkdir(path);
+}
+
+void ModMaker::rmrf(const QString &path) {
+  QDir(path).removeRecursively();
+}
+
 void ModMaker::createMod(const QString &name) {
   init(name);
 }
