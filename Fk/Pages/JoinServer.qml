@@ -388,7 +388,7 @@ Item {
         description: qsTr("Server not up"),
         online: "-",
         capacity: "-",
-        favicon: "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png",
+        favicon: "",
       });
       Backend.getServerInfo(key);
     }
