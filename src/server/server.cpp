@@ -39,7 +39,6 @@ Server::Server(QObject *parent) : QObject(parent) {
           &Server::processNewConnection);
 
   udpSocket = new QUdpSocket(this);
-  udpSocket->bind(9527);
   connect(udpSocket, &QUdpSocket::readyRead,
           this, &Server::readPendingDatagrams);
 
@@ -95,6 +94,7 @@ Server::~Server() {
 
 bool Server::listen(const QHostAddress &address, ushort port) {
   bool ret = server->listen(address, port);
+  udpSocket->bind(port);
   isListening = ret;
   return ret;
 }
@@ -632,13 +632,14 @@ void Server::readPendingDatagrams() {
 void Server::processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port) {
   if (msg == "fkDetectServer") {
     udpSocket->writeDatagram("me", addr, port);
-  } else if (msg == "fkGetDetail") {
+  } else if (msg.startsWith("fkGetDetail,")) {
     udpSocket->writeDatagram(JsonArray2Bytes(QJsonArray({
             FK_VERSION,
             getConfig("iconUrl"),
             getConfig("description"),
             getConfig("capacity"),
             players.count(),
+            msg.sliced(12).constData(),
             })), addr, port);
   }
   udpSocket->flush();
