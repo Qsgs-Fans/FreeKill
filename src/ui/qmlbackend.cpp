@@ -7,6 +7,7 @@
 #include <qaudiooutput.h>
 #include <qmediaplayer.h>
 #include <qrandom.h>
+#include <QNetworkDatagram>
 
 #include <QClipboard>
 #include <QMediaPlayer>

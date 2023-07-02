@@ -9,6 +9,7 @@
 // network
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUdpSocket>
 
 // other libraries
 typedef int LuaFunction;

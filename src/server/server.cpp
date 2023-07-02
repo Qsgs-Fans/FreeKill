@@ -7,6 +7,7 @@
 #include <qjsonvalue.h>
 #include <qobject.h>
 #include <qversionnumber.h>
+#include <QNetworkDatagram>
 
 #include <openssl/bn.h>
 
