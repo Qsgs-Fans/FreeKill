@@ -26,6 +26,8 @@ Fk:loadTranslationTable{
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Back"] = "返回",
 
+  ["Refresh Room List"] = "刷新房间列表",
+
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",

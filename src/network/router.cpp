@@ -243,6 +243,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData) {
       sender->getRoom()->chat(sender, jsonData);
     };
+    lobby_actions["RefreshRoomList"] = [](ServerPlayer *sender,
+                                    const QString &jsonData) {
+      ServerInstance->updateRoomList(sender);
+    };
   }
 #endif
 

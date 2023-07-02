@@ -35,7 +35,8 @@ public:
   void addPlayer(ServerPlayer *player);
   void removePlayer(int id);
 
-  void updateRoomList();
+  void updateRoomList(ServerPlayer *teller);
+  void updateOnlineInfo();
 
   sqlite3 *getDatabase();
 

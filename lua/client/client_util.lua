@@ -31,6 +31,7 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
+    gender = general.gender,
     skill = {},
     related_skill = {}
   }

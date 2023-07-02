@@ -38,7 +38,7 @@ Flickable {
     skillDesc.text = "";
 
     extra_data.generals.forEach((g) => {
-      let data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
+      const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
       skillDesc.append(Backend.translate(data.kingdom) + " " + Backend.translate(g) + " " + data.hp + "/" + data.maxHp);
       data.skill.forEach(t => {
         skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
