@@ -305,7 +305,7 @@ function ServerPlayer:reconnect()
   room:notifyProperty(self, self, "role")
 
   -- send player data
-  for _, p in ipairs(room:getOtherPlayers(self, true, true)) do
+  for _, p in ipairs(room:getOtherPlayers(self, false, true)) do
     self:doNotify("AddPlayer", json.encode{
       p.id,
       p._splayer:getScreenName(),
