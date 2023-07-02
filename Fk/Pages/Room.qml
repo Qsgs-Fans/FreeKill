@@ -950,6 +950,10 @@ Item {
     });
   }
 
+  function getPhoto(id) {
+    return Logic.getPhoto(id);
+  }
+
   Component.onCompleted: {
     toast.show(Backend.translate("$EnterRoom"));
     playerNum = config.roomCapacity;

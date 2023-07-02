@@ -12,6 +12,7 @@ Rectangle {
     chatLogBox.append(chatter)
   }
 
+  /*
   function loadSkills(pid) {
     if (isLobby) return;
     let gender = 0;
@@ -57,6 +58,17 @@ Rectangle {
       }
     }
   }
+  */
+  function loadSkills() {
+    for (let i = 1; i <= 16; i++) {
+      skills.append({ name: "fastchat_m", idx: i });
+    }
+  }
+
+  Timer {
+    id: opTimer
+    interval: 1500
+  }
 
   ColumnLayout {
     anchors.fill: parent
@@ -96,47 +108,40 @@ Rectangle {
     ListView {
       id: soundSelector
       Layout.fillWidth: true
-      Layout.preferredHeight: 240
+      Layout.preferredHeight: 180
       visible: false
       clip: true
       ScrollBar.vertical: ScrollBar {}
       model: ListModel {
         id: skills
       }
-      onVisibleChanged: {skills.clear(); loadSkills();}
+      // onVisibleChanged: {skills.clear(); loadSkills();}
 
       delegate: ItemDelegate {
         width: soundSelector.width
-        Layout.fillHeight: true
+        height: 30
+        text: Backend.translate("$" + name + (idx ? idx.toString() : ""))
 
-        Button {
-          width: parent.width
-          Layout.fillHeight: true
-          contentItem: ColumnLayout {
-            Text {
-              Layout.fillWidth: true
-              text: Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "")
-              font.bold: true
-              font.pixelSize: 14
-            }
-            Text {
-              Layout.fillWidth: true
-              text: (Backend.translate("$" + name + (idx ? idx.toString() : "")) == "$" + name + (idx ? idx.toString() : "") ? "" : Backend.translate("$" + name + (idx ? idx.toString() : "")))
-              wrapMode: Text.WordWrap
+        onClicked: {
+          opTimer.start();
+          const general = roomScene.getPhoto(Self.id).general;
+          let skill = "fastchat_m";
+          if (general !== "") {
+            const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+            const gender = data.gender;
+            if (gender !== 1) {
+              skill = "fastchat_f";
             }
           }
-
-          onClicked: {
           ClientInstance.notifyServer(
             "Chat",
             JSON.stringify({
               type: isLobby ? 1 : 2,
-              msg: "$" + name + ":" + idx
+              msg: "$" + skill + ":" + idx
             })
           );
-          }
+          soundSelector.visible = false;
         }
-
       }
     }
 
@@ -173,22 +178,37 @@ Rectangle {
       }
 
       MetroButton {
-        id: emojiBtn
-        text: "😃"
-        onClicked: { soundSelector.visible = false; emojiSelector.visible = !emojiSelector.visible;}
+        id: soundBtn
+        text: "🗨️"
+        visible: !isLobby
+        enabled: !opTimer.running;
+        onClicked: {
+          emojiSelector.visible = false;
+          soundSelector.visible = !soundSelector.visible;
+        }
       }
 
       MetroButton {
-        id: soundBtn
-        text: "💬"
-        visible: !isLobby
-        onClicked: { emojiSelector.visible = false; soundSelector.visible = !soundSelector.visible;}
+        id: emojiBtn
+        text: "😃"
+        onClicked: {
+          soundSelector.visible = false;
+          emojiSelector.visible = !emojiSelector.visible;
+        }
       }
 
       MetroButton {
         text: "✔️"
-        onClicked: chatEdit.accepted();
+        enabled: !opTimer.running;
+        onClicked: {
+          opTimer.start();
+          chatEdit.accepted();
+        }
       }
     }
+  }
+
+  Component.onCompleted: {
+    loadSkills();
   }
 }
