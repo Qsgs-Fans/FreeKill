@@ -13,7 +13,7 @@ local function tellRoomToObserver(self, player)
   player:doNotify("StartGame", "")
 
   -- send player data
-  for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do
+  for _, p in ipairs(self:getOtherPlayers(observee, false, true)) do
     player:doNotify("AddPlayer", json.encode{
       p.id,
       p._splayer:getScreenName(),
@@ -85,7 +85,9 @@ end
 
 request_handlers["prelight"] = function(room, id, reqlist)
   local p = room:getPlayerById(id)
-  p:prelightSkill(reqlist[3], reqlist[4] == "true")
+  if p then
+    p:prelightSkill(reqlist[3], reqlist[4] == "true")
+  end
 end
 
 request_handlers["luckcard"] = function(room, id, reqlist)
@@ -136,12 +138,13 @@ request_handlers["changeself"] = function(room, id, reqlist)
 end
 
 request_handlers["surrender"] = function(room, id, reqlist)
+  local player = room:getPlayerById(id)
+  if not player then return end
   local logic = room.logic
   local curEvent = logic:getCurrentEvent()
   if curEvent then
     curEvent:addExitFunc(
       function()
-        local player = room:getPlayerById(id)
         player.surrendered = true
         room:broadcastProperty(player, "surrendered")
         room:gameOver(Fk.game_modes[room.settings.gameMode]:getWinner(player))

@@ -99,6 +99,7 @@ Item {
 
       Button {
         id: surrenderButton
+        enabled: !config.observing
         text: Backend.translate("Surrender")
         onClicked: {
           if (isStarted && !getPhoto(Self.id).dead) {
