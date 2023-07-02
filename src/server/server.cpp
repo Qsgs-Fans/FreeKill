@@ -42,8 +42,8 @@ Server::Server(QObject *parent) : QObject(parent) {
   nextRoomId = 0;
   createRoom(nullptr, "Lobby", INT32_MAX);
   // 大厅只要发生人员变动，就向所有人广播一下房间列表
-  connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
-  connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
+  connect(lobby(), &Room::playerAdded, this, &Server::updateOnlineInfo);
+  connect(lobby(), &Room::playerRemoved, this, &Server::updateOnlineInfo);
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -161,7 +161,7 @@ void Server::removePlayer(int id) {
   }
 }
 
-void Server::updateRoomList() {
+void Server::updateRoomList(ServerPlayer *teller) {
   QJsonArray arr;
   QJsonArray avail_arr;
   foreach (Room *room, rooms) {
@@ -187,9 +187,10 @@ void Server::updateRoomList() {
     arr.prepend(v);
   }
   auto jsonData = JsonArray2Bytes(arr);
-  lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdateRoomList",
-                             QString(jsonData));
+  teller->doNotify("UpdateRoomList", QString(jsonData));
+}
 
+void Server::updateOnlineInfo() {
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdatePlayerNum",
                              QString(JsonArray2Bytes(QJsonArray({
                                  lobby()->getPlayers().length(),
@@ -494,7 +495,7 @@ void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
   room->gameOver();
   rooms.remove(room->getId());
-  updateRoomList();
+  updateOnlineInfo();
   // 按理说这时候就可以删除了，但是这里肯定比Lua先检测到。
   // 倘若在Lua的Room:gameOver时C++的Room被删除了问题就大了。
   // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
