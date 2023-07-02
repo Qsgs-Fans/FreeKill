@@ -1120,7 +1120,7 @@ local role_mode = fk.CreateGameMode{
     local alive = table.filter(room.alive_players, function(p)
       return not p.surrendered
     end)
-  
+
     if victim.role == "lord" then
       if #alive == 1 and alive[1].role == "renegade" then
         winner = "renegade"
@@ -1139,7 +1139,7 @@ local role_mode = fk.CreateGameMode{
         winner = "lord+loyalist"
       end
     end
-  
+
     return winner
   end,
   surrender_func = function(self, playedTime)
@@ -1195,7 +1195,7 @@ local role_mode = fk.CreateGameMode{
           local lordNum = #table.filter(roleTable, function(role)
             return role == "lord" or role == "loyalist"
           end)
-    
+
           local renegadeDead = not table.find(roleTable, function(role)
             return role == "renegade"
           end)
@@ -1203,7 +1203,7 @@ local role_mode = fk.CreateGameMode{
             if p.role == "renegade" and p.dead then
               renegadeDead = true
             end
-    
+
             if p ~= Self and (p.role == "lord" or p.role == "loyalist") then
               if p:isAlive() then
                 break

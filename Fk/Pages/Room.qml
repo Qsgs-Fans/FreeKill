@@ -109,7 +109,7 @@ Item {
               surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
             }
             surrenderDialog.open();
-          }          
+          }
         }
       }
 
