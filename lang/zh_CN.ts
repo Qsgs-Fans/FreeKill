@@ -255,6 +255,14 @@
     <source>you have been temporarily banned!</source>
     <translation>由于逃跑或者其他不正当行为，你已经被暂时封禁！</translation>
   </message>
+  <message>
+    <source>Can only observe running room.</source>
+    <translation>只能旁观已开战的房间。</translation>
+  </message>
+  <message>
+    <source>Room is full or already started!</source>
+    <translation>房间已满！</translation>
+  </message>
 </context>
 
 <context>
