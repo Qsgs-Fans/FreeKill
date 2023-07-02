@@ -330,6 +330,10 @@
     <source>Room is full or already started!</source>
     <translation>房间已满！</translation>
   </message>
+  <message>
+    <source>server is full!</source>
+    <translation>服务器已满！</translation>
+  </message>
 </context>
 
 <context>

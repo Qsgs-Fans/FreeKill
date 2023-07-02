@@ -223,6 +223,8 @@ void Server::processNewConnection(ClientSocket *client) {
     errmsg = "you have been banned!";
   } else if (temp_banlist.contains(addr)) {
     errmsg = "you have been temporarily banned!";
+  } else if (players.count() >= getConfig("capacity").toInt()) {
+    errmsg = "server is full!";
   }
 
   if (!errmsg.isEmpty()) {

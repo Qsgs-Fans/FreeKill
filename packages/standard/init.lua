@@ -1193,7 +1193,7 @@ local role_mode = fk.CreateGameMode{
     end
 
     return {
-      { text = "time limitation: 5 sec", passed = playedTime >= 5 },
+      { text = "time limitation: 5 min", passed = playedTime >= 300 },
       { text = roleText, passed = roleCheck },
     }
   end,
