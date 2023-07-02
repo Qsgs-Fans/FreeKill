@@ -113,6 +113,7 @@ callbacks["EnterLobby"] = (jsonData) => {
     mainStack.pop();
   }
   mainWindow.busy = false;
+  ClientInstance.notifyServer("RefreshRoomList", "");
   config.saveConf();
 }
 

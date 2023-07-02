@@ -109,6 +109,7 @@ ServerPlayer *Room::getOwner() const { return owner; }
 
 void Room::setOwner(ServerPlayer *owner) {
   this->owner = owner;
+  if (!owner) return;
   QJsonArray jsonData;
   jsonData << owner->getId();
   doBroadcastNotify(players, "RoomOwner", JsonArray2Bytes(jsonData));
@@ -177,13 +178,11 @@ void Room::addPlayer(ServerPlayer *player) {
       player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
     }
 
-    /*
     if (this->owner != nullptr) {
       jsonData = QJsonArray();
       jsonData << this->owner->getId();
       player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
     }
-    */
 
     if (player->getLastGameMode() != mode) {
       player->setLastGameMode(mode);
@@ -283,6 +282,7 @@ void Room::removePlayer(ServerPlayer *player) {
   if (isAbandoned()) {
     bool tmp = m_abandoned;
     m_abandoned = true;
+    setOwner(nullptr);
     // 只释放一次信号就行了，他销毁机器人的时候会多次调用removePlayer
     if (!tmp) {
       emit abandoned();

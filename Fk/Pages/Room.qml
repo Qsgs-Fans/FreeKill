@@ -128,6 +128,7 @@ Item {
                   "surrender", true
                 ]);
               }
+              surrenderDialog.close();
               break;
             }
             case MessageDialog.Cancel: {
@@ -141,7 +142,11 @@ Item {
         id: quitButton
         text: Backend.translate("Quit")
         onClicked: {
-          quitDialog.open();
+          if (config.observing) {
+            ClientInstance.notifyServer("QuitRoom", "[]");
+          } else {
+            quitDialog.open();
+          }
         }
       }
 
