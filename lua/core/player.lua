@@ -729,7 +729,7 @@ end
 ---@param card Card @ 特定牌
 function Player:canUse(card)
   assert(card, "Error: No Card")
-  return card.skill.canUse(self, card)
+  return card.skill:canUse(self, card)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。
