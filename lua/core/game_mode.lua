@@ -10,6 +10,7 @@
 ---@field public maxPlayer integer @ 最大玩家数
 ---@field public rule TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
 ---@field public logic fun() @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
+---@field public surrenderFunc fun()
 local GameMode = class("GameMode")
 
 --- 构造函数，不可随意调用。

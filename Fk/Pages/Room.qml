@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtMultimedia
 import Fk
@@ -71,17 +72,88 @@ Item {
   }
 
   // tmp
-  DelayButton {
+  Button {
+    id: menuButton
+    text: "menu"
+    anchors.top: parent.top
+    anchors.right: parent.right + 5
+    z: 2
+    onClicked: {
+      if (surrenderButton.visible) {
+        surrenderButton.anchors.topMargin = 0;
+        surrenderButton.visible = false;
+        quitButton.anchors.topMargin = 0;
+        quitButton.visible = false;
+      } else {
+        surrenderButton.anchors.topMargin = 50;
+        surrenderButton.visible = true;
+        quitButton.anchors.topMargin = 100;
+        quitButton.visible = true;
+      }
+    }
+  }
+
+  Button {
+    id: surrenderButton
+    text: "surrender"
+    anchors.top: parent.top
+    anchors.right: parent.right
+    visible: false
+    onClicked: {
+      surrenderDialog.title = '123';
+      surrenderDialog.open();
+    }
+  }
+
+  MessageDialog {
+    id: surrenderDialog
+    title: 'surrender'
+    informativeText: qsTr("Are you sure to quit?")
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          ClientInstance.notifyServer("PushRequest", [
+            "surrender", true
+          ]);
+          break;
+        }
+        case MessageDialog.Cancel: {
+          surrenderDialog.close();
+        }
+      }
+    }
+  }
+
+  Button {
     id: quitButton
     text: "quit"
     anchors.top: parent.top
     anchors.right: parent.right
-    delay: Debugging ? 10 : 1000
-    onActivated: {
-      // ClientInstance.clearPlayers();
-      ClientInstance.notifyServer("QuitRoom", "[]");
+    visible: false
+    onClicked: {
+      quitDialog.open();
     }
   }
+
+  MessageDialog {
+    id: quitDialog
+    title: 'quit'
+    informativeText: qsTr("Are you sure to quit?")
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          ClientInstance.notifyServer("QuitRoom", "[]");
+          break;
+        }
+        case MessageDialog.Cancel: {
+          quitDialog.close();
+        }
+      }
+    }
+  }
+
   Button {
     text: Backend.translate("Add Robot")
     visible: isOwner && !isStarted && !isFull
@@ -264,6 +336,7 @@ Item {
         drank: model.drank
         isOwner: model.isOwner
         ready: model.ready
+        surrendered: model.surrendered
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -987,6 +1060,7 @@ Item {
         drank: 0,
         isOwner: false,
         ready: false,
+        surrendered: false,
       });
     }
 

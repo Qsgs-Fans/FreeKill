@@ -92,6 +92,10 @@ local function _waitForReply(player, timeout)
   player.request_timeout = timeout
   player.request_start = start
   if state ~= fk.Player_Online then
+    if player.room.hasSurrendered then
+      return "__cancel"
+    end
+
     if state ~= fk.Player_Robot then
       player.room:checkNoHuman()
       player.room:delay(500)
@@ -117,6 +121,12 @@ local function _waitForReply(player, timeout)
       player.serverplayer:setThinking(false)
       return ""
     end
+
+    if player.room.hasSurrendered then
+      player.serverplayer:setThinking(false)
+      return ""
+    end
+
     coroutine.yield("__handleRequest", rest)
   end
 end

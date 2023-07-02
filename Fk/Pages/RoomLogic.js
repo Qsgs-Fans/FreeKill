@@ -1377,3 +1377,7 @@ callbacks["AskForLuckCard"] = (j) => {
   roomScene.okButton.enabled = true;
   roomScene.cancelButton.enabled = true;
 }
+
+callbacks["CancelRequest"] = (jsonData) => {
+  ClientInstance.replyToServer("", "__cancel")
+}

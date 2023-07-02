@@ -540,5 +540,9 @@ function fk.CreateGameMode(spec)
   local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
   ret.rule = spec.rule
   ret.logic = spec.logic
+  if ret.surrenderFunc then
+    assert(type(spec.surrenderFunc) == "function")
+    ret.surrenderFunc = spec.surrender_func
+  end
   return ret
 end
