@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtMultimedia
 import Fk
@@ -71,15 +72,15 @@ Item {
   }
 
   // tmp
-  DelayButton {
-    id: quitButton
-    text: "quit"
+  Button {
+    id: menuButton
     anchors.top: parent.top
     anchors.right: parent.right
-    delay: Debugging ? 10 : 1000
-    onActivated: {
-      // ClientInstance.clearPlayers();
-      ClientInstance.notifyServer("QuitRoom", "[]");
+    anchors.rightMargin: 10
+    text: Backend.translate("Menu")
+    z: 2
+    onClicked: {
+      menuContainer.visible || menuContainer.open();
     }
   }
 
@@ -345,6 +346,7 @@ Item {
         drank: model.drank
         isOwner: model.isOwner
         ready: model.ready
+        surrendered: model.surrendered
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -395,6 +397,7 @@ Item {
       MetroButton {
         text: Backend.translate("Sort Cards")
         textFont.pixelSize: 28
+        onClicked: Logic.resortHandcards();
       }
       MetroButton {
         text: Backend.translate("Chat")
@@ -790,7 +793,7 @@ Item {
 
   MiscStatus {
     id: miscStatus
-    anchors.right: quitButton.left
+    anchors.right: menuButton.left
     anchors.top: parent.top
     anchors.rightMargin: 16
     anchors.topMargin: 8
@@ -1067,6 +1070,7 @@ Item {
         drank: 0,
         isOwner: false,
         ready: false,
+        surrendered: false,
       });
     }
 

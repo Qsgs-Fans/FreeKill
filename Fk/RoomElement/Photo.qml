@@ -52,6 +52,7 @@ Item {
   property bool selected: false
 
   property bool playing: false
+  property bool surrendered: false
   onPlayingChanged: {
     if (playing) {
       animPlaying.start();
@@ -235,7 +236,7 @@ Item {
     anchors.fill: photoMask
     source: generalImgItem
     saturation: 0
-    visible: root.dead
+    visible: root.dead || root.surrendered
   }
 
   Rectangle {
@@ -370,8 +371,8 @@ Item {
 
   Image {
     // id: saveme
-    visible: root.dead || root.dying
-    source: SkinBank.DEATH_DIR + (root.dead ? root.role : "saveme")
+    visible: root.dead || root.dying || root.surrendered
+    source: SkinBank.DEATH_DIR + (root.dead ? root.role : root.surrendered ? "surrender" : "saveme")
     anchors.centerIn: photoMask
   }
 

@@ -98,6 +98,7 @@ function GetCardData(id)
     suit = card:getSuitString(),
     color = card:getColorString(),
     mark = mark,
+    type = card.type,
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then
@@ -623,6 +624,11 @@ end
 
 function SetObserving(o)
   ClientInstance.observing = o
+end
+
+function CheckSurrenderAvailable(playedTime)
+  local curMode = ClientInstance.room_settings.gameMode
+  return json.encode(Fk.game_modes[curMode]:surrenderFunc(playedTime))
 end
 
 dofile "lua/client/i18n/init.lua"
