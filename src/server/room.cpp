@@ -177,11 +177,13 @@ void Room::addPlayer(ServerPlayer *player) {
       player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
     }
 
+    /*
     if (this->owner != nullptr) {
       jsonData = QJsonArray();
       jsonData << this->owner->getId();
       player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
     }
+    */
 
     if (player->getLastGameMode() != mode) {
       player->setLastGameMode(mode);
