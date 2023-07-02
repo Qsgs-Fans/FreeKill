@@ -135,6 +135,23 @@ request_handlers["changeself"] = function(room, id, reqlist)
   })
 end
 
+request_handlers["surrender"] = function(room, id, reqlist)
+  local logic = room.logic
+  local curEvent = logic:getCurrentEvent()
+  if curEvent then
+    curEvent:addExitFunc(
+      function()
+        local player = room:getPlayerById(id)
+        player.surrendered = true
+        room:broadcastProperty(player, "surrendered")
+        room:gameOver(Fk.game_modes[room.settings.gameMode]:getWinner(player))
+      end
+    )
+    room.hasSurrendered = true
+    room:doBroadcastNotify("CancelRequest", "")
+  end
+end
+
 request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
 end

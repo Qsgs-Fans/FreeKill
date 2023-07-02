@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtMultimedia
 import Fk
@@ -71,17 +72,98 @@ Item {
   }
 
   // tmp
-  DelayButton {
-    id: quitButton
-    text: "quit"
+  Button {
+    id: menuButton
     anchors.top: parent.top
     anchors.right: parent.right
-    delay: Debugging ? 10 : 1000
-    onActivated: {
-      // ClientInstance.clearPlayers();
-      ClientInstance.notifyServer("QuitRoom", "[]");
+    anchors.rightMargin: 10
+    text: Backend.translate("Menu")
+    z: 2
+    onClicked: {
+      menuContainer.visible || menuContainer.open();
     }
   }
+
+  Menu {
+    id: menuContainer
+    x: parent.width - menuButton.width - menuContainer.width - 17
+    width: menuRow.width
+    height: menuRow.height
+    verticalPadding: 0
+    spacing: 7
+    z: 2
+
+    Row {
+      id: menuRow
+      spacing: 7
+
+      Button {
+        id: surrenderButton
+        text: Backend.translate("Surrender")
+        onClicked: {
+          if (isStarted) {
+            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+            if (!surrenderCheck.length) {
+              surrenderDialog.informativeText = 'surrender is disabled in this mode';
+            } else {
+              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
+            }
+            surrenderDialog.open();
+          }
+        }
+      }
+
+      MessageDialog {
+        id: surrenderDialog
+        title: Backend.translate("Surrender")
+        informativeText: ''
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button, role) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+              if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
+                ClientInstance.notifyServer("PushRequest", [
+                  "surrender", true
+                ]);
+              }
+              break;
+            }
+            case MessageDialog.Cancel: {
+              surrenderDialog.close();
+            }
+          }
+        }
+      }
+
+      Button {
+        id: quitButton
+        text: Backend.translate("Quit")
+        onClicked: {
+          quitDialog.open();
+        }
+      }
+
+      MessageDialog {
+        id: quitDialog
+        title: Backend.translate("Quit")
+        informativeText: Backend.translate("Are you sure to quit?")
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button, role) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              ClientInstance.notifyServer("QuitRoom", "[]");
+              break;
+            }
+            case MessageDialog.Cancel: {
+              quitDialog.close();
+            }
+          }
+        }
+      }
+    }
+  }
+
   Button {
     text: Backend.translate("Add Robot")
     visible: isOwner && !isStarted && !isFull
@@ -264,6 +346,7 @@ Item {
         drank: model.drank
         isOwner: model.isOwner
         ready: model.ready
+        surrendered: model.surrendered
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -314,6 +397,7 @@ Item {
       MetroButton {
         text: Backend.translate("Sort Cards")
         textFont.pixelSize: 28
+        onClicked: Logic.resortHandcards();
       }
       MetroButton {
         text: Backend.translate("Chat")
@@ -709,7 +793,7 @@ Item {
 
   MiscStatus {
     id: miscStatus
-    anchors.right: quitButton.left
+    anchors.right: menuButton.left
     anchors.top: parent.top
     anchors.rightMargin: 16
     anchors.topMargin: 8
@@ -986,6 +1070,7 @@ Item {
         drank: 0,
         isOwner: false,
         ready: false,
+        surrendered: false,
       });
     }
 

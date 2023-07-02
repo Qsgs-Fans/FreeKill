@@ -62,6 +62,9 @@ Item {
         card = cards[i];
         card.origX = i * spacing;
         card.origY = 0;
+        card.z = i + 1;
+        card.initialZ = i + 1;
+        card.maxZ = cards.length;
       }
     }
 

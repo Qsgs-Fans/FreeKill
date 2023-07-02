@@ -2950,7 +2950,7 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
   if fromPile == "discardPile" then
     pileToSearch = self.discard_pile
   elseif fromPile == "allPiles" then
-    pileToSearch = table.clone(self.draw_pile)
+    pileToSearch = table.simpleClone(self.draw_pile)
     table.insertTable(pileToSearch, self.discard_pile)
   end
 

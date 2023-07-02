@@ -215,6 +215,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#8"] = "八号位",
   ["@ControledBy"] = "控制者",
 
+  ["Menu"] = "菜单",
+  ["Surrender"] = "投降",
+  ["Quit"] = "退出",
+  ["Are you sure to quit?"] = "是否确认退出对局（若对局开始则将计入逃跑次数）？",
+
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",

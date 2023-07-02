@@ -204,6 +204,47 @@ function moveCards(moves) {
   }
 }
 
+function resortHandcards() {
+  if (!dashboard.handcardArea.cards.length) {
+    return;
+  }
+
+  const subtypeString2Number = {
+    ["none"]: Card.SubtypeNone,
+    ["delayed_trick"]: Card.SubtypeDelayedTrick,
+    ["weapon"]: Card.SubtypeWeapon,
+    ["armor"]: Card.SubtypeArmor,
+    ["defensive_horse"]: Card.SubtypeDefensiveRide,
+    ["offensive_horse"]: Card.SubtypeOffensiveRide,
+    ["treasure"]: Card.SubtypeTreasure,
+  }
+
+  dashboard.handcardArea.cards.sort((prev, next) => {
+    if (prev.type === next.type) {
+      const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+      const nextSubtypeNumber = subtypeString2Number[next.subtype];
+      if (prevSubtypeNumber === nextSubtypeNumber) {
+        const splitedPrevName = prev.name.split('__');
+        const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+
+        const splitedNextName = next.name.split('__');
+        const nextTrueName = splitedNextName[splitedNextName.length - 1];
+        if (prevTrueName === nextTrueName) {
+          return prev.cid - next.cid;
+        } else {
+          return prevTrueName > nextTrueName ? -1 : 1;
+        }
+      } else {
+        return prevSubtypeNumber - nextSubtypeNumber;
+      }
+    } else {
+      return prev.type - next.type;
+    }
+  });
+
+  dashboard.handcardArea.updateCardPosition(true);
+}
+
 function setEmotion(id, emotion, isCardId) {
   let path;
   if (OS === "Win") {
@@ -1335,4 +1376,8 @@ callbacks["AskForLuckCard"] = (j) => {
   roomScene.okCancel.visible = true;
   roomScene.okButton.enabled = true;
   roomScene.cancelButton.enabled = true;
+}
+
+callbacks["CancelRequest"] = (jsonData) => {
+  ClientInstance.replyToServer("", "__cancel")
 }
