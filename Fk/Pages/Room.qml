@@ -101,7 +101,7 @@ Item {
         id: surrenderButton
         text: Backend.translate("Surrender")
         onClicked: {
-          if (isStarted) {
+          if (isStarted && !getPhoto(Self.id).dead) {
             const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
             if (!surrenderCheck.length) {
               surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
@@ -149,7 +149,7 @@ Item {
         title: Backend.translate("Quit")
         informativeText: Backend.translate("Are you sure to quit?")
         buttons: MessageDialog.Ok | MessageDialog.Cancel
-        onButtonClicked: function (button, role) {
+        onButtonClicked: function (button) {
           switch (button) {
             case MessageDialog.Ok: {
               ClientInstance.notifyServer("QuitRoom", "[]");

@@ -1147,7 +1147,7 @@ local role_mode = fk.CreateGameMode{
         end
 
         if p ~= Self and p.role == "rebel" then
-          if p:isAlive() then
+          if not p.dead then
             break
           else
             rebelNum = rebelNum - 1
@@ -1177,7 +1177,7 @@ local role_mode = fk.CreateGameMode{
             end
 
             if p ~= Self and (p.role == "lord" or p.role == "loyalist") then
-              if p:isAlive() then
+              if not p.dead then
                 break
               else
                 lordNum = lordNum - 1
