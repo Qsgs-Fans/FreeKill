@@ -74,81 +74,91 @@ Item {
   // tmp
   Button {
     id: menuButton
-    text: "menu"
     anchors.top: parent.top
-    anchors.right: parent.right + 5
+    anchors.right: parent.right
+    anchors.rightMargin: 10
+    text: Backend.translate("Menu")
     z: 2
     onClicked: {
-      if (surrenderButton.visible) {
-        surrenderButton.anchors.topMargin = 0;
-        surrenderButton.visible = false;
-        quitButton.anchors.topMargin = 0;
-        quitButton.visible = false;
-      } else {
-        surrenderButton.anchors.topMargin = 50;
-        surrenderButton.visible = true;
-        quitButton.anchors.topMargin = 100;
-        quitButton.visible = true;
-      }
+      menuContainer.visible || menuContainer.open();
     }
   }
 
-  Button {
-    id: surrenderButton
-    text: "surrender"
-    anchors.top: parent.top
-    anchors.right: parent.right
-    visible: false
-    onClicked: {
-      surrenderDialog.title = '123';
-      surrenderDialog.open();
-    }
-  }
+  Menu {
+    id: menuContainer
+    x: parent.width - menuButton.width - menuContainer.width - 17
+    width: menuRow.width
+    height: menuRow.height
+    verticalPadding: 0
+    spacing: 7
+    z: 2
 
-  MessageDialog {
-    id: surrenderDialog
-    title: 'surrender'
-    informativeText: qsTr("Are you sure to quit?")
-    buttons: MessageDialog.Ok | MessageDialog.Cancel
-    onButtonClicked: function (button, role) {
-      switch (button) {
-        case MessageDialog.Ok: {
-          ClientInstance.notifyServer("PushRequest", [
-            "surrender", true
-          ]);
-          break;
-        }
-        case MessageDialog.Cancel: {
-          surrenderDialog.close();
+    Row {
+      id: menuRow
+      spacing: 7
+
+      Button {
+        id: surrenderButton
+        text: Backend.translate("Surrender")
+        onClicked: {
+          if (isStarted) {
+            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+            if (!surrenderCheck.length) {
+              surrenderDialog.informativeText = 'surrender is disabled in this mode';
+            } else {
+              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
+            }
+            surrenderDialog.open();
+          }          
         }
       }
-    }
-  }
 
-  Button {
-    id: quitButton
-    text: "quit"
-    anchors.top: parent.top
-    anchors.right: parent.right
-    visible: false
-    onClicked: {
-      quitDialog.open();
-    }
-  }
-
-  MessageDialog {
-    id: quitDialog
-    title: 'quit'
-    informativeText: qsTr("Are you sure to quit?")
-    buttons: MessageDialog.Ok | MessageDialog.Cancel
-    onButtonClicked: function (button, role) {
-      switch (button) {
-        case MessageDialog.Ok: {
-          ClientInstance.notifyServer("QuitRoom", "[]");
-          break;
+      MessageDialog {
+        id: surrenderDialog
+        title: Backend.translate("Surrender")
+        informativeText: ''
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button, role) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+              if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
+                ClientInstance.notifyServer("PushRequest", [
+                  "surrender", true
+                ]);
+              }
+              break;
+            }
+            case MessageDialog.Cancel: {
+              surrenderDialog.close();
+            }
+          }
         }
-        case MessageDialog.Cancel: {
-          quitDialog.close();
+      }
+
+      Button {
+        id: quitButton
+        text: Backend.translate("Quit")
+        onClicked: {
+          quitDialog.open();
+        }
+      }
+
+      MessageDialog {
+        id: quitDialog
+        title: Backend.translate("Quit")
+        informativeText: Backend.translate("Are you sure to quit?")
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button, role) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              ClientInstance.notifyServer("QuitRoom", "[]");
+              break;
+            }
+            case MessageDialog.Cancel: {
+              quitDialog.close();
+            }
+          }
         }
       }
     }
@@ -783,7 +793,7 @@ Item {
 
   MiscStatus {
     id: miscStatus
-    anchors.right: quitButton.left
+    anchors.right: menuButton.left
     anchors.top: parent.top
     anchors.rightMargin: 16
     anchors.topMargin: 8

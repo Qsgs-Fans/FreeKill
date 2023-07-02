@@ -626,4 +626,9 @@ function SetObserving(o)
   ClientInstance.observing = o
 end
 
+function CheckSurrenderAvailable(playedTime)
+  local curMode = ClientInstance.room_settings.gameMode
+  return json.encode(Fk.game_modes[curMode]:surrenderFunc(playedTime))
+end
+
 dofile "lua/client/i18n/init.lua"

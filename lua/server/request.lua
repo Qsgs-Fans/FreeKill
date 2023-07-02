@@ -144,7 +144,7 @@ request_handlers["surrender"] = function(room, id, reqlist)
         local player = room:getPlayerById(id)
         player.surrendered = true
         room:broadcastProperty(player, "surrendered")
-        room:gameOver("lord+loyalist")
+        room:gameOver(Fk.game_modes[room.settings.gameMode]:getWinner(player))
       end
     )
     room.hasSurrendered = true

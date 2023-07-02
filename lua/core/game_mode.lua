@@ -23,4 +23,16 @@ function GameMode:initialize(name, min, max)
   self.maxPlayer = math.min(max, 8)
 end
 
+---@param victim ServerPlayer @ 死者
+---@return string @ 胜者阵营
+function GameMode:getWinner(victim)
+  return ""
+end
+
+---@param playedTime number @ 游戏时长（单位：秒）
+---@return table
+function GameMode:surrenderFunc(playedTime)
+  return {}
+end
+
 return GameMode
