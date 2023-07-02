@@ -1114,8 +1114,98 @@ local role_mode = fk.CreateGameMode{
   name = "aaa_role_mode", -- just to let it at the top of list
   minPlayer = 2,
   maxPlayer = 8,
+  surrender_func = function(self, playedTime)
+    local roleCheck = false
+    local roleText = ""
+    local roleTable = {
+      { "lord" },
+      { "lord", "rebel" },
+      { "lord", "rebel", "renegade" },
+      { "lord", "loyalist", "rebel", "renegade" },
+      { "lord", "loyalist", "rebel", "rebel", "renegade" },
+      { "lord", "loyalist", "rebel", "rebel", "rebel", "renegade" },
+      { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "renegade" },
+      { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "rebel", "renegade" },
+    }
+
+    roleTable = roleTable[#Fk:currentRoom().players]
+
+    if Self.role == "renegade" then
+      roleCheck = #Fk:currentRoom().alive_players == 2
+      roleText = "only you and me"
+    elseif Self.role == "rebel" then
+      local rebelNum = #table.filter(roleTable, function(role)
+        return role == "rebel"
+      end)
+
+      local renegadeDead = not table.find(roleTable, function(role)
+        return role == "renegade"
+      end)
+      for _, p in ipairs(Fk:currentRoom().players) do
+        if p.role == "renegade" and p.dead then
+          renegadeDead = true
+        end
+
+        if p ~= Self and p.role == "rebel" then
+          if p:isAlive() then
+            break
+          else
+            rebelNum = rebelNum - 1
+          end
+        end
+      end
+
+      roleCheck = renegadeDead and rebelNum == 1
+      roleText = "left one rebel alive"
+    else
+      if Self.role == "loyalist" then
+        return { { text = "loyalist never surrender", passed = false } }
+      else
+        if #Fk:currentRoom().alive_players == 2 then
+          roleCheck = true
+        else
+          local lordNum = #table.filter(roleTable, function(role)
+            return role == "lord" or role == "loyalist"
+          end)
+
+          local renegadeDead = not table.find(roleTable, function(role)
+            return role == "renegade"
+          end)
+          for _, p in ipairs(Fk:currentRoom().players) do
+            if p.role == "renegade" and p.dead then
+              renegadeDead = true
+            end
+
+            if p ~= Self and (p.role == "lord" or p.role == "loyalist") then
+              if p:isAlive() then
+                break
+              else
+                lordNum = lordNum - 1
+              end
+            end
+          end
+
+          roleCheck = renegadeDead and lordNum == 1
+        end
+      end
+
+      roleText = "left you alive"
+    end
+
+    return {
+      { text = "time limitation: 5 sec", passed = playedTime >= 5 },
+      { text = roleText, passed = roleCheck },
+    }
+  end,
 }
 extension:addGameMode(role_mode)
+Fk:loadTranslationTable{
+  ["time limitation: 5 sec"] = "游戏时长达到5秒（测试用）",
+  ["only you and me"] = "仅剩你和主公存活",
+  ["left one rebel alive"] = "反贼仅剩你存活且不存在存活内奸",
+  ["left you alive"] = "主忠方仅剩你存活且其他阵营仅剩一方",
+  ["loyalist never surrender"] = "忠臣永不投降！",
+}
 
 local anjiang = General(extension, "anjiang", "unknown", 5)
 anjiang.gender = General.Agender
