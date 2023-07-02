@@ -565,12 +565,12 @@ end
 --- 获取玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
 ---@param scope integer @ 查询历史范围
-function Player:usedSkillTimes(cardName, scope)
-  if not self.skillUsedHistory[cardName] then
+function Player:usedSkillTimes(skill_name, scope)
+  if not self.skillUsedHistory[skill_name] then
     return 0
   end
   scope = scope or Player.HistoryTurn
-  return self.skillUsedHistory[cardName][scope]
+  return self.skillUsedHistory[skill_name][scope]
 end
 
 --- 获取玩家是否无手牌。
