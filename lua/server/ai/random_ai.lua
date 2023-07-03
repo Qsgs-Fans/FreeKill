@@ -26,8 +26,8 @@ local function useActiveSkill(self, skill, card)
   local max = skill:getMaxTargetNum(player, card)
   local min_card = skill:getMinCardNum()
   local max_card = skill:getMaxCardNum()
-  while not skill:feasible(selected_targets, selected_cards, self.player, card) do
-    if max_try_times <= 0 then break end
+  for i = 0, max_try_times do
+    if skill:feasible(selected_targets, selected_cards, self.player, card) then break end
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
@@ -50,7 +50,6 @@ local function useActiveSkill(self, skill, card)
     if #avail_targets == 0 and #avail_cards == 0 then break end
     table.insertIfNeed(selected_targets, table.random(avail_targets))
     table.insertIfNeed(selected_cards, table.random(avail_cards))
-    max_try_times = max_try_times - 1
   end
   if skill:feasible(selected_targets, selected_cards, self.player, card) then
     local ret = json.encode{
@@ -98,8 +97,7 @@ local function useVSSkill(self, skill, pattern, cancelable, extra_data)
   local selected_cards = {}
   local max_try_time = 100
 
-  while true do
-    if max_try_time <= 0 then break end
+  for i = 0, max_try_time do
     local avail_cards = table.filter(player:getCardIds{ Player.Hand, Player.Equip }, function(id)
       return skill:cardFilter(id, selected_cards)
     end)
@@ -111,7 +109,6 @@ local function useVSSkill(self, skill, pattern, cancelable, extra_data)
         subcards = selected_cards,
       }
     end
-    max_try_time = max_try_time - 1
   end
   return nil
 end
