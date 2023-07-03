@@ -404,12 +404,14 @@ end
 ---@param other Player @ 其他玩家
 ---@param num integer @ 距离数
 function Player:setFixedDistance(other, num)
+  print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = num
 end
 
 --- 移除玩家与其他角色的固定距离。
 ---@param other Player @ 其他玩家
 function Player:removeFixedDistance(other)
+  print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = nil
 end
 
@@ -417,23 +419,38 @@ end
 ---
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
 ---@param other Player @ 其他玩家
-function Player:distanceTo(other)
+---@param mode string @ 计算模式(left/right/both)
+---@param ignore_dead boolean @ 是否忽略尸体
+function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
+  mode = mode or "both"
   if other == self then return 0 end
   local right = 0
   local temp = self
   while temp ~= other do
-    if not temp.dead then
+    if ignore_dead or not temp.dead then
       right = right + 1
     end
     temp = temp.next
   end
-  local left = #Fk:currentRoom().alive_players - right
-  local ret = math.min(left, right)
+  local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right
+  local ret = 0
+  if mode == "left" then
+    ret = left
+  elseif mode == "right" then
+    ret = right
+  else
+    ret = math.min(left, right)
+  end
 
   local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
+    local fixed = skill:getFixed(self, other)
     local correct = skill:getCorrect(self, other)
+    if fixed ~= nil then
+      ret = fixed
+      break
+    end
     if correct == nil then correct = 0 end
     ret = ret + correct
   end
