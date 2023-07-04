@@ -423,6 +423,7 @@ end
 ---@param ignore_dead boolean @ 是否忽略尸体
 function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
+  assert(ignore_dead and not other.dead, "Target is Dead!")
   mode = mode or "both"
   if other == self then return 0 end
   local right = 0
