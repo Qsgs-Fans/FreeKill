@@ -425,7 +425,10 @@ function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
   if other == self then return 0 end
-  if ignore_dead and other.dead then return -1 end
+  if ignore_dead and other.dead then
+    print(other.name .. " is dead!")
+    return -1
+  end
   local right = 0
   local temp = self
   local try_time = 10
@@ -472,7 +475,8 @@ end
 ---@param other Player @ 其他玩家
 ---@param fixLimit number|null @ 卡牌距离限制增加专用
 function Player:inMyAttackRange(other, fixLimit)
-  if self == other then
+  assert(other:isInstanceOf(Player))
+  if self == other or (other and other.dead) then
     return false
   end
 

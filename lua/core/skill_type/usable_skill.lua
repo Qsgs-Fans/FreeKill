@@ -25,6 +25,7 @@ function UsableSkill:getMaxUseTime(player, scope, card, to)
 end
 
 function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
+  if to and to.dead then return false end
   scope = scope or Player.HistoryTurn
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
@@ -46,6 +47,7 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
 end
 
 function UsableSkill:withinDistanceLimit(player, isattack, card, to)
+  if to and to.dead then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
