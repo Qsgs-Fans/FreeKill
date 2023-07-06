@@ -428,7 +428,9 @@ function Player:distanceTo(other, mode, ignore_dead)
   if other == self then return 0 end
   local right = 0
   local temp = self
-  while temp ~= other do
+  local try_time = 10
+  for _ = 0, try_time do
+    if temp == other then break end
     if ignore_dead or not temp.dead then
       right = right + 1
     end
