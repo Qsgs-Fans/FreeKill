@@ -73,7 +73,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     for _, player in ipairs(room.alive_players) do
       local draw_data = luck_data[player.id]
       draw_data.luckTime = nil
-      room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+      room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
     end
     return
   end
@@ -126,7 +126,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   for _, player in ipairs(room.alive_players) do
     local draw_data = luck_data[player.id]
     draw_data.luckTime = nil
-    room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+    room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
   end
 
   room:removeTag("LuckCardData")

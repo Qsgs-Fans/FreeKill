@@ -268,6 +268,7 @@ end
 
 ---@class DistanceSpec: StatusSkillSpec
 ---@field public correct_func fun(self: DistanceSkill, from: Player, to: Player)
+---@field public fixed_func fun(self: DistanceSkill, from: Player, to: Player)
 
 ---@param spec DistanceSpec
 ---@return DistanceSkill
@@ -278,6 +279,7 @@ function fk.CreateDistanceSkill(spec)
   local skill = DistanceSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
   skill.getCorrect = spec.correct_func
+  skill.getFixed = spec.fixed_func
 
   return skill
 end
