@@ -28,7 +28,14 @@ MarkEnum.BypassTimesLimitTo = "BypassTimesLimitTo"
 ---@field BypassDistancesLimitTo string @ 对其使用牌无距离限制，可带清除标记后缀
 MarkEnum.BypassDistancesLimitTo = "BypassDistancesLimitTo"
 ---@field UncompulsoryInvalidity string @ 非锁定技失效，可带清除标记后缀
-MarkEnum.UncompulsoryInvalidity = "uncompulsoryInvalidity"
+MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
 
 ---@field TempMarkSuffix string[] @ 各种清除标记后缀
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
+
+---@field NotIncludeMaxCards string @ 不计入手牌上限，可带清除标记后缀
+MarkEnum.NotIncludeMaxCards = "NotIncludeMaxCards"
+---@field NoDiscard string @ 不可弃置，可带清除标记后缀
+MarkEnum.NoDiscard = "NoDiscard"
+---@field CardTempMarkSuffix string[] @ 卡牌标记版本的清除标记后缀
+MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round", "-inhand" } 
