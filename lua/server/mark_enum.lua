@@ -34,4 +34,4 @@ MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 
 ---@field CardTempMarkSuffix string[] @ 卡牌标记版本的清除标记后缀
-MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round", "-inhand" } 
+MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round", "-inhand" }
