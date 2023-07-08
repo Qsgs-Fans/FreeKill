@@ -131,10 +131,30 @@ local function hasNegIntersection(a, b)
       if neg_pass then return true end
     end
   end
+  -- 复制品，还得比对b.neg和a呢
+  for _, neg in ipairs(b.neg or Util.DummyTable) do
+    for _, e in ipairs(a) do
+      if type(neg) == "table" then
+        neg_pass = not table.contains(neg, e)
+      else
+        neg_pass = neg ~= e
+      end
+      if neg_pass then return true end
+    end
+  end
 
   -- 第二次比较： 比较双方neg
   -- 比如 ^jink 可以匹配 ^slash
-  -- 暂时想不出好方案
+  -- 这样就是直球比对了
+  local tmp = {}
+  for _, e in ipairs(a.neg or Util.DummyTable) do
+    tmp[e] = true
+  end
+  for _, e in ipairs(b.neg or Util.DummyTable) do
+    if tmp[e] then
+      return true
+    end
+  end
 end
 
 local function hasIntersection(a, b)
