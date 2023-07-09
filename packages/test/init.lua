@@ -262,7 +262,7 @@ test2.shield = 5
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(control)
-test2:addSkill(test_vs)
+--test2:addSkill(test_vs)
 --test2:addSkill(test_trig)
 test2:addSkill(damage_maker)
 test2:addSkill(change_hero)

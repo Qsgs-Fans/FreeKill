@@ -31,6 +31,7 @@ Fk:loadTranslationTable({
   ["duel"] = "Duel",
 
   ["collateral"] = "Collateral",
+  ["#collateral-slash"] = "Collateral：You shall play Slash to %dest , or %src obtain your weapon",
 
   ["ex_nihilo"] = "Ex Nihilo",
 
@@ -57,16 +58,18 @@ Fk:loadTranslationTable({
 
   ["double_swords"] = "Double Sword",
   ["#double_swords_skill"] = "Double Sword",
+  ["#double_swords-invoke"] = "Double Sword：You shall discard 1 handcard，or %src draw 1",
 
   ["blade"] = "Blade",
   ["#blade_skill"] = "Blade",
-  ["#blade_slash"] = "You can use Blade to use Slash to %src again",
+  ["#blade_slash"] = "Blade: You may use Slash to %src again",
 
   ["spear"] = "Spear",
   ["spear_skill"] = "Spear",
 
   ["axe"] = "Axe",
   ["#axe_skill"] = "Axe",
+  ["#axe-invoke"] = "Axe：You may discard 2 cards to ensure your Slash effective to %dest",
 
   ["halberd"] = "Halberd",
 
