@@ -394,7 +394,7 @@ function Player:getAttackRange()
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getCorrect(self)
-    baseAttackRange = baseAttackRange + correct
+    baseAttackRange = baseAttackRange + (correct or 0)
   end
 
   return math.max(baseAttackRange, 0)
@@ -460,8 +460,7 @@ function Player:distanceTo(other, mode, ignore_dead)
       ret = fixed
       break
     end
-    if correct == nil then correct = 0 end
-    ret = ret + correct
+    ret = ret + (correct or 0)
   end
 
   if self.fixedDistance[other] then
