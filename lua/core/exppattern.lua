@@ -131,30 +131,17 @@ local function hasNegIntersection(a, b)
       if neg_pass then return true end
     end
   end
-  -- 复制品，还得比对b.neg和a呢
-  for _, neg in ipairs(b.neg or Util.DummyTable) do
-    for _, e in ipairs(a) do
-      if type(neg) == "table" then
-        neg_pass = not table.contains(neg, e)
-      else
-        neg_pass = neg ~= e
-      end
-      if neg_pass then return true end
-    end
-  end
 
   -- 第二次比较： 比较双方neg
   -- 比如 ^jink 可以匹配 ^slash
-  -- 这样就是直球比对了
-  local tmp = {}
-  for _, e in ipairs(a.neg or Util.DummyTable) do
-    tmp[e] = true
-  end
-  for _, e in ipairs(b.neg or Util.DummyTable) do
-    if tmp[e] then
-      return true
-    end
-  end
+
+  -- 具体是这样的：
+  -- 假设有个全集——U，里面装着所有的关键词
+  -- 那么问题就是匹配两个集合的补集（也就是neg）的并集是否覆盖了U
+  -- 于是问题就来了，要计算这种玩意有两种方法
+  -- 计算补集的补集的并集是不是空集，或者直接并集和U匹配
+  -- 但是这两者都需要知道全集是啥
+  -- 啊这
 end
 
 local function hasIntersection(a, b)
