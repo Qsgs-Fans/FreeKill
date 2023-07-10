@@ -573,8 +573,7 @@ function ServerPlayer:bury()
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
-  self:setChainState(false)
-  if not self.faceup then self:turnOver() end
+  self:reset()
 end
 
 function ServerPlayer:throwAllCards(flag)
@@ -648,16 +647,25 @@ function ServerPlayer:setChainState(chained)
   if self.room.logic:trigger(fk.BeforeChainStateChange, self) then
     return
   end
-
+  
   self.chained = chained
   self.room:broadcastProperty(self, "chained")
   self.room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
-    arg = self.chained and "chained" or "not-chained"
+    arg = self.chained and "chained" or "un-chained"
   }
 
   self.room.logic:trigger(fk.ChainStateChanged, self)
+end
+
+function ServerPlayer:reset()
+  self.room:sendLog{
+    type = "#ResetGeneral",
+    from = self.id,
+  }
+  self:setChainState(false)
+  if not self.faceup then self:turnOver() end
 end
 
 ---@param from ServerPlayer

@@ -486,6 +486,7 @@ local savageAssault = fk.CreateTrickCard{
   suit = Card.Spade,
   number = 7,
   is_damage_card = true,
+  multiple_targets = true,
   skill = savageAssaultSkill,
 }
 
@@ -525,6 +526,7 @@ local archeryAttack = fk.CreateTrickCard{
   suit = Card.Heart,
   number = 1,
   is_damage_card = true,
+  multiple_targets = true,
   skill = archeryAttackSkill,
 }
 
@@ -554,6 +556,7 @@ local godSalvation = fk.CreateTrickCard{
   name = "god_salvation",
   suit = Card.Heart,
   number = 1,
+  multiple_targets = true,
   skill = godSalvationSkill,
 }
 
@@ -636,6 +639,7 @@ local amazingGrace = fk.CreateTrickCard{
   name = "amazing_grace",
   suit = Card.Heart,
   number = 3,
+  multiple_targets = true,
   skill = amazingGraceSkill,
 }
 

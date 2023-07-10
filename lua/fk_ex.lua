@@ -419,7 +419,9 @@ end
 ---@class CardSpec: Card
 ---@field public skill Skill
 ---@field public equip_skill Skill
+---@field public special_skills string[] | nil
 ---@field public is_damage_card boolean
+---@field public multiple_targets boolean
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
@@ -443,6 +445,7 @@ local function readCardSpecToCard(card, spec)
   card.skill.cardSkill = true
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
+  card.multiple_targets = spec.multiple_targets
 end
 
 ---@param spec CardSpec

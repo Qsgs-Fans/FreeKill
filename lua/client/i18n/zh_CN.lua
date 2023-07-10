@@ -267,13 +267,15 @@ Fk:loadTranslationTable{
 
   ["chained"] = "横置",
   ["un-chained"] = "竖置",
-  ["not-chained"] = "重置",
+  ["reset-general"] = "重置",
 
   ["yang"] = "阳",
   ["yin"] = "阴",
   ["quest_succeed"] = "成功",
   ["quest_failed"] = "失败",
 
+  ["card"] = "牌",
+  ["hand_card"] = "手牌",
   ["pile_draw"] = "牌堆",
   ["pile_discard"] = "弃牌堆",
   ["processing_area"] = "处理区",
@@ -379,6 +381,7 @@ Fk:loadTranslationTable{
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+  ["#ResetGeneral"] = "%from 复原了武将牌",
 }
 
 -- card footnote

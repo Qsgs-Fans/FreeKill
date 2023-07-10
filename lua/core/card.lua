@@ -23,6 +23,7 @@
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
 ---@field public special_skills string[] | nil @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
+---@field public multiple_targets boolean @ 是否为指定多个目标的牌
 ---@field public is_derived boolean|null @ 判断是否为衍生牌
 local Card = class("Card")
 
@@ -145,6 +146,7 @@ function Card:clone(suit, number)
   newCard.equip_skill = self.equip_skill
   newCard.attack_range = self.attack_range
   newCard.is_damage_card = self.is_damage_card
+  newCard.multiple_targets = self.multiple_targets
   newCard.is_derived = self.is_derived
   return newCard
 end
