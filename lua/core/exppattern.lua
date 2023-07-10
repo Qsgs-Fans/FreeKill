@@ -117,6 +117,7 @@ local function matchCard(matcher, card)
 end
 
 local function hasNegIntersection(a, b)
+  -- 注意，这里是拿a.neg和b比
   local neg_pass = false
 
   -- 第一次比较： 比较neg和正常值，如有不同即认为可以匹配
@@ -134,35 +135,11 @@ local function hasNegIntersection(a, b)
 
   -- 第二次比较： 比较双方neg
   -- 比如 ^jink 可以匹配 ^slash
-
-  -- 具体是这样的：
-  -- 假设有个全集——U，里面装着所有的关键词
-  -- 那么问题就是匹配两个集合的补集（也就是neg）的并集是否覆盖了U
-  -- 于是问题就来了，要计算这种玩意有两种方法
-  -- 计算补集的补集的交集是不是空集，或者直接并集和U匹配
-  -- 但是这两者都需要知道全集是啥
-  -- 啊这
-  -- 但是，程序运行到这是有前提的
-  -- 那就是两个关键词的正向词汇没有交集……
-  -- 也就是说，我们可以定义U=正向词汇的集合
-  -- 至于没有正向词汇的情况……鉴于一切皆有可能，应该返回true
-  local U = {}
-  local tmp = table.simpleClone(a)
-  table.insertTable(tmp, b)
-  for _, e in ipairs(tmp) do
-    U[e] = true
-  end
-  local Uneg = table.simpleClone(a.neg or {})
-  table.insertTable(Uneg, b.neg or {})
-  for _, e in ipairs(Uneg) do
-    if U[e] then
-      return true
-    end
-  end
+  -- 没法比
 end
 
 local function hasIntersection(a, b)
-  if a == nil or b == nil then
+  if a == nil or b == nil or (#a + #b == 0) then
     return true
   end
 
@@ -175,7 +152,6 @@ local function hasIntersection(a, b)
       return true
     end
   end
-
   local neg_pass = hasNegIntersection(a, b) or hasNegIntersection(b, a)
 
   return neg_pass
