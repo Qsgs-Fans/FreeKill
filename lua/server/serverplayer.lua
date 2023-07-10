@@ -647,7 +647,7 @@ function ServerPlayer:setChainState(chained)
   if self.room.logic:trigger(fk.BeforeChainStateChange, self) then
     return
   end
-  
+
   self.chained = chained
   self.room:broadcastProperty(self, "chained")
   self.room:sendLog{
