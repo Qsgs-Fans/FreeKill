@@ -808,7 +808,7 @@ local armorInvalidity = fk.CreateInvaliditySkill {
   invalidity_func = function(self, from, skill)
     if from:getMark(fk.MarkArmorNullified) > 0 and skill.attached_equip then
       for _, card in ipairs(Fk.cards) do
-        if skill.attached_equip == card.name then
+        if card.sub_type == Card.SubtypeArmor and skill.attached_equip == card.name then
           return true
         end
       end

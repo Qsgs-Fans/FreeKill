@@ -248,7 +248,7 @@ xuchu:addSkill(luoyi)
 
 local tiandu = fk.CreateTriggerSkill{
   name = "tiandu",
-  anim_type = "offensive",
+  anim_type = "drawcard",
   events = {fk.FinishJudge},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and player.room:getCardArea(data.card) == Card.Processing
@@ -297,7 +297,7 @@ local luoshen = fk.CreateTriggerSkill{
       local judge = {
         who = player,
         reason = self.name,
-        pattern = ".|A~K|spade,club",
+        pattern = ".|.|spade,club",
       }
       room:judge(judge)
       if judge.card.color ~= Card.Black then
