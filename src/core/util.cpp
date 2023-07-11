@@ -4,6 +4,7 @@
 #include <qcryptographichash.h>
 #include <qnamespace.h>
 #include <qregularexpression.h>
+#include <QSysInfo>
 
 extern "C" {
 int luaopen_fk(lua_State *);
@@ -201,6 +202,10 @@ QByteArray JsonArray2Bytes(const QJsonArray &arr) {
 QJsonDocument String2Json(const QString &str) {
   auto bytes = str.toUtf8();
   return QJsonDocument::fromJson(bytes);
+}
+
+QString GetDeviceUuid() {
+  return QSysInfo::machineUniqueId();
 }
 
 QString Color(const QString &raw, fkShell::TextColor color,
