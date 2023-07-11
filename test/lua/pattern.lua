@@ -20,7 +20,7 @@ TestExppattern = {
     local basic = Exppattern:Parse(".|.|.|.|.|basic")
     lu.assertFalse(basic:matchExp("nullification"))
     lu.assertTrue(basic:matchExp("slash,vine"))
-    lu.assertFalse(Exppattern:Parse(".|.|.|.|.|armor"):matchExp("slash,vine"))
+    lu.assertTrue(Exppattern:Parse(".|.|.|.|.|armor"):matchExp("slash,vine"))
     lu.assertTrue(Exppattern:Parse(".|.|.|.|.|trick"):matchExp("lightning"))
     lu.assertFalse(Exppattern:Parse(".|.|.|.|.|delayed_trick"):matchExp("savage_assault"))
   end,
