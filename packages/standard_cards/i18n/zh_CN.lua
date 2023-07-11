@@ -32,6 +32,8 @@ Fk:loadTranslationTable{
   ["equip_horse"] = "坐骑牌",
   ["treasure"] = "宝物牌",
   ["delayed_trick"] = "延时类锦囊牌",
+  ["damage_card-"] = "伤害类",
+  ["multiple_targets-"] = "多目标",
 
   ["type_weapon"] = "武器",
   ["type_armor"] = "防具",

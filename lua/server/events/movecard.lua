@@ -124,6 +124,14 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
         end
 
         local currentCard = Fk:getCardById(info.cardId)
+        for name, _ in pairs(currentCard.mark) do
+          if name:endsWith("-inhand") and
+          realFromArea == Player.Hand and
+          data.from
+          then
+            self:setCardMark(currentCard, name, 0)
+          end
+        end
         if
           data.toArea == Player.Equip and
           currentCard.type == Card.TypeEquip and

@@ -117,6 +117,7 @@ local function matchCard(matcher, card)
 end
 
 local function hasNegIntersection(a, b)
+  -- 注意，这里是拿a.neg和b比
   local neg_pass = false
 
   -- 第一次比较： 比较neg和正常值，如有不同即认为可以匹配
@@ -134,11 +135,11 @@ local function hasNegIntersection(a, b)
 
   -- 第二次比较： 比较双方neg
   -- 比如 ^jink 可以匹配 ^slash
-  -- 暂时想不出好方案
+  -- 没法比
 end
 
 local function hasIntersection(a, b)
-  if a == nil or b == nil then
+  if a == nil or b == nil or (#a + #b == 0) then
     return true
   end
 
@@ -151,7 +152,6 @@ local function hasIntersection(a, b)
       return true
     end
   end
-
   local neg_pass = hasNegIntersection(a, b) or hasNegIntersection(b, a)
 
   return neg_pass

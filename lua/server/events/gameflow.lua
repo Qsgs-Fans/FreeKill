@@ -172,6 +172,14 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
       end
     end
   end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-round") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
+      end
+    end
+  end
 end
 
 GameEvent.functions[GameEvent.Turn] = function(self)
@@ -199,6 +207,14 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     for name, _ in pairs(p.mark) do
       if name:endsWith("-turn") then
         room:setPlayerMark(p, name, 0)
+      end
+    end
+  end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-turn") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
   end
@@ -320,6 +336,14 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
     for name, _ in pairs(p.mark) do
       if name:endsWith("-phase") then
         room:setPlayerMark(p, name, 0)
+      end
+    end
+  end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-phase") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
   end

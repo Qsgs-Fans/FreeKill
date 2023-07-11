@@ -21,6 +21,8 @@ TestExppattern = {
     lu.assertFalse(basic:matchExp("nullification"))
     lu.assertTrue(basic:matchExp("slash,vine"))
     lu.assertTrue(Exppattern:Parse(".|.|.|.|.|armor"):matchExp("slash,vine"))
+    lu.assertTrue(Exppattern:Parse(".|.|.|.|.|trick"):matchExp("lightning"))
+    lu.assertFalse(Exppattern:Parse(".|.|.|.|.|delayed_trick"):matchExp("savage_assault"))
   end,
 
   testMatchNeg = function()
@@ -28,7 +30,9 @@ TestExppattern = {
     local not_nul = Exppattern:Parse("^nullification")
     local not_slash_jink = Exppattern:Parse("^(slash,jink)")
     local not_basic = Exppattern:Parse(".|.|.|.|.|^basic")
+    local not_black = Exppattern:Parse(".|.|^(spade,club)")
     local slash_jink = Exppattern:Parse("slash,jink")
+    local no_slash_jink = Exppattern:Parse("^(slash,jink)|.|.|.|.|basic")
     local slash = Fk:cloneCard("slash")
 
     lu.assertFalse(not_nul:matchExp("nullification"))
@@ -38,7 +42,11 @@ TestExppattern = {
     lu.assertFalse(not_slash_jink:match(slash))
     lu.assertFalse(not_basic:match(slash))
     lu.assertTrue(not_nul:matchExp("peach"))
-    lu.assertFalse(not_slash_jink:matchExp(not_basic))
+    lu.assertFalse(not_basic:matchExp(no_slash_jink))
+    lu.assertTrue(not_slash_jink:matchExp(not_basic))
     lu.assertFalse(slash_jink:matchExp(not_slash_jink))
+    lu.assertFalse(not_black:matchExp("slash|A~Q|spade"))
+    lu.assertTrue(not_black:matchExp("vine|10|^club"))
   end,
+
 }

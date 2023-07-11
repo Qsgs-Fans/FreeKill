@@ -64,8 +64,9 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: roomName + (hasPassword ? "（有密码）" : "")
+          text: (hasPassword ? Backend.translate("Has Password") : "") + roomName
           font.pixelSize: 20
+          elide: Label.ElideRight
         }
 
         Text {

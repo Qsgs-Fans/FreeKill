@@ -36,6 +36,7 @@ Fk:loadTranslationTable{
   ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
+  ["Has Password"] = "（有密码）",
   ["Room Password"] = "房间密码",
   ["Please input room's password"] = "请输入房间的密码",
   ["Add Robot"] = "添加机器人",
@@ -267,13 +268,15 @@ Fk:loadTranslationTable{
 
   ["chained"] = "横置",
   ["un-chained"] = "竖置",
-  ["not-chained"] = "重置",
+  ["reset-general"] = "重置",
 
   ["yang"] = "阳",
   ["yin"] = "阴",
   ["quest_succeed"] = "成功",
   ["quest_failed"] = "失败",
 
+  ["card"] = "牌",
+  ["hand_card"] = "手牌",
   ["pile_draw"] = "牌堆",
   ["pile_discard"] = "弃牌堆",
   ["processing_area"] = "处理区",
@@ -379,6 +382,7 @@ Fk:loadTranslationTable{
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+  ["#ResetGeneral"] = "%from 复原了武将牌",
 }
 
 -- card footnote

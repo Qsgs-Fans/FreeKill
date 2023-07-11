@@ -182,6 +182,7 @@ local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
   special_skills = { "recast" },
+  multiple_targets = true,
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
