@@ -47,7 +47,7 @@ function ServerPlayer:doNotify(command, jsonData)
   local room = self.room
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
-    if id == self.id then
+    if id == self.id and room.room:hasObserver(p) then
       p:doNotify(command, jsonData)
     end
   end

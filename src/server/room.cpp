@@ -346,6 +346,8 @@ void Room::removeObserver(ServerPlayer *player) {
 
 QList<ServerPlayer *> Room::getObservers() const { return observers; }
 
+bool Room::hasObserver(ServerPlayer *player) const { return observers.contains(player); }
+
 int Room::getTimeout() const { return timeout; }
 
 void Room::setTimeout(int timeout) { this->timeout = timeout; }

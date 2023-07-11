@@ -45,6 +45,7 @@ class Room : public QObject {
   void addObserver(ServerPlayer *player);
   void removeObserver(ServerPlayer *player);
   QList<ServerPlayer *> getObservers() const;
+  bool hasObserver(ServerPlayer *player) const;
 
   int getTimeout() const;
   void setTimeout(int timeout);

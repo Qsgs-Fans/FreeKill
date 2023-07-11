@@ -11,6 +11,7 @@ public:
   QList<ServerPlayer *> getPlayers() const;
 
   QList<ServerPlayer *> getObservers() const;
+  bool hasObserver(ServerPlayer *player) const;
   int getTimeout() const;
   void checkAbandoned();
 
