@@ -86,7 +86,7 @@ private:
   void readConfig();
 
   void handleNameAndPassword(ClientSocket *client, const QString &name,
-                             const QString &password, const QString &md5_str);
+                             const QString &password, const QString &md5_str, const QString &uuid_str);
   void processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port);
 };
 

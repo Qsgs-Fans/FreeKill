@@ -273,7 +273,7 @@ void Server::processRequest(const QByteArray &msg) {
         doc[2] != "Setup")
       valid = false;
     else
-      valid = (String2Json(doc[3].toString()).array().size() == 4);
+      valid = (String2Json(doc[3].toString()).array().size() == 5);
   }
 
   if (!valid) {
@@ -313,13 +313,34 @@ void Server::processRequest(const QByteArray &msg) {
     return;
   }
 
+  auto uuid = arr[4].toString();
+  auto result2 = QJsonArray({1});
+  if (CheckSqlString(uuid)) {
+    result2 = SelectFromDatabase(
+        db, QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid));
+  }
+
+  if (!result2.isEmpty()) {
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "you have been banned!";
+    client->send(JsonArray2Bytes(body));
+    qInfo() << "Refused banned UUID:" << uuid;
+    client->disconnectFromHost();
+    return;
+  }
+
   handleNameAndPassword(client, arr[0].toString(), arr[1].toString(),
-                        arr[2].toString());
+                        arr[2].toString(), uuid);
 }
 
 void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
                                    const QString &password,
-                                   const QString &md5_str) {
+                                   const QString &md5_str,
+                                   const QString &uuid_str) {
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
   RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
@@ -461,6 +482,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
             .arg(client->peerAddress())
             .arg(obj["id"].toString().toInt());
     ExecSQL(db, sql_update);
+
+    auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');").arg(obj["id"].toString().toInt()).arg(uuid_str);
+    ExecSQL(db, uuid_update);
 
     // create new ServerPlayer and setup
     ServerPlayer *player = new ServerPlayer(lobby());

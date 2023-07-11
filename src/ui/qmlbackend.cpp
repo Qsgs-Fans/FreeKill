@@ -270,7 +270,7 @@ void QmlBackend::replyDelayTest(const QString &screenName,
   auto md5 = calcFileMD5();
 
   QJsonArray arr;
-  arr << screenName << cipher << md5 << FK_VERSION;
+  arr << screenName << cipher << md5 << FK_VERSION << GetDeviceUuid();
   ClientInstance->notifyServer("Setup", JsonArray2Bytes(arr));
 }
 
