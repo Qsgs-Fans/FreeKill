@@ -310,10 +310,10 @@ local fanSkill = fk.CreateTriggerSkill{
     return target == player and player:hasSkill(self.name) and data.card.name == "slash"
   end,
   on_use = function(_, _, _, _, data)
-    local fireSlash = Fk:cloneCard("fire__slash")
-    fireSlash.skillName = "fan"
-    fireSlash:addSubcard(data.card)
-    data.card = fireSlash
+    local card = Fk:cloneCard("fire__slash")
+    card.skillName = "fan"
+    card:addSubcard(data.card)
+    data.card = card
   end,
 }
 Fk:addSkill(fanSkill)

@@ -61,17 +61,18 @@ local slashSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    local to = effect.to
-    local from = effect.from
-
-    room:damage({
-      from = room:getPlayerById(from),
-      to = room:getPlayerById(to),
-      card = effect.card,
-      damage = 1,
-      damageType = fk.NormalDamage,
-      skillName = self.name
-    })
+    local from = room:getPlayerById(effect.from)
+    local to = room:getPlayerById(effect.to)
+    if not to.dead then
+      room:damage({
+        from = from,
+        to = to,
+        card = effect.card,
+        damage = 1,
+        damageType = fk.NormalDamage,
+        skillName = self.name
+      })
+    end
   end
 }
 local slash = fk.CreateBasicCard{
@@ -166,16 +167,17 @@ local peachSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    local to = effect.to
-    local from = effect.from
-
-    room:recover({
-      who = room:getPlayerById(to),
-      num = 1,
-      card = effect.card,
-      recoverBy = room:getPlayerById(from),
-      skillName = self.name
-    })
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.to)
+    if target:isWounded() and not target.dead then
+      room:recover({
+        who = target,
+        num = 1,
+        card = effect.card,
+        recoverBy = player,
+        skillName = self.name
+      })
+    end
   end
 }
 local peach = fk.CreateBasicCard{
@@ -206,17 +208,11 @@ local dismantlementSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    local to = room:getPlayerById(effect.to)
-    if to:isAllNude() then return end
     local from = room:getPlayerById(effect.from)
-    local cid = room:askForCardChosen(
-      from,
-      to,
-      "hej",
-      self.name
-    )
-
-    room:throwCard(cid, self.name, to, from)
+    local to = room:getPlayerById(effect.to)
+    if to.dead or to:isAllNude() then return end
+    local cid = room:askForCardChosen(from, to, "hej", self.name)
+    room:throwCard({cid}, self.name, to, from)
   end
 }
 local dismantlement = fk.CreateTrickCard{
@@ -251,17 +247,11 @@ local snatchSkill = fk.CreateActiveSkill{
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
     local to = room:getPlayerById(effect.to)
-    local from = effect.from
-    if to:isAllNude() then return end
-    local cid = room:askForCardChosen(
-      room:getPlayerById(from),
-      to,
-      "hej",
-      self.name
-    )
-
-    room:obtainCard(from, cid)
+    if to.dead or to:isAllNude() then return end
+    local cid = room:askForCardChosen(from, to, "hej", self.name)
+    room:obtainCard(from, cid, false, fk.ReasonPrey)
   end
 }
 local snatch = fk.CreateTrickCard{
@@ -379,11 +369,14 @@ local collateralSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
-    if not to:getEquipment(Card.SubtypeWeapon) then return end
-    local use = room:askForUseCard(to, "slash", nil, nil, nil,
-                                   { must_targets = effect.subTargets }, effect)
-
+    if to.dead or not to:getEquipment(Card.SubtypeWeapon) then return end
+    local prompt = "#collateral-slash:"..effect.from..":"..effect.subTargets[1]
+    if #effect.subTargets > 1 then
+      prompt = nil
+    end
+    local use = room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets }, effect)
     if use then
+      use.extraUse = true
       room:useCard(use)
     else
       room:obtainCard(effect.from,
@@ -411,8 +404,10 @@ local exNihiloSkill = fk.CreateActiveSkill{
       cardUseEvent.tos = { { cardUseEvent.from } }
     end
   end,
-  on_effect = function(self, room, cardEffectEvent)
-    room:drawCards(room:getPlayerById(cardEffectEvent.to), 2, "ex_nihilo")
+  on_effect = function(self, room, effect)
+    local target = room:getPlayerById(effect.to)
+    if target.dead then return end
+    target:drawCards(2, "ex_nihilo")
   end
 }
 local exNihilo = fk.CreateTrickCard{
@@ -542,12 +537,17 @@ local godSalvationSkill = fk.CreateActiveSkill{
     end
   end,
   on_effect = function(self, room, effect)
-    room:recover({
-      who = room:getPlayerById(effect.to),
-      num = 1,
-      recoverBy = room:getPlayerById(effect.from),
-      skillName = self.name,
-    })
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.to)
+    if target:isWounded() and not target.dead then
+      room:recover({
+        who = target,
+        num = 1,
+        recoverBy = player,
+        card = effect.card,
+        skillName = self.name,
+      })
+    end
   end
 }
 local godSalvation = fk.CreateTrickCard{
@@ -765,9 +765,8 @@ local crossbowAudio = fk.CreateTriggerSkill{
   name = "#crossbowAudio",
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
-      data.card.trueName == "slash" and
-      player:usedCardTimes("slash") > 1
+    return target == player and player:hasSkill(self.name) and player.phase == Player.Play and
+      data.card.trueName == "slash" and player:usedCardTimes("slash", Player.HistoryPhase) > 1
   end,
   on_refresh = function(self, event, target, player, data)
     local room = player.room
@@ -807,10 +806,13 @@ local armorInvalidity = fk.CreateInvaliditySkill {
   name = "armor_invalidity",
   global = true,
   invalidity_func = function(self, from, skill)
-    return
-      from:getMark(fk.MarkArmorNullified) > 0 and
-      from:getEquipment(Card.SubtypeArmor) ~= nil and
-      skill.attached_equip == Fk:getCardById(from:getEquipment(Card.SubtypeArmor)).name
+    if from:getMark(fk.MarkArmorNullified) > 0 and skill.attached_equip then
+      for _, card in ipairs(Fk.cards) do
+        if card.sub_type == Card.SubtypeArmor and skill.attached_equip == card.name then
+          return true
+        end
+      end
+    end
   end
 }
 Fk:addSkill(armorInvalidity)
@@ -875,9 +877,9 @@ local iceSwordSkill = fk.CreateTriggerSkill{
     local room = player.room
     local to = data.to
     for i = 1, 2 do
-      if to:isNude() then break end
+      if player.dead or to.dead or to:isNude() then break end
       local card = room:askForCardChosen(player, to, "he", self.name)
-      room:throwCard(card, self.name, to, player)
+      room:throwCard({card}, self.name, to, player)
     end
     return true
   end
@@ -908,9 +910,13 @@ local doubleSwordsSkill = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     local room = player.room
     local to = player.room:getPlayerById(data.to)
-    local result = room:askForDiscard(to, 1, 1, false, self.name, true)
-    if #result == 0 then
+    if to:isKongcheng() then
       player:drawCards(1, self.name)
+    else
+      local result = room:askForDiscard(to, 1, 1, false, self.name, true, ".", "#double_swords-invoke:"..player.id)
+      if #result == 0 then
+        player:drawCards(1, self.name)
+      end
     end
   end,
 }
@@ -997,31 +1003,33 @@ extension:addCards({
   spear,
 })
 
-local axeProhibit = fk.CreateProhibitSkill{
-  name = "#axe_prohibit",
-  prohibit_discard = function(self, player, card)
-    return player:hasSkill(self.name) and card and card.name == "axe" and
-      Fk.currentResponseReason == "#axe_skill" and
-      Fk:currentRoom():getCardArea(card.id) == Player.Equip
-  end,
-}
 local axeSkill = fk.CreateTriggerSkill{
   name = "#axe_skill",
   attached_equip = "axe",
   events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    if not player:hasSkill(self.name) then return end
-    local effect = data ---@type CardEffectEvent
-    return effect.card.trueName == "slash" and effect.from == player.id
+    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash"
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local ret = room:askForDiscard(player, 2, 2, true, self.name, true)
-    if #ret > 0 then return true end
+    local pattern
+    if player:getEquipment(Card.SubtypeWeapon) then
+      pattern = ".|.|.|.|.|.|^"..tostring(player:getEquipment(Card.SubtypeWeapon))
+    else
+      pattern = "."
+    end
+    local cards = room:askForDiscard(player, 2, 2, true, self.name, true, pattern, "#axe-invoke::"..data.to, true)
+    if #cards > 0 then
+      self.cost_data = cards
+      return true
+    end
   end,
-  on_use = function() return true end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:throwCard(self.cost_data, "axe", player, player)
+    return true
+  end,
 }
-axeSkill:addRelatedSkill(axeProhibit)
 Fk:addSkill(axeSkill)
 local axe = fk.CreateWeapon{
   name = "axe",
