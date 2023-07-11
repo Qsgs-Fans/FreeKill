@@ -36,6 +36,7 @@ Fk:loadTranslationTable{
   ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
+  ["Has Password"] = "（有密码）",
   ["Room Password"] = "房间密码",
   ["Please input room's password"] = "请输入房间的密码",
   ["Add Robot"] = "添加机器人",
