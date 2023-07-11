@@ -231,7 +231,11 @@ void Shell::unbanCommand(QStringList &list) {
   foreach (auto name, list) {
     banAccount(db, name, false);
   }
+
+  unbanipCommand(list);
+  unbanUuidCommand(list);
 }
+
 static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
   if (!CheckSqlString(name))
     return;
