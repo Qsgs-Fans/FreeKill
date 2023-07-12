@@ -219,6 +219,12 @@ function Room:run()
   local mode = Fk.game_modes[self.settings.gameMode]
   self.logic = (mode.logic and mode.logic() or GameLogic):new(self)
   if mode.rule then self.logic:addTriggerSkill(mode.rule) end
+  for _, pkg in ipairs(mode.whitelist) do
+    table.removeOne(self.disabled_packs, pkg)
+  end
+  for _, pkg in ipairs(mode.blacklist) do
+    table.insert(self.disabled_packs, pkg)
+  end
   self.logic:run()
 end
 
