@@ -5,7 +5,12 @@
 #include <qjsonarray.h>
 #include <qjsondocument.h>
 
+#ifdef FK_SERVER_ONLY
+static void *ClientInstance = nullptr;
+#else
 #include "client.h"
+#endif
+
 #include "client_socket.h"
 #include "roomthread.h"
 #include "server.h"
@@ -268,15 +273,15 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
-    // 如果走小道的人不是单机启动玩家 那么直接ban
-    if (!ClientInstance && !player->isDied()) {
-      server->temporarilyBan(runner->getId());
-    }
-
     m_thread->wakeUp();
 
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
+
+    // 如果走小道的人不是单机启动玩家 那么直接ban
+    if (!ClientInstance && !player->isDied()) {
+      server->temporarilyBan(runner->getId());
+    }
   }
 
   // 如果房间空了，就把房间标为废弃，Server有信号处理函数的
@@ -340,6 +345,8 @@ void Room::removeObserver(ServerPlayer *player) {
 }
 
 QList<ServerPlayer *> Room::getObservers() const { return observers; }
+
+bool Room::hasObserver(ServerPlayer *player) const { return observers.contains(player); }
 
 int Room::getTimeout() const { return timeout; }
 

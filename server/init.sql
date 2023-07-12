@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS banip (
   ip VARCHAR(64)
 );
 
+CREATE TABLE IF NOT EXISTS uuidinfo (
+  id INTEGER PRIMARY KEY,
+  uuid VARCHAR(32)
+);
+
+CREATE TABLE IF NOT EXISTS banuuid (
+  uuid VARCHAR(32)
+);
+
 -- 胜率相关
 
 CREATE TABLE IF NOT EXISTS winRate (

@@ -20,6 +20,8 @@ QString calcFileMD5();
 QByteArray JsonArray2Bytes(const QJsonArray &arr);
 QJsonDocument String2Json(const QString &str);
 
+QString GetDeviceUuid();
+
 namespace fkShell {
   enum TextColor {
     Black,

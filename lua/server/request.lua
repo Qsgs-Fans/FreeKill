@@ -36,7 +36,7 @@ local function tellRoomToObserver(self, player)
   player:doNotify("UpdateDrawPile", #self.draw_pile)
   player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
-  table.insert(self.observers, {observee.id, player})
+  table.insert(self.observers, {observee.id, player, player:getId()})
 end
 
 local function addObserver(self, id)
@@ -56,12 +56,10 @@ end
 
 local function removeObserver(self, id)
   for _, t in ipairs(self.observers) do
-    local __, p = table.unpack(t)
-    if p:getId() == id then
+    local pid = t[3]
+    if pid == id then
       table.removeOne(self.observers, t)
-      self:doBroadcastNotify("RemoveObserver", json.encode{
-        p:getId(),
-      })
+      self:doBroadcastNotify("RemoveObserver", json.encode{ pid })
       break
     end
   end
