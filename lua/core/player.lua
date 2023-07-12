@@ -726,7 +726,7 @@ function Player:loseSkill(skill, source_skill)
   end
 
   -- clear derivative skills of this skill as well
-  local tolose = self.derivative_skills[skill]
+  local tolose = self.derivative_skills[skill] or {}
   table.insert(tolose, skill)
   self.derivative_skills[skill] = nil
 
