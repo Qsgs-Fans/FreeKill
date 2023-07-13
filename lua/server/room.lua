@@ -69,7 +69,7 @@ function Room:initialize(_room)
   self.id = _room:getId()
 
   self.players = {}
-  self.alive_players = {} 
+  self.alive_players = {}
   self.observers = {}
   self.current = nil
   self.game_started = false
@@ -94,10 +94,7 @@ function Room:initialize(_room)
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
-  local mode = Fk.game_modes[self.settings.gameMode]
-  for _, pkg in ipairs(mode.blacklist or Util.DummyTable) do
-    table.insert(self.disabled_packs, pkg)
-  end
+  table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
   self.disabled_generals = self.settings.disabledGenerals
 end
 

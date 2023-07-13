@@ -50,9 +50,11 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
+  self.game_mode_disabled = {}
   self.kingdoms = {}
 
   self:loadPackages()
+  self:loadDisabled()
   self:addSkills(AuxSkills)
 end
 
@@ -131,6 +133,26 @@ function Engine:loadPackages()
         end
       end
     end
+  end
+end
+
+---@return nil
+function Engine:loadDisabled()
+  for _, game_mode in pairs(self.game_modes) do
+    local disabled_packages = {}
+    if game_mode.whitelist then
+      for _, name in ipairs(self.package_names) do
+        if not table.contains(game_mode.whitelist, name) then
+          table.insert(disabled_packages, name)
+        end
+      end
+    end
+    for _, name in ipairs(self.package_names) do
+      if table.contains(game_mode.blacklist or Util.DummyTable, name) then
+        table.insert(disabled_packages, name)
+      end
+    end
+    self.game_mode_disabled[game_mode.name] = disabled_packages
   end
 end
 
