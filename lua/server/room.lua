@@ -95,9 +95,6 @@ function Room:initialize(_room)
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
   local mode = Fk.game_modes[self.settings.gameMode]
-  for _, pkg in ipairs(mode.whitelist) do
-    table.removeOne(self.disabled_packs, pkg)
-  end
   for _, pkg in ipairs(mode.blacklist) do
     table.insert(self.disabled_packs, pkg)
   end
