@@ -24,8 +24,8 @@ function GameMode:initialize(name, min, max, whitelist, blacklist)
   self.name = name
   self.minPlayer = math.max(min, 2)
   self.maxPlayer = math.min(max, 8)
-  self.whitelist = whitelist or Util.DummyTable
-  self.blacklist = blacklist or Util.DummyTable
+  self.whitelist = whitelist
+  self.blacklist = blacklist
 end
 
 ---@param victim ServerPlayer @ 死者

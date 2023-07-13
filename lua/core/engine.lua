@@ -19,6 +19,7 @@
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
+---@field public game_mode_disabled table<string, string[]> @ 游戏模式禁用的包
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
@@ -374,15 +375,8 @@ function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
     if not (except and table.contains(except, card.id)) then
-      local mode = Fk.game_modes[self:currentRoom().settings.gameMode]
-      if #mode.whitelist > 0 then
-        if table.contains(mode.whitelist, card.package.name) and not table.contains(self:currentRoom().disabled_packs, card.package.name) then
-          table.insert(result, card.id)
-        end
-      else
-        if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
-          table.insert(result, card.id)
-        end
+      if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
+        table.insert(result, card.id)
       end
     end
   end
