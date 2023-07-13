@@ -573,11 +573,11 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
   local new = Fk.generals[new_general] or Fk.generals["liubei"]
-  local new_skills = new:getSkillNameList()
-
-  table.insertTable(new_skills, table.map(orig_skills, function(e)
+  local new_skills = table.map(orig_skills, function(e)
     return "-" .. e
-  end))
+  end)
+
+  table.insertTable(new_skills, new:getSkillNameList())
 
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
@@ -1404,7 +1404,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
-    prompt = prompt or "",
+    prompt = "",
     cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,
