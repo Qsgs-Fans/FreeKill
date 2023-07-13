@@ -376,7 +376,7 @@ function Engine:getAllCardIds(except)
     if not (except and table.contains(except, card.id)) then
       local mode = Fk.game_modes[self:currentRoom().settings.gameMode]
       if #mode.whitelist > 0 then
-        if table.contains(mode.whitelist, card.package.name) then
+        if table.contains(mode.whitelist, card.package.name) and not table.contains(self:currentRoom().disabled_packs, card.package.name) then
           table.insert(result, card.id)
         end
       else
