@@ -45,8 +45,8 @@ local cheat = fk.CreateActiveSkill{
     end
 
     from:addToPile(self.name, toGain, true, self.name)
-    room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-phase", 1)
-    room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-inhand", 1)
+    -- room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-phase", 1)
+    -- room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-inhand", 1)
     room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
   end
 }
@@ -279,8 +279,8 @@ Fk:loadTranslationTable{
   -- ["cheat"] = "小开",
   [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
   ["#cheat"] = "cheat：你可以获得一张想要的牌",
-  ["@@test_cheat-phase"] = "苦肉",
-  ["@@test_cheat-inhand"] = "连营",
+  -- ["@@test_cheat-phase"] = "苦肉",
+  -- ["@@test_cheat-inhand"] = "连营",
   --["#test_trig-ask"] = "你可弃置一张手牌",
   ["control"] = "控制",
   [":control"] = "出牌阶段，你可以控制/解除控制若干名其他角色。",
