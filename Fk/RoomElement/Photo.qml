@@ -177,7 +177,16 @@ Item {
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
-      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+      source: {
+        if (general === "") {
+          return "";
+        }
+        if (deputyGeneral) {
+          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+        } else {
+          return SkinBank.getGeneralPicture(general)
+        }
+      }
     }
 
     Image {
@@ -187,8 +196,14 @@ Item {
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
-      source: (deputyGeneral != "") ?
-        SkinBank.getGeneralPicture(deputyGeneral) : ""
+      source: {
+        const general = deputyGeneral;
+        if (deputyGeneral != "") {
+          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+        } else {
+          return "";
+        }
+      }
     }
 
     Image {
