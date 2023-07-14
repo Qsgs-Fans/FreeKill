@@ -327,7 +327,7 @@ end
 ---@param num integer @ 要选出的武将数量
 ---@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
 ---@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
----@param filter fun(g: General): boolean | nil @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@param filter nil | fun(g: General): boolean @ 可选参数，若这个函数返回true的话这个武将被排除在外
 ---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
