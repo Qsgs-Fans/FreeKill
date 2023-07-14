@@ -75,7 +75,7 @@ end
 
 ---@class StatusSkillSpec: StatusSkill
 
----@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer, data: any):boolean|nil
 ---@class TriggerSkillSpec: UsableSkillSpec
 ---@field public global boolean
 ---@field public events Event | Event[]

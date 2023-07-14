@@ -38,7 +38,7 @@ local cheat = fk.CreateActiveSkill{
       return
     end
 
-    local cardName = room:askForChoice(from, allCardNames, "cheat", nil, nil, true)
+    local cardName = room:askForChoice(from, allCardNames, "cheat")
     local toGain = nil
     if #allCardMapper[cardName] > 0 then
       toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
