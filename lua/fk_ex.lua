@@ -542,7 +542,9 @@ function fk.CreateGameMode(spec)
   assert(type(spec.name) == "string")
   assert(type(spec.minPlayer) == "number")
   assert(type(spec.maxPlayer) == "number")
-  local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer, spec.whitelist, spec.blacklist)
+  local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
+  ret.whitelist = spec.whitelist
+  ret.blacklist = spec.blacklist
   ret.rule = spec.rule
   ret.logic = spec.logic
 

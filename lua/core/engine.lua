@@ -138,20 +138,17 @@ end
 
 ---@return nil
 function Engine:loadDisabled()
-  for _, game_mode in pairs(self.game_modes) do
+  for mode_name, game_mode in pairs(self.game_modes) do
     local disabled_packages = {}
-    if game_mode.whitelist then
-      for _, name in ipairs(self.package_names) do
-        if not table.contains(game_mode.whitelist, name) then
-          table.insert(disabled_packages, name)
-        end
-      end
-    end
     for _, name in ipairs(self.package_names) do
-      if table.contains(game_mode.blacklist or Util.DummyTable, name) then
+      if table.contains(game_mode.blacklist or Util.DummyTable, name) or
+      (game_mode.whitelist and not table.contains(game_mode.whitelist, name)) or
+      table.contains(self.packages[name].game_modes_blacklist or Util.DummyTable, mode_name) or
+      (self.packages[name].game_modes_whitelist and not table.contains(self.packages[name].game_modes_whitelist, mode_name)) then
         table.insert(disabled_packages, name)
       end
     end
+    p(disabled_packages)
     self.game_mode_disabled[game_mode.name] = disabled_packages
   end
 end
