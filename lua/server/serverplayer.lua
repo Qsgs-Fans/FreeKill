@@ -561,7 +561,7 @@ end
 ---@param pile_name string
 ---@param card integer|Card
 ---@param visible boolean
----@param skillName string
+---@param skillName string|nil
 function ServerPlayer:addToPile(pile_name, card, visible, skillName)
   local room = self.room
   room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
@@ -668,10 +668,10 @@ function ServerPlayer:reset()
   if not self.faceup then self:turnOver() end
 end
 
----@param from ServerPlayer
+--@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
----@param initialCard Card
+---@param initialCard Card|nil
 ---@return PindianStruct
 function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reason = skillName, fromCard = initialCard, results = {} }
@@ -759,6 +759,7 @@ end
 
 -- 神貂蝉
 
+---@param p ServerPlayer
 function ServerPlayer:control(p)
   if self == p then
     self.room:setPlayerMark(p, "@ControledBy", 0)

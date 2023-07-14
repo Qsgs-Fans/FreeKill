@@ -18,7 +18,7 @@ function ViewAsSkill:cardFilter(to_select, selected)
 end
 
 ---@param cards integer[] @ ids of cards
----@return card
+---@return Card|nil
 function ViewAsSkill:viewAs(cards)
   return nil
 end

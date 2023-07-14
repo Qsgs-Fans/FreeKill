@@ -24,6 +24,7 @@
 	* Properly handle being reentrant due to coroutines.
 ]]
 
+---@diagnostic disable
 -- notify 汉化 并根据fk/lua 5.4实际情况魔改
 
 local dbg

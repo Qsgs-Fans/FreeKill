@@ -48,7 +48,7 @@ function table:forEach(func)
   end
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:every(func)
   for i, v in ipairs(self) do
     if not func(v, i, self) then
@@ -58,7 +58,7 @@ function table:every(func)
   return true
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:find(func)
   for i, v in ipairs(self) do
     if func(v, i, self) then
@@ -70,7 +70,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 ---@return T[]
 function table.filter(self, func)
   local ret = {}
@@ -82,7 +82,7 @@ function table.filter(self, func)
   return ret
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:map(func)
   local ret = {}
   for i, v in ipairs(self) do

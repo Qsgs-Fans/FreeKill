@@ -230,7 +230,7 @@ end
 --- 基本算是私有函数，别去用
 ---@param cardId integer
 ---@param cardArea CardArea
----@param integer owner
+---@param owner integer
 function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
   self.owner_map[cardId] = owner
@@ -311,7 +311,7 @@ end
 --- 获得当前房间中的所有玩家。
 ---
 --- 返回的数组的第一个元素是当前回合玩家，并且按行动顺序进行排序。
----@param sortBySeat boolean @ 是否无视按座位排序直接返回
+---@param sortBySeat boolean|nil @ 是否无视按座位排序直接返回
 ---@return ServerPlayer[] @ 房间中玩家的数组
 function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
@@ -431,7 +431,7 @@ end
 --- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
 ---@param player ServerPlayer @ 要被更新标记的那个玩家
 ---@param mark string @ 标记的名称
----@param value integer @ 要设为的值，其实也可以设为字符串
+---@param value any @ 要设为的值，其实也可以设为字符串
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
   self:doBroadcastNotify("SetPlayerMark", json.encode{
@@ -468,7 +468,7 @@ end
 --- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
 ---@param card Card @ 要被更新标记的那张牌
 ---@param mark string @ 标记的名称
----@param value integer @ 要设为的值，其实也可以设为字符串
+---@param value any @ 要设为的值，其实也可以设为字符串
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
   if not card:isVirtual() then
@@ -531,7 +531,7 @@ end
 
 ---@param player ServerPlayer
 ---@param general string
----@param changeKingdom boolean
+---@param changeKingdom boolean|nil
 ---@param noBroadcast boolean|null
 function Room:setPlayerGeneral(player, general, changeKingdom, noBroadcast)
   if Fk.generals[general] == nil then return end
@@ -559,7 +559,7 @@ function Room:setDeputyGeneral(player, general)
 end
 
 ---@param player ServerPlayer @ 要换将的玩家
----@param new_general string|nil @ 要变更的武将，若不存在则变身为孙策，孙策也不存在则nil错
+---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策也不存在则nil错
 ---@param full boolean|nil @ 是否血量满状态变身
 ---@param isDeputy boolean|nil @ 是否变的是副将
 ---@param sendLog boolean|nil @ 是否发Log
@@ -1376,7 +1376,7 @@ end
 ---@param top_limit integer[]|nil @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[]|nil @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
----@param prompt string|null @ 观星框的标题(暂时雪藏)
+--@param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<"top"|"bottom", integer[]>
@@ -1716,8 +1716,8 @@ end
 --- 询问玩家从AG中选择一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param id_list integer[] | Card[] @ 可选的卡牌列表
----@param cancelable boolean @ 能否点取消
----@param reason string @ 原因
+---@param cancelable boolean|nil @ 能否点取消
+---@param reason string|nil @ 原因
 ---@return integer @ 选择的卡牌
 function Room:askForAG(player, id_list, cancelable, reason)
   id_list = Card:getIdList(id_list)
@@ -1748,7 +1748,7 @@ end
 --- 告诉一些玩家，AG中的牌被taker取走了。
 ---@param taker ServerPlayer @ 拿走牌的玩家
 ---@param id integer @ 被拿走的牌
----@param notify_list ServerPlayer[] @ 要告知的玩家，默认为全员
+---@param notify_list ServerPlayer[]|nil @ 要告知的玩家，默认为全员
 function Room:takeAG(taker, id, notify_list)
   self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
 end
@@ -1756,7 +1756,7 @@ end
 --- 关闭player那侧显示的AG。
 ---
 --- 若不传参（即player为nil），那么关闭所有玩家的AG。
----@param player ServerPlayer @ 要关闭AG的玩家
+---@param player ServerPlayer|nil @ 要关闭AG的玩家
 function Room:closeAG(player)
   if player then player:doNotify("CloseAG", "")
   else self:doBroadcastNotify("CloseAG", "") end
@@ -1880,7 +1880,7 @@ end
 ---@param skillName string @ 技能名
 ---@param cancelable boolean|null @ 是否可以取消选择
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
----@param no_indicate boolean @ 是否不显示指示线
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
 function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate)
   if flag then
@@ -2337,11 +2337,11 @@ function Room:responseCard(cardResponseEvent)
 end
 
 ---@param card_name string @ 想要视为使用的牌名
----@param subcards integer[] @ 子卡，可以留空或者直接nil
+---@param subcards integer[]|nil @ 子卡，可以留空或者直接nil
 ---@param from ServerPlayer @ 使用来源
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
----@param skillName string @ 技能名
----@param extra boolean @ 是否不计入次数
+---@param skillName string|nil @ 技能名
+---@param extra boolean|nil @ 是否不计入次数
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
@@ -2383,8 +2383,8 @@ end
 --- 让一名玩家获得一张牌
 ---@param player integer|ServerPlayer @ 要拿牌的玩家
 ---@param cid integer|Card @ 要拿到的卡牌
----@param unhide boolean @ 是否明着拿
----@param reason CardMoveReason @ 卡牌移动的原因
+---@param unhide boolean|nil @ 是否明着拿
+---@param reason CardMoveReason|nil @ 卡牌移动的原因
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
@@ -2503,7 +2503,7 @@ end
 --- 令一名玩家失去体力。
 ---@param player ServerPlayer @ 玩家
 ---@param num integer @ 失去的数量
----@param skillName string @ 技能名
+---@param skillName string|nil @ 技能名
 ---@return boolean
 function Room:loseHp(player, num, skillName)
   return execGameEvent(GameEvent.LoseHp, player, num, skillName)

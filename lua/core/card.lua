@@ -136,8 +136,8 @@ end
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
----@param suit Suit @ 克隆后的牌的花色
----@param number integer @ 克隆后的牌的点数
+---@param suit Suit|nil @ 克隆后的牌的花色
+---@param number integer|nil @ 克隆后的牌的点数
 ---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
@@ -402,7 +402,7 @@ end
 
 --- 获取卡牌对应Mark的数量。
 ---@param mark string @ 标记
----@return integer
+---@return any
 function Card:getMark(mark)
   local ret = (self.mark[mark] or 0)
   if (not self:isVirtual()) and next(self.mark) == nil then
@@ -430,7 +430,7 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
+---@param diff boolean|nil @ 比较二者相同还是不同
 ---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then

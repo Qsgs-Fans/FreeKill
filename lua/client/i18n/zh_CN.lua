@@ -140,7 +140,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["OK"] = "确定",
   ["Cancel"] = "取消",
   ["End"] = "结束",
-  ["Quit"] = "退出",
+  -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
   ["Death audio"] = "阵亡",

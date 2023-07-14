@@ -267,7 +267,7 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   -- jsonData: [ int id, string screenName, string avatar ]
   -- when other player enter the room, we create clientplayer(C and lua) for them
   local data = json.decode(jsonData)
-  local id, name, avatar, gameData = data[1], data[2], data[3]
+  local id, name, avatar = data[1], data[2], data[3]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.players, p)

@@ -103,10 +103,10 @@ end
 
 --- 设置角色、体力、技能。
 ---@param general General @ 角色类型
----@param setHp boolean @ 是否设置体力
----@param addSkills boolean @ 是否增加技能
+---@param setHp boolean|nil @ 是否设置体力
+---@param addSkills boolean|nil @ 是否增加技能
 function Player:setGeneral(general, setHp, addSkills)
-  self.general = general
+  self.general = general.name
   if setHp then
     self.maxHp = general.maxHp
     self.hp = general.hp
@@ -182,7 +182,7 @@ end
 
 --- 为角色设置Mark至指定数量。
 ---@param mark string @ 标记
----@param count integer @ 为标记删除的数量
+---@param count integer|nil @ 为标记删除的数量
 function Player:setMark(mark, count)
   if count == 0 then count = nil end
   if self.mark[mark] ~= count then
@@ -192,7 +192,7 @@ end
 
 --- 获取角色对应Mark的数量。
 ---@param mark string @ 标记
----@return integer
+---@return any
 function Player:getMark(mark)
   return (self.mark[mark] or 0)
 end
@@ -217,7 +217,7 @@ end
 --- 将指定数量的牌加入玩家的对应区域。
 ---@param playerArea PlayerCardArea @ 玩家牌所在的区域
 ---@param cardIds integer[] @ 牌的ID，返回唯一牌
----@param specialName string @ 私人牌堆名
+---@param specialName string|nil @ 私人牌堆名
 function Player:addCards(playerArea, cardIds, specialName)
   assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
   assert(playerArea ~= Player.Special or type(specialName) == "string")
@@ -233,7 +233,7 @@ end
 --- 将指定数量的牌移除出玩家的对应区域。
 ---@param playerArea PlayerCardArea @ 玩家牌所在的区域
 ---@param cardIds integer[] @ 牌的ID，返回唯一牌
----@param specialName string @ 私人牌堆名
+---@param specialName string|nil @ 私人牌堆名
 function Player:removeCards(playerArea, cardIds, specialName)
   assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
   assert(playerArea ~= Player.Special or type(specialName) == "string")
@@ -303,12 +303,25 @@ function Player:hasDelayedTrick(card_name)
 end
 
 --- 获取玩家特定区域所有牌的ID。
----@param playerAreas PlayerCardArea|nil @ 玩家牌所在的区域
+---@param playerAreas PlayerCardArea|PlayerCardArea[]|string|nil @ 玩家牌所在的区域
 ---@param specialName string|nil @私人牌堆名
 ---@return integer[] @ 返回对应区域的所有牌对应的ID
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
   playerAreas = playerAreas or rightAreas
+  if type(playerAreas) == "string" then
+    local str = playerAreas
+    playerAreas = {}
+    if str:find("h") then
+      table.insert(playerAreas, Player.Hand)
+    end
+    if str:find("e") then
+      table.insert(playerAreas, Player.Equip)
+    end
+    if str:find("j") then
+      table.insert(playerAreas, Player.Judge)
+    end
+  end
   assert(type(playerAreas) == "number" or type(playerAreas) == "table")
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
@@ -404,14 +417,14 @@ end
 ---@param other Player @ 其他玩家
 ---@param num integer @ 距离数
 function Player:setFixedDistance(other, num)
-  print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
+  --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = num
 end
 
 --- 移除玩家与其他角色的固定距离。
 ---@param other Player @ 其他玩家
 function Player:removeFixedDistance(other)
-  print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
+  --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = nil
 end
 
@@ -506,7 +519,7 @@ end
 
 --- 增加玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
----@param num integer @ 次数
+---@param num integer|nil @ 次数
 function Player:addCardUseHistory(cardName, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
@@ -521,7 +534,7 @@ end
 --- 设定玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
 ---@param num integer @ 次数
----@param scope integer @ 查询历史范围
+---@param scope integer|nil @ 查询历史范围
 function Player:setCardUseHistory(cardName, num, scope)
   if cardName == "" and num == nil and scope == nil then
     self.cardUsedHistory = {}
@@ -543,7 +556,7 @@ end
 
 --- 增加玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param num integer @ 次数
+---@param num integer|nil @ 次数
 function Player:addSkillUseHistory(skill_name, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
@@ -557,8 +570,8 @@ end
 
 --- 设定玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param num integer @ 次数
----@param scope integer @ 查询历史范围
+---@param num integer|nil @ 次数
+---@param scope integer|nil @ 查询历史范围
 function Player:setSkillUseHistory(skill_name, num, scope)
   if skill_name == "" and num == nil and scope == nil then
     self.skillUsedHistory = {}
@@ -590,7 +603,7 @@ end
 
 --- 获取玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param scope integer @ 查询历史范围
+---@param scope integer|nil @ 查询历史范围
 function Player:usedSkillTimes(skill_name, scope)
   if not self.skillUsedHistory[skill_name] then
     return 0
@@ -808,16 +821,16 @@ function Player:prohibitDiscard(card)
   return false
 end
 
----@field SwitchYang number @ 转换技状态阳
+--转换技状态阳
 fk.SwitchYang = 0
----@field SwitchYin number @ 转换技状态阴
+--转换技状态阴
 fk.SwitchYin = 1
 
 --- 获取转换技状态
 ---@param skillName string @ 技能名
 ---@param afterUse boolean|nil @ 是否提前计算转换后状态
 ---@param inWord boolean|nil @ 是否返回文字
----@return number @ 转换技状态
+---@return number|string @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then
     return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yin" or fk.SwitchYin) or (inWord and "yang" or fk.SwitchYang)

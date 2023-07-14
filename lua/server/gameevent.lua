@@ -15,13 +15,13 @@
 ---@field public interrupted boolean @ 事件是否是因为被强行中断而结束的
 local GameEvent = class("GameEvent")
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.functions = {}
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.cleaners = {}
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.exit_funcs = {}
 
 local function wrapCoFunc(f, ...)
@@ -43,6 +43,11 @@ function GameEvent:initialize(event, ...)
   self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
   self.extra_exit_funcs = Util.DummyTable
   self.interrupted = false
+end
+
+-- 静态函数，实际定义在events/init.lua
+function GameEvent:translate(id)
+  error('static')
 end
 
 function GameEvent:__tostring()
@@ -159,7 +164,7 @@ function GameEvent:clear()
       -- handle error, then break
       if not string.find(yield_result, "__manuallyBreak") then
         fk.qCritical(yield_result)
-        print(debug.traceback(co))
+        print(debug.traceback(clear_co))
       end
       coroutine.close(clear_co)
       break

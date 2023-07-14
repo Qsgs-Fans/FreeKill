@@ -8,6 +8,7 @@ Based on initial work of Ryu, Gwang (http://www.gpgstudy.com/gpgiki/LuaUnit)
 License: BSD License, see LICENSE.txt
 ]]--
 
+---@diagnostic disable
 local os, io = os, io
 require("math")
 local M={}

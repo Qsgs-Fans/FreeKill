@@ -4,7 +4,6 @@
 local AttackRangeSkill = StatusSkill:subclass("AttackRangeSkill")
 
 ---@param from Player
----@param to Player
 ---@return integer
 function AttackRangeSkill:getCorrect(from)
   return 0
