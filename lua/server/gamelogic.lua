@@ -375,8 +375,8 @@ function GameLogic:addTriggerSkill(skill)
 end
 
 ---@param event Event
----@param target ServerPlayer
----@param data any
+---@param target ServerPlayer|nil
+---@param data any|nil
 function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false

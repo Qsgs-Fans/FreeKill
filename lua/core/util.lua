@@ -204,7 +204,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n integer
+---@param n integer|nil
 ---@return T|T[]
 function table:random(n)
   local n0 = n

@@ -58,7 +58,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout integer
+---@param timeout integer|nil
 function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
@@ -87,7 +87,7 @@ end
 
 local function _waitForReply(player, timeout)
   local result
-  local start = os.getms()
+  local start = os:getms()
   local state = player.serverplayer:getState()
   player.request_timeout = timeout
   player.request_start = start
@@ -116,7 +116,7 @@ local function _waitForReply(player, timeout)
       player.serverplayer:setThinking(false)
       return result
     end
-    local rest = timeout * 1000 - (os.getms() - start) / 1000
+    local rest = timeout * 1000 - (os:getms() - start) / 1000
     if timeout and rest <= 0 then
       player.serverplayer:setThinking(false)
       return ""
@@ -442,7 +442,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   room:notifyProperty(self, self, "phase")
 end
 
----@param phase_table Phase[]
+---@param phase_table Phase[]|nil
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then

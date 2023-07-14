@@ -291,8 +291,8 @@ end
 ---
 --- 返回的牌是一张虚拟牌。
 ---@param name string @ 牌名
----@param suit Suit @ 花色
----@param number integer @ 点数
+---@param suit Suit|nil @ 花色
+---@param number integer|nil @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = _card_name_table[name]
@@ -405,7 +405,7 @@ end
 
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter boolean @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter boolean|nil @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   local ret = self.cards[id]
