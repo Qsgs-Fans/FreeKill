@@ -119,17 +119,17 @@ local function mainLoop()
         if #readyRooms == 0 then
           local time = requestRoom.minDelayTime
           -- verbose('[.] Sleeping for %d ms...', time)
-          local cur = os:getms()
+          local cur = os.getms()
 
           time = math.min((time <= 0 and 9999999 or time), 200)
 
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
 
-          -- verbose('[!] Waked up after %f ms...', (os:getms() - cur) / 1000)
+          -- verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
 
           if time > 0 then
-            rest_sleep_time = math.floor(time - (os:getms() - cur) / 1000)
+            rest_sleep_time = math.floor(time - (os.getms() - cur) / 1000)
           else
             rest_sleep_time = -1
           end

@@ -31,7 +31,7 @@ function Client:initialize()
   end
   self.client.callback = function(_self, command, jsonData, isRequest)
     if self.recording and not self.observing then
-      table.insert(self.record, {os:getms() / 1000, isRequest, command, jsonData})
+      table.insert(self.record, {os.getms() / 1000, isRequest, command, jsonData})
     end
 
     local cb = fk.client_callback[command]
@@ -797,7 +797,7 @@ fk.client_callback["StartGame"] = function(jsonData)
   for _, p in ipairs(c.players) do
     if p.id ~= Self.id then
       table.insert(c.record, {
-        os:getms() / 100,
+        os.getms() / 100,
         false,
         "AddPlayer",
         json.encode {

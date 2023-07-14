@@ -327,7 +327,7 @@ FileIO = {
   isDir = fk.QmlBackend_isDir
 }
 
-os.getms = fk.GetMicroSecond
+os.getms = function() return fk.GetMicroSecond end
 
 ---@class Stack : Object
 Stack = class("Stack")

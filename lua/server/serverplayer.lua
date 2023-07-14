@@ -87,7 +87,7 @@ end
 
 local function _waitForReply(player, timeout)
   local result
-  local start = os:getms()
+  local start = os.getms()
   local state = player.serverplayer:getState()
   player.request_timeout = timeout
   player.request_start = start
@@ -116,7 +116,7 @@ local function _waitForReply(player, timeout)
       player.serverplayer:setThinking(false)
       return result
     end
-    local rest = timeout * 1000 - (os:getms() - start) / 1000
+    local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
       player.serverplayer:setThinking(false)
       return ""

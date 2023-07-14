@@ -156,7 +156,7 @@ FreeKill通信有三大类型：请求（Request）、回复（Reply）和通知
        if result ~= "__notready" then
          return result
        end
-       local rest = timeout * 1000 - (os:getms() - start) / 1000
+       local rest = timeout * 1000 - (os.getms() - start) / 1000
        if timeout and rest <= 0 then
          return ""
        end

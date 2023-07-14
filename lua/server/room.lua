@@ -149,7 +149,7 @@ function Room:isReady()
   -- 因为delay函数而延时：判断延时是否已经结束。
   -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
   if self.in_delay then
-    local rest = self.delay_duration - (os:getms() - self.delay_start) / 1000
+    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
     if rest <= 0 then
       self.in_delay = false
       return true
@@ -168,7 +168,7 @@ function Room:isReady()
     if p._splayer:thinking() then
       ret = false
       -- 烧条烧光了的话就把thinking设为false
-      rest = p.request_timeout * 1000 - (os:getms() -
+      rest = p.request_timeout * 1000 - (os.getms() -
         p.request_start) / 1000
 
       if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
@@ -753,7 +753,7 @@ end
 --- 这个函数不应该在请求处理协程中使用。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
-  local start = os:getms()
+  local start = os.getms()
   self.delay_start = start
   self.delay_duration = ms
   self.in_delay = true
