@@ -148,7 +148,6 @@ function Engine:loadDisabled()
         table.insert(disabled_packages, name)
       end
     end
-    p(disabled_packages)
     self.game_mode_disabled[game_mode.name] = disabled_packages
   end
 end
