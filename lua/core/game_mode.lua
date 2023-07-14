@@ -11,12 +11,15 @@
 ---@field public rule TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
 ---@field public logic fun() @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
 ---@field public surrenderFunc fun()
+---@field public whitelist string[]|nil @ 白名单
+---@field public blacklist string[]|nil @ 黑名单
 local GameMode = class("GameMode")
 
 --- 构造函数，不可随意调用。
 ---@param name string @ 游戏模式名
 ---@param min integer @ 最小玩家数
 ---@param max integer @ 最大玩家数
+---@param filter string @ 过滤卡包，格式参考exppattern
 function GameMode:initialize(name, min, max)
   self.name = name
   self.minPlayer = math.max(min, 2)

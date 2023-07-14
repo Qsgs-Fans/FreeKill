@@ -58,7 +58,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout integer
+---@param timeout integer|nil
 function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
@@ -442,7 +442,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   room:notifyProperty(self, self, "phase")
 end
 
----@param phase_table Phase[]
+---@param phase_table Phase[]|nil
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then

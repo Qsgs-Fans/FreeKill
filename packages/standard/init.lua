@@ -63,7 +63,7 @@ local hujiaResponse = fk.CreateTriggerSkill{
     local room = player.room
     for _, p in ipairs(room:getOtherPlayers(player)) do
       if p.kingdom == "wei" then
-        local cardResponded = room:askForResponse(p, "jink", "jink", "#hujia-ask:%s", player.id)
+        local cardResponded = room:askForResponse(p, "jink", "jink", "#hujia-ask:" .. player.id, true)
         if cardResponded then
           room:responseCard({
             from = p.id,
@@ -407,7 +407,7 @@ local jijiangResponse = fk.CreateTriggerSkill{
     local room = player.room
     for _, p in ipairs(room:getOtherPlayers(player)) do
       if p.kingdom == "shu" then
-        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:%s", player.id)
+        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
         if cardResponded then
           room:responseCard({
             from = p.id,

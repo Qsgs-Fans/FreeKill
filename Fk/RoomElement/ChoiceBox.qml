@@ -21,8 +21,8 @@ GraphicsBox {
     const dest = parseInt(data[2]);
     if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
     if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
     if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
+    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
     return raw;
   }
 

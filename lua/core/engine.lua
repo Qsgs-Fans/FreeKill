@@ -19,6 +19,7 @@
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
+---@field public game_mode_disabled table<string, string[]> @ 游戏模式禁用的包
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
@@ -49,9 +50,11 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
+  self.game_mode_disabled = {}
   self.kingdoms = {}
 
   self:loadPackages()
+  self:loadDisabled()
   self:addSkills(AuxSkills)
 end
 
@@ -130,6 +133,22 @@ function Engine:loadPackages()
         end
       end
     end
+  end
+end
+
+---@return nil
+function Engine:loadDisabled()
+  for mode_name, game_mode in pairs(self.game_modes) do
+    local disabled_packages = {}
+    for name, pkg in pairs(self.packages) do
+      if table.contains(game_mode.blacklist or Util.DummyTable, name) or
+      (game_mode.whitelist and not table.contains(game_mode.whitelist, name)) or
+      table.contains(pkg.game_modes_blacklist or Util.DummyTable, mode_name) or
+      (pkg.game_modes_whitelist and not table.contains(pkg.game_modes_whitelist, mode_name)) then
+        table.insert(disabled_packages, name)
+      end
+    end
+    self.game_mode_disabled[game_mode.name] = disabled_packages
   end
 end
 
@@ -271,8 +290,8 @@ end
 ---
 --- 返回的牌是一张虚拟牌。
 ---@param name string @ 牌名
----@param suit Suit @ 花色
----@param number integer @ 点数
+---@param suit Suit|nil @ 花色
+---@param number integer|nil @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = _card_name_table[name]
@@ -308,7 +327,7 @@ end
 ---@param num integer @ 要选出的武将数量
 ---@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
 ---@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
----@param filter fun(g: General): boolean | nil @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@param filter nil | fun(g: General): boolean @ 可选参数，若这个函数返回true的话这个武将被排除在外
 ---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
@@ -385,7 +404,7 @@ end
 
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter boolean @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter boolean|nil @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   local ret = self.cards[id]

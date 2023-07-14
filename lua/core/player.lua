@@ -303,8 +303,8 @@ function Player:hasDelayedTrick(card_name)
 end
 
 --- 获取玩家特定区域所有牌的ID。
----@param playerAreas PlayerCardArea @ 玩家牌所在的区域
----@param specialName string @私人牌堆名
+---@param playerAreas PlayerCardArea|nil @ 玩家牌所在的区域
+---@param specialName string|nil @私人牌堆名
 ---@return integer[] @ 返回对应区域的所有牌对应的ID
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
@@ -419,8 +419,8 @@ end
 ---
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
 ---@param other Player @ 其他玩家
----@param mode string @ 计算模式(left/right/both)
----@param ignore_dead boolean @ 是否忽略尸体
+---@param mode string|nil @ 计算模式(left/right/both)
+---@param ignore_dead boolean|nil @ 是否忽略尸体
 function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
@@ -579,7 +579,7 @@ end
 
 --- 获取玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
----@param scope integer @ 查询历史范围
+---@param scope integer|nil @ 查询历史范围
 function Player:usedCardTimes(cardName, scope)
   if not self.cardUsedHistory[cardName] then
     return 0
@@ -636,8 +636,8 @@ end
 
 --- 检索玩家是否有对应技能。
 ---@param skill string | Skill @ 技能名
----@param ignoreNullified boolean @ 忽略技能是否被无效
----@param ignoreAlive boolean @ 忽略角色在场与否
+---@param ignoreNullified boolean|nil @ 忽略技能是否被无效
+---@param ignoreAlive boolean|nil @ 忽略角色在场与否
 function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   if not ignoreAlive and self.dead then
     return false
@@ -726,7 +726,7 @@ function Player:loseSkill(skill, source_skill)
   end
 
   -- clear derivative skills of this skill as well
-  local tolose = self.derivative_skills[skill]
+  local tolose = self.derivative_skills[skill] or {}
   table.insert(tolose, skill)
   self.derivative_skills[skill] = nil
 
@@ -815,8 +815,8 @@ fk.SwitchYin = 1
 
 --- 获取转换技状态
 ---@param skillName string @ 技能名
----@param afterUse boolean @ 是否提前计算转换后状态
----@param inWord boolean @ 是否返回文字
+---@param afterUse boolean|nil @ 是否提前计算转换后状态
+---@param inWord boolean|nil @ 是否返回文字
 ---@return number @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then

@@ -13,6 +13,8 @@
 ---@field public related_skills table<string, string> @ 对于额外技能而言的关联技能
 ---@field public cards Card[] @ 拓展包包含的卡牌
 ---@field public game_modes GameMode[] @ 拓展包包含的游戏模式
+---@field public game_modes_whitelist string[]|nil @ 拓展包关于游戏模式的白名单
+---@field public game_modes_blacklist string[]|nil @ 拓展包关于游戏模式的黑名单
 local Package = class("Package")
 
 ---@alias PackageType integer
@@ -83,4 +85,21 @@ function Package:addGameMode(game_mode)
   table.insert(self.game_modes, game_mode)
 end
 
+--- 向拓展包中设置游戏模式过滤。
+---@param whitelist string[] @ 白名单
+---@param blacklist string[] @ 黑名单
+function Package:setGameModeFilter(whitelist, blacklist)
+  self.game_modes_whitelist = whitelist
+  self.game_modes_blacklist = blacklist
+end
+
+--- 向拓展包中添加游戏模式过滤。
+---@param whitelist string[] @ 白名单
+---@param blacklist string[] @ 黑名单
+function Package:addGameModeFilter(whitelist, blacklist)
+  assert(type(whitelist) == "table")
+  assert(type(blacklist) == "table")
+  table.insertTable(self.game_modes_whitelist, whitelist)
+  table.insertTable(self.game_modes_blacklist, blacklist)
+end
 return Package

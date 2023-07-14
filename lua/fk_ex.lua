@@ -75,7 +75,7 @@ end
 
 ---@class StatusSkillSpec: StatusSkill
 
----@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer, data: any):boolean|nil
 ---@class TriggerSkillSpec: UsableSkillSpec
 ---@field public global boolean
 ---@field public events Event | Event[]
@@ -166,9 +166,9 @@ end
 ---@field public card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean
 ---@field public target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean
 ---@field public feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
----@field public on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
+---@field public on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean|nil
 ---@field public about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
----@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
+---@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
 ---@field public on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
 ---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
@@ -543,6 +543,8 @@ function fk.CreateGameMode(spec)
   assert(type(spec.minPlayer) == "number")
   assert(type(spec.maxPlayer) == "number")
   local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
+  ret.whitelist = spec.whitelist
+  ret.blacklist = spec.blacklist
   ret.rule = spec.rule
   ret.logic = spec.logic
 
