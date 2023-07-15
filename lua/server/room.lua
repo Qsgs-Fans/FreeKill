@@ -175,6 +175,13 @@ function Room:isReady()
         p._splayer:setThinking(false)
       end
     end
+
+    if self.race_request_list and table.contains(self.race_request_list, p) then
+      local result = p.serverplayer:waitForReply(0)
+      if result ~= "__notready" and result ~= "__cancel" and result ~= "" then
+        return true
+      end
+    end
   end
   return ret, (rest and rest > 1) and rest or nil
 end
@@ -645,6 +652,7 @@ end
 function Room:doRequest(player, command, jsonData, wait)
   if wait == nil then wait = true end
   self.request_queue = {}
+  self.race_request_list = nil
   player:doRequest(command, jsonData, self.timeout)
 
   if wait then
@@ -662,6 +670,7 @@ end
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   self.request_queue = {}
+  self.race_request_list = nil
   for _, p in ipairs(players) do
     p:doRequest(command, jsonData or p.request_data)
   end
@@ -695,6 +704,7 @@ function Room:doRaceRequest(command, players, jsonData)
   local player_len = #players
   -- self:notifyMoveFocus(players, command)
   self.request_queue = {}
+  self.race_request_list = players
   for _, p in ipairs(players) do
     p:doRequest(command, jsonData or p.request_data)
   end
