@@ -82,7 +82,7 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
   self.logic:trigger(fk.HpChanged, player, data)
 
   if player.hp < 1 then
-    if num < 0 and not data.preventDying then
+    if num < 0 and not data.preventDying and player.maxHp > 0 then
       ---@type DyingStruct
       local dyingStruct = {
         who = player.id,
@@ -114,7 +114,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
   damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
 
-  if damageStruct.from and not damageStruct.from:isAlive() then
+  if damageStruct.from and damageStruct.from.dead then
     damageStruct.from = nil
   end
 
@@ -135,7 +135,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     assert(damageStruct.to:isInstanceOf(ServerPlayer))
   end
 
-  if not damageStruct.to:isAlive() then
+  if damageStruct.to.dead then
     return false
   end
 
@@ -244,11 +244,13 @@ GameEvent.functions[GameEvent.Recover] = function(self)
     end
   end
 
+  local who = recoverStruct.who
+  recoverStruct.num = math.min(who.maxHp - who.hp, recoverStruct.num)
+
   if recoverStruct.num < 1 then
     return false
   end
 
-  local who = recoverStruct.who
   if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
     self.logic:breakEvent(false)
   end

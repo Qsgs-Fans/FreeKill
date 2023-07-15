@@ -19,6 +19,7 @@ UI.ComboBox = function(spec)
   spec.choices = type(spec.choices) == "table" and spec.choices or Util.DummyTable
   spec.default = spec.default or spec.choices[1]
   spec.detailed = spec.detailed or false
+  spec.all_choices = type(spec.all_choices) == "table" and spec.all_choices or spec.choices
   spec.type = "combo"
   return spec
 end

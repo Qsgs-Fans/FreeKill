@@ -7,6 +7,7 @@ import Fk.Pages
 
 GraphicsBox {
   property var options: []
+  property var all_options: []
   property string skill_name: ""
   property int result
 
@@ -25,7 +26,7 @@ GraphicsBox {
     clip: true
     spacing: 20
 
-    model: options
+    model: all_options
 
     delegate: Item {
       width: 200
@@ -35,6 +36,7 @@ GraphicsBox {
         id: choicetitle
         width: parent.width
         text: Backend.translate(modelData)
+        enabled: options.indexOf(modelData) !== -1
         textFont.pixelSize: 24
         anchors.top: choiceDetail.bottom
         anchors.topMargin: 8
