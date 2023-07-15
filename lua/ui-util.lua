@@ -13,6 +13,7 @@ local UI = {}
 -- * choices: string[] 类型，保存着可选项，会被前端翻译
 -- * default: string，默认的选项，默认为choices的第一个
 -- * detailed: bool，为真的话送详细信息
+-- * all_choices: string[] 类型，保存着所有选项，会被前端翻译
 UI.ComboBox = function(spec)
   -- assert(type(spec.choices) == "table", "Choices is not a table")
   -- assert(#spec.choices > 0, "Choices is empty")

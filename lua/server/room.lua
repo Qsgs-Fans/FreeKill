@@ -2425,7 +2425,9 @@ function Room:drawCards(player, num, skillName, fromPlace)
     skillName = skillName,
     fromPlace = fromPlace,
   }
-  self.logic:trigger(fk.BeforeDrawCard, player, drawData)
+  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) or drawData.num < 1 then
+    self.logic:breakEvent(false)
+  end
 
   num = drawData.num
   fromPlace = drawData.fromPlace
