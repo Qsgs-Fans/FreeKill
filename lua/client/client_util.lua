@@ -377,12 +377,14 @@ function ActiveCanUse(skill_name)
         for _, m in ipairs(exp.matchers) do
           if m.name then
             table.insertTable(cnames, m.name)
-          elseif m.trueName then
+          end
+          if m.trueName then
             table.insertTable(cnames, m.trueName)
           end
         end
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)
+          c.skillName = skill_name
           ret = c.skill:canUse(Self, c)
           if ret then break end
         end

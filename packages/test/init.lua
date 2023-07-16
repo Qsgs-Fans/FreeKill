@@ -187,7 +187,7 @@ local damage_maker = fk.CreateActiveSkill{
   end,
   target_num = 1,
   interaction = function()return UI.ComboBox {
-    choices = {"normal_damage", "fire_damage", "thunder_damage", "ice_damage", "lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp"}
+    choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage", "lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp"}
   }end,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
@@ -212,7 +212,7 @@ local damage_maker = fk.CreateActiveSkill{
     elseif choice == "lose_hp" then
       room:loseHp(target, number, self.name)
     else
-      choices = {"normal_damage", "fire_damage", "thunder_damage", "ice_damage"}
+      choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage"}
       room:damage({
         from = from,
         to = target,

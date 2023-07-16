@@ -7,6 +7,7 @@ MetroButton {
   id: root
   property string skill
   property var choices: []
+  property var all_choices: []
   property string default_choice
   property string answer: default_choice
   property bool detailed: false
@@ -42,6 +43,7 @@ MetroButton {
     }
     const box = roomScene.popupBox.item;
     box.options = choices;
+    box.all_options = all_choices;
     box.accepted.connect(() => {
       answer = choices[box.result];
     });

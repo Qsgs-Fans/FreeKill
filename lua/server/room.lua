@@ -594,7 +594,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
 
   player.maxHp = player:getGeneralMaxHp()
   self:broadcastProperty(player, "maxHp")
-  if full then
+  if full or player.hp > player.maxHp then
     player.hp = player.maxHp
     self:broadcastProperty(player, "hp")
   end
@@ -1338,15 +1338,18 @@ end
 ---@param choices string[] @ 可选选项列表
 ---@param skill_name string|nil @ 技能名
 ---@param prompt string|nil @ 提示信息
----@param detailed boolean|nil @ 暂未使用
+---@param detailed boolean|nil @ 选项详细描述
+---@param all_choices string[]|nil @ 所有选项（不可选变灰）
 ---@return string @ 选择的选项
-function Room:askForChoice(player, choices, skill_name, prompt, detailed)
-  if #choices == 1 then return choices[1] end
+function Room:askForChoice(player, choices, skill_name, prompt, detailed, all_choices)
+  if #choices == 1 and not all_choices then return choices[1] end
+  assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
   local command = "AskForChoice"
   prompt = prompt or ""
+  all_choices = all_choices or choices
   self:notifyMoveFocus(player, skill_name)
   local result = self:doRequest(player, command, json.encode{
-    choices, skill_name, prompt, detailed
+    choices, all_choices, skill_name, prompt, detailed
   })
   if result == "" then result = choices[1] end
   return result
@@ -1785,7 +1788,7 @@ end
 ---@param skillName string @ 技能名
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
----@return integer
+---@return table<"card"|"from"|"to"> @ 选择的卡牌、起点玩家id和终点玩家id列表
 function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
   if flag then
     assert(flag == "e" or flag == "j")
@@ -1863,15 +1866,18 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   end
 
   local cardToMove = Fk:getCardById(result.cardId)
+  local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
   self:moveCardTo(
     cardToMove,
     cardToMove.type == Card.TypeEquip and Player.Equip or Player.Judge,
-    result.pos == 0 and targetTwo or targetOne,
+    to,
     fk.ReasonPut,
     skillName,
     nil,
     true
   )
+
+  return { card = cardToMove, from = from.id, to = to.id }
 end
 
 --- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
@@ -2422,7 +2428,9 @@ function Room:drawCards(player, num, skillName, fromPlace)
     skillName = skillName,
     fromPlace = fromPlace,
   }
-  self.logic:trigger(fk.BeforeDrawCard, player, drawData)
+  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) or drawData.num < 1 then
+    self.logic:breakEvent(false)
+  end
 
   num = drawData.num
   fromPlace = drawData.fromPlace

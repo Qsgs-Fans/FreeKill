@@ -114,7 +114,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
   damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
 
-  if damageStruct.from and not damageStruct.from:isAlive() then
+  if damageStruct.from and damageStruct.from.dead then
     damageStruct.from = nil
   end
 
@@ -135,7 +135,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     assert(damageStruct.to:isInstanceOf(ServerPlayer))
   end
 
-  if not damageStruct.to:isAlive() then
+  if damageStruct.to.dead then
     return false
   end
 
@@ -249,6 +249,7 @@ GameEvent.functions[GameEvent.Recover] = function(self)
   end
 
   local who = recoverStruct.who
+
   if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
     self.logic:breakEvent(false)
   end
@@ -274,8 +275,22 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
     player = player.id,
     num = num,
   })
+  self:sendLog{
+    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
+    from = player.id,
+    arg = num > 0 and num or - num,
+  }
   if player.maxHp == 0 then
+    player.hp = 0
+    self:broadcastProperty(player, "hp")
+    self:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = 0,
+      arg2 = 0,
+    }
     self:killPlayer({ who = player.id })
+    return false
   end
 
   local diff = player.hp - player.maxHp
@@ -284,12 +299,6 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
       player.hp = player.hp - diff
     end
   end
-
-  self:sendLog{
-    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
-    from = player.id,
-    arg = num > 0 and num or - num,
-  }
 
   self:sendLog{
     type = "#ShowHPAndMaxHP",

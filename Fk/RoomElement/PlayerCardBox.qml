@@ -6,7 +6,9 @@ import Fk.Pages
 
 GraphicsBox {
   id: root
-  title.text: Backend.translate("$ChooseCard")
+
+  title.text: root.multiChoose ? Backend.translate("$ChooseCards").arg(root.min).arg(root.max) : Backend.translate("$ChooseCard")
+
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + Math.min(7, Math.max(1, handcards.count, equips.count, delayedTricks.count)) * 100
   height: 50 + (handcards.count > 0 ? 150 : 0) + (equips.count > 0 ? 150 : 0) + (delayedTricks.count > 0 ? 150 : 0)

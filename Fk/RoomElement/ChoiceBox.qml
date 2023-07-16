@@ -6,6 +6,7 @@ import Fk.Pages
 
 GraphicsBox {
   property var options: []
+  property var all_options: []
   property string skill_name: ""
   property int result
 
@@ -35,11 +36,12 @@ GraphicsBox {
     columnSpacing: 10
 
     Repeater {
-      model: options
+      model: all_options
 
       MetroButton {
         Layout.fillWidth: true
         text: processPrompt(modelData)
+        enabled: options.indexOf(modelData) !== -1
 
         onClicked: {
           result = index;

@@ -870,14 +870,16 @@ callbacks["AskForExchange"] = (jsonData) => {
     replyToServer(JSON.stringify(box.getResult()));
   });
 }
+
 callbacks["AskForChoice"] = (jsonData) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
   const data = JSON.parse(jsonData);
   const choices = data[0];
-  const skill_name = data[1];
-  const prompt = data[2];
-  const detailed = data[3];
+  const all_choices = data[1];
+  const skill_name = data[2];
+  const prompt = data[3];
+  const detailed = data[4];
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForChoice")
       .arg(Backend.translate(skill_name));
@@ -895,6 +897,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   const box = roomScene.popupBox.item;
   box.options = choices;
   box.skill_name = skill_name;
+  box.all_options = all_choices;
   box.accepted.connect(() => {
     replyToServer(choices[box.result]);
   });
@@ -970,8 +973,8 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
     delayedTricks.push(card_data);
   });
 
-  roomScene.promptText = Backend.translate("#AskForChooseCard")
-    .arg(Backend.translate(reason));
+  roomScene.promptText = Backend.translate("#AskForChooseCards")
+    .arg(Backend.translate(reason)).arg(min).arg(max);
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   const box = roomScene.popupBox.item;
