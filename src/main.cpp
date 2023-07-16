@@ -174,13 +174,13 @@ int main(int argc, char *argv[]) {
   // 初始化一下各种杂项信息
   QThread::currentThread()->setObjectName("Main");
   if (!info_log) {
-    info_log = fopen("freekill.server.info.log", "a+");
+    info_log = fopen("freekill.server.info.log", "w+");
     if (!info_log) {
       qFatal("Cannot open info.log");
     }
   }
   if (!err_log) {
-    err_log = fopen("freekill.server.error.log", "a+");
+    err_log = fopen("freekill.server.error.log", "w+");
     if (!err_log) {
       qFatal("Cannot open error.log");
     }

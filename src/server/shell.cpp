@@ -216,7 +216,7 @@ void Shell::banCommand(QStringList &list) {
     banAccount(db, name, true);
   }
 
-  banipCommand(list);
+  // banipCommand(list);
   banUuidCommand(list);
 }
 
@@ -232,7 +232,7 @@ void Shell::unbanCommand(QStringList &list) {
     banAccount(db, name, false);
   }
 
-  unbanipCommand(list);
+  // unbanipCommand(list);
   unbanUuidCommand(list);
 }
 
