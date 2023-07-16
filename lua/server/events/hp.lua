@@ -82,7 +82,7 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
   self.logic:trigger(fk.HpChanged, player, data)
 
   if player.hp < 1 then
-    if num < 0 and not data.preventDying and player.maxHp > 0 then
+    if num < 0 and not data.preventDying then
       ---@type DyingStruct
       local dyingStruct = {
         who = player.id,
@@ -244,12 +244,11 @@ GameEvent.functions[GameEvent.Recover] = function(self)
     end
   end
 
-  local who = recoverStruct.who
-  recoverStruct.num = math.min(who.maxHp - who.hp, recoverStruct.num)
-
   if recoverStruct.num < 1 then
     return false
   end
+
+  local who = recoverStruct.who
 
   if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
     self.logic:breakEvent(false)
@@ -276,8 +275,22 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
     player = player.id,
     num = num,
   })
+  self:sendLog{
+    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
+    from = player.id,
+    arg = num > 0 and num or - num,
+  }
   if player.maxHp == 0 then
+    player.hp = 0
+    self:broadcastProperty(player, "hp")
+    self:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = 0,
+      arg2 = 0,
+    }
     self:killPlayer({ who = player.id })
+    return false
   end
 
   local diff = player.hp - player.maxHp
@@ -286,12 +299,6 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
       player.hp = player.hp - diff
     end
   end
-
-  self:sendLog{
-    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
-    from = player.id,
-    arg = num > 0 and num or - num,
-  }
 
   self:sendLog{
     type = "#ShowHPAndMaxHP",

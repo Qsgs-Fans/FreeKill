@@ -594,7 +594,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
 
   player.maxHp = player:getGeneralMaxHp()
   self:broadcastProperty(player, "maxHp")
-  if full then
+  if full or player.hp > player.maxHp then
     player.hp = player.maxHp
     self:broadcastProperty(player, "hp")
   end
