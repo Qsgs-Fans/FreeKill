@@ -790,6 +790,20 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
         return false
       end
 
+      for _, info in ipairs(move.moveInfo) do
+        local realFromArea = self:getCardArea(info.cardId)
+        local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+        local virtualEquip
+
+        if table.contains(playerAreas, realFromArea) and move.from then
+          virtualEquip = self:getPlayerById(move.from):getVirualEquip(info.cardId)
+        end
+
+        if table.contains(playerAreas, move.toArea) and move.to and virtualEquip then
+          self:getPlayerById(move.to):addVirtualEquip(virtualEquip)
+        end
+      end
+
       -- forceVisible make the move visible
       -- FIXME: move.moveInfo is an array, fix this
       move.moveVisible = move.moveVisible or (forceVisible)
@@ -1798,11 +1812,14 @@ end
 ---@param skillName string @ 技能名
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
----@return table<"card"|"from"|"to"> @ 选择的卡牌、起点玩家id和终点玩家id列表
-function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
+---@param excludeIds CardId[]|null @ 本次不可移动的卡牌id
+---@return table<"card"|"from"|"to">|null @ 选择的卡牌、起点玩家id和终点玩家id列表
+function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
+
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local cards = {}
   local cardsPosition = {}
@@ -1810,14 +1827,14 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   if not flag or flag == "e" then
     if not moveFrom or moveFrom == targetOne then
       for _, equipId in ipairs(targetOne:getCardIds(Player.Equip)) do
-        if targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
+        if not table.contains(excludeIds, equipId) and targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
           table.insert(cards, equipId)
         end
       end
     end
     if not moveFrom or moveFrom == targetTwo then
       for _, equipId in ipairs(targetTwo:getCardIds(Player.Equip)) do
-        if targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
+        if not table.contains(excludeIds, equipId) and targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
           table.insert(cards, equipId)
         end
       end
@@ -1840,7 +1857,7 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   if not flag or flag == "j" then
     if not moveFrom or moveFrom == targetOne then
       for _, trickId in ipairs(targetOne:getCardIds(Player.Judge)) do
-        if targetOne:canMoveCardInBoardTo(targetTwo, trickId) then
+        if not table.contains(excludeIds, trickId) and targetOne:canMoveCardInBoardTo(targetTwo, trickId) then
           table.insert(cards, trickId)
           table.insert(cardsPosition, 0)
         end
@@ -1848,7 +1865,7 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     end
     if not moveFrom or moveFrom == targetTwo then
       for _, trickId in ipairs(targetTwo:getCardIds(Player.Judge)) do
-        if targetTwo:canMoveCardInBoardTo(targetOne, trickId) then
+        if not table.contains(excludeIds, trickId) and targetTwo:canMoveCardInBoardTo(targetOne, trickId) then
           table.insert(cards, trickId)
           table.insert(cardsPosition, 1)
         end
@@ -1863,7 +1880,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   local firstGeneralName = targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
   local secGeneralName = targetTwo.general + (targetTwo.deputyGeneral ~= "" and ("/" .. targetTwo.deputyGeneral) or "")
 
-  local data = { cards = cards, cardsPosition = cardsPosition, generalNames = { firstGeneralName, secGeneralName } }
+  local data = {
+    cards = cards,
+    cardsPosition = cardsPosition,
+    generalNames = { firstGeneralName, secGeneralName },
+    playerIds = { targetOne.id, targetTwo.id }
+  }
   local command = "AskForMoveCardInBoard"
   self:notifyMoveFocus(player, command)
   local result = self:doRequest(player, command, json.encode(data))
@@ -1875,8 +1897,8 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     result = json.decode(result)
   end
 
-  local cardToMove = Fk:getCardById(result.cardId)
   local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
+  local cardToMove = self:getCardOwner(result.cardId):getVirualEquip(result.cardId) or Fk:getCardById(result.cardId)
   self:moveCardTo(
     cardToMove,
     cardToMove.type == Card.TypeEquip and Player.Equip or Player.Judge,
@@ -1898,16 +1920,18 @@ end
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate)
+function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = (no_indicate == nil) and true or no_indicate
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local data = {
     flag = flag,
     skillName = skillName,
+    excludeIds = excludeIds,
   }
   local _, ret = self:askForUseActiveSkill(
     player,
@@ -1924,7 +1948,7 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
     if cancelable then
       return {}
     else
-      return self:canMoveCardInBoard(flag)
+      return self:canMoveCardInBoard(flag, excludeIds)
     end
   end
 end
@@ -3028,18 +3052,20 @@ end
 
 ---@param flag string|null
 ---@param players ServerPlayer[]|null
+---@param excludeIds CardId[]|null
 ---@return PlayerId[] @ 可能为空
-function Room:canMoveCardInBoard(flag, players)
+function Room:canMoveCardInBoard(flag, players, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
 
   players = players or self.alive_players
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local targets = {}
   table.find(players, function(p)
     local canMoveTo = table.find(players, function(another)
-      return p ~= another and p:canMoveCardsInBoardTo(another, flag)
+      return p ~= another and p:canMoveCardsInBoardTo(another, flag, excludeIds)
     end)
 
     if canMoveTo then

@@ -191,7 +191,7 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
   room.logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
 
   if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
-    local targets = table.filter(room:getOtherPlayers(room:getPlayerById(damageStruct.to)), function(p)
+    local targets = table.filter(room:getOtherPlayers(damageStruct.to), function(p)
       return p.chained
     end)
     for _, p in ipairs(targets) do

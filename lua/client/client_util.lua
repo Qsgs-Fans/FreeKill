@@ -76,7 +76,7 @@ local cardSubtypeStrings = {
   [Card.SubtypeTreasure] = "treasure",
 }
 
-function GetCardData(id)
+function GetCardData(id, virtualCardForm)
   local card = Fk:getCardById(id)
   if card == nil then return json.encode{
     cid = id,
@@ -105,6 +105,13 @@ function GetCardData(id)
     local orig = Fk:getCardById(id, true)
     ret.name = orig.name
     ret.virt_name = card.name
+  end
+  if virtualCardForm then
+    local virtualCard = ClientInstance:getPlayerById(virtualCardForm):getVirualEquip(id)
+    if virtualCard then
+      ret.virt_name = virtualCard.name
+      ret.subtype = cardSubtypeStrings[virtualCard.sub_type]
+    end
   end
   return json.encode(ret)
 end
