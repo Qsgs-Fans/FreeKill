@@ -352,6 +352,18 @@ function Player:getPileNameOfId(id)
   end
 end
 
+--- 返回所有“如手牌般使用或打出”的牌。
+--- 或者说，返回所有名字以“&”结尾的pile的牌。
+---@param include_hand boolean|nil @ 是否包含真正的手牌
+---@return integer[]
+function Player:getHandlyIds(include_hand)
+  local ret = include_hand and self:getCardIds("h") or {}
+  for k, v in pairs(self.special_cards) do
+    if k:endsWith("&") then table.insertTable(ret, v) end
+  end
+  return ret
+end
+
 -- for fkp only
 function Player:getHandcardNum()
   return #self:getCardIds(Player.Hand)

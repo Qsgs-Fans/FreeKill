@@ -19,6 +19,15 @@ var PIXANIM_DIR = AppPath + "/image/anim/"
 var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
 var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
 
+function getGeneralExtraPic(name, extra) {
+  const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+  const extension = data.extension;
+  const path = AppPath + "/packages/" + extension + "/image/generals/" + extra + name + ".jpg";
+  if (Backend.exists(path)) {
+    return path;
+  }
+}
+
 function getGeneralPicture(name) {
   const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
   const extension = data.extension;

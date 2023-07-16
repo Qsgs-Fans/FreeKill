@@ -402,7 +402,7 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   end
 
   self.phase = to_phase
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 
   if #self.phases > 0 then
     table.remove(self.phases, 1)
@@ -427,7 +427,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
 
   local current = self.phase
   self.phase = phase
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 
   room:sendLog{
     type = "#GainAnExtraPhase",
@@ -439,7 +439,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   GameEvent(GameEvent.Phase, self):exec()
 
   self.phase = current
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 end
 
 ---@param phase_table Phase[]|nil
@@ -494,7 +494,7 @@ function ServerPlayer:play(phase_table)
     phase_state[i].phase = phases[i]
 
     self.phase = phases[i]
-    room:notifyProperty(self, self, "phase")
+    room:broadcastProperty(self, "phase")
 
     local cancel_skip = true
     if phases[i] ~= Player.NotActive and (skip) then

@@ -661,6 +661,11 @@ callbacks["PropertyUpdate"] = (jsonData) => {
   if (typeof(model) !== "undefined") {
     model[property_name] = value;
   }
+
+  if (property_name === "phase") {
+    let item = getPhoto(uid);
+    item.playing = value < 8; // Player.NotActive
+  }
 }
 
 callbacks["UpdateCard"] = (j) => {
@@ -748,6 +753,7 @@ callbacks["MoveFocus"] = (jsonData) => {
       item.progressTip = Backend.translate(command)
         + Backend.translate(" thinking...");
 
+      /*
       if (command === "PlayCard") {
         item.playing = true;
       }
@@ -756,6 +762,7 @@ callbacks["MoveFocus"] = (jsonData) => {
       if (command === "PlayCard") {
         item.playing = false;
       }
+    */
     }
   }
 }

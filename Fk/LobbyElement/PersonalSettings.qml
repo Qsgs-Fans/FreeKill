@@ -23,10 +23,10 @@ Item {
     Image {
       Layout.preferredWidth: 64
       Layout.preferredHeight: 64
-      source: SkinBank.getGeneralPicture(Self.avatar)
-      sourceSize.width: 250
-      sourceSize.height: 292
-      sourceClipRect: Qt.rect(61, 0, 128, 128)
+      source: SkinBank.getGeneralExtraPic(Self.avatar, "avatar/") ?? SkinBank.getGeneralPicture(Self.avatar)
+      // sourceSize.width: 250
+      // sourceSize.height: 292
+      sourceClipRect: sourceSize.width > 200 ? Qt.rect(61, 0, 128, 128) : undefined
 
       Rectangle {
         anchors.fill: parent
