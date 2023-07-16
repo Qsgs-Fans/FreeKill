@@ -158,6 +158,12 @@ RowLayout {
 
       return ret;
     }
+
+    const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
+    for (let name in pile_data) {
+      if (name.endsWith("&")) expandPile(name);
+    }
+
     if (cname) {
       const ids = [];
       let cards = handcardAreaItem.cards;
@@ -178,7 +184,6 @@ RowLayout {
 
       // Must manually analyze pattern here
       let pile_list = cname.split("|")[4];
-      const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
       if (pile_list && pile_list !== "." && !(pile_data instanceof Array)) {
         pile_list = pile_list.split(",");
         for (let pile_name of pile_list) {

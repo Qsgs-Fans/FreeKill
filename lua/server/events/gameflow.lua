@@ -227,7 +227,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     logic:trigger(fk.EventPhaseEnd, current, nil, true)
 
     current.phase = Player.NotActive
-    room:notifyProperty(current, current, "phase")
+    room:broadcastProperty(current, "phase")
     logic:trigger(fk.EventPhaseChanging, current,
       { from = Player.Finish, to = Player.NotActive }, true)
     logic:trigger(fk.EventPhaseStart, current, nil, true)

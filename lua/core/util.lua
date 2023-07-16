@@ -2,6 +2,8 @@
 
 local Util = {}
 Util.DummyFunc = function() end
+Util.TrueFunc = function() return true end
+Util.FalseFunc = function() return false end
 Util.DummyTable = setmetatable({}, {
   __newindex = function() error("Cannot assign to dummy table") end
 })
