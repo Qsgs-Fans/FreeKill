@@ -156,47 +156,7 @@ function GameLogic:chooseGenerals()
     p.default_reply = ""
   end
 
-  local specialKingdomPlayers = table.filter(nonlord, function(p)
-    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
-  end)
-
-  if #specialKingdomPlayers > 0 then
-    local choiceMap = {}
-    for _, p in ipairs(specialKingdomPlayers) do
-      local allKingdoms = {}
-      if p.kingdom == "god" then
-        allKingdoms = table.simpleClone(Fk.kingdoms)
-
-        local exceptedKingdoms = { "god" }
-        for _, kingdom in ipairs(exceptedKingdoms) do
-          table.removeOne(allKingdoms, kingdom)
-        end
-      else
-        local curGeneral = Fk.generals[p.general]
-        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
-      end
-
-      choiceMap[p.id] = allKingdoms
-
-      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
-      p.request_data = data
-    end
-
-    room:notifyMoveFocus(nonlord, "AskForKingdom")
-    room:doBroadcastRequest("AskForChoice", specialKingdomPlayers)
-
-    for _, p in ipairs(specialKingdomPlayers) do
-      local kingdomChosen
-      if p.reply_ready then
-        kingdomChosen = p.client_reply
-      else
-        kingdomChosen = choiceMap[p.id][1]
-      end
-
-      p.kingdom = kingdomChosen
-      room:notifyProperty(p, p, "kingdom")
-    end
-  end
+  room:askForChooseKingdom(nonlord)
 end
 
 function GameLogic:buildPlayerCircle()
