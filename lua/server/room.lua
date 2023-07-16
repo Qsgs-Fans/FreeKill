@@ -1788,7 +1788,7 @@ end
 ---@param skillName string @ 技能名
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
----@return table<"card"|"from"|"to"> @ 选择的卡牌id、起点玩家id和终点玩家id列表
+---@return table<"card"|"from"|"to"> @ 选择的卡牌、起点玩家id和终点玩家id列表
 function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
   if flag then
     assert(flag == "e" or flag == "j")
@@ -1877,7 +1877,7 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     true
   )
 
-  return { card = result.cardId, from = from.id, to = to.id }
+  return { card = cardToMove, from = from.id, to = to.id }
 end
 
 --- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
