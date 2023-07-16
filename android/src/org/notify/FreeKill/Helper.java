@@ -2,6 +2,7 @@
 
 package org.notify.FreeKill;
 
+import android.provider.Settings;
 import android.app.Activity;
 import android.view.View;
 import android.view.WindowManager;
@@ -42,5 +43,13 @@ public class Helper {
         });
       }
     });
+  }
+
+  public static String GetSerial() {
+    Activity activity = QtNative.activity();
+    return Settings.Secure.getString(
+      activity.getContentResolver(),
+      Settings.Secure.ANDROID_ID
+    );
   }
 }

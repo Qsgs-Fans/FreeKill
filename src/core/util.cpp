@@ -205,7 +205,11 @@ QJsonDocument String2Json(const QString &str) {
 }
 
 QString GetDeviceUuid() {
+#ifdef Q_OS_ANDROID
+  return QJniObject::callStaticMethod<QString>("org/notify/FreeKill/Helper", "GetSerial", "()Ljava/lang/String;");
+#else
   return QSysInfo::machineUniqueId();
+#endif
 }
 
 QString Color(const QString &raw, fkShell::TextColor color,
