@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 local extension = Package("test_p_0")
+extension.extensionName = "test"
 
 local cheat = fk.CreateActiveSkill{
   name = "cheat",
@@ -269,6 +270,18 @@ test2:addSkill(control)
 test2:addSkill(damage_maker)
 test2:addSkill(change_hero)
 test2:addSkill(test_zhenggong)
+
+local shibing = General(extension, "blank_shibing", "qun", 5)
+shibing.hidden = true
+Fk:loadTranslationTable{
+  ["blank_shibing"] = "男士兵",
+}
+
+local nvshibing = General(extension, "blank_nvshibing", "qun", 5, 5, General.Female)
+Fk:loadTranslationTable{
+  ["blank_nvshibing"] = "女士兵",
+}
+nvshibing.hidden = true
 
 Fk:loadTranslationTable{
   ["test_p_0"] = "测试包",

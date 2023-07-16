@@ -1092,8 +1092,22 @@ local role_mode = fk.CreateGameMode{
     roleTable = roleTable[#Fk:currentRoom().players]
 
     if Self.role == "renegade" then
-      roleCheck = #Fk:currentRoom().alive_players == 2
-      roleText = "only you and me"
+      local rebelNum = #table.filter(roleTable, function(role)
+        return role == "rebel"
+      end)
+
+      for _, p in ipairs(Fk:currentRoom().players) do
+        if p.role == "rebel" then
+          if not p.dead then
+            break
+          else
+            rebelNum = rebelNum - 1
+          end
+        end
+      end
+
+      roleCheck = rebelNum == 0
+      roleText = "left lord and loyalist alive"
     elseif Self.role == "rebel" then
       local rebelNum = #table.filter(roleTable, function(role)
         return role == "rebel"
@@ -1162,7 +1176,7 @@ local role_mode = fk.CreateGameMode{
 extension:addGameMode(role_mode)
 Fk:loadTranslationTable{
   ["time limitation: 5 sec"] = "游戏时长达到5秒（测试用）",
-  ["only you and me"] = "仅剩你和主公存活",
+  ["left lord and loyalist alive"] = "仅剩你和主忠方存活",
   ["left one rebel alive"] = "反贼仅剩你存活且不存在存活内奸",
   ["left you alive"] = "主忠方仅剩你存活且其他阵营仅剩一方",
   ["loyalist never surrender"] = "忠臣永不投降！",
