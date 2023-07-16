@@ -1127,7 +1127,13 @@ callbacks["AskForUseCard"] = (jsonData) => {
   const prompt = data[2];
   const extra_data = data[4];
   if (extra_data != null) {
-    roomScene.extra_data = extra_data;
+    if (extra_data.effectTo !== Self.id && roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
+      doCancelButton();
+      return;
+    } else {
+      console.log(extra_data);
+      roomScene.extra_data = extra_data;
+    }
   }
 
   if (prompt === "") {

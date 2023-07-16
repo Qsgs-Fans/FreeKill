@@ -191,7 +191,7 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
   room.logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
 
   if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
-    local targets = table.filter(room:getAlivePlayers(), function(p)
+    local targets = table.filter(room:getOtherPlayers(room:getPlayerById(damageStruct.to)), function(p)
       return p.chained
     end)
     for _, p in ipairs(targets) do
@@ -225,7 +225,7 @@ GameEvent.functions[GameEvent.LoseHp] = function(self)
     self.logic:breakEvent(false)
   end
 
-  if not self:changeHp(player, -num, "loseHp", skillName) then
+  if not self:changeHp(player, -data.num, "loseHp", skillName) then
     self.logic:breakEvent(false)
   end
 

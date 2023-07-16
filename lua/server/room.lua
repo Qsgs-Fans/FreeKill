@@ -2329,7 +2329,15 @@ function Room:handleCardEffect(event, cardEffectEvent)
       elseif cardEffectEvent.from then
         prompt = "#AskForNullificationWithoutTo:" .. cardEffectEvent.from .. "::" .. cardEffectEvent.card.name
       end
-      local use = self:askForNullification(players, nil, nil, prompt)
+
+      local extra_data
+      if #TargetGroup:getRealTargets(cardEffectEvent.tos) > 1 then
+        local parentUseEvent = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
+        if parentUseEvent then
+          extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectEvent.to }
+        end
+      end
+      local use = self:askForNullification(players, nil, nil, prompt, true, extra_data)
       if use then
         use.toCard = cardEffectEvent.card
         use.responseToEvent = cardEffectEvent
