@@ -1245,7 +1245,7 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
----@return string @ 选择的武将
+---@return string|string[] @ 选择的武将
 function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
@@ -1267,6 +1267,48 @@ function Room:askForGeneral(player, generals, n)
   end
 
   return defaultChoice
+end
+
+--- 询问玩家若为神将、双势力需选择一个势力。
+---@param player ServerPlayer[]|nil @ 询问目标
+function Room:askForChooseKingdom(players)
+  players = players or self.alive_players
+  local specialKingdomPlayers = table.filter(players, function(p)
+    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+  end)
+
+  if #specialKingdomPlayers > 0 then
+    local choiceMap = {}
+    for _, p in ipairs(specialKingdomPlayers) do
+      local allKingdoms = {}
+      if p.kingdom == "god" then
+        allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
+      else
+        local curGeneral = Fk.generals[p.general]
+        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      end
+
+      choiceMap[p.id] = allKingdoms
+
+      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+      p.request_data = data
+    end
+
+    self:notifyMoveFocus(players, "AskForKingdom")
+    self:doBroadcastRequest("AskForChoice", specialKingdomPlayers)
+
+    for _, p in ipairs(specialKingdomPlayers) do
+      local kingdomChosen
+      if p.reply_ready then
+        kingdomChosen = p.client_reply
+      else
+        kingdomChosen = choiceMap[p.id][1]
+      end
+
+      p.kingdom = kingdomChosen
+      self:notifyProperty(p, p, "kingdom")
+    end
+  end
 end
 
 --- 询问chooser，选择target的一张牌。

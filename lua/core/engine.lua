@@ -352,22 +352,11 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     end
   end
 
-  if #availableGenerals == 0 then
+  if #availableGenerals < num then
     return {}
   end
 
-  local result = {}
-  for i = 1, num do
-    local randomGeneral = math.random(1, #availableGenerals)
-    table.insert(result, availableGenerals[randomGeneral])
-    table.remove(availableGenerals, randomGeneral)
-
-    if #availableGenerals == 0 then
-      break
-    end
-  end
-
-  return result
+  return table.random(availableGenerals, num)
 end
 
 --- 获取已经启用的所有武将的列表。
