@@ -1133,7 +1133,6 @@ callbacks["AskForUseCard"] = (jsonData) => {
       doCancelButton();
       return;
     } else {
-      console.log(extra_data);
       roomScene.extra_data = extra_data;
     }
   }
