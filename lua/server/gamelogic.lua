@@ -86,7 +86,7 @@ function GameLogic:chooseGenerals()
   local generalNum = room.settings.generalNum
   local n = room.settings.enableDeputy and 2 or 1
   local lord = room:getLord()
-  local lord_general = nil
+  local lord_generals = {}
 
   if lord ~= nil then
     room.current = lord
@@ -94,11 +94,14 @@ function GameLogic:chooseGenerals()
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
-    lord_general = room:askForGeneral(lord, generals, n)
-    local deputy
-    if type(lord_general) == "table" then
-      deputy = lord_general[2]
-      lord_general = lord_general[1]
+    lord_generals = room:askForGeneral(lord, generals, n)
+    local lord_general, deputy
+    if type(lord_generals) == "table" then
+      deputy = lord_generals[2]
+      lord_general = lord_generals[1]
+    else
+      lord_general = lord_generals
+      lord_generals = {lord_general}
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
@@ -125,7 +128,7 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, {lord_general})
+  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, lord_generals)
   table.shuffle(generals)
   for _, p in ipairs(nonlord) do
     local arg = {}
@@ -175,7 +178,7 @@ function GameLogic:chooseGenerals()
 
       choiceMap[p.id] = allKingdoms
 
-      local data = json.encode({ allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
       p.request_data = data
     end
 

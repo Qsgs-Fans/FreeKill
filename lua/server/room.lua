@@ -1235,7 +1235,7 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
----@return string @ 选择的武将
+---@return string|string[] @ 选择的武将
 function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
