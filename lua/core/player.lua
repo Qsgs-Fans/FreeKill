@@ -856,7 +856,7 @@ function Player:canMoveCardInBoardTo(to, id)
     return false
   end
 
-  local card = Fk:getCardById(id)
+  local card = self:getVirualEquip(id) or Fk:getCardById(id)
   assert(card.type == Card.TypeEquip or card.sub_type == Card.SubtypeDelayedTrick)
 
   if card.type == Card.TypeEquip then
@@ -868,12 +868,13 @@ function Player:canMoveCardInBoardTo(to, id)
   end
 end
 
-function Player:canMoveCardsInBoardTo(to, flag)
+function Player:canMoveCardsInBoardTo(to, flag, excludeIds)
   if self == to then
     return false
   end
 
   assert(flag == nil or flag == "e" or flag == "j")
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local areas = {}
   if flag == "e" then
@@ -885,7 +886,7 @@ function Player:canMoveCardsInBoardTo(to, flag)
   end
 
   for _, cardId in ipairs(self:getCardIds(areas)) do
-    if self:canMoveCardInBoardTo(to, cardId) then
+    if not table.contains(excludeIds, cardId) and self:canMoveCardInBoardTo(to, cardId) then
       return true
     end
   end

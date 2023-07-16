@@ -999,20 +999,22 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
 
 callbacks["AskForMoveCardInBoard"] = (jsonData) => {
   const data = JSON.parse(jsonData);
-  const { cards, cardsPosition, generalNames } = data;
+  const { cards, cardsPosition, generalNames, playerIds } = data;
 
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
 
   const boxCards = [];
   cards.forEach(id => {
-    const d = Backend.callLuaFunction("GetCardData", [id]);
+    const cardPos = cardsPosition[cards.findIndex(cid => cid === id)];
+    const d = Backend.callLuaFunction("GetCardData", [id, playerIds[cardPos]]);
     boxCards.push(JSON.parse(d));
   });
 
   const box = roomScene.popupBox.item;
   box.cards = boxCards;
   box.cardsPosition = cardsPosition;
+  box.playerIds = playerIds;
   box.generalNames = generalNames.map(name => {
     const namesSplited = name.split('/');
     return namesSplited.length > 1 ? namesSplited.map(nameSplited => Backend.translate(nameSplited)).join('/') : Backend.translate(name)
@@ -1127,7 +1129,13 @@ callbacks["AskForUseCard"] = (jsonData) => {
   const prompt = data[2];
   const extra_data = data[4];
   if (extra_data != null) {
-    roomScene.extra_data = extra_data;
+    if (extra_data.effectTo !== Self.id && roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
+      doCancelButton();
+      return;
+    } else {
+      console.log(extra_data);
+      roomScene.extra_data = extra_data;
+    }
   }
 
   if (prompt === "") {

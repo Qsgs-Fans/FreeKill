@@ -42,6 +42,7 @@ Item {
   property bool respond_play: false
   property bool autoPending: false
   property var extra_data: ({})
+  property var skippedUseEventId: []
 
   Image {
     source: config.roomBg
@@ -570,6 +571,16 @@ Item {
       anchors.horizontalCenter: progress.horizontalCenter
       spacing: 20
       visible: false
+
+      Button {
+        id: skipNullificationButton
+        text: Backend.translate("SkipNullification")
+        visible: !!extra_data.useEventId && !skippedUseEventId.find(id => id === extra_data.useEventId)
+        onClicked: {
+          skippedUseEventId.push(extra_data.useEventId);
+          Logic.doCancelButton();
+        }
+      }
 
       Button {
         id: okButton

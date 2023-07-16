@@ -62,12 +62,10 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
       for _, info in ipairs(data.moveInfo) do
         local realFromArea = self:getCardArea(info.cardId)
         local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-        local virtualEquip
 
         if table.contains(playerAreas, realFromArea) and data.from then
           local from = self:getPlayerById(data.from)
           from:removeCards(realFromArea, { info.cardId }, info.fromSpecialName)
-          virtualEquip = from:getVirualEquip(info.cardId)
 
         elseif realFromArea ~= Card.Unknown then
           local fromAreaIds = {}
@@ -86,7 +84,6 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
 
         if table.contains(playerAreas, data.toArea) and data.to then
           local to = self:getPlayerById(data.to)
-          if virtualEquip then to:addVirtualEquip(virtualEquip) end
           to:addCards(data.toArea, { info.cardId }, data.specialName)
 
         else

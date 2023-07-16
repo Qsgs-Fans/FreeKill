@@ -137,6 +137,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["Exit Lobby"] = "退出大厅",
 
+  ["SkipNullification"] = "本轮忽略",
   ["OK"] = "确定",
   ["Cancel"] = "取消",
   ["End"] = "结束",
