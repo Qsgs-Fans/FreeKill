@@ -661,8 +661,9 @@ end
 
 function ServerPlayer:reset()
   self.room:sendLog{
-    type = "#ResetGeneral",
+    type = "#ChainStateChange",
     from = self.id,
+    arg = "reset-general"
   }
   self:setChainState(false)
   if not self.faceup then self:turnOver() end
