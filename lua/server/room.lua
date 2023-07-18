@@ -1649,10 +1649,10 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
   if extra_data then
     if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 1)
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
     end
-    if extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 1)
+    if extra_data.bypass_times == nil or extra_data.bypass_times then
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
   end
   local command = "AskForUseCard"
@@ -1672,8 +1672,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
@@ -1683,13 +1683,13 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     Fk.currentResponsePattern = nil
 
     if result ~= "" then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
       return self:handleUseCardReply(player, result)
     end
   end
-  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
   return nil
 end
 

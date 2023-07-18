@@ -19,18 +19,18 @@ MarkEnum.MinusMaxCards = "MinusMaxCards"
 --于本回合内减少标记值数量的手牌上限
 MarkEnum.MinusMaxCardsInTurn = "MinusMaxCards-turn"
 
---使用牌无次数限制，可带清除标记后缀
+---使用牌无次数限制，可带清除标记后缀（-tmp为请求专用）
 MarkEnum.BypassTimesLimit = "BypassTimesLimit"
---使用牌无距离限制，可带清除标记后缀
+---使用牌无距离限制，可带清除标记后缀（-tmp为请求专用）
 MarkEnum.BypassDistancesLimit = "BypassDistancesLimit"
---对其使用牌无次数限制，可带清除标记后缀
+---对其使用牌无次数限制，可带清除标记后缀
 MarkEnum.BypassTimesLimitTo = "BypassTimesLimitTo"
---对其使用牌无距离限制，可带清除标记后缀
+---对其使用牌无距离限制，可带清除标记后缀
 MarkEnum.BypassDistancesLimitTo = "BypassDistancesLimitTo"
---非锁定技失效，可带清除标记后缀
+---非锁定技失效，可带清除标记后缀
 MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
 
---各种清除标记后缀
+---各种清除标记后缀
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 
 ---卡牌标记版本的清除标记后缀
