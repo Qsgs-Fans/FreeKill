@@ -551,6 +551,12 @@ function updateSelectedTargets(playerid, selected) {
         [card, id, selected_targets]
       ));
       photo.selectable = ret;
+      if (roomScene.extra_data instanceof Object) {
+        const exclusived = roomScene.extra_data.exclusive_targets;
+        if (exclusived instanceof Array) {
+          if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+      }
     })
 
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
