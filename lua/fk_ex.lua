@@ -274,7 +274,7 @@ end
 ---@return DistanceSkill
 function fk.CreateDistanceSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
 
   local skill = DistanceSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)

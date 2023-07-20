@@ -16,7 +16,7 @@ Fk:loadTranslationTable{
   ["diamond"] = "方块",
   ["suit"] = "花色",
   ["color"] = "颜色",
-  ["figure"] = "点数",
+  ["number"] = "点数",
 
   ["basic_char"] = "基",
   ["trick_char"] = "锦",
