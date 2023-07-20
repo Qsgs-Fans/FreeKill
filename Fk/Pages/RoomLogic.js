@@ -841,9 +841,15 @@ callbacks["AskForGuanxing"] = (jsonData) => {
     box.areaLimits = [min_bottom_cards];
     box.areaNames = [Backend.translate(bottom_area_name)];
   } else {
-    box.areaCapacities = [max_top_cards, max_bottom_cards];
-    box.areaLimits = [min_top_cards, min_bottom_cards];
-    box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    if (max_bottom_cards === 0) {
+      box.areaCapacities = [max_top_cards];
+      box.areaLimits = [min_top_cards];
+      box.areaNames = [Backend.translate(top_area_name)];
+    } else {
+      box.areaCapacities = [max_top_cards, max_bottom_cards];
+      box.areaLimits = [min_top_cards, min_bottom_cards];
+      box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    }
   }
   box.cards = cards;
   box.arrangeCards();

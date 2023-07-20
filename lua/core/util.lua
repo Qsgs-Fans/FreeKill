@@ -103,6 +103,47 @@ Util.NameMapper = function(e) return e.name end
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
 Util.Name2SkillMapper = function(e) return Fk.skills[e] end
 
+-- for card preset
+Util.global_can_use = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+Util.aoe_can_use = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if p ~= player and not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+Util.global_on_use = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+Util.aoe_on_use = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
 ---@generic T
 ---@param self T[]
 ---@return T[]
