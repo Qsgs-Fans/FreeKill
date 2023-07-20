@@ -1465,7 +1465,7 @@ function Room:AskForAddTarget(player, targets, num, can_minus, prompt, skillName
           if (data.card.trueName == "slash") or
             ((table.contains({"dismantlement", "snatch", "chasing_near"}, data.card.name)) and not p:isAllNude()) or
             (table.contains({"fire_attack", "unexpectation"}, data.card.name) and not p:isKongcheng()) or
-            (table.contains({"peach", "analeptic", "ex_nihilo", "duel", "savage_assault", "archery_attack", "amazing_grace", "god_salvation", 
+            (table.contains({"peach", "analeptic", "ex_nihilo", "duel", "savage_assault", "archery_attack", "amazing_grace", "god_salvation",
               "iron_chain", "foresight", "redistribute", "enemy_at_the_gates", "raid_and_frontal_attack"}, data.card.name)) or
             (data.card.name == "collateral" and p:getEquipment(Card.SubtypeWeapon) and
               #table.filter(room:getOtherPlayers(p), function(v) return p:inMyAttackRange(v) end) > 0)then
