@@ -1505,6 +1505,7 @@ function Room:AskForAddTarget(player, targets, num, can_minus, prompt, skillName
   end
   return {}
 end
+
 -- TODO: guanxing type
 --- 询问玩家对若干牌进行观星。
 ---
