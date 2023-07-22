@@ -170,6 +170,7 @@ end
 ---@field public about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
 ---@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
 ---@field public on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
+---@field public mod_target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean|nil
 ---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ActiveSkillSpec
@@ -186,6 +187,7 @@ function fk.CreateActiveSkill(spec)
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
+  if spec.mod_target_filter then skill.modTargetFilter = spec.mod_target_filter end
   if spec.feasible then
     print(spec.name .. ": feasible is deprecated. Use target_num and card_num instead.")
     skill.feasible = spec.feasible

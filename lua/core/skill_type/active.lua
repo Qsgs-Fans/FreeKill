@@ -50,6 +50,17 @@ function ActiveSkill:targetFilter(to_select, selected, selected_cards, card)
   return false
 end
 
+--- Determine whether a target can be selected by this skill(in modifying targets)
+--- only used in skill of players
+---@param to_select integer @ id of the target
+---@param selected integer[] @ ids of selected targets
+---@param user integer @ id of the userdata
+---@param card Card @ helper
+---@param distance_limited boolean @ is limited by distance
+function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
+  return false
+end
+
 function ActiveSkill:getMinTargetNum()
   local ret
   if self.target_num then ret = self.target_num
