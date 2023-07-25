@@ -1441,48 +1441,32 @@ end
 ---@param targets ServerPlayer[] @ 可选的目标范围
 ---@param num integer @ 可选的目标数
 ---@param can_minus boolean @ 是否可减少
+---@param distance_limited boolean @ 是否受距离限制
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@param data CardUseStruct @ 使用数据
-function Room:AskForAddTarget(player, targets, num, can_minus, prompt, skillName, data)
+function Room:AskForAddTarget(player, targets, num, can_minus, distance_limited, prompt, skillName, data)
   num = num or 1
   can_minus = can_minus or false
   prompt = prompt or ""
   skillName = skillName or ""
   local room = player.room
   local tos = {}
-  if can_minus and #AimGroup:getAllTargets(data.tos) > 1 then  --默认不允许减目标至0
+  local orig_tos = table.simpleClone(AimGroup:getAllTargets(data.tos))
+  if can_minus and #orig_tos > 1 then  --默认不允许减目标至0
     tos = table.map(table.filter(targets, function(p)
-      return table.contains(AimGroup:getAllTargets(data.tos), p.id) end), function(p) return p.id end)
+      return table.contains(AimGroup:getAllTargets(data.tos), p.id) end), Util.IdMapper)
   end
   for _, p in ipairs(targets) do
     if not table.contains(AimGroup:getAllTargets(data.tos), p.id) and not room:getPlayerById(data.from):isProhibited(p, data.card) then
-      if data.card.name == "jink" or data.card.trueName == "nullification" or data.card.name == "adaptation" or
-        (data.card.name == "peach" and not p:isWounded()) then
-        --continue
-      else
-        if data.from ~= p.id then
-          if (data.card.trueName == "slash") or
-            ((table.contains({"dismantlement", "snatch", "chasing_near"}, data.card.name)) and not p:isAllNude()) or
-            (table.contains({"fire_attack", "unexpectation"}, data.card.name) and not p:isKongcheng()) or
-            (table.contains({"peach", "analeptic", "ex_nihilo", "duel", "savage_assault", "archery_attack", "amazing_grace", "god_salvation",
-              "iron_chain", "foresight", "redistribute", "enemy_at_the_gates", "raid_and_frontal_attack"}, data.card.name)) or
-            (data.card.name == "collateral" and p:getEquipment(Card.SubtypeWeapon) and
-              #table.filter(room:getOtherPlayers(p), function(v) return p:inMyAttackRange(v) end) > 0)then
-            table.insertIfNeed(tos, p.id)
-          end
-        else
-          if (data.card.name == "analeptic") or
-            (table.contains({"ex_nihilo", "foresight", "iron_chain", "amazing_grace", "god_salvation", "redistribute"}, data.card.name)) or
-            (data.card.name == "fire_attack" and not p:isKongcheng()) then
-            table.insertIfNeed(tos, p.id)
-          end
-        end
+      if data.card.skill:modTargetFilter(p.id, orig_tos, player.id, data.card, distance_limited) then
+        table.insertIfNeed(tos, p.id)
       end
     end
   end
   if #tos > 0 then
     tos = room:askForChoosePlayers(player, tos, 1, num, prompt, skillName, true)
+    --借刀……！
     if data.card.name ~= "collateral" then
       return tos
     else
