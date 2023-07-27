@@ -3016,7 +3016,7 @@ local function shouldUpdateWinRate(room)
   for _, p in ipairs(room.players) do
     if p.id < 0 then return false end
   end
-  return room.settings.gameMode:countInFunc(room)
+  return Fk.game_modes[room.settings.gameMode]:countInFunc(room)
 end
 
 --- 结束一局游戏。
