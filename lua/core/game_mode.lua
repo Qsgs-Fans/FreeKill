@@ -61,4 +61,10 @@ function GameMode:surrenderFunc(playedTime)
   return {}
 end
 
+---@param room Room @ 游戏房间
+---@return boolean
+function GameMode:countInFunc(room)
+  return false
+end
+
 return GameMode
