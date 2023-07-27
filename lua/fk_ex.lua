@@ -558,5 +558,9 @@ function fk.CreateGameMode(spec)
     assert(type(spec.surrender_func) == "function")
     ret.surrenderFunc = spec.surrender_func
   end
+  if spec.is_counted then
+    assert(type(spec.is_counted) == "function")
+    ret.countInFunc = spec.is_counted
+  end
   return ret
 end

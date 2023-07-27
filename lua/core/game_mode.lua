@@ -64,7 +64,7 @@ end
 ---@param room Room @ 游戏房间
 ---@return boolean
 function GameMode:countInFunc(room)
-  return false
+  return true
 end
 
 return GameMode

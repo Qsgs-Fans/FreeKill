@@ -3007,10 +3007,6 @@ end
 
 ---@param room Room
 local function shouldUpdateWinRate(room)
-  if room.settings.gameMode == "heg_mode" then return false end
-  if room.settings.gameMode == "aaa_role_mode" and #room.players < 5 then
-    return false
-  end
   if room.settings.enableFreeAssign then
     return false
   end
@@ -3020,7 +3016,7 @@ local function shouldUpdateWinRate(room)
   for _, p in ipairs(room.players) do
     if p.id < 0 then return false end
   end
-  return true
+  return room.settings.gameMode:countInFunc(room)
 end
 
 --- 结束一局游戏。
