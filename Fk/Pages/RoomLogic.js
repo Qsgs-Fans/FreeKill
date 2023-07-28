@@ -918,7 +918,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   box.skill_name = skill_name;
   box.all_options = all_choices;
   box.accepted.connect(() => {
-    replyToServer(choices[box.result]);
+    replyToServer(all_choices[box.result]);
   });
 }
 
