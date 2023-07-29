@@ -333,7 +333,8 @@ extension:addCards({
 local collateralSkill = fk.CreateActiveSkill{
   name = "collateral_skill",
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return false --TODO: Bleeding……
+    local player = Fk:currentRoom():getPlayerById(to_select)
+    return user ~= player.id and player:getEquipment(Card.SubtypeWeapon)
   end,
   target_filter = function(self, to_select, selected)
     local player = Fk:currentRoom():getPlayerById(to_select)
