@@ -155,7 +155,7 @@ GameEvent.functions[GameEvent.Round] = function(self)
     GameEvent(GameEvent.Turn):exec()
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
-  until p.seat > p:getNextAlive().seat
+  until p.seat >= p:getNextAlive().seat
 
   logic:trigger(fk.RoundEnd, p)
 end
