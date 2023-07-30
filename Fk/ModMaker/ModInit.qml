@@ -20,6 +20,17 @@ Item {
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
+      Button {
+        text: "Test"
+        onClicked: {
+          const component = Qt.createComponent("Block/Workspace.qml");
+          if (component.status !== Component.Ready) {
+            return;
+          }
+          const page = component.createObject(null);
+          modStack.push(page);
+        }
+      }
       ToolButton {
         icon.source: AppPath + "/image/modmaker/menu"
         onClicked: {
