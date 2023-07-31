@@ -1445,7 +1445,7 @@ end
 ---@param prompt string @ 提示信息
 ---@param skillName string @ 技能名
 ---@param data CardUseStruct @ 使用数据
-function Room:AskForAddTarget(player, targets, num, can_minus, distance_limited, prompt, skillName, data)
+function Room:askForAddTarget(player, targets, num, can_minus, distance_limited, prompt, skillName, data)
   num = num or 1
   can_minus = can_minus or false
   prompt = prompt or ""
@@ -1499,7 +1499,7 @@ end
 ---@param top_limit integer[]|nil @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[]|nil @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
----@param prompt string|null @ 观星框的标题(暂时雪藏)
+---param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<"top"|"bottom", integer[]>

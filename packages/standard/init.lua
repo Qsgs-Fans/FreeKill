@@ -1076,7 +1076,7 @@ local role_mode = fk.CreateGameMode{
   minPlayer = 2,
   maxPlayer = 8,
   countInFunc = function(self, room)
-    return room.players >= 5
+    return #room.players >= 5
   end,
   surrender_func = function(self, playedTime)
     local roleCheck = false

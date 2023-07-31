@@ -437,8 +437,8 @@ extension:addCards({
 
 local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
-  can_use = Util.aoe_can_use,
-  on_use = Util.aoe_on_use,
+  can_use = Util.AoeCanUse,
+  on_use = Util.AoeOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return user ~= to_select
   end,
@@ -480,8 +480,8 @@ extension:addCards({
 
 local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
-  can_use = Util.aoe_can_use,
-  on_use = Util.aoe_on_use,
+  can_use = Util.AoeCanUse,
+  on_use = Util.AoeOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return user ~= to_select
   end,
@@ -521,8 +521,8 @@ extension:addCards({
 
 local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
-  can_use = Util.global_can_use,
-  on_use = Util.global_on_use,
+  can_use = Util.GlobalCanUse,
+  on_use = Util.GlobalOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return true
   end,
@@ -559,8 +559,8 @@ extension:addCards({
 
 local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
-  can_use = Util.global_can_use,
-  on_use = Util.global_on_use,
+  can_use = Util.GlobalCanUse,
+  on_use = Util.GlobalOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return true
   end,
