@@ -40,6 +40,7 @@ GraphicsBox {
       onClicked: {
         if (config.replaying) {
           mainStack.pop();
+          Backend.controlReplayer("shutdown");
         } else {
           ClientInstance.notifyServer("QuitRoom", "[]");
         }

@@ -126,6 +126,7 @@ Item {
   function updateList() {
     model.clear();
     const data = Backend.ls("recording");
+    data.reverse();
     data.forEach(s => {
       const d = s.split(".");
       if (d.length !== 8) return;

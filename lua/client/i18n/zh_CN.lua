@@ -72,7 +72,7 @@ Fk:loadTranslationTable{
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
-  ["Replay Manager"] = "录像管理器",
+  ["Replay Manager"] = "来欣赏潇洒的录像吧！",
   ["Game Win"] = "胜利",
   ["Game Lose"] = "失败",
   ["Play the Replay"] = "重放",

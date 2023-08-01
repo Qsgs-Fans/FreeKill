@@ -799,7 +799,7 @@ fk.client_callback["StartGame"] = function(jsonData)
   for _, p in ipairs(c.players) do
     if p.id ~= Self.id then
       table.insert(c.record, {
-        os.getms() / 100,
+        math.floor(os.getms() / 1000),
         false,
         "AddPlayer",
         json.encode {

@@ -28,6 +28,7 @@ QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
 #ifndef FK_SERVER_ONLY
   engine = nullptr;
+  replayer = nullptr;
   rsa = RSA_new();
   udpSocket = new QUdpSocket(this);
   udpSocket->bind(0);
@@ -381,8 +382,52 @@ void QmlBackend::removeRecord(const QString &fname) {
 }
 
 void QmlBackend::playRecord(const QString &fname) {
-  auto replayer = new Replayer(nullptr, fname);
+  auto replayer = new Replayer(this, fname);
+  setReplayer(replayer);
   replayer->start();
+}
+
+Replayer *QmlBackend::getReplayer() const {
+  return replayer;
+}
+
+void QmlBackend::setReplayer(Replayer *rep) {
+  auto r = replayer;
+  if (r) {
+    r->disconnect(this);
+    disconnect(r);
+  }
+  replayer = rep;
+  if (rep) {
+    connect(rep, &Replayer::duration_set, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerDurationSet", QString::number(sec));
+        });
+    connect(rep, &Replayer::elasped, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerElapsedChange", QString::number(sec));
+        });
+    connect(rep, &Replayer::speed_changed, this, [this](qreal speed) {
+        this->emitNotifyUI("ReplayerSpeedChange", QString::number(speed));
+        });
+    connect(this, &QmlBackend::replayerToggle, rep, &Replayer::toggle);
+    connect(this, &QmlBackend::replayerSlowDown, rep, &Replayer::slowDown);
+    connect(this, &QmlBackend::replayerSpeedUp, rep, &Replayer::speedUp);
+    connect(this, &QmlBackend::replayerUniform, rep, &Replayer::uniform);
+    connect(this, &QmlBackend::replayerShutdown, rep, &Replayer::shutdown);
+  }
+}
+
+void QmlBackend::controlReplayer(QString type) {
+  if (type == "toggle") {
+    emit replayerToggle();
+  } else if (type == "speedup") {
+    emit replayerSpeedUp();
+  } else if (type == "slowdown") {
+    emit replayerSlowDown();
+  } else if (type == "uniform") {
+    emit replayerUniform();
+  } else if (type == "shutdown") {
+    emit replayerShutdown();
+  }
 }
 
 #endif

@@ -44,6 +44,10 @@ Item {
   property var extra_data: ({})
   property var skippedUseEventId: []
 
+  property real replayerSpeed
+  property int replayerElapsed
+  property int replayerDuration
+
   Image {
     source: config.roomBg
     anchors.fill: parent
@@ -144,6 +148,7 @@ Item {
         text: Backend.translate("Quit")
         onClicked: {
           if (config.replaying) {
+            Backend.controlReplayer("shutdown");
             mainStack.pop();
           } else if (config.observing) {
             ClientInstance.notifyServer("QuitRoom", "[]");
@@ -443,6 +448,66 @@ Item {
     color: "#4B83CD"
     font.family: fontLi2.name
     font.pixelSize: 48
+  }
+
+  Rectangle {
+    id: replayControls
+    visible: config.replaying
+    anchors.bottom: dashboard.top
+    anchors.bottomMargin: -60
+    anchors.horizontalCenter: parent.horizontalCenter
+    width: childrenRect.width + 8
+    height: childrenRect.height + 8
+
+    color: "#88EEEEEE"
+    radius: 4
+
+    RowLayout {
+      x: 4; y: 4
+      Text {
+        font.pixelSize: 20
+        font.bold: true
+        text: {
+          const elapsedMin = Math.floor(replayerElapsed / 60);
+          const elapsedSec = replayerElapsed % 60;
+          const totalMin = Math.floor(replayerDuration / 60);
+          const totalSec = replayerDuration % 60;
+
+          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin + ":" + totalSec;
+        }
+      }
+
+      Switch {
+        text: "匀速"
+        checked: false
+        onCheckedChanged: Backend.controlReplayer("uniform");
+      }
+
+      Button {
+        text: "减速"
+        onClicked: Backend.controlReplayer("slowdown");
+      }
+
+      Text {
+        font.pixelSize: 20
+        font.bold: true
+        text: "x" + replayerSpeed;
+      }
+
+      Button {
+        text: "加速"
+        onClicked: Backend.controlReplayer("speedup");
+      }
+
+      Button {
+        property bool running: true
+        text: running ? "暂停" : "继续"
+        onClicked: {
+          running = !running;
+          Backend.controlReplayer("toggle");
+        }
+      }
+    }
   }
 
   Item {

@@ -1399,3 +1399,15 @@ callbacks["AskForLuckCard"] = (j) => {
 callbacks["CancelRequest"] = (jsonData) => {
   ClientInstance.replyToServer("", "__cancel")
 }
+
+callbacks["ReplayerDurationSet"] = (j) => {
+  roomScene.replayerDuration = parseInt(j);
+}
+
+callbacks["ReplayerElapsedChange"] = (j) => {
+  roomScene.replayerElapsed = parseInt(j);
+}
+
+callbacks["ReplayerSpeedChange"] = (j) => {
+  roomScene.replayerSpeed = parseFloat(j);
+}

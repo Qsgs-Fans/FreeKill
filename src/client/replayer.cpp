@@ -4,7 +4,8 @@
 #include "client.h"
 
 Replayer::Replayer(QObject *parent, const QString &filename) :
-  QThread(parent), fileName(filename), roomSettings(""), playing(true), speed(1.0)
+  QThread(parent), fileName(filename), roomSettings(""),
+  playing(true), killed(false), speed(1.0), uniformRunning(false)
 {
   setObjectName("Replayer");
 
@@ -41,18 +42,18 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
 }
 
 Replayer::~Replayer() {
+  Backend->setReplayer(nullptr);
   foreach (auto e, pairs) {
     delete e;
   }
 }
 
-int Replayer::getDuration() const
-{
-  return (pairs.last()->elapsed - pairs.first()->elapsed) / 1000.0;
+int Replayer::getDuration() const {
+  long ret = (pairs.last()->elapsed - pairs.first()->elapsed) / 1000.0;
+  return (int)ret;
 }
 
-qreal Replayer::getSpeed()
-{
+qreal Replayer::getSpeed() {
   qreal speed;
   mutex.lock();
   speed = this->speed;
@@ -60,23 +61,18 @@ qreal Replayer::getSpeed()
   return speed;
 }
 
-void Replayer::uniform()
-{
+void Replayer::uniform() {
   mutex.lock();
 
-  if (speed != 1.0) {
-    speed = 1.0;
-    emit speed_changed(1.0);
-  }
+  uniformRunning = !uniformRunning;
 
   mutex.unlock();
 }
 
-void Replayer::speedUp()
-{
+void Replayer::speedUp() {
   mutex.lock();
 
-  if (speed < 6.0) {
+  if (speed < 16.0) {
     qreal inc = speed >= 2.0 ? 1.0 : 0.5;
     speed += inc;
     emit speed_changed(speed);
@@ -85,8 +81,7 @@ void Replayer::speedUp()
   mutex.unlock();
 }
 
-void Replayer::slowDown()
-{
+void Replayer::slowDown() {
   mutex.lock();
 
   if (speed >= 1.0) {
@@ -104,8 +99,13 @@ void Replayer::toggle() {
     play_sem.release();
 }
 
+void Replayer::shutdown() {
+  killed = true;
+}
+
 void Replayer::run() {
-  int last = 0;
+  long last = 0;
+  long start = 0;
 
   if (roomSettings == "") {
     Backend->showToast("Invalid replay file.");
@@ -116,13 +116,28 @@ void Replayer::run() {
   emit command_parsed("EnterRoom", roomSettings);
   emit command_parsed("StartGame", "");
 
+  emit speed_changed(getSpeed());
+  emit duration_set(getDuration());
+
   foreach (auto pair, pairs) {
+    if (killed) {
+      break;
+    }
+
     if (pair->isRequest) {
       continue;
     }
 
-    int delay = qMin(pair->elapsed - last, 2500);
+    long delay = pair->elapsed - last;
+    if (uniformRunning) {
+      delay = qMin(delay, 2000);
+      if (delay > 500)
+        delay = 2000;
+    } else if (last == 0) {
+      delay = 100;
+    }
     last = pair->elapsed;
+    if (start == 0) start = last;
 
     bool delayed = true;
 
@@ -130,7 +145,7 @@ void Replayer::run() {
       delay /= getSpeed();
 
       msleep(delay);
-      emit elasped(pair->elapsed / 1000);
+      emit elasped((pair->elapsed - start) / 1000);
 
       emit command_parsed(pair->cmd, pair->jsonData);
 

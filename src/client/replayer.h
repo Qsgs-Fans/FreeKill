@@ -15,6 +15,7 @@ public:
   qreal getSpeed();
 
 signals:
+  void duration_set(int secs);
   void elasped(int secs);
   void speed_changed(qreal speed);
   void command_parsed(const QString &cmd, const QString &j);
@@ -24,6 +25,7 @@ public slots:
   void toggle();
   void speedUp();
   void slowDown();
+  void shutdown();
 
 protected:
   virtual void run();
@@ -32,12 +34,14 @@ private:
   QString fileName;
   qreal speed;
   bool playing;
+  bool killed;
+  bool uniformRunning;
   QString roomSettings;
   QMutex mutex;
   QSemaphore play_sem;
 
   struct Pair {
-    int elapsed;
+    long elapsed;
     bool isRequest;
     QString cmd;
     QString jsonData;
