@@ -107,7 +107,7 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
 }
 
 bool CheckSqlString(const QString &str) {
-  static const QRegularExpression exp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
+  static const QRegularExpression exp("['\";#* /\\\\?<>|:]+|(--)|(/\\*)|(\\*/)|(--\\+)");
   return (!exp.match(str).hasMatch() && !str.isEmpty());
 }
 
