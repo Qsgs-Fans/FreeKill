@@ -1383,6 +1383,7 @@ callbacks["ChangeSelf"] = (j) => {
 
 callbacks["AskForLuckCard"] = (j) => {
   // jsonData: int time
+  if (config.replaying) return;
   const time = parseInt(j);
   roomScene.setPrompt(Backend.translate("#AskForLuckCard").arg(time), true);
   roomScene.state = "replying";

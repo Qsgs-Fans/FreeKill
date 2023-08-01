@@ -112,6 +112,8 @@ Item {
           anchors.right: parent.right
           anchors.rightMargin: 8
           onClicked: {
+            Backend.removeRecord(fileName);
+            removeModel(index);
           }
         }
       }
@@ -128,6 +130,7 @@ Item {
       const [t, name, mode, general, role, winner] = d;
 
       model.append({
+        fileName: s,
         repDate: t,
         playerName: name,
         gameMode: mode,
@@ -136,6 +139,10 @@ Item {
         winner: winner,
       })
     });
+  }
+
+  function removeModel(index) {
+    model.remove(index);
   }
 
   Component.onCompleted: {

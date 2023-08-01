@@ -373,4 +373,8 @@ void QmlBackend::readPendingDatagrams() {
   }
 }
 
+void QmlBackend::removeRecord(const QString &fname) {
+  QFile::remove("recording/" + fname);
+}
+
 #endif

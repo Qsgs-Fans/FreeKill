@@ -46,6 +46,7 @@ GraphicsBox {
       id: repBtn
       text: Backend.translate("Save Replay")
       anchors.horizontalCenter: parent.horizontalCenter
+      visible: !config.replaying
 
       onClicked: {
         repBtn.visible = false;
