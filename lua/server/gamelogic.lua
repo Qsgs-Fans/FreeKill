@@ -105,23 +105,7 @@ function GameLogic:chooseGenerals()
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
-    if lord.kingdom == "god" or Fk.generals[lord_general].subkingdom then
-      local allKingdoms = {}
-      if lord.kingdom == "god" then
-        allKingdoms = table.simpleClone(Fk.kingdoms)
-
-        local exceptedKingdoms = { "god" }
-        for _, kingdom in ipairs(exceptedKingdoms) do
-          table.removeOne(allKingdoms, kingdom)
-        end
-      else
-        local curGeneral = Fk.generals[lord_general]
-        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
-      end
-
-      lord.kingdom = room:askForChoice(lord, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
-      room:broadcastProperty(lord, "kingdom")
-    end
+    room:askForChooseKingdom({lord})
     room:broadcastProperty(lord, "general")
     room:setDeputyGeneral(lord, deputy)
     room:broadcastProperty(lord, "deputyGeneral")

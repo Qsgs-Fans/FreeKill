@@ -9,6 +9,7 @@ local thunderSlashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
+  mod_target_filter = slash.skill.modTargetFilter,
   target_filter = slash.skill.targetFilter,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -47,6 +48,7 @@ local fireSlashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
+  mod_target_filter = slash.skill.modTargetFilter,
   target_filter = slash.skill.targetFilter,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -79,8 +81,14 @@ extension:addCards{
 local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
+      not table.find(Fk:currentRoom().players, function(p)
+        return p.dying
+      end)
+  end,
   can_use = function(self, player, card)
-    return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
+    return self:modTargetFilter(player.id, Util.DummyTable, player.id, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -171,6 +179,9 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
   max_target_num = 2,
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return true
+  end,
   target_filter = function() return true end,
   on_effect = function(self, room, cardEffectEvent)
     local to = room:getPlayerById(cardEffectEvent.to)
@@ -196,8 +207,11 @@ extension:addCards{
 local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
   target_num = 1,
-  target_filter = function(self, to_select)
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return not Fk:currentRoom():getPlayerById(to_select):isKongcheng()
+  end,
+  target_filter = function(self, to_select)
+    return self:modTargetFilter(to_select)
   end,
   on_effect = function(self, room, cardEffectEvent)
     local from = room:getPlayerById(cardEffectEvent.from)

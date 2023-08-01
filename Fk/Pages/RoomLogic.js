@@ -551,6 +551,12 @@ function updateSelectedTargets(playerid, selected) {
         [card, id, selected_targets]
       ));
       photo.selectable = ret;
+      if (roomScene.extra_data instanceof Object) {
+        const exclusived = roomScene.extra_data.exclusive_targets;
+        if (exclusived instanceof Array) {
+          if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+      }
     })
 
     okButton.enabled = JSON.parse(Backend.callLuaFunction(
@@ -835,9 +841,15 @@ callbacks["AskForGuanxing"] = (jsonData) => {
     box.areaLimits = [min_bottom_cards];
     box.areaNames = [Backend.translate(bottom_area_name)];
   } else {
-    box.areaCapacities = [max_top_cards, max_bottom_cards];
-    box.areaLimits = [min_top_cards, min_bottom_cards];
-    box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    if (max_bottom_cards === 0) {
+      box.areaCapacities = [max_top_cards];
+      box.areaLimits = [min_top_cards];
+      box.areaNames = [Backend.translate(top_area_name)];
+    } else {
+      box.areaCapacities = [max_top_cards, max_bottom_cards];
+      box.areaLimits = [min_top_cards, min_bottom_cards];
+      box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    }
   }
   box.cards = cards;
   box.arrangeCards();
@@ -906,7 +918,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   box.skill_name = skill_name;
   box.all_options = all_choices;
   box.accepted.connect(() => {
-    replyToServer(choices[box.result]);
+    replyToServer(all_choices[box.result]);
   });
 }
 

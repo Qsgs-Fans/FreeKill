@@ -1453,6 +1453,60 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   return invoked
 end
 
+--枚举法为使用牌重选目标（无距离限制）
+---@param player ServerPlayer @ 执行的玩家
+---@param targets ServerPlayer[] @ 可选的目标范围
+---@param num integer @ 可选的目标数
+---@param can_minus boolean @ 是否可减少
+---@param distance_limited boolean @ 是否受距离限制
+---@param prompt string @ 提示信息
+---@param skillName string @ 技能名
+---@param data CardUseStruct @ 使用数据
+function Room:askForAddTarget(player, targets, num, can_minus, distance_limited, prompt, skillName, data)
+  num = num or 1
+  can_minus = can_minus or false
+  prompt = prompt or ""
+  skillName = skillName or ""
+  local room = player.room
+  local tos = {}
+  local orig_tos = table.simpleClone(AimGroup:getAllTargets(data.tos))
+  if can_minus and #orig_tos > 1 then  --默认不允许减目标至0
+    tos = table.map(table.filter(targets, function(p)
+      return table.contains(AimGroup:getAllTargets(data.tos), p.id) end), Util.IdMapper)
+  end
+  for _, p in ipairs(targets) do
+    if not table.contains(AimGroup:getAllTargets(data.tos), p.id) and not room:getPlayerById(data.from):isProhibited(p, data.card) then
+      if data.card.skill:modTargetFilter(p.id, orig_tos, player.id, data.card, distance_limited) then
+        table.insertIfNeed(tos, p.id)
+      end
+    end
+  end
+  if #tos > 0 then
+    tos = room:askForChoosePlayers(player, tos, 1, num, prompt, skillName, true)
+    --借刀……！
+    if data.card.name ~= "collateral" then
+      return tos
+    else
+      local result = {}
+      for _, id in ipairs(tos) do
+        local to = room:getPlayerById(id)
+        local target = room:askForChoosePlayers(player, table.map(table.filter(room:getOtherPlayers(player), function(v)
+          return to:inMyAttackRange(v) end), function(p) return p.id end), 1, 1,
+          "#collateral-choose::"..to.id..":"..data.card:toLogString(), "collateral_skill", true)
+        if #target > 0 then
+          table.insert(result, {id, target[1]})
+        end
+      end
+      if #result > 0 then
+        return result
+      else
+        return {}
+      end
+    end
+  end
+  return {}
+end
+
 -- TODO: guanxing type
 --- 询问玩家对若干牌进行观星。
 ---
@@ -1462,7 +1516,7 @@ end
 ---@param top_limit integer[]|nil @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
 ---@param bottom_limit integer[]|nil @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
---@param prompt string|null @ 观星框的标题(暂时雪藏)
+---param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
 ---@return table<"top"|"bottom", integer[]>
@@ -1666,10 +1720,10 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
   if extra_data then
     if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 1)
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
     end
-    if extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 1)
+    if extra_data.bypass_times == nil or extra_data.bypass_times then
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
   end
   local command = "AskForUseCard"
@@ -1689,8 +1743,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
@@ -1700,13 +1754,13 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     Fk.currentResponsePattern = nil
 
     if result ~= "" then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
       return self:handleUseCardReply(player, result)
     end
   end
-  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit, 0)
-  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit, 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
   return nil
 end
 
@@ -2970,10 +3024,6 @@ end
 
 ---@param room Room
 local function shouldUpdateWinRate(room)
-  if room.settings.gameMode == "heg_mode" then return false end
-  if room.settings.gameMode == "aaa_role_mode" and #room.players < 5 then
-    return false
-  end
   if room.settings.enableFreeAssign then
     return false
   end
@@ -2983,7 +3033,7 @@ local function shouldUpdateWinRate(room)
   for _, p in ipairs(room.players) do
     if p.id < 0 then return false end
   end
-  return true
+  return Fk.game_modes[room.settings.gameMode]:countInFunc(room)
 end
 
 --- 结束一局游戏。

@@ -1075,6 +1075,9 @@ local role_mode = fk.CreateGameMode{
   name = "aaa_role_mode", -- just to let it at the top of list
   minPlayer = 2,
   maxPlayer = 8,
+  countInFunc = function(self, room)
+    return #room.players >= 5
+  end,
   surrender_func = function(self, playedTime)
     local roleCheck = false
     local roleText = ""

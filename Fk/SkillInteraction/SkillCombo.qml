@@ -45,7 +45,7 @@ MetroButton {
     box.options = choices;
     box.all_options = all_choices;
     box.accepted.connect(() => {
-      answer = choices[box.result];
+      answer = all_choices[box.result];
     });
   }
 
