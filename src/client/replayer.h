@@ -3,7 +3,6 @@
 #ifndef _REPLAYER_H
 #define _REPLAYER_H
 
-#include <qsemaphore.h>
 class Replayer : public QThread {
   Q_OBJECT
 
