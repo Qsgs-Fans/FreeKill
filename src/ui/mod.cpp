@@ -16,12 +16,12 @@ ModMaker::ModMaker(QObject *parent) : QObject(parent) {
     QDir(".").mkdir("mymod");
   }
 
-  db = OpenDatabase("mymod/packages.db", "packages/mymod.sql");
+  // db = OpenDatabase("mymod/packages.db", "packages/mymod.sql");
 }
 
 ModMaker::~ModMaker() {
   // git_libgit2_shutdown();
-  sqlite3_close(db);
+  // sqlite3_close(db);
 }
 
 // copied from https://stackoverflow.com/questions/1011572/convert-pem-key-to-ssh-rsa-format
