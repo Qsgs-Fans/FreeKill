@@ -97,6 +97,9 @@ void QmlBackend::joinServer(QString address) {
     return;
   Client *client = new Client(this);
   connect(client, &Client::error_message, this, [=](const QString &msg) {
+    if (replayer) {
+      emit replayerShutdown();
+    }
     client->deleteLater();
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
