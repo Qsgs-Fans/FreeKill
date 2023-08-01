@@ -41,5 +41,17 @@ GraphicsBox {
         ClientInstance.notifyServer("QuitRoom", "[]");
       }
     }
+
+    MetroButton {
+      id: repBtn
+      text: Backend.translate("Save Replay")
+      anchors.horizontalCenter: parent.horizontalCenter
+
+      onClicked: {
+        repBtn.visible = false;
+        Backend.callLuaFunction("SaveRecord", []);
+        toast.show("OK.");
+      }
+    }
   }
 }

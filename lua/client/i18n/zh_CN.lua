@@ -242,6 +242,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$NoWinner"] = "平局！",
   ["Back To Room"] = "回到房间",
   ["Back To Lobby"] = "返回大厅",
+  ["Save Replay"] = "保存录像",
 
   ["Bulletin Info"] = [==[
   ## v0.2.7

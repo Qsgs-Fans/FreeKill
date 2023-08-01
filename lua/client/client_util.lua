@@ -640,4 +640,9 @@ function CheckSurrenderAvailable(playedTime)
   return json.encode(Fk.game_modes[curMode]:surrenderFunc(playedTime))
 end
 
+function SaveRecord()
+  local c = ClientInstance
+  c.client:saveRecord(json.encode(c.record), c.record[2])
+end
+
 dofile "lua/client/i18n/init.lua"
