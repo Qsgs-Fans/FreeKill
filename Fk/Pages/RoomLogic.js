@@ -1383,6 +1383,7 @@ callbacks["ChangeSelf"] = (j) => {
 
 callbacks["AskForLuckCard"] = (j) => {
   // jsonData: int time
+  if (config.replaying) return;
   const time = parseInt(j);
   roomScene.setPrompt(Backend.translate("#AskForLuckCard").arg(time), true);
   roomScene.state = "replying";
@@ -1397,4 +1398,16 @@ callbacks["AskForLuckCard"] = (j) => {
 
 callbacks["CancelRequest"] = (jsonData) => {
   ClientInstance.replyToServer("", "__cancel")
+}
+
+callbacks["ReplayerDurationSet"] = (j) => {
+  roomScene.replayerDuration = parseInt(j);
+}
+
+callbacks["ReplayerElapsedChange"] = (j) => {
+  roomScene.replayerElapsed = parseInt(j);
+}
+
+callbacks["ReplayerSpeedChange"] = (j) => {
+  roomScene.replayerSpeed = parseFloat(j);
 }

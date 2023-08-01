@@ -57,13 +57,15 @@ Window {
     Component { id: generalsOverview; GeneralsOverview {} }
     Component { id: cardsOverview; CardsOverview {} }
     Component { id: modesOverview; ModesOverview {} }
+    Component { id: replay; Replay {} }
     Component { id: room; Room {} }
     Component { id: aboutPage; About {} }
 
-    property var generalsOverviewPage
-    property var cardsOverviewPage
+    property alias generalsOverviewPage: generalsOverview
+    property alias cardsOverviewPage: cardsOverview
     property alias modesOverviewPage: modesOverview
     property alias aboutPage: aboutPage
+    property alias replayPage: replay
     property bool busy: false
     property string busyText: ""
     onBusyChanged: busyText = "";

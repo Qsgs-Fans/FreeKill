@@ -9,5 +9,6 @@ MetroButton 1.0 MetroButton.qml
 ModesOverview 1.0 ModesOverview.qml
 PackageManage 1.0 PackageManage.qml
 Room 1.0 Room.qml
+Replay 1.0 Replay.qml
 TileButton 1.0 TileButton.qml
 ModMaker 1.0 ModMaker.qml

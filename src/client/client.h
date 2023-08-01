@@ -33,8 +33,12 @@ public:
   void installAESKey(const QByteArray &key);
 
   void saveRecord(const QString &json, const QString &fname);
+
 signals:
   void error_message(const QString &msg);
+
+public slots:
+  void processReplay(const QString &, const QString &);
 
 private:
   Router *router;

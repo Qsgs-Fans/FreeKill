@@ -168,6 +168,7 @@ Item {
       lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/CreateRoom.qml");
       lobby_drawer.open();
       config.observing = false;
+      config.replaying = false;
     }
   }
 
@@ -197,6 +198,9 @@ Item {
     }
     Button {
       text: Backend.translate("Replay")
+      onClicked: {
+        mainStack.push(mainWindow.replayPage);
+      }
     }
     Button {
       text: Backend.translate("About")
@@ -279,6 +283,7 @@ Item {
   }
 
   function enterRoom(roomId, playerNum, capacity, pw) {
+    config.replaying = false;
     if (playerNum < capacity) {
       config.observing = false;
       Backend.callLuaFunction("SetObserving", [false]);

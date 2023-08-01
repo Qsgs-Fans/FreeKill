@@ -72,6 +72,11 @@ Fk:loadTranslationTable{
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
+  ["Replay Manager"] = "来欣赏潇洒的录像吧！",
+  ["Game Win"] = "胜利",
+  ["Game Lose"] = "失败",
+  ["Play the Replay"] = "重放",
+  ["Delete Replay"] = "删除",
   ["About"] = "关于",
   ["about_freekill_description"] = [[
 # 关于新月杀
@@ -237,6 +242,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$NoWinner"] = "平局！",
   ["Back To Room"] = "回到房间",
   ["Back To Lobby"] = "返回大厅",
+  ["Save Replay"] = "保存录像",
 
   ["Bulletin Info"] = [==[
   ## v0.2.7

@@ -20,6 +20,7 @@
 #endif
 #include "client.h"
 #include "util.h"
+#include "replayer.h"
 
 QmlBackend *Backend = nullptr;
 
@@ -27,6 +28,7 @@ QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
 #ifndef FK_SERVER_ONLY
   engine = nullptr;
+  replayer = nullptr;
   rsa = RSA_new();
   udpSocket = new QUdpSocket(this);
   udpSocket->bind(0);
@@ -95,6 +97,9 @@ void QmlBackend::joinServer(QString address) {
     return;
   Client *client = new Client(this);
   connect(client, &Client::error_message, this, [=](const QString &msg) {
+    if (replayer) {
+      emit replayerShutdown();
+    }
     client->deleteLater();
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
@@ -181,6 +186,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
 QString QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params) {
   if (!ClientInstance) return "{}";
+
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, func_name.toLatin1().data());
 
@@ -196,6 +202,7 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
     return "";
   }
   lua_pop(L, 1);
+
   return QString(result);
 }
 
@@ -370,6 +377,59 @@ void QmlBackend::readPendingDatagrams() {
         emit notifyUI("GetServerDetail", JsonArray2Bytes(arr));
       }
     }
+  }
+}
+
+void QmlBackend::removeRecord(const QString &fname) {
+  QFile::remove("recording/" + fname);
+}
+
+void QmlBackend::playRecord(const QString &fname) {
+  auto replayer = new Replayer(this, fname);
+  setReplayer(replayer);
+  replayer->start();
+}
+
+Replayer *QmlBackend::getReplayer() const {
+  return replayer;
+}
+
+void QmlBackend::setReplayer(Replayer *rep) {
+  auto r = replayer;
+  if (r) {
+    r->disconnect(this);
+    disconnect(r);
+  }
+  replayer = rep;
+  if (rep) {
+    connect(rep, &Replayer::duration_set, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerDurationSet", QString::number(sec));
+        });
+    connect(rep, &Replayer::elasped, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerElapsedChange", QString::number(sec));
+        });
+    connect(rep, &Replayer::speed_changed, this, [this](qreal speed) {
+        this->emitNotifyUI("ReplayerSpeedChange", QString::number(speed));
+        });
+    connect(this, &QmlBackend::replayerToggle, rep, &Replayer::toggle);
+    connect(this, &QmlBackend::replayerSlowDown, rep, &Replayer::slowDown);
+    connect(this, &QmlBackend::replayerSpeedUp, rep, &Replayer::speedUp);
+    connect(this, &QmlBackend::replayerUniform, rep, &Replayer::uniform);
+    connect(this, &QmlBackend::replayerShutdown, rep, &Replayer::shutdown);
+  }
+}
+
+void QmlBackend::controlReplayer(QString type) {
+  if (type == "toggle") {
+    emit replayerToggle();
+  } else if (type == "speedup") {
+    emit replayerSpeedUp();
+  } else if (type == "slowdown") {
+    emit replayerSlowDown();
+  } else if (type == "uniform") {
+    emit replayerUniform();
+  } else if (type == "shutdown") {
+    emit replayerShutdown();
   }
 }
 

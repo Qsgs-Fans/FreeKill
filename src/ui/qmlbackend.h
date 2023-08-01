@@ -6,6 +6,8 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 
+class Replayer;
+
 #include <qtmetamacros.h>
 class QmlBackend : public QObject {
   Q_OBJECT
@@ -63,9 +65,20 @@ public:
 
   void showToast(const QString &s) { emit notifyUI("ShowToast", s); }
 
+  Q_INVOKABLE void removeRecord(const QString &);
+  Q_INVOKABLE void playRecord(const QString &);
+  Replayer *getReplayer() const;
+  void setReplayer(Replayer *rep);
+  Q_INVOKABLE void controlReplayer(QString type);
+
 signals:
   void notifyUI(const QString &command, const QString &jsonData);
   void volumeChanged(qreal);
+  void replayerToggle();
+  void replayerSpeedUp();
+  void replayerSlowDown();
+  void replayerUniform();
+  void replayerShutdown();
 
 private slots:
   void readPendingDatagrams();
@@ -79,6 +92,8 @@ private:
   RSA *rsa;
   QString aes_key;
   qreal m_volume;
+
+  Replayer *replayer;
 
   void pushLuaValue(lua_State *L, QVariant v);
 #endif
