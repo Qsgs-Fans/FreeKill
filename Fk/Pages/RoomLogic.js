@@ -1231,6 +1231,20 @@ callbacks["Animate"] = (jsonData) => {
       animation.finished.connect(() => animation.destroy());
       break;
     }
+    case "InvokeUltSkill": {
+      const id = data.player;
+      const photo = getPhoto(id);
+      if (!photo) {
+        return null;
+      }
+
+      roomScene.bigAnim.source = "../RoomElement/UltSkillAnimation.qml";
+      roomScene.bigAnim.item.loadData({
+        skill_name: data.name,
+        general: photo.general,
+      });
+      break;
+    }
     default:
       break;
   }

@@ -944,22 +944,39 @@ end
 ---@param skill_name string @ 技能名
 ---@param skill_type string | nil @ 技能的动画效果，默认是那个技能的anim_type
 function Room:notifySkillInvoked(player, skill_name, skill_type)
+  local bigAnim = false
   if not skill_type then
     local skill = Fk.skills[skill_name]
     if not skill then skill_type = "" end
+
+    if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+      bigAnim = true
+    end
+
     skill_type = skill.anim_type
   end
+
+  if skill_type == "big" then bigAnim = true end
+
   self:sendLog{
     type = "#InvokeSkill",
     from = player.id,
     arg = skill_name,
   }
 
-  self:doAnimate("InvokeSkill", {
-    name = skill_name,
-    player = player.id,
-    skill_type = skill_type,
-  })
+  if not bigAnim then
+    self:doAnimate("InvokeSkill", {
+      name = skill_name,
+      player = player.id,
+      skill_type = skill_type,
+    })
+  else
+    self:doAnimate("InvokeUltSkill", {
+      name = skill_name,
+      player = player.id,
+    })
+    self:delay(2000)
+  end
 end
 
 --- 播放从source指到targets的指示线效果。
