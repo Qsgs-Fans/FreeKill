@@ -2,9 +2,11 @@
 
 #include "replayer.h"
 #include "client.h"
+#include "qmlbackend.h"
+#include "util.h"
 
 Replayer::Replayer(QObject *parent, const QString &filename) :
-  QThread(parent), fileName(filename), roomSettings(""),
+  QThread(parent), fileName(filename), roomSettings(""), origPlayerInfo(""),
   playing(true), killed(false), speed(1.0), uniformRunning(false)
 {
   setObjectName("Replayer");
@@ -18,8 +20,13 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
 
   auto doc = QJsonDocument::fromJson(data);
   auto arr = doc.array();
-  if (arr.count() < 3) {
+  if (arr.count() < 10) {
     return;
+  }
+
+  auto ver = arr[0].toString();
+  if (ver != FK_VERSION) {
+    Backend->showToast("Warning: Mismatch version of replay detected, which may cause crashes.");
   }
 
   roomSettings = arr[2].toString();
@@ -39,9 +46,19 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
   }
 
   connect(this, &Replayer::command_parsed, ClientInstance, &Client::processReplay);
+
+  auto playerInfoRaw = arr[3].toString();
+  auto playerInfo = QJsonDocument::fromJson(playerInfoRaw.toUtf8()).array();
+  if (playerInfo[0].toInt() != Self->getId()) {
+    origPlayerInfo = JsonArray2Bytes({ Self->getId(), Self->getScreenName(), Self->getAvatar() });
+    emit command_parsed("Setup", playerInfoRaw);
+  }
 }
 
 Replayer::~Replayer() {
+  if (origPlayerInfo != "") {
+    emit command_parsed("Setup", origPlayerInfo);
+  }
   Backend->setReplayer(nullptr);
   foreach (auto e, pairs) {
     delete e;

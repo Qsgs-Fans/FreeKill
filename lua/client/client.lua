@@ -795,7 +795,19 @@ end
 
 fk.client_callback["StartGame"] = function(jsonData)
   local c = ClientInstance
-  c.record = { fk.FK_VER, os.date("%Y%m%d%H%M%S"), c.enter_room_data }
+  c.record = {
+    fk.FK_VER,
+    os.date("%Y%m%d%H%M%S"),
+    c.enter_room_data,
+    json.encode { Self.id, fk.Self:getScreenName(), fk.Self:getAvatar() },
+    -- RESERVED
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  }
   for _, p in ipairs(c.players) do
     if p.id ~= Self.id then
       table.insert(c.record, {

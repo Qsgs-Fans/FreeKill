@@ -37,6 +37,7 @@ private:
   bool killed;
   bool uniformRunning;
   QString roomSettings;
+  QString origPlayerInfo;
   QMutex mutex;
   QSemaphore play_sem;
 
