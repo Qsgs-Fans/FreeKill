@@ -20,6 +20,7 @@
 #endif
 #include "client.h"
 #include "util.h"
+#include "replayer.h"
 
 QmlBackend *Backend = nullptr;
 
@@ -181,6 +182,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
 QString QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params) {
   if (!ClientInstance) return "{}";
+
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, func_name.toLatin1().data());
 
@@ -196,6 +198,7 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
     return "";
   }
   lua_pop(L, 1);
+
   return QString(result);
 }
 
@@ -375,6 +378,11 @@ void QmlBackend::readPendingDatagrams() {
 
 void QmlBackend::removeRecord(const QString &fname) {
   QFile::remove("recording/" + fname);
+}
+
+void QmlBackend::playRecord(const QString &fname) {
+  auto replayer = new Replayer(nullptr, fname);
+  replayer->start();
 }
 
 #endif

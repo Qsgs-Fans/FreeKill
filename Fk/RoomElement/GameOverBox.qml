@@ -38,7 +38,11 @@ GraphicsBox {
       anchors.horizontalCenter: parent.horizontalCenter
 
       onClicked: {
-        ClientInstance.notifyServer("QuitRoom", "[]");
+        if (config.replaying) {
+          mainStack.pop();
+        } else {
+          ClientInstance.notifyServer("QuitRoom", "[]");
+        }
       }
     }
 

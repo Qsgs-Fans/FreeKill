@@ -100,7 +100,7 @@ Item {
 
       Button {
         id: surrenderButton
-        enabled: !config.observing
+        enabled: !config.observing && !config.replaying
         text: Backend.translate("Surrender")
         onClicked: {
           if (isStarted && !getPhoto(Self.id).dead) {
@@ -143,7 +143,9 @@ Item {
         id: quitButton
         text: Backend.translate("Quit")
         onClicked: {
-          if (config.observing) {
+          if (config.replaying) {
+            mainStack.pop();
+          } else if (config.observing) {
             ClientInstance.notifyServer("QuitRoom", "[]");
           } else {
             quitDialog.open();
@@ -437,7 +439,7 @@ Item {
 
   GlowText {
     text: Backend.translate("Observing ...")
-    visible: config.observing
+    visible: config.observing && !config.replaying
     color: "#4B83CD"
     font.family: fontLi2.name
     font.pixelSize: 48
@@ -721,6 +723,7 @@ Item {
           }
         }
         Item {
+          visible: !config.replaying
           ChatBox {
             id: chat
             anchors.fill: parent

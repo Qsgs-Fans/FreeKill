@@ -30,8 +30,8 @@ function Client:initialize()
     fk.Backend:emitNotifyUI(command, jsonData)
   end
   self.client.callback = function(_self, command, jsonData, isRequest)
-    if self.recording and not self.observing then
-      table.insert(self.record, {os.getms() / 1000, isRequest, command, jsonData})
+    if self.recording then
+      table.insert(self.record, {math.floor(os.getms() / 1000), isRequest, command, jsonData})
     end
 
     local cb = fk.client_callback[command]
@@ -256,7 +256,9 @@ fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
 
-  local data = json.decode(jsonData)[3]
+  local _data = json.decode(jsonData)
+  local data = _data[3]
+  ClientInstance.enter_room_data = jsonData;
   ClientInstance.room_settings = data
   ClientInstance.disabled_packs = data.disabledPack
   ClientInstance.disabled_generals = data.disabledGenerals
@@ -793,7 +795,7 @@ end
 
 fk.client_callback["StartGame"] = function(jsonData)
   local c = ClientInstance
-  c.record = { fk.FK_VER, os.date("%Y%m%d%H%M%S") }
+  c.record = { fk.FK_VER, os.date("%Y%m%d%H%M%S"), c.enter_room_data }
   for _, p in ipairs(c.players) do
     if p.id ~= Self.id then
       table.insert(c.record, {
@@ -815,7 +817,7 @@ end
 
 fk.client_callback["GameOver"] = function(jsonData)
   local c = ClientInstance
-  if c.recording and not c.observing then
+  if c.recording then
     c.recording = false
     c.record[2] = table.concat({
       c.record[2],

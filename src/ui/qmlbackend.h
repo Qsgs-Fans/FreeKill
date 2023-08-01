@@ -64,6 +64,7 @@ public:
   void showToast(const QString &s) { emit notifyUI("ShowToast", s); }
 
   Q_INVOKABLE void removeRecord(const QString &);
+  Q_INVOKABLE void playRecord(const QString &);
 
 signals:
   void notifyUI(const QString &command, const QString &jsonData);

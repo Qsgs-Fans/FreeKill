@@ -103,6 +103,9 @@ Item {
           anchors.right: delBtn.left
           anchors.rightMargin: 8
           onClicked: {
+            config.observing = true;
+            config.replaying = true;
+            Backend.playRecord(fileName);
           }
         }
 

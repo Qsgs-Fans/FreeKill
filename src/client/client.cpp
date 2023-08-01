@@ -89,3 +89,7 @@ void Client::saveRecord(const QString &json, const QString &fname) {
   c.write(qCompress(json.toUtf8()));
   c.close();
 }
+
+void Client::processReplay(const QString &c, const QString &j) {
+  callLua(c, j);
+}
