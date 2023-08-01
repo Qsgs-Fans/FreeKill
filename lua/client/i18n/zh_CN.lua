@@ -72,6 +72,11 @@ Fk:loadTranslationTable{
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
+  ["Replay Manager"] = "录像管理器",
+  ["Game Win"] = "胜利",
+  ["Game Lose"] = "失败",
+  ["Play the Replay"] = "重放",
+  ["Delete Replay"] = "删除",
   ["About"] = "关于",
   ["about_freekill_description"] = [[
 # 关于新月杀

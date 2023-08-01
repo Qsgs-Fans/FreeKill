@@ -825,7 +825,7 @@ fk.client_callback["GameOver"] = function(jsonData)
       Self.role,
       jsonData,
     }, ".")
-    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+    c.client:saveRecord(json.encode(c.record), c.record[2])
   end
   c:notifyUI("GameOver", jsonData)
 end
@@ -842,7 +842,7 @@ fk.client_callback["EnterLobby"] = function(jsonData)
       Self.role,
       "",
     }, ".")
-    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+    c.client:saveRecord(json.encode(c.record), c.record[2])
   end
   c:notifyUI("EnterLobby", jsonData)
 end

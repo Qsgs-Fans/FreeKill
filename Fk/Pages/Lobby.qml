@@ -197,6 +197,9 @@ Item {
     }
     Button {
       text: Backend.translate("Replay")
+      onClicked: {
+        mainStack.push(mainWindow.replayPage);
+      }
     }
     Button {
       text: Backend.translate("About")
