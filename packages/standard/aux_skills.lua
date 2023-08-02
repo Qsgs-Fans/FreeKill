@@ -7,6 +7,10 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
+    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
+      return false
+    end
+
     local checkpoint = true
     local card = Fk:getCardById(to_select)
 
@@ -43,6 +47,10 @@ local chooseCardsSkill = fk.CreateActiveSkill{
   expand_pile = function(self) return self.expand_pile end,
   card_filter = function(self, to_select, selected)
     if #selected >= self.num then
+      return false
+    end
+
+    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
       return false
     end
 
