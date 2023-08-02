@@ -280,9 +280,24 @@ function CanUseCard(card, player)
   return json.encode(ret)
 end
 
-function CardProhibitedUse(cid)
-  local c = Fk:getCardById(cid)
-  local ret = Self:prohibitUse(c)
+function CardProhibitedUse(card)
+  local c   ---@type Card
+  local ret = false
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+  else
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+    end
+  end
+  if c == nil then
+    return "true"
+  else
+    ret = Self:prohibitUse(c)
+  end
   return json.encode(ret)
 end
 
@@ -509,9 +524,24 @@ function SkillFitPattern(skill_name, pattern)
   return json.encode(ret)
 end
 
-function CardProhibitedResponse(cid)
-  local c = Fk:getCardById(cid)
-  local ret = Self:prohibitResponse(c)
+function CardProhibitedResponse(card)
+  local c   ---@type Card
+  local ret = false
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+  else
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+    end
+  end
+  if c == nil then
+    return "true"
+  else
+    ret = Self:prohibitUse(c)
+  end
   return json.encode(ret)
 end
 
