@@ -94,6 +94,10 @@ function Room:initialize(_room)
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
+  if not Fk.game_modes[self.settings.gameMode] then
+    self.settings.gameMode = "aaa_role_mode"
+  end
+
   table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
   self.disabled_generals = self.settings.disabledGenerals
 end
