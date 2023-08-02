@@ -636,9 +636,19 @@ void Server::temporarilyBan(int playerId) {
   if (!player) return;
 
   auto socket = player->getSocket();
-  if (!socket) return;
+  QString addr;
+  if (!socket) {
+    QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE id=%1;").arg(playerId);
+    auto result = SelectFromDatabase(db, sql_find);
+    if (result.isEmpty())
+      return;
 
-  auto addr = socket->peerAddress();
+    auto obj = result[0].toObject();
+    addr = obj["lastLoginIp"].toString();
+  } else {
+    addr = socket->peerAddress();
+  }
   temp_banlist.append(addr);
 
   auto time = getConfig("tempBanTime").toInt();
