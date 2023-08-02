@@ -24,6 +24,9 @@ Item {
     TabButton {
       text: Backend.translate("Audio Settings")
     }
+    TabButton {
+      text: Backend.translate("Ban General Settings")
+    }
   }
 
   SwipeView {
@@ -36,5 +39,6 @@ Item {
     UserInfo {}
     BGSetting {}
     AudioSetting {}
+    BanGeneralSetting {}
   }
 }

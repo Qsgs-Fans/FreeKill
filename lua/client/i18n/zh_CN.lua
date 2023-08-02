@@ -24,6 +24,7 @@ Fk:loadTranslationTable{
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
+  ["Ban General Settings"] = "禁将",
   ["Back"] = "返回",
 
   ["Refresh Room List"] = "刷新房间列表",
@@ -84,13 +85,24 @@ Fk:loadTranslationTable{
 以便于DIY为首要目的的开源三国杀游戏。
 
 项目链接： https://github.com/Notify-ctrl/FreeKill
+
+---
+
+作者： Notify Ho-spair
+
+开发者： RalphR Nyutanislavsky xxyheaven 妖梦厨
+
+贡献者： 假象 deepskybird 板蓝根
+
+鸣谢： Mogara
+
   ]],
   ["about_qt_description"] = [[
 # 关于Qt
 
 Qt是一个C++图形界面应用程序开发框架，拥有强大的跨平台能力以及易于使用的API。
 
-本程序使用Qt 6.2+，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
+本程序使用Qt 6.4，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
 
 官网： https://www.qt.io
   ]],

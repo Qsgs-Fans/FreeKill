@@ -24,6 +24,8 @@ QtObject {
   property bool disableMsgAudio
   property bool hideUseless
   property var disabledGenerals: []
+  property var disableGeneralSchemes: []
+  property int disableSchemeIdx: 0
 
   property int preferredTimeout
   property int preferredLuckTime
@@ -42,6 +44,10 @@ QtObject {
   property bool observing: false
   property bool replaying: false
   property var blockedUsers: []
+
+  onDisabledGeneralsChanged: {
+    disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
+  }
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
@@ -67,6 +73,8 @@ QtObject {
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     disabledGenerals = conf.disabledGenerals ?? [];
+    disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
+    disableSchemeIdx = conf.disableSchemeIdx ?? 0;
   }
 
   function saveConf() {
@@ -92,6 +100,8 @@ QtObject {
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.disabledGenerals = disabledGenerals;
+    conf.disableGeneralSchemes = disableGeneralSchemes;
+    conf.disableSchemeIdx = disableSchemeIdx;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

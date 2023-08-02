@@ -50,6 +50,7 @@ public:
   Q_INVOKABLE void playSound(const QString &name, int index = 0);
 
   Q_INVOKABLE void copyToClipboard(const QString &s);
+  Q_INVOKABLE QString readClipboard();
 
   Q_INVOKABLE void setAESKey(const QString &key);
   Q_INVOKABLE QString getAESKey() const;
