@@ -570,7 +570,7 @@ function Room:setDeputyGeneral(player, general)
 end
 
 ---@param player ServerPlayer @ 要换将的玩家
----@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策也不存在则nil错
+---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策不存在变身为士兵
 ---@param full boolean|nil @ 是否血量满状态变身
 ---@param isDeputy boolean|nil @ 是否变的是副将
 ---@param sendLog boolean|nil @ 是否发Log
@@ -580,7 +580,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   orig = Fk.generals[orig]
   local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
-  local new = Fk.generals[new_general] or Fk.generals["sunce"]
+  local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
   local new_skills = table.map(orig_skills, function(e)
     return "-" .. e
   end)
@@ -590,24 +590,16 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
   if isDeputy then
-    player.deputyGeneral = new_general
-    self:broadcastProperty(player, "deputyGeneral")
+    self:setPlayerProperty(player, "deputyGeneral", new_general)
   else
-    player.general = new_general
-    self:broadcastProperty(player, "general")
+    self:setPlayerProperty(player, "general", new_general)
+    self:setPlayerProperty(player, "gender", new.gender)
+    self:setPlayerProperty(player, "kingdom", new.kingdom)
   end
 
-  player.gender = new.gender
-  self:broadcastProperty(player, "gender")
-
-  player.kingdom = new.kingdom
-  self:broadcastProperty(player, "kingdom")
-
-  player.maxHp = player:getGeneralMaxHp()
-  self:broadcastProperty(player, "maxHp")
+  self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
   if full or player.hp > player.maxHp then
-    player.hp = player.maxHp
-    self:broadcastProperty(player, "hp")
+    self:setPlayerProperty(player, "hp", player.maxHp)
   end
 end
 
@@ -1080,7 +1072,7 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
-  pattern = pattern or ""
+  pattern = pattern or "."
 
   local canDiscards = table.filter(
     player:getCardIds{ Player.Hand, includeEquip and Player.Equip or nil }, function(id)
@@ -1200,7 +1192,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
   end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
-  pattern = pattern or ""
+  pattern = pattern or "."
 
   local chosenCards = {}
   local data = {
@@ -1305,7 +1297,7 @@ function Room:askForGeneral(player, generals, n)
 end
 
 --- 询问玩家若为神将、双势力需选择一个势力。
----@param player ServerPlayer[]|nil @ 询问目标
+---@param players ServerPlayer[]|nil @ 询问目标
 function Room:askForChooseKingdom(players)
   players = players or self.alive_players
   local specialKingdomPlayers = table.filter(players, function(p)
@@ -2023,7 +2015,8 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     fk.ReasonPut,
     skillName,
     nil,
-    true
+    true,
+    player.id
   )
 
   return { card = cardToMove, from = from.id, to = to.id }
@@ -2615,16 +2608,18 @@ end
 ---@param skill_name string|nil @ 技能名
 ---@param special_name string|nil @ 私人牌堆名
 ---@param visible boolean|nil @ 是否明置
-function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
+---@param proposer integer
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
+  proposer = proposer or nil
   local ids = Card:getIdList(card)
 
   local to
   if table.contains(
     {Card.PlayerEquip, Card.PlayerHand,
-     Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+      Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
     to = target.id
   end
 
@@ -2637,6 +2632,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     skillName = skill_name,
     specialName = special_name,
     moveVisible = visible,
+    proposer = proposer,
   }
 end
 
