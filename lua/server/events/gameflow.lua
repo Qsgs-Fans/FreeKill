@@ -152,7 +152,7 @@ GameEvent.functions[GameEvent.Round] = function(self)
 
   repeat
     p = room.current
-    GameEvent(GameEvent.Turn):exec()
+    GameEvent(GameEvent.Turn, p):exec()
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
   until p.seat >= p:getNextAlive().seat
