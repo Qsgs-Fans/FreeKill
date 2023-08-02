@@ -24,6 +24,7 @@ Fk:loadTranslationTable{
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
+  ["Ban General Settings"] = "禁将",
   ["Back"] = "返回",
 
   ["Refresh Room List"] = "刷新房间列表",
