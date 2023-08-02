@@ -1472,7 +1472,7 @@ function Room:askForAddTarget(player, targets, num, can_minus, distance_limited,
   end
   for _, p in ipairs(targets) do
     if not table.contains(AimGroup:getAllTargets(data.tos), p.id) and not room:getPlayerById(data.from):isProhibited(p, data.card) then
-      if data.card.skill:modTargetFilter(p.id, orig_tos, player.id, data.card, distance_limited) then
+      if data.card.skill:modTargetFilter(p.id, orig_tos, data.from, data.card, distance_limited) then
         table.insertIfNeed(tos, p.id)
       end
     end

@@ -114,8 +114,10 @@ function Engine:loadPackages()
   -- load standard & standard_cards first
   self:loadPackage(require("packages.standard"))
   self:loadPackage(require("packages.standard_cards"))
+  self:loadPackage(require("packages.maneuvering"))
   table.removeOne(directories, "standard")
   table.removeOne(directories, "standard_cards")
+  table.removeOne(directories, "maneuvering")
 
   for _, dir in ipairs(directories) do
     if (not string.find(dir, ".disabled")) and FileIO.isDir("packages/" .. dir)
