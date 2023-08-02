@@ -80,13 +80,13 @@ Item {
             toast.show("导入失败：数据格式不对。");
             return;
           }
+          let d = [];
           for (let e of data) {
-            if (!(typeof e === "string" && Backend.translate(e) !== e)) {
-              toast.show("导入失败：含有未知的武将。");
-              return;
+            if (typeof e === "string" && Backend.translate(e) !== e) {
+              d.push(e);
             }
           }
-          config.disabledGenerals = data;
+          config.disabledGenerals = d;
           toast.show("导入禁将方案成功。");
         }
       }
