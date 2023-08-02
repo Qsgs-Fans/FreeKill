@@ -2011,7 +2011,8 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     fk.ReasonPut,
     skillName,
     nil,
-    true
+    true,
+    player.id
   )
 
   return { card = cardToMove, from = from.id, to = to.id }
@@ -2603,16 +2604,18 @@ end
 ---@param skill_name string|nil @ 技能名
 ---@param special_name string|nil @ 私人牌堆名
 ---@param visible boolean|nil @ 是否明置
-function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
+---@param proposer integer
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
+  proposer = proposer or nil
   local ids = Card:getIdList(card)
 
   local to
   if table.contains(
     {Card.PlayerEquip, Card.PlayerHand,
-     Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+      Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
     to = target.id
   end
 
@@ -2625,6 +2628,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     skillName = skill_name,
     specialName = special_name,
     moveVisible = visible,
+    proposer = proposer,
   }
 end
 
