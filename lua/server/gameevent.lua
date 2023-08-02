@@ -109,7 +109,7 @@ local function bin_search(events, from, to, n, func)
 
   for i = mid, #events do
     local v = events[i]
-    if v.id < to and func(v) then
+    if v.id <= to and func(v) then
       table.insert(ret, v)
     end
     if #ret >= n then break end

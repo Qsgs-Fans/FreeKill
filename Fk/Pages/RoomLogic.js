@@ -508,7 +508,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
         [card, roomScene.responding_card]
       )) && (roomScene.autoPending || !JSON.parse(Backend.callLuaFunction(
         "CardProhibitedUse", [card])));
-    } else if (okButton.enabled || roomScene.state === "playing") {
+    } else if (okButton.enabled && roomScene.state === "playing") {
       okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
     }
     if (okButton.enabled) {
