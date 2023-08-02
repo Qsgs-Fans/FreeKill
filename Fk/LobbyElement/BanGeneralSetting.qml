@@ -48,6 +48,50 @@ Item {
       }
     }
 
+    Text {
+      Layout.fillWidth: true
+      Layout.margins: 8
+      wrapMode: Text.WrapAnywhere
+      text: "导出键会将这个方案的内容复制到剪贴板中；" +
+        "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。"
+    }
+
+    RowLayout {
+      Button {
+        text: "导出"
+        onClicked: {
+          Backend.copyToClipboard(JSON.stringify(config.disabledGenerals));
+          toast.show("该禁将方案已经复制到剪贴板。");
+        }
+      }
+
+      Button {
+        text: "导入"
+        onClicked: {
+          const str = Backend.readClipboard();
+          let data;
+          try {
+            data = JSON.parse(str);
+          } catch (e) {
+            toast.show("导入失败：不是合法的JSON字符串。");
+            return;
+          }
+          if (!data instanceof Array) {
+            toast.show("导入失败：数据格式不对。");
+            return;
+          }
+          for (let e of data) {
+            if (!(typeof e === "string" && Backend.translate(e) !== e)) {
+              toast.show("导入失败：含有未知的武将。");
+              return;
+            }
+          }
+          config.disabledGenerals = data;
+          toast.show("导入禁将方案成功。");
+        }
+      }
+    }
+
     GridView {
       id: listView
       Layout.fillWidth: true

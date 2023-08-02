@@ -321,6 +321,10 @@ void QmlBackend::copyToClipboard(const QString &s) {
   QGuiApplication::clipboard()->setText(s);
 }
 
+QString QmlBackend::readClipboard() {
+  return QGuiApplication::clipboard()->text();
+}
+
 void QmlBackend::setAESKey(const QString &key) { aes_key = key; }
 
 QString QmlBackend::getAESKey() const { return aes_key; }
