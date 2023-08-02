@@ -12,13 +12,10 @@ local jianxiong = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     local room = target.room
     return target == player and player:hasSkill(self.name) and data.card and
-      table.find(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
+      table.every(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
   end,
   on_use = function(self, event, target, player, data)
-    local room = player.room
-    local dummy = Fk:cloneCard("jueying")
-    dummy:addSubcards(table.filter(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end))
-    room:obtainCard(player.id, dummy, false, fk.ReasonJustMove)
+    player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
   end,
 }
 
@@ -317,7 +314,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
-      and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+      and Fk:currentRoom():getCardArea(to_select) ~= Player.Hand
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -337,7 +334,7 @@ local rende = fk.CreateActiveSkill{
   name = "rende",
   anim_type = "support",
   card_filter = function(self, to_select, selected)
-    return Fk:currentRoom():getCardArea(to_select) ~= Card.PlayerEquip
+    return Fk:currentRoom():getCardArea(to_select) == Card.PlayerHand
   end,
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
@@ -349,9 +346,7 @@ local rende = fk.CreateActiveSkill{
     local player = room:getPlayerById(effect.from)
     local cards = effect.cards
     local marks = player:getMark("_rende_cards-phase")
-    local dummy = Fk:cloneCard'slash'
-    dummy:addSubcards(cards)
-    room:obtainCard(target.id, dummy, false, fk.ReasonGive)
+    room:moveCardTo(cards, Player.Hand, target, fk.ReasonGive, self.name, nil, false)
     room:addPlayerMark(player, "_rende_cards-phase", #cards)
     if marks < 2 and marks + #cards >= 2 and player:isWounded() then
       room:recover{
@@ -808,20 +803,27 @@ local liuli = fk.CreateTriggerSkill{
     local ret = target == player and player:hasSkill(self.name) and
       data.card.trueName == "slash"
     if ret then
-      self.target_list = {}
       local room = player.room
-      for _, p in ipairs(room:getOtherPlayers(player)) do
-        if p.id ~= data.from and player:inMyAttackRange(p) then
-          table.insert(self.target_list, p.id)
+      local from = room:getPlayerById(data.from)
+      for _, p in ipairs(room.alive_players) do
+        if p ~= player and p.id ~= data.from and player:inMyAttackRange(p) and not from:isProhibited(p, data.card) then
+          return true
         end
       end
-      return #self.target_list > 0
     end
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#liuli-target"
-    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name, true)
+    local targets = {}
+    local from = room:getPlayerById(data.from)
+    for _, p in ipairs(room.alive_players) do
+      if p ~= player and p.id ~= data.from and player:inMyAttackRange(p) and not from:isProhibited(p, data.card) then
+        table.insert(targets, p.id)
+      end
+    end
+    if #targets == 0 then return false end
+    local plist, cid = room:askForChooseCardAndPlayers(player, targets, 1, 1, nil, prompt, self.name, true)
     if #plist > 0 then
       self.cost_data = {plist[1], cid}
       return true
@@ -910,7 +912,7 @@ local jieyin = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
   card_filter = function(self, to_select, selected)
-    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) == Player.Hand
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -937,7 +939,7 @@ local jieyin = fk.CreateActiveSkill{
         skillName = self.name
       })
     end
-   end
+  end
 }
 local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3, 3, General.Female)
 sunshangxiang:addSkill(xiaoji)
@@ -950,7 +952,7 @@ local qingnang = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
   card_filter = function(self, to_select, selected, targets)
-    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) == Player.Hand
   end,
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
