@@ -14,7 +14,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: "禁将方案"
+        text: Backend.translate("Ban List")
       }
       ComboBox {
         id: banCombo
@@ -30,18 +30,18 @@ Item {
       }
 
       Button {
-        text: "新建"
+        text: Backend.translate("List")
         onClicked: {
           const i = config.disableGeneralSchemes.length;
           banComboList.append({
-            name: "方案" + (i + 1),
+            name: Backend.translate("List") + (i + 1),
           });
           config.disableGeneralSchemes.push([]);
         }
       }
 
       Button {
-        text: "清空"
+        text: Backend.translate("Clear")
         onClicked: {
           config.disabledGenerals = [];
         }
@@ -52,32 +52,31 @@ Item {
       Layout.fillWidth: true
       Layout.margins: 8
       wrapMode: Text.WrapAnywhere
-      text: "导出键会将这个方案的内容复制到剪贴板中；" +
-        "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。"
+      text: Backend.translate("Help_Ban_List")
     }
 
     RowLayout {
       Button {
-        text: "导出"
+        text: Backend.translate("Export")
         onClicked: {
           Backend.copyToClipboard(JSON.stringify(config.disabledGenerals));
-          toast.show("该禁将方案已经复制到剪贴板。");
+          toast.show(Backend.translate("Export Success"));
         }
       }
 
       Button {
-        text: "导入"
+        text: Backend.translate("Import")
         onClicked: {
           const str = Backend.readClipboard();
           let data;
           try {
             data = JSON.parse(str);
           } catch (e) {
-            toast.show("导入失败：不是合法的JSON字符串。");
+            toast.show(Backend.translate("Not Legal"));
             return;
           }
           if (!data instanceof Array) {
-            toast.show("导入失败：数据格式不对。");
+            toast.show(Backend.translate("Not JSON"));
             return;
           }
           let d = [];
@@ -87,7 +86,7 @@ Item {
             }
           }
           config.disabledGenerals = d;
-          toast.show("导入禁将方案成功。");
+          toast.show(Backend.translate("Import Success"));
         }
       }
     }
@@ -118,7 +117,7 @@ Item {
   Component.onCompleted: {
     for (let i = 0; i < config.disableGeneralSchemes.length; i++) {
       banComboList.append({
-        name: "方案" + (i + 1),
+        name: Backend.translate("List") + (i + 1),
       });
     }
     banCombo.currentIndex = config.disableSchemeIdx;

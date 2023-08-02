@@ -29,6 +29,7 @@ Fk:loadTranslationTable{
 
   ["Refresh Room List"] = "刷新房间列表",
 
+  ["Disable Extension"] = "禁用Lua拓展 (重启后生效)",
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
@@ -64,6 +65,19 @@ Fk:loadTranslationTable{
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
   ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
+
+  ["Ban List"] = "禁将方案",
+  ["List"] = "方案",
+  ["New"] = "新建",
+  ["Clear"] = "清空",
+  ["Help_Ban_List"] = "导出键会将这个方案的内容复制到剪贴板中；" ..
+  "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
+  ["Export"] = "导出",
+  ["Export Success"] = "导出",
+  ["Import"] = "导入",
+  ["Not Legal"] = "导入失败：不是合法的JSON字符串。",
+  ["Not JSON"] = "导入失败：数据格式不对。",
+  ["Import Success"] = "导入",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -164,6 +178,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
+  ["LuckCardNum"] = "手气卡次数：",
+  ["ResponseTime"] = "出手时间：",
+  ["GeneralBoxNum"] = "选将框数：",
+  ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
+  ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
 
   -- Room
   ["$EnterRoom"] = "成功加入房间。",
@@ -256,6 +275,12 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Back To Lobby"] = "返回大厅",
   ["Save Replay"] = "保存录像",
 
+  ["Speed Resume"] = "等速",
+  ["Speed Up"] = "加速",
+  ["Speed Down"] = "减速",
+  ["Pause"] = "暂停",
+  ["Resume"] = "继续",
+
   ["Bulletin Info"] = [==[
   ## v0.2.10
 
@@ -300,6 +325,7 @@ Fk:loadTranslationTable{
   ["pile_draw"] = "牌堆",
   ["pile_discard"] = "弃牌堆",
   ["processing_area"] = "处理区",
+  ["Pile"] = "牌堆",
   ["Top"] = "牌堆顶",
   ["Bottom"] = "牌堆底",
   ["Shuffle"] = "洗牌",

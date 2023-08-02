@@ -22,7 +22,7 @@ Flickable {
     anchors.topMargin: 8
 
     Switch {
-      text: "禁用Lua拓展 (重启后生效)"
+      text: Backend.translate("Disable Extension")
     }
 
     RowLayout {
