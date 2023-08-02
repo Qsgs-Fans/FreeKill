@@ -276,11 +276,80 @@ local yiji = fk.CreateTriggerSkill{
     self.cancel_cost = true
   end,
   on_use = function(self, event, target, player, data)
-    -- TODO: yiji logic
-    player:drawCards(2)
+    local room = player.room
+    local ids = room:getNCards(2)
+    local fakemove = {
+      toArea = Card.PlayerHand,
+      to = player.id,
+      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.Void} end),
+      moveReason = fk.ReasonJustMove,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    for _, id in ipairs(ids) do
+      room:setCardMark(Fk:getCardById(id), "yiji", 1)
+    end
+    while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
+      if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
+        for _, id in ipairs(ids) do
+          room:setCardMark(Fk:getCardById(id), "yiji", 0)
+        end
+        ids = table.filter(ids, function(id) return room:getCardArea(id) ~= Card.PlayerHand end)
+        fakemove = {
+          from = player.id,
+          toArea = Card.Void,
+          moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
+          moveReason = fk.ReasonGive,
+        }
+        room:notifyMoveCards({player}, {fakemove})
+        room:moveCards({
+          fromArea = Card.Void,
+          ids = ids,
+          to = player.id,
+          toArea = Card.PlayerHand,
+          moveReason = fk.ReasonGive,
+          skillName = self.name,
+        })
+      end
+    end
+  end,
+}
+local yiji_active = fk.CreateActiveSkill{
+  name = "yiji_active",
+  mute = true,
+  min_card_num = 1,
+  target_num = 1,
+  card_filter = function(self, to_select, selected, targets)
+    return Fk:getCardById(to_select):getMark("yiji") > 0
+  end,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0
+  end,
+  on_use = function(self, room, effect)
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    room:doIndicate(player.id, {target.id})
+    for _, id in ipairs(effect.cards) do
+      room:setCardMark(Fk:getCardById(id), "yiji", 0)
+    end
+    local fakemove = {
+      from = player.id,
+      toArea = Card.Void,
+      moveInfo = table.map(effect.cards, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
+      moveReason = fk.ReasonGive,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    room:moveCards({
+      fromArea = Card.Void,
+      ids = effect.cards,
+      to = target.id,
+      toArea = Card.PlayerHand,
+      moveReason = fk.ReasonGive,
+      skillName = self.name,
+    })
   end,
 }
 local guojia = General:new(extension, "guojia", "wei", 3)
+Fk:addSkill(yiji_active)
 guojia:addSkill(tiandu)
 guojia:addSkill(yiji)
 
@@ -1075,9 +1144,6 @@ local role_mode = fk.CreateGameMode{
   name = "aaa_role_mode", -- just to let it at the top of list
   minPlayer = 2,
   maxPlayer = 8,
-  countInFunc = function(self, room)
-    return #room.players >= 5
-  end,
   surrender_func = function(self, playedTime)
     local roleCheck = false
     local roleText = ""
