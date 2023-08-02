@@ -72,3 +72,9 @@ public:
   bool thinking();
   void setThinking(bool t);
 };
+
+%extend ServerPlayer {
+  void emitKick() {
+    emit $self->kicked();
+  }
+}

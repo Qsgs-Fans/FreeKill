@@ -14,6 +14,7 @@
 ---@field public phase_state table[]
 ---@field public phase_index integer
 ---@field public role_shown boolean
+---@field private _timewaste_count integer
 ---@field public ai AI
 ---@field public ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
@@ -34,6 +35,7 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+  self._timewaste_count = 0
   self.ai = RandomAI:new(self)
 end
 
@@ -113,12 +115,19 @@ local function _waitForReply(player, timeout)
     player.serverplayer:setThinking(true)
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
+      player._timewaste_count = 0
       player.serverplayer:setThinking(false)
       return result
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
+      player._timewaste_count = player._timewaste_count + 1
       player.serverplayer:setThinking(false)
+
+      if player._timewaste_count >= 3 then
+        player.serverplayer:emitKick()
+      end
+
       return ""
     end
 
