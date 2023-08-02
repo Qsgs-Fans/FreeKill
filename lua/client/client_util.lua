@@ -586,12 +586,15 @@ function GetPlayerEquips(pid)
 end
 
 function ResetClientLua()
+  local _data = ClientInstance.enter_room_data;
   local data = ClientInstance.room_settings
   Self = ClientPlayer:new(fk.Self)
   ClientInstance = Client:new() -- clear old client data
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
+
+  ClientInstance.enter_room_data = _data;
   ClientInstance.room_settings = data
 
   ClientInstance.disabled_packs = data.disabledPack
