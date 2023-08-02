@@ -936,19 +936,14 @@ extension:addCards({
 local bladeSkill = fk.CreateTriggerSkill{
   name = "#blade_skill",
   attached_equip = "blade",
-  events = {fk.CardUseFinished},
+  events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    if not player:hasSkill(self.name) then return end
-    local use = data ---@type CardUseStruct
-    if use.card.name == "jink" and use.toCard and use.toCard.trueName == "slash" then
-      local effect = use.responseToEvent
-      return effect.from == player.id
-    end
+    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. target.id,
-      true, { must_targets = {target.id}, exclusive_targets = {target.id}, bypass_distances = true, bypass_times = true })
+    local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. data.to,
+      true, { must_targets = {data.to}, exclusive_targets = {data.to}, bypass_distances = true, bypass_times = true })
     if use then
       use.extraUse = true
       self.cost_data = use
@@ -1008,7 +1003,7 @@ local axeSkill = fk.CreateTriggerSkill{
   attached_equip = "axe",
   events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash"
+    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
@@ -1060,10 +1055,12 @@ local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
   extra_target_func = function(self, player, skill, card)
-    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
-      and #player:getCardIds(Player.Hand) == 1
-      and player:getCardIds(Player.Hand)[1] == card.id then
-      return 2
+    if player:hasSkill(self.name) and skill.trueName == "slash_skill" then
+      local cards = card:isVirtual() and card.subcards or {card.id}
+      local handcards = player:getCardIds(Player.Hand)
+      if #cards == #handcards and table.every(cards, function(id) return table.contains(handcards, id) end) then
+        return 2
+      end
     end
   end,
 }
