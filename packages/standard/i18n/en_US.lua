@@ -40,6 +40,8 @@ Fk:loadTranslationTable({
   [":tiandu"] = "当你的判定牌生效后，你可以获得之。",
   ["yiji"] = "Bequeathed Strategy",
   [":yiji"] = "每当你受到1点伤害后，你可以观看牌堆顶的两张牌并任意分配它们。",
+  ["yiji_active"] = "Bequeathed Strategy",
+  ["#yiji-give"] = "Bequeathed Strategy: You may distribute these cards to any players, or click Cancel to reserve",
 
   ["zhenji"] = "Zhen Ji",
   ["luoshen"] = "Goddess Luo",

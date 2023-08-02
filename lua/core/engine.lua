@@ -244,7 +244,7 @@ end
 local function canUseGeneral(g)
   local r = Fk:currentRoom()
   return not table.contains(r.disabled_packs, Fk.generals[g].package.name) and
-    not table.contains(r.disabled_generals, g)
+    not table.contains(r.disabled_generals, g) and not g.hidden and not g.total_hidden
 end
 
 --- 根据武将名称，获取它的同名武将。
