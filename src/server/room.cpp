@@ -535,6 +535,9 @@ void Room::gameOver() {
   // 清理所有状态不是“在线”的玩家
   foreach (ServerPlayer *p, players) {
     if (p->getState() != Player::Online) {
+      if (p->getState() == Player::Offline) {
+        server->temporarilyBan(p->getId());
+      }
       p->deleteLater();
     }
   }

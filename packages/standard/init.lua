@@ -12,13 +12,10 @@ local jianxiong = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     local room = target.room
     return target == player and player:hasSkill(self.name) and data.card and
-      table.find(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
+      table.every(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
   end,
   on_use = function(self, event, target, player, data)
-    local room = player.room
-    local dummy = Fk:cloneCard("jueying")
-    dummy:addSubcards(table.filter(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end))
-    room:obtainCard(player.id, dummy, false, fk.ReasonJustMove)
+    player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
   end,
 }
 
@@ -276,11 +273,80 @@ local yiji = fk.CreateTriggerSkill{
     self.cancel_cost = true
   end,
   on_use = function(self, event, target, player, data)
-    -- TODO: yiji logic
-    player:drawCards(2)
+    local room = player.room
+    local ids = room:getNCards(2)
+    local fakemove = {
+      toArea = Card.PlayerHand,
+      to = player.id,
+      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.Void} end),
+      moveReason = fk.ReasonJustMove,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    for _, id in ipairs(ids) do
+      room:setCardMark(Fk:getCardById(id), "yiji", 1)
+    end
+    while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
+      if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
+        for _, id in ipairs(ids) do
+          room:setCardMark(Fk:getCardById(id), "yiji", 0)
+        end
+        ids = table.filter(ids, function(id) return room:getCardArea(id) ~= Card.PlayerHand end)
+        fakemove = {
+          from = player.id,
+          toArea = Card.Void,
+          moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
+          moveReason = fk.ReasonGive,
+        }
+        room:notifyMoveCards({player}, {fakemove})
+        room:moveCards({
+          fromArea = Card.Void,
+          ids = ids,
+          to = player.id,
+          toArea = Card.PlayerHand,
+          moveReason = fk.ReasonGive,
+          skillName = self.name,
+        })
+      end
+    end
+  end,
+}
+local yiji_active = fk.CreateActiveSkill{
+  name = "yiji_active",
+  mute = true,
+  min_card_num = 1,
+  target_num = 1,
+  card_filter = function(self, to_select, selected, targets)
+    return Fk:getCardById(to_select):getMark("yiji") > 0
+  end,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0
+  end,
+  on_use = function(self, room, effect)
+    local player = room:getPlayerById(effect.from)
+    local target = room:getPlayerById(effect.tos[1])
+    room:doIndicate(player.id, {target.id})
+    for _, id in ipairs(effect.cards) do
+      room:setCardMark(Fk:getCardById(id), "yiji", 0)
+    end
+    local fakemove = {
+      from = player.id,
+      toArea = Card.Void,
+      moveInfo = table.map(effect.cards, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
+      moveReason = fk.ReasonGive,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    room:moveCards({
+      fromArea = Card.Void,
+      ids = effect.cards,
+      to = target.id,
+      toArea = Card.PlayerHand,
+      moveReason = fk.ReasonGive,
+      skillName = self.name,
+    })
   end,
 }
 local guojia = General:new(extension, "guojia", "wei", 3)
+Fk:addSkill(yiji_active)
 guojia:addSkill(tiandu)
 guojia:addSkill(yiji)
 
@@ -317,7 +383,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
-      and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+      and Fk:currentRoom():getCardArea(to_select) ~= Player.Hand
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -337,7 +403,7 @@ local rende = fk.CreateActiveSkill{
   name = "rende",
   anim_type = "support",
   card_filter = function(self, to_select, selected)
-    return Fk:currentRoom():getCardArea(to_select) ~= Card.PlayerEquip
+    return Fk:currentRoom():getCardArea(to_select) == Card.PlayerHand
   end,
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
@@ -349,9 +415,7 @@ local rende = fk.CreateActiveSkill{
     local player = room:getPlayerById(effect.from)
     local cards = effect.cards
     local marks = player:getMark("_rende_cards-phase")
-    local dummy = Fk:cloneCard'slash'
-    dummy:addSubcards(cards)
-    room:obtainCard(target.id, dummy, false, fk.ReasonGive)
+    room:moveCardTo(cards, Player.Hand, target, fk.ReasonGive, self.name, nil, false, player.id)
     room:addPlayerMark(player, "_rende_cards-phase", #cards)
     if marks < 2 and marks + #cards >= 2 and player:isWounded() then
       room:recover{
@@ -808,20 +872,27 @@ local liuli = fk.CreateTriggerSkill{
     local ret = target == player and player:hasSkill(self.name) and
       data.card.trueName == "slash"
     if ret then
-      self.target_list = {}
       local room = player.room
-      for _, p in ipairs(room:getOtherPlayers(player)) do
-        if p.id ~= data.from and player:inMyAttackRange(p) then
-          table.insert(self.target_list, p.id)
+      local from = room:getPlayerById(data.from)
+      for _, p in ipairs(room.alive_players) do
+        if p ~= player and p.id ~= data.from and player:inMyAttackRange(p) and not from:isProhibited(p, data.card) then
+          return true
         end
       end
-      return #self.target_list > 0
     end
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#liuli-target"
-    local plist, cid = room:askForChooseCardAndPlayers(player, self.target_list, 1, 1, nil, prompt, self.name, true)
+    local targets = {}
+    local from = room:getPlayerById(data.from)
+    for _, p in ipairs(room.alive_players) do
+      if p ~= player and p.id ~= data.from and player:inMyAttackRange(p) and not from:isProhibited(p, data.card) then
+        table.insert(targets, p.id)
+      end
+    end
+    if #targets == 0 then return false end
+    local plist, cid = room:askForChooseCardAndPlayers(player, targets, 1, 1, nil, prompt, self.name, true)
     if #plist > 0 then
       self.cost_data = {plist[1], cid}
       return true
@@ -910,7 +981,7 @@ local jieyin = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
   card_filter = function(self, to_select, selected)
-    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    return #selected < 2 and Fk:currentRoom():getCardArea(to_select) == Player.Hand
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
@@ -937,7 +1008,7 @@ local jieyin = fk.CreateActiveSkill{
         skillName = self.name
       })
     end
-   end
+  end
 }
 local sunshangxiang = General:new(extension, "sunshangxiang", "wu", 3, 3, General.Female)
 sunshangxiang:addSkill(xiaoji)
@@ -950,7 +1021,7 @@ local qingnang = fk.CreateActiveSkill{
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
   card_filter = function(self, to_select, selected, targets)
-    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    return #selected == 0 and Fk:currentRoom():getCardArea(to_select) == Player.Hand
   end,
   target_filter = function(self, to_select, selected, cards)
     return #selected == 0 and Fk:currentRoom():getPlayerById(to_select):isWounded()
@@ -1075,9 +1146,6 @@ local role_mode = fk.CreateGameMode{
   name = "aaa_role_mode", -- just to let it at the top of list
   minPlayer = 2,
   maxPlayer = 8,
-  countInFunc = function(self, room)
-    return #room.players >= 5
-  end,
   surrender_func = function(self, playedTime)
     local roleCheck = false
     local roleText = ""

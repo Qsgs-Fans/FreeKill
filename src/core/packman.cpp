@@ -16,6 +16,20 @@ PackMan *Pacman;
 PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();
   db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
+
+  QDir d("packages");
+  foreach (auto e, SelectFromDatabase(db, "SELECT name, enabled FROM packages;")) {
+    auto obj = e.toObject();
+    auto pack = obj["name"].toString();
+    auto enabled = obj["enabled"].toString().toInt() == 1;
+
+    if (enabled) {
+      d.rename(pack + ".disabled", pack);
+    } else {
+      d.rename(pack, pack + ".disabled");
+    }
+  }
+
 #ifdef Q_OS_ANDROID
   git_libgit2_opts(GIT_OPT_SET_SSL_CERT_LOCATIONS, NULL, "./certs");
 #endif
@@ -128,16 +142,24 @@ void PackMan::enablePack(const QString &pack) {
   ExecSQL(
       db,
       QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages"));
-  d.rename(pack + ".disabled", pack);
+  QDir d("packages");
+  int i = 0;
+  while (!d.rename(pack + ".disabled", pack) && i < 3) {
+    QThread::currentThread()->msleep(1);
+    i++;
+  }
 }
 
 void PackMan::disablePack(const QString &pack) {
   ExecSQL(
       db,
       QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages"));
-  d.rename(pack, pack + ".disabled");
+  QDir d("packages");
+  int i = 0;
+  while (!d.rename(pack, pack + ".disabled") && i < 3) {
+    QThread::currentThread()->msleep(1);
+    i++;
+  }
 }
 
 void PackMan::updatePack(const QString &pack) {

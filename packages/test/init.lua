@@ -10,15 +10,16 @@ local cheat = fk.CreateActiveSkill{
   can_use = function(self, player)
     return true
   end,
+  card_filter = function(self, card)
+    return false
+  end,
+  target_num = 0,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    local cardTypeName = room:askForChoice(from, { 'BasicCard', 'TrickCard', 'Equip' }, "cheat")
-    local cardType = Card.TypeBasic
-    if cardTypeName == 'TrickCard' then
-      cardType = Card.TypeTrick
-    elseif cardTypeName == 'Equip' then
-      cardType = Card.TypeEquip
-    end
+    local cardType = { 'basic', 'trick', 'equip' }
+    local cardTypeName = room:askForChoice(from, cardType, "cheat")
+    local card_types = {Card.TypeBasic, Card.TypeTrick, Card.TypeEquip}
+    cardType = card_types[table.indexOf(cardType, cardTypeName)]
 
     local allCardIds = Fk:getAllCardIds()
     local allCardMapper = {}
@@ -176,6 +177,7 @@ local test_trig = fk.CreateTriggerSkill{
 local damage_maker = fk.CreateActiveSkill{
   name = "damage_maker",
   anim_type = "offensive",
+  prompt = "#damage_maker",
   can_use = function(self, player)
     return true
   end,
@@ -183,40 +185,65 @@ local damage_maker = fk.CreateActiveSkill{
     return false
   end,
   card_num = 0,
-  target_filter = function(self)
-    return true
+  target_filter = function(self, to_select, selected)
+    if self.interaction.data == "revive" then return false end
+    return #selected < 2
   end,
-  target_num = 1,
-  interaction = function()return UI.ComboBox {
-    choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage", "lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp"}
-  }end,
+  min_target_num = function(self)
+    return self.interaction.data == "revive" and 0 or 1
+  end,
+  max_target_num = function(self)
+    return self.interaction.data == "revive" and 0 or 2
+  end,
+  interaction = function() return UI.ComboBox {
+    choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage", "lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp", "revive"}
+  } end,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    local target = room:getPlayerById(effect.tos[1])
+    local victim = #effect.tos > 0 and room:getPlayerById(effect.tos[1])
+    local target = #effect.tos > 1 and room:getPlayerById(effect.tos[2])
     local choice = self.interaction.data
-    local choices = {}
-    for i = 1, 99 do
-      table.insert(choices, tostring(i))
+    local number
+    if choice ~= "revive" then
+      local choices = {}
+      for i = 1, 99 do
+        table.insert(choices, tostring(i))
+      end
+      number = tonumber(room:askForChoice(from, choices, self.name, nil))
     end
-    local number = tonumber(room:askForChoice(from, choices, self.name, nil))
+    if target then from = target end
     if choice == "heal_hp" then
       room:recover{
-        who = target,
+        who = victim,
         num = number,
         recoverBy = from,
         skillName = self.name
       }
     elseif choice == "heal_max_hp" then
-      room:changeMaxHp(target, number)
+      room:changeMaxHp(victim, number)
     elseif choice == "lose_max_hp" then
-      room:changeMaxHp(target, -number)
+      room:changeMaxHp(victim, -number)
     elseif choice == "lose_hp" then
-      room:loseHp(target, number, self.name)
+      room:loseHp(victim, number, self.name)
+    elseif choice == "revive" then
+      local targets = table.map(table.filter(room.players, function(p) return p.dead end), function(p) return "seat#" .. tostring(p.seat) end)
+      if #targets > 0 then
+        targets = room:askForChoice(from, targets, self.name, "#revive-ask")
+        if targets then
+          target = tonumber(string.sub(targets, 6))
+          for _, p in ipairs(room.players) do
+            if p.seat == target then
+              room:revivePlayer(p, true)
+              break
+            end
+          end
+        end
+      end
     else
-      choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage"}
+      local choices = {"normal_damage", "thunder_damage", "fire_damage", "ice_damage"}
       room:damage({
         from = from,
-        to = target,
+        to = victim,
         damage = number,
         damageType = table.indexOf(choices, choice),
         skillName = self.name
@@ -237,15 +264,21 @@ local change_hero = fk.CreateActiveSkill{
     return #selected < 1
   end,
   target_num = 1,
+  interaction = function(self)
+    return UI.ComboBox {
+      choices = { "mainGeneral",  "deputyGeneral"},
+    }
+  end,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     local target = room:getPlayerById(effect.tos[1])
+    local choice = self.interaction.data
     local generals = table.map(Fk:getGeneralsRandomly(8, Fk:getAllGenerals()), function(p) return p.name end)
     local general = room:askForGeneral(from, generals, 1)
     if general == nil then
       general = table.random(generals)
     end
-    room:changeHero(target, general, false, false, true)
+    room:changeHero(target, general, false, choice == "deputyGeneral", true)
   end,
 }
 local test_zhenggong = fk.CreateTriggerSkill{
@@ -304,6 +337,8 @@ Fk:loadTranslationTable{
 
   ["damage_maker"] = "制伤",
   [":damage_maker"] = "出牌阶段，你可以进行一次伤害制造器。",
+  ["#damage_maker"] = "制伤：选择一名小白鼠，可选另一名角色做伤害来源（默认谋徐盛）",
+  ["#revive-ask"] = "复活一名角色！",
 
   ["change_hero"] = "变更",
   [":change_hero"] = "出牌阶段，你可以变更一名角色武将牌。",

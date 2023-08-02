@@ -337,7 +337,11 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
       self.logic:breakEvent()
     end
 
-    if self.logic:trigger(event, user, cardEffectEvent) then
+    if event == fk.PreCardEffect then
+      if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+        self.logic:breakEvent()
+      end
+    elseif cardEffectEvent.to and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
       self.logic:breakEvent()
     end
 

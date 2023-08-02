@@ -38,8 +38,7 @@ Item {
     width: parent.width
     height: parent.height - bar.height
     anchors.top: bar.bottom
-    color: "snow"
-    opacity: 0.75
+    color: "#A0EFEFEF"
     clip: true
 
     ListView {
