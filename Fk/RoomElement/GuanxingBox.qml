@@ -6,6 +6,7 @@ import Fk.Pages
 
 GraphicsBox {
   id: root
+  property string prompt
   property var cards: []
   property var result: []
   property var areaCapacities: []
@@ -13,7 +14,7 @@ GraphicsBox {
   property var areaNames: []
   property int padding: 25
 
-  title.text: Backend.translate("Please arrange cards")
+  title.text: Backend.translate(prompt !== "" ? prompt : "Please arrange cards")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
@@ -32,6 +33,28 @@ GraphicsBox {
 
         property int areaCapacity: modelData
         property string areaName: index < areaNames.length ? qsTr(areaNames[index]) : ""
+
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          color: "#6B5D42"
+          width: 20
+          height: 100
+          radius: 5
+
+          Text {
+            anchors.fill: parent
+            width: 20
+            height: 100
+            text: areaName
+            color: "white"
+            font.family: fontLibian.name
+            font.pixelSize: 18
+            style: Text.Outline
+            wrapMode: Text.WordWrap
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+          }
+        }
 
         Repeater {
           id: cardRepeater

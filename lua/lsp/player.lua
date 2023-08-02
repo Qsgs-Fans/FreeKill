@@ -8,41 +8,14 @@ FPlayer = {}
 ---@return integer id
 function FPlayer:getId()end
 
----@param id integer
-function FPlayer:setId(id)end
-
 ---@return string name
 function FPlayer:getScreenName()end
-
----@param name string
-function FPlayer:setScreenName(name)end
 
 ---@return string avatar
 function FPlayer:getAvatar()end
 
----@param avatar string
-function FPlayer:setAvatar(avatar)end
-
----@return string state
-function FPlayer:getStateString()end
-
----@param state string
-function FPlayer:setStateString(state)end
-
 ---@class fk.ServerPlayer : fk.Player
 FServerPlayer = {}
-
----@return fk.Server
-function FServerPlayer:getServer()end
-
----@return fk.Room
-function FServerPlayer:getRoom()end
-
----@param room fk.Room
-function FServerPlayer:setRoom(room)end
-
----@param msg string
-function FServerPlayer:speak(msg)end
 
 --- Send a request to client, and allow client to reply within *timeout* seconds.
 ---
@@ -64,3 +37,9 @@ function FServerPlayer:waitForReply(timeout)end
 ---@param command string
 ---@param jsonData string
 function FServerPlayer:doNotify(command,jsonData)end
+
+function FServerPlayer:setBusy(_) end
+function FServerPlayer:isBusy(_) end
+function FServerPlayer:setThinking(_) end
+
+function FServerPlayer:getState() end

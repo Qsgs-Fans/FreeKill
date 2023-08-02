@@ -14,6 +14,7 @@
 ---@field public phase_state table[]
 ---@field public phase_index integer
 ---@field public role_shown boolean
+---@field private _timewaste_count integer
 ---@field public ai AI
 ---@field public ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
@@ -24,7 +25,6 @@ function ServerPlayer:initialize(_self)
   self._splayer = _self -- 真正在玩的玩家
   self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
-  self.state = _self:getStateString()
   self.room = nil
 
   -- Below are for doBroadcastRequest
@@ -35,6 +35,7 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+  self._timewaste_count = 0
   self.ai = RandomAI:new(self)
 end
 
@@ -48,7 +49,7 @@ function ServerPlayer:doNotify(command, jsonData)
   local room = self.room
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
-    if id == self.id then
+    if id == self.id and room.room:hasObserver(p) then
       p:doNotify(command, jsonData)
     end
   end
@@ -59,7 +60,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout integer
+---@param timeout integer|nil
 function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
@@ -86,48 +87,55 @@ function ServerPlayer:doRequest(command, jsonData, timeout)
   self.serverplayer:doRequest(command, jsonData, timeout)
 end
 
-local function checkNoHuman(room)
-  for _, p in ipairs(room.players) do
-    -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
-      return
-    end
-  end
-  room:gameOver("")
-end
-
-
 local function _waitForReply(player, timeout)
   local result
   local start = os.getms()
-  local state = player.serverplayer:getStateString()
-  if state ~= "online" then
-    if state ~= "robot" then
-      checkNoHuman(player.room)
+  local state = player.serverplayer:getState()
+  player.request_timeout = timeout
+  player.request_start = start
+  if state ~= fk.Player_Online then
+    if player.room.hasSurrendered then
+      return "__cancel"
+    end
+
+    if state ~= fk.Player_Robot then
+      player.room:checkNoHuman()
       player.room:delay(500)
       return "__cancel"
     end
     -- Let AI make reply. First handle request
-    local ret_msg = true
-    while ret_msg do
-      -- when ret_msg is false, that means there is no request in the queue
-      ret_msg = coroutine.yield("__handleRequest", 1)
-    end
+    -- coroutine.yield("__handleRequest", 0)
 
-    checkNoHuman(player.room)
+    player.room:checkNoHuman()
     player.ai:readRequestData()
     local reply = player.ai:makeReply()
     return reply
   end
   while true do
+    player.serverplayer:setThinking(true)
     result = player.serverplayer:waitForReply(0)
     if result ~= "__notready" then
+      player._timewaste_count = 0
+      player.serverplayer:setThinking(false)
       return result
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
+      player._timewaste_count = player._timewaste_count + 1
+      player.serverplayer:setThinking(false)
+
+      if player._timewaste_count >= 3 then
+        player.serverplayer:emitKick()
+      end
+
       return ""
     end
+
+    if player.room.hasSurrendered then
+      player.serverplayer:setThinking(false)
+      return ""
+    end
+
     coroutine.yield("__handleRequest", rest)
   end
 end
@@ -151,10 +159,12 @@ function ServerPlayer:waitForReply(timeout)
     result = ""
     self.reply_cancel = true
     self.serverplayer:setBusy(false)
+    self.serverplayer:setThinking(false)
   end
   if result ~= "" then
     self.reply_ready = true
     self.serverplayer:setBusy(false)
+    self.serverplayer:setThinking(false)
   end
 
   local queue = self.room.request_queue[self.serverplayer]
@@ -185,11 +195,6 @@ function ServerPlayer:marshal(player)
   room:notifyProperty(player, self, "shield")
   room:notifyProperty(player, self, "gender")
   room:notifyProperty(player, self, "kingdom")
-
-  if self.kingdom ~= Fk.generals[self.general].kingdom then
-    self.kingdom = Fk.generals[self.general].kingdom
-    room:notifyProperty(player, self, "kingdom")
-  end
 
   if self.dead then
     room:notifyProperty(player, self, "dead")
@@ -244,11 +249,25 @@ function ServerPlayer:marshal(player)
     }
     table.insert(card_moves, move)
   end
+
+  for k, v in pairs(self.special_cards) do
+    local info = {}
+    for _, i in ipairs(v) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = self.id,
+      toArea = Card.PlayerSpecial,
+      specialName = k,
+      specialVisible = self == player,
+    }
+    table.insert(card_moves, move)
+  end
+
   if #card_moves > 0 then
     room:notifyMoveCards({ player }, card_moves)
   end
-
-  -- TODO: pile
 
   for k, v in pairs(self.mark) do
     player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
@@ -265,8 +284,11 @@ function ServerPlayer:marshal(player)
   end
 
   for k, v in pairs(self.skillUsedHistory) do
-    if v[1] > 0 then
-      player:doNotify("AddSkillUseHistory", json.encode{self.id, k, v[1]})
+    if v[4] > 0 then
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[1], 1})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[2], 2})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[3], 3})
+      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[4], 4})
     end
   end
 
@@ -277,12 +299,12 @@ end
 
 function ServerPlayer:reconnect()
   local room = self.room
-  self.serverplayer:setStateString("online")
+  self.serverplayer:setState(fk.Player_Online)
 
   self:doNotify("Setup", json.encode{
     self.id,
-    self.serverplayer:getScreenName(),
-    self.serverplayer:getAvatar(),
+    self._splayer:getScreenName(),
+    self._splayer:getAvatar(),
   })
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
@@ -292,11 +314,11 @@ function ServerPlayer:reconnect()
   room:notifyProperty(self, self, "role")
 
   -- send player data
-  for _, p in ipairs(room:getOtherPlayers(self, true, true)) do
+  for _, p in ipairs(room:getOtherPlayers(self, false, true)) do
     self:doNotify("AddPlayer", json.encode{
       p.id,
-      p.serverplayer:getScreenName(),
-      p.serverplayer:getAvatar(),
+      p._splayer:getScreenName(),
+      p._splayer:getAvatar(),
     })
   end
 
@@ -341,6 +363,10 @@ end
 
 function ServerPlayer:showCards(cards)
   cards = Card:getIdList(cards)
+  for _, id in ipairs(cards) do
+    Fk:filterCard(id, self)
+  end
+
   local room = self.room
   room:sendLog{
     type = "#ShowCard",
@@ -385,7 +411,7 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   end
 
   self.phase = to_phase
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 
   if #self.phases > 0 then
     table.remove(self.phases, 1)
@@ -410,7 +436,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
 
   local current = self.phase
   self.phase = phase
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 
   room:sendLog{
     type = "#GainAnExtraPhase",
@@ -422,10 +448,10 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   GameEvent(GameEvent.Phase, self):exec()
 
   self.phase = current
-  room:notifyProperty(self, self, "phase")
+  room:broadcastProperty(self, "phase")
 end
 
----@param phase_table Phase[]
+---@param phase_table Phase[]|nil
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then
@@ -477,7 +503,7 @@ function ServerPlayer:play(phase_table)
     phase_state[i].phase = phases[i]
 
     self.phase = phases[i]
-    room:notifyProperty(self, self, "phase")
+    room:broadcastProperty(self, "phase")
 
     local cancel_skip = true
     if phases[i] ~= Player.NotActive and (skip) then
@@ -544,7 +570,7 @@ end
 ---@param pile_name string
 ---@param card integer|Card
 ---@param visible boolean
----@param skillName string
+---@param skillName string|nil
 function ServerPlayer:addToPile(pile_name, card, visible, skillName)
   local room = self.room
   room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
@@ -556,8 +582,7 @@ function ServerPlayer:bury()
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
-  self:setChainState(false)
-  if not self.faceup then self:turnOver() end
+  self:reset()
 end
 
 function ServerPlayer:throwAllCards(flag)
@@ -637,16 +662,26 @@ function ServerPlayer:setChainState(chained)
   self.room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
-    arg = self.chained and "chained" or "not-chained"
+    arg = self.chained and "chained" or "un-chained"
   }
 
   self.room.logic:trigger(fk.ChainStateChanged, self)
 end
 
----@param from ServerPlayer
+function ServerPlayer:reset()
+  self.room:sendLog{
+    type = "#ChainStateChange",
+    from = self.id,
+    arg = "reset-general"
+  }
+  self:setChainState(false)
+  if not self.faceup then self:turnOver() end
+end
+
+--@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
----@param initialCard Card
+---@param initialCard Card|nil
 ---@return PindianStruct
 function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reason = skillName, fromCard = initialCard, results = {} }
@@ -734,6 +769,7 @@ end
 
 -- 神貂蝉
 
+---@param p ServerPlayer
 function ServerPlayer:control(p)
   if self == p then
     self.room:setPlayerMark(p, "@ControledBy", 0)

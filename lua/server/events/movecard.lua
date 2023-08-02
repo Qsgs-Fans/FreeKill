@@ -62,12 +62,10 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
       for _, info in ipairs(data.moveInfo) do
         local realFromArea = self:getCardArea(info.cardId)
         local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-        local virtualEquip
 
         if table.contains(playerAreas, realFromArea) and data.from then
           local from = self:getPlayerById(data.from)
           from:removeCards(realFromArea, { info.cardId }, info.fromSpecialName)
-          virtualEquip = from:getVirualEquip(info.cardId)
 
         elseif realFromArea ~= Card.Unknown then
           local fromAreaIds = {}
@@ -86,7 +84,6 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
 
         if table.contains(playerAreas, data.toArea) and data.to then
           local to = self:getPlayerById(data.to)
-          if virtualEquip then to:addVirtualEquip(virtualEquip) end
           to:addCards(data.toArea, { info.cardId }, data.specialName)
 
         else
@@ -119,9 +116,19 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
         end
 
-        Fk:filterCard(info.cardId, self:getPlayerById(data.to))
+        if not (data.to and data.toArea ~= Card.PlayerHand) then
+          Fk:filterCard(info.cardId, self:getPlayerById(data.to))
+        end
 
         local currentCard = Fk:getCardById(info.cardId)
+        for name, _ in pairs(currentCard.mark) do
+          if name:endsWith("-inhand") and
+          realFromArea == Player.Hand and
+          data.from
+          then
+            self:setCardMark(currentCard, name, 0)
+          end
+        end
         if
           data.toArea == Player.Equip and
           currentCard.type == Card.TypeEquip and

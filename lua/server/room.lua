@@ -5,6 +5,8 @@
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
 ---@class Room : Object
 ---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
+---@field public id integer @ 房间的id
+---@field private main_co any @ 本房间的主协程
 ---@field public players ServerPlayer[] @ 这个房间中所有参战玩家
 ---@field public alive_players ServerPlayer[] @ 所有还活着的玩家
 ---@field public observers fk.ServerPlayer[] @ 旁观者清单，这是c++玩家列表，别乱动
@@ -24,6 +26,8 @@
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
+---@field public skill_costs table<string, any> @ 存放skill.cost_data用
+---@field public card_marks table<integer, any> @ 存放card.mark之用
 local Room = class("Room")
 
 -- load classes used by the game
@@ -62,46 +66,7 @@ dofile "lua/server/ai/init.lua"
 ---@param _room fk.Room
 function Room:initialize(_room)
   self.room = _room
-  _room.startGame = function(_self)
-    Room.initialize(self, _room)  -- clear old data
-    self.settings = json.decode(_room:settings())
-    Fk.disabled_packs = self.settings.disabledPack
-    Fk.disabled_generals = self.settings.disabledGenerals
-    local main_co = coroutine.create(function()
-      self:run()
-    end)
-    local request_co = coroutine.create(function()
-      self:requestLoop()
-    end)
-    local ret, err_msg, rest_time = true, true
-    while not self.game_finished do
-      ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
-
-      -- handle error
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(main_co))
-        break
-      end
-
-      ret, err_msg = coroutine.resume(request_co, rest_time)
-      if ret == false then
-        fk.qCritical(err_msg)
-        print(debug.traceback(request_co))
-        break
-      end
-
-      -- If ret == true, then when err_msg is true, that means no request
-    end
-
-    coroutine.close(main_co)
-    coroutine.close(request_co)
-
-    if not self.game_finished then
-      self:doBroadcastNotify("GameOver", "")
-      self.room:gameOver()
-    end
-  end
+  self.id = _room:getId()
 
   self.players = {}
   self.alive_players = {}
@@ -123,13 +88,140 @@ function Room:initialize(_room)
   end
   self.request_queue = {}
   self.request_self = {}
+  self.skill_costs = {}
+  self.card_marks = {}
+  self.filtered_cards = {}
+
+  self.settings = json.decode(self.room:settings())
+  self.disabled_packs = self.settings.disabledPack
+  if not Fk.game_modes[self.settings.gameMode] then
+    self.settings.gameMode = "aaa_role_mode"
+  end
+
+  table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
+  self.disabled_generals = self.settings.disabledGenerals
 end
+
+-- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
+function Room:resume()
+  -- 如果还没运行的话就先创建自己的主协程
+  if not self.main_co then
+    self.main_co = coroutine.create(function()
+      self:run()
+    end)
+  end
+
+  local ret, err_msg, rest_time = true, true, nil
+  local main_co = self.main_co
+
+  if self:checkNoHuman() then
+    return true
+  end
+
+  if not self.game_finished then
+    ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
+
+    -- handle error
+    if ret == false then
+      fk.qCritical(err_msg)
+      print(debug.traceback(main_co))
+      goto GAME_OVER
+    end
+
+    if rest_time == "over" then
+      goto GAME_OVER
+    end
+
+    return false, rest_time
+  end
+
+  ::GAME_OVER::
+  self:gameOver("")
+  -- coroutine.close(main_co)
+  -- self.main_co = nil
+  return true
+end
+
+-- 供调度器使用的函数，用来指示房间是否就绪。
+-- 如果没有就绪的话，可能会返回第二个值来告诉调度器自己还有多久就绪。
+function Room:isReady()
+  -- 没有活人了？那就告诉调度器我就绪了，恢复时候就会自己杀掉
+  if self:checkNoHuman(true) then
+    return true
+  end
+
+  -- 因为delay函数而延时：判断延时是否已经结束。
+  -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
+  if self.in_delay then
+    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
+    if rest <= 0 then
+      self.in_delay = false
+      return true
+    end
+    return false, rest
+  end
+
+  -- 剩下的就是因为等待应答而未就绪了
+  -- 检查所有正在等回答的玩家，如果已经过了烧条时间
+  -- 那么就不认为他还需要时间就绪了
+  -- 然后在调度器第二轮刷新的时候就应该能返回自己已就绪
+  local ret = true
+  local rest
+  for _, p in ipairs(self.players) do
+    -- 这里判断的话需要用_splayer了，不然一控多的情况下会导致重复判断
+    if p._splayer:thinking() then
+      ret = false
+      -- 烧条烧光了的话就把thinking设为false
+      rest = p.request_timeout * 1000 - (os.getms() -
+        p.request_start) / 1000
+
+      if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
+        p._splayer:setThinking(false)
+      end
+    end
+
+    if self.race_request_list and table.contains(self.race_request_list, p) then
+      local result = p.serverplayer:waitForReply(0)
+      if result ~= "__notready" and result ~= "__cancel" and result ~= "" then
+        return true
+      end
+    end
+  end
+  return ret, (rest and rest > 1) and rest or nil
+end
+
+function Room:checkNoHuman(chkOnly)
+  if #self.players == 0 then return end
+
+  for _, p in ipairs(self.players) do
+    -- TODO: trust
+    if p.serverplayer:getState() == fk.Player_Online then
+      return
+    end
+  end
+
+  if not chkOnly then
+    self:gameOver("")
+  end
+  return true
+end
+
+function Room:__tostring()
+  return string.format("<Room #%d>", self.id)
+end
+
+--[[ 敢删就寄，算了
+function Room:__gc()
+  self.room:checkAbandoned()
+end
+--]]
 
 --- 正式在这个房间中开始游戏。
 ---
 --- 当这个函数返回之后，整个Room线程也宣告结束。
 ---@return nil
 function Room:run()
+  self.start_time = os.time()
   for _, p in fk.qlist(self.room:getPlayers()) do
     local player = ServerPlayer:new(p)
     player.room = self
@@ -149,7 +241,7 @@ end
 --- 基本算是私有函数，别去用
 ---@param cardId integer
 ---@param cardArea CardArea
----@param integer owner
+---@param owner integer
 function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
   self.owner_map[cardId] = owner
@@ -230,7 +322,7 @@ end
 --- 获得当前房间中的所有玩家。
 ---
 --- 返回的数组的第一个元素是当前回合玩家，并且按行动顺序进行排序。
----@param sortBySeat boolean @ 是否无视按座位排序直接返回
+---@param sortBySeat boolean|nil @ 是否无视按座位排序直接返回
 ---@return ServerPlayer[] @ 房间中玩家的数组
 function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
@@ -252,7 +344,7 @@ function Room:getAllPlayers(sortBySeat)
 end
 
 --- 获得所有存活玩家，参看getAllPlayers
----@param sortBySeat boolean
+---@param sortBySeat boolean|nil
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
   if sortBySeat == nil or sortBySeat then
@@ -279,8 +371,8 @@ end
 
 --- 获得除一名玩家外的其他玩家。
 ---@param player ServerPlayer @ 要排除的玩家
----@param sortBySeat boolean @ 是否要按座位排序？
----@param include_dead boolean @ 是否要把死人也算进去？
+---@param sortBySeat boolean|nil @ 是否要按座位排序？
+---@param include_dead boolean|nil @ 是否要把死人也算进去？
 ---@return ServerPlayer[] @ 其他玩家列表
 function Room:getOtherPlayers(player, sortBySeat, include_dead)
   if sortBySeat == nil then
@@ -318,7 +410,7 @@ end
 ---
 --- 如果牌堆中没有足够的牌可以获得，那么会触发洗牌；还是不够的话，游戏就平局。
 ---@param num integer @ 要获得的牌的数量
----@param from string @ 获得牌的位置，可以是 ``"top"`` 或者 ``"bottom"``，表示牌堆顶还是牌堆底
+---@param from string|nil @ 获得牌的位置，可以是 ``"top"`` 或者 ``"bottom"``，表示牌堆顶还是牌堆底
 ---@return integer[] @ 得到的id
 function Room:getNCards(num, from)
   from = from or "top"
@@ -350,7 +442,7 @@ end
 --- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
 ---@param player ServerPlayer @ 要被更新标记的那个玩家
 ---@param mark string @ 标记的名称
----@param value integer @ 要设为的值，其实也可以设为字符串
+---@param value any @ 要设为的值，其实也可以设为字符串
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
   self:doBroadcastNotify("SetPlayerMark", json.encode{
@@ -387,14 +479,16 @@ end
 --- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
 ---@param card Card @ 要被更新标记的那张牌
 ---@param mark string @ 标记的名称
----@param value integer @ 要设为的值，其实也可以设为字符串
+---@param value any @ 要设为的值，其实也可以设为字符串
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
-  self:doBroadcastNotify("SetCardMark", json.encode{
-    card.id,
-    mark,
-    value
-  })
+  if not card:isVirtual() then
+    self:doBroadcastNotify("SetCardMark", json.encode{
+      card.id,
+      mark,
+      value
+    })
+  end
 end
 
 --- 将一张卡牌的mark标记增加count个。
@@ -448,7 +542,7 @@ end
 
 ---@param player ServerPlayer
 ---@param general string
----@param changeKingdom boolean
+---@param changeKingdom boolean|nil
 ---@param noBroadcast boolean|null
 function Room:setPlayerGeneral(player, general, changeKingdom, noBroadcast)
   if Fk.generals[general] == nil then return end
@@ -476,44 +570,36 @@ function Room:setDeputyGeneral(player, general)
 end
 
 ---@param player ServerPlayer @ 要换将的玩家
----@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策也不存在则nil错
----@param full boolean @ 是否血量满状态变身
----@param isDeputy boolean @ 是否变的是副将
----@param sendLog boolean @ 是否发Log
+---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策不存在变身为士兵
+---@param full boolean|nil @ 是否血量满状态变身
+---@param isDeputy boolean|nil @ 是否变的是副将
+---@param sendLog boolean|nil @ 是否发Log
 function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList() or {}
+  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
-  local new = Fk.generals[new_general] or Fk.generals["sunce"]
-  local new_skills = new:getSkillNameList()
-
-  table.insertTable(new_skills, table.map(orig_skills, function(e)
+  local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
+  local new_skills = table.map(orig_skills, function(e)
     return "-" .. e
-  end))
+  end)
+
+  table.insertTable(new_skills, new:getSkillNameList())
 
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
   if isDeputy then
-    player.deputyGeneral = new_general
-    self:broadcastProperty(player, "deputyGeneral")
+    self:setPlayerProperty(player, "deputyGeneral", new_general)
   else
-    player.general = new_general
-    self:broadcastProperty(player, "general")
+    self:setPlayerProperty(player, "general", new_general)
+    self:setPlayerProperty(player, "gender", new.gender)
+    self:setPlayerProperty(player, "kingdom", new.kingdom)
   end
 
-  player.gender = new.gender
-  self:broadcastProperty(player, "gender")
-
-  player.kingdom = new.kingdom
-  self:broadcastProperty(player, "kingdom")
-
-  player.maxHp = player:getGeneralMaxHp()
-  self:broadcastProperty(player, "maxHp")
-  if full then
-    player.hp = player.maxHp
-    self:broadcastProperty(player, "hp")
+  self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  if full or player.hp > player.maxHp then
+    self:setPlayerProperty(player, "hp", player.maxHp)
   end
 end
 
@@ -557,27 +643,30 @@ end
 ---@param player ServerPlayer @ 发出这个请求的目标玩家
 ---@param command string @ 请求的类型
 ---@param jsonData string @ 请求的数据
----@param wait boolean @ 是否要等待答复，默认为true
+---@param wait boolean|nil @ 是否要等待答复，默认为true
 ---@return string | nil @ 收到的答复，如果wait为false的话就返回nil
 function Room:doRequest(player, command, jsonData, wait)
   if wait == nil then wait = true end
   self.request_queue = {}
+  self.race_request_list = nil
   player:doRequest(command, jsonData, self.timeout)
 
   if wait then
     local ret = player:waitForReply(self.timeout)
     player.serverplayer:setBusy(false)
+    player.serverplayer:setThinking(false)
     return ret
   end
 end
 
 --- 向多名玩家发出请求。
 ---@param command string @ 请求类型
----@param players ServerPlayer[] @ 发出请求的玩家列表
----@param jsonData string @ 请求数据
+---@param players ServerPlayer[]|nil @ 发出请求的玩家列表
+---@param jsonData string|nil @ 请求数据
 function Room:doBroadcastRequest(command, players, jsonData)
   players = players or self.players
   self.request_queue = {}
+  self.race_request_list = nil
   for _, p in ipairs(players) do
     p:doRequest(command, jsonData or p.request_data)
   end
@@ -592,6 +681,7 @@ function Room:doBroadcastRequest(command, players, jsonData)
 
   for _, p in ipairs(players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 end
 
@@ -610,6 +700,7 @@ function Room:doRaceRequest(command, players, jsonData)
   local player_len = #players
   -- self:notifyMoveFocus(players, command)
   self.request_queue = {}
+  self.race_request_list = players
   for _, p in ipairs(players) do
     p:doRequest(command, jsonData or p.request_data)
   end
@@ -635,6 +726,10 @@ function Room:doRaceRequest(command, players, jsonData)
       if p.reply_cancel then
         table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
+      elseif p.id > 0 then
+        -- 骗过调度器让他以为自己尚未就绪
+        p.request_timeout = remainTime - elapsed
+        p.serverplayer:setThinking(true)
       end
     end
     if winner then
@@ -652,32 +747,29 @@ function Room:doRaceRequest(command, players, jsonData)
 
   for _, p in ipairs(self.players) do
     p.serverplayer:setBusy(false)
+    p.serverplayer:setThinking(false)
   end
 
   return ret
 end
 
-Room.requestLoop = require "server.request"
 
 --- 延迟一段时间。
 ---
---- 这个函数只应该在主协程中使用。
+--- 这个函数不应该在请求处理协程中使用。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
   local start = os.getms()
-  while true do
-    local rest = ms - (os.getms() - start) / 1000
-    if rest <= 0 then
-      break
-    end
-    coroutine.yield("__handleRequest", rest)
-  end
+  self.delay_start = start
+  self.delay_duration = ms
+  self.in_delay = true
+  coroutine.yield("__handleRequest", ms)
 end
 
 --- 向多名玩家告知一次移牌行为。
 ---@param players ServerPlayer[] | nil @ 要被告知的玩家列表，默认为全员
 ---@param card_moves CardsMoveStruct[] @ 要告知的移牌信息列表
----@param forceVisible boolean @ 是否让所有牌对告知目标可见
+---@param forceVisible boolean|nil @ 是否让所有牌对告知目标可见
 function Room:notifyMoveCards(players, card_moves, forceVisible)
   if players == nil or players == {} then players = self.players end
   for _, p in ipairs(players) do
@@ -692,6 +784,20 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
           end
         end
         return false
+      end
+
+      for _, info in ipairs(move.moveInfo) do
+        local realFromArea = self:getCardArea(info.cardId)
+        local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+        local virtualEquip
+
+        if table.contains(playerAreas, realFromArea) and move.from then
+          virtualEquip = self:getPlayerById(move.from):getVirualEquip(info.cardId)
+        end
+
+        if table.contains(playerAreas, move.toArea) and move.to and virtualEquip then
+          self:getPlayerById(move.to):addVirtualEquip(virtualEquip)
+        end
       end
 
       -- forceVisible make the move visible
@@ -834,22 +940,39 @@ end
 ---@param skill_name string @ 技能名
 ---@param skill_type string | nil @ 技能的动画效果，默认是那个技能的anim_type
 function Room:notifySkillInvoked(player, skill_name, skill_type)
+  local bigAnim = false
   if not skill_type then
     local skill = Fk.skills[skill_name]
     if not skill then skill_type = "" end
+
+    if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
+      bigAnim = true
+    end
+
     skill_type = skill.anim_type
   end
+
+  if skill_type == "big" then bigAnim = true end
+
   self:sendLog{
     type = "#InvokeSkill",
     from = player.id,
     arg = skill_name,
   }
 
-  self:doAnimate("InvokeSkill", {
-    name = skill_name,
-    player = player.id,
-    skill_type = skill_type,
-  })
+  if not bigAnim then
+    self:doAnimate("InvokeSkill", {
+      name = skill_name,
+      player = player.id,
+      skill_type = skill_type,
+    })
+  else
+    self:doAnimate("InvokeUltSkill", {
+      name = skill_name,
+      player = player.id,
+    })
+    self:delay(2000)
+  end
 end
 
 --- 播放从source指到targets的指示线效果。
@@ -875,14 +998,16 @@ end
 --- 如果发动的话，那么会执行一下技能的onUse函数，然后返回选择的牌和目标等。
 ---@param player ServerPlayer @ 询问目标
 ---@param skill_name string @ 主动技的技能名
----@param prompt string @ 烧条上面显示的提示文本内容
----@param cancelable boolean @ 是否可以点取消
----@param extra_data table @ 额外信息，因技能而异了
+---@param prompt string|nil @ 烧条上面显示的提示文本内容
+---@param cancelable boolean|nil @ 是否可以点取消
+---@param extra_data table|nil @ 额外信息，因技能而异了
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return boolean, table
-function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data)
+function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data, no_indicate)
   prompt = prompt or ""
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  no_indicate = (no_indicate == nil) and true or no_indicate
+  extra_data = extra_data or Util.DummyTable
   local skill = Fk.skills[skill_name]
   if not (skill and (skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill))) then
     print("Attempt ask for use non-active skill: " .. skill_name)
@@ -906,7 +1031,9 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
-  self:doIndicate(player.id, targets)
+  if not no_indicate then
+    self:doIndicate(player.id, targets)
+  end
 
   if skill.interaction then
     skill.interaction.data = data.interaction_data
@@ -934,30 +1061,32 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param player ServerPlayer @ 弃牌角色
 ---@param minNum integer @ 最小值
 ---@param maxNum integer @ 最大值
----@param includeEquip boolean @ 能不能弃装备区？
----@param skillName string @ 引发弃牌的技能名
----@param cancelable boolean @ 能不能点取消？
----@param pattern string @ 弃牌需要符合的规则
----@param prompt string @ 提示信息
----@param skipDiscard boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
+---@param includeEquip boolean|nil @ 能不能弃装备区？
+---@param skillName string|nil @ 引发弃牌的技能名
+---@param cancelable boolean|nil @ 能不能点取消？
+---@param pattern string|nil @ 弃牌需要符合的规则
+---@param prompt string|nil @ 提示信息
+---@param skipDiscard boolean|nil @ 是否跳过弃牌（即只询问选择可以弃置的牌）
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard)
+function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
-  pattern = pattern or ""
+  no_indicate = no_indicate or false
+  pattern = pattern or "."
 
   local canDiscards = table.filter(
     player:getCardIds{ Player.Hand, includeEquip and Player.Equip or nil }, function(id)
       local checkpoint = true
       local card = Fk:getCardById(id)
 
-      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:prohibitDiscard(player, card) then
           return false
         end
       end
       if skillName == "game_rule" then
-        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
         for _, skill in ipairs(status_skills) do
           if skill:excludeFrom(player, card) then
             return false
@@ -972,11 +1101,14 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     end
   )
 
-  maxNum = math.min(#canDiscards, maxNum)
-  minNum = math.min(#canDiscards, minNum)
+  -- maxNum = math.min(#canDiscards, maxNum)
+  -- minNum = math.min(#canDiscards, minNum)
 
-  if minNum < 1 and not cancelable then
-    return {}
+  if minNum >= #canDiscards and not cancelable then
+    if not skipDiscard then
+      self:throwCard(canDiscards, skillName, player, player)
+    end
+    return canDiscards
   end
 
   local toDiscard = {}
@@ -988,7 +1120,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     pattern = pattern,
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
-  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data, no_indicate)
 
   if ret then
     toDiscard = ret.cards
@@ -1009,15 +1141,17 @@ end
 ---@param targets integer[] @ 可以选的目标范围，是玩家id数组
 ---@param minNum integer @ 最小值
 ---@param maxNum integer @ 最大值
----@param prompt string @ 提示信息
----@param skillName string @ 技能名
----@param cancelable boolean @ 能否点取消
+---@param prompt string|nil @ 提示信息
+---@param skillName string|nil @ 技能名
+---@param cancelable boolean|nil @ 能否点取消
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable)
+function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable, no_indicate)
   if maxNum < 1 then
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
 
   local data = {
     targets = targets,
@@ -1026,7 +1160,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
     pattern = "",
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
     return ret.targets
   else
@@ -1044,19 +1178,21 @@ end
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param minNum integer @ 最小值
 ---@param maxNum integer @ 最大值
----@param includeEquip boolean @ 能不能选装备
+---@param includeEquip boolean|nil @ 能不能选装备
 ---@param skillName string @ 技能名
----@param cancelable boolean @ 能否点取消
----@param pattern string @ 选牌规则
----@param prompt string @ 提示信息
----@param expand_pile string @ 可选私人牌堆名称
+---@param cancelable boolean|nil @ 能否点取消
+---@param pattern string|nil @ 选牌规则
+---@param prompt string|nil @ 提示信息
+---@param expand_pile string|nil @ 可选私人牌堆名称
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 选择的牌的id列表，可能是空的
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile)
+function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
   if minNum < 1 then
     return nil
   end
   cancelable = (cancelable == nil) and true or cancelable
-  pattern = pattern or ""
+  no_indicate = no_indicate or false
+  pattern = pattern or "."
 
   local chosenCards = {}
   local data = {
@@ -1068,7 +1204,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     expand_pile = expand_pile,
   }
   local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
-  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data, no_indicate)
   if ret then
     chosenCards = ret.cards
   else
@@ -1077,7 +1213,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     if includeEquip then
       table.insertTable(hands, player:getCardIds(Player.Equip))
     end
-    for i = 1, minNum do
+    for _ = 1, minNum do
       local randomId = hands[math.random(1, #hands)]
       table.insert(chosenCards, randomId)
       table.removeOne(hands, randomId)
@@ -1094,15 +1230,17 @@ end
 ---@param targets integer[] @ 选择目标的id范围
 ---@param minNum integer @ 选目标最小值
 ---@param maxNum integer @ 选目标最大值
----@param pattern string @ 选牌规则
----@param prompt string @ 提示信息
----@param cancelable boolean @ 能否点取消
+---@param pattern string|nil @ 选牌规则
+---@param prompt string|nil @ 提示信息
+---@param cancelable boolean|nil @ 能否点取消
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[], integer
-function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable)
+function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable, no_indicate)
   if maxNum < 1 then
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
   pattern = pattern or "."
 
   local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
@@ -1118,7 +1256,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     pattern = pattern,
     skillName = skillName
   }
-  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data)
+  local _, ret = self:askForUseActiveSkill(player, "choose_players_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
     return ret.targets, ret.cards[1]
   else
@@ -1134,7 +1272,7 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
----@return string @ 选择的武将
+---@return string|string[] @ 选择的武将
 function Room:askForGeneral(player, generals, n)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
@@ -1143,7 +1281,7 @@ function Room:askForGeneral(player, generals, n)
   if #generals == n then return n == 1 and generals[1] or generals end
   local defaultChoice = table.random(generals, n)
 
-  if (player.state == "online") then
+  if (player.serverplayer:getState() == fk.Player_Online) then
     local result = self:doRequest(player, command, json.encode{ generals, n })
     local choices
     if result == "" then
@@ -1156,6 +1294,48 @@ function Room:askForGeneral(player, generals, n)
   end
 
   return defaultChoice
+end
+
+--- 询问玩家若为神将、双势力需选择一个势力。
+---@param players ServerPlayer[]|nil @ 询问目标
+function Room:askForChooseKingdom(players)
+  players = players or self.alive_players
+  local specialKingdomPlayers = table.filter(players, function(p)
+    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+  end)
+
+  if #specialKingdomPlayers > 0 then
+    local choiceMap = {}
+    for _, p in ipairs(specialKingdomPlayers) do
+      local allKingdoms = {}
+      if p.kingdom == "god" then
+        allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
+      else
+        local curGeneral = Fk.generals[p.general]
+        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      end
+
+      choiceMap[p.id] = allKingdoms
+
+      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+      p.request_data = data
+    end
+
+    self:notifyMoveFocus(players, "AskForKingdom")
+    self:doBroadcastRequest("AskForChoice", specialKingdomPlayers)
+
+    for _, p in ipairs(specialKingdomPlayers) do
+      local kingdomChosen
+      if p.reply_ready then
+        kingdomChosen = p.client_reply
+      else
+        kingdomChosen = choiceMap[p.id][1]
+      end
+
+      p.kingdom = kingdomChosen
+      self:notifyProperty(p, p, "kingdom")
+    end
+  end
 end
 
 --- 询问chooser，选择target的一张牌。
@@ -1235,17 +1415,20 @@ end
 --- 询问一名玩家从众多选项中选择一个。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param choices string[] @ 可选选项列表
----@param skill_name string @ 技能名
----@param prompt string @ 提示信息
----@param detailed boolean @ 暂未使用
+---@param skill_name string|nil @ 技能名
+---@param prompt string|nil @ 提示信息
+---@param detailed boolean|nil @ 选项详细描述
+---@param all_choices string[]|nil @ 所有选项（不可选变灰）
 ---@return string @ 选择的选项
-function Room:askForChoice(player, choices, skill_name, prompt, detailed)
-  if #choices == 1 then return choices[1] end
+function Room:askForChoice(player, choices, skill_name, prompt, detailed, all_choices)
+  if #choices == 1 and not all_choices then return choices[1] end
+  assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
   local command = "AskForChoice"
   prompt = prompt or ""
+  all_choices = all_choices or choices
   self:notifyMoveFocus(player, skill_name)
   local result = self:doRequest(player, command, json.encode{
-    choices, skill_name, prompt, detailed
+    choices, all_choices, skill_name, prompt, detailed
   })
   if result == "" then result = choices[1] end
   return result
@@ -1254,8 +1437,8 @@ end
 --- 询问玩家是否发动技能。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param skill_name string @ 技能名
----@param data any @ 未使用
----@param prompt string @ 提示信息
+---@param data any|nil @ 未使用
+---@param prompt string|nil @ 提示信息
 ---@return boolean
 function Room:askForSkillInvoke(player, skill_name, data, prompt)
   local command = "AskForSkillInvoke"
@@ -1266,39 +1449,95 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   return invoked
 end
 
+--枚举法为使用牌重选目标（无距离限制）
+---@param player ServerPlayer @ 执行的玩家
+---@param targets ServerPlayer[] @ 可选的目标范围
+---@param num integer @ 可选的目标数
+---@param can_minus boolean @ 是否可减少
+---@param distance_limited boolean @ 是否受距离限制
+---@param prompt string @ 提示信息
+---@param skillName string @ 技能名
+---@param data CardUseStruct @ 使用数据
+function Room:askForAddTarget(player, targets, num, can_minus, distance_limited, prompt, skillName, data)
+  num = num or 1
+  can_minus = can_minus or false
+  prompt = prompt or ""
+  skillName = skillName or ""
+  local room = player.room
+  local tos = {}
+  local orig_tos = table.simpleClone(AimGroup:getAllTargets(data.tos))
+  if can_minus and #orig_tos > 1 then  --默认不允许减目标至0
+    tos = table.map(table.filter(targets, function(p)
+      return table.contains(AimGroup:getAllTargets(data.tos), p.id) end), Util.IdMapper)
+  end
+  for _, p in ipairs(targets) do
+    if not table.contains(AimGroup:getAllTargets(data.tos), p.id) and not room:getPlayerById(data.from):isProhibited(p, data.card) then
+      if data.card.skill:modTargetFilter(p.id, orig_tos, data.from, data.card, distance_limited) then
+        table.insertIfNeed(tos, p.id)
+      end
+    end
+  end
+  if #tos > 0 then
+    tos = room:askForChoosePlayers(player, tos, 1, num, prompt, skillName, true)
+    --借刀……！
+    if data.card.name ~= "collateral" then
+      return tos
+    else
+      local result = {}
+      for _, id in ipairs(tos) do
+        local to = room:getPlayerById(id)
+        local target = room:askForChoosePlayers(player, table.map(table.filter(room:getOtherPlayers(player), function(v)
+          return to:inMyAttackRange(v) end), function(p) return p.id end), 1, 1,
+          "#collateral-choose::"..to.id..":"..data.card:toLogString(), "collateral_skill", true)
+        if #target > 0 then
+          table.insert(result, {id, target[1]})
+        end
+      end
+      if #result > 0 then
+        return result
+      else
+        return {}
+      end
+    end
+  end
+  return {}
+end
+
 -- TODO: guanxing type
 --- 询问玩家对若干牌进行观星。
 ---
 --- 观星完成后，相关的牌会被置于牌堆顶或者牌堆底。所以这些cards最好不要来自牌堆，一般先用getNCards从牌堆拿出一些牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param cards integer[] @ 可以被观星的卡牌id列表
----@param top_limit integer[] @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
----@param bottom_limit integer[] @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
+---@param top_limit integer[]|nil @ 置于牌堆顶的牌的限制(下限,上限)，不填写则不限
+---@param bottom_limit integer[]|nil @ 置于牌堆底的牌的限制(下限,上限)，不填写则不限
 ---@param customNotify string|null @ 自定义读条操作提示
+---param prompt string|null @ 观星框的标题(暂时雪藏)
 ---@param noPut boolean|null @ 是否进行放置牌操作
 ---@param areaNames string[]|null @ 左侧提示信息
----@return table<top|bottom, cardId[]>
+---@return table<"top"|"bottom", integer[]>
 function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
-  top_limit = top_limit or {}
-  bottom_limit = bottom_limit or {}
+  top_limit = top_limit or Util.DummyTable
+  bottom_limit = bottom_limit or Util.DummyTable
   if #top_limit > 0 then
-    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "牌堆顶区间设置错误：数值小于0")
-    assert(top_limit[1] <= top_limit[2], "牌堆顶区间设置错误：上限小于下限")
+    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(top_limit[1] <= top_limit[2], "limits error: The upper limit should be less than the lower limit")
   end
   if #bottom_limit > 0 then
-    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "牌堆底区间设置错误：数值小于0")
-    assert(bottom_limit[1] <= bottom_limit[2], "牌堆底区间设置错误：上限小于下限")
+    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(bottom_limit[1] <= bottom_limit[2], "limits error: The upper limit should be less than the lower limit")
   end
   if #top_limit > 0 and #bottom_limit > 0 then
-    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "限定区间设置错误：可用空间不能容纳所有牌。")
+    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "limits Error: No enough space")
   end
   if areaNames then
-    assert(#areaNames > 1, "左侧提示信息设置错误：应有Top和Bottom两个提示信息")
+    assert(#areaNames == 2, "areaNames error: Should have 2 elements")
   end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
+    prompt = "",
     cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,
@@ -1320,8 +1559,8 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       bottom = d[2]
     end
   else
-    top = table.random(cards, top_limit and top_limit[2] or #cards) or {}
-    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or {}
+    top = table.random(cards, top_limit and top_limit[2] or #cards) or Util.DummyTable
+    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or Util.DummyTable
   end
 
   if not noPut then
@@ -1346,17 +1585,17 @@ end
 --- 询问玩家任意交换几堆牌堆。
 ---
 ---@param player ServerPlayer @ 要询问的玩家
----@param piles table<cardIds, cardId[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
+---@param piles table<cardIds, integer[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
 ---@param piles_name string[] @ 牌堆名，必须一一对应，否则统一替换为“牌堆X”
 ---@param customNotify string|null @ 自定义读条操作提示
----@return table<cardIds, cardId[]>
-function Room:AskForExchange(player, piles, piles_name, customNotify)
+---@return table<cardIds, integer[]>
+function Room:askForExchange(player, piles, piles_name, customNotify)
   local command = "AskForExchange"
-  piles_name = piles_name or {}
+  piles_name = piles_name or Util.DummyTable
   if #piles_name ~= #piles then
     piles_name = {}
     for i, _ in ipairs(piles) do
-      table.insert(piles_name, "牌堆" .. i)
+      table.insert(piles_name, "Pile" .. i)
     end
   end
   self:notifyMoveFocus(player, customNotify or command)
@@ -1399,8 +1638,6 @@ function Room:handleUseCardReply(player, data)
       Self = player
       local c = skill:viewAs(selected_cards)
       if c then
-        self:useSkill(player, skill, Util.DummyFunc)
-
         local use = {}    ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
@@ -1413,6 +1650,9 @@ function Room:handleUseCardReply(player, data)
         use.card = c
 
         skill:beforeUse(player, use)
+
+        self:useSkill(player, skill, Util.DummyFunc)
+
         return use
       end
     end
@@ -1436,6 +1676,7 @@ function Room:handleUseCardReply(player, data)
     if #use.tos == 0 then
       use.tos = nil
     end
+    Fk:filterCard(card, player)
     use.card = Fk:getCardById(card)
     return use
   end
@@ -1443,17 +1684,20 @@ end
 
 -- available extra_data:
 -- * must_targets: integer[]
+-- * exclusive_targets: integer[]
+-- * bypass_distances: boolean
+-- * bypass_times: boolean
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
----@param card_name string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
----@param pattern string @ 使用牌的规则，默认就是card_name的值
----@param prompt string @ 提示信息
----@param cancelable boolean @ 能否点取消
----@param extra_data integer @ 额外信息
+---@param card_name string|nil @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
+---@param pattern string|nil @ 使用牌的规则，默认就是card_name的值
+---@param prompt string|nil @ 提示信息
+---@param cancelable boolean|nil @ 能否点取消
+---@param extra_data integer|nil @ 额外信息
 ---@param event_data CardEffectEvent|nil @ 事件信息
 ---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
-  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or {}, player.id)) then
+  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
@@ -1470,10 +1714,18 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     card_name = table.concat(splitedCardNames, ",")
   end
 
+  if extra_data then
+    if extra_data.bypass_distances then
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
+    end
+    if extra_data.bypass_times == nil or extra_data.bypass_times then
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
+    end
+  end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
@@ -1487,6 +1739,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     return askForUseCardData.result
   else
     local data = {card_name, pattern, prompt, cancelable, extra_data}
@@ -1496,30 +1750,34 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     Fk.currentResponsePattern = nil
 
     if result ~= "" then
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
       return self:handleUseCardReply(player, result)
     end
   end
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
   return nil
 end
 
 --- 询问一名玩家打出一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 牌名
----@param pattern string @ 牌的规则
----@param prompt string @ 提示信息
----@param cancelable boolean @ 能否取消
----@param extra_data any @ 额外数据
----@param effectData CardEffectEvent @ 关联的卡牌生效流程
+---@param pattern string|nil @ 牌的规则
+---@param prompt string|nil @ 提示信息
+---@param cancelable boolean|nil @ 能否取消
+---@param extra_data any|nil @ 额外数据
+---@param effectData CardEffectEvent|nil @ 关联的卡牌生效流程
 ---@return Card | nil @ 打出的牌
 function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData)
-  if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or {}, player.id)) then
+  if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
@@ -1556,9 +1814,9 @@ end
 ---@param players ServerPlayer[] @ 要询问的玩家列表
 ---@param card_name string @ 询问的牌名，默认为无懈
 ---@param pattern string @ 牌的规则
----@param prompt string @ 提示信息
----@param cancelable boolean @ 能否点取消
----@param extra_data any @ 额外信息
+---@param prompt string|nil @ 提示信息
+---@param cancelable boolean|nil @ 能否点取消
+---@param extra_data any|nil @ 额外信息
 ---@return CardUseStruct | nil @ 最终决胜出的卡牌使用信息
 function Room:askForNullification(players, card_name, pattern, prompt, cancelable, extra_data)
   if #players == 0 then
@@ -1568,7 +1826,7 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   local command = "AskForUseCard"
   card_name = card_name or "nullification"
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or {}
+  extra_data = extra_data or Util.DummyTable
   prompt = prompt or ""
   pattern = pattern or card_name
 
@@ -1579,12 +1837,12 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
 
   Fk.currentResponsePattern = pattern
   local winner = self:doRaceRequest(command, players, json.encode(data))
-  Fk.currentResponsePattern = nil
 
   if winner then
     local result = winner.client_reply
     return self:handleUseCardReply(winner, result)
   end
+  Fk.currentResponsePattern = nil
   return nil
 end
 
@@ -1594,8 +1852,8 @@ end
 --- 询问玩家从AG中选择一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param id_list integer[] | Card[] @ 可选的卡牌列表
----@param cancelable boolean @ 能否点取消
----@param reason string @ 原因
+---@param cancelable boolean|nil @ 能否点取消
+---@param reason string|nil @ 原因
 ---@return integer @ 选择的卡牌
 function Room:askForAG(player, id_list, cancelable, reason)
   id_list = Card:getIdList(id_list)
@@ -1616,7 +1874,7 @@ end
 --- 给player发一条消息，在他的窗口中用一系列卡牌填充一个AG。
 ---@param player ServerPlayer @ 要通知的玩家
 ---@param id_list integer[] | Card[] @ 要填充的卡牌
----@param disable_ids integer[] | Card[] @ 未使用
+---@param disable_ids integer[] | Card[]|nil @ 未使用
 function Room:fillAG(player, id_list, disable_ids)
   id_list = Card:getIdList(id_list)
   -- disable_ids = Card:getIdList(disable_ids)
@@ -1626,7 +1884,7 @@ end
 --- 告诉一些玩家，AG中的牌被taker取走了。
 ---@param taker ServerPlayer @ 拿走牌的玩家
 ---@param id integer @ 被拿走的牌
----@param notify_list ServerPlayer[] @ 要告知的玩家，默认为全员
+---@param notify_list ServerPlayer[]|nil @ 要告知的玩家，默认为全员
 function Room:takeAG(taker, id, notify_list)
   self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
 end
@@ -1634,7 +1892,7 @@ end
 --- 关闭player那侧显示的AG。
 ---
 --- 若不传参（即player为nil），那么关闭所有玩家的AG。
----@param player ServerPlayer @ 要关闭AG的玩家
+---@param player ServerPlayer|nil @ 要关闭AG的玩家
 function Room:closeAG(player)
   if player then player:doNotify("CloseAG", "")
   else self:doBroadcastNotify("CloseAG", "") end
@@ -1663,11 +1921,14 @@ end
 ---@param skillName string @ 技能名
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param moveFrom ServerPlayer|null @ 是否只是目标1移动给目标2
----@return cardId
-function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom)
+---@param excludeIds CardId[]|null @ 本次不可移动的卡牌id
+---@return table<"card"|"from"|"to">|null @ 选择的卡牌、起点玩家id和终点玩家id列表
+function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
+
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local cards = {}
   local cardsPosition = {}
@@ -1675,14 +1936,14 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   if not flag or flag == "e" then
     if not moveFrom or moveFrom == targetOne then
       for _, equipId in ipairs(targetOne:getCardIds(Player.Equip)) do
-        if targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
+        if not table.contains(excludeIds, equipId) and targetOne:canMoveCardInBoardTo(targetTwo, equipId) then
           table.insert(cards, equipId)
         end
       end
     end
     if not moveFrom or moveFrom == targetTwo then
       for _, equipId in ipairs(targetTwo:getCardIds(Player.Equip)) do
-        if targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
+        if not table.contains(excludeIds, equipId) and targetTwo:canMoveCardInBoardTo(targetOne, equipId) then
           table.insert(cards, equipId)
         end
       end
@@ -1705,7 +1966,7 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   if not flag or flag == "j" then
     if not moveFrom or moveFrom == targetOne then
       for _, trickId in ipairs(targetOne:getCardIds(Player.Judge)) do
-        if targetOne:canMoveCardInBoardTo(targetTwo, trickId) then
+        if not table.contains(excludeIds, trickId) and targetOne:canMoveCardInBoardTo(targetTwo, trickId) then
           table.insert(cards, trickId)
           table.insert(cardsPosition, 0)
         end
@@ -1713,7 +1974,7 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     end
     if not moveFrom or moveFrom == targetTwo then
       for _, trickId in ipairs(targetTwo:getCardIds(Player.Judge)) do
-        if targetTwo:canMoveCardInBoardTo(targetOne, trickId) then
+        if not table.contains(excludeIds, trickId) and targetTwo:canMoveCardInBoardTo(targetOne, trickId) then
           table.insert(cards, trickId)
           table.insert(cardsPosition, 1)
         end
@@ -1728,7 +1989,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
   local firstGeneralName = targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
   local secGeneralName = targetTwo.general + (targetTwo.deputyGeneral ~= "" and ("/" .. targetTwo.deputyGeneral) or "")
 
-  local data = { cards = cards, cardsPosition = cardsPosition, generalNames = { firstGeneralName, secGeneralName } }
+  local data = {
+    cards = cards,
+    cardsPosition = cardsPosition,
+    generalNames = { firstGeneralName, secGeneralName },
+    playerIds = { targetOne.id, targetTwo.id }
+  }
   local command = "AskForMoveCardInBoard"
   self:notifyMoveFocus(player, command)
   local result = self:doRequest(player, command, json.encode(data))
@@ -1740,16 +2006,20 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     result = json.decode(result)
   end
 
-  local cardToMove = Fk:getCardById(result.cardId)
+  local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
+  local cardToMove = self:getCardOwner(result.cardId):getVirualEquip(result.cardId) or Fk:getCardById(result.cardId)
   self:moveCardTo(
     cardToMove,
     cardToMove.type == Card.TypeEquip and Player.Equip or Player.Judge,
-    result.pos == 0 and targetTwo or targetOne,
+    to,
     fk.ReasonPut,
     skillName,
     nil,
-    true
+    true,
+    player.id
   )
+
+  return { card = cardToMove, from = from.id, to = to.id }
 end
 
 --- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
@@ -1758,23 +2028,28 @@ end
 ---@param skillName string @ 技能名
 ---@param cancelable boolean|null @ 是否可以取消选择
 ---@param flag string|null @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
+---@param no_indicate boolean|nil @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
-function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag)
+function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
   cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = (no_indicate == nil) and true or no_indicate
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local data = {
     flag = flag,
     skillName = skillName,
+    excludeIds = excludeIds,
   }
   local _, ret = self:askForUseActiveSkill(
     player,
     "choose_players_to_move_card_in_board",
     prompt or "",
     cancelable,
-    data
+    data,
+    no_indicate
   )
 
   if ret then
@@ -1783,7 +2058,7 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
     if cancelable then
       return {}
     else
-      return self:canMoveCardInBoard(flag)
+      return self:canMoveCardInBoard(flag, excludeIds)
     end
   end
 end
@@ -2026,7 +2301,7 @@ function Room:doCardUseEffect(cardUseEvent)
     unoffsetableList = cardUseEvent.unoffsetableList,
     additionalDamage = cardUseEvent.additionalDamage,
     additionalRecover = cardUseEvent.additionalRecover,
-    cardIdsResponded = cardUseEvent.nullifiedTargets,
+    cardsResponded = cardUseEvent.cardsResponded,
     prohibitedCardNames = cardUseEvent.prohibitedCardNames,
     extra_data = cardUseEvent.extra_data,
   }
@@ -2077,7 +2352,15 @@ function Room:doCardUseEffect(cardUseEvent)
 
         collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
 
-        self:doCardEffect(table.simpleClone(cardEffectEvent))
+        local curCardEffectEvent = table.simpleClone(cardEffectEvent)
+        self:doCardEffect(curCardEffectEvent)
+
+        if curCardEffectEvent.cardsResponded then
+          cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
+          for _, card in ipairs(curCardEffectEvent.cardsResponded) do
+            table.insertIfNeed(cardUseEvent.cardsResponded, card)
+          end
+        end
       end
     end
   end
@@ -2095,7 +2378,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
     if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
     if
       cardEffectEvent.card.trueName == "slash" and
-      not (cardEffectEvent.unoffsetable or table.contains(cardEffectEvent.unoffsetableList or {}, cardEffectEvent.to))
+      not (cardEffectEvent.unoffsetable or table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, cardEffectEvent.to))
     then
       local loopTimes = 1
       if cardEffectEvent.fixedResponseTimes then
@@ -2105,6 +2388,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
           loopTimes = cardEffectEvent.fixedResponseTimes
         end
       end
+      Fk.currentResponsePattern = "jink"
 
       for i = 1, loopTimes do
         local to = self:getPlayerById(cardEffectEvent.to)
@@ -2137,17 +2421,18 @@ function Room:handleCardEffect(event, cardEffectEvent)
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and
       not (cardEffectEvent.disresponsive or cardEffectEvent.unoffsetable) and
-      not table.contains(cardEffectEvent.prohibitedCardNames or {}, "nullification")
+      not table.contains(cardEffectEvent.prohibitedCardNames or Util.DummyTable, "nullification")
     then
       local players = {}
+      Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
         local cards = p:getCardIds(Player.Hand)
         for _, cid in ipairs(cards) do
           if
             Fk:getCardById(cid).name == "nullification" and
             not (
-              table.contains(cardEffectEvent.disresponsiveList or {}, p.id) or
-              table.contains(cardEffectEvent.unoffsetableList or {}, p.id)
+              table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+              table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
             )
           then
             table.insert(players, p)
@@ -2161,8 +2446,8 @@ function Room:handleCardEffect(event, cardEffectEvent)
               Exppattern:Parse("nullification"):matchExp(s.pattern) and
               not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
               not (
-                table.contains(cardEffectEvent.disresponsiveList or {}, p.id) or
-                table.contains(cardEffectEvent.unoffsetableList or {}, p.id)
+                table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+                table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
               )
             then
               table.insert(players, p)
@@ -2178,13 +2463,22 @@ function Room:handleCardEffect(event, cardEffectEvent)
       elseif cardEffectEvent.from then
         prompt = "#AskForNullificationWithoutTo:" .. cardEffectEvent.from .. "::" .. cardEffectEvent.card.name
       end
-      local use = self:askForNullification(players, nil, nil, prompt)
+
+      local extra_data
+      if #TargetGroup:getRealTargets(cardEffectEvent.tos) > 1 then
+        local parentUseEvent = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
+        if parentUseEvent then
+          extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectEvent.to }
+        end
+      end
+      local use = self:askForNullification(players, nil, nil, prompt, true, extra_data)
       if use then
         use.toCard = cardEffectEvent.card
         use.responseToEvent = cardEffectEvent
         self:useCard(use)
       end
     end
+    Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then
     if cardEffectEvent.card.skill then
       execGameEvent(GameEvent.SkillEffect, function ()
@@ -2201,11 +2495,11 @@ function Room:responseCard(cardResponseEvent)
 end
 
 ---@param card_name string @ 想要视为使用的牌名
----@param subcards integer[] @ 子卡，可以留空或者直接nil
+---@param subcards integer[]|nil @ 子卡，可以留空或者直接nil
 ---@param from ServerPlayer @ 使用来源
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
----@param skillName string @ 技能名
----@param extra boolean @ 是否计入次数
+---@param skillName string|nil @ 技能名
+---@param extra boolean|nil @ 是否不计入次数
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
@@ -2247,8 +2541,8 @@ end
 --- 让一名玩家获得一张牌
 ---@param player integer|ServerPlayer @ 要拿牌的玩家
 ---@param cid integer|Card @ 要拿到的卡牌
----@param unhide boolean @ 是否明着拿
----@param reason CardMoveReason @ 卡牌移动的原因
+---@param unhide boolean|nil @ 是否明着拿
+---@param reason CardMoveReason|nil @ 卡牌移动的原因
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
@@ -2276,8 +2570,8 @@ end
 --- 让玩家摸牌
 ---@param player ServerPlayer @ 摸牌的玩家
 ---@param num integer @ 摸牌数
----@param skillName string @ 技能名
----@param fromPlace string @ 摸牌的位置，"top" 或者 "bottom"
+---@param skillName string|nil @ 技能名
+---@param fromPlace string|nil @ 摸牌的位置，"top" 或者 "bottom"
 ---@return integer[] @ 摸到的牌
 function Room:drawCards(player, num, skillName, fromPlace)
   local drawData = {
@@ -2286,7 +2580,9 @@ function Room:drawCards(player, num, skillName, fromPlace)
     skillName = skillName,
     fromPlace = fromPlace,
   }
-  self.logic:trigger(fk.BeforeDrawCard, player, drawData)
+  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) or drawData.num < 1 then
+    self.logic:breakEvent(false)
+  end
 
   num = drawData.num
   fromPlace = drawData.fromPlace
@@ -2308,20 +2604,22 @@ end
 ---@param card Card | Card[] @ 要移动的牌
 ---@param to_place integer @ 移动的目标位置
 ---@param target ServerPlayer @ 移动的目标玩家
----@param reason integer @ 移动时使用的移牌原因
----@param skill_name string @ 技能名
----@param special_name string @ 私人牌堆名
----@param visible boolean @ 是否明置
-function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible)
+---@param reason integer|nil @ 移动时使用的移牌原因
+---@param skill_name string|nil @ 技能名
+---@param special_name string|nil @ 私人牌堆名
+---@param visible boolean|nil @ 是否明置
+---@param proposer integer
+function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
+  proposer = proposer or nil
   local ids = Card:getIdList(card)
 
   local to
   if table.contains(
     {Card.PlayerEquip, Card.PlayerHand,
-     Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+      Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
     to = target.id
   end
 
@@ -2334,6 +2632,7 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     skillName = skill_name,
     specialName = special_name,
     moveVisible = visible,
+    proposer = proposer,
   }
 end
 
@@ -2347,7 +2646,7 @@ end
 ---@param player ServerPlayer @ 玩家
 ---@param num integer @ 变化量
 ---@param reason string|nil @ 原因
----@param skillName string @ 技能名
+---@param skillName string|nil @ 技能名
 ---@param damageStruct DamageStruct|null @ 伤害数据
 ---@return boolean
 function Room:changeHp(player, num, reason, skillName, damageStruct)
@@ -2367,7 +2666,7 @@ end
 --- 令一名玩家失去体力。
 ---@param player ServerPlayer @ 玩家
 ---@param num integer @ 失去的数量
----@param skillName string @ 技能名
+---@param skillName string|nil @ 技能名
 ---@return boolean
 function Room:loseHp(player, num, skillName)
   return execGameEvent(GameEvent.LoseHp, player, num, skillName)
@@ -2499,8 +2798,8 @@ end
 ---@param card Card @ 改判的牌
 ---@param player ServerPlayer @ 改判的玩家
 ---@param judge JudgeStruct @ 要被改判的判定数据
----@param skillName string @ 技能名
----@param exchange boolean @ 是否要替换原有判定牌（即类似鬼道那样）
+---@param skillName string|nil @ 技能名
+---@param exchange boolean|nil @ 是否要替换原有判定牌（即类似鬼道那样）
 function Room:retrial(card, player, judge, skillName, exchange)
   if not card then return end
   local triggerResponded = self.owner_map[card:getEffectiveId()] == player
@@ -2549,9 +2848,9 @@ end
 
 --- 弃置一名角色的牌。
 ---@param card_ids integer[] @ 被弃掉的牌
----@param skillName string @ 技能名
+---@param skillName string|nil @ 技能名
 ---@param who ServerPlayer @ 被弃牌的人
----@param thrower ServerPlayer @ 弃别人牌的人
+---@param thrower ServerPlayer|nil @ 弃别人牌的人
 function Room:throwCard(card_ids, skillName, who, thrower)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
@@ -2571,7 +2870,7 @@ end
 --- 重铸一名角色的牌。
 ---@param card_ids integer[] @ 被重铸的牌
 ---@param who ServerPlayer @ 重铸的角色
----@param skillName string @ 技能名，默认为“重铸”
+---@param skillName string|nil @ 技能名，默认为“重铸”
 function Room:recastCard(card_ids, who, skillName)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
@@ -2712,6 +3011,7 @@ end
 function Room:revivePlayer(player, sendLog)
   if not player.dead then return end
   self:setPlayerProperty(player, "dead", false)
+  player._splayer:setDied(false)
   self:setPlayerProperty(player, "dying", false)
   self:setPlayerProperty(player, "hp", player.maxHp)
   table.insertIfNeed(self.alive_players, player)
@@ -2724,19 +3024,23 @@ end
 
 ---@param room Room
 local function shouldUpdateWinRate(room)
-  if room.settings.gameMode == "heg_mode" then return false end
-  if room.settings.gameMode == "aaa_role_mode" and #room.players < 5 then
+  if room.settings.enableFreeAssign then
+    return false
+  end
+  if os.time() - room.start_time < 45 then
     return false
   end
   for _, p in ipairs(room.players) do
     if p.id < 0 then return false end
   end
-  return true
+  return Fk.game_modes[room.settings.gameMode]:countInFunc(room)
 end
 
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
+  if not self.game_started then return end
+
   self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
   self.game_finished = true
@@ -2754,18 +3058,27 @@ function Room:gameOver(winner)
 
       if p.id > 0 then
         if table.contains(winner:split("+"), p.role) then
-          self.room:updateWinRate(id, general, mode, 1)
+          self.room:updateWinRate(id, general, mode, 1, p.dead)
         elseif winner == "" then
-          self.room:updateWinRate(id, general, mode, 3)
+          self.room:updateWinRate(id, general, mode, 3, p.dead)
         else
-          self.room:updateWinRate(id, general, mode, 2)
+          self.room:updateWinRate(id, general, mode, 2, p.dead)
         end
       end
     end
   end
 
   self.room:gameOver()
-  coroutine.yield("__handleRequest", 0)
+
+  if table.contains(
+    { "running", "normal" },
+    coroutine.status(self.main_co)
+  ) then
+    coroutine.yield("__handleRequest", "over")
+  else
+    coroutine.close(self.main_co)
+    self.main_co = nil
+  end
 end
 
 ---@param card Card
@@ -2777,7 +3090,7 @@ function Room:getSubcardsByRule(card, fromAreas)
   end
 
   local cardIds = {}
-  fromAreas = fromAreas or {}
+  fromAreas = fromAreas or Util.DummyTable
   for _, cardId in ipairs(card:isVirtual() and card.subcards or { card.id }) do
     if #fromAreas == 0 or table.contains(fromAreas, self:getCardArea(cardId)) then
       table.insert(cardIds, cardId)
@@ -2797,8 +3110,12 @@ function Room:getCardsFromPileByRule(pattern, num, fromPile)
   if fromPile == "discardPile" then
     pileToSearch = self.discard_pile
   elseif fromPile == "allPiles" then
-    pileToSearch = table.clone(self.draw_pile)
+    pileToSearch = table.simpleClone(self.draw_pile)
     table.insertTable(pileToSearch, self.discard_pile)
+  end
+
+  if #pileToSearch == 0 then
+    return {}
   end
 
   local cardPack = {}
@@ -2844,18 +3161,20 @@ end
 
 ---@param flag string|null
 ---@param players ServerPlayer[]|null
+---@param excludeIds CardId[]|null
 ---@return PlayerId[] @ 可能为空
-function Room:canMoveCardInBoard(flag, players)
+function Room:canMoveCardInBoard(flag, players, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
   end
 
   players = players or self.alive_players
+  excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local targets = {}
   table.find(players, function(p)
     local canMoveTo = table.find(players, function(another)
-      return p ~= another and p:canMoveCardsInBoardTo(another, flag)
+      return p ~= another and p:canMoveCardsInBoardTo(another, flag, excludeIds)
     end)
 
     if canMoveTo then
@@ -2880,6 +3199,4 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
-function CreateRoom(_room)
-  RoomInstance = Room:new(_room)
-end
+return Room

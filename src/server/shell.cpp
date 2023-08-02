@@ -25,20 +25,30 @@ void Shell::helpCommand(QStringList &) {
 
   HELP_MSG("%s: Display this help message.", "help");
   HELP_MSG("%s: Shut down the server.", "quit");
+  HELP_MSG("%s: Crash the server. Useful when encounter dead loop.", "crash");
   HELP_MSG("%s: List all online players.", "lsplayer");
   HELP_MSG("%s: List all running rooms.", "lsroom");
+  HELP_MSG("%s: Reload server config file.", "reloadconf");
   HELP_MSG("%s: Kick a player by his <id>.", "kick");
   HELP_MSG("%s: Broadcast message.", "msg");
-  HELP_MSG("%s: Ban 1 or more accounts by their <name>.", "ban");
+  HELP_MSG("%s: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
   HELP_MSG("%s: Unban 1 or more accounts by their <name>.", "unban");
   HELP_MSG(
-      "%s: Ban 1 or more IP address according to somebody's 'lastLoginIp'. "
+      "%s: Ban 1 or more IP address. "
       "At least 1 <name> required.",
       "banip");
   HELP_MSG(
-      "%s: Unban 1 or more IP address according to somebody's 'lastLoginIp'. "
+      "%s: Unban 1 or more IP address. "
       "At least 1 <name> required.",
       "unbanip");
+  HELP_MSG(
+      "%s: Ban 1 or more UUID. "
+      "At least 1 <name> required.",
+      "banuuid");
+  HELP_MSG(
+      "%s: Unban 1 or more UUID. "
+      "At least 1 <name> required.",
+      "unbanuuid");
   qInfo();
   qInfo("===== Package commands =====");
   HELP_MSG("%s: Install a new package from <url>.", "install");
@@ -207,6 +217,9 @@ void Shell::banCommand(QStringList &list) {
   foreach (auto name, list) {
     banAccount(db, name, true);
   }
+
+  // banipCommand(list);
+  banUuidCommand(list);
 }
 
 void Shell::unbanCommand(QStringList &list) {
@@ -220,7 +233,11 @@ void Shell::unbanCommand(QStringList &list) {
   foreach (auto name, list) {
     banAccount(db, name, false);
   }
+
+  // unbanipCommand(list);
+  unbanUuidCommand(list);
 }
+
 static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
   if (!CheckSqlString(name))
     return;
@@ -275,6 +292,70 @@ void Shell::unbanipCommand(QStringList &list) {
   }
 }
 
+static void banUuidByName(sqlite3 *db, const QString &name, bool banned) {
+  if (!CheckSqlString(name))
+    return;
+
+  QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE name='%1';")
+                         .arg(name);
+  auto result = SelectFromDatabase(db, sql_find);
+  if (result.isEmpty())
+    return;
+  auto obj = result[0].toObject();
+  int id = obj["id"].toString().toInt();
+
+  auto result2 = SelectFromDatabase(db, QString("SELECT * FROM uuidinfo WHERE id=%1;").arg(id));
+  if (result2.isEmpty())
+    return;
+
+  auto uuid = result2[0].toObject()["uuid"].toString();
+
+  if (banned) {
+    ExecSQL(db, QString("INSERT INTO banuuid VALUES('%1');").arg(uuid));
+
+    auto p = ServerInstance->findPlayer(id);
+    if (p) {
+      p->kicked();
+    }
+    qInfo("Banned UUID %s.", uuid.toUtf8().constData());
+  } else {
+    ExecSQL(db, QString("DELETE FROM banuuid WHERE uuid='%1';").arg(uuid));
+    qInfo("Unbanned UUID %s.", uuid.toUtf8().constData());
+  }
+}
+
+void Shell::banUuidCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'banuuid' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banUuidByName(db, name, true);
+  }
+}
+
+void Shell::unbanUuidCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'unbanuuid' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+
+  foreach (auto name, list) {
+    banUuidByName(db, name, false);
+  }
+}
+
+void Shell::reloadConfCommand(QStringList &) {
+  ServerInstance->readConfig();
+  qInfo("Reloaded server config file.");
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -297,6 +378,9 @@ Shell::Shell() {
     handlers["unban"] = &Shell::unbanCommand;
     handlers["banip"] = &Shell::banipCommand;
     handlers["unbanip"] = &Shell::unbanipCommand;
+    handlers["banuuid"] = &Shell::banUuidCommand;
+    handlers["unbanuuid"] = &Shell::unbanUuidCommand;
+    handlers["reloadconf"] = &Shell::reloadConfCommand;
   }
   handler_map = handlers;
 }
@@ -308,13 +392,21 @@ void Shell::run() {
       "This is free software, and you are welcome to redistribute it under\n");
   printf("certain conditions; For more information visit "
          "http://www.gnu.org/licenses.\n\n");
-  printf("This is server cli. Enter \"help\" for usage hints.\n");
+
+  printf("[v%s] This is server cli. Enter \"help\" for usage hints.\n", FK_VERSION);
 
   while (true) {
     char *bytes = readline("fk> ");
     if (!bytes || !strcmp(bytes, "quit")) {
       qInfo("Server is shutting down.");
       qApp->quit();
+      return;
+    }
+
+    qInfo("Running command: \"%s\"", bytes);
+
+    if (!strcmp(bytes, "crash")) {
+      qFatal("Crashing."); // should dump core
       return;
     }
 

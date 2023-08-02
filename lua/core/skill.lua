@@ -9,6 +9,7 @@
 ---@field public frequency Frequency @ 技能发动的频繁程度，通常compulsory（锁定技）及limited（限定技）用的多。
 ---@field public visible boolean @ 技能是否会显示在游戏中
 ---@field public mute boolean @ 决定是否关闭技能配音
+---@field public global boolean @ 决定是否是全局技能
 ---@field public anim_type string @ 技能类型定义
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
@@ -37,6 +38,7 @@ function Skill:initialize(name, frequency)
   self.frequency = frequency
   self.visible = true
   self.lordSkill = false
+  self.cardSkill = false
   self.mute = false
   self.anim_type = ""
   self.related_skills = {}
@@ -54,6 +56,20 @@ function Skill:initialize(name, frequency)
   end
 
   self.attached_equip = nil
+end
+
+function Skill:__index(k)
+  if k == "cost_data" then
+    return Fk:currentRoom().skill_costs[self.name]
+  end
+end
+
+function Skill:__newindex(k, v)
+  if k == "cost_data" then
+    Fk:currentRoom().skill_costs[self.name] = v
+  else
+    rawset(self, k, v)
+  end
 end
 
 function Skill:__tostring()
@@ -78,7 +94,11 @@ end
 ---@param player Player @ 玩家
 ---@return boolean
 function Skill:isEffectable(player)
-  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or {}
+  if self.cardSkill then
+    return true
+  end
+
+  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
   for _, nullifySkill in ipairs(nullifySkills) do
     if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then
       return false

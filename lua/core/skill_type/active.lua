@@ -28,7 +28,7 @@ end
 ---@param player Player
 ---@param card Card @ helper
 function ActiveSkill:canUse(player, card)
-  return true
+  return self:isEffectable(player)
 end
 
 --- Determine whether a card can be selected by this skill
@@ -47,6 +47,17 @@ end
 ---@param selected_cards integer[] @ ids of selected cards
 ---@param card Card @ helper
 function ActiveSkill:targetFilter(to_select, selected, selected_cards, card)
+  return false
+end
+
+--- Determine whether a target can be selected by this skill(in modifying targets)
+--- only used in skill of players
+---@param to_select integer @ id of the target
+---@param selected integer[] @ ids of selected targets
+---@param user integer @ id of the userdata
+---@param card Card @ helper
+---@param distance_limited boolean @ is limited by distance
+function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end
 
@@ -79,7 +90,7 @@ function ActiveSkill:getMaxTargetNum(player, card)
     ret = ret[#ret]
   end
 
-  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getExtraTargetNum(player, self, card)
     if correct == nil then correct = 0 end
@@ -122,7 +133,7 @@ end
 
 function ActiveSkill:getDistanceLimit(player, card, to)
   local ret = self.distance_limit or 0
-  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or {}
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getDistanceLimit(player, self, card, to)
     if correct == nil then correct = 0 end
@@ -161,5 +172,9 @@ function ActiveSkill:onEffect(room, cardEffectEvent) end
 ---@param room Room
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onNullified(room, cardEffectEvent) end
+
+---@param selected integer[] @ ids of selected players
+---@param selected_cards integer[] @ ids of selected cards
+function ActiveSkill:prompt(selected, selected_cards) return "" end
 
 return ActiveSkill

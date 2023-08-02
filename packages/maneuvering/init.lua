@@ -9,6 +9,7 @@ local thunderSlashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
+  mod_target_filter = slash.skill.modTargetFilter,
   target_filter = slash.skill.targetFilter,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -47,6 +48,7 @@ local fireSlashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
+  mod_target_filter = slash.skill.modTargetFilter,
   target_filter = slash.skill.targetFilter,
   on_effect = function(self, room, effect)
     local to = effect.to
@@ -79,8 +81,14 @@ extension:addCards{
 local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
+      not table.find(Fk:currentRoom().players, function(p)
+        return p.dying
+      end)
+  end,
   can_use = function(self, player, card)
-    return player:usedCardTimes("analeptic", Player.HistoryTurn) < self:getMaxUseTime(Self, Player.HistoryTurn, card, Self)
+    return self:modTargetFilter(player.id, Util.DummyTable, player.id, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -158,42 +166,6 @@ extension:addCards({
   analeptic:clone(Card.Diamond, 9),
 })
 
-local ironChainEffect = fk.CreateTriggerSkill{
-  name = "iron_chain_effect",
-  global = true,
-  priority = { [fk.BeforeHpChanged] = 10, [fk.DamageFinished] = 0 }, -- game rule
-  events = { fk.BeforeHpChanged, fk.DamageFinished },
-  can_trigger = function(self, event, target, player, data)
-    if event == fk.BeforeHpChanged then
-      return target == player and data.damageEvent and data.damageEvent.damageType ~= fk.NormalDamage and player.chained
-    else
-      return target == player and data.beginnerOfTheDamage and not data.chain
-    end
-  end,
-  on_trigger = function(self, event, target, player, data)
-    local room = player.room
-    if event == fk.BeforeHpChanged then
-      data.damageEvent.beginnerOfTheDamage = true
-      player:setChainState(false)
-    else
-      local targets = table.filter(room:getAlivePlayers(), function(p)
-        return p.chained
-      end)
-      for _, p in ipairs(targets) do
-        room:sendLog{
-          type = "#ChainDamage",
-          from = p.id
-        }
-        local dmg = table.simpleClone(data)
-        dmg.to = p
-        dmg.chain = true
-        room:damage(dmg)
-      end
-    end
-  end,
-}
-Fk:addSkill(ironChainEffect)
-
 local recast = fk.CreateActiveSkill{
   name = "recast",
   target_num = 0,
@@ -207,6 +179,9 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
   max_target_num = 2,
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return true
+  end,
   target_filter = function() return true end,
   on_effect = function(self, room, cardEffectEvent)
     local to = room:getPlayerById(cardEffectEvent.to)
@@ -218,6 +193,7 @@ local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
   special_skills = { "recast" },
+  multiple_targets = true,
 }
 extension:addCards{
   ironChain:clone(Card.Spade, 11),
@@ -231,15 +207,18 @@ extension:addCards{
 local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
   target_num = 1,
-  target_filter = function(self, to_select)
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return not Fk:currentRoom():getPlayerById(to_select):isKongcheng()
+  end,
+  target_filter = function(self, to_select)
+    return self:modTargetFilter(to_select)
   end,
   on_effect = function(self, room, cardEffectEvent)
     local from = room:getPlayerById(cardEffectEvent.from)
     local to = room:getPlayerById(cardEffectEvent.to)
     if to:isKongcheng() then return end
 
-    local showCard = room:askForCard(to, 1, 1, false, self.name, false, nil, "#fire_attack-show:" .. from.id)[1]
+    local showCard = room:askForCard(to, 1, 1, false, self.name, false, ".|.|.|hand", "#fire_attack-show:" .. from.id)[1]
     to:showCards(showCard)
 
     showCard = Fk:getCardById(showCard)
@@ -276,7 +255,7 @@ local supplyShortageSkill = fk.CreateActiveSkill{
       local player = Fk:currentRoom():getPlayerById(to_select)
       if Self ~= player then
         return not player:hasDelayedTrick("supply_shortage") and
-          Self:distanceTo(player) <= self:getDistanceLimit(Self, card, player)
+          self:withinDistanceLimit(Self, false, card, player)
       end
     end
     return false
@@ -346,10 +325,10 @@ local fanSkill = fk.CreateTriggerSkill{
     return target == player and player:hasSkill(self.name) and data.card.name == "slash"
   end,
   on_use = function(_, _, _, _, data)
-    local fireSlash = Fk:cloneCard("fire__slash")
-    fireSlash.skillName = "fan"
-    fireSlash:addSubcard(data.card)
-    data.card = fireSlash
+    local card = Fk:cloneCard("fire__slash")
+    card.skillName = "fan"
+    card:addSubcard(data.card)
+    data.card = card
   end,
 }
 Fk:addSkill(fanSkill)

@@ -27,8 +27,11 @@ private:
   void msgCommand(QStringList &);
   void banCommand(QStringList &);
   void banipCommand(QStringList &);
+  void banUuidCommand(QStringList &);
   void unbanCommand(QStringList &);
   void unbanipCommand(QStringList &);
+  void unbanUuidCommand(QStringList &);
+  void reloadConfCommand(QStringList &);
 };
 
 #endif

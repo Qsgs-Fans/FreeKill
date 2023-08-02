@@ -4,8 +4,8 @@ local function tellRoomToObserver(self, player)
   local observee = self.players[1]
   player:doNotify("Setup", json.encode{
     observee.id,
-    observee.serverplayer:getScreenName(),
-    observee.serverplayer:getAvatar(),
+    observee._splayer:getScreenName(),
+    observee._splayer:getAvatar(),
   })
   player:doNotify("EnterRoom", json.encode{
     #self.players, self.timeout, self.settings
@@ -13,11 +13,11 @@ local function tellRoomToObserver(self, player)
   player:doNotify("StartGame", "")
 
   -- send player data
-  for _, p in ipairs(self:getOtherPlayers(observee, true, true)) do
+  for _, p in ipairs(self:getOtherPlayers(observee, false, true)) do
     player:doNotify("AddPlayer", json.encode{
       p.id,
-      p.serverplayer:getScreenName(),
-      p.serverplayer:getAvatar(),
+      p._splayer:getScreenName(),
+      p._splayer:getAvatar(),
     })
   end
 
@@ -36,7 +36,7 @@ local function tellRoomToObserver(self, player)
   player:doNotify("UpdateDrawPile", #self.draw_pile)
   player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
-  table.insert(self.observers, {observee.id, player})
+  table.insert(self.observers, {observee.id, player, player:getId()})
 end
 
 local function addObserver(self, id)
@@ -56,12 +56,10 @@ end
 
 local function removeObserver(self, id)
   for _, t in ipairs(self.observers) do
-    local __, p = table.unpack(t)
-    if p:getId() == id then
+    local pid = t[3]
+    if pid == id then
       table.removeOne(self.observers, t)
-      self:doBroadcastNotify("RemoveObserver", json.encode{
-        p:getId(),
-      })
+      self:doBroadcastNotify("RemoveObserver", json.encode{ pid })
       break
     end
   end
@@ -85,7 +83,9 @@ end
 
 request_handlers["prelight"] = function(room, id, reqlist)
   local p = room:getPlayerById(id)
-  p:prelightSkill(reqlist[3], reqlist[4] == "true")
+  if p then
+    p:prelightSkill(reqlist[3], reqlist[4] == "true")
+  end
 end
 
 request_handlers["luckcard"] = function(room, id, reqlist)
@@ -105,6 +105,8 @@ request_handlers["luckcard"] = function(room, id, reqlist)
 
   if pdata.luckTime > 0 then
     p:doNotify("AskForLuckCard", pdata.luckTime)
+  else
+    p.serverplayer:setThinking(false)
   end
 
   room:setTag("LuckCardData", luck_data)
@@ -129,26 +131,56 @@ request_handlers["changeself"] = function(room, id, reqlist)
   from_sp:doNotify("ChangeSelf", json.encode {
     id = toId,
     handcards = to:getCardIds(Player.Hand),
+    special_cards = to.special_cards,
   })
 end
 
+request_handlers["surrender"] = function(room, id, reqlist)
+  local player = room:getPlayerById(id)
+  if not player then return end
+  local logic = room.logic
+  local curEvent = logic:getCurrentEvent()
+  if curEvent then
+    curEvent:addExitFunc(
+      function()
+        player.surrendered = true
+        room:broadcastProperty(player, "surrendered")
+        room:gameOver(Fk.game_modes[room.settings.gameMode]:getWinner(player))
+      end
+    )
+    room.hasSurrendered = true
+    room:doBroadcastNotify("CancelRequest", "")
+  end
+end
+
+request_handlers["newroom"] = function(s, id)
+  s:registerRoom(id)
+end
+
+-- 处理异步请求的协程，本身也是个死循环就是了。
+-- 为了适应调度器，目前又暂且将请求分为“耗时请求”和不耗时请求。
+-- 耗时请求处理后会立刻挂起。不耗时的请求则会不断处理直到请求队列空后再挂起。
 local function requestLoop(self)
-  local rest_time = 0
   while true do
     local ret = false
-    local request = self.room:fetchRequest()
+    local request = self.thread:fetchRequest()
     if request ~= "" then
       ret = true
       local reqlist = request:split(",")
-      local id = tonumber(reqlist[1])
-      local command = reqlist[2]
-      request_handlers[command](self, id, reqlist)
-    elseif rest_time > 10 then
-      -- let current thread sleep 10ms
-      -- otherwise CPU usage will be 100% (infinite yield <-> resume loop)
-      fk.QThread_msleep(10)
+      local roomId = tonumber(table.remove(reqlist, 1))
+      local room = self:getRoom(roomId)
+
+      if room then
+        RoomInstance = room
+        local id = tonumber(reqlist[1])
+        local command = reqlist[2]
+        request_handlers[command](room, id, reqlist)
+        RoomInstance = nil
+      end
     end
-    rest_time = coroutine.yield(ret)
+    if not ret then
+      coroutine.yield()
+    end
   end
 end
 

@@ -114,7 +114,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
   damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
 
-  if damageStruct.from and not damageStruct.from:isAlive() then
+  if damageStruct.from and damageStruct.from.dead then
     damageStruct.from = nil
   end
 
@@ -135,7 +135,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     assert(damageStruct.to:isInstanceOf(ServerPlayer))
   end
 
-  if not damageStruct.to:isAlive() then
+  if damageStruct.to.dead then
     return false
   end
 
@@ -146,6 +146,11 @@ GameEvent.functions[GameEvent.Damage] = function(self)
       cardUseEvent.damageDealt = cardUseEvent.damageDealt or {}
       cardUseEvent.damageDealt[damageStruct.to.id] = (cardUseEvent.damageDealt[damageStruct.to.id] or 0) + damageStruct.damage
     end
+  end
+
+  if damageStruct.damageType ~= fk.NormalDamage and damageStruct.to.chained then
+    damageStruct.beginnerOfTheDamage = true
+    damageStruct.to:setChainState(false)
   end
 
   -- 先扣减护甲，再扣体力值
@@ -179,6 +184,29 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   return true
 end
 
+GameEvent.exit_funcs[GameEvent.Damage] = function(self)
+  local room = self.room
+  local damageStruct = self.data[1]
+
+  room.logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
+
+  if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
+    local targets = table.filter(room:getOtherPlayers(damageStruct.to), function(p)
+      return p.chained
+    end)
+    for _, p in ipairs(targets) do
+      room:sendLog{
+        type = "#ChainDamage",
+        from = p.id
+      }
+      local dmg = table.simpleClone(damageStruct)
+      dmg.to = p
+      dmg.chain = true
+      room:damage(dmg)
+    end
+  end
+end
+
 GameEvent.functions[GameEvent.LoseHp] = function(self)
   local player, num, skillName = table.unpack(self.data)
   local self = self.room
@@ -197,7 +225,7 @@ GameEvent.functions[GameEvent.LoseHp] = function(self)
     self.logic:breakEvent(false)
   end
 
-  if not self:changeHp(player, -num, "loseHp", skillName) then
+  if not self:changeHp(player, -data.num, "loseHp", skillName) then
     self.logic:breakEvent(false)
   end
 
@@ -221,6 +249,7 @@ GameEvent.functions[GameEvent.Recover] = function(self)
   end
 
   local who = recoverStruct.who
+
   if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
     self.logic:breakEvent(false)
   end
@@ -246,8 +275,22 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
     player = player.id,
     num = num,
   })
+  self:sendLog{
+    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
+    from = player.id,
+    arg = num > 0 and num or - num,
+  }
   if player.maxHp == 0 then
+    player.hp = 0
+    self:broadcastProperty(player, "hp")
+    self:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = 0,
+      arg2 = 0,
+    }
     self:killPlayer({ who = player.id })
+    return false
   end
 
   local diff = player.hp - player.maxHp
@@ -256,12 +299,6 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
       player.hp = player.hp - diff
     end
   end
-
-  self:sendLog{
-    type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
-    from = player.id,
-    arg = num > 0 and num or - num,
-  }
 
   self:sendLog{
     type = "#ShowHPAndMaxHP",

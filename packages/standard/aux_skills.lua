@@ -7,17 +7,21 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
+    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
+      return false
+    end
+
     local checkpoint = true
     local card = Fk:getCardById(to_select)
 
-    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or {}
+    local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
     for _, skill in ipairs(status_skills) do
       if skill:prohibitDiscard(Self, card) then
         return false
       end
     end
     if Fk.currentResponseReason == "game_rule" then
-      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or {}
+      status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:excludeFrom(Self, card) then
           return false
@@ -43,6 +47,10 @@ local chooseCardsSkill = fk.CreateActiveSkill{
   expand_pile = function(self) return self.expand_pile end,
   card_filter = function(self, to_select, selected)
     if #selected >= self.num then
+      return false
+    end
+
+    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
       return false
     end
 
@@ -99,11 +107,36 @@ local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, cards)
     local target = Fk:currentRoom():getPlayerById(to_select)
     if #selected > 0 then
-      return Fk:currentRoom():getPlayerById(selected[1]):canMoveCardsInBoardTo(target, self.flag)
+      return Fk:currentRoom():getPlayerById(selected[1]):canMoveCardsInBoardTo(target, self.flag, self.excludeIds)
     end
 
-    return #target:getCardIds({ Player.Equip, Player.Judge }) > 0
+    local fromAreas = { Player.Equip, Player.Judge }
+    if self.flag == "e" then
+      fromAreas = { Player.Equip }
+    elseif self.flag == "j" then
+      fromAreas = { Player.Judge }
+    end
+
+    return #table.filter(target:getCardIds(fromAreas), function(id)
+      return not table.contains((type(self.excludeIds) == "table" and self.excludeIds or {}), id)
+    end) > 0
   end,
+}
+
+local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
+  name = "uncompulsory_invalidity",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    return
+      (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
+      not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
+      (
+        from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
+        table.find(MarkEnum.TempMarkSuffix, function(s)
+          return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
+        end)
+      )
+  end
 }
 
 AuxSkills = {
@@ -112,4 +145,5 @@ AuxSkills = {
   choosePlayersSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
+  uncompulsoryInvalidity,
 }

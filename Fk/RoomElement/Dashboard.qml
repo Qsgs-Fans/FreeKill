@@ -158,6 +158,12 @@ RowLayout {
 
       return ret;
     }
+
+    const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
+    for (let name in pile_data) {
+      if (name.endsWith("&")) expandPile(name);
+    }
+
     if (cname) {
       const ids = [];
       let cards = handcardAreaItem.cards;
@@ -178,7 +184,6 @@ RowLayout {
 
       // Must manually analyze pattern here
       let pile_list = cname.split("|")[4];
-      const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
       if (pile_list && pile_list !== "." && !(pile_data instanceof Array)) {
         pile_list = pile_list.split(",");
         for (let pile_name of pile_list) {
@@ -240,6 +245,26 @@ RowLayout {
     }
   }
 
+  function revertSelection() {
+    if (pending_skill !== "") {
+      let to_select_cards = handcardAreaItem.cards.filter(cd => {
+        if (pendings.indexOf(cd.cid) === -1) {
+          return true;
+        } else {
+          cd.selected = !cd.selected;
+          cd.clicked();
+        }
+      });
+
+      to_select_cards.forEach(cd => {
+        if (cd.selectable) {
+          cd.selected = !cd.selected;
+          cd.clicked();
+        }
+      });
+    }
+  }
+
   function getSelectedCard() {
     if (pending_skill !== "") {
       return JSON.stringify({
@@ -251,11 +276,31 @@ RowLayout {
     }
   }
 
+  function processPrompt(prompt) {
+    const data = prompt.split(":");
+    let raw = Backend.translate(data[0]);
+    const src = parseInt(data[1]);
+    const dest = parseInt(data[2]);
+    if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
+    if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
+    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
+    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
+    return raw;
+  }
+
   function updatePending() {
+    roomScene.resetPrompt();
     if (pending_skill === "") return;
 
     const enabled_cards = [];
     const targets = roomScene.selected_targets;
+    const prompt = JSON.parse(Backend.callLuaFunction(
+      "ActiveSkillPrompt",
+      [pending_skill, pendings, targets]
+    ));
+    if (prompt !== "") {
+      roomScene.setPrompt(processPrompt(prompt));
+    }
 
     handcardAreaItem.cards.forEach((card) => {
       if (card.selected || JSON.parse(Backend.callLuaFunction(
@@ -337,6 +382,7 @@ RowLayout {
     handcardAreaItem.adjustCards();
     handcardAreaItem.unselectAll();
     cardSelected(-1);
+    roomScene.resetPrompt();
   }
 
   function addSkill(skill_name, prelight) {
@@ -384,11 +430,19 @@ RowLayout {
     self.tremble();
   }
 
+  function updateHandcards() {
+    Backend.callLuaFunction("FilterMyHandcards", []);
+    handcardAreaItem.cards.forEach(v => {
+      const data = JSON.parse(Backend.callLuaFunction("GetCardData", [v.cid]));
+      v.setData(data);
+    });
+  }
+
   function update() {
     unSelectAll();
     disableSkills();
 
-    const cards = handcardAreaItem.cards;
+    let cards = handcardAreaItem.cards;
     const toRemove = [];
     for (let c of cards) {
       toRemove.push(c.cid);

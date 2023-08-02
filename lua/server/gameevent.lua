@@ -15,13 +15,13 @@
 ---@field public interrupted boolean @ 事件是否是因为被强行中断而结束的
 local GameEvent = class("GameEvent")
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.functions = {}
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.cleaners = {}
 
----@type fun(self: GameEvent)[]
+---@type (fun(self: GameEvent): boolean|nil)[]
 GameEvent.exit_funcs = {}
 
 local function wrapCoFunc(f, ...)
@@ -43,6 +43,11 @@ function GameEvent:initialize(event, ...)
   self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
   self.extra_exit_funcs = Util.DummyTable
   self.interrupted = false
+end
+
+-- 静态函数，实际定义在events/init.lua
+function GameEvent:translate(id)
+  error('static')
 end
 
 function GameEvent:__tostring()
@@ -104,7 +109,7 @@ local function bin_search(events, from, to, n, func)
 
   for i = mid, #events do
     local v = events[i]
-    if v.id < to and func(v) then
+    if v.id <= to and func(v) then
       table.insert(ret, v)
     end
     if #ret >= n then break end
@@ -132,7 +137,7 @@ function GameEvent:searchEvents(eventType, n, func, endEvent)
   if #events < 6 then
     ret = {}
     for _, v in ipairs(events) do
-      if v.id > from and v.id < to and func(v) then
+      if v.id >= from and v.id <= to and func(v) then
         table.insert(ret, v)
       end
       if #ret >= n then break end
@@ -159,7 +164,7 @@ function GameEvent:clear()
       -- handle error, then break
       if not string.find(yield_result, "__manuallyBreak") then
         fk.qCritical(yield_result)
-        print(debug.traceback(co))
+        print(debug.traceback(clear_co))
       end
       coroutine.close(clear_co)
       break
@@ -186,13 +191,10 @@ function GameEvent:clear()
 
   logic.game_event_stack:pop()
 
-  local err, msg
-  err, msg = xpcall(self.exit_func, debug.traceback, self)
-  if err == false then fk.qCritical(msg) end
+  Pcall(self.exit_func, self)
   for _, f in ipairs(self.extra_exit_funcs) do
     if type(f) == "function" then
-      err, msg = xpcall(f, debug.traceback, self)
-      if err == false then fk.qCritical(msg) end
+      Pcall(f, self)
     end
   end
 end

@@ -362,6 +362,7 @@ heg = fk.CreateGameMode{
   maxPlayer = 8,
   rule = heg_rule,
   logic = heg_getlogic,
+  countInFunc = Util.FalseFunc
 }
 
 Fk:loadTranslationTable{

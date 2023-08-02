@@ -8,6 +8,9 @@ public:
     Invalid,
     Online,
     Trust,
+    Run,
+    Leave,
+    Robot,  // only for real robot
     Offline
   };
 
@@ -21,12 +24,13 @@ public:
   void setAvatar(const QString &avatar);
 
   State getState() const;
-  QString getStateString() const;
   void setState(State state);
-  void setStateString(const QString &state);
 
-  bool isReady() const;
-  void setReady(bool ready);
+  QList<int> getGameData();
+  void setGameData(int total, int win, int run);
+
+  bool isDied() const;
+  void setDied(bool died);
 };
 
 %nodefaultctor ClientPlayer;

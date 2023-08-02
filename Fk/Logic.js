@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+/*
 var generalsOverviewPage, cardsOverviewPage;
 var clientPageCreated = false;
 function createClientPages() {
@@ -13,9 +14,33 @@ function createClientPages() {
     mainWindow.cardsOverviewPage = cardsOverviewPage;
   }
 }
+*/
 
 var callbacks = {};
 let sheduled_download = "";
+
+callbacks["ServerDetected"] = (j) => {
+  const serverDialog = mainStack.currentItem.serverDialog;
+  if (!serverDialog) {
+    return;
+  }
+  const item = serverDialog.item;
+  if (item) {
+    toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+  }
+}
+
+callbacks["GetServerDetail"] = (j) => {
+  const [ver, icon, desc, capacity, count, addr] = JSON.parse(j);
+  const serverDialog = mainStack.currentItem.serverDialog;
+  if (!serverDialog) {
+    return;
+  }
+  const item = serverDialog.item;
+  if (item) {
+    item.updateServerDetail(addr, [ver, icon, desc, capacity, count]);
+  }
+}
 
 callbacks["NetworkDelayTest"] = (jsonData) => {
   // jsonData: RSA pub key
@@ -75,7 +100,7 @@ callbacks["BackToStart"] = (jsonData) => {
 
 callbacks["EnterLobby"] = (jsonData) => {
   // depth == 1 means the lobby page is not present in mainStack
-  createClientPages();
+  // createClientPages();
   if (mainStack.depth === 1) {
     // we enter the lobby successfully, so save password now.
     config.lastLoginServer = config.serverAddr;
@@ -90,6 +115,8 @@ callbacks["EnterLobby"] = (jsonData) => {
     mainStack.pop();
   }
   mainWindow.busy = false;
+  ClientInstance.notifyServer("RefreshRoomList", "");
+  config.saveConf();
 }
 
 callbacks["EnterRoom"] = (jsonData) => {
@@ -140,6 +167,10 @@ callbacks["Chat"] = (jsonData) => {
   const general = Backend.translate(data.general);
   const time = data.time;
   const msg = data.msg;
+
+  if (config.blockedUsers.indexOf(userName) !== -1) {
+    return;
+  }
 
   if (general === "")
     current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);

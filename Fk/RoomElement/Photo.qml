@@ -31,7 +31,11 @@ Item {
   property int drank: 0
   property bool isOwner: false
   property bool ready: false
-  property int distance: 0
+  property int winGame: 0
+  property int runGame: 0
+  property int totalGame: 0
+
+  property int distance: -1
   property string status: "normal"
   property int maxCard: 0
 
@@ -48,6 +52,7 @@ Item {
   property bool selected: false
 
   property bool playing: false
+  property bool surrendered: false
   onPlayingChanged: {
     if (playing) {
       animPlaying.start();
@@ -172,7 +177,16 @@ Item {
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
-      source: (general != "") ? SkinBank.getGeneralPicture(general) : ""
+      source: {
+        if (general === "") {
+          return "";
+        }
+        if (deputyGeneral) {
+          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+        } else {
+          return SkinBank.getGeneralPicture(general)
+        }
+      }
     }
 
     Image {
@@ -182,8 +196,14 @@ Item {
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
-      source: (deputyGeneral != "") ?
-        SkinBank.getGeneralPicture(deputyGeneral) : ""
+      source: {
+        const general = deputyGeneral;
+        if (deputyGeneral != "") {
+          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+        } else {
+          return "";
+        }
+      }
     }
 
     Image {
@@ -231,7 +251,7 @@ Item {
     anchors.fill: photoMask
     source: generalImgItem
     saturation: 0
-    visible: root.dead
+    visible: root.dead || root.surrendered
   }
 
   Rectangle {
@@ -246,10 +266,43 @@ Item {
     opacity: 0.4 + Math.log(root.drank) * 0.12
   }
 
-  Image {
+  Rectangle {
+    id: winRateRect
+    width: 138; x: 31
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 6
+    height: childrenRect.height + 8
+    color: "#CC3C3229"
+    radius: 8
+    border.color: "white"
+    border.width: 1
+    visible: screenName != "" && !roomScene.isStarted
+
+    Text {
+      y: 4
+      anchors.horizontalCenter: parent.horizontalCenter
+      font.pixelSize: 20
+      font.family: fontLibian.name
+      color: (totalGame > 0 && runGame / totalGame > 0.2) ? "red" : "white"
+      style: Text.Outline
+      text: {
+        if (totalGame === 0) {
+          return Backend.translate("Newbie");
+        }
+        const winRate = (winGame / totalGame) * 100;
+        const runRate = (runGame / totalGame) * 100;
+        return Backend.translate("Win=%1\nRun=%2\nTotal=%3")
+          .arg(winRate.toFixed(2))
+          .arg(runRate.toFixed(2))
+          .arg(totalGame);
+      }
+    }
+  }
+
+  Image {
+    anchors.bottom: winRateRect.top
     anchors.right: parent.right
-    anchors.bottomMargin: 8
+    anchors.bottomMargin: -8
     anchors.rightMargin: 4
     source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : (ready ? "ready" : "notready"))
     visible: screenName != "" && !roomScene.isStarted
@@ -333,8 +386,8 @@ Item {
 
   Image {
     // id: saveme
-    visible: root.dead || root.dying
-    source: SkinBank.DEATH_DIR + (root.dead ? root.role : "saveme")
+    visible: root.dead || root.dying || root.surrendered
+    source: SkinBank.DEATH_DIR + (root.dead ? root.role : root.surrendered ? "surrender" : "saveme")
     anchors.centerIn: photoMask
   }
 
@@ -567,7 +620,7 @@ Item {
     color: "white"
     height: 20
     width: 20
-    visible: distance != 0
+    visible: distance != -1
     Text {
       text: distance
       anchors.centerIn: parent

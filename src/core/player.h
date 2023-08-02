@@ -14,6 +14,7 @@ public:
     Online,
     Trust,
     Run,
+    Leave,
     Robot,  // only for real robot
     Offline
   };
@@ -38,11 +39,20 @@ public:
   bool isReady() const;
   void setReady(bool ready);
 
+  QList<int> getGameData();
+  void setGameData(int total, int win, int run);
+  QString getLastGameMode() const;
+  void setLastGameMode(const QString &mode);
+
+  bool isDied() const;
+  void setDied(bool died);
+
 signals:
   void screenNameChanged();
   void avatarChanged();
   void stateChanged();
   void readyChanged();
+  void gameDataChanged();
 
 private:
   int id;
@@ -50,6 +60,12 @@ private:
   QString avatar;
   State state;
   bool ready;
+  bool died;
+
+  QString lastGameMode;
+  int totalGames;
+  int winCount;
+  int runCount;
 };
 
 #endif // _PLAYER_H

@@ -277,7 +277,7 @@ fkp.CreateActiveSkill = function(spec)
 end
 
 fkp.functions.newVirtualCard = function(number, suit, name, subcards, skill)
-  subcards = subcards or {}
+  subcards = subcards or Util.DummyTable
   local ret = Fk:cloneCard(name, string2suit[suit], number)
   if not ret then
     ret = Fk:cloneCard("slash", string2suit[suit], number)

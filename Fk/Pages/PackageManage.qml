@@ -74,6 +74,7 @@ Item {
 
     ListView {
       id: packageList
+      clip: true
       anchors.fill: parent
       model: ListModel {
         id: packageModel
@@ -105,10 +106,12 @@ Item {
           onClicked: {
             if (pkgEnabled === "0") {
               Pacman.enablePack(pkgName);
+              pkgEnabled = "1";
             } else {
               Pacman.disablePack(pkgName);
+              pkgEnabled = "0";
             }
-            updatePackageList();
+            // updatePackageList();
           }
         }
 
@@ -119,7 +122,15 @@ Item {
           anchors.rightMargin: 8
           onClicked: {
             Pacman.upgradePack(pkgName);
-            updatePackageList();
+            // updatePackageList();
+            const data = JSON.parse(Pacman.listPackages());
+            const e = data[index];
+            packageModel.set(index, {
+              pkgName: e.name,
+              pkgURL: e.url,
+              pkgVersion: e.hash.substring(0, 8),
+              pkgEnabled: e.enabled
+            });
           }
         }
 
@@ -130,7 +141,8 @@ Item {
           anchors.rightMargin: 8
           onClicked: {
             Pacman.removePack(pkgName);
-            updatePackageList();
+            // updatePackageList();
+            packageModel.remove(index);
           }
         }
 

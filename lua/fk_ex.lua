@@ -75,7 +75,7 @@ end
 
 ---@class StatusSkillSpec: StatusSkill
 
----@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer):boolean
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer, data: any):boolean|nil
 ---@class TriggerSkillSpec: UsableSkillSpec
 ---@field public global boolean
 ---@field public events Event | Event[]
@@ -162,14 +162,16 @@ function fk.CreateTriggerSkill(spec)
 end
 
 ---@class ActiveSkillSpec: UsableSkillSpec
----@field public can_use fun(self: ActiveSkill, player: Player, card: Card): boolean
----@field public card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean
----@field public target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean
----@field public feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean
----@field public on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean
----@field public about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
----@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
----@field public on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean
+---@field public can_use fun(self: ActiveSkill, player: Player, card: Card): boolean|nil
+---@field public card_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean|nil
+---@field public target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean|nil
+---@field public feasible fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean|nil
+---@field public on_use fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean|nil
+---@field public about_to_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
+---@field public on_effect fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
+---@field public on_nullified fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
+---@field public mod_target_filter fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean|nil
+---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ActiveSkillSpec
 ---@return ActiveSkill
@@ -185,6 +187,7 @@ function fk.CreateActiveSkill(spec)
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
+  if spec.mod_target_filter then skill.modTargetFilter = spec.mod_target_filter end
   if spec.feasible then
     print(spec.name .. ": feasible is deprecated. Use target_num and card_num instead.")
     skill.feasible = spec.feasible
@@ -193,6 +196,7 @@ function fk.CreateActiveSkill(spec)
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
+  if spec.prompt then skill.prompt = spec.prompt end
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
@@ -209,12 +213,13 @@ function fk.CreateActiveSkill(spec)
 end
 
 ---@class ViewAsSkillSpec: UsableSkillSpec
----@field public card_filter fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean
----@field public view_as fun(self: ViewAsSkill, cards: integer[])
+---@field public card_filter fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean|nil
+---@field public view_as fun(self: ViewAsSkill, cards: integer[]): Card|nil
 ---@field public pattern string
----@field public enabled_at_play fun(self: ViewAsSkill, player: Player): boolean
----@field public enabled_at_response fun(self: ViewAsSkill, player: Player): boolean
----@field public before_use fun(self: ViewAsSkill, player: ServerPlayer)
+---@field public enabled_at_play fun(self: ViewAsSkill, player: Player): boolean|nil
+---@field public enabled_at_response fun(self: ViewAsSkill, player: Player, response: boolean): boolean|nil
+---@field public before_use fun(self: ViewAsSkill, player: ServerPlayer, use: CardUseStruct)
+---@field public prompt fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ViewAsSkillSpec
 ---@return ViewAsSkill
@@ -242,6 +247,7 @@ function fk.CreateViewAsSkill(spec)
       return spec.enabled_at_response(curSkill, player, cardResponsing) and curSkill:isEffectable(player)
     end
   end
+  if spec.prompt then skill.prompt = spec.prompt end
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
@@ -263,26 +269,28 @@ function fk.CreateViewAsSkill(spec)
 end
 
 ---@class DistanceSpec: StatusSkillSpec
----@field public correct_func fun(self: DistanceSkill, from: Player, to: Player)
+---@field public correct_func fun(self: DistanceSkill, from: Player, to: Player): integer|nil
+---@field public fixed_func fun(self: DistanceSkill, from: Player, to: Player): integer|nil
 
 ---@param spec DistanceSpec
 ---@return DistanceSkill
 function fk.CreateDistanceSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
 
   local skill = DistanceSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
   skill.getCorrect = spec.correct_func
+  skill.getFixed = spec.fixed_func
 
   return skill
 end
 
 ---@class ProhibitSpec: StatusSkillSpec
----@field public is_prohibited fun(self: ProhibitSkill, from: Player, to: Player, card: Card)
----@field public prohibit_use fun(self: ProhibitSkill, player: Player, card: Card)
----@field public prohibit_response fun(self: ProhibitSkill, player: Player, card: Card)
----@field public prohibit_discard fun(self: ProhibitSkill, player: Player, card: Card)
+---@field public is_prohibited fun(self: ProhibitSkill, from: Player, to: Player, card: Card): boolean|nil
+---@field public prohibit_use fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
+---@field public prohibit_response fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
+---@field public prohibit_discard fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
 
 ---@param spec ProhibitSpec
 ---@return ProhibitSkill
@@ -300,8 +308,8 @@ function fk.CreateProhibitSkill(spec)
 end
 
 ---@class AttackRangeSpec: StatusSkillSpec
----@field public correct_func fun(self: AttackRangeSkill, from: Player)
----@field public within_func fun(self: AttackRangeSkill, from: Player, to: Player)
+---@field public correct_func fun(self: AttackRangeSkill, from: Player, to: Player): number|nil
+---@field public within_func fun(self: AttackRangeSkill, from: Player, to: Player): boolean|nil
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
@@ -322,9 +330,9 @@ function fk.CreateAttackRangeSkill(spec)
 end
 
 ---@class MaxCardsSpec: StatusSkillSpec
----@field public correct_func fun(self: MaxCardsSkill, player: Player)
----@field public fixed_func fun(self: MaxCardsSkill, player: Player)
----@field public exclude_from fun(self: MaxCardsSkill, player: Player, card: Card)
+---@field public correct_func fun(self: MaxCardsSkill, player: Player): number|nil
+---@field public fixed_func fun(self: MaxCardsSkill, player: Player): number|nil
+---@field public exclude_from fun(self: MaxCardsSkill, player: Player, card: Card): boolean|nil
 
 ---@param spec MaxCardsSpec
 ---@return MaxCardsSkill
@@ -346,9 +354,11 @@ function fk.CreateMaxCardsSkill(spec)
 end
 
 ---@class TargetModSpec: StatusSkillSpec
----@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player)
----@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player)
----@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card)
+---@field public bypass_times fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player): boolean|nil
+---@field public residue_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player): number|nil
+---@field public bypass_distances fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player): boolean|nil
+---@field public distance_limit_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player): number|nil
+---@field public extra_target_func fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card): number|nil
 
 ---@param spec TargetModSpec
 ---@return TargetModSkill
@@ -357,8 +367,14 @@ function fk.CreateTargetModSkill(spec)
 
   local skill = TargetModSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
+  if spec.bypass_times then
+    skill.bypassTimesCheck = spec.bypass_times
+  end
   if spec.residue_func then
     skill.getResidueNum = spec.residue_func
+  end
+  if spec.bypass_distances then
+    skill.bypassDistancesCheck = spec.bypass_distances
   end
   if spec.distance_limit_func then
     skill.getDistanceLimit = spec.distance_limit_func
@@ -371,8 +387,8 @@ function fk.CreateTargetModSkill(spec)
 end
 
 ---@class FilterSpec: StatusSkillSpec
----@field public card_filter fun(self: FilterSkill, card: Card, player: Player)
----@field public view_as fun(self: FilterSkill, card: Card, player: Player)
+---@field public card_filter fun(self: FilterSkill, card: Card, player: Player): boolean|nil
+---@field public view_as fun(self: FilterSkill, card: Card, player: Player): Card|nil
 
 ---@param spec FilterSpec
 ---@return FilterSkill
@@ -388,7 +404,7 @@ function fk.CreateFilterSkill(spec)
 end
 
 ---@class InvaliditySpec: StatusSkillSpec
----@field public invalidity_func fun(self: InvaliditySkill, from: Player, skill: Skill)
+---@field public invalidity_func fun(self: InvaliditySkill, from: Player, skill: Skill): boolean|nil
 
 ---@param spec InvaliditySpec
 ---@return InvaliditySkill
@@ -405,7 +421,9 @@ end
 ---@class CardSpec: Card
 ---@field public skill Skill
 ---@field public equip_skill Skill
+---@field public special_skills string[] | nil
 ---@field public is_damage_card boolean
+---@field public multiple_targets boolean
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
@@ -426,8 +444,10 @@ end
 
 local function readCardSpecToCard(card, spec)
   card.skill = spec.skill or defaultCardSkill
+  card.skill.cardSkill = true
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
+  card.multiple_targets = spec.multiple_targets
 end
 
 ---@param spec CardSpec
@@ -525,7 +545,22 @@ function fk.CreateGameMode(spec)
   assert(type(spec.minPlayer) == "number")
   assert(type(spec.maxPlayer) == "number")
   local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
+  ret.whitelist = spec.whitelist
+  ret.blacklist = spec.blacklist
   ret.rule = spec.rule
   ret.logic = spec.logic
+
+  if spec.winner_getter then
+    assert(type(spec.winner_getter) == "function")
+    ret.getWinner = spec.winner_getter
+  end
+  if spec.surrender_func then
+    assert(type(spec.surrender_func) == "function")
+    ret.surrenderFunc = spec.surrender_func
+  end
+  if spec.is_counted then
+    assert(type(spec.is_counted) == "function")
+    ret.countInFunc = spec.is_counted
+  end
   return ret
 end

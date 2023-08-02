@@ -1,33 +1,5 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
----@param victim ServerPlayer
-local function getWinner(victim)
-  local room = victim.room
-  local winner = ""
-  local alive = room.alive_players
-
-  if victim.role == "lord" then
-    if #alive == 1 and alive[1].role == "renegade" then
-      winner = "renegade"
-    else
-      winner = "rebel"
-    end
-  elseif victim.role ~= "loyalist" then
-    local lord_win = true
-    for _, p in ipairs(alive) do
-      if p.role == "rebel" or p.role == "renegade" then
-        lord_win = false
-        break
-      end
-    end
-    if lord_win then
-      winner = "lord+loyalist"
-    end
-  end
-
-  return winner
-end
-
 ---@param killer ServerPlayer
 local function rewardAndPunish(killer, victim)
   if killer.dead then return end
@@ -104,7 +76,7 @@ GameRule = fk.CreateTriggerSkill{
       end
     end,
     [fk.GameOverJudge] = function()
-      local winner = getWinner(player)
+      local winner = Fk.game_modes[room.settings.gameMode]:getWinner(player)
       if winner ~= "" then
         room:gameOver(winner)
         return true
@@ -130,3 +102,8 @@ GameRule = fk.CreateTriggerSkill{
   end,
 
 }
+
+local fastchat_m = fk.CreateActiveSkill{ name = "fastchat_m" }
+local fastchat_f = fk.CreateActiveSkill{ name = "fastchat_f" }
+Fk:addSkill(fastchat_m)
+Fk:addSkill(fastchat_f)

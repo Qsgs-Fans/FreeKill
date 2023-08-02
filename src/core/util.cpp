@@ -4,6 +4,7 @@
 #include <qcryptographichash.h>
 #include <qnamespace.h>
 #include <qregularexpression.h>
+#include <QSysInfo>
 
 extern "C" {
 int luaopen_fk(lua_State *);
@@ -106,7 +107,7 @@ sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
 }
 
 bool CheckSqlString(const QString &str) {
-  static const QRegularExpression exp("['\";#]+|(--)|(/\\*)|(\\*/)|(--\\+)");
+  static const QRegularExpression exp("['\";#* /\\\\?<>|:]+|(--)|(/\\*)|(\\*/)|(--\\+)");
   return (!exp.match(str).hasMatch() && !str.isEmpty());
 }
 
@@ -201,6 +202,15 @@ QByteArray JsonArray2Bytes(const QJsonArray &arr) {
 QJsonDocument String2Json(const QString &str) {
   auto bytes = str.toUtf8();
   return QJsonDocument::fromJson(bytes);
+}
+
+QString GetDeviceUuid() {
+#ifdef Q_OS_ANDROID
+  QJniObject string = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetSerial", "()Ljava/lang/String;");
+  return string.toString();
+#else
+  return QSysInfo::machineUniqueId();
+#endif
 }
 
 QString Color(const QString &raw, fkShell::TextColor color,

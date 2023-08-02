@@ -16,6 +16,15 @@ CREATE TABLE IF NOT EXISTS banip (
   ip VARCHAR(64)
 );
 
+CREATE TABLE IF NOT EXISTS uuidinfo (
+  id INTEGER PRIMARY KEY,
+  uuid VARCHAR(32)
+);
+
+CREATE TABLE IF NOT EXISTS banuuid (
+  uuid VARCHAR(32)
+);
+
 -- 胜率相关
 
 CREATE TABLE IF NOT EXISTS winRate (
@@ -26,6 +35,13 @@ CREATE TABLE IF NOT EXISTS winRate (
   lose INTEGER,
   draw INTEGER,
   PRIMARY KEY (id, general, mode)
+);
+
+CREATE TABLE IF NOT EXISTS runRate (
+  id INTEGER,
+  mode VARCHAR(16),
+  run INTEGER,
+  PRIMARY KEY (id, mode)
 );
 
 CREATE VIEW IF NOT EXISTS playerWinRate AS

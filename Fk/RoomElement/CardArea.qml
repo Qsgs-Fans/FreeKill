@@ -23,8 +23,8 @@ Item {
   function remove(outputs)
   {
     let result = [];
-    for (let i = 0; i < cards.length; i++) {
-      for (let j = 0; j < outputs.length; j++) {
+    for (let j = 0; j < outputs.length; j++) {
+      for (let i = cards.length - 1; i >= 0; i--) {
         if (outputs[j] === cards[i].cid) {
           const state = JSON.parse(Backend.callLuaFunction("GetCardData", [cards[i].cid]));
           cards[i].setData(state);
@@ -62,6 +62,9 @@ Item {
         card = cards[i];
         card.origX = i * spacing;
         card.origY = 0;
+        card.z = i + 1;
+        card.initialZ = i + 1;
+        card.maxZ = cards.length;
       }
     }
 

@@ -23,15 +23,21 @@ Fk:loadTranslationTable{
   ["BG Settings"] = "游戏背景",
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
+  ["Hide unselectable cards"] = "下移不可选卡牌",
+  ["Ban General Settings"] = "禁将",
   ["Back"] = "返回",
+
+  ["Refresh Room List"] = "刷新房间列表",
 
   ["Create Room"] = "创建房间",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
-  ["Select general num"] = "选将数目",
+  ["Select generals num"] = "选将数目",
+  ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
+  ["Has Password"] = "（有密码）",
   ["Room Password"] = "房间密码",
   ["Please input room's password"] = "请输入房间的密码",
   ["Add Robot"] = "添加机器人",
@@ -45,11 +51,19 @@ Fk:loadTranslationTable{
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
+  ["Select All"] = "全选",
+  ["Revert Selection"] = "反选",
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
+  ["Give Wine"] = "酒杯",
   ["Give Shoe"] = "拖鞋",
+  ["Block Chatter"] = "屏蔽发言",
+  ["Unblock Chatter"] = "解除屏蔽",
   ["Kick From Room"] = "踢出房间",
+  ["Newbie"] = "新手保护ing",
+  ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
+  ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -59,6 +73,11 @@ Fk:loadTranslationTable{
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
+  ["Replay Manager"] = "来欣赏潇洒的录像吧！",
+  ["Game Win"] = "胜利",
+  ["Game Lose"] = "失败",
+  ["Play the Replay"] = "重放",
+  ["Delete Replay"] = "删除",
   ["About"] = "关于",
   ["about_freekill_description"] = [[
 # 关于新月杀
@@ -66,13 +85,24 @@ Fk:loadTranslationTable{
 以便于DIY为首要目的的开源三国杀游戏。
 
 项目链接： https://github.com/Notify-ctrl/FreeKill
+
+---
+
+作者： Notify Ho-spair
+
+开发者： RalphR Nyutanislavsky xxyheaven 妖梦厨
+
+贡献者： 假象 deepskybird 板蓝根
+
+鸣谢： Mogara
+
   ]],
   ["about_qt_description"] = [[
 # 关于Qt
 
 Qt是一个C++图形界面应用程序开发框架，拥有强大的跨平台能力以及易于使用的API。
 
-本程序使用Qt 6.2+，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
+本程序使用Qt 6.4，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
 
 官网： https://www.qt.io
   ]],
@@ -124,10 +154,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["Exit Lobby"] = "退出大厅",
 
+  ["SkipNullification"] = "本轮忽略",
   ["OK"] = "确定",
   ["Cancel"] = "取消",
   ["End"] = "结束",
-  ["Quit"] = "退出",
+  -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
   ["Death audio"] = "阵亡",
@@ -167,7 +198,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForCardChosen"] = "选牌",
   ["AskForCardsChosen"] = "选牌",
   ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
+  ["#AskForChooseCards"] = "%1：请选择其%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
+  ["$ChooseCards"] = "请选择%1至%2张卡牌",
   ["$Hand"] = "手牌区",
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
@@ -203,6 +236,12 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#8"] = "八号位",
   ["@ControledBy"] = "控制者",
 
+  ["Menu"] = "菜单",
+  ["Surrender"] = "投降",
+  ["Surrender is disabled in this mode"] = "投降在该模式不可用",
+  ["Quit"] = "退出",
+  ["Are you sure to quit?"] = "是否确认退出对局（若对局开始则将计入逃跑次数）？",
+
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
   ["Chat"] = "聊天",
@@ -215,23 +254,14 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$NoWinner"] = "平局！",
   ["Back To Room"] = "回到房间",
   ["Back To Lobby"] = "返回大厅",
+  ["Save Replay"] = "保存录像",
 
   ["Bulletin Info"] = [==[
-## v0.2.2
+  ## v0.2.10
 
-1. 增加退出时确定
-2. 修因心跳引起的贯石斧飞刀
-3. 修标记区遮住宝物牌
-4. exchangePile (我还没仔细测试)
-5. 事件记录器与相应的查找函数
-6. Qml/JS大部分let能改的都改成const了，顺便修一些三等号bug
-7. 增加hasMark函数，等效于getMark ~= 0
-8. 复活
-9. 修正cancelable默认
-10. move私有牌的-1时其他人视角正常
-11. 处理区的牌增加脚注和转化牌牌名（未完全完善）
-12. askForChoices堆一个detailed参数以显示详情
-13. 武将一览界面上新播放语音
+  测试用版本，主要的新功能是录像功能。
+
+  这种东西小范围传播就行了，大家还是先玩0.2.9
   ]==],
 }
 
@@ -247,6 +277,7 @@ Fk:loadTranslationTable{
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
+  ["hp_lost"] = "体力流失",
 
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
@@ -256,10 +287,31 @@ Fk:loadTranslationTable{
   ["phase_finish"] = "结束阶段",
 
   ["chained"] = "横置",
-  ["not-chained"] = "重置",
+  ["un-chained"] = "重置",
+  ["reset-general"] = "复原",
 
+  ["yang"] = "阳",
+  ["yin"] = "阴",
+  ["quest_succeed"] = "成功",
+  ["quest_failed"] = "失败",
+
+  ["card"] = "牌",
+  ["hand_card"] = "手牌",
+  ["pile_draw"] = "牌堆",
+  ["pile_discard"] = "弃牌堆",
+  ["processing_area"] = "处理区",
   ["Top"] = "牌堆顶",
   ["Bottom"] = "牌堆底",
+  ["Shuffle"] = "洗牌",
+
+  ["general_card"] = "武将牌",
+  ["General"] = "武将",
+  ["Hp"] = "体力",
+  ["Damage"] = "伤害",
+  ["Lost"] = "失去",
+  ["Distance"] = "距离",
+  ["Judge"] = "判定",
+  ["Retrial"] = "改判",
 }
 
 -- related to sendLog

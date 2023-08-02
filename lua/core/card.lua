@@ -18,10 +18,12 @@
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[] @ 子卡ID表
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
+---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
 ---@field public special_skills string[] | nil @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
+---@field public multiple_targets boolean @ 是否为指定多个目标的牌
 ---@field public is_derived boolean|null @ 判断是否为衍生牌
 local Card = class("Card")
 
@@ -78,7 +80,7 @@ function Card:initialize(name, suit, number, color)
     self.is_derived = true
   end
 
-  local name_splited = name:split("__")
+  local name_splited = self.name:split("__")
   self.trueName = name_splited[#name_splited]
 
   if suit == Card.Spade or suit == Card.Club then
@@ -94,18 +96,27 @@ function Card:initialize(name, suit, number, color)
   -- self.package = nil
   self.id = 0
   self.type = 0
-  self.sub_type = Card.SubTypeNone
+  self.sub_type = Card.SubtypeNone
   -- self.skill = nil
   self.subcards = {}
   -- self.skillName = nil
   self._skillName = ""
   self.skillNames = {}
-  self.mark = {}
+  -- self.mark = {}   -- 这个视情况了，只有虚拟牌才有真正的self.mark，真牌的话挂在currentRoom
 end
 
 function Card:__index(k)
   if k == "skillName" then
     return self._skillName
+  elseif k == "mark" then
+    if not self:isVirtual() then
+      local mark_tab = Fk:currentRoom().card_marks
+      mark_tab[self.id] = mark_tab[self.id] or {}
+      return mark_tab[self.id]
+    else
+      self.mark = {}
+      return self.mark
+    end
   end
 end
 
@@ -125,8 +136,8 @@ end
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
----@param suit Suit @ 克隆后的牌的花色
----@param number integer @ 克隆后的牌的点数
+---@param suit Suit|nil @ 克隆后的牌的花色
+---@param number integer|nil @ 克隆后的牌的点数
 ---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
@@ -135,6 +146,7 @@ function Card:clone(suit, number)
   newCard.equip_skill = self.equip_skill
   newCard.attack_range = self.attack_range
   newCard.is_damage_card = self.is_damage_card
+  newCard.multiple_targets = self.multiple_targets
   newCard.is_derived = self.is_derived
   return newCard
 end
@@ -225,21 +237,24 @@ function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
---- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）。
+--- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
+---@param symbol boolean|nil @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
-function Card:getSuitString()
+function Card:getSuitString(symbol)
   local suit = self.suit
+  local ret
   if suit == Card.Spade then
-    return "spade"
+    ret = "spade"
   elseif suit == Card.Heart then
-    return "heart"
+    ret = "heart"
   elseif suit == Card.Club then
-    return "club"
+    ret = "club"
   elseif suit == Card.Diamond then
-    return "diamond"
+    ret = "diamond"
   else
-    return "nosuit"
+    ret = "nosuit"
   end
+  return symbol and "log_" .. ret or ret
 end
 
 --- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
@@ -254,7 +269,7 @@ function Card:getColorString()
   return "nocolor"
 end
 
---- 获取卡牌类型并返回点数类型描述（例如基本牌/锦囊牌/装备牌）。
+--- 获取卡牌类型并返回类型描述（例如基本牌/锦囊牌/装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then
@@ -267,7 +282,30 @@ function Card:getTypeString()
   return "notype"
 end
 
---- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K）。
+local subtype_string_table = {
+  [Card.SubtypeArmor] = "armor",
+  [Card.SubtypeWeapon] = "weapon",
+  [Card.SubtypeTreasure] = "treasure",
+  [Card.SubtypeDelayedTrick] = "delayed_trick",
+  [Card.SubtypeDefensiveRide] = "defensive_ride",
+  [Card.SubtypeOffensiveRide] = "offensive_ride",
+}
+
+function Card:getSubtypeString()
+  local t = self.sub_type
+  local ret = subtype_string_table[t]
+  if ret == nil then
+    if self.type == Card.TypeTrick then
+      return "normal_trick"
+    elseif self.type == Card.TypeBasic then
+      return "basic"
+    end
+  else
+    return ret
+  end
+end
+
+--- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K/X）。
 local function getNumberStr(num)
   if num == 1 then
     return "A"
@@ -277,8 +315,40 @@ local function getNumberStr(num)
     return "Q"
   elseif num == 13 then
     return "K"
+  elseif num == 0 then
+    return "X"
   end
   return tostring(num)
+end
+
+--- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K/X）。
+---@param num integer @ 当你只想翻译点数为文字时(优先检查，请注意)
+function Card:getNumberStr(num)
+  return tostring(getNumberStr(num and num or self.number))
+end
+
+--- 根据点数文字描述返回数字。
+---@param str integer @ 只能翻译文字为点数
+function Card:strToNumber(str)
+  if str == "A" then
+    return 1
+  elseif str == "J" then
+    return 11
+  elseif str == "Q" then
+    return 12
+  elseif str == "K" then
+    return 13
+  elseif str == "X" then
+    return 0
+  end
+  return tonumber(str)
+end
+
+--- 获取卡牌的完整点数(花色+点数)，如（黑桃A/♠A）。
+---@param symbol boolean @ 是否以符号形式显示花色
+---@return string @ 完整点数（字符串）
+function Card:getSuitCompletedString(symbol)
+  return self:getSuitString(symbol) .. getNumberStr(self.number)
 end
 
 --- 判断卡牌是否为普通锦囊牌
@@ -312,9 +382,19 @@ function Card:removeMark(mark, count)
 end
 
 --- 为卡牌设置Mark至指定数量。
+---
+--- 关于标记的说明：
+---
+--- * @开头的为可见标记，其余为隐藏标记。
+--- * -turn结尾、-phase结尾、-round结尾的如同玩家标记一样在这个时机自动清理。
+--- * -noclear结尾的表示不要自动清理。
+--- * 默认的自动清理策略是当卡牌离开手牌区后清除所有的标记。
+--- * -turn之类的后缀会覆盖默认清理的方式。
+--- * (TODO: 以上皆为画饼)
 ---@param mark string @ 标记
 ---@param count integer @ 为标记删除的数量
 function Card:setMark(mark, count)
+  if count == 0 then count = nil end
   if self.mark[mark] ~= count then
     self.mark[mark] = count
   end
@@ -322,15 +402,20 @@ end
 
 --- 获取卡牌对应Mark的数量。
 ---@param mark string @ 标记
----@return integer
+---@return any
 function Card:getMark(mark)
-  return (self.mark[mark] or 0)
+  local ret = (self.mark[mark] or 0)
+  if (not self:isVirtual()) and next(self.mark) == nil then
+    self.mark = nil
+  end
+  return ret
 end
 
 --- 判定卡牌是否拥有对应的Mark。
 ---@param mark string @ 标记
 ---@return boolean
 function Card:hasMark(mark)
+  fk.qWarning("hasMark will be deleted in future version!")
   return self:getMark(mark) ~= 0
 end
 
@@ -345,7 +430,7 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
+---@param diff boolean|nil @ 比较二者相同还是不同
 ---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then

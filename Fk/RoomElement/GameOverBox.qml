@@ -38,7 +38,25 @@ GraphicsBox {
       anchors.horizontalCenter: parent.horizontalCenter
 
       onClicked: {
-        ClientInstance.notifyServer("QuitRoom", "[]");
+        if (config.replaying) {
+          mainStack.pop();
+          Backend.controlReplayer("shutdown");
+        } else {
+          ClientInstance.notifyServer("QuitRoom", "[]");
+        }
+      }
+    }
+
+    MetroButton {
+      id: repBtn
+      text: Backend.translate("Save Replay")
+      anchors.horizontalCenter: parent.horizontalCenter
+      visible: !config.replaying
+
+      onClicked: {
+        repBtn.visible = false;
+        Backend.callLuaFunction("SaveRecord", []);
+        toast.show("OK.");
       }
     }
   }

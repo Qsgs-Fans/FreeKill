@@ -31,6 +31,7 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
+    gender = general.gender,
     skill = {},
     related_skill = {}
   }
@@ -75,12 +76,20 @@ local cardSubtypeStrings = {
   [Card.SubtypeTreasure] = "treasure",
 }
 
-function GetCardData(id)
+function GetCardData(id, virtualCardForm)
   local card = Fk:getCardById(id)
   if card == nil then return json.encode{
     cid = id,
     known = false
   } end
+  local mark = {}
+  for k, v in pairs(card.mark) do
+    if k and k:startsWith("@") and v and v ~= 0 then
+      table.insert(mark, {
+        k = k, v = v,
+      })
+    end
+  end
   local ret = {
     cid = id,
     name = card.name,
@@ -88,12 +97,21 @@ function GetCardData(id)
     number = card.number,
     suit = card:getSuitString(),
     color = card:getColorString(),
+    mark = mark,
+    type = card.type,
     subtype = cardSubtypeStrings[card.sub_type]
   }
   if card.skillName ~= "" then
     local orig = Fk:getCardById(id, true)
     ret.name = orig.name
     ret.virt_name = card.name
+  end
+  if virtualCardForm then
+    local virtualCard = ClientInstance:getPlayerById(virtualCardForm):getVirualEquip(id)
+    if virtualCard then
+      ret.virt_name = virtualCard.name
+      ret.subtype = cardSubtypeStrings[virtualCard.sub_type]
+    end
   end
   return json.encode(ret)
 end
@@ -126,6 +144,58 @@ function GetGenerals(pack_name)
   return json.encode(ret)
 end
 
+function SearchAllGenerals(word)
+  local ret = {}
+  for _, name in ipairs(Fk.package_names) do
+    if Fk.packages[name].type == Package.GeneralPack then
+      table.insertTable(ret, json.decode(SearchGenerals(name, word)))
+    end
+  end
+  return json.encode(ret)
+end
+
+function SearchGenerals(pack_name, word)
+  local ret = {}
+  if word == "" then return GetGenerals(pack_name) end
+  for _, g in ipairs(Fk.packages[pack_name].generals) do
+    if not g.total_hidden and string.find(Fk:translate(g.name), word) then
+      table.insert(ret, g.name)
+    end
+  end
+  return json.encode(ret)
+end
+
+function UpdatePackageEnable(pkg, enabled)
+  if enabled then
+    table.removeOne(ClientInstance.disabled_packs, pkg)
+  else
+    table.insertIfNeed(ClientInstance.disabled_packs, pkg)
+  end
+end
+
+function GetAvailableGeneralsNum()
+  local generalPool = Fk:getAllGenerals()
+  local except = {}
+  local ret = 0
+  for _, g in ipairs(Fk.packages["test_p_0"].generals) do
+    table.insert(except, g.name)
+  end
+
+  local availableGenerals = {}
+  for _, general in pairs(generalPool) do
+    if not table.contains(except, general.name) then
+      if (not general.hidden and not general.total_hidden) and
+        #table.filter(availableGenerals, function(g)
+        return g.trueName == general.trueName
+      end) == 0 then
+        ret = ret + 1
+      end
+    end
+  end
+
+  return ret
+end
+
 function GetAllCardPack()
   local ret = {}
   for _, name in ipairs(Fk.package_names) do
@@ -145,7 +215,7 @@ function GetCards(pack_name)
 end
 
 function GetCardSpecialSkills(cid)
-  return json.encode(Fk:getCardById(cid).special_skills or {})
+  return json.encode(Fk:getCardById(cid).special_skills or Util.DummyTable)
 end
 
 function DistanceTo(from, to)
@@ -159,7 +229,7 @@ function GetPile(id, name)
 end
 
 function GetAllPiles(id)
-  return json.encode(ClientInstance:getPlayerById(id).special_cards or {})
+  return json.encode(ClientInstance:getPlayerById(id).special_cards or Util.DummyTable)
 end
 
 function GetPlayerSkills(id)
@@ -210,9 +280,24 @@ function CanUseCard(card, player)
   return json.encode(ret)
 end
 
-function CardProhibitedUse(cid)
-  local c = Fk:getCardById(cid)
-  local ret = Self:prohibitUse(c)
+function CardProhibitedUse(card)
+  local c   ---@type Card
+  local ret = false
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+  else
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+    end
+  end
+  if c == nil then
+    return "true"
+  else
+    ret = Self:prohibitUse(c)
+  end
   return json.encode(ret)
 end
 
@@ -314,12 +399,14 @@ function ActiveCanUse(skill_name)
         for _, m in ipairs(exp.matchers) do
           if m.name then
             table.insertTable(cnames, m.name)
-          elseif m.trueName then
+          end
+          if m.trueName then
             table.insertTable(cnames, m.trueName)
           end
         end
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)
+          c.skillName = skill_name
           ret = c.skill:canUse(Self, c)
           if ret then break end
         end
@@ -327,6 +414,19 @@ function ActiveCanUse(skill_name)
     end
   end
   return json.encode(ret)
+end
+
+function ActiveSkillPrompt(skill_name, selected, selected_targets)
+  local skill = Fk.skills[skill_name]
+  local ret = false
+  if skill then
+    if type(skill.prompt) == "function" then
+      ret = skill:prompt(selected, selected_targets)
+    else
+      ret = skill.prompt
+    end
+  end
+  return json.encode(ret or "")
 end
 
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
@@ -424,9 +524,24 @@ function SkillFitPattern(skill_name, pattern)
   return json.encode(ret)
 end
 
-function CardProhibitedResponse(cid)
-  local c = Fk:getCardById(cid)
-  local ret = Self:prohibitResponse(c)
+function CardProhibitedResponse(card)
+  local c   ---@type Card
+  local ret = false
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+  else
+    local data = json.decode(card)
+    local skill = Fk.skills[data.skill]
+    local selected_cards = data.subcards
+    if skill:isInstanceOf(ViewAsSkill) then
+      c = skill:viewAs(selected_cards)
+    end
+  end
+  if c == nil then
+    return "true"
+  else
+    ret = Self:prohibitUse(c)
+  end
   return json.encode(ret)
 end
 
@@ -494,17 +609,26 @@ function GetPlayerHandcards(pid)
   return json.encode(p.player_cards[Player.Hand])
 end
 
+function GetPlayerEquips(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  return json.encode(p.player_cards[Player.Equip])
+end
+
 function ResetClientLua()
+  local _data = ClientInstance.enter_room_data;
   local data = ClientInstance.room_settings
   Self = ClientPlayer:new(fk.Self)
   ClientInstance = Client:new() -- clear old client data
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
+
+  ClientInstance.enter_room_data = _data;
   ClientInstance.room_settings = data
 
-  Fk.disabled_packs = data.disabledPack
-  Fk.disabled_generals = data.disabledGenerals
+  ClientInstance.disabled_packs = data.disabledPack
+  ClientInstance.disabled_generals = data.disabledGenerals
   -- ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
@@ -514,6 +638,44 @@ end
 
 function GetRoomConfig()
   return json.encode(ClientInstance.room_settings)
+end
+
+function GetPlayerGameData(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  if not p then return "[0, 0, 0]" end
+  local raw = p.player:getGameData()
+  local ret = {}
+  for _, i in fk.qlist(raw) do
+    table.insert(ret, i)
+  end
+  return json.encode(ret)
+end
+
+function SetPlayerGameData(pid, data)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  p.player:setGameData(table.unpack(data))
+  table.insert(data, 1, pid)
+  ClientInstance:notifyUI("UpdateGameData", json.encode(data))
+end
+
+function FilterMyHandcards()
+  Self:filterHandcards()
+end
+
+function SetObserving(o)
+  ClientInstance.observing = o
+end
+
+function CheckSurrenderAvailable(playedTime)
+  local curMode = ClientInstance.room_settings.gameMode
+  return json.encode(Fk.game_modes[curMode]:surrenderFunc(playedTime))
+end
+
+function SaveRecord()
+  local c = ClientInstance
+  c.client:saveRecord(json.encode(c.record), c.record[2])
 end
 
 dofile "lua/client/i18n/init.lua"

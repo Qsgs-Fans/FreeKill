@@ -79,3 +79,17 @@ void Client::changeSelf(int id) {
 lua_State *Client::getLuaState() { return L; }
 
 void Client::installAESKey(const QByteArray &key) { router->installAESKey(key); }
+
+void Client::saveRecord(const QString &json, const QString &fname) {
+  if (!QDir("recording").exists()) {
+    QDir(".").mkdir("recording");
+  }
+  QFile c("recording/" + fname + ".fk.rep");
+  c.open(QIODevice::WriteOnly);
+  c.write(qCompress(json.toUtf8()));
+  c.close();
+}
+
+void Client::processReplay(const QString &c, const QString &j) {
+  callLua(c, j);
+}

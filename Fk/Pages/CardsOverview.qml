@@ -18,6 +18,7 @@ Item {
 
   ListView {
     id: listView
+    clip: true
     width: 130
     height: parent.height - 20
     y: 10
@@ -50,6 +51,7 @@ Item {
 
   GridView {
     id: gridView
+    clip: true
     width: root.width - listView.width - cardDetail.width - 16
     height: parent.height - 20
     y: 10

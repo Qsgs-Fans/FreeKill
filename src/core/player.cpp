@@ -3,7 +3,8 @@
 #include "player.h"
 
 Player::Player(QObject *parent)
-    : QObject(parent), id(0), state(Player::Invalid), ready(false) {}
+    : QObject(parent), id(0), state(Player::Invalid), ready(false),
+    totalGames(0), winCount(0), runCount(0) {}
 
 Player::~Player() {}
 
@@ -35,6 +36,8 @@ QString Player::getStateString() const {
     return QStringLiteral("trust");
   case Run:
     return QStringLiteral("run");
+  case Leave:
+    return QStringLiteral("leave");
   case Robot:
     return QStringLiteral("robot");
   case Offline:
@@ -69,4 +72,31 @@ bool Player::isReady() const { return ready; }
 void Player::setReady(bool ready) {
   this->ready = ready;
   emit readyChanged();
+}
+
+QList<int> Player::getGameData() {
+  return QList<int>({ totalGames, winCount, runCount });
+}
+
+void Player::setGameData(int total, int win, int run) {
+  totalGames = total;
+  winCount = win;
+  runCount = run;
+  emit gameDataChanged();
+}
+
+QString Player::getLastGameMode() const {
+  return lastGameMode;
+}
+
+void Player::setLastGameMode(const QString &mode) {
+  lastGameMode = mode;
+}
+
+bool Player::isDied() const {
+  return died;
+}
+
+void Player::setDied(bool died) {
+  this->died = died;
 }

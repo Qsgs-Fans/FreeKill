@@ -70,7 +70,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Select general num")
+        text: Backend.translate("Select generals num")
       }
       SpinBox {
         id: generalNum
@@ -82,6 +82,19 @@ Flickable {
           config.preferredGeneralNum = value;
         }
       }
+    }
+
+    Text {
+      id: warning
+      anchors.rightMargin: 8
+      visible: {
+        config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
+        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
+        const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
+        return ret;
+      }
+      text: Backend.translate("No enough generals")
+      color: "red"
     }
 
     RowLayout {
@@ -149,7 +162,9 @@ Flickable {
       spacing: 16
       Button {
         text: Backend.translate("OK")
+        enabled: !(warning.visible)
         onClicked: {
+          config.saveConf();
           root.finished();
           mainWindow.busy = true;
 
@@ -199,6 +214,11 @@ Flickable {
       }
 
       playerNum.value = config.preferedPlayerNum;
+
+      config.disabledPack.forEach(p => {
+        Backend.callLuaFunction("UpdatePackageEnable", [p, false]);
+      });
+      config.disabledPackChanged();
     }
   }
 }

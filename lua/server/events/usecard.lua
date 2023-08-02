@@ -47,16 +47,19 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   -- when this function is called, card is already in PlaceTable and no filter skill is applied.
   -- So filter this card manually here to get 'real' use.card
   local card = _card
+  ---[[
   if not _card:isVirtual() then
     local temp = { card = _card }
     Fk:filterCard(_card.id, room:getPlayerById(from), temp)
     card = temp.card
   end
+  cardUseEvent.card = card
+  --]]
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
     from = from,
-    to = cardUseEvent.tos or {},
+    to = cardUseEvent.tos or Util.DummyTable,
   })
 
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
@@ -205,7 +208,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
 
   if cardUseEvent.responseToEvent then
     cardUseEvent.responseToEvent.cardsResponded = cardUseEvent.responseToEvent.cardsResponded or {}
-    table.insert(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
+    table.insertIfNeed(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do
@@ -311,8 +314,8 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
   local self = self.room
 
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
+    local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
     if cardEffectEvent.isCancellOut then
-      local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
       if self.logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
         cardEffectEvent.isCancellOut = false
       else
@@ -330,11 +333,15 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
       self.logic:breakEvent()
     end
 
-    if table.contains((cardEffectEvent.nullifiedTargets or {}), cardEffectEvent.to) then
+    if table.contains((cardEffectEvent.nullifiedTargets or Util.DummyTable), cardEffectEvent.to) then
       self.logic:breakEvent()
     end
 
-    if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+    if event == fk.PreCardEffect then
+      if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+        self.logic:breakEvent()
+      end
+    elseif cardEffectEvent.to and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
       self.logic:breakEvent()
     end
 

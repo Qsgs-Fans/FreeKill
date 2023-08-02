@@ -41,6 +41,7 @@ function GameLogic:run()
   local room = self.room
   table.shuffle(self.room.players)
   self:assignRoles()
+  self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   room:adjustSeats()
 
@@ -52,7 +53,6 @@ function GameLogic:run()
   self:attachSkillToPlayers()
   self:prepareForStart()
 
-  self.room.game_started = true
   self:action()
 end
 
@@ -86,19 +86,39 @@ function GameLogic:chooseGenerals()
   local generalNum = room.settings.generalNum
   local n = room.settings.enableDeputy and 2 or 1
   local lord = room:getLord()
-  local lord_general = nil
+  local lord_generals = {}
 
   if lord ~= nil then
     room.current = lord
-    local generals = Fk:getGeneralsRandomly(generalNum)
+    local generals = {}
+    if room.settings.gameMode == "aaa_role_mode" then
+      for _, general in pairs(Fk:getAllGenerals()) do
+        if (not general.hidden and not general.total_hidden) and
+        table.find(general.skills, function(s)
+          return s.lordSkill
+        end) and
+        not table.find(generals, function(g)
+          return g.trueName == general.trueName
+        end) then
+          table.insert(generals, general)
+        end
+      end
+      generals = table.random(generals, 3)
+    end
+    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(generals, function (g)
+      return g.name
+    end)))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
-    lord_general = room:askForGeneral(lord, generals, n)
-    local deputy
-    if type(lord_general) == "table" then
-      deputy = lord_general[2]
-      lord_general = lord_general[1]
+    lord_generals = room:askForGeneral(lord, generals, n)
+    local lord_general, deputy
+    if type(lord_generals) == "table" then
+      deputy = lord_generals[2]
+      lord_general = lord_generals[1]
+    else
+      lord_general = lord_generals
+      lord_generals = {lord_general}
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
@@ -107,7 +127,7 @@ function GameLogic:chooseGenerals()
       if lord.kingdom == "god" then
         allKingdoms = table.simpleClone(Fk.kingdoms)
 
-        local exceptedKingdoms = { "god" }
+        local exceptedKingdoms = { "god", "qin" }
         for _, kingdom in ipairs(exceptedKingdoms) do
           table.removeOne(allKingdoms, kingdom)
         end
@@ -125,7 +145,7 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, {lord_general})
+  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, lord_generals)
   table.shuffle(generals)
   for _, p in ipairs(nonlord) do
     local arg = {}
@@ -153,47 +173,7 @@ function GameLogic:chooseGenerals()
     p.default_reply = ""
   end
 
-  local specialKingdomPlayers = table.filter(nonlord, function(p)
-    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
-  end)
-
-  if #specialKingdomPlayers > 0 then
-    local choiceMap = {}
-    for _, p in ipairs(specialKingdomPlayers) do
-      local allKingdoms = {}
-      if p.kingdom == "god" then
-        allKingdoms = table.simpleClone(Fk.kingdoms)
-
-        local exceptedKingdoms = { "god" }
-        for _, kingdom in ipairs(exceptedKingdoms) do
-          table.removeOne(allKingdoms, kingdom)
-        end
-      else
-        local curGeneral = Fk.generals[p.general]
-        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
-      end
-
-      choiceMap[p.id] = allKingdoms
-
-      local data = json.encode({ allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
-      p.request_data = data
-    end
-
-    room:notifyMoveFocus(nonlord, "AskForKingdom")
-    room:doBroadcastRequest("AskForChoice", specialKingdomPlayers)
-
-    for _, p in ipairs(specialKingdomPlayers) do
-      local kingdomChosen
-      if p.reply_ready then
-        kingdomChosen = p.client_reply
-      else
-        kingdomChosen = choiceMap[p.id][1]
-      end
-
-      p.kingdom = kingdomChosen
-      room:notifyProperty(p, p, "kingdom")
-    end
-  end
+  room:askForChooseKingdom(nonlord)
 end
 
 function GameLogic:buildPlayerCircle()
@@ -375,13 +355,13 @@ function GameLogic:addTriggerSkill(skill)
 end
 
 ---@param event Event
----@param target ServerPlayer
----@param data any
+---@param target ServerPlayer|nil
+---@param data any|nil
 function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false
   local skills = self.skill_table[event] or {}
-  local skills_to_refresh = self.refresh_skill_table[event] or {}
+  local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
   local _target = room.current -- for iteration
   local player = _target
 

@@ -11,6 +11,7 @@
 class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
+class RoomThread;
 
 #include "room.h"
 
@@ -34,7 +35,8 @@ public:
   void addPlayer(ServerPlayer *player);
   void removePlayer(int id);
 
-  void updateRoomList();
+  void updateRoomList(ServerPlayer *teller);
+  void updateOnlineInfo();
 
   sqlite3 *getDatabase();
 
@@ -43,6 +45,8 @@ public:
 
   QJsonValue getConfig(const QString &command);
   bool checkBanWord(const QString &str);
+  void temporarilyBan(int playerId);
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -51,6 +55,7 @@ signals:
 public slots:
   void processNewConnection(ClientSocket *client);
   void processRequest(const QByteArray &msg);
+  void readPendingDatagrams();
 
   void onRoomAbandoned();
   void onUserDisconnected();
@@ -59,12 +64,16 @@ public slots:
 private:
   friend class Shell;
   ServerSocket *server;
+  QUdpSocket *udpSocket;
+
   Room *m_lobby;
   QMap<int, Room *> rooms;
   QStack<Room *> idle_rooms;
+  QList<RoomThread *> threads;
   int nextRoomId;
-  friend Room::Room(Server *server);
+  friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players;
+  QList<QString> temp_banlist;
 
   RSA *rsa;
   QString public_key;
@@ -77,7 +86,8 @@ private:
   void readConfig();
 
   void handleNameAndPassword(ClientSocket *client, const QString &name,
-                             const QString &password, const QString &md5_str);
+                             const QString &password, const QString &md5_str, const QString &uuid_str);
+  void processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port);
 };
 
 extern Server *ServerInstance;

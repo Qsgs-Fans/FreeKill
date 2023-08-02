@@ -8,6 +8,7 @@
 ---@field public current ClientPlayer
 ---@field public discard_pile integer[]
 ---@field public status_skills Skill[]
+---@field public observing boolean
 Client = class('Client')
 
 -- load client classes
@@ -15,15 +16,27 @@ ClientPlayer = require "client.clientplayer"
 
 fk.client_callback = {}
 
+-- 总而言之就是会让roomScene.state变为responding或者playing的状态
+local pattern_refresh_commands = {
+  "PlayCard",
+  "AskForUseActiveSkill",
+  "AskForUseCard",
+  "AskForResponseCard",
+}
+
 function Client:initialize()
   self.client = fk.ClientInstance
   self.notifyUI = function(self, command, jsonData)
     fk.Backend:emitNotifyUI(command, jsonData)
   end
-  self.client.callback = function(_self, command, jsonData)
+  self.client.callback = function(_self, command, jsonData, isRequest)
+    if self.recording then
+      table.insert(self.record, {math.floor(os.getms() / 1000), isRequest, command, jsonData})
+    end
+
     local cb = fk.client_callback[command]
 
-    if command ~= "Heartbeat" and command ~= "StartChangeSelf" and command ~= "ChangeSelf" then
+    if table.contains(pattern_refresh_commands, command) then
       Fk.currentResponsePattern = nil
       Fk.currentResponseReason = nil
     end
@@ -43,11 +56,20 @@ function Client:initialize()
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+
+  self.skill_costs = {}
+  self.card_marks = {}
+  self.filtered_cards = {}
+  self.disabled_packs = {}
+  self.disabled_generals = {}
+
+  self.recording = false
 end
 
 ---@param id integer
 ---@return ClientPlayer
 function Client:getPlayerById(id)
+  if id == Self.id then return Self end
   for _, p in ipairs(self.players) do
     if p.id == id then return p end
   end
@@ -144,14 +166,14 @@ local function parseMsg(msg, nocolor)
 
   local from = getPlayerStr(data.from, "#0C8F0C")
 
-  local to = data.to or {}
+  local to = data.to or Util.DummyTable
   local to_str = {}
   for _, id in ipairs(to) do
     table.insert(to_str, getPlayerStr(id, "#CC3131"))
   end
   to = table.concat(to_str, ", ")
 
-  local card = data.card or {}
+  local card = data.card or Util.DummyTable
   local allUnknown = true
   local unknownCount = 0
   for _, id in ipairs(card) do
@@ -234,10 +256,12 @@ fk.client_callback["EnterRoom"] = function(jsonData)
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
 
-  local data = json.decode(jsonData)[3]
+  local _data = json.decode(jsonData)
+  local data = _data[3]
+  ClientInstance.enter_room_data = jsonData;
   ClientInstance.room_settings = data
-  Fk.disabled_packs = data.disabledPack
-  Fk.disabled_generals = data.disabledGenerals
+  ClientInstance.disabled_packs = data.disabledPack
+  ClientInstance.disabled_generals = data.disabledGenerals
   ClientInstance:notifyUI("EnterRoom", jsonData)
 end
 
@@ -645,11 +669,9 @@ fk.client_callback["SetCardMark"] = function(jsonData)
   -- jsonData: [ int id, string mark, int value ]
   local data = json.decode(jsonData)
   local card, mark, value = data[1], data[2], data[3]
-  ClientInstance:getCardById(card):setMark(mark, value)
+  Fk:getCardById(card):setMark(mark, value)
 
-  if string.sub(mark, 1, 1) == "@" then
-    ClientInstance:notifyUI("SetCardMark", jsonData)
-  end
+  ClientInstance:notifyUI("UpdateCard", tostring(card))
 end
 
 fk.client_callback["Chat"] = function(jsonData)
@@ -750,6 +772,7 @@ end
 fk.client_callback["ChangeSelf"] = function(jsonData)
   local data = json.decode(jsonData)
   ClientInstance:getPlayerById(data.id).player_cards[Player.Hand] = data.handcards
+  ClientInstance:getPlayerById(data.id).special_cards = data.special_cards
   ClientInstance:notifyUI("ChangeSelf", data.id)
 end
 
@@ -757,6 +780,87 @@ fk.client_callback["UpdateQuestSkillUI"] = function(jsonData)
   local data = json.decode(jsonData)
   local player, skillName, usedTimes = data[1], data[2], data[3]
   updateLimitSkill(player, Fk.skills[skillName], usedTimes)
+end
+
+fk.client_callback["UpdateGameData"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player, total, win, run = data[1], data[2], data[3], data[4]
+  player = ClientInstance:getPlayerById(player)
+  if player then
+    player.player:setGameData(total, win, run)
+  end
+
+  ClientInstance:notifyUI("UpdateGameData", jsonData)
+end
+
+fk.client_callback["StartGame"] = function(jsonData)
+  local c = ClientInstance
+  c.record = {
+    fk.FK_VER,
+    os.date("%Y%m%d%H%M%S"),
+    c.enter_room_data,
+    json.encode { Self.id, fk.Self:getScreenName(), fk.Self:getAvatar() },
+    -- RESERVED
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  }
+  for _, p in ipairs(c.players) do
+    if p.id ~= Self.id then
+      table.insert(c.record, {
+        math.floor(os.getms() / 1000),
+        false,
+        "AddPlayer",
+        json.encode {
+          p.player:getId(),
+          p.player:getScreenName(),
+          p.player:getAvatar(),
+          true,
+        },
+      })
+    end
+  end
+  c.recording = true
+  c:notifyUI("StartGame", jsonData)
+end
+
+fk.client_callback["GameOver"] = function(jsonData)
+  local c = ClientInstance
+  if c.recording then
+    c.recording = false
+    c.record[2] = table.concat({
+      c.record[2],
+      Self.player:getScreenName(),
+      c.room_settings.gameMode,
+      Self.general,
+      Self.role,
+      jsonData,
+    }, ".")
+    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+  end
+  c:notifyUI("GameOver", jsonData)
+end
+
+fk.client_callback["EnterLobby"] = function(jsonData)
+  local c = ClientInstance
+  --[[
+  if c.recording and not c.observing then
+    c.recording = false
+    c.record[2] = table.concat({
+      c.record[2],
+      Self.player:getScreenName(),
+      c.room_settings.gameMode,
+      Self.general,
+      Self.role,
+      "",
+    }, ".")
+    -- c.client:saveRecord(json.encode(c.record), c.record[2])
+  end
+  --]]
+  c:notifyUI("EnterLobby", jsonData)
 end
 
 -- Create ClientInstance (used by Lua)

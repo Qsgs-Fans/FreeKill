@@ -19,9 +19,10 @@
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
----@field public disabled_packs string[] @ 禁用的拓展包列表
+---@field public game_mode_disabled table<string, string[]> @ 游戏模式禁用的包
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
+---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -49,12 +50,32 @@ function Engine:initialize()
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
-  self.disabled_packs = {}
-  self.disabled_generals = {}
+  self.game_mode_disabled = {}
   self.kingdoms = {}
 
   self:loadPackages()
+  self:loadDisabled()
   self:addSkills(AuxSkills)
+end
+
+local _foreign_keys = {
+  "currentResponsePattern",
+  "currentResponseReason",
+  "filtered_cards",
+}
+
+function Engine:__index(k)
+  if table.contains(_foreign_keys, k) then
+    return self:currentRoom()[k]
+  end
+end
+
+function Engine:__newindex(k, v)
+  if table.contains(_foreign_keys, k) then
+    self:currentRoom()[k] = v
+  else
+    rawset(self, k, v)
+  end
 end
 
 --- 向Engine中加载一个拓展包。
@@ -93,8 +114,10 @@ function Engine:loadPackages()
   -- load standard & standard_cards first
   self:loadPackage(require("packages.standard"))
   self:loadPackage(require("packages.standard_cards"))
+  self:loadPackage(require("packages.maneuvering"))
   table.removeOne(directories, "standard")
   table.removeOne(directories, "standard_cards")
+  table.removeOne(directories, "maneuvering")
 
   for _, dir in ipairs(directories) do
     if (not string.find(dir, ".disabled")) and FileIO.isDir("packages/" .. dir)
@@ -112,6 +135,22 @@ function Engine:loadPackages()
         end
       end
     end
+  end
+end
+
+---@return nil
+function Engine:loadDisabled()
+  for mode_name, game_mode in pairs(self.game_modes) do
+    local disabled_packages = {}
+    for name, pkg in pairs(self.packages) do
+      if table.contains(game_mode.blacklist or Util.DummyTable, name) or
+      (game_mode.whitelist and not table.contains(game_mode.whitelist, name)) or
+      table.contains(pkg.game_modes_blacklist or Util.DummyTable, mode_name) or
+      (pkg.game_modes_whitelist and not table.contains(pkg.game_modes_whitelist, mode_name)) then
+        table.insert(disabled_packages, name)
+      end
+    end
+    self.game_mode_disabled[game_mode.name] = disabled_packages
   end
 end
 
@@ -204,6 +243,12 @@ function Engine:addGenerals(generals)
   end
 end
 
+local function canUseGeneral(g)
+  local r = Fk:currentRoom()
+  return not table.contains(r.disabled_packs, Fk.generals[g].package.name) and
+    not table.contains(r.disabled_generals, g) and not g.hidden and not g.total_hidden
+end
+
 --- 根据武将名称，获取它的同名武将。
 ---
 --- 注意以此法返回的同名武将列表不包含他自己。
@@ -214,9 +259,7 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and
-      not table.contains(self.disabled_packs, self.generals[g].package.name) and
-      not table.contains(self.disabled_generals, g)
+    return g ~= name and self.generals[g] ~= nil and canUseGeneral(g)
   end)
 end
 
@@ -249,8 +292,8 @@ end
 ---
 --- 返回的牌是一张虚拟牌。
 ---@param name string @ 牌名
----@param suit Suit @ 花色
----@param number integer @ 点数
+---@param suit Suit|nil @ 花色
+---@param number integer|nil @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = _card_name_table[name]
@@ -286,7 +329,7 @@ end
 ---@param num integer @ 要选出的武将数量
 ---@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
 ---@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
----@param filter fun(g: General): boolean | nil @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@param filter nil | fun(g: General): boolean @ 可选参数，若这个函数返回true的话这个武将被排除在外
 ---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
@@ -311,22 +354,11 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
     end
   end
 
-  if #availableGenerals == 0 then
+  if #availableGenerals < num then
     return {}
   end
 
-  local result = {}
-  for i = 1, num do
-    local randomGeneral = math.random(1, #availableGenerals)
-    table.insert(result, availableGenerals[randomGeneral])
-    table.remove(availableGenerals, randomGeneral)
-
-    if #availableGenerals == 0 then
-      break
-    end
-  end
-
-  return result
+  return table.random(availableGenerals, num)
 end
 
 --- 获取已经启用的所有武将的列表。
@@ -336,7 +368,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if not table.contains(self.disabled_packs, general.package.name) and not table.contains(self.disabled_generals, general.name) then
+      if canUseGeneral(general.name) then
         table.insert(result, general)
       end
     end
@@ -352,7 +384,7 @@ function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
     if not (except and table.contains(except, card.id)) then
-      if not table.contains(self.disabled_packs, card.package.name) then
+      if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
         table.insert(result, card.id)
       end
     end
@@ -361,16 +393,14 @@ function Engine:getAllCardIds(except)
   return result
 end
 
-local filtered_cards = {}
-
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter boolean @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter boolean|nil @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   local ret = self.cards[id]
   if not ignoreFilter then
-    ret = filtered_cards[id] or self.cards[id]
+    ret = self.filtered_cards[id] or self.cards[id]
   end
   return ret
 end
@@ -382,14 +412,14 @@ end
 function Engine:filterCard(id, player, data)
   local card = self:getCardById(id, true)
   if player == nil then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     return
   end
   local skills = player:getAllSkills()
-  local filters = self:currentRoom().status_skills[FilterSkill] or {}
+  local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
 
   if #filters == 0 then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     return
   end
 
@@ -426,11 +456,11 @@ function Engine:filterCard(id, player, data)
     if card == nil then
       card = self:getCardById(id)
     end
-    filtered_cards[id] = card
+    self.filtered_cards[id] = card
   end
 
   if modify then
-    filtered_cards[id] = nil
+    self.filtered_cards[id] = nil
     data.card = card
     return
   end

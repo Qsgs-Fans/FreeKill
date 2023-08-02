@@ -32,6 +32,8 @@
 ---@field public cardType string[]
 ---@field public id integer[]
 
+-- v0.2.6改动： cardType会被解析为trueName数组和name数组，而不是自己单独成立
+
 local numbertable = {
   ["A"] = 1,
   ["J"] = 11,
@@ -44,14 +46,34 @@ local placetable = {
   [Card.PlayerEquip] = "equip",
 }
 
+local card_type_table = {}
+
+local function fillCardTypeTable()
+  local tmp = {}
+  for _, cd in ipairs(Fk.cards) do
+    local t = cd:getTypeString()
+    local st = cd:getSubtypeString()
+    local tn = cd.trueName
+    -- TODO: local n = cd.name
+
+    if not tmp[tn] then
+      card_type_table[t] = card_type_table[t] or {}
+      card_type_table[st] = card_type_table[st] or {}
+      table.insertIfNeed(card_type_table[t], tn)
+      table.insertIfNeed(card_type_table[st], tn)
+      tmp[tn] = true
+    end
+  end
+end
+
 local function matchSingleKey(matcher, card, key)
   local match = matcher[key]
   if not match then return true end
   local val = card[key]
   if key == "suit" then
     val = card:getSuitString()
-  elseif key == "cardType" then
-    val = card:getTypeString()
+  -- elseif key == "cardType" then
+  --   val = card:getTypeString()
   elseif key == "place" then
     val = placetable[Fk:currentRoom():getCardArea(card.id)]
     if not val then
@@ -90,12 +112,34 @@ local function matchCard(matcher, card)
      and matchSingleKey(matcher, card, "suit")
      and matchSingleKey(matcher, card, "place")
      and matchSingleKey(matcher, card, "name")
-     and matchSingleKey(matcher, card, "cardType")
+     -- and matchSingleKey(matcher, card, "cardType")
      and matchSingleKey(matcher, card, "id")
 end
 
+local function hasNegIntersection(a, b)
+  -- 注意，这里是拿a.neg和b比
+  local neg_pass = false
+
+  -- 第一次比较： 比较neg和正常值，如有不同即认为可以匹配
+  -- 比如 ^jink 可以匹配 slash,jink
+  for _, neg in ipairs(a.neg or Util.DummyTable) do
+    for _, e in ipairs(b) do
+      if type(neg) == "table" then
+        neg_pass = not table.contains(neg, e)
+      else
+        neg_pass = neg ~= e
+      end
+      if neg_pass then return true end
+    end
+  end
+
+  -- 第二次比较： 比较双方neg
+  -- 比如 ^jink 可以匹配 ^slash
+  -- 没法比
+end
+
 local function hasIntersection(a, b)
-  if a == nil or b == nil then
+  if a == nil or b == nil or (#a + #b == 0) then
     return true
   end
 
@@ -108,10 +152,9 @@ local function hasIntersection(a, b)
       return true
     end
   end
+  local neg_pass = hasNegIntersection(a, b) or hasNegIntersection(b, a)
 
-  -- TODO: 判断含有neg的两个matcher
-
-  return false
+  return neg_pass
 end
 
 ---@param a Matcher
@@ -123,7 +166,7 @@ local function matchMatcher(a, b)
     "suit",
     "place",
     "name",
-    "cardType",
+    -- "cardType",
     "id",
   }
 
@@ -260,7 +303,27 @@ local function parseMatcher(str)
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
   ret.place = not table.contains(t[4], ".") and t[4] or nil
   ret.name = not table.contains(t[5], ".") and t[5] or nil
-  ret.cardType = not table.contains(t[6], ".") and t[6] or nil
+  -- ret.cardType = not table.contains(t[6], ".") and t[6] or nil
+  if table.empty(card_type_table) then
+    fillCardTypeTable()
+  end
+  for _, ctype in ipairs(t[6]) do
+    for _, n in ipairs(card_type_table[ctype] or Util.DummyTable) do
+      if not ret.trueName then ret.trueName = {} end
+      table.insertIfNeed(ret.trueName, n)
+    end
+  end
+  for _, neg in ipairs(t[6].neg or Util.DummyTable) do
+    if type(neg) ~= "table" then neg = { neg } end
+    if not ret.trueName then ret.trueName = {} end
+    if not ret.trueName.neg then ret.trueName.neg = {} end
+
+    local temp = {}
+    for _, ctype in ipairs(neg) do
+      table.insertTable(temp, card_type_table[ctype] or Util.DummyTable)
+    end
+    table.insert(ret.trueName.neg, temp)
+  end
 
   if not table.contains(t[7], ".") then
     ret.id = parseRawNumTable(t[7])

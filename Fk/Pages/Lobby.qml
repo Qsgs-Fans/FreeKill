@@ -15,7 +15,7 @@ Item {
   property string password
 
   Rectangle {
-    width: parent.width / 2 - roomListLayout.width / 2
+    width: parent.width / 2 - roomListLayout.width / 2 - 50
     height: parent.height * 0.7
     anchors.top: exitButton.bottom
     anchors.bottom: createRoomButton.top
@@ -64,8 +64,9 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: roomName + (hasPassword ? "(🔒)" : "")
+          text: (hasPassword ? Backend.translate("Has Password") : "") + roomName
           font.pixelSize: 20
+          elide: Label.ElideRight
         }
 
         Text {
@@ -106,17 +107,32 @@ Item {
   PersonalSettings {
   }
 
-  RowLayout {
+  Timer {
+    id: opTimer
+    interval: 1000
+  }
+
+  ColumnLayout {
     id: roomListLayout
-    anchors.centerIn: parent
-    width: childrenRect.width
-    height: parent.height
+    anchors.top: parent.top
+    anchors.topMargin: 10
+    anchors.horizontalCenter: parent.horizontalCenter
+    width: root.width * 0.48
+    height: root.height - 80
+    Button {
+      Layout.alignment: Qt.AlignRight
+      text: Backend.translate("Refresh Room List")
+      enabled: !opTimer.running
+      onClicked: {
+        opTimer.start();
+        ClientInstance.notifyServer("RefreshRoomList", "");
+      }
+    }
     Item {
-      Layout.preferredWidth: root.width * 0.6
+      Layout.fillWidth: true
       Layout.fillHeight: true
       Rectangle {
-        width: parent.width * 0.8
-        height: parent.height * 0.8
+        anchors.fill: parent
         anchors.centerIn: parent
         color: "#88EEEEEE"
         radius: 16
@@ -133,6 +149,7 @@ Item {
           ScrollBar.vertical: ScrollBar {}
           anchors.centerIn: parent
           delegate: roomDelegate
+          clip: true
           model: roomModel
         }
       }
@@ -151,6 +168,7 @@ Item {
       lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/CreateRoom.qml");
       lobby_drawer.open();
       config.observing = false;
+      config.replaying = false;
     }
   }
 
@@ -180,6 +198,9 @@ Item {
     }
     Button {
       text: Backend.translate("Replay")
+      onClicked: {
+        mainStack.push(mainWindow.replayPage);
+      }
     }
     Button {
       text: Backend.translate("About")
@@ -198,6 +219,7 @@ Item {
     onClicked: {
       toast.show("Goodbye.");
       mainStack.pop();
+      config.saveConf();
       Backend.quitLobby();
     }
   }
@@ -261,8 +283,10 @@ Item {
   }
 
   function enterRoom(roomId, playerNum, capacity, pw) {
+    config.replaying = false;
     if (playerNum < capacity) {
       config.observing = false;
+      Backend.callLuaFunction("SetObserving", [false]);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
@@ -270,6 +294,7 @@ Item {
       );
     } else {
       config.observing = true;
+      Backend.callLuaFunction("SetObserving", [true]);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",

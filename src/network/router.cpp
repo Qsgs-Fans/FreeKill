@@ -3,6 +3,7 @@
 #include "router.h"
 #include "client.h"
 #include "client_socket.h"
+#include "roomthread.h"
 #include <qjsondocument.h>
 #ifndef FK_CLIENT_ONLY
 #include "server.h"
@@ -242,6 +243,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     lobby_actions["Chat"] = [](ServerPlayer *sender, const QString &jsonData) {
       sender->getRoom()->chat(sender, jsonData);
     };
+    lobby_actions["RefreshRoomList"] = [](ServerPlayer *sender,
+                                    const QString &jsonData) {
+      ServerInstance->updateRoomList(sender);
+    };
   }
 #endif
 
@@ -257,7 +262,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   if (type & TYPE_NOTIFICATION) {
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      ClientInstance->callLua(command, jsonData);
+      ClientInstance->callLua(command, jsonData, false);
 #endif
     }
 #ifndef FK_CLIENT_ONLY
@@ -300,7 +305,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      qobject_cast<Client *>(parent())->callLua(command, jsonData);
+      qobject_cast<Client *>(parent())->callLua(command, jsonData, true);
 #endif
     } else {
       // requesting server is not allowed
@@ -310,6 +315,14 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 #ifndef FK_CLIENT_ONLY
   else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
+
+    ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
+    player->setThinking(false);
+    // qDebug() << "wake up!";
+    auto room = player->getRoom();
+    if (room->getThread()) {
+      room->getThread()->wakeUp();
+    }
 
     if (requestId != this->expectedReplyId)
       return;
@@ -328,6 +341,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       extraReplyReadySemaphore->release();
       extraReplyReadySemaphore = nullptr;
     }
+
     locker.unlock();
     emit replyReady();
   }

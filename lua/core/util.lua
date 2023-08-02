@@ -2,6 +2,8 @@
 
 local Util = {}
 Util.DummyFunc = function() end
+Util.TrueFunc = function() return true end
+Util.FalseFunc = function() return false end
 Util.DummyTable = setmetatable({}, {
   __newindex = function() error("Cannot assign to dummy table") end
 })
@@ -26,7 +28,9 @@ Util.lockTable = function(t)
   return setmetatable({}, new_mt)
 end
 
-function printf(fmt, ...) print(string.format(fmt, ...)) end
+function printf(fmt, ...)
+  print(string.format(fmt, ...))
+end
 
 -- the iterator of QList object
 local qlist_iterator = function(list, n)
@@ -46,7 +50,7 @@ function table:forEach(func)
   end
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:every(func)
   for i, v in ipairs(self) do
     if not func(v, i, self) then
@@ -56,7 +60,7 @@ function table:every(func)
   return true
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:find(func)
   for i, v in ipairs(self) do
     if func(v, i, self) then
@@ -68,7 +72,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 ---@return T[]
 function table.filter(self, func)
   local ret = {}
@@ -80,7 +84,7 @@ function table.filter(self, func)
   return ret
 end
 
----@param func fun(element, index, array)
+---@param func fun(element, index, array): any
 function table:map(func)
   local ret = {}
   for i, v in ipairs(self) do
@@ -98,6 +102,47 @@ end
 Util.NameMapper = function(e) return e.name end
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
 Util.Name2SkillMapper = function(e) return Fk.skills[e] end
+
+-- for card preset
+Util.GlobalCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+Util.AoeCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if p ~= player and not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+Util.GlobalOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+Util.AoeOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
 
 ---@generic T
 ---@param self T[]
@@ -202,7 +247,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n integer
+---@param n integer|nil
 ---@return T|T[]
 function table:random(n)
   local n0 = n
@@ -246,6 +291,10 @@ function table:assign(targetTbl)
       self[key] = value
     end
   end
+end
+
+function table.empty(t)
+  return next(t) == nil
 end
 
 -- allow a = "Hello"; a[1] == "H"
@@ -307,34 +356,6 @@ function string:endsWith(e)
   return e == "" or self:sub(-#e) == e
 end
 
----@class Sql
-Sql = {
-  ---@param filename string
-  open = function(filename)
-    return fk.OpenDatabase(filename)
-  end,
-
-  ---@param db fk.SQLite3
-  close = function(db)
-    fk.CloseDatabase(db)
-  end,
-
-  --- Execute an SQL statement.
-  ---@param db fk.SQLite3
-  ---@param sql string
-  exec = function(db, sql)
-    fk.ExecSQL(db, sql)
-  end,
-
-  --- Execute a `SELECT` SQL statement.
-  ---@param db fk.SQLite3
-  ---@param sql string
-  ---@return table[] @ Array of Json object, the key is column name and value is row value
-  exec_select = function(db, sql)
-    return json.decode(fk.SelectFromDb(db, sql))
-  end,
-}
-
 FileIO = {
   pwd = fk.QmlBackend_pwd,
   ls = function(filename)
@@ -349,7 +370,7 @@ FileIO = {
   isDir = fk.QmlBackend_isDir
 }
 
-os.getms = fk.GetMicroSecond
+os.getms = function() return fk.GetMicroSecond(fk) end
 
 ---@class Stack : Object
 Stack = class("Stack")

@@ -5,16 +5,19 @@
 
 class Server;
 class ServerPlayer;
+class RoomThread;
 
-class Room : public QThread {
+class Room : public QObject {
   Q_OBJECT
  public:
-  explicit Room(Server *m_server);
+  explicit Room(RoomThread *m_thread);
   ~Room();
 
   // Property reader & setter
   // ==================================={
   Server *getServer() const;
+  RoomThread *getThread() const;
+  void setThread(RoomThread *t);
   int getId() const;
   void setId(int id);
   bool isLobby() const;
@@ -26,7 +29,8 @@ class Room : public QThread {
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
-  void setAbandoned(bool abandoned);  // never use this function
+  void checkAbandoned();
+  void setAbandoned(bool a);
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -41,6 +45,7 @@ class Room : public QThread {
   void addObserver(ServerPlayer *player);
   void removeObserver(ServerPlayer *player);
   QList<ServerPlayer *> getObservers() const;
+  bool hasObserver(ServerPlayer *player) const;
 
   int getTimeout() const;
   void setTimeout(int timeout);
@@ -53,19 +58,10 @@ class Room : public QThread {
   void chat(ServerPlayer *sender, const QString &jsonData);
 
   void updateWinRate(int id, const QString &general, const QString &mode,
-                     int result);
+                     int result, bool dead);
   void gameOver();
-
-  void initLua();
-
-  void roomStart();
   void manuallyStart();
-  LuaFunction startGame;
-
-  QString fetchRequest();
   void pushRequest(const QString &req);
-  void clearRequest();
-  bool hasRequest() const;
 
  signals:
   void abandoned();
@@ -73,11 +69,9 @@ class Room : public QThread {
   void playerAdded(ServerPlayer *player);
   void playerRemoved(ServerPlayer *player);
 
- protected:
-  virtual void run();
-
  private:
   Server *server;
+  RoomThread *m_thread;
   int id;               // Lobby's id is 0
   QString name;         // “阴间大乱斗”
   int capacity;         // by default is 5, max is 8
@@ -90,12 +84,12 @@ class Room : public QThread {
   QList<int> runned_players;
   int robot_id;
   bool gameStarted;
+  bool m_ready;
 
   int timeout;
 
-  lua_State *L;
-  QMutex request_queue_mutex;
-  QQueue<QString> request_queue;  // json string
+  void addRunRate(int id, const QString &mode);
+  void updatePlayerGameData(int id, const QString &mode);
 };
 
 #endif  // _ROOM_H

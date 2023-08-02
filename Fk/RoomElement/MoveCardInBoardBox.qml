@@ -9,6 +9,7 @@ GraphicsBox {
   property var cards: []
   property var cardsPosition: []
   property var generalNames: []
+  property var playerIds: []
   property var result
   property int padding: 25
 
@@ -64,7 +65,7 @@ GraphicsBox {
             Text {
               horizontalAlignment: Text.AlignHCenter
               anchors.centerIn: parent
-              text: Backend.translate(JSON.parse(Backend.callLuaFunction("GetCardData", [modelData.cid])).subtype)
+              text: Backend.translate(modelData.subtype)
               color: "#90765F"
               font.family: fontLibian.name
                font.pixelSize: 16
@@ -100,6 +101,7 @@ GraphicsBox {
       name: modelData.name
       suit: modelData.suit
       number: modelData.number
+      virt_name: modelData.virt_name || ''
 
       selectable: !result || result.item === this
       onClicked: {

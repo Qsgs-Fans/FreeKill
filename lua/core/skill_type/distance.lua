@@ -10,4 +10,11 @@ function DistanceSkill:getCorrect(from, to)
   return 0
 end
 
+---@param from Player
+---@param to Player
+---@return integer
+function DistanceSkill:getFixed(from, to)
+  return nil
+end
+
 return DistanceSkill

@@ -8,7 +8,7 @@
 ---@field public player ServerPlayer
 ---@field public command string
 ---@field public jsonData string
----@field public cb_table table<string, fun(jsonData: string)>
+---@field public cb_table table<string, fun(self: AI, jsonData: string)>
 local AI = class("AI")
 
 function AI:initialize(player)

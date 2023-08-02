@@ -1,6 +1,7 @@
 # Compile output
 /build/
 /docs/build
+/docs/.venv
 /*.o
 /zh_CN.qm
 /fk_ver
@@ -18,6 +19,7 @@
 /FreeKill
 /FreeKill.exe
 /mymod
+/recording
 freekill-wrap.cxx
 /server/users.db
 /server/rsa
@@ -40,8 +42,11 @@ freekill-wrap.cxx
 /Qt5Compat/
 /QtQml/
 /QtMultimedia/
+/multimedia/
+/qmltooling/
 /sqldrivers/
 /styles/
 /tls/
 /translations/
 /*.dll
+/*.bat

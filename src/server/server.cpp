@@ -7,6 +7,7 @@
 #include <qjsonvalue.h>
 #include <qobject.h>
 #include <qversionnumber.h>
+#include <QNetworkDatagram>
 
 #include <openssl/bn.h>
 
@@ -14,6 +15,7 @@
 #include "packman.h"
 #include "player.h"
 #include "room.h"
+#include "roomthread.h"
 #include "router.h"
 #include "server_socket.h"
 #include "serverplayer.h"
@@ -37,12 +39,16 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
 
+  udpSocket = new QUdpSocket(this);
+  connect(udpSocket, &QUdpSocket::readyRead,
+          this, &Server::readPendingDatagrams);
+
   // 创建第一个房间，这个房间作为“大厅房间”
   nextRoomId = 0;
   createRoom(nullptr, "Lobby", INT32_MAX);
   // 大厅只要发生人员变动，就向所有人广播一下房间列表
-  connect(lobby(), &Room::playerAdded, this, &Server::updateRoomList);
-  connect(lobby(), &Room::playerRemoved, this, &Server::updateRoomList);
+  connect(lobby(), &Room::playerAdded, this, &Server::updateOnlineInfo);
+  connect(lobby(), &Room::playerRemoved, this, &Server::updateOnlineInfo);
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -63,7 +69,7 @@ Server::Server(QObject *parent) : QObject(parent) {
 
       foreach (auto p, this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
-          p->kicked();
+          emit p->kicked();
         }
       }
     }
@@ -77,11 +83,11 @@ Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
-  foreach (auto room, idle_rooms) {
-    room->deleteLater();
-  }
-  foreach (auto room, rooms) {
-    room->deleteLater();
+//  foreach (auto room, idle_rooms) {
+//    room->deleteLater();
+//  }
+  foreach (auto thread, threads) {
+    thread->deleteLater();
   }
   sqlite3_close(db);
   RSA_free(rsa);
@@ -89,6 +95,7 @@ Server::~Server() {
 
 bool Server::listen(const QHostAddress &address, ushort port) {
   bool ret = server->listen(address, port);
+  udpSocket->bind(port);
   isListening = ret;
   return ret;
 }
@@ -102,14 +109,28 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     return;
   }
   Room *room;
+  RoomThread *thread = nullptr;
+
+  foreach (auto t, threads) {
+    if (!t->isFull()) {
+      thread = t;
+      break;
+    }
+  }
+  if (!thread && nextRoomId != 0) {
+    thread = new RoomThread(this);
+    threads.append(thread);
+  }
+
   if (!idle_rooms.isEmpty()) {
     room = idle_rooms.pop();
     room->setId(nextRoomId);
     nextRoomId++;
     room->setAbandoned(false);
+    room->setThread(thread);
     rooms.insert(room->getId(), room);
   } else {
-    room = new Room(this);
+    room = new Room(thread);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
     if (room->isLobby())
       m_lobby = room;
@@ -146,7 +167,7 @@ void Server::removePlayer(int id) {
   }
 }
 
-void Server::updateRoomList() {
+void Server::updateRoomList(ServerPlayer *teller) {
   QJsonArray arr;
   QJsonArray avail_arr;
   foreach (Room *room, rooms) {
@@ -172,9 +193,10 @@ void Server::updateRoomList() {
     arr.prepend(v);
   }
   auto jsonData = JsonArray2Bytes(arr);
-  lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdateRoomList",
-                             QString(jsonData));
+  teller->doNotify("UpdateRoomList", QString(jsonData));
+}
 
+void Server::updateOnlineInfo() {
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdatePlayerNum",
                              QString(JsonArray2Bytes(QJsonArray({
                                  lobby()->getPlayers().length(),
@@ -195,13 +217,24 @@ void Server::processNewConnection(ClientSocket *client) {
   qInfo() << addr << "connected";
   auto result = SelectFromDatabase(
       db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
+
+  auto errmsg = QString();
+
   if (!result.isEmpty()) {
+    errmsg = "you have been banned!";
+  } else if (temp_banlist.contains(addr)) {
+    errmsg = "you have been temporarily banned!";
+  } else if (players.count() >= getConfig("capacity").toInt()) {
+    errmsg = "server is full!";
+  }
+
+  if (!errmsg.isEmpty()) {
     QJsonArray body;
     body << -2;
     body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
              Router::DEST_CLIENT);
     body << "ErrorMsg";
-    body << "you have been banned!";
+    body << errmsg;
     client->send(JsonArray2Bytes(body));
     qInfo() << "Refused banned IP:" << addr;
     client->disconnectFromHost();
@@ -240,7 +273,7 @@ void Server::processRequest(const QByteArray &msg) {
         doc[2] != "Setup")
       valid = false;
     else
-      valid = (String2Json(doc[3].toString()).array().size() == 4);
+      valid = (String2Json(doc[3].toString()).array().size() == 5);
   }
 
   if (!valid) {
@@ -270,25 +303,44 @@ void Server::processRequest(const QByteArray &msg) {
     body
         << (cmp < 0
                 ? QString("[\"server is still on version %%2\",\"%1\"]")
-                      .arg(FK_VERSION)
-                      .arg("1")
+                      .arg(FK_VERSION, "1")
                 : QString(
                       "[\"server is using version %%2, please update\",\"%1\"]")
-                      .arg(FK_VERSION)
-                      .arg("1"));
+                      .arg(FK_VERSION, "1"));
 
     client->send(JsonArray2Bytes(body));
     client->disconnectFromHost();
     return;
   }
 
+  auto uuid = arr[4].toString();
+  auto result2 = QJsonArray({1});
+  if (CheckSqlString(uuid)) {
+    result2 = SelectFromDatabase(
+        db, QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid));
+  }
+
+  if (!result2.isEmpty()) {
+    QJsonArray body;
+    body << -2;
+    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+             Router::DEST_CLIENT);
+    body << "ErrorMsg";
+    body << "you have been banned!";
+    client->send(JsonArray2Bytes(body));
+    qInfo() << "Refused banned UUID:" << uuid;
+    client->disconnectFromHost();
+    return;
+  }
+
   handleNameAndPassword(client, arr[0].toString(), arr[1].toString(),
-                        arr[2].toString());
+                        arr[2].toString(), uuid);
 }
 
 void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
                                    const QString &password,
-                                   const QString &md5_str) {
+                                   const QString &md5_str,
+                                   const QString &uuid_str) {
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
   RSA_private_decrypt(RSA_size(rsa), (const unsigned char *)encryted_pw.data(),
@@ -383,20 +435,33 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           error_msg = "username or password error";
       } else {
         auto player = players.value(id);
+        // 顶号机制，如果在线的话就让他变成不在线
+        if (player->getState() == Player::Online) {
+          player->doNotify("ErrorMsg", "others logged in again with this name");
+          emit player->kicked();
+        }
+
         if (player->getState() == Player::Offline) {
           auto room = player->getRoom();
           player->setSocket(client);
           player->alive = true;
           client->disconnect(this);
-          // broadcast("ServerMessage",
-          //          tr("%1 backed").arg(player->getScreenName()));
+          if (players.count() <= 10) {
+            broadcast("ServerMessage", tr("%1 backed").arg(player->getScreenName()));
+            if (room->getOwner() == player) {
+              auto owner = room->getOwner();
+              auto jsonData = QJsonArray();
+              jsonData << owner->getId();
+              player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
+            }
+          }
 
           if (room && !room->isLobby()) {
             room->pushRequest(QString("%1,reconnect").arg(id));
           } else {
             // 懒得处理掉线玩家在大厅了！踢掉得了
             player->doNotify("ErrorMsg", "Unknown Error");
-            player->kicked();
+            emit player->kicked();
           }
 
           return;
@@ -418,6 +483,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
             .arg(obj["id"].toString().toInt());
     ExecSQL(db, sql_update);
 
+    auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');").arg(obj["id"].toString().toInt()).arg(uuid_str);
+    ExecSQL(db, uuid_update);
+
     // create new ServerPlayer and setup
     ServerPlayer *player = new ServerPlayer(lobby());
     player->setSocket(client);
@@ -428,8 +496,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     player->setScreenName(name);
     player->setAvatar(obj["avatar"].toString());
     player->setId(obj["id"].toString().toInt());
-    // broadcast("ServerMessage", tr("%1 logged
-    // in").arg(player->getScreenName()));
+    if (players.count() <= 10) {
+      broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
+    }
     players.insert(player->getId(), player);
 
     // tell the lobby player's basic property
@@ -456,33 +525,23 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
 void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
-  if (room->isRunning()) {
-    room->wait();
-  }
   room->gameOver();
   rooms.remove(room->getId());
-  updateRoomList();
+  updateOnlineInfo();
+  // 按理说这时候就可以删除了，但是这里肯定比Lua先检测到。
+  // 倘若在Lua的Room:gameOver时C++的Room被删除了问题就大了。
+  // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
   // room->deleteLater();
   idle_rooms.push(room);
-  // 懒得改了！
-  // 这里出bug的原因还是在于room的销毁工作没做好
-  // room销毁这块bug很多
-  // if (idle_rooms.length() > 10) {
-  //   auto junk = idle_rooms[0];
-  //   idle_rooms.removeFirst();
-  //   junk->deleteLater();
-  // }
-#ifdef QT_DEBUG
-  qDebug() << rooms.size() << "running room(s)," << idle_rooms.size()
-           << "idle room(s).";
-#endif
+  room->getThread()->removeRoom(room);
 }
 
 void Server::onUserDisconnected() {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
   qInfo() << "Player" << player->getId() << "disconnected";
-  // broadcast("ServerMessage", tr("%1 logged
-  // out").arg(player->getScreenName()));
+  if (players.count() <= 10) {
+    broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
+  }
   Room *room = player->getRoom();
   if (room->isStarted()) {
     if (room->getObservers().contains(player)) {
@@ -494,6 +553,7 @@ void Server::onUserDisconnected() {
     player->setSocket(nullptr);
     // TODO: add a robot
   } else {
+    player->setState(Player::Robot); // 大厅！然而又不能设Offline
     player->deleteLater();
   }
 }
@@ -535,15 +595,24 @@ RSA *Server::initServerRSA() {
   return rsa;
 }
 
+#define SET_DEFAULT_CONFIG(k, v) do {\
+  if (config.value(k).isUndefined()) { \
+    config[k] = (v); \
+  } } while (0)
+
 void Server::readConfig() {
   QFile file("freekill.server.config.json");
-  if (!file.open(QIODevice::ReadOnly)) {
-    return;
+  QByteArray json = "{}";
+  if (file.open(QIODevice::ReadOnly)) {
+    json = file.readAll();
   }
-  auto json = file.readAll();
   config = QJsonDocument::fromJson(json).object();
 
   // defaults
+  SET_DEFAULT_CONFIG("description", "FreeKill Server");
+  SET_DEFAULT_CONFIG("iconUrl", "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png");
+  SET_DEFAULT_CONFIG("capacity", 100);
+  SET_DEFAULT_CONFIG("tempBanTime", 20);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
@@ -560,4 +629,56 @@ bool Server::checkBanWord(const QString &str) {
     }
   }
   return true;
+}
+
+void Server::temporarilyBan(int playerId) {
+  auto player = findPlayer(playerId);
+  if (!player) return;
+
+  auto socket = player->getSocket();
+  QString addr;
+  if (!socket) {
+    QString sql_find = QString("SELECT * FROM userinfo \
+        WHERE id=%1;").arg(playerId);
+    auto result = SelectFromDatabase(db, sql_find);
+    if (result.isEmpty())
+      return;
+
+    auto obj = result[0].toObject();
+    addr = obj["lastLoginIp"].toString();
+  } else {
+    addr = socket->peerAddress();
+  }
+  temp_banlist.append(addr);
+
+  auto time = getConfig("tempBanTime").toInt();
+  QTimer::singleShot(time * 60000, this, [=]() {
+      temp_banlist.removeOne(addr);
+      });
+  emit player->kicked();
+}
+
+void Server::readPendingDatagrams() {
+  while (udpSocket->hasPendingDatagrams()) {
+    QNetworkDatagram datagram = udpSocket->receiveDatagram();
+    if (datagram.isValid()) {
+      processDatagram(datagram.data(), datagram.senderAddress(), datagram.senderPort());
+    }
+  }
+}
+
+void Server::processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port) {
+  if (msg == "fkDetectServer") {
+    udpSocket->writeDatagram("me", addr, port);
+  } else if (msg.startsWith("fkGetDetail,")) {
+    udpSocket->writeDatagram(JsonArray2Bytes(QJsonArray({
+            FK_VERSION,
+            getConfig("iconUrl"),
+            getConfig("description"),
+            getConfig("capacity"),
+            players.count(),
+            msg.sliced(12).constData(),
+            })), addr, port);
+  }
+  udpSocket->flush();
 }

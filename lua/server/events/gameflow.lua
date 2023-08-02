@@ -47,16 +47,6 @@ local function discardInit(room, player)
   end
 end
 
-local function checkNoHuman(room)
-  for _, p in ipairs(room.players) do
-    -- TODO: trust
-    if p.serverplayer:getStateString() == "online" then
-      return
-    end
-  end
-  room:gameOver("")
-end
-
 GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local room = self.room
 
@@ -83,7 +73,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     for _, player in ipairs(room.alive_players) do
       local draw_data = luck_data[player.id]
       draw_data.luckTime = nil
-      room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+      room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
     end
     return
   end
@@ -95,6 +85,13 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   local remainTime = room.timeout + 1
   local currentTime = os.time()
   local elapsed = 0
+
+  for _, id in ipairs(luck_data.playerList) do
+    local pl = room:getPlayerById(id)
+    if luck_data[id].luckTime > 0 then
+      pl.serverplayer:setThinking(true)
+    end
+  end
 
   while true do
     elapsed = os.time() - currentTime
@@ -112,14 +109,16 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     end
 
     for _, id in ipairs(ldata.playerList) do
-      if room:getPlayerById(id)._splayer:getStateString() ~= "online" then
+      local pl = room:getPlayerById(id)
+      if pl._splayer:getState() ~= fk.Player_Online then
         ldata[id].luckTime = 0
+        pl.serverplayer:setThinking(false)
       end
     end
 
     -- room:setTag("LuckCardData", ldata)
 
-    checkNoHuman(room)
+    room:checkNoHuman()
 
     coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
   end
@@ -127,7 +126,7 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
   for _, player in ipairs(room.alive_players) do
     local draw_data = luck_data[player.id]
     draw_data.luckTime = nil
-    room.logic:trigger(fk.AfterDrawInitialCards, player, data)
+    room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
   end
 
   room:removeTag("LuckCardData")
@@ -156,7 +155,7 @@ GameEvent.functions[GameEvent.Round] = function(self)
     GameEvent(GameEvent.Turn):exec()
     if room.game_finished then break end
     room.current = room.current:getNextAlive()
-  until p.seat > p:getNextAlive().seat
+  until p.seat >= p:getNextAlive().seat
 
   logic:trigger(fk.RoundEnd, p)
 end
@@ -170,6 +169,14 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
     for name, _ in pairs(p.mark) do
       if name:endsWith("-round") then
         room:setPlayerMark(p, name, 0)
+      end
+    end
+  end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-round") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
   end
@@ -204,6 +211,14 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     end
   end
 
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-turn") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
+      end
+    end
+  end
+
   local current = room.current
   local logic = room.logic
   if self.interrupted then
@@ -212,7 +227,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     logic:trigger(fk.EventPhaseEnd, current, nil, true)
 
     current.phase = Player.NotActive
-    room:notifyProperty(current, current, "phase")
+    room:broadcastProperty(current, "phase")
     logic:trigger(fk.EventPhaseChanging, current,
       { from = Player.Finish, to = Player.NotActive }, true)
     logic:trigger(fk.EventPhaseStart, current, nil, true)
@@ -288,13 +303,13 @@ GameEvent.functions[GameEvent.Phase] = function(self)
         local discardNum = #table.filter(
           player:getCardIds(Player.Hand), function(id)
             local card = Fk:getCardById(id)
-            return table.every(room.status_skills[MaxCardsSkill] or {}, function(skill)
+            return table.every(room.status_skills[MaxCardsSkill] or Util.DummyTable, function(skill)
               return not skill:excludeFrom(player, card)
             end)
           end
         ) - player:getMaxCards()
         if discardNum > 0 then
-          room:askForDiscard(player, discardNum, discardNum, false, "game_rule")
+          room:askForDiscard(player, discardNum, discardNum, false, "game_rule", false)
         end
       end,
       [Player.Finish] = function()
@@ -321,6 +336,14 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
     for name, _ in pairs(p.mark) do
       if name:endsWith("-phase") then
         room:setPlayerMark(p, name, 0)
+      end
+    end
+  end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:endsWith("-phase") then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
   end

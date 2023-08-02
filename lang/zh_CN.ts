@@ -116,36 +116,28 @@
     <translation>新月杀</translation>
   </message>
   <message>
-    <source>Username</source>
-    <translation>用户名</translation>
-  </message>
-  <message>
-    <source>Show Password</source>
-    <translation>显示密码</translation>
-  </message>
-  <message>
     <source>Join Server</source>
     <translation>加入服务器</translation>
   </message>
   <message>
     <source>Console start</source>
-    <translation>单机启动</translation>
+    <translation>单机启动（不推荐）</translation>
   </message>
   <message>
     <source>PackageManage</source>
     <translation>管理拓展包</translation>
   </message>
   <message>
-    <source>Mod Making</source>
+    <source>Quit Game</source>
+    <translation>退出游戏</translation>
+  </message>
+  <message>
+    <source>Making Mod</source>
     <translation>制作Mod</translation>
   </message>
   <message>
     <source>Welcome back!</source>
     <translation>欢迎回来！</translation>
-  </message>
-  <message>
-    <source>Server Addr</source>
-    <translation>服务器IP</translation>
   </message>
   <message>
     <source>FAQ</source>
@@ -166,6 +158,77 @@
   <message>
     <source>updated packages for md5</source>
     <translation>已为您与服务器同步拓展包，请尝试再次连入</translation>
+  </message>
+</context>
+
+<context>
+  <name>JoinServer</name>
+  <message>
+    <source>Join Server</source>
+    <translation>加入服务器</translation>
+  </message>
+  <message>
+    <source>Add New Server</source>
+    <translation>添加服务器</translation>
+  </message>
+  <message>
+    <source>Edit Server</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>Refresh List</source>
+    <translation>刷新列表</translation>
+  </message>
+  <message>
+    <source>Detect LAN</source>
+    <translation>探测局域网</translation>
+  </message>
+  <message>
+    <source>Go Back</source>
+    <translation>返回</translation>
+  </message>
+
+  <message>
+    <source>Server not up</source>
+    <translation>服务器似乎没有启动。</translation>
+  </message>
+
+  <message>
+    <source>@NewServer</source>
+    <translation>添加新服务器</translation>
+  </message>
+  <message>
+    <source>@NewServerHint</source>
+    <translation>请输入服务器的IP或者域名，并输入你在这个服务器所使用的用户名与密码。如果你之前并未游玩过该服务器，则服务器会为你自动注册一个账号。以后登陆到该服务器都需要同样的用户名和密码，请不要忘记密码！</translation>
+  </message>
+  <message>
+    <source>Server Addr</source>
+    <translation>服务器IP</translation>
+  </message>
+  <message>
+    <source>Username</source>
+    <translation>用户名</translation>
+  </message>
+  <message>
+    <source>Password</source>
+    <translation>密码</translation>
+  </message>
+  <message>
+    <source>Show Password</source>
+    <translation>显示密码</translation>
+  </message>
+  <message>
+    <source>@EditServer</source>
+    <translation>编辑服务器</translation>
+  </message>
+  <message>
+    <source>@EditServerHint</source>
+    <translation>你可以修改在该服务器使用的用户名与密码。
+    你不能直接修改服务器的IP；如确实需要，请删除此服务器然后新增一个。</translation>
+  </message>
+  <message>
+    <source>Delete Server</source>
+    <translation>删除服务器</translation>
   </message>
 </context>
 
@@ -208,12 +271,20 @@
 <context>
   <name>Logic</name>
   <message>
+    <source>Detected Server %1</source>
+    <translation>检测到新月杀服务器 - %1</translation>
+  </message>
+  <message>
     <source>MD5 check failed!</source>
     <translation>MD5检测失败！请与服务端保持一致后再登入</translation>
   </message>
   <message>
     <source>others logged in with this name</source>
     <translation>已经有人用这个名字登入了</translation>
+  </message>
+  <message>
+    <source>others logged in again with this name</source>
+    <translation>其他人用你的用户名和密码登陆到了服务器，请检查密码是否泄漏</translation>
   </message>
   <message>
     <source>invalid user name</source>
@@ -246,6 +317,22 @@
   <message>
     <source>you have been banned!</source>
     <translation>你已经被该服务器封禁！</translation>
+  </message>
+  <message>
+    <source>you have been temporarily banned!</source>
+    <translation>由于逃跑或者其他不正当行为，你已经被暂时封禁！</translation>
+  </message>
+  <message>
+    <source>Can only observe running room.</source>
+    <translation>只能旁观已开战的房间。</translation>
+  </message>
+  <message>
+    <source>Room is full or already started!</source>
+    <translation>房间已满！</translation>
+  </message>
+  <message>
+    <source>server is full!</source>
+    <translation>服务器已满！</translation>
   </message>
 </context>
 
@@ -356,6 +443,14 @@
   <message>
     <source>create_mod_hint</source>
     <translation>请输入mod的名称。</translation>
+  </message>
+  <message>
+    <source>create_package</source>
+    <translation>新建拓展包</translation>
+  </message>
+  <message>
+    <source>create_package_hint</source>
+    <translation>请输入拓展包的内部名称。</translation>
   </message>
 </context>
 

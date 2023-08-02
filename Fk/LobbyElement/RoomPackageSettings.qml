@@ -25,16 +25,36 @@ Flickable {
       text: "禁用Lua拓展 (重启后生效)"
     }
 
-    Text {
-      text: Backend.translate("General Packages")
-      font.bold: true
+    RowLayout {
+      Text {
+        text: Backend.translate("General Packages")
+        font.bold: true
+      }
+      Button {
+        text: Backend.translate("Select All")
+        onClicked: {
+          for (let i = 0; i < gpacks.count; i++) {
+            const item = gpacks.itemAt(i);
+            item.checked = true;
+          }
+        }
+      }
+      Button {
+        text: Backend.translate("Revert Selection")
+        onClicked: {
+          for (let i = 0; i < gpacks.count; i++) {
+            const item = gpacks.itemAt(i);
+            item.checked = !item.checked;
+          }
+        }
+      }
     }
 
     GridLayout {
-      id: gpacks
       columns: 2
 
       Repeater {
+        id: gpacks
         model: ListModel {
           id: gpacklist
         }
@@ -45,28 +65,42 @@ Flickable {
           enabled: orig_name !== "test_p_0"
 
           onCheckedChanged: {
-            const packs = config.disabledPack;
-            if (checked) {
-              const idx = packs.indexOf(orig_name);
-              if (idx !== -1) packs.splice(idx, 1);
-            } else {
-              packs.push(orig_name);
-            }
+            checkPackage(orig_name, checked);
           }
         }
       }
     }
 
-    Text {
-      text: Backend.translate("Card Packages")
-      font.bold: true
+    RowLayout {
+      Text {
+        text: Backend.translate("Card Packages")
+        font.bold: true
+      }
+      Button {
+        text: Backend.translate("Select All")
+        onClicked: {
+          for (let i = 0; i < cpacks.count; i++) {
+            const item = cpacks.itemAt(i);
+            item.checked = true;
+          }
+        }
+      }
+      Button {
+        text: Backend.translate("Revert Selection")
+        onClicked: {
+          for (let i = 0; i < cpacks.count; i++) {
+            const item = cpacks.itemAt(i);
+            item.checked = !item.checked;
+          }
+        }
+      }
     }
 
     GridLayout {
-      id: cpacks
       columns: 2
 
       Repeater {
+        id: cpacks
         model: ListModel {
           id: cpacklist
         }
@@ -76,17 +110,23 @@ Flickable {
           checked: pkg_enabled
 
           onCheckedChanged: {
-            const packs = config.disabledPack;
-            if (checked) {
-              const idx = packs.indexOf(orig_name);
-              if (idx !== -1) packs.splice(idx, 1);
-            } else {
-              packs.push(orig_name);
-            }
+            checkPackage(orig_name, checked);
           }
         }
       }
     }
+  }
+
+  function checkPackage(orig_name, checked) {
+    const packs = config.disabledPack;
+    if (checked) {
+      const idx = packs.indexOf(orig_name);
+      if (idx !== -1) packs.splice(idx, 1);
+    } else {
+      packs.push(orig_name);
+    }
+    Backend.callLuaFunction("UpdatePackageEnable", [orig_name, checked]);
+    config.disabledPackChanged();
   }
 
   Component.onCompleted: {

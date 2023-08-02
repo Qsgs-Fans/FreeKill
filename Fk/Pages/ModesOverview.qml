@@ -11,6 +11,7 @@ Item {
 
     ListView {
       id: listView
+      clip: true
       width: parent.width * 0.2
       height: parent.height
       model: ListModel {

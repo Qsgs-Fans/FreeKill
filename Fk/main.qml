@@ -57,13 +57,15 @@ Window {
     Component { id: generalsOverview; GeneralsOverview {} }
     Component { id: cardsOverview; CardsOverview {} }
     Component { id: modesOverview; ModesOverview {} }
+    Component { id: replay; Replay {} }
     Component { id: room; Room {} }
     Component { id: aboutPage; About {} }
 
-    property var generalsOverviewPage
-    property var cardsOverviewPage
+    property alias generalsOverviewPage: generalsOverview
+    property alias cardsOverviewPage: cardsOverview
     property alias modesOverviewPage: modesOverview
     property alias aboutPage: aboutPage
+    property alias replayPage: replay
     property bool busy: false
     property string busyText: ""
     onBusyChanged: busyText = "";
@@ -224,13 +226,21 @@ Window {
     title: realMainWin.title
     informativeText: qsTr("Are you sure to exit?")
     buttons: MessageDialog.Ok | MessageDialog.Cancel
-    onAccepted: {
-      mainWindow.closing = true;
-      config.winWidth = width;
-      config.winHeight = height;
-      config.saveConf();
-      Backend.quitLobby(false);
-      realMainWin.close();
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          mainWindow.closing = true;
+          config.winWidth = width;
+          config.winHeight = height;
+          config.saveConf();
+          Backend.quitLobby(false);
+          realMainWin.close();
+          break;
+        }
+        case MessageDialog.Cancel: {
+          exitMessageDialog.close();
+        }
+      }
     }
   }
 

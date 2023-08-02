@@ -14,6 +14,8 @@ public:
 
   Q_INVOKABLE QString readFile(const QString &fileName);
   Q_INVOKABLE void saveToFile(const QString &fileName, const QString &content);
+  Q_INVOKABLE void mkdir(const QString &path);
+  Q_INVOKABLE void rmrf(const QString &path);
 
   Q_INVOKABLE void createMod(const QString &name);
   Q_INVOKABLE void removeMod(const QString &name);

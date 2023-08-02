@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Fk
 
@@ -25,6 +26,7 @@ Item {
   property string name: "slash"
   property string extension: ""
   property string virt_name: ""
+  property int type: 0
   property string subtype: ""
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
@@ -33,6 +35,7 @@ Item {
   property bool enabled: true   // if false the card will be grey
   property alias card: cardItem
   property alias glow: glowItem
+  property var mark: ({})
 
   function getColor() {
     if (suit != "")
@@ -49,6 +52,8 @@ Item {
   property bool showDetail: false
   property int origX: 0
   property int origY: 0
+  property int initialZ: 0
+  property int maxZ: 0
   property real origOpacity: 1
   // property bool isClicked: false
   property bool moveAborted: false
@@ -161,6 +166,57 @@ Item {
     //glow.samples: 12
   }
 
+  Component {
+    id: cardMarkDelegate
+    Item {
+      width: root.width / 2
+      height: 16
+      Rectangle {
+        id: mark_rect
+        width: mark_text.width + 12
+        height: 16
+        // color: "#A50330"
+        radius: 4
+        // border.color: "snow"
+        // border.width: 1
+        gradient: Gradient {
+          orientation: Gradient.Horizontal
+          GradientStop { position: 0.7; color: "#A50330" }
+          GradientStop { position: 1.0; color: "transparent" }
+        }
+      }
+      Text {
+        id: mark_text
+        x: 2
+        font.pixelSize: 16
+        font.family: fontLibian.name
+        font.letterSpacing: -0.6
+        text: {
+          let ret = Backend.translate(modelData.k);
+          if (!modelData.k.startsWith("@@")) {
+            ret += modelData.v.toString();
+          }
+          return ret;
+        }
+        color: "white"
+        style: Text.Outline
+        styleColor: "purple"
+      }
+    }
+  }
+
+  GridLayout {
+    width: root.width
+    y: 60
+    columns: 2
+    rowSpacing: 1
+    columnSpacing: 0
+    Repeater {
+      model: mark
+      delegate: cardMarkDelegate
+    }
+  }
+
   Rectangle {
     visible: !root.selectable
     anchors.fill: parent
@@ -206,10 +262,12 @@ Item {
       if (!draggable) return;
       if (hovered) {
         glow.visible = true;
-        root.z++;
+
+        root.z = root.maxZ ? root.maxZ + 1 : root.z + 1;
       } else {
         glow.visible = false;
-        root.z--;
+
+        root.z = root.initialZ ? root.initialZ : root.z - 1
       }
     }
   }
@@ -264,8 +322,10 @@ Item {
     suit = data.suit;
     number = data.number;
     color = data.color;
+    type = data.type ? data.type : 0
     subtype = data.subtype ? data.subtype : "";
     virt_name = data.virt_name ? data.virt_name : "";
+    mark = data.mark ?? {};
   }
 
   function toData()
@@ -276,8 +336,10 @@ Item {
       suit: suit,
       number: number,
       color: color,
+      type: type,
       subtype: subtype,
       virt_name: virt_name,
+      mark: mark,
     };
     return data;
   }

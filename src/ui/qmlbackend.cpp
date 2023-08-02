@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "qmlbackend.h"
+#include <qjsondocument.h>
 
 #ifndef FK_SERVER_ONLY
 #include <qaudiooutput.h>
 #include <qmediaplayer.h>
 #include <qrandom.h>
+#include <QNetworkDatagram>
 
 #include <QClipboard>
 #include <QMediaPlayer>
@@ -18,6 +20,7 @@
 #endif
 #include "client.h"
 #include "util.h"
+#include "replayer.h"
 
 QmlBackend *Backend = nullptr;
 
@@ -25,7 +28,12 @@ QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
 #ifndef FK_SERVER_ONLY
   engine = nullptr;
+  replayer = nullptr;
   rsa = RSA_new();
+  udpSocket = new QUdpSocket(this);
+  udpSocket->bind(0);
+  connect(udpSocket, &QUdpSocket::readyRead,
+          this, &QmlBackend::readPendingDatagrams);
 #endif
 }
 
@@ -89,6 +97,9 @@ void QmlBackend::joinServer(QString address) {
     return;
   Client *client = new Client(this);
   connect(client, &Client::error_message, this, [=](const QString &msg) {
+    if (replayer) {
+      emit replayerShutdown();
+    }
     client->deleteLater();
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
@@ -110,8 +121,8 @@ void QmlBackend::joinServer(QString address) {
 void QmlBackend::quitLobby(bool close) {
   if (ClientInstance)
     delete ClientInstance;
-  if (ServerInstance && close)
-    ServerInstance->deleteLater();
+  // if (ServerInstance && close)
+  //   ServerInstance->deleteLater();
 }
 
 void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
@@ -166,7 +177,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
     }
     break;
   default:
-    qCritical() << "cannot handle QVariant type" << v.typeId();
+    // qCritical() << "cannot handle QVariant type" << v.typeId();
     lua_pushnil(L);
     break;
   }
@@ -175,6 +186,7 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
 QString QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params) {
   if (!ClientInstance) return "{}";
+
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, func_name.toLatin1().data());
 
@@ -190,6 +202,7 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
     return "";
   }
   lua_pop(L, 1);
+
   return QString(result);
 }
 
@@ -264,7 +277,7 @@ void QmlBackend::replyDelayTest(const QString &screenName,
   auto md5 = calcFileMD5();
 
   QJsonArray arr;
-  arr << screenName << cipher << md5 << FK_VERSION;
+  arr << screenName << cipher << md5 << FK_VERSION << GetDeviceUuid();
   ClientInstance->notifyServer("Setup", JsonArray2Bytes(arr));
 }
 
@@ -308,6 +321,10 @@ void QmlBackend::copyToClipboard(const QString &s) {
   QGuiApplication::clipboard()->setText(s);
 }
 
+QString QmlBackend::readClipboard() {
+  return QGuiApplication::clipboard()->text();
+}
+
 void QmlBackend::setAESKey(const QString &key) { aes_key = key; }
 
 QString QmlBackend::getAESKey() const { return aes_key; }
@@ -318,6 +335,106 @@ void QmlBackend::installAESKey() {
 
 void QmlBackend::createModBackend() {
   engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
+}
+
+
+void QmlBackend::detectServer() {
+  static const char *ask_str = "fkDetectServer";
+  udpSocket->writeDatagram(ask_str,
+      strlen(ask_str),
+      QHostAddress::Broadcast,
+      9527);
+}
+
+void QmlBackend::getServerInfo(const QString &address) {
+  QString addr = "127.0.0.1";
+  ushort port = 9527u;
+  static const char *ask_str = "fkGetDetail,";
+
+  if (address.contains(QChar(':'))) {
+    QStringList texts = address.split(QChar(':'));
+    addr = texts.value(0);
+    port = texts.value(1).toUShort();
+  } else {
+    addr = address;
+  }
+
+  QByteArray ask(ask_str);
+  ask.append(address.toLatin1());
+
+  udpSocket->writeDatagram(ask, ask.size(),
+      QHostAddress(addr), port);
+}
+
+void QmlBackend::readPendingDatagrams() {
+  while (udpSocket->hasPendingDatagrams()) {
+    QNetworkDatagram datagram = udpSocket->receiveDatagram();
+    if (datagram.isValid()) {
+      auto data = datagram.data();
+      auto addr = datagram.senderAddress();
+      // auto port = datagram.senderPort();
+
+      if (data == "me") {
+        emit notifyUI("ServerDetected", addr.toString());
+      } else {
+        auto arr = QJsonDocument::fromJson(data).array();
+        emit notifyUI("GetServerDetail", JsonArray2Bytes(arr));
+      }
+    }
+  }
+}
+
+void QmlBackend::removeRecord(const QString &fname) {
+  QFile::remove("recording/" + fname);
+}
+
+void QmlBackend::playRecord(const QString &fname) {
+  auto replayer = new Replayer(this, fname);
+  setReplayer(replayer);
+  replayer->start();
+}
+
+Replayer *QmlBackend::getReplayer() const {
+  return replayer;
+}
+
+void QmlBackend::setReplayer(Replayer *rep) {
+  auto r = replayer;
+  if (r) {
+    r->disconnect(this);
+    disconnect(r);
+  }
+  replayer = rep;
+  if (rep) {
+    connect(rep, &Replayer::duration_set, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerDurationSet", QString::number(sec));
+        });
+    connect(rep, &Replayer::elasped, this, [this](int sec) {
+        this->emitNotifyUI("ReplayerElapsedChange", QString::number(sec));
+        });
+    connect(rep, &Replayer::speed_changed, this, [this](qreal speed) {
+        this->emitNotifyUI("ReplayerSpeedChange", QString::number(speed));
+        });
+    connect(this, &QmlBackend::replayerToggle, rep, &Replayer::toggle);
+    connect(this, &QmlBackend::replayerSlowDown, rep, &Replayer::slowDown);
+    connect(this, &QmlBackend::replayerSpeedUp, rep, &Replayer::speedUp);
+    connect(this, &QmlBackend::replayerUniform, rep, &Replayer::uniform);
+    connect(this, &QmlBackend::replayerShutdown, rep, &Replayer::shutdown);
+  }
+}
+
+void QmlBackend::controlReplayer(QString type) {
+  if (type == "toggle") {
+    emit replayerToggle();
+  } else if (type == "speedup") {
+    emit replayerSpeedUp();
+  } else if (type == "slowdown") {
+    emit replayerSlowDown();
+  } else if (type == "uniform") {
+    emit replayerUniform();
+  } else if (type == "shutdown") {
+    emit replayerShutdown();
+  }
 }
 
 #endif

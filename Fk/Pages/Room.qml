@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtMultimedia
 import Fk
@@ -25,6 +26,7 @@ Item {
   property alias manualBox: manualBox
   property alias bigAnim: bigAnim
   property alias promptText: prompt.text
+  property var currentPrompt
   property alias okCancel: okCancel
   property alias okButton: okButton
   property alias cancelButton: cancelButton
@@ -40,6 +42,11 @@ Item {
   property bool respond_play: false
   property bool autoPending: false
   property var extra_data: ({})
+  property var skippedUseEventId: []
+
+  property real replayerSpeed
+  property int replayerElapsed
+  property int replayerDuration
 
   Image {
     source: config.roomBg
@@ -70,17 +77,107 @@ Item {
   }
 
   // tmp
-  DelayButton {
-    id: quitButton
-    text: "quit"
+  Button {
+    id: menuButton
     anchors.top: parent.top
     anchors.right: parent.right
-    delay: Debugging ? 10 : 1000
-    onActivated: {
-      // ClientInstance.clearPlayers();
-      ClientInstance.notifyServer("QuitRoom", "[]");
+    anchors.rightMargin: 10
+    text: Backend.translate("Menu")
+    z: 2
+    onClicked: {
+      menuContainer.visible || menuContainer.open();
     }
   }
+
+  Menu {
+    id: menuContainer
+    x: parent.width - menuButton.width - menuContainer.width - 17
+    width: menuRow.width
+    height: menuRow.height
+    verticalPadding: 0
+    spacing: 7
+    z: 2
+
+    Row {
+      id: menuRow
+      spacing: 7
+
+      Button {
+        id: surrenderButton
+        enabled: !config.observing && !config.replaying
+        text: Backend.translate("Surrender")
+        onClicked: {
+          if (isStarted && !getPhoto(Self.id).dead) {
+            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+            if (!surrenderCheck.length) {
+              surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
+            } else {
+              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
+            }
+            surrenderDialog.open();
+          }
+        }
+      }
+
+      MessageDialog {
+        id: surrenderDialog
+        title: Backend.translate("Surrender")
+        informativeText: ''
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button, role) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+              if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
+                ClientInstance.notifyServer("PushRequest", [
+                  "surrender", true
+                ]);
+              }
+              surrenderDialog.close();
+              break;
+            }
+            case MessageDialog.Cancel: {
+              surrenderDialog.close();
+            }
+          }
+        }
+      }
+
+      Button {
+        id: quitButton
+        text: Backend.translate("Quit")
+        onClicked: {
+          if (config.replaying) {
+            Backend.controlReplayer("shutdown");
+            mainStack.pop();
+          } else if (config.observing) {
+            ClientInstance.notifyServer("QuitRoom", "[]");
+          } else {
+            quitDialog.open();
+          }
+        }
+      }
+
+      MessageDialog {
+        id: quitDialog
+        title: Backend.translate("Quit")
+        informativeText: Backend.translate("Are you sure to quit?")
+        buttons: MessageDialog.Ok | MessageDialog.Cancel
+        onButtonClicked: function (button) {
+          switch (button) {
+            case MessageDialog.Ok: {
+              ClientInstance.notifyServer("QuitRoom", "[]");
+              break;
+            }
+            case MessageDialog.Cancel: {
+              quitDialog.close();
+            }
+          }
+        }
+      }
+    }
+  }
+
   Button {
     text: Backend.translate("Add Robot")
     visible: isOwner && !isStarted && !isFull
@@ -127,7 +224,8 @@ Item {
       Component.onCompleted: {
         const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
         text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
-          + "<br />选将框数：" + data.generalNum
+          + "<br />选将框数：" + data.generalNum + (data.enableFreeAssign ? "<br /><font color=\"red\">可自由点将</font>" : "")
+          + (data.enableDeputy ? "<br /><font color=\"red\">启用副将机制</font>" : "")
       }
     }
   }
@@ -146,6 +244,7 @@ Item {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
+          currentPrompt = "";
           progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
@@ -156,6 +255,7 @@ Item {
 
           if (dashboard.pending_skill !== "")
             dashboard.stopPending();
+          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
           dashboard.retractAllPiles();
@@ -173,6 +273,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.enableCards();
           dashboard.enableSkills();
           progress.visible = true;
@@ -188,6 +289,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.enableCards(responding_card);
           dashboard.enableSkills(responding_card, respond_play);
           autoPending = false;
@@ -202,6 +304,7 @@ Item {
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
+          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
           progress.visible = true;
@@ -257,6 +360,7 @@ Item {
         drank: model.drank
         isOwner: model.isOwner
         ready: model.ready
+        surrendered: model.surrendered
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -291,15 +395,27 @@ Item {
     width: childrenRect.width
     height: childrenRect.height
     anchors.bottom: parent.bottom
+    anchors.bottomMargin: 8
+    anchors.left: parent.left
+    anchors.leftMargin: 8
     ColumnLayout {
       MetroButton {
-        text: Backend.translate("Trust")
+        text: Backend.translate("Revert Selection")
+        textFont.pixelSize: 28
+        enabled: dashboard.pending_skill !== ""
+        onClicked: dashboard.revertSelection();
       }
+      // MetroButton {
+      //   text: Backend.translate("Trust")
+      // }
       MetroButton {
         text: Backend.translate("Sort Cards")
+        textFont.pixelSize: 28
+        onClicked: Logic.resortHandcards();
       }
       MetroButton {
         text: Backend.translate("Chat")
+        textFont.pixelSize: 28
         onClicked: roomDrawer.open();
       }
     }
@@ -328,10 +444,70 @@ Item {
 
   GlowText {
     text: Backend.translate("Observing ...")
-    visible: config.observing
+    visible: config.observing && !config.replaying
     color: "#4B83CD"
     font.family: fontLi2.name
     font.pixelSize: 48
+  }
+
+  Rectangle {
+    id: replayControls
+    visible: config.replaying
+    anchors.bottom: dashboard.top
+    anchors.bottomMargin: -60
+    anchors.horizontalCenter: parent.horizontalCenter
+    width: childrenRect.width + 8
+    height: childrenRect.height + 8
+
+    color: "#88EEEEEE"
+    radius: 4
+
+    RowLayout {
+      x: 4; y: 4
+      Text {
+        font.pixelSize: 20
+        font.bold: true
+        text: {
+          const elapsedMin = Math.floor(replayerElapsed / 60);
+          const elapsedSec = replayerElapsed % 60;
+          const totalMin = Math.floor(replayerDuration / 60);
+          const totalSec = replayerDuration % 60;
+
+          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin + ":" + totalSec;
+        }
+      }
+
+      Switch {
+        text: "匀速"
+        checked: false
+        onCheckedChanged: Backend.controlReplayer("uniform");
+      }
+
+      Button {
+        text: "减速"
+        onClicked: Backend.controlReplayer("slowdown");
+      }
+
+      Text {
+        font.pixelSize: 20
+        font.bold: true
+        text: "x" + replayerSpeed;
+      }
+
+      Button {
+        text: "加速"
+        onClicked: Backend.controlReplayer("speedup");
+      }
+
+      Button {
+        property bool running: true
+        text: running ? "暂停" : "继续"
+        onClicked: {
+          running = !running;
+          Backend.controlReplayer("toggle");
+        }
+      }
+    }
   }
 
   Item {
@@ -408,8 +584,19 @@ Item {
       anchors.rightMargin: 20
       color: "#88EEEEEE"
       radius: 8
-      visible: roomScene.state == "playing" && specialCardSkills && (specialCardSkills.count > 1
-        || (specialCardSkills.model && specialCardSkills.model[0] !== "_normal_use"))
+      visible: {
+        if (roomScene.state !== "playing") {
+          return false;
+        }
+        if (!specialCardSkills) {
+          return false;
+        }
+        if (specialCardSkills.count > 1) {
+          return true;
+        }
+        return (specialCardSkills.model ?? false)
+            && specialCardSkills.model[0] !== "_normal_use"
+      }
       width: childrenRect.width
       height: childrenRect.height - 20
 
@@ -453,6 +640,16 @@ Item {
       visible: false
 
       Button {
+        id: skipNullificationButton
+        text: Backend.translate("SkipNullification")
+        visible: !!extra_data.useEventId && !skippedUseEventId.find(id => id === extra_data.useEventId)
+        onClicked: {
+          skippedUseEventId.push(extra_data.useEventId);
+          Logic.doCancelButton();
+        }
+      }
+
+      Button {
         id: okButton
         text: Backend.translate("OK")
         onClicked: Logic.doOkButton();
@@ -483,21 +680,20 @@ Item {
     onSourceChanged: {
       if (item === null)
         return;
-      item.finished.connect(function(){
+      item.finished.connect(() => {
         sourceComponent = undefined;
       });
-      item.widthChanged.connect(function(){
+      item.widthChanged.connect(() => {
         popupBox.moveToCenter();
       });
-      item.heightChanged.connect(function(){
+      item.heightChanged.connect(() => {
         popupBox.moveToCenter();
       });
       moveToCenter();
     }
     onSourceComponentChanged: sourceChanged();
 
-    function moveToCenter()
-    {
+    function moveToCenter() {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
     }
@@ -541,6 +737,8 @@ Item {
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
+          skillInteraction.item.detailed = data.detailed;
+          skillInteraction.item.all_choices = data.all_choices;
           // skillInteraction.item.clicked();
           break;
         case "spin":
@@ -590,6 +788,7 @@ Item {
           }
         }
         Item {
+          visible: !config.replaying
           ChatBox {
             id: chat
             anchors.fill: parent
@@ -680,7 +879,7 @@ Item {
 
   MiscStatus {
     id: miscStatus
-    anchors.right: quitButton.left
+    anchors.right: menuButton.left
     anchors.top: parent.top
     anchors.rightMargin: 16
     anchors.topMargin: 8
@@ -779,6 +978,7 @@ Item {
         case "Egg":
         case "GiantEgg":
         case "Shoe":
+        case "Wine":
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);
@@ -866,7 +1066,7 @@ Item {
         const dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
         item.distance = parseInt(dis);
       } else {
-        item.distance = 0;
+        item.distance = -1;
       }
     }
   }
@@ -881,6 +1081,13 @@ Item {
     const datalist = [];
     for (let i = 0; i < photoModel.count; i++) {
       const item = photoModel.get(i);
+      let gameData;
+      try {
+        gameData = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [item.id]));
+      } catch (e) {
+        console.log(e);
+        gameData = [0, 0, 0];
+      }
       if (item.id > 0) {
         datalist.push({
           id: item.id,
@@ -888,6 +1095,7 @@ Item {
           name: item.screenName,
           isOwner: item.isOwner,
           ready: item.ready,
+          gameData: gameData,
         });
       }
     }
@@ -897,6 +1105,15 @@ Item {
     mainStack.currentItem.loadPlayerData(datalist);
   }
 
+  function setPrompt(text, iscur) {
+    promptText = text;
+    if (iscur) currentPrompt = text;
+  }
+
+  function resetPrompt() {
+    promptText = currentPrompt;
+  }
+
   function loadPlayerData(datalist) {
     datalist.forEach(d => {
       if (d.id == Self.id) {
@@ -904,8 +1121,13 @@ Item {
       } else {
         Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
       }
+      Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;
     });
+  }
+
+  function getPhoto(id) {
+    return Logic.getPhoto(id);
   }
 
   Component.onCompleted: {
@@ -934,6 +1156,7 @@ Item {
         drank: 0,
         isOwner: false,
         ready: false,
+        surrendered: false,
       });
     }
 

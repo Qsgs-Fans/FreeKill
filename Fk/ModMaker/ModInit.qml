@@ -20,6 +20,17 @@ Item {
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
+      Button {
+        text: "Test"
+        onClicked: {
+          const component = Qt.createComponent("Block/Workspace.qml");
+          if (component.status !== Component.Ready) {
+            return;
+          }
+          const page = component.createObject(null);
+          modStack.push(page);
+        }
+      }
       ToolButton {
         icon.source: AppPath + "/image/modmaker/menu"
         onClicked: {
@@ -45,9 +56,19 @@ Item {
     ListView {
       anchors.fill: parent
       model: modConfig.modList
+      clip: true
       delegate: SwipeDelegate {
         width: root.width
         text: modelData
+
+        onClicked: {
+          const component = Qt.createComponent("ModDetail.qml");
+          if (component.status !== Component.Ready) {
+            return;
+          }
+          const page = component.createObject(null, { modName: modelData });
+          modStack.push(page);
+        }
 
         swipe.right: Label {
           id: deleteLabel
