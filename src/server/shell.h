@@ -31,6 +31,7 @@ private:
   void unbanCommand(QStringList &);
   void unbanipCommand(QStringList &);
   void unbanUuidCommand(QStringList &);
+  void reloadConfCommand(QStringList &);
 };
 
 #endif

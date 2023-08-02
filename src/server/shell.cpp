@@ -25,8 +25,10 @@ void Shell::helpCommand(QStringList &) {
 
   HELP_MSG("%s: Display this help message.", "help");
   HELP_MSG("%s: Shut down the server.", "quit");
+  HELP_MSG("%s: Crash the server. Useful when encounter dead loop.", "crash");
   HELP_MSG("%s: List all online players.", "lsplayer");
   HELP_MSG("%s: List all running rooms.", "lsroom");
+  HELP_MSG("%s: Reload server config file.", "reloadconf");
   HELP_MSG("%s: Kick a player by his <id>.", "kick");
   HELP_MSG("%s: Broadcast message.", "msg");
   HELP_MSG("%s: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
@@ -349,6 +351,11 @@ void Shell::unbanUuidCommand(QStringList &list) {
   }
 }
 
+void Shell::reloadConfCommand(QStringList &) {
+  ServerInstance->readConfig();
+  qInfo("Reloaded server config file.");
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -373,6 +380,7 @@ Shell::Shell() {
     handlers["unbanip"] = &Shell::unbanipCommand;
     handlers["banuuid"] = &Shell::banUuidCommand;
     handlers["unbanuuid"] = &Shell::unbanUuidCommand;
+    handlers["reloadconf"] = &Shell::reloadConfCommand;
   }
   handler_map = handlers;
 }
@@ -384,7 +392,8 @@ void Shell::run() {
       "This is free software, and you are welcome to redistribute it under\n");
   printf("certain conditions; For more information visit "
          "http://www.gnu.org/licenses.\n\n");
-  printf("This is server cli. Enter \"help\" for usage hints.\n");
+
+  printf("[v%s] This is server cli. Enter \"help\" for usage hints.\n", FK_VERSION);
 
   while (true) {
     char *bytes = readline("fk> ");
@@ -393,6 +402,8 @@ void Shell::run() {
       qApp->quit();
       return;
     }
+
+    qInfo("Running command: \"%s\"", bytes);
 
     if (!strcmp(bytes, "crash")) {
       qFatal("Crashing."); // should dump core
