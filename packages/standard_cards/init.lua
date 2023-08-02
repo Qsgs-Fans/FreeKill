@@ -21,7 +21,7 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return self:modTargetFilter(to_select, selected, Self.id, true, card) and
+      return self:modTargetFilter(to_select, selected, Self.id, card, true) and
       (#selected > 0 or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
     end
   end,
