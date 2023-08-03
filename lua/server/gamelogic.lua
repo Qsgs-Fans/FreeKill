@@ -91,6 +91,11 @@ function GameLogic:chooseGenerals()
   if lord ~= nil then
     room.current = lord
     local generals = {}
+    local lordlist = {}
+    local lordpools = {}
+    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(generals, function (g)
+      return g.name
+    end)))
     if room.settings.gameMode == "aaa_role_mode" then
       for _, general in pairs(Fk:getAllGenerals()) do
         if (not general.hidden and not general.total_hidden) and
@@ -100,18 +105,17 @@ function GameLogic:chooseGenerals()
         not table.find(generals, function(g)
           return g.trueName == general.trueName
         end) then
-          table.insert(generals, general)
+          table.insert(lordlist, general)
         end
       end
-      generals = table.random(generals, 3)
+      lordlist = table.random(lordlist, 3) or {}
     end
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(generals, function (g)
-      return g.name
-    end)))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
-    lord_generals = room:askForGeneral(lord, generals, n)
+    lordpools = table.simpleClone(generals)
+    table.insertTable(lordpools, table.map(lordlist, function(g) return g.name end))
+    lord_generals = room:askForGeneral(lord, lordpools, n)
     local lord_general, deputy
     if type(lord_generals) == "table" then
       deputy = lord_generals[2]
