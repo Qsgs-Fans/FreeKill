@@ -22,7 +22,7 @@ Flickable {
     anchors.topMargin: 8
 
     Switch {
-      text: "禁用Lua拓展 (重启后生效)"
+      text: Backend.translate("Disable Extension")
     }
 
     RowLayout {
@@ -132,19 +132,25 @@ Flickable {
   Component.onCompleted: {
     const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     for (let orig of g) {
+      if (config.serverHiddenPacks.includes(orig)) {
+        continue;
+      }
       gpacklist.append({
         name: Backend.translate(orig),
         orig_name: orig,
-        pkg_enabled: config.disabledPack.indexOf(orig) === -1,
+        pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
 
     const c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
     for (let orig of c) {
+      if (config.serverHiddenPacks.includes(orig)) {
+        continue;
+      }
       cpacklist.append({
         name: Backend.translate(orig),
         orig_name: orig,
-        pkg_enabled: config.disabledPack.indexOf(orig) === -1,
+        pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
   }

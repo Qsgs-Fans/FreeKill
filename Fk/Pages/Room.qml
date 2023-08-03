@@ -223,9 +223,9 @@ Item {
       x: 8; y: 8
       Component.onCompleted: {
         const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
-        text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
-          + "<br />选将框数：" + data.generalNum + (data.enableFreeAssign ? "<br /><font color=\"red\">可自由点将</font>" : "")
-          + (data.enableDeputy ? "<br /><font color=\"red\">启用副将机制</font>" : "")
+        text = Backend.translate("LuckCardNum") + data.luckTime + "<br />" + Backend.translate("ResponseTime") + config.roomTimeout
+          + "<br />" + Backend.translate("GeneralBoxNum") + data.generalNum + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
+          + (data.enableDeputy ? "<br />" + Backend.translate("IncludeDeputy") : "")
       }
     }
   }
@@ -478,13 +478,13 @@ Item {
       }
 
       Switch {
-        text: "匀速"
+        text: Backend.translate("Speed Resume")
         checked: false
         onCheckedChanged: Backend.controlReplayer("uniform");
       }
 
       Button {
-        text: "减速"
+        text: Backend.translate("Speed Down")
         onClicked: Backend.controlReplayer("slowdown");
       }
 
@@ -495,13 +495,13 @@ Item {
       }
 
       Button {
-        text: "加速"
+        text: Backend.translate("Speed Up")
         onClicked: Backend.controlReplayer("speedup");
       }
 
       Button {
         property bool running: true
-        text: running ? "暂停" : "继续"
+        text: Backend.translate(running ? "Pause" : "Resume")
         onClicked: {
           running = !running;
           Backend.controlReplayer("toggle");

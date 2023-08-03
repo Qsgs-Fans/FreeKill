@@ -359,7 +359,11 @@ Item {
   function loadPackages() {
     if (loaded) return;
     const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
-    packs.forEach((name) => packages.append({ name: name }));
+    packs.forEach(name => {
+      if (!config.serverHiddenPacks.includes(name)) {
+        packages.append({ name: name });
+      }
+    });
     generalDetail.updateGeneral();
     loaded = true;
   }

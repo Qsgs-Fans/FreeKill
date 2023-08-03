@@ -121,10 +121,13 @@ local function _waitForReply(player, timeout)
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
-      player._timewaste_count = player._timewaste_count + 1
+      if timeout >= 15 then
+        player._timewaste_count = player._timewaste_count + 1
+      end
       player.serverplayer:setThinking(false)
 
       if player._timewaste_count >= 3 then
+        player._timewaste_count = 0
         player.serverplayer:emitKick()
       end
 

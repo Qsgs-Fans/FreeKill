@@ -213,7 +213,7 @@ local snatchSkill = fk.CreateActiveSkill{
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return from ~= player and not (player:isAllNude() or (distance_limited and not self:withinDistanceLimit(from, true, card, player)))
+    return from ~= player and not (player:isAllNude() or (distance_limited and not self:withinDistanceLimit(from, false, card, player)))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
