@@ -88,7 +88,7 @@ local analepticSkill = fk.CreateActiveSkill{
       end)
   end,
   can_use = function(self, player, card)
-    return self:modTargetFilter(player.id, Util.DummyTable, player.id, card)
+    return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
