@@ -180,7 +180,8 @@ function ServerPlayer:waitForReply(timeout)
 end
 
 ---@param player ServerPlayer
-function ServerPlayer:marshal(player)
+---@param observe boolean|nil
+function ServerPlayer:marshal(player, observe)
   local room = self.room
   if not room.game_started then
     -- If game does not starts, that mean we are entering room that
@@ -269,7 +270,7 @@ function ServerPlayer:marshal(player)
   end
 
   if #card_moves > 0 then
-    room:notifyMoveCards({ player }, card_moves)
+    room:notifyMoveCards({ player }, card_moves, observe and self.seat == 1)
   end
 
   for k, v in pairs(self.mark) do
