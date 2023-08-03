@@ -83,7 +83,7 @@ local analepticSkill = fk.CreateActiveSkill{
   max_turn_use_time = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
-      not table.find(Fk:currentRoom().players, function(p)
+      not table.find(Fk:currentRoom().alive_players, function(p)
         return p.dying
       end)
   end,
