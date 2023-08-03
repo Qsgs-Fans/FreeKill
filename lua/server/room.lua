@@ -777,15 +777,6 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
     for _, move in ipairs(arg) do
       -- local to = self:getPlayerById(move.to)
 
-      local function infosContainArea(info, area)
-        for _, i in ipairs(info) do
-          if i.fromArea == area then
-            return true
-          end
-        end
-        return false
-      end
-
       for _, info in ipairs(move.moveInfo) do
         local realFromArea = self:getCardArea(info.cardId)
         local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
@@ -800,27 +791,24 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
         end
       end
 
-      -- forceVisible make the move visible
-      -- FIXME: move.moveInfo is an array, fix this
-      move.moveVisible = move.moveVisible or (forceVisible)
-        -- if move is relevant to player, it should be open
-        or ((move.from == p.id) or (move.to == p.id))
-        -- cards move from/to equip/judge/discard/processing should be open
-        or infosContainArea(move.moveInfo, Card.PlayerEquip)
-        or move.toArea == Card.PlayerEquip
-        or infosContainArea(move.moveInfo, Card.PlayerJudge)
-        or move.toArea == Card.PlayerJudge
-        or infosContainArea(move.moveInfo, Card.DiscardPile)
-        or move.toArea == Card.DiscardPile
-        or infosContainArea(move.moveInfo, Card.Processing)
-        or move.toArea == Card.Processing
-        -- TODO: PlayerSpecial
+      local function containArea(area, relevant) --处理区的处理？
+        local areas = relevant
+          and {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing, Card.PlayerHand}
+          or {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing}
+        return table.contains(areas, area)
+      end
 
-      if not move.moveVisible then
+      -- forceVisible make the move visible
+      -- if move is relevant to player's hands or equips, it should be open
+        -- cards move from/to equip/judge/discard/processing should be open
+
+      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to == p.id)) then
         for _, info in ipairs(move.moveInfo) do
+          if not containArea(info.fromArea, move.from == p.id) then
           info.cardId = -1
         end
       end
+    end
     end
     p:doNotify("MoveCards", json.encode(arg))
   end
@@ -2580,7 +2568,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
     skillName = skillName,
     fromPlace = fromPlace,
   }
-  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) or drawData.num < 1 then
+  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) then
     self.logic:breakEvent(false)
   end
 

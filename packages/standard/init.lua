@@ -130,10 +130,7 @@ local fankui = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     local room = player.room
     local from = data.from
-    local flag = "he"
-    if from == player then
-      flag = "e"
-    end
+    local flag =  from == player and "e" or "he"
     local card = room:askForCardChosen(player, from, flag, self.name)
     room:obtainCard(player.id, card, false, fk.ReasonPrey)
   end
@@ -366,16 +363,24 @@ local luoshen = fk.CreateTriggerSkill{
         pattern = ".|.|spade,club",
       }
       room:judge(judge)
-      if judge.card.color ~= Card.Black then
-        break
-      end
-      room:obtainCard(player.id, judge.card, true, fk.ReasonJustMove)
-      if player.dead or not room:askForSkillInvoke(player, self.name) then
+      if judge.card.color ~= Card.Black or player.dead or not room:askForSkillInvoke(player, self.name) then
         break
       end
     end
   end,
 }
+local luoshen_obtain = fk.CreateTriggerSkill{
+  name = "#luoshen_obtain",
+  mute = true,
+  frequency = Skill.Compulsory,
+  events = {fk.FinishJudge},
+  can_trigger = function(self, event, target, player, data)
+    return target == player and data.reason == "luoshen" and data.card.color == Card.Black end,
+  on_use = function(self, event, target, player, data)
+    player.room:obtainCard(player.id, data.card)
+  end,
+}
+luoshen:addRelatedSkill(luoshen_obtain)
 local qingguo = fk.CreateViewAsSkill{
   name = "qingguo",
   anim_type = "defensive",
@@ -383,7 +388,7 @@ local qingguo = fk.CreateViewAsSkill{
   card_filter = function(self, to_select, selected)
     if #selected == 1 then return false end
     return Fk:getCardById(to_select).color == Card.Black
-      and Fk:currentRoom():getCardArea(to_select) ~= Player.Hand
+      and Fk:currentRoom():getCardArea(to_select) == Player.Hand
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -951,24 +956,38 @@ local xiaoji = fk.CreateTriggerSkill{
   events = {fk.AfterCardsMove},
   can_trigger = function(self, event, target, player, data)
     if not player:hasSkill(self.name) then return end
-    self.trigger_times = 0
     for _, move in ipairs(data) do
       if move.from == player.id then
         for _, info in ipairs(move.moveInfo) do
           if info.fromArea == Card.PlayerEquip then
-            self.trigger_times = self.trigger_times + 1
+            return true
           end
         end
       end
     end
-    return self.trigger_times > 0
   end,
   on_trigger = function(self, event, target, player, data)
-    local ret
-    for i = 1, self.trigger_times do
-      ret = self:doCost(event, target, player, data)
-      if ret then return ret end
+    local i = 0
+    for _, move in ipairs(data) do
+      if move.from == player.id then
+        for _, info in ipairs(move.moveInfo) do
+          if info.fromArea == Card.PlayerEquip then
+            i = i + 1
+          end
+        end
+      end
     end
+    self.cancel_cost = false
+    for i = 1, i do
+      if self.cancel_cost or not player:hasSkill(self.name) then break end
+      self:doCost(event, target, player, data)
+    end
+  end,
+  on_cost = function(self, event, target, player, data)
+    if player.room:askForSkillInvoke(player, self.name) then
+      return true
+    end
+    self.cancel_cost = true
   end,
   on_use = function(self, event, target, player, data)
     player:drawCards(2, self.name)
@@ -997,14 +1016,14 @@ local jieyin = fk.CreateActiveSkill{
     room:recover({
       who = room:getPlayerById(effect.tos[1]),
       num = 1,
-      recoverBy = room:getPlayerById(effect.from),
+      recoverBy = from,
       skillName = self.name
     })
     if from:isWounded() then
       room:recover({
-        who = room:getPlayerById(effect.from),
+        who = from,
         num = 1,
-        recoverBy = room:getPlayerById(effect.from),
+        recoverBy = from,
         skillName = self.name
       })
     end
@@ -1034,7 +1053,7 @@ local qingnang = fk.CreateActiveSkill{
     room:recover({
       who = room:getPlayerById(effect.tos[1]),
       num = 1,
-      recoverBy = room:getPlayerById(effect.from),
+      recoverBy = from,
       skillName = self.name
     })
   end,

@@ -589,19 +589,21 @@ function ServerPlayer:bury()
 end
 
 function ServerPlayer:throwAllCards(flag)
-  local room = self.room
+  local cardIds = {}
   flag = flag or "hej"
   if string.find(flag, "h") then
-    room:throwCard(self.player_cards[Player.Hand], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Hand])
   end
 
   if string.find(flag, "e") then
-    room:throwCard(self.player_cards[Player.Equip], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Equip])
   end
 
   if string.find(flag, "j") then
-    room:throwCard(self.player_cards[Player.Judge], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Judge])
   end
+
+  self.room:throwCard(cardIds, "", self)
 end
 
 function ServerPlayer:throwAllMarks()
@@ -611,9 +613,11 @@ function ServerPlayer:throwAllMarks()
 end
 
 function ServerPlayer:clearPiles()
+  local cardIds = {}
   for _, ids in pairs(self.special_cards) do
-    self.room:throwCard(ids, "", self)
+    table.insertTable(cardIds, ids)
   end
+  self.room:moveCardTo(cardIds, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile, "", nil, true)
 end
 
 function ServerPlayer:addVirtualEquip(card)
@@ -656,19 +660,22 @@ end
 
 ---@param chained boolean
 function ServerPlayer:setChainState(chained)
-  if self.room.logic:trigger(fk.BeforeChainStateChange, self) then
+  local room = self.room
+  if room.logic:trigger(fk.BeforeChainStateChange, self) then
     return
   end
 
   self.chained = chained
-  self.room:broadcastProperty(self, "chained")
-  self.room:sendLog{
+
+  room:broadcastProperty(self, "chained")
+  room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
     arg = self.chained and "chained" or "un-chained"
   }
-
-  self.room.logic:trigger(fk.ChainStateChanged, self)
+  room:delay(150)
+  room:broadcastPlaySound("./audio/system/chain")
+  room.logic:trigger(fk.ChainStateChanged, self)
 end
 
 function ServerPlayer:reset()

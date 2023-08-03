@@ -76,6 +76,7 @@ Fk:loadTranslationTable{
   ["$luoshen2"] = "飘飖兮若流风之回雪。",
   ["luoshen"] = "洛神",
   [":luoshen"] = "准备阶段开始时，你可以进行判定：若结果为黑色，判定牌生效后你获得之，然后你可以再次发动“洛神”。",
+  ["#luoshen_obtain"] = "洛神",
   ["$qingguo1"] = "凌波微步，罗袜生尘。",
   ["$qingguo2"] = "体迅飞凫，飘忽若神。",
   ["qingguo"] = "倾国",
