@@ -98,6 +98,13 @@ callbacks["BackToStart"] = (jsonData) => {
   }
 }
 
+callbacks["SetServerSettings"] = (j) => {
+  const data = JSON.parse(j);
+  const [ motd, hiddenPacks ] = data;
+  config.serverMotd = motd;
+  config.serverHiddenPacks = hiddenPacks;
+};
+
 callbacks["EnterLobby"] = (jsonData) => {
   // depth == 1 means the lobby page is not present in mainStack
   // createClientPages();

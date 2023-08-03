@@ -508,6 +508,11 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
 
+    player->doNotify("SetServerSettings", JsonArray2Bytes({
+          getConfig("motd"),
+          getConfig("hiddenPacks"),
+          }));
+
     lobby()->addPlayer(player);
   } else {
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;
@@ -613,6 +618,8 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("iconUrl", "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png");
   SET_DEFAULT_CONFIG("capacity", 100);
   SET_DEFAULT_CONFIG("tempBanTime", 20);
+  SET_DEFAULT_CONFIG("motd", "Welcome!");
+  SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }

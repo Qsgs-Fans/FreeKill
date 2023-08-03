@@ -73,11 +73,11 @@ Fk:loadTranslationTable{
   ["Help_Ban_List"] = "导出键会将这个方案的内容复制到剪贴板中；" ..
   "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
   ["Export"] = "导出",
-  ["Export Success"] = "导出",
+  ["Export Success"] = "禁将方案已经复制到剪贴板。",
   ["Import"] = "导入",
   ["Not Legal"] = "导入失败：不是合法的JSON字符串。",
   ["Not JSON"] = "导入失败：数据格式不对。",
-  ["Import Success"] = "导入",
+  ["Import Success"] = "从剪贴板导入禁将方案成功。",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -275,7 +275,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Back To Lobby"] = "返回大厅",
   ["Save Replay"] = "保存录像",
 
-  ["Speed Resume"] = "等速",
+  ["Speed Resume"] = "匀速",
   ["Speed Up"] = "加速",
   ["Speed Down"] = "减速",
   ["Pause"] = "暂停",
@@ -287,9 +287,6 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   0.3.0版本，新增录像和禁将方案切换功能，同时修复不少bug。
 
   加强谋徐盛。
-
-  ___
-
   ]==],
 }
 

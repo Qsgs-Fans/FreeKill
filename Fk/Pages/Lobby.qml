@@ -41,7 +41,7 @@ Item {
         width: parent.width
         wrapMode: TextEdit.WordWrap
         textFormat: Text.MarkdownText
-        text: Backend.translate('Bulletin Info')
+        text: config.serverMotd + "\n___\n" + Backend.translate('Bulletin Info')
       }
     }
   }

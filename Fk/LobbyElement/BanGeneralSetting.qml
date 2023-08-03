@@ -30,7 +30,7 @@ Item {
       }
 
       Button {
-        text: Backend.translate("List")
+        text: Backend.translate("New")
         onClicked: {
           const i = config.disableGeneralSchemes.length;
           banComboList.append({
