@@ -252,7 +252,7 @@ end
 function table:random(n)
   local n0 = n
   n = n or 1
-  if #self == 0 then return nil end
+  if #self == 0 then return n0 == nil and nil or {} end
   local tmp = {table.unpack(self)}
   local ret = {}
   while n > 0 and #tmp > 0 do
