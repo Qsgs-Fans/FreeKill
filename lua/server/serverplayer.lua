@@ -417,7 +417,7 @@ function ServerPlayer:changePhase(from_phase, to_phase)
     table.remove(self.phases, 1)
   end
 
-  GameEvent(GameEvent.Phase, self):exec()
+  GameEvent(GameEvent.Phase, self, self.phase):exec()
 
   return false
 end
@@ -445,7 +445,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   }
 
 
-  GameEvent(GameEvent.Phase, self):exec()
+  GameEvent(GameEvent.Phase, self, self.phase):exec()
 
   self.phase = current
   room:broadcastProperty(self, "phase")
@@ -511,7 +511,7 @@ function ServerPlayer:play(phase_table)
     end
 
     if (not skip) or (cancel_skip) then
-      GameEvent(GameEvent.Phase, self):exec()
+      GameEvent(GameEvent.Phase, self, self.phase):exec()
     else
       room:sendLog{
         type = "#PhaseSkipped",
@@ -559,7 +559,7 @@ function ServerPlayer:gainAnExtraTurn(delay)
 
   local current = room.current
   room.current = self
-  GameEvent(GameEvent.Turn):exec()
+  GameEvent(GameEvent.Turn, self):exec()
   room.current = current
 end
 
