@@ -125,7 +125,7 @@ local peachSkill = fk.CreateActiveSkill{
   name = "peach_skill",
   mod_target_filter = function(self, to_select)
     return Fk:currentRoom():getPlayerById(to_select):isWounded() and
-      not table.find(Fk:currentRoom().players, function(p)
+      not table.find(Fk:currentRoom().alive_players, function(p)
         return p.dying
       end)
   end,
