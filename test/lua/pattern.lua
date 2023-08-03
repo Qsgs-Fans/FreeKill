@@ -1,4 +1,17 @@
 TestExppattern = {
+  testUtil = function()
+    local table1 = {1, 3, 5, 8}
+    local table2 = {2, 3, 5, 7}
+    p(table1)
+    p(table2)
+    p(table.connect(table1, table2))
+    p(table1)
+    p(table2)
+    p(table.connectIfNeed(table1, table2))
+    p(table1)
+    p(table2)
+  end,
+
   testMatchExp = function()
     local exp1 = Exppattern:Parse("slash,jink")
     lu.assertTrue(exp1:matchExp("peack,jink"))
