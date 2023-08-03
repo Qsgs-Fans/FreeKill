@@ -478,13 +478,13 @@ Item {
       }
 
       Switch {
-        text: Backend.Translate("Speed Resume")
+        text: Backend.translate("Speed Resume")
         checked: false
         onCheckedChanged: Backend.controlReplayer("uniform");
       }
 
       Button {
-        text: Backend.Translate("Speed Down")
+        text: Backend.translate("Speed Down")
         onClicked: Backend.controlReplayer("slowdown");
       }
 
@@ -495,13 +495,13 @@ Item {
       }
 
       Button {
-        text: Backend.Translate("Speed Up")
+        text: Backend.translate("Speed Up")
         onClicked: Backend.controlReplayer("speedup");
       }
 
       Button {
         property bool running: true
-        text: Backend.Translate(running ? "Pause" : "Resume")
+        text: Backend.translate(running ? "Pause" : "Resume")
         onClicked: {
           running = !running;
           Backend.controlReplayer("toggle");

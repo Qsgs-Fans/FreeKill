@@ -196,8 +196,7 @@ Flickable {
             }
           }
 
-          //ClientInstance.notifyServer(
-          console.log(
+          ClientInstance.notifyServer(
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
