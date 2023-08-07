@@ -241,7 +241,7 @@ end
 --- 基本算是私有函数，别去用
 ---@param cardId integer
 ---@param cardArea CardArea
----@param owner integer
+---@param owner nil|integer
 function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
   self.owner_map[cardId] = owner
