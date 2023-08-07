@@ -107,9 +107,9 @@ function GameLogic:chooseGenerals()
       end
       lordlist = table.random(lordlist, 3) or {}
     end
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(lordlist, function (g)
-      return g.name
-    end)))
+    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
+      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
+    end))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
