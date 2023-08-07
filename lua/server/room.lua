@@ -1540,11 +1540,11 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   if result ~= "" then
     local d = json.decode(result)
     if #top_limit > 0 and top_limit[2] == 0 then
-      top = {}
+      top = Util.DummyTable
       bottom = d[1]
     else
       top = d[1]
-      bottom = d[2]
+      bottom = d[2] or Util.DummyTable
     end
   else
     top = table.random(cards, top_limit and top_limit[2] or #cards) or Util.DummyTable
