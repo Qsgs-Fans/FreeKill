@@ -42,6 +42,8 @@ end
 
 local function readUsableSpecToSkill(skill, spec)
   readCommonSpecToSkill(skill, spec)
+  assert(spec.main_skill == nil or spec.main_skill:isInstanceOf(UsableSkill))
+  skill.main_skill = spec.main_skill
   skill.target_num = spec.target_num or skill.target_num
   skill.min_target_num = spec.min_target_num or skill.min_target_num
   skill.max_target_num = spec.max_target_num or skill.max_target_num

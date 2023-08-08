@@ -2987,7 +2987,6 @@ function Room:useSkill(player, skill, effect_cb)
       player:getSwitchSkillState(switchSkillName, true)
     )
   end
-  player:addSkillUseHistory(skill.name)
 
   if effect_cb then
     return execGameEvent(GameEvent.SkillEffect, effect_cb, player, skill)

@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class UsableSkill : Skill
+---@field public main_skill UsableSkill
 ---@field public max_use_time integer[]
 ---@field public expand_pile string
 local UsableSkill = Skill:subclass("UsableSkill")
