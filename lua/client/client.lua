@@ -619,6 +619,7 @@ fk.client_callback["LoseSkill"] = function(jsonData)
     end)
     --]]
     table.insert(sks, skill)
+    table.removeOne(target.player_skills, skill)
     local chk = false
 
     if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
@@ -626,7 +627,10 @@ fk.client_callback["LoseSkill"] = function(jsonData)
       ClientInstance:notifyUI("LoseSkill", jsonData)
     end
 
-    local active = table.filter(sks, function(s) return s:isInstanceOf(ActiveSkill) end)
+    local active = table.filter(sks, function(s)
+      return s:isInstanceOf(ActiveSkill) or s:isInstanceOf(ViewAsSkill)
+    end)
+
     if #active > 0 then
       chk = true
       ClientInstance:notifyUI("LoseSkill", json.encode {
@@ -662,6 +666,7 @@ fk.client_callback["AddSkill"] = function(jsonData)
     -- 无视状态技。
     local sks = { table.unpack(skill.related_skills) }
     table.insert(sks, skill)
+    table.insert(target.player_skills, skill)
     local chk = false
 
     if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
@@ -669,7 +674,10 @@ fk.client_callback["AddSkill"] = function(jsonData)
       ClientInstance:notifyUI("AddSkill", jsonData)
     end
 
-    local active = table.filter(sks, function(s) return s:isInstanceOf(ActiveSkill) end)
+    local active = table.filter(sks, function(s)
+      return s:isInstanceOf(ActiveSkill) or s:isInstanceOf(ViewAsSkill)
+    end)
+
     if #active > 0 then
       chk = true
       ClientInstance:notifyUI("AddSkill", json.encode {
