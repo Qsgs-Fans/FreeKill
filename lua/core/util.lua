@@ -159,11 +159,10 @@ end
 ---@return T[]
 function table:getN(n)
   ret = {}
-  if #self == 0 then return {} end
+  if #self == 0 or (type(n) ~= "number" or n == 0) then return {} end
   if n < 0 then
-    local rev = table.reverse(self)
-    for i = 1, math.min(-n, #rev), 1 do
-      table.insert(ret, rev[i])
+    for i = #self, math.max(#self + n + 1, 1), -1 do
+      table.insert(ret, self[i])
     end
   elseif n > 0 then
     for i = 1, math.min(n, #self), 1 do
