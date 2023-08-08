@@ -585,21 +585,6 @@ fk.client_callback["ShowCard"] = function(jsonData)
   })
 end
 
-fk.client_callback["LoseSkill"] = function(jsonData)
-  -- jsonData: [ int player_id, string skill_name ]
-  local data = json.decode(jsonData)
-  local id, skill_name, prelight = data[1], data[2], data[3]
-  local target = ClientInstance:getPlayerById(id)
-  local skill = Fk.skills[skill_name]
-  if not prelight then
-    target:loseSkill(skill)
-  end
-
-  if skill.visible then
-    ClientInstance:notifyUI("LoseSkill", jsonData)
-  end
-end
-
 -- 说是限定技，其实也适用于觉醒技、转换技、使命技
 ---@param skill Skill
 ---@param times integer
@@ -613,15 +598,91 @@ local function updateLimitSkill(pid, skill, times)
   end
 end
 
+fk.client_callback["LoseSkill"] = function(jsonData)
+  -- jsonData: [ int player_id, string skill_name ]
+  local data = json.decode(jsonData)
+  local id, skill_name, fake = data[1], data[2], data[3]
+  local target = ClientInstance:getPlayerById(id)
+  local skill = Fk.skills[skill_name]
+
+  if not fake then
+    target:loseSkill(skill)
+    if skill.visible then
+      ClientInstance:notifyUI("LoseSkill", jsonData)
+    end
+  elseif skill.visible then
+    -- 按理说能弄得更好的但还是复制粘贴舒服
+    local sks = { table.unpack(skill.related_skills) }
+    --[[ 需要大伙都适配好main_skill或者讨论出更好方案才行。不敢轻举妄动
+    local sks = table.filter(skill.related_skills, function(s)
+      return s.main_skill == skill
+    end)
+    --]]
+    table.insert(sks, skill)
+    local chk = false
+
+    if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
+      chk = true
+      ClientInstance:notifyUI("LoseSkill", jsonData)
+    end
+
+    local active = table.filter(sks, function(s) return s:isInstanceOf(ActiveSkill) end)
+    if #active > 0 then
+      chk = true
+      ClientInstance:notifyUI("LoseSkill", json.encode {
+        id, skill_name,
+      })
+    end
+
+    if not chk then
+      ClientInstance:notifyUI("LoseSkill", json.encode {
+        id, skill_name,
+      })
+    end
+  end
+
+  updateLimitSkill(id, skill, -1)
+end
+
 fk.client_callback["AddSkill"] = function(jsonData)
   -- jsonData: [ int player_id, string skill_name ]
   local data = json.decode(jsonData)
-  local id, skill_name = data[1], data[2]
+  local id, skill_name, fake = data[1], data[2], data[3]
   local target = ClientInstance:getPlayerById(id)
   local skill = Fk.skills[skill_name]
-  target:addSkill(skill)
-  if skill.visible then
-    ClientInstance:notifyUI("AddSkill", jsonData)
+
+  if not fake then
+    target:addSkill(skill)
+    if skill.visible then
+      ClientInstance:notifyUI("AddSkill", jsonData)
+    end
+  elseif skill.visible then
+    -- 添加假技能：服务器只会传一个主技能来。
+    -- 若有主动技则添加按钮，若有触发技则添加预亮按钮。
+    -- 无视状态技。
+    local sks = { table.unpack(skill.related_skills) }
+    table.insert(sks, skill)
+    local chk = false
+
+    if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
+      chk = true
+      ClientInstance:notifyUI("AddSkill", jsonData)
+    end
+
+    local active = table.filter(sks, function(s) return s:isInstanceOf(ActiveSkill) end)
+    if #active > 0 then
+      chk = true
+      ClientInstance:notifyUI("AddSkill", json.encode {
+        id, skill_name,
+      })
+    end
+
+    -- 面板上总得有点啥东西表明自己有技能吧 = =
+    if not chk then
+      ClientInstance:notifyUI("AddSkill", json.encode {
+        id, skill_name,
+      })
+    end
   end
 
   if skill.frequency == Skill.Quest then

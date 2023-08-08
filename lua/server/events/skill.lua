@@ -6,7 +6,9 @@ GameEvent.functions[GameEvent.SkillEffect] = function(self)
   local logic = room.logic
   local skill = _skill.main_skill and _skill.main_skill or _skill
 
-  player:addSkillUseHistory(skill.name)
+  if player then
+    player:addSkillUseHistory(skill.name)
+  end
 
   local cost_data_bak = skill.cost_data
   logic:trigger(fk.SkillEffect, player, skill)

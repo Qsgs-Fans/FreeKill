@@ -678,6 +678,13 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
     return true
   end
 
+  if self:isInstanceOf(ServerPlayer) and -- isInstanceOf(nil) will return false
+    table.contains(self._fake_skills, skill) and
+    table.contains(self.prelighted_skills, skill) then
+
+    return true
+  end
+
   for _, v in pairs(self.derivative_skills) do
     if table.contains(v, skill) then
       return true

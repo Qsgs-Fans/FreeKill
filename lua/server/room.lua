@@ -829,6 +829,15 @@ function Room:notifyMoveFocus(players, command)
     table.insert(ids, p.id)
   end
 
+  local tempSk = Fk.skills[command]
+  if tempSk and #players == 1 then
+    local p = players[1]
+    if p:isFakeSkill(tempSk) then
+      command = ""
+      ids = table.map(self.alive_players, Util.IdMapper)
+    end
+  end
+
   self:doBroadcastNotify("MoveFocus", json.encode{
     ids,
     command

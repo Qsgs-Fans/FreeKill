@@ -22,6 +22,9 @@ ColumnLayout {
       const data = skills.get(i);
       if (data.skillname_ === skill) {
         data.times = times;
+        if (times == -1) {
+          skills.remove(i);
+        }
         return;
       }
     }
