@@ -10,6 +10,9 @@ TestExppattern = {
     p(table.connectIfNeed(table1, table2))
     p(table1)
     p(table2)
+    p(table.getN(table1, 2))
+    p(table.getN(table1, -2))
+    p(table1)
   end,
 
   testMatchExp = function()
