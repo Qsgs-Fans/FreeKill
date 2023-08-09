@@ -829,6 +829,15 @@ function Room:notifyMoveFocus(players, command)
     table.insert(ids, p.id)
   end
 
+  local tempSk = Fk.skills[command]
+  if tempSk and #players == 1 then
+    local p = players[1]
+    if p:isFakeSkill(tempSk) then
+      command = ""
+      ids = table.map(self.alive_players, Util.IdMapper)
+    end
+  end
+
   self:doBroadcastNotify("MoveFocus", json.encode{
     ids,
     command
@@ -2987,7 +2996,6 @@ function Room:useSkill(player, skill, effect_cb)
       player:getSwitchSkillState(switchSkillName, true)
     )
   end
-  player:addSkillUseHistory(skill.name)
 
   if effect_cb then
     return execGameEvent(GameEvent.SkillEffect, effect_cb, player, skill)

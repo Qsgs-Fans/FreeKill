@@ -28,9 +28,9 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: Crash the server. Useful when encounter dead loop.", "crash");
   HELP_MSG("%s: List all online players.", "lsplayer");
   HELP_MSG("%s: List all running rooms.", "lsroom");
-  HELP_MSG("%s: Reload server config file.", "reloadconf");
+  HELP_MSG("%s: Reload server config file.", "reloadconf/r");
   HELP_MSG("%s: Kick a player by his <id>.", "kick");
-  HELP_MSG("%s: Broadcast message.", "msg");
+  HELP_MSG("%s: Broadcast message.", "msg/m");
   HELP_MSG("%s: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
   HELP_MSG("%s: Unban 1 or more accounts by their <name>.", "unban");
   HELP_MSG(
@@ -49,6 +49,7 @@ void Shell::helpCommand(QStringList &) {
       "%s: Unban 1 or more UUID. "
       "At least 1 <name> required.",
       "unbanuuid");
+  HELP_MSG("%s: reset <name>'s password to 1234.", "resetpassword/rp");
   qInfo();
   qInfo("===== Package commands =====");
   HELP_MSG("%s: Install a new package from <url>.", "install");
@@ -56,7 +57,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: List all packages.", "lspkg");
   HELP_MSG("%s: Enable a package.", "enable");
   HELP_MSG("%s: Disable a package.", "disable");
-  HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade");
+  HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade/u");
   qInfo("For more commands, check the documentation.");
 
 #undef HELP_MSG
@@ -356,6 +357,21 @@ void Shell::reloadConfCommand(QStringList &) {
   qInfo("Reloaded server config file.");
 }
 
+void Shell::resetPasswordCommand(QStringList &list) {
+  if (list.isEmpty()) {
+    qWarning("The 'resetpassword' command needs at least 1 <name>.");
+    return;
+  }
+
+  auto db = ServerInstance->getDatabase();
+  foreach (auto name, list) {
+    // 重置为1234
+    ExecSQL(db, QString("UPDATE userinfo SET password=\
+          'dbdc2ad3d9625407f55674a00b58904242545bfafedac67485ac398508403ade',\
+          salt='00000000' WHERE name='%1';").arg(name));
+  }
+}
+
 Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
@@ -369,11 +385,13 @@ Shell::Shell() {
     handlers["install"] = &Shell::installCommand;
     handlers["remove"] = &Shell::removeCommand;
     handlers["upgrade"] = &Shell::upgradeCommand;
+    handlers["u"] = &Shell::upgradeCommand;
     handlers["lspkg"] = &Shell::lspkgCommand;
     handlers["enable"] = &Shell::enableCommand;
     handlers["disable"] = &Shell::disableCommand;
     handlers["kick"] = &Shell::kickCommand;
     handlers["msg"] = &Shell::msgCommand;
+    handlers["m"] = &Shell::msgCommand;
     handlers["ban"] = &Shell::banCommand;
     handlers["unban"] = &Shell::unbanCommand;
     handlers["banip"] = &Shell::banipCommand;
@@ -381,6 +399,9 @@ Shell::Shell() {
     handlers["banuuid"] = &Shell::banUuidCommand;
     handlers["unbanuuid"] = &Shell::unbanUuidCommand;
     handlers["reloadconf"] = &Shell::reloadConfCommand;
+    handlers["r"] = &Shell::reloadConfCommand;
+    handlers["resetpassword"] = &Shell::resetPasswordCommand;
+    handlers["rp"] = &Shell::resetPasswordCommand;
   }
   handler_map = handlers;
 }

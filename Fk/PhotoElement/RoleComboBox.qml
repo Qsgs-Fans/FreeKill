@@ -8,7 +8,7 @@ Image {
   property var options: ["unknown", "loyalist", "rebel", "renegade"]
 
   id: root
-  source: visible ? SkinBank.ROLE_DIR + value : ""
+  source: visible ? SkinBank.getRolePic(value) : ""
   visible: value != "hidden"
 
   Image {
