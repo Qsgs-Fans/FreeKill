@@ -160,9 +160,7 @@ RowLayout {
     }
 
     const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
-    for (let name in pile_data) {
-      if (name.endsWith("&")) expandPile(name);
-    }
+    extractWoodenOx();
 
     if (cname) {
       const ids = [];
@@ -288,6 +286,15 @@ RowLayout {
     return raw;
   }
 
+  function extractWoodenOx() {
+    const pile_data = JSON.parse(Backend.callLuaFunction("GetAllPiles", [self.playerid]));
+    if (!roomScene.autoPending) { // 先屏蔽AskForUseActiveSkill再说，这下只剩使用打出以及出牌阶段了
+      for (let name in pile_data) {
+        if (name.endsWith("&")) expandPile(name);
+      }
+    }
+  }
+
   function updatePending() {
     roomScene.resetPrompt();
     if (pending_skill === "") return;
@@ -358,6 +365,8 @@ RowLayout {
     pending_skill = skill_name;
     pendings = [];
     handcardAreaItem.unselectAll();
+    retractAllPiles();
+
     for (let i = 0; i < skillButtons.count; i++) {
       const item = skillButtons.itemAt(i);
       item.enabled = item.pressed;
@@ -377,6 +386,9 @@ RowLayout {
     pending_card = -1;
 
     retractAllPiles();
+
+    if (roomScene.state == "playing")
+      extractWoodenOx();
 
     pendings = [];
     handcardAreaItem.adjustCards();
