@@ -9,6 +9,7 @@ Flickable {
   flickableDirection: Flickable.AutoFlickIfNeeded
   clip: true
   contentHeight: layout.height
+  property bool loading: false
   ScrollBar.vertical: ScrollBar {
     parent: root.parent
     anchors.top: root.top
@@ -65,7 +66,9 @@ Flickable {
           enabled: orig_name !== "test_p_0"
 
           onCheckedChanged: {
-            checkPackage(orig_name, checked);
+            if (!loading) {
+              checkPackage(orig_name, checked);
+            }
           }
         }
       }
@@ -130,6 +133,7 @@ Flickable {
   }
 
   Component.onCompleted: {
+    loading = true;
     const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     for (let orig of g) {
       if (config.serverHiddenPacks.includes(orig)) {
@@ -153,5 +157,6 @@ Flickable {
         pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
+    loading = false;
   }
 }

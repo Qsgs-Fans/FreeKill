@@ -194,12 +194,12 @@ fk.ReasonJudge = 11
 
 ---@class LogMessage
 ---@field public type string
----@field public from integer
----@field public to integer[]|nil
----@field public card integer[]|nil
----@field public arg any
----@field public arg2 any
----@field public arg3 any
+---@field public from integer | nil
+---@field public to integer[] | nil
+---@field public card integer[] | nil
+---@field public arg any | nil
+---@field public arg2 any | nil
+---@field public arg3 any | nil
 
 ---@class SkillUseStruct
 ---@field public skill Skill

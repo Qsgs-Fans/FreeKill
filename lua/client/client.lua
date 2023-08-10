@@ -60,6 +60,7 @@ function Client:initialize()
   self.skill_costs = {}
   self.card_marks = {}
   self.filtered_cards = {}
+  self.printed_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 
@@ -930,6 +931,13 @@ fk.client_callback["EnterLobby"] = function(jsonData)
   end
   --]]
   c:notifyUI("EnterLobby", jsonData)
+end
+
+fk.client_callback["PrintCard"] = function(j)
+  local data = json.decode(j)
+  local n, s, num = table.unpack(data)
+  local cd = Fk:cloneCard(n, s, num)
+  Fk:_addPrintedCard(cd)
 end
 
 -- Create ClientInstance (used by Lua)
