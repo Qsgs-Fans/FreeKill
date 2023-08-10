@@ -21,6 +21,7 @@ Item {
   property bool isFull: false
   property bool isAllReady: false
   property bool isReady: false
+  property bool canKickOwner: false
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -71,6 +72,8 @@ Item {
   onIsStartedChanged: {
     if (isStarted) {
       bgm.play();
+      canKickOwner = false;
+      kickOwnerTimer.stop();
     } else {
       // bgm.stop();
     }
@@ -209,6 +212,40 @@ Item {
       ClientInstance.notifyServer("Ready", "");
     }
   }
+
+  Button {
+    id: kickOwner
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: parent.height / 2 + 30
+    text: "踢出房主"
+    visible: canKickOwner && !isStarted && isFull && !isOwner
+    onClicked: {
+      for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.isOwner) {
+          ClientInstance.notifyServer("KickPlayer", item.id.toString());
+        }
+      }
+    }
+  }
+
+  Timer {
+    id: kickOwnerTimer
+    interval: 15000
+    onTriggered: {
+      canKickOwner = true;
+    }
+  }
+
+  onIsAllReadyChanged: {
+    if (!isAllReady) {
+      canKickOwner = false;
+      kickOwnerTimer.stop();
+    } else {
+      kickOwnerTimer.start();
+    }
+  }
+
   Rectangle {
     x: parent.width / 2 + 60
     y: parent.height / 2 - 30
