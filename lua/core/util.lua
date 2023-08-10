@@ -155,23 +155,6 @@ function table.reverse(self)
   return ret
 end
 
----@param n integer
----@return T[]
-function table:getN(n)
-  ret = {}
-  if #self == 0 or (type(n) ~= "number" or n == 0) then return {} end
-  if n < 0 then
-    for i = #self, math.max(#self + n + 1, 1), -1 do
-      table.insert(ret, self[i])
-    end
-  elseif n > 0 then
-    for i = 1, math.min(n, #self), 1 do
-      table.insert(ret, self[i])
-    end
-  end
-  return ret
-end
-
 function table:contains(element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
@@ -317,7 +300,7 @@ function table:slice(begin, _end)
   if begin >= _end then return {} end
 
   local ret = {}
-  for i = begin, _end - 1, 1 do
+  for i = math.max(begin, 1), math.min(_end - 1, len), 1 do
     table.insert(ret, self[i])
   end
   return ret
