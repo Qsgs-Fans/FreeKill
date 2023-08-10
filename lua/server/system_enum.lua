@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+---@alias PlayerId integer
+
 ---@class CardsMoveInfo
 ---@field public ids integer[]
 ---@field public from integer|null
@@ -60,10 +62,10 @@ fk.IceDamage = 4
 ---@field public to ServerPlayer @ 伤害目标
 ---@field public damage integer @ 伤害值
 ---@field public card Card | nil @ 造成伤害的牌
----@field public chain boolean @ 伤害是否是铁索传导的伤害
----@field public damageType DamageType @ 伤害的属性
----@field public skillName string @ 造成本次伤害的技能名
----@field public beginnerOfTheDamage boolean @ 是否是本次铁索传导的起点
+---@field public chain boolean | nil @ 伤害是否是铁索传导的伤害
+---@field public damageType DamageType | nil @ 伤害的属性
+---@field public skillName string | nil @ 造成本次伤害的技能名
+---@field public beginnerOfTheDamage boolean | nil @ 是否是本次铁索传导的起点
 
 --- 用来描述和回复体力有关的数据。
 ---@class RecoverStruct
@@ -88,7 +90,7 @@ fk.IceDamage = 4
 ---@field public card Card
 ---@field public toCard Card|null
 ---@field public responseToEvent CardUseStruct|null
----@field public nullifiedTargets interger[]|null
+---@field public nullifiedTargets integer[]|null
 ---@field public extraUse boolean|null
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
@@ -123,7 +125,7 @@ fk.IceDamage = 4
 ---@field public card Card
 ---@field public toCard Card|null
 ---@field public responseToEvent CardEffectEvent|null
----@field public nullifiedTargets interger[]|null
+---@field public nullifiedTargets integer[]|null
 ---@field public extraUse boolean|null
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
@@ -193,8 +195,8 @@ fk.ReasonJudge = 11
 ---@class LogMessage
 ---@field public type string
 ---@field public from integer
----@field public to integer[]
----@field public card integer[]
+---@field public to integer[]|nil
+---@field public card integer[]|nil
 ---@field public arg any
 ---@field public arg2 any
 ---@field public arg3 any

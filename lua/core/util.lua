@@ -355,6 +355,7 @@ end
 
 -- override default string.len
 string.rawlen = string.len
+---@diagnostic disable-next-line: duplicate-set-field
 function string:len()
   return utf8.len(self)
 end

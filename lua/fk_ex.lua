@@ -87,6 +87,7 @@ end
 ---@field public on_use nil|TrigFunc
 ---@field public on_refresh nil|TrigFunc
 ---@field public can_refresh nil|TrigFunc
+---@field public can_wake nil|TrigFunc
 
 ---@param spec TriggerSkillSpec
 ---@return TriggerSkill
@@ -172,6 +173,7 @@ end
 ---@field public on_nullified nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
 ---@field public mod_target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean|nil
 ---@field public prompt nil|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
+---@field public interaction any
 
 ---@param spec ActiveSkillSpec
 ---@return ActiveSkill
@@ -419,7 +421,7 @@ function fk.CreateInvaliditySkill(spec)
 end
 
 ---@class CardSpec: Card
----@field public skill Skill
+---@field public skill nil|Skill
 ---@field public equip_skill nil|Skill
 ---@field public special_skills string[] | nil
 ---@field public is_damage_card nil|boolean
