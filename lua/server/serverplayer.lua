@@ -851,4 +851,22 @@ function ServerPlayer:control(p)
   p.serverplayer = self._splayer
 end
 
+-- 22
+
+function ServerPlayer:addBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.addBuddy(self, other)
+  self:doNotify("AddBuddy", json.encode{ other.id, other.player_cards[Player.Hand] })
+end
+
+function ServerPlayer:removeBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.removeBuddy(self, other)
+  self:doNotify("RmBuddy", tostring(other.id))
+end
+
 return ServerPlayer

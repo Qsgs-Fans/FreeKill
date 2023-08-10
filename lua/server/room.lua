@@ -794,7 +794,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
 
       local function containArea(area, relevant) --处理区的处理？
         local areas = relevant
-          and {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing, Card.PlayerHand}
+          and {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing, Card.PlayerHand, Card.PlayerSpecial}
           or {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing}
         return table.contains(areas, area)
       end
@@ -803,7 +803,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       -- if move is relevant to player's hands or equips, it should be open
         -- cards move from/to equip/judge/discard/processing should be open
 
-      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to == p.id)) then
+      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
           info.cardId = -1

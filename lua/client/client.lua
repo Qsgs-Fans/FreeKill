@@ -125,7 +125,7 @@ function Client:moveCards(moves)
         pcardMax = self:getPlayerById(move.to):getMaxCards(),
         id = move.to,
       })
-      if (move.to ~= Self.id and move.toArea == Card.PlayerHand) or table.contains(ids, -1) then
+      if (not Self:isBuddy(self:getPlayerById(move.to)) and move.toArea == Card.PlayerHand) or table.contains(ids, -1) then
         ids = table.map(ids, function() return -1 end)
       end
       self:getPlayerById(move.to):addCards(move.toArea, ids, move.specialName)
@@ -938,6 +938,23 @@ fk.client_callback["PrintCard"] = function(j)
   local n, s, num = table.unpack(data)
   local cd = Fk:cloneCard(n, s, num)
   Fk:_addPrintedCard(cd)
+end
+
+fk.client_callback["AddBuddy"] = function(j)
+  local c = ClientInstance
+  local data = json.decode(j)
+  local id, hand = table.unpack(data)
+  local to = c:getPlayerById(id)
+  Self:addBuddy(to)
+  to.player_cards[Player.Hand] = hand
+end
+
+fk.client_callback["RmBuddy"] = function(j)
+  local c = ClientInstance
+  local id = tonumber(j)
+  local to = c:getPlayerById(id)
+  Self:removeBuddy(to)
+  to.player_cards[Player.Hand] = table.map(to.player_cards, function() return -1 end)
 end
 
 -- Create ClientInstance (used by Lua)
