@@ -55,6 +55,7 @@ function getCardPicture(cidOrName) {
     return path;
   } else {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
       path = AppPath + "/packages/" + dir + "/image/card/" + name + ".png";
       if (Backend.exists(path)) return path;
     }
@@ -70,6 +71,7 @@ function getDelayedTrickPicture(name) {
     return path;
   } else {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
       path = AppPath + "/packages/" + dir + "/image/card/delayedTrick/" + name + ".png";
       if (Backend.exists(path)) return path;
     }
@@ -87,6 +89,7 @@ function getEquipIcon(cid, icon) {
     return path;
   } else {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
       path = AppPath + "/packages/" + dir + "/image/card/equipIcon/" + name + ".png";
       if (Backend.exists(path)) return path;
     }
@@ -98,6 +101,7 @@ function getPhotoBack(kingdom) {
   let path = PHOTO_BACK_DIR + kingdom + ".png";
   if (!Backend.exists(path)) {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
       path = AppPath + "/packages/" + dir + "/image/kingdom/" + kingdom + "-back.png";
       if (Backend.exists(path)) return path;
     }
@@ -111,6 +115,7 @@ function getGeneralCardDir(kingdom) {
   let path = GENERALCARD_DIR + kingdom + ".png";
   if (!Backend.exists(path)) {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
       path = AppPath + "/packages/" + dir + "/image/kingdom/" + kingdom + "-back.png";
       if (Backend.exists(path))
         return AppPath + "/packages/" + dir + "/image/kingdom/";
@@ -118,4 +123,18 @@ function getGeneralCardDir(kingdom) {
   } else {
     return GENERALCARD_DIR;
   }
+}
+
+function getRolePic(role) {
+  let path = ROLE_DIR + role + ".png";
+  if (Backend.exists(path)) {
+    return path;
+  } else {
+    for (let dir of Backend.ls(AppPath + "/packages/")) {
+      if (dir.endsWith(".disabled")) continue;
+      path = AppPath + "/packages/" + dir + "/image/role/" + name + ".png";
+      if (Backend.exists(path)) return path;
+    }
+  }
+  return ROLE_DIR + "unknown.png";
 }
