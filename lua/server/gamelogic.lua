@@ -93,16 +93,13 @@ function GameLogic:chooseGenerals()
     local generals = {}
     local lordlist = {}
     local lordpools = {}
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(generals, function (g)
-      return g.name
-    end)))
     if room.settings.gameMode == "aaa_role_mode" then
       for _, general in pairs(Fk:getAllGenerals()) do
         if (not general.hidden and not general.total_hidden) and
         table.find(general.skills, function(s)
           return s.lordSkill
         end) and
-        not table.find(generals, function(g)
+        not table.find(lordlist, function(g)
           return g.trueName == general.trueName
         end) then
           table.insert(lordlist, general)
@@ -110,6 +107,9 @@ function GameLogic:chooseGenerals()
       end
       lordlist = table.random(lordlist, 3) or {}
     end
+    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
+      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
+    end))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end

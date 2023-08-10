@@ -242,7 +242,7 @@ end
 --- 基本算是私有函数，别去用
 ---@param cardId integer
 ---@param cardArea CardArea
----@param owner integer
+---@param owner nil|integer
 function Room:setCardArea(cardId, cardArea, owner)
   self.card_place[cardId] = cardArea
   self.owner_map[cardId] = owner
@@ -1550,11 +1550,11 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   if result ~= "" then
     local d = json.decode(result)
     if #top_limit > 0 and top_limit[2] == 0 then
-      top = {}
+      top = Util.DummyTable
       bottom = d[1]
     else
       top = d[1]
-      bottom = d[2]
+      bottom = d[2] or Util.DummyTable
     end
   else
     top = table.random(cards, top_limit and top_limit[2] or #cards) or Util.DummyTable

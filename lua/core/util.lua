@@ -300,7 +300,7 @@ function table:slice(begin, _end)
   if begin >= _end then return {} end
 
   local ret = {}
-  for i = begin, _end - 1, 1 do
+  for i = math.max(begin, 1), math.min(_end - 1, len), 1 do
     table.insert(ret, self[i])
   end
   return ret
@@ -355,6 +355,7 @@ end
 
 -- override default string.len
 string.rawlen = string.len
+---@diagnostic disable-next-line: duplicate-set-field
 function string:len()
   return utf8.len(self)
 end
