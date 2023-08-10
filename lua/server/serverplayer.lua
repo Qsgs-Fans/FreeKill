@@ -187,7 +187,7 @@ function ServerPlayer:waitForReply(timeout)
 end
 
 ---@param player ServerPlayer
----@param observe boolean|nil
+---@param observe bool
 function ServerPlayer:marshal(player, observe)
   local room = self.room
   if not room.game_started then
@@ -746,7 +746,7 @@ function ServerPlayer:isFakeSkill(skill)
 end
 
 ---@param skill string | Skill
----@param isPrelight boolean | nil
+---@param isPrelight bool
 function ServerPlayer:prelightSkill(skill, isPrelight)
   if type(skill) == "string" then skill = Fk.skills[skill] end
   assert(skill:isInstanceOf(Skill))

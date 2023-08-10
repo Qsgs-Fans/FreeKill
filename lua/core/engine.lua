@@ -397,7 +397,7 @@ end
 
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter boolean|nil @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter bool @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   if id == nil then return nil end

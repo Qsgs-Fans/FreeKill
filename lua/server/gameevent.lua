@@ -15,13 +15,13 @@
 ---@field public interrupted boolean @ 事件是否是因为被强行中断而结束的
 local GameEvent = class("GameEvent")
 
----@type (fun(self: GameEvent): boolean|nil)[]
+---@type (fun(self: GameEvent): bool)[]
 GameEvent.functions = {}
 
----@type (fun(self: GameEvent): boolean|nil)[]
+---@type (fun(self: GameEvent): bool)[]
 GameEvent.cleaners = {}
 
----@type (fun(self: GameEvent): boolean|nil)[]
+---@type (fun(self: GameEvent): bool)[]
 GameEvent.exit_funcs = {}
 
 local function wrapCoFunc(f, ...)

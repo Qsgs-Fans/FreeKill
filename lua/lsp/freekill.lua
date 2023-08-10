@@ -6,6 +6,7 @@
 -- Just for convenience when using sumneko.lua
 
 ---@alias null nil
+---@alias bool boolean | nil
 
 ---@class fk
 ---FreeKill's lua API

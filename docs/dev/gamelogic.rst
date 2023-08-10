@@ -137,9 +137,9 @@ on_trigger在非常多情况下仅仅只是简单的执行一下doCost而已，�
    ---@field moveReason CardMoveReason
    ---@field proposer integer
    ---@field skillName string|null
-   ---@field moveVisible boolean|null
+   ---@field moveVisible bool
    ---@field specialName string|null
-   ---@field specialVisible boolean|null
+   ---@field specialVisible bool
 
 moveCards函数的第一步是将参数中所有的moveInfo都转化为CardsMoveStruct。CardsMoveStruct与CardsMoveInfo几乎没有区别，除了它将每一张牌都单独划分出了一个moveinfo之外。这么做是为了在同时移动来源不同的牌的时候，让牌能该明牌明牌，该暗牌暗牌。
 

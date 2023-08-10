@@ -7,12 +7,12 @@
 ---@field public from integer|null
 ---@field public to integer|null
 ---@field public toArea CardArea
----@field public moveReason CardMoveReason
----@field public proposer integer
+---@field public moveReason CardMoveReason|nil
+---@field public proposer integer|nil
 ---@field public skillName string|null
----@field public moveVisible boolean|null
+---@field public moveVisible bool
 ---@field public specialName string|null
----@field public specialVisible boolean|null
+---@field public specialVisible bool
 
 ---@class MoveInfo
 ---@field public cardId integer
@@ -27,9 +27,9 @@
 ---@field public moveReason CardMoveReason
 ---@field public proposer integer|null
 ---@field public skillName string|null
----@field public moveVisible boolean|null
+---@field public moveVisible bool
 ---@field public specialName string|null
----@field public specialVisible boolean|null
+---@field public specialVisible bool
 ---@field public drawPilePosition number|null @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
 
 ---@class PindianResult
@@ -42,7 +42,7 @@
 ---@field public reason string @ 体力变化原因
 ---@field public skillName string @ 引起体力变化的技能名
 ---@field public damageEvent DamageStruct|nil @ 引起这次体力变化的伤害数据
----@field public preventDying boolean|null @ 是否阻止本次体力变更流程引发濒死流程
+---@field public preventDying bool @ 是否阻止本次体力变更流程引发濒死流程
 
 --- 描述跟失去体力有关的数据
 ---@class HpLostData
@@ -62,7 +62,7 @@ fk.IceDamage = 4
 ---@field public to ServerPlayer @ 伤害目标
 ---@field public damage integer @ 伤害值
 ---@field public card Card | nil @ 造成伤害的牌
----@field public chain boolean | nil @ 伤害是否是铁索传导的伤害
+---@field public chain bool @ 伤害是否是铁索传导的伤害
 ---@field public damageType DamageType | nil @ 伤害的属性
 ---@field public skillName string | nil @ 造成本次伤害的技能名
 ---@field public beginnerOfTheDamage boolean | nil @ 是否是本次铁索传导的起点
@@ -78,7 +78,7 @@ fk.IceDamage = 4
 ---@class DyingStruct
 ---@field public who integer
 ---@field public damage DamageStruct
----@field public ignoreDeath boolean|null
+---@field public ignoreDeath bool
 
 ---@class DeathStruct
 ---@field public who integer
@@ -91,7 +91,7 @@ fk.IceDamage = 4
 ---@field public toCard Card|null
 ---@field public responseToEvent CardUseStruct|null
 ---@field public nullifiedTargets integer[]|null
----@field public extraUse boolean|null
+---@field public extraUse bool
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
 ---@field public additionalDamage integer|null
@@ -112,8 +112,8 @@ fk.IceDamage = 4
 ---@field public firstTarget boolean
 ---@field public additionalDamage integer|null
 ---@field public additionalRecover integer|null
----@field public disresponsive boolean|null
----@field public unoffsetableList boolean|null
+---@field public disresponsive bool
+---@field public unoffsetableList bool
 ---@field public additionalResponseTimes table<string, integer>|integer|null
 ---@field public fixedAddTimesResponsors integer[]
 
@@ -126,16 +126,16 @@ fk.IceDamage = 4
 ---@field public toCard Card|null
 ---@field public responseToEvent CardEffectEvent|null
 ---@field public nullifiedTargets integer[]|null
----@field public extraUse boolean|null
+---@field public extraUse bool
 ---@field public disresponsiveList integer[]|null
 ---@field public unoffsetableList integer[]|null
 ---@field public additionalDamage integer|null
 ---@field public additionalRecover integer|null
 ---@field public customFrom integer|null
 ---@field public cardsResponded Card[]|null
----@field public disresponsive boolean|null
----@field public unoffsetable boolean|null
----@field public isCancellOut boolean|null
+---@field public disresponsive bool
+---@field public unoffsetable bool
+---@field public isCancellOut bool
 ---@field public fixedResponseTimes table<string, integer>|integer|null
 ---@field public fixedAddTimesResponsors integer[]
 ---@field public prohibitedCardNames string[]|null
@@ -150,13 +150,13 @@ fk.IceDamage = 4
 ---@field public card Card
 ---@field public reason string
 ---@field public pattern string
----@field public skipDrop boolean|null
+---@field public skipDrop bool
 
 ---@class CardResponseEvent
 ---@field public from integer
 ---@field public card Card
 ---@field public responseToEvent CardEffectEvent|null
----@field public skipDrop boolean|null
+---@field public skipDrop bool
 ---@field public customFrom integer|null
 
 ---@class AskForCardUse
@@ -197,9 +197,9 @@ fk.ReasonJudge = 11
 ---@field public from integer | nil
 ---@field public to integer[] | nil
 ---@field public card integer[] | nil
----@field public arg any | nil
----@field public arg2 any | nil
----@field public arg3 any | nil
+---@field public arg any
+---@field public arg2 any
+---@field public arg3 any
 
 ---@class SkillUseStruct
 ---@field public skill Skill

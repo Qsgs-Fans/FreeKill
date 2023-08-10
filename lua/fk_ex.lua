@@ -77,9 +77,9 @@ end
 
 ---@class StatusSkillSpec: StatusSkill
 
----@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer, data: any):boolean|nil
+---@alias TrigFunc fun(self: TriggerSkill, event: Event, target: ServerPlayer, player: ServerPlayer, data: any):bool
 ---@class TriggerSkillSpec: UsableSkillSpec
----@field public global nil|boolean
+---@field public global bool
 ---@field public events nil|Event | Event[]
 ---@field public refresh_events nil|Event | Event[]
 ---@field public priority nil|number | table<Event, number>
@@ -165,15 +165,15 @@ function fk.CreateTriggerSkill(spec)
 end
 
 ---@class ActiveSkillSpec: UsableSkillSpec
----@field public can_use nil|fun(self: ActiveSkill, player: Player, card: Card): boolean|nil
----@field public card_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean|nil
----@field public target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean|nil
----@field public feasible nil|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean|nil
----@field public on_use nil|fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean|nil
----@field public about_to_effect nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
----@field public on_effect nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
----@field public on_nullified nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean|nil
----@field public mod_target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean|nil
+---@field public can_use nil|fun(self: ActiveSkill, player: Player, card: Card): bool
+---@field public card_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): bool
+---@field public target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): bool
+---@field public feasible nil|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): bool
+---@field public on_use nil|fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): bool
+---@field public about_to_effect nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): bool
+---@field public on_effect nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): bool
+---@field public on_nullified nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): bool
+---@field public mod_target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): bool
 ---@field public prompt nil|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 ---@field public interaction any
 
@@ -217,11 +217,11 @@ function fk.CreateActiveSkill(spec)
 end
 
 ---@class ViewAsSkillSpec: UsableSkillSpec
----@field public card_filter nil|fun(self: ViewAsSkill, to_select: integer, selected: integer[]): boolean|nil
+---@field public card_filter nil|fun(self: ViewAsSkill, to_select: integer, selected: integer[]): bool
 ---@field public view_as fun(self: ViewAsSkill, cards: integer[]): Card|nil
 ---@field public pattern nil|string
----@field public enabled_at_play nil|fun(self: ViewAsSkill, player: Player): boolean|nil
----@field public enabled_at_response nil|fun(self: ViewAsSkill, player: Player, response: boolean): boolean|nil
+---@field public enabled_at_play nil|fun(self: ViewAsSkill, player: Player): bool
+---@field public enabled_at_response nil|fun(self: ViewAsSkill, player: Player, response: boolean): bool
 ---@field public before_use nil|fun(self: ViewAsSkill, player: ServerPlayer, use: CardUseStruct)
 ---@field public prompt nil|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
@@ -291,10 +291,10 @@ function fk.CreateDistanceSkill(spec)
 end
 
 ---@class ProhibitSpec: StatusSkillSpec
----@field public is_prohibited nil|fun(self: ProhibitSkill, from: Player, to: Player, card: Card): boolean|nil
----@field public prohibit_use nil|fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
----@field public prohibit_response nil|fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
----@field public prohibit_discard nil|fun(self: ProhibitSkill, player: Player, card: Card): boolean|nil
+---@field public is_prohibited nil|fun(self: ProhibitSkill, from: Player, to: Player, card: Card): bool
+---@field public prohibit_use nil|fun(self: ProhibitSkill, player: Player, card: Card): bool
+---@field public prohibit_response nil|fun(self: ProhibitSkill, player: Player, card: Card): bool
+---@field public prohibit_discard nil|fun(self: ProhibitSkill, player: Player, card: Card): bool
 
 ---@param spec ProhibitSpec
 ---@return ProhibitSkill
@@ -313,7 +313,7 @@ end
 
 ---@class AttackRangeSpec: StatusSkillSpec
 ---@field public correct_func nil|fun(self: AttackRangeSkill, from: Player, to: Player): number|nil
----@field public within_func nil|fun(self: AttackRangeSkill, from: Player, to: Player): boolean|nil
+---@field public within_func nil|fun(self: AttackRangeSkill, from: Player, to: Player): bool
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
@@ -336,7 +336,7 @@ end
 ---@class MaxCardsSpec: StatusSkillSpec
 ---@field public correct_func nil|fun(self: MaxCardsSkill, player: Player): number|nil
 ---@field public fixed_func nil|fun(self: MaxCardsSkill, player: Player): number|nil
----@field public exclude_from nil|fun(self: MaxCardsSkill, player: Player, card: Card): boolean|nil
+---@field public exclude_from nil|fun(self: MaxCardsSkill, player: Player, card: Card): bool
 
 ---@param spec MaxCardsSpec
 ---@return MaxCardsSkill
@@ -358,9 +358,9 @@ function fk.CreateMaxCardsSkill(spec)
 end
 
 ---@class TargetModSpec: StatusSkillSpec
----@field public bypass_times nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player): boolean|nil
+---@field public bypass_times nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player): bool
 ---@field public residue_func nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card: Card, to: Player): number|nil
----@field public bypass_distances nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player): boolean|nil
+---@field public bypass_distances nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player): bool
 ---@field public distance_limit_func nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card, to: Player): number|nil
 ---@field public extra_target_func nil|fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card: Card): number|nil
 
@@ -391,7 +391,7 @@ function fk.CreateTargetModSkill(spec)
 end
 
 ---@class FilterSpec: StatusSkillSpec
----@field public card_filter nil|fun(self: FilterSkill, card: Card, player: Player): boolean|nil
+---@field public card_filter nil|fun(self: FilterSkill, card: Card, player: Player): bool
 ---@field public view_as nil|fun(self: FilterSkill, card: Card, player: Player): Card|nil
 
 ---@param spec FilterSpec
@@ -408,7 +408,7 @@ function fk.CreateFilterSkill(spec)
 end
 
 ---@class InvaliditySpec: StatusSkillSpec
----@field public invalidity_func nil|fun(self: InvaliditySkill, from: Player, skill: Skill): boolean|nil
+---@field public invalidity_func nil|fun(self: InvaliditySkill, from: Player, skill: Skill): bool
 
 ---@param spec InvaliditySpec
 ---@return InvaliditySkill
@@ -426,8 +426,8 @@ end
 ---@field public skill nil|Skill
 ---@field public equip_skill nil|Skill
 ---@field public special_skills string[] | nil
----@field public is_damage_card nil|boolean
----@field public multiple_targets nil|boolean
+---@field public is_damage_card bool
+---@field public multiple_targets bool
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
