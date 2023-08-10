@@ -541,7 +541,7 @@ void Room::gameOver() {
       if (p->getState() == Player::Offline) {
         auto pid = p->getId();
         addRunRate(pid, mode);
-        addRunRate(pid, mode);
+        // addRunRate(pid, mode);
         server->temporarilyBan(pid);
       }
       p->deleteLater();
