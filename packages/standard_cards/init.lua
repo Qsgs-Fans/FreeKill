@@ -413,6 +413,7 @@ local nullificationSkill = fk.CreateActiveSkill{
   can_use = function()
     return false
   end,
+  on_use = function() RoomInstance:delay(1200) end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true

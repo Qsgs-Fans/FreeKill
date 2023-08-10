@@ -14,6 +14,8 @@
 ---@field public phase_state table[]
 ---@field public phase_index integer
 ---@field public role_shown boolean
+---@field private _fake_skills Skill[]
+---@field public prelighted_skills Skill[]
 ---@field private _timewaste_count integer
 ---@field public ai AI
 ---@field public ai_data any
@@ -35,6 +37,11 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+
+  self._fake_skills = {}
+  self.prelighted_skills = {}
+  self._prelighted_skills = {}
+
   self._timewaste_count = 0
   self.ai = RandomAI:new(self)
 end
@@ -702,13 +709,70 @@ end
 
 -- Hegemony func
 
+---@param skill Skill
+function ServerPlayer:addFakeSkill(skill)
+  assert(skill:isInstanceOf(Skill))
+  if table.contains(self._fake_skills, skill) then return end
+
+  table.insert(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    -- if s.main_skill == skill then -- TODO: need more detailed
+      table.insert(self._fake_skills, s)
+    -- end
+  end
+
+  -- TODO
+  self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
+end
+
+---@param skill Skill
+function ServerPlayer:loseFakeSkill(skill)
+  assert(skill:isInstanceOf(Skill))
+  if not table.contains(self._fake_skills, skill) then return end
+
+  table.removeOne(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    table.removeOne(self._fake_skills, s)
+  end
+
+  -- TODO
+  self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
+end
+
+function ServerPlayer:isFakeSkill(skill)
+  if type(skill) == "string" then skill = Fk.skills[skill] end
+  assert(skill:isInstanceOf(Skill))
+  return table.contains(self._fake_skills, skill)
+end
+
+---@param skill string | Skill
+---@param isPrelight boolean | nil
 function ServerPlayer:prelightSkill(skill, isPrelight)
-  if isPrelight then
+  if type(skill) == "string" then skill = Fk.skills[skill] end
+  assert(skill:isInstanceOf(Skill))
+
+  if not self._prelighted_skills[skill] and not self:hasSkill(skill) then
+    self._prelighted_skills[skill] = true
+    -- to attach skill to room
     self:addSkill(skill)
-  else
     self:loseSkill(skill)
   end
-  self:doNotify("PrelightSkill", json.encode{ skill, isPrelight })
+
+  if isPrelight then
+    -- self:addSkill(skill)
+    table.insert(self.prelighted_skills, skill)
+    for _, s in ipairs(skill.related_skills) do
+      table.insert(self.prelighted_skills, s)
+    end
+  else
+    -- self:loseSkill(skill)
+    table.removeOne(self.prelighted_skills, skill)
+    for _, s in ipairs(skill.related_skills) do
+      table.removeOne(self.prelighted_skills, s)
+    end
+  end
+
+  self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
 function ServerPlayer:revealGeneral(isDeputy)
@@ -725,10 +789,7 @@ function ServerPlayer:revealGeneral(isDeputy)
   local general = Fk.generals[generalName]
   for _, s in ipairs(general:getSkillNameList()) do
     local skill = Fk.skills[s]
-    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
-      function(s) return s:isInstanceOf(TriggerSkill) end) then
-      self:doNotify("LoseSkill", json.encode{ self.id, s, true })
-    end
+    self:loseFakeSkill(skill)
   end
 
   local oldKingdom = self.kingdom

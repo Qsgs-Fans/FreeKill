@@ -234,6 +234,7 @@ void Room::removePlayer(ServerPlayer *player) {
   if (!gameStarted) {
     // 游戏还没开始的话，直接删除这名玩家
     if (players.contains(player) && !players.isEmpty()) {
+      player->setReady(false);
       players.removeOne(player);
     }
     emit playerRemoved(player);
@@ -533,10 +534,15 @@ void Room::gameOver() {
   gameStarted = false;
   runned_players.clear();
   // 清理所有状态不是“在线”的玩家
+  auto settings = QJsonDocument::fromJson(this->settings);
+  auto mode = settings["gameMode"].toString();
   foreach (ServerPlayer *p, players) {
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
-        server->temporarilyBan(p->getId());
+        auto pid = p->getId();
+        addRunRate(pid, mode);
+        addRunRate(pid, mode);
+        server->temporarilyBan(pid);
       }
       p->deleteLater();
     }

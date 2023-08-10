@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Fk
 
 Item {
@@ -29,6 +30,12 @@ Item {
         Menu {
           id: menu
           y: bar.height
+          MenuItem {
+            text: qsTr("Replay from file")
+            onTriggered: {
+              fdialog.open();
+            }
+          }
         }
       }
     }
@@ -104,7 +111,7 @@ Item {
           onClicked: {
             config.observing = true;
             config.replaying = true;
-            Backend.playRecord(fileName);
+            Backend.playRecord("recording/" + fileName);
           }
         }
 
@@ -119,6 +126,17 @@ Item {
           }
         }
       }
+    }
+  }
+
+  FileDialog {
+    id: fdialog
+    nameFilters: ["FK Rep Files (*.fk.rep)"];
+    onAccepted: {
+      config.observing = true;
+      config.replaying = true;
+      let str = selectedFile.toString(); // QUrl -> string
+      Backend.playRecord(str);
     }
   }
 
