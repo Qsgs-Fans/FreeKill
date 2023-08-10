@@ -91,6 +91,7 @@ function Room:initialize(_room)
   self.skill_costs = {}
   self.card_marks = {}
   self.filtered_cards = {}
+  self.printed_cards = {}
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
@@ -3180,6 +3181,20 @@ function Room:canMoveCardInBoard(flag, players, excludeIds)
   end)
 
   return targets
+end
+
+--- 现场印卡。当然了，这个卡只和这个房间有关。
+---@param name string @ 牌名
+---@param suit Suit|nil @ 花色
+---@param number integer|nil @ 点数
+---@return Card
+function Room:printCard(name, suit, number)
+  local cd = Fk:cloneCard(name, suit, number)
+  Fk:_addPrintedCard(cd)
+  table.insert(self.void, cd.id)
+  self:setCardArea(cd.id, Card.Void, nil)
+  self:doBroadcastNotify("PrintCard", json.encode{ name, suit, number })
+  return cd
 end
 
 function Room:updateQuestSkillState(player, skillName, failed)
