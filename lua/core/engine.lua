@@ -23,6 +23,7 @@
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
+---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -62,6 +63,7 @@ local _foreign_keys = {
   "currentResponsePattern",
   "currentResponseReason",
   "filtered_cards",
+  "printed_cards",
 }
 
 function Engine:__index(k)
@@ -398,9 +400,11 @@ end
 ---@param ignoreFilter boolean|nil @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
-  local ret = self.cards[id]
+  if id == nil then return nil end
+  local card_tab = (id >= -1) and self.cards or self.printed_cards
+  local ret = card_tab[id]
   if not ignoreFilter then
-    ret = self.filtered_cards[id] or self.cards[id]
+    ret = self.filtered_cards[id] or card_tab[id]
   end
   return ret
 end
@@ -464,6 +468,18 @@ function Engine:filterCard(id, player, data)
     data.card = card
     return
   end
+end
+
+--- 添加一张现场打印的牌到游戏中。
+---
+--- 这张牌必须是clone出来的虚拟牌，不能有子卡；因为他接下来就要变成实体卡了
+---@param card Card
+function Engine:_addPrintedCard(card)
+  assert(card:isVirtual() and #card.subcards == 0)
+  table.insert(self.printed_cards, card)
+  local id = -#self.printed_cards - 1
+  card.id = id
+  self.printed_cards[id] = card
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。

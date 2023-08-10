@@ -33,7 +33,8 @@ end
 
 GameEvent.functions[GameEvent.ChangeHp] = function(self)
   local player, num, reason, skillName, damageStruct = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
   if num == 0 then
     return false
   end
@@ -47,39 +48,39 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
     damageEvent = damageStruct,
   }
 
-  if self.logic:trigger(fk.BeforeHpChanged, player, data) then
-    self.logic:breakEvent(false)
+  if logic:trigger(fk.BeforeHpChanged, player, data) then
+    logic:breakEvent(false)
   end
 
   assert(not (data.reason == "recover" and data.num < 0))
   player.hp = math.min(player.hp + data.num, player.maxHp)
-  self:broadcastProperty(player, "hp")
+  room:broadcastProperty(player, "hp")
 
   if reason == "damage" then
-    sendDamageLog(self, damageStruct)
+    sendDamageLog(room, damageStruct)
   elseif reason == "loseHp" then
-    self:sendLog{
+    room:sendLog{
       type = "#LoseHP",
       from = player.id,
       arg = 0 - num,
     }
-    self:sendLogEvent("LoseHP", {})
+    room:sendLogEvent("LoseHP", {})
   elseif reason == "recover" then
-    self:sendLog{
+    room:sendLog{
       type = "#HealHP",
       from = player.id,
       arg = num,
     }
   end
 
-  self:sendLog{
+  room:sendLog{
     type = "#ShowHPAndMaxHP",
     from = player.id,
     arg = player.hp,
     arg2 = player.maxHp,
   }
 
-  self.logic:trigger(fk.HpChanged, player, data)
+  logic:trigger(fk.HpChanged, player, data)
 
   if player.hp < 1 then
     if num < 0 and not data.preventDying then
@@ -88,11 +89,11 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
         who = player.id,
         damage = damageStruct,
       }
-      self:enterDying(dyingStruct)
+      room:enterDying(dyingStruct)
     end
   elseif player.dying then
     player.dying = false
-    self:broadcastProperty(player, "dying")
+    room:broadcastProperty(player, "dying")
   end
 
   return true
@@ -100,9 +101,10 @@ end
 
 GameEvent.functions[GameEvent.Damage] = function(self)
   local damageStruct = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
   if damageStruct.card and damageStruct.skillName == damageStruct.card.name .. "_skill" and not damageStruct.chain then
-    local cardEffectData = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect)
+    local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
       damageStruct.damage = damageStruct.damage + (cardEffectEvent.additionalDamage or 0)
@@ -128,8 +130,8 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    if self.logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
-      self.logic:breakEvent(false)
+    if logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
+      logic:breakEvent(false)
     end
 
     assert(damageStruct.to:isInstanceOf(ServerPlayer))
@@ -140,7 +142,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
 
   if damageStruct.card and damageStruct.damage > 0 then
-    local parentUseData = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
+    local parentUseData = logic:getCurrentEvent():findParent(GameEvent.UseCard)
     if parentUseData then
       local cardUseEvent = parentUseData.data[1]
       cardUseEvent.damageDealt = cardUseEvent.damageDealt or {}
@@ -155,19 +157,19 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
   -- 先扣减护甲，再扣体力值
   local shield_to_lose = math.min(damageStruct.damage, damageStruct.to.shield)
-  self:changeShield(damageStruct.to, -shield_to_lose)
+  room:changeShield(damageStruct.to, -shield_to_lose)
 
   if shield_to_lose < damageStruct.damage then
-    if not self:changeHp(
+    if not room:changeHp(
       damageStruct.to,
       shield_to_lose - damageStruct.damage,
       "damage",
       damageStruct.skillName,
       damageStruct) then
-      self.logic:breakEvent(false)
+      logic:breakEvent(false)
     end
   else
-    sendDamageLog(self, damageStruct)
+    sendDamageLog(room, damageStruct)
   end
 
   stages = {
@@ -178,7 +180,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    self.logic:trigger(event, player, damageStruct)
+    logic:trigger(event, player, damageStruct)
   end
 
   return true
@@ -186,9 +188,10 @@ end
 
 GameEvent.exit_funcs[GameEvent.Damage] = function(self)
   local room = self.room
+  local logic = room.logic
   local damageStruct = self.data[1]
 
-  room.logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
+  logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
 
   if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
     local targets = table.filter(room:getOtherPlayers(damageStruct.to), function(p)
@@ -209,7 +212,9 @@ end
 
 GameEvent.functions[GameEvent.LoseHp] = function(self)
   local player, num, skillName = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
+
   if num == nil then
     num = 1
   elseif num < 1 then
@@ -221,23 +226,25 @@ GameEvent.functions[GameEvent.LoseHp] = function(self)
     num = num,
     skillName = skillName,
   }
-  if self.logic:trigger(fk.PreHpLost, player, data) or data.num < 1 then
-    self.logic:breakEvent(false)
+  if logic:trigger(fk.PreHpLost, player, data) or data.num < 1 then
+    logic:breakEvent(false)
   end
 
-  if not self:changeHp(player, -data.num, "loseHp", skillName) then
-    self.logic:breakEvent(false)
+  if not room:changeHp(player, -data.num, "loseHp", skillName) then
+    logic:breakEvent(false)
   end
 
-  self.logic:trigger(fk.HpLost, player, data)
+  logic:trigger(fk.HpLost, player, data)
   return true
 end
 
 GameEvent.functions[GameEvent.Recover] = function(self)
   local recoverStruct = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
+
   if recoverStruct.card then
-    local cardEffectData = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect)
+    local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
       recoverStruct.num = recoverStruct.num + (cardEffectEvent.additionalRecover or 0)
@@ -250,63 +257,63 @@ GameEvent.functions[GameEvent.Recover] = function(self)
 
   local who = recoverStruct.who
 
-  if self.logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
-    self.logic:breakEvent(false)
+  if logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
+    logic:breakEvent(false)
   end
 
-  if not self:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
-    self.logic:breakEvent(false)
+  if not room:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
+    logic:breakEvent(false)
   end
 
-  self.logic:trigger(fk.HpRecover, who, recoverStruct)
+  logic:trigger(fk.HpRecover, who, recoverStruct)
   return true
 end
 
 GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
   local player, num = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
   if num == 0 then
     return false
   end
 
   player.maxHp = math.max(player.maxHp + num, 0)
-  self:broadcastProperty(player, "maxHp")
-  self:sendLogEvent("ChangeMaxHp", {
+  room:broadcastProperty(player, "maxHp")
+  room:sendLogEvent("ChangeMaxHp", {
     player = player.id,
     num = num,
   })
-  self:sendLog{
+  room:sendLog{
     type = num > 0 and "#HealMaxHP" or "#LoseMaxHP",
     from = player.id,
     arg = num > 0 and num or - num,
   }
   if player.maxHp == 0 then
     player.hp = 0
-    self:broadcastProperty(player, "hp")
-    self:sendLog{
+    room:broadcastProperty(player, "hp")
+    room:sendLog{
       type = "#ShowHPAndMaxHP",
       from = player.id,
       arg = 0,
       arg2 = 0,
     }
-    self:killPlayer({ who = player.id })
+    room:killPlayer({ who = player.id })
     return false
   end
 
   local diff = player.hp - player.maxHp
   if diff > 0 then
-    if not self:changeHp(player, -diff) then
+    if not room:changeHp(player, -diff) then
       player.hp = player.hp - diff
     end
   end
 
-  self:sendLog{
+  room:sendLog{
     type = "#ShowHPAndMaxHP",
     from = player.id,
     arg = player.hp,
     arg2 = player.maxHp,
   }
 
-  self.logic:trigger(fk.MaxHpChanged, player, { num = num })
+  room.logic:trigger(fk.MaxHpChanged, player, { num = num })
   return true
 end

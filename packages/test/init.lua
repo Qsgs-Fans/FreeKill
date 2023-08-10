@@ -41,12 +41,12 @@ local cheat = fk.CreateActiveSkill{
     end
 
     local cardName = room:askForChoice(from, allCardNames, "cheat")
-    local toGain = nil
-    if #allCardMapper[cardName] > 0 then
-      toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
-    end
+    local toGain = room:printCard(cardName, Card.Heart, 1)
+    -- if #allCardMapper[cardName] > 0 then
+    --   toGain = allCardMapper[cardName][math.random(1, #allCardMapper[cardName])]
+    -- end
 
-    from:addToPile(self.name, toGain, true, self.name)
+    -- from:addToPile(self.name, toGain, true, self.name)
     -- room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-phase", 1)
     -- room:setCardMark(Fk:getCardById(toGain), "@@test_cheat-inhand", 1)
     room:obtainCard(effect.from, toGain, true, fk.ReasonPrey)
@@ -323,7 +323,7 @@ Fk:loadTranslationTable{
   [":test_filter"] = "你的点数大于11的牌视为无中生有。",
   ["mouxusheng"] = "谋徐盛",
   -- ["cheat"] = "小开",
-  [":cheat"] = "出牌阶段，你可以获得一张想要的牌。",
+  [":cheat"] = "出牌阶段，你可以以红桃A打印一张想要的牌并获得之。",
   ["#cheat"] = "cheat：你可以获得一张想要的牌",
   -- ["@@test_cheat-phase"] = "苦肉",
   -- ["@@test_cheat-inhand"] = "连营",
