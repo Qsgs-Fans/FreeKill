@@ -180,30 +180,31 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   end
 end
 
----@param self GameEvent
 GameEvent.functions[GameEvent.UseCard] = function(self)
   local cardUseEvent = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
+
   local from = cardUseEvent.from
-  self:moveCards({
-    ids = self:getSubcardsByRule(cardUseEvent.card),
+  room:moveCards({
+    ids = room:getSubcardsByRule(cardUseEvent.card),
     from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonUse,
   })
 
   if cardUseEvent.card.skill then
-    cardUseEvent.card.skill:onUse(self, cardUseEvent)
+    cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  if self.logic:trigger(fk.PreCardUse, self:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    self.logic:breakEvent()
+  if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
+    logic:breakEvent()
   end
 
-  sendCardEmotionAndLog(self, cardUseEvent)
+  sendCardEmotionAndLog(room, cardUseEvent)
 
   if not cardUseEvent.extraUse then
-    self:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
+    room:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
   end
 
   if cardUseEvent.responseToEvent then
@@ -216,22 +217,22 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
       break
     end
 
-    self.logic:trigger(event, self:getPlayerById(cardUseEvent.from), cardUseEvent)
+    logic:trigger(event, room:getPlayerById(cardUseEvent.from), cardUseEvent)
     if event == fk.CardUsing then
-      self:doCardUseEffect(cardUseEvent)
+      room:doCardUseEffect(cardUseEvent)
     end
   end
 end
 
 GameEvent.cleaners[GameEvent.UseCard] = function(self)
   local cardUseEvent = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
 
-  self.logic:trigger(fk.CardUseFinished, self:getPlayerById(cardUseEvent.from), cardUseEvent)
+  room.logic:trigger(fk.CardUseFinished, room:getPlayerById(cardUseEvent.from), cardUseEvent)
 
-  local leftRealCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
+  local leftRealCardIds = room:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
   if #leftRealCardIds > 0 then
-    self:moveCards({
+    room:moveCards({
       ids = leftRealCardIds,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonUse,
@@ -241,20 +242,21 @@ end
 
 GameEvent.functions[GameEvent.RespondCard] = function(self)
   local cardResponseEvent = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
   local card = cardResponseEvent.card
-  local cardIds = self:getSubcardsByRule(card)
+  local cardIds = room:getSubcardsByRule(card)
 
   if card:isVirtual() then
     if #cardIds == 0 then
-      self:sendLog{
+      room:sendLog{
         type = "#ResponsePlayV0Card",
         from = from,
         arg = card:toLogString(),
       }
     else
-      self:sendLog{
+      room:sendLog{
         type = "#ResponsePlayVCard",
         from = from,
         card = cardIds,
@@ -262,46 +264,46 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
       }
     end
   else
-    self:sendLog{
+    room:sendLog{
       type = "#ResponsePlayCard",
       from = from,
       card = cardIds,
     }
   end
-  self:moveCards({
+  room:moveCards({
     ids = cardIds,
     from = from,
     toArea = Card.Processing,
     moveReason = fk.ReasonResonpse,
   })
   if #cardIds > 0 then
-    self:sendFootnote(cardIds, {
+    room:sendFootnote(cardIds, {
       type = "##ResponsePlayCard",
       from = from,
     })
     if card:isVirtual() then
-      self:sendCardVirtName(cardIds, card.name)
+      room:sendCardVirtName(cardIds, card.name)
     end
   end
 
-  if self.logic:trigger(fk.PreCardRespond, self:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-    self.logic:breakEvent()
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    logic:breakEvent()
   end
 
-  playCardEmotionAndSound(self, self:getPlayerById(from), card)
+  playCardEmotionAndSound(room, room:getPlayerById(from), card)
 
-  self.logic:trigger(fk.CardResponding, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+  logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 end
 
 GameEvent.cleaners[GameEvent.RespondCard] = function(self)
   local cardResponseEvent = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
 
-  self.logic:trigger(fk.CardRespondFinished, self:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+  room.logic:trigger(fk.CardRespondFinished, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 
-  local realCardIds = self:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
+  local realCardIds = room:getSubcardsByRule(cardResponseEvent.card, { Card.Processing })
   if #realCardIds > 0 and not cardResponseEvent.skipDrop then
-    self:moveCards({
+    room:moveCards({
       ids = realCardIds,
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonResonpse,
@@ -311,40 +313,41 @@ end
 
 GameEvent.functions[GameEvent.CardEffect] = function(self)
   local cardEffectEvent = table.unpack(self.data)
-  local self = self.room
+  local room = self.room
+  local logic = room.logic
 
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
-    local user = cardEffectEvent.from and self:getPlayerById(cardEffectEvent.from) or nil
+    local user = cardEffectEvent.from and room:getPlayerById(cardEffectEvent.from) or nil
     if cardEffectEvent.isCancellOut then
-      if self.logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
+      if logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
         cardEffectEvent.isCancellOut = false
       else
-        self.logic:breakEvent()
+        logic:breakEvent()
       end
     end
 
     if
       not cardEffectEvent.toCard and
       (
-        not (self:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to)
-        or #self:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0
+        not (room:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to)
+        or #room:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0
       )
     then
-      self.logic:breakEvent()
+      logic:breakEvent()
     end
 
     if table.contains((cardEffectEvent.nullifiedTargets or Util.DummyTable), cardEffectEvent.to) then
-      self.logic:breakEvent()
+      logic:breakEvent()
     end
 
     if event == fk.PreCardEffect then
-      if cardEffectEvent.from and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
-        self.logic:breakEvent()
+      if cardEffectEvent.from and logic:trigger(event, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+        logic:breakEvent()
       end
-    elseif cardEffectEvent.to and self.logic:trigger(event, self:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
-      self.logic:breakEvent()
+    elseif cardEffectEvent.to and logic:trigger(event, room:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
+      logic:breakEvent()
     end
 
-    self:handleCardEffect(event, cardEffectEvent)
+    room:handleCardEffect(event, cardEffectEvent)
   end
 end
