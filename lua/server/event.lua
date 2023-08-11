@@ -8,11 +8,14 @@
 fk.NonTrigger = 1
 fk.GamePrepared = 78
 fk.GameStart = 2
+fk.BeforeTurnStart = 83
 fk.TurnStart = 3
 fk.TurnEnd = 73
+fk.AfterTurnEnd = 84
 fk.EventPhaseStart = 4
 fk.EventPhaseProceeding = 5
 fk.EventPhaseEnd = 6
+fk.AfterPhaseEnd = 86
 fk.EventPhaseChanging = 7
 fk.EventPhaseSkipping = 8
 
@@ -113,5 +116,10 @@ fk.CardShown = 77
 
 fk.SkillEffect = 81
 fk.AfterSkillEffect = 82
+
+-- 83 = PreTurnStart
+-- 84 = AfterTurnEnd
+-- 85 = xxx
+-- 86 = AfterPhaseEnd
 
 fk.NumOfEvents = 83

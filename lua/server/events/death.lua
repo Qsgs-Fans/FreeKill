@@ -31,6 +31,15 @@ GameEvent.functions[GameEvent.Dying] = function(self)
   logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
 end
 
+GameEvent.prepare_funcs[GameEvent.Death] = function(self)
+  local deathStruct = table.unpack(self.data)
+  local room = self.room
+  local victim = room:getPlayerById(deathStruct.who)
+  if victim.dead then
+    return true
+  end
+end
+
 GameEvent.functions[GameEvent.Death] = function(self)
   local deathStruct = table.unpack(self.data)
   local room = self.room

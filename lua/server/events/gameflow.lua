@@ -182,9 +182,23 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
   end
 end
 
+GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
+  local room = self.room
+  local logic = room.logic
+  local player = room.current
+
+  local ret
+
+  if player.faceup then
+    ret = logic:trigger(fk.BeforeTurnStart, player)
+  end
+
+  return ret
+end
+
 GameEvent.functions[GameEvent.Turn] = function(self)
   local room = self.room
-  room.logic:trigger(fk.TurnStart, room.current)
+  local logic = room.logic
 
   room:sendLog{ type = "$AppendSeparator" }
 
@@ -192,10 +206,11 @@ GameEvent.functions[GameEvent.Turn] = function(self)
   if not player.faceup then
     player:turnOver()
   elseif not player.dead then
+    logic:trigger(fk.TurnStart, room.current)
     player:play()
+    logic:trigger(fk.TurnEnd, room.current)
+    logic:trigger(fk.AfterTurnEnd, room.current, nil, true)
   end
-
-  room.logic:trigger(fk.TurnEnd, room.current)
 end
 
 GameEvent.cleaners[GameEvent.Turn] = function(self)
@@ -217,6 +232,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     current.skipped_phases = {}
 
     logic:trigger(fk.TurnEnd, current, nil, true)
+    logic:trigger(fk.AfterTurnEnd, room.current, nil, true)
   end
 
   for _, p in ipairs(room.players) do

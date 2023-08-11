@@ -206,6 +206,7 @@ end
 
 local function breakEvent(self, extra_yield_result)
   local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
+  cancelEvent.toId = self.id
   local notcanceled = cancelEvent:exec()
   local ret, extra_ret = false, nil
   if not notcanceled then
