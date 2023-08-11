@@ -551,6 +551,11 @@ function ServerPlayer:skip(phase)
   end
 end
 
+function ServerPlayer:endPlayPhase()
+  self._play_phase_end = true
+  -- TODO: send log
+end
+
 function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
   delay = (delay == nil) and true or delay
