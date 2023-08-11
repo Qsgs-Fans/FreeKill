@@ -418,22 +418,25 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
       passed = true;
     } else {
       obj = result[0].toObject();
-      // check if this username already login
+
+      // check ban account
       int id = obj["id"].toString().toInt();
       passed = obj["banned"].toString().toInt() == 0;
       if (!passed) {
         error_msg = "you have been banned!";
-      } else if (!players.value(id)) {
-        // check if password is the same
-        auto salt = obj["salt"].toString().toLatin1();
-        decrypted_pw.append(salt);
-        auto passwordHash =
-            QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256)
-                .toHex();
-        passed = (passwordHash == obj["password"].toString());
-        if (!passed)
-          error_msg = "username or password error";
-      } else {
+      }
+
+      // check if password is the same
+      auto salt = obj["salt"].toString().toLatin1();
+      decrypted_pw.append(salt);
+      auto passwordHash =
+        QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256)
+        .toHex();
+      passed = (passwordHash == obj["password"].toString());
+
+      if (!passed) {
+        error_msg = "username or password error";
+      } else if (players.value(id)) {
         auto player = players.value(id);
         // 顶号机制，如果在线的话就让他变成不在线
         if (player->getState() == Player::Online) {
