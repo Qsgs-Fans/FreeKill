@@ -418,6 +418,22 @@ Item {
       anchors.bottomMargin: 4
       style: Text.Outline
     }
+
+    TapHandler {
+      enabled: (root.state != "candidate" || !root.selectable) && root.playerid !== Self.id
+      onTapped: {
+        const params = { name: "hand_card" };
+        let data = JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [root.playerid]));
+        data = data.filter((e) => e !== -1);
+        if (data.length === 0)
+          return;
+
+        params.ids = data;
+
+        // Just for using room's right drawer
+        roomScene.startCheat("../RoomElement/ViewPile", params);
+      }
+    }
   }
 
   TapHandler {

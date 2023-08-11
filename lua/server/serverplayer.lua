@@ -551,6 +551,11 @@ function ServerPlayer:skip(phase)
   end
 end
 
+function ServerPlayer:endPlayPhase()
+  self._play_phase_end = true
+  -- TODO: send log
+end
+
 function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
   delay = (delay == nil) and true or delay
@@ -849,6 +854,24 @@ function ServerPlayer:control(p)
     self.room:setPlayerMark(p, "@ControledBy", "seat#" .. self.seat)
   end
   p.serverplayer = self._splayer
+end
+
+-- 22
+
+function ServerPlayer:addBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.addBuddy(self, other)
+  self:doNotify("AddBuddy", json.encode{ other.id, other.player_cards[Player.Hand] })
+end
+
+function ServerPlayer:removeBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.removeBuddy(self, other)
+  self:doNotify("RmBuddy", tostring(other.id))
 end
 
 return ServerPlayer

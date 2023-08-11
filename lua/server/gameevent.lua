@@ -7,6 +7,7 @@
 ---@field public event integer @ 该事件对应的EventType
 ---@field public data any @ 事件的附加数据，视类型而定
 ---@field public parent GameEvent @ 事件的父事件（栈中的上一层事件）
+---@field public prepare_func fun(self: GameEvent) @ 事件即将开始时执行的函数
 ---@field public main_func fun(self: GameEvent) @ 事件的主函数
 ---@field public clear_func fun(self: GameEvent) @ 事件结束时执行的函数
 ---@field public extra_clear_funcs fun(self:GameEvent)[] @ 事件结束时执行的自定义函数列表
@@ -14,6 +15,9 @@
 ---@field public extra_exit_funcs fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
 ---@field public interrupted boolean @ 事件是否是因为被强行中断而结束的
 local GameEvent = class("GameEvent")
+
+---@type (fun(self: GameEvent): bool)[]
+GameEvent.prepare_funcs = {}
 
 ---@type (fun(self: GameEvent): bool)[]
 GameEvent.functions = {}
@@ -37,6 +41,7 @@ function GameEvent:initialize(event, ...)
   self.room = RoomInstance
   self.event = event
   self.data = { ... }
+  self.prepare_func = GameEvent.prepare_funcs[event] or dummyFunc
   self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
   self.clear_func = GameEvent.cleaners[event] or dummyFunc
   self.extra_clear_funcs = Util.DummyTable
@@ -131,7 +136,7 @@ function GameEvent:searchEvents(eventType, n, func, endEvent)
   local to = endEvent and endEvent.id or self.end_id
   if to == -1 then to = #logic.all_game_events end
   n = n or 1
-  func = func or function() return true end
+  func = func or Util.TrueFunc
 
   local ret
   if #events < 6 then
@@ -201,6 +206,7 @@ end
 
 local function breakEvent(self, extra_yield_result)
   local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
+  cancelEvent.toId = self.id
   local notcanceled = cancelEvent:exec()
   local ret, extra_ret = false, nil
   if not notcanceled then
@@ -218,6 +224,9 @@ function GameEvent:exec()
   local ret = false -- false or nil means this event is running normally
   local extra_ret
   self.parent = logic:getCurrentEvent()
+
+  if self:prepare_func() then return true end
+
   logic.game_event_stack:push(self)
 
   logic.current_event_id = logic.current_event_id + 1

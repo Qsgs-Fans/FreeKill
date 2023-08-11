@@ -34,6 +34,7 @@
 ---@field public cardUsedHistory table<string, integer[]> @ 用牌次数历史记录
 ---@field public skillUsedHistory table<string, integer[]> @ 发动技能次数的历史记录
 ---@field public fixedDistance table<Player, integer> @ 与其他玩家的固定距离列表
+---@field public buddy_list integer[] @ 队友列表，或者说自己可以观看别人手牌的那些玩家的列表
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -62,7 +63,7 @@ Player.HistoryGame = 4
 
 --- 构造函数。总之这不是随便调用的函数
 function Player:initialize()
-  self.id = 114514
+  self.id = 0
   self.hp = 0
   self.maxHp = 0
   self.kingdom = "qun"
@@ -95,6 +96,7 @@ function Player:initialize()
   self.cardUsedHistory = {}
   self.skillUsedHistory = {}
   self.fixedDistance = {}
+  self.buddy_list = {}
 end
 
 function Player:__tostring()
@@ -163,6 +165,8 @@ end
 -- 'xxx': invisible mark
 -- '@mark': mark with extra data (maybe string or number)
 -- '@@mark': mark without data
+-- '@$mark': mark with card_name[] data
+-- '@&mark': mark with general_name[] data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
@@ -904,6 +908,19 @@ end
 function Player:getQuestSkillState(skillName)
   local questSkillState = self:getMark(MarkEnum.QuestSkillPreName .. skillName)
   return type(questSkillState) == "string" and questSkillState or nil
+end
+
+function Player:addBuddy(other)
+  table.insert(self.buddy_list, other.id)
+end
+
+function Player:removeBuddy(other)
+  table.removeOne(self.buddy_list, other.id)
+end
+
+function Player:isBuddy(other)
+  local id = type(other) == "number" and other or other.id
+  return self.id == id or table.contains(self.buddy_list, id)
 end
 
 return Player
