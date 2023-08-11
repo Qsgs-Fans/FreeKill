@@ -165,6 +165,8 @@ end
 -- 'xxx': invisible mark
 -- '@mark': mark with extra data (maybe string or number)
 -- '@@mark': mark without data
+-- '@$mark': mark with card_name[] data
+-- '@&mark': mark with general_name[] data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
