@@ -187,30 +187,24 @@ GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
   local logic = room.logic
   local player = room.current
 
-  local ret
+  if player.dead then return true end
 
-  if player.faceup then
-    ret = logic:trigger(fk.BeforeTurnStart, player)
+  room:sendLog{ type = "$AppendSeparator" }
+
+  if not player.faceup then
+    player:turnOver()
+    return true
   end
 
-  return ret
+  return logic:trigger(fk.BeforeTurnStart, player)
 end
 
 GameEvent.functions[GameEvent.Turn] = function(self)
   local room = self.room
   local logic = room.logic
 
-  room:sendLog{ type = "$AppendSeparator" }
-
-  local player = room.current
-  if not player.faceup then
-    player:turnOver()
-  elseif not player.dead then
-    logic:trigger(fk.TurnStart, room.current)
-    player:play()
-    logic:trigger(fk.TurnEnd, room.current)
-    logic:trigger(fk.AfterTurnEnd, room.current, nil, true)
-  end
+  logic:trigger(fk.TurnStart, room.current)
+  room.current:play()
 end
 
 GameEvent.cleaners[GameEvent.Turn] = function(self)
@@ -230,10 +224,10 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     end
 
     current.skipped_phases = {}
-
-    logic:trigger(fk.TurnEnd, current, nil, true)
-    logic:trigger(fk.AfterTurnEnd, room.current, nil, true)
   end
+
+  logic:trigger(fk.TurnEnd, current, nil, self.interrupted)
+  logic:trigger(fk.AfterTurnEnd, current, nil, self.interrupted)
 
   for _, p in ipairs(room.players) do
     p:setCardUseHistory("", 0, Player.HistoryTurn)
@@ -340,23 +334,19 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       })
     end
   end
-
-  if player.phase ~= Player.NotActive then
-    logic:trigger(fk.EventPhaseEnd, player)
-  else
-    player.skipped_phases = {}
-  end
 end
 
 GameEvent.cleaners[GameEvent.Phase] = function(self)
   local room = self.room
   local player = self.data[1]
+  local logic = room.logic
 
-  --[[
-  if self.interrupted then
-    room.logic:trigger(fk.EventPhaseEnd, player, nil, true)
+  if player.phase ~= Player.NotActive then
+    logic:trigger(fk.EventPhaseEnd, player, nil, self.interrupted)
+    logic:trigger(fk.AfterPhaseEnd, player, nil, self.interrupted)
+  else
+    player.skipped_phases = {}
   end
-  --]]
 
   for _, p in ipairs(room.players) do
     p:setCardUseHistory("", 0, Player.HistoryPhase)
