@@ -330,6 +330,7 @@ Item {
           dashboard.disableSkills();
           dashboard.retractAllPiles();
           selected_targets = [];
+          autoPending = false;
 
           if (popupBox.item != null) {
             popupBox.item.finished();
@@ -348,6 +349,7 @@ Item {
           dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
+          autoPending = false;
           endPhaseButton.visible = true;
           respond_play = false;
         }
@@ -379,6 +381,7 @@ Item {
           dashboard.disableSkills();
           progress.visible = true;
           respond_play = false;
+          autoPending = false;
           roomScene.okCancel.visible = false;
           roomScene.okButton.enabled = false;
           roomScene.cancelButton.enabled = false;
