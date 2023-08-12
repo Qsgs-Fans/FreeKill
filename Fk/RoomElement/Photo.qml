@@ -42,6 +42,7 @@ Item {
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
   property alias markArea: markAreaItem
+  property alias picMarkArea: picMarkAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem
   property alias specialArea: specialAreaItem
 
@@ -586,6 +587,14 @@ Item {
     id: delayedTrickAreaItem
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 8
+  }
+
+  PicMarkArea {
+    id: picMarkAreaItem
+
+    anchors.top: parent.bottom
+    anchors.right: parent.right
+    anchors.topMargin: -4
   }
 
   InvisibleCardArea {

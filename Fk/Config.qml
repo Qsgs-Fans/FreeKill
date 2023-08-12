@@ -62,7 +62,13 @@ QtObject {
     lobbyBg = conf.lobbyBg ?? AppPath + "/image/background";
     roomBg = conf.roomBg ?? AppPath + "/image/gamebg";
     bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
-    language = conf.language ?? "zh_CN";
+    language = conf.language ?? (() => {
+      let ret = SysLocale;
+      if (['zh_CN', 'en_US'].includes(ret)) {
+        return ret;
+      }
+      return 'zh_CN';
+    })();
     disabledPack = conf.disabledPack ?? [ "test_p_0" ];
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;

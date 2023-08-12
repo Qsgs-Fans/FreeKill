@@ -138,3 +138,12 @@ function getRolePic(role) {
   }
   return ROLE_DIR + "unknown.png";
 }
+
+function getMarkPic(mark) {
+  for (let dir of Backend.ls(AppPath + "/packages/")) {
+    if (dir.endsWith(".disabled")) continue;
+    let path = AppPath + "/packages/" + dir + "/image/mark/" + mark + ".png";
+    if (Backend.exists(path)) return path;
+  }
+  return "";
+}
