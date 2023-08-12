@@ -1194,10 +1194,11 @@ callbacks["SetPlayerMark"] = (jsonData) => {
   const player = getPhoto(data[0]);
   const mark = data[1];
   const value = data[2] instanceof Array ? data[2] : data[2].toString();
+  let area = mark.startsWith("@!") ? player.picMarkArea : player.markArea;
   if (data[2] === 0) {
-    player.markArea.removeMark(mark);
+    area.removeMark(mark);
   } else {
-    player.markArea.setMark(mark, mark.startsWith("@@") ? "" : value);
+    area.setMark(mark, mark.startsWith("@@") ? "" : value);
   }
 }
 

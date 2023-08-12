@@ -7,6 +7,7 @@ LimitSkillArea 1.0 LimitSkillArea.qml
 LimitSkillItem 1.0 LimitSkillItem.qml
 Magatama 1.0 Magatama.qml
 MarkArea 1.0 MarkArea.qml
+PicMarkArea 1.0 PicMarkArea.qml
 RoleComboBox 1.0 RoleComboBox.qml
 Shield 1.0 Shield.qml
 SpecialMarkArea 1.0 SpecialMarkArea.qml
