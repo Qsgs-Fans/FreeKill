@@ -805,7 +805,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       -- if move is relevant to player's hands or equips, it should be open
         -- cards move from/to equip/judge/discard/processing should be open
 
-      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p:isBuddy(move.to))) then
+      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
           info.cardId = -1
