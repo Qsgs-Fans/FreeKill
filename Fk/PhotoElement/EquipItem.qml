@@ -154,6 +154,10 @@ Item {
   }
 
   onSealedChanged: {
+    showAnime.stop();
+    hideAnime.stop();
+    x = 0;
+
     opacity = 1;
     text = '  ' + Backend.translate(subtype + "_sealed")
   }

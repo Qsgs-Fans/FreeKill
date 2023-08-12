@@ -168,10 +168,6 @@ Util.AoeOnUse = function(self, room, cardUseEvent)
   end
 end
 
-Util.DefualtEquipCanUse = function(self, player, card)
-  return player:hasEmptyEquipSlot(card.sub_type)
-end
-
 ---@generic T
 ---@param self T[]
 ---@return T[]
