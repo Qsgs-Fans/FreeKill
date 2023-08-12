@@ -16,7 +16,7 @@ Window {
   minimumHeight: 90
   title: qsTr("FreeKill") + " v" + FkVersion
   property var callbacks: Logic.callbacks
-  property var tipList: []
+  property list<string> tipList: []
 
   Item {
     id: mainWindow

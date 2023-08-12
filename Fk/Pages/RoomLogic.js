@@ -663,7 +663,7 @@ callbacks["PropertyUpdate"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const uid = data[0];
   const property_name = data[1];
-  const value = data[2];
+  let value = data[2];
 
   let model = getPhotoModel(uid);
 
