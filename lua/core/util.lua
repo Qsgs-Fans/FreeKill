@@ -163,9 +163,15 @@ function table:contains(element)
 end
 
 function table:shuffle()
-  for i = #self, 2, -1 do
-      local j = math.random(i)
-      self[i], self[j] = self[j], self[i]
+  if #self == 2 then
+    if math.random() < 0.5 then
+      self[1], self[2] = self[2], self[1]
+    end
+  else
+    for i = #self, 2, -1 do
+        local j = math.random(i)
+        self[i], self[j] = self[j], self[i]
+    end
   end
 end
 
