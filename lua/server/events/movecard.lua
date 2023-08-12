@@ -44,6 +44,8 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
     end
   end
 
+  self.data = cardsMoveStructs
+
   if #cardsMoveStructs < 1 then
     return false
   end

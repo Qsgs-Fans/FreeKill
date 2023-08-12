@@ -2210,7 +2210,7 @@ function Room:doCardUseEffect(cardUseEvent)
     end
 
     if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
-      self.moveCards({
+      self:moveCards({
         ids = realCardIds,
         toArea = Card.DiscardPile,
         moveReason = fk.ReasonPutIntoDiscardPile,
