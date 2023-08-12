@@ -30,7 +30,7 @@ local function tellRoomToObserver(self, player)
   for _, p in ipairs(self.players) do
     self:notifyProperty(player, p, "general")
     self:notifyProperty(player, p, "deputyGeneral")
-    p:marshal(player)
+    p:marshal(player, true)
   end
 
   player:doNotify("UpdateDrawPile", #self.draw_pile)

@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class UsableSkill : Skill
+---@field public main_skill UsableSkill
 ---@field public max_use_time integer[]
 ---@field public expand_pile string
 local UsableSkill = Skill:subclass("UsableSkill")
@@ -59,7 +60,7 @@ function UsableSkill:withinDistanceLimit(player, isattack, card, to)
   end
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   table.insert(temp_suf, "-tmp")
-  return isattack and player:inMyAttackRange(to, self:getDistanceLimit(player, card, to)) or player:distanceTo(to) <= self:getDistanceLimit(player, card, to) or
+  return isattack and player:inMyAttackRange(to) or player:distanceTo(to) <= self:getDistanceLimit(player, card, to) or
   (player:getMark(MarkEnum.BypassDistancesLimit) ~= 0 or
   table.find(temp_suf, function(s)
     return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0

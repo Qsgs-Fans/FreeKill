@@ -245,6 +245,33 @@ function table:insertIfNeed(element)
   end
 end
 
+-- similar to table.insertTable but insertIfNeed inside
+function table:insertTableIfNeed(list)
+  for _, e in ipairs(list) do
+    table.insertIfNeed(self, e)
+  end
+end
+
+---@generic T
+---@return T[]
+function table.connect(...)
+  local ret = {}
+  for _, v in ipairs({...}) do
+    table.insertTable(ret, v)
+  end
+  return ret
+end
+
+---@generic T
+---@return T[]
+function table.connectIfNeed(...)
+  local ret = {}
+  for _, v in ipairs({...}) do
+    table.insertTableIfNeed(ret, v)
+  end
+  return ret
+end
+
 ---@generic T
 ---@param self T[]
 ---@param n integer|nil
@@ -252,7 +279,7 @@ end
 function table:random(n)
   local n0 = n
   n = n or 1
-  if #self == 0 then return nil end
+  if #self == 0 then return n0 ~= nil and {} or nil end
   local tmp = {table.unpack(self)}
   local ret = {}
   while n > 0 and #tmp > 0 do
@@ -273,7 +300,7 @@ function table:slice(begin, _end)
   if begin >= _end then return {} end
 
   local ret = {}
-  for i = begin, _end - 1, 1 do
+  for i = math.max(begin, 1), math.min(_end - 1, len), 1 do
     table.insert(ret, self[i])
   end
   return ret
@@ -328,6 +355,7 @@ end
 
 -- override default string.len
 string.rawlen = string.len
+---@diagnostic disable-next-line: duplicate-set-field
 function string:len()
   return utf8.len(self)
 end

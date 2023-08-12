@@ -21,6 +21,7 @@ Item {
   property bool isFull: false
   property bool isAllReady: false
   property bool isReady: false
+  property bool canKickOwner: false
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -71,6 +72,8 @@ Item {
   onIsStartedChanged: {
     if (isStarted) {
       bgm.play();
+      canKickOwner = false;
+      kickOwnerTimer.stop();
     } else {
       // bgm.stop();
     }
@@ -209,23 +212,90 @@ Item {
       ClientInstance.notifyServer("Ready", "");
     }
   }
+
+  Button {
+    id: kickOwner
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: parent.height / 2 + 30
+    text: "踢出房主"
+    visible: canKickOwner && !isStarted && isFull && !isOwner
+    onClicked: {
+      for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.isOwner) {
+          ClientInstance.notifyServer("KickPlayer", item.id.toString());
+        }
+      }
+    }
+  }
+
+  Timer {
+    id: kickOwnerTimer
+    interval: 15000
+    onTriggered: {
+      canKickOwner = true;
+    }
+  }
+
+  onIsAllReadyChanged: {
+    if (!isAllReady) {
+      canKickOwner = false;
+      kickOwnerTimer.stop();
+    } else {
+      kickOwnerTimer.start();
+    }
+  }
+
   Rectangle {
-    x: parent.width / 2 + 80
-    y: parent.height / 2
+    x: parent.width / 2 + 60
+    y: parent.height / 2 - 30
     color: "snow"
     opacity: 0.8
     radius: 6
-    height: childrenRect.height + 16
-    width: childrenRect.width + 16
     visible: !isStarted
+    width: 280
+    height: 280
 
-    Text {
-      x: 8; y: 8
-      Component.onCompleted: {
-        const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
-        text = "手气卡次数：" + data.luckTime + "<br />出手时间：" + config.roomTimeout
-          + "<br />选将框数：" + data.generalNum + (data.enableFreeAssign ? "<br /><font color=\"red\">可自由点将</font>" : "")
-          + (data.enableDeputy ? "<br /><font color=\"red\">启用副将机制</font>" : "")
+    Flickable {
+      id: flickableContainer
+      ScrollBar.vertical: ScrollBar {}
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: 10
+      flickableDirection: Flickable.VerticalFlick
+      width: parent.width - 10
+      height: parent.height - 10
+      contentHeight: roominfo.height
+      clip: true
+
+      Text {
+        id: roominfo
+        font.pixelSize: 16
+        width: parent.width
+        wrapMode: TextEdit.WordWrap
+        Component.onCompleted: {
+          const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
+          let cardpack = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
+          cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
+
+          text = "游戏模式：" + Backend.translate(data.gameMode) + "<br />"
+            + Backend.translate("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
+            + Backend.translate("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
+            + Backend.translate("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
+            + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
+            + (data.enableDeputy ? " " + Backend.translate("IncludeDeputy") : "")
+            + '<br />使用牌堆：' + cardpack.map(e => {
+              let ret = Backend.translate(e);
+              if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
+                ret = "<b>" + ret + "</b>";
+              } else {
+                ret = '<font color="grey"><i>' + ret + "</i></font>";
+              }
+              return ret;
+            }).join('，')
+            //+ '<br /><b>禁包</b>：' + data.disabledPack.map(e => Backend.translate(e)).join('，')
+            //+ '<br /><b>禁将</b>：' + data.disabledGenerals.map(e => Backend.translate(e)).join('，')
+        }
       }
     }
   }
@@ -478,13 +548,13 @@ Item {
       }
 
       Switch {
-        text: "匀速"
+        text: Backend.translate("Speed Resume")
         checked: false
         onCheckedChanged: Backend.controlReplayer("uniform");
       }
 
       Button {
-        text: "减速"
+        text: Backend.translate("Speed Down")
         onClicked: Backend.controlReplayer("slowdown");
       }
 
@@ -495,13 +565,13 @@ Item {
       }
 
       Button {
-        text: "加速"
+        text: Backend.translate("Speed Up")
         onClicked: Backend.controlReplayer("speedup");
       }
 
       Button {
         property bool running: true
-        text: running ? "暂停" : "继续"
+        text: Backend.translate(running ? "Pause" : "Resume")
         onClicked: {
           running = !running;
           Backend.controlReplayer("toggle");

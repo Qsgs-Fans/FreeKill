@@ -91,27 +91,31 @@ function GameLogic:chooseGenerals()
   if lord ~= nil then
     room.current = lord
     local generals = {}
+    local lordlist = {}
+    local lordpools = {}
     if room.settings.gameMode == "aaa_role_mode" then
       for _, general in pairs(Fk:getAllGenerals()) do
         if (not general.hidden and not general.total_hidden) and
         table.find(general.skills, function(s)
           return s.lordSkill
         end) and
-        not table.find(generals, function(g)
+        not table.find(lordlist, function(g)
           return g.trueName == general.trueName
         end) then
-          table.insert(generals, general)
+          table.insert(lordlist, general)
         end
       end
-      generals = table.random(generals, 3)
+      lordlist = table.random(lordlist, 3) or {}
     end
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), table.map(generals, function (g)
-      return g.name
-    end)))
+    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
+      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
+    end))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
-    lord_generals = room:askForGeneral(lord, generals, n)
+    lordpools = table.simpleClone(generals)
+    table.insertTable(lordpools, table.map(lordlist, function(g) return g.name end))
+    lord_generals = room:askForGeneral(lord, lordpools, n)
     local lord_general, deputy
     if type(lord_generals) == "table" then
       deputy = lord_generals[2]
@@ -122,23 +126,7 @@ function GameLogic:chooseGenerals()
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
-    if lord.kingdom == "god" or Fk.generals[lord_general].subkingdom then
-      local allKingdoms = {}
-      if lord.kingdom == "god" then
-        allKingdoms = table.simpleClone(Fk.kingdoms)
-
-        local exceptedKingdoms = { "god", "qin" }
-        for _, kingdom in ipairs(exceptedKingdoms) do
-          table.removeOne(allKingdoms, kingdom)
-        end
-      else
-        local curGeneral = Fk.generals[lord_general]
-        allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
-      end
-
-      lord.kingdom = room:askForChoice(lord, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
-      room:broadcastProperty(lord, "kingdom")
-    end
+    room:askForChooseKingdom({lord})
     room:broadcastProperty(lord, "general")
     room:setDeputyGeneral(lord, deputy)
     room:broadcastProperty(lord, "deputyGeneral")

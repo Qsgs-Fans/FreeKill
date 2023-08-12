@@ -56,8 +56,15 @@ end
 -- do cost and skill effect.
 -- DO NOT modify this function
 function TriggerSkill:doCost(event, target, player, data)
+  local start_time = os.getms()
   local ret = self:cost(event, target, player, data)
+  local end_time = os.getms()
+
   local room = player.room
+  -- 对于那种cost直接返回true的锁定技，如果是预亮技，那么还是询问一下好
+  if ret and player:isFakeSkill(self) and end_time - start_time < 10000 then
+    ret = room:askForSkillInvoke(player, self.name)
+  end
 
   local cost_data_bak = self.cost_data
   room.logic:trigger(fk.BeforeTriggerSkillUse, player, { skill = self, willUse = ret })
@@ -93,7 +100,7 @@ end
 ---@param target ServerPlayer @ Player who triggered this event
 ---@param player ServerPlayer @ Player who is operating
 ---@param data any @ useful data of the event
----@return boolean|nil
+---@return bool
 function TriggerSkill:use(event, target, player, data) end
 
 function TriggerSkill:canWake(event, target, player, data)

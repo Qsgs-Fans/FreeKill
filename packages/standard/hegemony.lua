@@ -229,13 +229,7 @@ function HegLogic:attachSkillToPlayers()
       return
     end
 
-    -- room:handleAddLoseSkills(player, skillName, nil, false)
-    player:doNotify("AddSkill", json.encode{ player.id, skillName })
-
-    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
-      function(s) return s:isInstanceOf(TriggerSkill) end) then
-      player:doNotify("AddSkill", json.encode{ player.id, skillName, true })
-    end
+    player:addFakeSkill(skill)
   end
 
   for _, p in ipairs(room.alive_players) do
@@ -362,7 +356,7 @@ heg = fk.CreateGameMode{
   maxPlayer = 8,
   rule = heg_rule,
   logic = heg_getlogic,
-  countInFunc = Util.FalseFunc
+  is_counted = Util.FalseFunc
 }
 
 Fk:loadTranslationTable{

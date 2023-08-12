@@ -54,6 +54,13 @@ Item {
         enabled: root.parent.state != "candidate" || !root.parent.selectable
         onTapped: {
           const params = { name: mark_name };
+
+          if (mark_name.startsWith('@&')) {
+            params.cardNames = mark_extra.split(',');
+            roomScene.startCheat("../RoomElement/ViewGeneralPile", params);
+            return;
+          }
+
           if (mark_name.startsWith('@$')) {
             params.cardNames = mark_extra.split(',');
           } else {
@@ -88,7 +95,7 @@ Item {
     }
 
     let special_value = '';
-    if (mark.startsWith('@$')) {
+    if (mark.startsWith('@$') || mark.startsWith('@&')) {
       special_value += data.length;
       data = data.join(',');
     } else {

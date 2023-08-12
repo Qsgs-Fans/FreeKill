@@ -38,6 +38,8 @@ QtObject {
   property string aeskey
 
   // Client data
+  property string serverMotd: ""
+  property var serverHiddenPacks: []
   property int roomCapacity: 0
   property int roomTimeout: 0
   property bool enableFreeAssign: false

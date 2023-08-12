@@ -48,6 +48,8 @@ Item {
   }
 
   TapHandler {
+    gesturePolicy: TapHandler.WithinBounds
+
     onTapped: {
       lobby_dialog.sourceComponent = Qt.createComponent("EditProfile.qml");
       lobby_drawer.open();

@@ -32,6 +32,7 @@ private:
   void unbanipCommand(QStringList &);
   void unbanUuidCommand(QStringList &);
   void reloadConfCommand(QStringList &);
+  void resetPasswordCommand(QStringList &);
 };
 
 #endif

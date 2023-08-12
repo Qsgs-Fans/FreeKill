@@ -14,6 +14,8 @@
 ---@field public phase_state table[]
 ---@field public phase_index integer
 ---@field public role_shown boolean
+---@field private _fake_skills Skill[]
+---@field public prelighted_skills Skill[]
 ---@field private _timewaste_count integer
 ---@field public ai AI
 ---@field public ai_data any
@@ -35,6 +37,11 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+
+  self._fake_skills = {}
+  self.prelighted_skills = {}
+  self._prelighted_skills = {}
+
   self._timewaste_count = 0
   self.ai = RandomAI:new(self)
 end
@@ -121,10 +128,13 @@ local function _waitForReply(player, timeout)
     end
     local rest = timeout * 1000 - (os.getms() - start) / 1000
     if timeout and rest <= 0 then
-      player._timewaste_count = player._timewaste_count + 1
+      if timeout >= 15 then
+        player._timewaste_count = player._timewaste_count + 1
+      end
       player.serverplayer:setThinking(false)
 
       if player._timewaste_count >= 3 then
+        player._timewaste_count = 0
         player.serverplayer:emitKick()
       end
 
@@ -177,7 +187,8 @@ function ServerPlayer:waitForReply(timeout)
 end
 
 ---@param player ServerPlayer
-function ServerPlayer:marshal(player)
+---@param observe bool
+function ServerPlayer:marshal(player, observe)
   local room = self.room
   if not room.game_started then
     -- If game does not starts, that mean we are entering room that
@@ -266,7 +277,7 @@ function ServerPlayer:marshal(player)
   end
 
   if #card_moves > 0 then
-    room:notifyMoveCards({ player }, card_moves)
+    room:notifyMoveCards({ player }, card_moves, observe and self.seat == 1)
   end
 
   for k, v in pairs(self.mark) do
@@ -540,6 +551,11 @@ function ServerPlayer:skip(phase)
   end
 end
 
+function ServerPlayer:endPlayPhase()
+  self._play_phase_end = true
+  -- TODO: send log
+end
+
 function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
   delay = (delay == nil) and true or delay
@@ -586,19 +602,21 @@ function ServerPlayer:bury()
 end
 
 function ServerPlayer:throwAllCards(flag)
-  local room = self.room
+  local cardIds = {}
   flag = flag or "hej"
   if string.find(flag, "h") then
-    room:throwCard(self.player_cards[Player.Hand], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Hand])
   end
 
   if string.find(flag, "e") then
-    room:throwCard(self.player_cards[Player.Equip], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Equip])
   end
 
   if string.find(flag, "j") then
-    room:throwCard(self.player_cards[Player.Judge], "", self)
+    table.insertTable(cardIds, self.player_cards[Player.Judge])
   end
+
+  self.room:throwCard(cardIds, "", self)
 end
 
 function ServerPlayer:throwAllMarks()
@@ -608,9 +626,11 @@ function ServerPlayer:throwAllMarks()
 end
 
 function ServerPlayer:clearPiles()
+  local cardIds = {}
   for _, ids in pairs(self.special_cards) do
-    self.room:throwCard(ids, "", self)
+    table.insertTable(cardIds, ids)
   end
+  self.room:moveCardTo(cardIds, Card.DiscardPile, nil, fk.ReasonPutIntoDiscardPile, "", nil, true)
 end
 
 function ServerPlayer:addVirtualEquip(card)
@@ -653,19 +673,22 @@ end
 
 ---@param chained boolean
 function ServerPlayer:setChainState(chained)
-  if self.room.logic:trigger(fk.BeforeChainStateChange, self) then
+  local room = self.room
+  if room.logic:trigger(fk.BeforeChainStateChange, self) then
     return
   end
 
   self.chained = chained
-  self.room:broadcastProperty(self, "chained")
-  self.room:sendLog{
+
+  room:broadcastProperty(self, "chained")
+  room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
     arg = self.chained and "chained" or "un-chained"
   }
-
-  self.room.logic:trigger(fk.ChainStateChanged, self)
+  room:delay(150)
+  room:broadcastPlaySound("./audio/system/chain")
+  room.logic:trigger(fk.ChainStateChanged, self)
 end
 
 function ServerPlayer:reset()
@@ -691,13 +714,70 @@ end
 
 -- Hegemony func
 
+---@param skill Skill
+function ServerPlayer:addFakeSkill(skill)
+  assert(skill:isInstanceOf(Skill))
+  if table.contains(self._fake_skills, skill) then return end
+
+  table.insert(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    -- if s.main_skill == skill then -- TODO: need more detailed
+      table.insert(self._fake_skills, s)
+    -- end
+  end
+
+  -- TODO
+  self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
+end
+
+---@param skill Skill
+function ServerPlayer:loseFakeSkill(skill)
+  assert(skill:isInstanceOf(Skill))
+  if not table.contains(self._fake_skills, skill) then return end
+
+  table.removeOne(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    table.removeOne(self._fake_skills, s)
+  end
+
+  -- TODO
+  self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
+end
+
+function ServerPlayer:isFakeSkill(skill)
+  if type(skill) == "string" then skill = Fk.skills[skill] end
+  assert(skill:isInstanceOf(Skill))
+  return table.contains(self._fake_skills, skill)
+end
+
+---@param skill string | Skill
+---@param isPrelight bool
 function ServerPlayer:prelightSkill(skill, isPrelight)
-  if isPrelight then
+  if type(skill) == "string" then skill = Fk.skills[skill] end
+  assert(skill:isInstanceOf(Skill))
+
+  if not self._prelighted_skills[skill] and not self:hasSkill(skill) then
+    self._prelighted_skills[skill] = true
+    -- to attach skill to room
     self:addSkill(skill)
-  else
     self:loseSkill(skill)
   end
-  self:doNotify("PrelightSkill", json.encode{ skill, isPrelight })
+
+  if isPrelight then
+    -- self:addSkill(skill)
+    table.insert(self.prelighted_skills, skill)
+    for _, s in ipairs(skill.related_skills) do
+      table.insert(self.prelighted_skills, s)
+    end
+  else
+    -- self:loseSkill(skill)
+    table.removeOne(self.prelighted_skills, skill)
+    for _, s in ipairs(skill.related_skills) do
+      table.removeOne(self.prelighted_skills, s)
+    end
+  end
+
+  self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
 function ServerPlayer:revealGeneral(isDeputy)
@@ -714,10 +794,7 @@ function ServerPlayer:revealGeneral(isDeputy)
   local general = Fk.generals[generalName]
   for _, s in ipairs(general:getSkillNameList()) do
     local skill = Fk.skills[s]
-    if skill:isInstanceOf(TriggerSkill) or table.find(skill.related_skills,
-      function(s) return s:isInstanceOf(TriggerSkill) end) then
-      self:doNotify("LoseSkill", json.encode{ self.id, s, true })
-    end
+    self:loseFakeSkill(skill)
   end
 
   local oldKingdom = self.kingdom
@@ -777,6 +854,24 @@ function ServerPlayer:control(p)
     self.room:setPlayerMark(p, "@ControledBy", "seat#" .. self.seat)
   end
   p.serverplayer = self._splayer
+end
+
+-- 22
+
+function ServerPlayer:addBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.addBuddy(self, other)
+  self:doNotify("AddBuddy", json.encode{ other.id, other.player_cards[Player.Hand] })
+end
+
+function ServerPlayer:removeBuddy(other)
+  if type(other) == "number" then
+    other = self.room:getPlayerById(other)
+  end
+  Player.removeBuddy(self, other)
+  self:doNotify("RmBuddy", tostring(other.id))
 end
 
 return ServerPlayer

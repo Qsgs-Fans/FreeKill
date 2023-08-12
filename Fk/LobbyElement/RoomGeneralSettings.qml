@@ -179,13 +179,30 @@ Flickable {
             disabledGenerals = Array.from(new Set(disabledGenerals));
           }
 
+          let disabledPack = config.disabledPack.slice();
+          config.serverHiddenPacks.forEach(p => {
+            if (!disabledPack.includes(p)) {
+              disabledPack.push(p);
+            }
+          });
+          const generalPacks = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+          for (let pk of generalPacks) {
+            if (disabledPack.includes(pk)) continue;
+            let generals = JSON.parse(Backend.callLuaFunction("GetGenerals", [pk]));
+            let t = generals.filter(g => !disabledGenerals.includes(g));
+            if (t.length === 0) {
+              disabledPack.push(pk);
+              disabledGenerals = disabledGenerals.filter(g1 => !generals.includes(g1));
+            }
+          }
+
           ClientInstance.notifyServer(
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
               enableDeputy: deputyCheck.checked,
               gameMode: config.preferedMode,
-              disabledPack: config.disabledPack,
+              disabledPack: disabledPack,
               generalNum: config.preferredGeneralNum,
               luckTime: config.preferredLuckTime,
               password: roomPassword.text,

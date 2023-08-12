@@ -34,6 +34,7 @@
 ---@field public cardUsedHistory table<string, integer[]> @ 用牌次数历史记录
 ---@field public skillUsedHistory table<string, integer[]> @ 发动技能次数的历史记录
 ---@field public fixedDistance table<Player, integer> @ 与其他玩家的固定距离列表
+---@field public buddy_list integer[] @ 队友列表，或者说自己可以观看别人手牌的那些玩家的列表
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -62,7 +63,7 @@ Player.HistoryGame = 4
 
 --- 构造函数。总之这不是随便调用的函数
 function Player:initialize()
-  self.id = 114514
+  self.id = 0
   self.hp = 0
   self.maxHp = 0
   self.kingdom = "qun"
@@ -95,6 +96,7 @@ function Player:initialize()
   self.cardUsedHistory = {}
   self.skillUsedHistory = {}
   self.fixedDistance = {}
+  self.buddy_list = {}
 end
 
 function Player:__tostring()
@@ -103,8 +105,8 @@ end
 
 --- 设置角色、体力、技能。
 ---@param general General @ 角色类型
----@param setHp boolean|nil @ 是否设置体力
----@param addSkills boolean|nil @ 是否增加技能
+---@param setHp bool @ 是否设置体力
+---@param addSkills bool @ 是否增加技能
 function Player:setGeneral(general, setHp, addSkills)
   self.general = general.name
   if setHp then
@@ -163,6 +165,8 @@ end
 -- 'xxx': invisible mark
 -- '@mark': mark with extra data (maybe string or number)
 -- '@@mark': mark without data
+-- '@$mark': mark with card_name[] data
+-- '@&mark': mark with general_name[] data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
@@ -354,7 +358,7 @@ end
 
 --- 返回所有“如手牌般使用或打出”的牌。
 --- 或者说，返回所有名字以“&”结尾的pile的牌。
----@param include_hand boolean|nil @ 是否包含真正的手牌
+---@param include_hand bool @ 是否包含真正的手牌
 ---@return integer[]
 function Player:getHandlyIds(include_hand)
   local ret = include_hand and self:getCardIds("h") or {}
@@ -445,7 +449,7 @@ end
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
 ---@param other Player @ 其他玩家
 ---@param mode string|nil @ 计算模式(left/right/both)
----@param ignore_dead boolean|nil @ 是否忽略尸体
+---@param ignore_dead bool @ 是否忽略尸体
 function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
@@ -661,8 +665,8 @@ end
 
 --- 检索玩家是否有对应技能。
 ---@param skill string | Skill @ 技能名
----@param ignoreNullified boolean|nil @ 忽略技能是否被无效
----@param ignoreAlive boolean|nil @ 忽略角色在场与否
+---@param ignoreNullified bool @ 忽略技能是否被无效
+---@param ignoreAlive bool @ 忽略角色在场与否
 function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   if not ignoreAlive and self.dead then
     return false
@@ -675,6 +679,13 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   end
 
   if table.contains(self.player_skills, skill) then
+    return true
+  end
+
+  if self:isInstanceOf(ServerPlayer) and -- isInstanceOf(nil) will return false
+    table.contains(self._fake_skills, skill) and
+    table.contains(self.prelighted_skills, skill) then
+
     return true
   end
 
@@ -840,8 +851,8 @@ fk.SwitchYin = 1
 
 --- 获取转换技状态
 ---@param skillName string @ 技能名
----@param afterUse boolean|nil @ 是否提前计算转换后状态
----@param inWord boolean|nil @ 是否返回文字
+---@param afterUse bool @ 是否提前计算转换后状态
+---@param inWord bool @ 是否返回文字
 ---@return number|string @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then
@@ -897,6 +908,19 @@ end
 function Player:getQuestSkillState(skillName)
   local questSkillState = self:getMark(MarkEnum.QuestSkillPreName .. skillName)
   return type(questSkillState) == "string" and questSkillState or nil
+end
+
+function Player:addBuddy(other)
+  table.insert(self.buddy_list, other.id)
+end
+
+function Player:removeBuddy(other)
+  table.removeOne(self.buddy_list, other.id)
+end
+
+function Player:isBuddy(other)
+  local id = type(other) == "number" and other or other.id
+  return self.id == id or table.contains(self.buddy_list, id)
 end
 
 return Player

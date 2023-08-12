@@ -7,8 +7,15 @@ local discardSkill = fk.CreateActiveSkill{
       return false
     end
 
-    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
-      return false
+    if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
+      local pile = ""
+      for p, t in pairs(Self.special_cards) do
+        if table.contains(t, to_select) then
+          pile = p
+          break
+        end
+      end
+      if not string.find(self.pattern or "", pile) then return false end
     end
 
     local checkpoint = true
@@ -44,14 +51,14 @@ local discardSkill = fk.CreateActiveSkill{
 
 local chooseCardsSkill = fk.CreateActiveSkill{
   name = "choose_cards_skill",
-  expand_pile = function(self) return self.expand_pile end,
+  -- expand_pile = function(self) return self.expand_pile end,
   card_filter = function(self, to_select, selected)
     if #selected >= self.num then
       return false
     end
 
-    if Fk:currentRoom():getCardArea(to_select) == Player.Special then
-      return false
+    if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
+      if not string.find(self.pattern or "", self.expand_pile or "") then return false end
     end
 
     local checkpoint = true

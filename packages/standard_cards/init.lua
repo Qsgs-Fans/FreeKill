@@ -125,7 +125,7 @@ local peachSkill = fk.CreateActiveSkill{
   name = "peach_skill",
   mod_target_filter = function(self, to_select)
     return Fk:currentRoom():getPlayerById(to_select):isWounded() and
-      not table.find(Fk:currentRoom().players, function(p)
+      not table.find(Fk:currentRoom().alive_players, function(p)
         return p.dying
       end)
   end,
@@ -213,7 +213,7 @@ local snatchSkill = fk.CreateActiveSkill{
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return from ~= player and not (player:isAllNude() or (distance_limited and not self:withinDistanceLimit(from, true, card, player)))
+    return from ~= player and not (player:isAllNude() or (distance_limited and not self:withinDistanceLimit(from, false, card, player)))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected == 0 then
@@ -413,6 +413,7 @@ local nullificationSkill = fk.CreateActiveSkill{
   can_use = function()
     return false
   end,
+  on_use = function() RoomInstance:delay(1200) end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true

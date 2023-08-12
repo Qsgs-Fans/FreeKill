@@ -22,6 +22,9 @@ Item {
     TabButton {
       text: Backend.translate("Package Settings")
     }
+    TabButton {
+      text: Backend.translate("Ban General Settings")
+    }
   }
 
   SwipeView {
@@ -37,5 +40,6 @@ Item {
         anchors.fill: parent
       }
     }
+    BanGeneralSetting {}
   }
 }

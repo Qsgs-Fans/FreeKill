@@ -24,7 +24,7 @@
 ---@field public special_skills string[] | nil @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
----@field public is_derived boolean|null @ 判断是否为衍生牌
+---@field public is_derived bool @ 判断是否为衍生牌
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -153,7 +153,7 @@ end
 
 --- 检测是否为虚拟卡牌，如果其ID为0及以下，则为虚拟卡牌。
 function Card:isVirtual()
-  return self.id <= 0
+  return self.id == 0
 end
 
 --- 获取卡牌的ID。
@@ -238,7 +238,7 @@ function Card:matchPattern(pattern)
 end
 
 --- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
----@param symbol boolean|nil @ 是否以符号形式显示
+---@param symbol bool @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
   local suit = self.suit
@@ -430,7 +430,7 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean|nil @ 比较二者相同还是不同
+---@param diff bool @ 比较二者相同还是不同
 ---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then

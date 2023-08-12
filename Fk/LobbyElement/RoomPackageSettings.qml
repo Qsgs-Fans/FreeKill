@@ -9,6 +9,7 @@ Flickable {
   flickableDirection: Flickable.AutoFlickIfNeeded
   clip: true
   contentHeight: layout.height
+  property bool loading: false
   ScrollBar.vertical: ScrollBar {
     parent: root.parent
     anchors.top: root.top
@@ -22,7 +23,7 @@ Flickable {
     anchors.topMargin: 8
 
     Switch {
-      text: "禁用Lua拓展 (重启后生效)"
+      text: Backend.translate("Disable Extension")
     }
 
     RowLayout {
@@ -65,7 +66,9 @@ Flickable {
           enabled: orig_name !== "test_p_0"
 
           onCheckedChanged: {
-            checkPackage(orig_name, checked);
+            if (!loading) {
+              checkPackage(orig_name, checked);
+            }
           }
         }
       }
@@ -130,22 +133,30 @@ Flickable {
   }
 
   Component.onCompleted: {
+    loading = true;
     const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
     for (let orig of g) {
+      if (config.serverHiddenPacks.includes(orig)) {
+        continue;
+      }
       gpacklist.append({
         name: Backend.translate(orig),
         orig_name: orig,
-        pkg_enabled: config.disabledPack.indexOf(orig) === -1,
+        pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
 
     const c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
     for (let orig of c) {
+      if (config.serverHiddenPacks.includes(orig)) {
+        continue;
+      }
       cpacklist.append({
         name: Backend.translate(orig),
         orig_name: orig,
-        pkg_enabled: config.disabledPack.indexOf(orig) === -1,
+        pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
+    loading = false;
   }
 }
