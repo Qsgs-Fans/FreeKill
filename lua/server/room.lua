@@ -3210,4 +3210,30 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
+function Room:abortPlayerArea(player, area)
+  assert(type(area) == "number" or type(area) == "table")
+
+  if type(area) == "number" then
+    area = { area }
+  end
+
+  local areaCanSeal = {
+    Player.AreaWeapon,
+    Player.AreaArmor,
+    Player.AreaOffensiveRide,
+    Player.AreaDefensiveRide,
+    Player.AreaTreasure,
+    Player.AreaJudge,
+  }
+  assert(table.every(area, function(curArea)
+    return table.contains(areaCanSeal, curArea)
+  end))
+
+  for _, curArea in ipairs(area) do
+    table.insertIfNeed(player.areasSealed, curArea)
+  end
+
+  self:broadcastProperty(player, "areasSealed")
+end
+
 return Room

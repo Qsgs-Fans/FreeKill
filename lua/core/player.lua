@@ -61,6 +61,13 @@ Player.HistoryTurn = 2
 Player.HistoryRound = 3
 Player.HistoryGame = 4
 
+Player.AreaWeapon = 1
+Player.AreaArmor = 2
+Player.AreaOffensiveRide = 3
+Player.AreaDefensiveRide = 4
+Player.AreaTreasure = 5
+Player.AreaJudge = 6
+
 --- 构造函数。总之这不是随便调用的函数
 function Player:initialize()
   self.id = 0
@@ -90,6 +97,7 @@ function Player:initialize()
     [Player.Equip] = {},
     [Player.Judge] = {},
   }
+  self.areasSealed = {}
   self.virtual_equips = {}
   self.special_cards = {}
 

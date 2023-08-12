@@ -41,6 +41,7 @@ Item {
 
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
+  property alias areasSealed: equipAreaItem
   property alias markArea: markAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem
   property alias specialArea: specialAreaItem
