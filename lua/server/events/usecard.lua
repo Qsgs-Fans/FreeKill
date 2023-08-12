@@ -185,13 +185,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
-  local from = cardUseEvent.from
-  room:moveCards({
-    ids = room:getSubcardsByRule(cardUseEvent.card),
-    from = from,
-    toArea = Card.Processing,
-    moveReason = fk.ReasonUse,
-  })
+  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
@@ -270,12 +264,7 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
       card = cardIds,
     }
   end
-  room:moveCards({
-    ids = cardIds,
-    from = from,
-    toArea = Card.Processing,
-    moveReason = fk.ReasonResonpse,
-  })
+  room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
       type = "##ResponsePlayCard",

@@ -663,11 +663,14 @@ callbacks["PropertyUpdate"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const uid = data[0];
   const property_name = data[1];
-  const value = data[2];
+  let value = data[2];
 
   let model = getPhotoModel(uid);
 
   if (typeof(model) !== "undefined") {
+    if (property_name == "sealedSlots")
+      value = JSON.stringify(value); // 辣鸡qml
+
     model[property_name] = value;
   }
 

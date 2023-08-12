@@ -34,6 +34,7 @@ Item {
   property int winGame: 0
   property int runGame: 0
   property int totalGame: 0
+  property list<string> sealedSlots: []
 
   property int distance: -1
   property string status: "normal"
@@ -41,6 +42,7 @@ Item {
 
   property alias handcardArea: handcardAreaItem
   property alias equipArea: equipAreaItem
+  property alias areasSealed: equipAreaItem
   property alias markArea: markAreaItem
   property alias picMarkArea: picMarkAreaItem
   property alias delayedTrickArea: delayedTrickAreaItem

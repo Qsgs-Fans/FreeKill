@@ -9,31 +9,41 @@ Item {
   property string name: ""
   property string suit: ""
   property int number: 0
+  property bool sealed: false
+  property string subtype
 
   property string icon: ""
   property alias text: textItem.text
 
   id: root
 
+  Rectangle {
+    anchors.fill: parent
+    radius: 2
+    visible: sealed
+    color: "#CCC"
+    opacity: 0.8
+  }
+
   Image {
     id: iconItem
     anchors.verticalCenter: parent.verticalCenter
     x: 3
 
-    source: icon ? SkinBank.getEquipIcon(cid, icon) : ""
+    source: sealed ? (SkinBank.EQUIP_ICON_DIR + "sealed") : (icon ? SkinBank.getEquipIcon(cid, icon) : "")
   }
 
   Image {
     id: suitItem
     anchors.right: parent.right
-    source: suit ? SkinBank.CARD_SUIT_DIR + suit : ""
+    source: (suit && !sealed) ? SkinBank.CARD_SUIT_DIR + suit : ""
     width: implicitWidth / implicitHeight * height
     height: 16
   }
 
   GlowText {
     id: numberItem
-    visible: number > 0 && number < 14
+    visible: !sealed && number > 0 && number < 14
     text: Utility.convertNumber(number)
     color: "white"
     font.family: fontLibian.name
@@ -49,7 +59,7 @@ Item {
   Text {
     id: textItem
     font.family: fontLibian.name
-    color: "white"
+    color: sealed ? "black" : "white"
     font.pixelSize: 18
     anchors.left: iconItem.right
     anchors.leftMargin: -8
@@ -131,13 +141,24 @@ Item {
     }
   }
 
-  function show()
-  {
-    showAnime.start();
+  function show() {
+    if (!sealed) {
+      showAnime.start();
+    }
   }
 
-  function hide()
-  {
-    hideAnime.start();
+  function hide() {
+    if (!sealed) {
+      hideAnime.start();
+    }
+  }
+
+  onSealedChanged: {
+    showAnime.stop();
+    hideAnime.stop();
+    x = 0;
+
+    opacity = 1;
+    text = '  ' + Backend.translate(subtype + "_sealed")
   }
 }
