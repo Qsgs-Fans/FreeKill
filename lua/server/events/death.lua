@@ -23,12 +23,20 @@ GameEvent.functions[GameEvent.Dying] = function(self)
     end
     logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)
   end
+end
 
-  if not dyingPlayer.dead and dyingPlayer.dying then
+GameEvent.exit_funcs[GameEvent.Dying] = function(self)
+  local room = self.room
+  local logic = room.logic
+  local dyingStruct = self.data[1]
+
+  local dyingPlayer = room:getPlayerById(dyingStruct.who)
+
+  if dyingPlayer.dying then
     dyingPlayer.dying = false
     room:broadcastProperty(dyingPlayer, "dying")
   end
-  logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct)
+  logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct, self.interrupted)
 end
 
 GameEvent.prepare_funcs[GameEvent.Death] = function(self)
