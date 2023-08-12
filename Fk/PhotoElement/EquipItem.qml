@@ -21,7 +21,8 @@ Item {
     anchors.fill: parent
     radius: 2
     visible: sealed
-    color: "snow"
+    color: "#CCC"
+    opacity: 0.8
   }
 
   Image {
