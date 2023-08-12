@@ -34,6 +34,7 @@ Item {
   property int winGame: 0
   property int runGame: 0
   property int totalGame: 0
+  property var sealedSlots: []
 
   property int distance: -1
   property string status: "normal"

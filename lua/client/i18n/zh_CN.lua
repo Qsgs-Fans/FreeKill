@@ -338,6 +338,11 @@ Fk:loadTranslationTable{
   ["Distance"] = "距离",
   ["Judge"] = "判定",
   ["Retrial"] = "改判",
+
+  ["_sealed"] = "废除",
+  ["weapon_sealed"] = "武器栏废除",
+  ["armor_sealed"] = "防具栏废除",
+  ["treasure_sealed"] = "宝物栏废除",
 }
 
 -- related to sendLog
