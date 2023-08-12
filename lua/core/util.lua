@@ -28,6 +28,30 @@ Util.lockTable = function(t)
   return setmetatable({}, new_mt)
 end
 
+Util.convertSubtypeAndEquipSlot = function(value)
+  if type(value) == "number" then
+    local mapper = {
+      [Card.SubtypeWeapon] = Player.WeaponSlot,
+      [Card.SubtypeArmor] = Player.ArmorSlot,
+      [Card.SubtypeOffensiveRide] = Player.OffensiveRideSlot,
+      [Card.SubtypeDefensiveRide] = Player.DefensiveRideSlot,
+      [Card.SubtypeTreasure] = Player.TreasureSlot,
+    }
+
+    return mapper[value]
+  else
+    local mapper = {
+      [Player.WeaponSlot] = Card.SubtypeWeapon,
+      [Player.ArmorSlot] = Card.SubtypeArmor,
+      [Player.OffensiveRideSlot] = Card.SubtypeOffensiveRide,
+      [Player.DefensiveRideSlot] = Card.SubtypeDefensiveRide,
+      [Player.TreasureSlot] = Card.SubtypeTreasure,
+    }
+
+    return mapper[value]
+  end
+end
+
 function printf(fmt, ...)
   print(string.format(fmt, ...))
 end
@@ -142,6 +166,10 @@ Util.AoeOnUse = function(self, room, cardUseEvent)
       end
     end
   end
+end
+
+Util.DefualtEquipCanUse = function(self, player, card)
+  return player:hasEmptyEquipSlot(card.sub_type)
 end
 
 ---@generic T

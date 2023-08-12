@@ -3210,30 +3210,54 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
-function Room:abortPlayerArea(player, area)
-  assert(type(area) == "number" or type(area) == "table")
+function Room:abortPlayerArea(player, playerSlots)
+  assert(type(playerSlots) == "string" or type(playerSlots) == "table")
 
-  if type(area) == "number" then
-    area = { area }
+  if type(playerSlots) == "string" then
+    playerSlots = { playerSlots }
   end
 
-  local areaCanSeal = {
-    Player.AreaWeapon,
-    Player.AreaArmor,
-    Player.AreaOffensiveRide,
-    Player.AreaDefensiveRide,
-    Player.AreaTreasure,
-    Player.AreaJudge,
-  }
-  assert(table.every(area, function(curArea)
-    return table.contains(areaCanSeal, curArea)
-  end))
+  local cardsToDrop = {}
+  local slotsSealed = {}
+  local slotsToSeal = {}
+  for _, slot in ipairs(playerSlots) do
+    if slot == Player.JudgeSlot then
+      if not table.contains(player.sealedSlots, Player.JudgeSlot) then
+        table.insertIfNeed(slotsToSeal, slot)
 
-  for _, curArea in ipairs(area) do
-    table.insertIfNeed(player.areasSealed, curArea)
+        local delayedTricks = player:getCardIds(Player.Judge)
+        if #delayedTricks > 0 then
+          table.insertTable(cardsToDrop, delayedTricks)
+        end
+      end
+    else
+      local subtype = Util.convertSubtypeAndEquipSlot(slot)
+      if #player:getAvailableEquipSlots(subtype) > 0 then
+        table.insert(slotsToSeal, slot)
+
+        local equipmentIndex = (slotsSealed[tostring(subtype)] or 0) + 1
+        slotsSealed[tostring(subtype)] = equipmentIndex
+
+        if equipmentIndex <= #player:getEquipments(subtype) then
+          table.insert(cardsToDrop, player:getEquipments(subtype)[equipmentIndex])
+        end
+      end
+    end
   end
 
-  self:broadcastProperty(player, "areasSealed")
+  if next(slotsSealed) == nil then
+    return
+  end
+
+  self:moveCards({
+    ids = cardsToDrop,
+    from = player.id,
+    toArea = Card.DiscardPile,
+    moveReason = fk.ReasonPutIntoDiscardPile,
+  })
+
+  table.insertTable(player.sealedSlots, slotsToSeal)
+  self:broadcastProperty(player, "sealedSlots")
 end
 
 return Room

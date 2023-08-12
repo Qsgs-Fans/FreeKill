@@ -293,6 +293,26 @@ local test_zhenggong = fk.CreateTriggerSkill{
     player:gainAnExtraTurn()
   end,
 }
+local test_feichu = fk.CreateActiveSkill{
+  name = "test_feichu",
+  can_use = function(self, player)
+    return true
+  end,
+  card_filter = function(self, card)
+    return false
+  end,
+  card_num = 0,
+  target_filter = function(self, to_select, selected)
+    return #selected < 1
+  end,
+  target_num = 1,
+  on_use = function(self, room, effect)
+    local from = room:getPlayerById(effect.from)
+    local eqipSlots = from:getAvailableEquipSlots()
+    table.insert(eqipSlots, Player.JudgeSlot)
+    room:abortPlayerArea(from, eqipSlots)
+  end,
+}
 local test2 = General(extension, "mouxusheng", "wu", 99, 99, General.Female)
 test2.shield = 5
 test2:addSkill("rende")
@@ -303,6 +323,7 @@ test2:addSkill(control)
 test2:addSkill(damage_maker)
 test2:addSkill(change_hero)
 test2:addSkill(test_zhenggong)
+test2:addSkill(test_feichu)
 
 local shibing = General(extension, "blank_shibing", "qun", 5)
 shibing.hidden = true
