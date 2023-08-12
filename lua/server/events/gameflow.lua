@@ -187,13 +187,13 @@ GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
   local logic = room.logic
   local player = room.current
 
-  if player.dead then return false end
+  if player.dead then return true end
 
   room:sendLog{ type = "$AppendSeparator" }
 
   if not player.faceup then
     player:turnOver()
-    return false
+    return true
   end
 
   return logic:trigger(fk.BeforeTurnStart, player)

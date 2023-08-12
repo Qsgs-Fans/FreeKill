@@ -93,6 +93,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
       fromCard = pindianData.fromCard,
       toCard = result.toCard,
       winner = result.winner,
+      reason = pindianData.reason,
     }
 
     room:sendLog{
