@@ -440,7 +440,7 @@ local defaultCardSkill = fk.CreateActiveSkill{
 
 local defaultEquipSkill = fk.CreateActiveSkill{
   name = "default_equip_skill",
-  can_use = function(self, player, card) 
+  can_use = function(self, player, card)
     return #player:getAvailableEquipSlots(card.sub_type) > 0
   end,
   on_use = function(self, room, use)
