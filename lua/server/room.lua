@@ -1245,7 +1245,7 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
     local c = Fk:getCardById(id)
     return c:matchPattern(pattern)
   end)
-  if #pcards == 0 then return {} end
+  if #pcards == 0 and not cancelable then return {} end
 
   local data = {
     targets = targets,
