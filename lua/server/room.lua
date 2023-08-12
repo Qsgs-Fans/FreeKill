@@ -2621,17 +2621,30 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     to = target.id
   end
 
-  self:moveCards{
-    ids = ids,
-    from = self.owner_map[ids[1]],
-    to = to,
-    toArea = to_place,
-    moveReason = reason,
-    skillName = skill_name,
-    specialName = special_name,
-    moveVisible = visible,
-    proposer = proposer,
-  }
+  local movesSplitedByOwner = {}
+  for _, cardId in ipairs(ids) do
+    local moveFound = table.find(movesSplitedByOwner, function(move)
+      return move.from == self.owner_map[cardId]
+    end)
+
+    if moveFound then
+      table.insert(moveFound.ids, cardId)
+    else
+      table.insert(movesSplitedByOwner, {
+        ids = { cardId },
+        from = self.owner_map[cardId],
+        to = to,
+        toArea = to_place,
+        moveReason = reason,
+        skillName = skill_name,
+        specialName = special_name,
+        moveVisible = visible,
+        proposer = proposer,
+      })
+    end
+  end
+
+  self:moveCards(table.unpack(movesSplitedByOwner))
 end
 
 ------------------------------------------------------------------------
