@@ -288,8 +288,6 @@ Item {
               let ret = Backend.translate(e);
               if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
                 ret = "<b>" + ret + "</b>";
-              } else {
-                ret = '<font color="grey"><i>' + ret + "</i></font>";
               }
               return ret;
             }).join('，')

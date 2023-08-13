@@ -92,7 +92,7 @@ Rectangle {
       Layout.preferredHeight: 120
       cellHeight: 48
       cellWidth: 48
-      model: 50
+      model: 59
       visible: false
       clip: true
       delegate: ItemDelegate {

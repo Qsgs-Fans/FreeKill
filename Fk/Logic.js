@@ -180,9 +180,9 @@ callbacks["Chat"] = (jsonData) => {
   }
 
   if (general === "")
-    current.addToChat(pid, data, `[${time}] ${userName}: ${msg}`);
+    current.addToChat(pid, data, `<font color="#3598E8">[${time}] ${userName}:</font> ${msg}`);
   else
-    current.addToChat(pid, data, `[${time}] ${userName}(${general}): ${msg}`);
+    current.addToChat(pid, data, `<font color="#3598E8">[${time}] ${userName}(${general}):</font> ${msg}`);
 }
 
 callbacks["ServerMessage"] = (jsonData) => {
