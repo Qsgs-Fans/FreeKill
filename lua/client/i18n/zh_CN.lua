@@ -282,9 +282,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.0
+  ## v0.3.3
 
-  0.3.0版本，新增录像和禁将方案切换功能，同时修复不少bug。
+  0.3.3版本，新增弹劾房主和房间开启牌堆显示，修复不少bug。
 
   加强谋徐盛。
   ]==],
@@ -338,6 +338,18 @@ Fk:loadTranslationTable{
   ["Distance"] = "距离",
   ["Judge"] = "判定",
   ["Retrial"] = "改判",
+
+  ["_sealed"] = "废除",
+  ["weapon_sealed"] = "武器栏废除",
+  ["armor_sealed"] = "防具栏废除",
+  ["treasure_sealed"] = "宝物栏废除",
+
+  ["WeaponSlot"] = "武器栏",
+  ["ArmorSlot"] = "防具栏",
+  ["OffensiveRideSlot"] = "进攻坐骑栏",
+  ["DefensiveRideSlot"] = "防御坐骑栏",
+  ["TreasureSlot"] = "宝物栏",
+  ["JudgeSlot"] = "判定区",
 }
 
 -- related to sendLog

@@ -438,6 +438,21 @@ local defaultCardSkill = fk.CreateActiveSkill{
   end
 }
 
+local defaultEquipSkill = fk.CreateActiveSkill{
+  name = "default_equip_skill",
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return #Fk:currentRoom():getPlayerById(to_select):getAvailableEquipSlots(card.sub_type) > 0
+  end,
+  can_use = function(self, player, card)
+    return self:modTargetFilter(player.id, {}, player.id, card, true) and not player:isProhibited(player, card)
+  end,
+  on_use = function(self, room, use)
+    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+      use.tos = { { use.from } }
+    end
+  end
+}
+
 local function preprocessCardSpec(spec)
   assert(type(spec.name) == "string" or type(spec.class_name) == "string")
   if not spec.name then spec.name = spec.class_name
@@ -447,7 +462,7 @@ local function preprocessCardSpec(spec)
 end
 
 local function readCardSpecToCard(card, spec)
-  card.skill = spec.skill or defaultCardSkill
+  card.skill = spec.skill or (card.type == Card.TypeEquip and defaultEquipSkill or defaultCardSkill)
   card.skill.cardSkill = true
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card

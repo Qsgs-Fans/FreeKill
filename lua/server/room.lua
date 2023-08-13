@@ -2212,7 +2212,7 @@ function Room:doCardUseEffect(cardUseEvent)
     end
 
     if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
-      self.moveCards({
+      self:moveCards({
         ids = realCardIds,
         toArea = Card.DiscardPile,
         moveReason = fk.ReasonPutIntoDiscardPile,
@@ -2623,17 +2623,30 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
     to = target.id
   end
 
-  self:moveCards{
-    ids = ids,
-    from = self.owner_map[ids[1]],
-    to = to,
-    toArea = to_place,
-    moveReason = reason,
-    skillName = skill_name,
-    specialName = special_name,
-    moveVisible = visible,
-    proposer = proposer,
-  }
+  local movesSplitedByOwner = {}
+  for _, cardId in ipairs(ids) do
+    local moveFound = table.find(movesSplitedByOwner, function(move)
+      return move.from == self.owner_map[cardId]
+    end)
+
+    if moveFound then
+      table.insert(moveFound.ids, cardId)
+    else
+      table.insert(movesSplitedByOwner, {
+        ids = { cardId },
+        from = self.owner_map[cardId],
+        to = to,
+        toArea = to_place,
+        moveReason = reason,
+        skillName = skill_name,
+        specialName = special_name,
+        moveVisible = visible,
+        proposer = proposer,
+      })
+    end
+  end
+
+  self:moveCards(table.unpack(movesSplitedByOwner))
 end
 
 ------------------------------------------------------------------------
@@ -3210,6 +3223,81 @@ function Room:updateQuestSkillState(player, skillName, failed)
     skillName,
     updateValue,
   })
+end
+
+function Room:abortPlayerArea(player, playerSlots)
+  assert(type(playerSlots) == "string" or type(playerSlots) == "table")
+
+  if type(playerSlots) == "string" then
+    playerSlots = { playerSlots }
+  end
+
+  local cardsToDrop = {}
+  local slotsSealed = {}
+  local slotsToSeal = {}
+  for _, slot in ipairs(playerSlots) do
+    if slot == Player.JudgeSlot then
+      if not table.contains(player.sealedSlots, Player.JudgeSlot) then
+        table.insertIfNeed(slotsToSeal, slot)
+
+        local delayedTricks = player:getCardIds(Player.Judge)
+        if #delayedTricks > 0 then
+          table.insertTable(cardsToDrop, delayedTricks)
+        end
+      end
+    else
+      local subtype = Util.convertSubtypeAndEquipSlot(slot)
+      if #player:getAvailableEquipSlots(subtype) > 0 then
+        table.insert(slotsToSeal, slot)
+
+        local equipmentIndex = (slotsSealed[tostring(subtype)] or 0) + 1
+        slotsSealed[tostring(subtype)] = equipmentIndex
+
+        if equipmentIndex <= #player:getEquipments(subtype) then
+          table.insert(cardsToDrop, player:getEquipments(subtype)[equipmentIndex])
+        end
+      end
+    end
+  end
+
+  if #slotsToSeal == 0 then
+    return
+  end
+
+  self:moveCards({
+    ids = cardsToDrop,
+    from = player.id,
+    toArea = Card.DiscardPile,
+    moveReason = fk.ReasonPutIntoDiscardPile,
+  })
+
+  table.insertTable(player.sealedSlots, slotsToSeal)
+  self:broadcastProperty(player, "sealedSlots")
+
+  self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
+end
+
+function Room:resumePlayerArea(player, playerSlots)
+  assert(type(playerSlots) == "string" or type(playerSlots) == "table")
+
+  if type(playerSlots) == "string" then
+    playerSlots = { playerSlots }
+  end
+
+  local slotsToResume = {}
+  for _, slot in ipairs(playerSlots) do
+    for i = 1, #player.sealedSlots do
+      if player.sealedSlots[i] == slot then
+        table.remove(player.sealedSlots, i)
+        table.insert(slotsToResume, slot)
+      end
+    end
+  end
+
+  if #slotsToResume > 0 then
+    self:broadcastProperty(player, "sealedSlots")
+    self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
+  end
 end
 
 return Room

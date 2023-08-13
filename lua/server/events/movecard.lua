@@ -17,32 +17,68 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
 
       ---@type MoveInfo[]
       local infos = {}
+      local abortMoveInfos = {}
       for _, id in ipairs(cardsMoveInfo.ids) do
-        table.insert(infos, {
-          cardId = id,
-          fromArea = room:getCardArea(id),
-          fromSpecialName = cardsMoveInfo.from and room:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
-        })
+        local toAbortDrop = false
+        if cardsMoveInfo.toArea == Card.PlayerEquip and cardsMoveInfo.to then
+          local moveToPlayer = room:getPlayerById(cardsMoveInfo.to)
+          local card = moveToPlayer:getVirualEquip(id) or Fk:getCardById(id)
+          if card.type == Card.TypeEquip and #moveToPlayer:getAvailableEquipSlots(card.sub_type) == 0 then
+            table.insert(abortMoveInfos, {
+              cardId = id,
+              fromArea = room:getCardArea(id),
+              fromSpecialName = cardsMoveInfo.from and room:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
+            })
+            toAbortDrop = true
+          end
+        end
+
+        if not toAbortDrop then
+          table.insert(infos, {
+            cardId = id,
+            fromArea = room:getCardArea(id),
+            fromSpecialName = cardsMoveInfo.from and room:getPlayerById(cardsMoveInfo.from):getPileNameOfId(id),
+          })
+        end
       end
 
-      ---@type CardsMoveStruct
-      local cardsMoveStruct = {
-        moveInfo = infos,
-        from = cardsMoveInfo.from,
-        to = cardsMoveInfo.to,
-        toArea = cardsMoveInfo.toArea,
-        moveReason = cardsMoveInfo.moveReason,
-        proposer = cardsMoveInfo.proposer,
-        skillName = cardsMoveInfo.skillName,
-        moveVisible = cardsMoveInfo.moveVisible,
-        specialName = cardsMoveInfo.specialName,
-        specialVisible = cardsMoveInfo.specialVisible,
-        drawPilePosition = cardsMoveInfo.drawPilePosition,
-      }
+      if #infos > 0 then
+        ---@type CardsMoveStruct
+        local cardsMoveStruct = {
+          moveInfo = infos,
+          from = cardsMoveInfo.from,
+          to = cardsMoveInfo.to,
+          toArea = cardsMoveInfo.toArea,
+          moveReason = cardsMoveInfo.moveReason,
+          proposer = cardsMoveInfo.proposer,
+          skillName = cardsMoveInfo.skillName,
+          moveVisible = cardsMoveInfo.moveVisible,
+          specialName = cardsMoveInfo.specialName,
+          specialVisible = cardsMoveInfo.specialVisible,
+          drawPilePosition = cardsMoveInfo.drawPilePosition,
+        }
 
-      table.insert(cardsMoveStructs, cardsMoveStruct)
+        table.insert(cardsMoveStructs, cardsMoveStruct)
+      end
+
+      if #abortMoveInfos > 0 then
+        ---@type CardsMoveStruct
+        local cardsMoveStruct = {
+          moveInfo = abortMoveInfos,
+          from = cardsMoveInfo.from,
+          toArea = Card.DiscardPile,
+          moveReason = fk.ReasonPutIntoDiscardPile,
+          specialName = cardsMoveInfo.specialName,
+          specialVisible = cardsMoveInfo.specialVisible,
+          drawPilePosition = cardsMoveInfo.drawPilePosition,
+        }
+
+        table.insert(cardsMoveStructs, cardsMoveStruct)
+      end
     end
   end
+
+  self.data = cardsMoveStructs
 
   if #cardsMoveStructs < 1 then
     return false

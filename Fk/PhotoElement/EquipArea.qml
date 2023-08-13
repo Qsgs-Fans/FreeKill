@@ -13,9 +13,11 @@ import Fk.RoomElement
  */
 
 Column {
+  id: root
+
   height: 70
   width: 138
-  property int itemHeight: treasureItem.name === "" ? height / 3 : height / 4
+  property int itemHeight: (treasureItem.name === "" && !treasureItem.sealed) ? height / 3 : height / 4
   property var items: [treasureItem, weaponItem, armorItem, defensiveHorseItem, offensiveHorseItem]
   property var subtypes: ["treasure", "weapon", "armor", "defensive_horse", "offensive_horse"]
   property int length: area.length
@@ -28,23 +30,29 @@ Column {
 
   EquipItem {
     id: treasureItem
+    subtype: "treasure"
     width: parent.width
-    height: name === "" ? 0 : itemHeight
+    height: (name === "" && !sealed) ? 0 : itemHeight
     opacity: 0
+    sealed: root.parent.sealedSlots.includes('TreasureSlot')
   }
 
   EquipItem {
     id: weaponItem
+    subtype: "weapon"
     width: parent.width
     height: itemHeight
     opacity: 0
+    sealed: root.parent.sealedSlots.includes('WeaponSlot')
   }
 
   EquipItem {
     id: armorItem
+    subtype: "armor"
     width: parent.width
     height: itemHeight
     opacity: 0
+    sealed: root.parent.sealedSlots.includes('ArmorSlot')
   }
 
   Row {
@@ -61,6 +69,7 @@ Column {
         height: itemHeight
         icon: "horse"
         opacity: 0
+        sealed: root.parent.sealedSlots.includes('DefensiveRideSlot')
       }
     }
 
@@ -74,6 +83,7 @@ Column {
         height: itemHeight
         icon: "horse"
         opacity: 0
+        sealed: root.parent.sealedSlots.includes('OffensiveRideSlot')
       }
     }
   }

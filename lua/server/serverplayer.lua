@@ -306,6 +306,10 @@ function ServerPlayer:marshal(player, observe)
   if self.role_shown then
     room:notifyProperty(player, self, "role")
   end
+
+  if #self.sealedSlots > 0 then
+    room:notifyProperty(player, self, "sealedSlots")
+  end
 end
 
 function ServerPlayer:reconnect()

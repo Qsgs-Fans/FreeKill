@@ -128,6 +128,7 @@ function GameLogic:chooseGenerals()
     room:setPlayerGeneral(lord, lord_general, true)
     room:askForChooseKingdom({lord})
     room:broadcastProperty(lord, "general")
+    room:broadcastProperty(lord, "kingdom")
     room:setDeputyGeneral(lord, deputy)
     room:broadcastProperty(lord, "deputyGeneral")
   end

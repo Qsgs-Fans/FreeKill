@@ -5,6 +5,16 @@ import Fk
 import Fk.RoomElement
 
 Item {
+  property bool sealed: parent.sealedSlots.includes("JudgeSlot")
+
+  Image {
+    visible: sealed
+    x: -6; y: 8; z: 9
+    source: SkinBank.DELAYED_TRICK_DIR + "sealed"
+    height: 28
+    fillMode: Image.PreserveAspectFit
+  }
+
   InvisibleCardArea {
     id: area
     checkExisting: true

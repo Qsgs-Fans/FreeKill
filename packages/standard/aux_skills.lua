@@ -51,7 +51,6 @@ local discardSkill = fk.CreateActiveSkill{
 
 local chooseCardsSkill = fk.CreateActiveSkill{
   name = "choose_cards_skill",
-  -- expand_pile = function(self) return self.expand_pile end,
   card_filter = function(self, to_select, selected)
     if #selected >= self.num then
       return false
