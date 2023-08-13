@@ -3258,7 +3258,7 @@ function Room:abortPlayerArea(player, playerSlots)
     end
   end
 
-  if next(slotsSealed) == nil then
+  if #slotsToSeal == 0 then
     return
   end
 
@@ -3271,6 +3271,31 @@ function Room:abortPlayerArea(player, playerSlots)
 
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
+
+  self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
+end
+
+function Room:resumePlayerArea(player, playerSlots)
+  assert(type(playerSlots) == "string" or type(playerSlots) == "table")
+
+  if type(playerSlots) == "string" then
+    playerSlots = { playerSlots }
+  end
+
+  local slotsToResume = {}
+  for _, slot in ipairs(playerSlots) do
+    for i = 1, #player.sealedSlots do
+      if player.sealedSlots[i] == slot then
+        table.remove(player.sealedSlots, i)
+        table.insert(slotsToResume, slot)
+      end
+    end
+  end
+
+  if #slotsToResume > 0 then
+    self:broadcastProperty(player, "sealedSlots")
+    self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
+  end
 end
 
 return Room

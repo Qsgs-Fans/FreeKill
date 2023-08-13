@@ -158,7 +158,7 @@ Item {
     hideAnime.stop();
     x = 0;
 
-    opacity = 1;
+    opacity = sealed ? 1 : 0;
     text = '  ' + Backend.translate(subtype + "_sealed")
   }
 }
