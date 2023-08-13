@@ -288,8 +288,6 @@ Item {
               let ret = Backend.translate(e);
               if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
                 ret = "<b>" + ret + "</b>";
-              } else {
-                ret = '<font color="grey"><i>' + ret + "</i></font>";
               }
               return ret;
             }).join('，')
@@ -330,6 +328,7 @@ Item {
           dashboard.disableSkills();
           dashboard.retractAllPiles();
           selected_targets = [];
+          autoPending = false;
 
           if (popupBox.item != null) {
             popupBox.item.finished();
@@ -348,6 +347,7 @@ Item {
           dashboard.enableSkills();
           progress.visible = true;
           okCancel.visible = true;
+          autoPending = false;
           endPhaseButton.visible = true;
           respond_play = false;
         }
@@ -379,6 +379,7 @@ Item {
           dashboard.disableSkills();
           progress.visible = true;
           respond_play = false;
+          autoPending = false;
           roomScene.okCancel.visible = false;
           roomScene.okButton.enabled = false;
           roomScene.cancelButton.enabled = false;

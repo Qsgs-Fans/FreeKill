@@ -108,6 +108,7 @@ function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
+      self.tag["_general_pile"] = Fk:getAllGenerals()
       self:run()
     end)
   end
@@ -803,7 +804,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       -- if move is relevant to player's hands or equips, it should be open
         -- cards move from/to equip/judge/discard/processing should be open
 
-      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p:isBuddy(move.to))) then
+      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
           info.cardId = -1
@@ -2438,6 +2439,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
           end
         end
         if not table.contains(players, p) then
+          Self = p -- for enabledAtResponse
           for _, s in ipairs(p.player_skills) do
             if
               s.pattern and
@@ -3258,7 +3260,7 @@ function Room:abortPlayerArea(player, playerSlots)
     end
   end
 
-  if next(slotsSealed) == nil then
+  if #slotsToSeal == 0 then
     return
   end
 
@@ -3271,6 +3273,31 @@ function Room:abortPlayerArea(player, playerSlots)
 
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
+
+  self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
+end
+
+function Room:resumePlayerArea(player, playerSlots)
+  assert(type(playerSlots) == "string" or type(playerSlots) == "table")
+
+  if type(playerSlots) == "string" then
+    playerSlots = { playerSlots }
+  end
+
+  local slotsToResume = {}
+  for _, slot in ipairs(playerSlots) do
+    for i = 1, #player.sealedSlots do
+      if player.sealedSlots[i] == slot then
+        table.remove(player.sealedSlots, i)
+        table.insert(slotsToResume, slot)
+      end
+    end
+  end
+
+  if #slotsToResume > 0 then
+    self:broadcastProperty(player, "sealedSlots")
+    self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
+  end
 end
 
 return Room
