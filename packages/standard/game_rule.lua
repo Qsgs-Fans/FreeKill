@@ -40,22 +40,20 @@ GameRule = fk.CreateTriggerSkill{
     [fk.AskForPeaches] = function()
       local dyingPlayer = room:getPlayerById(data.who)
       while dyingPlayer.hp < 1 do
-        local pattern = "peach"
+        local cardNames = {"peach"}
         local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. tostring(1 - dyingPlayer.hp)
         if player == dyingPlayer then
-          pattern = pattern .. ",analeptic"
+          table.insert(cardNames, "analeptic")
           prompt = "#AskForPeachesSelf:::" .. tostring(1 - dyingPlayer.hp)
         end
 
-        local cardNames = pattern:split(",")
-        for _, cardName in ipairs(cardNames) do
+        cardNames = table.filter(cardNames, function (cardName)
           local cardCloned = Fk:cloneCard(cardName)
-          if player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned) then
-            return
-          end
-        end
+          return not (player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned))
+        end)
+        if #cardNames == 0 then return end
 
-        local peach_use = room:askForUseCard(player, "peach", pattern, prompt)
+        local peach_use = room:askForUseCard(player, "peach", table.concat(cardNames, ",") , prompt)
         if not peach_use then break end
         peach_use.tos = { {dyingPlayer.id} }
         if peach_use.card.trueName == "analeptic" then

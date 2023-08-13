@@ -129,8 +129,8 @@ local peachSkill = fk.CreateActiveSkill{
         return p.dying
       end)
   end,
-  can_use = function(self, player)
-    return player:isWounded()
+  can_use = function(self, player, card)
+    return player:isWounded() and not player:isProhibited(player, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -382,6 +382,9 @@ local exNihiloSkill = fk.CreateActiveSkill{
   name = "ex_nihilo_skill",
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return true
+  end,
+  can_use = function(self, player, card)
+    return not player:isProhibited(player, card)
   end,
   on_use = function(self, room, cardUseEvent)
     if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
@@ -647,8 +650,11 @@ extension:addCards({
 
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
-  can_use = function(self, player)
-    return not (Self:hasDelayedTrick("lightning") or table.contains(player.sealedSlots, Player.JudgeSlot))
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return true
+  end,
+  can_use = function(self, player, card)
+    return not player:isProhibited(player, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -717,14 +723,11 @@ extension:addCards({
 
 local indulgenceSkill = fk.CreateActiveSkill{
   name = "indulgence_skill",
-  target_filter = function(self, to_select, selected)
-    if #selected == 0 then
-      local player = Fk:currentRoom():getPlayerById(to_select)
-      if Self ~= player then
-        return not player:hasDelayedTrick("indulgence")
-      end
-    end
-    return false
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return user ~= to_select
+  end,
+  target_filter = function(self, to_select, selected, _, card)
+    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)

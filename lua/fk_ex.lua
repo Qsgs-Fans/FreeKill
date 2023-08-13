@@ -440,8 +440,11 @@ local defaultCardSkill = fk.CreateActiveSkill{
 
 local defaultEquipSkill = fk.CreateActiveSkill{
   name = "default_equip_skill",
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    return #Fk:currentRoom():getPlayerById(to_select):getAvailableEquipSlots(card.sub_type) > 0
+  end,
   can_use = function(self, player, card)
-    return #player:getAvailableEquipSlots(card.sub_type) > 0
+    return self:modTargetFilter(player.id, {}, player.id, card, true) and not player:isProhibited(player, card)
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
