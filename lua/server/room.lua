@@ -19,6 +19,7 @@
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
 ---@field public processing_area integer[] @ 处理区，依然是卡牌id数组
 ---@field public void integer[] @ 从游戏中除外区，一样的是卡牌id数组
+---@field public general_pile string[] @ 武将牌堆，这是武将名的数组
 ---@field public card_place table<integer, CardArea> @ 每个卡牌的id对应的区域，一张表
 ---@field public owner_map table<integer, integer> @ 每个卡牌id对应的主人，表的值是那个玩家的id，可能是nil
 ---@field public status_skills Skill[] @ 这个房间中含有的状态技列表
@@ -80,6 +81,7 @@ function Room:initialize(_room)
   self.discard_pile = {}
   self.processing_area = {}
   self.void = {}
+  self.general_pile = {}
   self.card_place = {}
   self.owner_map = {}
   self.status_skills = {}
@@ -803,7 +805,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       -- if move is relevant to player's hands or equips, it should be open
         -- cards move from/to equip/judge/discard/processing should be open
 
-      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p:isBuddy(move.to))) then
+      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
           info.cardId = -1
