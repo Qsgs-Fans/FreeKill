@@ -250,15 +250,13 @@ extension:addCards{
 local supplyShortageSkill = fk.CreateActiveSkill{
   name = "supply_shortage_skill",
   distance_limit = 1,
+  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+    local player = Fk:currentRoom():getPlayerById(to_select)
+    local from = Fk:currentRoom():getPlayerById(user)
+    return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
+  end,
   target_filter = function(self, to_select, selected, _, card)
-    if #selected == 0 then
-      local player = Fk:currentRoom():getPlayerById(to_select)
-      if Self ~= player then
-        return not player:hasDelayedTrick("supply_shortage") and
-          self:withinDistanceLimit(Self, false, card, player)
-      end
-    end
-    return false
+    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
