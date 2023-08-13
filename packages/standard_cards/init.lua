@@ -648,7 +648,7 @@ extension:addCards({
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
   can_use = function(self, player)
-    return not Self:hasDelayedTrick("lightning")
+    return not (Self:hasDelayedTrick("lightning") or table.contains(player.sealedSlots, Player.JudgeSlot))
   end,
   on_use = function(self, room, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then

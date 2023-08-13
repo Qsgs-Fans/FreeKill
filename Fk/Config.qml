@@ -15,7 +15,7 @@ QtObject {
   property string roomBg
   property string bgmFile
   property string language
-  property var disabledPack: []
+  property list<string> disabledPack: []
   property string preferedMode
   property int preferedPlayerNum
   property int preferredGeneralNum
@@ -23,8 +23,8 @@ QtObject {
   property real bgmVolume
   property bool disableMsgAudio
   property bool hideUseless
-  property var disabledGenerals: []
-  property var disableGeneralSchemes: []
+  property list<string> disabledGenerals: []
+  property list<var> disableGeneralSchemes: []
   property int disableSchemeIdx: 0
 
   property int preferredTimeout
@@ -39,13 +39,13 @@ QtObject {
 
   // Client data
   property string serverMotd: ""
-  property var serverHiddenPacks: []
+  property list<string> serverHiddenPacks: []
   property int roomCapacity: 0
   property int roomTimeout: 0
   property bool enableFreeAssign: false
   property bool observing: false
   property bool replaying: false
-  property var blockedUsers: []
+  property list<string> blockedUsers: []
 
   onDisabledGeneralsChanged: {
     disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
@@ -62,7 +62,13 @@ QtObject {
     lobbyBg = conf.lobbyBg ?? AppPath + "/image/background";
     roomBg = conf.roomBg ?? AppPath + "/image/gamebg";
     bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
-    language = conf.language ?? "zh_CN";
+    language = conf.language ?? (() => {
+      let ret = SysLocale;
+      if (['zh_CN', 'en_US'].includes(ret)) {
+        return ret;
+      }
+      return 'zh_CN';
+    })();
     disabledPack = conf.disabledPack ?? [ "test_p_0" ];
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;

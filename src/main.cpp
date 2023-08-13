@@ -191,6 +191,9 @@ int main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion(FK_VERSION);
 
+  QLocale l = QLocale::system();
+  auto localeName = l.name();
+
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
 #endif
@@ -312,6 +315,7 @@ int main(int argc, char *argv[]) {
   engine->rootContext()->setContextProperty("Backend", &backend);
   engine->rootContext()->setContextProperty("ModBackend", nullptr);
   engine->rootContext()->setContextProperty("Pacman", Pacman);
+  engine->rootContext()->setContextProperty("SysLocale", localeName);
 
 #ifdef QT_DEBUG
   bool debugging = true;

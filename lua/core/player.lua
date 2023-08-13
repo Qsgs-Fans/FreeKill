@@ -61,6 +61,13 @@ Player.HistoryTurn = 2
 Player.HistoryRound = 3
 Player.HistoryGame = 4
 
+Player.WeaponSlot = 'WeaponSlot'
+Player.ArmorSlot = 'ArmorSlot'
+Player.OffensiveRideSlot = 'OffensiveRideSlot'
+Player.DefensiveRideSlot = 'DefensiveRideSlot'
+Player.TreasureSlot = 'TreasureSlot'
+Player.JudgeSlot = 'JudgeSlot'
+
 --- 构造函数。总之这不是随便调用的函数
 function Player:initialize()
   self.id = 0
@@ -92,6 +99,15 @@ function Player:initialize()
   }
   self.virtual_equips = {}
   self.special_cards = {}
+
+  self.equipSlots = {
+    Player.WeaponSlot,
+    Player.ArmorSlot,
+    Player.OffensiveRideSlot,
+    Player.DefensiveRideSlot,
+    Player.TreasureSlot,
+  }
+  self.sealedSlots = {}
 
   self.cardUsedHistory = {}
   self.skillUsedHistory = {}
@@ -390,6 +406,20 @@ function Player:getEquipment(cardSubtype)
   end
 
   return nil
+end
+
+--- 检索玩家装备区是否存在对应类型的装备列表。
+---@param cardSubtype CardSubtype @ 卡牌子类
+---@return integer[] @ 返回卡牌ID或空表
+function Player:getEquipments(cardSubtype)
+  local cardIds = {}
+  for _, cardId in ipairs(self.player_cards[Player.Equip]) do
+    if Fk:getCardById(cardId).sub_type == cardSubtype then
+      table.insert(cardIds, cardId)
+    end
+  end
+
+  return cardIds
 end
 
 --- 获取玩家手牌上限。
@@ -799,6 +829,15 @@ end
 ---@param card Card @ 特定牌
 function Player:isProhibited(to, card)
   local r = Fk:currentRoom()
+
+  if card.type == Card.TypeEquip and #to:getAvailableEquipSlots(card.sub_type) == 0 then
+    return true
+  end
+
+  if card.sub_type == Card.SubtypeDelayedTrick and table.contains(to.sealedSlots, Player.JudgeSlot) then
+    return true
+  end
+
   local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:isProhibited(self, to, card) then
@@ -871,11 +910,15 @@ function Player:canMoveCardInBoardTo(to, id)
   assert(card.type == Card.TypeEquip or card.sub_type == Card.SubtypeDelayedTrick)
 
   if card.type == Card.TypeEquip then
-    return not to:getEquipment(card.sub_type)
+    return to:hasEmptyEquipSlot(card.sub_type)
   else
-    return not table.find(to:getCardIds(Player.Judge), function(cardId)
-      return Fk:getCardById(cardId).name == card.name
-    end)
+    return
+      not (
+        table.find(to:getCardIds(Player.Judge), function(cardId)
+          return Fk:getCardById(cardId).name == card.name
+        end) or
+        table.contains(to.sealedSlots, Player.JudgeSlot)
+      )
   end
 end
 
@@ -908,6 +951,41 @@ end
 function Player:getQuestSkillState(skillName)
   local questSkillState = self:getMark(MarkEnum.QuestSkillPreName .. skillName)
   return type(questSkillState) == "string" and questSkillState or nil
+end
+
+function Player:getAvailableEquipSlots(subtype)
+  local tempSlots = table.simpleClone(self.equipSlots)
+  local tempSealedSlots = table.simpleClone(self.sealedSlots)
+
+  if subtype then
+    local subtype2slot = {
+      [Card.SubtypeWeapon] = Player.WeaponSlot,
+      [Card.SubtypeArmor] = Player.ArmorSlot,
+      [Card.SubtypeOffensiveRide] = Player.OffensiveRideSlot,
+      [Card.SubtypeDefensiveRide] = Player.DefensiveRideSlot,
+      [Card.SubtypeTreasure] = Player.TreasureSlot,
+    }
+
+    local singleSlot = table.filter(tempSlots, function(slot)
+      return slot == subtype2slot[subtype]
+    end)
+
+    for _, sealedSlot in ipairs(tempSealedSlots) do
+      table.removeOne(singleSlot, sealedSlot)
+    end
+
+    return singleSlot
+  end
+
+  for _, sealedSlot in ipairs(tempSealedSlots) do
+    table.removeOne(tempSlots, sealedSlot)
+  end
+
+  return tempSlots
+end
+
+function Player:hasEmptyEquipSlot(subtype)
+  return #self:getAvailableEquipSlots(subtype) - #self:getEquipments(subtype) > 0
 end
 
 function Player:addBuddy(other)

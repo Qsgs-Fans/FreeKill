@@ -431,6 +431,7 @@ Item {
         isOwner: model.isOwner
         ready: model.ready
         surrendered: model.surrendered
+        sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
           Logic.updateSelectedTargets(playerid, selected);
@@ -1227,6 +1228,7 @@ Item {
         isOwner: false,
         ready: false,
         surrendered: false,
+        sealedSlots: "[]",
       });
     }
 
