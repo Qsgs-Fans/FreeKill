@@ -122,4 +122,7 @@ fk.AfterSkillEffect = 82
 -- 85 = xxx
 -- 86 = AfterPhaseEnd
 
-fk.NumOfEvents = 83
+fk.AreaAborted = 87
+fk.AreaResumed = 88
+
+fk.NumOfEvents = 89
