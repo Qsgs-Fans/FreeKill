@@ -20,6 +20,7 @@
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
+---@field public companions string [] @ 有珠联璧合关系的武将，只需填写一边
 ---@field public hidden boolean
 ---@field public total_hidden boolean
 General = class("General")
@@ -55,6 +56,8 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
   self.related_skills = {} -- skills related to this general, but not first added to it, e.g. "jixi" of dengai
   self.related_other_skills = {} -- skills related to this general and belong to other generals, e.g. "yingzi" of sunce
+
+  self.companions = {}
 
   package:addGeneral(self)
 end
