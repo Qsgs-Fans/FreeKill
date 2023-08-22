@@ -140,9 +140,9 @@ function Player:getGeneralMaxHp()
   local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputy]
 
   if not deputy then
-    return general.maxHp
+    return general.maxHp + general.headMaxHpAdjustedValue
   else
-    return (general.maxHp + deputy.maxHp) // 2
+    return (general.maxHp + general.headMaxHpAdjustedValue + deputy.maxHp + deputy.deputyMaxHpAdjustedValue) // 2
   end
 end
 

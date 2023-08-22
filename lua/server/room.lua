@@ -580,14 +580,20 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
+  local orig_skills = orig and orig:getSkillNameList()
 
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
-  local new_skills = table.map(orig_skills, function(e)
-    return "-" .. e
-  end)
+  local new_skills = {}
+  for _, sname in ipairs(new:getSkillNameList()) do
+    local s = Fk.skills[sname]
+    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "h") then
+      table.insert(new_skills, sname)
+    end
+  end
 
-  table.insertTable(new_skills, new:getSkillNameList())
+  table.insertTable(new_skills, table.map(orig_skills, function(e)
+    return "-" .. e
+  end))
 
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
