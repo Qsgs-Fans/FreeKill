@@ -188,6 +188,16 @@ Item {
       const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
       generalText.clear();
       audioModel.clear();
+
+      if (data.companions.length > 0){
+        let ret = '';
+        ret += "<font color=\"slategrey\"><b>" + Backend.translate("Companions") + "</b>: ";
+        data.companions.forEach(t => {
+          ret += Backend.translate(t) + ' '
+        });
+        generalText.append(ret)
+      }
+
       data.skill.forEach(t => {
         generalText.append("<b>" + Backend.translate(t.name) +
           "</b>: " + t.description);

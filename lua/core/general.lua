@@ -20,7 +20,7 @@
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
----@field public companions string [] @ 有珠联璧合关系的武将，只需填写一边
+---@field public companions string [] @ 有珠联璧合关系的武将
 ---@field public hidden boolean
 ---@field public total_hidden boolean
 General = class("General")
@@ -97,6 +97,16 @@ function General:getSkillNameList(include_lord)
   if not include_lord then
   end
   return ret
+end
+
+--- 为武将增加珠联璧合关系武将（1个或多个），只需写trueName。
+---@param name string[]  @ 武将真名（表）
+function General:addCompanions(name)
+  if type(name) == "table" then
+    table.insertTable(self.companions, name)
+  elseif type(name) == "string" then
+    table.insert(self.companions, name)
+  end
 end
 
 return General
