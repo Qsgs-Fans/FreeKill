@@ -2425,10 +2425,10 @@ function Room:handleCardEffect(event, cardEffectEvent)
       local players = {}
       Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getCardIds(Player.Hand)
+        local cards = p:getHandlyIds(true)
         for _, cid in ipairs(cards) do
           if
-            Fk:getCardById(cid).name == "nullification" and
+            Fk:getCardById(cid).trueName == "nullification" and
             not (
               table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
               table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
