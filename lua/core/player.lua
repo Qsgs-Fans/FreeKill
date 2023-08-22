@@ -459,6 +459,13 @@ function Player:getAttackRange()
   return math.max(baseAttackRange, 0)
 end
 
+--- 获取角色是否被移除。
+function Player:isRemoved()
+  return table.find(MarkEnum.TempMarkSuffix, function(s)
+    return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
+  end)
+end
+
 --- 修改玩家与其他角色的固定距离。
 ---@param other Player @ 其他玩家
 ---@param num integer @ 距离数
@@ -484,8 +491,11 @@ function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
   if other == self then return 0 end
-  if ignore_dead and other.dead then
+  if not ignore_dead and other.dead then
     print(other.name .. " is dead!")
+    return -1
+  end
+  if self:isRemoved() or other:isRemoved() then
     return -1
   end
   local right = 0
@@ -493,7 +503,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   local try_time = 10
   for _ = 0, try_time do
     if temp == other then break end
-    if ignore_dead or not temp.dead then
+    if (ignore_dead or not temp.dead) and not temp:isRemoved() then
       right = right + 1
     end
     temp = temp.next
@@ -501,7 +511,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   if temp ~= other then
     print("Distance malfunction: start and end does not matched.")
   end
-  local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right
+  local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right - #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)
   local ret = 0
   if mode == "left" then
     ret = left
@@ -551,13 +561,17 @@ function Player:inMyAttackRange(other, fixLimit)
   return self:distanceTo(other) <= (baseAttackRange + fixLimit)
 end
 
-function Player:getNextAlive()
+--- 获取下家。
+---@param ignoreRemoved bool @ 忽略被移除
+---@return ServerPlayer
+function Player:getNextAlive(ignoreRemoved)
   if Fk:currentRoom().alive_players == 0 then
     return self
   end
 
   local ret = self.next
-  while ret.dead do
+  local doNotIgnore = not ignoreRemoved
+  while ret.dead or (doNotIgnore and ret:isRemoved()) do
     ret = ret.next
   end
   return ret

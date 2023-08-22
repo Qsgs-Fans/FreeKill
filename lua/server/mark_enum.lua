@@ -29,6 +29,8 @@ MarkEnum.BypassTimesLimitTo = "BypassTimesLimitTo"
 MarkEnum.BypassDistancesLimitTo = "BypassDistancesLimitTo"
 ---非锁定技失效，可带清除标记后缀
 MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
+---不计入距离、座次后缀，可带清除标记后缀
+MarkEnum.PlayerRemoved = "PlayerRemoved"
 
 ---各种清除标记后缀
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
