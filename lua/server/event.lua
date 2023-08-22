@@ -125,4 +125,7 @@ fk.AfterSkillEffect = 82
 fk.AreaAborted = 87
 fk.AreaResumed = 88
 
-fk.NumOfEvents = 89
+fk.GeneralRevealed = 89
+fk.GeneralRemoved = 90
+
+fk.NumOfEvents = 91
