@@ -44,6 +44,14 @@ dofile "lua/server/events/pindian.lua"
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
+for _, l in ipairs(Fk._custom_events) do
+  local name, p, m, c, e = l.name, l.p, l.m, l.c, l.e
+  GameEvent.prepare_funcs[name] = p
+  GameEvent.functions[name] = m
+  GameEvent.cleaners[name] = c
+  GameEvent.exit_funcs[name] = e
+end
+
 local eventTranslations = {
   [GameEvent.ChangeHp] = "GameEvent.ChangeHp",
   [GameEvent.Damage] = "GameEvent.Damage",
@@ -68,5 +76,7 @@ local eventTranslations = {
 }
 
 function GameEvent.static:translate(id)
-  return eventTranslations[id]
+  local ret = eventTranslations[id]
+  if not ret then ret = id end
+  return ret
 end

@@ -187,7 +187,7 @@ function GameEvent:clear()
   local logic = RoomInstance.logic
   local end_id = logic.current_event_id + 1
   if self.id ~= end_id - 1 then
-    logic.all_game_events[end_id] = -self.event
+    logic.all_game_events[end_id] = self.event
     logic.current_event_id = end_id
     self.end_id = end_id
   else

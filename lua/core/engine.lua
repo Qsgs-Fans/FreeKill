@@ -24,6 +24,7 @@
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
+---@field private _custom_events any[] @ 自定义事件列表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -53,6 +54,7 @@ function Engine:initialize()
   self.game_modes = {}
   self.game_mode_disabled = {}
   self.kingdoms = {}
+  self._custom_events = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -321,6 +323,10 @@ function Engine:addGameMode(game_mode)
     error(string.format("Duplicate game_mode %s detected", game_mode.name))
   end
   self.game_modes[game_mode.name] = game_mode
+end
+
+function Engine:addGameEvent(name, pfunc, mfunc, cfunc, efunc)
+  table.insert(self._custom_events, { name = name, p = pfunc, m = mfunc, c = cfunc, e = efunc })
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。
