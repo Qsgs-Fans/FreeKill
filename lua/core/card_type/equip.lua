@@ -26,13 +26,28 @@ function EquipCard:onUninstall(room, player)
   end
 end
 
+function EquipCard:clone(suit, number)
+  local ret = Card.clone(self, suit, number)
+  ret.equip_skill = self.equip_skill
+  ret.onInstall = self.onInstall
+  ret.onUninstall = self.onUninstall
+  return ret
+end
+
 ---@class Weapon : EquipCard
+---@field public attack_range integer
 local Weapon = EquipCard:subclass("Weapon")
 
 function Weapon:initialize(name, suit, number, attackRange)
   EquipCard.initialize(self, name, suit, number)
   self.sub_type = Card.SubtypeWeapon
   self.attack_range = attackRange or 1
+end
+
+function Weapon:clone(suit, number)
+  local ret = EquipCard.clone(self, suit, number)
+  ret.attack_range = self.attack_range
+  return ret
 end
 
 ---@class Armor : EquipCard

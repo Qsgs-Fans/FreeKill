@@ -143,8 +143,6 @@ function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
   newCard.skill = self.skill
   newCard.special_skills = self.special_skills
-  newCard.equip_skill = self.equip_skill
-  newCard.attack_range = self.attack_range
   newCard.is_damage_card = self.is_damage_card
   newCard.multiple_targets = self.multiple_targets
   newCard.is_derived = self.is_derived
