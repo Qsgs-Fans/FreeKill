@@ -824,7 +824,7 @@ function ServerPlayer:revealGeneral(isDeputy)
     arg2 = generalName,
   }
 
-  room.logic:trigger(fk.GeneralRevealed, self, general)
+  room.logic:trigger(fk.GeneralRevealed, self, generalName)
 end
 
 function ServerPlayer:revealBySkillName(skill_name)
@@ -848,6 +848,40 @@ function ServerPlayer:revealBySkillName(skill_name)
   end
 end
 
+function ServerPlayer:hideGeneral(isDeputy)
+  local room = self.room
+  local generalName = isDeputy and self.deputyGeneral or self.general
+  local mark = isDeputy and "__heg_deputy" or "__heg_general"
+
+  self:setMark(mark, generalName)
+  self:doNotify("SetPlayerMark", json.encode{ self.id, mark, generalName})
+
+  if isDeputy then
+    room:setDeputyGeneral(self, "anjiang")
+    room:broadcastProperty(self, "deputyGeneral")
+  else
+    room:setPlayerGeneral(self, "anjiang", false)
+    room:broadcastProperty(self, "general")
+  end
+
+  local general = Fk.generals[generalName]
+  local skills = general.skills
+  for _, s in ipairs(skills) do
+    room:handleAddLoseSkills(self, "-" .. s.name, nil, false, true)
+    if s.relate_to_place ~= (isDeputy and "m" or "d") then
+      self:addFakeSkill(s)
+    end
+  end
+  for _, sname in ipairs(general.other_skills) do
+    room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
+    local s = Fk.skills[sname]
+    if s.relate_to_place ~= (isDeputy and "m" or "d") then
+      self:addFakeSkill(s)
+    end
+  end
+
+  room.logic:trigger(fk.GeneralHidden, room, generalName)
+end
 -- 神貂蝉
 
 ---@param p ServerPlayer

@@ -586,7 +586,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
   local new_skills = {}
   for _, sname in ipairs(new:getSkillNameList()) do
     local s = Fk.skills[sname]
-    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "h") then
+    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "m") then
       table.insert(new_skills, sname)
     end
   end

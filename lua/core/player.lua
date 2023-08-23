@@ -140,9 +140,9 @@ function Player:getGeneralMaxHp()
   local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputy]
 
   if not deputy then
-    return general.maxHp + general.headMaxHpAdjustedValue
+    return general.maxHp + general.mainMaxHpAdjustedValue
   else
-    return (general.maxHp + general.headMaxHpAdjustedValue + deputy.maxHp + deputy.deputyMaxHpAdjustedValue) // 2
+    return (general.maxHp + general.mainMaxHpAdjustedValue + deputy.maxHp + deputy.deputyMaxHpAdjustedValue) // 2
   end
 end
 
@@ -892,6 +892,22 @@ function Player:prohibitDiscard(card)
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitDiscard(self, card) then
+      return true
+    end
+  end
+  return false
+end
+
+--- 确认角色是否被禁止亮将。
+function Player:prohibitReveal(isDeputy)
+  local place = isDeputy and "d" or "m"
+  if type(self:getMark(MarkEnum.RevealProhibited)) == "table" and table.contains(self:getMark(MarkEnum.RevealProhibited), place) then
+    return true
+  end
+  for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+      return self:getMark(MarkEnum.RevealProhibited .. s)
+    end)) do
+    if type(m) == "table" and table.contains(m, place) then
       return true
     end
   end

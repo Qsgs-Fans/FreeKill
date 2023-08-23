@@ -14,7 +14,7 @@
 ---@field public subkingdom string @ 武将副势力
 ---@field public hp integer @ 武将初始体力
 ---@field public maxHp integer @ 武将初始最大体力
----@field public headMaxHpAdjustedValue integer @ 主将体力上限调整
+---@field public mainMaxHpAdjustedValue integer @ 主将体力上限调整
 ---@field public deputyMaxHpAdjustedValue integer @ 副将体力上限调整
 ---@field public shield integer @ 初始护甲
 ---@field public gender Gender @ 武将性别
@@ -51,7 +51,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.hp = hp
   self.maxHp = maxHp or hp
   self.gender = gender or General.Male
-  self.headMaxHpAdjustedValue = 0
+  self.mainMaxHpAdjustedValue = 0
   self.deputyMaxHpAdjustedValue = 0
   self.shield = 0
   self.subkingdom = nil

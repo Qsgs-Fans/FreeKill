@@ -126,6 +126,7 @@ fk.AreaAborted = 87
 fk.AreaResumed = 88
 
 fk.GeneralRevealed = 89
-fk.GeneralRemoved = 90
+fk.GeneralHidden = 90
+fk.GeneralRemoved = 91
 
-fk.NumOfEvents = 91
+fk.NumOfEvents = 92
