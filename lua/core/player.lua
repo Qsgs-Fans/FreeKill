@@ -544,7 +544,7 @@ end
 ---@param fixLimit number|null @ 卡牌距离限制增加专用
 function Player:inMyAttackRange(other, fixLimit)
   assert(other:isInstanceOf(Player))
-  if self == other or (other and other.dead) then
+  if self == other or (other and (other.dead or other:isRemoved())) or self:isRemoved() then
     return false
   end
 

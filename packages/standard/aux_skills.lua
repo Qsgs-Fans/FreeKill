@@ -162,9 +162,9 @@ local revealProhibited = fk.CreateInvaliditySkill {
         end
       end
     end
-    
+
     if #generals == 0 then return false end
-    if not table.contains(from._fake_skills, skill) then return false end
+    if type(from._fake_skills) == "table" and not table.contains(from._fake_skills, skill) then return false end
     local sname = skill.name
     for _, g in ipairs(generals) do
       local ret = g == "h" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
