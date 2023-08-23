@@ -796,7 +796,8 @@ callbacks["AskForGeneral"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const generals = data[0];
   const n = data[1];
-  const heg = data[2];
+  const convert = data[2];
+  const heg = data[3];
   roomScene.setPrompt(Backend.translate("#AskForGeneral"), true);
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
@@ -805,6 +806,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
     replyToServer(JSON.stringify(box.choices));
   });
   box.choiceNum = n;
+  box.convertEnabled = convert;
   box.needSameKingdom = !!heg;
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });

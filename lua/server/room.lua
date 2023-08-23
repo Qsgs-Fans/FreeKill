@@ -576,7 +576,8 @@ end
 ---@param full bool @ 是否血量满状态变身
 ---@param isDeputy bool @ 是否变的是副将
 ---@param sendLog bool @ 是否发Log
-function Room:changeHero(player, new_general, full, isDeputy, sendLog)
+---@param maxHpChange bool @ 是否改变体力上限，默认改变
+function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
@@ -605,9 +606,22 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
     self:setPlayerProperty(player, "kingdom", new.kingdom)
   end
 
-  self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  maxHpChange = (maxHpChange == nil) and true or maxHpChange
+  if maxHpChange then
+    self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  end
   if full or player.hp > player.maxHp then
     self:setPlayerProperty(player, "hp", player.maxHp)
+  end
+
+  if sendLog then
+    self:sendLog{
+      type = "#ChangeHero",
+      from = player.id,
+      arg = orig.name,
+      arg2 = new.name,
+      arg3 = isDeputy and "deputyGeneral" or "mainGeneral"
+    }
   end
 end
 
@@ -1277,17 +1291,19 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
+---@param convert bool @ 可否变更，默认可
 ---@return string|string[] @ 选择的武将
-function Room:askForGeneral(player, generals, n)
+function Room:askForGeneral(player, generals, n, convert)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
 
   n = n or 1
+  convert = (convert == nil) and true or convert
   if #generals == n then return n == 1 and generals[1] or generals end
   local defaultChoice = table.random(generals, n)
 
   if (player.serverplayer:getState() == fk.Player_Online) then
-    local result = self:doRequest(player, command, json.encode{ generals, n })
+    local result = self:doRequest(player, command, json.encode{ generals, n, convert })
     local choices
     if result == "" then
       choices = defaultChoice

@@ -11,6 +11,7 @@ GraphicsBox {
   property var choices: []
   property var selectedItem: []
   property bool loaded: false
+  property bool convertEnabled: true
   property bool needSameKingdom: false
 
   ListModel {
@@ -91,6 +92,7 @@ GraphicsBox {
 
         MetroButton {
           id: convertBtn
+          visible: convertEnabled
           text: Backend.translate("Same General Convert")
           onClicked: roomScene.startCheat("SameConvert", { cards: generalList });
         }

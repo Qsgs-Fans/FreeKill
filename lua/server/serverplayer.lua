@@ -784,7 +784,9 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
   self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
-function ServerPlayer:revealGeneral(isDeputy)
+---@param isDeputy bool
+---@param no_trigger bool
+function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   local room = self.room
   local generalName
   if isDeputy then
@@ -824,7 +826,9 @@ function ServerPlayer:revealGeneral(isDeputy)
     arg2 = generalName,
   }
 
-  room.logic:trigger(fk.GeneralRevealed, self, generalName)
+  if not no_trigger then
+    room.logic:trigger(fk.GeneralRevealed, self, generalName)
+  end
 end
 
 function ServerPlayer:revealBySkillName(skill_name)

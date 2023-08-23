@@ -437,6 +437,9 @@ Fk:loadTranslationTable{
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
   ["#Revive"] = "%from 竟然复活了",
 
+  -- change hero
+  ["#ChangeHero"] = "%from 的 %arg3 %arg 变更为 %arg2",
+
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
