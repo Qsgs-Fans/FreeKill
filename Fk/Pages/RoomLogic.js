@@ -806,7 +806,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
     replyToServer(JSON.stringify(box.choices));
   });
   box.choiceNum = n;
-  box.convertEnabled = convert;
+  box.convertDisabled = !!convert;
   box.needSameKingdom = !!heg;
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });

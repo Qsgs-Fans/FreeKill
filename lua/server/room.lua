@@ -1291,19 +1291,18 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
----@param convert bool @ 可否变更，默认可
+---@param noConvert bool @ 可否变更，默认可
 ---@return string|string[] @ 选择的武将
-function Room:askForGeneral(player, generals, n, convert)
+function Room:askForGeneral(player, generals, n, noConvert)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
 
   n = n or 1
-  convert = (convert == nil) and true or convert
   if #generals == n then return n == 1 and generals[1] or generals end
   local defaultChoice = table.random(generals, n)
 
   if (player.serverplayer:getState() == fk.Player_Online) then
-    local result = self:doRequest(player, command, json.encode{ generals, n, convert })
+    local result = self:doRequest(player, command, json.encode{ generals, n, noConvert })
     local choices
     if result == "" then
       choices = defaultChoice
