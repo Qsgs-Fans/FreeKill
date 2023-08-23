@@ -145,6 +145,38 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
   end
 }
 
+local revealProhibited = fk.CreateInvaliditySkill {
+  name = "reveal_prohibited",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    local generals = {}
+    if type(from:getMark(MarkEnum.RevealProhibited)) == "table" then
+      generals = from:getMark(MarkEnum.RevealProhibited)
+    end
+    for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+        return from:getMark(MarkEnum.RevealProhibited .. s)
+      end)) do
+      if type(m) == "table" then
+        for _, g in ipairs(m) do
+          table.insertIfNeed(generals, g)
+        end
+      end
+    end
+    
+    if #generals == 0 then return false end
+    if not table.contains(from._fake_skills, skill) then return false end
+    local sname = skill.name
+    for _, g in ipairs(generals) do
+      local ret = g == "h" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
+      local general = Fk.generals[ret]
+      if table.contains(general:getSkillNameList(), sname) then
+        return true
+      end
+    end
+    return false
+  end
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
@@ -152,4 +184,5 @@ AuxSkills = {
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,
+  revealProhibited
 }

@@ -461,7 +461,7 @@ end
 
 --- 获取角色是否被移除。
 function Player:isRemoved()
-  return table.find(MarkEnum.TempMarkSuffix, function(s)
+  return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
     return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
   end)
 end
