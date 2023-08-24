@@ -94,13 +94,19 @@ function doOkButton() {
   replyToServer("1");
 }
 
+let _is_canceling = false;
 function doCancelButton() {
+  if (_is_canceling) return;
+  _is_canceling = true;
+
   if (roomScene.state === "playing") {
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
     dashboard.enableCards();
     dashboard.enableSkills();
+
+    _is_canceling = false;
     return;
   } else if (roomScene.state === "responding") {
     const p = dashboard.pending_skill;
@@ -113,6 +119,8 @@ function doCancelButton() {
       dashboard.enableCards(roomScene.responding_card);
       dashboard.enableSkills(roomScene.responding_card);
     }
+
+    _is_canceling = false;
     return;
   }
 
@@ -121,9 +129,13 @@ function doCancelButton() {
       "luckcard", false
     ].join(","));
     roomScene.state = "notactive";
+
+    _is_canceling = false;
     return;
   }
+
   replyToServer("__cancel");
+  _is_canceling = false;
 }
 
 function replyToServer(jsonData) {
