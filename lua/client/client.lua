@@ -261,6 +261,10 @@ fk.client_callback["EnterRoom"] = function(jsonData)
   local data = _data[3]
   ClientInstance.enter_room_data = jsonData;
   ClientInstance.room_settings = data
+  table.insertTableIfNeed(
+    data.disabledPack,
+    Fk.game_mode_disabled[data.gameMode]
+  )
   ClientInstance.disabled_packs = data.disabledPack
   ClientInstance.disabled_generals = data.disabledGenerals
   ClientInstance:notifyUI("EnterRoom", jsonData)
