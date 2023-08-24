@@ -15,7 +15,7 @@ local function useActiveSkill(self, skill, card)
     filter_func = function() return false end
   end
 
-  if self.command == "PlayCard" and not skill:canUse(player, card) then
+  if self.command == "PlayCard" and (not skill:canUse(player, card) or player:prohibitUse(card)) then
     return ""
   end
 
@@ -31,13 +31,8 @@ local function useActiveSkill(self, skill, card)
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
-        local r = self.room
-        local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
-        for _, skill in ipairs(status_skills) do
-          if skill:isProhibited(self.player, p, card) then
-            ret = false
-            break
-          end
+        if player:prohibitUse(card) then
+          ret = false
         end
       end
       return ret
@@ -131,7 +126,48 @@ random_cb.AskForSkillInvoke = function(self, jsonData)
   return table.random{"1", ""}
 end
 
-random_cb.AskForUseCard = function(self, jsonData) end
+random_cb.AskForUseCard = function(self, jsonData)
+  local player = self.player
+  local data = json.decode(jsonData)
+  local card_name = data[1]
+  local pattern = data[2] or card_name
+  local cancelable = data[4] or true
+  local exp = Exppattern:Parse(pattern)
+  local avail_cards = table.filter(player:getCardIds("he"), function(id)
+    return exp:match(Fk:getCardById(id)) and not player:prohibitUse(Fk:getCardById(id))
+  end)
+  if #avail_cards > 0 then
+    if math.random() < 0.25 then return "" end
+    for _, card in ipairs(avail_cards) do
+      local skill = Fk:getCardById(card).skill
+      local max_try_times = 100
+      local selected_targets = {}
+      local min = skill:getMinTargetNum()
+      local max = skill:getMaxTargetNum(player, card)
+      local min_card = skill:getMinCardNum()
+      local max_card = skill:getMaxCardNum()
+      for _ = 0, max_try_times do
+        if skill:feasible(selected_targets, {card}, self.player, card) then break end
+        local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
+          local ret = skill:targetFilter(p.id, selected_targets, {card}, card or Fk:cloneCard'zixing')
+          return ret
+        end)
+        avail_targets = table.map(avail_targets, function(p) return p.id end)
+
+        if #avail_targets == 0 and #avail_cards == 0 then break end
+        table.insertIfNeed(selected_targets, table.random(avail_targets))
+        table.insertIfNeed({card}, table.random(avail_cards))
+      end
+      if skill:feasible(selected_targets, {card}, self.player, card) then
+        return json.encode{
+          card = table.random(avail_cards),
+          targets = selected_targets,
+        }
+      end
+    end
+  end
+  return ""
+end
 
 ---@param self RandomAI
 random_cb.AskForResponseCard = function(self, jsonData)
