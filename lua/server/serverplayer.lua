@@ -840,8 +840,6 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     self.gender = general.gender
   end
 
-  
-
   room:sendLog{
     type = "#RevealGeneral",
     from = self.id,
