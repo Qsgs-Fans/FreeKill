@@ -1340,7 +1340,7 @@ end
 --- 询问chooser，选择target的一张牌。
 ---@param chooser ServerPlayer @ 要被询问的人
 ---@param target ServerPlayer @ 被选牌的人
----@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
 ---@return integer @ 选择的卡牌id
 function Room:askForCardChosen(chooser, target, flag, reason)
@@ -1351,10 +1351,18 @@ function Room:askForCardChosen(chooser, target, flag, reason)
 
   if result == "" then
     local areas = {}
-    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-    local handcards = target:getCardIds(areas)
+    local handcards
+    if type(flag) == "string" then
+      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+      handcards = target:getCardIds(areas)
+    else
+      handcards = {}
+      for _, t in ipairs(flag.card_data) do
+        table.insertTable(handcards, t[2])
+      end
+    end
     if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
   else
@@ -1376,7 +1384,7 @@ end
 ---@param target ServerPlayer @ 被选牌的人
 ---@param min integer @ 最小选牌数
 ---@param max integer @ 最大选牌数
----@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
 ---@return integer[] @ 选择的id
 function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
@@ -1394,10 +1402,18 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
     ret = json.decode(result)
   else
     local areas = {}
-    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-    local handcards = target:getCardIds(areas)
+    local handcards
+    if type(flag) == "string" then
+      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+      handcards = target:getCardIds(areas)
+    else
+      handcards = {}
+      for _, t in ipairs(flag.card_data) do
+        table.insertTable(handcards, t[2])
+      end
+    end
     if #handcards == 0 then return {} end
     ret = table.random(handcards, math.min(min, #handcards))
   end

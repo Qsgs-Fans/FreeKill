@@ -10,8 +10,8 @@ GraphicsBox {
   title.text: root.multiChoose ? Backend.translate("$ChooseCards").arg(root.min).arg(root.max) : Backend.translate("$ChooseCard")
 
   // TODO: Adjust the UI design in case there are more than 7 cards
-  width: 70 + Math.min(7, Math.max(1, handcards.count, equips.count, delayedTricks.count)) * 100
-  height: 50 + (handcards.count > 0 ? 150 : 0) + (equips.count > 0 ? 150 : 0) + (delayedTricks.count > 0 ? 150 : 0)
+  width: 70 + 700
+  height: 50 + Math.min(cardView.contentHeight, 400) + (multiChoose ? 20 : 0)
 
   signal cardSelected(int cid)
   signal cardsSelected(var ids)
@@ -21,39 +21,35 @@ GraphicsBox {
   property var selected_ids: []
 
   ListModel {
-    id: handcards
+    id: cardModel
   }
 
-  ListModel {
-    id: equips
-  }
-
-  ListModel {
-    id: delayedTricks
-  }
-
-  ColumnLayout {
+  ListView {
+    id: cardView
     anchors.fill: parent
     anchors.topMargin: 40
     anchors.leftMargin: 20
     anchors.rightMargin: 20
     anchors.bottomMargin: 20
+    spacing: 20
+    model: cardModel
+    clip: true
 
-    Row {
-      height: 130
+    delegate: RowLayout {
       spacing: 15
-      visible: handcards.count > 0
+      visible: areaCards.count > 0
 
       Rectangle {
         border.color: "#A6967A"
         radius: 5
         color: "transparent"
         width: 18
-        height: parent.height
+        height: 130
+        Layout.alignment: Qt.AlignTop
 
         Text {
           color: "#E4D5A0"
-          text: Backend.translate("$Hand")
+          text: Backend.translate(areaName)
           anchors.fill: parent
           wrapMode: Text.WrapAnywhere
           verticalAlignment: Text.AlignVCenter
@@ -62,10 +58,10 @@ GraphicsBox {
         }
       }
 
-      Row {
-        spacing: 7
+      GridLayout {
+        columns: 7
         Repeater {
-          model: handcards
+          model: areaCards
 
           CardItem {
             cid: model.cid
@@ -82,147 +78,50 @@ GraphicsBox {
             }
             onSelectedChanged: {
               if (selected) {
-                origY = origY - 20;
-                root.selected_ids.push(cid);
+                virt_name = "$Selected";
               } else {
-                origY = origY + 20;
-                root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
+                virt_name = "";
               }
-              origX = x;
-              goBack(true);
               root.selected_ids = root.selected_ids;
             }
           }
         }
       }
     }
+  }
 
-    Row {
-      height: 130
-      spacing: 15
-      visible: equips.count > 0
-
-      Rectangle {
-        border.color: "#A6967A"
-        radius: 5
-        color: "transparent"
-        width: 18
-        height: parent.height
-
-        Text {
-          color: "#E4D5A0"
-          text: Backend.translate("$Equip")
-          anchors.fill: parent
-          wrapMode: Text.WrapAnywhere
-          verticalAlignment: Text.AlignVCenter
-          horizontalAlignment: Text.AlignHCenter
-          font.pixelSize: 15
-        }
-      }
-
-      Row {
-        spacing: 7
-        Repeater {
-          model: equips
-
-          CardItem {
-            cid: model.cid
-            name: model.name
-            suit: model.suit
-            number: model.number
-            autoBack: false
-            selectable: true
-            onClicked: {
-              if (!root.multiChoose) {
-                root.cardSelected(cid);
-              }
-            }
-            onSelectedChanged: {
-              if (selected) {
-                origY = origY - 20;
-                root.selected_ids.push(cid);
-              } else {
-                origY = origY + 20;
-                root.selected_ids.splice(root.selected_ids.indexOf(cid));
-              }
-              origX = x;
-              goBack(true);
-              root.selected_ids = root.selected_ids;
-            }
-          }
-        }
-      }
-    }
-
-    Row {
-      height: 130
-      spacing: 15
-      visible: delayedTricks.count > 0
-
-      Rectangle {
-        border.color: "#A6967A"
-        radius: 5
-        color: "transparent"
-        width: 18
-        height: parent.height
-
-        Text {
-          color: "#E4D5A0"
-          text: Backend.translate("$Judge")
-          anchors.fill: parent
-          wrapMode: Text.WrapAnywhere
-          verticalAlignment: Text.AlignVCenter
-          horizontalAlignment: Text.AlignHCenter
-          font.pixelSize: 15
-        }
-      }
-
-      Row {
-        spacing: 7
-        Repeater {
-          model: delayedTricks
-
-          CardItem {
-            cid: model.cid
-            name: model.name
-            suit: model.suit
-            number: model.number
-            autoBack: false
-            selectable: true
-            onClicked: {
-              if (!root.multiChoose) {
-                root.cardSelected(cid);
-              }
-            }
-            onSelectedChanged: {
-              if (selected) {
-                origY = origY - 20;
-                root.selected_ids.push(cid);
-              } else {
-                origY = origY + 20;
-                root.selected_ids.splice(root.selected_ids.indexOf(cid));
-              }
-              origX = x;
-              goBack(true);
-              root.selected_ids = root.selected_ids;
-            }
-          }
-        }
-      }
-    }
-
-    MetroButton {
-      text: Backend.translate("OK")
-      visible: root.multiChoose
-      enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
-      onClicked: root.cardsSelected(root.selected_ids)
-    }
+  MetroButton {
+    anchors.bottom: parent.bottom
+    text: Backend.translate("OK")
+    visible: root.multiChoose
+    enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
+    onClicked: root.cardsSelected(root.selected_ids)
   }
 
   onCardSelected: finished();
 
-  function addHandcards(cards)
-  {
+  function findAreaModel(name) {
+    let ret;
+    for (let i = 0; i < cardModel.count; i++) {
+      let item = cardModel.get(i);
+      if (item.areaName == name) {
+        ret = item;
+        break;
+      }
+    }
+    if (!ret) {
+      ret = {
+        areaName: name,
+        areaCards: [],
+      }
+      cardModel.append(ret);
+      ret = findAreaModel(name);
+    }
+    return ret;
+  }
+
+  function addHandcards(cards) {
+    let handcards = findAreaModel('$Hand').areaCards;
     if (cards instanceof Array) {
       for (let i = 0; i < cards.length; i++)
         handcards.append(cards[i]);
@@ -233,6 +132,7 @@ GraphicsBox {
 
   function addEquips(cards)
   {
+    let equips = findAreaModel('$Equip').areaCards;
     if (cards instanceof Array) {
       for (let i = 0; i < cards.length; i++)
         equips.append(cards[i]);
@@ -243,11 +143,22 @@ GraphicsBox {
 
   function addDelayedTricks(cards)
   {
+    let delayedTricks = findAreaModel('$Judge').areaCards;
     if (cards instanceof Array) {
       for (let i = 0; i < cards.length; i++)
         delayedTricks.append(cards[i]);
     } else {
       delayedTricks.append(cards);
+    }
+  }
+
+  function addCustomCards(name, cards) {
+    let area = findAreaModel(name).areaCards;
+    if (cards instanceof Array) {
+      for (let i = 0; i < cards.length; i++)
+        area.append(cards[i]);
+    } else {
+      area.append(cards);
     }
   }
 }

@@ -371,19 +371,28 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
   local judge = target.player_cards[Player.Judge]
-  if not string.find(flag, "h") then
-    hand = {}
-  elseif target.id ~= Self.id then
-    -- FIXME: can not see other's handcard
-    hand = table.map(hand, function() return -1 end)
+
+  local ui_data = flag
+  if type(flag) == "string" then
+    if not string.find(flag, "h") then
+      hand = {}
+    end
+    if not string.find(flag, "e") then
+      equip = {}
+    end
+    if not string.find(flag, "j") then
+      judge = {}
+    end
+    ui_data = {
+      _reason = reason,
+      card_data = {},
+    }
+    if #hand ~= 0 then table.insert(ui_data.card_data, { "$Hand", hand }) end
+    if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
+    if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
+  else
+    ui_data._reason = reason
   end
-  if not string.find(flag, "e") then
-    equip = {}
-  end
-  if not string.find(flag, "j") then
-    judge = {}
-  end
-  local ui_data = {hand, equip, judge, reason}
   ClientInstance:notifyUI("AskForCardChosen", json.encode(ui_data))
 end
 
@@ -395,16 +404,32 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
   local judge = target.player_cards[Player.Judge]
-  if not string.find(flag, "h") then
-    hand = {}
+
+  local ui_data = flag
+  if type(flag) == "string" then
+    if not string.find(flag, "h") then
+      hand = {}
+    end
+    if not string.find(flag, "e") then
+      equip = {}
+    end
+    if not string.find(flag, "j") then
+      judge = {}
+    end
+    ui_data = {
+      _min = min,
+      _max = max,
+      _reason = reason,
+      card_data = {}
+    }
+    if #hand ~= 0 then table.insert(ui_data.card_data, { "$Hand", hand }) end
+    if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
+    if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
+  else
+    ui_data._min = min
+    ui_data._max = max
+    ui_data._reason = reason
   end
-  if not string.find(flag, "e") then
-    equip = {}
-  end
-  if not string.find(flag, "j") then
-    judge = {}
-  end
-  local ui_data = {hand, equip, judge, min, max, reason}
   ClientInstance:notifyUI("AskForCardsChosen", json.encode(ui_data))
 end
 
