@@ -576,18 +576,25 @@ end
 ---@param full bool @ 是否血量满状态变身
 ---@param isDeputy bool @ 是否变的是副将
 ---@param sendLog bool @ 是否发Log
-function Room:changeHero(player, new_general, full, isDeputy, sendLog)
+---@param maxHpChange bool @ 是否改变体力上限，默认改变
+function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
+  local orig_skills = orig and orig:getSkillNameList()
 
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
-  local new_skills = table.map(orig_skills, function(e)
-    return "-" .. e
-  end)
+  local new_skills = {}
+  for _, sname in ipairs(new:getSkillNameList()) do
+    local s = Fk.skills[sname]
+    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "m") then
+      table.insert(new_skills, sname)
+    end
+  end
 
-  table.insertTable(new_skills, new:getSkillNameList())
+  table.insertTable(new_skills, table.map(orig_skills, function(e)
+    return "-" .. e
+  end))
 
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
@@ -599,9 +606,22 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
     self:setPlayerProperty(player, "kingdom", new.kingdom)
   end
 
-  self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  maxHpChange = (maxHpChange == nil) and true or maxHpChange
+  if maxHpChange then
+    self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  end
   if full or player.hp > player.maxHp then
     self:setPlayerProperty(player, "hp", player.maxHp)
+  end
+
+  if sendLog then
+    self:sendLog{
+      type = "#ChangeHero",
+      from = player.id,
+      arg = orig.name,
+      arg2 = new.name,
+      arg3 = isDeputy and "deputyGeneral" or "mainGeneral"
+    }
   end
 end
 
@@ -1271,8 +1291,9 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
+---@param noConvert bool @ 可否变更，默认可
 ---@return string|string[] @ 选择的武将
-function Room:askForGeneral(player, generals, n)
+function Room:askForGeneral(player, generals, n, noConvert)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
 
@@ -1281,7 +1302,7 @@ function Room:askForGeneral(player, generals, n)
   local defaultChoice = table.random(generals, n)
 
   if (player.serverplayer:getState() == fk.Player_Online) then
-    local result = self:doRequest(player, command, json.encode{ generals, n })
+    local result = self:doRequest(player, command, json.encode{ generals, n, noConvert })
     local choices
     if result == "" then
       choices = defaultChoice
@@ -2425,10 +2446,10 @@ function Room:handleCardEffect(event, cardEffectEvent)
       local players = {}
       Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getCardIds(Player.Hand)
+        local cards = p:getHandlyIds(true)
         for _, cid in ipairs(cards) do
           if
-            Fk:getCardById(cid).name == "nullification" and
+            Fk:getCardById(cid).trueName == "nullification" and
             not (
               table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
               table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)

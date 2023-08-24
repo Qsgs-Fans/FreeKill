@@ -183,8 +183,7 @@ function GameLogic:broadcastGeneral()
     assert(p.general ~= "")
     local general = Fk.generals[p.general]
     local deputy = Fk.generals[p.deputyGeneral]
-    p.maxHp = deputy and math.floor((deputy.maxHp + general.maxHp) / 2)
-      or general.maxHp
+    p.maxHp = p:getGeneralMaxHp()
     p.hp = deputy and math.floor((deputy.hp + general.hp) / 2) or general.hp
     p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
     -- TODO: setup AI here

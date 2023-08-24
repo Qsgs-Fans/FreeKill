@@ -33,7 +33,8 @@ function GetGeneralDetail(name)
     maxHp = general.maxHp,
     gender = general.gender,
     skill = {},
-    related_skill = {}
+    related_skill = {},
+    companions = general.companions
   }
   for _, s in ipairs(general.skills) do
     table.insert(ret.skill, {
@@ -58,6 +59,11 @@ function GetGeneralDetail(name)
       name = s,
       description = Fk:getDescription(s)
     })
+  end
+  for _, g in pairs(Fk.generals) do
+    if table.contains(g.companions, general.trueName) then
+      table.insertIfNeed(ret.companions, g.trueName)
+    end
   end
   return json.encode(ret)
 end

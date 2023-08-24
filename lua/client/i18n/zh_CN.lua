@@ -175,6 +175,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Companions"] = "珠联璧合",
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
@@ -435,6 +436,9 @@ Fk:loadTranslationTable{
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
   ["#Revive"] = "%from 竟然复活了",
+
+  -- change hero
+  ["#ChangeHero"] = "%from 的 %arg3 %arg 变更为 %arg2",
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",

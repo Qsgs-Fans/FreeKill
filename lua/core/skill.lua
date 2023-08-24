@@ -13,6 +13,7 @@
 ---@field public anim_type string @ 技能类型定义
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
+---@field public relate_to_place string @ 主将技/副将技
 ---@field public switchSkillName string @ 转换技名字
 local Skill = class("Skill")
 
@@ -56,6 +57,7 @@ function Skill:initialize(name, frequency)
   end
 
   self.attached_equip = nil
+  self.relate_to_place = nil
 end
 
 function Skill:__index(k)

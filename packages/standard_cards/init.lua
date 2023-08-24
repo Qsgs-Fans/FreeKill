@@ -692,7 +692,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local to = room:getPlayerById(effect.to)
     local nextp = to
     repeat
-      nextp = nextp:getNextAlive()
+      nextp = nextp:getNextAlive(true)
       if nextp == to then break end
     until not nextp:hasDelayedTrick("lightning") and not nextp:isProhibited(nextp, effect.card)
 
