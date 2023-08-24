@@ -334,6 +334,7 @@ Fk:loadTranslationTable{
 
   ["general_card"] = "武将牌",
   ["General"] = "武将",
+  ["noGeneral"] = "无武将",
   ["Hp"] = "体力",
   ["Damage"] = "伤害",
   ["Lost"] = "失去",
@@ -366,8 +367,8 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆顶",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆顶",
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
   ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
   ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
