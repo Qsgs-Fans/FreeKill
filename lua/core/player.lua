@@ -565,12 +565,15 @@ end
 ---@param ignoreRemoved bool @ 忽略被移除
 ---@return ServerPlayer
 function Player:getNextAlive(ignoreRemoved)
-  if Fk:currentRoom().alive_players == 0 then
+  if #Fk:currentRoom().alive_players == 0 then
+    return self
+  end
+  local doNotIgnore = not ignoreRemoved
+  if doNotIgnore and table.every(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end) then
     return self
   end
 
   local ret = self.next
-  local doNotIgnore = not ignoreRemoved
   while ret.dead or (doNotIgnore and ret:isRemoved()) do
     ret = ret.next
   end
