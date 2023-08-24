@@ -231,7 +231,7 @@ local luoyi_trigger = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:broadcastSkillInvoke("luoyi")
+    player:broadcastSkillInvoke("luoyi")
     room:notifySkillInvoked(player, "luoyi")
     data.damage = data.damage + 1
   end,
@@ -540,7 +540,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
       player:usedCardTimes("slash") > 1
   end,
   on_refresh = function(self, event, target, player, data)
-    player.room:broadcastSkillInvoke("paoxiao")
+    player:broadcastSkillInvoke("paoxiao")
     player.room:doAnimate("InvokeSkill", {
       name = "paoxiao",
       player = player.id,
@@ -592,7 +592,7 @@ local kongchengAudio = fk.CreateTriggerSkill{
     end
   end,
   on_refresh = function(self, event, target, player, data)
-    player.room:broadcastSkillInvoke("kongcheng")
+    player:broadcastSkillInvoke("kongcheng")
     player.room:notifySkillInvoked(player, "kongcheng", "defensive")
   end,
 }
