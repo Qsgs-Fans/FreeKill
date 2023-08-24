@@ -720,7 +720,10 @@ end
 
 ---@param skill Skill
 function ServerPlayer:addFakeSkill(skill)
-  assert(skill:isInstanceOf(Skill))
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
   if table.contains(self._fake_skills, skill) then return end
 
   table.insert(self._fake_skills, skill)
@@ -736,7 +739,10 @@ end
 
 ---@param skill Skill
 function ServerPlayer:loseFakeSkill(skill)
-  assert(skill:isInstanceOf(Skill))
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
   if not table.contains(self._fake_skills, skill) then return end
 
   table.removeOne(self._fake_skills, skill)
@@ -803,6 +809,21 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     self:loseFakeSkill(skill)
   end
 
+  local ret = true
+  if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
+    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")]
+    for _, sname in ipairs(other:getSkillNameList()) do
+      local s = Fk.skills[sname]
+      if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
+        ret = false
+        break
+      end
+    end
+  end
+  if ret then
+    self:loseFakeSkill("reveal_skill")
+  end
+
   local oldKingdom = self.kingdom
   room:changeHero(self, generalName, false, isDeputy)
   local kingdom = general.kingdom
@@ -818,6 +839,8 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   if self.gender == General.Agender then
     self.gender = general.gender
   end
+
+  
 
   room:sendLog{
     type = "#RevealGeneral",
@@ -870,16 +893,23 @@ function ServerPlayer:hideGeneral(isDeputy)
 
   local general = Fk.generals[generalName]
   local skills = general.skills
+  local place = isDeputy and "m" or "d"
   for _, s in ipairs(skills) do
     room:handleAddLoseSkills(self, "-" .. s.name, nil, false, true)
-    if s.relate_to_place ~= (isDeputy and "m" or "d") then
+    if s.relate_to_place ~= place then
+      if s.frequency == Skill.Compulsory then
+        self:addFakeSkill("reveal_skill")
+      end
       self:addFakeSkill(s)
     end
   end
   for _, sname in ipairs(general.other_skills) do
     room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
     local s = Fk.skills[sname]
-    if s.relate_to_place ~= (isDeputy and "m" or "d") then
+    if s.relate_to_place ~= place then
+      if s.frequency == Skill.Compulsory then
+        self:addFakeSkill("reveal_skill")
+      end
       self:addFakeSkill(s)
     end
   end

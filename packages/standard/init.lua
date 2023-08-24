@@ -532,6 +532,7 @@ guanyu:addSkill(wusheng)
 
 local paoxiaoAudio = fk.CreateTriggerSkill{
   name = "#paoxiaoAudio",
+  visible = false,
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
@@ -549,6 +550,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
 }
 local paoxiao = fk.CreateTargetModSkill{
   name = "paoxiao",
+  frequency = Skill.Compulsory,
   bypass_times = function(self, player, skill, scope)
     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then

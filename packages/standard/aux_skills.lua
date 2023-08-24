@@ -177,6 +177,47 @@ local revealProhibited = fk.CreateInvaliditySkill {
   end
 }
 
+-- 亮将
+local revealSkill = fk.CreateActiveSkill{
+  name = "reveal_skill",
+  prompt = "#reveal_skill",
+  interaction = function(self)
+    local choiceList = {}
+    if (Self.general == "anjiang" and not Self:prohibitReveal()) then
+      local general = Fk.generals[Self:getMark("__heg_general")]
+      for _, sname in ipairs(general:getSkillNameList()) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
+          table.insert(choiceList, "revealMain")
+          break
+        end
+      end
+    end
+    if (Self.deputyGeneral == "anjiang" and not Self:prohibitReveal(true)) then
+      local general = Fk.generals[Self:getMark("__heg_deputy")]
+      for _, sname in ipairs(general:getSkillNameList()) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
+          table.insert(choiceList, "revealDeputy")
+          break
+        end
+      end
+    end
+    if #choiceList == 0 then return false end
+    return UI.ComboBox { choices = choiceList}
+  end,
+  target_num = 0,
+  card_num = 0,
+  card_filter = Util.FalseFunc,
+  on_use = function(self, room, effect)
+    local player = room:getPlayerById(effect.from)
+    local choice = self.interaction.data
+    if not choice then return false
+    elseif choice == "revealMain" then player:revealGeneral(false)
+    elseif choice == "revealDeputy" then player:revealGeneral(true) end
+  end,
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
@@ -184,5 +225,6 @@ AuxSkills = {
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,
-  revealProhibited
+  revealProhibited,
+  revealSkill
 }
