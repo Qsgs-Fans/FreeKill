@@ -684,7 +684,8 @@ local jizhi = fk.CreateTriggerSkill{
   anim_type = "drawcard",
   events = {fk.CardUsing},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and data.card:isCommonTrick()
+    return target == player and player:hasSkill(self.name) and data.card:isCommonTrick() and
+      (not data.card:isVirtual() or #data.card.subcards == 0)
   end,
   on_use = function(self, event, target, player, data)
     player:drawCards(1, self.name)
@@ -1008,7 +1009,7 @@ local jieyin = fk.CreateActiveSkill{
     local target = Fk:currentRoom():getPlayerById(to_select)
     return target:isWounded() and
       target.gender == General.Male
-      and #selected < 1
+      and #selected < 1 and to_select ~= Self.id
   end,
   target_num = 1,
   card_num = 2,
