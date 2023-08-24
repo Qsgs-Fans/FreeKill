@@ -716,6 +716,20 @@ function ServerPlayer:pindian(tos, skillName, initialCard)
   return pindianData
 end
 
+--- 播放技能的语音。
+---@param skill_name string @ 技能名
+---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
+function ServerPlayer:broadcastSkillInvoke(skill_name, index)
+  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
+  index = index or -1
+  self.room:sendLogEvent("PlaySkillSound", {
+    name = skill_name,
+    i = index,
+    general = self.general,
+    deputy = self.deputyGeneral,
+  })
+end
+
 -- Hegemony func
 
 ---@param skill Skill

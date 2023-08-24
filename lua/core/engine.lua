@@ -446,7 +446,7 @@ function Engine:filterCard(id, player, data)
       _card.skillName = f.name
       if modify and RoomInstance then
         if not f.mute then
-          RoomInstance:broadcastSkillInvoke(f.name)
+          player:broadcastSkillInvoke(f.name)
         end
         RoomInstance:doAnimate("InvokeSkill", {
           name = f.name,

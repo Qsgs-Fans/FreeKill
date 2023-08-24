@@ -914,9 +914,10 @@ function Room:sendLogEvent(type, data, players)
 end
 
 --- 播放技能的语音。
----@param skill_name string @ 技能名
+---@param skill_name nil @ 技能名
 ---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function Room:broadcastSkillInvoke(skill_name, index)
+  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
   index = index or -1
   self:sendLogEvent("PlaySkillSound", {
     name = skill_name,
@@ -3015,7 +3016,7 @@ function Room:useSkill(player, skill, effect_cb)
       self:broadcastPlaySound(soundName)
       self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
     else
-      self:broadcastSkillInvoke(skill.name)
+      player:broadcastSkillInvoke(skill.name)
       self:notifySkillInvoked(player, skill.name)
     end
   end

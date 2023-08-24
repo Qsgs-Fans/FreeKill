@@ -1280,12 +1280,38 @@ callbacks["LogEvent"] = (jsonData) => {
     }
     case "PlaySkillSound": {
       const skill = data.name;
-      let extension = data.extension;
-      if (!extension) {
-        const data = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
-        extension = data.extension;
+      // let extension = data.extension;
+      let extension;
+      let path;
+      let dat;
+
+      // try main general
+      if (data.general) {
+        dat = JSON.parse(Backend.callLuaFunction("GetGeneralData", [data.general]));
+        extension = dat.extension;
+        path = "./packages/" + extension + "/audio/skill/" + skill + "_" + data.general;
+        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+          Backend.playSound(path, data.i);
+          break;
+        }
       }
-      Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, data.i);
+
+      // secondly try deputy general
+      if (data.deputy) {
+        dat = JSON.parse(Backend.callLuaFunction("GetGeneralData", [data.deputy]));
+        extension = dat.extension;
+        path = "./packages/" + extension + "/audio/skill/" + skill + "_" + data.deputy;
+        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+          Backend.playSound(path, data.i);
+          break;
+        }
+      }
+
+      // finally normal skill
+      dat = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      extension = dat.extension;
+      path = "./packages/" + extension + "/audio/skill/" + skill;
+      Backend.playSound(path, data.i);
       break;
     }
     case "PlaySound": {
