@@ -17,10 +17,10 @@ jobs:
       with:
         submodules: true
 
-    - name: Install swig, winflexbison3
+    - name: Install swig
       uses: crazy-max/ghaction-chocolatey@v1
       with:
-        args: install winflexbison3 swig -y
+        args: install swig -y
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v3
@@ -32,7 +32,6 @@ jobs:
         target: 'desktop'
         arch: 'win64_mingw'
         modules: 'qtmultimedia qt5compat qtshadertools'
-        tools: 'tools_openssl_x64'
 
     - name: Disable PCH
       shell: bash
@@ -47,7 +46,7 @@ jobs:
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
-        OPENSSL_ROOT_DIR: ${{github.workspace}}/../Qt/tools/OpenSSL/Win_x64
+        OPENSSL_ROOT_DIR: /c/Program Files/OpenSSL
       run: |
         cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" -B ${{github.workspace}}/build
 
@@ -100,7 +99,7 @@ jobs:
       with:
         fallback: 0.0.1
 
-    - name: Download APK from build
+    - name: Download zip from build
       uses: actions/download-artifact@v3
       with:
         name: zip
@@ -110,7 +109,7 @@ jobs:
       run: |
         mv zip/FreeKill-release.7z zip/FreeKill-${{ steps.previoustag.outputs.tag }}.7z
 
-    - name: Upload Release APK
+    - name: Upload Release
       uses: softprops/action-gh-release@v1
       with:
         token: ${{ secrets.MY_TOKEN }}
