@@ -61,8 +61,8 @@ function GetGeneralDetail(name)
     })
   end
   for _, g in pairs(Fk.generals) do
-    if table.contains(g.companions, general.trueName) then
-      table.insertIfNeed(ret.companions, g.trueName)
+    if table.contains(g.companions, general.name) then
+      table.insertIfNeed(ret.companions, g.name)
     end
   end
   return json.encode(ret)
