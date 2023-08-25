@@ -817,7 +817,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     generalName = self:getMark("__heg_general")
   end
 
-  local general = Fk.generals[generalName]
+  local general = Fk.generals[generalName] or Fk.generals["blank_shibing"]
   for _, s in ipairs(general:getSkillNameList()) do
     local skill = Fk.skills[s]
     self:loseFakeSkill(skill)
@@ -825,7 +825,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local ret = true
   if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
-    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")]
+    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
     for _, sname in ipairs(other:getSkillNameList()) do
       local s = Fk.skills[sname]
       if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
