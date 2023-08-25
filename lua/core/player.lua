@@ -992,16 +992,8 @@ function Player:getAvailableEquipSlots(subtype)
   local tempSealedSlots = table.simpleClone(self.sealedSlots)
 
   if subtype then
-    local subtype2slot = {
-      [Card.SubtypeWeapon] = Player.WeaponSlot,
-      [Card.SubtypeArmor] = Player.ArmorSlot,
-      [Card.SubtypeOffensiveRide] = Player.OffensiveRideSlot,
-      [Card.SubtypeDefensiveRide] = Player.DefensiveRideSlot,
-      [Card.SubtypeTreasure] = Player.TreasureSlot,
-    }
-
     local singleSlot = table.filter(tempSlots, function(slot)
-      return slot == subtype2slot[subtype]
+      return slot == Util.convertSubtypeAndEquipSlot(subtype)
     end)
 
     for _, sealedSlot in ipairs(tempSealedSlots) do

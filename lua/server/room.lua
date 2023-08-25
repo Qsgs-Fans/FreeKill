@@ -581,7 +581,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList()
+  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
   local new_skills = {}
@@ -618,7 +618,7 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
     self:sendLog{
       type = "#ChangeHero",
       from = player.id,
-      arg = orig.name,
+      arg = orig and orig.name or "noGeneral",
       arg2 = new.name,
       arg3 = isDeputy and "deputyGeneral" or "mainGeneral"
     }
