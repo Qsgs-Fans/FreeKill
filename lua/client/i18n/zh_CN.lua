@@ -284,11 +284,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.3
+  ## v0.3.4
 
-  0.3.3版本，新增弹劾房主和房间开启牌堆显示，修复不少bug。
+  0.3.4版本，修复bug，手机不会息屏。
 
-  加强谋徐盛。
+  优化谋徐盛。
   ]==],
 }
 
@@ -334,6 +334,7 @@ Fk:loadTranslationTable{
 
   ["general_card"] = "武将牌",
   ["General"] = "武将",
+  ["noGeneral"] = "无武将",
   ["Hp"] = "体力",
   ["Damage"] = "伤害",
   ["Lost"] = "失去",
@@ -366,8 +367,8 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆顶",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆顶",
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
   ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
   ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
