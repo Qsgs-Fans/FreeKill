@@ -40,6 +40,14 @@ Flickable {
     extra_data.generals.forEach((g) => {
       const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
       skillDesc.append(Backend.translate(data.kingdom) + " " + Backend.translate(g) + " " + data.hp + "/" + data.maxHp);
+      if (data.companions.length > 0){
+        let ret = '';
+        ret += "<font color=\"slategrey\"><b>" + Backend.translate("Companions") + "</b>: ";
+        data.companions.forEach(t => {
+          ret += Backend.translate(t) + ' '
+        });
+        skillDesc.append(ret)
+      }
       data.skill.forEach(t => {
         skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
       });

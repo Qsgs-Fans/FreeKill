@@ -132,7 +132,7 @@ function getRolePic(role) {
   } else {
     for (let dir of Backend.ls(AppPath + "/packages/")) {
       if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/role/" + name + ".png";
+      path = AppPath + "/packages/" + dir + "/image/role/" + role + ".png";
       if (Backend.exists(path)) return path;
     }
   }

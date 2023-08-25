@@ -175,6 +175,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Companions"] = "珠联璧合",
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
@@ -223,6 +224,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$Hand"] = "手牌区",
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
+  ['$Selected'] = "已选择",
   ["#AskForUseActiveSkill"] = "请使用技能 %1",
   ["#AskForUseCard"] = "请使用卡牌 %1",
   ["#AskForResponseCard"] = "请打出卡牌 %1",
@@ -282,11 +284,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.3
+  ## v0.3.4
 
-  0.3.3版本，新增弹劾房主和房间开启牌堆显示，修复不少bug。
+  0.3.4版本，修复bug，手机不会息屏。
 
-  加强谋徐盛。
+  优化谋徐盛。
   ]==],
 }
 
@@ -332,6 +334,7 @@ Fk:loadTranslationTable{
 
   ["general_card"] = "武将牌",
   ["General"] = "武将",
+  ["noGeneral"] = "无武将",
   ["Hp"] = "体力",
   ["Damage"] = "伤害",
   ["Lost"] = "失去",
@@ -364,8 +367,8 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆顶",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆顶",
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
   ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
   ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
@@ -435,6 +438,9 @@ Fk:loadTranslationTable{
   ["#KillPlayer"] = "%from [%arg] 阵亡，凶手是 %to",
   ["#KillPlayerWithNoKiller"] = "%from [%arg] 阵亡，无伤害来源",
   ["#Revive"] = "%from 竟然复活了",
+
+  -- change hero
+  ["#ChangeHero"] = "%from 的 %arg3 %arg 变更为 %arg2",
 
   -- misc
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",

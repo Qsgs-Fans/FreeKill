@@ -145,6 +145,79 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
   end
 }
 
+local revealProhibited = fk.CreateInvaliditySkill {
+  name = "reveal_prohibited",
+  global = true,
+  invalidity_func = function(self, from, skill)
+    local generals = {}
+    if type(from:getMark(MarkEnum.RevealProhibited)) == "table" then
+      generals = from:getMark(MarkEnum.RevealProhibited)
+    end
+    for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+        return from:getMark(MarkEnum.RevealProhibited .. s)
+      end)) do
+      if type(m) == "table" then
+        for _, g in ipairs(m) do
+          table.insertIfNeed(generals, g)
+        end
+      end
+    end
+
+    if #generals == 0 then return false end
+    if type(from._fake_skills) == "table" and not table.contains(from._fake_skills, skill) then return false end
+    local sname = skill.name
+    for _, g in ipairs(generals) do
+      local ret = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
+      local general = Fk.generals[ret]
+      if table.contains(general:getSkillNameList(), sname) then
+        return true
+      end
+    end
+    return false
+  end
+}
+
+-- 亮将
+local revealSkill = fk.CreateActiveSkill{
+  name = "reveal_skill",
+  prompt = "#reveal_skill",
+  interaction = function(self)
+    local choiceList = {}
+    if (Self.general == "anjiang" and not Self:prohibitReveal()) then
+      local general = Fk.generals[Self:getMark("__heg_general")]
+      for _, sname in ipairs(general:getSkillNameList()) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
+          table.insert(choiceList, "revealMain")
+          break
+        end
+      end
+    end
+    if (Self.deputyGeneral == "anjiang" and not Self:prohibitReveal(true)) then
+      local general = Fk.generals[Self:getMark("__heg_deputy")]
+      for _, sname in ipairs(general:getSkillNameList()) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
+          table.insert(choiceList, "revealDeputy")
+          break
+        end
+      end
+    end
+    if #choiceList == 0 then return false end
+    return UI.ComboBox { choices = choiceList}
+  end,
+  target_num = 0,
+  card_num = 0,
+  card_filter = Util.FalseFunc,
+  on_use = function(self, room, effect)
+    local player = room:getPlayerById(effect.from)
+    local choice = self.interaction.data
+    if not choice then return false
+    elseif choice == "revealMain" then player:revealGeneral(false)
+    elseif choice == "revealDeputy" then player:revealGeneral(true) end
+  end,
+}
+
 AuxSkills = {
   discardSkill,
   chooseCardsSkill,
@@ -152,4 +225,6 @@ AuxSkills = {
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,
+  revealProhibited,
+  revealSkill
 }

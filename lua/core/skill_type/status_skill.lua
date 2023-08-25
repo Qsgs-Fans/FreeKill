@@ -5,7 +5,7 @@
 local StatusSkill = Skill:subclass("StatusSkill")
 
 function StatusSkill:initialize(name, frequency)
-  frequency = frequency or Skill.NotFrequent
+  frequency = frequency or Skill.Compulsory
   Skill.initialize(self, name, frequency)
   self.global = false
 end

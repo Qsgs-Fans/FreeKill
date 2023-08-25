@@ -94,13 +94,19 @@ function doOkButton() {
   replyToServer("1");
 }
 
+let _is_canceling = false;
 function doCancelButton() {
+  if (_is_canceling) return;
+  _is_canceling = true;
+
   if (roomScene.state === "playing") {
     dashboard.stopPending();
     dashboard.deactivateSkillButton();
     dashboard.unSelectAll();
     dashboard.enableCards();
     dashboard.enableSkills();
+
+    _is_canceling = false;
     return;
   } else if (roomScene.state === "responding") {
     const p = dashboard.pending_skill;
@@ -113,6 +119,8 @@ function doCancelButton() {
       dashboard.enableCards(roomScene.responding_card);
       dashboard.enableSkills(roomScene.responding_card);
     }
+
+    _is_canceling = false;
     return;
   }
 
@@ -121,9 +129,13 @@ function doCancelButton() {
       "luckcard", false
     ].join(","));
     roomScene.state = "notactive";
+
+    _is_canceling = false;
     return;
   }
+
   replyToServer("__cancel");
+  _is_canceling = false;
 }
 
 function replyToServer(jsonData) {
@@ -796,7 +808,8 @@ callbacks["AskForGeneral"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const generals = data[0];
   const n = data[1];
-  const heg = data[2];
+  const convert = data[2];
+  const heg = data[3];
   roomScene.setPrompt(Backend.translate("#AskForGeneral"), true);
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
@@ -805,6 +818,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
     replyToServer(JSON.stringify(box.choices));
   });
   box.choiceNum = n;
+  box.convertDisabled = !!convert;
   box.needSameKingdom = !!heg;
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });
@@ -932,37 +946,25 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  string reason ]
   const data = JSON.parse(jsonData);
-  const handcard_ids = data[0];
-  const equip_ids = data[1];
-  const delayedTrick_ids = data[2];
-  const reason = data[3];
-  const handcards = [];
-  const equips = [];
-  const delayedTricks = [];
-
-  handcard_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    handcards.push(card_data);
-  });
-
-  equip_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    equips.push(card_data);
-  });
-
-  delayedTrick_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    delayedTricks.push(card_data);
-  });
+  const reason = data._reason;
 
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
+
   const box = roomScene.popupBox.item;
-  box.addHandcards(handcards);
-  box.addEquips(equips);
-  box.addDelayedTricks(delayedTricks);
+  for (let d of data.card_data) {
+    const arr = [];
+    const ids = d[1];
+
+    ids.forEach(id => {
+      const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+      arr.push(card_data);
+    });
+    box.addCustomCards(d[0], arr);
+  }
+
   roomScene.popupBox.moveToCenter();
   box.cardSelected.connect(function(cid){
     replyToServer(cid);
@@ -973,30 +975,9 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  int min, int max, string reason ]
   const data = JSON.parse(jsonData);
-  const handcard_ids = data[0];
-  const equip_ids = data[1];
-  const delayedTrick_ids = data[2];
-  const min = data[3];
-  const max = data[4];
-  const reason = data[5];
-  const handcards = [];
-  const equips = [];
-  const delayedTricks = [];
-
-  handcard_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    handcards.push(card_data);
-  });
-
-  equip_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    equips.push(card_data);
-  });
-
-  delayedTrick_ids.forEach(id => {
-    const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-    delayedTricks.push(card_data);
-  });
+  const min = data._min;
+  const max = data._max;
+  const reason = data._reason;
 
   roomScene.promptText = Backend.translate("#AskForChooseCards")
     .arg(Backend.translate(reason)).arg(min).arg(max);
@@ -1006,9 +987,17 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   box.multiChoose = true;
   box.min = min;
   box.max = max;
-  box.addHandcards(handcards);
-  box.addEquips(equips);
-  box.addDelayedTricks(delayedTricks);
+  for (let d of data.card_data) {
+    const arr = [];
+    const ids = d[1];
+
+    ids.forEach(id => {
+      const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
+      arr.push(card_data);
+    });
+    box.addCustomCards(d[0], arr);
+  }
+
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {
     replyToServer(JSON.stringify(ids));
@@ -1293,12 +1282,38 @@ callbacks["LogEvent"] = (jsonData) => {
     }
     case "PlaySkillSound": {
       const skill = data.name;
-      let extension = data.extension;
-      if (!extension) {
-        const data = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
-        extension = data.extension;
+      // let extension = data.extension;
+      let extension;
+      let path;
+      let dat;
+
+      // try main general
+      if (data.general) {
+        dat = JSON.parse(Backend.callLuaFunction("GetGeneralData", [data.general]));
+        extension = dat.extension;
+        path = "./packages/" + extension + "/audio/skill/" + skill + "_" + data.general;
+        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+          Backend.playSound(path, data.i);
+          break;
+        }
       }
-      Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, data.i);
+
+      // secondly try deputy general
+      if (data.deputy) {
+        dat = JSON.parse(Backend.callLuaFunction("GetGeneralData", [data.deputy]));
+        extension = dat.extension;
+        path = "./packages/" + extension + "/audio/skill/" + skill + "_" + data.deputy;
+        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+          Backend.playSound(path, data.i);
+          break;
+        }
+      }
+
+      // finally normal skill
+      dat = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      extension = dat.extension;
+      path = "./packages/" + extension + "/audio/skill/" + skill;
+      Backend.playSound(path, data.i);
       break;
     }
     case "PlaySound": {
