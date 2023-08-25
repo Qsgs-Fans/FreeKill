@@ -840,15 +840,19 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local oldKingdom = self.kingdom
   room:changeHero(self, generalName, false, isDeputy)
-  local kingdom = general.kingdom
-  self.kingdom = kingdom
-  if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self),
-    function(p)
-      return p.kingdom == kingdom
-    end) >= #room.players // 2 then
-    self.kingdom = "wild"
+  if oldKingdom ~= "wild" then
+    local kingdom = general.kingdom
+    self.kingdom = kingdom
+    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+      function(p)
+        return p.kingdom == kingdom
+      end) >= #room.players // 2 then
+      self.kingdom = "wild"
+    end
+    room:broadcastProperty(self, "kingdom")
+  else
+    room:setPlayerProperty(self, "kingdom", "wild")
   end
-  room:broadcastProperty(self, "kingdom")
 
   if self.gender == General.Agender then
     self.gender = general.gender
