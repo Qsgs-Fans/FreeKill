@@ -720,7 +720,6 @@ end
 ---@param skill_name string @ 技能名
 ---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function ServerPlayer:broadcastSkillInvoke(skill_name, index)
-  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
   index = index or -1
   self.room:sendLogEvent("PlaySkillSound", {
     name = skill_name,
@@ -817,7 +816,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     generalName = self:getMark("__heg_general")
   end
 
-  local general = Fk.generals[generalName]
+  local general = Fk.generals[generalName] or Fk.generals["blank_shibing"]
   for _, s in ipairs(general:getSkillNameList()) do
     local skill = Fk.skills[s]
     self:loseFakeSkill(skill)
@@ -825,7 +824,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local ret = true
   if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
-    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")]
+    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
     for _, sname in ipairs(other:getSkillNameList()) do
       local s = Fk.skills[sname]
       if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
@@ -840,15 +839,19 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local oldKingdom = self.kingdom
   room:changeHero(self, generalName, false, isDeputy)
-  local kingdom = general.kingdom
-  self.kingdom = kingdom
-  if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self),
-    function(p)
-      return p.kingdom == kingdom
-    end) >= #room.players // 2 then
-    self.kingdom = "wild"
+  if oldKingdom ~= "wild" then
+    local kingdom = general.kingdom
+    self.kingdom = kingdom
+    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+      function(p)
+        return p.kingdom == kingdom
+      end) >= #room.players // 2 then
+      self.kingdom = "wild"
+    end
+    room:broadcastProperty(self, "kingdom")
+  else
+    room:setPlayerProperty(self, "kingdom", "wild")
   end
-  room:broadcastProperty(self, "kingdom")
 
   if self.gender == General.Agender then
     self.gender = general.gender
