@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Fk.RoomElement
+import "RoomLogic.js" as RoomLogic
 
 Item {
   id: root
@@ -157,7 +158,27 @@ Item {
 
     property string general: "caocao"
 
+    function addSpecialSkillAudio(skill) {
+      const gdata = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+      const extension = gdata.extension;
+      let ret = false;
+      for (let i = 0; i < 999; i++) {
+        const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
+          skill + "_" + general + (i !== 0 ? i.toString() : "") + ".mp3";
+
+        if (Backend.exists(fname)) {
+          ret = true;
+          audioModel.append({ name: skill, idx: i });
+        } else {
+          if (i > 0) break;
+        }
+      }
+      return ret;
+    }
+
     function addSkillAudio(skill) {
+      if (addSpecialSkillAudio(skill)) return;
+      console.log(skill, 'normal add')
       const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
       if (!skilldata) return;
       const extension = skilldata.extension;
@@ -261,16 +282,35 @@ Item {
               }
               Text {
                 Layout.fillWidth: true
-                text: (Backend.translate("$" + name + (idx ? idx.toString() : "")) == "$" + name + (idx ? idx.toString() : "") ? "" : Backend.translate("$" + name + (idx ? idx.toString() : "")))
+                text: {
+                  const orig = '$' + name + (idx ? idx.toString() : "");
+                  const orig_trans = Backend.translate(orig);
+
+                  // try general specific
+                  const orig_g = '$' + name + '_' + detailGeneralCard.name + (idx ? idx.toString() : "");
+                  const orig_g_trans = Backend.translate(orig_g);
+
+                  if (orig_g_trans !== orig_g) {
+                    return orig_g_trans;
+                  }
+
+                  if (orig_trans !== orig) {
+                    return orig_trans;
+                  }
+
+                  return "";
+                }
                 wrapMode: Text.WordWrap
               }
             }
 
             onClicked: {
-              const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [name]));
-              const extension = skilldata.extension;
-              Backend.playSound("./packages/" + extension +
-                "/audio/skill/" + name, idx);
+              callbacks["LogEvent"](JSON.stringify({
+                type: "PlaySkillSound",
+                name: name,
+                general: detailGeneralCard.name,
+                i: idx,
+              }));
             }
           }
         }

@@ -1035,7 +1035,7 @@ Item {
   }
 
   function specialChat(pid, data, msg) {
-    // skill audio: %s%d
+    // skill audio: %s%d[%s]
     // death audio: ~%s
     // something special: !%s:...
 
@@ -1096,14 +1096,17 @@ Item {
       if (splited.length < 2) return false;
       const skill = splited[0];
       const idx = parseInt(splited[1]);
+      const gene = splited[2];
 
-      const data2 = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
-      if (!data2) return false;
-      const extension = data2.extension;
-      if (!config.disableMsgAudio)
-        Backend.playSound("./packages/" + extension + "/audio/skill/" + skill, idx);
-
-      const m = Backend.translate("$" + skill + idx.toString());
+      try {
+        callbacks["LogEvent"](JSON.stringify({
+          type: "PlaySkillSound",
+          name: skill,
+          general: gene,
+          i: idx,
+        }));
+      } catch (e) {}
+      const m = Backend.translate("$" + skill + (gene ? "_" + gene : "") + idx.toString());
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`);
       else
