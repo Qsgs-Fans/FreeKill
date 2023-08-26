@@ -38,6 +38,11 @@ local function readCommonSpecToSkill(skill, spec)
     assert(type(spec.switch_skill_name) == "string")
     skill.switchSkillName = spec.switch_skill_name
   end
+
+  if spec.relate_to_place then
+    assert(type(spec.relate_to_place) == "string")
+    skill.relate_to_place = spec.relate_to_place
+  end
 end
 
 local function readUsableSpecToSkill(skill, spec)

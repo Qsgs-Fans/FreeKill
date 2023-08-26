@@ -576,18 +576,25 @@ end
 ---@param full bool @ 是否血量满状态变身
 ---@param isDeputy bool @ 是否变的是副将
 ---@param sendLog bool @ 是否发Log
-function Room:changeHero(player, new_general, full, isDeputy, sendLog)
+---@param maxHpChange bool @ 是否改变体力上限，默认改变
+function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange)
   local orig = isDeputy and (player.deputyGeneral or "") or player.general
 
   orig = Fk.generals[orig]
   local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
 
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
-  local new_skills = table.map(orig_skills, function(e)
-    return "-" .. e
-  end)
+  local new_skills = {}
+  for _, sname in ipairs(new:getSkillNameList()) do
+    local s = Fk.skills[sname]
+    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "m") then
+      table.insert(new_skills, sname)
+    end
+  end
 
-  table.insertTable(new_skills, new:getSkillNameList())
+  table.insertTable(new_skills, table.map(orig_skills, function(e)
+    return "-" .. e
+  end))
 
   self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
 
@@ -599,9 +606,22 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog)
     self:setPlayerProperty(player, "kingdom", new.kingdom)
   end
 
-  self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  maxHpChange = (maxHpChange == nil) and true or maxHpChange
+  if maxHpChange then
+    self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  end
   if full or player.hp > player.maxHp then
     self:setPlayerProperty(player, "hp", player.maxHp)
+  end
+
+  if sendLog then
+    self:sendLog{
+      type = "#ChangeHero",
+      from = player.id,
+      arg = orig and orig.name or "noGeneral",
+      arg2 = new.name,
+      arg3 = isDeputy and "deputyGeneral" or "mainGeneral"
+    }
   end
 end
 
@@ -914,9 +934,10 @@ function Room:sendLogEvent(type, data, players)
 end
 
 --- 播放技能的语音。
----@param skill_name string @ 技能名
+---@param skill_name nil @ 技能名
 ---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function Room:broadcastSkillInvoke(skill_name, index)
+  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
   index = index or -1
   self:sendLogEvent("PlaySkillSound", {
     name = skill_name,
@@ -1271,8 +1292,9 @@ end
 ---@param player ServerPlayer @ 询问目标
 ---@param generals string[] @ 可选武将
 ---@param n integer @ 可选数量，默认为1
+---@param noConvert bool @ 可否变更，默认可
 ---@return string|string[] @ 选择的武将
-function Room:askForGeneral(player, generals, n)
+function Room:askForGeneral(player, generals, n, noConvert)
   local command = "AskForGeneral"
   self:notifyMoveFocus(player, command)
 
@@ -1281,7 +1303,7 @@ function Room:askForGeneral(player, generals, n)
   local defaultChoice = table.random(generals, n)
 
   if (player.serverplayer:getState() == fk.Player_Online) then
-    local result = self:doRequest(player, command, json.encode{ generals, n })
+    local result = self:doRequest(player, command, json.encode{ generals, n, noConvert })
     local choices
     if result == "" then
       choices = defaultChoice
@@ -1340,7 +1362,7 @@ end
 --- 询问chooser，选择target的一张牌。
 ---@param chooser ServerPlayer @ 要被询问的人
 ---@param target ServerPlayer @ 被选牌的人
----@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
 ---@return integer @ 选择的卡牌id
 function Room:askForCardChosen(chooser, target, flag, reason)
@@ -1351,10 +1373,18 @@ function Room:askForCardChosen(chooser, target, flag, reason)
 
   if result == "" then
     local areas = {}
-    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-    local handcards = target:getCardIds(areas)
+    local handcards
+    if type(flag) == "string" then
+      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+      handcards = target:getCardIds(areas)
+    else
+      handcards = {}
+      for _, t in ipairs(flag.card_data) do
+        table.insertTable(handcards, t[2])
+      end
+    end
     if #handcards == 0 then return end
     result = handcards[math.random(1, #handcards)]
   else
@@ -1376,7 +1406,7 @@ end
 ---@param target ServerPlayer @ 被选牌的人
 ---@param min integer @ 最小选牌数
 ---@param max integer @ 最大选牌数
----@param flag string @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
 ---@return integer[] @ 选择的id
 function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
@@ -1394,10 +1424,18 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
     ret = json.decode(result)
   else
     local areas = {}
-    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-    local handcards = target:getCardIds(areas)
+    local handcards
+    if type(flag) == "string" then
+      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+      handcards = target:getCardIds(areas)
+    else
+      handcards = {}
+      for _, t in ipairs(flag.card_data) do
+        table.insertTable(handcards, t[2])
+      end
+    end
     if #handcards == 0 then return {} end
     ret = table.random(handcards, math.min(min, #handcards))
   end
@@ -2425,10 +2463,10 @@ function Room:handleCardEffect(event, cardEffectEvent)
       local players = {}
       Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getCardIds(Player.Hand)
+        local cards = p:getHandlyIds(true)
         for _, cid in ipairs(cards) do
           if
-            Fk:getCardById(cid).name == "nullification" and
+            Fk:getCardById(cid).trueName == "nullification" and
             not (
               table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
               table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
@@ -2999,7 +3037,7 @@ function Room:useSkill(player, skill, effect_cb)
       self:broadcastPlaySound(soundName)
       self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
     else
-      self:broadcastSkillInvoke(skill.name)
+      player:broadcastSkillInvoke(skill.name)
       self:notifySkillInvoked(player, skill.name)
     end
   end

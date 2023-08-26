@@ -377,7 +377,8 @@ RowLayout {
 
   function deactivateSkillButton() {
     for (let i = 0; i < skillButtons.count; i++) {
-      skillButtons.itemAt(i).pressed = false;
+      let item = skillButtons.itemAt(i);
+      item.pressed = false;
     }
   }
 

@@ -460,6 +460,9 @@ Fk:loadTranslationTable{
   ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "选择角色",
   ["choose_players_to_move_card_in_board"] = "选择角色",
+  ["reveal_skill"] = "亮将",
+  ["#reveal_skill"] = "选择一个武将亮将（点击左侧选择框展开）",
+  [":reveal_skill"] = "出牌阶段，你可亮出一张有锁定技的武将。",
 
   ["game_rule"] = "弃牌阶段",
 }

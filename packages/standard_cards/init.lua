@@ -692,7 +692,7 @@ local lightningSkill = fk.CreateActiveSkill{
     local to = room:getPlayerById(effect.to)
     local nextp = to
     repeat
-      nextp = nextp:getNextAlive()
+      nextp = nextp:getNextAlive(true)
       if nextp == to then break end
     until not nextp:hasDelayedTrick("lightning") and not nextp:isProhibited(nextp, effect.card)
 
@@ -907,9 +907,11 @@ local doubleSwordsSkill = fk.CreateTriggerSkill{
   attached_equip = "double_swords",
   events = {fk.TargetSpecified},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
-      data.card and data.card.trueName == "slash" and
-      (player.room:getPlayerById(data.to).gender ~= player.gender)
+    if target == player and player:hasSkill(self.name) and
+      data.card and data.card.trueName == "slash" then
+      local target = player.room:getPlayerById(data.to)
+      return target.gender ~= player.gender and target.gender ~= General.Agender and player.gender ~= General.Agender
+    end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room

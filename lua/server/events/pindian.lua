@@ -25,9 +25,25 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
   local data = { "choose_cards_skill", prompt, true, json.encode(extraData) }
 
   local targets = {}
+  local moveInfos = {}
   if not pindianData.fromCard then
     table.insert(targets, pindianData.from)
     pindianData.from.request_data = json.encode(data)
+  else
+    local _pindianCard = pindianData.fromCard
+    local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+    pindianCard:addSubcard(_pindianCard.id)
+
+    pindianData.fromCard = pindianCard
+
+    table.insert(moveInfos, {
+      ids = { _pindianCard.id },
+      fromArea = room:getCardArea(_pindianCard.id),
+      toArea = Card.Processing,
+      moveReason = fk.ReasonPut,
+      skillName = pindianData.reason,
+      moveVisible = true,
+    })
   end
   for _, to in ipairs(pindianData.tos) do
     if not (pindianData.results[to.id] and pindianData.results[to.id].toCard) then
@@ -39,7 +55,6 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
   room:notifyMoveFocus(targets, "AskForPindian")
   room:doBroadcastRequest("AskForUseActiveSkill", targets)
 
-  local moveInfos = {}
   for _, p in ipairs(targets) do
     local _pindianCard
     if p.reply_ready then

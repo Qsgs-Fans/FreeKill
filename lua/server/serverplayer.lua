@@ -716,11 +716,27 @@ function ServerPlayer:pindian(tos, skillName, initialCard)
   return pindianData
 end
 
+--- 播放技能的语音。
+---@param skill_name string @ 技能名
+---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
+function ServerPlayer:broadcastSkillInvoke(skill_name, index)
+  index = index or -1
+  self.room:sendLogEvent("PlaySkillSound", {
+    name = skill_name,
+    i = index,
+    general = self.general,
+    deputy = self.deputyGeneral,
+  })
+end
+
 -- Hegemony func
 
 ---@param skill Skill
 function ServerPlayer:addFakeSkill(skill)
-  assert(skill:isInstanceOf(Skill))
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
   if table.contains(self._fake_skills, skill) then return end
 
   table.insert(self._fake_skills, skill)
@@ -736,7 +752,10 @@ end
 
 ---@param skill Skill
 function ServerPlayer:loseFakeSkill(skill)
-  assert(skill:isInstanceOf(Skill))
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
   if not table.contains(self._fake_skills, skill) then return end
 
   table.removeOne(self._fake_skills, skill)
@@ -784,7 +803,9 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
   self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
-function ServerPlayer:revealGeneral(isDeputy)
+---@param isDeputy bool
+---@param no_trigger bool
+function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   local room = self.room
   local generalName
   if isDeputy then
@@ -795,25 +816,44 @@ function ServerPlayer:revealGeneral(isDeputy)
     generalName = self:getMark("__heg_general")
   end
 
-  local general = Fk.generals[generalName]
+  local general = Fk.generals[generalName] or Fk.generals["blank_shibing"]
   for _, s in ipairs(general:getSkillNameList()) do
     local skill = Fk.skills[s]
     self:loseFakeSkill(skill)
   end
 
-  local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy)
-  local kingdom = general.kingdom
-  if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self),
-    function(p)
-      return p.kingdom == kingdom
-    end) >= #room.players // 2 then
-
-    self.kingdom = "wild"
-    room:broadcastProperty(self, "kingdom")
+  local ret = true
+  if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
+    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
+    for _, sname in ipairs(other:getSkillNameList()) do
+      local s = Fk.skills[sname]
+      if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
+        ret = false
+        break
+      end
+    end
+  end
+  if ret then
+    self:loseFakeSkill("reveal_skill")
   end
 
-  if self.gender ~= General.Male and self.gender ~= General.Female then
+  local oldKingdom = self.kingdom
+  room:changeHero(self, generalName, false, isDeputy)
+  if oldKingdom ~= "wild" then
+    local kingdom = general.kingdom
+    self.kingdom = kingdom
+    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+      function(p)
+        return p.kingdom == kingdom
+      end) >= #room.players // 2 then
+      self.kingdom = "wild"
+    end
+    room:broadcastProperty(self, "kingdom")
+  else
+    room:setPlayerProperty(self, "kingdom", "wild")
+  end
+
+  if self.gender == General.Agender then
     self.gender = general.gender
   end
 
@@ -824,7 +864,9 @@ function ServerPlayer:revealGeneral(isDeputy)
     arg2 = generalName,
   }
 
-  -- TODO: 阴阳鱼摸牌
+  if not no_trigger then
+    room.logic:trigger(fk.GeneralRevealed, self, generalName)
+  end
 end
 
 function ServerPlayer:revealBySkillName(skill_name)
@@ -848,6 +890,47 @@ function ServerPlayer:revealBySkillName(skill_name)
   end
 end
 
+function ServerPlayer:hideGeneral(isDeputy)
+  local room = self.room
+  local generalName = isDeputy and self.deputyGeneral or self.general
+  local mark = isDeputy and "__heg_deputy" or "__heg_general"
+
+  self:setMark(mark, generalName)
+  self:doNotify("SetPlayerMark", json.encode{ self.id, mark, generalName})
+
+  if isDeputy then
+    room:setDeputyGeneral(self, "anjiang")
+    room:broadcastProperty(self, "deputyGeneral")
+  else
+    room:setPlayerGeneral(self, "anjiang", false)
+    room:broadcastProperty(self, "general")
+  end
+
+  local general = Fk.generals[generalName]
+  local skills = general.skills
+  local place = isDeputy and "m" or "d"
+  for _, s in ipairs(skills) do
+    room:handleAddLoseSkills(self, "-" .. s.name, nil, false, true)
+    if s.relate_to_place ~= place then
+      if s.frequency == Skill.Compulsory then
+        self:addFakeSkill("reveal_skill")
+      end
+      self:addFakeSkill(s)
+    end
+  end
+  for _, sname in ipairs(general.other_skills) do
+    room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
+    local s = Fk.skills[sname]
+    if s.relate_to_place ~= place then
+      if s.frequency == Skill.Compulsory then
+        self:addFakeSkill("reveal_skill")
+      end
+      self:addFakeSkill(s)
+    end
+  end
+
+  room.logic:trigger(fk.GeneralHidden, room, generalName)
+end
 -- 神貂蝉
 
 ---@param p ServerPlayer

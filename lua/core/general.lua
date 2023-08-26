@@ -14,14 +14,17 @@
 ---@field public subkingdom string @ 武将副势力
 ---@field public hp integer @ 武将初始体力
 ---@field public maxHp integer @ 武将初始最大体力
+---@field public mainMaxHpAdjustedValue integer @ 主将体力上限调整
+---@field public deputyMaxHpAdjustedValue integer @ 副将体力上限调整
 ---@field public shield integer @ 初始护甲
 ---@field public gender Gender @ 武将性别
 ---@field public skills Skill[] @ 武将技能
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
----@field public hidden boolean
----@field public total_hidden boolean
+---@field public companions string [] @ 有珠联璧合关系的武将
+---@field public hidden boolean @ 不在选将框里出现，可以点将，可以在武将一览里查询到
+---@field public total_hidden boolean @ 完全隐藏
 General = class("General")
 
 ---@alias Gender integer
@@ -48,6 +51,8 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.hp = hp
   self.maxHp = maxHp or hp
   self.gender = gender or General.Male
+  self.mainMaxHpAdjustedValue = 0
+  self.deputyMaxHpAdjustedValue = 0
   self.shield = 0
   self.subkingdom = nil
 
@@ -55,6 +60,8 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
   self.related_skills = {} -- skills related to this general, but not first added to it, e.g. "jixi" of dengai
   self.related_other_skills = {} -- skills related to this general and belong to other generals, e.g. "yingzi" of sunce
+
+  self.companions = {}
 
   package:addGeneral(self)
 end
@@ -94,6 +101,16 @@ function General:getSkillNameList(include_lord)
   if not include_lord then
   end
   return ret
+end
+
+--- 为武将增加珠联璧合关系武将（1个或多个），只需写trueName。
+---@param name string[]  @ 武将真名（表）
+function General:addCompanions(name)
+  if type(name) == "table" then
+    table.insertTable(self.companions, name)
+  elseif type(name) == "string" then
+    table.insert(self.companions, name)
+  end
 end
 
 return General

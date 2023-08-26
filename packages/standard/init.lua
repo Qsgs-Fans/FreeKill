@@ -231,7 +231,7 @@ local luoyi_trigger = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:broadcastSkillInvoke("luoyi")
+    player:broadcastSkillInvoke("luoyi")
     room:notifySkillInvoked(player, "luoyi")
     data.damage = data.damage + 1
   end,
@@ -532,6 +532,7 @@ guanyu:addSkill(wusheng)
 
 local paoxiaoAudio = fk.CreateTriggerSkill{
   name = "#paoxiaoAudio",
+  visible = false,
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
@@ -539,7 +540,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
       player:usedCardTimes("slash") > 1
   end,
   on_refresh = function(self, event, target, player, data)
-    player.room:broadcastSkillInvoke("paoxiao")
+    player:broadcastSkillInvoke("paoxiao")
     player.room:doAnimate("InvokeSkill", {
       name = "paoxiao",
       player = player.id,
@@ -549,6 +550,7 @@ local paoxiaoAudio = fk.CreateTriggerSkill{
 }
 local paoxiao = fk.CreateTargetModSkill{
   name = "paoxiao",
+  frequency = Skill.Compulsory,
   bypass_times = function(self, player, skill, scope)
     if player:hasSkill(self.name) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
@@ -590,7 +592,7 @@ local kongchengAudio = fk.CreateTriggerSkill{
     end
   end,
   on_refresh = function(self, event, target, player, data)
-    player.room:broadcastSkillInvoke("kongcheng")
+    player:broadcastSkillInvoke("kongcheng")
     player.room:notifySkillInvoked(player, "kongcheng", "defensive")
   end,
 }
@@ -622,7 +624,7 @@ local longdan = fk.CreateViewAsSkill{
     else
       return false
     end
-    return (Fk.currentResponsePattern == nil and c.skill:canUse(Self)) or (Fk.currentResponsePattern and Exppattern:Parse(Fk.currentResponsePattern):match(c))
+    return (Fk.currentResponsePattern == nil and Self:canUse(c)) or (Fk.currentResponsePattern and Exppattern:Parse(Fk.currentResponsePattern):match(c))
   end,
   view_as = function(self, cards)
     if #cards ~= 1 then
@@ -682,7 +684,8 @@ local jizhi = fk.CreateTriggerSkill{
   anim_type = "drawcard",
   events = {fk.CardUsing},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and data.card:isCommonTrick()
+    return target == player and player:hasSkill(self.name) and data.card:isCommonTrick() and
+      (not data.card:isVirtual() or #data.card.subcards == 0)
   end,
   on_use = function(self, event, target, player, data)
     player:drawCards(1, self.name)
@@ -1006,7 +1009,7 @@ local jieyin = fk.CreateActiveSkill{
     local target = Fk:currentRoom():getPlayerById(to_select)
     return target:isWounded() and
       target.gender == General.Male
-      and #selected < 1
+      and #selected < 1 and to_select ~= Self.id
   end,
   target_num = 1,
   card_num = 2,
@@ -1282,9 +1285,6 @@ anjiang.total_hidden = true
 Fk:loadTranslationTable{
   ["anjiang"] = "暗将",
 }
-
--- local heg_mode = require "packages.standard.hegemony"
--- extension:addGameMode(heg_mode)
 
 -- load translations of this package
 dofile "packages/standard/i18n/init.lua"
