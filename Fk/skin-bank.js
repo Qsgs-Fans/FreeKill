@@ -65,6 +65,8 @@ function getCardPicture(cidOrName) {
   if (Backend.exists(path)) {
     return path;
   } else {
+    let ret = searchPkgResource("/image/card/", name, ".png");
+    if (ret) return ret;
   }
   return CARD_DIR + "unknown.png";
 }

@@ -394,7 +394,7 @@ Item {
       if (root.dead) {
         return SkinBank.getRoleDeathPic(root.role);
       }
-      return SkinBank.DEATH_DIR + root.surrendered ? "surrender" : "saveme"
+      return SkinBank.DEATH_DIR + (root.surrendered ? "surrender" : "saveme")
     }
     anchors.centerIn: photoMask
   }
