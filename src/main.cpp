@@ -198,8 +198,6 @@ int main(int argc, char *argv[]) {
   prepareForLinux();
 #endif
 
-  Pacman = new PackMan;
-
 #ifndef FK_CLIENT_ONLY
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
@@ -232,6 +230,8 @@ int main(int argc, char *argv[]) {
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
       serverPort = parser.value("server").toInt();
+
+    Pacman = new PackMan;
     Server *server = new Server;
     if (!server->listen(QHostAddress::Any, serverPort)) {
       qFatal("cannot listen on port %d!\n", serverPort);
@@ -308,6 +308,8 @@ int main(int argc, char *argv[]) {
 
   QmlBackend backend;
   backend.setEngine(engine);
+
+  Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
