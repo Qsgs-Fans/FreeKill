@@ -102,11 +102,8 @@ function getEquipIcon(cid, icon) {
 function getPhotoBack(kingdom) {
   let path = PHOTO_BACK_DIR + kingdom + ".png";
   if (!Backend.exists(path)) {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/kingdom/" + kingdom + "-back.png";
-      if (Backend.exists(path)) return path;
-    }
+    let ret = searchPkgResource("/image/kingdom/", kingdom, "-back.png");
+    if (ret) return ret;
   } else {
     return path;
   }

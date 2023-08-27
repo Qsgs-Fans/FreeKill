@@ -160,8 +160,9 @@ static void writeDirMD5(QFile &dest, const QString &dir,
   auto entries = d.entryInfoList(
       QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
   auto re = QRegularExpression::fromWildcard(filter);
+  const auto disabled = Pacman->getDisabledPacks();
   foreach (QFileInfo info, entries) {
-    if (info.isDir() && !info.fileName().endsWith(".disabled")) {
+    if (info.isDir() && !info.fileName().endsWith(".disabled") && !disabled.contains(info.fileName())) {
       writeDirMD5(dest, info.filePath(), filter);
     } else {
       if (re.match(info.fileName()).hasMatch()) {
