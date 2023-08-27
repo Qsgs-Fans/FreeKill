@@ -492,7 +492,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   mode = mode or "both"
   if other == self then return 0 end
   if not ignore_dead and other.dead then
-    print(other.name .. " is dead!")
+    print(other.general .. " is dead!")
     return -1
   end
   if self:isRemoved() or other:isRemoved() then
