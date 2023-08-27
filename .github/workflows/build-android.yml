@@ -21,9 +21,9 @@ jobs:
     #- name: Setup Debug Session
     #  uses: csexton/debugger-action@master
 
-    - name: Install swig, flex, bison
+    - name: Install swig
       run: |
-        sudo apt-get install -y swig flex bison
+        sudo apt-get install -y swig
 
     - name: Install Qt for Host
       uses: jurplel/install-qt-action@v3

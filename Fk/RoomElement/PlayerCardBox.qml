@@ -79,8 +79,10 @@ GraphicsBox {
             onSelectedChanged: {
               if (selected) {
                 virt_name = "$Selected";
+                root.selected_ids.push(cid);
               } else {
                 virt_name = "";
+                root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
               }
               root.selected_ids = root.selected_ids;
             }
