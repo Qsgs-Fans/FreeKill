@@ -18,15 +18,21 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
   db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
 
   QDir d("packages");
+
+  // For old version
+  foreach (auto e, QmlBackend::ls("packages")) {
+    if (e.endsWith(".disabled") && d.exists(e) && !d.exists(e.chopped(9))) {
+      d.rename(e, e.chopped(9));
+    }
+  }
+
   foreach (auto e, SelectFromDatabase(db, "SELECT name, enabled FROM packages;")) {
     auto obj = e.toObject();
     auto pack = obj["name"].toString();
     auto enabled = obj["enabled"].toString().toInt() == 1;
 
-    if (enabled) {
-      d.rename(pack + ".disabled", pack);
-    } else {
-      d.rename(pack, pack + ".disabled");
+    if (!enabled) {
+      disabled_packs << pack;
     }
   }
 
@@ -38,6 +44,10 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
 PackMan::~PackMan() {
   git_libgit2_shutdown();
   sqlite3_close(db);
+}
+
+QStringList PackMan::getDisabledPacks() {
+  return disabled_packs;
 }
 
 QString PackMan::getPackSummary() {
@@ -142,24 +152,17 @@ void PackMan::enablePack(const QString &pack) {
   ExecSQL(
       db,
       QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
-  QDir d("packages");
-  int i = 0;
-  while (!d.rename(pack + ".disabled", pack) && i < 3) {
-    QThread::currentThread()->msleep(1);
-    i++;
-  }
+
+  disabled_packs.removeOne(pack);
 }
 
 void PackMan::disablePack(const QString &pack) {
   ExecSQL(
       db,
       QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
-  QDir d("packages");
-  int i = 0;
-  while (!d.rename(pack, pack + ".disabled") && i < 3) {
-    QThread::currentThread()->msleep(1);
-    i++;
-  }
+
+  if (!disabled_packs.contains(pack))
+    disabled_packs << pack;
 }
 
 void PackMan::updatePack(const QString &pack) {
@@ -208,7 +211,7 @@ void PackMan::removePack(const QString &pack) {
     return;
   bool enabled = result[0].toObject()["enabled"].toString().toInt() == 1;
   ExecSQL(db, QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
-  QDir d(QString("packages/%1%2").arg(pack).arg(enabled ? "" : ".disabled"));
+  QDir d(QString("packages/%1").arg(pack));
   d.removeRecursively();
 }
 

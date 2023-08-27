@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "util.h"
+#include "packman.h"
 #include <qcryptographichash.h>
 #include <qnamespace.h>
 #include <qregularexpression.h>
@@ -211,6 +212,10 @@ QString GetDeviceUuid() {
 #else
   return QSysInfo::machineUniqueId();
 #endif
+}
+
+QString GetDisabledPacks() {
+  return JsonArray2Bytes(QJsonArray::fromStringList(Pacman->getDisabledPacks()));
 }
 
 QString Color(const QString &raw, fkShell::TextColor color,

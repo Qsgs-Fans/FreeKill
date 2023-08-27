@@ -19,6 +19,17 @@ var PIXANIM_DIR = AppPath + "/image/anim/"
 var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
 var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
 
+const searchPkgResource = function(path, name, suffix) {
+  let ret;
+  for (let dir of Backend.ls(AppPath + "/packages/")) {
+    if (Pacman.getDisabledPacks().includes(dir) ||
+      dir.endsWith(".disabled") // in case
+    ) continue;
+    ret = AppPath + "/packages/" + dir + path + name + suffix;
+    if (Backend.exists(ret)) return ret;
+  }
+}
+
 function getGeneralExtraPic(name, extra) {
   const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
   const extension = data.extension;
@@ -54,11 +65,6 @@ function getCardPicture(cidOrName) {
   if (Backend.exists(path)) {
     return path;
   } else {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/card/" + name + ".png";
-      if (Backend.exists(path)) return path;
-    }
   }
   return CARD_DIR + "unknown.png";
 }
@@ -70,11 +76,8 @@ function getDelayedTrickPicture(name) {
   if (Backend.exists(path)) {
     return path;
   } else {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/card/delayedTrick/" + name + ".png";
-      if (Backend.exists(path)) return path;
-    }
+    let ret = searchPkgResource("/image/card/delayedTrick/", name, ".png");
+    if (ret) return ret;
   }
   return DELAYED_TRICK_DIR + "unknown.png";
 }
@@ -88,11 +91,8 @@ function getEquipIcon(cid, icon) {
   if (Backend.exists(path)) {
     return path;
   } else {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/card/equipIcon/" + name + ".png";
-      if (Backend.exists(path)) return path;
-    }
+    let ret = searchPkgResource("/image/card/equipIcon/", name, ".png");
+    if (ret) return ret;
   }
   return EQUIP_ICON_DIR + "unknown.png";
 }
@@ -114,12 +114,8 @@ function getPhotoBack(kingdom) {
 function getGeneralCardDir(kingdom) {
   let path = GENERALCARD_DIR + kingdom + ".png";
   if (!Backend.exists(path)) {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/kingdom/" + kingdom + "-back.png";
-      if (Backend.exists(path))
-        return AppPath + "/packages/" + dir + "/image/kingdom/";
-    }
+    let ret = searchPkgResource("/image/kingdom/", kingdom, "-back.png");
+    if (ret) return ret.slice(0, ret.lastIndexOf('/')) + "/";
   } else {
     return GENERALCARD_DIR;
   }
@@ -130,20 +126,25 @@ function getRolePic(role) {
   if (Backend.exists(path)) {
     return path;
   } else {
-    for (let dir of Backend.ls(AppPath + "/packages/")) {
-      if (dir.endsWith(".disabled")) continue;
-      path = AppPath + "/packages/" + dir + "/image/role/" + role + ".png";
-      if (Backend.exists(path)) return path;
-    }
+    let ret = searchPkgResource("/image/role/", role, ".png");
+    if (ret) return ret;
   }
   return ROLE_DIR + "unknown.png";
 }
 
-function getMarkPic(mark) {
-  for (let dir of Backend.ls(AppPath + "/packages/")) {
-    if (dir.endsWith(".disabled")) continue;
-    let path = AppPath + "/packages/" + dir + "/image/mark/" + mark + ".png";
-    if (Backend.exists(path)) return path;
+function getRoleDeathPic(role) {
+  let path = DEATH_DIR + role + ".png";
+  if (Backend.exists(path)) {
+    return path;
+  } else {
+    let ret = searchPkgResource("/image/role/death/", role, ".png");
+    if (ret) return ret;
   }
+  return DEATH_DIR + "hidden.png";
+}
+
+function getMarkPic(mark) {
+  let ret = searchPkgResource("/image/mark/", mark, ".png");
+  if (ret) return ret;
   return "";
 }

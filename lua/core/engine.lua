@@ -123,8 +123,11 @@ function Engine:loadPackages()
   table.removeOne(directories, "standard_cards")
   table.removeOne(directories, "maneuvering")
 
+  local _disable_packs = json.decode(fk.GetDisabledPacks())
+
   for _, dir in ipairs(directories) do
-    if (not string.find(dir, ".disabled")) and FileIO.isDir("packages/" .. dir)
+    if (not string.find(dir, ".disabled")) and not table.contains(_disable_packs, dir)
+      and FileIO.isDir("packages/" .. dir)
       and FileIO.exists("packages/" .. dir .. "/init.lua") then
       local pack = require(string.format("packages.%s", dir))
       -- Note that instance of Package is a table too
