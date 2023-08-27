@@ -41,6 +41,9 @@ dofile "lua/server/events/gameflow.lua"
 GameEvent.Pindian = 19
 dofile "lua/server/events/pindian.lua"
 
+GameEvent.ChangeProperty = 21
+dofile "lua/server/events/misc.lua"
+
 -- TODO: fix this
 GameEvent.BreakEvent = 999
 
@@ -71,6 +74,8 @@ local eventTranslations = {
   [GameEvent.Turn] = "GameEvent.Turn",
   [GameEvent.Phase] = "GameEvent.Phase",
   [GameEvent.Pindian] = "GameEvent.Pindian",
+
+  [GameEvent.ChangeProperty] = "GameEvent.ChangeProperty",
 
   [GameEvent.BreakEvent] = "GameEvent.BreakEvent",
 }
