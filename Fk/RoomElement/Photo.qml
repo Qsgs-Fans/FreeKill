@@ -390,7 +390,12 @@ Item {
   Image {
     // id: saveme
     visible: root.dead || root.dying || root.surrendered
-    source: SkinBank.DEATH_DIR + (root.dead ? root.role : root.surrendered ? "surrender" : "saveme")
+    source: {
+      if (root.dead) {
+        return SkinBank.getRoleDeathPic(root.role);
+      }
+      return SkinBank.DEATH_DIR + (root.surrendered ? "surrender" : "saveme")
+    }
     anchors.centerIn: photoMask
   }
 

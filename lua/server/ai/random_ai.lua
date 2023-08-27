@@ -133,6 +133,7 @@ random_cb.AskForUseCard = function(self, jsonData)
   local pattern = data[2] or card_name
   local cancelable = data[4] or true
   local exp = Exppattern:Parse(pattern)
+
   local avail_cards = table.filter(player:getCardIds("he"), function(id)
     return exp:match(Fk:getCardById(id)) and not player:prohibitUse(Fk:getCardById(id))
   end)

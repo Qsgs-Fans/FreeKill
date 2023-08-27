@@ -514,6 +514,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     player->doNotify("SetServerSettings", JsonArray2Bytes({
           getConfig("motd"),
           getConfig("hiddenPacks"),
+          getConfig("enableBots"),
           }));
 
     lobby()->addPlayer(player);
@@ -623,6 +624,7 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("tempBanTime", 20);
   SET_DEFAULT_CONFIG("motd", "Welcome!");
   SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
+  SET_DEFAULT_CONFIG("enableBots", true);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }

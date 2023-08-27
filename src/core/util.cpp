@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "util.h"
+#include "packman.h"
 #include <qcryptographichash.h>
 #include <qnamespace.h>
 #include <qregularexpression.h>
@@ -159,8 +160,9 @@ static void writeDirMD5(QFile &dest, const QString &dir,
   auto entries = d.entryInfoList(
       QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
   auto re = QRegularExpression::fromWildcard(filter);
+  const auto disabled = Pacman->getDisabledPacks();
   foreach (QFileInfo info, entries) {
-    if (info.isDir() && !info.fileName().endsWith(".disabled")) {
+    if (info.isDir() && !info.fileName().endsWith(".disabled") && !disabled.contains(info.fileName())) {
       writeDirMD5(dest, info.filePath(), filter);
     } else {
       if (re.match(info.fileName()).hasMatch()) {
@@ -211,6 +213,10 @@ QString GetDeviceUuid() {
 #else
   return QSysInfo::machineUniqueId();
 #endif
+}
+
+QString GetDisabledPacks() {
+  return JsonArray2Bytes(QJsonArray::fromStringList(Pacman->getDisabledPacks()));
 }
 
 QString Color(const QString &raw, fkShell::TextColor color,

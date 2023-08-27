@@ -116,6 +116,7 @@ local function _waitForReply(player, timeout)
     player.room:checkNoHuman()
     player.ai:readRequestData()
     local reply = player.ai:makeReply()
+    if reply == "" then reply = "__cancel" end
     return reply
   end
   while true do

@@ -22,6 +22,8 @@ QJsonDocument String2Json(const QString &str);
 
 QString GetDeviceUuid();
 
+QString GetDisabledPacks();
+
 namespace fkShell {
   enum TextColor {
     Black,

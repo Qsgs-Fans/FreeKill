@@ -137,7 +137,7 @@ end
 
 function Player:getGeneralMaxHp()
   local general = Fk.generals[type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
-  local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputy]
+  local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputyGeneral]
 
   if not deputy then
     return general.maxHp + general.mainMaxHpAdjustedValue
@@ -492,7 +492,6 @@ function Player:distanceTo(other, mode, ignore_dead)
   mode = mode or "both"
   if other == self then return 0 end
   if not ignore_dead and other.dead then
-    print(other.general .. " is dead!")
     return -1
   end
   if self:isRemoved() or other:isRemoved() then

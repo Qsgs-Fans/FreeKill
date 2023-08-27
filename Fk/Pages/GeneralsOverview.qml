@@ -178,7 +178,6 @@ Item {
 
     function addSkillAudio(skill) {
       if (addSpecialSkillAudio(skill)) return;
-      console.log(skill, 'normal add')
       const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
       if (!skilldata) return;
       const extension = skilldata.extension;
