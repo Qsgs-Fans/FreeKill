@@ -15,3 +15,5 @@
 %include "qt.i"
 %include "player.i"
 %include "client.i"
+
+QString GetDisabledPacks();

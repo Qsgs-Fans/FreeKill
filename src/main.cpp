@@ -198,6 +198,8 @@ int main(int argc, char *argv[]) {
   prepareForLinux();
 #endif
 
+  Pacman = new PackMan;
+
 #ifndef FK_CLIENT_ONLY
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
@@ -239,7 +241,6 @@ int main(int argc, char *argv[]) {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       // Linux 服务器的话可以启用一个 Shell 来操作服务器。
       auto shell = new Shell;
-      Pacman = new PackMan;
       shell->start();
 #endif
     }
@@ -307,8 +308,6 @@ int main(int argc, char *argv[]) {
 
   QmlBackend backend;
   backend.setEngine(engine);
-
-  Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
   engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);

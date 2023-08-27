@@ -38,6 +38,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
 
     table.insert(moveInfos, {
       ids = { _pindianCard.id },
+      from = pindianData.from.id,
       fromArea = room:getCardArea(_pindianCard.id),
       toArea = Card.Processing,
       moveReason = fk.ReasonPut,

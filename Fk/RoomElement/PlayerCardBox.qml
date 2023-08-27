@@ -11,7 +11,7 @@ GraphicsBox {
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
-  height: 50 + Math.min(cardView.contentHeight, 400) + (multiChoose ? 20 : 0)
+  height: 64 + Math.min(cardView.contentHeight, 400) + (multiChoose ? 20 : 0)
 
   signal cardSelected(int cid)
   signal cardsSelected(var ids)

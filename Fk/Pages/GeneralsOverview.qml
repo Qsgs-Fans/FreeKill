@@ -275,7 +275,12 @@ Item {
             contentItem: ColumnLayout {
               Text {
                 Layout.fillWidth: true
-                text: Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "")
+                text: {
+                  if (name.endsWith("_win_audio")) {
+                    return "胜利语音";
+                  }
+                  return Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "");
+                }
                 font.bold: true
                 font.pixelSize: 14
               }

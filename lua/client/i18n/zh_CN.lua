@@ -284,11 +284,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.6
+  ## v0.3.7
 
-  0.3.6版本，修复bug，手机不会息屏。
+  0.3.7版本，修复bug，下载拓展不会闪退（但愿如此）。
 
-  优化谋徐盛。
+  移除了谋徐盛。
   ]==],
 }
 
@@ -446,6 +446,7 @@ Fk:loadTranslationTable{
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+  ["#ChangeKingdom"] = "%from 的国籍从 %arg 变成了 %arg2",
 }
 
 -- card footnote

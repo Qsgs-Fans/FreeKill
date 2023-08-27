@@ -98,7 +98,7 @@ CardItem {
   }
 
   Shield {
-    visible: detailed
+    visible: shieldNum > 0 && detailed
     anchors.right: parent.right
     anchors.top: parent.top
     anchors.topMargin: hpRepeater.model > 4 ? 16 : 0

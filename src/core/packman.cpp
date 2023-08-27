@@ -3,13 +3,8 @@
 #include "packman.h"
 #include "git2.h"
 #include "util.h"
-#include <qjsondocument.h>
-
-#ifndef FK_SERVER_ONLY
 #include "qmlbackend.h"
-#else
-static void *Backend = nullptr;
-#endif
+#include <qjsondocument.h>
 
 PackMan *Pacman;
 

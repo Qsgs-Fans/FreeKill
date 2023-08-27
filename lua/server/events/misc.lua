@@ -108,7 +108,7 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
       end
     end
   end
-  room:handleAddLoseSkills(player, table.concat(skills, "|"), nil, data.sendLog, false)
+  room:handleAddLoseSkills(player, table.concat(skills, "|"), nil, false, false)
 
   logic:trigger(fk.AfterPropertyChange, player, data)
 end

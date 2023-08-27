@@ -1107,7 +1107,7 @@ Item {
           i: idx,
         }));
       } catch (e) {}
-      const m = Backend.translate("$" + skill + (gene ? "_" + gene : "") + idx.toString());
+      const m = Backend.translate("$" + skill + (gene ? "_" + gene : "") + (idx ? idx.toString() : ""));
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`);
       else
