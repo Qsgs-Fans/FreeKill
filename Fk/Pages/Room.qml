@@ -185,6 +185,7 @@ Item {
     text: Backend.translate("Add Robot")
     visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
+    enabled: config.serverEnableBot
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
     }

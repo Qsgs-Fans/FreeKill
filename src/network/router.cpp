@@ -280,7 +280,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
         if (command == "QuitRoom") {
           room->removePlayer(player);
         } else if (command == "AddRobot") {
-          room->addRobot(player);
+          if (ServerInstance->getConfig("enableBots").toBool()) room->addRobot(player);
         } else if (command == "KickPlayer") {
           int i = jsonData.toInt();
           auto p = room->findPlayer(i);

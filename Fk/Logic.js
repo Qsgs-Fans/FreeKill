@@ -100,9 +100,10 @@ callbacks["BackToStart"] = (jsonData) => {
 
 callbacks["SetServerSettings"] = (j) => {
   const data = JSON.parse(j);
-  const [ motd, hiddenPacks ] = data;
+  const [ motd, hiddenPacks, enableBots ] = data;
   config.serverMotd = motd;
   config.serverHiddenPacks = hiddenPacks;
+  config.serverEnableBot = enableBots;
 };
 
 callbacks["EnterLobby"] = (jsonData) => {

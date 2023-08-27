@@ -5,5 +5,6 @@
   "capacity": 100,
   "tempBanTime": 20,
   "motd": "Welcome!",
-  "hiddenPacks": []
+  "hiddenPacks": [],
+  "enableBots": true
 }
