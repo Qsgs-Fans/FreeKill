@@ -46,7 +46,6 @@ jobs:
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
-        OPENSSL_ROOT_DIR: /c/Program Files/OpenSSL
       run: |
         cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" -B ${{github.workspace}}/build
 

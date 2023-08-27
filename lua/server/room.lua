@@ -542,6 +542,12 @@ function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
 end
 
+local function execGameEvent(type, ...)
+  local event = GameEvent:new(type, ...)
+  local _, ret = event:exec()
+  return ret
+end
+
 ---@param player ServerPlayer
 ---@param general string
 ---@param changeKingdom bool
@@ -578,33 +584,29 @@ end
 ---@param sendLog bool @ 是否发Log
 ---@param maxHpChange bool @ 是否改变体力上限，默认改变
 function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange)
-  local orig = isDeputy and (player.deputyGeneral or "") or player.general
-
-  orig = Fk.generals[orig]
-  local orig_skills = orig and orig:getSkillNameList() or Util.DummyTable
-
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
-  local new_skills = {}
-  for _, sname in ipairs(new:getSkillNameList()) do
-    local s = Fk.skills[sname]
-    if not s.relate_to_place or s.relate_to_place == (isDeputy and "d" or "m") then
-      table.insert(new_skills, sname)
+
+  local kingdom = isDeputy and player.kingdom or new.kingdom
+  if not isDeputy and (new.kingdom == "god" or new.subkingdom) then
+    local allKingdoms = {}
+    if new.kingdom == "god" then
+      allKingdoms = {"wei", "shu", "wu", "qun", "jin"}
+    elseif new.subkingdom then
+      allKingdoms = { new.kingdom, new.subkingdom }
     end
+    kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
   end
 
-  table.insertTable(new_skills, table.map(orig_skills, function(e)
-    return "-" .. e
-  end))
-
-  self:handleAddLoseSkills(player, table.concat(new_skills, "|"), nil, false)
-
-  if isDeputy then
-    self:setPlayerProperty(player, "deputyGeneral", new_general)
-  else
-    self:setPlayerProperty(player, "general", new_general)
-    self:setPlayerProperty(player, "gender", new.gender)
-    self:setPlayerProperty(player, "kingdom", new.kingdom)
-  end
+  execGameEvent(GameEvent.ChangeProperty,
+  {
+    from = player,
+    general = not isDeputy and new_general or "",
+    deputyGeneral = isDeputy and new_general or "",
+    gender = isDeputy and player.gender or new.gender,
+    kingdom = kingdom,
+    sendLog = sendLog,
+    results = {},
+  })
 
   maxHpChange = (maxHpChange == nil) and true or maxHpChange
   if maxHpChange then
@@ -613,16 +615,22 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
   if full or player.hp > player.maxHp then
     self:setPlayerProperty(player, "hp", player.maxHp)
   end
+end
 
-  if sendLog then
-    self:sendLog{
-      type = "#ChangeHero",
-      from = player.id,
-      arg = orig and orig.name or "noGeneral",
-      arg2 = new.name,
-      arg3 = isDeputy and "deputyGeneral" or "mainGeneral"
-    }
-  end
+---@param player ServerPlayer @ 要变更势力的玩家
+---@param kingdom string @ 要变更的势力
+---@param sendLog bool @ 是否发Log
+function Room:changeKingdom(player, kingdom, sendLog)
+  if kingdom == player.kingdom then return end
+  sendLog = sendLog or false
+
+  execGameEvent(GameEvent.ChangeProperty,
+  {
+    from = player,
+    kingdom = kingdom,
+    sendLog = sendLog,
+    results = {},
+  })
 end
 
 ------------------------------------------------------------------------
@@ -1486,7 +1494,7 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   return invoked
 end
 
---枚举法为使用牌重选目标（无距离限制）
+--为使用牌增减目标
 ---@param player ServerPlayer @ 执行的玩家
 ---@param targets ServerPlayer[] @ 可选的目标范围
 ---@param num integer @ 可选的目标数
@@ -2103,12 +2111,6 @@ end
 ------------------------------------------------------------------------
 -- 使用牌
 ------------------------------------------------------------------------
-
-local function execGameEvent(type, ...)
-  local event = GameEvent:new(type, ...)
-  local _, ret = event:exec()
-  return ret
-end
 
 --- 根据卡牌使用数据，去实际使用这个卡牌。
 ---@param cardUseEvent CardUseStruct @ 使用数据
