@@ -12,7 +12,73 @@ const Card = {
   Void : 8
 }
 
+function arrangeManyPhotos() {
+  /* Layout of photos:
+   * +----------------+
+   * |    -2 ... 2    |
+   * | -1           1 |
+   * |              0 |
+   * +----------------+
+   */
+
+  const photoBaseWidth = 175;
+  const photoMaxWidth = 175 * 0.75;
+  const verticalSpacing = 32;
+  // Padding is negative, because photos are scaled.
+  const roomAreaPadding = -16;
+
+  let horizontalSpacing = 8;
+  let photoWidth = (roomArea.width - horizontalSpacing * playerNum) / (playerNum - 1);
+  let photoScale = 0.75;
+  if (photoWidth > photoMaxWidth) {
+    photoWidth = photoMaxWidth;
+    horizontalSpacing = (roomArea.width - photoWidth * (playerNum - 1)) / playerNum;
+  } else {
+    photoScale = photoWidth / photoBaseWidth;
+  }
+
+  const horizontalPadding = (photoWidth - photoBaseWidth) / 2;
+  const startX = horizontalPadding + horizontalSpacing;
+  const padding = photoWidth + horizontalSpacing;
+  let regions = [
+    {
+      x: startX + padding * (playerNum - 2),
+      y: roomScene.height - 220,
+      scale: photoScale
+    },
+  ];
+  let i;
+  for (i = 0; i < playerNum - 1; i++) {
+    regions.push({
+      x: startX + padding * (playerNum - 2 - i),
+      y: roomAreaPadding,
+      scale: photoScale,
+    });
+  }
+  regions[1].y += verticalSpacing * 3;
+  regions[regions.length - 1].y += verticalSpacing * 3;
+  regions[2].y += verticalSpacing;
+  regions[regions.length - 2].y += verticalSpacing;
+
+  let item, region;
+
+  for (i = 0; i < playerNum; i++) {
+    item = photos.itemAt(i);
+    if (!item)
+      continue;
+
+    region = regions[photoModel.get(i).index];
+    item.x = region.x;
+    item.y = region.y;
+    item.scale = region.scale;
+  }
+}
+
 function arrangePhotos() {
+  if (playerNum > 8) {
+    return arrangeManyPhotos();
+  }
+
   /* Layout of photos:
    * +---------------+
    * |   6 5 4 3 2   |

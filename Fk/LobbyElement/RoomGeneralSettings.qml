@@ -34,7 +34,7 @@ Flickable {
       SpinBox {
         id: playerNum
         from: 2
-        to: 8
+        to: 12
         value: config.preferedPlayerNum
 
         onValueChanged: {
