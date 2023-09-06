@@ -272,6 +272,21 @@ function Engine:getSameGenerals(name)
   end)
 end
 
+function Engine:makeGeneralPile()
+  local room = Fk:currentRoom()
+  local trueNames = {}
+  local ret = {}
+  for name, general in pairs(self.generals) do
+    if canUseGeneral(name) and not trueNames[general.trueName] then
+      table.insert(ret, name)
+      trueNames[general.trueName] = true
+    end
+  end
+  table.shuffle(ret)
+  room.general_pile = table.simpleClone(ret)
+  return ret
+end
+
 local cardId = 1
 local _card_name_table = {}
 

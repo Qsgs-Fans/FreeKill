@@ -15,6 +15,7 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
+---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
 ---@field public processing_area integer[] @ 处理区，依然是卡牌id数组
@@ -76,6 +77,7 @@ function Room:initialize(_room)
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
+  self.general_pile = {}
   self.draw_pile = {}
   self.discard_pile = {}
   self.processing_area = {}
@@ -108,7 +110,6 @@ function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
-      self.tag["_general_pile"] = Fk:getAllGenerals()
       self:run()
     end)
   end
@@ -1294,6 +1295,55 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
       return table.random(targets, minNum), table.random(pcards)
     end
   end
+end
+
+--- 抽个武将
+---
+--- 同getNCards，抽出来就没有了，记得放回去。
+---@param n number @ 数量
+---@param position string|nil @位置，top/bottom，默认top
+---@return string[] @ 武将名数组
+function Room:getNGenerals(n, position)
+  position = position or "top"
+  assert(position == "top" or position == "bottom")
+
+  local generals = {}
+  while n > 0 do
+    if #self.general_pile < 1 then
+      Fk:makeGeneralPile()
+      if #self.general_pile < 1 then
+        self:gameOver("")
+      end
+    end
+
+    local index = position == "top" and 1 or #self.general_pile
+    table.insert(generals, self.general_pile[index])
+    table.remove(self.general_pile, index)
+
+    n = n - 1
+  end
+
+  return generals
+end
+
+--- 把武将牌塞回去（……）
+---@param g string[] @ 武将名数组
+---@param position string|nil @位置，top/bottom，默认top
+---@return boolean @ 是否成功
+function Room:putNGenerals(g, position)
+  position = position or "top"
+  assert(position == "top" or position == "bottom")
+  local n = #g
+  while n > 0 do
+
+    local index = position == "top" and 1 or #self.general_pile
+    table.insert(self.general_pile, index, g[1])
+    table.remove(g, 1)
+
+    n = n - 1
+  end
+
+  return true
 end
 
 --- 询问玩家选择一名武将。
