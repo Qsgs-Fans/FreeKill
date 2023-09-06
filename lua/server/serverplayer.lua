@@ -726,7 +726,7 @@ function ServerPlayer:reset()
     from = self.id,
     arg = "reset-general"
   }
-  self:setChainState(false)
+  if self.chained then self:setChainState(false) end
   if not self.faceup then self:turnOver() end
 end
 
@@ -867,7 +867,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy)
+  room:changeHero(self, generalName, false, isDeputy, false, false)
   if oldKingdom ~= "wild" then
     local kingdom = general.kingdom
     self.kingdom = kingdom
