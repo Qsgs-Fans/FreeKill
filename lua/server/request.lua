@@ -36,6 +36,20 @@ local function tellRoomToObserver(self, player)
   player:doNotify("UpdateDrawPile", #self.draw_pile)
   player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
+  -- send printed_cards
+  for i = -2, -math.huge, -1 do
+    local c = Fk.printed_cards[i]
+    if not c then break end
+    player:doNotify("PrintCard", json.encode{ c.name, c.suit, c.number })
+  end
+
+  -- send card marks
+  for id, marks in pairs(room.card_marks) do
+    for k, v in pairs(marks) do
+      player:doNotify("SetCardMark", json.encode{ id, k, v })
+    end
+  end
+
   table.insert(self.observers, {observee.id, player, player:getId()})
 end
 
