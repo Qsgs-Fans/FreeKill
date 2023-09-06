@@ -730,7 +730,8 @@ function ServerPlayer:reset()
   if not self.faceup then self:turnOver() end
 end
 
---@param from ServerPlayer
+--- 进行拼点。
+---@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
 ---@param initialCard Card|nil
