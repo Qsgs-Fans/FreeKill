@@ -276,6 +276,11 @@ function Engine:makeGeneralPile()
   local room = Fk:currentRoom()
   local trueNames = {}
   local ret = {}
+  if room.game_started then
+    for _, player in ipairs(room.players) do
+      trueNames[Fk.generals[player.general].trueName] = true
+    end
+  end
   for name, general in pairs(self.generals) do
     if canUseGeneral(name) and not trueNames[general.trueName] then
       table.insert(ret, name)

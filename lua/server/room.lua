@@ -103,6 +103,7 @@ function Room:initialize(_room)
 
   table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
   self.disabled_generals = self.settings.disabledGenerals
+  Fk:makeGeneralPile()
 end
 
 -- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
@@ -1330,7 +1331,7 @@ end
 ---@param g string[] @ 武将名数组
 ---@param position string|nil @位置，top/bottom，默认top
 ---@return boolean @ 是否成功
-function Room:putNGenerals(g, position)
+function Room:putGenerals(g, position)
   position = position or "top"
   assert(position == "top" or position == "bottom")
   local n = #g
