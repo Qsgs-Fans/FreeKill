@@ -2530,7 +2530,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
         end
         if not table.contains(players, p) then
           Self = p -- for enabledAtResponse
-          for _, s in ipairs(p.player_skills) do
+          for _, s in ipairs(table.connect(p.player_skills, p._fake_skills)) do
             if
               s.pattern and
               Exppattern:Parse("nullification"):matchExp(s.pattern) and

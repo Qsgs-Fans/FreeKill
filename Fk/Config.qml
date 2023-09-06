@@ -43,6 +43,7 @@ QtObject {
   property bool serverEnableBot: true
   property int roomCapacity: 0
   property int roomTimeout: 0
+  property bool heg: false
   property bool enableFreeAssign: false
   property bool observing: false
   property bool replaying: false

@@ -134,6 +134,7 @@ callbacks["EnterRoom"] = (jsonData) => {
   config.roomTimeout = data[1] - 1;
   const roomSettings = data[2];
   config.enableFreeAssign = roomSettings.enableFreeAssign;
+  config.heg = roomSettings.gameMode.includes('heg_mode');
   mainStack.push(room);
   mainWindow.busy = false;
 }
