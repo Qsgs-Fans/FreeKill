@@ -326,7 +326,7 @@ Item {
   Image {
     id: turnedOver
     visible: !root.faceup
-    source: SkinBank.PHOTO_DIR + "faceturned"
+    source: SkinBank.PHOTO_DIR + "faceturned" + (config.heg ? '-heg' : '')
     x: 29; y: 5
   }
 

@@ -32,6 +32,9 @@ CardItem {
   card.source: SkinBank.getGeneralPicture(name)
   glow.color: "white" //Engine.kingdomColor[kingdom]
 
+  // FIXME: 藕！！
+  property bool heg: name.startsWith('hs__') || name.startsWith('ld__') || name.includes('heg__')
+
   Image {
     source: SkinBank.GENERALCARD_DIR + "border"
   }
@@ -54,10 +57,10 @@ CardItem {
     x: 34
     y: 4
     spacing: 1
-    visible: detailed
+    visible: detailed && !heg
     Repeater {
       id: hpRepeater
-      model: (hp > 5 || hp !== maxHp) ? 1 : hp
+      model: (!heg) ? ((hp > 5 || hp !== maxHp) ? 1 : hp) : 0
       Item {
         width: childrenRect.width
         height: childrenRect.height
@@ -94,6 +97,43 @@ CardItem {
       font.pixelSize: 14
       style: Text.Outline
       y: -6
+    }
+  }
+
+  Row {
+    x: 34
+    y: 3
+    spacing: 0
+    visible: detailed && heg
+    Repeater {
+      id: hegHpRepeater
+      model: heg ? ((hp > 7 || hp !== maxHp) ? 1 : Math.ceil(hp / 2)) : 0
+      Item {
+        width: childrenRect.width
+        height: childrenRect.height
+        Image {
+          height: 12; fillMode: Image.PreserveAspectFit
+          source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama-l"
+        }
+        Image {
+          x: 4.4
+          opacity: (index + 1) * 2 <= hp ? 1 : 0
+          height: 12; fillMode: Image.PreserveAspectFit
+          source: {
+            const k = subkingdom ? subkingdom : kingdom;
+            SkinBank.getGeneralCardDir(k) + k + "-magatama-r"
+          }
+        }
+      }
+    }
+
+    Text {
+      visible: hp > 7 || hp !== maxHp
+      text: hp === maxHp ? ("x" + hp / 2) : (" " + hp / 2 + "/" + maxHp / 2)
+      color: "white"
+      font.pixelSize: 14
+      style: Text.Outline
+      y: -4
     }
   }
 
