@@ -27,15 +27,6 @@ local function tellRoomToObserver(self, player)
   end
   player:doNotify("ArrangeSeats", json.encode(player_circle))
 
-  for _, p in ipairs(self.players) do
-    self:notifyProperty(player, p, "general")
-    self:notifyProperty(player, p, "deputyGeneral")
-    p:marshal(player, true)
-  end
-
-  player:doNotify("UpdateDrawPile", #self.draw_pile)
-  player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
-
   -- send printed_cards
   for i = -2, -math.huge, -1 do
     local c = Fk.printed_cards[i]
@@ -44,11 +35,20 @@ local function tellRoomToObserver(self, player)
   end
 
   -- send card marks
-  for id, marks in pairs(room.card_marks) do
+  for id, marks in pairs(self.card_marks) do
     for k, v in pairs(marks) do
       player:doNotify("SetCardMark", json.encode{ id, k, v })
     end
   end
+
+  for _, p in ipairs(self.players) do
+    self:notifyProperty(player, p, "general")
+    self:notifyProperty(player, p, "deputyGeneral")
+    p:marshal(player, true)
+  end
+
+  player:doNotify("UpdateDrawPile", #self.draw_pile)
+  player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
 
   table.insert(self.observers, {observee.id, player, player:getId()})
 end

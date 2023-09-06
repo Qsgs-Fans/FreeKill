@@ -346,15 +346,6 @@ function ServerPlayer:reconnect()
   end
   self:doNotify("ArrangeSeats", json.encode(player_circle))
 
-  for _, p in ipairs(room.players) do
-    room:notifyProperty(self, p, "general")
-    room:notifyProperty(self, p, "deputyGeneral")
-    p:marshal(self)
-  end
-
-  self:doNotify("UpdateDrawPile", #room.draw_pile)
-  self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
-
   -- send printed_cards
   for i = -2, -math.huge, -1 do
     local c = Fk.printed_cards[i]
@@ -368,6 +359,15 @@ function ServerPlayer:reconnect()
       self:doNotify("SetCardMark", json.encode{ id, k, v })
     end
   end
+
+  for _, p in ipairs(room.players) do
+    room:notifyProperty(self, p, "general")
+    room:notifyProperty(self, p, "deputyGeneral")
+    p:marshal(self)
+  end
+
+  self:doNotify("UpdateDrawPile", #room.draw_pile)
+  self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
 
   -- send fake skills
   for _, s in ipairs(self._manually_fake_skills) do
