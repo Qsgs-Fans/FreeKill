@@ -326,7 +326,7 @@ Item {
   Image {
     id: turnedOver
     visible: !root.faceup
-    source: SkinBank.PHOTO_DIR + "faceturned"
+    source: SkinBank.PHOTO_DIR + "faceturned" + (config.heg ? '-heg' : '')
     x: 29; y: 5
   }
 
@@ -505,7 +505,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
     anchors.bottomMargin: -32
-    property var seatChr: ["一", "二", "三", "四", "五", "六", "七", "八"]
+    property var seatChr: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
     font.family: fontLi2.name
     font.pixelSize: 32
     text: seatChr[seatNumber - 1]

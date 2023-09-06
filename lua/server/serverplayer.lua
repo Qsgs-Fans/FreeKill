@@ -15,6 +15,7 @@
 ---@field public phase_index integer
 ---@field public role_shown boolean
 ---@field private _fake_skills Skill[]
+---@field private _manually_fake_skills Skill[]
 ---@field public prelighted_skills Skill[]
 ---@field private _timewaste_count integer
 ---@field public ai AI
@@ -39,6 +40,7 @@ function ServerPlayer:initialize(_self)
   self.skipped_phases = {}
 
   self._fake_skills = {}
+  self._manually_fake_skills = {}
   self.prelighted_skills = {}
   self._prelighted_skills = {}
 
@@ -352,6 +354,28 @@ function ServerPlayer:reconnect()
 
   self:doNotify("UpdateDrawPile", #room.draw_pile)
   self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
+
+  -- send printed_cards
+  for i = -2, -math.huge, -1 do
+    local c = Fk.printed_cards[i]
+    if not c then break end
+    self:doNotify("PrintCard", json.encode{ c.name, c.suit, c.number })
+  end
+
+  -- send card marks
+  for id, marks in pairs(room.card_marks) do
+    for k, v in pairs(marks) do
+      self:doNotify("SetCardMark", json.encode{ id, k, v })
+    end
+  end
+
+  -- send fake skills
+  for _, s in ipairs(self._manually_fake_skills) do
+    self:doNotify("AddSkill", json.encode{ self.id, s.name, true })
+    if table.contains(self.prelighted_skills, s) then
+      self:doNotify("PrelightSkill", json.encode{ s.name, true })
+    end
+  end
 
   room:broadcastProperty(self, "state")
 end
@@ -702,11 +726,12 @@ function ServerPlayer:reset()
     from = self.id,
     arg = "reset-general"
   }
-  self:setChainState(false)
+  if self.chained then self:setChainState(false) end
   if not self.faceup then self:turnOver() end
 end
 
---@param from ServerPlayer
+--- 进行拼点。
+---@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
 ---@param initialCard Card|nil
@@ -740,6 +765,8 @@ function ServerPlayer:addFakeSkill(skill)
   end
   if table.contains(self._fake_skills, skill) then return end
 
+  table.insertIfNeed(self._manually_fake_skills, skill)
+
   table.insert(self._fake_skills, skill)
   for _, s in ipairs(skill.related_skills) do
     -- if s.main_skill == skill then -- TODO: need more detailed
@@ -758,6 +785,8 @@ function ServerPlayer:loseFakeSkill(skill)
     skill = Fk.skills[skill]
   end
   if not table.contains(self._fake_skills, skill) then return end
+
+  table.removeOne(self._manually_fake_skills, skill)
 
   table.removeOne(self._fake_skills, skill)
   for _, s in ipairs(skill.related_skills) do
@@ -839,7 +868,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy)
+  room:changeHero(self, generalName, false, isDeputy, false, false)
   if oldKingdom ~= "wild" then
     local kingdom = general.kingdom
     self.kingdom = kingdom

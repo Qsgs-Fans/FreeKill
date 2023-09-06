@@ -235,7 +235,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
-  ["#askForPindian"] = "请选择一张手牌作为拼点牌",
+  ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
   ["#StartPindianReason"] = "%from 由于 %arg 而发起拼点",
   ["#ShowPindianCard"] = "%from 的拼点牌是 %card",
   ["#ShowPindianResult"] = "%from 在 %from 和 %to 之间的拼点中 %arg",
@@ -255,6 +255,10 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#6"] = "六号位",
   ["seat#7"] = "七号位",
   ["seat#8"] = "八号位",
+  ["seat#9"] = "九号位",
+  ["seat#10"] = "十号位",
+  ["seat#11"] = "十一号位",
+  ["seat#12"] = "十二号位",
   ["@ControledBy"] = "控制者",
 
   ["Menu"] = "菜单",
