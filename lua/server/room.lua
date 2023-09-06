@@ -103,7 +103,6 @@ function Room:initialize(_room)
 
   table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
   self.disabled_generals = self.settings.disabledGenerals
-  Fk:makeGeneralPile()
 end
 
 -- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
@@ -235,6 +234,7 @@ function Room:run()
   local mode = Fk.game_modes[self.settings.gameMode]
   self.logic = (mode.logic and mode.logic() or GameLogic):new(self)
   if mode.rule then self.logic:addTriggerSkill(mode.rule) end
+  Fk:makeGeneralPile()
   self.logic:run()
 end
 
