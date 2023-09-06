@@ -41,6 +41,7 @@ CardItem {
 
   Image {
     scale: subkingdom ? 0.6 : 1
+    width: 34; fillMode: Image.PreserveAspectFit
     transformOrigin: Item.TopLeft
     source: SkinBank.getGeneralCardDir(kingdom) + kingdom
     visible: detailed
@@ -49,6 +50,7 @@ CardItem {
   Image {
     scale: 0.6; x: 9; y: 12
     transformOrigin: Item.TopLeft
+    width: 34; fillMode: Image.PreserveAspectFit
     source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom : ""
     visible: detailed
   }

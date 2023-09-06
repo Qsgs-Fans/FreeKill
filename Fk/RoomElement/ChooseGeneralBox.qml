@@ -174,6 +174,43 @@ GraphicsBox {
     updatePosition();
   }
 
+  /*
+    主副将的主势力和副势力至少有一个相同；
+    副将不可野 主将可野
+   */
+  function isHegPair(gcard1, gcard2) {
+    if (!gcard1 || gcard1 === gcard2) {
+      return true;
+    }
+
+    if (gcard2.kingdom == "wild") {
+      return false;
+    }
+
+    if (gcard1.kingdom == "wild") {
+      return true;
+    }
+
+    const k1 = gcard1.kingdom;
+    const k2 = gcard2.kingdom;
+    const sub1 = gcard1.subkingdom;
+    const sub2 = gcard2.subkingdom;
+
+    if (k1 == k2) {
+      return true;
+    }
+
+    if (sub1 && (sub1 == k2 || sub1 == sub2)) {
+      return true;
+    }
+
+    if (sub2 && sub2 == k1) {
+      return true;
+    }
+
+    return false;
+  }
+
   function updatePosition()
   {
     choices = [];
@@ -195,7 +232,7 @@ GraphicsBox {
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
-      item.selectable = needSameKingdom ? !(selectedItem[0] && (selectedItem[0].kingdom !== item.kingdom)) : true;
+      item.selectable = needSameKingdom ? isHegPair(selectedItem[0], item) : true;
       if (selectedItem.indexOf(item) != -1)
         continue;
 
