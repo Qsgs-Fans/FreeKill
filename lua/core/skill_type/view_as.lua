@@ -27,12 +27,12 @@ end
 
 ---@param player Player
 function ViewAsSkill:enabledAtPlay(player)
-  return player:hasSkill(self)
+  return self:isEffectable(player)
 end
 
 ---@param player Player
 function ViewAsSkill:enabledAtResponse(player, cardResponsing)
-  return player:hasSkill(self)
+  return self:isEffectable(player)
 end
 
 ---@param player Player

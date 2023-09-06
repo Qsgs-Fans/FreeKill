@@ -21,8 +21,8 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     pattern = ".",
     reason = pindianData.reason,
   }
-  local prompt = "#askForPindian"
-  local data = { "choose_cards_skill", prompt, true, json.encode(extraData) }
+  local prompt = "#askForPindian:::" .. pindianData.reason
+  local data = { "choose_cards_skill", prompt, false, json.encode(extraData) }
 
   local targets = {}
   local moveInfos = {}

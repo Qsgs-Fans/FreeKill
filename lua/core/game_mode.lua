@@ -21,7 +21,7 @@ local GameMode = class("GameMode")
 function GameMode:initialize(name, min, max)
   self.name = name
   self.minPlayer = math.max(min, 2)
-  self.maxPlayer = math.min(max, 8)
+  self.maxPlayer = math.min(max, 12)
 end
 
 ---@param victim ServerPlayer @ 死者
