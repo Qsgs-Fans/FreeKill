@@ -1243,6 +1243,10 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     if includeEquip then
       table.insertTable(hands, player:getCardIds(Player.Equip))
     end
+    local exp = Exppattern:Parse(pattern)
+    hands = table.filter(hands, function(cid)
+      return exp:match(Fk:getCardById(cid))
+    end)
     for _ = 1, minNum do
       local randomId = hands[math.random(1, #hands)]
       table.insert(chosenCards, randomId)
