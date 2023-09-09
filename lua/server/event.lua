@@ -129,3 +129,6 @@ fk.GeneralRevealed = 89
 fk.GeneralHidden = 90
 
 fk.NumOfEvents = 91
+
+fk.BeforePropertyChange = 92
+fk.AfterPropertyChange = 93
