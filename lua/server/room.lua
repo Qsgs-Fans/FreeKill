@@ -2947,7 +2947,8 @@ function Room:retrial(card, player, judge, skillName, exchange)
     arg = skillName,
   }
 
-  self:moveCards(move1, move2)
+  self:moveCards(move1)
+  self:moveCards(move2)
 
   if triggerResponded then
     self.logic:trigger(fk.CardRespondFinished, player, resp)
