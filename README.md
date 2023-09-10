@@ -63,3 +63,9 @@ ___
 ## 许可证
 
 本仓库使用GPLv3作为许可证。详见`LICENSE`文件。
+
+___
+
+## 点一下小星星呗！
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Qsgs-Fans/FreeKill&type=Date)](https://star-history.com/#Qsgs-Fans/FreeKill&Date)
