@@ -110,6 +110,7 @@ function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
+      Fk:makeGeneralPile()
       self:run()
     end)
   end
@@ -234,7 +235,6 @@ function Room:run()
   local mode = Fk.game_modes[self.settings.gameMode]
   self.logic = (mode.logic and mode.logic() or GameLogic):new(self)
   if mode.rule then self.logic:addTriggerSkill(mode.rule) end
-  Fk:makeGeneralPile()
   self.logic:run()
 end
 
@@ -1315,10 +1315,10 @@ function Room:getNGenerals(n, position)
   local generals = {}
   while n > 0 do
     if #self.general_pile < 1 then
-      Fk:makeGeneralPile()
-      if #self.general_pile < 1 then
+      -- Fk:makeGeneralPile()
+      -- if #self.general_pile < 1 then
         self:gameOver("")
-      end
+      -- end
     end
 
     local index = position == "top" and 1 or #self.general_pile
