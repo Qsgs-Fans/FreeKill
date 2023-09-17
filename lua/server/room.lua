@@ -1304,7 +1304,7 @@ end
 
 --- 抽个武将
 ---
---- 同getNCards，抽出来就没有了，记得放回去。
+--- 同getNCards，抽出来就没有了，所以记得放回去。
 ---@param n number @ 数量
 ---@param position string|nil @位置，top/bottom，默认top
 ---@return string[] @ 武将名数组
@@ -1315,10 +1315,7 @@ function Room:getNGenerals(n, position)
   local generals = {}
   while n > 0 do
     if #self.general_pile < 1 then
-      -- Fk:makeGeneralPile()
-      -- if #self.general_pile < 1 then
-        self:gameOver("")
-      -- end
+      self:gameOver("")
     end
 
     local index = position == "top" and 1 or #self.general_pile
@@ -1333,10 +1330,10 @@ end
 
 --- 把武将牌塞回去（……）
 ---@param g string[] @ 武将名数组
----@param position string|nil @位置，top/bottom，默认top
+---@param position string|nil @位置，top/bottom，默认bottom
 ---@return boolean @ 是否成功
 function Room:putGenerals(g, position)
-  position = position or "top"
+  position = position or "bottom"
   assert(position == "top" or position == "bottom")
   local n = #g
   while n > 0 do
@@ -1349,6 +1346,34 @@ function Room:putGenerals(g, position)
   end
 
   return true
+end
+
+--- 抽特定名字的武将（抽了就没了）
+---@param name string @ 武将name，如找不到则查找truename，再找不到则返回失败
+---@return boolean @ 是否成功
+function Room:findGeneral(name)
+  local general = table.find(self.general_pile, function(g)
+    return g == name or Fk.generals[g].trueName == Fk.generals[name].trueName
+  end)
+  if general == nil then return false end
+  return table.removeOne(self.general_pile, general)
+end
+
+--- 自上而下抽符合特定情况的N个武将（抽了就没了）
+---@param func fun(name: string): boolean @ 武将筛选函数
+---@param n integer | nil @ 抽取数量，数量不足则直接抽干净
+---@return string[] @ 武将组合，可能为空
+function Room:findGenerals(func, n)
+  n = n or 1
+  local generals = table.filter(self.general_pile, func)
+  local ret = {}
+  for i, name in ipairs(generals) do
+    if i <= n then
+      table.insertIfNeed(ret, name)
+      table.removeOne(self.general_pile, name)
+    end
+  end
+  return ret
 end
 
 --- 询问玩家选择一名武将。
@@ -2106,7 +2131,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     result = json.decode(result)
   end
 
-  local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
+  local from, to
+  if result.pos == 0 then
+    from, to = targetOne, targetTwo
+  else
+    from, to = targetTwo, targetOne
+  end
   local cardToMove = self:getCardOwner(result.cardId):getVirualEquip(result.cardId) or Fk:getCardById(result.cardId)
   self:moveCardTo(
     cardToMove,
@@ -2298,7 +2328,7 @@ function Room:doCardUseEffect(cardUseEvent)
 
   local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
 
-  self.logic:trigger(fk.BeforeCardUseEffect, cardUseEvent.from, cardUseEvent)
+  self.logic:trigger(fk.BeforeCardUseEffect, self:getPlayerById(cardUseEvent.from), cardUseEvent)
   -- If using Equip or Delayed trick, move them to the area and return
   if cardUseEvent.card.type == Card.TypeEquip then
     if #realCardIds == 0 then
