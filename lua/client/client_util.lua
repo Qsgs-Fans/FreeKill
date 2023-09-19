@@ -684,4 +684,33 @@ function SaveRecord()
   c.client:saveRecord(json.encode(c.record), c.record[2])
 end
 
+function GetCardProhibitReason(cid, method, pattern)
+  local card = Fk:getCardById(cid)
+  if not card then return "" end
+  if method == "play" and not card.skill:canUse(Self, card) then return "" end
+  if method ~= "play" and not card:matchPattern(pattern) then return "" end
+  if method == "play" then method = "use" end
+
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
+  local s
+  for _, skill in ipairs(status_skills) do
+    local fn = method == "use" and skill.prohibitUse or skill.prohibitResponse
+    if fn(skill, Self, card) then
+      s = skill
+      break
+    end
+  end
+  if not s then return "" end
+
+  -- try to return a translated string
+  local skillName = s.name
+  local ret = Fk:translate(skillName)
+  if ret ~= skillName then
+    -- TODO: translate
+    return ret .. "禁" .. (method == "use" and "使用" or "打出")
+  elseif skillName:endsWith("_prohibit") and skillName:startsWith("#") then
+    return Fk:translate(skillName:sub(2, -10)) .. "禁" .. (method == "use" and "使用" or "打出")
+  end
+end
+
 dofile "lua/client/i18n/init.lua"
