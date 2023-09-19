@@ -469,7 +469,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
     if turn then
-      turn:addExitFunc(function() self:gainAnExtraPhase(phase, false) end)
+      turn:prependExitFunc(function() self:gainAnExtraPhase(phase, false) end)
       return
     end
   end
@@ -483,7 +483,6 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
     from = self.id,
     arg = phase_name_table[phase],
   }
-
 
   GameEvent(GameEvent.Phase, self, self.phase):exec()
 
@@ -580,6 +579,7 @@ function ServerPlayer:skip(phase)
   end
 end
 
+--- 当进行到出牌阶段空闲点时，结束出牌阶段。
 function ServerPlayer:endPlayPhase()
   self._play_phase_end = true
   -- TODO: send log
@@ -592,7 +592,7 @@ function ServerPlayer:gainAnExtraTurn(delay)
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:addExitFunc(function() self:gainAnExtraTurn(false) end)
+      turn:prependExitFunc(function() self:gainAnExtraTurn(false) end)
       return
     end
   end
@@ -604,8 +604,30 @@ function ServerPlayer:gainAnExtraTurn(delay)
 
   local current = room.current
   room.current = self
+
+  self.tag["_extra_turn_count"] = self.tag["_extra_turn_count"] or {}
+  local ex_tag = self.tag["_extra_turn_count"]
+  local skillName = room.logic:getCurrentSkillName()
+  table.insert(ex_tag, skillName)
+
   GameEvent(GameEvent.Turn, self):exec()
+
+  table.remove(ex_tag)
+
   room.current = current
+end
+
+function ServerPlayer:insideExtraTurn()
+  return self.tag["_extra_turn_count"] and #self.tag["_extra_turn_count"] > 0
+end
+
+---@return string
+function ServerPlayer:getCurrentExtraTurnReason()
+  local ex_tag = self.tag["_extra_turn_count"]
+  if (not ex_tag) or #ex_tag == 0 then
+    return "game_rule"
+  end
+  return ex_tag[#ex_tag]
 end
 
 function ServerPlayer:drawCards(num, skillName, fromPlace)

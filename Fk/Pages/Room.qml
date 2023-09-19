@@ -59,7 +59,7 @@ Item {
     id: bgm
     source: config.bgmFile
 
-    // loops: MediaPlayer.Infinite
+    loops: MediaPlayer.Infinite
     onPlaybackStateChanged: {
       if (playbackState == MediaPlayer.StoppedState && roomScene.isStarted)
         play();

@@ -7,18 +7,17 @@ import Fk.Pages
 GraphicsBox {
   id: root
 
-  title.text: root.multiChoose ? Backend.translate("$ChooseCards").arg(root.min).arg(root.max) : Backend.translate("$ChooseCard")
+  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data])
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
-  height: 64 + Math.min(cardView.contentHeight, 400) + (multiChoose ? 20 : 0)
+  height: 64 + Math.min(cardView.contentHeight, 400) + 20
 
   signal cardSelected(int cid)
   signal cardsSelected(var ids)
-  property bool multiChoose: false
-  property int min: 0
-  property int max: 1
   property var selected_ids: []
+  property string poxi_type
+  property var card_data
 
   ListModel {
     id: cardModel
@@ -70,11 +69,11 @@ GraphicsBox {
             number: model.number || 0
             autoBack: false
             known: model.cid !== -1
-            selectable: true
-            onClicked: {
-              if (!root.multiChoose) {
-                root.cardSelected(cid);
-              }
+            selectable: {
+              return root.selected_ids.includes(model.cid) || JSON.parse(Backend.callLuaFunction(
+                "PoxiFilter",
+                [root.poxi_type, model.cid, root.selected_ids, root.card_data]
+              ));
             }
             onSelectedChanged: {
               if (selected) {
@@ -95,8 +94,12 @@ GraphicsBox {
   MetroButton {
     anchors.bottom: parent.bottom
     text: Backend.translate("OK")
-    visible: root.multiChoose
-    enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
+    enabled: {
+      return JSON.parse(Backend.callLuaFunction(
+        "PoxiFeasible",
+        [root.poxi_type, root.selected_ids, root.card_data]
+      ));
+    }
     onClicked: root.cardsSelected(root.selected_ids)
   }
 
@@ -121,6 +124,7 @@ GraphicsBox {
     }
     return ret;
   }
+
 
   function addCustomCards(name, cards) {
     let area = findAreaModel(name).areaCards;
