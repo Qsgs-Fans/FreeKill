@@ -2,7 +2,7 @@
 
 Fk:loadTranslationTable({
   -- Lobby
-  -- ["Room List"] = "房间列表",
+  ["Room List"] = "Room List (currently have %1 rooms)",
   -- ["Enter"] = "进入",
   -- ["Observe"] = "旁观",
 
