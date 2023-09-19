@@ -713,4 +713,23 @@ function GetCardProhibitReason(cid, method, pattern)
   end
 end
 
+function PoxiPrompt(poxi_type, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi or not poxi.prompt then return "" end
+  if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
+  return poxi.prompt(data)
+end
+
+function PoxiFilter(poxi_type, to_select, selected, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi then return "false" end
+  return json.encode(poxi.card_filter(to_select, selected, data))
+end
+
+function PoxiFeasible(poxi_type, selected, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi then return "false" end
+  return json.encode(poxi.feasible(selected, data))
+end
+
 dofile "lua/client/i18n/init.lua"

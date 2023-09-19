@@ -37,6 +37,7 @@ Item {
   property alias card: cardItem
   property alias glow: glowItem
   property var mark: ({})
+  property alias chosenInBox: chosen.visible
 
   function getColor() {
     if (suit != "")
@@ -88,6 +89,7 @@ Item {
     cornerRadius: 8
     visible: false
   }
+
 
   Image {
     id: cardItem
@@ -216,6 +218,15 @@ Item {
       model: mark
       delegate: cardMarkDelegate
     }
+  }
+
+  Image {
+    id: chosen
+    visible: false
+    source: SkinBank.CARD_DIR + "chosen"
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: 90
+    scale: 1.25
   }
 
   Rectangle {

@@ -1457,6 +1457,33 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
   return new_ret
 end
 
+--- 谋askForCardsChosen，需使用Fk:addPoxiMethod定义好方法
+---
+--- 选卡规则和返回值啥的全部自己想办法解决，data填入所有卡的列表（类似ui.card_data）
+---
+--- 注意一定要返回一个表，毕竟本质上是选卡函数
+---@param player ServerPlayer
+---@param poxi_type string
+---@param data any
+---@return integer[]
+function Room:askForPoxi(player, poxi_type, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi then return {} end
+
+  local command = "AskForPoxi"
+  self:notifyMoveFocus(player, poxi_type)
+  local result = self:doRequest(player, command, json.encode {
+    type = poxi_type,
+    data = data,
+  })
+
+  if result == "" then
+    return poxi.default_choice(data)
+  else
+    return poxi.post_select(json.decode(result), data)
+  end
+end
+
 --- 询问一名玩家从众多选项中选择一个。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param choices string[] @ 可选选项列表
