@@ -1173,7 +1173,7 @@ local role_getlogic = function()
     local n = room.settings.enableDeputy and 2 or 1
     local lord = room:getLord()
     local lord_generals = {}
-  
+
     if lord ~= nil then
       room.current = lord
       local generals = table.connect(room:findGenerals(function(g)
