@@ -7,9 +7,9 @@ SmartAI = require "server.ai.smart_ai"
 
 -- load ai module from packages
 local directories = FileIO.ls("packages")
-dofile "packages.standard"
-dofile "packages.standard_cards"
-dofile "packages.maneuvering"
+require "packages.standard.ai"
+require "packages.standard_cards.ai"
+require "packages.maneuvering.ai"
 table.removeOne(directories, "standard")
 table.removeOne(directories, "standard_cards")
 table.removeOne(directories, "maneuvering")
@@ -21,7 +21,7 @@ for _, dir in ipairs(directories) do
     and FileIO.isDir("packages/" .. dir)
     and FileIO.exists("packages/" .. dir .. "/ai/init.lua") then
 
-    dofile(string.format("packages.%s.ai", dir))
+    require(string.format("packages.%s.ai", dir))
 
   end
 end

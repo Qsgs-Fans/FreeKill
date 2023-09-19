@@ -428,6 +428,18 @@ function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
 end
 
+--- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。
+function GameLogic:getCurrentSkillName()
+  local skillEvent = self:getCurrentEvent()
+  local ret = ""
+  if skillEvent.event == GameEvent.SkillEffect then
+    local _, _, _skill = table.unpack(skillEvent.data)
+    local skill = _skill.main_skill and _skill.main_skill or _skill
+    ret = skill.name
+  end
+  return ret
+end
+
 -- 在指定历史范围中找至多n个符合条件的事件
 ---@param eventType integer @ 要查找的事件类型
 ---@param n integer @ 最多找多少个

@@ -73,6 +73,13 @@ function GameEvent:addExitFunc(f)
   table.insert(self.extra_exit_funcs, f)
 end
 
+function GameEvent:prependExitFunc(f)
+  if self.extra_exit_funcs == Util.DummyTable then
+    self.extra_exit_funcs = {}
+  end
+  table.insert(self.extra_exit_funcs, 1, f)
+end
+
 function GameEvent:findParent(eventType, includeSelf)
   if includeSelf and self.event == eventType then return self end
   local e = self.parent
