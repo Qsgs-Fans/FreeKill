@@ -376,14 +376,14 @@ function GameLogic:trigger(event, target, data, refresh_only)
     end
 
     repeat do
-      local triggerables = table.filter(skills, function(skill)
+      local invoked_skills = {}
+      local filter_func = function(skill)
         return skill.priority_table[event] == prio and
+          not table.contains(invoked_skills, skill) and
           skill:triggerable(event, target, player, data)
-      end)
+      end
 
-      local skill_names = table.map(triggerables, function(skill)
-        return skill.name
-      end)
+      local skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
       while #skill_names > 0 do
         local skill_name = prio <= 0 and table.random(skill_names) or
@@ -392,23 +392,14 @@ function GameLogic:trigger(event, target, data, refresh_only)
         local skill = skill_name == "game_rule" and GameRule
           or Fk.skills[skill_name]
 
-        local len = #skills
+        table.insert(invoked_skills, skill)
         broken = skill:trigger(event, target, player, data)
-
-        table.insertTable(
-          skill_names,
-          table.map(table.filter(table.slice(skills, len - #skills), function(s)
-            return
-              s.priority_table[event] == prio and
-              s:triggerable(event, target, player, data)
-          end), function(s) return s.name end)
-        )
+        skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
           and room:getPlayerById(data.who).hp > 0)
 
         if broken then break end
-        table.removeOne(skill_names, skill_name)
       end
 
       if broken then break end

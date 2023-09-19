@@ -29,7 +29,7 @@ Item {
       }
       let ret = AppPath + "/image/button/skill/" + type + "/";
       let suffix = enabled ? (pressed ? "pressed" : "normal") : "disabled";
-      if (enabled && orig.endsWith("&")) {
+      if (enabled && type === "active" && orig.endsWith("&")) {
         suffix += "-attach";
       }
       return ret + suffix;
