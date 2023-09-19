@@ -1360,15 +1360,15 @@ function Room:findGeneral(name)
 end
 
 --- 自上而下抽符合特定情况的N个武将（抽了就没了）
----@param func fun(name: string): boolean @ 武将筛选函数
+---@param func fun(name: string):any @ 武将筛选函数
 ---@param n integer | nil @ 抽取数量，数量不足则直接抽干净
 ---@return string[] @ 武将组合，可能为空
 function Room:findGenerals(func, n)
   n = n or 1
   local generals = table.filter(self.general_pile, func)
   local ret = {}
-  for i, name in ipairs(generals) do
-    if i <= n then
+  for _, name in ipairs(generals) do
+    if #ret <= n then
       table.insertIfNeed(ret, name)
       table.removeOne(self.general_pile, name)
     end
