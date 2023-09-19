@@ -94,6 +94,8 @@ local control = fk.CreateActiveSkill{
       --   { "你自己", from:getCardIds "h" },
       --   { "对方", to:getCardIds "h" },
       -- }))
+      -- room:setPlayerMark(from, "@$a", {1,2,3})
+      -- room:setPlayerMark(from, "@$b", {'slash','duel','axe'})
       if to:getMark("mouxushengcontrolled") == 0 then
         room:addPlayerMark(to, "mouxushengcontrolled")
         from:control(to)

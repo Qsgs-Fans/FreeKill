@@ -62,7 +62,12 @@ Item {
           }
 
           if (mark_name.startsWith('@$')) {
-            params.cardNames = mark_extra.split(',');
+            let data = mark_extra.split(',');
+            if (!Object.is(parseInt(data[0]), NaN)) {
+              params.ids = data.map(s => parseInt(s));
+            } else {
+              params.cardNames = data;
+            }
           } else {
             let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
             data = data.filter((e) => e !== -1);
