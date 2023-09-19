@@ -25,6 +25,7 @@
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
 ---@field private _custom_events any[] @ 自定义事件列表
+---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -55,6 +56,7 @@ function Engine:initialize()
   self.game_mode_disabled = {}
   self.kingdoms = {}
   self._custom_events = {}
+  self.poxi_methods = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -352,6 +354,16 @@ end
 
 function Engine:addGameEvent(name, pfunc, mfunc, cfunc, efunc)
   table.insert(self._custom_events, { name = name, p = pfunc, m = mfunc, c = cfunc, e = efunc })
+end
+
+---@param spec PoxiSpec
+function Engine:addPoxiMethod(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.card_filter) == "function")
+  assert(type(spec.feasible) == "function")
+  self.poxi_methods[spec.name] = spec
+  spec.default_choice = spec.default_choice or function() return {} end
+  spec.post_select = spec.post_select or function(s) return s end
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。

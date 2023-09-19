@@ -48,6 +48,7 @@ Item {
       card.selectable = false;
       card.showDetail = false;
       card.selectedChanged.disconnect(adjustCards);
+      card.prohibitReason = "";
     }
     return result;
   }
