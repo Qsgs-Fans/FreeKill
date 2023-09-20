@@ -102,7 +102,7 @@ function GameLogic:chooseGenerals()
     end
 
     generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
-    room:putGenerals(generals)
+    room:returnToGeneralPile(generals)
 
     room:setPlayerGeneral(lord, lord_general, true)
     room:askForChooseKingdom({lord})
@@ -141,7 +141,7 @@ function GameLogic:chooseGenerals()
   end
 
   generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
-  room:putGenerals(generals)
+  room:returnToGeneralPile(generals)
 
   room:askForChooseKingdom(nonlord)
 end

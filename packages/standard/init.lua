@@ -1173,12 +1173,16 @@ local role_getlogic = function()
     local n = room.settings.enableDeputy and 2 or 1
     local lord = room:getLord()
     local lord_generals = {}
+    local lord_num = 3
 
     if lord ~= nil then
       room.current = lord
+      if GetAvailableGeneralsNum() < #room.players * generalNum + lord_num then
+        room:gameOver("")
+      end
       local generals = table.connect(room:findGenerals(function(g)
         return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
-      end, 3), room:getNGenerals(generalNum))
+      end, lord_num), room:getNGenerals(generalNum))
       lord_generals = room:askForGeneral(lord, generals, n)
       local lord_general, deputy
       if type(lord_generals) == "table" then
@@ -1190,7 +1194,7 @@ local role_getlogic = function()
       end
 
       generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
-      room:putGenerals(generals)
+      room:returnToGeneralPile(generals)
 
       room:setPlayerGeneral(lord, lord_general, true)
       room:askForChooseKingdom({lord})
@@ -1229,7 +1233,7 @@ local role_getlogic = function()
     end
 
     generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
-    room:putGenerals(generals)
+    room:returnToGeneralPile(generals)
 
     room:askForChooseKingdom(nonlord)
   end

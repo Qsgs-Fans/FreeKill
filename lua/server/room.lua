@@ -110,7 +110,7 @@ function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
-      Fk:makeGeneralPile()
+      self:makeGeneralPile()
       self:run()
     end)
   end
@@ -143,6 +143,25 @@ function Room:resume()
   self:gameOver("")
   -- coroutine.close(main_co)
   -- self.main_co = nil
+  return true
+end
+
+function Room:makeGeneralPile()
+  local trueNames = {}
+  local ret = {}
+  if self.game_started then
+    for _, player in ipairs(self.players) do
+      trueNames[Fk.generals[player.general].trueName] = true
+    end
+  end
+  for name, general in pairs(Fk.generals) do
+    if Fk:canUseGeneral(name) and not trueNames[general.trueName] then
+      table.insert(ret, name)
+      trueNames[general.trueName] = true
+    end
+  end
+  table.shuffle(ret)
+  self.general_pile = ret
   return true
 end
 
@@ -1332,7 +1351,7 @@ end
 ---@param g string[] @ 武将名数组
 ---@param position string|nil @位置，top/bottom，默认bottom
 ---@return boolean @ 是否成功
-function Room:putGenerals(g, position)
+function Room:returnToGeneralPile(g, position)
   position = position or "bottom"
   assert(position == "top" or position == "bottom")
   local n = #g
