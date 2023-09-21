@@ -1177,12 +1177,12 @@ local role_getlogic = function()
 
     if lord ~= nil then
       room.current = lord
-      if GetAvailableGeneralsNum() < #room.players * generalNum + lord_num then
-        room:gameOver("")
-      end
       local generals = table.connect(room:findGenerals(function(g)
         return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
       end, lord_num), room:getNGenerals(generalNum))
+      if #room.general_pile < (#room.players - 1) * generalNum then
+        room:gameOver("")
+      end
       lord_generals = room:askForGeneral(lord, generals, n)
       local lord_general, deputy
       if type(lord_generals) == "table" then

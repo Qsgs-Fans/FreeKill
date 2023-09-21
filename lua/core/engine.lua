@@ -256,7 +256,7 @@ end
 ---@param g string @ 武将名
 function Engine:canUseGeneral(g)
   local r = self:currentRoom()
-  local general = Fk.generals[g]
+  local general = self.generals[g]
   if not general then return false end
   return not table.contains(r.disabled_packs, general.package.name) and
     not table.contains(r.disabled_generals, g) and not general.hidden and not general.total_hidden

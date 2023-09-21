@@ -146,6 +146,7 @@ function Room:resume()
   return true
 end
 
+-- 构造武将牌堆
 function Room:makeGeneralPile()
   local trueNames = {}
   local ret = {}
@@ -1354,14 +1355,16 @@ end
 function Room:returnToGeneralPile(g, position)
   position = position or "bottom"
   assert(position == "top" or position == "bottom")
-  local n = #g
-  while n > 0 do
+  while #g > 0 do
 
-    local index = position == "top" and 1 or #self.general_pile
-    table.insert(self.general_pile, index, g[1])
-    table.remove(g, 1)
+    if position == "bottom" then
+      table.insert(self.general_pile, g[#g])
+      table.remove(g, #g)
+    elseif position == "top" then
+      table.insert(self.general_pile, 1, g[#g])
+      table.remove(g, #g)
+    end
 
-    n = n - 1
   end
 
   return true
