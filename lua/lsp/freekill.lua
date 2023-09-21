@@ -7,7 +7,6 @@
 
 ---@alias null nil
 ---@alias bool boolean | nil
----@alias int integer
 
 ---@class fk
 ---FreeKill's lua API

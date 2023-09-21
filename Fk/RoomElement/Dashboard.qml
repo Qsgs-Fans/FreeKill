@@ -166,34 +166,16 @@ RowLayout {
       const ids = [];
       let cards = handcardAreaItem.cards;
       for (let i = 0; i < cards.length; i++) {
-        cards[i].prohibitReason = "";
         if (cardValid(cards[i].cid, cname)) {
           ids.push(cards[i].cid);
-        } else {
-          const prohibitReason = Backend.callLuaFunction(
-            "GetCardProhibitReason",
-            [cards[i].cid, roomScene.respond_play ? "response" : "use", cname]
-          );
-          if (prohibitReason) {
-            cards[i].prohibitReason = prohibitReason;
-          }
         }
       }
       cards = self.equipArea.getAllCards();
       cards.forEach(c => {
-        c.prohibitReason = "";
         if (cardValid(c.cid, cname)) {
           ids.push(c.cid);
           if (!expanded_piles["_equip"]) {
             expandPile("_equip");
-          }
-        } else {
-          const prohibitReason = Backend.callLuaFunction(
-            "GetCardProhibitReason",
-            [c.cid, roomScene.respond_play ? "response" : "use", cname]
-          );
-          if (prohibitReason) {
-            c.prohibitReason = prohibitReason;
           }
         }
       });
@@ -220,7 +202,6 @@ RowLayout {
 
     const ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
-      cards[i].prohibitReason = "";
       if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id]))) {
         ids.push(cards[i].cid);
       } else {
@@ -231,14 +212,6 @@ RowLayout {
           if (JSON.parse(Backend.callLuaFunction("ActiveCanUse", [s]))) {
             ids.push(cards[i].cid);
             break;
-          }
-        }
-
-        // still cannot use? show message on card
-        if (!ids.includes(cards[i].cid)) {
-          const prohibitReason = Backend.callLuaFunction("GetCardProhibitReason", [cards[i].cid, "play"]);
-          if (prohibitReason) {
-            cards[i].prohibitReason = prohibitReason;
           }
         }
       }
@@ -397,11 +370,6 @@ RowLayout {
     for (let i = 0; i < skillButtons.count; i++) {
       const item = skillButtons.itemAt(i);
       item.enabled = item.pressed;
-    }
-
-    const cards = handcardAreaItem.cards;
-    for (let i = 0; i < cards.length; i++) {
-      cards[i].prohibitReason = "";
     }
 
     updatePending();

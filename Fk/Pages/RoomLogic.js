@@ -1070,31 +1070,6 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   });
 }
 
-callbacks["AskForPoxi"] = (jsonData) => {
-  const { type, data } = JSON.parse(jsonData);
-
-  roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PoxiBox.qml");
-  const box = roomScene.popupBox.item;
-  box.poxi_type = type;
-  box.card_data = data;
-  for (let d of data) {
-    const arr = [];
-    const ids = d[1];
-
-    ids.forEach(id => {
-      const card_data = JSON.parse(Backend.callLuaFunction("GetCardData", [id]));
-      arr.push(card_data);
-    });
-    box.addCustomCards(d[0], arr);
-  }
-
-  roomScene.popupBox.moveToCenter();
-  box.cardsSelected.connect((ids) => {
-    replyToServer(JSON.stringify(ids));
-  });
-}
-
 callbacks["AskForMoveCardInBoard"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const { cards, cardsPosition, generalNames, playerIds } = data;

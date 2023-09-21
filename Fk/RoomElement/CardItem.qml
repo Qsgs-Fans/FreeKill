@@ -31,13 +31,11 @@ Item {
   property string color: ""  // only use when suit is empty
   property string footnote: ""  // footnote, e.g. "A use card to B"
   property bool footnoteVisible: false
-  property string prohibitReason: ""
   property bool known: true     // if false it only show a card back
   property bool enabled: true   // if false the card will be grey
   property alias card: cardItem
   property alias glow: glowItem
   property var mark: ({})
-  property alias chosenInBox: chosen.visible
 
   function getColor() {
     if (suit != "")
@@ -89,7 +87,6 @@ Item {
     cornerRadius: 8
     visible: false
   }
-
 
   Image {
     id: cardItem
@@ -220,38 +217,11 @@ Item {
     }
   }
 
-  Image {
-    id: chosen
-    visible: false
-    source: SkinBank.CARD_DIR + "chosen"
-    anchors.horizontalCenter: parent.horizontalCenter
-    y: 90
-    scale: 1.25
-  }
-
   Rectangle {
     visible: !root.selectable
     anchors.fill: parent
     color: Qt.rgba(0, 0, 0, 0.5)
     opacity: 0.7
-  }
-
-  Text {
-    id: prohibitText
-    visible: !root.selectable
-    anchors.centerIn: parent
-    font.family: fontLibian.name
-    font.pixelSize: 18
-    opacity: 0.9
-    horizontalAlignment: Text.AlignHCenter
-    lineHeight: 18
-    lineHeightMode: Text.FixedHeight
-    color: "snow"
-    width: 20
-    wrapMode: Text.WrapAnywhere
-    style: Text.Outline
-    styleColor: "red"
-    text: prohibitReason
   }
 
   TapHandler {
