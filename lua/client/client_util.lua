@@ -710,6 +710,8 @@ function GetCardProhibitReason(cid, method, pattern)
     return ret .. "禁" .. (method == "use" and "使用" or "打出")
   elseif skillName:endsWith("_prohibit") and skillName:startsWith("#") then
     return Fk:translate(skillName:sub(2, -10)) .. "禁" .. (method == "use" and "使用" or "打出")
+  else
+    return ret
   end
 end
 

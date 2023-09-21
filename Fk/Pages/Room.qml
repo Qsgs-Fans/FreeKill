@@ -747,6 +747,26 @@ Item {
     }
   }
 
+  // manualBox: same as popupBox, but must be closed manually
+  Loader {
+    id: manualBox
+    z: 999
+    onSourceChanged: {
+      if (item === null)
+        return;
+      item.finished.connect(() => sourceComponent = undefined);
+      item.widthChanged.connect(() => manualBox.moveToCenter());
+      item.heightChanged.connect(() => manualBox.moveToCenter());
+      moveToCenter();
+    }
+    onSourceComponentChanged: sourceChanged();
+
+    function moveToCenter() {
+      item.x = Math.round((roomArea.width - item.width) / 2);
+      item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
+    }
+  }
+
   Loader {
     id: popupBox
     z: 999
@@ -767,27 +787,6 @@ Item {
     onSourceComponentChanged: sourceChanged();
 
     function moveToCenter() {
-      item.x = Math.round((roomArea.width - item.width) / 2);
-      item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
-    }
-  }
-
-  // manualBox: same as popupBox, but must be closed manually
-  Loader {
-    id: manualBox
-    z: 999
-    onSourceChanged: {
-      if (item === null)
-        return;
-      item.finished.connect(() => sourceComponent = undefined);
-      item.widthChanged.connect(() => manualBox.moveToCenter());
-      item.heightChanged.connect(() => manualBox.moveToCenter());
-      moveToCenter();
-    }
-    onSourceComponentChanged: sourceChanged();
-
-    function moveToCenter()
-    {
       item.x = Math.round((roomArea.width - item.width) / 2);
       item.y = Math.round(roomArea.height * 0.67 - item.height / 2);
     }
