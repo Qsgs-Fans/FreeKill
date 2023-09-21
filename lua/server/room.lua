@@ -1,5 +1,4 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
-
 --- Room是fk游戏逻辑运行的主要场所，同时也提供了许多API函数供编写技能使用。
 ---
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
@@ -56,7 +55,8 @@ dofile "lua/server/ai/init.lua"
     gameevent.lua (游戏事件的执行逻辑，以及各种事件的执行方法)
     game_rule.lua (基础游戏规则，包括执行阶段、决胜负等)
     aux_skills.lua (某些交互方法是套壳askForUseActiveSkill，就是在这定义的)
-]]----------------------------------------------------------------------
+]]
+----------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 -- 构造函数
@@ -84,7 +84,7 @@ function Room:initialize(_room)
   self.owner_map = {}
   self.status_skills = {}
   for class, skills in pairs(Fk.global_status_skill) do
-    self.status_skills[class] = {table.unpack(skills)}
+    self.status_skills[class] = { table.unpack(skills) }
   end
   self.request_queue = {}
   self.request_self = {}
@@ -107,10 +107,13 @@ end
 function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
-    self.main_co = coroutine.create(function()
-      self.tag["_general_pile"] = Fk:getAllGenerals()
-      self:run()
-    end)
+    self.main_co =
+        coroutine.create(
+          function()
+            self.tag["_general_pile"] = Fk:getAllGenerals()
+            self:run()
+          end
+        )
   end
 
   local ret, err_msg, rest_time = true, true, nil
@@ -174,8 +177,7 @@ function Room:isReady()
     if p._splayer:thinking() then
       ret = false
       -- 烧条烧光了的话就把thinking设为false
-      rest = p.request_timeout * 1000 - (os.getms() -
-        p.request_start) / 1000
+      rest = p.request_timeout * 1000 - (os.getms() - p.request_start) / 1000
 
       if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
         p._splayer:setThinking(false)
@@ -193,7 +195,9 @@ function Room:isReady()
 end
 
 function Room:checkNoHuman(chkOnly)
-  if #self.players == 0 then return end
+  if #self.players == 0 then
+    return
+  end
 
   for _, p in ipairs(self.players) do
     -- TODO: trust
@@ -217,7 +221,6 @@ function Room:__gc()
   self.room:checkAbandoned()
 end
 --]]
-
 --- 正式在这个房间中开始游戏。
 ---
 --- 当这个函数返回之后，整个Room线程也宣告结束。
@@ -232,7 +235,9 @@ function Room:run()
 
   local mode = Fk.game_modes[self.settings.gameMode]
   self.logic = (mode.logic and mode.logic() or GameLogic):new(self)
-  if mode.rule then self.logic:addTriggerSkill(mode.rule) end
+  if mode.rule then
+    self.logic:addTriggerSkill(mode.rule)
+  end
   self.logic:run()
 end
 
@@ -275,33 +280,36 @@ end
 ---@param id integer @ 玩家的id
 ---@return ServerPlayer @ 这个id对应的ServerPlayer实例
 function Room:getPlayerById(id)
-  if not id then return nil end
-  assert(type(id) == "number")
-
+  --assert(type(id) == "number")
   for _, p in ipairs(self.players) do
     if p.id == id then
       return p
     end
   end
-
   return nil
 end
 
 --- 将房间中的玩家按照座位顺序重新排序。
 ---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
 function Room:sortPlayersByAction(playerIds, isTargetGroup)
-  table.sort(playerIds, function(prev, next)
-    local prevSeat = self:getPlayerById(isTargetGroup and prev[1] or prev).seat
-    local nextSeat = self:getPlayerById(isTargetGroup and next[1] or next).seat
+  table.sort(
+    playerIds,
+    function(prev, next)
+      local prevSeat = self:getPlayerById(isTargetGroup and prev[1] or prev).seat
+      local nextSeat = self:getPlayerById(isTargetGroup and next[1] or next).seat
 
-    return prevSeat < nextSeat
-  end)
+      return prevSeat < nextSeat
+    end
+  )
 
   if
-    self.current and
-    table.find(isTargetGroup and TargetGroup:getRealTargets(playerIds) or playerIds, function(id)
-      return self:getPlayerById(id).seat >= self.current.seat
-    end)
+      self.current and
+      table.find(
+        isTargetGroup and TargetGroup:getRealTargets(playerIds) or playerIds,
+        function(id)
+          return self:getPlayerById(id).seat >= self.current.seat
+        end
+      )
   then
     while self:getPlayerById(isTargetGroup and playerIds[1][1] or playerIds[1]).seat < self.current.seat do
       local toPlayerId = table.remove(playerIds, 1)
@@ -330,15 +338,13 @@ function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
     return { table.unpack(self.players) }
   end
-  if sortBySeat == nil or sortBySeat then
-    local current = self.current
-    local temp = current.next
-    local ret = {current}
-    while temp ~= current do
+  if sortBySeat ~= false and self.current then
+    local temp = self.current.next
+    local ret = { self.current }
+    while temp ~= self.current do
       table.insert(ret, temp)
       temp = temp.next
     end
-
     return ret
   else
     return { table.unpack(self.players) }
@@ -349,7 +355,7 @@ end
 ---@param sortBySeat bool
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
-  if sortBySeat == nil or sortBySeat then
+  if sortBySeat ~= false and self.current then
     local current = self.current
     local temp = current.next
 
@@ -357,14 +363,13 @@ function Room:getAlivePlayers(sortBySeat)
     if temp == nil then
       return { table.unpack(self.players) }
     end
-    local ret = {current}
+    local ret = { current }
     while temp ~= current do
       if not temp.dead then
         table.insert(ret, temp)
       end
       temp = temp.next
     end
-
     return ret
   else
     return { table.unpack(self.alive_players) }
@@ -398,9 +403,13 @@ end
 ---@return ServerPlayer | nil @ 主公
 function Room:getLord()
   local lord = self.players[1]
-  if lord.role == "lord" then return lord end
+  if lord.role == "lord" then
+    return lord
+  end
   for _, p in ipairs(self.players) do
-    if p.role == "lord" then return p end
+    if p.role == "lord" then
+      return p
+    end
   end
 
   return nil
@@ -447,11 +456,7 @@ end
 ---@param value any @ 要设为的值，其实也可以设为字符串
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
-  self:doBroadcastNotify("SetPlayerMark", json.encode{
-    player.id,
-    mark,
-    value
-  })
+  self:doBroadcastNotify("SetPlayerMark", json.encode { player.id, mark, value })
 end
 
 --- 将一名玩家的mark标记增加count个。
@@ -485,11 +490,7 @@ end
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
   if not card:isVirtual() then
-    self:doBroadcastNotify("SetCardMark", json.encode{
-      card.id,
-      mark,
-      value
-    })
+    self:doBroadcastNotify("SetCardMark", json.encode { card.id, mark, value })
   end
 end
 
@@ -553,7 +554,9 @@ end
 ---@param changeKingdom bool
 ---@param noBroadcast bool
 function Room:setPlayerGeneral(player, general, changeKingdom, noBroadcast)
-  if Fk.generals[general] == nil then return end
+  if Fk.generals[general] == nil then
+    return
+  end
   player.general = general
   player.gender = Fk.generals[general].gender
   self:notifyProperty(player, player, "general")
@@ -572,7 +575,9 @@ end
 ---@param player ServerPlayer
 ---@param general string
 function Room:setDeputyGeneral(player, general)
-  if Fk.generals[general] == nil then return end
+  if Fk.generals[general] == nil then
+    return
+  end
   player.deputyGeneral = general
   self:notifyProperty(player, player, "deputyGeneral")
 end
@@ -590,23 +595,25 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
   if not isDeputy and (new.kingdom == "god" or new.subkingdom) then
     local allKingdoms = {}
     if new.kingdom == "god" then
-      allKingdoms = {"wei", "shu", "wu", "qun", "jin"}
+      allKingdoms = { "wei", "shu", "wu", "qun", "jin" }
     elseif new.subkingdom then
       allKingdoms = { new.kingdom, new.subkingdom }
     end
     kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
   end
 
-  execGameEvent(GameEvent.ChangeProperty,
-  {
-    from = player,
-    general = not isDeputy and new_general or "",
-    deputyGeneral = isDeputy and new_general or "",
-    gender = isDeputy and player.gender or new.gender,
-    kingdom = kingdom,
-    sendLog = sendLog,
-    results = {},
-  })
+  execGameEvent(
+    GameEvent.ChangeProperty,
+    {
+      from = player,
+      general = not isDeputy and new_general or "",
+      deputyGeneral = isDeputy and new_general or "",
+      gender = isDeputy and player.gender or new.gender,
+      kingdom = kingdom,
+      sendLog = sendLog,
+      results = {}
+    }
+  )
 
   maxHpChange = (maxHpChange == nil) and true or maxHpChange
   if maxHpChange then
@@ -621,16 +628,20 @@ end
 ---@param kingdom string @ 要变更的势力
 ---@param sendLog bool @ 是否发Log
 function Room:changeKingdom(player, kingdom, sendLog)
-  if kingdom == player.kingdom then return end
+  if kingdom == player.kingdom then
+    return
+  end
   sendLog = sendLog or false
 
-  execGameEvent(GameEvent.ChangeProperty,
-  {
-    from = player,
-    kingdom = kingdom,
-    sendLog = sendLog,
-    results = {},
-  })
+  execGameEvent(
+    GameEvent.ChangeProperty,
+    {
+      from = player,
+      kingdom = kingdom,
+      sendLog = sendLog,
+      results = {}
+    }
+  )
 end
 
 ------------------------------------------------------------------------
@@ -651,11 +662,7 @@ end
 ---@param player ServerPlayer @ 拥有那个属性的玩家
 ---@param property string @ 属性名称
 function Room:notifyProperty(p, player, property)
-  p:doNotify("PropertyUpdate", json.encode{
-    player.id,
-    property,
-    player[property],
-  })
+  p:doNotify("PropertyUpdate", json.encode { player.id, property, player[property] })
 end
 
 --- 向多名玩家广播一条消息。
@@ -676,12 +683,11 @@ end
 ---@param wait bool @ 是否要等待答复，默认为true
 ---@return string | nil @ 收到的答复，如果wait为false的话就返回nil
 function Room:doRequest(player, command, jsonData, wait)
-  if wait == nil then wait = true end
   self.request_queue = {}
   self.race_request_list = nil
   player:doRequest(command, jsonData, self.timeout)
 
-  if wait then
+  if wait ~= false then
     local ret = player:waitForReply(self.timeout)
     player.serverplayer:setBusy(false)
     player.serverplayer:setThinking(false)
@@ -735,12 +741,11 @@ function Room:doRaceRequest(command, players, jsonData)
     p:doRequest(command, jsonData or p.request_data)
   end
 
+  local elapsed = 0
+  local canceled_players = {}
+  local ret = nil
   local remainTime = self.timeout
   local currentTime = os.time()
-  local elapsed = 0
-  local winner
-  local canceled_players = {}
-  local ret
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
@@ -749,29 +754,25 @@ function Room:doRaceRequest(command, players, jsonData)
     for _, p in ipairs(players) do
       p:waitForReply(0)
       if p.reply_ready == true then
-        winner = p
+        ret = p
         break
       end
-
       if p.reply_cancel then
-        table.removeOne(players, p)
         table.insertIfNeed(canceled_players, p)
+        table.removeOne(players, p)
       elseif p.id > 0 then
         -- 骗过调度器让他以为自己尚未就绪
         p.request_timeout = remainTime - elapsed
         p.serverplayer:setThinking(true)
       end
     end
-    if winner then
+    if ret then
       self:doBroadcastNotify("CancelRequest", "")
-      ret = winner
       break
     end
-
-    if player_len == #canceled_players then
+    if #canceled_players >= player_len then
       break
     end
-
     coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
   end
 
@@ -783,14 +784,12 @@ function Room:doRaceRequest(command, players, jsonData)
   return ret
 end
 
-
 --- 延迟一段时间。
 ---
 --- 这个函数不应该在请求处理协程中使用。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
-  local start = os.getms()
-  self.delay_start = start
+  self.delay_start = os.getms()
   self.delay_duration = ms
   self.in_delay = true
   coroutine.yield("__handleRequest", ms)
@@ -801,7 +800,9 @@ end
 ---@param card_moves CardsMoveStruct[] @ 要告知的移牌信息列表
 ---@param forceVisible bool @ 是否让所有牌对告知目标可见
 function Room:notifyMoveCards(players, card_moves, forceVisible)
-  if players == nil or players == {} then players = self.players end
+  if players == nil or players == {} then
+    players = self.players
+  end
   for _, p in ipairs(players) do
     local arg = table.clone(card_moves)
     for _, move in ipairs(arg) do
@@ -821,24 +822,34 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
         end
       end
 
-      local function containArea(area, relevant) --处理区的处理？
-        local areas = relevant
-          and {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing, Card.PlayerHand, Card.PlayerSpecial}
-          or {Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing}
+      local function containArea(area, relevant) -- 处理区的处理？
+        local areas =
+            relevant and
+            {
+              Card.PlayerEquip,
+              Card.PlayerJudge,
+              Card.DiscardPile,
+              Card.Processing,
+              Card.PlayerHand,
+              Card.PlayerSpecial
+            } or
+            { Card.PlayerEquip, Card.PlayerJudge, Card.DiscardPile, Card.Processing }
         return table.contains(areas, area)
       end
 
       -- forceVisible make the move visible
       -- if move is relevant to player's hands or equips, it should be open
-        -- cards move from/to equip/judge/discard/processing should be open
+      -- cards move from/to equip/judge/discard/processing should be open
 
-      if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
+      if
+          not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to)))
+      then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
-          info.cardId = -1
+            info.cardId = -1
+          end
         end
       end
-    end
     end
     p:doNotify("MoveCards", json.encode(arg))
   end
@@ -851,7 +862,7 @@ end
 ---@param command string @ 烧条的提示文字
 function Room:notifyMoveFocus(players, command)
   if (players.class) then
-    players = {players}
+    players = { players }
   end
 
   local ids = {}
@@ -868,10 +879,7 @@ function Room:notifyMoveFocus(players, command)
     end
   end
 
-  self:doBroadcastNotify("MoveFocus", json.encode{
-    ids,
-    command
-  })
+  self:doBroadcastNotify("MoveFocus", json.encode { ids, command })
 end
 
 --- 向战报中发送一条log。
@@ -881,11 +889,11 @@ function Room:sendLog(log)
 end
 
 function Room:sendFootnote(ids, log)
-  self:doBroadcastNotify("SetCardFootnote", json.encode{ ids, log })
+  self:doBroadcastNotify("SetCardFootnote", json.encode { ids, log })
 end
 
 function Room:sendCardVirtName(ids, name)
-  self:doBroadcastNotify("SetCardVirtName", json.encode{ ids, name })
+  self:doBroadcastNotify("SetCardVirtName", json.encode { ids, name })
 end
 
 --- 播放某种动画效果给players看。
@@ -904,10 +912,13 @@ end
 ---@param player ServerPlayer @ 被播放动画的那个角色
 ---@param name string @ emotion名字，可以是一个路径
 function Room:setEmotion(player, name)
-  self:doAnimate("Emotion", {
-    player = player.id,
-    emotion = name
-  })
+  self:doAnimate(
+    "Emotion",
+    {
+      player = player.id,
+      emotion = name
+    }
+  )
 end
 
 --- 在一张card上播放一段emotion动效。
@@ -916,11 +927,14 @@ end
 ---@param cid integer @ 被播放动效的那个牌的id
 ---@param name string @ emotion名字，可以是一个路径
 function Room:setCardEmotion(cid, name)
-  self:doAnimate("Emotion", {
-    player = cid,
-    emotion = name,
-    is_card = true,
-  })
+  self:doAnimate(
+    "Emotion",
+    {
+      player = cid,
+      emotion = name,
+      is_card = true
+    }
+  )
 end
 
 --- 播放一个全屏大动画。可以自己指定qml文件路径和额外的信息。
@@ -928,10 +942,13 @@ end
 ---@param extra_data any @ 要传递的额外信息
 function Room:doSuperLightBox(path, extra_data)
   path = path or "RoomElement/SuperLightBox.qml"
-  self:doAnimate("SuperLightBox", {
-    path = path,
-    data = extra_data,
-  })
+  self:doAnimate(
+    "SuperLightBox",
+    {
+      path = path,
+      data = extra_data
+    }
+  )
 end
 
 --- 基本上是个不常用函数就是了
@@ -945,20 +962,26 @@ end
 ---@param skill_name nil @ 技能名
 ---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function Room:broadcastSkillInvoke(skill_name, index)
-  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
+  print "Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke"
   index = index or -1
-  self:sendLogEvent("PlaySkillSound", {
-    name = skill_name,
-    i = index
-  })
+  self:sendLogEvent(
+    "PlaySkillSound",
+    {
+      name = skill_name,
+      i = index
+    }
+  )
 end
 
 --- 播放一段音频。
 ---@param path string @ 音频文件路径
 function Room:broadcastPlaySound(path)
-  self:sendLogEvent("PlaySound", {
-    name = path,
-  })
+  self:sendLogEvent(
+    "PlaySound",
+    {
+      name = path
+    }
+  )
 end
 
 --- 在player的脸上播放技能发动的特效。
@@ -971,7 +994,9 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
   local bigAnim = false
   if not skill_type then
     local skill = Fk.skills[skill_name]
-    if not skill then skill_type = "" end
+    if not skill then
+      skill_type = ""
+    end
 
     if skill.frequency == Skill.Limited or skill.frequency == Skill.Wake then
       bigAnim = true
@@ -980,25 +1005,33 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
     skill_type = skill.anim_type
   end
 
-  if skill_type == "big" then bigAnim = true end
+  if skill_type == "big" then
+    bigAnim = true
+  end
 
-  self:sendLog{
+  self:sendLog {
     type = "#InvokeSkill",
     from = player.id,
-    arg = skill_name,
+    arg = skill_name
   }
 
   if not bigAnim then
-    self:doAnimate("InvokeSkill", {
-      name = skill_name,
-      player = player.id,
-      skill_type = skill_type,
-    })
+    self:doAnimate(
+      "InvokeSkill",
+      {
+        name = skill_name,
+        player = player.id,
+        skill_type = skill_type
+      }
+    )
   else
-    self:doAnimate("InvokeUltSkill", {
-      name = skill_name,
-      player = player.id,
-    })
+    self:doAnimate(
+      "InvokeUltSkill",
+      {
+        name = skill_name,
+        player = player.id
+      }
+    )
     self:delay(2000)
   end
 end
@@ -1011,10 +1044,13 @@ function Room:doIndicate(source, targets)
   for _, id in ipairs(targets) do
     table.insert(target_group, { id })
   end
-  self:doAnimate("Indicate", {
-    from = source,
-    to = target_group,
-  })
+  self:doAnimate(
+    "Indicate",
+    {
+      from = source,
+      to = target_group
+    }
+  )
 end
 
 ------------------------------------------------------------------------
@@ -1043,8 +1079,8 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   end
 
   local command = "AskForUseActiveSkill"
-  self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
-  local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
+  self:notifyMoveFocus(player, extra_data.skillName or skill_name) -- for display skill name instead of command name
+  local data = { skill_name, prompt, cancelable, json.encode(extra_data) }
 
   Fk.currentResponseReason = extra_data.skillName
   local result = self:doRequest(player, command, json.encode(data))
@@ -1068,11 +1104,14 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   end
 
   if skill:isInstanceOf(ActiveSkill) then
-    skill:onUse(self, {
-      from = player.id,
-      cards = selected_cards,
-      tos = targets,
-    })
+    skill:onUse(
+      self,
+      {
+        from = player.id,
+        cards = selected_cards,
+        tos = targets
+      }
+    )
   end
 
   return true, {
@@ -1097,37 +1136,49 @@ Room.askForUseViewAsSkill = Room.askForUseActiveSkill
 ---@param skipDiscard bool @ 是否跳过弃牌（即只询问选择可以弃置的牌）
 ---@param no_indicate bool @ 是否不显示指示线
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
-function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
+function Room:askForDiscard(
+  player,
+  minNum,
+  maxNum,
+  includeEquip,
+  skillName,
+  cancelable,
+  pattern,
+  prompt,
+  skipDiscard,
+  no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
   pattern = pattern or "."
 
-  local canDiscards = table.filter(
-    player:getCardIds{ Player.Hand, includeEquip and Player.Equip or nil }, function(id)
-      local checkpoint = true
-      local card = Fk:getCardById(id)
+  local canDiscards =
+      table.filter(
+        player:getCardIds { Player.Hand, includeEquip and Player.Equip or nil },
+        function(id)
+          local checkpoint = true
+          local card = Fk:getCardById(id)
 
-      local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
-      for _, skill in ipairs(status_skills) do
-        if skill:prohibitDiscard(player, card) then
-          return false
-        end
-      end
-      if skillName == "game_rule" then
-        status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
-        for _, skill in ipairs(status_skills) do
-          if skill:excludeFrom(player, card) then
-            return false
+          local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
+          for _, skill in ipairs(status_skills) do
+            if skill:prohibitDiscard(player, card) then
+              return false
+            end
           end
-        end
-      end
+          if skillName == "game_rule" then
+            status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
+            for _, skill in ipairs(status_skills) do
+              if skill:excludeFrom(player, card) then
+                return false
+              end
+            end
+          end
 
-      if pattern ~= "" then
-        checkpoint = checkpoint and (Exppattern:Parse(pattern):match(card))
-      end
-      return checkpoint
-    end
-  )
+          if pattern ~= "" then
+            checkpoint = checkpoint and (Exppattern:Parse(pattern):match(card))
+          end
+          return checkpoint
+        end
+      )
 
   -- maxNum = math.min(#canDiscards, maxNum)
   -- minNum = math.min(#canDiscards, minNum)
@@ -1145,7 +1196,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     min_num = minNum,
     include_equip = includeEquip,
     skillName = skillName,
-    pattern = pattern,
+    pattern = pattern
   }
   local prompt = prompt or ("#AskForDiscard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "discard_skill", prompt, cancelable, data, no_indicate)
@@ -1153,7 +1204,9 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
   if ret then
     toDiscard = ret.cards
   else
-    if cancelable then return {} end
+    if cancelable then
+      return {}
+    end
     toDiscard = table.random(canDiscards, minNum)
   end
 
@@ -1214,7 +1267,17 @@ end
 ---@param expand_pile string|nil @ 可选私人牌堆名称
 ---@param no_indicate bool @ 是否不显示指示线
 ---@return integer[] @ 选择的牌的id列表，可能是空的
-function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
+function Room:askForCard(
+  player,
+  minNum,
+  maxNum,
+  includeEquip,
+  skillName,
+  cancelable,
+  pattern,
+  prompt,
+  expand_pile,
+  no_indicate)
   if minNum < 1 then
     return nil
   end
@@ -1229,14 +1292,16 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     include_equip = includeEquip,
     skillName = skillName,
     pattern = pattern,
-    expand_pile = expand_pile,
+    expand_pile = expand_pile
   }
   local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data, no_indicate)
   if ret then
     chosenCards = ret.cards
   else
-    if cancelable then return {} end
+    if cancelable then
+      return {}
+    end
     local hands = player:getCardIds(Player.Hand)
     if includeEquip then
       table.insertTable(hands, player:getCardIds(Player.Equip))
@@ -1252,7 +1317,6 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
 end
 
 --- 询问玩家选择1张牌和若干名角色。
----
 --- 返回两个值，第一个是选择的目标列表，第二个是选择的那张牌的id
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param targets integer[] @ 选择目标的id范围
@@ -1263,7 +1327,16 @@ end
 ---@param cancelable bool @ 能否点取消
 ---@param no_indicate bool @ 是否不显示指示线
 ---@return integer[], integer
-function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable, no_indicate)
+function Room:askForChooseCardAndPlayers(
+  player,
+  targets,
+  minNum,
+  maxNum,
+  pattern,
+  prompt,
+  skillName,
+  cancelable,
+  no_indicate)
   if maxNum < 1 then
     return {}
   end
@@ -1271,11 +1344,17 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
   no_indicate = no_indicate or false
   pattern = pattern or "."
 
-  local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
-    local c = Fk:getCardById(id)
-    return c:matchPattern(pattern)
-  end)
-  if #pcards == 0 and not cancelable then return {} end
+  local pcards =
+      table.filter(
+        player:getCardIds({ Player.Hand, Player.Equip }),
+        function(id)
+          local c = Fk:getCardById(id)
+          return c:matchPattern(pattern)
+        end
+      )
+  if #pcards == 0 and not cancelable then
+    return {}
+  end
 
   local data = {
     targets = targets,
@@ -1307,18 +1386,22 @@ function Room:askForGeneral(player, generals, n, noConvert)
   self:notifyMoveFocus(player, command)
 
   n = n or 1
-  if #generals == n then return n == 1 and generals[1] or generals end
+  if #generals == n then
+    return n == 1 and generals[1] or generals
+  end
   local defaultChoice = table.random(generals, n)
 
   if (player.serverplayer:getState() == fk.Player_Online) then
-    local result = self:doRequest(player, command, json.encode{ generals, n, noConvert })
+    local result = self:doRequest(player, command, json.encode { generals, n, noConvert })
     local choices
     if result == "" then
       choices = defaultChoice
     else
       choices = json.decode(result)
     end
-    if #choices == 1 then return choices[1] end
+    if #choices == 1 then
+      return choices[1]
+    end
     return choices
   end
 
@@ -1329,16 +1412,26 @@ end
 ---@param players ServerPlayer[]|nil @ 询问目标
 function Room:askForChooseKingdom(players)
   players = players or self.alive_players
-  local specialKingdomPlayers = table.filter(players, function(p)
-    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
-  end)
+  local specialKingdomPlayers =
+      table.filter(
+        players,
+        function(p)
+          return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+        end
+      )
 
   if #specialKingdomPlayers > 0 then
     local choiceMap = {}
     for _, p in ipairs(specialKingdomPlayers) do
       local allKingdoms = {}
       if p.kingdom == "god" then
-        allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
+        allKingdoms =
+            table.filter(
+              { "wei", "shu", "wu", "qun", "jin" },
+              function(k)
+                return table.contains(Fk.kingdoms, k)
+              end
+            )
       else
         local curGeneral = Fk.generals[p.general]
         allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
@@ -1376,9 +1469,8 @@ end
 function Room:askForCardChosen(chooser, target, flag, reason)
   local command = "AskForCardChosen"
   self:notifyMoveFocus(chooser, command)
-  local data = {target.id, flag, reason}
+  local data = { target.id, flag, reason }
   local result = self:doRequest(chooser, command, json.encode(data))
-
   if result == "" then
     local areas = {}
     local handcards
@@ -1404,7 +1496,6 @@ function Room:askForCardChosen(chooser, target, flag, reason)
     if #handcards == 0 then return end
     result = table.random(handcards)
   end
-
   return result
 end
 
@@ -1424,7 +1515,7 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
 
   local command = "AskForCardsChosen"
   self:notifyMoveFocus(chooser, command)
-  local data = {target.id, min, max, flag, reason}
+  local data = { target.id, min, max, flag, reason }
   local result = self:doRequest(chooser, command, json.encode(data))
 
   local ret
@@ -1434,9 +1525,15 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
     local areas = {}
     local handcards
     if type(flag) == "string" then
-      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+      if string.find(flag, "h") then
+        table.insert(areas, Player.Hand)
+      end
+      if string.find(flag, "e") then
+        table.insert(areas, Player.Equip)
+      end
+      if string.find(flag, "j") then
+        table.insert(areas, Player.Judge)
+      end
       handcards = target:getCardIds(areas)
     else
       handcards = {}
@@ -1444,44 +1541,25 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
         table.insertTable(handcards, t[2])
       end
     end
-    if #handcards == 0 then return {} end
+    if #handcards == 0 then
+      return {}
+    end
     ret = table.random(handcards, math.min(min, #handcards))
   end
 
-  local new_ret = table.filter(ret, function(id) return id ~= -1 end)
+  local new_ret =
+      table.filter(
+        ret,
+        function(id)
+          return id ~= -1
+        end
+      )
   local hand_num = #ret - #new_ret
   if hand_num > 0 then
     table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hand_num))
   end
 
   return new_ret
-end
-
---- 谋askForCardsChosen，需使用Fk:addPoxiMethod定义好方法
----
---- 选卡规则和返回值啥的全部自己想办法解决，data填入所有卡的列表（类似ui.card_data）
----
---- 注意一定要返回一个表，毕竟本质上是选卡函数
----@param player ServerPlayer
----@param poxi_type string
----@param data any
----@return integer[]
-function Room:askForPoxi(player, poxi_type, data)
-  local poxi = Fk.poxi_methods[poxi_type]
-  if not poxi then return {} end
-
-  local command = "AskForPoxi"
-  self:notifyMoveFocus(player, poxi_type)
-  local result = self:doRequest(player, command, json.encode {
-    type = poxi_type,
-    data = data,
-  })
-
-  if result == "" then
-    return poxi.default_choice(data)
-  else
-    return poxi.post_select(json.decode(result), data)
-  end
 end
 
 --- 询问一名玩家从众多选项中选择一个。
@@ -1493,16 +1571,26 @@ end
 ---@param all_choices string[]|nil @ 所有选项（不可选变灰）
 ---@return string @ 选择的选项
 function Room:askForChoice(player, choices, skill_name, prompt, detailed, all_choices)
-  if #choices == 1 and not all_choices then return choices[1] end
-  assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
+  if #choices == 1 and not all_choices then
+    return choices[1]
+  end
+  assert(
+    not all_choices or
+    table.every(
+      choices,
+      function(c)
+        return table.contains(all_choices, c)
+      end
+    )
+  )
   local command = "AskForChoice"
   prompt = prompt or ""
   all_choices = all_choices or choices
   self:notifyMoveFocus(player, skill_name)
-  local result = self:doRequest(player, command, json.encode{
-    choices, all_choices, skill_name, prompt, detailed
-  })
-  if result == "" then result = choices[1] end
+  local result = self:doRequest(player, command, json.encode { choices, all_choices, skill_name, prompt, detailed })
+  if result == "" then
+    result = choices[1]
+  end
   return result
 end
 
@@ -1516,12 +1604,14 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   local command = "AskForSkillInvoke"
   self:notifyMoveFocus(player, skill_name)
   local invoked = false
-  local result = self:doRequest(player, command, json.encode{ skill_name, prompt })
-  if result ~= "" then invoked = true end
+  local result = self:doRequest(player, command, json.encode { skill_name, prompt, data })
+  if result ~= "" then
+    invoked = true
+  end
   return invoked
 end
 
---为使用牌增减目标
+-- 为使用牌增减目标
 ---@param player ServerPlayer @ 执行的玩家
 ---@param targets ServerPlayer[] @ 可选的目标范围
 ---@param num integer @ 可选的目标数
@@ -1538,12 +1628,23 @@ function Room:askForAddTarget(player, targets, num, can_minus, distance_limited,
   local room = player.room
   local tos = {}
   local orig_tos = table.simpleClone(AimGroup:getAllTargets(data.tos))
-  if can_minus and #orig_tos > 1 then  --默认不允许减目标至0
-    tos = table.map(table.filter(targets, function(p)
-      return table.contains(AimGroup:getAllTargets(data.tos), p.id) end), Util.IdMapper)
+  if can_minus and #orig_tos > 1 then -- 默认不允许减目标至0
+    tos =
+        table.map(
+          table.filter(
+            targets,
+            function(p)
+              return table.contains(AimGroup:getAllTargets(data.tos), p.id)
+            end
+          ),
+          Util.IdMapper
+        )
   end
   for _, p in ipairs(targets) do
-    if not table.contains(AimGroup:getAllTargets(data.tos), p.id) and not room:getPlayerById(data.from):isProhibited(p, data.card) then
+    if
+        not table.contains(AimGroup:getAllTargets(data.tos), p.id) and
+        not room:getPlayerById(data.from):isProhibited(p, data.card)
+    then
       if data.card.skill:modTargetFilter(p.id, orig_tos, data.from, data.card, distance_limited) then
         table.insertIfNeed(tos, p.id)
       end
@@ -1551,18 +1652,35 @@ function Room:askForAddTarget(player, targets, num, can_minus, distance_limited,
   end
   if #tos > 0 then
     tos = room:askForChoosePlayers(player, tos, 1, num, prompt, skillName, true)
-    --借刀……！
+    -- 借刀……！
     if data.card.name ~= "collateral" then
       return tos
     else
       local result = {}
       for _, id in ipairs(tos) do
         local to = room:getPlayerById(id)
-        local target = room:askForChoosePlayers(player, table.map(table.filter(room:getOtherPlayers(player), function(v)
-          return to:inMyAttackRange(v) end), function(p) return p.id end), 1, 1,
-          "#collateral-choose::"..to.id..":"..data.card:toLogString(), "collateral_skill", true)
+        local target =
+            room:askForChoosePlayers(
+              player,
+              table.map(
+                table.filter(
+                  room:getOtherPlayers(player),
+                  function(v)
+                    return to:inMyAttackRange(v)
+                  end
+                ),
+                function(p)
+                  return p.id
+                end
+              ),
+              1,
+              1,
+              "#collateral-choose::" .. to.id .. ":" .. data.card:toLogString(),
+              "collateral_skill",
+              true
+            )
         if #target > 0 then
-          table.insert(result, {id, target[1]})
+          table.insert(result, { id, target[1] })
         end
       end
       if #result > 0 then
@@ -1601,7 +1719,10 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     assert(bottom_limit[1] <= bottom_limit[2], "limits error: The upper limit should be less than the lower limit")
   end
   if #top_limit > 0 and #bottom_limit > 0 then
-    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "limits Error: No enough space")
+    assert(
+      #cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2],
+      "limits Error: No enough space"
+    )
   end
   if areaNames then
     assert(#areaNames == 2, "areaNames error: Should have 2 elements")
@@ -1616,7 +1737,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
     max_bottom_cards = bottom_limit and bottom_limit[2] or #cards,
     top_area_name = areaNames and areaNames[1] or "Top",
-    bottom_area_name = areaNames and areaNames[2] or "Bottom",
+    bottom_area_name = areaNames and areaNames[2] or "Bottom"
   }
 
   local result = self:doRequest(player, command, json.encode(data))
@@ -1632,7 +1753,15 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     end
   else
     top = table.random(cards, top_limit and top_limit[2] or #cards) or Util.DummyTable
-    bottom = table.shuffle(table.filter(cards, function(id) return not table.contains(top, id) end)) or Util.DummyTable
+    bottom =
+        table.shuffle(
+          table.filter(
+            cards,
+            function(id)
+              return not table.contains(top, id)
+            end
+          )
+        ) or Util.DummyTable
   end
 
   if not noPut then
@@ -1643,15 +1772,18 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
       table.insert(self.draw_pile, bottom[i])
     end
 
-    self:sendLog{
+    self:sendLog {
       type = "#GuanxingResult",
       from = player.id,
       arg = #top,
-      arg2 = #bottom,
+      arg2 = #bottom
     }
   end
 
-  return { top = top, bottom = bottom }
+  return {
+    top = top,
+    bottom = bottom
+  }
 end
 
 --- 询问玩家任意交换几堆牌堆。
@@ -1673,7 +1805,7 @@ function Room:askForExchange(player, piles, piles_name, customNotify)
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
     piles = piles,
-    piles_name = piles_name,
+    piles_name = piles_name
   }
   local result = self:doRequest(player, command, json.encode(data))
   if result ~= "" then
@@ -1683,6 +1815,7 @@ function Room:askForExchange(player, piles, piles_name, customNotify)
     return piles
   end
 end
+
 --- 平时写DIY用不到的函数。
 ---@param player ServerPlayer
 ---@param data string
@@ -1695,22 +1828,30 @@ function Room:handleUseCardReply(player, data)
     local card_data = json.decode(card)
     local skill = Fk.skills[card_data.skill]
     local selected_cards = card_data.subcards
-    if skill.interaction then skill.interaction.data = data.interaction_data end
+    if skill.interaction then
+      skill.interaction.data = data.interaction_data
+    end
     if skill:isInstanceOf(ActiveSkill) then
-      self:useSkill(player, skill, function()
-        self:doIndicate(player.id, targets)
-        skill:onUse(self, {
-          from = player.id,
-          cards = selected_cards,
-          tos = targets,
-        })
-      end)
-      return nil
+      self:useSkill(
+        player,
+        skill,
+        function()
+          self:doIndicate(player.id, targets)
+          skill:onUse(
+            self,
+            {
+              from = player.id,
+              cards = selected_cards,
+              tos = targets
+            }
+          )
+        end
+      )
     elseif skill:isInstanceOf(ViewAsSkill) then
       Self = player
       local c = skill:viewAs(selected_cards)
       if c then
-        local use = {}    ---@type CardUseStruct
+        local use = {} ---@type CardUseStruct
         use.from = player.id
         use.tos = {}
         for _, target in ipairs(targets) do
@@ -1732,26 +1873,30 @@ function Room:handleUseCardReply(player, data)
     if data.special_skill then
       local skill = Fk.skills[data.special_skill]
       assert(skill:isInstanceOf(ActiveSkill))
-      skill:onUse(self, {
-        from = player.id,
-        cards = { card },
-        tos = targets,
-      })
-      return nil
+      skill:onUse(
+        self,
+        {
+          from = player.id,
+          cards = { card },
+          tos = targets
+        }
+      )
+    else
+      local use = {} ---@type CardUseStruct
+      use.from = player.id
+      use.tos = {}
+      for _, target in ipairs(targets) do
+        table.insert(use.tos, { target })
+      end
+      if #use.tos == 0 then
+        use.tos = nil
+      end
+      Fk:filterCard(card, player)
+      use.card = Fk:getCardById(card)
+      return use
     end
-    local use = {}    ---@type CardUseStruct
-    use.from = player.id
-    use.tos = {}
-    for _, target in ipairs(targets) do
-      table.insert(use.tos, { target })
-    end
-    if #use.tos == 0 then
-      use.tos = nil
-    end
-    Fk:filterCard(card, player)
-    use.card = Fk:getCardById(card)
-    return use
   end
+  return nil
 end
 
 -- available extra_data:
@@ -1769,67 +1914,89 @@ end
 ---@param event_data CardEffectEvent|nil @ 事件信息
 ---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
-  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
+  if
+      event_data and
+      (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id))
+  then
     return nil
   end
 
   if event_data and event_data.prohibitedCardNames and card_name then
     local splitedCardNames = card_name:split(",")
-    splitedCardNames = table.filter(splitedCardNames, function(name)
-      return not table.contains(event_data.prohibitedCardNames, name)
-    end)
+    splitedCardNames =
+        table.filter(
+          splitedCardNames,
+          function(name)
+            return not table.contains(event_data.prohibitedCardNames, name)
+          end
+        )
 
     if #splitedCardNames == 0 then
       return nil
     end
-
     card_name = table.concat(splitedCardNames, ",")
   end
-
   if extra_data then
     if extra_data.bypass_distances then
       player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
     end
-    if extra_data.bypass_times == nil or extra_data.bypass_times then
+    if extra_data.bypass_times ~= false then
       player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
+    fk.useMustTargets = extra_data.must_targets
   end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
-  cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or Util.DummyTable
+  cancelable = cancelable ~= false
   pattern = pattern or card_name
   prompt = prompt or ""
 
-  local askForUseCardData = {
+  local useData = {
     user = player,
     cardName = card_name,
     pattern = pattern,
-    extraData = extra_data,
-    eventData = event_data,
+    extraData = extra_data or Util.DummyTable,
+    eventData = event_data
   }
-  self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
+  local use = nil
+  self.logic:trigger(fk.AskForCardUse, player, useData)
 
-  if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-    return askForUseCardData.result
-  else
-    local data = {card_name, pattern, prompt, cancelable, extra_data}
-
+  if type(useData.result) == "table" then
+    useData = useData.result
+    useData.extraUse = extra_data ~= nil
+    self:useCard(useData)
+    if useData.nullified then
+      use = false
+    elseif useData.breakEvent ~= true then
+      use = useData
+    end
+  end
+  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
+  while use == nil do
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
     Fk.currentResponsePattern = nil
-
     if result ~= "" then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-      return self:handleUseCardReply(player, result)
+      result = self:handleUseCardReply(player, result)
+      if result then
+        result.extraUse = extra_data ~= nil
+        self:useCard(result)
+        if result.nullified then
+          use = false
+        elseif result.breakEvent ~= true then
+          use = result
+        end
+      else
+        break
+      end
+    else
+      break
     end
   end
+  fk.useMustTargets = nil
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
   player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-  return nil
+  return use
 end
 
 --- 询问一名玩家打出一张牌。
@@ -1840,15 +2007,19 @@ end
 ---@param cancelable bool @ 能否取消
 ---@param extra_data any|nil @ 额外数据
 ---@param effectData CardEffectEvent|nil @ 关联的卡牌生效流程
+---@param retrial bool @ 改判打出
 ---@return Card | nil @ 打出的牌
-function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData)
-  if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or Util.DummyTable, player.id)) then
+function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData, retrial)
+  if
+      effectData and
+      (effectData.disresponsive or table.contains(effectData.disresponsiveList or Util.DummyTable, player.id))
+  then
     return nil
   end
 
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
-  cancelable = (cancelable == nil) and true or cancelable
+  cancelable = cancelable ~= false
   extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
@@ -1857,27 +2028,52 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
     user = player,
     cardName = card_name,
     pattern = pattern,
-    extraData = extra_data,
+    extraData = extra_data
   }
+  local response = nil
   self.logic:trigger(fk.AskForCardResponse, player, eventData)
-
   if eventData.result then
-    return eventData.result
-  else
-    local data = {card_name, pattern, prompt, cancelable, extra_data}
-
+    eventData = {
+      from = player.id,
+      card = eventData.result,
+      skipDrop = true,
+      retrial = retrial,
+      responseToEvent = effectData
+    }
+    eventData.extraResponse = extra_data ~= nil
+    self:responseCard(eventData)
+    if eventData.nullified then
+      response = false
+    elseif eventData.breakEvent ~= true then
+      response = eventData
+    end
+  end
+  local data = { card_name, pattern, prompt, cancelable, extra_data }
+  while response == nil do
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
     Fk.currentResponsePattern = nil
-
     if result ~= "" then
-      local use = self:handleUseCardReply(player, result)
-      if use then
-        return use.card
+      result = self:handleUseCardReply(player, result)
+      if result then
+        result.skipDrop = true
+        result.retrial = retrial
+        result.responseToEvent = effectData
+        result.extraResponse = extra_data ~= nil
+        self:responseCard(result)
+        if result.nullified then
+          response = false
+        elseif result.breakEvent ~= true then
+          response = result
+        end
+      else
+        break
       end
+    else
+      break
     end
   end
-  return nil
+  return response
 end
 
 --- 同时询问多名玩家是否使用某一张牌。
@@ -1891,35 +2087,45 @@ end
 ---@param extra_data any|nil @ 额外信息
 ---@return CardUseStruct | nil @ 最终决胜出的卡牌使用信息
 function Room:askForNullification(players, card_name, pattern, prompt, cancelable, extra_data)
-  if #players == 0 then
-    return nil
-  end
-
   local command = "AskForUseCard"
   card_name = card_name or "nullification"
-  cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or Util.DummyTable
+  cancelable = cancelable ~= false
   prompt = prompt or ""
   pattern = pattern or card_name
 
   self:notifyMoveFocus(self.alive_players, card_name)
   self:doBroadcastNotify("WaitForNullification", "")
-
-  local data = {card_name, pattern, prompt, cancelable, extra_data}
-
-  Fk.currentResponsePattern = pattern
-  local winner = self:doRaceRequest(command, players, json.encode(data))
-
-  if winner then
-    local result = winner.client_reply
-    return self:handleUseCardReply(winner, result)
+  local use = nil
+  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
+  while use == nil do
+    Fk.currentResponsePattern = pattern
+    local winner = self:doRaceRequest(command, players, json.encode(data))
+    Fk.currentResponsePattern = nil
+    if winner then
+      local reply = self:handleUseCardReply(winner, winner.client_reply)
+      if reply then
+        local event = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect, true).data[1]
+        reply.responseToEvent = event
+        reply.toCard = event.card
+        reply.extraUse = extra_data ~= nil
+        self:useCard(reply)
+        if reply.nullified then
+          use = false
+        elseif reply.breakEvent ~= true then
+          use = reply
+        end
+      else
+        break
+      end
+    else
+      break
+    end
   end
-  Fk.currentResponsePattern = nil
-  return nil
+  return use
 end
 
 -- AG(a.k.a. Amazing Grace) functions
--- Popup a box that contains many cards, then ask player to choose one
+-- Popup a box that contains many cards, then ask player:delay(1200) to choose one
 
 --- 询问玩家从AG中选择一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
@@ -1950,7 +2156,7 @@ end
 function Room:fillAG(player, id_list, disable_ids)
   id_list = Card:getIdList(id_list)
   -- disable_ids = Card:getIdList(disable_ids)
-  player:doNotify("FillAG", json.encode{ id_list, disable_ids })
+  player:doNotify("FillAG", json.encode { id_list, disable_ids })
 end
 
 --- 告诉一些玩家，AG中的牌被taker取走了。
@@ -1958,7 +2164,7 @@ end
 ---@param id integer @ 被拿走的牌
 ---@param notify_list ServerPlayer[]|nil @ 要告知的玩家，默认为全员
 function Room:takeAG(taker, id, notify_list)
-  self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
+  self:doBroadcastNotify("TakeAG", json.encode { taker.id, id }, notify_list)
 end
 
 --- 关闭player那侧显示的AG。
@@ -1966,8 +2172,11 @@ end
 --- 若不传参（即player为nil），那么关闭所有玩家的AG。
 ---@param player ServerPlayer|nil @ 要关闭AG的玩家
 function Room:closeAG(player)
-  if player then player:doNotify("CloseAG", "")
-  else self:doBroadcastNotify("CloseAG", "") end
+  if player then
+    player:doNotify("CloseAG", "")
+  else
+    self:doBroadcastNotify("CloseAG", "")
+  end
 end
 
 -- Show a qml dialog and return qml's ClientInstance.replyToServer
@@ -1981,10 +2190,14 @@ end
 function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   local command = "CustomDialog"
   self:notifyMoveFocus(player, focustxt)
-  return self:doRequest(player, command, json.encode{
-    path = qmlPath,
-    data = extra_data,
-  })
+  return self:doRequest(
+    player,
+    command,
+    json.encode {
+      path = qmlPath,
+      data = extra_data
+    }
+  )
 end
 
 ---@param player ServerPlayer @ 移动的操作
@@ -2022,12 +2235,15 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     end
 
     if #cards > 0 then
-      table.sort(cards, function(prev, next)
-        local prevSubType = Fk:getCardById(prev).sub_type
-        local nextSubType = Fk:getCardById(next).sub_type
+      table.sort(
+        cards,
+        function(prev, next)
+          local prevSubType = Fk:getCardById(prev).sub_type
+          local nextSubType = Fk:getCardById(next).sub_type
 
-        return prevSubType < nextSubType
-      end)
+          return prevSubType < nextSubType
+        end
+      )
 
       for _, id in ipairs(cards) do
         table.insert(cardsPosition, self:getCardOwner(id) == targetOne and 0 or 1)
@@ -2058,7 +2274,8 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     return
   end
 
-  local firstGeneralName = targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
+  local firstGeneralName =
+      targetOne.general + (targetOne.deputyGeneral ~= "" and ("/" .. targetOne.deputyGeneral) or "")
   local secGeneralName = targetTwo.general + (targetTwo.deputyGeneral ~= "" and ("/" .. targetTwo.deputyGeneral) or "")
 
   local data = {
@@ -2073,12 +2290,15 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
 
   if result == "" then
     local randomIndex = math.random(1, #cards)
-    result = { cardId = cards[randomIndex], pos = cardsPosition[randomIndex] }
+    result = {
+      cardId = cards[randomIndex],
+      pos = cardsPosition[randomIndex]
+    }
   else
     result = json.decode(result)
   end
 
-  local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
+  local from, to = result.pos == 0 and targetOne, targetTwo and targetTwo or targetOne
   local cardToMove = self:getCardOwner(result.cardId):getVirualEquip(result.cardId) or Fk:getCardById(result.cardId)
   self:moveCardTo(
     cardToMove,
@@ -2091,7 +2311,11 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     player.id
   )
 
-  return { card = cardToMove, from = from.id, to = to.id }
+  return {
+    card = cardToMove,
+    from = from.id,
+    to = to.id
+  }
 end
 
 --- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
@@ -2113,16 +2337,17 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
   local data = {
     flag = flag,
     skillName = skillName,
-    excludeIds = excludeIds,
+    excludeIds = excludeIds
   }
-  local _, ret = self:askForUseActiveSkill(
-    player,
-    "choose_players_to_move_card_in_board",
-    prompt or "",
-    cancelable,
-    data,
-    no_indicate
-  )
+  local _, ret =
+      self:askForUseActiveSkill(
+        player,
+        "choose_players_to_move_card_in_board",
+        prompt or "",
+        cancelable,
+        data,
+        no_indicate
+      )
 
   if ret then
     return ret.targets
@@ -2151,8 +2376,7 @@ end
 ---@param aimEventCollaborators table<string, AimStruct[]>
 ---@return boolean
 local onAim = function(room, cardUseEvent, aimEventCollaborators)
-  local eventStages = { fk.TargetSpecifying, fk.TargetConfirming, fk.TargetSpecified, fk.TargetConfirmed }
-  for _, stage in ipairs(eventStages) do
+  for _, stage in ipairs({ fk.TargetSpecifying, fk.TargetConfirming, fk.TargetSpecified, fk.TargetConfirmed }) do
     if (not cardUseEvent.tos) or #cardUseEvent.tos == 0 then
       return false
     end
@@ -2180,7 +2404,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
           firstTarget = firstTarget,
           additionalDamage = cardUseEvent.additionalDamage,
           additionalRecover = cardUseEvent.additionalRecover,
-          extra_data = cardUseEvent.extra_data,
+          extra_data = cardUseEvent.extra_data
         }
 
         local index = 1
@@ -2212,7 +2436,14 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
 
       firstTarget = false
 
-      if room.logic:trigger(stage, (stage == fk.TargetSpecifying or stage == fk.TargetSpecified) and room:getPlayerById(aimStruct.from) or room:getPlayerById(aimStruct.to), aimStruct) then
+      if
+          room.logic:trigger(
+            stage,
+            (stage == fk.TargetSpecifying or stage == fk.TargetSpecified) and room:getPlayerById(aimStruct.from) or
+            room:getPlayerById(aimStruct.to),
+            aimStruct
+          )
+      then
         return false
       end
       AimGroup:removeDeadTargets(room, aimStruct)
@@ -2264,7 +2495,7 @@ end
 function Room:doCardUseEffect(cardUseEvent)
   ---@type table<string, AimStruct>
   local aimEventCollaborators = {}
-  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) then
+  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then
     return
   end
 
@@ -2278,11 +2509,13 @@ function Room:doCardUseEffect(cardUseEvent)
     end
 
     if self:getPlayerById(TargetGroup:getRealTargets(cardUseEvent.tos)[1]).dead then
-      self:moveCards({
-        ids = realCardIds,
-        toArea = Card.DiscardPile,
-        moveReason = fk.ReasonPutIntoDiscardPile,
-      })
+      self:moveCards(
+        {
+          ids = realCardIds,
+          toArea = Card.DiscardPile,
+          moveReason = fk.ReasonPutIntoDiscardPile
+        }
+      )
     else
       local target = TargetGroup:getRealTargets(cardUseEvent.tos)[1]
       local existingEquipId = self:getPlayerById(target):getEquipment(cardUseEvent.card.sub_type)
@@ -2292,22 +2525,24 @@ function Room:doCardUseEffect(cardUseEvent)
             ids = { existingEquipId },
             from = target,
             toArea = Card.DiscardPile,
-            moveReason = fk.ReasonPutIntoDiscardPile,
+            moveReason = fk.ReasonPutIntoDiscardPile
           },
           {
             ids = realCardIds,
             to = target,
             toArea = Card.PlayerEquip,
-            moveReason = fk.ReasonUse,
+            moveReason = fk.ReasonUse
           }
         )
       else
-        self:moveCards({
-          ids = realCardIds,
-          to = target,
-          toArea = Card.PlayerEquip,
-          moveReason = fk.ReasonUse,
-        })
+        self:moveCards(
+          {
+            ids = realCardIds,
+            to = target,
+            toArea = Card.PlayerEquip,
+            moveReason = fk.ReasonUse
+          }
+        )
       end
     end
 
@@ -2331,22 +2566,26 @@ function Room:doCardUseEffect(cardUseEvent)
           self:getPlayerById(target):addVirtualEquip(cardUseEvent.card)
         end
 
-        self:moveCards({
-          ids = realCardIds,
-          to = target,
-          toArea = Card.PlayerJudge,
-          moveReason = fk.ReasonUse,
-        })
+        self:moveCards(
+          {
+            ids = realCardIds,
+            to = target,
+            toArea = Card.PlayerJudge,
+            moveReason = fk.ReasonUse
+          }
+        )
 
         return
       end
     end
 
-    self:moveCards({
-      ids = realCardIds,
-      toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
-    })
+    self:moveCards(
+      {
+        ids = realCardIds,
+        toArea = Card.DiscardPile,
+        moveReason = fk.ReasonPutIntoDiscardPile
+      }
+    )
 
     return
   end
@@ -2369,7 +2608,7 @@ function Room:doCardUseEffect(cardUseEvent)
     additionalRecover = cardUseEvent.additionalRecover,
     cardsResponded = cardUseEvent.cardsResponded,
     prohibitedCardNames = cardUseEvent.prohibitedCardNames,
-    extra_data = cardUseEvent.extra_data,
+    extra_data = cardUseEvent.extra_data
   }
 
   -- If using card to other card (like jink or nullification), simply effect and return
@@ -2441,10 +2680,13 @@ end
 ---@param cardEffectEvent CardEffectEvent
 function Room:handleCardEffect(event, cardEffectEvent)
   if event == fk.PreCardEffect then
-    if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then return end
+    if cardEffectEvent.card.skill:aboutToEffect(self, cardEffectEvent) then
+      return
+    end
     if
-      cardEffectEvent.card.trueName == "slash" and
-      not (cardEffectEvent.unoffsetable or table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, cardEffectEvent.to))
+        cardEffectEvent.card.trueName == "slash" and
+        not (cardEffectEvent.unoffsetable or
+          table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, cardEffectEvent.to))
     then
       local loopTimes = 1
       if cardEffectEvent.fixedResponseTimes then
@@ -2455,51 +2697,36 @@ function Room:handleCardEffect(event, cardEffectEvent)
         end
       end
       Fk.currentResponsePattern = "jink"
-
       for i = 1, loopTimes do
         local to = self:getPlayerById(cardEffectEvent.to)
-        local prompt = ""
+        local prompt = nil
         if cardEffectEvent.from then
-          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+          if loopTimes > 1 then
+            prompt = "#slash-jinks:" .. cardEffectEvent.from .. "::" .. loopTimes + 1 - i .. ":" .. loopTimes
+          else
+            prompt = "#slash-jink:" .. cardEffectEvent.from .. "::1"
+          end
         end
-
-        local use = self:askForUseCard(
-          to,
-          "jink",
-          nil,
-          prompt,
-          true,
-          nil,
-          cardEffectEvent
-        )
-        if use then
-          use.toCard = cardEffectEvent.card
-          use.responseToEvent = cardEffectEvent
-          self:useCard(use)
-        end
-
-        if not cardEffectEvent.isCancellOut then
+        if self:askForUseCard(to, "jink", nil, prompt, true, nil, cardEffectEvent) then
+          cardEffectEvent.isCancellOut = true
+        else
+          cardEffectEvent.isCancellOut = false
           break
         end
-
-        cardEffectEvent.isCancellOut = i == loopTimes
       end
     elseif
-      cardEffectEvent.card.type == Card.TypeTrick and
-      not (cardEffectEvent.disresponsive or cardEffectEvent.unoffsetable) and
-      not table.contains(cardEffectEvent.prohibitedCardNames or Util.DummyTable, "nullification")
+        cardEffectEvent.card.type == Card.TypeTrick and
+        not (cardEffectEvent.disresponsive or cardEffectEvent.unoffsetable) and
+        not table.contains(cardEffectEvent.prohibitedCardNames or Util.DummyTable, "nullification")
     then
       local players = {}
       Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getHandlyIds(true)
-        for _, cid in ipairs(cards) do
+        for _, cid in ipairs(p:getHandlyIds(true)) do
           if
-            Fk:getCardById(cid).trueName == "nullification" and
-            not (
-              table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
-              table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
-            )
+              Fk:getCardById(cid).trueName == "nullification" and
+              not (table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+                table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id))
           then
             table.insert(players, p)
             break
@@ -2509,13 +2736,10 @@ function Room:handleCardEffect(event, cardEffectEvent)
           Self = p -- for enabledAtResponse
           for _, s in ipairs(table.connect(p.player_skills, p._fake_skills)) do
             if
-              s.pattern and
-              Exppattern:Parse("nullification"):matchExp(s.pattern) and
-              not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
-              not (
-                table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
-                table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
-              )
+                s.pattern and Exppattern:Parse("nullification"):matchExp(s.pattern) and
+                not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
+                not (table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+                  table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id))
             then
               table.insert(players, p)
               break
@@ -2535,22 +2759,25 @@ function Room:handleCardEffect(event, cardEffectEvent)
       if #TargetGroup:getRealTargets(cardEffectEvent.tos) > 1 then
         local parentUseEvent = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
         if parentUseEvent then
-          extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectEvent.to }
+          extra_data = {
+            useEventId = parentUseEvent.id,
+            effectTo = cardEffectEvent.to
+          }
         end
       end
-      local use = self:askForNullification(players, nil, nil, prompt, true, extra_data)
-      if use then
-        use.toCard = cardEffectEvent.card
-        use.responseToEvent = cardEffectEvent
-        self:useCard(use)
-      end
+      self:askForNullification(players, nil, nil, prompt, true, extra_data)
     end
     Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then
     if cardEffectEvent.card.skill then
-      execGameEvent(GameEvent.SkillEffect, function ()
-        cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
-      end, self:getPlayerById(cardEffectEvent.from), cardEffectEvent.card.skill)
+      execGameEvent(
+        GameEvent.SkillEffect,
+        function()
+          cardEffectEvent.card.skill:onEffect(self, cardEffectEvent)
+        end,
+        self:getPlayerById(cardEffectEvent.from),
+        cardEffectEvent.card.skill
+      )
     end
   end
 end
@@ -2571,22 +2798,36 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
 
-  if from:prohibitUse(card) then return false end
+  if from:prohibitUse(card) then
+    return false
+  end
 
-  if tos.class then tos = { tos } end
+  if tos.class then
+    tos = { tos }
+  end
   for i, p in ipairs(tos) do
     if from:isProhibited(p, card) then
       table.remove(tos, i)
     end
   end
 
-  if #tos == 0 then return false end
+  if #tos == 0 then
+    return false
+  end
 
-  if subcards then card:addSubcards(Card:getIdList(subcards)) end
+  if subcards then
+    card:addSubcards(Card:getIdList(subcards))
+  end
 
   local use = {} ---@type CardUseStruct
   use.from = from.id
-  use.tos = table.map(tos, function(p) return { p.id } end)
+  use.tos =
+      table.map(
+        tos,
+        function(p)
+          return { p.id }
+        end
+      )
   use.card = card
   use.extraUse = extra
   self:useCard(use)
@@ -2613,25 +2854,29 @@ end
 function Room:obtainCard(player, cid, unhide, reason)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
-    cid = cid:isVirtual() and cid.subcards or {cid.id}
+    cid = cid:isVirtual() and cid.subcards or { cid.id }
   else
-    cid = {cid}
+    cid = { cid }
   end
-  if #cid == 0 then return end
+  if #cid == 0 then
+    return
+  end
 
   if type(player) == "table" then
     player = player.id
   end
 
-  self:moveCards({
-    ids = cid,
-    from = self.owner_map[cid[1]],
-    to = player,
-    toArea = Card.PlayerHand,
-    moveReason = reason or fk.ReasonJustMove,
-    proposer = player,
-    moveVisible = unhide or false,
-  })
+  self:moveCards(
+    {
+      ids = cid,
+      from = self.owner_map[cid[1]],
+      to = player,
+      toArea = Card.PlayerHand,
+      moveReason = reason or fk.ReasonJustMove,
+      proposer = player,
+      moveVisible = unhide or false
+    }
+  )
 end
 
 --- 让玩家摸牌
@@ -2645,7 +2890,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
     who = player,
     num = num,
     skillName = skillName,
-    fromPlace = fromPlace,
+    fromPlace = fromPlace
   }
   if self.logic:trigger(fk.BeforeDrawCard, player, drawData) then
     self.logic:breakEvent(false)
@@ -2655,14 +2900,16 @@ function Room:drawCards(player, num, skillName, fromPlace)
   fromPlace = drawData.fromPlace
 
   local topCards = self:getNCards(num, fromPlace)
-  self:moveCards({
-    ids = topCards,
-    to = player.id,
-    toArea = Card.PlayerHand,
-    moveReason = fk.ReasonDraw,
-    proposer = player.id,
-    skillName = skillName,
-  })
+  self:moveCards(
+    {
+      ids = topCards,
+      to = player.id,
+      toArea = Card.PlayerHand,
+      moveReason = fk.ReasonDraw,
+      proposer = player.id,
+      skillName = skillName
+    }
+  )
 
   return { table.unpack(topCards) }
 end
@@ -2684,32 +2931,37 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
   local ids = Card:getIdList(card)
 
   local to
-  if table.contains(
-    {Card.PlayerEquip, Card.PlayerHand,
-      Card.PlayerJudge, Card.PlayerSpecial}, to_place) then
+  if table.contains({ Card.PlayerEquip, Card.PlayerHand, Card.PlayerJudge, Card.PlayerSpecial }, to_place) then
     to = target.id
   end
 
   local movesSplitedByOwner = {}
   for _, cardId in ipairs(ids) do
-    local moveFound = table.find(movesSplitedByOwner, function(move)
-      return move.from == self.owner_map[cardId]
-    end)
+    local moveFound =
+        table.find(
+          movesSplitedByOwner,
+          function(move)
+            return move.from == self.owner_map[cardId]
+          end
+        )
 
     if moveFound then
       table.insert(moveFound.ids, cardId)
     else
-      table.insert(movesSplitedByOwner, {
-        ids = { cardId },
-        from = self.owner_map[cardId],
-        to = to,
-        toArea = to_place,
-        moveReason = reason,
-        skillName = skill_name,
-        specialName = special_name,
-        moveVisible = visible,
-        proposer = proposer,
-      })
+      table.insert(
+        movesSplitedByOwner,
+        {
+          ids = { cardId },
+          from = self.owner_map[cardId],
+          to = to,
+          toArea = to_place,
+          moveReason = reason,
+          skillName = skill_name,
+          specialName = special_name,
+          moveVisible = visible,
+          proposer = proposer
+        }
+      )
     end
   end
 
@@ -2737,7 +2989,9 @@ end
 ---@param player ServerPlayer
 ---@param num integer @ 变化量
 function Room:changeShield(player, num)
-  if num == 0 then return end
+  if num == 0 then
+    return
+  end
   player.shield = math.max(player.shield + num, 0)
   player.shield = math.min(player.shield, 5)
   self:broadcastProperty(player, "shield")
@@ -2802,10 +3056,14 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
     skill_names = skill_names:split("|")
   end
 
-  if sendlog == nil then sendlog = true end
+  if sendlog == nil then
+    sendlog = true
+  end
 
-  if #skill_names == 0 then return end
-  local losts = {}  ---@type boolean[]
+  if #skill_names == 0 then
+    return
+  end
+  local losts = {} ---@type boolean[]
   local triggers = {} ---@type Skill[]
   for _, skill in ipairs(skill_names) do
     if string.sub(skill, 1, 1) == "-" then
@@ -2813,13 +3071,10 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
       if player:hasSkill(actual_skill, true, true) then
         local lost_skills = player:loseSkill(actual_skill, source_skill)
         for _, s in ipairs(lost_skills) do
-          self:doBroadcastNotify("LoseSkill", json.encode{
-            player.id,
-            s.name
-          })
+          self:doBroadcastNotify("LoseSkill", json.encode { player.id, s.name })
 
           if sendlog and s.visible then
-            self:sendLog{
+            self:sendLog {
               type = "#LoseSkill",
               from = player.id,
               arg = s.name
@@ -2838,13 +3093,10 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
         for _, s in ipairs(got_skills) do
           -- TODO: limit skill mark
 
-          self:doBroadcastNotify("AddSkill", json.encode{
-            player.id,
-            s.name
-          })
+          self:doBroadcastNotify("AddSkill", json.encode { player.id, s.name })
 
           if sendlog and s.visible then
-            self:sendLog{
+            self:sendLog {
               type = "#AcquireSkill",
               from = player.id,
               arg = s.name
@@ -2881,7 +3133,9 @@ end
 ---@param skillName string|nil @ 技能名
 ---@param exchange bool @ 是否要替换原有判定牌（即类似鬼道那样）
 function Room:retrial(card, player, judge, skillName, exchange)
-  if not card then return end
+  if not card then
+    return
+  end
   local triggerResponded = self.owner_map[card:getEffectiveId()] == player
   local isHandcard = (triggerResponded and self:getCardArea(card:getEffectiveId()) == Card.PlayerHand)
 
@@ -2911,12 +3165,12 @@ function Room:retrial(card, player, judge, skillName, exchange)
   move2.moveReason = fk.ReasonJustMove
   move2.to = exchange and player.id or nil
 
-  self:sendLog{
+  self:sendLog {
     type = "#ChangedJudge",
     from = player.id,
     to = { judge.who.id },
     card = { card:getEffectiveId() },
-    arg = skillName,
+    arg = skillName
   }
 
   self:moveCards(move1, move2)
@@ -2933,18 +3187,20 @@ end
 ---@param thrower ServerPlayer|nil @ 弃别人牌的人
 function Room:throwCard(card_ids, skillName, who, thrower)
   if type(card_ids) == "number" then
-    card_ids = {card_ids}
+    card_ids = { card_ids }
   end
   skillName = skillName or ""
   thrower = thrower or who
-  self:moveCards({
-    ids = card_ids,
-    from = who.id,
-    toArea = Card.DiscardPile,
-    moveReason = fk.ReasonDiscard,
-    proposer = thrower.id,
-    skillName = skillName
-  })
+  self:moveCards(
+    {
+      ids = card_ids,
+      from = who.id,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonDiscard,
+      proposer = thrower.id,
+      skillName = skillName
+    }
+  )
 end
 
 --- 重铸一名角色的牌。
@@ -2953,22 +3209,24 @@ end
 ---@param skillName string|nil @ 技能名，默认为“重铸”
 function Room:recastCard(card_ids, who, skillName)
   if type(card_ids) == "number" then
-    card_ids = {card_ids}
+    card_ids = { card_ids }
   end
   skillName = skillName or "recast"
-  self:moveCards({
-    ids = card_ids,
-    from = who.id,
-    toArea = Card.DiscardPile,
-    skillName = skillName,
-    moveReason = fk.ReasonPutIntoDiscardPile,
-    proposer = who.id
-  })
-  self:sendLog{
+  self:moveCards(
+    {
+      ids = card_ids,
+      from = who.id,
+      toArea = Card.DiscardPile,
+      skillName = skillName,
+      moveReason = fk.ReasonPutIntoDiscardPile,
+      proposer = who.id
+    }
+  )
+  self:sendLog {
     type = skillName == "recast" and "#Recast" or "#RecastBySkill",
     from = who.id,
     card = card_ids,
-    arg = skillName,
+    arg = skillName
   }
   self:drawCards(who, #card_ids, skillName)
 end
@@ -3015,8 +3273,12 @@ function Room:swapSeat(a, b)
   local ai, bi
   local players = self.players
   for i, v in ipairs(self.players) do
-    if v == a then ai = i end
-    if v == b then bi = i end
+    if v == a then
+      ai = i
+    end
+    if v == b then
+      bi = i
+    end
   end
 
   players[ai] = b
@@ -3088,7 +3350,9 @@ end
 ---@param player ServerPlayer
 ---@param sendLog bool
 function Room:revivePlayer(player, sendLog)
-  if not player.dead then return end
+  if not player.dead then
+    return
+  end
   self:setPlayerProperty(player, "dead", false)
   player._splayer:setDied(false)
   self:setPlayerProperty(player, "dying", false)
@@ -3097,7 +3361,10 @@ function Room:revivePlayer(player, sendLog)
 
   sendLog = (sendLog == nil) and true or sendLog
   if sendLog then
-    self:sendLog { type = "#Revive", from = player.id }
+    self:sendLog {
+      type = "#Revive",
+      from = player.id
+    }
   end
 end
 
@@ -3110,7 +3377,9 @@ local function shouldUpdateWinRate(room)
     return false
   end
   for _, p in ipairs(room.players) do
-    if p.id < 0 then return false end
+    if p.id < 0 then
+      return false
+    end
   end
   return Fk.game_modes[room.settings.gameMode]:countInFunc(room)
 end
@@ -3118,7 +3387,9 @@ end
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
-  if not self.game_started then return end
+  if not self.game_started then
+    return
+  end
 
   self.logic:trigger(fk.GameFinished, nil, winner)
   self.game_started = false
@@ -3149,10 +3420,7 @@ function Room:gameOver(winner)
 
   self.room:gameOver()
 
-  if table.contains(
-    { "running", "normal" },
-    coroutine.status(self.main_co)
-  ) then
+  if table.contains({ "running", "normal" }, coroutine.status(self.main_co)) then
     coroutine.yield("__handleRequest", "over")
   else
     coroutine.close(self.main_co)
@@ -3251,16 +3519,23 @@ function Room:canMoveCardInBoard(flag, players, excludeIds)
   excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
   local targets = {}
-  table.find(players, function(p)
-    local canMoveTo = table.find(players, function(another)
-      return p ~= another and p:canMoveCardsInBoardTo(another, flag, excludeIds)
-    end)
+  table.find(
+    players,
+    function(p)
+      local canMoveTo =
+          table.find(
+            players,
+            function(another)
+              return p ~= another and p:canMoveCardsInBoardTo(another, flag, excludeIds)
+            end
+          )
 
-    if canMoveTo then
-      targets = {p.id, canMoveTo.id}
+      if canMoveTo then
+        targets = { p.id, canMoveTo.id }
+      end
+      return canMoveTo
     end
-    return canMoveTo
-  end)
+  )
 
   return targets
 end
@@ -3275,7 +3550,7 @@ function Room:printCard(name, suit, number)
   Fk:_addPrintedCard(cd)
   table.insert(self.void, cd.id)
   self:setCardArea(cd.id, Card.Void, nil)
-  self:doBroadcastNotify("PrintCard", json.encode{ name, suit, number })
+  self:doBroadcastNotify("PrintCard", json.encode { name, suit, number })
   return cd
 end
 
@@ -3285,11 +3560,7 @@ function Room:updateQuestSkillState(player, skillName, failed)
   self:setPlayerMark(player, MarkEnum.QuestSkillPreName .. skillName, failed and "failed" or "succeed")
   local updateValue = failed and 2 or 1
 
-  self:doBroadcastNotify("UpdateQuestSkillUI", json.encode{
-    player.id,
-    skillName,
-    updateValue,
-  })
+  self:doBroadcastNotify("UpdateQuestSkillUI", json.encode { player.id, skillName, updateValue })
 end
 
 function Room:abortPlayerArea(player, playerSlots)
@@ -3331,17 +3602,25 @@ function Room:abortPlayerArea(player, playerSlots)
     return
   end
 
-  self:moveCards({
-    ids = cardsToDrop,
-    from = player.id,
-    toArea = Card.DiscardPile,
-    moveReason = fk.ReasonPutIntoDiscardPile,
-  })
+  self:moveCards(
+    {
+      ids = cardsToDrop,
+      from = player.id,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile
+    }
+  )
 
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
 
-  self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
+  self.logic:trigger(
+    fk.AreaAborted,
+    player,
+    {
+      slots = slotsSealed
+    }
+  )
 end
 
 function Room:resumePlayerArea(player, playerSlots)
@@ -3363,7 +3642,13 @@ function Room:resumePlayerArea(player, playerSlots)
 
   if #slotsToResume > 0 then
     self:broadcastProperty(player, "sealedSlots")
-    self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
+    self.logic:trigger(
+      fk.AreaResumed,
+      player,
+      {
+        slots = slotsToResume
+      }
+    )
   end
 end
 

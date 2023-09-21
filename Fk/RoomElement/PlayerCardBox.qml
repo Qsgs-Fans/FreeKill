@@ -78,10 +78,10 @@ GraphicsBox {
             }
             onSelectedChanged: {
               if (selected) {
-                chosenInBox = true;
+                virt_name = "$Selected";
                 root.selected_ids.push(cid);
               } else {
-                chosenInBox = false;
+                virt_name = "";
                 root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
               }
               root.selected_ids = root.selected_ids;
@@ -120,6 +120,38 @@ GraphicsBox {
       ret = findAreaModel(name);
     }
     return ret;
+  }
+
+  function addHandcards(cards) {
+    let handcards = findAreaModel('$Hand').areaCards;
+    if (cards instanceof Array) {
+      for (let i = 0; i < cards.length; i++)
+        handcards.append(cards[i]);
+    } else {
+      handcards.append(cards);
+    }
+  }
+
+  function addEquips(cards)
+  {
+    let equips = findAreaModel('$Equip').areaCards;
+    if (cards instanceof Array) {
+      for (let i = 0; i < cards.length; i++)
+        equips.append(cards[i]);
+    } else {
+      equips.append(cards);
+    }
+  }
+
+  function addDelayedTricks(cards)
+  {
+    let delayedTricks = findAreaModel('$Judge').areaCards;
+    if (cards instanceof Array) {
+      for (let i = 0; i < cards.length; i++)
+        delayedTricks.append(cards[i]);
+    } else {
+      delayedTricks.append(cards);
+    }
   }
 
   function addCustomCards(name, cards) {

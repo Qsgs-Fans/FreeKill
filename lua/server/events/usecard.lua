@@ -1,15 +1,18 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
-
 local playCardEmotionAndSound = function(room, player, card)
   if card.type ~= Card.TypeEquip then
     local anim_path = "./packages/" .. card.package.extensionName .. "/image/anim/" .. card.name
     if not FileIO.exists(anim_path) then
       for _, dir in ipairs(FileIO.ls("./packages/")) do
         anim_path = "./packages/" .. dir .. "/image/anim/" .. card.name
-        if FileIO.exists(anim_path) then break end
+        if FileIO.exists(anim_path) then
+          break
+        end
       end
     end
-    if FileIO.exists(anim_path) then room:setEmotion(player, anim_path) end
+    if FileIO.exists(anim_path) then
+      room:setEmotion(player, anim_path)
+    end
   end
 
   local soundName
@@ -25,13 +28,15 @@ local playCardEmotionAndSound = function(room, player, card)
 
     soundName = "./audio/card/common/" .. subTypeStr
   else
-    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
-      .. (player.gender == General.Male and "male/" or "female/") .. card.name
+    soundName = "./packages/" .. card.package.extensionName .. "/audio/card/" ..
+        (player.gender == General.Male and "male/" or "female/") .. card.name
     if not FileIO.exists(soundName .. ".mp3") then
       for _, dir in ipairs(FileIO.ls("./packages/")) do
-        soundName = "./packages/" .. dir .. "/audio/card/"
-          .. (player.gender == General.Male and "male/" or "female/") .. card.name
-        if FileIO.exists(soundName .. ".mp3") then break end
+        soundName = "./packages/" .. dir .. "/audio/card/" ..
+            (player.gender == General.Male and "male/" or "female/") .. card.name
+        if FileIO.exists(soundName .. ".mp3") then
+          break
+        end
       end
     end
   end
@@ -49,17 +54,19 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   local card = _card
   ---[[
   if not _card:isVirtual() then
-    local temp = { card = _card }
+    local temp = {
+      card = _card
+    }
     Fk:filterCard(_card.id, room:getPlayerById(from), temp)
     card = temp.card
   end
   cardUseEvent.card = card
-  --]]
+  -- ]]
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
   room:doAnimate("Indicate", {
     from = from,
-    to = cardUseEvent.tos or Util.DummyTable,
+    to = cardUseEvent.tos or Util.DummyTable
   })
 
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
@@ -71,23 +78,23 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
 
     if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
-        room:sendLog{
+        room:sendLog {
           type = "#UseV0CardToTargets",
           from = from,
           to = to,
-          arg = card:toLogString(),
+          arg = card:toLogString()
         }
       else
-        room:sendLog{
+        room:sendLog {
           type = "#UseVCardToTargets",
           from = from,
           to = to,
           card = useCardIds,
-          arg = card:toLogString(),
+          arg = card:toLogString()
         }
       end
     else
-      room:sendLog{
+      room:sendLog {
         type = "#UseCardToTargets",
         from = from,
         to = to,
@@ -97,74 +104,78 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
 
     for _, t in ipairs(cardUseEvent.tos) do
       if t[2] then
-        local temp = {table.unpack(t)}
+        local temp = { table.unpack(t) }
         table.remove(temp, 1)
-        room:sendLog{
+        room:sendLog {
           type = "#CardUseCollaborator",
           from = t[1],
           to = temp,
-          arg = card.name,
+          arg = card.name
         }
       end
     end
   elseif cardUseEvent.toCard then
     if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
-        room:sendLog{
+        room:sendLog {
           type = "#UseV0CardToCard",
           from = from,
           arg = cardUseEvent.toCard.name,
-          arg2 = card:toLogString(),
+          arg2 = card:toLogString()
         }
       else
-        room:sendLog{
+        room:sendLog {
           type = "#UseVCardToCard",
           from = from,
           card = useCardIds,
           arg = cardUseEvent.toCard.name,
-          arg2 = card:toLogString(),
+          arg2 = card:toLogString()
         }
       end
     else
-      room:sendLog{
+      room:sendLog {
         type = "#UseCardToCard",
         from = from,
         card = useCardIds,
-        arg = cardUseEvent.toCard.name,
+        arg = cardUseEvent.toCard.name
       }
     end
   else
     if card:isVirtual() or (card ~= _card) then
       if #useCardIds == 0 then
-        room:sendLog{
+        room:sendLog {
           type = "#UseV0Card",
           from = from,
-          arg = card:toLogString(),
+          arg = card:toLogString()
         }
       else
-        room:sendLog{
+        room:sendLog {
           type = "#UseVCard",
           from = from,
           card = useCardIds,
-          arg = card:toLogString(),
+          arg = card:toLogString()
         }
       end
     else
-      room:sendLog{
+      room:sendLog {
         type = "#UseCard",
         from = from,
-        card = useCardIds,
+        card = useCardIds
       }
     end
   end
 
-  if #useCardIds == 0 then return end
+  if #useCardIds == 0 then
+    return
+  end
   if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
-    local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
+    local tos = table.map(cardUseEvent.tos, function(e)
+      return e[1]
+    end)
     room:sendFootnote(useCardIds, {
       type = "##UseCardTo",
       from = from,
-      to = tos,
+      to = tos
     })
     if card:isVirtual() then
       room:sendCardVirtName(useCardIds, card.name)
@@ -172,7 +183,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   else
     room:sendFootnote(useCardIds, {
       type = "##UseCard",
-      from = from,
+      from = from
     })
     if card:isVirtual() then
       room:sendCardVirtName(useCardIds, card.name)
@@ -185,15 +196,17 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
-  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
-
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
+    cardUseEvent.breakEvent = true
+    self.data = { cardUseEvent }
     logic:breakEvent()
   end
+
+  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   sendCardEmotionAndLog(room, cardUseEvent)
 
@@ -205,7 +218,6 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.responseToEvent.cardsResponded = cardUseEvent.responseToEvent.cardsResponded or {}
     table.insertIfNeed(cardUseEvent.responseToEvent.cardsResponded, cardUseEvent.card)
   end
-
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do
     if not cardUseEvent.toCard and #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
       break
@@ -229,7 +241,7 @@ GameEvent.cleaners[GameEvent.UseCard] = function(self)
     room:moveCards({
       ids = leftRealCardIds,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonUse,
+      moveReason = fk.ReasonUse
     })
   end
 end
@@ -238,50 +250,54 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   local cardResponseEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
+
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    cardResponseEvent.breakEvent = true
+    self.data = { cardResponseEvent }
+    logic:breakEvent()
+  end
+
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
   local card = cardResponseEvent.card
   local cardIds = room:getSubcardsByRule(card)
 
   if card:isVirtual() then
     if #cardIds == 0 then
-      room:sendLog{
+      room:sendLog {
         type = "#ResponsePlayV0Card",
         from = from,
-        arg = card:toLogString(),
+        arg = card:toLogString()
       }
     else
-      room:sendLog{
+      room:sendLog {
         type = "#ResponsePlayVCard",
         from = from,
         card = cardIds,
-        arg = card:toLogString(),
+        arg = card:toLogString()
       }
     end
   else
-    room:sendLog{
+    room:sendLog {
       type = "#ResponsePlayCard",
       from = from,
-      card = cardIds,
+      card = cardIds
     }
   end
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
       type = "##ResponsePlayCard",
-      from = from,
+      from = from
     })
     if card:isVirtual() then
       room:sendCardVirtName(cardIds, card.name)
     end
   end
-
-  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-    logic:breakEvent()
+  if cardResponseEvent.retrial ~= true then
+    playCardEmotionAndSound(room, room:getPlayerById(from), card)
   end
-
-  playCardEmotionAndSound(room, room:getPlayerById(from), card)
-
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
+  self.data = { cardResponseEvent }
 end
 
 GameEvent.cleaners[GameEvent.RespondCard] = function(self)
@@ -295,7 +311,7 @@ GameEvent.cleaners[GameEvent.RespondCard] = function(self)
     room:moveCards({
       ids = realCardIds,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonResonpse,
+      moveReason = fk.ReasonResonpse
     })
   end
 end
@@ -315,13 +331,9 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
       end
     end
 
-    if
-      not cardEffectEvent.toCard and
-      (
-        not (room:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to)
-        or #room:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0
-      )
-    then
+    if not cardEffectEvent.toCard and
+        (not (room:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or
+          #room:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
       logic:breakEvent()
     end
 

@@ -136,8 +136,10 @@ function Player:setGeneral(general, setHp, addSkills)
 end
 
 function Player:getGeneralMaxHp()
-  local general = Fk.generals[type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
-  local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputyGeneral]
+  local general = Fk.generals
+      [type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
+  local deputy = Fk.generals
+      [type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputyGeneral]
 
   if not deputy then
     return general.maxHp + general.mainMaxHpAdjustedValue
@@ -267,7 +269,7 @@ function Player:removeCards(playerArea, cardIds, specialName)
 
       if table.contains(fromAreaIds, id) then
         table.removeOne(fromAreaIds, id)
-      -- FIXME: 为客户端移动id为-1的牌考虑，但总感觉有地方需要商讨啊！
+        -- FIXME: 为客户端移动id为-1的牌考虑，但总感觉有地方需要商讨啊！
       elseif table.every(fromAreaIds, function(e) return e == -1 end) then
         table.remove(fromAreaIds, 1)
       elseif id == -1 then
@@ -329,11 +331,17 @@ end
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
   playerAreas = playerAreas or rightAreas
+  local cardIds = {}
   if type(playerAreas) == "string" then
     local str = playerAreas
     playerAreas = {}
     if str:find("h") then
       table.insert(playerAreas, Player.Hand)
+    end
+    if str:find("&") then
+      for k, v in pairs(self.special_cards) do
+        if k:endsWith("&") then table.insertTable(cardIds, v) end
+      end
     end
     if str:find("e") then
       table.insert(playerAreas, Player.Equip)
@@ -346,7 +354,6 @@ function Player:getCardIds(playerAreas, specialName)
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-  local cardIds = {}
   for _, area in ipairs(areas) do
     assert(table.contains(rightAreas, area))
     assert(area ~= Player.Special or type(specialName) == "string")
@@ -510,7 +517,8 @@ function Player:distanceTo(other, mode, ignore_dead)
   if temp ~= other then
     print("Distance malfunction: start and end does not matched.")
   end
-  local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right - #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)
+  local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right -
+      #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)
   local ret = 0
   if mode == "left" then
     ret = left
@@ -586,7 +594,7 @@ function Player:addCardUseHistory(cardName, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
 
-  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or {0, 0, 0, 0}
+  self.cardUsedHistory[cardName] = self.cardUsedHistory[cardName] or { 0, 0, 0, 0 }
   local t = self.cardUsedHistory[cardName]
   for i, _ in ipairs(t) do
     t[i] = t[i] + num
@@ -623,7 +631,7 @@ function Player:addSkillUseHistory(skill_name, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
 
-  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or {0, 0, 0, 0}
+  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or { 0, 0, 0, 0 }
   local t = self.skillUsedHistory[skill_name]
   for i, _ in ipairs(t) do
     t[i] = t[i] + num
@@ -648,7 +656,7 @@ function Player:setSkillUseHistory(skill_name, num, scope)
     return
   end
 
-  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or {0, 0, 0, 0}
+  self.skillUsedHistory[skill_name] = self.skillUsedHistory[skill_name] or { 0, 0, 0, 0 }
   self.skillUsedHistory[skill_name][scope] = num
 end
 
@@ -681,7 +689,7 @@ end
 
 --- 获取玩家是否无手牌及装备牌。
 function Player:isNude()
-  return #self:getCardIds{Player.Hand, Player.Equip} == 0
+  return #self:getCardIds { Player.Hand, Player.Equip } == 0
 end
 
 --- 获取玩家所有区域是否无牌。
@@ -729,9 +737,8 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   end
 
   if self:isInstanceOf(ServerPlayer) and -- isInstanceOf(nil) will return false
-    table.contains(self._fake_skills, skill) and
-    table.contains(self.prelighted_skills, skill) then
-
+      table.contains(self._fake_skills, skill) and
+      table.contains(self.prelighted_skills, skill) then
     return true
   end
 
@@ -751,7 +758,7 @@ end
 function Player:addSkill(skill, source_skill)
   skill = getActualSkill(skill)
 
-  local toget = {table.unpack(skill.related_skills)}
+  local toget = { table.unpack(skill.related_skills) }
   table.insert(toget, skill)
 
   local room = Fk:currentRoom()
@@ -812,7 +819,7 @@ function Player:loseSkill(skill, source_skill)
   table.insert(tolose, skill)
   self.derivative_skills[skill] = nil
 
-  local ret = {}  ---@type Skill[]
+  local ret = {} ---@type Skill[]
   for _, s in ipairs(tolose) do
     if not self:hasSkill(s, true, true) then
       table.insert(ret, s)
@@ -824,7 +831,7 @@ end
 --- 获取对应玩家所有技能。
 -- return all skills that xxx:hasSkill() == true
 function Player:getAllSkills()
-  local ret = {table.unpack(self.player_skills)}
+  local ret = { table.unpack(self.player_skills) }
   for _, t in pairs(self.derivative_skills) do
     for _, s in ipairs(t) do
       table.insertIfNeed(ret, s)
@@ -844,8 +851,7 @@ end
 ---@param to Player @ 特定玩家
 ---@param card Card @ 特定牌
 function Player:isProhibited(to, card)
-  local r = Fk:currentRoom()
-
+  if type(card) == "number" then card = Fk:getCardById(card) end
   if card.type == Card.TypeEquip and #to:getAvailableEquipSlots(card.sub_type) == 0 then
     return true
   end
@@ -855,7 +861,12 @@ function Player:isProhibited(to, card)
     return true
   end
 
-  local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
+  if fk.useMustTargets and
+      not table.contains(fk.useMustTargets, to.id) then
+    return true
+  end
+
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:isProhibited(self, to, card) then
       return true
@@ -907,8 +918,8 @@ function Player:prohibitReveal(isDeputy)
     return true
   end
   for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-      return self:getMark(MarkEnum.RevealProhibited .. s)
-    end)) do
+    return self:getMark(MarkEnum.RevealProhibited .. s)
+  end)) do
     if type(m) == "table" and table.contains(m, place) then
       return true
     end
@@ -928,9 +939,11 @@ fk.SwitchYin = 1
 ---@return number|string @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then
-    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yin" or fk.SwitchYin) or (inWord and "yang" or fk.SwitchYang)
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yin" or fk.SwitchYin) or
+        (inWord and "yang" or fk.SwitchYang)
   else
-    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yang" or fk.SwitchYang) or (inWord and "yin" or fk.SwitchYin)
+    return self:getMark(MarkEnum.SwithSkillPreName .. skillName) < 1 and (inWord and "yang" or fk.SwitchYang) or
+        (inWord and "yin" or fk.SwitchYin)
   end
 end
 
@@ -946,12 +959,12 @@ function Player:canMoveCardInBoardTo(to, id)
     return to:hasEmptyEquipSlot(card.sub_type)
   else
     return
-      not (
-        table.find(to:getCardIds(Player.Judge), function(cardId)
-          return Fk:getCardById(cardId).name == card.name
-        end) or
-        table.contains(to.sealedSlots, Player.JudgeSlot)
-      )
+        not (
+          table.find(to:getCardIds(Player.Judge), function(cardId)
+            return Fk:getCardById(cardId).name == card.name
+          end) or
+          table.contains(to.sealedSlots, Player.JudgeSlot)
+        )
   end
 end
 
