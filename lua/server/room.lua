@@ -1334,15 +1334,16 @@ function Room:getNGenerals(n, position)
 
   local generals = {}
   while n > 0 do
-    if #self.general_pile < 1 then
-      self:gameOver("")
-    end
 
     local index = position == "top" and 1 or #self.general_pile
     table.insert(generals, self.general_pile[index])
     table.remove(self.general_pile, index)
 
     n = n - 1
+  end
+
+  if #generals < 1 then
+    self:gameOver("")
   end
 
   return generals
