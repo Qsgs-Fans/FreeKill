@@ -62,7 +62,7 @@ fk.ai_card.god_salvation = {
     end
   end,
   value = 1.5,
-  priority = 2
+  priority = 4
 }
 fk.ai_card.amazing_grace = {
   intention = -30,
@@ -272,13 +272,13 @@ end
 fk.ai_nullification.ex_nihilo = function(self, card, to, from, positive)
   if positive then
     if self:isEnemie(to) then
-      if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
+      if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
     end
   else
     if self:isFriend(to) then
-      if #self.avail_cards > 1 or self:isWeak(to) then
+      if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
     end
@@ -331,6 +331,35 @@ fk.ai_nullification.god_salvation = function(self, card, to, from, positive)
       end
     end
   end
+end
+
+fk.ai_use_play.god_salvation = function(self, card)
+  local can = 0
+  for _, p in ipairs(self.enemies) do
+    if p:isWounded()
+    then
+      can = can - 1
+      if self:isWeak(p)
+      then
+        can = can - 1
+      end
+    end
+  end
+  for _, p in ipairs(self.friends) do
+    if p:isWounded()
+    then
+      can = can + 1
+      if self:isWeak(p)
+      then
+        can = can + 1
+      end
+    end
+  end
+  self.use_id = can > 0 and card.id
+end
+
+fk.ai_use_play.amazing_grace = function(self, card)
+  self.use_id = #self.player:getCardIds("&h") <= self.player.hp and card.id
 end
 
 fk.ai_use_play.ex_nihilo = function(self, card)

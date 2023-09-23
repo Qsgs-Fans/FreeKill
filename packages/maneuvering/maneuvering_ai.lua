@@ -114,6 +114,22 @@ fk.ai_dis_card.fire_attack_skill = function(self, min_num, num, include_equip, c
   end
 end
 
+fk.ai_nullification.fire_attack = function(self, card, to, from, positive)
+  if positive then
+    if self:isFriend(to) and #to:getCardIds("h") > 0 and #from:getCardIds("h") > 0 then
+      if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
+        self.use_id = self.avail_cards[1]
+      end
+    end
+  else
+    if self:isEnemie(to) and #to:getCardIds("h") > 0 and #from:getCardIds("h") > 1 then
+      if #self.avail_cards > 1 or self:isWeak(to) then
+        self.use_id = self.avail_cards[1]
+      end
+    end
+  end
+end
+
 fk.ai_card.fire_attack = {
   intention = 120, -- 身份值
   value = 2,       -- 卡牌价值
@@ -129,6 +145,28 @@ fk.ai_use_play.supply_shortage = function(self, card)
     end
   end
 end
+
+fk.ai_nullification.supply_shortage = function(self, card, to, from, positive)
+  if positive then
+    if self:isFriend(to) then
+      if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
+        self.use_id = self.avail_cards[1]
+      end
+    end
+  else
+    if self:isEnemie(to) then
+      if #self.avail_cards > 1 or self:isWeak(to) then
+        self.use_id = self.avail_cards[1]
+      end
+    end
+  end
+end
+
+fk.ai_card.supply_shortage = {
+  intention = 130, -- 身份值
+  value = 2,       -- 卡牌价值
+  priority = 1     -- 使用优先值
+}
 
 fk.ai_skill_invoke["#fan_skill"] = function(self)
   local use = self:eventData("UseCard")

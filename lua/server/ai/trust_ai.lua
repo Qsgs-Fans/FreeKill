@@ -952,18 +952,18 @@ local function updateIntention(player, to, intention)
   if player.id == to.id then
     return
   elseif player.role == "lord" then
-    fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * 300 / (300 + fk.roleValue[to.id].rebel)
+    fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
   else
     if to.role == "lord" or fk.ai_role[to.id] == "loyalist" then
       fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel +
-          intention * 200 / (200 + fk.roleValue[player.id].rebel)
+          intention * (200 - fk.roleValue[player.id].rebel) / 200
     elseif fk.ai_role[to.id] == "rebel" then
       fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel -
-          intention * -200 / (-200 + fk.roleValue[player.id].rebel)
+          intention * (fk.roleValue[player.id].rebel + 200) / 200
     end
     if fk.roleValue[player.id].rebel < 0 and intention > 0 or fk.roleValue[player.id].rebel > 0 and intention < 0 then
       fk.roleValue[player.id].renegade = fk.roleValue[player.id].renegade +
-          intention * 100 / (200 + fk.roleValue[player.id].renegade)
+          intention * (100 - fk.roleValue[player.id].renegade) / 200
     end
     local aps = player.room:getAlivePlayers()
     local function compare_func(a, b)
@@ -995,7 +995,7 @@ local function updateIntention(player, to, intention)
       else
         fk.ai_role[ap.id] = "neutral"
       end
-    end --[[
+    end
     fk.qWarning(
       player.general ..
       " " ..
@@ -1003,7 +1003,7 @@ local function updateIntention(player, to, intention)
       " " ..
       fk.ai_role[player.id] ..
       " rebelValue:" .. fk.roleValue[player.id].rebel .. " renegadeValue:" .. fk.roleValue[player.id].renegade
-    )--]]
+    ) --]]
   end
 end
 
