@@ -10,5 +10,8 @@
     "missing-fields",
     "assign-type-mismatch",
     "undefined-doc-name"
+  ],
+  "Lua.diagnostics.globals": [
+    "GameRule"
   ]
 }

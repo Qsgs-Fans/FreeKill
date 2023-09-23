@@ -199,6 +199,32 @@ end
 
 fk.ai_skill_invoke = {}
 
+trust_cb.AskForAG = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local prompt = data[3]
+  local cancelable = data[2]
+  local id_list = data[1]
+  local ask = fk.ai_askfor_ag[prompt:split(":")[1]]
+  self:updatePlayers()
+  if type(ask) == "function" then
+    ask = ask(self, id_list, cancelable, prompt)
+  end
+  if type(ask) ~= "number" then
+    local cards =
+        table.map(
+          id_list,
+          function(id)
+            return Fk:getCardById(id)
+          end
+        )
+    self:sortValue(cards)
+    ask = cards[#cards].id
+  end
+  return ask
+end
+
+fk.ai_askfor_ag = {}
+
 trust_cb.AskForUseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]

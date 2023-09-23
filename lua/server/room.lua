@@ -1231,7 +1231,7 @@ function Room:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skill
   if maxNum < 1 then
     return {}
   end
-  cancelable = (cancelable == nil) and true or cancelable
+  cancelable = cancelable ~= false
   no_indicate = no_indicate or false
 
   local data = {
@@ -1294,7 +1294,7 @@ function Room:askForCard(
     pattern = pattern,
     expand_pile = expand_pile
   }
-  local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
+  prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data, no_indicate)
   if ret then
     chosenCards = ret.cards
@@ -1340,7 +1340,7 @@ function Room:askForChooseCardAndPlayers(
   if maxNum < 1 then
     return {}
   end
-  cancelable = (cancelable == nil) and true or cancelable
+  cancelable = cancelable ~= false
   no_indicate = no_indicate or false
   pattern = pattern or "."
 

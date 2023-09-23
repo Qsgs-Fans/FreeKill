@@ -14,10 +14,10 @@ local GameLogic = class("GameLogic")
 
 function GameLogic:initialize(room)
   self.room = room
-  self.skill_table = {}   -- TriggerEvent --> TriggerSkill[]
+  self.skill_table = {} -- TriggerEvent --> TriggerSkill[]
   self.skill_priority_table = {}
   self.refresh_skill_table = {}
-  self.skills = {}   -- skillName[]
+  self.skills = {} -- skillName[]
   self.game_event_stack = Stack:new()
   self.all_game_events = {}
   self.event_recorder = {}
@@ -348,7 +348,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
-  local _target = room.current   -- for iteration
+  local _target = room.current -- for iteration
   local player = _target
   if #skills_to_refresh > 0 then
     repeat
@@ -452,7 +452,7 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
     start_event = event:findParent(GameEvent.Phase, true)
   end
 
-  return start_event:searchEvents(eventType, n, func)
+  return start_event and start_event:searchEvents(eventType, n, func)
 end
 
 function GameLogic:dumpEventStack(detailed)

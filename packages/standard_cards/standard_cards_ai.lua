@@ -433,4 +433,7 @@ fk.ai_skill_invoke["#kylin_bow_skill"] = function(self)
   return not self:isFriend(damage.to)
 end
 
-fk.ai_skill_invoke["#eight_diagram_skill"] = true
+fk.ai_skill_invoke["#eight_diagram_skill"] = function(self)
+  local effect = self:eventData("CardEffect")
+  return effect and self:isFriend(effect.to)
+end
