@@ -691,8 +691,7 @@ function CheckSurrenderAvailable(playedTime)
 end
 
 function SaveRecord()
-  local c = ClientInstance
-  c.client:saveRecord(json.encode(c.record), c.record[2])
+  ClientInstance.client:saveRecord(json.encode(ClientInstance.record), ClientInstance.record[2])
 end
 
 function GetCardProhibitReason(cid, method, pattern)
@@ -743,6 +742,10 @@ function PoxiFeasible(poxi_type, selected, data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return "false" end
   return json.encode(poxi.feasible(selected, data))
+<<<<<<< HEAD
+=======
+>>>>>>> 30b363ef775598c6c6510ceb17e70ca01bd2f677
+>>>>>>> 269c4fdee7d25ef0b05982793d8710a738edd69b
 end
 
 dofile "lua/client/i18n/init.lua"
