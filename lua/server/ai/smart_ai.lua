@@ -418,6 +418,10 @@ function SmartAI:getPriority(card)
     end
     v = v + (13 - card.number) / 100
     v = v + card.suit / 100
+    if card:isVirtual()
+    then
+      v = v - #card.subcards * 0.25
+    end
   end
   return v
 end
@@ -1103,8 +1107,8 @@ function SmartAI:eventData(game_event)
 end
 
 for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n) and FileIO.exists("packages/" .. n .. "/" .. n .. "_ai.lua") then
-    dofile("packages/" .. n .. "/" .. n .. "_ai.lua")
+  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
+    dofile("packages/" .. n .. "/ai/init.lua")
   end
 end
 -- 加载两次拓展是为了能够引用，例如属性杀的使用直接套入普通杀的使用

@@ -799,7 +799,9 @@ function Room:doRaceRequest(command, players, jsonData)
     p.serverplayer:setBusy(false)
     p.serverplayer:setThinking(false)
   end
-
+  if ret == nil or ret.serverplayer:getState() ~= fk.Player_Online then
+    self:delay(math.random(23, 2333))
+  end
   return ret
 end
 

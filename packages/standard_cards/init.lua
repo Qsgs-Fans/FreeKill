@@ -370,8 +370,8 @@ local nullificationSkill = fk.CreateActiveSkill {
   can_use = function()
     return false
   end,
-  on_use = function()
-    RoomInstance:delay(1200)
+  on_use = function(self, room, cardUseEvent)
+    --room:delay(math.random(23, 2333))
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
@@ -1043,8 +1043,8 @@ local halberdSkill = fk.CreateTargetModSkill {
     if player:hasSkill(self.name) and skill.trueName == "slash_skill" and card then
       local cards = card:isVirtual() and card.subcards or { card.id }
       local handcards = player:getCardIds(Player.Hand)
-      if #cards == #handcards and table.every(cards, function(id)
-            return table.contains(handcards, id)
+      if #cards >= #handcards and table.every(handcards, function(id)
+            return table.contains(cards, id)
           end) then
         return 2
       end
