@@ -129,7 +129,7 @@ fk.GeneralRevealed = 89
 fk.GeneralHidden = 90
 
 fk.NumOfEvents = 91
-
+--[[
 local events = {
   "NonTrigger",
   "GamePrepared",
