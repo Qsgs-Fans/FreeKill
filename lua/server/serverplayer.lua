@@ -1013,8 +1013,4 @@ function ServerPlayer:removeBuddy(other)
   self:doNotify("RmBuddy", tostring(other.id))
 end
 
-function ServerPlayer:getAI()
-  return self.ai
-end
-
 return ServerPlayer
