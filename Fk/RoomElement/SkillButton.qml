@@ -23,17 +23,9 @@ Item {
     x: -13 - 120 * 0.166
     y: -6 - 55 * 0.166
     scale: 0.66
-    source: {
-      if (type === "notactive") {
-        return "";
-      }
-      let ret = AppPath + "/image/button/skill/" + type + "/";
-      let suffix = enabled ? (pressed ? "pressed" : "normal") : "disabled";
-      if (enabled && type === "active" && orig.endsWith("&")) {
-        suffix += "-attach";
-      }
-      return ret + suffix;
-    }
+    source: type === "notactive" ? ""
+      : AppPath + "/image/button/skill/" + type + "/"
+      + (enabled ? (pressed ? "pressed" : "normal") : "disabled")
   }
 
   Image {

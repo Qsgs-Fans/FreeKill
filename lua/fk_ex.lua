@@ -588,13 +588,3 @@ function fk.CreateGameMode(spec)
   end
   return ret
 end
-
--- other
-
----@class PoxiSpec
----@field name string
----@field card_filter fun(to_select: int, selected: int[], data: any): bool
----@field feasible fun(selected: int[], data: any): bool
----@field post_select nil | fun(selected: int[], data: any): int[]
----@field default_choice nil | fun(data: any): int[]
----@field prompt nil | string | fun(data: any): string

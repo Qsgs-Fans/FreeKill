@@ -1,0 +1,14 @@
+{
+  "editor.renderLineHighlight": "none",
+  "Lua.diagnostics.disable": [
+    "undefined-field",
+    "inject-field",
+    "return-type-mismatch",
+    "cast-local-type",
+    "param-type-mismatch",
+    "invisible",
+    "missing-fields",
+    "assign-type-mismatch",
+    "undefined-doc-name"
+  ]
+}

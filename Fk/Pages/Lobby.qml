@@ -139,7 +139,7 @@ Item {
         Text {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
-          text: Backend.translate("Room List").arg(roomModel.count)
+          text: Backend.translate("Room List")
         }
         ListView {
           id: roomList
