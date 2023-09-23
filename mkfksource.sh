@@ -3,7 +3,7 @@
 dir=FreeKill-${FK_VER}
 mkdir $dir
 echo Copying
-cp -r ./Freekill/.git $dir
+cp -r ./FreeKill/.git $dir
 
 cd $dir
 git restore .

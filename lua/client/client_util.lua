@@ -691,8 +691,63 @@ function CheckSurrenderAvailable(playedTime)
 end
 
 function SaveRecord()
+<<<<<<< HEAD
     local c = ClientInstance
     c.client:saveRecord(json.encode(c.record), c.record[2])
+=======
+  local c = ClientInstance
+  c.client:saveRecord(json.encode(c.record), c.record[2])
+end
+
+function GetCardProhibitReason(cid, method, pattern)
+  local card = Fk:getCardById(cid)
+  if not card then return "" end
+  if method == "play" and not card.skill:canUse(Self, card) then return "" end
+  if method ~= "play" and not card:matchPattern(pattern) then return "" end
+  if method == "play" then method = "use" end
+
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
+  local s
+  for _, skill in ipairs(status_skills) do
+    local fn = method == "use" and skill.prohibitUse or skill.prohibitResponse
+    if fn(skill, Self, card) then
+      s = skill
+      break
+    end
+  end
+  if not s then return "" end
+
+  -- try to return a translated string
+  local skillName = s.name
+  local ret = Fk:translate(skillName)
+  if ret ~= skillName then
+    -- TODO: translate
+    return ret .. "禁" .. (method == "use" and "使用" or "打出")
+  elseif skillName:endsWith("_prohibit") and skillName:startsWith("#") then
+    return Fk:translate(skillName:sub(2, -10)) .. "禁" .. (method == "use" and "使用" or "打出")
+  else
+    return ret
+  end
+end
+
+function PoxiPrompt(poxi_type, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi or not poxi.prompt then return "" end
+  if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
+  return poxi.prompt(data)
+end
+
+function PoxiFilter(poxi_type, to_select, selected, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi then return "false" end
+  return json.encode(poxi.card_filter(to_select, selected, data))
+end
+
+function PoxiFeasible(poxi_type, selected, data)
+  local poxi = Fk.poxi_methods[poxi_type]
+  if not poxi then return "false" end
+  return json.encode(poxi.feasible(selected, data))
+>>>>>>> 30b363ef775598c6c6510ceb17e70ca01bd2f677
 end
 
 dofile "lua/client/i18n/init.lua"
