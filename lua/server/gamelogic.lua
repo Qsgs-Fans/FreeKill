@@ -1,5 +1,4 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
-
 ---@class GameLogic: Object
 ---@field public room Room
 ---@field public skill_table table<Event, TriggerSkill[]>
@@ -18,22 +17,17 @@ function GameLogic:initialize(room)
   self.skill_table = {}   -- TriggerEvent --> TriggerSkill[]
   self.skill_priority_table = {}
   self.refresh_skill_table = {}
-  self.skills = {}    -- skillName[]
+  self.skills = {}   -- skillName[]
   self.game_event_stack = Stack:new()
   self.all_game_events = {}
   self.event_recorder = {}
   self.current_event_id = 0
 
-  self.role_table = {
-    { "lord" },
-    { "lord", "rebel" },
-    { "lord", "rebel", "renegade" },
-    { "lord", "loyalist", "rebel", "renegade" },
-    { "lord", "loyalist", "rebel", "rebel", "renegade" },
-    { "lord", "loyalist", "rebel", "rebel", "rebel", "renegade" },
-    { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "renegade" },
-    { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "rebel", "renegade" },
-  }
+  self.role_table = { { "lord" }, { "lord", "rebel" }, { "lord", "rebel", "renegade" },
+    { "lord", "loyalist", "rebel", "renegade" }, { "lord", "loyalist", "rebel", "rebel", "renegade" },
+    { "lord", "loyalist", "rebel",    "rebel", "rebel", "renegade" },
+    { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel",   "renegade" },
+    { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel",   "rebel",   "renegade" } }
 end
 
 function GameLogic:run()
@@ -61,7 +55,6 @@ local function execGameEvent(type, ...)
   local _, ret = event:exec()
   return ret
 end
-
 
 function GameLogic:assignRoles()
   local room = self.room
@@ -95,26 +88,28 @@ function GameLogic:chooseGenerals()
     local lordpools = {}
     if room.settings.gameMode == "aaa_role_mode" then
       for _, general in pairs(Fk:getAllGenerals()) do
-        if (not general.hidden and not general.total_hidden) and
-        table.find(general.skills, function(s)
-          return s.lordSkill
-        end) and
-        not table.find(lordlist, function(g)
-          return g.trueName == general.trueName
-        end) then
+        if (not general.hidden and not general.total_hidden) and table.find(general.skills, function(s)
+              return s.lordSkill
+            end) and not table.find(lordlist, function(g)
+              return g.trueName == general.trueName
+            end) then
           table.insert(lordlist, general)
         end
       end
       lordlist = table.random(lordlist, 3) or {}
     end
     table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
-      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
+      return table.contains(table.map(lordlist, function(g)
+        return g.trueName
+      end), g.trueName)
     end))
     for i = 1, #generals do
       generals[i] = generals[i].name
     end
     lordpools = table.simpleClone(generals)
-    table.insertTable(lordpools, table.map(lordlist, function(g) return g.name end))
+    table.insertTable(lordpools, table.map(lordlist, function(g)
+      return g.name
+    end))
     lord_generals = room:askForGeneral(lord, lordpools, n)
     local lord_general, deputy
     if type(lord_generals) == "table" then
@@ -122,11 +117,11 @@ function GameLogic:chooseGenerals()
       lord_general = lord_generals[1]
     else
       lord_general = lord_generals
-      lord_generals = {lord_general}
+      lord_generals = { lord_general }
     end
 
     room:setPlayerGeneral(lord, lord_general, true)
-    room:askForChooseKingdom({lord})
+    room:askForChooseKingdom({ lord })
     room:broadcastProperty(lord, "general")
     room:broadcastProperty(lord, "kingdom")
     room:setDeputyGeneral(lord, deputy)
@@ -141,7 +136,7 @@ function GameLogic:chooseGenerals()
     for i = 1, generalNum do
       table.insert(arg, table.remove(generals, 1).name)
     end
-    p.request_data = json.encode{ arg, n }
+    p.request_data = json.encode { arg, n }
     p.default_reply = table.random(arg, n)
   end
 
@@ -168,7 +163,7 @@ end
 function GameLogic:buildPlayerCircle()
   local room = self.room
   local players = room.players
-  room.alive_players = {table.unpack(players)}
+  room.alive_players = { table.unpack(players) }
   for i = 1, #players - 1 do
     players[i].next = players[i + 1]
   end
@@ -269,7 +264,9 @@ function GameLogic:prepareForStart()
     self:addTriggerSkill(trig)
   end
 
-  self.room:sendLog{ type = "$GameStart" }
+  self.room:sendLog {
+    type = "$GameStart"
+  }
 end
 
 function GameLogic:action()
@@ -280,7 +277,9 @@ function GameLogic:action()
 
   while true do
     execGameEvent(GameEvent.Round)
-    if room.game_finished then break end
+    if room.game_finished then
+      break
+    end
   end
 end
 
@@ -324,16 +323,15 @@ function GameLogic:addTriggerSkill(skill)
       end
     end
 
-    if not table.contains(self.skill_priority_table[event],
-      skill.priority_table[event]) then
-
-      table.insert(self.skill_priority_table[event],
-        skill.priority_table[event])
+    if not table.contains(self.skill_priority_table[event], skill.priority_table[event]) then
+      table.insert(self.skill_priority_table[event], skill.priority_table[event])
     end
   end
 
   if skill.visible then
-    if (Fk.related_skills[skill.name] == nil) then return end
+    if (Fk.related_skills[skill.name] == nil) then
+      return
+    end
     for _, s in ipairs(Fk.related_skills[skill.name]) do
       if (s.class == TriggerSkill) then
         self:addTriggerSkill(s)
@@ -350,85 +348,88 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
-  local _target = room.current -- for iteration
+  local _target = room.current   -- for iteration
   local player = _target
-
-  if #skills_to_refresh > 0 then repeat do
-    -- refresh skills. This should not be broken
-    for _, skill in ipairs(skills_to_refresh) do
-      if skill:canRefresh(event, target, player, data) then
-        skill:refresh(event, target, player, data)
+  if #skills_to_refresh > 0 then
+    repeat
+      do
+        -- refresh skills. This should not be broken
+        for _, skill in ipairs(skills_to_refresh) do
+          if skill:canRefresh(event, target, player, data) then
+            skill:refresh(event, target, player, data)
+          end
+        end
+        player = player.next
       end
-    end
-    player = player.next
-  end until player == _target end
+    until player == _target
+  end
 
-  if #skills == 0 or refresh_only then return end
+  if #skills == 0 or refresh_only then
+    return
+  end
 
   local prio_tab = self.skill_priority_table[event]
   local prev_prio = math.huge
 
   for _, prio in ipairs(prio_tab) do
-    if broken then break end
+    if broken then
+      break
+    end
     if prio >= prev_prio then
       -- continue
       goto trigger_loop_continue
     end
 
-    repeat do
-      local invoked_skills = {}
-      local filter_func = function(skill)
-        return skill.priority_table[event] == prio and
-          not table.contains(invoked_skills, skill) and
-          skill:triggerable(event, target, player, data)
+    repeat
+      do
+        local triggerables = table.filter(skills, function(skill)
+          return skill.priority_table[event] == prio and skill:triggerable(event, target, player, data)
+        end)
+
+        local skill_names = table.map(triggerables, function(skill)
+          return skill.name
+        end)
+
+        while #skill_names > 0 do
+          local skill_name = prio <= 0 and table.random(skill_names) or
+              room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
+
+          local skill = skill_name == "game_rule" and GameRule or Fk.skills[skill_name]
+
+          local len = #skills
+          broken = skill:trigger(event, target, player, data)
+
+          table.insertTable(skill_names,
+            table.map(table.filter(table.slice(skills, len - #skills), function(s)
+              return s.priority_table[event] == prio and s:triggerable(event, target, player, data)
+            end), function(s)
+              return s.name
+            end))
+
+          broken = broken or (event == fk.AskForPeaches and room:getPlayerById(data.who).hp > 0)
+
+          if broken then
+            break
+          end
+          table.removeOne(skill_names, skill_name)
+        end
+        if broken then
+          break
+        end
+        player = player.next
       end
-
-      local skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
-
-      while #skill_names > 0 do
-        local skill_name = prio <= 0 and table.random(skill_names) or
-          room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
-
-        local skill = skill_name == "game_rule" and GameRule
-          or Fk.skills[skill_name]
-
-        table.insert(invoked_skills, skill)
-        broken = skill:trigger(event, target, player, data)
-        skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
-
-        broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0)
-
-        if broken then break end
-      end
-
-      if broken then break end
-
-      player = player.next
-    end until player == _target
+    until player == _target
 
     prev_prio = prio
     ::trigger_loop_continue::
   end
-
+  _target.ai:filterEvent(event, target, data)
   return broken
 end
 
 ---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
-end
-
---- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。
-function GameLogic:getCurrentSkillName()
-  local skillEvent = self:getCurrentEvent()
-  local ret = ""
-  if skillEvent.event == GameEvent.SkillEffect then
-    local _, _, _skill = table.unpack(skillEvent.data)
-    local skill = _skill.main_skill and _skill.main_skill or _skill
-    ret = skill.name
-  end
-  return ret
 end
 
 -- 在指定历史范围中找至多n个符合条件的事件
@@ -458,10 +459,14 @@ function GameLogic:dumpEventStack(detailed)
   local top = self:getCurrentEvent()
   local i = self.game_event_stack.p
   local inspect = p
-  if not top then return end
+  if not top then
+    return
+  end
 
   print("===== Start of event stack dump =====")
-  if not detailed then print("") end
+  if not detailed then
+    print("")
+  end
 
   repeat
     local printable_data
@@ -475,9 +480,9 @@ function GameLogic:dumpEventStack(detailed)
       print("Stack level #" .. i .. ": " .. tostring(top))
     else
       print("\nStack level #" .. i .. ":")
-      inspect{
+      inspect {
         eventId = GameEvent:translate(top.event),
-        data = printable_data or "nil",
+        data = printable_data or "nil"
       }
     end
 
@@ -492,7 +497,6 @@ function GameLogic:dumpAllEvents(from, to)
   from = from or 1
   to = to or #self.all_game_events
   assert(from <= to)
-
   local indent = 0
   local tab = "  "
   for i = from, to, 1 do
@@ -511,6 +515,7 @@ function GameLogic:dumpAllEvents(from, to)
 end
 
 function GameLogic:breakEvent(ret)
+  self.room.breakEvent = true
   coroutine.yield("__breakEvent", ret)
 end
 

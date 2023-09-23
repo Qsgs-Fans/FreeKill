@@ -1,7 +1,5 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
-
 -- Trust AI
-
 ---@class TrustAI: AI
 local TrustAI = AI:subclass("TrustAI")
 

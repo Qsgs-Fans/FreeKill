@@ -1,0 +1,46 @@
+diff a/lua/server/room.lua b/lua/server/room.lua	(rejected hunks)
+@@ -1482,41 +1482,18 @@
+   local result = self:doRequest(chooser, command, json.encode(data))
+ 
+   if result == "" then
+-    local areas = {}
+-    local handcards
++    local handcards = {}
+     if type(flag) == "string" then
+-      if string.find(flag, "h") then
+-        table.insert(areas, Player.Hand)
+-      end
+-      if string.find(flag, "e") then
+-        table.insert(areas, Player.Equip)
+-      end
+-      if string.find(flag, "j") then
+-        table.insert(areas, Player.Judge)
+-      end
+-      handcards = target:getCardIds(areas)
++      handcards = target:getCardIds(flag)
+     else
+-      handcards = {}
+       for _, t in ipairs(flag.card_data) do
+         table.insertTable(handcards, t[2])
+       end
+     end
+-    if #handcards == 0 then
+-      return
+-    end
+-    result = handcards[math.random(1, #handcards)]
++    result = handcards[math.random(1, #handcards)] or -1
+   else
+     result = tonumber(result)
+   end
+-
+-  if result == -1 then
+-    local handcards = target:getCardIds(Player.Hand)
+-    if #handcards == 0 then
+-      return
+-    end
+-    result = table.random(handcards)
+-  end
+-
+   return result
+ end
+ 

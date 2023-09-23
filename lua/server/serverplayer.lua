@@ -24,8 +24,8 @@ local ServerPlayer = Player:subclass("ServerPlayer")
 
 function ServerPlayer:initialize(_self)
   Player.initialize(self)
-  self.serverplayer = _self -- 控制者
-  self._splayer = _self -- 真正在玩的玩家
+  self.serverplayer = _self   -- 控制者
+  self._splayer = _self       -- 真正在玩的玩家
   self._observers = { _self } -- "旁观"中的玩家，然而不包括真正的旁观者
   self.id = _self:getId()
   self.room = nil
@@ -45,7 +45,7 @@ function ServerPlayer:initialize(_self)
   self._prelighted_skills = {}
 
   self._timewaste_count = 0
-  self.ai = RandomAI:new(self)
+  self.ai = SmartAI:new(self)
 end
 
 ---@param command string
@@ -284,25 +284,25 @@ function ServerPlayer:marshal(player, observe)
   end
 
   for k, v in pairs(self.mark) do
-    player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
+    player:doNotify("SetPlayerMark", json.encode { self.id, k, v })
   end
 
   for _, s in ipairs(self.player_skills) do
-    player:doNotify("AddSkill", json.encode{self.id, s.name})
+    player:doNotify("AddSkill", json.encode { self.id, s.name })
   end
 
   for k, v in pairs(self.cardUsedHistory) do
     if v[1] > 0 then
-      player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
+      player:doNotify("AddCardUseHistory", json.encode { k, v[1] })
     end
   end
 
   for k, v in pairs(self.skillUsedHistory) do
     if v[4] > 0 then
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[1], 1})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[2], 2})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[3], 3})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[4], 4})
+      player:doNotify("SetSkillUseHistory", json.encode { self.id, k, v[1], 1 })
+      player:doNotify("SetSkillUseHistory", json.encode { self.id, k, v[2], 2 })
+      player:doNotify("SetSkillUseHistory", json.encode { self.id, k, v[3], 3 })
+      player:doNotify("SetSkillUseHistory", json.encode { self.id, k, v[4], 4 })
     end
   end
 
@@ -319,13 +319,13 @@ function ServerPlayer:reconnect()
   local room = self.room
   self.serverplayer:setState(fk.Player_Online)
 
-  self:doNotify("Setup", json.encode{
+  self:doNotify("Setup", json.encode {
     self.id,
     self._splayer:getScreenName(),
     self._splayer:getAvatar(),
   })
   self:doNotify("EnterLobby", "")
-  self:doNotify("EnterRoom", json.encode{
+  self:doNotify("EnterRoom", json.encode {
     #room.players, room.timeout, room.settings,
   })
   self:doNotify("StartGame", "")
@@ -333,7 +333,7 @@ function ServerPlayer:reconnect()
 
   -- send player data
   for _, p in ipairs(room:getOtherPlayers(self, false, true)) do
-    self:doNotify("AddPlayer", json.encode{
+    self:doNotify("AddPlayer", json.encode {
       p.id,
       p._splayer:getScreenName(),
       p._splayer:getAvatar(),
@@ -350,13 +350,13 @@ function ServerPlayer:reconnect()
   for i = -2, -math.huge, -1 do
     local c = Fk.printed_cards[i]
     if not c then break end
-    self:doNotify("PrintCard", json.encode{ c.name, c.suit, c.number })
+    self:doNotify("PrintCard", json.encode { c.name, c.suit, c.number })
   end
 
   -- send card marks
   for id, marks in pairs(room.card_marks) do
     for k, v in pairs(marks) do
-      self:doNotify("SetCardMark", json.encode{ id, k, v })
+      self:doNotify("SetCardMark", json.encode { id, k, v })
     end
   end
 
@@ -371,9 +371,9 @@ function ServerPlayer:reconnect()
 
   -- send fake skills
   for _, s in ipairs(self._manually_fake_skills) do
-    self:doNotify("AddSkill", json.encode{ self.id, s.name, true })
+    self:doNotify("AddSkill", json.encode { self.id, s.name, true })
     if table.contains(self.prelighted_skills, s) then
-      self:doNotify("PrelightSkill", json.encode{ s.name, true })
+      self:doNotify("PrelightSkill", json.encode { s.name, true })
     end
   end
 
@@ -392,7 +392,7 @@ function ServerPlayer:turnOver()
   self.faceup = not self.faceup
   self.room:broadcastProperty(self, "faceup")
 
-  self.room:sendLog{
+  self.room:sendLog {
     type = "#TurnOver",
     from = self.id,
     arg = self.faceup and "face_up" or "face_down",
@@ -408,12 +408,12 @@ function ServerPlayer:showCards(cards)
   end
 
   local room = self.room
-  room:sendLog{
+  room:sendLog {
     type = "#ShowCard",
     from = self.id,
     card = cards,
   }
-  room:doBroadcastNotify("ShowCard", json.encode{
+  room:doBroadcastNotify("ShowCard", json.encode {
     from = self.id,
     cards = cards,
   })
@@ -469,7 +469,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraPhase(phase, false) end)
+      turn:addExitFunc(function() self:gainAnExtraPhase(phase, false) end)
       return
     end
   end
@@ -478,11 +478,12 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   self.phase = phase
   room:broadcastProperty(self, "phase")
 
-  room:sendLog{
+  room:sendLog {
     type = "#GainAnExtraPhase",
     from = self.id,
     arg = phase_name_table[phase],
   }
+
 
   GameEvent(GameEvent.Phase, self, self.phase):exec()
 
@@ -552,7 +553,7 @@ function ServerPlayer:play(phase_table)
     if (not skip) or (cancel_skip) then
       GameEvent(GameEvent.Phase, self, self.phase):exec()
     else
-      room:sendLog{
+      room:sendLog {
         type = "#PhaseSkipped",
         from = self.id,
         arg = phase_name_table[self.phase],
@@ -564,11 +565,11 @@ end
 ---@param phase Phase
 function ServerPlayer:skip(phase)
   if not table.contains({
-    Player.Judge,
-    Player.Draw,
-    Player.Play,
-    Player.Discard
-  }, phase) then
+        Player.Judge,
+        Player.Draw,
+        Player.Play,
+        Player.Discard
+      }, phase) then
     return
   end
   self.skipped_phases[phase] = true
@@ -579,7 +580,6 @@ function ServerPlayer:skip(phase)
   end
 end
 
---- 当进行到出牌阶段空闲点时，结束出牌阶段。
 function ServerPlayer:endPlayPhase()
   self._play_phase_end = true
   -- TODO: send log
@@ -592,42 +592,20 @@ function ServerPlayer:gainAnExtraTurn(delay)
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false) end)
+      turn:addExitFunc(function() self:gainAnExtraTurn(false) end)
       return
     end
   end
 
-  room:sendLog{
+  room:sendLog {
     type = "#GainAnExtraTurn",
     from = self.id
   }
 
   local current = room.current
   room.current = self
-
-  self.tag["_extra_turn_count"] = self.tag["_extra_turn_count"] or {}
-  local ex_tag = self.tag["_extra_turn_count"]
-  local skillName = room.logic:getCurrentSkillName()
-  table.insert(ex_tag, skillName)
-
   GameEvent(GameEvent.Turn, self):exec()
-
-  table.remove(ex_tag)
-
   room.current = current
-end
-
-function ServerPlayer:insideExtraTurn()
-  return self.tag["_extra_turn_count"] and #self.tag["_extra_turn_count"] > 0
-end
-
----@return string
-function ServerPlayer:getCurrentExtraTurnReason()
-  local ex_tag = self.tag["_extra_turn_count"]
-  if (not ex_tag) or #ex_tag == 0 then
-    return "game_rule"
-  end
-  return ex_tag[#ex_tag]
 end
 
 function ServerPlayer:drawCards(num, skillName, fromPlace)
@@ -686,7 +664,7 @@ end
 
 function ServerPlayer:addVirtualEquip(card)
   Player.addVirtualEquip(self, card)
-  self.room:doBroadcastNotify("AddVirtualEquip", json.encode{
+  self.room:doBroadcastNotify("AddVirtualEquip", json.encode {
     player = self.id,
     name = card.name,
     subcards = card.subcards,
@@ -695,7 +673,7 @@ end
 
 function ServerPlayer:removeVirtualEquip(cid)
   local ret = Player.removeVirtualEquip(self, cid)
-  self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode{
+  self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode {
     player = self.id,
     id = cid,
   })
@@ -704,22 +682,22 @@ end
 
 function ServerPlayer:addCardUseHistory(cardName, num)
   Player.addCardUseHistory(self, cardName, num)
-  self:doNotify("AddCardUseHistory", json.encode{cardName, num})
+  self:doNotify("AddCardUseHistory", json.encode { cardName, num })
 end
 
 function ServerPlayer:setCardUseHistory(cardName, num, scope)
   Player.setCardUseHistory(self, cardName, num, scope)
-  self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
+  self:doNotify("SetCardUseHistory", json.encode { cardName, num, scope })
 end
 
 function ServerPlayer:addSkillUseHistory(cardName, num)
   Player.addSkillUseHistory(self, cardName, num)
-  self.room:doBroadcastNotify("AddSkillUseHistory", json.encode{self.id, cardName, num})
+  self.room:doBroadcastNotify("AddSkillUseHistory", json.encode { self.id, cardName, num })
 end
 
 function ServerPlayer:setSkillUseHistory(cardName, num, scope)
   Player.setSkillUseHistory(self, cardName, num, scope)
-  self.room:doBroadcastNotify("SetSkillUseHistory", json.encode{self.id, cardName, num, scope})
+  self.room:doBroadcastNotify("SetSkillUseHistory", json.encode { self.id, cardName, num, scope })
 end
 
 ---@param chained boolean
@@ -732,7 +710,7 @@ function ServerPlayer:setChainState(chained)
   self.chained = chained
 
   room:broadcastProperty(self, "chained")
-  room:sendLog{
+  room:sendLog {
     type = "#ChainStateChange",
     from = self.id,
     arg = self.chained and "chained" or "un-chained"
@@ -743,7 +721,7 @@ function ServerPlayer:setChainState(chained)
 end
 
 function ServerPlayer:reset()
-  self.room:sendLog{
+  self.room:sendLog {
     type = "#ChainStateChange",
     from = self.id,
     arg = "reset-general"
@@ -792,12 +770,12 @@ function ServerPlayer:addFakeSkill(skill)
   table.insert(self._fake_skills, skill)
   for _, s in ipairs(skill.related_skills) do
     -- if s.main_skill == skill then -- TODO: need more detailed
-      table.insert(self._fake_skills, s)
+    table.insert(self._fake_skills, s)
     -- end
   end
 
   -- TODO
-  self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
+  self:doNotify("AddSkill", json.encode { self.id, skill.name, true })
 end
 
 ---@param skill Skill
@@ -816,7 +794,7 @@ function ServerPlayer:loseFakeSkill(skill)
   end
 
   -- TODO
-  self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
+  self:doNotify("LoseSkill", json.encode { self.id, skill.name, true })
 end
 
 function ServerPlayer:isFakeSkill(skill)
@@ -852,7 +830,7 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
     end
   end
 
-  self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
+  self:doNotify("PrelightSkill", json.encode { skill.name, isPrelight })
 end
 
 ---@param isDeputy bool
@@ -876,7 +854,8 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local ret = true
   if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
-    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
+    local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or
+        Fk.generals["blank_shibing"]
     for _, sname in ipairs(other:getSkillNameList()) do
       local s = Fk.skills[sname]
       if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
@@ -895,9 +874,9 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     local kingdom = general.kingdom
     self.kingdom = kingdom
     if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
-      function(p)
-        return p.kingdom == kingdom
-      end) >= #room.players // 2 then
+          function(p)
+            return p.kingdom == kingdom
+          end) >= #room.players // 2 then
       self.kingdom = "wild"
     end
     room:broadcastProperty(self, "kingdom")
@@ -909,7 +888,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     self.gender = general.gender
   end
 
-  room:sendLog{
+  room:sendLog {
     type = "#RevealGeneral",
     from = self.id,
     arg = isDeputy and "deputyGeneral" or "mainGeneral",
@@ -927,7 +906,7 @@ function ServerPlayer:revealBySkillName(skill_name)
 
   if main then
     if table.contains(Fk.generals[self:getMark("__heg_general")]
-      :getSkillNameList(), skill_name) then
+          :getSkillNameList(), skill_name) then
       self:revealGeneral(false)
       return
     end
@@ -935,7 +914,7 @@ function ServerPlayer:revealBySkillName(skill_name)
 
   if deputy then
     if table.contains(Fk.generals[self:getMark("__heg_deputy")]
-      :getSkillNameList(), skill_name) then
+          :getSkillNameList(), skill_name) then
       self:revealGeneral(true)
       return
     end
@@ -948,7 +927,7 @@ function ServerPlayer:hideGeneral(isDeputy)
   local mark = isDeputy and "__heg_deputy" or "__heg_general"
 
   self:setMark(mark, generalName)
-  self:doNotify("SetPlayerMark", json.encode{ self.id, mark, generalName})
+  self:doNotify("SetPlayerMark", json.encode { self.id, mark, generalName })
 
   if isDeputy then
     room:setDeputyGeneral(self, "anjiang")
@@ -983,6 +962,7 @@ function ServerPlayer:hideGeneral(isDeputy)
 
   room.logic:trigger(fk.GeneralHidden, room, generalName)
 end
+
 -- 神貂蝉
 
 ---@param p ServerPlayer
@@ -1002,7 +982,7 @@ function ServerPlayer:addBuddy(other)
     other = self.room:getPlayerById(other)
   end
   Player.addBuddy(self, other)
-  self:doNotify("AddBuddy", json.encode{ other.id, other.player_cards[Player.Hand] })
+  self:doNotify("AddBuddy", json.encode { other.id, other.player_cards[Player.Hand] })
 end
 
 function ServerPlayer:removeBuddy(other)
@@ -1011,6 +991,10 @@ function ServerPlayer:removeBuddy(other)
   end
   Player.removeBuddy(self, other)
   self:doNotify("RmBuddy", tostring(other.id))
+end
+
+function ServerPlayer:getAI()
+  return self.ai
 end
 
 return ServerPlayer
