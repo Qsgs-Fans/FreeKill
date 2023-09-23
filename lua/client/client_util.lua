@@ -618,7 +618,7 @@ function SetInteractionDataOfSkill(skill_name, data)
 end
 
 function ChangeSelf(pid)
-  ClientInstance.client:changeSelf(pid)   -- for qml
+  ClientInstance.client:changeSelf(pid) -- for qml
   Self = ClientInstance:getPlayerById(pid)
 end
 
@@ -636,7 +636,7 @@ function ResetClientLua()
   local _data = ClientInstance.enter_room_data;
   local data = ClientInstance.room_settings
   Self = ClientPlayer:new(fk.Self)
-  ClientInstance = Client:new()   -- clear old client data
+  ClientInstance = Client:new() -- clear old client data
   ClientInstance.players = { Self }
   ClientInstance.alive_players = { Self }
   ClientInstance.discard_pile = {}
@@ -691,8 +691,7 @@ function CheckSurrenderAvailable(playedTime)
 end
 
 function SaveRecord()
-  local c = ClientInstance
-  c.client:saveRecord(json.encode(c.record), c.record[2])
+  ClientInstance.client:saveRecord(json.encode(ClientInstance.record), ClientInstance.record[2])
 end
 
 function GetCardProhibitReason(cid, method, pattern)
