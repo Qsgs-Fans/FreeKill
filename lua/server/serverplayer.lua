@@ -628,6 +628,7 @@ function ServerPlayer:bury()
   self:throwAllMarks()
   self:clearPiles()
   self:reset()
+  self:returnToGeneralPile()
 end
 
 function ServerPlayer:throwAllCards(flag)
@@ -721,6 +722,7 @@ function ServerPlayer:setChainState(chained)
 end
 
 function ServerPlayer:reset()
+  if self.faceup and not self.chained then return end
   self.room:sendLog {
     type = "#ChainStateChange",
     from = self.id,
@@ -728,6 +730,16 @@ function ServerPlayer:reset()
   }
   if self.chained then self:setChainState(false) end
   if not self.faceup then self:turnOver() end
+end
+
+function ServerPlayer:returnToGeneralPile()
+  local room = self.room
+  if self.deputyGeneral and Fk:canUseGeneral(self.deputyGeneral) then
+    room:returnToGeneralPile(self.deputyGeneral)
+  end
+  if self.general and Fk:canUseGeneral(self.general) then
+    room:returnToGeneralPile(self.general)
+  end
 end
 
 --- 进行拼点。
