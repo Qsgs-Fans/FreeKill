@@ -515,7 +515,7 @@ function Player:distanceTo(other, mode, ignore_dead)
     temp = temp.next
   end
   if temp ~= other then
-    print("Distance malfunction: start and end does not matched.")
+    print("Distance malfunction: start and end does not match.")
   end
   local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right -
       #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)

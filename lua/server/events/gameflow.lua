@@ -294,7 +294,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           n = 2
         }
         room.logic:trigger(fk.DrawNCards, player, data)
-        room:drawCards(player, data.n, self.name)
+        room:drawCards(player, data.n, "game_rule")
         room.logic:trigger(fk.AfterDrawNCards, player, data)
       end,
       [Player.Play] = function()
