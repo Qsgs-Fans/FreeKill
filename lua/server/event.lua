@@ -129,3 +129,121 @@ fk.GeneralRevealed = 89
 fk.GeneralHidden = 90
 
 fk.NumOfEvents = 91
+--[[
+local events = {
+  "NonTrigger",
+  "GamePrepared",
+  "GameStart",
+  "BeforeTurnStart",
+  "TurnStart",
+  "TurnEnd",
+  "AfterTurnEnd",
+  "EventPhaseStart",
+  "EventPhaseProceeding",
+  "EventPhaseEnd",
+  "AfterPhaseEnd",
+  "EventPhaseChanging",
+  "EventPhaseSkipping",
+
+  "BeforeCardsMove",
+  "AfterCardsMove",
+
+  "DrawNCards",
+  "AfterDrawNCards",
+  "DrawInitialCards",
+  "AfterDrawInitialCards",
+
+  "PreHpRecover",
+  "HpRecover",
+  "PreHpLost",
+  "HpLost",
+  "BeforeHpChanged",
+  "HpChanged",
+  "MaxHpChanged",
+
+  "EventLoseSkill",
+  "EventAcquireSkill",
+
+  "StartJudge",
+  "AskForRetrial",
+  "FinishRetrial",
+  "FinishJudge",
+
+  "RoundStart",
+  "RoundEnd",
+  "BeforeTurnOver",
+  "TurnedOver",
+  "BeforeChainStateChange",
+  "ChainStateChanged",
+
+  "PreDamage",
+  "DamageCaused",
+  "DamageInflicted",
+  "Damage",
+  "Damaged",
+  "DamageFinished",
+
+  "EnterDying",
+  "Dying",
+  "AfterDying",
+
+  "PreCardUse",
+  "AfterCardUseDeclared",
+  "AfterCardTargetDeclared",
+  "CardUsing",
+  "BeforeCardUseEffect",
+  "TargetSpecifying",
+  "TargetConfirming",
+  "TargetSpecified",
+  "TargetConfirmed",
+  "CardUseFinished",
+
+  "PreCardRespond",
+  "CardResponding",
+  "CardRespondFinished",
+
+  "PreCardEffect",
+  "BeforeCardEffect",
+  "CardEffecting",
+  "CardEffectFinished",
+  "CardEffectCancelledOut",
+
+  "AskForPeaches",
+  "AskForPeachesDone",
+  "Death",
+  "BuryVictim",
+  "Deathed",
+  "BeforeGameOverJudge",
+  "GameOverJudge",
+  "GameFinished",
+
+  "AskForCardUse",
+  "AskForCardResponse",
+
+  "StartPindian",
+  "PindianCardsDisplayed",
+  "PindianResultConfirmed",
+  "PindianFinished",
+
+  "AfterDrawPileShuffle",
+
+  "BeforeTriggerSkillUse",
+
+  "BeforeDrawCard",
+
+  "CardShown",
+
+  "SkillEffect",
+  "AfterSkillEffect",
+
+  "AreaAborted",
+  "AreaResumed",
+
+  "GeneralRevealed",
+  "GeneralHidden",
+
+  "NumOfEvents"
+}
+for i, event in ipairs(events) do
+  fk[event] = i
+end --]]
