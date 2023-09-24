@@ -415,14 +415,13 @@ end
 
 fk.ai_dis_card["#axe_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local ids = {}
+  local effect = self:eventData("CardEffect")
   for _, cid in ipairs(self.player:getCardIds("he")) do
     if Fk:getCardById(cid):matchPattern(pattern) then
       table.insert(ids, cid)
     end
-    if
-        #ids >= min_num and self:isEnemie(self.player.axe_to) and
-        (self:isWeak(self.player.axe_to) or #self.player:getCardIds("he") > 3)
-    then
+    if #ids >= min_num and self:isEnemie(effect.to)
+    and (self:isWeak(effect.to) or #self.player:getCardIds("he") > 3) then
       return ids
     end
   end

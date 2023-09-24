@@ -329,11 +329,17 @@ end
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
   playerAreas = playerAreas or rightAreas
+  local cardIds = {}
   if type(playerAreas) == "string" then
     local str = playerAreas
     playerAreas = {}
     if str:find("h") then
       table.insert(playerAreas, Player.Hand)
+    end
+    if str:find("&") then
+      for k, v in pairs(self.special_cards) do
+        if k:endsWith("&") then table.insertTable(cardIds, v) end
+      end
     end
     if str:find("e") then
       table.insert(playerAreas, Player.Equip)
@@ -345,8 +351,7 @@ function Player:getCardIds(playerAreas, specialName)
   assert(type(playerAreas) == "number" or type(playerAreas) == "table")
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
-  local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-  local cardIds = {}
+  rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
   for _, area in ipairs(areas) do
     assert(table.contains(rightAreas, area))
     assert(area ~= Player.Special or type(specialName) == "string")
