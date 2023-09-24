@@ -7,16 +7,16 @@ local function drawInit(room, player, n)
   for _, id in ipairs(cardIds) do
     Fk:filterCard(id, player)
   end
-  local move_to_notify = {}   ---@type CardsMoveStruct
+  local move_to_notify = {} ---@type CardsMoveStruct
   move_to_notify.toArea = Card.PlayerHand
   move_to_notify.to = player.id
   move_to_notify.moveInfo = {}
   move_to_notify.moveReason = fk.ReasonDraw
   for _, id in ipairs(cardIds) do
     table.insert(move_to_notify.moveInfo,
-    { cardId = id, fromArea = Card.DrawPile })
+      { cardId = id, fromArea = Card.DrawPile })
   end
-  room:notifyMoveCards(nil, {move_to_notify})
+  room:notifyMoveCards(nil, { move_to_notify })
 
   for _, id in ipairs(cardIds) do
     room:setCardArea(id, Card.PlayerHand, player.id)
@@ -31,16 +31,16 @@ local function discardInit(room, player)
     Fk:filterCard(id, nil)
   end
 
-  local move_to_notify = {}   ---@type CardsMoveStruct
+  local move_to_notify = {} ---@type CardsMoveStruct
   move_to_notify.from = player.id
   move_to_notify.toArea = Card.DrawPile
   move_to_notify.moveInfo = {}
   move_to_notify.moveReason = fk.ReasonJustMove
   for _, id in ipairs(cardIds) do
     table.insert(move_to_notify.moveInfo,
-    { cardId = id, fromArea = Card.PlayerHand })
+      { cardId = id, fromArea = Card.PlayerHand })
   end
-  room:notifyMoveCards(nil, {move_to_notify})
+  room:notifyMoveCards(nil, { move_to_notify })
 
   for _, id in ipairs(cardIds) do
     room:setCardArea(id, Card.DrawPile, nil)
@@ -103,8 +103,8 @@ GameEvent.functions[GameEvent.DrawInitial] = function(self)
     local ldata = luck_data
 
     if table.every(ldata.playerList, function(id)
-      return ldata[id].luckTime == 0
-    end) then
+          return ldata[id].luckTime == 0
+        end) then
       break
     end
 
@@ -189,7 +189,7 @@ GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
 
   if player.dead then return true end
 
-  room:sendLog{ type = "$AppendSeparator" }
+  room:sendLog { type = "$AppendSeparator" }
 
   if not player.faceup then
     player:turnOver()
@@ -258,79 +258,79 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       logic:trigger(fk.EventPhaseProceeding, player)
 
       switch(player.phase, {
-      [Player.PhaseNone] = function()
-        error("You should never proceed PhaseNone")
-      end,
-      [Player.RoundStart] = function()
+        [Player.PhaseNone] = function()
+          error("You should never proceed PhaseNone")
+        end,
+        [Player.RoundStart] = function()
 
-      end,
-      [Player.Start] = function()
+        end,
+        [Player.Start] = function()
 
-      end,
-      [Player.Judge] = function()
-        local cards = player:getCardIds(Player.Judge)
-        for i = #cards, 1, -1 do
-          local card
-          card = player:removeVirtualEquip(cards[i])
-          if not card then
-            card = Fk:getCardById(cards[i])
+        end,
+        [Player.Judge] = function()
+          local cards = player:getCardIds(Player.Judge)
+          for i = #cards, 1, -1 do
+            local card
+            card = player:removeVirtualEquip(cards[i])
+            if not card then
+              card = Fk:getCardById(cards[i])
+            end
+            room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+
+            ---@type CardEffectEvent
+            local effect_data = {
+              card = card,
+              to = player.id,
+              tos = { { player.id } },
+            }
+            room:doCardEffect(effect_data)
+            if effect_data.isCancellOut and card.skill then
+              card.skill:onNullified(room, effect_data)
+            end
           end
-          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
-
-          ---@type CardEffectEvent
-          local effect_data = {
-            card = card,
-            to = player.id,
-            tos = { {player.id} },
+        end,
+        [Player.Draw] = function()
+          local data = {
+            n = 2
           }
-          room:doCardEffect(effect_data)
-          if effect_data.isCancellOut and card.skill then
-            card.skill:onNullified(room, effect_data)
-          end
-        end
-      end,
-      [Player.Draw] = function()
-        local data = {
-          n = 2
-        }
-        room.logic:trigger(fk.DrawNCards, player, data)
-        room:drawCards(player, data.n, "game_rule")
-        room.logic:trigger(fk.AfterDrawNCards, player, data)
-      end,
-      [Player.Play] = function()
-        player._play_phase_end = false
-        while not player.dead do
-          room:notifyMoveFocus(player, "PlayCard")
-          local result = room:doRequest(player, "PlayCard", player.id)
-          if result == "" then break end
+          room.logic:trigger(fk.DrawNCards, player, data)
+          room:drawCards(player, data.n, "game_rule")
+          room.logic:trigger(fk.AfterDrawNCards, player, data)
+        end,
+        [Player.Play] = function()
+          player._play_phase_end = false
+          while not player.dead do
+            room:notifyMoveFocus(player, "PlayCard")
+            local result = room:doRequest(player, "PlayCard", player.id)
+            if result == "" then break end
 
-          local use = room:handleUseCardReply(player, result)
-          if use then
-            room:useCard(use)
-          end
+            local use = room:handleUseCardReply(player, result)
+            if use then
+              room:useCard(use)
+            end
 
-          if player._play_phase_end then
-            player._play_phase_end = false
-            break
+            if player._play_phase_end then
+              player._play_phase_end = false
+              break
+            end
           end
-        end
-      end,
-      [Player.Discard] = function()
-        local discardNum = #table.filter(
-          player:getCardIds(Player.Hand), function(id)
-            local card = Fk:getCardById(id)
-            return table.every(room.status_skills[MaxCardsSkill] or Util.DummyTable, function(skill)
-              return not skill:excludeFrom(player, card)
-            end)
+        end,
+        [Player.Discard] = function()
+          local discardNum = #table.filter(
+            player:getCardIds(Player.Hand), function(id)
+              local card = Fk:getCardById(id)
+              return table.every(room.status_skills[MaxCardsSkill] or Util.DummyTable, function(skill)
+                return not skill:excludeFrom(player, card)
+              end)
+            end
+          ) - player:getMaxCards()
+          if discardNum > 0 then
+            room:askForDiscard(player, discardNum, discardNum, false, "discard_skill", false)
           end
-        ) - player:getMaxCards()
-        if discardNum > 0 then
-          room:askForDiscard(player, discardNum, discardNum, false, "game_rule", false)
-        end
-      end,
-      [Player.Finish] = function()
+        end,
+        [Player.Finish] = function()
 
-      end,
+        end,
       })
     end
   end
