@@ -799,8 +799,8 @@ function Room:doRaceRequest(command, players, jsonData)
     p.serverplayer:setBusy(false)
     p.serverplayer:setThinking(false)
   end
-  if ret == nil or ret.serverplayer:getState() ~= fk.Player_Online then
-    self:delay(math.random(23, 2333))
+  if self.current and (ret == nil or ret.serverplayer:getState() ~= fk.Player_Online) then
+    self:delay(math.random(233, 2333)) --无懈增加随机延迟，就难以察觉场上是否有无懈了
   end
   return ret
 end
@@ -2042,7 +2042,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     if extra_data.bypass_times ~= false then
       player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
-    fk.useMustTargets = extra_data.must_targets
+    fk.MustTargets = extra_data.must_targets
+    fk.exclusiveTargets = extra_data.exclusive_targets
   end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
@@ -2092,7 +2093,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
       break
     end
   end
-  fk.useMustTargets = nil
+  fk.MustTargets = nil
+  fk.exclusiveTargets = nil
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
   player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
   return use

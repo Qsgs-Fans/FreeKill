@@ -308,15 +308,9 @@ fk.ai_askuse_card = {}
 fk.ai_nullification = {}
 
 fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, extra_data)
-  local effect = self:eventData("CardEffect")
-  if effect.to then
-    fk.askNullificationData = effect
-    fk.askNullification = 1
-  elseif effect.from then
-    fk.askNullification = fk.askNullification + 1
-  end
-  effect = fk.askNullificationData
-  local positive = fk.askNullification % 2 == 1
+  local datas = self:eventsData("CardEffect")
+  local effect = datas[#datas]
+  local positive = #datas % 2 == 1
   local ask = fk.ai_nullification[effect.card.name]
   if type(ask) == "function" then
     ask(self, effect.card, self.room:getPlayerById(effect.to), self.room:getPlayerById(effect.from), positive)
@@ -1057,6 +1051,34 @@ function SmartAI:filterEvent(event, player, data)
     end
   elseif event == fk.StartJudge then
     fk.trick_judge[data.reason] = data.pattern
+  elseif event == fk.CardUsing then
+    if data.card.name == "nullification" then
+      local datas = self:eventsData("CardEffect")
+      local effect = datas[#datas]
+      local to = self.room:getPlayerById(effect.to)
+      local from = self.room:getPlayerById(data.from)
+      local callback = fk.ai_card[effect.card.name]
+      callback = callback and callback.intention
+      if #datas % 2 == 1 then
+        if type(callback) == "function" then
+          callback = callback(to.ai, effect.card, from)
+          if type(callback) == "number" then
+            updateIntention(from, to, -callback)
+          end
+        elseif type(callback) == "number" then
+          updateIntention(from, to, -callback)
+        end
+      else
+        if type(callback) == "function" then
+          callback = callback(to.ai, effect.card, from)
+          if type(callback) == "number" then
+            updateIntention(from, to, callback)
+          end
+        elseif type(callback) == "number" then
+          updateIntention(from, to, callback)
+        end
+      end
+    end
   elseif event == fk.AfterCardsMove then
   end
 end
@@ -1101,6 +1123,18 @@ function SmartAI:isEnemie(pid, tid)
   end
 end
 
+function SmartAI:eventsData(game_event, ge)
+  local datas = {}
+  local _ge = ge or self.room.logic:getCurrentEvent()
+  while _ge do
+    if _ge.event == GameEvent[game_event] then
+      table.insert(datas, _ge.data[1])
+    end
+    _ge = _ge.parent
+  end
+  return datas
+end
+
 function SmartAI:eventData(game_event)
   local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
   return event and event.data[1]
@@ -1113,8 +1147,8 @@ for _, n in ipairs(FileIO.ls("packages")) do
 end
 -- 加载两次拓展是为了能够引用，例如属性杀的使用直接套入普通杀的使用
 for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n) and FileIO.exists("packages/" .. n .. "/" .. n .. "_ai.lua") then
-    dofile("packages/" .. n .. "/" .. n .. "_ai.lua")
+  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
+    dofile("packages/" .. n .. "/ai/init.lua")
   end
 end
 

@@ -16,7 +16,7 @@ local slashSkill = fk.CreateActiveSkill {
     local from = Fk:currentRoom():getPlayerById(user)
     return
         user ~= to_select and not (distance_limited and not self:withinDistanceLimit(from, true, card, player)) and
-        not (card and from:isProhibited(player, card))
+        not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -131,7 +131,7 @@ local dismantlementSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return user ~= to_select and not player:isAllNude() and not (card and from:isProhibited(player, card))
+    return user ~= to_select and not player:isAllNude() and not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -169,7 +169,7 @@ local snatchSkill = fk.CreateActiveSkill {
     return user ~= to_select and
         not (player:isAllNude() or
           (distance_limited and not self:withinDistanceLimit(from, false, card, player))) and
-        not (card and from:isProhibited(player, card))
+        not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -202,7 +202,7 @@ local duelSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return user ~= to_select and not (card and from:isProhibited(player, card))
+    return user ~= to_select and not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -275,7 +275,7 @@ local collateralSkill = fk.CreateActiveSkill {
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
     return user ~= to_select and player:getEquipment(Card.SubtypeWeapon) and
-        not (card and from:isProhibited(player, card))
+        not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected >= (self:getMaxTargetNum(Self, card) - 1) * 2 then
@@ -283,8 +283,9 @@ local collateralSkill = fk.CreateActiveSkill {
     elseif #selected % 2 == 0 then
       return self:modTargetFilter(to_select, selected, Self.id, card)
     elseif #selected > 0 then
-      return Fk:currentRoom():getPlayerById(selected[#selected]):inMyAttackRange(
-        Fk:currentRoom():getPlayerById(to_select))
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      local from = Fk:currentRoom():getPlayerById(selected[#selected])
+      return from:inMyAttackRange(player) and not from:isProhibited(player, Fk:cloneCard("slash"))
     end
   end,
   target_num = 2,
@@ -313,7 +314,7 @@ local collateralSkill = fk.CreateActiveSkill {
     end
     if room:askForUseCard(to, "slash", nil, prompt, nil, {
           must_targets = effect.subTargets,
-          exclusive_targets = effect.subTargets,
+          --exclusive_targets = effect.subTargets,
           bypass_distances = true,
           bypass_times = true
         }, effect) then
@@ -337,7 +338,7 @@ local exNihiloSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(player, card))
+    return not (card and from:isProhibited(player, card, selected))
   end,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
@@ -396,7 +397,7 @@ local savageAssaultSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return user ~= to_select and not (card and from:isProhibited(player, card))
+    return user ~= to_select and not (card and from:isProhibited(player, card, selected))
   end,
   on_effect = function(self, room, effect)
     if room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect) then
@@ -430,7 +431,7 @@ local archeryAttackSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return user ~= to_select and not (card and from:isProhibited(player, card))
+    return user ~= to_select and not (card and from:isProhibited(player, card, selected))
   end,
   on_effect = function(self, room, effect)
     if room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect) then
@@ -464,7 +465,7 @@ local godSalvationSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(player, card))
+    return not (card and from:isProhibited(player, card, selected))
   end,
   about_to_effect = function(self, room, effect)
     if not room:getPlayerById(effect.to):isWounded() then
@@ -502,7 +503,7 @@ local amazingGraceSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(player, card))
+    return not (card and from:isProhibited(player, card, selected))
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
@@ -589,7 +590,7 @@ local lightningSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(player, card))
+    return not (card and from:isProhibited(player, card, selected))
   end,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
@@ -661,7 +662,7 @@ local indulgenceSkill = fk.CreateActiveSkill {
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return user ~= to_select and not (card and from:isProhibited(player, card))
+    return user ~= to_select and not (card and from:isProhibited(player, card, selected))
   end,
   target_filter = function(self, to_select, selected, _, card)
     return #selected < 1 and self:modTargetFilter(to_select, selected, Self.id, card, true)

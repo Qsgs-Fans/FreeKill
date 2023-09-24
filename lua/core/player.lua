@@ -598,7 +598,8 @@ end
 ---@return ServerPlayer
 function Player:getLastAlive(ignoreRemoved, num)
   num = num or 1
-  local index = ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
+  local index = ignoreRemoved and #Fk:currentRoom().alive_players or
+      #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
   return self:getNextAlive(ignoreRemoved, index)
 end
 
@@ -865,7 +866,8 @@ end
 --- 确认玩家是否被禁止对特定玩家使用特定牌。
 ---@param to Player @ 特定玩家
 ---@param card Card @ 特定牌
-function Player:isProhibited(to, card)
+---@param selected number[]|nil @ 已选目标id表
+function Player:isProhibited(to, card, selected)
   if type(card) == "number" then card = Fk:getCardById(card) end
   if card.type == Card.TypeEquip and #to:getAvailableEquipSlots(card.sub_type) == 0 then
     return true
@@ -876,9 +878,11 @@ function Player:isProhibited(to, card)
     return true
   end
 
-  if fk.useMustTargets and
-      not table.contains(fk.useMustTargets, to.id) then
-    return true
+  if selected then
+    if fk.MustTargets and #fk.MustTargets > #selected and not table.contains(fk.MustTargets, to.id)
+        or fk.exclusiveTargets and not table.contains(fk.exclusiveTargets, to.id) then
+      return true
+    end
   end
 
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
