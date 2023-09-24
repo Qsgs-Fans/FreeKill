@@ -1023,8 +1023,8 @@ local function updateIntention(player, to, intention)
       else
         fk.ai_role[ap.id] = "neutral"
       end
-    end
-    fk.qWarning(
+    end --[[
+      fk.qWarning(
       player.general ..
       " " ..
       intention ..
