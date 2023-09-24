@@ -45,7 +45,7 @@ function ServerPlayer:initialize(_self)
   self._prelighted_skills = {}
 
   self._timewaste_count = 0
-  self.ai = RandomAI:new(self)
+  self.ai = SmartAI:new(self)
 end
 
 ---@param command string

@@ -540,9 +540,8 @@ function SmartAI:getRetrialCardId(cards, exchange)
     end
   end
   for _, c in ipairs(cards) do
-    if
-        self:isFriend(judge.who) and c:matchPattern(judge.pattern) or
-        self:isEnemie(judge.who) and not c:matchPattern(judge.pattern)
+    if self:isFriend(judge.who) and c:matchPattern(judge.pattern)==judge.good
+    or self:isEnemie(judge.who) and c:matchPattern(judge.pattern)~=judge.good
     then
       table.insert(canRetrial, c)
     end
@@ -634,13 +633,10 @@ trust_cb.PlayCard = function(self, jsonData)
           return Fk:getCardById(id)
         end
       )
-  cards =
-      table.filter(
-        cards,
+  cards = table.filter(cards,
         function(c)
           return c.skill:canUse(self.player, c) and not self.player:prohibitUse(c)
-        end
-      )
+        end)
   table.insertTable(
     cards,
     table.filter(
@@ -819,7 +815,7 @@ local function aliveRoles(room)
   for _, ap in ipairs(room:getAllPlayers(false)) do
     fk.alive_roles[ap.role] = 0
   end
-  for _, ap in ipairs(room:getAlivePlayers(false)) do
+  for _, ap in ipairs(room.alive_players) do
     fk.alive_roles[ap.role] = fk.alive_roles[ap.role] + 1
   end
   return fk.alive_roles
@@ -828,7 +824,7 @@ end
 function SmartAI:objectiveLevel(to)
   if self.player.id == to.id then
     return -2
-  elseif #self.room:getAlivePlayers(false) < 3 then
+  elseif #self.room.alive_players < 3 then
     return 5
   end
   local ars = aliveRoles(self.room)
@@ -838,7 +834,7 @@ function SmartAI:objectiveLevel(to)
     if self.role == "renegade" then
       fk.explicit_renegade = true
     end
-    for _, p in ipairs(self.room:getAlivePlayers()) do
+    for _, p in ipairs(self.room.alive_players) do
       if
           p.role == self.role or p.role == "lord" and self.role == "loyalist" or
           p.role == "loyalist" and self.role == "lord"
@@ -915,7 +911,7 @@ function SmartAI:updatePlayers(update)
   self.friends = {}
   self.friends_noself = {}
 
-  local aps = self.room:getAlivePlayers()
+  local aps = self.room.alive_players
   local function compare_func(a, b)
     local v1 = fk.roleValue[a.id].rebel
     local v2 = fk.roleValue[b.id].rebel
@@ -947,7 +943,7 @@ function SmartAI:updatePlayers(update)
     end
   end
 
-  for n, p in ipairs(self.room:getAlivePlayers(false)) do
+  for n, p in ipairs(aps) do
     n = self:objectiveLevel(p)
     if n < 0 then
       table.insert(self.friends, p)
@@ -993,7 +989,7 @@ local function updateIntention(player, to, intention)
       fk.roleValue[player.id].renegade = fk.roleValue[player.id].renegade +
           intention * (100 - fk.roleValue[player.id].renegade) / 200
     end
-    local aps = player.room:getAlivePlayers()
+    local aps = player.room.alive_players
     local function compare_func(a, b)
       local v1 = fk.roleValue[a.id].rebel
       local v2 = fk.roleValue[b.id].rebel
@@ -1162,18 +1158,6 @@ end
 function SmartAI:eventData(game_event)
   local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
   return event and event.data[1]
-end
-
-for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
-    dofile("packages/" .. n .. "/ai/init.lua")
-  end
-end
--- 加载两次拓展ai文件是为了能够保证引用，例如属性杀的使用直接套入普通杀的使用
-for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
-    dofile("packages/" .. n .. "/ai/init.lua")
-  end
 end
 
 return SmartAI

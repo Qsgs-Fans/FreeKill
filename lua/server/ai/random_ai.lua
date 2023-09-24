@@ -134,13 +134,15 @@ random_cb.AskForUseCard = function(self, jsonData)
   local cancelable = data[4] or true
   local exp = Exppattern:Parse(pattern)
 
-  local avail_cards = table.filter(player:getCardIds("he"), function(id)
-    return exp:match(Fk:getCardById(id)) and not player:prohibitUse(Fk:getCardById(id))
+  local avail_cards = table.map(player:getCardIds("he"),
+    function(id) return Fk:getCardById(id) end)
+  avail_cards = table.filter(avail_cards, function(c)
+    return exp:match(c) and not player:prohibitUse(c)
   end)
   if #avail_cards > 0 then
     if math.random() < 0.25 then return "" end
     for _, card in ipairs(avail_cards) do
-      local skill = Fk:getCardById(card).skill
+      local skill = card.skill
       local max_try_times = 100
       local selected_targets = {}
       local min = skill:getMinTargetNum()
@@ -148,22 +150,19 @@ random_cb.AskForUseCard = function(self, jsonData)
       local min_card = skill:getMinCardNum()
       local max_card = skill:getMaxCardNum()
       for _ = 0, max_try_times do
-        if skill:feasible(selected_targets, {card}, self.player, card) then break end
+        if skill:feasible(selected_targets, { card.id }, self.player, card) then
+          return json.encode{
+            card = table.random(avail_cards).id,
+            targets = selected_targets,
+            }
+        end
         local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
-          local ret = skill:targetFilter(p.id, selected_targets, {card}, card or Fk:cloneCard'zixing')
-          return ret
+          return skill:targetFilter(p.id, selected_targets, {card.id}, card or Fk:cloneCard'zixing')
         end)
         avail_targets = table.map(avail_targets, function(p) return p.id end)
 
         if #avail_targets == 0 and #avail_cards == 0 then break end
         table.insertIfNeed(selected_targets, table.random(avail_targets))
-        table.insertIfNeed({card}, table.random(avail_cards))
-      end
-      if skill:feasible(selected_targets, {card}, self.player, card) then
-        return json.encode{
-          card = table.random(avail_cards),
-          targets = selected_targets,
-        }
       end
     end
   end
