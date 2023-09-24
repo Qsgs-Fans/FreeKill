@@ -1336,8 +1336,7 @@ function Room:getNGenerals(n, position)
   while n > 0 do
 
     local index = position == "top" and 1 or #self.general_pile
-    table.insert(generals, self.general_pile[index])
-    table.remove(self.general_pile, index)
+    table.insert(generals, table.remove(self.general_pile, index))
 
     n = n - 1
   end
@@ -1359,11 +1358,9 @@ function Room:returnToGeneralPile(g, position)
   while #g > 0 do
 
     if position == "bottom" then
-      table.insert(self.general_pile, g[#g])
-      table.remove(g, #g)
+      table.insert(self.general_pile, table.remove(g))
     elseif position == "top" then
-      table.insert(self.general_pile, 1, g[#g])
-      table.remove(g, #g)
+      table.insert(self.general_pile, 1, table.remove(g))
     end
 
   end
@@ -1372,14 +1369,15 @@ function Room:returnToGeneralPile(g, position)
 end
 
 --- 抽特定名字的武将（抽了就没了）
----@param name string @ 武将name，如找不到则查找truename，再找不到则返回失败
----@return boolean @ 是否成功
+---@param name string @ 武将name，如找不到则查找truename，再找不到则返回nil
+---@return string | nil @ 抽出的武将名
 function Room:findGeneral(name)
-  local general = table.find(self.general_pile, function(g)
-    return g == name or Fk.generals[g].trueName == Fk.generals[name].trueName
-  end)
-  if general == nil then return false end
-  return table.removeOne(self.general_pile, general)
+  for i, g in ipairs(self.general_pile) do
+    if g == name or Fk.generals[g].trueName == Fk.generals[name].trueName then
+      return table.remove(self.general_pile, i)
+    end
+  end
+  return nil
 end
 
 --- 自上而下抽符合特定情况的N个武将（抽了就没了）
@@ -1388,14 +1386,15 @@ end
 ---@return string[] @ 武将组合，可能为空
 function Room:findGenerals(func, n)
   n = n or 1
-  local generals = table.filter(self.general_pile, func)
   local ret = {}
-  for _, name in ipairs(generals) do
-    if #ret <= n then
-      table.insertIfNeed(ret, name)
-      table.removeOne(self.general_pile, name)
+  local index = 1
+  repeat
+    if func(self.general_pile[index]) then
+      table.insert(ret, table.remove(self.general_pile, index))
+    else
+      index = index + 1
     end
-  end
+  until index >= #self.general_pile or #ret >= n
   return ret
 end
 
