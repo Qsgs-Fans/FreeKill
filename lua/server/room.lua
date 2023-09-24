@@ -2042,7 +2042,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     if extra_data.bypass_times ~= false then
       player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
-    fk.MustTargets = extra_data.must_targets
+    fk.mustTargets = extra_data.must_targets
     fk.exclusiveTargets = extra_data.exclusive_targets
   end
   local command = "AskForUseCard"

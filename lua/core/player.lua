@@ -879,7 +879,7 @@ function Player:isProhibited(to, card, selected)
   end
 
   if selected then
-    if fk.MustTargets and #fk.MustTargets > #selected and not table.contains(fk.MustTargets, to.id)
+    if fk.mustTargets and #fk.mustTargets > #selected and not table.contains(fk.mustTargets, to.id)
         or fk.exclusiveTargets and not table.contains(fk.exclusiveTargets, to.id) then
       return true
     end
