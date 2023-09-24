@@ -30,11 +30,18 @@ fk.ai_card.jijiang = { priority = 10 }
 fk.ai_use_play.lijian = function(self, skill)
   local c = Fk:cloneCard("duel")
   c.skillName = "lijian"
+  local cards = table.map(
+    self.player:getCardIds("he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
+  self:sortValue(cards)
   for _, p in ipairs(self.enemies) do
     for _, pt in ipairs(self.enemies) do
-      if p.gender == General.Male and pt.gender == General.Male and p.id ~= pt.id and
-          c.skill:targetFilter(pt.id, {}, p.id, c) then
-        self.use_id = { self.player:getCardIds("he")[1] }
+      if p.gender == General.Male and pt.gender == General.Male and p.id ~= pt.id
+      and c.skill:targetFilter(pt.id, {}, p.id, c) then
+        self.use_id = { cards[1].id }
         self.use_tos = { pt.id, p.id }
         break
       end
@@ -42,9 +49,9 @@ fk.ai_use_play.lijian = function(self, skill)
   end
   for _, p in ipairs(self.friends_noself) do
     for _, pt in ipairs(self.enemies) do
-      if p.gender == General.Male and pt.gender == General.Male and p.id ~= pt.id and
-          c.skill:targetFilter(pt.id, {}, p.id, c) then
-        self.use_id = { self.player:getCardIds("he")[1] }
+      if p.gender == General.Male and pt.gender == General.Male and p.id ~= pt.id
+      and c.skill:targetFilter(pt.id, {}, p.id, c) then
+        self.use_id = { cards[1].id }
         self.use_tos = { pt.id, p.id }
         break
       end
@@ -56,9 +63,16 @@ fk.ai_card.lijian = { priority = 2 }
 
 fk.ai_use_play.zhiheng = function(self, skill)
   local card_ids = {}
-  for _, h in ipairs(self.player:getCardIds("he")) do
-    if #card_ids < #self.player:getCardIds("he") / 2 then
-      table.insert(card_ids, h)
+  local cards = table.map(
+    self.player:getCardIds("he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
+  self:sortValue(cards)
+  for _, h in ipairs(cards) do
+    if #card_ids < #cards / 2 then
+      table.insert(card_ids, h.id)
     end
   end
   if #card_ids > 0 then
@@ -90,10 +104,16 @@ fk.ai_use_play.fanjian = function(self, skill)
 end
 
 fk.ai_use_play.jieyin = function(self, skill)
-  for cs, p in ipairs(self.friends_noself) do
-    cs = self.player:getCardIds("h")
-    if #cs > 1 and p.gender == General.Male and p:isWounded() then
-      self.use_id = { cs[1], cs[2] }
+  local cards = table.map(
+    self.player:getCardIds("he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
+  self:sortValue(cards)
+  for _, p in ipairs(self.friends_noself) do
+    if #cards > 1 and p.gender == General.Male and p:isWounded() then
+      self.use_id = { cards[1].id, cards[2].id }
       table.insert(self.use_tos, p.id)
       break
     end
@@ -101,10 +121,16 @@ fk.ai_use_play.jieyin = function(self, skill)
 end
 
 fk.ai_use_play.qingnang = function(self, skill)
-  for cs, p in ipairs(self.friends) do
-    cs = self.player:getCardIds("h")
-    if #cs > 0 and p:isWounded() then
-      self.use_id = { cs[1] }
+  local cards = table.map(
+    self.player:getCardIds("he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
+  self:sortValue(cards)
+  for _, p in ipairs(self.friends) do
+    if #cards > 0 and p:isWounded() then
+      self.use_id = { cards[1].id }
       table.insert(self.use_tos, p.id)
       break
     end
@@ -117,7 +143,7 @@ fk.ai_card.hujia = { priority = 10 }
 
 fk.ai_response_card["#hujia-ask"] = function(self, pattern, prompt, cancelable, data)
   local to = self.room:getPlayerById(tonumber(prompt:split(":")[2]))
-  if to and self:isFriend(to) then
+  if to and self:isFriend(to) and (self:isWeak(to) or #self:getActives(pattern)>1) then
     self:setUseId(pattern)
   end
 end
@@ -208,19 +234,26 @@ fk.ai_use_skill.yiji_active = function(self, prompt, cancelable, data)
 end
 
 fk.ai_choose_players.liuli = function(self, targets, min_num, num, cancelable)
+  local cards = table.map(
+    self.player:getCardIds("he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
+  self:sortValue(cards)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if self:isEnemie(p) and #self.use_tos < num and #self.player:getCardIds("he") > 0 then
+    if self:isEnemie(p) and #self.use_tos < num and #cards > 0 then
       table.insert(self.use_tos, pid)
-      self.use_id = { self.player:getCardIds("he")[1] }
+      self.use_id = { cards[1].id }
       return
     end
   end
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if not self:isFriend(p) and #self.use_tos < num and #self.player:getCardIds("he") > 0 then
+    if not self:isFriend(p) and #self.use_tos < num and #cards > 0 then
       table.insert(self.use_tos, pid)
-      self.use_id = { self.player:getCardIds("he")[1] }
+      self.use_id = { cards[1].id }
       return
     end
   end

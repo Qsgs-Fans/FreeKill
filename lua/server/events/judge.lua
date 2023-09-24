@@ -11,31 +11,33 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   data.card = data.card or Fk:getCardById(room:getNCards(1)[1])
 
   if data.reason ~= "" then
-    room:sendLog {
+    room:sendLog{
       type = "#StartJudgeReason",
       from = who.id,
       arg = data.reason,
     }
   end
 
-  room:sendLog {
+  room:sendLog{
     type = "#InitialJudge",
     from = who.id,
-    card = { data.card.id },
+    card = {data.card.id},
   }
   room:moveCardTo(data.card, Card.Processing, nil, fk.ReasonJudge)
   room:sendFootnote({ data.card.id }, {
     type = "##JudgeCard",
     arg = data.reason,
   })
+
   data.isgood = data.good == data.card:matchPattern(data.pattern)
+
   logic:trigger(fk.AskForRetrial, who, data)
   logic:trigger(fk.FinishRetrial, who, data)
   Fk:filterCard(data.card.id, who, data)
-  room:sendLog {
+  room:sendLog{
     type = "#JudgeResult",
     from = who.id,
-    card = { data.card.id },
+    card = {data.card.id},
   }
   room:sendFootnote({ data.card.id }, {
     type = "##JudgeCard",
@@ -43,16 +45,17 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   })
 
   if data.pattern then
-    room:delay(400)
+    room:delay(400);
     if data.negative
     then
       room:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgebad" or "judgegood")
     else
       room:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
     end
-    room:delay(900)
+    room:delay(900);
   end
-  data.isgood = data.good == data.card:matchPattern(data.pattern) --增加判定结果参数
+  data.isgood = data.good == data.card:matchPattern(data.pattern)
+
   if logic:trigger(fk.FinishJudge, who, data) then
     logic:breakEvent()
   end

@@ -4,7 +4,7 @@ local extension = Package:new("maneuvering", Package.CardPack)
 
 local slash = Fk:cloneCard("slash")
 
-local thunderSlashSkill = fk.CreateActiveSkill {
+local thunderSlashSkill = fk.CreateActiveSkill{
   name = "thunder__slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
@@ -25,13 +25,13 @@ local thunderSlashSkill = fk.CreateActiveSkill {
     })
   end
 }
-local thunderSlash = fk.CreateBasicCard {
+local thunderSlash = fk.CreateBasicCard{
   name = "thunder__slash",
   skill = thunderSlashSkill,
   is_damage_card = true,
 }
 
-extension:addCards {
+extension:addCards{
   thunderSlash:clone(Card.Club, 5),
   thunderSlash:clone(Card.Club, 6),
   thunderSlash:clone(Card.Club, 7),
@@ -43,7 +43,7 @@ extension:addCards {
   thunderSlash:clone(Card.Spade, 8),
 }
 
-local fireSlashSkill = fk.CreateActiveSkill {
+local fireSlashSkill = fk.CreateActiveSkill{
   name = "fire__slash_skill",
   max_phase_use_time = 1,
   target_num = 1,
@@ -64,13 +64,13 @@ local fireSlashSkill = fk.CreateActiveSkill {
     })
   end
 }
-local fireSlash = fk.CreateBasicCard {
+local fireSlash = fk.CreateBasicCard{
   name = "fire__slash",
   skill = fireSlashSkill,
   is_damage_card = true,
 }
 
-extension:addCards {
+extension:addCards{
   fireSlash:clone(Card.Heart, 4),
   fireSlash:clone(Card.Heart, 7),
   fireSlash:clone(Card.Heart, 10),
@@ -78,15 +78,14 @@ extension:addCards {
   fireSlash:clone(Card.Diamond, 5),
 }
 
-local analepticSkill = fk.CreateActiveSkill {
+local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic",
-          Fk:currentRoom():getPlayerById(to_select)) and
-        not table.find(Fk:currentRoom().alive_players, function(p)
-          return p.dying
-        end)
+    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
+      not table.find(Fk:currentRoom().alive_players, function(p)
+        return p.dying
+      end)
   end,
   can_use = function(self, player, card)
     return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
@@ -116,7 +115,7 @@ local analepticSkill = fk.CreateActiveSkill {
   end
 }
 
-local analepticEffect = fk.CreateTriggerSkill {
+local analepticEffect = fk.CreateTriggerSkill{
   name = "analeptic_effect",
   global = true,
   priority = 0, -- game rule
@@ -152,7 +151,7 @@ local analepticEffect = fk.CreateTriggerSkill {
 }
 Fk:addSkill(analepticEffect)
 
-local analeptic = fk.CreateBasicCard {
+local analeptic = fk.CreateBasicCard{
   name = "analeptic",
   suit = Card.Spade,
   number = 3,
@@ -167,7 +166,7 @@ extension:addCards({
   analeptic:clone(Card.Diamond, 9),
 })
 
-local recast = fk.CreateActiveSkill {
+local recast = fk.CreateActiveSkill{
   name = "recast",
   target_num = 0,
   on_use = function(self, room, effect)
@@ -176,14 +175,14 @@ local recast = fk.CreateActiveSkill {
 }
 Fk:addSkill(recast)
 
-local ironChainCardSkill = fk.CreateActiveSkill {
+local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
   min_target_num = 1,
   max_target_num = 2,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local to = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card, selected)) and not to:isKongcheng()
+    return not (card and from:isProhibited(to, card)) and not to:isKongcheng()
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -196,13 +195,13 @@ local ironChainCardSkill = fk.CreateActiveSkill {
   end,
 }
 
-local ironChain = fk.CreateTrickCard {
+local ironChain = fk.CreateTrickCard{
   name = "iron_chain",
   skill = ironChainCardSkill,
   special_skills = { "recast" },
   multiple_targets = true,
 }
-extension:addCards {
+extension:addCards{
   ironChain:clone(Card.Spade, 11),
   ironChain:clone(Card.Spade, 12),
   ironChain:clone(Card.Club, 10),
@@ -211,13 +210,13 @@ extension:addCards {
   ironChain:clone(Card.Club, 13),
 }
 
-local fireAttackSkill = fk.CreateActiveSkill {
+local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
   target_num = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local to = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card, selected)) and not to:isKongcheng()
+    return not (card and from:isProhibited(to, card)) and not to:isKongcheng()
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -229,13 +228,12 @@ local fireAttackSkill = fk.CreateActiveSkill {
     local to = room:getPlayerById(cardEffectEvent.to)
     if to:isKongcheng() then return end
 
-    local showCard = room:askForCard(to, 1, 1, false, self.name, false, ".|.|.|hand", "#fire_attack-show:" .. from.id)
-        [1]
+    local showCard = room:askForCard(to, 1, 1, false, self.name, false, ".|.|.|hand", "#fire_attack-show:" .. from.id)[1]
     to:showCards(showCard)
 
     showCard = Fk:getCardById(showCard)
     local cards = room:askForDiscard(from, 1, 1, false, self.name, true,
-      ".|.|" .. showCard:getSuitString(), "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString())
+                                    ".|.|" .. showCard:getSuitString(), "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString())
     if #cards > 0 then
       room:damage({
         from = from,
@@ -248,25 +246,25 @@ local fireAttackSkill = fk.CreateActiveSkill {
     end
   end,
 }
-local fireAttack = fk.CreateTrickCard {
+local fireAttack = fk.CreateTrickCard{
   name = "fire_attack",
   skill = fireAttackSkill,
   is_damage_card = true,
 }
-extension:addCards {
+extension:addCards{
   fireAttack:clone(Card.Heart, 2),
   fireAttack:clone(Card.Heart, 3),
   fireAttack:clone(Card.Diamond, 12),
 }
 
-local supplyShortageSkill = fk.CreateActiveSkill {
+local supplyShortageSkill = fk.CreateActiveSkill{
   name = "supply_shortage_skill",
   distance_limit = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
-        and not (card and from:isProhibited(player, card, selected))
+    and not (card and from:isProhibited(player, card))
   end,
   target_filter = function(self, to_select, selected, _, card)
     return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
@@ -287,38 +285,38 @@ local supplyShortageSkill = fk.CreateActiveSkill {
     self:onNullified(room, effect)
   end,
   on_nullified = function(self, room, effect)
-    room:moveCards {
+    room:moveCards{
       ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       toArea = Card.DiscardPile,
       moveReason = fk.ReasonUse
     }
   end,
 }
-local supplyShortage = fk.CreateDelayedTrickCard {
+local supplyShortage = fk.CreateDelayedTrickCard{
   name = "supply_shortage",
   skill = supplyShortageSkill,
 }
-extension:addCards {
+extension:addCards{
   supplyShortage:clone(Card.Spade, 10),
   supplyShortage:clone(Card.Club, 4),
 }
 
-local gudingSkill = fk.CreateTriggerSkill {
+local gudingSkill = fk.CreateTriggerSkill{
   name = "#guding_blade_skill",
   attached_equip = "guding_blade",
   frequency = Skill.Compulsory,
-  events = { fk.DamageCaused },
+  events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and
-        data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
-        not data.chain
+      data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
+      not data.chain
   end,
   on_use = function(_, _, _, _, data)
     data.damage = data.damage + 1
   end,
 }
 Fk:addSkill(gudingSkill)
-local gudingBlade = fk.CreateWeapon {
+local gudingBlade = fk.CreateWeapon{
   name = "guding_blade",
   suit = Card.Spade,
   number = 1,
@@ -328,7 +326,7 @@ local gudingBlade = fk.CreateWeapon {
 
 extension:addCard(gudingBlade)
 
-local fanSkill = fk.CreateTriggerSkill {
+local fanSkill = fk.CreateTriggerSkill{
   name = "#fan_skill",
   attached_equip = "fan",
   events = { fk.AfterCardUseDeclared },
@@ -343,7 +341,7 @@ local fanSkill = fk.CreateTriggerSkill {
   end,
 }
 Fk:addSkill(fanSkill)
-local fan = fk.CreateWeapon {
+local fan = fk.CreateWeapon{
   name = "fan",
   suit = Card.Diamond,
   number = 1,
@@ -353,22 +351,22 @@ local fan = fk.CreateWeapon {
 
 extension:addCard(fan)
 
-local vineSkill = fk.CreateTriggerSkill {
+local vineSkill = fk.CreateTriggerSkill{
   name = "#vine_skill",
   attached_equip = "vine",
   mute = true,
   frequency = Skill.Compulsory,
 
-  events = { fk.PreCardEffect, fk.DamageInflicted },
+  events = {fk.PreCardEffect, fk.DamageInflicted},
   can_trigger = function(self, event, target, player, data)
     if event == fk.DamageInflicted then
       return target == player and player:hasSkill(self.name) and
-          data.damageType == fk.FireDamage
+        data.damageType == fk.FireDamage
     end
     local effect = data ---@type CardEffectEvent
     return player.id == effect.to and player:hasSkill(self.name) and
-        (effect.card.name == "slash" or effect.card.name == "savage_assault" or
-          effect.card.name == "archery_attack")
+      (effect.card.name == "slash" or effect.card.name == "savage_assault" or
+      effect.card.name == "archery_attack")
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
@@ -384,20 +382,20 @@ local vineSkill = fk.CreateTriggerSkill {
   end,
 }
 Fk:addSkill(vineSkill)
-local vine = fk.CreateArmor {
+local vine = fk.CreateArmor{
   name = "vine",
   equip_skill = vineSkill,
 }
-extension:addCards {
+extension:addCards{
   vine:clone(Card.Spade, 2),
   vine:clone(Card.Club, 2),
 }
 
-local silverLionSkill = fk.CreateTriggerSkill {
+local silverLionSkill = fk.CreateTriggerSkill{
   name = "#silver_lion_skill",
   attached_equip = "silver_lion",
   frequency = Skill.Compulsory,
-  events = { fk.DamageInflicted },
+  events = {fk.DamageInflicted},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name) and data.damage > 1
   end,
@@ -406,7 +404,7 @@ local silverLionSkill = fk.CreateTriggerSkill {
   end,
 }
 Fk:addSkill(silverLionSkill)
-local silverLion = fk.CreateArmor {
+local silverLion = fk.CreateArmor{
   name = "silver_lion",
   suit = Card.Club,
   number = 1,
@@ -416,7 +414,7 @@ local silverLion = fk.CreateArmor {
     if player:isAlive() and player:isWounded() and self.equip_skill:isEffectable(player) then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
       room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
-      room:recover {
+      room:recover{
         who = player,
         num = 1,
         skillName = self.name
@@ -426,7 +424,7 @@ local silverLion = fk.CreateArmor {
 }
 extension:addCard(silverLion)
 
-local huaLiu = fk.CreateDefensiveRide {
+local huaLiu = fk.CreateDefensiveRide{
   name = "hualiu",
   suit = Card.Diamond,
   number = 13,
@@ -436,7 +434,7 @@ extension:addCards({
   huaLiu,
 })
 
-extension:addCards {
+extension:addCards{
   Fk:cloneCard("jink", Card.Heart, 8),
   Fk:cloneCard("jink", Card.Heart, 9),
   Fk:cloneCard("jink", Card.Heart, 11),
@@ -457,36 +455,36 @@ extension:addCards {
   Fk:cloneCard("nullification", Card.Spade, 13),
 }
 
-Fk:loadTranslationTable {
+Fk:loadTranslationTable{
   ["maneuvering"] = "军争",
 
   ["thunder__slash"] = "雷杀",
-  [":thunder__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点雷电伤害。",
+	[":thunder__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点雷电伤害。",
   ["fire__slash"] = "火杀",
-  [":fire__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点火焰伤害。",
+	[":fire__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点火焰伤害。",
   ["analeptic"] = "酒",
-  [":analeptic"] = "基本牌<br /><b>时机</b>：出牌阶段/你处于濒死状态时<br /><b>目标</b>：你<br /><b>效果</b>：目标角色本回合使用的下一张【杀】将要造成的伤害+1/目标角色回复1点体力。",
+	[":analeptic"] = "基本牌<br /><b>时机</b>：出牌阶段/你处于濒死状态时<br /><b>目标</b>：你<br /><b>效果</b>：目标角色本回合使用的下一张【杀】将要造成的伤害+1/目标角色回复1点体力。",
   ["iron_chain"] = "铁锁连环",
-  [":iron_chain"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一至两名角色<br /><b>效果</b>：横置或重置目标角色的武将牌。",
+	[":iron_chain"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一至两名角色<br /><b>效果</b>：横置或重置目标角色的武将牌。",
   ["_normal_use"] = "正常使用",
   ["recast"] = "重铸",
   [":recast"] = "你可以将此牌置入弃牌堆，然后摸一张牌。",
   ["fire_attack"] = "火攻",
   ["fire_attack_skill"] = "火攻",
-  [":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与所展示牌花色相同的手牌令其受到1点火焰伤害。",
+	[":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与所展示牌花色相同的手牌令其受到1点火焰伤害。",
   ["#fire_attack-show"] = "%src 对你使用了火攻，请展示一张手牌",
   ["#fire_attack-discard"] = "你可弃置一张 %arg 手牌，对 %src 造成1点火属性伤害",
   ["supply_shortage"] = "兵粮寸断",
-  [":supply_shortage"] = "延时锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：距离1的一名其他角色<br /><b>效果</b>：将此牌置于目标角色判定区内。其判定阶段进行判定：若结果不为梅花，其跳过摸牌阶段。然后将【兵粮寸断】置入弃牌堆。",
+	[":supply_shortage"] = "延时锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：距离1的一名其他角色<br /><b>效果</b>：将此牌置于目标角色判定区内。其判定阶段进行判定：若结果不为梅花，其跳过摸牌阶段。然后将【兵粮寸断】置入弃牌堆。",
   ["guding_blade"] = "古锭刀",
-  [":guding_blade"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技。每当你使用【杀】对目标角色造成伤害时，若该角色没有手牌，此伤害+1。",
+	[":guding_blade"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技。每当你使用【杀】对目标角色造成伤害时，若该角色没有手牌，此伤害+1。",
   ["fan"] = "朱雀羽扇",
-  [":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：你可以将一张普通【杀】当火【杀】使用。",
+	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：你可以将一张普通【杀】当火【杀】使用。",
   ["#fan_skill"] = "朱雀羽扇",
   ["vine"] = "藤甲",
-  [":vine"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。【南蛮入侵】、【万箭齐发】和普通【杀】对你无效。每当你受到火焰伤害时，此伤害+1。",
+	[":vine"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。【南蛮入侵】、【万箭齐发】和普通【杀】对你无效。每当你受到火焰伤害时，此伤害+1。",
   ["silver_lion"] = "白银狮子",
-  [":silver_lion"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。每当你受到伤害时，若此伤害大于1点，防止多余的伤害。每当你失去装备区里的【白银狮子】后，你回复1点体力。",
+	[":silver_lion"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。每当你受到伤害时，若此伤害大于1点，防止多余的伤害。每当你失去装备区里的【白银狮子】后，你回复1点体力。",
   ["hualiu"] = "骅骝",
   [":hualiu"] = "装备牌·坐骑<br /><b>坐骑技能</b>：其他角色与你的距离+1。",
 }
