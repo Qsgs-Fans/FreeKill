@@ -308,15 +308,9 @@ fk.ai_askuse_card = {}
 fk.ai_nullification = {}
 
 fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, extra_data)
-  local effect = self:eventData("CardEffect")
-  if effect.to then
-    fk.askNullificationData = effect
-    fk.askNullification = 1
-  elseif effect.from then
-    fk.askNullification = fk.askNullification + 1
-  end
-  effect = fk.askNullificationData
-  local positive = fk.askNullification % 2 == 1
+  local datas = self:eventsData("CardEffect")
+  local effect = datas[#datas] --修改了无懈的请求，不用在room.lua里加记录了
+  local positive = #datas % 2 == 1
   local ask = fk.ai_nullification[effect.card.name]
   if type(ask) == "function" then
     ask(self, effect.card, self.room:getPlayerById(effect.to), self.room:getPlayerById(effect.from), positive)
@@ -418,6 +412,10 @@ function SmartAI:getPriority(card)
     end
     v = v + (13 - card.number) / 100
     v = v + card.suit / 100
+    if card:isVirtual()
+    then
+      v = v - #card.subcards * 0.25
+    end
   end
   return v
 end
@@ -503,10 +501,11 @@ trust_cb.AskForResponseCard = function(self, jsonData)
     ask = fk.ai_response_card[data[1]]
     if type(ask) == "function" then
       ask(self, pattern, prompt, cancelable, extra_data)
-    end
-    local effect = self:eventData("CardEffect")
-    if effect and effect.card then
-      self:setUseId(pattern)
+    else
+      local effect = self:eventData("CardEffect")
+      if effect and (effect.card.multiple_targets or self:isEnemie(effect.from, effect.to)) then
+        self:setUseId(pattern)
+      end
     end
   end
   if self.use_id then
@@ -522,7 +521,7 @@ fk.ai_response_card = {}
 
 function SmartAI:getRetrialCardId(cards, exchange)
   local judge = self:eventData("Judge")
-  local isgood = judge.card:matchPattern(judge.pattern)
+  local isgood = judge.good == judge.card:matchPattern(judge.pattern)
   local canRetrial = {}
   self:sortValue(cards)
   if exchange then
@@ -713,9 +712,9 @@ fk.roleValue = {}
 
 fk.trick_judge = {}
 
-fk.trick_judge.indulgence = ".|.|heart"
-fk.trick_judge.lightning = ".|.|^spade"
-fk.trick_judge.supply_shortage = ".|.|club"
+fk.trick_judge.indulgence = { ".|.|heart", true }
+fk.trick_judge.lightning = { ".|2~9|spade", false }
+fk.trick_judge.supply_shortage = { ".|.|club", true }
 
 local function table_clone(self)
   local t = {}
@@ -749,7 +748,7 @@ trust_cb.AskForGuanxing = function(self, jsonData)
         local tj = fk.trick_judge[j.name]
         if tj then
           for _, c in ipairs(table_clone(cards)) do
-            if c:matchPattern(tj) and #top < data.max_top_cards then
+            if tj[2] == c:matchPattern(tj[1]) and #top < data.max_top_cards then
               table.insert(top, c.id)
               table.removeOne(cards, c)
               tj = 1
@@ -978,7 +977,10 @@ local function updateIntention(player, to, intention)
   if player.id == to.id then
     return
   elseif player.role == "lord" then
-    fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
+    if fk.roleValue[to.id].rebel ~= 0
+    then
+      fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
+    end
   else
     if to.role == "lord" or fk.ai_role[to.id] == "loyalist" then
       fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel +
@@ -1021,8 +1023,8 @@ local function updateIntention(player, to, intention)
       else
         fk.ai_role[ap.id] = "neutral"
       end
-    end
-    fk.qWarning(
+    end --[[
+      fk.qWarning(
       player.general ..
       " " ..
       intention ..
@@ -1033,29 +1035,77 @@ local function updateIntention(player, to, intention)
   end
 end
 
+--[[
 function SmartAI:filterEvent(event, player, data)
-  if event == fk.TargetSpecified then
-    local callback = fk.ai_card[data.card.name]
-    callback = callback and callback.intention
-    if type(callback) == "function" then
-      for _, p in ipairs(TargetGroup:getRealTargets(data.tos)) do
-        p = self.room:getPlayerById(p)
-        local intention = callback(p.ai, data.card, self.room:getPlayerById(data.from))
-        if type(intention) == "number" then
-          updateIntention(self.room:getPlayerById(data.from), p, intention)
+end--]]
+--增加全局触发技，这样就不用在gamelogic.lua里增加接口了
+local filterEvent = fk.CreateTriggerSkill {
+  name = "filter_event",
+  events = {
+    fk.TargetSpecified,
+    fk.StartJudge,
+    --fk.AfterCardsMove,
+    fk.CardUsing
+  },
+  priority = -1,
+  global = true,
+  can_trigger = function(self, event, target, player, data)
+    return target == nil or target == player
+  end,
+  on_trigger = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.TargetSpecified then
+      local callback = fk.ai_card[data.card.name]
+      callback = callback and callback.intention
+      if type(callback) == "function" then
+        for _, p in ipairs(TargetGroup:getRealTargets(data.tos)) do
+          p = room:getPlayerById(p)
+          local intention = callback(p.ai, data.card, room:getPlayerById(data.from))
+          if type(intention) == "number" then
+            updateIntention(room:getPlayerById(data.from), p, intention)
+          end
+        end
+      elseif type(callback) == "number" then
+        for _, p in ipairs(TargetGroup:getRealTargets(data.tos)) do
+          p = room:getPlayerById(p)
+          updateIntention(room:getPlayerById(data.from), p, callback)
         end
       end
-    elseif type(callback) == "number" then
-      for _, p in ipairs(TargetGroup:getRealTargets(data.tos)) do
-        p = self.room:getPlayerById(p)
-        updateIntention(self.room:getPlayerById(data.from), p, callback)
+    elseif event == fk.StartJudge then
+      fk.trick_judge[data.reason] = { data.pattern, data.good }
+    elseif event == fk.CardUsing then
+      if data.card.name == "nullification" then
+        local datas = player.ai:eventsData("CardEffect")
+        local effect = datas[#datas]
+        local to = room:getPlayerById(effect.to)
+        local from = room:getPlayerById(data.from)
+        local callback = fk.ai_card[effect.card.name]
+        callback = callback and callback.intention
+        if #datas % 2 == 1 then
+          if type(callback) == "function" then
+            callback = callback(to.ai, effect.card, from)
+            if type(callback) == "number" then
+              updateIntention(from, to, -callback)
+            end
+          elseif type(callback) == "number" then
+            updateIntention(from, to, -callback)
+          end
+        else
+          if type(callback) == "function" then
+            callback = callback(to.ai, effect.card, from)
+            if type(callback) == "number" then
+              updateIntention(from, to, callback)
+            end
+          elseif type(callback) == "number" then
+            updateIntention(from, to, callback)
+          end
+        end
       end
+    elseif event == fk.AfterCardsMove then
     end
-  elseif event == fk.StartJudge then
-    fk.trick_judge[data.reason] = data.pattern
-  elseif event == fk.AfterCardsMove then
   end
-end
+}
+Fk:addSkill(filterEvent)
 
 function SmartAI:isWeak(player, getAP)
   player = player or self.player
@@ -1097,20 +1147,32 @@ function SmartAI:isEnemie(pid, tid)
   end
 end
 
+function SmartAI:eventsData(game_event, ge)
+  local datas = {}
+  local _ge = ge or self.room.logic:getCurrentEvent()
+  while _ge do
+    if _ge.event == GameEvent[game_event] then
+      table.insert(datas, _ge.data[1])
+    end
+    _ge = _ge.parent
+  end
+  return datas
+end
+
 function SmartAI:eventData(game_event)
   local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
   return event and event.data[1]
 end
 
 for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n) and FileIO.exists("packages/" .. n .. "/" .. n .. "_ai.lua") then
-    dofile("packages/" .. n .. "/" .. n .. "_ai.lua")
+  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
+    dofile("packages/" .. n .. "/ai/init.lua")
   end
 end
--- 加载两次拓展是为了能够引用，例如属性杀的使用直接套入普通杀的使用
+-- 加载两次拓展ai文件是为了能够保证引用，例如属性杀的使用直接套入普通杀的使用
 for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n) and FileIO.exists("packages/" .. n .. "/" .. n .. "_ai.lua") then
-    dofile("packages/" .. n .. "/" .. n .. "_ai.lua")
+  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
+    dofile("packages/" .. n .. "/ai/init.lua")
   end
 end
 

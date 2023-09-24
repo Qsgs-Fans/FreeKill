@@ -198,7 +198,6 @@ end
 
 function GameLogic:attachSkillToPlayers()
   local room = self.room
-  local players = room.players
 
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
@@ -235,9 +234,6 @@ function GameLogic:attachSkillToPlayers()
 end
 
 function GameLogic:prepareForStart()
-  local room = self.room
-  local players = room.players
-
   self:addTriggerSkill(GameRule)
   for _, trig in ipairs(Fk.global_trigger) do
     self:addTriggerSkill(trig)
@@ -250,13 +246,12 @@ end
 
 function GameLogic:action()
   self:trigger(fk.GamePrepared)
-  local room = self.room
 
   execGameEvent(GameEvent.DrawInitial)
 
   while true do
     execGameEvent(GameEvent.Round)
-    if room.game_finished then
+    if self.room.game_finished then
       break
     end
   end
@@ -323,11 +318,10 @@ end
 ---@param target ServerPlayer|nil
 ---@param data any|nil
 function GameLogic:trigger(event, target, data, refresh_only)
-  local room = self.room
   local broken = false
   local skills = self.skill_table[event] or {}
   local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
-  local _target = room.current -- for iteration
+  local _target = self.room.current -- for iteration
   local player = _target
   if #skills_to_refresh > 0 then
     repeat
@@ -371,7 +365,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
 
         while #skill_names > 0 do
           local skill_name = prio <= 0 and table.random(skill_names) or
-              room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
+              self.room:askForChoice(player, skill_names, "trigger", "#choose-trigger")
 
           local skill = skill_name == "game_rule" and GameRule or Fk.skills[skill_name]
 
@@ -385,7 +379,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
               return s.name
             end))
 
-          broken = broken or (event == fk.AskForPeaches and room:getPlayerById(data.who).hp > 0)
+          broken = broken or (event == fk.AskForPeaches and self.room:getPlayerById(data.who).hp > 0)
 
           if broken then
             break
@@ -402,7 +396,6 @@ function GameLogic:trigger(event, target, data, refresh_only)
     prev_prio = prio
     ::trigger_loop_continue::
   end
-  _target.ai:filterEvent(event, target, data)
   return broken
 end
 

@@ -46,7 +46,6 @@ GameRule = fk.CreateTriggerSkill {
             table.insert(cardNames, "analeptic")
             prompt = "#AskForPeachesSelf:::" .. 1 - dyingPlayer.hp
           end
-
           cardNames = table.filter(cardNames, function(cardName)
             local cardCloned = Fk:cloneCard(cardName)
             return not (player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned))
@@ -59,6 +58,7 @@ GameRule = fk.CreateTriggerSkill {
             pattern = table.concat(cardNames, ","),
             extraData = Util.DummyTable
           }
+          local use = nil
           room.logic:trigger(fk.AskForCardUse, player, useData)
           if type(useData.result) == "table" then
             useData = useData.result
@@ -68,9 +68,14 @@ GameRule = fk.CreateTriggerSkill {
               useData.extra_data.analepticRecover = true
             end
             room:useCard(useData)
+            if useData.nullified then
+              use = false
+            elseif useData.breakEvent ~= true then
+              use = useData
+            end
           end
-          useData = { "peach", table.concat(cardNames, ","), prompt, true, Util.DummyTable }
-          while dyingPlayer.hp < 1 do
+          if use == nil then
+            useData = { "peach", table.concat(cardNames, ","), prompt, true, Util.DummyTable }
             Fk.currentResponsePattern = table.concat(cardNames, ",")
             local result = room:doRequest(player, "AskForUseCard", json.encode(useData))
             Fk.currentResponsePattern = nil

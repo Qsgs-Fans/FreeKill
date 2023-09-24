@@ -735,10 +735,10 @@ end
 function ServerPlayer:returnToGeneralPile()
   local room = self.room
   if self.deputyGeneral and Fk:canUseGeneral(self.deputyGeneral) then
-    room:returnToGeneralPile(self.deputyGeneral)
+    room:returnToGeneralPile({ self.deputyGeneral })
   end
   if self.general and Fk:canUseGeneral(self.general) then
-    room:returnToGeneralPile(self.general)
+    room:returnToGeneralPile({ self.general })
   end
 end
 
@@ -1011,10 +1011,6 @@ function ServerPlayer:removeBuddy(other)
   end
   Player.removeBuddy(self, other)
   self:doNotify("RmBuddy", tostring(other.id))
-end
-
-function ServerPlayer:getAI()
-  return self.ai
 end
 
 return ServerPlayer

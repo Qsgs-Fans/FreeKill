@@ -63,9 +63,13 @@ end
 
 function ActiveSkill:getMinTargetNum()
   local ret
-  if self.target_num then ret = self.target_num
-  elseif self.target_num_table then ret = self.target_num_table
-  else ret = self.min_target_num end
+  if self.target_num then
+    ret = self.target_num
+  elseif self.target_num_table then
+    ret = self.target_num_table
+  else
+    ret = self.min_target_num
+  end
 
   if type(ret) == "function" then
     ret = ret(self)
@@ -79,9 +83,13 @@ end
 
 function ActiveSkill:getMaxTargetNum(player, card)
   local ret
-  if self.target_num then ret = self.target_num
-  elseif self.target_num_table then ret = self.target_num_table
-  else ret = self.max_target_num end
+  if self.target_num then
+    ret = self.target_num
+  elseif self.target_num_table then
+    ret = self.target_num_table
+  else
+    ret = self.max_target_num
+  end
 
   if type(ret) == "function" then
     ret = ret(self)
@@ -101,9 +109,13 @@ end
 
 function ActiveSkill:getMinCardNum()
   local ret
-  if self.card_num then ret = self.card_num
-  elseif self.card_num_table then ret = self.card_num_table
-  else ret = self.min_card_num end
+  if self.card_num then
+    ret = self.card_num
+  elseif self.card_num_table then
+    ret = self.card_num_table
+  else
+    ret = self.min_card_num
+  end
 
   if type(ret) == "function" then
     ret = ret(self)
@@ -117,9 +129,13 @@ end
 
 function ActiveSkill:getMaxCardNum()
   local ret
-  if self.card_num then ret = self.card_num
-  elseif self.card_num_table then ret = self.card_num_table
-  else ret = self.max_card_num end
+  if self.card_num then
+    ret = self.card_num
+  elseif self.card_num_table then
+    ret = self.card_num_table
+  else
+    ret = self.max_card_num
+  end
 
   if type(ret) == "function" then
     ret = ret(self)
@@ -135,9 +151,7 @@ function ActiveSkill:getDistanceLimit(player, card, to)
   local ret = self.distance_limit or 0
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
-    local correct = skill:getDistanceLimit(player, self, card, to)
-    if correct == nil then correct = 0 end
-    ret = ret + correct
+    ret = ret + (skill:getDistanceLimit(player, self, card, to) or 0)
   end
   return ret
 end
@@ -151,7 +165,7 @@ end
 ---@param selected_cards integer[] @ ids of selected cards
 function ActiveSkill:feasible(selected, selected_cards, player, card)
   return #selected >= self:getMinTargetNum() and #selected <= self:getMaxTargetNum(player, card)
-    and #selected_cards >= self:getMinCardNum() and #selected_cards <= self:getMaxCardNum()
+      and #selected_cards >= self:getMinCardNum() and #selected_cards <= self:getMaxCardNum()
 end
 
 ------- }

@@ -199,9 +199,12 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
+  fk.mustTargets = nil
+  fk.exclusiveTargets = nil --进入使用事件时清除目标限制
+
   if room.logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    cardUseEvent.breakEvent = true
-    self.data = { cardUseEvent }
+    cardUseEvent.breakEvent = true --增加终止判定参数
+    self.data = { cardUseEvent }   --传回数据
     room.logic:breakEvent()
   end
 
@@ -327,8 +330,8 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
     end
 
     if not cardEffectEvent.toCard and
-        (not (room:getPlayerById(cardEffectEvent.to):isAlive() and cardEffectEvent.to) or
-          #room:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) == 0) then
+        (not (cardEffectEvent.to and room:getPlayerById(cardEffectEvent.to):isAlive()) or
+          #room:deadPlayerFilter(TargetGroup:getRealTargets(cardEffectEvent.tos)) < 1) then
       room.logic:breakEvent()
     end
 

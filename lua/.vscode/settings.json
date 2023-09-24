@@ -12,6 +12,7 @@
     "undefined-doc-name"
   ],
   "Lua.diagnostics.globals": [
-    "GameRule"
+    "GameRule",
+    "AuxSkills"
   ]
 }

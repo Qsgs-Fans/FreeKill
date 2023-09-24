@@ -155,10 +155,11 @@ local ganglie = fk.CreateTriggerSkill {
     local judge = {
       who = player,
       reason = self.name,
-      pattern = ".|.|^heart"
+      good = false,
+      pattern = ".|.|heart"
     }
     room:judge(judge)
-    if judge.card.suit ~= Card.Heart and from and not from.dead then
+    if judge.isgood and from and not from.dead then
       local discards = room:askForDiscard(from, 2, 2, false, self.name, true)
       if #discards == 0 then
         room:damage {
@@ -394,7 +395,7 @@ local luoshen = fk.CreateTriggerSkill {
         pattern = ".|.|spade,club"
       }
       room:judge(judge)
-      if judge.card.color ~= Card.Black or player.dead or not room:askForSkillInvoke(player, self.name) then
+      if not judge.isgood or player.dead or not room:askForSkillInvoke(player, self.name) then
         break
       end
     end
@@ -705,7 +706,7 @@ local tieqi = fk.CreateTriggerSkill {
       pattern = ".|.|heart,diamond"
     }
     room:judge(judge)
-    if judge.card.color == Card.Red then
+    if judge.isgood then
       data.disresponsive = true
     end
   end

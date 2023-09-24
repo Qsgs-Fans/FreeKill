@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
   ["standard"] = "标准包",
   ["wei"] = "魏",
   ["shu"] = "蜀",
@@ -41,7 +41,6 @@ Fk:loadTranslationTable{
   ["$ganglie2"] = "以彼之道，还施彼身！",
   ["ganglie"] = "刚烈",
   [":ganglie"] = "当你受到伤害后，你可以进行判定：若结果不为红桃，则伤害来源选择一项：弃置两张手牌，或受到1点伤害。",
-
   ["zhangliao"] = "张辽",
   ["~zhangliao"] = "真的没想到……",
   ["$tuxi1"] = "哼，没想到吧！",
@@ -56,7 +55,6 @@ Fk:loadTranslationTable{
   ["$luoyi2"] = "谁来与我大战三百回合？",
   ["luoyi"] = "裸衣",
   [":luoyi"] = "摸牌阶段，你可以少摸一张牌，若如此做，本回合你使用【杀】或【决斗】对目标角色造成伤害时，此伤害+1。",
-
   ["guojia"] = "郭嘉",
   ["~guojia"] = "咳，咳……",
   ["$tiandu1"] = "就这样吧。",
@@ -118,14 +116,12 @@ Fk:loadTranslationTable{
   ["$kongcheng2"] = "（低沉的琴音）",
   ["kongcheng"] = "空城",
   [":kongcheng"] = "锁定技，若你没有手牌，你不能被选择为【杀】或【决斗】的目标。",
-
   ["zhaoyun"] = "赵云",
   ["~zhaoyun"] = "这，就是失败的滋味吗？",
   ["$longdan1"] = "能进能退乃真正法器！",
   ["$longdan2"] = "吾乃常山赵子龙也！",
   ["longdan"] = "龙胆",
   [":longdan"] = "你可以将一张【杀】当【闪】使用或打出，或将一张【闪】当普通【杀】使用或打出。",
-
   ["machao"] = "马超",
   ["~machao"] = "（马蹄远去声）",
   ["mashu"] = "马术",
@@ -134,7 +130,6 @@ Fk:loadTranslationTable{
   ["$tieqi2"] = "（马蹄、马嘶声）",
   ["tieqi"] = "铁骑",
   [":tieqi"] = "每当你指定【杀】的目标后，你可以进行判定：若结果为红色，该角色不能使用【闪】响应此【杀】。",
-
   ["huangyueying"] = "黄月英",
   ["~huangyueying"] = "亮……",
   ["$jizhi1"] = "哼哼～",
@@ -186,7 +181,6 @@ Fk:loadTranslationTable{
   ["$fanjian2"] = "痛苦吧，在仇与恨的地狱中！",
   ["fanjian"] = "反间",
   [":fanjian"] = "阶段技。你可以令一名其他角色选择一种花色，然后正面朝上获得你的一张手牌。若此牌花色与该角色所选花色不同，你对其造成1点伤害。",
-
   ["daqiao"] = "大乔",
   ["~daqiao"] = "伯符，我去了……",
   ["$guose1"] = "请休息吧。",
@@ -220,7 +214,6 @@ Fk:loadTranslationTable{
   ["$jieyin2"] = "他好，我也好。",
   ["jieyin"] = "结姻",
   [":jieyin"] = "阶段技，你可以弃置两张手牌并选择一名已受伤的男性角色：若如此做，你和该角色各回复1点体力。",
-
   ["huatuo"] = "华佗",
   ["~huatuo"] = "医者……不能自医啊……",
   ["$qingnang1"] = "早睡早起，方能养生。",
@@ -238,7 +231,6 @@ Fk:loadTranslationTable{
   ["$wushuang2"] = "神挡杀神，佛挡杀佛！",
   ["wushuang"] = "无双",
   [":wushuang"] = "锁定技，当你使用【杀】指定目标后，其使用【闪】抵消此【杀】的方式改为需连续使用两张【闪】；当你使用【决斗】指定目标后，或当你成为【决斗】的目标后，你令其打出【杀】响应此【决斗】的方式改为需连续打出两张【杀】。",
-
   ["diaochan"] = "貂蝉",
   ["~diaochan"] = "父亲大人，对不起……",
   ["$lijian1"] = "嗯呵呵～～呵呵～～",
@@ -455,7 +447,7 @@ ___
 }
 
 -- aux skills
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
   ["discard_skill"] = "弃牌",
   ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "选择角色",
