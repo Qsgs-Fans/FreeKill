@@ -1344,7 +1344,6 @@ function Room:getNGenerals(n, position)
   if #generals < 1 then
     self:gameOver("")
   end
-
   return generals
 end
 

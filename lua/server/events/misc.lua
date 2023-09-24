@@ -9,7 +9,7 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
 
   data.sendLog = data.sendLog or false
   local skills = {}
-  if logic.trigger(fk.PropertyChange, player, data) then
+  if logic:trigger(fk.PropertyChange, player, data) then
     logic:breakEvent()
   end
 
