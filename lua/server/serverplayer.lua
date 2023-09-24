@@ -905,7 +905,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     room:setPlayerProperty(self, "kingdom", "wild")
   end
 
-  if self.gender == General.Agender or self.gender ~= self.general.gender then
+  if self.gender == General.Agender or self.gender ~= Fk.generals[self.general].gender then
     room:setPlayerProperty(self, "gender", general.gender)
   end
 
@@ -982,10 +982,10 @@ function ServerPlayer:hideGeneral(isDeputy)
   end
 
   self.gender = General.Agender
-  if self.general.gender ~= General.Agender then
-    self.gender = self.general.gender
-  elseif self.deputyGeneral and self.deputyGeneral.gender ~= General.Agender then
-    self.gender = self.deputyGeneral.gender
+  if Fk.generals[self.general].gender ~= General.Agender then
+    self.gender = Fk.generals[self.general].gender
+  elseif self.deputyGeneral and Fk.generals[self.deputyGeneral].gender ~= General.Agender then
+    self.gender = Fk.generals[self.deputyGeneral].gender
   end
   room:broadcastProperty(self, "gender")
 
