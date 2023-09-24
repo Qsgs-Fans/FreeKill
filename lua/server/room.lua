@@ -1354,14 +1354,12 @@ end
 function Room:returnToGeneralPile(g, position)
   position = position or "bottom"
   assert(position == "top" or position == "bottom")
-  while #g > 0 do
-
-    if position == "bottom" then
-      table.insert(self.general_pile, table.remove(g))
-    elseif position == "top" then
+  if position == "bottom" then
+    table.insertTable(self.general_pile, g)
+  elseif position == "top" then
+    while #g > 0 do
       table.insert(self.general_pile, 1, table.remove(g))
     end
-
   end
 
   return true
