@@ -199,7 +199,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  fk.MustTargets = nil
+  fk.mustTargets = nil
   fk.exclusiveTargets = nil
 
   if room.logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
