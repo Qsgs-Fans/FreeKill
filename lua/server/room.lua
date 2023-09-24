@@ -2065,9 +2065,9 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     useData = useData.result
     useData.extraUse = extra_data ~= nil
     self:useCard(useData)
-    if useData.nullified then
+    if useData.nullified then              --卡牌无效的判定，如果是无效就只执行使用事件不执行生效事件
       use = false
-    elseif useData.breakEvent ~= true then
+    elseif useData.breakEvent ~= true then --卡牌终止判定，判定使用前是否被终止
       use = useData
     end
   end
@@ -2601,7 +2601,7 @@ end
 function Room:doCardUseEffect(cardUseEvent)
   ---@type table<string, AimStruct>
   local aimEventCollaborators = {}
-  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then
+  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then --增加判定牌是否是无效
     return
   end
 

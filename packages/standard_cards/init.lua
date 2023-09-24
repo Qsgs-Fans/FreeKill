@@ -314,7 +314,7 @@ local collateralSkill = fk.CreateActiveSkill {
     end
     if room:askForUseCard(to, "slash", nil, prompt, nil, {
           must_targets = effect.subTargets,
-          --exclusive_targets = effect.subTargets,
+          exclusive_targets = effect.subTargets,
           bypass_distances = true,
           bypass_times = true
         }, effect) then
@@ -888,7 +888,8 @@ local bladeSkill = fk.CreateTriggerSkill {
       if extra_data.bypass_times ~= false then
         player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
       end
-      fk.useMustTargets = extra_data.must_targets
+      fk.mustTargets = extra_data.must_targets
+      fk.exclusiveTargets = extra_data.exclusive_targets
     end
     local command = "AskForUseCard"
     player.room:notifyMoveFocus(player, "slash")
@@ -921,7 +922,8 @@ local bladeSkill = fk.CreateTriggerSkill {
         use = result
       end
     end
-    fk.useMustTargets = nil
+    fk.mustTargets = nil
+    fk.exclusiveTargets = nil
     player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
     player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     if use

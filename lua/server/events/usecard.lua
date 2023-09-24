@@ -203,8 +203,8 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   fk.exclusiveTargets = nil
 
   if room.logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    cardUseEvent.breakEvent = true
-    self.data = { cardUseEvent }
+    cardUseEvent.breakEvent = true --增加终止判定参数
+    self.data = { cardUseEvent }   --传回数据
     room.logic:breakEvent()
   end
 
