@@ -155,10 +155,11 @@ local ganglie = fk.CreateTriggerSkill {
     local judge = {
       who = player,
       reason = self.name,
-      pattern = ".|.|^heart"
+      good = false,
+      pattern = ".|.|heart"
     }
     room:judge(judge)
-    if not judge.isgood and from and not from.dead then
+    if judge.isgood and from and not from.dead then
       local discards = room:askForDiscard(from, 2, 2, false, self.name, true)
       if #discards == 0 then
         room:damage {

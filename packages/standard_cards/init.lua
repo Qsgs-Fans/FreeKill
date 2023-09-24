@@ -1189,11 +1189,13 @@ local horseSkill = fk.CreateDistanceSkill {
   global = true,
   correct_func = function(self, from, to)
     local ret = 0
-    if from:getEquipment(Card.SubtypeOffensiveRide) then
-      ret = ret - 1
+    local ride = from:getEquipment(Card.SubtypeOffensiveRide)
+    if ride then --给坐骑增加了距离参数，为以后-2+2等做准备
+      ret = ret + Fk:getCardById(ride).correct_func
     end
-    if to:getEquipment(Card.SubtypeDefensiveRide) then
-      ret = ret + 1
+    ride = to:getEquipment(Card.SubtypeDefensiveRide)
+    if ride then
+      ret = ret + Fk:getCardById(ride).correct_func
     end
     return ret
   end

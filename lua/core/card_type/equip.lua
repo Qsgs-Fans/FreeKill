@@ -64,6 +64,7 @@ local DefensiveRide = EquipCard:subclass("DefensiveRide")
 function DefensiveRide:initialize(name, suit, number)
   EquipCard.initialize(self, name, suit, number)
   self.sub_type = Card.SubtypeDefensiveRide
+  self.correct_func = 1
 end
 
 ---@class OffensiveRide : EquipCard
@@ -72,6 +73,7 @@ local OffensiveRide = EquipCard:subclass("OffensiveRide")
 function OffensiveRide:initialize(name, suit, number)
   EquipCard.initialize(self, name, suit, number)
   self.sub_type = Card.SubtypeOffensiveRide
+  self.correct_func = -1
 end
 
 ---@class Treasure : EquipCard

@@ -503,7 +503,7 @@ trust_cb.AskForResponseCard = function(self, jsonData)
       ask(self, pattern, prompt, cancelable, extra_data)
     else
       local effect = self:eventData("CardEffect")
-      if effect and (effect.card.multiple_targets or not self:isFriend(effect.from)) then
+      if effect and (effect.card.multiple_targets or self:isEnemie(effect.from, effect.to)) then
         self:setUseId(pattern)
       end
     end
@@ -977,7 +977,10 @@ local function updateIntention(player, to, intention)
   if player.id == to.id then
     return
   elseif player.role == "lord" then
-    fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
+    if fk.roleValue[to.id].rebel ~= 0
+    then
+      fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
+    end
   else
     if to.role == "lord" or fk.ai_role[to.id] == "loyalist" then
       fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel +

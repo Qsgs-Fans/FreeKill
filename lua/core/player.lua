@@ -453,14 +453,20 @@ function Player:getMaxCards()
 end
 
 --- 获取玩家攻击距离。
-function Player:getAttackRange()
-  local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
-  local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
+---@param include_weapon boolean|nil @ 包含武器
+---@return number @ 返回攻击距离
+function Player:getAttackRange(include_weapon)
+  local baseAttackRange = 1
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self)
-    baseAttackRange = baseAttackRange + (correct or 0)
+  if include_weapon ~= false then
+    local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
+    if weapon then
+      baseAttackRange = weapon.attack_range
+    end
+  end
+
+  for _, skill in ipairs(Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable) do
+    baseAttackRange = baseAttackRange + (skill:getCorrect(self) or 0)
   end
 
   return math.max(baseAttackRange, 0)
@@ -528,8 +534,7 @@ function Player:distanceTo(other, mode, ignore_dead)
     ret = math.min(left, right)
   end
 
-  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
+  for _, skill in ipairs(Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable) do
     local fixed = skill:getFixed(self, other)
     local correct = skill:getCorrect(self, other)
     if fixed ~= nil then
@@ -555,17 +560,15 @@ function Player:inMyAttackRange(other, fixLimit)
     return false
   end
 
-  fixLimit = fixLimit or 0
-
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
+  for _, skill in ipairs(Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable) do
     if skill:withinAttackRange(self, other) then
       return true
     end
   end
 
-  local baseAttackRange = self:getAttackRange()
-  return self:distanceTo(other) <= (baseAttackRange + fixLimit)
+  fixLimit = fixLimit or 0
+
+  return self:distanceTo(other) <= self:getAttackRange() + fixLimit
 end
 
 --- 获取下家。
