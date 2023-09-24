@@ -605,7 +605,7 @@ local lightningSkill = fk.CreateActiveSkill {
     local judge = {
       who = to,
       reason = "lightning",
-      good = false,     --增加了好判定，为了实现鬼才改判
+      good = false,     --增加了好判定，为了实现ai鬼才改判
       negative = false, --增加了反向动画
       pattern = ".|2~9|spade"
     }
