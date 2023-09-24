@@ -396,7 +396,6 @@ function GameLogic:trigger(event, target, data, refresh_only)
     prev_prio = prio
     ::trigger_loop_continue::
   end
-  _target.ai:filterEvent(event, target, data)
   return broken
 end
 

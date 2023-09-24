@@ -2013,10 +2013,7 @@ end
 ---@param event_data CardEffectEvent|nil @ 事件信息
 ---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
-  if
-      event_data and
-      (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id))
-  then
+  if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
@@ -2029,7 +2026,6 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
             return not table.contains(event_data.prohibitedCardNames, name)
           end
         )
-
     if #splitedCardNames == 0 then
       return nil
     end
@@ -2042,7 +2038,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     if extra_data.bypass_times ~= false then
       player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
-    fk.mustTargets = extra_data.must_targets
+    fk.mustTargets = extra_data.must_targets --记录目标限制，在isProhibited函数进行判定
     fk.exclusiveTargets = extra_data.exclusive_targets
   end
   local command = "AskForUseCard"
@@ -2060,14 +2056,13 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   }
   local use = nil
   self.logic:trigger(fk.AskForCardUse, player, useData)
-
   if type(useData.result) == "table" then
     useData = useData.result
     useData.extraUse = extra_data ~= nil
     self:useCard(useData)
-    if useData.nullified then
+    if useData.nullified then              --卡牌无效的判定，如果是无效就只执行使用事件不执行生效事件
       use = false
-    elseif useData.breakEvent ~= true then
+    elseif useData.breakEvent ~= true then --卡牌终止判定，判定使用前是否被终止
       use = useData
     end
   end
@@ -2093,7 +2088,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
       break
     end
   end
-  fk.MustTargets = nil
+  fk.mustTargets = nil
   fk.exclusiveTargets = nil
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
   player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
@@ -2601,7 +2596,7 @@ end
 function Room:doCardUseEffect(cardUseEvent)
   ---@type table<string, AimStruct>
   local aimEventCollaborators = {}
-  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then
+  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then --增加判定牌是否是无效
     return
   end
 

@@ -314,7 +314,7 @@ local collateralSkill = fk.CreateActiveSkill {
     end
     if room:askForUseCard(to, "slash", nil, prompt, nil, {
           must_targets = effect.subTargets,
-          --exclusive_targets = effect.subTargets,
+          exclusive_targets = effect.subTargets,
           bypass_distances = true,
           bypass_times = true
         }, effect) then
@@ -605,10 +605,14 @@ local lightningSkill = fk.CreateActiveSkill {
     local judge = {
       who = to,
       reason = "lightning",
-      pattern = ".|.|^spade;.|1,10,11,12,13|spade"
+      good = false,     --增加了好判定，为了实现鬼才改判
+      negative = false, --增加了反向动画
+      pattern = ".|2~9|spade"
     }
     room:judge(judge)
-    if judge.card.suit == Card.Spade and judge.card.number >= 2 and judge.card.number <= 9 then
+    if judge.isgood then
+      self:onNullified(room, effect)
+    else
       room:damage {
         to = to,
         damage = 3,
@@ -616,14 +620,11 @@ local lightningSkill = fk.CreateActiveSkill {
         damageType = fk.ThunderDamage,
         skillName = self.name
       }
-
       room:moveCards {
         ids = { effect.cardId },
         toArea = Card.DiscardPile,
         moveReason = fk.ReasonUse
       }
-    else
-      self:onNullified(room, effect)
     end
   end,
   on_nullified = function(self, room, effect)
@@ -673,10 +674,11 @@ local indulgenceSkill = fk.CreateActiveSkill {
     local judge = {
       who = to,
       reason = "indulgence",
+      negative = true, --增加了反向动画
       pattern = ".|.|heart"
     }
     room:judge(judge)
-    if judge.card.suit ~= Card.Heart then
+    if not judge.isgood then
       to:skip(Player.Play)
     end
     self:onNullified(room, effect)
@@ -888,13 +890,14 @@ local bladeSkill = fk.CreateTriggerSkill {
       if extra_data.bypass_times ~= false then
         player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
       end
-      fk.useMustTargets = extra_data.must_targets
+      fk.mustTargets = extra_data.must_targets
+      fk.exclusiveTargets = extra_data.exclusive_targets
     end
     local command = "AskForUseCard"
     player.room:notifyMoveFocus(player, "slash")
     local pattern = "slash"
     local prompt = "#blade_slash:" .. data.to
-
+    --重写了青龙刀的追杀
     local useData = {
       user = player,
       cardName = "slash",
@@ -921,7 +924,8 @@ local bladeSkill = fk.CreateTriggerSkill {
         use = result
       end
     end
-    fk.useMustTargets = nil
+    fk.mustTargets = nil
+    fk.exclusiveTargets = nil
     player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
     player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     if use
@@ -1127,7 +1131,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill {
     }
     room:judge(judgeData)
 
-    if judgeData.card.color == Card.Red then
+    if judgeData.isgood then
       if event == fk.AskForCardUse then
         data.result = {
           from = player.id,

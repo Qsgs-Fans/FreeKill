@@ -873,8 +873,7 @@ function Player:isProhibited(to, card, selected)
     return true
   end
 
-  if card.sub_type == Card.SubtypeDelayedTrick and
-      (table.contains(to.sealedSlots, Player.JudgeSlot) or to:hasDelayedTrick(card.name)) then
+  if card.sub_type == Card.SubtypeDelayedTrick and (table.contains(to.sealedSlots, Player.JudgeSlot) or to:hasDelayedTrick(card.name)) then
     return true
   end
 
