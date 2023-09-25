@@ -22,3 +22,4 @@ const char *FK_VER = FK_VERSION;
 %include "server.i"
 
 extern char *FK_VER;
+QString GetDisabledPacks();

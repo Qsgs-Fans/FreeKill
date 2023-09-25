@@ -230,6 +230,8 @@ int main(int argc, char *argv[]) {
     bool ok = false;
     if (parser.value("server").toInt(&ok) && ok)
       serverPort = parser.value("server").toInt();
+
+    Pacman = new PackMan;
     Server *server = new Server;
     if (!server->listen(QHostAddress::Any, serverPort)) {
       qFatal("cannot listen on port %d!\n", serverPort);
@@ -239,7 +241,6 @@ int main(int argc, char *argv[]) {
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
       // Linux 服务器的话可以启用一个 Shell 来操作服务器。
       auto shell = new Shell;
-      Pacman = new PackMan;
       shell->start();
 #endif
     }

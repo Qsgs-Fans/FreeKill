@@ -3,6 +3,7 @@
 #ifndef _PACKMAN_H
 #define _PACKMAN_H
 
+#include <qtmetamacros.h>
 class PackMan : public QObject {
   Q_OBJECT
 public:
@@ -10,6 +11,7 @@ public:
   ~PackMan();
 
   QString getPackSummary();
+  Q_INVOKABLE QStringList getDisabledPacks();
   Q_INVOKABLE void loadSummary(const QString &, bool useThread = false);
   Q_INVOKABLE void downloadNewPack(const QString &url, bool useThread = false);
   Q_INVOKABLE void enablePack(const QString &pack);
@@ -27,6 +29,7 @@ private:
   int checkout_branch(const QString &name, const QString &branch);
   int status(const QString &name); // return 1 if the workdir is modified
   QString head(const QString &name); // get commit hash of HEAD
+  QStringList disabled_packs;
 };
 
 extern PackMan *Pacman;

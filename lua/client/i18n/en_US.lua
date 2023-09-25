@@ -2,7 +2,7 @@
 
 Fk:loadTranslationTable({
   -- Lobby
-  -- ["Room List"] = "房间列表",
+  ["Room List"] = "Room List (currently have %1 rooms)",
   -- ["Enter"] = "进入",
   -- ["Observe"] = "旁观",
 
@@ -99,7 +99,7 @@ Fk:loadTranslationTable({
   ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的 %arg 使用无懈可击？",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
-  ["#askForPindian"] = "请选择一张手牌作为拼点牌",
+  ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
 
   -- ["Trust"] = "托管",
   -- ["Sort Cards"] = "牌序",

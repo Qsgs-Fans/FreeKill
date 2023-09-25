@@ -178,7 +178,6 @@ Item {
 
     function addSkillAudio(skill) {
       if (addSpecialSkillAudio(skill)) return;
-      console.log(skill, 'normal add')
       const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
       if (!skilldata) return;
       const extension = skilldata.extension;
@@ -276,7 +275,12 @@ Item {
             contentItem: ColumnLayout {
               Text {
                 Layout.fillWidth: true
-                text: Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "")
+                text: {
+                  if (name.endsWith("_win_audio")) {
+                    return "胜利语音";
+                  }
+                  return Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "");
+                }
                 font.bold: true
                 font.pixelSize: 14
               }

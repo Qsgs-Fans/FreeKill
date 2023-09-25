@@ -2,7 +2,7 @@
 
 Fk:loadTranslationTable{
   -- Lobby
-  ["Room List"] = "房间列表",
+  ["Room List"] = "房间列表 (共%1个房间)",
   ["Enter"] = "进入",
   ["Observe"] = "旁观",
 
@@ -235,7 +235,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
-  ["#askForPindian"] = "请选择一张手牌作为拼点牌",
+  ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
   ["#StartPindianReason"] = "%from 由于 %arg 而发起拼点",
   ["#ShowPindianCard"] = "%from 的拼点牌是 %card",
   ["#ShowPindianResult"] = "%from 在 %from 和 %to 之间的拼点中 %arg",
@@ -255,6 +255,10 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#6"] = "六号位",
   ["seat#7"] = "七号位",
   ["seat#8"] = "八号位",
+  ["seat#9"] = "九号位",
+  ["seat#10"] = "十号位",
+  ["seat#11"] = "十一号位",
+  ["seat#12"] = "十二号位",
   ["@ControledBy"] = "控制者",
 
   ["Menu"] = "菜单",
@@ -284,11 +288,10 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.6
+  ## v0.3.8
 
-  0.3.6版本，修复bug，手机不会息屏。
+  为国战添加专属ui，修复一些bug。
 
-  优化谋徐盛。
   ]==],
 }
 
@@ -446,6 +449,7 @@ Fk:loadTranslationTable{
   ["#GuanxingResult"] = "%from 的观星结果为 %arg 上 %arg2 下",
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
+  ["#ChangeKingdom"] = "%from 的国籍从 %arg 变成了 %arg2",
 }
 
 -- card footnote

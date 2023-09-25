@@ -376,14 +376,14 @@ function GameLogic:trigger(event, target, data, refresh_only)
     end
 
     repeat do
-      local triggerables = table.filter(skills, function(skill)
+      local invoked_skills = {}
+      local filter_func = function(skill)
         return skill.priority_table[event] == prio and
+          not table.contains(invoked_skills, skill) and
           skill:triggerable(event, target, player, data)
-      end)
+      end
 
-      local skill_names = table.map(triggerables, function(skill)
-        return skill.name
-      end)
+      local skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
       while #skill_names > 0 do
         local skill_name = prio <= 0 and table.random(skill_names) or
@@ -392,23 +392,14 @@ function GameLogic:trigger(event, target, data, refresh_only)
         local skill = skill_name == "game_rule" and GameRule
           or Fk.skills[skill_name]
 
-        local len = #skills
+        table.insert(invoked_skills, skill)
         broken = skill:trigger(event, target, player, data)
-
-        table.insertTable(
-          skill_names,
-          table.map(table.filter(table.slice(skills, len - #skills), function(s)
-            return
-              s.priority_table[event] == prio and
-              s:triggerable(event, target, player, data)
-          end), function(s) return s.name end)
-        )
+        skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
           and room:getPlayerById(data.who).hp > 0)
 
         if broken then break end
-        table.removeOne(skill_names, skill_name)
       end
 
       if broken then break end
@@ -426,6 +417,18 @@ end
 ---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
+end
+
+--- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。
+function GameLogic:getCurrentSkillName()
+  local skillEvent = self:getCurrentEvent()
+  local ret = ""
+  if skillEvent.event == GameEvent.SkillEffect then
+    local _, _, _skill = table.unpack(skillEvent.data)
+    local skill = _skill.main_skill and _skill.main_skill or _skill
+    ret = skill.name
+  end
+  return ret
 end
 
 -- 在指定历史范围中找至多n个符合条件的事件

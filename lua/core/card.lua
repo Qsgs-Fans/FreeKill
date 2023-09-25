@@ -346,7 +346,7 @@ end
 ---@param symbol boolean @ 是否以符号形式显示花色
 ---@return string @ 完整点数（字符串）
 function Card:getSuitCompletedString(symbol)
-  return self:getSuitString(symbol) .. getNumberStr(self.number)
+  return Fk:translate(self:getSuitString(symbol)) .. getNumberStr(self.number)
 end
 
 --- 判断卡牌是否为普通锦囊牌
