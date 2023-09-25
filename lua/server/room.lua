@@ -330,7 +330,7 @@ function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
     return { table.unpack(self.players) }
   end
-  if self.current and (sortBySeat == nil or sortBySeat) then
+  if self.current and (sortBySeat == nil or sortBySeat) then--ai载入时没有current，函数会出错
     local current = self.current
     local temp = current.next
     local ret = {current}
@@ -1810,8 +1810,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   if type(useData.result) == "table" then
     useData = useData.result
     useData.extraUse = extra_data ~= nil
-    self:useCard(useData)
-    if useData.nullified then              --卡牌无效的判定，如果是无效就只执行使用事件不执行生效事件
+    self:useCard(useData)--请求用牌都在函数里执行用的事件，然后返回用的数据，如果用牌失败就不返回数据
+    if useData.nullified then--卡牌无效的判定，如果是无效就只执行使用事件不执行生效事件
       use = false
     elseif useData.breakEvent ~= true then --卡牌终止判定，判定使用前是否被终止
       use = useData

@@ -633,13 +633,10 @@ trust_cb.PlayCard = function(self, jsonData)
           return Fk:getCardById(id)
         end
       )
-  cards =
-      table.filter(
-        cards,
+  cards = table.filter(cards,
         function(c)
           return c.skill:canUse(self.player, c) and not self.player:prohibitUse(c)
-        end
-      )
+        end)
   table.insertTable(
     cards,
     table.filter(
