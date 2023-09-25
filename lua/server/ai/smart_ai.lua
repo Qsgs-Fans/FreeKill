@@ -540,9 +540,8 @@ function SmartAI:getRetrialCardId(cards, exchange)
     end
   end
   for _, c in ipairs(cards) do
-    if
-        self:isFriend(judge.who) and c:matchPattern(judge.pattern) or
-        self:isEnemie(judge.who) and not c:matchPattern(judge.pattern)
+    if self:isFriend(judge.who) and c:matchPattern(judge.pattern)==judge.good
+    or self:isEnemie(judge.who) and c:matchPattern(judge.pattern)~=judge.good
     then
       table.insert(canRetrial, c)
     end
