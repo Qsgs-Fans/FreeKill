@@ -336,7 +336,7 @@ function Player:getCardIds(playerAreas, specialName)
     if str:find("h") then
       table.insert(playerAreas, Player.Hand)
     end
-    if str:find("&") then
+    if str:find("&") then--增加特殊区域
       for k, v in pairs(self.special_cards) do
         if k:endsWith("&") then table.insertTable(cardIds, v) end
       end
