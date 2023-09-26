@@ -284,7 +284,9 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     end
   end
 
-  playCardEmotionAndSound(room, room:getPlayerById(from), card)
+  if not cardResponseEvent.retrial then--不是改判打出就播放配音
+    playCardEmotionAndSound(room, room:getPlayerById(from), card)
+  end
 
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 end

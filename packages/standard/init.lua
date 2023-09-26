@@ -10,9 +10,12 @@ local jianxiong = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    local room = target.room
-    return target == player and player:hasSkill(self.name) and data.card and
-      table.every(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
+    if data.card then
+      local room = player.room
+      local subcards = data.card:isVirtual() and data.card.subcards or {data.card.id}
+      return target == player and player:hasSkill(self.name) and #subcards>0
+      and table.every(subcards, function(id) return room:getCardArea(id) == Card.Processing end)  
+    end
   end,
   on_use = function(self, event, target, player, data)
     player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
@@ -146,6 +149,7 @@ local ganglie = fk.CreateTriggerSkill{
       who = player,
       reason = self.name,
       good = false,
+      negative = true,
       pattern = ".|.|heart"
     }
     room:judge(judge)
