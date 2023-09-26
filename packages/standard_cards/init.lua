@@ -339,10 +339,11 @@ local collateralSkill = fk.CreateActiveSkill{
       return false--修改借刀的目标选择
     elseif #selected % 2 == 0 then
       return self:modTargetFilter(to_select, selected, Self.id, card)
-    elseif #selected > 0 then
+    else
       local player = Fk:currentRoom():getPlayerById(to_select)
       local from = Fk:currentRoom():getPlayerById(selected[#selected])
-      return from:inMyAttackRange(player) and not from:isProhibited(player, Fk:cloneCard("slash"))
+      return self:modTargetFilter(selected[#selected], selected, Self.id, card)
+      and from:inMyAttackRange(player) and not from:isProhibited(player, Fk:cloneCard("slash"))
     end
   end,
   target_num = 2,

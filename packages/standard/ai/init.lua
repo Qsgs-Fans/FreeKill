@@ -105,7 +105,7 @@ end
 
 fk.ai_use_play.jieyin = function(self, skill)
   local cards = table.map(
-    self.player:getCardIds("he"),
+    self.player:getCardIds("h"),
     function(id)
       return Fk:getCardById(id)
     end
@@ -122,7 +122,7 @@ end
 
 fk.ai_use_play.qingnang = function(self, skill)
   local cards = table.map(
-    self.player:getCardIds("he"),
+    self.player:getCardIds("h"),
     function(id)
       return Fk:getCardById(id)
     end
