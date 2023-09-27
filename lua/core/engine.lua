@@ -252,9 +252,11 @@ function Engine:addGenerals(generals)
   end
 end
 
-local function canUseGeneral(g)
-  local r = Fk:currentRoom()
-  local general = Fk.generals[g]
+--- 判断一个武将是否在本房间可用。
+---@param g string @ 武将名
+function Engine:canUseGeneral(g)
+  local r = self:currentRoom()
+  local general = self.generals[g]
   if not general then return false end
   return not table.contains(r.disabled_packs, general.package.name) and
     not table.contains(r.disabled_generals, g) and not general.hidden and not general.total_hidden
@@ -270,7 +272,7 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and canUseGeneral(g)
+    return g ~= name and self.generals[g] ~= nil and self:canUseGeneral(g)
   end)
 end
 
@@ -393,7 +395,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if canUseGeneral(general.name) then
+      if self:canUseGeneral(general.name) then
         table.insert(result, general)
       end
     end

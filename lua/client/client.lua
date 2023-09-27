@@ -2,12 +2,12 @@
 
 ---@class Client
 ---@field public client fk.Client
----@field public players ClientPlayer[]
----@field public alive_players ClientPlayer[]
----@field public observers ClientPlayer[]
----@field public current ClientPlayer
----@field public discard_pile integer[]
----@field public status_skills Skill[]
+---@field public players ClientPlayer[] @ 所有参战玩家的数组
+---@field public alive_players ClientPlayer[] @ 所有存活玩家的数组
+---@field public observers ClientPlayer[] @ 观察者的数组
+---@field public current ClientPlayer @ 当前回合玩家
+---@field public discard_pile integer[] @ 弃牌堆
+---@field public status_skills Skill[] @ 状态技总和
 ---@field public observing boolean
 Client = class('Client')
 
