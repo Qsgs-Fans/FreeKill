@@ -519,38 +519,6 @@ end
 
 fk.ai_response_card = {}
 
-function SmartAI:getRetrialCardId(cards, exchange)
-  local judge = self:eventData("Judge")
-  local isgood = judge.good == judge.card:matchPattern(judge.pattern)
-  local canRetrial = {}
-  self:sortValue(cards)
-  if exchange then
-    for _, c in ipairs(cards) do
-      if c:matchPattern(judge.pattern) == isgood then
-        table.insert(canRetrial, c)
-      end
-    end
-  else
-    if isgood then
-      if self:isFriend(judge.who) then
-        return
-      end
-    elseif self:isEnemie(judge.who) then
-      return
-    end
-  end
-  for _, c in ipairs(cards) do
-    if self:isFriend(judge.who) and c:matchPattern(judge.pattern)==judge.good
-    or self:isEnemie(judge.who) and c:matchPattern(judge.pattern)~=judge.good
-    then
-      table.insert(canRetrial, c)
-    end
-  end
-  if #canRetrial > 0 then
-    return canRetrial[1].id
-  end
-end
-
 function SmartAI:getActives(pattern)
   local cards =
       table.map(
@@ -703,14 +671,48 @@ trust_cb.AskForCardChosen = function(self, jsonData)
   return ""
 end
 
-fk.ai_role = {}
-fk.roleValue = {}
+fk.ai_judge = {}
 
-fk.trick_judge = {}
+fk.ai_judge.indulgence = { ".|.|heart", true }
+fk.ai_judge.lightning = { ".|2~9|spade", false }
+fk.ai_judge.supply_shortage = { ".|.|club", true }
 
-fk.trick_judge.indulgence = { ".|.|heart", true }
-fk.trick_judge.lightning = { ".|2~9|spade", false }
-fk.trick_judge.supply_shortage = { ".|.|club", true }
+function SmartAI:getRetrialCardId(cards, exchange)
+  local judge = self:eventData("Judge")
+  local isgood = judge.card:matchPattern(judge.pattern)
+  local tj = fk.ai_judge[judge.reason]
+  local good = tj or {judge.pattern,true}
+  if tj then
+    isgood = judge.card:matchPattern(tj[1]) == tj[2]
+  end
+  local canRetrial = {}
+  self:sortValue(cards)
+  if exchange then
+    for _, c in ipairs(cards) do
+      if c:matchPattern(judge.pattern) == isgood then
+        table.insert(canRetrial, c)
+      end
+    end
+  else
+    if isgood then
+      if self:isFriend(judge.who) then
+        return
+      end
+    elseif self:isEnemie(judge.who) then
+      return
+    end
+  end
+  for _, c in ipairs(cards) do
+    if self:isFriend(judge.who) and c:matchPattern(good[1])==good[2]
+    or self:isEnemie(judge.who) and c:matchPattern(good[1])~=good[2]
+    then
+      table.insert(canRetrial, c)
+    end
+  end
+  if #canRetrial > 0 then
+    return canRetrial[1].id
+  end
+end
 
 local function table_clone(self)
   local t = {}
@@ -721,69 +723,72 @@ local function table_clone(self)
 end
 
 trust_cb.AskForGuanxing = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local cards =
-      table.map(
-        data.cards,
-        function(id)
-          return Fk:getCardById(id)
-        end
-      )
-  self:sortValue(cards)
-  local top = {}
-  if self.room.current.phase < Player.Play then
-    local jt =
+    local data = json.decode(jsonData)
+    local cards =
         table.map(
-          self.room.current:getCardIds("j"),
-          function(id)
-            return Fk:getCardById(id)
-          end
-        )
-    if #jt > 0 then
-      for i, j in ipairs(table.reverse(jt)) do
-        local tj = fk.trick_judge[j.name]
-        if tj then
-          for _, c in ipairs(table_clone(cards)) do
-            if tj[2] == c:matchPattern(tj[1]) and #top < data.max_top_cards then
-              table.insert(top, c.id)
-              table.removeOne(cards, c)
-              tj = 1
-              break
+            data.cards,
+            function(id)
+                return Fk:getCardById(id)
             end
-          end
+        )
+    self:sortValue(cards)
+    local top = {}
+    if self.room.current.phase < Player.Play then
+        local jt =
+            table.map(
+                self.room.current:getCardIds("j"),
+                function(id)
+                    return Fk:getCardById(id)
+                end
+            )
+        if #jt > 0 then
+            for _, j in ipairs(table.reverse(jt)) do
+                local tj = fk.ai_judge[j.name]
+                if tj then
+                    for _, c in ipairs(table_clone(cards)) do
+                        if tj[2] == c:matchPattern(tj[1]) and #top < data.max_top_cards then
+                            table.insert(top, c.id)
+                            table.removeOne(cards, c)
+                            tj = 1
+                            break
+                        end
+                    end
+                end
+                if tj ~= 1 and #cards > 0 and #top < data.max_top_cards then
+                    table.insert(top, cards[1].id)
+                    table.remove(cards, 1)
+                end
+            end
         end
-        if tj ~= 1 and #cards > 0 and #top < data.max_top_cards then
-          table.insert(top, cards[1].id)
-          table.remove(cards, 1)
+        self:sortValue(cards, true)
+        for _, c in ipairs(table_clone(cards)) do
+            if #top < data.max_top_cards and c.skill:canUse(self.player, c) and usePlaySkill(self, c) ~= "" then
+                table.insert(top, c.id)
+                table.removeOne(cards, c)
+                break
+            end
         end
-      end
     end
-    self:sortValue(cards, true)
     for _, c in ipairs(table_clone(cards)) do
-      if #top < data.max_top_cards and c.skill:canUse(self.player, c) and usePlaySkill(self, c) ~= "" then
-        table.insert(top, c.id)
-        table.removeOne(cards, c)
-        break
-      end
+        if #top < data.min_top_cards then
+            table.insert(top, c.id)
+            table.removeOne(cards, c)
+            break
+        end
     end
-  end
-  for _, c in ipairs(table_clone(cards)) do
-    if #top < data.min_top_cards then
-      table.insert(top, c.id)
-      table.removeOne(cards, c)
-      break
-    end
-  end
-  return json.encode {
-    top,
-    table.map(
-      cards,
-      function(c)
-        return c.id
-      end
-    )
-  }
+    return json.encode {
+        top,
+        table.map(
+            cards,
+            function(c)
+                return c.id
+            end
+        )
+    }
 end
+
+fk.ai_role = {}
+fk.roleValue = {}
 
 function SmartAI:initialize(player)
   AI.initialize(self, player)
@@ -1039,7 +1044,7 @@ local filterEvent = fk.CreateTriggerSkill {
   name = "filter_event",
   events = {
     fk.TargetSpecified,
-    fk.StartJudge,
+    --fk.StartJudge,
     --fk.AfterCardsMove,
     fk.CardUsing
   },
@@ -1067,8 +1072,6 @@ local filterEvent = fk.CreateTriggerSkill {
           updateIntention(room:getPlayerById(data.from), p, callback)
         end
       end
-    elseif event == fk.StartJudge then
-      fk.trick_judge[data.reason] = { data.pattern, data.good }
     elseif event == fk.CardUsing then
       if data.card.name == "nullification" then
         local datas = player.ai:eventsData("CardEffect")

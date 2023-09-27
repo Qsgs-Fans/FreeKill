@@ -15,6 +15,7 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
+---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
 ---@field public processing_area integer[] @ 处理区，依然是卡牌id数组
@@ -76,6 +77,7 @@ function Room:initialize(_room)
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
+  self.general_pile = {}
   self.draw_pile = {}
   self.discard_pile = {}
   self.processing_area = {}
@@ -108,7 +110,7 @@ function Room:resume()
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
-      self.tag["_general_pile"] = Fk:getAllGenerals()
+      self:makeGeneralPile()
       self:run()
     end)
   end
@@ -141,6 +143,26 @@ function Room:resume()
   self:gameOver("")
   -- coroutine.close(main_co)
   -- self.main_co = nil
+  return true
+end
+
+-- 构造武将牌堆
+function Room:makeGeneralPile()
+  local trueNames = {}
+  local ret = {}
+  if self.game_started then
+    for _, player in ipairs(self.players) do
+      trueNames[Fk.generals[player.general].trueName] = true
+    end
+  end
+  for name, general in pairs(Fk.generals) do
+    if Fk:canUseGeneral(name) and not trueNames[general.trueName] then
+      table.insert(ret, name)
+      trueNames[general.trueName] = true
+    end
+  end
+  table.shuffle(ret)
+  self.general_pile = ret
   return true
 end
 
@@ -745,7 +767,7 @@ function Room:doRaceRequest(command, players, jsonData)
     if remainTime - elapsed <= 0 then
       break
     end
-    for _, p in ipairs(players) do
+    for _, p in ipairs(table.filter(players,function() return true end)) do
       p:waitForReply(0)
       if p.reply_ready == true then
         ret = p
@@ -1239,6 +1261,10 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     if includeEquip then
       table.insertTable(hands, player:getCardIds(Player.Equip))
     end
+    local exp = Exppattern:Parse(pattern)
+    hands = table.filter(hands, function(cid)
+      return exp:match(Fk:getCardById(cid))
+    end)
     for _ = 1, minNum do
       local randomId = hands[math.random(1, #hands)]
       table.insert(chosenCards, randomId)
@@ -1292,6 +1318,79 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
       return table.random(targets, minNum), table.random(pcards)
     end
   end
+end
+
+--- 抽个武将
+---
+--- 同getNCards，抽出来就没有了，所以记得放回去。
+---@param n number @ 数量
+---@param position string|nil @位置，top/bottom，默认top
+---@return string[] @ 武将名数组
+function Room:getNGenerals(n, position)
+  position = position or "top"
+  assert(position == "top" or position == "bottom")
+
+  local generals = {}
+  while n > 0 do
+
+    local index = position == "top" and 1 or #self.general_pile
+    table.insert(generals, table.remove(self.general_pile, index))
+
+    n = n - 1
+  end
+
+  if #generals < 1 then
+    self:gameOver("")
+  end
+  return generals
+end
+
+--- 把武将牌塞回去（……）
+---@param g string[] @ 武将名数组
+---@param position string|nil @位置，top/bottom，默认bottom
+---@return boolean @ 是否成功
+function Room:returnToGeneralPile(g, position)
+  position = position or "bottom"
+  assert(position == "top" or position == "bottom")
+  if position == "bottom" then
+    table.insertTable(self.general_pile, g)
+  elseif position == "top" then
+    while #g > 0 do
+      table.insert(self.general_pile, 1, table.remove(g))
+    end
+  end
+
+  return true
+end
+
+--- 抽特定名字的武将（抽了就没了）
+---@param name string @ 武将name，如找不到则查找truename，再找不到则返回nil
+---@return string | nil @ 抽出的武将名
+function Room:findGeneral(name)
+  for i, g in ipairs(self.general_pile) do
+    if g == name or Fk.generals[g].trueName == Fk.generals[name].trueName then
+      return table.remove(self.general_pile, i)
+    end
+  end
+  return nil
+end
+
+--- 自上而下抽符合特定情况的N个武将（抽了就没了）
+---@param func fun(name: string):any @ 武将筛选函数
+---@param n integer | nil @ 抽取数量，数量不足则直接抽干净
+---@return string[] @ 武将组合，可能为空
+function Room:findGenerals(func, n)
+  n = n or 1
+  local ret = {}
+  local index = 1
+  repeat
+    if func(self.general_pile[index]) then
+      table.insert(ret, table.remove(self.general_pile, index))
+    else
+      index = index + 1
+    end
+  until index >= #self.general_pile or #ret >= n
+  return ret
 end
 
 --- 询问玩家选择一名武将。
@@ -2129,7 +2228,12 @@ function Room:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, fla
     result = json.decode(result)
   end
 
-  local from, to = result.pos == 0 and targetOne, targetTwo or targetTwo, targetOne
+  local from, to
+  if result.pos == 0 then
+    from, to = targetOne, targetTwo
+  else
+    from, to = targetTwo, targetOne
+  end
   local cardToMove = self:getCardOwner(result.cardId):getVirualEquip(result.cardId) or Fk:getCardById(result.cardId)
   self:moveCardTo(
     cardToMove,
@@ -2321,7 +2425,7 @@ function Room:doCardUseEffect(cardUseEvent)
 
   local realCardIds = self:getSubcardsByRule(cardUseEvent.card, { Card.Processing })
 
-  self.logic:trigger(fk.BeforeCardUseEffect, cardUseEvent.from, cardUseEvent)
+  self.logic:trigger(fk.BeforeCardUseEffect, self:getPlayerById(cardUseEvent.from), cardUseEvent)
   -- If using Equip or Delayed trick, move them to the area and return
   if cardUseEvent.card.type == Card.TypeEquip then
     if #realCardIds == 0 then
@@ -2954,7 +3058,8 @@ function Room:retrial(card, player, judge, skillName, exchange)
     arg = skillName,
   }
 
-  self:moveCards(move1, move2)
+  self:moveCards(move1)
+  self:moveCards(move2)
 
   if triggerResponded then
     self.logic:trigger(fk.CardRespondFinished, player, resp)

@@ -1154,10 +1154,88 @@ local diaochan = General:new(extension, "diaochan", "qun", 3, 3, General.Female)
 diaochan:addSkill(lijian)
 diaochan:addSkill(biyue)
 
+local role_getlogic = function()
+  local role_logic = GameLogic:subclass("role_logic")
+
+  function role_logic:chooseGenerals()
+    local room = self.room ---@class Room
+    local generalNum = room.settings.generalNum
+    local n = room.settings.enableDeputy and 2 or 1
+    local lord = room:getLord()
+    local lord_generals = {}
+    local lord_num = 3
+
+    if lord ~= nil then
+      room.current = lord
+      local generals = table.connect(room:findGenerals(function(g)
+        return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
+      end, lord_num), room:getNGenerals(generalNum))
+      if #room.general_pile < (#room.players - 1) * generalNum then
+        room:gameOver("")
+      end
+      lord_generals = room:askForGeneral(lord, generals, n)
+      local lord_general, deputy
+      if type(lord_generals) == "table" then
+        deputy = lord_generals[2]
+        lord_general = lord_generals[1]
+      else
+        lord_general = lord_generals
+        lord_generals = {lord_general}
+      end
+
+      generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
+      room:returnToGeneralPile(generals)
+
+      room:setPlayerGeneral(lord, lord_general, true)
+      room:askForChooseKingdom({lord})
+      room:broadcastProperty(lord, "general")
+      room:broadcastProperty(lord, "kingdom")
+      room:setDeputyGeneral(lord, deputy)
+      room:broadcastProperty(lord, "deputyGeneral")
+    end
+
+    local nonlord = room:getOtherPlayers(lord, true)
+    local generals = room:getNGenerals(#nonlord * generalNum)
+    table.shuffle(generals)
+    for i, p in ipairs(nonlord) do
+      local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
+      p.request_data = json.encode{ arg, n }
+      p.default_reply = table.random(arg, n)
+    end
+
+    room:notifyMoveFocus(nonlord, "AskForGeneral")
+    room:doBroadcastRequest("AskForGeneral", nonlord)
+
+    local selected = {}
+    for _, p in ipairs(nonlord) do
+      if p.general == "" and p.reply_ready then
+        local general_ret = json.decode(p.client_reply)
+        local general = general_ret[1]
+        local deputy = general_ret[2]
+        table.insertTableIfNeed(selected, general_ret)
+        room:setPlayerGeneral(p, general, true, true)
+        room:setDeputyGeneral(p, deputy)
+      else
+        room:setPlayerGeneral(p, p.default_reply[1], true, true)
+        room:setDeputyGeneral(p, p.default_reply[2])
+      end
+      p.default_reply = ""
+    end
+
+    generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
+    room:returnToGeneralPile(generals)
+
+    room:askForChooseKingdom(nonlord)
+  end
+
+  return role_logic
+end
+
 local role_mode = fk.CreateGameMode{
   name = "aaa_role_mode", -- just to let it at the top of list
   minPlayer = 2,
   maxPlayer = 8,
+  logic = role_getlogic,
   is_counted = function(self, room)
     return #room.players >= 5
   end,

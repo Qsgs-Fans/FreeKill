@@ -351,7 +351,8 @@ function Player:getCardIds(playerAreas, specialName)
   assert(type(playerAreas) == "number" or type(playerAreas) == "table")
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
-  rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+  local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+  local cardIds = {}
   for _, area in ipairs(areas) do
     assert(table.contains(rightAreas, area))
     assert(area ~= Player.Special or type(specialName) == "string")
@@ -513,7 +514,7 @@ function Player:distanceTo(other, mode, ignore_dead)
     temp = temp.next
   end
   if temp ~= other then
-    print("Distance malfunction: start and end does not matched.")
+    print("Distance malfunction: start and end does not match.")
   end
   local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right - #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)
   local ret = 0
