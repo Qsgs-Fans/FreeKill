@@ -295,12 +295,14 @@ local change_hero = fk.CreateActiveSkill{
     local from = room:getPlayerById(effect.from)
     local target = room:getPlayerById(effect.tos[1])
     local choice = self.interaction.data
-    local generals = table.map(Fk:getGeneralsRandomly(8, Fk:getAllGenerals()), function(p) return p.name end)
+    local generals = room:getNGenerals(8)
     local general = room:askForGeneral(from, generals, 1)
     if general == nil then
       general = table.random(generals)
     end
+    table.removeOne(generals, general)
     room:changeHero(target, general, false, choice == "deputyGeneral", true)
+    room:returnToGeneralPile(generals)
   end,
 }
 local test_zhenggong = fk.CreateTriggerSkill{

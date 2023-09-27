@@ -743,6 +743,7 @@ function ServerPlayer:setChainState(chained)
 end
 
 function ServerPlayer:reset()
+  if self.faceup and not self.chained then return end
   self.room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
