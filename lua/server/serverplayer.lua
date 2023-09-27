@@ -890,14 +890,14 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy, false, false)
+  room:changeHero(self, generalName, false, isDeputy, false, false, false)
   if oldKingdom ~= "wild" then
-    local kingdom = general.kingdom
+    local kingdom = (self:getMark("__heg_wild") == 1 and not isDeputy) and "wild" or self:getMark("__heg_kingdom")
     self.kingdom = kingdom
-    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+    if oldKingdom == "unknown" and kingdom ~= "wild" and #table.filter(room:getOtherPlayers(self, false, true),
       function(p)
         return p.kingdom == kingdom
-      end) >= #room.players // 2 then
+      end) >= #room.players // 2 and table.every(room.alive_players, function(p) return p.kingdom ~= kingdom or not string.find(p.general, "lord") end) then
       self.kingdom = "wild"
     end
     room:broadcastProperty(self, "kingdom")
