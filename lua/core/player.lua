@@ -351,7 +351,8 @@ function Player:getCardIds(playerAreas, specialName)
   assert(type(playerAreas) == "number" or type(playerAreas) == "table")
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
-  rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+  local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
+  local cardIds = {}
   for _, area in ipairs(areas) do
     assert(table.contains(rightAreas, area))
     assert(area ~= Player.Special or type(specialName) == "string")

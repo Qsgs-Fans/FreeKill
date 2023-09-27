@@ -675,13 +675,12 @@ local lightningSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "lightning",
-      good = false,     --增加了好判定，为了实现ai鬼才改判
-      negative = false, --增加了反向动画
-      pattern = ".|2~9|spade"
+      pattern = ".|2~9|spade",
     }
     room:judge(judge)
-    if not judge.isgood then
-      room:damage{
+    local result = judge.card
+    if result.suit == Card.Spade and result.number >= 2 and result.number <= 9 then
+        room:damage{
         to = to,
         damage = 3,
         card = effect.card,
@@ -747,11 +746,11 @@ local indulgenceSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "indulgence",
-      negative = true, --增加了反向动画
-      pattern = ".|.|heart"
+      pattern = ".|.|spade,club,diamond",
     }
     room:judge(judge)
-    if not judge.isgood then
+    local result = judge.card
+    if result.suit ~= Card.Heart then
       to:skip(Player.Play)
     end
     self:onNullified(room, effect)
@@ -1211,7 +1210,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
     }
     room:judge(judgeData)
 
-    if judgeData.isgood then
+    if judgeData.card.color == Card.Red then
       if event == fk.AskForCardUse then
         data.result = {
           from = player.id,

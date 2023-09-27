@@ -352,7 +352,7 @@ function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
     return { table.unpack(self.players) }
   end
-  if self.current and (sortBySeat == nil or sortBySeat) then--ai载入时没有current，函数会出错
+  if sortBySeat == nil or sortBySeat then
     local current = self.current
     local temp = current.next
     local ret = {current}
@@ -371,7 +371,7 @@ end
 ---@param sortBySeat bool
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
-  if self.current and (sortBySeat == nil or sortBySeat) then
+  if sortBySeat == nil or sortBySeat then
     local current = self.current
     local temp = current.next
 

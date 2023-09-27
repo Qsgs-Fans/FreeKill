@@ -275,11 +275,11 @@ local supplyShortageSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "supply_shortage",
-      negative = true, --增加了反向动画
-      pattern = ".|.|club"
+      pattern = ".|.|spade,heart,diamond",
     }
     room:judge(judge)
-    if not judge.isgood then
+    local result = judge.card
+    if result.suit ~= Card.Club then
       to:skip(Player.Draw)
     end
     self:onNullified(room, effect)
