@@ -464,5 +464,5 @@ Fk:loadTranslationTable{
   ["#reveal_skill"] = "选择一个武将亮将（点击左侧选择框展开）",
   [":reveal_skill"] = "出牌阶段，你可亮出一张有锁定技的武将。",
 
-  ["game_rule"] = "游戏规则",
+  ["game_rule"] = "弃牌阶段",
 }
