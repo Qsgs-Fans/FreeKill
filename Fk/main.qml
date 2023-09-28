@@ -204,6 +204,10 @@ Window {
 
   Component.onCompleted: {
     mainStack.push(init);
+    if (config.firstRun) {
+      config.firstRun = false;
+      mainStack.push(Qt.createComponent("Tutorial.qml").createObject());
+    }
     if (!Debugging) {
       splashLoader.source = "Splash.qml";
       splashLoader.item.disappeared.connect(() => {
