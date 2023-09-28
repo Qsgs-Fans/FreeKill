@@ -182,7 +182,7 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local to = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card)) and not to:isKongcheng()
+    return not (card and from:isProhibited(to, card))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
