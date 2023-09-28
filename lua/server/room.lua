@@ -767,7 +767,7 @@ function Room:doRaceRequest(command, players, jsonData)
     if remainTime - elapsed <= 0 then
       break
     end
-    for _, p in ipairs(table.filter(players,function() return true end)) do
+    for _, p in ipairs(players) do
       p:waitForReply(0)
       if p.reply_ready == true then
         ret = p
