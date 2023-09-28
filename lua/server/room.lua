@@ -3104,6 +3104,10 @@ function Room:recastCard(card_ids, who, skillName)
     moveReason = fk.ReasonPutIntoDiscardPile,
     proposer = who.id
   })
+  local soundName = "./packages/maneuvering/audio/card/recast"
+  if FileIO.exists(soundName .. ".mp3") then--加了个重铸音效
+    self:broadcastPlaySound(soundName)
+  end
   self:sendLog{
     type = skillName == "recast" and "#Recast" or "#RecastBySkill",
     from = who.id,
