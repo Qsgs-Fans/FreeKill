@@ -367,8 +367,7 @@ local collateralSkill = fk.CreateActiveSkill{
     if #effect.subTargets > 1 then
       prompt = nil
     end
-    if room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets ,exclusive_targets = effect.subTargets}, effect) then
-    else
+    if room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets, exclusive_targets = effect.subTargets }, effect) == nil then
       room:obtainCard(effect.from,
         room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon),
         true, fk.ReasonGive)
