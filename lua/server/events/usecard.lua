@@ -193,7 +193,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.breakEvent = true --增加终止判定参数
     self.data = { cardUseEvent }   --传回数据
     room.logic:breakEvent()
-  end--优先判定是否终止，终止就不移动牌了
+  end--优先判定是否终止，终止就不移动牌到处理区了
 
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 

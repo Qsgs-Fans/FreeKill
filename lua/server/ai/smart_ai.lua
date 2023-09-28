@@ -89,9 +89,9 @@ end
 
 fk.ai_use_play = {}
 
-local trust_cb = {}
+local smart_cb = {}
 
-trust_cb.AskForUseActiveSkill = function(self, jsonData)
+smart_cb.AskForUseActiveSkill = function(self, jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local prompt = data[2]
@@ -180,7 +180,7 @@ end
 
 fk.ai_dis_card = {}
 
-trust_cb.AskForSkillInvoke = function(self, jsonData)
+smart_cb.AskForSkillInvoke = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[2]
   local extra_data = data[3]
@@ -199,7 +199,7 @@ end
 
 fk.ai_skill_invoke = {}
 
-trust_cb.AskForAG = function(self, jsonData)
+smart_cb.AskForAG = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[3]
   local cancelable = data[2]
@@ -225,7 +225,7 @@ end
 
 fk.ai_askfor_ag = {}
 
-trust_cb.AskForUseCard = function(self, jsonData)
+smart_cb.AskForUseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -486,7 +486,7 @@ function SmartAI:sortPriority(cards, inverse)
 end
 
 ---@param self SmartAI
-trust_cb.AskForResponseCard = function(self, jsonData)
+smart_cb.AskForResponseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -593,7 +593,7 @@ function SmartAI:cardsView(pattern)
 end
 
 ---@param self SmartAI
-trust_cb.PlayCard = function(self, jsonData)
+smart_cb.PlayCard = function(self, jsonData)
   local cards =
       table.map(
         self.player:getHandlyIds(true),
@@ -631,7 +631,7 @@ end
 
 fk.ai_card_chosen = {}
 
-trust_cb.AskForCardChosen = function(self, jsonData)
+smart_cb.AskForCardChosen = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
   local chosen = fk.ai_card_chosen[data[3]]
@@ -722,7 +722,7 @@ local function table_clone(self)
   return t
 end
 
-trust_cb.AskForGuanxing = function(self, jsonData)
+smart_cb.AskForGuanxing = function(self, jsonData)
     local data = json.decode(jsonData)
     local cards =
         table.map(
@@ -792,7 +792,7 @@ fk.roleValue = {}
 
 function SmartAI:initialize(player)
   AI.initialize(self, player)
-  self.cb_table = trust_cb
+  self.cb_table = smart_cb
   self.player = player
   self.room = RoomInstance or ClientInstance
 

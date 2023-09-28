@@ -680,7 +680,7 @@ local lightningSkill = fk.CreateActiveSkill{
     room:judge(judge)
     local result = judge.card
     if result.suit == Card.Spade and result.number >= 2 and result.number <= 9 then
-        room:damage{
+      room:damage{
         to = to,
         damage = 3,
         card = effect.card,
