@@ -148,9 +148,7 @@ local ganglie = fk.CreateTriggerSkill{
     local judge = {
       who = player,
       reason = self.name,
-      good = false,
-      negative = true,
-      pattern = ".|.|heart"
+      pattern = ".|.|^heart"
     }
     room:judge(judge)
     if judge.card.suit ~= Card.Heart and from and not from.dead then
