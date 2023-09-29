@@ -362,7 +362,7 @@ Item {
         }
 
         Button {
-          text: qsTr("Search")
+          text: Backend.translate("Search")
           enabled: word.text !== ""
           onClicked: {
             listView.currentIndex = 0;

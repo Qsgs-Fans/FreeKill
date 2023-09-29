@@ -60,7 +60,7 @@ Item {
   }
 
   Button {
-    text: qsTr("Quit")
+    text: Backend.translate("Quit")
     anchors.bottom: parent.bottom
     onClicked: {
       mainStack.pop();
