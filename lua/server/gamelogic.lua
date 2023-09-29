@@ -90,32 +90,8 @@ function GameLogic:chooseGenerals()
 
   if lord ~= nil then
     room.current = lord
-    local generals = {}
-    local lordlist = {}
-    local lordpools = {}
-    if room.settings.gameMode == "aaa_role_mode" then
-      for _, general in pairs(Fk:getAllGenerals()) do
-        if (not general.hidden and not general.total_hidden) and
-        table.find(general.skills, function(s)
-          return s.lordSkill
-        end) and
-        not table.find(lordlist, function(g)
-          return g.trueName == general.trueName
-        end) then
-          table.insert(lordlist, general)
-        end
-      end
-      lordlist = table.random(lordlist, 3) or {}
-    end
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
-      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
-    end))
-    for i = 1, #generals do
-      generals[i] = generals[i].name
-    end
-    lordpools = table.simpleClone(generals)
-    table.insertTable(lordpools, table.map(lordlist, function(g) return g.name end))
-    lord_generals = room:askForGeneral(lord, lordpools, n)
+    local generals = room:getNGenerals(generalNum)
+    lord_generals = room:askForGeneral(lord, generals, n)
     local lord_general, deputy
     if type(lord_generals) == "table" then
       deputy = lord_generals[2]
@@ -124,6 +100,9 @@ function GameLogic:chooseGenerals()
       lord_general = lord_generals
       lord_generals = {lord_general}
     end
+
+    generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
+    room:returnToGeneralPile(generals)
 
     room:setPlayerGeneral(lord, lord_general, true)
     room:askForChooseKingdom({lord})
@@ -134,13 +113,10 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, lord_generals)
+  local generals = room:getNGenerals(#nonlord * generalNum)
   table.shuffle(generals)
-  for _, p in ipairs(nonlord) do
-    local arg = {}
-    for i = 1, generalNum do
-      table.insert(arg, table.remove(generals, 1).name)
-    end
+  for i, p in ipairs(nonlord) do
+    local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
     p.request_data = json.encode{ arg, n }
     p.default_reply = table.random(arg, n)
   end
@@ -148,11 +124,13 @@ function GameLogic:chooseGenerals()
   room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
 
+  local selected = {}
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
-      local generals = json.decode(p.client_reply)
-      local general = generals[1]
-      local deputy = generals[2]
+      local general_ret = json.decode(p.client_reply)
+      local general = general_ret[1]
+      local deputy = general_ret[2]
+      table.insertTableIfNeed(selected, general_ret)
       room:setPlayerGeneral(p, general, true, true)
       room:setDeputyGeneral(p, deputy)
     else
@@ -161,6 +139,9 @@ function GameLogic:chooseGenerals()
     end
     p.default_reply = ""
   end
+
+  generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
+  room:returnToGeneralPile(generals)
 
   room:askForChooseKingdom(nonlord)
 end
