@@ -52,8 +52,6 @@ Fk:loadTranslationTable{
   ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
   ["#slash-jinks"] = "%src 对你使用了杀，需 %arg2 张闪，你还需使用 %arg 张闪",
 
-  ["#slash-jinks"] = "%src 对你使用了杀，需 %arg2 张闪，你还需使用 %arg 张闪",
-
   ["jink"] = "闪",
   [":jink"] = "基本牌<br /><b>时机</b>：【杀】对你生效时<br /><b>目标</b>：此【杀】<br /><b>效果</b>：抵消此【杀】的效果。",
 
