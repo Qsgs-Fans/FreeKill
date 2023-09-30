@@ -891,14 +891,14 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy, false, false)
+  room:changeHero(self, generalName, false, isDeputy, false, false, false)
   if oldKingdom ~= "wild" then
-    local kingdom = general.kingdom
+    local kingdom = (self:getMark("__heg_wild") == 1 and not isDeputy) and "wild" or self:getMark("__heg_kingdom")
     self.kingdom = kingdom
-    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+    if oldKingdom == "unknown" and kingdom ~= "wild" and #table.filter(room:getOtherPlayers(self, false, true),
       function(p)
         return p.kingdom == kingdom
-      end) >= #room.players // 2 then
+      end) >= #room.players // 2 and table.every(room.alive_players, function(p) return p.kingdom ~= kingdom or not string.find(p.general, "lord") end) then
       self.kingdom = "wild"
     end
     room:broadcastProperty(self, "kingdom")
@@ -906,8 +906,8 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     room:setPlayerProperty(self, "kingdom", "wild")
   end
 
-  if self.gender == General.Agender then
-    self.gender = general.gender
+  if self.gender == General.Agender or self.gender ~= Fk.generals[self.general].gender then
+    room:setPlayerProperty(self, "gender", general.gender)
   end
 
   room:sendLog{
@@ -982,8 +982,17 @@ function ServerPlayer:hideGeneral(isDeputy)
     end
   end
 
-  room.logic:trigger(fk.GeneralHidden, room, generalName)
+  self.gender = General.Agender
+  if Fk.generals[self.general].gender ~= General.Agender then
+    self.gender = Fk.generals[self.general].gender
+  elseif self.deputyGeneral and Fk.generals[self.deputyGeneral].gender ~= General.Agender then
+    self.gender = Fk.generals[self.deputyGeneral].gender
+  end
+  room:broadcastProperty(self, "gender")
+
+  room.logic:trigger(fk.GeneralHidden, self, generalName)
 end
+
 -- 神貂蝉
 
 ---@param p ServerPlayer
