@@ -47,7 +47,23 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     })
   end
   for _, to in ipairs(pindianData.tos) do
-    if not (pindianData.results[to.id] and pindianData.results[to.id].toCard) then
+    if pindianData.results[to.id] and pindianData.results[to.id].toCard then
+      local _pindianCard = pindianData.results[to.id].toCard
+      local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+      pindianCard:addSubcard(_pindianCard.id)
+
+      pindianData.results[to.id].toCard = pindianCard
+
+      table.insert(moveInfos, {
+        ids = { _pindianCard.id },
+        from = to.id,
+        fromArea = room:getCardArea(_pindianCard.id),
+        toArea = Card.Processing,
+        moveReason = fk.ReasonPut,
+        skillName = pindianData.reason,
+        moveVisible = true,
+      })
+    else
       table.insert(targets, to)
       to.request_data = json.encode(data)
     end

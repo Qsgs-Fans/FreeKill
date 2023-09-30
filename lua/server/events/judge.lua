@@ -5,8 +5,6 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   local room = self.room
   local logic = room.logic
   local who = data.who
-  data.good = data.good ~= false --为了以后实现判定反转的效果
-  data.negative = data.negative == true
   logic:trigger(fk.StartJudge, who, data)
   data.card = data.card or Fk:getCardById(room:getNCards(1)[1])
 
@@ -29,8 +27,6 @@ GameEvent.functions[GameEvent.Judge] = function(self)
     arg = data.reason,
   })
 
-  data.isgood = data.good == data.card:matchPattern(data.pattern)
-
   logic:trigger(fk.AskForRetrial, who, data)
   logic:trigger(fk.FinishRetrial, who, data)
   Fk:filterCard(data.card.id, who, data)
@@ -46,15 +42,9 @@ GameEvent.functions[GameEvent.Judge] = function(self)
 
   if data.pattern then
     room:delay(400);
-    if data.negative
-    then
-      room:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgebad" or "judgegood")
-    else
-      room:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
-    end
+    room:setCardEmotion(data.card.id, data.card:matchPattern(data.pattern) and "judgegood" or "judgebad")
     room:delay(900);
   end
-  data.isgood = data.good == data.card:matchPattern(data.pattern)
 
   if logic:trigger(fk.FinishJudge, who, data) then
     logic:breakEvent()

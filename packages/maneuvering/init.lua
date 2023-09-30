@@ -182,7 +182,7 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local to = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card)) and not to:isKongcheng()
+    return not (card and from:isProhibited(to, card))
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -275,11 +275,11 @@ local supplyShortageSkill = fk.CreateActiveSkill{
     local judge = {
       who = to,
       reason = "supply_shortage",
-      negative = true, --增加了反向动画
-      pattern = ".|.|club"
+      pattern = ".|.|spade,heart,diamond",
     }
     room:judge(judge)
-    if not judge.isgood then
+    local result = judge.card
+    if result.suit ~= Card.Club then
       to:skip(Player.Draw)
     end
     self:onNullified(room, effect)

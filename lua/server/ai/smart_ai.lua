@@ -3,6 +3,139 @@
 ---@class SmartAI: AI
 local SmartAI = AI:subclass("SmartAI")
 
+local smart_cb = {}
+
+fk.ai_use_skill = {}
+
+smart_cb.AskForUseActiveSkill = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local skill = Fk.skills[data[1]]
+  local prompt = data[2]
+  local cancelable = data[3]
+  self:updatePlayers()
+  local extra_data = json.decode(data[4])
+  for k, v in pairs(extra_data) do
+    skill[k] = v
+  end
+  self.use_id = nil
+  self.use_tos = {}
+  local ask = fk.ai_use_skill[data[1]]
+  if type(ask) == "function" then
+    ask(self, prompt, cancelable, extra_data)
+  end
+  if self.use_id then
+    return json.encode {
+      card = self.use_id,
+      targets = self.use_tos
+    }
+  end
+  return ""
+end
+
+fk.ai_choose_players = {}
+
+fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
+  local ask = fk.ai_choose_players[data.skillName]
+  if type(ask) == "function" then
+    ask(self, data.targets, data.min_num, data.num, cancelable)
+  end
+  if #self.use_tos > 0 then
+    if self.use_id then
+      self.use_id =
+          json.encode {
+            skill = data.skillName,
+            subcards = self.use_id
+          }
+    else
+      self.use_id =
+          json.encode {
+            skill = data.skillName,
+            subcards = {}
+          }
+    end
+  end
+end
+
+fk.ai_dis_card = {}
+
+fk.ai_use_skill.discard_skill = function(self, prompt, cancelable, data)
+  local ask = fk.ai_dis_card[data.skillName]
+  self:assignValue()
+  if type(ask) == "function" then
+    ask = ask(self, data.min_num, data.num, data.include_equip, cancelable, data.pattern, prompt)
+  end
+  if type(ask) ~= "table" and not cancelable then
+    local flag = "h"
+    if data.include_equip then
+      flag = "he"
+    end
+    ask = {}
+    local cards = table.map(self.player:getCardIds(flag),
+        function(id)
+          return Fk:getCardById(id)
+        end
+      )
+    self:sortValue(cards)
+    for _, c in ipairs(cards) do
+      table.insert(ask, c.id)
+      if #ask >= data.min_num then
+        break
+      end
+    end
+  end
+  if type(ask) == "table" and #ask >= data.min_num then
+    self.use_id = json.encode {
+      skill = data.skillName,
+      subcards = ask
+    }
+  end
+end
+
+fk.ai_skill_invoke = {}
+
+smart_cb.AskForSkillInvoke = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local prompt = data[2]
+  local extra_data = data[3]
+  local ask = fk.ai_skill_invoke[data[1]]
+  self:updatePlayers()
+  if type(ask) == "function" then
+    return ask(self, extra_data, prompt) and "1" or ""
+  elseif type(ask) == "boolean" then
+    return ask and "1" or ""
+  elseif Fk.skills[data[1]].frequency == 1 then
+    return "1"
+  else
+    return table.random { "1", "" }
+  end
+end
+
+fk.ai_askfor_ag = {}
+
+smart_cb.AskForAG = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local prompt = data[3]
+  local cancelable = data[2]
+  local id_list = data[1]
+  local ask = fk.ai_askfor_ag[prompt:split(":")[1]]
+  self:updatePlayers()
+  if type(ask) == "function" then
+    ask = ask(self, id_list, cancelable, prompt)
+  end
+  if type(ask) ~= "number" then
+    local cards = table.map(id_list,
+        function(id)
+          return Fk:getCardById(id)
+        end
+      )
+    self:sortValue(cards)
+    ask = cards[#cards].id
+  end
+  return ask
+end
+
+fk.ai_use_play = {}
+
 ---@param self SmartAI
 ---@param skill ActiveSkill|ViewAsSkill|Card
 local function usePlaySkill(self, skill)
@@ -41,9 +174,7 @@ local function usePlaySkill(self, skill)
     end
   elseif skill:isInstanceOf(ViewAsSkill) then
     local selected = {}
-    local cards =
-        table.map(
-          self.player:getCardIds("&he"),
+    local cards = table.map(self.player:getCardIds("&he"),
           function(id)
             return Fk:getCardById(id)
           end
@@ -72,8 +203,7 @@ local function usePlaySkill(self, skill)
   end
   if self.use_id then
     if not skill:isInstanceOf(Card) then
-      self.use_id =
-          json.encode {
+      self.use_id = json.encode {
             skill = skill.name,
             subcards = self.use_id
           }
@@ -87,145 +217,9 @@ local function usePlaySkill(self, skill)
   return ""
 end
 
-fk.ai_use_play = {}
+fk.ai_askuse_card = {}
 
-local trust_cb = {}
-
-trust_cb.AskForUseActiveSkill = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local skill = Fk.skills[data[1]]
-  local prompt = data[2]
-  local cancelable = data[3]
-  self:updatePlayers()
-  local extra_data = json.decode(data[4])
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
-  self.use_id = nil
-  self.use_tos = {}
-  local ask = fk.ai_use_skill[data[1]]
-  if type(ask) == "function" then
-    ask(self, prompt, cancelable, extra_data)
-  end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = self.use_tos
-    }
-  end
-  return ""
-end
-
-fk.ai_use_skill = {}
-
-fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
-  local ask = fk.ai_choose_players[data.skillName]
-  if type(ask) == "function" then
-    ask(self, data.targets, data.min_num, data.num, cancelable)
-  end
-  if #self.use_tos > 0 then
-    if self.use_id then
-      self.use_id =
-          json.encode {
-            skill = data.skillName,
-            subcards = self.use_id
-          }
-    else
-      self.use_id =
-          json.encode {
-            skill = data.skillName,
-            subcards = {}
-          }
-    end
-  end
-end
-
-fk.ai_choose_players = {}
-
-fk.ai_use_skill.discard_skill = function(self, prompt, cancelable, data)
-  local ask = fk.ai_dis_card[data.skillName]
-  self:assignValue()
-  if type(ask) == "function" then
-    ask = ask(self, data.min_num, data.num, data.include_equip, cancelable, data.pattern, prompt)
-  end
-  if type(ask) ~= "table" and not cancelable then
-    local flag = "h"
-    if data.include_equip then
-      flag = "he"
-    end
-    ask = {}
-    local cards =
-        table.map(
-          self.player:getCardIds(flag),
-          function(id)
-            return Fk:getCardById(id)
-          end
-        )
-    self:sortValue(cards)
-    for _, c in ipairs(cards) do
-      table.insert(ask, c.id)
-      if #ask >= data.min_num then
-        break
-      end
-    end
-  end
-  if type(ask) == "table" and #ask >= data.min_num then
-    self.use_id =
-        json.encode {
-          skill = data.skillName,
-          subcards = ask
-        }
-  end
-end
-
-fk.ai_dis_card = {}
-
-trust_cb.AskForSkillInvoke = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local prompt = data[2]
-  local extra_data = data[3]
-  local ask = fk.ai_skill_invoke[data[1]]
-  self:updatePlayers()
-  if type(ask) == "function" then
-    return ask(self, extra_data, prompt) and "1" or ""
-  elseif type(ask) == "boolean" then
-    return ask and "1" or ""
-  elseif Fk.skills[data[1]].frequency == 1 then
-    return "1"
-  else
-    return table.random { "1", "" }
-  end
-end
-
-fk.ai_skill_invoke = {}
-
-trust_cb.AskForAG = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local prompt = data[3]
-  local cancelable = data[2]
-  local id_list = data[1]
-  local ask = fk.ai_askfor_ag[prompt:split(":")[1]]
-  self:updatePlayers()
-  if type(ask) == "function" then
-    ask = ask(self, id_list, cancelable, prompt)
-  end
-  if type(ask) ~= "number" then
-    local cards =
-        table.map(
-          id_list,
-          function(id)
-            return Fk:getCardById(id)
-          end
-        )
-    self:sortValue(cards)
-    ask = cards[#cards].id
-  end
-  return ask
-end
-
-fk.ai_askfor_ag = {}
-
-trust_cb.AskForUseCard = function(self, jsonData)
+smart_cb.AskForUseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -235,25 +229,21 @@ trust_cb.AskForUseCard = function(self, jsonData)
   self.use_id = nil
   self.use_tos = {}
   local exp = Exppattern:Parse(data[2] or data[1])
-  self.avail_cards =
-      table.filter(
-        self.player:getCardIds("&he"),
-        function(id)
-          return exp:match(Fk:getCardById(id)) and not self.player:prohibitUse(Fk:getCardById(id))
-        end
-      )
+  self.avail_cards = table.filter(self.player:getCardIds("&he"),
+      function(id)
+        return exp:match(Fk:getCardById(id)) and not self.player:prohibitUse(Fk:getCardById(id))
+      end
+    )
   Self = self.player
   local ask = fk.ai_askuse_card[prompt:split(":")[1]]
   if type(ask) == "function" then
     ask(self, pattern, prompt, cancelable, extra_data)
   else
-    local cards =
-        table.map(
-          self.player:getCardIds("&he"),
-          function(id)
-            return Fk:getCardById(id)
-          end
-        )
+    local cards = table.map(self.player:getCardIds("&he"),
+        function(id)
+          return Fk:getCardById(id)
+        end
+      )
     self:sortValue(cards)
     for _, sth in ipairs(self:getActives(pattern)) do
       if sth:isInstanceOf(Card) then
@@ -276,11 +266,10 @@ trust_cb.AskForUseCard = function(self, jsonData)
           if type(uc) == "function" then
             uc(self, tc)
             if self.use_id then
-              self.use_id =
-                  json.encode {
-                    skill = sth.name,
-                    subcards = selected
-                  }
+              self.use_id = json.encode {
+                skill = sth.name,
+                subcards = selected
+              }
               break
             end
           end
@@ -304,8 +293,19 @@ trust_cb.AskForUseCard = function(self, jsonData)
   return ""
 end
 
-fk.ai_askuse_card = {}
 fk.ai_nullification = {}
+
+function SmartAI:eventsData(game_event, ge)
+  local datas = {}
+  local _ge = ge or self.room.logic:getCurrentEvent()
+  while _ge do
+    if _ge.event == GameEvent[game_event] then
+      table.insert(datas, _ge.data[1])
+    end
+    _ge = _ge.parent
+  end
+  return datas
+end
 
 fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, extra_data)
   local datas = self:eventsData("CardEffect")
@@ -315,6 +315,11 @@ fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, ex
   if type(ask) == "function" then
     ask(self, effect.card, self.room:getPlayerById(effect.to), self.room:getPlayerById(effect.from), positive)
   end
+end
+
+function SmartAI:eventData(game_event)
+  local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
+  return event and event.data[1]
 end
 
 fk.ai_askuse_card["#AskForPeaches"] = function(self, pattern, prompt, cancelable, extra_data)
@@ -470,23 +475,25 @@ function SmartAI:sortValue(cards, inverse)
 end
 
 function SmartAI:sortPriority(cards, inverse)
-  local function compare_func(a, b)
-    local va = a and self:getPriority(a) or 0
-    local vb = b and self:getPriority(b) or 0
-    if va == vb then
-      va = a and self:getValue(a) or 0
-      vb = b and self:getValue(b) or 0
+    local function compare_func(a, b)
+        local va = a and self:getPriority(a) or 0
+        local vb = b and self:getPriority(b) or 0
+        if va == vb then
+            va = a and self:getValue(a) or 0
+            vb = b and self:getValue(b) or 0
+        end
+        return va > vb
     end
-    return va > vb
-  end
-  table.sort(cards, compare_func)
-  if inverse then
-    cards = table.reverse(cards)
-  end
+    table.sort(cards, compare_func)
+    if inverse then
+        cards = table.reverse(cards)
+    end
 end
 
+fk.ai_response_card = {}
+
 ---@param self SmartAI
-trust_cb.AskForResponseCard = function(self, jsonData)
+smart_cb.AskForResponseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -515,40 +522,6 @@ trust_cb.AskForResponseCard = function(self, jsonData)
     }
   end
   return ""
-end
-
-fk.ai_response_card = {}
-
-function SmartAI:getRetrialCardId(cards, exchange)
-  local judge = self:eventData("Judge")
-  local isgood = judge.good == judge.card:matchPattern(judge.pattern)
-  local canRetrial = {}
-  self:sortValue(cards)
-  if exchange then
-    for _, c in ipairs(cards) do
-      if c:matchPattern(judge.pattern) == isgood then
-        table.insert(canRetrial, c)
-      end
-    end
-  else
-    if isgood then
-      if self:isFriend(judge.who) then
-        return
-      end
-    elseif self:isEnemie(judge.who) then
-      return
-    end
-  end
-  for _, c in ipairs(cards) do
-    if self:isFriend(judge.who) and c:matchPattern(judge.pattern)==judge.good
-    or self:isEnemie(judge.who) and c:matchPattern(judge.pattern)~=judge.good
-    then
-      table.insert(canRetrial, c)
-    end
-  end
-  if #canRetrial > 0 then
-    return canRetrial[1].id
-  end
 end
 
 function SmartAI:getActives(pattern)
@@ -614,9 +587,7 @@ function SmartAI:setUseId(pattern)
 end
 
 function SmartAI:cardsView(pattern)
-  local actives =
-      table.filter(
-        self.player:getAllSkills(),
+  local actives = table.filter(self.player:getAllSkills(),
         function(s)
           return s:isInstanceOf(ViewAsSkill) and s:enabledAtResponse(self.player, pattern)
         end
@@ -625,45 +596,41 @@ function SmartAI:cardsView(pattern)
 end
 
 ---@param self SmartAI
-trust_cb.PlayCard = function(self, jsonData)
-  local cards =
-      table.map(
-        self.player:getHandlyIds(true),
+smart_cb.PlayCard = function(self, jsonData)
+    local cards = table.map(self.player:getHandlyIds(true),
         function(id)
           return Fk:getCardById(id)
         end
-      )
-  cards = table.filter(cards,
+    )
+    cards = table.filter(cards,
         function(c)
           return c.skill:canUse(self.player, c) and not self.player:prohibitUse(c)
         end)
-  table.insertTable(
-    cards,
-    table.filter(
-      self.player:getAllSkills(),
-      function(s)
-        return s:isInstanceOf(ActiveSkill) and s:canUse(self.player) or
-            s:isInstanceOf(ViewAsSkill) and s:enabledAtPlay(self.player)
-      end
+    table.insertTable(cards,
+        table.filter(self.player:getAllSkills(),
+            function(s)
+              return s:isInstanceOf(ActiveSkill) and s:canUse(self.player)
+              or s:isInstanceOf(ViewAsSkill) and s:enabledAtPlay(self.player)
+            end
+        )
     )
-  )
-  if #cards < 1 then
-    return
-  end
-  self:updatePlayers()
-  self:sortPriority(cards)
-  for _, sth in ipairs(cards) do
-    local ret = usePlaySkill(self, sth)
-    if ret ~= "" then
-      return ret
+    if #cards < 1 then
+      return
     end
-  end
-  return ""
+    self:updatePlayers()
+    self:sortPriority(cards)
+    for _, sth in ipairs(cards) do
+        local ret = usePlaySkill(self, sth)
+        if ret ~= "" then
+          return ret
+        end
+    end
+    return ""
 end
 
 fk.ai_card_chosen = {}
 
-trust_cb.AskForCardChosen = function(self, jsonData)
+smart_cb.AskForCardChosen = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
   local chosen = fk.ai_card_chosen[data[3]]
@@ -703,14 +670,48 @@ trust_cb.AskForCardChosen = function(self, jsonData)
   return ""
 end
 
-fk.ai_role = {}
-fk.roleValue = {}
+fk.ai_judge = {}
 
-fk.trick_judge = {}
+fk.ai_judge.indulgence = { ".|.|heart", true }
+fk.ai_judge.lightning = { ".|2~9|spade", false }
+fk.ai_judge.supply_shortage = { ".|.|club", true }
 
-fk.trick_judge.indulgence = { ".|.|heart", true }
-fk.trick_judge.lightning = { ".|2~9|spade", false }
-fk.trick_judge.supply_shortage = { ".|.|club", true }
+function SmartAI:getRetrialCardId(cards, exchange)
+  local judge = self:eventData("Judge")
+  local isgood = judge.card:matchPattern(judge.pattern)
+  local tj = fk.ai_judge[judge.reason]
+  local good = tj or {judge.pattern,true}
+  if tj then
+    isgood = judge.card:matchPattern(tj[1]) == tj[2]
+  end
+  local canRetrial = {}
+  self:sortValue(cards)
+  if exchange then
+    for _, c in ipairs(cards) do
+      if c:matchPattern(judge.pattern) == isgood then
+        table.insert(canRetrial, c)
+      end
+    end
+  else
+    if isgood then
+      if self:isFriend(judge.who) then
+        return
+      end
+    elseif self:isEnemie(judge.who) then
+      return
+    end
+  end
+  for _, c in ipairs(cards) do
+    if self:isFriend(judge.who) and c:matchPattern(good[1])==good[2]
+    or self:isEnemie(judge.who) and c:matchPattern(good[1])~=good[2]
+    then
+      table.insert(canRetrial, c)
+    end
+  end
+  if #canRetrial > 0 then
+    return canRetrial[1].id
+  end
+end
 
 local function table_clone(self)
   local t = {}
@@ -720,86 +721,69 @@ local function table_clone(self)
   return t
 end
 
-trust_cb.AskForGuanxing = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local cards =
-      table.map(
-        data.cards,
+smart_cb.AskForGuanxing = function(self, jsonData)
+    local data = json.decode(jsonData)
+    local cards = table.map(data.cards,
         function(id)
           return Fk:getCardById(id)
         end
       )
-  self:sortValue(cards)
-  local top = {}
-  if self.room.current.phase < Player.Play then
-    local jt =
-        table.map(
-          self.room.current:getCardIds("j"),
-          function(id)
-            return Fk:getCardById(id)
-          end
-        )
-    if #jt > 0 then
-      for i, j in ipairs(table.reverse(jt)) do
-        local tj = fk.trick_judge[j.name]
-        if tj then
-          for _, c in ipairs(table_clone(cards)) do
-            if tj[2] == c:matchPattern(tj[1]) and #top < data.max_top_cards then
-              table.insert(top, c.id)
-              table.removeOne(cards, c)
-              tj = 1
-              break
+    self:sortValue(cards)
+    local top = {}
+    if self.room.current.phase < Player.Play then
+        local jt = table.map(self.room.current:getCardIds("j"),
+            function(id)
+                return Fk:getCardById(id)
             end
-          end
+          )
+        if #jt > 0 then
+            for _, j in ipairs(table.reverse(jt)) do
+                local tj = fk.ai_judge[j.name]
+                if tj then
+                    for _, c in ipairs(table_clone(cards)) do
+                        if tj[2] == c:matchPattern(tj[1]) and #top < data.max_top_cards then
+                            table.insert(top, c.id)
+                            table.removeOne(cards, c)
+                            tj = 1
+                            break
+                        end
+                    end
+                end
+                if tj ~= 1 and #cards > 0 and #top < data.max_top_cards then
+                    table.insert(top, cards[1].id)
+                    table.remove(cards, 1)
+                end
+            end
         end
-        if tj ~= 1 and #cards > 0 and #top < data.max_top_cards then
-          table.insert(top, cards[1].id)
-          table.remove(cards, 1)
+        self:sortValue(cards, true)
+        for _, c in ipairs(table_clone(cards)) do
+            if #top < data.max_top_cards and c.skill:canUse(self.player, c) and usePlaySkill(self, c) ~= "" then
+                table.insert(top, c.id)
+                table.removeOne(cards, c)
+                break
+            end
         end
-      end
     end
-    self:sortValue(cards, true)
     for _, c in ipairs(table_clone(cards)) do
-      if #top < data.max_top_cards and c.skill:canUse(self.player, c) and usePlaySkill(self, c) ~= "" then
-        table.insert(top, c.id)
-        table.removeOne(cards, c)
-        break
-      end
+        if #top < data.min_top_cards then
+            table.insert(top, c.id)
+            table.removeOne(cards, c)
+            break
+        end
     end
-  end
-  for _, c in ipairs(table_clone(cards)) do
-    if #top < data.min_top_cards then
-      table.insert(top, c.id)
-      table.removeOne(cards, c)
-      break
-    end
-  end
-  return json.encode {
-    top,
-    table.map(
-      cards,
-      function(c)
-        return c.id
-      end
-    )
-  }
+    return json.encode {
+        top,
+        table.map(
+            cards,
+            function(c)
+                return c.id
+            end
+        )
+    }
 end
 
-function SmartAI:initialize(player)
-  AI.initialize(self, player)
-  self.cb_table = trust_cb
-  self.player = player
-  self.room = RoomInstance or ClientInstance
-
-  fk.ai_role[player.id] = "neutral"
-  fk.roleValue[player.id] = {
-    lord = 0,
-    loyalist = 0,
-    rebel = 0,
-    renegade = 0
-  }
-  self:updatePlayers()
-end
+fk.ai_role = {}
+fk.roleValue = {}
 
 function SmartAI:isRolePredictable()
   return self.room.settings.gameMode ~= "aaa_role_mode"
@@ -812,10 +796,10 @@ local function aliveRoles(room)
     rebel = 0,
     renegade = 0
   }
-  for _, ap in ipairs(room:getAllPlayers(false)) do
+  for _, ap in ipairs(room.players) do
     fk.alive_roles[ap.role] = 0
   end
-  for _, ap in ipairs(room:getAlivePlayers(false)) do
+  for _, ap in ipairs(room.alive_players) do
     fk.alive_roles[ap.role] = fk.alive_roles[ap.role] + 1
   end
   return fk.alive_roles
@@ -824,7 +808,7 @@ end
 function SmartAI:objectiveLevel(to)
   if self.player.id == to.id then
     return -2
-  elseif #self.room:getAlivePlayers(false) < 3 then
+  elseif #self.room.alive_players < 3 then
     return 5
   end
   local ars = aliveRoles(self.room)
@@ -834,7 +818,7 @@ function SmartAI:objectiveLevel(to)
     if self.role == "renegade" then
       fk.explicit_renegade = true
     end
-    for _, p in ipairs(self.room:getAlivePlayers()) do
+    for _, p in ipairs(self.room.alive_players) do
       if
           p.role == self.role or p.role == "lord" and self.role == "loyalist" or
           p.role == "loyalist" and self.role == "lord"
@@ -911,7 +895,7 @@ function SmartAI:updatePlayers(update)
   self.friends = {}
   self.friends_noself = {}
 
-  local aps = self.room:getAlivePlayers()
+  local aps = self.room.alive_players
   local function compare_func(a, b)
     local v1 = fk.roleValue[a.id].rebel
     local v2 = fk.roleValue[b.id].rebel
@@ -943,7 +927,7 @@ function SmartAI:updatePlayers(update)
     end
   end
 
-  for n, p in ipairs(self.room:getAlivePlayers(false)) do
+  for n, p in ipairs(aps) do
     n = self:objectiveLevel(p)
     if n < 0 then
       table.insert(self.friends, p)
@@ -969,6 +953,22 @@ function SmartAI:updatePlayers(update)
 		end-]]
 end
 
+function SmartAI:initialize(player)
+  AI.initialize(self, player)
+  self.cb_table = smart_cb
+  self.player = player
+  self.room = RoomInstance or ClientInstance
+
+  fk.ai_role[player.id] = "neutral"
+  fk.roleValue[player.id] = {
+    lord = 0,
+    loyalist = 0,
+    rebel = 0,
+    renegade = 0
+  }
+  self:updatePlayers()
+end
+
 local function updateIntention(player, to, intention)
   if player.id == to.id then
     return
@@ -979,17 +979,14 @@ local function updateIntention(player, to, intention)
     end
   else
     if to.role == "lord" or fk.ai_role[to.id] == "loyalist" then
-      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel +
-          intention * (200 - fk.roleValue[player.id].rebel) / 200
+      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel + intention * (200 - fk.roleValue[player.id].rebel) / 200
     elseif fk.ai_role[to.id] == "rebel" then
-      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel -
-          intention * (fk.roleValue[player.id].rebel + 200) / 200
+      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel - intention * (fk.roleValue[player.id].rebel + 200) / 200
     end
     if fk.roleValue[player.id].rebel < 0 and intention > 0 or fk.roleValue[player.id].rebel > 0 and intention < 0 then
-      fk.roleValue[player.id].renegade = fk.roleValue[player.id].renegade +
-          intention * (100 - fk.roleValue[player.id].renegade) / 200
+      fk.roleValue[player.id].renegade = fk.roleValue[player.id].renegade + intention * (100 - fk.roleValue[player.id].renegade) / 200
     end
-    local aps = player.room:getAlivePlayers()
+    local aps = player.room.alive_players
     local function compare_func(a, b)
       local v1 = fk.roleValue[a.id].rebel
       local v2 = fk.roleValue[b.id].rebel
@@ -1020,7 +1017,7 @@ local function updateIntention(player, to, intention)
         fk.ai_role[ap.id] = "neutral"
       end
     end --[[
-      fk.qWarning(
+      fk.qWarning(--提示身份值变化信息，消除注释后就会在调试框中显示
       player.general ..
       " " ..
       intention ..
@@ -1039,7 +1036,7 @@ local filterEvent = fk.CreateTriggerSkill {
   name = "filter_event",
   events = {
     fk.TargetSpecified,
-    fk.StartJudge,
+    --fk.StartJudge,
     --fk.AfterCardsMove,
     fk.CardUsing
   },
@@ -1067,8 +1064,6 @@ local filterEvent = fk.CreateTriggerSkill {
           updateIntention(room:getPlayerById(data.from), p, callback)
         end
       end
-    elseif event == fk.StartJudge then
-      fk.trick_judge[data.reason] = { data.pattern, data.good }
     elseif event == fk.CardUsing then
       if data.card.name == "nullification" then
         local datas = player.ai:eventsData("CardEffect")
@@ -1140,35 +1135,6 @@ function SmartAI:isEnemie(pid, tid)
     return true
   elseif ve < 0 then
     return false
-  end
-end
-
-function SmartAI:eventsData(game_event, ge)
-  local datas = {}
-  local _ge = ge or self.room.logic:getCurrentEvent()
-  while _ge do
-    if _ge.event == GameEvent[game_event] then
-      table.insert(datas, _ge.data[1])
-    end
-    _ge = _ge.parent
-  end
-  return datas
-end
-
-function SmartAI:eventData(game_event)
-  local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
-  return event and event.data[1]
-end
-
-for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
-    dofile("packages/" .. n .. "/ai/init.lua")
-  end
-end
--- 加载两次拓展ai文件是为了能够保证引用，例如属性杀的使用直接套入普通杀的使用
-for _, n in ipairs(FileIO.ls("packages")) do
-  if FileIO.isDir("packages/" .. n .. "/ai") and FileIO.exists("packages/" .. n .. "/ai/init.lua") then
-    dofile("packages/" .. n .. "/ai/init.lua")
   end
 end
 
