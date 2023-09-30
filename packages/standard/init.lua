@@ -98,7 +98,7 @@ local guicai = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#guicai-ask::" .. target.id
-    local response = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true, nil, nil, true)
+    local response = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true, {retrial = true})
     if response then
       self.cost_data = response.card
       return true

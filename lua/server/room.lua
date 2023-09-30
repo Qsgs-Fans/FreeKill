@@ -1943,6 +1943,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   return use
 end
 
+-- available extra_data:
+-- * retrial: boolean
 --- 询问一名玩家打出一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 牌名
@@ -1951,9 +1953,8 @@ end
 ---@param cancelable bool @ 能否取消
 ---@param extra_data any|nil @ 额外数据
 ---@param effectData CardEffectEvent|nil @ 关联的卡牌生效流程
----@param retrial bool @ 改判打出
 ---@return Card | nil @ 打出的牌
-function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData, retrial)
+function Room:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData)
   if effectData and (effectData.disresponsive or table.contains(effectData.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
@@ -1961,7 +1962,6 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
-  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
@@ -1969,7 +1969,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
     user = player,
     cardName = card_name,
     pattern = pattern,
-    extraData = extra_data,
+    extraData = extra_data or Util.DummyTable,
   }
   local response = nil
   self.logic:trigger(fk.AskForCardResponse, player, eventData)
@@ -1978,7 +1978,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
       from = player.id,
       card = eventData.result,
       skipDrop = true,
-      retrial = retrial,
+      retrial = extra_data and extra_data.retrial,
       responseToEvent = effectData
     }
     eventData.extraResponse = extra_data ~= nil
@@ -1989,7 +1989,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
       response = eventData
     end
   end
-  local data = { card_name, pattern, prompt, cancelable, extra_data }
+  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
   while response == nil do
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
@@ -1998,7 +1998,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
       result = self:handleUseCardReply(player, result)
       if result then
         result.skipDrop = true
-        result.retrial = retrial
+        result.retrial = extra_data and extra_data.retrial
         result.responseToEvent = effectData
         result.extraResponse = extra_data ~= nil
         self:responseCard(result)
