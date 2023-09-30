@@ -758,11 +758,12 @@ function Room:doRaceRequest(command, players, jsonData)
     p:doRequest(command, jsonData or p.request_data)
   end
 
-  local elapsed = 0
-  local canceled_players = {}
-  local ret = nil
   local remainTime = self.timeout
   local currentTime = os.time()
+  local elapsed = 0
+  local winner
+  local canceled_players = {}
+  local ret
   while true do
     elapsed = os.time() - currentTime
     if remainTime - elapsed <= 0 then
@@ -771,34 +772,35 @@ function Room:doRaceRequest(command, players, jsonData)
     for _, p in ipairs(players) do
       p:waitForReply(0)
       if p.reply_ready == true then
-        ret = p
+        winner = p
         break
       end
+
       if p.reply_cancel then
-        table.insertIfNeed(canceled_players, p)
         table.removeOne(players, p)
+        table.insertIfNeed(canceled_players, p)
       elseif p.id > 0 then
         -- 骗过调度器让他以为自己尚未就绪
         p.request_timeout = remainTime - elapsed
         p.serverplayer:setThinking(true)
       end
     end
-    if ret then
+    if winner then
       self:doBroadcastNotify("CancelRequest", "")
+      ret = winner
       break
     end
-    if #canceled_players >= player_len then
+
+    if player_len == #canceled_players then
       break
     end
+
     coroutine.yield("__handleRequest", (remainTime - elapsed) * 1000)
   end
 
   for _, p in ipairs(self.players) do
     p.serverplayer:setBusy(false)
     p.serverplayer:setThinking(false)
-  end
-  if self.current and (ret == nil or ret.serverplayer:getState() ~= fk.Player_Online) then
-    self:delay(math.random(233, 2333)) --无懈增加随机延迟，就难以察觉场上是否有无懈了
   end
 
   return ret
@@ -2029,6 +2031,9 @@ end
 ---@param extra_data any|nil @ 额外信息
 ---@return CardUseStruct | nil @ 最终决胜出的卡牌使用信息
 function Room:askForNullification(players, card_name, pattern, prompt, cancelable, extra_data)
+  if #players == 0 then
+    return nil
+  end
 
   local command = "AskForUseCard"
   card_name = card_name or "nullification"
