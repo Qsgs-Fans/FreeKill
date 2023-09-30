@@ -117,8 +117,8 @@ smart_cb.AskForAG = function(self, jsonData)
   local prompt = data[3]
   local cancelable = data[2]
   local id_list = data[1]
-  local ask = fk.ai_askfor_ag[prompt:split(":")[1]]
   self:updatePlayers()
+  local ask = fk.ai_askfor_ag[prompt:split(":")[1]]
   if type(ask) == "function" then
     ask = ask(self, id_list, cancelable, prompt)
   end
@@ -326,9 +326,7 @@ fk.ai_askuse_card["#AskForPeaches"] = function(self, pattern, prompt, cancelable
   local dying = self:eventData("Dying")
   local who = self.room:getPlayerById(dying.who)
   if who and self:isFriend(who) then
-    local cards =
-        table.map(
-          self.player:getCardIds("&he"),
+    local cards = table.map(self.player:getCardIds("&he"),
           function(id)
             return Fk:getCardById(id)
           end
@@ -347,8 +345,7 @@ fk.ai_askuse_card["#AskForPeaches"] = function(self, pattern, prompt, cancelable
         end
         local tc = sth.viewAs(sth, selected)
         if tc and tc:matchPattern(pattern) then
-          self.use_id =
-              json.encode {
+          self.use_id = json.encode {
                 skill = sth.name,
                 subcards = selected
               }
@@ -399,7 +396,6 @@ function SmartAI:getValue(card, kept)
   else
     return fk.cardValue[card.name] or v
   end
-  return v
 end
 
 function SmartAI:getPriority(card)
@@ -525,25 +521,19 @@ smart_cb.AskForResponseCard = function(self, jsonData)
 end
 
 function SmartAI:getActives(pattern)
-  local cards =
-      table.map(
-        self.player:getCardIds("&he"),
+  local cards = table.map(self.player:getCardIds("&he"),
         function(id)
           return Fk:getCardById(id)
         end
       )
   local exp = Exppattern:Parse(pattern)
-  cards =
-      table.filter(
-        cards,
+  cards = table.filter(cards,
         function(c)
           return exp:match(c)
         end
       )
-  table.insertTable(
-    cards,
-    table.filter(
-      self.player:getAllSkills(),
+  table.insertTable(cards,
+    table.filter(self.player:getAllSkills(),
       function(s)
         return s:isInstanceOf(ViewAsSkill) and s:enabledAtResponse(self.player, pattern)
       end
@@ -554,13 +544,11 @@ function SmartAI:getActives(pattern)
 end
 
 function SmartAI:setUseId(pattern)
-  local cards =
-      table.map(
-        self.player:getCardIds("&he"),
-        function(id)
-          return Fk:getCardById(id)
-        end
-      )
+  local cards = table.map(self.player:getCardIds("&he"),
+    function(id)
+      return Fk:getCardById(id)
+    end
+  )
   self:sortValue(cards)
   for _, sth in ipairs(self:getActives(pattern)) do
     if sth:isInstanceOf(Card) then
@@ -575,11 +563,10 @@ function SmartAI:setUseId(pattern)
       end
       local tc = sth:viewAs(selected)
       if tc and tc:matchPattern(pattern) then
-        self.use_id =
-            json.encode {
-              skill = sth.name,
-              subcards = selected
-            }
+        self.use_id = json.encode {
+          skill = sth.name,
+          subcards = selected
+        }
         break
       end
     end
@@ -635,7 +622,7 @@ smart_cb.AskForCardChosen = function(self, jsonData)
   local to = self.room:getPlayerById(data[1])
   local chosen = fk.ai_card_chosen[data[3]]
   if type(chosen) == "function" then
-    return chosen(self, to, data[2])
+    return chosen(self, to, data[2]) or ""
   elseif table.contains(self.friends, to) then
     if string.find(data[2], "j") then
       local jc = to:getCardIds("j")
@@ -668,6 +655,68 @@ smart_cb.AskForCardChosen = function(self, jsonData)
     end
   end
   return ""
+end
+
+fk.ai_cards_chosen = {}
+
+smart_cb.AskForCardsChosen = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local to = self.room:getPlayerById(data[1])
+  local min = data[2]
+  local max = data[3]
+  local flag = data[4]
+  local ids = {}
+  local chosen = fk.ai_cards_chosen[data[5]]
+  if type(chosen) == "function" then
+    return chosen(self, to, min, max, flag)
+  elseif table.contains(self.friends, to) then
+    if string.find(flag, "j") then
+      for _, id in ipairs(to:getCardIds("j")) do
+        if #ids<max then
+          table.insert(ids,id)
+        end
+      end
+    end
+  else
+    if string.find(flag, "h") then
+      local hc = to:getCardIds("h")
+      if max - #ids >= #hc then
+        for _, id in ipairs(hc) do
+          table.insert(ids,id)
+        end
+      end
+    end
+    if string.find(flag, "e") then
+      for _, id in ipairs(to:getCardIds("e")) do
+        if #ids<max then
+          table.insert(ids,id)
+        end
+      end
+    end
+    if string.find(flag, "h") then
+      for _, id in ipairs(to:getCardIds("h")) do
+        if #ids<max then
+          table.insertIfNeed(ids,id)
+        end
+      end
+    end
+  end
+  return #ids >= min and json.encode(ids) or ""
+end
+
+fk.ai_ask_choice = {}
+
+smart_cb.AskForChoice = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local choices = data[1]
+  local all_choices = data[2]
+  local prompt = data[4]
+  local detailed = data[5]
+  local chosen = fk.ai_ask_choice[data[3]]
+  if type(chosen) == "function" then
+    chosen = chosen(self, choices, prompt, detailed, all_choices)
+  end
+  return table.connect(choices,chosen) and chosen or table.random(choices)
 end
 
 fk.ai_judge = {}
