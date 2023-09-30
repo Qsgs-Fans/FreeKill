@@ -30,6 +30,8 @@ QtObject {
   property int preferredTimeout
   property int preferredLuckTime
 
+  property bool firstRun: true
+
   // Player property of client
   property string serverAddr
   property string screenName: ""
@@ -82,6 +84,7 @@ QtObject {
     hideUseless = conf.hideUseless ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
+    firstRun = conf.firstRun ?? true;
     disabledGenerals = conf.disabledGenerals ?? [];
     disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
     disableSchemeIdx = conf.disableSchemeIdx ?? 0;
@@ -109,6 +112,7 @@ QtObject {
     conf.hideUseless = hideUseless;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
+    conf.firstRun = firstRun;
     conf.disabledGenerals = disabledGenerals;
     conf.disableGeneralSchemes = disableGeneralSchemes;
     conf.disableSchemeIdx = disableSchemeIdx;

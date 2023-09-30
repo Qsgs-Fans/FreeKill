@@ -605,14 +605,15 @@ end
 ---@param isDeputy bool @ 是否变的是副将
 ---@param sendLog bool @ 是否发Log
 ---@param maxHpChange bool @ 是否改变体力上限，默认改变
-function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange)
+function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange, kingdomChange)
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
 
-  local kingdom = isDeputy and player.kingdom or new.kingdom
-  if not isDeputy and (new.kingdom == "god" or new.subkingdom) then
+  kingdomChange = (kingdomChange == nil) and true or kingdomChange
+  local kingdom = (isDeputy or not kingdomChange) and player.kingdom or new.kingdom
+  if not isDeputy and kingdomChange and (new.kingdom == "god" or new.subkingdom) then
     local allKingdoms = {}
     if new.kingdom == "god" then
-      allKingdoms = {"wei", "shu", "wu", "qun", "jin"}
+      allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
     elseif new.subkingdom then
       allKingdoms = { new.kingdom, new.subkingdom }
     end
@@ -2792,6 +2793,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
 
   num = drawData.num
   fromPlace = drawData.fromPlace
+  player = drawData.who
 
   local topCards = self:getNCards(num, fromPlace)
   self:moveCards({

@@ -25,6 +25,7 @@ Fk:loadTranslationTable{
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Ban General Settings"] = "禁将",
+  ["Search"] = "搜索",
   ["Back"] = "返回",
 
   ["Refresh Room List"] = "刷新房间列表",
@@ -288,9 +289,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.8
+  ## v0.3.10
 
-  为国战添加专属ui，修复一些bug。
+  优化锁住卡牌的游玩体验，增加了新人引导。
 
   ]==],
 }
