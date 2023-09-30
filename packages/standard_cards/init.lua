@@ -8,8 +8,7 @@ local slashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player, card)
-    return
-      table.find(Fk:currentRoom().alive_players, function(p)
+    return table.find(Fk:currentRoom().alive_players, function(p)
         return self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
       end)
   end,
@@ -22,8 +21,8 @@ local slashSkill = fk.CreateActiveSkill{
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return self:modTargetFilter(to_select, selected, Self.id, card, true) and
-      (#selected > 0 or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
+      return self:modTargetFilter(to_select, selected, Self.id, card, true)
+      and (#selected > 0 or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
     end
   end,
   on_effect = function(self, room, effect)

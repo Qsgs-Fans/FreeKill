@@ -170,6 +170,8 @@ fk.ai_skill_invoke.ganglie = function(self, data, prompt)
   return damage and damage.from and not self:isFriend(damage.from)
 end
 
+fk.ai_judge.ganglie = { ".|.|heart", false }
+
 fk.ai_skill_invoke.luoyi = function(self, data, prompt)
   for _, p in ipairs(self.enemies) do
     if #self:getActives("slash") > 0 and not self:isWeak() then

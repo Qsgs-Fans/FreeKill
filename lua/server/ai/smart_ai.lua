@@ -727,12 +727,8 @@ fk.ai_judge.supply_shortage = { ".|.|club", true }
 
 function SmartAI:getRetrialCardId(cards, exchange)
   local judge = self:eventData("Judge")
-  local isgood = judge.card:matchPattern(judge.pattern)
-  local tj = fk.ai_judge[judge.reason]
-  local good = tj or {judge.pattern,true}
-  if tj then
-    isgood = judge.card:matchPattern(tj[1]) == tj[2]
-  end
+  local ai_judge = fk.ai_judge[judge.reason] or {judge.pattern,true}
+  local isgood = judge.card:matchPattern(ai_judge[1])==ai_judge[2]
   local canRetrial = {}
   self:sortValue(cards)
   if exchange then
@@ -751,8 +747,8 @@ function SmartAI:getRetrialCardId(cards, exchange)
     end
   end
   for _, c in ipairs(cards) do
-    if self:isFriend(judge.who) and c:matchPattern(good[1])==good[2]
-    or self:isEnemie(judge.who) and c:matchPattern(good[1])~=good[2]
+    if self:isFriend(judge.who) and c:matchPattern(ai_judge[1])==ai_judge[2]
+    or self:isEnemie(judge.who) and c:matchPattern(ai_judge[1])~=ai_judge[2]
     then
       table.insert(canRetrial, c)
     end
