@@ -118,8 +118,7 @@ Item {
 
         TapHandler {
           onTapped: {
-            errDialog.txt = qsTr("$LoginFAQ");
-            errDialog.open();
+            mainStack.push(Qt.createComponent("../Tutorial.qml").createObject());
           }
         }
       }
