@@ -1949,6 +1949,7 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   local command = "AskForResponseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
