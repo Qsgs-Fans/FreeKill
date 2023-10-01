@@ -1890,7 +1890,7 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     if extra_data.bypass_distances then
       player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
     end
-    if extra_data.bypass_times ~= false then
+    if extra_data.bypass_times == nil or extra_data.bypass_times then
       player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
     end
   end

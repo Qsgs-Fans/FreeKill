@@ -10,11 +10,10 @@ local jianxiong = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    if data.card then
+    if target == player and player:hasSkill(self.name) and data.card then
       local room = player.room
       local subcards = data.card:isVirtual() and data.card.subcards or {data.card.id}
-      return target == player and player:hasSkill(self.name) and #subcards>0
-      and table.every(subcards, function(id) return room:getCardArea(id) == Card.Processing end)  
+      return #subcards>0 and table.every(subcards, function(id) return room:getCardArea(id) == Card.Processing end)
     end
   end,
   on_use = function(self, event, target, player, data)
@@ -41,7 +40,7 @@ local hujia = fk.CreateViewAsSkill{
     return false
   end,
   enabled_at_response = function(self, player)
-    return player:getMark("hujia-failed-phase") == 0 and not table.every(Fk:currentRoom().alive_players, function(p)
+    return not table.every(Fk:currentRoom().alive_players, function(p)
       return p == player or p.kingdom ~= "wei"
     end)
   end,

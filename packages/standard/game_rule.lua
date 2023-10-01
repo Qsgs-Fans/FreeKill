@@ -41,10 +41,10 @@ GameRule = fk.CreateTriggerSkill{
       local dyingPlayer = room:getPlayerById(data.who)
       while dyingPlayer.hp < 1 do
         local cardNames = {"peach"}
-        local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. 1 - dyingPlayer.hp
+        local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. tostring(1 - dyingPlayer.hp)
         if player == dyingPlayer then
           table.insert(cardNames, "analeptic")
-          prompt = "#AskForPeachesSelf:::" .. 1 - dyingPlayer.hp
+          prompt = "#AskForPeachesSelf:::" .. tostring(1 - dyingPlayer.hp)
         end
 
         cardNames = table.filter(cardNames, function (cardName)
