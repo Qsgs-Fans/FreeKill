@@ -426,7 +426,7 @@ local nullificationSkill = fk.CreateActiveSkill{
     return false
   end,
   on_use = function()
-    --RoomInstance:delay(1200)放弃这里的延迟，改在room:doRaceRequest里加随机延迟
+    --RoomInstance:delay(1200)放弃延迟，用的时候卡一下体验不够好，还是流畅一点好
   end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
