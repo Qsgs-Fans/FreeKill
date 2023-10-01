@@ -6,7 +6,12 @@ local SmartAI = AI:subclass("SmartAI")
 local smart_cb = {}
 
 fk.ai_use_skill = {}
-
+--- 请求发动主动技
+---
+--- 总的请求技，从它分支出各种功能技
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json使用数据（包含了子卡和目标）
 smart_cb.AskForUseActiveSkill = function(self, jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
@@ -33,7 +38,13 @@ smart_cb.AskForUseActiveSkill = function(self, jsonData)
 end
 
 fk.ai_choose_players = {}
-
+--- 请求选择目标
+---
+---由skillName进行下一级的决策，只需要在下一级里给self.use_tos添加角色id为目标就行
+---@param self SmartAI @ai系统
+---@param prompt string @提示信息
+---@param cancelable boolean @可以取消
+---@param data any @数据
 fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
   local ask = fk.ai_choose_players[data.skillName]
   if type(ask) == "function" then
@@ -41,14 +52,12 @@ fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
   end
   if #self.use_tos > 0 then
     if self.use_id then
-      self.use_id =
-          json.encode {
+      self.use_id = json.encode {
             skill = data.skillName,
             subcards = self.use_id
           }
     else
-      self.use_id =
-          json.encode {
+      self.use_id = json.encode {
             skill = data.skillName,
             subcards = {}
           }
@@ -57,7 +66,13 @@ fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
 end
 
 fk.ai_dis_card = {}
-
+--- 请求弃置
+---
+---由skillName进行下一级的决策，只需要在下一级里返回需要弃置的卡牌id表就行
+---@param self SmartAI @ai系统
+---@param prompt string @提示信息
+---@param cancelable boolean @可以取消
+---@param data any @数据
 fk.ai_use_skill.discard_skill = function(self, prompt, cancelable, data)
   local ask = fk.ai_dis_card[data.skillName]
   self:assignValue()
@@ -92,7 +107,10 @@ fk.ai_use_skill.discard_skill = function(self, prompt, cancelable, data)
 end
 
 fk.ai_skill_invoke = {}
-
+--- 请求发动技能
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @输出"1"为发动
 smart_cb.AskForSkillInvoke = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[2]
@@ -111,7 +129,10 @@ smart_cb.AskForSkillInvoke = function(self, jsonData)
 end
 
 fk.ai_askfor_ag = {}
-
+--- 请求AG
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return number @ 选择的牌id
 smart_cb.AskForAG = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[3]
@@ -135,9 +156,10 @@ smart_cb.AskForAG = function(self, jsonData)
 end
 
 fk.ai_use_play = {}
-
----@param self SmartAI
----@param skill ActiveSkill|ViewAsSkill|Card
+--- 使用阶段技或卡牌
+---@param self SmartAI @ai系统
+---@param skill ActiveSkill|Card|ViewAsSkill @输入可用的阶段技或卡牌
+---@return string @json使用数据（包含了子卡和目标）
 local function usePlaySkill(self, skill)
   self.use_id = nil
   self.use_tos = {}
@@ -218,7 +240,14 @@ local function usePlaySkill(self, skill)
 end
 
 fk.ai_askuse_card = {}
-
+--- 请求使用
+---
+---优先由prompt进行下一级的决策，需要定义self.use_id，如果卡牌需要目标也需要给self.use_tos添加角色id为目标
+---
+---然后若没有定义self.use_id则由card_name再进行决策
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json使用数据（包含了子卡和目标）
 smart_cb.AskForUseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
@@ -294,7 +323,10 @@ smart_cb.AskForUseCard = function(self, jsonData)
 end
 
 fk.ai_nullification = {}
-
+---根据事件类型获取所有满足的事件的数据表
+---@param game_event string @事件类型（字符串，省略GameEvent. 例如要获取生效事件数据就输入"CardEffect"）
+---@param ge any|nil @可输入起始事件
+---@return table @事件数据表
 function SmartAI:eventsData(game_event, ge)
   local datas = {}
   local _ge = ge or self.room.logic:getCurrentEvent()
@@ -307,6 +339,14 @@ function SmartAI:eventsData(game_event, ge)
   return datas
 end
 
+---请求无懈
+---
+---由锦囊牌名进行下一级决策，给self.use_id定义无懈id进行使用，同时参数包含positive（boolean）来区分正反无懈
+---@param self SmartAI @ai系统
+---@param pattern any
+---@param prompt any
+---@param cancelable any
+---@param extra_data any
 fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, extra_data)
   local datas = self:eventsData("CardEffect")
   local effect = datas[#datas] --修改了无懈的请求，不用在room.lua里加记录了
@@ -317,11 +357,20 @@ fk.ai_askuse_card.nullification = function(self, pattern, prompt, cancelable, ex
   end
 end
 
+---根据事件类型获取满足的事件的数据
+---@param game_event string @事件类型（字符串，省略GameEvent. 例如要获取生效事件数据就输入"CardEffect"）
+---@return any @事件数据
 function SmartAI:eventData(game_event)
   local event = self.room.logic:getCurrentEvent():findParent(GameEvent[game_event], true)
   return event and event.data[1]
 end
 
+---请求桃
+---@param self SmartAI @ai系统
+---@param pattern any
+---@param prompt any
+---@param cancelable any
+---@param extra_data any
 fk.ai_askuse_card["#AskForPeaches"] = function(self, pattern, prompt, cancelable, extra_data)
   local dying = self:eventData("Dying")
   local who = self.room:getPlayerById(dying.who)
@@ -361,6 +410,10 @@ fk.ai_askuse_card["#AskForPeachesSelf"] = fk.ai_askuse_card["#AskForPeaches"]
 fk.ai_card = {}
 fk.cardValue = {}
 
+---修正卡牌价值
+---
+---根据技能会转化的牌名修正卡牌的价值，例如有倾国时黑色手牌的价值会加上闪的价值
+---@param assign string[]|nil @牌名表
 function SmartAI:assignValue(assign)
   assign = assign or { "slash", "peach", "jink", "nullification" }
   for v, p in ipairs(assign) do
@@ -379,6 +432,15 @@ function SmartAI:assignValue(assign)
   end
 end
 
+---获取卡牌价值
+---
+---需要自己定义卡牌或阶段技的价值（直接看标包ai文件）
+---
+---当有输入kept时，就是对卡牌价值进行修正，同名卡牌的价值会逐渐递减，
+---例如有多张闪时，最高价值的那一张价值保持不变，然后每多一张，多的这张的价值就会减少25%，会不断累积
+---@param card Card @卡牌
+---@param kept string[]|nil @已有同名卡牌表（用来配合修正卡牌价值使用）
+---@return number @价值
 function SmartAI:getValue(card, kept)
   local v = fk.ai_card[card.name]
   v = v and v.value or 0
@@ -398,6 +460,11 @@ function SmartAI:getValue(card, kept)
   end
 end
 
+---获取优先度
+---
+---需要自己定义卡牌或阶段技的优先值（直接看标包ai文件）
+---@param card Card @卡牌
+---@return number @优先值
 function SmartAI:getPriority(card)
   local v = card and fk.ai_card[card.name]
   v = v and v.priority or 0
@@ -413,8 +480,7 @@ function SmartAI:getPriority(card)
     end
     v = v + (13 - card.number) / 100
     v = v + card.suit / 100
-    if card:isVirtual()
-    then
+    if card:isVirtual() then
       v = v - #card.subcards * 0.25
     end
   end
@@ -445,7 +511,11 @@ fk.compareFunc = {
   end
 }
 
-function SmartAI:sort(players, key, inverse)
+---对角色表进行条件排序，由低到高
+---@param players Player[] @角色表
+---@param key string|nil @条件（上面compareFunc列举的，默认是状态值）
+---@param reverse boolean|nil @反向排序（由高到低）
+function SmartAI:sort(players, key, reverse)
   key = key or "defense"
   local func = fk.compareFunc[key]
   if func == nil then
@@ -455,22 +525,28 @@ function SmartAI:sort(players, key, inverse)
     return func(a) < func(b)
   end
   table.sort(players, compare_func)
-  if inverse then
+  if reverse then
     players = table.reverse(players)
   end
 end
 
-function SmartAI:sortValue(cards, inverse)
+---排序卡牌表价值，由低到高
+---@param cards Card[] @卡牌表
+---@param reverse boolean|nil @反向排序（由高到低）
+function SmartAI:sortValue(cards, reverse)
   local function compare_func(a, b)
     return self:getValue(a) < self:getValue(b)
   end
   table.sort(cards, compare_func)
-  if inverse then
+  if reverse then
     cards = table.reverse(cards)
   end
 end
 
-function SmartAI:sortPriority(cards, inverse)
+---排序阶段技和卡牌表优先值，由高到低
+---@param cards table @阶段技和卡牌表
+---@param reverse boolean|nil @反向排序（由低到高）
+function SmartAI:sortPriority(cards, reverse)
     local function compare_func(a, b)
         local va = a and self:getPriority(a) or 0
         local vb = b and self:getPriority(b) or 0
@@ -481,14 +557,19 @@ function SmartAI:sortPriority(cards, inverse)
         return va > vb
     end
     table.sort(cards, compare_func)
-    if inverse then
+    if reverse then
         cards = table.reverse(cards)
     end
 end
 
 fk.ai_response_card = {}
 
----@param self SmartAI
+---请求打出
+---
+---优先按照prompt提示信息进行下一级决策，需要定义self.use_id，然后可以根据card_name再进行决策
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json打出数据
 smart_cb.AskForResponseCard = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
@@ -520,6 +601,11 @@ smart_cb.AskForResponseCard = function(self, jsonData)
   return ""
 end
 
+---根据pattern获取可用的卡牌或转化技
+---
+---默认是按照优先度从高到低排序
+---@param pattern string @可用条件
+---@return table @可用卡牌和转化技表
 function SmartAI:getActives(pattern)
   local cards = table.map(self.player:getCardIds("&he"),
         function(id)
@@ -543,6 +629,10 @@ function SmartAI:getActives(pattern)
   return cards
 end
 
+---根据pattern直接定义self.use_id
+---
+---默认是按照优先度从高到低排序且优先使用价值低的卡牌或转化技
+---@param pattern string @可用条件
 function SmartAI:setUseId(pattern)
   local cards = table.map(self.player:getCardIds("&he"),
     function(id)
@@ -573,6 +663,9 @@ function SmartAI:setUseId(pattern)
   end
 end
 
+---根据pattern获取可用的转化技
+---@param pattern string @可用条件
+---@return table @可用转化技表
 function SmartAI:cardsView(pattern)
   local actives = table.filter(self.player:getAllSkills(),
         function(s)
@@ -582,7 +675,10 @@ function SmartAI:cardsView(pattern)
   return actives
 end
 
----@param self SmartAI
+---空闲点使用
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json使用数据
 smart_cb.PlayCard = function(self, jsonData)
     local cards = table.map(self.player:getHandlyIds(true),
         function(id)
@@ -601,9 +697,7 @@ smart_cb.PlayCard = function(self, jsonData)
             end
         )
     )
-    if #cards < 1 then
-      return
-    end
+    if #cards < 1 then return "" end
     self:updatePlayers()
     self:sortPriority(cards)
     for _, sth in ipairs(cards) do
@@ -617,6 +711,12 @@ end
 
 fk.ai_card_chosen = {}
 
+---请求选择角色区域牌
+---
+---按照reason原因进行下一级决策，需返回选择的牌id，同时设置有兜底决策
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return number @牌id
 smart_cb.AskForCardChosen = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
@@ -642,10 +742,6 @@ smart_cb.AskForCardChosen = function(self, jsonData)
       if #ec > 0 then
         return table.random(ec)
       end
-      for c, id in ipairs(to:getCardIds("e")) do
-        --c = Fk:getCardById(id)
-        return id
-      end
     end
     if string.find(data[2], "h") then
       local hc = to:getCardIds("h")
@@ -659,6 +755,12 @@ end
 
 fk.ai_cards_chosen = {}
 
+---请求选择角色区域多张牌
+---
+---按照reason原因进行下一级决策，需返回选择的牌id表，同时设置有兜底决策
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json选择牌表数据
 smart_cb.AskForCardsChosen = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
@@ -706,6 +808,12 @@ end
 
 fk.ai_ask_choice = {}
 
+---请求选择选项
+---
+---按照skill_name进行下一级决策，需返回要选择的选项，兜底决策是随机选择
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @选择的选项
 smart_cb.AskForChoice = function(self, jsonData)
   local data = json.decode(jsonData)
   local choices = data[1]
@@ -725,6 +833,12 @@ fk.ai_judge.indulgence = { ".|.|heart", true }
 fk.ai_judge.lightning = { ".|2~9|spade", false }
 fk.ai_judge.supply_shortage = { ".|.|club", true }
 
+---改判，输出要改判牌的id
+---
+---需要自己定义判定的好坏在fk.ai_judge，例如闪电fk.ai_judge.lightning = { ".|2~9|spade", false }，第一个值是满足的条件，第二个值是满足条件后的好坏
+---@param cards Card[] @可用改判的卡牌表
+---@param exchange boolean|nil @是否可交换（类似鬼道）
+---@return number|nil @改判牌id
 function SmartAI:getRetrialCardId(cards, exchange)
   local judge = self:eventData("Judge")
   local ai_judge = fk.ai_judge[judge.reason] or {judge.pattern,true}
@@ -758,14 +872,10 @@ function SmartAI:getRetrialCardId(cards, exchange)
   end
 end
 
-local function table_clone(self)
-  local t = {}
-  for _, r in ipairs(self) do
-    table.insert(t, r)
-  end
-  return t
-end
-
+---请求观星
+---@param self SmartAI @ai系统
+---@param jsonData any @总数据
+---@return string @json放置顶和底的牌id表
 smart_cb.AskForGuanxing = function(self, jsonData)
     local data = json.decode(jsonData)
     local cards = table.map(data.cards,
@@ -774,6 +884,13 @@ smart_cb.AskForGuanxing = function(self, jsonData)
         end
       )
     self:sortValue(cards)
+    local function table_clone(self)
+      local t = {}
+      for _, r in ipairs(self) do
+        table.insert(t, r)
+      end
+      return t
+    end
     local top = {}
     if self.room.current.phase < Player.Play then
         local jt = table.map(self.room.current:getCardIds("j"),
@@ -795,31 +912,30 @@ smart_cb.AskForGuanxing = function(self, jsonData)
                     end
                 end
                 if tj ~= 1 and #cards > 0 and #top < data.max_top_cards then
-                    table.insert(top, cards[1].id)
-                    table.remove(cards, 1)
+                  table.insert(top, cards[1].id)
+                  table.remove(cards, 1)
                 end
             end
         end
         self:sortValue(cards, true)
         for _, c in ipairs(table_clone(cards)) do
             if #top < data.max_top_cards and c.skill:canUse(self.player, c) and usePlaySkill(self, c) ~= "" then
-                table.insert(top, c.id)
-                table.removeOne(cards, c)
-                break
+              table.insert(top, c.id)
+              table.removeOne(cards, c)
+              break
             end
         end
     end
     for _, c in ipairs(table_clone(cards)) do
         if #top < data.min_top_cards then
-            table.insert(top, c.id)
-            table.removeOne(cards, c)
-            break
+          table.insert(top, c.id)
+          table.removeOne(cards, c)
+          break
         end
     end
     return json.encode {
         top,
-        table.map(
-            cards,
+        table.map(cards,
             function(c)
                 return c.id
             end
@@ -830,10 +946,15 @@ end
 fk.ai_role = {}
 fk.roleValue = {}
 
+---身份可见
+---@return boolean
 function SmartAI:isRolePredictable()
   return self.room.settings.gameMode ~= "aaa_role_mode"
 end
 
+---获取存活身份数
+---@param room Room
+---@return table
 local function aliveRoles(room)
   fk.alive_roles = {
     lord = 0,
@@ -850,6 +971,11 @@ local function aliveRoles(room)
   return fk.alive_roles
 end
 
+---判定目标敌友值
+---
+---大于0为敌方，小于0为友方
+---@param to Player
+---@return number
 function SmartAI:objectiveLevel(to)
   if self.player.id == to.id then
     return -2
@@ -933,7 +1059,8 @@ function SmartAI:objectiveLevel(to)
   return 0
 end
 
-function SmartAI:updatePlayers(update)
+---更新场上敌友
+function SmartAI:updatePlayers()
   self.role = self.player.role
   local neutrality = {}
   self.enemies = {}
@@ -1014,6 +1141,12 @@ function SmartAI:initialize(player)
   self:updatePlayers()
 end
 
+---给来源附加身份值
+---
+---关于给卡牌或技能定义身份值直接看标包ai文件
+---@param player ServerPlayer @来源
+---@param to Player @目标
+---@param intention number @卡牌或技能身份值
 local function updateIntention(player, to, intention)
   if player.id == to.id then
     return
@@ -1143,6 +1276,10 @@ local filterEvent = fk.CreateTriggerSkill {
 }
 Fk:addSkill(filterEvent)
 
+---判断目标是否虚弱
+---@param player Player|number @目标或目标id
+---@param getAP boolean|nil @默认包含目标可知的桃酒（未完成）
+---@return boolean
 function SmartAI:isWeak(player, getAP)
   player = player or self.player
   if type(player) == "number" then
@@ -1151,6 +1288,12 @@ function SmartAI:isWeak(player, getAP)
   return player.hp < 2 or player.hp <= 2 and #player:getCardIds("&h") <= 2
 end
 
+---判断目标是否是友军
+---
+---如果有tid就判断pid和tid之间是否是友军，否则就判断pid是不是自己的友军
+---@param pid Player|number @目标或目标id
+---@param tid Player|number|nil @目标或目标id
+---@return boolean|nil
 function SmartAI:isFriend(pid, tid)
   if tid then
     local bt = self:isFriend(pid)
@@ -1167,6 +1310,12 @@ function SmartAI:isFriend(pid, tid)
   end
 end
 
+---判断目标是否是敌军
+---
+---如果有tid就判断pid和tid之间是否是敌军，否则就判断pid是不是自己的敌军
+---@param pid Player|number @目标或目标id
+---@param tid Player|number|nil @目标或目标id
+---@return boolean|nil
 function SmartAI:isEnemie(pid, tid)
   if tid then
     local bt = self:isFriend(pid)
