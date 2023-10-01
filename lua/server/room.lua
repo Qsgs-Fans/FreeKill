@@ -1896,58 +1896,42 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
-  cancelable = cancelable ~= false
+  cancelable = (cancelable == nil) and true or cancelable
+  extra_data = extra_data or Util.DummyTable
   pattern = pattern or card_name
   prompt = prompt or ""
 
-  local useData = {
+  local askForUseCardData = {
     user = player,
     cardName = card_name,
     pattern = pattern,
-    extraData = extra_data or Util.DummyTable,
-    eventData = event_data
+    extraData = extra_data,
+    eventData = event_data,
   }
-  local use = nil
-  self.logic:trigger(fk.AskForCardUse, player, useData)
-  if type(useData.result) == "table" then
-    useData = useData.result
-    useData.extraUse = extra_data ~= nil
-    self:useCard(useData)--请求用牌都在函数里执行用的事件，然后返回用的数据，如果用牌失败就不返回数据
-    if useData.nullified then--卡牌无效的判定，如果是无效就只执行使用事件不执行生效事件
-      use = false
-    elseif useData.breakEvent ~= true then --卡牌终止判定，判定使用前是否被终止
-      use = useData
-    end
-  end
-  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
-  while use == nil do
+  self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
+
+  if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+    return askForUseCardData.result
+  else
+    local data = {card_name, pattern, prompt, cancelable, extra_data}
+
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
     Fk.currentResponsePattern = nil
+
     if result ~= "" then
-      result = self:handleUseCardReply(player, result)
-      if result then
-        result.extraUse = extra_data ~= nil
-        self:useCard(result)
-        if result.nullified then
-          use = false
-        elseif result.breakEvent ~= true then
-          use = result
-        end
-      else
-        break
-      end
-    else
-      break
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+      return self:handleUseCardReply(player, result)
     end
   end
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
   player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-  return use
+  return nil
 end
 
--- available extra_data:
--- * retrial: boolean
 --- 询问一名玩家打出一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name string @ 牌名
@@ -1972,52 +1956,27 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
     user = player,
     cardName = card_name,
     pattern = pattern,
-    extraData = extra_data or Util.DummyTable,
+    extraData = extra_data,
   }
-  local response = nil
   self.logic:trigger(fk.AskForCardResponse, player, eventData)
+
   if eventData.result then
-    eventData = {
-      from = player.id,
-      card = eventData.result,
-      skipDrop = true,
-      retrial = extra_data and extra_data.retrial,
-      responseToEvent = effectData
-    }
-    eventData.extraResponse = extra_data ~= nil
-    self:responseCard(eventData)
-    if eventData.nullified then
-      response = false
-    elseif eventData.breakEvent ~= true then
-      response = eventData
-    end
-  end
-  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
-  while response == nil do
+    return eventData.result
+  else
+    local data = {card_name, pattern, prompt, cancelable, extra_data}
+
     Fk.currentResponsePattern = pattern
     local result = self:doRequest(player, command, json.encode(data))
     Fk.currentResponsePattern = nil
+
     if result ~= "" then
-      result = self:handleUseCardReply(player, result)
-      if result then
-        result.skipDrop = true
-        result.retrial = extra_data and extra_data.retrial
-        result.responseToEvent = effectData
-        result.extraResponse = extra_data ~= nil
-        self:responseCard(result)
-        if result.nullified then
-          response = false
-        elseif result.breakEvent ~= true then
-          response = result
-        end
-      else
-        break
+      local use = self:handleUseCardReply(player, result)
+      if use then
+        return use.card
       end
-    else
-      break
     end
   end
-  return response
+  return nil
 end
 
 --- 同时询问多名玩家是否使用某一张牌。
@@ -2045,33 +2004,17 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   self:notifyMoveFocus(self.alive_players, card_name)
   self:doBroadcastNotify("WaitForNullification", "")
 
-  local use = nil
-  local data = { card_name, pattern, prompt, cancelable, extra_data or Util.DummyTable }
-  while use == nil do
-    Fk.currentResponsePattern = pattern
-    local winner = self:doRaceRequest(command, players, json.encode(data))
-    Fk.currentResponsePattern = nil
-    if winner then
-      local reply = self:handleUseCardReply(winner, winner.client_reply)
-      if reply then
-        local event = self.logic:getCurrentEvent():findParent(GameEvent.CardEffect, true).data[1]
-        reply.responseToEvent = event
-        reply.toCard = event.card
-        reply.extraUse = extra_data ~= nil
-        self:useCard(reply)
-        if reply.nullified then
-          use = false
-        elseif reply.breakEvent ~= true then
-          use = reply
-        end
-      else
-        break
-      end
-    else
-      break
-    end
+  local data = {card_name, pattern, prompt, cancelable, extra_data}
+
+  Fk.currentResponsePattern = pattern
+  local winner = self:doRaceRequest(command, players, json.encode(data))
+
+  if winner then
+    local result = winner.client_reply
+    return self:handleUseCardReply(winner, result)
   end
-  return use
+  Fk.currentResponsePattern = nil
+  return nil
 end
 
 -- AG(a.k.a. Amazing Grace) functions
@@ -2425,7 +2368,7 @@ end
 function Room:doCardUseEffect(cardUseEvent)
   ---@type table<string, AimStruct>
   local aimEventCollaborators = {}
-  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) or cardUseEvent.nullified then --增加判定牌是否是无效
+  if cardUseEvent.tos and not onAim(self, cardUseEvent, aimEventCollaborators) then
     return
   end
 
@@ -2627,7 +2570,11 @@ function Room:handleCardEffect(event, cardEffectEvent)
             prompt = "#slash-jink:" .. cardEffectEvent.from .. "::1"
           end
         end
-        if self:askForUseCard(to, "jink", nil, prompt, true, nil, cardEffectEvent) then
+        local use = self:askForUseCard(to, "jink", nil, prompt, true, nil, cardEffectEvent)
+        if use then
+          use.toCard = cardEffectEvent.card
+          use.responseToEvent = cardEffectEvent
+          self:useCard(use)
           cardEffectEvent.isCancellOut = true
         else
           cardEffectEvent.isCancellOut = false
@@ -2688,7 +2635,12 @@ function Room:handleCardEffect(event, cardEffectEvent)
           extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectEvent.to }
         end
       end
-      self:askForNullification(players, nil, nil, prompt, true, extra_data)
+      local use = self:askForNullification(players, nil, nil, prompt, true, extra_data)
+      if use then
+        use.toCard = cardEffectEvent.card
+        use.responseToEvent = cardEffectEvent
+        self:useCard(use)
+      end
     end
     Fk.currentResponsePattern = nil
   elseif event == fk.CardEffecting then

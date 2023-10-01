@@ -274,6 +274,7 @@ local duelSkill = fk.CreateActiveSkill{
         if effect.fixedAddTimesResponsors then
           canFix = table.contains(effect.fixedAddTimesResponsors, currentResponser.id)
         end
+
         if canFix then
           if type(effect.fixedResponseTimes) == 'table' then
             loopTimes = effect.fixedResponseTimes["slash"] or 1
@@ -282,17 +283,25 @@ local duelSkill = fk.CreateActiveSkill{
           end
         end
       end
-      local can --修改决斗打出
+
+      local cardResponded
       for i = 1, loopTimes do
-        if room:askForResponse(currentResponser, 'slash', nil, nil, false, nil, effect) then
+        cardResponded = room:askForResponse(currentResponser, 'slash', nil, nil, false, nil, effect)
+        if cardResponded then
+          room:responseCard({
+            from = currentResponser.id,
+            card = cardResponded,
+            responseToEvent = effect,
+          })
         else
-          can = true
           break
         end
       end
-      if can then
+
+      if not cardResponded then
         break
       end
+
       currentTurn = currentTurn % 2 + 1
       currentResponser = responsers[currentTurn]
     end
@@ -366,7 +375,11 @@ local collateralSkill = fk.CreateActiveSkill{
     if #effect.subTargets > 1 then
       prompt = nil
     end
-    if room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets, exclusive_targets = effect.subTargets }, effect) == nil then
+    local use = room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets }, effect)
+    if use then
+      use.extraUse = true
+      room:useCard(use)
+    else
       room:obtainCard(effect.from,
         room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon),
         true, fk.ReasonGive)
@@ -458,8 +471,14 @@ local savageAssaultSkill = fk.CreateActiveSkill{
     return user ~= to_select and not (card and from:isProhibited(player, card))
   end,
   on_effect = function(self, room, effect)
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect)
 
-    if room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect) then
+    if cardResponded then
+      room:responseCard({
+        from = effect.to,
+        card = cardResponded,
+        responseToEvent = effect,
+      })
     else
       room:damage({
         from = room:getPlayerById(effect.from),
@@ -497,8 +516,14 @@ local archeryAttackSkill = fk.CreateActiveSkill{
     return user ~= to_select and not (card and from:isProhibited(player, card))
   end,
   on_effect = function(self, room, effect)
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect)
 
-    if room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect) then
+    if cardResponded then
+      room:responseCard({
+        from = effect.to,
+        card = cardResponded,
+        responseToEvent = effect,
+      })
     else
       room:damage({
         from = room:getPlayerById(effect.from),
@@ -954,69 +979,17 @@ local bladeSkill = fk.CreateTriggerSkill{
     return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
-    local extra_data = {
-      must_targets = { data.to },
-      exclusive_targets = { data.to },
-      bypass_distances = true,
-      bypass_times = true
-    }
-    if extra_data then
-      if extra_data.bypass_distances then
-        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "", 1)
-      end
-      if extra_data.bypass_times ~= false then
-        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
-      end
-    end
-    local command = "AskForUseCard"
-    player.room:notifyMoveFocus(player, "slash")
-    local pattern = "slash"
-    local prompt = "#blade_slash:" .. data.to
-    --重写了青龙刀的追杀
-    local useData = {
-      user = player,
-      cardName = "slash",
-      pattern = pattern,
-      extraData = extra_data
-    }
-    local use = nil
-    if self.cost_data == nil then
-      player.room.logic:trigger(fk.AskForCardUse, player, useData)
-      if type(useData.result) == "table" then
-        useData = useData.result
-        useData.extraUse = extra_data ~= nil
-        use = useData
-      end
-    end
-    local usedata = { "slash", pattern, prompt, true, extra_data }
-    if use == nil then
-      Fk.currentResponsePattern = pattern
-      local result = player.room:doRequest(player, command, json.encode(usedata))
-      Fk.currentResponsePattern = nil
-      if result ~= "" then
-        result = player.room:handleUseCardReply(player, result)
-        result.extraUse = extra_data ~= nil
-        use = result
-      end
-    end
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-    if use
-    then
+    local room = player.room
+    local use = room:askForUseCard(player, "slash", nil, "#blade_slash:" .. data.to,
+      true, { must_targets = {data.to}, exclusive_targets = {data.to}, bypass_distances = true, bypass_times = true })
+    if use then
+      use.extraUse = true
       self.cost_data = use
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
-    while true do
-      local use = self.cost_data
-      player.room:useCard(use)
-      if use.breakEvent and self:onCost(event, target, player, data) then
-      else
-        break
-      end
-    end
-    self.cost_data = nil
+    player.room:useCard(self.cost_data)
   end,
 }
 Fk:addSkill(bladeSkill)

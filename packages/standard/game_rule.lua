@@ -53,46 +53,14 @@ GameRule = fk.CreateTriggerSkill{
         end)
         if #cardNames == 0 then return end
 
-        room:notifyMoveFocus(player, "peach")
-        local useData = {
-          user = player,
-          cardName = "peach",
-          pattern = table.concat(cardNames, ","),
-          extraData = Util.DummyTable
-        }
-        local use = nil
-        room.logic:trigger(fk.AskForCardUse, player, useData)
-        if type(useData.result) == "table" then
-          useData = useData.result
-          useData.tos = { { data.who } }
-          if useData.card.trueName == "analeptic" then
-            useData.extra_data = useData.extra_data or {}
-            useData.extra_data.analepticRecover = true
-          end
-          room:useCard(useData)
-          if useData.nullified then
-            use = false
-          elseif useData.breakEvent ~= true then
-            use = useData
-          end
+        local peach_use = room:askForUseCard(player, "peach", table.concat(cardNames, ",") , prompt)
+        if not peach_use then break end
+        peach_use.tos = { {dyingPlayer.id} }
+        if peach_use.card.trueName == "analeptic" then
+          peach_use.extra_data = peach_use.extra_data or {}
+          peach_use.extra_data.analepticRecover = true
         end
-        if use == nil then
-          useData = { "peach", table.concat(cardNames, ","), prompt, true, Util.DummyTable }
-          Fk.currentResponsePattern = table.concat(cardNames, ",")
-          local result = room:doRequest(player, "AskForUseCard", json.encode(useData))
-          Fk.currentResponsePattern = nil
-          if result ~= "" then
-            result = room:handleUseCardReply(player, result)
-            result.tos = { { data.who } }
-            if result.card.trueName == "analeptic" then
-              result.extra_data = result.extra_data or {}
-              result.extra_data.analepticRecover = true
-            end
-            room:useCard(result)
-          else
-            return
-          end
-        end
+        room:useCard(peach_use)
       end
     end,
     [fk.AskForPeachesDone] = function()

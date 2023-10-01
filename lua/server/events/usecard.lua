@@ -185,17 +185,15 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
+  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
+
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  if room.logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    cardUseEvent.breakEvent = true --增加终止判定参数
-    self.data = { cardUseEvent }   --传回数据
-    room.logic:breakEvent()
-  end--优先判定是否终止，终止就不移动牌到处理区了
-
-  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
+  if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
+    logic:breakEvent()
+  end
 
   sendCardEmotionAndLog(room, cardUseEvent)
 
@@ -240,13 +238,6 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   local cardResponseEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
-
-  if room.logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-      cardResponseEvent.breakEvent = true
-      self.data = { cardResponseEvent }
-      room.logic:breakEvent()
-  end
-
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
   local card = cardResponseEvent.card
   local cardIds = room:getSubcardsByRule(card)
@@ -284,9 +275,11 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     end
   end
 
-  if not cardResponseEvent.retrial then--不是改判打出就播放配音
-    playCardEmotionAndSound(room, room:getPlayerById(from), card)
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    logic:breakEvent()
   end
+
+  playCardEmotionAndSound(room, room:getPlayerById(from), card)
 
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 end

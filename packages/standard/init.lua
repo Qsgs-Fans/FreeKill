@@ -65,16 +65,24 @@ local hujiaResponse = fk.CreateTriggerSkill{
       if p.kingdom == "wei" then
         local cardResponded = room:askForResponse(p, "jink", "jink", "#hujia-ask:" .. player.id, true)
         if cardResponded then
-          data.card = cardResponded.card
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          data.card = cardResponded
           return false
         end
       end
     end
 
-    room:setPlayerMark(player, "hujia-failed-phase", 1)
+    if event == fk.PreCardUse and player.phase == Player.Play then
+      room:setPlayerMark(player, "hujia-failed-phase", 1)
+    end
     return true
   end,
-  refresh_events = {fk.CardUsing, fk.CardResponding},
+  refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name, true) and player:getMark("hujia-failed-phase") > 0
   end,
@@ -98,9 +106,9 @@ local guicai = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#guicai-ask::" .. target.id
-    local response = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true, {retrial = true})
-    if response then
-      self.cost_data = response.card
+    local card = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true)
+    if card ~= nil then
+      self.cost_data = card
       return true
     end
   end,
@@ -450,7 +458,7 @@ local jijiang = fk.CreateViewAsSkill{
     end)
   end,
   enabled_at_response = function(self, player)
-    return player:getMark("jijiang-failed-phase") == 0 and not table.every(Fk:currentRoom().alive_players, function(p)
+    return not table.every(Fk:currentRoom().alive_players, function(p)
       return p == player or p.kingdom ~= "shu"
     end)
   end,
@@ -474,7 +482,13 @@ local jijiangResponse = fk.CreateTriggerSkill{
       if p.kingdom == "shu" then
         local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
         if cardResponded then
-          data.card = cardResponded.card
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          data.card = cardResponded
           return false
         end
       end
