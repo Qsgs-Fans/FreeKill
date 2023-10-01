@@ -493,10 +493,12 @@ local jijiangResponse = fk.CreateTriggerSkill{
       end
     end
 
+    if event == fk.PreCardUse and player.phase == Player.Play then
     room:setPlayerMark(player, "jijiang-failed-phase", 1)
+    end
     return true
   end,
-  refresh_events = {fk.CardUsing, fk.CardResponding},
+  refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name, true) and player:getMark("jijiang-failed-phase") > 0
   end,
