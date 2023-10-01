@@ -189,6 +189,10 @@
   </message>
 
   <message>
+    <source>@VersionMismatch</source>
+    <translation>&lt;font color="red" size="4">&lt;b>版本不同：服务器为v%1&lt;/b>&lt;/font></translation>
+  </message>
+  <message>
     <source>Server not up</source>
     <translation>服务器似乎没有启动。</translation>
   </message>
