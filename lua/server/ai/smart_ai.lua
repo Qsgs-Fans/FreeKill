@@ -512,7 +512,7 @@ fk.compareFunc = {
 }
 
 ---对角色表进行条件排序，由低到高
----@param players Player[] @角色表
+---@param players ServerPlayer[] @角色表
 ---@param key string|nil @条件（上面compareFunc列举的，默认是状态值）
 ---@param reverse boolean|nil @反向排序（由高到低）
 function SmartAI:sort(players, key, reverse)
@@ -974,7 +974,7 @@ end
 ---判定目标敌友值
 ---
 ---大于0为敌方，小于0为友方
----@param to Player
+---@param to ServerPlayer
 ---@return number
 function SmartAI:objectiveLevel(to)
   if self.player.id == to.id then
@@ -1145,7 +1145,7 @@ end
 ---
 ---关于给卡牌或技能定义身份值直接看标包ai文件
 ---@param player ServerPlayer @来源
----@param to Player @目标
+---@param to ServerPlayer @目标
 ---@param intention number @卡牌或技能身份值
 local function updateIntention(player, to, intention)
   if player.id == to.id then
@@ -1277,7 +1277,7 @@ local filterEvent = fk.CreateTriggerSkill {
 Fk:addSkill(filterEvent)
 
 ---判断目标是否虚弱
----@param player Player|number @目标或目标id
+---@param player ServerPlayer|number @目标或目标id
 ---@param getAP boolean|nil @默认包含目标可知的桃酒（未完成）
 ---@return boolean
 function SmartAI:isWeak(player, getAP)
@@ -1291,8 +1291,8 @@ end
 ---判断目标是否是友军
 ---
 ---如果有tid就判断pid和tid之间是否是友军，否则就判断pid是不是自己的友军
----@param pid Player|number @目标或目标id
----@param tid Player|number|nil @目标或目标id
+---@param pid ServerPlayer|number @目标或目标id
+---@param tid ServerPlayer|number|nil @目标或目标id
 ---@return boolean|nil
 function SmartAI:isFriend(pid, tid)
   if tid then
@@ -1313,8 +1313,8 @@ end
 ---判断目标是否是敌军
 ---
 ---如果有tid就判断pid和tid之间是否是敌军，否则就判断pid是不是自己的敌军
----@param pid Player|number @目标或目标id
----@param tid Player|number|nil @目标或目标id
+---@param pid ServerPlayer|number @目标或目标id
+---@param tid ServerPlayer|number|nil @目标或目标id
 ---@return boolean|nil
 function SmartAI:isEnemie(pid, tid)
   if tid then
