@@ -497,7 +497,7 @@
     <source>tutor_msg_6</source>
     <translation>如果想联系我们，可以用这些方式：&lt;br>
         百度贴吧：新月杀吧&lt;br>
-        Discord群组：https://discord.gg/tp35GrQR6v&lt;br>
+        Discord群组：&lt;a href="https://discord.gg/tp35GrQR6v">https://discord.gg/tp35GrQR6v&lt;/a>&lt;br>
         QQ频道：freekill01&lt;br>
     QQ群太容易满啦，就不发群号了</translation>
   </message>

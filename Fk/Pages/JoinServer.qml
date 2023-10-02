@@ -82,10 +82,10 @@ Item {
     ScrollBar.vertical: ScrollBar {}
     clip: true
     highlight: Rectangle {
-      color: "transparent"; radius: 5
-      border.color: "black"; border.width: 2
+      color: "#AA9ABFEF"; radius: 5
+      // border.color: "black"; border.width: 2
     }
-    highlightMoveDuration: 0
+    // highlightMoveDuration: 0
     currentIndex: -1
   }
 
