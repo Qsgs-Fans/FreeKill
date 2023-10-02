@@ -54,7 +54,9 @@ Fk:loadTranslationTable{
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
   ["Select All"] = "全选",
+  ["Choose one handcard"] = "选卡",
   ["Revert Selection"] = "反选",
+  ["Handcard selector"] = "手牌选择器，只可选一张，代为点击这张手牌",
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
