@@ -12,53 +12,6 @@ Rectangle {
     chatLogBox.append(chatter)
   }
 
-  /*
-  function loadSkills(pid) {
-    if (isLobby) return;
-    let gender = 0;
-    // let g = false;
-    // if (g) {
-    //   const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
-    //   const extension  = data.extension;
-    //   gender = data.gender;
-    //   data.skill.forEach(t => {
-    //     for (let i = 0; i < 999; i++) {
-    //       const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-    //         t.name + (i !== 0 ? i.toString() : "") + ".mp3";
-
-    //       if (Backend.exists(fname)) {
-    //         skills.append({ name: t.name, idx: i });
-    //       } else {
-    //         if (i > 0) break;
-    //       }
-    //     }
-    //   });
-    //   data.related_skill.forEach(t => {
-    //     for (let i = 0; i < 999; i++) {
-    //       const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-    //         t.name + (i !== 0 ? i.toString() : "") + ".mp3";
-
-    //       if (Backend.exists(fname)) {
-    //         skills.append({ name: t.name, idx: i });
-    //       } else {
-    //         if (i > 0) break;
-    //       }
-    //     }
-    //   });
-    // }
-    for (let i = 0; i < 999; i++) {
-      const name = "fastchat_" + (gender == 1 ? "f" : "m")
-      const fname = AppPath + "/packages/standard/audio/skill/" +
-        name + (i !== 0 ? i.toString() : "") + ".mp3";
-
-      if (Backend.exists(fname)) {
-        skills.append({ name: name, idx: i });
-      } else {
-        if (i > 0) break;
-      }
-    }
-  }
-  */
   function loadSkills() {
     for (let i = 1; i <= 16; i++) {
       skills.append({ name: "fastchat_m", idx: i });

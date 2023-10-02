@@ -24,6 +24,7 @@ Rectangle {
           width: parent.width * 0.7
           horizontalAlignment: Text.AlignHCenter
           textFormat: Text.RichText
+          onLinkActivated: Qt.openUrlExternally(link);
         }
       }
     }

@@ -473,6 +473,20 @@ Item {
     anchors.leftMargin: 8
     ColumnLayout {
       MetroButton {
+        text: Backend.translate("Choose one handcard")
+        textFont.pixelSize: 28
+        visible: {
+          if (dashboard.handcardArea.length <= 15) {
+            return false;
+          }
+          if (roomScene.state == "notactive" || roomScene.state == "replying") {
+            return false;
+          }
+          return true;
+        }
+        onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
+      }
+      MetroButton {
         text: Backend.translate("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""

@@ -362,8 +362,17 @@ void QmlBackend::getServerInfo(const QString &address) {
   QByteArray ask(ask_str);
   ask.append(address.toLatin1());
 
-  udpSocket->writeDatagram(ask, ask.size(),
-      QHostAddress(addr), port);
+  if (QHostAddress(addr).isNull()) { // 不是ip？考虑解析域名
+    QHostInfo::lookupHost(addr, this, [=](const QHostInfo &host) {
+      if (host.error() == QHostInfo::NoError) {
+        udpSocket->writeDatagram(ask, ask.size(),
+            host.addresses().first(), port);
+      }
+    });
+  } else {
+    udpSocket->writeDatagram(ask, ask.size(),
+        QHostAddress(addr), port);
+  }
 }
 
 void QmlBackend::readPendingDatagrams() {

@@ -300,6 +300,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       [Player.Play] = function()
         player._play_phase_end = false
         while not player.dead do
+          logic:trigger(fk.StartPlayCard, player, nil, true)
           room:notifyMoveFocus(player, "PlayCard")
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
