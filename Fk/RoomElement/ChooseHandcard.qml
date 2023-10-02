@@ -35,12 +35,14 @@ Item {
 
     GridLayout {
       id: cardsList
-      columns: 4
+      columns: Math.floor(flickableContainer.width / 90)
 
       Repeater {
         model: cards
 
         CardItem {
+          width: 93 * 0.9
+          height: 130 * 0.9
           chosenInBox: modelData.chosen
           onClicked: {
             const clist = roomScene.dashboard.handcardArea.cards;

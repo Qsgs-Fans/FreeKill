@@ -188,7 +188,7 @@ local function requestLoop(self)
         RoomInstance = room
         local id = tonumber(reqlist[1])
         local command = reqlist[2]
-        request_handlers[command](room, id, reqlist)
+        Pcall(request_handlers[command], room, id, reqlist)
         RoomInstance = nil
       end
     end
