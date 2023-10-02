@@ -3,53 +3,63 @@
 ---@class SmartAI: AI
 local SmartAI = AI:subclass("SmartAI")
 
----[command] = function(self, jsonData)
+---@type table<string, fun(self: SmartAI,jsonData: any)>
 local smart_cb = {}
 
 ---[skill_name] = function(self, prompt, cancelable, data)
+---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any)>
 fk.ai_use_skill = {}
 ---[skillName] = function(self, targets, min_num, num, cancelable)
+---@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool)>
 fk.ai_choose_players = {}
 ---[skillName] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
+---@type table<string, fun(self: SmartAI, min_num: number, num: number, include_equip: bool, cancelable: bool, pattern: string, prompt: string)>
 fk.ai_discard = {}
 ---[skill_name] = function(self, extra_data, prompt)
+---@type table<string, fun(self: SmartAI, extra_data: any, prompt: string)>
 fk.ai_skill_invoke = {}
 ---[prompt:split(":")[1]] = function(self, id_list, cancelable, prompt)
+---@type table<string, fun(self: SmartAI, id_list: integer[], cancelable: bool, prompt: string)>
 fk.ai_ask_forag = {}
 ---[card.name] = function(self, card)
 ---
 ---[skill.name] = function(self, skill)
+---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
 fk.ai_use_play = {}
 ---[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
 ---
 ---[card_name] = function(self, pattern, prompt, cancelable, extra_data)
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
 fk.ai_ask_usecard = {}
 ---[effect.card.name] = function(self, effect.card, room:getPlayerById(effect.to), room:getPlayerById(effect.from), positive)
+---@type table<string, fun(self: SmartAI, card: Card, to: ServerPlayer, from: ServerPlayer, positive: bool)>
 fk.ai_nullification = {}
 ---[card.name] = {intention = 0, value = 0, priority = 0}
 ---
 ---[skill.name] = {intention = 0, value = 0, priority = 0}
+---@type table<string, {intention: number, value: number, priority: number}>
 fk.ai_card = {}
 ---[card.id] = 0
 ---
 ---[skill.name] = 0
+---@type table<string|number, number>
 fk.cardValue = {}
 ---[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
 ---
 ---[card_name] = function(self, pattern, prompt, cancelable, extra_data)
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
 fk.ai_response_card = {}
 ---[reason] = function(self, to, flag)
+---@type table<string, fun(self: SmartAI, to: ServerPlayer, flag: string)>
 fk.ai_card_chosen = {}
 ---[reason] = function(self, to, min, max, flag)
 fk.ai_cards_chosen = {}
 ---[skill_name] = function(self, choices, prompt, detailed, all_choices)
+---@type table<string, fun(self: SmartAI, choices: string[], prompt: string, detailed: bool, all_choices: string[])>
 fk.ai_ask_choice = {}
 ---[judge.reason] = {judge.pattern,isgood}
+---@type table<string, {pattern: string,isgood: boolean}>
 fk.ai_judge = {}
----[player.id] = "role"(ai怀疑player的身份)
-fk.ai_role = {}
----[player.id] = {lord = 0, loyalist = 0, rebel = 0, renegade = 0}(各个身份的值)
-fk.roleValue = {}
 
 
 --- 请求发动主动技
@@ -659,8 +669,7 @@ end
 ---默认是按照优先度从高到低排序且优先使用价值低的卡牌或转化技
 ---@param pattern string @可用条件
 function SmartAI:setUseId(pattern)
-  local cards = table.map(self.player:getCardIds("&he"),
-    function(id)
+  local cards = table.map(self.player:getCardIds("&he"), function(id)
       return Fk:getCardById(id)
     end
   )
@@ -984,6 +993,9 @@ end
 ---@param to ServerPlayer
 ---@return number
 function SmartAI:objectiveLevel(to)
+  if type(to) == "number" then
+    to = self.room:getPlayerById(to)
+  end
   if self.player.id == to.id then
     return -2
   elseif #self.room.alive_players < 3 then
@@ -991,10 +1003,10 @@ function SmartAI:objectiveLevel(to)
   end
   local ars = aliveRoles(self.room)
   if self:isRolePredictable() then
-    fk.ai_role[self.player.id] = self.role
-    fk.roleValue[self.player.id][self.role] = 666
+    self.room.ai_role[self.player.id] = self.role
+    self.room.role_value[self.player.id][self.role] = 666
     if self.role == "renegade" then
-      fk.explicit_renegade = true
+      self.explicit_renegade = true
     end
     for _, p in ipairs(self.room.alive_players) do
       if p.role == self.role or p.role == "lord" and self.role == "loyalist"
@@ -1012,9 +1024,9 @@ function SmartAI:objectiveLevel(to)
       return -1
     elseif ars.rebel < 1 then
       return 4
-    elseif fk.ai_role[to.id] == "loyalist" then
+    elseif self.room.ai_role[to.id] == "loyalist" then
       return ars.lord + ars.loyalist - ars.rebel
-    elseif fk.ai_role[to.id] == "rebel" then
+    elseif self.room.ai_role[to.id] == "rebel" then
       local r = ars.rebel - ars.lord + ars.loyalist
       if r >= 0 then
         return 3
@@ -1023,21 +1035,21 @@ function SmartAI:objectiveLevel(to)
       end
     end
   elseif self.role == "lord" or self.role == "loyalist" then
-    if fk.ai_role[to.id] == "rebel" then
+    if self.room.ai_role[to.id] == "rebel" then
       return 5
     elseif to.role == "lord" then
       return -2
     elseif ars.rebel < 1 then
       if self.role == "lord" then
-        return fk.explicit_renegade and fk.ai_role[to.id] == "renegade" and 4 or to.hp > 1 and 2 or 0
-      elseif fk.explicit_renegade then
-        return fk.ai_role[to.id] == "renegade" and 4 or -1
+        return self.explicit_renegade and self.room.ai_role[to.id] == "renegade" and 4 or to.hp > 1 and 2 or 0
+      elseif self.explicit_renegade then
+        return self.room.ai_role[to.id] == "renegade" and 4 or -1
       else
         return 3
       end
-    elseif fk.ai_role[to.id] == "loyalist" then
+    elseif self.room.ai_role[to.id] == "loyalist" then
       return -2
-    elseif fk.ai_role[to.id] == "renegade" then
+    elseif self.room.ai_role[to.id] == "renegade" then
       local r = ars.lord + ars.loyalist - ars.rebel
       if r <= 0 then
         return r
@@ -1048,11 +1060,11 @@ function SmartAI:objectiveLevel(to)
   elseif self.role == "rebel" then
     if to.role == "lord" then
       return 5
-    elseif fk.ai_role[to.id] == "loyalist" then
+    elseif self.room.ai_role[to.id] == "loyalist" then
       return 4
-    elseif fk.ai_role[to.id] == "rebel" then
+    elseif self.room.ai_role[to.id] == "rebel" then
       return -2
-    elseif fk.ai_role[to.id] == "renegade" then
+    elseif self.room.ai_role[to.id] == "renegade" then
       local r = ars.rebel - ars.lord + ars.loyalist
       if r > 0 then
         return 1
@@ -1067,43 +1079,54 @@ end
 ---更新场上敌友
 function SmartAI:updatePlayers()
   self.role = self.player.role
-  local neutrality = {}
   self.enemies = {}
   self.friends = {}
   self.friends_noself = {}
 
   local aps = self.room.alive_players
+  if self.room.initialized ~= true then
+    self.room.initialized = true
+    self.room.ai_role = {}--将怀疑的身份和身份价值移到room记录
+    self.room.role_value = {}
+      for _, ap in ipairs(aps) do
+      self.room.ai_role[ap.id] = "neutral"
+      self.room.role_value[ap.id] = {
+        rebel = 0,
+        renegade= 0
+      }
+    end
+  end
   local function compare_func(a, b)
-    local v1 = fk.roleValue[a.id].rebel
-    local v2 = fk.roleValue[b.id].rebel
+    local v1 = self.room.role_value[a.id].rebel
+    local v2 = self.room.role_value[b.id].rebel
     if v1 == v2 then
-      v1 = fk.roleValue[a.id].renegade
-      v2 = fk.roleValue[b.id].renegade
+      v1 = self.room.role_value[a.id].renegade
+      v2 = self.room.role_value[b.id].renegade
     end
     return v1 > v2
   end
   table.sort(aps, compare_func)
-  fk.explicit_renegade = false
+  self.explicit_renegade = false
   local ars = aliveRoles(self.room)
   local rebel, renegade, loyalist = 0, 0, 0
   for _, ap in ipairs(aps) do
     if ap.role == "lord" then
-      fk.ai_role[ap.id] = "loyalist"
-    elseif fk.roleValue[ap.id].rebel > 50 and ars.rebel > rebel then
+      self.room.ai_role[ap.id] = "loyalist"
+    elseif self.room.role_value[ap.id].rebel > 50 and ars.rebel > rebel then
       rebel = rebel + 1
-      fk.ai_role[ap.id] = "rebel"
-    elseif fk.roleValue[ap.id].renegade > 50 and ars.renegade > renegade then
+      self.room.ai_role[ap.id] = "rebel"
+    elseif self.room.role_value[ap.id].renegade > 50 and ars.renegade > renegade then
       renegade = renegade + 1
-      fk.ai_role[ap.id] = "renegade"
-      fk.explicit_renegade = fk.roleValue[ap.id].renegade > 100
-    elseif fk.roleValue[ap.id].rebel < -50 and ars.loyalist > loyalist then
+      self.room.ai_role[ap.id] = "renegade"
+      self.explicit_renegade = self.room.role_value[ap.id].renegade > 100
+    elseif self.room.role_value[ap.id].rebel < -50 and ars.loyalist > loyalist then
       loyalist = loyalist + 1
-      fk.ai_role[ap.id] = "loyalist"
+      self.room.ai_role[ap.id] = "loyalist"
     else
-      fk.ai_role[ap.id] = "neutral"
+      self.room.ai_role[ap.id] = "neutral"
     end
   end
-
+  local neutrality = {}
   for n, p in ipairs(aps) do
     n = self:objectiveLevel(p)
     if n < 0 then
@@ -1132,16 +1155,6 @@ function SmartAI:initialize(player)
   AI.initialize(self, player)
   self.cb_table = smart_cb
   self.player = player
-  self.room = RoomInstance or ClientInstance
-
-  fk.ai_role[player.id] = "neutral"
-  fk.roleValue[player.id] = {
-    lord = 0,
-    loyalist = 0,
-    rebel = 0,
-    renegade = 0
-  }
-  self:updatePlayers()
 end
 
 ---给来源附加身份值
@@ -1151,62 +1164,61 @@ end
 ---@param to ServerPlayer @目标
 ---@param intention number @卡牌或技能身份值
 local function updateIntention(player, to, intention)
-  if player.id == to.id then
-    return
-  elseif player.role == "lord" then
-    if fk.roleValue[to.id].rebel ~= 0
-    then
-      fk.roleValue[to.id].rebel = fk.roleValue[to.id].rebel + intention * (200 - fk.roleValue[to.id].rebel) / 200
-    end
-  else
-    if to.role == "lord" or fk.ai_role[to.id] == "loyalist" then
-      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel + intention * (200 - fk.roleValue[player.id].rebel) / 200
-    elseif fk.ai_role[to.id] == "rebel" then
-      fk.roleValue[player.id].rebel = fk.roleValue[player.id].rebel - intention * (fk.roleValue[player.id].rebel + 200) / 200
-    end
-    if fk.roleValue[player.id].rebel < 0 and intention > 0 or fk.roleValue[player.id].rebel > 0 and intention < 0 then
-      fk.roleValue[player.id].renegade = fk.roleValue[player.id].renegade + intention * (100 - fk.roleValue[player.id].renegade) / 200
-    end
-    local aps = player.room.alive_players
-    local function compare_func(a, b)
-      local v1 = fk.roleValue[a.id].rebel
-      local v2 = fk.roleValue[b.id].rebel
-      if v1 == v2 then
-        v1 = fk.roleValue[a.id].renegade
-        v2 = fk.roleValue[b.id].renegade
+  if player.id == to.id then return end
+    if player.role == "lord" then
+      if player.room.role_value[to.id].rebel ~= 0
+      then
+        player.room.role_value[to.id].rebel = player.room.role_value[to.id].rebel + intention * (200 - player.room.role_value[to.id].rebel) / 200
       end
-      return v1 > v2
-    end
-    table.sort(aps, compare_func)
-    fk.explicit_renegade = false
-    local ars = aliveRoles(player.room)
-    local rebel, renegade, loyalist = 0, 0, 0
-    for _, ap in ipairs(aps) do
-      if ap.role == "lord" then
-        fk.ai_role[ap.id] = "loyalist"
-      elseif fk.roleValue[ap.id].rebel > 50 and ars.rebel > rebel then
-        rebel = rebel + 1
-        fk.ai_role[ap.id] = "rebel"
-      elseif fk.roleValue[ap.id].renegade > 50 and ars.renegade > renegade then
-        renegade = renegade + 1
-        fk.ai_role[ap.id] = "renegade"
-        fk.explicit_renegade = fk.roleValue[ap.id].renegade > 100
-      elseif fk.roleValue[ap.id].rebel < -50 and ars.loyalist > loyalist then
-        loyalist = loyalist + 1
-        fk.ai_role[ap.id] = "loyalist"
-      else
-        fk.ai_role[ap.id] = "neutral"
+    else
+      if to.role == "lord" or player.room.ai_role[to.id] == "loyalist" then
+        player.room.role_value[player.id].rebel = player.room.role_value[player.id].rebel + intention * (200 - player.room.role_value[player.id].rebel) / 200
+      elseif player.room.ai_role[to.id] == "rebel" then
+        player.room.role_value[player.id].rebel = player.room.role_value[player.id].rebel - intention * (player.room.role_value[player.id].rebel + 200) / 200
       end
-    end --[[
-    fk.qWarning(--提示身份值变化信息，消除注释后就会在调试框中显示
-      player.general ..
-      " " ..
-      intention ..
-      " " ..
-      fk.ai_role[player.id] ..
-      " rebelValue:" .. fk.roleValue[player.id].rebel .. " renegadeValue:" .. fk.roleValue[player.id].renegade
-    ) --]]
-  end
+      if player.room.role_value[player.id].rebel < 0 and intention > 0 or player.room.role_value[player.id].rebel > 0 and intention < 0 then
+        player.room.role_value[player.id].renegade = player.room.role_value[player.id].renegade + intention * (100 - player.room.role_value[player.id].renegade) / 200
+      end
+      local function compare_func(a, b)
+        local v1 = player.room.role_value[a.id].rebel
+        local v2 = player.room.role_value[b.id].rebel
+        if v1 == v2 then
+          v1 = player.room.role_value[a.id].renegade
+          v2 = player.room.role_value[b.id].renegade
+        end
+        return v1 > v2
+      end
+      local aps = player.room.alive_players
+      table.sort(aps, compare_func)
+      player.explicit_renegade = false
+      local ars = aliveRoles(player.room)
+      local rebel, renegade, loyalist = 0, 0, 0
+      for _, ap in ipairs(aps) do
+        if ap.role == "lord" then
+          player.room.ai_role[ap.id] = "loyalist"
+        elseif player.room.role_value[ap.id].rebel > 50 and ars.rebel > rebel then
+          rebel = rebel + 1
+          player.room.ai_role[ap.id] = "rebel"
+        elseif player.room.role_value[ap.id].renegade > 50 and ars.renegade > renegade then
+          renegade = renegade + 1
+          player.room.ai_role[ap.id] = "renegade"
+          player.explicit_renegade = player.room.role_value[ap.id].renegade > 100
+        elseif player.room.role_value[ap.id].rebel < -50 and ars.loyalist > loyalist then
+          loyalist = loyalist + 1
+          player.room.ai_role[ap.id] = "loyalist"
+        else
+          player.room.ai_role[ap.id] = "neutral"
+        end
+      end --[[
+      fk.qWarning(--提示身份值变化信息，消除注释后就会在调试框中显示
+        player.general ..
+        " " ..
+        intention ..
+        " " ..
+        player.room.ai_role[player.id] ..
+        " rebelValue:" .. player.room.role_value[player.id].rebel .. " renegadeValue:" .. player.room.role_value[player.id].renegade
+      ) --]]
+    end
 end
 
 --[[
@@ -1217,7 +1229,7 @@ local filterEvent = fk.CreateTriggerSkill {
   name = "filter_event",
   events = {
     fk.TargetSpecified,
-    --fk.StartJudge,
+    fk.GameStart,
     --fk.AfterCardsMove,
     fk.CardUsing
   },
@@ -1245,6 +1257,8 @@ local filterEvent = fk.CreateTriggerSkill {
           updateIntention(room:getPlayerById(data.from), p, callback)
         end
       end
+    elseif event == fk.GameStart then
+      player.ai:updatePlayers()
     elseif event == fk.CardUsing then
       if data.card.name == "nullification" then
         local datas = player.ai:eventsData("CardEffect")
@@ -1285,6 +1299,9 @@ Fk:addSkill(filterEvent)
 ---@return boolean
 function SmartAI:isWeak(player, getAP)
   player = player or self.player
+  if type(player) == "number" then
+    player = self.room:getPlayerById(player)
+  end
   return player.hp < 2 or player.hp <= 2 and #player:getCardIds("&h") <= 2
 end
 

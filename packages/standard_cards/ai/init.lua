@@ -12,7 +12,7 @@ fk.ai_card.dismantlement = {
   intention = function(self, card, from)
     if #self.player.player_cards[Player.Judge] < 1 then
       return 80
-    elseif fk.ai_role[from.id] == "neutral" then
+    elseif self.room.ai_role[from.id] == "neutral" then
       return 30
     end
   end,
@@ -23,7 +23,7 @@ fk.ai_card.snatch = {
   intention = function(self, card, from)
     if #self.player.player_cards[Player.Judge] < 1 then
       return 80
-    elseif fk.ai_role[from.id] == "neutral" then
+    elseif self.room.ai_role[from.id] == "neutral" then
       return 30
     end
   end,
@@ -101,7 +101,7 @@ fk.ai_use_play.slash = function(self, card)
   end
 end
 
-fk.ai_askuse_card["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
+fk.ai_ask_usecard["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
   local act = self:getActives(pattern)
   if tonumber(prompt:split(":")[4]) > #act then
     return
@@ -138,7 +138,7 @@ fk.ai_askuse_card["#slash-jink"] = function(self, pattern, prompt, cancelable, e
   end
 end
 
-fk.ai_askuse_card["#slash-jinks"] = fk.ai_askuse_card["#slash-jink"]
+fk.ai_ask_usecard["#slash-jinks"] = fk.ai_ask_usecard["#slash-jink"]
 
 fk.ai_use_play.snatch = function(self, card)
   for _, p in ipairs(self.friends_noself) do
@@ -158,7 +158,7 @@ end
 
 fk.ai_nullification.snatch = function(self, card, to, from, positive)
   if positive then
-    if self:isFriend(to) and not self:isFriend(from) and fk.ai_role[from.id] ~= "neutral" then
+    if self:isFriend(to) and not self:isFriend(from) and self.room.ai_role[from.id] ~= "neutral" then
       if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
@@ -190,7 +190,7 @@ end
 
 fk.ai_nullification.dismantlement = function(self, card, to, from, positive)
   if positive then
-    if self:isFriend(to) and not self:isFriend(from) and fk.ai_role[from.id] ~= "neutral" then
+    if self:isFriend(to) and not self:isFriend(from) and self.room.ai_role[from.id] ~= "neutral" then
       if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
@@ -408,12 +408,12 @@ fk.ai_skill_invoke["#double_swords_skill"] = function(self)
   end
 end
 
-fk.ai_dis_card["#double_swords_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
+fk.ai_discard["#double_swords_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local use = self:eventData("UseCard")
   return self:isEnemie(use.from) and { self.player:getCardIds("h")[1] }
 end
 
-fk.ai_dis_card["#axe_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
+fk.ai_discard["#axe_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local ids = {}
   local effect = self:eventData("CardEffect")
   for _, cid in ipairs(self.player:getCardIds("he")) do

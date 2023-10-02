@@ -95,7 +95,7 @@ fk.ai_use_play.fire_attack = function(self, card)
   end
 end
 
-fk.ai_dis_card.fire_attack_skill = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
+fk.ai_discard.fire_attack_skill = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
     if self:isEnemie(p) then
