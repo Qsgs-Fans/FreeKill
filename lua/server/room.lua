@@ -2563,24 +2563,31 @@ function Room:handleCardEffect(event, cardEffectEvent)
 
       for i = 1, loopTimes do
         local to = self:getPlayerById(cardEffectEvent.to)
-        local prompt = nil
+        local prompt = ""
         if cardEffectEvent.from then
-          if loopTimes > 1 then
-            prompt = "#slash-jinks:" .. cardEffectEvent.from .. "::" .. loopTimes + 1 - i .. ":" .. loopTimes
-          else
-            prompt = "#slash-jink:" .. cardEffectEvent.from .. "::1"
-          end
+          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
         end
-        local use = self:askForUseCard(to, "jink", nil, prompt, true, nil, cardEffectEvent)
+
+        local use = self:askForUseCard(
+          to,
+          "jink",
+          nil,
+          prompt,
+          true,
+          nil,
+          cardEffectEvent
+        )
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
           self:useCard(use)
-          cardEffectEvent.isCancellOut = true
-        else
-          cardEffectEvent.isCancellOut = false
+        end
+
+        if not cardEffectEvent.isCancellOut then
           break
         end
+
+        cardEffectEvent.isCancellOut = i == loopTimes
       end
     elseif
       cardEffectEvent.card.type == Card.TypeTrick and
@@ -3064,10 +3071,7 @@ function Room:recastCard(card_ids, who, skillName)
     moveReason = fk.ReasonPutIntoDiscardPile,
     proposer = who.id
   })
-  local soundName = "./audio/system/recast"
-  if FileIO.exists(soundName .. ".mp3") then--加了个重铸音效
-    self:broadcastPlaySound(soundName)
-  end
+  self:broadcastPlaySound("./audio/system/recast")
   self:sendLog{
     type = skillName == "recast" and "#Recast" or "#RecastBySkill",
     from = who.id,
