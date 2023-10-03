@@ -12,7 +12,7 @@ fk.ai_card.dismantlement = {
   intention = function(self, card, from)
     if #self.player.player_cards[Player.Judge] < 1 then
       return 80
-    elseif self.room.ai_role[from.id] == "neutral" then
+    elseif self.ai_role[from.id] == "neutral" then
       return 30
     end
   end,
@@ -23,7 +23,7 @@ fk.ai_card.snatch = {
   intention = function(self, card, from)
     if #self.player.player_cards[Player.Judge] < 1 then
       return 80
-    elseif self.room.ai_role[from.id] == "neutral" then
+    elseif self.ai_role[from.id] == "neutral" then
       return 30
     end
   end,
@@ -94,7 +94,7 @@ end
 fk.ai_use_play.slash = function(self, card)
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
-    if card.skill:targetFilter(p.id, self.use_tos, {}, card) and slashEeffect(card, p) then
+    if card.skill:targetFilter(p.id, self.use_tos, {}, card) and slashEeffect(card, p) and self:objectiveLevel(p) > 2 then
       self.use_id = card.id
       table.insert(self.use_tos, p.id)
     end
@@ -158,7 +158,7 @@ end
 
 fk.ai_nullification.snatch = function(self, card, to, from, positive)
   if positive then
-    if self:isFriend(to) and not self:isFriend(from) and self.room.ai_role[from.id] ~= "neutral" then
+    if self:isFriend(to) and not self:isFriend(from) and self.ai_role[from.id] ~= "neutral" then
       if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
@@ -190,7 +190,7 @@ end
 
 fk.ai_nullification.dismantlement = function(self, card, to, from, positive)
   if positive then
-    if self:isFriend(to) and not self:isFriend(from) and self.room.ai_role[from.id] ~= "neutral" then
+    if self:isFriend(to) and not self:isFriend(from) and self.ai_role[from.id] ~= "neutral" then
       if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
