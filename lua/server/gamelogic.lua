@@ -333,6 +333,10 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
   local _target = room.current -- for iteration
   local player = _target
+  local cur_event = self:getCurrentEvent() or {}
+  -- 如果当前事件被杀，就强制只refresh
+  -- 因为被杀的事件再进行正常trigger只可能在cleaner和exit了
+  refresh_only = refresh_only or cur_event.killed
 
   if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
@@ -378,7 +382,9 @@ function GameLogic:trigger(event, target, data, refresh_only)
         skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0)
+          and room:getPlayerById(data.who).hp > 0) or cur_event.revived
+        --                                            ^^^^^^^^^^^^^^^^^
+        -- 如果事件复活了，那么其实说明事件已经死过了，赶紧break掉
 
         if broken then break end
       end
