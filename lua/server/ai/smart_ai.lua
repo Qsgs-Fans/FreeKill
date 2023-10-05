@@ -1072,7 +1072,7 @@ function SmartAI:objectiveLevel(to)
     or to.role == "loyalist" and self.role == "lord" then
       level = -2
     else
-      level = 2
+      level = 3
     end
   end
   return level or 0
@@ -1085,23 +1085,6 @@ function SmartAI:updatePlayers()
   self.friends = {}
   self.friends_noself = {}
 
-  local aps = self.room.alive_players
-  if self.room:getTag("initialized") ~= true then
-    self.room:setTag("initialized", true)
-    local ai_role = {}
-    local role_value = {}
-    for _, ap in ipairs(aps) do
-      ai_role[ap.id] = "neutral"
-      role_value[ap.id] = {
-        rebel = 0,
-        renegade = 0
-      }
-    end
-    self.room:setTag("ai_role", ai_role)
-    self.room:setTag("role_value", role_value)
-  end
-  self.ai_role = self.room:getTag("ai_role")
-  self.role_value = self.room:getTag("role_value")
   local function compare_func(a, b)
     local v1 = self.role_value[a.id].rebel
     local v2 = self.role_value[b.id].rebel
@@ -1111,6 +1094,7 @@ function SmartAI:updatePlayers()
     end
     return v1 > v2
   end
+  local aps = self.room.alive_players
   table.sort(aps, compare_func)
   self.explicit_renegade = false
   local ars = aliveRoles(self.room)
@@ -1162,6 +1146,21 @@ function SmartAI:initialize(player)
   AI.initialize(self, player)
   self.cb_table = smart_cb
   self.player = player
+  if self.room:getTag("ai_role") == nil then
+    local ai_role = {}
+    local role_value = {}
+    for _, ap in ipairs(self.room.players) do
+      ai_role[ap.id] = "neutral"
+      role_value[ap.id] = {
+        rebel = 0,
+        renegade = 0
+      }
+    end
+    self.room:setTag("ai_role", ai_role)
+    self.room:setTag("role_value", role_value)
+  end
+  self.ai_role = self.room:getTag("ai_role")
+  self.role_value = self.room:getTag("role_value")
 end
 
 ---给来源附加身份值
@@ -1240,7 +1239,7 @@ local filterEvent = fk.CreateTriggerSkill {
   name = "filter_event",
   events = {
     fk.TargetSpecified,
-    fk.GameStart,
+    --fk.GameStart,
     --fk.AfterCardsMove,
     fk.CardUsing
   },
@@ -1268,8 +1267,6 @@ local filterEvent = fk.CreateTriggerSkill {
           updateIntention(room:getPlayerById(data.from), p, callback)
         end
       end
-    elseif event == fk.GameStart then
-      player.ai:updatePlayers()
     elseif event == fk.CardUsing then
       if data.card.name == "nullification" then
         local datas = player.ai:eventsData("CardEffect")

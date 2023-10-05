@@ -44,7 +44,9 @@ function GameLogic:run()
   self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   room:adjustSeats()
-
+  for _, p in ipairs(room.players) do
+    p.ai = SmartAI:new(p)
+  end
   self:chooseGenerals()
 
   self:buildPlayerCircle()
