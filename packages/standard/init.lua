@@ -10,9 +10,11 @@ local jianxiong = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    local room = target.room
-    return target == player and player:hasSkill(self.name) and data.card and
-      table.every(data.card:isVirtual() and data.card.subcards or {data.card.id}, function(id) return room:getCardArea(id) == Card.Processing end)
+    if target == player and player:hasSkill(self.name) and data.card then
+      local room = player.room
+      local subcards = data.card:isVirtual() and data.card.subcards or {data.card.id}
+      return #subcards>0 and table.every(subcards, function(id) return room:getCardArea(id) == Card.Processing end)
+    end
   end,
   on_use = function(self, event, target, player, data)
     player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
@@ -282,6 +284,7 @@ local yiji = fk.CreateTriggerSkill{
     for _, id in ipairs(ids) do
       room:setCardMark(Fk:getCardById(id), "yiji", 1)
     end
+    player.tag["yiji_ids"] = ids --存储遗技卡牌表
     while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
       if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
         for _, id in ipairs(ids) do
@@ -491,7 +494,7 @@ local jijiangResponse = fk.CreateTriggerSkill{
     end
 
     if event == fk.PreCardUse and player.phase == Player.Play then
-      room:setPlayerMark(player, "jijiang-failed-phase", 1)
+    room:setPlayerMark(player, "jijiang-failed-phase", 1)
     end
     return true
   end,

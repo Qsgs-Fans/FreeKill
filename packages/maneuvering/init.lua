@@ -182,7 +182,11 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return true
   end,
-  target_filter = function() return true end,
+  target_filter = function(self, to_select, selected, _, card)
+    if #selected < self:getMaxTargetNum(Self, card) then
+      return self:modTargetFilter(to_select, selected, Self.id, card)
+    end
+  end,
   on_effect = function(self, room, cardEffectEvent)
     local to = room:getPlayerById(cardEffectEvent.to)
     to:setChainState(not to.chained)
@@ -208,10 +212,13 @@ local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
   target_num = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return not Fk:currentRoom():getPlayerById(to_select):isKongcheng()
+    local to = Fk:currentRoom():getPlayerById(to_select)
+    return not to:isKongcheng()
   end,
-  target_filter = function(self, to_select)
-    return self:modTargetFilter(to_select)
+  target_filter = function(self, to_select, selected, _, card)
+    if #selected < self:getMaxTargetNum(Self, card) then
+      return self:modTargetFilter(to_select, selected, Self.id, card)
+    end
   end,
   on_effect = function(self, room, cardEffectEvent)
     local from = room:getPlayerById(cardEffectEvent.from)
