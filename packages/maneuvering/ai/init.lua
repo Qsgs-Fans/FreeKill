@@ -8,7 +8,7 @@ fk.ai_card.analeptic = {
   priority = 3    -- 使用优先值
 }
 
-fk.ai_use_play.analeptic = function(self, card)
+fk.ai_use_play["analeptic"] = function(self, card)
   local cards = table.map(self.player:getCardIds("&he"), function(id)
     return Fk:getCardById(id)
   end)
@@ -53,7 +53,7 @@ fk.ai_card.iron_chain = {
   priority = 3 -- 使用优先值
 }
 
-fk.ai_use_play.iron_chain = function(self, card)
+fk.ai_use_play["iron_chain"] = function(self, card)
   for _, p in ipairs(self.friends) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and p.chained then
       table.insert(self.use_tos, p.id)
@@ -72,7 +72,7 @@ fk.ai_use_play.iron_chain = function(self, card)
   end
 end
 
-fk.ai_use_play.recast = function(self, card)
+fk.ai_use_play["recast"] = function(self, card)
   if self.command == "PlayCard" then
     self.use_id = card.id
     self.special_skill = "recast"
@@ -85,7 +85,7 @@ fk.ai_card.fire_attack = {
   priority = 4    -- 使用优先值
 }
 
-fk.ai_use_play.fire_attack = function(self, card)
+fk.ai_use_play["fire_attack"] = function(self, card)
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and #self.player:getCardIds("h") > 2 then
@@ -95,7 +95,7 @@ fk.ai_use_play.fire_attack = function(self, card)
   end
 end
 
-fk.ai_discard.fire_attack_skill = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
+fk.ai_discard["fire_attack_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
     if self:isEnemie(p) then
@@ -136,7 +136,7 @@ fk.ai_card.fire_attack = {
   priority = 2     -- 使用优先值
 }
 
-fk.ai_use_play.supply_shortage = function(self, card)
+fk.ai_use_play["supply_shortage"] = function(self, card)
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and not p.chained then

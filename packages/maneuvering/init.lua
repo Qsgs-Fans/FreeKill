@@ -180,9 +180,7 @@ local ironChainCardSkill = fk.CreateActiveSkill{
   min_target_num = 1,
   max_target_num = 2,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    local to = Fk:currentRoom():getPlayerById(to_select)
-    local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card))
+    return true
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -215,8 +213,7 @@ local fireAttackSkill = fk.CreateActiveSkill{
   target_num = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local to = Fk:currentRoom():getPlayerById(to_select)
-    local from = Fk:currentRoom():getPlayerById(user)
-    return not (card and from:isProhibited(to, card)) and not to:isKongcheng()
+    return not to:isKongcheng()
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
@@ -264,7 +261,6 @@ local supplyShortageSkill = fk.CreateActiveSkill{
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
-    and not (card and from:isProhibited(player, card))
   end,
   target_filter = function(self, to_select, selected, _, card)
     return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
