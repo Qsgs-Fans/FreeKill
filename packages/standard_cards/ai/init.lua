@@ -91,7 +91,7 @@ local function slashEeffect(slash, to)
   return true
 end
 
-fk.ai_use_play.slash = function(self, card)
+fk.ai_use_play["slash"] = function(self, card)
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and slashEeffect(card, p) and self:objectiveLevel(p) > 2 then
@@ -140,7 +140,7 @@ end
 
 fk.ai_ask_usecard["#slash-jinks"] = fk.ai_ask_usecard["#slash-jink"]
 
-fk.ai_use_play.snatch = function(self, card)
+fk.ai_use_play["snatch"] = function(self, card)
   for _, p in ipairs(self.friends_noself) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and #p:getCardIds("j") > 0 then
       self.use_id = card.id
@@ -172,7 +172,7 @@ fk.ai_nullification.snatch = function(self, card, to, from, positive)
   end
 end
 
-fk.ai_use_play.dismantlement = function(self, card)
+fk.ai_use_play["dismantlement"] = function(self, card)
   for _, p in ipairs(self.friends_noself) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) and #p:getCardIds("j") > 0 then
       self.use_id = card.id
@@ -204,7 +204,7 @@ fk.ai_nullification.dismantlement = function(self, card, to, from, positive)
   end
 end
 
-fk.ai_use_play.indulgence = function(self, card)
+fk.ai_use_play["indulgence"] = function(self, card)
   self:sort(self.enemies, nil, true)
   for _, p in ipairs(self.enemies) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) then
@@ -230,7 +230,7 @@ fk.ai_nullification.indulgence = function(self, card, to, from, positive)
   end
 end
 
-fk.ai_use_play.collateral = function(self, card)
+fk.ai_use_play["collateral"] = function(self, card)
   local max = (card.skill:getMaxTargetNum(self.player, card) - 1) * 2
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
@@ -333,7 +333,7 @@ fk.ai_nullification.god_salvation = function(self, card, to, from, positive)
   end
 end
 
-fk.ai_use_play.god_salvation = function(self, card)
+fk.ai_use_play["god_salvation"] = function(self, card)
   local can = 0
   for _, p in ipairs(self.enemies) do
     if p:isWounded()
@@ -358,19 +358,19 @@ fk.ai_use_play.god_salvation = function(self, card)
   self.use_id = can > 0 and card.id
 end
 
-fk.ai_use_play.amazing_grace = function(self, card)
+fk.ai_use_play["amazing_grace"] = function(self, card)
   self.use_id = #self.player:getCardIds("&h") <= self.player.hp and card.id
 end
 
-fk.ai_use_play.ex_nihilo = function(self, card)
+fk.ai_use_play["ex_nihilo"] = function(self, card)
   self.use_id = card.id
 end
 
-fk.ai_use_play.lightning = function(self, card)
+fk.ai_use_play["lightning"] = function(self, card)
   self.use_id = #self.enemies > #self.friends and card.id
 end
 
-fk.ai_use_play.peach = function(self, card)
+fk.ai_use_play["peach"] = function(self, card)
   if self.command == "PlayCard" then
     self.use_id = self.player.hp ~= self.player.maxHp and self.player.hp < #self.player:getCardIds("h") and card.id
   else
@@ -384,7 +384,7 @@ fk.ai_use_play.peach = function(self, card)
   end
 end
 
-fk.ai_use_play.duel = function(self, card)
+fk.ai_use_play["duel"] = function(self, card)
   self:sort(self.enemies)
   for _, p in ipairs(self.enemies) do
     if card.skill:targetFilter(p.id, self.use_tos, {}, card) then

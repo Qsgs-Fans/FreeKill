@@ -1,4 +1,4 @@
-fk.ai_use_play.rende = function(self, skill)
+fk.ai_use_play["rende"] = function(self, skill)
   for _, p in ipairs(self.friends_noself) do
     if p.kingdom == "shu" and #self.player:getCardIds("h") >= self.player.hp then
       self.use_id = {}
@@ -25,9 +25,9 @@ fk.ai_use_play.rende = function(self, skill)
   end
 end
 
-fk.ai_card.jijiang = { priority = 10 }
+fk.ai_card["jijiang"] = { priority = 10 }
 
-fk.ai_use_play.lijian = function(self, skill)
+fk.ai_use_play["lijian"] = function(self, skill)
   local c = Fk:cloneCard("duel")
   c.skillName = "lijian"
   local cards = table.map(
@@ -59,9 +59,9 @@ fk.ai_use_play.lijian = function(self, skill)
   end
 end
 
-fk.ai_card.lijian = { priority = 2 }
+fk.ai_card["lijian"] = { priority = 2 }
 
-fk.ai_use_play.zhiheng = function(self, skill)
+fk.ai_use_play["zhiheng"] = function(self, skill)
   local card_ids = {}
   local cards = table.map(
     self.player:getCardIds("he"),
@@ -80,7 +80,7 @@ fk.ai_use_play.zhiheng = function(self, skill)
   end
 end
 
-fk.ai_use_play.kurou = function(self, skill)
+fk.ai_use_play["kurou"] = function(self, skill)
   if #self:getActives("peach") + self.player.hp > 1 then
     local slash = Fk:cloneCard("slash")
     if slash.skill:canUse(self.player, slash) and not self.player:prohibitUse(slash) then
@@ -93,7 +93,7 @@ fk.ai_use_play.kurou = function(self, skill)
   end
 end
 
-fk.ai_use_play.fanjian = function(self, skill)
+fk.ai_use_play["fanjian"] = function(self, skill)
   for _, p in ipairs(self.enemies) do
     if #self.player:getCardIds("h") > 0 then
       self.use_id = {}
@@ -103,7 +103,7 @@ fk.ai_use_play.fanjian = function(self, skill)
   end
 end
 
-fk.ai_use_play.jieyin = function(self, skill)
+fk.ai_use_play["jieyin"] = function(self, skill)
   local cards = table.map(
     self.player:getCardIds("h"),
     function(id)
@@ -120,7 +120,7 @@ fk.ai_use_play.jieyin = function(self, skill)
   end
 end
 
-fk.ai_use_play.qingnang = function(self, skill)
+fk.ai_use_play["qingnang"] = function(self, skill)
   local cards = table.map(
     self.player:getCardIds("h"),
     function(id)
@@ -137,9 +137,9 @@ fk.ai_use_play.qingnang = function(self, skill)
   end
 end
 
-fk.ai_skill_invoke.jianxiong = true
+fk.ai_skill_invoke["jianxiong"] = true
 
-fk.ai_card.hujia = { priority = 10 }
+fk.ai_card["hujia"] = { priority = 10 }
 
 fk.ai_response_card["#hujia-ask"] = function(self, pattern, prompt, cancelable, data)
   local to = self.room:getPlayerById(tonumber(prompt:split(":")[2]))
@@ -150,7 +150,7 @@ end
 
 fk.ai_response_card["#jijiang-ask"] = fk.ai_response_card["#hujia-ask"]
 
-fk.ai_skill_invoke.fankui = function(self, data, prompt)
+fk.ai_skill_invoke["fankui"] = function(self, data, prompt)
   local damage = self:eventData("Damage")
   return damage and damage.from and not self:isFriend(damage.from)
 end
@@ -165,14 +165,14 @@ fk.ai_response_card["#guicai-ask"] = function(self, pattern, prompt, cancelable,
   end
 end
 
-fk.ai_skill_invoke.ganglie = function(self, data, prompt)
+fk.ai_skill_invoke["ganglie"] = function(self, data, prompt)
   local damage = self:eventData("Damage")
   return damage and damage.from and not self:isFriend(damage.from)
 end
 
-fk.ai_judge.ganglie = { ".|.|heart", false }
+fk.ai_judge["ganglie"] = { ".|.|heart", false }
 
-fk.ai_skill_invoke.luoyi = function(self, data, prompt)
+fk.ai_skill_invoke["luoyi"] = function(self, data, prompt)
   for _, p in ipairs(self.enemies) do
     if #self:getActives("slash") > 0 and not self:isWeak() then
       return true
@@ -180,15 +180,15 @@ fk.ai_skill_invoke.luoyi = function(self, data, prompt)
   end
 end
 
-fk.ai_skill_invoke.tiandu = true
+fk.ai_skill_invoke["tiandu"] = true
 
-fk.ai_skill_invoke.yiji = true
+fk.ai_skill_invoke["yiji"] = true
 
-fk.ai_skill_invoke.luoshen = true
+fk.ai_skill_invoke["luoshen"] = true
 
-fk.ai_skill_invoke.guanxing = true
+fk.ai_skill_invoke["guanxing"] = true
 
-fk.ai_skill_invoke.tieqi = function(self, data, prompt)
+fk.ai_skill_invoke["tieqi"] = function(self, data, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
     p = self.room:getPlayerById(p)
@@ -198,19 +198,19 @@ fk.ai_skill_invoke.tieqi = function(self, data, prompt)
   end
 end
 
-fk.ai_skill_invoke.jizhi = true
+fk.ai_skill_invoke["jizhi"] = true
 
-fk.ai_skill_invoke.keji = true
+fk.ai_skill_invoke["keji"] = true
 
-fk.ai_skill_invoke.yingzi = true
+fk.ai_skill_invoke["yingzi"] = true
 
-fk.ai_skill_invoke.lianying = true
+fk.ai_skill_invoke["lianying"] = true
 
-fk.ai_skill_invoke.xiaoji = true
+fk.ai_skill_invoke["xiaoji"] = true
 
-fk.ai_skill_invoke.biyue = true
+fk.ai_skill_invoke["biyue"] = true
 
-fk.ai_choose_players.tuxi = function(self, targets, min_num, num, cancelable)
+fk.ai_choose_players["tuxi"] = function(self, targets, min_num, num, cancelable)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
     if self:isEnemie(p) and #self.use_tos < num then
@@ -219,9 +219,9 @@ fk.ai_choose_players.tuxi = function(self, targets, min_num, num, cancelable)
   end
 end
 
-fk.ai_use_skill.yiji_active = function(self, prompt, cancelable, data)
+fk.ai_use_skill["yiji_active"] = function(self, prompt, cancelable, data)
   for _, p in ipairs(self.friends_noself) do
-    for c, cid in ipairs(self.player.yiji_ids) do
+    for c, cid in ipairs(self.player.tag["yiji_ids"]) do
       c = Fk:getCardById(cid)
       if c:getMark("yiji") > 0 and c.skill:canUse(p, c) then
         self.use_tos = { p.id }
@@ -235,7 +235,7 @@ fk.ai_use_skill.yiji_active = function(self, prompt, cancelable, data)
   end
 end
 
-fk.ai_choose_players.liuli = function(self, targets, min_num, num, cancelable)
+fk.ai_choose_players["liuli"] = function(self, targets, min_num, num, cancelable)
   local cards = table.map(
     self.player:getCardIds("he"),
     function(id)

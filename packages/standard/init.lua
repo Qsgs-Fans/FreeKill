@@ -284,7 +284,7 @@ local yiji = fk.CreateTriggerSkill{
     for _, id in ipairs(ids) do
       room:setCardMark(Fk:getCardById(id), "yiji", 1)
     end
-    player.yiji_ids = ids --存储遗技卡牌表
+    player.tag["yiji_ids"] = ids --存储遗技卡牌表
     while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
       if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
         for _, id in ipairs(ids) do
