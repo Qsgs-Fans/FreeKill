@@ -108,9 +108,10 @@ local function useVSSkill(self, skill, pattern, cancelable, extra_data)
   return nil
 end
 
+---@type table<string, fun(self: RandomAI, jsonData: string): string>
 local random_cb = {}
 
-random_cb.AskForUseActiveSkill = function(self, jsonData)
+random_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local cancelable = data[3]
@@ -122,11 +123,11 @@ random_cb.AskForUseActiveSkill = function(self, jsonData)
   return useActiveSkill(self, skill)
 end
 
-random_cb.AskForSkillInvoke = function(self, jsonData)
+random_cb["AskForSkillInvoke"] = function(self, jsonData)
   return table.random{"1", ""}
 end
 
-random_cb.AskForUseCard = function(self, jsonData)
+random_cb["AskForUseCard"] = function(self, jsonData)
   local player = self.player
   local data = json.decode(jsonData)
   local card_name = data[1]
@@ -169,8 +170,7 @@ random_cb.AskForUseCard = function(self, jsonData)
   return ""
 end
 
----@param self RandomAI
-random_cb.AskForResponseCard = function(self, jsonData)
+random_cb["AskForResponseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local cancelable = true
@@ -186,8 +186,7 @@ random_cb.AskForResponseCard = function(self, jsonData)
   return ""
 end
 
----@param self RandomAI
-random_cb.PlayCard = function(self, jsonData)
+random_cb["PlayCard"] = function(self, jsonData)
   local cards = table.map(self.player:getCardIds(Player.Hand),
     function(id) return Fk:getCardById(id) end)
   local actives = table.filter(self.player:getAllSkills(), function(s)

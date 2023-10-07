@@ -1,65 +1,86 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+--[[
+  关于SmartAI: 一款参考神杀基本AI架构的AI体系。
+  该文件加载了AI常用的种种表以及实用函数等，并提供了可供拓展自定义AI逻辑的接口。
+
+  AI的核心在于编程实现对各种交互的回应(或者说应付各种room:askForXXX)，
+  所以本文件的直接目的是编写出合适的函数充实smart_cb表以实现合理的答复，
+  但为了实现这个目的就还要去额外实现敌友判断、收益计算等等功能。
+  为了便于各个拓展快速编写AI，还要封装一些AI判断时常用的函数。
+
+  -- TODO: 优化底层逻辑，防止AI每次操作之前都要json.decode一下。
+  -- TODO: 更加详细的文档
+--]]
+
 ---@class SmartAI: AI
 local SmartAI = AI:subclass("SmartAI")
 
----@type table<string, fun(self: SmartAI,jsonData: any)>
-local smart_cb = {}
+--[[
+  * 数据表准备部分 *
+  这部分定义了各种以后决策、拓展等都会用到的表。
+  这些表的内容只要加载完成后就不会改变，所以定义成了全局表的样子。
+--]]
 
----[skill_name] = function(self, prompt, cancelable, data)
+--- 用来应对Room:askForUseActiveSkill的表。
 ---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any)>
 fk.ai_use_skill = {}
----[skillName] = function(self, targets, min_num, num, cancelable)
----@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool)>
-fk.ai_choose_players = {}
----[skillName] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
----@type table<string, fun(self: SmartAI, min_num: number, num: number, include_equip: bool, cancelable: bool, pattern: string, prompt: string)>
-fk.ai_discard = {}
----[skill_name] = function(self, extra_data, prompt)
+
+--- TOdo? Room:askForGeneral暂缺
+
+--- 用来应对Room:askForSkillInvoke的表。
 ---@type table<string, fun(self: SmartAI, extra_data: any, prompt: string)>
 fk.ai_skill_invoke = {}
----[prompt:split(":")[1]] = function(self, id_list, cancelable, prompt)
+
+--- 用来应对Room:askForAG的表。表的键是prompt的第一项。
 ---@type table<string, fun(self: SmartAI, id_list: integer[], cancelable: bool, prompt: string)>
-fk.ai_ask_forag = {}
----[card.name] = function(self, card)
----
----[skill.name] = function(self, skill)
+fk.ai_ask_for_ag = {}
+
+--- 用来应对出牌阶段空闲时间点如何出牌/使用技能的表。
 ---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
 fk.ai_use_play = {}
----[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
----
----[card_name] = function(self, pattern, prompt, cancelable, extra_data)
+
+--- 用来应对Room:askForUseCard的表。表的键是prompt的第一项或者牌名，优先prompt。
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
 fk.ai_ask_usecard = {}
+
 ---[effect.card.name] = function(self, effect.card, room:getPlayerById(effect.to), room:getPlayerById(effect.from), positive)
 ---@type table<string, fun(self: SmartAI, card: Card, to: ServerPlayer, from: ServerPlayer, positive: bool)>
 fk.ai_nullification = {}
+
 ---[card.name] = {intention = 0, value = 0, priority = 0}
 ---
 ---[skill.name] = {intention = 0, value = 0, priority = 0}
 ---@type table<string, {intention: number, value: number, priority: number}>
 fk.ai_card = {}
+
 ---[card.id] = 0
 ---
 ---[skill.name] = 0
 ---@type table<string|number, number>
 fk.cardValue = {}
+
 ---[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
 ---
 ---[card_name] = function(self, pattern, prompt, cancelable, extra_data)
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
 fk.ai_response_card = {}
+
 ---[reason] = function(self, to, flag)
 ---@type table<string, fun(self: SmartAI, to: ServerPlayer, flag: string)>
 fk.ai_card_chosen = {}
+
 ---[reason] = function(self, to, min, max, flag)
 fk.ai_cards_chosen = {}
+
 ---[skill_name] = function(self, choices, prompt, detailed, all_choices)
 ---@type table<string, fun(self: SmartAI, choices: string[], prompt: string, detailed: bool, all_choices: string[])>
 fk.ai_ask_choice = {}
+
 ---[judge.reason] = {judge.pattern,isgood}
 ---@type table<string, {pattern: string,isgood: boolean}>
 fk.ai_judge = {}
+
 ---[gameMode] = function(self, to)
 ---
 ---根据游戏模式定义目标敌友值
@@ -68,14 +89,23 @@ fk.ai_judge = {}
 ---@type table<string, fun(self: SmartAI, to: ServerPlayer)>
 fk.ai_objective_level = {}
 
+--[[
+  * SmartAI类成员函数部分 *
+--]]
+
+--[[
+  * command处理函数部分 *
+  这部分就像RandomAI一样对各种请求类型返回相应的数据。
+  当然了，SmartAI会尽可能做出合乎逻辑的决策。
+--]]
+
+---@type table<string, fun(self: SmartAI, jsonData: string): string>
+local smart_cb = {}
 
 --- 请求发动主动技
 ---
 --- 总的请求技，从它分支出各种功能技
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @json使用数据（包含了子卡和目标）
-smart_cb.AskForUseActiveSkill = function(self, jsonData)
+smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local prompt = data[2]
@@ -100,77 +130,8 @@ smart_cb.AskForUseActiveSkill = function(self, jsonData)
   return ""
 end
 
---- 请求选择目标
----
----由skillName进行下一级的决策，只需要在下一级里给self.use_tos添加角色id为目标就行
----@param self SmartAI @ai系统
----@param prompt string @提示信息
----@param cancelable boolean @可以取消
----@param data any @数据
-fk.ai_use_skill.choose_players_skill = function(self, prompt, cancelable, data)
-  local ask = fk.ai_choose_players[data.skillName]
-  if type(ask) == "function" then
-    ask(self, data.targets, data.min_num, data.num, cancelable)
-  end
-  if #self.use_tos > 0 then
-    if self.use_id then
-      self.use_id = json.encode {
-        skill = data.skillName,
-        subcards = self.use_id
-      }
-    else
-      self.use_id = json.encode {
-        skill = data.skillName,
-        subcards = {}
-      }
-    end
-  end
-end
-
---- 请求弃置
----
----由skillName进行下一级的决策，只需要在下一级里返回需要弃置的卡牌id表就行
----@param self SmartAI @ai系统
----@param prompt string @提示信息
----@param cancelable boolean @可以取消
----@param data any @数据
-fk.ai_use_skill.discard_skill = function(self, prompt, cancelable, data)
-  local ask = fk.ai_discard[data.skillName]
-  self:assignValue()
-  if type(ask) == "function" then
-    ask = ask(self, data.min_num, data.num, data.include_equip, cancelable, data.pattern, prompt)
-  end
-  if type(ask) ~= "table" and not cancelable then
-    local flag = "h"
-    if data.include_equip then
-      flag = "he"
-    end
-    ask = {}
-    local cards = table.map(self.player:getCardIds(flag), function(id)
-        return Fk:getCardById(id)
-      end
-    )
-    self:sortValue(cards)
-    for _, c in ipairs(cards) do
-      table.insert(ask, c.id)
-      if #ask >= data.min_num then
-        break
-      end
-    end
-  end
-  if type(ask) == "table" and #ask >= data.min_num then
-    self.use_id = json.encode {
-      skill = data.skillName,
-      subcards = ask
-    }
-  end
-end
-
 --- 请求发动技能
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @输出"1"为发动
-smart_cb.AskForSkillInvoke = function(self, jsonData)
+smart_cb["AskForSkillInvoke"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[2]
   local extra_data = data[3]
@@ -188,16 +149,13 @@ smart_cb.AskForSkillInvoke = function(self, jsonData)
 end
 
 --- 请求AG
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return number @ 选择的牌id
-smart_cb.AskForAG = function(self, jsonData)
+smart_cb["AskForAG"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local prompt = data[3]
   local cancelable = data[2]
   local id_list = data[1]
   self:updatePlayers()
-  local ask = fk.ai_ask_forag[prompt:split(":")[1]]
+  local ask = fk.ai_ask_for_ag[prompt:split(":")[1]]
   if type(ask) == "function" then
     ask = ask(self, id_list, cancelable, prompt)
   end
@@ -299,10 +257,7 @@ end
 ---优先由prompt进行下一级的决策，需要定义self.use_id，如果卡牌需要目标也需要给self.use_tos添加角色id为目标
 ---
 ---然后若没有定义self.use_id则由card_name再进行决策
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @json使用数据（包含了子卡和目标）
-smart_cb.AskForUseCard = function(self, jsonData)
+smart_cb["AskForUseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -612,10 +567,7 @@ end
 ---请求打出
 ---
 ---优先按照prompt提示信息进行下一级决策，需要定义self.use_id，然后可以根据card_name再进行决策
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @json打出数据
-smart_cb.AskForResponseCard = function(self, jsonData)
+smart_cb["AskForResponseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local prompt = data[3]
@@ -716,10 +668,7 @@ function SmartAI:cardsView(pattern)
 end
 
 ---空闲点使用
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @json使用数据
-smart_cb.PlayCard = function(self, jsonData)
+smart_cb["PlayCard"] = function(self, jsonData)
   local cards = table.map(self.player:getHandlyIds(true), function(id)
       return Fk:getCardById(id)
     end
@@ -749,10 +698,7 @@ end
 ---请求选择角色区域牌
 ---
 ---按照reason原因进行下一级决策，需返回选择的牌id，同时设置有兜底决策
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return number @牌id
-smart_cb.AskForCardChosen = function(self, jsonData)
+smart_cb["AskForCardChosen"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
   local chosen = fk.ai_card_chosen[data[3]]
@@ -791,10 +737,7 @@ end
 ---请求选择角色区域多张牌
 ---
 ---按照reason原因进行下一级决策，需返回选择的牌id表，同时设置有兜底决策
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @json选择牌表数据
-smart_cb.AskForCardsChosen = function(self, jsonData)
+smart_cb["AskForCardsChosen"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local to = self.room:getPlayerById(data[1])
   local min = data[2]
@@ -842,12 +785,9 @@ end
 ---请求选择选项
 ---
 ---按照skill_name进行下一级决策，需返回要选择的选项，兜底决策是随机选择
----@param self SmartAI @ai系统
----@param jsonData any @总数据
----@return string @选择的选项
-smart_cb.AskForChoice = function(self, jsonData)
+smart_cb["AskForChoice"] = function(self, jsonData)
   local data = json.decode(jsonData)
-  local choices = data[1]
+  local choices = data[1] ---@type string[]
   local all_choices = data[2]
   local prompt = data[4]
   local detailed = data[5]
@@ -855,7 +795,7 @@ smart_cb.AskForChoice = function(self, jsonData)
   if type(chosen) == "function" then
     chosen = chosen(self, choices, prompt, detailed, all_choices)
   end
-  return table.connect(choices,chosen) and chosen or table.random(choices)
+  return table.contains(choices,chosen) and chosen or table.random(choices)
 end
 
 fk.ai_judge.indulgence = { ".|.|heart", true }
@@ -905,7 +845,7 @@ end
 ---@param self SmartAI @ai系统
 ---@param jsonData any @总数据
 ---@return string @json放置顶和底的牌id表
-smart_cb.AskForGuanxing = function(self, jsonData)
+smart_cb["AskForGuanxing"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local cards = table.map(data.cards, function(id)
       return Fk:getCardById(id)
