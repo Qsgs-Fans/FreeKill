@@ -58,6 +58,9 @@ Item {
       if (usedtimes >= 1) {
         x.visible = true;
         bg.source = SkinBank.LIMIT_SKILL_DIR + "limit-used";
+      } else {
+        x.visible = false;
+        bg.source = SkinBank.LIMIT_SKILL_DIR + "limit";
       }
     } else if (skilltype === 'switch') {
       visible = true;

@@ -25,6 +25,12 @@ CREATE TABLE IF NOT EXISTS banuuid (
   uuid VARCHAR(32)
 );
 
+CREATE TABLE IF NOT EXISTS friendinfo (
+  id1 INTEGER,
+  id2 INTEGER,
+  reltype INTEGER   -- 1=好友 2=黑名单
+);
+
 -- 胜率相关
 
 CREATE TABLE IF NOT EXISTS winRate (
