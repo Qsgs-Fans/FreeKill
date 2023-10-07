@@ -22,27 +22,25 @@ local SmartAI = AI:subclass("SmartAI")
   这些表的内容只要加载完成后就不会改变，所以定义成了全局表的样子。
 --]]
 
----[skill_name] = function(self, prompt, cancelable, data)
+--- 用来应对Room:askForUseActiveSkill的表。
 ---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any)>
 fk.ai_use_skill = {}
 
----[skill_name] = function(self, extra_data, prompt)
+--- TOdo? Room:askForGeneral暂缺
+
+--- 用来应对Room:askForSkillInvoke的表。
 ---@type table<string, fun(self: SmartAI, extra_data: any, prompt: string)>
 fk.ai_skill_invoke = {}
 
----[prompt:split(":")[1]] = function(self, id_list, cancelable, prompt)
+--- 用来应对Room:askForAG的表。表的键是prompt的第一项。
 ---@type table<string, fun(self: SmartAI, id_list: integer[], cancelable: bool, prompt: string)>
 fk.ai_ask_for_ag = {}
 
----[card.name] = function(self, card)
----
----[skill.name] = function(self, skill)
+--- 用来应对出牌阶段空闲时间点如何出牌/使用技能的表。
 ---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
 fk.ai_use_play = {}
 
----[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
----
----[card_name] = function(self, pattern, prompt, cancelable, extra_data)
+--- 用来应对Room:askForUseCard的表。表的键是prompt的第一项或者牌名，优先prompt。
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
 fk.ai_ask_usecard = {}
 
@@ -789,7 +787,7 @@ end
 ---按照skill_name进行下一级决策，需返回要选择的选项，兜底决策是随机选择
 smart_cb["AskForChoice"] = function(self, jsonData)
   local data = json.decode(jsonData)
-  local choices = data[1]
+  local choices = data[1] ---@type string[]
   local all_choices = data[2]
   local prompt = data[4]
   local detailed = data[5]
@@ -797,7 +795,7 @@ smart_cb["AskForChoice"] = function(self, jsonData)
   if type(chosen) == "function" then
     chosen = chosen(self, choices, prompt, detailed, all_choices)
   end
-  return table.connect(choices,chosen) and chosen or table.random(choices)
+  return table.contains(choices,chosen) and chosen or table.random(choices)
 end
 
 fk.ai_judge.indulgence = { ".|.|heart", true }

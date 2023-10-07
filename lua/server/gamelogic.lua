@@ -402,6 +402,11 @@ function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
 end
 
+---@param eventType integer
+function GameLogic:getMostRecentEvent(eventType)
+  return self:getCurrentEvent():findParent(eventType, true)
+end
+
 --- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。
 function GameLogic:getCurrentSkillName()
   local skillEvent = self:getCurrentEvent()
