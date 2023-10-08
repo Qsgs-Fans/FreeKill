@@ -47,6 +47,9 @@ public:
   bool checkBanWord(const QString &str);
   void temporarilyBan(int playerId);
 
+  void beginTransaction();
+  void endTransaction();
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -78,6 +81,7 @@ private:
   RSA *rsa;
   QString public_key;
   sqlite3 *db;
+  QMutex transaction_mutex;
   QString md5;
 
   static RSA *initServerRSA();

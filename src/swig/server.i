@@ -9,6 +9,7 @@ public:
   int getId() const;
 
   QList<ServerPlayer *> getPlayers() const;
+  ServerPlayer *getOwner() const;
 
   QList<ServerPlayer *> getObservers() const;
   bool hasObserver(ServerPlayer *player) const;

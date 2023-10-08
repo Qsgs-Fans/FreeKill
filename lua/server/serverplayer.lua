@@ -339,6 +339,7 @@ function ServerPlayer:reconnect()
       p._splayer:getAvatar(),
     })
   end
+  self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
 
   local player_circle = {}
   for i = 1, #room.players do

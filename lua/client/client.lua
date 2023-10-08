@@ -621,8 +621,9 @@ end
 local function updateLimitSkill(pid, skill, times)
   if not skill.visible then return end
   if skill:isSwitchSkill() then
-    times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
-    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.switchSkillName, times })
+    local _times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
+    if times == -1 then _times = -1 end
+    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.switchSkillName, _times })
   elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake or skill.frequency == Skill.Quest then
     ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
   end
