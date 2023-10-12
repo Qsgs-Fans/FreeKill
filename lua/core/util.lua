@@ -126,6 +126,7 @@ end
 Util.NameMapper = function(e) return e.name end
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
 Util.Name2SkillMapper = function(e) return Fk.skills[e] end
+Util.TranslateMapper = function(str) return Fk:translate(str) end
 
 -- for card preset
 Util.GlobalCanUse = function(self, player, card)
