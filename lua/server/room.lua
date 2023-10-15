@@ -1565,8 +1565,10 @@ end
 ---@param player ServerPlayer
 ---@param poxi_type string
 ---@param data any
+---@param extra_data any
+---@param cancelable nil|bool
 ---@return integer[]
-function Room:askForPoxi(player, poxi_type, data)
+function Room:askForPoxi(player, poxi_type, data, extra_data, cancelable)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return {} end
 
@@ -1575,12 +1577,14 @@ function Room:askForPoxi(player, poxi_type, data)
   local result = self:doRequest(player, command, json.encode {
     type = poxi_type,
     data = data,
+    extra_data = extra_data,
+    cancelable = (cancelable == nil) and true or cancelable
   })
 
   if result == "" then
-    return poxi.default_choice(data)
+    return poxi.default_choice(data, extra_data)
   else
-    return poxi.post_select(json.decode(result), data)
+    return poxi.post_select(json.decode(result), data, extra_data)
   end
 end
 

@@ -90,10 +90,10 @@ local control = fk.CreateActiveSkill{
     -- room:swapSeat(from, to)
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
-      -- p(room:askForPoxi(from, "test", {
-      --   { "你自己", from:getCardIds "h" },
-      --   { "对方", to:getCardIds "h" },
-      -- }))
+      p(room:askForPoxi(from, "test", {
+        { "你自己", from:getCardIds "h" },
+        { "对方", to:getCardIds "h" },
+      }, from.hp, false))
       -- room:setPlayerMark(from, "@$a", {1,2,3})
       -- room:setPlayerMark(from, "@$b", {'slash','duel','axe'})
       if to:getMark("mouxushengcontrolled") == 0 then
@@ -130,18 +130,18 @@ local control = fk.CreateActiveSkill{
     -- room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
   end,
 }
---[[
+---[[
 Fk:addPoxiMethod{
   name = "test",
-  card_filter = function(to_select, selected, data)
+  card_filter = function(to_select, selected, data, extra_data)
     local s = Fk:getCardById(to_select).suit
     for _, id in ipairs(selected) do
       if Fk:getCardById(id).suit == s then return false end
     end
     return true
   end,
-  feasible = function(selected, data)
-    return #selected == 0 or #selected == 4
+  feasible = function(selected, data, extra_data)
+    return #selected == 0 or #selected == 4 or #selected == extra_data
   end,
   prompt = "魄袭：选你们俩手牌总共四个花色，或者不选直接按确定按钮"
 }
