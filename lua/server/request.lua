@@ -155,11 +155,19 @@ request_handlers["surrender"] = function(room, id, reqlist)
   local logic = room.logic
   local curEvent = logic:getCurrentEvent()
   if curEvent then
-    curEvent:addExitFunc(
+    curEvent:addCleaner(
       function()
         player.surrendered = true
         room:broadcastProperty(player, "surrendered")
-        room:gameOver(Fk.game_modes[room.settings.gameMode]:getWinner(player))
+        local mode = Fk.game_modes[room.settings.gameMode]
+        local winner = Pcall(mode.getWinner, mode, player)
+        if winner ~= nil then
+          room:gameOver(winner)
+        end
+
+        -- 以防万一
+        player.surrendered = false
+        room.hasSurrendered = false
       end
     )
     room.hasSurrendered = true
