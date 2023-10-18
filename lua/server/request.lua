@@ -155,7 +155,7 @@ request_handlers["surrender"] = function(room, id, reqlist)
   local logic = room.logic
   local curEvent = logic:getCurrentEvent()
   if curEvent then
-    curEvent:addExitFunc(
+    curEvent:addCleaner(
       function()
         player.surrendered = true
         room:broadcastProperty(player, "surrendered")
