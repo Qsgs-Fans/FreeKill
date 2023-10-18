@@ -185,6 +185,8 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
+  sendCardEmotionAndLog(room, cardUseEvent)
+
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   if cardUseEvent.card.skill then
@@ -194,8 +196,6 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
     logic:breakEvent()
   end
-
-  sendCardEmotionAndLog(room, cardUseEvent)
 
   if not cardUseEvent.extraUse then
     room:getPlayerById(cardUseEvent.from):addCardUseHistory(cardUseEvent.card.trueName, 1)
@@ -264,6 +264,9 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
       card = cardIds,
     }
   end
+
+  playCardEmotionAndSound(room, room:getPlayerById(from), card)
+
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
@@ -278,8 +281,6 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
     logic:breakEvent()
   end
-
-  playCardEmotionAndSound(room, room:getPlayerById(from), card)
 
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 end

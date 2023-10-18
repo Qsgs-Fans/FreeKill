@@ -145,7 +145,7 @@ GameEvent.functions[GameEvent.Round] = function(self)
   local roundCount = room:getTag("RoundCount")
   roundCount = roundCount + 1
   room:setTag("RoundCount",  roundCount)
-  room:doBroadcastNotify("UpdateRoundNum", room:getTag("RoundCount"))
+  room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
   if roundCount >= 9999 then
     room:gameOver("")
