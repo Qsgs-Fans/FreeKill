@@ -439,15 +439,15 @@ end
 function Room:getNCards(num, from)
   from = from or "top"
   assert(from == "top" or from == "bottom")
+  if #self.draw_pile < num then
+    self:shuffleDrawPile()
+    if #self.draw_pile < num then
+      self:gameOver("")
+    end
+  end
 
   local cardIds = {}
   while num > 0 do
-    if #self.draw_pile < 1 then
-      self:shuffleDrawPile()
-      if #self.draw_pile < 1 then
-        self:gameOver("")
-      end
-    end
 
     local index = from == "top" and 1 or #self.draw_pile
     table.insert(cardIds, self.draw_pile[index])
