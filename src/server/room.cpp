@@ -370,6 +370,8 @@ void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   // 屏蔽.号，防止有人在HTML文本发链接，而正常发链接看不出来有啥改动
   auto msg = doc["msg"].toString();
   msg.replace(".", "․");
+  // 300字限制，与客户端相同
+  msg.erase(msg.begin() + 300, msg.end());
   doc["msg"] = msg;
   if (!server->checkBanWord(msg)) {
     return;
