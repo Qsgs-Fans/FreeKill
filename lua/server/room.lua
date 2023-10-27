@@ -127,8 +127,7 @@ function Room:resume()
 
     -- handle error
     if ret == false then
-      fk.qCritical(err_msg)
-      print(debug.traceback(main_co))
+      fk.qCritical(err_msg .. "\n" .. debug.traceback(main_co))
       goto GAME_OVER
     end
 

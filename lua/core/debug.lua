@@ -23,8 +23,7 @@ function Traceback()
 end
 
 local msgh = function(err)
-  fk.qCritical(err)
-  print(debug.traceback(nil, 2))
+  fk.qCritical(err .. "\n" .. debug.traceback(nil, 2))
 end
 
 function Pcall(f, ...)

@@ -179,8 +179,7 @@ function GameEvent:clear()
     if err == false then
       -- handle error, then break
       if not string.find(yield_result, "__manuallyBreak") then
-        fk.qCritical(yield_result)
-        print(debug.traceback(clear_co))
+        fk.qCritical(yield_result .. "\n" .. debug.traceback(clear_co))
       end
       coroutine.close(clear_co)
       break
@@ -294,8 +293,7 @@ function GameEvent:exec()
     if err == false then
       -- handle error, then break
       if not string.find(yield_result, "__manuallyBreak") then
-        fk.qCritical(yield_result)
-        print(debug.traceback(co))
+        fk.qCritical(yield_result .. "\n" .. debug.traceback(co))
       end
       self.interrupted = true
       self:clear()
