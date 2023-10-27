@@ -242,7 +242,6 @@ GameEvent.functions[GameEvent.Recover] = function(self)
   local recoverStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
-  assert(recoverStruct.recoverBy:isInstanceOf(ServerPlayer))
 
   if recoverStruct.card then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
