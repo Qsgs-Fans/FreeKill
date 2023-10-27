@@ -1071,13 +1071,15 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
 }
 
 callbacks["AskForPoxi"] = (jsonData) => {
-  const { type, data } = JSON.parse(jsonData);
+  const { type, data, extra_data, cancelable } = JSON.parse(jsonData);
 
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
   box.poxi_type = type;
   box.card_data = data;
+  box.extra_data = extra_data;
+  box.cancelable = cancelable;
   for (let d of data) {
     const arr = [];
     const ids = d[1];

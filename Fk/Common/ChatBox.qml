@@ -114,6 +114,7 @@ Rectangle {
           color: "white"
           clip: true
           font.pixelSize: 14
+          maximumLength: 300
 
           onAccepted: {
             if (text != "") {

@@ -722,16 +722,16 @@ function PoxiPrompt(poxi_type, data)
   return poxi.prompt(data)
 end
 
-function PoxiFilter(poxi_type, to_select, selected, data)
+function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return "false" end
-  return json.encode(poxi.card_filter(to_select, selected, data))
+  return json.encode(poxi.card_filter(to_select, selected, data, extra_data))
 end
 
-function PoxiFeasible(poxi_type, selected, data)
+function PoxiFeasible(poxi_type, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return "false" end
-  return json.encode(poxi.feasible(selected, data))
+  return json.encode(poxi.feasible(selected, data, extra_data))
 end
 
 dofile "lua/client/i18n/init.lua"
