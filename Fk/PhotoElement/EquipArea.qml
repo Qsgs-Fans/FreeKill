@@ -12,7 +12,7 @@ import Fk.RoomElement
     +---------------+
  */
 
-Column {
+Item {
   id: root
 
   height: 70
@@ -22,6 +22,9 @@ Column {
   property var subtypes: ["treasure", "weapon", "armor", "defensive_horse", "offensive_horse"]
   property int length: area.length
 
+  // FIXME: Qt 6.6
+Column {
+  anchors.fill: parent
   InvisibleCardArea {
     id: area
     anchors.centerIn: parent
@@ -56,7 +59,7 @@ Column {
   }
 
   Row {
-    width: parent.width
+    width: root.width
     height: itemHeight
 
     Item {
@@ -87,6 +90,7 @@ Column {
       }
     }
   }
+}
 
   function add(inputs)
   {
