@@ -180,6 +180,7 @@ function ServerPlayer:waitForReply(timeout)
     self.serverplayer:setThinking(false)
   end
 
+  -- FIXME: 一控多求无懈
   local queue = self.room.request_queue[self.serverplayer]
   if queue and #queue > 0 and not self.serverplayer:busy() then
     local i, c, j, t = table.unpack(table.remove(queue, 1))
