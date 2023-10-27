@@ -13,6 +13,7 @@ ColumnLayout {
       text: Backend.translate("Lobby BG")
     }
     TextField {
+      Layout.fillWidth: true
       text: config.lobbyBg
     }
     Button {
@@ -32,6 +33,7 @@ ColumnLayout {
       text: Backend.translate("Room BG")
     }
     TextField {
+      Layout.fillWidth: true
       text: config.roomBg
     }
     Button {
@@ -51,6 +53,7 @@ ColumnLayout {
       text: Backend.translate("Game BGM")
     }
     TextField {
+      Layout.fillWidth: true
       text: config.bgmFile
     }
     Button {
@@ -70,6 +73,7 @@ ColumnLayout {
       text: Backend.translate("Poster Girl")
     }
     TextField {
+      Layout.fillWidth: true
       text: config.ladyImg
     }
     Button {

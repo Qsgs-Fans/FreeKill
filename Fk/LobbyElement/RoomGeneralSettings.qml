@@ -11,6 +11,7 @@ Flickable {
 
   ColumnLayout {
     id: layout
+    width: parent.width
     RowLayout {
       anchors.rightMargin: 8
       spacing: 16
@@ -21,6 +22,8 @@ Flickable {
         id: roomName
         maximumLength: 64
         font.pixelSize: 18
+        Layout.rightMargin: 16
+        Layout.fillWidth: true
         text: Backend.translate("$RoomName").arg(Self.screenName)
       }
     }
@@ -142,6 +145,8 @@ Flickable {
         id: roomPassword
         maximumLength: 16
         font.pixelSize: 18
+        Layout.rightMargin: 16
+        Layout.fillWidth: true
       }
     }
 
