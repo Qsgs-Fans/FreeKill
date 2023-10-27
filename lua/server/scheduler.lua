@@ -34,8 +34,7 @@ local requestRoom = setmetatable({
   resume = function(self)
     local err, msg = coroutine.resume(requestCo, self)
     if err == false then
-      fk.qCritical(msg)
-      print(debug.traceback(requestCo))
+      fk.qCritical(msg .. "\n" .. debug.traceback(requestCo))
     end
     return nil, 0
   end,

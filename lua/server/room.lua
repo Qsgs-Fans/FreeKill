@@ -127,8 +127,7 @@ function Room:resume()
 
     -- handle error
     if ret == false then
-      fk.qCritical(err_msg)
-      print(debug.traceback(main_co))
+      fk.qCritical(err_msg .. "\n" .. debug.traceback(main_co))
       goto GAME_OVER
     end
 
@@ -968,7 +967,7 @@ end
 ---@param skill_name nil @ 技能名
 ---@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
 function Room:broadcastSkillInvoke(skill_name, index)
-  print 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
+  fk.qCritical 'Room:broadcastSkillInvoke deprecated; use SPlayer:broadcastSkillInvoke'
   index = index or -1
   self:sendLogEvent("PlaySkillSound", {
     name = skill_name,

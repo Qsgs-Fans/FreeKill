@@ -189,7 +189,7 @@ callbacks["Chat"] = (jsonData) => {
 
 callbacks["ServerMessage"] = (jsonData) => {
   const current = mainStack.currentItem;  // lobby or room
-  current.sendDanmaku('<font color="gold"><b>[Server] </b></font>' + jsonData);
+  current.sendDanmaku('<font color="grey"><b>[Server] </b></font>' + jsonData);
 }
 
 callbacks["ShowToast"] = (j) => toast.show(j);

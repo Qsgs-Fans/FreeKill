@@ -30,6 +30,7 @@ ColumnLayout {
       maximumLength: 64
       font.pixelSize: 18
       text: Self.avatar
+      Layout.fillWidth: true
     }
     Button {
       text: Backend.translate("Update Avatar")
@@ -54,6 +55,8 @@ ColumnLayout {
       id: oldPassword
       echoMode: TextInput.Password
       passwordCharacter: "*"
+      Layout.rightMargin: 16
+      Layout.fillWidth: true
     }
   }
 
@@ -67,6 +70,7 @@ ColumnLayout {
       id: newPassword
       echoMode: TextInput.Password
       passwordCharacter: "*"
+      Layout.fillWidth: true
     }
     Button {
       text: Backend.translate("Update Password")

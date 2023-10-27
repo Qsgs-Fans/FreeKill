@@ -185,13 +185,13 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
-  sendCardEmotionAndLog(room, cardUseEvent)
-
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
+
+  sendCardEmotionAndLog(room, cardUseEvent)
 
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
     logic:breakEvent()
