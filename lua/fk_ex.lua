@@ -179,7 +179,7 @@ end
 ---@field public on_effect nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): bool
 ---@field public on_nullified nil|fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): bool
 ---@field public mod_target_filter nil|fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): bool
----@field public prompt nil|string|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
+---@field public prompt nil|string|fun(self: ActiveSkill, selected_cards: integer[], selected_targets: integer[]): string
 ---@field public interaction any
 
 ---@param spec ActiveSkillSpec
