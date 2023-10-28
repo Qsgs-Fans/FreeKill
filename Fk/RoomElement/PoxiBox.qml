@@ -7,7 +7,7 @@ import Fk.Pages
 GraphicsBox {
   id: root
 
-  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data])
+  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data, extra_data])
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
