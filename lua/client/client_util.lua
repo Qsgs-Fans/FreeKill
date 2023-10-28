@@ -719,7 +719,7 @@ function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi or not poxi.prompt then return "" end
   if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
-  return poxi.prompt(dat, extra_dataa)
+  return poxi.prompt(data, extra_data)
 end
 
 function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
