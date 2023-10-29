@@ -52,7 +52,7 @@ Util.convertSubtypeAndEquipSlot = function(value)
   end
 end
 
---- 根据花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）返回符号。
+--- 根据花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）返回花色ID。
 ---@param symbol string @ 描述/符号（原文，确保没被翻译过）
 ---@return Suit @ 花色ID
 Util.getSuitFromString = function(symbol)
