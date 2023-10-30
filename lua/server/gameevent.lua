@@ -143,7 +143,7 @@ function GameEvent:searchEvents(eventType, n, func, endEvent)
   local events = logic.event_recorder[eventType] or Util.DummyTable
   local from = self.id
   local to = endEvent and endEvent.id or self.end_id
-  if to == -1 then to = #logic.all_game_events end
+  if math.abs(to) == 1 then to = #logic.all_game_events end
   n = n or 1
   func = func or Util.TrueFunc
 
