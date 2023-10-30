@@ -98,7 +98,7 @@ local exChooseSkill = fk.CreateActiveSkill{
     return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)) and #selected < self.max_card_num
   end,
   target_filter = function(self, to_select, selected, cards)
-    if self.pattern ~= "" and #cards == 0 then return end
+    if self.pattern ~= "" and #cards < self.min_card_num then return end
     if #selected < self.max_target_num then
       return table.contains(self.targets, to_select)
     end
