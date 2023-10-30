@@ -370,7 +370,7 @@ end
 fk.client_callback["AskForCardChosen"] = function(jsonData)
   -- jsonData: [ int target_id, string flag, int reason ]
   local data = json.decode(jsonData)
-  local id, flag, reason = data[1], data[2], data[3]
+  local id, flag, reason, prompt = data[1], data[2], data[3], data[4]
   local target = ClientInstance:getPlayerById(id)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
@@ -390,12 +390,14 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
     ui_data = {
       _reason = reason,
       card_data = {},
+      _prompt = prompt,
     }
     if #hand ~= 0 then table.insert(ui_data.card_data, { "$Hand", hand }) end
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
     if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
   else
     ui_data._reason = reason
+    ui_data._prompt = prompt
   end
   ClientInstance:notifyUI("AskForCardChosen", json.encode(ui_data))
 end
@@ -403,7 +405,7 @@ end
 fk.client_callback["AskForCardsChosen"] = function(jsonData)
   -- jsonData: [ int target_id, int min, int max, string flag, int reason ]
   local data = json.decode(jsonData)
-  local id, min, max, flag, reason = data[1], data[2], data[3], data[4], data[5]
+  local id, min, max, flag, reason, prompt = data[1], data[2], data[3], data[4], data[5], data[6]
   local target = ClientInstance:getPlayerById(id)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
@@ -424,7 +426,8 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
       _min = min,
       _max = max,
       _reason = reason,
-      card_data = {}
+      card_data = {},
+      _prompt = prompt,
     }
     if #hand ~= 0 then table.insert(ui_data.card_data, { "$Hand", hand }) end
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
@@ -433,6 +436,7 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
     ui_data._min = min
     ui_data._max = max
     ui_data._reason = reason
+    ui_data._prompt = prompt
   end
   ClientInstance:notifyUI("AskForCardsChosen", json.encode(ui_data))
 end

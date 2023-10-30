@@ -1471,11 +1471,13 @@ end
 ---@param target ServerPlayer @ 被选牌的人
 ---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
+---@param prompt string|nil @ 提示信息
 ---@return integer @ 选择的卡牌id
-function Room:askForCardChosen(chooser, target, flag, reason)
+function Room:askForCardChosen(chooser, target, flag, reason, prompt)
   local command = "AskForCardChosen"
+  prompt = prompt or ""
   self:notifyMoveFocus(chooser, command)
-  local data = {target.id, flag, reason}
+  local data = {target.id, flag, reason, prompt}
   local result = self:doRequest(chooser, command, json.encode(data))
 
   if result == "" then
@@ -1515,15 +1517,17 @@ end
 ---@param max integer @ 最大选牌数
 ---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@param reason string @ 原因，一般是技能名
+---@param prompt string|nil @ 提示信息
 ---@return integer[] @ 选择的id
-function Room:askForCardsChosen(chooser, target, min, max, flag, reason)
+function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
   if min == 1 and max == 1 then
     return { self:askForCardChosen(chooser, target, flag, reason) }
   end
 
   local command = "AskForCardsChosen"
+  prompt = prompt or ""
   self:notifyMoveFocus(chooser, command)
-  local data = {target.id, min, max, flag, reason}
+  local data = {target.id, min, max, flag, reason, prompt}
   local result = self:doRequest(chooser, command, json.encode(data))
 
   local ret

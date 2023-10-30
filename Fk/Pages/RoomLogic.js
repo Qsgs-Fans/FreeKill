@@ -1013,13 +1013,18 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   //  string reason ]
   const data = JSON.parse(jsonData);
   const reason = data._reason;
-
-  roomScene.promptText = Backend.translate("#AskForChooseCard")
-    .arg(Backend.translate(reason));
+  const prompt = data._prompt;
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChooseCard")
+      .arg(Backend.translate(reason));
+  } else {
+    roomScene.setPrompt(processPrompt(prompt), true);
+  }
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
 
   const box = roomScene.popupBox.item;
+  box.prompt = prompt;
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
@@ -1044,15 +1049,21 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   const min = data._min;
   const max = data._max;
   const reason = data._reason;
-
-  roomScene.promptText = Backend.translate("#AskForChooseCards")
+  const prompt = data._prompt;
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChooseCards")
     .arg(Backend.translate(reason)).arg(min).arg(max);
+  } else {
+    roomScene.setPrompt(processPrompt(prompt), true);
+  }
+
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   const box = roomScene.popupBox.item;
   box.multiChoose = true;
   box.min = min;
   box.max = max;
+  box.prompt = prompt;
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
