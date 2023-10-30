@@ -1020,6 +1020,7 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
     self:doAnimate("InvokeUltSkill", {
       name = skill_name,
       player = player.id,
+      deputy = player.deputyGeneral and player.deputyGeneral ~= "" and table.contains(Fk.generals[player.deputyGeneral]:getSkillNameList(), skill_name),
     })
     self:delay(2000)
   end

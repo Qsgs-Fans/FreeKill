@@ -1353,7 +1353,7 @@ callbacks["Animate"] = (jsonData) => {
       roomScene.bigAnim.source = "../RoomElement/UltSkillAnimation.qml";
       roomScene.bigAnim.item.loadData({
         skill_name: data.name,
-        general: photo.general,
+        general: data.deputy ? photo.deputyGeneral : photo.general,
       });
       break;
     }
