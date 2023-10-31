@@ -62,74 +62,20 @@ end
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
 fk.ai_ask_usecard = {}
 
---- 请求使用
+--- 请求使用，先试图使用prompt，再试图使用card_name，最后交给随机AI
 smart_cb["AskForUseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
-  self.use_id = nil
-  self.use_tos = {}
-  local exp = Exppattern:Parse(pattern or card_name)
-  self.avail_cards = table.filter(self.player:getCardIds("&he"), function(id)
-      return exp:match(Fk:getCardById(id)) and not self.player:prohibitUse(Fk:getCardById(id))
-    end
-  )
-
   local ask = fk.ai_ask_usecard[prompt:split(":")[1]]
-  if type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  else
-    local cards = table.map(self.player:getCardIds("&he"), function(id)
-        return Fk:getCardById(id)
-      end
-    )
-    self:sortValue(cards)
-    for _, sth in ipairs(self:getActives(pattern)) do
-      if sth:isInstanceOf(Card) then
-        if sth.skill:canUse(self.player, sth) and not self.player:prohibitUse(sth) then
-          local ret = usePlaySkill(self, sth)
-          if ret ~= "" then
-            return ret
-          end
-        end
-      else
-        local selected = {}
-        for _, c in ipairs(cards) do
-          if sth:cardFilter(c.id, selected) then
-            table.insert(selected, c.id)
-          end
-        end
-        local tc = sth:viewAs(selected)
-        if tc and tc:matchPattern(pattern) then
-          local uc = fk.ai_use_play[tc.name]
-          if type(uc) == "function" then
-            uc(self, tc)
-            if self.use_id then
-              self.use_id = json.encode {
-                skill = sth.name,
-                subcards = selected
-              }
-              break
-            end
-          end
-        end
-      end
-    end
+  if not ask then ask = fk.ai_ask_usecard[card_name] end
+  local ret
+  if ask then
+    ret = ask(self, pattern, prompt, cancelable, extra_data)
+    if ret then return json.encode(ret) end
   end
-  ask = fk.ai_ask_usecard[data[1]]
-  if self.use_id == nil and type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  end
-  if self.use_id == true then
-    self.use_id = self.avail_cards[1]
-  end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = self.use_tos
-    }
-  end
-  return ""
+  if cancelable then return "" end
+  return RandomAI.cb_table["AskForUseCard"](self, jsonData)
 end
 
 -- AskForResponseCard: 询问打出卡牌
@@ -140,38 +86,20 @@ end
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
 fk.ai_response_card = {}
 
----请求打出
----
----优先按照prompt提示信息进行下一级决策，需要定义self.use_id，然后可以根据card_name再进行决策
+-- 同前
 smart_cb["AskForResponseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
-  local pattern = data[2]
-  local prompt = data[3]
-  local cancelable = data[4]
-  local extra_data = data[5]
-  self:updatePlayers()
-  self.use_id = nil
+  local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
+
   local ask = fk.ai_response_card[prompt:split(":")[1]]
-  if type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  else
-    ask = fk.ai_response_card[data[1]]
-    if type(ask) == "function" then
-      ask(self, pattern, prompt, cancelable, extra_data)
-    else
-      local effect = self:eventData("CardEffect")
-      if effect and (effect.card.multiple_targets or self:isEnemy(effect.from, effect.to)) then
-        self:setUseId(pattern)
-      end
-    end
+  if not ask then ask = fk.ai_response_card[card_name] end
+  local ret
+  if ask then
+    ret = ask(self, pattern, prompt, cancelable, extra_data)
+    if ret then return json.encode(ret) end
   end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = {}
-    }
-  end
-  return ""
+  if cancelable then return "" end
+  return RandomAI.cb_table["AskForResponseCard"](self, jsonData)
 end
 
 -- AskForSkillInvoke
