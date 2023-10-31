@@ -25,6 +25,7 @@ Fk:loadTranslationTable{
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Ban General Settings"] = "禁将",
+  ["Set as Avatar"] = "设为头像",
   ["Search"] = "搜索",
   ["Back"] = "返回",
 
