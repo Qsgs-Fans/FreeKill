@@ -38,7 +38,7 @@ fk.ai_use_skill["discard_skill"] = function(self, prompt, cancelable, data)
   if ret == nil or #ret < data.min_num then return nil end
 
   return {
-    cards = json.encode {
+    card = json.encode {
       skill = "discard_skill",
       subcards = ask
     }
@@ -48,26 +48,27 @@ end
 -- choose_players_skill: 选人相关AI
 -------------------------------------
 
+---@class ChoosePlayersReply
+---@field cardId integer|nil
+---@field targets integer[]
+
 --- 选人相关判定函数的表。键为技能名，值为原型如下的函数。
----@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool)>
+---@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool): ChoosePlayersReply|nil>
 fk.ai_choose_players = {}
 
 fk.ai_use_skill["choose_players_skill"] = function(self, prompt, cancelable, data)
   local ask = fk.ai_choose_players[data.skillName]
-  if type(ask) == "function" then
-    ask(self, data.targets, data.min_num, data.num, cancelable)
+  local ret
+  if ask then
+    ret = ask(self, data.targets, data.min_num, data.num, cancelable)
   end
-  if #self.use_tos > 0 then
-    if self.use_id then
-      self.use_id = json.encode {
-        skill = data.skillName,
-        subcards = self.use_id
-      }
-    else
-      self.use_id = json.encode {
-        skill = data.skillName,
-        subcards = {}
-      }
-    end
+  if ret then
+    return {
+      card = json.encode {
+        skill = "discard_skill",
+        subcards = { ret.cardId }
+      },
+      targets = ret.targets,
+    }
   end
 end
