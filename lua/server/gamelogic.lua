@@ -44,7 +44,7 @@ function GameLogic:run()
   self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   room:adjustSeats()
-  --[[ 因为未完工，在release版暂时不启用。
+  ---[[ 因为未完工，在release版暂时不启用。
   for _, p in ipairs(room.players) do
     p.ai = SmartAI:new(p)
   end

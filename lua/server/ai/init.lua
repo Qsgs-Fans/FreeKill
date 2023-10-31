@@ -4,7 +4,7 @@ AI = require "server.ai.ai"
 TrustAI = require "server.ai.trust_ai"
 RandomAI = require "server.ai.random_ai"
 
---[[ 在release版暂时不启动。
+---[[ 在release版暂时不启动。
 SmartAI = require "server.ai.smart_ai"
 
 -- load ai module from packages
