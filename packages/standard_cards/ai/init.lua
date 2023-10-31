@@ -164,7 +164,7 @@ fk.ai_nullification.snatch = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) and self:isEnemie(from) then
+    if self:isEnemy(to) and self:isEnemy(from) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -196,7 +196,7 @@ fk.ai_nullification.dismantlement = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) and self:isEnemie(from) then
+    if self:isEnemy(to) and self:isEnemy(from) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -222,7 +222,7 @@ fk.ai_nullification.indulgence = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) then
+    if self:isEnemy(to) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -261,7 +261,7 @@ end
 
 fk.ai_nullification.collateral = function(self, card, to, from, positive)
   if positive then
-    if self:isFriend(to) and self:isEnemie(from) then
+    if self:isFriend(to) and self:isEnemy(from) then
       if #self.avail_cards > 1 or self:isWeak(to) or to.id == self.player.id then
         self.use_id = self.avail_cards[1]
       end
@@ -271,7 +271,7 @@ end
 
 fk.ai_nullification.ex_nihilo = function(self, card, to, from, positive)
   if positive then
-    if self:isEnemie(to) then
+    if self:isEnemy(to) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -293,7 +293,7 @@ fk.ai_nullification.savage_assault = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) then
+    if self:isEnemy(to) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -309,7 +309,7 @@ fk.ai_nullification.archery_attack = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) then
+    if self:isEnemy(to) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -319,7 +319,7 @@ end
 
 fk.ai_nullification.god_salvation = function(self, card, to, from, positive)
   if positive then
-    if self:isEnemie(to) and to.hp ~= to.maxHp then
+    if self:isEnemy(to) and to.hp ~= to.maxHp then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -410,7 +410,7 @@ end
 
 fk.ai_discard["#double_swords_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local use = self:eventData("UseCard")
-  return self:isEnemie(use.from) and { self.player:getCardIds("h")[1] }
+  return self:isEnemy(use.from) and { self.player:getCardIds("h")[1] }
 end
 
 fk.ai_discard["#axe_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
@@ -420,7 +420,7 @@ fk.ai_discard["#axe_skill"] = function(self, min_num, num, include_equip, cancel
     if Fk:getCardById(cid):matchPattern(pattern) then
       table.insert(ids, cid)
     end
-    if #ids >= min_num and self:isEnemie(effect.to)
+    if #ids >= min_num and self:isEnemy(effect.to)
     and (self:isWeak(effect.to) or #self.player:getCardIds("he") > 3) then
       return ids
     end

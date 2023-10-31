@@ -98,7 +98,7 @@ end
 fk.ai_discard["fire_attack_skill"] = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
-    if self:isEnemie(p) then
+    if self:isEnemy(p) then
       local cards = table.map(self.player:getCardIds("h"), function(id)
         return Fk:getCardById(id)
       end)
@@ -122,7 +122,7 @@ fk.ai_nullification.fire_attack = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) and #to:getCardIds("h") > 0 and #from:getCardIds("h") > 1 then
+    if self:isEnemy(to) and #to:getCardIds("h") > 0 and #from:getCardIds("h") > 1 then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end
@@ -154,7 +154,7 @@ fk.ai_nullification.supply_shortage = function(self, card, to, from, positive)
       end
     end
   else
-    if self:isEnemie(to) then
+    if self:isEnemy(to) then
       if #self.avail_cards > 1 or self:isWeak(to) then
         self.use_id = self.avail_cards[1]
       end

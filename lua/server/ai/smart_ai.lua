@@ -584,7 +584,7 @@ smart_cb["AskForResponseCard"] = function(self, jsonData)
       ask(self, pattern, prompt, cancelable, extra_data)
     else
       local effect = self:eventData("CardEffect")
-      if effect and (effect.card.multiple_targets or self:isEnemie(effect.from, effect.to)) then
+      if effect and (effect.card.multiple_targets or self:isEnemy(effect.from, effect.to)) then
         self:setUseId(pattern)
       end
     end
@@ -825,13 +825,13 @@ function SmartAI:getRetrialCardId(cards, exchange)
       if self:isFriend(judge.who) then
         return
       end
-    elseif self:isEnemie(judge.who) then
+    elseif self:isEnemy(judge.who) then
       return
     end
   end
   for _, c in ipairs(cards) do
     if self:isFriend(judge.who) and c:matchPattern(ai_judge[1])==ai_judge[2]
-    or self:isEnemie(judge.who) and c:matchPattern(ai_judge[1])~=ai_judge[2]
+    or self:isEnemy(judge.who) and c:matchPattern(ai_judge[1])~=ai_judge[2]
     then
       table.insert(canRetrial, c)
     end
@@ -1278,7 +1278,7 @@ end
 ---@param p ServerPlayer @目标
 ---@param tp ServerPlayer|nil @比较目标
 ---@return boolean|nil @有时候需要nil来判断中立角色
-function SmartAI:isEnemie(p, tp)
+function SmartAI:isEnemy(p, tp)
   if tp then
     local bt = self:isFriend(p)
     return bt ~= nil and bt ~= self:isFriend(tp)

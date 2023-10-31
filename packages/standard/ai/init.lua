@@ -194,7 +194,7 @@ fk.ai_skill_invoke["tieqi"] = function(self, data, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
     p = self.room:getPlayerById(p)
-    if self:isEnemie(p) then
+    if self:isEnemy(p) then
       return true
     end
   end
@@ -215,7 +215,7 @@ fk.ai_skill_invoke["biyue"] = true
 fk.ai_choose_players["tuxi"] = function(self, targets, min_num, num, cancelable)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if self:isEnemie(p) and #self.use_tos < num then
+    if self:isEnemy(p) and #self.use_tos < num then
       table.insert(self.use_tos, pid)
     end
   end
@@ -247,7 +247,7 @@ fk.ai_choose_players["liuli"] = function(self, targets, min_num, num, cancelable
   self:sortValue(cards)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if self:isEnemie(p) and #self.use_tos < num and #cards > 0 then
+    if self:isEnemy(p) and #self.use_tos < num and #cards > 0 then
       table.insert(self.use_tos, pid)
       self.use_id = { cards[1].id }
       return
