@@ -417,7 +417,7 @@ Item {
     }
 
     Button {
-      text: Backend.translate("Set Avatar")
+      text: Backend.translate("Set as Avatar")
       enabled: detailGeneralCard.name !== "" && !opTimer.running && Self.avatar !== detailGeneralCard.name
       onClicked: {
         mainWindow.busy = true;
