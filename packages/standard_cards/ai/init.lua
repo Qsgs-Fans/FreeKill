@@ -101,7 +101,7 @@ fk.ai_use_play["slash"] = function(self, card)
   end
 end
 
-fk.ai_ask_usecard["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
+fk.ai_ask_use_card["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
   local act = self:getActives(pattern)
   if tonumber(prompt:split(":")[4]) > #act then
     return
@@ -138,7 +138,7 @@ fk.ai_ask_usecard["#slash-jink"] = function(self, pattern, prompt, cancelable, e
   end
 end
 
-fk.ai_ask_usecard["#slash-jinks"] = fk.ai_ask_usecard["#slash-jink"]
+fk.ai_ask_use_card["#slash-jinks"] = fk.ai_ask_use_card["#slash-jink"]
 
 fk.ai_use_play["snatch"] = function(self, card)
   for _, p in ipairs(self.friends_noself) do

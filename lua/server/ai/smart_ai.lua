@@ -60,15 +60,15 @@ end
 
 --- 键是prompt的第一项或者牌名，优先prompt。
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
-fk.ai_ask_usecard = {}
+fk.ai_ask_use_card = {}
 
 --- 请求使用，先试图使用prompt，再试图使用card_name，最后交给随机AI
 smart_cb["AskForUseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
-  local ask = fk.ai_ask_usecard[prompt:split(":")[1]]
-  if not ask then ask = fk.ai_ask_usecard[card_name] end
+  local ask = fk.ai_ask_use_card[prompt:split(":")[1]]
+  if not ask then ask = fk.ai_ask_use_card[card_name] end
   local ret
   if ask then
     ret = ask(self, pattern, prompt, cancelable, extra_data)
@@ -302,7 +302,7 @@ end
 ---@param prompt any
 ---@param cancelable any
 ---@param extra_data any
-fk.ai_ask_usecard.nullification = function(self, pattern, prompt, cancelable, extra_data)
+fk.ai_ask_use_card.nullification = function(self, pattern, prompt, cancelable, extra_data)
   local datas = self:eventsData("CardEffect")
   local effect = datas[#datas] --修改了无懈的请求，不用在room.lua里加记录了
   local positive = #datas % 2 == 1
@@ -326,7 +326,7 @@ end
 ---@param prompt any
 ---@param cancelable any
 ---@param extra_data any
-fk.ai_ask_usecard["#AskForPeaches"] = function(self, pattern, prompt, cancelable, extra_data)
+fk.ai_ask_use_card["#AskForPeaches"] = function(self, pattern, prompt, cancelable, extra_data)
   local dying = self:eventData("Dying")
   local who = self.room:getPlayerById(dying.who)
   if who and self:objectiveLevel(who) < -1 then
@@ -359,7 +359,7 @@ fk.ai_ask_usecard["#AskForPeaches"] = function(self, pattern, prompt, cancelable
   end
 end
 
-fk.ai_ask_usecard["#AskForPeachesSelf"] = fk.ai_ask_usecard["#AskForPeaches"]
+fk.ai_ask_use_card["#AskForPeachesSelf"] = fk.ai_ask_use_card["#AskForPeaches"]
 
 ---修正卡牌价值
 ---
