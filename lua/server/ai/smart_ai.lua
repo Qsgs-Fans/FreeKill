@@ -102,32 +102,21 @@ fk.ai_objective_level = {}
 ---@type table<string, fun(self: SmartAI, jsonData: string): string>
 local smart_cb = {}
 
---- 请求发动主动技
----
---- 总的请求技，从它分支出各种功能技
+--- 请求发动主动技，进而发散到主动技和各种aux_skill
 smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local data = json.decode(jsonData)
-  local skill = Fk.skills[data[1]]
-  local prompt = data[2]
-  local cancelable = data[3]
-  self:updatePlayers()
-  local extra_data = json.decode(data[4])
+  local skillName, prompt, cancelable, extra_data = table.unpack(data)
+  local skill = Fk.skills[skillName]
   for k, v in pairs(extra_data) do
     skill[k] = v
   end
-  self.use_id = nil
-  self.use_tos = {}
-  local ask = fk.ai_use_skill[data[1]]
+
+  local ask = fk.ai_use_skill[skillName]
   if type(ask) == "function" then
-    ask(self, prompt, cancelable, extra_data)
+    local ret = ask(self, prompt, cancelable, extra_data)
+    if ret then return json.encode(ret) end
   end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = self.use_tos
-    }
-  end
-  return ""
+  return RandomAI.cb_table["AskForUseActiveSkill"](self, jsonData)
 end
 
 --- 请求发动技能

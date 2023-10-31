@@ -1067,7 +1067,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
 
   local command = "AskForUseActiveSkill"
   self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
-  local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
+  local data = {skill_name, prompt, cancelable, extra_data}
 
   Fk.currentResponseReason = extra_data.skillName
   local result = self:doRequest(player, command, json.encode(data))
