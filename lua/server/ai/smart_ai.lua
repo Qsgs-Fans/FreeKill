@@ -22,14 +22,20 @@ local SmartAI = AI:subclass("SmartAI")
   这些表的内容只要加载完成后就不会改变，所以定义成了全局表的样子。
 --]]
 
+---@class UseReply
+---@field card integer|string @ string情况下是json.encode后
+---@field targets integer[]
+---@field special_skill string @ 出牌阶段空闲点使用实体卡特有
+---@field interaction_data any @ 因技能而异，一般都是nil
+
 --- 用来应对Room:askForUseActiveSkill的表。
----@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any)>
+---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any): UseReply | nil>
 fk.ai_use_skill = {}
 
 --- TOdo? Room:askForGeneral暂缺
 
 --- 用来应对Room:askForSkillInvoke的表。
----@type table<string, fun(self: SmartAI, extra_data: any, prompt: string)>
+---@type table<string, boolean | fun(self: SmartAI, extra_data: any, prompt: string): bool>
 fk.ai_skill_invoke = {}
 
 --- 用来应对Room:askForAG的表。表的键是prompt的第一项。
@@ -112,28 +118,29 @@ smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
   end
 
   local ask = fk.ai_use_skill[skillName]
-  if type(ask) == "function" then
+  if ask then
     local ret = ask(self, prompt, cancelable, extra_data)
     if ret then return json.encode(ret) end
   end
+  if cancelable then return "" end
   return RandomAI.cb_table["AskForUseActiveSkill"](self, jsonData)
 end
 
 --- 请求发动技能
 smart_cb["AskForSkillInvoke"] = function(self, jsonData)
   local data = json.decode(jsonData)
+  local skillName = data[1]
   local prompt = data[2]
-  local extra_data = data[3]
-  local ask = fk.ai_skill_invoke[data[1]]
-  self:updatePlayers()
+  local ask = fk.ai_skill_invoke[skillName]
+
   if type(ask) == "function" then
-    return ask(self, extra_data, prompt) and "1" or ""
+    return ask(self, prompt) and "1" or ""
   elseif type(ask) == "boolean" then
     return ask and "1" or ""
-  elseif Fk.skills[data[1]].frequency == 1 then
+  elseif Fk.skills[skillName].frequency == Skill.Frequent then
     return "1"
   else
-    return table.random { "1", "" }
+    return RandomAI.cb_table["AskForSkillInvoke"](self, jsonData)
   end
 end
 
