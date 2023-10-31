@@ -31,7 +31,7 @@ local function useActiveSkill(self, skill, card)
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
-        if player:prohibitUse(card) then
+        if player:isProhibited(p, card) then
           ret = false
         end
       end
