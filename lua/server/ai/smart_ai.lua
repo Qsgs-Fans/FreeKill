@@ -16,11 +16,13 @@
 ---@class SmartAI: AI
 local SmartAI = AI:subclass("SmartAI")
 
---[[
-  * 数据表准备部分 *
-  这部分定义了各种以后决策、拓展等都会用到的表。
-  这些表的内容只要加载完成后就不会改变，所以定义成了全局表的样子。
---]]
+---@type table<string, fun(self: SmartAI, jsonData: string): string>
+local smart_cb = {}
+
+-- AskForUseActiveSkill: 询问发动主动技/视为技
+-- * 此处 UseReply.card 必定由 json.encode 而来
+-- * 且原型为 { skill = skillName, subcards = integer[] }
+----------------------------------------------------------
 
 ---@class UseReply
 ---@field card integer|string @ string情况下是json.encode后
@@ -28,15 +30,172 @@ local SmartAI = AI:subclass("SmartAI")
 ---@field special_skill string @ 出牌阶段空闲点使用实体卡特有
 ---@field interaction_data any @ 因技能而异，一般都是nil
 
---- 用来应对Room:askForUseActiveSkill的表。
 ---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any): UseReply | nil>
 fk.ai_use_skill = {}
 
+smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local skillName, prompt, cancelable, extra_data = table.unpack(data)
+  local skill = Fk.skills[skillName]
+  for k, v in pairs(extra_data) do
+    skill[k] = v
+  end
+
+  local ask = fk.ai_use_skill[skillName]
+  if ask then
+    local ret = ask(self, prompt, cancelable, extra_data)
+    if ret then return json.encode(ret) end
+  end
+  if cancelable then return "" end
+  return RandomAI.cb_table["AskForUseActiveSkill"](self, jsonData)
+end
+
 --- TOdo? Room:askForGeneral暂缺
 
---- 用来应对Room:askForSkillInvoke的表。
+-- AskForUseCard: 询问使用卡牌
+-- 判断函数一样返回UseReply，此时卡牌可能是integer或者string
+-- 为string的话肯定是由ViewAsSkill转化而来
+-- 真的要考虑ViewAsSkill吗，害怕
+---------------------------------------------------------
+
+--- 键是prompt的第一项或者牌名，优先prompt。
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
+fk.ai_ask_usecard = {}
+
+--- 请求使用
+smart_cb["AskForUseCard"] = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
+
+  self.use_id = nil
+  self.use_tos = {}
+  local exp = Exppattern:Parse(pattern or card_name)
+  self.avail_cards = table.filter(self.player:getCardIds("&he"), function(id)
+      return exp:match(Fk:getCardById(id)) and not self.player:prohibitUse(Fk:getCardById(id))
+    end
+  )
+
+  local ask = fk.ai_ask_usecard[prompt:split(":")[1]]
+  if type(ask) == "function" then
+    ask(self, pattern, prompt, cancelable, extra_data)
+  else
+    local cards = table.map(self.player:getCardIds("&he"), function(id)
+        return Fk:getCardById(id)
+      end
+    )
+    self:sortValue(cards)
+    for _, sth in ipairs(self:getActives(pattern)) do
+      if sth:isInstanceOf(Card) then
+        if sth.skill:canUse(self.player, sth) and not self.player:prohibitUse(sth) then
+          local ret = usePlaySkill(self, sth)
+          if ret ~= "" then
+            return ret
+          end
+        end
+      else
+        local selected = {}
+        for _, c in ipairs(cards) do
+          if sth:cardFilter(c.id, selected) then
+            table.insert(selected, c.id)
+          end
+        end
+        local tc = sth:viewAs(selected)
+        if tc and tc:matchPattern(pattern) then
+          local uc = fk.ai_use_play[tc.name]
+          if type(uc) == "function" then
+            uc(self, tc)
+            if self.use_id then
+              self.use_id = json.encode {
+                skill = sth.name,
+                subcards = selected
+              }
+              break
+            end
+          end
+        end
+      end
+    end
+  end
+  ask = fk.ai_ask_usecard[data[1]]
+  if self.use_id == nil and type(ask) == "function" then
+    ask(self, pattern, prompt, cancelable, extra_data)
+  end
+  if self.use_id == true then
+    self.use_id = self.avail_cards[1]
+  end
+  if self.use_id then
+    return json.encode {
+      card = self.use_id,
+      targets = self.use_tos
+    }
+  end
+  return ""
+end
+
+-- AskForResponseCard: 询问打出卡牌
+-- 注意事项同前
+-------------------------------------
+
+-- 一样的牌名或者prompt做键优先prompt
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
+fk.ai_response_card = {}
+
+---请求打出
+---
+---优先按照prompt提示信息进行下一级决策，需要定义self.use_id，然后可以根据card_name再进行决策
+smart_cb["AskForResponseCard"] = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local pattern = data[2]
+  local prompt = data[3]
+  local cancelable = data[4]
+  local extra_data = data[5]
+  self:updatePlayers()
+  self.use_id = nil
+  local ask = fk.ai_response_card[prompt:split(":")[1]]
+  if type(ask) == "function" then
+    ask(self, pattern, prompt, cancelable, extra_data)
+  else
+    ask = fk.ai_response_card[data[1]]
+    if type(ask) == "function" then
+      ask(self, pattern, prompt, cancelable, extra_data)
+    else
+      local effect = self:eventData("CardEffect")
+      if effect and (effect.card.multiple_targets or self:isEnemy(effect.from, effect.to)) then
+        self:setUseId(pattern)
+      end
+    end
+  end
+  if self.use_id then
+    return json.encode {
+      card = self.use_id,
+      targets = {}
+    }
+  end
+  return ""
+end
+
+-- AskForSkillInvoke
+-------------------------
+
 ---@type table<string, boolean | fun(self: SmartAI, extra_data: any, prompt: string): bool>
 fk.ai_skill_invoke = {}
+
+smart_cb["AskForSkillInvoke"] = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local skillName = data[1]
+  local prompt = data[2]
+  local ask = fk.ai_skill_invoke[skillName]
+
+  if type(ask) == "function" then
+    return ask(self, prompt) and "1" or ""
+  elseif type(ask) == "boolean" then
+    return ask and "1" or ""
+  elseif Fk.skills[skillName].frequency == Skill.Frequent then
+    return "1"
+  else
+    return RandomAI.cb_table["AskForSkillInvoke"](self, jsonData)
+  end
+end
 
 --- 用来应对Room:askForAG的表。表的键是prompt的第一项。
 ---@type table<string, fun(self: SmartAI, id_list: integer[], cancelable: bool, prompt: string)>
@@ -46,9 +205,7 @@ fk.ai_ask_for_ag = {}
 ---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
 fk.ai_use_play = {}
 
---- 用来应对Room:askForUseCard的表。表的键是prompt的第一项或者牌名，优先prompt。
----@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
-fk.ai_ask_usecard = {}
+
 
 ---[effect.card.name] = function(self, effect.card, room:getPlayerById(effect.to), room:getPlayerById(effect.from), positive)
 ---@type table<string, fun(self: SmartAI, card: Card, to: ServerPlayer, from: ServerPlayer, positive: bool)>
@@ -65,12 +222,6 @@ fk.ai_card = {}
 ---[skill.name] = 0
 ---@type table<string|number, number>
 fk.cardValue = {}
-
----[prompt:split(":")[1]] = function(self, pattern, prompt, cancelable, extra_data)
----
----[card_name] = function(self, pattern, prompt, cancelable, extra_data)
----@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any)>
-fk.ai_response_card = {}
 
 ---[reason] = function(self, to, flag)
 ---@type table<string, fun(self: SmartAI, to: ServerPlayer, flag: string)>
@@ -94,55 +245,6 @@ fk.ai_judge = {}
 ---返回的值大于0则为敌，小于0则为友，一般是值大于等于3才会杀目标，小于等于-2才会救目标
 ---@type table<string, fun(self: SmartAI, to: ServerPlayer)>
 fk.ai_objective_level = {}
-
---[[
-  * SmartAI类成员函数部分 *
---]]
-
---[[
-  * command处理函数部分 *
-  这部分就像RandomAI一样对各种请求类型返回相应的数据。
-  当然了，SmartAI会尽可能做出合乎逻辑的决策。
---]]
-
----@type table<string, fun(self: SmartAI, jsonData: string): string>
-local smart_cb = {}
-
---- 请求发动主动技，进而发散到主动技和各种aux_skill
-smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local skillName, prompt, cancelable, extra_data = table.unpack(data)
-  local skill = Fk.skills[skillName]
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
-
-  local ask = fk.ai_use_skill[skillName]
-  if ask then
-    local ret = ask(self, prompt, cancelable, extra_data)
-    if ret then return json.encode(ret) end
-  end
-  if cancelable then return "" end
-  return RandomAI.cb_table["AskForUseActiveSkill"](self, jsonData)
-end
-
---- 请求发动技能
-smart_cb["AskForSkillInvoke"] = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local skillName = data[1]
-  local prompt = data[2]
-  local ask = fk.ai_skill_invoke[skillName]
-
-  if type(ask) == "function" then
-    return ask(self, prompt) and "1" or ""
-  elseif type(ask) == "boolean" then
-    return ask and "1" or ""
-  elseif Fk.skills[skillName].frequency == Skill.Frequent then
-    return "1"
-  else
-    return RandomAI.cb_table["AskForSkillInvoke"](self, jsonData)
-  end
-end
 
 --- 请求AG
 smart_cb["AskForAG"] = function(self, jsonData)
@@ -243,83 +345,6 @@ local function usePlaySkill(self, skill)
       card = self.use_id,
       targets = self.use_tos,
       special_skill = self.special_skill
-    }
-  end
-  return ""
-end
-
---- 请求使用
----
----优先由prompt进行下一级的决策，需要定义self.use_id，如果卡牌需要目标也需要给self.use_tos添加角色id为目标
----
----然后若没有定义self.use_id则由card_name再进行决策
-smart_cb["AskForUseCard"] = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local pattern = data[2]
-  local prompt = data[3]
-  local cancelable = data[4]
-  local extra_data = data[5]
-  self:updatePlayers()
-  self.use_id = nil
-  self.use_tos = {}
-  local exp = Exppattern:Parse(data[2] or data[1])
-  self.avail_cards = table.filter(self.player:getCardIds("&he"), function(id)
-      return exp:match(Fk:getCardById(id)) and not self.player:prohibitUse(Fk:getCardById(id))
-    end
-  )
-  Self = self.player
-  local ask = fk.ai_ask_usecard[prompt:split(":")[1]]
-  if type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  else
-    local cards = table.map(self.player:getCardIds("&he"), function(id)
-        return Fk:getCardById(id)
-      end
-    )
-    self:sortValue(cards)
-    for _, sth in ipairs(self:getActives(pattern)) do
-      if sth:isInstanceOf(Card) then
-        if sth.skill:canUse(self.player, sth) and not self.player:prohibitUse(sth) then
-          local ret = usePlaySkill(self, sth)
-          if ret ~= "" then
-            return ret
-          end
-        end
-      else
-        local selected = {}
-        for _, c in ipairs(cards) do
-          if sth:cardFilter(c.id, selected) then
-            table.insert(selected, c.id)
-          end
-        end
-        local tc = sth:viewAs(selected)
-        if tc and tc:matchPattern(pattern) then
-          local uc = fk.ai_use_play[tc.name]
-          if type(uc) == "function" then
-            uc(self, tc)
-            if self.use_id then
-              self.use_id = json.encode {
-                skill = sth.name,
-                subcards = selected
-              }
-              break
-            end
-          end
-        end
-      end
-    end
-  end
-  ask = fk.ai_ask_usecard[data[1]]
-  if self.use_id == nil and type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  end
-  if self.use_id == true then
-    self.use_id = self.avail_cards[1]
-  end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = self.use_tos
     }
   end
   return ""
@@ -558,40 +583,6 @@ function SmartAI:sortPriority(cards, reverse)
   if reverse then
     cards = table.reverse(cards)
   end
-end
-
----请求打出
----
----优先按照prompt提示信息进行下一级决策，需要定义self.use_id，然后可以根据card_name再进行决策
-smart_cb["AskForResponseCard"] = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local pattern = data[2]
-  local prompt = data[3]
-  local cancelable = data[4]
-  local extra_data = data[5]
-  self:updatePlayers()
-  self.use_id = nil
-  local ask = fk.ai_response_card[prompt:split(":")[1]]
-  if type(ask) == "function" then
-    ask(self, pattern, prompt, cancelable, extra_data)
-  else
-    ask = fk.ai_response_card[data[1]]
-    if type(ask) == "function" then
-      ask(self, pattern, prompt, cancelable, extra_data)
-    else
-      local effect = self:eventData("CardEffect")
-      if effect and (effect.card.multiple_targets or self:isEnemy(effect.from, effect.to)) then
-        self:setUseId(pattern)
-      end
-    end
-  end
-  if self.use_id then
-    return json.encode {
-      card = self.use_id,
-      targets = {}
-    }
-  end
-  return ""
 end
 
 ---根据pattern获取可用的卡牌或转化技
