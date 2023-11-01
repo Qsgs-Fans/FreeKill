@@ -2251,6 +2251,7 @@ end
 ---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
+  ---ul return false
   return execGameEvent(GameEvent.UseCard, cardUseEvent)
 end
 
@@ -2583,7 +2584,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
-          self:useCard(use)
+          self:useCard(use) --处理卡片效果
         end
 
         if not cardEffectEvent.isCancellOut then
@@ -2650,7 +2651,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
       if use then
         use.toCard = cardEffectEvent.card
         use.responseToEvent = cardEffectEvent
-        self:useCard(use)
+        self:useCard(use) --要求无效
       end
     end
     Fk.currentResponsePattern = nil
@@ -2697,7 +2698,7 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   use.tos = table.map(tos, function(p) return { p.id } end)
   use.card = card
   use.extraUse = extra
-  self:useCard(use)
+  self:useCard(use) --使用虚拟卡 ...
 
   return true
 end

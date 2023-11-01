@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+
+
 local function drawInit(room, player, n)
   -- TODO: need a new function to call the UI
   local cardIds = room:getNCards(n)
@@ -314,7 +316,13 @@ GameEvent.functions[GameEvent.Phase] = function(self)
 
           local use = room:handleUseCardReply(player, result)
           if use then
-            room:useCard(use)
+            --- room:askForDiscard(player, 1, 1, false, "game_rule", false) --ul
+            --- D:\GitHub\FreeKill\FreeKill\Fk\RoomElement\TestDialog.qml
+
+            --- local result = room:askForCustomDialog(player, "simayi", "FK/RoomElement/TestDialog.qml", "Hello, world123. FROM LUA")
+            --- print(result)
+            
+            room:useCard(use,room) --Play
           end
 
           if player._play_phase_end then

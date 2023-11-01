@@ -479,6 +479,7 @@ Item {
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
+          //场景
           if (roomScene.state == "notactive" || roomScene.state == "replying") {
             return false;
           }

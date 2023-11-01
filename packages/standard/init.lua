@@ -1148,7 +1148,7 @@ local lijian = fk.CreateActiveSkill{
       card = duel,
       prohibitedCardNames = { "nullification" },
     }
-    room:useCard(new_use)
+    room:useCard(new_use) --- 离间
   end,
 }
 local biyue = fk.CreateTriggerSkill{

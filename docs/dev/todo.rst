@@ -34,7 +34,7 @@ height等。因为影响到的都是Image所以设置这些应该是够了。
 
 可以通过类似fk.Backend:loadDialog的方式弹出对话框。在Lua文件中相应的地方影响client_callback这张全局表。但同时考虑到拓展包比server/client相关的Lua先加载，或许需要一些特殊的办法，比如弄一张全局表，然后client.lua初始回调函数列表的时候先把那个表的结果加进去之类的。
 
-至于Lua如何与QML进行交互，毫无疑问的是通过JSON字符串。QML最后需要自己将数据发回给服务端，这里需要用到ClientInstance手动发送了，不能用RoomLogic.js。同样的需要有统一的方法初始化QML对话框的数据，考虑都传入JSON字符串，然后QML在Component.onComplete时候加载初始化数据。
+至于Lua如何与QML进行交互，毫无疑问的是通过JSON字符串。QML最后需要自己将数据发回给服务端，这里需要用到 ClientInstance 手动发送了，不能用RoomLogic.js。同样的需要有统一的方法初始化QML对话框的数据，考虑都传入JSON字符串，然后QML在Component.onComplete时候加载初始化数据。
 
 skin-bank.js的话依然可以用相对位置进行加载，这个理论上应该是不会被影响到。
 
