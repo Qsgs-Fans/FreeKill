@@ -228,6 +228,9 @@ random_cb["PlayCard"] = function(self, jsonData)
   return ""
 end
 
+-- FIXME: for smart ai
+RandomAI.cb_table = random_cb
+
 function RandomAI:initialize(player)
   AI.initialize(self, player)
   self.cb_table = random_cb
