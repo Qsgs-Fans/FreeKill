@@ -298,25 +298,29 @@ function resortHandcards() {
   }
 
   dashboard.handcardArea.cards.sort((prev, next) => {
-    if (prev.type === next.type) {
-      const prevSubtypeNumber = subtypeString2Number[prev.subtype];
-      const nextSubtypeNumber = subtypeString2Number[next.subtype];
-      if (prevSubtypeNumber === nextSubtypeNumber) {
-        const splitedPrevName = prev.name.split('__');
-        const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+    if (prev.footnote === next.footnote) {
+      if (prev.type === next.type) {
+        const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+        const nextSubtypeNumber = subtypeString2Number[next.subtype];
+        if (prevSubtypeNumber === nextSubtypeNumber) {
+          const splitedPrevName = prev.name.split('__');
+          const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
 
-        const splitedNextName = next.name.split('__');
-        const nextTrueName = splitedNextName[splitedNextName.length - 1];
-        if (prevTrueName === nextTrueName) {
-          return prev.cid - next.cid;
+          const splitedNextName = next.name.split('__');
+          const nextTrueName = splitedNextName[splitedNextName.length - 1];
+          if (prevTrueName === nextTrueName) {
+            return prev.cid - next.cid;
+          } else {
+            return prevTrueName > nextTrueName ? -1 : 1;
+          }
         } else {
-          return prevTrueName > nextTrueName ? -1 : 1;
+          return prevSubtypeNumber - nextSubtypeNumber;
         }
       } else {
-        return prevSubtypeNumber - nextSubtypeNumber;
+        return prev.type - next.type;
       }
     } else {
-      return prev.type - next.type;
+      return prev.footnote > next.footnote ? 1 : -1;
     }
   });
 
