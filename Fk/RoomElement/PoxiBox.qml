@@ -116,7 +116,7 @@ GraphicsBox {
       width: 120
       height: 35
       text: Backend.translate("Cancel")
-      enabled: root.cancelable
+      visible: root.cancelable
       onClicked: root.cardsSelected([])
     }
 

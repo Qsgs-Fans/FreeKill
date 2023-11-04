@@ -75,6 +75,7 @@ Fk:loadTranslationTable({
   ["#AskForGeneral"] = "",
   ["#AskForSkillInvoke"] = "Do you want to use skill %1?",
   ["#AskForChoice"] = "%1: Please choose",
+  ["#AskForCheck"] = "%1: Please choose",
   ["#choose-trigger"] = "Please choose the skill to use",
   ["trigger"] = "Trigger skill",
   -- ["Please arrange cards"] = "请拖拽移动卡牌",
@@ -83,6 +84,7 @@ Fk:loadTranslationTable({
   ["AskForGeneral"] = "Choosing general",
   ["AskForGuanxing"] = "Stargazing",
   ["AskForChoice"] = "Making choice",
+  ["AskForCheck"] = "Making choice",
   ["AskForPindian"] = "pindian",
   ["PlayCard"] = "Playing card",
 

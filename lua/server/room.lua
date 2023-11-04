@@ -1658,6 +1658,34 @@ function Room:askForChoice(player, choices, skill_name, prompt, detailed, all_ch
   return result
 end
 
+--- 询问一名玩家从众多选项中勾选任意项。
+---@param player ServerPlayer @ 要询问的玩家
+---@param choices string[] @ 可选选项列表
+---@param minNum number @ 最少选择项数
+---@param maxNum number @ 最多选择项数
+---@param skill_name string|nil @ 技能名
+---@param prompt string|nil @ 提示信息
+---@param cancelable bool|nil @ 是否可取消
+---@param detailed bool @ 选项详细描述
+---@param all_choices string[]|nil @ 所有选项（不可选变灰）
+---@return string[] @ 选择的选项
+function Room:askForCheck(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
+  cancelable = (cancelable == nil) and true or cancelable
+  if #choices == 1 and not all_choices then return {} end
+  assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
+  local command = "AskForCheck"
+  skill_name = skill_name or ""
+  prompt = prompt or ""
+  all_choices = all_choices or choices
+  detailed = detailed or false
+  self:notifyMoveFocus(player, skill_name)
+  local result = self:doRequest(player, command, json.encode{
+    choices, all_choices, {minNum, maxNum}, cancelable, skill_name, prompt, detailed
+  })
+  if result == "" then return {} end
+  return json.decode(result)
+end
+
 --- 询问玩家是否发动技能。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param skill_name string @ 技能名
