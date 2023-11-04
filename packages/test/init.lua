@@ -90,7 +90,6 @@ local control = fk.CreateActiveSkill{
     -- room:swapSeat(from, to)
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
-      p(room:askForCheck(from, {"wusheng", "paoxiao", "longdan", "tieqi"}, 1, 3, self.name, nil, false, false, {"rende", "wusheng", "paoxiao", "longdan", "tieqi", "jizhi"}))
       -- p(room:askForPoxi(from, "test", {
       --   { "你自己", from:getCardIds "h" },
       --   { "对方", to:getCardIds "h" },

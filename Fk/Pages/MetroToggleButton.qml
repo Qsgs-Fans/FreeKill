@@ -30,15 +30,14 @@ Item {
 
   states: [
     State {
-      name: "hovered"; when: hover.hovered
-      PropertyChanges { target: bg; color: "white" }
+      name: "hovered_checked"; when: hover.hovered && triggered
+      PropertyChanges { target: bg; color: "gold" }
       PropertyChanges { target: title; color: "black" }
     },
     State {
-      name: "hovered_checked"; when: hover.hovered && triggered
-      PropertyChanges { target: border; color: "gold" }
+      name: "hovered"; when: hover.hovered
       PropertyChanges { target: bg; color: "white" }
-      PropertyChanges { target: title; color: "gold" }
+      PropertyChanges { target: title; color: "black" }
     },
     State {
       name: "checked"; when: triggered
