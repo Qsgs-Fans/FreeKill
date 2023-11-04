@@ -1671,7 +1671,8 @@ end
 ---@return string[] @ 选择的选项
 function Room:askForCheck(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
-  if #choices == 1 and not all_choices then return {} end
+  if #choices <= minNum then return choices end
+  assert(minNum <= maxNum)
   assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
   local command = "AskForCheck"
   skill_name = skill_name or ""

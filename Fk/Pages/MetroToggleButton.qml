@@ -47,12 +47,6 @@ Item {
     State {
       name: "disabled"; when: !enabled
       PropertyChanges { target: button; opacity: 0.2 }
-    },
-    State {
-      name: "disabled_checked"; when: !enabled && triggered
-      PropertyChanges { target: button; opacity: 0.2 }
-      PropertyChanges { target: border; color: "gold" }
-      PropertyChanges { target: title; color: "gold" }
     }
   ]
 
