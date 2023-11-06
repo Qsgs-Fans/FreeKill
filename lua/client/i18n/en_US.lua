@@ -82,7 +82,7 @@ Fk:loadTranslationTable({
   ["Not JSON"] = "Error: improper JSON format.",
   ["Import Success"] = "Imported ban scheme successfully.",
 
-  ["$OnlineInfo"] = "%2 players online, %1 players in the lobby",
+  ["$OnlineInfo"] = "Lobby: %1, Online: %2",
 
   -- ["Generals Overview"] = "武将一览",
   -- ["Cards Overview"] = "卡牌一览",
