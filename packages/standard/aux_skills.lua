@@ -92,6 +92,23 @@ local choosePlayersSkill = fk.CreateActiveSkill{
   max_target_num = function(self) return self.num end,
 }
 
+local exChooseSkill = fk.CreateActiveSkill{
+  name = "ex__choose_skill",
+  card_filter = function(self, to_select, selected)
+    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)) and #selected < self.max_card_num
+  end,
+  target_filter = function(self, to_select, selected, cards)
+    if self.pattern ~= "" and #cards < self.min_card_num then return end
+    if #selected < self.max_target_num then
+      return table.contains(self.targets, to_select)
+    end
+  end,
+  min_target_num = function(self) return self.min_target_num end,
+  max_target_num = function(self) return self.max_target_num end,
+  min_card_num = function(self) return self.min_card_num end,
+  max_card_num = function(self) return self.max_card_num end,
+}
+
 local maxCardsSkill = fk.CreateMaxCardsSkill{
   name = "max_cards_skill",
   global = true,
@@ -222,6 +239,7 @@ AuxSkills = {
   discardSkill,
   chooseCardsSkill,
   choosePlayersSkill,
+  exChooseSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,

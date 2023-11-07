@@ -18,7 +18,8 @@ math.randomseed(os.time())
 
 -- 加载实用类，让Lua编写起来更轻松。
 local Utils = require "core.util"
-TargetGroup, AimGroup, Util = table.unpack(Utils)
+-- TargetGroup, AimGroup, Util = table.unpack(Utils)
+TargetGroup, AimGroup, Util = Utils[1], Utils[2], Utils[3]
 dofile "lua/core/debug.lua"
 
 -- 加载游戏核心类
