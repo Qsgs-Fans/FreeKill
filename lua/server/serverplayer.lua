@@ -920,7 +920,28 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   }
 
   if not no_trigger then
-    room.logic:trigger(fk.GeneralRevealed, self, generalName)
+    local current_event = room.logic:getCurrentEvent()
+    if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
+      room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+    else
+      current_event:addExitFunc(function ()
+        room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+      end)
+    end
+  end
+end
+
+function ServerPlayer:revealGenerals()
+  self:revealGeneral(false, true)
+  self:revealGeneral(true, true)
+  local room = self.room
+  local current_event = room.logic:getCurrentEvent()
+  if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
+    room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+  else
+    current_event:addExitFunc(function ()
+      room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+    end)
   end
 end
 
