@@ -70,7 +70,7 @@ Fk:loadTranslationTable({
 
   ["collateral"] = "Collateral",
   [":collateral"] = "Collateral (trick card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Another player with an equipped weapon (Player A)<br /><b>Sub-target</b>: A player within Player A's ATK range (Player B)<br /><b>Effect</b>: Unless A uses Slash to B, he gives you his equipped weapon.",
-  ["#collateral-slash"] = "Collateral: You shall play Slash to %dest , or %src takes your weapon",
+  ["#collateral-slash"] = "Collateral: You shall use Slash to %dest , or %src takes your weapon",
 
   ["ex_nihilo"] = "Ex Nihilo",
   [":ex_nihilo"] = "Ex Nihilo (trick card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Yourself<br /><b>Effect</b>: The target draws 2 cards.",
