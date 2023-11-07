@@ -322,6 +322,10 @@ void QmlBackend::playSound(const QString &name, int index) {
   if (!QFile::exists(fname))
     return;
 
+#ifdef Q_OS_ANDROID
+  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
+      "(Ljava/lang/String;)V", QJniObject::fromString(fname).object<jstring>());
+#else
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
   player->setAudioOutput(output);
@@ -334,6 +338,7 @@ void QmlBackend::playSound(const QString &name, int index) {
     }
   });
   player->play();
+#endif
 }
 
 void QmlBackend::copyToClipboard(const QString &s) {

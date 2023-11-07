@@ -183,7 +183,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
-  ["GameMode"] = "游戏模式",
+  ["GameMode"] = "游戏模式：",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
   ["GeneralBoxNum"] = "选将框数：",
@@ -296,9 +296,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.11
+  ## v0.3.12
 
-  修复了一些底层bug。
+  移除了BGM。请自己用外部音乐APP播放BGM。
+
+  又修复了一些底层bug。
 
   ]==],
 }

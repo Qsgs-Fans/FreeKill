@@ -27,7 +27,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.2'
+        version: '6.5.3'
         host: 'windows'
         target: 'desktop'
         arch: 'win64_mingw'
@@ -73,7 +73,7 @@ jobs:
         cp lib/win/* FreeKill-release
         cp build/zh_CN.qm FreeKill-release
         cp build/en_US.qm FreeKill-release
-        cp ../Qt/6.4.2/mingw_64/bin/li*.dll FreeKill-release
+        cp ../Qt/6.5.3/mingw_64/bin/li*.dll FreeKill-release
         cp '/c/Program Files/OpenSSL/bin/libcrypto-1_1-x64.dll' FreeKill-release
         7z a -t7z FreeKill-release.7z FreeKill-release -r -mx=9 -m0=LZMA2 -ms=10m -mf=on -mhc=on -mmt=on
 

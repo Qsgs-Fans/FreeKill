@@ -2,10 +2,13 @@
 
 package org.notify.FreeKill;
 
+import java.util.*;
 import android.provider.Settings;
 import android.app.Activity;
 import android.view.View;
 import android.view.WindowManager;
+import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnCompletionListener;
 import org.qtproject.qt.android.QtNative;
 
 public class Helper {
@@ -54,5 +57,27 @@ public class Helper {
       activity.getContentResolver(),
       Settings.Secure.ANDROID_ID
     );
+  }
+
+  public static String GetLocaleCode() {
+    return java.util.Locale.getDefault().toString();
+  }
+
+  public static void PlaySound(String path) {
+    MediaPlayer mp = new MediaPlayer();
+    mp.setOnCompletionListener(new OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer mp) {
+        mp.reset();
+        mp.release();
+      }
+    });
+    try {
+      mp.setDataSource(path);
+      mp.prepare();
+      mp.start();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

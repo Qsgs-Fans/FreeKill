@@ -55,6 +55,7 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
 
+  /*
   MediaPlayer {
     id: bgm
     source: config.bgmFile
@@ -68,10 +69,11 @@ Item {
       volume: config.bgmVolume / 100
     }
   }
+  */
 
   onIsStartedChanged: {
     if (isStarted) {
-      bgm.play();
+      // bgm.play();
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
@@ -517,7 +519,9 @@ Item {
     onCardSelected: function(card) {
       Logic.enableTargets(card);
 
-      if (typeof card === "number" && card !== -1 && roomScene.state === "playing") {
+      if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
+        && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
+
         const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
         if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
           skills.unshift("_normal_use");
