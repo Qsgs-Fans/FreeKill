@@ -19,6 +19,11 @@ ColumnLayout {
     }
   }
 
+  Timer {
+    id: opTimer
+    interval: 1000
+  }
+
   RowLayout {
     anchors.rightMargin: 8
     spacing: 16
@@ -34,9 +39,10 @@ ColumnLayout {
     }
     Button {
       text: Backend.translate("Update Avatar")
-      enabled: avatarName.text !== ""
+      enabled: avatarName.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
+        opTimer.start();
         ClientInstance.notifyServer(
           "UpdateAvatar",
           JSON.stringify([avatarName.text])
@@ -74,9 +80,10 @@ ColumnLayout {
     }
     Button {
       text: Backend.translate("Update Password")
-      enabled: oldPassword.text !== "" && newPassword.text !== ""
+      enabled: oldPassword.text !== "" && newPassword.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
+        opTimer.start();
         ClientInstance.notifyServer(
           "UpdatePassword",
           JSON.stringify([oldPassword.text, newPassword.text])

@@ -15,7 +15,7 @@ local function useActiveSkill(self, skill, card)
     filter_func = function() return false end
   end
 
-  if self.command == "PlayCard" and (not skill:canUse(player, card) or player:prohibitUse(card)) then
+  if self.command == "PlayCard" and card and (not player:canUse(card) or player:prohibitUse(card)) then
     return ""
   end
 
@@ -31,7 +31,7 @@ local function useActiveSkill(self, skill, card)
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
-        if player:prohibitUse(card) then
+        if player:isProhibited(p, card) then
           ret = false
         end
       end
@@ -135,8 +135,7 @@ random_cb["AskForUseCard"] = function(self, jsonData)
   local cancelable = data[4] or true
   local exp = Exppattern:Parse(pattern)
 
-  local avail_cards = table.map(player:getCardIds("he"),
-    function(id) return Fk:getCardById(id) end)
+  local avail_cards = table.map(player:getCardIds("he"), Util.Id2CardMapper)
   avail_cards = table.filter(avail_cards, function(c)
     return exp:match(c) and not player:prohibitUse(c)
   end)
@@ -187,8 +186,7 @@ random_cb["AskForResponseCard"] = function(self, jsonData)
 end
 
 random_cb["PlayCard"] = function(self, jsonData)
-  local cards = table.map(self.player:getCardIds(Player.Hand),
-    function(id) return Fk:getCardById(id) end)
+  local cards = table.map(self.player:getCardIds(Player.Hand), Util.Id2CardMapper)
   local actives = table.filter(self.player:getAllSkills(), function(s)
     return s:isInstanceOf(ActiveSkill)
   end)

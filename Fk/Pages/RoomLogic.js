@@ -298,25 +298,29 @@ function resortHandcards() {
   }
 
   dashboard.handcardArea.cards.sort((prev, next) => {
-    if (prev.type === next.type) {
-      const prevSubtypeNumber = subtypeString2Number[prev.subtype];
-      const nextSubtypeNumber = subtypeString2Number[next.subtype];
-      if (prevSubtypeNumber === nextSubtypeNumber) {
-        const splitedPrevName = prev.name.split('__');
-        const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+    if (prev.footnote === next.footnote) {
+      if (prev.type === next.type) {
+        const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+        const nextSubtypeNumber = subtypeString2Number[next.subtype];
+        if (prevSubtypeNumber === nextSubtypeNumber) {
+          const splitedPrevName = prev.name.split('__');
+          const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
 
-        const splitedNextName = next.name.split('__');
-        const nextTrueName = splitedNextName[splitedNextName.length - 1];
-        if (prevTrueName === nextTrueName) {
-          return prev.cid - next.cid;
+          const splitedNextName = next.name.split('__');
+          const nextTrueName = splitedNextName[splitedNextName.length - 1];
+          if (prevTrueName === nextTrueName) {
+            return prev.cid - next.cid;
+          } else {
+            return prevTrueName > nextTrueName ? -1 : 1;
+          }
         } else {
-          return prevTrueName > nextTrueName ? -1 : 1;
+          return prevSubtypeNumber - nextSubtypeNumber;
         }
       } else {
-        return prevSubtypeNumber - nextSubtypeNumber;
+        return prev.type - next.type;
       }
     } else {
-      return prev.type - next.type;
+      return prev.footnote > next.footnote ? 1 : -1;
     }
   });
 
@@ -1055,13 +1059,18 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   //  string reason ]
   const data = JSON.parse(jsonData);
   const reason = data._reason;
-
-  roomScene.promptText = Backend.translate("#AskForChooseCard")
-    .arg(Backend.translate(reason));
+  const prompt = data._prompt;
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChooseCard")
+      .arg(Backend.translate(reason));
+  } else {
+    roomScene.setPrompt(processPrompt(prompt), true);
+  }
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
 
   const box = roomScene.popupBox.item;
+  box.prompt = prompt;
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
@@ -1086,15 +1095,21 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   const min = data._min;
   const max = data._max;
   const reason = data._reason;
-
-  roomScene.promptText = Backend.translate("#AskForChooseCards")
+  const prompt = data._prompt;
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForChooseCards")
     .arg(Backend.translate(reason)).arg(min).arg(max);
+  } else {
+    roomScene.setPrompt(processPrompt(prompt), true);
+  }
+
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   const box = roomScene.popupBox.item;
   box.multiChoose = true;
   box.min = min;
   box.max = max;
+  box.prompt = prompt;
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
@@ -1384,7 +1399,7 @@ callbacks["Animate"] = (jsonData) => {
       roomScene.bigAnim.source = "../RoomElement/UltSkillAnimation.qml";
       roomScene.bigAnim.item.loadData({
         skill_name: data.name,
-        general: photo.general,
+        general: data.deputy ? photo.deputyGeneral : photo.general,
       });
       break;
     }

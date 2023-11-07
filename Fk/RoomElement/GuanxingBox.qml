@@ -100,6 +100,7 @@ GraphicsBox {
       name: modelData.name
       suit: modelData.suit
       number: modelData.number
+      mark: modelData.mark
       draggable: true
       onReleased: arrangeCards();
     }

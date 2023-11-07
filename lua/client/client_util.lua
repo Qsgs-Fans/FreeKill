@@ -546,7 +546,7 @@ function CardProhibitedResponse(card)
   if c == nil then
     return "true"
   else
-    ret = Self:prohibitUse(c)
+    ret = Self:prohibitResponse(c)
   end
   return json.encode(ret)
 end

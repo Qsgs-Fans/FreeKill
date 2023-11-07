@@ -359,6 +359,8 @@ Item {
           id: word
           Layout.fillWidth: true
           clip: true
+          leftPadding: 5
+          rightPadding: 5
         }
 
         Button {
@@ -406,6 +408,24 @@ Item {
           disabledGenerals.push(name);
         }
         config.disabledGeneralsChanged();
+      }
+    }
+
+    Timer {
+      id: opTimer
+      interval: 4000
+    }
+
+    Button {
+      text: Backend.translate("Set as Avatar")
+      enabled: detailGeneralCard.name !== "" && !opTimer.running && Self.avatar !== detailGeneralCard.name
+      onClicked: {
+        mainWindow.busy = true;
+        opTimer.start();
+        ClientInstance.notifyServer(
+          "UpdateAvatar",
+          JSON.stringify([detailGeneralCard.name])
+        );
       }
     }
   }
