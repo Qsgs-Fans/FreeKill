@@ -70,6 +70,9 @@ if (NOT DEFINED FK_SERVER_ONLY)
   qt_add_translations(FreeKill
     TS_FILES lang/zh_CN.ts
     QM_FILES_OUTPUT_VARIABLE zh_CN.qm
+
+    TS_FILES lang/en_US.ts
+    QM_FILES_OUTPUT_VARIABLE en_US.qm
   )
 endif()
 
