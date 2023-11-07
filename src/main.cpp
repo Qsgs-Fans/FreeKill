@@ -303,7 +303,11 @@ int main(int argc, char *argv[]) {
 #endif
 
   QTranslator translator;
-  Q_UNUSED(translator.load("zh_CN.qm"));
+  if (localeName.startsWith("zh_")) {
+    Q_UNUSED(translator.load("zh_CN.qm"));
+  } else {
+    Q_UNUSED(translator.load("en_US.qm"));
+  }
   QCoreApplication::installTranslator(&translator);
 
   QmlBackend backend;

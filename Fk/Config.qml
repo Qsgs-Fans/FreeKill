@@ -68,10 +68,11 @@ QtObject {
     bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
     language = conf.language ?? (() => {
       let ret = SysLocale;
-      if (['zh_CN', 'en_US'].includes(ret)) {
-        return ret;
+      if (ret.startsWith('zh_')) {
+        return 'zh_CN';
+      } else {
+        return 'en_US';
       }
-      return 'zh_CN';
     })();
     disabledPack = conf.disabledPack ?? [ "test_p_0" ];
     preferedMode = conf.preferedMode ?? "aaa_role_mode";

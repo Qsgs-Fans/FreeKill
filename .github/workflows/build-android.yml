@@ -75,7 +75,9 @@ jobs:
     - name: Copy android assets
       run: |
         ${Qt6_DIR}/../gcc_64/bin/lrelease lang/zh_CN.ts
+        ${Qt6_DIR}/../gcc_64/bin/lrelease lang/en_US.ts
         cp lang/zh_CN.qm .
+        cp lang/en_US.qm .
         FKVER=$(cat CMakeLists.txt | grep 'project(FreeKill' | cut -d ' ' -f 3)
         cd android
         sed -i 's/function //g' copy_assets.sh  # FIX THIS

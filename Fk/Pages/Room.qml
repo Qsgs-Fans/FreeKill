@@ -279,13 +279,13 @@ Item {
           let cardpack = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
 
-          text = "游戏模式：" + Backend.translate(data.gameMode) + "<br />"
+          text = Backend.translate("GameMode") + Backend.translate(data.gameMode) + "<br />"
             + Backend.translate("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
             + Backend.translate("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
             + Backend.translate("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
             + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
             + (data.enableDeputy ? " " + Backend.translate("IncludeDeputy") : "")
-            + '<br />使用牌堆：' + cardpack.map(e => {
+            + '<br />' + Backend.translate('CardPackages') + cardpack.map(e => {
               let ret = Backend.translate(e);
               if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
                 ret = "<b>" + ret + "</b>";

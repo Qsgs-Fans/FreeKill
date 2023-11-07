@@ -182,9 +182,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
+  ["GameMode"] = "游戏模式",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
   ["GeneralBoxNum"] = "选将框数：",
+  ["CardPackages"] = "使用牌堆：",
   ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
   ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
 
