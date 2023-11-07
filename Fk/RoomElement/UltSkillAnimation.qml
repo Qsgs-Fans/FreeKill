@@ -84,7 +84,7 @@ Item {
     x: root.width + 140
     anchors.verticalCenter: parent.verticalCenter
     opacity: 0
-    detailed : false
+    detailed: false
   }
 
   Text {

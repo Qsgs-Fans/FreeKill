@@ -183,9 +183,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
+  ["GameMode"] = "游戏模式",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
   ["GeneralBoxNum"] = "选将框数：",
+  ["CardPackages"] = "使用牌堆：",
   ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
   ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
 
@@ -204,6 +206,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %1 次，剩余手气卡∞张",
   ["AskForLuckCard"] = "手气卡",
   ["#AskForChoice"] = "%1：请选择",
+  ["#AskForCheck"] = "%1：请选择",
   ["#choose-trigger"] = "请选择一项技能发动",
   ["trigger"] = "选择技能",
   ["Please arrange cards"] = "请拖拽移动卡牌",
@@ -214,6 +217,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGuanxing"] = "观星",
   ["AskForExchange"] = "换牌",
   ["AskForChoice"] = "选择",
+  ["AskForCheck"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
   ["AskForMoveCardInBoard"] = "移动卡牌",

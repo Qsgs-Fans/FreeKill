@@ -1012,6 +1012,48 @@ callbacks["AskForChoice"] = (jsonData) => {
   });
 }
 
+callbacks["AskForCheck"] = (jsonData) => {
+  // jsonData: [ string[] choices, string skill ]
+  // TODO: multiple choices, e.g. benxi_ol
+  const data = JSON.parse(jsonData);
+  const choices = data[0];
+  const all_choices = data[1];
+  const min_num = data[2][0];
+  const max_num = data[2][1];
+  const cancelable = data[3];
+  const skill_name = data[4];
+  const prompt = data[5];
+  const detailed = data[6];
+  if (prompt === "") {
+    roomScene.promptText = Backend.translate("#AskForCheck")
+      .arg(Backend.translate(skill_name));
+  } else {
+    roomScene.setPrompt(processPrompt(prompt), true);
+  }
+  roomScene.state = "replying";
+  let qmlSrc;
+  if (!detailed) {
+    qmlSrc = "../RoomElement/CheckBox.qml";
+  } else {
+    qmlSrc = "../RoomElement/DetailedCheckBox.qml";
+  }
+  roomScene.popupBox.sourceComponent = Qt.createComponent(qmlSrc);
+  const box = roomScene.popupBox.item;
+  box.options = choices;
+  box.skill_name = skill_name;
+  box.all_options = all_choices;
+  box.min_num = min_num;
+  box.max_num = max_num;
+  box.cancelable = cancelable;
+  box.accepted.connect(() => {
+    const ret = [];
+    box.result.forEach(id => {
+      ret.push(all_choices[id]);
+    });
+    replyToServer(JSON.stringify(ret));
+  });
+}
+
 callbacks["AskForCardChosen"] = (jsonData) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  string reason ]

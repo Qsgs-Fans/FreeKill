@@ -1053,7 +1053,7 @@ end
 ---@param cancelable bool @ 是否可以点取消
 ---@param extra_data table|nil @ 额外信息，因技能而异了
 ---@param no_indicate bool @ 是否不显示指示线
----@return boolean, table
+---@return boolean, table|nil
 function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data, no_indicate)
   prompt = prompt or ""
   cancelable = (cancelable == nil) and true or cancelable
@@ -1319,6 +1319,55 @@ function Room:askForChooseCardAndPlayers(player, targets, minNum, maxNum, patter
       return {}
     else
       return table.random(targets, minNum), table.random(pcards)
+    end
+  end
+end
+
+--- 询问玩家选择X张牌和Y名角色。
+---
+--- 返回两个值，第一个是选择的目标列表，第二个是选择的那张牌的id
+---@param player ServerPlayer @ 要询问的玩家
+---@param minCardNum integer @ 选卡牌最小值
+---@param maxCardNum integer @ 选卡牌最大值
+---@param targets integer[] @ 选择目标的id范围
+---@param minTargetNum integer @ 选目标最小值
+---@param maxTargetNum integer @ 选目标最大值
+---@param pattern string|nil @ 选牌规则
+---@param prompt string|nil @ 提示信息
+---@param cancelable bool @ 能否点取消
+---@param no_indicate bool @ 是否不显示指示线
+---@return integer[], integer[]
+function Room:askForChooseBoth(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
+  if minCardNum < 1 or minTargetNum < 1 then
+    return table.unpack({}, {})
+  end
+  cancelable = (cancelable == nil) and true or cancelable
+  no_indicate = no_indicate or false
+  pattern = pattern or "."
+
+  local pcards = table.filter(player:getCardIds({ Player.Hand, Player.Equip }), function(id)
+    local c = Fk:getCardById(id)
+    return c:matchPattern(pattern)
+  end)
+  if #pcards < minCardNum and not cancelable then return table.unpack({}, {}) end
+
+  local data = {
+    targets = targets,
+    max_target_num = maxTargetNum,
+    min_target_num = minTargetNum,
+    max_card_num = maxCardNum,
+    min_card_num = minCardNum,
+    pattern = pattern,
+    skillName = skillName,
+  }
+  local _, ret = self:askForUseActiveSkill(player, "ex__choose_skill", prompt or "", cancelable, data, no_indicate)
+  if ret then
+    return ret.targets, ret.cards
+  else
+    if cancelable then
+      return table.unpack({}, {})
+    else
+      return table.random(targets, minTargetNum), table.random(pcards, minCardNum)
     end
   end
 end
@@ -1612,6 +1661,35 @@ function Room:askForChoice(player, choices, skill_name, prompt, detailed, all_ch
   })
   if result == "" then result = choices[1] end
   return result
+end
+
+--- 询问一名玩家从众多选项中勾选任意项。
+---@param player ServerPlayer @ 要询问的玩家
+---@param choices string[] @ 可选选项列表
+---@param minNum number @ 最少选择项数
+---@param maxNum number @ 最多选择项数
+---@param skill_name string|nil @ 技能名
+---@param prompt string|nil @ 提示信息
+---@param cancelable bool|nil @ 是否可取消
+---@param detailed bool @ 选项详细描述
+---@param all_choices string[]|nil @ 所有选项（不可选变灰）
+---@return string[] @ 选择的选项
+function Room:askForCheck(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
+  cancelable = (cancelable == nil) and true or cancelable
+  if #choices <= minNum and not all_choices then return choices end
+  assert(minNum <= maxNum)
+  assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
+  local command = "AskForCheck"
+  skill_name = skill_name or ""
+  prompt = prompt or ""
+  all_choices = all_choices or choices
+  detailed = detailed or false
+  self:notifyMoveFocus(player, skill_name)
+  local result = self:doRequest(player, command, json.encode{
+    choices, all_choices, {minNum, maxNum}, cancelable, skill_name, prompt, detailed
+  })
+  if result == "" then return {} end
+  return json.decode(result)
 end
 
 --- 询问玩家是否发动技能。

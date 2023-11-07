@@ -34,7 +34,8 @@ Flickable {
     height: grid0.height + grid1.height + grid2.height
     Grid {
       id: grid0
-      columns: 2
+      // FIXME: 得优化成类似mark区域那种自动化布局才行啊，可惜鸽
+      columns: config.language.startsWith('zh') ? 2 : 1
       columnSpacing: 2
       rowSpacing: 2
       Repeater {
@@ -61,7 +62,7 @@ Flickable {
     Grid {
       id: grid1
       anchors.top: grid0.bottom
-      columns: 2
+      columns: config.language.startsWith('zh') ? 2 : 1
       columnSpacing: 2
       rowSpacing: 2
       Repeater {
@@ -86,7 +87,7 @@ Flickable {
       id: grid2
       anchors.top: grid1.bottom
       anchors.topMargin: 2
-      columns: 3
+      columns: config.language.startsWith('zh') ? 3 : 1
       columnSpacing: 2
       rowSpacing: 2
       Repeater {
