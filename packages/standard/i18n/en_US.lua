@@ -2,10 +2,10 @@
 
 Fk:loadTranslationTable({
   ["standard"] = "Standard",
-  ["wei"] = "Wei",
-  ["shu"] = "Shu",
-  ["wu"] = "Wu",
-  ["qun"] = "Qun",
+  ["wei"] = "*Wei*",
+  ["shu"] = "*Shu*",
+  ["wu"] = "*Wu*",
+  ["qun"] = "*Neutral*",
 
   ["black"] = "Black",
   ["red"] = '<font color="#CC3131">Red</font>',
@@ -13,7 +13,10 @@ Fk:loadTranslationTable({
 
   ["caocao"] = "Cao Cao",
   ["jianxiong"] = "Villainous Hero",
-  [":jianxiong"] = "当你受到伤害后，你可以获得对你造成伤害的牌。",
+  [":jianxiong"] = "After you suffer DMG: you can take the card(s) that caused it.",
+  ["hujia"] = "Royal Escort",
+  [":hujia"] = "<b>Lord skill</b>, when you need to use/play Dodge: you can ask other Wei characters to play Dodge, which is regard as you use/play that.",
+  ["#hujia-ask"] = "护驾：你可打出一张闪，视为 %src 使用或打出",
 
   ["simayi"] = "Sima Yi",
   ["guicai"] = "Demonic Talent",
@@ -46,12 +49,16 @@ Fk:loadTranslationTable({
   ["zhenji"] = "Zhen Ji",
   ["luoshen"] = "Goddess Luo",
   [":luoshen"] = "准备阶段开始时，你可以进行判定：若结果为黑色，判定牌生效后你获得之，然后你可以再次发动“洛神”。",
+  ["#luoshen_obtain"] = "洛神",
   ["qingguo"] = "Helen of Troy",
   [":qingguo"] = "你可以将一张黑色手牌当【闪】使用或打出。",
 
   ["liubei"] = "Liu Bei",
   ["rende"] = "Benevolence",
   [":rende"] = "出牌阶段，你可以将至少一张手牌任意分配给其他角色。你于本阶段内以此法给出的手牌首次达到两张或更多后，你回复1点体力。",
+  ["jijiang"] = "激将",
+  [":jijiang"] = "主公技，当你需要使用或打出【杀】时，你可以令其他蜀势力角色选择是否打出一张【杀】（视为由你使用或打出）。",
+  ["#jijiang-ask"] = "激将：你可打出一张杀，视为 %src 使用或打出",
 
   ["guanyu"] = "Guan Yu",
   ["wusheng"] = "Warrior Saint",
@@ -86,6 +93,8 @@ Fk:loadTranslationTable({
   ["sunquan"] = "Sun Quan",
   ["zhiheng"] = "Balance of Power",
   [":zhiheng"] = "阶段技，你可以弃置至少一张牌然后摸等量的牌。",
+  ["jiuyuan"] = "救援",
+  [":jiuyuan"] = "主公技，其他吴势力角色使用【桃】令你回复体力时，回复值+1。",
 
   ["ganning"] = "Gan Ning",
   ["qixi"] = "Surprise Raid",
@@ -131,16 +140,66 @@ Fk:loadTranslationTable({
   [":jijiu"] = "你的回合外，你可以将一张红色牌当【桃】使用。",
 
   ["lvbu"] = "Lv Bu",
+  ["wushuang"] = "无双",
+  [":wushuang"] = "锁定技，当你使用【杀】指定目标后，其使用【闪】抵消此【杀】的方式改为需连续使用两张【闪】；当你使用【决斗】指定目标后，或当你成为【决斗】的目标后，你令其打出【杀】响应此【决斗】的方式改为需连续打出两张【杀】。",
 
   ["diaochan"] = "Diao Chan",
   ["lijian"] = "Seed of Animosity",
   [":lijian"] = "阶段技，你可以弃置一张牌并选择两名其他男性角色，后选择的角色视为对先选择的角色使用了一张不能被无懈可击的决斗。",
   ["biyue"] = "Envious by Moon",
   [":biyue"] = "结束阶段开始时，你可以摸一张牌。",
+
+  ["fastchat_m"] = "快捷短语",
+  ["fastchat_f"] = "快捷短语",
+
+  ["$fastchat_m1"] = "能不能快一点啊，兵贵神速啊。",
+  ["$fastchat_m2"] = "主公，别开枪，自己人！",
+  ["$fastchat_m3"] = "小内再不跳，后面还怎么玩啊？",
+  ["$fastchat_m4"] = "你们忍心，就这么让我酱油了？",
+  ["$fastchat_m5"] = "我……我惹你们了吗！？",
+  ["$fastchat_m6"] = "姑娘，你真是条汉子。",
+  ["$fastchat_m7"] = "三十六计走为上，容我去去便回。",
+  ["$fastchat_m8"] = "人心散了，队伍不好带啊。",
+  ["$fastchat_m9"] = "昏君，昏君呐！",
+  ["$fastchat_m10"] = "风吹鸡蛋壳，牌去人安乐。",
+  ["$fastchat_m11"] = "小内啊，你老悠着点。",
+  ["$fastchat_m12"] = "啊，不好意思，刚才卡了。",
+  ["$fastchat_m13"] = "你可以打的再烂一点吗？",
+  ["$fastchat_m14"] = "哥们，给力点行吗？",
+  ["$fastchat_m15"] = "哥哥，交个朋友吧。",
+  ["$fastchat_m16"] = "妹子，交个朋友吧。",
+  ["$fastchat_f1"] = "能不能快一点啊，兵贵神速啊。",
+  ["$fastchat_f2"] = "主公，别开枪，自己人！",
+  ["$fastchat_f3"] = "小内再不跳，后面还怎么玩啊？",
+  ["$fastchat_f4"] = "嗯嘛~你们忍心，就这么让我酱油了？",
+  ["$fastchat_f5"] = "我……我惹你们了吗？",
+  ["$fastchat_f6"] = "姑娘，你真是条汉子。",
+  ["$fastchat_f7"] = "三十六计走为上，容我去去便回。",
+  ["$fastchat_f8"] = "人心散了，队伍不好带啊。",
+  ["$fastchat_f9"] = "昏君，昏君呐！",
+  ["$fastchat_f10"] = "风吹鸡蛋壳，牌去人安乐。",
+  ["$fastchat_f11"] = "小内啊，你老悠着点儿。",
+  ["$fastchat_f12"] = "不好意思，刚才卡了。",
+  ["$fastchat_f13"] = "你可以打的再烂一点吗？",
+  ["$fastchat_f14"] = "哥们，给力点行吗？",
+  ["$fastchat_f15"] = "哥，交个朋友吧。",
+  ["$fastchat_f16"] = "妹子，交个朋友吧。",
+
+  ["aaa_role_mode"] = "身份模式",
+  [":aaa_role_mode"] = [[
+  There should be some text to introduce rule of role mode, buy currently have nothing.
+  ]],
 }, "en_US")
 
 -- aux skills
 Fk:loadTranslationTable({
   ["discard_skill"] = "Discard",
+  ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "Choose players",
+  ["choose_players_to_move_card_in_board"] = "选择角色",
+  ["reveal_skill"] = "亮将",
+  ["#reveal_skill"] = "选择一个武将亮将（点击左侧选择框展开）",
+  [":reveal_skill"] = "出牌阶段，你可亮出一张有锁定技的武将。",
+
+  ["game_rule"] = "弃牌阶段",
 }, "en_US")

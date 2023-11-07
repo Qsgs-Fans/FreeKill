@@ -84,11 +84,11 @@ Fk:loadTranslationTable({
 
   ["$OnlineInfo"] = "Lobby: %1, Online: %2",
 
-  -- ["Generals Overview"] = "武将一览",
-  -- ["Cards Overview"] = "卡牌一览",
+  ["Generals Overview"] = "Characters",
+  ["Cards Overview"] = "Cards",
   ["Special card skills:"] = "<b>Special use method:</b>",
   ["Every suit & number:"] = "<b>All suit and number:</b>",
-  -- ["Scenarios Overview"] = "玩法一览",
+  ["Scenarios Overview"] = "Game modes",
   -- ["Replay"] = "录像",
   -- ["Replay Manager"] = "来欣赏潇洒的录像吧！",
   ["Game Win"] = "Win",
@@ -268,7 +268,7 @@ Fk:loadTranslationTable({
   ["phase_start"] = "Prepare phase",
   ["phase_judge"] = "Judge phase",
   ["phase_draw"] = "Draw phase",
-  ["phase_play"] = "Play phase",
+  ["phase_play"] = "Action phase",
   ["phase_discard"] = "Discard phase",
   ["phase_finish"] = "Finish phase",
 
