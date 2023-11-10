@@ -574,9 +574,15 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
         const exclusived = roomScene.extra_data.exclusive_targets;
         if (exclusived instanceof Array) {
           if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
@@ -636,9 +642,15 @@ function updateSelectedTargets(playerid, selected) {
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
         const exclusived = roomScene.extra_data.exclusive_targets;
         if (exclusived instanceof Array) {
           if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
