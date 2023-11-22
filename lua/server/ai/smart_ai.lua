@@ -9,6 +9,11 @@
   但为了实现这个目的就还要去额外实现敌友判断、收益计算等等功能。
   为了便于各个拓展快速编写AI，还要封装一些AI判断时常用的函数。
 
+  本文件包含以下内容：
+  1. 基本策略代码：定义各种全局表，以及smart_cb表
+  2. 敌我相关代码：关于如何判断敌我以及更新意向值等
+  3. 十分常用的各种函数（？）
+
   -- TODO: 优化底层逻辑，防止AI每次操作之前都要json.decode一下。
   -- TODO: 更加详细的文档
 --]]
@@ -19,38 +24,96 @@ local SmartAI = AI:subclass("SmartAI")
 ---@type table<string, fun(self: SmartAI, jsonData: string): string>
 local smart_cb = {}
 
+function SmartAI:initialize(player)
+  AI.initialize(self, player)
+  self.cb_table = smart_cb
+  self.player = player
+  if self.room:getTag("ai_role") == nil then
+    local ai_role = {}
+    local role_value = {}
+    for _, ap in ipairs(self.room.players) do
+      ai_role[ap.id] = "neutral"
+      role_value[ap.id] = {
+        rebel = 0,
+        renegade = 0
+      }
+    end
+    self.room:setTag("ai_role", ai_role)
+    self.room:setTag("role_value", role_value)
+  end
+  self.ai_role = self.room:getTag("ai_role")
+  self.role_value = self.room:getTag("role_value")
+end
+
+-- AI框架中常用的模式化函数。
+-- 先从表中选函数，若无则调用默认的。点点点是参数
+function SmartAI:callFromTable(func_table, default_func, key, ...)
+  local f = func_table[key]
+  if type(f) == "function" then
+    return f(...)
+  elseif type(default_func) == "function" then
+    return default_func(...)
+  else
+    return nil
+  end
+end
+
+-- 面板相关交互：对应操控手牌区、技能面板、直接选择目标的交互
+-- 对应UI中的"responding"状态和"playing"状态
+-- AI代码需要像实际操作UI那样完成以下几个任务：
+--   * 点击技能按钮（出牌阶段或者打算使用ViewAsSkill）
+--   * 技能如果带有interaction，则选择interaction
+--   * 如果需要的话点选手牌
+--   * 选择目标
+--   * 点确定
+-- 这些步骤归结起来，就是让AI想办法返回如下定义的UseReply
+-- 或者返回nil表示点取消
+--===================================================
+
+---@class UseReply
+---@field card integer|string|nil @ string情况下是json.encode后
+---@field targets integer[]|nil
+---@field special_skill string @ 出牌阶段空闲点使用实体卡特有
+---@field interaction_data any @ 因技能而异，一般都是nil
+
+---@param card integer|table|nil
+---@param targets integer[]|nil
+---@param special_skill string|nil
+---@param interaction_data any
+function SmartAI:buildUseReply(card, targets, special_skill, interaction_data)
+  if type(card) == "table" then card = json.encode(card) end
+  return {
+    card = card,
+    targets = targets,
+    special_skill = special_skill,
+    interaction_data = interaction_data,
+  }
+end
+
 -- AskForUseActiveSkill: 询问发动主动技/视为技
 -- * 此处 UseReply.card 必定由 json.encode 而来
 -- * 且原型为 { skill = skillName, subcards = integer[] }
 ----------------------------------------------------------
 
----@class UseReply
----@field card integer|string @ string情况下是json.encode后
----@field targets integer[]
----@field special_skill string @ 出牌阶段空闲点使用实体卡特有
----@field interaction_data any @ 因技能而异，一般都是nil
-
 ---@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any): UseReply | nil>
-fk.ai_use_skill = {}
+fk.ai_active_skill = {}
 
 smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local skillName, prompt, cancelable, extra_data = table.unpack(data)
+
   local skill = Fk.skills[skillName]
   for k, v in pairs(extra_data) do
     skill[k] = v
   end
 
-  local ask = fk.ai_use_skill[skillName]
-  if ask then
-    local ret = ask(self, prompt, cancelable, extra_data)
-    if ret then return json.encode(ret) end
-  end
+  local ret = self:callFromTable(fk.ai_active_skill, nil, skillName,
+    self, prompt, cancelable, extra_data)
+
+  if ret then return json.encode(ret) end
   if cancelable then return "" end
   return RandomAI.cb_table["AskForUseActiveSkill"](self, jsonData)
 end
-
---- TOdo? Room:askForGeneral暂缺
 
 -- AskForUseCard: 询问使用卡牌
 -- 判断函数一样返回UseReply，此时卡牌可能是integer或者string
@@ -67,13 +130,12 @@ smart_cb["AskForUseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
-  local ask = fk.ai_ask_use_card[prompt:split(":")[1]]
-  if not ask then ask = fk.ai_ask_use_card[card_name] end
-  local ret
-  if ask then
-    ret = ask(self, pattern, prompt, cancelable, extra_data)
-    if ret then return json.encode(ret) end
-  end
+  local prompt_prefix = prompt:split(":")[1]
+  local ret = self:callFromTable(fk.ai_ask_use_card, nil,
+    fk.ai_ask_use_card[prompt_prefix] and prompt_prefix or card_name,
+    self, pattern, prompt, cancelable, extra_data)
+
+  if ret then return json.encode(ret) end
   if cancelable then return "" end
   return RandomAI.cb_table["AskForUseCard"](self, jsonData)
 end
@@ -91,27 +153,42 @@ smart_cb["AskForResponseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
-  local ask = fk.ai_response_card[prompt:split(":")[1]]
-  if not ask then ask = fk.ai_response_card[card_name] end
-  local ret
-  if ask then
-    ret = ask(self, pattern, prompt, cancelable, extra_data)
-    if ret then return json.encode(ret) end
-  end
+  local prompt_prefix = prompt:split(":")[1]
+  local ret = self:callFromTable(fk.ai_response_card, nil,
+    fk.ai_ask_use_card[prompt_prefix] and prompt_prefix or card_name,
+    self, pattern, prompt, cancelable, extra_data)
+
+  if ret then return json.encode(ret) end
   if cancelable then return "" end
   return RandomAI.cb_table["AskForResponseCard"](self, jsonData)
 end
 
+-- PlayCard: 出牌阶段空闲时间点使用牌/技能
+-- 老规矩得丢一个UseReply回来，但是自由度就高得多了
+-- 需要完成的任务：从众多亮着的卡、技能中选一个
+-- 考虑要不要用？用的话就用，否则选下个
+-- 至于如何使用，可以复用askFor中的函数
+-----------------------------------------------
+-- smart_cb["PlayCard"] = function(self)
+-- end
+
+---------------------------------------------------------------------
+
+-- 其他交互：不涉及面板而是基于弹窗式的交互
+-- 这块就灵活变通了，没啥非常通用的回复格式
+-- ========================================
+
 -- AskForSkillInvoke
--------------------------
+-- 只能选择确定或者取消的交互。
+-- 函数返回true或者false即可。
+-----------------------------
 
 ---@type table<string, boolean | fun(self: SmartAI, extra_data: any, prompt: string): bool>
 fk.ai_skill_invoke = {}
 
 smart_cb["AskForSkillInvoke"] = function(self, jsonData)
   local data = json.decode(jsonData)
-  local skillName = data[1]
-  local prompt = data[2]
+  local skillName, prompt = data[1], data[2]
   local ask = fk.ai_skill_invoke[skillName]
 
   if type(ask) == "function" then
@@ -125,9 +202,31 @@ smart_cb["AskForSkillInvoke"] = function(self, jsonData)
   end
 end
 
+-- AskForAG
+-- AG早该死一下了
+----------------------------------
+
 --- 用来应对Room:askForAG的表。表的键是prompt的第一项。
 ---@type table<string, fun(self: SmartAI, id_list: integer[], cancelable: bool, prompt: string)>
 fk.ai_ask_for_ag = {}
+
+--- 请求AG
+smart_cb["AskForAG"] = function(self, jsonData)
+  local data = json.decode(jsonData)
+  local id_list, cancelable, prompt = data[1], data[2], data[3]
+
+  local ask = fk.ai_ask_for_ag[prompt:split(":")[1]]
+  local ret
+  if type(ask) == "function" then
+    ret = ask(self, id_list, cancelable, prompt)
+  end
+  if type(ask) ~= "number" then
+    local cards = table.map(id_list, Util.Id2CardMapper)
+    self:sortValue(cards)
+    ret = cards[#cards].id
+  end
+  return ret
+end
 
 --- 用来应对出牌阶段空闲时间点如何出牌/使用技能的表。
 ---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
@@ -173,28 +272,6 @@ fk.ai_judge = {}
 ---返回的值大于0则为敌，小于0则为友，一般是值大于等于3才会杀目标，小于等于-2才会救目标
 ---@type table<string, fun(self: SmartAI, to: ServerPlayer)>
 fk.ai_objective_level = {}
-
---- 请求AG
-smart_cb["AskForAG"] = function(self, jsonData)
-  local data = json.decode(jsonData)
-  local prompt = data[3]
-  local cancelable = data[2]
-  local id_list = data[1]
-  self:updatePlayers()
-  local ask = fk.ai_ask_for_ag[prompt:split(":")[1]]
-  if type(ask) == "function" then
-    ask = ask(self, id_list, cancelable, prompt)
-  end
-  if type(ask) ~= "number" then
-    local cards = table.map(id_list, function(id)
-        return Fk:getCardById(id)
-      end
-    )
-    self:sortValue(cards)
-    ask = cards[#cards].id
-  end
-  return ask
-end
 
 --- 使用阶段技或卡牌
 ---@param self SmartAI @ai系统
@@ -997,26 +1074,7 @@ function SmartAI:updatePlayers()
 	end-]]
 end
 
-function SmartAI:initialize(player)
-  AI.initialize(self, player)
-  self.cb_table = smart_cb
-  self.player = player
-  if self.room:getTag("ai_role") == nil then
-    local ai_role = {}
-    local role_value = {}
-    for _, ap in ipairs(self.room.players) do
-      ai_role[ap.id] = "neutral"
-      role_value[ap.id] = {
-        rebel = 0,
-        renegade = 0
-      }
-    end
-    self.room:setTag("ai_role", ai_role)
-    self.room:setTag("role_value", role_value)
-  end
-  self.ai_role = self.room:getTag("ai_role")
-  self.role_value = self.room:getTag("role_value")
-end
+
 
 ---给来源附加身份值
 ---

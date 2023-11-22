@@ -221,7 +221,7 @@ fk.ai_choose_players["tuxi"] = function(self, targets, min_num, num, cancelable)
   end
 end
 
-fk.ai_use_skill["yiji_active"] = function(self, prompt, cancelable, data)
+fk.ai_active_skill["yiji_active"] = function(self, prompt, cancelable, data)
   for _, p in ipairs(self.friends_noself) do
     for c, cid in ipairs(self.player.tag["yiji_ids"]) do
       c = Fk:getCardById(cid)

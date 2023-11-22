@@ -25,24 +25,13 @@ local default_discard = function(self, min_num, num, include_equip, cancelable, 
   return ret
 end
 
-fk.ai_use_skill["discard_skill"] = function(self, prompt, cancelable, data)
-  local ask = fk.ai_discard[data.skillName]
-  if ask == nil and not cancelable then
-    ask = default_discard
-  end
+fk.ai_active_skill["discard_skill"] = function(self, prompt, cancelable, data)
+  local ret = self:callFromTable(fk.ai_discard, not cancelable and default_discard, data.skillName,
+    self, data.min_num, data.num, data.include_equip, cancelable, data.pattern, prompt)
 
-  local ret
-  if ask then
-    ret = ask(self, data.min_num, data.num, data.include_equip, cancelable, data.pattern, prompt)
-  end
   if ret == nil or #ret < data.min_num then return nil end
 
-  return {
-    card = json.encode {
-      skill = "discard_skill",
-      subcards = ask
-    }
-  }
+  return self:buildUseReply { skill = "discard_skill", subcards = ret }
 end
 
 -- choose_players_skill: 选人相关AI
@@ -56,19 +45,11 @@ end
 ---@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool): ChoosePlayersReply|nil>
 fk.ai_choose_players = {}
 
-fk.ai_use_skill["choose_players_skill"] = function(self, prompt, cancelable, data)
-  local ask = fk.ai_choose_players[data.skillName]
-  local ret
-  if ask then
-    ret = ask(self, data.targets, data.min_num, data.num, cancelable)
-  end
+fk.ai_active_skill["choose_players_skill"] = function(self, prompt, cancelable, data)
+  local ret = self:callFromTable(fk.ai_choose_players, nil, data.skillName,
+    self, data.targets, data.min_num, data.num, cancelable)
+
   if ret then
-    return {
-      card = json.encode {
-        skill = "discard_skill",
-        subcards = { ret.cardId }
-      },
-      targets = ret.targets,
-    }
+    return self:buildUseReply({ skill = "choose_players_skill", subcards = { ret.cardId } }, ret.targets)
   end
 end
