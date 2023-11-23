@@ -84,7 +84,7 @@ function SmartAI:buildUseReply(card, targets, special_skill, interaction_data)
   if type(card) == "table" then card = json.encode(card) end
   return {
     card = card,
-    targets = targets,
+    targets = targets or {},
     special_skill = special_skill,
     interaction_data = interaction_data,
   }
@@ -169,8 +169,23 @@ end
 -- 考虑要不要用？用的话就用，否则选下个
 -- 至于如何使用，可以复用askFor中的函数
 -----------------------------------------------
--- smart_cb["PlayCard"] = function(self)
--- end
+smart_cb["PlayCard"] = function(self)
+  -- 第一步：找到所有“亮着”的卡牌和技能
+  local cards = table.map(Self:getHandlyIds(true), Util.Id2CardMapper)
+  cards = table.filter(cards, function(c)
+    return Self:canUse(c) and not Self:prohibitUse(c)
+  end)
+  -- TODO: skill
+
+  -- 第二步：考虑使用其中之一
+  local toUse = cards[1]
+  if not toUse then return "" end
+  print(toUse)
+
+  -- 第三步：正式使用；此处复用被动使用的逻辑
+  -- TODO: 总之起码跑起来了，后面再优化
+  return RandomAI.useActiveSkill(self, toUse.skill, toUse)
+end
 
 ---------------------------------------------------------------------
 
@@ -228,6 +243,7 @@ smart_cb["AskForAG"] = function(self, jsonData)
   return ret
 end
 
+--[=======[ 封印之线
 --- 用来应对出牌阶段空闲时间点如何出牌/使用技能的表。
 ---@type table<string, fun(self: SmartAI, card: Card|ActiveSkill|ViewAsSkill)>
 fk.ai_use_play = {}
@@ -659,7 +675,7 @@ function SmartAI:cardsView(pattern)
   return actives
 end
 
----空闲点使用
+--[[-空闲点使用
 smart_cb["PlayCard"] = function(self, jsonData)
   local cards = table.map(self.player:getHandlyIds(true), function(id)
       return Fk:getCardById(id)
@@ -686,6 +702,7 @@ smart_cb["PlayCard"] = function(self, jsonData)
   end
   return ""
 end
+--]]
 
 ---请求选择角色区域牌
 ---
@@ -1264,4 +1281,5 @@ function SmartAI:isEnemy(p, tp)
   end
 end
 
+--封印之线 ]=======]
 return SmartAI
