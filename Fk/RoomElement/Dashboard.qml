@@ -365,9 +365,9 @@ RowLayout {
         [pending_skill, cid, pendings, targets]
       ))) {
         enabled_cards.push(cid);
-        if (!expanded_piles[pile]) {
-          expandPile(pile);
-        }
+      };
+      if (!expanded_piles[pile]) {
+        expandPile(pile);
       }
     });
 
