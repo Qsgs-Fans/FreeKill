@@ -790,7 +790,7 @@ callbacks["PropertyUpdate"] = (jsonData) => {
     model[property_name] = value;
   }
 
-  if (property_name === "phase") {
+  if (prdashboardoperty_name === "phase") {
     let item = getPhoto(uid);
     item.playing = value < 8; // Player.NotActive
   }
@@ -1372,14 +1372,20 @@ callbacks["WaitForNullification"] = () => {
 callbacks["SetPlayerMark"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const player = getPhoto(data[0]);
-  const mark = data[1];
-  const value = data[2] instanceof Object ? data[2] : data[2].toString();
-  let area = mark.startsWith("@!") ? player.picMarkArea : player.markArea;
+  const mark = data[1].startsWith('@#') ? data[1].replace('@#', '@!') : data[1];
+  const value = data[2] instanceof Array ? data[2] : data[2].toString();
+  let area = (data[1].startsWith("@!") || data[1].startsWith("@#")) ? player.picMarkArea : player.markArea;
   if (data[2] === 0) {
     area.removeMark(mark);
   } else {
-    area.setMark(mark, mark.startsWith("@@") ? "" : value);
+    if (data[1].startsWith("@#") && data[0] === Self.id) {
+      markCardItem.setMark(mark, value);
+    } else {
+      area.setMark(mark, mark.startsWith("@@") ? "" : value);
+    }
   }
+
+  markCardBoard.visible = markCardItem.data.length > 0;
 }
 
 callbacks["SetBanner"] = (jsonData) => {

@@ -471,6 +471,33 @@ Item {
     }
   }
 
+  Rectangle {
+    id: markCardBoard
+
+    anchors.top: dashboard.top
+    anchors.left: dashboardBtn.right
+    visible: false
+    color: "black"
+    width: markCardItem.width + 20
+    height: markCardItem.height + 20
+    radius: 5
+
+    PicMarkArea {
+      id: markCardItem
+
+      anchors.centerIn: markCardBoard
+    }
+
+    TapHandler {
+      id: mouse
+      onTapped: markCardBoard.clicked()
+    }
+
+    onClicked: {
+      
+    }
+  }
+
   Dashboard {
     id: dashboard
     width: roomScene.width - dashboardBtn.width
