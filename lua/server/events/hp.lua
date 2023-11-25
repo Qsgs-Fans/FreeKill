@@ -201,7 +201,14 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
         type = "#ChainDamage",
         from = p.id
       }
-      local dmg = table.simpleClone(damageStruct)
+      local dmg = {
+        from = damageStruct.from,
+        to = p,
+        damage = damageStruct.damage,
+        card = damageStruct.card,
+        skillName = damageStruct.skillName,
+        chain = true,
+      }
       dmg.to = p
       dmg.chain = true
       room:damage(dmg)
