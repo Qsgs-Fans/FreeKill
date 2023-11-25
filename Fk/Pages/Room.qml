@@ -8,6 +8,7 @@ import QtMultimedia
 import Fk
 import Fk.Common
 import Fk.RoomElement
+import Fk.PhotoElement
 import "RoomLogic.js" as Logic
 
 Item {
@@ -507,6 +508,33 @@ Item {
         textFont.pixelSize: 28
         onClicked: roomDrawer.open();
       }
+    }
+  }
+
+  Rectangle {
+    id: markCardBoard
+
+    anchors.top: dashboard.top
+    anchors.left: dashboardBtn.right
+    visible: false
+    color: "black"
+    width: markCardItem.width + 20
+    height: markCardItem.height + 20
+    radius: 5
+
+    PicMarkArea {
+      id: markCardItem
+
+      anchors.centerIn: markCardBoard
+    }
+
+    TapHandler {
+      id: mouse
+      onTapped: markCardBoard.clicked()
+    }
+
+    onClicked: {
+      
     }
   }
 
