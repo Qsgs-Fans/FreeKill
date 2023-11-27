@@ -6,7 +6,7 @@ RandomAI = require "server.ai.random_ai"
 
 ---[[ 在release版暂时不启动。
 SmartAI = require "server.ai.smart_ai"
---[[ 调试中，暂且不加载额外的AI。
+---[[ 调试中，暂且不加载额外的AI。
 -- load ai module from packages
 local directories = FileIO.ls("packages")
 require "packages.standard.ai"

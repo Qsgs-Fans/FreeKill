@@ -1,3 +1,4 @@
+--[[
 fk.ai_card.thunder__slash = fk.ai_card.slash
 fk.ai_use_play.thunder__slash = fk.ai_use_play.slash
 fk.ai_card.fire__slash = fk.ai_card.slash
@@ -176,3 +177,4 @@ fk.ai_skill_invoke["#fan_skill"] = function(self)
     end
   end
 end
+--]]

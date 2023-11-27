@@ -1,3 +1,12 @@
+-- 基本牌：杀，闪，桃
+
+fk.ai_use_card["slash"] = function(self, pattern, prompt, cancelable, extra_data)
+  -- 首先，挑出所有可使用且有目标可选的【杀】
+  -- 用哪张呢？对谁用呢？
+  return nil
+end
+
+--[[
 fk.ai_card.slash = {
   intention = 100, -- 身份值
   value = 4,       -- 卡牌价值
@@ -101,7 +110,7 @@ fk.ai_use_play["slash"] = function(self, card)
   end
 end
 
-fk.ai_ask_use_card["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
+fk.ai_use_card["#slash-jink"] = function(self, pattern, prompt, cancelable, extra_data)
   local act = self:getActives(pattern)
   if tonumber(prompt:split(":")[4]) > #act then
     return
@@ -138,7 +147,7 @@ fk.ai_ask_use_card["#slash-jink"] = function(self, pattern, prompt, cancelable, 
   end
 end
 
-fk.ai_ask_use_card["#slash-jinks"] = fk.ai_ask_use_card["#slash-jink"]
+fk.ai_use_card["#slash-jinks"] = fk.ai_use_card["#slash-jink"]
 
 fk.ai_use_play["snatch"] = function(self, card)
   for _, p in ipairs(self.friends_noself) do
@@ -436,3 +445,4 @@ fk.ai_skill_invoke["#eight_diagram_skill"] = function(self)
   local effect = self:eventData("CardEffect")
   return effect and self:isFriend(effect.to)
 end
+--]]

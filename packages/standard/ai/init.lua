@@ -1,5 +1,6 @@
 require "packages.standard.ai.aux_skills"
 
+--[[
 fk.ai_use_play["rende"] = function(self, skill)
   for _, p in ipairs(self.friends_noself) do
     if p.kingdom == "shu" and #self.player:getCardIds("h") >= self.player.hp then
@@ -262,3 +263,4 @@ fk.ai_choose_players["liuli"] = function(self, targets, min_num, num, cancelable
     end
   end
 end
+--]]

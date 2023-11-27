@@ -121,9 +121,9 @@ end
 -- 真的要考虑ViewAsSkill吗，害怕
 ---------------------------------------------------------
 
---- 键是prompt的第一项或者牌名，优先prompt。
+--- 键是prompt的第一项或者牌名，优先prompt，其次name，实在不行trueName。
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
-fk.ai_ask_use_card = {}
+fk.ai_use_card = {}
 
 --- 请求使用，先试图使用prompt，再试图使用card_name，最后交给随机AI
 smart_cb["AskForUseCard"] = function(self, jsonData)
@@ -131,8 +131,16 @@ smart_cb["AskForUseCard"] = function(self, jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
   local prompt_prefix = prompt:split(":")[1]
-  local ret = self:callFromTable(fk.ai_ask_use_card, nil,
-    fk.ai_ask_use_card[prompt_prefix] and prompt_prefix or card_name,
+  local key
+  if fk.ai_use_card[prompt_prefix] then
+    key = prompt_prefix
+  elseif fk.ai_use_card[card_name] then
+    key = card_name
+  else
+    local tmp = card_name:split("__")
+    key = tmp[#tmp]
+  end
+  local ret = self:callFromTable(fk.ai_use_card, nil, key,
     self, pattern, prompt, cancelable, extra_data)
 
   if ret then return json.encode(ret) end
@@ -154,8 +162,16 @@ smart_cb["AskForResponseCard"] = function(self, jsonData)
   local card_name, pattern, prompt, cancelable, extra_data = table.unpack(data)
 
   local prompt_prefix = prompt:split(":")[1]
-  local ret = self:callFromTable(fk.ai_response_card, nil,
-    fk.ai_ask_use_card[prompt_prefix] and prompt_prefix or card_name,
+  local key
+  if fk.ai_response_card[prompt_prefix] then
+    key = prompt_prefix
+  elseif fk.ai_response_card[card_name] then
+    key = card_name
+  else
+    local tmp = card_name:split("__")
+    key = tmp[#tmp]
+  end
+  local ret = self:callFromTable(fk.ai_response_card, nil, key,
     self, pattern, prompt, cancelable, extra_data)
 
   if ret then return json.encode(ret) end
@@ -175,16 +191,27 @@ smart_cb["PlayCard"] = function(self)
   cards = table.filter(cards, function(c)
     return Self:canUse(c) and not Self:prohibitUse(c)
   end)
+
+  -- FIXME: 此处只使用牌名或有不妥
+  local card_names = {}
+  for _, cd in ipairs(cards) do
+    table.insertIfNeed(card_names, cd.name)
+  end
   -- TODO: skill
 
   -- 第二步：考虑使用其中之一
-  local toUse = cards[1]
-  if not toUse then return "" end
-  print(toUse)
+  local value_func = function(str) return #str end
+  for _, name in fk.sorted_pairs(card_names, value_func) do
+    if true then
+      local ret = self:callFromTable(fk.ai_use_card, nil,
+        fk.ai_use_card[name] and name or name:split("__")[2],
+        self, "", "", true, Util.DummyTable)
+      if ret then return json.encode(ret) end
+      break
+    end
+  end
 
-  -- 第三步：正式使用；此处复用被动使用的逻辑
-  -- TODO: 总之起码跑起来了，后面再优化
-  return RandomAI.useActiveSkill(self, toUse.skill, toUse)
+  return ""
 end
 
 ---------------------------------------------------------------------
