@@ -19,6 +19,9 @@
 --]]
 
 ---@class SmartAI: AI
+---@field private _memory table<string, any> @ AI底层的空间换时间机制
+---@field public friends ServerPlayer[] @ 队友
+---@field public enemies ServerPlayer[] @ 敌人
 local SmartAI = AI:subclass("SmartAI")
 
 ---@type table<string, fun(self: SmartAI, jsonData: string): string>
@@ -28,21 +31,29 @@ function SmartAI:initialize(player)
   AI.initialize(self, player)
   self.cb_table = smart_cb
   self.player = player
-  if self.room:getTag("ai_role") == nil then
-    local ai_role = {}
-    local role_value = {}
-    for _, ap in ipairs(self.room.players) do
-      ai_role[ap.id] = "neutral"
-      role_value[ap.id] = {
-        rebel = 0,
-        renegade = 0
-      }
-    end
-    self.room:setTag("ai_role", ai_role)
-    self.room:setTag("role_value", role_value)
+end
+
+function SmartAI:makeReply()
+  self._memory = {}
+  return AI.makeReply(self)
+end
+
+function SmartAI:__index(k)
+  if self._memory[k] then
+    return self._memory[k]
   end
-  self.ai_role = self.room:getTag("ai_role")
-  self.role_value = self.room:getTag("role_value")
+  local ret
+  if k == "enemies" then
+    ret = table.filter(self.room.alive_players, function(p)
+      return self:isEnemy(p)
+    end)
+  elseif k == "friends" then
+    ret = table.filter(self.room.alive_players, function(p)
+      return self:isFriend(p)
+    end)
+  end
+  self._memory[k] = ret
+  return ret
 end
 
 -- AI框架中常用的模式化函数。
@@ -122,8 +133,17 @@ end
 ---------------------------------------------------------
 
 --- 键是prompt的第一项或者牌名，优先prompt，其次name，实在不行trueName。
----@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data?: UseExtraData): UseReply|nil>
 fk.ai_use_card = {}
+
+local defauld_use_card = function(self, pattern, _, cancelable, exdata)
+  if cancelable then return nil end
+  local cards = self:getCards(pattern, "use", exdata)
+  if #cards == 0 then return nil end
+
+  -- TODO: 目标
+  return self:buildUseReply(cards[1].id)
+end
 
 --- 请求使用，先试图使用prompt，再试图使用card_name，最后交给随机AI
 smart_cb["AskForUseCard"] = function(self, jsonData)
@@ -140,7 +160,7 @@ smart_cb["AskForUseCard"] = function(self, jsonData)
     local tmp = card_name:split("__")
     key = tmp[#tmp]
   end
-  local ret = self:callFromTable(fk.ai_use_card, nil, key,
+  local ret = self:callFromTable(fk.ai_use_card, defauld_use_card, key,
     self, pattern, prompt, cancelable, extra_data)
 
   if ret then return json.encode(ret) end
@@ -155,6 +175,13 @@ end
 -- 一样的牌名或者prompt做键优先prompt
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
 fk.ai_response_card = {}
+
+local defauld_response_card = function(self, pattern, _, cancelable)
+  if cancelable then return nil end
+  local cards = self:getCards(pattern, "response")
+  if #cards == 0 then return nil end
+  return self:buildUseReply(cards[1].id)
+end
 
 -- 同前
 smart_cb["AskForResponseCard"] = function(self, jsonData)
@@ -171,7 +198,7 @@ smart_cb["AskForResponseCard"] = function(self, jsonData)
     local tmp = card_name:split("__")
     key = tmp[#tmp]
   end
-  local ret = self:callFromTable(fk.ai_response_card, nil, key,
+  local ret = self:callFromTable(fk.ai_response_card, defauld_response_card, key,
     self, pattern, prompt, cancelable, extra_data)
 
   if ret then return json.encode(ret) end
@@ -186,18 +213,15 @@ end
 -- 至于如何使用，可以复用askFor中的函数
 -----------------------------------------------
 smart_cb["PlayCard"] = function(self)
-  -- 第一步：找到所有“亮着”的卡牌和技能
-  local cards = table.map(Self:getHandlyIds(true), Util.Id2CardMapper)
-  cards = table.filter(cards, function(c)
-    return Self:canUse(c) and not Self:prohibitUse(c)
-  end)
+  local extra_use_data = { playing = true }
+  local cards = self:getCards(".", "use", extra_use_data)
 
-  -- FIXME: 此处只使用牌名或有不妥
   local card_names = {}
   for _, cd in ipairs(cards) do
+    -- TODO: 视为技
     table.insertIfNeed(card_names, cd.name)
   end
-  -- TODO: skill
+  -- TODO: 主动技
 
   -- 第二步：考虑使用其中之一
   local value_func = function(str) return #str end
@@ -205,9 +229,9 @@ smart_cb["PlayCard"] = function(self)
     if true then
       local ret = self:callFromTable(fk.ai_use_card, nil,
         fk.ai_use_card[name] and name or name:split("__")[2],
-        self, "", "", true, Util.DummyTable)
+        self, name, "", true, extra_use_data)
+
       if ret then return json.encode(ret) end
-      break
     end
   end
 
@@ -268,5 +292,39 @@ end
 --=================================================
 
 -- sorted_pairs 见 core/util.lua
+
+-- 合法性检测相关
+-- 以后估计会单开个合法性类然后改成套壳吧
+--=================================================
+
+-- TODO: 这东西估计会变成一个单独模块
+local invalid_func_table = {
+  use = function(player, card, extra_data)
+    local playing = extra_data and extra_data.playing
+    return Player.prohibitUse(player, card) or (playing and not player:canUse(card))
+  end,
+  response = Player.prohibitResponse,
+  discard = Player.prohibitDiscard,
+}
+
+--- 根据pattern获得所有手中的牌。
+---@param pattern string
+---@param validator? string @ 合法检测，须为use, response, discard之一或空
+---@param extra_data? UseExtraData @ 出牌阶段用
+---@return Card[]
+function SmartAI:getCards(pattern, validator, extra_data)
+  validator = validator or ""
+  extra_data = extra_data or Util.DummyTable
+  local invalid_func = invalid_func_table[validator] or Util.FalseFunc
+  local exp = Exppattern:Parse(pattern)
+
+  local cards = table.map(self.player:getHandlyIds(), Util.Id2CardMapper)
+  local ret = table.filter(cards, function(c)
+    return exp:match(c) and not invalid_func(self.player, c, extra_data)
+  end)
+
+  -- TODO: 考虑视为技，这里可以再返回一些虚拟牌
+  return ret
+end
 
 return SmartAI

@@ -84,6 +84,14 @@ fk.IceDamage = 4
 ---@field public who integer
 ---@field public damage DamageStruct
 
+--- askForUseCard中的extra_data
+---@class UseExtraData
+---@field public must_targets? integer[] @ 必须选的目标（？）
+---@field public exclusive_targets? integer[] @ ??
+---@field public bypass_distances? boolean @ 无距离限制？
+---@field public bypass_times? boolean @ 无次数限制？
+---@field public playing? boolean @ (AI专用) 出牌阶段？
+
 ---@class CardUseStruct
 ---@field public from integer
 ---@field public tos TargetGroup

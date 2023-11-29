@@ -1,8 +1,34 @@
 -- 基本牌：杀，闪，桃
 
 fk.ai_use_card["slash"] = function(self, pattern, prompt, cancelable, extra_data)
-  -- 首先，挑出所有可使用且有目标可选的【杀】
-  -- 用哪张呢？对谁用呢？
+  local slashes = self:getCards("slash", "use", extra_data)
+  if #slashes == 0 then return nil end
+
+  -- TODO: 目标合法性
+  local targets = {}
+  if self.enemies[1] then table.insert(targets, self.enemies[1].id) end
+
+  return self:buildUseReply(slashes[1].id, targets)
+end
+
+fk.ai_use_card["peach"] = function(self, _, _, _, extra_data)
+  local cards = self:getCards("peach", "use", extra_data)
+  if #cards == 0 then return nil end
+
+  return self:buildUseReply(cards[1].id)
+end
+
+-- 自救见军争卡牌AI
+fk.ai_use_card["#AskForPeaches"] = function(self)
+  local room = self.room
+  local deathEvent = room.logic:getCurrentEvent()
+  local data = deathEvent.data[1] ---@type DyingStruct
+
+  -- TODO: 关于救不回来、神关羽之类的更复杂逻辑
+  -- TODO: 这些逻辑感觉不能写死在此函数里面，得想出更加多样的办法
+  if self:isFriend(room:getPlayerById(data.who)) then
+    return fk.ai_use_card["peach"](self)
+  end
   return nil
 end
 
