@@ -95,7 +95,23 @@ local choosePlayersSkill = fk.CreateActiveSkill{
 local exChooseSkill = fk.CreateActiveSkill{
   name = "ex__choose_skill",
   card_filter = function(self, to_select, selected)
-    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)) and #selected < self.max_card_num
+    if #selected < self.max_card_num then return false end
+
+    if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
+      if not string.find(self.pattern or "", self.expand_pile or "") then return false end
+    end
+
+    local checkpoint = true
+    local card = Fk:getCardById(to_select)
+
+    if not self.include_equip then
+      checkpoint = checkpoint and (Fk:currentRoom():getCardArea(to_select) ~= Player.Equip)
+    end
+
+    if self.pattern and self.pattern ~= "" then
+      checkpoint = checkpoint and (Exppattern:Parse(self.pattern):match(card))
+    end
+    return checkpoint
   end,
   target_filter = function(self, to_select, selected, cards)
     if self.pattern ~= "" and #cards < self.min_card_num then return end
