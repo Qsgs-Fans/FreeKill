@@ -167,7 +167,7 @@ end
 
 --- 向翻译表中加载新的翻译表。
 ---@param t table @ 要加载的翻译表，这是一个 原文 --> 译文 的键值对表
----@param lang string|nil @ 目标语言，默认为zh_CN
+---@param lang? string @ 目标语言，默认为zh_CN
 function Engine:loadTranslationTable(t, lang)
   assert(type(t) == "table")
   lang = lang or "zh_CN"
@@ -179,8 +179,9 @@ end
 
 --- 翻译一段文本。其实就是从翻译表中去找
 ---@param src string @ 要翻译的文本
-function Engine:translate(src)
-  local lang = Config.language or "zh_CN"
+---@param lang? string @ 来源语言，默认设置语言
+function Engine:translate(src, lang)
+  if not lang then lang = Config.language or "zh_CN" end
   if not self.translations[lang] then lang = "zh_CN" end
   local ret = self.translations[lang][src]
   return ret or src
