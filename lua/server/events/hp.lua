@@ -141,6 +141,9 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     return false
   end
 
+  damageStruct.dealtRecorderId = room.logic.specific_events_id[GameEvent.Damage]
+  room.logic.specific_events_id[GameEvent.Damage] = room.logic.specific_events_id[GameEvent.Damage] + 1
+
   if damageStruct.card and damageStruct.damage > 0 then
     local parentUseData = logic:getCurrentEvent():findParent(GameEvent.UseCard)
     if parentUseData then

@@ -423,6 +423,31 @@ local jijiang = fk.CreateViewAsSkill{
     c.skillName = self.name
     return c
   end,
+  before_use = function(self, player, use)
+    local room = player.room
+    if use.tos then
+      room:doIndicate(player.id, TargetGroup:getRealTargets(use.tos))
+    end
+
+    for _, p in ipairs(room:getOtherPlayers(player)) do
+      if p.kingdom == "shu" then
+        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
+        if cardResponded then
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          use.card = cardResponded
+          return
+        end
+      end
+    end
+
+    room:setPlayerMark(player, "jijiang-failed-phase", 1)
+    return self.name
+  end,
   enabled_at_play = function(self, player)
     return player:getMark("jijiang-failed-phase") == 0 and not table.every(Fk:currentRoom().alive_players, function(p)
       return p == player or p.kingdom ~= "shu"
@@ -436,40 +461,6 @@ local jijiang = fk.CreateViewAsSkill{
 }
 local jijiangResponse = fk.CreateTriggerSkill{
   name = "#jijiangResponse",
-  events = {fk.PreCardUse, fk.PreCardRespond},
-  mute = true,
-  priority = 10,
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name, true) and table.contains(data.card.skillNames, "jijiang")
-  end,
-  on_cost = function(self, event, target, player, data)
-    local room = player.room
-    room:doIndicate(player.id, TargetGroup:getRealTargets(data.tos))
-    return true
-  end,
-  on_use = function(self, event, target, player, data)
-    local room = player.room
-    for _, p in ipairs(room:getOtherPlayers(player)) do
-      if p.kingdom == "shu" then
-        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
-        if cardResponded then
-          room:responseCard({
-            from = p.id,
-            card = cardResponded,
-            skipDrop = true,
-          })
-
-          data.card = cardResponded
-          return false
-        end
-      end
-    end
-
-    if event == fk.PreCardUse and player.phase == Player.Play then
-    room:setPlayerMark(player, "jijiang-failed-phase", 1)
-    end
-    return true
-  end,
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
     return target == player and player:hasSkill(self.name, true) and player:getMark("jijiang-failed-phase") > 0

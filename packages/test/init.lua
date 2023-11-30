@@ -338,6 +338,154 @@ local test_feichu = fk.CreateActiveSkill{
     room:abortPlayerArea(from, eqipSlots)
   end,
 }
+
+
+local jijiang1 = fk.CreateViewAsSkill{
+  name = "jijiang1",
+  anim_type = "offensive",
+  pattern = "slash",
+  card_filter = function(self, to_select, selected)
+    return false
+  end,
+  view_as = function(self, cards)
+    if #cards ~= 0 then
+      return nil
+    end
+    local c = Fk:cloneCard("slash")
+    c.skillName = self.name
+    return c
+  end,
+  before_use = function(self, player, use)
+    local room = player.room
+    if use.tos then
+      room:doIndicate(player.id, TargetGroup:getRealTargets(use.tos))
+    end
+
+    for _, p in ipairs(room:getOtherPlayers(player)) do
+      if p.kingdom == "shu" then
+        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
+        if cardResponded then
+          room:responseCard({
+            from = p.id,
+            card = cardResponded,
+            skipDrop = true,
+          })
+
+          use.card = cardResponded
+          return
+        end
+      end
+    end
+
+    room:setPlayerMark(player, "jijiang-failed-phase", 1)
+    return self.name
+  end,
+  enabled_at_play = function(self, player)
+    return player:getMark("jijiang-failed-phase") == 0 and not table.every(Fk:currentRoom().alive_players, function(p)
+      return p == player or p.kingdom ~= "shu"
+    end)
+  end,
+  enabled_at_response = function(self, player)
+    return not table.every(Fk:currentRoom().alive_players, function(p)
+      return p == player or p.kingdom ~= "shu"
+    end)
+  end,
+}
+
+local aocai = fk.CreateViewAsSkill{
+  name = "aocai_test",
+  pattern = ".|.|.|.|.|basic",
+  card_filter = function(self, to_select, selected)
+    local ids = Self:getMark("aocai_cards")
+    if ids == 0 then
+      return #selected == 0
+    elseif #selected == 0 then   
+      return type(ids) == "table" and table.contains(ids, to_select)
+    end
+  end,
+  view_as = function(self, cards)
+    local ids = Self:getMark("aocai_cards")
+    if ids == 0 then
+      return
+    elseif #cards == 1 then
+      return Fk:getCardById(cards[1])
+    end
+  end,
+  before_use = function(self, player, use)
+    local room = player.room
+    local ids
+    if player:isKongcheng() then
+      ids = room:getNCards(4)
+    else
+      ids = room:getNCards(2)
+    end
+    local fakemove = {
+      toArea = Card.PlayerHand,
+      to = player.id,
+      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.Void} end),
+      moveReason = fk.ReasonJustMove,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    local availableCards = {}
+    for _, id in ipairs(ids) do
+      local card = Fk:getCardById(id)
+      if card.type == Card.TypeBasic then
+        if data.pattern then
+          if Exppattern:Parse(data.pattern):match(card) then
+            table.insertIfNeed(availableCards, id)
+          end
+        else
+          if player:canUse(card) then
+            table.insertIfNeed(availableCards, id)
+          end
+        end
+      end
+    end
+    room:setPlayerMark(player, "aocai_cards", availableCards)
+    local success, dat
+    if event == fk.AskForCardUse then
+      success, dat = room:askForUseActiveSkill(player, "aocai_use", "#aocai-use", true)
+    else
+      success, dat = room:askForUseActiveSkill(player, "aocai_response", "#aocai-response", true)
+    end
+    room:setPlayerMark(player, "aocai_cards", 0)
+    fakemove = {
+      from = player.id,
+      toArea = Card.Void,
+      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
+      moveReason = fk.ReasonJustMove,
+    }
+    room:notifyMoveCards({player}, {fakemove})
+    for i = #ids, 1, -1 do
+      table.insert(room.draw_pile, 1, ids[i])
+    end
+    if success then
+      if event == fk.AskForCardUse then
+        local card = Fk.skills["aocai_use"]:viewAs(dat.cards)
+        data.result = {
+          from = player.id,
+          card = card,
+        }
+        data.result.card.skillName = self.name
+        if data.eventData then
+          data.result.toCard = data.eventData.toCard
+          data.result.responseToEvent = data.eventData.responseToEvent
+        end
+      else
+        local card =  Fk:getCardById(dat.cards[1])
+        data.result = card
+        data.result.skillName = self.name
+      end
+    end
+  end,
+  enabled_at_play = function(self, player)
+    return player.phase == Player.NotActive
+  end,
+  enabled_at_response = function(self, player)
+    return player.phase == Player.NotActive
+  end,
+}
+
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 3
 test2.hidden = true
@@ -349,6 +497,7 @@ test2:addSkill(control)
 test2:addSkill(damage_maker)
 test2:addSkill(test_zhenggong)
 test2:addSkill(change_hero)
+test2:addSkill(jijiang1)
 -- test2:addSkill(test_feichu)
 
 local shibing = General(extension, "blank_shibing", "qun", 5)

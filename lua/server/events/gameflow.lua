@@ -312,9 +312,9 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
 
-          local use = room:handleUseCardReply(player, result)
-          if use then
-            room:useCard(use)
+          local useResult = room:handleUseCardReply(player, result)
+          if type(useResult) == "table" then
+            room:useCard(useResult)
           end
 
           if player._play_phase_end then
