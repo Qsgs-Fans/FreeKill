@@ -450,7 +450,7 @@ function Player:getMaxCards()
   return math.max(baseValue, 0)
 end
 
---- 获取玩家攻击距离。
+--- 获取玩家攻击范围。
 function Player:getAttackRange()
   local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
   local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
@@ -543,7 +543,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   return math.max(ret, 1)
 end
 
---- 获取其他玩家是否在玩家的攻击距离内。
+--- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
 ---@param fixLimit number|null @ 卡牌距离限制增加专用
 function Player:inMyAttackRange(other, fixLimit)
@@ -566,8 +566,8 @@ function Player:inMyAttackRange(other, fixLimit)
 end
 
 --- 获取下家。
----@param ignoreRemoved bool @ 忽略被移除
----@param num interger|nil @ 第几个，默认1
+---@param ignoreRemoved? bool @ 忽略被移除
+---@param num? integer @ 第几个，默认1
 ---@return ServerPlayer
 function Player:getNextAlive(ignoreRemoved, num)
   if #Fk:currentRoom().alive_players == 0 then
@@ -590,12 +590,12 @@ function Player:getNextAlive(ignoreRemoved, num)
 end
 
 --- 获取上家。
----@param ignoreRemoved bool @ 忽略被移除
----@param num interger|nil @ 第几个，默认1
+---@param ignoreRemoved? bool @ 忽略被移除
+---@param num? integer @ 第几个，默认1
 ---@return ServerPlayer
 function Player:getLastAlive(ignoreRemoved, num)
   num = num or 1
-  local index = ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
+  local index = (ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end)) - num
   return self:getNextAlive(ignoreRemoved, index)
 end
 
