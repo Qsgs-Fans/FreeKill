@@ -3154,7 +3154,7 @@ function Room:recastCard(card_ids, who, skillName)
     from = who.id,
     toArea = Card.DiscardPile,
     skillName = skillName,
-    moveReason = fk.ReasonPutIntoDiscardPile,
+    moveReason = fk.ReasonRecast,
     proposer = who.id
   })
   self:broadcastPlaySound("./audio/system/recast")
