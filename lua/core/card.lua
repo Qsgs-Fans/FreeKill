@@ -428,8 +428,8 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff bool @ 比较二者相同还是不同
----@return boolean 返回比较结果
+---@param diff? bool @ 比较二者不同
+---@return boolean @ 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
     return false
@@ -444,8 +444,8 @@ end
 
 --- 比较两张卡牌的颜色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
----@return boolean 返回比较结果
+---@param diff? boolean @ 比较二者不同
+---@return boolean @ 返回比较结果
 function Card:compareColorWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.color, anotherCard.color }, Card.NoColor) then
     return false
@@ -460,8 +460,8 @@ end
 
 --- 比较两张卡牌的点数是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
----@return boolean 返回比较结果
+---@param diff? boolean @ 比较二者不同
+---@return boolean @ 返回比较结果
 function Card:compareNumberWith(anotherCard, diff)
   if self ~= anotherCard and self.number < 1 or anotherCard.number < 1 then
     return false
