@@ -1239,7 +1239,7 @@ end
 ---@return integer[] @ 选择的牌的id列表，可能是空的
 function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
   if minNum < 1 then
-    return nil
+    return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
@@ -1260,19 +1260,12 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     chosenCards = ret.cards
   else
     if cancelable then return {} end
-    local hands = player:getCardIds(Player.Hand)
-    if includeEquip then
-      table.insertTable(hands, player:getCardIds(Player.Equip))
-    end
+    local cards = player:getCardIds("he&")
     local exp = Exppattern:Parse(pattern)
-    hands = table.filter(hands, function(cid)
+    cards = table.filter(cards, function(cid)
       return exp:match(Fk:getCardById(cid))
     end)
-    for _ = 1, minNum do
-      local randomId = hands[math.random(1, #hands)]
-      table.insert(chosenCards, randomId)
-      table.removeOne(hands, randomId)
-    end
+    chosenCards = table.random(cards, minNum)
   end
 
   return chosenCards
