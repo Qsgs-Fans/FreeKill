@@ -3144,6 +3144,7 @@ end
 ---@param card_ids integer[] @ 被重铸的牌
 ---@param who ServerPlayer @ 重铸的角色
 ---@param skillName string|nil @ 技能名，默认为“重铸”
+---@return integer[] @ 摸到的牌
 function Room:recastCard(card_ids, who, skillName)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
@@ -3164,7 +3165,7 @@ function Room:recastCard(card_ids, who, skillName)
     card = card_ids,
     arg = skillName,
   }
-  self:drawCards(who, #card_ids, skillName)
+  return self:drawCards(who, #card_ids, skillName)
 end
 
 --- 根据拼点信息开始拼点。
