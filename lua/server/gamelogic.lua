@@ -446,7 +446,7 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
   elseif scope == Player.HistoryPhase then
     start_event = event:findParent(GameEvent.Phase, true)
   end
-
+  if not start_event then return {} end
   return start_event:searchEvents(eventType, n, func)
 end
 
