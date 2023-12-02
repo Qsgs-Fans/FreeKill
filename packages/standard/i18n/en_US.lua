@@ -15,8 +15,8 @@ Fk:loadTranslationTable({
   ["jianxiong"] = "Villainous Hero",
   [":jianxiong"] = "After you suffer DMG: you can take the card(s) that caused it.",
   ["hujia"] = "Royal Escort",
-  [":hujia"] = "<b>Lord skill</b>, when you need to use/play Dodge: you can ask other Wei characters to play Dodge, which is regard as you use/play that.",
-  ["#hujia-ask"] = "Royal Escort: you can play a jink, which is regarded as %src uses/plays",
+  [":hujia"] = "(lord) When you need to use/play Dodge: you can ask other Wei characters to play Dodge, which is regard as you use/play that.",
+  ["#hujia-ask"] = "Royal Escort: you can play a Dodge, which is regarded as %src uses/plays",
 
   ["simayi"] = "Sima Yi",
   ["guicai"] = "Demonic Talent",
@@ -57,7 +57,7 @@ Fk:loadTranslationTable({
   ["rende"] = "Benevolence",
   [":rende"] = "In your Action Phase: you can give any # of hand cards to other players; then, if you have given a total of 2 or more cards, you heal 1 HP (only once).",
   ["jijiang"] = "Rouse",
-  [":jijiang"] = "<b>Lord skill</b>, when you need to use/play Slash: you can ask other Shu characters to play Slash, which is regard as you use/play that.",
+  [":jijiang"] = "(lord) When you need to use/play Slash: you can ask other Shu characters to play Slash, which is regard as you use/play that.",
   ["#jijiang-ask"] = "Rouse: you can play a Slash, which is regarded as %src uses/plays",
 
   ["guanyu"] = "Guan Yu",
@@ -66,13 +66,13 @@ Fk:loadTranslationTable({
 
   ["zhangfei"] = "Zhang Fei",
   ["paoxiao"] = "Roar",
-  [":paoxiao"] = "<b>Compulsory skill</b>, you can use any # of Slash.",
+  [":paoxiao"] = "(forced) You can use any # of Slash.",
 
   ["zhugeliang"] = "Zhuge Liang",
   ["guanxing"] = "Stargaze",
   [":guanxing"] = "In your Beginning Phase: you can examine X cards from the deck; then, you can place any # of them at the top of the deck and the rest at the bottom. (X = # of living players, max. 5)",
   ["kongcheng"] = "Empty Fort",
-  [":kongcheng"] = "<b>Compulsory skill</b>, if you don’t have hand cards, you cannot be the target of Sha or Duel.",
+  [":kongcheng"] = "(forced) If you don’t have hand cards, you cannot be the target of Sha or Duel.",
 
   ["zhaoyun"] = "Zhao Yun",
   ["longdan"] = "Dragon Heart",
@@ -80,7 +80,7 @@ Fk:loadTranslationTable({
 
   ["machao"] = "Ma Chao",
   ["mashu"] = "Horsemanship",
-  [":mashu"] = "<b>Compulsory skill</b>, the distance from you to other players is reduced by -1.",
+  [":mashu"] = "(forced) The distance from you to other players is reduced by -1.",
   ["tieqi"] = "Iron Cavalry",
   [":tieqi"] = "After you use Slash to target a player: you can perform a judgment; if it’s red, he can't use Dodge.",
 
@@ -88,19 +88,19 @@ Fk:loadTranslationTable({
   ["jizhi"] = "Wisdom",
   [":jizhi"] = "When you use a non-delay trick card, you can draw 1 card.",
   ["qicai"] = "Genius",
-  [":qicai"] = "<b>Compulsory skill</b>, your trick cards have unlimited range.",
+  [":qicai"] = "(forced) Your trick cards have unlimited range.",
 
   ["sunquan"] = "Sun Quan",
   ["zhiheng"] = "Balance of Power",
   [":zhiheng"] = "Once per Action Phase: you can discard any # of cards; then, draw the same # of cards.",
   ["jiuyuan"] = "Rescued",
-  [":jiuyuan"] = "<b>Lord skill, compulsory skill</b>, when another Wu character uses Peach to you, you heal +1 HP.",
+  [":jiuyuan"] = "(lord, forced) When another Wu character uses Peach to you, you heal +1 HP.",
 
   ["ganning"] = "Gan Ning",
   ["qixi"] = "Surprise Raid",
   [":qixi"] = "You can use any black card as Dismantlement.",
 
-  ["lvmeng"] = "Lv Meng",
+  ["lvmeng"] = "Lü Meng",
   ["keji"] = "Self Mastery",
   [":keji"] = "If you haven't used/played Slash in your Action Phase, you can skip your Discard Phase.",
 
@@ -123,7 +123,7 @@ Fk:loadTranslationTable({
 
   ["luxun"] = "Lu Xun",
   ["qianxun"] = "Humility",
-  [":qianxun"] = "<b>Compulsory skill</b>, you can't be the target of Snatch or Indulgence.",
+  [":qianxun"] = "(forced) You can't be the target of Snatch or Indulgence.",
   ["lianying"] = "One After Another",
   [":lianying"] = "When you lose your last hand card: you can draw 1 card.",
 
@@ -139,9 +139,9 @@ Fk:loadTranslationTable({
   ["jijiu"] = "First Aid",
   [":jijiu"] = "Outside of your turn: you can use any red card as Peach.",
 
-  ["lvbu"] = "Lv Bu",
+  ["lvbu"] = "Lü Bu",
   ["wushuang"] = "Without Equal",
-  [":wushuang"] = "<b>Compulsory skill</b>, if you use Slash to target a player, the target needs to use 2 Dodge to evade it. During Duel, the opponent must play 2 Slash per round.",
+  [":wushuang"] = "(forced) If you use Slash to target a player, the target needs to use 2 Dodge to evade it. During Duel, the opponent must play 2 Slash per round.",
 
   ["diaochan"] = "Diao Chan",
   ["lijian"] = "Seed of Animosity",
@@ -199,7 +199,17 @@ Fk:loadTranslationTable({
   ["choose_players_to_move_card_in_board"] = "Choose players",
   ["reveal_skill"] = "Reveal",
   ["#reveal_skill"] = "Choose a character to reveal",
-  [":reveal_skill"] = "In action phase, you can reveal a character who has Compulsory skills.",
+  [":reveal_skill"] = "In action phase, you can reveal a character who has Forced skills.",
 
   ["game_rule"] = "Discard",
+}, "en_US")
+
+-- init
+Fk:loadTranslationTable({
+  ["left lord and loyalist alive"] = "You're the only surviving Renegade and all others alive are lord and loyalists.",
+  ["left one rebel alive"] = "You're the only surviving Rebel and there's no surviving Renegade.",
+  ["left you alive"] = "No surviving loyalists and only another fraction remains.",
+  ["loyalist never surrender"] = "Loyalist never surrender!",
+
+  ["anjiang"] = "Hidden Char.",
 }, "en_US")

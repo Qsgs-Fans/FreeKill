@@ -86,9 +86,7 @@ extension:addCards({
 
 local jinkSkill = fk.CreateActiveSkill{
   name = "jink_skill",
-  can_use = function()
-    return false
-  end,
+  can_use = Util.FalseFunc,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
       effect.responseToEvent.isCancellOut = true
@@ -394,9 +392,7 @@ extension:addCards({
 
 local exNihiloSkill = fk.CreateActiveSkill{
   name = "ex_nihilo_skill",
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return true
-  end,
+  mod_target_filter = Util.TrueFunc,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
   end,
@@ -427,9 +423,7 @@ extension:addCards({
 
 local nullificationSkill = fk.CreateActiveSkill{
   name = "nullification_skill",
-  can_use = function()
-    return false
-  end,
+  can_use = Util.FalseFunc,
   on_use = function() RoomInstance:delay(1200) end,
   on_effect = function(self, room, effect)
     if effect.responseToEvent then
@@ -541,9 +535,7 @@ local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
   can_use = Util.GlobalCanUse,
   on_use = Util.GlobalOnUse,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return true
-  end,
+  mod_target_filter = Util.TrueFunc,
   about_to_effect = function(self, room, effect)
     if not room:getPlayerById(effect.to):isWounded() then
       return true
@@ -579,9 +571,7 @@ local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
   can_use = Util.GlobalCanUse,
   on_use = Util.GlobalOnUse,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return true
-  end,
+  mod_target_filter = Util.TrueFunc,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     if not (effect.extra_data and effect.extra_data.AGFilled) then
@@ -664,9 +654,7 @@ extension:addCards({
 
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return true
-  end,
+  mod_target_filter = Util.TrueFunc,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
   end,
@@ -783,7 +771,7 @@ local crossbowAudio = fk.CreateTriggerSkill{
   name = "#crossbowAudio",
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and player.phase == Player.Play and
+    return target == player and player:hasSkill(self) and player.phase == Player.Play and
       data.card.trueName == "slash" and player:usedCardTimes("slash", Player.HistoryPhase) > 1
   end,
   on_refresh = function(self, event, target, player, data)
@@ -796,7 +784,7 @@ local crossbowSkill = fk.CreateTargetModSkill{
   name = "#crossbow_skill",
   attached_equip = "crossbow",
   bypass_times = function(self, player, skill, scope)
-    if player:hasSkill(self.name) and skill.trueName == "slash_skill"
+    if player:hasSkill(self) and skill.trueName == "slash_skill"
       and scope == Player.HistoryPhase then
       return true
     end
@@ -841,7 +829,7 @@ local qingGangSkill = fk.CreateTriggerSkill{
   frequency = Skill.Compulsory,
   events = { fk.TargetSpecified },
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
+    return target == player and player:hasSkill(self) and
       data.card and data.card.trueName == "slash"
   end,
   on_use = function(self, event, target, player, data)
@@ -874,7 +862,7 @@ local iceSwordSkill = fk.CreateTriggerSkill{
   attached_equip = "ice_sword",
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and (not data.chain) and
+    return target == player and player:hasSkill(self) and (not data.chain) and
       data.card and data.card.trueName == "slash" and not data.to:isNude()
   end,
   on_use = function(self, event, target, player, data)
@@ -907,11 +895,10 @@ local doubleSwordsSkill = fk.CreateTriggerSkill{
   attached_equip = "double_swords",
   events = {fk.TargetSpecified},
   can_trigger = function(self, event, target, player, data)
-    if target == player and player:hasSkill(self.name) and
+    if target == player and player:hasSkill(self) and
       data.card and data.card.trueName == "slash" then
-      local to = player.room:getPlayerById(data.to)
-      if player.gender == General.Agender or to.gender == General.Agender then return false end
-      return to.gender ~= player.gender or player.gender == General.Bigender or to.gender == General.Bigender
+      local target = player.room:getPlayerById(data.to)
+      return player:compareGenderWith(target, true)
     end
   end,
   on_use = function(self, event, target, player, data)
@@ -945,7 +932,7 @@ local bladeSkill = fk.CreateTriggerSkill{
   attached_equip = "blade",
   events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
+    return player:hasSkill(self) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
@@ -1010,7 +997,7 @@ local axeSkill = fk.CreateTriggerSkill{
   attached_equip = "axe",
   events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self.name) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
+    return player:hasSkill(self) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
@@ -1049,7 +1036,7 @@ local halberdAudio = fk.CreateTriggerSkill{
   name = "#halberdAudio",
   refresh_events = {fk.CardUsing},
   can_refresh = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
+    return target == player and player:hasSkill(self) and
       data.card.trueName == "slash" and #TargetGroup:getRealTargets(data.tos) > 1
   end,
   on_refresh = function(self, event, target, player, data)
@@ -1062,7 +1049,7 @@ local halberdSkill = fk.CreateTargetModSkill{
   name = "#halberd_skill",
   attached_equip = "halberd",
   extra_target_func = function(self, player, skill, card)
-    if player:hasSkill(self.name) and skill.trueName == "slash_skill" then
+    if player:hasSkill(self) and skill.trueName == "slash_skill" then
       local cards = card:isVirtual() and card.subcards or {card.id}
       local handcards = player:getCardIds(Player.Hand)
       if #cards == #handcards and table.every(cards, function(id) return table.contains(handcards, id) end) then
@@ -1090,7 +1077,7 @@ local kylinBowSkill = fk.CreateTriggerSkill{
   attached_equip = "kylin_bow",
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
-    local ret = target == player and player:hasSkill(self.name) and
+    local ret = target == player and player:hasSkill(self) and
       data.card and data.card.trueName == "slash" and (not data.chain)
     if ret then
       ---@type ServerPlayer
@@ -1135,7 +1122,7 @@ local eightDiagramSkill = fk.CreateTriggerSkill{
   attached_equip = "eight_diagram",
   events = {fk.AskForCardUse, fk.AskForCardResponse},
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
+    return target == player and player:hasSkill(self) and
       (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none")))
   end,
   on_use = function(self, event, target, player, data)
@@ -1188,10 +1175,10 @@ local niohShieldSkill = fk.CreateTriggerSkill{
   events = {fk.PreCardEffect},
   can_trigger = function(self, event, target, player, data)
     local effect = data ---@type CardEffectEvent
-    return player.id == effect.to and player:hasSkill(self.name) and
+    return player.id == effect.to and player:hasSkill(self) and
       effect.card.trueName == "slash" and effect.card.color == Card.Black
   end,
-  on_use = function() return true end,
+  on_use = Util.TrueFunc,
 }
 Fk:addSkill(niohShieldSkill)
 local niohShield = fk.CreateArmor{
