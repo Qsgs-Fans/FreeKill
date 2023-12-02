@@ -282,7 +282,7 @@ function Room:getCardArea(cardId)
 end
 
 --- 获得拥有某一张牌的玩家。
----@param cardId integer | card @ 要获得主人的那张牌，可以是Card实例或者id
+---@param cardId integer | Card @ 要获得主人的那张牌，可以是Card实例或者id
 ---@return ServerPlayer | nil @ 这张牌的主人，可能返回nil
 function Room:getCardOwner(cardId)
   if type(cardId) ~= "number" then
@@ -2853,7 +2853,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
 end
 
 --- 将一张或多张牌移动到某处
----@param card Card | Card[] @ 要移动的牌
+---@param card Card | Card[] | integer | integer[] @ 要移动的牌
 ---@param to_place integer @ 移动的目标位置
 ---@param target ServerPlayer @ 移动的目标玩家
 ---@param reason integer|nil @ 移动时使用的移牌原因
