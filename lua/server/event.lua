@@ -125,6 +125,7 @@ fk.AfterSkillEffect = 82
 fk.AreaAborted = 87
 fk.AreaResumed = 88
 
+fk.GeneralShown = 95
 fk.GeneralRevealed = 89
 fk.GeneralHidden = 90
 
@@ -134,4 +135,4 @@ fk.BeforePropertyChange = 92
 fk.PropertyChange = 93
 fk.AfterPropertyChange = 94
 
-fk.NumOfEvents = 95
+fk.NumOfEvents = 96
