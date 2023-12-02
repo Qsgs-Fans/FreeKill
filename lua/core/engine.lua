@@ -16,6 +16,7 @@
 ---@field public generals table<string, General> @ 所有武将
 ---@field public same_generals table<string, string[]> @ 所有同名武将组合
 ---@field public lords string[] @ 所有主公武将，用于常备主公
+---@field public all_card_types table<string, Card> @ 所有的卡牌类型以及一张样板牌
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
@@ -50,6 +51,7 @@ function Engine:initialize()
   self.generals = {}    -- name --> General
   self.same_generals = {}
   self.lords = {}     -- lordName[]
+  self.all_card_types = {}
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
@@ -252,9 +254,11 @@ function Engine:addGenerals(generals)
   end
 end
 
-local function canUseGeneral(g)
-  local r = Fk:currentRoom()
-  local general = Fk.generals[g]
+--- 判断一个武将是否在本房间可用。
+---@param g string @ 武将名
+function Engine:canUseGeneral(g)
+  local r = self:currentRoom()
+  local general = self.generals[g]
   if not general then return false end
   return not table.contains(r.disabled_packs, general.package.name) and
     not table.contains(r.disabled_generals, g) and not general.hidden and not general.total_hidden
@@ -270,12 +274,11 @@ function Engine:getSameGenerals(name)
   local tName = tmp[#tmp]
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
-    return g ~= name and self.generals[g] ~= nil and canUseGeneral(g)
+    return g ~= name and self.generals[g] ~= nil and self:canUseGeneral(g)
   end)
 end
 
 local cardId = 1
-local _card_name_table = {}
 
 --- 向Engine中加载一张卡牌。
 ---
@@ -286,8 +289,8 @@ function Engine:addCard(card)
   card.id = cardId
   cardId = cardId + 1
   table.insert(self.cards, card)
-  if _card_name_table[card.name] == nil then
-    _card_name_table[card.name] = card
+  if self.all_card_types[card.name] == nil then
+    self.all_card_types[card.name] = card
   end
 end
 
@@ -307,7 +310,7 @@ end
 ---@param number integer|nil @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
-  local cd = _card_name_table[name]
+  local cd = self.all_card_types[name]
   assert(cd, "Attempt to clone a card that not added to engine")
   local ret = cd:clone(suit, number)
   ret.package = cd.package
@@ -393,7 +396,7 @@ function Engine:getAllGenerals(except)
   local result = {}
   for _, general in pairs(self.generals) do
     if not (except and table.contains(except, general)) then
-      if canUseGeneral(general.name) then
+      if self:canUseGeneral(general.name) then
         table.insert(result, general)
       end
     end

@@ -55,6 +55,7 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
 
+  /*
   MediaPlayer {
     id: bgm
     source: config.bgmFile
@@ -68,10 +69,11 @@ Item {
       volume: config.bgmVolume / 100
     }
   }
+  */
 
   onIsStartedChanged: {
     if (isStarted) {
-      bgm.play();
+      // bgm.play();
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
@@ -279,13 +281,13 @@ Item {
           let cardpack = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
 
-          text = "游戏模式：" + Backend.translate(data.gameMode) + "<br />"
+          text = Backend.translate("GameMode") + Backend.translate(data.gameMode) + "<br />"
             + Backend.translate("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
             + Backend.translate("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
             + Backend.translate("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
             + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
             + (data.enableDeputy ? " " + Backend.translate("IncludeDeputy") : "")
-            + '<br />使用牌堆：' + cardpack.map(e => {
+            + '<br />' + Backend.translate('CardPackages') + cardpack.map(e => {
               let ret = Backend.translate(e);
               if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
                 ret = "<b>" + ret + "</b>";
@@ -473,6 +475,20 @@ Item {
     anchors.leftMargin: 8
     ColumnLayout {
       MetroButton {
+        text: Backend.translate("Choose one handcard")
+        textFont.pixelSize: 28
+        visible: {
+          if (dashboard.handcardArea.length <= 15) {
+            return false;
+          }
+          if (roomScene.state == "notactive" || roomScene.state == "replying") {
+            return false;
+          }
+          return true;
+        }
+        onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
+      }
+      MetroButton {
         text: Backend.translate("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
@@ -503,7 +519,9 @@ Item {
     onCardSelected: function(card) {
       Logic.enableTargets(card);
 
-      if (typeof card === "number" && card !== -1 && roomScene.state === "playing") {
+      if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
+        && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
+
         const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
         if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
           skills.unshift("_normal_use");

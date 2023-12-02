@@ -30,6 +30,8 @@ QtObject {
   property int preferredTimeout
   property int preferredLuckTime
 
+  property bool firstRun: true
+
   // Player property of client
   property string serverAddr
   property string screenName: ""
@@ -66,10 +68,11 @@ QtObject {
     bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
     language = conf.language ?? (() => {
       let ret = SysLocale;
-      if (['zh_CN', 'en_US'].includes(ret)) {
-        return ret;
+      if (ret.startsWith('zh_')) {
+        return 'zh_CN';
+      } else {
+        return 'en_US';
       }
-      return 'zh_CN';
     })();
     disabledPack = conf.disabledPack ?? [ "test_p_0" ];
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
@@ -82,6 +85,7 @@ QtObject {
     hideUseless = conf.hideUseless ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
+    firstRun = conf.firstRun ?? true;
     disabledGenerals = conf.disabledGenerals ?? [];
     disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
     disableSchemeIdx = conf.disableSchemeIdx ?? 0;
@@ -109,6 +113,7 @@ QtObject {
     conf.hideUseless = hideUseless;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
+    conf.firstRun = firstRun;
     conf.disabledGenerals = disabledGenerals;
     conf.disableGeneralSchemes = disableGeneralSchemes;
     conf.disableSchemeIdx = disableSchemeIdx;

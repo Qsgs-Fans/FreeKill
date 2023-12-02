@@ -52,6 +52,24 @@ Util.convertSubtypeAndEquipSlot = function(value)
   end
 end
 
+--- 根据花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）返回花色ID。
+---@param symbol string @ 描述/符号（原文，确保没被翻译过）
+---@return Suit @ 花色ID
+Util.getSuitFromString = function(symbol)
+  assert(type(symbol) == "string")
+  if symbol:find("spade") then
+    return Card.Spade
+  elseif symbol:find("heart") then
+    return Card.Heart
+  elseif symbol:find("club") then
+    return Card.Club
+  elseif symbol:find("diamond") then
+    return Card.Diamond
+  else
+    return Card.NoSuit
+  end
+end
+
 function printf(fmt, ...)
   print(string.format(fmt, ...))
 end
@@ -118,14 +136,23 @@ function table:map(func)
 end
 
 -- frequenly used filter & map functions
+
+--- 返回ID
 Util.IdMapper = function(e) return e.id end
+--- 根据卡牌ID返回卡牌
 Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
+--- 根据玩家ID返回玩家
 Util.Id2PlayerMapper = function(id)
   return Fk:currentRoom():getPlayerById(id)
 end
+--- 返回武将名
 Util.NameMapper = function(e) return e.name end
+--- 根据武将名返回武将
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
+--- 根据技能名返回技能
 Util.Name2SkillMapper = function(e) return Fk.skills[e] end
+--- 返回译文
+Util.TranslateMapper = function(str) return Fk:translate(str) end
 
 -- for card preset
 Util.GlobalCanUse = function(self, player, card)

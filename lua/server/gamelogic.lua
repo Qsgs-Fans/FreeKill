@@ -44,7 +44,11 @@ function GameLogic:run()
   self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   room:adjustSeats()
-
+  --[[ 因为未完工，在release版暂时不启用。
+  for _, p in ipairs(room.players) do
+    p.ai = SmartAI:new(p)
+  end
+  --]]
   self:chooseGenerals()
 
   self:buildPlayerCircle()
@@ -90,32 +94,8 @@ function GameLogic:chooseGenerals()
 
   if lord ~= nil then
     room.current = lord
-    local generals = {}
-    local lordlist = {}
-    local lordpools = {}
-    if room.settings.gameMode == "aaa_role_mode" then
-      for _, general in pairs(Fk:getAllGenerals()) do
-        if (not general.hidden and not general.total_hidden) and
-        table.find(general.skills, function(s)
-          return s.lordSkill
-        end) and
-        not table.find(lordlist, function(g)
-          return g.trueName == general.trueName
-        end) then
-          table.insert(lordlist, general)
-        end
-      end
-      lordlist = table.random(lordlist, 3) or {}
-    end
-    table.insertTable(generals, Fk:getGeneralsRandomly(generalNum, Fk:getAllGenerals(), nil, function(g)
-      return table.contains(table.map(lordlist, function(g) return g.trueName end), g.trueName)
-    end))
-    for i = 1, #generals do
-      generals[i] = generals[i].name
-    end
-    lordpools = table.simpleClone(generals)
-    table.insertTable(lordpools, table.map(lordlist, function(g) return g.name end))
-    lord_generals = room:askForGeneral(lord, lordpools, n)
+    local generals = room:getNGenerals(generalNum)
+    lord_generals = room:askForGeneral(lord, generals, n)
     local lord_general, deputy
     if type(lord_generals) == "table" then
       deputy = lord_generals[2]
@@ -124,6 +104,9 @@ function GameLogic:chooseGenerals()
       lord_general = lord_generals
       lord_generals = {lord_general}
     end
+
+    generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
+    room:returnToGeneralPile(generals)
 
     room:setPlayerGeneral(lord, lord_general, true)
     room:askForChooseKingdom({lord})
@@ -134,13 +117,10 @@ function GameLogic:chooseGenerals()
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = Fk:getGeneralsRandomly(#nonlord * generalNum, nil, lord_generals)
+  local generals = room:getNGenerals(#nonlord * generalNum)
   table.shuffle(generals)
-  for _, p in ipairs(nonlord) do
-    local arg = {}
-    for i = 1, generalNum do
-      table.insert(arg, table.remove(generals, 1).name)
-    end
+  for i, p in ipairs(nonlord) do
+    local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
     p.request_data = json.encode{ arg, n }
     p.default_reply = table.random(arg, n)
   end
@@ -148,11 +128,13 @@ function GameLogic:chooseGenerals()
   room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
 
+  local selected = {}
   for _, p in ipairs(nonlord) do
     if p.general == "" and p.reply_ready then
-      local generals = json.decode(p.client_reply)
-      local general = generals[1]
-      local deputy = generals[2]
+      local general_ret = json.decode(p.client_reply)
+      local general = general_ret[1]
+      local deputy = general_ret[2]
+      table.insertTableIfNeed(selected, general_ret)
       room:setPlayerGeneral(p, general, true, true)
       room:setDeputyGeneral(p, deputy)
     else
@@ -161,6 +143,9 @@ function GameLogic:chooseGenerals()
     end
     p.default_reply = ""
   end
+
+  generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
+  room:returnToGeneralPile(generals)
 
   room:askForChooseKingdom(nonlord)
 end
@@ -352,6 +337,10 @@ function GameLogic:trigger(event, target, data, refresh_only)
   local skills_to_refresh = self.refresh_skill_table[event] or Util.DummyTable
   local _target = room.current -- for iteration
   local player = _target
+  local cur_event = self:getCurrentEvent() or {}
+  -- 如果当前事件被杀，就强制只refresh
+  -- 因为被杀的事件再进行正常trigger只可能在cleaner和exit了
+  refresh_only = refresh_only or cur_event.killed
 
   if #skills_to_refresh > 0 then repeat do
     -- refresh skills. This should not be broken
@@ -397,7 +386,9 @@ function GameLogic:trigger(event, target, data, refresh_only)
         skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0)
+          and room:getPlayerById(data.who).hp > 0) or cur_event.revived
+        --                                            ^^^^^^^^^^^^^^^^^
+        -- 如果事件复活了，那么其实说明事件已经死过了，赶紧break掉
 
         if broken then break end
       end
@@ -417,6 +408,11 @@ end
 ---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
+end
+
+---@param eventType integer
+function GameLogic:getMostRecentEvent(eventType)
+  return self:getCurrentEvent():findParent(eventType, true)
 end
 
 --- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。

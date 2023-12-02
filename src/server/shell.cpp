@@ -9,6 +9,7 @@
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <signal.h>
+#include <QJsonDocument>
 
 static void sigintHandler(int) {
   fprintf(stderr, "\n");
@@ -81,7 +82,10 @@ void Shell::lsrCommand(QStringList &) {
   }
   qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
   foreach (auto room, ServerInstance->rooms) {
-    qInfo() << room->getId() << "," << room->getName();
+    auto config = QJsonDocument::fromJson(room->getSettings());
+    auto pw = config["password"].toString();
+    qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
+        QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
   }
 }
 

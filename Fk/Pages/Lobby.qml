@@ -315,13 +315,14 @@ Item {
   Rectangle {
     id: info
     color: "#88EEEEEE"
-    width: childrenRect.width + 8
+    width: root.width * 0.23 // childrenRect.width + 8
     height: childrenRect.height + 4
     anchors.bottom: parent.bottom
     anchors.left: parent.left
     radius: 4
 
     Text {
+      anchors.horizontalCenter: parent.horizontalCenter
       x: 4; y: 2
       font.pixelSize: 16
       text: Backend.translate("$OnlineInfo")

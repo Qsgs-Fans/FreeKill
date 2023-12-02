@@ -41,6 +41,7 @@ dofile "lua/server/events/gameflow.lua"
 GameEvent.Pindian = 19
 dofile "lua/server/events/pindian.lua"
 
+-- 20 = CardEffect
 GameEvent.ChangeProperty = 21
 dofile "lua/server/events/misc.lua"
 

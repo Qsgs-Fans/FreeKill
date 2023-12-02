@@ -180,6 +180,7 @@ function ServerPlayer:waitForReply(timeout)
     self.serverplayer:setThinking(false)
   end
 
+  -- FIXME: 一控多求无懈
   local queue = self.room.request_queue[self.serverplayer]
   if queue and #queue > 0 and not self.serverplayer:busy() then
     local i, c, j, t = table.unpack(table.remove(queue, 1))
@@ -339,6 +340,7 @@ function ServerPlayer:reconnect()
       p._splayer:getAvatar(),
     })
   end
+  self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
 
   local player_circle = {}
   for i = 1, #room.players do
@@ -743,6 +745,7 @@ function ServerPlayer:setChainState(chained)
 end
 
 function ServerPlayer:reset()
+  if self.faceup and not self.chained then return end
   self.room:sendLog{
     type = "#ChainStateChange",
     from = self.id,
@@ -890,14 +893,14 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local oldKingdom = self.kingdom
-  room:changeHero(self, generalName, false, isDeputy, false, false)
+  room:changeHero(self, generalName, false, isDeputy, false, false, false)
   if oldKingdom ~= "wild" then
-    local kingdom = general.kingdom
+    local kingdom = (self:getMark("__heg_wild") == 1 and not isDeputy) and "wild" or self:getMark("__heg_kingdom")
     self.kingdom = kingdom
-    if oldKingdom == "unknown" and #table.filter(room:getOtherPlayers(self, false, true),
+    if oldKingdom == "unknown" and kingdom ~= "wild" and #table.filter(room:getOtherPlayers(self, false, true),
       function(p)
         return p.kingdom == kingdom
-      end) >= #room.players // 2 then
+      end) >= #room.players // 2 and table.every(room.alive_players, function(p) return p.kingdom ~= kingdom or not string.find(p.general, "lord") end) then
       self.kingdom = "wild"
     end
     room:broadcastProperty(self, "kingdom")
@@ -905,8 +908,8 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     room:setPlayerProperty(self, "kingdom", "wild")
   end
 
-  if self.gender == General.Agender then
-    self.gender = general.gender
+  if self.gender == General.Agender or self.gender ~= Fk.generals[self.general].gender then
+    room:setPlayerProperty(self, "gender", general.gender)
   end
 
   room:sendLog{
@@ -917,7 +920,28 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   }
 
   if not no_trigger then
-    room.logic:trigger(fk.GeneralRevealed, self, generalName)
+    local current_event = room.logic:getCurrentEvent()
+    if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
+      room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+    else
+      current_event:addExitFunc(function ()
+        room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+      end)
+    end
+  end
+end
+
+function ServerPlayer:revealGenerals()
+  self:revealGeneral(false, true)
+  self:revealGeneral(true, true)
+  local room = self.room
+  local current_event = room.logic:getCurrentEvent()
+  if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
+    room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+  else
+    current_event:addExitFunc(function ()
+      room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+    end)
   end
 end
 
@@ -981,8 +1005,17 @@ function ServerPlayer:hideGeneral(isDeputy)
     end
   end
 
-  room.logic:trigger(fk.GeneralHidden, room, generalName)
+  self.gender = General.Agender
+  if Fk.generals[self.general].gender ~= General.Agender then
+    self.gender = Fk.generals[self.general].gender
+  elseif self.deputyGeneral and Fk.generals[self.deputyGeneral].gender ~= General.Agender then
+    self.gender = Fk.generals[self.deputyGeneral].gender
+  end
+  room:broadcastProperty(self, "gender")
+
+  room.logic:trigger(fk.GeneralHidden, self, generalName)
 end
+
 -- 神貂蝉
 
 ---@param p ServerPlayer

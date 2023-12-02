@@ -12,6 +12,8 @@ ColumnLayout {
       text: Backend.translate("BGM Volume")
     }
     Slider {
+      Layout.rightMargin: 16
+      Layout.fillWidth: true
       from: 0
       to: 100
       value: config.bgmVolume
@@ -26,6 +28,8 @@ ColumnLayout {
       text: Backend.translate("Effect Volume")
     }
     Slider {
+      Layout.rightMargin: 16
+      Layout.fillWidth: true
       from: 0
       to: 100
       value: Backend.volume

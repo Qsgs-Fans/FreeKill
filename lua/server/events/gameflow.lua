@@ -141,8 +141,15 @@ GameEvent.functions[GameEvent.Round] = function(self)
   if isFirstRound then
     room:setTag("FirstRound", false)
   end
-  room:setTag("RoundCount", room:getTag("RoundCount") + 1)
-  room:doBroadcastNotify("UpdateRoundNum", room:getTag("RoundCount"))
+
+  local roundCount = room:getTag("RoundCount")
+  roundCount = roundCount + 1
+  room:setTag("RoundCount",  roundCount)
+  room:doBroadcastNotify("UpdateRoundNum", roundCount)
+  -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
+  if roundCount >= 9999 then
+    room:gameOver("")
+  end
 
   if isFirstRound then
     logic:trigger(fk.GameStart, room.current)
@@ -294,12 +301,13 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           n = 2
         }
         room.logic:trigger(fk.DrawNCards, player, data)
-        room:drawCards(player, data.n, self.name)
+        room:drawCards(player, data.n, "game_rule")
         room.logic:trigger(fk.AfterDrawNCards, player, data)
       end,
       [Player.Play] = function()
         player._play_phase_end = false
         while not player.dead do
+          logic:trigger(fk.StartPlayCard, player, nil, true)
           room:notifyMoveFocus(player, "PlayCard")
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end

@@ -41,7 +41,7 @@ private:
   QSemaphore play_sem;
 
   struct Pair {
-    long elapsed;
+    qint64 elapsed;
     bool isRequest;
     QString cmd;
     QString jsonData;

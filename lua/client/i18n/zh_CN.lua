@@ -25,6 +25,8 @@ Fk:loadTranslationTable{
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Ban General Settings"] = "禁将",
+  ["Set as Avatar"] = "设为头像",
+  ["Search"] = "搜索",
   ["Back"] = "返回",
 
   ["Refresh Room List"] = "刷新房间列表",
@@ -53,7 +55,9 @@ Fk:loadTranslationTable{
   ["General Packages"] = "武将拓展包",
   ["Card Packages"] = "卡牌拓展包",
   ["Select All"] = "全选",
+  ["Choose one handcard"] = "选卡",
   ["Revert Selection"] = "反选",
+  ["Handcard selector"] = "手牌选择器，只可选一张，代为点击这张手牌",
 
   ["Give Flower"] = "送花",
   ["Give Egg"] = "砸蛋",
@@ -179,9 +183,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Death audio"] = "阵亡",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
+  ["GameMode"] = "游戏模式：",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
   ["GeneralBoxNum"] = "选将框数：",
+  ["CardPackages"] = "使用牌堆：",
   ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
   ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
 
@@ -200,6 +206,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %1 次，剩余手气卡∞张",
   ["AskForLuckCard"] = "手气卡",
   ["#AskForChoice"] = "%1：请选择",
+  ["#AskForCheck"] = "%1：请选择",
   ["#choose-trigger"] = "请选择一项技能发动",
   ["trigger"] = "选择技能",
   ["Please arrange cards"] = "请拖拽移动卡牌",
@@ -210,6 +217,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGuanxing"] = "观星",
   ["AskForExchange"] = "换牌",
   ["AskForChoice"] = "选择",
+  ["AskForCheck"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
   ["AskForMoveCardInBoard"] = "移动卡牌",
@@ -288,9 +296,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.8
+  ## v0.3.12
 
-  为国战添加专属ui，修复一些bug。
+  移除了BGM。请自己用外部音乐APP播放BGM。
+
+  又修复了一些底层bug。
 
   ]==],
 }

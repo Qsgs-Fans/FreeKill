@@ -8,6 +8,7 @@
 #include <qmediaplayer.h>
 #include <qrandom.h>
 #include <QNetworkDatagram>
+#include <QDnsLookup>
 
 #include <QClipboard>
 #include <QMediaPlayer>
@@ -113,6 +114,24 @@ void QmlBackend::joinServer(QString address) {
     port = texts.value(1).toUShort();
   } else {
     addr = address;
+    // SRV解析查询
+    QDnsLookup* dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
+    QEventLoop eventLoop;
+    // 阻塞的SRV解析查询回调
+    connect(dns, &QDnsLookup::finished,[&eventLoop](void){
+        eventLoop.quit();
+    });
+    dns->lookup();
+    eventLoop.exec();
+    if (dns->error() == QDnsLookup::NoError) { // SRV解析成功
+      const auto records = dns->serviceRecords();
+      const QDnsServiceRecord &record = records.first();
+      QHostInfo host = QHostInfo::fromName(record.target());
+      if (host.error() == QHostInfo::NoError) { // 主机解析成功
+          addr = host.addresses().first().toString();
+          port = record.port();
+      }
+    }
   }
 
   client->connectToHost(addr, port);
@@ -303,6 +322,10 @@ void QmlBackend::playSound(const QString &name, int index) {
   if (!QFile::exists(fname))
     return;
 
+#ifdef Q_OS_ANDROID
+  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
+      "(Ljava/lang/String;)V", QJniObject::fromString(fname).object<jstring>());
+#else
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
   player->setAudioOutput(output);
@@ -315,6 +338,7 @@ void QmlBackend::playSound(const QString &name, int index) {
     }
   });
   player->play();
+#endif
 }
 
 void QmlBackend::copyToClipboard(const QString &s) {
@@ -362,8 +386,43 @@ void QmlBackend::getServerInfo(const QString &address) {
   QByteArray ask(ask_str);
   ask.append(address.toLatin1());
 
-  udpSocket->writeDatagram(ask, ask.size(),
-      QHostAddress(addr), port);
+  if (QHostAddress(addr).isNull()) { // 不是ip？考虑解析域名
+    QHostInfo::lookupHost(addr, this, [=](const QHostInfo &host) {
+      if (host.error() == QHostInfo::NoError) {
+        udpSocket->writeDatagram(ask, ask.size(),
+            host.addresses().first(), port);
+      }
+      else if (host.error() == QHostInfo::HostNotFound
+        && !address.contains(QChar(':'))){ // 直接解析主机失败，尝试获取其SRV记录
+        QDnsLookup* dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
+        // SRV解析回调
+        connect(dns, &QDnsLookup::finished, this, [=]() {
+          if (dns->error() != QDnsLookup::NoError) {
+            return;
+          }
+          // SRV解析成功，再次进行解析主机
+          const auto records = dns->serviceRecords();
+          if (records.isEmpty()) {
+            return;
+          }
+          const QDnsServiceRecord &record = records.first();
+          // 获取到真实端口
+          QHostInfo::lookupHost(record.target(), [=](const QHostInfo &host) {
+            if (host.error() == QHostInfo::NoError) {
+              // 获取到真实地址
+              udpSocket->writeDatagram(ask, ask.size(),
+                host.addresses().first(), record.port());
+            }
+          });
+        });
+        // SRV解析查询
+        dns->lookup();
+      }
+    });
+  } else {
+    udpSocket->writeDatagram(ask, ask.size(),
+        QHostAddress(addr), port);
+  }
 }
 
 void QmlBackend::readPendingDatagrams() {

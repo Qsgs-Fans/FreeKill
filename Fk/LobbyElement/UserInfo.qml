@@ -19,6 +19,11 @@ ColumnLayout {
     }
   }
 
+  Timer {
+    id: opTimer
+    interval: 1000
+  }
+
   RowLayout {
     anchors.rightMargin: 8
     spacing: 16
@@ -30,12 +35,14 @@ ColumnLayout {
       maximumLength: 64
       font.pixelSize: 18
       text: Self.avatar
+      Layout.fillWidth: true
     }
     Button {
       text: Backend.translate("Update Avatar")
-      enabled: avatarName.text !== ""
+      enabled: avatarName.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
+        opTimer.start();
         ClientInstance.notifyServer(
           "UpdateAvatar",
           JSON.stringify([avatarName.text])
@@ -54,6 +61,8 @@ ColumnLayout {
       id: oldPassword
       echoMode: TextInput.Password
       passwordCharacter: "*"
+      Layout.rightMargin: 16
+      Layout.fillWidth: true
     }
   }
 
@@ -67,12 +76,14 @@ ColumnLayout {
       id: newPassword
       echoMode: TextInput.Password
       passwordCharacter: "*"
+      Layout.fillWidth: true
     }
     Button {
       text: Backend.translate("Update Password")
-      enabled: oldPassword.text !== "" && newPassword.text !== ""
+      enabled: oldPassword.text !== "" && newPassword.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
+        opTimer.start();
         ClientInstance.notifyServer(
           "UpdatePassword",
           JSON.stringify([oldPassword.text, newPassword.text])

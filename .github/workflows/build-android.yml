@@ -30,7 +30,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.2'
+        version: '6.5.3'
         host: 'linux'
         target: 'desktop'
         arch: 'gcc_64'
@@ -41,7 +41,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.4.2'
+        version: '6.5.3'
         host: 'linux'
         target: 'android'
         arch: 'android_arm64_v8a'
@@ -59,7 +59,7 @@ jobs:
         cd ../FreeKill
         cp -r ../openssl-1.1.1t/include/openssl ./include
 
-    - name: Setup Android for Qt 6.4.x
+    - name: Setup Android for Qt
       run: |
         cd ..
         mkdir android
@@ -67,15 +67,17 @@ jobs:
         wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip commandlinetools-linux-9477386_latest.zip
         yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
-          "platforms;android-31" \
+          "platforms;android-33" \
           "platform-tools" \
-          "build-tools;31.0.0" \
-          "ndk;23.1.7779620"
+          "build-tools;33.0.0" \
+          "ndk;25.1.8937393"
 
     - name: Copy android assets
       run: |
         ${Qt6_DIR}/../gcc_64/bin/lrelease lang/zh_CN.ts
+        ${Qt6_DIR}/../gcc_64/bin/lrelease lang/en_US.ts
         cp lang/zh_CN.qm .
+        cp lang/en_US.qm .
         FKVER=$(cat CMakeLists.txt | grep 'project(FreeKill' | cut -d ' ' -f 3)
         cd android
         sed -i 's/function //g' copy_assets.sh  # FIX THIS
@@ -90,7 +92,7 @@ jobs:
       run: |
         export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
         export ANDROID_SDK_ROOT=$(pwd)/../android
-        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.1.7779620
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
         ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
 
@@ -102,7 +104,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: apk
-        path: build/android-build/build/outputs/apk/debug/android-build-debug.apk
+        path: build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk
 
   release:
     name: Release APK
@@ -137,7 +139,7 @@ jobs:
         keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
       env:
         # override default build-tools version (29.0.3) -- optional
-        BUILD_TOOLS_VERSION: "31.0.0"
+        BUILD_TOOLS_VERSION: "33.0.0"
 
     - name: Rename APK
       run: |

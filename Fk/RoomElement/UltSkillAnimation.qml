@@ -27,8 +27,13 @@ Item {
       model: 40
       Text {
         text: {
-          const o = "$" + skillName + (index % 2 + 1);
-          const p = Backend.translate(o);
+          let o = "$" + skillName + "_" + generalName + (index % 2 + 1);
+          let p = Backend.translate(o);
+          if (o !== p) {
+            return p;
+          }
+          o = "$" + skillName + (index % 2 + 1);
+          p = Backend.translate(o);
           if (o === p) {
             return "Ultimate Skill Invoked!";
           }
@@ -53,8 +58,13 @@ Item {
       model: 40
       Text {
         text: {
-          const o = "$" + skillName + ((index + 1) % 2 + 1);
-          const p = Backend.translate(o);
+          let o = "$" + skillName + "_" + generalName + ((index + 1) % 2 + 1);
+          let p = Backend.translate(o);
+          if (o !== p) {
+            return p;
+          }
+          o = "$" + skillName + ((index + 1) % 2 + 1);
+          p = Backend.translate(o);
           if (o === p) {
             return "Ultimate Skill Invoked!";
           }
@@ -74,6 +84,7 @@ Item {
     x: root.width + 140
     anchors.verticalCenter: parent.verticalCenter
     opacity: 0
+    detailed: false
   }
 
   Text {

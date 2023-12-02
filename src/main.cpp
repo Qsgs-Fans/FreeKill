@@ -191,9 +191,6 @@ int main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion(FK_VERSION);
 
-  QLocale l = QLocale::system();
-  auto localeName = l.name();
-
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
 #endif
@@ -274,6 +271,13 @@ int main(int argc, char *argv[]) {
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 
 #ifdef Q_OS_ANDROID
+  // 投降喵，设为android根本无效
+  // 直接改用Android原生Mediaplayer了，不用你Qt家的
+  // qputenv("QT_MEDIA_BACKEND", "android");
+
+  // 安卓：获取系统语言需要使用Java才行
+  QString localeName = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetLocaleCode", "()Ljava/lang/String;").toString();
+
   // 安卓：先切换到我们安装程序的那个外部存储目录去
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView",
                                      "()V");
@@ -290,7 +294,14 @@ int main(int argc, char *argv[]) {
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
+
+  info_log = freopen("freekill.server.info.log", "w+", info_log);
+  err_log = freopen("freekill.server.error.log", "w+", err_log);
 #else
+  // 不是安卓，使用QLocale获得系统语言
+  QLocale l = QLocale::system();
+  auto localeName = l.name();
+
   // 不是安卓，那么直接启动欢迎界面，也就是不复制东西了
   QSplashScreen splash(QPixmap("image/splash.jpg"));
   splash.show();
@@ -303,7 +314,11 @@ int main(int argc, char *argv[]) {
 #endif
 
   QTranslator translator;
-  Q_UNUSED(translator.load("zh_CN.qm"));
+  if (localeName.startsWith("zh_")) {
+    Q_UNUSED(translator.load("zh_CN.qm"));
+  } else {
+    Q_UNUSED(translator.load("en_US.qm"));
+  }
   QCoreApplication::installTranslator(&translator);
 
   QmlBackend backend;

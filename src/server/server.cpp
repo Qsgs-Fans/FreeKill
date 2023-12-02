@@ -451,15 +451,14 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           client->disconnect(this);
           if (players.count() <= 10) {
             broadcast("ServerMessage", tr("%1 backed").arg(player->getScreenName()));
-            if (room->getOwner() == player) {
-              auto owner = room->getOwner();
-              auto jsonData = QJsonArray();
-              jsonData << owner->getId();
-              player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
-            }
           }
 
           if (room && !room->isLobby()) {
+            player->doNotify("SetServerSettings", JsonArray2Bytes({
+                  getConfig("motd"),
+                  getConfig("hiddenPacks"),
+                  getConfig("enableBots"),
+                  }));
             room->pushRequest(QString("%1,reconnect").arg(id));
           } else {
             // 懒得处理掉线玩家在大厅了！踢掉得了
@@ -668,6 +667,16 @@ void Server::temporarilyBan(int playerId) {
       temp_banlist.removeOne(addr);
       });
   emit player->kicked();
+}
+
+void Server::beginTransaction() {
+  transaction_mutex.lock();
+  ExecSQL(db, "BEGIN;");
+}
+
+void Server::endTransaction() {
+  ExecSQL(db, "COMMIT;");
+  transaction_mutex.unlock();
 }
 
 void Server::readPendingDatagrams() {

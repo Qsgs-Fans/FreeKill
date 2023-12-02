@@ -15,7 +15,7 @@ local function useActiveSkill(self, skill, card)
     filter_func = function() return false end
   end
 
-  if self.command == "PlayCard" and (not skill:canUse(player, card) or player:prohibitUse(card)) then
+  if self.command == "PlayCard" and card and (not player:canUse(card) or player:prohibitUse(card)) then
     return ""
   end
 
@@ -31,7 +31,7 @@ local function useActiveSkill(self, skill, card)
     local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
-        if player:prohibitUse(card) then
+        if player:isProhibited(p, card) then
           ret = false
         end
       end
@@ -108,9 +108,10 @@ local function useVSSkill(self, skill, pattern, cancelable, extra_data)
   return nil
 end
 
+---@type table<string, fun(self: RandomAI, jsonData: string): string>
 local random_cb = {}
 
-random_cb.AskForUseActiveSkill = function(self, jsonData)
+random_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local cancelable = data[3]
@@ -122,11 +123,11 @@ random_cb.AskForUseActiveSkill = function(self, jsonData)
   return useActiveSkill(self, skill)
 end
 
-random_cb.AskForSkillInvoke = function(self, jsonData)
+random_cb["AskForSkillInvoke"] = function(self, jsonData)
   return table.random{"1", ""}
 end
 
-random_cb.AskForUseCard = function(self, jsonData)
+random_cb["AskForUseCard"] = function(self, jsonData)
   local player = self.player
   local data = json.decode(jsonData)
   local card_name = data[1]
@@ -134,13 +135,14 @@ random_cb.AskForUseCard = function(self, jsonData)
   local cancelable = data[4] or true
   local exp = Exppattern:Parse(pattern)
 
-  local avail_cards = table.filter(player:getCardIds("he"), function(id)
-    return exp:match(Fk:getCardById(id)) and not player:prohibitUse(Fk:getCardById(id))
+  local avail_cards = table.map(player:getCardIds("he"), Util.Id2CardMapper)
+  avail_cards = table.filter(avail_cards, function(c)
+    return exp:match(c) and not player:prohibitUse(c)
   end)
   if #avail_cards > 0 then
     if math.random() < 0.25 then return "" end
     for _, card in ipairs(avail_cards) do
-      local skill = Fk:getCardById(card).skill
+      local skill = card.skill
       local max_try_times = 100
       local selected_targets = {}
       local min = skill:getMinTargetNum()
@@ -148,30 +150,26 @@ random_cb.AskForUseCard = function(self, jsonData)
       local min_card = skill:getMinCardNum()
       local max_card = skill:getMaxCardNum()
       for _ = 0, max_try_times do
-        if skill:feasible(selected_targets, {card}, self.player, card) then break end
+        if skill:feasible(selected_targets, { card.id }, self.player, card) then
+          return json.encode{
+            card = table.random(avail_cards).id,
+            targets = selected_targets,
+            }
+        end
         local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
-          local ret = skill:targetFilter(p.id, selected_targets, {card}, card or Fk:cloneCard'zixing')
-          return ret
+          return skill:targetFilter(p.id, selected_targets, {card.id}, card or Fk:cloneCard'zixing')
         end)
         avail_targets = table.map(avail_targets, function(p) return p.id end)
 
         if #avail_targets == 0 and #avail_cards == 0 then break end
         table.insertIfNeed(selected_targets, table.random(avail_targets))
-        table.insertIfNeed({card}, table.random(avail_cards))
-      end
-      if skill:feasible(selected_targets, {card}, self.player, card) then
-        return json.encode{
-          card = table.random(avail_cards),
-          targets = selected_targets,
-        }
       end
     end
   end
   return ""
 end
 
----@param self RandomAI
-random_cb.AskForResponseCard = function(self, jsonData)
+random_cb["AskForResponseCard"] = function(self, jsonData)
   local data = json.decode(jsonData)
   local pattern = data[2]
   local cancelable = true
@@ -187,10 +185,8 @@ random_cb.AskForResponseCard = function(self, jsonData)
   return ""
 end
 
----@param self RandomAI
-random_cb.PlayCard = function(self, jsonData)
-  local cards = table.map(self.player:getCardIds(Player.Hand),
-    function(id) return Fk:getCardById(id) end)
+random_cb["PlayCard"] = function(self, jsonData)
+  local cards = table.map(self.player:getCardIds(Player.Hand), Util.Id2CardMapper)
   local actives = table.filter(self.player:getAllSkills(), function(s)
     return s:isInstanceOf(ActiveSkill)
   end)

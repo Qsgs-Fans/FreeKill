@@ -7,17 +7,19 @@ import Fk.Pages
 GraphicsBox {
   id: root
 
-  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data])
+  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data, extra_data])
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
-  height: 64 + Math.min(cardView.contentHeight, 400) + 20
+  height: 64 + Math.min(cardView.contentHeight, 400) + 30
 
   signal cardSelected(int cid)
   signal cardsSelected(var ids)
   property var selected_ids: []
   property string poxi_type
   property var card_data
+  property bool cancelable: true
+  property var extra_data
 
   ListModel {
     id: cardModel
@@ -29,14 +31,14 @@ GraphicsBox {
     anchors.topMargin: 40
     anchors.leftMargin: 20
     anchors.rightMargin: 20
-    anchors.bottomMargin: 20
+    anchors.bottomMargin: 30
     spacing: 20
     model: cardModel
     clip: true
 
     delegate: RowLayout {
       spacing: 15
-      visible: areaCards.count > 0
+      // visible: areaCards.count > 0
 
       Rectangle {
         border.color: "#A6967A"
@@ -72,7 +74,7 @@ GraphicsBox {
             selectable: {
               return root.selected_ids.includes(model.cid) || JSON.parse(Backend.callLuaFunction(
                 "PoxiFilter",
-                [root.poxi_type, model.cid, root.selected_ids, root.card_data]
+                [root.poxi_type, model.cid, root.selected_ids, root.card_data, root.extra_data]
               ));
             }
             onSelectedChanged: {
@@ -91,17 +93,35 @@ GraphicsBox {
     }
   }
 
-  MetroButton {
+  Row {
+    anchors.margins: 8
     anchors.bottom: parent.bottom
-    text: Backend.translate("OK")
-    enabled: {
-      return JSON.parse(Backend.callLuaFunction(
-        "PoxiFeasible",
-        [root.poxi_type, root.selected_ids, root.card_data]
-      ));
+    anchors.horizontalCenter: parent.horizontalCenter
+    spacing: 32
+
+    MetroButton {
+      width: 120
+      height: 35
+      text: Backend.translate("OK")
+      enabled: {
+        return JSON.parse(Backend.callLuaFunction(
+          "PoxiFeasible",
+          [root.poxi_type, root.selected_ids, root.card_data, root.extra_data]
+        ));
+      }
+      onClicked: root.cardsSelected(root.selected_ids)
     }
-    onClicked: root.cardsSelected(root.selected_ids)
+
+    MetroButton {
+      width: 120
+      height: 35
+      text: Backend.translate("Cancel")
+      visible: root.cancelable
+      onClicked: root.cardsSelected([])
+    }
+
   }
+
 
   onCardSelected: finished();
 

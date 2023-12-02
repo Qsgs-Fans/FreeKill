@@ -329,11 +329,17 @@ end
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
   playerAreas = playerAreas or rightAreas
+  local cardIds = {}
   if type(playerAreas) == "string" then
     local str = playerAreas
     playerAreas = {}
     if str:find("h") then
       table.insert(playerAreas, Player.Hand)
+    end
+    if str:find("&") then--增加特殊区域
+      for k, v in pairs(self.special_cards) do
+        if k:endsWith("&") then table.insertTable(cardIds, v) end
+      end
     end
     if str:find("e") then
       table.insert(playerAreas, Player.Equip)
@@ -345,8 +351,7 @@ function Player:getCardIds(playerAreas, specialName)
   assert(type(playerAreas) == "number" or type(playerAreas) == "table")
   local areas = type(playerAreas) == "table" and playerAreas or { playerAreas }
 
-  local rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
-  local cardIds = {}
+  rightAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
   for _, area in ipairs(areas) do
     assert(table.contains(rightAreas, area))
     assert(area ~= Player.Special or type(specialName) == "string")
@@ -508,7 +513,7 @@ function Player:distanceTo(other, mode, ignore_dead)
     temp = temp.next
   end
   if temp ~= other then
-    print("Distance malfunction: start and end does not matched.")
+    print("Distance malfunction: start and end does not match.")
   end
   local left = #(ignore_dead and Fk:currentRoom().players or Fk:currentRoom().alive_players) - right - #table.filter(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end)
   local ret = 0
@@ -562,8 +567,9 @@ end
 
 --- 获取下家。
 ---@param ignoreRemoved bool @ 忽略被移除
+---@param num interger|nil @ 第几个，默认1
 ---@return ServerPlayer
-function Player:getNextAlive(ignoreRemoved)
+function Player:getNextAlive(ignoreRemoved, num)
   if #Fk:currentRoom().alive_players == 0 then
     return self
   end
@@ -572,11 +578,25 @@ function Player:getNextAlive(ignoreRemoved)
     return self
   end
 
-  local ret = self.next
-  while ret.dead or (doNotIgnore and ret:isRemoved()) do
+  local ret = self
+  num = num or 1
+  for _ = 1, num do
     ret = ret.next
+    while ret.dead or (doNotIgnore and ret:isRemoved()) do
+      ret = ret.next
+    end
   end
   return ret
+end
+
+--- 获取上家。
+---@param ignoreRemoved bool @ 忽略被移除
+---@param num interger|nil @ 第几个，默认1
+---@return ServerPlayer
+function Player:getLastAlive(ignoreRemoved, num)
+  num = num or 1
+  local index = ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
+  return self:getNextAlive(ignoreRemoved, index)
 end
 
 --- 增加玩家使用特定牌的历史次数。

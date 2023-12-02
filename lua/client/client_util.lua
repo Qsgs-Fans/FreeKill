@@ -546,7 +546,7 @@ function CardProhibitedResponse(card)
   if c == nil then
     return "true"
   else
-    ret = Self:prohibitUse(c)
+    ret = Self:prohibitResponse(c)
   end
   return json.encode(ret)
 end
@@ -715,23 +715,23 @@ function GetCardProhibitReason(cid, method, pattern)
   end
 end
 
-function PoxiPrompt(poxi_type, data)
+function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi or not poxi.prompt then return "" end
   if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
-  return poxi.prompt(data)
+  return poxi.prompt(data, extra_data)
 end
 
-function PoxiFilter(poxi_type, to_select, selected, data)
+function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return "false" end
-  return json.encode(poxi.card_filter(to_select, selected, data))
+  return json.encode(poxi.card_filter(to_select, selected, data, extra_data))
 end
 
-function PoxiFeasible(poxi_type, selected, data)
+function PoxiFeasible(poxi_type, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return "false" end
-  return json.encode(poxi.feasible(selected, data))
+  return json.encode(poxi.feasible(selected, data, extra_data))
 end
 
 dofile "lua/client/i18n/init.lua"

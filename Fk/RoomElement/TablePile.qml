@@ -75,14 +75,17 @@ Item {
     let i, j;
 
     let result = area.remove(outputs);
-    for (let i = 0; i < result.length; i++) {
-      const c = result[i];
+    result.forEach(c => {
+      const idx = discardedCards.indexOf(c);
+      if (idx !== -1) {
+        discardedCards.splice(idx, 1);
+      }
       c.footnoteVisible = false;
       c.selectable = false;
       c.height = c.height / 0.8;
       c.width = c.width / 0.8;
       // c.rotation = 0;
-    }
+    });
     const vanished = [];
     if (result.length < outputs.length) {
       for (i = 0; i < outputs.length; i++) {

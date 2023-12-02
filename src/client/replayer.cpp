@@ -71,7 +71,7 @@ Replayer::~Replayer() {
 }
 
 int Replayer::getDuration() const {
-  long ret = (pairs.last()->elapsed - pairs.first()->elapsed) / 1000.0;
+  qint64 ret = (pairs.last()->elapsed - pairs.first()->elapsed) / 1000.0;
   return (int)ret;
 }
 
@@ -126,8 +126,8 @@ void Replayer::shutdown() {
 }
 
 void Replayer::run() {
-  long last = 0;
-  long start = 0;
+  qint64 last = 0;
+  qint64 start = 0;
 
   if (roomSettings == "") {
     Backend->showToast("Invalid replay file.");
@@ -150,7 +150,7 @@ void Replayer::run() {
       continue;
     }
 
-    long delay = pair->elapsed - last;
+    qint64 delay = pair->elapsed - last;
     if (uniformRunning) {
       delay = qMin(delay, 2000);
       if (delay > 500)

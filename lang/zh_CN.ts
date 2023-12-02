@@ -189,6 +189,10 @@
   </message>
 
   <message>
+    <source>@VersionMismatch</source>
+    <translation>&lt;font color="red" size="4">&lt;b>版本不同：服务器为v%1&lt;/b>&lt;/font></translation>
+  </message>
+  <message>
     <source>Server not up</source>
     <translation>服务器似乎没有启动。</translation>
   </message>
@@ -454,4 +458,66 @@
   </message>
 </context>
 
+<context>
+  <name>Tutorial</name>
+  <message>
+    <source>tutor_msg_1</source>
+    <translation>欢迎来到新月杀！&lt;br>
+        由于是第一次运行，先来看看说明吧。&lt;br>
+        跳过了也没关系，只要点击主界面的“&lt;font color="blue">&lt;u>常见疑问&lt;/u>&lt;/font>”，就能随时查看。</translation>
+  </message>
+  <message>
+    <source>tutor_msg_2</source>
+    <translation>新月杀是一款免费三国杀类型游戏，&lt;br>
+        使用GPLv3协议进行开源！&lt;br>
+        有关项目的详细信息可以在进入大厅后，&lt;br>
+        点击右下角“关于”按钮查看。</translation>
+  </message>
+  <message>
+    <source>tutor_msg_3</source>
+    <translation>新月杀本身默认只含标准包！&lt;br>
+        想要体验更多武将，就要通过联机获取！&lt;br>
+    在主界面点击“加入服务器” -> 添加服务器。&lt;br>
+        （目前推荐的服务器IP是175.178.66.93）</translation>
+  </message>
+  <message>
+    <source>tutor_msg_4</source>
+    <translation>连接到服务器也可能不是一帆风顺。&lt;br>
+        有时候你可能用了别人已注册的用户名，&lt;br>
+        或者输错了IP等等。遇到错误不要心急，&lt;br>
+        仔细注意一下屏幕底部的提示信息吧。</translation>
+  </message>
+  <message>
+    <source>tutor_msg_5</source>
+    <translation>更多指引可以去查阅下载链接附送的pdf。
+        这些pdf都是由开发者们编写的，不仅能让你快速掌握游戏的深入玩法，
+    还可以告诉你关于开设私服、制作拓展之类的知识。</translation>
+  </message>
+  <message>
+    <source>tutor_msg_6</source>
+    <translation>如果想联系我们，可以用这些方式：&lt;br>
+        百度贴吧：新月杀吧&lt;br>
+        Discord群组：&lt;a href="https://discord.gg/tp35GrQR6v">https://discord.gg/tp35GrQR6v&lt;/a>&lt;br>
+        QQ频道：freekill01&lt;br>
+    QQ群太容易满啦，就不发群号了</translation>
+  </message>
+  <message>
+    <source>tutor_msg_7</source>
+    <translation>感谢你能看完这些！&lt;br>
+        那么接下来祝你游戏愉快！&lt;br>
+        （免费联机游戏，还请素质打牌！）</translation>
+  </message>
+  <message>
+    <source>Skip</source>
+    <translation>跳过</translation>
+  </message>
+  <message>
+    <source>Prev</source>
+    <translation>上一条</translation>
+  </message>
+  <message>
+    <source>Next</source>
+    <translation>下一条</translation>
+  </message>
+</context>
 </TS>

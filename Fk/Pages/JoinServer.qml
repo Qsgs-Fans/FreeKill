@@ -37,7 +37,7 @@ Item {
           Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
-            text: serverIP
+            text: serverIP + " " + misMatchMsg
             font.bold: true
           }
 
@@ -82,10 +82,10 @@ Item {
     ScrollBar.vertical: ScrollBar {}
     clip: true
     highlight: Rectangle {
-      color: "transparent"; radius: 5
-      border.color: "black"; border.width: 2
+      color: "#AA9ABFEF"; radius: 5
+      // border.color: "black"; border.width: 2
     }
-    highlightMoveDuration: 0
+    // highlightMoveDuration: 0
     currentIndex: -1
   }
 
@@ -328,6 +328,7 @@ Item {
 
     serverModel.append({
       serverIP: addr,
+      misMatchMsg: "",
       description: qsTr("Server not up"),
       online: "-",
       capacity: "-",
@@ -370,7 +371,8 @@ Item {
       const item = serverModel.get(i);
       const ip = item.serverIP;
       if (addr.endsWith(ip)) { // endsWith是为了应付IPv6格式的ip
-        item.description = FkVersion === ver ? desc : "Ver " + ver;
+        item.misMatchMsg = FkVersion === ver ? "" : qsTr("@VersionMismatch").arg(ver);
+        item.description = desc;
         item.favicon = icon;
         item.online = count.toString();
         item.capacity = capacity.toString();
@@ -385,6 +387,7 @@ Item {
     for (let key in config.savedPassword) {
       serverModel.append({
         serverIP: key,
+        misMatchMsg: "",
         description: qsTr("Server not up"),
         online: "-",
         capacity: "-",
