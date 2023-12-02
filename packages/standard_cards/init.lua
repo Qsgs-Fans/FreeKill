@@ -184,7 +184,7 @@ local dismantlementSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     local to = room:getPlayerById(effect.to)
-    if to.dead or to:isAllNude() then return end
+    if from.dead or to.dead or to:isAllNude() then return end
     local cid = room:askForCardChosen(from, to, "hej", self.name)
     room:throwCard({cid}, self.name, to, from)
   end
@@ -224,7 +224,7 @@ local snatchSkill = fk.CreateActiveSkill{
   on_effect = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     local to = room:getPlayerById(effect.to)
-    if to.dead or to:isAllNude() then return end
+    if from.dead or to.dead or to:isAllNude() then return end
     local cid = room:askForCardChosen(from, to, "hej", self.name)
     room:obtainCard(from, cid, false, fk.ReasonPrey)
   end
@@ -846,27 +846,13 @@ local qingGangSkill = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:addPlayerMark(room:getPlayerById(data.to), fk.MarkArmorNullified)
-
-    data.extra_data = data.extra_data or {}
-    data.extra_data.qinggangNullified = data.extra_data.qinggangNullified or {}
-    data.extra_data.qinggangNullified[tostring(data.to)] = (data.extra_data.qinggangNullified[tostring(data.to)] or 0) + 1
-  end,
-
-  refresh_events = { fk.CardUseFinished },
-  can_refresh = function(self, event, target, player, data)
-    return data.extra_data and data.extra_data.qinggangNullified
-  end,
-  on_refresh = function(self, event, target, player, data)
-    local room = player.room
-    for key, num in pairs(data.extra_data.qinggangNullified) do
-      local p = room:getPlayerById(tonumber(key))
-      if p:getMark(fk.MarkArmorNullified) > 0 then
-        room:removePlayerMark(p, fk.MarkArmorNullified, num)
-      end
-    end
-
-    data.qinggangNullified = nil
+    local to = room:getPlayerById(data.to)
+    local use_event = room.logic:getCurrentEvent():findParent(GameEvent.UseCard, true)
+    if use_event == nil then return end
+    room:addPlayerMark(to, fk.MarkArmorNullified)
+    use_event:addCleaner(function()
+      room:removePlayerMark(to, fk.MarkArmorNullified)
+    end)
   end,
 }
 Fk:addSkill(qingGangSkill)
@@ -923,8 +909,9 @@ local doubleSwordsSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     if target == player and player:hasSkill(self.name) and
       data.card and data.card.trueName == "slash" then
-      local target = player.room:getPlayerById(data.to)
-      return target.gender ~= player.gender and target.gender ~= General.Agender and player.gender ~= General.Agender
+      local to = player.room:getPlayerById(data.to)
+      if player.gender == General.Agender or to.gender == General.Agender then return false end
+      return to.gender ~= player.gender or player.gender == General.Bigender or to.gender == General.Bigender
     end
   end,
   on_use = function(self, event, target, player, data)
@@ -1108,27 +1095,26 @@ local kylinBowSkill = fk.CreateTriggerSkill{
     if ret then
       ---@type ServerPlayer
       local to = data.to
-      return to:getEquipment(Card.SubtypeDefensiveRide) or
-        to:getEquipment(Card.SubtypeOffensiveRide)
+      return table.find(to:getCardIds(Player.Equip), function (id)
+        local card = Fk:getCardById(id)
+        return card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide
+      end)
     end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
     local to = data.to
-    local ride_tab = {}
-    if to:getEquipment(Card.SubtypeDefensiveRide) then
-      table.insert(ride_tab, "+1")
-    end
-    if to:getEquipment(Card.SubtypeOffensiveRide) then
-      table.insert(ride_tab, "-1")
-    end
+    local ride_tab = table.filter(to:getCardIds(Player.Equip), function (id)
+      local card = Fk:getCardById(id)
+      return card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide
+    end)
     if #ride_tab == 0 then return end
-    local choice = room:askForChoice(player, ride_tab, self.name)
-    if choice == "+1" then
-      room:throwCard(to:getEquipment(Card.SubtypeDefensiveRide), self.name, to, player)
-    else
-      room:throwCard(to:getEquipment(Card.SubtypeOffensiveRide), self.name, to, player)
-    end
+    local id = room:askForCardChosen(player, to, {
+      card_data = {
+        { "equip_horse", ride_tab }
+      }
+    }, self.name)
+    room:throwCard({id}, self.name, to, player)
   end
 }
 Fk:addSkill(kylinBowSkill)
