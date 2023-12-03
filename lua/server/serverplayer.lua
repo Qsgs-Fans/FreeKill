@@ -69,7 +69,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout integer|nil
+---@param timeout? integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
@@ -191,7 +191,7 @@ function ServerPlayer:waitForReply(timeout)
 end
 
 ---@param player ServerPlayer
----@param observe bool
+---@param observe? boolean
 function ServerPlayer:marshal(player, observe)
   local room = self.room
   if not room.game_started then
@@ -492,7 +492,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   room:broadcastProperty(self, "phase")
 end
 
----@param phase_table Phase[]|nil
+---@param phase_table? Phase[]
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then
@@ -639,7 +639,7 @@ end
 ---@param pile_name string
 ---@param card integer|Card
 ---@param visible boolean
----@param skillName string|nil
+---@param skillName? string
 function ServerPlayer:addToPile(pile_name, card, visible, skillName)
   local room = self.room
   room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
@@ -756,10 +756,9 @@ function ServerPlayer:reset()
 end
 
 --- 进行拼点。
----@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
----@param initialCard Card|nil
+---@param initialCard? Card
 ---@return PindianStruct
 function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reason = skillName, fromCard = initialCard, results = {} }
@@ -769,7 +768,7 @@ end
 
 --- 播放技能的语音。
 ---@param skill_name string @ 技能名
----@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
+---@param index? integer @ 语音编号，默认为-1（也就是随机播放）
 function ServerPlayer:broadcastSkillInvoke(skill_name, index)
   index = index or -1
   self.room:sendLogEvent("PlaySkillSound", {
@@ -829,7 +828,7 @@ function ServerPlayer:isFakeSkill(skill)
 end
 
 ---@param skill string | Skill
----@param isPrelight bool
+---@param isPrelight? boolean
 function ServerPlayer:prelightSkill(skill, isPrelight)
   if type(skill) == "string" then skill = Fk.skills[skill] end
   assert(skill:isInstanceOf(Skill))
@@ -858,8 +857,8 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
   self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
----@param isDeputy bool
----@param no_trigger bool
+---@param isDeputy? boolean
+---@param no_trigger? boolean
 function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   local room = self.room
   local generalName

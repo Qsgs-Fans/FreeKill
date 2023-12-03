@@ -360,7 +360,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n integer|nil
+---@param n? integer
 ---@return T|T[]
 function table:random(n)
   local n0 = n

@@ -5,7 +5,7 @@ local RandomAI = AI:subclass("RandomAI")
 
 ---@param self RandomAI
 ---@param skill ActiveSkill
----@param card Card | nil
+---@param card? Card
 function RandomAI:useActiveSkill(skill, card)
   local room = self.room
   local player = self.player

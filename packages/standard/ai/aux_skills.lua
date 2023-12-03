@@ -5,7 +5,7 @@
 -----------------------------
 
 --- 弃牌相关判定函数的表。键为技能名，值为原型如下的函数。
----@type table<string, fun(self: SmartAI, min_num: number, num: number, include_equip: bool, cancelable: bool, pattern: string, prompt: string): integer[]|nil>
+---@type table<string, fun(self: SmartAI, min_num: number, num: number, include_equip?: boolean, cancelable?: boolean, pattern: string, prompt: string): integer[]?>
 fk.ai_discard = {}
 
 local default_discard = function(self, min_num, num, include_equip, cancelable, pattern, prompt)
@@ -38,11 +38,11 @@ end
 -------------------------------------
 
 ---@class ChoosePlayersReply
----@field cardId integer|nil
+---@field cardId? integer
 ---@field targets integer[]
 
 --- 选人相关判定函数的表。键为技能名，值为原型如下的函数。
----@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable: bool): ChoosePlayersReply|nil>
+---@type table<string, fun(self: SmartAI, targets: integer[], min_num: number, num: number, cancelable?: boolean): ChoosePlayersReply?>
 fk.ai_choose_players = {}
 
 fk.ai_active_skill["choose_players_skill"] = function(self, prompt, cancelable, data)

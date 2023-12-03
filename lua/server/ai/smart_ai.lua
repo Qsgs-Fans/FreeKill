@@ -82,15 +82,15 @@ end
 --===================================================
 
 ---@class UseReply
----@field card integer|string|nil @ string情况下是json.encode后
----@field targets integer[]|nil
+---@field card? integer|string @ string情况下是json.encode后
+---@field targets? integer[]
 ---@field special_skill string @ 出牌阶段空闲点使用实体卡特有
 ---@field interaction_data any @ 因技能而异，一般都是nil
 
----@param card integer|table|nil
----@param targets integer[]|nil
----@param special_skill string|nil
----@param interaction_data any
+---@param card integer|table
+---@param targets? integer[]
+---@param special_skill? string
+---@param interaction_data? any
 function SmartAI:buildUseReply(card, targets, special_skill, interaction_data)
   if type(card) == "table" then card = json.encode(card) end
   return {
@@ -106,7 +106,7 @@ end
 -- * 且原型为 { skill = skillName, subcards = integer[] }
 ----------------------------------------------------------
 
----@type table<string, fun(self: SmartAI, prompt: string, cancelable: bool, data: any): UseReply | nil>
+---@type table<string, fun(self: SmartAI, prompt: string, cancelable?: boolean, data: any): UseReply?>
 fk.ai_active_skill = {}
 
 smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
@@ -133,7 +133,7 @@ end
 ---------------------------------------------------------
 
 --- 键是prompt的第一项或者牌名，优先prompt，其次name，实在不行trueName。
----@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data?: UseExtraData): UseReply|nil>
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable?: boolean, extra_data?: UseExtraData): UseReply?>
 fk.ai_use_card = {}
 
 local defauld_use_card = function(self, pattern, _, cancelable, exdata)
@@ -173,7 +173,7 @@ end
 -------------------------------------
 
 -- 一样的牌名或者prompt做键优先prompt
----@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable: bool, extra_data: any): UseReply|nil>
+---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable?: boolean, extra_data: any): UseReply?>
 fk.ai_response_card = {}
 
 local defauld_response_card = function(self, pattern, _, cancelable)

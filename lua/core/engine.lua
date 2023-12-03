@@ -167,7 +167,7 @@ end
 
 --- 向翻译表中加载新的翻译表。
 ---@param t table @ 要加载的翻译表，这是一个 原文 --> 译文 的键值对表
----@param lang string|nil @ 目标语言，默认为zh_CN
+---@param lang? string @ 目标语言，默认为zh_CN
 function Engine:loadTranslationTable(t, lang)
   assert(type(t) == "table")
   lang = lang or "zh_CN"
@@ -179,8 +179,9 @@ end
 
 --- 翻译一段文本。其实就是从翻译表中去找
 ---@param src string @ 要翻译的文本
-function Engine:translate(src)
-  local lang = Config.language or "zh_CN"
+---@param lang? string @ 要使用的语言，默认读取config
+function Engine:translate(src, lang)
+  lang = lang or (Config.language or "zh_CN")
   if not self.translations[lang] then lang = "zh_CN" end
   local ret = self.translations[lang][src]
   return ret or src
@@ -306,8 +307,8 @@ end
 ---
 --- 返回的牌是一张虚拟牌。
 ---@param name string @ 牌名
----@param suit Suit|nil @ 花色
----@param number integer|nil @ 点数
+---@param suit? Suit @ 花色
+---@param number? integer @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = self.all_card_types[name]
@@ -355,9 +356,9 @@ end
 ---
 --- 如果符合条件的武将不够，那么就不能保证能选出那么多武将。
 ---@param num integer @ 要选出的武将数量
----@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
----@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
----@param filter nil | fun(g: General): boolean @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@param generalPool? General[] @ 选择的范围，默认是已经启用的所有武将
+---@param except? string[] @ 特别要排除掉的武将名列表，默认是空表
+---@param filter? fun(g: General): boolean? @ 可选参数，若这个函数返回true的话这个武将被排除在外
 ---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
@@ -390,7 +391,7 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
 end
 
 --- 获取已经启用的所有武将的列表。
----@param except General[] | nil @ 特别指明要排除在外的武将
+---@param except? General[] @ 特别指明要排除在外的武将
 ---@return General[] @ 所有武将的列表
 function Engine:getAllGenerals(except)
   local result = {}
@@ -406,7 +407,7 @@ function Engine:getAllGenerals(except)
 end
 
 --- 获取当前已经启用的所有卡牌。
----@param except integer[] | nil @ 特别指定要排除在外的id列表
+---@param except? integer[] @ 特别指定要排除在外的id列表
 ---@return integer[] @ 所有卡牌id的列表
 function Engine:getAllCardIds(except)
   local result = {}
@@ -423,7 +424,7 @@ end
 
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter bool @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter? boolean @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   if id == nil then return nil end
