@@ -81,7 +81,7 @@ extension:addCards{
 local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   max_turn_use_time = 1,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+  mod_target_filter = function(self, to_select, _, _, card, _)
     return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
       not table.find(Fk:currentRoom().alive_players, function(p)
         return p.dying
@@ -90,7 +90,7 @@ local analepticSkill = fk.CreateActiveSkill{
   can_use = function(self, player, card)
     return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
   end,
-  on_use = function(self, room, use)
+  on_use = function(_, _, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
       use.tos = { { use.from } }
     end
@@ -99,7 +99,7 @@ local analepticSkill = fk.CreateActiveSkill{
       use.extraUse = true
     end
   end,
-  on_effect = function(self, room, effect)
+  on_effect = function(_, room, effect)
     local to = room:getPlayerById(effect.to)
     if effect.extra_data and effect.extra_data.analepticRecover then
       room:recover({
@@ -120,7 +120,7 @@ local analepticEffect = fk.CreateTriggerSkill{
   global = true,
   priority = 0, -- game rule
   events = { fk.PreCardUse, fk.EventPhaseStart },
-  can_trigger = function(self, event, target, player, data)
+  can_trigger = function(_, event, target, player, data)
     if target ~= player then
       return false
     end
@@ -131,7 +131,7 @@ local analepticEffect = fk.CreateTriggerSkill{
       return target.phase == Player.NotActive
     end
   end,
-  on_trigger = function(self, event, target, player, data)
+  on_trigger = function(_, event, _, player, data)
     local room = player.room
     if event == fk.PreCardUse then
       data.additionalDamage = (data.additionalDamage or 0) + player.drank
@@ -169,7 +169,7 @@ extension:addCards({
 local recast = fk.CreateActiveSkill{
   name = "recast",
   target_num = 0,
-  on_use = function(self, room, effect)
+  on_use = function(_, room, effect)
     room:recastCard(effect.cards, room:getPlayerById(effect.from))
   end
 }
@@ -177,17 +177,16 @@ Fk:addSkill(recast)
 
 local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
+  prompt = "#iron_chain",
   min_target_num = 1,
   max_target_num = 2,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
-    return true
-  end,
+  mod_target_filter = Util.TrueFunc,
   target_filter = function(self, to_select, selected, _, card)
     if #selected < self:getMaxTargetNum(Self, card) then
       return self:modTargetFilter(to_select, selected, Self.id, card)
     end
   end,
-  on_effect = function(self, room, cardEffectEvent)
+  on_effect = function(_, room, cardEffectEvent)
     local to = room:getPlayerById(cardEffectEvent.to)
     to:setChainState(not to.chained)
   end,
@@ -211,7 +210,7 @@ extension:addCards{
 local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
   target_num = 1,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+  mod_target_filter = function(_, to_select, _, _, _, _)
     local to = Fk:currentRoom():getPlayerById(to_select)
     return not to:isKongcheng()
   end,
@@ -257,7 +256,7 @@ extension:addCards{
 local supplyShortageSkill = fk.CreateActiveSkill{
   name = "supply_shortage_skill",
   distance_limit = 1,
-  mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
+  mod_target_filter = function(self, to_select, _, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
@@ -302,8 +301,8 @@ local gudingSkill = fk.CreateTriggerSkill{
   attached_equip = "guding_blade",
   frequency = Skill.Compulsory,
   events = {fk.DamageCaused},
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and
+  can_trigger = function(self, _, target, player, data)
+    return target == player and player:hasSkill(self) and
       data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
       not data.chain
   end,
@@ -326,8 +325,8 @@ local fanSkill = fk.CreateTriggerSkill{
   name = "#fan_skill",
   attached_equip = "fan",
   events = { fk.AfterCardUseDeclared },
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and data.card.name == "slash"
+  can_trigger = function(self, _, target, player, data)
+    return target == player and player:hasSkill(self) and data.card.name == "slash"
   end,
   on_use = function(_, _, _, _, data)
     local card = Fk:cloneCard("fire__slash")
@@ -356,15 +355,15 @@ local vineSkill = fk.CreateTriggerSkill{
   events = {fk.PreCardEffect, fk.DamageInflicted},
   can_trigger = function(self, event, target, player, data)
     if event == fk.DamageInflicted then
-      return target == player and player:hasSkill(self.name) and
+      return target == player and player:hasSkill(self) and
         data.damageType == fk.FireDamage
     end
     local effect = data ---@type CardEffectEvent
-    return player.id == effect.to and player:hasSkill(self.name) and
+    return player.id == effect.to and player:hasSkill(self) and
       (effect.card.name == "slash" or effect.card.name == "savage_assault" or
       effect.card.name == "archery_attack")
   end,
-  on_use = function(self, event, target, player, data)
+  on_use = function(_, event, _, player, data)
     local room = player.room
     if event == fk.DamageInflicted then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/vineburn")
@@ -392,8 +391,8 @@ local silverLionSkill = fk.CreateTriggerSkill{
   attached_equip = "silver_lion",
   frequency = Skill.Compulsory,
   events = {fk.DamageInflicted},
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and data.damage > 1
+  can_trigger = function(self, _, target, player, data)
+    return target == player and player:hasSkill(self) and data.damage > 1
   end,
   on_use = function(_, _, _, _, data)
     data.damage = 1
@@ -465,6 +464,7 @@ Fk:loadTranslationTable{
   ["_normal_use"] = "正常使用",
   ["recast"] = "重铸",
   [":recast"] = "你可以将此牌置入弃牌堆，然后摸一张牌。",
+  ["#iron_chain"] = "统统连起来吧！",
   ["fire_attack"] = "火攻",
   ["fire_attack_skill"] = "火攻",
 	[":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与所展示牌花色相同的手牌令其受到1点火焰伤害。",
