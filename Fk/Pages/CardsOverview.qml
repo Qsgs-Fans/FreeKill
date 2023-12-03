@@ -226,8 +226,9 @@ Item {
       }
       detailCard.known = true;
       cardText.clear();
+      audioRow.clear();
       cardText.append(Backend.translate(":" + data.name));
-
+      addCardAudio(data)
       const skills = JSON.parse(Backend.callLuaFunction
         ("GetCardSpecialSkills", [cid]));
       if (skills.length > 0) {
@@ -287,6 +288,35 @@ Item {
           textFormat: TextEdit.RichText
           font.pixelSize: 16
         }
+
+        GridLayout {
+          columns: 2
+          Repeater {
+            model: ListModel {
+              id: audioRow
+            }
+            Button {
+              Layout.fillWidth: true
+              contentItem: Text {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                text: {
+                  if (gender === "male") {
+                    return Backend.translate("Male Audio");
+                  } else {
+                    return Backend.translate("Female Audio");
+                  }
+                }
+                font.pixelSize: 14
+              }
+              onClicked: {
+                const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cardDetail.cid]));
+                Backend.playSound("./packages/" + extension + "/audio/card/" + gender + "/" + data.name);
+              }
+            }
+          }
+        }
       }
     }
   }
@@ -296,6 +326,29 @@ Item {
     anchors.right: parent.right
     onClicked: {
       mainStack.pop();
+    }
+  }
+
+  function addCardAudio(card) {
+    const extension = card.extension;
+    const orig_extension = card.orig_extension;
+    let fname = AppPath + "/packages/" + extension + "/audio/card/male/" + card.name + ".mp3";
+    if (Backend.exists(fname)) {
+      audioRow.append( {gender: "male", extension: extension} );
+    } else {
+      fname = AppPath + "/packages/" + orig_extension + "/audio/card/male/" + card.name + ".mp3";
+      if (Backend.exists(fname)) {
+        audioRow.append( {gender: "male", extension: orig_extension} );
+      }
+    }
+    fname = AppPath + "/packages/" + extension + "/audio/card/female/" + card.name + ".mp3";
+    if (Backend.exists(fname)) {
+      audioRow.append( {gender: "female", extension: extension} );
+    }else {
+      fname = AppPath + "/packages/" + orig_extension + "/audio/card/female/" + card.name + ".mp3";
+      if (Backend.exists(fname)) {
+        audioRow.append( {gender: "female", extension: orig_extension} );
+      }
     }
   }
 

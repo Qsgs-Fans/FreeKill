@@ -100,6 +100,7 @@ function GetCardData(id, virtualCardForm)
     cid = id,
     name = card.name,
     extension = card.package.extensionName,
+    orig_extension = Fk.all_card_types[card.name].package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
     color = card:getColorString(),
