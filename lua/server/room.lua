@@ -1067,7 +1067,7 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
 
   local command = "AskForUseActiveSkill"
   self:notifyMoveFocus(player, extra_data.skillName or skill_name)  -- for display skill name instead of command name
-  local data = {skill_name, prompt, cancelable, json.encode(extra_data)}
+  local data = {skill_name, prompt, cancelable, extra_data}
 
   Fk.currentResponseReason = extra_data.skillName
   local result = self:doRequest(player, command, json.encode(data))
@@ -1951,7 +1951,7 @@ end
 ---@param pattern string|nil @ 使用牌的规则，默认就是card_name的值
 ---@param prompt string|nil @ 提示信息
 ---@param cancelable bool @ 能否点取消
----@param extra_data integer|nil @ 额外信息
+---@param extra_data? UseExtraData @ 额外信息
 ---@param event_data CardEffectEvent|nil @ 事件信息
 ---@return CardUseStruct | nil @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
@@ -2683,7 +2683,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
       local players = {}
       Fk.currentResponsePattern = "nullification"
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getHandlyIds(true)
+        local cards = p:getHandlyIds()
         for _, cid in ipairs(cards) do
           if
             Fk:getCardById(cid).trueName == "nullification" and

@@ -1,5 +1,6 @@
 require "packages.standard.ai.aux_skills"
 
+--[[
 fk.ai_use_play["rende"] = function(self, skill)
   for _, p in ipairs(self.friends_noself) do
     if p.kingdom == "shu" and #self.player:getCardIds("h") >= self.player.hp then
@@ -194,7 +195,7 @@ fk.ai_skill_invoke["tieqi"] = function(self, data, prompt)
   local use = self:eventData("UseCard")
   for _, p in ipairs(TargetGroup:getRealTargets(use.tos)) do
     p = self.room:getPlayerById(p)
-    if self:isEnemie(p) then
+    if self:isEnemy(p) then
       return true
     end
   end
@@ -215,13 +216,13 @@ fk.ai_skill_invoke["biyue"] = true
 fk.ai_choose_players["tuxi"] = function(self, targets, min_num, num, cancelable)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if self:isEnemie(p) and #self.use_tos < num then
+    if self:isEnemy(p) and #self.use_tos < num then
       table.insert(self.use_tos, pid)
     end
   end
 end
 
-fk.ai_use_skill["yiji_active"] = function(self, prompt, cancelable, data)
+fk.ai_active_skill["yiji_active"] = function(self, prompt, cancelable, data)
   for _, p in ipairs(self.friends_noself) do
     for c, cid in ipairs(self.player.tag["yiji_ids"]) do
       c = Fk:getCardById(cid)
@@ -247,7 +248,7 @@ fk.ai_choose_players["liuli"] = function(self, targets, min_num, num, cancelable
   self:sortValue(cards)
   for _, pid in ipairs(targets) do
     local p = self.room:getPlayerById(pid)
-    if self:isEnemie(p) and #self.use_tos < num and #cards > 0 then
+    if self:isEnemy(p) and #self.use_tos < num and #cards > 0 then
       table.insert(self.use_tos, pid)
       self.use_id = { cards[1].id }
       return
@@ -262,3 +263,4 @@ fk.ai_choose_players["liuli"] = function(self, targets, min_num, num, cancelable
     end
   end
 end
+--]]

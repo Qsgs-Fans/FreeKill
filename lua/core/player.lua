@@ -382,6 +382,7 @@ end
 ---@param include_hand bool @ 是否包含真正的手牌
 ---@return integer[]
 function Player:getHandlyIds(include_hand)
+  include_hand = include_hand or include_hand == nil
   local ret = include_hand and self:getCardIds("h") or {}
   for k, v in pairs(self.special_cards) do
     if k:endsWith("&") then table.insertTable(ret, v) end
