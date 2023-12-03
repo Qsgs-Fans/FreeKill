@@ -739,7 +739,7 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   -- jsonData: [ string skill_name, string prompt, bool cancelable. json extra_data ]
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
-  local extra_data = json.decode(data[4])
+  local extra_data = data[4]
   for k, v in pairs(extra_data) do
     skill[k] = v
   end

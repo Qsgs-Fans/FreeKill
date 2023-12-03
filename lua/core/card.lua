@@ -21,10 +21,10 @@
 ---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
----@field public special_skills string[] | nil @ 衍生技能，如重铸
+---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
----@field public is_derived bool @ 判断是否为衍生牌
+---@field public is_derived? boolean @ 判断是否为衍生牌
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -136,8 +136,8 @@ end
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
----@param suit Suit|nil @ 克隆后的牌的花色
----@param number integer|nil @ 克隆后的牌的点数
+---@param suit? Suit @ 克隆后的牌的花色
+---@param number? integer @ 克隆后的牌的点数
 ---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
@@ -157,7 +157,7 @@ end
 --- 获取卡牌的ID。
 ---
 --- 如果牌是虚拟牌，则返回其第一张子卡的id，没有子卡就返回nil
----@return integer | nil
+---@return integer?
 function Card:getEffectiveId()
   if self:isVirtual() then
     return #self.subcards > 0 and self.subcards[1] or nil
@@ -236,7 +236,7 @@ function Card:matchPattern(pattern)
 end
 
 --- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
----@param symbol bool @ 是否以符号形式显示
+---@param symbol? boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
   local suit = self.suit
@@ -428,8 +428,8 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff? bool @ 比较二者不同
----@return boolean @ 返回比较结果
+---@param diff? boolean @ 比较二者不同
+---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
     return false

@@ -13,8 +13,8 @@
 ---@field public related_skills table<string, string> @ 对于额外技能而言的关联技能
 ---@field public cards Card[] @ 拓展包包含的卡牌
 ---@field public game_modes GameMode[] @ 拓展包包含的游戏模式
----@field public game_modes_whitelist string[]|nil @ 拓展包关于游戏模式的白名单
----@field public game_modes_blacklist string[]|nil @ 拓展包关于游戏模式的黑名单
+---@field public game_modes_whitelist? string[] @ 拓展包关于游戏模式的白名单
+---@field public game_modes_blacklist? string[] @ 拓展包关于游戏模式的黑名单
 local Package = class("Package")
 
 ---@alias PackageType integer
@@ -25,7 +25,7 @@ Package.SpecialPack = 3
 
 --- 拓展包的构造函数。
 ---@param name string @ 包的名字
----@param _type integer|nil @ 包的类型，默认为武将包
+---@param _type? integer @ 包的类型，默认为武将包
 function Package:initialize(name, _type)
   assert(type(name) == "string")
   assert(type(_type) == "nil" or type(_type) == "number")

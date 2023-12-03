@@ -85,6 +85,35 @@ function fk.qlist(list)
   return qlist_iterator, list, -1
 end
 
+--- 用于for循环的迭代函数。可以将表按照某种权值的顺序进行遍历，这样不用进行完整排序。
+---@generic T
+---@param t T[]
+---@param val_func? fun(e: T): integer @ 计算权值的函数，对int[]可不写
+---@param reverse? boolean @ 是否反排？反排的话优先返回权值小的元素
+function fk.sorted_pairs(t, val_func, reverse)
+  val_func = val_func or function(e) return e end
+  local t2 = table.simpleClone(t)  -- 克隆一次表，用作迭代器上值
+  local iter = function()
+    local max_idx, max, max_val = -1, nil, nil
+    for i, v in ipairs(t2) do
+      if not max then
+        max_idx, max, max_val = i, v, val_func(v)
+      else
+        local val = val_func(v)
+        local checked = val > max_val
+        if reverse then checked = not checked end
+        if checked then
+          max_idx, max, max_val = i, v, val
+        end
+      end
+    end
+    if max_idx == -1 then return nil, nil end
+    table.remove(t2, max_idx)
+    return -1, max, max_val
+  end
+  return iter, nil, 1
+end
+
 ---@param func fun(element, index, array)
 function table:forEach(func)
   for i, v in ipairs(self) do
@@ -331,7 +360,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n integer|nil
+---@param n? integer
 ---@return T|T[]
 function table:random(n)
   local n0 = n

@@ -13,7 +13,7 @@ function SPlayerList:append(e)end
 function SPlayerList:contains(e)end
 
 ---@param index integer
----@return fk.ServerPlayer | nil
+---@return fk.ServerPlayer
 function SPlayerList:at(index)end
 
 function SPlayerList:first()end

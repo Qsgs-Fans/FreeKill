@@ -3,7 +3,7 @@
 ---@class MaxCardsSkill : StatusSkill
 local MaxCardsSkill = StatusSkill:subclass("MaxCardsSkill")
 
----@return integer|nil
+---@return integer?
 function MaxCardsSkill:getFixed(player)
   return nil
 end
