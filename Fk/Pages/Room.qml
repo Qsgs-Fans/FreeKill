@@ -90,7 +90,13 @@ Item {
     icon.source: AppPath + "/image/modmaker/menu"
     icon.width: 36
     icon.height: 36
-    onClicked: menuContainer.open();
+    onClicked: {
+      if (menuContainer.visible){
+        menuContainer.close();
+      } else {
+        menuContainer.open();
+      }
+    }
 
     background.implicitWidth: 60
     background.implicitHeight: 60
@@ -114,14 +120,15 @@ Item {
         id: menuRow
         width: menuContainer.width
         Layout.fillWidth: true
-        // spacing: 7
+        spacing: 7
 
         Button {
           id: quitButton
           text: Backend.translate("Quit")
-          font.pixelSize: 22
+          font.pixelSize: 28
           Layout.fillWidth: true
           width: menuContainer.width
+          height: menuContainer.width * 0.65
           onClicked: {
             if (config.replaying) {
               Backend.controlReplayer("shutdown");
@@ -156,9 +163,10 @@ Item {
           id: surrenderButton
           enabled: !config.observing && !config.replaying
           text: Backend.translate("Surrender")
-          font.pixelSize: 22
+          font.pixelSize: 28
           Layout.fillWidth: true
           width: menuContainer.width
+          height: menuContainer.width * 0.65
           onClicked: {
             if (isStarted && !getPhoto(Self.id).dead) {
               const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
@@ -199,9 +207,10 @@ Item {
         Button {
           id: volumeButton
           text: Backend.translate("Audio Settings")
-          font.pixelSize: 22
+          font.pixelSize: 28
           Layout.fillWidth: true
           width: menuContainer.width
+          height: menuContainer.width * 0.65
           onClicked: {
             volumeDialog.open();
           }
