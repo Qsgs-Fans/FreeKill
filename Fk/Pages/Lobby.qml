@@ -224,19 +224,25 @@ Item {
     }
   }
 
-  Drawer {
+  Popup {
     id: lobby_drawer
-    width: parent.width * 0.4 / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    dim: false
-    clip: true
-    dragMargin: 0
-    scale: mainWindow.scale
-    transformOrigin: Item.TopLeft
+    width: realMainWin.width * 0.8
+    height: realMainWin.height * 0.8
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "snow"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
 
     Loader {
       id: lobby_dialog
-      anchors.fill: parent
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      clip: true
       onSourceChanged: {
         if (item === null)
           return;

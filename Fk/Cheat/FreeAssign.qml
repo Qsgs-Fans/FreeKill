@@ -58,15 +58,16 @@ Item {
       ScrollBar.vertical: ScrollBar {}
       model: packages
       clip: true
-      cellWidth: width / 3
+      cellWidth: width / 6
       cellHeight: 40
 
       delegate: ItemDelegate {
-        width: listView.width / 3
+        width: listView.width / 6
         height: 40
 
         Text {
           text: Backend.translate(name)
+          color: "#E4D5A0"
           anchors.centerIn: parent
         }
 

@@ -32,24 +32,6 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Player num")
-      }
-      SpinBox {
-        id: playerNum
-        from: 2
-        to: 12
-        value: config.preferedPlayerNum
-
-        onValueChanged: {
-          config.preferedPlayerNum = value;
-        }
-      }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
         text: Backend.translate("Game Mode")
       }
       ComboBox {
@@ -69,11 +51,32 @@ Flickable {
       }
     }
 
-    RowLayout {
+    GridLayout {
       anchors.rightMargin: 8
-      spacing: 16
+      rowSpacing: 20
+      columnSpacing: 20
+      columns: 4
+      Text {
+        text: Backend.translate("Player num")
+      }
       Text {
         text: Backend.translate("Select generals num")
+      }
+      Text {
+        text: Backend.translate("Operation timeout")
+      }
+      Text {
+        text: Backend.translate("Luck Card Times")
+      }
+      SpinBox {
+        id: playerNum
+        from: 2
+        to: 12
+        value: config.preferedPlayerNum
+
+        onValueChanged: {
+          config.preferedPlayerNum = value;
+        }
       }
       SpinBox {
         id: generalNum
@@ -83,6 +86,25 @@ Flickable {
 
         onValueChanged: {
           config.preferredGeneralNum = value;
+        }
+      }
+      SpinBox {
+        from: 10
+        to: 60
+        editable: true
+        value: config.preferredTimeout
+
+        onValueChanged: {
+          config.preferredTimeout = value;
+        }
+      }
+      SpinBox {
+        from: 0
+        to: 8
+        value: config.preferredLuckTime
+
+        onValueChanged: {
+          config.preferredLuckTime = value;
         }
       }
     }
@@ -104,41 +126,6 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Operation timeout")
-      }
-      SpinBox {
-        from: 10
-        to: 60
-        editable: true
-        value: config.preferredTimeout
-
-        onValueChanged: {
-          config.preferredTimeout = value;
-        }
-      }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: Backend.translate("Luck Card Times")
-      }
-      SpinBox {
-        from: 0
-        to: 8
-        value: config.preferredLuckTime
-
-        onValueChanged: {
-          config.preferredLuckTime = value;
-        }
-      }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
         text: Backend.translate("Room Password")
       }
       TextField {
@@ -150,16 +137,20 @@ Flickable {
       }
     }
 
-    Switch {
-      id: freeAssignCheck
-      checked: Debugging ? true : false
-      text: Backend.translate("Enable free assign")
-    }
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Switch {
+        id: freeAssignCheck
+        checked: Debugging ? true : false
+        text: Backend.translate("Enable free assign")
+      }
 
-    Switch {
-      id: deputyCheck
-      checked: Debugging ? true : false
-      text: Backend.translate("Enable deputy general")
+      Switch {
+        id: deputyCheck
+        checked: Debugging ? true : false
+        text: Backend.translate("Enable deputy general")
+      }
     }
 
     RowLayout {
