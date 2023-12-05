@@ -331,7 +331,7 @@ Item {
 
   function addCardAudio(card) {
     const extension = card.extension;
-    const orig_extension = card.orig_extension;
+    const orig_extension = Backend.callLuaFunction("GetCardExtensionByName", [card.name]);
     let fname = AppPath + "/packages/" + extension + "/audio/card/male/" + card.name + ".mp3";
     if (Backend.exists(fname)) {
       audioRow.append( {gender: "male", extension: extension} );

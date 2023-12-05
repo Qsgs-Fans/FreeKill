@@ -25,7 +25,6 @@ Item {
   property int number: 7
   property string name: "slash"
   property string extension: ""
-  property string orig_extension: ""
   property string virt_name: ""
   property int type: 0
   property string subtype: ""

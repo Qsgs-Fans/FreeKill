@@ -100,7 +100,6 @@ function GetCardData(id, virtualCardForm)
     cid = id,
     name = card.name,
     extension = card.package.extensionName,
-    orig_extension = Fk.all_card_types[card.name].package.extensionName,
     number = card.number,
     suit = card:getSuitString(),
     color = card:getColorString(),
@@ -124,10 +123,7 @@ function GetCardData(id, virtualCardForm)
 end
 
 function GetCardExtensionByName(cardName)
-  local card = table.find(Fk.cards, function(card)
-    return card.name == cardName
-  end)
-
+  local card = Fk.all_card_types[cardName]
   return card and card.package.extensionName or ""
 end
 
@@ -630,6 +626,7 @@ function ResetClientLua()
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
+  ClientInstance.processing_area = {}
 
   ClientInstance.enter_room_data = _data;
   ClientInstance.room_settings = data
