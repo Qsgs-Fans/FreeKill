@@ -63,6 +63,8 @@ class Room : public QObject {
   void manuallyStart();
   void pushRequest(const QString &req);
 
+  void addRejectId(int id);
+  void removeRejectId(int id);
  signals:
   void abandoned();
 
@@ -82,6 +84,7 @@ class Room : public QObject {
   QList<ServerPlayer *> players;
   QList<ServerPlayer *> observers;
   QList<int> runned_players;
+  QList<int> rejected_players;
   int robot_id;
   bool gameStarted;
   bool m_ready;
