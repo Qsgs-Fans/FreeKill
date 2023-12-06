@@ -53,10 +53,10 @@ end
 --- Determine whether a target can be selected by this skill(in modifying targets)
 --- only used in skill of players
 ---@param to_select integer @ id of the target
----@param selected nil|integer[] @ ids of selected targets
----@param user nil|integer @ id of the userdata
----@param card nil|Card @ helper
----@param distance_limited nil|boolean @ is limited by distance
+---@param selected? integer[] @ ids of selected targets
+---@param user? integer @ id of the userdata
+---@param card? Card @ helper
+---@param distance_limited boolean @ is limited by distance
 function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end

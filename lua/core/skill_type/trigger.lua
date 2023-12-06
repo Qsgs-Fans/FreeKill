@@ -101,7 +101,7 @@ end
 ---@param target ServerPlayer @ Player who triggered this event
 ---@param player ServerPlayer @ Player who is operating
 ---@param data any @ useful data of the event
----@return bool
+---@return boolean?
 function TriggerSkill:use(event, target, player, data) end
 
 function TriggerSkill:canWake(event, target, player, data)

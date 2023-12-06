@@ -135,8 +135,8 @@ end
 -- 从某个区间中，找出类型符合且符合func函数检测的至多n个事件。
 ---@param eventType integer @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
----@param func fun(e: GameEvent): boolean @ 过滤用的函数
----@param endEvent GameEvent|nil @ 区间终止点，默认为本事件结束
+---@param func fun(e: GameEvent): boolean? @ 过滤用的函数
+---@param endEvent? GameEvent @ 区间终止点，默认为本事件结束
 ---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameEvent:searchEvents(eventType, n, func, endEvent)
   local logic = self.room.logic
