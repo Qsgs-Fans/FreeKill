@@ -125,6 +125,11 @@ void Room::addPlayer(ServerPlayer *player) {
   if (!player)
     return;
 
+  if (rejected_players.contains(player->getId())) {
+    player->doNotify("ErrorMsg", "rejected your demand of joining room");
+    return;
+  }
+
   // 如果要加入的房间满员了，或者已经开战了，就不能再加入
   if (isFull() || gameStarted) {
     player->doNotify("ErrorMsg", "Room is full or already started!");
@@ -319,6 +324,11 @@ void Room::addObserver(ServerPlayer *player) {
   // 首先只能旁观在运行的房间，因为旁观是由Lua处理的
   if (!gameStarted) {
     player->doNotify("ErrorMsg", "Can only observe running room.");
+    return;
+  }
+
+  if (rejected_players.contains(player->getId())) {
+    player->doNotify("ErrorMsg", "rejected your demand of joining room");
     return;
   }
 
@@ -572,4 +582,13 @@ void Room::pushRequest(const QString &req) {
   if (m_thread) {
     m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
   }
+}
+
+void Room::addRejectId(int id) {
+  if (isLobby()) return;
+  rejected_players << id;
+}
+
+void Room::removeRejectId(int id) {
+  rejected_players.removeOne(id);
 }

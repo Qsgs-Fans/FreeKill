@@ -28,7 +28,7 @@ Item {
         ColumnLayout {
           Text { text: Backend.translate(gname) }
           GridLayout {
-            columns: 3
+            columns: 6
 
             Repeater {
               model: JSON.parse(Backend.callLuaFunction("GetSameGenerals", [gname]))

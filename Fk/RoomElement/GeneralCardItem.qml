@@ -153,7 +153,7 @@ CardItem {
     height: 80
     x: 2
     y: lineCount > 6 ? 30 : 34
-    text: Backend.translate(name)
+    text: name !== "" ? Backend.translate(name) : "nil"
     visible: Backend.translate(name).length <= 6 && detailed
     color: "white"
     font.family: fontLibian.name

@@ -60,7 +60,7 @@ Server::Server(QObject *parent) : QObject(parent) {
         }
       }
 
-      for (int i = 0; i < 20; i++) {
+      for (int i = 0; i < 30; i++) {
         if (!this->isListening) {
           return;
         }

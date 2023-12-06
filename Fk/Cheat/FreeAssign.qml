@@ -24,6 +24,7 @@ Item {
         text: Backend.translate("Back")
         onClicked: stack.pop()
       }
+
       Label {
         text: Backend.translate("Enable free assign")
         elide: Label.ElideRight
@@ -31,8 +32,29 @@ Item {
         verticalAlignment: Qt.AlignVCenter
         Layout.fillWidth: true
       }
+
+      TextField {
+        id: word
+        placeholderText: "Search..."
+        clip: true
+        verticalAlignment: Qt.AlignVCenter
+        background: Rectangle {
+          implicitHeight: 16
+          implicitWidth: 120
+          color: "transparent"
+        }
+      }
+
       ToolButton {
-        opacity: 0
+        text: Backend.translate("Search")
+        enabled: word.text !== ""
+        onClicked: {
+          if (stack.depth > 1) stack.pop();
+          generalModel = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
+            [word.text]));
+          stack.push(generalList);
+          word.text = "";
+        }
       }
     }
   }
@@ -58,15 +80,16 @@ Item {
       ScrollBar.vertical: ScrollBar {}
       model: packages
       clip: true
-      cellWidth: width / 3
+      cellWidth: width / 5
       cellHeight: 40
 
       delegate: ItemDelegate {
-        width: listView.width / 3
+        width: listView.width / 5
         height: 40
 
         Text {
           text: Backend.translate(name)
+          color: "#E4D5A0"
           anchors.centerIn: parent
         }
 

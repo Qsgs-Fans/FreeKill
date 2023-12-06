@@ -41,6 +41,11 @@ local function tellRoomToObserver(self, player)
     end
   end
 
+  -- send banners
+  for k, v in pairs(self.banners) do
+    player:doNotify("SetBanner", json.encode{ k, v })
+  end
+
   for _, p in ipairs(self.players) do
     self:notifyProperty(player, p, "general")
     self:notifyProperty(player, p, "deputyGeneral")

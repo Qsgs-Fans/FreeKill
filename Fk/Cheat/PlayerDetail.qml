@@ -3,6 +3,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Fk.Pages
+import Fk.RoomElement
 
 Flickable {
   id: root
@@ -24,29 +26,18 @@ Flickable {
     Text {
       id: screenName
       font.pixelSize: 18
+      color: "#E4D5A0"
     }
 
     Text {
       id: playerGameData
       Layout.fillWidth: true
       font.pixelSize: 18
-    }
-
-    TextEdit {
-      id: skillDesc
-
-      Layout.fillWidth: true
-      font.pixelSize: 18
-
-      readOnly: true
-      selectByKeyboard: true
-      selectByMouse: false
-      wrapMode: TextEdit.WordWrap
-      textFormat: TextEdit.RichText
+      color: "#E4D5A0"
     }
 
     RowLayout {
-      Button {
+      MetroButton {
         text: Backend.translate("Give Flower")
         onClicked: {
           enabled = false;
@@ -55,7 +46,7 @@ Flickable {
         }
       }
 
-      Button {
+      MetroButton {
         text: Backend.translate("Give Egg")
         onClicked: {
           enabled = false;
@@ -68,7 +59,7 @@ Flickable {
         }
       }
 
-      Button {
+      MetroButton {
         text: Backend.translate("Give Wine")
         enabled: Math.random() < 0.3
         onClicked: {
@@ -78,7 +69,7 @@ Flickable {
         }
       }
 
-      Button {
+      MetroButton {
         text: Backend.translate("Give Shoe")
         enabled: Math.random() < 0.3
         onClicked: {
@@ -87,10 +78,8 @@ Flickable {
           root.finish();
         }
       }
-    }
 
-    RowLayout {
-      Button {
+      MetroButton {
         text: config.blockedUsers.indexOf(screenName.text) === -1 ? Backend.translate("Block Chatter") : Backend.translate("Unblock Chatter")
         enabled: pid !== Self.id && pid > 0
         onClicked: {
@@ -103,7 +92,7 @@ Flickable {
           config.blockedUsersChanged();
         }
       }
-      Button {
+      MetroButton {
         text: Backend.translate("Kick From Room")
         visible: !roomScene.isStarted && roomScene.isOwner
         enabled: pid !== Self.id
@@ -111,6 +100,41 @@ Flickable {
           ClientInstance.notifyServer("KickPlayer", pid.toString());
           root.finish();
         }
+      }
+    }
+
+    RowLayout {
+      spacing: 20
+      ColumnLayout {
+        Layout.alignment: Qt.AlignTop
+        Layout.topMargin: 16
+
+        GeneralCardItem {
+          id: mainChara
+          name: "caocao"
+          visible: name !== ""
+        }
+        GeneralCardItem {
+          id: deputyChara
+          name: "caocao"
+          visible: name !== ""
+        }
+      }
+
+      TextEdit {
+        id: skillDesc
+
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        Layout.topMargin: 10
+        font.pixelSize: 18
+        color: "#E4D5A0"
+
+        readOnly: true
+        selectByKeyboard: true
+        selectByMouse: false
+        wrapMode: TextEdit.WordWrap
+        textFormat: TextEdit.RichText
       }
     }
   }
@@ -136,6 +160,8 @@ Flickable {
     root.pid = id;
 
     screenName.text = extra_data.photo.screenName;
+    mainChara.name = extra_data.photo.general;
+    deputyChara.name = extra_data.photo.deputyGeneral;
 
     if (!config.observing) {
       const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [id]));

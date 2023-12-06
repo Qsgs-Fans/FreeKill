@@ -598,3 +598,8 @@ end
 ---@field post_select? fun(selected: int[], data: any, extra_data: any): int[]
 ---@field default_choice? fun(data: any, extra_data: any): int[]
 ---@field prompt? string | fun(data: any, extra_data: any): string
+
+---@class QmlMarkSpec
+---@field name string
+---@field qml_path string
+---@field how_to_show function(name: string, value?: any): string?

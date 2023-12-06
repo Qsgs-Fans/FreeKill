@@ -284,7 +284,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
         } else if (command == "KickPlayer") {
           int i = jsonData.toInt();
           auto p = room->findPlayer(i);
-          if (p && !room->isStarted()) room->removePlayer(p);
+          if (p && !room->isStarted()) {
+            room->removePlayer(p);
+            room->addRejectId(i);
+            QTimer::singleShot(30000, this, [=]() {
+                room->removeRejectId(i);
+                });
+          }
         } else if (command == "Ready") {
           player->setReady(!player->isReady());
           room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
