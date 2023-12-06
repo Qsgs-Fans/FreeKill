@@ -6,6 +6,7 @@ import QtQuick.Layouts
 Item {
   id: root
   width: 138
+  property var bgColor: "#3C3229"
 
   ListModel {
     id: markList
@@ -15,7 +16,7 @@ Item {
     anchors.bottom: parent.bottom
     width: parent.width
     height: parent.height
-    color: "#3C3229"
+    color: bgColor
     opacity: 0.8
     radius: 4
     border.color: "white"
@@ -82,6 +83,7 @@ Item {
             }
             return;
           } else {
+            if (!root.parent.playerid) return;
             let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
             data = data.filter((e) => e !== -1);
             if (data.length === 0)

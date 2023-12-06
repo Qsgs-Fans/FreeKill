@@ -15,6 +15,7 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
+---@field public banners table<string, any> @ 左上角显示点啥好呢？
 ---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
@@ -77,6 +78,7 @@ function Room:initialize(_room)
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
+  self.banners = {}
   self.general_pile = {}
   self.draw_pile = {}
   self.discard_pile = {}
@@ -561,6 +563,16 @@ end
 ---@param tag_name string @ tag名字
 function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
+end
+
+function Room:setBanner(name, value)
+  if value == 0 then value = nil end
+  self.banners[name] = value
+  self:doBroadcastNotify("SetBanner", json.encode{ name, value })
+end
+
+function Room:getBanner(name)
+  return self.banners[name]
 end
 
 ---@return boolean

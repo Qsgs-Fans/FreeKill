@@ -1344,6 +1344,18 @@ callbacks["SetPlayerMark"] = (jsonData) => {
   }
 }
 
+callbacks["SetBanner"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const mark = data[0];
+  const value = data[1] instanceof Object ? data[1] : data[1].toString();
+  let area = roomScene.banner;
+  if (data[1] === 0) {
+    area.removeMark(mark);
+  } else {
+    area.setMark(mark, mark.startsWith("@@") ? "" : value);
+  }
+}
+
 callbacks["Animate"] = (jsonData) => {
   // jsonData: [Object object]
   const data = JSON.parse(jsonData);
@@ -1581,7 +1593,7 @@ callbacks["ChangeSelf"] = (j) => {
 
 callbacks["AskForLuckCard"] = (j) => {
   // jsonData: int time
-  if (config.replaying) return;
+  if (config.observing || config.replaying) return;
   const time = parseInt(j);
   roomScene.setPrompt(Backend.translate("#AskForLuckCard").arg(time), true);
   roomScene.state = "replying";

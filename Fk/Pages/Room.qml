@@ -8,6 +8,7 @@ import QtMultimedia
 import Fk
 import Fk.Common
 import Fk.RoomElement
+import Fk.PhotoElement as PhotoElement
 import "RoomLogic.js" as Logic
 
 Item {
@@ -37,6 +38,7 @@ Item {
   property alias drawPile: drawPile
   property alias skillInteraction: skillInteraction
   property alias miscStatus: miscStatus
+  property alias banner: banner
 
   property var selected_targets: []
   property string responding_card
@@ -55,7 +57,6 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
 
-  /*
   MediaPlayer {
     id: bgm
     source: config.bgmFile
@@ -69,15 +70,14 @@ Item {
       volume: config.bgmVolume / 100
     }
   }
-  */
 
   onIsStartedChanged: {
     if (isStarted) {
-      // bgm.play();
+      bgm.play();
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
-      // bgm.stop();
+      bgm.stop();
     }
   }
 
@@ -533,14 +533,6 @@ Item {
     }
   }
 
-  GlowText {
-    text: Backend.translate("Observing ...")
-    visible: config.observing && !config.replaying
-    color: "#4B83CD"
-    font.family: fontLi2.name
-    font.pixelSize: 48
-  }
-
   Rectangle {
     id: replayControls
     visible: config.replaying
@@ -937,6 +929,20 @@ Item {
   }
 
   Rectangle {
+    anchors.fill: dashboard
+    visible: config.observing && !config.replaying
+    color: "transparent"
+    GlowText {
+      anchors.centerIn: parent
+      text: Backend.translate("Observing ...")
+      color: "#4B83CD"
+      font.family: fontLi2.name
+      font.pixelSize: 48
+    }
+  }
+
+  /* 这东西似乎一直不好使啊
+  Rectangle {
     id: easyChat
     width: parent.width
     height: 28
@@ -972,6 +978,16 @@ Item {
     }
   }
 
+  Shortcut {
+    sequence: "T"
+    onActivated: {
+      easyChat.visible = true;
+      easyChatEdit.enabled = true;
+      easyChatEdit.forceActiveFocus();
+    }
+  }
+  */
+
   MiscStatus {
     id: miscStatus
     anchors.right: menuButton.left
@@ -980,18 +996,18 @@ Item {
     anchors.topMargin: 8
   }
 
+  PhotoElement.MarkArea {
+    id: banner
+    x: 12; y: 12
+    width: (roomScene.width - 175 * 0.75 * 7) / 4 + 175 - 16
+    transformOrigin: Item.TopLeft
+    scale: 0.75
+    bgColor: "#BB838AEA"
+  }
+
   Danmaku {
     id: danmaku
     width: parent.width
-  }
-
-  Shortcut {
-    sequence: "T"
-    onActivated: {
-      easyChat.visible = true;
-      easyChatEdit.enabled = true;
-      easyChatEdit.forceActiveFocus();
-    }
   }
 
   Shortcut {

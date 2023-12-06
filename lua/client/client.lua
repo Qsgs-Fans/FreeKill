@@ -8,6 +8,7 @@
 ---@field public current ClientPlayer @ 当前回合玩家
 ---@field public discard_pile integer[] @ 弃牌堆
 ---@field public status_skills Skill[] @ 状态技总和
+---@field public banners table<string, any> @ 左上角显示的东西
 ---@field public observing boolean
 Client = class('Client')
 
@@ -56,6 +57,8 @@ function Client:initialize()
   for class, skills in pairs(Fk.global_status_skill) do
     self.status_skills[class] = {table.unpack(skills)}
   end
+
+  self.banners = {}
 
   self.skill_costs = {}
   self.card_marks = {}
@@ -232,6 +235,15 @@ function Client:setCardNote(ids, msg)
       self:notifyUI("SetCardFootnote", json.encode{ id, parseMsg(msg, true) })
     end
   end
+end
+
+function Client:setBanner(name, value)
+  if value == 0 then value = nil end
+  self.banners[name] = value
+end
+
+function Client:getBanner(name)
+  return self.banners[name]
 end
 
 fk.client_callback["SetCardFootnote"] = function(jsonData)
@@ -766,6 +778,17 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
 
   if string.sub(mark, 1, 1) == "@" then
     ClientInstance:notifyUI("SetPlayerMark", jsonData)
+  end
+end
+
+fk.client_callback["SetBanner"] = function(jsonData)
+  -- jsonData: [ int id, string mark, int value ]
+  local data = json.decode(jsonData)
+  local mark, value = data[1], data[2]
+  ClientInstance:setBanner(mark, value)
+
+  if string.sub(mark, 1, 1) == "@" then
+    ClientInstance:notifyUI("SetBanner", jsonData)
   end
 end
 
