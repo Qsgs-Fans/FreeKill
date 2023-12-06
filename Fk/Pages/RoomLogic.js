@@ -574,9 +574,21 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         const exclusived = roomScene.extra_data.exclusive_targets;
         if (exclusived instanceof Array) {
           if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0 && included.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
@@ -596,8 +608,12 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         if (must instanceof Array) {
-          okButton.enabled = (must.length === 0);
+          if(must.length === 0) okButton.enabled = false;
+        }
+        if (included instanceof Array) {
+          if (included.length === 0) okButton.enabled = false;
         }
       }
     }
@@ -636,9 +652,21 @@ function updateSelectedTargets(playerid, selected) {
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         const exclusived = roomScene.extra_data.exclusive_targets;
         if (exclusived instanceof Array) {
           if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0 && included.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
@@ -658,10 +686,16 @@ function updateSelectedTargets(playerid, selected) {
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         if (must instanceof Array) {
-          okButton.enabled = (must.filter((val) => {
+          if (must.filter((val) => {
             return selected_targets.indexOf(val) === -1;
-          }).length === 0);
+          }).length !== 0) okButton.enabled = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0) okButton.enabled = false;
         }
       }
     }
