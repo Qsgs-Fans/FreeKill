@@ -1012,7 +1012,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   });
 }
 
-callbacks["AskForCheck"] = (jsonData) => {
+callbacks["AskForChoices"] = (jsonData) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
   const data = JSON.parse(jsonData);
@@ -1025,7 +1025,7 @@ callbacks["AskForCheck"] = (jsonData) => {
   const prompt = data[5];
   const detailed = data[6];
   if (prompt === "") {
-    roomScene.promptText = Backend.translate("#AskForCheck")
+    roomScene.promptText = Backend.translate("#AskForChoices")
       .arg(Backend.translate(skill_name));
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);

@@ -1350,9 +1350,9 @@ end
 ---@param cancelable? boolean @ 能否点取消
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[], integer[]
-function Room:askForChooseBoth(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
+function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
   if minCardNum < 1 or minTargetNum < 1 then
-    return table.unpack({}, {})
+    return {}, {}
   end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
@@ -1378,7 +1378,7 @@ function Room:askForChooseBoth(player, minCardNum, maxCardNum, targets, minTarge
     return ret.targets, ret.cards
   else
     if cancelable then
-      return table.unpack({}, {})
+      return {}, {}
     else
       return table.random(targets, minTargetNum), table.random(pcards, minCardNum)
     end
@@ -1687,12 +1687,12 @@ end
 ---@param detailed? boolean @ 选项详细描述
 ---@param all_choices? string[] @ 所有选项（不可选变灰）
 ---@return string[] @ 选择的选项
-function Room:askForCheck(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
+function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
   if #choices <= minNum and not all_choices then return choices end
   assert(minNum <= maxNum)
   assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
-  local command = "AskForCheck"
+  local command = "AskForChoices"
   skill_name = skill_name or ""
   prompt = prompt or ""
   all_choices = all_choices or choices
