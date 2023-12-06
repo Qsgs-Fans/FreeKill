@@ -68,6 +68,19 @@ Item {
             } else {
               params.cardNames = data;
             }
+          } else if (mark_name.startsWith('@[')) {
+            // @[xxx]yyy 怀疑是不是qml标记
+            const close_br = mark_name.indexOf(']');
+            if (close_br === -1) return;
+
+            const mark_type = mark_name.slice(2, close_br);
+            const _data = (mark_extra);
+            let data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark_name, JSON.stringify(_data)]));
+            if (data && data.qml_path) {
+              params.data = _data;
+              roomScene.startCheat("../../" + data.qml_path, params);
+            }
+            return;
           } else {
             let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
             data = data.filter((e) => e !== -1);
@@ -103,6 +116,15 @@ Item {
     if (mark.startsWith('@$') || mark.startsWith('@&')) {
       special_value += data.length;
       data = data.join(',');
+    } else if (mark.startsWith('@[')) {
+      const close_br = mark.indexOf(']');
+      if (close_br !== -1) {
+        const mark_type = mark.slice(2, close_br);
+        const _data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark, JSON.stringify(data)]));
+        if (_data && _data.text) {
+          special_value = _data.text;
+        }
+      }
     } else {
       data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
     }

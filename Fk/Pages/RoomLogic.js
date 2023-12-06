@@ -1335,7 +1335,7 @@ callbacks["SetPlayerMark"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const player = getPhoto(data[0]);
   const mark = data[1];
-  const value = data[2] instanceof Array ? data[2] : data[2].toString();
+  const value = data[2] instanceof Object ? data[2] : data[2].toString();
   let area = mark.startsWith("@!") ? player.picMarkArea : player.markArea;
   if (data[2] === 0) {
     area.removeMark(mark);
