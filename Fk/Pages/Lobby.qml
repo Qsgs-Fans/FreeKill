@@ -230,7 +230,7 @@ Item {
     height: realMainWin.height * 0.8
     anchors.centerIn: parent
     background: Rectangle {
-      color: "snow"
+      color: "#EEEEEEEE"
       radius: 5
       border.color: "#A6967A"
       border.width: 1

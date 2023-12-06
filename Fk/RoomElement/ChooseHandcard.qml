@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 
-Item {
+ColumnLayout {
   id: root
   anchors.fill: parent
   property var extra_data: ({}) // unused
@@ -14,50 +14,39 @@ Item {
 
   Text {
     text: Backend.translate("Handcard selector")
-    width: parent.width
-    anchors.topMargin: 6
+    Layout.fillWidth: true
     horizontalAlignment: Text.AlignHCenter
-    font.pixelSize: 16
+    font.pixelSize: 18
+    color: "#E4D5A0"
   }
 
-  Flickable {
-    id: flickableContainer
-    ScrollBar.vertical: ScrollBar {}
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    anchors.topMargin: 40
-    flickableDirection: Flickable.VerticalFlick
-    width: parent.width - 20
-    height: parent.height - 40
-    contentWidth: cardsList.width
-    contentHeight: cardsList.height
+  GridView {
+    id: cardsList
+    cellWidth: 93 * 0.9 + 4
+    cellHeight: 130 * 0.9 + 4
+    Layout.preferredWidth: root.width - root.width % 88
+    Layout.fillHeight: true
+    Layout.alignment: Qt.AlignHCenter
     clip: true
 
-    GridLayout {
-      id: cardsList
-      columns: Math.floor(flickableContainer.width / 90)
+    model: cards
 
-      Repeater {
-        model: cards
-
-        CardItem {
-          width: 93 * 0.9
-          height: 130 * 0.9
-          chosenInBox: modelData.chosen
-          onClicked: {
-            const clist = roomScene.dashboard.handcardArea.cards;
-            for (let cd of clist) {
-              if (cd.cid == cid) {
-                cd.selected = !cd.selected;
-                cd.clicked();
-                finish();
-              }
-            }
-          }
-          Component.onCompleted: {
-            setData(JSON.parse(Backend.callLuaFunction("GetCardData", [modelData.cid])));
+    delegate: CardItem {
+      width: 93 * 0.9
+      height: 130 * 0.9
+      chosenInBox: modelData.chosen
+      onClicked: {
+        const clist = roomScene.dashboard.handcardArea.cards;
+        for (let cd of clist) {
+          if (cd.cid == cid) {
+            cd.selected = !cd.selected;
+            cd.clicked();
+            finish();
           }
         }
+      }
+      Component.onCompleted: {
+        setData(JSON.parse(Backend.callLuaFunction("GetCardData", [modelData.cid])));
       }
     }
   }

@@ -903,7 +903,7 @@ Item {
 
   Popup {
     id: cheatDrawer
-    width: realMainWin.width * 0.8
+    width: realMainWin.width * 0.60
     height: realMainWin.height * 0.8
     anchors.centerIn: parent
     background: Rectangle {
