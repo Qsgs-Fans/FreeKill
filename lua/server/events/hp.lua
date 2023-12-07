@@ -204,6 +204,7 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
       local dmg = table.simpleClone(damageStruct)
       dmg.to = p
       dmg.chain = true
+      dmg.beginnerOfTheDamage = false
       room:damage(dmg)
     end
   end
