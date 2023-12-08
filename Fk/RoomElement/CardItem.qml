@@ -129,7 +129,7 @@ Item {
 
   Rectangle {
     id: virt_rect
-    visible: root.virt_name !== ""
+    visible: root.virt_name !== "" && root.virt_name !== root.name
     width: parent.width
     height: 20
     y: 40
