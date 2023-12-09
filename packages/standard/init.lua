@@ -1339,7 +1339,7 @@ local role_mode = fk.CreateGameMode{
 }
 extension:addGameMode(role_mode)
 Fk:loadTranslationTable{
-  ["time limitation: 5 sec"] = "游戏时长达到5秒（测试用）",
+  ["time limitation: 5 min"] = "游戏时长达到5分钟",
   ["left lord and loyalist alive"] = "仅剩你和主忠方存活",
   ["left one rebel alive"] = "反贼仅剩你存活且不存在存活内奸",
   ["left you alive"] = "主忠方仅剩你存活且其他阵营仅剩一方",
