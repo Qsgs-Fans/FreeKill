@@ -747,7 +747,6 @@ Item {
                   "ActiveSkillPrompt",
                   [skillName, card, selected_targets]
                 ));
-                
               } else {
                 Logic.enableTargets(JSON.stringify({
                   skill: modelData,
