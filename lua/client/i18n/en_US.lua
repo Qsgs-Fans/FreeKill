@@ -376,9 +376,9 @@ Fk:loadTranslationTable({
 
   -- judge
   ["#StartJudgeReason"] = "%from started a judgement (%arg)",
-  ["#InitialJudge"] = "Judge card of %from was %card",
-  ["#ChangedJudge"] = "%from invoked %arg, retrialed judgement of %to with %card",
-  ["#JudgeResult"] = "The judge result of %from was %card",
+  ["#InitialJudge"] = "Judge card of %from was %arg",
+  ["#ChangedJudge"] = "%from invoked %arg, retrialed judgement of %to with %arg2",
+  ["#JudgeResult"] = "The judge result of %from was %arg",
 
   -- turnOver
   ["#TurnOver"] = "%from turned over character card, now his status is %arg",
