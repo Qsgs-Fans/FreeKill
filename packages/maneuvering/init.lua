@@ -6,6 +6,19 @@ local slash = Fk:cloneCard("slash")
 
 local thunderSlashSkill = fk.CreateActiveSkill{
   name = "thunder__slash_skill",
+  prompt = function(self, selected_cards)
+    local card = Fk:cloneCard("thunder__slash")
+    card.subcards = Card:getIdList(selected_cards)
+    local max_num = self:getMaxTargetNum(Self, card)
+    if max_num > 1 then
+      local num = #table.filter(Fk:currentRoom().alive_players, function (p)
+        return p ~= Self and not Self:isProhibited(p, card)
+      end)
+      max_num = math.min(num, max_num)
+    end
+    card.subcards = {}
+    return max_num > 1 and "#thunder__slash_skill_multi:::" .. max_num or "#thunder__slash_skill"
+  end,
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
@@ -45,6 +58,19 @@ extension:addCards{
 
 local fireSlashSkill = fk.CreateActiveSkill{
   name = "fire__slash_skill",
+  prompt = function(self, selected_cards)
+    local card = Fk:cloneCard("fire__slash")
+    card.subcards = Card:getIdList(selected_cards)
+    local max_num = self:getMaxTargetNum(Self, card)
+    if max_num > 1 then
+      local num = #table.filter(Fk:currentRoom().alive_players, function (p)
+        return p ~= Self and not Self:isProhibited(p, card)
+      end)
+      max_num = math.min(num, max_num)
+    end
+    card.subcards = {}
+    return max_num > 1 and "#fire__slash_skill_multi:::" .. max_num or "#fire__slash_skill"
+  end,
   max_phase_use_time = 1,
   target_num = 1,
   can_use = slash.skill.canUse,
@@ -80,6 +106,7 @@ extension:addCards{
 
 local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
+  prompt = "#analeptic_skill",
   max_turn_use_time = 1,
   mod_target_filter = function(self, to_select, _, _, card, _)
     return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
@@ -168,6 +195,7 @@ extension:addCards({
 
 local recast = fk.CreateActiveSkill{
   name = "recast",
+  prompt = "#recast",
   target_num = 0,
   on_use = function(_, room, effect)
     room:recastCard(effect.cards, room:getPlayerById(effect.from))
@@ -177,7 +205,7 @@ Fk:addSkill(recast)
 
 local ironChainCardSkill = fk.CreateActiveSkill{
   name = "iron_chain_skill",
-  prompt = "#iron_chain",
+  prompt = "#iron_chain_skill",
   min_target_num = 1,
   max_target_num = 2,
   mod_target_filter = Util.TrueFunc,
@@ -209,6 +237,7 @@ extension:addCards{
 
 local fireAttackSkill = fk.CreateActiveSkill{
   name = "fire_attack_skill",
+  prompt = "#fire_attack_skill",
   target_num = 1,
   mod_target_filter = function(_, to_select, _, _, _, _)
     local to = Fk:currentRoom():getPlayerById(to_select)
@@ -255,6 +284,7 @@ extension:addCards{
 
 local supplyShortageSkill = fk.CreateActiveSkill{
   name = "supply_shortage_skill",
+  prompt = "#supply_shortage_skill",
   distance_limit = 1,
   mod_target_filter = function(self, to_select, _, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
@@ -455,32 +485,50 @@ Fk:loadTranslationTable{
 
   ["thunder__slash"] = "雷杀",
 	[":thunder__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点雷电伤害。",
+  ["#thunder__slash_skill"] = "选择攻击范围内的一名角色，对其造成1点雷电伤害",
+  ["#thunder__slash_skill_multi"] = "选择攻击范围内的至多%arg名角色，对这些角色各造成1点雷电伤害",
+
   ["fire__slash"] = "火杀",
 	[":fire__slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点火焰伤害。",
+  ["#fire__slash_skill"] = "选择攻击范围内的一名角色，对其造成1点火焰伤害",
+  ["#fire__slash_skill_multi"] = "选择攻击范围内的至多%arg名角色，对这些角色各造成1点火焰伤害",
+
   ["analeptic"] = "酒",
 	[":analeptic"] = "基本牌<br /><b>时机</b>：出牌阶段/你处于濒死状态时<br /><b>目标</b>：你<br /><b>效果</b>：目标角色本回合使用的下一张【杀】将要造成的伤害+1/目标角色回复1点体力。",
+  ["#analeptic_skill"] = "你于此回合内使用的下一张【杀】的伤害值基数+1",
+
   ["iron_chain"] = "铁锁连环",
 	[":iron_chain"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一至两名角色<br /><b>效果</b>：横置或重置目标角色的武将牌。",
+  ["#iron_chain_skill"] = "选择一至两名角色，这些角色横置或重置",
   ["_normal_use"] = "正常使用",
   ["recast"] = "重铸",
   [":recast"] = "你可以将此牌置入弃牌堆，然后摸一张牌。",
-  ["#iron_chain"] = "统统连起来吧！",
+  ["#recast"] = "将此牌置入弃牌堆，然后摸一张牌",
+
   ["fire_attack"] = "火攻",
   ["fire_attack_skill"] = "火攻",
-	[":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与所展示牌花色相同的手牌令其受到1点火焰伤害。",
+	[":fire_attack"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名有手牌的角色<br /><b>效果</b>：目标角色展示一张手牌，然后你可以弃置一张与此牌花色相同的手牌对其造成1点火焰伤害。",
   ["#fire_attack-show"] = "%src 对你使用了火攻，请展示一张手牌",
   ["#fire_attack-discard"] = "你可弃置一张 %arg 手牌，对 %src 造成1点火属性伤害",
+  ["#fire_attack_skill"] = "选择一名有手牌的角色，令其展示一张手牌，<br />然后你可以弃置一张与此牌花色相同的手牌对其造成1点火焰伤害",
+
   ["supply_shortage"] = "兵粮寸断",
-	[":supply_shortage"] = "延时锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：距离1的一名其他角色<br /><b>效果</b>：将此牌置于目标角色判定区内。其判定阶段进行判定：若结果不为梅花，其跳过摸牌阶段。然后将【兵粮寸断】置入弃牌堆。",
+	[":supply_shortage"] = "延时锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：距离1的一名其他角色<br /><b>效果</b>：将此牌置于目标角色判定区内。其判定阶段进行判定：若结果不为♣，其跳过摸牌阶段。然后将【兵粮寸断】置入弃牌堆。",
+  ["#supply_shortage_skill"] = "选择距离1的一名角色，将此牌置于其判定区内。其判定阶段判定：<br />若结果不为♣，其跳过摸牌阶段",
+
   ["guding_blade"] = "古锭刀",
 	[":guding_blade"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技。每当你使用【杀】对目标角色造成伤害时，若该角色没有手牌，此伤害+1。",
+
   ["fan"] = "朱雀羽扇",
 	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：你可以将一张普通【杀】当火【杀】使用。",
   ["#fan_skill"] = "朱雀羽扇",
+
   ["vine"] = "藤甲",
 	[":vine"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。【南蛮入侵】、【万箭齐发】和普通【杀】对你无效。每当你受到火焰伤害时，此伤害+1。",
+
   ["silver_lion"] = "白银狮子",
 	[":silver_lion"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。每当你受到伤害时，若此伤害大于1点，防止多余的伤害。每当你失去装备区里的【白银狮子】后，你回复1点体力。",
+
   ["hualiu"] = "骅骝",
   [":hualiu"] = "装备牌·坐骑<br /><b>坐骑技能</b>：其他角色与你的距离+1。",
 }

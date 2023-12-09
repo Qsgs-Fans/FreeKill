@@ -445,6 +445,9 @@ local defaultCardSkill = fk.CreateActiveSkill{
 
 local defaultEquipSkill = fk.CreateActiveSkill{
   name = "default_equip_skill",
+  prompt = function(_, selected_cards, _)
+    return "#default_equip_skill:::" .. Fk:getCardById(selected_cards).name .. ":" .. Fk:getCardById(selected_cards):getSubtypeString()
+  end,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return #Fk:currentRoom():getPlayerById(to_select):getAvailableEquipSlots(card.sub_type) > 0
   end,

@@ -5,6 +5,19 @@ extension.metadata = require "packages.standard_cards.metadata"
 
 local slashSkill = fk.CreateActiveSkill{
   name = "slash_skill",
+  prompt = function(self, selected_cards)
+    local slash = Fk:cloneCard("slash")
+    slash.subcards = Card:getIdList(selected_cards)
+    local max_num = self:getMaxTargetNum(Self, slash) -- halberd
+    if max_num > 1 then
+      local num = #table.filter(Fk:currentRoom().alive_players, function (p)
+        return p ~= Self and not Self:isProhibited(p, slash)
+      end)
+      max_num = math.min(num, max_num)
+    end
+    slash.subcards = {}
+    return max_num > 1 and "#slash_skill_multi:::" .. max_num or "#slash_skill"
+  end,
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player, card)
@@ -121,6 +134,7 @@ extension:addCards({
 
 local peachSkill = fk.CreateActiveSkill{
   name = "peach_skill",
+  prompt = "#peach_skill",
   mod_target_filter = function(self, to_select)
     return Fk:currentRoom():getPlayerById(to_select):isWounded() and
       not table.find(Fk:currentRoom().alive_players, function(p)
@@ -169,6 +183,7 @@ extension:addCards({
 
 local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
+  prompt = "#dismantlement_skill",
   target_num = 1,
   mod_target_filter = function(self, to_select, selected, user, card)
     local player = Fk:currentRoom():getPlayerById(to_select)
@@ -207,6 +222,7 @@ extension:addCards({
 
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
+  prompt = "#snatch_skill",
   distance_limit = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
@@ -245,6 +261,7 @@ extension:addCards({
 
 local duelSkill = fk.CreateActiveSkill{
   name = "duel_skill",
+  prompt = "#duel_skill",
   mod_target_filter = function(self, to_select, selected, user, card)
     return user ~= to_select
   end,
@@ -330,6 +347,7 @@ extension:addCards({
 
 local collateralSkill = fk.CreateActiveSkill{
   name = "collateral_skill",
+  prompt = "#collateral_skill",
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     return user ~= to_select and player:getEquipment(Card.SubtypeWeapon)
@@ -372,9 +390,7 @@ local collateralSkill = fk.CreateActiveSkill{
       use.extraUse = true
       room:useCard(use)
     else
-      room:obtainCard(effect.from,
-        room:getPlayerById(effect.to):getEquipment(Card.SubtypeWeapon),
-        true, fk.ReasonGive)
+      room:moveCardTo(to:getEquipment(Card.SubtypeWeapon), Card.PlayerHand, room:getPlayerById(effect.from), fk.ReasonGive, "collateral", nil, true, to.id)
     end
   end
 }
@@ -392,6 +408,7 @@ extension:addCards({
 
 local exNihiloSkill = fk.CreateActiveSkill{
   name = "ex_nihilo_skill",
+  prompt = "#ex_nihilo_skill",
   mod_target_filter = Util.TrueFunc,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
@@ -449,6 +466,7 @@ extension:addCards({
 
 local savageAssaultSkill = fk.CreateActiveSkill{
   name = "savage_assault_skill",
+  prompt = "#savage_assault_skill",
   can_use = Util.AoeCanUse,
   on_use = Util.AoeOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
@@ -492,6 +510,7 @@ extension:addCards({
 
 local archeryAttackSkill = fk.CreateActiveSkill{
   name = "archery_attack_skill",
+  prompt = "#archery_attack_skill",
   can_use = Util.AoeCanUse,
   on_use = Util.AoeOnUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
@@ -533,6 +552,7 @@ extension:addCards({
 
 local godSalvationSkill = fk.CreateActiveSkill{
   name = "god_salvation_skill",
+  prompt = "#god_salvation_skill",
   can_use = Util.GlobalCanUse,
   on_use = Util.GlobalOnUse,
   mod_target_filter = Util.TrueFunc,
@@ -569,6 +589,7 @@ extension:addCards({
 
 local amazingGraceSkill = fk.CreateActiveSkill{
   name = "amazing_grace_skill",
+  prompt = "#amazing_grace_skill",
   can_use = Util.GlobalCanUse,
   on_use = Util.GlobalOnUse,
   mod_target_filter = Util.TrueFunc,
@@ -654,6 +675,7 @@ extension:addCards({
 
 local lightningSkill = fk.CreateActiveSkill{
   name = "lightning_skill",
+  prompt = "#lightning_skill",
   mod_target_filter = Util.TrueFunc,
   can_use = function(self, player, card)
     return not player:isProhibited(player, card)
@@ -725,6 +747,7 @@ extension:addCards({
 
 local indulgenceSkill = fk.CreateActiveSkill{
   name = "indulgence_skill",
+  prompt = "#indulgence_skill",
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return user ~= to_select
   end,
@@ -778,6 +801,11 @@ local crossbowAudio = fk.CreateTriggerSkill{
     local room = player.room
     room:broadcastPlaySound("./packages/standard_cards/audio/card/crossbow")
     room:setEmotion(player, "./packages/standard_cards/image/anim/crossbow")
+    room:sendLog{
+      type = "#InvokeSkill",
+      from = player.id,
+      arg = "crossbow",
+    }
   end,
 }
 local crossbowSkill = fk.CreateTargetModSkill{
@@ -963,6 +991,7 @@ extension:addCards({
 
 local spearSkill = fk.CreateViewAsSkill{
   name = "spear_skill",
+  prompt = "#spear_skill",
   attached_equip = "spear",
   pattern = "slash",
   card_filter = function(self, to_select, selected)
