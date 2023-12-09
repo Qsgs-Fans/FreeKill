@@ -310,7 +310,7 @@ function Room:getPlayerById(id)
   return nil
 end
 
---- 将房间中的玩家按照座位顺序重新排序。
+--- 将房间中的玩家按照行动顺序重新排序。
 ---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
 function Room:sortPlayersByAction(playerIds, isTargetGroup)
   table.sort(playerIds, function(prev, next)
