@@ -554,6 +554,7 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
+      roomScene.resetPrompt();
 
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
         && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
@@ -563,6 +564,14 @@ Item {
           skills.unshift("_normal_use");
         }
         specialCardSkills.model = skills;
+        const skillName = Backend.callLuaFunction("GetCardSkill", [card]);
+        const prompt = JSON.parse(Backend.callLuaFunction(
+          "ActiveSkillPrompt",
+          [skillName, card, selected_targets]
+        ));
+        if (prompt !== "") {
+          roomScene.setPrompt(processPrompt(prompt));
+        }
       } else {
         specialCardSkills.model = [];
       }
@@ -736,13 +745,29 @@ Item {
             text: Backend.translate(modelData)
             checked: index === 0
             onCheckedChanged: {
+              roomScene.resetPrompt();
+              const card = dashboard.selected_card;
+              let prompt = ""
               if (modelData === "_normal_use") {
-                Logic.enableTargets(dashboard.selected_card);
+                Logic.enableTargets(card);
+                const skillName = Backend.callLuaFunction("GetCardSkill", [card]);
+                prompt = JSON.parse(Backend.callLuaFunction(
+                  "ActiveSkillPrompt",
+                  [skillName, card, selected_targets]
+                ));
+                
               } else {
                 Logic.enableTargets(JSON.stringify({
                   skill: modelData,
-                  subcards: [dashboard.selected_card],
+                  subcards: [card],
                 }));
+                prompt = JSON.parse(Backend.callLuaFunction(
+                  "ActiveSkillPrompt",
+                  [modelData, card, selected_targets]
+                ));
+              }
+              if (prompt !== "") {
+                roomScene.setPrompt(processPrompt(prompt));
               }
             }
           }
@@ -1106,6 +1131,18 @@ Item {
     sequence: "Space"
     enabled: cancelButton.enabled
     onActivated: Logic.doCancelButton();
+  }
+
+  function processPrompt(prompt) {
+    const data = prompt.split(":");
+    let raw = Backend.translate(data[0]);
+    const src = parseInt(data[1]);
+    const dest = parseInt(data[2]);
+    if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
+    if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
+    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
+    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
+    return raw;
   }
 
   function getCurrentCardUseMethod() {

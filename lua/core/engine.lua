@@ -291,6 +291,7 @@ function Engine:addCard(card)
   cardId = cardId + 1
   table.insert(self.cards, card)
   if self.all_card_types[card.name] == nil then
+    self.skills[card.skill.name] = card.skill
     self.all_card_types[card.name] = card
   end
 end

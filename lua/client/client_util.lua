@@ -217,6 +217,10 @@ function GetCards(pack_name)
   return json.encode(ret)
 end
 
+function GetCardSkill(cid)
+  return Fk:getCardById(cid).skill and Fk:getCardById(cid).skill.name or ""
+end
+
 function GetCardSpecialSkills(cid)
   return json.encode(Fk:getCardById(cid).special_skills or Util.DummyTable)
 end
