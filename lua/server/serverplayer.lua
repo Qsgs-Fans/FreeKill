@@ -38,6 +38,7 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+  self.phase_state = {}
 
   self._fake_skills = {}
   self._manually_fake_skills = {}
@@ -469,11 +470,13 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   return false
 end
 
+---@param phase Phase
+---@param delay? boolean
 function ServerPlayer:gainAnExtraPhase(phase, delay)
   local room = self.room
   delay = (delay == nil) and true or delay
+  local logic = room.logic
   if delay then
-    local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
     if turn then
       turn:prependExitFunc(function() self:gainAnExtraPhase(phase, false) end)
@@ -482,16 +485,43 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   end
 
   local current = self.phase
+
+  local phase_change = {
+    from = current,
+    to = phase
+  }
+
+  local skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
+
+  phase = phase_change.to
   self.phase = phase
   room:broadcastProperty(self, "phase")
 
-  room:sendLog{
-    type = "#GainAnExtraPhase",
-    from = self.id,
-    arg = phase_name_table[phase],
-  }
+  local cancel_skip = true
+  if phase ~= Player.NotActive and (skip) then
+    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+  end
+  if (not skip) or (cancel_skip) then
+    room:sendLog{
+      type = "#GainAnExtraPhase",
+      from = self.id,
+      arg = phase_name_table[phase],
+    }
 
-  GameEvent(GameEvent.Phase, self, self.phase):exec()
+    GameEvent(GameEvent.Phase, self, self.phase):exec()
+
+    phase_change = {
+      from = phase,
+      to = current
+    }
+    logic:trigger(fk.EventPhaseChanging, self, phase_change)
+  else
+    room:sendLog{
+      type = "#PhaseSkipped",
+      from = self.id,
+      arg = phase_name_table[phase],
+    }
+  end
 
   self.phase = current
   room:broadcastProperty(self, "phase")
@@ -592,6 +622,7 @@ function ServerPlayer:endPlayPhase()
   -- TODO: send log
 end
 
+---@param delay? boolean
 function ServerPlayer:gainAnExtraTurn(delay)
   local room = self.room
   delay = (delay == nil) and true or delay
@@ -624,10 +655,13 @@ function ServerPlayer:gainAnExtraTurn(delay)
   room.current = current
 end
 
+--- 当前是否处于额外的回合。
+--- @return boolean
 function ServerPlayer:insideExtraTurn()
   return self.tag["_extra_turn_count"] and #self.tag["_extra_turn_count"] > 0
 end
 
+--- 当前额外回合的技能原因。
 ---@return string
 function ServerPlayer:getCurrentExtraTurnReason()
   local ex_tag = self.tag["_extra_turn_count"]
@@ -637,13 +671,18 @@ function ServerPlayer:getCurrentExtraTurnReason()
   return ex_tag[#ex_tag]
 end
 
+--- 角色摸牌。
+---@param num integer @ 摸牌数
+---@param skillName? string @ 技能名
+---@param fromPlace? string @ 摸牌的位置，"top" 或者 "bottom"
+---@return integer[] @ 摸到的牌
 function ServerPlayer:drawCards(num, skillName, fromPlace)
   return self.room:drawCards(self, num, skillName, fromPlace)
 end
 
 ---@param pile_name string
 ---@param card integer|Card
----@param visible boolean
+---@param visible? boolean
 ---@param skillName? string
 function ServerPlayer:addToPile(pile_name, card, visible, skillName)
   local room = self.room
@@ -923,13 +962,21 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     arg2 = generalName,
   }
 
+  local data = {[isDeputy and "d" or "m"] = generalName}
+  room.logic:trigger(fk.GeneralShown, self, data)
   if not no_trigger then
     local current_event = room.logic:getCurrentEvent()
     if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
-      room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+      room.logic:trigger(fk.GeneralRevealed, self, data)
     else
+      if current_event.parent then
+        repeat
+          if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.parent.event) then break end
+          current_event = current_event.parent
+        until (not current_event.parent)
+      end
       current_event:addExitFunc(function ()
-        room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+        room.logic:trigger(fk.GeneralRevealed, self, data)
       end)
     end
   end
@@ -940,11 +987,18 @@ function ServerPlayer:revealGenerals()
   self:revealGeneral(true, true)
   local room = self.room
   local current_event = room.logic:getCurrentEvent()
+  local data = {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")}
   if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
-    room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+    room.logic:trigger(fk.GeneralRevealed, self, data)
   else
+    if current_event.parent then
+      repeat
+        if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.parent.event) then break end
+        current_event = current_event.parent
+      until (not current_event.parent)
+    end
     current_event:addExitFunc(function ()
-      room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+      room.logic:trigger(fk.GeneralRevealed, self, data)
     end)
   end
 end

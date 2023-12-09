@@ -123,10 +123,7 @@ function GetCardData(id, virtualCardForm)
 end
 
 function GetCardExtensionByName(cardName)
-  local card = table.find(Fk.cards, function(card)
-    return card.name == cardName
-  end)
-
+  local card = Fk.all_card_types[cardName]
   return card and card.package.extensionName or ""
 end
 
@@ -218,6 +215,10 @@ function GetCards(pack_name)
     table.insert(ret, c.id)
   end
   return json.encode(ret)
+end
+
+function GetCardSkill(cid)
+  return Fk:getCardById(cid).skill and Fk:getCardById(cid).skill.name or ""
 end
 
 function GetCardSpecialSkills(cid)

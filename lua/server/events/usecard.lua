@@ -28,11 +28,9 @@ local playCardEmotionAndSound = function(room, player, card)
     soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
       .. (player.gender == General.Male and "male/" or "female/") .. card.name
     if not FileIO.exists(soundName .. ".mp3") then
-      for _, dir in ipairs(FileIO.ls("./packages/")) do
-        soundName = "./packages/" .. dir .. "/audio/card/"
-          .. (player.gender == General.Male and "male/" or "female/") .. card.name
-        if FileIO.exists(soundName .. ".mp3") then break end
-      end
+      local orig = Fk.all_card_types[card.name]
+      soundName = "./packages/" .. orig.package.extensionName .. "/audio/card/"
+      .. (player.gender == General.Male and "male/" or "female/") .. orig.name
     end
   end
   room:broadcastPlaySound(soundName)

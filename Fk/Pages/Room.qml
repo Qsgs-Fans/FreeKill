@@ -81,102 +81,138 @@ Item {
     }
   }
 
-  // tmp
-  Button {
+  ToolButton {
     id: menuButton
     anchors.top: parent.top
+    anchors.topMargin: 12
     anchors.right: parent.right
-    anchors.rightMargin: 10
-    text: Backend.translate("Menu")
-    z: 2
+    anchors.rightMargin: 36
+    icon.source: AppPath + "/image/modmaker/menu"
+    icon.width: 36
+    icon.height: 36
     onClicked: {
-      menuContainer.visible || menuContainer.open();
+      if (menuContainer.visible){
+        menuContainer.close();
+      } else {
+        menuContainer.open();
+      }
     }
-  }
 
-  Menu {
-    id: menuContainer
-    x: parent.width - menuButton.width - menuContainer.width - 17
-    width: menuRow.width
-    height: menuRow.height
-    verticalPadding: 0
-    spacing: 7
-    z: 2
+    background.implicitWidth: 60
+    background.implicitHeight: 60
 
-    Row {
-      id: menuRow
-      spacing: 7
-
-      Button {
-        id: surrenderButton
-        enabled: !config.observing && !config.replaying
-        text: Backend.translate("Surrender")
-        onClicked: {
-          if (isStarted && !getPhoto(Self.id).dead) {
-            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-            if (!surrenderCheck.length) {
-              surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
-            } else {
-              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
-            }
-            surrenderDialog.open();
-          }
-        }
+    Menu {
+      id: menuContainer
+      y: menuButton.height - 12
+      width: 115
+      height: menuRow.height
+      verticalPadding: 0
+      spacing: 15
+      z: 2
+      background: Rectangle {
+        implicitWidth: 200
+        implicitHeight: 40
+        color: "transparent"
+        border.color: "transparent"
       }
 
-      MessageDialog {
-        id: surrenderDialog
-        title: Backend.translate("Surrender")
-        informativeText: ''
-        buttons: MessageDialog.Ok | MessageDialog.Cancel
-        onButtonClicked: function (button, role) {
-          switch (button) {
-            case MessageDialog.Ok: {
-              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-              if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
-                ClientInstance.notifyServer("PushRequest", [
-                  "surrender", true
-                ]);
-              }
-              surrenderDialog.close();
-              break;
-            }
-            case MessageDialog.Cancel: {
-              surrenderDialog.close();
-            }
-          }
-        }
-      }
+      Column {
+        id: menuRow
+        width: menuContainer.width
+        Layout.fillWidth: true
+        spacing: 7
 
-      Button {
-        id: quitButton
-        text: Backend.translate("Quit")
-        onClicked: {
-          if (config.replaying) {
-            Backend.controlReplayer("shutdown");
-            mainStack.pop();
-          } else if (config.observing) {
-            ClientInstance.notifyServer("QuitRoom", "[]");
-          } else {
-            quitDialog.open();
-          }
-        }
-      }
-
-      MessageDialog {
-        id: quitDialog
-        title: Backend.translate("Quit")
-        informativeText: Backend.translate("Are you sure to quit?")
-        buttons: MessageDialog.Ok | MessageDialog.Cancel
-        onButtonClicked: function (button) {
-          switch (button) {
-            case MessageDialog.Ok: {
+        Button {
+          id: quitButton
+          text: Backend.translate("Quit")
+          font.pixelSize: 28
+          Layout.fillWidth: true
+          width: menuContainer.width
+          height: menuContainer.width * 0.65
+          onClicked: {
+            if (config.replaying) {
+              Backend.controlReplayer("shutdown");
+              mainStack.pop();
+            } else if (config.observing) {
               ClientInstance.notifyServer("QuitRoom", "[]");
-              break;
+            } else {
+              quitDialog.open();
             }
-            case MessageDialog.Cancel: {
-              quitDialog.close();
+          }
+        }
+
+        MessageDialog {
+          id: quitDialog
+          title: Backend.translate("Quit")
+          informativeText: Backend.translate("Are you sure to quit?")
+          buttons: MessageDialog.Ok | MessageDialog.Cancel
+          onButtonClicked: function (button) {
+            switch (button) {
+              case MessageDialog.Ok: {
+                ClientInstance.notifyServer("QuitRoom", "[]");
+                break;
+              }
+              case MessageDialog.Cancel: {
+                quitDialog.close();
+              }
             }
+          }
+        }
+
+        Button {
+          id: surrenderButton
+          enabled: !config.observing && !config.replaying
+          text: Backend.translate("Surrender")
+          font.pixelSize: 28
+          Layout.fillWidth: true
+          width: menuContainer.width
+          height: menuContainer.width * 0.65
+          onClicked: {
+            if (isStarted && !getPhoto(Self.id).dead) {
+              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+              if (!surrenderCheck.length) {
+                surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
+              } else {
+                surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
+              }
+              surrenderDialog.open();
+            }
+          }
+        }
+
+        MessageDialog {
+          id: surrenderDialog
+          title: Backend.translate("Surrender")
+          informativeText: ''
+          buttons: MessageDialog.Ok | MessageDialog.Cancel
+          onButtonClicked: function (button, role) {
+            switch (button) {
+              case MessageDialog.Ok: {
+                const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+                if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
+                  ClientInstance.notifyServer("PushRequest", [
+                    "surrender", true
+                  ]);
+                }
+                surrenderDialog.close();
+                break;
+              }
+              case MessageDialog.Cancel: {
+                surrenderDialog.close();
+              }
+            }
+          }
+        }
+
+        Button {
+          id: volumeButton
+          text: Backend.translate("Audio Settings")
+          font.pixelSize: 28
+          Layout.fillWidth: true
+          width: menuContainer.width
+          height: menuContainer.width * 0.65
+          onClicked: {
+            volumeDialog.open();
           }
         }
       }
@@ -518,6 +554,7 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
+      roomScene.resetPrompt();
 
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
         && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
@@ -527,6 +564,14 @@ Item {
           skills.unshift("_normal_use");
         }
         specialCardSkills.model = skills;
+        const skillName = Backend.callLuaFunction("GetCardSkill", [card]);
+        const prompt = JSON.parse(Backend.callLuaFunction(
+          "ActiveSkillPrompt",
+          [skillName, card, selected_targets]
+        ));
+        if (prompt !== "") {
+          roomScene.setPrompt(processPrompt(prompt));
+        }
       } else {
         specialCardSkills.model = [];
       }
@@ -692,13 +737,28 @@ Item {
             text: Backend.translate(modelData)
             checked: index === 0
             onCheckedChanged: {
+              roomScene.resetPrompt();
+              const card = dashboard.selected_card;
+              let prompt = ""
               if (modelData === "_normal_use") {
-                Logic.enableTargets(dashboard.selected_card);
+                Logic.enableTargets(card);
+                const skillName = Backend.callLuaFunction("GetCardSkill", [card]);
+                prompt = JSON.parse(Backend.callLuaFunction(
+                  "ActiveSkillPrompt",
+                  [skillName, card, selected_targets]
+                ));
               } else {
                 Logic.enableTargets(JSON.stringify({
                   skill: modelData,
-                  subcards: [dashboard.selected_card],
+                  subcards: [card],
                 }));
+                prompt = JSON.parse(Backend.callLuaFunction(
+                  "ActiveSkillPrompt",
+                  [modelData, card, selected_targets]
+                ));
+              }
+              if (prompt !== "") {
+                roomScene.setPrompt(processPrompt(prompt));
               }
             }
           }
@@ -928,6 +988,60 @@ Item {
     anchors.fill: parent
   }
 
+  Dialog {
+    id: volumeDialog
+    title: Backend.translate("Audio Settings")
+    anchors.centerIn: roomScene
+    ColumnLayout {
+      RowLayout {
+        anchors.rightMargin: 8
+        spacing: 16
+        Text {
+          text: Backend.translate("BGM Volume")
+        }
+        Slider {
+          Layout.rightMargin: 16
+          Layout.fillWidth: true
+          from: 0
+          to: 100
+          value: config.bgmVolume
+          onValueChanged: config.bgmVolume = value;
+        }
+      }
+
+      RowLayout {
+        anchors.rightMargin: 8
+        spacing: 16
+        Text {
+          text: Backend.translate("Effect Volume")
+        }
+        Slider {
+          Layout.rightMargin: 16
+          Layout.fillWidth: true
+          from: 0
+          to: 100
+          value: Backend.volume
+          onValueChanged: Backend.volume = value;
+        }
+      }
+
+      Switch {
+        text: Backend.translate("Disable message audio")
+        checked: config.disableMsgAudio
+        onCheckedChanged: config.disableMsgAudio = checked;
+      }
+
+      Switch {
+        text: Backend.translate("Hide unselectable cards")
+        checked: config.hideUseless
+        onCheckedChanged: {
+          config.hideUseless = checked;
+        }
+      }
+
+    }
+  }
+
   Rectangle {
     anchors.fill: dashboard
     visible: config.observing && !config.replaying
@@ -1037,6 +1151,18 @@ Item {
     sequence: "Space"
     enabled: cancelButton.enabled
     onActivated: Logic.doCancelButton();
+  }
+
+  function processPrompt(prompt) {
+    const data = prompt.split(":");
+    let raw = Backend.translate(data[0]);
+    const src = parseInt(data[1]);
+    const dest = parseInt(data[2]);
+    if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
+    if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
+    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
+    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
+    return raw;
   }
 
   function getCurrentCardUseMethod() {

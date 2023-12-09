@@ -576,9 +576,9 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
         const included = roomScene.extra_data.include_targets;
-        const exclusived = roomScene.extra_data.exclusive_targets;
-        if (exclusived instanceof Array) {
-          if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        const exclusive = roomScene.extra_data.exclusive_targets;
+        if (exclusive instanceof Array) {
+          if (exclusive.indexOf(id) === -1) photo.selectable = false;
         }
         if (must instanceof Array) {
           if (must.filter((val) => {
@@ -654,9 +654,9 @@ function updateSelectedTargets(playerid, selected) {
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
         const included = roomScene.extra_data.include_targets;
-        const exclusived = roomScene.extra_data.exclusive_targets;
-        if (exclusived instanceof Array) {
-          if (exclusived.indexOf(id) === -1) photo.selectable = false;
+        const exclusive = roomScene.extra_data.exclusive_targets;
+        if (exclusive instanceof Array) {
+          if (exclusive.indexOf(id) === -1) photo.selectable = false;
         }
         if (must instanceof Array) {
           if (must.filter((val) => {

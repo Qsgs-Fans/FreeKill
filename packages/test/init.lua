@@ -7,12 +7,8 @@ local cheat = fk.CreateActiveSkill{
   name = "cheat",
   anim_type = "drawcard",
   prompt = "#cheat",
-  can_use = function(self, player)
-    return true
-  end,
-  card_filter = function(self, card)
-    return false
-  end,
+  can_use = Util.TrueFunc,
+  card_filter = Util.FalseFunc,
   target_num = 0,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
@@ -64,16 +60,8 @@ local test_filter = fk.CreateFilterSkill{
 local control = fk.CreateActiveSkill{
   name = "control",
   anim_type = "control",
-  can_use = function(self, player)
-    return true
-  end,
-  card_filter = function(self, card)
-    -- if self.interaction.data == "joy" then
-      --local c = Fk:getCardById(card)
-      --return Self:getPileNameOfId(card) == self.name and c.color == Card.Red
-      return false
-    -- end
-  end,
+  can_use = Util.TrueFunc,
+  card_filter = Util.FalseFunc,
   card_num = 0,
   target_filter = function(self, to_select)
     return to_select ~= Self.id
@@ -225,12 +213,8 @@ local damage_maker = fk.CreateActiveSkill{
   name = "damage_maker",
   anim_type = "offensive",
   prompt = "#damage_maker",
-  can_use = function(self, player)
-    return true
-  end,
-  card_filter = function(self, card)
-    return false
-  end,
+  can_use = Util.TrueFunc,
+  card_filter = Util.FalseFunc,
   card_num = 0,
   target_filter = function(self, to_select, selected)
     if self.interaction.data == "revive" then return false end
@@ -300,12 +284,8 @@ local damage_maker = fk.CreateActiveSkill{
 }
 local change_hero = fk.CreateActiveSkill{
   name = "change_hero",
-  can_use = function(self, player)
-    return true
-  end,
-  card_filter = function(self, card)
-    return false
-  end,
+  can_use = Util.TrueFunc,
+  card_filter = Util.FalseFunc,
   card_num = 0,
   target_filter = function(self, to_select, selected)
     return #selected < 1
@@ -344,12 +324,8 @@ local test_zhenggong = fk.CreateTriggerSkill{
 }
 local test_feichu = fk.CreateActiveSkill{
   name = "test_feichu",
-  can_use = function(self, player)
-    return true
-  end,
-  card_filter = function(self, card)
-    return false
-  end,
+  can_use = Util.TrueFunc,
+  card_filter = Util.FalseFunc,
   card_num = 0,
   target_filter = function(self, to_select, selected)
     return #selected < 1

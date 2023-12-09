@@ -310,7 +310,7 @@ function Room:getPlayerById(id)
   return nil
 end
 
---- 将房间中的玩家按照座位顺序重新排序。
+--- 将房间中的玩家按照行动顺序重新排序。
 ---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
 function Room:sortPlayersByAction(playerIds, isTargetGroup)
   table.sort(playerIds, function(prev, next)
@@ -1273,19 +1273,12 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     chosenCards = ret.cards
   else
     if cancelable then return {} end
-    local hands = player:getCardIds(Player.Hand)
-    if includeEquip then
-      table.insertTable(hands, player:getCardIds(Player.Equip))
-    end
+    local cards = player:getCardIds("he&")
     local exp = Exppattern:Parse(pattern)
-    hands = table.filter(hands, function(cid)
+    cards = table.filter(cards, function(cid)
       return exp:match(Fk:getCardById(cid))
     end)
-    for _ = 1, minNum do
-      local randomId = hands[math.random(1, #hands)]
-      table.insert(chosenCards, randomId)
-      table.removeOne(hands, randomId)
-    end
+    chosenCards = table.random(cards, minNum)
   end
 
   return chosenCards
@@ -2873,14 +2866,14 @@ function Room:drawCards(player, num, skillName, fromPlace)
 end
 
 --- 将一张或多张牌移动到某处
----@param card integer | Card | Card[] @ 要移动的牌
+---@param card integer | integer[] | Card | Card[] @ 要移动的牌
 ---@param to_place integer @ 移动的目标位置
----@param target ServerPlayer @ 移动的目标玩家
+---@param target? ServerPlayer @ 移动的目标角色
 ---@param reason? integer @ 移动时使用的移牌原因
 ---@param skill_name? string @ 技能名
 ---@param special_name? string @ 私人牌堆名
 ---@param visible? boolean @ 是否明置
----@param proposer? integer
+---@param proposer? integer @ 移动操作者的id
 function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
@@ -3268,10 +3261,15 @@ function Room:useSkill(player, skill, effect_cb)
   player:revealBySkillName(skill.name)
   if not skill.mute then
     if skill.attached_equip then
-      local equip = Fk:cloneCard(skill.attached_equip)
+      local equip = Fk.all_card_types[skill.attached_equip]
       local pkgPath = "./packages/" .. equip.package.extensionName
       local soundName = pkgPath .. "/audio/card/" .. equip.name
       self:broadcastPlaySound(soundName)
+      self:sendLog{
+        type = "#InvokeSkill",
+        from = player.id,
+        arg = skill.name,
+      }
       self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
     else
       player:broadcastSkillInvoke(skill.name)
