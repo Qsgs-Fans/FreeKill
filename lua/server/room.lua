@@ -2856,12 +2856,12 @@ end
 --- 将一张或多张牌移动到某处
 ---@param card integer | integer[] | Card | Card[] @ 要移动的牌
 ---@param to_place integer @ 移动的目标位置
----@param target ServerPlayer @ 移动的目标玩家
+---@param target? ServerPlayer @ 移动的目标角色
 ---@param reason? integer @ 移动时使用的移牌原因
 ---@param skill_name? string @ 技能名
 ---@param special_name? string @ 私人牌堆名
 ---@param visible? boolean @ 是否明置
----@param proposer? integer
+---@param proposer? integer @ 移动操作者的id
 function Room:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer)
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
@@ -3248,10 +3248,15 @@ function Room:useSkill(player, skill, effect_cb)
   player:revealBySkillName(skill.name)
   if not skill.mute then
     if skill.attached_equip then
-      local equip = Fk:cloneCard(skill.attached_equip)
+      local equip = Fk.all_card_types[skill.attached_equip]
       local pkgPath = "./packages/" .. equip.package.extensionName
       local soundName = pkgPath .. "/audio/card/" .. equip.name
       self:broadcastPlaySound(soundName)
+      self:sendLog{
+        type = "#InvokeSkill",
+        from = player.id,
+        arg = skill.name,
+      }
       self:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
     else
       player:broadcastSkillInvoke(skill.name)
