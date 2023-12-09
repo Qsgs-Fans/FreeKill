@@ -7,10 +7,6 @@ Fk:loadTranslationTable({
   ["wu"] = "*Wu*",
   ["qun"] = "*Neutral*",
 
-  ["black"] = "Black",
-  ["red"] = '<font color="#CC3131">Red</font>',
-  ["nocolor"] = '<font color="grey">NoColor</font>',
-
   ["caocao"] = "Cao Cao",
   ["jianxiong"] = "Villainous Hero",
   [":jianxiong"] = "After you suffer DMG: you can take the card(s) that caused it.",

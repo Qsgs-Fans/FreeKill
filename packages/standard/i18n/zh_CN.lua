@@ -7,10 +7,6 @@ Fk:loadTranslationTable{
   ["wu"] = "吴",
   ["qun"] = "群",
 
-  ["black"] = "黑色",
-  ["red"] = '<font color="#CC3131">红色</font>',
-  ["nocolor"] = '<font color="grey">无色</font>',
-
   ["caocao"] = "曹操",
   ["~caocao"] = "霸业未成！未成啊！",
   ["$jianxiong1"] = "宁教我负天下人，休教天下人负我！",
