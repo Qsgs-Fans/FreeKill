@@ -81,15 +81,13 @@ Item {
     }
   }
 
-  ToolButton {
+  Button {
     id: menuButton
     anchors.top: parent.top
     anchors.topMargin: 12
     anchors.right: parent.right
-    anchors.rightMargin: 36
-    icon.source: AppPath + "/image/modmaker/menu"
-    icon.width: 36
-    icon.height: 36
+    anchors.rightMargin: 12
+    text: Backend.translate("Menu")
     onClicked: {
       if (menuContainer.visible){
         menuContainer.close();
@@ -98,122 +96,48 @@ Item {
       }
     }
 
-    background.implicitWidth: 60
-    background.implicitHeight: 60
-
     Menu {
       id: menuContainer
       y: menuButton.height - 12
-      width: 115
-      height: menuRow.height
-      verticalPadding: 0
-      spacing: 15
-      z: 2
-      background: Rectangle {
-        implicitWidth: 200
-        implicitHeight: 40
-        color: "transparent"
-        border.color: "transparent"
+      width: 100
+
+      MenuItem {
+        id: quitButton
+        text: Backend.translate("Quit")
+        onClicked: {
+          if (config.replaying) {
+            Backend.controlReplayer("shutdown");
+            mainStack.pop();
+          } else if (config.observing) {
+            ClientInstance.notifyServer("QuitRoom", "[]");
+          } else {
+            quitDialog.open();
+          }
+        }
       }
 
-      Column {
-        id: menuRow
-        width: menuContainer.width
-        Layout.fillWidth: true
-        spacing: 7
-
-        Button {
-          id: quitButton
-          text: Backend.translate("Quit")
-          font.pixelSize: 28
-          Layout.fillWidth: true
-          width: menuContainer.width
-          height: menuContainer.width * 0.65
-          onClicked: {
-            if (config.replaying) {
-              Backend.controlReplayer("shutdown");
-              mainStack.pop();
-            } else if (config.observing) {
-              ClientInstance.notifyServer("QuitRoom", "[]");
+      MenuItem {
+        id: surrenderButton
+        enabled: !config.observing && !config.replaying
+        text: Backend.translate("Surrender")
+        onClicked: {
+          if (isStarted && !getPhoto(Self.id).dead) {
+            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+            if (!surrenderCheck.length) {
+              surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
             } else {
-              quitDialog.open();
+              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
             }
+            surrenderDialog.open();
           }
         }
+      }
 
-        MessageDialog {
-          id: quitDialog
-          title: Backend.translate("Quit")
-          informativeText: Backend.translate("Are you sure to quit?")
-          buttons: MessageDialog.Ok | MessageDialog.Cancel
-          onButtonClicked: function (button) {
-            switch (button) {
-              case MessageDialog.Ok: {
-                ClientInstance.notifyServer("QuitRoom", "[]");
-                break;
-              }
-              case MessageDialog.Cancel: {
-                quitDialog.close();
-              }
-            }
-          }
-        }
-
-        Button {
-          id: surrenderButton
-          enabled: !config.observing && !config.replaying
-          text: Backend.translate("Surrender")
-          font.pixelSize: 28
-          Layout.fillWidth: true
-          width: menuContainer.width
-          height: menuContainer.width * 0.65
-          onClicked: {
-            if (isStarted && !getPhoto(Self.id).dead) {
-              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-              if (!surrenderCheck.length) {
-                surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
-              } else {
-                surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
-              }
-              surrenderDialog.open();
-            }
-          }
-        }
-
-        MessageDialog {
-          id: surrenderDialog
-          title: Backend.translate("Surrender")
-          informativeText: ''
-          buttons: MessageDialog.Ok | MessageDialog.Cancel
-          onButtonClicked: function (button, role) {
-            switch (button) {
-              case MessageDialog.Ok: {
-                const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-                if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
-                  ClientInstance.notifyServer("PushRequest", [
-                    "surrender", true
-                  ]);
-                }
-                surrenderDialog.close();
-                break;
-              }
-              case MessageDialog.Cancel: {
-                surrenderDialog.close();
-              }
-            }
-          }
-        }
-
-        Button {
-          id: volumeButton
-          text: Backend.translate("Audio Settings")
-          font.pixelSize: 28
-          Layout.fillWidth: true
-          width: menuContainer.width
-          height: menuContainer.width * 0.65
-          onClicked: {
-            volumeDialog.open();
-          }
+      MenuItem {
+        id: volumeButton
+        text: Backend.translate("Audio Settings")
+        onClicked: {
+          volumeDialog.open();
         }
       }
     }
@@ -988,57 +912,66 @@ Item {
     anchors.fill: parent
   }
 
-  Dialog {
+  MessageDialog {
+    id: quitDialog
+    title: Backend.translate("Quit")
+    informativeText: Backend.translate("Are you sure to quit?")
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          ClientInstance.notifyServer("QuitRoom", "[]");
+          break;
+        }
+        case MessageDialog.Cancel: {
+          quitDialog.close();
+        }
+      }
+    }
+  }
+
+  MessageDialog {
+    id: surrenderDialog
+    title: Backend.translate("Surrender")
+    informativeText: ''
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
+          if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
+            ClientInstance.notifyServer("PushRequest", [
+              "surrender", true
+            ]);
+          }
+          surrenderDialog.close();
+          break;
+        }
+        case MessageDialog.Cancel: {
+          surrenderDialog.close();
+        }
+      }
+    }
+  }
+
+  Popup {
     id: volumeDialog
-    title: Backend.translate("Audio Settings")
-    anchors.centerIn: roomScene
-    ColumnLayout {
-      RowLayout {
-        anchors.rightMargin: 8
-        spacing: 16
-        Text {
-          text: Backend.translate("BGM Volume")
-        }
-        Slider {
-          Layout.rightMargin: 16
-          Layout.fillWidth: true
-          from: 0
-          to: 100
-          value: config.bgmVolume
-          onValueChanged: config.bgmVolume = value;
-        }
-      }
+    width: realMainWin.width * 0.5
+    height: realMainWin.height * 0.5
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
 
-      RowLayout {
-        anchors.rightMargin: 8
-        spacing: 16
-        Text {
-          text: Backend.translate("Effect Volume")
-        }
-        Slider {
-          Layout.rightMargin: 16
-          Layout.fillWidth: true
-          from: 0
-          to: 100
-          value: Backend.volume
-          onValueChanged: Backend.volume = value;
-        }
-      }
-
-      Switch {
-        text: Backend.translate("Disable message audio")
-        checked: config.disableMsgAudio
-        onCheckedChanged: config.disableMsgAudio = checked;
-      }
-
-      Switch {
-        text: Backend.translate("Hide unselectable cards")
-        checked: config.hideUseless
-        onCheckedChanged: {
-          config.hideUseless = checked;
-        }
-      }
-
+    Loader {
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/LobbyElement/AudioSetting.qml"
     }
   }
 

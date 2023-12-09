@@ -63,8 +63,11 @@ public class Helper {
     return java.util.Locale.getDefault().toString();
   }
 
-  public static void PlaySound(String path) {
-    MediaPlayer mp = new MediaPlayer();
+  static MediaPlayer mp;
+
+  public static void PlaySound(String path, float vol) {
+    // FIXME: 此法中途会被GC
+    mp = new MediaPlayer();
     mp.setOnCompletionListener(new OnCompletionListener() {
       @Override
       public void onCompletion(MediaPlayer mp) {
@@ -74,6 +77,7 @@ public class Helper {
     });
     try {
       mp.setDataSource(path);
+      mp.setVolume(vol, vol);
       mp.prepare();
       mp.start();
     } catch (Exception e) {
