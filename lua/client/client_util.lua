@@ -630,7 +630,6 @@ function ResetClientLua()
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
   ClientInstance.discard_pile = {}
-  ClientInstance.processing_area = {}
 
   ClientInstance.enter_room_data = _data;
   ClientInstance.room_settings = data
