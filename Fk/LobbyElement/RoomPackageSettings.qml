@@ -52,7 +52,7 @@ Flickable {
     }
 
     GridLayout {
-      columns: 2
+      columns: 4
 
       Repeater {
         id: gpacks
@@ -100,7 +100,7 @@ Flickable {
     }
 
     GridLayout {
-      columns: 2
+      columns: 4
 
       Repeater {
         id: cpacks

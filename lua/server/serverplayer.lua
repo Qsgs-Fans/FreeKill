@@ -363,6 +363,11 @@ function ServerPlayer:reconnect()
     end
   end
 
+  -- send banners
+  for k, v in pairs(room.banners) do
+    self:doNotify("SetBanner", json.encode{ k, v })
+  end
+
   for _, p in ipairs(room.players) do
     room:notifyProperty(self, p, "general")
     room:notifyProperty(self, p, "deputyGeneral")

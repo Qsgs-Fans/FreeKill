@@ -736,4 +736,14 @@ function PoxiFeasible(poxi_type, selected, data, extra_data)
   return json.encode(poxi.feasible(selected, data, extra_data))
 end
 
+function GetQmlMark(mtype, name, value)
+  local spec = Fk.qml_marks[mtype]
+  if not spec then return "{}" end
+  value = json.decode(value)
+  return json.encode {
+    qml_path = spec.qml_path,
+    text = spec.how_to_show(name, value)
+  }
+end
+
 dofile "lua/client/i18n/init.lua"

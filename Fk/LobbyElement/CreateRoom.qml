@@ -16,6 +16,7 @@ Item {
     transformOrigin: Item.BottomLeft
     rotation: 90
     width: root.height
+    background: Rectangle { color: "#EEEEEEEE" }
     TabButton {
       text: Backend.translate("General Settings")
     }

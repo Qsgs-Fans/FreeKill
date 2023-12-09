@@ -27,6 +27,7 @@
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
+---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -59,6 +60,7 @@ function Engine:initialize()
   self.kingdoms = {}
   self._custom_events = {}
   self.poxi_methods = {}
+  self.qml_marks = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -346,9 +348,20 @@ function Engine:addPoxiMethod(spec)
   assert(type(spec.name) == "string")
   assert(type(spec.card_filter) == "function")
   assert(type(spec.feasible) == "function")
+  if self.poxi_methods[spec.name] then
+    fk.qCritical("Warning: duplicated poxi_method " .. spec.name)
+  end
   self.poxi_methods[spec.name] = spec
   spec.default_choice = spec.default_choice or function() return {} end
   spec.post_select = spec.post_select or function(s) return s end
+end
+
+function Engine:addQmlMark(spec)
+  assert(type(spec.name) == "string")
+  if self.qml_marks[spec.name] then
+    fk.qCritical("Warning: duplicated qml mark type " .. spec.name)
+  end
+  self.qml_marks[spec.name] = spec
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。

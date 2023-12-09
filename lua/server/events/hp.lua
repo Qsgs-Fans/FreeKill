@@ -175,7 +175,6 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   stages = {
     {fk.Damage, damageStruct.from},
     {fk.Damaged, damageStruct.to},
-    {fk.DamageFinished, damageStruct.to},
   }
 
   for _, struct in ipairs(stages) do

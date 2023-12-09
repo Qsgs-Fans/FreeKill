@@ -574,9 +574,21 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         const exclusive = roomScene.extra_data.exclusive_targets;
         if (exclusive instanceof Array) {
           if (exclusive.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0 && included.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
@@ -596,8 +608,12 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         if (must instanceof Array) {
-          okButton.enabled = (must.length === 0);
+          if(must.length === 0) okButton.enabled = false;
+        }
+        if (included instanceof Array) {
+          if (included.length === 0) okButton.enabled = false;
         }
       }
     }
@@ -636,9 +652,21 @@ function updateSelectedTargets(playerid, selected) {
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
+        const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         const exclusive = roomScene.extra_data.exclusive_targets;
         if (exclusive instanceof Array) {
           if (exclusive.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (must instanceof Array) {
+          if (must.filter((val) => {
+            return selected_targets.indexOf(val) === -1;
+          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0 && included.indexOf(id) === -1) photo.selectable = false;
         }
       }
     })
@@ -658,10 +686,16 @@ function updateSelectedTargets(playerid, selected) {
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
+        const included = roomScene.extra_data.include_targets;
         if (must instanceof Array) {
-          okButton.enabled = (must.filter((val) => {
+          if (must.filter((val) => {
             return selected_targets.indexOf(val) === -1;
-          }).length === 0);
+          }).length !== 0) okButton.enabled = false;
+        }
+        if (included instanceof Array) {
+          if (included.filter((val) => {
+            return selected_targets.indexOf(val) !== -1;
+          }).length === 0) okButton.enabled = false;
         }
       }
     }
@@ -1012,7 +1046,7 @@ callbacks["AskForChoice"] = (jsonData) => {
   });
 }
 
-callbacks["AskForCheck"] = (jsonData) => {
+callbacks["AskForChoices"] = (jsonData) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
   const data = JSON.parse(jsonData);
@@ -1025,7 +1059,7 @@ callbacks["AskForCheck"] = (jsonData) => {
   const prompt = data[5];
   const detailed = data[6];
   if (prompt === "") {
-    roomScene.promptText = Backend.translate("#AskForCheck")
+    roomScene.promptText = Backend.translate("#AskForChoices")
       .arg(Backend.translate(skill_name));
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
@@ -1335,9 +1369,21 @@ callbacks["SetPlayerMark"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const player = getPhoto(data[0]);
   const mark = data[1];
-  const value = data[2] instanceof Array ? data[2] : data[2].toString();
+  const value = data[2] instanceof Object ? data[2] : data[2].toString();
   let area = mark.startsWith("@!") ? player.picMarkArea : player.markArea;
   if (data[2] === 0) {
+    area.removeMark(mark);
+  } else {
+    area.setMark(mark, mark.startsWith("@@") ? "" : value);
+  }
+}
+
+callbacks["SetBanner"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const mark = data[0];
+  const value = data[1] instanceof Object ? data[1] : data[1].toString();
+  let area = roomScene.banner;
+  if (data[1] === 0) {
     area.removeMark(mark);
   } else {
     area.setMark(mark, mark.startsWith("@@") ? "" : value);
@@ -1581,7 +1627,7 @@ callbacks["ChangeSelf"] = (j) => {
 
 callbacks["AskForLuckCard"] = (j) => {
   // jsonData: int time
-  if (config.replaying) return;
+  if (config.observing || config.replaying) return;
   const time = parseInt(j);
   roomScene.setPrompt(Backend.translate("#AskForLuckCard").arg(time), true);
   roomScene.state = "replying";

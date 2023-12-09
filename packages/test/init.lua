@@ -75,6 +75,10 @@ local control = fk.CreateActiveSkill{
   on_use = function(self, room, effect)
     --room:doSuperLightBox("packages/test/qml/Test.qml")
     local from = room:getPlayerById(effect.from)
+    -- room:setPlayerMark(from, "@[test]test", {
+    --   all = {3, 1, 6, 9, 5, 11, 10, 2, 8, 7, 12, 4, 13},
+    --   ok = {10, 2},
+    -- })
     -- room:swapSeat(from, to)
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
@@ -132,6 +136,27 @@ Fk:addPoxiMethod{
     return #selected == 0 or #selected == 4 or #selected == extra_data
   end,
   prompt = "魄袭：选你们俩手牌总共四个花色，或者不选直接按确定按钮"
+}
+Fk:loadTranslationTable{['@[test]test']='割圆'}
+Fk:addQmlMark{
+  name = "test",
+  how_to_show = function(name, value)
+    local all_points = value.all
+    local ok_points = value.ok
+    -- 若没有点亮的就不显示
+    if #ok_points == 0 then return "" end
+    -- 否则，显示相邻的，逻辑上要构成循环
+    local start_idx = table.indexOf(all_points, ok_points[1]) - 1
+    local end_idx = table.indexOf(all_points, ok_points[#ok_points]) + 1
+    if start_idx == 0 then start_idx = #all_points end
+    if end_idx == #all_points + 1 then end_idx = 1 end
+    if start_idx == end_idx then
+      return Card:getNumberStr(all_points[start_idx])
+    else
+      return Card:getNumberStr(all_points[start_idx]) .. Card:getNumberStr(all_points[end_idx])
+    end
+  end,
+  qml_path = "packages/test/qml/TestDialog"
 }
 --]]
 local test_vs = fk.CreateViewAsSkill{

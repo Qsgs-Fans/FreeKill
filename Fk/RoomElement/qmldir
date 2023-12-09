@@ -8,6 +8,7 @@ Dashboard 1.0 Dashboard.qml
 GameOverBox 1.0 GameOverBox.qml
 GeneralCardItem 1.0 GeneralCardItem.qml
 GlowText 1.0 GlowText.qml
+BigGlowText 1.0 BigGlowText.qml
 GraphicsBox 1.0 GraphicsBox.qml
 GuanxingBox 1.0 GuanxingBox.qml
 HandcardArea 1.0 HandcardArea.qml

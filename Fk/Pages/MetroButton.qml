@@ -41,6 +41,9 @@ Item {
 
   TapHandler {
     id: mouse
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+    gesturePolicy: TapHandler.WithinBounds
+
     onTapped: if (parent.enabled) parent.clicked()
   }
 

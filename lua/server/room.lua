@@ -15,6 +15,7 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
+---@field public banners table<string, any> @ 左上角显示点啥好呢？
 ---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
@@ -77,6 +78,7 @@ function Room:initialize(_room)
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
+  self.banners = {}
   self.general_pile = {}
   self.draw_pile = {}
   self.discard_pile = {}
@@ -561,6 +563,16 @@ end
 ---@param tag_name string @ tag名字
 function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
+end
+
+function Room:setBanner(name, value)
+  if value == 0 then value = nil end
+  self.banners[name] = value
+  self:doBroadcastNotify("SetBanner", json.encode{ name, value })
+end
+
+function Room:getBanner(name)
+  return self.banners[name]
 end
 
 ---@return boolean
@@ -1331,9 +1343,9 @@ end
 ---@param cancelable? boolean @ 能否点取消
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[], integer[]
-function Room:askForChooseBoth(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
+function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
   if minCardNum < 1 or minTargetNum < 1 then
-    return table.unpack({}, {})
+    return {}, {}
   end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
@@ -1359,7 +1371,7 @@ function Room:askForChooseBoth(player, minCardNum, maxCardNum, targets, minTarge
     return ret.targets, ret.cards
   else
     if cancelable then
-      return table.unpack({}, {})
+      return {}, {}
     else
       return table.random(targets, minTargetNum), table.random(pcards, minCardNum)
     end
@@ -1668,12 +1680,12 @@ end
 ---@param detailed? boolean @ 选项详细描述
 ---@param all_choices? string[] @ 所有选项（不可选变灰）
 ---@return string[] @ 选择的选项
-function Room:askForCheck(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
+function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
   if #choices <= minNum and not all_choices then return choices end
   assert(minNum <= maxNum)
   assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
-  local command = "AskForCheck"
+  local command = "AskForChoices"
   skill_name = skill_name or ""
   prompt = prompt or ""
   all_choices = all_choices or choices
@@ -3138,6 +3150,7 @@ end
 ---@param card_ids integer[] @ 被重铸的牌
 ---@param who ServerPlayer @ 重铸的角色
 ---@param skillName? string @ 技能名，默认为“重铸”
+---@return integer[] @ 摸到的牌
 function Room:recastCard(card_ids, who, skillName)
   if type(card_ids) == "number" then
     card_ids = {card_ids}
@@ -3148,7 +3161,7 @@ function Room:recastCard(card_ids, who, skillName)
     from = who.id,
     toArea = Card.DiscardPile,
     skillName = skillName,
-    moveReason = fk.ReasonPutIntoDiscardPile,
+    moveReason = fk.ReasonRecast,
     proposer = who.id
   })
   self:broadcastPlaySound("./audio/system/recast")
@@ -3158,7 +3171,7 @@ function Room:recastCard(card_ids, who, skillName)
     card = card_ids,
     arg = skillName,
   }
-  self:drawCards(who, #card_ids, skillName)
+  return self:drawCards(who, #card_ids, skillName)
 end
 
 --- 根据拼点信息开始拼点。

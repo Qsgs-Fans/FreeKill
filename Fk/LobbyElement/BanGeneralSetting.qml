@@ -46,16 +46,7 @@ Item {
           config.disabledGenerals = [];
         }
       }
-    }
 
-    Text {
-      Layout.fillWidth: true
-      Layout.margins: 8
-      wrapMode: Text.WrapAnywhere
-      text: Backend.translate("Help_Ban_List")
-    }
-
-    RowLayout {
       Button {
         text: Backend.translate("Export")
         onClicked: {
@@ -91,12 +82,19 @@ Item {
       }
     }
 
+    Text {
+      Layout.fillWidth: true
+      Layout.margins: 8
+      wrapMode: Text.WrapAnywhere
+      text: Backend.translate("Help_Ban_List")
+    }
+
     GridView {
       id: listView
       Layout.fillWidth: true
       Layout.fillHeight: true
       clip: true
-      cellWidth: width / 2
+      cellWidth: width / 4
       cellHeight: 24
       model: config.disabledGenerals
       delegate: Text {
