@@ -53,7 +53,11 @@ GameEvent.functions[GameEvent.Death] = function(self)
   local room = self.room
   local victim = room:getPlayerById(deathStruct.who)
   victim.dead = true
-  victim._splayer:setDied(true)
+
+  if victim.rest <= 0 then
+    victim._splayer:setDied(true)
+  end
+
   table.removeOne(room.alive_players, victim)
 
   local logic = room.logic
@@ -65,26 +69,50 @@ GameEvent.functions[GameEvent.Death] = function(self)
       type = "#KillPlayer",
       to = {killer.id},
       from = victim.id,
-      arg = victim.role,
+      arg = (victim.rest > 0 and 'unknown' or victim.role),
     }
   else
     room:sendLog{
       type = "#KillPlayerWithNoKiller",
       from = victim.id,
-      arg = victim.role,
+      arg = (victim.rest > 0 and 'unknown' or victim.role),
     }
   end
   room:sendLogEvent("Death", {to = victim.id})
 
-  room:broadcastProperty(victim, "role")
+  if victim.rest == 0 then
+    room:broadcastProperty(victim, "role")
+  end
   room:broadcastProperty(victim, "dead")
 
   victim.drank = 0
   room:broadcastProperty(victim, "drank")
+  victim.shield = 0
+  room:broadcastProperty(victim, "shield")
 
   logic:trigger(fk.GameOverJudge, victim, deathStruct)
   logic:trigger(fk.Death, victim, deathStruct)
   logic:trigger(fk.BuryVictim, victim, deathStruct)
 
   logic:trigger(fk.Deathed, victim, deathStruct)
+end
+
+GameEvent.functions[GameEvent.Revive] = function(self)
+  local room = self.room
+  local player, sendLog, reason = table.unpack(self.data)
+
+  if not player.dead then return end
+  room:setPlayerProperty(player, "dead", false)
+  player._splayer:setDied(false)
+  room:setPlayerProperty(player, "dying", false)
+  room:setPlayerProperty(player, "hp", player.maxHp)
+  table.insertIfNeed(room.alive_players, player)
+
+  sendLog = (sendLog == nil) and true or sendLog
+  if sendLog then
+    room:sendLog { type = "#Revive", from = player.id }
+  end
+
+  reason = reason or ""
+  room.logic:trigger(fk.AfterPlayerRevived, player, { reason = reason })
 end

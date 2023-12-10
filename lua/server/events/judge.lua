@@ -5,6 +5,8 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   local room = self.room
   local logic = room.logic
   local who = data.who
+
+  data.isJudgeEvent = true
   logic:trigger(fk.StartJudge, who, data)
   data.card = data.card or Fk:getCardById(room:getNCards(1)[1])
 

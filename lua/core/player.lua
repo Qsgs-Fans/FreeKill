@@ -86,6 +86,7 @@ function Player:initialize()
   self.dying = false
   self.dead = false
   self.drank = 0
+  self.rest = 0
 
   self.player_skills = {}
   self.derivative_skills = {}
@@ -570,9 +571,9 @@ end
 ---@param ignoreRemoved? boolean @ 忽略被移除
 ---@param num? integer @ 第几个，默认1
 ---@return ServerPlayer
-function Player:getNextAlive(ignoreRemoved, num)
+function Player:getNextAlive(ignoreRemoved, num, ignoreRest)
   if #Fk:currentRoom().alive_players == 0 then
-    return self
+    return self.rest > 0 and self.next.rest > 0 and self.next or self
   end
   local doNotIgnore = not ignoreRemoved
   if doNotIgnore and table.every(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end) then
@@ -583,7 +584,7 @@ function Player:getNextAlive(ignoreRemoved, num)
   num = num or 1
   for _ = 1, num do
     ret = ret.next
-    while ret.dead or (doNotIgnore and ret:isRemoved()) do
+    while (ret.dead and not ignoreRest) or (doNotIgnore and ret:isRemoved()) do
       ret = ret.next
     end
   end

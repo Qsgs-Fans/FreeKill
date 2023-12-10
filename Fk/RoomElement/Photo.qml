@@ -3,6 +3,7 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import QtQuick.Controls
+import QtQuick.Layouts
 import Fk
 import Fk.PhotoElement
 
@@ -29,6 +30,7 @@ Item {
   property bool faceup: true
   property bool chained: false
   property int drank: 0
+  property int rest: 0
   property bool isOwner: false
   property bool ready: false
   property int winGame: 0
@@ -269,6 +271,45 @@ Item {
     opacity: 0.4 + Math.log(root.drank) * 0.12
   }
 
+  ColumnLayout {
+    id: restRect
+    anchors.centerIn: photoMask
+    anchors.leftMargin: 20
+    visible: root.rest > 0
+
+    Text {
+      Layout.alignment: Qt.AlignCenter
+      text: "休整中"
+      font.family: fontLibian.name
+      font.pixelSize: 40
+      color: "white"
+      style: Text.Outline
+      textFormat: Text.RichText
+    }
+
+    Text {
+      Layout.alignment: Qt.AlignCenter
+      visible: root.rest > 0 && root.rest < 999
+      text: root.rest
+      font.family: fontLibian.name
+      font.pixelSize: 30
+      color: "white"
+      style: Text.Outline
+      textFormat: Text.RichText
+    }
+
+    Text {
+      Layout.alignment: Qt.AlignCenter
+      visible: root.rest > 0 && root.rest < 999
+      text: "轮次"
+      font.family: fontLibian.name
+      font.pixelSize: 28
+      color: "white"
+      style: Text.Outline
+      textFormat: Text.RichText
+    }
+  }
+
   Rectangle {
     id: winRateRect
     width: 138; x: 31
@@ -389,7 +430,7 @@ Item {
 
   Image {
     // id: saveme
-    visible: root.dead || root.dying || root.surrendered
+    visible: (root.dead && !root.rest) || root.dying || root.surrendered
     source: {
       if (root.dead) {
         return SkinBank.getRoleDeathPic(root.role);

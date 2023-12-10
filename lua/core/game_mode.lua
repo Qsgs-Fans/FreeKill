@@ -27,10 +27,14 @@ end
 ---@param victim ServerPlayer @ 死者
 ---@return string @ 胜者阵营
 function GameMode:getWinner(victim)
+  if victim.rest > 0 then
+    return ""
+  end
+
   local room = victim.room
   local winner = ""
-  local alive = table.filter(room.alive_players, function(p)
-    return not p.surrendered
+  local alive = table.filter(room.players, function(p)
+    return not p.surrendered and not (p.dead and p.rest == 0)
   end)
 
   if victim.role == "lord" then

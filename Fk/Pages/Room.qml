@@ -392,6 +392,7 @@ Item {
         faceup: model.faceup
         chained: model.chained
         drank: model.drank
+        rest: model.rest
         isOwner: model.isOwner
         ready: model.ready
         surrendered: model.surrendered
@@ -855,7 +856,7 @@ Item {
         }
         Item {
           visible: !config.replaying
-          ChatBox {
+          AvatarChatBox {
             id: chat
             anchors.fill: parent
           }
@@ -1121,7 +1122,7 @@ Item {
     if (raw.msg.startsWith("$")) {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
-    chat.append(msg);
+    chat.append(msg, raw);
     const photo = Logic.getPhoto(pid);
     if (photo === undefined) {
       const user = raw.userName;
@@ -1176,10 +1177,11 @@ Item {
         Backend.playSound("./packages/" + extension + "/audio/death/" + g);
 
       const m = Backend.translate("~" + g);
+      data.msg = m;
       if (general === "")
-        chat.append(`[${time}] ${userName}: ${m}`);
+        chat.append(`[${time}] ${userName}: ${m}`, data);
       else
-        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+        chat.append(`[${time}] ${userName}(${general}): ${m}`, data);
 
       const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
@@ -1205,10 +1207,11 @@ Item {
         }));
       } catch (e) {}
       const m = Backend.translate("$" + skill + (gene ? "_" + gene : "") + (idx ? idx.toString() : ""));
+      data.msg = m;
       if (general === "")
-        chat.append(`[${time}] ${userName}: ${m}`);
+        chat.append(`[${time}] ${userName}: ${m}`, data);
       else
-        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+        chat.append(`[${time}] ${userName}(${general}): ${m}`, data)
 
       const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
@@ -1224,12 +1227,17 @@ Item {
   }
 
   function addToLog(msg) {
-    log.append(msg);
+    log.append({ logText: msg });
   }
 
   function sendDanmaku(msg) {
     danmaku.sendLog(msg);
-    chat.append(msg);
+    chat.append(null, {
+      msg: msg,
+      general: "__server", // FIXME: 基于默认读取貂蝉的数据
+      userName: "",
+      time: "Server",
+    });
   }
 
   function showDistance(show) {
@@ -1327,6 +1335,7 @@ Item {
         faceup: true,
         chained: false,
         drank: 0,
+        rest: 0,
         isOwner: false,
         ready: false,
         surrendered: false,

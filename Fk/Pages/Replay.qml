@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import Fk
+import Fk.Common
 
 Item {
   id: root
@@ -59,21 +60,13 @@ Item {
         width: root.width
         height: 64
 
-        Image {
+        Avatar {
           id: generalPic
+          width: 48; height: 48
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.margins: 8
-          width: 48
-          height: 48
-          source: SkinBank.getGeneralExtraPic(general, "avatar/") ?? SkinBank.getGeneralPicture(general)
-          sourceClipRect: sourceSize.width > 200 ? Qt.rect(61, 0, 128, 128) : undefined
-
-          Rectangle {
-            anchors.fill: parent
-            color: "transparent"
-            border.width: 1
-          }
+          general: general
         }
 
         ColumnLayout {

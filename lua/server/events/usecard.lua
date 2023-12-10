@@ -155,13 +155,29 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       }
     end
   end
+end
 
+GameEvent.functions[GameEvent.UseCard] = function(self)
+  local cardUseEvent = table.unpack(self.data)
+  local room = self.room
+  local logic = room.logic
+
+  if cardUseEvent.card.skill then
+    cardUseEvent.card.skill:onUse(room, cardUseEvent)
+  end
+
+  sendCardEmotionAndLog(room, cardUseEvent)
+
+  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
+
+  local card = cardUseEvent.card
+  local useCardIds = card:isVirtual() and card.subcards or { card.id }
   if #useCardIds == 0 then return end
   if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
     local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
     room:sendFootnote(useCardIds, {
       type = "##UseCardTo",
-      from = from,
+      from = cardUseEvent.from,
       to = tos,
     })
     if card:isVirtual() then
@@ -170,26 +186,12 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   else
     room:sendFootnote(useCardIds, {
       type = "##UseCard",
-      from = from,
+      from = cardUseEvent.from,
     })
     if card:isVirtual() then
       room:sendCardVirtName(useCardIds, card.name)
     end
   end
-end
-
-GameEvent.functions[GameEvent.UseCard] = function(self)
-  local cardUseEvent = table.unpack(self.data)
-  local room = self.room
-  local logic = room.logic
-
-  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
-
-  if cardUseEvent.card.skill then
-    cardUseEvent.card.skill:onUse(room, cardUseEvent)
-  end
-
-  sendCardEmotionAndLog(room, cardUseEvent)
 
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
     logic:breakEvent()

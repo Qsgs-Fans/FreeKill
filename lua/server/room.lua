@@ -1913,9 +1913,12 @@ function Room:handleUseCardReply(player, data)
         end
         use.card = c
 
-        skill:beforeUse(player, use)
-
         self:useSkill(player, skill, Util.DummyFunc)
+
+        local rejectSkillName = skill:beforeUse(player, use)
+        if type(rejectSkillName) == "string" then
+          return rejectSkillName
+        end
 
         return use
       end
@@ -2007,17 +2010,29 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
     return askForUseCardData.result
   else
-    local data = {card_name, pattern, prompt, cancelable, extra_data}
+    local useResult
+    local disabledSkillNames = {}
 
-    Fk.currentResponsePattern = pattern
-    local result = self:doRequest(player, command, json.encode(data))
-    Fk.currentResponsePattern = nil
+    repeat
+      useResult = nil
+      local data = {card_name, pattern, prompt, cancelable, extra_data, disabledSkillNames}
 
-    if result ~= "" then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
-      return self:handleUseCardReply(player, result)
-    end
+      Fk.currentResponsePattern = pattern
+      local result = self:doRequest(player, command, json.encode(data))
+      Fk.currentResponsePattern = nil
+
+      if result ~= "" then
+        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
+        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+        useResult = self:handleUseCardReply(player, result)
+
+        if type(useResult) == "string" and useResult ~= "" then
+          table.insertIfNeed(disabledSkillNames, useResult)
+        end
+      end
+    until type(useResult) ~= "string"
+
+    return useResult
   end
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
   player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
@@ -2056,17 +2071,28 @@ function Room:askForResponse(player, card_name, pattern, prompt, cancelable, ext
   if eventData.result then
     return eventData.result
   else
-    local data = {card_name, pattern, prompt, cancelable, extra_data}
+    local useResult
+    local disabledSkillNames = {}
 
-    Fk.currentResponsePattern = pattern
-    local result = self:doRequest(player, command, json.encode(data))
-    Fk.currentResponsePattern = nil
+    repeat
+      useResult = nil
+      local data = {card_name, pattern, prompt, cancelable, extra_data, disabledSkillNames}
 
-    if result ~= "" then
-      local use = self:handleUseCardReply(player, result)
-      if use then
-        return use.card
+      Fk.currentResponsePattern = pattern
+      local result = self:doRequest(player, command, json.encode(data))
+      Fk.currentResponsePattern = nil
+
+      if result ~= "" then
+        useResult = self:handleUseCardReply(player, result)
+
+        if type(useResult) == "string" and useResult ~= "" then
+          table.insertIfNeed(disabledSkillNames, useResult)
+        end
       end
+    until type(useResult) ~= "string"
+
+    if useResult then
+      return useResult.card
     end
   end
   return nil
@@ -2094,20 +2120,31 @@ function Room:askForNullification(players, card_name, pattern, prompt, cancelabl
   prompt = prompt or ""
   pattern = pattern or card_name
 
-  self:notifyMoveFocus(self.alive_players, card_name)
-  self:doBroadcastNotify("WaitForNullification", "")
+  local useResult
+  local disabledSkillNames = {}
 
-  local data = {card_name, pattern, prompt, cancelable, extra_data}
+  repeat
+    useResult = nil
+    self:notifyMoveFocus(self.alive_players, card_name)
+    self:doBroadcastNotify("WaitForNullification", "")
 
-  Fk.currentResponsePattern = pattern
-  local winner = self:doRaceRequest(command, players, json.encode(data))
+    local data = {card_name, pattern, prompt, cancelable, extra_data, disabledSkillNames}
 
-  if winner then
-    local result = winner.client_reply
-    return self:handleUseCardReply(winner, result)
-  end
-  Fk.currentResponsePattern = nil
-  return nil
+    Fk.currentResponsePattern = pattern
+    local winner = self:doRaceRequest(command, players, json.encode(data))
+
+    if winner then
+      local result = winner.client_reply
+      useResult = self:handleUseCardReply(winner, result)
+
+      if type(useResult) == "string" and useResult ~= "" then
+        table.insertIfNeed(disabledSkillNames, useResult)
+      end
+    end
+    Fk.currentResponsePattern = nil
+  until type(useResult) ~= "string"
+
+  return useResult
 end
 
 -- AG(a.k.a. Amazing Grace) functions
@@ -2409,9 +2446,8 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
 
       firstTarget = false
 
-      if room.logic:trigger(stage, (stage == fk.TargetSpecifying or stage == fk.TargetSpecified) and room:getPlayerById(aimStruct.from) or room:getPlayerById(aimStruct.to), aimStruct) then
-        return false
-      end
+      room.logic:trigger(stage, (stage == fk.TargetSpecifying or stage == fk.TargetSpecified) and room:getPlayerById(aimStruct.from) or room:getPlayerById(aimStruct.to), aimStruct)
+
       AimGroup:removeDeadTargets(room, aimStruct)
 
       local aimEventTargetGroup = aimStruct.targetGroup
@@ -3288,19 +3324,9 @@ function Room:useSkill(player, skill, effect_cb)
 end
 
 ---@param player ServerPlayer
----@param sendLog? boolean
-function Room:revivePlayer(player, sendLog)
-  if not player.dead then return end
-  self:setPlayerProperty(player, "dead", false)
-  player._splayer:setDied(false)
-  self:setPlayerProperty(player, "dying", false)
-  self:setPlayerProperty(player, "hp", player.maxHp)
-  table.insertIfNeed(self.alive_players, player)
-
-  sendLog = (sendLog == nil) and true or sendLog
-  if sendLog then
-    self:sendLog { type = "#Revive", from = player.id }
-  end
+---@param sendLog? bool
+function Room:revivePlayer(player, sendLog, reason)
+  return execGameEvent(GameEvent.Revive, player, sendLog, reason)
 end
 
 ---@param room Room
@@ -3567,6 +3593,11 @@ function Room:resumePlayerArea(player, playerSlots)
     self:broadcastProperty(player, "sealedSlots")
     self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
   end
+end
+
+function Room:setPlayerRest(player, roundNum)
+  player.rest = roundNum
+  self:broadcastProperty(player, "rest")
 end
 
 return Room

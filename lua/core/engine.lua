@@ -455,12 +455,12 @@ end
 ---@param player Player @ 和这张牌扯上关系的那名玩家
 ---@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
 function Engine:filterCard(id, player, data)
-  local card = self:getCardById(id, true)
   if player == nil then
     self.filtered_cards[id] = nil
     return
   end
-  local skills = player:getAllSkills()
+
+  local card = self:getCardById(id, true)
   local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
 
   if #filters == 0 then
@@ -475,7 +475,7 @@ function Engine:filterCard(id, player, data)
   end
 
   for _, f in ipairs(filters) do
-    if f:cardFilter(card, player) then
+    if f:cardFilter(card, player, type(data) == "table" and data.isJudgeEvent) then
       local _card = f:viewAs(card, player)
       _card.id = id
       _card.skillName = f.name

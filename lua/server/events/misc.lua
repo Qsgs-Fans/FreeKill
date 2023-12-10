@@ -39,28 +39,33 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
     room:setPlayerProperty(player, "general", data.general)
   end
 
-  if data.deputyGeneral and data.deputyGeneral ~= "" and data.deputyGeneral ~= player.deputyGeneral then
+  if data.deputyGeneral and data.deputyGeneral ~= player.deputyGeneral then
     local originalDeputy = Fk.generals[player.deputyGeneral] or Fk.generals["blank_shibing"]
     local originalSkills = originalDeputy and originalDeputy:getSkillNameList() or Util.DummyTable
     table.insertTableIfNeed(skills, table.map(originalSkills, function(e)
       return "-" .. e
     end))
-    local newDeputy = Fk.generals[data.deputyGeneral] or Fk.generals["blank_shibing"]
-    for _, name in ipairs(newDeputy:getSkillNameList()) do
-      local s = Fk.skills[name]
-      if not s.relate_to_place or s.relate_to_place == "d" then
-        table.insertIfNeed(skills, name)
+
+    if data.deputyGeneral ~= "" then
+      local newDeputy = Fk.generals[data.deputyGeneral] or Fk.generals["blank_shibing"]
+      for _, name in ipairs(newDeputy:getSkillNameList()) do
+        local s = Fk.skills[name]
+        if not s.relate_to_place or s.relate_to_place == "d" then
+          table.insertIfNeed(skills, name)
+        end
+      end
+
+      if data.sendLog then
+        room:sendLog{
+          type = "#ChangeHero",
+          from = player.id,
+          arg = player.deputyGeneral,
+          arg2 = data.deputyGeneral,
+          arg3 = "deputyGeneral",
+        }
       end
     end
-    if data.sendLog then
-      room:sendLog{
-        type = "#ChangeHero",
-        from = player.id,
-        arg = player.deputyGeneral,
-        arg2 = data.deputyGeneral,
-        arg3 = "deputyGeneral",
-      }
-    end
+
     data.results["deputyChange"] = {player.deputyGeneral, data.deputyGeneral}
     room:setPlayerProperty(player, "deputyGeneral", data.deputyGeneral)
   end
