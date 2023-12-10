@@ -12,23 +12,24 @@ function RandomAI:useActiveSkill(skill, card)
 
   local filter_func = skill.cardFilter
   if card then
-    filter_func = function() return false end
+    filter_func = Util.FalseFunc
   end
 
-  if self.command == "PlayCard" and card and (not player:canUse(card) or player:prohibitUse(card)) then
+  if self.command == "PlayCard" and (not skill:canUse(player, card) or player:prohibitUse(card)) then
     return ""
   end
 
   local max_try_times = 100
   local selected_targets = {}
   local selected_cards = {}
-  local min = skill:getMinTargetNum()
-  local max = skill:getMaxTargetNum(player, card)
-  local min_card = skill:getMinCardNum()
-  local max_card = skill:getMaxCardNum()
+  -- FIXME: ...
+  -- local min = skill:getMinTargetNum()
+  -- local max = skill:getMaxTargetNum(player, card)
+  -- local min_card = skill:getMinCardNum()
+  -- local max_card = skill:getMaxCardNum()
   for _ = 0, max_try_times do
     if skill:feasible(selected_targets, selected_cards, self.player, card) then break end
-    local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
+    local avail_targets = table.filter(room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
         if player:isProhibited(p, card) then

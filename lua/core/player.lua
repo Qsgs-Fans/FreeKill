@@ -451,7 +451,7 @@ function Player:getMaxCards()
   return math.max(baseValue, 0)
 end
 
---- 获取玩家攻击距离。
+--- 获取玩家攻击范围。
 function Player:getAttackRange()
   local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
   local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
@@ -544,7 +544,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   return math.max(ret, 1)
 end
 
---- 获取其他玩家是否在玩家的攻击距离内。
+--- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
 ---@param fixLimit? integer @ 卡牌距离限制增加专用
 function Player:inMyAttackRange(other, fixLimit)
@@ -596,7 +596,7 @@ end
 ---@return ServerPlayer
 function Player:getLastAlive(ignoreRemoved, num)
   num = num or 1
-  local index = ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
+  local index = (ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end)) - num
   return self:getNextAlive(ignoreRemoved, index)
 end
 
@@ -1045,6 +1045,21 @@ end
 function Player:isBuddy(other)
   local id = type(other) == "number" and other or other.id
   return self.id == id or table.contains(self.buddy_list, id)
+end
+
+--- 比较两名角色的性别是否相同。
+---@param other Player @ 另一名角色
+---@param diff? bool @ 比较二者不同
+---@return boolean @ 返回比较结果
+function Player:compareGenderWith(other, diff)
+  if self == other then return not diff end
+  if self.gender == General.Agender or other.gender == General.Agender then return false end
+  if self.gender == General.Bigender or other.gender == General.Bigender then return true end
+  if diff then
+    return self.gender ~= other.gender
+  else
+    return self.gender == other.gender
+  end
 end
 
 return Player

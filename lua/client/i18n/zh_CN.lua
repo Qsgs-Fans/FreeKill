@@ -89,6 +89,8 @@ Fk:loadTranslationTable{
   ["Cards Overview"] = "卡牌一览",
   ["Special card skills:"] = "<b>卡牌的特殊用法:</b>",
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
+  ["Male Audio"] = "男性音效",
+  ["Female Audio"] = "女性音效",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
   ["Replay Manager"] = "来欣赏潇洒的录像吧！",

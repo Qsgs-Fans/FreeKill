@@ -84,7 +84,10 @@ Item {
           text: (playerNum < capacity) ? Backend.translate("Enter") :
           Backend.translate("Observe")
 
+          enabled: !opTimer.running
+
           onClicked: {
+            opTimer.start();
             if (hasPassword) {
               lobby_dialog.sourceComponent = enterPassword;
               lobby_dialog.item.roomId = roomId;
