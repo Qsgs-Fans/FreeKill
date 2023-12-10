@@ -3155,6 +3155,7 @@ function Room:retrial(card, player, judge, skillName, exchange)
   }
 
   self:moveCards(move2)
+  Fk:filterCard(judge.card, judge.who, judge)
 end
 
 --- 弃置一名角色的牌。
