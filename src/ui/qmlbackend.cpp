@@ -324,7 +324,7 @@ void QmlBackend::playSound(const QString &name, int index) {
 
 #ifdef Q_OS_ANDROID
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
-      "(Ljava/lang/String;D)V", QJniObject::fromString(fname).object<jstring>(),
+      "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
 #else
   auto player = new QMediaPlayer;
