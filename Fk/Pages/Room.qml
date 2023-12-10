@@ -392,6 +392,7 @@ Item {
         faceup: model.faceup
         chained: model.chained
         drank: model.drank
+        rest: model.rest
         isOwner: model.isOwner
         ready: model.ready
         surrendered: model.surrendered
@@ -1327,6 +1328,7 @@ Item {
         faceup: true,
         chained: false,
         drank: 0,
+        rest: 0,
         isOwner: false,
         ready: false,
         surrendered: false,

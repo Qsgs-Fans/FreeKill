@@ -4,7 +4,7 @@
 local FilterSkill = StatusSkill:subclass("FilterSkill")
 
 ---@param card Card
-function FilterSkill:cardFilter(card, player)
+function FilterSkill:cardFilter(card, player, isJudgeEvent)
   return false
 end
 

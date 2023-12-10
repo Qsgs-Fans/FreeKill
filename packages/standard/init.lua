@@ -459,17 +459,6 @@ local jijiang = fk.CreateViewAsSkill{
     end)
   end,
 }
-local jijiangResponse = fk.CreateTriggerSkill{
-  name = "#jijiangResponse",
-  refresh_events = {fk.CardUsing},
-  can_refresh = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name, true) and player:getMark("jijiang-failed-phase") > 0
-  end,
-  on_refresh = function(self, event, target, player, data)
-    player.room:setPlayerMark(player, "jijiang-failed-phase", 0)
-  end,
-}
-jijiang:addRelatedSkill(jijiangResponse)
 
 local liubei = General:new(extension, "liubei", "shu", 4)
 liubei:addSkill(rende)

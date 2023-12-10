@@ -3328,19 +3328,9 @@ function Room:useSkill(player, skill, effect_cb)
 end
 
 ---@param player ServerPlayer
----@param sendLog? boolean
-function Room:revivePlayer(player, sendLog)
-  if not player.dead then return end
-  self:setPlayerProperty(player, "dead", false)
-  player._splayer:setDied(false)
-  self:setPlayerProperty(player, "dying", false)
-  self:setPlayerProperty(player, "hp", player.maxHp)
-  table.insertIfNeed(self.alive_players, player)
-
-  sendLog = (sendLog == nil) and true or sendLog
-  if sendLog then
-    self:sendLog { type = "#Revive", from = player.id }
-  end
+---@param sendLog? bool
+function Room:revivePlayer(player, sendLog, reason)
+  return execGameEvent(GameEvent.Revive, player, sendLog, reason)
 end
 
 ---@param room Room
@@ -3607,6 +3597,11 @@ function Room:resumePlayerArea(player, playerSlots)
     self:broadcastProperty(player, "sealedSlots")
     self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
   end
+end
+
+function Room:setPlayerRest(player, roundNum)
+  player.rest = roundNum
+  self:broadcastProperty(player, "rest")
 end
 
 return Room

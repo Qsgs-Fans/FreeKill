@@ -82,7 +82,7 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.BuryVictim] = function()
       player:bury()
-      if room.tag["SkipNormalDeathProcess"] then
+      if room.tag["SkipNormalDeathProcess"] or player.rest > 0 then
         return false
       end
       local damage = data.damage
