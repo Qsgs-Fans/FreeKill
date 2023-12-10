@@ -19,6 +19,8 @@ RowLayout {
 
   property var expanded_piles: ({}) // name -> int[]
 
+  property var disabledSkillNames: []
+
   signal cardSelected(var card)
 
   Item { width: 5 }
@@ -454,6 +456,11 @@ RowLayout {
       // if cname is presented, we are responding use or play.
       for (let i = 0; i < skillButtons.count; i++) {
         const item = skillButtons.itemAt(i);
+        if (disabledSkillNames.includes(item.orig)) {
+          item.enabled = false;
+          continue;
+        }
+
         const fitpattern = JSON.parse(Backend.callLuaFunction("SkillFitPattern", [item.orig, cname]));
         const canresp = JSON.parse(Backend.callLuaFunction("SkillCanResponse", [item.orig, cardResponsing]));
         item.enabled = fitpattern && canresp;
@@ -462,11 +469,17 @@ RowLayout {
     }
     for (let i = 0; i < skillButtons.count; i++) {
       const item = skillButtons.itemAt(i);
+      if (disabledSkillNames.includes(item.orig)) {
+        item.enabled = false;
+        continue;
+      }
+
       item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig]));
     }
   }
 
   function disableSkills() {
+    disabledSkillNames = [];
     for (let i = 0; i < skillButtons.count; i++)
       skillButtons.itemAt(i).enabled = false;
   }

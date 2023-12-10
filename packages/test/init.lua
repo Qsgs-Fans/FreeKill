@@ -338,6 +338,7 @@ local test_feichu = fk.CreateActiveSkill{
     room:abortPlayerArea(from, eqipSlots)
   end,
 }
+
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 3
 test2.hidden = true

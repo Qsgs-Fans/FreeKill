@@ -135,4 +135,6 @@ fk.BeforePropertyChange = 92
 fk.PropertyChange = 93
 fk.AfterPropertyChange = 94
 
+fk.AfterPlayerRevived = 95
+
 fk.NumOfEvents = 96

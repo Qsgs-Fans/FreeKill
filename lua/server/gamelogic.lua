@@ -23,6 +23,9 @@ function GameLogic:initialize(room)
   self.all_game_events = {}
   self.event_recorder = {}
   self.current_event_id = 0
+  self.specific_events_id = {
+    [GameEvent.Damage] = 0,
+  }
 
   self.role_table = {
     { "lord" },

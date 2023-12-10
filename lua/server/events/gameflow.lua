@@ -161,8 +161,8 @@ GameEvent.functions[GameEvent.Round] = function(self)
     p = room.current
     GameEvent(GameEvent.Turn, p):exec()
     if room.game_finished then break end
-    room.current = room.current:getNextAlive(true)
-  until p.seat >= p:getNextAlive(true).seat
+    room.current = room.current:getNextAlive(true, nil, true)
+  until p.seat >= p:getNextAlive(true, nil, true).seat
 
   logic:trigger(fk.RoundEnd, p)
 end
@@ -193,6 +193,15 @@ GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
   local room = self.room
   local logic = room.logic
   local player = room.current
+
+  if player.rest > 0 and player.rest < 999 then
+    room:setPlayerRest(player, player.rest - 1)
+    if player.rest == 0 and player.dead then
+      room:revivePlayer(player, true, "rest")
+    else
+      room:delay(50)
+    end
+  end
 
   if player.dead then return true end
 
@@ -312,9 +321,9 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
 
-          local use = room:handleUseCardReply(player, result)
-          if use then
-            room:useCard(use)
+          local useResult = room:handleUseCardReply(player, result)
+          if type(useResult) == "table" then
+            room:useCard(useResult)
           end
 
           if player._play_phase_end then

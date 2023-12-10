@@ -8,8 +8,23 @@ import Fk.Pages
 Rectangle {
   property bool isLobby: false
 
-  function append(chatter) {
-    chatLogBox.append({ logText: chatter })
+  function append(chatter, data) {
+    let general = data.general;
+    let avatar;
+    if (general == "__server") {
+      general = "";
+      avatar = "__server"
+    } else if (!roomScene.getPhoto(data.sender)) {
+      avatar = "__observer";
+    }
+    chatLogBox.append({
+      avatar: data.general || roomScene.getPhoto(data.sender)?.general || avatar || "unknown",
+      general: general,
+      msg: data.msg,
+      userName: data.userName,
+      time: data.time,
+      isSelf: data.sender === Self.id,
+    })
   }
 
   function loadSkills() {
@@ -21,6 +36,59 @@ Rectangle {
   Timer {
     id: opTimer
     interval: 1500
+  }
+
+  Component {
+    id: avatarDelegate
+    Item {
+      width: chatLogBox.width
+      height: childrenRect.height
+      Avatar {
+        id: avatarPic
+        width: 36
+        height: 36
+        general: avatar
+        anchors.top: parent.top
+        anchors.topMargin: 8
+        anchors.left: isSelf ? undefined : parent.left
+        anchors.right: !isSelf ? undefined : parent.right
+      }
+
+      Text {
+        id: unameLbl
+        anchors.left: isSelf ? undefined : avatarPic.right
+        anchors.right: !isSelf ? undefined : avatarPic.left
+        anchors.margins: 6
+        font.pixelSize: 14
+        text: userName + (general ? (" (" + Backend.translate(general) + ")") : "")
+          + ' <font color="grey">[' + time + "]</font>"
+      }
+
+      Rectangle {
+        anchors.left: isSelf ? undefined : avatarPic.right
+        anchors.right: !isSelf ? undefined : avatarPic.left
+        anchors.margins: 4
+        anchors.top: unameLbl.bottom
+        width: Math.min(parent.width - 80, childrenRect.width + 12)
+        height: childrenRect.height + 12
+        radius: 8
+        color: isSelf ? "lightgreen" : "lightsteelblue"
+        Text {
+          width: Math.min(contentWidth, parent.parent.width - 80 - 12)
+          x: 6; y: 6
+          text: msg
+          wrapMode: Text.WrapAnywhere
+          font.family: fontLibian.name
+          font.pixelSize: 16
+        }
+      }
+
+      TapHandler {
+        acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+        gesturePolicy: TapHandler.WithinBounds
+        onTapped: chatLogBox.currentIndex = index;
+      }
+    }
   }
 
   ColumnLayout {
@@ -35,6 +103,7 @@ Rectangle {
         id: chatLogBox
         anchors.fill: parent
         anchors.margins: 10
+        delegate: avatarDelegate
         //font.pixelSize: 14
       }
     }
@@ -166,3 +235,4 @@ Rectangle {
     loadSkills();
   }
 }
+

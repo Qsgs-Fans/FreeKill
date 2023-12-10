@@ -1319,6 +1319,7 @@ callbacks["AskForUseCard"] = (jsonData) => {
   const pattern = data[1];
   const prompt = data[2];
   const extra_data = data[4];
+  const disabledSkillNames = data[5];
   if (extra_data != null) {
     if (extra_data.effectTo !== Self.id && roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
       doCancelButton();
@@ -1336,6 +1337,7 @@ callbacks["AskForUseCard"] = (jsonData) => {
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = false;
+  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
   roomScene.state = "responding";
   okButton.enabled = false;
   cancelButton.enabled = true;
@@ -1347,6 +1349,7 @@ callbacks["AskForResponseCard"] = (jsonData) => {
   const cardname = data[0];
   const pattern = data[1];
   const prompt = data[2];
+  const disabledSkillNames = data[5];
 
   if (prompt === "") {
     roomScene.promptText = Backend.translate("#AskForResponseCard")
@@ -1356,6 +1359,7 @@ callbacks["AskForResponseCard"] = (jsonData) => {
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = true;
+  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
   roomScene.state = "responding";
   okButton.enabled = false;
   cancelButton.enabled = true;

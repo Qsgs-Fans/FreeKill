@@ -14,6 +14,7 @@ dofile "lua/server/events/hp.lua"
 
 GameEvent.Dying = 6
 GameEvent.Death = 7
+GameEvent.Revive = 22
 dofile "lua/server/events/death.lua"
 
 GameEvent.MoveCards = 8
@@ -64,6 +65,7 @@ local eventTranslations = {
   [GameEvent.ChangeMaxHp] = "GameEvent.ChangeMaxHp",
   [GameEvent.Dying] = "GameEvent.Dying",
   [GameEvent.Death] = "GameEvent.Death",
+  [GameEvent.Revive] = "GameEvent.Revive",
   [GameEvent.MoveCards] = "GameEvent.MoveCards",
   [GameEvent.UseCard] = "GameEvent.UseCard",
   [GameEvent.RespondCard] = "GameEvent.RespondCard",
