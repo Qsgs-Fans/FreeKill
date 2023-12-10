@@ -212,6 +212,7 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
         type = "#ChainDamage",
         from = p.id
       }
+
       local dmg = {
         from = damageStruct.from,
         to = p,

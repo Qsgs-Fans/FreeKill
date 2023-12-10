@@ -3119,25 +3119,26 @@ function Room:retrial(card, player, judge, skillName, exchange)
   local triggerResponded = self.owner_map[card:getEffectiveId()] == player
   local isHandcard = (triggerResponded and self:getCardArea(card:getEffectiveId()) == Card.PlayerHand)
 
-  local oldJudge = judge.card
-  judge.card = Fk:getCardById(card:getEffectiveId())
-  local rebyre = judge.retrial_by_response
-  judge.retrial_by_response = player
-
-  local resp = {} ---@type CardResponseEvent
-  resp.from = player.id
-  resp.card = card
-
   if triggerResponded then
-    self.logic:trigger(fk.PreCardRespond, player, resp)
+    local resp = {} ---@type CardResponseEvent
+    resp.from = player.id
+    resp.card = card
+    resp.skipDrop = true
+    self:responseCard(resp)
+  else
+    local move1 = {} ---@type CardsMoveInfo
+    move1.ids = { card:getEffectiveId() }
+    move1.from = player.id
+    move1.toArea = Card.Processing
+    move1.moveReason = fk.ReasonJustMove
+    move1.skillName = skillName
+    self:moveCards(move1)
   end
 
-  local move1 = {} ---@type CardsMoveInfo
-  move1.ids = { card:getEffectiveId() }
-  move1.from = player.id
-  move1.toArea = Card.Processing
-  move1.moveReason = fk.ReasonResonpse
-  move1.skillName = skillName
+  local oldJudge = judge.card
+  judge.card = card
+  local rebyre = judge.retrial_by_response
+  judge.retrial_by_response = player
 
   local move2 = {} ---@type CardsMoveInfo
   move2.ids = { oldJudge:getEffectiveId() }
@@ -3149,16 +3150,11 @@ function Room:retrial(card, player, judge, skillName, exchange)
     type = "#ChangedJudge",
     from = player.id,
     to = { judge.who.id },
-    card = { card:getEffectiveId() },
+    arg2 = card:toLogString(),
     arg = skillName,
   }
 
-  self:moveCards(move1)
   self:moveCards(move2)
-
-  if triggerResponded then
-    self.logic:trigger(fk.CardRespondFinished, player, resp)
-  end
 end
 
 --- 弃置一名角色的牌。

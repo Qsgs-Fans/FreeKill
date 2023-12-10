@@ -122,14 +122,14 @@ Item {
 
   Image {
     id: colorItem
-    visible: known && (suit === "" || suit === "nosuit")
+    visible: known && (suit === "" || suit === "nosuit") //  && number <= 0 // <- FIX ME:需要区分“黑色有点数”和“无色有点数”
     source: (visible && color !== "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
     x: 1
   }
 
   Rectangle {
     id: virt_rect
-    visible: root.virt_name !== ""
+    visible: root.virt_name !== "" && root.virt_name !== root.name
     width: parent.width
     height: 20
     y: 40

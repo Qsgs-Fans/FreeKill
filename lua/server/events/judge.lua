@@ -17,11 +17,12 @@ GameEvent.functions[GameEvent.Judge] = function(self)
       arg = data.reason,
     }
   end
+  Fk:filterCard(data.card.id, who, data)
 
   room:sendLog{
     type = "#InitialJudge",
     from = who.id,
-    card = {data.card.id},
+    arg = data.card:toLogString(),
   }
   room:moveCardTo(data.card, Card.Processing, nil, fk.ReasonJudge)
   room:sendFootnote({ data.card.id }, {
@@ -31,11 +32,10 @@ GameEvent.functions[GameEvent.Judge] = function(self)
 
   logic:trigger(fk.AskForRetrial, who, data)
   logic:trigger(fk.FinishRetrial, who, data)
-  Fk:filterCard(data.card.id, who, data)
   room:sendLog{
     type = "#JudgeResult",
     from = who.id,
-    card = {data.card.id},
+    arg = data.card:toLogString(),
   }
   room:sendFootnote({ data.card.id }, {
     type = "##JudgeCard",
