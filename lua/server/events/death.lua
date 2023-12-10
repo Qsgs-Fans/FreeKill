@@ -54,7 +54,7 @@ GameEvent.functions[GameEvent.Death] = function(self)
   local victim = room:getPlayerById(deathStruct.who)
   victim.dead = true
 
-  if victim.rest > 0 then
+  if victim.rest <= 0 then
     victim._splayer:setDied(true)
   end
 
