@@ -87,8 +87,9 @@ fk.IceDamage = 4
 
 --- askForUseCard中的extra_data
 ---@class UseExtraData
----@field public must_targets? integer[] @ 必须选的目标（？）
----@field public exclusive_targets? integer[] @ ??
+---@field public must_targets? integer[] @ 必须选择这些目标
+---@field public include_targets? integer[] @ 必须选其中一个目标
+---@field public exclusive_targets? integer[] @ 只能选择这些目标
 ---@field public bypass_distances? boolean @ 无距离限制？
 ---@field public bypass_times? boolean @ 无次数限制？
 ---@field public playing? boolean @ (AI专用) 出牌阶段？

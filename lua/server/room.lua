@@ -1954,6 +1954,7 @@ end
 -- * exclusive_targets: integer[]
 -- * bypass_distances: boolean
 -- * bypass_times: boolean
+---
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name? string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
