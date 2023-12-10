@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Fk
+import Fk.Common
 
 Item {
   id: root
@@ -20,19 +21,10 @@ Item {
   RowLayout {
     Item { Layout.preferredWidth: 16 }
 
-    Image {
+    Avatar {
       Layout.preferredWidth: 64
       Layout.preferredHeight: 64
-      source: SkinBank.getGeneralExtraPic(Self.avatar, "avatar/") ?? SkinBank.getGeneralPicture(Self.avatar)
-      // sourceSize.width: 250
-      // sourceSize.height: 292
-      sourceClipRect: sourceSize.width > 200 ? Qt.rect(61, 0, 128, 128) : undefined
-
-      Rectangle {
-        anchors.fill: parent
-        color: "transparent"
-        border.width: 1
-      }
+      general: Self.avatar
     }
 
     Item { Layout.preferredWidth: 8 }
