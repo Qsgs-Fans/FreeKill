@@ -283,6 +283,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Log"] = "战报",
   ["Trusting ..."] = "托管中 ...",
   ["Observing ..."] = "旁观中 ...",
+  ["Resting, don't leave!"] = "稍后你可返回战局，不要离开",
+  ["resting..."] = "休整中",
+  ["rest round num"] = "轮次",
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",

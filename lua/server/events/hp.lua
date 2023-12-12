@@ -217,6 +217,7 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
         from = damageStruct.from,
         to = p,
         damage = damageStruct.damage,
+        damageType = damageStruct.damageType,
         card = damageStruct.card,
         skillName = damageStruct.skillName,
         chain = true,

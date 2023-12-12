@@ -974,6 +974,17 @@ Item {
     }
   }
 
+  GlowText {
+    anchors.centerIn: dashboard
+    visible: Logic.getPhoto(Self.id).rest > 0 && !config.observing
+    text: Backend.translate("Resting, don't leave!")
+    color: "#DBCC69"
+    font.family: fontLibian.name
+    font.pixelSize: 28
+    glow.color: "#2E200F"
+    glow.spread: 0.6
+  }
+
   Rectangle {
     anchors.fill: dashboard
     visible: config.observing && !config.replaying
