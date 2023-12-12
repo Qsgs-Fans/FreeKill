@@ -24,6 +24,7 @@ Flickable {
 
       Layout.fillWidth: true
       font.pixelSize: 18
+      color: "#E4D5A0"
 
       readOnly: true
       selectByKeyboard: true

@@ -155,6 +155,8 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
       }
     end
   end
+
+  return _card
 end
 
 GameEvent.functions[GameEvent.UseCard] = function(self)
@@ -166,30 +168,31 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  sendCardEmotionAndLog(room, cardUseEvent)
+  local _card = sendCardEmotionAndLog(room, cardUseEvent)
 
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   local card = cardUseEvent.card
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
-  if #useCardIds == 0 then return end
-  if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
-    local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
-    room:sendFootnote(useCardIds, {
-      type = "##UseCardTo",
-      from = cardUseEvent.from,
-      to = tos,
-    })
-    if card:isVirtual() then
-      room:sendCardVirtName(useCardIds, card.name)
-    end
-  else
-    room:sendFootnote(useCardIds, {
-      type = "##UseCard",
-      from = cardUseEvent.from,
-    })
-    if card:isVirtual() then
-      room:sendCardVirtName(useCardIds, card.name)
+  if #useCardIds > 0 then
+    if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
+      local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
+      room:sendFootnote(useCardIds, {
+        type = "##UseCardTo",
+        from = cardUseEvent.from,
+        to = tos,
+      })
+      if card:isVirtual() or card ~= _card then
+        room:sendCardVirtName(useCardIds, card.name)
+      end
+    else
+      room:sendFootnote(useCardIds, {
+        type = "##UseCard",
+        from = cardUseEvent.from,
+      })
+      if card:isVirtual() or card ~= _card then
+        room:sendCardVirtName(useCardIds, card.name)
+      end
     end
   end
 

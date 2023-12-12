@@ -66,7 +66,7 @@ Item {
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.margins: 8
-          general: general
+          general: _general
         }
 
         ColumnLayout {
@@ -76,7 +76,7 @@ Item {
             text: {
               const win = winner.split("+").indexOf(role) !== -1;
               const winStr = win ? Backend.translate("Game Win") : Backend.translate("Game Lose");
-              return "<b>" + Backend.translate(general) + "</b> " + Backend.translate(role) + " " + winStr;
+              return "<b>" + Backend.translate(_general) + "</b> " + Backend.translate(role) + " " + winStr;
             }
             font.pixelSize: 20
             textFormat: Text.RichText
@@ -148,7 +148,7 @@ Item {
         repDate: t,
         playerName: name,
         gameMode: mode,
-        general: general,
+        _general: general,
         role: role,
         winner: winner,
       })

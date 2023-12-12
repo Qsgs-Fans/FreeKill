@@ -613,7 +613,7 @@ end
 function GetPlayerHandcards(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  return json.encode(p.player_cards[Player.Hand])
+  return p and json.encode(p.player_cards[Player.Hand]) or ""
 end
 
 function GetPlayerEquips(pid)

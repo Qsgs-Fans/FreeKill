@@ -635,8 +635,8 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
   execGameEvent(GameEvent.ChangeProperty,
   {
     from = player,
-    general = not isDeputy and new_general or "",
-    deputyGeneral = isDeputy and new_general or "",
+    general = not isDeputy and new_general or nil,
+    deputyGeneral = isDeputy and new_general or nil,
     gender = isDeputy and player.gender or new.gender,
     kingdom = kingdom,
     sendLog = sendLog,

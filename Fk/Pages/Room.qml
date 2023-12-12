@@ -479,8 +479,6 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
-      roomScene.resetPrompt();
-
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
         && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
 
@@ -974,6 +972,17 @@ Item {
       scale: mainWindow.scale
       source: AppPath + "/Fk/LobbyElement/AudioSetting.qml"
     }
+  }
+
+  GlowText {
+    anchors.centerIn: dashboard
+    visible: Logic.getPhoto(Self.id).rest > 0 && !config.observing
+    text: Backend.translate("Resting, don't leave!")
+    color: "#DBCC69"
+    font.family: fontLibian.name
+    font.pixelSize: 28
+    glow.color: "#2E200F"
+    glow.spread: 0.6
   }
 
   Rectangle {

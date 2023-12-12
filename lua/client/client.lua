@@ -109,8 +109,8 @@ function Client:moveCards(moves)
         pcardMax = from:getMaxCards(),
         id = move.from,
       })
-      if from.id ~= Self.id and move.fromArea == Card.PlayerHand then
-        for i = 1, #move.ids do
+      if move.fromArea == Card.PlayerHand and not Self:isBuddy(self:getPlayerById(move.from)) then
+        for _ = 1, #move.ids do
           table.remove(from.player_cards[Player.Hand])
         end
       else

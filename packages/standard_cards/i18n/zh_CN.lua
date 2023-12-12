@@ -122,6 +122,7 @@ Fk:loadTranslationTable{
 
   ["qinggang_sword"] = "青釭剑",
   [":qinggang_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技，你的【杀】无视目标角色的防具。",
+  ["#qinggang_sword_skill"] = "青釭剑",
 
   ["ice_sword"] = "寒冰剑",
   [":ice_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，然后依次弃置其两张牌。",

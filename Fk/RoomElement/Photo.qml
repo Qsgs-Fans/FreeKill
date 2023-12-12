@@ -277,36 +277,38 @@ Item {
     anchors.leftMargin: 20
     visible: root.rest > 0
 
-    Text {
+    GlowText {
       Layout.alignment: Qt.AlignCenter
-      text: "休整中"
+      text: Backend.translate("resting...")
       font.family: fontLibian.name
       font.pixelSize: 40
-      color: "white"
-      style: Text.Outline
-      textFormat: Text.RichText
+      font.bold: true
+      color: "#FEF7D6"
+      glow.color: "#845422"
+      glow.spread: 0.8
     }
 
-    Text {
+    GlowText {
       Layout.alignment: Qt.AlignCenter
       visible: root.rest > 0 && root.rest < 999
       text: root.rest
       font.family: fontLibian.name
-      font.pixelSize: 30
-      color: "white"
-      style: Text.Outline
-      textFormat: Text.RichText
+      font.pixelSize: 34
+      font.bold: true
+      color: "#DBCC69"
+      glow.color: "#2E200F"
+      glow.spread: 0.6
     }
 
-    Text {
+    GlowText {
       Layout.alignment: Qt.AlignCenter
       visible: root.rest > 0 && root.rest < 999
-      text: "轮次"
+      text: Backend.translate("rest round num")
       font.family: fontLibian.name
       font.pixelSize: 28
-      color: "white"
-      style: Text.Outline
-      textFormat: Text.RichText
+      color: "#F0E5D6"
+      glow.color: "#2E200F"
+      glow.spread: 0.6
     }
   }
 
