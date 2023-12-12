@@ -267,6 +267,7 @@ RowLayout {
       } else {
         handcardAreaItem.unselectAll();
         selected_card = -1;
+        roomScene.resetPrompt();
       }
       cardSelected(selected_card);
     }
