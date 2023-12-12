@@ -26,7 +26,10 @@ Item {
         }
 
         ColumnLayout {
-          Text { text: Backend.translate(gname) }
+          Text {
+            color: "#E4D5A0"
+            text: Backend.translate(gname)
+          }
           GridLayout {
             columns: 6
 
