@@ -1984,10 +1984,10 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
   if extra_data then
     if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIX ME:缺少直接传入无限制的手段
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
     end
     if extra_data.bypass_times == nil or extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIX ME:缺少直接传入无限制的手段
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
     end
   end
   local command = "AskForUseCard"
@@ -2007,8 +2007,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return askForUseCardData.result
   else
     local useResult
@@ -2023,8 +2023,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
       Fk.currentResponsePattern = nil
 
       if result ~= "" then
-        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
-        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
+        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
         useResult = self:handleUseCardReply(player, result)
 
         if type(useResult) == "string" and useResult ~= "" then
@@ -2035,8 +2035,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
     return useResult
   end
-  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
-  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIX ME:缺少直接传入无限制的手段
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
   return nil
 end
 
