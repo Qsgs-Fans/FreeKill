@@ -4,9 +4,9 @@ Fk:loadTranslationTable{
   ["standard_cards"] = "标+EX",
 
   ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
-  ["log_spade"] = '<font color="black">♠</font>',
+  ["log_spade"] = '♠',
   ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = '<font color="black">♣</font>',
+  ["log_club"] = '♣',
   ["log_diamond"] = '<font color="#CC3131">♦</font>',
   ["log_nosuit"] = "无花色",
   ["spade"] = "黑桃",
@@ -14,7 +14,7 @@ Fk:loadTranslationTable{
   ["club"] = "梅花",
   ["diamond"] = "方块",
   ["nosuit"] = "无花色",
-  ["black"] = '<font color="black">黑色</font>',
+  ["black"] = '黑色',
   ["red"] = '<font color="#CC3131">红色</font>',
   ["nocolor"] = '<font color="grey">无色</font>',
   ["suit"] = "花色",
@@ -122,7 +122,6 @@ Fk:loadTranslationTable{
 
   ["qinggang_sword"] = "青釭剑",
   [":qinggang_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技，你的【杀】无视目标角色的防具。",
-  ["#qinggang_sword_skill"] = "青釭剑",
 
   ["ice_sword"] = "寒冰剑",
   [":ice_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，然后依次弃置其两张牌。",

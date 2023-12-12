@@ -4,9 +4,9 @@ Fk:loadTranslationTable({
   ["standard_cards"] = "Standard",
 
   ["unknown_card"] = '<font color="#B5BA00"><b>Unknown card</b></font>',
-  ["log_spade"] = '<font color="black">♠</font>',
+  ["log_spade"] = '♠',
   ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = '<font color="black">♣</font>',
+  ["log_club"] = '♣',
   ["log_diamond"] = '<font color="#CC3131">♦</font>',
   ["log_nosuit"] = "No suit",
   -- ["spade"] = "Spade",
@@ -14,7 +14,7 @@ Fk:loadTranslationTable({
   -- ["club"] = "Club",
   -- ["diamond"] = "Diamond",
   ["nosuit"] = "No suit",
-  ["black"] = '<font color="black">Black</font>',
+  ["black"] = 'Black',
   ["red"] = '<font color="#CC3131">Red</font>',
   ["nocolor"] = '<font color="grey">NoColor</font>',
   -- ["suit"] = "花色",
@@ -122,7 +122,6 @@ Fk:loadTranslationTable({
 
   ["qinggang_sword"] = "Qinggang Sword",
   [":qinggang_sword"] = "Qinggang Sword (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: Your Slash ignores the target's armor.",
-  ["#qinggang_sword_skill"] = "Qinggang Sword",
 
   ["ice_sword"] = "Ice Sword",
   [":ice_sword"] = "Ice Sword (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: When your used Slash is about to cause DMG to a player who has cards, you can prevent this DMG and discard him 2 cards successively.",
