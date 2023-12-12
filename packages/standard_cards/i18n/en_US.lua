@@ -122,6 +122,7 @@ Fk:loadTranslationTable({
 
   ["qinggang_sword"] = "Qinggang Sword",
   [":qinggang_sword"] = "Qinggang Sword (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: Your Slash ignores the target's armor.",
+  ["#qinggang_sword_skill"] = "Qinggang Sword",
 
   ["ice_sword"] = "Ice Sword",
   [":ice_sword"] = "Ice Sword (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: When your used Slash is about to cause DMG to a player who has cards, you can prevent this DMG and discard him 2 cards successively.",
