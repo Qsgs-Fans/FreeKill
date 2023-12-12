@@ -1477,7 +1477,7 @@ function Room:askForGeneral(player, generals, n, noConvert)
     return choices
   end
 
-  return defaultChoice
+  return n == 1 and defaultChoice[1] or defaultChoice
 end
 
 --- 询问玩家若为神将、双势力需选择一个势力。
@@ -1954,6 +1954,7 @@ end
 -- * exclusive_targets: integer[]
 -- * bypass_distances: boolean
 -- * bypass_times: boolean
+---
 --- 询问玩家使用一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param card_name? string @ 使用牌的牌名，若pattern指定了则可随意写，它影响的是烧条的提示信息
@@ -1983,10 +1984,10 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
   if extra_data then
     if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1)
+      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
     end
     if extra_data.bypass_times == nil or extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1)
+      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
     end
   end
   local command = "AskForUseCard"
@@ -2006,8 +2007,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return askForUseCardData.result
   else
     local useResult
@@ -2022,8 +2023,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
       Fk.currentResponsePattern = nil
 
       if result ~= "" then
-        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
         useResult = self:handleUseCardReply(player, result)
 
         if type(useResult) == "string" and useResult ~= "" then
@@ -2034,8 +2035,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
 
     return useResult
   end
-  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0)
-  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0)
+  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
   return nil
 end
 
@@ -3155,6 +3156,7 @@ function Room:retrial(card, player, judge, skillName, exchange)
   }
 
   self:moveCards(move2)
+  Fk:filterCard(judge.card.id, judge.who, judge)
 end
 
 --- 弃置一名角色的牌。
