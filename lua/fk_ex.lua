@@ -227,7 +227,7 @@ end
 ---@field public pattern? string
 ---@field public enabled_at_play? fun(self: ViewAsSkill, player: Player): boolean?
 ---@field public enabled_at_response? fun(self: ViewAsSkill, player: Player, response: boolean): boolean?
----@field public before_use? fun(self: ViewAsSkill, player: ServerPlayer, use: CardUseStruct)
+---@field public before_use? fun(self: ViewAsSkill, player: ServerPlayer, use: CardUseStruct): string?
 ---@field public prompt? string|fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): string
 
 ---@param spec ViewAsSkillSpec
@@ -396,7 +396,7 @@ function fk.CreateTargetModSkill(spec)
 end
 
 ---@class FilterSpec: StatusSkillSpec
----@field public card_filter? fun(self: FilterSkill, card: Card, player: Player): boolean?
+---@field public card_filter? fun(self: FilterSkill, card: Card, player: Player, isJudgeEvent: boolean): boolean?
 ---@field public view_as? fun(self: FilterSkill, card: Card, player: Player): Card?
 
 ---@param spec FilterSpec
