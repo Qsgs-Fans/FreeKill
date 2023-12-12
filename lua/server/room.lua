@@ -1477,7 +1477,7 @@ function Room:askForGeneral(player, generals, n, noConvert)
     return choices
   end
 
-  return defaultChoice
+  return n == 1 and defaultChoice[1] or defaultChoice
 end
 
 --- 询问玩家若为神将、双势力需选择一个势力。
