@@ -300,6 +300,7 @@ end
 ---@field public prohibit_use? fun(self: ProhibitSkill, player: Player, card: Card): boolean?
 ---@field public prohibit_response? fun(self: ProhibitSkill, player: Player, card: Card): boolean?
 ---@field public prohibit_discard? fun(self: ProhibitSkill, player: Player, card: Card): boolean?
+---@field public prohibit_pindian? fun(self: ProhibitSkill, from: Player, to: Player): boolean?
 
 ---@param spec ProhibitSpec
 ---@return ProhibitSkill
@@ -312,6 +313,7 @@ function fk.CreateProhibitSkill(spec)
   skill.prohibitUse = spec.prohibit_use or skill.prohibitUse
   skill.prohibitResponse = spec.prohibit_response or skill.prohibitResponse
   skill.prohibitDiscard = spec.prohibit_discard or skill.prohibitDiscard
+  skill.prohibitPindian = spec.prohibit_pindian or skill.prohibitPindian
 
   return skill
 end

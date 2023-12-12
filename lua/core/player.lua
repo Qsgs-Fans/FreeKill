@@ -938,6 +938,25 @@ function Player:prohibitReveal(isDeputy)
   return false
 end
 
+---@param to Player
+---@param ignoreFromKong? boolean
+---@param ignoreToKong? boolean
+function Player:canPindian(to, ignoreFromKong, ignoreToKong)
+  if self:isKongcheng() and not ignoreFromKong then
+    return false
+  end
+  if to:isKongcheng() and not ignoreToKong then
+    return false
+  end
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitPindian(self, to) then
+      return false
+    end
+  end
+  return true
+end
+
 --转换技状态阳
 fk.SwitchYang = 0
 --转换技状态阴

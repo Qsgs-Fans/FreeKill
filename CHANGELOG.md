@@ -1,8 +1,10 @@
 # ChangeLog
 
-## v0.3.14
+## v0.4.0 && v0.3.14
 
 修复bug，详见git log
+
+- 新增canPindian，禁止技新增prohibitPindian
 
 ___
 

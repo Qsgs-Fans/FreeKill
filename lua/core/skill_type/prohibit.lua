@@ -32,4 +32,11 @@ function ProhibitSkill:prohibitDiscard(player, card)
   return false
 end
 
+---@param from Player
+---@param to Player
+---@return boolean
+function ProhibitSkill:prohibitPindian(from, to)
+  return false
+end
+
 return ProhibitSkill

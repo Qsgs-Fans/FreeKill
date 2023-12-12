@@ -112,7 +112,7 @@ Fk:loadTranslationTable{
 
 开发者： RalphR Nyutanislavsky xxyheaven 妖梦厨
 
-贡献者： 假象 deepskybird 板蓝根
+贡献者： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主
 
 鸣谢： Mogara
 
@@ -122,7 +122,7 @@ Fk:loadTranslationTable{
 
 Qt是一个C++图形界面应用程序开发框架，拥有强大的跨平台能力以及易于使用的API。
 
-本程序使用Qt 6.4，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
+本程序使用Qt 6.5，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
 
 官网： https://www.qt.io
   ]],
@@ -301,9 +301,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.14
+  ## v0.4.0
 
-  此为测试版本，不在主服上线。
+  整个游戏的UI都或多或少的更新了。增加播放卡牌配音的功能。
+
+  BGM复活。游戏内可以调节音量了。
+
+  被房主踢掉的人半分钟内不可以进入同一房间，防止卡房。
 
   ]==],
 }
