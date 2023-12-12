@@ -33,8 +33,8 @@ ListView {
     font.pixelSize: 16
 
     TapHandler {
-      acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
-      gesturePolicy: TapHandler.WithinBounds
+      // acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+      // gesturePolicy: TapHandler.WithinBounds
       onTapped: root.currentIndex = index;
     }
   }
