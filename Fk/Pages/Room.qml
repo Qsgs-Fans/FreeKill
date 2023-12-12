@@ -479,8 +479,6 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
-      roomScene.resetPrompt();
-
       if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
         && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
 

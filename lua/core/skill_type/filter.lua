@@ -4,11 +4,14 @@
 local FilterSkill = StatusSkill:subclass("FilterSkill")
 
 ---@param card Card
+---@param player Player
+---@param isJudgeEvent bool
 function FilterSkill:cardFilter(card, player, isJudgeEvent)
   return false
 end
 
 ---@param card Card
+---@param player Player
 ---@return Card
 function FilterSkill:viewAs(card, player)
   return nil
