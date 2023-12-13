@@ -1331,7 +1331,7 @@ end
 
 --- 询问玩家选择X张牌和Y名角色。
 ---
---- 返回两个值，第一个是选择的目标列表，第二个是选择的那张牌的id
+--- 返回两个值，第一个是选择的目标列表，第二个是选择的牌id列表
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param minCardNum integer @ 选卡牌最小值
 ---@param maxCardNum integer @ 选卡牌最大值
@@ -1357,7 +1357,7 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     local c = Fk:getCardById(id)
     return c:matchPattern(pattern)
   end)
-  if #pcards < minCardNum and not cancelable then return table.unpack({}, {}) end
+  if #pcards < minCardNum and not cancelable then return {}, {} end
 
   local data = {
     targets = targets,
