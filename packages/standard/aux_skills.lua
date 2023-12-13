@@ -95,7 +95,7 @@ local choosePlayersSkill = fk.CreateActiveSkill{
 local exChooseSkill = fk.CreateActiveSkill{
   name = "ex__choose_skill",
   card_filter = function(self, to_select, selected)
-    if #selected < self.max_card_num then return false end
+    if #selected >= self.max_card_num then return false end
 
     if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
       if not string.find(self.pattern or "", self.expand_pile or "") then return false end
