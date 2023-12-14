@@ -1398,6 +1398,8 @@ callbacks["SetBanner"] = (jsonData) => {
   } else {
     area.setMark(mark, mark.startsWith("@@") ? "" : value);
   }
+
+  markCardBoard.visible = markCardItem.data.length > 0;
 }
 
 callbacks["Animate"] = (jsonData) => {
