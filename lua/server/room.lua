@@ -1095,12 +1095,14 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
+  local interaction
   if not no_indicate then
     self:doIndicate(player.id, targets)
   end
 
   if skill.interaction then
-    skill.interaction.data = data.interaction_data
+    interaction = data.interaction_data
+    skill.interaction.data = interaction
   end
 
   if skill:isInstanceOf(ActiveSkill) then
@@ -1113,7 +1115,8 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
 
   return true, {
     cards = selected_cards,
-    targets = targets
+    targets = targets,
+    interaction = interaction
   }
 end
 
@@ -2613,6 +2616,13 @@ function Room:doCardUseEffect(cardUseEvent)
   -- If using card to other card (like jink or nullification), simply effect and return
   if cardUseEvent.toCard ~= nil then
     self:doCardEffect(cardEffectEvent)
+
+    if cardEffectEvent.cardsResponded then
+      cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
+      for _, card in ipairs(cardEffectEvent.cardsResponded) do
+        table.insertIfNeed(cardUseEvent.cardsResponded, card)
+      end
+    end
     return
   end
 
