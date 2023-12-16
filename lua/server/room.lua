@@ -1689,7 +1689,7 @@ end
 ---@return string[] @ 选择的选项
 function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
-  if #choices <= minNum and not all_choices then return choices end
+  if #choices <= minNum and not all_choices and not cancelable then return choices end
   assert(minNum <= maxNum)
   assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
   local command = "AskForChoices"
@@ -1701,7 +1701,13 @@ function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt,
   local result = self:doRequest(player, command, json.encode{
     choices, all_choices, {minNum, maxNum}, cancelable, skill_name, prompt, detailed
   })
-  if result == "" then return {} end
+  if result == "" then
+    if cancelable then
+      return {}
+    else
+      return table.random(choices, math.min(minNum, #choices))
+    end
+  end
   return json.decode(result)
 end
 
