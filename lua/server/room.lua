@@ -2045,7 +2045,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
         end
       end
     until type(useResult) ~= "string"
-
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return useResult
   end
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
