@@ -228,7 +228,8 @@ GraphicsBox {
     }
     root.choicesChanged();
 
-    fightButton.enabled = (choices.length == choiceNum);
+    fightButton.enabled = (choices.length == choiceNum) &&
+      (needSameKingdom ? isHegPair(selectedItem[0], selectedItem[1]) : true);
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
