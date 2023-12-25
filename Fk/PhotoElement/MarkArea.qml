@@ -76,7 +76,7 @@ Item {
 
             const mark_type = mark_name.slice(2, close_br);
             const _data = mark_extra;
-            let data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark_name, _data]));
+            let data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark_name, _data, root.parent?.playerid]));
             if (data && data.qml_path) {
               params.data = JSON.parse(_data);
               roomScene.startCheat("../../" + data.qml_path, params);
@@ -123,7 +123,7 @@ Item {
       if (close_br !== -1) {
         const mark_type = mark.slice(2, close_br);
         data = JSON.stringify(data);
-        const _data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark, data]));
+        const _data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark, data, root.parent?.playerid]));
         if (_data && _data.text) {
           special_value = _data.text;
         }

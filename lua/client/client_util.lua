@@ -735,13 +735,14 @@ function PoxiFeasible(poxi_type, selected, data, extra_data)
   return json.encode(poxi.feasible(selected, data, extra_data))
 end
 
-function GetQmlMark(mtype, name, value)
+function GetQmlMark(mtype, name, value, p)
   local spec = Fk.qml_marks[mtype]
   if not spec then return "{}" end
+  p = ClientInstance:getPlayerById(p)
   value = json.decode(value)
   return json.encode {
-    qml_path = spec.qml_path,
-    text = spec.how_to_show(name, value)
+    qml_path = type(spec.qml_path) == "function" and spec.qml_path(name, value, p) or spec.qml_path,
+    text = spec.how_to_show(name, value, p)
   }
 end
 
