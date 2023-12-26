@@ -212,9 +212,59 @@ void Server::broadcast(const QString &command, const QString &jsonData) {
   }
 }
 
+void Server::sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg) {
+  QJsonArray body;
+  body << -2;
+  body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
+          Router::DEST_CLIENT);
+  body << type;
+  body << msg;
+  client->send(JsonArray2Bytes(body));
+}
+
+bool Server::checkClientVersion(ClientSocket *client, const QString &cver) {
+  auto client_ver = QVersionNumber::fromString(cver);
+  auto ver = QVersionNumber::fromString(FK_VERSION);
+  int cmp = QVersionNumber::compare(ver, client_ver);
+  if (cmp != 0) {
+    auto errmsg = QString();
+    if (cmp < 0) {
+      errmsg = QString("[\"server is still on version %%2\",\"%1\"]")
+                      .arg(FK_VERSION, "1");
+    } else {
+      errmsg = QString("[\"server is using version %%2, please update\",\"%1\"]")
+                      .arg(FK_VERSION, "1");
+    }
+
+    sendEarlyPacket(client, "ErrorMsg", errmsg);
+    client->disconnectFromHost();
+    return false;
+  }
+  return true;
+}
+
+void Server::setupPlayer(ServerPlayer *player, bool all_info) {
+  // tell the lobby player's basic property
+  QJsonArray arr;
+  arr << player->getId();
+  arr << player->getScreenName();
+  arr << player->getAvatar();
+  player->doNotify("Setup", JsonArray2Bytes(arr));
+
+  if (all_info) {
+    player->doNotify("SetServerSettings", JsonArray2Bytes({
+          getConfig("motd"),
+          getConfig("hiddenPacks"),
+          getConfig("enableBots"),
+          }));
+  }
+}
+
 void Server::processNewConnection(ClientSocket *client) {
   auto addr = client->peerAddress();
   qInfo() << addr << "connected";
+
+  // check ban ip
   auto result = SelectFromDatabase(
       db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
 
@@ -229,13 +279,7 @@ void Server::processNewConnection(ClientSocket *client) {
   }
 
   if (!errmsg.isEmpty()) {
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << errmsg;
-    client->send(JsonArray2Bytes(body));
+    sendEarlyPacket(client, "ErrorMsg", errmsg);
     qInfo() << "Refused banned IP:" << addr;
     client->disconnectFromHost();
     return;
@@ -245,13 +289,7 @@ void Server::processNewConnection(ClientSocket *client) {
           [client]() { qInfo() << client->peerAddress() << "disconnected"; });
 
   // network delay test
-  QJsonArray body;
-  body << -2;
-  body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-           Router::DEST_CLIENT);
-  body << "NetworkDelayTest";
-  body << public_key;
-  client->send(JsonArray2Bytes(body));
+  sendEarlyPacket(client, "NetworkDelayTest", public_key);
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, this, &Server::processRequest);
   client->timerSignup.start(30000);
@@ -278,40 +316,14 @@ void Server::processRequest(const QByteArray &msg) {
 
   if (!valid) {
     qWarning() << "Invalid setup string:" << msg;
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << "INVALID SETUP STRING";
-    client->send(JsonArray2Bytes(body));
+    sendEarlyPacket(client, "ErrorMsg", "INVALID SETUP STRING");
     client->disconnectFromHost();
     return;
   }
 
   QJsonArray arr = String2Json(doc[3].toString()).array();
 
-  auto client_ver = QVersionNumber::fromString(arr[3].toString());
-  auto ver = QVersionNumber::fromString(FK_VERSION);
-  int cmp = QVersionNumber::compare(ver, client_ver);
-  if (cmp != 0) {
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body
-        << (cmp < 0
-                ? QString("[\"server is still on version %%2\",\"%1\"]")
-                      .arg(FK_VERSION, "1")
-                : QString(
-                      "[\"server is using version %%2, please update\",\"%1\"]")
-                      .arg(FK_VERSION, "1"));
-
-    client->send(JsonArray2Bytes(body));
-    client->disconnectFromHost();
-    return;
-  }
+  if (!checkClientVersion(client, arr[3].toString())) return;
 
   auto uuid = arr[4].toString();
   auto result2 = QJsonArray({1});
@@ -321,13 +333,7 @@ void Server::processRequest(const QByteArray &msg) {
   }
 
   if (!result2.isEmpty()) {
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << "you have been banned!";
-    client->send(JsonArray2Bytes(body));
+    sendEarlyPacket(client, "ErrorMsg", "you have been banned!");
     qInfo() << "Refused banned UUID:" << uuid;
     client->disconnectFromHost();
     return;
@@ -352,13 +358,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     auto aes_bytes = decrypted_pw.first(32);
 
     // tell client to install aes key
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "InstallKey";
-    body << "";
-    client->send(JsonArray2Bytes(body));
+    sendEarlyPacket(client, "InstallKey", "");
 
     client->installAESKey(aes_bytes);
     decrypted_pw.remove(0, 32);
@@ -367,20 +367,8 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
   }
 
   if (md5 != md5_str) {
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << "MD5 check failed!";
-    client->send(JsonArray2Bytes(body));
-
-    body.removeLast();
-    body.removeLast();
-    body << "UpdatePackage";
-    body << Pacman->getPackSummary();
-    client->send(JsonArray2Bytes(body));
-
+    sendEarlyPacket(client, "ErrorMsg", "MD5 check failed!");
+    sendEarlyPacket(client, "UpdatePackage", Pacman->getPackSummary());
     client->disconnectFromHost();
     return;
   }
@@ -454,11 +442,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
           }
 
           if (room && !room->isLobby()) {
-            player->doNotify("SetServerSettings", JsonArray2Bytes({
-                  getConfig("motd"),
-                  getConfig("hiddenPacks"),
-                  getConfig("enableBots"),
-                  }));
+            setupPlayer(player, true);
             room->pushRequest(QString("%1,reconnect").arg(id));
           } else {
             // 懒得处理掉线玩家在大厅了！踢掉得了
@@ -503,29 +487,11 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     }
     players.insert(player->getId(), player);
 
-    // tell the lobby player's basic property
-    QJsonArray arr;
-    arr << player->getId();
-    arr << player->getScreenName();
-    arr << player->getAvatar();
-    player->doNotify("Setup", JsonArray2Bytes(arr));
-
-    player->doNotify("SetServerSettings", JsonArray2Bytes({
-          getConfig("motd"),
-          getConfig("hiddenPacks"),
-          getConfig("enableBots"),
-          }));
-
+    setupPlayer(player);
     lobby()->addPlayer(player);
   } else {
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;
-    QJsonArray body;
-    body << -2;
-    body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-             Router::DEST_CLIENT);
-    body << "ErrorMsg";
-    body << error_msg;
-    client->send(JsonArray2Bytes(body));
+    sendEarlyPacket(client, "ErrorMsg", error_msg);
     client->disconnectFromHost();
     return;
   }
