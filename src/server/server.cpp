@@ -86,9 +86,11 @@ Server::~Server() {
 //  foreach (auto room, idle_rooms) {
 //    room->deleteLater();
 //  }
-  foreach (auto thread, threads) {
-    thread->deleteLater();
-  }
+//  foreach (auto thread, threads) {
+//    thread->deleteLater();
+//  }
+  qDeleteAll(threads.begin(), threads.end());
+  threads.clear();
   sqlite3_close(db);
   RSA_free(rsa);
 }
