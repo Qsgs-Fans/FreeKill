@@ -543,15 +543,23 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
 }
 
 void Room::gameOver() {
+  if (!gameStarted) return;
   gameStarted = false;
   runned_players.clear();
-  // 清理所有状态不是“在线”的玩家
+  // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
   foreach (ServerPlayer *p, players) {
+    auto pid = p->getId();
+
+    if (pid > 0) {
+      auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
+      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(p->getGameTime());
+      ExecSQL(server->getDatabase(), info_update);
+    }
+
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
-        auto pid = p->getId();
         addRunRate(pid, mode);
         // addRunRate(pid, mode);
         server->temporarilyBan(pid);
@@ -572,6 +580,7 @@ void Room::manuallyStart() {
     foreach (auto p, players) {
       p->setReady(false);
       p->setDied(false);
+      p->startGameTimer();
     }
     gameStarted = true;
     m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));

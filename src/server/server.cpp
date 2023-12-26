@@ -404,7 +404,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
       result = SelectFromDatabase(db, sql_find); // refresh result
       obj = result[0].toObject();
 
-      auto info_update = QString("REPLACE INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
+      auto info_update = QString("INSERT INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
       ExecSQL(db, info_update);
 
       passed = true;
@@ -467,17 +467,22 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
   if (passed) {
     // update lastLoginIp
+    int id = obj["id"].toString().toInt();
+    beginTransaction();
     auto sql_update =
         QString("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
             .arg(client->peerAddress())
-            .arg(obj["id"].toString().toInt());
+            .arg(id);
     ExecSQL(db, sql_update);
 
-    auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');").arg(obj["id"].toString().toInt()).arg(uuid_str);
+    auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');").arg(id).arg(uuid_str);
     ExecSQL(db, uuid_update);
 
-    auto info_update = QString("REPLACE INTO usergameinfo (id, lastLoginTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
-      ExecSQL(db, info_update);
+    // 来晚了，有很大可能存在已经注册但是表里面没数据的人
+    ExecSQL(db, QString("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
+    auto info_update = QString("UPDATE usergameinfo SET lastLoginTime=%2 where id=%1;").arg(id).arg(QDateTime::currentSecsSinceEpoch());
+    ExecSQL(db, info_update);
+    endTransaction();
 
     // create new ServerPlayer and setup
     ServerPlayer *player = new ServerPlayer(lobby());
@@ -488,7 +493,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     connect(player, &Player::stateChanged, this, &Server::onUserStateChanged);
     player->setScreenName(name);
     player->setAvatar(obj["avatar"].toString());
-    player->setId(obj["id"].toString().toInt());
+    player->setId(id);
     if (players.count() <= 10) {
       broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
     }
@@ -545,8 +550,15 @@ void Server::onUserStateChanged() {
   if (!room || room->isLobby() || room->isAbandoned()) {
     return;
   }
+  auto state = player->getState();
   room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
       QString("[%1,\"%2\"]").arg(player->getId()).arg(player->getStateString()));
+
+  if (state == Player::Online) {
+    player->resumeGameTimer();
+  } else {
+    player->pauseGameTimer();
+  }
 }
 
 RSA *Server::initServerRSA() {
