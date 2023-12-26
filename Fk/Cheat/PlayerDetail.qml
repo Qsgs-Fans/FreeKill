@@ -92,6 +92,7 @@ Flickable {
           config.blockedUsersChanged();
         }
       }
+
       MetroButton {
         text: Backend.translate("Kick From Room")
         visible: !roomScene.isStarted && roomScene.isOwner

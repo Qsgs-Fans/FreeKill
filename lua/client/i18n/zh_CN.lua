@@ -65,6 +65,7 @@ Fk:loadTranslationTable{
   ["Give Shoe"] = "拖鞋",
   ["Block Chatter"] = "屏蔽发言",
   ["Unblock Chatter"] = "解除屏蔽",
+  ["<Blocked> "] = '<font color="red">[已屏蔽]</font> ',
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
