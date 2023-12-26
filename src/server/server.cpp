@@ -403,6 +403,10 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
       ExecSQL(db, sql_reg);
       result = SelectFromDatabase(db, sql_find); // refresh result
       obj = result[0].toObject();
+
+      auto info_update = QString("REPLACE INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
+      ExecSQL(db, info_update);
+
       passed = true;
     } else {
       obj = result[0].toObject();
@@ -471,6 +475,9 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
     auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');").arg(obj["id"].toString().toInt()).arg(uuid_str);
     ExecSQL(db, uuid_update);
+
+    auto info_update = QString("REPLACE INTO usergameinfo (id, lastLoginTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
+      ExecSQL(db, info_update);
 
     // create new ServerPlayer and setup
     ServerPlayer *player = new ServerPlayer(lobby());
