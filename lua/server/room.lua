@@ -1341,14 +1341,12 @@ end
 ---@param targets integer[] @ 选择目标的id范围
 ---@param minTargetNum integer @ 选目标最小值
 ---@param maxTargetNum integer @ 选目标最大值
----@param includeEquip? string @ 是否包括装备
----@param expandPile? string @ 额外牌堆
 ---@param pattern? string @ 选牌规则
 ---@param prompt? string @ 提示信息
 ---@param cancelable? boolean @ 能否点取消
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[], integer[]
-function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, includeEquip, expandPile, pattern, prompt, skillName, cancelable, no_indicate)
+function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
   if minCardNum < 1 or minTargetNum < 1 then
     return {}, {}
   end
@@ -1370,8 +1368,8 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     min_card_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
-    include_equip = includeEquip,
-    expand_pile = expandPile,
+    -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
+    -- expand_pile = expandPile,
   }
   local _, ret = self:askForUseActiveSkill(player, "ex__choose_skill", prompt or "", cancelable, data, no_indicate)
   if ret then

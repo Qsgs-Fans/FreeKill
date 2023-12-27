@@ -96,7 +96,7 @@ local control = fk.CreateActiveSkill{
         to:control(to)
       end
     end
-    -- local targets, cards = room:askForChooseCardsAndPlayers(from, 1, 3, effect.tos, 1, 3, true, nil, nil, "选一下吧", self.name, true)
+    -- local targets, cards = room:askForChooseCardsAndPlayers(from, 1, 3, effect.tos, 1, 3, nil, "选一下吧", self.name, true)
     -- p(targets)
     -- p(cards)
     --local success, dat = room:askForUseViewAsSkill(from, "test_vs", nil, true)
