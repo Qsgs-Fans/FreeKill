@@ -169,11 +169,20 @@ Flickable {
       const total = gamedata[0];
       const win = gamedata[1];
       const run = gamedata[2];
+      const totalTime = gamedata[3];
       const winRate = (win / total) * 100;
       const runRate = (run / total) * 100;
       playerGameData.text = total === 0 ? Backend.translate("Newbie") :
         Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
         .arg(runRate.toFixed(2)).arg(total);
+
+      const h = (totalTime / 3600).toFixed(2);
+      const m = Math.floor(totalTime / 60);
+      if (m < 100) {
+        playerGameData.text += " " + Backend.translate("TotalGameTime: %1 min").arg(m);
+      } else {
+        playerGameData.text += " " + Backend.translate("TotalGameTime: %1 h").arg(h);
+      }
     }
 
     const data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));

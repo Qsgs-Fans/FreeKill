@@ -334,6 +334,8 @@ function ServerPlayer:reconnect()
       p.id,
       p._splayer:getScreenName(),
       p._splayer:getAvatar(),
+      false,
+      p._splayer:getTotalGameTime(),
     })
   end
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })

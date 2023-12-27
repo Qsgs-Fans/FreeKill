@@ -1276,7 +1276,7 @@ Item {
         gameData = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [item.id]));
       } catch (e) {
         console.log(e);
-        gameData = [0, 0, 0];
+        gameData = [0, 0, 0, 0];
       }
       if (item.id > 0) {
         datalist.push({

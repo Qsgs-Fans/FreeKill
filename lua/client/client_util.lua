@@ -650,19 +650,21 @@ end
 function GetPlayerGameData(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  if not p then return "[0, 0, 0]" end
+  if not p then return "[0, 0, 0, 0]" end
   local raw = p.player:getGameData()
   local ret = {}
   for _, i in fk.qlist(raw) do
     table.insert(ret, i)
   end
+  table.insert(ret, p.player:getTotalGameTime())
   return json.encode(ret)
 end
 
 function SetPlayerGameData(pid, data)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  p.player:setGameData(table.unpack(data))
+  local total, win, run = table.unpack(data)
+  p.player:setGameData(total, win, run)
   table.insert(data, 1, pid)
   ClientInstance:notifyUI("UpdateGameData", json.encode(data))
 end

@@ -500,6 +500,12 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
     players.insert(player->getId(), player);
 
     setupPlayer(player);
+
+    auto result = SelectFromDatabase(db, QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
+    auto time = result[0].toObject()["totalGameTime"].toString().toInt();
+    player->addTotalGameTime(time);
+    player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
+
     lobby()->addPlayer(player);
   } else {
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;

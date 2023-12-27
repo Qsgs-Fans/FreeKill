@@ -151,6 +151,7 @@ void Room::addPlayer(ServerPlayer *player) {
     jsonData << player->getScreenName();
     jsonData << player->getAvatar();
     jsonData << player->isReady();
+    jsonData << player->getTotalGameTime();
     doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
   }
 
@@ -179,6 +180,7 @@ void Room::addPlayer(ServerPlayer *player) {
       jsonData << p->getScreenName();
       jsonData << p->getAvatar();
       jsonData << p->isReady();
+      jsonData << p->getTotalGameTime();
       player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
 
       jsonData = QJsonArray();
@@ -274,6 +276,7 @@ void Room::removePlayer(ServerPlayer *player) {
     runner->setId(player->getId());
     auto gamedata = player->getGameData();
     runner->setGameData(gamedata[0], gamedata[1], gamedata[2]);
+    runner->addTotalGameTime(player->getTotalGameTime());
 
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
@@ -553,8 +556,20 @@ void Room::gameOver() {
     auto pid = p->getId();
 
     if (pid > 0) {
+      int time = p->getGameTime();
+      auto bytes = JsonArray2Bytes({ pid, time });
+      doBroadcastNotify(getOtherPlayers(p), "AddTotalGameTime", bytes);
+
+      // 考虑到阵亡已离开啥的，时间得给真实玩家增加
+      auto realPlayer = server->findPlayer(pid);
+      if (realPlayer) {
+        realPlayer->addTotalGameTime(time);
+        realPlayer->doNotify("AddTotalGameTime", bytes);
+      }
+
+      // 摸了，这么写总之不会有问题
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
-      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(p->getGameTime());
+      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       ExecSQL(server->getDatabase(), info_update);
     }
 

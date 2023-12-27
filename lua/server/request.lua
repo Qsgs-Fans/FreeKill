@@ -18,6 +18,8 @@ local function tellRoomToObserver(self, player)
       p.id,
       p._splayer:getScreenName(),
       p._splayer:getAvatar(),
+      false,
+      p._splayer:getTotalGameTime(),
     })
   end
 
