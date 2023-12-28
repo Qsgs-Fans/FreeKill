@@ -326,6 +326,10 @@ function ServerPlayer:reconnect()
     self._splayer:getScreenName(),
     self._splayer:getAvatar(),
   })
+  self:doNotify("AddTotalGameTime", json.encode {
+    self.id,
+    self._splayer:getTotalGameTime(),
+  })
 
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
