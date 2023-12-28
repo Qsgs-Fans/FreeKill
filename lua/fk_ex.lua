@@ -606,5 +606,5 @@ end
 
 ---@class QmlMarkSpec
 ---@field name string
----@field qml_path string
----@field how_to_show function(name: string, value?: any): string?
+---@field qml_path string | fun(name: string, value?: any, player?: Player): string
+---@field how_to_show fun(name: string, value?: any, player?: Player): string?

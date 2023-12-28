@@ -1095,12 +1095,14 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
   local targets = data.targets
   local card_data = json.decode(card)
   local selected_cards = card_data.subcards
+  local interaction
   if not no_indicate then
     self:doIndicate(player.id, targets)
   end
 
   if skill.interaction then
-    skill.interaction.data = data.interaction_data
+    interaction = data.interaction_data
+    skill.interaction.data = interaction
   end
 
   if skill:isInstanceOf(ActiveSkill) then
@@ -1113,7 +1115,8 @@ function Room:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra
 
   return true, {
     cards = selected_cards,
-    targets = targets
+    targets = targets,
+    interaction = interaction
   }
 end
 
@@ -1331,7 +1334,7 @@ end
 
 --- 询问玩家选择X张牌和Y名角色。
 ---
---- 返回两个值，第一个是选择的目标列表，第二个是选择的那张牌的id
+--- 返回两个值，第一个是选择的目标列表，第二个是选择的牌id列表
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param minCardNum integer @ 选卡牌最小值
 ---@param maxCardNum integer @ 选卡牌最大值
@@ -1355,7 +1358,7 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     local c = Fk:getCardById(id)
     return c:matchPattern(pattern)
   end)
-  if #pcards < minCardNum and not cancelable then return table.unpack({}, {}) end
+  if #pcards < minCardNum and not cancelable then return {}, {} end
 
   local data = {
     targets = targets,
@@ -1365,6 +1368,8 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     min_card_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
+    -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
+    -- expand_pile = expandPile,
   }
   local _, ret = self:askForUseActiveSkill(player, "ex__choose_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
@@ -1682,7 +1687,7 @@ end
 ---@return string[] @ 选择的选项
 function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
-  if #choices <= minNum and not all_choices then return choices end
+  if #choices <= minNum and not all_choices and not cancelable then return choices end
   assert(minNum <= maxNum)
   assert(not all_choices or table.every(choices, function(c) return table.contains(all_choices, c) end))
   local command = "AskForChoices"
@@ -1694,7 +1699,13 @@ function Room:askForChoices(player, choices, minNum, maxNum, skill_name, prompt,
   local result = self:doRequest(player, command, json.encode{
     choices, all_choices, {minNum, maxNum}, cancelable, skill_name, prompt, detailed
   })
-  if result == "" then return {} end
+  if result == "" then
+    if cancelable then
+      return {}
+    else
+      return table.random(choices, math.min(minNum, #choices))
+    end
+  end
   return json.decode(result)
 end
 
@@ -2032,7 +2043,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
         end
       end
     until type(useResult) ~= "string"
-
+    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
+    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return useResult
   end
   player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
@@ -2609,6 +2621,13 @@ function Room:doCardUseEffect(cardUseEvent)
   -- If using card to other card (like jink or nullification), simply effect and return
   if cardUseEvent.toCard ~= nil then
     self:doCardEffect(cardEffectEvent)
+
+    if cardEffectEvent.cardsResponded then
+      cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
+      for _, card in ipairs(cardEffectEvent.cardsResponded) do
+        table.insertIfNeed(cardUseEvent.cardsResponded, card)
+      end
+    end
     return
   end
 

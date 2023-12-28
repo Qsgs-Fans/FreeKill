@@ -942,6 +942,8 @@ end
 ---@param ignoreFromKong? boolean
 ---@param ignoreToKong? boolean
 function Player:canPindian(to, ignoreFromKong, ignoreToKong)
+  if self == to then return false end
+
   if self:isKongcheng() and not ignoreFromKong then
     return false
   end

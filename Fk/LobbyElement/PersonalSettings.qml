@@ -10,6 +10,37 @@ Item {
   width: bg.width
   height: bg.height
 
+  Rectangle {
+    x: 84; y: 31.6
+    height: 20
+    width: childrenRect.width + 48
+
+    gradient: Gradient {
+      orientation: Gradient.Horizontal
+      GradientStop { position: 0.7; color: "#AA3598E8" }
+      GradientStop { position: 1.0; color: "transparent" }
+    }
+    Text {
+      text: {
+        config.totalTime;
+        const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [Self.id]));
+        const totalTime = gamedata[3];
+        const h = (totalTime / 3600).toFixed(2);
+        const m = Math.floor(totalTime / 60);
+        if (m < 100) {
+          return Backend.translate("TotalGameTime: %1 min").arg(m);
+        } else {
+          return Backend.translate("TotalGameTime: %1 h").arg(h);
+        }
+      }
+      x: 12; y: 1
+      font.family: fontLibian.name
+      font.pixelSize: 16
+      color: "white"
+      //style: Text.Outline
+    }
+  }
+
   Image {
     id: bg
     x: -32

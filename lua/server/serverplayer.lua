@@ -321,11 +321,6 @@ function ServerPlayer:reconnect()
   local room = self.room
   self.serverplayer:setState(fk.Player_Online)
 
-  self:doNotify("Setup", json.encode{
-    self.id,
-    self._splayer:getScreenName(),
-    self._splayer:getAvatar(),
-  })
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
     #room.players, room.timeout, room.settings,
@@ -339,6 +334,8 @@ function ServerPlayer:reconnect()
       p.id,
       p._splayer:getScreenName(),
       p._splayer:getAvatar(),
+      false,
+      p._splayer:getTotalGameTime(),
     })
   end
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })

@@ -65,10 +65,13 @@ Fk:loadTranslationTable{
   ["Give Shoe"] = "拖鞋",
   ["Block Chatter"] = "屏蔽发言",
   ["Unblock Chatter"] = "解除屏蔽",
+  ["<Blocked> "] = '<font color="red">[已屏蔽]</font> ',
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
   ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
+  ["TotalGameTime: %1 min"] = "已游玩: %1 分钟",
+  ["TotalGameTime: %1 h"] = "已游玩: %1 小时",
 
   ["Ban List"] = "禁将方案",
   ["List"] = "方案",
@@ -301,13 +304,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.0
+  ## v0.4.2
 
-  整个游戏的UI都或多或少的更新了。增加播放卡牌配音的功能。
-
-  BGM复活。游戏内可以调节音量了。
-
-  被房主踢掉的人半分钟内不可以进入同一房间，防止卡房。
+  增加游玩计时和屏蔽提示。
 
   ]==],
 }

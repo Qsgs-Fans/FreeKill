@@ -194,3 +194,7 @@ callbacks["ServerMessage"] = (jsonData) => {
 
 callbacks["ShowToast"] = (j) => toast.show(j);
 callbacks["InstallKey"] = (j) => Backend.installAESKey();
+
+callbacks["AddTotalGameTime"] = (jsonData) => {
+  config.totalTime++;
+}

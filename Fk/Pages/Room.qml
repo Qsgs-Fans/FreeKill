@@ -1276,7 +1276,7 @@ Item {
         gameData = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [item.id]));
       } catch (e) {
         console.log(e);
-        gameData = [0, 0, 0];
+        gameData = [0, 0, 0, 0];
       }
       if (item.id > 0) {
         datalist.push({
@@ -1309,7 +1309,7 @@ Item {
       if (d.id == Self.id) {
         roomScene.isOwner = d.isOwner;
       } else {
-        Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
+        Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready, d.gameData[3]])]);
       }
       Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;

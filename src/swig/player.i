@@ -23,6 +23,9 @@ public:
   QString getAvatar() const;
   void setAvatar(const QString &avatar);
 
+  int getTotalGameTime() const;
+  void addTotalGameTime(int toAdd);
+
   State getState() const;
   void setState(State state);
 
