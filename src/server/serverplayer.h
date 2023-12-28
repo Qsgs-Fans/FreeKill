@@ -43,6 +43,12 @@ public:
 
   bool thinking();
   void setThinking(bool t);
+
+  void startGameTimer();
+  void pauseGameTimer();
+  void resumeGameTimer();
+  int getGameTime();
+
 signals:
   void disconnected();
   void kicked();
@@ -58,6 +64,9 @@ private:
 
   QString requestCommand;
   QString requestData;
+
+  int gameTime; // 在这个房间的有效游戏时长(秒)
+  QElapsedTimer gameTimer;
 };
 
 #endif // _SERVERPLAYER_H

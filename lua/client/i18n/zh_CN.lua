@@ -65,10 +65,13 @@ Fk:loadTranslationTable{
   ["Give Shoe"] = "拖鞋",
   ["Block Chatter"] = "屏蔽发言",
   ["Unblock Chatter"] = "解除屏蔽",
+  ["<Blocked> "] = '<font color="red">[已屏蔽]</font> ',
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
   ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
+  ["TotalGameTime: %1 min"] = "已游玩: %1 分钟",
+  ["TotalGameTime: %1 h"] = "已游玩: %1 小时",
 
   ["Ban List"] = "禁将方案",
   ["List"] = "方案",

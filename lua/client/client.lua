@@ -286,8 +286,9 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   -- jsonData: [ int id, string screenName, string avatar ]
   -- when other player enter the room, we create clientplayer(C and lua) for them
   local data = json.decode(jsonData)
-  local id, name, avatar = data[1], data[2], data[3]
+  local id, name, avatar, time = data[1], data[2], data[3], data[5]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
+  player:addTotalGameTime(time)
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.players, p)
   table.insert(ClientInstance.alive_players, p)
@@ -920,6 +921,18 @@ fk.client_callback["UpdateGameData"] = function(jsonData)
   ClientInstance:notifyUI("UpdateGameData", jsonData)
 end
 
+fk.client_callback["AddTotalGameTime"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player, time = data[1], data[2]
+  player = ClientInstance:getPlayerById(player)
+  if player then
+    player.player:addTotalGameTime(time)
+    if player == Self then
+      ClientInstance:notifyUI("AddTotalGameTime", jsonData)
+    end
+  end
+end
+
 fk.client_callback["StartGame"] = function(jsonData)
   local c = ClientInstance
   c.record = {
@@ -946,6 +959,7 @@ fk.client_callback["StartGame"] = function(jsonData)
           p.player:getScreenName(),
           p.player:getAvatar(),
           true,
+          p.player:getTotalGameTime(),
         },
       })
     end

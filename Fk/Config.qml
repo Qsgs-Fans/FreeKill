@@ -50,6 +50,7 @@ QtObject {
   property bool observing: false
   property bool replaying: false
   property list<string> blockedUsers: []
+  property int totalTime: 0 // FIXME: only for notifying
 
   onDisabledGeneralsChanged: {
     disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
@@ -89,6 +90,7 @@ QtObject {
     disabledGenerals = conf.disabledGenerals ?? [];
     disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
     disableSchemeIdx = conf.disableSchemeIdx ?? 0;
+    blockedUsers = conf.blockedUsers ?? [];
   }
 
   function saveConf() {
@@ -117,6 +119,7 @@ QtObject {
     conf.disabledGenerals = disabledGenerals;
     conf.disableGeneralSchemes = disableGeneralSchemes;
     conf.disableSchemeIdx = disableSchemeIdx;
+    conf.blockedUsers = blockedUsers;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

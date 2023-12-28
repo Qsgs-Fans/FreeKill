@@ -68,6 +68,8 @@ Fk:loadTranslationTable({
   --["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "Win=%1% Run=%2% Total=%3",
   ["Win=%1\nRun=%2\nTotal=%3"] = "Win: %1%\nRun: %2%\nTotal: %3",
+  ["TotalGameTime: %1 min"] = "Played: %1 minutes",
+  ["TotalGameTime: %1 h"] = "Played: %1 hours",
 
   ["Ban List"] = "Ban character scheme",
   ["List"] = "Scheme",

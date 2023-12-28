@@ -31,6 +31,9 @@ public:
   QString getAvatar() const;
   void setAvatar(const QString &avatar);
 
+  int getTotalGameTime() const;
+  void addTotalGameTime(int toAdd);
+
   State getState() const;
   QString getStateString() const;
   void setState(State state);
@@ -58,6 +61,7 @@ private:
   int id;
   QString screenName;   // screenName should not be same.
   QString avatar;
+  int totalGameTime;
   State state;
   bool ready;
   bool died;

@@ -531,7 +531,7 @@ Item {
     anchors.topMargin: 2
 
     font.pixelSize: 16
-    text: screenName
+    text: (config.blockedUsers && config.blockedUsers.includes(screenName) ? Backend.translate("<Blocked> ") : "") + screenName
 
     glow.radius: 8
   }

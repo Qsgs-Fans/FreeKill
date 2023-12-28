@@ -25,6 +25,13 @@ CREATE TABLE IF NOT EXISTS banuuid (
   uuid VARCHAR(32)
 );
 
+CREATE TABLE IF NOT EXISTS usergameinfo (
+  id INTEGER PRIMARY KEY,
+  registerTime INTEGER,  -- 时间戳
+  lastLoginTime INTEGER, -- 时间戳
+  totalGameTime INTEGER  -- 单位：秒
+);
+
 CREATE TABLE IF NOT EXISTS friendinfo (
   id1 INTEGER,
   id2 INTEGER,

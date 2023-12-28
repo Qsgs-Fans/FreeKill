@@ -227,6 +227,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     y: 90
     scale: 1.25
+    z: 1
   }
 
   Rectangle {
@@ -234,6 +235,7 @@ Item {
     anchors.fill: parent
     color: Qt.rgba(0, 0, 0, 0.5)
     opacity: 0.7
+    z: 2
   }
 
   Text {
