@@ -169,7 +169,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
 
   if damageStruct.damageType ~= fk.NormalDamage and damageStruct.to.chained then
-    damageStruct.beginnerOfTheDamage = true
+    if not damageStruct.chain then damageStruct.beginnerOfTheDamage = true end
     damageStruct.to:setChainState(false)
   end
 

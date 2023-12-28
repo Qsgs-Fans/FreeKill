@@ -43,10 +43,10 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   table.find(temp_suf, function(s)
     return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
   end)) or
-  (to:getMark(MarkEnum.BypassTimesLimitTo) ~= 0 or
+  (to and (to:getMark(MarkEnum.BypassTimesLimitTo) ~= 0 or
   table.find(temp_suf, function(s)
     return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
-  end))
+  end)))
 end
 
 function UsableSkill:withinDistanceLimit(player, isattack, card, to)
@@ -66,10 +66,10 @@ function UsableSkill:withinDistanceLimit(player, isattack, card, to)
   table.find(temp_suf, function(s)
     return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
   end)) or
-  (to:getMark(MarkEnum.BypassDistancesLimitTo) ~= 0 or
+  (to and (to:getMark(MarkEnum.BypassDistancesLimitTo) ~= 0 or
   table.find(temp_suf, function(s)
     return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
-  end))
+  end)))
 end
 
 return UsableSkill
