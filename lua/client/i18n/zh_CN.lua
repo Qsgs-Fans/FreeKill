@@ -304,7 +304,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.1
+  ## v0.4.2
 
   增加游玩计时和屏蔽提示。
 

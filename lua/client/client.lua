@@ -288,7 +288,7 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   local data = json.decode(jsonData)
   local id, name, avatar, time = data[1], data[2], data[3], data[5]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
-  player:addTotalGameTime(time)
+  player:addTotalGameTime(time or 0) -- 以防再次智迟
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.players, p)
   table.insert(ClientInstance.alive_players, p)
