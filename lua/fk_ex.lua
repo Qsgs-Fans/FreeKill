@@ -608,3 +608,10 @@ end
 ---@field name string
 ---@field qml_path string | fun(name: string, value?: any, player?: Player): string
 ---@field how_to_show fun(name: string, value?: any, player?: Player): string?
+
+---@class YuqiSpec
+---@field name string
+---@field feasible fun(current_data: any, old_data: any, extra_data: any): bool
+---@field entry_filter fun(card: int, pos: int, pile: int[], data: any, extra_data: any): bool
+---@field out_filter fun(card: int, data: any, extra_data: any): bool
+---@field prompt? string | fun(data: any, extra_data: any): string

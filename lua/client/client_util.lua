@@ -748,4 +748,29 @@ function GetQmlMark(mtype, name, value, p)
   }
 end
 
+function YuqiPrompt(yuqi_type, data, extra_data)
+  local yuqi = Fk.yuqi_methods[yuqi_type]
+  if not yuqi or not yuqi.prompt then return "" end
+  if type(yuqi.prompt) == "string" then return Fk:translate(yuqi.prompt) end
+  return yuqi.prompt(data, extra_data)
+end
+
+function YuqiEntryFilter(yuqi_type, to_select, position, to_pile, data, extra_data)
+  local yuqi = Fk.yuqi_methods[yuqi_type]
+  if not yuqi then return "false" end
+  return json.encode(yuqi.entry_filter(to_select, position, to_pile, data, extra_data))
+end
+
+function YuqiOutFilter(yuqi_type, to_select, data, extra_data)
+  local yuqi = Fk.yuqi_methods[yuqi_type]
+  if not yuqi then return "false" end
+  return json.encode(yuqi.out_filter(to_select, data, extra_data))
+end
+
+function YuqiFeasible(yuqi_type, current, origin, extra_data)
+  local yuqi = Fk.yuqi_methods[yuqi_type]
+  if not yuqi then return "false" end
+  return json.encode(yuqi.feasible(current, origin, extra_data))
+end
+
 dofile "lua/client/i18n/init.lua"

@@ -28,6 +28,7 @@
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
+---@field public yuqi_methods table<string, YuqiSpec> @ “隅泣”框操作方法表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -343,6 +344,7 @@ function Engine:addGameEvent(name, pfunc, mfunc, cfunc, efunc)
   table.insert(self._custom_events, { name = name, p = pfunc, m = mfunc, c = cfunc, e = efunc })
 end
 
+--- 向Engine中添加一个魄袭用方法。
 ---@param spec PoxiSpec
 function Engine:addPoxiMethod(spec)
   assert(type(spec.name) == "string")
@@ -356,12 +358,24 @@ function Engine:addPoxiMethod(spec)
   spec.post_select = spec.post_select or function(s) return s end
 end
 
+--- 向Engine中添加一个隅泣用方法。
+---@param spec QmlMarkSpec
 function Engine:addQmlMark(spec)
   assert(type(spec.name) == "string")
   if self.qml_marks[spec.name] then
     fk.qCritical("Warning: duplicated qml mark type " .. spec.name)
   end
   self.qml_marks[spec.name] = spec
+end
+
+--- 向Engine中添加一个隅泣用方法。
+---@param spec YuqiSpec
+function Engine:addYuqiMethod(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.feasible) == "function")
+  self.yuqi_methods[spec.name] = spec
+  spec.entry_filter = spec.entry_filter or function() return true end
+  spec.out_filter = spec.out_filter or function() return true end
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。
