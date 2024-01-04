@@ -1,5 +1,9 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+GameEvent.functions[GameEvent.Game] = function(self)
+  self.room.logic:run()
+end
+
 GameEvent.functions[GameEvent.ChangeProperty] = function(self)
   local data = table.unpack(self.data)
   local room = self.room
@@ -119,4 +123,26 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
   room:handleAddLoseSkills(player, table.concat(skills, "|"), nil, false, false)
 
   logic:trigger(fk.AfterPropertyChange, player, data)
+end
+
+GameEvent.functions[GameEvent.ClearEvent] = function(self)
+  local event = self.data[1]
+  local logic = self.room.logic
+  event:clear_func()
+  for _, f in ipairs(event.extra_clear_funcs) do
+    if type(f) == "function" then f(event) end
+  end
+
+  -- cleaner顺利执行完了，出栈吧
+  local end_id = logic.current_event_id + 1
+  if event.id ~= end_id - 1 then
+    logic.all_game_events[end_id] = event.event
+    logic.current_event_id = end_id
+    event.end_id = end_id
+  else
+    event.end_id = event.id
+  end
+
+  logic.game_event_stack:pop()
+  logic.cleaner_stack:pop()
 end

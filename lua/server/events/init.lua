@@ -5,6 +5,8 @@
 -- 某类事件对应的结束事件，其id刚好就是那个事件的相反数
 -- GameEvent.EventFinish = -1
 
+GameEvent.Game = 0
+
 GameEvent.ChangeHp = 1
 GameEvent.Damage = 2
 GameEvent.LoseHp = 3
@@ -44,10 +46,10 @@ dofile "lua/server/events/pindian.lua"
 
 -- 20 = CardEffect
 GameEvent.ChangeProperty = 21
-dofile "lua/server/events/misc.lua"
 
--- TODO: fix this
-GameEvent.BreakEvent = 999
+-- 新的clear函数专用
+GameEvent.ClearEvent = 9999
+dofile "lua/server/events/misc.lua"
 
 for _, l in ipairs(Fk._custom_events) do
   local name, p, m, c, e = l.name, l.p, l.m, l.c, l.e
@@ -58,6 +60,8 @@ for _, l in ipairs(Fk._custom_events) do
 end
 
 local eventTranslations = {
+  [GameEvent.Game] = "GameEvent.Game",
+
   [GameEvent.ChangeHp] = "GameEvent.ChangeHp",
   [GameEvent.Damage] = "GameEvent.Damage",
   [GameEvent.LoseHp] = "GameEvent.LoseHp",
@@ -80,7 +84,7 @@ local eventTranslations = {
 
   [GameEvent.ChangeProperty] = "GameEvent.ChangeProperty",
 
-  [GameEvent.BreakEvent] = "GameEvent.BreakEvent",
+  [GameEvent.ClearEvent] = "GameEvent.ClearEvent",
 }
 
 function GameEvent.static:translate(id)
