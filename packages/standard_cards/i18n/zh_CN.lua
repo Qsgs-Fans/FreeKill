@@ -119,6 +119,7 @@ Fk:loadTranslationTable{
 
   ["crossbow"] = "诸葛连弩",
   [":crossbow"] = "装备牌·武器<br /><b>攻击范围</b>：１<br /><b>武器技能</b>：锁定技，你于出牌阶段内使用【杀】无次数限制。",
+  ["#crossbow_skill"] = "诸葛连弩",
 
   ["qinggang_sword"] = "青釭剑",
   [":qinggang_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技，你的【杀】无视目标角色的防具。",
@@ -151,6 +152,7 @@ Fk:loadTranslationTable{
 
   ["halberd"] = "方天画戟",
   [":halberd"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：锁定技，你使用最后的手牌【杀】可以额外选择至多两名目标。",
+  ["#halberd_skill"] = "方天画戟",
 
   ["kylin_bow"] = "麒麟弓",
   [":kylin_bow"] = "装备牌·武器<br /><b>攻击范围</b>：５<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。",
@@ -162,6 +164,7 @@ Fk:loadTranslationTable{
 
   ["nioh_shield"] = "仁王盾",
   [":nioh_shield"] = "装备牌·防具<br /><b>防具技能</b>：锁定技，黑色【杀】对你无效。",
+  ["#nioh_shield_skill"] = "仁王盾",
 
   ["dilu"] = "的卢",
   [":dilu"] = "装备牌·坐骑<br /><b>坐骑技能</b>：其他角色与你的距离+1。",
