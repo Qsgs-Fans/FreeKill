@@ -54,7 +54,8 @@ Fk:loadTranslationTable({
 
   ["slash"] = "Slash",
   [":slash"] = "Slash (basic card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Another player within your ATK range<br /><b>Effect</b>: Deal 1 DMG to the targets.<br/><b>Note</b>: You can only use 1 Slash per action phase.",
-  ["#slash-jink"] = "%src used Slash to you, please use %arg Dodge(s)",
+  ["#slash-jink"] = "%src used Slash to you, please use a Dodge",
+  ["#slash-jink-multi"] = "%src used Slash to you, please use a Dodge( %arg th, %arg2 total )",
   ["#slash_skill"] = "Choose 1 player within your ATK range, deal 1 DMG to him",
   ["#slash_skill_multi"] = "Choose up to %arg players within your ATK range. Deal 1 DMG to them",
 

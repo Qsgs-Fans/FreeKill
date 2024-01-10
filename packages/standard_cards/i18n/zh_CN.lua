@@ -54,7 +54,8 @@ Fk:loadTranslationTable{
 
   ["slash"] = "杀",
   [":slash"] = "基本牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：攻击范围内的一名角色<br /><b>效果</b>：对目标角色造成1点伤害。",
-  ["#slash-jink"] = "%src 对你使用了杀，请使用 %arg 张闪",
+  ["#slash-jink"] = "%src 对你使用了杀，请使用一张闪",
+  ["#slash-jink-multi"] = "%src 对你使用了杀，请使用一张闪（此为第 %arg 张，共需 %arg2 张）",
   ["#slash_skill"] = "选择攻击范围内的一名角色，对其造成1点伤害",
   ["#slash_skill_multi"] = "选择攻击范围内的至多%arg名角色，对这些角色各造成1点伤害",
 
