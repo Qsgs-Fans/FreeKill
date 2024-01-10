@@ -7,6 +7,7 @@
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
 ---@field public game_event_stack Stack
+---@field public cleaner_stack Stack
 ---@field public role_table string[][]
 ---@field public all_game_events GameEvent[]
 ---@field public event_recorder table<integer, GameEvent>
@@ -20,6 +21,7 @@ function GameLogic:initialize(room)
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
   self.game_event_stack = Stack:new()
+  self.cleaner_stack = Stack:new()
   self.all_game_events = {}
   self.event_recorder = {}
   self.current_event_id = 0
@@ -389,9 +391,7 @@ function GameLogic:trigger(event, target, data, refresh_only)
         skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0) or cur_event.revived
-        --                                            ^^^^^^^^^^^^^^^^^
-        -- 如果事件复活了，那么其实说明事件已经死过了，赶紧break掉
+          and room:getPlayerById(data.who).hp > 0) or cur_event.killed
 
         if broken then break end
       end
@@ -406,6 +406,138 @@ function GameLogic:trigger(event, target, data, refresh_only)
   end
 
   return broken
+end
+
+-- 此为启动事件管理器并启动第一个事件的初始函数
+function GameLogic:start()
+  local root_event = GameEvent:new(GameEvent.Game)
+
+  self:pushEvent(root_event)
+
+  -- 此时的协程：room.main_co
+  -- 事件管理器协程，同时也是Game事件
+  -- 当新事件想要exec时，就切回此处，由这里负责调度协程
+  -- 一个事件结束后也切回此处，然后resume
+  local co = coroutine.create(root_event.main_func)
+  root_event._co = co
+
+  local jump_to -- shutdown函数用
+
+  while true do
+    -- 对于cleaner和正常事件，处理更后面来的
+    local ne = self:getCurrentEvent()
+    local ce = self:getCurrentCleaner()
+    local e = ce and (ce.id >= ne.id and ce or ne) or ne
+
+    -- 如果正在jump的话，判断是否需要继续clean，否则正常继续
+    if e == ne and jump_to ~= nil then
+      e.interrupted = true
+      e.killed = e ~= jump_to
+      self:clearEvent(e)
+      coroutine.close(e._co)
+      if e == jump_to then jump_to = nil end -- shutdown结束了
+      e = self:getCurrentCleaner()
+    end
+
+    -- ret, evt解释：
+    -- * true, nil: 中止
+    -- * false, nil: 正常结束
+    -- * true, GameEvent: 中止直到某event
+    -- * false, GameEvent: 未结束，插入新event
+    -- 若jump_to不为nil，表示正在中断至某某事件
+    local ret, evt = self:resumeEvent(e)
+    if evt == nil then
+      e.interrupted = ret
+      self:clearEvent(e)
+      coroutine.close(e._co)
+    elseif ret == true then
+      -- 跳到越早发生的事件越好
+      if not jump_to then
+        jump_to = evt
+      else
+        jump_to = jump_to.id < evt.id and jump_to or evt
+      end
+    end
+  end
+end
+
+---@param event GameEvent
+function GameLogic:pushEvent(event)
+  self.game_event_stack:push(event)
+
+  self.current_event_id = self.current_event_id + 1
+  event.id = self.current_event_id
+  self.all_game_events[event.id] = event
+  self.event_recorder[event.event] = self.event_recorder[event.event] or {}
+  table.insert(self.event_recorder[event.event], event)
+end
+
+-- 一般来说从GameEvent:exec切回start再被start调用
+-- 作用是启动新事件 都是结构差不多的函数
+---@param event GameEvent
+---@return boolean, GameEvent?
+function GameLogic:resumeEvent(event, ...)
+  local ret, evt
+
+  local co = event._co
+
+  while true do
+    local err, yield_result, extra_yield_result = coroutine.resume(co, ...)
+
+    if err == false then
+      -- handle error, then break
+      if not string.find(yield_result, "__manuallyBreak") then
+        fk.qCritical(yield_result .. "\n" .. debug.traceback(co))
+      end
+      ret = true
+      break
+    end
+
+    if yield_result == "__handleRequest" then
+      -- yield to requestLoop
+      coroutine.yield(yield_result, extra_yield_result)
+
+    elseif type(yield_result) == "table" and yield_result.class
+      and yield_result:isInstanceOf(GameEvent) then
+
+      if extra_yield_result == "__newEvent" then
+        ret, evt = false, yield_result
+        break
+      elseif extra_yield_result == "__breakEvent" then
+        ret, evt = true, yield_result
+        if event.event ~= GameEvent.ClearEvent then break end
+      end
+
+    elseif yield_result == "__breakEvent" then
+      ret = true
+      if event.event ~= GameEvent.ClearEvent then break end
+
+    else
+      ret = false
+      event.exec_ret = yield_result
+      break
+    end
+  end
+
+  return ret, evt
+end
+
+---@return GameEvent
+function GameLogic:getCurrentCleaner()
+  return self.cleaner_stack.t[self.cleaner_stack.p]
+end
+
+-- 事件中的清理。
+-- cleaner单独开协程运行，exitFunc须转到上个事件的协程内执行
+-- 注意插入新event
+---@param event GameEvent
+function GameLogic:clearEvent(event)
+  if event.event == GameEvent.ClearEvent then return end
+  local ce = GameEvent(GameEvent.ClearEvent, event)
+  ce.id = self.current_event_id
+  local co = coroutine.create(ce.main_func)
+  ce._co = co
+  self.cleaner_stack:push(ce)
 end
 
 ---@return GameEvent

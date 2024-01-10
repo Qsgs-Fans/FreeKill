@@ -505,7 +505,9 @@ end
 function Stack:pop()
   if self.p == 0 then return nil end
   self.p = self.p - 1
-  return self.t[self.p + 1]
+  local ret = self.t[self.p + 1]
+  self.t[self.p + 1] = nil
+  return ret
 end
 
 
