@@ -613,6 +613,12 @@ local function sendMoveCardLog(move)
         card = move.ids,
         arg = #move.ids,
       }
+    elseif move.moveReason == fk.ReasonPutIntoDiscardPile then
+      client:appendLog{
+        type = "$PutToDiscard",
+        card = move.ids,
+        arg = #move.ids,
+      }
     end
   -- elseif move.toArea == Card.Void then
     -- nop
