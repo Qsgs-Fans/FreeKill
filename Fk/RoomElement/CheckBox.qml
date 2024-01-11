@@ -43,7 +43,7 @@ GraphicsBox {
       model: all_options
 
       MetroToggleButton {
-        // Layout.fillWidth: true
+        Layout.fillWidth: true
         text: processPrompt(modelData)
         enabled: options.indexOf(modelData) !== -1 && (root.result.length < max_num || triggered)
 

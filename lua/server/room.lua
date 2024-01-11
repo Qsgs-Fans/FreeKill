@@ -2715,7 +2715,11 @@ function Room:handleCardEffect(event, cardEffectEvent)
         local to = self:getPlayerById(cardEffectEvent.to)
         local prompt = ""
         if cardEffectEvent.from then
-          prompt = "#slash-jink:" .. cardEffectEvent.from .. "::" .. 1
+          if loopTimes == 1 then
+            prompt = "#slash-jink:" .. cardEffectEvent.from
+          else
+            prompt = "#slash-jink-multi:" .. cardEffectEvent.from .. "::" .. i .. ":" .. loopTimes
+          end
         end
 
         local use = self:askForUseCard(

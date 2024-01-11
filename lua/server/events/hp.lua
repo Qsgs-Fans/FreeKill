@@ -290,7 +290,7 @@ end
 GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
   local player, num = table.unpack(self.data)
   local room = self.room
-  if num == 0 then
+  if room.logic:trigger(fk.BeforeMaxHpChanged, player, { num = num }) or num == 0 then
     return false
   end
 
