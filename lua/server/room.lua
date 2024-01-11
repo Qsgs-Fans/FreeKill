@@ -2214,6 +2214,34 @@ function Room:closeAG(player)
   else self:doBroadcastNotify("CloseAG", "") end
 end
 
+-- TODO: 重构request机制，不然这个还得手动拿client_reply
+---@param players ServerPlayer[]
+---@param focus string
+---@param game_type string
+---@param data_table table<integer, any> @ 对应每个player
+function Room:askForMiniGame(players, focus, game_type, data_table)
+  local command = "MiniGame"
+  local game = Fk.mini_games[game_type]
+  if #players == 0 or not game then return end
+  for _, p in ipairs(players) do
+    local data = data_table[p.id]
+    p.mini_game_data = { type = game_type, data = data }
+    p.request_data = json.encode(p.mini_game_data)
+    p.default_reply = game.default_choice and json.encode(game.default_choice(p, data)) or ""
+  end
+
+  self:notifyMoveFocus(players, focus)
+  self:doBroadcastRequest(command, players)
+
+  for _, p in ipairs(players) do
+    p.mini_game_data = nil
+    if not p.reply_ready then
+      p.client_reply = p.default_reply
+      p.reply_ready = true
+    end
+  end
+end
+
 -- Show a qml dialog and return qml's ClientInstance.replyToServer
 -- Do anything you like through this function
 

@@ -88,6 +88,8 @@ local control = fk.CreateActiveSkill{
       -- }, from.hp, false))
       -- room:setPlayerMark(from, "@$a", {1,2,3})
       -- room:setPlayerMark(from, "@$b", {'slash','duel','axe'})
+      --room:askForMiniGame({from}, "test", "test", { [from.id] = {"Helloworld"} })
+      --print(from.client_reply)
       if to:getMark("mouxushengcontrolled") == 0 then
         room:addPlayerMark(to, "mouxushengcontrolled")
         from:control(to)
@@ -126,6 +128,13 @@ local control = fk.CreateActiveSkill{
   end,
 }
 --[[
+Fk:addMiniGame{
+  name = "test",
+  qml_path = "packages/test/qml/TestMini",
+  update_func = function(player, data)
+    player:doNotify("UpdateMiniGame", json.encode(data))
+  end
+}
 Fk:addPoxiMethod{
   name = "test",
   card_filter = function(to_select, selected, data, extra_data)

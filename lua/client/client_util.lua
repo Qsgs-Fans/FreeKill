@@ -748,4 +748,13 @@ function GetQmlMark(mtype, name, value, p)
   }
 end
 
+function GetMiniGame(gtype, p, data)
+  local spec = Fk.mini_games[gtype]
+  p = ClientInstance:getPlayerById(p)
+  data = json.decode(data)
+  return json.encode {
+    qml_path = type(spec.qml_path) == "function" and spec.qml_path(p, data) or spec.qml_path,
+  }
+end
+
 dofile "lua/client/i18n/init.lua"

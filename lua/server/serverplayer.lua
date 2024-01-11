@@ -5,6 +5,7 @@
 ---@field public room Room
 ---@field public next ServerPlayer
 ---@field public request_data string
+---@field public mini_game_data any
 ---@field public client_reply string
 ---@field public default_reply string
 ---@field public reply_ready boolean

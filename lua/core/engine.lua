@@ -28,6 +28,7 @@
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
+---@field public mini_games table<string, MiniGameSpec> @ 自定义多人交互表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -61,6 +62,7 @@ function Engine:initialize()
   self._custom_events = {}
   self.poxi_methods = {}
   self.qml_marks = {}
+  self.mini_games = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -356,12 +358,22 @@ function Engine:addPoxiMethod(spec)
   spec.post_select = spec.post_select or function(s) return s end
 end
 
+---@param spec QmlMarkSpec
 function Engine:addQmlMark(spec)
   assert(type(spec.name) == "string")
   if self.qml_marks[spec.name] then
     fk.qCritical("Warning: duplicated qml mark type " .. spec.name)
   end
   self.qml_marks[spec.name] = spec
+end
+
+---@param spec MiniGameSpec
+function Engine:addMiniGame(spec)
+  assert(type(spec.name) == "string")
+  if self.mini_games[spec.name] then
+    fk.qCritical("Warning: duplicated mini game type " .. spec.name)
+  end
+  self.mini_games[spec.name] = spec
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。
