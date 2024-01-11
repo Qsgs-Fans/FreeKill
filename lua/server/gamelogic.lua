@@ -439,6 +439,10 @@ function GameLogic:start()
       e = self:getCurrentCleaner()
     end
 
+    if not e then -- 没有事件，按理说不应该，平局处理
+      self.room:gameOver("")
+    end
+
     -- ret, evt解释：
     -- * true, nil: 中止
     -- * false, nil: 正常结束

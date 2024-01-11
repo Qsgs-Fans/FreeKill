@@ -182,6 +182,18 @@ request_handlers["surrender"] = function(room, id, reqlist)
   end
 end
 
+request_handlers["updatemini"] = function(room, pid, reqlist)
+  local player = room:getPlayerById(pid)
+  local data = player.mini_game_data
+  if not data then return end
+  local game = Fk.mini_games[data.type]
+  if not (game and game.update_func) then return end
+  local dat = table.simpleClone(reqlist)
+  table.remove(dat, 1)
+  table.remove(dat, 1)
+  game.update_func(player, dat)
+end
+
 request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
 end

@@ -1575,6 +1575,25 @@ callbacks["CustomDialog"] = (j) => {
   }
 }
 
+callbacks["MiniGame"] = (j) => {
+  const data = JSON.parse(j);
+  const game = data.type;
+  const dat = data.data;
+  const gdata = JSON.parse(Backend.callLuaFunction("GetMiniGame", [game, Self.id, JSON.stringify(dat)]));
+  roomScene.state = "replying";
+  roomScene.popupBox.source = AppPath + "/" + gdata.qml_path + ".qml";
+  if (dat) {
+    roomScene.popupBox.item.loadData(dat);
+  }
+}
+
+callbacks["UpdateMiniGame"] = (j) => {
+  const data = JSON.parse(j);
+  if (roomScene.popupBox.item) {
+    roomScene.popupBox.item.updateData(data);
+  }
+}
+
 callbacks["UpdateLimitSkill"] = (j) => {
   const data = JSON.parse(j);
   const id = data[0];

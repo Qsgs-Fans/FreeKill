@@ -509,7 +509,91 @@ local function sendMoveCardLog(move)
   local hidden = table.contains(move.ids, -1)
   local msgtype
 
-  if move.from and move.toArea == Card.DrawPile then
+  if move.toArea == Card.PlayerHand then
+    if move.fromArea == Card.PlayerSpecial then
+      client:appendLog{
+        type = "$GetCardsFromPile",
+        from = move.to,
+        arg = move.fromSpecialName,
+        arg2 = #move.ids,
+        card = move.ids,
+      }
+    elseif move.fromArea == Card.DrawPile then
+      client:appendLog{
+        type = "$DrawCards",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.fromArea == Card.Processing then
+      client:appendLog{
+        type = "$GotCardBack",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.fromArea == Card.DiscardPile then
+      client:appendLog{
+        type = "$RecycleCard",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.from then
+      client:appendLog{
+        type = "$MoveCards",
+        from = move.from,
+        to = { move.to },
+        arg = #move.ids,
+        card = move.ids,
+      }
+    else
+      client:appendLog{
+        type = "$PreyCardsFromPile",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    end
+  elseif move.toArea == Card.PlayerEquip then
+    client:appendLog{
+      type = "$InstallEquip",
+      from = move.to,
+      card = move.ids,
+    }
+  elseif move.toArea == Card.PlayerJudge then
+    if move.from ~= move.to and move.fromArea == Card.PlayerJudge then
+      client:appendLog{
+        type = "$LightningMove",
+        from = move.from,
+        to = { move.to },
+        card = move.ids,
+      }
+    elseif move.from then
+      client:appendLog{
+        type = "$PasteCard",
+        from = move.from,
+        to = { move.to },
+        card = move.ids,
+      }
+    end
+  elseif move.toArea == Card.PlayerSpecial then
+    client:appendLog{
+      type = "$AddToPile",
+      arg = move.specialName,
+      arg2 = #move.ids,
+      from = move.to,
+      card = move.ids,
+    }
+  elseif move.fromArea == Card.PlayerEquip then
+    client:appendLog{
+      type = "$UninstallEquip",
+      from = move.from,
+      card = move.ids,
+    }
+  -- elseif move.toArea == Card.Processing then
+    -- nop
+  elseif move.from and move.toArea == Card.DrawPile then
     msgtype = hidden and "$PutCard" or "$PutKnownCard"
     client:appendLog{
       type = msgtype,
@@ -521,85 +605,27 @@ local function sendMoveCardLog(move)
       type = "$$PutCard",
       from = move.from,
     })
-  elseif move.toArea == Card.PlayerSpecial then
-    msgtype = hidden and "$RemoveCardFromGame" or "$AddToPile"
-    client:appendLog{
-      type = msgtype,
-      arg = move.specialName,
-      arg2 = #move.ids,
-      card = move.ids,
-    }
-  elseif move.fromArea == Card.PlayerSpecial and move.to then
-    client:appendLog{
-      type = "$GetCardsFromPile",
-      from = move.to,
-      arg = move.fromSpecialName,
-      arg2 = #move.ids,
-      card = move.ids,
-    }
-  elseif move.moveReason == fk.ReasonDraw then
-    client:appendLog{
-      type = "$DrawCards",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif (move.fromArea == Card.DrawPile or move.fromArea == Card.DiscardPile)
-    and move.moveReason == fk.ReasonPrey then
-    client:appendLog{
-      type = "$PreyCardsFromPile",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif (move.fromArea == Card.Processing or move.fromArea == Card.PlayerJudge)
-    and move.toArea == Card.PlayerHand then
-    client:appendLog{
-      type = "$GotCardBack",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif move.fromArea == Card.DiscardPile and move.toArea == Card.PlayerHand then
-    client:appendLog{
-      type = "$RecycleCard",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif move.from and move.fromArea ~= Card.PlayerJudge and
-    move.toArea ~= Card.PlayerJudge and move.to and move.from ~= move.to then
-    client:appendLog{
-      type = "$MoveCards",
-      from = move.from,
-      to = { move.to },
-      arg = #move.ids,
-      card = move.ids,
-    }
-  elseif move.from and move.to and move.toArea == Card.PlayerJudge then
-    if move.fromArea == Card.PlayerJudge and move.from ~= move.to then
-      msgtype = "$LightningMove"
-    elseif move.fromArea ~= Card.PlayerJudge then
-      msgtype = "$PasteCard"
-    end
-    if msgtype then
+  elseif move.toArea == Card.DiscardPile then
+    if move.moveReason == fk.ReasonDiscard then
       client:appendLog{
-        type = msgtype,
+        type = "$DiscardCards",
         from = move.from,
-        to = { move.to },
         card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.moveReason == fk.ReasonPutIntoDiscardPile then
+      client:appendLog{
+        type = "$PutToDiscard",
+        card = move.ids,
+        arg = #move.ids,
       }
     end
+  -- elseif move.toArea == Card.Void then
+    -- nop
   end
 
-  -- TODO ...
+  -- TODO: footnote
   if move.moveReason == fk.ReasonDiscard then
-    client:appendLog{
-      type = "$DiscardCards",
-      from = move.from,
-      card = move.ids,
-      arg = #move.ids,
-    }
     client:setCardNote(move.ids, {
       type = "$$DiscardCards",
       from = move.from

@@ -386,21 +386,25 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
-  ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
-  ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
   ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
-  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
-  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
-  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
-  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
+
+  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
+  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
+
+  ["$AddToPile"] = "%arg2 张牌 %card 被作为 %from 的 %arg 移出游戏",
+
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
+  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+  ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",
 
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",
