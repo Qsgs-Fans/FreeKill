@@ -1978,21 +1978,20 @@ end
 ---@param event_data? CardEffectEvent @ 事件信息
 ---@return CardUseStruct? @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
+  pattern = pattern or card_name
   if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
-  if event_data and event_data.prohibitedCardNames and card_name then
-    local splitedCardNames = card_name:split(",")
-    splitedCardNames = table.filter(splitedCardNames, function(name)
-      return not table.contains(event_data.prohibitedCardNames, name)
-    end)
-
-    if #splitedCardNames == 0 then
-      return nil
+  if event_data and event_data.prohibitedCardNames then
+    local exp = Exppattern:Parse(pattern)
+    for _, matcher in ipairs(exp.matchers) do
+      matcher.name = table.filter(matcher.name, function(name)
+        return not table.contains(event_data.prohibitedCardNames, name)
+      end)
+      if #matcher.name == 0 then return nil end
     end
-
-    card_name = table.concat(splitedCardNames, ",")
+    pattern = tostring(exp)
   end
 
   if extra_data then
@@ -2007,7 +2006,6 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or Util.DummyTable
-  pattern = pattern or card_name
   prompt = prompt or ""
 
   local askForUseCardData = {
