@@ -35,40 +35,23 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   for _, skill in ipairs(status_skills) do
     if skill:bypassTimesCheck(player, self, scope, card, to) then return true end
   end
+
   card_name = card_name or card.trueName
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
+  local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
+  table.insert(temp_suf, 1, "")
   table.insert(temp_suf, "-tmp")
+  table.insert(card_temp_suf, 1, "")
+
   return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to) or
-  (player:getMark(MarkEnum.BypassTimesLimit) ~= 0 or
-  table.find(temp_suf, function(s)
+  (card and table.find(card_temp_suf, function(s)
+    return card:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
+  end)) or
+  (table.find(temp_suf, function(s)
     return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
   end)) or
-  (to and (to:getMark(MarkEnum.BypassTimesLimitTo) ~= 0 or
-  table.find(temp_suf, function(s)
+  (to and (table.find(temp_suf, function(s)
     return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
-  end)))
-end
-
-function UsableSkill:withinDistanceLimit(player, isattack, card, to)
-  if to and to.dead then return false end
-  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
-  if not card and self.name:endsWith("_skill") then
-    card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
-  end
-  for _, skill in ipairs(status_skills) do
-    if skill:bypassDistancesCheck(player, self, card, to) then return true end
-  end
-  local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
-  table.insert(temp_suf, "-tmp")
-  return (isattack and player:inMyAttackRange(to)) or
-  (player:distanceTo(to) > 0 and player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
-  (player:getMark(MarkEnum.BypassDistancesLimit) ~= 0 or
-  table.find(temp_suf, function(s)
-    return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  end)) or
-  (to and (to:getMark(MarkEnum.BypassDistancesLimitTo) ~= 0 or
-  table.find(temp_suf, function(s)
-    return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
   end)))
 end
 

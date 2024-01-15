@@ -1994,14 +1994,14 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
     pattern = tostring(exp)
   end
 
-  if extra_data then
-    if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
-    end
-    if extra_data.bypass_times == nil or extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
-    end
-  end
+  -- if extra_data then
+  --   if extra_data.bypass_distances then
+  --     player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
+  --   end
+  --   if extra_data.bypass_times == nil or extra_data.bypass_times then
+  --     player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
+  --   end
+  -- end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable

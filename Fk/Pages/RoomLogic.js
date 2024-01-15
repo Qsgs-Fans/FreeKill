@@ -570,7 +570,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       const id = photo.playerid;
       const ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
-        [card, id, selected_targets]
+        [card, id, selected_targets, JSON.stringify(roomScene.extra_data)]
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
@@ -603,7 +603,7 @@ function enableTargets(card) { // card: int | { skill: string, subcards: int[] }
       )) && (roomScene.autoPending || !JSON.parse(Backend.callLuaFunction(
         "CardProhibitedUse", [card])));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id, JSON.stringify(roomScene.extra_data)]));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
@@ -648,7 +648,7 @@ function updateSelectedTargets(playerid, selected) {
       const id = photo.playerid;
       const ret = JSON.parse(Backend.callLuaFunction(
         "CanUseCardToTarget",
-        [card, id, selected_targets]
+        [card, id, selected_targets, JSON.stringify(roomScene.extra_data)]
       ));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
@@ -681,7 +681,7 @@ function updateSelectedTargets(playerid, selected) {
       )) && (roomScene.autoPending || !JSON.parse(Backend.callLuaFunction(
         "CardProhibitedUse", [card])));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]));
+      okButton.enabled = JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id, JSON.stringify(roomScene.extra_data)]));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {

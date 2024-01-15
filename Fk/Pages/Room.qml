@@ -483,7 +483,7 @@ Item {
         && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
 
         const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
-        if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
+        if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id, JSON.stringify(roomScene.extra_data)]))) {
           skills.unshift("_normal_use");
         }
         specialCardSkills.model = skills;
