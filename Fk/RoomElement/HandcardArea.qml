@@ -46,7 +46,7 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
-      card.showDetail = false;
+      // card.showDetail = false;
       card.selectedChanged.disconnect(adjustCards);
       card.prohibitReason = "";
     }
