@@ -3335,6 +3335,8 @@ function Room:shuffleDrawPile()
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
 
+  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
+
   self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end
 
