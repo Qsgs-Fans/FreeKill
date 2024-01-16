@@ -96,12 +96,13 @@ end
 --- 获取武将所有技能。
 function General:getSkillNameList(include_lord)
   local ret = {}
-  for _, skill in ipairs(table.connect(self.skills, self.other_skills)) do
+  for _, skill in ipairs(self.skills) do
     if include_lord or not skill.lordSkill then
       table.insert(ret, skill.name)
     end
   end
 
+  table.insertTable(ret, self.other_skills)
   return ret
 end
 
