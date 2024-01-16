@@ -363,13 +363,13 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
---- 通过名字检索获取玩家是否存在对应私人牌堆。
+--- 通过名字检索获取玩家对应的私人牌堆。
 ---@param name string @ 私人牌堆名
 function Player:getPile(name)
   return table.simpleClone(self.special_cards[name]) or {}
 end
 
---- 通过ID检索获取玩家是否存在对应私人牌堆。
+--- 通过ID检索获取玩家对应的私人牌堆。
 ---@param id integer @ 私人牌堆ID
 ---@return string?
 function Player:getPileNameOfId(id)
