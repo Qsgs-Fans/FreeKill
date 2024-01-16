@@ -366,7 +366,7 @@ end
 --- 通过名字检索获取玩家是否存在对应私人牌堆。
 ---@param name string @ 私人牌堆名
 function Player:getPile(name)
-  return self.special_cards[name] or {}
+  return table.simpleClone(self.special_cards[name]) or {}
 end
 
 --- 通过ID检索获取玩家是否存在对应私人牌堆。
