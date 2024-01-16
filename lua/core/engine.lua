@@ -275,8 +275,8 @@ end
 ---@param name string @ 要查询的武将名字
 ---@return string[] @ 这个武将对应的同名武将列表
 function Engine:getSameGenerals(name)
-  local tmp = name:split("__")
-  local tName = tmp[#tmp]
+  if not self.generals[name] then return {} end
+  local tName = self.generals[name].trueName
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
     return g ~= name and self.generals[g] ~= nil and self:canUseGeneral(g)
