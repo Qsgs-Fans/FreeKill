@@ -90,6 +90,8 @@ local control = fk.CreateActiveSkill{
       -- room:setPlayerMark(from, "@$b", {'slash','duel','axe'})
       --room:askForMiniGame({from}, "test", "test", { [from.id] = {"Helloworld"} })
       --print(from.client_reply)
+      -- p(Fk.generals[to.general]:getSkillNameList())
+      -- p(Fk.generals[to.general]:getSkillNameList(true))
       if to:getMark("mouxushengcontrolled") == 0 then
         room:addPlayerMark(to, "mouxushengcontrolled")
         from:control(to)
