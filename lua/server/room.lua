@@ -3240,7 +3240,7 @@ function Room:recastCard(card_ids, who, skillName)
     card = card_ids,
     arg = skillName,
   }
-  return self:drawCards(who, #card_ids, skillName) or {}
+  return self:drawCards(who, #card_ids, skillName)
 end
 
 --- 根据拼点信息开始拼点。
