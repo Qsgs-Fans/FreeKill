@@ -1172,6 +1172,16 @@ local role_getlogic = function()
       room:broadcastProperty(lord, "kingdom")
       room:setDeputyGeneral(lord, deputy)
       room:broadcastProperty(lord, "deputyGeneral")
+      local lord_skills = Fk.generals[lord.general]:getSkillNameList(true)
+      if lord.deputyGeneral and lord.deputyGeneral ~= "" then
+        table.insertTableIfNeed(lord_skills, Fk.generals[lord.deputyGeneral]:getSkillNameList(true))
+      end
+      for _, skill in ipairs(lord_skills) do
+        room:doBroadcastNotify("AddSkill", json.encode{
+          lord.id,
+          skill
+        })
+      end
     end
 
     local nonlord = room:getOtherPlayers(lord, true)

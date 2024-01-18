@@ -207,7 +207,7 @@ local revealProhibited = fk.CreateInvaliditySkill {
       end
       local generalName = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
       local general = Fk.generals[generalName]
-      if table.contains(general:getSkillNameList(), sname) then
+      if table.contains(general:getSkillNameList(true), sname) then
         return true
       end
     end
@@ -223,7 +223,7 @@ local revealSkill = fk.CreateActiveSkill{
     local choiceList = {}
     if (Self.general == "anjiang" and not Self:prohibitReveal()) then
       local general = Fk.generals[Self:getMark("__heg_general")]
-      for _, sname in ipairs(general:getSkillNameList()) do
+      for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
           table.insert(choiceList, "revealMain")
@@ -233,7 +233,7 @@ local revealSkill = fk.CreateActiveSkill{
     end
     if (Self.deputyGeneral == "anjiang" and not Self:prohibitReveal(true)) then
       local general = Fk.generals[Self:getMark("__heg_deputy")]
-      for _, sname in ipairs(general:getSkillNameList()) do
+      for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
           table.insert(choiceList, "revealDeputy")

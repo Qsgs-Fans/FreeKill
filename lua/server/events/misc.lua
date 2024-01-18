@@ -19,12 +19,12 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
 
   if data.general and data.general ~= "" and data.general ~= player.general then
     local originalGeneral = Fk.generals[player.general] or Fk.generals["blank_shibing"]
-    local originalSkills = originalGeneral and originalGeneral:getSkillNameList() or Util.DummyTable
+    local originalSkills = originalGeneral and originalGeneral:getSkillNameList(true) or Util.DummyTable
     table.insertTableIfNeed(skills, table.map(originalSkills, function(e)
       return "-" .. e
     end))
     local newGeneral = Fk.generals[data.general] or Fk.generals["blank_shibing"]
-    for _, name in ipairs(newGeneral:getSkillNameList()) do
+    for _, name in ipairs(newGeneral:getSkillNameList(data.isLord)) do
       local s = Fk.skills[name]
       if not s.relate_to_place or s.relate_to_place == "m" then
         table.insertIfNeed(skills, name)
@@ -45,14 +45,14 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
 
   if data.deputyGeneral and data.deputyGeneral ~= player.deputyGeneral then
     local originalDeputy = Fk.generals[player.deputyGeneral] or Fk.generals["blank_shibing"]
-    local originalSkills = originalDeputy and originalDeputy:getSkillNameList() or Util.DummyTable
+    local originalSkills = originalDeputy and originalDeputy:getSkillNameList(true) or Util.DummyTable
     table.insertTableIfNeed(skills, table.map(originalSkills, function(e)
       return "-" .. e
     end))
 
     if data.deputyGeneral ~= "" then
       local newDeputy = Fk.generals[data.deputyGeneral] or Fk.generals["blank_shibing"]
-      for _, name in ipairs(newDeputy:getSkillNameList()) do
+      for _, name in ipairs(newDeputy:getSkillNameList(data.isLord)) do
         local s = Fk.skills[name]
         if not s.relate_to_place or s.relate_to_place == "d" then
           table.insertIfNeed(skills, name)
