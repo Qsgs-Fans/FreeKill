@@ -414,6 +414,11 @@ Fk:loadTranslationTable{
   ["$change_hero"] = "敌军色厉内荏，可筑假城以退敌！",
 
   ["~mouxusheng"] = "来世，愿再为我江东之臣……",
+
+  ["heal_hp"] = "回复体力",
+  ["lose_max_hp"] = "减少体力上限",
+  ["heal_max_hp"] = "增加体力上限",
+  ["revive"] = "复活",
 }
 
 return { extension }
