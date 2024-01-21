@@ -215,7 +215,10 @@ end
 ---@param mark string @ 标记
 ---@return any
 function Player:getMark(mark)
-  return (self.mark[mark] or 0)
+  local mark = self.mark[mark]
+  if not mark then return 0 end
+  if type(mark) == "table" then return table.simpleClone(mark) end
+  return mark
 end
 
 --- 判定角色是否拥有对应的Mark。
