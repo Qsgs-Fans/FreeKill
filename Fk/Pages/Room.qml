@@ -147,10 +147,7 @@ Item {
     text: Backend.translate("Add Robot")
     visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
-    enabled: {
-      const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
-      config.serverEnableBot && data.enableAI
-    }
+    enabled: config.serverEnableBot
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
@@ -250,7 +247,6 @@ Item {
             + Backend.translate("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
             + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
             + (data.enableDeputy ? " " + Backend.translate("IncludeDeputy") : "")
-            + (data.enableAI ? "<br />" + Backend.translate("IncludeAI") : "")
             + '<br />' + Backend.translate('CardPackages') + cardpack.map(e => {
               let ret = Backend.translate(e);
               if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
