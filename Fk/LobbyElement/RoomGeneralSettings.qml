@@ -151,6 +151,13 @@ Flickable {
         checked: Debugging ? true : false
         text: Backend.translate("Enable deputy general")
       }
+
+      Switch {
+        id: aiCheck
+        checked: Debugging ? true : false
+        enabled: config.serverEnableBot
+        text: Backend.translate("Enable AI")
+      }
     }
 
     RowLayout {
@@ -197,6 +204,7 @@ Flickable {
             JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
               enableDeputy: deputyCheck.checked,
+              enableAI: aiCheck.checked,
               gameMode: config.preferedMode,
               disabledPack: disabledPack,
               generalNum: config.preferredGeneralNum,

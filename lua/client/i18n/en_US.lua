@@ -47,8 +47,9 @@ Fk:loadTranslationTable({
   -- ["Ready"] = "准备",
   ["Cancel Ready"] = "Cancel ready",
   ["Game Mode"] = "Game mode",
-  -- ["Enable free assign"] = "自由选将",
-  ["Enable deputy general"] = "Enable deputy character",
+  -- ["Enable free assign"] = "Free Assign",
+  ["Enable deputy general"] = "Deputy",
+  ["Enable AI"] = "Robot",
   -- ["General Settings"] = "通常设置",
   -- ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "Character packages",
@@ -145,6 +146,7 @@ Fk:loadTranslationTable({
   ["CardPackages"] = "Enabled card pacakges: ",
   ["IncludeFreeAssign"] = "<font color=\"red\">Free assign enabled</font>",
   ["IncludeDeputy"] = "<font color=\"red\">Deputy character enabled</font>",
+  ["IncludeAI"] = "<font color=\"red\">Add robot enabled</font>",
 
   -- Room
   ["$EnterRoom"] = "Successfully entered the room.",

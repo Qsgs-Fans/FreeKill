@@ -49,7 +49,8 @@ Fk:loadTranslationTable{
   ["Cancel Ready"] = "取消准备",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
-  ["Enable deputy general"] = "启用副将机制",
+  ["Enable deputy general"] = "副将机制",
+  ["Enable AI"] = "启用AI",
   ["General Settings"] = "通常设置",
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
@@ -195,6 +196,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["CardPackages"] = "使用牌堆：",
   ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
   ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
+  ["IncludeAI"] = "<font color=\"red\">可添加机器人</font>",
 
   -- Room
   ["$EnterRoom"] = "成功加入房间。",
