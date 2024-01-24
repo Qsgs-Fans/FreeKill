@@ -489,7 +489,8 @@ Item {
         && lcall("GetPlayerHandcards", Self.id).includes(card)) {
 
         const skills = lcall("GetCardSpecialSkills", card);
-        if (lcall("CanUseCard", card, Self.id, JSON.stringify(roomScene.extra_data))) {
+        if (lcall("CanUseCard", card, Self.id,
+                  JSON.stringify(roomScene.extra_data))) {
           skills.unshift("_normal_use");
         }
         specialCardSkills.model = skills;

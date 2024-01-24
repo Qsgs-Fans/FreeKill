@@ -608,7 +608,8 @@ function enableTargets(card) {
         lcall("CardFitPattern", card, roomScene.responding_card) &&
         (roomScene.autoPending || !lcall("CardProhibitedUse", card));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id, JSON.stringify(roomScene.extra_data));
+      okButton.enabled = lcall("CanUseCard", card, Self.id,
+                               JSON.stringify(roomScene.extra_data));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
@@ -681,7 +682,8 @@ function updateSelectedTargets(playerid, selected) {
         lcall("CardFitPattern", card, roomScene.responding_card) &&
         (roomScene.autoPending || !lcall("CardProhibitedUse", card));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id, JSON.stringify(roomScene.extra_data));
+      okButton.enabled = lcall("CanUseCard", card, Self.id,
+                               JSON.stringify(roomScene.extra_data));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {

@@ -218,7 +218,8 @@ RowLayout {
     const ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
       cards[i].prohibitReason = "";
-      if (lcall("CanUseCard", cards[i].cid, Self.id, JSON.stringify(roomScene.extra_data))) {
+      if (lcall("CanUseCard", cards[i].cid, Self.id,
+                JSON.stringify(roomScene.extra_data))) {
         ids.push(cards[i].cid);
       } else {
         // cannot use? considering special_skills
@@ -447,7 +448,8 @@ RowLayout {
         continue;
       }
 
-      item.enabled = lcall("ActiveCanUse", item.orig，JSON.stringify(roomScene.extra_data));
+      item.enabled = lcall("ActiveCanUse", item.orig,
+                           JSON.stringify(roomScene.extra_data));
     }
   }
 
