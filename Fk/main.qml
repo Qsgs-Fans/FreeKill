@@ -45,7 +45,8 @@ Window {
     StackView {
       id: mainStack
       visible: !mainWindow.busy
-      // If error occurs during loading initialItem, the program will fall into "polish()" loop
+      // If error occurs during loading initialItem
+      //   the program will fall into "polish()" loop
       // initialItem: init
       anchors.fill: parent
     }
@@ -159,7 +160,10 @@ Window {
           return;
         }
         if (mainWindow.is_pending && command !== "ChangeSelf") {
-          mainWindow.pending_message.push({ command: command, jsonData: jsonData });
+          mainWindow.pending_message.push({
+                                            command: command,
+                                            jsonData: jsonData,
+                                          });
         } else {
           if (command === "StartChangeSelf") {
             mainWindow.is_pending = true;

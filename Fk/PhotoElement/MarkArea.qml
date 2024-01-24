@@ -34,7 +34,8 @@ Item {
       width: childrenRect.width
       height: 22
       Text {
-        text: luatr(mark_name) + ' ' + (special_value !== '' ? special_value : mark_extra)
+        text: luatr(mark_name) + ' '
+              + (special_value !== '' ? special_value : mark_extra)
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -131,7 +132,9 @@ Item {
         }
       }
     } else {
-      data = data instanceof Array ? data.map((markText) => luatr(markText)).join(' ') : luatr(data);
+      data = data instanceof Array
+           ? data.map((markText) => luatr(markText)).join(' ')
+           : luatr(data);
     }
 
     if (modelItem) {

@@ -118,7 +118,8 @@ Item {
 
         TapHandler {
           onTapped: {
-            mainStack.push(Qt.createComponent("../Tutorial.qml").createObject());
+            mainStack.push(Qt.createComponent("../Tutorial.qml")
+                           .createObject());
           }
         }
       }

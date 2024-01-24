@@ -80,7 +80,8 @@ ColumnLayout {
     }
     Button {
       text: luatr("Update Password")
-      enabled: oldPassword.text !== "" && newPassword.text !== "" && !opTimer.running
+      enabled: oldPassword.text !== "" && newPassword.text !== ""
+               && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
         opTimer.start();

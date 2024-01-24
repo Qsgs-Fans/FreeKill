@@ -187,7 +187,8 @@ Item {
           return "";
         }
         if (deputyGeneral) {
-          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+          return SkinBank.getGeneralExtraPic(general, "dual/")
+              ?? SkinBank.getGeneralPicture(general);
         } else {
           return SkinBank.getGeneralPicture(general)
         }
@@ -204,7 +205,8 @@ Item {
       source: {
         const general = deputyGeneral;
         if (deputyGeneral != "") {
-          return SkinBank.getGeneralExtraPic(general, "dual/") ?? SkinBank.getGeneralPicture(general);
+          return SkinBank.getGeneralExtraPic(general, "dual/")
+              ?? SkinBank.getGeneralPicture(general);
         } else {
           return "";
         }
@@ -350,7 +352,8 @@ Item {
     anchors.right: parent.right
     anchors.bottomMargin: -8
     anchors.rightMargin: 4
-    source: SkinBank.PHOTO_DIR + (isOwner ? "owner" : (ready ? "ready" : "notready"))
+    source: SkinBank.PHOTO_DIR +
+            (isOwner ? "owner" : (ready ? "ready" : "notready"))
     visible: screenName != "" && !roomScene.isStarted
   }
 
@@ -459,7 +462,14 @@ Item {
     x: -6
 
     Text {
-      text: (root.maxCard === root.hp || root.hp < 0 ) ? (root.handcards) : (root.handcards + "/" + (root.maxCard < 900 ? root.maxCard : "∞"))
+      text: {
+        if (root.maxCard === root.hp || root.hp < 0) {
+          return root.handcards;
+        } else {
+          const maxCard = root.maxCard < 900 ? root.maxCard : "∞";
+          return root.handcards + "/" + maxCard;
+        }
+      }
       font.family: fontLibian.name
       font.pixelSize: (root.maxCard === root.hp || root.hp < 0 ) ? 32 : 27
       //font.weight: 30
@@ -471,7 +481,8 @@ Item {
     }
 
     TapHandler {
-      enabled: (root.state != "candidate" || !root.selectable) && root.playerid !== Self.id
+      enabled: (root.state != "candidate" || !root.selectable)
+               && root.playerid !== Self.id
       onTapped: {
         const params = { name: "hand_card" };
         let data = lcall("GetPlayerHandcards", root.playerid);
@@ -531,7 +542,12 @@ Item {
     anchors.topMargin: 2
 
     font.pixelSize: 16
-    text: (config.blockedUsers && config.blockedUsers.includes(screenName) ? luatr("<Blocked> ") : "") + screenName
+    text: {
+      let ret = screenName;
+      if (config.blockedUsers?.includes(screenName))
+        ret = luatr("<Blocked> ") + ret;
+      return ret;
+    }
 
     glow.radius: 8
   }
@@ -548,7 +564,10 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
     anchors.bottomMargin: -32
-    property var seatChr: ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
+    property var seatChr: [
+      "一", "二", "三", "四", "五", "六",
+      "七", "八", "九", "十", "十一", "十二",
+    ]
     font.family: fontLi2.name
     font.pixelSize: 32
     text: seatChr[seatNumber - 1]

@@ -131,7 +131,8 @@ GraphicsBox {
       const index = cards.findIndex(data => item.cid === data.cid);
       result && (result.pos = cardsPosition[index]);
 
-      const cardPos = cardsPosition[index] === 0 ? (result ? 1 : 0) : (result ? 0 : 1);
+      const cardPos = cardsPosition[index] === 0 ? (result ? 1 : 0)
+                                                 : (result ? 0 : 1);
       const curArea = areaRepeater.itemAt(cardPos);
       const curBox = curArea.cardRepeater.itemAt(index);
       const curPos = mapFromItem(curArea, curBox.x, curBox.y);

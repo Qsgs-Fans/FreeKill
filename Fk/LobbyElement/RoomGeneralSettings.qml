@@ -115,7 +115,8 @@ Flickable {
       visible: {
         //config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
         const avail = lcall("GetAvailableGeneralsNum");
-        const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
+        const ret = avail <
+                  config.preferredGeneralNum * config.preferedPlayerNum;
         return ret;
       }
       text: luatr("No enough generals")
@@ -189,13 +190,15 @@ Flickable {
             let t = generals.filter(g => !disabledGenerals.includes(g));
             if (t.length === 0) {
               disabledPack.push(pk);
-              disabledGenerals = disabledGenerals.filter(g1 => !generals.includes(g1));
+              disabledGenerals = disabledGenerals
+                .filter(g1 => !generals.includes(g1));
             }
           }
 
           ClientInstance.notifyServer(
             "CreateRoom",
-            JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
+            JSON.stringify([roomName.text, playerNum.value,
+                            config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
               enableDeputy: deputyCheck.checked,
               gameMode: config.preferedMode,

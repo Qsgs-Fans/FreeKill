@@ -23,9 +23,11 @@ MetroButton {
 
   onClicked: {
     if (detailed) {
-      roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/DetailedChoiceBox.qml");
+      roomScene.popupBox.sourceComponent =
+        Qt.createComponent("../RoomElement/DetailedChoiceBox.qml");
     } else {
-      roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChoiceBox.qml");
+      roomScene.popupBox.sourceComponent =
+        Qt.createComponent("../RoomElement/ChoiceBox.qml");
     }
     const box = roomScene.popupBox.item;
     box.options = choices;

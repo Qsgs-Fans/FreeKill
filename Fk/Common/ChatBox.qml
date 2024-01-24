@@ -54,7 +54,8 @@ Rectangle {
           anchors.centerIn: parent
           source: "../../image/emoji/" + index
         }
-        onClicked: chatEdit.insert(chatEdit.cursorPosition, "{emoji" + index + "}");
+        onClicked: chatEdit.insert(chatEdit.cursorPosition,
+                                   "{emoji" + index + "}");
       }
     }
 

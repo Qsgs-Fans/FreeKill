@@ -32,7 +32,8 @@ GraphicsBox {
         spacing: 5
 
         property int areaCapacity: modelData
-        property string areaName: index < areaNames.length ? qsTr(areaNames[index]) : ""
+        property string areaName: index < areaNames.length
+                                  ? qsTr(areaNames[index]) : ""
 
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter

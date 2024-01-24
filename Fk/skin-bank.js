@@ -33,7 +33,8 @@ const searchPkgResource = function(path, name, suffix) {
 function getGeneralExtraPic(name, extra) {
   const data = lcall("GetGeneralData", name);
   const extension = data.extension;
-  const path = AppPath + "/packages/" + extension + "/image/generals/" + extra + name + ".jpg";
+  const path = AppPath + "/packages/" + extension + "/image/generals/"
+             + extra + name + ".jpg";
   if (Backend.exists(path)) {
     return path;
   }
@@ -42,7 +43,8 @@ function getGeneralExtraPic(name, extra) {
 function getGeneralPicture(name) {
   const data = lcall("GetGeneralData", name);
   const extension = data.extension;
-  const path = AppPath + "/packages/" + extension + "/image/generals/" + name + ".jpg";
+  const path = AppPath + "/packages/" + extension + "/image/generals/"
+             + name + ".jpg";
   if (Backend.exists(path)) {
     return path;
   }
@@ -61,7 +63,8 @@ function getCardPicture(cidOrName) {
     name = data.name;
   }
 
-  let path = AppPath + "/packages/" + extension + "/image/card/" + name + ".png";
+  let path = AppPath + "/packages/" + extension + "/image/card/"
+           + name + ".png";
   if (Backend.exists(path)) {
     return path;
   } else {
@@ -74,7 +77,8 @@ function getCardPicture(cidOrName) {
 function getDelayedTrickPicture(name) {
   const extension = lcall("GetCardExtensionByName", name);
 
-  let path = AppPath + "/packages/" + extension + "/image/card/delayedTrick/" + name + ".png";
+  let path = AppPath + "/packages/" + extension + "/image/card/delayedTrick/"
+           + name + ".png";
   if (Backend.exists(path)) {
     return path;
   } else {
@@ -89,7 +93,8 @@ function getEquipIcon(cid, icon) {
   const data = lcall("GetCardData", cid);
   const extension = data.extension;
   const name = icon || data.name;
-  let path = AppPath + "/packages/" + extension + "/image/card/equipIcon/" + name + ".png";
+  let path = AppPath + "/packages/" + extension + "/image/card/equipIcon/"
+           + name + ".png";
   if (Backend.exists(path)) {
     return path;
   } else {

@@ -76,7 +76,8 @@ Item {
             text: {
               const win = winner.split("+").indexOf(role) !== -1;
               const winStr = win ? luatr("Game Win") : luatr("Game Lose");
-              return "<b>" + luatr(_general) + "</b> " + luatr(role) + " " + winStr;
+              return "<b>" + luatr(_general) + "</b> " + luatr(role)
+                   + " " + winStr;
             }
             font.pixelSize: 20
             textFormat: Text.RichText
@@ -89,7 +90,7 @@ Item {
               const h = repDate.slice(8,10);
               const m = repDate.slice(10,12);
               const s = repDate.slice(12,14);
-              const dateStr = y + "-" + month + "-" + d + " " + h + ":" + m + ":" + s;
+              const dateStr = `${y}-${month}-${d} ${h}:${m}:${s}`;
 
               return playerName + " " + luatr(gameMode) + " " + dateStr
             }

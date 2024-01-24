@@ -22,7 +22,8 @@ GraphicsBox {
   title.text: luatr("$ChooseGeneral").arg(choiceNum) +
     (config.enableFreeAssign ? "(" + luatr("Enable free assign") + ")" : "")
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
-  height: body.implicitHeight + body.anchors.topMargin + body.anchors.bottomMargin
+  height: body.implicitHeight + body.anchors.topMargin +
+          body.anchors.bottomMargin
 
   Column {
     id: body
@@ -32,7 +33,8 @@ GraphicsBox {
 
     Item {
       id: generalArea
-      width: (generalList.count > 8 ? Math.ceil(generalList.count / 2) : Math.max(3, generalList.count)) * 97
+      width: (generalList.count > 8 ? Math.ceil(generalList.count / 2)
+                                    : Math.max(3, generalList.count)) * 97
       height: generalList.count > 8 ? 290 : 150
       z: 1
 
@@ -43,8 +45,23 @@ GraphicsBox {
         Item {
           width: 93
           height: 130
-          x: (index % Math.ceil(generalList.count / (generalList.count > 8 ? 2 : 1))) * 98 + (generalList.count > 8 && index > generalList.count / 2 && generalList.count % 2 == 1 ? 50 : 0)
-          y: generalList.count <= 8 ? 0 : (index < generalList.count / 2 ? 0 : 135)
+          x: {
+            const count = generalList.count;
+            let columns = generalList.count;
+            if (columns > 8) {
+              columns = Math.ceil(columns / 2);
+            }
+
+            let ret = (index % columns) * 98;
+            if (count > 8 && index > count / 2 && count % 2 == 1)
+              ret += 50;
+            return ret;
+          }
+          y: {
+            if (generalList.count <= 8)
+              return 0;
+            return index < generalList.count / 2 ? 0 : 135;
+          }
         }
       }
     }
@@ -94,7 +111,9 @@ GraphicsBox {
           id: convertBtn
           visible: !convertDisabled
           text: luatr("Same General Convert")
-          onClicked: roomScene.startCheat("SameConvert", { cards: generalList });
+          onClicked: {
+            roomScene.startCheat("SameConvert", { cards: generalList });
+          }
         }
 
         MetroButton {
@@ -233,7 +252,8 @@ GraphicsBox {
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
-      item.selectable = needSameKingdom ? isHegPair(selectedItem[0], item) : true;
+      item.selectable = needSameKingdom ? isHegPair(selectedItem[0], item)
+                                        : true;
       if (selectedItem.indexOf(item) != -1)
         continue;
 

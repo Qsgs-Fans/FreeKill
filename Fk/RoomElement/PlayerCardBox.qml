@@ -9,7 +9,11 @@ GraphicsBox {
   id: root
   property string prompt
 
-  title.text: prompt === "" ? (root.multiChoose ? luatr("$ChooseCards").arg(root.min).arg(root.max) : luatr("$ChooseCard")) : Util.processPrompt(prompt)
+  title.text: prompt === "" ?
+                (root.multiChoose ?
+                   luatr("$ChooseCards").arg(root.min).arg(root.max)
+                   : luatr("$ChooseCard"))
+                : Util.processPrompt(prompt)
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -98,7 +102,8 @@ GraphicsBox {
     anchors.bottom: parent.bottom
     text: luatr("OK")
     visible: root.multiChoose
-    enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
+    enabled: root.selected_ids.length <= root.max
+             && root.selected_ids.length >= root.min
     onClicked: root.cardsSelected(root.selected_ids)
   }
 

@@ -30,7 +30,11 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     x: 3
 
-    source: sealed ? (SkinBank.EQUIP_ICON_DIR + "sealed") : (icon ? SkinBank.getEquipIcon(cid, icon) : "")
+    source: {
+      if (sealed)
+        return SkinBank.EQUIP_ICON_DIR + "sealed";
+      return icon ? SkinBank.getEquipIcon(cid, icon) : "";
+    }
   }
 
   Image {

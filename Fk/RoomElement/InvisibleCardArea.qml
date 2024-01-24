@@ -94,7 +94,8 @@ Item {
       const parentPos = roomScene.mapFromItem(root, 0, 0);
       for (i = 0; i < pendingInput.length; i++) {
         card = pendingInput[i];
-        card.origX = parentPos.x - card.width / 2 + ((i - pendingInput.length / 2) * 15);
+        card.origX = parentPos.x - card.width / 2
+                   + ((i - pendingInput.length / 2) * 15);
         card.origY = parentPos.y - card.height / 2;
         card.origOpacity = 0;
         card.destroyOnStop();

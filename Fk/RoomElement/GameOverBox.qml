@@ -18,7 +18,8 @@ GraphicsBox {
     spacing: 10
 
     Text {
-      text: winner !== "" ? luatr("$Winner").arg(luatr(winner)) : luatr("$NoWinner")
+      text: winner !== "" ? luatr("$Winner").arg(luatr(winner))
+                          : luatr("$NoWinner")
       color: "#E4D5A0"
     }
 

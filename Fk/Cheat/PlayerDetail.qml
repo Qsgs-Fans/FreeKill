@@ -80,7 +80,10 @@ Flickable {
       }
 
       MetroButton {
-        text: config.blockedUsers.indexOf(screenName.text) === -1 ? luatr("Block Chatter") : luatr("Unblock Chatter")
+        text: {
+          const blocked = !config.blockedUsers.includes(screenName.text);
+          return blocked ? luatr("Block Chatter") : luatr("Unblock Chatter");
+        }
         enabled: pid !== Self.id && pid > 0
         onClicked: {
           const idx = config.blockedUsers.indexOf(screenName.text);

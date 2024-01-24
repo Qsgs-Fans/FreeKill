@@ -44,7 +44,7 @@ Flickable {
                        "/" + data.maxHp);
       if (data.companions.length > 0){
         let ret = '';
-        ret += "<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
+        ret +="<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
         data.companions.forEach(t => {
           ret += luatr(t) + ' '
         });

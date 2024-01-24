@@ -34,7 +34,8 @@ GraphicsBox {
       MetroToggleButton {
         Layout.fillWidth: true
         text: Util.processPrompt(modelData)
-        enabled: options.indexOf(modelData) !== -1 && (root.result.length < max_num || triggered)
+        enabled: options.indexOf(modelData) !== -1
+                 && (root.result.length < max_num || triggered)
 
         onClicked: {
           if (triggered) {

@@ -302,7 +302,8 @@ RowLayout {
 
   function extractWoodenOx() {
     const pile_data = lcall("GetAllPiles", self.playerid);
-    if (!roomScene.autoPending) { // 先屏蔽AskForUseActiveSkill再说，这下只剩使用打出以及出牌阶段了
+    if (!roomScene.autoPending) {
+      // 先屏蔽AskForUseActiveSkill再说，这下只剩使用打出以及出牌阶段了
       for (let name in pile_data) {
         if (name.endsWith("&")) expandPile(name);
       }
@@ -315,7 +316,8 @@ RowLayout {
 
     const enabled_cards = [];
     const targets = roomScene.selected_targets;
-    const prompt = lcall("ActiveSkillPrompt", pending_skill, pendings, targets);
+    const prompt = lcall("ActiveSkillPrompt", pending_skill, pendings,
+                         targets);
     if (prompt !== "") {
       roomScene.setPrompt(Util.processPrompt(prompt));
     }

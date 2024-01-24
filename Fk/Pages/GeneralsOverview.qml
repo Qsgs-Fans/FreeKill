@@ -195,7 +195,8 @@ Item {
 
     function findDeathAudio(general) {
       const extension = lcall("GetGeneralData", general).extension;
-      const fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
+      const fname = AppPath + "/packages/" + extension + "/audio/death/"
+                  + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
       } else {
@@ -210,8 +211,8 @@ Item {
       audioModel.clear();
 
       if (data.companions.length > 0){
-        let ret = '';
-        ret += "<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
+        let ret = "<font color=\"slategrey\"><b>" + luatr("Companions")
+                + "</b>: ";
         data.companions.forEach(t => {
           ret += luatr(t) + ' '
         });
@@ -279,7 +280,8 @@ Item {
                   if (name.endsWith("_win_audio")) {
                     return "胜利语音";
                   }
-                  return luatr(name) + (idx ? " (" + idx.toString() + ")" : "");
+                  return luatr(name) + (idx ? " (" + idx.toString() + ")"
+                                            : "");
                 }
                 font.bold: true
                 font.pixelSize: 14
@@ -291,7 +293,8 @@ Item {
                   const orig_trans = luatr(orig);
 
                   // try general specific
-                  const orig_g = '$' + name + '_' + detailGeneralCard.name + (idx ? idx.toString() : "");
+                  const orig_g = '$' + name + '_' + detailGeneralCard.name
+                               + (idx ? idx.toString() : "");
                   const orig_g_trans = luatr(orig_g);
 
                   if (orig_g_trans !== orig_g) {
@@ -346,7 +349,8 @@ Item {
           onClicked: {
             const general = generalDetail.general
             const extension = lcall("GetGeneralData", general).extension;
-            Backend.playSound("./packages/" + extension + "/audio/death/" + general);
+            Backend.playSound("./packages/" + extension + "/audio/death/"
+                              + general);
           }
         }
       }
@@ -394,14 +398,16 @@ Item {
 
     Button {
       id: banButton
-      text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ? 'ResumeGeneral' : 'BanGeneral')
+      text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ?
+                      'ResumeGeneral' : 'BanGeneral')
       visible: detailGeneralCard.name
       onClicked: {
         const { disabledGenerals } = config;
         const { name } = detailGeneralCard;
 
         if (banButton.text === luatr('ResumeGeneral')) {
-          const deleteIndex = disabledGenerals.findIndex((general) => general === name);
+          const deleteIndex = disabledGenerals.findIndex(
+                                (general) => general === name);
           if (deleteIndex === -1) {
             return;
           }
@@ -425,7 +431,8 @@ Item {
 
     Button {
       text: luatr("Set as Avatar")
-      enabled: detailGeneralCard.name !== "" && !opTimer.running && Self.avatar !== detailGeneralCard.name
+      enabled: detailGeneralCard.name !== "" && !opTimer.running
+               && Self.avatar !== detailGeneralCard.name
       onClicked: {
         mainWindow.busy = true;
         opTimer.start();

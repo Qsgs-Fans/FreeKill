@@ -249,17 +249,17 @@ Item {
             + luatr("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
             + luatr("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
             + luatr("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
-            + (data.enableFreeAssign ? "<br />" + luatr("IncludeFreeAssign") : "")
+            + (data.enableFreeAssign ? "<br />" + luatr("IncludeFreeAssign")
+                                     : "")
             + (data.enableDeputy ? " " + luatr("IncludeDeputy") : "")
             + '<br />' + luatr('CardPackages') + cardpack.map(e => {
               let ret = luatr(e);
-              if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
+              // TODO: 这种东西最好还是变量名规范化= =
+              if (ret.search(/特殊牌|衍生牌/) === -1) {
                 ret = "<b>" + ret + "</b>";
               }
               return ret;
-            }).join('，')
-            //+ '<br /><b>禁包</b>：' + data.disabledPack.map(e => luatr(e)).join('，')
-            //+ '<br /><b>禁将</b>：' + data.disabledGenerals.map(e => luatr(e)).join('，')
+            }).join('，');
         }
       }
     }
@@ -446,7 +446,8 @@ Item {
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
-          if (roomScene.state == "notactive" || roomScene.state == "replying") {
+          if (roomScene.state === "notactive"
+                  || roomScene.state === "replying") {
             return false;
           }
           return true;
@@ -483,7 +484,8 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
-      if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
+      if (typeof card === "number" && card !== -1
+        && roomScene.state === "playing"
         && lcall("GetPlayerHandcards", Self.id).includes(card)) {
 
         const skills = lcall("GetCardSpecialSkills", card);
@@ -526,7 +528,8 @@ Item {
           const totalMin = Math.floor(replayerDuration / 60);
           const totalSec = replayerDuration % 60;
 
-          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin + ":" + totalSec;
+          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin
+               + ":" + totalSec;
         }
       }
 
@@ -706,7 +709,8 @@ Item {
       Button {
         id: skipNullificationButton
         text: luatr("SkipNullification")
-        visible: !!extra_data.useEventId && !skippedUseEventId.find(id => id === extra_data.useEventId)
+        visible: !!extra_data.useEventId
+                 && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
           Logic.doCancelButton();
@@ -1100,7 +1104,8 @@ Item {
   }
 
   function getCurrentCardUseMethod() {
-    if (specialCardSkills.count === 1 && specialCardSkills.model[0] !== "_normal_use") {
+    if (specialCardSkills.count === 1
+            && specialCardSkills.model[0] !== "_normal_use") {
       return specialCardSkills.model[0];
     }
 
@@ -1116,8 +1121,10 @@ Item {
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
 
-    msg = msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
-    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    msg = msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
 
     if (raw.msg.startsWith("$")) {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
@@ -1158,10 +1165,15 @@ Item {
           //  return false;
 
           const fromItem = Logic.getPhotoOrDashboard(fromId);
-          const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+          const fromPos = mapFromItem(fromItem, fromItem.width / 2,
+                                      fromItem.height / 2);
           const toItem = Logic.getPhoto(toId);
-          const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
-          const egg = component.createObject(roomScene, { start: fromPos, end: toPos });
+          const toPos = mapFromItem(toItem, toItem.width / 2,
+                                    toItem.height / 2);
+          const egg = component.createObject(roomScene, {
+                                                 start: fromPos,
+                                                 end: toPos
+                                             });
           egg.finished.connect(() => egg.destroy());
           egg.running = true;
 
@@ -1206,7 +1218,8 @@ Item {
           i: idx,
         }));
       } catch (e) {}
-      const m = luatr("$" + skill + (gene ? "_" + gene : "") + (idx ? idx.toString() : ""));
+      const m = luatr("$" + skill + (gene ? "_" + gene : "")
+                          + (idx ? idx.toString() : ""));
       data.msg = m;
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`, data);
@@ -1300,7 +1313,7 @@ Item {
         roomScene.isOwner = d.isOwner;
       } else {
         lcall("ResetAddPlayer",
-              JSON.stringify([d.id, d.name, d.avatar, d.ready, d.gameData[3]]));
+          JSON.stringify([d.id, d.name, d.avatar, d.ready, d.gameData[3]]));
       }
       lcall("SetPlayerGameData", d.id, d.gameData);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;

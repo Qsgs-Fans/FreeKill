@@ -43,7 +43,8 @@ Item {
     id: pointToAnimation
     running: false
     ScriptAction {
-      script: Backend.playSound("./audio/system/fly" + (Math.floor(Math.random() * 2) + 1));
+      script: Backend.playSound("./audio/system/fly" +
+                                (Math.floor(Math.random() * 2) + 1));
     }
 
     ParallelAnimation {
@@ -80,7 +81,8 @@ Item {
     }
 
     ScriptAction {
-      script: Backend.playSound("./audio/system/flower" + (Math.floor(Math.random() * 2) + 1));
+      script: Backend.playSound("./audio/system/flower" +
+                                (Math.floor(Math.random() * 2) + 1));
     }
 
     ParallelAnimation {

@@ -39,7 +39,8 @@ GraphicsBox {
         id: choicetitle
         width: parent.width
         text: luatr(modelData)
-        enabled: options.indexOf(modelData) !== -1 && (root.result.length < max_num || triggered)
+        enabled: options.indexOf(modelData) !== -1
+                 && (root.result.length < max_num || triggered)
         textFont.pixelSize: 24
         anchors.top: choiceDetail.bottom
         anchors.topMargin: 8

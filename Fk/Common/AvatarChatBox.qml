@@ -18,7 +18,8 @@ Rectangle {
       avatar = "__observer";
     }
     chatLogBox.append({
-      avatar: data.general || roomScene.getPhoto(data.sender)?.general || avatar || "unknown",
+      avatar: data.general || roomScene.getPhoto(data.sender)?.general ||
+              avatar || "unknown",
       general: general,
       msg: data.msg,
       userName: data.userName,
@@ -123,7 +124,8 @@ Rectangle {
           anchors.centerIn: parent
           source: "../../image/emoji/" + index
         }
-        onClicked: chatEdit.insert(chatEdit.cursorPosition, "{emoji" + index + "}");
+        onClicked: chatEdit.insert(chatEdit.cursorPosition,
+                                   "{emoji" + index + "}");
       }
     }
 

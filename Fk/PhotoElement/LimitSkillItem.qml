@@ -64,7 +64,8 @@ Item {
       }
     } else if (skilltype === 'switch') {
       visible = true;
-      bg.source = SkinBank.LIMIT_SKILL_DIR + (usedtimes < 1 ? 'switch' : 'switch-yin');
+      bg.source = SkinBank.LIMIT_SKILL_DIR +
+        (usedtimes < 1 ? 'switch' : 'switch-yin');
     } else if (skilltype === 'quest') {
       visible = true
       if (usedtimes > 1) {

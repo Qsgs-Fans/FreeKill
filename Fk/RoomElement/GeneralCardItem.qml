@@ -29,11 +29,13 @@ CardItem {
   suit: ""
   number: 0
   footnote: ""
-  card.source: known ? SkinBank.getGeneralPicture(name) : (SkinBank.GENERALCARD_DIR + 'card-back')
+  card.source: known ? SkinBank.getGeneralPicture(name)
+                     : (SkinBank.GENERALCARD_DIR + 'card-back')
   glow.color: "white" //Engine.kingdomColor[kingdom]
 
   // FIXME: 藕！！
-  property bool heg: name.startsWith('hs__') || name.startsWith('ld__') || name.includes('heg__')
+  property bool heg: name.startsWith('hs__') || name.startsWith('ld__') ||
+                     name.includes('heg__')
 
   Image {
     source: known ? (SkinBank.GENERALCARD_DIR + "border") : ""
@@ -51,7 +53,8 @@ CardItem {
     scale: 0.6; x: 9; y: 12
     transformOrigin: Item.TopLeft
     width: 34; fillMode: Image.PreserveAspectFit
-    source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom : ""
+    source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom
+                       : ""
     visible: detailed && known
   }
 
@@ -72,7 +75,8 @@ CardItem {
         Image {
           id: subkingdomMagatama
           visible: false
-          source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom + "-magatama" : ""
+          source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) +
+                               subkingdom + "-magatama" : ""
         }
         LinearGradient {
           id: subkingdomMask
