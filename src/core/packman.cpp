@@ -393,7 +393,7 @@ clean:
 int PackMan::status(const QString &name) {
   git_repository *repo = NULL;
   int error;
-  git_status_list *status_list;
+  git_status_list *status_list = NULL;
   size_t i, maxi;
   const git_status_entry *s;
   auto path = QString("packages/%1").arg(name).toUtf8();
