@@ -128,9 +128,10 @@ end
 GameEvent.functions[GameEvent.ClearEvent] = function(self)
   local event = self.data[1]
   local logic = self.room.logic
-  event:clear_func()
+  -- 不可中断
+  Pcall(event.clear_func, event)
   for _, f in ipairs(event.extra_clear_funcs) do
-    if type(f) == "function" then f(event) end
+    if type(f) == "function" then Pcall(f, event) end
   end
 
   -- cleaner顺利执行完了，出栈吧

@@ -18,13 +18,13 @@ Item {
     width: root.height
     background: Rectangle { color: "#EEEEEEEE" }
     TabButton {
-      text: Backend.translate("General Settings")
+      text: luatr("General Settings")
     }
     TabButton {
-      text: Backend.translate("Package Settings")
+      text: luatr("Package Settings")
     }
     TabButton {
-      text: Backend.translate("Ban General Settings")
+      text: luatr("Ban General Settings")
     }
   }
 

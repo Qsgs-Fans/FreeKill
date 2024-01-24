@@ -36,7 +36,9 @@ ColumnLayout {
     id: edit
     font.pixelSize: 18
     Layout.fillWidth: true
-    validator: RegularExpressionValidator { regularExpression: /[0-9A-Za-z_]+/ }
+    validator: RegularExpressionValidator {
+      regularExpression: /[0-9A-Za-z_]+/
+    }
   }
 
   Button {

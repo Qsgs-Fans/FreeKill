@@ -7,6 +7,7 @@
 --- 同时也提供了许多常用的函数。
 ---
 ---@class Engine : Object
+---@field public extensions table<string, string[]> @ 所有mod列表及其包含的拓展包
 ---@field public packages table<string, Package> @ 所有拓展包的列表
 ---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
 ---@field public skills table<string, Skill> @ 所有的技能
@@ -44,6 +45,11 @@ function Engine:initialize()
 
   Fk = self
 
+  self.extensions = {
+    ["standard"] = { "standard" },
+    ["standard_cards"] = { "standard_cards" },
+    ["maneuvering"] = { "maneuvering" },
+  }
   self.packages = {}    -- name --> Package
   self.package_names = {}
   self.skills = {}    -- name --> Skill
@@ -142,10 +148,13 @@ function Engine:loadPackages()
       -- so dont use type(pack) == "table" here
       if type(pack) == "table" then
         if pack[1] ~= nil then
+          self.extensions[dir] = {}
           for _, p in ipairs(pack) do
+            table.insert(self.extensions[dir], p.name)
             self:loadPackage(p)
           end
         else
+          self.extensions[dir] = { pack.name }
           self:loadPackage(pack)
         end
       end

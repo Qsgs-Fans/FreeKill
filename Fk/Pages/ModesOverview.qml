@@ -51,7 +51,7 @@ Item {
           id: modeDesc
           width: parent.width - 16
           wrapMode: Text.WordWrap
-          text: Backend.translate(":" + modeList.get(listView.currentIndex).orig_name)
+          text: luatr(":" + modeList.get(listView.currentIndex).orig_name)
           textFormat: Text.MarkdownText
           font.pixelSize: 16
         }
@@ -60,7 +60,7 @@ Item {
   }
 
   Button {
-    text: Backend.translate("Quit")
+    text: luatr("Quit")
     anchors.bottom: parent.bottom
     onClicked: {
       mainStack.pop();
@@ -68,7 +68,7 @@ Item {
   }
 
   Component.onCompleted: {
-    const mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+    const mode_data = lcall("GetGameModes");
     for (let d of mode_data) {
       modeList.append(d);
     }

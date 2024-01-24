@@ -13,7 +13,7 @@ ColumnLayout {
   property var cards: []
 
   Text {
-    text: Backend.translate("Handcard selector")
+    text: luatr("Handcard selector")
     Layout.fillWidth: true
     horizontalAlignment: Text.AlignHCenter
     font.pixelSize: 18
@@ -46,7 +46,7 @@ ColumnLayout {
         }
       }
       Component.onCompleted: {
-        setData(JSON.parse(Backend.callLuaFunction("GetCardData", [modelData.cid])));
+        setData(lcall("GetCardData", modelData.cid));
       }
     }
   }

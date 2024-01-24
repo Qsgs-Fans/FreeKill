@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk
 import Fk.RoomElement
 import "RoomLogic.js" as RoomLogic
 
@@ -36,7 +37,7 @@ Item {
       height: 40
 
       Text {
-        text: Backend.translate(name)
+        text: luatr(name)
         anchors.centerIn: parent
       }
 
@@ -113,11 +114,10 @@ Item {
     }
     onFinished: {
       if (word.text !== "") {
-        gridView.model = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
-          [word.text]));
+        gridView.model = lcall("SearchAllGenerals", word.text);
       } else {
-        gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
-          [listView.model.get(listView.currentIndex).name, word.text]));
+        gridView.model = lcall("SearchGenerals",
+          listView.model.get(listView.currentIndex).name, word.text);
       }
       word.text = "";
       appearAnim.start();
@@ -159,7 +159,7 @@ Item {
     property string general: "caocao"
 
     function addSpecialSkillAudio(skill) {
-      const gdata = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+      const gdata = lcall("GetGeneralData", general);
       const extension = gdata.extension;
       let ret = false;
       for (let i = 0; i < 999; i++) {
@@ -178,7 +178,7 @@ Item {
 
     function addSkillAudio(skill) {
       if (addSpecialSkillAudio(skill)) return;
-      const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      const skilldata = lcall("GetSkillData", skill);
       if (!skilldata) return;
       const extension = skilldata.extension;
       for (let i = 0; i < 999; i++) {
@@ -194,8 +194,9 @@ Item {
     }
 
     function findDeathAudio(general) {
-      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
-      const fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
+      const extension = lcall("GetGeneralData", general).extension;
+      const fname = AppPath + "/packages/" + extension + "/audio/death/"
+                  + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
       } else {
@@ -205,27 +206,27 @@ Item {
 
     function updateGeneral() {
       detailGeneralCard.name = general;
-      const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+      const data = lcall("GetGeneralDetail", general);
       generalText.clear();
       audioModel.clear();
 
       if (data.companions.length > 0){
-        let ret = '';
-        ret += "<font color=\"slategrey\"><b>" + Backend.translate("Companions") + "</b>: ";
+        let ret = "<font color=\"slategrey\"><b>" + luatr("Companions")
+                + "</b>: ";
         data.companions.forEach(t => {
-          ret += Backend.translate(t) + ' '
+          ret += luatr(t) + ' '
         });
         generalText.append(ret)
       }
 
       data.skill.forEach(t => {
-        generalText.append("<b>" + Backend.translate(t.name) +
+        generalText.append("<b>" + luatr(t.name) +
           "</b>: " + t.description);
 
         addSkillAudio(t.name);
       });
       data.related_skill.forEach(t => {
-        generalText.append("<font color=\"purple\"><b>" + Backend.translate(t.name) +
+        generalText.append("<font color=\"purple\"><b>" + luatr(t.name) +
           "</b>: " + t.description + "</font>");
 
         addSkillAudio(t.name);
@@ -279,7 +280,8 @@ Item {
                   if (name.endsWith("_win_audio")) {
                     return "胜利语音";
                   }
-                  return Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "");
+                  return luatr(name) + (idx ? " (" + idx.toString() + ")"
+                                            : "");
                 }
                 font.bold: true
                 font.pixelSize: 14
@@ -288,11 +290,12 @@ Item {
                 Layout.fillWidth: true
                 text: {
                   const orig = '$' + name + (idx ? idx.toString() : "");
-                  const orig_trans = Backend.translate(orig);
+                  const orig_trans = luatr(orig);
 
                   // try general specific
-                  const orig_g = '$' + name + '_' + detailGeneralCard.name + (idx ? idx.toString() : "");
-                  const orig_g_trans = Backend.translate(orig_g);
+                  const orig_g = '$' + name + '_' + detailGeneralCard.name
+                               + (idx ? idx.toString() : "");
+                  const orig_g_trans = luatr(orig_g);
 
                   if (orig_g_trans !== orig_g) {
                     return orig_g_trans;
@@ -325,21 +328,29 @@ Item {
           contentItem: ColumnLayout {
             Text {
               Layout.fillWidth: true
-              text: Backend.translate("Death audio")
+              text: luatr("Death audio")
               font.bold: true
               font.pixelSize: 14
             }
             Text {
               Layout.fillWidth: true
-              text: Backend.translate("~" + generalDetail.general) == "~" + generalDetail.general ? "" : Backend.translate("~" + generalDetail.general)
+              text: {
+                const orig = "~" + generalDetail.general;
+                const tr = luatr(orig);
+                if (tr === orig) {
+                  return "";
+                }
+                return tr;
+              }
               wrapMode: Text.WordWrap
             }
           }
 
           onClicked: {
             const general = generalDetail.general
-            const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
-            Backend.playSound("./packages/" + extension + "/audio/death/" + general);
+            const extension = lcall("GetGeneralData", general).extension;
+            Backend.playSound("./packages/" + extension + "/audio/death/"
+                              + general);
           }
         }
       }
@@ -364,7 +375,7 @@ Item {
         }
 
         Button {
-          text: Backend.translate("Search")
+          text: luatr("Search")
           enabled: word.text !== ""
           onClicked: {
             listView.currentIndex = 0;
@@ -378,7 +389,7 @@ Item {
   ColumnLayout {
     anchors.right: parent.right
     Button {
-      text: Backend.translate("Quit")
+      text: luatr("Quit")
       onClicked: {
         mainStack.pop();
         config.saveConf();
@@ -387,14 +398,16 @@ Item {
 
     Button {
       id: banButton
-      text: Backend.translate(config.disabledGenerals.includes(detailGeneralCard.name) ? 'ResumeGeneral' : 'BanGeneral')
+      text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ?
+                      'ResumeGeneral' : 'BanGeneral')
       visible: detailGeneralCard.name
       onClicked: {
         const { disabledGenerals } = config;
         const { name } = detailGeneralCard;
 
-        if (banButton.text === Backend.translate('ResumeGeneral')) {
-          const deleteIndex = disabledGenerals.findIndex((general) => general === name);
+        if (banButton.text === luatr('ResumeGeneral')) {
+          const deleteIndex = disabledGenerals.findIndex(
+                                (general) => general === name);
           if (deleteIndex === -1) {
             return;
           }
@@ -417,8 +430,9 @@ Item {
     }
 
     Button {
-      text: Backend.translate("Set as Avatar")
-      enabled: detailGeneralCard.name !== "" && !opTimer.running && Self.avatar !== detailGeneralCard.name
+      text: luatr("Set as Avatar")
+      enabled: detailGeneralCard.name !== "" && !opTimer.running
+               && Self.avatar !== detailGeneralCard.name
       onClicked: {
         mainWindow.busy = true;
         opTimer.start();
@@ -432,7 +446,7 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const packs = lcall("GetAllGeneralPack");
     packs.forEach(name => {
       if (!config.serverHiddenPacks.includes(name)) {
         packages.append({ name: name });

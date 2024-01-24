@@ -41,7 +41,7 @@ Item {
         width: parent.width
         wrapMode: TextEdit.WordWrap
         textFormat: Text.MarkdownText
-        text: config.serverMotd + "\n___\n" + Backend.translate('Bulletin Info')
+        text: config.serverMotd + "\n___\n" + luatr('Bulletin Info')
       }
     }
   }
@@ -64,13 +64,13 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: (hasPassword ? Backend.translate("Has Password") : "") + roomName
+          text: (hasPassword ? luatr("Has Password") : "") + roomName
           font.pixelSize: 20
           elide: Label.ElideRight
         }
 
         Text {
-          text: Backend.translate(gameMode)
+          text: luatr(gameMode)
         }
 
         Text {
@@ -81,8 +81,8 @@ Item {
         }
 
         Button {
-          text: (playerNum < capacity) ? Backend.translate("Enter") :
-          Backend.translate("Observe")
+          text: (playerNum < capacity) ? luatr("Enter") :
+          luatr("Observe")
 
           enabled: !opTimer.running
 
@@ -124,7 +124,7 @@ Item {
     height: root.height - 80
     Button {
       Layout.alignment: Qt.AlignRight
-      text: Backend.translate("Refresh Room List")
+      text: luatr("Refresh Room List")
       enabled: !opTimer.running
       onClicked: {
         opTimer.start();
@@ -142,7 +142,7 @@ Item {
         Text {
           width: parent.width
           horizontalAlignment: Text.AlignHCenter
-          text: Backend.translate("Room List").arg(roomModel.count)
+          text: luatr("Room List").arg(roomModel.count)
         }
         ListView {
           id: roomList
@@ -166,9 +166,10 @@ Item {
     width: 120
     display: AbstractButton.TextUnderIcon
     icon.name: "media-playback-start"
-    text: Backend.translate("Create Room")
+    text: luatr("Create Room")
     onClicked: {
-      lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/CreateRoom.qml");
+      lobby_dialog.sourceComponent =
+        Qt.createComponent("../LobbyElement/CreateRoom.qml");
       lobby_drawer.open();
       config.observing = false;
       config.replaying = false;
@@ -180,33 +181,33 @@ Item {
     anchors.right: parent.right
     anchors.bottom: parent.bottom
     Button {
-      text: Backend.translate("Generals Overview")
+      text: luatr("Generals Overview")
       onClicked: {
         mainStack.push(mainWindow.generalsOverviewPage);
         mainStack.currentItem.loadPackages();
       }
     }
     Button {
-      text: Backend.translate("Cards Overview")
+      text: luatr("Cards Overview")
       onClicked: {
         mainStack.push(mainWindow.cardsOverviewPage);
         mainStack.currentItem.loadPackages();
       }
     }
     Button {
-      text: Backend.translate("Scenarios Overview")
+      text: luatr("Scenarios Overview")
       onClicked: {
         mainStack.push(mainWindow.modesOverviewPage);
       }
     }
     Button {
-      text: Backend.translate("Replay")
+      text: luatr("Replay")
       onClicked: {
         mainStack.push(mainWindow.replayPage);
       }
     }
     Button {
-      text: Backend.translate("About")
+      text: luatr("About")
       onClicked: {
         mainStack.push(mainWindow.aboutPage);
       }
@@ -216,7 +217,7 @@ Item {
   Button {
     id: exitButton
     anchors.right: parent.right
-    text: Backend.translate("Exit Lobby")
+    text: luatr("Exit Lobby")
     display: AbstractButton.TextBesideIcon
     icon.name: "application-exit"
     onClicked: {
@@ -269,7 +270,7 @@ Item {
       anchors.margins: 16
 
       Text {
-        text: Backend.translate("Please input room's password")
+        text: luatr("Please input room's password")
       }
 
       TextField {
@@ -295,7 +296,7 @@ Item {
     config.replaying = false;
     if (playerNum < capacity) {
       config.observing = false;
-      Backend.callLuaFunction("SetObserving", [false]);
+      lcall("SetObserving", false);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
@@ -303,7 +304,7 @@ Item {
       );
     } else {
       config.observing = true;
-      Backend.callLuaFunction("SetObserving", [true]);
+      lcall("SetObserving", true);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",
@@ -334,7 +335,7 @@ Item {
       anchors.horizontalCenter: parent.horizontalCenter
       x: 4; y: 2
       font.pixelSize: 16
-      text: Backend.translate("$OnlineInfo")
+      text: luatr("$OnlineInfo")
         .arg(lobbyPlayerNum).arg(serverPlayerNum) + "\n"
         + "Powered by FreeKill " + FkVersion
     }
@@ -357,8 +358,10 @@ Item {
 
   function addToChat(pid, raw, msg) {
     if (raw.type !== 1) return;
-    msg = msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
-    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    msg = msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
     lobbyChat.append(msg);
     danmaku.sendLog("<b>" + raw.userName + "</b>: " + raw.msg);
   }
@@ -369,6 +372,6 @@ Item {
   }
 
   Component.onCompleted: {
-    toast.show(Backend.translate("$WelcomeToLobby"));
+    toast.show(luatr("$WelcomeToLobby"));
   }
 }

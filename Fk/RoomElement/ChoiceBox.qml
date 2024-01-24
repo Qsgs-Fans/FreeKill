@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
@@ -11,21 +12,9 @@ GraphicsBox {
   property int result
 
   id: root
-  title.text: Backend.translate("$Choice").arg(Backend.translate(skill_name))
+  title.text: luatr("$Choice").arg(luatr(skill_name))
   width: Math.max(140, body.width + 20)
   height: body.height + title.height + 20
-
-  function processPrompt(prompt) {
-    const data = prompt.split(":");
-    let raw = Backend.translate(data[0]);
-    const src = parseInt(data[1]);
-    const dest = parseInt(data[2]);
-    if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
-    if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
-    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
-    return raw;
-  }
 
   GridLayout {
     id: body
@@ -40,7 +29,7 @@ GraphicsBox {
 
       MetroButton {
         Layout.fillWidth: true
-        text: processPrompt(modelData)
+        text: Util.processPrompt(modelData)
         enabled: options.indexOf(modelData) !== -1
 
         onClicked: {

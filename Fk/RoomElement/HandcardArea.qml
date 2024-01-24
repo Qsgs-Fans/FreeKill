@@ -46,7 +46,7 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
-      card.showDetail = false;
+      // card.showDetail = false;
       card.selectedChanged.disconnect(adjustCards);
       card.prohibitReason = "";
     }
@@ -57,7 +57,7 @@ Item {
   {
     let card, i;
     cards.forEach(card => {
-      card.selectable = cardIds.contains(card.cid);
+      card.selectable = cardIds.includes(card.cid);
       if (!card.selectable) {
         card.selected = false;
         unselectCard(card);
@@ -93,10 +93,10 @@ Item {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
       if (card.selected) {
-        if (!selectedCards.contains(card))
+        if (!selectedCards.includes(card))
           selectCard(card);
       } else {
-        if (selectedCards.contains(card))
+        if (selectedCards.includes(card))
           unselectCard(card);
       }
     }

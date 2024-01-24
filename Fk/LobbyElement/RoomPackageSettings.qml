@@ -23,16 +23,16 @@ Flickable {
     anchors.topMargin: 8
 
     Switch {
-      text: Backend.translate("Disable Extension")
+      text: luatr("Disable Extension")
     }
 
     RowLayout {
       Text {
-        text: Backend.translate("General Packages")
+        text: luatr("General Packages")
         font.bold: true
       }
       Button {
-        text: Backend.translate("Select All")
+        text: luatr("Select All")
         onClicked: {
           for (let i = 0; i < gpacks.count; i++) {
             const item = gpacks.itemAt(i);
@@ -41,7 +41,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Revert Selection")
+        text: luatr("Revert Selection")
         onClicked: {
           for (let i = 0; i < gpacks.count; i++) {
             const item = gpacks.itemAt(i);
@@ -76,11 +76,11 @@ Flickable {
 
     RowLayout {
       Text {
-        text: Backend.translate("Card Packages")
+        text: luatr("Card Packages")
         font.bold: true
       }
       Button {
-        text: Backend.translate("Select All")
+        text: luatr("Select All")
         onClicked: {
           for (let i = 0; i < cpacks.count; i++) {
             const item = cpacks.itemAt(i);
@@ -89,7 +89,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Revert Selection")
+        text: luatr("Revert Selection")
         onClicked: {
           for (let i = 0; i < cpacks.count; i++) {
             const item = cpacks.itemAt(i);
@@ -128,31 +128,32 @@ Flickable {
     } else {
       packs.push(orig_name);
     }
-    Backend.callLuaFunction("UpdatePackageEnable", [orig_name, checked]);
+    lcall("UpdatePackageEnable", orig_name, checked);
     config.disabledPackChanged();
   }
 
   Component.onCompleted: {
     loading = true;
-    const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
-    for (let orig of g) {
+    const g = lcall("GetAllGeneralPack");
+    let orig;
+    for (orig of g) {
       if (config.serverHiddenPacks.includes(orig)) {
         continue;
       }
       gpacklist.append({
-        name: Backend.translate(orig),
+        name: luatr(orig),
         orig_name: orig,
         pkg_enabled: !config.disabledPack.includes(orig),
       });
     }
 
-    const c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
-    for (let orig of c) {
+    const c = lcall("GetAllCardPack");
+    for (orig of c) {
       if (config.serverHiddenPacks.includes(orig)) {
         continue;
       }
       cpacklist.append({
-        name: Backend.translate(orig),
+        name: luatr(orig),
         orig_name: orig,
         pkg_enabled: !config.disabledPack.includes(orig),
       });

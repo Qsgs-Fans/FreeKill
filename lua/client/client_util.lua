@@ -127,6 +127,10 @@ function GetCardExtensionByName(cardName)
   return card and card.package.extensionName or ""
 end
 
+function GetAllMods()
+  return json.encode(Fk.extensions)
+end
+
 function GetAllGeneralPack()
   local ret = {}
   for _, name in ipairs(Fk.package_names) do

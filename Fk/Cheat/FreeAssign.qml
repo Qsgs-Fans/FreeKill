@@ -21,12 +21,12 @@ Item {
       ToolButton {
         opacity: stack.depth > 1 ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 100 } }
-        text: Backend.translate("Back")
+        text: luatr("Back")
         onClicked: stack.pop()
       }
 
       Label {
-        text: Backend.translate("Enable free assign")
+        text: luatr("Enable free assign")
         elide: Label.ElideRight
         horizontalAlignment: Qt.AlignHCenter
         verticalAlignment: Qt.AlignVCenter
@@ -46,12 +46,11 @@ Item {
       }
 
       ToolButton {
-        text: Backend.translate("Search")
+        text: luatr("Search")
         enabled: word.text !== ""
         onClicked: {
           if (stack.depth > 1) stack.pop();
-          generalModel = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
-            [word.text]));
+          generalModel = lcall("SearchAllGenerals", word.text);
           stack.push(generalList);
           word.text = "";
         }
@@ -88,14 +87,13 @@ Item {
         height: 40
 
         Text {
-          text: Backend.translate(name)
+          text: luatr(name)
           color: "#E4D5A0"
           anchors.centerIn: parent
         }
 
         onClicked: {
-          generalModel = JSON.parse(Backend.callLuaFunction("GetGenerals",
-            [packages.get(index).name]));
+          generalModel = lcall("GetGenerals", packages.get(index).name);
           stack.push(generalList);
         }
       }
@@ -134,7 +132,7 @@ Item {
   }
 
   function load() {
-    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+    const packs = lcall("GetAllGeneralPack");
     packs.forEach((name) => packages.append({ name: name }));
   }
 

@@ -14,7 +14,7 @@ Item {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Ban List")
+        text: luatr("Ban List")
       }
       ComboBox {
         id: banCombo
@@ -30,54 +30,54 @@ Item {
       }
 
       Button {
-        text: Backend.translate("New")
+        text: luatr("New")
         onClicked: {
           const i = config.disableGeneralSchemes.length;
           banComboList.append({
-            name: Backend.translate("List") + (i + 1),
+            name: luatr("List") + (i + 1),
           });
           config.disableGeneralSchemes.push([]);
         }
       }
 
       Button {
-        text: Backend.translate("Clear")
+        text: luatr("Clear")
         onClicked: {
           config.disabledGenerals = [];
         }
       }
 
       Button {
-        text: Backend.translate("Export")
+        text: luatr("Export")
         onClicked: {
           Backend.copyToClipboard(JSON.stringify(config.disabledGenerals));
-          toast.show(Backend.translate("Export Success"));
+          toast.show(luatr("Export Success"));
         }
       }
 
       Button {
-        text: Backend.translate("Import")
+        text: luatr("Import")
         onClicked: {
           const str = Backend.readClipboard();
           let data;
           try {
             data = JSON.parse(str);
           } catch (e) {
-            toast.show(Backend.translate("Not Legal"));
+            toast.show(luatr("Not Legal"));
             return;
           }
           if (!data instanceof Array) {
-            toast.show(Backend.translate("Not JSON"));
+            toast.show(luatr("Not JSON"));
             return;
           }
           let d = [];
           for (let e of data) {
-            if (typeof e === "string" && Backend.translate(e) !== e) {
+            if (typeof e === "string" && luatr(e) !== e) {
               d.push(e);
             }
           }
           config.disabledGenerals = d;
-          toast.show(Backend.translate("Import Success"));
+          toast.show(luatr("Import Success"));
         }
       }
     }
@@ -86,7 +86,7 @@ Item {
       Layout.fillWidth: true
       Layout.margins: 8
       wrapMode: Text.WrapAnywhere
-      text: Backend.translate("Help_Ban_List")
+      text: luatr("Help_Ban_List")
     }
 
     GridView {
@@ -101,9 +101,9 @@ Item {
         width: listView.width
         text: {
           const prefix = modelData.split("__")[0];
-          let name = Backend.translate(modelData);
+          let name = luatr(modelData);
           if (prefix !== modelData) {
-            name += (" (" + Backend.translate(prefix) + ")");
+            name += (" (" + luatr(prefix) + ")");
           }
           return name;
         }
@@ -115,7 +115,7 @@ Item {
   Component.onCompleted: {
     for (let i = 0; i < config.disableGeneralSchemes.length; i++) {
       banComboList.append({
-        name: Backend.translate("List") + (i + 1),
+        name: luatr("List") + (i + 1),
       });
     }
     banCombo.currentIndex = config.disableSchemeIdx;
