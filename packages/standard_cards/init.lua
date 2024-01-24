@@ -20,8 +20,8 @@ local slashSkill = fk.CreateActiveSkill{
   end,
   max_phase_use_time = 1,
   target_num = 1,
-  can_use = function(self, player, card)
-    return
+  can_use = function(self, player, card, extra_data)
+    return (extra_data and extra_data.bypass_times) or
       table.find(Fk:currentRoom().alive_players, function(p)
         return self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
       end)
@@ -31,11 +31,12 @@ local slashSkill = fk.CreateActiveSkill{
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, true, card, player))
   end,
-  target_filter = function(self, to_select, selected, _, card)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    local count_distances = not (extra_data and extra_data.bypass_distances)
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
-      return self:modTargetFilter(to_select, selected, Self.id, card, true) and
-      (#selected > 0 or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
+      return self:modTargetFilter(to_select, selected, Self.id, card, count_distances) and
+      (#selected > 0 or (extra_data and extra_data.bypass_times) or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
     end
   end,
   on_effect = function(self, room, effect)
@@ -229,9 +230,10 @@ local snatchSkill = fk.CreateActiveSkill{
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (player:isAllNude() or (distance_limited and not self:withinDistanceLimit(from, false, card, player)))
   end,
-  target_filter = function(self, to_select, selected, _, card)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    local count_distances = not (extra_data and extra_data.bypass_distances)
     if #selected < self:getMaxTargetNum(Self, card) then
-      return self:modTargetFilter(to_select, selected, Self.id, card, true)
+      return self:modTargetFilter(to_select, selected, Self.id, card, count_distances)
     end
   end,
   target_num = 1,

@@ -85,10 +85,10 @@ end
 function GameEvent:findParent(eventType, includeSelf)
   if includeSelf and self.event == eventType then return self end
   local e = self.parent
-  repeat
+  while e do
     if e.event == eventType then return e end
     e = e.parent
-  until not e
+  end
   return nil
 end
 

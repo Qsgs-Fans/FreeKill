@@ -170,9 +170,9 @@ function fk.CreateTriggerSkill(spec)
 end
 
 ---@class ActiveSkillSpec: UsableSkillSpec
----@field public can_use? fun(self: ActiveSkill, player: Player, card: Card): boolean?
+---@field public can_use? fun(self: ActiveSkill, player: Player, card: Card, extra_data: any): boolean?
 ---@field public card_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean?
----@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean?
+---@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card, extra_data: any): boolean?
 ---@field public feasible? fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean?
 ---@field public on_use? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean?
 ---@field public about_to_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?

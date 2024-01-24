@@ -94,12 +94,18 @@ function General:addRelatedSkill(skill)
 end
 
 --- 获取武将所有技能。
+---@param include_lord bool
 function General:getSkillNameList(include_lord)
-  local ret = table.map(self.skills, Util.NameMapper)
-  table.insertTable(ret, self.other_skills)
-
-  if not include_lord then
+  local ret = {}
+  local other_skills = table.map(self.other_skills, Util.Name2SkillMapper)
+  local skills = table.connect(self.skills, other_skills)
+  for _, skill in ipairs(skills) do
+    if include_lord or not skill.lordSkill then
+      table.insert(ret, skill.name)
+    end
   end
+
+  -- table.insertTable(ret, self.other_skills)
   return ret
 end
 

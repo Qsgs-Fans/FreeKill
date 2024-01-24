@@ -27,7 +27,7 @@ end
 --- Determine whether the skill can be used in playing phase
 ---@param player Player
 ---@param card Card @ helper
-function ActiveSkill:canUse(player, card)
+function ActiveSkill:canUse(player, card, extra_data)
   return self:isEffectable(player)
 end
 
@@ -45,8 +45,9 @@ end
 ---@param to_select integer @ id of the target
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
+---@param extra_data any @ extra_data
 ---@param card Card @ helper
-function ActiveSkill:targetFilter(to_select, selected, selected_cards, card)
+function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
   return false
 end
 
@@ -140,6 +141,35 @@ function ActiveSkill:getDistanceLimit(player, card, to)
     ret = ret + correct
   end
   return ret
+end
+
+function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
+  if to and to.dead then return false end
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  if not card and self.name:endsWith("_skill") then
+    card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
+  end
+  for _, skill in ipairs(status_skills) do
+    if skill:bypassDistancesCheck(player, self, card, to) then return true end
+  end
+
+  local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
+  local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
+  table.insert(temp_suf, 1, "")
+  table.insert(temp_suf, "-tmp")
+  table.insert(card_temp_suf, 1, "")
+
+  return (isattack and player:inMyAttackRange(to)) or
+  (player:distanceTo(to) > 0 and player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
+  (card and table.find(card_temp_suf, function(s)
+    return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  end)) or
+  (table.find(temp_suf, function(s)
+    return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  end)) or
+  (to and (table.find(temp_suf, function(s)
+    return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
+  end)))
 end
 
 --- Determine if selected cards and targets are valid for this skill

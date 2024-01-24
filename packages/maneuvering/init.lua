@@ -109,13 +109,13 @@ local analepticSkill = fk.CreateActiveSkill{
   prompt = "#analeptic_skill",
   max_turn_use_time = 1,
   mod_target_filter = function(self, to_select, _, _, card, _)
-    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
-      not table.find(Fk:currentRoom().alive_players, function(p)
-        return p.dying
-      end)
+    return not table.find(Fk:currentRoom().alive_players, function(p)
+      return p.dying
+    end)
   end,
-  can_use = function(self, player, card)
-    return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
+  can_use = function(self, player, card, extra_data)
+    return ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
+      self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
   end,
   on_use = function(_, _, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -291,8 +291,9 @@ local supplyShortageSkill = fk.CreateActiveSkill{
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
   end,
-  target_filter = function(self, to_select, selected, _, card)
-    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    local count_distances = not (extra_data and extra_data.bypass_distances)
+    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, count_distances)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)

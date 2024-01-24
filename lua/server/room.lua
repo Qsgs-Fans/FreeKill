@@ -1035,7 +1035,7 @@ function Room:notifySkillInvoked(player, skill_name, skill_type)
     self:doAnimate("InvokeUltSkill", {
       name = skill_name,
       player = player.id,
-      deputy = player.deputyGeneral and player.deputyGeneral ~= "" and table.contains(Fk.generals[player.deputyGeneral]:getSkillNameList(), skill_name),
+      deputy = player.deputyGeneral and player.deputyGeneral ~= "" and table.contains(Fk.generals[player.deputyGeneral]:getSkillNameList(true), skill_name),
     })
     self:delay(2000)
   end
@@ -1978,36 +1978,26 @@ end
 ---@param event_data? CardEffectEvent @ 事件信息
 ---@return CardUseStruct? @ 返回关于本次使用牌的数据，以便后续处理
 function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
+  pattern = pattern or card_name
   if event_data and (event_data.disresponsive or table.contains(event_data.disresponsiveList or Util.DummyTable, player.id)) then
     return nil
   end
 
-  if event_data and event_data.prohibitedCardNames and card_name then
-    local splitedCardNames = card_name:split(",")
-    splitedCardNames = table.filter(splitedCardNames, function(name)
-      return not table.contains(event_data.prohibitedCardNames, name)
-    end)
-
-    if #splitedCardNames == 0 then
-      return nil
+  if event_data and event_data.prohibitedCardNames then
+    local exp = Exppattern:Parse(pattern)
+    for _, matcher in ipairs(exp.matchers) do
+      matcher.name = table.filter(matcher.name, function(name)
+        return not table.contains(event_data.prohibitedCardNames, name)
+      end)
+      if #matcher.name == 0 then return nil end
     end
-
-    card_name = table.concat(splitedCardNames, ",")
+    pattern = tostring(exp)
   end
 
-  if extra_data then
-    if extra_data.bypass_distances then
-      player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
-    end
-    if extra_data.bypass_times == nil or extra_data.bypass_times then
-      player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 1) -- FIXME: 缺少直接传入无限制的手段
-    end
-  end
   local command = "AskForUseCard"
   self:notifyMoveFocus(player, card_name)
   cancelable = (cancelable == nil) and true or cancelable
   extra_data = extra_data or Util.DummyTable
-  pattern = pattern or card_name
   prompt = prompt or ""
 
   local askForUseCardData = {
@@ -2020,8 +2010,6 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
   self.logic:trigger(fk.AskForCardUse, player, askForUseCardData)
 
   if askForUseCardData.result and type(askForUseCardData.result) == 'table' then
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return askForUseCardData.result
   else
     local useResult
@@ -2036,8 +2024,6 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
       Fk.currentResponsePattern = nil
 
       if result ~= "" then
-        player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
-        player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
         useResult = self:handleUseCardReply(player, result)
 
         if type(useResult) == "string" and useResult ~= "" then
@@ -2045,12 +2031,8 @@ function Room:askForUseCard(player, card_name, pattern, prompt, cancelable, extr
         end
       end
     until type(useResult) ~= "string"
-    player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
-    player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
     return useResult
   end
-  player.room:setPlayerMark(player, MarkEnum.BypassDistancesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
-  player.room:setPlayerMark(player, MarkEnum.BypassTimesLimit .. "-tmp", 0) -- FIXME: 缺少直接传入无限制的手段
   return nil
 end
 
@@ -3336,6 +3318,8 @@ function Room:shuffleDrawPile()
   end
   self.discard_pile = {}
   table.shuffle(self.draw_pile)
+
+  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
 
   self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end

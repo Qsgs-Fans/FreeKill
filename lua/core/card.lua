@@ -406,6 +406,9 @@ function Card:getMark(mark)
   if (not self:isVirtual()) and next(self.mark) == nil then
     self.mark = nil
   end
+  if type(ret) == "table" then
+    ret = table.simpleClone(ret)
+  end
   return ret
 end
 

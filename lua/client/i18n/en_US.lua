@@ -268,6 +268,7 @@ Fk:loadTranslationTable({
   ["thunder_damage"] = "Thunder",
   ["ice_damage"] = "Ice",
   ["hp_lost"] = "HP lost",
+  ["lose_hp"] = "lose HP",
 
   ["phase_start"] = "Prepare phase",
   ["phase_judge"] = "Judge phase",

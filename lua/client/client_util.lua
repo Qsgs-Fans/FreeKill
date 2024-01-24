@@ -255,8 +255,10 @@ end
 
 ---@param card string | integer
 ---@param player integer
-function CanUseCard(card, player)
+---@param extra_data_str string
+function CanUseCard(card, player, extra_data_str)
   local c   ---@type Card
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   if type(card) == "number" then
     c = Fk:getCardById(card)
   else
@@ -275,13 +277,13 @@ function CanUseCard(card, player)
   end
 
   player = ClientInstance:getPlayerById(player)
-  local ret = c.skill:canUse(player, c)
+  local ret = c.skill:canUse(player, c, extra_data)
   ret = ret and not player:prohibitUse(c)
   if ret then
     local min_target = c.skill:getMinTargetNum()
     if min_target > 0 then
       for _, p in ipairs(ClientInstance.players) do
-        if c.skill:targetFilter(p.id, {}, {}, c) then
+        if c.skill:targetFilter(p.id, {}, {}, c, extra_data) then
           return "true"
         end
       end
@@ -315,7 +317,9 @@ end
 ---@param card string | integer
 ---@param to_select integer @ id of the target
 ---@param selected integer[] @ ids of selected targets
-function CanUseCardToTarget(card, to_select, selected)
+---@param extra_data_str string @ extra data
+function CanUseCardToTarget(card, to_select, selected, extra_data_str)
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   if ClientInstance:getPlayerById(to_select).dead then
     return "false"
   end
@@ -326,10 +330,10 @@ function CanUseCardToTarget(card, to_select, selected)
     selected_cards = {card}
   else
     local t = json.decode(card)
-    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards)
+    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards, extra_data)
   end
 
-  local ret = c.skill:targetFilter(to_select, selected, selected_cards, c)
+  local ret = c.skill:targetFilter(to_select, selected, selected_cards, c, extra_data)
   ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), c)
   return json.encode(ret)
 end
@@ -396,12 +400,13 @@ function GetSkillData(skill_name)
   }
 end
 
-function ActiveCanUse(skill_name)
+function ActiveCanUse(skill_name, extra_data_str)
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill then
     if skill:isInstanceOf(ActiveSkill) then
-      ret = skill:canUse(Self)
+      ret = skill:canUse(Self, extra_data)
     elseif skill:isInstanceOf(ViewAsSkill) then
       ret = skill:enabledAtPlay(Self)
       if ret then
@@ -418,7 +423,7 @@ function ActiveCanUse(skill_name)
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)
           c.skillName = skill_name
-          ret = c.skill:canUse(Self, c)
+          ret = c.skill:canUse(Self, c, extra_data)
           if ret then break end
         end
       end
@@ -453,7 +458,7 @@ function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
   return json.encode(ret)
 end
 
-function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
+function ActiveTargetFilter(skill_name, to_select, selected, selected_cards, extra_data)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill then
@@ -462,7 +467,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local card = skill:viewAs(selected_cards)
       if card then
-        ret = card.skill:targetFilter(to_select, selected, selected_cards, card)
+        ret = card.skill:targetFilter(to_select, selected, selected_cards, card, extra_data)
         ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
       end
     end
@@ -726,7 +731,7 @@ function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi or not poxi.prompt then return "" end
   if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
-  return poxi.prompt(data, extra_data)
+  return Fk:translate(poxi.prompt(data, extra_data))
 end
 
 function PoxiFilter(poxi_type, to_select, selected, data, extra_data)

@@ -324,6 +324,7 @@ Fk:loadTranslationTable{
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
   ["hp_lost"] = "体力流失",
+  ["lose_hp"] = "失去体力",
 
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",

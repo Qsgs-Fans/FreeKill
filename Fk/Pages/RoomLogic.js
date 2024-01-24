@@ -578,7 +578,8 @@ function enableTargets(card) {
     all_photos.forEach(photo => {
       photo.state = "candidate";
       const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets);
+      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
+                        JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
@@ -607,7 +608,7 @@ function enableTargets(card) {
         lcall("CardFitPattern", card, roomScene.responding_card) &&
         (roomScene.autoPending || !lcall("CardProhibitedUse", card));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id);
+      okButton.enabled = lcall("CanUseCard", card, Self.id, JSON.stringify(roomScene.extra_data));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {
@@ -650,7 +651,8 @@ function updateSelectedTargets(playerid, selected) {
     all_photos.forEach(photo => {
       if (photo.selected) return;
       const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets);
+      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
+                         JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
@@ -679,7 +681,7 @@ function updateSelectedTargets(playerid, selected) {
         lcall("CardFitPattern", card, roomScene.responding_card) &&
         (roomScene.autoPending || !lcall("CardProhibitedUse", card));
     } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id);
+      okButton.enabled = lcall("CanUseCard", card, Self.id, JSON.stringify(roomScene.extra_data));
     }
     if (okButton.enabled) {
       if (roomScene.extra_data instanceof Object) {

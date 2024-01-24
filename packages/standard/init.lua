@@ -1172,6 +1172,56 @@ local role_getlogic = function()
       room:broadcastProperty(lord, "kingdom")
       room:setDeputyGeneral(lord, deputy)
       room:broadcastProperty(lord, "deputyGeneral")
+
+      -- 显示技能
+      local canAttachSkill = function(player, skillName)
+        local skill = Fk.skills[skillName]
+        if not skill then
+          fk.qCritical("Skill: "..skillName.." doesn't exist!")
+          return false
+        end
+        if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+          return false
+        end
+
+        if #skill.attachedKingdom > 0 and not table.contains(skill.attachedKingdom, player.kingdom) then
+          return false
+        end
+
+        return true
+      end
+
+      local lord_skills = {}
+      for _, s in ipairs(Fk.generals[lord.general].skills) do
+        if canAttachSkill(lord, s.name) then
+          table.insertIfNeed(lord_skills, s.name)
+        end
+      end
+      for _, sname in ipairs(Fk.generals[lord.general].other_skills) do
+        if canAttachSkill(lord, sname) then
+          table.insertIfNeed(lord_skills, sname)
+        end
+      end
+
+      local deputyGeneral = Fk.generals[lord.deputyGeneral]
+      if deputyGeneral then
+        for _, s in ipairs(deputyGeneral.skills) do
+          if canAttachSkill(lord, s.name) then
+            table.insertIfNeed(lord_skills, s.name)
+          end
+        end
+        for _, sname in ipairs(deputyGeneral.other_skills) do
+          if canAttachSkill(lord, sname) then
+            table.insertIfNeed(lord_skills, sname)
+          end
+        end
+      end
+      for _, skill in ipairs(lord_skills) do
+        room:doBroadcastNotify("AddSkill", json.encode{
+          lord.id,
+          skill
+        })
+      end
     end
 
     local nonlord = room:getOtherPlayers(lord, true)

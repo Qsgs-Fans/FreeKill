@@ -249,14 +249,15 @@ Item {
   }
 
   OpacityMask {
+    id: photoMaskEffect
     anchors.fill: photoMask
     source: generalImgItem
     maskSource: photoMask
   }
 
   Colorize {
-    anchors.fill: photoMask
-    source: generalImgItem
+    anchors.fill: photoMaskEffect
+    source: photoMaskEffect
     saturation: 0
     visible: root.dead || root.surrendered
   }
