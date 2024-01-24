@@ -7,7 +7,7 @@ GraphicsBox {
   property string winner: ""
 
   id: root
-  title.text: Backend.translate("$GameOver")
+  title.text: luatr("$GameOver")
   width: Math.max(140, body.width + 20)
   height: body.height + title.height + 20
 
@@ -18,12 +18,12 @@ GraphicsBox {
     spacing: 10
 
     Text {
-      text: winner !== "" ? Backend.translate("$Winner").arg(Backend.translate(winner)) : Backend.translate("$NoWinner")
+      text: winner !== "" ? luatr("$Winner").arg(luatr(winner)) : luatr("$NoWinner")
       color: "#E4D5A0"
     }
 
     MetroButton {
-      text: Backend.translate("Back To Room")
+      text: luatr("Back To Room")
       anchors.horizontalCenter: parent.horizontalCenter
       visible: !config.observing
 
@@ -34,7 +34,7 @@ GraphicsBox {
     }
 
     MetroButton {
-      text: Backend.translate("Back To Lobby")
+      text: luatr("Back To Lobby")
       anchors.horizontalCenter: parent.horizontalCenter
 
       onClicked: {
@@ -49,13 +49,13 @@ GraphicsBox {
 
     MetroButton {
       id: repBtn
-      text: Backend.translate("Save Replay")
+      text: luatr("Save Replay")
       anchors.horizontalCenter: parent.horizontalCenter
       visible: !config.replaying
 
       onClicked: {
         repBtn.visible = false;
-        Backend.callLuaFunction("SaveRecord", []);
+        lcall("SaveRecord");
         toast.show("OK.");
       }
     }

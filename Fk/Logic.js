@@ -173,7 +173,7 @@ callbacks["Chat"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const pid = data.sender;
   const userName = data.userName;
-  const general = Backend.translate(data.general);
+  const general = luatr(data.general);
   const time = data.time;
   const msg = data.msg;
 

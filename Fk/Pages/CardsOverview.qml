@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk
 import Fk.RoomElement
 
 Item {
@@ -35,7 +36,7 @@ Item {
       height: 40
 
       Text {
-        text: Backend.translate(name)
+        text: luatr(name)
         anchors.centerIn: parent
       }
 
@@ -115,10 +116,9 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      const pkg = [listView.model.get(listView.currentIndex).name];
-      const idList = JSON.parse(Backend.callLuaFunction("GetCards", pkg));
-      const cardList = idList.map(id => JSON.parse(Backend.callLuaFunction
-        ("GetCardData",[id])));
+      const pkg = listView.model.get(listView.currentIndex).name;
+      const idList = lcall("GetCards", pkg);
+      const cardList = idList.map(id => lcall("GetCardData", id));
 
       const groupedCardList = [];
       let groupedCards = {};
@@ -194,24 +194,10 @@ Item {
     property int cid: 1
     property var cards
     function updateCard() {
-      const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+      const data = lcall("GetCardData", cid);
       const suitTable = {
         spade: "♠", heart: '<font color="red">♥</font>',
         club: "♣", diamond: '<font color="red">♦</font>',
-      }
-      const getNumString = n => {
-        switch (n) {
-          case 1:
-            return "A";
-          case 11:
-            return "J";
-          case 12:
-            return "Q";
-          case 13:
-            return "K";
-          default:
-            return n.toString();
-        }
       }
 
       if (!cards) {
@@ -227,22 +213,21 @@ Item {
       detailCard.known = true;
       cardText.clear();
       audioRow.clear();
-      cardText.append(Backend.translate(":" + data.name));
+      cardText.append(luatr(":" + data.name));
       addCardAudio(data)
-      const skills = JSON.parse(Backend.callLuaFunction
-        ("GetCardSpecialSkills", [cid]));
+      const skills = lcall("GetCardSpecialSkills", cid);
       if (skills.length > 0) {
-        cardText.append("<br/>" + Backend.translate("Special card skills:"));
+        cardText.append("<br/>" + luatr("Special card skills:"));
         skills.forEach(t => {
-          cardText.append("<b>" + Backend.translate(t) + "</b>: "
-            + Backend.translate(":" + t));
+          cardText.append("<b>" + luatr(t) + "</b>: "
+            + luatr(":" + t));
         });
       }
 
       if (cards) {
-        cardText.append("<br/>" + Backend.translate("Every suit & number:"));
+        cardText.append("<br/>" + luatr("Every suit & number:"));
         cardText.append(cards.map(c => {
-          return (suitTable[c.suit] + getNumString(c.number))
+          return (suitTable[c.suit] + Util.convertNumber(c.number))
         }).join(", "));
       }
     }
@@ -303,16 +288,17 @@ Item {
                 verticalAlignment: Text.AlignVCenter
                 text: {
                   if (gender === "male") {
-                    return Backend.translate("Male Audio");
+                    return luatr("Male Audio");
                   } else {
-                    return Backend.translate("Female Audio");
+                    return luatr("Female Audio");
                   }
                 }
                 font.pixelSize: 14
               }
               onClicked: {
-                const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cardDetail.cid]));
-                Backend.playSound("./packages/" + extension + "/audio/card/" + gender + "/" + data.name);
+                const data = lcall("GetCardData", cardDetail.cid);
+                Backend.playSound("./packages/" + extension + "/audio/card/"
+                                  + gender + "/" + data.name);
               }
             }
           }
@@ -322,7 +308,7 @@ Item {
   }
 
   Button {
-    text: Backend.translate("Quit")
+    text: luatr("Quit")
     anchors.right: parent.right
     onClicked: {
       mainStack.pop();
@@ -331,30 +317,32 @@ Item {
 
   function addCardAudio(card) {
     const extension = card.extension;
-    const orig_extension = Backend.callLuaFunction("GetCardExtensionByName", [card.name]);
-    let fname = AppPath + "/packages/" + extension + "/audio/card/male/" + card.name + ".mp3";
+    const orig_extension = lcall("GetCardExtensionByName", card.name);
+    const prefix = AppPath + "/packages/";
+    const suffix = card.name + ".mp3";
+    let fname = prefix + extension + "/audio/card/male/" + suffix;
     if (Backend.exists(fname)) {
-      audioRow.append( {gender: "male", extension: extension} );
+      audioRow.append( { gender: "male", extension: extension } );
     } else {
-      fname = AppPath + "/packages/" + orig_extension + "/audio/card/male/" + card.name + ".mp3";
+      fname = prefix + orig_extension + "/audio/card/male/" + suffix;
       if (Backend.exists(fname)) {
         audioRow.append( {gender: "male", extension: orig_extension} );
       }
     }
-    fname = AppPath + "/packages/" + extension + "/audio/card/female/" + card.name + ".mp3";
+    fname = prefix + extension + "/audio/card/female/" + suffix;
     if (Backend.exists(fname)) {
-      audioRow.append( {gender: "female", extension: extension} );
+      audioRow.append( { gender: "female", extension: extension } );
     }else {
-      fname = AppPath + "/packages/" + orig_extension + "/audio/card/female/" + card.name + ".mp3";
+      fname = prefix + orig_extension + "/audio/card/female/" + suffix;
       if (Backend.exists(fname)) {
-        audioRow.append( {gender: "female", extension: orig_extension} );
+        audioRow.append( { gender: "female", extension: orig_extension } );
       }
     }
   }
 
   function loadPackages() {
     if (loaded) return;
-    const packs = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
+    const packs = lcall("GetAllCardPack");
     packs.forEach(name => {
       if (!config.serverHiddenPacks.includes(name)) {
         packages.append({ name: name });

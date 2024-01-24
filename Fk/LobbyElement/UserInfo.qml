@@ -11,7 +11,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Username")
+      text: luatr("Username")
     }
     Text {
       text: Self.screenName
@@ -28,7 +28,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Avatar")
+      text: luatr("Avatar")
     }
     TextField {
       id: avatarName
@@ -38,7 +38,7 @@ ColumnLayout {
       Layout.fillWidth: true
     }
     Button {
-      text: Backend.translate("Update Avatar")
+      text: luatr("Update Avatar")
       enabled: avatarName.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;
@@ -55,7 +55,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Old Password")
+      text: luatr("Old Password")
     }
     TextField {
       id: oldPassword
@@ -70,7 +70,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("New Password")
+      text: luatr("New Password")
     }
     TextField {
       id: newPassword
@@ -79,7 +79,7 @@ ColumnLayout {
       Layout.fillWidth: true
     }
     Button {
-      text: Backend.translate("Update Password")
+      text: luatr("Update Password")
       enabled: oldPassword.text !== "" && newPassword.text !== "" && !opTimer.running
       onClicked: {
         mainWindow.busy = true;

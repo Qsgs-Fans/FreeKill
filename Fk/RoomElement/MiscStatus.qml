@@ -19,7 +19,7 @@ Item {
   Text {
     id: roundTxt
     anchors.right: parent.right
-    text: Backend.translate("#currentRoundNum").arg(roundNum)
+    text: luatr("#currentRoundNum").arg(roundNum)
     color: "#F0E5DA"
     font.pixelSize: 18
     font.family: fontLibian.name

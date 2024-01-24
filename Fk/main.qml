@@ -254,4 +254,18 @@ Window {
       exitMessageDialog.open();
     }
   }
+
+  // fake global functions
+  function lcall(funcName, ...params) {
+    const ret = Backend.callLuaFunction(funcName, [...params]);
+    try {
+      return JSON.parse(ret);
+    } catch (e) {
+      return ret;
+    }
+  }
+
+  function luatr(src) {
+    return Backend.translate(src);
+  }
 }

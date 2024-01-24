@@ -59,7 +59,7 @@ Item {
     const items = [];
     for (let i = 0; i < outputs.length; i++) {
       if (_contains(outputs[i])) {
-        const state = JSON.parse(Backend.callLuaFunction("GetCardData", [outputs[i]]))
+        const state = lcall("GetCardData", outputs[i]);
         state.x = parentPos.x;
         state.y = parentPos.y;
         state.opacity = 0;

@@ -44,7 +44,7 @@ Item {
   GlowText {
     id: numberItem
     visible: !sealed && number > 0 && number < 14
-    text: Utility.convertNumber(number)
+    text: Util.convertNumber(number)
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 16
@@ -132,7 +132,7 @@ Item {
       text = "-1"
       icon = "horse";
     } else {
-      text = Backend.translate(name);
+      text = luatr(name);
       if (card.virt_name) {
         icon = card.virt_name;
       } else {
@@ -159,6 +159,6 @@ Item {
     x = 0;
 
     opacity = sealed ? 1 : 0;
-    text = '  ' + Backend.translate(subtype + "_sealed")
+    text = '  ' + luatr(subtype + "_sealed")
   }
 }

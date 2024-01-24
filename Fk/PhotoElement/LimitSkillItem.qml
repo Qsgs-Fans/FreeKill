@@ -25,7 +25,7 @@ Item {
     font.family: fontLi2.name
     style: Text.Outline
     styleColor: "#3D2D1C"
-    text: Backend.translate(skillname);
+    text: luatr(skillname);
   }
 
   Text {
@@ -39,7 +39,7 @@ Item {
   }
 
   onSkillnameChanged: {
-    let data = Backend.callLuaFunction("GetSkillData", [skillname]);
+    let data = lcall("GetSkillData", skillname);
     data = JSON.parse(data);
     if (data.frequency || data.switchSkillName) {
       skilltype = data.switchSkillName ? 'switch' : data.frequency;

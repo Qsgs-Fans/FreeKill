@@ -13,7 +13,7 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: childrenRect.height + 4
 
-    text: Backend.translate(extra_data.name)
+    text: luatr(extra_data.name)
   }
 
   GridView {
@@ -32,7 +32,7 @@ ColumnLayout {
       Component.onCompleted: {
         let data = {}
         if (extra_data.ids) {
-          data = JSON.parse(Backend.callLuaFunction("GetCardData", [modelData]));
+          data = lcall("GetCardData", modelData);
         } else {
           data.cid = 0;
           data.name = modelData;

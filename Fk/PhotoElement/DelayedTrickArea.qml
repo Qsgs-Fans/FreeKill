@@ -47,7 +47,7 @@ Item {
       inputs = [inputs];
     }
     inputs.forEach(card => {
-      const v = JSON.parse(Backend.callLuaFunction("GetVirtualEquip", [parent.playerid, card.cid]));
+      const v = lcall("GetVirtualEquip", parent.playerid, card.cid);
       if (v !== null) {
         cards.append(v);
       } else {

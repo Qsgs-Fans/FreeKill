@@ -16,7 +16,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Room Name")
+        text: luatr("Room Name")
       }
       TextField {
         id: roomName
@@ -24,7 +24,7 @@ Flickable {
         font.pixelSize: 18
         Layout.rightMargin: 16
         Layout.fillWidth: true
-        text: Backend.translate("$RoomName").arg(Self.screenName)
+        text: luatr("$RoomName").arg(Self.screenName)
       }
     }
 
@@ -32,7 +32,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Game Mode")
+        text: luatr("Game Mode")
       }
       ComboBox {
         id: gameModeCombo
@@ -57,16 +57,16 @@ Flickable {
       columnSpacing: 20
       columns: 4
       Text {
-        text: Backend.translate("Player num")
+        text: luatr("Player num")
       }
       Text {
-        text: Backend.translate("Select generals num")
+        text: luatr("Select generals num")
       }
       Text {
-        text: Backend.translate("Operation timeout")
+        text: luatr("Operation timeout")
       }
       Text {
-        text: Backend.translate("Luck Card Times")
+        text: luatr("Luck Card Times")
       }
       SpinBox {
         id: playerNum
@@ -114,11 +114,11 @@ Flickable {
       anchors.rightMargin: 8
       visible: {
         //config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
-        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
+        const avail = lcall("GetAvailableGeneralsNum");
         const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
         return ret;
       }
-      text: Backend.translate("No enough generals")
+      text: luatr("No enough generals")
       color: "red"
     }
 
@@ -126,7 +126,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Room Password")
+        text: luatr("Room Password")
       }
       TextField {
         id: roomPassword
@@ -143,13 +143,13 @@ Flickable {
       Switch {
         id: freeAssignCheck
         checked: Debugging ? true : false
-        text: Backend.translate("Enable free assign")
+        text: luatr("Enable free assign")
       }
 
       Switch {
         id: deputyCheck
         checked: Debugging ? true : false
-        text: Backend.translate("Enable deputy general")
+        text: luatr("Enable deputy general")
       }
     }
 
@@ -157,7 +157,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Button {
-        text: Backend.translate("OK")
+        text: luatr("OK")
         enabled: !(warning.visible)
         onClicked: {
           config.saveConf();
@@ -166,10 +166,11 @@ Flickable {
 
           let disabledGenerals = config.disabledGenerals.slice();
           if (disabledGenerals.length) {
-            const availablePack = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", [])).
+            const availablePack = lcall("GetAllGeneralPack").
               filter((pack) => !config.disabledPack.includes(pack));
             disabledGenerals = disabledGenerals.filter((general) => {
-              return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGenerals", [pack])).includes(general));
+              return availablePack.find(pack =>
+                lcall("GetGenerals", pack).includes(general));
             });
 
             disabledGenerals = Array.from(new Set(disabledGenerals));
@@ -181,10 +182,10 @@ Flickable {
               disabledPack.push(p);
             }
           });
-          const generalPacks = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
+          const generalPacks = lcall("GetAllGeneralPack");
           for (let pk of generalPacks) {
             if (disabledPack.includes(pk)) continue;
-            let generals = JSON.parse(Backend.callLuaFunction("GetGenerals", [pk]));
+            let generals = lcall("GetGenerals", pk);
             let t = generals.filter(g => !disabledGenerals.includes(g));
             if (t.length === 0) {
               disabledPack.push(pk);
@@ -208,7 +209,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Cancel")
+        text: luatr("Cancel")
         onClicked: {
           root.finished();
         }
@@ -216,11 +217,11 @@ Flickable {
     }
 
     Component.onCompleted: {
-      const mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+      const mode_data = lcall("GetGameModes");
       let i = 0;
       for (let d of mode_data) {
         gameModeList.append(d);
-        if (d.orig_name == config.preferedMode) {
+        if (d.orig_name === config.preferedMode) {
           gameModeCombo.currentIndex = i;
         }
         i += 1;
@@ -228,9 +229,7 @@ Flickable {
 
       playerNum.value = config.preferedPlayerNum;
 
-      config.disabledPack.forEach(p => {
-        Backend.callLuaFunction("UpdatePackageEnable", [p, false]);
-      });
+      config.disabledPack.forEach(p => lcall("UpdatePackageEnable", p, false));
       config.disabledPackChanged();
     }
   }

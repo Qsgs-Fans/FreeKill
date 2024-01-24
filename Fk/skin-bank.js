@@ -31,7 +31,7 @@ const searchPkgResource = function(path, name, suffix) {
 }
 
 function getGeneralExtraPic(name, extra) {
-  const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+  const data = lcall("GetGeneralData", name);
   const extension = data.extension;
   const path = AppPath + "/packages/" + extension + "/image/generals/" + extra + name + ".jpg";
   if (Backend.exists(path)) {
@@ -40,7 +40,7 @@ function getGeneralExtraPic(name, extra) {
 }
 
 function getGeneralPicture(name) {
-  const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+  const data = lcall("GetGeneralData", name);
   const extension = data.extension;
   const path = AppPath + "/packages/" + extension + "/image/generals/" + name + ".jpg";
   if (Backend.exists(path)) {
@@ -54,9 +54,9 @@ function getCardPicture(cidOrName) {
   let name = "unknown";
   if (typeof cidOrName === 'string') {
     name = cidOrName;
-    extension = Backend.callLuaFunction("GetCardExtensionByName", [cidOrName]);
+    extension = lcall("GetCardExtensionByName", cidOrName);
   } else {
-    const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+    const data = lcall("GetCardData", cid);
     extension = data.extension;
     name = data.name;
   }
@@ -72,7 +72,7 @@ function getCardPicture(cidOrName) {
 }
 
 function getDelayedTrickPicture(name) {
-  const extension = Backend.callLuaFunction("GetCardExtensionByName", [name]);
+  const extension = lcall("GetCardExtensionByName", name);
 
   let path = AppPath + "/packages/" + extension + "/image/card/delayedTrick/" + name + ".png";
   if (Backend.exists(path)) {
@@ -86,7 +86,7 @@ function getDelayedTrickPicture(name) {
 
 
 function getEquipIcon(cid, icon) {
-  const data = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+  const data = lcall("GetCardData", cid);
   const extension = data.extension;
   const name = icon || data.name;
   let path = AppPath + "/packages/" + extension + "/image/card/equipIcon/" + name + ".png";

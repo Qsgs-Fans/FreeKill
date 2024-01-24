@@ -12,7 +12,7 @@ GraphicsBox {
   property int result
 
   id: root
-  title.text: Backend.translate("$Choice").arg(Backend.translate(skill_name))
+  title.text: luatr("$Choice").arg(luatr(skill_name))
   width: Math.max(140, body.width + 20)
   height: body.height + title.height + 20
 
@@ -35,7 +35,7 @@ GraphicsBox {
       MetroButton {
         id: choicetitle
         width: parent.width
-        text: Backend.translate(modelData)
+        text: luatr(modelData)
         enabled: options.indexOf(modelData) !== -1
         textFont.pixelSize: 24
         anchors.top: choiceDetail.bottom
@@ -57,7 +57,7 @@ GraphicsBox {
         Text {
           id: detail
           width: parent.width
-          text: Backend.translate(":" + modelData)
+          text: luatr(":" + modelData)
           color: "white"
           wrapMode: Text.WordWrap
           font.pixelSize: 16

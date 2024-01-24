@@ -9,7 +9,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("BGM Volume")
+      text: luatr("BGM Volume")
     }
     Slider {
       Layout.rightMargin: 16
@@ -25,7 +25,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Effect Volume")
+      text: luatr("Effect Volume")
     }
     Slider {
       Layout.rightMargin: 16
@@ -38,13 +38,13 @@ ColumnLayout {
   }
 
   Switch {
-    text: Backend.translate("Disable message audio")
+    text: luatr("Disable message audio")
     checked: config.disableMsgAudio
     onCheckedChanged: config.disableMsgAudio = checked;
   }
 
   Switch {
-    text: Backend.translate("Hide unselectable cards")
+    text: luatr("Hide unselectable cards")
     checked: config.hideUseless
     onCheckedChanged: {
       config.hideUseless = checked;

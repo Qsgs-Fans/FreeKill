@@ -146,7 +146,7 @@ Item {
     font.pixelSize: 16
     font.family: fontLibian.name
     font.letterSpacing: -0.6
-    text: Backend.translate(root.virt_name)
+    text: luatr(root.virt_name)
   }
 
   Text {
@@ -195,7 +195,7 @@ Item {
         font.family: fontLibian.name
         font.letterSpacing: -0.6
         text: {
-          let ret = Backend.translate(modelData.k);
+          let ret = luatr(modelData.k);
           if (!modelData.k.startsWith("@@")) {
             ret += modelData.v.toString();
           }

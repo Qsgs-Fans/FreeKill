@@ -231,7 +231,7 @@ Item {
       color: "white"
       width: 24
       wrapMode: Text.WrapAnywhere
-      text: Backend.translate(deputyGeneral)
+      text: luatr(deputyGeneral)
       style: Text.Outline
     }
   }
@@ -279,7 +279,7 @@ Item {
 
     GlowText {
       Layout.alignment: Qt.AlignCenter
-      text: Backend.translate("resting...")
+      text: luatr("resting...")
       font.family: fontLibian.name
       font.pixelSize: 40
       font.bold: true
@@ -303,7 +303,7 @@ Item {
     GlowText {
       Layout.alignment: Qt.AlignCenter
       visible: root.rest > 0 && root.rest < 999
-      text: Backend.translate("rest round num")
+      text: luatr("rest round num")
       font.family: fontLibian.name
       font.pixelSize: 28
       color: "#F0E5D6"
@@ -333,11 +333,11 @@ Item {
       style: Text.Outline
       text: {
         if (totalGame === 0) {
-          return Backend.translate("Newbie");
+          return luatr("Newbie");
         }
         const winRate = (winGame / totalGame) * 100;
         const runRate = (runGame / totalGame) * 100;
-        return Backend.translate("Win=%1\nRun=%2\nTotal=%3")
+        return luatr("Win=%1\nRun=%2\nTotal=%3")
           .arg(winRate.toFixed(2))
           .arg(runRate.toFixed(2))
           .arg(totalGame);
@@ -392,7 +392,7 @@ Item {
     }
 
     function updatePileInfo(areaName) {
-      const data = JSON.parse(Backend.callLuaFunction("GetPile", [root.playerid, areaName]));
+      const data = lcall("GetPile", root.playerid, areaName);
       if (data.length === 0) {
         root.markArea.removeMark(areaName);
       } else {
@@ -474,7 +474,7 @@ Item {
       enabled: (root.state != "candidate" || !root.selectable) && root.playerid !== Self.id
       onTapped: {
         const params = { name: "hand_card" };
-        let data = JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [root.playerid]));
+        let data = lcall("GetPlayerHandcards", root.playerid);
         data = data.filter((e) => e !== -1);
         if (data.length === 0)
           return;
@@ -531,7 +531,7 @@ Item {
     anchors.topMargin: 2
 
     font.pixelSize: 16
-    text: (config.blockedUsers && config.blockedUsers.includes(screenName) ? Backend.translate("<Blocked> ") : "") + screenName
+    text: (config.blockedUsers && config.blockedUsers.includes(screenName) ? luatr("<Blocked> ") : "") + screenName
 
     glow.radius: 8
   }
@@ -704,7 +704,7 @@ Item {
 
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
-    const text = Backend.translate(general);
+    const text = luatr(general);
     if (text.length > 6) {
       generalName.text = "";
       longGeneralName.text = text;
@@ -712,8 +712,6 @@ Item {
       generalName.text = text;
       longGeneralName.text = "";
     }
-    // let data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
-    // kingdom = data.kingdom;
   }
 
   function chat(msg) {

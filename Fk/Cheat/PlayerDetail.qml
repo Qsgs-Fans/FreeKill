@@ -38,7 +38,7 @@ Flickable {
 
     RowLayout {
       MetroButton {
-        text: Backend.translate("Give Flower")
+        text: luatr("Give Flower")
         onClicked: {
           enabled = false;
           root.givePresent("Flower");
@@ -47,7 +47,7 @@ Flickable {
       }
 
       MetroButton {
-        text: Backend.translate("Give Egg")
+        text: luatr("Give Egg")
         onClicked: {
           enabled = false;
           if (Math.random() < 0.03) {
@@ -60,7 +60,7 @@ Flickable {
       }
 
       MetroButton {
-        text: Backend.translate("Give Wine")
+        text: luatr("Give Wine")
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;
@@ -70,7 +70,7 @@ Flickable {
       }
 
       MetroButton {
-        text: Backend.translate("Give Shoe")
+        text: luatr("Give Shoe")
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;
@@ -80,7 +80,7 @@ Flickable {
       }
 
       MetroButton {
-        text: config.blockedUsers.indexOf(screenName.text) === -1 ? Backend.translate("Block Chatter") : Backend.translate("Unblock Chatter")
+        text: config.blockedUsers.indexOf(screenName.text) === -1 ? luatr("Block Chatter") : luatr("Unblock Chatter")
         enabled: pid !== Self.id && pid > 0
         onClicked: {
           const idx = config.blockedUsers.indexOf(screenName.text);
@@ -94,7 +94,7 @@ Flickable {
       }
 
       MetroButton {
-        text: Backend.translate("Kick From Room")
+        text: luatr("Kick From Room")
         visible: !roomScene.isStarted && roomScene.isOwner
         enabled: pid !== Self.id
         onClicked: {
@@ -157,7 +157,7 @@ Flickable {
     skillDesc.text = "";
 
     const id = extra_data.photo.playerid;
-    if (id == 0) return;
+    if (id === 0) return;
     root.pid = id;
 
     screenName.text = extra_data.photo.screenName;
@@ -165,36 +165,34 @@ Flickable {
     deputyChara.name = extra_data.photo.deputyGeneral;
 
     if (!config.observing) {
-      const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [id]));
+      const gamedata = lcall("GetPlayerGameData", id);
       const total = gamedata[0];
       const win = gamedata[1];
       const run = gamedata[2];
       const totalTime = gamedata[3];
       const winRate = (win / total) * 100;
       const runRate = (run / total) * 100;
-      playerGameData.text = total === 0 ? Backend.translate("Newbie") :
-        Backend.translate("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
+      playerGameData.text = total === 0 ? luatr("Newbie") :
+        luatr("Win=%1 Run=%2 Total=%3").arg(winRate.toFixed(2))
         .arg(runRate.toFixed(2)).arg(total);
 
       const h = (totalTime / 3600).toFixed(2);
       const m = Math.floor(totalTime / 60);
       if (m < 100) {
-        playerGameData.text += " " + Backend.translate("TotalGameTime: %1 min").arg(m);
+        playerGameData.text += " " + luatr("TotalGameTime: %1 min").arg(m);
       } else {
-        playerGameData.text += " " + Backend.translate("TotalGameTime: %1 h").arg(h);
+        playerGameData.text += " " + luatr("TotalGameTime: %1 h").arg(h);
       }
     }
 
-    const data = JSON.parse(Backend.callLuaFunction("GetPlayerSkills", [id]));
-    data.forEach(t => {
-      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+    lcall("GetPlayerSkills", id).forEach(t => {
+      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + t.description)
     });
 
-    const equips = JSON.parse(Backend.callLuaFunction("GetPlayerEquips", [id]));
-    equips.forEach(cid => {
-      const t = JSON.parse(Backend.callLuaFunction("GetCardData", [cid]));
+    lcall("GetPlayerEquips", id).forEach(cid => {
+      const t = lcall("GetCardData", cid);
       skillDesc.append("--------------------");
-      skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + Backend.translate(":" + t.name));
+      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
     });
   }
 }

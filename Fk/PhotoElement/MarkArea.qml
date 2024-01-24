@@ -34,7 +34,7 @@ Item {
       width: childrenRect.width
       height: 22
       Text {
-        text: Backend.translate(mark_name) + ' ' + (special_value !== '' ? special_value : mark_extra)
+        text: luatr(mark_name) + ' ' + (special_value !== '' ? special_value : mark_extra)
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -76,7 +76,8 @@ Item {
 
             const mark_type = mark_name.slice(2, close_br);
             const _data = mark_extra;
-            let data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark_name, _data, root.parent?.playerid]));
+            let data = lcall("GetQmlMark", mark_type, mark_name, _data,
+                             root.parent?.playerid);
             if (data && data.qml_path) {
               params.data = JSON.parse(_data);
               roomScene.startCheat("../../" + data.qml_path, params);
@@ -84,7 +85,7 @@ Item {
             return;
           } else {
             if (!root.parent.playerid) return;
-            let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
+            let data = lcall("GetPile", root.parent.playerid, mark_name);
             data = data.filter((e) => e !== -1);
             if (data.length === 0)
               return;
@@ -123,13 +124,14 @@ Item {
       if (close_br !== -1) {
         const mark_type = mark.slice(2, close_br);
         data = JSON.stringify(data);
-        const _data = JSON.parse(Backend.callLuaFunction("GetQmlMark", [mark_type, mark, data, root.parent?.playerid]));
+        const _data = lcall("GetQmlMark", mark_type, mark, data,
+                            root.parent?.playerid);
         if (_data && _data.text) {
           special_value = _data.text;
         }
       }
     } else {
-      data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
+      data = data instanceof Array ? data.map((markText) => luatr(markText)).join(' ') : luatr(data);
     }
 
     if (modelItem) {

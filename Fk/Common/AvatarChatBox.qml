@@ -60,7 +60,7 @@ Rectangle {
         anchors.right: !isSelf ? undefined : avatarPic.left
         anchors.margins: 6
         font.pixelSize: 14
-        text: userName + (general ? (" (" + Backend.translate(general) + ")") : "")
+        text: userName + (general ? (" (" + luatr(general) + ")") : "")
           + ' <font color="grey">[' + time + "]</font>"
       }
 
@@ -142,14 +142,14 @@ Rectangle {
       delegate: ItemDelegate {
         width: soundSelector.width
         height: 30
-        text: Backend.translate("$" + name + (idx ? idx.toString() : ""))
+        text: luatr("$" + name + (idx ? idx.toString() : ""))
 
         onClicked: {
           opTimer.start();
           const general = roomScene.getPhoto(Self.id).general;
           let skill = "fastchat_m";
           if (general !== "") {
-            const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+            const data = lcall("GetGeneralDetail", general);
             const gender = data.gender;
             if (gender !== 1) {
               skill = "fastchat_f";

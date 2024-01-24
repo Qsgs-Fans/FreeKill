@@ -19,8 +19,8 @@ GraphicsBox {
   }
 
   id: root
-  title.text: Backend.translate("$ChooseGeneral").arg(choiceNum) +
-    (config.enableFreeAssign ? "(" + Backend.translate("Enable free assign") + ")" : "")
+  title.text: luatr("$ChooseGeneral").arg(choiceNum) +
+    (config.enableFreeAssign ? "(" + luatr("Enable free assign") + ")" : "")
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
   height: body.implicitHeight + body.anchors.topMargin + body.anchors.bottomMargin
 
@@ -93,13 +93,13 @@ GraphicsBox {
         MetroButton {
           id: convertBtn
           visible: !convertDisabled
-          text: Backend.translate("Same General Convert")
+          text: luatr("Same General Convert")
           onClicked: roomScene.startCheat("SameConvert", { cards: generalList });
         }
 
         MetroButton {
           id: fightButton
-          text: Backend.translate("Fight")
+          text: luatr("Fight")
           width: 120
           height: 35
           enabled: false
@@ -110,7 +110,7 @@ GraphicsBox {
         MetroButton {
           id: detailBtn
           enabled: choices.length > 0
-          text: Backend.translate("Show General Detail")
+          text: luatr("Show General Detail")
           onClicked: roomScene.startCheat(
             "GeneralDetail",
             { generals: choices }
@@ -247,9 +247,7 @@ GraphicsBox {
     }
 
     for (let i = 0; i < generalList.count; i++) {
-      if (JSON.parse(Backend.callLuaFunction(
-        "GetSameGenerals", [generalList.get(i).name])
-      ).length > 0) {
+      if (lcall("GetSameGenerals", generalList.get(i).name).length > 0) {
         convertBtn.enabled = true;
         return;
       }
