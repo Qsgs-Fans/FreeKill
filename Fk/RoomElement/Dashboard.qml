@@ -223,14 +223,14 @@ RowLayout {
     const ids = [], cards = handcardAreaItem.cards;
     for (let i = 0; i < cards.length; i++) {
       cards[i].prohibitReason = "";
-      if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id]))) {
+      if (JSON.parse(Backend.callLuaFunction("CanUseCard", [cards[i].cid, Self.id, JSON.stringify(roomScene.extra_data)]))) {
         ids.push(cards[i].cid);
       } else {
         // cannot use? considering special_skills
         const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [cards[i].cid]));
         for (let j = 0; j < skills.length; j++) {
           const s = skills[j];
-          if (JSON.parse(Backend.callLuaFunction("ActiveCanUse", [s]))) {
+          if (JSON.parse(Backend.callLuaFunction("ActiveCanUse", [s, JSON.stringify(roomScene.extra_data)]))) {
             ids.push(cards[i].cid);
             break;
           }
@@ -475,7 +475,7 @@ RowLayout {
         continue;
       }
 
-      item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig]));
+      item.enabled = JSON.parse(Backend.callLuaFunction("ActiveCanUse", [item.orig, JSON.stringify(roomScene.extra_data)]));
     }
   }
 

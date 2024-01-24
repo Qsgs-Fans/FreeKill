@@ -218,6 +218,10 @@ function GameLogic:attachSkillToPlayers()
 
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
+    if not skill then
+      fk.qCritical("Skill: "..skillName.." doesn't exist!")
+      return
+    end
     if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
       return
     end
