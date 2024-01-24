@@ -2,13 +2,14 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
   id: root
   property string prompt
 
-  title.text: prompt === "" ? (root.multiChoose ? luatr("$ChooseCards").arg(root.min).arg(root.max) : luatr("$ChooseCard")) : processPrompt(prompt)
+  title.text: prompt === "" ? (root.multiChoose ? luatr("$ChooseCards").arg(root.min).arg(root.max) : luatr("$ChooseCard")) : Util.processPrompt(prompt)
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -102,18 +103,6 @@ GraphicsBox {
   }
 
   onCardSelected: finished();
-
-  function processPrompt(prompt) {
-    const data = prompt.split(":");
-    let raw = luatr(data[0]);
-    const src = parseInt(data[1]);
-    const dest = parseInt(data[2]);
-    if (raw.match("%src")) raw = raw.replace(/%src/g, luatr(getPhoto(src).general));
-    if (raw.match("%dest")) raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, luatr(data[4]));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, luatr(data[3]));
-    return raw;
-  }
 
   function findAreaModel(name) {
     let ret;

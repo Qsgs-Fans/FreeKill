@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
+import Fk
 
 RowLayout {
   id: root
@@ -299,18 +300,6 @@ RowLayout {
     }
   }
 
-  function processPrompt(prompt) {
-    const data = prompt.split(":");
-    let raw = luatr(data[0]);
-    const src = parseInt(data[1]);
-    const dest = parseInt(data[2]);
-    if (raw.match("%src")) raw = raw.replace(/%src/g, luatr(getPhoto(src).general));
-    if (raw.match("%dest")) raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, luatr(data[4]));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, luatr(data[3]));
-    return raw;
-  }
-
   function extractWoodenOx() {
     const pile_data = lcall("GetAllPiles", self.playerid);
     if (!roomScene.autoPending) { // 先屏蔽AskForUseActiveSkill再说，这下只剩使用打出以及出牌阶段了
@@ -328,7 +317,7 @@ RowLayout {
     const targets = roomScene.selected_targets;
     const prompt = lcall("ActiveSkillPrompt", pending_skill, pendings, targets);
     if (prompt !== "") {
-      roomScene.setPrompt(processPrompt(prompt));
+      roomScene.setPrompt(Util.processPrompt(prompt));
     }
 
     handcardAreaItem.cards.forEach((card) => {

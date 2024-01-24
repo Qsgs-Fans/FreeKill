@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+.import Fk.Util as Util
+
 const Card = {
   Unknown : 0,
   PlayerHand : 1,
@@ -917,7 +919,7 @@ callbacks["AskForSkillInvoke"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const skill = data[0];
   const prompt = data[1];
-  roomScene.promptText = prompt ? processPrompt(prompt) : luatr("#AskForSkillInvoke")
+  roomScene.promptText = prompt ? Util.processPrompt(prompt) : luatr("#AskForSkillInvoke")
     .arg(luatr(skill));
   roomScene.state = "replying";
   roomScene.okCancel.visible = true;
@@ -1004,7 +1006,7 @@ callbacks["AskForChoice"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForChoice")
       .arg(luatr(skill_name));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
   roomScene.state = "replying";
   let qmlSrc;
@@ -1039,7 +1041,7 @@ callbacks["AskForChoices"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForChoices")
       .arg(luatr(skill_name));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
   roomScene.state = "replying";
   let qmlSrc;
@@ -1075,7 +1077,7 @@ callbacks["AskForCardChosen"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForChooseCard")
       .arg(luatr(reason));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
@@ -1106,7 +1108,7 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForChooseCards")
     .arg(luatr(reason)).arg(min).arg(max);
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
 
   roomScene.state = "replying";
@@ -1229,19 +1231,6 @@ callbacks["PrelightSkill"] = (jsonData) => {
   dashboard.prelightSkill(skill_name, prelight);
 }
 
-// prompt: 'string:<src>:<dest>:<arg>:<arg2>'
-function processPrompt(prompt) {
-  const data = prompt.split(":");
-  let raw = luatr(data[0]);
-  const src = parseInt(data[1]);
-  const dest = parseInt(data[2]);
-  if (raw.match("%src")) raw = raw.replace(/%src/g, luatr(getPhoto(src).general));
-  if (raw.match("%dest")) raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-  if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, luatr(data[4]));
-  if (raw.match("%arg")) raw = raw.replace(/%arg/g, luatr(data[3]));
-  return raw;
-}
-
 callbacks["AskForUseActiveSkill"] = (jsonData) => {
   // jsonData: string skill_name, string prompt
   const data = JSON.parse(jsonData);
@@ -1253,7 +1242,7 @@ callbacks["AskForUseActiveSkill"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForUseActiveSkill")
       .arg(luatr(skill_name));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
 
   roomScene.respond_play = false;
@@ -1299,7 +1288,7 @@ callbacks["AskForUseCard"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForUseCard")
       .arg(luatr(cardname));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = false;
@@ -1321,7 +1310,7 @@ callbacks["AskForResponseCard"] = (jsonData) => {
     roomScene.promptText = luatr("#AskForResponseCard")
       .arg(luatr(cardname));
   } else {
-    roomScene.setPrompt(processPrompt(prompt), true);
+    roomScene.setPrompt(Util.processPrompt(prompt), true);
   }
   roomScene.responding_card = pattern;
   roomScene.respond_play = true;

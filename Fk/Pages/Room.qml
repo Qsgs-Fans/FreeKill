@@ -495,7 +495,7 @@ Item {
         const prompt = lcall("ActiveSkillPrompt", skillName, card,
                              selected_targets);
         if (prompt !== "") {
-          roomScene.setPrompt(processPrompt(prompt));
+          roomScene.setPrompt(Util.processPrompt(prompt));
         }
       } else {
         specialCardSkills.model = [];
@@ -679,7 +679,7 @@ Item {
                                selected_targets);
               }
               if (prompt !== "") {
-                roomScene.setPrompt(processPrompt(prompt));
+                roomScene.setPrompt(Util.processPrompt(prompt));
               }
             }
           }
@@ -1097,18 +1097,6 @@ Item {
     sequence: "Space"
     enabled: cancelButton.enabled
     onActivated: Logic.doCancelButton();
-  }
-
-  function processPrompt(prompt) {
-    const data = prompt.split(":");
-    let raw = luatr(data[0]);
-    const src = parseInt(data[1]);
-    const dest = parseInt(data[2]);
-    if (raw.match("%src")) raw = raw.replace(/%src/g, luatr(getPhoto(src).general));
-    if (raw.match("%dest")) raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, luatr(data[4]));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, luatr(data[3]));
-    return raw;
   }
 
   function getCurrentCardUseMethod() {
