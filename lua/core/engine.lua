@@ -8,6 +8,7 @@
 ---
 ---@class Engine : Object
 ---@field public extensions table<string, string[]> @ 所有mod列表及其包含的拓展包
+---@field public extension_names string[] @ Mod名字的数组，为了方便排序
 ---@field public packages table<string, Package> @ 所有拓展包的列表
 ---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
 ---@field public skills table<string, Skill> @ 所有的技能
@@ -50,6 +51,7 @@ function Engine:initialize()
     ["standard_cards"] = { "standard_cards" },
     ["maneuvering"] = { "maneuvering" },
   }
+  self.extension_names = { "standard", "standard_cards", "maneuvering" }
   self.packages = {}    -- name --> Package
   self.package_names = {}
   self.skills = {}    -- name --> Skill
@@ -147,6 +149,7 @@ function Engine:loadPackages()
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
       if type(pack) == "table" then
+        table.insert(self.extension_names, dir)
         if pack[1] ~= nil then
           self.extensions[dir] = {}
           for _, p in ipairs(pack) do

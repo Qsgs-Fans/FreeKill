@@ -13,37 +13,71 @@ Item {
   property bool loaded: false
 
   Rectangle {
-    anchors.fill: listView
-    color: "#88EEEEEE"
+    id: listBg
+    width: 260; height: parent.height
+    color: "snow"
     radius: 6
   }
 
   ListView {
-    id: listView
+    id: modList
+    width: 130; height: parent.height
+    anchors.top: listBg.top; anchors.left: listBg.left
     clip: true
-    width: 130
-    height: parent.height - 20
-    y: 10
-    ScrollBar.vertical: ScrollBar {}
     model: ListModel {
-      id: packages
+      id: mods
     }
 
-    highlight: Rectangle { color: "#E91E63"; radius: 5 }
+    Rectangle {
+      anchors.fill: parent
+      color: "#A48959"
+      z: -1
+    }
+
+    highlight: Rectangle { color: "snow" }
     highlightMoveDuration: 500
 
     delegate: Item {
-      width: listView.width
+      width: modList.width
       height: 40
 
       Text {
         text: luatr(name)
+        color: modList.currentIndex === index ? "black" : "white"
         anchors.centerIn: parent
       }
 
       TapHandler {
         onTapped: {
-          listView.currentIndex = index;
+          modList.currentIndex = index;
+        }
+      }
+    }
+  }
+
+  ListView {
+    id: pkgList
+    width: 130; height: parent.height
+    anchors.top: listBg.top; anchors.left: modList.right
+
+    clip: true
+    model: JSON.parse(mods.get(modList.currentIndex)?.pkgs ?? "[]")
+
+    highlight: Rectangle { color: "#FFCC3F"; radius: 5; scale: 0.8 }
+    highlightMoveDuration: 500
+
+    delegate: Item {
+      width: pkgList.width
+      height: 40
+
+      Text {
+        text: luatr(modelData)
+        anchors.centerIn: parent
+      }
+
+      TapHandler {
+        onTapped: {
+          pkgList.currentIndex = index;
         }
       }
     }
@@ -51,13 +85,86 @@ Item {
     onCurrentIndexChanged: { vanishAnim.start(); }
   }
 
+  ToolBar {
+    id: bar
+    width: root.width - listBg.width - 16
+    anchors.left: listBg.right
+    anchors.leftMargin: 8
+    y: 8
+    RowLayout {
+      Label {
+        text: luatr("Generals Overview")
+        elide: Label.ElideLeft
+        verticalAlignment: Qt.AlignVCenter
+        font.pixelSize: 24
+      }
+
+      Item { Layout.fillWidth: true }
+
+      TextField {
+        id: word
+        Layout.fillWidth: true
+        clip: true
+        leftPadding: 5
+        rightPadding: 5
+      }
+
+      ToolButton {
+        text: luatr("Search")
+        enabled: word.text !== ""
+        onClicked: {
+          pkgList.currentIndex = 0;
+          vanishAnim.start();
+        }
+      }
+
+      /*
+      ToolButton {
+        id: banButton
+        text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ?
+          'ResumeGeneral' : 'BanGeneral')
+        visible: detailGeneralCard.name
+        onClicked: {
+          const { disabledGenerals } = config;
+          const { name } = detailGeneralCard;
+
+          if (banButton.text === luatr('ResumeGeneral')) {
+            const deleteIndex = disabledGenerals.findIndex(
+              (general) => general === name);
+            if (deleteIndex === -1) {
+              return;
+            }
+
+            disabledGenerals.splice(deleteIndex, 1);
+          } else {
+            if (disabledGenerals.includes(name)) {
+              return;
+            }
+
+            disabledGenerals.push(name);
+          }
+          config.disabledGeneralsChanged();
+        }
+      }
+      */
+
+      ToolButton {
+        text: luatr("Quit")
+        onClicked: {
+          mainStack.pop();
+          config.saveConf();
+        }
+      }
+    }
+  }
+
   GridView {
     id: gridView
     clip: true
-    width: root.width - listView.width - generalDetail.width - 16
-    height: parent.height - 20
-    y: 10
-    anchors.left: listView.right
+    width: root.width - listBg.width - 16
+    height: parent.height - bar.height - 24
+    y: 16 + bar.height
+    anchors.left: listBg.right
     anchors.leftMargin: 8 + (width % 100) / 2
     cellHeight: 140
     cellWidth: 100
@@ -69,7 +176,7 @@ Item {
         generalText.clear();
         generalDetail.general = modelData;
         generalDetail.updateGeneral();
-      // generalDetail.open();
+        generalDetail.open();
       }
 
       Rectangle {
@@ -108,7 +215,7 @@ Item {
     PropertyAnimation {
       target: gridView
       property: "y"
-      to: 30
+      to: 36 + bar.height
       duration: 150
       easing.type: Easing.InOutQuad
     }
@@ -117,7 +224,7 @@ Item {
         gridView.model = lcall("SearchAllGenerals", word.text);
       } else {
         gridView.model = lcall("SearchGenerals",
-          listView.model.get(listView.currentIndex).name, word.text);
+          pkgList.model[pkgList.currentIndex], word.text);
       }
       word.text = "";
       appearAnim.start();
@@ -138,23 +245,78 @@ Item {
       PropertyAnimation {
         target: gridView
         property: "y"
-        from: 20
-        to: 10
+        from: 36 + bar.height
+        to: 16 + bar.height
         duration: 150
         easing.type: Easing.InOutQuad
       }
     }
   }
 
-  Rectangle {
+  Component {
+    id: skillAudioBtn
+    Button {
+      Layout.fillWidth: true
+      contentItem: ColumnLayout {
+        Text {
+          Layout.fillWidth: true
+          text: {
+            if (name.endsWith("_win_audio")) {
+              return "胜利语音";
+            }
+            return luatr(name) + (idx ? " (" + idx.toString() + ")"
+              : "");
+          }
+          font.bold: true
+          font.pixelSize: 14
+        }
+        Text {
+          Layout.fillWidth: true
+          text: {
+            const orig = '$' + name + (idx ? idx.toString() : "");
+            const orig_trans = luatr(orig);
+
+            // try general specific
+            const orig_g = '$' + name + '_' + detailGeneralCard.name
+              + (idx ? idx.toString() : "");
+            const orig_g_trans = luatr(orig_g);
+
+            if (orig_g_trans !== orig_g) {
+              return orig_g_trans;
+            }
+
+            if (orig_trans !== orig) {
+              return orig_trans;
+            }
+
+            return "";
+          }
+          wrapMode: Text.WordWrap
+        }
+      }
+
+      onClicked: {
+        callbacks["LogEvent"](JSON.stringify({
+          type: "PlaySkillSound",
+          name: name,
+          general: detailGeneralCard.name,
+          i: idx,
+        }));
+      }
+    }
+  }
+
+  Popup {
     id: generalDetail
-    width: 310
-    height: parent.height - searcher.height - 20
-    y: 10
-    anchors.right: parent.right
-    anchors.rightMargin: 10
-    color: "#88EEEEEE"
-    radius: 8
+    width: realMainWin.width * 0.8
+    height: realMainWin.height * 0.8
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
 
     property string general: "caocao"
 
@@ -196,7 +358,7 @@ Item {
     function findDeathAudio(general) {
       const extension = lcall("GetGeneralData", general).extension;
       const fname = AppPath + "/packages/" + extension + "/audio/death/"
-                  + general + ".mp3";
+        + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
       } else {
@@ -212,7 +374,7 @@ Item {
 
       if (data.companions.length > 0){
         let ret = "<font color=\"slategrey\"><b>" + luatr("Companions")
-                + "</b>: ";
+          + "</b>: ";
         data.companions.forEach(t => {
           ret += luatr(t) + ' '
         });
@@ -236,223 +398,153 @@ Item {
       addSkillAudio(general + "_win_audio");
     }
 
-    Flickable {
-      flickableDirection: Flickable.VerticalFlick
-      contentHeight: detailLayout.height
-      width: parent.width - 40
-      height: parent.height - 40
-      clip: true
+    Item {
       anchors.centerIn: parent
-      ScrollBar.vertical: ScrollBar {}
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
 
-      ColumnLayout {
-        id: detailLayout
-        width: parent.width
-
-        GeneralCardItem {
-          id: detailGeneralCard
-          Layout.alignment: Qt.AlignHCenter
-          name: "caocao"
-        }
-
-        TextEdit {
-          id: generalText
-
-          Layout.fillWidth: true
-          readOnly: true
-          selectByKeyboard: true
-          selectByMouse: false
-          wrapMode: TextEdit.WordWrap
-          textFormat: TextEdit.RichText
-          font.pixelSize: 16
-        }
-
-        Repeater {
-          model: ListModel {
-            id: audioModel
+      Item {
+        id: generalInfo
+        width: 150
+        ColumnLayout {
+          width: parent.width
+          GeneralCardItem {
+            id: detailGeneralCard
+            name: "caocao"
+            scale: 1.5; transformOrigin: Item.TopLeft
           }
+
+          Item { Layout.preferredHeight: 130 * 0.5 }
+
+          Text {
+            Layout.fillWidth: true
+            textFormat: TextEdit.RichText
+            font.pixelSize: 16
+            function trans(str) {
+              const ret = luatr(str);
+              if (ret === str) {
+                return "官方";
+              }
+              return ret;
+            }
+            text: {
+              const general = generalDetail.general;
+              return [
+                luatr(lcall("GetGeneralData", general).package),
+                "称号：" + trans("#" + general),
+                "设计：" + trans("designer:" + general),
+                "配音：" + trans("cv:" + general),
+                "画师：" + trans("illustrator:" + general),
+              ].join("<br>");
+            }
+          }
+
+          Timer {
+            id: opTimer
+            interval: 4000
+          }
+
           Button {
+            text: luatr("Set as Avatar")
+            enabled: detailGeneralCard.name !== "" && !opTimer.running
+              && Self.avatar !== detailGeneralCard.name
+            onClicked: {
+              mainWindow.busy = true;
+              opTimer.start();
+              ClientInstance.notifyServer(
+                "UpdateAvatar",
+                JSON.stringify([detailGeneralCard.name])
+              );
+            }
+          }
+        }
+      }
+
+      Flickable {
+        flickableDirection: Flickable.VerticalFlick
+        contentHeight: detailLayout.height
+        width: parent.width - 40 - generalInfo.width
+        height: parent.height - 40
+        clip: true
+        anchors.left: generalInfo.right
+        anchors.leftMargin: 20
+        y: 20
+
+        ColumnLayout {
+          id: detailLayout
+          width: parent.width
+
+          TextEdit {
+            id: generalText
+
+            Layout.fillWidth: true
+            readOnly: true
+            selectByKeyboard: true
+            selectByMouse: false
+            wrapMode: TextEdit.WordWrap
+            textFormat: TextEdit.RichText
+            font.pixelSize: 18
+          }
+
+          GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            Repeater {
+              model: ListModel {
+                id: audioModel
+              }
+              delegate: skillAudioBtn
+            }
+          }
+
+          Button {
+            id: audioDeath
             Layout.fillWidth: true
             contentItem: ColumnLayout {
               Text {
                 Layout.fillWidth: true
-                text: {
-                  if (name.endsWith("_win_audio")) {
-                    return "胜利语音";
-                  }
-                  return luatr(name) + (idx ? " (" + idx.toString() + ")"
-                                            : "");
-                }
+                text: luatr("Death audio")
                 font.bold: true
                 font.pixelSize: 14
               }
               Text {
                 Layout.fillWidth: true
                 text: {
-                  const orig = '$' + name + (idx ? idx.toString() : "");
-                  const orig_trans = luatr(orig);
-
-                  // try general specific
-                  const orig_g = '$' + name + '_' + detailGeneralCard.name
-                               + (idx ? idx.toString() : "");
-                  const orig_g_trans = luatr(orig_g);
-
-                  if (orig_g_trans !== orig_g) {
-                    return orig_g_trans;
+                  const orig = "~" + generalDetail.general;
+                  const tr = luatr(orig);
+                  if (tr === orig) {
+                    return "";
                   }
-
-                  if (orig_trans !== orig) {
-                    return orig_trans;
-                  }
-
-                  return "";
+                  return tr;
                 }
                 wrapMode: Text.WordWrap
               }
             }
 
             onClicked: {
-              callbacks["LogEvent"](JSON.stringify({
-                type: "PlaySkillSound",
-                name: name,
-                general: detailGeneralCard.name,
-                i: idx,
-              }));
+              const general = generalDetail.general
+              const extension = lcall("GetGeneralData", general).extension;
+              Backend.playSound("./packages/" + extension + "/audio/death/"
+                + general);
             }
           }
         }
-
-        Button {
-          id: audioDeath
-          Layout.fillWidth: true
-          contentItem: ColumnLayout {
-            Text {
-              Layout.fillWidth: true
-              text: luatr("Death audio")
-              font.bold: true
-              font.pixelSize: 14
-            }
-            Text {
-              Layout.fillWidth: true
-              text: {
-                const orig = "~" + generalDetail.general;
-                const tr = luatr(orig);
-                if (tr === orig) {
-                  return "";
-                }
-                return tr;
-              }
-              wrapMode: Text.WordWrap
-            }
-          }
-
-          onClicked: {
-            const general = generalDetail.general
-            const extension = lcall("GetGeneralData", general).extension;
-            Backend.playSound("./packages/" + extension + "/audio/death/"
-                              + general);
-          }
-        }
-      }
-    }
-    Rectangle {
-      id: searcher
-      width: parent.width
-      height: childrenRect.height
-      color: "snow"
-      opacity: 0.75
-      anchors.top: parent.bottom
-      radius: 8
-
-      RowLayout {
-        width: parent.width
-        TextField {
-          id: word
-          Layout.fillWidth: true
-          clip: true
-          leftPadding: 5
-          rightPadding: 5
-        }
-
-        Button {
-          text: luatr("Search")
-          enabled: word.text !== ""
-          onClicked: {
-            listView.currentIndex = 0;
-            vanishAnim.start();
-          }
-        }
-      }
-    }
-  }
-
-  ColumnLayout {
-    anchors.right: parent.right
-    Button {
-      text: luatr("Quit")
-      onClicked: {
-        mainStack.pop();
-        config.saveConf();
-      }
-    }
-
-    Button {
-      id: banButton
-      text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ?
-                      'ResumeGeneral' : 'BanGeneral')
-      visible: detailGeneralCard.name
-      onClicked: {
-        const { disabledGenerals } = config;
-        const { name } = detailGeneralCard;
-
-        if (banButton.text === luatr('ResumeGeneral')) {
-          const deleteIndex = disabledGenerals.findIndex(
-                                (general) => general === name);
-          if (deleteIndex === -1) {
-            return;
-          }
-
-          disabledGenerals.splice(deleteIndex, 1);
-        } else {
-          if (disabledGenerals.includes(name)) {
-            return;
-          }
-
-          disabledGenerals.push(name);
-        }
-        config.disabledGeneralsChanged();
-      }
-    }
-
-    Timer {
-      id: opTimer
-      interval: 4000
-    }
-
-    Button {
-      text: luatr("Set as Avatar")
-      enabled: detailGeneralCard.name !== "" && !opTimer.running
-               && Self.avatar !== detailGeneralCard.name
-      onClicked: {
-        mainWindow.busy = true;
-        opTimer.start();
-        ClientInstance.notifyServer(
-          "UpdateAvatar",
-          JSON.stringify([detailGeneralCard.name])
-        );
       }
     }
   }
 
   function loadPackages() {
     if (loaded) return;
+    const _mods = lcall("GetAllModNames")
+    const modData = lcall("GetAllMods")
     const packs = lcall("GetAllGeneralPack");
-    packs.forEach(name => {
-      if (!config.serverHiddenPacks.includes(name)) {
-        packages.append({ name: name });
-      }
+    _mods.forEach(name => {
+      const pkgs = modData[name].filter(p => packs.includes(p)
+        && !config.serverHiddenPacks.includes(p));
+      if (pkgs.length > 0)
+        mods.append({ name: name, pkgs: JSON.stringify(pkgs) });
     });
-    generalDetail.updateGeneral();
     loaded = true;
   }
 }

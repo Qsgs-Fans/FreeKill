@@ -131,6 +131,10 @@ function GetAllMods()
   return json.encode(Fk.extensions)
 end
 
+function GetAllModNames()
+  return json.encode(Fk.extension_names)
+end
+
 function GetAllGeneralPack()
   local ret = {}
   for _, name in ipairs(Fk.package_names) do
