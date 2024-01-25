@@ -11,6 +11,7 @@ Item {
   id: root
 
   property bool loaded: false
+  property int stat: 0 // 0=normal 1=banPkg 2=banChara
 
   Rectangle {
     id: listBg
@@ -70,6 +71,14 @@ Item {
       width: pkgList.width
       height: 40
 
+      Rectangle {
+        color: "#BB888888"
+        opacity: !config.curScheme.banPkg[modelData] ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+        anchors.fill: parent
+        scale: 0.92; radius: 4
+      }
+
       Text {
         text: luatr(modelData)
         anchors.centerIn: parent
@@ -77,7 +86,20 @@ Item {
 
       TapHandler {
         onTapped: {
-          pkgList.currentIndex = index;
+          if (stat === 1) {
+            const name = modelData;
+            let s = config.curScheme;
+            if (s.banPkg[name]) {
+              s.banPkg[name] = undefined;
+              s.normalPkg[name] = [];
+            } else {
+              s.normalPkg[name] = undefined;
+              s.banPkg[name] = [];
+            }
+            config.curSchemeChanged();
+          } else {
+            pkgList.currentIndex = index;
+          }
         }
       }
     }
@@ -91,9 +113,24 @@ Item {
     anchors.left: listBg.right
     anchors.leftMargin: 8
     y: 8
+
+    background: Rectangle {
+      color: stat === 0 ? "#5cb3cc" : "#869d9d"
+      Behavior on color { ColorAnimation { duration: 200 } }
+    }
+
     RowLayout {
+      anchors.fill: parent
+      Item { Layout.preferredWidth: 20 }
+
       Label {
-        text: luatr("Generals Overview")
+        text: {
+          switch (stat) {
+            case 0: return luatr("Generals Overview");
+            case 1: return luatr("$BanPkgHelp");
+            case 2: return luatr("$BanCharaHelp");
+          }
+        }
         elide: Label.ElideLeft
         verticalAlignment: Qt.AlignVCenter
         font.pixelSize: 24
@@ -103,7 +140,6 @@ Item {
 
       TextField {
         id: word
-        Layout.fillWidth: true
         clip: true
         leftPadding: 5
         rightPadding: 5
@@ -118,35 +154,37 @@ Item {
         }
       }
 
-      /*
       ToolButton {
         id: banButton
-        text: luatr(config.disabledGenerals.includes(detailGeneralCard.name) ?
-          'ResumeGeneral' : 'BanGeneral')
-        visible: detailGeneralCard.name
+        text: {
+          if (stat === 2) return luatr("OK");
+          return luatr("BanGeneral");
+        }
+        enabled: stat !== 1
         onClicked: {
-          const { disabledGenerals } = config;
-          const { name } = detailGeneralCard;
-
-          if (banButton.text === luatr('ResumeGeneral')) {
-            const deleteIndex = disabledGenerals.findIndex(
-              (general) => general === name);
-            if (deleteIndex === -1) {
-              return;
-            }
-
-            disabledGenerals.splice(deleteIndex, 1);
+          if (stat === 0) {
+            stat = 2;
           } else {
-            if (disabledGenerals.includes(name)) {
-              return;
-            }
-
-            disabledGenerals.push(name);
+            stat = 0;
           }
-          config.disabledGeneralsChanged();
         }
       }
-      */
+
+      ToolButton {
+        id: banPkgButton
+        text: {
+          if (stat === 1) return luatr("OK");
+          return luatr("BanPackage");
+        }
+        enabled: stat !== 2
+        onClicked: {
+          if (stat === 0) {
+            stat = 1;
+          } else {
+            stat = 0;
+          }
+        }
+      }
 
       ToolButton {
         text: luatr("Quit")
@@ -173,24 +211,77 @@ Item {
       autoBack: false
       name: modelData
       onClicked: {
-        generalText.clear();
-        generalDetail.general = modelData;
-        generalDetail.updateGeneral();
-        generalDetail.open();
+        if (stat === 2) {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          let arr;
+          if (s.banPkg[pack]) {
+            arr = s.banPkg[pack];
+          } else {
+            if (!s.normalPkg[pack]) {
+              s.normalPkg[pack] = [];
+            }
+            arr = s.normalPkg[pack];
+          }
+          // TODO: 根据手动全禁/全白名单自动改为禁包
+          const idx = arr.indexOf(modelData);
+          if (idx !== -1) {
+            arr.splice(idx, 1);
+          } else {
+            arr.push(modelData);
+          }
+          config.curSchemeChanged();
+        } else {
+          generalText.clear();
+          generalDetail.general = modelData;
+          generalDetail.updateGeneral();
+          generalDetail.open();
+        }
       }
 
       Rectangle {
         anchors.fill: parent
         color: "black"
-        opacity: config.disabledGenerals.includes(modelData) ? 0.7 : 0
+        opacity: {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            if (!s.banPkg[pack].includes(modelData)) return 0.7;
+          } else {
+            if (!!s.normalPkg[pack]?.includes(modelData)) return 0.7;
+          }
+          return 0;
+        }
         Behavior on opacity {
           NumberAnimation {}
         }
       }
 
       GlowText {
-        visible: config.disabledGenerals.includes(modelData)
-        text: '禁'
+        id: banText
+        visible: {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            return s.banPkg[pack].includes(modelData);
+          } else {
+            return !!s.normalPkg[pack]?.includes(modelData);
+          }
+        }
+        text: {
+          if (!visible) return '';
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            if (s.banPkg[pack].includes(modelData)) return '白名单';
+          } else {
+            if (!!s.normalPkg[pack]?.includes(modelData)) return '禁';
+          }
+        }
         anchors.centerIn: parent
         font.family: fontLi2.name
         color: "#E4D5A0"
@@ -308,7 +399,7 @@ Item {
 
   Popup {
     id: generalDetail
-    width: realMainWin.width * 0.8
+    width: realMainWin.width * 0.6
     height: realMainWin.height * 0.8
     anchors.centerIn: parent
     background: Rectangle {

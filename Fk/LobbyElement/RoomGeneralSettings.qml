@@ -113,7 +113,6 @@ Flickable {
       id: warning
       anchors.rightMargin: 8
       visible: {
-        //config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
         const avail = lcall("GetAvailableGeneralsNum");
         const ret = avail <
                   config.preferredGeneralNum * config.preferedPlayerNum;
@@ -164,36 +163,32 @@ Flickable {
           config.saveConf();
           root.finished();
           mainWindow.busy = true;
+          let k, arr;
 
-          let disabledGenerals = config.disabledGenerals.slice();
-          if (disabledGenerals.length) {
-            const availablePack = lcall("GetAllGeneralPack").
-              filter((pack) => !config.disabledPack.includes(pack));
-            disabledGenerals = disabledGenerals.filter((general) => {
-              return availablePack.find(pack =>
-                lcall("GetGenerals", pack).includes(general));
-            });
-
-            disabledGenerals = Array.from(new Set(disabledGenerals));
+          let disabledGenerals = [];
+          for (k in config.curScheme.banPkg) {
+            arr = config.curScheme.banPkg[k];
+            if (arr.length !== 0) {
+              const generals = lcall("GetGenerals", k);
+              disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
+            }
+          }
+          for (k in config.curScheme.normalPkg) {
+            arr = config.curScheme.normalPkg[k] ?? [];
+            if (arr.length !== 0)
+              disabledGenerals.push(...arr);
           }
 
-          let disabledPack = config.disabledPack.slice();
+          let disabledPack = config.curScheme.banCardPkg.slice();
+          for (k in config.curScheme.banPkg) {
+            if (config.curScheme.banPkg[k].length === 0)
+              disabledPack.push(k);
+          }
           config.serverHiddenPacks.forEach(p => {
             if (!disabledPack.includes(p)) {
               disabledPack.push(p);
             }
           });
-          const generalPacks = lcall("GetAllGeneralPack");
-          for (let pk of generalPacks) {
-            if (disabledPack.includes(pk)) continue;
-            let generals = lcall("GetGenerals", pk);
-            let t = generals.filter(g => !disabledGenerals.includes(g));
-            if (t.length === 0) {
-              disabledPack.push(pk);
-              disabledGenerals = disabledGenerals
-                .filter(g1 => !generals.includes(g1));
-            }
-          }
 
           ClientInstance.notifyServer(
             "CreateRoom",
@@ -232,8 +227,12 @@ Flickable {
 
       playerNum.value = config.preferedPlayerNum;
 
-      config.disabledPack.forEach(p => lcall("UpdatePackageEnable", p, false));
-      config.disabledPackChanged();
+      for (let k in config.curScheme.banPkg) {
+        lcall("UpdatePackageEnable", k, false);
+      }
+      config.curScheme.banCardPkg.forEach(p =>
+        lcall("UpdatePackageEnable", p, false));
+      config.curSchemeChanged();
     }
   }
 }
