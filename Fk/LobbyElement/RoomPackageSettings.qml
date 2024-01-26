@@ -113,7 +113,15 @@ Flickable {
           checked: pkg_enabled
 
           onCheckedChanged: {
-            checkPackage(orig_name, checked);
+            const packs = config.curScheme.banCardPkg;
+            if (checked) {
+              const idx = packs.indexOf(orig_name);
+              if (idx !== -1) packs.splice(idx, 1);
+            } else {
+              packs.push(orig_name);
+            }
+            lcall("UpdatePackageEnable", orig_name, checked);
+            config.curSchemeChanged();
           }
         }
       }
@@ -121,15 +129,16 @@ Flickable {
   }
 
   function checkPackage(orig_name, checked) {
-    const packs = config.disabledPack;
-    if (checked) {
-      const idx = packs.indexOf(orig_name);
-      if (idx !== -1) packs.splice(idx, 1);
+    const s = config.curScheme;
+    if (!checked) {
+      s.banPkg[orig_name] = [];
+      s.normalPkg[orig_name] = undefined;
     } else {
-      packs.push(orig_name);
+      s.normalPkg[orig_name] = undefined;
+      s.banPkg[orig_name] = undefined;
     }
     lcall("UpdatePackageEnable", orig_name, checked);
-    config.disabledPackChanged();
+    config.curSchemeChanged();
   }
 
   Component.onCompleted: {
@@ -143,7 +152,7 @@ Flickable {
       gpacklist.append({
         name: luatr(orig),
         orig_name: orig,
-        pkg_enabled: !config.disabledPack.includes(orig),
+        pkg_enabled: !config.curScheme.banPkg[orig],
       });
     }
 
@@ -155,7 +164,7 @@ Flickable {
       cpacklist.append({
         name: luatr(orig),
         orig_name: orig,
-        pkg_enabled: !config.disabledPack.includes(orig),
+        pkg_enabled: !config.curScheme.banCardPkg.includes(orig),
       });
     }
     loading = false;
