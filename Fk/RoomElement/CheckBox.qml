@@ -58,7 +58,7 @@ GraphicsBox {
 
     MetroButton {
       Layout.fillWidth: true
-      text: Util.processPrompt("OK")
+      text: luatr("OK")
       enabled: root.result.length >= min_num
 
       onClicked: {
@@ -68,7 +68,7 @@ GraphicsBox {
 
     MetroButton {
       Layout.fillWidth: true
-      text: processPrompt("Cancel")
+      text: luatr("Cancel")
       visible: cancelable
 
       onClicked: {

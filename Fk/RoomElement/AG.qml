@@ -47,7 +47,6 @@ GraphicsBox {
   function addIds(ids) {
     ids.forEach((id) => {
       let data = lcall("GetCardData", id);
-      data = JSON.parse(data);
       data.selectable = true;
       data.footnote = "";
       cards.append(data);

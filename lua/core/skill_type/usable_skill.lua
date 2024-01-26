@@ -3,7 +3,7 @@
 ---@class UsableSkill : Skill
 ---@field public main_skill UsableSkill
 ---@field public max_use_time integer[]
----@field public expand_pile string
+---@field public expand_pile? string | integer[] | fun(self: UsableSkill): integer[]|string?
 local UsableSkill = Skill:subclass("UsableSkill")
 
 function UsableSkill:initialize(name, frequency)

@@ -71,7 +71,7 @@ RowLayout {
     handcardAreaItem.unselectAll(expectId);
   }
 
-  function expandPile(pile) {
+  function expandPile(pile, extra_ids, extra_footnote) {
     const expanded_pile_names = Object.keys(expanded_piles);
     if (expanded_pile_names.indexOf(pile) !== -1)
       return;
@@ -80,30 +80,27 @@ RowLayout {
     const parentPos = roomScene.mapFromItem(self, 0, 0);
 
     expanded_piles[pile] = [];
+    let ids, footnote;
     if (pile === "_equip") {
-      const equips = self.equipArea.getAllCards();
-      equips.forEach(data => {
-        data.x = parentPos.x;
-        data.y = parentPos.y;
-        const card = component.createObject(roomScene, data);
-        card.footnoteVisible = true;
-        card.footnote = luatr("$Equip");
-        handcardAreaItem.add(card);
-      })
-      handcardAreaItem.updateCardPosition();
+      ids = self.equipArea.getAllCards();
+      footnote = "$Equip";
+    } else if (pile === "_extra") {
+      ids = extra_ids;
+      footnote = extra_footnote;
     } else {
-      const ids = lcall("GetPile", self.playerid, pile);
-      ids.forEach(id => {
-        const data = lcall("GetCardData", id);
-        data.x = parentPos.x;
-        data.y = parentPos.y;
-        const card = component.createObject(roomScene, data);
-        card.footnoteVisible = true;
-        card.footnote = luatr(pile);
-        handcardAreaItem.add(card);
-      });
-      handcardAreaItem.updateCardPosition();
+      ids = lcall("GetPile", self.playerid, pile);
+      footnote = pile;
     }
+    ids.forEach(id => {
+      const data = lcall("GetCardData", id);
+      data.x = parentPos.x;
+      data.y = parentPos.y;
+      const card = component.createObject(roomScene, data);
+      card.footnoteVisible = true;
+      card.footnote = luatr(footnote);
+      handcardAreaItem.add(card);
+    });
+    handcardAreaItem.updateCardPosition();
   }
 
   function retractPile(pile) {
@@ -339,14 +336,20 @@ RowLayout {
       }
     })
 
-    const pile = lcall("GetExpandPileOfSkill", pending_skill);
-    const pile_ids = lcall("GetPile", self.playerid, pile);
+    let pile = lcall("GetExpandPileOfSkill", pending_skill);
+    let pile_ids = pile;
+    if (typeof pile === "string") {
+      pile_ids = lcall("GetPile", self.playerid, pile);
+    } else {
+      pile = "_extra";
+    }
+
     pile_ids.forEach(cid => {
       if (lcall("ActiveCardFilter", pending_skill, cid, pendings, targets)) {
         enabled_cards.push(cid);
       };
       if (!expanded_piles[pile]) {
-        expandPile(pile);
+        expandPile(pile, pile_ids, pending_skill);
       }
     });
 

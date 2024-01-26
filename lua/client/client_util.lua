@@ -586,7 +586,17 @@ end
 
 function GetExpandPileOfSkill(skillName)
   local skill = Fk.skills[skillName]
-  return skill and (skill.expand_pile or "") or ""
+  if not skill then return "" end
+  local e = skill.expand_pile
+  if type(e) == "function" then
+    e = e(skill)
+  end
+
+  if type(e) == "table" then
+    return json.encode(e)
+  else
+    return e or ""
+  end
 end
 
 function GetGameModes()

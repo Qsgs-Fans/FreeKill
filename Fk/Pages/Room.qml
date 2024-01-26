@@ -1006,53 +1006,6 @@ Item {
     }
   }
 
-  /* 这东西似乎一直不好使啊
-  Rectangle {
-    id: easyChat
-    width: parent.width
-    height: 28
-    anchors.bottom: parent.bottom
-    visible: false
-    color: "#040403"
-    radius: 3
-    border.width: 1
-    border.color: "#A6967A"
-
-    TextInput {
-      id: easyChatEdit
-      anchors.fill: parent
-      anchors.margins: 6
-      color: "white"
-      clip: true
-      font.pixelSize: 14
-
-      onAccepted: {
-        if (text != "") {
-          ClientInstance.notifyServer(
-            "Chat",
-            JSON.stringify({
-              type: 0,
-              msg: text
-            })
-          );
-          text = "";
-          easyChat.visible = false;
-          easyChatEdit.enabled = false;
-        }
-      }
-    }
-  }
-
-  Shortcut {
-    sequence: "T"
-    onActivated: {
-      easyChat.visible = true;
-      easyChatEdit.enabled = true;
-      easyChatEdit.forceActiveFocus();
-    }
-  }
-  */
-
   MiscStatus {
     id: miscStatus
     anchors.right: menuButton.left
@@ -1085,10 +1038,9 @@ Item {
   }
 
   Shortcut {
-    sequence: "Esc"
+    sequence: "T"
     onActivated: {
-      easyChat.visible = false;
-      easyChatEdit.enabled = false;
+      roomDrawer.open();
     }
   }
 

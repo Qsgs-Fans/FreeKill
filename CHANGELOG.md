@@ -1,5 +1,13 @@
 # ChangeLog
 
+## v0.4.4
+
+禁将增强；修复bug
+
+UsableSkill的expand_pile功能加强
+
+___
+
 ## v0.4.3
 
 1. 事件栈和实际的函数调用栈分离

@@ -40,7 +40,6 @@ Item {
 
   onSkillnameChanged: {
     let data = lcall("GetSkillData", skillname);
-    data = JSON.parse(data);
     if (data.frequency || data.switchSkillName) {
       skilltype = data.switchSkillName ? 'switch' : data.frequency;
       visible = true;
