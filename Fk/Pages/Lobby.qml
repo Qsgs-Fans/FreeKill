@@ -64,9 +64,19 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: (hasPassword ? luatr("Has Password") : "") + roomName
+          text: roomName
           font.pixelSize: 20
           elide: Label.ElideRight
+        }
+
+        Item {
+          Layout.preferredWidth: 16
+          Image {
+            source: AppPath + "/image/button/skill/locked.png"
+            visible: hasPassword
+            anchors.centerIn: parent
+            scale: 0.8
+          }
         }
 
         Text {

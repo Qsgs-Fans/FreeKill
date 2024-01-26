@@ -71,17 +71,19 @@ Item {
       width: pkgList.width
       height: 40
 
-      Rectangle {
-        color: "#BB888888"
-        opacity: !config.curScheme.banPkg[modelData] ? 0 : 1
-        Behavior on opacity { NumberAnimation { duration: 200 } }
-        anchors.fill: parent
-        scale: 0.92; radius: 4
-      }
-
       Text {
         text: luatr(modelData)
+        color: !config.curScheme.banPkg[modelData] ? "black" : "grey"
+        Behavior on color { ColorAnimation { duration: 200 } }
         anchors.centerIn: parent
+      }
+
+      Image {
+        source: AppPath + "/image/button/skill/locked.png"
+        opacity: !config.curScheme.banPkg[modelData] ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+        anchors.centerIn: parent
+        scale: 0.8
       }
 
       TapHandler {
@@ -277,7 +279,7 @@ Item {
           const gdata = lcall("GetGeneralData", modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
-            if (s.banPkg[pack].includes(modelData)) return '白名单';
+            if (s.banPkg[pack].includes(modelData)) return '启用';
           } else {
             if (!!s.normalPkg[pack]?.includes(modelData)) return '禁';
           }
