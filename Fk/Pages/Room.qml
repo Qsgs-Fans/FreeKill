@@ -1163,14 +1163,15 @@ Item {
       const idx = parseInt(splited[1]);
       const gene = splited[2];
 
-      try {
-        callbacks["LogEvent"](JSON.stringify({
-          type: "PlaySkillSound",
-          name: skill,
-          general: gene,
-          i: idx,
-        }));
-      } catch (e) {}
+      if (!config.disableMsgAudio)
+        try {
+          callbacks["LogEvent"](JSON.stringify({
+            type: "PlaySkillSound",
+            name: skill,
+            general: gene,
+            i: idx,
+          }));
+        } catch (e) {}
       const m = luatr("$" + skill + (gene ? "_" + gene : "")
                           + (idx ? idx.toString() : ""));
       data.msg = m;

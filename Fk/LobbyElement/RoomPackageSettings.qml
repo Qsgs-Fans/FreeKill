@@ -132,10 +132,10 @@ Flickable {
     const s = config.curScheme;
     if (!checked) {
       s.banPkg[orig_name] = [];
-      s.normalPkg[orig_name] = undefined;
+      delete s.normalPkg[orig_name];
     } else {
-      s.normalPkg[orig_name] = undefined;
-      s.banPkg[orig_name] = undefined;
+      delete s.normalPkg[orig_name];
+      delete s.banPkg[orig_name];
     }
     lcall("UpdatePackageEnable", orig_name, checked);
     config.curSchemeChanged();

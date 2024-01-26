@@ -82,7 +82,7 @@ RowLayout {
     expanded_piles[pile] = [];
     let ids, footnote;
     if (pile === "_equip") {
-      ids = self.equipArea.getAllCards();
+      ids = self.equipArea.getAllCards().map(e => e.cid);
       footnote = "$Equip";
     } else if (pile === "_extra") {
       ids = extra_ids;

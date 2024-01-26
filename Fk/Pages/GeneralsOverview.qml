@@ -92,12 +92,13 @@ Item {
             const name = modelData;
             let s = config.curScheme;
             if (s.banPkg[name]) {
-              s.banPkg[name] = undefined;
-              s.normalPkg[name] = undefined;
+              delete s.banPkg[name];
+              delete s.normalPkg[name];
             } else {
-              s.normalPkg[name] = undefined;
+              delete s.normalPkg[name];
               s.banPkg[name] = [];
             }
+            console.log(JSON.stringify(config.curScheme))
             config.curSchemeChanged();
           } else {
             pkgList.currentIndex = index;
@@ -135,7 +136,7 @@ Item {
         }
         elide: Label.ElideLeft
         verticalAlignment: Qt.AlignVCenter
-        font.pixelSize: 24
+        font.pixelSize: 28
       }
 
       Item { Layout.fillWidth: true }
@@ -149,6 +150,7 @@ Item {
 
       ToolButton {
         text: luatr("Search")
+        font.pixelSize: 20
         enabled: word.text !== ""
         onClicked: {
           pkgList.currentIndex = 0;
@@ -158,6 +160,7 @@ Item {
 
       ToolButton {
         id: banButton
+        font.pixelSize: 20
         text: {
           if (stat === 2) return luatr("OK");
           return luatr("BanGeneral");
@@ -174,6 +177,7 @@ Item {
 
       ToolButton {
         id: banPkgButton
+        font.pixelSize: 20
         text: {
           if (stat === 1) return luatr("OK");
           return luatr("BanPackage");
@@ -190,6 +194,7 @@ Item {
 
       ToolButton {
         text: luatr("Quit")
+        font.pixelSize: 20
         onClicked: {
           mainStack.pop();
           config.saveConf();
