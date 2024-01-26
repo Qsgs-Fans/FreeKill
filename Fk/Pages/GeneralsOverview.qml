@@ -93,7 +93,7 @@ Item {
             let s = config.curScheme;
             if (s.banPkg[name]) {
               s.banPkg[name] = undefined;
-              s.normalPkg[name] = [];
+              s.normalPkg[name] = undefined;
             } else {
               s.normalPkg[name] = undefined;
               s.banPkg[name] = [];
