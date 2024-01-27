@@ -3077,6 +3077,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
   if #skill_names == 0 then return end
   local losts = {}  ---@type boolean[]
   local triggers = {} ---@type Skill[]
+  local lost_piles = {} ---@type integer[]
   for _, skill in ipairs(skill_names) do
     if string.sub(skill, 1, 1) == "-" then
       local actual_skill = string.sub(skill, 2, #skill)
@@ -3098,12 +3099,17 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
 
           table.insert(losts, true)
           table.insert(triggers, s)
+          if s.hooked_piles then
+            for _, pile_name in ipairs(s.hooked_piles) do
+              table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
+            end
+          end
         end
       end
     else
       local sk = Fk.skills[skill]
       if sk and not player:hasSkill(sk, true, true) then
-        local got_skills = player:addSkill(sk)
+        local got_skills = player:addSkill(sk, source_skill)
 
         for _, s in ipairs(got_skills) do
           -- TODO: limit skill mark
@@ -3133,6 +3139,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])
     end
+  end
+
+  if #lost_piles > 0 then
+    self:moveCards({
+      ids = lost_piles,
+      from = player.id,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonDiscard,
+    })
   end
 end
 
