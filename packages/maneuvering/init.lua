@@ -146,7 +146,7 @@ local analepticEffect = fk.CreateTriggerSkill{
   name = "analeptic_effect",
   global = true,
   priority = 0, -- game rule
-  events = { fk.PreCardUse, fk.EventPhaseStart },
+  events = { fk.PreCardUse, fk.AfterTurnEnd },
   can_trigger = function(_, event, target, player, data)
     if target ~= player then
       return false
@@ -155,7 +155,7 @@ local analepticEffect = fk.CreateTriggerSkill{
     if event == fk.PreCardUse then
       return data.card.trueName == "slash" and player.drank > 0
     else
-      return target.phase == Player.NotActive
+      return true
     end
   end,
   on_trigger = function(_, event, _, player, data)
@@ -360,9 +360,16 @@ local fanSkill = fk.CreateTriggerSkill{
     return target == player and player:hasSkill(self) and data.card.name == "slash"
   end,
   on_use = function(_, _, _, _, data)
-    local card = Fk:cloneCard("fire__slash")
+    local card = Fk:cloneCard("fire__slash", data.card.suit, data.card.number)
+    for k, v in pairs(data.card) do
+      if card[k] == nil then
+        card[k] = v
+      end
+    end
+    if not data.card:isVirtual() then
+      card.id = data.card.id
+    end
     card.skillName = "fan"
-    card:addSubcard(data.card)
     data.card = card
   end,
 }
@@ -522,7 +529,7 @@ Fk:loadTranslationTable{
   ["#guding_blade_skill"] = "古锭刀",
 
   ["fan"] = "朱雀羽扇",
-	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：你可以将一张普通【杀】当火【杀】使用。",
+	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：当你声明使用普【杀】后，你可以将此【杀】改为火【杀】。",
   ["#fan_skill"] = "朱雀羽扇",
 
   ["vine"] = "藤甲",

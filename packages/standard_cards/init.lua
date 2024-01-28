@@ -352,18 +352,22 @@ local collateralSkill = fk.CreateActiveSkill{
   prompt = "#collateral_skill",
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
-    return user ~= to_select and player:getEquipment(Card.SubtypeWeapon)
+    if #selected == 0 then
+      return user ~= to_select and player:getEquipment(Card.SubtypeWeapon) and not player:prohibitUse(Fk:cloneCard("slash"))
+    elseif #selected == 1 then
+      local target = Fk:currentRoom():getPlayerById(to_select)
+      local from = Fk:currentRoom():getPlayerById(selected[1])
+      return from:inMyAttackRange(target) and not from:isProhibited(player, Fk:cloneCard("slash"))
+    end
   end,
   target_filter = function(self, to_select, selected, _, card)
     if #selected >= (self:getMaxTargetNum(Self, card) - 1) * 2 then
       return false--修改借刀的目标选择
     elseif #selected % 2 == 0 then
-      return self:modTargetFilter(to_select, selected, Self.id, card)
+      return self:modTargetFilter(to_select, {}, Self.id, card)
     else
-      local player = Fk:currentRoom():getPlayerById(to_select)
-      local from = Fk:currentRoom():getPlayerById(selected[#selected])
-      return self:modTargetFilter(selected[#selected], selected, Self.id, card)
-      and from:inMyAttackRange(player) and not from:isProhibited(player, Fk:cloneCard("slash"))
+      return self:modTargetFilter(selected[#selected], {}, Self.id, card)
+      and self:modTargetFilter(to_select, {selected[#selected]}, Self.id, card)
     end
   end,
   target_num = 2,
@@ -382,17 +386,26 @@ local collateralSkill = fk.CreateActiveSkill{
   end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
-    if to.dead or not to:getEquipment(Card.SubtypeWeapon) then return end
+    if to.dead then return end
     local prompt = "#collateral-slash:"..effect.from..":"..effect.subTargets[1]
     if #effect.subTargets > 1 then
       prompt = nil
     end
-    local use = room:askForUseCard(to, "slash", nil, prompt, nil, { must_targets = effect.subTargets }, effect)
+    local extra_data = {
+      must_targets = effect.subTargets,
+      bypass_times = true,
+    }
+    local use = room:askForUseCard(to, "slash", nil, prompt, nil, extra_data, effect)
     if use then
       use.extraUse = true
       room:useCard(use)
     else
-      room:moveCardTo(to:getEquipment(Card.SubtypeWeapon), Card.PlayerHand, room:getPlayerById(effect.from), fk.ReasonGive, "collateral", nil, true, to.id)
+      local from = room:getPlayerById(effect.from)
+      if from.dead then return end
+      local weapons = to:getEquipments(Card.SubtypeWeapon)
+      if #weapons > 0 then
+        room:moveCardTo(weapons, Card.PlayerHand, from, fk.ReasonGive, "collateral", nil, true, to.id)
+      end
     end
   end
 }
