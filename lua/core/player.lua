@@ -860,9 +860,21 @@ end
 
 --- 确认玩家是否可以使用特定牌。
 ---@param card Card @ 特定牌
-function Player:canUse(card)
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUse(card, extra_data)
   assert(card, "Error: No Card")
-  return card.skill:canUse(self, card)
+  return card.skill:canUse(self, card, extra_data)
+end
+
+--- 确认玩家是否可以对特定玩家使用特定牌。
+---@param card Card @ 特定牌
+---@param to Player @ 特定玩家
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUseCardTo(card, to, extra_data)
+  if self:prohibitUse(card) or self:isProhibited(to, card) then return false end
+  local distance_limited = not (extra_data and extra_data.bypass_distances)
+  local can_use = self:canUse(card, extra_data)
+  return can_use and card.skill:modTargetFilter(to.id, {}, self.id, card, distance_limited)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。

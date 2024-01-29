@@ -1726,6 +1726,26 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   return invoked
 end
 
+-- 获取使用牌的合法额外目标（【借刀杀人】等带副目标的卡牌除外）
+---@param data CardUseStruct @ 使用事件的data
+---@param bypass_distances boolean? @ 是否无距离关系的限制
+---@param use_AimGroup boolean? @ 某些场合需要使用AimGroup，by smart Ho-spair
+---@return integer[] @ 返回满足条件的player的id列表
+function Room:getUseExtraTargets(data, bypass_distances, use_AimGroup)
+  if not (data.card.type == Card.TypeBasic or data.card:isCommonTrick()) then return {} end
+  if data.card.skill:getMinTargetNum() > 1 then return {} end --stupid collateral
+  local tos = {}
+  local current_targets = use_AimGroup and AimGroup:getAllTargets(data.tos) or TargetGroup:getRealTargets(data.tos)
+  for _, p in ipairs(self.alive_players) do
+    if not table.contains(current_targets, p.id) and not self:getPlayerById(data.from):isProhibited(p, data.card) then
+      if data.card.skill:modTargetFilter(p.id, {}, data.from, data.card, not bypass_distances) then
+        table.insert(tos, p.id)
+      end
+    end
+  end
+  return tos
+end
+
 --为使用牌增减目标
 ---@param player ServerPlayer @ 执行的玩家
 ---@param targets ServerPlayer[] @ 可选的目标范围
