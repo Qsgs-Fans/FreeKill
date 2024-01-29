@@ -457,16 +457,28 @@ end
 
 --- 获取玩家攻击范围。
 function Player:getAttackRange()
-  local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
-  local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
-
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self)
-    baseAttackRange = baseAttackRange + (correct or 0)
+  local baseValue = 1
+  local weapons = self:getEquipments(Card.SubtypeWeapon)
+  if #weapons > 0 then
+    baseValue = 0
+    for _, id in ipairs(weapons) do
+      local weapon = Fk:getCardById(id)
+      baseValue = math.max(baseValue, weapon.attack_range or 1)
+    end
   end
 
-  return math.max(baseAttackRange, 0)
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local max_fixed, correct = nil, 0
+  for _, skill in ipairs(status_skills) do
+    local f = skill:getFixed(self)
+    if f ~= nil then
+      max_fixed = max_fixed and math.max(max_fixed, f) or f
+    end
+    local c = skill:getCorrect(self)
+    correct = correct + (c or 0)
+  end
+
+  return math.max(math.max(baseValue, (max_fixed or 0)) + correct, 0)
 end
 
 --- 获取角色是否被移除。

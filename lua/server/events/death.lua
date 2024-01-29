@@ -17,8 +17,10 @@ GameEvent.functions[GameEvent.Dying] = function(self)
     -- room.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
     local savers = room:getAlivePlayers()
     for _, p in ipairs(savers) do
-      if dyingPlayer.hp > 0 or dyingPlayer.dead or logic:trigger(fk.AskForPeaches, p, dyingStruct) then
-        break
+      if not p.dead then
+        if dyingPlayer.hp > 0 or dyingPlayer.dead or logic:trigger(fk.AskForPeaches, p, dyingStruct) then
+          break
+        end
       end
     end
     logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingStruct)

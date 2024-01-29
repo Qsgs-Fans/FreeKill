@@ -395,7 +395,9 @@ function GameLogic:trigger(event, target, data, refresh_only)
         skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0) or cur_event.killed
+          and room:getPlayerById(data.who).hp > 0) or
+          (table.contains({fk.PreDamage, fk.DamageCaused, fk.DamageInflicted}, event) and data.damage < 1) or
+          cur_event.killed
 
         if broken then break end
       end

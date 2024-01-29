@@ -2760,27 +2760,13 @@ function Room:handleCardEffect(event, cardEffectEvent)
     then
       local players = {}
       Fk.currentResponsePattern = "nullification"
+      local cardCloned = Fk:cloneCard("nullification")
       for _, p in ipairs(self.alive_players) do
-        local cards = p:getHandlyIds()
-        for _, cid in ipairs(cards) do
-          if
-            Fk:getCardById(cid).trueName == "nullification" and
-            not (
-              table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
-              table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
-            )
-          then
-            table.insert(players, p)
-            break
-          end
-        end
-        if not table.contains(players, p) then
-          Self = p -- for enabledAtResponse
-          for _, s in ipairs(table.connect(p.player_skills, p._fake_skills)) do
+        if not p:prohibitUse(cardCloned) then
+          local cards = p:getHandlyIds()
+          for _, cid in ipairs(cards) do
             if
-              s.pattern and
-              Exppattern:Parse("nullification"):matchExp(s.pattern) and
-              not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
+              Fk:getCardById(cid).trueName == "nullification" and
               not (
                 table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
                 table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
@@ -2788,6 +2774,23 @@ function Room:handleCardEffect(event, cardEffectEvent)
             then
               table.insert(players, p)
               break
+            end
+          end
+          if not table.contains(players, p) then
+            Self = p -- for enabledAtResponse
+            for _, s in ipairs(table.connect(p.player_skills, p._fake_skills)) do
+              if
+                s.pattern and
+                Exppattern:Parse("nullification"):matchExp(s.pattern) and
+                not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
+                not (
+                  table.contains(cardEffectEvent.disresponsiveList or Util.DummyTable, p.id) or
+                  table.contains(cardEffectEvent.unoffsetableList or Util.DummyTable, p.id)
+                )
+              then
+                table.insert(players, p)
+                break
+              end
             end
           end
         end
@@ -3176,12 +3179,6 @@ function Room:retrial(card, player, judge, skillName, exchange)
   local rebyre = judge.retrial_by_response
   judge.retrial_by_response = player
 
-  local move2 = {} ---@type CardsMoveInfo
-  move2.ids = { oldJudge:getEffectiveId() }
-  move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
-  move2.moveReason = fk.ReasonJustMove
-  move2.to = exchange and player.id or nil
-
   self:sendLog{
     type = "#ChangedJudge",
     from = player.id,
@@ -3190,8 +3187,18 @@ function Room:retrial(card, player, judge, skillName, exchange)
     arg = skillName,
   }
 
-  self:moveCards(move2)
   Fk:filterCard(judge.card.id, judge.who, judge)
+
+  exchange = exchange and not player.dead
+
+  local move2 = {} ---@type CardsMoveInfo
+  move2.ids = { oldJudge:getEffectiveId() }
+  move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
+  move2.moveReason = exchange and fk.ReasonJustMove or fk.ReasonJudge
+  move2.to = exchange and player.id or nil
+  move2.skillName = skillName
+
+  self:moveCards(move2)
 end
 
 --- 弃置一名角色的牌。
