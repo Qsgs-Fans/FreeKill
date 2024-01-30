@@ -214,9 +214,9 @@ function fk.CreateActiveSkill(spec)
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
-      __call = function(self)
+      __call = function()
         if type(spec.interaction) == "function" then
-          return spec.interaction(self)
+          return spec.interaction(skill)
         else
           return spec.interaction
         end
