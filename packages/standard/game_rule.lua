@@ -39,7 +39,7 @@ GameRule = fk.CreateTriggerSkill{
     switch(event, {
     [fk.AskForPeaches] = function()
       local dyingPlayer = room:getPlayerById(data.who)
-      while dyingPlayer.hp < 1 do
+      while not (player.dead or dyingPlayer.dead) and dyingPlayer.hp < 1 do
         local cardNames = {"peach"}
         local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. tostring(1 - dyingPlayer.hp)
         if player == dyingPlayer then
