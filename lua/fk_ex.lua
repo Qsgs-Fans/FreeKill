@@ -195,8 +195,8 @@ function fk.CreateActiveSkill(spec)
   readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then
-    skill.canUse = function(curSkill, player, card)
-      return spec.can_use(curSkill, player, card) and curSkill:isEffectable(player)
+    skill.canUse = function(curSkill, player, card, extra_data)
+      return spec.can_use(curSkill, player, card, extra_data) and curSkill:isEffectable(player)
     end
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
