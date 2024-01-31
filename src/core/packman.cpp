@@ -169,7 +169,11 @@ void PackMan::updatePack(const QString &pack) {
   int error;
   error = status(pack);
   if (error != 0) {
-    qCritical("packages/%s: Workspace is dirty, or some error occured.", pack.toLatin1().constData());
+#ifndef FK_SERVER_ONLY
+    if (Backend != nullptr) {
+      Backend->showToast(tr("packages/%1: some error occured.").arg(pack));
+    }
+#endif
     return;
   }
   error = pull(pack);
@@ -187,7 +191,11 @@ void PackMan::upgradePack(const QString &pack) {
     return;
   error = status(pack);
   if (error != 0) {
-    qCritical("Workspace is dirty, or some error occured.");
+#ifndef FK_SERVER_ONLY
+    if (Backend != nullptr) {
+      Backend->showToast(tr("packages/%1: some error occured.").arg(pack));
+    }
+#endif
     return;
   }
   error = pull(pack);
@@ -218,6 +226,12 @@ QString PackMan::listPackages() {
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", error, e->klass, e->message)
+
+#define GIT_CHK_CLEAN  \
+  if (error < 0) {     \
+    GIT_FAIL;          \
+    goto clean;        \
+  }
 
 static int transfer_progress_cb(const git_indexer_progress *stats,
                                 void *payload) {
@@ -290,37 +304,22 @@ int PackMan::pull(const QString &name) {
   opt2.checkout_strategy = GIT_CHECKOUT_FORCE;
 
   error = git_repository_open(&repo, path);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
 
   // first git fetch origin
   error = git_remote_lookup(&remote, repo, "origin");
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_remote_fetch(remote, NULL, &opt, NULL);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
 
   // then git checkout FETCH_HEAD
   error = git_repository_set_head(repo, "FETCH_HEAD");
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_checkout_head(repo, &opt2);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  } else {
-    if (Backend == nullptr)
-      printf("\n");
-  }
+  GIT_CHK_CLEAN;
+
+  if (Backend == nullptr)
+    printf("\n");
 
 clean:
   git_remote_free(remote);
@@ -337,25 +336,13 @@ int PackMan::checkout(const QString &name, const QString &hash) {
   auto path = QString("packages/%1").arg(name).toUtf8();
   auto sha = hash.toLatin1();
   error = git_repository_open(&repo, path);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_oid_fromstr(&oid, sha);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_repository_set_head_detached(repo, &oid);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_checkout_head(repo, &opt);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
 
 clean:
   git_repository_free(repo);
@@ -369,20 +356,11 @@ int PackMan::checkout_branch(const QString &name, const QString &branch) {
   git_object *obj = NULL;
   auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_revparse_single(&obj, repo, branch.toUtf8());
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_checkout_tree(repo, obj, NULL);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
 
 clean:
   git_object_free(obj);
@@ -398,21 +376,19 @@ int PackMan::status(const QString &name) {
   const git_status_entry *s;
   auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   error = git_status_list_new(&status_list, repo, NULL);
-  if (error < 0) {
-    GIT_FAIL;
-    goto clean;
-  }
+  GIT_CHK_CLEAN;
   maxi = git_status_list_entrycount(status_list);
   for (i = 0; i < maxi; ++i) {
     char *istatus = NULL;
     s = git_status_byindex(status_list, i);
-    if (s->status != GIT_STATUS_CURRENT && s->status != GIT_STATUS_IGNORED)
+    if (s->status != GIT_STATUS_CURRENT && s->status != GIT_STATUS_IGNORED) {
+      git_status_list_free(status_list);
+      git_repository_free(repo);
+      qCritical("Workspace is dirty.");
       return 1;
+    }
   }
 
 clean:
@@ -425,28 +401,25 @@ QString PackMan::head(const QString &name) {
   git_repository *repo = NULL;
   int error;
   git_object *obj = NULL;
+  const git_oid *oid;
+  char buf[42] = {0};
   auto path = QString("packages/%1").arg(name).toUtf8();
   error = git_repository_open(&repo, path);
-  if (error < 0) {
-    GIT_FAIL;
-    git_object_free(obj);
-    git_repository_free(repo);
-    return QString();
-  }
+  GIT_CHK_CLEAN;
   error = git_revparse_single(&obj, repo, "HEAD");
-  if (error < 0) {
-    GIT_FAIL;
-    git_object_free(obj);
-    git_repository_free(repo);
-    return QString();
-  }
+  GIT_CHK_CLEAN;
 
-  const git_oid *oid = git_object_id(obj);
-  char buf[42];
+  oid = git_object_id(obj);
   git_oid_tostr(buf, 41, oid);
   git_object_free(obj);
   git_repository_free(repo);
   return QString(buf);
+
+clean:
+  git_object_free(obj);
+  git_repository_free(repo);
+  return QString();
 }
 
 #undef GIT_FAIL
+#undef GIT_CHK_CLEAN
