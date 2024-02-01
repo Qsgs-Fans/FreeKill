@@ -112,6 +112,7 @@ local jink = fk.CreateBasicCard{
   suit = Card.Heart,
   number = 2,
   skill = jinkSkill,
+  is_passive = true,
 }
 
 extension:addCards({
@@ -468,6 +469,7 @@ local nullification = fk.CreateTrickCard{
   suit = Card.Spade,
   number = 11,
   skill = nullificationSkill,
+  is_passive = true,
 }
 
 extension:addCards({
