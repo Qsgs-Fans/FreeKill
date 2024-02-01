@@ -179,6 +179,7 @@ Item {
     Image {
       id: generalImage
       width: deputyGeneral ? parent.width / 2 : parent.width
+      Behavior on width { NumberAnimation { duration: 100 } }
       height: parent.height
       smooth: true
       fillMode: Image.PreserveAspectCrop
@@ -259,7 +260,8 @@ Item {
     anchors.fill: photoMaskEffect
     source: photoMaskEffect
     saturation: 0
-    visible: root.dead || root.surrendered
+    opacity: (root.dead || root.surrendered) ? 1 : 0
+    Behavior on opacity { NumberAnimation { duration: 300 } }
   }
 
   Rectangle {
@@ -269,9 +271,10 @@ Item {
     height: 222
     radius: 8
 
-    visible: root.drank > 0
+    // visible: root.drank > 0
     color: "red"
-    opacity: 0.4 + Math.log(root.drank) * 0.12
+    opacity: (root.drank <= 0 ? 0 : 0.4) + Math.log(root.drank) * 0.12
+    Behavior on opacity { NumberAnimation { duration: 300 } }
   }
 
   ColumnLayout {
