@@ -19,6 +19,7 @@ RowLayout {
   property alias skillButtons: skillPanel.skill_buttons
 
   property var expanded_piles: ({}) // name -> int[]
+  property var extra_cards: []
 
   property var disabledSkillNames: []
 
@@ -86,6 +87,7 @@ RowLayout {
       footnote = "$Equip";
     } else if (pile === "_extra") {
       ids = extra_ids;
+      extra_cards = ids;
       footnote = extra_footnote;
     } else {
       ids = lcall("GetPile", self.playerid, pile);
@@ -122,7 +124,13 @@ RowLayout {
       })
       handcardAreaItem.updateCardPosition();
     } else {
-      const ids = lcall("GetPile", self.playerid, pile);
+      let ids = [];
+      if (pile === "_extra") {
+        ids = extra_cards;
+        extra_cards = [];
+      } else {
+        ids = lcall("GetPile", self.playerid, pile);
+      }
       ids.forEach(id => {
         const card = handcardAreaItem.remove([id])[0];
         card.origX = parentPos.x;
