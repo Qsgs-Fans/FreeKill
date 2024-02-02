@@ -268,7 +268,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
   local room = self.room
   local logic = room.logic
 
-  local player = self.data[1]
+  local player = self.data[1] ---@type Player
   if not logic:trigger(fk.EventPhaseStart, player) then
     if player.phase ~= Player.NotActive then
       logic:trigger(fk.EventPhaseProceeding, player)
@@ -292,17 +292,19 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           if not card then
             card = Fk:getCardById(cid)
           end
-          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
-
-          ---@type CardEffectEvent
-          local effect_data = {
-            card = card,
-            to = player.id,
-            tos = { {player.id} },
-          }
-          room:doCardEffect(effect_data)
-          if effect_data.isCancellOut and card.skill then
-            card.skill:onNullified(room, effect_data)
+          if table.contains(player:getCardIds(Player.Judge), cid) then
+            room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+  
+            ---@type CardEffectEvent
+            local effect_data = {
+              card = card,
+              to = player.id,
+              tos = { {player.id} },
+            }
+            room:doCardEffect(effect_data)
+            if effect_data.isCancellOut and card.skill then
+              card.skill:onNullified(room, effect_data)
+            end
           end
         end
       end,
