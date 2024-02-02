@@ -872,10 +872,10 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
       if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
           if not containArea(info.fromArea, move.from == p.id) then
-          info.cardId = -1
+            info.cardId = -1
+          end
         end
       end
-    end
     end
     p:doNotify("MoveCards", json.encode(arg))
   end
@@ -1195,7 +1195,7 @@ function Room:askForDiscard(player, minNum, maxNum, includeEquip, skillName, can
     toDiscard = ret.cards
   else
     if cancelable then return {} end
-    toDiscard = table.random(canDiscards, minNum)
+    toDiscard = table.random(canDiscards, minNum) ---@type integer[]
   end
 
   if not skipDiscard then
@@ -1272,7 +1272,7 @@ function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancel
     pattern = pattern,
     expand_pile = expand_pile,
   }
-  local prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
+  prompt = prompt or ("#AskForCard:::" .. maxNum .. ":" .. minNum)
   local _, ret = self:askForUseActiveSkill(player, "choose_cards_skill", prompt, cancelable, data, no_indicate)
   if ret then
     chosenCards = ret.cards
@@ -2613,7 +2613,7 @@ function Room:doCardUseEffect(cardUseEvent)
     return
   end
 
-  ---@type CardEffectEvent
+  ---@class CardEffectEvent
   local cardEffectEvent = {
     from = cardUseEvent.from,
     tos = cardUseEvent.tos,
@@ -2882,7 +2882,8 @@ end
 ---@param cid integer|Card @ 要拿到的卡牌
 ---@param unhide? boolean @ 是否明着拿
 ---@param reason? CardMoveReason @ 卡牌移动的原因
-function Room:obtainCard(player, cid, unhide, reason)
+---@param proposer? integer @ 移动操作者的id
+function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
     assert(cid and cid:isInstanceOf(Card))
     cid = cid:isVirtual() and cid.subcards or {cid.id}
@@ -2901,7 +2902,7 @@ function Room:obtainCard(player, cid, unhide, reason)
     to = player,
     toArea = Card.PlayerHand,
     moveReason = reason or fk.ReasonJustMove,
-    proposer = player,
+    proposer = proposer or player,
     moveVisible = unhide or false,
   })
 end
@@ -2953,7 +2954,6 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
   reason = reason or fk.ReasonJustMove
   skill_name = skill_name or ""
   special_name = special_name or ""
-  proposer = proposer or nil
   local ids = Card:getIdList(card)
 
   local to
@@ -3553,6 +3553,10 @@ function Room:printCard(name, suit, number)
   return cd
 end
 
+--- 刷新使命技状态
+---@param player ServerPlayer
+---@param skillName Suit
+---@param failed? boolean
 function Room:updateQuestSkillState(player, skillName, failed)
   assert(Fk.skills[skillName].frequency == Skill.Quest)
 
@@ -3566,6 +3570,9 @@ function Room:updateQuestSkillState(player, skillName, failed)
   })
 end
 
+--- 废除区域
+---@param player ServerPlayer
+---@param playerSlots string | string[]
 function Room:abortPlayerArea(player, playerSlots)
   assert(type(playerSlots) == "string" or type(playerSlots) == "table")
 
@@ -3618,6 +3625,9 @@ function Room:abortPlayerArea(player, playerSlots)
   self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
 end
 
+--- 恢复区域
+---@param player ServerPlayer
+---@param playerSlots string | string[]
 function Room:resumePlayerArea(player, playerSlots)
   assert(type(playerSlots) == "string" or type(playerSlots) == "table")
 
@@ -3641,6 +3651,9 @@ function Room:resumePlayerArea(player, playerSlots)
   end
 end
 
+--- 设置休整
+---@param player ServerPlayer
+---@param roundNum integer
 function Room:setPlayerRest(player, roundNum)
   player.rest = roundNum
   self:broadcastProperty(player, "rest")
