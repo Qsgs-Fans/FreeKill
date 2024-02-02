@@ -285,11 +285,12 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       end,
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
-        for i = #cards, 1, -1 do
-          local card
-          card = player:removeVirtualEquip(cards[i])
+        while #cards > 0 do
+          local cid = table.remove(cards)
+          if not cid then return end
+          local card = player:removeVirtualEquip(cid)
           if not card then
-            card = Fk:getCardById(cards[i])
+            card = Fk:getCardById(cid)
           end
           room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
