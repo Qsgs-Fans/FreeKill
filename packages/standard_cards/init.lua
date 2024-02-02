@@ -1011,7 +1011,7 @@ local spearSkill = fk.CreateViewAsSkill{
   pattern = "slash",
   card_filter = function(self, to_select, selected)
     if #selected == 2 then return false end
-    return Fk:currentRoom():getCardArea(to_select) ~= Player.Equip
+    return table.contains(Self:getHandlyIds(true), to_select)
   end,
   view_as = function(self, cards)
     if #cards ~= 2 then
