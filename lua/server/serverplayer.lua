@@ -630,15 +630,18 @@ function ServerPlayer:endPlayPhase()
   -- TODO: send log
 end
 
+--- 获得一个额外回合
 ---@param delay? boolean
-function ServerPlayer:gainAnExtraTurn(delay)
+---@param skillName? string
+function ServerPlayer:gainAnExtraTurn(delay, skillName)
   local room = self.room
   delay = (delay == nil) and true or delay
+  skillName = (skillName == nil) and room.logic:getCurrentSkillName() or skillName
   if delay then
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false) end)
+      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName) end)
       return
     end
   end
@@ -653,7 +656,6 @@ function ServerPlayer:gainAnExtraTurn(delay)
 
   self.tag["_extra_turn_count"] = self.tag["_extra_turn_count"] or {}
   local ex_tag = self.tag["_extra_turn_count"]
-  local skillName = room.logic:getCurrentSkillName()
   table.insert(ex_tag, skillName)
 
   GameEvent(GameEvent.Turn, self):exec()
@@ -833,7 +835,7 @@ end
 
 -- Hegemony func
 
----@param skill Skill
+---@param skill Skill | string
 function ServerPlayer:addFakeSkill(skill)
   assert(type(skill) == "string" or skill:isInstanceOf(Skill))
   if type(skill) == "string" then
@@ -854,7 +856,7 @@ function ServerPlayer:addFakeSkill(skill)
   self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
 end
 
----@param skill Skill
+---@param skill Skill | string
 function ServerPlayer:loseFakeSkill(skill)
   assert(type(skill) == "string" or skill:isInstanceOf(Skill))
   if type(skill) == "string" then
@@ -873,6 +875,7 @@ function ServerPlayer:loseFakeSkill(skill)
   self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
 end
 
+---@param skill Skill | string
 function ServerPlayer:isFakeSkill(skill)
   if type(skill) == "string" then skill = Fk.skills[skill] end
   assert(skill:isInstanceOf(Skill))
@@ -1049,18 +1052,8 @@ function ServerPlayer:hideGeneral(isDeputy)
   end
 
   local general = Fk.generals[generalName]
-  local skills = general.skills
   local place = isDeputy and "m" or "d"
-  for _, s in ipairs(skills) do
-    room:handleAddLoseSkills(self, "-" .. s.name, nil, false, true)
-    if s.relate_to_place ~= place then
-      if s.frequency == Skill.Compulsory then
-        self:addFakeSkill("reveal_skill")
-      end
-      self:addFakeSkill(s)
-    end
-  end
-  for _, sname in ipairs(general.other_skills) do
+  for _, sname in ipairs(general:getSkillNameList()) do
     room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
     local s = Fk.skills[sname]
     if s.relate_to_place ~= place then
