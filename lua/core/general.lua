@@ -94,7 +94,8 @@ function General:addRelatedSkill(skill)
 end
 
 --- 获取武将所有技能。
----@param include_lord bool
+---@param include_lord? boolean
+---@return string[]
 function General:getSkillNameList(include_lord)
   local ret = {}
   local other_skills = table.map(self.other_skills, Util.Name2SkillMapper)
