@@ -608,6 +608,43 @@ local amazingGraceSkill = fk.CreateActiveSkill{
   can_use = Util.GlobalCanUse,
   on_use = Util.GlobalOnUse,
   mod_target_filter = Util.TrueFunc,
+  on_action = function(self, room, use, finished)
+    if not finished then
+      local toDisplay = room:getNCards(#TargetGroup:getRealTargets(use.tos))
+      room:moveCards({
+        ids = toDisplay,
+        toArea = Card.Processing,
+        moveReason = fk.ReasonPut,
+      })
+
+      table.forEach(room.players, function(p)
+        room:fillAG(p, toDisplay)
+      end)
+
+      use.extra_data = use.extra_data or {}
+      use.extra_data.AGFilled = toDisplay
+    else
+      if use.extra_data and use.extra_data.AGFilled then
+        table.forEach(room.players, function(p)
+          room:closeAG(p)
+        end)
+
+        local toDiscard = table.filter(use.extra_data.AGFilled, function(id)
+          return room:getCardArea(id) == Card.Processing
+        end)
+
+        if #toDiscard > 0 then
+          room:moveCards({
+            ids = toDiscard,
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonPutIntoDiscardPile,
+          })
+        end
+      end
+
+      use.extra_data.AGFilled = nil
+    end
+  end,
   on_effect = function(self, room, effect)
     local to = room:getPlayerById(effect.to)
     if not (effect.extra_data and effect.extra_data.AGFilled) then

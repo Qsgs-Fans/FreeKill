@@ -110,6 +110,7 @@ fk.IceDamage = 4
 ---@field public cardsResponded? Card[]
 ---@field public prohibitedCardNames? string[]
 ---@field public damageDealt? table<PlayerId, number>
+---@field public additionalEffect? integer
 
 ---@class AimStruct
 ---@field public from integer
@@ -126,6 +127,7 @@ fk.IceDamage = 4
 ---@field public unoffsetableList? boolean
 ---@field public additionalResponseTimes? table<string, integer>|integer
 ---@field public fixedAddTimesResponsors? integer[]
+---@field public additionalEffect? integer
 
 ---@class CardEffectEvent
 ---@field public from integer
