@@ -2899,7 +2899,7 @@ end
 
 --- 让一名玩家获得一张牌
 ---@param player integer|ServerPlayer @ 要拿牌的玩家
----@param cid integer|Card @ 要拿到的卡牌
+---@param cid integer|Card|integer[] @ 要拿到的卡牌
 ---@param unhide? boolean @ 是否明着拿
 ---@param reason? CardMoveReason @ 卡牌移动的原因
 function Room:obtainCard(player, cid, unhide, reason)
@@ -3237,7 +3237,7 @@ function Room:retrial(card, player, judge, skillName, exchange)
 end
 
 --- 弃置一名角色的牌。
----@param card_ids integer[] @ 被弃掉的牌
+---@param card_ids integer[]|integer @ 被弃掉的牌
 ---@param skillName? string @ 技能名
 ---@param who ServerPlayer @ 被弃牌的人
 ---@param thrower? ServerPlayer @ 弃别人牌的人
