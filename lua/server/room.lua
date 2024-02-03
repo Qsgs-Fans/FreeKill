@@ -2403,9 +2403,14 @@ end
 ---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
+  local attachedSkillAndUser
+  if type(cardUseEvent.attachedSkillAndUser) == "table" then
+    attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
+    cardUseEvent.attachedSkillAndUser = nil
+  end
+
   local ret = execGameEvent(GameEvent.UseCard, cardUseEvent)
 
-  local attachedSkillAndUser = cardUseEvent.attachedSkillAndUser
   if
     type(attachedSkillAndUser) == "table" and 
     Fk.skills[attachedSkillAndUser.skillName] and
