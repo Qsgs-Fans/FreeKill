@@ -294,7 +294,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           end
           if table.contains(player:getCardIds(Player.Judge), cid) then
             room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
-  
+
             ---@type CardEffectEvent
             local effect_data = {
               card = card,
