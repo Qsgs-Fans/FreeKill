@@ -612,8 +612,8 @@ local function sendMoveCardLog(move)
       if move.proposer and move.proposer ~= move.from then
         client:appendLog{
           type = "$DiscardOther",
-          from = move.proposer,
-          to = {move.from},
+          from = move.from,
+          to = {move.proposer},
           card = move.ids,
           arg = #move.ids,
         }

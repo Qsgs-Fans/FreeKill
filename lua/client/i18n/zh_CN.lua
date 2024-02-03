@@ -412,7 +412,7 @@ Fk:loadTranslationTable{
   ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
   ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
-  ["$DiscardOther"] = "%to 被 %from 弃置了 %arg 张牌 %card",
+  ["$DiscardOther"] = "%to 弃置了 %from 的 %arg 张牌 %card",
   ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",
 
   ["#ShowCard"] = "%from 展示了牌 %card",
