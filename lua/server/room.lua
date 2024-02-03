@@ -3122,8 +3122,8 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
 
           table.insert(losts, true)
           table.insert(triggers, s)
-          if s.hooked_piles then
-            for _, pile_name in ipairs(s.hooked_piles) do
+          if s.derived_piles then
+            for _, pile_name in ipairs(s.derived_piles) do
               table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
             end
           end
@@ -3169,7 +3169,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
       ids = lost_piles,
       from = player.id,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonDiscard,
+      moveReason = fk.ReasonPutIntoDiscardPile,
     })
   end
 end

@@ -48,10 +48,10 @@ end
 local function readUsableSpecToSkill(skill, spec)
   readCommonSpecToSkill(skill, spec)
   assert(spec.main_skill == nil or spec.main_skill:isInstanceOf(UsableSkill))
-  if type(spec.hooked_piles) == "string" then
-    skill.hooked_piles = {spec.hooked_piles}
+  if type(spec.derived_piles) == "string" then
+    skill.derived_piles = {spec.derived_piles}
   else
-    skill.hooked_piles = spec.hooked_piles or {}
+    skill.derived_piles = spec.derived_piles or {}
   end
   skill.main_skill = spec.main_skill
   skill.target_num = spec.target_num or skill.target_num
