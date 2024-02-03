@@ -2412,7 +2412,7 @@ function Room:useCard(cardUseEvent)
   local ret = execGameEvent(GameEvent.UseCard, cardUseEvent)
 
   if
-    type(attachedSkillAndUser) == "table" and 
+    type(attachedSkillAndUser) == "table" and
     Fk.skills[attachedSkillAndUser.skillName] and
     Fk.skills[attachedSkillAndUser.skillName].afterUse
   then
