@@ -661,6 +661,7 @@ end
 
 function GameLogic:breakTurn()
   local event = self:getCurrentEvent():findParent(GameEvent.Turn)
+  if not event then return end
   event:shutdown()
 end
 
