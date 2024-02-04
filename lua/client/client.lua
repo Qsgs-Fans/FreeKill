@@ -469,6 +469,7 @@ local function separateMoves(moves)
         moveReason = move.moveReason,
         specialName = move.specialName,
         fromSpecialName = info.fromSpecialName,
+        proposer = move.proposer,
       })
     end
   end
@@ -480,9 +481,9 @@ local function mergeMoves(moves)
   local ret = {}
   local temp = {}
   for _, move in ipairs(moves) do
-    local info = string.format("%q,%q,%q,%q,%s,%s",
+    local info = string.format("%q,%q,%q,%q,%s,%s,%q",
       move.from, move.to, move.fromArea, move.toArea,
-      move.specialName, move.fromSpecialName)
+      move.specialName, move.fromSpecialName, move.proposer)
     if temp[info] == nil then
       temp[info] = {
         ids = {},
@@ -493,6 +494,7 @@ local function mergeMoves(moves)
         moveReason = move.moveReason,
         specialName = move.specialName,
         fromSpecialName = move.fromSpecialName,
+        proposer = move.proposer,
       }
     end
     table.insert(temp[info].ids, move.ids[1])
@@ -504,7 +506,7 @@ local function mergeMoves(moves)
 end
 
 local function sendMoveCardLog(move)
-  local client = ClientInstance
+  local client = ClientInstance ---@class Client
   if #move.ids == 0 then return end
   local hidden = table.contains(move.ids, -1)
   local msgtype
@@ -607,12 +609,22 @@ local function sendMoveCardLog(move)
     })
   elseif move.toArea == Card.DiscardPile then
     if move.moveReason == fk.ReasonDiscard then
-      client:appendLog{
-        type = "$DiscardCards",
-        from = move.from,
-        card = move.ids,
-        arg = #move.ids,
-      }
+      if move.proposer and move.proposer ~= move.from then
+        client:appendLog{
+          type = "$DiscardOther",
+          from = move.from,
+          to = {move.proposer},
+          card = move.ids,
+          arg = #move.ids,
+        }
+      else
+        client:appendLog{
+          type = "$DiscardCards",
+          from = move.from,
+          card = move.ids,
+          arg = #move.ids,
+        }
+      end
     elseif move.moveReason == fk.ReasonPutIntoDiscardPile then
       client:appendLog{
         type = "$PutToDiscard",

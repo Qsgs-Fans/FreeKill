@@ -197,18 +197,14 @@ local revealProhibited = fk.CreateInvaliditySkill {
     end
 
     if #generals == 0 then return false end
-    if type(from._fake_skills) == "table" and not table.contains(from._fake_skills, skill) then return false end
     local sname = skill.name
     for _, g in ipairs(generals) do
-      if g == "m" then
-        if from.general ~= "anjiang" then return false end
-      else
-        if from.deputyGeneral ~= "anjiang" then return false end
-      end
-      local generalName = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
-      local general = Fk.generals[generalName]
-      if table.contains(general:getSkillNameList(true), sname) then
-        return true
+      if (g == "m" and from.general == "anjiang") or (g == "d" and from.deputyGeneral == "anjiang") then
+        local generalName = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
+        local general = Fk.generals[generalName]
+        if table.contains(general:getSkillNameList(true), sname) then
+          return true
+        end
       end
     end
     return false
@@ -254,6 +250,30 @@ local revealSkill = fk.CreateActiveSkill{
     elseif choice == "revealMain" then player:revealGeneral(false)
     elseif choice == "revealDeputy" then player:revealGeneral(true) end
   end,
+  can_use = function(self, player)
+    local choiceList = {}
+    if (player.general == "anjiang" and not player:prohibitReveal()) then
+      local general = Fk.generals[player:getMark("__heg_general")]
+      for _, sname in ipairs(general:getSkillNameList(true)) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
+          table.insert(choiceList, "revealMain")
+          break
+        end
+      end
+    end
+    if (player.deputyGeneral == "anjiang" and not player:prohibitReveal(true)) then
+      local general = Fk.generals[player:getMark("__heg_deputy")]
+      for _, sname in ipairs(general:getSkillNameList(true)) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
+          table.insert(choiceList, "revealDeputy")
+          break
+        end
+      end
+    end
+    return #choiceList > 0
+  end
 }
 
 AuxSkills = {

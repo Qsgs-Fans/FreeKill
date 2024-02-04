@@ -50,6 +50,10 @@
 ---@field public num integer @ 失去体力的数值
 ---@field public skillName string @ 导致这次失去的技能名
 
+--- 描述跟体力上限变化有关的数据
+---@class MaxHpChangedData
+---@field public num integer @ 体力上限变化量，可能是正数或者负数
+
 ---@alias DamageType integer
 
 fk.NormalDamage = 1

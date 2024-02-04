@@ -344,6 +344,7 @@ Fk:loadTranslationTable({
   ["$LightningMove"] = "%card transfered from %from to %to",
   ["$PasteCard"] = "%from used %card to %to",
   ["$DiscardCards"] = "%from discarded %arg card(s) %card",
+  ["$DiscardOther"] = "%to discarded %arg card(s) %card from %from",
   ["$InstallEquip"] = "%from equipped %card",
   ["$UninstallEquip"] = "%from uninstalled %card",
 

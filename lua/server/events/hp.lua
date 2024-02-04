@@ -74,14 +74,14 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
       room:sendLog{
         type = "#LoseHP",
         from = player.id,
-        arg = 0 - num,
+        arg = 0 - data.num,
       }
       room:sendLogEvent("LoseHP", {})
     elseif reason == "recover" then
       room:sendLog{
         type = "#HealHP",
         from = player.id,
-        arg = num,
+        arg = data.num,
       }
     end
 
@@ -290,12 +290,19 @@ end
 GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
   local player, num = table.unpack(self.data)
   local room = self.room
-  if room.logic:trigger(fk.BeforeMaxHpChanged, player, { num = num }) or num == 0 then
+
+  ---@type MaxHpChangedData
+  local data = {
+    num = num,
+  }
+
+  if room.logic:trigger(fk.BeforeMaxHpChanged, player, data) or data.num == 0 then
     return false
   end
 
-  player.maxHp = math.max(player.maxHp + num, 0)
-  room:broadcastProperty(player, "maxHp")
+  num = data.num
+
+  room:setPlayerProperty(player, "maxHp", math.max(player.maxHp + num, 0))
   room:sendLogEvent("ChangeMaxHp", {
     player = player.id,
     num = num,

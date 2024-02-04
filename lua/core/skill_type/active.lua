@@ -45,8 +45,8 @@ end
 ---@param to_select integer @ id of the target
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
----@param extra_data any @ extra_data
 ---@param card Card @ helper
+---@param extra_data? any @ extra_data
 function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
   return false
 end
