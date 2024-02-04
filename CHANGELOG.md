@@ -1,5 +1,38 @@
 # ChangeLog
 
+## v0.4.6
+
+- 攻击范围状态技类新增基础值修正函数
+- 伤害值在一个技能处理后小于1会终止当前事件
+- 不向不能使用【无懈可击】的角色询问使用【无懈可击】
+- 修正在濒死插结中有人死亡后仍然会向该角色求桃的情况
+- 将PreCardUse和PreCardRespond时机移至实体牌移动之前
+- 调整改判函数原判定牌置入弃牌堆的原因
+- 修正【朱雀羽扇】、【借刀杀人】、【酒】
+- 为使用流程和Aim流程增加属性additionalEffect，用于指定额外结算次数（OL版），顺带移动【五谷丰登】开启和关
+闭AG的位置；
+- 为视为技新增after_use方法处理转化牌后的后续操作；
+- 修复伤害流程时机触发者不变问题；
+- 修复旁观休整的问题；
+- 修复可移动场上牌判断函数未判断虚拟牌名的问题。
+- 修复传入数组的extraPile无法收回
+- 被弃置牌的log添加操作者
+- beforeMaxHpChanged的num可以被修改
+- 额外回合增加skillName
+- 修复亮将技能和禁止亮将
+- 水一些注释和格式
+- git报错优化
+- 防止反复shutdown同一事件
+- 将Utility如canUseCardTo的一些函数搬运到了本体
+- 为技能添加hooked_piles属性，当失去技能时自动弃置hooked_piles内的所有私人牌堆
+- 修复了添加技能没写source_skill的bug
+- 修复了ActiveSkill的interaction不传入Skill本身而是metatable的bug
+- 修复了主动询问canUse时没有传入extra_data的bug
+- 修复了多选时按钮选项变回空白的bug
+- 修复了判定阶段被中途拿走判定牌后报错的bug
+
+___
+
 ## v0.4.4 & 0.4.5
 
 禁将增强；修复bug
