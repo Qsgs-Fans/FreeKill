@@ -9,7 +9,7 @@ Fk:loadTranslationTable{
 
   ["caocao"] = "曹操",
   ["#caocao"] = "魏武帝",
-  ["illustrator:caocao"] = "Kayak",
+  ["illustrator:caocao"] = "KayaK",
   ["~caocao"] = "霸业未成！未成啊！",
   ["$jianxiong1"] = "宁教我负天下人，休教天下人负我！",
   ["$jianxiong2"] = "吾好梦中杀人！",
@@ -23,7 +23,7 @@ Fk:loadTranslationTable{
 
   ["simayi"] = "司马懿",
   ["#simayi"] = "狼顾之鬼",
-  ["illustrator:simayi"] = "Kayak",
+  ["illustrator:simayi"] = "KayaK",
   ["~simayi"] = "难道真是天意难违？",
   ["$guicai1"] = "天命？哈哈哈哈……",
   ["$guicai2"] = "吾乃天命之子！",
@@ -37,7 +37,7 @@ Fk:loadTranslationTable{
 
   ["xiahoudun"] = "夏侯惇",
   ["#xiahoudun"] = "独眼的罗刹",
-  ["illustrator:xiahoudun"] = "Kayak",
+  ["illustrator:xiahoudun"] = "KayaK",
   ["~xiahoudun"] = "两边都看不见了……",
   ["$ganglie1"] = "鼠辈，竟敢伤我！",
   ["$ganglie2"] = "以彼之道，还施彼身！",
@@ -46,7 +46,7 @@ Fk:loadTranslationTable{
 
   ["zhangliao"] = "张辽",
   ["#zhangliao"] = "前将军",
-  ["illustrator:zhangliao"] = "Kayak",
+  ["illustrator:zhangliao"] = "KayaK",
   ["~zhangliao"] = "真的没想到……",
   ["$tuxi1"] = "哼，没想到吧！",
   ["$tuxi2"] = "拿来吧！",
@@ -56,7 +56,7 @@ Fk:loadTranslationTable{
 
   ["xuchu"] = "许褚",
   ["#xuchu"] = "虎痴",
-  ["illustrator:xuchu"] = "Kayak",
+  ["illustrator:xuchu"] = "KayaK",
   ["~xuchu"] = "冷，好冷啊……",
   ["$luoyi1"] = "脱！",
   ["$luoyi2"] = "谁来与我大战三百回合？",
@@ -65,7 +65,7 @@ Fk:loadTranslationTable{
 
   ["guojia"] = "郭嘉",
   ["#guojia"] = "早终的先知",
-  ["illustrator:guojia"] = "Kayak",
+  ["illustrator:guojia"] = "KayaK",
   ["~guojia"] = "咳，咳……",
   ["$tiandu1"] = "就这样吧。",
   ["$tiandu2"] = "哦？",
@@ -80,7 +80,7 @@ Fk:loadTranslationTable{
 
   ["zhenji"] = "甄姬",
   ["#zhenji"] = "薄幸的美人",
-  ["illustrator:zhenji"] = "Kayak",
+  ["illustrator:zhenji"] = "KayaK",
   ["~zhenji"] = "悼良会之永绝兮，哀一逝而异乡。",
   ["$luoshen1"] = "髣髴兮若轻云之蔽月。",
   ["$luoshen2"] = "飘飖兮若流风之回雪。",
@@ -94,7 +94,7 @@ Fk:loadTranslationTable{
 
   ["liubei"] = "刘备",
   ["#liubei"] = "乱世的枭雄",
-  ["illustrator:liubei"] = "Kayak",
+  ["illustrator:liubei"] = "KayaK",
   ["~liubei"] = "这就是桃园吗？",
   ["$rende1"] = "以德服人。",
   ["$rende2"] = "唯贤唯德，能服于人。",
@@ -108,7 +108,7 @@ Fk:loadTranslationTable{
 
   ["guanyu"] = "关羽",
   ["#guanyu"] = "美髯公",
-  ["illustrator:guanyu"] = "Kayak",
+  ["illustrator:guanyu"] = "KayaK",
   ["~guanyu"] = "什么？此地名叫麦城？",
   ["$wusheng1"] = "关羽在此，尔等受死！",
   ["$wusheng2"] = "看尔乃插标卖首！",
@@ -117,7 +117,7 @@ Fk:loadTranslationTable{
 
   ["zhangfei"] = "张飞",
   ["#zhangfei"] = "万夫不当",
-  ["illustrator:zhangfei"] = "Kayak",
+  ["illustrator:zhangfei"] = "KayaK",
   ["~zhangfei"] = "实在是，杀不动了……",
   ["$paoxiao1"] = "啊~~~！",
   ["$paoxiao2"] = "燕人张飞在此！",
@@ -126,7 +126,7 @@ Fk:loadTranslationTable{
 
   ["zhugeliang"] = "诸葛亮",
   ["#zhugeliang"] = "迟暮的丞相",
-  ["illustrator:zhugeliang"] = "Kayak",
+  ["illustrator:zhugeliang"] = "KayaK",
   ["~zhugeliang"] = "将星陨落，天命难违。",
   ["$guanxing1"] = "观今夜天象，知天下大事。",
   ["$guanxing2"] = "知天易，逆天难。",
@@ -139,7 +139,7 @@ Fk:loadTranslationTable{
 
   ["zhaoyun"] = "赵云",
   ["#zhaoyun"] = "少年将军",
-  ["illustrator:zhaoyun"] = "Kayak",
+  ["illustrator:zhaoyun"] = "KayaK",
   ["~zhaoyun"] = "这，就是失败的滋味吗？",
   ["$longdan1"] = "能进能退乃真正法器！",
   ["$longdan2"] = "吾乃常山赵子龙也！",
@@ -148,7 +148,7 @@ Fk:loadTranslationTable{
 
   ["machao"] = "马超",
   ["#machao"] = "一骑当千",
-  ["illustrator:machao"] = "Kayak",
+  ["illustrator:machao"] = "KayaK",
   ["~machao"] = "（马蹄远去声）",
   ["mashu"] = "马术",
   [":mashu"] = "锁定技，你与其他角色的距离-1。",
@@ -159,7 +159,7 @@ Fk:loadTranslationTable{
 
   ["huangyueying"] = "黄月英",
   ["#huangyueying"] = "归隐的杰女",
-  ["illustrator:huangyueying"] = "Kayak",
+  ["illustrator:huangyueying"] = "KayaK",
   ["~huangyueying"] = "亮……",
   ["$jizhi1"] = "哼哼～",
   ["$jizhi2"] = "哼～",
@@ -170,7 +170,7 @@ Fk:loadTranslationTable{
 
   ["sunquan"] = "孙权",
   ["#sunquan"] = "年轻的贤君",
-  ["illustrator:sunquan"] = "Kayak",
+  ["illustrator:sunquan"] = "KayaK",
   ["~sunquan"] = "父亲，大哥，仲谋愧矣……",
   ["$zhiheng1"] = "容我三思。",
   ["$zhiheng2"] = "且慢。",
@@ -183,7 +183,7 @@ Fk:loadTranslationTable{
 
   ["ganning"] = "甘宁",
   ["#ganning"] = "锦帆游侠",
-  ["illustrator:ganning"] = "Kayak",
+  ["illustrator:ganning"] = "KayaK",
   ["~ganning"] = "二十年后，又是一条好汉……",
   ["$qixi1"] = "接招吧！",
   ["$qixi2"] = "你的牌太多啦！",
@@ -192,7 +192,7 @@ Fk:loadTranslationTable{
 
   ["lvmeng"] = "吕蒙",
   ["#lvmeng"] = "白衣渡江",
-  ["illustrator:lvmeng"] = "Kayak",
+  ["illustrator:lvmeng"] = "KayaK",
   ["~lvmeng"] = "被看穿了吗……",
   ["$keji1"] = "不是不报，时候未到！",
   ["$keji2"] = "留得青山在，不怕没柴烧！",
@@ -201,7 +201,7 @@ Fk:loadTranslationTable{
 
   ["huanggai"] = "黄盖",
   ["#huanggai"] = "轻身为国",
-  ["illustrator:huanggai"] = "Kayak",
+  ["illustrator:huanggai"] = "KayaK",
   ["~huanggai"] = "失血……过多了……",
   ["$kurou1"] = "请鞭笞我吧，公瑾！",
   ["$kurou2"] = "赴汤蹈火，在所不辞！",
@@ -210,7 +210,7 @@ Fk:loadTranslationTable{
 
   ["zhouyu"] = "周瑜",
   ["#zhouyu"] = "大都督",
-  ["illustrator:zhouyu"] = "Kayak",
+  ["illustrator:zhouyu"] = "KayaK",
   ["~zhouyu"] = "既生瑜，何生……",
   ["$yingzi1"] = "哈哈哈哈……",
   ["$yingzi2"] = "汝等看好了！",
@@ -223,7 +223,7 @@ Fk:loadTranslationTable{
 
   ["daqiao"] = "大乔",
   ["#daqiao"] = "矜持之花",
-  ["illustrator:daqiao"] = "Kayak",
+  ["illustrator:daqiao"] = "KayaK",
   ["~daqiao"] = "伯符，我去了……",
   ["$guose1"] = "请休息吧。",
   ["$guose2"] = "你累了。",
@@ -237,7 +237,7 @@ Fk:loadTranslationTable{
 
   ["luxun"] = "陆逊",
   ["#luxun"] = "儒生雄才",
-  ["illustrator:luxun"] = "Kayak",
+  ["illustrator:luxun"] = "KayaK",
   ["~luxun"] = "我还是太年轻了……",
   ["$qianxun1"] = "儒生脱尘，不为贪逸淫乐之事。",
   ["$qianxun2"] = "谦谦君子，不饮盗泉之水。",
@@ -250,7 +250,7 @@ Fk:loadTranslationTable{
 
   ["sunshangxiang"] = "孙尚香",
   ["#sunshangxiang"] = "弓腰姬",
-  ["illustrator:sunshangxiang"] = "Kayak",
+  ["illustrator:sunshangxiang"] = "KayaK",
   ["~sunshangxiang"] = "不，还不可以死……",
   ["$xiaoji1"] = "哼！",
   ["$xiaoji2"] = "看我的厉害！",
@@ -263,7 +263,7 @@ Fk:loadTranslationTable{
 
   ["huatuo"] = "华佗",
   ["#huatuo"] = "神医",
-  ["illustrator:huatuo"] = "Kayak",
+  ["illustrator:huatuo"] = "KayaK",
   ["~huatuo"] = "医者……不能自医啊……",
   ["$qingnang1"] = "早睡早起，方能养生。",
   ["$qingnang2"] = "越老越要补啊。",
@@ -276,7 +276,7 @@ Fk:loadTranslationTable{
 
   ["lvbu"] = "吕布",
   ["#lvbu"] = "武的化身",
-  ["illustrator:lvbu"] = "Kayak",
+  ["illustrator:lvbu"] = "KayaK",
   ["~lvbu"] = "不可能……！",
   ["$wushuang1"] = "谁能挡我！",
   ["$wushuang2"] = "神挡杀神，佛挡杀佛！",
@@ -285,7 +285,7 @@ Fk:loadTranslationTable{
 
   ["diaochan"] = "貂蝉",
   ["#diaochan"] = "绝世的舞姬",
-  ["illustrator:diaochan"] = "Kayak",
+  ["illustrator:diaochan"] = "KayaK",
   ["~diaochan"] = "父亲大人，对不起……",
   ["$lijian1"] = "嗯呵呵～～呵呵～～",
   ["$lijian2"] = "夫君，你要替妾身作主啊……",
