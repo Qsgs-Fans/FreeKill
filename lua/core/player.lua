@@ -1006,7 +1006,7 @@ function Player:canMoveCardInBoardTo(to, id)
     return
       not (
         table.find(to:getCardIds(Player.Judge), function(cardId)
-          return Fk:getCardById(cardId).name == card.name
+          return (to:getVirualEquip(cardId) or Fk:getCardById(cardId)).name == card.name
         end) or
         table.contains(to.sealedSlots, Player.JudgeSlot)
       )

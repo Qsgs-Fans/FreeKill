@@ -136,16 +136,16 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   assert(damageStruct.to:isInstanceOf(ServerPlayer))
 
   local stages = {
-    {fk.PreDamage, damageStruct.from},
+    {fk.PreDamage, "from"},
   }
 
   if not damageStruct.isVirtualDMG then
-    table.insertTable(stages, { { fk.DamageCaused, damageStruct.from }, { fk.DamageInflicted, damageStruct.to } })
+    table.insertTable(stages, { { fk.DamageCaused, "from" }, { fk.DamageInflicted, "to" } })
   end
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    if logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
+    if logic:trigger(event, damageStruct[player], damageStruct) or damageStruct.damage < 1 then
       logic:breakEvent(false)
     end
 
@@ -184,13 +184,13 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
 
   stages = {
-    {fk.Damage, damageStruct.from},
-    {fk.Damaged, damageStruct.to},
+    {fk.Damage, "from"},
+    {fk.Damaged, "to"},
   }
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    logic:trigger(event, player, damageStruct)
+    logic:trigger(event, damageStruct[player], damageStruct)
   end
 
   return true

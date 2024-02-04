@@ -175,6 +175,7 @@ end
 ---@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card, extra_data: any): boolean?
 ---@field public feasible? fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean?
 ---@field public on_use? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean?
+---@field public on_action? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct, finished: boolean): boolean?
 ---@field public about_to_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
 ---@field public on_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
 ---@field public on_nullified? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
@@ -202,6 +203,7 @@ function fk.CreateActiveSkill(spec)
     skill.feasible = spec.feasible
   end
   if spec.on_use then skill.onUse = spec.on_use end
+  if spec.on_action then skill.onAction = spec.on_action end
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
@@ -272,6 +274,10 @@ function fk.CreateViewAsSkill(spec)
 
   if spec.before_use and type(spec.before_use) == "function" then
     skill.beforeUse = spec.before_use
+  end
+
+  if spec.after_use and type(spec.after_use) == "function" then
+    skill.afterUse = spec.after_use
   end
 
   return skill

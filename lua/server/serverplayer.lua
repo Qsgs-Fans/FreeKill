@@ -215,7 +215,7 @@ function ServerPlayer:marshal(player, observe)
 
   if self.dead then
     room:notifyProperty(player, self, "dead")
-    room:notifyProperty(player, self, "role")
+    room:notifyProperty(player, self, self.rest > 0 and "rest" or "role")
   else
     room:notifyProperty(player, self, "seat")
     room:notifyProperty(player, self, "phase")

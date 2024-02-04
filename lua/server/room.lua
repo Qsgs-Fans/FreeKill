@@ -1927,6 +1927,7 @@ function Room:handleUseCardReply(player, data)
         use.card = c
 
         self:useSkill(player, skill, Util.DummyFunc)
+        use.attachedSkillAndUser = { skillName = skill.name, user = player.id }
 
         local rejectSkillName = skill:beforeUse(player, use)
         if type(rejectSkillName) == "string" then
@@ -2402,7 +2403,23 @@ end
 ---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
-  return execGameEvent(GameEvent.UseCard, cardUseEvent)
+  local attachedSkillAndUser
+  if type(cardUseEvent.attachedSkillAndUser) == "table" then
+    attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
+    cardUseEvent.attachedSkillAndUser = nil
+  end
+
+  local ret = execGameEvent(GameEvent.UseCard, cardUseEvent)
+
+  if
+    type(attachedSkillAndUser) == "table" and
+    Fk.skills[attachedSkillAndUser.skillName] and
+    Fk.skills[attachedSkillAndUser.skillName].afterUse
+  then
+    Fk.skills[attachedSkillAndUser.skillName]:afterUse(self:getPlayerById(attachedSkillAndUser.user), cardUseEvent)
+  end
+
+  return ret
 end
 
 ---@param room Room
@@ -2439,6 +2456,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
           firstTarget = firstTarget,
           additionalDamage = cardUseEvent.additionalDamage,
           additionalRecover = cardUseEvent.additionalRecover,
+          additionalEffect = cardUseEvent.additionalEffect,
           extra_data = cardUseEvent.extra_data,
         }
 
@@ -2466,6 +2484,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
         aimStruct.targetGroup = cardUseEvent.tos
         aimStruct.nullifiedTargets = cardUseEvent.nullifiedTargets or {}
         aimStruct.firstTarget = firstTarget
+        aimStruct.additionalEffect = cardUseEvent.additionalEffect
         aimStruct.extra_data = cardUseEvent.extra_data
       end
 
@@ -2483,6 +2502,7 @@ local onAim = function(room, cardUseEvent, aimEventCollaborators)
       cardUseEvent.from = aimStruct.from
       cardUseEvent.tos = aimEventTargetGroup
       cardUseEvent.nullifiedTargets = aimStruct.nullifiedTargets
+      cardUseEvent.additionalEffect = aimStruct.additionalEffect
       cardUseEvent.extra_data = aimStruct.extra_data
 
       if #AimGroup:getAllTargets(aimStruct.tos) == 0 then
@@ -2643,56 +2663,70 @@ function Room:doCardUseEffect(cardUseEvent)
     return
   end
 
-  -- Else: do effect to all targets
-  local collaboratorsIndex = {}
-  for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
-    if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
-      if aimEventCollaborators[toId] then
-        cardEffectEvent.to = toId
-        collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
-        local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
+  for i = 1, (cardUseEvent.additionalEffect or 0) + 1 do
+    if #TargetGroup:getRealTargets(cardUseEvent.tos) > 0 and cardUseEvent.card.skill.onAction then
+      cardUseEvent.card.skill:onAction(self, cardUseEvent)
+    end
 
-        cardEffectEvent.subTargets = curAimEvent.subTargets
-        cardEffectEvent.additionalDamage = curAimEvent.additionalDamage
-        cardEffectEvent.additionalRecover = curAimEvent.additionalRecover
+    -- Else: do effect to all targets
+    local collaboratorsIndex = {}
+    for _, toId in ipairs(TargetGroup:getRealTargets(cardUseEvent.tos)) do
+      if not table.contains(cardUseEvent.nullifiedTargets, toId) and self:getPlayerById(toId):isAlive() then
+        if aimEventCollaborators[toId] then
+          cardEffectEvent.to = toId
+          collaboratorsIndex[toId] = collaboratorsIndex[toId] or 1
+          local curAimEvent = aimEventCollaborators[toId][collaboratorsIndex[toId]]
 
-        if curAimEvent.disresponsiveList then
-          cardEffectEvent.disresponsiveList = cardEffectEvent.disresponsiveList or {}
+          cardEffectEvent.subTargets = curAimEvent.subTargets
+          cardEffectEvent.additionalDamage = curAimEvent.additionalDamage
+          cardEffectEvent.additionalRecover = curAimEvent.additionalRecover
 
-          for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
-            if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
-              table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
+          if curAimEvent.disresponsiveList then
+            cardEffectEvent.disresponsiveList = cardEffectEvent.disresponsiveList or {}
+
+            for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
+              if not table.contains(cardEffectEvent.disresponsiveList, disresponsivePlayer) then
+                table.insert(cardEffectEvent.disresponsiveList, disresponsivePlayer)
+              end
             end
           end
-        end
 
-        if curAimEvent.unoffsetableList then
-          cardEffectEvent.unoffsetableList = cardEffectEvent.unoffsetableList or {}
+          if curAimEvent.unoffsetableList then
+            cardEffectEvent.unoffsetableList = cardEffectEvent.unoffsetableList or {}
 
-          for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
-            if not table.contains(cardEffectEvent.unoffsetableList, unoffsetablePlayer) then
-              table.insert(cardEffectEvent.unoffsetableList, unoffsetablePlayer)
+            for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
+              if not table.contains(cardEffectEvent.unoffsetableList, unoffsetablePlayer) then
+                table.insert(cardEffectEvent.unoffsetableList, unoffsetablePlayer)
+              end
             end
           end
-        end
 
-        cardEffectEvent.disresponsive = curAimEvent.disresponsive
-        cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
-        cardEffectEvent.fixedResponseTimes = curAimEvent.fixedResponseTimes
-        cardEffectEvent.fixedAddTimesResponsors = curAimEvent.fixedAddTimesResponsors
+          cardEffectEvent.disresponsive = curAimEvent.disresponsive
+          cardEffectEvent.unoffsetable = curAimEvent.unoffsetable
+          cardEffectEvent.fixedResponseTimes = curAimEvent.fixedResponseTimes
+          cardEffectEvent.fixedAddTimesResponsors = curAimEvent.fixedAddTimesResponsors
 
-        collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
+          collaboratorsIndex[toId] = collaboratorsIndex[toId] + 1
 
-        local curCardEffectEvent = table.simpleClone(cardEffectEvent)
-        self:doCardEffect(curCardEffectEvent)
+          local curCardEffectEvent = table.simpleClone(cardEffectEvent)
+          self:doCardEffect(curCardEffectEvent)
 
-        if curCardEffectEvent.cardsResponded then
-          cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
-          for _, card in ipairs(curCardEffectEvent.cardsResponded) do
-            table.insertIfNeed(cardUseEvent.cardsResponded, card)
+          if curCardEffectEvent.cardsResponded then
+            cardUseEvent.cardsResponded = cardUseEvent.cardsResponded or {}
+            for _, card in ipairs(curCardEffectEvent.cardsResponded) do
+              table.insertIfNeed(cardUseEvent.cardsResponded, card)
+            end
+          end
+
+          if type(curCardEffectEvent.nullifiedTargets) == 'table' then
+            table.insertTableIfNeed(cardUseEvent.nullifiedTargets, curCardEffectEvent.nullifiedTargets)
           end
         end
       end
+    end
+
+    if #TargetGroup:getRealTargets(cardUseEvent.tos) > 0 and cardUseEvent.card.skill.onAction then
+      cardUseEvent.card.skill:onAction(self, cardUseEvent, true)
     end
   end
 end

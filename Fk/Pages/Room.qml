@@ -121,9 +121,9 @@ Item {
         enabled: !config.observing && !config.replaying
         text: luatr("Surrender")
         onClicked: {
-          if (isStarted && !getPhoto(Self.id).dead) {
-            const surrenderCheck =
-              lcall('CheckSurrenderAvailable', miscStatus.playedTime);
+          const photo = getPhoto(Self.id);
+          if (isStarted && !(photo.dead && photo.rest <= 0)) {
+            const surrenderCheck = lcall('CheckSurrenderAvailable', miscStatus.playedTime);
             if (!surrenderCheck.length) {
               surrenderDialog.informativeText =
                 luatr('Surrender is disabled in this mode');
