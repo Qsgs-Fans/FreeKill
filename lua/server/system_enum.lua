@@ -134,7 +134,7 @@ fk.IceDamage = 4
 ---@field public additionalEffect? integer
 
 ---@class CardEffectEvent
----@field public from integer
+---@field public from? integer
 ---@field public to integer
 ---@field public subTargets? integer[]
 ---@field public tos TargetGroup

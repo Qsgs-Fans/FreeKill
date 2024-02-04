@@ -1726,6 +1726,26 @@ function Room:askForSkillInvoke(player, skill_name, data, prompt)
   return invoked
 end
 
+-- 获取使用牌的合法额外目标（【借刀杀人】等带副目标的卡牌除外）
+---@param data CardUseStruct @ 使用事件的data
+---@param bypass_distances boolean? @ 是否无距离关系的限制
+---@param use_AimGroup boolean? @ 某些场合需要使用AimGroup，by smart Ho-spair
+---@return integer[] @ 返回满足条件的player的id列表
+function Room:getUseExtraTargets(data, bypass_distances, use_AimGroup)
+  if not (data.card.type == Card.TypeBasic or data.card:isCommonTrick()) then return {} end
+  if data.card.skill:getMinTargetNum() > 1 then return {} end --stupid collateral
+  local tos = {}
+  local current_targets = use_AimGroup and AimGroup:getAllTargets(data.tos) or TargetGroup:getRealTargets(data.tos)
+  for _, p in ipairs(self.alive_players) do
+    if not table.contains(current_targets, p.id) and not self:getPlayerById(data.from):isProhibited(p, data.card) then
+      if data.card.skill:modTargetFilter(p.id, {}, data.from, data.card, not bypass_distances) then
+        table.insert(tos, p.id)
+      end
+    end
+  end
+  return tos
+end
+
 --为使用牌增减目标
 ---@param player ServerPlayer @ 执行的玩家
 ---@param targets ServerPlayer[] @ 可选的目标范围
@@ -2913,7 +2933,7 @@ end
 
 --- 让一名玩家获得一张牌
 ---@param player integer|ServerPlayer @ 要拿牌的玩家
----@param cid integer|Card @ 要拿到的卡牌
+---@param cid integer|Card|integer[] @ 要拿到的卡牌
 ---@param unhide? boolean @ 是否明着拿
 ---@param reason? CardMoveReason @ 卡牌移动的原因
 ---@param proposer? integer @ 移动操作者的id
@@ -3114,6 +3134,7 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
   if #skill_names == 0 then return end
   local losts = {}  ---@type boolean[]
   local triggers = {} ---@type Skill[]
+  local lost_piles = {} ---@type integer[]
   for _, skill in ipairs(skill_names) do
     if string.sub(skill, 1, 1) == "-" then
       local actual_skill = string.sub(skill, 2, #skill)
@@ -3135,12 +3156,17 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
 
           table.insert(losts, true)
           table.insert(triggers, s)
+          if s.derived_piles then
+            for _, pile_name in ipairs(s.derived_piles) do
+              table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
+            end
+          end
         end
       end
     else
       local sk = Fk.skills[skill]
       if sk and not player:hasSkill(sk, true, true) then
-        local got_skills = player:addSkill(sk)
+        local got_skills = player:addSkill(sk, source_skill)
 
         for _, s in ipairs(got_skills) do
           -- TODO: limit skill mark
@@ -3170,6 +3196,15 @@ function Room:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no
       local event = losts[i] and fk.EventLoseSkill or fk.EventAcquireSkill
       self.logic:trigger(event, player, triggers[i])
     end
+  end
+
+  if #lost_piles > 0 then
+    self:moveCards({
+      ids = lost_piles,
+      from = player.id,
+      toArea = Card.DiscardPile,
+      moveReason = fk.ReasonPutIntoDiscardPile,
+    })
   end
 end
 
@@ -3236,7 +3271,7 @@ function Room:retrial(card, player, judge, skillName, exchange)
 end
 
 --- 弃置一名角色的牌。
----@param card_ids integer[] @ 被弃掉的牌
+---@param card_ids integer[]|integer @ 被弃掉的牌
 ---@param skillName? string @ 技能名
 ---@param who ServerPlayer @ 被弃牌的人
 ---@param thrower? ServerPlayer @ 弃别人牌的人

@@ -48,6 +48,11 @@ end
 local function readUsableSpecToSkill(skill, spec)
   readCommonSpecToSkill(skill, spec)
   assert(spec.main_skill == nil or spec.main_skill:isInstanceOf(UsableSkill))
+  if type(spec.derived_piles) == "string" then
+    skill.derived_piles = {spec.derived_piles}
+  else
+    skill.derived_piles = spec.derived_piles or {}
+  end
   skill.main_skill = spec.main_skill
   skill.target_num = spec.target_num or skill.target_num
   skill.min_target_num = spec.min_target_num or skill.min_target_num
@@ -191,8 +196,8 @@ function fk.CreateActiveSkill(spec)
   readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then
-    skill.canUse = function(curSkill, player, card)
-      return spec.can_use(curSkill, player, card) and curSkill:isEffectable(player)
+    skill.canUse = function(curSkill, player, card, extra_data)
+      return spec.can_use(curSkill, player, card, extra_data) and curSkill:isEffectable(player)
     end
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
@@ -211,9 +216,9 @@ function fk.CreateActiveSkill(spec)
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
-      __call = function(self)
+      __call = function()
         if type(spec.interaction) == "function" then
-          return spec.interaction(self)
+          return spec.interaction(skill)
         else
           return spec.interaction
         end
@@ -445,6 +450,7 @@ end
 ---@field public special_skills? string[]
 ---@field public is_damage_card? boolean
 ---@field public multiple_targets? boolean
+---@field public is_passive? boolean
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
@@ -487,6 +493,7 @@ local function readCardSpecToCard(card, spec)
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
   card.multiple_targets = spec.multiple_targets
+  card.is_passive = spec.is_passive
 end
 
 ---@param spec CardSpec

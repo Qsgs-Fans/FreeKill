@@ -24,6 +24,7 @@
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
+---@field public is_passive? boolean @ 是否只能在响应时使用或打出
 ---@field public is_derived? boolean @ 判断是否为衍生牌
 local Card = class("Card")
 
@@ -145,11 +146,12 @@ function Card:clone(suit, number)
   newCard.special_skills = self.special_skills
   newCard.is_damage_card = self.is_damage_card
   newCard.multiple_targets = self.multiple_targets
+  newCard.is_passive = self.is_passive
   newCard.is_derived = self.is_derived
   return newCard
 end
 
---- 检测是否为虚拟卡牌，如果其ID为0及以下，则为虚拟卡牌。
+--- 检测是否为虚拟卡牌，如果其ID为0，则为虚拟卡牌。
 function Card:isVirtual()
   return self.id == 0
 end
