@@ -8,6 +8,8 @@ Fk:loadTranslationTable{
   ["qun"] = "群",
 
   ["caocao"] = "曹操",
+  ["#caocao"] = "魏武帝",
+  ["illustrator:caocao"] = "Kayak",
   ["~caocao"] = "霸业未成！未成啊！",
   ["$jianxiong1"] = "宁教我负天下人，休教天下人负我！",
   ["$jianxiong2"] = "吾好梦中杀人！",
@@ -20,6 +22,8 @@ Fk:loadTranslationTable{
   ["#hujia-ask"] = "护驾：你可打出一张闪，视为 %src 使用或打出",
 
   ["simayi"] = "司马懿",
+  ["#simayi"] = "狼顾之鬼",
+  ["illustrator:simayi"] = "Kayak",
   ["~simayi"] = "难道真是天意难违？",
   ["$guicai1"] = "天命？哈哈哈哈……",
   ["$guicai2"] = "吾乃天命之子！",
@@ -32,6 +36,8 @@ Fk:loadTranslationTable{
   [":fankui"] = "当你受到伤害后，你可以获得伤害来源的一张牌。",
 
   ["xiahoudun"] = "夏侯惇",
+  ["#xiahoudun"] = "独眼的罗刹",
+  ["illustrator:xiahoudun"] = "Kayak",
   ["~xiahoudun"] = "两边都看不见了……",
   ["$ganglie1"] = "鼠辈，竟敢伤我！",
   ["$ganglie2"] = "以彼之道，还施彼身！",
@@ -39,6 +45,8 @@ Fk:loadTranslationTable{
   [":ganglie"] = "当你受到伤害后，你可以进行判定：若结果不为红桃，则伤害来源选择一项：弃置两张手牌，或受到1点伤害。",
 
   ["zhangliao"] = "张辽",
+  ["#zhangliao"] = "前将军",
+  ["illustrator:zhangliao"] = "Kayak",
   ["~zhangliao"] = "真的没想到……",
   ["$tuxi1"] = "哼，没想到吧！",
   ["$tuxi2"] = "拿来吧！",
@@ -47,6 +55,8 @@ Fk:loadTranslationTable{
   ["#tuxi-ask"] = "是否发动“突袭”，改为获得1-2名角色各一张手牌？",
 
   ["xuchu"] = "许褚",
+  ["#xuchu"] = "虎痴",
+  ["illustrator:xuchu"] = "Kayak",
   ["~xuchu"] = "冷，好冷啊……",
   ["$luoyi1"] = "脱！",
   ["$luoyi2"] = "谁来与我大战三百回合？",
@@ -54,6 +64,8 @@ Fk:loadTranslationTable{
   [":luoyi"] = "摸牌阶段，你可以少摸一张牌，然后本回合你使用【杀】或【决斗】对目标角色造成伤害时，此伤害+1。",
 
   ["guojia"] = "郭嘉",
+  ["#guojia"] = "早终的先知",
+  ["illustrator:guojia"] = "Kayak",
   ["~guojia"] = "咳，咳……",
   ["$tiandu1"] = "就这样吧。",
   ["$tiandu2"] = "哦？",
@@ -67,6 +79,8 @@ Fk:loadTranslationTable{
   ["#yiji-give"] = "遗计：你可以将这些牌分配给任意角色，点“取消”自己保留",
 
   ["zhenji"] = "甄姬",
+  ["#zhenji"] = "薄幸的美人",
+  ["illustrator:zhenji"] = "Kayak",
   ["~zhenji"] = "悼良会之永绝兮，哀一逝而异乡。",
   ["$luoshen1"] = "髣髴兮若轻云之蔽月。",
   ["$luoshen2"] = "飘飖兮若流风之回雪。",
@@ -79,6 +93,8 @@ Fk:loadTranslationTable{
   [":qingguo"] = "你可以将一张黑色手牌当【闪】使用或打出。",
 
   ["liubei"] = "刘备",
+  ["#liubei"] = "乱世的枭雄",
+  ["illustrator:liubei"] = "Kayak",
   ["~liubei"] = "这就是桃园吗？",
   ["$rende1"] = "以德服人。",
   ["$rende2"] = "唯贤唯德，能服于人。",
@@ -91,6 +107,8 @@ Fk:loadTranslationTable{
   ["#jijiang-ask"] = "激将：你可打出一张杀，视为 %src 使用或打出",
 
   ["guanyu"] = "关羽",
+  ["#guanyu"] = "美髯公",
+  ["illustrator:guanyu"] = "Kayak",
   ["~guanyu"] = "什么？此地名叫麦城？",
   ["$wusheng1"] = "关羽在此，尔等受死！",
   ["$wusheng2"] = "看尔乃插标卖首！",
@@ -98,6 +116,8 @@ Fk:loadTranslationTable{
   [":wusheng"] = "你可以将一张红色牌当【杀】使用或打出。",
 
   ["zhangfei"] = "张飞",
+  ["#zhangfei"] = "万夫不当",
+  ["illustrator:zhangfei"] = "Kayak",
   ["~zhangfei"] = "实在是，杀不动了……",
   ["$paoxiao1"] = "啊~~~！",
   ["$paoxiao2"] = "燕人张飞在此！",
@@ -105,6 +125,8 @@ Fk:loadTranslationTable{
   [":paoxiao"] = "锁定技，出牌阶段，你使用【杀】无次数限制。",
 
   ["zhugeliang"] = "诸葛亮",
+  ["#zhugeliang"] = "迟暮的丞相",
+  ["illustrator:zhugeliang"] = "Kayak",
   ["~zhugeliang"] = "将星陨落，天命难违。",
   ["$guanxing1"] = "观今夜天象，知天下大事。",
   ["$guanxing2"] = "知天易，逆天难。",
@@ -116,6 +138,8 @@ Fk:loadTranslationTable{
   [":kongcheng"] = "锁定技，若你没有手牌，你不能被选择为【杀】或【决斗】的目标。",
 
   ["zhaoyun"] = "赵云",
+  ["#zhaoyun"] = "少年将军",
+  ["illustrator:zhaoyun"] = "Kayak",
   ["~zhaoyun"] = "这，就是失败的滋味吗？",
   ["$longdan1"] = "能进能退乃真正法器！",
   ["$longdan2"] = "吾乃常山赵子龙也！",
@@ -123,6 +147,8 @@ Fk:loadTranslationTable{
   [":longdan"] = "你可以将一张【杀】当【闪】使用或打出，或将一张【闪】当普通【杀】使用或打出。",
 
   ["machao"] = "马超",
+  ["#machao"] = "一骑当千",
+  ["illustrator:machao"] = "Kayak",
   ["~machao"] = "（马蹄远去声）",
   ["mashu"] = "马术",
   [":mashu"] = "锁定技，你与其他角色的距离-1。",
@@ -132,6 +158,8 @@ Fk:loadTranslationTable{
   [":tieqi"] = "当你指定【杀】的目标后，你可以进行判定：若结果为红色，该角色不能使用【闪】响应此【杀】。",
 
   ["huangyueying"] = "黄月英",
+  ["#huangyueying"] = "归隐的杰女",
+  ["illustrator:huangyueying"] = "Kayak",
   ["~huangyueying"] = "亮……",
   ["$jizhi1"] = "哼哼～",
   ["$jizhi2"] = "哼～",
@@ -141,6 +169,8 @@ Fk:loadTranslationTable{
   [":qicai"] = "锁定技，你使用锦囊牌无距离限制。",
 
   ["sunquan"] = "孙权",
+  ["#sunquan"] = "年轻的贤君",
+  ["illustrator:sunquan"] = "Kayak",
   ["~sunquan"] = "父亲，大哥，仲谋愧矣……",
   ["$zhiheng1"] = "容我三思。",
   ["$zhiheng2"] = "且慢。",
@@ -152,6 +182,8 @@ Fk:loadTranslationTable{
   [":jiuyuan"] = "主公技，其他吴势力角色使用【桃】令你回复体力时，回复值+1。",
 
   ["ganning"] = "甘宁",
+  ["#ganning"] = "锦帆游侠",
+  ["illustrator:ganning"] = "Kayak",
   ["~ganning"] = "二十年后，又是一条好汉……",
   ["$qixi1"] = "接招吧！",
   ["$qixi2"] = "你的牌太多啦！",
@@ -159,6 +191,8 @@ Fk:loadTranslationTable{
   [":qixi"] = "你可以将一张黑色牌当【过河拆桥】使用。",
 
   ["lvmeng"] = "吕蒙",
+  ["#lvmeng"] = "白衣渡江",
+  ["illustrator:lvmeng"] = "Kayak",
   ["~lvmeng"] = "被看穿了吗……",
   ["$keji1"] = "不是不报，时候未到！",
   ["$keji2"] = "留得青山在，不怕没柴烧！",
@@ -166,6 +200,8 @@ Fk:loadTranslationTable{
   [":keji"] = "若你未于出牌阶段内使用或打出【杀】，你可以跳过弃牌阶段。",
 
   ["huanggai"] = "黄盖",
+  ["#huanggai"] = "轻身为国",
+  ["illustrator:huanggai"] = "Kayak",
   ["~huanggai"] = "失血……过多了……",
   ["$kurou1"] = "请鞭笞我吧，公瑾！",
   ["$kurou2"] = "赴汤蹈火，在所不辞！",
@@ -173,6 +209,8 @@ Fk:loadTranslationTable{
   [":kurou"] = "出牌阶段，你可以失去1点体力然后摸两张牌。",
 
   ["zhouyu"] = "周瑜",
+  ["#zhouyu"] = "大都督",
+  ["illustrator:zhouyu"] = "Kayak",
   ["~zhouyu"] = "既生瑜，何生……",
   ["$yingzi1"] = "哈哈哈哈……",
   ["$yingzi2"] = "汝等看好了！",
@@ -184,6 +222,8 @@ Fk:loadTranslationTable{
   [":fanjian"] = "阶段技。你可以令一名其他角色选择一种花色，然后正面朝上获得你的一张手牌。若此牌花色与该角色所选花色不同，你对其造成1点伤害。",
 
   ["daqiao"] = "大乔",
+  ["#daqiao"] = "矜持之花",
+  ["illustrator:daqiao"] = "Kayak",
   ["~daqiao"] = "伯符，我去了……",
   ["$guose1"] = "请休息吧。",
   ["$guose2"] = "你累了。",
@@ -196,6 +236,8 @@ Fk:loadTranslationTable{
   ["#liuli-target"] = "流离：你可以弃置一张牌，将【杀】的目标转移给一名其他角色",
 
   ["luxun"] = "陆逊",
+  ["#luxun"] = "儒生雄才",
+  ["illustrator:luxun"] = "Kayak",
   ["~luxun"] = "我还是太年轻了……",
   ["$qianxun1"] = "儒生脱尘，不为贪逸淫乐之事。",
   ["$qianxun2"] = "谦谦君子，不饮盗泉之水。",
@@ -207,6 +249,8 @@ Fk:loadTranslationTable{
   [":lianying"] = "当你失去最后的手牌后，你可以摸一张牌。",
 
   ["sunshangxiang"] = "孙尚香",
+  ["#sunshangxiang"] = "弓腰姬",
+  ["illustrator:sunshangxiang"] = "Kayak",
   ["~sunshangxiang"] = "不，还不可以死……",
   ["$xiaoji1"] = "哼！",
   ["$xiaoji2"] = "看我的厉害！",
@@ -218,6 +262,8 @@ Fk:loadTranslationTable{
   [":jieyin"] = "出牌阶段限一次，你可以弃置两张手牌并选择一名已受伤的男性角色：若如此做，你和该角色各回复1点体力。",
 
   ["huatuo"] = "华佗",
+  ["#huatuo"] = "神医",
+  ["illustrator:huatuo"] = "Kayak",
   ["~huatuo"] = "医者……不能自医啊……",
   ["$qingnang1"] = "早睡早起，方能养生。",
   ["$qingnang2"] = "越老越要补啊。",
@@ -229,6 +275,8 @@ Fk:loadTranslationTable{
   [":jijiu"] = "你的回合外，你可以将一张红色牌当【桃】使用。",
 
   ["lvbu"] = "吕布",
+  ["#lvbu"] = "武的化身",
+  ["illustrator:lvbu"] = "Kayak",
   ["~lvbu"] = "不可能……！",
   ["$wushuang1"] = "谁能挡我！",
   ["$wushuang2"] = "神挡杀神，佛挡杀佛！",
@@ -236,11 +284,13 @@ Fk:loadTranslationTable{
   [":wushuang"] = "锁定技，当你使用【杀】指定目标后，其使用【闪】抵消此【杀】的方式改为需连续使用两张【闪】；当你使用【决斗】指定目标后，或当你成为【决斗】的目标后，你令其打出【杀】响应此【决斗】的方式改为需连续打出两张【杀】。",
 
   ["diaochan"] = "貂蝉",
+  ["#diaochan"] = "绝世的舞姬",
+  ["illustrator:diaochan"] = "Kayak",
   ["~diaochan"] = "父亲大人，对不起……",
   ["$lijian1"] = "嗯呵呵～～呵呵～～",
   ["$lijian2"] = "夫君，你要替妾身作主啊……",
   ["lijian"] = "离间",
-  [":lijian"] = "出牌阶段限一次，你可以弃置一张牌并选择两名其他男性角色，后选择的角色视为对先选择的角色使用了一张不能被无懈可击的决斗。",
+  [":lijian"] = "出牌阶段限一次，你可以弃置一张牌并选择两名其他男性角色，后选择的角色视为对先选择的角色使用了一张不能被【无懈可击】的【决斗】。",
   ["$biyue1"] = "失礼了～",
   ["$biyue2"] = "羡慕吧～",
   ["biyue"] = "闭月",
