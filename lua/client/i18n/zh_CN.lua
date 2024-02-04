@@ -193,6 +193,12 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$BanCharaHelp"] = "正在禁用武将",
   ["Companions"] = "珠联璧合",
   ["Death audio"] = "阵亡",
+  ["Win audio"] = "胜利语音",
+  ["Official"] = "官方",
+  ["Title"] = "称号：",
+  ["Designer"] = "设计：",
+  ["Voice Actor"] = "配音：",
+  ["Illustrator"] = "画师：",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
   ["GameMode"] = "游戏模式：",

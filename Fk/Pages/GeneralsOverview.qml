@@ -360,7 +360,7 @@ Item {
           Layout.fillWidth: true
           text: {
             if (name.endsWith("_win_audio")) {
-              return "胜利语音";
+              return luatr("Win audio");
             }
             return luatr(name) + (idx ? " (" + idx.toString() + ")"
               : "");
@@ -522,7 +522,7 @@ Item {
             function trans(str) {
               const ret = luatr(str);
               if (ret === str) {
-                return "官方";
+                return luatr("Official");
               }
               return ret;
             }
@@ -530,10 +530,10 @@ Item {
               const general = generalDetail.general;
               return [
                 luatr(lcall("GetGeneralData", general).package),
-                "称号：" + trans("#" + general),
-                "设计：" + trans("designer:" + general),
-                "配音：" + trans("cv:" + general),
-                "画师：" + trans("illustrator:" + general),
+                luatr("Title") + trans("#" + general),
+                luatr("Designer") + trans("designer:" + general),
+                luatr("Voice Actor") + trans("cv:" + general),
+                luatr("Illustrator") + trans("illustrator:" + general),
               ].join("<br>");
             }
           }
