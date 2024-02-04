@@ -2423,23 +2423,7 @@ end
 ---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
-  local attachedSkillAndUser
-  if type(cardUseEvent.attachedSkillAndUser) == "table" then
-    attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
-    cardUseEvent.attachedSkillAndUser = nil
-  end
-
-  local ret = execGameEvent(GameEvent.UseCard, cardUseEvent)
-
-  if
-    type(attachedSkillAndUser) == "table" and
-    Fk.skills[attachedSkillAndUser.skillName] and
-    Fk.skills[attachedSkillAndUser.skillName].afterUse
-  then
-    Fk.skills[attachedSkillAndUser.skillName]:afterUse(self:getPlayerById(attachedSkillAndUser.user), cardUseEvent)
-  end
-
-  return ret
+  return execGameEvent(GameEvent.UseCard, cardUseEvent)
 end
 
 ---@param room Room
@@ -2686,6 +2670,7 @@ function Room:doCardUseEffect(cardUseEvent)
   for i = 1, (cardUseEvent.additionalEffect or 0) + 1 do
     if #TargetGroup:getRealTargets(cardUseEvent.tos) > 0 and cardUseEvent.card.skill.onAction then
       cardUseEvent.card.skill:onAction(self, cardUseEvent)
+      cardEffectEvent.extra_data = cardUseEvent.extra_data
     end
 
     -- Else: do effect to all targets

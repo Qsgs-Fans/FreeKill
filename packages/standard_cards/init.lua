@@ -21,7 +21,7 @@ local slashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player, card, extra_data)
-    return (extra_data and extra_data.bypass_times) or
+    return (extra_data and extra_data.bypass_times) or player.phase ~= Player.Play or
       table.find(Fk:currentRoom().alive_players, function(p)
         return self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
       end)
@@ -36,7 +36,12 @@ local slashSkill = fk.CreateActiveSkill{
     if #selected < self:getMaxTargetNum(Self, card) then
       local player = Fk:currentRoom():getPlayerById(to_select)
       return self:modTargetFilter(to_select, selected, Self.id, card, count_distances) and
-      (#selected > 0 or (extra_data and extra_data.bypass_times) or self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player))
+      (
+        #selected > 0 or
+        Self.phase ~= Player.Play or
+        (extra_data and extra_data.bypass_times) or
+        self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player)
+      )
     end
   end,
   on_effect = function(self, room, effect)
@@ -659,60 +664,6 @@ local amazingGraceSkill = fk.CreateActiveSkill{
     table.removeOne(effect.extra_data.AGFilled, chosen)
   end
 }
-
-local amazingGraceAction = fk.CreateTriggerSkill{
-  name = "amazing_grace_action",
-  global = true,
-  priority = { [fk.BeforeCardUseEffect] = 0, [fk.CardUseFinished] = 10 }, -- game rule
-  events = { fk.BeforeCardUseEffect, fk.CardUseFinished },
-  can_trigger = function(self, event, target, player, data)
-    local frameFilled = data.extra_data and data.extra_data.AGFilled
-    if event == fk.BeforeCardUseEffect then
-      return data.card.trueName == 'amazing_grace' and not frameFilled
-    else
-      return frameFilled
-    end
-  end,
-  on_trigger = function(self, event, target, player, data)
-    local room = player.room
-    if event == fk.BeforeCardUseEffect then
-      local toDisplay = room:getNCards(#TargetGroup:getRealTargets(data.tos))
-      room:moveCards({
-        ids = toDisplay,
-        toArea = Card.Processing,
-        moveReason = fk.ReasonPut,
-      })
-
-      table.forEach(room.players, function(p)
-        room:fillAG(p, toDisplay)
-      end)
-
-      data.extra_data = data.extra_data or {}
-      data.extra_data.AGFilled = toDisplay
-    else
-      table.forEach(room.players, function(p)
-        room:closeAG(p)
-      end)
-
-      if data.extra_data and data.extra_data.AGFilled then
-        local toDiscard = table.filter(data.extra_data.AGFilled, function(id)
-          return room:getCardArea(id) == Card.Processing
-        end)
-
-        if #toDiscard > 0 then
-          room:moveCards({
-            ids = toDiscard,
-            toArea = Card.DiscardPile,
-            moveReason = fk.ReasonPutIntoDiscardPile,
-          })
-        end
-      end
-
-      data.extra_data.AGFilled = nil
-    end
-  end,
-}
-Fk:addSkill(amazingGraceAction)
 
 local amazingGrace = fk.CreateTrickCard{
   name = "amazing_grace",

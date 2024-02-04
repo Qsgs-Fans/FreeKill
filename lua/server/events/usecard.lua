@@ -164,6 +164,20 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
+  if type(cardUseEvent.attachedSkillAndUser) == "table" then
+    local attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
+    self:addExitFunc(function()
+      if
+        type(attachedSkillAndUser) == "table" and
+        Fk.skills[attachedSkillAndUser.skillName] and
+        Fk.skills[attachedSkillAndUser.skillName].afterUse
+      then
+        Fk.skills[attachedSkillAndUser.skillName]:afterUse(room:getPlayerById(attachedSkillAndUser.user), cardUseEvent)
+      end
+    end)
+    cardUseEvent.attachedSkillAndUser = nil
+  end
+
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
