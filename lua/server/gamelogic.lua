@@ -441,6 +441,7 @@ function GameLogic:start()
       e.killed = e ~= jump_to
       self:clearEvent(e)
       coroutine.close(e._co)
+      e.status = "dead"
       if e == jump_to then jump_to = nil end -- shutdown结束了
       e = self:getCurrentCleaner()
     end
@@ -460,6 +461,7 @@ function GameLogic:start()
       e.interrupted = ret
       self:clearEvent(e)
       coroutine.close(e._co)
+      e.status = "dead"
     elseif ret == true then
       -- 跳到越早发生的事件越好
       if not jump_to then
@@ -543,6 +545,8 @@ end
 ---@param event GameEvent
 function GameLogic:clearEvent(event)
   if event.event == GameEvent.ClearEvent then return end
+  if event.status == "exiting" then return end
+  event.status = "exiting"
   local ce = GameEvent(GameEvent.ClearEvent, event)
   ce.id = self.current_event_id
   local co = coroutine.create(ce.main_func)

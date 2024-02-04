@@ -14,6 +14,7 @@
 ---@field public exit_func fun(self: GameEvent) @ 事件结束后执行的函数
 ---@field public extra_exit_funcs fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
 ---@field public exec_ret boolean? @ exec函数的返回值，可能不存在
+---@field public status string @ ready, running, exiting, dead
 ---@field public interrupted boolean @ 事件是否是因为被中断而结束的，可能是防止事件或者被杀
 ---@field public killed boolean @ 事件因为终止一切结算而被中断（所谓的“被杀”）
 local GameEvent = class("GameEvent")
@@ -49,6 +50,7 @@ function GameEvent:initialize(event, ...)
   self.extra_clear_funcs = Util.DummyTable
   self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
   self.extra_exit_funcs = Util.DummyTable
+  self.status = "ready"
   self.interrupted = false
 end
 
@@ -166,6 +168,8 @@ end
 function GameEvent:exec()
   local room = self.room
   local logic = room.logic
+  if self.status ~= "ready" then return true end
+
   self.parent = logic:getCurrentEvent()
 
   if self:prepare_func() then return true end
@@ -174,6 +178,7 @@ function GameEvent:exec()
 
   local co = coroutine.create(self.main_func)
   self._co = co
+  self.status = "running"
 
   coroutine.yield(self, "__newEvent")
 
@@ -188,6 +193,7 @@ function GameEvent:exec()
 end
 
 function GameEvent:shutdown()
+  if self.status ~= "running" then return end
   -- yield to self and break
   coroutine.yield(self, "__breakEvent")
 end
