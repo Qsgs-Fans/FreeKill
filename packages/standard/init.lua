@@ -225,6 +225,21 @@ local tiandu = fk.CreateTriggerSkill{
     player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
   end,
 }
+local yiji_active = fk.CreateActiveSkill{
+  name = "yiji_active",
+  expand_pile = function(self)
+    return type(Self:getMark("yiji_cards")) == "table" and Self:getMark("yiji_cards") or {}
+  end,
+  min_card_num = 1,
+  target_num = 1,
+  card_filter = function(self, to_select, selected, targets)
+    local ids = Self:getMark("yiji_cards")
+      return type(ids) == "table" and table.contains(ids, to_select)
+  end,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0 and to_select ~= Self.id
+  end,
+}
 local yiji = fk.CreateTriggerSkill{
   name = "yiji",
   anim_type = "masochism",
@@ -246,75 +261,30 @@ local yiji = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     local room = player.room
     local ids = room:getNCards(2)
-    local fakemove = {
-      toArea = Card.PlayerHand,
-      to = player.id,
-      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.Void} end),
-      moveReason = fk.ReasonJustMove,
-    }
-    room:notifyMoveCards({player}, {fakemove})
-    for _, id in ipairs(ids) do
-      room:setCardMark(Fk:getCardById(id), "yiji", 1)
-    end
-    player.tag["yiji_ids"] = ids --存储遗技卡牌表
-    while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
-      if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
-        for _, id in ipairs(ids) do
-          room:setCardMark(Fk:getCardById(id), "yiji", 0)
+    while true do
+      room:setPlayerMark(player, "yiji_cards", ids)
+      local _, ret = room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true, nil, true)
+      room:setPlayerMark(player, "yiji_cards", 0)
+      if ret then
+        for _, id in ipairs(ret.cards) do
+          table.removeOne(ids, id)
         end
-        ids = table.filter(ids, function(id) return room:getCardArea(id) ~= Card.PlayerHand end)
-        fakemove = {
-          from = player.id,
-          toArea = Card.Void,
-          moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
-          moveReason = fk.ReasonGive,
-        }
-        room:notifyMoveCards({player}, {fakemove})
-        room:moveCards({
-          fromArea = Card.Void,
-          ids = ids,
-          to = player.id,
-          toArea = Card.PlayerHand,
-          moveReason = fk.ReasonGive,
-          skillName = self.name,
-        })
+        room:moveCardTo(ret.cards, Card.PlayerHand, room:getPlayerById(ret.targets[1]), fk.ReasonGive, self.name, nil, false, player.id)
+        if #ids == 0 then break end
+        if player.dead then
+          room:moveCards({
+            ids = ids,
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonJustMove,
+            skillName = self.name,
+          })
+          break
+        end
+      else
+        room:moveCardTo(ids, Player.Hand, player, fk.ReasonGive, self.name, nil, false, player.id)
+        break
       end
     end
-  end,
-}
-local yiji_active = fk.CreateActiveSkill{
-  name = "yiji_active",
-  mute = true,
-  min_card_num = 1,
-  target_num = 1,
-  card_filter = function(self, to_select, selected, targets)
-    return Fk:getCardById(to_select):getMark("yiji") > 0
-  end,
-  target_filter = function(self, to_select, selected, selected_cards)
-    return #selected == 0
-  end,
-  on_use = function(self, room, effect)
-    local player = room:getPlayerById(effect.from)
-    local target = room:getPlayerById(effect.tos[1])
-    room:doIndicate(player.id, {target.id})
-    for _, id in ipairs(effect.cards) do
-      room:setCardMark(Fk:getCardById(id), "yiji", 0)
-    end
-    local fakemove = {
-      from = player.id,
-      toArea = Card.Void,
-      moveInfo = table.map(effect.cards, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
-      moveReason = fk.ReasonGive,
-    }
-    room:notifyMoveCards({player}, {fakemove})
-    room:moveCards({
-      fromArea = Card.Void,
-      ids = effect.cards,
-      to = target.id,
-      toArea = Card.PlayerHand,
-      moveReason = fk.ReasonGive,
-      skillName = self.name,
-    })
   end,
 }
 local guojia = General:new(extension, "guojia", "wei", 3)
