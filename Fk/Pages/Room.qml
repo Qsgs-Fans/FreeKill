@@ -73,6 +73,7 @@ Item {
 
   onIsStartedChanged: {
     if (isStarted) {
+      Backend.playSound("./audio/system/gamestart");
       bgm.play();
       canKickOwner = false;
       kickOwnerTimer.stop();
@@ -209,6 +210,7 @@ Item {
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
+      Backend.playSound("./audio/system/ready");
       kickOwnerTimer.start();
     }
   }
