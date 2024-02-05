@@ -29,7 +29,7 @@ Rectangle {
   }
 
   function loadSkills() {
-    for (let i = 1; i <= 16; i++) {
+    for (let i = 1; i <= 23; i++) {
       skills.append({ name: "fastchat_m", idx: i });
     }
   }
