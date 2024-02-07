@@ -205,9 +205,9 @@ Fk:loadTranslationTable({
   ["#AskForPeaches"] = "%src is dying, please use %arg Peach(es) to save him",
   ["#AskForPeachesSelf"] = "You are dying, please use %arg Peach(es)/Alcohol to save yourself",
 
-  ["#AskForDiscard"] = "Please discard %arg cards (at least %arg2)",
-  ["#AskForCard"] = "Please choose %arg cards (at least %arg2)",
-  ["#AskForDistribution"] = "Please distribute cards (at least %arg, %arg2 total)",
+  ["#AskForDiscard"] = "Please discard %arg cards (%arg2 at least)",
+  ["#AskForCard"] = "Please choose %arg cards (%arg2 at least)",
+  ["#AskForDistribution"] = "Please distribute cards (%arg at least , %arg2 total)",
   ["@DistributionTo"] = "",
   ["#askForPindian"] = "%arg: please choose a hand card for point fight",
   ["#StartPindianReason"] = "%from started point fight (%arg)",
