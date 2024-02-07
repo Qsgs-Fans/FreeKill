@@ -207,6 +207,8 @@ Fk:loadTranslationTable({
 
   ["#AskForDiscard"] = "Please discard %arg cards (at least %arg2)",
   ["#AskForCard"] = "Please choose %arg cards (at least %arg2)",
+  ["#AskForDistribution"] = "Please distribute cards (at least %arg, %arg2 total)",
+  ["@DistributionTo"] = "",
   ["#askForPindian"] = "%arg: please choose a hand card for point fight",
   ["#StartPindianReason"] = "%from started point fight (%arg)",
   ["#ShowPindianCard"] = "The point fight card of %from is %card",
