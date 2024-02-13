@@ -414,14 +414,6 @@ function Card:getMark(mark)
   return ret
 end
 
---- 判定卡牌是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Card:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
-end
-
 --- 获取卡牌有哪些Mark。
 function Card:getMarkNames()
   local ret = {}
