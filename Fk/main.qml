@@ -269,6 +269,15 @@ Window {
     }
   }
 
+  function leval(lua) {
+    const ret = Backend.evalLuaExp(`return json.encode(${lua})`);
+    try {
+      return JSON.parse(ret);
+    } catch (e) {
+      return ret;
+    }
+  }
+
   function luatr(src) {
     return Backend.translate(src);
   }
