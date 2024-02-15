@@ -10,6 +10,8 @@ function RandomAI:useActiveSkill(skill, card)
   local room = self.room
   local player = self.player
 
+  if skill:isInstanceOf(ViewAsSkill) then return "" end
+
   local filter_func = skill.cardFilter
   if card then
     filter_func = Util.FalseFunc
@@ -68,6 +70,7 @@ function RandomAI:useVSSkill(skill, pattern, cancelable, extra_data)
   local player = self.player
   local room = self.room
   local precondition
+  if not skill then return nil end
 
   if self.command == "PlayCard" then
     precondition = skill:enabledAtPlay(player)
