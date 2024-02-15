@@ -71,7 +71,7 @@ function General:__tostring()
 end
 
 --- 为武将增加技能，需要注意增加其他武将技能时的处理方式。
----@param skill Skill @ （单个）武将技能
+---@param skill Skill|string @ （单个）武将技能
 function General:addSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.other_skills, skill)
@@ -82,7 +82,7 @@ function General:addSkill(skill)
 end
 
 --- 为武将增加相关技能，需要注意增加其他武将技能时的处理方式。
----@param skill Skill @ （单个）武将技能
+---@param skill Skill|string @ （单个）武将技能
 function General:addRelatedSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.related_other_skills, skill)

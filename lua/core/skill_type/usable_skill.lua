@@ -40,20 +40,37 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   card_name = card_name or card.trueName
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
-  table.insert(temp_suf, 1, "")
-  table.insert(temp_suf, "-tmp")
-  table.insert(card_temp_suf, 1, "")
+
+  ---@param object Card|Player
+  ---@param markname string
+  ---@param suffixes string[]
+  ---@return boolean
+  local function hasMark(object, markname, suffixes)
+    if not object then return false end
+    for mark, _ in pairs(object.mark) do
+      if mark == markname then return true end
+      if mark:startsWith(markname .. "-") then
+        for _, suffix in ipairs(suffixes) do
+          if mark:find(suffix, 1, true) then return true end
+        end
+      end
+    end
+    return false
+  end
 
   return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to) or
-  (card and table.find(card_temp_suf, function(s)
-    return card:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
-  end)) or
-  (table.find(temp_suf, function(s)
-    return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
-  end)) or
-  (to and (table.find(temp_suf, function(s)
-    return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
-  end)))
+  hasMark(card, MarkEnum.BypassTimesLimit, card_temp_suf) or
+  hasMark(player, MarkEnum.BypassTimesLimit, temp_suf) or
+  hasMark(to, MarkEnum.BypassTimesLimitTo, temp_suf)
+  -- (card and table.find(card_temp_suf, function(s)
+  --   return card:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
+  -- end)) or
+  -- (table.find(temp_suf, function(s)
+  --   return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
+  -- end)) or
+  -- (to and (table.find(temp_suf, function(s)
+  --   return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
+  -- end)))
 end
 
 return UsableSkill

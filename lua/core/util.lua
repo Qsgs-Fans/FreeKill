@@ -114,6 +114,73 @@ function fk.sorted_pairs(t, val_func, reverse)
   return iter, nil, 1
 end
 
+-- frequenly used filter & map functions
+
+--- 返回ID
+Util.IdMapper = function(e) return e.id end
+--- 根据卡牌ID返回卡牌
+Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
+--- 根据玩家ID返回玩家
+Util.Id2PlayerMapper = function(id)
+  return Fk:currentRoom():getPlayerById(id)
+end
+--- 返回武将名
+Util.NameMapper = function(e) return e.name end
+--- 根据武将名返回武将
+Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
+--- 根据技能名返回技能
+Util.Name2SkillMapper = function(e) return Fk.skills[e] end
+--- 返回译文
+Util.TranslateMapper = function(str) return Fk:translate(str) end
+
+-- for card preset
+
+--- 全局卡牌(包括自己)的canUse
+Util.GlobalCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+--- AOE卡牌(不包括自己)的canUse
+Util.AoeCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if p ~= player and not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+--- 全局卡牌(包括自己)的onUse
+Util.GlobalOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+--- AOE卡牌(不包括自己)的onUse
+Util.AoeOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+-- Table
+
 ---@param func fun(element, index, array)
 function table:forEach(func)
   for i, v in ipairs(self) do
@@ -162,66 +229,6 @@ function table:map(func)
     table.insert(ret, func(v, i, self))
   end
   return ret
-end
-
--- frequenly used filter & map functions
-
---- 返回ID
-Util.IdMapper = function(e) return e.id end
---- 根据卡牌ID返回卡牌
-Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
---- 根据玩家ID返回玩家
-Util.Id2PlayerMapper = function(id)
-  return Fk:currentRoom():getPlayerById(id)
-end
---- 返回武将名
-Util.NameMapper = function(e) return e.name end
---- 根据武将名返回武将
-Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
---- 根据技能名返回技能
-Util.Name2SkillMapper = function(e) return Fk.skills[e] end
---- 返回译文
-Util.TranslateMapper = function(str) return Fk:translate(str) end
-
--- for card preset
-Util.GlobalCanUse = function(self, player, card)
-  local room = Fk:currentRoom()
-  for _, p in ipairs(room.alive_players) do
-    if not (card and player:isProhibited(p, card)) then
-      return true
-    end
-  end
-end
-
-Util.AoeCanUse = function(self, player, card)
-  local room = Fk:currentRoom()
-  for _, p in ipairs(room.alive_players) do
-    if p ~= player and not (card and player:isProhibited(p, card)) then
-      return true
-    end
-  end
-end
-
-Util.GlobalOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getAlivePlayers()) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end
-end
-
-Util.AoeOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end
 end
 
 ---@generic T

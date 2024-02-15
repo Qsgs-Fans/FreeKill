@@ -174,7 +174,7 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryRound)
     p:setSkillUseHistory("", 0, Player.HistoryRound)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -182,7 +182,7 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
@@ -249,7 +249,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryTurn)
     p:setSkillUseHistory("", 0, Player.HistoryTurn)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -257,7 +257,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
@@ -372,7 +372,7 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryPhase)
     p:setSkillUseHistory("", 0, Player.HistoryPhase)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -380,7 +380,7 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
