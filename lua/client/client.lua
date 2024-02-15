@@ -791,9 +791,7 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local extra_data = data[4]
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
+  skill._extra_data = extra_data
 
   Fk.currentResponseReason = extra_data.skillName
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)

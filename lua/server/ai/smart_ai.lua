@@ -114,9 +114,7 @@ smart_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local skillName, prompt, cancelable, extra_data = table.unpack(data)
 
   local skill = Fk.skills[skillName]
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
+  skill._extra_data = extra_data
 
   local ret = self:callFromTable(fk.ai_active_skill, nil, skillName,
     self, prompt, cancelable, extra_data)
