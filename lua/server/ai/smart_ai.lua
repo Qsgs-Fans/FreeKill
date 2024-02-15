@@ -132,9 +132,24 @@ end
 -- 真的要考虑ViewAsSkill吗，害怕
 ---------------------------------------------------------
 
+-- 使用牌相关——同时见于主动使用和响应式使用。
 --- 键是prompt的第一项或者牌名，优先prompt，其次name，实在不行trueName。
 ---@type table<string, fun(self: SmartAI, pattern: string, prompt: string, cancelable?: boolean, extra_data?: UseExtraData): UseReply?>
-fk.ai_use_card = {}
+fk.ai_use_card = setmetatable({}, {
+  __index = function(_, k)
+    -- FIXME: 感觉不妥
+    local c = Fk.all_card_types[k]
+    if not c then return nil end
+    if c.type == Card.TypeEquip then
+      return function(self, pattern, prompt, cancelable, extra_data)
+        local slashes = self:getCards(k, "use", extra_data)
+        if #slashes == 0 then return nil end
+
+        return self:buildUseReply(slashes[1].id)
+      end
+    end
+  end,
+})
 
 local defauld_use_card = function(self, pattern, _, cancelable, exdata)
   if cancelable then return nil end
@@ -219,6 +234,9 @@ smart_cb["PlayCard"] = function(self)
   local card_names = {}
   for _, cd in ipairs(cards) do
     -- TODO: 视为技
+    -- 视为技对应的function一般会返回一张印出来的卡，又要纳入新的考虑范围了
+    -- 不过这种根据牌名判断的逻辑而言 可能需要调用多次视为技函数了
+    -- 要用好空间换时间
     table.insertIfNeed(card_names, cd.name)
   end
   -- TODO: 主动技
@@ -277,7 +295,7 @@ function SmartAI:isFriend(target)
   if Self.role == target.role then return true end
   local t = { "lord", "loyalist" }
   if table.contains(t, Self.role) and table.contains(t, target.role) then return true end
-  if Self.role == "renegade" or target.role == "renegade" then return math.random() < 0.5 end
+  if Self.role == "renegade" or target.role == "renegade" then return math.random() < 0.6 end
   return false
 end
 
