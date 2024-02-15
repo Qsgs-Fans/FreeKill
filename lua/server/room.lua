@@ -1393,15 +1393,13 @@ end
 ---@param minNum? integer @ 最少交出的卡牌数，默认0
 ---@param maxNum? integer @ 最多交出的卡牌数，默认所有牌
 ---@param prompt? string @ 询问提示信息
----@param cancelable? boolean @ 能否点取消
 ---@param expand_pile? string @ 可选私人牌堆名称，如要分配你武将牌上的牌请填写
 ---@param skipMove? boolean @ 是否跳过移动。默认不跳过
 ---@param single_max? integer|table @ 限制每人能获得的最大牌数。输入整数或(以角色id为键以整数为值)的表
 ---@return table<integer[]> @ 返回一个表，键为角色id，值为分配给其的牌id数组
-function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prompt, cancelable, expand_pile, skipMove, single_max)
+function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prompt, expand_pile, skipMove, single_max)
   targets = targets or self.alive_players
   cards = cards or player:getCardIds("he")
-  cancelable = cancelable or true
   local _cards = table.simpleClone(cards)
   targets = table.map(targets, Util.IdMapper)
   self:sortPlayersByAction(targets)
@@ -1438,7 +1436,7 @@ function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prom
   while maxNum > 0 and #_cards > 0 do
     data.max_num = maxNum
     prompt = prompt or ("#AskForDistribution:::"..minNum..":"..maxNum)
-    local success, dat = self:askForUseActiveSkill(player, "distribution_select_skill", prompt, cancelable, data, true)
+    local success, dat = self:askForUseActiveSkill(player, "distribution_select_skill", prompt, minNum == 0, data, true)
     if success and dat then
       local to = dat.targets[1]
       local give_cards = dat.cards
