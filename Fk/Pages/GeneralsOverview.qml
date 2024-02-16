@@ -255,9 +255,9 @@ Item {
           const gdata = lcall("GetGeneralData", modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
-            if (!s.banPkg[pack].includes(modelData)) return 0.7;
+            if (!s.banPkg[pack].includes(modelData)) return 0.5;
           } else {
-            if (!!s.normalPkg[pack]?.includes(modelData)) return 0.7;
+            if (!!s.normalPkg[pack]?.includes(modelData)) return 0.5;
           }
           return 0;
         }
