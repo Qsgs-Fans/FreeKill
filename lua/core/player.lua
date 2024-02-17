@@ -221,14 +221,6 @@ function Player:getMark(mark)
   return mark
 end
 
---- 判定角色是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Player:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
-end
-
 --- 获取角色有哪些Mark。
 function Player:getMarkNames()
   local ret = {}

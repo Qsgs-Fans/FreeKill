@@ -3429,7 +3429,13 @@ end
 function Room:gameOver(winner)
   if not self.game_started then return end
 
-  self.logic:trigger(fk.GameFinished, nil, winner)
+  if table.contains(
+    { "running", "normal" },
+    coroutine.status(self.main_co)
+  ) then
+    self.logic:trigger(fk.GameFinished, nil, winner)
+  end
+
   self.game_started = false
   self.game_finished = true
 

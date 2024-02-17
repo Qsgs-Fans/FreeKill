@@ -517,7 +517,7 @@ void Server::handleNameAndPassword(ClientSocket *client, const QString &name,
 
 void Server::onRoomAbandoned() {
   Room *room = qobject_cast<Room *>(sender());
-  room->gameOver();
+  // room->gameOver(); // Lua会出手
   rooms.remove(room->getId());
   updateOnlineInfo();
   // 按理说这时候就可以删除了，但是这里肯定比Lua先检测到。
