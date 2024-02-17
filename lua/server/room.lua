@@ -3,7 +3,7 @@
 --- Room是fk游戏逻辑运行的主要场所，同时也提供了许多API函数供编写技能使用。
 ---
 --- 一个房间中只有一个Room实例，保存在RoomInstance全局变量中。
----@class Room : Object
+---@class Room : AbstractRoom
 ---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
 ---@field public id integer @ 房间的id
 ---@field private main_co any @ 本房间的主协程
@@ -15,7 +15,6 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
----@field public banners table<string, any> @ 左上角显示点啥好呢？
 ---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
 ---@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
@@ -23,14 +22,13 @@
 ---@field public void integer[] @ 从游戏中除外区，一样的是卡牌id数组
 ---@field public card_place table<integer, CardArea> @ 每个卡牌的id对应的区域，一张表
 ---@field public owner_map table<integer, integer> @ 每个卡牌id对应的主人，表的值是那个玩家的id，可能是nil
----@field public status_skills Skill[] @ 这个房间中含有的状态技列表
 ---@field public settings table @ 房间的额外设置，差不多是json对象
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
 ---@field public skill_costs table<string, any> @ 存放skill.cost_data用
 ---@field public card_marks table<integer, any> @ 存放card.mark之用
-local Room = class("Room")
+local Room = AbstractRoom:subclass("Room")
 
 -- load classes used by the game
 GameEvent = require "server.gameevent"
@@ -67,18 +65,14 @@ dofile "lua/server/ai/init.lua"
 --- 构造函数。别去构造
 ---@param _room fk.Room
 function Room:initialize(_room)
+  AbstractRoom.initialize(self)
   self.room = _room
   self.id = _room:getId()
 
-  self.players = {}
-  self.alive_players = {}
-  self.observers = {}
-  self.current = nil
   self.game_started = false
   self.game_finished = false
   self.timeout = _room:getTimeout()
   self.tag = {}
-  self.banners = {}
   self.general_pile = {}
   self.draw_pile = {}
   self.discard_pile = {}
@@ -86,16 +80,8 @@ function Room:initialize(_room)
   self.void = {}
   self.card_place = {}
   self.owner_map = {}
-  self.status_skills = {}
-  for class, skills in pairs(Fk.global_status_skill) do
-    self.status_skills[class] = {table.unpack(skills)}
-  end
   self.request_queue = {}
   self.request_self = {}
-  self.skill_costs = {}
-  self.card_marks = {}
-  self.filtered_cards = {}
-  self.printed_cards = {}
 
   self.settings = json.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
@@ -568,13 +554,8 @@ function Room:removeTag(tag_name)
 end
 
 function Room:setBanner(name, value)
-  if value == 0 then value = nil end
-  self.banners[name] = value
+  AbstractRoom.setBanner(self, name, value)
   self:doBroadcastNotify("SetBanner", json.encode{ name, value })
-end
-
-function Room:getBanner(name)
-  return self.banners[name]
 end
 
 ---@return boolean

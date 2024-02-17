@@ -78,20 +78,20 @@ function Engine:initialize()
 end
 
 local _foreign_keys = {
-  "currentResponsePattern",
-  "currentResponseReason",
-  "filtered_cards",
-  "printed_cards",
+  ["currentResponsePattern"] = true,
+  ["currentResponseReason"] = true,
+  ["filtered_cards"] = true,
+  ["printed_cards"] = true,
 }
 
 function Engine:__index(k)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     return self:currentRoom()[k]
   end
 end
 
 function Engine:__newindex(k, v)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     self:currentRoom()[k] = v
   else
     rawset(self, k, v)
@@ -548,7 +548,7 @@ function Engine:_addPrintedCard(card)
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。
----@return Room | Client
+---@return AbstractRoom
 function Engine:currentRoom()
   if RoomInstance then
     return RoomInstance
