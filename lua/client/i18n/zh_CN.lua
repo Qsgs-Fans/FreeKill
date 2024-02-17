@@ -261,6 +261,8 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
+  ["#AskForDistribution"] = "请分配这些牌，至少 %arg 张，至多 %arg2 张",
+  ["@DistributionTo"] = "",
   ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
   ["#StartPindianReason"] = "%from 由于 %arg 而发起拼点",
   ["#ShowPindianCard"] = "%from 的拼点牌是 %card",

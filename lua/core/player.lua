@@ -929,8 +929,12 @@ function Player:prohibitResponse(card)
 end
 
 --- 确认玩家是否被禁止弃置特定牌。
----@param card Card @ 特定的牌
+---@param card Card|integer @ 特定的牌
 function Player:prohibitDiscard(card)
+  if type(card) == "number" then
+    card = Fk:getCardById(card)
+  end
+
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitDiscard(self, card) then

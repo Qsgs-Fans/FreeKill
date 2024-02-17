@@ -519,6 +519,8 @@ Fk:loadTranslationTable{
   ["discard_skill"] = "弃牌",
   ["choose_cards_skill"] = "选牌",
   ["choose_players_skill"] = "选择角色",
+  ["ex__choose_skill"] = "选择",
+  ["distribution_select_skill"] = "分配",
   ["choose_players_to_move_card_in_board"] = "选择角色",
   ["reveal_skill"] = "亮将",
   ["#reveal_skill"] = "选择一个武将亮将（点击左侧选择框展开）",

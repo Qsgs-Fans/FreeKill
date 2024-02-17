@@ -78,8 +78,8 @@ local chooseCardsSkill = fk.CreateActiveSkill{
 
 local choosePlayersSkill = fk.CreateActiveSkill{
   name = "choose_players_skill",
-  card_filter = function(self, to_select)
-    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select))
+  card_filter = function(self, to_select, selected)
+    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)) and #selected == 0
   end,
   target_filter = function(self, to_select, selected, cards)
     if self.pattern ~= "" and #cards == 0 then return end
@@ -136,6 +136,21 @@ local maxCardsSkill = fk.CreateMaxCardsSkill{
       player:getMark(MarkEnum.MinusMaxCardsInTurn)
   end,
 }
+
+local distributionSelectSkill = fk.CreateActiveSkill{
+  name = "distribution_select_skill",
+  mute = true,
+  min_card_num = 1,
+  card_filter = function(self, to_select, selected)
+    return #selected < self.max_num and table.contains(self.cards, to_select)
+  end,
+  target_num = 1,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0 and #selected_cards > 0 and table.contains(self.targets, to_select)
+    and #selected_cards <= (self.residued_list[string.format("%d", to_select)] or 0)
+  end,
+}
+
 
 local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
   name = "choose_players_to_move_card_in_board",
@@ -281,6 +296,7 @@ AuxSkills = {
   chooseCardsSkill,
   choosePlayersSkill,
   exChooseSkill,
+  distributionSelectSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,

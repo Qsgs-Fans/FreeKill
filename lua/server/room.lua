@@ -1366,6 +1366,94 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
   end
 end
 
+--- 询问将卡牌分配给任意角色。
+---@param player ServerPlayer @ 要询问的玩家
+---@param cards? integer[] @ 要分配的卡牌。默认拥有的所有牌
+---@param targets? ServerPlayer[] @ 可以获得卡牌的角色。默认所有存活角色
+---@param skillName? string @ 技能名，影响焦点信息。默认为“分配”
+---@param minNum? integer @ 最少交出的卡牌数，默认0
+---@param maxNum? integer @ 最多交出的卡牌数，默认所有牌
+---@param prompt? string @ 询问提示信息
+---@param expand_pile? string @ 可选私人牌堆名称，如要分配你武将牌上的牌请填写
+---@param skipMove? boolean @ 是否跳过移动。默认不跳过
+---@param single_max? integer|table @ 限制每人能获得的最大牌数。输入整数或(以角色id为键以整数为值)的表
+---@return table<integer[]> @ 返回一个表，键为角色id，值为分配给其的牌id数组
+function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prompt, expand_pile, skipMove, single_max)
+  targets = targets or self.alive_players
+  cards = cards or player:getCardIds("he")
+  local _cards = table.simpleClone(cards)
+  targets = table.map(targets, Util.IdMapper)
+  self:sortPlayersByAction(targets)
+  skillName = skillName or "distribution_select_skill"
+  minNum = minNum or 0
+  maxNum = maxNum or #cards
+  local list = {}
+  for _, pid in ipairs(targets) do
+    list[pid] = {}
+  end
+  local toStr = function(int) return string.format("%d", int) end
+  local residueMap = {}
+  if type(single_max) == "table" then
+    for pid, v in pairs(single_max) do
+      residueMap[toStr(pid)] = v
+    end
+  end
+  local residue_sum = 0
+  local residue_num = type(single_max) == "number" and single_max or 9999
+  for _, pid in ipairs(targets) do
+    residueMap[toStr(pid)] = residueMap[toStr(pid)] or residue_num
+    residue_sum = residue_sum + residueMap[toStr(pid)]
+  end
+  minNum = math.min(minNum, #_cards, residue_sum)
+  local data = {
+    cards = _cards,
+    max_num = maxNum,
+    targets = targets,
+    residued_list = residueMap,
+    expand_pile = expand_pile
+  }
+  p(json.encode(residueMap))
+
+  while maxNum > 0 and #_cards > 0 do
+    data.max_num = maxNum
+    prompt = prompt or ("#AskForDistribution:::"..minNum..":"..maxNum)
+    local success, dat = self:askForUseActiveSkill(player, "distribution_select_skill", prompt, minNum == 0, data, true)
+    if success and dat then
+      local to = dat.targets[1]
+      local give_cards = dat.cards
+      for _, id in ipairs(give_cards) do
+        table.insert(list[to], id)
+        table.removeOne(_cards, id)
+        self:setCardMark(Fk:getCardById(id), "@DistributionTo", Fk:translate(self:getPlayerById(to).general))
+      end
+      minNum = math.max(0, minNum - #give_cards)
+      maxNum = maxNum - #give_cards
+      residueMap[toStr(to)] = residueMap[toStr(to)] - #give_cards
+    else
+      break
+    end
+  end
+
+  for _, id in ipairs(cards) do
+    self:setCardMark(Fk:getCardById(id), "@DistributionTo", 0)
+  end
+  for _, pid in ipairs(targets) do
+    if minNum == 0 or #_cards == 0 then break end
+    local num = math.min(residueMap[toStr(pid)] or 0, minNum, #_cards)
+    if num > 0 then
+      for i = num, 1, -1 do
+        local c = table.remove(_cards, i)
+        table.insert(list[pid], c)
+        minNum = minNum - 1
+      end
+    end
+  end
+  if not skipMove then
+    self:doYiji(self, list, player.id, skillName)
+  end
+
+  return list
+end
 --- 抽个武将
 ---
 --- 同getNCards，抽出来就没有了，所以记得放回去。
@@ -3007,6 +3095,65 @@ function Room:moveCardTo(card, to_place, target, reason, skill_name, special_nam
   end
 
   self:moveCards(table.unpack(movesSplitedByOwner))
+end
+
+--- 将一些卡牌同时分配给一些角色。
+---@param room Room @ 房间
+---@param list table<integer[]> @ 分配牌和角色的数据表，键为角色id，值为分配给其的牌id数组
+---@param proposer? integer @ 操作者的id。默认为空
+---@param skillName? string @ 技能名。默认为“分配”
+---@return table<integer[]> @ 返回成功分配的卡牌
+function Room:doYiji(room, list, proposer, skillName)
+  skillName = skillName or "distribution_skill"
+  local moveInfos = {}
+  local move_ids = {}
+  for to, cards in pairs(list) do
+    local toP = room:getPlayerById(to)
+    local handcards = toP:getCardIds("h")
+    cards = table.filter(cards, function (id) return not table.contains(handcards, id) end)
+    if #cards > 0 then
+      table.insertTable(move_ids, cards)
+      local moveMap = {}
+      local noFrom = {}
+      for _, id in ipairs(cards) do
+        local from = room.owner_map[id]
+        if from then
+          moveMap[from] = moveMap[from] or {}
+          table.insert(moveMap[from], id)
+        else
+          table.insert(noFrom, id)
+        end
+      end
+      for from, _cards in pairs(moveMap) do
+        table.insert(moveInfos, {
+          ids = _cards,
+          moveInfo = table.map(_cards, function(id)
+            return {cardId = id, fromArea = room:getCardArea(id), fromSpecialName = room:getPlayerById(from):getPileNameOfId(id)}
+          end),
+          from = from,
+          to = to,
+          toArea = Card.PlayerHand,
+          moveReason = fk.ReasonGive,
+          proposer = proposer,
+          skillName = skillName,
+        })
+      end
+      if #noFrom > 0 then
+        table.insert(moveInfos, {
+          ids = noFrom,
+          to = to,
+          toArea = Card.PlayerHand,
+          moveReason = fk.ReasonGive,
+          proposer = proposer,
+          skillName = skillName,
+        })
+      end
+    end
+  end
+  if #moveInfos > 0 then
+    room:moveCards(table.unpack(moveInfos))
+  end
+  return move_ids
 end
 
 ------------------------------------------------------------------------
