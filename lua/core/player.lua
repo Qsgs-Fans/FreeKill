@@ -997,6 +997,21 @@ function Player:canPindian(to, ignoreFromKong, ignoreToKong)
   return true
 end
 
+--- 判断一张牌能否移动至某角色的装备区
+---@param cardId integer @ 移动的牌
+---@param convert? boolean @ 是否可以替换装备（默认可以）
+---@return boolean 
+function Player:canMoveCardIntoEquip(cardId, convert)
+  convert = (convert == nil) and true or convert
+  local card = Fk:getCardById(cardId)
+  if not (card.sub_type >= 3 and card.sub_type <= 7) then return false end
+  if self.dead or table.contains(self:getCardIds("e"), cardId) then return false end
+  if self:hasEmptyEquipSlot(card.sub_type) or (#self:getEquipments(card.sub_type) > 0 and convert) then
+    return true
+  end
+  return false
+end
+
 --转换技状态阳
 fk.SwitchYang = 0
 --转换技状态阴

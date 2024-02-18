@@ -185,6 +185,7 @@ Fk:loadTranslationTable({
   ["AskForKingdom"] = "Choosing kingdom",
   ["AskForPindian"] = "Point fight",
   ["AskForMoveCardInBoard"] = "Moving cards",
+  ["replaceEquip"] = "Replacing Equip",
   ["PlayCard"] = "Playing card",
 
   ["AskForCardChosen"] = "Choosing card",
@@ -209,6 +210,7 @@ Fk:loadTranslationTable({
   ["#AskForCard"] = "Please choose %arg cards (%arg2 at least)",
   ["#AskForDistribution"] = "Please distribute cards (%arg at least , %arg2 total)",
   ["@DistributionTo"] = "",
+  ["#replaceEquip"] = "Please Choose a Equip Card to be replaced",
   ["#askForPindian"] = "%arg: please choose a hand card for point fight",
   ["#StartPindianReason"] = "%from started point fight (%arg)",
   ["#ShowPindianCard"] = "The point fight card of %from is %card",
