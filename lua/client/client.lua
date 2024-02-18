@@ -1,16 +1,14 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
----@class Client
+---@class Client : AbstractRoom
 ---@field public client fk.Client
 ---@field public players ClientPlayer[] @ 所有参战玩家的数组
 ---@field public alive_players ClientPlayer[] @ 所有存活玩家的数组
 ---@field public observers ClientPlayer[] @ 观察者的数组
 ---@field public current ClientPlayer @ 当前回合玩家
 ---@field public discard_pile integer[] @ 弃牌堆
----@field public status_skills Skill[] @ 状态技总和
----@field public banners table<string, any> @ 左上角显示的东西
 ---@field public observing boolean
-Client = class('Client')
+Client = AbstractRoom:subclass('Client')
 
 -- load client classes
 ClientPlayer = require "client.clientplayer"
@@ -26,6 +24,7 @@ local pattern_refresh_commands = {
 }
 
 function Client:initialize()
+  AbstractRoom.initialize(self)
   self.client = fk.ClientInstance
   self.notifyUI = function(self, command, jsonData)
     fk.Backend:emitNotifyUI(command, jsonData)
@@ -49,21 +48,8 @@ function Client:initialize()
     end
   end
 
-  self.players = {}     -- ClientPlayer[]
-  self.alive_players = {}
-  self.observers = {}
   self.discard_pile = {}
-  self.status_skills = {}
-  for class, skills in pairs(Fk.global_status_skill) do
-    self.status_skills[class] = {table.unpack(skills)}
-  end
 
-  self.banners = {}
-
-  self.skill_costs = {}
-  self.card_marks = {}
-  self.filtered_cards = {}
-  self.printed_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 
@@ -71,7 +57,7 @@ function Client:initialize()
 end
 
 ---@param id integer
----@return ClientPlayer
+---@return ClientPlayer?
 function Client:getPlayerById(id)
   if id == Self.id then return Self end
   for _, p in ipairs(self.players) do
@@ -235,15 +221,6 @@ function Client:setCardNote(ids, msg)
       self:notifyUI("SetCardFootnote", json.encode{ id, parseMsg(msg, true) })
     end
   end
-end
-
-function Client:setBanner(name, value)
-  if value == 0 then value = nil end
-  self.banners[name] = value
-end
-
-function Client:getBanner(name)
-  return self.banners[name]
 end
 
 fk.client_callback["SetCardFootnote"] = function(jsonData)
@@ -791,9 +768,7 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
   local extra_data = data[4]
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
+  skill._extra_data = extra_data
 
   Fk.currentResponseReason = extra_data.skillName
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)

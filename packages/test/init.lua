@@ -80,6 +80,7 @@ local control = fk.CreateActiveSkill{
     --   ok = {10, 2},
     -- })
     -- room:swapSeat(from, to)
+    -- p(room:askForYiji(from, from:getCardIds(Player.Hand), table.map(effect.tos, Util.Id2PlayerMapper), self.name, 2, 10, nil, false, nil, false, 3, true))
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
       -- p(room:askForPoxi(from, "test", {

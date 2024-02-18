@@ -225,8 +225,8 @@ function ActiveSkill:onEffect(room, cardEffectEvent) end
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onNullified(room, cardEffectEvent) end
 
----@param selected integer[] @ ids of selected players
 ---@param selected_cards integer[] @ ids of selected cards
-function ActiveSkill:prompt(selected, selected_cards) return "" end
+---@param selected_targets integer[] @ ids of selected players
+function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
 
 return ActiveSkill
