@@ -199,7 +199,7 @@ end
 GameEvent.exit_funcs[GameEvent.Damage] = function(self)
   local room = self.room
   local logic = room.logic
-  local damageStruct = self.data[1]
+  local damageStruct = self.data[1] ---@type DamageStruct
 
   logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
 
@@ -256,10 +256,12 @@ GameEvent.functions[GameEvent.LoseHp] = function(self)
   return true
 end
 
-GameEvent.functions[GameEvent.Recover] = function(self)
-  local recoverStruct = table.unpack(self.data)
+GameEvent.prepare_funcs[GameEvent.Recover] = function(self)
+  local recoverStruct = table.unpack(self.data) ---@type RecoverStruct
   local room = self.room
   local logic = room.logic
+
+  local who = recoverStruct.who
 
   if recoverStruct.card then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
@@ -269,15 +271,23 @@ GameEvent.functions[GameEvent.Recover] = function(self)
     end
   end
 
-  if recoverStruct.num < 1 then
-    return false
-  end
+  recoverStruct.num = math.min(recoverStruct.num, who:getLostHp())
 
-  local who = recoverStruct.who
+  if recoverStruct.num < 1 then
+    return true
+  end
 
   if logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
-    logic:breakEvent(false)
+    return true
   end
+
+
+end
+
+GameEvent.functions[GameEvent.Recover] = function(self)
+  local recoverStruct = table.unpack(self.data) ---@type RecoverStruct
+  local room = self.room
+  local logic = room.logic
 
   if not room:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
     logic:breakEvent(false)
