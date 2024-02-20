@@ -1501,6 +1501,7 @@ end
 ---@param name string @ 武将name，如找不到则查找truename，再找不到则返回nil
 ---@return string? @ 抽出的武将名
 function Room:findGeneral(name)
+  if not Fk.generals[name] then return nil end
   for i, g in ipairs(self.general_pile) do
     if g == name or Fk.generals[g].trueName == Fk.generals[name].trueName then
       return table.remove(self.general_pile, i)
@@ -1517,13 +1518,13 @@ function Room:findGenerals(func, n)
   n = n or 1
   local ret = {}
   local index = 1
-  repeat
+  while #ret < n and index <= #self.general_pile do
     if func(self.general_pile[index]) then
       table.insert(ret, table.remove(self.general_pile, index))
     else
       index = index + 1
     end
-  until index >= #self.general_pile or #ret >= n
+  end
   return ret
 end
 
