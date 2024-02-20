@@ -1000,7 +1000,7 @@ end
 --- 判断一张牌能否移动至某角色的装备区
 ---@param cardId integer @ 移动的牌
 ---@param convert? boolean @ 是否可以替换装备（默认可以）
----@return boolean 
+---@return boolean
 function Player:canMoveCardIntoEquip(cardId, convert)
   convert = (convert == nil) and true or convert
   local card = Fk:getCardById(cardId)
