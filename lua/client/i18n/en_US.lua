@@ -190,8 +190,8 @@ Fk:loadTranslationTable({
 
   ["AskForCardChosen"] = "Choosing card",
   ["AskForCardsChosen"] = "Choosing card",
-  ["#AskForChooseCard"] = "%1: please choose a card",
-  ["#AskForChooseCards"] = "%1: please choose %2~%3 cards",
+  ["#AskForChooseCard"] = "%1: please choose a card from %src",
+  ["#AskForChooseCards"] = "%1: please choose %2~%3 cards from %src",
   ["$ChooseCard"] = "Choose a card",
   ["$ChooseCards"] = "Choose %1~%2 cards",
   ["$Hand"] = "Hand",

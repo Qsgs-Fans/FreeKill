@@ -244,8 +244,8 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["AskForCardChosen"] = "选牌",
   ["AskForCardsChosen"] = "选牌",
-  ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
-  ["#AskForChooseCards"] = "%1：请选择其%2至%3张卡牌",
+  ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
+  ["#AskForChooseCards"] = "%1：请选择%src的%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
   ["$ChooseCards"] = "请选择%1至%2张卡牌",
   ["$Hand"] = "手牌区",
