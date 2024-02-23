@@ -277,17 +277,16 @@ GameEvent.prepare_funcs[GameEvent.Recover] = function(self)
     return true
   end
 
-  if logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
-    return true
-  end
-
-
 end
 
 GameEvent.functions[GameEvent.Recover] = function(self)
   local recoverStruct = table.unpack(self.data) ---@type RecoverStruct
   local room = self.room
   local logic = room.logic
+
+  if logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
+    logic:breakEvent(false)
+  end
 
   if not room:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then
     logic:breakEvent(false)
