@@ -1107,7 +1107,7 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   const reason = data._reason;
   const prompt = data._prompt;
   if (prompt === "") {
-    roomScene.promptText = luatr("#AskForChooseCard")
+    roomScene.promptText = luatr(processPrompt("#AskForChooseCard:" + data._id))
       .arg(luatr(reason));
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
@@ -1139,7 +1139,7 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   const reason = data._reason;
   const prompt = data._prompt;
   if (prompt === "") {
-    roomScene.promptText = luatr("#AskForChooseCards")
+    roomScene.promptText = luatr(processPrompt("#AskForChooseCards:" + data._id))
     .arg(luatr(reason)).arg(min).arg(max);
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);

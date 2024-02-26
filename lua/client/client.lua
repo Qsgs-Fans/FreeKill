@@ -378,6 +378,7 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
       judge = {}
     end
     ui_data = {
+      _id = id,
       _reason = reason,
       card_data = {},
       _prompt = prompt,
@@ -413,6 +414,7 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
       judge = {}
     end
     ui_data = {
+      _id = id,
       _min = min,
       _max = max,
       _reason = reason,

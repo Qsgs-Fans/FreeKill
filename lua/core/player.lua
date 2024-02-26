@@ -475,9 +475,17 @@ end
 
 --- 获取角色是否被移除。
 function Player:isRemoved()
-  return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
-    return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
-  end)
+  for mark, _ in pairs(self.mark) do
+    if mark == MarkEnum.PlayerRemoved then return true end
+    if mark:startsWith(MarkEnum.PlayerRemoved .. "-") then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
+    end
+  end
+  -- return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
+  --   return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
+  -- end)
 end
 
 --- 修改玩家与其他角色的固定距离。
@@ -950,13 +958,21 @@ function Player:prohibitReveal(isDeputy)
   if type(self:getMark(MarkEnum.RevealProhibited)) == "table" and table.contains(self:getMark(MarkEnum.RevealProhibited), place) then
     return true
   end
-  for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-      return self:getMark(MarkEnum.RevealProhibited .. s)
-    end)) do
-    if type(m) == "table" and table.contains(m, place) then
-      return true
+
+  for mark, value in pairs(self.mark) do
+    if mark:startsWith(MarkEnum.RevealProhibited .. "-") and type(value) == "table" then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
     end
   end
+  -- for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+  --     return self:getMark(MarkEnum.RevealProhibited .. s)
+  --   end)) do
+  --   if type(m) == "table" and table.contains(m, place) then
+  --     return true
+  --   end
+  -- end
   return false
 end
 
@@ -979,6 +995,21 @@ function Player:canPindian(to, ignoreFromKong, ignoreToKong)
     end
   end
   return true
+end
+
+--- 判断一张牌能否移动至某角色的装备区
+---@param cardId integer @ 移动的牌
+---@param convert? boolean @ 是否可以替换装备（默认可以）
+---@return boolean
+function Player:canMoveCardIntoEquip(cardId, convert)
+  convert = (convert == nil) and true or convert
+  local card = Fk:getCardById(cardId)
+  if not (card.sub_type >= 3 and card.sub_type <= 7) then return false end
+  if self.dead or table.contains(self:getCardIds("e"), cardId) then return false end
+  if self:hasEmptyEquipSlot(card.sub_type) or (#self:getEquipments(card.sub_type) > 0 and convert) then
+    return true
+  end
+  return false
 end
 
 --转换技状态阳

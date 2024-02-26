@@ -366,9 +366,12 @@ local fanSkill = fk.CreateTriggerSkill{
         card[k] = v
       end
     end
-    if not data.card:isVirtual() then
+    if data.card:isVirtual() then
+      card.subcards = data.card.subcards
+    else
       card.id = data.card.id
     end
+    card.skillNames = data.card.skillNames
     card.skillName = "fan"
     data.card = card
   end,

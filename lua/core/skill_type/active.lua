@@ -155,21 +155,38 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
 
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
-  table.insert(temp_suf, 1, "")
-  table.insert(temp_suf, "-tmp")
-  table.insert(card_temp_suf, 1, "")
+
+  ---@param object Card|Player
+  ---@param markname string
+  ---@param suffixes string[]
+  ---@return boolean
+  local function hasMark(object, markname, suffixes)
+    if not object then return false end
+    for mark, _ in pairs(object.mark) do
+      if mark == markname then return true end
+      if mark:startsWith(markname .. "-") then
+        for _, suffix in ipairs(suffixes) do
+          if mark:find(suffix, 1, true) then return true end
+        end
+      end
+    end
+    return false
+  end
 
   return (isattack and player:inMyAttackRange(to)) or
   (player:distanceTo(to) > 0 and player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
-  (card and table.find(card_temp_suf, function(s)
-    return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  end)) or
-  (table.find(temp_suf, function(s)
-    return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  end)) or
-  (to and (table.find(temp_suf, function(s)
-    return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
-  end)))
+  hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
+  hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
+  hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)
+  -- (card and table.find(card_temp_suf, function(s)
+  --   return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  -- end)) or
+  -- (table.find(temp_suf, function(s)
+  --   return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  -- end)) or
+  -- (to and (table.find(temp_suf, function(s)
+  --   return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
+  -- end)))
 end
 
 --- Determine if selected cards and targets are valid for this skill

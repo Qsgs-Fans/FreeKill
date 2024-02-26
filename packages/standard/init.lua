@@ -1132,9 +1132,17 @@ local role_getlogic = function()
         lord_general = lord_generals
         lord_generals = {lord_general}
       end
-
-      generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
       room:returnToGeneralPile(generals)
+      local index = 1
+      while index <= #room.general_pile do
+        local ret = {}
+        for _, gname in ipairs(lord_generals) do
+          if room.general_pile[index] == gname or Fk.generals[room.general_pile[index]].trueName == Fk.generals[gname].trueName then
+            table.insert(ret, table.remove(room.general_pile, index))
+          end
+        end
+        if #ret == 0 then index = index + 1 end
+      end
 
       room:setPlayerGeneral(lord, lord_general, true)
       room:askForChooseKingdom({lord})
@@ -1216,14 +1224,24 @@ local role_getlogic = function()
         room:setPlayerGeneral(p, general, true, true)
         room:setDeputyGeneral(p, deputy)
       else
+        table.insertTableIfNeed(selected, p.default_reply)
         room:setPlayerGeneral(p, p.default_reply[1], true, true)
         room:setDeputyGeneral(p, p.default_reply[2])
       end
       p.default_reply = ""
     end
 
-    generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
     room:returnToGeneralPile(generals)
+    local index = 1
+    while index <= #room.general_pile do
+      local ret = {}
+      for _, gname in ipairs(selected) do
+        if room.general_pile[index] == gname or Fk.generals[room.general_pile[index]].trueName == Fk.generals[gname].trueName then
+          table.insert(ret, table.remove(room.general_pile, index))
+        end
+      end
+      if #ret == 0 then index = index + 1 end
+    end
 
     room:askForChooseKingdom(nonlord)
   end

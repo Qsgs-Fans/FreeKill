@@ -1501,6 +1501,7 @@ end
 ---@param name string @ 武将name，如找不到则查找truename，再找不到则返回nil
 ---@return string? @ 抽出的武将名
 function Room:findGeneral(name)
+  if not Fk.generals[name] then return nil end
   for i, g in ipairs(self.general_pile) do
     if g == name or Fk.generals[g].trueName == Fk.generals[name].trueName then
       return table.remove(self.general_pile, i)
@@ -1517,13 +1518,13 @@ function Room:findGenerals(func, n)
   n = n or 1
   local ret = {}
   local index = 1
-  repeat
+  while #ret < n and index <= #self.general_pile do
     if func(self.general_pile[index]) then
       table.insert(ret, table.remove(self.general_pile, index))
     else
       index = index + 1
     end
-  until index >= #self.general_pile or #ret >= n
+  end
   return ret
 end
 
@@ -2993,8 +2994,10 @@ end
 ---@param proposer? integer @ 移动操作者的id
 function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
-    assert(cid and cid:isInstanceOf(Card))
-    cid = cid:isVirtual() and cid.subcards or {cid.id}
+    assert(cid and type(cid) == "table")
+    if cid:isInstanceOf(Card) then
+      cid = cid:isVirtual() and cid.subcards or {cid.id}
+    end
   else
     cid = {cid}
   end
@@ -3156,6 +3159,37 @@ function Room:doYiji(room, list, proposer, skillName)
   return move_ids
 end
 
+--- 将一张牌移动至某角色的装备区，若不合法则置入弃牌堆。目前没做相同副类别装备同时置入的适配(甘露神典韦)
+---@param target ServerPlayer @ 接受牌的角色
+---@param cards integer|integer[] @ 移动的牌
+---@param skillName? string @ 技能名
+---@param convert? boolean @ 是否可以替换装备（默认可以）
+---@param proposer? ServerPlayer @ 操作者
+function Room:moveCardIntoEquip(target, cards, skillName, convert, proposer)
+  convert = (convert == nil) and true or convert
+  skillName = skillName or ""
+  cards = type(cards) == "table" and cards or {cards}
+  local moves = {}
+  for _, cardId in ipairs(cards) do
+    local card = Fk:getCardById(cardId)
+    local fromId = self.owner_map[cardId]
+    local proposerId = proposer and proposer.id or nil
+    if target:canMoveCardIntoEquip(cardId, convert) then
+      if target:hasEmptyEquipSlot(card.sub_type) then
+        table.insert(moves,{ids = {cardId}, from = fromId, to = target.id, toArea = Card.PlayerEquip, moveReason = fk.ReasonPut,skillName = skillName,proposer = proposerId})
+      else
+        local existingEquip = target:getEquipments(card.sub_type)
+        local throw = #existingEquip == 1 and existingEquip[1] or
+        self:askForCardChosen(proposer or target, target, {card_data = { {Util.convertSubtypeAndEquipSlot(card.sub_type),existingEquip} } }, "replaceEquip","#replaceEquip")
+        table.insert(moves,{ids = {throw}, from = target.id, toArea = Card.DiscardPile, moveReason = fk.ReasonPutIntoDiscardPile, skillName = skillName,proposer = proposerId})
+        table.insert(moves,{ids = {cardId}, from = fromId, to = target.id, toArea = Card.PlayerEquip, moveReason = fk.ReasonPut,skillName = skillName,proposer = proposerId})
+      end
+    else
+      table.insert(moves,{ids = {cardId}, from = fromId, toArea = Card.DiscardPile, moveReason = fk.ReasonPutIntoDiscardPile,skillName = skillName})
+    end
+  end
+  self:moveCards(table.unpack(moves))
+end
 ------------------------------------------------------------------------
 -- 其他游戏事件
 ------------------------------------------------------------------------

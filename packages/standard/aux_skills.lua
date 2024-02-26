@@ -129,11 +129,25 @@ local maxCardsSkill = fk.CreateMaxCardsSkill{
   name = "max_cards_skill",
   global = true,
   correct_func = function(self, player)
+    local function getMark(markname)
+      local v = 0
+      for mark, value in pairs(player.mark) do
+        if mark == markname then
+          v = v + value
+        elseif mark:startsWith(markname .. "-") then
+          for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+            if mark:find(suffix, 1, true) then
+              v = v + value
+              break
+            end
+          end
+        end
+      end
+      return v
+    end
     return
-      player:getMark(MarkEnum.AddMaxCards) +
-      player:getMark(MarkEnum.AddMaxCardsInTurn) -
-      player:getMark(MarkEnum.MinusMaxCards) -
-      player:getMark(MarkEnum.MinusMaxCardsInTurn)
+      getMark(MarkEnum.AddMaxCards) -
+      getMark(MarkEnum.MinusMaxCards)
   end,
 }
 
@@ -181,15 +195,32 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
   name = "uncompulsory_invalidity",
   global = true,
   invalidity_func = function(self, from, skill)
+    ---@param object Card|Player
+    ---@param markname string
+    ---@param suffixes string[]
+    ---@return boolean
+    local function hasMark(object, markname, suffixes)
+      if not object then return false end
+      for mark, _ in pairs(object.mark) do
+        if mark == markname then return true end
+        if mark:startsWith(markname .. "-") then
+          for _, suffix in ipairs(suffixes) do
+            if mark:find(suffix, 1, true) then return true end
+          end
+        end
+      end
+      return false
+    end
     return
       (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
       not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
-      (
-        from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
-        table.find(MarkEnum.TempMarkSuffix, function(s)
-          return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
-        end)
-      )
+      hasMark(from, MarkEnum.UncompulsoryInvalidity, MarkEnum.TempMarkSuffix)
+      -- (
+      --   from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
+      --   table.find(MarkEnum.TempMarkSuffix, function(s)
+      --     return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
+      --   end)
+      -- )
   end
 }
 
@@ -201,15 +232,27 @@ local revealProhibited = fk.CreateInvaliditySkill {
     if type(from:getMark(MarkEnum.RevealProhibited)) == "table" then
       generals = from:getMark(MarkEnum.RevealProhibited)
     end
-    for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-        return from:getMark(MarkEnum.RevealProhibited .. s)
-      end)) do
-      if type(m) == "table" then
-        for _, g in ipairs(m) do
-          table.insertIfNeed(generals, g)
+
+    for mark, value in pairs(from.mark) do
+      if mark:startsWith(MarkEnum.RevealProhibited .. "-") and type(value) == "table" then
+        for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+          if mark:find(suffix, 1, true) then
+            for _, g in ipairs(value) do
+              table.insertIfNeed(generals, g)
+            end
+          end
         end
       end
     end
+    -- for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+    --     return from:getMark(MarkEnum.RevealProhibited .. s)
+    --   end)) do
+    --   if type(m) == "table" then
+    --     for _, g in ipairs(m) do
+    --       table.insertIfNeed(generals, g)
+    --     end
+    --   end
+    -- end
 
     if #generals == 0 then return false end
     local sname = skill.name
