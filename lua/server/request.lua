@@ -159,27 +159,10 @@ end
 request_handlers["surrender"] = function(room, id, reqlist)
   local player = room:getPlayerById(id)
   if not player then return end
-  local logic = room.logic
-  local curEvent = logic:getCurrentEvent()
-  if curEvent then
-    curEvent:addCleaner(
-      function()
-        player.surrendered = true
-        room:broadcastProperty(player, "surrendered")
-        local mode = Fk.game_modes[room.settings.gameMode]
-        local winner = Pcall(mode.getWinner, mode, player)
-        if winner ~= nil then
-          room:gameOver(winner)
-        end
 
-        -- 以防万一
-        player.surrendered = false
-        room.hasSurrendered = false
-      end
-    )
-    room.hasSurrendered = true
-    room:doBroadcastNotify("CancelRequest", "")
-  end
+  room.hasSurrendered = true
+  player.surrendered = true
+  room:doBroadcastNotify("CancelRequest", "")
 end
 
 request_handlers["updatemini"] = function(room, pid, reqlist)

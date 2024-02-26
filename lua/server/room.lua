@@ -687,6 +687,29 @@ function Room:doBroadcastNotify(command, jsonData, players)
   end
 end
 
+---@param room Room
+local function surrenderCheck(room)
+  if not room.hasSurrendered then return end
+  local player = table.find(room.players, function(p)
+    return p.surrendered
+  end)
+  if not player then
+    room.hasSurrendered = false
+    return
+  end
+  room:broadcastProperty(player, "surrendered")
+  local mode = Fk.game_modes[room.settings.gameMode]
+  local winner = Pcall(mode.getWinner, mode, player)
+  if winner ~= "" then
+    room:gameOver(winner)
+  end
+
+  -- 以防万一
+  player.surrendered = false
+  room:broadcastProperty(player, "surrendered")
+  room.hasSurrendered = false
+end
+
 --- 向某个玩家发起一次Request。
 ---@param player ServerPlayer @ 发出这个请求的目标玩家
 ---@param command string @ 请求的类型
@@ -703,6 +726,7 @@ function Room:doRequest(player, command, jsonData, wait)
     local ret = player:waitForReply(self.timeout)
     player.serverplayer:setBusy(false)
     player.serverplayer:setThinking(false)
+    surrenderCheck(self)
     return ret
   end
 end
@@ -731,6 +755,8 @@ function Room:doBroadcastRequest(command, players, jsonData)
     p.serverplayer:setBusy(false)
     p.serverplayer:setThinking(false)
   end
+
+  surrenderCheck(self)
 end
 
 --- 向多名玩家发出竞争请求。
@@ -798,6 +824,7 @@ function Room:doRaceRequest(command, players, jsonData)
     p.serverplayer:setThinking(false)
   end
 
+  surrenderCheck(self)
   return ret
 end
 
