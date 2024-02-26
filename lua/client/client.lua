@@ -211,7 +211,12 @@ end
 
 ---@param msg LogMessage
 function Client:appendLog(msg)
-  self:notifyUI("GameLog", parseMsg(msg))
+  local text = parseMsg(msg)
+  self:notifyUI("GameLog", text)
+  if msg.toast then
+    print('helo')
+    self:notifyUI("ShowToast", text)
+  end
 end
 
 ---@param msg LogMessage
