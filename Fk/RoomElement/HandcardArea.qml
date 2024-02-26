@@ -34,7 +34,6 @@ Item {
     card.autoBack = true;
     card.draggable = true;
     card.selectable = false;
-    card.showDetail = true;
     card.clicked.connect(adjustCards);
   }
 
@@ -46,7 +45,6 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
-      // card.showDetail = false;
       card.selectedChanged.disconnect(adjustCards);
       card.prohibitReason = "";
     }

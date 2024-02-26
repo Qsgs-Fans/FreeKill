@@ -81,6 +81,7 @@ Item {
                              root.parent?.playerid);
             if (data && data.qml_path) {
               params.data = JSON.parse(_data);
+              params.owner = root.parent?.playerid;
               roomScene.startCheat("../../" + data.qml_path, params);
             }
             return;
@@ -94,7 +95,7 @@ Item {
             params.ids = data;
           }
 
-          // Just for using room's right drawer
+          // Just for using right drawer of the room
           roomScene.startCheat("../RoomElement/ViewPile", params);
         }
       }

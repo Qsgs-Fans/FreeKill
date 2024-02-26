@@ -399,6 +399,7 @@ Item {
     }
 
     function updatePileInfo(areaName) {
+      if (areaName.startsWith('#')) return;
       const data = lcall("GetPile", root.playerid, areaName);
       if (data.length === 0) {
         root.markArea.removeMark(areaName);

@@ -63,6 +63,7 @@ Item {
 
     delegate: CardItem {
       autoBack: false
+      showDetail: false
       property int dupCount: 0
 
       Text {
@@ -250,6 +251,7 @@ Item {
           Layout.alignment: Qt.AlignHCenter
           cid: 1
           known: false
+          showDetail: false
 
           property int dupCount: 0
           Text {

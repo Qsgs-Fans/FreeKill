@@ -64,7 +64,6 @@ Item {
         state.y = parentPos.y;
         state.opacity = 0;
         card = component.createObject(roomScene.dynamicCardArea, state);
-        card.showDetail = true
         card.x -= card.width / 2;
         card.x += (i - outputs.length / 2) * 15;
         card.y -= card.height / 2;

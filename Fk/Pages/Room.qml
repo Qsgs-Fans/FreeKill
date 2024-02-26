@@ -819,6 +819,12 @@ Item {
           skillInteraction.item.from = data.from;
           skillInteraction.item.to = data.to;
           break;
+        case "custom":
+          skillInteraction.sourceComponent =
+            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
+          break;
         default:
           skillInteraction.sourceComponent = undefined;
           break;
