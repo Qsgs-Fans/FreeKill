@@ -372,6 +372,7 @@ local fanSkill = fk.CreateTriggerSkill{
       card.id = data.card.id
     end
     card.skillNames = data.card.skillNames
+    card.skillName = "fan"
     data.card = card
   end,
 }
