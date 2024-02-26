@@ -51,7 +51,7 @@ Item {
   property bool selected: false
   property bool draggable: false
   property bool autoBack: true
-  property bool showDetail: false
+  property bool showDetail: true
   property int origX: 0
   property int origY: 0
   property int initialZ: 0
@@ -76,7 +76,7 @@ Item {
   signal hoverChanged(bool enter)
 
   onRightClicked: {
-    if (!showDetail) return;
+    if (!showDetail || !known) return;
     roomScene.startCheat("CardDetail", { card: this });
   }
 
