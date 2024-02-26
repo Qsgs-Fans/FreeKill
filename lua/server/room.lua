@@ -2994,8 +2994,10 @@ end
 ---@param proposer? integer @ 移动操作者的id
 function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
-    assert(cid and cid:isInstanceOf(Card))
-    cid = cid:isVirtual() and cid.subcards or {cid.id}
+    assert(cid and type(cid) == "table")
+    if cid:isInstanceOf(Card) then
+      cid = cid:isVirtual() and cid.subcards or {cid.id}
+    end
   else
     cid = {cid}
   end
