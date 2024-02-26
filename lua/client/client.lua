@@ -788,9 +788,19 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   -- jsonData: [ int id, string mark, int value ]
   local data = json.decode(jsonData)
   local player, mark, value = data[1], data[2], data[3]
-  ClientInstance:getPlayerById(player):setMark(mark, value)
+  local p = ClientInstance:getPlayerById(player)
+  p:setMark(mark, value)
 
   if string.sub(mark, 1, 1) == "@" then
+    if mark:startsWith("@[") and mark:find(']') then
+      local close = mark:find(']')
+      local mtype = mark:sub(3, close - 1)
+      local spec = Fk.qml_marks[mtype]
+      if spec then
+        local text = spec.how_to_show(mark, value, p)
+        if text == "#hidden" then return end
+      end
+    end
     ClientInstance:notifyUI("SetPlayerMark", jsonData)
   end
 end
