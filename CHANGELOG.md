@@ -1,5 +1,32 @@
 # ChangeLog
 
+## v0.4.8
+
+- Qml: 新增leval函数可获得lua表达式的值
+- 新增AbstractRoom类 去除冗余
+- 修gameOver相关bug（或许）
+- 从Utility那里搬运了askForYiji和doYiji两个函数，负责分配
+  虽然暂时没实现单烧条，但先这么用着
+- 修复了askForCardAndPlayers的选择中可以选择复数张牌的bug
+- 为prohibitDiscard添加了输入id选项
+- 正式添加对多后缀标记的支持
+- 添加了一点注释
+- 搬运了moveCardIntoEquip和canMoveCardIntoEquip
+- 为选牌的默认prompt添加了目标
+- 完善了朱雀羽扇的判定
+- 修复了抽选武将牌堆时未删除已选武将的bug
+- 修复了maxCard标记不识别“-turn”以外标记的bug
+- 修复了obtaincard实际不能接受id数组的bug
+- CardItem一律可长按，除了卡牌一览
+- Qml Mark在QML中可获得主人的id
+- Qml Mark可实现某某视角完全不可见
+- 隐藏#开头的pile
+- 可自定义interaction了
+- LogMessage新增toast成员
+- 修复投降杀人bug
+
+___
+
 ## v0.4.6 & v0.4.7
 
 - 攻击范围状态技类新增基础值修正函数
