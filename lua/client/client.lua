@@ -214,7 +214,6 @@ function Client:appendLog(msg)
   local text = parseMsg(msg)
   self:notifyUI("GameLog", text)
   if msg.toast then
-    print('helo')
     self:notifyUI("ShowToast", text)
   end
 end
