@@ -1508,16 +1508,21 @@ end
 
 --- 把武将牌塞回去（……）
 ---@param g string[] @ 武将名数组
----@param position? string @位置，top/bottom，默认bottom
+---@param position? string @位置，top/bottom/random，默认random
 ---@return boolean @ 是否成功
 function Room:returnToGeneralPile(g, position)
-  position = position or "bottom"
-  assert(position == "top" or position == "bottom")
+  position = position or "random"
+  assert(position == "top" or position == "bottom" or position == "random")
   if position == "bottom" then
     table.insertTable(self.general_pile, g)
   elseif position == "top" then
     while #g > 0 do
       table.insert(self.general_pile, 1, table.remove(g))
+    end
+  elseif position == "random" then
+    while #g > 0 do
+      table.insert(self.general_pile, math.random(1, #self.general_pile),
+                   table.remove(g))
     end
   end
 
