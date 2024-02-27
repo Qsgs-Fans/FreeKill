@@ -119,10 +119,6 @@ local exChooseSkill = fk.CreateActiveSkill{
       return table.contains(self.targets, to_select)
     end
   end,
-  min_target_num = function(self) return self.min_target_num end,
-  max_target_num = function(self) return self.max_target_num end,
-  min_card_num = function(self) return self.min_card_num end,
-  max_card_num = function(self) return self.max_card_num end,
 }
 
 local maxCardsSkill = fk.CreateMaxCardsSkill{

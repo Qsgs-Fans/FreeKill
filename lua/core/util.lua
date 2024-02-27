@@ -335,6 +335,7 @@ end
 function table:insertIfNeed(element)
   if not table.contains(self, element) then
     table.insert(self, element)
+    return true
   end
 end
 

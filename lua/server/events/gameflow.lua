@@ -385,4 +385,9 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
       end
     end
   end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
+  end
 end
