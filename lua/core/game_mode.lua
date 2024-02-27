@@ -27,7 +27,7 @@ end
 ---@param victim ServerPlayer @ 死者
 ---@return string @ 胜者阵营
 function GameMode:getWinner(victim)
-  if victim.rest > 0 then
+  if not victim.surrendered and victim.rest > 0 then
     return ""
   end
 

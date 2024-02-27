@@ -442,10 +442,12 @@ Item {
     // id: saveme
     visible: (root.dead && !root.rest) || root.dying || root.surrendered
     source: {
-      if (root.dead) {
+      if (root.surrendered) {
+        return SkinBank.DEATH_DIR + "surrender";
+      } else if (root.dead) {
         return SkinBank.getRoleDeathPic(root.role);
       }
-      return SkinBank.DEATH_DIR + (root.surrendered ? "surrender" : "saveme")
+      return SkinBank.DEATH_DIR + "saveme";
     }
     anchors.centerIn: photoMask
   }
