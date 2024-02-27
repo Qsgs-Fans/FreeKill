@@ -391,6 +391,7 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
     if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
   else
+    ui_data._id = id
     ui_data._reason = reason
     ui_data._prompt = prompt
   end
@@ -429,6 +430,7 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
     if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
   else
+    ui_data._id = id
     ui_data._min = min
     ui_data._max = max
     ui_data._reason = reason
