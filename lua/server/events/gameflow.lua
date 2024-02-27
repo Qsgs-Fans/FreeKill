@@ -187,11 +187,6 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
       end
     end
   end
-
-  for _, p in ipairs(room.players) do
-    p:filterHandcards()
-    room:broadcastProperty(p, "MaxCards")
-  end
 end
 
 GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
@@ -266,11 +261,6 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
-  end
-
-  for _, p in ipairs(room.players) do
-    p:filterHandcards()
-    room:broadcastProperty(p, "MaxCards")
   end
 end
 
@@ -386,8 +376,6 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
         room:setPlayerMark(p, name, 0)
       end
     end
-    p:filterHandcards()
-    room:broadcastProperty(p, "MaxCards")
   end
 
   for cid, cmark in pairs(room.card_marks) do
@@ -396,5 +384,10 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end
