@@ -386,6 +386,8 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
         room:setPlayerMark(p, name, 0)
       end
     end
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 
   for cid, cmark in pairs(room.card_marks) do
