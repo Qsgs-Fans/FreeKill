@@ -1,6 +1,6 @@
 # ChangeLog
 
-## v0.4.8
+## v0.4.8 & v0.4.9
 
 - Qml: 新增leval函数可获得lua表达式的值
 - 新增AbstractRoom类 去除冗余
