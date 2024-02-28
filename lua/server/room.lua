@@ -3027,7 +3027,7 @@ end
 function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
     assert(cid and type(cid) == "table")
-    if cid:isInstanceOf(Card) then
+    if cid[1] == nil then
       cid = cid:isVirtual() and cid.subcards or {cid.id}
     end
   else
