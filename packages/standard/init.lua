@@ -989,9 +989,10 @@ local qingnang = fk.CreateActiveSkill{
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:throwCard(effect.cards, self.name, from, from)
-    if from:isAlive() and from:isWounded() then
+    local to = room:getPlayerById(effect.tos[1])
+    if to:isAlive() and to:isWounded() then
       room:recover({
-        who = room:getPlayerById(effect.tos[1]),
+        who = to,
         num = 1,
         recoverBy = from,
         skillName = self.name
