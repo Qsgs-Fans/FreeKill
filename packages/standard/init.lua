@@ -699,29 +699,26 @@ local keji = fk.CreateTriggerSkill{
   can_trigger = function(self, event, target, player, data)
     if target == player and player:hasSkill(self) and data.to == Player.Discard then
       local room = player.room
-      local logic = room.logic
-      local e = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
-      if e == nil then return false end
-      local end_id = e.id
-      local events = logic.event_recorder[GameEvent.UseCard] or Util.DummyTable
-      for i = #events, 1, -1 do
-        e = events[i]
-        if e.id <= end_id then break end
-        local use = e.data[1]
-        if use.from == player.id and use.card.trueName == "slash" then
-          return false
+      local play_ids = {}
+      player.room.logic:getEventsOfScope(GameEvent.Phase, 1, function (e)
+        if e.data[2] == Player.Play and e.end_id then
+          table.insert(play_ids, {e.id, e.end_id})
         end
-      end
-      events = logic.event_recorder[GameEvent.RespondCard] or Util.DummyTable
-      for i = #events, 1, -1 do
-        e = events[i]
-        if e.id <= end_id then break end
-        local resp = e.data[1]
-        if resp.from == player.id and resp.card.trueName == "slash" then
-          return false
+        return false
+      end, Player.HistoryTurn)
+      if #play_ids == 0 then return true end
+      local function PlayCheck (e)
+        local in_play = false
+        for _, ids in ipairs(play_ids) do
+          if e.id > ids[1] and e.id < ids[2] then
+            in_play = true
+            break
+          end
         end
+        return in_play and e.data[1].from == player.id and e.data[1].card.trueName == "slash"
       end
-      return true
+      return #player.room.logic:getEventsOfScope(GameEvent.UseCard, 1, PlayCheck, Player.HistoryTurn) == 0
+      and #player.room.logic:getEventsOfScope(GameEvent.RespondCard, 1, PlayCheck, Player.HistoryTurn) == 0
     end
   end,
   on_use = function(self, event, target, player, data)
