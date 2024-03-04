@@ -1372,10 +1372,10 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
 
   local data = {
     targets = targets,
-    max_target_num = maxTargetNum,
-    min_target_num = minTargetNum,
-    max_card_num = maxCardNum,
-    min_card_num = minCardNum,
+    max_t_num = maxTargetNum,
+    min_t_num = minTargetNum,
+    max_c_num = maxCardNum,
+    min_c_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
     -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
