@@ -3023,7 +3023,7 @@ end
 ---@param cid integer|Card|integer[] @ 要拿到的卡牌
 ---@param unhide? boolean @ 是否明着拿
 ---@param reason? CardMoveReason @ 卡牌移动的原因
----@param proposer? integer @ 移动操作者的id
+---@param proposer? integer|ServerPlayer @ 移动操作者的id
 function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
     assert(cid and type(cid) == "table")
@@ -3037,6 +3037,10 @@ function Room:obtainCard(player, cid, unhide, reason, proposer)
 
   if type(player) == "table" then
     player = player.id
+  end
+
+  if type(proposer) == "table" then
+    proposer = proposer.id
   end
 
   self:moveCards({
