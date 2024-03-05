@@ -87,16 +87,16 @@ end
 -- 找第一个与当前事件有继承关系的特定事件
 ---@param eventType integer @ 事件类型
 ---@param includeSelf bool @ 是否包括本事件
----@param layer? integer @ 搜索深度
+---@param depth? integer @ 搜索深度
 ---@return GameEvent?
-function GameEvent:findParent(eventType, includeSelf, layer)
+function GameEvent:findParent(eventType, includeSelf, depth)
   if includeSelf and self.event == eventType then return self end
-  if layer == 0 then return nil end
+  if depth == 0 then return nil end
   local e = self.parent
   local l = 1
   while e do
     if e.event == eventType then return e end
-    if layer and l >= layer then break end
+    if depth and l >= depth then break end
     e = e.parent
     l = l + 1
   end
