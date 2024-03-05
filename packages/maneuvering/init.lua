@@ -335,7 +335,7 @@ local gudingSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, _, target, player, data)
     return target == player and player:hasSkill(self) and
       data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
-      not data.chain
+      player.room.logic:damageByCardEffect(true)
   end,
   on_use = function(_, _, _, _, data)
     data.damage = data.damage + 1

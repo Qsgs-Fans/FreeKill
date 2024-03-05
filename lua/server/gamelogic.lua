@@ -744,6 +744,21 @@ function GameLogic:getActualDamageEvents(n, func, scope, end_id)
   return ret
 end
 
+--检测最近的伤害事件是否由执行牌的效果触发，即通常描述的使用牌对目标角色造成伤害
+---@param is_exact? bool @ 是否进一步判定使用者和来源是否一致（默认为true）
+---@return bool
+function GameLogic:damageByCardEffect(is_exact)
+  is_exact = (is_exact == nil) and true or is_exact
+  local d_event = self:getCurrentEvent():findParent(GameEvent.Damage, true)
+  if d_event == nil then return false end
+  local damage = d_event.data[1]
+  if damage.chain or damage.card == nil then return false end
+  local c_event = d_event:findParent(GameEvent.CardEffect, false, 2)
+  if c_event == nil then return false end
+  return damage.card == c_event.data[1].card and
+  (not is_exact or d_event.data[1].from.id == c_event.data[1].from)
+end
+
 function GameLogic:dumpEventStack(detailed)
   local top = self:getCurrentEvent()
   local i = self.game_event_stack.p
