@@ -333,9 +333,17 @@ local gudingSkill = fk.CreateTriggerSkill{
   frequency = Skill.Compulsory,
   events = {fk.DamageCaused},
   can_trigger = function(self, _, target, player, data)
-    return target == player and player:hasSkill(self) and
-      data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
-      player.room.logic:damageByCardEffect(true)
+    local logic = player.room.logic
+    if target == player and player:hasSkill(self) and
+    data.to:isKongcheng() and data.card and data.card.trueName == "slash" then
+      local event = logic:getCurrentEvent()
+      if event == nil then return false end
+      event = event.parent
+      if event == nil or event.event ~= GameEvent.SkillEffect then return false end
+      event = event.parent
+      if event == nil or event.event ~= GameEvent.CardEffect then return false end
+      return data.card == event.data[1].card and data.from.id == event.data[1].from
+    end
   end,
   on_use = function(_, _, _, _, data)
     data.damage = data.damage + 1
