@@ -114,7 +114,7 @@ local analepticSkill = fk.CreateActiveSkill{
     end)
   end,
   can_use = function(self, player, card, extra_data)
-    return ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
+    return not player:isProhibited(player, card) and ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
       self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
   end,
   on_use = function(_, _, use)
