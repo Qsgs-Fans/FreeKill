@@ -351,7 +351,11 @@ bool Room::hasObserver(ServerPlayer *player) const { return observers.contains(p
 
 int Room::getTimeout() const { return timeout; }
 
+QString Room::getWordList() const { return wordList; }
+
 void Room::setTimeout(int timeout) { this->timeout = timeout; }
+
+void Room::setWordList(QString wordList) { this->wordList = wordList; }
 
 bool Room::isStarted() const { return gameStarted; }
 

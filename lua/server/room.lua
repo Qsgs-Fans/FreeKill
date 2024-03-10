@@ -14,6 +14,7 @@
 ---@field public game_started boolean @ 游戏是否已经开始
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public timeout integer @ 出牌时长上限
+---@field public wordList string[] @ wordList
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
 ---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
 ---@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
@@ -76,6 +77,8 @@ function Room:initialize(_room)
   self.game_started = false
   self.game_finished = false
   self.timeout = _room:getTimeout()
+  self.wordList = _room:getWordList()
+  print("wordList is -- " ..self.wordList)
   self.tag = {}
   self.general_pile = {}
   self.draw_pile = {}
@@ -2251,7 +2254,6 @@ end
 ---@param cardUseEvent CardUseStruct @ 使用数据
 ---@return boolean
 function Room:useCard(cardUseEvent)
-  ---ul return false
   return execGameEvent(GameEvent.UseCard, cardUseEvent)
 end
 
@@ -2584,7 +2586,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
         if use then
           use.toCard = cardEffectEvent.card
           use.responseToEvent = cardEffectEvent
-          self:useCard(use) --处理卡片效果
+          self:useCard(use)
         end
 
         if not cardEffectEvent.isCancellOut then
@@ -2651,7 +2653,7 @@ function Room:handleCardEffect(event, cardEffectEvent)
       if use then
         use.toCard = cardEffectEvent.card
         use.responseToEvent = cardEffectEvent
-        self:useCard(use) --要求无效
+        self:useCard(use)
       end
     end
     Fk.currentResponsePattern = nil
@@ -2698,7 +2700,7 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   use.tos = table.map(tos, function(p) return { p.id } end)
   use.card = card
   use.extraUse = extra
-  self:useCard(use) --使用虚拟卡 ...
+  self:useCard(use)
 
   return true
 end

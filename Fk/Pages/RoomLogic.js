@@ -347,7 +347,7 @@ function setEmotion(id, emotion, isCardId) {
     // TODO: set picture emotion
     return;
   }
-  const component = Qt.createComponent("../RoomElement/PixmapAnimation.qml"); //ul 像素图动画
+  const component = Qt.createComponent("../RoomElement/PixmapAnimation.qml");
   if (component.status !== Component.Ready)
     return;
 
@@ -443,7 +443,7 @@ function changeHp(id, delta, losthp) {
 }
 
 function doIndicate(from, tos) {
-  const component = Qt.createComponent("../RoomElement/IndicatorLine.qml"); //ul 指标线
+  const component = Qt.createComponent("../RoomElement/IndicatorLine.qml");
   if (component.status !== Component.Ready)
     return;
 
@@ -878,7 +878,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
   const heg = data[3];
   roomScene.setPrompt(Backend.translate("#AskForGeneral"), true);
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml"); //ul 选择常规框
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   const box = roomScene.popupBox.item;
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
@@ -896,7 +896,7 @@ callbacks["AskForSkillInvoke"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const skill = data[0];
   const prompt = data[1];
-  roomScene.promptText = prompt ? processPrompt(prompt) : Backend.translate("#AskForSkillInvoke") //请求技能调用
+  roomScene.promptText = prompt ? processPrompt(prompt) : Backend.translate("#AskForSkillInvoke")
     .arg(Backend.translate(skill));
   roomScene.state = "replying";
   roomScene.okCancel.visible = true;
@@ -915,7 +915,47 @@ callbacks["AskForGuanxing"] = (jsonData) => {
   const bottom_area_name = data.bottom_area_name;
   const prompt = data.prompt;
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml"); //ul 观星
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
+  data.cards.forEach(id => {
+    const d = Backend.callLuaFunction("GetCardData", [id]);
+    cards.push(JSON.parse(d));
+  });
+  const box = roomScene.popupBox.item;
+  box.prompt = prompt;
+  if (max_top_cards === 0) {
+    box.areaCapacities = [max_bottom_cards];
+    box.areaLimits = [min_bottom_cards];
+    box.areaNames = [Backend.translate(bottom_area_name)];
+  } else {
+    if (max_bottom_cards === 0) {
+      box.areaCapacities = [max_top_cards];
+      box.areaLimits = [min_top_cards];
+      box.areaNames = [Backend.translate(top_area_name)];
+    } else {
+      box.areaCapacities = [max_top_cards, max_bottom_cards];
+      box.areaLimits = [min_top_cards, min_bottom_cards];
+      box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    }
+  }
+  box.cards = cards;
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
+  });
+}
+
+callbacks["AskForGuanxing"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const cards = [];
+  const min_top_cards = data.min_top_cards;
+  const max_top_cards = data.max_top_cards;
+  const min_bottom_cards = data.min_bottom_cards;
+  const max_bottom_cards = data.max_bottom_cards;
+  const top_area_name = data.top_area_name;
+  const bottom_area_name = data.bottom_area_name;
+  const prompt = data.prompt;
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   data.cards.forEach(id => {
     const d = Backend.callLuaFunction("GetCardData", [id]);
     cards.push(JSON.parse(d));
@@ -951,7 +991,7 @@ callbacks["AskForExchange"] = (jsonData) => {
   const capacities = [];
   const limits = [];
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml"); //观星
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
   const box = roomScene.popupBox.item;
   data.piles.forEach(ids => {
@@ -994,9 +1034,9 @@ callbacks["AskForChoice"] = (jsonData) => {
   roomScene.state = "replying";
   let qmlSrc;
   if (!detailed) {
-    qmlSrc = "../RoomElement/ChoiceBox.qml"; //ul 选择框
+    qmlSrc = "../RoomElement/ChoiceBox.qml";
   } else {
-    qmlSrc = "../RoomElement/DetailedChoiceBox.qml"; //ul 详细选择框
+    qmlSrc = "../RoomElement/DetailedChoiceBox.qml";
   }
   roomScene.popupBox.sourceComponent = Qt.createComponent(qmlSrc);
   const box = roomScene.popupBox.item;
@@ -1017,7 +1057,7 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   roomScene.promptText = Backend.translate("#AskForChooseCard")
     .arg(Backend.translate(reason));
   roomScene.state = "replying";
-  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml"); //ul 选择的卡
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/PlayerCardBox.qml");
 
   const box = roomScene.popupBox.item;
   for (let d of data.card_data) {
@@ -1315,7 +1355,7 @@ callbacks["Animate"] = (jsonData) => {
     }
     case "InvokeSkill": {
       const id = data.player;
-      const component = Qt.createComponent("../RoomElement/SkillInvokeAnimation.qml"); //ul 技能调用动画
+      const component = Qt.createComponent("../RoomElement/SkillInvokeAnimation.qml");
       if (component.status !== Component.Ready)
         return;
 
@@ -1339,7 +1379,7 @@ callbacks["Animate"] = (jsonData) => {
         return null;
       }
 
-      roomScene.bigAnim.source = "../RoomElement/UltSkillAnimation.qml"; //ul大招技能动画
+      roomScene.bigAnim.source = "../RoomElement/UltSkillAnimation.qml";
       roomScene.bigAnim.item.loadData({
         skill_name: data.name,
         general: photo.general,

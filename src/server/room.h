@@ -48,7 +48,9 @@ class Room : public QObject {
   bool hasObserver(ServerPlayer *player) const;
 
   int getTimeout() const;
+  QString getWordList() const;
   void setTimeout(int timeout);
+  void setWordList(QString wordList);
 
   bool isStarted() const;
   // ====================================}
@@ -87,6 +89,7 @@ class Room : public QObject {
   bool m_ready;
 
   int timeout;
+  QString wordList;
 
   void addRunRate(int id, const QString &mode);
   void updatePlayerGameData(int id, const QString &mode);

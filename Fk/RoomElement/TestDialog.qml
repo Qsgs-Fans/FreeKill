@@ -7,7 +7,7 @@ GraphicsBox {
   property string custom_string: ""
 
   id: root
-  title.text: Backend.translate("English")
+  title.text: Backend.translate("en")
   width: Math.max(140, body.width + 20)
   height: body.height + title.height + 20
 
@@ -27,6 +27,15 @@ GraphicsBox {
         Layout.fillWidth: true
         placeholderText: qsTr("Word")
         text: ""
+        color: "#E4D5A0"
+        Keys.onPressed: {  
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {  
+                // console.log("回车键被按下")  
+                // 在这里添加你希望在按下回车键时执行的代码  
+                ClientInstance.replyToServer("", serverAddrEdit.text);
+                finished();
+            }  
+        }
       }
 
     Button {

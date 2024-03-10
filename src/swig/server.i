@@ -14,6 +14,7 @@ public:
   QList<ServerPlayer *> getObservers() const;
   bool hasObserver(ServerPlayer *player) const;
   int getTimeout() const;
+  QString getWordList() const;
   void checkAbandoned();
 
   void updateWinRate(int id, const QString &general, const QString &mode,

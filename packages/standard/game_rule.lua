@@ -60,7 +60,7 @@ GameRule = fk.CreateTriggerSkill{
           peach_use.extra_data = peach_use.extra_data or {}
           peach_use.extra_data.analepticRecover = true
         end
-        room:useCard(peach_use) --- peach
+        room:useCard(peach_use)
       end
     end,
     [fk.AskForPeachesDone] = function()

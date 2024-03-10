@@ -107,8 +107,8 @@ Flickable {
         text: Backend.translate("Operation timeout")
       }
       SpinBox {
-        from: 10
-        to: 60
+        from: 32767
+        to: 32767
         editable: true
         value: config.preferredTimeout
 

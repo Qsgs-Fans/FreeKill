@@ -1,0 +1,242 @@
+在运行搜qt6.6.0 cmd 运行
+D:\GitHub\FreeKill\FreeKill>pwd
+/d/GitHub/FreeKill/FreeKill
+windeployqt  从D:/Qt/6.6.0/mingw_64/bin/windeployqt.exe复制过来
+D:\GitHub\FreeKill\FreeKill>windeployqt FreeKill.exe
+
+运行的话，在Qt Creator的项目选项->运行中，先将工作目录改为项目所在的目录 （git仓库的目录）。然后先将编译好了的FreeKill.exe放到项目目录中， 在目录下打开CMD，执行windeployqt FreeKill.exe。调整目录下的dll 文件直到能运行起来为止，之后就可以在Qt Creator中正常运行和调试了。
+
+
+running = !running;
+
+23:45:18: 为项目FreeKill执行步骤 ...
+23:45:18: 正在启动 "D:\Qt\Tools\CMake_64\bin\cmake.exe" --build D:/GitHub/FreeKill/build-FreeKill-Desktop_Qt_6_6_0_MinGW_64_bit-Release --target all
+
+[1/5 2.0/sec] Automatic MOC for target FreeKill
+[2/4 0.3/sec] Building CXX object CMakeFiles/FreeKill.dir/src/server/server.cpp.obj
+[3/4 0.4/sec] Building CXX object CMakeFiles/FreeKill.dir/src/swig/freekill-wrap.cxx.obj
+[4/4 0.5/sec] Linking CXX executable FreeKill.exe
+23:45:26: 进程"D:\Qt\Tools\CMake_64\bin\cmake.exe"正常退出。
+23:45:26: Elapsed time: 00:08.
+
+  QList<ServerPlayer *> players;
+  players.append(player);
+
+RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Text {
+        text: Backend.translate("Operation timeout")
+      }
+      SpinBox {
+        from: 10
+        to: 60
+        editable: true
+        value: config.preferredTimeout
+
+        onValueChanged: {
+          config.preferredTimeout = value;
+        }
+      }
+    }
+
+
+to: "playing"
+
+running = !running;
+          Backend.controlReplayer("toggle");
+
+            room:useCard(use,room) --Play
+--- room:askForDiscard(player, 1, 1, false, "game_rule", false) --ul
+            --- D:\GitHub\FreeKill\FreeKill\Fk\RoomElement\TestDialog.qml
+
+            --- local result = room:askForCustomDialog(player, "simayi", "FK/RoomElement/TestDialog.qml", "Hello, world123. FROM LUA")
+            --- print(result)
+            
+             room:delay(400);
+            room:useCard(use,room) --Play
+
+            --- 延迟一段时间。
+---
+--- 这个函数不应该在请求处理协程中使用。
+---@param ms integer @ 要延迟的毫秒数
+function Room:delay(ms)
+  local start = os.getms()
+  self.delay_start = start
+  self.delay_duration = ms
+  self.in_delay = true
+  coroutine.yield("__handleRequest", ms)
+end
+
+
+callbacks["AskForGuanxing"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const cards = [];
+  const min_top_cards = data.min_top_cards;
+  const max_top_cards = data.max_top_cards;
+  const min_bottom_cards = data.min_bottom_cards;
+  const max_bottom_cards = data.max_bottom_cards;
+  const top_area_name = data.top_area_name;
+  const bottom_area_name = data.bottom_area_name;
+  const prompt = data.prompt;
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
+  data.cards.forEach(id => {
+    const d = Backend.callLuaFunction("GetCardData", [id]);
+    cards.push(JSON.parse(d));
+  });
+  const box = roomScene.popupBox.item;
+  box.prompt = prompt;
+  if (max_top_cards === 0) {
+    box.areaCapacities = [max_bottom_cards];
+    box.areaLimits = [min_bottom_cards];
+    box.areaNames = [Backend.translate(bottom_area_name)];
+  } else {
+    if (max_bottom_cards === 0) {
+      box.areaCapacities = [max_top_cards];
+      box.areaLimits = [min_top_cards];
+      box.areaNames = [Backend.translate(top_area_name)];
+    } else {
+      box.areaCapacities = [max_top_cards, max_bottom_cards];
+      box.areaLimits = [min_top_cards, min_bottom_cards];
+      box.areaNames = [Backend.translate(top_area_name), Backend.translate(bottom_area_name)];
+    }
+  }
+  box.cards = cards;
+  box.arrangeCards();
+  box.accepted.connect(() => {
+    replyToServer(JSON.stringify(box.getResult()));
+  });
+}          
+
+
+
+function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
+  -- 这一大堆都是来提前报错的
+  top_limit = top_limit or Util.DummyTable
+  bottom_limit = bottom_limit or Util.DummyTable
+  if #top_limit > 0 then
+    assert(top_limit[1] >= 0 and top_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(top_limit[1] <= top_limit[2], "limits error: The upper limit should be less than the lower limit")
+  end
+  if #bottom_limit > 0 then
+    assert(bottom_limit[1] >= 0 and bottom_limit[2] >= 0, "limits error: The lower limit should be greater than 0")
+    assert(bottom_limit[1] <= bottom_limit[2], "limits error: The upper limit should be less than the lower limit")
+  end
+  if #top_limit > 0 and #bottom_limit > 0 then
+    assert(#cards >= top_limit[1] + bottom_limit[1] and #cards <= top_limit[2] + bottom_limit[2], "limits Error: No enough space")
+  end
+  if areaNames then
+    assert(#areaNames == 2, "areaNames error: Should have 2 elements")
+  end
+  local command = "AskForGuanxing"
+  self:notifyMoveFocus(player, customNotify or command)
+  local data = {
+    prompt = "",
+    cards = cards,
+    min_top_cards = top_limit and top_limit[1] or 0,
+    max_top_cards = top_limit and top_limit[2] or #cards,
+    min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
+    max_bottom_cards = bottom_limit and bottom_limit[2] or #cards,
+    top_area_name = areaNames and areaNames[1] or "Top",
+    bottom_area_name = areaNames and areaNames[2] or "Bottom",
+  }
+
+callbacks["AskForGuanxing"] = (jsonData) => {
+  const data = JSON.parse(jsonData);
+  const cards = [];
+  const min_top_cards = data.min_top_cards;
+  const max_top_cards = data.max_top_cards;
+  const min_bottom_cards = data.min_bottom_cards;
+  const max_bottom_cards = data.max_bottom_cards;
+  const top_area_name = data.top_area_name;
+  const bottom_area_name = data.bottom_area_name;
+  const prompt = data.prompt;
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent = Qt.createComponent("../RoomElement/GuanxingBox.qml");
+  data.cards.forEach(id => {
+    const d = Backend.callLuaFunction("GetCardData", [id]);
+    cards.push(JSON.parse(d));
+  });
+  const box = roomScene.popupBox.item;
+  box.prompt = prompt;
+  if (max_top_cards === 0) {  
+
+
+
+    //请求地址
+  QUrl url("http://127.0.0.1:8000/api/wx/student/question/answer/page");
+  QNetworkRequest request(url);
+  //设置请求头
+  request.setRawHeader("Accept","application/json, text/plain, */*");
+  request.setRawHeader("Connection","keep-alive");
+  request.setRawHeader("token","123111111111111111111111111111111111");
+  request.setRawHeader("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36");
+  request.setRawHeader("Content-Type", "application/json");
+  //组装JSON数据
+  QJsonObject login_json;
+  login_json.insert("userName", "123456");
+  login_json.insert("password", "password");
+  QJsonDocument doc;
+  doc.setObject(login_json);
+//    请求头content-type为application/x-www-form-urlencoded时，采用下面的格式
+//    QString info = "userName=123456&password=password";
+//    QByteArray postData = info.toLocal8Bit();
+
+connect(reply, &QNetworkReply::finished, this, [reply]() {
+        // 处理响应数据
+        QByteArray data = reply->readAll();
+        qDebug() << "Received data:" << data;
+    });
+
+    QByteArray postData = doc.toJson(QJsonDocument::Compact);
+    QNetworkAccessManager *networkAccessManager = new QNetworkAccessManager();
+    //发送json
+    QNetworkReply* reply = networkAccessManager->post(request,postData);
+
+        postData.clear();
+        if (reply->error() == QNetworkReply::NoError) {
+            // 获取响应信息
+            QByteArray bytes = reply->readAll();      //读取所有字节；
+
+            QJsonParseError jsonError;
+            //转化为JSON文档
+            QJsonDocument doucment = QJsonDocument::fromJson(bytes, &jsonError);
+            // 解析Json  error
+            if (doucment.isObject()) {
+                QJsonObject obj = doucment.object();
+                qDebug() << obj;
+
+                QJsonValue val;
+                QJsonValue data_value;
+                if (obj.contains("userName")) {
+                    QString userName= obj.value("userName").toString();
+                    qDebug() << tr("打印userName");
+                    qDebug() << userName;
+                }
+                if (obj.contains("password")) {
+                    val = obj.value("password");
+                    if ((val.toString()) == "password") {
+                        qDebug() << "登陆成功！";
+                    }
+                }
+            }
+            if (jsonError.error != QJsonParseError::NoError) {
+                qDebug() << QStringLiteral("解析Json失败58");
+                //return;
+            }
+        }
+        else
+        {
+
+            qDebug() << "登陆失败！";
+            qDebug()<<"handle errors here" ;
+            QVariant statusCodeV = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
+            //输出错误状态码
+            qDebug( "found error ....code: %d %d\n", statusCodeV.toInt(), (int)reply->error());
+            //错误信息
+            qDebug(qPrintable(reply->errorString()));
+        }
+
+        reply->deleteLater();
+        delete manager;
