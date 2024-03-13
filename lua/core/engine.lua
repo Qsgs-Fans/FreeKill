@@ -27,6 +27,8 @@
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
+---@field private kingdoms string[] @ 总势力
+---@field private kingdom_map table<string, string[]> @ 势力映射表
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
@@ -67,6 +69,7 @@ function Engine:initialize()
   self.game_modes = {}
   self.game_mode_disabled = {}
   self.kingdoms = {}
+  self.kingdom_map = {}
   self._custom_events = {}
   self.poxi_methods = {}
   self.qml_marks = {}
@@ -269,6 +272,30 @@ function Engine:addGenerals(generals)
   for _, general in ipairs(generals) do
     self:addGeneral(general)
   end
+end
+
+--- 为一个势力添加势力映射
+---
+--- 这意味着原势力登场时必须改变为添加的几个势力之一(须存在)
+---@param kingdom string @ 原势力
+---@param kingdoms string[] @ 需要映射到的势力
+function Engine:appendKingdomMap(kingdom, kingdoms)
+  local ret = self.kingdom_map[kingdom] or {}
+  table.insertTableIfNeed(ret, kingdoms)
+  self.kingdom_map[kingdom] = ret
+end
+
+---获得一个势力所映射到的势力，若没有，返回空集
+---@param kingdom string @ 原势力
+---@return string[] @ 可用势力列表，可能是空的
+function Engine:getKingdomMap(kingdom)
+  local ret = {}
+  for _, k in ipairs(self.kingdom_map[kingdom] or {}) do
+    if table.contains(self.kingdoms, k) then
+      table.insertIfNeed(ret, k)
+    end
+  end
+  return ret
 end
 
 --- 判断一个武将是否在本房间可用。

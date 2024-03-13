@@ -605,14 +605,16 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
 
   kingdomChange = (kingdomChange == nil) and true or kingdomChange
   local kingdom = (isDeputy or not kingdomChange) and player.kingdom or new.kingdom
-  if not isDeputy and kingdomChange and (new.kingdom == "god" or new.subkingdom) then
+  if not isDeputy and kingdomChange then
     local allKingdoms = {}
-    if new.kingdom == "god" then
-      allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
-    elseif new.subkingdom then
+    if new.subkingdom then
       allKingdoms = { new.kingdom, new.subkingdom }
+    else
+      allKingdoms = Fk:getKingdomMap(new.kingdom)
     end
-    kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+    if #allKingdoms > 0 then
+      kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+    end
   end
 
   execGameEvent(GameEvent.ChangeProperty,
@@ -1594,24 +1596,25 @@ end
 function Room:askForChooseKingdom(players)
   players = players or self.alive_players
   local specialKingdomPlayers = table.filter(players, function(p)
-    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+    return Fk.generals[p.general].subkingdom or #Fk:getKingdomMap(p.kingdom) > 0
   end)
 
   if #specialKingdomPlayers > 0 then
     local choiceMap = {}
     for _, p in ipairs(specialKingdomPlayers) do
       local allKingdoms = {}
-      if p.kingdom == "god" then
-        allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
-      else
-        local curGeneral = Fk.generals[p.general]
+      local curGeneral = Fk.generals[p.general]
+      if curGeneral.subkingdom then
         allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      else
+        allKingdoms = Fk:getKingdomMap(p.kingdom)
       end
+      if #allKingdoms > 0 then
+        choiceMap[p.id] = allKingdoms
 
-      choiceMap[p.id] = allKingdoms
-
-      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
-      p.request_data = data
+        local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+        p.request_data = data
+      end
     end
 
     self:notifyMoveFocus(players, "AskForKingdom")
