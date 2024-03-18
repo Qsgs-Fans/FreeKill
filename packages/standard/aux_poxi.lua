@@ -1,0 +1,24 @@
+-- SPDX-License-Identifier: GPL-3.0-or-later
+
+Fk:addPoxiMethod{
+  name = "AskForCardsChosen",
+  card_filter = function(to_select, selected, data, extra_data)
+    p(extra_data.max)
+    p(selected)
+    return #selected < extra_data.max
+  end,
+  feasible = function(selected, data, extra_data)
+    return #selected >= extra_data.min and #selected <= extra_data.max
+  end,
+  prompt = function(data, extra_data)
+    if extra_data.prompt then
+      return extra_data.prompt
+    else
+      local ret = Fk:translate("#AskForChooseCards")
+      ret = ret:gsub("%%1", Fk:translate(extra_data.skillName or "AskForCardsChosen"))
+      ret = ret:gsub("%%2", Fk:translate(extra_data.min))
+      ret = ret:gsub("%%3", Fk:translate(extra_data.max))
+      return ret .. ":" ..extra_data.to
+    end
+  end,
+}
