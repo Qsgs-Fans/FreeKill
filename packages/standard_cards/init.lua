@@ -1086,7 +1086,7 @@ local halberdSkill = fk.CreateTargetModSkill{
     if player:hasSkill(self) and skill.trueName == "slash_skill" then
       local cards = card:isVirtual() and card.subcards or {card.id}
       local handcards = player:getCardIds(Player.Hand)
-      if #cards == #handcards and table.every(cards, function(id) return table.contains(handcards, id) end) then
+      if #handcards > 0 and #cards == #handcards and table.every(cards, function(id) return table.contains(handcards, id) end) then
         return 2
       end
     end
