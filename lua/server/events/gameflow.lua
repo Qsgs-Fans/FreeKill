@@ -148,6 +148,10 @@ GameEvent.functions[GameEvent.Round] = function(self)
   room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
   if roundCount >= 9999 then
+    room:sendLog{
+      type = "#TimeOut",
+      toast = true,
+    }
     room:gameOver("")
   end
 

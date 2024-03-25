@@ -447,6 +447,10 @@ function GameLogic:start()
     end
 
     if not e then -- 没有事件，按理说不应该，平局处理
+      self.room:sendLog{
+        type = "#NoEvent",
+        toast = true,
+      }
       self.room:gameOver("")
     end
 

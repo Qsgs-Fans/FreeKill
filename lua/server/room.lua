@@ -432,6 +432,10 @@ function Room:getNCards(num, from)
   if #self.draw_pile < num then
     self:shuffleDrawPile()
     if #self.draw_pile < num then
+      self:sendLog{
+        type = "#NoCard",
+        toast = true,
+      }
       self:gameOver("")
     end
   end
@@ -1504,6 +1508,10 @@ function Room:getNGenerals(n, position)
   end
 
   if #generals < 1 then
+    self:sendLog{
+      type = "#NoGeneral",
+      toast = true,
+    }
     self:gameOver("")
   end
   return generals
