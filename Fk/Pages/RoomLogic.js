@@ -1174,9 +1174,9 @@ callbacks["AskForPoxi"] = (jsonData) => {
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
+  box.extra_data = JSON.stringify(extra_data);
   box.poxi_type = type;
   box.card_data = data;
-  box.extra_data = extra_data;
   box.cancelable = cancelable;
   for (let d of data) {
     const arr = [];
@@ -1185,6 +1185,7 @@ callbacks["AskForPoxi"] = (jsonData) => {
     ids.forEach(id => arr.push(lcall("GetCardData", id)));
     box.addCustomCards(d[0], arr);
   }
+  box.refreshPrompt();
 
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {

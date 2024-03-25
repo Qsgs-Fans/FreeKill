@@ -95,7 +95,7 @@ local choosePlayersSkill = fk.CreateActiveSkill{
 local exChooseSkill = fk.CreateActiveSkill{
   name = "ex__choose_skill",
   card_filter = function(self, to_select, selected)
-    if #selected >= self.max_card_num then return false end
+    if #selected >= self.max_c_num then return false end
 
     if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
       if not string.find(self.pattern or "", self.expand_pile or "") then return false end
@@ -114,11 +114,15 @@ local exChooseSkill = fk.CreateActiveSkill{
     return checkpoint
   end,
   target_filter = function(self, to_select, selected, cards)
-    if self.pattern ~= "" and #cards < self.min_card_num then return end
-    if #selected < self.max_target_num then
+    if #cards < self.min_c_num then return end
+    if #selected < self.max_t_num then
       return table.contains(self.targets, to_select)
     end
   end,
+  min_target_num = function(self) return self.min_t_num end,
+  max_target_num = function(self) return self.max_t_num end,
+  min_card_num = function(self) return self.min_c_num end,
+  max_card_num = function(self) return self.max_c_num end,
 }
 
 local maxCardsSkill = fk.CreateMaxCardsSkill{

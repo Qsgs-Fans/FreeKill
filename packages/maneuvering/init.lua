@@ -114,7 +114,7 @@ local analepticSkill = fk.CreateActiveSkill{
     end)
   end,
   can_use = function(self, player, card, extra_data)
-    return ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
+    return not player:isProhibited(player, card) and ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
       self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
   end,
   on_use = function(_, _, use)
@@ -333,9 +333,17 @@ local gudingSkill = fk.CreateTriggerSkill{
   frequency = Skill.Compulsory,
   events = {fk.DamageCaused},
   can_trigger = function(self, _, target, player, data)
-    return target == player and player:hasSkill(self) and
-      data.to:isKongcheng() and data.card and data.card.trueName == "slash" and
-      not data.chain
+    local logic = player.room.logic
+    if target == player and player:hasSkill(self) and
+    data.to:isKongcheng() and data.card and data.card.trueName == "slash" and not data.chain then
+      local event = logic:getCurrentEvent()
+      if event == nil then return false end
+      event = event.parent
+      if event == nil or event.event ~= GameEvent.SkillEffect then return false end
+      event = event.parent
+      if event == nil or event.event ~= GameEvent.CardEffect then return false end
+      return data.card == event.data[1].card and data.from.id == event.data[1].from
+    end
   end,
   on_use = function(_, _, _, _, data)
     data.damage = data.damage + 1

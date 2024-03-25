@@ -84,17 +84,32 @@ function GameEvent:prependExitFunc(f)
   table.insert(self.extra_exit_funcs, 1, f)
 end
 
-function GameEvent:findParent(eventType, includeSelf)
+-- 找第一个与当前事件有继承关系的特定事件
+---@param eventType integer @ 事件类型
+---@param includeSelf bool @ 是否包括本事件
+---@param depth? integer @ 搜索深度
+---@return GameEvent?
+function GameEvent:findParent(eventType, includeSelf, depth)
   if includeSelf and self.event == eventType then return self end
+  if depth == 0 then return nil end
   local e = self.parent
+  local l = 1
   while e do
     if e.event == eventType then return e end
+    if depth and l >= depth then break end
     e = e.parent
+    l = l + 1
   end
   return nil
 end
 
 -- 找n个id介于from和to之间的事件。
+---@param events GameEvent[] @ 事件数组
+---@param from integer @ 起始id
+---@param to integer @ 终止id
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean? @ 过滤用的函数
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 local function bin_search(events, from, to, n, func)
   local left = 1
   local right = #events

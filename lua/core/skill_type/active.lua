@@ -57,7 +57,7 @@ end
 ---@param selected? integer[] @ ids of selected targets
 ---@param user? integer @ id of the userdata
 ---@param card? Card @ helper
----@param distance_limited boolean @ is limited by distance
+---@param distance_limited? boolean @ is limited by distance
 function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end
