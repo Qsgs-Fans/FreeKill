@@ -2,168 +2,157 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
   id: root
-  property string prompt
-  property var data
-  property var old_cards: []
-  property var cards: []
-  property var areaNames: []
-  property int length: 1
-  property var extra_data
+
+  title.text: ""
+
+  // TODO: Adjust the UI design in case there are more than 7 cards
+  width: 70 + 700
+  height: 64 + Math.min(cardView.contentHeight, 400) + 30
+
+  signal cardSelected(int cid)
+  signal cardsSelected(var ids)
+  property var selected_ids: []
+  property string Yuqi_type
+  property var card_data
   property bool cancelable: true
-  property string yuqi_type
-  property int padding: 25
+  property var extra_data
 
-  signal returnResults(var ids)
+  ListModel {
+    id: cardModel
+  }
 
-  title.text: Backend.callLuaFunction("YuqiPrompt", [yuqi_type, data, extra_data])
-  width: body.width + padding * 2
-  height: title.height + body.height + padding * 2
-
-  ColumnLayout {
-    id: body
-    x: padding
-    y: parent.height - padding - height
+  ListView {
+    id: cardView
+    anchors.fill: parent
+    anchors.topMargin: 40
+    anchors.leftMargin: 20
+    anchors.rightMargin: 20
+    anchors.bottomMargin: 30
     spacing: 20
+    model: cardModel
+    clip: true
 
-    Repeater {
-      id: areaRepeater
-      model: old_cards
+    delegate: RowLayout {
+      spacing: 15
+      // visible: areaCards.count > 0
 
-      Row {
-        spacing: 5
+      Rectangle {
+        border.color: "#A6967A"
+        radius: 5
+        color: "transparent"
+        width: 18
+        height: 130
+        Layout.alignment: Qt.AlignTop
 
-        property int areaCapacity: modelData
-        property string areaName: index < data.length ? qsTr(areaNames.name[index]) : ""
-
-        Rectangle {
-          anchors.verticalCenter: parent.verticalCenter
-          color: "#6B5D42"
-          width: 20
-          height: 100
-          radius: 5
-
-          Text {
-            anchors.fill: parent
-            width: 20
-            height: 100
-            text: Backend.translate(areaName)
-            color: "white"
-            font.family: fontLibian.name
-            font.pixelSize: 18
-            style: Text.Outline
-            wrapMode: Text.WordWrap
-            verticalAlignment: Text.AlignVCenter
-            horizontalAlignment: Text.AlignHCenter
-          }
+        Text {
+          color: "#E4D5A0"
+          text: luatr(areaName)
+          anchors.fill: parent
+          wrapMode: Text.WrapAnywhere
+          verticalAlignment: Text.AlignVCenter
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 15
         }
+      }
 
+      GridLayout {
+        columns: 7
         Repeater {
-          id: cardRepeater
-          model: areaCapacity
+          model: areaCards
 
-          Rectangle {
-            color: "#1D1E19"
-            width: 93
-            height: 130
+          CardItem {
+            cid: model.cid
+            name: model.name || ""
+            suit: model.suit || ""
+            number: model.number || 0
+            autoBack: false
+            known: model.cid !== -1
+            selectable: chosenInBox ||
+              lcall("YuqiFilter", root.Yuqi_type, model.cid, root.selected_ids,
+                    root.card_data, root.extra_data);
 
-            Text {
-              anchors.centerIn: parent
-              text: Backend.translate(areaName)
-              color: "#59574D"
-              width: parent.width * 0.8
-              wrapMode: Text.WordWrap
+            onSelectedChanged: {
+              if (selected) {
+                chosenInBox = true;
+                root.selected_ids.push(cid);
+              } else {
+                chosenInBox = false;
+                root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
+              }
+              root.selected_ids = root.selected_ids;
+              refreshPrompt();
             }
           }
         }
-        property alias cardRepeater: cardRepeater
-      }
-    }
-    Row {
-      anchors.margins: 8
-      anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
-      spacing: 32
-
-      MetroButton {
-        width: 120
-        height: 35
-        text: Backend.translate("OK")
-        enabled: {
-          return JSON.parse(Backend.callLuaFunction(
-            "YuqiFeasible",
-            [root.yuqi_type, root.cards, root.data, root.extra_data]
-          ));
-        }
-        onClicked: root.getResult(true);
-      }
-
-      MetroButton {
-        width: 120
-        height: 35
-        text: Backend.translate("Cancel")
-        enabled: root.cancelable
-        onClicked: root.getResult(false);
-      }
-
-    }
-  }
-
-  Repeater {
-    id: cardItem
-    model: cards
-
-    CardItem {
-      x: index
-      y: -1
-      cid: modelData.cid
-      name: modelData.name
-      suit: modelData.suit
-      number: modelData.number
-      draggable: {
-          return JSON.parse(Backend.callLuaFunction(
-            "YuqiOutFilter",
-            [root.yuqi_type, model.cid, root.cards, root.extra_data]
-          ));
-        }
-      onReleased: arrangeCards(model.cid);
-    }
-  }
-
-  function arrangeCards(var moved_card) {
-    let pos;
-    for (i = 0; i < cards.length; i++) {
-      let pile = cards[i];
-      if (moved_card != null) {
-        if (pile[j] == moved_card) 
-      }
-      for (j = 0; j < pile.length; j++) {
-      }
-    }
-
-
-    let box, pos, pile;
-    for (j = 0; j < areaRepeater.count; j++) {
-      pile = areaRepeater.itemAt(j);
-      if (pile.y === 0){
-        pile.y = j * 150
-      }
-      for (i = 0; i < result[j].length; i++) {
-        box = pile.cardRepeater.itemAt(i);
-        pos = mapFromItem(pile, box.x, box.y);
-        card = result[j][i];
-        card.origX = pos.x;
-        card.origY = pos.y;
-        card.goBack(true);
       }
     }
   }
 
-  function getResult(var bol) {
-    if (!bol) return old_cards;
-    return cards;
+  Row {
+    anchors.margins: 8
+    anchors.bottom: parent.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    spacing: 32
+
+    MetroButton {
+      width: 120
+      height: 35
+      text: luatr("OK")
+      enabled: lcall("YuqiFeasible", root.Yuqi_type, root.selected_ids,
+                     root.card_data, root.extra_data);
+      onClicked: root.cardsSelected(root.selected_ids)
+    }
+
+    MetroButton {
+      width: 120
+      height: 35
+      text: luatr("Cancel")
+      visible: root.cancelable
+      onClicked: root.cardsSelected([])
+    }
+
+  }
+
+
+  onCardSelected: finished();
+
+  function findAreaModel(name) {
+    let ret;
+    for (let i = 0; i < cardModel.count; i++) {
+      let item = cardModel.get(i);
+      if (item.areaName === name) {
+        ret = item;
+        break;
+      }
+    }
+    if (!ret) {
+      ret = {
+        areaName: name,
+        areaCards: [],
+      }
+      cardModel.append(ret);
+      ret = findAreaModel(name);
+    }
+    return ret;
+  }
+
+
+  function addCustomCards(name, cards) {
+    let area = findAreaModel(name).areaCards;
+    if (cards instanceof Array) {
+      for (let i = 0; i < cards.length; i++)
+        area.append(cards[i]);
+    } else {
+      area.append(cards);
+    }
+  }
+
+  function refreshPrompt() {
+    root.title.text = Util.processPrompt(lcall("YuqiPrompt", Yuqi_type, card_data, extra_data))
   }
 }
