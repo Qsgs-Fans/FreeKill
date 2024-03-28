@@ -13,7 +13,7 @@ GraphicsBox {
   property var result
   property int padding: 25
 
-  title.text: Backend.translate("Please click to move card")
+  title.text: luatr("Please click to move card")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
@@ -65,7 +65,7 @@ GraphicsBox {
             Text {
               horizontalAlignment: Text.AlignHCenter
               anchors.centerIn: parent
-              text: Backend.translate(modelData.subtype)
+              text: luatr(modelData.subtype)
               color: "#90765F"
               font.family: fontLibian.name
                font.pixelSize: 16
@@ -81,7 +81,7 @@ GraphicsBox {
     MetroButton {
       Layout.alignment: Qt.AlignHCenter
       id: buttonConfirm
-      text: Backend.translate("OK")
+      text: luatr("OK")
       width: 120
       height: 35
       enabled: false
@@ -131,7 +131,8 @@ GraphicsBox {
       const index = cards.findIndex(data => item.cid === data.cid);
       result && (result.pos = cardsPosition[index]);
 
-      const cardPos = cardsPosition[index] === 0 ? (result ? 1 : 0) : (result ? 0 : 1);
+      const cardPos = cardsPosition[index] === 0 ? (result ? 1 : 0)
+                                                 : (result ? 0 : 1);
       const curArea = areaRepeater.itemAt(cardPos);
       const curBox = curArea.cardRepeater.itemAt(index);
       const curPos = mapFromItem(curArea, curBox.x, curBox.y);

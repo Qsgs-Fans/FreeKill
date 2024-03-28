@@ -109,13 +109,13 @@ local analepticSkill = fk.CreateActiveSkill{
   prompt = "#analeptic_skill",
   max_turn_use_time = 1,
   mod_target_filter = function(self, to_select, _, _, card, _)
-    return self:withinTimesLimit(Fk:currentRoom():getPlayerById(to_select), Player.HistoryTurn, card, "analeptic", Fk:currentRoom():getPlayerById(to_select)) and
-      not table.find(Fk:currentRoom().alive_players, function(p)
-        return p.dying
-      end)
+    return not table.find(Fk:currentRoom().alive_players, function(p)
+      return p.dying
+    end)
   end,
-  can_use = function(self, player, card)
-    return self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player)
+  can_use = function(self, player, card, extra_data)
+    return ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
+      self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
   end,
   on_use = function(_, _, use)
     if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
@@ -146,7 +146,7 @@ local analepticEffect = fk.CreateTriggerSkill{
   name = "analeptic_effect",
   global = true,
   priority = 0, -- game rule
-  events = { fk.PreCardUse, fk.EventPhaseStart },
+  events = { fk.PreCardUse, fk.AfterTurnEnd },
   can_trigger = function(_, event, target, player, data)
     if target ~= player then
       return false
@@ -155,7 +155,7 @@ local analepticEffect = fk.CreateTriggerSkill{
     if event == fk.PreCardUse then
       return data.card.trueName == "slash" and player.drank > 0
     else
-      return target.phase == Player.NotActive
+      return true
     end
   end,
   on_trigger = function(_, event, _, player, data)
@@ -291,8 +291,9 @@ local supplyShortageSkill = fk.CreateActiveSkill{
     local from = Fk:currentRoom():getPlayerById(user)
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, false, card, player))
   end,
-  target_filter = function(self, to_select, selected, _, card)
-    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    local count_distances = not (extra_data and extra_data.bypass_distances)
+    return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, count_distances)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
@@ -359,9 +360,19 @@ local fanSkill = fk.CreateTriggerSkill{
     return target == player and player:hasSkill(self) and data.card.name == "slash"
   end,
   on_use = function(_, _, _, _, data)
-    local card = Fk:cloneCard("fire__slash")
+    local card = Fk:cloneCard("fire__slash", data.card.suit, data.card.number)
+    for k, v in pairs(data.card) do
+      if card[k] == nil then
+        card[k] = v
+      end
+    end
+    if data.card:isVirtual() then
+      card.subcards = data.card.subcards
+    else
+      card.id = data.card.id
+    end
+    card.skillNames = data.card.skillNames
     card.skillName = "fan"
-    card:addSubcard(data.card)
     data.card = card
   end,
 }
@@ -518,16 +529,19 @@ Fk:loadTranslationTable{
 
   ["guding_blade"] = "古锭刀",
 	[":guding_blade"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技。每当你使用【杀】对目标角色造成伤害时，若该角色没有手牌，此伤害+1。",
+  ["#guding_blade_skill"] = "古锭刀",
 
   ["fan"] = "朱雀羽扇",
-	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：你可以将一张普通【杀】当火【杀】使用。",
+	[":fan"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：当你声明使用普【杀】后，你可以将此【杀】改为火【杀】。",
   ["#fan_skill"] = "朱雀羽扇",
 
   ["vine"] = "藤甲",
 	[":vine"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。【南蛮入侵】、【万箭齐发】和普通【杀】对你无效。每当你受到火焰伤害时，此伤害+1。",
+  ["#vine_skill"] = "藤甲",
 
   ["silver_lion"] = "白银狮子",
 	[":silver_lion"] = "装备牌·防具<br /><b>防具技能</b>：锁定技。每当你受到伤害时，若此伤害大于1点，防止多余的伤害。每当你失去装备区里的【白银狮子】后，你回复1点体力。",
+  ["#silver_lion_skill"] = "白银狮子",
 
   ["hualiu"] = "骅骝",
   [":hualiu"] = "装备牌·坐骑<br /><b>坐骑技能</b>：其他角色与你的距离+1。",

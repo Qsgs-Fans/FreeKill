@@ -2,13 +2,18 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
   id: root
   property string prompt
 
-  title.text: prompt === "" ? (root.multiChoose ? Backend.translate("$ChooseCards").arg(root.min).arg(root.max) : Backend.translate("$ChooseCard")) : processPrompt(prompt)
+  title.text: prompt === "" ?
+                (root.multiChoose ?
+                   luatr("$ChooseCards").arg(root.min).arg(root.max)
+                   : luatr("$ChooseCard"))
+                : Util.processPrompt(prompt)
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -50,7 +55,7 @@ GraphicsBox {
 
         Text {
           color: "#E4D5A0"
-          text: Backend.translate(areaName)
+          text: luatr(areaName)
           anchors.fill: parent
           wrapMode: Text.WrapAnywhere
           verticalAlignment: Text.AlignVCenter
@@ -95,25 +100,14 @@ GraphicsBox {
 
   MetroButton {
     anchors.bottom: parent.bottom
-    text: Backend.translate("OK")
+    text: luatr("OK")
     visible: root.multiChoose
-    enabled: root.selected_ids.length <= root.max && root.selected_ids.length >= root.min
+    enabled: root.selected_ids.length <= root.max
+             && root.selected_ids.length >= root.min
     onClicked: root.cardsSelected(root.selected_ids)
   }
 
   onCardSelected: finished();
-
-  function processPrompt(prompt) {
-    const data = prompt.split(":");
-    let raw = Backend.translate(data[0]);
-    const src = parseInt(data[1]);
-    const dest = parseInt(data[2]);
-    if (raw.match("%src")) raw = raw.replace(/%src/g, Backend.translate(getPhoto(src).general));
-    if (raw.match("%dest")) raw = raw.replace(/%dest/g, Backend.translate(getPhoto(dest).general));
-    if (raw.match("%arg2")) raw = raw.replace(/%arg2/g, Backend.translate(data[4]));
-    if (raw.match("%arg")) raw = raw.replace(/%arg/g, Backend.translate(data[3]));
-    return raw;
-  }
 
   function findAreaModel(name) {
     let ret;

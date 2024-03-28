@@ -20,13 +20,24 @@ Column {
     id: repeater
     model: column.visible ? 0 : maxValue
     Magatama {
-      state: (maxValue - 1 - index) >= value ? 0 : (value >= 3 || value >= maxValue ? 3 : (value <= 0 ? 0 : value))
+      state: {
+        if (maxValue - 1 - index >= value) {
+          return 0;
+        } else if (value >= 3 || value >= maxValue) {
+          return 3;
+        } else if (value <= 0) {
+          return 0;
+        } else {
+          return value;
+        }
+      }
     }
   }
 
   Column {
     id: column
-    visible: maxValue > 4 || value > maxValue || (shieldNum > 0 && maxValue > 3)
+    visible: maxValue > 4 || value > maxValue ||
+             (shieldNum > 0 && maxValue > 3)
     spacing: -4
 
     Magatama {
@@ -37,7 +48,17 @@ Column {
       id: hpItem
       width: root.width
       text: value
-      color: root.colors[(value >= 3 || value >= maxValue) ? 3 : (value <= 0 ? 0 : value)]
+      color: {
+        let idx;
+        if (value >= 3 || value >= maxValue) {
+          idx = 3;
+        } else if (value <= 0) {
+          idx = 0;
+        } else {
+          idx = value;
+        }
+        return root.colors[idx];
+      }
       font.family: fontLibian.name
       font.pixelSize: 22
       font.bold: true

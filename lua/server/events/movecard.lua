@@ -166,7 +166,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
 
         local currentCard = Fk:getCardById(info.cardId)
         for name, _ in pairs(currentCard.mark) do
-          if name:endsWith("-inhand") and
+          if name:find("-inhand", 1, true) and
           realFromArea == Player.Hand and
           data.from
           then

@@ -112,10 +112,7 @@ Flickable {
       return false;
     };
 
-    const data = JSON.parse(Backend.callLuaFunction(
-      "GetSkillData",
-      [skill_name]
-    ));
+    const data = lcall("GetSkillData", skill_name);
 
     if (prelight) {
       if (!modelContains(prelight_skills, data))

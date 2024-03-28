@@ -51,7 +51,7 @@ Item {
   property bool selected: false
   property bool draggable: false
   property bool autoBack: true
-  property bool showDetail: false
+  property bool showDetail: true
   property int origX: 0
   property int origY: 0
   property int initialZ: 0
@@ -76,7 +76,7 @@ Item {
   signal hoverChanged(bool enter)
 
   onRightClicked: {
-    if (!showDetail) return;
+    if (!showDetail || !known) return;
     roomScene.startCheat("CardDetail", { card: this });
   }
 
@@ -102,7 +102,8 @@ Item {
   Image {
     id: suitItem
     visible: known
-    source: (suit !== "" && suit !== "nosuit") ? SkinBank.CARD_SUIT_DIR + suit : ""
+    source: (suit !== "" && suit !== "nosuit") ? SkinBank.CARD_SUIT_DIR + suit
+                                               : ""
     x: 3
     y: 19
     width: 21
@@ -122,8 +123,10 @@ Item {
 
   Image {
     id: colorItem
-    visible: known && (suit === "" || suit === "nosuit") //  && number <= 0 // <- FIXME: 需要区分“黑色有点数”和“无色有点数”
-    source: (visible && color !== "") ? SkinBank.CARD_SUIT_DIR + "/" + color : ""
+    visible: known && (suit === "" || suit === "nosuit")
+      //  && number <= 0 // <- FIXME: 需要区分“黑色有点数”和“无色有点数”
+    source: (visible && color !== "") ? SkinBank.CARD_SUIT_DIR + "/" + color
+                                      : ""
     x: 1
   }
 
@@ -146,7 +149,7 @@ Item {
     font.pixelSize: 16
     font.family: fontLibian.name
     font.letterSpacing: -0.6
-    text: Backend.translate(root.virt_name)
+    text: luatr(root.virt_name)
   }
 
   Text {
@@ -195,7 +198,7 @@ Item {
         font.family: fontLibian.name
         font.letterSpacing: -0.6
         text: {
-          let ret = Backend.translate(modelData.k);
+          let ret = luatr(modelData.k);
           if (!modelData.k.startsWith("@@")) {
             ret += modelData.v.toString();
           }

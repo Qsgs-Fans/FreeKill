@@ -6,7 +6,8 @@ Image {
 
   width: 64
   height: 64
-  source: SkinBank.getGeneralExtraPic(general, "avatar/") ?? SkinBank.getGeneralPicture(general)
+  source: SkinBank.getGeneralExtraPic(general, "avatar/")
+          ?? SkinBank.getGeneralPicture(general)
   // sourceSize.width: 250
   // sourceSize.height: 292
   property bool useSmallPic: !!SkinBank.getGeneralExtraPic(general, "avatar/")

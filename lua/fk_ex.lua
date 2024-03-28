@@ -48,6 +48,11 @@ end
 local function readUsableSpecToSkill(skill, spec)
   readCommonSpecToSkill(skill, spec)
   assert(spec.main_skill == nil or spec.main_skill:isInstanceOf(UsableSkill))
+  if type(spec.derived_piles) == "string" then
+    skill.derived_piles = {spec.derived_piles}
+  else
+    skill.derived_piles = spec.derived_piles or {}
+  end
   skill.main_skill = spec.main_skill
   skill.target_num = spec.target_num or skill.target_num
   skill.min_target_num = spec.min_target_num or skill.min_target_num
@@ -170,11 +175,12 @@ function fk.CreateTriggerSkill(spec)
 end
 
 ---@class ActiveSkillSpec: UsableSkillSpec
----@field public can_use? fun(self: ActiveSkill, player: Player, card: Card): boolean?
+---@field public can_use? fun(self: ActiveSkill, player: Player, card: Card, extra_data: any): boolean?
 ---@field public card_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean?
----@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card): boolean?
+---@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card, extra_data: any): boolean?
 ---@field public feasible? fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean?
 ---@field public on_use? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean?
+---@field public on_action? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct, finished: boolean): boolean?
 ---@field public about_to_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
 ---@field public on_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
 ---@field public on_nullified? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
@@ -190,8 +196,8 @@ function fk.CreateActiveSkill(spec)
   readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then
-    skill.canUse = function(curSkill, player, card)
-      return spec.can_use(curSkill, player, card) and curSkill:isEffectable(player)
+    skill.canUse = function(curSkill, player, card, extra_data)
+      return spec.can_use(curSkill, player, card, extra_data) and curSkill:isEffectable(player)
     end
   end
   if spec.card_filter then skill.cardFilter = spec.card_filter end
@@ -202,6 +208,7 @@ function fk.CreateActiveSkill(spec)
     skill.feasible = spec.feasible
   end
   if spec.on_use then skill.onUse = spec.on_use end
+  if spec.on_action then skill.onAction = spec.on_action end
   if spec.about_to_effect then skill.aboutToEffect = spec.about_to_effect end
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
@@ -209,9 +216,9 @@ function fk.CreateActiveSkill(spec)
 
   if spec.interaction then
     skill.interaction = setmetatable({}, {
-      __call = function(self)
+      __call = function()
         if type(spec.interaction) == "function" then
-          return spec.interaction(self)
+          return spec.interaction(skill)
         else
           return spec.interaction
         end
@@ -274,6 +281,10 @@ function fk.CreateViewAsSkill(spec)
     skill.beforeUse = spec.before_use
   end
 
+  if spec.after_use and type(spec.after_use) == "function" then
+    skill.afterUse = spec.after_use
+  end
+
   return skill
 end
 
@@ -320,18 +331,22 @@ end
 
 ---@class AttackRangeSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: AttackRangeSkill, from: Player, to: Player): number?
+---@field public fixed_func? fun(self: AttackRangeSkill, player: Player): number?
 ---@field public within_func? fun(self: AttackRangeSkill, from: Player, to: Player): boolean?
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
 function fk.CreateAttackRangeSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function" or type(spec.within_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or type(spec.within_func) == "function")
 
   local skill = AttackRangeSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
   if spec.correct_func then
     skill.getCorrect = spec.correct_func
+  end
+  if spec.fixed_func then
+    skill.getFixed = spec.fixed_func
   end
   if spec.within_func then
     skill.withinAttackRange = spec.within_func
@@ -435,6 +450,7 @@ end
 ---@field public special_skills? string[]
 ---@field public is_damage_card? boolean
 ---@field public multiple_targets? boolean
+---@field public is_passive? boolean
 
 local defaultCardSkill = fk.CreateActiveSkill{
   name = "default_card_skill",
@@ -477,6 +493,7 @@ local function readCardSpecToCard(card, spec)
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
   card.multiple_targets = spec.multiple_targets
+  card.is_passive = spec.is_passive
 end
 
 ---@param spec CardSpec
@@ -608,6 +625,13 @@ end
 ---@field name string
 ---@field qml_path string | fun(name: string, value?: any, player?: Player): string
 ---@field how_to_show fun(name: string, value?: any, player?: Player): string?
+
+-- TODO: 断连 不操作的人观看 现在只做了专为22设计的框
+---@class MiniGameSpec
+---@field name string
+---@field qml_path string | fun(player: Player, data: any): string
+---@field update_func? fun(player: ServerPlayer, data: any)
+---@field default_choice? fun(player: ServerPlayer, data: any): any
 
 ---@class YuqiSpec
 ---@field name string

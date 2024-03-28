@@ -89,8 +89,14 @@ Rectangle {
       id: textAni
       running: false
       loops: Animation.Infinite
-      NumberAnimation { from: 0; to: 1; duration: 1600; easing.type: Easing.InOutQuad; }
-      NumberAnimation { from: 1; to: 0; duration: 1600; easing.type: Easing.InOutQuad; }
+      NumberAnimation {
+        from: 0; to: 1; duration: 1600
+        easing.type: Easing.InOutQuad
+      }
+      NumberAnimation {
+        from: 1; to: 0; duration: 1600
+        easing.type: Easing.InOutQuad
+      }
     }
   }
 

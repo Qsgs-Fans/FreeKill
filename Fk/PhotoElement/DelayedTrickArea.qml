@@ -35,7 +35,7 @@ Item {
       Image {
         height: 55 * 0.8
         width: 47 * 0.8
-        source: SkinBank.getDelayedTrickPicture(name) // SkinBank.DELAYED_TRICK_DIR + name
+        source: SkinBank.getDelayedTrickPicture(name)
       }
     }
   }
@@ -47,7 +47,7 @@ Item {
       inputs = [inputs];
     }
     inputs.forEach(card => {
-      const v = JSON.parse(Backend.callLuaFunction("GetVirtualEquip", [parent.playerid, card.cid]));
+      const v = lcall("GetVirtualEquip", parent.playerid, card.cid);
       if (v !== null) {
         cards.append(v);
       } else {

@@ -15,7 +15,8 @@ Rectangle {
   property real time: defaultTime
   readonly property real fadeTime: 300
 
-  anchors.horizontalCenter: parent != null ? parent.horizontalCenter : undefined
+  anchors.horizontalCenter: parent != null ? parent.horizontalCenter
+                                           : undefined
   height: message.height + 20
   width: message.width + 40
   radius: 16

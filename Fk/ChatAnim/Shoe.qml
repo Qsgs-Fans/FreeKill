@@ -64,7 +64,8 @@ Item {
           script: {
             egg.opacity = 0;
             whip.opacity = 1;
-            Backend.playSound("./audio/system/egg" + (Math.floor(Math.random() * 2) + 1));
+            Backend.playSound("./audio/system/egg" +
+                              (Math.floor(Math.random() * 2) + 1));
           }
         }
         PropertyAnimation {

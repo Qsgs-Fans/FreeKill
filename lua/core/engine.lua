@@ -7,6 +7,8 @@
 --- 同时也提供了许多常用的函数。
 ---
 ---@class Engine : Object
+---@field public extensions table<string, string[]> @ 所有mod列表及其包含的拓展包
+---@field public extension_names string[] @ Mod名字的数组，为了方便排序
 ---@field public packages table<string, Package> @ 所有拓展包的列表
 ---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
 ---@field public skills table<string, Skill> @ 所有的技能
@@ -28,6 +30,7 @@
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
+---@field public mini_games table<string, MiniGameSpec> @ 自定义多人交互表
 ---@field public yuqi_methods table<string, YuqiSpec> @ “隅泣”框操作方法表
 local Engine = class("Engine")
 
@@ -44,6 +47,12 @@ function Engine:initialize()
 
   Fk = self
 
+  self.extensions = {
+    ["standard"] = { "standard" },
+    ["standard_cards"] = { "standard_cards" },
+    ["maneuvering"] = { "maneuvering" },
+  }
+  self.extension_names = { "standard", "standard_cards", "maneuvering" }
   self.packages = {}    -- name --> Package
   self.package_names = {}
   self.skills = {}    -- name --> Skill
@@ -62,6 +71,7 @@ function Engine:initialize()
   self._custom_events = {}
   self.poxi_methods = {}
   self.qml_marks = {}
+  self.mini_games = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -69,20 +79,20 @@ function Engine:initialize()
 end
 
 local _foreign_keys = {
-  "currentResponsePattern",
-  "currentResponseReason",
-  "filtered_cards",
-  "printed_cards",
+  ["currentResponsePattern"] = true,
+  ["currentResponseReason"] = true,
+  ["filtered_cards"] = true,
+  ["printed_cards"] = true,
 }
 
 function Engine:__index(k)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     return self:currentRoom()[k]
   end
 end
 
 function Engine:__newindex(k, v)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     self:currentRoom()[k] = v
   else
     rawset(self, k, v)
@@ -140,11 +150,15 @@ function Engine:loadPackages()
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
       if type(pack) == "table" then
+        table.insert(self.extension_names, dir)
         if pack[1] ~= nil then
+          self.extensions[dir] = {}
           for _, p in ipairs(pack) do
+            table.insert(self.extensions[dir], p.name)
             self:loadPackage(p)
           end
         else
+          self.extensions[dir] = { pack.name }
           self:loadPackage(pack)
         end
       end
@@ -274,8 +288,8 @@ end
 ---@param name string @ 要查询的武将名字
 ---@return string[] @ 这个武将对应的同名武将列表
 function Engine:getSameGenerals(name)
-  local tmp = name:split("__")
-  local tName = tmp[#tmp]
+  if not self.generals[name] then return {} end
+  local tName = self.generals[name].trueName
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
     return g ~= name and self.generals[g] ~= nil and self:canUseGeneral(g)
@@ -358,7 +372,7 @@ function Engine:addPoxiMethod(spec)
   spec.post_select = spec.post_select or function(s) return s end
 end
 
---- 向Engine中添加一个隅泣用方法。
+--- 向Engine中添加一个QML标记方法。
 ---@param spec QmlMarkSpec
 function Engine:addQmlMark(spec)
   assert(type(spec.name) == "string")
@@ -366,6 +380,16 @@ function Engine:addQmlMark(spec)
     fk.qCritical("Warning: duplicated qml mark type " .. spec.name)
   end
   self.qml_marks[spec.name] = spec
+end
+
+--- 向Engine中添加一个多人交互用方法。
+---@param spec MiniGameSpec
+function Engine:addMiniGame(spec)
+  assert(type(spec.name) == "string")
+  if self.mini_games[spec.name] then
+    fk.qCritical("Warning: duplicated mini game type " .. spec.name)
+  end
+  self.mini_games[spec.name] = spec
 end
 
 --- 向Engine中添加一个隅泣用方法。
@@ -538,7 +562,7 @@ function Engine:_addPrintedCard(card)
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。
----@return Room | Client
+---@return AbstractRoom
 function Engine:currentRoom()
   if RoomInstance then
     return RoomInstance

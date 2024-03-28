@@ -23,14 +23,14 @@ Item {
     Text {
       text: {
         config.totalTime;
-        const gamedata = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [Self.id]));
+        const gamedata = lcall("GetPlayerGameData", Self.id);
         const totalTime = gamedata[3];
         const h = (totalTime / 3600).toFixed(2);
         const m = Math.floor(totalTime / 60);
         if (m < 100) {
-          return Backend.translate("TotalGameTime: %1 min").arg(m);
+          return luatr("TotalGameTime: %1 min").arg(m);
         } else {
-          return Backend.translate("TotalGameTime: %1 h").arg(h);
+          return luatr("TotalGameTime: %1 h").arg(h);
         }
       }
       x: 12; y: 1

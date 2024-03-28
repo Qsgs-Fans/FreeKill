@@ -20,7 +20,8 @@ Item {
 
     Rectangle {
       width: 6
-      height: Math.sqrt(Math.pow(modelData.x - start.x, 2) + Math.pow(modelData.y - start.y, 2)) * ratio
+      height: Math.sqrt(Math.pow(modelData.x - start.x, 2) +
+                        Math.pow(modelData.y - start.y, 2)) * ratio
       x: start.x
       y: start.y
       antialiasing: true

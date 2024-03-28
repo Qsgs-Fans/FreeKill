@@ -12,7 +12,7 @@ end
 
 ---@param from Player
 ---@param to Player
----@return integer
+---@return integer|nil
 function DistanceSkill:getFixed(from, to)
   return nil
 end

@@ -24,6 +24,7 @@
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
+---@field public is_passive? boolean @ 是否只能在响应时使用或打出
 ---@field public is_derived? boolean @ 判断是否为衍生牌
 local Card = class("Card")
 
@@ -145,11 +146,12 @@ function Card:clone(suit, number)
   newCard.special_skills = self.special_skills
   newCard.is_damage_card = self.is_damage_card
   newCard.multiple_targets = self.multiple_targets
+  newCard.is_passive = self.is_passive
   newCard.is_derived = self.is_derived
   return newCard
 end
 
---- 检测是否为虚拟卡牌，如果其ID为0及以下，则为虚拟卡牌。
+--- 检测是否为虚拟卡牌，如果其ID为0，则为虚拟卡牌。
 function Card:isVirtual()
   return self.id == 0
 end
@@ -171,7 +173,7 @@ local function updateColorAndNumber(card)
   local different_color = false
   for i, id in ipairs(card.subcards) do
     local c = Fk:getCardById(id)
-    number = math.min(number + c.number, 13)
+    number = #card.subcards == 1 and math.min(number + c.number, 13) or 0
     if i == 1 then
       card.suit = c.suit
     else
@@ -406,15 +408,10 @@ function Card:getMark(mark)
   if (not self:isVirtual()) and next(self.mark) == nil then
     self.mark = nil
   end
+  if type(ret) == "table" then
+    ret = table.simpleClone(ret)
+  end
   return ret
-end
-
---- 判定卡牌是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Card:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
 end
 
 --- 获取卡牌有哪些Mark。

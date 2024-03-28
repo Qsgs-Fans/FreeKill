@@ -225,6 +225,21 @@ local tiandu = fk.CreateTriggerSkill{
     player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
   end,
 }
+local yiji_active = fk.CreateActiveSkill{
+  name = "yiji_active",
+  expand_pile = function(self)
+    return type(Self:getMark("yiji_cards")) == "table" and Self:getMark("yiji_cards") or {}
+  end,
+  min_card_num = 1,
+  target_num = 1,
+  card_filter = function(self, to_select, selected, targets)
+    local ids = Self:getMark("yiji_cards")
+      return type(ids) == "table" and table.contains(ids, to_select)
+  end,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0 and to_select ~= Self.id
+  end,
+}
 local yiji = fk.CreateTriggerSkill{
   name = "yiji",
   anim_type = "masochism",
@@ -246,75 +261,30 @@ local yiji = fk.CreateTriggerSkill{
   on_use = function(self, event, target, player, data)
     local room = player.room
     local ids = room:getNCards(2)
-    local fakemove = {
-      toArea = Card.PlayerHand,
-      to = player.id,
-      moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.Void} end),
-      moveReason = fk.ReasonJustMove,
-    }
-    room:notifyMoveCards({player}, {fakemove})
-    for _, id in ipairs(ids) do
-      room:setCardMark(Fk:getCardById(id), "yiji", 1)
-    end
-    player.tag["yiji_ids"] = ids --存储遗技卡牌表
-    while table.find(ids, function(id) return Fk:getCardById(id):getMark("yiji") > 0 end) do
-      if not room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true) then
-        for _, id in ipairs(ids) do
-          room:setCardMark(Fk:getCardById(id), "yiji", 0)
+    while true do
+      room:setPlayerMark(player, "yiji_cards", ids)
+      local _, ret = room:askForUseActiveSkill(player, "yiji_active", "#yiji-give", true, nil, true)
+      room:setPlayerMark(player, "yiji_cards", 0)
+      if ret then
+        for _, id in ipairs(ret.cards) do
+          table.removeOne(ids, id)
         end
-        ids = table.filter(ids, function(id) return room:getCardArea(id) ~= Card.PlayerHand end)
-        fakemove = {
-          from = player.id,
-          toArea = Card.Void,
-          moveInfo = table.map(ids, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
-          moveReason = fk.ReasonGive,
-        }
-        room:notifyMoveCards({player}, {fakemove})
-        room:moveCards({
-          fromArea = Card.Void,
-          ids = ids,
-          to = player.id,
-          toArea = Card.PlayerHand,
-          moveReason = fk.ReasonGive,
-          skillName = self.name,
-        })
+        room:moveCardTo(ret.cards, Card.PlayerHand, room:getPlayerById(ret.targets[1]), fk.ReasonGive, self.name, nil, false, player.id)
+        if #ids == 0 then break end
+        if player.dead then
+          room:moveCards({
+            ids = ids,
+            toArea = Card.DiscardPile,
+            moveReason = fk.ReasonJustMove,
+            skillName = self.name,
+          })
+          break
+        end
+      else
+        room:moveCardTo(ids, Player.Hand, player, fk.ReasonGive, self.name, nil, false, player.id)
+        break
       end
     end
-  end,
-}
-local yiji_active = fk.CreateActiveSkill{
-  name = "yiji_active",
-  mute = true,
-  min_card_num = 1,
-  target_num = 1,
-  card_filter = function(self, to_select, selected, targets)
-    return Fk:getCardById(to_select):getMark("yiji") > 0
-  end,
-  target_filter = function(self, to_select, selected, selected_cards)
-    return #selected == 0
-  end,
-  on_use = function(self, room, effect)
-    local player = room:getPlayerById(effect.from)
-    local target = room:getPlayerById(effect.tos[1])
-    room:doIndicate(player.id, {target.id})
-    for _, id in ipairs(effect.cards) do
-      room:setCardMark(Fk:getCardById(id), "yiji", 0)
-    end
-    local fakemove = {
-      from = player.id,
-      toArea = Card.Void,
-      moveInfo = table.map(effect.cards, function(id) return {cardId = id, fromArea = Card.PlayerHand} end),
-      moveReason = fk.ReasonGive,
-    }
-    room:notifyMoveCards({player}, {fakemove})
-    room:moveCards({
-      fromArea = Card.Void,
-      ids = effect.cards,
-      to = target.id,
-      toArea = Card.PlayerHand,
-      moveReason = fk.ReasonGive,
-      skillName = self.name,
-    })
   end,
 }
 local guojia = General:new(extension, "guojia", "wei", 3)
@@ -1162,8 +1132,11 @@ local role_getlogic = function()
         lord_general = lord_generals
         lord_generals = {lord_general}
       end
-
-      generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
+      generals = table.filter(generals, function(g)
+        return not table.find(lord_generals, function(lg)
+          return Fk.generals[lg].trueName == Fk.generals[g].trueName
+        end)
+      end)
       room:returnToGeneralPile(generals)
 
       room:setPlayerGeneral(lord, lord_general, true)
@@ -1172,6 +1145,56 @@ local role_getlogic = function()
       room:broadcastProperty(lord, "kingdom")
       room:setDeputyGeneral(lord, deputy)
       room:broadcastProperty(lord, "deputyGeneral")
+
+      -- 显示技能
+      local canAttachSkill = function(player, skillName)
+        local skill = Fk.skills[skillName]
+        if not skill then
+          fk.qCritical("Skill: "..skillName.." doesn't exist!")
+          return false
+        end
+        if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+          return false
+        end
+
+        if #skill.attachedKingdom > 0 and not table.contains(skill.attachedKingdom, player.kingdom) then
+          return false
+        end
+
+        return true
+      end
+
+      local lord_skills = {}
+      for _, s in ipairs(Fk.generals[lord.general].skills) do
+        if canAttachSkill(lord, s.name) then
+          table.insertIfNeed(lord_skills, s.name)
+        end
+      end
+      for _, sname in ipairs(Fk.generals[lord.general].other_skills) do
+        if canAttachSkill(lord, sname) then
+          table.insertIfNeed(lord_skills, sname)
+        end
+      end
+
+      local deputyGeneral = Fk.generals[lord.deputyGeneral]
+      if deputyGeneral then
+        for _, s in ipairs(deputyGeneral.skills) do
+          if canAttachSkill(lord, s.name) then
+            table.insertIfNeed(lord_skills, s.name)
+          end
+        end
+        for _, sname in ipairs(deputyGeneral.other_skills) do
+          if canAttachSkill(lord, sname) then
+            table.insertIfNeed(lord_skills, sname)
+          end
+        end
+      end
+      for _, skill in ipairs(lord_skills) do
+        room:doBroadcastNotify("AddSkill", json.encode{
+          lord.id,
+          skill
+        })
+      end
     end
 
     local nonlord = room:getOtherPlayers(lord, true)
@@ -1196,13 +1219,18 @@ local role_getlogic = function()
         room:setPlayerGeneral(p, general, true, true)
         room:setDeputyGeneral(p, deputy)
       else
+        table.insertTableIfNeed(selected, p.default_reply)
         room:setPlayerGeneral(p, p.default_reply[1], true, true)
         room:setDeputyGeneral(p, p.default_reply[2])
       end
       p.default_reply = ""
     end
 
-    generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
+    generals = table.filter(generals, function(g)
+      return not table.find(selected, function(lg)
+        return Fk.generals[lg].trueName == Fk.generals[g].trueName
+      end)
+    end)
     room:returnToGeneralPile(generals)
 
     room:askForChooseKingdom(nonlord)

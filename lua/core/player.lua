@@ -215,15 +215,10 @@ end
 ---@param mark string @ 标记
 ---@return any
 function Player:getMark(mark)
-  return (self.mark[mark] or 0)
-end
-
---- 判定角色是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Player:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
+  local mark = self.mark[mark]
+  if not mark then return 0 end
+  if type(mark) == "table" then return table.simpleClone(mark) end
+  return mark
 end
 
 --- 获取角色有哪些Mark。
@@ -363,13 +358,13 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
---- 通过名字检索获取玩家是否存在对应私人牌堆。
+--- 通过名字检索获取玩家对应的私人牌堆。
 ---@param name string @ 私人牌堆名
 function Player:getPile(name)
-  return self.special_cards[name] or {}
+  return table.simpleClone(self.special_cards[name] or {})
 end
 
---- 通过ID检索获取玩家是否存在对应私人牌堆。
+--- 通过ID检索获取玩家对应的私人牌堆。
 ---@param id integer @ 私人牌堆ID
 ---@return string?
 function Player:getPileNameOfId(id)
@@ -454,23 +449,43 @@ end
 
 --- 获取玩家攻击范围。
 function Player:getAttackRange()
-  local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
-  local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
-
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self)
-    baseAttackRange = baseAttackRange + (correct or 0)
+  local baseValue = 1
+  local weapons = self:getEquipments(Card.SubtypeWeapon)
+  if #weapons > 0 then
+    baseValue = 0
+    for _, id in ipairs(weapons) do
+      local weapon = Fk:getCardById(id)
+      baseValue = math.max(baseValue, weapon.attack_range or 1)
+    end
   end
 
-  return math.max(baseAttackRange, 0)
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local max_fixed, correct = nil, 0
+  for _, skill in ipairs(status_skills) do
+    local f = skill:getFixed(self)
+    if f ~= nil then
+      max_fixed = max_fixed and math.max(max_fixed, f) or f
+    end
+    local c = skill:getCorrect(self)
+    correct = correct + (c or 0)
+  end
+
+  return math.max(math.max(baseValue, (max_fixed or 0)) + correct, 0)
 end
 
 --- 获取角色是否被移除。
 function Player:isRemoved()
-  return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
-    return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
-  end)
+  for mark, _ in pairs(self.mark) do
+    if mark == MarkEnum.PlayerRemoved then return true end
+    if mark:startsWith(MarkEnum.PlayerRemoved .. "-") then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
+    end
+  end
+  -- return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
+  --   return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
+  -- end)
 end
 
 --- 修改玩家与其他角色的固定距离。
@@ -857,9 +872,20 @@ end
 
 --- 确认玩家是否可以使用特定牌。
 ---@param card Card @ 特定牌
-function Player:canUse(card)
-  assert(card, "Error: No Card")
-  return card.skill:canUse(self, card)
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUse(card, extra_data)
+  return card.skill:canUse(self, card, extra_data)
+end
+
+--- 确认玩家是否可以对特定玩家使用特定牌。
+---@param card Card @ 特定牌
+---@param to Player @ 特定玩家
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUseTo(card, to, extra_data)
+  if self:prohibitUse(card) or self:isProhibited(to, card) then return false end
+  local distance_limited = not (extra_data and extra_data.bypass_distances)
+  local can_use = self:canUse(card, extra_data)
+  return can_use and card.skill:modTargetFilter(to.id, {}, self.id, card, distance_limited)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。
@@ -911,8 +937,12 @@ function Player:prohibitResponse(card)
 end
 
 --- 确认玩家是否被禁止弃置特定牌。
----@param card Card @ 特定的牌
+---@param card Card|integer @ 特定的牌
 function Player:prohibitDiscard(card)
+  if type(card) == "number" then
+    card = Fk:getCardById(card)
+  end
+
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitDiscard(self, card) then
@@ -928,13 +958,21 @@ function Player:prohibitReveal(isDeputy)
   if type(self:getMark(MarkEnum.RevealProhibited)) == "table" and table.contains(self:getMark(MarkEnum.RevealProhibited), place) then
     return true
   end
-  for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-      return self:getMark(MarkEnum.RevealProhibited .. s)
-    end)) do
-    if type(m) == "table" and table.contains(m, place) then
-      return true
+
+  for mark, value in pairs(self.mark) do
+    if mark:startsWith(MarkEnum.RevealProhibited .. "-") and type(value) == "table" then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
     end
   end
+  -- for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+  --     return self:getMark(MarkEnum.RevealProhibited .. s)
+  --   end)) do
+  --   if type(m) == "table" and table.contains(m, place) then
+  --     return true
+  --   end
+  -- end
   return false
 end
 
@@ -957,6 +995,21 @@ function Player:canPindian(to, ignoreFromKong, ignoreToKong)
     end
   end
   return true
+end
+
+--- 判断一张牌能否移动至某角色的装备区
+---@param cardId integer @ 移动的牌
+---@param convert? boolean @ 是否可以替换装备（默认可以）
+---@return boolean
+function Player:canMoveCardIntoEquip(cardId, convert)
+  convert = (convert == nil) and true or convert
+  local card = Fk:getCardById(cardId)
+  if not (card.sub_type >= 3 and card.sub_type <= 7) then return false end
+  if self.dead or table.contains(self:getCardIds("e"), cardId) then return false end
+  if self:hasEmptyEquipSlot(card.sub_type) or (#self:getEquipments(card.sub_type) > 0 and convert) then
+    return true
+  end
+  return false
 end
 
 --转换技状态阳
@@ -991,7 +1044,7 @@ function Player:canMoveCardInBoardTo(to, id)
     return
       not (
         table.find(to:getCardIds(Player.Judge), function(cardId)
-          return Fk:getCardById(cardId).name == card.name
+          return (to:getVirualEquip(cardId) or Fk:getCardById(cardId)).name == card.name
         end) or
         table.contains(to.sealedSlots, Player.JudgeSlot)
       )

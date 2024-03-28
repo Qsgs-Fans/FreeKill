@@ -8,7 +8,7 @@ GraphicsBox {
   property bool interactive: false
 
   id: root
-  title.text: Backend.translate("Please choose cards")
+  title.text: luatr("Please choose cards")
   width: cards.count * 100 + spacing * (cards.count - 1) + 25
   height: 180
 
@@ -46,8 +46,7 @@ GraphicsBox {
 
   function addIds(ids) {
     ids.forEach((id) => {
-      let data = Backend.callLuaFunction("GetCardData", [id]);
-      data = JSON.parse(data);
+      let data = lcall("GetCardData", id);
       data.selectable = true;
       data.footnote = "";
       cards.append(data);

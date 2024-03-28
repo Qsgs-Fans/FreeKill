@@ -174,7 +174,7 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryRound)
     p:setSkillUseHistory("", 0, Player.HistoryRound)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -182,10 +182,15 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end
 
@@ -249,7 +254,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryTurn)
     p:setSkillUseHistory("", 0, Player.HistoryTurn)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -257,10 +262,15 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end
 
@@ -268,7 +278,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
   local room = self.room
   local logic = room.logic
 
-  local player = self.data[1]
+  local player = self.data[1] ---@type Player
   if not logic:trigger(fk.EventPhaseStart, player) then
     if player.phase ~= Player.NotActive then
       logic:trigger(fk.EventPhaseProceeding, player)
@@ -285,23 +295,26 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       end,
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
-        for i = #cards, 1, -1 do
-          local card
-          card = player:removeVirtualEquip(cards[i])
+        while #cards > 0 do
+          local cid = table.remove(cards)
+          if not cid then return end
+          local card = player:removeVirtualEquip(cid)
           if not card then
-            card = Fk:getCardById(cards[i])
+            card = Fk:getCardById(cid)
           end
-          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+          if table.contains(player:getCardIds(Player.Judge), cid) then
+            room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
-          ---@type CardEffectEvent
-          local effect_data = {
-            card = card,
-            to = player.id,
-            tos = { {player.id} },
-          }
-          room:doCardEffect(effect_data)
-          if effect_data.isCancellOut and card.skill then
-            card.skill:onNullified(room, effect_data)
+            ---@type CardEffectEvent
+            local effect_data = {
+              card = card,
+              to = player.id,
+              tos = { {player.id} },
+            }
+            room:doCardEffect(effect_data)
+            if effect_data.isCancellOut and card.skill then
+              card.skill:onNullified(room, effect_data)
+            end
           end
         end
       end,
@@ -369,7 +382,7 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryPhase)
     p:setSkillUseHistory("", 0, Player.HistoryPhase)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -377,9 +390,14 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end

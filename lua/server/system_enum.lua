@@ -50,6 +50,10 @@
 ---@field public num integer @ 失去体力的数值
 ---@field public skillName string @ 导致这次失去的技能名
 
+--- 描述跟体力上限变化有关的数据
+---@class MaxHpChangedData
+---@field public num integer @ 体力上限变化量，可能是正数或者负数
+
 ---@alias DamageType integer
 
 fk.NormalDamage = 1
@@ -110,6 +114,7 @@ fk.IceDamage = 4
 ---@field public cardsResponded? Card[]
 ---@field public prohibitedCardNames? string[]
 ---@field public damageDealt? table<PlayerId, number>
+---@field public additionalEffect? integer
 
 ---@class AimStruct
 ---@field public from integer
@@ -126,9 +131,10 @@ fk.IceDamage = 4
 ---@field public unoffsetableList? boolean
 ---@field public additionalResponseTimes? table<string, integer>|integer
 ---@field public fixedAddTimesResponsors? integer[]
+---@field public additionalEffect? integer
 
 ---@class CardEffectEvent
----@field public from integer
+---@field public from? integer
 ---@field public to integer
 ---@field public subTargets? integer[]
 ---@field public tos TargetGroup
@@ -181,8 +187,34 @@ fk.IceDamage = 4
 ---@field public pattern string
 ---@field public result Card
 
----@alias CardMoveReason integer
+---@class PindianStruct
+---@field public from ServerPlayer
+---@field public tos ServerPlayer[]
+---@field public fromCard Card
+---@field public results table<integer, PindianResult>
+---@field public reason string
 
+---@class LogMessage
+---@field public type string @ log主体
+---@field public from? integer @ 要替换%from的玩家的id
+---@field public to? integer[] @ 要替换%to的玩家id列表
+---@field public card? integer[] @ 要替换%card的卡牌id列表
+---@field public arg? any @ 要替换%arg的内容
+---@field public arg2? any @ 要替换%arg2的内容
+---@field public arg3? any @ 要替换%arg3的内容
+---@field public toast? boolean @ 是否顺手把消息发送一条相同的toast
+
+---@class SkillUseStruct
+---@field public skill Skill
+---@field public willUse boolean
+
+---@class DrawCardStruct
+---@field public who ServerPlayer
+---@field public num number
+---@field public skillName string
+---@field public fromPlace "top"|"bottom"
+
+---@alias CardMoveReason integer
 fk.ReasonJustMove = 1
 fk.ReasonDraw = 2
 fk.ReasonDiscard = 3
@@ -195,29 +227,3 @@ fk.ReasonUse = 9
 fk.ReasonResonpse = 10
 fk.ReasonJudge = 11
 fk.ReasonRecast = 12
-
----@class PindianStruct
----@field public from ServerPlayer
----@field public tos ServerPlayer[]
----@field public fromCard Card
----@field public results table<integer, PindianResult>
----@field public reason string
-
----@class LogMessage
----@field public type string
----@field public from? integer
----@field public to? integer[]
----@field public card? integer[]
----@field public arg? any
----@field public arg2? any
----@field public arg3? any
-
----@class SkillUseStruct
----@field public skill Skill
----@field public willUse boolean
-
----@class DrawCardStruct
----@field public who ServerPlayer
----@field public num number
----@field public skillName string
----@field public fromPlace "top"|"bottom"

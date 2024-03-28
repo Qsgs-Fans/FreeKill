@@ -57,7 +57,7 @@ Flickable {
     if (!card) return;
     cardPic.setData(card.toData());
     const name = card.virt_name ? card.virt_name : card.name;
-    screenName.text = Backend.translate(name);
-    skillDesc.text = Backend.translate(":" + name);
+    screenName.text = luatr(name);
+    skillDesc.text = luatr(":" + name);
   }
 }

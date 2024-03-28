@@ -79,12 +79,16 @@ Fk:loadTranslationTable{
   ["Clear"] = "清空",
   ["Help_Ban_List"] = "导出键会将这个方案的内容复制到剪贴板中；" ..
   "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
+  ["Ban_Generals"] = "已禁用武将",
+  ["Ban_Packages"] = "禁用拓展包",
+  ["Whitelist_Generals"] = "白名单武将",
   ["Export"] = "导出",
   ["Export Success"] = "禁将方案已经复制到剪贴板。",
   ["Import"] = "导入",
   ["Not Legal"] = "导入失败：不是合法的JSON字符串。",
   ["Not JSON"] = "导入失败：数据格式不对。",
   ["Import Success"] = "从剪贴板导入禁将方案成功。",
+  ["Rename"] = "重命名",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -184,8 +188,17 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["BanPackage"] = "禁拓展包",
+  ["$BanPkgHelp"] = "正在禁用拓展包",
+  ["$BanCharaHelp"] = "正在禁用武将",
   ["Companions"] = "珠联璧合",
   ["Death audio"] = "阵亡",
+  ["Win audio"] = "胜利语音",
+  ["Official"] = "官方",
+  ["Title"] = "称号：",
+  ["Designer"] = "设计：",
+  ["Voice Actor"] = "配音：",
+  ["Illustrator"] = "画师：",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
   ["GameMode"] = "游戏模式：",
@@ -226,12 +239,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
   ["AskForMoveCardInBoard"] = "移动卡牌",
+  ["replaceEquip"] = "替换装备",
   ["PlayCard"] = "出牌",
 
   ["AskForCardChosen"] = "选牌",
   ["AskForCardsChosen"] = "选牌",
-  ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
-  ["#AskForChooseCards"] = "%1：请选择其%2至%3张卡牌",
+  ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
+  ["#AskForChooseCards"] = "%1：请选择%src的%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
   ["$ChooseCards"] = "请选择%1至%2张卡牌",
   ["$Hand"] = "手牌区",
@@ -248,6 +262,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
+  ["#AskForDistribution"] = "请分配这些牌，至少 %arg 张，至多 %arg2 张",
+  ["@DistributionTo"] = "",
+  ["#replaceEquip"] = "选择一张装备牌替换之",
   ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
   ["#StartPindianReason"] = "%from 由于 %arg 而发起拼点",
   ["#ShowPindianCard"] = "%from 的拼点牌是 %card",
@@ -304,9 +321,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.2
+  ## v0.4.9
 
-  增加游玩计时和屏蔽提示。
+  修复投降莫名奇妙把对面杀了的bug
 
   ]==],
 }
@@ -323,7 +340,8 @@ Fk:loadTranslationTable{
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
-  ["hp_lost"] = "体力流失",
+  ["hp_lost"] = "失去体力",
+  ["lose_hp"] = "失去体力",
 
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
@@ -386,21 +404,26 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
-  ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
-  ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
   ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
-  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
-  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
-  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
-  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
+
+  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
+  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
+
+  ["$AddToPile"] = "%arg2 张牌 %card 被作为 %from 的 %arg 移出游戏",
+
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
+  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+  ["$DiscardOther"] = "%to 弃置了 %from 的 %arg 张牌 %card",
+  ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",
 
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",

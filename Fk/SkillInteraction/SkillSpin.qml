@@ -10,11 +10,7 @@ SpinBox {
   // from, to
 
   onValueChanged: {
-    Backend.callLuaFunction(
-      "SetInteractionDataOfSkill",
-      [skill, JSON.stringify(answer)]
-    );
+    lcall("SetInteractionDataOfSkill", skill, JSON.stringify(answer));
     roomScene.dashboard.startPending(skill);
   }
-
 }

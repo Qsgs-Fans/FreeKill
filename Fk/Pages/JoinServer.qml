@@ -204,7 +204,8 @@ Item {
         Layout.fillWidth: true
         placeholderText: qsTr("Password")
         text: ""
-        echoMode: showPasswordCheck.checked ? TextInput.Normal : TextInput.Password
+        echoMode: showPasswordCheck.checked ? TextInput.Normal
+                                            : TextInput.Password
         passwordCharacter: "*"
       }
 
@@ -215,10 +216,12 @@ Item {
 
       Button {
         Layout.fillWidth: true
-        enabled: serverAddrEdit.text !== "" && screenNameEdit.text !== "" && passwordEdit.text !== ""
+        enabled: serverAddrEdit.text !== "" && screenNameEdit.text !== ""
+                 && passwordEdit.text !== ""
         text: "OK"
         onClicked: {
-          root.addNewServer(serverAddrEdit.text, screenNameEdit.text, passwordEdit.text);
+          root.addNewServer(serverAddrEdit.text, screenNameEdit.text,
+                            passwordEdit.text);
           finished();
         }
       }
@@ -259,7 +262,8 @@ Item {
         Layout.fillWidth: true
         placeholderText: qsTr("Password")
         text: ""
-        echoMode: showPasswordCheck.checked ? TextInput.Normal : TextInput.Password
+        echoMode: showPasswordCheck.checked ? TextInput.Normal
+                                            : TextInput.Password
         passwordCharacter: "*"
       }
 
@@ -371,7 +375,11 @@ Item {
       const item = serverModel.get(i);
       const ip = item.serverIP;
       if (addr.endsWith(ip)) { // endsWith是为了应付IPv6格式的ip
-        item.misMatchMsg = FkVersion === ver ? "" : qsTr("@VersionMismatch").arg(ver);
+        item.misMatchMsg = "";
+        if (FkVersion !== ver) {
+          item.misMatchMsg = qsTr("@VersionMismatch").arg(ver);
+        }
+
         item.description = desc;
         item.favicon = icon;
         item.online = count.toString();

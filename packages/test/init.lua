@@ -80,6 +80,7 @@ local control = fk.CreateActiveSkill{
     --   ok = {10, 2},
     -- })
     -- room:swapSeat(from, to)
+    -- p(room:askForYiji(from, from:getCardIds(Player.Hand), table.map(effect.tos, Util.Id2PlayerMapper), self.name, 2, 10, nil, false, nil, false, 3, true))
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
       -- p(room:askForPoxi(from, "test", {
@@ -88,6 +89,10 @@ local control = fk.CreateActiveSkill{
       -- }, from.hp, false))
       -- room:setPlayerMark(from, "@$a", {1,2,3})
       -- room:setPlayerMark(from, "@$b", {'slash','duel','axe'})
+      --room:askForMiniGame({from}, "test", "test", { [from.id] = {"Helloworld"} })
+      --print(from.client_reply)
+      -- p(Fk.generals[to.general]:getSkillNameList())
+      -- p(Fk.generals[to.general]:getSkillNameList(true))
       if to:getMark("mouxushengcontrolled") == 0 then
         room:addPlayerMark(to, "mouxushengcontrolled")
         from:control(to)
@@ -126,6 +131,13 @@ local control = fk.CreateActiveSkill{
   end,
 }
 --[[
+Fk:addMiniGame{
+  name = "test",
+  qml_path = "packages/test/qml/TestMini",
+  update_func = function(player, data)
+    player:doNotify("UpdateMiniGame", json.encode(data))
+  end
+}
 Fk:addPoxiMethod{
   name = "test",
   card_filter = function(to_select, selected, data, extra_data)
@@ -197,19 +209,10 @@ local test_vs = fk.CreateViewAsSkill{
 }
 local test_trig = fk.CreateTriggerSkill{
   name = "test_trig",
-  events = {fk.EventPhaseEnd},
-  can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self.name) and player.phase == Player.Discard
-  end,
-  on_cost = function(self, event, target, player, data)
-    local cards = player.room:askForDiscard(player, 1, 1, false, self.name, true, nil, "#test_trig-ask", true)
-    if #cards > 0 then
-      self.cost_data = cards
-      return true
-    end
-  end,
+  events = {fk.BeforeHpChanged},
+  on_cost = Util.TrueFunc,
   on_use = function(self, event, target, player, data)
-    player.room:throwCard(self.cost_data, self.name, player, player)
+    data.num = data.num - 1
   end,
 }
 local damage_maker = fk.CreateActiveSkill{
@@ -234,7 +237,7 @@ local damage_maker = fk.CreateActiveSkill{
   } end,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    local victim = #effect.tos > 0 and room:getPlayerById(effect.tos[1])
+    local victim = room:getPlayerById(effect.tos[1])
     local target = #effect.tos > 1 and room:getPlayerById(effect.tos[2])
     local choice = self.interaction.data
     local number
@@ -243,7 +246,7 @@ local damage_maker = fk.CreateActiveSkill{
       for i = 1, 99 do
         table.insert(choices, tostring(i))
       end
-      number = tonumber(room:askForChoice(from, choices, self.name, nil))
+      number = tonumber(room:askForChoice(from, choices, self.name, nil)) ---@type integer
     end
     if target then from = target end
     if choice == "heal_hp" then
@@ -305,9 +308,6 @@ local change_hero = fk.CreateActiveSkill{
     local choice = self.interaction.data
     local generals = room:getNGenerals(8)
     local general = room:askForGeneral(from, generals, 1)
-    if general == nil then
-      general = table.random(generals)
-    end
     table.removeOne(generals, general)
     room:changeHero(target, general, false, choice == "deputyGeneral", true)
     room:returnToGeneralPile(generals)
@@ -319,7 +319,7 @@ local test_zhenggong = fk.CreateTriggerSkill{
   frequency = Skill.Compulsory,
   anim_type = "negative",
   can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self.name) and player.room:getTag("RoundCount") == 1
+    return player:hasSkill(self) and player.room:getTag("RoundCount") == 1
   end,
   on_use = function(self, event, target, player, data)
     player:gainAnExtraTurn()
@@ -348,8 +348,8 @@ test2.hidden = true
 test2:addSkill("rende")
 test2:addSkill(cheat)
 test2:addSkill(control)
---test2:addSkill(test_vs)
---test2:addSkill(test_trig)
+-- test2:addSkill(test_vs)
+-- test2:addSkill(test_trig)
 test2:addSkill(damage_maker)
 test2:addSkill(test_zhenggong)
 test2:addSkill(change_hero)
@@ -379,7 +379,6 @@ Fk:loadTranslationTable{
   ["$cheat"] = "喝啊！",
   -- ["@@test_cheat-phase"] = "苦肉",
   -- ["@@test_cheat-inhand"] = "连营",
-  --["#test_trig-ask"] = "你可弃置一张手牌",
   ["control"] = "控制",
   [":control"] = "出牌阶段，你可以控制/解除控制若干名其他角色。",
   ["$control"] = "战将临阵，斩关刈城！",
@@ -403,6 +402,11 @@ Fk:loadTranslationTable{
   ["$change_hero"] = "敌军色厉内荏，可筑假城以退敌！",
 
   ["~mouxusheng"] = "来世，愿再为我江东之臣……",
+
+  ["heal_hp"] = "回复体力",
+  ["lose_max_hp"] = "减体力上限",
+  ["heal_max_hp"] = "加体力上限",
+  ["revive"] = "复活",
 }
 
 return { extension }

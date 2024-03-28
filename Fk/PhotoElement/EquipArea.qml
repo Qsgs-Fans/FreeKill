@@ -17,9 +17,15 @@ Item {
 
   height: 70
   width: 138
-  property int itemHeight: (treasureItem.name === "" && !treasureItem.sealed) ? height / 3 : height / 4
-  property var items: [treasureItem, weaponItem, armorItem, defensiveHorseItem, offensiveHorseItem]
-  property var subtypes: ["treasure", "weapon", "armor", "defensive_horse", "offensive_horse"]
+  property int itemHeight: {
+    if (treasureItem.name === "" && !treasureItem.sealed)
+      return height / 3;
+    return height / 4;
+  }
+  property var items: [treasureItem, weaponItem, armorItem,
+    defensiveHorseItem, offensiveHorseItem]
+  property var subtypes: ["treasure", "weapon", "armor",
+    "defensive_horse", "offensive_horse"]
   property int length: area.length
 
   // FIXME: Qt 6.6

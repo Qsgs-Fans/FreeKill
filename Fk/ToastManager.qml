@@ -2,8 +2,8 @@
 
 import QtQuick
 
-// copy from https://gist.github.com/jonmcclung/bae669101d17b103e94790341301c129
-// and modified some code
+// https://gist.github.com/jonmcclung/bae669101d17b103e94790341301c129
+// modified some code
 ListView {
   function show(text, duration) {
     if (duration === undefined) {

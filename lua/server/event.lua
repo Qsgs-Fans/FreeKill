@@ -33,6 +33,7 @@ fk.PreHpLost = 17
 fk.HpLost = 18
 fk.BeforeHpChanged = 19
 fk.HpChanged = 20
+fk.BeforeMaxHpChanged = 97
 fk.MaxHpChanged = 21
 
 fk.EventLoseSkill = 22

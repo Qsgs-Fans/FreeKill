@@ -10,7 +10,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Lobby BG")
+      text: luatr("Lobby BG")
     }
     TextField {
       Layout.fillWidth: true
@@ -30,7 +30,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Room BG")
+      text: luatr("Room BG")
     }
     TextField {
       Layout.fillWidth: true
@@ -50,7 +50,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Game BGM")
+      text: luatr("Game BGM")
     }
     TextField {
       Layout.fillWidth: true
@@ -70,7 +70,7 @@ ColumnLayout {
     anchors.rightMargin: 8
     spacing: 16
     Text {
-      text: Backend.translate("Poster Girl")
+      text: luatr("Poster Girl")
     }
     TextField {
       Layout.fillWidth: true

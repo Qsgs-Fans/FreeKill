@@ -27,7 +27,8 @@ Item {
         y: start.y - height / 2 + yOffset
         scale: 0.7
         opacity: 0
-        rotation: (Math.atan(Math.abs(end.y - start.y) / Math.abs(end.x - start.x))
+        rotation: (Math.atan(Math.abs(end.y - start.y)
+          / Math.abs(end.x - start.x))
           / Math.PI * 180 - 90) * (end.x > start.x ? -1 : 1)
       }
 

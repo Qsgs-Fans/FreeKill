@@ -54,7 +54,8 @@ Fk:loadTranslationTable({
 
   ["slash"] = "Slash",
   [":slash"] = "Slash (basic card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Another player within your ATK range<br /><b>Effect</b>: Deal 1 DMG to the targets.<br/><b>Note</b>: You can only use 1 Slash per action phase.",
-  ["#slash-jink"] = "%src used Slash to you, please use %arg Dodge(s)",
+  ["#slash-jink"] = "%src used Slash to you, please use a Dodge",
+  ["#slash-jink-multi"] = "%src used Slash to you, please use a Dodge( %arg th, %arg2 total )",
   ["#slash_skill"] = "Choose 1 player within your ATK range, deal 1 DMG to him",
   ["#slash_skill_multi"] = "Choose up to %arg players within your ATK range. Deal 1 DMG to them",
 
@@ -119,6 +120,7 @@ Fk:loadTranslationTable({
 
   ["crossbow"] = "Crossbow",
   [":crossbow"] = "Crossbow (equip card, weapon)<br /><b>ATK range</b>: 1<br /><b>Weapon skill</b>: You can use any amount of Slash in your action phase.",
+  ["#crossbow_skill"] = "Crossbow",
 
   ["qinggang_sword"] = "Qinggang Sword",
   [":qinggang_sword"] = "Qinggang Sword (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: Your Slash ignores the target's armor.",
@@ -151,6 +153,7 @@ Fk:loadTranslationTable({
 
   ["halberd"] = "Halberd",
   [":halberd"] = "Halberd (equip card, weapon)<br /><b>ATK range</b>: 4<br /><b>Weapon skill</b>: When you are about to use Slash which is your last hand card, you can target up to +2 extra targets.",
+  ["#halberd_skill"] = "Halberd",
 
   ["kylin_bow"] = "Kylin Bow",
   [":kylin_bow"] = "Kylin Bow (equip card, weapon)<br /><b>ATK range</b>: 5<br /><b>Weapon skill</b>: When your used Slash is about to cause DMG, you can discard 1 of his equipped horse.",
@@ -162,6 +165,7 @@ Fk:loadTranslationTable({
 
   ["nioh_shield"] = "Nioh Shield",
   [":nioh_shield"] = "Nioh Shield (equip card, armor)<br /><b>Armor skill</b>: Black Slash has no effect on you.",
+  ["#nioh_shield_skill"] = "Nioh Shield",
 
   ["dilu"] = "Di Lu",
   [":dilu"] = "Di Lu (equip card, horse)<br /><b>Horse skill</b>: The distance from other players to you is increased by +1.",

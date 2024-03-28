@@ -32,6 +32,7 @@ jobs:
         target: 'desktop'
         arch: 'win64_mingw'
         modules: 'qtmultimedia qt5compat qtshadertools'
+        tools: 'tools_opensslv3_x64'
 
     - name: Disable PCH
       shell: bash
@@ -46,6 +47,9 @@ jobs:
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        OPENSSL_ROOT_DIR: ${{env.Qt6_Dir}}/../../Tools/OpenSSLv3/Win_x64
+        OPENSSL_INCLUDE_DIR: ${{env.OPENSSL_ROOT_DIR}}/include
+        OPENSSL_CRYPTO_LIBRARY: ${{env.OPENSSL_ROOT_DIR}}/bin/libcrypto-3-x64.dll
       run: |
         cmake -DCMAKE_BUILD_TYPE=MinSizeRel -G "MinGW Makefiles" -B ${{github.workspace}}/build
 
@@ -74,7 +78,7 @@ jobs:
         cp build/zh_CN.qm FreeKill-release
         cp build/en_US.qm FreeKill-release
         cp ../Qt/6.5.3/mingw_64/bin/li*.dll FreeKill-release
-        cp '/c/Program Files/OpenSSL/bin/libcrypto-1_1-x64.dll' FreeKill-release
+        cp ../Qt/Tools/OpenSSLv3/Win_x64/bin/libcrypto-3-x64.dll FreeKill-release
         7z a -t7z FreeKill-release.7z FreeKill-release -r -mx=9 -m0=LZMA2 -ms=10m -mf=on -mhc=on -mmt=on
 
     - name: Upload Release

@@ -28,12 +28,12 @@ Item {
       Text {
         text: {
           let o = "$" + skillName + "_" + generalName + (index % 2 + 1);
-          let p = Backend.translate(o);
+          let p = luatr(o);
           if (o !== p) {
             return p;
           }
           o = "$" + skillName + (index % 2 + 1);
-          p = Backend.translate(o);
+          p = luatr(o);
           if (o === p) {
             return "Ultimate Skill Invoked!";
           }
@@ -59,12 +59,12 @@ Item {
       Text {
         text: {
           let o = "$" + skillName + "_" + generalName + ((index + 1) % 2 + 1);
-          let p = Backend.translate(o);
+          let p = luatr(o);
           if (o !== p) {
             return p;
           }
           o = "$" + skillName + ((index + 1) % 2 + 1);
-          p = Backend.translate(o);
+          p = luatr(o);
           if (o === p) {
             return "Ultimate Skill Invoked!";
           }
@@ -90,7 +90,7 @@ Item {
   Text {
     topPadding: 5
     id: skill
-    text: Backend.translate(skillName)
+    text: luatr(skillName)
     font.family: fontLi2.name
     font.pixelSize: 40
     x: root.width / 2 + 100

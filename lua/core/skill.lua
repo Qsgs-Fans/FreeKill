@@ -44,6 +44,7 @@ function Skill:initialize(name, frequency)
   self.anim_type = ""
   self.related_skills = {}
   self.attachedKingdom = {}
+  self._extra_data = {}
 
   local name_splited = name:split("__")
   self.trueName = name_splited[#name_splited]
@@ -63,6 +64,8 @@ end
 function Skill:__index(k)
   if k == "cost_data" then
     return Fk:currentRoom().skill_costs[self.name]
+  else
+    return self._extra_data[k]
   end
 end
 

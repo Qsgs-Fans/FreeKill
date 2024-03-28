@@ -62,7 +62,8 @@ Item {
           SwipeDelegate.onClicked: deletePackage(modelData);
 
           background: Rectangle {
-            color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
+            color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1)
+                                                     : "tomato"
           }
         }
       }
@@ -118,14 +119,19 @@ Item {
       toast.show(qsTr("cannot use this package name"));
       return;
     }
+
     const path = modPath + new_name + "/";
     ModBackend.mkdir(path);
     mod.packages.push(new_name);
-    ModBackend.saveToFile(modPath + "mod.json", JSON.stringify(mod, undefined, 2));
+    ModBackend.saveToFile(modPath + "mod.json",
+                          JSON.stringify(mod, undefined, 2));
+
     const pkgInfo = {
       name: new_name,
     };
-    ModBackend.saveToFile(path + "pkg.json", JSON.stringify(pkgInfo, undefined, 2));
+    ModBackend.saveToFile(path + "pkg.json",
+                          JSON.stringify(pkgInfo, undefined, 2));
+
     root.modChanged();
   }
 
@@ -133,7 +139,9 @@ Item {
     const path = modPath + name + "/";
     ModBackend.rmrf(path);
     mod.packages.splice(mod.packages.indexOf(name), 1);
-    ModBackend.saveToFile(modPath + "mod.json", JSON.stringify(mod, undefined, 2));
+    ModBackend.saveToFile(modPath + "mod.json",
+                          JSON.stringify(mod, undefined, 2));
+
     root.modChanged();
   }
 }

@@ -78,8 +78,8 @@ local chooseCardsSkill = fk.CreateActiveSkill{
 
 local choosePlayersSkill = fk.CreateActiveSkill{
   name = "choose_players_skill",
-  card_filter = function(self, to_select)
-    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select))
+  card_filter = function(self, to_select, selected)
+    return self.pattern ~= "" and Exppattern:Parse(self.pattern):match(Fk:getCardById(to_select)) and #selected == 0
   end,
   target_filter = function(self, to_select, selected, cards)
     if self.pattern ~= "" and #cards == 0 then return end
@@ -119,23 +119,48 @@ local exChooseSkill = fk.CreateActiveSkill{
       return table.contains(self.targets, to_select)
     end
   end,
-  min_target_num = function(self) return self.min_target_num end,
-  max_target_num = function(self) return self.max_target_num end,
-  min_card_num = function(self) return self.min_card_num end,
-  max_card_num = function(self) return self.max_card_num end,
 }
 
 local maxCardsSkill = fk.CreateMaxCardsSkill{
   name = "max_cards_skill",
   global = true,
   correct_func = function(self, player)
+    local function getMark(markname)
+      local v = 0
+      for mark, value in pairs(player.mark) do
+        if mark == markname then
+          v = v + value
+        elseif mark:startsWith(markname .. "-") then
+          for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+            if mark:find(suffix, 1, true) then
+              v = v + value
+              break
+            end
+          end
+        end
+      end
+      return v
+    end
     return
-      player:getMark(MarkEnum.AddMaxCards) +
-      player:getMark(MarkEnum.AddMaxCardsInTurn) -
-      player:getMark(MarkEnum.MinusMaxCards) -
-      player:getMark(MarkEnum.MinusMaxCardsInTurn)
+      getMark(MarkEnum.AddMaxCards) -
+      getMark(MarkEnum.MinusMaxCards)
   end,
 }
+
+local distributionSelectSkill = fk.CreateActiveSkill{
+  name = "distribution_select_skill",
+  mute = true,
+  min_card_num = 1,
+  card_filter = function(self, to_select, selected)
+    return #selected < self.max_num and table.contains(self.cards, to_select)
+  end,
+  target_num = 1,
+  target_filter = function(self, to_select, selected, selected_cards)
+    return #selected == 0 and #selected_cards > 0 and table.contains(self.targets, to_select)
+    and #selected_cards <= (self.residued_list[string.format("%d", to_select)] or 0)
+  end,
+}
+
 
 local choosePlayersToMoveCardInBoardSkill = fk.CreateActiveSkill{
   name = "choose_players_to_move_card_in_board",
@@ -166,15 +191,32 @@ local uncompulsoryInvalidity = fk.CreateInvaliditySkill {
   name = "uncompulsory_invalidity",
   global = true,
   invalidity_func = function(self, from, skill)
+    ---@param object Card|Player
+    ---@param markname string
+    ---@param suffixes string[]
+    ---@return boolean
+    local function hasMark(object, markname, suffixes)
+      if not object then return false end
+      for mark, _ in pairs(object.mark) do
+        if mark == markname then return true end
+        if mark:startsWith(markname .. "-") then
+          for _, suffix in ipairs(suffixes) do
+            if mark:find(suffix, 1, true) then return true end
+          end
+        end
+      end
+      return false
+    end
     return
       (skill.frequency ~= Skill.Compulsory and skill.frequency ~= Skill.Wake) and
       not (skill:isEquipmentSkill() or skill.name:endsWith("&")) and
-      (
-        from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
-        table.find(MarkEnum.TempMarkSuffix, function(s)
-          return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
-        end)
-      )
+      hasMark(from, MarkEnum.UncompulsoryInvalidity, MarkEnum.TempMarkSuffix)
+      -- (
+      --   from:getMark(MarkEnum.UncompulsoryInvalidity) ~= 0 or
+      --   table.find(MarkEnum.TempMarkSuffix, function(s)
+      --     return from:getMark(MarkEnum.UncompulsoryInvalidity .. s) ~= 0
+      --   end)
+      -- )
   end
 }
 
@@ -186,29 +228,37 @@ local revealProhibited = fk.CreateInvaliditySkill {
     if type(from:getMark(MarkEnum.RevealProhibited)) == "table" then
       generals = from:getMark(MarkEnum.RevealProhibited)
     end
-    for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-        return from:getMark(MarkEnum.RevealProhibited .. s)
-      end)) do
-      if type(m) == "table" then
-        for _, g in ipairs(m) do
-          table.insertIfNeed(generals, g)
+
+    for mark, value in pairs(from.mark) do
+      if mark:startsWith(MarkEnum.RevealProhibited .. "-") and type(value) == "table" then
+        for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+          if mark:find(suffix, 1, true) then
+            for _, g in ipairs(value) do
+              table.insertIfNeed(generals, g)
+            end
+          end
         end
       end
     end
+    -- for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+    --     return from:getMark(MarkEnum.RevealProhibited .. s)
+    --   end)) do
+    --   if type(m) == "table" then
+    --     for _, g in ipairs(m) do
+    --       table.insertIfNeed(generals, g)
+    --     end
+    --   end
+    -- end
 
     if #generals == 0 then return false end
-    if type(from._fake_skills) == "table" and not table.contains(from._fake_skills, skill) then return false end
     local sname = skill.name
     for _, g in ipairs(generals) do
-      if g == "m" then
-        if from.general ~= "anjiang" then return false end
-      else
-        if from.deputyGeneral ~= "anjiang" then return false end
-      end
-      local generalName = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
-      local general = Fk.generals[generalName]
-      if table.contains(general:getSkillNameList(), sname) then
-        return true
+      if (g == "m" and from.general == "anjiang") or (g == "d" and from.deputyGeneral == "anjiang") then
+        local generalName = g == "m" and from:getMark("__heg_general") or from:getMark("__heg_deputy")
+        local general = Fk.generals[generalName]
+        if table.contains(general:getSkillNameList(true), sname) then
+          return true
+        end
       end
     end
     return false
@@ -223,7 +273,7 @@ local revealSkill = fk.CreateActiveSkill{
     local choiceList = {}
     if (Self.general == "anjiang" and not Self:prohibitReveal()) then
       local general = Fk.generals[Self:getMark("__heg_general")]
-      for _, sname in ipairs(general:getSkillNameList()) do
+      for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
           table.insert(choiceList, "revealMain")
@@ -233,7 +283,7 @@ local revealSkill = fk.CreateActiveSkill{
     end
     if (Self.deputyGeneral == "anjiang" and not Self:prohibitReveal(true)) then
       local general = Fk.generals[Self:getMark("__heg_deputy")]
-      for _, sname in ipairs(general:getSkillNameList()) do
+      for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
           table.insert(choiceList, "revealDeputy")
@@ -254,6 +304,30 @@ local revealSkill = fk.CreateActiveSkill{
     elseif choice == "revealMain" then player:revealGeneral(false)
     elseif choice == "revealDeputy" then player:revealGeneral(true) end
   end,
+  can_use = function(self, player)
+    local choiceList = {}
+    if (player.general == "anjiang" and not player:prohibitReveal()) then
+      local general = Fk.generals[player:getMark("__heg_general")]
+      for _, sname in ipairs(general:getSkillNameList(true)) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
+          table.insert(choiceList, "revealMain")
+          break
+        end
+      end
+    end
+    if (player.deputyGeneral == "anjiang" and not player:prohibitReveal(true)) then
+      local general = Fk.generals[player:getMark("__heg_deputy")]
+      for _, sname in ipairs(general:getSkillNameList(true)) do
+        local s = Fk.skills[sname]
+        if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
+          table.insert(choiceList, "revealDeputy")
+          break
+        end
+      end
+    end
+    return #choiceList > 0
+  end
 }
 
 AuxSkills = {
@@ -261,6 +335,7 @@ AuxSkills = {
   chooseCardsSkill,
   choosePlayersSkill,
   exChooseSkill,
+  distributionSelectSkill,
   maxCardsSkill,
   choosePlayersToMoveCardInBoardSkill,
   uncompulsoryInvalidity,

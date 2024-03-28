@@ -36,6 +36,7 @@ return {
 
   ["guding_blade"] = "Ancient Scimitar",
 	[":guding_blade"] = "Ancient Scimitar (equip card, weapon)<br /><b>ATK range</b>: 2<br /><b>Weapon skill</b>: When your used Slash is about to cause DMG, if the target player has no hand cards: the DMG is increased by +1.",
+  ["#guding_blade_skill"] = "Ancient Scimitar",
 
   ["fan"] = "Fan",
 	[":fan"] = "Fan (equip card, weapon)<br /><b>ATK range</b>: 4<br /><b>Weapon skill</b>: You can use any basic Slash as Fire Slash.",
@@ -43,9 +44,11 @@ return {
 
   ["vine"] = "Vine",
 	[":vine"] = "Vine (equip card, armor)<br /><b>Armor skill</b>: Savage Assault, Archery Attack and basic Slash have no effect on you. When you are about to suffer Fire DMG, the DMG is increased by +1.",
+  ["#vine_skill"] = "Vine",
 
   ["silver_lion"] = "Sliver Lion",
 	[":silver_lion"] = "Sliver Lion (equip card, armor)<br /><b>Armor skill</b>: When you are about to suffer DMG: that DMG is reduced to 1. When you lose this card in your equipment area: you heal 1 HP.",
+  ["#silver_lion_skill"] = "Sliver Lion",
 
   ["hualiu"] = "Hua Liu",
   [":hualiu"] = "Hua Liu (equip card, horse)<br /><b>Horse skill</b>: The distance from other players to you is increased by +1.",

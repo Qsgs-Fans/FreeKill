@@ -84,7 +84,8 @@ Item {
           SwipeDelegate.onClicked: deleteMod(modelData);
 
           background: Rectangle {
-            color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1) : "tomato"
+            color: deleteLabel.SwipeDelegate.pressed ? Qt.darker("tomato", 1.1)
+                                                     : "tomato"
           }
         }
       }
@@ -136,7 +137,8 @@ Item {
 
   function createNewMod(name) {
     const banned = [ "test", "standard", "standard_cards", "maneuvering" ];
-    if (banned.indexOf(name) !== -1 || modConfig.modList.indexOf(name) !== -1) {
+    if (banned.indexOf(name) !== -1 ||
+            modConfig.modList.indexOf(name) !== -1) {
       toast.show(qsTr("cannot use this mod name"));
       return;
     }
@@ -146,10 +148,12 @@ Item {
       descrption: "",
       author: modConfig.userName,
     };
-    ModBackend.saveToFile(`mymod/${name}/mod.json`, JSON.stringify(modInfo, undefined, 2));
+    ModBackend.saveToFile(`mymod/${name}/mod.json`,
+                          JSON.stringify(modInfo, undefined, 2));
     ModBackend.saveToFile(`mymod/${name}/.gitignore`, "init.lua");
     ModBackend.stageFiles(name);
-    ModBackend.commitChanges(name, "Initial commit", modConfig.userName, modConfig.email);
+    ModBackend.commitChanges(name, "Initial commit", modConfig.userName,
+                             modConfig.email);
     modConfig.addMod(name);
   }
 

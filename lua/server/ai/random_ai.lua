@@ -27,6 +27,7 @@ function RandomAI:useActiveSkill(skill, card)
   -- local max = skill:getMaxTargetNum(player, card)
   -- local min_card = skill:getMinCardNum()
   -- local max_card = skill:getMaxCardNum()
+  -- FIXME: ViewAsSkill can be buggy here
   for _ = 0, max_try_times do
     if skill:feasible(selected_targets, selected_cards, self.player, card) then break end
     local avail_targets = table.filter(room:getAlivePlayers(), function(p)
@@ -120,6 +121,9 @@ random_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local extra_data = data[4]
   for k, v in pairs(extra_data) do
     skill[k] = v
+  end
+  if skill:isInstanceOf(ViewAsSkill) then
+    return RandomAI.useVSSkill(skill)
   end
   return RandomAI.useActiveSkill(self, skill)
 end

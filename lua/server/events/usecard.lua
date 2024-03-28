@@ -164,11 +164,29 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
+  if type(cardUseEvent.attachedSkillAndUser) == "table" then
+    local attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
+    self:addExitFunc(function()
+      if
+        type(attachedSkillAndUser) == "table" and
+        Fk.skills[attachedSkillAndUser.skillName] and
+        Fk.skills[attachedSkillAndUser.skillName].afterUse
+      then
+        Fk.skills[attachedSkillAndUser.skillName]:afterUse(room:getPlayerById(attachedSkillAndUser.user), cardUseEvent)
+      end
+    end)
+    cardUseEvent.attachedSkillAndUser = nil
+  end
+
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
   local _card = sendCardEmotionAndLog(room, cardUseEvent)
+
+  if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
+    logic:breakEvent()
+  end
 
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
@@ -194,10 +212,6 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
         room:sendCardVirtName(useCardIds, card.name)
       end
     end
-  end
-
-  if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
-    logic:breakEvent()
   end
 
   if not cardUseEvent.extraUse then
@@ -270,6 +284,10 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
 
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    logic:breakEvent()
+  end
+
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
@@ -279,10 +297,6 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     if card:isVirtual() then
       room:sendCardVirtName(cardIds, card.name)
     end
-  end
-
-  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-    logic:breakEvent()
   end
 
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -335,9 +349,16 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
 
     if event == fk.PreCardEffect then
       if cardEffectEvent.from and logic:trigger(event, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+        if cardEffectEvent.to then
+          cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
+          table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
+        end
         logic:breakEvent()
       end
     elseif cardEffectEvent.to and logic:trigger(event, room:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
+      cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
+      table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
+
       logic:breakEvent()
     end
 
