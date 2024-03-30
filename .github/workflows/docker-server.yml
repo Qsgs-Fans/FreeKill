@@ -1,16 +1,19 @@
 name: Docker - Server
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [created]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to use'
+        required: true
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}-server
 
 jobs:
-  nightly:
+  build:
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -18,6 +21,19 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+    - name: Grub Tag
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          echo "Using release tag ${{ github.event.release.tag_name }}"
+          echo "TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+        elif [[ -z "${{ github.event.inputs.tag }}" ]]; then
+          LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)
+          echo "Using latest tag $LATEST_TAG"
+          echo "TAG=$LATEST_TAG" >> $GITHUB_ENV
+        else
+          echo "Using manually specified tag ${{ github.event.inputs.tag }}"
+          echo "TAG=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        fi
     - name: Log into registry ${{ env.REGISTRY }}
       if: github.event_name != 'pull_request'
       uses: docker/login-action@v2
@@ -29,8 +45,7 @@ jobs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-        tags: |
-          type=semver,pattern={{version}}
+        tags: type=raw,value=${{ env.TAG }}
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
     - name: Build and push Docker image
       uses: docker/build-push-action@v3
