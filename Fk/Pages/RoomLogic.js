@@ -275,14 +275,29 @@ function moveCards(moves) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
-    if (!from || !to || from === to)
+    if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
     const items = from.remove(move.ids, move.fromSpecialName);
-    if (items.length > 0)
-      to.add(items, move.specialName);
-    to.updateCardPosition(true);
+    if (to === tablePile) {
+      let vanished = items.filter(c => c.cid === -1);
+      if (vanished.length > 0) {
+        drawPile.add(vanished, move.specialName);
+        drawPile.updateCardPosition(true);
+      }
+      vanished = items.filter(c => c.cid !== -1);
+      if (vanished.length > 0) {
+        to.add(vanished, move.specialName);
+        to.updateCardPosition(true);
+      }
+    } else {
+      if (items.length > 0)
+        to.add(items, move.specialName);
+      to.updateCardPosition(true);
+    }
   }
 }
+
+
 
 function resortHandcards() {
   if (!dashboard.handcardArea.cards.length) {
