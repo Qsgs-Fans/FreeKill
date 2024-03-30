@@ -11,12 +11,10 @@ GraphicsBox {
   title.text: ""
 
   // TODO: Adjust the UI design in case there are more than 7 cards
-  width: 70 + 700
+  width: 70 + 1000
   height: 64 + Math.min(cardView.contentHeight, 400) + 30
 
-  signal cardSelected(int cid)
   signal cardsSelected(var ids)
-  property var selected_ids: []
   property string Yuqi_type
   property var card_data
   property bool cancelable: true
@@ -60,35 +58,11 @@ GraphicsBox {
         }
       }
 
-      GridLayout {
-        columns: 7
-        Repeater {
-          model: areaCards
-
-          CardItem {
-            cid: model.cid
-            name: model.name || ""
-            suit: model.suit || ""
-            number: model.number || 0
-            autoBack: false
-            known: model.cid !== -1
-            selectable: chosenInBox ||
-              lcall("YuqiFilter", root.Yuqi_type, model.cid, root.selected_ids,
-                    root.card_data, root.extra_data);
-
-            onSelectedChanged: {
-              if (selected) {
-                chosenInBox = true;
-                root.selected_ids.push(cid);
-              } else {
-                chosenInBox = false;
-                root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
-              }
-              root.selected_ids = root.selected_ids;
-              refreshPrompt();
-            }
-          }
-        }
+      Rectangle {
+        id: cardsArea
+        color: "#1D1E19"
+        width: 800
+        height: 130
       }
     }
   }
@@ -105,7 +79,7 @@ GraphicsBox {
       text: luatr("OK")
       enabled: lcall("YuqiFeasible", root.Yuqi_type, root.selected_ids,
                      root.card_data, root.extra_data);
-      onClicked: root.cardsSelected(root.selected_ids)
+      onClicked: root.cardsSelected(findAllModel())
     }
 
     MetroButton {
@@ -113,13 +87,28 @@ GraphicsBox {
       height: 35
       text: luatr("Cancel")
       visible: root.cancelable
-      onClicked: root.cardsSelected([])
+      onClicked: root.cardsSelected(card_data)
     }
 
   }
 
+  Repeater {
+    id: citem
+    model: cards
 
-  onCardSelected: finished();
+    CardItem {
+      x: index
+      y: -1
+      cid: modelData.cid
+      name: modelData.name
+      suit: modelData.suit
+      number: modelData.number
+      draggable: true
+      onReleased: updateCardReleased(this);
+    }
+  }
+
+
 
   function findAreaModel(name) {
     let ret;
@@ -141,6 +130,14 @@ GraphicsBox {
     return ret;
   }
 
+  function findAllModel() {
+    let ret = [];
+    for (let i = 0; i < cardModel.count; i++) {
+      let item = cardModel.get(i);
+      ret.push([item.areaName, item.areaCards]);
+    }
+    return ret;
+  }
 
   function addCustomCards(name, cards) {
     let area = findAreaModel(name).areaCards;
@@ -150,6 +147,9 @@ GraphicsBox {
     } else {
       area.append(cards);
     }
+  }
+
+  function arrangeCards() {
   }
 
   function refreshPrompt() {

@@ -788,16 +788,16 @@ function YuqiPrompt(yuqi_type, data, extra_data)
   return yuqi.prompt(data, extra_data)
 end
 
-function YuqiEntryFilter(yuqi_type, to_select, position, to_pile, data, extra_data)
+function YuqiEntryFilter(yuqi_type, to_select, from_pile, to_pile, data, extra_data)
   local yuqi = Fk.yuqi_methods[yuqi_type]
   if not yuqi then return "false" end
-  return json.encode(yuqi.entry_filter(to_select, position, to_pile, data, extra_data))
+  return json.encode(yuqi.entry_filter(to_select, from_pile, to_pile, data, extra_data))
 end
 
-function YuqiOutFilter(yuqi_type, to_select, data, extra_data)
+function YuqiOutFilter(yuqi_type, to_select, from_pile, data, extra_data)
   local yuqi = Fk.yuqi_methods[yuqi_type]
   if not yuqi then return "false" end
-  return json.encode(yuqi.out_filter(to_select, data, extra_data))
+  return json.encode(yuqi.out_filter(to_select, from_pile, data, extra_data))
 end
 
 function YuqiFeasible(yuqi_type, current, origin, extra_data)
