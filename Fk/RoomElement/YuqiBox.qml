@@ -7,93 +7,94 @@ import Fk.Pages
 
 GraphicsBox {
   id: root
+  property string Yuqi_type
+  property var cards: []
+  property var result: []
+  property var pilecards: []
+  property var areaNames: []
+  property bool cancelable: true
+  property var extra_data
+  property int padding: 25
 
   title.text: ""
 
-  // TODO: Adjust the UI design in case there are more than 7 cards
-  width: 70 + 1000
-  height: 64 + Math.min(cardView.contentHeight, 400) + 30
+  width: body.width + padding * 2
+  height: title.height + body.height + padding * 2
 
-  signal cardsSelected(var ids)
-  property string Yuqi_type
-  property var card_data
-  property bool cancelable: true
-  property var extra_data
+  ColumnLayout {
+    id: body
+    x: padding
+    y: parent.height - padding - height
+    spacing: 10
 
-  ListModel {
-    id: cardModel
-  }
+    Repeater {
+      id: areaRepeater
+      model: pilecards
 
-  ListView {
-    id: cardView
-    anchors.fill: parent
-    anchors.topMargin: 40
-    anchors.leftMargin: 20
-    anchors.rightMargin: 20
-    anchors.bottomMargin: 30
-    spacing: 20
-    model: cardModel
-    clip: true
+      Row {
+        spacing: 5
 
-    delegate: RowLayout {
-      spacing: 15
-      // visible: areaCards.count > 0
+        Rectangle {
+          anchors.verticalCenter: parent.verticalCenter
+          color: "#6B5D42"
+          width: 20
+          height: 100
+          radius: 5
 
-      Rectangle {
-        border.color: "#A6967A"
-        radius: 5
-        color: "transparent"
-        width: 18
-        height: 130
-        Layout.alignment: Qt.AlignTop
-
-        Text {
-          color: "#E4D5A0"
-          text: luatr(areaName)
-          anchors.fill: parent
-          wrapMode: Text.WrapAnywhere
-          verticalAlignment: Text.AlignVCenter
-          horizontalAlignment: Text.AlignHCenter
-          font.pixelSize: 15
+          Text {
+            anchors.fill: parent
+            width: 20
+            height: 100
+            text: areaNames.length > index ? qsTr(areaNames[index]) : ""
+            color: "white"
+            font.family: fontLibian.name
+            font.pixelSize: 18
+            style: Text.Outline
+            wrapMode: Text.WordWrap
+            verticalAlignment: Text.AlignVCenter
+            horizontalAlignment: Text.AlignHCenter
+          }
         }
+
+        Rectangle {
+          id: cardsArea
+          color: "#1D1E19"
+          width: 800
+          height: 130
+
+        }
+        // property alias cardsArea: cardsArea
+      }
+    }
+
+    Row {
+      anchors.margins: 8
+      anchors.bottom: parent.bottom
+      anchors.horizontalCenter: parent.horizontalCenter
+      spacing: 32
+
+      MetroButton {
+        width: 120
+        height: 35
+        text: luatr("OK")
+        enabled: lcall("YuqiFeasible", root.Yuqi_type, root.selected_ids,
+                      root.card_data, root.extra_data);
+        onClicked: root.cardsSelected(findAllModel())
       }
 
-      Rectangle {
-        id: cardsArea
-        color: "#1D1E19"
-        width: 800
-        height: 130
+      MetroButton {
+        width: 120
+        height: 35
+        text: luatr("Cancel")
+        visible: root.cancelable
+        onClicked: root.cardsSelected(card_data)
       }
+
     }
-  }
-
-  Row {
-    anchors.margins: 8
-    anchors.bottom: parent.bottom
-    anchors.horizontalCenter: parent.horizontalCenter
-    spacing: 32
-
-    MetroButton {
-      width: 120
-      height: 35
-      text: luatr("OK")
-      enabled: lcall("YuqiFeasible", root.Yuqi_type, root.selected_ids,
-                     root.card_data, root.extra_data);
-      onClicked: root.cardsSelected(findAllModel())
-    }
-
-    MetroButton {
-      width: 120
-      height: 35
-      text: luatr("Cancel")
-      visible: root.cancelable
-      onClicked: root.cardsSelected(card_data)
-    }
-
   }
 
   Repeater {
-    id: citem
+    id: cardItem
     model: cards
 
     CardItem {
@@ -104,52 +105,62 @@ GraphicsBox {
       suit: modelData.suit
       number: modelData.number
       draggable: true
-      onReleased: updateCardReleased(this);
+      onReleased: updateCardsReleased();
     }
   }
 
-
-
-  function findAreaModel(name) {
-    let ret;
-    for (let i = 0; i < cardModel.count; i++) {
-      let item = cardModel.get(i);
-      if (item.areaName === name) {
-        ret = item;
+  function updateCardsReleased() {
+    let _card = result[0][0];
+    if (Math.abs(card.y - _card.y) >= card.height) return;
+    let i;
+    for (i = 0; i < result[0].length; i++) {
+      _card = result[0][i]
+      if (Math.abs(card.x - _card.x) <= 50) {
+        result[1][result[1].indexOf(card)] = _card;
+        result[0][i] = card;
         break;
       }
     }
-    if (!ret) {
-      ret = {
-        areaName: name,
-        areaCards: [],
-      }
-      cardModel.append(ret);
-      ret = findAreaModel(name);
-    }
-    return ret;
-  }
-
-  function findAllModel() {
-    let ret = [];
-    for (let i = 0; i < cardModel.count; i++) {
-      let item = cardModel.get(i);
-      ret.push([item.areaName, item.areaCards]);
-    }
-    return ret;
-  }
-
-  function addCustomCards(name, cards) {
-    let area = findAreaModel(name).areaCards;
-    if (cards instanceof Array) {
-      for (let i = 0; i < cards.length; i++)
-        area.append(cards[i]);
-    } else {
-      area.append(cards);
-    }
+    arrangeCards();
   }
 
   function arrangeCards() {
+    let i, j;
+    let card, box, pos, pile;
+    let spacing
+    for (j = 0; j < 2; j++){
+      pile = areaRepeater.itemAt(j);
+      if (pile.y === 0){
+        pile.y = j * 150
+      }
+      spacing = (result[j].length > 8) ? (700 / (result[j].length - 1)) : 100
+      for (i = 0; i < result[j].length; i++) {
+        box = pile.cardsArea;
+        pos = mapFromItem(pile, box.x, box.y);
+        card = result[j][i];
+        card.draggable = (j > 0)
+        card.origX = pos.x + i * spacing;
+        card.origY = pos.y;
+        card.z = i + 1;
+        card.initialZ = i + 1;
+        card.maxZ = result[j].length;
+        card.goBack(true);
+      }
+    }
+    refreshPrompt();
+  }
+
+  function initializeCards() {
+    for (i = 0; i < pilecards.length; i++) {
+      card = cardItem.itemAt(i);
+      if (i < pilecards.length) {
+        result[0].push(card);
+      } else {
+        result[1].push(card);
+      }
+    }
+
+    arrangeCards();
   }
 
   function refreshPrompt() {
