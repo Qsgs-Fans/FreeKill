@@ -53,6 +53,10 @@ void Router::installAESKey(const QByteArray &key) {
   socket->installAESKey(key);
 }
 
+bool Router::isConsoleStart() const {
+  return socket->peerAddress() == "127.0.0.1";
+}
+
 #ifndef FK_CLIENT_ONLY
 void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;

@@ -3,7 +3,11 @@
 #include "client.h"
 #include "client_socket.h"
 #include "clientplayer.h"
+#include "qmlbackend.h"
 #include "util.h"
+#include "server.h"
+#include <qforeach.h>
+#include <qlogging.h>
 
 Client *ClientInstance = nullptr;
 ClientPlayer *Self = nullptr;
@@ -78,7 +82,10 @@ void Client::changeSelf(int id) {
 
 lua_State *Client::getLuaState() { return L; }
 
-void Client::installAESKey(const QByteArray &key) { router->installAESKey(key); }
+void Client::installAESKey(const QByteArray &key) {
+  startWatchFiles();
+  router->installAESKey(key);
+}
 
 void Client::saveRecord(const QString &json, const QString &fname) {
   if (!QDir("recording").exists()) {
@@ -90,6 +97,48 @@ void Client::saveRecord(const QString &json, const QString &fname) {
   c.close();
 }
 
+bool Client::isConsoleStart() const {
+  if (!ClientInstance || !ServerInstance) {
+    return false;
+  }
+
+  return router->isConsoleStart();
+}
+
+void Client::startWatchFiles() {
+  if (!isConsoleStart()) return;
+  if (!fsWatcher.files().empty()) return;
+  QFile flist("flist.txt");
+  if (!flist.open(QIODevice::ReadOnly)) {
+    qCritical("Cannot open flist.txt. Won't watch files.");
+    fsWatcher.addPath("fk_ver"); // dummy
+  }
+  auto md5pairs = flist.readAll().split(';');
+  foreach (auto md5, md5pairs) {
+    if (md5.isEmpty()) continue;
+    auto fname = md5.split('=')[0];
+    if (fname.startsWith("packages") && fname.endsWith(".lua")) {
+      fsWatcher.addPath(fname);
+    }
+  }
+  connect(&fsWatcher, &QFileSystemWatcher::fileChanged, this,
+      &Client::updateLuaFiles);
+}
+
 void Client::processReplay(const QString &c, const QString &j) {
   callLua(c, j);
+}
+
+void Client::updateLuaFiles(const QString &path) {
+  if (!isConsoleStart()) return;
+  Backend->showToast(tr("File %1 changed, reloading...").arg(path));
+  QThread::msleep(100);
+  Backend->callLuaFunction("ReloadPackage", { path });
+  ClientInstance->notifyServer("PushRequest",
+      QString("reloadpackage,%1").arg(path));
+
+  // according to QT documentation
+  if (!fsWatcher.files().contains(path) && QFile::exists(path)) {
+    fsWatcher.addPath(path);
+  }
 }

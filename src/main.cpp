@@ -173,6 +173,16 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 int main(int argc, char *argv[]) {
   // 初始化一下各种杂项信息
   QThread::currentThread()->setObjectName("Main");
+
+  qInstallMessageHandler(fkMsgHandler);
+  QCoreApplication *app;
+  QCoreApplication::setApplicationName("FreeKill");
+  QCoreApplication::setApplicationVersion(FK_VERSION);
+
+#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
+  prepareForLinux();
+#endif
+
   if (!info_log) {
     info_log = fopen("freekill.server.info.log", "w+");
     if (!info_log) {
@@ -185,15 +195,6 @@ int main(int argc, char *argv[]) {
       qFatal("Cannot open error.log");
     }
   }
-
-  qInstallMessageHandler(fkMsgHandler);
-  QCoreApplication *app;
-  QCoreApplication::setApplicationName("FreeKill");
-  QCoreApplication::setApplicationVersion(FK_VERSION);
-
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-  prepareForLinux();
-#endif
 
 #ifndef FK_CLIENT_ONLY
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器

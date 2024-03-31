@@ -39,6 +39,8 @@ public:
 
   void trySleep(int ms);
   bool isTerminated() const;
+
+  bool isConsoleStart() const;
 };
 
 %{
