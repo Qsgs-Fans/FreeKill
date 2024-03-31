@@ -97,3 +97,25 @@ target_link_libraries(FreeKill PRIVATE
 )
 
 install(TARGETS FreeKill DESTINATION bin)
+install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/audio
+  ${PROJECT_SOURCE_DIR}/fonts
+  ${PROJECT_SOURCE_DIR}/image
+  ${PROJECT_SOURCE_DIR}/lua
+  ${PROJECT_SOURCE_DIR}/packages
+  ${PROJECT_SOURCE_DIR}/Fk
+  ${PROJECT_SOURCE_DIR}/server
+  DESTINATION share/FreeKill
+)
+install(FILES
+  ${PROJECT_SOURCE_DIR}/fk_ver
+  DESTINATION share/FreeKill
+)
+
+if (NOT DEFINED FK_SERVER_ONLY)
+  install(FILES
+    ${CMAKE_BINARY_DIR}/zh_CN.qm
+    ${CMAKE_BINARY_DIR}/en_US.qm
+    DESTINATION share/FreeKill
+  )
+endif()
