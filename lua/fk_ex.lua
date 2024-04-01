@@ -635,7 +635,7 @@ end
 
 ---@class YuqiSpec
 ---@field name string
----@field feasible fun(current_data: any, old_data: any, extra_data: any): bool
----@field entry_filter fun(card: int, from_pile: int, to_pile: int, data: any, extra_data: any): bool
----@field out_filter fun(card: int, from_pile: int, data: any, extra_data: any): bool
+---@field feasible? fun(current_data: any, old_data: any, extra_data: any): bool
+---@field entry_filter? fun(card: int, from_pile: int, to_pile: int, data: any, extra_data: any): bool
+---@field out_filter? fun(card: int, from_pile: int, data: any, extra_data: any): bool
 ---@field prompt? string | fun(data: any, extra_data: any): string

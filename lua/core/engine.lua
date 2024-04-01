@@ -72,6 +72,7 @@ function Engine:initialize()
   self.poxi_methods = {}
   self.qml_marks = {}
   self.mini_games = {}
+  self.yuqi_methods = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -396,10 +397,10 @@ end
 ---@param spec YuqiSpec
 function Engine:addYuqiMethod(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.feasible) == "function")
   self.yuqi_methods[spec.name] = spec
-  spec.entry_filter = spec.entry_filter or function() return true end
-  spec.out_filter = spec.out_filter or function() return true end
+  spec.entry_filter = spec.entry_filter or Util.TrueFunc
+  spec.out_filter = spec.out_filter or Util.TrueFunc
+  spec.feasible = spec.feasible or Util.TrueFunc
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。

@@ -1192,6 +1192,46 @@ callbacks["AskForPoxi"] = (jsonData) => {
   });
 }
 
+callbacks["AskForYuqi"] = (jsonData) => {
+  const { type, data, extra_data, cancelable } = JSON.parse(jsonData);
+
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent =
+    Qt.createComponent("../RoomElement/YuqiBox.qml");
+  const box = roomScene.popupBox.item;
+  const area_names = [];
+  const card_data = [];
+  const card_items = [];
+  const carditems = [];
+  for (let d of data) {
+    const arr = d[0];
+    const card_arr = [];
+    const ids = d[1];
+
+    area_names.push(arr);
+    card_data.push(ids);
+    ids.forEach(id => {
+      const cdata = lcall("GetCardData", id)
+      card_arr.push(cdata);
+      carditems.push(cdata);
+    });
+    card_items.push(card_arr);
+  }
+  box.yuqi_type = type;
+  box.areaNames = area_names;
+  box.pilecards = card_data;
+  box.result = card_items;
+  box.extra_data = extra_data;
+  box.cancelable = cancelable;
+
+  box.cards = carditems;
+  box.arrangeCards();
+  roomScene.popupBox.moveToCenter();
+  box.cardsSelected.connect((ids) => {
+    replyToServer(JSON.stringify(ids));
+  });
+}
+
 callbacks["AskForMoveCardInBoard"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const { cards, cardsPosition, generalNames, playerIds } = data;

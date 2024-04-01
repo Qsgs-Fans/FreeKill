@@ -83,6 +83,11 @@ local control = fk.CreateActiveSkill{
     -- p(room:askForYiji(from, from:getCardIds(Player.Hand), table.map(effect.tos, Util.Id2PlayerMapper), self.name, 2, 10, nil, false, nil, false, 3, true))
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
+      p(room:askForYuqi(from, "test", {
+        {"牌堆顶", table.slice(room.draw_pile, 1, 5)},
+        {"你自己", {}},
+        {"对方", {}},
+      }, to.hp, true))
       -- p(room:askForPoxi(from, "test", {
       --   { "你自己", from:getCardIds "h" },
       --   { "对方", to:getCardIds "h" },
@@ -129,6 +134,16 @@ local control = fk.CreateActiveSkill{
     -- p(cards)
     -- room:useVirtualCard("slash", nil, from, room:getOtherPlayers(from), self.name, true)
   end,
+}
+Fk:addYuqiMethod{
+  name = "test",
+  prompt = "隅泣：请分配这些卡牌",
+  entry_filter = function(card, from_pile, to_pile, data, extra_data)
+    if table.contains({2, 3}, to_pile) and #data[to_pile] >= 5 then
+      return false
+    end
+    return true
+  end
 }
 --[[
 Fk:addMiniGame{

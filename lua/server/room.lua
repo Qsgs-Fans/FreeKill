@@ -1756,6 +1756,31 @@ function Room:askForPoxi(player, poxi_type, data, extra_data, cancelable)
   end
 end
 
+--- 咕了太久的隅泣
+---
+--- data填入所有卡的列表（类似ui.card_data）
+---@param player ServerPlayer
+---@param yuqi_type string
+---@param data any
+---@param extra_data any
+---@param cancelable? boolean
+---@return integer[]
+function Room:askForYuqi(player, yuqi_type, data, extra_data, cancelable)
+  local yuqi = Fk.yuqi_methods[yuqi_type]
+  if not yuqi then return {} end
+
+  local command = "AskForYuqi"
+  self:notifyMoveFocus(player, yuqi_type)
+  local result = self:doRequest(player, command, json.encode {
+    type = yuqi_type,
+    data = data,
+    extra_data = extra_data,
+    cancelable = (cancelable == nil) and true or cancelable
+  })
+
+  return result == "" and {} or json.decode(result)
+end
+
 --- 询问一名玩家从众多选项中选择一个。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param choices string[] @ 可选选项列表

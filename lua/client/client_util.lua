@@ -791,13 +791,13 @@ end
 function YuqiEntryFilter(yuqi_type, to_select, from_pile, to_pile, data, extra_data)
   local yuqi = Fk.yuqi_methods[yuqi_type]
   if not yuqi then return "false" end
-  return json.encode(yuqi.entry_filter(to_select, from_pile, to_pile, data, extra_data))
+  return json.encode(yuqi.entry_filter(to_select, from_pile + 1, to_pile + 1, data, extra_data))
 end
 
 function YuqiOutFilter(yuqi_type, to_select, from_pile, data, extra_data)
   local yuqi = Fk.yuqi_methods[yuqi_type]
   if not yuqi then return "false" end
-  return json.encode(yuqi.out_filter(to_select, from_pile, data, extra_data))
+  return json.encode(yuqi.out_filter(to_select, from_pile + 1, data, extra_data))
 end
 
 function YuqiFeasible(yuqi_type, current, origin, extra_data)
