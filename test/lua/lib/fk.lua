@@ -22,9 +22,12 @@ function fk.QmlBackend_exists(dir)
 end
 
 function fk.GetDisabledPacks()
+  return "[]"
+  --[[
   local pkgs = fk.QmlBackend_ls("packages")
   table.removeOne(pkgs, "test")
   return json.encode(pkgs)
+  --]]
 end
 
 function fk.qCritical(msg) print(string.char(27) .. "[91m[Test/C]" ..
@@ -44,11 +47,27 @@ function fk.roomtest(croom, f)
   local room = Room(croom)
   RoomInstance = room
   room.action = function() f(room) end
-  room:resume()
+  while true do
+    local over = room:resume()
+    if over then break else room.in_delay = false end
+  end
   RoomInstance = nil
   local fail = testFail
   if fail then testFail = false end
   lu.assertFalse(fail, "Test failed!")
 end
+
+-- terminal color
+fk.BOLD = string.char(27) .. "[1m"
+fk.GRAY = string.char(27) .. "[90m"
+fk.RED = string.char(27) .. "[91m"
+fk.GREEN = string.char(27) .. "[92m"
+fk.BLUE = string.char(27) .. "[94m"
+fk.YELLOW = string.char(27) .. "[93m"
+fk.DEEPBLUE = string.char(27) .. "[34m"
+fk.PURPLE = string.char(27) .. "[95m"
+fk.CYAN = string.char(27) .. "[96m"
+fk.RST = string.char(27) .. "[0m"
+fk.CARET = string.char(27) .. "[92m => ".. fk.RST
 
 return fk
