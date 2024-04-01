@@ -1120,7 +1120,7 @@ local role_getlogic = function()
       local a2 = #room.players * generalNum + lord_num
       if a1 < a2 then
         room:sendLog{
-          type = "#NoEnoughGeneral",
+          type = "#NoEnoughGeneralDraw",
           arg = a1,
           arg2 = a2,
           toast = true,

@@ -307,11 +307,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["resting..."] = "休整中",
   ["rest round num"] = "轮次",
 
-  ["#NoCard"] = "牌堆被摸空了",
-  ["#NoGeneral"] = "武将牌堆被摸空了",
-  ["#NoEvent"] = "没有可执行的事件",
-  ["#NoEnoughGeneral"] = "武将数不足！(%arg/%arg2)",
-  ["#TimeOut"] = "轮数已经突破极限！",
+  ["#NoCardDraw"] = "牌堆被摸空了",
+  ["#NoGeneralDraw"] = "武将牌堆被摸空了",
+  ["#NoEventDraw"] = "没有可执行的事件",
+  ["#NoEnoughGeneralDraw"] = "武将数不足！(%arg/%arg2)",
+  ["#TimeOutDraw"] = "轮数已经突破极限！",
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",
