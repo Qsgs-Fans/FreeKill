@@ -3,8 +3,6 @@
 Fk:addPoxiMethod{
   name = "AskForCardsChosen",
   card_filter = function(to_select, selected, data, extra_data)
-    p(extra_data.max)
-    p(selected)
     return #selected < extra_data.max
   end,
   feasible = function(selected, data, extra_data)

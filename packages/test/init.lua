@@ -83,7 +83,7 @@ local control = fk.CreateActiveSkill{
     -- p(room:askForYiji(from, from:getCardIds(Player.Hand), table.map(effect.tos, Util.Id2PlayerMapper), self.name, 2, 10, nil, false, nil, false, 3, true))
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
-      p(room:askForCardsChosen(from, to, 2, 3, "hej", self.name))
+      -- p(room:askForCardsChosen(from, to, 2, 3, "hej", self.name))
       -- p(room:askForPoxi(from, "test", {
       --   { "你自己", from:getCardIds "h" },
       --   { "对方", to:getCardIds "h" },
