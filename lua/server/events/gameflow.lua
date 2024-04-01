@@ -148,6 +148,10 @@ GameEvent.functions[GameEvent.Round] = function(self)
   room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
   if roundCount >= 9999 then
+    room:sendLog{
+      type = "#TimeOutDraw",
+      toast = true,
+    }
     room:gameOver("")
   end
 
@@ -354,6 +358,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
             end)
           end
         ) - player:getMaxCards()
+        room:broadcastProperty(player, "MaxCards")
         if discardNum > 0 then
           room:askForDiscard(player, discardNum, discardNum, false, "game_rule", false)
         end

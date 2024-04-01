@@ -275,14 +275,29 @@ function moveCards(moves) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
-    if (!from || !to || from === to)
+    if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
     const items = from.remove(move.ids, move.fromSpecialName);
-    if (items.length > 0)
-      to.add(items, move.specialName);
-    to.updateCardPosition(true);
+    if (to === tablePile) {
+      let vanished = items.filter(c => c.cid === -1);
+      if (vanished.length > 0) {
+        drawPile.add(vanished, move.specialName);
+        drawPile.updateCardPosition(true);
+      }
+      vanished = items.filter(c => c.cid !== -1);
+      if (vanished.length > 0) {
+        to.add(vanished, move.specialName);
+        to.updateCardPosition(true);
+      }
+    } else {
+      if (items.length > 0)
+        to.add(items, move.specialName);
+      to.updateCardPosition(true);
+    }
   }
 }
+
+
 
 function resortHandcards() {
   if (!dashboard.handcardArea.cards.length) {
@@ -1174,9 +1189,9 @@ callbacks["AskForPoxi"] = (jsonData) => {
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
+  box.extra_data = JSON.stringify(extra_data);
   box.poxi_type = type;
   box.card_data = data;
-  box.extra_data = extra_data;
   box.cancelable = cancelable;
   for (let d of data) {
     const arr = [];
@@ -1185,6 +1200,7 @@ callbacks["AskForPoxi"] = (jsonData) => {
     ids.forEach(id => arr.push(lcall("GetCardData", id)));
     box.addCustomCards(d[0], arr);
   }
+  box.refreshPrompt();
 
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {

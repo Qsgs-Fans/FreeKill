@@ -250,6 +250,12 @@ Fk:loadTranslationTable({
   -- ["Trusting ..."] = "托管中 ...",
   -- ["Observing ..."] = "旁观中 ...",
 
+  ["#NoCardDraw"] = "Card Pile is empty",
+  ["#NoGeneralDraw"] = "General Pile is empty",
+  ["#NoEventDraw"] = "All game events terminated",
+  ["#NoEnoughGeneralDraw"] = "No enough generals! (%arg/%arg2)",
+  ["#TimeOutDraw"] = "It's over 9999 Round!",
+
   ["$GameOver"] = "Game Over",
   ["$Winner"] = "Winner is %1",
   ["$NoWinner"] = "Draw!",

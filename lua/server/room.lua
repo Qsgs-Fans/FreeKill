@@ -56,6 +56,7 @@ dofile "lua/server/ai/init.lua"
     gameevent.lua (游戏事件的执行逻辑，以及各种事件的执行方法)
     game_rule.lua (基础游戏规则，包括执行阶段、决胜负等)
     aux_skills.lua (某些交互方法是套壳askForUseActiveSkill，就是在这定义的)
+    aux_poxi.lua (有了Poxi之后，一些交互方法改成了以各种PoxiMethod为基础的交互)
 ]]----------------------------------------------------------------------
 
 ------------------------------------------------------------------------
@@ -431,6 +432,10 @@ function Room:getNCards(num, from)
   if #self.draw_pile < num then
     self:shuffleDrawPile()
     if #self.draw_pile < num then
+      self:sendLog{
+        type = "#NoCardDraw",
+        toast = true,
+      }
       self:gameOver("")
     end
   end
@@ -605,14 +610,16 @@ function Room:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChan
 
   kingdomChange = (kingdomChange == nil) and true or kingdomChange
   local kingdom = (isDeputy or not kingdomChange) and player.kingdom or new.kingdom
-  if not isDeputy and kingdomChange and (new.kingdom == "god" or new.subkingdom) then
+  if not isDeputy and kingdomChange then
     local allKingdoms = {}
-    if new.kingdom == "god" then
-      allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
-    elseif new.subkingdom then
+    if new.subkingdom then
       allKingdoms = { new.kingdom, new.subkingdom }
+    else
+      allKingdoms = Fk:getKingdomMap(new.kingdom)
     end
-    kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+    if #allKingdoms > 0 then
+      kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+    end
   end
 
   execGameEvent(GameEvent.ChangeProperty,
@@ -1372,10 +1379,10 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
 
   local data = {
     targets = targets,
-    max_target_num = maxTargetNum,
-    min_target_num = minTargetNum,
-    max_card_num = maxCardNum,
-    min_card_num = minCardNum,
+    max_t_num = maxTargetNum,
+    min_t_num = minTargetNum,
+    max_c_num = maxCardNum,
+    min_c_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
     -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
@@ -1501,6 +1508,10 @@ function Room:getNGenerals(n, position)
   end
 
   if #generals < 1 then
+    self:sendLog{
+      type = "#NoGeneralDraw",
+      toast = true,
+    }
     self:gameOver("")
   end
   return generals
@@ -1594,24 +1605,25 @@ end
 function Room:askForChooseKingdom(players)
   players = players or self.alive_players
   local specialKingdomPlayers = table.filter(players, function(p)
-    return p.kingdom == "god" or Fk.generals[p.general].subkingdom
+    return Fk.generals[p.general].subkingdom or #Fk:getKingdomMap(p.kingdom) > 0
   end)
 
   if #specialKingdomPlayers > 0 then
     local choiceMap = {}
     for _, p in ipairs(specialKingdomPlayers) do
       local allKingdoms = {}
-      if p.kingdom == "god" then
-        allKingdoms = table.filter({"wei", "shu", "wu", "qun", "jin"}, function(k) return table.contains(Fk.kingdoms, k) end)
-      else
-        local curGeneral = Fk.generals[p.general]
+      local curGeneral = Fk.generals[p.general]
+      if curGeneral.subkingdom then
         allKingdoms = { curGeneral.kingdom, curGeneral.subkingdom }
+      else
+        allKingdoms = Fk:getKingdomMap(p.kingdom)
       end
+      if #allKingdoms > 0 then
+        choiceMap[p.id] = allKingdoms
 
-      choiceMap[p.id] = allKingdoms
-
-      local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
-      p.request_data = data
+        local data = json.encode({ allKingdoms, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom" })
+        p.request_data = data
+      end
     end
 
     self:notifyMoveFocus(players, "AskForKingdom")
@@ -1674,57 +1686,6 @@ function Room:askForCardChosen(chooser, target, flag, reason, prompt)
   return result
 end
 
---- 完全类似askForCardChosen，但是可以选择多张牌。
---- 相应的，返回的是id的数组而不是单个id。
----@param chooser ServerPlayer @ 要被询问的人
----@param target ServerPlayer @ 被选牌的人
----@param min integer @ 最小选牌数
----@param max integer @ 最大选牌数
----@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
----@param reason string @ 原因，一般是技能名
----@param prompt? string @ 提示信息
----@return integer[] @ 选择的id
-function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
-  if min == 1 and max == 1 then
-    return { self:askForCardChosen(chooser, target, flag, reason) }
-  end
-
-  local command = "AskForCardsChosen"
-  prompt = prompt or ""
-  self:notifyMoveFocus(chooser, command)
-  local data = {target.id, min, max, flag, reason, prompt}
-  local result = self:doRequest(chooser, command, json.encode(data))
-
-  local ret
-  if result ~= "" then
-    ret = json.decode(result)
-  else
-    local areas = {}
-    local handcards
-    if type(flag) == "string" then
-      if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-      if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-      if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-      handcards = target:getCardIds(areas)
-    else
-      handcards = {}
-      for _, t in ipairs(flag.card_data) do
-        table.insertTable(handcards, t[2])
-      end
-    end
-    if #handcards == 0 then return {} end
-    ret = table.random(handcards, math.min(min, #handcards))
-  end
-
-  local new_ret = table.filter(ret, function(id) return id ~= -1 end)
-  local hand_num = #ret - #new_ret
-  if hand_num > 0 then
-    table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hand_num))
-  end
-
-  return new_ret
-end
-
 --- 谋askForCardsChosen，需使用Fk:addPoxiMethod定义好方法
 ---
 --- 选卡规则和返回值啥的全部自己想办法解决，data填入所有卡的列表（类似ui.card_data）
@@ -1754,6 +1715,103 @@ function Room:askForPoxi(player, poxi_type, data, extra_data, cancelable)
   else
     return poxi.post_select(json.decode(result), data, extra_data)
   end
+end
+
+--- 完全类似askForCardChosen，但是可以选择多张牌。
+--- 相应的，返回的是id的数组而不是单个id。
+---@param chooser ServerPlayer @ 要被询问的人
+---@param target ServerPlayer @ 被选牌的人
+---@param min integer @ 最小选牌数
+---@param max integer @ 最大选牌数
+---@param flag any @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---可以通过flag.card_data = {{牌堆1名, 牌堆1ID表},...}来定制能选择的牌
+---@param reason string @ 原因，一般是技能名
+---@param prompt? string @ 提示信息
+---@return integer[] @ 选择的id
+function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
+  if min == 1 and max == 1 then
+    return { self:askForCardChosen(chooser, target, flag, reason) }
+  end
+
+  -- local command = "AskForCardsChosen"
+  -- prompt = prompt or ""
+  -- self:notifyMoveFocus(chooser, command)
+  -- local data = {target.id, min, max, flag, reason, prompt}
+  -- local result = self:doRequest(chooser, command, json.encode(data))
+
+  -- local ret
+  -- if result ~= "" then
+  --   ret = json.decode(result)
+  -- else
+  --   local areas = {}
+  --   local handcards
+  --   if type(flag) == "string" then
+  --     if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+  --     if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+  --     if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+  --     handcards = target:getCardIds(areas)
+  --   else
+  --     handcards = {}
+  --     for _, t in ipairs(flag.card_data) do
+  --       table.insertTable(handcards, t[2])
+  --     end
+  --   end
+  --   if #handcards == 0 then return {} end
+  --   ret = table.random(handcards, math.min(min, #handcards))
+  -- end
+
+  -- local new_ret = table.filter(ret, function(id) return id ~= -1 end)
+  -- local hand_num = #ret - #new_ret
+  -- if hand_num > 0 then
+  --   table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hand_num))
+  -- end
+
+  -- return new_ret
+  local areas = {}
+  local cards
+  local data = {
+    to = target.id,
+    min = min,
+    max = max,
+    skillName = reason,
+    prompt = prompt,
+  }
+  if type(flag) == "string" then
+    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
+    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
+    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
+    cards = target:getCardIds(areas)
+  else
+    cards = {}
+    for _, t in ipairs(flag.card_data) do
+      table.insertTable(cards, t[2])
+    end
+  end
+  if #cards <= min then return table.random(cards, math.min(min, #cards)) end
+  local cards_data = {}
+  if type(flag) == "string" then
+    if string.find(flag, "h") and #target:getCardIds(Player.Hand) > 0 then
+      local handcards = {}
+      for _, _ in ipairs(target:getCardIds(Player.Hand)) do
+        table.insert(handcards, -1)
+      end
+      table.insert(cards_data, {"$Hand", handcards})
+    end
+    if string.find(flag, "e") and #target:getCardIds(Player.Equip) > 0 then table.insert(cards_data, {"$Equip", target:getCardIds(Player.Equip)}) end
+    if string.find(flag, "j") and #target:getCardIds(Player.Judge) > 0 then table.insert(cards_data, {"$Judge", target:getCardIds(Player.Judge)}) end
+    local ret = self:askForPoxi(chooser, "AskForCardsChosen", cards_data, data, false)
+    local new_ret = table.filter(ret, function(id) return id ~= -1 end)
+    local hidden_num = #ret - #new_ret
+    if hidden_num > 0 then
+      table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hidden_num))
+    end
+    return new_ret
+  else
+    for _, t in ipairs(flag.card_data) do
+      table.insert(cards_data, t)
+    end
+  end
+  return self:askForPoxi(chooser, "AskForCardsChosen", cards_data, data, false)
 end
 
 --- 询问一名玩家从众多选项中选择一个。
@@ -3027,7 +3085,7 @@ end
 function Room:obtainCard(player, cid, unhide, reason, proposer)
   if type(cid) ~= "number" then
     assert(cid and type(cid) == "table")
-    if cid:isInstanceOf(Card) then
+    if cid[1] == nil then
       cid = cid:isVirtual() and cid.subcards or {cid.id}
     end
   else

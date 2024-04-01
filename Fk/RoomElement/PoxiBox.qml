@@ -2,12 +2,13 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
   id: root
 
-  title.text: lcall("PoxiPrompt", poxi_type, card_data, extra_data)
+  title.text: Util.processPrompt(lcall("PoxiPrompt", poxi_type, card_data, extra_data))
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -71,7 +72,7 @@ GraphicsBox {
             number: model.number || 0
             autoBack: false
             known: model.cid !== -1
-            selectable: root.selected_ids.includes(model.cid) ||
+            selectable: chosenInBox ||
               lcall("PoxiFilter", root.poxi_type, model.cid, root.selected_ids,
                     root.card_data, root.extra_data);
 
@@ -84,6 +85,7 @@ GraphicsBox {
                 root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
               }
               root.selected_ids = root.selected_ids;
+              refreshPrompt();
             }
           }
         }
@@ -123,7 +125,7 @@ GraphicsBox {
     let ret;
     for (let i = 0; i < cardModel.count; i++) {
       let item = cardModel.get(i);
-      if (item.areaName == name) {
+      if (item.areaName === name) {
         ret = item;
         break;
       }
@@ -148,5 +150,9 @@ GraphicsBox {
     } else {
       area.append(cards);
     }
+  }
+
+  function refreshPrompt() {
+    root.title.text = Util.processPrompt(lcall("PoxiPrompt", poxi_type, card_data, extra_data))
   }
 }
