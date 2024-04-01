@@ -1,5 +1,22 @@
 # ChangeLog
 
+## v0.4.10
+
+- Github新增自动发布Docker镜像的CI
+- 一些覆盖面约为0的lua test，以及基于纯Lua的命令行版本FreeKill
+- 为findParent添加深度限制参数(默认无限制)
+- 搬运了damageByCardEffect
+- 修复了ex__choose_skill
+- 修复了华佗、吕蒙和古锭刀
+- 添加势力映射，可以指定一个势力必须变成其他几个势力之一（需要神话再临包/OL包自行处理神将变将范围）
+- askForCardsChosen界限突破，改成了基于askForPoxi的格式
+- 修复了空城虚拟杀可以方天的bug
+- 给强制平局添加了原因提醒
+- 优化了移动牌的视觉逻辑
+- 单机下简单的热更新功能，bug可能极多
+
+___
+
 ## v0.4.8 & v0.4.9
 
 - Qml: 新增leval函数可获得lua表达式的值
