@@ -8,10 +8,10 @@ import Fk.Pages
 GraphicsBox {
   id: root
   property string Yuqi_type
-  property var cards: []
-  property var result: []
-  property var pilecards: []
-  property var areaNames: []
+  property var cards: [] //全体卡牌枚举
+  property var result: [] //最终牌堆
+  property var pilecards: [] //初始牌堆
+  property var areaNames: [] //牌堆名
   property bool cancelable: true
   property var extra_data
   property int padding: 25
@@ -110,10 +110,7 @@ GraphicsBox {
   }
 
   function updateCardsReleased() {
-    let _card = result[0][0];
-    if (Math.abs(card.y - _card.y) >= card.height) return;
-    let i;
-    for (i = 0; i < result[0].length; i++) {
+    for (i = 0; i < cardItem.count; i++) {
       _card = result[0][i]
       if (Math.abs(card.x - _card.x) <= 50) {
         result[1][result[1].indexOf(card)] = _card;
@@ -128,7 +125,7 @@ GraphicsBox {
     let i, j;
     let card, box, pos, pile;
     let spacing
-    for (j = 0; j < 2; j++){
+    for (j = 0; j < pilecards.length; j++){
       pile = areaRepeater.itemAt(j);
       if (pile.y === 0){
         pile.y = j * 150
@@ -148,19 +145,6 @@ GraphicsBox {
       }
     }
     refreshPrompt();
-  }
-
-  function initializeCards() {
-    for (i = 0; i < pilecards.length; i++) {
-      card = cardItem.itemAt(i);
-      if (i < pilecards.length) {
-        result[0].push(card);
-      } else {
-        result[1].push(card);
-      }
-    }
-
-    arrangeCards();
   }
 
   function refreshPrompt() {
