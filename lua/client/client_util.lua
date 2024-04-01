@@ -784,4 +784,8 @@ function GetMiniGame(gtype, p, data)
   }
 end
 
+function ReloadPackage(path)
+  Fk:reloadPackage(path)
+end
+
 dofile "lua/client/i18n/init.lua"

@@ -47,7 +47,6 @@ function Engine:initialize()
   end
 
   Fk = self
-
   self.extensions = {
     ["standard"] = { "standard" },
     ["standard_cards"] = { "standard_cards" },
@@ -122,6 +121,76 @@ function Engine:loadPackage(pack)
   self:addSkills(pack:getSkills())
   self:addGameModes(pack.game_modes)
 end
+
+-- Don't do this
+local package = package
+function Engine:reloadPackage(path)
+  path = path:sub(1, #path - 4)
+  local oldPkg = package.loaded[path]
+  package.loaded[path] = nil
+  local ok, err = pcall(require, path)
+  if not ok then
+    package.loaded[path] = oldPkg
+    print("reload failed:", err)
+    return
+  end
+
+  -- 阉割版重载机制，反正单机用
+  local function replace(t, skill)
+    if not t then return end
+    for k, s in pairs(t) do
+      if s.name == skill.name then
+        t[k] = skill
+        break
+      end
+    end
+  end
+
+  local function f(p)
+    self.packages[p.name] = p
+    local room = Fk:currentRoom()
+    local skills = p:getSkills()
+    local related = {}
+    for _, skill in ipairs(skills) do
+      table.insertTableIfNeed(related, skill.related_skills)
+    end
+    table.insertTableIfNeed(skills, related)
+
+    for _, skill in ipairs(skills) do
+      if self.skills[skill.name].class ~= skill.class then
+        fk.qCritical("cannot change class of skill: " .. skill.name)
+        goto CONTINUE
+      end
+      self.skills[skill.name] = skill
+      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
+        local logic = room.logic
+        for _, event in ipairs(skill.refresh_events) do
+          replace(logic.refresh_skill_table[event], skill)
+        end
+        for _, event in ipairs(skill.events) do
+          replace(logic.skill_table[event], skill)
+        end
+      end
+      if skill:isInstanceOf(StatusSkill) then
+        replace(room.status_skills[skill.class], skill)
+      end
+
+      for _, p in ipairs(room.players) do
+        replace(p.player_skills, skill)
+      end
+      ::CONTINUE::
+    end
+  end
+
+  local pkg = package.loaded[path]
+  if type(pkg) ~= "table" then return end
+  if pkg.class and pkg:isInstanceOf(Package) then
+    f(pkg)
+  elseif path:endsWith("init") and not path:find("/ai/") then
+    for _, p in ipairs(pkg) do f(p) end
+  end
+end
+
 
 --- 加载所有拓展包。
 ---
@@ -215,7 +284,7 @@ end
 function Engine:addSkill(skill)
   assert(skill.class:isSubclassOf(Skill))
   if self.skills[skill.name] ~= nil then
-    error(string.format("Duplicate skill %s detected", skill.name))
+    fk.qWarning(string.format("Duplicate skill %s detected", skill.name))
   end
   self.skills[skill.name] = skill
 

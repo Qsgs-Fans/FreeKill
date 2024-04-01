@@ -31,6 +31,7 @@ class RoomThread : public QThread {
   void tryTerminate();
   bool isTerminated() const;
 
+  bool isConsoleStart() const;
  protected:
   virtual void run();
 

@@ -5,6 +5,7 @@
 
 #include "router.h"
 #include "clientplayer.h"
+#include <qfilesystemwatcher.h>
 
 #ifndef FK_SERVER_ONLY
 #include "qmlbackend.h"
@@ -34,11 +35,16 @@ public:
 
   void saveRecord(const QString &json, const QString &fname);
 
+  bool isConsoleStart() const;
+  void startWatchFiles();
 signals:
   void error_message(const QString &msg);
 
 public slots:
   void processReplay(const QString &, const QString &);
+
+private slots:
+  void updateLuaFiles(const QString &path);
 
 private:
   Router *router;
@@ -46,6 +52,7 @@ private:
   ClientPlayer *self;
 
   lua_State *L;
+  QFileSystemWatcher fsWatcher;
 };
 
 extern Client *ClientInstance;

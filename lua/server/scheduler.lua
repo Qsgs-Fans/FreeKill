@@ -154,3 +154,7 @@ function InitScheduler(_thread)
   requestRoom.thread = _thread
   Pcall(mainLoop)
 end
+
+function IsConsoleStart()
+  return requestRoom.thread:isConsoleStart()
+end

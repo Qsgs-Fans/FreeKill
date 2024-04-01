@@ -32,6 +32,7 @@ public:
   void setSocket(ClientSocket *socket);
   void removeSocket();
   void installAESKey(const QByteArray &key);
+  bool isConsoleStart() const;
 
 #ifndef FK_CLIENT_ONLY
   void setReplyReadySemaphore(QSemaphore *semaphore);

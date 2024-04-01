@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Fk.Common
 import Fk.Pages
 import Fk.RoomElement
 
@@ -22,18 +23,29 @@ Flickable {
     width: parent.width - 40
     x: 20
 
-    // TODO: player details
-    Text {
-      id: screenName
-      font.pixelSize: 18
-      color: "#E4D5A0"
-    }
+    RowLayout {
+      spacing: 8
+      Avatar {
+        id: avatar
+        Layout.preferredWidth: 56
+        Layout.preferredHeight: 56
+        general: "diaochan"
+      }
 
-    Text {
-      id: playerGameData
-      Layout.fillWidth: true
-      font.pixelSize: 18
-      color: "#E4D5A0"
+      ColumnLayout {
+        Text {
+          id: screenName
+          font.pixelSize: 18
+          color: "#E4D5A0"
+        }
+
+        Text {
+          id: playerGameData
+          Layout.fillWidth: true
+          font.pixelSize: 18
+          color: "#E4D5A0"
+        }
+      }
     }
 
     RowLayout {
@@ -163,6 +175,7 @@ Flickable {
     if (id === 0) return;
     root.pid = id;
 
+    avatar.general = extra_data.photo.avatar;
     screenName.text = extra_data.photo.screenName;
     mainChara.name = extra_data.photo.general;
     deputyChara.name = extra_data.photo.deputyGeneral;
@@ -182,9 +195,9 @@ Flickable {
       const h = (totalTime / 3600).toFixed(2);
       const m = Math.floor(totalTime / 60);
       if (m < 100) {
-        playerGameData.text += " " + luatr("TotalGameTime: %1 min").arg(m);
+        screenName.text += " (" + luatr("TotalGameTime: %1 min").arg(m) + ")";
       } else {
-        playerGameData.text += " " + luatr("TotalGameTime: %1 h").arg(h);
+        screenName.text += " (" + luatr("TotalGameTime: %1 h").arg(h) + ")";
       }
     }
 
