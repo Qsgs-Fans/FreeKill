@@ -1220,12 +1220,11 @@ callbacks["AskForYuqi"] = (jsonData) => {
   box.yuqi_type = type;
   box.areaNames = area_names;
   box.pilecards = card_data;
-  box.result = card_items;
   box.extra_data = extra_data;
   box.cancelable = cancelable;
 
   box.cards = carditems;
-  box.arrangeCards();
+  box.initializeCards();
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {
     replyToServer(JSON.stringify(ids));

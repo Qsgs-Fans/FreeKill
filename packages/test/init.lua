@@ -84,7 +84,7 @@ local control = fk.CreateActiveSkill{
     for _, pid in ipairs(effect.tos) do
       local to = room:getPlayerById(pid)
       p(room:askForYuqi(from, "test", {
-        {"牌堆顶", table.slice(room.draw_pile, 1, 5)},
+        {"牌堆顶", table.slice(room.draw_pile, 1, 7)},
         {"你自己", {}},
         {"对方", {}},
       }, to.hp, true))

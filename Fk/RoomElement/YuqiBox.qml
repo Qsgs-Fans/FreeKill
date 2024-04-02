@@ -119,7 +119,7 @@ GraphicsBox {
       const _pile = result[i];
       const box = pile.cardsArea;
       const pos = mapFromItem(pile, box.x, box.y);
-      const posid = _pile.indexOf(card.cid)
+      const posid = _pile.indexOf(card)
       if (posid !== -1) {
         from = i;
         orig = posid;
@@ -128,20 +128,45 @@ GraphicsBox {
       if (Math.abs(card.y - pos.y) <= spacing / 2) {
         to = i
       }
+      console.log(pos.x, pos.y);
+      console.log(card.x, card.y);
+      console.log(from, to);
       if (from !== null && to !== null) {
-        if (pilecards[to].indexOf(card.cid) === -1 && !lcall("YuqiEntryFilter", root.yuqi_type, card.cid, from, to,
+        if (pilecards[to].indexOf(card) === -1 && !lcall("YuqiEntryFilter", root.yuqi_type, card.cid, from, to,
                       result_cards, root.extra_data) ) break;
         result[from].splice(orig, 1)
         for (j = 0; j < result[0].length; j++) {
           let _card = result[orig][i]
           if (Math.abs(card.x - _card.x) <= card.width / 2) {
-            result[to].splice(j, 0, card.cid);
+            result[to].splice(j, 0, card);
             break;
           }
         }
         break;
       }
     }
+    arrangeCards();
+  }
+
+  function initializeCards() {
+    result = new Array(areaNames.length);
+    let i;
+    for (i = 0; i < result.length; i++){
+      result[i] = [];
+    }
+
+    let card;
+    let j = 0;
+    for (i = 0; i < cardsItem.count; i++) {
+      card = cardsItem.itemAt(i);
+      console.log(pilecards[j]);
+      if (i < pilecards[j].length) {
+        result[j].push(card);
+      } else {
+        j++;
+      }
+    }
+
     arrangeCards();
   }
 
