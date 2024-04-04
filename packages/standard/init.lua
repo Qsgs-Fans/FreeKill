@@ -937,9 +937,7 @@ local jieyin = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     local target = Fk:currentRoom():getPlayerById(to_select)
-    return target:isWounded() and
-      (target.gender == General.Male or target.gender == General.Bigender)
-      and #selected < 1 and to_select ~= Self.id
+    return target:isWounded() and target:isMale() and #selected < 1 and to_select ~= Self.id
   end,
   target_num = 1,
   card_num = 2,
@@ -1067,8 +1065,7 @@ local lijian = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     if #selected < 2 and to_select ~= Self.id then
-      local target = Fk:currentRoom():getPlayerById(to_select)
-      return target.gender == General.Male or target.gender == General.Bigender
+      return Fk:currentRoom():getPlayerById(to_select):isMale()
     end
   end,
   target_num = 2,
