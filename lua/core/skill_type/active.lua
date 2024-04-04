@@ -27,7 +27,7 @@ end
 --- Determine whether the skill can be used in playing phase
 ---@param player Player
 ---@param card Card @ helper
-function ActiveSkill:canUse(player, card)
+function ActiveSkill:canUse(player, card, extra_data)
   return self:isEffectable(player)
 end
 
@@ -46,17 +46,18 @@ end
 ---@param selected integer[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
 ---@param card Card @ helper
-function ActiveSkill:targetFilter(to_select, selected, selected_cards, card)
+---@param extra_data? any @ extra_data
+function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
   return false
 end
 
 --- Determine whether a target can be selected by this skill(in modifying targets)
 --- only used in skill of players
 ---@param to_select integer @ id of the target
----@param selected nil|integer[] @ ids of selected targets
----@param user nil|integer @ id of the userdata
----@param card nil|Card @ helper
----@param distance_limited boolean @ is limited by distance
+---@param selected? integer[] @ ids of selected targets
+---@param user? integer @ id of the userdata
+---@param card? Card @ helper
+---@param distance_limited? boolean @ is limited by distance
 function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end
@@ -142,6 +143,52 @@ function ActiveSkill:getDistanceLimit(player, card, to)
   return ret
 end
 
+function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
+  if to and to.dead then return false end
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  if not card and self.name:endsWith("_skill") then
+    card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
+  end
+  for _, skill in ipairs(status_skills) do
+    if skill:bypassDistancesCheck(player, self, card, to) then return true end
+  end
+
+  local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
+  local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
+
+  ---@param object Card|Player
+  ---@param markname string
+  ---@param suffixes string[]
+  ---@return boolean
+  local function hasMark(object, markname, suffixes)
+    if not object then return false end
+    for mark, _ in pairs(object.mark) do
+      if mark == markname then return true end
+      if mark:startsWith(markname .. "-") then
+        for _, suffix in ipairs(suffixes) do
+          if mark:find(suffix, 1, true) then return true end
+        end
+      end
+    end
+    return false
+  end
+
+  return (isattack and player:inMyAttackRange(to)) or
+  (player:distanceTo(to) > 0 and player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
+  hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
+  hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
+  hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)
+  -- (card and table.find(card_temp_suf, function(s)
+  --   return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  -- end)) or
+  -- (table.find(temp_suf, function(s)
+  --   return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
+  -- end)) or
+  -- (to and (table.find(temp_suf, function(s)
+  --   return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
+  -- end)))
+end
+
 --- Determine if selected cards and targets are valid for this skill
 --- If returns true, the OK button should be enabled
 --- only used in skill of players
@@ -161,6 +208,11 @@ end
 function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
+---@param cardUseEvent CardUseStruct
+---@param isEnding? bool
+function ActiveSkill:onAction(room, cardUseEvent, finished) end
+
+---@param room Room
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:aboutToEffect(room, cardEffectEvent) end
 
@@ -173,8 +225,8 @@ function ActiveSkill:onEffect(room, cardEffectEvent) end
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onNullified(room, cardEffectEvent) end
 
----@param selected integer[] @ ids of selected players
 ---@param selected_cards integer[] @ ids of selected cards
-function ActiveSkill:prompt(selected, selected_cards) return "" end
+---@param selected_targets integer[] @ ids of selected players
+function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
 
 return ActiveSkill

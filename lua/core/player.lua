@@ -86,6 +86,7 @@ function Player:initialize()
   self.dying = false
   self.dead = false
   self.drank = 0
+  self.rest = 0
 
   self.player_skills = {}
   self.derivative_skills = {}
@@ -121,8 +122,8 @@ end
 
 --- 设置角色、体力、技能。
 ---@param general General @ 角色类型
----@param setHp bool @ 是否设置体力
----@param addSkills bool @ 是否增加技能
+---@param setHp? boolean @ 是否设置体力
+---@param addSkills? boolean @ 是否增加技能
 function Player:setGeneral(general, setHp, addSkills)
   self.general = general.name
   if setHp then
@@ -202,7 +203,7 @@ end
 
 --- 为角色设置Mark至指定数量。
 ---@param mark string @ 标记
----@param count integer|nil @ 为标记删除的数量
+---@param count? integer @ 为标记删除的数量
 function Player:setMark(mark, count)
   if count == 0 then count = nil end
   if self.mark[mark] ~= count then
@@ -214,15 +215,10 @@ end
 ---@param mark string @ 标记
 ---@return any
 function Player:getMark(mark)
-  return (self.mark[mark] or 0)
-end
-
---- 判定角色是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Player:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
+  local mark = self.mark[mark]
+  if not mark then return 0 end
+  if type(mark) == "table" then return table.simpleClone(mark) end
+  return mark
 end
 
 --- 获取角色有哪些Mark。
@@ -237,7 +233,7 @@ end
 --- 将指定数量的牌加入玩家的对应区域。
 ---@param playerArea PlayerCardArea @ 玩家牌所在的区域
 ---@param cardIds integer[] @ 牌的ID，返回唯一牌
----@param specialName string|nil @ 私人牌堆名
+---@param specialName? string @ 私人牌堆名
 function Player:addCards(playerArea, cardIds, specialName)
   assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
   assert(playerArea ~= Player.Special or type(specialName) == "string")
@@ -253,7 +249,7 @@ end
 --- 将指定数量的牌移除出玩家的对应区域。
 ---@param playerArea PlayerCardArea @ 玩家牌所在的区域
 ---@param cardIds integer[] @ 牌的ID，返回唯一牌
----@param specialName string|nil @ 私人牌堆名
+---@param specialName? string @ 私人牌堆名
 function Player:removeCards(playerArea, cardIds, specialName)
   assert(table.contains({ Player.Hand, Player.Equip, Player.Judge, Player.Special }, playerArea))
   assert(playerArea ~= Player.Special or type(specialName) == "string")
@@ -323,8 +319,8 @@ function Player:hasDelayedTrick(card_name)
 end
 
 --- 获取玩家特定区域所有牌的ID。
----@param playerAreas PlayerCardArea|PlayerCardArea[]|string|nil @ 玩家牌所在的区域
----@param specialName string|nil @私人牌堆名
+---@param playerAreas? PlayerCardArea|PlayerCardArea[]|string @ 玩家牌所在的区域
+---@param specialName? string @私人牌堆名
 ---@return integer[] @ 返回对应区域的所有牌对应的ID
 function Player:getCardIds(playerAreas, specialName)
   local rightAreas = { Player.Hand, Player.Equip, Player.Judge }
@@ -362,15 +358,15 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
---- 通过名字检索获取玩家是否存在对应私人牌堆。
+--- 通过名字检索获取玩家对应的私人牌堆。
 ---@param name string @ 私人牌堆名
 function Player:getPile(name)
-  return self.special_cards[name] or {}
+  return table.simpleClone(self.special_cards[name] or {})
 end
 
---- 通过ID检索获取玩家是否存在对应私人牌堆。
+--- 通过ID检索获取玩家对应的私人牌堆。
 ---@param id integer @ 私人牌堆ID
----@return string|null
+---@return string?
 function Player:getPileNameOfId(id)
   for k, v in pairs(self.special_cards) do
     if table.contains(v, id) then return k end
@@ -379,9 +375,10 @@ end
 
 --- 返回所有“如手牌般使用或打出”的牌。
 --- 或者说，返回所有名字以“&”结尾的pile的牌。
----@param include_hand bool @ 是否包含真正的手牌
+---@param include_hand? boolean @ 是否包含真正的手牌
 ---@return integer[]
 function Player:getHandlyIds(include_hand)
+  include_hand = include_hand or include_hand == nil
   local ret = include_hand and self:getCardIds("h") or {}
   for k, v in pairs(self.special_cards) do
     if k:endsWith("&") then table.insertTable(ret, v) end
@@ -402,7 +399,7 @@ end
 
 --- 检索玩家装备区是否存在对应类型的装备。
 ---@param cardSubtype CardSubtype @ 卡牌子类
----@return integer|null @ 返回卡牌ID或nil
+---@return integer? @ 返回卡牌ID或nil
 function Player:getEquipment(cardSubtype)
   for _, cardId in ipairs(self.player_cards[Player.Equip]) do
     if Fk:getCardById(cardId).sub_type == cardSubtype then
@@ -450,25 +447,45 @@ function Player:getMaxCards()
   return math.max(baseValue, 0)
 end
 
---- 获取玩家攻击距离。
+--- 获取玩家攻击范围。
 function Player:getAttackRange()
-  local weapon = Fk:getCardById(self:getEquipment(Card.SubtypeWeapon))
-  local baseAttackRange = math.max(weapon and weapon.attack_range or 1, 0)
-
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
-  for _, skill in ipairs(status_skills) do
-    local correct = skill:getCorrect(self)
-    baseAttackRange = baseAttackRange + (correct or 0)
+  local baseValue = 1
+  local weapons = self:getEquipments(Card.SubtypeWeapon)
+  if #weapons > 0 then
+    baseValue = 0
+    for _, id in ipairs(weapons) do
+      local weapon = Fk:getCardById(id)
+      baseValue = math.max(baseValue, weapon.attack_range or 1)
+    end
   end
 
-  return math.max(baseAttackRange, 0)
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local max_fixed, correct = nil, 0
+  for _, skill in ipairs(status_skills) do
+    local f = skill:getFixed(self)
+    if f ~= nil then
+      max_fixed = max_fixed and math.max(max_fixed, f) or f
+    end
+    local c = skill:getCorrect(self)
+    correct = correct + (c or 0)
+  end
+
+  return math.max(math.max(baseValue, (max_fixed or 0)) + correct, 0)
 end
 
 --- 获取角色是否被移除。
 function Player:isRemoved()
-  return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
-    return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
-  end)
+  for mark, _ in pairs(self.mark) do
+    if mark == MarkEnum.PlayerRemoved then return true end
+    if mark:startsWith(MarkEnum.PlayerRemoved .. "-") then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
+    end
+  end
+  -- return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
+  --   return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
+  -- end)
 end
 
 --- 修改玩家与其他角色的固定距离。
@@ -490,8 +507,8 @@ end
 ---
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
 ---@param other Player @ 其他玩家
----@param mode string|nil @ 计算模式(left/right/both)
----@param ignore_dead bool @ 是否忽略尸体
+---@param mode? string @ 计算模式(left/right/both)
+---@param ignore_dead? boolean @ 是否忽略尸体
 function Player:distanceTo(other, mode, ignore_dead)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
@@ -543,9 +560,9 @@ function Player:distanceTo(other, mode, ignore_dead)
   return math.max(ret, 1)
 end
 
---- 获取其他玩家是否在玩家的攻击距离内。
+--- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
----@param fixLimit number|null @ 卡牌距离限制增加专用
+---@param fixLimit? integer @ 卡牌距离限制增加专用
 function Player:inMyAttackRange(other, fixLimit)
   assert(other:isInstanceOf(Player))
   if self == other or (other and (other.dead or other:isRemoved())) or self:isRemoved() then
@@ -566,12 +583,12 @@ function Player:inMyAttackRange(other, fixLimit)
 end
 
 --- 获取下家。
----@param ignoreRemoved bool @ 忽略被移除
----@param num interger|nil @ 第几个，默认1
+---@param ignoreRemoved? boolean @ 忽略被移除
+---@param num? integer @ 第几个，默认1
 ---@return ServerPlayer
-function Player:getNextAlive(ignoreRemoved, num)
+function Player:getNextAlive(ignoreRemoved, num, ignoreRest)
   if #Fk:currentRoom().alive_players == 0 then
-    return self
+    return self.rest > 0 and self.next.rest > 0 and self.next or self
   end
   local doNotIgnore = not ignoreRemoved
   if doNotIgnore and table.every(Fk:currentRoom().alive_players, function(p) return p:isRemoved() end) then
@@ -582,7 +599,7 @@ function Player:getNextAlive(ignoreRemoved, num)
   num = num or 1
   for _ = 1, num do
     ret = ret.next
-    while ret.dead or (doNotIgnore and ret:isRemoved()) do
+    while (ret.dead and not ignoreRest) or (doNotIgnore and ret:isRemoved()) do
       ret = ret.next
     end
   end
@@ -590,18 +607,18 @@ function Player:getNextAlive(ignoreRemoved, num)
 end
 
 --- 获取上家。
----@param ignoreRemoved bool @ 忽略被移除
----@param num interger|nil @ 第几个，默认1
+---@param ignoreRemoved boolean @ 忽略被移除
+---@param num? integer @ 第几个，默认1
 ---@return ServerPlayer
 function Player:getLastAlive(ignoreRemoved, num)
   num = num or 1
-  local index = ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end) - num
+  local index = (ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end)) - num
   return self:getNextAlive(ignoreRemoved, index)
 end
 
 --- 增加玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
----@param num integer|nil @ 次数
+---@param num? integer @ 次数
 function Player:addCardUseHistory(cardName, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
@@ -616,7 +633,7 @@ end
 --- 设定玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
 ---@param num integer @ 次数
----@param scope integer|nil @ 查询历史范围
+---@param scope? integer @ 历史范围 全为nil意为清空
 function Player:setCardUseHistory(cardName, num, scope)
   if cardName == "" and num == nil and scope == nil then
     self.cardUsedHistory = {}
@@ -638,7 +655,7 @@ end
 
 --- 增加玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param num integer|nil @ 次数
+---@param num? integer @ 次数 默认1
 function Player:addSkillUseHistory(skill_name, num)
   num = num or 1
   assert(type(num) == "number" and num ~= 0)
@@ -652,8 +669,8 @@ end
 
 --- 设定玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param num integer|nil @ 次数
----@param scope integer|nil @ 查询历史范围
+---@param num? integer @ 次数 默认0
+---@param scope? integer @ 查询历史范围
 function Player:setSkillUseHistory(skill_name, num, scope)
   if skill_name == "" and num == nil and scope == nil then
     self.skillUsedHistory = {}
@@ -674,7 +691,7 @@ end
 
 --- 获取玩家使用特定牌的历史次数。
 ---@param cardName string @ 牌名
----@param scope integer|nil @ 查询历史范围
+---@param scope? integer @ 查询历史范围，默认Turn
 function Player:usedCardTimes(cardName, scope)
   if not self.cardUsedHistory[cardName] then
     return 0
@@ -685,7 +702,7 @@ end
 
 --- 获取玩家使用特定技能的历史次数。
 ---@param skill_name string @ 技能名
----@param scope integer|nil @ 查询历史范围
+---@param scope? integer @ 查询历史范围，默认Turn
 function Player:usedSkillTimes(skill_name, scope)
   if not self.skillUsedHistory[skill_name] then
     return 0
@@ -731,8 +748,8 @@ end
 
 --- 检索玩家是否有对应技能。
 ---@param skill string | Skill @ 技能名
----@param ignoreNullified bool @ 忽略技能是否被无效
----@param ignoreAlive bool @ 忽略角色在场与否
+---@param ignoreNullified? boolean @ 忽略技能是否被无效
+---@param ignoreAlive? boolean @ 忽略角色在场与否
 function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   if not ignoreAlive and self.dead then
     return false
@@ -766,7 +783,7 @@ end
 
 --- 为玩家增加对应技能。
 ---@param skill string | Skill @ 技能名
----@param source_skill string | Skill | nil @ 本有技能（和衍生技能相对）
+---@param source_skill? string | Skill @ 本有技能（和衍生技能相对）
 ---@return Skill[] @ got skills that Player didn't have at start
 function Player:addSkill(skill, source_skill)
   skill = getActualSkill(skill)
@@ -812,7 +829,7 @@ end
 
 --- 为玩家删除对应技能。
 ---@param skill string | Skill @ 技能名
----@param source_skill string | Skill | nil @ 本有技能（和衍生技能相对）
+---@param source_skill? string | Skill @ 本有技能（和衍生技能相对）
 ---@return Skill[] @ lost skills that the Player doesn't have anymore
 function Player:loseSkill(skill, source_skill)
   skill = getActualSkill(skill)
@@ -855,9 +872,20 @@ end
 
 --- 确认玩家是否可以使用特定牌。
 ---@param card Card @ 特定牌
-function Player:canUse(card)
-  assert(card, "Error: No Card")
-  return card.skill:canUse(self, card)
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUse(card, extra_data)
+  return not self:prohibitUse(card) and card.skill:canUse(self, card, extra_data)
+end
+
+--- 确认玩家是否可以对特定玩家使用特定牌。
+---@param card Card @ 特定牌
+---@param to Player @ 特定玩家
+---@param extra_data? UseExtraData @ 额外数据
+function Player:canUseTo(card, to, extra_data)
+  if self:prohibitUse(card) or self:isProhibited(to, card) then return false end
+  local distance_limited = not (extra_data and extra_data.bypass_distances)
+  local can_use = self:canUse(card, extra_data)
+  return can_use and card.skill:modTargetFilter(to.id, {}, self.id, card, distance_limited)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。
@@ -909,8 +937,12 @@ function Player:prohibitResponse(card)
 end
 
 --- 确认玩家是否被禁止弃置特定牌。
----@param card Card @ 特定的牌
+---@param card Card|integer @ 特定的牌
 function Player:prohibitDiscard(card)
+  if type(card) == "number" then
+    card = Fk:getCardById(card)
+  end
+
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     if skill:prohibitDiscard(self, card) then
@@ -926,12 +958,56 @@ function Player:prohibitReveal(isDeputy)
   if type(self:getMark(MarkEnum.RevealProhibited)) == "table" and table.contains(self:getMark(MarkEnum.RevealProhibited), place) then
     return true
   end
-  for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
-      return self:getMark(MarkEnum.RevealProhibited .. s)
-    end)) do
-    if type(m) == "table" and table.contains(m, place) then
-      return true
+
+  for mark, value in pairs(self.mark) do
+    if mark:startsWith(MarkEnum.RevealProhibited .. "-") and type(value) == "table" then
+      for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
+        if mark:find(suffix, 1, true) then return true end
+      end
     end
+  end
+  -- for _, m in ipairs(table.map(MarkEnum.TempMarkSuffix, function(s)
+  --     return self:getMark(MarkEnum.RevealProhibited .. s)
+  --   end)) do
+  --   if type(m) == "table" and table.contains(m, place) then
+  --     return true
+  --   end
+  -- end
+  return false
+end
+
+---@param to Player
+---@param ignoreFromKong? boolean
+---@param ignoreToKong? boolean
+function Player:canPindian(to, ignoreFromKong, ignoreToKong)
+  if self == to then return false end
+
+  if self:isKongcheng() and not ignoreFromKong then
+    return false
+  end
+  if to:isKongcheng() and not ignoreToKong then
+    return false
+  end
+  local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    if skill:prohibitPindian(self, to) then
+      return false
+    end
+  end
+  return true
+end
+
+--- 判断一张牌能否移动至某角色的装备区
+---@param cardId integer @ 移动的牌
+---@param convert? boolean @ 是否可以替换装备（默认可以）
+---@return boolean
+function Player:canMoveCardIntoEquip(cardId, convert)
+  convert = (convert == nil) and true or convert
+  local card = Fk:getCardById(cardId)
+  if not (card.sub_type >= 3 and card.sub_type <= 7) then return false end
+  if self.dead or table.contains(self:getCardIds("e"), cardId) then return false end
+  if self:hasEmptyEquipSlot(card.sub_type) or (#self:getEquipments(card.sub_type) > 0 and convert) then
+    return true
   end
   return false
 end
@@ -943,8 +1019,8 @@ fk.SwitchYin = 1
 
 --- 获取转换技状态
 ---@param skillName string @ 技能名
----@param afterUse bool @ 是否提前计算转换后状态
----@param inWord bool @ 是否返回文字
+---@param afterUse? boolean @ 是否提前计算转换后状态
+---@param inWord? boolean @ 是否返回文字
 ---@return number|string @ 转换技状态
 function Player:getSwitchSkillState(skillName, afterUse, inWord)
   if afterUse then
@@ -968,7 +1044,7 @@ function Player:canMoveCardInBoardTo(to, id)
     return
       not (
         table.find(to:getCardIds(Player.Judge), function(cardId)
-          return Fk:getCardById(cardId).name == card.name
+          return (to:getVirualEquip(cardId) or Fk:getCardById(cardId)).name == card.name
         end) or
         table.contains(to.sealedSlots, Player.JudgeSlot)
       )
@@ -1044,6 +1120,21 @@ end
 function Player:isBuddy(other)
   local id = type(other) == "number" and other or other.id
   return self.id == id or table.contains(self.buddy_list, id)
+end
+
+--- 比较两名角色的性别是否相同。
+---@param other Player @ 另一名角色
+---@param diff? bool @ 比较二者不同
+---@return boolean @ 返回比较结果
+function Player:compareGenderWith(other, diff)
+  if self == other then return not diff end
+  if self.gender == General.Agender or other.gender == General.Agender then return false end
+  if self.gender == General.Bigender or other.gender == General.Bigender then return true end
+  if diff then
+    return self.gender ~= other.gender
+  else
+    return self.gender == other.gender
+  end
 end
 
 return Player

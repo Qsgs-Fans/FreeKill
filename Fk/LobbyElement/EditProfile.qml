@@ -15,14 +15,15 @@ Item {
     transformOrigin: Item.BottomLeft
     rotation: 90
     width: root.height
+    background: Rectangle { color: "#EEEEEEEE" }
     TabButton {
-      text: Backend.translate("Userinfo Settings")
+      text: luatr("Userinfo Settings")
     }
     TabButton {
-      text: Backend.translate("BG Settings")
+      text: luatr("BG Settings")
     }
     TabButton {
-      text: Backend.translate("Audio Settings")
+      text: luatr("Audio Settings")
     }
   }
 

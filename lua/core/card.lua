@@ -21,10 +21,11 @@
 ---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
 ---@field public skill Skill @ 技能（用于实现卡牌效果）
----@field public special_skills string[] | nil @ 衍生技能，如重铸
+---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
----@field public is_derived bool @ 判断是否为衍生牌
+---@field public is_passive? boolean @ 是否只能在响应时使用或打出
+---@field public is_derived? boolean @ 判断是否为衍生牌
 local Card = class("Card")
 
 ---@alias Suit integer
@@ -136,8 +137,8 @@ end
 --- 克隆特定卡牌并赋予花色与点数。
 ---
 --- 会将skill/special_skills/equip_skill继承到克隆牌中。
----@param suit Suit|nil @ 克隆后的牌的花色
----@param number integer|nil @ 克隆后的牌的点数
+---@param suit? Suit @ 克隆后的牌的花色
+---@param number? integer @ 克隆后的牌的点数
 ---@return Card @ 产品
 function Card:clone(suit, number)
   local newCard = self.class:new(self.name, suit, number)
@@ -145,11 +146,12 @@ function Card:clone(suit, number)
   newCard.special_skills = self.special_skills
   newCard.is_damage_card = self.is_damage_card
   newCard.multiple_targets = self.multiple_targets
+  newCard.is_passive = self.is_passive
   newCard.is_derived = self.is_derived
   return newCard
 end
 
---- 检测是否为虚拟卡牌，如果其ID为0及以下，则为虚拟卡牌。
+--- 检测是否为虚拟卡牌，如果其ID为0，则为虚拟卡牌。
 function Card:isVirtual()
   return self.id == 0
 end
@@ -157,7 +159,7 @@ end
 --- 获取卡牌的ID。
 ---
 --- 如果牌是虚拟牌，则返回其第一张子卡的id，没有子卡就返回nil
----@return integer | nil
+---@return integer?
 function Card:getEffectiveId()
   if self:isVirtual() then
     return #self.subcards > 0 and self.subcards[1] or nil
@@ -171,7 +173,7 @@ local function updateColorAndNumber(card)
   local different_color = false
   for i, id in ipairs(card.subcards) do
     local c = Fk:getCardById(id)
-    number = math.min(number + c.number, 13)
+    number = #card.subcards == 1 and math.min(number + c.number, 13) or 0
     if i == 1 then
       card.suit = c.suit
     else
@@ -236,7 +238,7 @@ function Card:matchPattern(pattern)
 end
 
 --- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
----@param symbol bool @ 是否以符号形式显示
+---@param symbol? boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
   local suit = self.suit
@@ -406,15 +408,10 @@ function Card:getMark(mark)
   if (not self:isVirtual()) and next(self.mark) == nil then
     self.mark = nil
   end
+  if type(ret) == "table" then
+    ret = table.simpleClone(ret)
+  end
   return ret
-end
-
---- 判定卡牌是否拥有对应的Mark。
----@param mark string @ 标记
----@return boolean
-function Card:hasMark(mark)
-  fk.qWarning("hasMark will be deleted in future version!")
-  return self:getMark(mark) ~= 0
 end
 
 --- 获取卡牌有哪些Mark。
@@ -428,7 +425,7 @@ end
 
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff bool @ 比较二者相同还是不同
+---@param diff? boolean @ 比较二者不同
 ---@return boolean 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
@@ -444,8 +441,8 @@ end
 
 --- 比较两张卡牌的颜色是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
----@return boolean 返回比较结果
+---@param diff? boolean @ 比较二者不同
+---@return boolean @ 返回比较结果
 function Card:compareColorWith(anotherCard, diff)
   if self ~= anotherCard and table.contains({ self.color, anotherCard.color }, Card.NoColor) then
     return false
@@ -460,8 +457,8 @@ end
 
 --- 比较两张卡牌的点数是否相同
 ---@param anotherCard Card @ 另一张卡牌
----@param diff boolean @ 比较二者相同还是不同
----@return boolean 返回比较结果
+---@param diff? boolean @ 比较二者不同
+---@return boolean @ 返回比较结果
 function Card:compareNumberWith(anotherCard, diff)
   if self ~= anotherCard and self.number < 1 or anotherCard.number < 1 then
     return false

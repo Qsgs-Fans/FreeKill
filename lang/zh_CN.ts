@@ -107,6 +107,10 @@
     <source>[%1/%2] upgrading package '%3'</source>
     <translation>[%1/%2] 更新拓展包 '%3'</translation>
   </message>
+  <message>
+    <source>packages/%1: some error occured.</source>
+    <translation>拓展包 %1 出了点问题，尝试在管理拓展包中删除之再试试</translation>
+  </message>
 </context>
 
 <context>
@@ -333,6 +337,10 @@
   <message>
     <source>Room is full or already started!</source>
     <translation>房间已满！</translation>
+  </message>
+  <message>
+    <source>rejected your demand of joining room</source>
+    <translation>房主拒绝你加入。</translation>
   </message>
   <message>
     <source>server is full!</source>

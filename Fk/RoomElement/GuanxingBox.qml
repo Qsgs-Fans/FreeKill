@@ -14,7 +14,7 @@ GraphicsBox {
   property var areaNames: []
   property int padding: 25
 
-  title.text: Backend.translate(prompt !== "" ? prompt : "Please arrange cards")
+  title.text: luatr(prompt !== "" ? prompt : "Please arrange cards")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
@@ -32,7 +32,8 @@ GraphicsBox {
         spacing: 5
 
         property int areaCapacity: modelData
-        property string areaName: index < areaNames.length ? qsTr(areaNames[index]) : ""
+        property string areaName: index < areaNames.length
+                                  ? qsTr(areaNames[index]) : ""
 
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
@@ -81,7 +82,7 @@ GraphicsBox {
     MetroButton {
       Layout.alignment: Qt.AlignHCenter
       id: buttonConfirm
-      text: Backend.translate("OK")
+      text: luatr("OK")
       width: 120
       height: 35
 

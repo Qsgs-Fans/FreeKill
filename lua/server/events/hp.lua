@@ -48,37 +48,50 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
     damageEvent = damageStruct,
   }
 
+  if reason == "damage" then
+    data.shield_lost = math.min(-num, player.shield)
+    data.num = num + data.shield_lost
+  end
+
   if logic:trigger(fk.BeforeHpChanged, player, data) then
     logic:breakEvent(false)
   end
 
-  assert(not (data.reason == "recover" and data.num < 0))
-  player.hp = math.min(player.hp + data.num, player.maxHp)
-  room:broadcastProperty(player, "hp")
+  if reason == "damage" and data.shield_lost > 0 and not damageStruct.isVirtualDMG then
+    room:changeShield(player, -data.shield_lost)
+  end
 
   if reason == "damage" then
     sendDamageLog(room, damageStruct)
-  elseif reason == "loseHp" then
-    room:sendLog{
-      type = "#LoseHP",
-      from = player.id,
-      arg = 0 - num,
-    }
-    room:sendLogEvent("LoseHP", {})
-  elseif reason == "recover" then
-    room:sendLog{
-      type = "#HealHP",
-      from = player.id,
-      arg = num,
-    }
   end
 
-  room:sendLog{
-    type = "#ShowHPAndMaxHP",
-    from = player.id,
-    arg = player.hp,
-    arg2 = player.maxHp,
-  }
+  if not (reason == "damage" and (data.num == 0 or damageStruct.isVirtualDMG)) then
+    assert(not (data.reason == "recover" and data.num < 0))
+    player.hp = math.min(player.hp + data.num, player.maxHp)
+    room:broadcastProperty(player, "hp")
+
+    if reason == "loseHp" then
+      room:sendLog{
+        type = "#LoseHP",
+        from = player.id,
+        arg = 0 - data.num,
+      }
+      room:sendLogEvent("LoseHP", {})
+    elseif reason == "recover" then
+      room:sendLog{
+        type = "#HealHP",
+        from = player.id,
+        arg = data.num,
+      }
+    end
+
+    room:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = player.hp,
+      arg2 = player.maxHp,
+    }
+  end
 
   logic:trigger(fk.HpChanged, player, data)
 
@@ -123,14 +136,16 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   assert(damageStruct.to:isInstanceOf(ServerPlayer))
 
   local stages = {
-    {fk.PreDamage, damageStruct.from},
-    {fk.DamageCaused, damageStruct.from},
-    {fk.DamageInflicted, damageStruct.to},
+    {fk.PreDamage, "from"},
   }
+
+  if not damageStruct.isVirtualDMG then
+    table.insertTable(stages, { { fk.DamageCaused, "from" }, { fk.DamageInflicted, "to" } })
+  end
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    if logic:trigger(event, player, damageStruct) or damageStruct.damage < 1 then
+    if logic:trigger(event, damageStruct[player], damageStruct) or damageStruct.damage < 1 then
       logic:breakEvent(false)
     end
 
@@ -140,6 +155,9 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   if damageStruct.to.dead then
     return false
   end
+
+  damageStruct.dealtRecorderId = room.logic.specific_events_id[GameEvent.Damage]
+  room.logic.specific_events_id[GameEvent.Damage] = room.logic.specific_events_id[GameEvent.Damage] + 1
 
   if damageStruct.card and damageStruct.damage > 0 then
     local parentUseData = logic:getCurrentEvent():findParent(GameEvent.UseCard)
@@ -151,36 +169,28 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   end
 
   if damageStruct.damageType ~= fk.NormalDamage and damageStruct.to.chained then
-    damageStruct.beginnerOfTheDamage = true
+    if not damageStruct.chain then damageStruct.beginnerOfTheDamage = true end
     damageStruct.to:setChainState(false)
   end
 
-  -- 先扣减护甲，再扣体力值
-  local shield_to_lose = math.min(damageStruct.damage, damageStruct.to.shield)
-  room:changeShield(damageStruct.to, -shield_to_lose)
-
-  if shield_to_lose < damageStruct.damage then
-    if not room:changeHp(
-      damageStruct.to,
-      shield_to_lose - damageStruct.damage,
-      "damage",
-      damageStruct.skillName,
-      damageStruct) then
-      logic:breakEvent(false)
-    end
-  else
-    sendDamageLog(room, damageStruct)
+  if not room:changeHp(
+    damageStruct.to,
+    -damageStruct.damage,
+    "damage",
+    damageStruct.skillName,
+    damageStruct) then
+    logic:breakEvent(false)
   end
 
+
   stages = {
-    {fk.Damage, damageStruct.from},
-    {fk.Damaged, damageStruct.to},
-    {fk.DamageFinished, damageStruct.to},
+    {fk.Damage, "from"},
+    {fk.Damaged, "to"},
   }
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    logic:trigger(event, player, damageStruct)
+    logic:trigger(event, damageStruct[player], damageStruct)
   end
 
   return true
@@ -202,9 +212,17 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
         type = "#ChainDamage",
         from = p.id
       }
-      local dmg = table.simpleClone(damageStruct)
-      dmg.to = p
-      dmg.chain = true
+
+      local dmg = {
+        from = damageStruct.from,
+        to = p,
+        damage = damageStruct.damage,
+        damageType = damageStruct.damageType,
+        card = damageStruct.card,
+        skillName = damageStruct.skillName,
+        chain = true,
+      }
+
       room:damage(dmg)
     end
   end
@@ -272,12 +290,19 @@ end
 GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
   local player, num = table.unpack(self.data)
   local room = self.room
-  if num == 0 then
+
+  ---@type MaxHpChangedData
+  local data = {
+    num = num,
+  }
+
+  if room.logic:trigger(fk.BeforeMaxHpChanged, player, data) or data.num == 0 then
     return false
   end
 
-  player.maxHp = math.max(player.maxHp + num, 0)
-  room:broadcastProperty(player, "maxHp")
+  num = data.num
+
+  room:setPlayerProperty(player, "maxHp", math.max(player.maxHp + num, 0))
   room:sendLogEvent("ChangeMaxHp", {
     player = player.id,
     num = num,

@@ -25,7 +25,7 @@ Item {
     font.family: fontLi2.name
     style: Text.Outline
     styleColor: "#3D2D1C"
-    text: Backend.translate(skillname);
+    text: luatr(skillname);
   }
 
   Text {
@@ -39,8 +39,7 @@ Item {
   }
 
   onSkillnameChanged: {
-    let data = Backend.callLuaFunction("GetSkillData", [skillname]);
-    data = JSON.parse(data);
+    let data = lcall("GetSkillData", skillname);
     if (data.frequency || data.switchSkillName) {
       skilltype = data.switchSkillName ? 'switch' : data.frequency;
       visible = true;
@@ -64,7 +63,8 @@ Item {
       }
     } else if (skilltype === 'switch') {
       visible = true;
-      bg.source = SkinBank.LIMIT_SKILL_DIR + (usedtimes < 1 ? 'switch' : 'switch-yin');
+      bg.source = SkinBank.LIMIT_SKILL_DIR +
+        (usedtimes < 1 ? 'switch' : 'switch-yin');
     } else if (skilltype === 'quest') {
       visible = true
       if (usedtimes > 1) {

@@ -26,12 +26,15 @@ Item {
         }
 
         ColumnLayout {
-          Text { text: Backend.translate(gname) }
+          Text {
+            color: "#E4D5A0"
+            text: luatr(gname)
+          }
           GridLayout {
-            columns: 3
+            columns: 6
 
             Repeater {
-              model: JSON.parse(Backend.callLuaFunction("GetSameGenerals", [gname]))
+              model: lcall("GetSameGenerals", gname)
 
               GeneralCardItem {
                 name: modelData

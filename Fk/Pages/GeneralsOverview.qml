@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk
 import Fk.RoomElement
 import "RoomLogic.js" as RoomLogic
 
@@ -10,39 +11,98 @@ Item {
   id: root
 
   property bool loaded: false
+  property int stat: 0 // 0=normal 1=banPkg 2=banChara
 
   Rectangle {
-    anchors.fill: listView
-    color: "#88EEEEEE"
+    id: listBg
+    width: 260; height: parent.height
+    color: "snow"
     radius: 6
   }
 
   ListView {
-    id: listView
+    id: modList
+    width: 130; height: parent.height
+    anchors.top: listBg.top; anchors.left: listBg.left
     clip: true
-    width: 130
-    height: parent.height - 20
-    y: 10
-    ScrollBar.vertical: ScrollBar {}
     model: ListModel {
-      id: packages
+      id: mods
     }
 
-    highlight: Rectangle { color: "#E91E63"; radius: 5 }
+    Rectangle {
+      anchors.fill: parent
+      color: "#A48959"
+      z: -1
+    }
+
+    highlight: Rectangle { color: "snow" }
     highlightMoveDuration: 500
 
     delegate: Item {
-      width: listView.width
+      width: modList.width
       height: 40
 
       Text {
-        text: Backend.translate(name)
+        text: luatr(name)
+        color: modList.currentIndex === index ? "black" : "white"
         anchors.centerIn: parent
       }
 
       TapHandler {
         onTapped: {
-          listView.currentIndex = index;
+          modList.currentIndex = index;
+        }
+      }
+    }
+  }
+
+  ListView {
+    id: pkgList
+    width: 130; height: parent.height
+    anchors.top: listBg.top; anchors.left: modList.right
+
+    clip: true
+    model: JSON.parse(mods.get(modList.currentIndex)?.pkgs ?? "[]")
+
+    highlight: Rectangle { color: "#FFCC3F"; radius: 5; scale: 0.8 }
+    highlightMoveDuration: 500
+
+    delegate: Item {
+      width: pkgList.width
+      height: 40
+
+      Text {
+        text: luatr(modelData)
+        color: !config.curScheme.banPkg[modelData] ? "black" : "grey"
+        Behavior on color { ColorAnimation { duration: 200 } }
+        anchors.centerIn: parent
+      }
+
+      Image {
+        source: AppPath + "/image/button/skill/locked.png"
+        opacity: !config.curScheme.banPkg[modelData] ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+        anchors.centerIn: parent
+        scale: 0.8
+      }
+
+      TapHandler {
+        onTapped: {
+          if (stat === 1) {
+            const name = modelData;
+            let s = config.curScheme;
+            if (s.banPkg[name]) {
+              delete s.banPkg[name];
+              delete s.normalPkg[name];
+            } else {
+              delete s.normalPkg[name];
+              s.banPkg[name] = [];
+            }
+            console.log(JSON.stringify(config.curScheme))
+            config.curSchemeChanged();
+          } else {
+            pkgList.currentIndex = index;
+          }
         }
       }
     }
@@ -50,13 +110,106 @@ Item {
     onCurrentIndexChanged: { vanishAnim.start(); }
   }
 
+  ToolBar {
+    id: bar
+    width: root.width - listBg.width - 16
+    anchors.left: listBg.right
+    anchors.leftMargin: 8
+    y: 8
+
+    background: Rectangle {
+      color: stat === 0 ? "#5cb3cc" : "#869d9d"
+      Behavior on color { ColorAnimation { duration: 200 } }
+    }
+
+    RowLayout {
+      anchors.fill: parent
+      Item { Layout.preferredWidth: 20 }
+
+      Label {
+        text: {
+          switch (stat) {
+            case 0: return luatr("Generals Overview");
+            case 1: return luatr("$BanPkgHelp");
+            case 2: return luatr("$BanCharaHelp");
+          }
+        }
+        elide: Label.ElideLeft
+        verticalAlignment: Qt.AlignVCenter
+        font.pixelSize: 28
+      }
+
+      Item { Layout.fillWidth: true }
+
+      TextField {
+        id: word
+        clip: true
+        leftPadding: 5
+        rightPadding: 5
+      }
+
+      ToolButton {
+        text: luatr("Search")
+        font.pixelSize: 20
+        enabled: word.text !== ""
+        onClicked: {
+          pkgList.currentIndex = 0;
+          vanishAnim.start();
+        }
+      }
+
+      ToolButton {
+        id: banButton
+        font.pixelSize: 20
+        text: {
+          if (stat === 2) return luatr("OK");
+          return luatr("BanGeneral");
+        }
+        enabled: stat !== 1
+        onClicked: {
+          if (stat === 0) {
+            stat = 2;
+          } else {
+            stat = 0;
+          }
+        }
+      }
+
+      ToolButton {
+        id: banPkgButton
+        font.pixelSize: 20
+        text: {
+          if (stat === 1) return luatr("OK");
+          return luatr("BanPackage");
+        }
+        enabled: stat !== 2
+        onClicked: {
+          if (stat === 0) {
+            stat = 1;
+          } else {
+            stat = 0;
+          }
+        }
+      }
+
+      ToolButton {
+        text: luatr("Quit")
+        font.pixelSize: 20
+        onClicked: {
+          mainStack.pop();
+          config.saveConf();
+        }
+      }
+    }
+  }
+
   GridView {
     id: gridView
     clip: true
-    width: root.width - listView.width - generalDetail.width - 16
-    height: parent.height - 20
-    y: 10
-    anchors.left: listView.right
+    width: root.width - listBg.width - 16
+    height: parent.height - bar.height - 24
+    y: 16 + bar.height
+    anchors.left: listBg.right
     anchors.leftMargin: 8 + (width % 100) / 2
     cellHeight: 140
     cellWidth: 100
@@ -65,24 +218,77 @@ Item {
       autoBack: false
       name: modelData
       onClicked: {
-        generalText.clear();
-        generalDetail.general = modelData;
-        generalDetail.updateGeneral();
-      // generalDetail.open();
+        if (stat === 2) {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          let arr;
+          if (s.banPkg[pack]) {
+            arr = s.banPkg[pack];
+          } else {
+            if (!s.normalPkg[pack]) {
+              s.normalPkg[pack] = [];
+            }
+            arr = s.normalPkg[pack];
+          }
+          // TODO: 根据手动全禁/全白名单自动改为禁包
+          const idx = arr.indexOf(modelData);
+          if (idx !== -1) {
+            arr.splice(idx, 1);
+          } else {
+            arr.push(modelData);
+          }
+          config.curSchemeChanged();
+        } else {
+          generalText.clear();
+          generalDetail.general = modelData;
+          generalDetail.updateGeneral();
+          generalDetail.open();
+        }
       }
 
       Rectangle {
         anchors.fill: parent
         color: "black"
-        opacity: config.disabledGenerals.includes(modelData) ? 0.7 : 0
+        opacity: {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            if (!s.banPkg[pack].includes(modelData)) return 0.5;
+          } else {
+            if (!!s.normalPkg[pack]?.includes(modelData)) return 0.5;
+          }
+          return 0;
+        }
         Behavior on opacity {
           NumberAnimation {}
         }
       }
 
       GlowText {
-        visible: config.disabledGenerals.includes(modelData)
-        text: '禁'
+        id: banText
+        visible: {
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            return s.banPkg[pack].includes(modelData);
+          } else {
+            return !!s.normalPkg[pack]?.includes(modelData);
+          }
+        }
+        text: {
+          if (!visible) return '';
+          const s = config.curScheme;
+          const gdata = lcall("GetGeneralData", modelData);
+          const pack = gdata.package;
+          if (s.banPkg[pack]) {
+            if (s.banPkg[pack].includes(modelData)) return '启用';
+          } else {
+            if (!!s.normalPkg[pack]?.includes(modelData)) return '禁';
+          }
+        }
         anchors.centerIn: parent
         font.family: fontLi2.name
         color: "#E4D5A0"
@@ -107,17 +313,16 @@ Item {
     PropertyAnimation {
       target: gridView
       property: "y"
-      to: 30
+      to: 36 + bar.height
       duration: 150
       easing.type: Easing.InOutQuad
     }
     onFinished: {
       if (word.text !== "") {
-        gridView.model = JSON.parse(Backend.callLuaFunction("SearchAllGenerals",
-          [word.text]));
+        gridView.model = lcall("SearchAllGenerals", word.text);
       } else {
-        gridView.model = JSON.parse(Backend.callLuaFunction("SearchGenerals",
-          [listView.model.get(listView.currentIndex).name, word.text]));
+        gridView.model = lcall("SearchGenerals",
+          pkgList.model[pkgList.currentIndex], word.text);
       }
       word.text = "";
       appearAnim.start();
@@ -138,28 +343,83 @@ Item {
       PropertyAnimation {
         target: gridView
         property: "y"
-        from: 20
-        to: 10
+        from: 36 + bar.height
+        to: 16 + bar.height
         duration: 150
         easing.type: Easing.InOutQuad
       }
     }
   }
 
-  Rectangle {
+  Component {
+    id: skillAudioBtn
+    Button {
+      Layout.fillWidth: true
+      contentItem: ColumnLayout {
+        Text {
+          Layout.fillWidth: true
+          text: {
+            if (name.endsWith("_win_audio")) {
+              return luatr("Win audio");
+            }
+            return luatr(name) + (idx ? " (" + idx.toString() + ")"
+              : "");
+          }
+          font.bold: true
+          font.pixelSize: 14
+        }
+        Text {
+          Layout.fillWidth: true
+          text: {
+            const orig = '$' + name + (idx ? idx.toString() : "");
+            const orig_trans = luatr(orig);
+
+            // try general specific
+            const orig_g = '$' + name + '_' + detailGeneralCard.name
+              + (idx ? idx.toString() : "");
+            const orig_g_trans = luatr(orig_g);
+
+            if (orig_g_trans !== orig_g) {
+              return orig_g_trans;
+            }
+
+            if (orig_trans !== orig) {
+              return orig_trans;
+            }
+
+            return "";
+          }
+          wrapMode: Text.WordWrap
+        }
+      }
+
+      onClicked: {
+        callbacks["LogEvent"](JSON.stringify({
+          type: "PlaySkillSound",
+          name: name,
+          general: detailGeneralCard.name,
+          i: idx,
+        }));
+      }
+    }
+  }
+
+  Popup {
     id: generalDetail
-    width: 310
-    height: parent.height - searcher.height - 20
-    y: 10
-    anchors.right: parent.right
-    anchors.rightMargin: 10
-    color: "#88EEEEEE"
-    radius: 8
+    width: realMainWin.width * 0.6
+    height: realMainWin.height * 0.8
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
 
     property string general: "caocao"
 
     function addSpecialSkillAudio(skill) {
-      const gdata = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general]));
+      const gdata = lcall("GetGeneralData", general);
       const extension = gdata.extension;
       let ret = false;
       for (let i = 0; i < 999; i++) {
@@ -178,7 +438,7 @@ Item {
 
     function addSkillAudio(skill) {
       if (addSpecialSkillAudio(skill)) return;
-      const skilldata = JSON.parse(Backend.callLuaFunction("GetSkillData", [skill]));
+      const skilldata = lcall("GetSkillData", skill);
       if (!skilldata) return;
       const extension = skilldata.extension;
       for (let i = 0; i < 999; i++) {
@@ -194,8 +454,9 @@ Item {
     }
 
     function findDeathAudio(general) {
-      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
-      const fname = AppPath + "/packages/" + extension + "/audio/death/" + general + ".mp3";
+      const extension = lcall("GetGeneralData", general).extension;
+      const fname = AppPath + "/packages/" + extension + "/audio/death/"
+        + general + ".mp3";
       if (Backend.exists(fname)) {
         audioDeath.visible = true;
       } else {
@@ -205,27 +466,27 @@ Item {
 
     function updateGeneral() {
       detailGeneralCard.name = general;
-      const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [general]));
+      const data = lcall("GetGeneralDetail", general);
       generalText.clear();
       audioModel.clear();
 
       if (data.companions.length > 0){
-        let ret = '';
-        ret += "<font color=\"slategrey\"><b>" + Backend.translate("Companions") + "</b>: ";
+        let ret = "<font color=\"slategrey\"><b>" + luatr("Companions")
+          + "</b>: ";
         data.companions.forEach(t => {
-          ret += Backend.translate(t) + ' '
+          ret += luatr(t) + ' '
         });
         generalText.append(ret)
       }
 
       data.skill.forEach(t => {
-        generalText.append("<b>" + Backend.translate(t.name) +
+        generalText.append("<b>" + luatr(t.name) +
           "</b>: " + t.description);
 
         addSkillAudio(t.name);
       });
       data.related_skill.forEach(t => {
-        generalText.append("<font color=\"purple\"><b>" + Backend.translate(t.name) +
+        generalText.append("<font color=\"purple\"><b>" + luatr(t.name) +
           "</b>: " + t.description + "</font>");
 
         addSkillAudio(t.name);
@@ -235,210 +496,153 @@ Item {
       addSkillAudio(general + "_win_audio");
     }
 
-    Flickable {
-      flickableDirection: Flickable.VerticalFlick
-      contentHeight: detailLayout.height
-      width: parent.width - 40
-      height: parent.height - 40
-      clip: true
+    Item {
       anchors.centerIn: parent
-      ScrollBar.vertical: ScrollBar {}
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
 
-      ColumnLayout {
-        id: detailLayout
-        width: parent.width
-
-        GeneralCardItem {
-          id: detailGeneralCard
-          Layout.alignment: Qt.AlignHCenter
-          name: "caocao"
-        }
-
-        TextEdit {
-          id: generalText
-
-          Layout.fillWidth: true
-          readOnly: true
-          selectByKeyboard: true
-          selectByMouse: false
-          wrapMode: TextEdit.WordWrap
-          textFormat: TextEdit.RichText
-          font.pixelSize: 16
-        }
-
-        Repeater {
-          model: ListModel {
-            id: audioModel
+      Item {
+        id: generalInfo
+        width: 150
+        ColumnLayout {
+          width: parent.width
+          GeneralCardItem {
+            id: detailGeneralCard
+            name: "caocao"
+            scale: 1.5; transformOrigin: Item.TopLeft
           }
+
+          Item { Layout.preferredHeight: 130 * 0.5 }
+
+          Text {
+            Layout.fillWidth: true
+            textFormat: TextEdit.RichText
+            font.pixelSize: 16
+            function trans(str) {
+              const ret = luatr(str);
+              if (ret === str) {
+                return luatr("Official");
+              }
+              return ret;
+            }
+            text: {
+              const general = generalDetail.general;
+              return [
+                luatr(lcall("GetGeneralData", general).package),
+                luatr("Title") + trans("#" + general),
+                luatr("Designer") + trans("designer:" + general),
+                luatr("Voice Actor") + trans("cv:" + general),
+                luatr("Illustrator") + trans("illustrator:" + general),
+              ].join("<br>");
+            }
+          }
+
+          Timer {
+            id: opTimer
+            interval: 4000
+          }
+
           Button {
+            text: luatr("Set as Avatar")
+            enabled: detailGeneralCard.name !== "" && !opTimer.running
+              && Self.avatar !== detailGeneralCard.name
+            onClicked: {
+              mainWindow.busy = true;
+              opTimer.start();
+              ClientInstance.notifyServer(
+                "UpdateAvatar",
+                JSON.stringify([detailGeneralCard.name])
+              );
+            }
+          }
+        }
+      }
+
+      Flickable {
+        flickableDirection: Flickable.VerticalFlick
+        contentHeight: detailLayout.height
+        width: parent.width - 40 - generalInfo.width
+        height: parent.height - 40
+        clip: true
+        anchors.left: generalInfo.right
+        anchors.leftMargin: 20
+        y: 20
+
+        ColumnLayout {
+          id: detailLayout
+          width: parent.width
+
+          TextEdit {
+            id: generalText
+
+            Layout.fillWidth: true
+            readOnly: true
+            selectByKeyboard: true
+            selectByMouse: false
+            wrapMode: TextEdit.WordWrap
+            textFormat: TextEdit.RichText
+            font.pixelSize: 18
+          }
+
+          GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            Repeater {
+              model: ListModel {
+                id: audioModel
+              }
+              delegate: skillAudioBtn
+            }
+          }
+
+          Button {
+            id: audioDeath
             Layout.fillWidth: true
             contentItem: ColumnLayout {
               Text {
                 Layout.fillWidth: true
-                text: {
-                  if (name.endsWith("_win_audio")) {
-                    return "胜利语音";
-                  }
-                  return Backend.translate(name) + (idx ? " (" + idx.toString() + ")" : "");
-                }
+                text: luatr("Death audio")
                 font.bold: true
                 font.pixelSize: 14
               }
               Text {
                 Layout.fillWidth: true
                 text: {
-                  const orig = '$' + name + (idx ? idx.toString() : "");
-                  const orig_trans = Backend.translate(orig);
-
-                  // try general specific
-                  const orig_g = '$' + name + '_' + detailGeneralCard.name + (idx ? idx.toString() : "");
-                  const orig_g_trans = Backend.translate(orig_g);
-
-                  if (orig_g_trans !== orig_g) {
-                    return orig_g_trans;
+                  const orig = "~" + generalDetail.general;
+                  const tr = luatr(orig);
+                  if (tr === orig) {
+                    return "";
                   }
-
-                  if (orig_trans !== orig) {
-                    return orig_trans;
-                  }
-
-                  return "";
+                  return tr;
                 }
                 wrapMode: Text.WordWrap
               }
             }
 
             onClicked: {
-              callbacks["LogEvent"](JSON.stringify({
-                type: "PlaySkillSound",
-                name: name,
-                general: detailGeneralCard.name,
-                i: idx,
-              }));
+              const general = generalDetail.general
+              const extension = lcall("GetGeneralData", general).extension;
+              Backend.playSound("./packages/" + extension + "/audio/death/"
+                + general);
             }
           }
         }
-
-        Button {
-          id: audioDeath
-          Layout.fillWidth: true
-          contentItem: ColumnLayout {
-            Text {
-              Layout.fillWidth: true
-              text: Backend.translate("Death audio")
-              font.bold: true
-              font.pixelSize: 14
-            }
-            Text {
-              Layout.fillWidth: true
-              text: Backend.translate("~" + generalDetail.general) == "~" + generalDetail.general ? "" : Backend.translate("~" + generalDetail.general)
-              wrapMode: Text.WordWrap
-            }
-          }
-
-          onClicked: {
-            const general = generalDetail.general
-            const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [general])).extension;
-            Backend.playSound("./packages/" + extension + "/audio/death/" + general);
-          }
-        }
-      }
-    }
-    Rectangle {
-      id: searcher
-      width: parent.width
-      height: childrenRect.height
-      color: "snow"
-      opacity: 0.75
-      anchors.top: parent.bottom
-      radius: 8
-
-      RowLayout {
-        width: parent.width
-        TextField {
-          id: word
-          Layout.fillWidth: true
-          clip: true
-          leftPadding: 5
-          rightPadding: 5
-        }
-
-        Button {
-          text: Backend.translate("Search")
-          enabled: word.text !== ""
-          onClicked: {
-            listView.currentIndex = 0;
-            vanishAnim.start();
-          }
-        }
-      }
-    }
-  }
-
-  ColumnLayout {
-    anchors.right: parent.right
-    Button {
-      text: Backend.translate("Quit")
-      onClicked: {
-        mainStack.pop();
-        config.saveConf();
-      }
-    }
-
-    Button {
-      id: banButton
-      text: Backend.translate(config.disabledGenerals.includes(detailGeneralCard.name) ? 'ResumeGeneral' : 'BanGeneral')
-      visible: detailGeneralCard.name
-      onClicked: {
-        const { disabledGenerals } = config;
-        const { name } = detailGeneralCard;
-
-        if (banButton.text === Backend.translate('ResumeGeneral')) {
-          const deleteIndex = disabledGenerals.findIndex((general) => general === name);
-          if (deleteIndex === -1) {
-            return;
-          }
-
-          disabledGenerals.splice(deleteIndex, 1);
-        } else {
-          if (disabledGenerals.includes(name)) {
-            return;
-          }
-
-          disabledGenerals.push(name);
-        }
-        config.disabledGeneralsChanged();
-      }
-    }
-
-    Timer {
-      id: opTimer
-      interval: 4000
-    }
-
-    Button {
-      text: Backend.translate("Set as Avatar")
-      enabled: detailGeneralCard.name !== "" && !opTimer.running && Self.avatar !== detailGeneralCard.name
-      onClicked: {
-        mainWindow.busy = true;
-        opTimer.start();
-        ClientInstance.notifyServer(
-          "UpdateAvatar",
-          JSON.stringify([detailGeneralCard.name])
-        );
       }
     }
   }
 
   function loadPackages() {
     if (loaded) return;
-    const packs = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
-    packs.forEach(name => {
-      if (!config.serverHiddenPacks.includes(name)) {
-        packages.append({ name: name });
-      }
+    const _mods = lcall("GetAllModNames")
+    const modData = lcall("GetAllMods")
+    const packs = lcall("GetAllGeneralPack");
+    _mods.forEach(name => {
+      const pkgs = modData[name].filter(p => packs.includes(p)
+        && !config.serverHiddenPacks.includes(p));
+      if (pkgs.length > 0)
+        mods.append({ name: name, pkgs: JSON.stringify(pkgs) });
     });
-    generalDetail.updateGeneral();
     loaded = true;
   }
 }

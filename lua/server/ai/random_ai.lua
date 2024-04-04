@@ -5,30 +5,34 @@ local RandomAI = AI:subclass("RandomAI")
 
 ---@param self RandomAI
 ---@param skill ActiveSkill
----@param card Card | nil
-local function useActiveSkill(self, skill, card)
+---@param card? Card
+function RandomAI:useActiveSkill(skill, card)
   local room = self.room
   local player = self.player
 
+  if skill:isInstanceOf(ViewAsSkill) then return "" end
+
   local filter_func = skill.cardFilter
   if card then
-    filter_func = function() return false end
+    filter_func = Util.FalseFunc
   end
 
-  if self.command == "PlayCard" and card and (not player:canUse(card) or player:prohibitUse(card)) then
+  if self.command == "PlayCard" and (not skill:canUse(player, card) or player:prohibitUse(card)) then
     return ""
   end
 
   local max_try_times = 100
   local selected_targets = {}
   local selected_cards = {}
-  local min = skill:getMinTargetNum()
-  local max = skill:getMaxTargetNum(player, card)
-  local min_card = skill:getMinCardNum()
-  local max_card = skill:getMaxCardNum()
+  -- FIXME: ...
+  -- local min = skill:getMinTargetNum()
+  -- local max = skill:getMaxTargetNum(player, card)
+  -- local min_card = skill:getMinCardNum()
+  -- local max_card = skill:getMaxCardNum()
+  -- FIXME: ViewAsSkill can be buggy here
   for _ = 0, max_try_times do
     if skill:feasible(selected_targets, selected_cards, self.player, card) then break end
-    local avail_targets = table.filter(self.room:getAlivePlayers(), function(p)
+    local avail_targets = table.filter(room:getAlivePlayers(), function(p)
       local ret = skill:targetFilter(p.id, selected_targets, selected_cards, card or Fk:cloneCard'zixing')
       if ret and card then
         if player:isProhibited(p, card) then
@@ -62,10 +66,11 @@ end
 
 ---@param self RandomAI
 ---@param skill ViewAsSkill
-local function useVSSkill(self, skill, pattern, cancelable, extra_data)
+function RandomAI:useVSSkill(skill, pattern, cancelable, extra_data)
   local player = self.player
   local room = self.room
   local precondition
+  if not skill then return nil end
 
   if self.command == "PlayCard" then
     precondition = skill:enabledAtPlay(player)
@@ -116,11 +121,14 @@ random_cb["AskForUseActiveSkill"] = function(self, jsonData)
   local skill = Fk.skills[data[1]]
   local cancelable = data[3]
   if cancelable and math.random() < 0.25 then return "" end
-  local extra_data = json.decode(data[4])
+  local extra_data = data[4]
   for k, v in pairs(extra_data) do
     skill[k] = v
   end
-  return useActiveSkill(self, skill)
+  if skill:isInstanceOf(ViewAsSkill) then
+    return RandomAI.useVSSkill(skill)
+  end
+  return RandomAI.useActiveSkill(self, skill)
 end
 
 random_cb["AskForSkillInvoke"] = function(self, jsonData)
@@ -202,7 +210,7 @@ random_cb["PlayCard"] = function(self, jsonData)
       local card = sth
       local skill = card.skill ---@type ActiveSkill
       if math.random() > 0.15 then
-        local ret = useActiveSkill(self, skill, card)
+        local ret = RandomAI.useActiveSkill(self, skill, card)
         if ret ~= "" then return ret end
         table.removeOne(cards, card)
       else
@@ -211,14 +219,14 @@ random_cb["PlayCard"] = function(self, jsonData)
     elseif sth:isInstanceOf(ActiveSkill) then
       local active = sth
       if math.random() > 0.30 then
-        local ret = useActiveSkill(self, active, nil)
+        local ret = RandomAI.useActiveSkill(self, active, nil)
         if ret ~= "" then return ret end
       end
       table.removeOne(cards, active)
     else
       local vs = sth
       if math.random() > 0.20 then
-        local ret = useVSSkill(self, vs)
+        local ret = self:useVSSkill(vs)
         -- TODO: handle vs result
       end
       table.removeOne(cards, vs)
@@ -227,6 +235,9 @@ random_cb["PlayCard"] = function(self, jsonData)
 
   return ""
 end
+
+-- FIXME: for smart ai
+RandomAI.cb_table = random_cb
 
 function RandomAI:initialize(player)
   AI.initialize(self, player)

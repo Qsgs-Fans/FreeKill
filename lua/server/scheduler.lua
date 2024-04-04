@@ -93,6 +93,12 @@ local function mainLoop()
 
       if over then
         -- verbose('[#] %s is finished, removing ...', tostring(room))
+        for _, e in ipairs(room.logic.game_event_stack.t) do
+          coroutine.close(e._co)
+        end
+        for _, e in ipairs(room.logic.cleaner_stack.t) do
+          coroutine.close(e._co)
+        end
         room.logic = nil
         runningRooms[room.id] = nil
       else
@@ -147,4 +153,8 @@ end
 function InitScheduler(_thread)
   requestRoom.thread = _thread
   Pcall(mainLoop)
+end
+
+function IsConsoleStart()
+  return requestRoom.thread:isConsoleStart()
 end

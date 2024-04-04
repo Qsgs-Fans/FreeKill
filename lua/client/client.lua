@@ -1,15 +1,14 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
----@class Client
+---@class Client : AbstractRoom
 ---@field public client fk.Client
 ---@field public players ClientPlayer[] @ 所有参战玩家的数组
 ---@field public alive_players ClientPlayer[] @ 所有存活玩家的数组
 ---@field public observers ClientPlayer[] @ 观察者的数组
 ---@field public current ClientPlayer @ 当前回合玩家
 ---@field public discard_pile integer[] @ 弃牌堆
----@field public status_skills Skill[] @ 状态技总和
 ---@field public observing boolean
-Client = class('Client')
+Client = AbstractRoom:subclass('Client')
 
 -- load client classes
 ClientPlayer = require "client.clientplayer"
@@ -25,6 +24,7 @@ local pattern_refresh_commands = {
 }
 
 function Client:initialize()
+  AbstractRoom.initialize(self)
   self.client = fk.ClientInstance
   self.notifyUI = function(self, command, jsonData)
     fk.Backend:emitNotifyUI(command, jsonData)
@@ -48,19 +48,8 @@ function Client:initialize()
     end
   end
 
-  self.players = {}     -- ClientPlayer[]
-  self.alive_players = {}
-  self.observers = {}
   self.discard_pile = {}
-  self.status_skills = {}
-  for class, skills in pairs(Fk.global_status_skill) do
-    self.status_skills[class] = {table.unpack(skills)}
-  end
 
-  self.skill_costs = {}
-  self.card_marks = {}
-  self.filtered_cards = {}
-  self.printed_cards = {}
   self.disabled_packs = {}
   self.disabled_generals = {}
 
@@ -68,7 +57,7 @@ function Client:initialize()
 end
 
 ---@param id integer
----@return ClientPlayer
+---@return ClientPlayer?
 function Client:getPlayerById(id)
   if id == Self.id then return Self end
   for _, p in ipairs(self.players) do
@@ -106,8 +95,8 @@ function Client:moveCards(moves)
         pcardMax = from:getMaxCards(),
         id = move.from,
       })
-      if from.id ~= Self.id and move.fromArea == Card.PlayerHand then
-        for i = 1, #move.ids do
+      if move.fromArea == Card.PlayerHand and not Self:isBuddy(self:getPlayerById(move.from)) then
+        for _ = 1, #move.ids do
           table.remove(from.player_cards[Player.Hand])
         end
       else
@@ -222,7 +211,11 @@ end
 
 ---@param msg LogMessage
 function Client:appendLog(msg)
-  self:notifyUI("GameLog", parseMsg(msg))
+  local text = parseMsg(msg)
+  self:notifyUI("GameLog", text)
+  if msg.toast then
+    self:notifyUI("ShowToast", text)
+  end
 end
 
 ---@param msg LogMessage
@@ -274,8 +267,9 @@ fk.client_callback["AddPlayer"] = function(jsonData)
   -- jsonData: [ int id, string screenName, string avatar ]
   -- when other player enter the room, we create clientplayer(C and lua) for them
   local data = json.decode(jsonData)
-  local id, name, avatar = data[1], data[2], data[3]
+  local id, name, avatar, time = data[1], data[2], data[3], data[5]
   local player = fk.ClientInstance:addPlayer(id, name, avatar)
+  player:addTotalGameTime(time or 0) -- 以防再次智迟
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.players, p)
   table.insert(ClientInstance.alive_players, p)
@@ -388,6 +382,7 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
       judge = {}
     end
     ui_data = {
+      _id = id,
       _reason = reason,
       card_data = {},
       _prompt = prompt,
@@ -396,6 +391,7 @@ fk.client_callback["AskForCardChosen"] = function(jsonData)
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
     if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
   else
+    ui_data._id = id
     ui_data._reason = reason
     ui_data._prompt = prompt
   end
@@ -423,6 +419,7 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
       judge = {}
     end
     ui_data = {
+      _id = id,
       _min = min,
       _max = max,
       _reason = reason,
@@ -433,6 +430,7 @@ fk.client_callback["AskForCardsChosen"] = function(jsonData)
     if #equip ~= 0 then table.insert(ui_data.card_data, { "$Equip", equip }) end
     if #judge ~= 0 then table.insert(ui_data.card_data, { "$Judge", judge }) end
   else
+    ui_data._id = id
     ui_data._min = min
     ui_data._max = max
     ui_data._reason = reason
@@ -456,6 +454,7 @@ local function separateMoves(moves)
         moveReason = move.moveReason,
         specialName = move.specialName,
         fromSpecialName = info.fromSpecialName,
+        proposer = move.proposer,
       })
     end
   end
@@ -467,9 +466,9 @@ local function mergeMoves(moves)
   local ret = {}
   local temp = {}
   for _, move in ipairs(moves) do
-    local info = string.format("%q,%q,%q,%q,%s,%s",
+    local info = string.format("%q,%q,%q,%q,%s,%s,%q",
       move.from, move.to, move.fromArea, move.toArea,
-      move.specialName, move.fromSpecialName)
+      move.specialName, move.fromSpecialName, move.proposer)
     if temp[info] == nil then
       temp[info] = {
         ids = {},
@@ -480,6 +479,7 @@ local function mergeMoves(moves)
         moveReason = move.moveReason,
         specialName = move.specialName,
         fromSpecialName = move.fromSpecialName,
+        proposer = move.proposer,
       }
     end
     table.insert(temp[info].ids, move.ids[1])
@@ -491,12 +491,96 @@ local function mergeMoves(moves)
 end
 
 local function sendMoveCardLog(move)
-  local client = ClientInstance
+  local client = ClientInstance ---@class Client
   if #move.ids == 0 then return end
   local hidden = table.contains(move.ids, -1)
   local msgtype
 
-  if move.from and move.toArea == Card.DrawPile then
+  if move.toArea == Card.PlayerHand then
+    if move.fromArea == Card.PlayerSpecial then
+      client:appendLog{
+        type = "$GetCardsFromPile",
+        from = move.to,
+        arg = move.fromSpecialName,
+        arg2 = #move.ids,
+        card = move.ids,
+      }
+    elseif move.fromArea == Card.DrawPile then
+      client:appendLog{
+        type = "$DrawCards",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.fromArea == Card.Processing then
+      client:appendLog{
+        type = "$GotCardBack",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.fromArea == Card.DiscardPile then
+      client:appendLog{
+        type = "$RecycleCard",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    elseif move.from then
+      client:appendLog{
+        type = "$MoveCards",
+        from = move.from,
+        to = { move.to },
+        arg = #move.ids,
+        card = move.ids,
+      }
+    else
+      client:appendLog{
+        type = "$PreyCardsFromPile",
+        from = move.to,
+        card = move.ids,
+        arg = #move.ids,
+      }
+    end
+  elseif move.toArea == Card.PlayerEquip then
+    client:appendLog{
+      type = "$InstallEquip",
+      from = move.to,
+      card = move.ids,
+    }
+  elseif move.toArea == Card.PlayerJudge then
+    if move.from ~= move.to and move.fromArea == Card.PlayerJudge then
+      client:appendLog{
+        type = "$LightningMove",
+        from = move.from,
+        to = { move.to },
+        card = move.ids,
+      }
+    elseif move.from then
+      client:appendLog{
+        type = "$PasteCard",
+        from = move.from,
+        to = { move.to },
+        card = move.ids,
+      }
+    end
+  elseif move.toArea == Card.PlayerSpecial then
+    client:appendLog{
+      type = "$AddToPile",
+      arg = move.specialName,
+      arg2 = #move.ids,
+      from = move.to,
+      card = move.ids,
+    }
+  elseif move.fromArea == Card.PlayerEquip then
+    client:appendLog{
+      type = "$UninstallEquip",
+      from = move.from,
+      card = move.ids,
+    }
+  -- elseif move.toArea == Card.Processing then
+    -- nop
+  elseif move.from and move.toArea == Card.DrawPile then
     msgtype = hidden and "$PutCard" or "$PutKnownCard"
     client:appendLog{
       type = msgtype,
@@ -508,85 +592,37 @@ local function sendMoveCardLog(move)
       type = "$$PutCard",
       from = move.from,
     })
-  elseif move.toArea == Card.PlayerSpecial then
-    msgtype = hidden and "$RemoveCardFromGame" or "$AddToPile"
-    client:appendLog{
-      type = msgtype,
-      arg = move.specialName,
-      arg2 = #move.ids,
-      card = move.ids,
-    }
-  elseif move.fromArea == Card.PlayerSpecial and move.to then
-    client:appendLog{
-      type = "$GetCardsFromPile",
-      from = move.to,
-      arg = move.fromSpecialName,
-      arg2 = #move.ids,
-      card = move.ids,
-    }
-  elseif move.moveReason == fk.ReasonDraw then
-    client:appendLog{
-      type = "$DrawCards",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif (move.fromArea == Card.DrawPile or move.fromArea == Card.DiscardPile)
-    and move.moveReason == fk.ReasonPrey then
-    client:appendLog{
-      type = "$PreyCardsFromPile",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif (move.fromArea == Card.Processing or move.fromArea == Card.PlayerJudge)
-    and move.toArea == Card.PlayerHand then
-    client:appendLog{
-      type = "$GotCardBack",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif move.fromArea == Card.DiscardPile and move.toArea == Card.PlayerHand then
-    client:appendLog{
-      type = "$RecycleCard",
-      from = move.to,
-      card = move.ids,
-      arg = #move.ids,
-    }
-  elseif move.from and move.fromArea ~= Card.PlayerJudge and
-    move.toArea ~= Card.PlayerJudge and move.to and move.from ~= move.to then
-    client:appendLog{
-      type = "$MoveCards",
-      from = move.from,
-      to = { move.to },
-      arg = #move.ids,
-      card = move.ids,
-    }
-  elseif move.from and move.to and move.toArea == Card.PlayerJudge then
-    if move.fromArea == Card.PlayerJudge and move.from ~= move.to then
-      msgtype = "$LightningMove"
-    elseif move.fromArea ~= Card.PlayerJudge then
-      msgtype = "$PasteCard"
-    end
-    if msgtype then
+  elseif move.toArea == Card.DiscardPile then
+    if move.moveReason == fk.ReasonDiscard then
+      if move.proposer and move.proposer ~= move.from then
+        client:appendLog{
+          type = "$DiscardOther",
+          from = move.from,
+          to = {move.proposer},
+          card = move.ids,
+          arg = #move.ids,
+        }
+      else
+        client:appendLog{
+          type = "$DiscardCards",
+          from = move.from,
+          card = move.ids,
+          arg = #move.ids,
+        }
+      end
+    elseif move.moveReason == fk.ReasonPutIntoDiscardPile then
       client:appendLog{
-        type = msgtype,
-        from = move.from,
-        to = { move.to },
+        type = "$PutToDiscard",
         card = move.ids,
+        arg = #move.ids,
       }
     end
+  -- elseif move.toArea == Card.Void then
+    -- nop
   end
 
-  -- TODO ...
+  -- TODO: footnote
   if move.moveReason == fk.ReasonDiscard then
-    client:appendLog{
-      type = "$DiscardCards",
-      from = move.from,
-      card = move.ids,
-      arg = #move.ids,
-    }
     client:setCardNote(move.ids, {
       type = "$$DiscardCards",
       from = move.from
@@ -739,10 +775,8 @@ fk.client_callback["AskForUseActiveSkill"] = function(jsonData)
   -- jsonData: [ string skill_name, string prompt, bool cancelable. json extra_data ]
   local data = json.decode(jsonData)
   local skill = Fk.skills[data[1]]
-  local extra_data = json.decode(data[4])
-  for k, v in pairs(extra_data) do
-    skill[k] = v
-  end
+  local extra_data = data[4]
+  skill._extra_data = extra_data
 
   Fk.currentResponseReason = extra_data.skillName
   ClientInstance:notifyUI("AskForUseActiveSkill", jsonData)
@@ -762,10 +796,31 @@ fk.client_callback["SetPlayerMark"] = function(jsonData)
   -- jsonData: [ int id, string mark, int value ]
   local data = json.decode(jsonData)
   local player, mark, value = data[1], data[2], data[3]
-  ClientInstance:getPlayerById(player):setMark(mark, value)
+  local p = ClientInstance:getPlayerById(player)
+  p:setMark(mark, value)
 
   if string.sub(mark, 1, 1) == "@" then
+    if mark:startsWith("@[") and mark:find(']') then
+      local close = mark:find(']')
+      local mtype = mark:sub(3, close - 1)
+      local spec = Fk.qml_marks[mtype]
+      if spec then
+        local text = spec.how_to_show(mark, value, p)
+        if text == "#hidden" then return end
+      end
+    end
     ClientInstance:notifyUI("SetPlayerMark", jsonData)
+  end
+end
+
+fk.client_callback["SetBanner"] = function(jsonData)
+  -- jsonData: [ int id, string mark, int value ]
+  local data = json.decode(jsonData)
+  local mark, value = data[1], data[2]
+  ClientInstance:setBanner(mark, value)
+
+  if string.sub(mark, 1, 1) == "@" then
+    ClientInstance:notifyUI("SetBanner", jsonData)
   end
 end
 
@@ -897,6 +952,18 @@ fk.client_callback["UpdateGameData"] = function(jsonData)
   ClientInstance:notifyUI("UpdateGameData", jsonData)
 end
 
+fk.client_callback["AddTotalGameTime"] = function(jsonData)
+  local data = json.decode(jsonData)
+  local player, time = data[1], data[2]
+  player = ClientInstance:getPlayerById(player)
+  if player then
+    player.player:addTotalGameTime(time)
+    if player == Self then
+      ClientInstance:notifyUI("AddTotalGameTime", jsonData)
+    end
+  end
+end
+
 fk.client_callback["StartGame"] = function(jsonData)
   local c = ClientInstance
   c.record = {
@@ -923,6 +990,7 @@ fk.client_callback["StartGame"] = function(jsonData)
           p.player:getScreenName(),
           p.player:getAvatar(),
           true,
+          p.player:getTotalGameTime(),
         },
       })
     end

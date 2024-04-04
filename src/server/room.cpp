@@ -125,6 +125,11 @@ void Room::addPlayer(ServerPlayer *player) {
   if (!player)
     return;
 
+  if (rejected_players.contains(player->getId())) {
+    player->doNotify("ErrorMsg", "rejected your demand of joining room");
+    return;
+  }
+
   // 如果要加入的房间满员了，或者已经开战了，就不能再加入
   if (isFull() || gameStarted) {
     player->doNotify("ErrorMsg", "Room is full or already started!");
@@ -146,6 +151,7 @@ void Room::addPlayer(ServerPlayer *player) {
     jsonData << player->getScreenName();
     jsonData << player->getAvatar();
     jsonData << player->isReady();
+    jsonData << player->getTotalGameTime();
     doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
   }
 
@@ -174,6 +180,7 @@ void Room::addPlayer(ServerPlayer *player) {
       jsonData << p->getScreenName();
       jsonData << p->getAvatar();
       jsonData << p->isReady();
+      jsonData << p->getTotalGameTime();
       player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
 
       jsonData = QJsonArray();
@@ -269,6 +276,7 @@ void Room::removePlayer(ServerPlayer *player) {
     runner->setId(player->getId());
     auto gamedata = player->getGameData();
     runner->setGameData(gamedata[0], gamedata[1], gamedata[2]);
+    runner->addTotalGameTime(player->getTotalGameTime());
 
     // 最后向服务器玩家列表中增加这个人
     // 原先的跑路机器人会在游戏结束后自动销毁掉
@@ -319,6 +327,11 @@ void Room::addObserver(ServerPlayer *player) {
   // 首先只能旁观在运行的房间，因为旁观是由Lua处理的
   if (!gameStarted) {
     player->doNotify("ErrorMsg", "Can only observe running room.");
+    return;
+  }
+
+  if (rejected_players.contains(player->getId())) {
+    player->doNotify("ErrorMsg", "rejected your demand of joining room");
     return;
   }
 
@@ -533,15 +546,35 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
 }
 
 void Room::gameOver() {
+  if (!gameStarted) return;
   gameStarted = false;
   runned_players.clear();
-  // 清理所有状态不是“在线”的玩家
+  // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
   foreach (ServerPlayer *p, players) {
+    auto pid = p->getId();
+
+    if (pid > 0) {
+      int time = p->getGameTime();
+      auto bytes = JsonArray2Bytes({ pid, time });
+      doBroadcastNotify(getOtherPlayers(p), "AddTotalGameTime", bytes);
+
+      // 考虑到阵亡已离开啥的，时间得给真实玩家增加
+      auto realPlayer = server->findPlayer(pid);
+      if (realPlayer) {
+        realPlayer->addTotalGameTime(time);
+        realPlayer->doNotify("AddTotalGameTime", bytes);
+      }
+
+      // 摸了，这么写总之不会有问题
+      auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
+      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
+      ExecSQL(server->getDatabase(), info_update);
+    }
+
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
-        auto pid = p->getId();
         addRunRate(pid, mode);
         // addRunRate(pid, mode);
         server->temporarilyBan(pid);
@@ -562,6 +595,7 @@ void Room::manuallyStart() {
     foreach (auto p, players) {
       p->setReady(false);
       p->setDied(false);
+      p->startGameTimer();
     }
     gameStarted = true;
     m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
@@ -572,4 +606,13 @@ void Room::pushRequest(const QString &req) {
   if (m_thread) {
     m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
   }
+}
+
+void Room::addRejectId(int id) {
+  if (isLobby()) return;
+  rejected_players << id;
+}
+
+void Room::removeRejectId(int id) {
+  rejected_players.removeOne(id);
 }

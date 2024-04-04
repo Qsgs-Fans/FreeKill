@@ -7,6 +7,8 @@
 --- 同时也提供了许多常用的函数。
 ---
 ---@class Engine : Object
+---@field public extensions table<string, string[]> @ 所有mod列表及其包含的拓展包
+---@field public extension_names string[] @ Mod名字的数组，为了方便排序
 ---@field public packages table<string, Package> @ 所有拓展包的列表
 ---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
 ---@field public skills table<string, Skill> @ 所有的技能
@@ -25,8 +27,12 @@
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
+---@field private kingdoms string[] @ 总势力
+---@field private kingdom_map table<string, string[]> @ 势力映射表
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
+---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
+---@field public mini_games table<string, MiniGameSpec> @ 自定义多人交互表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -41,7 +47,12 @@ function Engine:initialize()
   end
 
   Fk = self
-
+  self.extensions = {
+    ["standard"] = { "standard" },
+    ["standard_cards"] = { "standard_cards" },
+    ["maneuvering"] = { "maneuvering" },
+  }
+  self.extension_names = { "standard", "standard_cards", "maneuvering" }
   self.packages = {}    -- name --> Package
   self.package_names = {}
   self.skills = {}    -- name --> Skill
@@ -57,8 +68,11 @@ function Engine:initialize()
   self.game_modes = {}
   self.game_mode_disabled = {}
   self.kingdoms = {}
+  self.kingdom_map = {}
   self._custom_events = {}
   self.poxi_methods = {}
+  self.qml_marks = {}
+  self.mini_games = {}
 
   self:loadPackages()
   self:loadDisabled()
@@ -66,20 +80,20 @@ function Engine:initialize()
 end
 
 local _foreign_keys = {
-  "currentResponsePattern",
-  "currentResponseReason",
-  "filtered_cards",
-  "printed_cards",
+  ["currentResponsePattern"] = true,
+  ["currentResponseReason"] = true,
+  ["filtered_cards"] = true,
+  ["printed_cards"] = true,
 }
 
 function Engine:__index(k)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     return self:currentRoom()[k]
   end
 end
 
 function Engine:__newindex(k, v)
-  if table.contains(_foreign_keys, k) then
+  if _foreign_keys[k] then
     self:currentRoom()[k] = v
   else
     rawset(self, k, v)
@@ -107,6 +121,76 @@ function Engine:loadPackage(pack)
   self:addSkills(pack:getSkills())
   self:addGameModes(pack.game_modes)
 end
+
+-- Don't do this
+local package = package
+function Engine:reloadPackage(path)
+  path = path:sub(1, #path - 4)
+  local oldPkg = package.loaded[path]
+  package.loaded[path] = nil
+  local ok, err = pcall(require, path)
+  if not ok then
+    package.loaded[path] = oldPkg
+    print("reload failed:", err)
+    return
+  end
+
+  -- 阉割版重载机制，反正单机用
+  local function replace(t, skill)
+    if not t then return end
+    for k, s in pairs(t) do
+      if s.name == skill.name then
+        t[k] = skill
+        break
+      end
+    end
+  end
+
+  local function f(p)
+    self.packages[p.name] = p
+    local room = Fk:currentRoom()
+    local skills = p:getSkills()
+    local related = {}
+    for _, skill in ipairs(skills) do
+      table.insertTableIfNeed(related, skill.related_skills)
+    end
+    table.insertTableIfNeed(skills, related)
+
+    for _, skill in ipairs(skills) do
+      if self.skills[skill.name].class ~= skill.class then
+        fk.qCritical("cannot change class of skill: " .. skill.name)
+        goto CONTINUE
+      end
+      self.skills[skill.name] = skill
+      if skill:isInstanceOf(TriggerSkill) and RoomInstance then
+        local logic = room.logic
+        for _, event in ipairs(skill.refresh_events) do
+          replace(logic.refresh_skill_table[event], skill)
+        end
+        for _, event in ipairs(skill.events) do
+          replace(logic.skill_table[event], skill)
+        end
+      end
+      if skill:isInstanceOf(StatusSkill) then
+        replace(room.status_skills[skill.class], skill)
+      end
+
+      for _, p in ipairs(room.players) do
+        replace(p.player_skills, skill)
+      end
+      ::CONTINUE::
+    end
+  end
+
+  local pkg = package.loaded[path]
+  if type(pkg) ~= "table" then return end
+  if pkg.class and pkg:isInstanceOf(Package) then
+    f(pkg)
+  elseif path:endsWith("init") and not path:find("/ai/") then
+    for _, p in ipairs(pkg) do f(p) end
+  end
+end
+
 
 --- 加载所有拓展包。
 ---
@@ -137,11 +221,15 @@ function Engine:loadPackages()
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
       if type(pack) == "table" then
+        table.insert(self.extension_names, dir)
         if pack[1] ~= nil then
+          self.extensions[dir] = {}
           for _, p in ipairs(pack) do
+            table.insert(self.extensions[dir], p.name)
             self:loadPackage(p)
           end
         else
+          self.extensions[dir] = { pack.name }
           self:loadPackage(pack)
         end
       end
@@ -167,7 +255,7 @@ end
 
 --- 向翻译表中加载新的翻译表。
 ---@param t table @ 要加载的翻译表，这是一个 原文 --> 译文 的键值对表
----@param lang string|nil @ 目标语言，默认为zh_CN
+---@param lang? string @ 目标语言，默认为zh_CN
 function Engine:loadTranslationTable(t, lang)
   assert(type(t) == "table")
   lang = lang or "zh_CN"
@@ -179,8 +267,9 @@ end
 
 --- 翻译一段文本。其实就是从翻译表中去找
 ---@param src string @ 要翻译的文本
-function Engine:translate(src)
-  local lang = Config.language or "zh_CN"
+---@param lang? string @ 要使用的语言，默认读取config
+function Engine:translate(src, lang)
+  lang = lang or (Config.language or "zh_CN")
   if not self.translations[lang] then lang = "zh_CN" end
   local ret = self.translations[lang][src]
   return ret or src
@@ -195,7 +284,7 @@ end
 function Engine:addSkill(skill)
   assert(skill.class:isSubclassOf(Skill))
   if self.skills[skill.name] ~= nil then
-    error(string.format("Duplicate skill %s detected", skill.name))
+    fk.qWarning(string.format("Duplicate skill %s detected", skill.name))
   end
   self.skills[skill.name] = skill
 
@@ -254,6 +343,30 @@ function Engine:addGenerals(generals)
   end
 end
 
+--- 为一个势力添加势力映射
+---
+--- 这意味着原势力登场时必须改变为添加的几个势力之一(须存在)
+---@param kingdom string @ 原势力
+---@param kingdoms string[] @ 需要映射到的势力
+function Engine:appendKingdomMap(kingdom, kingdoms)
+  local ret = self.kingdom_map[kingdom] or {}
+  table.insertTableIfNeed(ret, kingdoms)
+  self.kingdom_map[kingdom] = ret
+end
+
+---获得一个势力所映射到的势力，若没有，返回空集
+---@param kingdom string @ 原势力
+---@return string[] @ 可用势力列表，可能是空的
+function Engine:getKingdomMap(kingdom)
+  local ret = {}
+  for _, k in ipairs(self.kingdom_map[kingdom] or {}) do
+    if table.contains(self.kingdoms, k) then
+      table.insertIfNeed(ret, k)
+    end
+  end
+  return ret
+end
+
 --- 判断一个武将是否在本房间可用。
 ---@param g string @ 武将名
 function Engine:canUseGeneral(g)
@@ -270,8 +383,8 @@ end
 ---@param name string @ 要查询的武将名字
 ---@return string[] @ 这个武将对应的同名武将列表
 function Engine:getSameGenerals(name)
-  local tmp = name:split("__")
-  local tName = tmp[#tmp]
+  if not self.generals[name] then return {} end
+  local tName = self.generals[name].trueName
   local ret = self.same_generals[tName] or {}
   return table.filter(ret, function(g)
     return g ~= name and self.generals[g] ~= nil and self:canUseGeneral(g)
@@ -290,6 +403,7 @@ function Engine:addCard(card)
   cardId = cardId + 1
   table.insert(self.cards, card)
   if self.all_card_types[card.name] == nil then
+    self.skills[card.skill.name] = card.skill
     self.all_card_types[card.name] = card
   end
 end
@@ -306,8 +420,8 @@ end
 ---
 --- 返回的牌是一张虚拟牌。
 ---@param name string @ 牌名
----@param suit Suit|nil @ 花色
----@param number integer|nil @ 点数
+---@param suit? Suit @ 花色
+---@param number? integer @ 点数
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = self.all_card_types[name]
@@ -344,9 +458,30 @@ function Engine:addPoxiMethod(spec)
   assert(type(spec.name) == "string")
   assert(type(spec.card_filter) == "function")
   assert(type(spec.feasible) == "function")
+  if self.poxi_methods[spec.name] then
+    fk.qCritical("Warning: duplicated poxi_method " .. spec.name)
+  end
   self.poxi_methods[spec.name] = spec
   spec.default_choice = spec.default_choice or function() return {} end
   spec.post_select = spec.post_select or function(s) return s end
+end
+
+---@param spec QmlMarkSpec
+function Engine:addQmlMark(spec)
+  assert(type(spec.name) == "string")
+  if self.qml_marks[spec.name] then
+    fk.qCritical("Warning: duplicated qml mark type " .. spec.name)
+  end
+  self.qml_marks[spec.name] = spec
+end
+
+---@param spec MiniGameSpec
+function Engine:addMiniGame(spec)
+  assert(type(spec.name) == "string")
+  if self.mini_games[spec.name] then
+    fk.qCritical("Warning: duplicated mini game type " .. spec.name)
+  end
+  self.mini_games[spec.name] = spec
 end
 
 --- 从已经开启的拓展包中，随机选出若干名武将。
@@ -355,9 +490,9 @@ end
 ---
 --- 如果符合条件的武将不够，那么就不能保证能选出那么多武将。
 ---@param num integer @ 要选出的武将数量
----@param generalPool General[] | nil @ 选择的范围，默认是已经启用的所有武将
----@param except string[] | nil @ 特别要排除掉的武将名列表，默认是空表
----@param filter nil | fun(g: General): boolean @ 可选参数，若这个函数返回true的话这个武将被排除在外
+---@param generalPool? General[] @ 选择的范围，默认是已经启用的所有武将
+---@param except? string[] @ 特别要排除掉的武将名列表，默认是空表
+---@param filter? fun(g: General): boolean? @ 可选参数，若这个函数返回true的话这个武将被排除在外
 ---@return General[] @ 随机选出的武将列表
 function Engine:getGeneralsRandomly(num, generalPool, except, filter)
   if filter then
@@ -390,7 +525,7 @@ function Engine:getGeneralsRandomly(num, generalPool, except, filter)
 end
 
 --- 获取已经启用的所有武将的列表。
----@param except General[] | nil @ 特别指明要排除在外的武将
+---@param except? General[] @ 特别指明要排除在外的武将
 ---@return General[] @ 所有武将的列表
 function Engine:getAllGenerals(except)
   local result = {}
@@ -406,7 +541,7 @@ function Engine:getAllGenerals(except)
 end
 
 --- 获取当前已经启用的所有卡牌。
----@param except integer[] | nil @ 特别指定要排除在外的id列表
+---@param except? integer[] @ 特别指定要排除在外的id列表
 ---@return integer[] @ 所有卡牌id的列表
 function Engine:getAllCardIds(except)
   local result = {}
@@ -423,7 +558,7 @@ end
 
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
----@param ignoreFilter bool @ 是否要无视掉锁定视为技，直接获得真牌
+---@param ignoreFilter? boolean @ 是否要无视掉锁定视为技，直接获得真牌
 ---@return Card @ 这个id对应的卡牌
 function Engine:getCardById(id, ignoreFilter)
   if id == nil then return nil end
@@ -440,12 +575,12 @@ end
 ---@param player Player @ 和这张牌扯上关系的那名玩家
 ---@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
 function Engine:filterCard(id, player, data)
-  local card = self:getCardById(id, true)
   if player == nil then
     self.filtered_cards[id] = nil
     return
   end
-  local skills = player:getAllSkills()
+
+  local card = self:getCardById(id, true)
   local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
 
   if #filters == 0 then
@@ -460,7 +595,7 @@ function Engine:filterCard(id, player, data)
   end
 
   for _, f in ipairs(filters) do
-    if f:cardFilter(card, player) then
+    if f:cardFilter(card, player, type(data) == "table" and data.isJudgeEvent) then
       local _card = f:viewAs(card, player)
       _card.id = id
       _card.skillName = f.name
@@ -509,7 +644,7 @@ function Engine:_addPrintedCard(card)
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。
----@return Room | Client
+---@return AbstractRoom
 function Engine:currentRoom()
   if RoomInstance then
     return RoomInstance

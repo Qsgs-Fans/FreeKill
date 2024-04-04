@@ -2,12 +2,13 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
 
 GraphicsBox {
   id: root
 
-  title.text: Backend.callLuaFunction("PoxiPrompt", [poxi_type, card_data, extra_data])
+  title.text: Util.processPrompt(lcall("PoxiPrompt", poxi_type, card_data, extra_data))
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -50,7 +51,7 @@ GraphicsBox {
 
         Text {
           color: "#E4D5A0"
-          text: Backend.translate(areaName)
+          text: luatr(areaName)
           anchors.fill: parent
           wrapMode: Text.WrapAnywhere
           verticalAlignment: Text.AlignVCenter
@@ -71,12 +72,10 @@ GraphicsBox {
             number: model.number || 0
             autoBack: false
             known: model.cid !== -1
-            selectable: {
-              return root.selected_ids.includes(model.cid) || JSON.parse(Backend.callLuaFunction(
-                "PoxiFilter",
-                [root.poxi_type, model.cid, root.selected_ids, root.card_data, root.extra_data]
-              ));
-            }
+            selectable: chosenInBox ||
+              lcall("PoxiFilter", root.poxi_type, model.cid, root.selected_ids,
+                    root.card_data, root.extra_data);
+
             onSelectedChanged: {
               if (selected) {
                 chosenInBox = true;
@@ -86,6 +85,7 @@ GraphicsBox {
                 root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
               }
               root.selected_ids = root.selected_ids;
+              refreshPrompt();
             }
           }
         }
@@ -102,20 +102,16 @@ GraphicsBox {
     MetroButton {
       width: 120
       height: 35
-      text: Backend.translate("OK")
-      enabled: {
-        return JSON.parse(Backend.callLuaFunction(
-          "PoxiFeasible",
-          [root.poxi_type, root.selected_ids, root.card_data, root.extra_data]
-        ));
-      }
+      text: luatr("OK")
+      enabled: lcall("PoxiFeasible", root.poxi_type, root.selected_ids,
+                     root.card_data, root.extra_data);
       onClicked: root.cardsSelected(root.selected_ids)
     }
 
     MetroButton {
       width: 120
       height: 35
-      text: Backend.translate("Cancel")
+      text: luatr("Cancel")
       visible: root.cancelable
       onClicked: root.cardsSelected([])
     }
@@ -129,7 +125,7 @@ GraphicsBox {
     let ret;
     for (let i = 0; i < cardModel.count; i++) {
       let item = cardModel.get(i);
-      if (item.areaName == name) {
+      if (item.areaName === name) {
         ret = item;
         break;
       }
@@ -154,5 +150,9 @@ GraphicsBox {
     } else {
       area.append(cards);
     }
+  }
+
+  function refreshPrompt() {
+    root.title.text = Util.processPrompt(lcall("PoxiPrompt", poxi_type, card_data, extra_data))
   }
 }

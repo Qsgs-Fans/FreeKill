@@ -23,16 +23,16 @@ Flickable {
     anchors.topMargin: 8
 
     Switch {
-      text: Backend.translate("Disable Extension")
+      text: luatr("Disable Extension")
     }
 
     RowLayout {
       Text {
-        text: Backend.translate("General Packages")
+        text: luatr("General Packages")
         font.bold: true
       }
       Button {
-        text: Backend.translate("Select All")
+        text: luatr("Select All")
         onClicked: {
           for (let i = 0; i < gpacks.count; i++) {
             const item = gpacks.itemAt(i);
@@ -41,7 +41,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Revert Selection")
+        text: luatr("Revert Selection")
         onClicked: {
           for (let i = 0; i < gpacks.count; i++) {
             const item = gpacks.itemAt(i);
@@ -52,7 +52,7 @@ Flickable {
     }
 
     GridLayout {
-      columns: 2
+      columns: 4
 
       Repeater {
         id: gpacks
@@ -76,11 +76,11 @@ Flickable {
 
     RowLayout {
       Text {
-        text: Backend.translate("Card Packages")
+        text: luatr("Card Packages")
         font.bold: true
       }
       Button {
-        text: Backend.translate("Select All")
+        text: luatr("Select All")
         onClicked: {
           for (let i = 0; i < cpacks.count; i++) {
             const item = cpacks.itemAt(i);
@@ -89,7 +89,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Revert Selection")
+        text: luatr("Revert Selection")
         onClicked: {
           for (let i = 0; i < cpacks.count; i++) {
             const item = cpacks.itemAt(i);
@@ -100,7 +100,7 @@ Flickable {
     }
 
     GridLayout {
-      columns: 2
+      columns: 4
 
       Repeater {
         id: cpacks
@@ -113,7 +113,15 @@ Flickable {
           checked: pkg_enabled
 
           onCheckedChanged: {
-            checkPackage(orig_name, checked);
+            const packs = config.curScheme.banCardPkg;
+            if (checked) {
+              const idx = packs.indexOf(orig_name);
+              if (idx !== -1) packs.splice(idx, 1);
+            } else {
+              packs.push(orig_name);
+            }
+            lcall("UpdatePackageEnable", orig_name, checked);
+            config.curSchemeChanged();
           }
         }
       }
@@ -121,40 +129,42 @@ Flickable {
   }
 
   function checkPackage(orig_name, checked) {
-    const packs = config.disabledPack;
-    if (checked) {
-      const idx = packs.indexOf(orig_name);
-      if (idx !== -1) packs.splice(idx, 1);
+    const s = config.curScheme;
+    if (!checked) {
+      s.banPkg[orig_name] = [];
+      delete s.normalPkg[orig_name];
     } else {
-      packs.push(orig_name);
+      delete s.normalPkg[orig_name];
+      delete s.banPkg[orig_name];
     }
-    Backend.callLuaFunction("UpdatePackageEnable", [orig_name, checked]);
-    config.disabledPackChanged();
+    lcall("UpdatePackageEnable", orig_name, checked);
+    config.curSchemeChanged();
   }
 
   Component.onCompleted: {
     loading = true;
-    const g = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
-    for (let orig of g) {
+    const g = lcall("GetAllGeneralPack");
+    let orig;
+    for (orig of g) {
       if (config.serverHiddenPacks.includes(orig)) {
         continue;
       }
       gpacklist.append({
-        name: Backend.translate(orig),
+        name: luatr(orig),
         orig_name: orig,
-        pkg_enabled: !config.disabledPack.includes(orig),
+        pkg_enabled: !config.curScheme.banPkg[orig],
       });
     }
 
-    const c = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
-    for (let orig of c) {
+    const c = lcall("GetAllCardPack");
+    for (orig of c) {
       if (config.serverHiddenPacks.includes(orig)) {
         continue;
       }
       cpacklist.append({
-        name: Backend.translate(orig),
+        name: luatr(orig),
         orig_name: orig,
-        pkg_enabled: !config.disabledPack.includes(orig),
+        pkg_enabled: !config.curScheme.banCardPkg.includes(orig),
       });
     }
     loading = false;

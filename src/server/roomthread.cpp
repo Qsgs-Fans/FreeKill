@@ -4,6 +4,10 @@
 #include "server.h"
 #include "util.h"
 
+#ifndef FK_SERVER_ONLY
+#include "client.h"
+#endif
+
 RoomThread::RoomThread(Server *m_server) {
   setObjectName("Room");
   this->m_server = m_server;
@@ -104,4 +108,13 @@ void RoomThread::tryTerminate() {
 
 bool RoomThread::isTerminated() const {
   return terminated;
+}
+
+bool RoomThread::isConsoleStart() const {
+#ifndef FK_SERVER_ONLY
+  if (!ClientInstance) return false;
+  return ClientInstance->isConsoleStart();
+#else
+  return false;
+#endif
 }

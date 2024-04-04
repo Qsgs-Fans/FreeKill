@@ -5,6 +5,7 @@
 ---@field public room Room
 ---@field public next ServerPlayer
 ---@field public request_data string
+---@field public mini_game_data any
 ---@field public client_reply string
 ---@field public default_reply string
 ---@field public reply_ready boolean
@@ -38,6 +39,7 @@ function ServerPlayer:initialize(_self)
   self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
+  self.phase_state = {}
 
   self._fake_skills = {}
   self._manually_fake_skills = {}
@@ -69,7 +71,7 @@ end
 --- *timeout* must not be negative. If nil, room.timeout is used.
 ---@param command string
 ---@param jsonData string
----@param timeout integer|nil
+---@param timeout? integer
 function ServerPlayer:doRequest(command, jsonData, timeout)
   self.client_reply = ""
   self.reply_ready = false
@@ -191,7 +193,7 @@ function ServerPlayer:waitForReply(timeout)
 end
 
 ---@param player ServerPlayer
----@param observe bool
+---@param observe? boolean
 function ServerPlayer:marshal(player, observe)
   local room = self.room
   if not room.game_started then
@@ -213,7 +215,7 @@ function ServerPlayer:marshal(player, observe)
 
   if self.dead then
     room:notifyProperty(player, self, "dead")
-    room:notifyProperty(player, self, "role")
+    room:notifyProperty(player, self, self.rest > 0 and "rest" or "role")
   else
     room:notifyProperty(player, self, "seat")
     room:notifyProperty(player, self, "phase")
@@ -325,6 +327,11 @@ function ServerPlayer:reconnect()
     self._splayer:getScreenName(),
     self._splayer:getAvatar(),
   })
+  self:doNotify("AddTotalGameTime", json.encode {
+    self.id,
+    self._splayer:getTotalGameTime(),
+  })
+
   self:doNotify("EnterLobby", "")
   self:doNotify("EnterRoom", json.encode{
     #room.players, room.timeout, room.settings,
@@ -338,6 +345,8 @@ function ServerPlayer:reconnect()
       p.id,
       p._splayer:getScreenName(),
       p._splayer:getAvatar(),
+      false,
+      p._splayer:getTotalGameTime(),
     })
   end
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
@@ -360,6 +369,11 @@ function ServerPlayer:reconnect()
     for k, v in pairs(marks) do
       self:doNotify("SetCardMark", json.encode{ id, k, v })
     end
+  end
+
+  -- send banners
+  for k, v in pairs(room.banners) do
+    self:doNotify("SetBanner", json.encode{ k, v })
   end
 
   for _, p in ipairs(room.players) do
@@ -464,11 +478,13 @@ function ServerPlayer:changePhase(from_phase, to_phase)
   return false
 end
 
+---@param phase Phase
+---@param delay? boolean
 function ServerPlayer:gainAnExtraPhase(phase, delay)
   local room = self.room
   delay = (delay == nil) and true or delay
+  local logic = room.logic
   if delay then
-    local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
     if turn then
       turn:prependExitFunc(function() self:gainAnExtraPhase(phase, false) end)
@@ -477,22 +493,49 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   end
 
   local current = self.phase
+
+  local phase_change = {
+    from = current,
+    to = phase
+  }
+
+  local skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
+
+  phase = phase_change.to
   self.phase = phase
   room:broadcastProperty(self, "phase")
 
-  room:sendLog{
-    type = "#GainAnExtraPhase",
-    from = self.id,
-    arg = phase_name_table[phase],
-  }
+  local cancel_skip = true
+  if phase ~= Player.NotActive and (skip) then
+    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+  end
+  if (not skip) or (cancel_skip) then
+    room:sendLog{
+      type = "#GainAnExtraPhase",
+      from = self.id,
+      arg = phase_name_table[phase],
+    }
 
-  GameEvent(GameEvent.Phase, self, self.phase):exec()
+    GameEvent(GameEvent.Phase, self, self.phase):exec()
+
+    phase_change = {
+      from = phase,
+      to = current
+    }
+    logic:trigger(fk.EventPhaseChanging, self, phase_change)
+  else
+    room:sendLog{
+      type = "#PhaseSkipped",
+      from = self.id,
+      arg = phase_name_table[phase],
+    }
+  end
 
   self.phase = current
   room:broadcastProperty(self, "phase")
 end
 
----@param phase_table Phase[]|nil
+---@param phase_table? Phase[]
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then
@@ -587,14 +630,18 @@ function ServerPlayer:endPlayPhase()
   -- TODO: send log
 end
 
-function ServerPlayer:gainAnExtraTurn(delay)
+--- 获得一个额外回合
+---@param delay? boolean
+---@param skillName? string
+function ServerPlayer:gainAnExtraTurn(delay, skillName)
   local room = self.room
   delay = (delay == nil) and true or delay
+  skillName = (skillName == nil) and room.logic:getCurrentSkillName() or skillName
   if delay then
     local logic = room.logic
     local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false) end)
+      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName) end)
       return
     end
   end
@@ -609,7 +656,6 @@ function ServerPlayer:gainAnExtraTurn(delay)
 
   self.tag["_extra_turn_count"] = self.tag["_extra_turn_count"] or {}
   local ex_tag = self.tag["_extra_turn_count"]
-  local skillName = room.logic:getCurrentSkillName()
   table.insert(ex_tag, skillName)
 
   GameEvent(GameEvent.Turn, self):exec()
@@ -619,10 +665,13 @@ function ServerPlayer:gainAnExtraTurn(delay)
   room.current = current
 end
 
+--- 当前是否处于额外的回合。
+--- @return boolean
 function ServerPlayer:insideExtraTurn()
   return self.tag["_extra_turn_count"] and #self.tag["_extra_turn_count"] > 0
 end
 
+--- 当前额外回合的技能原因。
 ---@return string
 function ServerPlayer:getCurrentExtraTurnReason()
   local ex_tag = self.tag["_extra_turn_count"]
@@ -632,14 +681,19 @@ function ServerPlayer:getCurrentExtraTurnReason()
   return ex_tag[#ex_tag]
 end
 
+--- 角色摸牌。
+---@param num integer @ 摸牌数
+---@param skillName? string @ 技能名
+---@param fromPlace? string @ 摸牌的位置，"top" 或者 "bottom"
+---@return integer[] @ 摸到的牌
 function ServerPlayer:drawCards(num, skillName, fromPlace)
   return self.room:drawCards(self, num, skillName, fromPlace)
 end
 
 ---@param pile_name string
 ---@param card integer|Card
----@param visible boolean
----@param skillName string|nil
+---@param visible? boolean
+---@param skillName? string
 function ServerPlayer:addToPile(pile_name, card, visible, skillName)
   local room = self.room
   room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
@@ -756,10 +810,9 @@ function ServerPlayer:reset()
 end
 
 --- 进行拼点。
----@param from ServerPlayer
 ---@param tos ServerPlayer[]
 ---@param skillName string
----@param initialCard Card|nil
+---@param initialCard? Card
 ---@return PindianStruct
 function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reason = skillName, fromCard = initialCard, results = {} }
@@ -769,7 +822,7 @@ end
 
 --- 播放技能的语音。
 ---@param skill_name string @ 技能名
----@param index integer | nil @ 语音编号，默认为-1（也就是随机播放）
+---@param index? integer @ 语音编号，默认为-1（也就是随机播放）
 function ServerPlayer:broadcastSkillInvoke(skill_name, index)
   index = index or -1
   self.room:sendLogEvent("PlaySkillSound", {
@@ -782,7 +835,7 @@ end
 
 -- Hegemony func
 
----@param skill Skill
+---@param skill Skill | string
 function ServerPlayer:addFakeSkill(skill)
   assert(type(skill) == "string" or skill:isInstanceOf(Skill))
   if type(skill) == "string" then
@@ -803,7 +856,7 @@ function ServerPlayer:addFakeSkill(skill)
   self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
 end
 
----@param skill Skill
+---@param skill Skill | string
 function ServerPlayer:loseFakeSkill(skill)
   assert(type(skill) == "string" or skill:isInstanceOf(Skill))
   if type(skill) == "string" then
@@ -822,6 +875,7 @@ function ServerPlayer:loseFakeSkill(skill)
   self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
 end
 
+---@param skill Skill | string
 function ServerPlayer:isFakeSkill(skill)
   if type(skill) == "string" then skill = Fk.skills[skill] end
   assert(skill:isInstanceOf(Skill))
@@ -829,7 +883,7 @@ function ServerPlayer:isFakeSkill(skill)
 end
 
 ---@param skill string | Skill
----@param isPrelight bool
+---@param isPrelight? boolean
 function ServerPlayer:prelightSkill(skill, isPrelight)
   if type(skill) == "string" then skill = Fk.skills[skill] end
   assert(skill:isInstanceOf(Skill))
@@ -858,8 +912,8 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
   self:doNotify("PrelightSkill", json.encode{ skill.name, isPrelight })
 end
 
----@param isDeputy bool
----@param no_trigger bool
+---@param isDeputy? boolean
+---@param no_trigger? boolean
 function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   local room = self.room
   local generalName
@@ -872,7 +926,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local general = Fk.generals[generalName] or Fk.generals["blank_shibing"]
-  for _, s in ipairs(general:getSkillNameList()) do
+  for _, s in ipairs(general:getSkillNameList(true)) do
     local skill = Fk.skills[s]
     self:loseFakeSkill(skill)
   end
@@ -880,7 +934,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   local ret = true
   if not ((isDeputy and self.general ~= "anjiang") or (not isDeputy and self.deputyGeneral ~= "anjiang")) then
     local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
-    for _, sname in ipairs(other:getSkillNameList()) do
+    for _, sname in ipairs(other:getSkillNameList(true)) do
       local s = Fk.skills[sname]
       if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
         ret = false
@@ -919,13 +973,21 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     arg2 = generalName,
   }
 
+  local data = {[isDeputy and "d" or "m"] = generalName}
+  room.logic:trigger(fk.GeneralShown, self, data)
   if not no_trigger then
     local current_event = room.logic:getCurrentEvent()
     if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
-      room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+      room.logic:trigger(fk.GeneralRevealed, self, data)
     else
+      if current_event.parent then
+        repeat
+          if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.parent.event) then break end
+          current_event = current_event.parent
+        until (not current_event.parent)
+      end
       current_event:addExitFunc(function ()
-        room.logic:trigger(fk.GeneralRevealed, self, {[isDeputy and "d" or "m"] = generalName})
+        room.logic:trigger(fk.GeneralRevealed, self, data)
       end)
     end
   end
@@ -936,11 +998,18 @@ function ServerPlayer:revealGenerals()
   self:revealGeneral(true, true)
   local room = self.room
   local current_event = room.logic:getCurrentEvent()
+  local data = {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")}
   if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
-    room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+    room.logic:trigger(fk.GeneralRevealed, self, data)
   else
+    if current_event.parent then
+      repeat
+        if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.parent.event) then break end
+        current_event = current_event.parent
+      until (not current_event.parent)
+    end
     current_event:addExitFunc(function ()
-      room.logic:trigger(fk.GeneralRevealed, self, {["m"] = self:getMark("__heg_general"), ["d"] = self:getMark("__heg_deputy")})
+      room.logic:trigger(fk.GeneralRevealed, self, data)
     end)
   end
 end
@@ -951,7 +1020,7 @@ function ServerPlayer:revealBySkillName(skill_name)
 
   if main then
     if table.contains(Fk.generals[self:getMark("__heg_general")]
-      :getSkillNameList(), skill_name) then
+      :getSkillNameList(true), skill_name) then
       self:revealGeneral(false)
       return
     end
@@ -959,7 +1028,7 @@ function ServerPlayer:revealBySkillName(skill_name)
 
   if deputy then
     if table.contains(Fk.generals[self:getMark("__heg_deputy")]
-      :getSkillNameList(), skill_name) then
+      :getSkillNameList(true), skill_name) then
       self:revealGeneral(true)
       return
     end
@@ -983,18 +1052,8 @@ function ServerPlayer:hideGeneral(isDeputy)
   end
 
   local general = Fk.generals[generalName]
-  local skills = general.skills
   local place = isDeputy and "m" or "d"
-  for _, s in ipairs(skills) do
-    room:handleAddLoseSkills(self, "-" .. s.name, nil, false, true)
-    if s.relate_to_place ~= place then
-      if s.frequency == Skill.Compulsory then
-        self:addFakeSkill("reveal_skill")
-      end
-      self:addFakeSkill(s)
-    end
-  end
-  for _, sname in ipairs(general.other_skills) do
+  for _, sname in ipairs(general:getSkillNameList()) do
     room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
     local s = Fk.skills[sname]
     if s.relate_to_place ~= place then

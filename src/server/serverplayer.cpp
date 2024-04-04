@@ -124,3 +124,20 @@ void ServerPlayer::setThinking(bool t) {
   m_thinking = t;
   m_thinking_mutex.unlock();
 }
+
+void ServerPlayer::startGameTimer() {
+  gameTime = 0;
+  gameTimer.start();
+}
+
+void ServerPlayer::pauseGameTimer() {
+  gameTime += gameTimer.elapsed() / 1000;
+}
+
+void ServerPlayer::resumeGameTimer() {
+  gameTimer.start();
+}
+
+int ServerPlayer::getGameTime() {
+  return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
+}

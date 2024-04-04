@@ -67,7 +67,7 @@ public slots:
 private:
   friend class Shell;
   ServerSocket *server;
-  QUdpSocket *udpSocket;
+  QUdpSocket *udpSocket;  // 服务器列表页面显示服务器信息用
 
   Room *m_lobby;
   QMap<int, Room *> rooms;
@@ -89,6 +89,12 @@ private:
   QJsonObject config;
   void readConfig();
 
+  // 用于确定建立连接之前与客户端通信，连接后用doNotify
+  void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
+  bool checkClientVersion(ClientSocket *client, const QString &ver);
+
+  // 某玩家刚刚连入之后，服务器告诉他关于他的一些基本信息
+  void setupPlayer(ServerPlayer *player, bool all_info = true);
   void handleNameAndPassword(ClientSocket *client, const QString &name,
                              const QString &password, const QString &md5_str, const QString &uuid_str);
   void processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port);

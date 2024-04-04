@@ -29,14 +29,16 @@ CardItem {
   suit: ""
   number: 0
   footnote: ""
-  card.source: SkinBank.getGeneralPicture(name)
+  card.source: known ? SkinBank.getGeneralPicture(name)
+                     : (SkinBank.GENERALCARD_DIR + 'card-back')
   glow.color: "white" //Engine.kingdomColor[kingdom]
 
   // FIXME: 藕！！
-  property bool heg: name.startsWith('hs__') || name.startsWith('ld__') || name.includes('heg__')
+  property bool heg: name.startsWith('hs__') || name.startsWith('ld__') ||
+                     name.includes('heg__')
 
   Image {
-    source: SkinBank.GENERALCARD_DIR + "border"
+    source: known ? (SkinBank.GENERALCARD_DIR + "border") : ""
   }
 
   Image {
@@ -44,22 +46,23 @@ CardItem {
     width: 34; fillMode: Image.PreserveAspectFit
     transformOrigin: Item.TopLeft
     source: SkinBank.getGeneralCardDir(kingdom) + kingdom
-    visible: detailed
+    visible: detailed && known
   }
 
   Image {
     scale: 0.6; x: 9; y: 12
     transformOrigin: Item.TopLeft
     width: 34; fillMode: Image.PreserveAspectFit
-    source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom : ""
-    visible: detailed
+    source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom
+                       : ""
+    visible: detailed && known
   }
 
   Row {
     x: 34
     y: 4
     spacing: 1
-    visible: detailed && !heg
+    visible: detailed && known && !heg
     Repeater {
       id: hpRepeater
       model: (!heg) ? ((hp > 5 || hp !== maxHp) ? 1 : hp) : 0
@@ -72,7 +75,8 @@ CardItem {
         Image {
           id: subkingdomMagatama
           visible: false
-          source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) + subkingdom + "-magatama" : ""
+          source: subkingdom ? SkinBank.getGeneralCardDir(subkingdom) +
+                               subkingdom + "-magatama" : ""
         }
         LinearGradient {
           id: subkingdomMask
@@ -106,7 +110,7 @@ CardItem {
     x: 34
     y: 3
     spacing: 0
-    visible: detailed && heg
+    visible: detailed && known && heg
     Repeater {
       id: hegHpRepeater
       model: heg ? ((hp > 7 || hp !== maxHp) ? 1 : Math.ceil(hp / 2)) : 0
@@ -140,7 +144,7 @@ CardItem {
   }
 
   Shield {
-    visible: shieldNum > 0 && detailed
+    visible: shieldNum > 0 && detailed && known
     anchors.right: parent.right
     anchors.top: parent.top
     anchors.topMargin: hpRepeater.model > 4 ? 16 : 0
@@ -153,8 +157,8 @@ CardItem {
     height: 80
     x: 2
     y: lineCount > 6 ? 30 : 34
-    text: Backend.translate(name)
-    visible: Backend.translate(name).length <= 6 && detailed
+    text: name !== "" ? luatr(name) : "nil"
+    visible: luatr(name).length <= 6 && detailed && known
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
@@ -168,8 +172,8 @@ CardItem {
     y: 12
     rotation: 90
     transformOrigin: Item.BottomLeft
-    text: Backend.translate(name)
-    visible: Backend.translate(name).length > 6 && detailed
+    text: luatr(name)
+    visible: luatr(name).length > 6 && detailed && known
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
@@ -177,7 +181,7 @@ CardItem {
   }
 
   Rectangle {
-    visible: pkgName !== "" && detailed
+    visible: pkgName !== "" && detailed && known
     height: 16
     width: childrenRect.width + 4
     anchors.bottom: parent.bottom
@@ -191,7 +195,7 @@ CardItem {
     border.color: "white"
     border.width: 1
     Text {
-      text: Backend.translate(pkgName)
+      text: luatr(pkgName)
       x: 2; y: 1
       font.family: fontLibian.name
       font.pixelSize: 14
@@ -202,7 +206,7 @@ CardItem {
   }
 
   onNameChanged: {
-    const data = JSON.parse(Backend.callLuaFunction("GetGeneralData", [name]));
+    const data = lcall("GetGeneralData", name);
     kingdom = data.kingdom;
     subkingdom = (data.subkingdom !== kingdom && data.subkingdom) || "";
     hp = data.hp;

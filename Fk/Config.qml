@@ -15,7 +15,7 @@ QtObject {
   property string roomBg
   property string bgmFile
   property string language
-  property list<string> disabledPack: []
+  // property list<string> disabledPack: []
   property string preferedMode
   property int preferedPlayerNum
   property int preferredGeneralNum
@@ -23,9 +23,12 @@ QtObject {
   property real bgmVolume
   property bool disableMsgAudio
   property bool hideUseless
-  property list<string> disabledGenerals: []
-  property list<var> disableGeneralSchemes: []
-  property int disableSchemeIdx: 0
+  // property list<string> disabledGenerals: []
+  // property list<var> disableGeneralSchemes: []
+  // property int disableSchemeIdx: 0
+  property list<var> disableSchemes: []
+  property int currentDisableIdx: 0
+  property var curScheme
 
   property int preferredTimeout
   property int preferredLuckTime
@@ -50,10 +53,11 @@ QtObject {
   property bool observing: false
   property bool replaying: false
   property list<string> blockedUsers: []
+  property int totalTime: 0 // FIXME: only for notifying
 
-  onDisabledGeneralsChanged: {
-    disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
-  }
+  // onDisabledGeneralsChanged: {
+  //   disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
+  // }
 
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
@@ -74,7 +78,7 @@ QtObject {
         return 'en_US';
       }
     })();
-    disabledPack = conf.disabledPack ?? [ "test_p_0" ];
+    // disabledPack = conf.disabledPack ?? [ "test_p_0" ];
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;
     preferredGeneralNum = conf.preferredGeneralNum ?? 3;
@@ -86,9 +90,18 @@ QtObject {
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     firstRun = conf.firstRun ?? true;
-    disabledGenerals = conf.disabledGenerals ?? [];
-    disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
-    disableSchemeIdx = conf.disableSchemeIdx ?? 0;
+    // disabledGenerals = conf.disabledGenerals ?? [];
+    // disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
+    // disableSchemeIdx = conf.disableSchemeIdx ?? 0;
+    disableSchemes = conf.disableSchemes ?? [{
+      name: "",
+      banPkg: {},    // 被禁用的包，内部数据为 包名: 白名单武将名数组
+      normalPkg: {},  // 未被禁用的包，内部数据为 包名: 黑名单武将名数组
+      banCardPkg: [], // 被禁用的卡包
+    }];
+    currentDisableIdx = conf.currentDisableIdx ?? 0;
+    curScheme = disableSchemes[currentDisableIdx];
+    blockedUsers = conf.blockedUsers ?? [];
   }
 
   function saveConf() {
@@ -102,7 +115,7 @@ QtObject {
     conf.roomBg = roomBg;
     conf.bgmFile = bgmFile;
     conf.language = language;
-    conf.disabledPack = disabledPack;
+    // conf.disabledPack = disabledPack;
     conf.preferedMode = preferedMode;
     conf.preferedPlayerNum = preferedPlayerNum;
     conf.ladyImg = ladyImg;
@@ -114,9 +127,13 @@ QtObject {
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.firstRun = firstRun;
-    conf.disabledGenerals = disabledGenerals;
-    conf.disableGeneralSchemes = disableGeneralSchemes;
-    conf.disableSchemeIdx = disableSchemeIdx;
+    // conf.disabledGenerals = disabledGenerals;
+    // conf.disableGeneralSchemes = disableGeneralSchemes;
+    // conf.disableSchemeIdx = disableSchemeIdx;
+    disableSchemes[currentDisableIdx] = curScheme;
+    conf.disableSchemes = disableSchemes;
+    conf.currentDisableIdx = currentDisableIdx;
+    conf.blockedUsers = blockedUsers;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

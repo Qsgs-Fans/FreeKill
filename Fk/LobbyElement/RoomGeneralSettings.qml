@@ -16,7 +16,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Room Name")
+        text: luatr("Room Name")
       }
       TextField {
         id: roomName
@@ -24,7 +24,7 @@ Flickable {
         font.pixelSize: 18
         Layout.rightMargin: 16
         Layout.fillWidth: true
-        text: Backend.translate("$RoomName").arg(Self.screenName)
+        text: luatr("$RoomName").arg(Self.screenName)
       }
     }
 
@@ -32,25 +32,7 @@ Flickable {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Player num")
-      }
-      SpinBox {
-        id: playerNum
-        from: 2
-        to: 12
-        value: config.preferedPlayerNum
-
-        onValueChanged: {
-          config.preferedPlayerNum = value;
-        }
-      }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: Backend.translate("Game Mode")
+        text: luatr("Game Mode")
       }
       ComboBox {
         id: gameModeCombo
@@ -69,11 +51,32 @@ Flickable {
       }
     }
 
-    RowLayout {
+    GridLayout {
       anchors.rightMargin: 8
-      spacing: 16
+      rowSpacing: 20
+      columnSpacing: 20
+      columns: 4
       Text {
-        text: Backend.translate("Select generals num")
+        text: luatr("Player num")
+      }
+      Text {
+        text: luatr("Select generals num")
+      }
+      Text {
+        text: luatr("Operation timeout")
+      }
+      Text {
+        text: luatr("Luck Card Times")
+      }
+      SpinBox {
+        id: playerNum
+        from: 2
+        to: 12
+        value: config.preferedPlayerNum
+
+        onValueChanged: {
+          config.preferedPlayerNum = value;
+        }
       }
       SpinBox {
         id: generalNum
@@ -85,27 +88,6 @@ Flickable {
           config.preferredGeneralNum = value;
         }
       }
-    }
-
-    Text {
-      id: warning
-      anchors.rightMargin: 8
-      visible: {
-        //config.disabledPack; // 没什么用，只是为了禁包刷新时刷新visible罢了
-        const avail = JSON.parse(Backend.callLuaFunction("GetAvailableGeneralsNum", []));
-        const ret = avail < config.preferredGeneralNum * config.preferedPlayerNum;
-        return ret;
-      }
-      text: Backend.translate("No enough generals")
-      color: "red"
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: Backend.translate("Operation timeout")
-      }
       SpinBox {
         from: 10
         to: 60
@@ -115,14 +97,6 @@ Flickable {
         onValueChanged: {
           config.preferredTimeout = value;
         }
-      }
-    }
-
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: Backend.translate("Luck Card Times")
       }
       SpinBox {
         from: 0
@@ -135,11 +109,26 @@ Flickable {
       }
     }
 
+    /*
+    Text {
+      id: warning
+      anchors.rightMargin: 8
+      visible: {
+        const avail = lcall("GetAvailableGeneralsNum");
+        const ret = avail <
+                  config.preferredGeneralNum * config.preferedPlayerNum;
+        return ret;
+      }
+      text: luatr("No enough generals")
+      color: "red"
+    }
+    */
+
     RowLayout {
       anchors.rightMargin: 8
       spacing: 16
       Text {
-        text: Backend.translate("Room Password")
+        text: luatr("Room Password")
       }
       TextField {
         id: roomPassword
@@ -150,60 +139,63 @@ Flickable {
       }
     }
 
-    Switch {
-      id: freeAssignCheck
-      checked: Debugging ? true : false
-      text: Backend.translate("Enable free assign")
-    }
+    RowLayout {
+      anchors.rightMargin: 8
+      spacing: 16
+      Switch {
+        id: freeAssignCheck
+        checked: Debugging ? true : false
+        text: luatr("Enable free assign")
+      }
 
-    Switch {
-      id: deputyCheck
-      checked: Debugging ? true : false
-      text: Backend.translate("Enable deputy general")
+      Switch {
+        id: deputyCheck
+        checked: Debugging ? true : false
+        text: luatr("Enable deputy general")
+      }
     }
 
     RowLayout {
       anchors.rightMargin: 8
       spacing: 16
       Button {
-        text: Backend.translate("OK")
-        enabled: !(warning.visible)
+        text: luatr("OK")
+        // enabled: !(warning.visible)
         onClicked: {
           config.saveConf();
           root.finished();
           mainWindow.busy = true;
+          let k, arr;
 
-          let disabledGenerals = config.disabledGenerals.slice();
-          if (disabledGenerals.length) {
-            const availablePack = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", [])).
-              filter((pack) => !config.disabledPack.includes(pack));
-            disabledGenerals = disabledGenerals.filter((general) => {
-              return availablePack.find((pack) => JSON.parse(Backend.callLuaFunction("GetGenerals", [pack])).includes(general));
-            });
-
-            disabledGenerals = Array.from(new Set(disabledGenerals));
+          let disabledGenerals = [];
+          for (k in config.curScheme.banPkg) {
+            arr = config.curScheme.banPkg[k];
+            if (arr.length !== 0) {
+              const generals = lcall("GetGenerals", k);
+              disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
+            }
+          }
+          for (k in config.curScheme.normalPkg) {
+            arr = config.curScheme.normalPkg[k] ?? [];
+            if (arr.length !== 0)
+              disabledGenerals.push(...arr);
           }
 
-          let disabledPack = config.disabledPack.slice();
+          let disabledPack = config.curScheme.banCardPkg.slice();
+          for (k in config.curScheme.banPkg) {
+            if (config.curScheme.banPkg[k].length === 0)
+              disabledPack.push(k);
+          }
           config.serverHiddenPacks.forEach(p => {
             if (!disabledPack.includes(p)) {
               disabledPack.push(p);
             }
           });
-          const generalPacks = JSON.parse(Backend.callLuaFunction("GetAllGeneralPack", []));
-          for (let pk of generalPacks) {
-            if (disabledPack.includes(pk)) continue;
-            let generals = JSON.parse(Backend.callLuaFunction("GetGenerals", [pk]));
-            let t = generals.filter(g => !disabledGenerals.includes(g));
-            if (t.length === 0) {
-              disabledPack.push(pk);
-              disabledGenerals = disabledGenerals.filter(g1 => !generals.includes(g1));
-            }
-          }
 
           ClientInstance.notifyServer(
             "CreateRoom",
-            JSON.stringify([roomName.text, playerNum.value, config.preferredTimeout, {
+            JSON.stringify([roomName.text, playerNum.value,
+                            config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
               enableDeputy: deputyCheck.checked,
               gameMode: config.preferedMode,
@@ -217,7 +209,7 @@ Flickable {
         }
       }
       Button {
-        text: Backend.translate("Cancel")
+        text: luatr("Cancel")
         onClicked: {
           root.finished();
         }
@@ -225,11 +217,11 @@ Flickable {
     }
 
     Component.onCompleted: {
-      const mode_data = JSON.parse(Backend.callLuaFunction("GetGameModes", []));
+      const mode_data = lcall("GetGameModes");
       let i = 0;
       for (let d of mode_data) {
         gameModeList.append(d);
-        if (d.orig_name == config.preferedMode) {
+        if (d.orig_name === config.preferedMode) {
           gameModeCombo.currentIndex = i;
         }
         i += 1;
@@ -237,10 +229,12 @@ Flickable {
 
       playerNum.value = config.preferedPlayerNum;
 
-      config.disabledPack.forEach(p => {
-        Backend.callLuaFunction("UpdatePackageEnable", [p, false]);
-      });
-      config.disabledPackChanged();
+      for (let k in config.curScheme.banPkg) {
+        lcall("UpdatePackageEnable", k, false);
+      }
+      config.curScheme.banCardPkg.forEach(p =>
+        lcall("UpdatePackageEnable", p, false));
+      config.curSchemeChanged();
     }
   }
 }

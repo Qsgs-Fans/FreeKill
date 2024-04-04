@@ -40,6 +40,7 @@ public:
   Q_INVOKABLE QString translate(const QString &src);
   Q_INVOKABLE QString callLuaFunction(const QString &func_name,
                                       QVariantList params);
+  Q_INVOKABLE QString evalLuaExp(const QString &lua);
 
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();

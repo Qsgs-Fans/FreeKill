@@ -50,7 +50,7 @@ Item {
               anchors.left: logo.right
               anchors.leftMargin: 16
               width: parent.width * 0.65
-              text: Backend.translate("about_" + dest + "_description")
+              text: luatr("about_" + dest + "_description")
               wrapMode: Text.WordWrap
               textFormat: Text.MarkdownText
               font.pixelSize: 18
@@ -73,7 +73,7 @@ Item {
   }
 
   Button {
-    text: Backend.translate("Quit")
+    text: luatr("Quit")
     anchors.right: parent.right
     onClicked: {
       swipe.opacity = 0;

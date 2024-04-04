@@ -148,6 +148,10 @@ GameEvent.functions[GameEvent.Round] = function(self)
   room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
   if roundCount >= 9999 then
+    room:sendLog{
+      type = "#TimeOutDraw",
+      toast = true,
+    }
     room:gameOver("")
   end
 
@@ -161,8 +165,8 @@ GameEvent.functions[GameEvent.Round] = function(self)
     p = room.current
     GameEvent(GameEvent.Turn, p):exec()
     if room.game_finished then break end
-    room.current = room.current:getNextAlive(true)
-  until p.seat >= p:getNextAlive(true).seat
+    room.current = room.current:getNextAlive(true, nil, true)
+  until p.seat >= p:getNextAlive(true, nil, true).seat
 
   logic:trigger(fk.RoundEnd, p)
 end
@@ -174,7 +178,7 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryRound)
     p:setSkillUseHistory("", 0, Player.HistoryRound)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -182,10 +186,15 @@ GameEvent.cleaners[GameEvent.Round] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-round") then
+      if name:find("-round", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end
 
@@ -193,6 +202,15 @@ GameEvent.prepare_funcs[GameEvent.Turn] = function(self)
   local room = self.room
   local logic = room.logic
   local player = room.current
+
+  if player.rest > 0 and player.rest < 999 then
+    room:setPlayerRest(player, player.rest - 1)
+    if player.rest == 0 and player.dead then
+      room:revivePlayer(player, true, "rest")
+    else
+      room:delay(50)
+    end
+  end
 
   if player.dead then return true end
 
@@ -240,7 +258,7 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryTurn)
     p:setSkillUseHistory("", 0, Player.HistoryTurn)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -248,10 +266,15 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-turn") then
+      if name:find("-turn", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end
 
@@ -259,7 +282,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
   local room = self.room
   local logic = room.logic
 
-  local player = self.data[1]
+  local player = self.data[1] ---@type Player
   if not logic:trigger(fk.EventPhaseStart, player) then
     if player.phase ~= Player.NotActive then
       logic:trigger(fk.EventPhaseProceeding, player)
@@ -276,23 +299,26 @@ GameEvent.functions[GameEvent.Phase] = function(self)
       end,
       [Player.Judge] = function()
         local cards = player:getCardIds(Player.Judge)
-        for i = #cards, 1, -1 do
-          local card
-          card = player:removeVirtualEquip(cards[i])
+        while #cards > 0 do
+          local cid = table.remove(cards)
+          if not cid then return end
+          local card = player:removeVirtualEquip(cid)
           if not card then
-            card = Fk:getCardById(cards[i])
+            card = Fk:getCardById(cid)
           end
-          room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
+          if table.contains(player:getCardIds(Player.Judge), cid) then
+            room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
-          ---@type CardEffectEvent
-          local effect_data = {
-            card = card,
-            to = player.id,
-            tos = { {player.id} },
-          }
-          room:doCardEffect(effect_data)
-          if effect_data.isCancellOut and card.skill then
-            card.skill:onNullified(room, effect_data)
+            ---@type CardEffectEvent
+            local effect_data = {
+              card = card,
+              to = player.id,
+              tos = { {player.id} },
+            }
+            room:doCardEffect(effect_data)
+            if effect_data.isCancellOut and card.skill then
+              card.skill:onNullified(room, effect_data)
+            end
           end
         end
       end,
@@ -312,9 +338,9 @@ GameEvent.functions[GameEvent.Phase] = function(self)
           local result = room:doRequest(player, "PlayCard", player.id)
           if result == "" then break end
 
-          local use = room:handleUseCardReply(player, result)
-          if use then
-            room:useCard(use)
+          local useResult = room:handleUseCardReply(player, result)
+          if type(useResult) == "table" then
+            room:useCard(useResult)
           end
 
           if player._play_phase_end then
@@ -332,6 +358,7 @@ GameEvent.functions[GameEvent.Phase] = function(self)
             end)
           end
         ) - player:getMaxCards()
+        room:broadcastProperty(player, "MaxCards")
         if discardNum > 0 then
           room:askForDiscard(player, discardNum, discardNum, false, "game_rule", false)
         end
@@ -360,7 +387,7 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
     p:setCardUseHistory("", 0, Player.HistoryPhase)
     p:setSkillUseHistory("", 0, Player.HistoryPhase)
     for name, _ in pairs(p.mark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setPlayerMark(p, name, 0)
       end
     end
@@ -368,9 +395,14 @@ GameEvent.cleaners[GameEvent.Phase] = function(self)
 
   for cid, cmark in pairs(room.card_marks) do
     for name, _ in pairs(cmark) do
-      if name:endsWith("-phase") then
+      if name:find("-phase", 1, true) then
         room:setCardMark(Fk:getCardById(cid), name, 0)
       end
     end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+    room:broadcastProperty(p, "MaxCards")
   end
 end

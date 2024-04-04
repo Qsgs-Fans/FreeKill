@@ -28,11 +28,9 @@ local playCardEmotionAndSound = function(room, player, card)
     soundName = "./packages/" .. card.package.extensionName .. "/audio/card/"
       .. (player.gender == General.Male and "male/" or "female/") .. card.name
     if not FileIO.exists(soundName .. ".mp3") then
-      for _, dir in ipairs(FileIO.ls("./packages/")) do
-        soundName = "./packages/" .. dir .. "/audio/card/"
-          .. (player.gender == General.Male and "male/" or "female/") .. card.name
-        if FileIO.exists(soundName .. ".mp3") then break end
-      end
+      local orig = Fk.all_card_types[card.name]
+      soundName = "./packages/" .. orig.package.extensionName .. "/audio/card/"
+      .. (player.gender == General.Male and "male/" or "female/") .. orig.name
     end
   end
   room:broadcastPlaySound(soundName)
@@ -158,26 +156,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
     end
   end
 
-  if #useCardIds == 0 then return end
-  if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
-    local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
-    room:sendFootnote(useCardIds, {
-      type = "##UseCardTo",
-      from = from,
-      to = tos,
-    })
-    if card:isVirtual() then
-      room:sendCardVirtName(useCardIds, card.name)
-    end
-  else
-    room:sendFootnote(useCardIds, {
-      type = "##UseCard",
-      from = from,
-    })
-    if card:isVirtual() then
-      room:sendCardVirtName(useCardIds, card.name)
-    end
-  end
+  return _card
 end
 
 GameEvent.functions[GameEvent.UseCard] = function(self)
@@ -185,16 +164,54 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   local room = self.room
   local logic = room.logic
 
-  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
+  if type(cardUseEvent.attachedSkillAndUser) == "table" then
+    local attachedSkillAndUser = table.simpleClone(cardUseEvent.attachedSkillAndUser)
+    self:addExitFunc(function()
+      if
+        type(attachedSkillAndUser) == "table" and
+        Fk.skills[attachedSkillAndUser.skillName] and
+        Fk.skills[attachedSkillAndUser.skillName].afterUse
+      then
+        Fk.skills[attachedSkillAndUser.skillName]:afterUse(room:getPlayerById(attachedSkillAndUser.user), cardUseEvent)
+      end
+    end)
+    cardUseEvent.attachedSkillAndUser = nil
+  end
 
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  sendCardEmotionAndLog(room, cardUseEvent)
+  local _card = sendCardEmotionAndLog(room, cardUseEvent)
 
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
     logic:breakEvent()
+  end
+
+  room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
+
+  local card = cardUseEvent.card
+  local useCardIds = card:isVirtual() and card.subcards or { card.id }
+  if #useCardIds > 0 then
+    if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
+      local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
+      room:sendFootnote(useCardIds, {
+        type = "##UseCardTo",
+        from = cardUseEvent.from,
+        to = tos,
+      })
+      if card:isVirtual() or card ~= _card then
+        room:sendCardVirtName(useCardIds, card.name)
+      end
+    else
+      room:sendFootnote(useCardIds, {
+        type = "##UseCard",
+        from = cardUseEvent.from,
+      })
+      if card:isVirtual() or card ~= _card then
+        room:sendCardVirtName(useCardIds, card.name)
+      end
+    end
   end
 
   if not cardUseEvent.extraUse then
@@ -267,6 +284,10 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
 
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    logic:breakEvent()
+  end
+
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
@@ -276,10 +297,6 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
     if card:isVirtual() then
       room:sendCardVirtName(cardIds, card.name)
     end
-  end
-
-  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-    logic:breakEvent()
   end
 
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
@@ -332,9 +349,16 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
 
     if event == fk.PreCardEffect then
       if cardEffectEvent.from and logic:trigger(event, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+        if cardEffectEvent.to then
+          cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
+          table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
+        end
         logic:breakEvent()
       end
     elseif cardEffectEvent.to and logic:trigger(event, room:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
+      cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
+      table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
+
       logic:breakEvent()
     end
 

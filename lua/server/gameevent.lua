@@ -13,9 +13,10 @@
 ---@field public extra_clear_funcs fun(self:GameEvent)[] @ 事件结束时执行的自定义函数列表
 ---@field public exit_func fun(self: GameEvent) @ 事件结束后执行的函数
 ---@field public extra_exit_funcs fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
+---@field public exec_ret boolean? @ exec函数的返回值，可能不存在
+---@field public status string @ ready, running, exiting, dead
 ---@field public interrupted boolean @ 事件是否是因为被中断而结束的，可能是防止事件或者被杀
 ---@field public killed boolean @ 事件因为终止一切结算而被中断（所谓的“被杀”）
----@field public revived boolean @ 事件被killed，但因为在cleaner中发生而被复活
 local GameEvent = class("GameEvent")
 
 ---@type (fun(self: GameEvent): bool)[]
@@ -49,6 +50,7 @@ function GameEvent:initialize(event, ...)
   self.extra_clear_funcs = Util.DummyTable
   self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
   self.extra_exit_funcs = Util.DummyTable
+  self.status = "ready"
   self.interrupted = false
 end
 
@@ -82,17 +84,32 @@ function GameEvent:prependExitFunc(f)
   table.insert(self.extra_exit_funcs, 1, f)
 end
 
-function GameEvent:findParent(eventType, includeSelf)
+-- 找第一个与当前事件有继承关系的特定事件
+---@param eventType integer @ 事件类型
+---@param includeSelf bool @ 是否包括本事件
+---@param depth? integer @ 搜索深度
+---@return GameEvent?
+function GameEvent:findParent(eventType, includeSelf, depth)
   if includeSelf and self.event == eventType then return self end
+  if depth == 0 then return nil end
   local e = self.parent
-  repeat
+  local l = 1
+  while e do
     if e.event == eventType then return e end
+    if depth and l >= depth then break end
     e = e.parent
-  until not e
+    l = l + 1
+  end
   return nil
 end
 
 -- 找n个id介于from和to之间的事件。
+---@param events GameEvent[] @ 事件数组
+---@param from integer @ 起始id
+---@param to integer @ 终止id
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean? @ 过滤用的函数
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 local function bin_search(events, from, to, n, func)
   local left = 1
   local right = #events
@@ -135,8 +152,8 @@ end
 -- 从某个区间中，找出类型符合且符合func函数检测的至多n个事件。
 ---@param eventType integer @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
----@param func fun(e: GameEvent): boolean @ 过滤用的函数
----@param endEvent GameEvent|nil @ 区间终止点，默认为本事件结束
+---@param func fun(e: GameEvent): boolean? @ 过滤用的函数
+---@param endEvent? GameEvent @ 区间终止点，默认为本事件结束
 ---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameEvent:searchEvents(eventType, n, func, endEvent)
   local logic = self.room.logic
@@ -163,193 +180,35 @@ function GameEvent:searchEvents(eventType, n, func, endEvent)
   return ret
 end
 
-function GameEvent:clear()
-  local clear_co = coroutine.create(function()
-    self:clear_func()
-    for _, f in ipairs(self.extra_clear_funcs) do
-      if type(f) == "function" then f(self) end
-    end
-  end)
+function GameEvent:exec()
+  local room = self.room
+  local logic = room.logic
+  if self.status ~= "ready" then return true end
 
-  local zhuran_jmp, zhuran_msg -- SB老朱然
+  self.parent = logic:getCurrentEvent()
 
-  while true do
-    local err, yield_result, extra_yield_result = coroutine.resume(clear_co)
+  if self:prepare_func() then return true end
 
-    if err == false then
-      -- handle error, then break
-      if not string.find(yield_result, "__manuallyBreak") then
-        fk.qCritical(yield_result .. "\n" .. debug.traceback(clear_co))
-      end
-      coroutine.close(clear_co)
-      break
-    end
+  logic:pushEvent(self)
 
-    if yield_result == "__handleRequest" then
-      -- yield to requestLoop
-      coroutine.yield(yield_result, extra_yield_result)
+  local co = coroutine.create(self.main_func)
+  self._co = co
+  self.status = "running"
 
-    elseif type(yield_result) == "table" and yield_result.class
-      and yield_result:isInstanceOf(GameEvent) and self ~= yield_result then
+  coroutine.yield(self, "__newEvent")
 
-      -- 不是，谁TM还在cleaner里面玩老朱然啊
-      -- 总之，cleaner不能断
-      -- 倒是没必要手动resume，新一轮while true会自动resume，只要把返回值
-      -- 传回去就行
-
-      -- 一般来说都是由cleaner中的trigger引起
-      -- 以胆守合击为例就是trigger -> SkillEffect事件 -> UseCard事件 -> 胆守
-      -- 此时胆守的话最后从SkillEffect事件的exec内部yield出来
-      -- 当前协程就应该正在执行room:useSkill函数，resume会去只会让那个函数返回
-
-      if zhuran_jmp == nil or zhuran_jmp.id > yield_result.id then
-        zhuran_jmp = yield_result
-        zhuran_msg = extra_yield_result
-      end
-
-      -- 自己本来应该被杀的但是因为自己正在执行self:clear()而逃过一劫啊
-      -- 还是得标记一下被杀才行，顺便因为实际上没死所以标记被复活
-      self.killed = true
-      self.revived = true
-      -- 什么都不做，等下轮while自己resume
-    else
-      coroutine.close(clear_co)
-      break
-    end
-  end
-
-  -- cleaner顺利执行完了，出栈吧
-  local logic = RoomInstance.logic
-  local end_id = logic.current_event_id + 1
-  if self.id ~= end_id - 1 then
-    logic.all_game_events[end_id] = self.event
-    logic.current_event_id = end_id
-    self.end_id = end_id
-  else
-    self.end_id = self.id
-  end
-
-  logic.game_event_stack:pop()
-
-  -- 好了确保cleaner走完了，此时中断就会进入下层事件的正常中断处理
-  if zhuran_jmp then
-    coroutine.close(self._co)
-    coroutine.yield(zhuran_jmp, zhuran_msg)
-
-    -- 此时仍可能出现在插结在其他事件的clear函数中
-    -- 但就算被交付回去了，也能安然返回而不是继续while
-    -- 但愿如此吧
-  end
-
-  -- 保险而已，其实如果被杀的话应该已经在前面的yield终止了
-  -- 但担心cleaner嵌套（三国杀是这样的）还是补一刀
-  if self.killed then return end
-
-  -- 恭喜没被杀掉，我们来执行一些事件结束之后的结算吧
   Pcall(self.exit_func, self)
   for _, f in ipairs(self.extra_exit_funcs) do
     if type(f) == "function" then
       Pcall(f, self)
     end
   end
-end
 
-local function breakEvent(self, extra_yield_result)
-  local cancelEvent = GameEvent:new(GameEvent.BreakEvent, self)
-  cancelEvent.toId = self.id
-  local notcanceled = cancelEvent:exec()
-  local ret, extra_ret = false, nil
-  if not notcanceled then
-    self.interrupted = true
-    self:clear()
-    ret = true
-    extra_ret = extra_yield_result
-  end
-  return ret, extra_ret
-end
-
-function GameEvent:exec()
-  local room = self.room
-  local logic = room.logic
-  local ret = false -- false or nil means this event is running normally
-  local extra_ret
-  self.parent = logic:getCurrentEvent()
-
-  if self:prepare_func() then return true end
-
-  logic.game_event_stack:push(self)
-
-  logic.current_event_id = logic.current_event_id + 1
-  self.id = logic.current_event_id
-  logic.all_game_events[self.id] = self
-  logic.event_recorder[self.event] = logic.event_recorder[self.event] or {}
-  table.insert(logic.event_recorder[self.event], self)
-
-  local co = coroutine.create(self.main_func)
-  self._co = co
-  while true do
-    local err, yield_result, extra_yield_result = coroutine.resume(co)
-
-    if err == false then
-      -- handle error, then break
-      if not string.find(yield_result, "__manuallyBreak") then
-        fk.qCritical(yield_result .. "\n" .. debug.traceback(co))
-      end
-      self.interrupted = true
-      self:clear()
-      ret = true
-      coroutine.close(co)
-      break
-    end
-
-    if yield_result == "__handleRequest" then
-      -- yield to requestLoop
-      coroutine.yield(yield_result, extra_yield_result)
-
-    elseif type(yield_result) == "table" and yield_result.class
-      and yield_result:isInstanceOf(GameEvent) then
-
-      if self ~= yield_result then
-        -- yield to corresponding GameEvent, first pop self from stack
-        self.interrupted = true
-        self.killed = true  -- 老朱然！你不得好死
-        self:clear()
-        -- logic.game_event_stack:pop(self)
-        coroutine.close(co)
-
-        -- then, call yield
-        coroutine.yield(yield_result, extra_yield_result)
-
-        -- 如果是在cleaner/exit里面发生此类中断的话是会被cleaner原地返回的
-        -- 此时正常执行程序流就变成继续while循环了，这是不行的
-        break
-      elseif extra_yield_result == "__breakEvent" then
-        if breakEvent(self) then
-          coroutine.close(co)
-          break
-        end
-      end
-
-    elseif yield_result == "__breakEvent" then
-      -- try to break this event
-      if breakEvent(self) then
-        coroutine.close(co)
-        break
-      end
-
-    else
-      -- normally exit, simply break the loop
-      self:clear()
-      extra_ret = yield_result
-      coroutine.close(co)
-      break
-    end
-  end
-
-  return ret, extra_ret
+  return self.interrupted, self.exec_ret
 end
 
 function GameEvent:shutdown()
+  if self.status ~= "running" then return end
   -- yield to self and break
   coroutine.yield(self, "__breakEvent")
 end

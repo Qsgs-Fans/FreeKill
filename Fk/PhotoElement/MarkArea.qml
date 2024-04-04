@@ -6,6 +6,7 @@ import QtQuick.Layouts
 Item {
   id: root
   width: 138
+  property var bgColor: "#3C3229"
 
   ListModel {
     id: markList
@@ -15,7 +16,7 @@ Item {
     anchors.bottom: parent.bottom
     width: parent.width
     height: parent.height
-    color: "#3C3229"
+    color: bgColor
     opacity: 0.8
     radius: 4
     border.color: "white"
@@ -33,7 +34,8 @@ Item {
       width: childrenRect.width
       height: 22
       Text {
-        text: Backend.translate(mark_name) + ' ' + (special_value !== '' ? special_value : mark_extra)
+        text: luatr(mark_name) + ' '
+              + (special_value !== '' ? special_value : mark_extra)
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -68,8 +70,24 @@ Item {
             } else {
               params.cardNames = data;
             }
+          } else if (mark_name.startsWith('@[')) {
+            // @[xxx]yyy 怀疑是不是qml标记
+            const close_br = mark_name.indexOf(']');
+            if (close_br === -1) return;
+
+            const mark_type = mark_name.slice(2, close_br);
+            const _data = mark_extra;
+            let data = lcall("GetQmlMark", mark_type, mark_name, _data,
+                             root.parent?.playerid);
+            if (data && data.qml_path) {
+              params.data = JSON.parse(_data);
+              params.owner = root.parent?.playerid;
+              roomScene.startCheat("../../" + data.qml_path, params);
+            }
+            return;
           } else {
-            let data = JSON.parse(Backend.callLuaFunction("GetPile", [root.parent.playerid, mark_name]));
+            if (!root.parent.playerid) return;
+            let data = lcall("GetPile", root.parent.playerid, mark_name);
             data = data.filter((e) => e !== -1);
             if (data.length === 0)
               return;
@@ -77,7 +95,7 @@ Item {
             params.ids = data;
           }
 
-          // Just for using room's right drawer
+          // Just for using right drawer of the room
           roomScene.startCheat("../RoomElement/ViewPile", params);
         }
       }
@@ -103,8 +121,21 @@ Item {
     if (mark.startsWith('@$') || mark.startsWith('@&')) {
       special_value += data.length;
       data = data.join(',');
+    } else if (mark.startsWith('@[')) {
+      const close_br = mark.indexOf(']');
+      if (close_br !== -1) {
+        const mark_type = mark.slice(2, close_br);
+        data = JSON.stringify(data);
+        const _data = lcall("GetQmlMark", mark_type, mark, data,
+                            root.parent?.playerid);
+        if (_data && _data.text) {
+          special_value = _data.text;
+        }
+      }
     } else {
-      data = data instanceof Array ? data.map((markText) => Backend.translate(markText)).join(' ') : Backend.translate(data);
+      data = data instanceof Array
+           ? data.map((markText) => luatr(markText)).join(' ')
+           : luatr(data);
     }
 
     if (modelItem) {

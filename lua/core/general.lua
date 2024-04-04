@@ -71,7 +71,7 @@ function General:__tostring()
 end
 
 --- 为武将增加技能，需要注意增加其他武将技能时的处理方式。
----@param skill Skill @ （单个）武将技能
+---@param skill Skill|string @ （单个）武将技能
 function General:addSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.other_skills, skill)
@@ -82,7 +82,7 @@ function General:addSkill(skill)
 end
 
 --- 为武将增加相关技能，需要注意增加其他武将技能时的处理方式。
----@param skill Skill @ （单个）武将技能
+---@param skill Skill|string @ （单个）武将技能
 function General:addRelatedSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.related_other_skills, skill)
@@ -94,12 +94,19 @@ function General:addRelatedSkill(skill)
 end
 
 --- 获取武将所有技能。
+---@param include_lord? boolean
+---@return string[]
 function General:getSkillNameList(include_lord)
-  local ret = table.map(self.skills, Util.NameMapper)
-  table.insertTable(ret, self.other_skills)
-
-  if not include_lord then
+  local ret = {}
+  local other_skills = table.map(self.other_skills, Util.Name2SkillMapper)
+  local skills = table.connect(self.skills, other_skills)
+  for _, skill in ipairs(skills) do
+    if include_lord or not skill.lordSkill then
+      table.insert(ret, skill.name)
+    end
   end
+
+  -- table.insertTable(ret, self.other_skills)
   return ret
 end
 

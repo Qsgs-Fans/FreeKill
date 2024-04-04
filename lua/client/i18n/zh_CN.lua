@@ -65,10 +65,13 @@ Fk:loadTranslationTable{
   ["Give Shoe"] = "拖鞋",
   ["Block Chatter"] = "屏蔽发言",
   ["Unblock Chatter"] = "解除屏蔽",
+  ["<Blocked> "] = '<font color="red">[已屏蔽]</font> ',
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
   ["Win=%1 Run=%2 Total=%3"] = "胜率%1% 逃率%2% 总场次%3",
   ["Win=%1\nRun=%2\nTotal=%3"] = "胜率: %1%\n逃率: %2%\n总场次: %3",
+  ["TotalGameTime: %1 min"] = "已游玩: %1 分钟",
+  ["TotalGameTime: %1 h"] = "已游玩: %1 小时",
 
   ["Ban List"] = "禁将方案",
   ["List"] = "方案",
@@ -76,12 +79,16 @@ Fk:loadTranslationTable{
   ["Clear"] = "清空",
   ["Help_Ban_List"] = "导出键会将这个方案的内容复制到剪贴板中；" ..
   "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
+  ["Ban_Generals"] = "已禁用武将",
+  ["Ban_Packages"] = "禁用拓展包",
+  ["Whitelist_Generals"] = "白名单武将",
   ["Export"] = "导出",
   ["Export Success"] = "禁将方案已经复制到剪贴板。",
   ["Import"] = "导入",
   ["Not Legal"] = "导入失败：不是合法的JSON字符串。",
   ["Not JSON"] = "导入失败：数据格式不对。",
   ["Import Success"] = "从剪贴板导入禁将方案成功。",
+  ["Rename"] = "重命名",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -89,6 +96,8 @@ Fk:loadTranslationTable{
   ["Cards Overview"] = "卡牌一览",
   ["Special card skills:"] = "<b>卡牌的特殊用法:</b>",
   ["Every suit & number:"] = "<b>所有的花色和点数:</b>",
+  ["Male Audio"] = "男性音效",
+  ["Female Audio"] = "女性音效",
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
   ["Replay Manager"] = "来欣赏潇洒的录像吧！",
@@ -110,7 +119,7 @@ Fk:loadTranslationTable{
 
 开发者： RalphR Nyutanislavsky xxyheaven 妖梦厨
 
-贡献者： 假象 deepskybird 板蓝根
+贡献者： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主
 
 鸣谢： Mogara
 
@@ -120,7 +129,7 @@ Fk:loadTranslationTable{
 
 Qt是一个C++图形界面应用程序开发框架，拥有强大的跨平台能力以及易于使用的API。
 
-本程序使用Qt 6.4，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
+本程序使用Qt 6.5，主要利用QtQuick开发UI，同时也使用Qt的网络库开发服务端程序。
 
 官网： https://www.qt.io
   ]],
@@ -179,8 +188,17 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["BanPackage"] = "禁拓展包",
+  ["$BanPkgHelp"] = "正在禁用拓展包",
+  ["$BanCharaHelp"] = "正在禁用武将",
   ["Companions"] = "珠联璧合",
   ["Death audio"] = "阵亡",
+  ["Win audio"] = "胜利语音",
+  ["Official"] = "官方",
+  ["Title"] = "称号：",
+  ["Designer"] = "设计：",
+  ["Voice Actor"] = "配音：",
+  ["Illustrator"] = "画师：",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
   ["GameMode"] = "游戏模式：",
@@ -206,7 +224,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %1 次，剩余手气卡∞张",
   ["AskForLuckCard"] = "手气卡",
   ["#AskForChoice"] = "%1：请选择",
-  ["#AskForCheck"] = "%1：请选择",
+  ["#AskForChoices"] = "%1：请选择",
   ["#choose-trigger"] = "请选择一项技能发动",
   ["trigger"] = "选择技能",
   ["Please arrange cards"] = "请拖拽移动卡牌",
@@ -217,16 +235,17 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForGuanxing"] = "观星",
   ["AskForExchange"] = "换牌",
   ["AskForChoice"] = "选择",
-  ["AskForCheck"] = "选择",
+  ["AskForChoices"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
   ["AskForMoveCardInBoard"] = "移动卡牌",
+  ["replaceEquip"] = "替换装备",
   ["PlayCard"] = "出牌",
 
   ["AskForCardChosen"] = "选牌",
   ["AskForCardsChosen"] = "选牌",
-  ["#AskForChooseCard"] = "%1：请选择其一张卡牌",
-  ["#AskForChooseCards"] = "%1：请选择其%2至%3张卡牌",
+  ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
+  ["#AskForChooseCards"] = "%1：请选择%src的%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
   ["$ChooseCards"] = "请选择%1至%2张卡牌",
   ["$Hand"] = "手牌区",
@@ -243,6 +262,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
+  ["#AskForDistribution"] = "请分配这些牌，至少 %arg 张，至多 %arg2 张",
+  ["@DistributionTo"] = "",
+  ["#replaceEquip"] = "选择一张装备牌替换之",
   ["#askForPindian"] = "%arg：请选择一张手牌作为拼点牌",
   ["#StartPindianReason"] = "%from 由于 %arg 而发起拼点",
   ["#ShowPindianCard"] = "%from 的拼点牌是 %card",
@@ -281,6 +303,15 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Log"] = "战报",
   ["Trusting ..."] = "托管中 ...",
   ["Observing ..."] = "旁观中 ...",
+  ["Resting, don't leave!"] = "稍后你可返回战局，不要离开",
+  ["resting..."] = "休整中",
+  ["rest round num"] = "轮次",
+
+  ["#NoCardDraw"] = "牌堆被摸空了",
+  ["#NoGeneralDraw"] = "武将牌堆被摸空了",
+  ["#NoEventDraw"] = "没有可执行的事件",
+  ["#NoEnoughGeneralDraw"] = "武将数不足！(%arg/%arg2)",
+  ["#TimeOutDraw"] = "轮数已经突破极限！",
 
   ["$GameOver"] = "游戏结束",
   ["$Winner"] = "%1 获胜",
@@ -296,11 +327,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.3.12
+  ## v0.4.10
 
-  移除了BGM。请自己用外部音乐APP播放BGM。
-
-  又修复了一些底层bug。
+  一些优化
 
   ]==],
 }
@@ -317,7 +346,8 @@ Fk:loadTranslationTable{
   ["fire_damage"] = "火属性",
   ["thunder_damage"] = "雷属性",
   ["ice_damage"] = "冰属性",
-  ["hp_lost"] = "体力流失",
+  ["hp_lost"] = "失去体力",
+  ["lose_hp"] = "失去体力",
 
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
@@ -380,21 +410,26 @@ Fk:loadTranslationTable{
 	["#LoseSkill"] = "%from 失去了技能 “%arg”",
 
   -- moveCards (they are sent by notifyMoveCards)
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
-  ["$RemoveCardFromGame"] = "%arg2 张牌被作为 %arg 移出游戏",
-  ["$AddToPile"] = "%card 被作为 %arg 移出游戏",
   ["$GetCardsFromPile"] = "%from 从 %arg 中获得了 %arg2 张牌 %card",
   ["$DrawCards"] = "%from 摸了 %arg 张牌 %card",
+  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
   ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
-  ["$MoveCards"] = "%to 从 %from 处获得了 %arg 张牌 %card",
-  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
-  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
-  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
+
+  ["$LightningMove"] = "%card 从 %from 转移到了 %to",
+  ["$PasteCard"] = "%from 给 %to 贴了张 %card",
+
+  ["$AddToPile"] = "%arg2 张牌 %card 被作为 %from 的 %arg 移出游戏",
+
+  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
+  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
+  ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
+  ["$DiscardOther"] = "%to 弃置了 %from 的 %arg 张牌 %card",
+  ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",
 
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",
@@ -428,9 +463,9 @@ Fk:loadTranslationTable{
 
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",
-  ["#InitialJudge"] = "%from 的判定牌为 %card",
-  ["#ChangedJudge"] = "%from 发动“%arg”把 %to 的判定牌改为 %card",
-  ["#JudgeResult"] = "%from 的判定结果为 %card",
+  ["#InitialJudge"] = "%from 的判定牌为 %arg",
+  ["#ChangedJudge"] = "%from 发动“%arg”把 %to 的判定牌改为 %arg2",
+  ["#JudgeResult"] = "%from 的判定结果为 %arg",
 
   -- turnOver
   ["#TurnOver"] = "%from 将武将牌翻面，现在是 %arg",

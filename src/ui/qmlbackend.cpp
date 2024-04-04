@@ -225,6 +225,29 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   return QString(result);
 }
 
+QString QmlBackend::evalLuaExp(const QString &lua) {
+  if (!ClientInstance) return "{}";
+
+  lua_State *L = ClientInstance->getLuaState();
+  int err;
+  err = luaL_loadstring(L, lua.toUtf8().constData());
+  if (err != LUA_OK) {
+    qCritical() << lua_tostring(L, -1);
+    lua_pop(L, 1);
+    return "";
+  }
+  err = lua_pcall(L, 0, 1, 0);
+  const char *result = luaL_tolstring(L, -1, NULL);
+  if (err) {
+    qCritical() << result;
+    lua_pop(L, 1);
+    return "";
+  }
+  lua_pop(L, 1);
+
+  return QString(result);
+}
+
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
   // 在用公钥加密口令时，也随机生成AES密钥/IV，并随着口令一起加密
   // AES密钥和IV都是固定16字节的，所以可以放在开头
@@ -324,7 +347,8 @@ void QmlBackend::playSound(const QString &name, int index) {
 
 #ifdef Q_OS_ANDROID
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
-      "(Ljava/lang/String;)V", QJniObject::fromString(fname).object<jstring>());
+      "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
+      (float)(m_volume / 100));
 #else
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;

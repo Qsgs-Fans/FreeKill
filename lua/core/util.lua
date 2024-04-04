@@ -85,6 +85,102 @@ function fk.qlist(list)
   return qlist_iterator, list, -1
 end
 
+--- 用于for循环的迭代函数。可以将表按照某种权值的顺序进行遍历，这样不用进行完整排序。
+---@generic T
+---@param t T[]
+---@param val_func? fun(e: T): integer @ 计算权值的函数，对int[]可不写
+---@param reverse? boolean @ 是否反排？反排的话优先返回权值小的元素
+function fk.sorted_pairs(t, val_func, reverse)
+  val_func = val_func or function(e) return e end
+  local t2 = table.simpleClone(t)  -- 克隆一次表，用作迭代器上值
+  local iter = function()
+    local max_idx, max, max_val = -1, nil, nil
+    for i, v in ipairs(t2) do
+      if not max then
+        max_idx, max, max_val = i, v, val_func(v)
+      else
+        local val = val_func(v)
+        local checked = val > max_val
+        if reverse then checked = not checked end
+        if checked then
+          max_idx, max, max_val = i, v, val
+        end
+      end
+    end
+    if max_idx == -1 then return nil, nil end
+    table.remove(t2, max_idx)
+    return -1, max, max_val
+  end
+  return iter, nil, 1
+end
+
+-- frequenly used filter & map functions
+
+--- 返回ID
+Util.IdMapper = function(e) return e.id end
+--- 根据卡牌ID返回卡牌
+Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
+--- 根据玩家ID返回玩家
+Util.Id2PlayerMapper = function(id)
+  return Fk:currentRoom():getPlayerById(id)
+end
+--- 返回武将名
+Util.NameMapper = function(e) return e.name end
+--- 根据武将名返回武将
+Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
+--- 根据技能名返回技能
+Util.Name2SkillMapper = function(e) return Fk.skills[e] end
+--- 返回译文
+Util.TranslateMapper = function(str) return Fk:translate(str) end
+
+-- for card preset
+
+--- 全局卡牌(包括自己)的canUse
+Util.GlobalCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+--- AOE卡牌(不包括自己)的canUse
+Util.AoeCanUse = function(self, player, card)
+  local room = Fk:currentRoom()
+  for _, p in ipairs(room.alive_players) do
+    if p ~= player and not (card and player:isProhibited(p, card)) then
+      return true
+    end
+  end
+end
+
+--- 全局卡牌(包括自己)的onUse
+Util.GlobalOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getAlivePlayers()) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+--- AOE卡牌(不包括自己)的onUse
+Util.AoeOnUse = function(self, room, cardUseEvent)
+  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
+    cardUseEvent.tos = {}
+    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
+      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
+        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
+      end
+    end
+  end
+end
+
+-- Table
+
 ---@param func fun(element, index, array)
 function table:forEach(func)
   for i, v in ipairs(self) do
@@ -133,66 +229,6 @@ function table:map(func)
     table.insert(ret, func(v, i, self))
   end
   return ret
-end
-
--- frequenly used filter & map functions
-
---- 返回ID
-Util.IdMapper = function(e) return e.id end
---- 根据卡牌ID返回卡牌
-Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
---- 根据玩家ID返回玩家
-Util.Id2PlayerMapper = function(id)
-  return Fk:currentRoom():getPlayerById(id)
-end
---- 返回武将名
-Util.NameMapper = function(e) return e.name end
---- 根据武将名返回武将
-Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
---- 根据技能名返回技能
-Util.Name2SkillMapper = function(e) return Fk.skills[e] end
---- 返回译文
-Util.TranslateMapper = function(str) return Fk:translate(str) end
-
--- for card preset
-Util.GlobalCanUse = function(self, player, card)
-  local room = Fk:currentRoom()
-  for _, p in ipairs(room.alive_players) do
-    if not (card and player:isProhibited(p, card)) then
-      return true
-    end
-  end
-end
-
-Util.AoeCanUse = function(self, player, card)
-  local room = Fk:currentRoom()
-  for _, p in ipairs(room.alive_players) do
-    if p ~= player and not (card and player:isProhibited(p, card)) then
-      return true
-    end
-  end
-end
-
-Util.GlobalOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getAlivePlayers()) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end
-end
-
-Util.AoeOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end
 end
 
 ---@generic T
@@ -299,6 +335,7 @@ end
 function table:insertIfNeed(element)
   if not table.contains(self, element) then
     table.insert(self, element)
+    return true
   end
 end
 
@@ -331,7 +368,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n integer|nil
+---@param n? integer
 ---@return T|T[]
 function table:random(n)
   local n0 = n
@@ -476,7 +513,9 @@ end
 function Stack:pop()
   if self.p == 0 then return nil end
   self.p = self.p - 1
-  return self.t[self.p + 1]
+  local ret = self.t[self.p + 1]
+  self.t[self.p + 1] = nil
+  return ret
 end
 
 

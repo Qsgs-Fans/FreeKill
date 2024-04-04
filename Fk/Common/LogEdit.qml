@@ -33,6 +33,8 @@ ListView {
     font.pixelSize: 16
 
     TapHandler {
+      // acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+      // gesturePolicy: TapHandler.WithinBounds
       onTapped: root.currentIndex = index;
     }
   }
@@ -43,9 +45,9 @@ ListView {
     onClicked: root.currentIndex = logModel.count - 1;
   }
 
-  function append(text) {
+  function append(data) {
     const autoScroll = root.currentIndex === logModel.count - 1;
-    logModel.append({ logText: text });
+    logModel.append(data);
     if (autoScroll) {
       root.currentIndex = logModel.count - 1;
     }

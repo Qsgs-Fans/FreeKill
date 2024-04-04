@@ -39,7 +39,7 @@ GameRule = fk.CreateTriggerSkill{
     switch(event, {
     [fk.AskForPeaches] = function()
       local dyingPlayer = room:getPlayerById(data.who)
-      while dyingPlayer.hp < 1 do
+      while not (player.dead or dyingPlayer.dead) and dyingPlayer.hp < 1 do
         local cardNames = {"peach"}
         local prompt = "#AskForPeaches:" .. dyingPlayer.id .. "::" .. tostring(1 - dyingPlayer.hp)
         if player == dyingPlayer then
@@ -53,7 +53,7 @@ GameRule = fk.CreateTriggerSkill{
         end)
         if #cardNames == 0 then return end
 
-        local peach_use = room:askForUseCard(player, "peach", table.concat(cardNames, ",") , prompt)
+        local peach_use = room:askForUseCard(player, "peach", table.concat(cardNames, ",") , prompt, true, {analepticRecover = true})
         if not peach_use then break end
         peach_use.tos = { {dyingPlayer.id} }
         if peach_use.card.trueName == "analeptic" then
@@ -82,7 +82,7 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.BuryVictim] = function()
       player:bury()
-      if room.tag["SkipNormalDeathProcess"] then
+      if room.tag["SkipNormalDeathProcess"] or player.rest > 0 then
         return false
       end
       local damage = data.damage

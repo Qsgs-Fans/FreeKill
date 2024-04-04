@@ -30,7 +30,11 @@ Item {
     anchors.verticalCenter: parent.verticalCenter
     x: 3
 
-    source: sealed ? (SkinBank.EQUIP_ICON_DIR + "sealed") : (icon ? SkinBank.getEquipIcon(cid, icon) : "")
+    source: {
+      if (sealed)
+        return SkinBank.EQUIP_ICON_DIR + "sealed";
+      return icon ? SkinBank.getEquipIcon(cid, icon) : "";
+    }
   }
 
   Image {
@@ -44,7 +48,7 @@ Item {
   GlowText {
     id: numberItem
     visible: !sealed && number > 0 && number < 14
-    text: Utility.convertNumber(number)
+    text: Util.convertNumber(number)
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 16
@@ -132,7 +136,7 @@ Item {
       text = "-1"
       icon = "horse";
     } else {
-      text = Backend.translate(name);
+      text = luatr(name);
       if (card.virt_name) {
         icon = card.virt_name;
       } else {
@@ -159,6 +163,6 @@ Item {
     x = 0;
 
     opacity = sealed ? 1 : 0;
-    text = '  ' + Backend.translate(subtype + "_sealed")
+    text = '  ' + luatr(subtype + "_sealed")
   }
 }

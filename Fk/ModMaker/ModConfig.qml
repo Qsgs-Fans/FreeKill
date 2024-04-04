@@ -19,7 +19,8 @@ QtObject {
     conf.email = email;
     conf.modList = modList;
 
-    ModBackend.saveToFile("mymod/config.json", JSON.stringify(conf, undefined, 2));
+    ModBackend.saveToFile("mymod/config.json",
+                          JSON.stringify(conf, undefined, 2));
   }
 
   function addMod(mod) {

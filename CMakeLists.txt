@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
+# ------------------------------------------------------------
+#  此为新月杀的项目组织文件，采用CMake+QT
+# 2022-01-24 新建文件夹 2023-02-21 发布v0.0.1版本
+# ------------------------------------------------------------
 
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.3.12)
+project(FreeKill VERSION 0.4.10)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 find_package(Qt6 REQUIRED COMPONENTS

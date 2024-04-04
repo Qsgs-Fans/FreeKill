@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import Fk
+import Fk.Common
 
 Item {
   id: root
@@ -19,7 +20,7 @@ Item {
         onClicked: mainStack.pop();
       }
       Label {
-        text: Backend.translate("Replay Manager")
+        text: luatr("Replay Manager")
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
@@ -59,21 +60,13 @@ Item {
         width: root.width
         height: 64
 
-        Image {
+        Avatar {
           id: generalPic
+          width: 48; height: 48
           anchors.top: parent.top
           anchors.left: parent.left
           anchors.margins: 8
-          width: 48
-          height: 48
-          source: SkinBank.getGeneralExtraPic(general, "avatar/") ?? SkinBank.getGeneralPicture(general)
-          sourceClipRect: sourceSize.width > 200 ? Qt.rect(61, 0, 128, 128) : undefined
-
-          Rectangle {
-            anchors.fill: parent
-            color: "transparent"
-            border.width: 1
-          }
+          general: _general
         }
 
         ColumnLayout {
@@ -82,8 +75,9 @@ Item {
           Text {
             text: {
               const win = winner.split("+").indexOf(role) !== -1;
-              const winStr = win ? Backend.translate("Game Win") : Backend.translate("Game Lose");
-              return "<b>" + Backend.translate(general) + "</b> " + Backend.translate(role) + " " + winStr;
+              const winStr = win ? luatr("Game Win") : luatr("Game Lose");
+              return "<b>" + luatr(_general) + "</b> " + luatr(role)
+                   + " " + winStr;
             }
             font.pixelSize: 20
             textFormat: Text.RichText
@@ -96,16 +90,16 @@ Item {
               const h = repDate.slice(8,10);
               const m = repDate.slice(10,12);
               const s = repDate.slice(12,14);
-              const dateStr = y + "-" + month + "-" + d + " " + h + ":" + m + ":" + s;
+              const dateStr = `${y}-${month}-${d} ${h}:${m}:${s}`;
 
-              return playerName + " " + Backend.translate(gameMode) + " " + dateStr
+              return playerName + " " + luatr(gameMode) + " " + dateStr
             }
           }
         }
 
         Button {
           id: replayBtn
-          text: Backend.translate("Play the Replay")
+          text: luatr("Play the Replay")
           anchors.right: delBtn.left
           anchors.rightMargin: 8
           onClicked: {
@@ -117,7 +111,7 @@ Item {
 
         Button {
           id: delBtn
-          text: Backend.translate("Delete Replay")
+          text: luatr("Delete Replay")
           anchors.right: parent.right
           anchors.rightMargin: 8
           onClicked: {
@@ -155,7 +149,7 @@ Item {
         repDate: t,
         playerName: name,
         gameMode: mode,
-        general: general,
+        _general: general,
         role: role,
         winner: winner,
       })

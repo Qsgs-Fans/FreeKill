@@ -152,13 +152,21 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           room:doBroadcastNotify("UpdateDrawPile", #room.draw_pile)
         end
 
-        if not (data.to and data.toArea ~= Card.PlayerHand) then
-          Fk:filterCard(info.cardId, room:getPlayerById(data.to))
+        local beforeCard = Fk:getCardById(info.cardId)
+        if
+          realFromArea == Player.Equip and
+          beforeCard.type == Card.TypeEquip and
+          data.from ~= nil and
+          beforeCard.equip_skill
+        then
+          beforeCard:onUninstall(room, room:getPlayerById(data.from))
         end
+
+        Fk:filterCard(info.cardId, room:getPlayerById(data.to))
 
         local currentCard = Fk:getCardById(info.cardId)
         for name, _ in pairs(currentCard.mark) do
-          if name:endsWith("-inhand") and
+          if name:find("-inhand", 1, true) and
           realFromArea == Player.Hand and
           data.from
           then
@@ -173,15 +181,6 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           currentCard.equip_skill
         then
           currentCard:onInstall(room, room:getPlayerById(data.to))
-        end
-
-        if
-          realFromArea == Player.Equip and
-          currentCard.type == Card.TypeEquip and
-          data.from ~= nil and
-          currentCard.equip_skill
-        then
-          currentCard:onUninstall(room, room:getPlayerById(data.from))
         end
       end
     end

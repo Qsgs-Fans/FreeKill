@@ -24,6 +24,7 @@ Flickable {
 
       Layout.fillWidth: true
       font.pixelSize: 18
+      color: "#E4D5A0"
 
       readOnly: true
       selectByKeyboard: true
@@ -38,21 +39,23 @@ Flickable {
     skillDesc.text = "";
 
     extra_data.generals.forEach((g) => {
-      const data = JSON.parse(Backend.callLuaFunction("GetGeneralDetail", [g]));
-      skillDesc.append(Backend.translate(data.kingdom) + " " + Backend.translate(g) + " " + data.hp + "/" + data.maxHp);
+      const data = lcall("GetGeneralDetail", g);
+      skillDesc.append(luatr(data.kingdom) + " " + luatr(g) + " " + data.hp +
+                       "/" + data.maxHp);
       if (data.companions.length > 0){
         let ret = '';
-        ret += "<font color=\"slategrey\"><b>" + Backend.translate("Companions") + "</b>: ";
+        ret +="<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
         data.companions.forEach(t => {
-          ret += Backend.translate(t) + ' '
+          ret += luatr(t) + ' '
         });
         skillDesc.append(ret)
       }
       data.skill.forEach(t => {
-        skillDesc.append("<b>" + Backend.translate(t.name) + "</b>: " + t.description)
+        skillDesc.append("<b>" + luatr(t.name) + "</b>: " + t.description)
       });
       data.related_skill.forEach(t => {
-        skillDesc.append("<font color=\"purple\"><b>" + Backend.translate(t.name) + "</b>: " + t.description + "</font>")
+        skillDesc.append("<font color=\"purple\"><b>" + luatr(t.name) +
+                         "</b>: " + t.description + "</font>")
       });
       skillDesc.append("\n");
     });

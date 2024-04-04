@@ -8,10 +8,10 @@
 ---@field public name string @ 游戏模式名
 ---@field public minPlayer integer @ 最小玩家数
 ---@field public maxPlayer integer @ 最大玩家数
----@field public rule nil|TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
----@field public logic nil|fun() @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
----@field public whitelist string[]|nil @ 白名单
----@field public blacklist string[]|nil @ 黑名单
+---@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
+---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
+---@field public whitelist? string[] @ 白名单
+---@field public blacklist? string[] @ 黑名单
 local GameMode = class("GameMode")
 
 --- 构造函数，不可随意调用。
@@ -27,10 +27,14 @@ end
 ---@param victim ServerPlayer @ 死者
 ---@return string @ 胜者阵营
 function GameMode:getWinner(victim)
+  if not victim.surrendered and victim.rest > 0 then
+    return ""
+  end
+
   local room = victim.room
   local winner = ""
-  local alive = table.filter(room.alive_players, function(p)
-    return not p.surrendered
+  local alive = table.filter(room.players, function(p)
+    return not p.surrendered and not (p.dead and p.rest == 0)
   end)
 
   if victim.role == "lord" then

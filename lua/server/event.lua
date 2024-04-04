@@ -33,6 +33,7 @@ fk.PreHpLost = 17
 fk.HpLost = 18
 fk.BeforeHpChanged = 19
 fk.HpChanged = 20
+fk.BeforeMaxHpChanged = 97
 fk.MaxHpChanged = 21
 
 fk.EventLoseSkill = 22
@@ -125,6 +126,7 @@ fk.AfterSkillEffect = 82
 fk.AreaAborted = 87
 fk.AreaResumed = 88
 
+fk.GeneralShown = 95
 fk.GeneralRevealed = 89
 fk.GeneralHidden = 90
 
@@ -134,4 +136,6 @@ fk.BeforePropertyChange = 92
 fk.PropertyChange = 93
 fk.AfterPropertyChange = 94
 
-fk.NumOfEvents = 95
+fk.AfterPlayerRevived = 95
+
+fk.NumOfEvents = 96

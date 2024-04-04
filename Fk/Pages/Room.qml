@@ -8,6 +8,7 @@ import QtMultimedia
 import Fk
 import Fk.Common
 import Fk.RoomElement
+import Fk.PhotoElement as PhotoElement
 import "RoomLogic.js" as Logic
 
 Item {
@@ -37,6 +38,7 @@ Item {
   property alias drawPile: drawPile
   property alias skillInteraction: skillInteraction
   property alias miscStatus: miscStatus
+  property alias banner: banner
 
   property var selected_targets: []
   property string responding_card
@@ -55,7 +57,6 @@ Item {
     fillMode: Image.PreserveAspectCrop
   }
 
-  /*
   MediaPlayer {
     id: bgm
     source: config.bgmFile
@@ -69,88 +70,41 @@ Item {
       volume: config.bgmVolume / 100
     }
   }
-  */
 
   onIsStartedChanged: {
     if (isStarted) {
-      // bgm.play();
+      Backend.playSound("./audio/system/gamestart");
+      bgm.play();
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
-      // bgm.stop();
+      bgm.stop();
     }
   }
 
-  // tmp
   Button {
     id: menuButton
     anchors.top: parent.top
+    anchors.topMargin: 12
     anchors.right: parent.right
-    anchors.rightMargin: 10
-    text: Backend.translate("Menu")
-    z: 2
+    anchors.rightMargin: 12
+    text: luatr("Menu")
     onClicked: {
-      menuContainer.visible || menuContainer.open();
+      if (menuContainer.visible){
+        menuContainer.close();
+      } else {
+        menuContainer.open();
+      }
     }
-  }
 
-  Menu {
-    id: menuContainer
-    x: parent.width - menuButton.width - menuContainer.width - 17
-    width: menuRow.width
-    height: menuRow.height
-    verticalPadding: 0
-    spacing: 7
-    z: 2
+    Menu {
+      id: menuContainer
+      y: menuButton.height - 12
+      width: 100
 
-    Row {
-      id: menuRow
-      spacing: 7
-
-      Button {
-        id: surrenderButton
-        enabled: !config.observing && !config.replaying
-        text: Backend.translate("Surrender")
-        onClicked: {
-          if (isStarted && !getPhoto(Self.id).dead) {
-            const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-            if (!surrenderCheck.length) {
-              surrenderDialog.informativeText = Backend.translate('Surrender is disabled in this mode');
-            } else {
-              surrenderDialog.informativeText = surrenderCheck.map(str => `${Backend.translate(str.text)}（${str.passed ? '√' : '×'}）`).join('<br>');
-            }
-            surrenderDialog.open();
-          }
-        }
-      }
-
-      MessageDialog {
-        id: surrenderDialog
-        title: Backend.translate("Surrender")
-        informativeText: ''
-        buttons: MessageDialog.Ok | MessageDialog.Cancel
-        onButtonClicked: function (button, role) {
-          switch (button) {
-            case MessageDialog.Ok: {
-              const surrenderCheck = JSON.parse(Backend.callLuaFunction('CheckSurrenderAvailable', [miscStatus.playedTime]));
-              if (surrenderCheck.length && !surrenderCheck.find(check => !check.passed)) {
-                ClientInstance.notifyServer("PushRequest", [
-                  "surrender", true
-                ]);
-              }
-              surrenderDialog.close();
-              break;
-            }
-            case MessageDialog.Cancel: {
-              surrenderDialog.close();
-            }
-          }
-        }
-      }
-
-      Button {
+      MenuItem {
         id: quitButton
-        text: Backend.translate("Quit")
+        text: luatr("Quit")
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
@@ -163,28 +117,39 @@ Item {
         }
       }
 
-      MessageDialog {
-        id: quitDialog
-        title: Backend.translate("Quit")
-        informativeText: Backend.translate("Are you sure to quit?")
-        buttons: MessageDialog.Ok | MessageDialog.Cancel
-        onButtonClicked: function (button) {
-          switch (button) {
-            case MessageDialog.Ok: {
-              ClientInstance.notifyServer("QuitRoom", "[]");
-              break;
+      MenuItem {
+        id: surrenderButton
+        enabled: !config.observing && !config.replaying
+        text: luatr("Surrender")
+        onClicked: {
+          const photo = getPhoto(Self.id);
+          if (isStarted && !(photo.dead && photo.rest <= 0)) {
+            const surrenderCheck = lcall('CheckSurrenderAvailable', miscStatus.playedTime);
+            if (!surrenderCheck.length) {
+              surrenderDialog.informativeText =
+                luatr('Surrender is disabled in this mode');
+            } else {
+              surrenderDialog.informativeText = surrenderCheck
+                .map(str => `${luatr(str.text)}（${str.passed ? '√' : '×'}）`)
+                .join('<br>');
             }
-            case MessageDialog.Cancel: {
-              quitDialog.close();
-            }
+            surrenderDialog.open();
           }
+        }
+      }
+
+      MenuItem {
+        id: volumeButton
+        text: luatr("Audio Settings")
+        onClicked: {
+          volumeDialog.open();
         }
       }
     }
   }
 
   Button {
-    text: Backend.translate("Add Robot")
+    text: luatr("Add Robot")
     visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
     enabled: config.serverEnableBot
@@ -193,7 +158,7 @@ Item {
     }
   }
   Button {
-    text: Backend.translate("Start Game")
+    text: luatr("Start Game")
     visible: isOwner && !isStarted && isFull
     enabled: isAllReady
     anchors.centerIn: parent
@@ -206,7 +171,7 @@ Item {
     interval: 1000
   }
   Button {
-    text: isReady ? Backend.translate("Cancel Ready") : Backend.translate("Ready")
+    text: isReady ? luatr("Cancel Ready") : luatr("Ready")
     visible: !isOwner && !isStarted
     enabled: !opTimer.running
     anchors.centerIn: parent
@@ -245,6 +210,7 @@ Item {
       canKickOwner = false;
       kickOwnerTimer.stop();
     } else {
+      Backend.playSound("./audio/system/ready");
       kickOwnerTimer.start();
     }
   }
@@ -277,25 +243,25 @@ Item {
         width: parent.width
         wrapMode: TextEdit.WordWrap
         Component.onCompleted: {
-          const data = JSON.parse(Backend.callLuaFunction("GetRoomConfig", []));
-          let cardpack = JSON.parse(Backend.callLuaFunction("GetAllCardPack", []));
+          const data = lcall("GetRoomConfig");
+          let cardpack = lcall("GetAllCardPack");
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
 
-          text = Backend.translate("GameMode") + Backend.translate(data.gameMode) + "<br />"
-            + Backend.translate("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
-            + Backend.translate("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
-            + Backend.translate("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
-            + (data.enableFreeAssign ? "<br />" + Backend.translate("IncludeFreeAssign") : "")
-            + (data.enableDeputy ? " " + Backend.translate("IncludeDeputy") : "")
-            + '<br />' + Backend.translate('CardPackages') + cardpack.map(e => {
-              let ret = Backend.translate(e);
-              if (ret.search(/特殊牌|衍生牌/) === -1) { // TODO: 这种东西最好还是变量名规范化= =
+          text = luatr("GameMode") + luatr(data.gameMode) + "<br />"
+            + luatr("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
+            + luatr("ResponseTime") + "<b>" + config.roomTimeout + "</b><br />"
+            + luatr("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
+            + (data.enableFreeAssign ? "<br />" + luatr("IncludeFreeAssign")
+                                     : "")
+            + (data.enableDeputy ? " " + luatr("IncludeDeputy") : "")
+            + '<br />' + luatr('CardPackages') + cardpack.map(e => {
+              let ret = luatr(e);
+              // TODO: 这种东西最好还是变量名规范化= =
+              if (ret.search(/特殊牌|衍生牌/) === -1) {
                 ret = "<b>" + ret + "</b>";
               }
               return ret;
-            }).join('，')
-            //+ '<br /><b>禁包</b>：' + data.disabledPack.map(e => Backend.translate(e)).join('，')
-            //+ '<br /><b>禁将</b>：' + data.disabledGenerals.map(e => Backend.translate(e)).join('，')
+            }).join('，');
         }
       }
     }
@@ -432,6 +398,7 @@ Item {
         faceup: model.faceup
         chained: model.chained
         drank: model.drank
+        rest: model.rest
         isOwner: model.isOwner
         ready: model.ready
         surrendered: model.surrendered
@@ -475,13 +442,14 @@ Item {
     anchors.leftMargin: 8
     ColumnLayout {
       MetroButton {
-        text: Backend.translate("Choose one handcard")
+        text: luatr("Choose one handcard")
         textFont.pixelSize: 28
         visible: {
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
-          if (roomScene.state == "notactive" || roomScene.state == "replying") {
+          if (roomScene.state === "notactive"
+                  || roomScene.state === "replying") {
             return false;
           }
           return true;
@@ -489,21 +457,21 @@ Item {
         onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
       }
       MetroButton {
-        text: Backend.translate("Revert Selection")
+        text: luatr("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
         onClicked: dashboard.revertSelection();
       }
       // MetroButton {
-      //   text: Backend.translate("Trust")
+      //   text: luatr("Trust")
       // }
       MetroButton {
-        text: Backend.translate("Sort Cards")
+        text: luatr("Sort Cards")
         textFont.pixelSize: 28
         onClicked: Logic.resortHandcards();
       }
       MetroButton {
-        text: Backend.translate("Chat")
+        text: luatr("Chat")
         textFont.pixelSize: 28
         onClicked: roomDrawer.open();
       }
@@ -518,27 +486,26 @@ Item {
 
     onCardSelected: function(card) {
       Logic.enableTargets(card);
+      if (typeof card === "number" && card !== -1
+        && roomScene.state === "playing"
+        && lcall("GetPlayerHandcards", Self.id).includes(card)) {
 
-      if (typeof card === "number" && card !== -1 && roomScene.state === "playing"
-        && JSON.parse(Backend.callLuaFunction("GetPlayerHandcards", [Self.id])).includes(card)) {
-
-        const skills = JSON.parse(Backend.callLuaFunction("GetCardSpecialSkills", [card]));
-        if (JSON.parse(Backend.callLuaFunction("CanUseCard", [card, Self.id]))) {
+        const skills = lcall("GetCardSpecialSkills", card);
+        if (lcall("CanUseCard", card, Self.id,
+                  JSON.stringify(roomScene.extra_data))) {
           skills.unshift("_normal_use");
         }
         specialCardSkills.model = skills;
+        const skillName = lcall("GetCardSkill", card);
+        const prompt = lcall("ActiveSkillPrompt", skillName, card,
+                             selected_targets);
+        if (prompt !== "") {
+          roomScene.setPrompt(Util.processPrompt(prompt));
+        }
       } else {
         specialCardSkills.model = [];
       }
     }
-  }
-
-  GlowText {
-    text: Backend.translate("Observing ...")
-    visible: config.observing && !config.replaying
-    color: "#4B83CD"
-    font.family: fontLi2.name
-    font.pixelSize: 48
   }
 
   Rectangle {
@@ -564,18 +531,19 @@ Item {
           const totalMin = Math.floor(replayerDuration / 60);
           const totalSec = replayerDuration % 60;
 
-          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin + ":" + totalSec;
+          return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin
+               + ":" + totalSec;
         }
       }
 
       Switch {
-        text: Backend.translate("Speed Resume")
+        text: luatr("Speed Resume")
         checked: false
         onCheckedChanged: Backend.controlReplayer("uniform");
       }
 
       Button {
-        text: Backend.translate("Speed Down")
+        text: luatr("Speed Down")
         onClicked: Backend.controlReplayer("slowdown");
       }
 
@@ -586,13 +554,13 @@ Item {
       }
 
       Button {
-        text: Backend.translate("Speed Up")
+        text: luatr("Speed Up")
         onClicked: Backend.controlReplayer("speedup");
       }
 
       Button {
         property bool running: true
-        text: Backend.translate(running ? "Pause" : "Resume")
+        text: luatr(running ? "Pause" : "Resume")
         onClicked: {
           running = !running;
           Backend.controlReplayer("toggle");
@@ -697,16 +665,27 @@ Item {
           id: specialCardSkills
           RadioButton {
             property string orig_text: modelData
-            text: Backend.translate(modelData)
+            text: luatr(modelData)
             checked: index === 0
             onCheckedChanged: {
+              roomScene.resetPrompt();
+              const card = dashboard.selected_card;
+              let prompt = ""
               if (modelData === "_normal_use") {
-                Logic.enableTargets(dashboard.selected_card);
+                Logic.enableTargets(card);
+                const skillName = lcall("GetCardSkill", card);
+                prompt = lcall("ActiveSkillPrompt", skillName, card,
+                               selected_targets);
               } else {
                 Logic.enableTargets(JSON.stringify({
                   skill: modelData,
-                  subcards: [dashboard.selected_card],
+                  subcards: [card],
                 }));
+                prompt = lcall("ActiveSkillPrompt", modelData, card,
+                               selected_targets);
+              }
+              if (prompt !== "") {
+                roomScene.setPrompt(Util.processPrompt(prompt));
               }
             }
           }
@@ -732,8 +711,9 @@ Item {
 
       Button {
         id: skipNullificationButton
-        text: Backend.translate("SkipNullification")
-        visible: !!extra_data.useEventId && !skippedUseEventId.find(id => id === extra_data.useEventId)
+        text: luatr("SkipNullification")
+        visible: !!extra_data.useEventId
+                 && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
           Logic.doCancelButton();
@@ -742,20 +722,20 @@ Item {
 
       Button {
         id: okButton
-        text: Backend.translate("OK")
+        text: luatr("OK")
         onClicked: Logic.doOkButton();
       }
 
       Button {
         id: cancelButton
-        text: Backend.translate("Cancel")
+        text: luatr("Cancel")
         onClicked: Logic.doCancelButton();
       }
     }
 
     Button {
       id: endPhaseButton
-      text: Backend.translate("End")
+      text: luatr("End")
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 40
       anchors.right: parent.right
@@ -818,12 +798,13 @@ Item {
 
   function activateSkill(skill_name, pressed) {
     if (pressed) {
-      const data = JSON.parse(Backend.callLuaFunction("GetInteractionOfSkill", [skill_name]));
+      const data = lcall("GetInteractionOfSkill", skill_name);
       if (data) {
-        Backend.callLuaFunction("SetInteractionDataOfSkill", [skill_name, "null"]);
+        lcall("SetInteractionDataOfSkill", skill_name, "null");
         switch (data.type) {
         case "combo":
-          skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.default_choice = data["default"];
           skillInteraction.item.choices = data.choices;
@@ -832,10 +813,17 @@ Item {
           // skillInteraction.item.clicked();
           break;
         case "spin":
-          skillInteraction.sourceComponent = Qt.createComponent("../SkillInteraction/SkillSpin.qml");
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.from = data.from;
           skillInteraction.item.to = data.to;
+          break;
+        case "custom":
+          skillInteraction.sourceComponent =
+            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
           break;
         default:
           skillInteraction.sourceComponent = undefined;
@@ -855,7 +843,7 @@ Item {
 
   Drawer {
     id: roomDrawer
-    width: parent.width * 0.3 / mainWindow.scale
+    width: parent.width * 0.36 / mainWindow.scale
     height: parent.height / mainWindow.scale
     dim: false
     clip: true
@@ -879,7 +867,7 @@ Item {
         }
         Item {
           visible: !config.replaying
-          ChatBox {
+          AvatarChatBox {
             id: chat
             anchors.fill: parent
           }
@@ -891,30 +879,35 @@ Item {
         width: roomDrawer.width
         TabButton {
           width: roomDrawer.width / 2
-          text: Backend.translate("Log")
+          text: luatr("Log")
         }
         TabButton {
           width: roomDrawer.width / 2
-          text: Backend.translate("Chat")
+          text: luatr("Chat")
         }
       }
     }
   }
 
-  Drawer {
+  Popup {
     id: cheatDrawer
-    edge: Qt.RightEdge
-    width: parent.width * 0.4 / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    dim: false
-    clip: true
-    dragMargin: 0
-    scale: mainWindow.scale
-    transformOrigin: Item.TopRight
+    width: realMainWin.width * 0.60
+    height: realMainWin.height * 0.8
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#CC2E2C27"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
 
     Loader {
       id: cheatLoader
-      anchors.fill: parent
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      clip: true
       onSourceChanged: {
         if (item === null)
           return;
@@ -931,39 +924,93 @@ Item {
     anchors.fill: parent
   }
 
-  Rectangle {
-    id: easyChat
-    width: parent.width
-    height: 28
-    anchors.bottom: parent.bottom
-    visible: false
-    color: "#040403"
-    radius: 3
-    border.width: 1
-    border.color: "#A6967A"
-
-    TextInput {
-      id: easyChatEdit
-      anchors.fill: parent
-      anchors.margins: 6
-      color: "white"
-      clip: true
-      font.pixelSize: 14
-
-      onAccepted: {
-        if (text != "") {
-          ClientInstance.notifyServer(
-            "Chat",
-            JSON.stringify({
-              type: 0,
-              msg: text
-            })
-          );
-          text = "";
-          easyChat.visible = false;
-          easyChatEdit.enabled = false;
+  MessageDialog {
+    id: quitDialog
+    title: luatr("Quit")
+    informativeText: luatr("Are you sure to quit?")
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          ClientInstance.notifyServer("QuitRoom", "[]");
+          break;
+        }
+        case MessageDialog.Cancel: {
+          quitDialog.close();
         }
       }
+    }
+  }
+
+  MessageDialog {
+    id: surrenderDialog
+    title: luatr("Surrender")
+    informativeText: ''
+    buttons: MessageDialog.Ok | MessageDialog.Cancel
+    onButtonClicked: function (button, role) {
+      switch (button) {
+        case MessageDialog.Ok: {
+          const surrenderCheck =
+            lcall('CheckSurrenderAvailable', miscStatus.playedTime);
+          if (surrenderCheck.length &&
+                !surrenderCheck.find(check => !check.passed)) {
+
+            ClientInstance.notifyServer("PushRequest", [
+              "surrender", true
+            ]);
+          }
+          surrenderDialog.close();
+          break;
+        }
+        case MessageDialog.Cancel: {
+          surrenderDialog.close();
+        }
+      }
+    }
+  }
+
+  Popup {
+    id: volumeDialog
+    width: realMainWin.width * 0.5
+    height: realMainWin.height * 0.5
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+
+    Loader {
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/LobbyElement/AudioSetting.qml"
+    }
+  }
+
+  GlowText {
+    anchors.centerIn: dashboard
+    visible: Logic.getPhoto(Self.id).rest > 0 && !config.observing
+    text: luatr("Resting, don't leave!")
+    color: "#DBCC69"
+    font.family: fontLibian.name
+    font.pixelSize: 28
+    glow.color: "#2E200F"
+    glow.spread: 0.6
+  }
+
+  Rectangle {
+    anchors.fill: dashboard
+    visible: config.observing && !config.replaying
+    color: "transparent"
+    GlowText {
+      anchors.centerIn: parent
+      text: luatr("Observing ...")
+      color: "#4B83CD"
+      font.family: fontLi2.name
+      font.pixelSize: 48
     }
   }
 
@@ -975,18 +1022,18 @@ Item {
     anchors.topMargin: 8
   }
 
+  PhotoElement.MarkArea {
+    id: banner
+    x: 12; y: 12
+    width: (roomScene.width - 175 * 0.75 * 7) / 4 + 175 - 16
+    transformOrigin: Item.TopLeft
+    scale: 0.75
+    bgColor: "#BB838AEA"
+  }
+
   Danmaku {
     id: danmaku
     width: parent.width
-  }
-
-  Shortcut {
-    sequence: "T"
-    onActivated: {
-      easyChat.visible = true;
-      easyChatEdit.enabled = true;
-      easyChatEdit.forceActiveFocus();
-    }
   }
 
   Shortcut {
@@ -999,10 +1046,9 @@ Item {
   }
 
   Shortcut {
-    sequence: "Esc"
+    sequence: "T"
     onActivated: {
-      easyChat.visible = false;
-      easyChatEdit.enabled = false;
+      roomDrawer.open();
     }
   }
 
@@ -1019,7 +1065,8 @@ Item {
   }
 
   function getCurrentCardUseMethod() {
-    if (specialCardSkills.count === 1 && specialCardSkills.model[0] !== "_normal_use") {
+    if (specialCardSkills.count === 1
+            && specialCardSkills.model[0] !== "_normal_use") {
       return specialCardSkills.model[0];
     }
 
@@ -1035,13 +1082,15 @@ Item {
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
 
-    msg = msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
-    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g, '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    msg = msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+    raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g,
+      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
 
     if (raw.msg.startsWith("$")) {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
-    chat.append(msg);
+    chat.append(msg, raw);
     const photo = Logic.getPhoto(pid);
     if (photo === undefined) {
       const user = raw.userName;
@@ -1059,7 +1108,7 @@ Item {
 
     const time = data.time;
     const userName = data.userName;
-    const general = Backend.translate(data.general);
+    const general = luatr(data.general);
 
     if (msg.startsWith("!")) {
       const splited = msg.split(":");
@@ -1077,10 +1126,15 @@ Item {
           //  return false;
 
           const fromItem = Logic.getPhotoOrDashboard(fromId);
-          const fromPos = mapFromItem(fromItem, fromItem.width / 2, fromItem.height / 2);
+          const fromPos = mapFromItem(fromItem, fromItem.width / 2,
+                                      fromItem.height / 2);
           const toItem = Logic.getPhoto(toId);
-          const toPos = mapFromItem(toItem, toItem.width / 2, toItem.height / 2);
-          const egg = component.createObject(roomScene, { start: fromPos, end: toPos });
+          const toPos = mapFromItem(toItem, toItem.width / 2,
+                                    toItem.height / 2);
+          const egg = component.createObject(roomScene, {
+                                                 start: fromPos,
+                                                 end: toPos
+                                             });
           egg.finished.connect(() => egg.destroy());
           egg.running = true;
 
@@ -1091,15 +1145,16 @@ Item {
       }
     } else if (msg.startsWith("~")) {
       const g = msg.slice(1);
-      const extension = JSON.parse(Backend.callLuaFunction("GetGeneralData", [g])).extension;
+      const extension = lcall("GetGeneralData", g).extension;
       if (!config.disableMsgAudio)
         Backend.playSound("./packages/" + extension + "/audio/death/" + g);
 
-      const m = Backend.translate("~" + g);
+      const m = luatr("~" + g);
+      data.msg = m;
       if (general === "")
-        chat.append(`[${time}] ${userName}: ${m}`);
+        chat.append(`[${time}] ${userName}: ${m}`, data);
       else
-        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+        chat.append(`[${time}] ${userName}(${general}): ${m}`, data);
 
       const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
@@ -1116,19 +1171,22 @@ Item {
       const idx = parseInt(splited[1]);
       const gene = splited[2];
 
-      try {
-        callbacks["LogEvent"](JSON.stringify({
-          type: "PlaySkillSound",
-          name: skill,
-          general: gene,
-          i: idx,
-        }));
-      } catch (e) {}
-      const m = Backend.translate("$" + skill + (gene ? "_" + gene : "") + (idx ? idx.toString() : ""));
+      if (!config.disableMsgAudio)
+        try {
+          callbacks["LogEvent"](JSON.stringify({
+            type: "PlaySkillSound",
+            name: skill,
+            general: gene,
+            i: idx,
+          }));
+        } catch (e) {}
+      const m = luatr("$" + skill + (gene ? "_" + gene : "")
+                          + (idx ? idx.toString() : ""));
+      data.msg = m;
       if (general === "")
-        chat.append(`[${time}] ${userName}: ${m}`);
+        chat.append(`[${time}] ${userName}: ${m}`, data);
       else
-        chat.append(`[${time}] ${userName}(${general}): ${m}`);
+        chat.append(`[${time}] ${userName}(${general}): ${m}`, data)
 
       const photo = Logic.getPhoto(pid);
       if (photo === undefined) {
@@ -1144,20 +1202,24 @@ Item {
   }
 
   function addToLog(msg) {
-    log.append(msg);
+    log.append({ logText: msg });
   }
 
   function sendDanmaku(msg) {
     danmaku.sendLog(msg);
-    chat.append(msg);
+    chat.append(null, {
+      msg: msg,
+      general: "__server", // FIXME: 基于默认读取貂蝉的数据
+      userName: "",
+      time: "Server",
+    });
   }
 
   function showDistance(show) {
     for (let i = 0; i < photoModel.count; i++) {
       const item = photos.itemAt(i);
       if (show) {
-        const dis = Backend.callLuaFunction("DistanceTo",[Self.id, item.playerid]);
-        item.distance = parseInt(dis);
+        item.distance = lcall("DistanceTo", Self.id, item.playerid);
       } else {
         item.distance = -1;
       }
@@ -1176,10 +1238,10 @@ Item {
       const item = photoModel.get(i);
       let gameData;
       try {
-        gameData = JSON.parse(Backend.callLuaFunction("GetPlayerGameData", [item.id]));
+        gameData = lcall("GetPlayerGameData", item.id);
       } catch (e) {
         console.log(e);
-        gameData = [0, 0, 0];
+        gameData = [0, 0, 0, 0];
       }
       if (item.id > 0) {
         datalist.push({
@@ -1193,7 +1255,7 @@ Item {
       }
     }
     mainStack.pop();
-    Backend.callLuaFunction("ResetClientLua", []);
+    lcall("ResetClientLua");
     mainStack.push(room);
     mainStack.currentItem.loadPlayerData(datalist);
   }
@@ -1209,12 +1271,13 @@ Item {
 
   function loadPlayerData(datalist) {
     datalist.forEach(d => {
-      if (d.id == Self.id) {
+      if (d.id === Self.id) {
         roomScene.isOwner = d.isOwner;
       } else {
-        Backend.callLuaFunction("ResetAddPlayer", [JSON.stringify([d.id, d.name, d.avatar, d.ready])]);
+        lcall("ResetAddPlayer",
+          JSON.stringify([d.id, d.name, d.avatar, d.ready, d.gameData[3]]));
       }
-      Backend.callLuaFunction("SetPlayerGameData", [d.id, d.gameData]);
+      lcall("SetPlayerGameData", d.id, d.gameData);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;
     });
   }
@@ -1224,7 +1287,7 @@ Item {
   }
 
   Component.onCompleted: {
-    toast.show(Backend.translate("$EnterRoom"));
+    toast.show(luatr("$EnterRoom"));
     playerNum = config.roomCapacity;
 
     for (let i = 0; i < playerNum; i++) {
@@ -1247,6 +1310,7 @@ Item {
         faceup: true,
         chained: false,
         drank: 0,
+        rest: 0,
         isOwner: false,
         ready: false,
         surrendered: false,

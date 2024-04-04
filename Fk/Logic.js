@@ -46,8 +46,8 @@ callbacks["NetworkDelayTest"] = (jsonData) => {
   // jsonData: RSA pub key
   let cipherText;
   let aeskey;
-  if (config.savedPassword[config.serverAddr] !== undefined
-    && config.savedPassword[config.serverAddr].shorten_password === config.password) {
+  const savedPw = config.savedPassword[config.serverAddr];
+  if (savedPw?.shorten_password === config.password) {
     cipherText = config.savedPassword[config.serverAddr].password;
     aeskey = config.savedPassword[config.serverAddr].key;
     config.aeskey = aeskey ?? "";
@@ -173,7 +173,7 @@ callbacks["Chat"] = (jsonData) => {
   const data = JSON.parse(jsonData);
   const pid = data.sender;
   const userName = data.userName;
-  const general = Backend.translate(data.general);
+  const general = luatr(data.general);
   const time = data.time;
   const msg = data.msg;
 
@@ -181,10 +181,13 @@ callbacks["Chat"] = (jsonData) => {
     return;
   }
 
+  let text;
   if (general === "")
-    current.addToChat(pid, data, `<font color="#3598E8">[${time}] ${userName}:</font> ${msg}`);
+    text = `<font color="#3598E8">[${time}] ${userName}:</font> ${msg}`;
   else
-    current.addToChat(pid, data, `<font color="#3598E8">[${time}] ${userName}(${general}):</font> ${msg}`);
+    text = `<font color="#3598E8">[${time}] ${userName}` +
+           `(${general}):</font> ${msg}`;
+  current.addToChat(pid, data, text);
 }
 
 callbacks["ServerMessage"] = (jsonData) => {
@@ -194,3 +197,7 @@ callbacks["ServerMessage"] = (jsonData) => {
 
 callbacks["ShowToast"] = (j) => toast.show(j);
 callbacks["InstallKey"] = (j) => Backend.installAESKey();
+
+callbacks["AddTotalGameTime"] = (jsonData) => {
+  config.totalTime++;
+}

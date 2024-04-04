@@ -1,5 +1,158 @@
 # ChangeLog
 
+## v0.4.10
+
+- Github新增自动发布Docker镜像的CI
+- 一些覆盖面约为0的lua test，以及基于纯Lua的命令行版本FreeKill
+- 为findParent添加深度限制参数(默认无限制)
+- 搬运了damageByCardEffect
+- 修复了ex__choose_skill
+- 修复了华佗、吕蒙和古锭刀
+- 添加势力映射，可以指定一个势力必须变成其他几个势力之一（需要神话再临包/OL包自行处理神将变将范围）
+- askForCardsChosen界限突破，改成了基于askForPoxi的格式
+- 修复了空城虚拟杀可以方天的bug
+- 给强制平局添加了原因提醒
+- 优化了移动牌的视觉逻辑
+- 单机下简单的热更新功能，bug可能极多
+
+___
+
+## v0.4.8 & v0.4.9
+
+- Qml: 新增leval函数可获得lua表达式的值
+- 新增AbstractRoom类 去除冗余
+- 修gameOver相关bug（或许）
+- 从Utility那里搬运了askForYiji和doYiji两个函数，负责分配
+  虽然暂时没实现单烧条，但先这么用着
+- 修复了askForCardAndPlayers的选择中可以选择复数张牌的bug
+- 为prohibitDiscard添加了输入id选项
+- 正式添加对多后缀标记的支持
+- 添加了一点注释
+- 搬运了moveCardIntoEquip和canMoveCardIntoEquip
+- 为选牌的默认prompt添加了目标
+- 完善了朱雀羽扇的判定
+- 修复了抽选武将牌堆时未删除已选武将的bug
+- 修复了maxCard标记不识别“-turn”以外标记的bug
+- 修复了obtaincard实际不能接受id数组的bug
+- CardItem一律可长按，除了卡牌一览
+- Qml Mark在QML中可获得主人的id
+- Qml Mark可实现某某视角完全不可见
+- 隐藏#开头的pile
+- 可自定义interaction了
+- LogMessage新增toast成员
+- 修复投降杀人bug
+
+___
+
+## v0.4.6 & v0.4.7
+
+- 攻击范围状态技类新增基础值修正函数
+- 伤害值在一个技能处理后小于1会终止当前事件
+- 不向不能使用【无懈可击】的角色询问使用【无懈可击】
+- 修正在濒死插结中有人死亡后仍然会向该角色求桃的情况
+- 将PreCardUse和PreCardRespond时机移至实体牌移动之前
+- 调整改判函数原判定牌置入弃牌堆的原因
+- 修正【朱雀羽扇】、【借刀杀人】、【酒】
+- 为使用流程和Aim流程增加属性additionalEffect，用于指定额外结算次数（OL版），顺带移动【五谷丰登】开启和关
+闭AG的位置；
+- 为视为技新增after_use方法处理转化牌后的后续操作；
+- 修复伤害流程时机触发者不变问题；
+- 修复旁观休整的问题；
+- 修复可移动场上牌判断函数未判断虚拟牌名的问题。
+- 修复传入数组的extraPile无法收回
+- 被弃置牌的log添加操作者
+- beforeMaxHpChanged的num可以被修改
+- 额外回合增加skillName
+- 修复亮将技能和禁止亮将
+- 水一些注释和格式
+- git报错优化
+- 防止反复shutdown同一事件
+- 将Utility如canUseCardTo的一些函数搬运到了本体
+- 为技能添加hooked_piles属性，当失去技能时自动弃置hooked_piles内的所有私人牌堆
+- 修复了添加技能没写source_skill的bug
+- 修复了ActiveSkill的interaction不传入Skill本身而是metatable的bug
+- 修复了主动询问canUse时没有传入extra_data的bug
+- 修复了多选时按钮选项变回空白的bug
+- 修复了判定阶段被中途拿走判定牌后报错的bug
+
+___
+
+## v0.4.4 & 0.4.5
+
+禁将增强；修复bug
+
+UsableSkill的expand_pile功能加强
+
+___
+
+## v0.4.3
+
+1. 事件栈和实际的函数调用栈分离
+2. 2v2选将专用的MiniGame
+3. 各种小修小补
+
+___
+
+## v0.4.2 && v0.4.1
+
+1. 修复和完善qml mark
+2. 修复国战野心家放副将
+3. 统计游戏时长功能
+4. 后台也开始记录注册时间和上次上线的时间
+5. 现在会将屏蔽玩家保存到本地并标红提示
+6. askForChooseCardsAndPlayers又写崩了，故修之
+7. 修复了Within系列没有检查to的错误
+8. 彻底修复了连环起点属性的bug
+
+___
+
+## v0.4.0 && v0.3.14
+
+修复bug，详见git log
+
+- 新增canPindian，禁止技新增prohibitPindian
+
+___
+
+## v0.3.13
+
+为v0.4做准备的测试版。
+
+1. 修正标准版武将、卡牌结算
+2. 杀光侧栏 只留战报一个
+3. Qml标记，以及一个割圆demo
+4. 自由选将增加搜索功能
+5. room:setBanner，相当于公共标记了
+6. 改掉两个很蠢的命名
+7. 重做目标参数相关：
+8. 重修`must_targets`参数，必须选择其中**全部**目标后才能选择其他目标/按确定
+9. 添加`include_targets`参数，必须选择其中**一个**目标后才能选择其他目标/按确定
+10. 修复expandPile指定牌堆无卡符合要求则收回的bug
+11. 优化ex_choose_skill，添加扩展牌堆和包括装备功能
+12. 添加ReasonRecast理由，现在recastCard会返回该动作后摸的牌
+13. 移除了重复的DamageFinished时机触发
+14. 卡牌一览中音效播放（装备牌鸽）
+15. 修改游戏桌面菜单式样，增加音量
+16. 卡牌使用时prompt
+17. 比较角色性别是否相同
+18. 修一些函数提示
+19. getEventsOfScope找不到start_event直接返回
+20. 应用all_card_types
+21. 修改askForCard的默认返回值
+22. 增加装备牌技能触发log
+23. phase_state初始化
+24. 额外阶段走phaseChanging
+25. 亮将增加一个时机并做调整（但还是不对……）
+26. 标准包和军争篇增加卡牌prompt，修改描述
+27. 运用一些Util，hasSkill精简
+28. 修改一些神秘英语单词，水
+29. 新增船新“休整”机制；
+30. 修改作废逻辑，并可在当前响应读条禁用该技能（出牌阶段空闲时间点尚未完成限制）；
+31. 修复锁视技的相关bug，其cardFilter新增标识是否为判定的参数；
+32. 将护甲扣减融合进体力扣减流程，为伤害流程增加“虚拟伤害”概念，为伤害流程增加“造成过伤害”标识id以供记录搜索使用；
+33. 为变将新增可删除副将。
+34. 房间内聊天优化。
+
 ___
 
 ## v0.3.12

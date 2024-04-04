@@ -7,6 +7,7 @@
 ---@field public refresh_skill_table table<Event, TriggerSkill[]>
 ---@field public skills string[]
 ---@field public game_event_stack Stack
+---@field public cleaner_stack Stack
 ---@field public role_table string[][]
 ---@field public all_game_events GameEvent[]
 ---@field public event_recorder table<integer, GameEvent>
@@ -20,9 +21,13 @@ function GameLogic:initialize(room)
   self.refresh_skill_table = {}
   self.skills = {}    -- skillName[]
   self.game_event_stack = Stack:new()
+  self.cleaner_stack = Stack:new()
   self.all_game_events = {}
   self.event_recorder = {}
   self.current_event_id = 0
+  self.specific_events_id = {
+    [GameEvent.Damage] = 1,
+  }
 
   self.role_table = {
     { "lord" },
@@ -213,6 +218,10 @@ function GameLogic:attachSkillToPlayers()
 
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
+    if not skill then
+      fk.qCritical("Skill: "..skillName.." doesn't exist!")
+      return
+    end
     if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
       return
     end
@@ -328,8 +337,8 @@ function GameLogic:addTriggerSkill(skill)
 end
 
 ---@param event Event
----@param target ServerPlayer|nil
----@param data any|nil
+---@param target? ServerPlayer
+---@param data? any
 function GameLogic:trigger(event, target, data, refresh_only)
   local room = self.room
   local broken = false
@@ -386,9 +395,9 @@ function GameLogic:trigger(event, target, data, refresh_only)
         skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
 
         broken = broken or (event == fk.AskForPeaches
-          and room:getPlayerById(data.who).hp > 0) or cur_event.revived
-        --                                            ^^^^^^^^^^^^^^^^^
-        -- 如果事件复活了，那么其实说明事件已经死过了，赶紧break掉
+          and room:getPlayerById(data.who).hp > 0) or
+          (table.contains({fk.PreDamage, fk.DamageCaused, fk.DamageInflicted}, event) and data.damage < 1) or
+          cur_event.killed
 
         if broken then break end
       end
@@ -403,6 +412,150 @@ function GameLogic:trigger(event, target, data, refresh_only)
   end
 
   return broken
+end
+
+-- 此为启动事件管理器并启动第一个事件的初始函数
+function GameLogic:start()
+  local root_event = GameEvent:new(GameEvent.Game)
+
+  self:pushEvent(root_event)
+
+  -- 此时的协程：room.main_co
+  -- 事件管理器协程，同时也是Game事件
+  -- 当新事件想要exec时，就切回此处，由这里负责调度协程
+  -- 一个事件结束后也切回此处，然后resume
+  local co = coroutine.create(root_event.main_func)
+  root_event._co = co
+
+  local jump_to -- shutdown函数用
+
+  while true do
+    -- 对于cleaner和正常事件，处理更后面来的
+    local ne = self:getCurrentEvent()
+    local ce = self:getCurrentCleaner()
+    local e = ce and (ce.id >= ne.id and ce or ne) or ne
+
+    -- 如果正在jump的话，判断是否需要继续clean，否则正常继续
+    if e == ne and jump_to ~= nil then
+      e.interrupted = true
+      e.killed = e ~= jump_to
+      self:clearEvent(e)
+      coroutine.close(e._co)
+      e.status = "dead"
+      if e == jump_to then jump_to = nil end -- shutdown结束了
+      e = self:getCurrentCleaner()
+    end
+
+    if not e then -- 没有事件，按理说不应该，平局处理
+      self.room:sendLog{
+        type = "#NoEventDraw",
+        toast = true,
+      }
+      self.room:gameOver("")
+    end
+
+    -- ret, evt解释：
+    -- * true, nil: 中止
+    -- * false, nil: 正常结束
+    -- * true, GameEvent: 中止直到某event
+    -- * false, GameEvent: 未结束，插入新event
+    -- 若jump_to不为nil，表示正在中断至某某事件
+    local ret, evt = self:resumeEvent(e)
+    if evt == nil then
+      e.interrupted = ret
+      self:clearEvent(e)
+      coroutine.close(e._co)
+      e.status = "dead"
+    elseif ret == true then
+      -- 跳到越早发生的事件越好
+      if not jump_to then
+        jump_to = evt
+      else
+        jump_to = jump_to.id < evt.id and jump_to or evt
+      end
+    end
+  end
+end
+
+---@param event GameEvent
+function GameLogic:pushEvent(event)
+  self.game_event_stack:push(event)
+
+  self.current_event_id = self.current_event_id + 1
+  event.id = self.current_event_id
+  self.all_game_events[event.id] = event
+  self.event_recorder[event.event] = self.event_recorder[event.event] or {}
+  table.insert(self.event_recorder[event.event], event)
+end
+
+-- 一般来说从GameEvent:exec切回start再被start调用
+-- 作用是启动新事件 都是结构差不多的函数
+---@param event GameEvent
+---@return boolean, GameEvent?
+function GameLogic:resumeEvent(event, ...)
+  local ret, evt
+
+  local co = event._co
+
+  while true do
+    local err, yield_result, extra_yield_result = coroutine.resume(co, ...)
+
+    if err == false then
+      -- handle error, then break
+      if not string.find(yield_result, "__manuallyBreak") then
+        fk.qCritical(yield_result .. "\n" .. debug.traceback(co))
+      end
+      ret = true
+      break
+    end
+
+    if yield_result == "__handleRequest" then
+      -- yield to requestLoop
+      coroutine.yield(yield_result, extra_yield_result)
+
+    elseif type(yield_result) == "table" and yield_result.class
+      and yield_result:isInstanceOf(GameEvent) then
+
+      if extra_yield_result == "__newEvent" then
+        ret, evt = false, yield_result
+        break
+      elseif extra_yield_result == "__breakEvent" then
+        ret, evt = true, yield_result
+        if event.event ~= GameEvent.ClearEvent then break end
+      end
+
+    elseif yield_result == "__breakEvent" then
+      ret = true
+      if event.event ~= GameEvent.ClearEvent then break end
+
+    else
+      ret = false
+      event.exec_ret = yield_result
+      break
+    end
+  end
+
+  return ret, evt
+end
+
+---@return GameEvent
+function GameLogic:getCurrentCleaner()
+  return self.cleaner_stack.t[self.cleaner_stack.p]
+end
+
+-- 事件中的清理。
+-- cleaner单独开协程运行，exitFunc须转到上个事件的协程内执行
+-- 注意插入新event
+---@param event GameEvent
+function GameLogic:clearEvent(event)
+  if event.event == GameEvent.ClearEvent then return end
+  if event.status == "exiting" then return end
+  event.status = "exiting"
+  local ce = GameEvent(GameEvent.ClearEvent, event)
+  ce.id = self.current_event_id
+  local co = coroutine.create(ce.main_func)
+  ce._co = co
+  self.cleaner_stack:push(ce)
 end
 
 ---@return GameEvent
@@ -446,8 +599,168 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
   elseif scope == Player.HistoryPhase then
     start_event = event:findParent(GameEvent.Phase, true)
   end
-
+  if not start_event then return {} end
   return start_event:searchEvents(eventType, n, func)
+end
+
+-- 在指定历史范围中找符合条件的事件（逆序）
+---@param eventType integer @ 要查找的事件类型
+---@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param n integer @ 最多找多少个
+---@param end_id integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+function GameLogic:getEventsByRule(eventType, n, func, end_id)
+  local ret = {}
+	local events = self.event_recorder[eventType] or Util.DummyTable
+  for i = #events, 1, -1 do
+    local e = events[i]
+    if e.id <= end_id then break end
+    if func(e) then
+      table.insert(ret, e)
+      if #ret >= n then break end
+    end
+  end
+  return ret
+end
+
+
+--- 获取实际的伤害事件
+---@param n integer @ 最多找多少个
+---@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param scope? integer @ 查询历史范围，只能是当前阶段/回合/轮次
+---@param end_id? integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）
+---@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+function GameLogic:getActualDamageEvents(n, func, scope, end_id)
+  if not end_id then
+    scope = scope or Player.HistoryTurn
+  end
+
+  n = n or 1
+  func = func or Util.TrueFunc
+
+  local eventType = GameEvent.Damage
+  local ret = {}
+  local endIdRecorded
+  local tempEvents = {}
+
+  local addTempEvents = function(reverse)
+    if #tempEvents > 0 and #ret < n then
+      table.sort(tempEvents, function(a, b)
+        if reverse then
+          return a.data[1].dealtRecorderId > b.data[1].dealtRecorderId
+        else
+          return a.data[1].dealtRecorderId < b.data[1].dealtRecorderId
+        end
+      end)
+
+      for _, e in ipairs(tempEvents) do
+        table.insert(ret, e)
+        if #ret >= n then return true end
+      end
+    end
+
+    endIdRecorded = nil
+    tempEvents = {}
+
+    return false
+  end
+
+  if scope then
+    local event = self:getCurrentEvent()
+    local start_event ---@type GameEvent
+    if scope == Player.HistoryGame then
+      start_event = self.all_game_events[1]
+    elseif scope == Player.HistoryRound then
+      start_event = event:findParent(GameEvent.Round, true)
+    elseif scope == Player.HistoryTurn then
+      start_event = event:findParent(GameEvent.Turn, true)
+    elseif scope == Player.HistoryPhase then
+      start_event = event:findParent(GameEvent.Phase, true)
+    end
+
+    if not start_event then return {} end
+
+    local events = self.event_recorder[eventType] or Util.DummyTable
+    local from = start_event.id
+    local to = start_event.end_id
+    if math.abs(to) == 1 then to = #self.all_game_events end
+
+    for _, v in ipairs(events) do
+      local damageStruct = v.data[1]
+      if damageStruct.dealtRecorderId then
+        if endIdRecorded and v.id > endIdRecorded then
+          local result = addTempEvents()
+          if result then
+            return ret
+          end
+        end
+
+        if v.id >= from and v.id <= to then
+          if not endIdRecorded and v.end_id > -1 and v.end_id > v.id then
+            endIdRecorded = v.end_id
+          end
+
+          if func(v) then
+            if endIdRecorded then
+              table.insert(tempEvents, v)
+            else
+              table.insert(ret, v)
+            end
+          end
+        end
+        if #ret >= n then break end
+      end
+    end
+
+    addTempEvents()
+  else
+    local events = self.event_recorder[eventType] or Util.DummyTable
+
+    for i = #events, 1, -1 do
+      local e = events[i]
+      if e.id <= end_id then break end
+
+      local damageStruct = e.data[1]
+      if damageStruct.dealtRecorderId then
+        if e.end_id == -1 or (endIdRecorded and endIdRecorded > e.end_id) then
+          local result = addTempEvents(true)
+          if result then
+            return ret
+          end
+
+          if func(e) then
+            table.insert(ret, e)
+          end
+        else
+          endIdRecorded = e.end_id
+          if func(e) then
+            table.insert(tempEvents, e)
+          end
+        end
+
+        if #ret >= n then break end
+      end
+    end
+
+    addTempEvents(true)
+  end
+
+  return ret
+end
+
+--检测最近的伤害事件是否由执行牌的效果触发，即通常描述的使用牌对目标角色造成伤害
+---@param is_exact? bool @ 是否进一步判定使用者和来源是否一致（默认为true）
+---@return bool
+function GameLogic:damageByCardEffect(is_exact)
+  is_exact = (is_exact == nil) and true or is_exact
+  local d_event = self:getCurrentEvent():findParent(GameEvent.Damage, true)
+  if d_event == nil then return false end
+  local damage = d_event.data[1]
+  if damage.chain or damage.card == nil then return false end
+  local c_event = d_event:findParent(GameEvent.CardEffect, false, 2)
+  if c_event == nil then return false end
+  return damage.card == c_event.data[1].card and
+  (not is_exact or d_event.data[1].from.id == c_event.data[1].from)
 end
 
 function GameLogic:dumpEventStack(detailed)
@@ -512,6 +825,7 @@ end
 
 function GameLogic:breakTurn()
   local event = self:getCurrentEvent():findParent(GameEvent.Turn)
+  if not event then return end
   event:shutdown()
 end
 

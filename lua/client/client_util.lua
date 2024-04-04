@@ -123,11 +123,16 @@ function GetCardData(id, virtualCardForm)
 end
 
 function GetCardExtensionByName(cardName)
-  local card = table.find(Fk.cards, function(card)
-    return card.name == cardName
-  end)
-
+  local card = Fk.all_card_types[cardName]
   return card and card.package.extensionName or ""
+end
+
+function GetAllMods()
+  return json.encode(Fk.extensions)
+end
+
+function GetAllModNames()
+  return json.encode(Fk.extension_names)
 end
 
 function GetAllGeneralPack()
@@ -141,6 +146,7 @@ function GetAllGeneralPack()
 end
 
 function GetGenerals(pack_name)
+  if not Fk.packages[pack_name] then return "{}" end
   local ret = {}
   for _, g in ipairs(Fk.packages[pack_name].generals) do
     if not g.total_hidden then
@@ -220,6 +226,10 @@ function GetCards(pack_name)
   return json.encode(ret)
 end
 
+function GetCardSkill(cid)
+  return Fk:getCardById(cid).skill and Fk:getCardById(cid).skill.name or ""
+end
+
 function GetCardSpecialSkills(cid)
   return json.encode(Fk:getCardById(cid).special_skills or Util.DummyTable)
 end
@@ -250,8 +260,10 @@ end
 
 ---@param card string | integer
 ---@param player integer
-function CanUseCard(card, player)
+---@param extra_data_str string
+function CanUseCard(card, player, extra_data_str)
   local c   ---@type Card
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   if type(card) == "number" then
     c = Fk:getCardById(card)
   else
@@ -270,13 +282,13 @@ function CanUseCard(card, player)
   end
 
   player = ClientInstance:getPlayerById(player)
-  local ret = c.skill:canUse(player, c)
+  local ret = c.skill:canUse(player, c, extra_data)
   ret = ret and not player:prohibitUse(c)
   if ret then
     local min_target = c.skill:getMinTargetNum()
     if min_target > 0 then
       for _, p in ipairs(ClientInstance.players) do
-        if c.skill:targetFilter(p.id, {}, {}, c) then
+        if c.skill:targetFilter(p.id, {}, {}, c, extra_data) then
           return "true"
         end
       end
@@ -310,7 +322,9 @@ end
 ---@param card string | integer
 ---@param to_select integer @ id of the target
 ---@param selected integer[] @ ids of selected targets
-function CanUseCardToTarget(card, to_select, selected)
+---@param extra_data_str string @ extra data
+function CanUseCardToTarget(card, to_select, selected, extra_data_str)
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   if ClientInstance:getPlayerById(to_select).dead then
     return "false"
   end
@@ -321,10 +335,10 @@ function CanUseCardToTarget(card, to_select, selected)
     selected_cards = {card}
   else
     local t = json.decode(card)
-    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards)
+    return ActiveTargetFilter(t.skill, to_select, selected, t.subcards, extra_data)
   end
 
-  local ret = c.skill:targetFilter(to_select, selected, selected_cards, c)
+  local ret = c.skill:targetFilter(to_select, selected, selected_cards, c, extra_data)
   ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), c)
   return json.encode(ret)
 end
@@ -391,12 +405,13 @@ function GetSkillData(skill_name)
   }
 end
 
-function ActiveCanUse(skill_name)
+function ActiveCanUse(skill_name, extra_data_str)
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill then
     if skill:isInstanceOf(ActiveSkill) then
-      ret = skill:canUse(Self)
+      ret = skill:canUse(Self, extra_data)
     elseif skill:isInstanceOf(ViewAsSkill) then
       ret = skill:enabledAtPlay(Self)
       if ret then
@@ -413,7 +428,7 @@ function ActiveCanUse(skill_name)
         for _, n in ipairs(cnames) do
           local c = Fk:cloneCard(n)
           c.skillName = skill_name
-          ret = c.skill:canUse(Self, c)
+          ret = c.skill:canUse(Self, c, extra_data)
           if ret then break end
         end
       end
@@ -448,7 +463,7 @@ function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
   return json.encode(ret)
 end
 
-function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
+function ActiveTargetFilter(skill_name, to_select, selected, selected_cards, extra_data)
   local skill = Fk.skills[skill_name]
   local ret = false
   if skill then
@@ -457,7 +472,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards)
     elseif skill:isInstanceOf(ViewAsSkill) then
       local card = skill:viewAs(selected_cards)
       if card then
-        ret = card.skill:targetFilter(to_select, selected, selected_cards, card)
+        ret = card.skill:targetFilter(to_select, selected, selected_cards, card, extra_data)
         ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
       end
     end
@@ -571,7 +586,17 @@ end
 
 function GetExpandPileOfSkill(skillName)
   local skill = Fk.skills[skillName]
-  return skill and (skill.expand_pile or "") or ""
+  if not skill then return "" end
+  local e = skill.expand_pile
+  if type(e) == "function" then
+    e = e(skill)
+  end
+
+  if type(e) == "table" then
+    return json.encode(e)
+  else
+    return e or ""
+  end
 end
 
 function GetGameModes()
@@ -612,7 +637,7 @@ end
 function GetPlayerHandcards(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  return json.encode(p.player_cards[Player.Hand])
+  return p and json.encode(p.player_cards[Player.Hand]) or ""
 end
 
 function GetPlayerEquips(pid)
@@ -649,19 +674,21 @@ end
 function GetPlayerGameData(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  if not p then return "[0, 0, 0]" end
+  if not p then return "[0, 0, 0, 0]" end
   local raw = p.player:getGameData()
   local ret = {}
   for _, i in fk.qlist(raw) do
     table.insert(ret, i)
   end
+  table.insert(ret, p.player:getTotalGameTime())
   return json.encode(ret)
 end
 
 function SetPlayerGameData(pid, data)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  p.player:setGameData(table.unpack(data))
+  local total, win, run = table.unpack(data)
+  p.player:setGameData(total, win, run)
   table.insert(data, 1, pid)
   ClientInstance:notifyUI("UpdateGameData", json.encode(data))
 end
@@ -717,21 +744,48 @@ end
 
 function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
+  extra_data = extra_data and json.decode(extra_data)
   if not poxi or not poxi.prompt then return "" end
   if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
-  return poxi.prompt(data, extra_data)
+  return Fk:translate(poxi.prompt(data, extra_data))
 end
 
 function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
+  extra_data = extra_data and json.decode(extra_data)
   if not poxi then return "false" end
   return json.encode(poxi.card_filter(to_select, selected, data, extra_data))
 end
 
 function PoxiFeasible(poxi_type, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
+  extra_data = extra_data and json.decode(extra_data)
   if not poxi then return "false" end
   return json.encode(poxi.feasible(selected, data, extra_data))
+end
+
+function GetQmlMark(mtype, name, value, p)
+  local spec = Fk.qml_marks[mtype]
+  if not spec then return "{}" end
+  p = ClientInstance:getPlayerById(p)
+  value = json.decode(value)
+  return json.encode {
+    qml_path = type(spec.qml_path) == "function" and spec.qml_path(name, value, p) or spec.qml_path,
+    text = spec.how_to_show(name, value, p)
+  }
+end
+
+function GetMiniGame(gtype, p, data)
+  local spec = Fk.mini_games[gtype]
+  p = ClientInstance:getPlayerById(p)
+  data = json.decode(data)
+  return json.encode {
+    qml_path = type(spec.qml_path) == "function" and spec.qml_path(p, data) or spec.qml_path,
+  }
+end
+
+function ReloadPackage(path)
+  Fk:reloadPackage(path)
 end
 
 dofile "lua/client/i18n/init.lua"
