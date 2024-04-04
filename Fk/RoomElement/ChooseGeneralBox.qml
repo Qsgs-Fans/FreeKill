@@ -267,7 +267,7 @@ GraphicsBox {
           if (selectedItem[1]) {
             if (selectedItem[0] === item) {
               updateCompanion(item, selectedItem[1], true);
-            } else if (selectedItem[1] === item) { 
+            } else if (selectedItem[1] === item) {
               updateCompanion(item, selectedItem[0], true);
             } else {
               item.hasCompanions = false;
