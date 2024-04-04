@@ -27,6 +27,7 @@ _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
 local function readCommonSpecToSkill(skill, spec)
   skill.mute = spec.mute
+  skill.no_indicate = spec.no_indicate
   skill.anim_type = spec.anim_type
 
   if spec.attached_equip then

@@ -115,6 +115,7 @@ fk.IceDamage = 4
 ---@field public prohibitedCardNames? string[]
 ---@field public damageDealt? table<PlayerId, number>
 ---@field public additionalEffect? integer
+---@field public noIndicate? boolean
 
 ---@class AimStruct
 ---@field public from integer
