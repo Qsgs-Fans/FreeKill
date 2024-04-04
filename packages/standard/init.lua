@@ -170,10 +170,11 @@ local tuxi = fk.CreateTriggerSkill{
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
+    room:sortPlayersByAction(self.cost_data)
     for _, id in ipairs(self.cost_data) do
       if player.dead then return end
       local p = room:getPlayerById(id)
-      if not p.dead then
+      if not p.dead and not p:isKongcheng() then
         local c = room:askForCardChosen(player, p, "h", self.name)
         room:obtainCard(player.id, c, false, fk.ReasonPrey)
       end
@@ -689,6 +690,9 @@ local qixi = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
+  enabled_at_response = function (self, player, response)
+    return not response
+  end
 }
 local ganning = General:new(extension, "ganning", "wu", 4)
 ganning:addSkill(qixi)
@@ -759,7 +763,7 @@ local fanjian = fk.CreateActiveSkill{
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
-  card_filter = function() return false end,
+  card_filter = Util.FalseFunc,
   target_filter = function(self, to_select, selected)
     return #selected == 0 and to_select ~= Self.id
   end,
@@ -801,6 +805,9 @@ local guose = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
+  enabled_at_response = function (self, player, response)
+    return not response
+  end
 }
 local liuli = fk.CreateTriggerSkill{
   name = "liuli",
@@ -1013,11 +1020,9 @@ local jijiu = fk.CreateViewAsSkill{
     c:addSubcard(cards[1])
     return c
   end,
-  enabled_at_play = function(self, player)
-    return false
-  end,
-  enabled_at_response = function(self, player)
-    return player.phase == Player.NotActive
+  enabled_at_play = Util.FalseFunc,
+  enabled_at_response = function(self, player, res)
+    return player.phase == Player.NotActive and not res
   end,
 }
 local huatuo = General:new(extension, "huatuo", "qun", 3)
