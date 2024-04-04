@@ -3934,6 +3934,13 @@ function Room:abortPlayerArea(player, playerSlots)
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
 
+  for _, s in ipairs(slotsToSeal) do
+    self:sendLog{
+      type = "#AbortArea",
+      from = player.id,
+      arg = s,
+    }
+  end
   self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
 end
 
@@ -3959,6 +3966,13 @@ function Room:resumePlayerArea(player, playerSlots)
 
   if #slotsToResume > 0 then
     self:broadcastProperty(player, "sealedSlots")
+    for _, s in ipairs(slotsToResume) do
+      self:sendLog{
+        type = "#ResumeArea",
+        from = player.id,
+        arg = s,
+      }
+    end
     self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
   end
 end
