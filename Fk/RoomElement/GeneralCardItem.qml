@@ -24,6 +24,7 @@ CardItem {
   property int shieldNum
   property string pkgName: ""
   property bool detailed: true
+  property alias hasCompanions: companions.visible
   name: ""
   // description: Sanguosha.getGeneralDescription(name)
   suit: ""
@@ -203,6 +204,16 @@ CardItem {
       style: Text.Outline
       textFormat: Text.RichText
     }
+  }
+
+  Image {
+    id: companions
+    // width: 120
+    visible: false
+    source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-companions"
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: 80
+    z: 1
   }
 
   onNameChanged: {
