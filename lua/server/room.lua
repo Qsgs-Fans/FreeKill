@@ -265,11 +265,8 @@ end
 ---@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
 ---@return CardArea @ 这张牌的区域
 function Room:getCardArea(cardId)
-  if type(cardId) ~= "number" then
-    assert(cardId and cardId:isInstanceOf(Card))
-    cardId = cardId:getEffectiveId()
-  end
-  return self.card_place[cardId] or Card.Unknown
+  local cardIds = table.map(Card:getIdList(cardId), function(cid) return self.card_place[cid] or Card.Unknown end)
+  return #cardIds == 1 and cardIds[1] or Card.Unknown
 end
 
 --- 获得拥有某一张牌的玩家。
