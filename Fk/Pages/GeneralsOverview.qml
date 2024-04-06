@@ -634,8 +634,8 @@ Item {
 
   function loadPackages() {
     if (loaded) return;
-    const _mods = lcall("GetAllModNames")
-    const modData = lcall("GetAllMods")
+    const _mods = lcall("GetAllModNames");
+    const modData = lcall("GetAllMods");
     const packs = lcall("GetAllGeneralPack");
     _mods.forEach(name => {
       const pkgs = modData[name].filter(p => packs.includes(p)

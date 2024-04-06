@@ -172,7 +172,9 @@ Flickable {
             arr = config.curScheme.banPkg[k];
             if (arr.length !== 0) {
               const generals = lcall("GetGenerals", k);
-              disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
+              if (generals.length !== 0) {
+                disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
+              }
             }
           }
           for (k in config.curScheme.normalPkg) {

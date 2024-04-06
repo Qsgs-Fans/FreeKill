@@ -560,6 +560,30 @@ function Player:distanceTo(other, mode, ignore_dead)
   return math.max(ret, 1)
 end
 
+--- 比较距离
+---@param other Player @ 终点角色
+---@param num integer @ 比较基准
+---@param operator string @ 运算符，有 ``"<"`` ``">"`` ``"<="`` ``">="`` ``"=="`` ``"~="``
+---@return boolean @ 返回比较结果，不计入距离结果永远为false
+function Player:compareDistance(other, num, operator)
+  local distance = self:distanceTo(other)
+  if distance < 0 or num < 0 then return false end
+  if operator == ">" then
+    return distance > num
+  elseif operator == "<" then
+    return distance < num
+  elseif operator == "==" then
+    return distance == num
+  elseif operator == ">=" then
+    return distance >= num
+  elseif operator == "<=" then
+    return distance <= num
+  elseif operator == "~=" then
+    return distance ~= num
+  end
+  return false
+end
+
 --- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
 ---@param fixLimit? integer @ 卡牌距离限制增加专用
@@ -762,7 +786,12 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   end
 
   if table.contains(self.player_skills, skill) then
-    return true
+    if not skill:isInstanceOf(StatusSkill) then return true end
+    if self:isInstanceOf(ServerPlayer) then
+      return not self:isFakeSkill(skill)
+    else
+      return table.contains(self.player_skills, skill)
+    end
   end
 
   if self:isInstanceOf(ServerPlayer) and -- isInstanceOf(nil) will return false
@@ -779,6 +808,20 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   end
 
   return false
+end
+
+--- 技能是否亮出
+---@param skill string | Skill
+---@return boolean
+function Player:hasShownSkill(skill, ignoreNullified, ignoreAlive)
+  if not self:hasSkill(skill, ignoreNullified, ignoreAlive) then return false end
+
+  if self:isInstanceOf(ServerPlayer) then
+    return not self:isFakeSkill(skill)
+  else
+    if type(skill) == "string" then skill = Fk.skills[skill] end
+    return table.contains(self.player_skills, skill)
+  end
 end
 
 --- 为玩家增加对应技能。
@@ -1135,6 +1178,16 @@ function Player:compareGenderWith(other, diff)
   else
     return self.gender == other.gender
   end
+end
+
+--- 是否为男性（包括双性）。
+function Player:isMale()
+  return self.gender == General.Male or self.gender == General.Bigender
+end
+
+--- 是否为女性（包括双性）。
+function Player:isFemale()
+  return self.gender == General.Female or self.gender == General.Bigender
 end
 
 return Player

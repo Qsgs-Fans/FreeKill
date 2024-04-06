@@ -143,14 +143,12 @@ callbacks["UpdateRoomList"] = (jsonData) => {
   const current = mainStack.currentItem;  // should be lobby
   if (mainStack.depth === 2) {
     current.roomModel.clear();
-    JSON.parse(jsonData).forEach(function (room) {
+    JSON.parse(jsonData).forEach(room => {
+      const [roomId, roomName, gameMode, playerNum, capacity, hasPassword,
+        outdated] = room;
       current.roomModel.append({
-        roomId: room[0],
-        roomName: room[1],
-        gameMode: room[2],
-        playerNum: room[3],
-        capacity: room[4],
-        hasPassword: room[5] ? true : false,
+        roomId, roomName, gameMode, playerNum, capacity,
+        hasPassword, outdated,
       });
     });
   }

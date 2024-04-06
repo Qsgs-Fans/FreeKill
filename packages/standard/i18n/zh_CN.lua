@@ -522,9 +522,11 @@ Fk:loadTranslationTable{
   ["ex__choose_skill"] = "选择",
   ["distribution_select_skill"] = "分配",
   ["choose_players_to_move_card_in_board"] = "选择角色",
-  ["reveal_skill"] = "亮将",
-  ["#reveal_skill"] = "选择一个武将亮将（点击左侧选择框展开）",
-  [":reveal_skill"] = "出牌阶段，你可亮出一张有锁定技的武将。",
+  ["reveal_skill&"] = "亮将",
+  ["#reveal_skill&"] = "选择一个武将亮将（点击左侧选择框展开）",
+  [":reveal_skill&"] = "出牌阶段，你可明置一张有锁定技的武将。",
+  ["revealMain"] = "明置主将 %arg",
+  ["revealDeputy"] = "明置副将 %arg",
 
   ["game_rule"] = "弃牌阶段",
 }

@@ -12,7 +12,7 @@ GraphicsBox {
   property var selectedItem: []
   property bool loaded: false
   property bool convertDisabled: false
-  property bool needSameKingdom: false
+  property bool hegemony: false
 
   ListModel {
     id: generalList
@@ -230,6 +230,14 @@ GraphicsBox {
     return false;
   }
 
+  function updateCompanion(gcard1, gcard2, overwrite) {
+    if (lcall("IsCompanionWith", gcard1.name, gcard2.name)) {
+      gcard1.hasCompanions = true;
+    } else if (overwrite) {
+      gcard1.hasCompanions = false;
+    }
+  }
+
   function updatePosition()
   {
     choices = [];
@@ -248,12 +256,37 @@ GraphicsBox {
     root.choicesChanged();
 
     fightButton.enabled = (choices.length == choiceNum) &&
-      (needSameKingdom ? isHegPair(selectedItem[0], selectedItem[1]) : true);
+      (hegemony ? isHegPair(selectedItem[0], selectedItem[1]) : true);
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
-      item.selectable = needSameKingdom ? isHegPair(selectedItem[0], item)
+      item.selectable = hegemony ? isHegPair(selectedItem[0], item)
                                         : true;
+      if (hegemony) {
+        if (selectedItem[0]) {
+          if (selectedItem[1]) {
+            if (selectedItem[0] === item) {
+              updateCompanion(item, selectedItem[1], true);
+            } else if (selectedItem[1] === item) {
+              updateCompanion(item, selectedItem[0], true);
+            } else {
+              item.hasCompanions = false;
+            }
+          } else {
+            if (selectedItem[0] !== item) {
+              updateCompanion(item, selectedItem[0], true);
+            } else {
+              for (let j = 0; j < generalList.count; j++) {
+                updateCompanion(item, generalList.get(j), false);
+              }
+            }
+          }
+        } else {
+          for (let j = 0; j < generalList.count; j++) {
+            updateCompanion(item, generalList.get(j), false);
+          }
+        }
+      }
       if (selectedItem.indexOf(item) != -1)
         continue;
 

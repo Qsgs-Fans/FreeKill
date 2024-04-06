@@ -954,7 +954,7 @@ callbacks["AskForGeneral"] = (jsonData) => {
   });
   box.choiceNum = n;
   box.convertDisabled = !!convert;
-  box.needSameKingdom = !!heg;
+  box.hegemony = !!heg;
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });
   box.updatePosition();

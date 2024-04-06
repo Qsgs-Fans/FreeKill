@@ -110,14 +110,22 @@ function General:getSkillNameList(include_lord)
   return ret
 end
 
---- 为武将增加珠联璧合关系武将（1个或多个），只需写trueName。
----@param name string[]  @ 武将真名（表）
+--- 为武将增加珠联璧合关系武将（1个或多个）。
+---@param name string|string[]  @ 武将名（表）
 function General:addCompanions(name)
   if type(name) == "table" then
     table.insertTable(self.companions, name)
   elseif type(name) == "string" then
     table.insert(self.companions, name)
   end
+end
+
+--- 是否与另一武将构成珠联璧合关系。
+---@param other General @ 另一武将
+function General:isCompanionWith(other)
+  return table.contains(self.companions, other.name) or table.contains(other.companions, self.name)
+    or (string.find(self.name, "lord") and (other.kingdom == self.kingdom or other.subkingdom == self.kingdom))
+    or (string.find(other.name, "lord") and (self.kingdom == other.kingdom or self.subkingdom == other.kingdom))
 end
 
 return General

@@ -265,11 +265,8 @@ end
 ---@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
 ---@return CardArea @ 这张牌的区域
 function Room:getCardArea(cardId)
-  if type(cardId) ~= "number" then
-    assert(cardId and cardId:isInstanceOf(Card))
-    cardId = cardId:getEffectiveId()
-  end
-  return self.card_place[cardId] or Card.Unknown
+  local cardIds = table.map(Card:getIdList(cardId), function(cid) return self.card_place[cid] or Card.Unknown end)
+  return #cardIds == 1 and cardIds[1] or Card.Unknown
 end
 
 --- 获得拥有某一张牌的玩家。
@@ -3040,6 +3037,7 @@ end
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName? string @ 技能名
 ---@param extra? boolean @ 是否不计入次数
+---@return CardUseStruct
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
@@ -3064,7 +3062,7 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   use.extraUse = extra
   self:useCard(use)
 
-  return true
+  return use
 end
 
 ------------------------------------------------------------------------
@@ -3936,6 +3934,13 @@ function Room:abortPlayerArea(player, playerSlots)
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
 
+  for _, s in ipairs(slotsToSeal) do
+    self:sendLog{
+      type = "#AbortArea",
+      from = player.id,
+      arg = s,
+    }
+  end
   self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
 end
 
@@ -3961,6 +3966,13 @@ function Room:resumePlayerArea(player, playerSlots)
 
   if #slotsToResume > 0 then
     self:broadcastProperty(player, "sealedSlots")
+    for _, s in ipairs(slotsToResume) do
+      self:sendLog{
+        type = "#ResumeArea",
+        from = player.id,
+        arg = s,
+      }
+    end
     self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
   end
 end

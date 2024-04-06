@@ -72,6 +72,11 @@ function GetSameGenerals(name)
   return json.encode(Fk:getSameGenerals(name))
 end
 
+function IsCompanionWith(general, general2)
+  local _general, _general2 = Fk.generals[general], Fk.generals[general2]
+  return json.encode(_general:isCompanionWith(_general2))
+end
+
 local cardSubtypeStrings = {
   [Card.SubtypeNone] = "none",
   [Card.SubtypeDelayedTrick] = "delayed_trick",
@@ -146,7 +151,7 @@ function GetAllGeneralPack()
 end
 
 function GetGenerals(pack_name)
-  if not Fk.packages[pack_name] then return "{}" end
+  if not Fk.packages[pack_name] then return "[]" end
   local ret = {}
   for _, g in ipairs(Fk.packages[pack_name].generals) do
     if not g.total_hidden then
