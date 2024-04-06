@@ -228,6 +228,7 @@ GameEvent.functions[GameEvent.Turn] = function(self)
   local room = self.room
   room.current.phase = Player.PhaseNone
   room.logic:trigger(fk.TurnStart, room.current)
+  room.current.phase = Player.NotActive
   room.current:play()
 end
 
