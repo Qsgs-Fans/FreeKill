@@ -618,7 +618,6 @@ void Room::removeRejectId(int id) {
 }
 
 // ------------------------------------------------
-
 static void updateAvatar(ServerPlayer *sender, const QString &jsonData) {
   auto arr = String2Json(jsonData).array();
   auto avatar = arr[0].toString();
@@ -681,7 +680,11 @@ static void enterRoom(ServerPlayer *sender, const QString &jsonData) {
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
-      room->addPlayer(sender);
+      if (room->getThread()->isOutdated()) {
+        sender->doNotify("ErrorMsg", "room is outdated");
+      } else {
+        room->addPlayer(sender);
+      }
     } else {
       sender->doNotify("ErrorMsg", "room password error");
     }
@@ -698,7 +701,11 @@ static void observeRoom(ServerPlayer *sender, const QString &jsonData) {
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
-      room->addObserver(sender);
+      if (room->getThread()->isOutdated()) {
+        sender->doNotify("ErrorMsg", "room is outdated");
+      } else {
+        room->addObserver(sender);
+      }
     } else {
       sender->doNotify("ErrorMsg", "room password error");
     }
@@ -749,6 +756,7 @@ static void startGame(ServerPlayer *player, const QString &) {
   auto room = player->getRoom();
   if (room->getThread()->isOutdated()) {
     foreach (auto p, room->getPlayers()) {
+      p->doNotify("ErrorMsg", "room is outdated");
       p->kicked();
     }
   } else {

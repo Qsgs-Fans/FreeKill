@@ -692,6 +692,14 @@ void Server::refreshMd5() {
       thread->pushRequest("-1,outdated");
     }
   }
+  foreach (auto room, rooms) {
+    if (!room->isStarted()) {
+      foreach (auto p, room->getPlayers()) {
+        p->doNotify("ErrorMsg", "room is outdated");
+        p->kicked();
+      }
+    }
+  }
   foreach (auto p, lobby()->getPlayers()) {
     // TODO: auto reconnect
     emit p->kicked();

@@ -66,6 +66,7 @@ class Room : public QObject {
   void addRejectId(int id);
   void removeRejectId(int id);
 
+  // router用
   void handlePacket(ServerPlayer *sender, const QString &command,
                     const QString &jsonData);
  signals:
