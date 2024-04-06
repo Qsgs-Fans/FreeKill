@@ -3038,6 +3038,7 @@ end
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName? string @ 技能名
 ---@param extra? boolean @ 是否不计入次数
+---@return CardUseStruct
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
@@ -3062,7 +3063,7 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   use.extraUse = extra
   self:useCard(use)
 
-  return true
+  return use
 end
 
 ------------------------------------------------------------------------
