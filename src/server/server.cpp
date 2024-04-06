@@ -693,7 +693,7 @@ void Server::refreshMd5() {
     }
   }
   foreach (auto room, rooms) {
-    if (!room->isStarted()) {
+    if (!room->isStarted() && room->getThread()->isOutdated()) {
       foreach (auto p, room->getPlayers()) {
         p->doNotify("ErrorMsg", "room is outdated");
         p->kicked();
@@ -701,7 +701,6 @@ void Server::refreshMd5() {
     }
   }
   foreach (auto p, lobby()->getPlayers()) {
-    // TODO: auto reconnect
     emit p->kicked();
   }
 }
