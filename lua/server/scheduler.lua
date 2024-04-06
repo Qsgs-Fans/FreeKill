@@ -22,6 +22,8 @@ end)
 
 -- 仿照Room接口编写的request协程处理器
 local requestRoom = setmetatable({
+  id = -1,
+  runningRooms = runningRooms,
 
   -- minDelayTime 是当没有任何就绪房间时，可以睡眠的时间。
   -- 因为这个时间是所有房间预期就绪用时的最小值，故称为minDelayTime。
@@ -130,6 +132,14 @@ local function mainLoop()
 
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
+          local runningRoomsCount = -1 -- 必有requestRoom，从-1开始算
+          for _ in pairs(runningRooms) do
+            runningRoomsCount = runningRoomsCount + 1
+            if runningRoomsCount > 0 then break end
+          end
+          if runningRoomsCount == 0 and requestRoom.thread:isOutdated() then
+            break
+          end
 
           -- verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
 
