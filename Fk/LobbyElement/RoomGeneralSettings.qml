@@ -109,6 +109,7 @@ Flickable {
       }
     }
 
+    /*
     Text {
       id: warning
       anchors.rightMargin: 8
@@ -121,6 +122,7 @@ Flickable {
       text: luatr("No enough generals")
       color: "red"
     }
+    */
 
     RowLayout {
       anchors.rightMargin: 8
