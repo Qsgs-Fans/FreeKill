@@ -198,6 +198,8 @@ Fk:loadTranslationTable({
   ["reveal_skill&"] = "Reveal",
   ["#reveal_skill&"] = "Choose a character to reveal",
   [":reveal_skill&"] = "In action phase, you can reveal a character who has Forced skills.",
+  ["revealMain"] = "Reveal main character %arg",
+  ["revealDeputy"] = "Reveal deputy character %arg",
 
   ["game_rule"] = "Discard",
 }, "en_US")

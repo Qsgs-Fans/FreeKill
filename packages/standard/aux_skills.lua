@@ -280,7 +280,7 @@ local revealSkill = fk.CreateActiveSkill{
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
-          table.insert(choiceList, "revealMainGeneral:::" .. general.name)
+          table.insert(choiceList, "revealMain:::" .. general.name)
           break
         end
       end
@@ -290,7 +290,7 @@ local revealSkill = fk.CreateActiveSkill{
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
-          table.insert(choiceList, "revealDeputyGeneral:::" .. general.name)
+          table.insert(choiceList, "revealDeputy:::" .. general.name)
           break
         end
       end
