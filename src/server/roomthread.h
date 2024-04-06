@@ -16,6 +16,7 @@ class RoomThread : public QThread {
   Server *getServer() const;
   bool isFull() const;
 
+  QString getMd5() const;
   Room *getRoom(int id) const;
   void addRoom(Room *room);
   void removeRoom(Room *room);
@@ -32,6 +33,9 @@ class RoomThread : public QThread {
   bool isTerminated() const;
 
   bool isConsoleStart() const;
+
+  bool isOutdated();
+
  protected:
   virtual void run();
 
@@ -39,6 +43,7 @@ class RoomThread : public QThread {
   Server *m_server;
   // QList<Room *> room_list;
   int m_capacity;
+  QString md5;
 
   lua_State *L;
   QMutex request_queue_mutex;

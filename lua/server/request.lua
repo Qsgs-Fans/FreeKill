@@ -181,7 +181,7 @@ request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
 end
 
-request_handlers["reloadpackage"] = function(room, id, reqlist)
+request_handlers["reloadpackage"] = function(_, _, reqlist)
   if not IsConsoleStart() then return end
   local path = reqlist[3]
   Fk:reloadPackage(path)

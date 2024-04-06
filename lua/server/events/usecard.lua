@@ -48,20 +48,23 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   ---[[
   if not _card:isVirtual() then
     local temp = { card = _card }
-    Fk:filterCard(_card.id, room:getCardOwner(_card.id), temp)
+    Fk:filterCard(_card.id, room:getCardOwner(_card), temp)
     card = temp.card
   end
   cardUseEvent.card = card
   --]]
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
-  room:doAnimate("Indicate", {
-    from = from,
-    to = cardUseEvent.tos or Util.DummyTable,
-  })
+
+  if not cardUseEvent.noIndicate then
+    room:doAnimate("Indicate", {
+      from = from,
+      to = cardUseEvent.tos or Util.DummyTable,
+    })
+  end
 
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
-  if cardUseEvent.tos and #cardUseEvent.tos > 0 then
+  if cardUseEvent.tos and #cardUseEvent.tos > 0 and not cardUseEvent.noIndicate then
     local to = {}
     for _, t in ipairs(cardUseEvent.tos) do
       table.insert(to, t[1])
@@ -182,18 +185,18 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
   end
 
-  local _card = sendCardEmotionAndLog(room, cardUseEvent)
-
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
     logic:breakEvent()
   end
+
+  local _card = sendCardEmotionAndLog(room, cardUseEvent)
 
   room:moveCardTo(cardUseEvent.card, Card.Processing, nil, fk.ReasonUse)
 
   local card = cardUseEvent.card
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
   if #useCardIds > 0 then
-    if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 then
+    if cardUseEvent.tos and #cardUseEvent.tos > 0 and #cardUseEvent.tos <= 2 and not cardUseEvent.noIndicate then
       local tos = table.map(cardUseEvent.tos, function(e) return e[1] end)
       room:sendFootnote(useCardIds, {
         type = "##UseCardTo",
@@ -255,6 +258,11 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   local cardResponseEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
+
+  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
+    logic:breakEvent()
+  end
+
   local from = cardResponseEvent.customFrom or cardResponseEvent.from
   local card = cardResponseEvent.card
   local cardIds = room:getSubcardsByRule(card)
@@ -283,10 +291,6 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   end
 
   playCardEmotionAndSound(room, room:getPlayerById(from), card)
-
-  if logic:trigger(fk.PreCardRespond, room:getPlayerById(cardResponseEvent.from), cardResponseEvent) then
-    logic:breakEvent()
-  end
 
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
   if #cardIds > 0 then

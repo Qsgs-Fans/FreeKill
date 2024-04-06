@@ -41,6 +41,7 @@ public:
   bool isTerminated() const;
 
   bool isConsoleStart() const;
+  bool isOutdated();
 };
 
 %{

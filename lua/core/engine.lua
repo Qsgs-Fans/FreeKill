@@ -602,12 +602,12 @@ function Engine:filterCard(id, player, data)
       if modify and RoomInstance then
         if not f.mute then
           player:broadcastSkillInvoke(f.name)
+          RoomInstance:doAnimate("InvokeSkill", {
+            name = f.name,
+            player = player.id,
+            skill_type = f.anim_type,
+          })
         end
-        RoomInstance:doAnimate("InvokeSkill", {
-          name = f.name,
-          player = player.id,
-          skill_type = f.anim_type,
-        })
         RoomInstance:sendLog{
           type = "#FilterCard",
           arg = f.name,

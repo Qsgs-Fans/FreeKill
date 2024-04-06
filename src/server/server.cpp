@@ -112,14 +112,14 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   RoomThread *thread = nullptr;
 
   foreach (auto t, threads) {
-    if (!t->isFull()) {
+    if (!t->isFull() && !t->isOutdated()) {
       thread = t;
       break;
     }
   }
+
   if (!thread && nextRoomId != 0) {
-    thread = new RoomThread(this);
-    threads.append(thread);
+    thread = createThread();
   }
 
   if (!idle_rooms.isEmpty()) {
@@ -128,6 +128,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     nextRoomId++;
     room->setAbandoned(false);
     room->setThread(thread);
+    thread->addRoom(room);
     rooms.insert(room->getId(), room);
   } else {
     room = new Room(thread);
@@ -150,6 +151,16 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
 Room *Server::findRoom(int id) const { return rooms.value(id); }
 
 Room *Server::lobby() const { return m_lobby; }
+
+RoomThread *Server::createThread() {
+  RoomThread *thread = new RoomThread(this);
+  threads.append(thread);
+  return thread;
+}
+
+void Server::removeThread(RoomThread *thread) {
+  threads.removeOne(thread);
+}
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
@@ -183,6 +194,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
+    obj << room->isOutdated();
 
     if (count == cap)
       arr << obj;
@@ -668,6 +680,30 @@ void Server::beginTransaction() {
 void Server::endTransaction() {
   ExecSQL(db, "COMMIT;");
   transaction_mutex.unlock();
+}
+
+const QString &Server::getMd5() const {
+  return md5;
+}
+
+void Server::refreshMd5() {
+  md5 = calcFileMD5();
+  foreach (auto room, rooms) {
+    if (room->isOutdated()) {
+      if (!room->isStarted()) {
+        foreach (auto p, room->getPlayers()) {
+          p->doNotify("ErrorMsg", "room is outdated");
+          p->kicked();
+        }
+      } else {
+        room->doBroadcastNotify(room->getPlayers(), "GameLog",
+            "{\"type\":\"#RoomOutdated\",\"toast\":true}");
+      }
+    }
+  }
+  foreach (auto p, lobby()->getPlayers()) {
+    emit p->kicked();
+  }
 }
 
 void Server::readPendingDatagrams() {

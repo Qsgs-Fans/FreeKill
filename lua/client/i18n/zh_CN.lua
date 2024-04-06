@@ -498,6 +498,7 @@ Fk:loadTranslationTable{
   ["#ChainStateChange"] = "%from %arg 了武将牌",
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
   ["#ChangeKingdom"] = "%from 的国籍从 %arg 变成了 %arg2",
+  ["#RoomOutdated"] = "服务器更新完毕！该房间已过期，将无法再次游玩",
 }
 
 -- card footnote

@@ -3,6 +3,7 @@
 #include "roomthread.h"
 #include "server.h"
 #include "util.h"
+#include <lua.h>
 
 #ifndef FK_SERVER_ONLY
 #include "client.h"
@@ -13,6 +14,7 @@ RoomThread::RoomThread(Server *m_server) {
   this->m_server = m_server;
   m_capacity = 100; // TODO: server cfg
   terminated = false;
+  md5 = m_server->getMd5();
 
   L = CreateLuaState();
   DoLuaScript(L, "lua/freekill.lua");
@@ -26,6 +28,7 @@ RoomThread::~RoomThread() {
     wait();
   }
   lua_close(L);
+  m_server->removeThread(this);
   // foreach (auto room, room_list) {
   //   room->deleteLater();
   // }
@@ -40,6 +43,8 @@ bool RoomThread::isFull() const {
   return m_capacity <= 0;
 }
 
+QString RoomThread::getMd5() const { return md5; }
+
 Room *RoomThread::getRoom(int id) const {
   return m_server->findRoom(id);
 }
@@ -52,6 +57,10 @@ void RoomThread::addRoom(Room *room) {
 void RoomThread::removeRoom(Room *room) {
   room->setThread(nullptr);
   m_capacity++;
+  if (m_capacity == 100 // TODO: server cfg
+      && isOutdated()) {
+    deleteLater();
+  }
 }
 
 QString RoomThread::fetchRequest() {
@@ -117,4 +126,14 @@ bool RoomThread::isConsoleStart() const {
 #else
   return false;
 #endif
+}
+
+bool RoomThread::isOutdated() {
+  bool ret = md5 != m_server->getMd5();
+  if (ret) {
+    // 让以后每次都outdate
+    // 不然反复disable/enable的情况下会出乱子
+    md5 = "";
+  }
+  return ret;
 }
