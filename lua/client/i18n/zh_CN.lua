@@ -327,7 +327,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.10
+  ## v0.4.11
 
   一些优化
 
