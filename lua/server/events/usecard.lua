@@ -48,7 +48,7 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   ---[[
   if not _card:isVirtual() then
     local temp = { card = _card }
-    Fk:filterCard(_card.id, room:getPlayerById(from), temp)
+    Fk:filterCard(_card.id, room:getCardOwner(_card.id), temp)
     card = temp.card
   end
   cardUseEvent.card = card
