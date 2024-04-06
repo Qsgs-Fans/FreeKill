@@ -1117,7 +1117,7 @@ local role_getlogic = function()
     if lord ~= nil then
       room.current = lord
       local a1 = #room.general_pile
-      local a2 = #room.players * generalNum + lord_num
+      local a2 = #room.players * generalNum
       if a1 < a2 then
         room:sendLog{
           type = "#NoEnoughGeneralDraw",
@@ -1127,6 +1127,7 @@ local role_getlogic = function()
         }
         room:gameOver("")
       end
+      lord_num = math.min(a1 - a2, lord_num)
       local generals = table.connect(room:findGenerals(function(g)
         return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
       end, lord_num), room:getNGenerals(generalNum))
