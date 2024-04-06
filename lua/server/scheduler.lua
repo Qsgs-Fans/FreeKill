@@ -132,7 +132,12 @@ local function mainLoop()
 
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
-          if #runningRooms == 0 and requestRoom.thread:isOutdated() then
+          local runningRoomsCount = -1 -- 必有requestRoom，从-1开始算
+          for _ in pairs(runningRooms) do
+            runningRoomsCount = runningRoomsCount + 1
+            if runningRoomsCount > 0 then break end
+          end
+          if runningRoomsCount == 0 and requestRoom.thread:isOutdated() then
             break
           end
 
