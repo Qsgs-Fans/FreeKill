@@ -146,7 +146,7 @@ function GetAllGeneralPack()
 end
 
 function GetGenerals(pack_name)
-  if not Fk.packages[pack_name] then return "{}" end
+  if not Fk.packages[pack_name] then return "[]" end
   local ret = {}
   for _, g in ipairs(Fk.packages[pack_name].generals) do
     if not g.total_hidden then
