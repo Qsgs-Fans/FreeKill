@@ -84,14 +84,14 @@ local guicai = fk.CreateTriggerSkill{
   on_cost = function(self, event, target, player, data)
     local room = player.room
     local prompt = "#guicai-ask::" .. target.id
-    local card = room:askForResponse(player, self.name, ".|.|.|hand", prompt, true)
-    if card ~= nil then
-      self.cost_data = card
+    local card = room:askForCard(player, 1, 1, false, self.name, true, ".|.|.|hand", prompt)
+    if #card > 0 then
+      self.cost_data = card[1]
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
-    player.room:retrial(self.cost_data, player, data, self.name)
+    player.room:retrial(Fk:getCardById(self.cost_data), player, data, self.name)
   end,
 }
 local fankui = fk.CreateTriggerSkill{
@@ -1119,7 +1119,7 @@ local role_getlogic = function()
     if lord ~= nil then
       room.current = lord
       local a1 = #room.general_pile
-      local a2 = #room.players * generalNum + lord_num
+      local a2 = #room.players * generalNum
       if a1 < a2 then
         room:sendLog{
           type = "#NoEnoughGeneralDraw",
@@ -1129,6 +1129,7 @@ local role_getlogic = function()
         }
         room:gameOver("")
       end
+      lord_num = math.min(a1 - a2, lord_num)
       local generals = table.connect(room:findGenerals(function(g)
         return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
       end, lord_num), room:getNGenerals(generalNum))

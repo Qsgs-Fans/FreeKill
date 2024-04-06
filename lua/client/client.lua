@@ -66,25 +66,28 @@ function Client:getPlayerById(id)
   return nil
 end
 
----@param cardId integer | card
+---@param cardId integer | Card
 ---@return CardArea
 function Client:getCardArea(cardId)
-  if type(cardId) ~= "number" then
-    assert(cardId and cardId:isInstanceOf(Card))
-    cardId = cardId:getEffectiveId()
-  end
-  if table.contains(Self.player_cards[Player.Hand], cardId) then
-    return Card.PlayerHand
-  end
-  if table.contains(Self.player_cards[Player.Equip], cardId) then
-    return Card.PlayerEquip
-  end
-  for _, t in pairs(Self.special_cards) do
-    if table.contains(t, cardId) then
-      return Card.PlayerSpecial
+  local cardIds = Card:getIdList(cardId)
+  local resultPos = {}
+  for _, cid in ipairs(cardIds) do
+    if not table.contains(resultPos, Card.PlayerHand) and table.contains(Self.player_cards[Player.Hand], cid) then
+      table.insert(resultPos, Card.PlayerHand)
+    end
+    if not table.contains(resultPos, Card.PlayerEquip) and table.contains(Self.player_cards[Player.Equip], cid) then
+      table.insert(resultPos, Card.PlayerEquip)
+    end
+    for _, t in pairs(Self.special_cards) do
+      if table.contains(t, cid) then
+        table.insertIfNeed(resultPos, Card.PlayerSpecial)
+      end
     end
   end
-  error("Client:getCardArea can only judge cards in your hand or equip area")
+  if #resultPos == 1 then
+    return resultPos[1]
+  end
+  return Card.Unknown
 end
 
 function Client:moveCards(moves)
