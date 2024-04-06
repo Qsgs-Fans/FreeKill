@@ -62,6 +62,7 @@ Item {
   property alias goBackAnim: goBackAnimation
   property int goBackDuration: 500
   property bool busy: false // whether there is a running emotion on the card
+  property alias dragging: drag.active
 
   signal toggleDiscards()
   signal clicked()
@@ -278,6 +279,7 @@ Item {
   }
 
   DragHandler {
+    id: drag
     enabled: draggable
     grabPermissions: PointHandler.TakeOverForbidden
     xAxis.enabled: true

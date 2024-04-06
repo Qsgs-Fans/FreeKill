@@ -226,9 +226,8 @@ end
 
 GameEvent.functions[GameEvent.Turn] = function(self)
   local room = self.room
-  local logic = room.logic
-
-  logic:trigger(fk.TurnStart, room.current)
+  room.current.phase = Player.PhaseNone
+  room.logic:trigger(fk.TurnStart, room.current)
   room.current:play()
 end
 
@@ -251,8 +250,10 @@ GameEvent.cleaners[GameEvent.Turn] = function(self)
     current.skipped_phases = {}
   end
 
+  current.phase = Player.PhaseNone
   logic:trigger(fk.TurnEnd, current, nil, self.interrupted)
   logic:trigger(fk.AfterTurnEnd, current, nil, self.interrupted)
+  current.phase = Player.NotActive
 
   for _, p in ipairs(room.players) do
     p:setCardUseHistory("", 0, Player.HistoryTurn)

@@ -2083,7 +2083,9 @@ function Room:handleUseCardReply(player, data)
     if skill.interaction then skill.interaction.data = data.interaction_data end
     if skill:isInstanceOf(ActiveSkill) then
       self:useSkill(player, skill, function()
-        self:doIndicate(player.id, targets)
+        if not skill.no_indicate then
+          self:doIndicate(player.id, targets)
+        end
         skill:onUse(self, {
           from = player.id,
           cards = selected_cards,
