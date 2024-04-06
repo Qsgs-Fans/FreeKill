@@ -72,6 +72,11 @@ function GetSameGenerals(name)
   return json.encode(Fk:getSameGenerals(name))
 end
 
+function IsCompanionWith(general, general2)
+  local _general, _general2 = Fk.generals[general], Fk.generals[general2]
+  return json.encode(_general:isCompanionWith(_general2))
+end
+
 local cardSubtypeStrings = {
   [Card.SubtypeNone] = "none",
   [Card.SubtypeDelayedTrick] = "delayed_trick",

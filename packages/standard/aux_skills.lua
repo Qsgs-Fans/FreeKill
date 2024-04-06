@@ -271,8 +271,8 @@ local revealProhibited = fk.CreateInvaliditySkill {
 
 -- 亮将
 local revealSkill = fk.CreateActiveSkill{
-  name = "reveal_skill",
-  prompt = "#reveal_skill",
+  name = "reveal_skill&",
+  prompt = "#reveal_skill&",
   interaction = function(self)
     local choiceList = {}
     if (Self.general == "anjiang" and not Self:prohibitReveal()) then
@@ -280,7 +280,7 @@ local revealSkill = fk.CreateActiveSkill{
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
-          table.insert(choiceList, "revealMain")
+          table.insert(choiceList, "revealMain:::" .. general.name)
           break
         end
       end
@@ -290,13 +290,13 @@ local revealSkill = fk.CreateActiveSkill{
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
-          table.insert(choiceList, "revealDeputy")
+          table.insert(choiceList, "revealDeputy:::" .. general.name)
           break
         end
       end
     end
     if #choiceList == 0 then return false end
-    return UI.ComboBox { choices = choiceList}
+    return UI.ComboBox { choices = choiceList }
   end,
   target_num = 0,
   card_num = 0,
@@ -305,18 +305,16 @@ local revealSkill = fk.CreateActiveSkill{
     local player = room:getPlayerById(effect.from)
     local choice = self.interaction.data
     if not choice then return false
-    elseif choice == "revealMain" then player:revealGeneral(false)
-    elseif choice == "revealDeputy" then player:revealGeneral(true) end
+    elseif choice:startsWith("revealMain") then player:revealGeneral(false)
+    elseif choice:startsWith("revealDeputy") then player:revealGeneral(true) end
   end,
   can_use = function(self, player)
-    local choiceList = {}
     if (player.general == "anjiang" and not player:prohibitReveal()) then
       local general = Fk.generals[player:getMark("__heg_general")]
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "m" then
-          table.insert(choiceList, "revealMain")
-          break
+          return true
         end
       end
     end
@@ -325,12 +323,11 @@ local revealSkill = fk.CreateActiveSkill{
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
         if s.frequency == Skill.Compulsory and s.relate_to_place ~= "d" then
-          table.insert(choiceList, "revealDeputy")
-          break
+          return true
         end
       end
     end
-    return #choiceList > 0
+    return false
   end
 }
 

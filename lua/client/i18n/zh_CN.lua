@@ -431,9 +431,12 @@ Fk:loadTranslationTable{
   ["$DiscardOther"] = "%to 弃置了 %from 的 %arg 张牌 %card",
   ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",
 
+  ["#AbortArea"] = "%from 的 %arg 被废除",
+  ["#ResumeArea"] = "%from 的 %arg 被恢复",
+
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",
-  ["#RecastBySkill"] = "%from 发动了 “%arg” 重铸了 %card",
+  ["#RecastBySkill"] = "%from 因 “%arg” 重铸了 %card",
 
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",

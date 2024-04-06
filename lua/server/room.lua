@@ -3040,6 +3040,7 @@ end
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName? string @ 技能名
 ---@param extra? boolean @ 是否不计入次数
+---@return CardUseStruct
 function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   card.skillName = skillName
@@ -3064,7 +3065,7 @@ function Room:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   use.extraUse = extra
   self:useCard(use)
 
-  return true
+  return use
 end
 
 ------------------------------------------------------------------------
@@ -3936,6 +3937,13 @@ function Room:abortPlayerArea(player, playerSlots)
   table.insertTable(player.sealedSlots, slotsToSeal)
   self:broadcastProperty(player, "sealedSlots")
 
+  for _, s in ipairs(slotsToSeal) do
+    self:sendLog{
+      type = "#AbortArea",
+      from = player.id,
+      arg = s,
+    }
+  end
   self.logic:trigger(fk.AreaAborted, player, { slots = slotsSealed })
 end
 
@@ -3961,6 +3969,13 @@ function Room:resumePlayerArea(player, playerSlots)
 
   if #slotsToResume > 0 then
     self:broadcastProperty(player, "sealedSlots")
+    for _, s in ipairs(slotsToResume) do
+      self:sendLog{
+        type = "#ResumeArea",
+        from = player.id,
+        arg = s,
+      }
+    end
     self.logic:trigger(fk.AreaResumed, player, { slots = slotsToResume })
   end
 end

@@ -209,7 +209,7 @@ function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
 ---@param cardUseEvent CardUseStruct
----@param isEnding? bool
+---@param finished? bool
 function ActiveSkill:onAction(room, cardUseEvent, finished) end
 
 ---@param room Room

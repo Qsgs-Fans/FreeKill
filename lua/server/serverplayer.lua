@@ -943,7 +943,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     end
   end
   if ret then
-    self:loseFakeSkill("reveal_skill")
+    self:loseFakeSkill("reveal_skill&")
   end
 
   local oldKingdom = self.kingdom
@@ -1058,7 +1058,7 @@ function ServerPlayer:hideGeneral(isDeputy)
     local s = Fk.skills[sname]
     if s.relate_to_place ~= place then
       if s.frequency == Skill.Compulsory then
-        self:addFakeSkill("reveal_skill")
+        self:addFakeSkill("reveal_skill&")
       end
       self:addFakeSkill(s)
     end
