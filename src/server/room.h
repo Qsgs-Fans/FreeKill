@@ -65,6 +65,9 @@ class Room : public QObject {
 
   void addRejectId(int id);
   void removeRejectId(int id);
+
+  void handlePacket(ServerPlayer *sender, const QString &command,
+                    const QString &jsonData);
  signals:
   void abandoned();
 

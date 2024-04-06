@@ -616,3 +616,178 @@ void Room::addRejectId(int id) {
 void Room::removeRejectId(int id) {
   rejected_players.removeOne(id);
 }
+
+// ------------------------------------------------
+
+static void updateAvatar(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto avatar = arr[0].toString();
+
+  if (CheckSqlString(avatar)) {
+    auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
+      .arg(avatar)
+      .arg(sender->getId());
+    ExecSQL(ServerInstance->getDatabase(), sql);
+    sender->setAvatar(avatar);
+    sender->doNotify("UpdateAvatar", avatar);
+  }
+}
+
+static void updatePassword(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto oldpw = arr[0].toString();
+  auto newpw = arr[1].toString();
+  auto sql_find =
+    QString("SELECT password, salt FROM userinfo WHERE id=%1;")
+    .arg(sender->getId());
+
+  auto passed = false;
+  auto arr2 = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
+  auto result = arr2[0].toObject();
+  passed = (result["password"].toString() ==
+      QCryptographicHash::hash(
+        oldpw.append(result["salt"].toString()).toLatin1(),
+        QCryptographicHash::Sha256)
+      .toHex());
+  if (passed) {
+    auto sql_update =
+      QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
+      .arg(QCryptographicHash::hash(
+            newpw.append(result["salt"].toString()).toLatin1(),
+            QCryptographicHash::Sha256)
+          .toHex())
+      .arg(sender->getId());
+    ExecSQL(ServerInstance->getDatabase(), sql_update);
+  }
+
+  sender->doNotify("UpdatePassword", passed ? "1" : "0");
+}
+
+static void createRoom(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto name = arr[0].toString();
+  auto capacity = arr[1].toInt();
+  auto timeout = arr[2].toInt();
+  auto settings =
+    QJsonDocument(arr[3].toObject()).toJson(QJsonDocument::Compact);
+  ServerInstance->createRoom(sender, name, capacity, timeout, settings);
+}
+
+static void enterRoom(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto roomId = arr[0].toInt();
+  auto room = ServerInstance->findRoom(roomId);
+  if (room) {
+    auto settings = QJsonDocument::fromJson(room->getSettings());
+    auto password = settings["password"].toString();
+    if (password.isEmpty() || arr[1].toString() == password) {
+      room->addPlayer(sender);
+    } else {
+      sender->doNotify("ErrorMsg", "room password error");
+    }
+  } else {
+    sender->doNotify("ErrorMsg", "no such room");
+  }
+}
+
+static void observeRoom(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto roomId = arr[0].toInt();
+  auto room = ServerInstance->findRoom(roomId);
+  if (room) {
+    auto settings = QJsonDocument::fromJson(room->getSettings());
+    auto password = settings["password"].toString();
+    if (password.isEmpty() || arr[1].toString() == password) {
+      room->addObserver(sender);
+    } else {
+      sender->doNotify("ErrorMsg", "room password error");
+    }
+  } else {
+    sender->doNotify("ErrorMsg", "no such room");
+  }
+}
+
+static void refreshRoomList(ServerPlayer *sender, const QString &) {
+  ServerInstance->updateRoomList(sender);
+};
+
+static void quitRoom(ServerPlayer *player, const QString &) {
+  auto room = player->getRoom();
+  room->removePlayer(player);
+  if (room->getThread()->isOutdated()) {
+    player->kicked();
+  }
+}
+
+static void addRobot(ServerPlayer *player, const QString &) {
+  auto room = player->getRoom();
+  if (ServerInstance->getConfig("enableBots").toBool())
+    room->addRobot(player);
+}
+
+static void kickPlayer(ServerPlayer *player, const QString &jsonData) {
+  auto room = player->getRoom();
+  int i = jsonData.toInt();
+  auto p = room->findPlayer(i);
+  if (p && !room->isStarted()) {
+    room->removePlayer(p);
+    room->addRejectId(i);
+    QTimer::singleShot(30000, room, [=]() {
+        room->removeRejectId(i);
+        });
+  }
+}
+
+static void ready(ServerPlayer *player, const QString &) {
+  auto room = player->getRoom();
+  player->setReady(!player->isReady());
+  room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+      QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
+}
+
+static void startGame(ServerPlayer *player, const QString &) {
+  auto room = player->getRoom();
+  if (room->getThread()->isOutdated()) {
+    foreach (auto p, room->getPlayers()) {
+      p->kicked();
+    }
+  } else {
+    room->manuallyStart();
+  }
+}
+
+typedef void (*room_cb)(ServerPlayer *, const QString &);
+static const QMap<QString, room_cb> lobby_actions = {
+  {"UpdateAvatar", updateAvatar},
+  {"UpdatePassword", updatePassword},
+  {"CreateRoom", createRoom},
+  {"EnterRoom", enterRoom},
+  {"ObserveRoom", observeRoom},
+  {"RefreshRoomList", refreshRoomList},
+};
+
+static const QMap<QString, room_cb> room_actions = {
+  {"QuitRoom", quitRoom},
+  {"AddRobot", addRobot},
+  {"KickPlayer", kickPlayer},
+  {"Ready", ready},
+  {"StartGame", startGame},
+};
+
+void Room::handlePacket(ServerPlayer *sender, const QString &command,
+                        const QString &jsonData) {
+  if (command == "Chat") {
+    chat(sender, jsonData);
+    return;
+  } else if (command == "PushRequest") {
+    if (!isLobby())
+      pushRequest(QString("%1,").arg(sender->getId()) + jsonData);
+  }
+
+  auto func_table = lobby_actions;
+  if (!isLobby()) func_table = room_actions;
+  auto func = func_table[command];
+  if (func) {
+    func(sender, jsonData);
+  }
+}

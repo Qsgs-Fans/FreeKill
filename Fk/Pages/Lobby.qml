@@ -64,7 +64,13 @@ Item {
         Text {
           horizontalAlignment: Text.AlignLeft
           Layout.fillWidth: true
-          text: roomName
+          text: {
+            let ret = roomName;
+            if (outdated) {
+              ret = '<font color="grey"><del>' + ret + '</del></font>';
+            }
+            return ret;
+          }
           font.pixelSize: 20
           elide: Label.ElideRight
         }
@@ -94,7 +100,7 @@ Item {
           text: (playerNum < capacity) ? luatr("Enter") :
           luatr("Observe")
 
-          enabled: !opTimer.running
+          enabled: !opTimer.running && !outdated
 
           onClicked: {
             opTimer.start();

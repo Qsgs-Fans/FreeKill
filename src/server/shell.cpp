@@ -382,33 +382,32 @@ Shell::Shell() {
   setObjectName("Shell");
   signal(SIGINT, sigintHandler);
 
-  static QHash<QString, void (Shell::*)(QStringList &)> handlers;
-  if (handlers.size() == 0) {
-    handlers["help"] = &Shell::helpCommand;
-    handlers["?"] = &Shell::helpCommand;
-    handlers["lsplayer"] = &Shell::lspCommand;
-    handlers["lsroom"] = &Shell::lsrCommand;
-    handlers["install"] = &Shell::installCommand;
-    handlers["remove"] = &Shell::removeCommand;
-    handlers["upgrade"] = &Shell::upgradeCommand;
-    handlers["u"] = &Shell::upgradeCommand;
-    handlers["lspkg"] = &Shell::lspkgCommand;
-    handlers["enable"] = &Shell::enableCommand;
-    handlers["disable"] = &Shell::disableCommand;
-    handlers["kick"] = &Shell::kickCommand;
-    handlers["msg"] = &Shell::msgCommand;
-    handlers["m"] = &Shell::msgCommand;
-    handlers["ban"] = &Shell::banCommand;
-    handlers["unban"] = &Shell::unbanCommand;
-    handlers["banip"] = &Shell::banipCommand;
-    handlers["unbanip"] = &Shell::unbanipCommand;
-    handlers["banuuid"] = &Shell::banUuidCommand;
-    handlers["unbanuuid"] = &Shell::unbanUuidCommand;
-    handlers["reloadconf"] = &Shell::reloadConfCommand;
-    handlers["r"] = &Shell::reloadConfCommand;
-    handlers["resetpassword"] = &Shell::resetPasswordCommand;
-    handlers["rp"] = &Shell::resetPasswordCommand;
-  }
+  static const QHash<QString, void (Shell::*)(QStringList &)> handlers = {
+    {"help", &Shell::helpCommand},
+    {"?", &Shell::helpCommand},
+    {"lsplayer", &Shell::lspCommand},
+    {"lsroom", &Shell::lsrCommand},
+    {"install", &Shell::installCommand},
+    {"remove", &Shell::removeCommand},
+    {"upgrade", &Shell::upgradeCommand},
+    {"u", &Shell::upgradeCommand},
+    {"lspkg", &Shell::lspkgCommand},
+    {"enable", &Shell::enableCommand},
+    {"disable", &Shell::disableCommand},
+    {"kick", &Shell::kickCommand},
+    {"msg", &Shell::msgCommand},
+    {"m", &Shell::msgCommand},
+    {"ban", &Shell::banCommand},
+    {"unban", &Shell::unbanCommand},
+    {"banip", &Shell::banipCommand},
+    {"unbanip", &Shell::unbanipCommand},
+    {"banuuid", &Shell::banUuidCommand},
+    {"unbanuuid", &Shell::unbanUuidCommand},
+    {"reloadconf", &Shell::reloadConfCommand},
+    {"r", &Shell::reloadConfCommand},
+    {"resetpassword", &Shell::resetPasswordCommand},
+    {"rp", &Shell::resetPasswordCommand},
+  };
   handler_map = handlers;
 }
 
