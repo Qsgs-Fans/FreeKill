@@ -22,7 +22,7 @@ Room::Room(RoomThread *m_thread) {
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  this->m_thread = m_thread;
+  setThread(m_thread);
   if (m_thread) { // In case of lobby
     m_thread->addRoom(this);
   }
@@ -60,7 +60,12 @@ Server *Room::getServer() const { return server; }
 
 RoomThread *Room::getThread() const { return m_thread; }
 
-void Room::setThread(RoomThread *t) { m_thread = t; }
+void Room::setThread(RoomThread *t) {
+  m_thread = t;
+  if (t != nullptr) {
+    md5 = t->getMd5();
+  }
+}
 
 int Room::getId() const { return id; }
 
@@ -365,6 +370,12 @@ bool Room::hasObserver(ServerPlayer *player) const { return observers.contains(p
 int Room::getTimeout() const { return timeout; }
 
 void Room::setTimeout(int timeout) { this->timeout = timeout; }
+
+bool Room::isOutdated() {
+  bool ret = md5 != server->getMd5();
+  if (ret) md5 = "";
+  return ret;
+}
 
 bool Room::isStarted() const { return gameStarted; }
 
@@ -680,7 +691,7 @@ static void enterRoom(ServerPlayer *sender, const QString &jsonData) {
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
-      if (room->getThread()->isOutdated()) {
+      if (room->isOutdated()) {
         sender->doNotify("ErrorMsg", "room is outdated");
       } else {
         room->addPlayer(sender);
@@ -701,7 +712,7 @@ static void observeRoom(ServerPlayer *sender, const QString &jsonData) {
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
-      if (room->getThread()->isOutdated()) {
+      if (room->isOutdated()) {
         sender->doNotify("ErrorMsg", "room is outdated");
       } else {
         room->addObserver(sender);
@@ -721,7 +732,7 @@ static void refreshRoomList(ServerPlayer *sender, const QString &) {
 static void quitRoom(ServerPlayer *player, const QString &) {
   auto room = player->getRoom();
   room->removePlayer(player);
-  if (room->getThread()->isOutdated()) {
+  if (room->isOutdated()) {
     player->kicked();
   }
 }
@@ -754,7 +765,7 @@ static void ready(ServerPlayer *player, const QString &) {
 
 static void startGame(ServerPlayer *player, const QString &) {
   auto room = player->getRoom();
-  if (room->getThread()->isOutdated()) {
+  if (room->isOutdated()) {
     foreach (auto p, room->getPlayers()) {
       p->doNotify("ErrorMsg", "room is outdated");
       p->kicked();

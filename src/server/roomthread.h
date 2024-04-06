@@ -16,6 +16,7 @@ class RoomThread : public QThread {
   Server *getServer() const;
   bool isFull() const;
 
+  QString getMd5() const;
   Room *getRoom(int id) const;
   void addRoom(Room *room);
   void removeRoom(Room *room);
@@ -33,7 +34,7 @@ class RoomThread : public QThread {
 
   bool isConsoleStart() const;
 
-  bool isOutdated() const;
+  bool isOutdated();
 
  protected:
   virtual void run();

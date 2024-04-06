@@ -134,6 +134,7 @@ void Shell::enableCommand(QStringList &list) {
 
   auto pack = list[0];
   Pacman->enablePack(pack);
+  ServerInstance->refreshMd5();
 }
 
 void Shell::disableCommand(QStringList &list) {
@@ -144,6 +145,7 @@ void Shell::disableCommand(QStringList &list) {
 
   auto pack = list[0];
   Pacman->disablePack(pack);
+  ServerInstance->refreshMd5();
 }
 
 void Shell::lspkgCommand(QStringList &) {

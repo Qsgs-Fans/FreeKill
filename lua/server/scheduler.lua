@@ -132,6 +132,9 @@ local function mainLoop()
 
           -- 调用RoomThread的trySleep函数开始真正的睡眠。会被wakeUp(c++)唤醒。
           requestRoom.thread:trySleep(time)
+          if #runningRooms == 0 and requestRoom.thread:isOutdated() then
+            break
+          end
 
           -- verbose('[!] Waked up after %f ms...', (os.getms() - cur) / 1000)
 

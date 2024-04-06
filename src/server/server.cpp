@@ -117,6 +117,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
       break;
     }
   }
+
   if (!thread && nextRoomId != 0) {
     thread = createThread();
   }
@@ -193,7 +194,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
-    obj << room->getThread()->isOutdated();
+    obj << room->isOutdated();
 
     if (count == cap)
       arr << obj;
@@ -687,16 +688,16 @@ const QString &Server::getMd5() const {
 
 void Server::refreshMd5() {
   md5 = calcFileMD5();
-  foreach (auto thread, threads) {
-    if (thread->isOutdated()) {
-      thread->pushRequest("-1,outdated");
-    }
-  }
   foreach (auto room, rooms) {
-    if (!room->isStarted() && room->getThread()->isOutdated()) {
-      foreach (auto p, room->getPlayers()) {
-        p->doNotify("ErrorMsg", "room is outdated");
-        p->kicked();
+    if (room->isOutdated()) {
+      if (!room->isStarted()) {
+        foreach (auto p, room->getPlayers()) {
+          p->doNotify("ErrorMsg", "room is outdated");
+          p->kicked();
+        }
+      } else {
+        room->doBroadcastNotify(room->getPlayers(), "GameLog",
+            "{\"type\":\"#RoomOutdated\",\"toast\":true}");
       }
     }
   }

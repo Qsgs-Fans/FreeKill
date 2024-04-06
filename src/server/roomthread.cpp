@@ -3,6 +3,7 @@
 #include "roomthread.h"
 #include "server.h"
 #include "util.h"
+#include <lua.h>
 
 #ifndef FK_SERVER_ONLY
 #include "client.h"
@@ -28,7 +29,6 @@ RoomThread::~RoomThread() {
   }
   lua_close(L);
   m_server->removeThread(this);
-  qDebug() << objectName() << "destructed";
   // foreach (auto room, room_list) {
   //   room->deleteLater();
   // }
@@ -42,6 +42,8 @@ bool RoomThread::isFull() const {
   // return room_list.count() >= m_capacity;
   return m_capacity <= 0;
 }
+
+QString RoomThread::getMd5() const { return md5; }
 
 Room *RoomThread::getRoom(int id) const {
   return m_server->findRoom(id);
@@ -114,7 +116,7 @@ void RoomThread::tryTerminate() {
 }
 
 bool RoomThread::isTerminated() const {
-  return terminated || isOutdated();
+  return terminated;
 }
 
 bool RoomThread::isConsoleStart() const {
@@ -126,6 +128,12 @@ bool RoomThread::isConsoleStart() const {
 #endif
 }
 
-bool RoomThread::isOutdated() const {
-  return md5 != m_server->getMd5();
+bool RoomThread::isOutdated() {
+  bool ret = md5 != m_server->getMd5();
+  if (ret) {
+    // 让以后每次都outdate
+    // 不然反复disable/enable的情况下会出乱子
+    md5 = "";
+  }
+  return ret;
 }
