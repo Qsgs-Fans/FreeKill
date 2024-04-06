@@ -47,9 +47,6 @@ local function tellRoomToObserver(self, player)
   for k, v in pairs(self.banners) do
     player:doNotify("SetBanner", json.encode{ k, v })
   end
-  if self.outdated then
-    player:doNotify("Outdated")
-  end
 
   for _, p in ipairs(self.players) do
     self:notifyProperty(player, p, "general")
@@ -193,8 +190,10 @@ end
 request_handlers["outdated"] = function(s)
   for _, room in pairs(s.runningRooms) do
     if room.id ~= -1 then
-      room.outdated = true
-      room:doBroadcastNotify("Outdated")
+      room:sendLog{
+        type = "#RoomOutdated",
+        toast = true,
+      }
     end
   end
 end

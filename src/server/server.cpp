@@ -193,6 +193,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
+    obj << room->getThread()->isOutdated();
 
     if (count == cap)
       arr << obj;

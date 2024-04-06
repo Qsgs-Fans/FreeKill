@@ -375,9 +375,6 @@ function ServerPlayer:reconnect()
   for k, v in pairs(room.banners) do
     self:doNotify("SetBanner", json.encode{ k, v })
   end
-  if room.outdated then
-    self:doNotify("Outdated")
-  end
 
   for _, p in ipairs(room.players) do
     room:notifyProperty(self, p, "general")

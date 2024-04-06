@@ -283,6 +283,9 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       else {
         if (command == "QuitRoom") {
           room->removePlayer(player);
+          if (room->getThread()->isOutdated()) {
+            player->kicked();
+          }
         } else if (command == "AddRobot") {
           if (ServerInstance->getConfig("enableBots").toBool()) room->addRobot(player);
         } else if (command == "KickPlayer") {
@@ -300,7 +303,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
           room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
               QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
         } else if (command == "StartGame") {
-          room->manuallyStart();
+          if (room->getThread()->isOutdated()) {
+            foreach (auto p, room->getPlayers()) {
+              p->kicked();
+            }
+          } else {
+            room->manuallyStart();
+          }
         } else if (command == "Chat") {
           room->chat(player, jsonData);
         } else if (command == "PushRequest") {
