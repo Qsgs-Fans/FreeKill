@@ -13,6 +13,7 @@ RoomThread::RoomThread(Server *m_server) {
   this->m_server = m_server;
   m_capacity = 100; // TODO: server cfg
   terminated = false;
+  md5 = m_server->getMd5();
 
   L = CreateLuaState();
   DoLuaScript(L, "lua/freekill.lua");
@@ -26,6 +27,8 @@ RoomThread::~RoomThread() {
     wait();
   }
   lua_close(L);
+  m_server->removeThread(this);
+  qDebug() << objectName() << "destructed";
   // foreach (auto room, room_list) {
   //   room->deleteLater();
   // }
@@ -52,6 +55,10 @@ void RoomThread::addRoom(Room *room) {
 void RoomThread::removeRoom(Room *room) {
   room->setThread(nullptr);
   m_capacity++;
+  if (m_capacity == 100 // TODO: server cfg
+      && isOutdated()) {
+    deleteLater();
+  }
 }
 
 QString RoomThread::fetchRequest() {
@@ -107,7 +114,7 @@ void RoomThread::tryTerminate() {
 }
 
 bool RoomThread::isTerminated() const {
-  return terminated;
+  return terminated || isOutdated();
 }
 
 bool RoomThread::isConsoleStart() const {
@@ -117,4 +124,8 @@ bool RoomThread::isConsoleStart() const {
 #else
   return false;
 #endif
+}
+
+bool RoomThread::isOutdated() const {
+  return md5 != m_server->getMd5();
 }

@@ -22,6 +22,8 @@ end)
 
 -- 仿照Room接口编写的request协程处理器
 local requestRoom = setmetatable({
+  id = -1,
+  runningRooms = runningRooms,
 
   -- minDelayTime 是当没有任何就绪房间时，可以睡眠的时间。
   -- 因为这个时间是所有房间预期就绪用时的最小值，故称为minDelayTime。

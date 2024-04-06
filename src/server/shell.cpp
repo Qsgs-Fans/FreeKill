@@ -117,11 +117,13 @@ void Shell::upgradeCommand(QStringList &list) {
       auto obj = a.toObject();
       Pacman->upgradePack(obj["name"].toString());
     }
+    ServerInstance->refreshMd5();
     return;
   }
 
   auto pack = list[0];
   Pacman->upgradePack(pack);
+  ServerInstance->refreshMd5();
 }
 
 void Shell::enableCommand(QStringList &list) {

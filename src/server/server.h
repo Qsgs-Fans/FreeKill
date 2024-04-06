@@ -31,6 +31,9 @@ public:
   Room *findRoom(int id) const;
   Room *lobby() const;
 
+  RoomThread *createThread();
+  void removeThread(RoomThread *thread);
+
   ServerPlayer *findPlayer(int id) const;
   void addPlayer(ServerPlayer *player);
   void removePlayer(int id);
@@ -49,6 +52,9 @@ public:
 
   void beginTransaction();
   void endTransaction();
+
+  const QString &getMd5() const;
+  void refreshMd5();
 
 signals:
   void roomCreated(Room *room);

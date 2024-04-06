@@ -112,14 +112,13 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   RoomThread *thread = nullptr;
 
   foreach (auto t, threads) {
-    if (!t->isFull()) {
+    if (!t->isFull() && !t->isOutdated()) {
       thread = t;
       break;
     }
   }
   if (!thread && nextRoomId != 0) {
-    thread = new RoomThread(this);
-    threads.append(thread);
+    thread = createThread();
   }
 
   if (!idle_rooms.isEmpty()) {
@@ -128,6 +127,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     nextRoomId++;
     room->setAbandoned(false);
     room->setThread(thread);
+    thread->addRoom(room);
     rooms.insert(room->getId(), room);
   } else {
     room = new Room(thread);
@@ -150,6 +150,16 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
 Room *Server::findRoom(int id) const { return rooms.value(id); }
 
 Room *Server::lobby() const { return m_lobby; }
+
+RoomThread *Server::createThread() {
+  RoomThread *thread = new RoomThread(this);
+  threads.append(thread);
+  return thread;
+}
+
+void Server::removeThread(RoomThread *thread) {
+  threads.removeOne(thread);
+}
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
@@ -668,6 +678,23 @@ void Server::beginTransaction() {
 void Server::endTransaction() {
   ExecSQL(db, "COMMIT;");
   transaction_mutex.unlock();
+}
+
+const QString &Server::getMd5() const {
+  return md5;
+}
+
+void Server::refreshMd5() {
+  md5 = calcFileMD5();
+  foreach (auto thread, threads) {
+    if (thread->isOutdated()) {
+      thread->pushRequest("-1,outdated");
+    }
+  }
+  foreach (auto p, lobby()->getPlayers()) {
+    // TODO: auto reconnect
+    emit p->kicked();
+  }
 }
 
 void Server::readPendingDatagrams() {

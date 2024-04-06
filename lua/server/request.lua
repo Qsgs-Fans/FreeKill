@@ -47,6 +47,9 @@ local function tellRoomToObserver(self, player)
   for k, v in pairs(self.banners) do
     player:doNotify("SetBanner", json.encode{ k, v })
   end
+  if self.outdated then
+    player:doNotify("Outdated")
+  end
 
   for _, p in ipairs(self.players) do
     self:notifyProperty(player, p, "general")
@@ -181,10 +184,19 @@ request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
 end
 
-request_handlers["reloadpackage"] = function(room, id, reqlist)
+request_handlers["reloadpackage"] = function(_, _, reqlist)
   if not IsConsoleStart() then return end
   local path = reqlist[3]
   Fk:reloadPackage(path)
+end
+
+request_handlers["outdated"] = function(s)
+  for _, room in pairs(s.runningRooms) do
+    if room.id ~= -1 then
+      room.outdated = true
+      room:doBroadcastNotify("Outdated")
+    end
+  end
 end
 
 -- 处理异步请求的协程，本身也是个死循环就是了。
