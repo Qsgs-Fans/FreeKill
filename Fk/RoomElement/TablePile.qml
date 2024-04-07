@@ -17,6 +17,17 @@ Item {
     id: invisibleArea
   }
 
+  // FIXME: 重构需要
+  function inTable(cid) {
+    return leval(`(function()
+      local client = Fk:currentRoom()
+      if client._processing[${cid}] then
+        return true
+      end
+      return false
+    end)()`)
+  }
+
   Timer {
     id: vanishTimer
     interval: 1500
@@ -28,7 +39,7 @@ Item {
       if (toVanish) {
         for (i = 0; i < discardedCards.length; i++) {
           card = discardedCards[i];
-          if (card.busy) {
+          if (card.busy || inTable(card.cid)) {
             discardedCards.splice(i, 1);
             continue;
           }
@@ -42,16 +53,17 @@ Item {
 
         discardedCards = [];
         for (i = 0; i < cards.length; i++) {
-          if (cards[i].busy)
+          if (cards[i].busy || inTable(cards[i].cid))
             continue;
           discardedCards.push(cards[i]);
         }
         toVanish = false;
       } else {
         for (i = 0; i < discardedCards.length; i++) {
-          discardedCards[i].selectable = false;
+          if (!inTable((discardedCards[i].cid)))
+            discardedCards[i].selectable = false;
         }
-        toVanish = true
+        toVanish = true;
       }
     }
   }
@@ -66,7 +78,9 @@ Item {
       c.selectable = true;
       c.height = c.height * 0.8;
       c.width = c.width * 0.8;
-      // c.rotation = (Math.random() - 0.5) * 5;
+      if (config.rotateTableCard) {
+        c.rotation = (Math.random() - 0.5) * 5;
+      }
     }
   }
 

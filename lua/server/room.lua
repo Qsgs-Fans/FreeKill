@@ -1730,42 +1730,17 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
     return { self:askForCardChosen(chooser, target, flag, reason) }
   end
 
-  -- local command = "AskForCardsChosen"
-  -- prompt = prompt or ""
-  -- self:notifyMoveFocus(chooser, command)
-  -- local data = {target.id, min, max, flag, reason, prompt}
-  -- local result = self:doRequest(chooser, command, json.encode(data))
-
-  -- local ret
-  -- if result ~= "" then
-  --   ret = json.decode(result)
-  -- else
-  --   local areas = {}
-  --   local handcards
-  --   if type(flag) == "string" then
-  --     if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-  --     if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-  --     if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-  --     handcards = target:getCardIds(areas)
-  --   else
-  --     handcards = {}
-  --     for _, t in ipairs(flag.card_data) do
-  --       table.insertTable(handcards, t[2])
-  --     end
-  --   end
-  --   if #handcards == 0 then return {} end
-  --   ret = table.random(handcards, math.min(min, #handcards))
-  -- end
-
-  -- local new_ret = table.filter(ret, function(id) return id ~= -1 end)
-  -- local hand_num = #ret - #new_ret
-  -- if hand_num > 0 then
-  --   table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hand_num))
-  -- end
-
-  -- return new_ret
-  local areas = {}
   local cards
+  if type(flag) == "string" then
+    cards = target:getCardIds(flag)
+  else
+    cards = {}
+    for _, t in ipairs(flag.card_data) do
+      table.insertTable(cards, t[2])
+    end
+  end
+  if #cards <= min then return cards end
+
   local data = {
     to = target.id,
     min = min,
@@ -1773,42 +1748,37 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
     skillName = reason,
     prompt = prompt,
   }
-  if type(flag) == "string" then
-    if string.find(flag, "h") then table.insert(areas, Player.Hand) end
-    if string.find(flag, "e") then table.insert(areas, Player.Equip) end
-    if string.find(flag, "j") then table.insert(areas, Player.Judge) end
-    cards = target:getCardIds(areas)
-  else
-    cards = {}
-    for _, t in ipairs(flag.card_data) do
-      table.insertTable(cards, t[2])
-    end
-  end
-  if #cards <= min then return table.random(cards, math.min(min, #cards)) end
   local cards_data = {}
   if type(flag) == "string" then
-    if string.find(flag, "h") and #target:getCardIds(Player.Hand) > 0 then
-      local handcards = {}
-      for _, _ in ipairs(target:getCardIds(Player.Hand)) do
-        table.insert(handcards, -1)
+    local handcards = target:getCardIds(Player.Hand)
+    local equips = target:getCardIds(Player.Equip)
+    local judges = target:getCardIds(Player.Judge)
+    if string.find(flag, "h") and #handcards > 0 then
+      -- TODO: 关于明置的牌
+      if target ~= chooser then
+        handcards = table.map(handcards, function() return -1 end)
       end
       table.insert(cards_data, {"$Hand", handcards})
     end
-    if string.find(flag, "e") and #target:getCardIds(Player.Equip) > 0 then table.insert(cards_data, {"$Equip", target:getCardIds(Player.Equip)}) end
-    if string.find(flag, "j") and #target:getCardIds(Player.Judge) > 0 then table.insert(cards_data, {"$Judge", target:getCardIds(Player.Judge)}) end
-    local ret = self:askForPoxi(chooser, "AskForCardsChosen", cards_data, data, false)
-    local new_ret = table.filter(ret, function(id) return id ~= -1 end)
-    local hidden_num = #ret - #new_ret
-    if hidden_num > 0 then
-      table.insertTable(new_ret, table.random(target:getCardIds(Player.Hand), hidden_num))
+    if string.find(flag, "e") and #equips > 0 then
+      table.insert(cards_data, {"$Equip", equips})
     end
-    return new_ret
+    if string.find(flag, "j") and #judges > 0 then
+      table.insert(cards_data, {"$Judge", judges})
+    end
   else
     for _, t in ipairs(flag.card_data) do
       table.insert(cards_data, t)
     end
   end
-  return self:askForPoxi(chooser, "AskForCardsChosen", cards_data, data, false)
+  local ret = self:askForPoxi(chooser, "AskForCardsChosen", cards_data, data, false)
+  local new_ret = table.filter(ret, function(id) return id ~= -1 end)
+  local hidden_num = #ret - #new_ret
+  if hidden_num > 0 then
+    table.insertTable(new_ret,
+    table.random(target:getCardIds(Player.Hand), hidden_num))
+  end
+  return new_ret
 end
 
 --- 询问一名玩家从众多选项中选择一个。

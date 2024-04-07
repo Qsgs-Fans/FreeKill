@@ -24,6 +24,8 @@ Fk:loadTranslationTable{
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
   ["Hide unselectable cards"] = "下移不可选卡牌",
+  ["Hide observer chatter"] = "屏蔽旁观者聊天",
+  ["Rotate table card"] = "处理区的牌随机旋转",
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
   ["Search"] = "搜索",
@@ -327,9 +329,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.11
+  ## v0.4.12
 
-  一些优化
+  处理区的牌不消失，可以屏蔽旁观玩家，以及其他优化。
 
   ]==],
 }

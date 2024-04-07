@@ -1081,6 +1081,9 @@ Item {
 
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
+    const photo = Logic.getPhoto(pid);
+    if (photo === undefined && config.hideObserverChatter)
+      return;
 
     msg = msg.replace(/\{emoji([0-9]+)\}/g,
       '<img src="../../image/emoji/$1.png" height="24" width="24" />');
@@ -1091,7 +1094,7 @@ Item {
       if (specialChat(pid, raw, raw.msg.slice(1))) return;
     }
     chat.append(msg, raw);
-    const photo = Logic.getPhoto(pid);
+
     if (photo === undefined) {
       const user = raw.userName;
       const m = raw.msg;
