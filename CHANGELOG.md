@@ -1,5 +1,15 @@
 # ChangeLog
 
+## v0.4.12
+
+- 修前个版本poxi框bug
+- 增强lcall，可以传更复杂的参数（Object）
+- 处理区的牌不会消失 需要FIXME
+- 可以屏蔽旁观者
+- 可以开启0.2.0时代的卡牌旋转了
+
+___
+
 ## v0.4.11
 
 - 给carditem增加dragging参数；

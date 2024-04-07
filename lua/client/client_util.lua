@@ -749,7 +749,6 @@ end
 
 function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
-  extra_data = extra_data and json.decode(extra_data)
   if not poxi or not poxi.prompt then return "" end
   if type(poxi.prompt) == "string" then return Fk:translate(poxi.prompt) end
   return Fk:translate(poxi.prompt(data, extra_data))
@@ -757,14 +756,12 @@ end
 
 function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
-  extra_data = extra_data and json.decode(extra_data)
   if not poxi then return "false" end
   return json.encode(poxi.card_filter(to_select, selected, data, extra_data))
 end
 
 function PoxiFeasible(poxi_type, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
-  extra_data = extra_data and json.decode(extra_data)
   if not poxi then return "false" end
   return json.encode(poxi.feasible(selected, data, extra_data))
 end

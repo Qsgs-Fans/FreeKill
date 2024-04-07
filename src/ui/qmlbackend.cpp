@@ -170,6 +170,7 @@ QString QmlBackend::translate(const QString &src) {
 
 void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   QVariantList list;
+  QVariantMap map;
   switch (v.typeId()) {
   case QMetaType::Bool:
     lua_pushboolean(L, v.toBool());
@@ -195,8 +196,22 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
       lua_settable(L, -3);
     }
     break;
+  case QMetaType::QVariantMap:
+    lua_newtable(L);
+    map = v.toMap();
+    for (auto i = map.cbegin(), end = map.cend(); i != end; i++) {
+      auto bytes = i.key().toUtf8();
+      lua_pushstring(L, bytes.data());
+      pushLuaValue(L, i.value());
+      lua_settable(L, -3);
+    }
+    break;
+  case QMetaType::Nullptr:
+  case QMetaType::UnknownType: // 应该是 undefined，感觉很危险
+    lua_pushnil(L);
+    break;
   default:
-    // qCritical() << "cannot handle QVariant type" << v.typeId();
+    qCritical() << "cannot handle QVariant type" << v.typeId();
     lua_pushnil(L);
     break;
   }

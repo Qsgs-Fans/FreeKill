@@ -37,6 +37,9 @@ ColumnLayout {
     }
   }
 
+  Grid {
+    columns: 2
+
   Switch {
     text: luatr("Disable message audio")
     checked: config.disableMsgAudio
@@ -51,4 +54,21 @@ ColumnLayout {
     }
   }
 
+  Switch {
+    text: luatr("Hide observer chatter")
+    checked: config.hideObserverChatter
+    onCheckedChanged: {
+      config.hideObserverChatter = checked;
+    }
+  }
+
+  Switch {
+    text: luatr("Rotate table card")
+    checked: config.rotateTableCard
+    onCheckedChanged: {
+      config.rotateTableCard = checked;
+    }
+  }
+
+  }
 }
