@@ -1189,7 +1189,7 @@ callbacks["AskForPoxi"] = (jsonData) => {
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
-  box.extra_data = JSON.stringify(extra_data);
+  box.extra_data = extra_data;
   box.poxi_type = type;
   box.card_data = data;
   box.cancelable = cancelable;

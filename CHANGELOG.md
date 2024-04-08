@@ -1,5 +1,39 @@
 # ChangeLog
 
+## v0.4.12
+
+- 修前个版本poxi框bug
+- 增强lcall，可以传更复杂的参数（Object）
+- 处理区的牌不会消失 需要FIXME
+- 可以屏蔽旁观者
+- 可以开启0.2.0时代的卡牌旋转了
+
+___
+
+## v0.4.11
+
+- 给carditem增加dragging参数；
+- filterskill在mute的情况下不播放技能特效；
+- 给ActiveSkill增加no_indicate参数
+- 回合开始时、结束时这两个时机当前回合角色的phase设置为Player.None
+- 给usecard增加noIndicate参数
+- 服务端热更新功能
+- 国战选将框动态显示珠联璧合（等待更清晰的图…）
+- 废除和恢复区域log
+- 搬运isMale，isFemale，compareDistance，hasShownSkill
+- hasSkill如果是状态技，判断是否亮出，未亮出的返回false
+- 标准包调整，修复八卦阵，离间结姻用isMale
+- 亮将技能改用&后缀并详细化prompt
+- 拼点移动起点改为owner
+- 使用牌filter改为owner
+- 改造常备主逻辑，现在常备主会根据可用多余将数调整
+- 改良了getCardArea
+- 重新启用将框不足提醒
+- 修复了司马懿问打出牌的bug
+- 修复了白名单武将不存在时无法创房的bug
+
+___
+
 ## v0.4.10
 
 - Github新增自动发布Docker镜像的CI

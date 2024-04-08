@@ -49,6 +49,7 @@ function Client:initialize()
   end
 
   self.discard_pile = {}
+  self._processing = {}
 
   self.disabled_packs = {}
   self.disabled_generals = {}
@@ -123,6 +124,18 @@ function Client:moveCards(moves)
       self:getPlayerById(move.to):addCards(move.toArea, ids, move.specialName)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
+    end
+
+    -- FIXME: 需要系统化的重构
+    if move.fromArea == Card.Processing then
+      for _, v in ipairs(move.ids) do
+        self._processing[v] = nil
+      end
+    end
+    if move.toArea == Card.Processing then
+      for _, v in ipairs(move.ids) do
+        self._processing[v] = true
+      end
     end
 
     if (move.ids[1] ~= -1) then

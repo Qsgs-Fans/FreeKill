@@ -153,12 +153,25 @@ CardItem {
     value: shieldNum
   }
 
+  Image {
+    id: companions
+    width: parent.width
+    fillMode: Image.PreserveAspectFit
+    visible: false
+    source: {
+      const f = SkinBank.getGeneralCardDir(kingdom) + kingdom + "-companions";
+      if (Backend.exists(f + ".png")) return f;
+      return "";
+    }
+    anchors.horizontalCenter: parent.horizontalCenter
+    y: 80
+  }
+
   Text {
     width: 20
     height: 80
     x: 2
     y: lineCount > 6 ? 30 : 34
-    z: 999
     text: name !== "" ? luatr(name) : "nil"
     visible: luatr(name).length <= 6 && detailed && known
     color: "white"
@@ -172,7 +185,6 @@ CardItem {
   Text {
     x: 0
     y: 12
-    z: 999
     rotation: 90
     transformOrigin: Item.BottomLeft
     text: luatr(name)
@@ -187,7 +199,6 @@ CardItem {
     visible: pkgName !== "" && detailed && known
     height: 16
     width: childrenRect.width + 4
-    z: 100
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 4
     anchors.right: parent.right
@@ -207,17 +218,6 @@ CardItem {
       style: Text.Outline
       textFormat: Text.RichText
     }
-  }
-
-  Image {
-    id: companions
-    width: parent.width
-    fillMode: Image.PreserveAspectFit
-    visible: false
-    source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-companions"
-    anchors.horizontalCenter: parent.horizontalCenter
-    y: 80
-    z: 1
   }
 
   onNameChanged: {
