@@ -153,7 +153,7 @@ local analepticEffect = fk.CreateTriggerSkill{
     end
 
     if event == fk.PreCardUse then
-      return data.card.trueName == "slash" and player.drank > 0
+      return data.card.trueName == "slash" and player.drank > 0 and player.room.logic:damageByCardEffect(true)
     else
       return true
     end
@@ -336,13 +336,7 @@ local gudingSkill = fk.CreateTriggerSkill{
     local logic = player.room.logic
     if target == player and player:hasSkill(self) and
     data.to:isKongcheng() and data.card and data.card.trueName == "slash" and not data.chain then
-      local event = logic:getCurrentEvent()
-      if event == nil then return false end
-      event = event.parent
-      if event == nil or event.event ~= GameEvent.SkillEffect then return false end
-      event = event.parent
-      if event == nil or event.event ~= GameEvent.CardEffect then return false end
-      return data.card == event.data[1].card and data.from.id == event.data[1].from
+      return logic:damageByCardEffect(true)
     end
   end,
   on_use = function(_, _, _, _, data)
