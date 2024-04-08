@@ -229,3 +229,5 @@ fk.ReasonUse = 9
 fk.ReasonResonpse = 10
 fk.ReasonJudge = 11
 fk.ReasonRecast = 12
+
+---@alias AnimationType "special" | "drawcard" | "control" | "offensive" | "support" | "defensive" | "negative" | "masochism"
