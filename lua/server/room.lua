@@ -437,14 +437,14 @@ function Room:getNCards(num, from)
     end
   end
 
+  local i, j = 1, num
+  if from == "bottom" then
+    i = #self.draw_pile + 1 - num
+    j = #self.draw_pile
+  end
   local cardIds = {}
-  while num > 0 do
-
-    local index = from == "top" and 1 or #self.draw_pile
-    table.insert(cardIds, self.draw_pile[index])
-    table.remove(self.draw_pile, index)
-
-    num = num - 1
+  for index = i, j, 1 do
+    table.insert(cardIds, table.remove(self.draw_pile, i))
   end
 
   self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
@@ -1991,7 +1991,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     for i = #top, 1, -1 do
       table.insert(self.draw_pile, 1, top[i])
     end
-    for i = #bottom, 1, -1 do
+    for i = 1, #bottom, -1 do
       table.insert(self.draw_pile, bottom[i])
     end
 
