@@ -202,7 +202,7 @@ local luoyi_trigger = fk.CreateTriggerSkill{
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:usedSkillTimes("luoyi", Player.HistoryTurn) > 0 and
-      data.card and (data.card.trueName == "slash" or data.card.name == "duel") and player.room.logic:damageByCardEffect(true)
+      data.card and (data.card.trueName == "slash" or data.card.name == "duel") and data.by_user
   end,
   on_cost = Util.TrueFunc,
   on_use = function(self, event, target, player, data)

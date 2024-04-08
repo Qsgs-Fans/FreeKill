@@ -121,6 +121,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
       damageStruct.damage = damageStruct.damage + (cardEffectEvent.additionalDamage or 0)
+      damageStruct.by_user = true
     end
   end
 
