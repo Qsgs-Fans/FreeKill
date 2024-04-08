@@ -19,4 +19,17 @@ Fk:addPoxiMethod{
       return ret .. ":" ..extra_data.to
     end
   end,
+  default_choice = function(data, extra_data)
+    local ret = {}
+    for _, pile in ipairs(data) do
+      local cards = pile[2]
+      local lim = extra_data.min - #ret
+      if #cards > lim then
+        table.insertTable(ret, table.random(cards, lim))
+        break
+      end
+      table.insertTable(ret, cards)
+    end
+    return ret
+  end
 }
