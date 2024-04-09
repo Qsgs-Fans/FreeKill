@@ -16,9 +16,7 @@
 #endif
 
 #include <cstdlib>
-#ifndef Q_OS_WASM
 #include "server.h"
-#endif
 #include "client.h"
 #include "util.h"
 #include "replayer.h"
@@ -81,7 +79,6 @@ void QmlBackend::setEngine(QQmlApplicationEngine *engine) {
 }
 
 void QmlBackend::startServer(ushort port) {
-#ifndef Q_OS_WASM
   if (!ServerInstance) {
     Server *server = new Server(this);
 
@@ -90,7 +87,6 @@ void QmlBackend::startServer(ushort port) {
       emit notifyUI("ErrorMsg", tr("Cannot start server!"));
     }
   }
-#endif
 }
 
 void QmlBackend::joinServer(QString address) {
