@@ -3841,7 +3841,7 @@ end
 
 --- 刷新使命技状态
 ---@param player ServerPlayer
----@param skillName Suit
+---@param skillName string
 ---@param failed? boolean
 function Room:updateQuestSkillState(player, skillName, failed)
   assert(Fk.skills[skillName].frequency == Skill.Quest)
