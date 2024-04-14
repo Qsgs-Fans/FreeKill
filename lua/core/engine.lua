@@ -332,6 +332,10 @@ function Engine:addGeneral(general)
     self.same_generals[tName] = self.same_generals[tName] or { tName }
     table.insert(self.same_generals[tName], general.name)
   end
+
+  if table.find(general.skills, function(s) return s.lordSkill end) then
+    table.insert(self.lords, general.name)
+  end
 end
 
 --- 加载一系列武将。

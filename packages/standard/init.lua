@@ -1131,7 +1131,7 @@ local role_getlogic = function()
       end
       lord_num = math.min(a1 - a2, lord_num)
       local generals = table.connect(room:findGenerals(function(g)
-        return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
+        return table.contains(Fk.lords, g)
       end, lord_num), room:getNGenerals(generalNum))
       lord_generals = room:askForGeneral(lord, generals, n)
       local lord_general, deputy
