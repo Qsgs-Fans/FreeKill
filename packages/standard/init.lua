@@ -6,6 +6,8 @@ dofile "packages/standard/game_rule.lua"
 dofile "packages/standard/aux_skills.lua"
 dofile "packages/standard/aux_poxi.lua"
 
+Fk:appendKingdomMap("god", {"wei", "shu", "wu", "qun"})
+
 local jianxiong = fk.CreateTriggerSkill{
   name = "jianxiong",
   anim_type = "masochism",
