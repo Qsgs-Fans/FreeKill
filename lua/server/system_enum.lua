@@ -2,6 +2,7 @@
 
 ---@alias PlayerId integer
 
+--- CardsMoveInfo 一组牌的移动信息
 ---@class CardsMoveInfo
 ---@field public ids integer[] @ 移动卡牌ID数组
 ---@field public from? integer @ 移动来源玩家ID
@@ -16,11 +17,13 @@
 ---@field public drawPilePosition? integer @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
 ---@field public moveMark? table @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 
+--- MoveInfo 一张牌的来源信息
 ---@class MoveInfo
 ---@field public cardId integer
 ---@field public fromArea CardArea
 ---@field public fromSpecialName? string
 
+--- CardsMoveStruct 一次完整移动
 ---@class CardsMoveStruct
 ---@field public moveInfo MoveInfo[] @ 移动信息
 ---@field public from? integer @ 移动来源玩家ID
@@ -35,11 +38,12 @@
 ---@field public drawPilePosition? integer @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
 ---@field public moveMark? table @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 
----@class PindianResult
----@field public toCard Card
----@field public winner? ServerPlayer
+--- PindianResul 拼点结果
+---@class PindianResul 
+---@field public toCard Card @ 被拼点者所使用的牌
+---@field public winner? ServerPlayer @ 赢家，可能不存在
 
---- 描述和一次体力变化有关的数据
+--- HpChangedData 描述和一次体力变化有关的数据
 ---@class HpChangedData
 ---@field public num integer @ 体力变化量，可能是正数或者负数
 ---@field public shield_lost integer|nil
@@ -48,15 +52,16 @@
 ---@field public damageEvent? DamageStruct @ 引起这次体力变化的伤害数据
 ---@field public preventDying? boolean @ 是否阻止本次体力变更流程引发濒死流程
 
---- 描述跟失去体力有关的数据
+--- HpLostData 描述跟失去体力有关的数据
 ---@class HpLostData
 ---@field public num integer @ 失去体力的数值
 ---@field public skillName string @ 导致这次失去的技能名
 
---- 描述跟体力上限变化有关的数据
+--- MaxHpChangedData 描述跟体力上限变化有关的数据
 ---@class MaxHpChangedData
 ---@field public num integer @ 体力上限变化量，可能是正数或者负数
 
+--- DamageType 伤害的属性
 ---@alias DamageType integer
 
 fk.NormalDamage = 1
@@ -64,7 +69,7 @@ fk.ThunderDamage = 2
 fk.FireDamage = 3
 fk.IceDamage = 4
 
---- DamageStruct 用来描述和伤害事件有关的数据。
+--- DamageStruct 描述和伤害事件有关的数据。
 ---@class DamageStruct
 ---@field public from? ServerPlayer @ 伤害来源
 ---@field public to ServerPlayer @ 伤害目标
@@ -76,7 +81,7 @@ fk.IceDamage = 4
 ---@field public beginnerOfTheDamage? boolean @ 是否是本次铁索传导的起点
 ---@field public by_user? boolean @ 是否由卡牌直接生效造成的伤害
 
---- 用来描述和回复体力有关的数据。
+--- RecoverStruct 描述和回复体力有关的数据。
 ---@class RecoverStruct
 ---@field public who ServerPlayer @ 回复体力的角色
 ---@field public num integer @ 回复值
@@ -84,14 +89,16 @@ fk.IceDamage = 4
 ---@field public skillName? string @ 因何种技能而回复
 ---@field public card? Card @ 造成此次回复的卡牌
 
+--- DyingStruct 描述和濒死事件有关的数据
 ---@class DyingStruct
----@field public who integer
----@field public damage DamageStruct
----@field public ignoreDeath? boolean
+---@field public who integer @ 濒死角色
+---@field public damage DamageStruct @ 造成此次濒死的伤害数据
+---@field public ignoreDeath? boolean @ 是否不进行死亡结算
 
+--- DeathStruct 描述和死亡事件有关的数据
 ---@class DeathStruct
----@field public who integer
----@field public damage DamageStruct
+---@field public who integer @ 死亡角色
+---@field public damage DamageStruct @ 造成此次死亡的伤害数据
 
 --- askForUseCard中的extra_data
 ---@class UseExtraData
@@ -233,4 +240,4 @@ fk.ReasonResonpse = 10
 fk.ReasonJudge = 11
 fk.ReasonRecast = 12
 
----@alias AnimationType "special" | "drawcard" | "control" | "offensive" | "support" | "defensive" | "negative" | "masochism" | "switch" | "big"
+---@alias AnimationType "special" | "drawcard" | "control" | "offensive" | "support" | "defensive" | "negative" | "masochism" | "switch" | "big" @ 内置动画类型，理论上你可以自定义一个自己的动画类型（big会播放一段限定技动画）
