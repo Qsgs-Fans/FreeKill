@@ -116,11 +116,6 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   local damageStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
-
-  if damageStruct.from and damageStruct.from.dead then
-    damageStruct.from = nil
-  end
-
   if not damageStruct.chain and logic:damageByCardEffect(damageStruct.from) then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
@@ -134,6 +129,10 @@ GameEvent.functions[GameEvent.Damage] = function(self)
     return false
   end
   damageStruct.damageType = damageStruct.damageType or fk.NormalDamage
+
+  if damageStruct.from and damageStruct.from.dead then
+    damageStruct.from = nil
+  end
 
   assert(damageStruct.to:isInstanceOf(ServerPlayer))
 
