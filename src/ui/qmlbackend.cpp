@@ -240,7 +240,7 @@ QVariant QmlBackend::readLuaValue(lua_State *L, int index,
       lua_len(L, index);
       int length = lua_tointeger(L, -1);
       lua_pop(L, 1);
-      
+
       if (length == 0) {
         bool empty = true;
         QVariantMap map;
