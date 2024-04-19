@@ -114,7 +114,7 @@ function Client:moveCards(moves)
   for _, move in ipairs(moves) do
     if move.from and move.fromArea then
       local from = self:getPlayerById(move.from)
-      self:notifyUI("MaxCard", json.encode{
+      self:notifyUI("MaxCard", {
         pcardMax = from:getMaxCards(),
         id = move.from,
       })
@@ -133,7 +133,7 @@ function Client:moveCards(moves)
 
     if move.to and move.toArea then
       local ids = move.ids
-      self:notifyUI("MaxCard", json.encode{
+      self:notifyUI("MaxCard", {
         pcardMax = self:getPlayerById(move.to):getMaxCards(),
         id = move.to,
       })
@@ -259,7 +259,7 @@ end
 function Client:setCardNote(ids, msg)
   for _, id in ipairs(ids) do
     if id ~= -1 then
-      self:notifyUI("SetCardFootnote", json.encode{ id, parseMsg(msg, true) })
+      self:notifyUI("SetCardFootnote", { id, parseMsg(msg, true) })
     end
   end
 end
@@ -692,9 +692,9 @@ local function updateLimitSkill(pid, skill, times)
   if skill:isSwitchSkill() then
     local _times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
     if times == -1 then _times = -1 end
-    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.switchSkillName, _times })
+    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill.switchSkillName, _times })
   elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake or skill.frequency == Skill.Quest then
-    ClientInstance:notifyUI("UpdateLimitSkill", json.encode{ pid, skill.name, times })
+    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill.name, times })
   end
 end
 
@@ -732,13 +732,13 @@ fk.client_callback["LoseSkill"] = function(data)
 
     if #active > 0 then
       chk = true
-      ClientInstance:notifyUI("LoseSkill", json.encode {
+      ClientInstance:notifyUI("LoseSkill", {
         id, skill_name,
       })
     end
 
     if not chk then
-      ClientInstance:notifyUI("LoseSkill", json.encode {
+      ClientInstance:notifyUI("LoseSkill", {
         id, skill_name,
       })
     end
@@ -861,7 +861,7 @@ fk.client_callback["Chat"] = function(data)
   if data.type == 1 then
     data.general = ""
     data.time = os.date("%H:%M:%S")
-    ClientInstance:notifyUI("Chat", json.encode(data))
+    ClientInstance:notifyUI("Chat", data)
     return
   end
 
@@ -1200,12 +1200,12 @@ fk.client_callback["Reconnect"] = function(data)
   local players = data.p
   local setup_data = players[tostring(data.you)].d
   setup(setup_data[1], setup_data[2], setup_data[3])
-  fk.client_callback["AddTotalGameTime"](json.encode{ setup_data[1], setup_data[5] })
+  fk.client_callback["AddTotalGameTime"]{ setup_data[1], setup_data[5] }
 
   local enter_room_data = data.d
   table.insert(enter_room_data, 1, #data.circle)
   fk.client_callback["EnterLobby"]("")
-  fk.client_callback["EnterRoom"](json.encode(enter_room_data))
+  fk.client_callback["EnterRoom"](enter_room_data)
 
   loadRoomSummary(data)
 end
@@ -1218,7 +1218,7 @@ fk.client_callback["Observe"] = function(data)
 
   local enter_room_data = data.d
   table.insert(enter_room_data, 1, #data.circle)
-  fk.client_callback["EnterRoom"](json.encode(enter_room_data))
+  fk.client_callback["EnterRoom"](enter_room_data)
   fk.client_callback["StartGame"]("")
 
   loadRoomSummary(data)

@@ -23,6 +23,7 @@ json = {
     return ret
   end,
   decode = function(str)
+    if str == "null" then return nil end
     local start = str:sub(1, 1)
     if start ~= "[" and start ~= "{" then
       return luajson.decode(str)
