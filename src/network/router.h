@@ -34,9 +34,7 @@ public:
   void installAESKey(const QByteArray &key);
   bool isConsoleStart() const;
 
-#ifndef FK_CLIENT_ONLY
   void setReplyReadySemaphore(QSemaphore *semaphore);
-#endif
 
   void request(int type, const QString &command,
               const QString &jsonData, int timeout);
@@ -72,10 +70,8 @@ private:
   int expectedReplyId;
   int replyTimeout;
   QString m_reply;    // should be json string
-#ifndef FK_CLIENT_ONLY
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
-#endif
 
   // Two Lua global table for callbacks and interactions
   // stored in the lua_State of the sender

@@ -24,10 +24,6 @@ SPlayerList = {}
 ---@return integer microsecond
 function fk:GetMicroSecond()end
 
---- construct a QList<ServerPlayer *>.
----@return fk.SPlayerList
-function fk:SPlayerList()end
-
 function fk.QmlBackend_pwd()end
 
 ---@return string[]
@@ -44,3 +40,5 @@ function fk.qCritical(msg) end
 function fk.qInfo(msg) end
 function fk.qDebug(msg) end
 function fk.qWarning(msg) end
+
+fk.FK_VER = '0.0.0'

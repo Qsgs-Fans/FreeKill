@@ -261,21 +261,11 @@ Window {
 
   // fake global functions
   function lcall(funcName, ...params) {
-    const ret = Backend.callLuaFunction(funcName, [...params]);
-    try {
-      return JSON.parse(ret);
-    } catch (e) {
-      return ret;
-    }
+    return Backend.callLuaFunction(funcName, [...params]);
   }
 
   function leval(lua) {
-    const ret = Backend.evalLuaExp(`return json.encode(${lua})`);
-    try {
-      return JSON.parse(ret);
-    } catch (e) {
-      return ret;
-    }
+    return Backend.evalLuaExp(`return ${lua}`);
   }
 
   function luatr(src) {

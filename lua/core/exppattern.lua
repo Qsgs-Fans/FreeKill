@@ -24,13 +24,13 @@
 ]]--
 
 ---@class Matcher
----@field public trueName string[]
----@field public number integer[]
----@field public suit string[]
----@field public place string[]
----@field public name string[]
----@field public cardType string[]
----@field public id integer[]
+---@field public trueName? string[]
+---@field public number? integer[]
+---@field public suit? string[]
+---@field public place? string[]
+---@field public name? string[]
+---@field public cardType? string[]
+---@field public id? integer[]
 
 -- v0.2.6改动： cardType会被解析为trueName数组和name数组，而不是自己单独成立
 

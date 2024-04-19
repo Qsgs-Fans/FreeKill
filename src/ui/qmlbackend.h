@@ -23,6 +23,11 @@ public:
   static Q_INVOKABLE bool exists(const QString &file);
   static Q_INVOKABLE bool isDir(const QString &file);
 
+  // 这俩函数为啥要写在这。。
+  static void pushLuaValue(lua_State *L, QVariant v);
+  static QVariant readLuaValue(lua_State *L, int index = 0,
+      QHash<const void *, bool> stack = QHash<const void *, bool>());
+
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
   void setEngine(QQmlApplicationEngine *engine);
@@ -33,14 +38,11 @@ public:
   // Lobby
   Q_INVOKABLE void quitLobby(bool close = true);
 
-  // lua --> qml
-  void emitNotifyUI(const QString &command, const QString &jsonData);
-
   // read data from lua, call lua functions
   Q_INVOKABLE QString translate(const QString &src);
-  Q_INVOKABLE QString callLuaFunction(const QString &func_name,
+  Q_INVOKABLE QVariant callLuaFunction(const QString &func_name,
                                       QVariantList params);
-  Q_INVOKABLE QString evalLuaExp(const QString &lua);
+  Q_INVOKABLE QVariant evalLuaExp(const QString &lua);
 
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();
@@ -74,7 +76,7 @@ public:
   Q_INVOKABLE void controlReplayer(QString type);
 
 signals:
-  void notifyUI(const QString &command, const QString &jsonData);
+  void notifyUI(const QString &command, const QVariant &data);
   void volumeChanged(qreal);
   void replayerToggle();
   void replayerSpeedUp();
@@ -96,8 +98,6 @@ private:
   qreal m_volume;
 
   Replayer *replayer;
-
-  void pushLuaValue(lua_State *L, QVariant v);
 #endif
 };
 
