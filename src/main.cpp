@@ -311,11 +311,12 @@ int main(int argc, char *argv[]) {
   Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
-  engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
-  engine->rootContext()->setContextProperty("Backend", &backend);
-  engine->rootContext()->setContextProperty("ModBackend", nullptr);
-  engine->rootContext()->setContextProperty("Pacman", Pacman);
-  engine->rootContext()->setContextProperty("SysLocale", localeName);
+  auto root = engine->rootContext();
+  root->setContextProperty("FkVersion", FK_VERSION);
+  root->setContextProperty("Backend", &backend);
+  root->setContextProperty("ModBackend", nullptr);
+  root->setContextProperty("Pacman", Pacman);
+  root->setContextProperty("SysLocale", localeName);
 
 #ifdef QT_DEBUG
   bool debugging = true;
@@ -335,9 +336,9 @@ int main(int argc, char *argv[]) {
 #else
   system = "Other";
 #endif
-  engine->rootContext()->setContextProperty("OS", system);
+  root->setContextProperty("OS", system);
 
-  engine->rootContext()->setContextProperty(
+  root->setContextProperty(
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
   engine->addImportPath(QDir::currentPath());

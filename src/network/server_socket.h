@@ -5,6 +5,7 @@
 
 class ClientSocket;
 
+// 只是对QTcpServer的简单封装
 class ServerSocket : public QObject {
   Q_OBJECT
 
@@ -17,6 +18,7 @@ signals:
   void new_connection(ClientSocket *socket);
 
 private slots:
+  // 新建一个ClientSocket，然后立刻交给Server相关函数处理。
   void processNewConnection();
 
 private:

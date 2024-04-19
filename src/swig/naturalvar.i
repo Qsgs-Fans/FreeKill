@@ -65,6 +65,7 @@ SWIG_arg ++;
 // QStringList
 %naturalvar QStringList;
 
+/* 没有从lua传入QStringList的情况，注释！
 %typemap(in, checkfn = "lua_istable") QStringList
 %{
 for (size_t i = 0; i < lua_rawlen(L, $input); ++i) {
@@ -74,6 +75,7 @@ for (size_t i = 0; i < lua_rawlen(L, $input); ++i) {
   lua_pop(L, 1);
 }
 %}
+*/
 
 %typemap(out) QStringList
 %{
