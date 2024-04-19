@@ -192,198 +192,94 @@ function ServerPlayer:waitForReply(timeout)
   return result
 end
 
+local function assign(t1, t2, k)
+  t1[k] = t2[k]
+end
+
+-- 获取摘要信息。供重连/旁观使用
+-- 根据参数，返回一个大表保存自己的信息，客户端自行分析
 ---@param player ServerPlayer
 ---@param observe? boolean
-function ServerPlayer:marshal(player, observe)
+function ServerPlayer:getSummary(player, observe)
   local room = self.room
   if not room.game_started then
+    local ret = { p = {} }
     -- If game does not starts, that mean we are entering room that
     -- all players are choosing their generals.
     -- Note that when we are in this function, the main thread must be
     -- calling delay() or waiting for reply.
     if self.role_shown then
-      room:notifyProperty(player, self, "role")
+      -- room:notifyProperty(player, self, "role")
+      ret.p.general = self.general
+      ret.p.deputyGeneral = self.deputyGeneral
+      ret.p.role = self.role
     end
-    return
+    return ret
   end
 
-  room:notifyProperty(player, self, "maxHp")
-  room:notifyProperty(player, self, "hp")
-  room:notifyProperty(player, self, "shield")
-  room:notifyProperty(player, self, "gender")
-  room:notifyProperty(player, self, "kingdom")
+  local properties = {}
+
+  assign(properties, self, "general")
+  assign(properties, self, "deputyGeneral")
+  assign(properties, self, "maxHp")
+  assign(properties, self, "hp")
+  assign(properties, self, "shield")
+  assign(properties, self, "gender")
+  assign(properties, self, "kingdom")
 
   if self.dead then
-    room:notifyProperty(player, self, "dead")
-    room:notifyProperty(player, self, self.rest > 0 and "rest" or "role")
+    assign(properties, self, "dead")
+    assign(properties, self, self.rest > 0 and "rest" or "role")
   else
-    room:notifyProperty(player, self, "seat")
-    room:notifyProperty(player, self, "phase")
+    assign(properties, self, "seat")
+    assign(properties, self, "phase")
   end
 
   if not self.faceup then
-    room:notifyProperty(player, self, "faceup")
+    assign(properties, self, "faceup")
   end
 
   if self.chained then
-    room:notifyProperty(player, self, "chained")
-  end
-
-  local card_moves = {}
-  if #self.player_cards[Player.Hand] ~= 0 then
-    local info = {}
-    for _, i in ipairs(self.player_cards[Player.Hand]) do
-      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
-    end
-    local move = {
-      moveInfo = info,
-      to = self.id,
-      toArea = Card.PlayerHand
-    }
-    table.insert(card_moves, move)
-  end
-  if #self.player_cards[Player.Equip] ~= 0 then
-    local info = {}
-    for _, i in ipairs(self.player_cards[Player.Equip]) do
-      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
-    end
-    local move = {
-      moveInfo = info,
-      to = self.id,
-      toArea = Card.PlayerEquip
-    }
-    table.insert(card_moves, move)
-  end
-  if #self.player_cards[Player.Judge] ~= 0 then
-    local info = {}
-    for _, i in ipairs(self.player_cards[Player.Judge]) do
-      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
-    end
-    local move = {
-      moveInfo = info,
-      to = self.id,
-      toArea = Card.PlayerJudge
-    }
-    table.insert(card_moves, move)
-  end
-
-  for k, v in pairs(self.special_cards) do
-    local info = {}
-    for _, i in ipairs(v) do
-      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
-    end
-    local move = {
-      moveInfo = info,
-      to = self.id,
-      toArea = Card.PlayerSpecial,
-      specialName = k,
-      specialVisible = self == player,
-    }
-    table.insert(card_moves, move)
-  end
-
-  if #card_moves > 0 then
-    room:notifyMoveCards({ player }, card_moves, observe and self.seat == 1)
-  end
-
-  for k, v in pairs(self.mark) do
-    player:doNotify("SetPlayerMark", json.encode{self.id, k, v})
-  end
-
-  for _, s in ipairs(self.player_skills) do
-    player:doNotify("AddSkill", json.encode{self.id, s.name})
-  end
-
-  for k, v in pairs(self.cardUsedHistory) do
-    if v[1] > 0 then
-      player:doNotify("AddCardUseHistory", json.encode{k, v[1]})
-    end
-  end
-
-  for k, v in pairs(self.skillUsedHistory) do
-    if v[4] > 0 then
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[1], 1})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[2], 2})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[3], 3})
-      player:doNotify("SetSkillUseHistory", json.encode{self.id, k, v[4], 4})
-    end
+    assign(properties, self, "chained")
   end
 
   if self.role_shown then
-    room:notifyProperty(player, self, "role")
+    assign(properties, self, "role")
   end
 
   if #self.sealedSlots > 0 then
-    room:notifyProperty(player, self, "sealedSlots")
+    assign(properties, self, "sealedSlots")
   end
+
+  local sp = self._splayer
+
+  return {
+    -- data for Setup/AddPlayer
+    d = {
+      self.id,
+      sp:getScreenName(),
+      sp:getAvatar(),
+      false,
+      sp:getTotalGameTime(),
+    },
+    p = properties,
+    ch = self.cardUsedHistory,
+    sh = self.skillUsedHistory,
+    m = self.mark,
+    s = table.map(self.player_skills, Util.NameMapper),
+    c = self.player_cards,
+    sc = self.special_cards,
+  }
 end
 
 function ServerPlayer:reconnect()
   local room = self.room
   self.serverplayer:setState(fk.Player_Online)
 
-  self:doNotify("Setup", json.encode{
-    self.id,
-    self._splayer:getScreenName(),
-    self._splayer:getAvatar(),
-  })
-  self:doNotify("AddTotalGameTime", json.encode {
-    self.id,
-    self._splayer:getTotalGameTime(),
-  })
-
-  self:doNotify("EnterLobby", "")
-  self:doNotify("EnterRoom", json.encode{
-    #room.players, room.timeout, room.settings,
-  })
-  self:doNotify("StartGame", "")
+  local summary = room:getSummary(self, false)
+  self:doNotify("Reconnect", json.encode(summary))
   room:notifyProperty(self, self, "role")
-
-  -- send player data
-  for _, p in ipairs(room:getOtherPlayers(self, false, true)) do
-    self:doNotify("AddPlayer", json.encode{
-      p.id,
-      p._splayer:getScreenName(),
-      p._splayer:getAvatar(),
-      false,
-      p._splayer:getTotalGameTime(),
-    })
-  end
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
-
-  local player_circle = {}
-  for i = 1, #room.players do
-    table.insert(player_circle, room.players[i].id)
-  end
-  self:doNotify("ArrangeSeats", json.encode(player_circle))
-
-  -- send printed_cards
-  for i = -2, -math.huge, -1 do
-    local c = Fk.printed_cards[i]
-    if not c then break end
-    self:doNotify("PrintCard", json.encode{ c.name, c.suit, c.number })
-  end
-
-  -- send card marks
-  for id, marks in pairs(room.card_marks) do
-    for k, v in pairs(marks) do
-      self:doNotify("SetCardMark", json.encode{ id, k, v })
-    end
-  end
-
-  -- send banners
-  for k, v in pairs(room.banners) do
-    self:doNotify("SetBanner", json.encode{ k, v })
-  end
-
-  for _, p in ipairs(room.players) do
-    room:notifyProperty(self, p, "general")
-    room:notifyProperty(self, p, "deputyGeneral")
-    p:marshal(self)
-  end
-
-  self:doNotify("UpdateDrawPile", #room.draw_pile)
-  self:doNotify("UpdateRoundNum", room:getTag("RoundCount") or 0)
 
   -- send fake skills
   for _, s in ipairs(self._manually_fake_skills) do

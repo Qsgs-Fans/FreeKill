@@ -251,15 +251,19 @@ fk.client_callback["SetCardFootnote"] = function(jsonData)
   ClientInstance:setCardNote(data[1], data[2]);
 end
 
-fk.client_callback["Setup"] = function(jsonData)
-  -- jsonData: [ int id, string screenName, string avatar ]
-  local data = json.decode(jsonData)
-  local id, name, avatar = data[1], data[2], data[3]
+local function setup(id, name, avatar)
   local self = fk.Self
   self:setId(id)
   self:setScreenName(name)
   self:setAvatar(avatar)
   Self = ClientPlayer:new(fk.Self)
+end
+
+fk.client_callback["Setup"] = function(jsonData)
+  -- jsonData: [ int id, string screenName, string avatar ]
+  local data = json.decode(jsonData)
+  local id, name, avatar = data[1], data[2], data[3]
+  setup(id, name, avatar)
 end
 
 fk.client_callback["EnterRoom"] = function(jsonData)
@@ -1076,6 +1080,164 @@ fk.client_callback["RmBuddy"] = function(j)
   local to = c:getPlayerById(id)
   Self:removeBuddy(to)
   to.player_cards[Player.Hand] = table.map(to.player_cards, function() return -1 end)
+end
+
+local function loadPlayerSummary(pdata)
+  local f = fk.client_callback["PropertyUpdate"]
+  local id = pdata.d[1]
+  local properties = {
+    "general", "deputyGeneral", "maxHp", "hp", "shield", "gender", "kingdom",
+    "dead", "role", "rest", "seat", "phase", "faceup", "chained",
+    "sealedSlots",
+  }
+
+  for _, k in ipairs(properties) do
+    if pdata.p[k] ~= nil then
+      f(json.encode{ id, k, pdata.p[k] })
+    end
+  end
+
+  local card_moves = {}
+  local cards = pdata.c
+  if #cards[Player.Hand] ~= 0 then
+    local info = {}
+    for _, i in ipairs(cards[Player.Hand]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = { moveInfo = info, to = id, toArea = Card.PlayerHand }
+    table.insert(card_moves, move)
+  end
+  if #cards[Player.Equip] ~= 0 then
+    local info = {}
+    for _, i in ipairs(cards[Player.Equip]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = { moveInfo = info, to = id, toArea = Card.PlayerEquip }
+    table.insert(card_moves, move)
+  end
+  if #cards[Player.Judge] ~= 0 then
+    local info = {}
+    for _, i in ipairs(cards[Player.Judge]) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = { moveInfo = info, to = id, toArea = Card.PlayerJudge }
+    table.insert(card_moves, move)
+  end
+
+  for k, v in pairs(pdata.sc) do
+    local info = {}
+    for _, i in ipairs(v) do
+      table.insert(info, { cardId = i, fromArea = Card.DrawPile })
+    end
+    local move = {
+      moveInfo = info,
+      to = id,
+      toArea = Card.PlayerSpecial,
+      specialName = k,
+      specialVisible = Self.id == id,
+    }
+    table.insert(card_moves, move)
+  end
+
+  if #card_moves > 0 then
+    -- TODO: visibility
+    fk.client_callback["MoveCards"](json.encode(card_moves))
+  end
+
+  f = fk.client_callback["SetPlayerMark"]
+  for k, v in pairs(pdata.m) do
+    f(json.encode{ id, k, v })
+  end
+
+  f = fk.client_callback["AddSkill"]
+  for _, v in pairs(pdata.s) do
+    f(json.encode{ id, v })
+  end
+
+  f = fk.client_callback["AddCardUseHistory"]
+  for k, v in pairs(pdata.ch) do
+    if v[1] > 0 then
+      f(json.encode{ k, v[1] })
+    end
+  end
+
+  f = fk.client_callback["SetSkillUseHistory"]
+  for k, v in pairs(pdata.sh) do
+    if v[4] > 0 then
+      f(json.encode{ id, k, v[1], 1 })
+      f(json.encode{ id, k, v[2], 2 })
+      f(json.encode{ id, k, v[3], 3 })
+      f(json.encode{ id, k, v[4], 4 })
+    end
+  end
+end
+
+local function loadRoomSummary(data)
+  local players = data.p
+
+  fk.client_callback["StartGame"]("")
+
+  for _, pid in ipairs(data.circle) do
+    if pid ~= data.you then
+      fk.client_callback["AddPlayer"](json.encode(players[tostring(pid)].d))
+    end
+  end
+
+  fk.client_callback["ArrangeSeats"](json.encode(data.circle))
+
+  for _, d in ipairs(data.pc) do
+    local cd = Fk:cloneCard(table.unpack(d))
+    Fk:_addPrintedCard(cd)
+  end
+
+  for cid, marks in pairs(data.cm) do
+    for k, v in pairs(marks) do
+      Fk:getCardById(tonumber(cid)):setMark(k, v)
+      ClientInstance:notifyUI("UpdateCard", tostring(cid))
+    end
+  end
+
+  for k, v in pairs(data.b) do
+    fk.client_callback["SetBanner"](json.encode({ k, v }))
+  end
+
+  for _, pid in ipairs(data.circle) do
+    local pdata = data.p[tostring(pid)]
+    loadPlayerSummary(pdata)
+  end
+
+  ClientInstance:notifyUI("UpdateDrawPile", tostring(data.dp))
+  ClientInstance:notifyUI("UpdateRoundNum", tostring(data.rnd))
+end
+
+fk.client_callback["Reconnect"] = function(j)
+  local data = json.decode(j)
+  local players = data.p
+  local setup_data = players[tostring(data.you)].d
+  setup(setup_data[1], setup_data[2], setup_data[3])
+  fk.client_callback["AddTotalGameTime"](json.encode{ setup_data[1], setup_data[5] })
+
+  local enter_room_data = data.d
+  table.insert(enter_room_data, 1, #data.circle)
+  fk.client_callback["EnterLobby"]("")
+  fk.client_callback["EnterRoom"](json.encode(enter_room_data))
+
+  loadRoomSummary(data)
+end
+
+fk.client_callback["Observe"] = function(j)
+  local data = json.decode(j)
+  local players = data.p
+
+  local setup_data = players[tostring(data.you)].d
+  setup(setup_data[1], setup_data[2], setup_data[3])
+
+  local enter_room_data = data.d
+  table.insert(enter_room_data, 1, #data.circle)
+  fk.client_callback["EnterRoom"](json.encode(enter_room_data))
+  fk.client_callback["StartGame"]("")
+
+  loadRoomSummary(data)
 end
 
 -- Create ClientInstance (used by Lua)

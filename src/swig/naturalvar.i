@@ -4,6 +4,13 @@
 // type bindings
 // ------------------------------------------------------
 
+// Lua 5.4 特有的不能pushnumber， swig迟迟不更只好手动调教
+%typemap(out) int
+%{
+lua_pushinteger(L, $1);
+SWIG_arg ++;
+%}
+
 // LuaFunction(int) and lua function
 %naturalvar LuaFunction;
 %typemap(in) LuaFunction

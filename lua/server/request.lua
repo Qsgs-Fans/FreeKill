@@ -2,60 +2,8 @@
 
 local function tellRoomToObserver(self, player)
   local observee = self.players[1]
-  player:doNotify("Setup", json.encode{
-    observee.id,
-    observee._splayer:getScreenName(),
-    observee._splayer:getAvatar(),
-  })
-  player:doNotify("EnterRoom", json.encode{
-    #self.players, self.timeout, self.settings
-  })
-  player:doNotify("StartGame", "")
-
-  -- send player data
-  for _, p in ipairs(self:getOtherPlayers(observee, false, true)) do
-    player:doNotify("AddPlayer", json.encode{
-      p.id,
-      p._splayer:getScreenName(),
-      p._splayer:getAvatar(),
-      false,
-      p._splayer:getTotalGameTime(),
-    })
-  end
-
-  local player_circle = {}
-  for i = 1, #self.players do
-    table.insert(player_circle, self.players[i].id)
-  end
-  player:doNotify("ArrangeSeats", json.encode(player_circle))
-
-  -- send printed_cards
-  for i = -2, -math.huge, -1 do
-    local c = Fk.printed_cards[i]
-    if not c then break end
-    player:doNotify("PrintCard", json.encode{ c.name, c.suit, c.number })
-  end
-
-  -- send card marks
-  for id, marks in pairs(self.card_marks) do
-    for k, v in pairs(marks) do
-      player:doNotify("SetCardMark", json.encode{ id, k, v })
-    end
-  end
-
-  -- send banners
-  for k, v in pairs(self.banners) do
-    player:doNotify("SetBanner", json.encode{ k, v })
-  end
-
-  for _, p in ipairs(self.players) do
-    self:notifyProperty(player, p, "general")
-    self:notifyProperty(player, p, "deputyGeneral")
-    p:marshal(player, true)
-  end
-
-  player:doNotify("UpdateDrawPile", #self.draw_pile)
-  player:doNotify("UpdateRoundNum", self:getTag("RoundCount") or 0)
+  local summary = self:getSummary(observee, true)
+  player:doNotify("Observe", json.encode(summary))
 
   table.insert(self.observers, {observee.id, player, player:getId()})
 end

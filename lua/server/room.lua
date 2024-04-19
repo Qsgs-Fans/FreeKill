@@ -655,6 +655,45 @@ function Room:changeKingdom(player, kingdom, sendLog)
   })
 end
 
+--- 房间信息摘要，返回房间的大致信息
+--- 用于旁观和重连，但也可用于debug
+function Room:getSummary(player, observe)
+  local printed_cards = {}
+  for i = -2, -math.huge, -1 do
+    local c = Fk.printed_cards[i]
+    if not c then break end
+    table.insert(printed_cards, { c.name, c.suit, c.number })
+  end
+
+  local players = {}
+  for _, p in ipairs(self.players) do
+    players[tostring(p.id)] = p:getSummary(player, observe)
+  end
+
+  local cmarks = {}
+  for k, v in pairs(self.card_marks) do
+    cmarks[tostring(k)] = v
+  end
+
+  return {
+    you = player.id or player:getId(),
+    -- data for EnterRoom
+    d = {
+      -- #self.players, 留给客户端自己思考
+      self.timeout,
+      self.settings,
+    },
+    pc = printed_cards,
+    cm = cmarks,
+    b = self.banners,
+
+    circle = table.map(self.players, Util.IdMapper),
+    p = players,
+    rnd = self:getTag("RoundCount") or 0,
+    dp = #self.draw_pile,
+  }
+end
+
 ------------------------------------------------------------------------
 -- 网络通信有关
 ------------------------------------------------------------------------
