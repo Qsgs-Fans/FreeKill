@@ -4,8 +4,7 @@
 %nodefaultdtor QmlBackend;
 class QmlBackend : public QObject {
 public:
-  void emitNotifyUI(const QString &command, const QString &json_data);
-
+  void notifyUI(const QString &command, const QVariant &data);
   static void cd(const QString &path);
   static QStringList ls(const QString &dir);
   static QString pwd();

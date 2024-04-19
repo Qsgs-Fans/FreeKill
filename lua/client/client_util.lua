@@ -9,7 +9,7 @@ end
 function GetGeneralData(name)
   local general = Fk.generals[name]
   if general == nil then general = Fk.generals["diaochan"] end
-  return json.encode {
+  return {
     package = general.package.name,
     extension = general.package.extensionName,
     kingdom = general.kingdom,
@@ -65,16 +65,16 @@ function GetGeneralDetail(name)
       table.insertIfNeed(ret.companions, g.name)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetSameGenerals(name)
-  return json.encode(Fk:getSameGenerals(name))
+  return Fk:getSameGenerals(name)
 end
 
 function IsCompanionWith(general, general2)
   local _general, _general2 = Fk.generals[general], Fk.generals[general2]
-  return json.encode(_general:isCompanionWith(_general2))
+  return _general:isCompanionWith(_general2)
 end
 
 local cardSubtypeStrings = {
@@ -89,7 +89,7 @@ local cardSubtypeStrings = {
 
 function GetCardData(id, virtualCardForm)
   local card = Fk:getCardById(id)
-  if card == nil then return json.encode{
+  if card == nil then return {
     cid = id,
     known = false
   } end
@@ -124,7 +124,7 @@ function GetCardData(id, virtualCardForm)
       ret.subtype = cardSubtypeStrings[virtualCard.sub_type]
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetCardExtensionByName(cardName)
@@ -133,11 +133,11 @@ function GetCardExtensionByName(cardName)
 end
 
 function GetAllMods()
-  return json.encode(Fk.extensions)
+  return Fk.extensions
 end
 
 function GetAllModNames()
-  return json.encode(Fk.extension_names)
+  return Fk.extension_names
 end
 
 function GetAllGeneralPack()
@@ -147,28 +147,28 @@ function GetAllGeneralPack()
       table.insert(ret, name)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetGenerals(pack_name)
-  if not Fk.packages[pack_name] then return "[]" end
+  if not Fk.packages[pack_name] then return {} end
   local ret = {}
   for _, g in ipairs(Fk.packages[pack_name].generals) do
     if not g.total_hidden then
       table.insert(ret, g.name)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function SearchAllGenerals(word)
   local ret = {}
   for _, name in ipairs(Fk.package_names) do
     if Fk.packages[name].type == Package.GeneralPack then
-      table.insertTable(ret, json.decode(SearchGenerals(name, word)))
+      table.insertTable(ret, SearchGenerals(name, word))
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function SearchGenerals(pack_name, word)
@@ -179,7 +179,7 @@ function SearchGenerals(pack_name, word)
       table.insert(ret, g.name)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function UpdatePackageEnable(pkg, enabled)
@@ -220,7 +220,7 @@ function GetAllCardPack()
       table.insert(ret, name)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetCards(pack_name)
@@ -228,7 +228,7 @@ function GetCards(pack_name)
   for _, c in ipairs(Fk.packages[pack_name].cards) do
     table.insert(ret, c.id)
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetCardSkill(cid)
@@ -236,7 +236,7 @@ function GetCardSkill(cid)
 end
 
 function GetCardSpecialSkills(cid)
-  return json.encode(Fk:getCardById(cid).special_skills or Util.DummyTable)
+  return Fk:getCardById(cid).special_skills or Util.DummyTable
 end
 
 function DistanceTo(from, to)
@@ -246,21 +246,21 @@ function DistanceTo(from, to)
 end
 
 function GetPile(id, name)
-  return json.encode(ClientInstance:getPlayerById(id):getPile(name) or {})
+  return ClientInstance:getPlayerById(id):getPile(name) or Util.DummyTable
 end
 
 function GetAllPiles(id)
-  return json.encode(ClientInstance:getPlayerById(id).special_cards or Util.DummyTable)
+  return ClientInstance:getPlayerById(id).special_cards or Util.DummyTable
 end
 
 function GetPlayerSkills(id)
   local p = ClientInstance:getPlayerById(id)
-  return json.encode(table.map(p.player_skills, function(s)
+  return table.map(p.player_skills, function(s)
     return s.visible and {
       name = s.name,
       description = Fk:getDescription(s.name),
     } or nil
-  end))
+  end)
 end
 
 ---@param card string | integer
@@ -278,11 +278,11 @@ function CanUseCard(card, player, extra_data_str)
     if skill:isInstanceOf(ViewAsSkill) then
       c = skill:viewAs(selected_cards)
       if not c then
-        return "false"
+        return false
       end
     else
       -- ActiveSkill should return true here
-      return "true"
+      return true
     end
   end
 
@@ -294,13 +294,13 @@ function CanUseCard(card, player, extra_data_str)
     if min_target > 0 then
       for _, p in ipairs(ClientInstance.players) do
         if c.skill:targetFilter(p.id, {}, {}, c, extra_data) then
-          return "true"
+          return true
         end
       end
-      return "false"
+      return false
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function CardProhibitedUse(card)
@@ -317,11 +317,11 @@ function CardProhibitedUse(card)
     end
   end
   if c == nil then
-    return "true"
+    return true
   else
     ret = Self:prohibitUse(c)
   end
-  return json.encode(ret)
+  return ret
 end
 
 ---@param card string | integer
@@ -331,7 +331,7 @@ end
 function CanUseCardToTarget(card, to_select, selected, extra_data_str)
   local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   if ClientInstance:getPlayerById(to_select).dead then
-    return "false"
+    return false
   end
   local c   ---@type Card
   local selected_cards
@@ -345,7 +345,7 @@ function CanUseCardToTarget(card, to_select, selected, extra_data_str)
 
   local ret = c.skill:targetFilter(to_select, selected, selected_cards, c, extra_data)
   ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), c)
-  return json.encode(ret)
+  return ret
 end
 
 ---@param card string | integer
@@ -362,7 +362,7 @@ function CanSelectCardForSkill(card, to_select, selected_targets)
   end
 
   local ret = c.skill:cardFilter(to_select, selected_cards, selected_targets)
-  return json.encode(ret)
+  return ret
 end
 
 ---@param card string | integer
@@ -379,14 +379,14 @@ function CardFeasible(card, selected_targets)
   end
 
   local ret = c.skill:feasible(selected_targets, selected_cards, Self, c)
-  return json.encode(ret)
+  return ret
 end
 
 -- Handle skills
 
 function GetSkillData(skill_name)
   local skill = Fk.skills[skill_name]
-  if not skill then return "null" end
+  if not skill then return nil end
   local freq = "notactive"
   if skill:isInstanceOf(ActiveSkill) or skill:isInstanceOf(ViewAsSkill) then
     freq = "active"
@@ -399,7 +399,7 @@ function GetSkillData(skill_name)
   elseif skill.frequency == Skill.Quest then
     frequency = "quest"
   end
-  return json.encode{
+  return {
     skill = Fk:translate(skill_name),
     orig_skill = skill_name,
     extension = skill.package.extensionName,
@@ -439,7 +439,7 @@ function ActiveCanUse(skill_name, extra_data_str)
       end
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function ActiveSkillPrompt(skill_name, selected, selected_targets)
@@ -452,7 +452,7 @@ function ActiveSkillPrompt(skill_name, selected, selected_targets)
       ret = skill.prompt
     end
   end
-  return json.encode(ret or "")
+  return ret or ""
 end
 
 function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
@@ -465,7 +465,7 @@ function ActiveCardFilter(skill_name, to_select, selected, selected_targets)
       ret = skill:cardFilter(to_select, selected)
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function ActiveTargetFilter(skill_name, to_select, selected, selected_cards, extra_data)
@@ -482,7 +482,7 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards, ext
       end
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function ActiveFeasible(skill_name, selected, selected_cards)
@@ -498,7 +498,7 @@ function ActiveFeasible(skill_name, selected, selected_cards)
       end
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 function CanViewAs(skill_name, card_ids)
@@ -511,7 +511,7 @@ function CanViewAs(skill_name, card_ids)
       ret = true
     end
   end
-  return json.encode(ret)
+  return ret
 end
 
 -- card_name may be id, name of card, or json string
@@ -532,12 +532,12 @@ function CardFitPattern(card_name, pattern)
         ret = exp:match(c)
       end
     else
-      return "true"
+      return true
     end
   else
     ret = exp:matchExp(card_name)
   end
-  return json.encode(ret)
+  return ret
 end
 
 function SkillFitPattern(skill_name, pattern)
@@ -547,7 +547,7 @@ function SkillFitPattern(skill_name, pattern)
     local exp = Exppattern:Parse(pattern)
     ret = exp:matchExp(skill.pattern)
   end
-  return json.encode(ret)
+  return ret
 end
 
 function CardProhibitedResponse(card)
@@ -564,11 +564,11 @@ function CardProhibitedResponse(card)
     end
   end
   if c == nil then
-    return "true"
+    return true
   else
     ret = Self:prohibitResponse(c)
   end
-  return json.encode(ret)
+  return ret
 end
 
 function SkillCanResponse(skill_name, cardResponsing)
@@ -577,13 +577,13 @@ function SkillCanResponse(skill_name, cardResponsing)
   if skill and skill:isInstanceOf(ViewAsSkill) then
     ret = skill:enabledAtResponse(Self, cardResponsing)
   end
-  return json.encode(ret)
+  return ret
 end
 
 function GetVirtualEquip(player, cid)
   local c = ClientInstance:getPlayerById(player):getVirualEquip(cid)
-  if not c then return "null" end
-  return json.encode{
+  if not c then return nil end
+  return {
     name = c.name,
     cid = c.subcards[1],
   }
@@ -598,7 +598,7 @@ function GetExpandPileOfSkill(skillName)
   end
 
   if type(e) == "table" then
-    return json.encode(e)
+    return e
   else
     return e or ""
   end
@@ -615,15 +615,15 @@ function GetGameModes()
     })
   end
   table.sort(ret, function(a, b) return a.name > b.name end)
-  return json.encode(ret)
+  return ret
 end
 
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
   if skill and skill.interaction then
-    return json.encode(skill:interaction())
+    return skill:interaction()
   end
-  return "null"
+  return nil
 end
 
 function SetInteractionDataOfSkill(skill_name, data)
@@ -642,13 +642,13 @@ end
 function GetPlayerHandcards(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  return p and json.encode(p.player_cards[Player.Hand]) or ""
+  return p and p.player_cards[Player.Hand] or ""
 end
 
 function GetPlayerEquips(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  return json.encode(p.player_cards[Player.Equip])
+  return p.player_cards[Player.Equip]
 end
 
 function ResetClientLua()
@@ -673,20 +673,20 @@ function ResetAddPlayer(j)
 end
 
 function GetRoomConfig()
-  return json.encode(ClientInstance.room_settings)
+  return ClientInstance.room_settings
 end
 
 function GetPlayerGameData(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
-  if not p then return "[0, 0, 0, 0]" end
+  if not p then return {0, 0, 0, 0} end
   local raw = p.player:getGameData()
   local ret = {}
   for _, i in fk.qlist(raw) do
     table.insert(ret, i)
   end
   table.insert(ret, p.player:getTotalGameTime())
-  return json.encode(ret)
+  return ret
 end
 
 function SetPlayerGameData(pid, data)
@@ -708,7 +708,7 @@ end
 
 function CheckSurrenderAvailable(playedTime)
   local curMode = ClientInstance.room_settings.gameMode
-  return json.encode(Fk.game_modes[curMode]:surrenderFunc(playedTime))
+  return Fk.game_modes[curMode]:surrenderFunc(playedTime)
 end
 
 function SaveRecord()
@@ -756,22 +756,22 @@ end
 
 function PoxiFilter(poxi_type, to_select, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
-  if not poxi then return "false" end
-  return json.encode(poxi.card_filter(to_select, selected, data, extra_data))
+  if not poxi then return false end
+  return poxi.card_filter(to_select, selected, data, extra_data)
 end
 
 function PoxiFeasible(poxi_type, selected, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
-  if not poxi then return "false" end
-  return json.encode(poxi.feasible(selected, data, extra_data))
+  if not poxi then return false end
+  return poxi.feasible(selected, data, extra_data)
 end
 
 function GetQmlMark(mtype, name, value, p)
   local spec = Fk.qml_marks[mtype]
-  if not spec then return "{}" end
+  if not spec then return {} end
   p = ClientInstance:getPlayerById(p)
   value = json.decode(value)
-  return json.encode {
+  return {
     qml_path = type(spec.qml_path) == "function" and spec.qml_path(name, value, p) or spec.qml_path,
     text = spec.how_to_show(name, value, p)
   }
@@ -781,7 +781,7 @@ function GetMiniGame(gtype, p, data)
   local spec = Fk.mini_games[gtype]
   p = ClientInstance:getPlayerById(p)
   data = json.decode(data)
-  return json.encode {
+  return {
     qml_path = type(spec.qml_path) == "function" and spec.qml_path(p, data) or spec.qml_path,
   }
 end

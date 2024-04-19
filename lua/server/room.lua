@@ -441,14 +441,14 @@ function Room:getNCards(num, from)
     end
   end
 
+  local i, j = 1, num
+  if from == "bottom" then
+    i = #self.draw_pile + 1 - num
+    j = #self.draw_pile
+  end
   local cardIds = {}
-  while num > 0 do
-
-    local index = from == "top" and 1 or #self.draw_pile
-    table.insert(cardIds, self.draw_pile[index])
-    table.remove(self.draw_pile, index)
-
-    num = num - 1
+  for index = i, j, 1 do
+    table.insert(cardIds, table.remove(self.draw_pile, i))
   end
 
   self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
@@ -657,6 +657,45 @@ function Room:changeKingdom(player, kingdom, sendLog)
     sendLog = sendLog,
     results = {},
   })
+end
+
+--- 房间信息摘要，返回房间的大致信息
+--- 用于旁观和重连，但也可用于debug
+function Room:getSummary(player, observe)
+  local printed_cards = {}
+  for i = -2, -math.huge, -1 do
+    local c = Fk.printed_cards[i]
+    if not c then break end
+    table.insert(printed_cards, { c.name, c.suit, c.number })
+  end
+
+  local players = {}
+  for _, p in ipairs(self.players) do
+    players[tostring(p.id)] = p:getSummary(player, observe)
+  end
+
+  local cmarks = {}
+  for k, v in pairs(self.card_marks) do
+    cmarks[tostring(k)] = v
+  end
+
+  return {
+    you = player.id or player:getId(),
+    -- data for EnterRoom
+    d = {
+      -- #self.players, 留给客户端自己思考
+      self.timeout,
+      self.settings,
+    },
+    pc = printed_cards,
+    cm = cmarks,
+    b = self.banners,
+
+    circle = table.map(self.players, Util.IdMapper),
+    p = players,
+    rnd = self:getTag("RoundCount") or 0,
+    dp = #self.draw_pile,
+  }
 end
 
 ------------------------------------------------------------------------
@@ -1995,7 +2034,7 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
     for i = #top, 1, -1 do
       table.insert(self.draw_pile, 1, top[i])
     end
-    for i = #bottom, 1, -1 do
+    for i = 1, #bottom, -1 do
       table.insert(self.draw_pile, bottom[i])
     end
 

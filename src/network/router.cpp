@@ -5,10 +5,8 @@
 #include "client_socket.h"
 #include "roomthread.h"
 #include <qjsondocument.h>
-#ifndef FK_CLIENT_ONLY
 #include "server.h"
 #include "serverplayer.h"
-#endif
 #include "util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
@@ -18,9 +16,7 @@ Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
   setSocket(socket);
   expectedReplyId = -1;
   replyTimeout = 0;
-#ifndef FK_CLIENT_ONLY
   extraReplyReadySemaphore = nullptr;
-#endif
 }
 
 Router::~Router() { abortRequest(); }
@@ -57,15 +53,12 @@ bool Router::isConsoleStart() const {
   return socket->peerAddress() == "127.0.0.1";
 }
 
-#ifndef FK_CLIENT_ONLY
 void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;
 }
-#endif
 
 void Router::request(int type, const QString &command, const QString &jsonData,
                      int timeout) {
-#ifndef FK_CLIENT_ONLY
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
@@ -88,7 +81,6 @@ void Router::request(int type, const QString &command, const QString &jsonData,
   body << timeout;
 
   emit messageReady(JsonArray2Bytes(body));
-#endif
 }
 
 void Router::reply(int type, const QString &command, const QString &jsonData) {
@@ -115,7 +107,6 @@ int Router::getTimeout() const { return requestTimeout; }
 
 // cancel last request from the sender
 void Router::cancelRequest() {
-#ifndef FK_CLIENT_ONLY
   replyMutex.lock();
   expectedReplyId = -1;
   replyTimeout = 0;
@@ -124,22 +115,18 @@ void Router::cancelRequest() {
 
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
-#endif
 }
 
 QString Router::waitForReply(int timeout) {
   QString ret;
-#ifndef FK_CLIENT_ONLY
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
   replyMutex.lock();
   ret = m_reply;
   replyMutex.unlock();
-#endif
   return ret;
 }
 
 void Router::abortRequest() {
-#ifndef FK_CLIENT_ONLY
   replyMutex.lock();
   if (expectedReplyId != -1) {
     replyReadySemaphore.release();
@@ -149,7 +136,6 @@ void Router::abortRequest() {
     extraReplyReadySemaphore = nullptr;
   }
   replyMutex.unlock();
-#endif
 }
 
 void Router::handlePacket(const QByteArray &rawPacket) {
@@ -167,9 +153,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 #ifndef FK_SERVER_ONLY
       ClientInstance->callLua(command, jsonData, false);
 #endif
-    }
-#ifndef FK_CLIENT_ONLY
-    else {
+    } else {
       ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
       if (command == "Heartbeat") {
         player->alive = true;
@@ -179,7 +163,6 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       Room *room = player->getRoom();
       room->handlePacket(player, command, jsonData);
     }
-#endif
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
     this->requestTimeout = packet[4].toInt();
@@ -192,9 +175,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       // requesting server is not allowed
       Q_ASSERT(false);
     }
-  }
-#ifndef FK_CLIENT_ONLY
-  else if (type & TYPE_REPLY) {
+  } else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
 
     ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
@@ -226,5 +207,4 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     locker.unlock();
     emit replyReady();
   }
-#endif
 }

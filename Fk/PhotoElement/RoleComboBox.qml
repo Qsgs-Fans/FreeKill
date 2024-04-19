@@ -16,7 +16,7 @@ Image {
 
     id: assumptionBox
     source: SkinBank.ROLE_DIR + value
-    visible: root.value == "unknown"
+    visible: root.value == "unknown" && optionPopupBox.visible == false
 
     TapHandler {
       onTapped: optionPopupBox.visible = true;

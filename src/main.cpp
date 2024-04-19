@@ -5,11 +5,7 @@
 using namespace fkShell;
 
 #include "packman.h"
-#ifndef Q_OS_WASM
 #include "server.h"
-#else
-#include <emscripten.h>
-#endif
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "shell.h"
@@ -29,7 +25,7 @@ using namespace fkShell;
 #include "qmlbackend.h"
 #endif
 
-#if defined(Q_OS_ANDROID) || defined(Q_OS_WASM)
+#if defined(Q_OS_ANDROID)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath) {
   QFileInfo srcFileInfo(srcFilePath);
   if (srcFileInfo.isDir()) {
@@ -196,7 +192,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-#ifndef FK_CLIENT_ONLY
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
@@ -244,24 +239,12 @@ int main(int argc, char *argv[]) {
     }
     return app->exec();
   }
-#endif
 
 #ifdef FK_SERVER_ONLY
   // 根本没编译 GUI 相关的功能，直接在此退出
   qFatal("This is server-only build and have no GUI support.\n\
       Please use ./FreeKill -s to start a server in command line.");
 #else
-
-#ifdef Q_OS_WASM
-  EM_ASM (
-    FS.mkdir('/assets');
-    FS.mount(IDBFS, {}, '/assets');
-    FS.chdir('/assets');
-    FS.syncfs(true, function(err) {
-    });
-  );
-  copyPath(":/", QDir::currentPath());
-#endif
 
   app = new QApplication(argc, argv);
 #ifdef DESKTOP_BUILD
@@ -328,11 +311,12 @@ int main(int argc, char *argv[]) {
   Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
-  engine->rootContext()->setContextProperty("FkVersion", FK_VERSION);
-  engine->rootContext()->setContextProperty("Backend", &backend);
-  engine->rootContext()->setContextProperty("ModBackend", nullptr);
-  engine->rootContext()->setContextProperty("Pacman", Pacman);
-  engine->rootContext()->setContextProperty("SysLocale", localeName);
+  auto root = engine->rootContext();
+  root->setContextProperty("FkVersion", FK_VERSION);
+  root->setContextProperty("Backend", &backend);
+  root->setContextProperty("ModBackend", nullptr);
+  root->setContextProperty("Pacman", Pacman);
+  root->setContextProperty("SysLocale", localeName);
 
 #ifdef QT_DEBUG
   bool debugging = true;
@@ -344,9 +328,6 @@ int main(int argc, char *argv[]) {
   QString system;
 #if defined(Q_OS_ANDROID)
   system = "Android";
-#elif defined(Q_OS_WASM)
-  system = "Web";
-  engine->rootContext()->setContextProperty("ServerAddr", "127.0.0.1:9527");
 #elif defined(Q_OS_WIN32)
   system = "Win";
   ::system("chcp 65001");
@@ -355,9 +336,9 @@ int main(int argc, char *argv[]) {
 #else
   system = "Other";
 #endif
-  engine->rootContext()->setContextProperty("OS", system);
+  root->setContextProperty("OS", system);
 
-  engine->rootContext()->setContextProperty(
+  root->setContextProperty(
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
   engine->addImportPath(QDir::currentPath());
@@ -378,20 +359,8 @@ int main(int argc, char *argv[]) {
   delete engine;
   delete Pacman;
 
-#ifdef Q_OS_WASM
-  EM_ASM (
-    FS.syncfs(function(err) {});
-  );
-#endif
-
-  if (info_log) {
-    fclose(info_log);
-    info_log = nullptr;
-  }
-  if (err_log) {
-    fclose(err_log);
-    info_log = nullptr;
-  }
+  if (info_log) fclose(info_log);
+  if (err_log) fclose(err_log);
 
   return ret;
 #endif
