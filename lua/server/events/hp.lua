@@ -116,7 +116,8 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   local damageStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
-  if not damageStruct.chain and logic:damageByCardEffect(damageStruct.from) then
+
+  if not damageStruct.chain and logic:damageByCardEffect(not not damageStruct.from) then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
