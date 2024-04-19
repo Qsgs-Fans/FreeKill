@@ -247,8 +247,7 @@ QVariant QmlBackend::readLuaValue(lua_State *L, int index,
 
         lua_pushnil(L);
         while (lua_next(L, index) != 0) {
-          // 坑逼lua把number也能过isstring判断
-          if (!lua_isstring(L, -2) || lua_isnumber(L, -2)) {
+          if (lua_type(L, -2) != LUA_TSTRING) {
             luaL_error(L, "key of object must be string");
             return QVariant();
           }
