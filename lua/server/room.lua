@@ -265,7 +265,11 @@ end
 ---@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
 ---@return CardArea @ 这张牌的区域
 function Room:getCardArea(cardId)
-  local cardIds = table.map(Card:getIdList(cardId), function(cid) return self.card_place[cid] or Card.Unknown end)
+  local cardIds = {}
+  for _, cid in ipairs(Card:getIdList(cardId)) do
+    local place = self.card_place[cid] or Card.Unknown
+    table.insertIfNeed(cardIds, place)
+  end
   return #cardIds == 1 and cardIds[1] or Card.Unknown
 end
 
@@ -3131,7 +3135,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
     fromPlace = fromPlace,
   }
   if self.logic:trigger(fk.BeforeDrawCard, player, drawData) then
-    self.logic:breakEvent(false)
+    return {}
   end
 
   num = drawData.num
@@ -3876,7 +3880,7 @@ end
 
 --- 刷新使命技状态
 ---@param player ServerPlayer
----@param skillName Suit
+---@param skillName string
 ---@param failed? boolean
 function Room:updateQuestSkillState(player, skillName, failed)
   assert(Fk.skills[skillName].frequency == Skill.Quest)

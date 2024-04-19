@@ -335,14 +335,8 @@ local gudingSkill = fk.CreateTriggerSkill{
   can_trigger = function(self, _, target, player, data)
     local logic = player.room.logic
     if target == player and player:hasSkill(self) and
-    data.to:isKongcheng() and data.card and data.card.trueName == "slash" and not data.chain then
-      local event = logic:getCurrentEvent()
-      if event == nil then return false end
-      event = event.parent
-      if event == nil or event.event ~= GameEvent.SkillEffect then return false end
-      event = event.parent
-      if event == nil or event.event ~= GameEvent.CardEffect then return false end
-      return data.card == event.data[1].card and data.from.id == event.data[1].from
+    data.to:isKongcheng() and data.card and data.card.trueName == "slash" then
+      return data.by_user
     end
   end,
   on_use = function(_, _, _, _, data)

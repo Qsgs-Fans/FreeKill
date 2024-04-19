@@ -10,7 +10,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
     assert(info.toArea ~= Card.PlayerSpecial or type(info.specialName) == "string")
     assert(type(info.moveReason) == "number")
   end
-
+  --- @param cardsMoveInfo CardsMoveInfo
   for _, cardsMoveInfo in ipairs(args) do
     if #cardsMoveInfo.ids > 0 then
       infoCheck(cardsMoveInfo)
@@ -56,6 +56,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           specialName = cardsMoveInfo.specialName,
           specialVisible = cardsMoveInfo.specialVisible,
           drawPilePosition = cardsMoveInfo.drawPilePosition,
+          moveMark = cardsMoveInfo.moveMark,
         }
 
         table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -71,6 +72,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           specialName = cardsMoveInfo.specialName,
           specialVisible = cardsMoveInfo.specialVisible,
           drawPilePosition = cardsMoveInfo.drawPilePosition,
+          moveMark = cardsMoveInfo.moveMark,
         }
 
         table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -165,13 +167,24 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
         Fk:filterCard(info.cardId, room:getPlayerById(data.to))
 
         local currentCard = Fk:getCardById(info.cardId)
-        for name, _ in pairs(currentCard.mark) do
+        for name, value in pairs(currentCard.mark) do
           if name:find("-inhand", 1, true) and
           realFromArea == Player.Hand and
           data.from
           then
             room:setCardMark(currentCard, name, 0)
           end
+          if name:find("-inarea", 1, true) and
+          type(value) == "table" and table.contains(value, realFromArea) and not table.contains(value, data.toArea)
+          then
+            p(realFromArea)
+            p(value)
+            room:setCardMark(currentCard, name, 0)
+          end
+        end
+        if data.moveMark then
+          local mark = table.clone(data.moveMark) or {"", 0}
+          room:setCardMark(currentCard, mark[1], mark[2])
         end
         if
           data.toArea == Player.Equip and

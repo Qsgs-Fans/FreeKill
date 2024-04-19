@@ -11,7 +11,7 @@
 ---@field public mute boolean @ 决定是否关闭技能配音
 ---@field public no_indicate boolean @ 决定是否关闭技能指示线
 ---@field public global boolean @ 决定是否是全局技能
----@field public anim_type string @ 技能类型定义
+---@field public anim_type string|AnimationType @ 技能类型定义
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
 ---@field public relate_to_place string @ 主将技/副将技

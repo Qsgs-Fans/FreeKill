@@ -52,5 +52,7 @@ MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 ---round：轮次结束后
 ---
 ---inhand：离开手牌区后
+---
+---inarea：离开标记值指定的特定区域后
 MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round",
-                                "-inhand" }
+                                "-inhand", "-inarea" }

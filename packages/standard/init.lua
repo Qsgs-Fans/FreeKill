@@ -6,6 +6,8 @@ dofile "packages/standard/game_rule.lua"
 dofile "packages/standard/aux_skills.lua"
 dofile "packages/standard/aux_poxi.lua"
 
+Fk:appendKingdomMap("god", {"wei", "shu", "wu", "qun"})
+
 local jianxiong = fk.CreateTriggerSkill{
   name = "jianxiong",
   anim_type = "masochism",
@@ -202,7 +204,7 @@ local luoyi_trigger = fk.CreateTriggerSkill{
   events = {fk.DamageCaused},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:usedSkillTimes("luoyi", Player.HistoryTurn) > 0 and
-      not data.chain and data.card and (data.card.trueName == "slash" or data.card.name == "duel")
+      data.card and (data.card.trueName == "slash" or data.card.name == "duel") and data.by_user
   end,
   on_cost = Util.TrueFunc,
   on_use = function(self, event, target, player, data)
@@ -1131,7 +1133,7 @@ local role_getlogic = function()
       end
       lord_num = math.min(a1 - a2, lord_num)
       local generals = table.connect(room:findGenerals(function(g)
-        return table.find(Fk.generals[g].skills, function(s) return s.lordSkill end)
+        return table.contains(Fk.lords, g)
       end, lord_num), room:getNGenerals(generalNum))
       lord_generals = room:askForGeneral(lord, generals, n)
       local lord_general, deputy

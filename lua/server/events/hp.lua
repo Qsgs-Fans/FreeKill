@@ -116,11 +116,12 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   local damageStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
-  if damageStruct.card and damageStruct.skillName == damageStruct.card.name .. "_skill" and not damageStruct.chain then
+  if not damageStruct.chain and logic:damageByCardEffect(true) then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
       damageStruct.damage = damageStruct.damage + (cardEffectEvent.additionalDamage or 0)
+      damageStruct.by_user = true
     end
   end
 
