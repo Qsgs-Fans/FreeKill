@@ -421,10 +421,8 @@ function setCardFootnote(id, footnote) {
   card.footnoteVisible = true;
 }
 
-callbacks["SetCardFootnote"] = (j) => {
-  const data = JSON.parse(j);
-  const id = data[0];
-  const note = data[1];
+callbacks["SetCardFootnote"] = (data) => {
+  const [id, note] = data;
   setCardFootnote(id, note);
 }
 
@@ -444,10 +442,8 @@ function setCardVirtName(id, name) {
   card.virt_name = name;
 }
 
-callbacks["SetCardVirtName"] = (j) => {
-  const data = JSON.parse(j);
-  const ids = data[0];
-  const note = data[1];
+callbacks["SetCardVirtName"] = (data) => {
+  const [ids, note] = data;
   ids.forEach(id => setCardVirtName(id, note));
 }
 
@@ -508,8 +504,7 @@ function processPrompt(prompt) {
   return raw;
 }
 
-callbacks["MaxCard"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["MaxCard"] = (data) => {
   const id = data.id;
   const cardMax = data.pcardMax;
   const photo = getPhoto(id);
@@ -530,7 +525,7 @@ function changeSelf(id) {
       dashboard.self = photos.itemAt(i);
     }
   }
-  callbacks["ArrangeSeats"](JSON.stringify(order));
+  callbacks["ArrangeSeats"](order);
 
   // update dashboard
   dashboard.update();
@@ -542,12 +537,11 @@ function changeSelf(id) {
   }
 }
 
-callbacks["AddPlayer"] = (jsonData) => {
+callbacks["AddPlayer"] = (data) => {
   // jsonData: int id, string screenName, string avatar, bool ready
   for (let i = 0; i < photoModel.count; i++) {
     const item = photoModel.get(i);
     if (item.id === -1) {
-      const data = JSON.parse(jsonData);
       const uid = data[0];
       const name = data[1];
       const avatar = data[2];
@@ -740,9 +734,9 @@ function updateSelectedTargets(playerid, selected) {
   }
 }
 
-callbacks["RemovePlayer"] = (jsonData) => {
+callbacks["RemovePlayer"] = (data) => {
   // jsonData: int uid
-  const uid = JSON.parse(jsonData)[0];
+  const uid = data[0];
   const model = getPhotoModel(uid);
   if (typeof(model) !== "undefined") {
     model.id = -1;
@@ -753,9 +747,9 @@ callbacks["RemovePlayer"] = (jsonData) => {
   }
 }
 
-callbacks["RoomOwner"] = (jsonData) => {
+callbacks["RoomOwner"] = (data) => {
   // jsonData: int uid of the owner
-  const uid = JSON.parse(jsonData)[0];
+  const uid = data[0];
 
   roomScene.isOwner = (Self.id === uid);
 
@@ -777,8 +771,7 @@ function checkAllReady() {
   roomScene.isAllReady = allReady;
 }
 
-callbacks["ReadyChanged"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["ReadyChanged"] = (data) => {
   const id = data[0];
   const ready = data[1];
 
@@ -793,8 +786,7 @@ callbacks["ReadyChanged"] = (j) => {
   }
 }
 
-callbacks["NetStateChanged"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["NetStateChanged"] = (data) => {
   const id = data[0];
   let state = data[1];
 
@@ -805,9 +797,8 @@ callbacks["NetStateChanged"] = (j) => {
   model.netstate = state;
 }
 
-callbacks["PropertyUpdate"] = (jsonData) => {
+callbacks["PropertyUpdate"] = (data) => {
   // jsonData: int id, string property_name, value
-  const data = JSON.parse(jsonData);
   const uid = data[0];
   const property_name = data[1];
   let value = data[2];
@@ -863,9 +854,8 @@ callbacks["StartGame"] = (jsonData) => {
   }
 }
 
-callbacks["ArrangeSeats"] = (jsonData) => {
+callbacks["ArrangeSeats"] = (order) => {
   // jsonData: seat order
-  const order = JSON.parse(jsonData);
 
   for (let i = 0; i < photoModel.count; i++) {
     const item = photoModel.get(i);
@@ -895,10 +885,9 @@ function cancelAllFocus() {
   }
 }
 
-callbacks["MoveFocus"] = (jsonData) => {
+callbacks["MoveFocus"] = (data) => {
   // jsonData: int[] focuses, string command
   cancelAllFocus();
-  const data = JSON.parse(jsonData);
   const focuses = data[0];
   const command = data[1];
 
@@ -925,9 +914,8 @@ callbacks["MoveFocus"] = (jsonData) => {
   }
 }
 
-callbacks["PlayerRunned"] = (jsonData) => {
+callbacks["PlayerRunned"] = (data) => {
   // jsonData: int runner, int robot
-  const data = JSON.parse(jsonData);
   const runner = data[0];
   const robot = data[1];
 
@@ -937,9 +925,8 @@ callbacks["PlayerRunned"] = (jsonData) => {
   }
 }
 
-callbacks["AskForGeneral"] = (jsonData) => {
+callbacks["AskForGeneral"] = (data) => {
   // jsonData: string[] Generals
-  const data = JSON.parse(jsonData);
   const generals = data[0];
   const n = data[1];
   const convert = data[2];
@@ -960,9 +947,8 @@ callbacks["AskForGeneral"] = (jsonData) => {
   box.updatePosition();
 }
 
-callbacks["AskForSkillInvoke"] = (jsonData) => {
+callbacks["AskForSkillInvoke"] = (data) => {
   // jsonData: [ string name, string prompt ]
-  const data = JSON.parse(jsonData);
   const skill = data[0];
   const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt)
@@ -973,8 +959,7 @@ callbacks["AskForSkillInvoke"] = (jsonData) => {
   roomScene.cancelButton.enabled = true;
 }
 
-callbacks["AskForGuanxing"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["AskForGuanxing"] = (data) => {
   const cards = [];
   const min_top_cards = data.min_top_cards;
   const max_top_cards = data.max_top_cards;
@@ -1011,8 +996,7 @@ callbacks["AskForGuanxing"] = (jsonData) => {
   });
 }
 
-callbacks["AskForExchange"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["AskForExchange"] = (data) => {
   const cards = [];
   const cards_name = [];
   const capacities = [];
@@ -1041,10 +1025,9 @@ callbacks["AskForExchange"] = (jsonData) => {
   });
 }
 
-callbacks["AskForChoice"] = (jsonData) => {
+callbacks["AskForChoice"] = (data) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
-  const data = JSON.parse(jsonData);
   const choices = data[0];
   const all_choices = data[1];
   const skill_name = data[2];
@@ -1073,10 +1056,9 @@ callbacks["AskForChoice"] = (jsonData) => {
   });
 }
 
-callbacks["AskForChoices"] = (jsonData) => {
+callbacks["AskForChoices"] = (data) => {
   // jsonData: [ string[] choices, string skill ]
   // TODO: multiple choices, e.g. benxi_ol
-  const data = JSON.parse(jsonData);
   const choices = data[0];
   const all_choices = data[1];
   const min_num = data[2][0];
@@ -1115,10 +1097,9 @@ callbacks["AskForChoices"] = (jsonData) => {
   });
 }
 
-callbacks["AskForCardChosen"] = (jsonData) => {
+callbacks["AskForCardChosen"] = (data) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  string reason ]
-  const data = JSON.parse(jsonData);
   const reason = data._reason;
   const prompt = data._prompt;
   if (prompt === "") {
@@ -1145,10 +1126,9 @@ callbacks["AskForCardChosen"] = (jsonData) => {
   box.cardSelected.connect(cid => replyToServer(cid));
 }
 
-callbacks["AskForCardsChosen"] = (jsonData) => {
+callbacks["AskForCardsChosen"] = (data) => {
   // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
   //  int min, int max, string reason ]
-  const data = JSON.parse(jsonData);
   const min = data._min;
   const max = data._max;
   const reason = data._reason;
@@ -1182,8 +1162,8 @@ callbacks["AskForCardsChosen"] = (jsonData) => {
   });
 }
 
-callbacks["AskForPoxi"] = (jsonData) => {
-  const { type, data, extra_data, cancelable } = JSON.parse(jsonData);
+callbacks["AskForPoxi"] = (dat) => {
+  const { type, data, extra_data, cancelable } = dat;
 
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent =
@@ -1208,8 +1188,7 @@ callbacks["AskForPoxi"] = (jsonData) => {
   });
 }
 
-callbacks["AskForMoveCardInBoard"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["AskForMoveCardInBoard"] = (data) => {
   const { cards, cardsPosition, generalNames, playerIds } = data;
 
   roomScene.state = "replying";
@@ -1241,15 +1220,13 @@ callbacks["AskForMoveCardInBoard"] = (jsonData) => {
   });
 }
 
-callbacks["MoveCards"] = (jsonData) => {
+callbacks["MoveCards"] = (moves) => {
   // jsonData: merged moves
-  const moves = JSON.parse(jsonData);
   moveCards(moves);
 }
 
-callbacks["PlayCard"] = (jsonData) => {
+callbacks["PlayCard"] = (playerId) => {
   // jsonData: int playerId
-  const playerId = parseInt(jsonData);
   if (playerId === Self.id) {
     roomScene.setPrompt(luatr("#PlayCard"), true);
     roomScene.state = "playing";
@@ -1257,9 +1234,8 @@ callbacks["PlayCard"] = (jsonData) => {
   }
 }
 
-callbacks["LoseSkill"] = (jsonData) => {
+callbacks["LoseSkill"] = (data) => {
   // jsonData: [ int player_id, string skill_name ]
-  const data = JSON.parse(jsonData);
   const id = data[0];
   const skill_name = data[1];
   const prelight = data[2];
@@ -1268,9 +1244,8 @@ callbacks["LoseSkill"] = (jsonData) => {
   }
 }
 
-callbacks["AddSkill"] = (jsonData) => {
+callbacks["AddSkill"] = (data) => {
   // jsonData: [ int player_id, string skill_name ]
-  const data = JSON.parse(jsonData);
   const id = data[0];
   const skill_name = data[1];
   const prelight = data[2];
@@ -1279,17 +1254,15 @@ callbacks["AddSkill"] = (jsonData) => {
   }
 }
 
-callbacks["PrelightSkill"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["PrelightSkill"] = (data) => {
   const skill_name = data[0];
   const prelight = data[1];
 
   dashboard.prelightSkill(skill_name, prelight);
 }
 
-callbacks["AskForUseActiveSkill"] = (jsonData) => {
+callbacks["AskForUseActiveSkill"] = (data) => {
   // jsonData: string skill_name, string prompt
-  const data = JSON.parse(jsonData);
   const skill_name = data[0];
   const prompt = data[1];
   const cancelable = data[2];
@@ -1323,9 +1296,8 @@ callbacks["GameLog"] = (jsonData) => {
   roomScene.addToLog(jsonData)
 }
 
-callbacks["AskForUseCard"] = (jsonData) => {
+callbacks["AskForUseCard"] = (data) => {
   // jsonData: card, pattern, prompt, cancelable, {}
-  const data = JSON.parse(jsonData);
   const cardname = data[0];
   const pattern = data[1];
   const prompt = data[2];
@@ -1355,9 +1327,8 @@ callbacks["AskForUseCard"] = (jsonData) => {
   cancelButton.enabled = true;
 }
 
-callbacks["AskForResponseCard"] = (jsonData) => {
+callbacks["AskForResponseCard"] = (data) => {
   // jsonData: card_name, pattern, prompt, cancelable, {}
-  const data = JSON.parse(jsonData);
   const cardname = data[0];
   const pattern = data[1];
   const prompt = data[2];
@@ -1381,8 +1352,7 @@ callbacks["WaitForNullification"] = () => {
   roomScene.state = "notactive";
 }
 
-callbacks["SetPlayerMark"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["SetPlayerMark"] = (data) => {
   const player = getPhoto(data[0]);
   const mark = data[1];
   const value = data[2] instanceof Object ? data[2] : data[2].toString();
@@ -1394,8 +1364,7 @@ callbacks["SetPlayerMark"] = (jsonData) => {
   }
 }
 
-callbacks["SetBanner"] = (jsonData) => {
-  const data = JSON.parse(jsonData);
+callbacks["SetBanner"] = (data) => {
   const mark = data[0];
   const value = data[1] instanceof Object ? data[1] : data[1].toString();
   let area = roomScene.banner;
@@ -1406,9 +1375,8 @@ callbacks["SetBanner"] = (jsonData) => {
   }
 }
 
-callbacks["Animate"] = (jsonData) => {
+callbacks["Animate"] = (data) => {
   // jsonData: [Object object]
-  const data = JSON.parse(jsonData);
   switch (data.type) {
     case "Indicate":
       data.to.forEach(item => {
@@ -1471,9 +1439,8 @@ callbacks["Animate"] = (jsonData) => {
   }
 }
 
-callbacks["LogEvent"] = (jsonData) => {
+callbacks["LogEvent"] = (data) => {
   // jsonData: [Object object]
-  const data = JSON.parse(jsonData);
   switch (data.type) {
     case "Damage": {
       const item = getPhotoOrDashboard(data.to);
@@ -1557,8 +1524,7 @@ callbacks["GameOver"] = (jsonData) => {
   // roomScene.isStarted = false;
 }
 
-callbacks["FillAG"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["FillAG"] = (data) => {
   const ids = data[0];
   roomScene.manualBox.sourceComponent =
     Qt.createComponent("../RoomElement/AG.qml");
@@ -1570,9 +1536,8 @@ callbacks["AskForAG"] = (j) => {
   roomScene.manualBox.item.interactive = true;
 }
 
-callbacks["TakeAG"] = (j) => {
+callbacks["TakeAG"] = (data) => {
   if (!roomScene.manualBox.item) return;
-  const data = JSON.parse(j);
   const pid = data[0];
   const cid = data[1];
   const item = getPhoto(pid);
@@ -1584,8 +1549,7 @@ callbacks["TakeAG"] = (j) => {
 
 callbacks["CloseAG"] = () => roomScene.manualBox.item.close();
 
-callbacks["CustomDialog"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["CustomDialog"] = (data) => {
   const path = data.path;
   const dat = data.data;
   roomScene.state = "replying";
@@ -1595,8 +1559,7 @@ callbacks["CustomDialog"] = (j) => {
   }
 }
 
-callbacks["MiniGame"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["MiniGame"] = (data) => {
   const game = data.type;
   const dat = data.data;
   const gdata = lcall("GetMiniGame", game, Self.id, JSON.stringify(dat));
@@ -1607,15 +1570,13 @@ callbacks["MiniGame"] = (j) => {
   }
 }
 
-callbacks["UpdateMiniGame"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["UpdateMiniGame"] = (data) => {
   if (roomScene.popupBox.item) {
     roomScene.popupBox.item.updateData(data);
   }
 }
 
-callbacks["UpdateLimitSkill"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["UpdateLimitSkill"] = (data) => {
   const id = data[0];
   const skill = data[1];
   const time = data[2];
@@ -1636,8 +1597,7 @@ callbacks["UpdateRoundNum"] = (j) => {
   roomScene.miscStatus.roundNum = data;
 }
 
-callbacks["UpdateGameData"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["UpdateGameData"] = (data) => {
   const id = data[0];
   const total = data[1];
   const win = data[2];

@@ -17,12 +17,8 @@ typedef int LuaFunction;
 #include "sqlite3.h"
 #define OPENSSL_API_COMPAT 0x10101000L
 
-#if !defined (Q_OS_ANDROID) && !defined (Q_OS_WASM)
+#if !defined (Q_OS_ANDROID)
 #define DESKTOP_BUILD
-#endif
-
-#if defined(Q_OS_WASM)
-#define FK_CLIENT_ONLY
 #endif
 
 // You may define FK_SERVER_ONLY with cmake .. -D...

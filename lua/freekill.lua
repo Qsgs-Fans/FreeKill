@@ -11,7 +11,30 @@ package.path = package.path .. ";./lua/lib/?.lua"
 class = require "middleclass"
 
 -- json: 提供json处理支持，能解析JSON和生成JSON
-json = require "json"
+-- 仍借助luajson处理简单类型。
+local luajson = require "json"
+json = {
+  encode = function(val, t)
+    if type(val) ~= "table" then return luajson.encode(val) end
+    t = t or 1 -- Compact
+    ---@diagnostic disable-next-line
+    local doc = fk.QJsonDocument_fromVariant(val)
+    local ret = doc:toJson(t)
+    return ret
+  end,
+  decode = function(str)
+    if str == "null" then return nil end
+    local start = str:sub(1, 1)
+    if start ~= "[" and start ~= "{" then
+      return luajson.decode(str)
+    end
+    ---@diagnostic disable-next-line
+    local doc = fk.QJsonDocument_fromJson(str)
+    local ret = doc:toVariant()
+    -- if ret == "" then ret = luajson.decode(str) end
+    return ret
+  end,
+}
 
 -- 初始化随机数种子
 math.randomseed(os.time())

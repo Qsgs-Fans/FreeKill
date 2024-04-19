@@ -4,8 +4,11 @@
 #define _PACKMAN_H
 
 #include <qtmetamacros.h>
+
+// 管理拓展包所需的类，本质上是libgit2接口的再封装。
 class PackMan : public QObject {
   Q_OBJECT
+
 public:
   PackMan(QObject *parent = nullptr);
   ~PackMan();
@@ -20,6 +23,7 @@ public:
   Q_INVOKABLE void upgradePack(const QString &pack);
   Q_INVOKABLE void removePack(const QString &pack);
   Q_INVOKABLE QString listPackages();
+
 private:
   sqlite3 *db;
 

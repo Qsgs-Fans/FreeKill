@@ -98,8 +98,7 @@ callbacks["BackToStart"] = (jsonData) => {
   }
 }
 
-callbacks["SetServerSettings"] = (j) => {
-  const data = JSON.parse(j);
+callbacks["SetServerSettings"] = (data) => {
   const [ motd, hiddenPacks, enableBots ] = data;
   config.serverMotd = motd;
   config.serverHiddenPacks = hiddenPacks;
@@ -127,9 +126,8 @@ callbacks["EnterLobby"] = (jsonData) => {
   config.saveConf();
 }
 
-callbacks["EnterRoom"] = (jsonData) => {
+callbacks["EnterRoom"] = (data) => {
   // jsonData: int capacity, int timeout
-  const data = JSON.parse(jsonData);
   config.roomCapacity = data[0];
   config.roomTimeout = data[1] - 1;
   const roomSettings = data[2];
@@ -139,11 +137,11 @@ callbacks["EnterRoom"] = (jsonData) => {
   mainWindow.busy = false;
 }
 
-callbacks["UpdateRoomList"] = (jsonData) => {
+callbacks["UpdateRoomList"] = (data) => {
   const current = mainStack.currentItem;  // should be lobby
   if (mainStack.depth === 2) {
     current.roomModel.clear();
-    JSON.parse(jsonData).forEach(room => {
+    data.forEach(room => {
       const [roomId, roomName, gameMode, playerNum, capacity, hasPassword,
         outdated] = room;
       current.roomModel.append({
@@ -154,10 +152,9 @@ callbacks["UpdateRoomList"] = (jsonData) => {
   }
 }
 
-callbacks["UpdatePlayerNum"] = (j) => {
+callbacks["UpdatePlayerNum"] = (data) => {
   const current = mainStack.currentItem;  // should be lobby
   if (mainStack.depth === 2) {
-    const data = JSON.parse(j);
     const l = data[0];
     const s = data[1];
     current.lobbyPlayerNum = l;
@@ -165,10 +162,9 @@ callbacks["UpdatePlayerNum"] = (j) => {
   }
 }
 
-callbacks["Chat"] = (jsonData) => {
+callbacks["Chat"] = (data) => {
   // jsonData: { string userName, string general, string time, string msg }
   const current = mainStack.currentItem;  // lobby or room
-  const data = JSON.parse(jsonData);
   const pid = data.sender;
   const userName = data.userName;
   const general = luatr(data.general);

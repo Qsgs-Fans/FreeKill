@@ -58,21 +58,6 @@ elseif (ANDROID)
     QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${SSH_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Emscripten")
-  # WASM
-  list(REMOVE_ITEM freekill_SRCS
-    "network/server_socket.cpp"
-    #"network/client_socket.cpp"
-    #"network/router.cpp"
-    "server/server.cpp"
-    "server/serverplayer.cpp"
-    "server/room.cpp"
-  )
-  # set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/liblua.a)
-  # set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/wasm/libcrypto.a)
-  # set other libs by yourself
-  set(IDBFS_LIB idbfs.js)
-  include(${FK_WASM_TOOLCHAIN})
 else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)
