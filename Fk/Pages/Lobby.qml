@@ -42,6 +42,7 @@ Item {
         wrapMode: TextEdit.WordWrap
         textFormat: Text.MarkdownText
         text: config.serverMotd + "\n___\n" + luatr('Bulletin Info')
+        onLinkActivated: Qt.openUrlExternally(link);
       }
     }
   }
