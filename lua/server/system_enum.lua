@@ -38,8 +38,8 @@
 ---@field public drawPilePosition? integer @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
 ---@field public moveMark? table @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 
---- PindianResul 拼点结果
----@class PindianResul 
+--- PindianResult 拼点结果
+---@class PindianResult
 ---@field public toCard Card @ 被拼点者所使用的牌
 ---@field public winner? ServerPlayer @ 赢家，可能不存在
 
@@ -122,6 +122,7 @@ fk.IceDamage = 4
 ---@field public unoffsetableList? integer[] @ 这些角色不可抵消此牌
 ---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
 ---@field public additionalRecover? integer @ 额外回复值
+---@field public extra_data? any @ 额外数据（如目标过滤等）
 ---@field public customFrom? integer @ 新使用者
 ---@field public cardsResponded? Card[] @ 响应此牌的牌
 ---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
@@ -142,72 +143,84 @@ fk.IceDamage = 4
 ---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
 ---@field public additionalRecover? integer @ 额外回复值
 ---@field public disresponsive? boolean @ 是否不可响应
----@field public unoffsetableList? boolean @ 是否不可抵消
+---@field public unoffsetable? boolean @ 是否不可抵消
 ---@field public fixedResponseTimes? table<string, integer>|integer @ 额外响应请求
 ---@field public fixedAddTimesResponsors? integer[] @ 额外响应请求次数
 ---@field public additionalEffect? integer @额外结算次数
 
+--- CardUseStruct 卡牌效果的数据
 ---@class CardEffectEvent
----@field public from? integer
----@field public to integer
----@field public subTargets? integer[]
----@field public tos TargetGroup
----@field public card Card
----@field public toCard? Card
----@field public responseToEvent? CardEffectEvent
----@field public nullifiedTargets? integer[]
----@field public extraUse? boolean
----@field public disresponsiveList? integer[]
----@field public unoffsetableList? integer[]
----@field public additionalDamage? integer
----@field public additionalRecover? integer
----@field public customFrom? integer
----@field public cardsResponded? Card[]
----@field public disresponsive? boolean
----@field public unoffsetable? boolean
----@field public isCancellOut? boolean
----@field public fixedResponseTimes? table<string, integer>|integer
----@field public fixedAddTimesResponsors? integer[]
----@field public prohibitedCardNames? string[]
+---@field public from? integer @ 使用者
+---@field public to integer @ 角色目标
+---@field public subTargets? integer[] @ 子目标（借刀！）
+---@field public tos TargetGroup @ 目标组
+---@field public card Card @ 卡牌本牌
+---@field public toCard? Card @ 卡牌目标
+---@field public responseToEvent? CardEffectEvent @ 响应事件目标
+---@field public nullifiedTargets? integer[] @ 对这些角色无效
+---@field public extraUse? boolean @ 是否不计入次数
+---@field public disresponsiveList? integer[] @ 这些角色不可响应此牌
+---@field public unoffsetableList? integer[] @ 这些角色不可抵消此牌
+---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
+---@field public additionalRecover? integer @ 额外回复值
+---@field public extra_data? any @ 额外数据（如目标过滤等）
+---@field public customFrom? integer @ 新使用者
+---@field public cardsResponded? Card[] @ 响应此牌的牌
+---@field public disresponsive? boolean @ 是否不可响应
+---@field public unoffsetable? boolean @ 是否不可抵消
+---@field public isCancellOut? boolean @ 是否被抵消
+---@field public fixedResponseTimes? table<string, integer>|integer @ 额外响应请求
+---@field public fixedAddTimesResponsors? integer[] @ 额外响应请求次数
+---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
 
+--- SkillEffectEvent 技能效果的数据
 ---@class SkillEffectEvent
----@field public from integer
----@field public tos integer[]
----@field public cards integer[]
+---@field public from integer @ 使用者
+---@field public tos integer[] @ 角色目标
+---@field public cards integer[] @ 选择卡牌
 
+--- JudgeStruct 判定的数据
 ---@class JudgeStruct
----@field public who ServerPlayer
----@field public card Card
----@field public reason string
----@field public pattern string
----@field public skipDrop? boolean
+---@field public who ServerPlayer @ 判定者
+---@field public card Card @ 当前判定牌
+---@field public reason string @ 判定原因
+---@field public pattern string @ 钩叉条件
+---@field public skipDrop? boolean @ 是否不进入弃牌堆
 
+--- CardResponseEvent 卡牌响应的数据
 ---@class CardResponseEvent
----@field public from integer
----@field public card Card
----@field public responseToEvent? CardEffectEvent
----@field public skipDrop? boolean
----@field public customFrom? integer
+---@field public from integer @ 响应者
+---@field public card Card @ 卡牌本牌
+---@field public responseToEvent? CardEffectEvent @ 响应事件目标
+---@field public skipDrop? boolean @ 是否不进入弃牌堆
+---@field public customFrom? integer @ 新响应者
 
+--- AskForCardUse 询问使用卡牌的数据
 ---@class AskForCardUse
----@field public user ServerPlayer
----@field public cardName string
----@field public pattern string
----@field public result CardUseStruct
+---@field public user ServerPlayer @ 使用者
+---@field public cardName string @ 烧条信息
+---@field public pattern string @ 可用牌过滤
+---@field public eventData CardEffectEvent @ 事件数据
+---@field public extraData UseExtraData @ 额外数据
+---@field public result? CardUseStruct @ 使用结果
 
+--- AskForCardResponse 询问响应卡牌的数据
 ---@class AskForCardResponse
----@field public user ServerPlayer
----@field public cardName string
----@field public pattern string
----@field public result Card
+---@field public user ServerPlayer @ 响应者
+---@field public cardName string @ 烧条信息
+---@field public pattern string @ 可用牌过滤
+---@field public extraData UseExtraData @ 额外数据
+---@field public result? Card
 
+--- PindianStruct 拼点的数据
 ---@class PindianStruct
----@field public from ServerPlayer
----@field public tos ServerPlayer[]
----@field public fromCard Card
----@field public results table<integer, PindianResult>
----@field public reason string
+---@field public from ServerPlayer @ 拼点发起者
+---@field public tos ServerPlayer[] @ 拼点目标
+---@field public fromCard Card @ 拼点发起者拼点牌
+---@field public results table<integer, PindianResult> @ 结果
+---@field public reason string @ 拼点原因
 
+--- LogMessage 战报信息
 ---@class LogMessage
 ---@field public type string @ log主体
 ---@field public from? integer @ 要替换%from的玩家的id
@@ -218,16 +231,19 @@ fk.IceDamage = 4
 ---@field public arg3? any @ 要替换%arg3的内容
 ---@field public toast? boolean @ 是否顺手把消息发送一条相同的toast
 
+--- SkillUseStruct 使用技能的数据
 ---@class SkillUseStruct
 ---@field public skill Skill
 ---@field public willUse boolean
 
+--- DrawCardStruct 摸牌的数据
 ---@class DrawCardStruct
----@field public who ServerPlayer
----@field public num number
----@field public skillName string
----@field public fromPlace "top"|"bottom"
+---@field public who ServerPlayer @ 摸牌者
+---@field public num number @ 摸牌数
+---@field public skillName string @ 技能名
+---@field public fromPlace "top"|"bottom" @ 摸牌的位置
 
+--- 移动理由
 ---@alias CardMoveReason integer
 fk.ReasonJustMove = 1
 fk.ReasonDraw = 2
@@ -242,4 +258,5 @@ fk.ReasonResonpse = 10
 fk.ReasonJudge = 11
 fk.ReasonRecast = 12
 
----@alias AnimationType "special" | "drawcard" | "control" | "offensive" | "support" | "defensive" | "negative" | "masochism" | "switch" | "big" @ 内置动画类型，理论上你可以自定义一个自己的动画类型（big会播放一段限定技动画）
+--- 内置动画类型，理论上你可以自定义一个自己的动画类型（big会播放一段限定技动画）
+---@alias AnimationType "special" | "drawcard" | "control" | "offensive" | "support" | "defensive" | "negative" | "masochism" | "switch" | "big"
