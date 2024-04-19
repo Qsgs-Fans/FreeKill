@@ -175,8 +175,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
             room:setCardMark(currentCard, name, 0)
           end
           if name:find("-inarea", 1, true) and
-          type(value) == "table" and
-          not table.contains(value, data.toArea)
+          type(value) == "table" and table.contains(value, realFromArea)
           then
             room:setCardMark(currentCard, name, 0)
           end
