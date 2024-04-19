@@ -167,10 +167,6 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
         Fk:filterCard(info.cardId, room:getPlayerById(data.to))
 
         local currentCard = Fk:getCardById(info.cardId)
-        if data.moveMark then
-          local mark = table.clone(data.moveMark) or {"", 0}
-          room:setCardMark(currentCard, mark[1], mark[2])
-        end
         for name, value in pairs(currentCard.mark) do
           if name:find("-inhand", 1, true) and
           realFromArea == Player.Hand and
@@ -184,6 +180,10 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           then
             room:setCardMark(currentCard, name, 0)
           end
+        end
+        if data.moveMark then
+          local mark = table.clone(data.moveMark) or {"", 0}
+          room:setCardMark(currentCard, mark[1], mark[2])
         end
         if
           data.toArea == Player.Equip and
