@@ -109,41 +109,43 @@ fk.IceDamage = 4
 ---@field public bypass_times? boolean @ 无次数限制？
 ---@field public playing? boolean @ (AI专用) 出牌阶段？
 
+--- CardUseStruct 使用卡牌的数据
 ---@class CardUseStruct
----@field public from integer
----@field public tos TargetGroup
----@field public card Card
----@field public toCard? Card
----@field public responseToEvent? CardUseStruct
----@field public nullifiedTargets? integer[]
----@field public extraUse? boolean
----@field public disresponsiveList? integer[]
----@field public unoffsetableList? integer[]
----@field public additionalDamage? integer
----@field public additionalRecover? integer
----@field public customFrom? integer
----@field public cardsResponded? Card[]
----@field public prohibitedCardNames? string[]
----@field public damageDealt? table<PlayerId, number>
----@field public additionalEffect? integer
----@field public noIndicate? boolean
+---@field public from integer @ 使用者
+---@field public tos TargetGroup @ 角色目标组
+---@field public card Card @ 卡牌本牌
+---@field public toCard? Card @ 卡牌目标
+---@field public responseToEvent? CardUseStruct @ 响应事件目标
+---@field public nullifiedTargets? integer[] @ 对这些角色无效
+---@field public extraUse? boolean @ 是否不计入次数
+---@field public disresponsiveList? integer[] @ 这些角色不可响应此牌
+---@field public unoffsetableList? integer[] @ 这些角色不可抵消此牌
+---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
+---@field public additionalRecover? integer @ 额外回复值
+---@field public customFrom? integer @ 新使用者
+---@field public cardsResponded? Card[] @ 响应此牌的牌
+---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
+---@field public damageDealt? table<PlayerId, number> @ 此牌造成的伤害
+---@field public additionalEffect? integer @ 额外结算次数
+---@field public noIndicate? boolean @ 隐藏指示线
 
+--- AimStruct 处理使用牌目标的数据
 ---@class AimStruct
----@field public from integer
----@field public card Card
----@field public tos AimGroup
----@field public to integer
----@field public subTargets? integer[]
----@field public targetGroup? TargetGroup
----@field public nullifiedTargets? integer[]
----@field public firstTarget boolean
----@field public additionalDamage? integer
----@field public additionalRecover? integer
----@field public disresponsive? boolean
----@field public unoffsetableList? boolean
----@field public additionalResponseTimes? table<string, integer>|integer
----@field public fixedAddTimesResponsors? integer[]
----@field public additionalEffect? integer
+---@field public from integer @ 使用者
+---@field public card Card @ 卡牌本牌
+---@field public tos AimGroup @ 总角色目标
+---@field public to integer @ 当前角色目标
+---@field public subTargets? integer[] @ 子目标（借刀！）
+---@field public targetGroup? TargetGroup @ 目标组
+---@field public nullifiedTargets? integer[] @ 对这些角色无效
+---@field public firstTarget boolean @ 是否是第一个目标
+---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
+---@field public additionalRecover? integer @ 额外回复值
+---@field public disresponsive? boolean @ 是否不可响应
+---@field public unoffsetableList? boolean @ 是否不可抵消
+---@field public fixedResponseTimes? table<string, integer>|integer @ 额外响应请求
+---@field public fixedAddTimesResponsors? integer[] @ 额外响应请求次数
+---@field public additionalEffect? integer @额外结算次数
 
 ---@class CardEffectEvent
 ---@field public from? integer
