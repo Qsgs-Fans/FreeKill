@@ -8,6 +8,7 @@
 ---@field public current ClientPlayer @ 当前回合玩家
 ---@field public discard_pile integer[] @ 弃牌堆
 ---@field public observing boolean
+---@field public record any
 Client = AbstractRoom:subclass('Client')
 
 -- load client classes
@@ -58,7 +59,7 @@ function Client:initialize()
 end
 
 ---@param id integer
----@return ClientPlayer?
+---@return ClientPlayer
 function Client:getPlayerById(id)
   if id == Self.id then return Self end
   for _, p in ipairs(self.players) do
@@ -172,6 +173,7 @@ local function parseMsg(msg, nocolor)
 
   local from = getPlayerStr(data.from, "#0C8F0C")
 
+  ---@type any
   local to = data.to or Util.DummyTable
   local to_str = {}
   for _, id in ipairs(to) do
@@ -179,6 +181,7 @@ local function parseMsg(msg, nocolor)
   end
   to = table.concat(to_str, ", ")
 
+  ---@type any
   local card = data.card or Util.DummyTable
   local allUnknown = true
   local unknownCount = 0

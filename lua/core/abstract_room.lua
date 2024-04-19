@@ -38,7 +38,7 @@ function AbstractRoom:getPlayerById(id) end
 --- 获取一张牌所处的区域。
 ---@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
 ---@return CardArea @ 这张牌的区域
-function AbstractRoom:getCardArea(cardId) end
+function AbstractRoom:getCardArea(cardId) return Card.Unknown end
 
 function AbstractRoom:setBanner(name, value)
   if value == 0 then value = nil end

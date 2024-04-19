@@ -449,11 +449,14 @@ end
 
 -- override default string.len
 string.rawlen = string.len
+
+---@param self string
 ---@diagnostic disable-next-line: duplicate-set-field
 function string:len()
   return utf8.len(self)
 end
 
+---@param self string
 ---@param delimiter string
 ---@return string[]
 function string:split(delimiter)
@@ -470,16 +473,20 @@ function string:split(delimiter)
   return result
 end
 
+---@param self string
 function string:startsWith(start)
   return self:sub(1, #start) == start
 end
 
+---@param self string
 function string:endsWith(e)
   return e == "" or self:sub(-#e) == e
 end
 
 FileIO = {
   pwd = fk.QmlBackend_pwd,
+
+  ---@return string[]
   ls = function(filename)
     if filename == nil then
       return fk.QmlBackend_ls(".")
