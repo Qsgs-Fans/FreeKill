@@ -98,7 +98,7 @@ Item {
       c.selectable = false;
       c.height = c.height / 0.8;
       c.width = c.width / 0.8;
-      // c.rotation = 0;
+      c.rotation = 0;
     });
     const vanished = [];
     if (result.length < outputs.length) {
