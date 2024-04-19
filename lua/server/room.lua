@@ -3135,7 +3135,7 @@ function Room:drawCards(player, num, skillName, fromPlace)
     fromPlace = fromPlace,
   }
   if self.logic:trigger(fk.BeforeDrawCard, player, drawData) then
-    self.logic:breakEvent(false)
+    return {}
   end
 
   num = drawData.num
