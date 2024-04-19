@@ -695,7 +695,7 @@ function SetPlayerGameData(pid, data)
   local total, win, run = table.unpack(data)
   p.player:setGameData(total, win, run)
   table.insert(data, 1, pid)
-  ClientInstance:notifyUI("UpdateGameData", json.encode(data))
+  ClientInstance:notifyUI("UpdateGameData", data)
 end
 
 function FilterMyHandcards()
