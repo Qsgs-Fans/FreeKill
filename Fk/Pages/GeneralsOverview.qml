@@ -98,7 +98,6 @@ Item {
               delete s.normalPkg[name];
               s.banPkg[name] = [];
             }
-            console.log(JSON.stringify(config.curScheme))
             config.curSchemeChanged();
           } else {
             pkgList.currentIndex = index;
@@ -394,12 +393,12 @@ Item {
       }
 
       onClicked: {
-        callbacks["LogEvent"](JSON.stringify({
+        callbacks["LogEvent"]({
           type: "PlaySkillSound",
           name: name,
           general: detailGeneralCard.name,
           i: idx,
-        }));
+        });
       }
     }
   }

@@ -72,96 +72,6 @@ bool QmlBackend::isDir(const QString &file) {
   return QFileInfo(QUrl(file).path()).isDir();
 }
 
-#ifndef FK_SERVER_ONLY
-
-QQmlApplicationEngine *QmlBackend::getEngine() const { return engine; }
-
-void QmlBackend::setEngine(QQmlApplicationEngine *engine) {
-  this->engine = engine;
-}
-
-void QmlBackend::startServer(ushort port) {
-  if (!ServerInstance) {
-    Server *server = new Server(this);
-
-    if (!server->listen(QHostAddress::Any, port)) {
-      server->deleteLater();
-      emit notifyUI("ErrorMsg", tr("Cannot start server!"));
-    }
-  }
-}
-
-void QmlBackend::joinServer(QString address) {
-  if (ClientInstance != nullptr)
-    return;
-  Client *client = new Client(this);
-  connect(client, &Client::error_message, this, [=](const QString &msg) {
-    if (replayer) {
-      emit replayerShutdown();
-    }
-    client->deleteLater();
-    emit notifyUI("ErrorMsg", msg);
-    emit notifyUI("BackToStart", "[]");
-  });
-  QString addr = "127.0.0.1";
-  ushort port = 9527u;
-
-  if (address.contains(QChar(':'))) {
-    QStringList texts = address.split(QChar(':'));
-    addr = texts.value(0);
-    port = texts.value(1).toUShort();
-  } else {
-    addr = address;
-    // SRV解析查询
-    QDnsLookup* dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
-    QEventLoop eventLoop;
-    // 阻塞的SRV解析查询回调
-    connect(dns, &QDnsLookup::finished,[&eventLoop](void){
-        eventLoop.quit();
-    });
-    dns->lookup();
-    eventLoop.exec();
-    if (dns->error() == QDnsLookup::NoError) { // SRV解析成功
-      const auto records = dns->serviceRecords();
-      const QDnsServiceRecord &record = records.first();
-      QHostInfo host = QHostInfo::fromName(record.target());
-      if (host.error() == QHostInfo::NoError) { // 主机解析成功
-          addr = host.addresses().first().toString();
-          port = record.port();
-      }
-    }
-  }
-
-  client->connectToHost(addr, port);
-}
-
-void QmlBackend::quitLobby(bool close) {
-  if (ClientInstance)
-    delete ClientInstance;
-  // if (ServerInstance && close)
-  //   ServerInstance->deleteLater();
-}
-
-QString QmlBackend::translate(const QString &src) {
-  if (!ClientInstance)
-    return src;
-
-  lua_State *L = ClientInstance->getLuaState();
-  lua_getglobal(L, "Translate");
-  auto bytes = src.toUtf8();
-  lua_pushstring(L, bytes.data());
-
-  int err = lua_pcall(L, 1, 1, 0);
-  const char *result = lua_tostring(L, -1);
-  if (err) {
-    qCritical() << result;
-    lua_pop(L, 1);
-    return "";
-  }
-  lua_pop(L, 1);
-  return QString(result);
-}
-
 void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   QVariantList list;
   QVariantMap map;
@@ -282,6 +192,96 @@ QVariant QmlBackend::readLuaValue(lua_State *L, int index,
       luaL_error(L, "unexpected value type %s", lua_typename(L, tp));
   }
   return QVariant(); // won't return
+}
+
+#ifndef FK_SERVER_ONLY
+
+QQmlApplicationEngine *QmlBackend::getEngine() const { return engine; }
+
+void QmlBackend::setEngine(QQmlApplicationEngine *engine) {
+  this->engine = engine;
+}
+
+void QmlBackend::startServer(ushort port) {
+  if (!ServerInstance) {
+    Server *server = new Server(this);
+
+    if (!server->listen(QHostAddress::Any, port)) {
+      server->deleteLater();
+      emit notifyUI("ErrorMsg", tr("Cannot start server!"));
+    }
+  }
+}
+
+void QmlBackend::joinServer(QString address) {
+  if (ClientInstance != nullptr)
+    return;
+  Client *client = new Client(this);
+  connect(client, &Client::error_message, this, [=](const QString &msg) {
+    if (replayer) {
+      emit replayerShutdown();
+    }
+    client->deleteLater();
+    emit notifyUI("ErrorMsg", msg);
+    emit notifyUI("BackToStart", "[]");
+  });
+  QString addr = "127.0.0.1";
+  ushort port = 9527u;
+
+  if (address.contains(QChar(':'))) {
+    QStringList texts = address.split(QChar(':'));
+    addr = texts.value(0);
+    port = texts.value(1).toUShort();
+  } else {
+    addr = address;
+    // SRV解析查询
+    QDnsLookup* dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
+    QEventLoop eventLoop;
+    // 阻塞的SRV解析查询回调
+    connect(dns, &QDnsLookup::finished,[&eventLoop](void){
+        eventLoop.quit();
+    });
+    dns->lookup();
+    eventLoop.exec();
+    if (dns->error() == QDnsLookup::NoError) { // SRV解析成功
+      const auto records = dns->serviceRecords();
+      const QDnsServiceRecord &record = records.first();
+      QHostInfo host = QHostInfo::fromName(record.target());
+      if (host.error() == QHostInfo::NoError) { // 主机解析成功
+          addr = host.addresses().first().toString();
+          port = record.port();
+      }
+    }
+  }
+
+  client->connectToHost(addr, port);
+}
+
+void QmlBackend::quitLobby(bool close) {
+  if (ClientInstance)
+    delete ClientInstance;
+  // if (ServerInstance && close)
+  //   ServerInstance->deleteLater();
+}
+
+QString QmlBackend::translate(const QString &src) {
+  if (!ClientInstance)
+    return src;
+
+  lua_State *L = ClientInstance->getLuaState();
+  lua_getglobal(L, "Translate");
+  auto bytes = src.toUtf8();
+  lua_pushstring(L, bytes.data());
+
+  int err = lua_pcall(L, 1, 1, 0);
+  const char *result = lua_tostring(L, -1);
+  if (err) {
+    qCritical() << result;
+    lua_pop(L, 1);
+    return "";
+  }
+  lua_pop(L, 1);
+  return QString(result);
 }
 
 QVariant QmlBackend::callLuaFunction(const QString &func_name,

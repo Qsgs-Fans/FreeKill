@@ -1176,12 +1176,12 @@ Item {
 
       if (!config.disableMsgAudio)
         try {
-          callbacks["LogEvent"](JSON.stringify({
+          callbacks["LogEvent"]({
             type: "PlaySkillSound",
             name: skill,
             general: gene,
             i: idx,
-          }));
+          });
         } catch (e) {}
       const m = luatr("$" + skill + (gene ? "_" + gene : "")
                           + (idx ? idx.toString() : ""));
@@ -1278,7 +1278,7 @@ Item {
         roomScene.isOwner = d.isOwner;
       } else {
         lcall("ResetAddPlayer",
-          JSON.stringify([d.id, d.name, d.avatar, d.ready, d.gameData[3]]));
+          [d.id, d.name, d.avatar, d.ready, d.gameData[3]]);
       }
       lcall("SetPlayerGameData", d.id, d.gameData);
       Logic.getPhotoModel(d.id).isOwner = d.isOwner;

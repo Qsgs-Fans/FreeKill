@@ -76,7 +76,7 @@ callbacks["ErrorMsg"] = (jsonData) => {
   mainWindow.busy = false;
   if (sheduled_download !== "") {
     mainWindow.busy = true;
-    Pacman.loadSummary(sheduled_download, true);
+    Pacman.loadSummary(JSON.stringify(sheduled_download), true);
     sheduled_download = "";
   }
 }
