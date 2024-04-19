@@ -38,9 +38,6 @@ public:
   // Lobby
   Q_INVOKABLE void quitLobby(bool close = true);
 
-  // lua --> qml
-  void emitNotifyUI(const QString &command, const QString &jsonData);
-
   // read data from lua, call lua functions
   Q_INVOKABLE QString translate(const QString &src);
   Q_INVOKABLE QVariant callLuaFunction(const QString &func_name,
@@ -79,7 +76,7 @@ public:
   Q_INVOKABLE void controlReplayer(QString type);
 
 signals:
-  void notifyUI(const QString &command, const QString &jsonData);
+  void notifyUI(const QString &command, const QVariant &data);
   void volumeChanged(qreal);
   void replayerToggle();
   void replayerSpeedUp();

@@ -95,7 +95,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
     connect(thread, &QThread::finished, [=]() {
       thread->deleteLater();
 #ifndef FK_SERVER_ONLY
-      Backend->emitNotifyUI("DownloadComplete", "");
+      Backend->notifyUI("DownloadComplete", "");
 #endif
     });
   } else {
@@ -135,7 +135,7 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
     connect(thread, &QThread::finished, [=]() {
       thread->deleteLater();
 #ifndef FK_SERVER_ONLY
-      Backend->emitNotifyUI("DownloadComplete", "");
+      Backend->notifyUI("DownloadComplete", "");
 #endif
     });
   } else {
@@ -252,14 +252,14 @@ static int transfer_progress_cb(const git_indexer_progress *stats,
       auto msg = QString("Resolving deltas %1/%2")
                      .arg(stats->indexed_deltas)
                      .arg(stats->total_deltas);
-      Backend->emitNotifyUI("UpdateBusyText", msg);
+      Backend->notifyUI("UpdateBusyText", msg);
     } else if (stats->total_objects > 0) {
       auto msg = QString("Received %1/%2 objects (%3) in %4 KiB")
                      .arg(stats->received_objects)
                      .arg(stats->total_objects)
                      .arg(stats->indexed_objects)
                      .arg(stats->received_bytes / 1024);
-      Backend->emitNotifyUI("UpdateBusyText", msg);
+      Backend->notifyUI("UpdateBusyText", msg);
     }
 #endif
   }

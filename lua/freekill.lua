@@ -17,14 +17,20 @@ json = {
   encode = function(val, t)
     if type(val) ~= "table" then return luajson.encode(val) end
     t = t or 1 -- Compact
+    ---@diagnostic disable-next-line
     local doc = fk.QJsonDocument_fromVariant(val)
     local ret = doc:toJson(t)
     return ret
   end,
   decode = function(str)
+    local start = str:sub(1, 1)
+    if start ~= "[" and start ~= "{" then
+      return luajson.decode(str)
+    end
+    ---@diagnostic disable-next-line
     local doc = fk.QJsonDocument_fromJson(str)
     local ret = doc:toVariant()
-    if ret == "" then ret = luajson.decode(str) end
+    -- if ret == "" then ret = luajson.decode(str) end
     return ret
   end,
 }

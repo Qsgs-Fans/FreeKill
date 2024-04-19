@@ -142,10 +142,6 @@ void QmlBackend::quitLobby(bool close) {
   //   ServerInstance->deleteLater();
 }
 
-void QmlBackend::emitNotifyUI(const QString &command, const QString &jsonData) {
-  emit notifyUI(command, jsonData);
-}
-
 QString QmlBackend::translate(const QString &src) {
   if (!ClientInstance)
     return src;
@@ -228,7 +224,7 @@ QVariant QmlBackend::readLuaValue(lua_State *L, int index,
     case LUA_TNIL:
       return QVariant::fromValue(nullptr);
     case LUA_TBOOLEAN:
-      return QVariant(lua_toboolean(L, index));
+      return QVariant((bool)lua_toboolean(L, index));
     case LUA_TNUMBER:
       return QVariant(lua_tonumber(L, index));
     case LUA_TSTRING:
@@ -577,13 +573,13 @@ void QmlBackend::setReplayer(Replayer *rep) {
   replayer = rep;
   if (rep) {
     connect(rep, &Replayer::duration_set, this, [this](int sec) {
-        this->emitNotifyUI("ReplayerDurationSet", QString::number(sec));
+        this->notifyUI("ReplayerDurationSet", QString::number(sec));
         });
     connect(rep, &Replayer::elasped, this, [this](int sec) {
-        this->emitNotifyUI("ReplayerElapsedChange", QString::number(sec));
+        this->notifyUI("ReplayerElapsedChange", QString::number(sec));
         });
     connect(rep, &Replayer::speed_changed, this, [this](qreal speed) {
-        this->emitNotifyUI("ReplayerSpeedChange", QString::number(speed));
+        this->notifyUI("ReplayerSpeedChange", QString::number(speed));
         });
     connect(this, &QmlBackend::replayerToggle, rep, &Replayer::toggle);
     connect(this, &QmlBackend::replayerSlowDown, rep, &Replayer::slowDown);
