@@ -926,7 +926,7 @@ function Room:notifyMoveCards(players, card_moves, forceVisible)
 
       if not (move.moveVisible or forceVisible or containArea(move.toArea, move.to and p.isBuddy and p:isBuddy(move.to))) then
         for _, info in ipairs(move.moveInfo) do
-          if not containArea(info.fromArea, move.from == p.id) then
+          if not containArea(info.fromArea, move.from and p.isBuddy and p:isBuddy(move.to)) then
             info.cardId = -1
           end
         end
