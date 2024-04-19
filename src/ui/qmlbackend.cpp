@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "qmlbackend.h"
+#include <lua.h>
 #include <qjsondocument.h>
+#include <qvariant.h>
 
 #ifndef FK_SERVER_ONLY
 #include <qaudiooutput.h>
@@ -175,6 +177,9 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   case QMetaType::UInt:
     lua_pushinteger(L, v.toInt());
     break;
+  case QMetaType::LongLong:
+    lua_pushinteger(L, v.toLongLong());
+    break;
   case QMetaType::Double:
     lua_pushnumber(L, v.toDouble());
     break;
@@ -213,9 +218,80 @@ void QmlBackend::pushLuaValue(lua_State *L, QVariant v) {
   }
 }
 
-QString QmlBackend::callLuaFunction(const QString &func_name,
+// 要求返回一个QVariant而不对栈产生影响
+QVariant QmlBackend::readLuaValue(lua_State *L, int index,
+    QHash<const void *, bool> stack) {
+
+  if (index == 0) index = lua_gettop(L);
+  auto tp = lua_type(L, index);
+  switch (tp) {
+    case LUA_TNIL:
+      return QVariant::fromValue(nullptr);
+    case LUA_TBOOLEAN:
+      return QVariant(lua_toboolean(L, index));
+    case LUA_TNUMBER:
+      return QVariant(lua_tonumber(L, index));
+    case LUA_TSTRING:
+      return QVariant(lua_tostring(L, index));
+    case LUA_TTABLE: {
+      auto p = lua_topointer(L, index);
+      if (stack[p]) {
+        luaL_error(L, "circular reference detected");
+        return QVariant(); // won't return
+      }
+      stack[p] = true;
+
+      lua_len(L, index);
+      int length = lua_tointeger(L, -1);
+      lua_pop(L, 1);
+      
+      if (length == 0) {
+        bool empty = true;
+        QVariantMap map;
+
+        lua_pushnil(L);
+        while (lua_next(L, index) != 0) {
+          // 坑逼lua把number也能过isstring判断
+          if (!lua_isstring(L, -2) || lua_isnumber(L, -2)) {
+            luaL_error(L, "key of object must be string");
+            return QVariant();
+          }
+
+          const char *key = lua_tostring(L, -2);
+          auto value = readLuaValue(L, lua_gettop(L), stack);
+          lua_pop(L, 1);
+
+          map[key] = value;
+          empty = false;
+        }
+
+        if (empty) {
+          return QVariantList();
+        } else {
+          return map;
+        }
+      } else {
+        QVariantList arr;
+        for (int i = 1; i <= length; i++) {
+          lua_rawgeti(L, index, i);
+          arr << readLuaValue(L, lua_gettop(L), stack);
+          lua_pop(L, 1);
+        }
+        return arr;
+      }
+      break;
+    }
+
+    // ignore function, userdata and thread
+    default:
+      luaL_error(L, "unexpected value type %s", lua_typename(L, tp));
+  }
+  return QVariant(); // won't return
+}
+
+QVariant QmlBackend::callLuaFunction(const QString &func_name,
                                     QVariantList params) {
-  if (!ClientInstance) return "{}";
+  if (!ClientInstance) return QVariantMap();
 
   lua_State *L = ClientInstance->getLuaState();
   lua_getglobal(L, func_name.toLatin1().data());
@@ -225,19 +301,19 @@ QString QmlBackend::callLuaFunction(const QString &func_name,
   }
 
   int err = lua_pcall(L, params.length(), 1, 0);
-  const char *result = lua_tostring(L, -1);
   if (err) {
-    qCritical() << result;
+    qCritical() << lua_tostring(L, -1);
     lua_pop(L, 1);
-    return "";
+    return QVariant();
   }
+  auto result = readLuaValue(L);
   lua_pop(L, 1);
 
-  return QString(result);
+  return result;
 }
 
-QString QmlBackend::evalLuaExp(const QString &lua) {
-  if (!ClientInstance) return "{}";
+QVariant QmlBackend::evalLuaExp(const QString &lua) {
+  if (!ClientInstance) return QVariantMap();
 
   lua_State *L = ClientInstance->getLuaState();
   int err;
@@ -248,15 +324,15 @@ QString QmlBackend::evalLuaExp(const QString &lua) {
     return "";
   }
   err = lua_pcall(L, 0, 1, 0);
-  const char *result = luaL_tolstring(L, -1, NULL);
   if (err) {
-    qCritical() << result;
+    qCritical() << lua_tostring(L, -1);
     lua_pop(L, 1);
-    return "";
+    return QVariant();
   }
+  auto result = readLuaValue(L);
   lua_pop(L, 1);
 
-  return QString(result);
+  return result;
 }
 
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {

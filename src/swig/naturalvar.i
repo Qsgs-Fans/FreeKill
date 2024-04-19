@@ -4,6 +4,10 @@
 // type bindings
 // ------------------------------------------------------
 
+%{
+#include <qmlbackend.h>
+%}
+
 // Lua 5.4 特有的不能pushnumber， swig迟迟不更只好手动调教
 %typemap(out) int
 %{
@@ -103,4 +107,37 @@ SWIG_arg++;
   $1 = lua_istable(L, $input) ? 1 : 0;
 %}
 
+// QByteArray: 仅out
 
+%typemap(out) QByteArray
+%{
+  lua_pushstring(L, $1.constData());
+  SWIG_arg++;
+%}
+
+// const QByteArray &: 仅in
+%typemap(arginit) QByteArray const &
+  "QByteArray $1_str;"
+
+%typemap(in, checkfn = "lua_isstring") QByteArray const &
+%{
+  $1_str = QByteArray(lua_tostring(L, $input));
+  $1 = &$1_str;
+%}
+
+// QVariant: 用于json，out
+%typemap(out) QVariant
+%{
+  QmlBackend::pushLuaValue(L, $1);
+  SWIG_arg++;
+%}
+
+// const QVariant &: 用于json，in
+%typemap(arginit) QVariant const &
+  "QVariant $1_var;"
+
+%typemap(in) QVariant const &
+%{
+  $1_var = QmlBackend::readLuaValue(L, $input);
+  $1 = &$1_var;
+%}

@@ -38,3 +38,15 @@ void qDebug(const char *msg, ...);
 void qInfo(const char *msg, ...);
 void qWarning(const char *msg, ...);
 void qCritical(const char *msg, ...);
+
+class QJsonDocument {
+public:
+  enum JsonFormat {
+    Indented,
+    Compact,
+  };
+  static QJsonDocument fromJson(const QByteArray &json);
+  static QJsonDocument fromVariant(const QVariant &variant);
+  QByteArray toJson(QJsonDocument::JsonFormat format = 1) const;
+  QVariant toVariant() const;
+};
