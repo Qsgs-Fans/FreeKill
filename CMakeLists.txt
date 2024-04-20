@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.4.14)
+project(FreeKill VERSION 0.4.15)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 find_package(Qt6 REQUIRED COMPONENTS

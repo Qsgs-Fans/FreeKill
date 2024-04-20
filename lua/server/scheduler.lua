@@ -168,3 +168,7 @@ end
 function IsConsoleStart()
   return requestRoom.thread:isConsoleStart()
 end
+
+if FileIO.pwd():endsWith("packages/freekill-core") then
+  FileIO.cd("../..")
+end

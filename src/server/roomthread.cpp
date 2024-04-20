@@ -17,6 +17,12 @@ RoomThread::RoomThread(Server *m_server) {
   md5 = m_server->getMd5();
 
   L = CreateLuaState();
+  if (QFile::exists("packages/freekill-core") &&
+      !GetDisabledPacks().contains("freekill-core")) {
+    // 危险的cd操作，记得在lua中切回游戏根目录
+    QDir::setCurrent("packages/freekill-core");
+  }
+
   DoLuaScript(L, "lua/freekill.lua");
   DoLuaScript(L, "lua/server/scheduler.lua");
   start();

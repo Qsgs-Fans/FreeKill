@@ -27,6 +27,12 @@ Client::Client(QObject *parent) : QObject(parent), callback(0) {
   router = new Router(this, socket, Router::TYPE_CLIENT);
 
   L = CreateLuaState();
+  if (QFile::exists("packages/freekill-core") &&
+      !GetDisabledPacks().contains("freekill-core")) {
+    // 危险的cd操作，记得在lua中切回游戏根目录
+    QDir::setCurrent("packages/freekill-core");
+  }
+
   DoLuaScript(L, "lua/freekill.lua");
   DoLuaScript(L, "lua/client/client.lua");
 }
