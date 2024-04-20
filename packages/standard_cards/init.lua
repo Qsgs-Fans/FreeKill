@@ -709,7 +709,7 @@ local lightningSkill = fk.CreateActiveSkill{
       }
 
       room:moveCards{
-        ids = { effect.cardId },
+        ids = Card:getIdList(effect.card),
         toArea = Card.DiscardPile,
         moveReason = fk.ReasonUse
       }
