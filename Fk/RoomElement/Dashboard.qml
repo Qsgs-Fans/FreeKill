@@ -322,11 +322,6 @@ RowLayout {
 
     const enabled_cards = [];
     const targets = roomScene.selected_targets;
-    const prompt = lcall("ActiveSkillPrompt", pending_skill, pendings,
-                         targets);
-    if (prompt !== "") {
-      roomScene.setPrompt(Util.processPrompt(prompt));
-    }
 
     handcardAreaItem.cards.forEach((card) => {
       if (card.selected || lcall("ActiveCardFilter", pending_skill, card.cid,
@@ -372,6 +367,11 @@ RowLayout {
     } else {
       pending_card = -1;
       cardSelected(pending_card);
+    }
+    const prompt = lcall("ActiveSkillPrompt", pending_skill, pendings,
+                         targets);
+    if (prompt !== "") {
+      roomScene.setPrompt(Util.processPrompt(prompt));
     }
   }
 
