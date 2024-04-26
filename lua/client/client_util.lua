@@ -382,6 +382,22 @@ function CardFeasible(card, selected_targets)
   return ret
 end
 
+---@param card string | integer
+---@param selected_targets integer[] @ ids of selected players
+function CardPrompt(card, selected_targets)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    local t = json.decode(card)
+    return ActiveSkillPrompt(t.skill, t.subcards, selected_targets)
+  end
+
+  return ActiveSkillPrompt(c.skill, selected_cards, selected_targets)
+end
+
 -- Handle skills
 
 function GetSkillData(skill_name)

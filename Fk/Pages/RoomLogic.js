@@ -724,6 +724,10 @@ function updateSelectedTargets(playerid, selected) {
         }
       }
     }
+    const prompt = lcall("CardPrompt", card, selected_targets);
+    if (prompt !== "") {
+      roomScene.setPrompt(Util.processPrompt(prompt));
+    }
   } else {
     all_photos.forEach(photo => {
       photo.state = "normal";
