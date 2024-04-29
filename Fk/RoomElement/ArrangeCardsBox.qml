@@ -194,7 +194,7 @@ GraphicsBox {
       for (i = 0; i < result[j].length; i++) {
         card = result[j][i];
         if (card.dragging) continue;
-        
+
         if (card.x > _card.x) {
           movepos = [j, i - ((index !==-1 && index < i) ? 1 : 0)];
           break;
@@ -202,7 +202,7 @@ GraphicsBox {
       }
       if (movepos.length === 0)
         movepos = [j, result[j].length - ((index === -1) ? 0 : 1)];
-      
+
       if (!free_arrange && j === 0 && org_cards[0].includes(_card.cid)) {
         let a = 0, b = -1, c = -1;
         i = 0;
@@ -381,7 +381,7 @@ GraphicsBox {
         b++;
       }
     }
-    
+
     for (i = 0; i < areaRepeater.count; i++) {
       if (result[i].length < areaLimits[i]) {
         buttonConfirm.enabled = false;
@@ -420,7 +420,7 @@ GraphicsBox {
     });
     return ret;
   }
-  
+
   function loadData(data) {
     const d = data;
 
