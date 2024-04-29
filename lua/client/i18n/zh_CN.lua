@@ -373,6 +373,7 @@ Fk:loadTranslationTable{
   ["pile_discard"] = "弃牌堆",
   ["processing_area"] = "处理区",
   ["Pile"] = "牌堆",
+  ["toObtain"] = "获得的牌",
   ["Top"] = "牌堆顶",
   ["Bottom"] = "牌堆底",
   ["Shuffle"] = "洗牌",
