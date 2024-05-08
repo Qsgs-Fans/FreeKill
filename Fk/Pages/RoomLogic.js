@@ -672,6 +672,39 @@ function updateSelectedTargets(playerid, selected) {
   }
 
   if (candidate) {
+    if (!selected) {
+      const remain_targets = [];
+      selected_targets.forEach(id => {
+        const photo = getPhoto(id);
+        const ret = lcall("CanUseCardToTarget", card, id, remain_targets,
+                           JSON.stringify(roomScene.extra_data));
+        let bool = ret;
+        if (roomScene.extra_data instanceof Object) {
+          const must = roomScene.extra_data.must_targets;
+          const included = roomScene.extra_data.include_targets;
+          const exclusive = roomScene.extra_data.exclusive_targets;
+          if (exclusive instanceof Array) {
+            if (exclusive.indexOf(id) === -1) bool = false;
+          }
+          if (must instanceof Array) {
+            if (must.filter((val) => {
+              return remain_targets.indexOf(val) === -1;
+            }).length !== 0 && must.indexOf(id) === -1) bool = false;
+          }
+          if (included instanceof Array) {
+            if (included.filter((val) => {
+              return remain_targets.indexOf(val) !== -1;
+            }).length === 0 && included.indexOf(id) === -1) bool = false;
+          }
+        }
+        if (bool) {
+          remain_targets.push(id);
+        } else {
+          photo.selected = false;
+        }
+      })
+      selected_targets = remain_targets;
+    }
     all_photos.forEach(photo => {
       if (photo.selected) return;
       const id = photo.playerid;
