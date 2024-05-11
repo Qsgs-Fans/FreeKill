@@ -113,10 +113,10 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  fprintf(stderr, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(stderr, "%02d/%02d ", date.month(), date.day());
   fprintf(stderr, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
-  fprintf(file, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(file, "%02d/%02d ", date.month(), date.day());
   fprintf(file, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
 
@@ -329,6 +329,7 @@ int main(int argc, char *argv[]) {
 #if defined(Q_OS_ANDROID)
   system = "Android";
 #elif defined(Q_OS_WIN32)
+  qputenv("QT_MEDIA_BACKEND", "windows");
   system = "Win";
   ::system("chcp 65001");
 #elif defined(Q_OS_LINUX)
