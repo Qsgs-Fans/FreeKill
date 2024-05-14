@@ -996,6 +996,29 @@ callbacks["AskForSkillInvoke"] = (data) => {
   roomScene.cancelButton.enabled = true;
 }
 
+callbacks["AskForArrangeCards"] = (data) => {
+  roomScene.state = "replying";
+  roomScene.popupBox.sourceComponent =
+    Qt.createComponent("../RoomElement/ArrangeCardsBox.qml");
+  const box = roomScene.popupBox.item;
+  const cards = data.cards;
+  box.cards = cards.reduce((newArray, elem) => {
+    return newArray.concat(elem.map(cid => lcall("GetCardData", cid)));
+  }, []);
+  box.org_cards = cards;
+  box.prompt = data.prompt;
+  box.size = data.size;
+  box.areaCapacities = data.capacities;
+  box.areaLimits = data.limits;
+  box.free_arrange = data.is_free;
+  box.areaNames = data.names;
+  box.pattern = data.pattern;
+  box.poxi_type = data.poxi_type;
+  box.cancelable = data.cancelable;
+
+  box.initializeCards();
+}
+
 callbacks["AskForGuanxing"] = (data) => {
   const cards = [];
   const min_top_cards = data.min_top_cards;

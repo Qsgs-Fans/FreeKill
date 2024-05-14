@@ -2007,11 +2007,25 @@ function Room:askForArrangeCards(player, skillname, cardMap, prompt, free_arrang
   end
   pattern = pattern or "."
   poxi_type = poxi_type or ""
-  local result = player.room:askForCustomDialog(player, skillname,
-  "packages/utility/qml/ArrangeCardsBox.qml", {
-    cardMap, prompt, box_size, max_limit, min_limit, free_arrange or false, areaNames,
-    pattern or ".", poxi_type or "", ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
-  })
+  local command = "AskForArrangeCards"
+  local data = {
+    cards = cardMap,
+    names = areaNames,
+    prompt = prompt,
+    size = box_size,
+    capacities = max_limit,
+    limits = min_limit,
+    is_free = free_arrange or false,
+    pattern = pattern or ".",
+    poxi_type = poxi_type or "", 
+    cancelable = ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
+  }
+  local result = self:doRequest(player, command, json.encode(data))
+  -- local result = player.room:askForCustomDialog(player, skillname,
+  -- "RoomElement/ArrangeCardsBox.qml", {
+  --   cardMap, prompt, box_size, max_limit, min_limit, free_arrange or false, areaNames,
+  --   pattern or ".", poxi_type or "", ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
+  -- })
   if result == "" then
     if default_choice then return default_choice end
     for j = 1, #min_limit, 1 do
@@ -2493,6 +2507,7 @@ end
 -- Show a qml dialog and return qml's ClientInstance.replyToServer
 -- Do anything you like through this function
 
+-- 调用一个自定义对话框，须自备loadData方法
 ---@param player ServerPlayer
 ---@param focustxt string
 ---@param qmlPath string
