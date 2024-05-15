@@ -622,11 +622,11 @@ function processPrompt(prompt) {
     raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
   
   if (data.length > 3) {
-    for (let i = 4; i < data.length; i++) {
-      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), data[i]);
+    for (let i = data.length - 1; i > 3; i--) {
+      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
     }
 
-    raw = raw.replace(new RegExp("%arg", "g"), data[3]);
+    raw = raw.replace(new RegExp("%arg", "g"), luatr(data[3]));
   }
   return raw;
 }
