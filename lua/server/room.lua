@@ -2017,7 +2017,7 @@ function Room:askForArrangeCards(player, skillname, cardMap, prompt, free_arrang
     limits = min_limit,
     is_free = free_arrange or false,
     pattern = pattern or ".",
-    poxi_type = poxi_type or "", 
+    poxi_type = poxi_type or "",
     cancelable = ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
   }
   local result = self:doRequest(player, command, json.encode(data))
