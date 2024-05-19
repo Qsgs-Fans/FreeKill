@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "roomthread.h"
+#include "scheduler.h"
 #include "server.h"
-#include "util.h"
-#include <lua.h>
 
 #ifndef FK_SERVER_ONLY
 #include "client.h"
@@ -13,31 +12,29 @@ RoomThread::RoomThread(Server *m_server) {
   setObjectName("Room");
   this->m_server = m_server;
   m_capacity = 100; // TODO: server cfg
-  terminated = false;
   md5 = m_server->getMd5();
 
-  L = CreateLuaState();
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core")) {
-    // 危险的cd操作，记得在lua中切回游戏根目录
-    QDir::setCurrent("packages/freekill-core");
-  }
-
-  DoLuaScript(L, "lua/freekill.lua");
-  DoLuaScript(L, "lua/server/scheduler.lua");
   start();
 }
 
 RoomThread::~RoomThread() {
-  tryTerminate();
   if (isRunning()) {
-    wait();
+    quit();
   }
-  lua_close(L);
+  delete m_scheduler;
   m_server->removeThread(this);
   // foreach (auto room, room_list) {
   //   room->deleteLater();
   // }
+}
+
+void RoomThread::run() {
+  // 在run中创建，这样就能在接下来的exec中处理事件了
+  m_scheduler = new Scheduler(this);
+  connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
+  connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
+  connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
+  exec();
 }
 
 Server *RoomThread::getServer() const {
@@ -69,6 +66,7 @@ void RoomThread::removeRoom(Room *room) {
   }
 }
 
+/*
 QString RoomThread::fetchRequest() {
   // if (!gameStarted)
   //   return "";
@@ -124,6 +122,7 @@ void RoomThread::tryTerminate() {
 bool RoomThread::isTerminated() const {
   return terminated;
 }
+*/
 
 bool RoomThread::isConsoleStart() const {
 #ifndef FK_SERVER_ONLY

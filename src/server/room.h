@@ -49,6 +49,7 @@ class Room : public QObject {
 
   int getTimeout() const;
   void setTimeout(int timeout);
+  void delay(int ms);
 
   bool isOutdated();
 
@@ -71,6 +72,9 @@ class Room : public QObject {
   // router用
   void handlePacket(ServerPlayer *sender, const QString &command,
                     const QString &jsonData);
+
+  void setRequestTimer(int ms);
+  void destroyRequestTimer();
  signals:
   void abandoned();
 
@@ -97,6 +101,8 @@ class Room : public QObject {
 
   int timeout;
   QString md5;
+
+  QTimer *request_timer = nullptr;
 
   void addRunRate(int id, const QString &mode);
   void updatePlayerGameData(int id, const QString &mode);

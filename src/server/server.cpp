@@ -537,6 +537,7 @@ void Server::onRoomAbandoned() {
   // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
   // room->deleteLater();
   idle_rooms.push(room);
+  room->getThread()->wakeUp(room->getId());
   room->getThread()->removeRoom(room);
 }
 

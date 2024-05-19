@@ -287,7 +287,7 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
-    m_thread->wakeUp();
+    // m_thread->wakeUp();
 
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
@@ -370,6 +370,10 @@ bool Room::hasObserver(ServerPlayer *player) const { return observers.contains(p
 int Room::getTimeout() const { return timeout; }
 
 void Room::setTimeout(int timeout) { this->timeout = timeout; }
+
+void Room::delay(int ms) {
+  m_thread->delay(id, ms);
+}
 
 bool Room::isOutdated() {
   bool ret = md5 != server->getMd5();
@@ -809,4 +813,23 @@ void Room::handlePacket(ServerPlayer *sender, const QString &command,
   if (func) {
     func(sender, jsonData);
   }
+}
+
+// Lua用：request之前设置计时器防止等到死。
+void Room::setRequestTimer(int ms) {
+  request_timer = new QTimer();
+  request_timer->setSingleShot(true);
+  request_timer->setInterval(ms);
+  connect(request_timer, &QTimer::timeout, this, [=](){
+      m_thread->wakeUp(id);
+      });
+  request_timer->start();
+}
+
+// Lua用：当request完成后手动销毁计时器。
+void Room::destroyRequestTimer() {
+  if (!request_timer) return;
+  request_timer->stop();
+  delete request_timer;
+  request_timer = nullptr;
 }

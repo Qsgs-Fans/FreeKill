@@ -180,10 +180,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 
     ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
     player->setThinking(false);
-    // qDebug() << "wake up!";
     auto room = player->getRoom();
     if (room->getThread()) {
-      room->getThread()->wakeUp();
+      room->getThread()->wakeUp(room->getId());
+      // TODO: signal
     }
 
     if (requestId != this->expectedReplyId)

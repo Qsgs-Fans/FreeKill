@@ -6,6 +6,7 @@
 #include <qsemaphore.h>
 class Room;
 class Server;
+class Scheduler;
 
 class RoomThread : public QThread {
   Q_OBJECT
@@ -21,20 +22,23 @@ class RoomThread : public QThread {
   void addRoom(Room *room);
   void removeRoom(Room *room);
 
-  QString fetchRequest();
-  void pushRequest(const QString &req);
-  void clearRequest();
-  bool hasRequest();
+  //QString fetchRequest();
+  //void clearRequest();
+  //bool hasRequest();
 
-  void trySleep(int ms);
-  void wakeUp();
+  // void trySleep(int ms);
 
-  void tryTerminate();
-  bool isTerminated() const;
+  // void tryTerminate();
+  // bool isTerminated() const;
 
   bool isConsoleStart() const;
 
   bool isOutdated();
+
+ signals:
+  void pushRequest(const QString &req);
+  void delay(int roomId, int ms);
+  void wakeUp(int roomId);
 
  protected:
   virtual void run();
@@ -45,11 +49,11 @@ class RoomThread : public QThread {
   int m_capacity;
   QString md5;
 
-  lua_State *L;
-  QMutex request_queue_mutex;
-  QQueue<QString> request_queue;  // json string
-  QSemaphore sema_wake;
-  volatile bool terminated;
+  Scheduler *m_scheduler;
+  // QMutex request_queue_mutex;
+  // QQueue<QString> request_queue;  // json string
+  // QSemaphore sema_wake;
+  // volatile bool terminated;
 };
 
 #endif // _ROOMTHREAD_H
