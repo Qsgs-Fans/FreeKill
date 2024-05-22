@@ -3,11 +3,7 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-
-#include <qjsonobject.h>
-#include <qjsonvalue.h>
+class AuthManager;
 class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
@@ -45,6 +41,8 @@ public:
   sqlite3 *getDatabase();
 
   void broadcast(const QString &command, const QString &jsonData);
+  void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
+  void setupPlayer(ServerPlayer *player, bool all_info = true);
   bool isListening;
 
   QJsonValue getConfig(const QString &command);
@@ -83,25 +81,13 @@ private:
   QHash<int, ServerPlayer *> players;
   QList<QString> temp_banlist;
 
-  RSA *rsa;
-  QString public_key;
+  AuthManager *auth;
   sqlite3 *db;
   QMutex transaction_mutex;
   QString md5;
 
-  static RSA *initServerRSA();
-
   QJsonObject config;
   void readConfig();
-
-  // 用于确定建立连接之前与客户端通信，连接后用doNotify
-  void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
-  bool checkClientVersion(ClientSocket *client, const QString &ver);
-
-  // 某玩家刚刚连入之后，服务器告诉他关于他的一些基本信息
-  void setupPlayer(ServerPlayer *player, bool all_info = true);
-  void handleNameAndPassword(ClientSocket *client, const QString &name,
-                             const QString &password, const QString &md5_str, const QString &uuid_str);
 };
 
 extern Server *ServerInstance;

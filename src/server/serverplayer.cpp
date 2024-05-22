@@ -112,6 +112,24 @@ void ServerPlayer::kick() {
   setSocket(nullptr);
 }
 
+void ServerPlayer::reconnect(ClientSocket *client) {
+  setSocket(client);
+  alive = true;
+  client->disconnect(this);
+  if (server->getPlayers().count() <= 10) {
+    server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()));
+  }
+
+  if (room && !room->isLobby()) {
+    server->setupPlayer(this, true);
+    room->pushRequest(QString("%1,reconnect").arg(getId()));
+  } else {
+    // 懒得处理掉线玩家在大厅了！踢掉得了
+    doNotify("ErrorMsg", "Unknown Error");
+    emit kicked();
+  }
+}
+
 bool ServerPlayer::thinking() {
   m_thinking_mutex.lock();
   bool ret = m_thinking;

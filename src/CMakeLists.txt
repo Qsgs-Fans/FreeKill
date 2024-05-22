@@ -8,6 +8,7 @@ set(freekill_SRCS
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
+  "server/auth.cpp"
   "server/server.cpp"
   "server/serverplayer.cpp"
   "server/room.cpp"

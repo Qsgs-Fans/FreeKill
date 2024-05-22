@@ -37,6 +37,7 @@ public:
 
   volatile bool alive; // For heartbeat
   void kick();
+  void reconnect(ClientSocket *socket);
 
   bool busy() const { return m_busy; }
   void setBusy(bool busy) { m_busy = busy; }

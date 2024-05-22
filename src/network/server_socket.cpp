@@ -38,7 +38,7 @@ void ServerSocket::readPendingDatagrams() {
 }
 
 void ServerSocket::processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port) {
-  auto server = ServerInstance;
+  auto server = qobject_cast<Server *>(parent());
   if (msg == "fkDetectServer") {
     udpSocket->writeDatagram("me", addr, port);
   } else if (msg.startsWith("fkGetDetail,")) {
