@@ -35,7 +35,7 @@ void ClientSocket::connectToHost(const QString &address, ushort port) {
 void ClientSocket::getMessage() {
   while (socket->canReadLine()) {
     auto msg = socket->readLine();
-    msg = aesDecrypt(msg);
+    msg = aesDec(msg);
     if (msg.startsWith("Compressed")) {
       msg = msg.sliced(10);
       msg = qUncompress(QByteArray::fromBase64(msg));
@@ -54,9 +54,9 @@ void ClientSocket::send(const QByteArray &msg) {
   if (msg.length() >= 1024) {
     auto comp = qCompress(msg);
     _msg = "Compressed" + comp.toBase64();
-    _msg = aesEncrypt(_msg) + "\n";
+    _msg = aesEnc(_msg) + "\n";
   } else {
-    _msg = aesEncrypt(msg) + "\n";
+    _msg = aesEnc(msg) + "\n";
   }
 
   socket->write(_msg);
@@ -156,7 +156,7 @@ void ClientSocket::installAESKey(const QByteArray &key) {
   aes_ready = true;
 }
 
-QByteArray ClientSocket::aesEncrypt(const QByteArray &in) {
+QByteArray ClientSocket::aesEnc(const QByteArray &in) {
   if (!aes_ready) {
     return in;
   }
@@ -182,7 +182,7 @@ QByteArray ClientSocket::aesEncrypt(const QByteArray &in) {
 
   return iv + out.toBase64();
 }
-QByteArray ClientSocket::aesDecrypt(const QByteArray &in) {
+QByteArray ClientSocket::aesDec(const QByteArray &in) {
   if (!aes_ready) {
     return in;
   }
