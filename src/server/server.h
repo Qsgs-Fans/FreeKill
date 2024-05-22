@@ -37,6 +37,7 @@ public:
   ServerPlayer *findPlayer(int id) const;
   void addPlayer(ServerPlayer *player);
   void removePlayer(int id);
+  auto getPlayers() { return players; }
 
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
@@ -64,7 +65,6 @@ signals:
 public slots:
   void processNewConnection(ClientSocket *client);
   void processRequest(const QByteArray &msg);
-  void readPendingDatagrams();
 
   void onRoomAbandoned();
   void onUserDisconnected();
@@ -73,7 +73,6 @@ public slots:
 private:
   friend class Shell;
   ServerSocket *server;
-  QUdpSocket *udpSocket;  // 服务器列表页面显示服务器信息用
 
   Room *m_lobby;
   QMap<int, Room *> rooms;
@@ -103,7 +102,6 @@ private:
   void setupPlayer(ServerPlayer *player, bool all_info = true);
   void handleNameAndPassword(ClientSocket *client, const QString &name,
                              const QString &password, const QString &md5_str, const QString &uuid_str);
-  void processDatagram(const QByteArray &msg, const QHostAddress &addr, uint port);
 };
 
 extern Server *ServerInstance;
