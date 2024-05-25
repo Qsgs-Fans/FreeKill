@@ -1060,8 +1060,17 @@ Item {
 
   Shortcut {
     sequence: "Space"
-    enabled: cancelButton.enabled
-    onActivated: Logic.doCancelButton();
+    enabled: cancelButton.enabled || endPhaseButton.visible;
+    onActivated: if (cancelButton.enabled) {
+      Logic.doCancelButton();
+    } else {
+      Logic.replyToServer("");
+    }
+  }
+
+  Shortcut {
+    sequence: "Escape"
+    onActivated: menuContainer.open();
   }
 
   function getCurrentCardUseMethod() {
