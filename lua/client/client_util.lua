@@ -19,6 +19,8 @@ function GetGeneralData(name)
     shield = general.shield,
     hidden = general.hidden,
     total_hidden = general.total_hidden,
+    mainMaxHpAdjustedValue = general.mainMaxHpAdjustedValue,
+    deputyMaxHpAdjustedValue = general.deputyMaxHpAdjustedValue,
   }
 end
 
@@ -31,6 +33,8 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
+    mainMaxHp = general.mainMaxHpAdjustedValue,
+    deputyMaxHp = general.deputyMaxHpAdjustedValue,
     gender = general.gender,
     skill = {},
     related_skill = {},
