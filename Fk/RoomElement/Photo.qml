@@ -234,7 +234,26 @@ Item {
       color: "white"
       width: 24
       wrapMode: Text.WrapAnywhere
-      text: luatr(deputyGeneral)
+      text: ""
+      style: Text.Outline
+    }
+
+    Text {
+      id: longDeputyGeneralName
+      anchors.left: generalImage.right
+      anchors.leftMargin: -14
+      y: 23
+      font.family: fontLibian.name
+      font.pixelSize: 22
+      rotation: 90
+      transformOrigin: Item.BottomLeft
+      opacity: 0.9
+      horizontalAlignment: Text.AlignHCenter
+      lineHeight: 18
+      lineHeightMode: Text.FixedHeight
+      color: "white"
+      width: 24
+      text: ""
       style: Text.Outline
     }
   }
@@ -737,6 +756,18 @@ Item {
     } else {
       generalName.text = text;
       longGeneralName.text = "";
+    }
+  }
+
+  onDeputyGeneralChanged: {
+    if (!roomScene.isStarted) return;
+    const text = luatr(deputyGeneral);
+    if (text.length > 6) {
+      deputyGeneralName.text = "";
+      longDeputyGeneralName.text = text;
+    } else {
+      deputyGeneralName.text = text;
+      longDeputyGeneralName.text = "";
     }
   }
 
