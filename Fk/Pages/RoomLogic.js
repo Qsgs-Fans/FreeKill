@@ -314,6 +314,10 @@ function resortHandcards() {
     ["treasure"]: Card.SubtypeTreasure,
   }
 
+  const hand = dashboard.handcardArea.cards.map(c => {
+    return c.cid;
+  })
+
   dashboard.handcardArea.cards.sort((prev, next) => {
     if (prev.footnote === next.footnote) {
       if (prev.type === next.type) {
@@ -340,6 +344,34 @@ function resortHandcards() {
       return prev.footnote > next.footnote ? 1 : -1;
     }
   });
+
+  let i = 0;
+  let resort = true;
+  dashboard.handcardArea.cards.forEach(c => {
+    if (hand[i] !== c.cid) {
+      resort = false;
+      return;
+    }
+    i++;
+  })
+
+  if (resort) {
+    dashboard.handcardArea.cards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (prev.number === next.number) { // 按点数排
+          if (prev.suit === next.suit) {
+            return prev.cid - next.cid;
+          } else {
+            return prev.suit - next.suit;
+          }
+        } else {
+          return prev.number - next.number;
+        }
+      } else {
+        return prev.footnote > next.footnote ? 1 : -1;
+      }
+    });
+  }
 
   dashboard.handcardArea.updateCardPosition(true);
 }
