@@ -15,7 +15,6 @@ GraphicsBox {
   property var areaCapacities: []
   property var areaLimits: []
   property var areaNames: []
-  property int size: 0
   property bool free_arrange: true
   property int padding: 25
 
@@ -256,7 +255,7 @@ GraphicsBox {
           a--;
         }
       }
-      spacing = (size > 0 && a > size) ? ((size - 1) * 100 / (a - 1)) : 100;
+      spacing = 100;
       b = 0;
       for (i = 0; i < result[j].length; i++) {
         card = result[j][i];
