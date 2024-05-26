@@ -50,6 +50,16 @@ Item {
                   if (idx < extra_data.cards.count) {
                     extra_data.cards.set(idx, { name: modelData });
                   }
+
+                  idx = 0;
+                  extra_data.choices.forEach( s => {
+                    if (s === gname) {
+                      extra_data.choices[idx] = modelData;
+                      return;
+                    }
+                    idx++;
+                  });
+
                   root.finish();
                 }
               }

@@ -112,7 +112,7 @@ GraphicsBox {
           visible: !convertDisabled
           text: luatr("Same General Convert")
           onClicked: {
-            roomScene.startCheat("SameConvert", { cards: generalList });
+            roomScene.startCheat("SameConvert", { cards: generalList, choices: choices });
           }
         }
 
