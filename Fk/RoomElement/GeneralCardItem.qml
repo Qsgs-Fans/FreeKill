@@ -129,7 +129,7 @@ CardItem {
         }
         Image {
           x: 4.4
-          opacity: (index + 1) * 2 <= hp ? (((mainMaxHp < 0 || deputyMaxHp < 0) && inPosition !== -1 && ((index + 1) * 2 === hp)) 
+          opacity: (index + 1) * 2 <= hp ? (((mainMaxHp < 0 || deputyMaxHp < 0) && inPosition !== -1 && ((index + 1) * 2 === hp))
                     ? (inPosition === 0 ? 0.5 : 0) : 1) : 0
           height: 12; fillMode: Image.PreserveAspectFit
           source: {
