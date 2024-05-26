@@ -1069,7 +1069,7 @@ callbacks["AskForExchange"] = (data) => {
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
   const box = roomScene.popupBox.item;
-  box.org_cards = cards;
+  box.org_cards = data.piles;
   data.piles.forEach(ids => {
     if (ids.length > 0) {
       ids.forEach(id => cards.push(lcall("GetCardData", id)));
@@ -1079,11 +1079,11 @@ callbacks["AskForExchange"] = (data) => {
       for_i ++;
     }
   });
+  box.cards = cards;
   box.areaCapacities = capacities
   box.areaLimits = limits
   box.areaNames = cards_name
-  box.cards = cards;
-  box.arrangeCards();
+  box.initializeCards();
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.getResult()));
   });
