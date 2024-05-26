@@ -2090,9 +2090,15 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
+  local max_top = top_limit and top_limit[2] or #cards
+  local card_map = {table.slice(cards, 1, max_top + 1)}
+  if max_top < #cards then
+    table.insert(card_map, table.slice(cards, max_top))
+  end
   local data = {
     prompt = "",
-    cards = cards,
+    is_free = true,
+    cards = card_map,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,
     min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
@@ -2149,7 +2155,7 @@ function Room:askForExchange(player, piles, piles_name, customNotify)
   if #piles_name ~= #piles then
     piles_name = {}
     for i, _ in ipairs(piles) do
-      table.insert(piles_name, "Pile" .. i)
+      table.insert(piles_name, Fk:translate("Pile") .. i)
     end
   end
   self:notifyMoveFocus(player, customNotify or command)

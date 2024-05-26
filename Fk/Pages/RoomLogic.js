@@ -1020,7 +1020,7 @@ callbacks["AskForArrangeCards"] = (data) => {
 }
 
 callbacks["AskForGuanxing"] = (data) => {
-  const cards = [];
+  const cards = data.cards;
   const min_top_cards = data.min_top_cards;
   const max_top_cards = data.max_top_cards;
   const min_bottom_cards = data.min_bottom_cards;
@@ -1031,9 +1031,9 @@ callbacks["AskForGuanxing"] = (data) => {
   roomScene.state = "replying";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
-  data.cards.forEach(id => cards.push(lcall("GetCardData", id)));
   const box = roomScene.popupBox.item;
   box.prompt = prompt;
+  box.free_arrange = data.is_free;
   if (max_top_cards === 0) {
     box.areaCapacities = [max_bottom_cards];
     box.areaLimits = [min_bottom_cards];
@@ -1049,8 +1049,11 @@ callbacks["AskForGuanxing"] = (data) => {
       box.areaNames = [luatr(top_area_name), luatr(bottom_area_name)];
     }
   }
-  box.cards = cards;
-  box.arrangeCards();
+  box.org_cards = cards;
+  box.cards = cards.reduce((newArray, elem) => {
+    return newArray.concat(elem.map(cid => lcall("GetCardData", cid)));
+  }, []);
+  box.initializeCards();
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.getResult()));
   });
@@ -1066,6 +1069,7 @@ callbacks["AskForExchange"] = (data) => {
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
   const box = roomScene.popupBox.item;
+  box.org_cards = cards;
   data.piles.forEach(ids => {
     if (ids.length > 0) {
       ids.forEach(id => cards.push(lcall("GetCardData", id)));
