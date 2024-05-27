@@ -223,8 +223,8 @@ function ActiveSkill:feasible(selected, selected_cards, player, card)
 end
 
 -- 使用技能时默认的烧条提示（一般会在主动使用时出现）
----@param selected_cards integer[] @ ids of selected cards
----@param selected_targets integer[] @ ids of selected players
+---@param selected_cards integer[] @ 已选牌
+---@param selected_targets integer[] @ 已选目标
 ---@return string?
 function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
 
