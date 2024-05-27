@@ -159,7 +159,7 @@ Fk:loadTranslationTable({
   ["IncludeDeputy"] = "<font color=\"red\">Deputy character enabled</font>",
 
   -- Room
-  ["$EnterRoom"] = "Successfully entered the room.",
+  ["$EnterRoom"] = "Successfully entered the room",
   ["#currentRoundNum"] = "Round #%1",
   ["$Choice"] = "%1: Please choose",
   ["$ChooseGeneral"] = "Please choose %1 character(s)",

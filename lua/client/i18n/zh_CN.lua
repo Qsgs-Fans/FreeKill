@@ -215,7 +215,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["IncludeDeputy"] = "<font color=\"red\">启用副将机制</font>",
 
   -- Room
-  ["$EnterRoom"] = "成功加入房间。",
+  ["$EnterRoom"] = "成功加入房间",
   ["#currentRoundNum"] = "第 %1 轮",
   ["$Choice"] = "%1：请选择",
   ["$ChooseGeneral"] = "请选择 %1 名武将",
