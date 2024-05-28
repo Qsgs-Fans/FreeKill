@@ -563,7 +563,7 @@ end
 --- 比较距离
 ---@param other Player @ 终点角色
 ---@param num integer @ 比较基准
----@param operator "<"|">"|"<="|">="|"=="|"~=" @ 运算符
+---@param operator string @ 运算符，有 ``"<"`` ``">"`` ``"<="`` ``">="`` ``"=="`` ``"~="``
 ---@return boolean @ 返回比较结果，不计入距离结果永远为false
 function Player:compareDistance(other, num, operator)
   local distance = self:distanceTo(other)

@@ -1058,7 +1058,7 @@ end
 --- 与此同时，在战报里面发一条“xxx发动了xxx”
 ---@param player ServerPlayer @ 发动技能的那个玩家
 ---@param skill_name string @ 技能名
----@param skill_type? string | AnimationType @ 技能的动画效果，默认是那个技能的anim_type
+---@param skill_type? string @ 技能的动画效果，默认是那个技能的anim_type
 function Room:notifySkillInvoked(player, skill_name, skill_type)
   local bigAnim = false
   if not skill_type then
@@ -1970,93 +1970,6 @@ function Room:askForAddTarget(player, targets, num, can_minus, distance_limited,
   return {}
 end
 
---- 询问玩家在自定义大小的框中排列卡牌（观星、交换、拖拽选牌）
----@param player ServerPlayer @ 要询问的玩家
----@param skillname string @ 烧条技能名
----@param cardMap any @ { "牌堆1卡表", "牌堆2卡表", …… }
----@param prompt? string @ 操作提示
----@param box_size? integer @ 数值对应卡牌平铺张数的最大值，为0则有单个卡位，每张卡占100单位长度，默认为7
----@param max_limit? integer[] @ 每一行牌上限 { 第一行, 第二行，…… }，不填写则不限
----@param min_limit? integer[] @ 每一行牌下限 { 第一行, 第二行，…… }，不填写则不限
----@param free_arrange? boolean @ 是否允许自由排列第一行卡的位置，默认不能
----@param pattern? string @ 控制第一行卡牌是否可以操作，不填写默认均可操作
----@param poxi_type? string @ 控制每张卡牌是否可以操作、确定键是否可以点击，不填写默认均可操作
----@param default_choice? table[] @ 超时的默认响应值，在带poxi_type时需要填写
----@return table[]
-function Room:askForArrangeCards(player, skillname, cardMap, prompt, free_arrange, box_size, max_limit, min_limit, pattern, poxi_type, default_choice)
-  prompt = prompt or ""
-  local areaNames = {}
-  if type(cardMap[1]) == "number" then
-    cardMap = {cardMap}
-  else
-    for i = #cardMap, 1, -1 do
-      if type(cardMap[i]) == "string" then
-        table.insert(areaNames, 1, cardMap[i])
-        table.remove(cardMap, i)
-      end
-    end
-  end
-  if #areaNames == 0 then
-    areaNames = {skillname, "toObtain"}
-  end
-  box_size = box_size or 7
-  max_limit = max_limit or {#cardMap[1], #cardMap > 1 and #cardMap[2] or #cardMap[1]}
-  min_limit = min_limit or {0, 0}
-  for _ = #cardMap + 1, #min_limit, 1 do
-    table.insert(cardMap, {})
-  end
-  pattern = pattern or "."
-  poxi_type = poxi_type or ""
-  local command = "AskForArrangeCards"
-  local data = {
-    cards = cardMap,
-    names = areaNames,
-    prompt = prompt,
-    size = box_size,
-    capacities = max_limit,
-    limits = min_limit,
-    is_free = free_arrange or false,
-    pattern = pattern or ".",
-    poxi_type = poxi_type or "",
-    cancelable = ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
-  }
-  local result = self:doRequest(player, command, json.encode(data))
-  -- local result = player.room:askForCustomDialog(player, skillname,
-  -- "RoomElement/ArrangeCardsBox.qml", {
-  --   cardMap, prompt, box_size, max_limit, min_limit, free_arrange or false, areaNames,
-  --   pattern or ".", poxi_type or "", ((pattern ~= "." or poxi_type ~= "") and (default_choice == nil))
-  -- })
-  if result == "" then
-    if default_choice then return default_choice end
-    for j = 1, #min_limit, 1 do
-      if #cardMap[j] < min_limit[j] then
-        local cards = {table.connect(table.unpack(cardMap))}
-        if #min_limit > 1 then
-          for i = 2, #min_limit, 1 do
-            table.insert(cards, {})
-            if #cards[i] < min_limit[i] then
-              for _ = 1, min_limit[i] - #cards[i], 1 do
-                table.insert(cards[i], table.remove(cards[1], #cards[1] + #cards[i] - min_limit[i] + 1))
-              end
-            end
-          end
-          if #cards[1] > max_limit[1] then
-            for i = 2, #max_limit, 1 do
-              while #cards[i] < max_limit[i] do
-                table.insert(cards[i], table.remove(cards[1], max_limit[1] + 1))
-                if #cards[1] == max_limit[1] then return cards end
-              end
-            end
-          end
-        end
-        return cards
-      end
-    end
-    return cardMap
-  end
-  return json.decode(result)
-end
-
 -- TODO: guanxing type
 --- 询问玩家对若干牌进行观星。
 ---
@@ -2090,15 +2003,9 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   end
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
-  local max_top = top_limit and top_limit[2] or #cards
-  local card_map = {table.slice(cards, 1, max_top + 1)}
-  if max_top < #cards then
-    table.insert(card_map, table.slice(cards, max_top))
-  end
   local data = {
     prompt = "",
-    is_free = true,
-    cards = card_map,
+    cards = cards,
     min_top_cards = top_limit and top_limit[1] or 0,
     max_top_cards = top_limit and top_limit[2] or #cards,
     min_bottom_cards = bottom_limit and bottom_limit[1] or 0,
@@ -2155,7 +2062,7 @@ function Room:askForExchange(player, piles, piles_name, customNotify)
   if #piles_name ~= #piles then
     piles_name = {}
     for i, _ in ipairs(piles) do
-      table.insert(piles_name, Fk:translate("Pile") .. i)
+      table.insert(piles_name, "Pile" .. i)
     end
   end
   self:notifyMoveFocus(player, customNotify or command)
@@ -2513,7 +2420,6 @@ end
 -- Show a qml dialog and return qml's ClientInstance.replyToServer
 -- Do anything you like through this function
 
--- 调用一个自定义对话框，须自备loadData方法
 ---@param player ServerPlayer
 ---@param focustxt string
 ---@param qmlPath string
