@@ -1058,7 +1058,7 @@ end
 --- 与此同时，在战报里面发一条“xxx发动了xxx”
 ---@param player ServerPlayer @ 发动技能的那个玩家
 ---@param skill_name string @ 技能名
----@param skill_type? string @ 技能的动画效果，默认是那个技能的anim_type
+---@param skill_type? string | AnimationType @ 技能的动画效果，默认是那个技能的anim_type
 function Room:notifySkillInvoked(player, skill_name, skill_type)
   local bigAnim = false
   if not skill_type then
