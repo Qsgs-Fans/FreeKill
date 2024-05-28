@@ -83,6 +83,8 @@ function ActiveSkill:getMinTargetNum()
 end
 
 -- 获得技能的最大目标数
+---@param player Player @ 使用者
+---@param card Card @ 牌
 ---@return number @ 最大目标数
 function ActiveSkill:getMaxTargetNum(player, card)
   local ret
