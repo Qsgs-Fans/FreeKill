@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "scheduler.h"
-#include "roomthread.h"
-#include "util.h"
+#include "server/scheduler.h"
+#include "server/roomthread.h"
+#include "core/util.h"
 
 Scheduler::Scheduler(RoomThread *thread) {
   m_thread = thread;

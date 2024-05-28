@@ -1,26 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server.h"
+#include "server/server.h"
+#include "server/auth.h"
+#include "server/room.h"
+#include "server/roomthread.h"
+#include "server/serverplayer.h"
+#include "network/router.h"
+#include "network/client_socket.h"
+#include "network/server_socket.h"
+#include "core/packman.h"
+#include "core/util.h"
 
-#include <qjsonarray.h>
-#include <qjsondocument.h>
-#include <qjsonvalue.h>
-#include <qobject.h>
-#include <qversionnumber.h>
 #include <QNetworkDatagram>
-
-#include <openssl/bn.h>
-
-#include "auth.h"
-#include "client_socket.h"
-#include "packman.h"
-#include "player.h"
-#include "room.h"
-#include "roomthread.h"
-#include "router.h"
-#include "server_socket.h"
-#include "serverplayer.h"
-#include "util.h"
 
 Server *ServerInstance = nullptr;
 

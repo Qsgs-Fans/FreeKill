@@ -48,7 +48,7 @@ public:
 };
 
 %{
-#include "scheduler.h"
+#include "server/scheduler.h"
 void Scheduler::tellThreadToLua()
 {
   lua_getglobal(L, "debug");

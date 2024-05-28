@@ -3,13 +3,13 @@
 %module fk
 
 %{
-#include "server.h"
-#include "serverplayer.h"
-#include "clientplayer.h"
-#include "room.h"
-#include "roomthread.h"
-#include "util.h"
-#include "qmlbackend.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "client/clientplayer.h"
+#include "server/room.h"
+#include "server/roomthread.h"
+#include "core/util.h"
+#include "ui/qmlbackend.h"
 class ClientPlayer *Self = nullptr;
 %}
 

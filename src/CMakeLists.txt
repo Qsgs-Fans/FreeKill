@@ -23,7 +23,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
     "client/client.cpp"
     "client/clientplayer.cpp"
     "client/replayer.cpp"
-    "ui/mod.cpp"
+    # "ui/mod.cpp"
   )
 endif ()
 

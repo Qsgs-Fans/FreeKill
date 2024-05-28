@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "replayer.h"
-#include "client.h"
-#include "qmlbackend.h"
-#include "util.h"
+#include "client/replayer.h"
+#include "client/client.h"
+#include "ui/qmlbackend.h"
+#include "core/util.h"
 
 Replayer::Replayer(QObject *parent, const QString &filename) :
   QThread(parent), fileName(filename), roomSettings(""), origPlayerInfo(""),

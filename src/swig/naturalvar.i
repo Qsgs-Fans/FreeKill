@@ -5,7 +5,7 @@
 // ------------------------------------------------------
 
 %{
-#include <qmlbackend.h>
+#include "ui/qmlbackend.h"
 %}
 
 // Lua 5.4 特有的不能pushnumber， swig迟迟不更只好手动调教

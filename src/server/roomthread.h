@@ -3,7 +3,6 @@
 #ifndef _ROOMTHREAD_H
 #define _ROOMTHREAD_H
 
-#include <qsemaphore.h>
 class Room;
 class Server;
 class Scheduler;

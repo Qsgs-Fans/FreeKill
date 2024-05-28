@@ -9,7 +9,7 @@ class ClientSocket;
 class ServerPlayer;
 class RoomThread;
 
-#include "room.h"
+#include "server/room.h"
 
 class Server : public QObject {
   Q_OBJECT

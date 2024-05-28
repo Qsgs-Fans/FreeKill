@@ -1,27 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "qmlbackend.h"
-#include <lua.h>
-#include <qjsondocument.h>
-#include <qvariant.h>
+#include "ui/qmlbackend.h"
 
 #ifndef FK_SERVER_ONLY
-#include <qaudiooutput.h>
-#include <qmediaplayer.h>
-#include <qrandom.h>
+#include <QAudioOutput>
 #include <QNetworkDatagram>
 #include <QDnsLookup>
 
 #include <QClipboard>
 #include <QMediaPlayer>
-#include "mod.h"
+// #include "mod.h"
 #endif
 
 #include <cstdlib>
-#include "server.h"
-#include "client.h"
-#include "util.h"
-#include "replayer.h"
+#include "server/server.h"
+#include "client/client.h"
+#include "core/util.h"
+#include "client/replayer.h"
 
 QmlBackend *Backend = nullptr;
 
@@ -464,7 +459,7 @@ void QmlBackend::installAESKey() {
 }
 
 void QmlBackend::createModBackend() {
-  engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
+  //engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
 }
 
 

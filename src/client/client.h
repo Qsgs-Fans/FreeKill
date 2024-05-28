@@ -3,12 +3,11 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include "router.h"
-#include "clientplayer.h"
-#include <qfilesystemwatcher.h>
+#include "network/router.h"
+#include "client/clientplayer.h"
 
 #ifndef FK_SERVER_ONLY
-#include "qmlbackend.h"
+#include "ui/qmlbackend.h"
 #endif
 
 class Client : public QObject {

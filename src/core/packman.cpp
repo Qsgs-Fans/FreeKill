@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "packman.h"
+#include "core/packman.h"
 #include "git2.h"
-#include "util.h"
-#include "qmlbackend.h"
-#include <qjsondocument.h>
+#include "core/util.h"
+#include "ui/qmlbackend.h"
 
 PackMan *Pacman;
 

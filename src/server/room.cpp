@@ -1,21 +1,45 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "room.h"
-
-#include <qjsonarray.h>
-#include <qjsondocument.h>
+#include "server/room.h"
 
 #ifdef FK_SERVER_ONLY
 static void *ClientInstance = nullptr;
 #else
-#include "client.h"
+#include "client/client.h"
 #endif
 
-#include "client_socket.h"
-#include "roomthread.h"
-#include "server.h"
-#include "serverplayer.h"
-#include "util.h"
+#include "network/client_socket.h"
+#include "server/roomthread.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
+
+bool RoomBase::isLobby() const {
+  return inherits("Lobby");
+}
+
+QList<ServerPlayer *> RoomBase::getPlayers() const { return players; }
+
+QList<ServerPlayer *> RoomBase::getOtherPlayers(ServerPlayer *expect) const {
+  QList<ServerPlayer *> others = getPlayers();
+  others.removeOne(expect);
+  return others;
+}
+
+ServerPlayer *RoomBase::findPlayer(int id) const {
+  foreach (ServerPlayer *p, players) {
+    if (p->getId() == id)
+      return p;
+  }
+  return nullptr;
+}
+
+void RoomBase::doBroadcastNotify(const QList<ServerPlayer *> targets,
+                             const QString &command, const QString &jsonData) {
+  foreach (ServerPlayer *p, targets) {
+    p->doNotify(command, jsonData);
+  }
+}
 
 Room::Room(RoomThread *m_thread) {
   auto server = ServerInstance;
@@ -70,8 +94,6 @@ void Room::setThread(RoomThread *t) {
 int Room::getId() const { return id; }
 
 void Room::setId(int id) { this->id = id; }
-
-bool Room::isLobby() const { return id == 0; }
 
 QString Room::getName() const { return name; }
 
@@ -312,22 +334,6 @@ void Room::removePlayer(ServerPlayer *player) {
   }
 }
 
-QList<ServerPlayer *> Room::getPlayers() const { return players; }
-
-QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer *expect) const {
-  QList<ServerPlayer *> others = getPlayers();
-  others.removeOne(expect);
-  return others;
-}
-
-ServerPlayer *Room::findPlayer(int id) const {
-  foreach (ServerPlayer *p, players) {
-    if (p->getId() == id)
-      return p;
-  }
-  return nullptr;
-}
-
 void Room::addObserver(ServerPlayer *player) {
   // 首先只能旁观在运行的房间，因为旁观是由Lua处理的
   if (!gameStarted) {
@@ -382,13 +388,6 @@ bool Room::isOutdated() {
 }
 
 bool Room::isStarted() const { return gameStarted; }
-
-void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
-                             const QString &command, const QString &jsonData) {
-  foreach (ServerPlayer *p, targets) {
-    p->doNotify(command, jsonData);
-  }
-}
 
 void Room::chat(ServerPlayer *sender, const QString &jsonData) {
   auto doc = String2Json(jsonData).object();

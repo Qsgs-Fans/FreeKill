@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "roomthread.h"
-#include "scheduler.h"
-#include "server.h"
+#include "server/roomthread.h"
+#include "server/scheduler.h"
+#include "server/server.h"
 
 #ifndef FK_SERVER_ONLY
-#include "client.h"
+#include "client/client.h"
 #endif
 
 RoomThread::RoomThread(Server *m_server) {

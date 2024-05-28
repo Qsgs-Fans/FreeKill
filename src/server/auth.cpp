@@ -1,8 +1,8 @@
-#include "auth.h"
-#include "util.h"
-#include "server.h"
-#include "client_socket.h"
-#include "serverplayer.h"
+#include "server/auth.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
+#include "network/client_socket.h"
 
 AuthManager::AuthManager(QObject *parent) : QObject(parent) {
   rsa = initRSA();

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "client.h"
-#include "util.h"
+#include "client/client.h"
+#include "core/util.h"
 using namespace fkShell;
 
-#include "packman.h"
-#include "server.h"
+#include "core/packman.h"
+#include "server/server.h"
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-#include "shell.h"
+#include "server/shell.h"
 #endif
 
 #if defined(Q_OS_WIN32)
@@ -22,7 +22,7 @@ using namespace fkShell;
 #ifndef Q_OS_ANDROID
 #include <QQuickStyle>
 #endif
-#include "qmlbackend.h"
+#include "ui/qmlbackend.h"
 #endif
 
 #if defined(Q_OS_ANDROID)

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server_socket.h"
-#include "client_socket.h"
-#include "server.h"
-#include "util.h"
+#include "network/server_socket.h"
+#include "network/client_socket.h"
+#include "server/server.h"
+#include "core/util.h"
 
 ServerSocket::ServerSocket(QObject *parent) : QObject(parent) {
   server = new QTcpServer(this);

@@ -3,7 +3,7 @@
 #ifndef _SERVERPLAYER_H
 #define _SERVERPLAYER_H
 
-#include "player.h"
+#include "core/player.h"
 
 class ClientSocket;
 class Router;

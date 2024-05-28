@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "client_socket.h"
+#include "network/client_socket.h"
 #include <openssl/aes.h>
-#include <qabstractsocket.h>
-#include <qrandom.h>
 
 ClientSocket::ClientSocket() : socket(new QTcpSocket(this)) {
   aes_ready = false;

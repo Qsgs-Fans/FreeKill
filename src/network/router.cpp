@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "router.h"
-#include "client.h"
-#include "client_socket.h"
-#include "roomthread.h"
-#include <qjsondocument.h>
-#include "server.h"
-#include "serverplayer.h"
-#include "util.h"
+#include "network/router.h"
+#include "client/client.h"
+#include "network/client_socket.h"
+#include "server/roomthread.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent) {

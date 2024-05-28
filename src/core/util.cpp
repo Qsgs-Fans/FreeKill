@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "util.h"
-#include "packman.h"
-#include <qcryptographichash.h>
-#include <qnamespace.h>
-#include <qregularexpression.h>
+#include "core/util.h"
+#include "core/packman.h"
 #include <QSysInfo>
 
 extern "C" {

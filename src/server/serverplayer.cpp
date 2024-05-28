@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "serverplayer.h"
-#include "client_socket.h"
-#include "room.h"
-#include "roomthread.h"
-#include "router.h"
-#include "server.h"
+#include "server/serverplayer.h"
+#include "network/client_socket.h"
+#include "server/room.h"
+#include "server/roomthread.h"
+#include "network/router.h"
+#include "server/server.h"
 
 ServerPlayer::ServerPlayer(Room *room) {
   socket = nullptr;
