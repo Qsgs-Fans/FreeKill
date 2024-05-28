@@ -11,6 +11,8 @@ set(freekill_SRCS
   "server/auth.cpp"
   "server/server.cpp"
   "server/serverplayer.cpp"
+  "server/roombase.cpp"
+  "server/lobby.cpp"
   "server/room.cpp"
   "server/roomthread.cpp"
   "server/scheduler.cpp"

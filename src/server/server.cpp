@@ -3,6 +3,7 @@
 #include "server/server.h"
 #include "server/auth.h"
 #include "server/room.h"
+#include "server/lobby.h"
 #include "server/roomthread.h"
 #include "server/serverplayer.h"
 #include "network/router.h"
@@ -26,12 +27,8 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
 
-  // 创建第一个房间，这个房间作为“大厅房间”
-  nextRoomId = 0;
-  createRoom(nullptr, "Lobby", INT32_MAX);
-  // 大厅只要发生人员变动，就向所有人广播一下房间列表
-  connect(lobby(), &Room::playerAdded, this, &Server::updateOnlineInfo);
-  connect(lobby(), &Room::playerRemoved, this, &Server::updateOnlineInfo);
+  nextRoomId = 1;
+  m_lobby = new Lobby(this);
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -99,7 +96,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     }
   }
 
-  if (!thread && nextRoomId != 0) {
+  if (!thread) {
     thread = createThread();
   }
 
@@ -114,10 +111,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   } else {
     room = new Room(thread);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-    if (room->isLobby())
-      m_lobby = room;
-    else
-      rooms.insert(room->getId(), room);
+    rooms.insert(room->getId(), room);
   }
 
   room->setName(name);
@@ -125,13 +119,12 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   room->setTimeout(timeout);
   room->setSettings(settings);
   room->addPlayer(owner);
-  if (!room->isLobby())
-    room->setOwner(owner);
+  room->setOwner(owner);
 }
 
 Room *Server::findRoom(int id) const { return rooms.value(id); }
 
-Room *Server::lobby() const { return m_lobby; }
+Lobby *Server::lobby() const { return m_lobby; }
 
 RoomThread *Server::createThread() {
   RoomThread *thread = new RoomThread(this);
@@ -383,33 +376,42 @@ void Server::onRoomAbandoned() {
 }
 
 void Server::onUserDisconnected() {
-  ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
+  auto player = qobject_cast<ServerPlayer *>(sender());
   qInfo() << "Player" << player->getId() << "disconnected";
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
   }
-  Room *room = player->getRoom();
-  if (room->isStarted()) {
-    if (room->getObservers().contains(player)) {
-      room->removeObserver(player);
-      player->deleteLater();
-      return;
-    }
-    player->setState(Player::Offline);
-    player->setSocket(nullptr);
-    // TODO: add a robot
-  } else {
+
+  auto _room = player->getRoom();
+  if (_room->isLobby()) {
     player->setState(Player::Robot); // 大厅！然而又不能设Offline
     player->deleteLater();
+  } else {
+    auto room = qobject_cast<Room *>(_room);
+    if (room->isStarted()) {
+      if (room->getObservers().contains(player)) {
+        room->removeObserver(player);
+        player->deleteLater();
+        return;
+      }
+      player->setState(Player::Offline);
+      player->setSocket(nullptr);
+      // TODO: add a robot
+    } else {
+      player->setState(Player::Robot); // 大厅！然而又不能设Offline
+      // 这里有一个多线程问题，可能与Room::gameOver同时deleteLater导致出事
+      player->deleteLater();
+    }
   }
 }
 
 void Server::onUserStateChanged() {
   ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  auto room = player->getRoom();
-  if (!room || room->isLobby() || room->isAbandoned()) {
-    return;
-  }
+  auto _room = player->getRoom();
+  if (!_room || _room->isLobby()) return;
+  auto room = qobject_cast<Room *>(_room);
+  if (room->isAbandoned()) return;
+
   auto state = player->getState();
   room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
       QString("[%1,\"%2\"]").arg(player->getId()).arg(player->getStateString()));

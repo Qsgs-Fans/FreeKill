@@ -8,6 +8,7 @@ class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
 class RoomThread;
+class Lobby;
 
 #include "server/room.h"
 
@@ -25,7 +26,7 @@ public:
                   int timeout = 15, const QByteArray &settings = "{}");
 
   Room *findRoom(int id) const;
-  Room *lobby() const;
+  Lobby *lobby() const;
 
   RoomThread *createThread();
   void removeThread(RoomThread *thread);
@@ -72,7 +73,7 @@ private:
   friend class Shell;
   ServerSocket *server;
 
-  Room *m_lobby;
+  Lobby *m_lobby;
   QMap<int, Room *> rooms;
   QStack<Room *> idle_rooms;
   QList<RoomThread *> threads;

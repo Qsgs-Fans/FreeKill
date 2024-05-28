@@ -159,7 +159,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
         return;
       }
 
-      Room *room = player->getRoom();
+      auto room = player->getRoom();
       room->handlePacket(player, command, jsonData);
     }
   } else if (type & TYPE_REQUEST) {
@@ -179,10 +179,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 
     ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
     player->setThinking(false);
-    auto room = player->getRoom();
-    if (room->getThread()) {
-      room->getThread()->wakeUp(room->getId());
-      // TODO: signal
+    auto _room = player->getRoom();
+    if (!_room->isLobby()) {
+      auto room = qobject_cast<Room *>(_room);
+      if (room->getThread()) {
+        room->getThread()->wakeUp(room->getId());
+        // TODO: signal
+      }
     }
 
     if (requestId != this->expectedReplyId)

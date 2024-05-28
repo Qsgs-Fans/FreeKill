@@ -7,7 +7,7 @@
 #include "network/router.h"
 #include "server/server.h"
 
-ServerPlayer::ServerPlayer(Room *room) {
+ServerPlayer::ServerPlayer(RoomBase *room) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
   setState(Player::Online);
@@ -61,9 +61,9 @@ void ServerPlayer::removeSocket() {
 
 Server *ServerPlayer::getServer() const { return server; }
 
-Room *ServerPlayer::getRoom() const { return room; }
+RoomBase *ServerPlayer::getRoom() const { return room; }
 
-void ServerPlayer::setRoom(Room *room) { this->room = room; }
+void ServerPlayer::setRoom(RoomBase *room) { this->room = room; }
 
 void ServerPlayer::speak(const QString &message) { ; }
 
@@ -122,7 +122,7 @@ void ServerPlayer::reconnect(ClientSocket *client) {
 
   if (room && !room->isLobby()) {
     server->setupPlayer(this, true);
-    room->pushRequest(QString("%1,reconnect").arg(getId()));
+    qobject_cast<Room *>(room)->pushRequest(QString("%1,reconnect").arg(getId()));
   } else {
     // 懒得处理掉线玩家在大厅了！踢掉得了
     doNotify("ErrorMsg", "Unknown Error");

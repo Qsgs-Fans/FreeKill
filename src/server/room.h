@@ -9,10 +9,6 @@ class Server;
 class ServerPlayer;
 class RoomThread;
 
-class Lobby : public RoomBase {
-  Q_OBJECT
-};
-
 class Room : public RoomBase {
   Q_OBJECT
  public:
@@ -21,9 +17,9 @@ class Room : public RoomBase {
 
   // Property reader & setter
   // ==================================={
-  Server *getServer() const;
   RoomThread *getThread() const;
   void setThread(RoomThread *t);
+
   int getId() const;
   void setId(int id);
   QString getName() const;
@@ -58,8 +54,6 @@ class Room : public RoomBase {
   bool isStarted() const;
   // ====================================}
 
-  void chat(ServerPlayer *sender, const QString &jsonData);
-
   void updateWinRate(int id, const QString &general, const QString &mode,
                      int result, bool dead);
   void gameOver();
@@ -91,12 +85,12 @@ class Room : public RoomBase {
   bool m_abandoned;     // If room is empty, delete it
 
   ServerPlayer *owner;  // who created this room?
-  QList<ServerPlayer *> observers;
   QList<int> runned_players;
   QList<int> rejected_players;
   int robot_id;
   bool gameStarted;
   bool m_ready;
+  QMutex gameOverLock;
 
   int timeout;
   QString md5;
@@ -105,6 +99,13 @@ class Room : public RoomBase {
 
   void addRunRate(int id, const QString &mode);
   void updatePlayerGameData(int id, const QString &mode);
+
+  // handle packet
+  void quitRoom(ServerPlayer *, const QString &);
+  void addRobotRequest(ServerPlayer *, const QString &);
+  void kickPlayer(ServerPlayer *, const QString &);
+  void ready(ServerPlayer *, const QString &);
+  void startGame(ServerPlayer *, const QString &);
 };
 
 #endif  // _ROOM_H
