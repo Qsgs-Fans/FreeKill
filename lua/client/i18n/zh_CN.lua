@@ -106,6 +106,7 @@ Fk:loadTranslationTable{
   ["Scenarios Overview"] = "玩法一览",
   ["Replay"] = "录像",
   ["Replay Manager"] = "来欣赏潇洒的录像吧！",
+  ["Replay from File"] = "从文件打开",
   ["Game Win"] = "胜利",
   ["Game Lose"] = "失败",
   ["Play the Replay"] = "重放",

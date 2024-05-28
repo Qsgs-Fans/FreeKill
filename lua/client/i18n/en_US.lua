@@ -96,6 +96,7 @@ Fk:loadTranslationTable({
   ["Scenarios Overview"] = "Game modes",
   -- ["Replay"] = "录像",
   -- ["Replay Manager"] = "来欣赏潇洒的录像吧！",
+  -- ["Replay from File"] = "从文件打开",
   ["Game Win"] = "Win",
   ["Game Lose"] = "Lose",
   ["Play the Replay"] = "Play",
