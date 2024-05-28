@@ -70,6 +70,9 @@ class Room : public RoomBase {
   void setRequestTimer(int ms);
   void destroyRequestTimer();
 
+  // FIXME
+  volatile bool insideGameOver = false;
+
  signals:
   void abandoned();
 
@@ -90,7 +93,6 @@ class Room : public RoomBase {
   int robot_id;
   bool gameStarted;
   bool m_ready;
-  QMutex gameOverLock;
 
   int timeout;
   QString md5;

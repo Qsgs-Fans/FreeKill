@@ -476,12 +476,13 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
 
 void Room::gameOver() {
   if (!gameStarted) return;
+  insideGameOver = true;
   gameStarted = false;
   runned_players.clear();
-  QMutexLocker locker(&gameOverLock);
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
+  server->beginTransaction();
   foreach (ServerPlayer *p, players) {
     auto pid = p->getId();
 
@@ -497,7 +498,7 @@ void Room::gameOver() {
         realPlayer->doNotify("AddTotalGameTime", bytes);
       }
 
-      // 摸了，这么写总之不会有问题
+      // 将游戏时间更新到数据库中
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       ExecSQL(server->getDatabase(), info_update);
@@ -506,18 +507,13 @@ void Room::gameOver() {
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
         addRunRate(pid, mode);
-        // addRunRate(pid, mode);
         server->temporarilyBan(pid);
       }
       p->deleteLater();
     }
   }
-  // 旁观者不能在这清除，因为removePlayer逻辑不一样
-  // observers.clear();
-  // 玩家也不能在这里清除，因为要能返回原来房间继续玩呢
-  // players.clear();
-  // owner = nullptr;
-  // clearRequest();
+  server->endTransaction();
+  insideGameOver = true;
 }
 
 void Room::manuallyStart() {

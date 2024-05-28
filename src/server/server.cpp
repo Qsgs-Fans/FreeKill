@@ -400,7 +400,9 @@ void Server::onUserDisconnected() {
     } else {
       player->setState(Player::Robot); // 大厅！然而又不能设Offline
       // 这里有一个多线程问题，可能与Room::gameOver同时deleteLater导致出事
-      player->deleteLater();
+      // FIXME: 这种解法肯定不安全
+      if (!room->insideGameOver)
+        player->deleteLater();
     }
   }
 }
