@@ -12,10 +12,7 @@ Fk:loadTranslationTable({
   -- ["Old Password"] = "旧密码",
   -- ["New Password"] = "新密码",
   -- ["Update Avatar"] = "更新头像",
-  -- ["Update avatar done."] = "头像已更新",
   -- ["Update Password"] = "更新密码",
-  -- ["Update password done."] = "密码已更新",
-  -- ["Old password wrong!"] = "旧密码错误！",
   -- ["Lobby BG"] = "大厅壁纸",
   -- ["Room BG"] = "房间背景",
   -- ["Game BGM"] = "游戏BGM",
@@ -96,7 +93,6 @@ Fk:loadTranslationTable({
   ["Scenarios Overview"] = "Game modes",
   -- ["Replay"] = "录像",
   -- ["Replay Manager"] = "来欣赏潇洒的录像吧！",
-  -- ["Replay from File"] = "从文件打开",
   ["Game Win"] = "Win",
   ["Game Lose"] = "Lose",
   ["Play the Replay"] = "Play",
@@ -160,7 +156,7 @@ Fk:loadTranslationTable({
   ["IncludeDeputy"] = "<font color=\"red\">Deputy character enabled</font>",
 
   -- Room
-  ["$EnterRoom"] = "Successfully entered the room",
+  ["$EnterRoom"] = "Successfully entered the room.",
   ["#currentRoundNum"] = "Round #%1",
   ["$Choice"] = "%1: Please choose",
   ["$ChooseGeneral"] = "Please choose %1 character(s)",
