@@ -150,8 +150,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
             "C", localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
-      Backend->notifyUI(
-          "ErrorDialog",
+      Backend->notifyUI("ErrorDialog",
           QString("⛔ %1/Error occured!\n  %2").arg(threadName).arg(localMsg));
     }
 #endif

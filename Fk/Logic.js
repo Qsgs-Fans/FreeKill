@@ -81,6 +81,25 @@ callbacks["ErrorMsg"] = (jsonData) => {
   }
 }
 
+callbacks["ErrorDlg"] = (jsonData) => {
+  let log;
+  try {
+    const a = JSON.parse(jsonData);
+    log = qsTr(a[0]).arg(a[1]);
+  } catch (e) {
+    log = qsTr(jsonData);
+  }
+
+  console.log("ERROR: " + log);
+  Backend.showDialog("warning", log, jsonData);
+  mainWindow.busy = false;
+  if (sheduled_download !== "") {
+    mainWindow.busy = true;
+    Pacman.loadSummary(JSON.stringify(sheduled_download), true);
+    sheduled_download = "";
+  }
+}
+
 callbacks["UpdatePackage"] = (jsonData) => sheduled_download = jsonData;
 
 callbacks["UpdateBusyText"] = (jsonData) => {

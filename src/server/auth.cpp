@@ -59,7 +59,7 @@ bool AuthManager::checkClientVersion(ClientSocket *client, const QString &cver) 
                       .arg(FK_VERSION, "1");
     }
 
-    server->sendEarlyPacket(client, "ErrorMsg", errmsg);
+    server->sendEarlyPacket(client, "ErrorDlg", errmsg);
     client->disconnectFromHost();
     return false;
   }
@@ -169,7 +169,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
     auto player = players.value(id);
     // 顶号机制，如果在线的话就让他变成不在线
     if (player->getState() == Player::Online) {
-      player->doNotify("ErrorMsg", "others logged in again with this name");
+      player->doNotify("ErrorDlg", "others logged in again with this name");
       emit player->kicked();
     }
 
@@ -186,7 +186,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
 FAIL:
   if (!passed) {
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;
-    server->sendEarlyPacket(client, "ErrorMsg", error_msg);
+    server->sendEarlyPacket(client, "ErrorDlg", error_msg);
     client->disconnectFromHost();
     return QJsonObject();
   }

@@ -244,7 +244,7 @@ void Server::processNewConnection(ClientSocket *client) {
   }
 
   if (!errmsg.isEmpty()) {
-    sendEarlyPacket(client, "ErrorMsg", errmsg);
+    sendEarlyPacket(client, "ErrorDlg", errmsg);
     qInfo() << "Refused banned IP:" << addr;
     client->disconnectFromHost();
     return;
@@ -281,7 +281,7 @@ void Server::processRequest(const QByteArray &msg) {
 
   if (!valid) {
     qWarning() << "Invalid setup string:" << msg;
-    sendEarlyPacket(client, "ErrorMsg", "INVALID SETUP STRING");
+    sendEarlyPacket(client, "ErrorDlg", "INVALID SETUP STRING");
     client->disconnectFromHost();
     return;
   }
@@ -298,7 +298,7 @@ void Server::processRequest(const QByteArray &msg) {
   }
 
   if (!result2.isEmpty()) {
-    sendEarlyPacket(client, "ErrorMsg", "you have been banned!");
+    sendEarlyPacket(client, "ErrorDlg", "you have been banned!");
     qInfo() << "Refused banned UUID:" << uuid_str;
     client->disconnectFromHost();
     return;
