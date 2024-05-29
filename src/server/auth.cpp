@@ -110,6 +110,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
   int id;
   QByteArray salt;
   QByteArray passwordHash;
+  auto players = server->getPlayers();
 
   auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
@@ -127,12 +128,19 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
     decrypted_pw.remove(0, 32);
   } else {
     // FIXME
-    decrypted_pw = "\xFF";
+    // decrypted_pw = "\xFF";
+    error_msg = "unknown password error";
+    goto FAIL;
   }
 
-  auto players = server->getPlayers();
   if (!CheckSqlString(name) || !server->checkBanWord(name)) {
     error_msg = "invalid user name";
+    goto FAIL;
+  }
+
+  if (server->getConfig("whitelist").isArray() &&
+      !server->getConfig("whitelist").toArray().toVariantList().contains(name)) {
+    error_msg = "user name not in whitelist";
     goto FAIL;
   }
 
