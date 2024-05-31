@@ -105,7 +105,6 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     room->setId(nextRoomId);
     nextRoomId++;
     room->setAbandoned(false);
-    room->setThread(thread);
     thread->addRoom(room);
     rooms.insert(room->getId(), room);
   } else {

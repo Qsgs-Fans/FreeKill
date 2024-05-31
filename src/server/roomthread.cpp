@@ -53,7 +53,7 @@ Room *RoomThread::getRoom(int id) const {
 }
 
 void RoomThread::addRoom(Room *room) {
-  Q_UNUSED(room);
+  room->setThread(this);
   m_capacity--;
 }
 

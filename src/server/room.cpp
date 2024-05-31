@@ -20,7 +20,6 @@ Room::Room(RoomThread *m_thread) {
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  setThread(m_thread);
   if (m_thread) { // In case of lobby
     m_thread->addRoom(this);
   }
