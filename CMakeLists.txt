@@ -73,6 +73,7 @@ add_custom_command(
   POST_BUILD
   COMMENT "Generating version file fk_ver"
   COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/fk_ver
+  COMMAND ${PROJECT_SOURCE_DIR}/genfkver.sh
 )
 
 add_subdirectory(src)
