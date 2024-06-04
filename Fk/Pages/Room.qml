@@ -810,7 +810,7 @@ Item {
           skillInteraction.item.choices = data.choices;
           skillInteraction.item.detailed = data.detailed;
           skillInteraction.item.all_choices = data.all_choices;
-          // skillInteraction.item.clicked();
+          skillInteraction.item.clicked();
           break;
         case "spin":
           skillInteraction.sourceComponent =
@@ -818,12 +818,14 @@ Item {
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.from = data.from;
           skillInteraction.item.to = data.to;
+          skillInteraction.item.clicked();
           break;
         case "custom":
           skillInteraction.sourceComponent =
             Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
           skillInteraction.item.skill = skill_name;
           skillInteraction.item.extra_data = data;
+          skillInteraction.item.clicked();
           break;
         default:
           skillInteraction.sourceComponent = undefined;
@@ -837,6 +839,7 @@ Item {
       cancelButton.enabled = true;
     } else {
       skillInteraction.sourceComponent = undefined;
+      roomScene.popupBox.item.close();
       Logic.doCancelButton();
     }
   }
