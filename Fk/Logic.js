@@ -163,6 +163,7 @@ callbacks["UpdateRoomList"] = (data) => {
     data.forEach(room => {
       const [roomId, roomName, gameMode, playerNum, capacity, hasPassword,
         outdated] = room;
+      for (let j=0;j<40;j++)
       current.roomModel.append({
         roomId, roomName, gameMode, playerNum, capacity,
         hasPassword, outdated,
