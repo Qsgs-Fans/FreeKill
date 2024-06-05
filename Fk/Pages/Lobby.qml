@@ -15,42 +15,6 @@ Item {
 
   property string password
 
-  /*
-  Rectangle {
-    visible: false
-    width: parent.width / 2 - roomListLayout.width / 2 - 50
-    height: parent.height * 0.7
-    anchors.top: exitButton.bottom
-    anchors.bottom: createRoomButton.top
-    anchors.right: parent.right
-    anchors.rightMargin: 20
-    color: "#88EEEEEE"
-    radius: 6
-
-    Flickable {
-      id: flickableContainer
-      ScrollBar.vertical: ScrollBar {}
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.top: parent.top
-      anchors.topMargin: 10
-      flickableDirection: Flickable.VerticalFlick
-      width: parent.width - 10
-      height: parent.height - 10
-      contentHeight: bulletin_info.height
-      clip: true
-
-      Text {
-        id: bulletin_info
-        width: parent.width
-        wrapMode: TextEdit.WordWrap
-        textFormat: Text.MarkdownText
-        text: config.serverMotd + "\n___\n" + luatr('Bulletin Info')
-        onLinkActivated: Qt.openUrlExternally(link);
-      }
-    }
-  }
-  */
-
   Component {
     id: roomDelegate
 
@@ -155,9 +119,9 @@ Item {
     height: root.height - 72
     y: 16
     anchors.left: parent.left
-    anchors.leftMargin: root.width * 0.05 + root.width * 0.9 * 0.8 % 128 / 2
+    anchors.leftMargin: root.width * 0.03 + root.width * 0.94 * 0.8 % 128 / 2
     width: {
-      let ret = root.width * 0.90 * 0.8;
+      let ret = root.width * 0.94 * 0.8;
       ret -= ret % 128;
       return ret;
     }
@@ -207,14 +171,55 @@ Item {
 
   Rectangle {
     id: serverInfoLayout
-    anchors.top: parent.top
-    anchors.topMargin: root.height * 0.05
+    height: root.height - 112
+    y: 56
+    width: root.width * 0.94 * 0.2
     anchors.right: parent.right
-    anchors.rightMargin: root.width * 0.05
+    anchors.rightMargin: root.width * 0.03
     // anchors.horizontalCenter: parent.horizontalCenter
-    height: root.height * 0.90
-    width: root.width * 0.90 * 0.2
-    color: "white"
+    color: "#88EEEEEE"
+    property bool chatShown: true
+
+    Flickable {
+      ScrollBar.vertical: ScrollBar {}
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: 10
+      flickableDirection: Flickable.VerticalFlick
+      width: parent.width - 10
+      height: parent.height - 10 - (parent.chatShown ? 200 : 0)
+      contentHeight: bulletin_info.height
+      clip: true
+
+      Text {
+        id: bulletin_info
+        width: parent.width
+        wrapMode: TextEdit.WordWrap
+        textFormat: Text.MarkdownText
+        text: config.serverMotd + "\n\n___\n\n" + luatr('Bulletin Info')
+        onLinkActivated: Qt.openUrlExternally(link);
+      }
+    }
+
+    MetroButton {
+      text: "🗨️" + (parent.chatShown ? "➖" : "➕")
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: lobbyChat.top
+      onClicked: {
+        parent.chatShown = !parent.chatShown
+      }
+    }
+
+    ChatBox {
+      id: lobbyChat
+      width: parent.width
+      height: parent.chatShown ? 200 : 0
+      Behavior on height { NumberAnimation { duration: 200 } }
+      anchors.bottom: parent.bottom
+      isLobby: true
+      color: "#88EEEEEE"
+      clip: true
+    }
   }
 
   RowLayout {
@@ -386,16 +391,6 @@ Item {
   onServerPlayerNumChanged: updateOnlineInfo();
 
   /*
-  ChatBox {
-    id: lobbyChat
-    visible: false
-    anchors.bottom: info.top
-    width: info.width
-    height: root.height * 0.6
-    isLobby: true
-    color: "#88EEEEEE"
-    radius: 4
-  }
   */
 
   Danmaku {
