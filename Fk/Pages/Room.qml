@@ -839,7 +839,8 @@ Item {
       cancelButton.enabled = true;
     } else {
       skillInteraction.sourceComponent = undefined;
-      roomScene.popupBox.item.close();
+      if (roomScene.popupBox.item)
+        roomScene.popupBox.item.close();
       Logic.doCancelButton();
     }
   }
