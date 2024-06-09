@@ -718,6 +718,15 @@ function updateSelectedTargets(playerid, selected) {
   }
 
   if (candidate) {
+    roomScene.resetPrompt(); // update prompt due to selected_targets
+    const prompt = lcall("ActiveSkillPrompt",
+      dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
+      dashboard.pending_skill !== "" ? dashboard.pendings : [card],
+      selected_targets);
+    if (prompt !== "") {
+      roomScene.setPrompt(Util.processPrompt(prompt));
+    }
+
     all_photos.forEach(photo => {
       if (photo.selected) return;
       const id = photo.playerid;
