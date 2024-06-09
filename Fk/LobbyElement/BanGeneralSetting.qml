@@ -184,6 +184,12 @@ Item {
           return ret;
         }
         delegate: Text {
+          width: parent.width / 2
+          wrapMode: Text.WordWrap
+          fontSizeMode: Text.HorizontalFit
+          minimumPixelSize: 14
+          elide: Text.ElideRight
+          height: 24
           text: luatr(modelData)
           font.pixelSize: 16
         }
