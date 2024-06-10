@@ -22,7 +22,7 @@ Item {
       radius: 8
       height: 124 - 8
       width: 124 - 8
-      color: "lightgreen"
+      color: outdated ? "#E2E2E2" : "lightgreen"
 
       Text {
         id: roomNameText
@@ -50,7 +50,7 @@ Item {
 
       Image {
         source: AppPath + "/image/button/skill/locked.png"
-        // visible: hasPassword
+        visible: hasPassword
         scale: 0.8
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -68,37 +68,93 @@ Item {
         anchors.rightMargin: 8
       }
 
-      // Button {
-      //   text: (playerNum < capacity) ? luatr("Enter") :
-      //     luatr("Observe")
-
-      //   enabled: !opTimer.running && !outdated
-
-      //   onClicked: {
-      //     opTimer.start();
-      //     if (hasPassword) {
-      //       lobby_dialog.sourceComponent = enterPassword;
-      //       lobby_dialog.item.roomId = roomId;
-      //       lobby_dialog.item.playerNum = playerNum;
-      //       lobby_dialog.item.capacity = capacity;
-      //       lobby_drawer.open();
-      //     } else {
-      //       enterRoom(roomId, playerNum, capacity, "");
-      //     }
-      //   }
-      // }
-
       TapHandler {
         gesturePolicy: TapHandler.WithinBounds
         enabled: !opTimer.running && !outdated
 
         onTapped: {
           lobby_dialog.sourceComponent = roomDetailDialog;
-          //lobby_dialog.item.roomId = roomId;
-          //lobby_dialog.item.playerNum = playerNum;
-          //lobby_dialog.item.capacity = capacity;
+          lobby_dialog.item.roomData = {
+            roomId, roomName, gameMode, playerNum, capacity,
+            hasPassword, outdated,
+          };
+          lobby_dialog.item.roomConfig = config.roomConfigCache?.[config.serverAddr]?.[roomId]
           lobby_drawer.open();
         }
+      }
+    }
+  }
+
+  Component {
+    id: roomDetailDialog
+    ColumnLayout {
+      property var roomData: ({
+        roomName: "",
+        hasPassword: true,
+      })
+      property var roomConfig: undefined
+      signal finished()
+      anchors.fill: parent
+      anchors.margins: 16
+
+      Text {
+        text: roomData.roomName
+        font.pixelSize: 18
+      }
+
+      Text {
+        font.pixelSize: 18
+        text: {
+          let ret = luatr(roomData.gameMode);
+          ret += (' #' + roomData.roomId);
+          ret += ('   ' + roomData.playerNum + '/' + roomData.capacity);
+          return ret;
+        }
+      }
+
+      Item { Layout.fillHeight: true }
+
+      // Dummy
+      Text {
+        text: "在未来的版本中这一块区域将增加更多实用的功能，<br>"+
+          "例如直接查看房间的各种配置信息<br>"+
+          "以及更多与禁将有关的实用功能！"+
+          "<font color='gray'>注：绿色按钮为试做型UI 后面优化</font>"
+        font.pixelSize: 18
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        Text {
+          visible: roomData.hasPassword
+          text: luatr("Please input room's password")
+        }
+
+        TextField {
+          id: passwordEdit
+          visible: roomData.hasPassword
+          Layout.fillWidth: true
+          onTextChanged: root.password = text;
+        }
+
+        Item {
+          visible: !roomData.hasPassword
+          Layout.fillWidth: true
+        }
+
+        Button {
+          // text: "OK"
+          text: (roomData.playerNum < roomData.capacity) ? luatr("Enter") : luatr("Observe")
+          onClicked: {
+            enterRoom(roomData.roomId, roomData.playerNum, roomData.capacity,
+              roomData.hasPassword ? root.password : "");
+            lobby_dialog.item.finished();
+          }
+        }
+      }
+
+      Component.onCompleted: {
+        passwordEdit.text = "";
       }
     }
   }
@@ -130,14 +186,9 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       Item { Layout.fillWidth: true }
-      Text {
-        width: parent.width
-        horizontalAlignment: Text.AlignHCenter
-        text: luatr("Room List").arg(roomModel.count)
-      }
       Button {
         Layout.alignment: Qt.AlignRight
-        text: luatr("Refresh Room List")
+        text: luatr("Refresh Room List").arg(roomModel.count)
         enabled: !opTimer.running
         onClicked: {
           opTimer.start();
@@ -323,39 +374,6 @@ Item {
         });
       }
       onSourceComponentChanged: sourceChanged();
-    }
-  }
-
-  Component {
-    id: enterPassword
-    ColumnLayout {
-      property int roomId
-      property int playerNum
-      property int capacity
-      signal finished()
-      anchors.fill: parent
-      anchors.margins: 16
-
-      Text {
-        text: luatr("Please input room's password")
-      }
-
-      TextField {
-        id: passwordEdit
-        onTextChanged: root.password = text;
-      }
-
-      Button {
-        text: "OK"
-        onClicked: {
-          enterRoom(roomId, playerNum, capacity, root.password);
-          parent.finished();
-        }
-      }
-
-      Component.onCompleted: {
-        passwordEdit.text = "";
-      }
     }
   }
 

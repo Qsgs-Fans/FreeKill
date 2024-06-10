@@ -18,6 +18,7 @@ class Lobby : public RoomBase {
   void updateAvatar(ServerPlayer *, const QString &);
   void updatePassword(ServerPlayer *, const QString &);
   void createRoom(ServerPlayer *, const QString &);
+  void getRoomConfig(ServerPlayer *, const QString &);
   void enterRoom(ServerPlayer *, const QString &);
   void observeRoom(ServerPlayer *, const QString &);
   void refreshRoomList(ServerPlayer *, const QString &);

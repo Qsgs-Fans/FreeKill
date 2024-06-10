@@ -83,6 +83,19 @@ void Lobby::createRoom(ServerPlayer *sender, const QString &jsonData) {
   ServerInstance->createRoom(sender, name, capacity, timeout, settings);
 }
 
+void Lobby::getRoomConfig(ServerPlayer *sender, const QString &jsonData) {
+  auto arr = String2Json(jsonData).array();
+  auto roomId = arr[0].toInt();
+  auto room = ServerInstance->findRoom(roomId);
+  if (room) {
+    auto settings = room->getSettings();
+    // 手搓JSON数组 跳过编码解码
+    sender->doNotify("GetRoomConfig", QString("[%1,%2]").arg(roomId).arg(settings));
+  } else {
+    sender->doNotify("ErrorMsg", "no such room");
+  }
+}
+
 void Lobby::enterRoom(ServerPlayer *sender, const QString &jsonData) {
   auto arr = String2Json(jsonData).array();
   auto roomId = arr[0].toInt();
@@ -137,6 +150,7 @@ void Lobby::handlePacket(ServerPlayer *sender, const QString &command,
     {"UpdateAvatar", &Lobby::updateAvatar},
     {"UpdatePassword", &Lobby::updatePassword},
     {"CreateRoom", &Lobby::createRoom},
+    {"GetRoomConfig", &Lobby::getRoomConfig},
     {"EnterRoom", &Lobby::enterRoom},
     {"ObserveRoom", &Lobby::observeRoom},
     {"RefreshRoomList", &Lobby::refreshRoomList},
