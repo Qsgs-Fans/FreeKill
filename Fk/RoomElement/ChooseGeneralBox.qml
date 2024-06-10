@@ -112,7 +112,7 @@ GraphicsBox {
           visible: !convertDisabled
           text: luatr("Same General Convert")
           onClicked: {
-            roomScene.startCheat("SameConvert", { cards: generalList });
+            roomScene.startCheat("SameConvert", { cards: generalList, choices: choices });
           }
         }
 
@@ -263,6 +263,7 @@ GraphicsBox {
       item.selectable = hegemony ? isHegPair(selectedItem[0], item)
                                         : true;
       if (hegemony) {
+        item.inPosition = 0;
         if (selectedItem[0]) {
           if (selectedItem[1]) {
             if (selectedItem[0] === item) {
@@ -296,6 +297,23 @@ GraphicsBox {
         item.origX = pos.x;
         item.origY = pos.y;
         item.goBack(true);
+      }
+    }
+
+    if (hegemony) {
+      if (selectedItem[0]) {
+        if (selectedItem[0].mainMaxHp < 0) {
+          selectedItem[0].inPosition = 1;
+        } else if (selectedItem[0].deputyMaxHp < 0) {
+          selectedItem[0].inPosition = -1;
+        }
+        if (selectedItem[1]) {
+          if (selectedItem[1].mainMaxHp < 0) {
+            selectedItem[1].inPosition = -1;
+          } else if (selectedItem[1].deputyMaxHp < 0) {
+            selectedItem[1].inPosition = 1;
+          }
+        }
       }
     }
 

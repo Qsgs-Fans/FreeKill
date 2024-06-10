@@ -22,6 +22,9 @@ CardItem {
   property int hp
   property int maxHp
   property int shieldNum
+  property int mainMaxHp
+  property int deputyMaxHp
+  property int inPosition: 0
   property string pkgName: ""
   property bool detailed: true
   property alias hasCompanions: companions.visible
@@ -119,12 +122,15 @@ CardItem {
         width: childrenRect.width
         height: childrenRect.height
         Image {
+          opacity: ((mainMaxHp < 0 || deputyMaxHp < 0) && (index * 2 + 1 === hp) && inPosition !== -1)
+                    ? (inPosition === 0 ? 0.5 : 0) :1
           height: 12; fillMode: Image.PreserveAspectFit
           source: SkinBank.getGeneralCardDir(kingdom) + kingdom + "-magatama-l"
         }
         Image {
           x: 4.4
-          opacity: (index + 1) * 2 <= hp ? 1 : 0
+          opacity: (index + 1) * 2 <= hp ? (((mainMaxHp < 0 || deputyMaxHp < 0) && inPosition !== -1 && ((index + 1) * 2 === hp))
+                    ? (inPosition === 0 ? 0.5 : 0) : 1) : 0
           height: 12; fillMode: Image.PreserveAspectFit
           source: {
             const k = subkingdom ? subkingdom : kingdom;
@@ -227,6 +233,8 @@ CardItem {
     hp = data.hp;
     maxHp = data.maxHp;
     shieldNum = data.shield;
+    mainMaxHp = data.mainMaxHpAdjustedValue;
+    deputyMaxHp = data.deputyMaxHpAdjustedValue;
 
     const splited = name.split("__");
     if (splited.length > 1) {

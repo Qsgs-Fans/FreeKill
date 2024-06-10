@@ -314,6 +314,10 @@ function resortHandcards() {
     ["treasure"]: Card.SubtypeTreasure,
   }
 
+  const hand = dashboard.handcardArea.cards.map(c => {
+    return c.cid;
+  })
+
   dashboard.handcardArea.cards.sort((prev, next) => {
     if (prev.footnote === next.footnote) {
       if (prev.type === next.type) {
@@ -340,6 +344,34 @@ function resortHandcards() {
       return prev.footnote > next.footnote ? 1 : -1;
     }
   });
+
+  let i = 0;
+  let resort = true;
+  dashboard.handcardArea.cards.forEach(c => {
+    if (hand[i] !== c.cid) {
+      resort = false;
+      return;
+    }
+    i++;
+  })
+
+  if (resort) {
+    dashboard.handcardArea.cards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (prev.number === next.number) { // 按点数排
+          if (prev.suit === next.suit) {
+            return prev.cid - next.cid;
+          } else {
+            return prev.suit - next.suit;
+          }
+        } else {
+          return prev.number - next.number;
+        }
+      } else {
+        return prev.footnote > next.footnote ? 1 : -1;
+      }
+    });
+  }
 
   dashboard.handcardArea.updateCardPosition(true);
 }
@@ -488,15 +520,29 @@ function doIndicate(from, tos) {
   line.running = true;
 }
 
+function getPlayerStr(playerid) {
+  const photo = getPhoto(playerid);
+  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
+    return luatr("seat#" + photo.seatNumber);
+  }
+
+  let ret = photo.general;
+  ret = luatr(ret);
+  if (photo.deputyGeneral && photo.deputyGeneral !== "") {
+    ret = ret + "/" + luatr(photo.deputyGeneral);
+  }
+  return ret;
+}
+
 function processPrompt(prompt) {
   const data = prompt.split(":");
   let raw = luatr(data[0]);
   const src = parseInt(data[1]);
   const dest = parseInt(data[2]);
   if (raw.match("%src"))
-    raw = raw.replace(/%src/g, luatr(getPhoto(src).general));
+    raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+    raw = raw.replace(/%dest/g, getPlayerStr(dest));
   if (raw.match("%arg2"))
     raw = raw.replace(/%arg2/g, luatr(data[4]));
   if (raw.match("%arg"))
@@ -672,6 +718,15 @@ function updateSelectedTargets(playerid, selected) {
   }
 
   if (candidate) {
+    roomScene.resetPrompt(); // update prompt due to selected_targets
+    const prompt = lcall("ActiveSkillPrompt",
+      dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
+      dashboard.pending_skill !== "" ? dashboard.pendings : [card],
+      selected_targets);
+    if (prompt !== "") {
+      roomScene.setPrompt(Util.processPrompt(prompt));
+    }
+
     all_photos.forEach(photo => {
       if (photo.selected) return;
       const id = photo.playerid;

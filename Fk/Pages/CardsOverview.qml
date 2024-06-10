@@ -289,18 +289,29 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 text: {
-                  if (gender === "male") {
+                  if (audioType === "male") {
                     return luatr("Male Audio");
-                  } else {
+                  } else if (audioType === "female") {
                     return luatr("Female Audio");
+                  } else if (audioType === "equip_effect")  {
+                    return luatr("Equip Effect Audio");
+                  } {
+                    return luatr("Equip Use Audio");
                   }
                 }
                 font.pixelSize: 14
               }
               onClicked: {
                 const data = lcall("GetCardData", cardDetail.cid);
-                Backend.playSound("./packages/" + extension + "/audio/card/"
-                                  + gender + "/" + data.name);
+                if (audioType === "male" || audioType === "female") {
+                  Backend.playSound("./packages/" + extension + "/audio/card/"
+                                  + audioType + "/" + data.name);
+                } else if (audioType === "equip_effect") {
+                  Backend.playSound("./packages/" + extension + "/audio/card/"
+                                  + "/" + data.name);
+                } else {
+                  Backend.playSound("./audio/card/common/" + extension);
+                }
               }
             }
           }
@@ -317,27 +328,41 @@ Item {
     }
   }
 
+  function loadAudio(cardName, type, extension, orig_extension) {
+    const prefix = AppPath + "/packages/";
+    const suffix = cardName + ".mp3";
+    let midfix = type + "/";
+    if (type === "equip_effect") {
+      midfix = "";
+    }
+    let fname = prefix + extension + "/audio/card/" + midfix + suffix;
+    if (Backend.exists(fname)) {
+      audioRow.append( { audioType: type, extension: extension } );
+    } else {
+      fname = prefix + orig_extension + "/audio/card/" + midfix + suffix;
+      if (Backend.exists(fname)) {
+        audioRow.append( { audioType: type, extension: orig_extension} );
+      }
+    }
+  }
+
   function addCardAudio(card) {
     const extension = card.extension;
     const orig_extension = lcall("GetCardExtensionByName", card.name);
-    const prefix = AppPath + "/packages/";
-    const suffix = card.name + ".mp3";
-    let fname = prefix + extension + "/audio/card/male/" + suffix;
-    if (Backend.exists(fname)) {
-      audioRow.append( { gender: "male", extension: extension } );
-    } else {
-      fname = prefix + orig_extension + "/audio/card/male/" + suffix;
-      if (Backend.exists(fname)) {
-        audioRow.append( {gender: "male", extension: orig_extension} );
-      }
-    }
-    fname = prefix + extension + "/audio/card/female/" + suffix;
-    if (Backend.exists(fname)) {
-      audioRow.append( { gender: "female", extension: extension } );
-    }else {
-      fname = prefix + orig_extension + "/audio/card/female/" + suffix;
-      if (Backend.exists(fname)) {
-        audioRow.append( { gender: "female", extension: orig_extension } );
+    loadAudio(card.name, "male", extension, orig_extension);
+    loadAudio(card.name, "female", extension, orig_extension);
+    if (audioRow.count === 0 && card.type === 3) {
+      loadAudio(card.name, "equip_effect", extension, orig_extension);
+      if (audioRow.count === 0) {
+        let subType = "";
+        if (card.subtype === "defensive_horse" || card.subtype === "offensive_horse") {
+          subType = "horse";
+        } else if (card.subtype === "weapon") {
+          subType = "weapon";
+        } else {
+          subType = "armor";
+        }
+        audioRow.append( { audioType: "equip_use", extension: subType } );
       }
     }
   }

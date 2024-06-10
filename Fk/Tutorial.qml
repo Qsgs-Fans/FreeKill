@@ -64,9 +64,15 @@ Rectangle {
     }
 
     Button {
-      text: qsTr("Next")
-      enabled: view.currentIndex + 1 < total
-      onClicked: view.currentIndex++
+      text: view.currentIndex + 1 == total ? qsTr("OK!") : qsTr("Next")
+      enabled: view.currentIndex + 1 <= total
+      onClicked: {
+        if (view.currentIndex + 1 == total) {
+          mainStack.pop();
+        } else {
+          view.currentIndex++
+        }
+      }
     }
   }
 }

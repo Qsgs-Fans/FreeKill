@@ -32,7 +32,7 @@ Item {
           id: menu
           y: bar.height
           MenuItem {
-            text: qsTr("Replay from file")
+            text: luatr("Replay from File")
             onTriggered: {
               fdialog.open();
             }
