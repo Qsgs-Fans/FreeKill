@@ -39,11 +39,6 @@ include_directories(include/lua)
 include_directories(include)
 include_directories(include/libgit2)
 include_directories(src)
-include_directories(src/client)
-include_directories(src/core)
-include_directories(src/network)
-include_directories(src/server)
-include_directories(src/ui)
 
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
 if (DEFINED FK_SERVER_ONLY)
@@ -78,6 +73,7 @@ add_custom_command(
   POST_BUILD
   COMMENT "Generating version file fk_ver"
   COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/fk_ver
+  COMMAND ${PROJECT_SOURCE_DIR}/genfkver.sh
 )
 
 add_subdirectory(src)

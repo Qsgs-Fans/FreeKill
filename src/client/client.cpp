@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "client.h"
-#include "client_socket.h"
-#include "clientplayer.h"
-#include "qmlbackend.h"
-#include "util.h"
-#include "server.h"
-#include <qforeach.h>
-#include <qlogging.h>
+#include "client/client.h"
+#include "client/clientplayer.h"
+#include "ui/qmlbackend.h"
+#include "core/util.h"
+#include "server/server.h"
+#include "network/client_socket.h"
 
 Client *ClientInstance = nullptr;
 ClientPlayer *Self = nullptr;

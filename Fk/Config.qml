@@ -43,6 +43,8 @@ QtObject {
   property string password: ""
   property string cipherText
   property string aeskey
+  // string => { roomId => config }
+  property var roomConfigCache: ({})
 
   // Client data
   property string serverMotd: ""

@@ -114,6 +114,38 @@
 </context>
 
 <context>
+  <name>QmlBackend</name>
+  <message>
+    <source>FreeKill</source>
+    <translation>新月杀</translation>
+  </message>
+  <message>
+    <source>help: others logged in again with this name</source>
+    <translation>提示：请检查密码是否泄漏</translation>
+  </message>
+  <message>
+    <source>help: unknown password error</source>
+    <translation>提示：请尝试重新启动程序</translation>
+  </message>
+  <message>
+    <source>help: you have been banned!</source>
+    <translation>提示：此为永久封禁，请联系管理员说明</translation>
+  </message>
+  <message>
+    <source>help: you have been temporarily banned!</source>
+    <translation>提示：此为暂时封禁，一般在约二十分钟后自动解禁</translation>
+  </message>
+  <message>
+    <source>help: user name not in whitelist</source>
+    <translation>提示：请联系服主解决</translation>
+  </message>
+  <message>
+    <source>help: username or password error</source>
+    <translation>提示：可能该用户名已被占用，或者密码错误，如果你是初次注册的话考虑用另一个用户名密码进行登入</translation>
+  </message>
+</context>
+
+<context>
   <name>Init</name>
   <message>
     <source>FreeKill</source>
@@ -292,7 +324,15 @@
   </message>
   <message>
     <source>others logged in again with this name</source>
-    <translation>其他人用你的用户名和密码登陆到了服务器，请检查密码是否泄漏</translation>
+    <translation>其他人用你的用户名和密码登陆到了服务器</translation>
+  </message>
+  <message>
+    <source>unknown password error</source>
+    <translation>服务端解密密码时出现未知错误</translation>
+  </message>
+  <message>
+    <source>user name not in whitelist</source>
+    <translation>你不在该服务器的白名单中！</translation>
   </message>
   <message>
     <source>invalid user name</source>

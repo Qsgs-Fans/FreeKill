@@ -8,10 +8,14 @@ set(freekill_SRCS
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
+  "server/auth.cpp"
   "server/server.cpp"
   "server/serverplayer.cpp"
+  "server/roombase.cpp"
+  "server/lobby.cpp"
   "server/room.cpp"
   "server/roomthread.cpp"
+  "server/scheduler.cpp"
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
@@ -21,7 +25,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
     "client/client.cpp"
     "client/clientplayer.cpp"
     "client/replayer.cpp"
-    "ui/mod.cpp"
+    # "ui/mod.cpp"
   )
 endif ()
 

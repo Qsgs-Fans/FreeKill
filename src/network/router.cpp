@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "router.h"
-#include "client.h"
-#include "client_socket.h"
-#include "roomthread.h"
-#include <qjsondocument.h>
-#include "server.h"
-#include "serverplayer.h"
-#include "util.h"
+#include "network/router.h"
+#include "client/client.h"
+#include "network/client_socket.h"
+#include "server/roomthread.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent) {
@@ -160,7 +159,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
         return;
       }
 
-      Room *room = player->getRoom();
+      auto room = player->getRoom();
       room->handlePacket(player, command, jsonData);
     }
   } else if (type & TYPE_REQUEST) {
@@ -180,10 +179,13 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 
     ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
     player->setThinking(false);
-    // qDebug() << "wake up!";
-    auto room = player->getRoom();
-    if (room->getThread()) {
-      room->getThread()->wakeUp();
+    auto _room = player->getRoom();
+    if (!_room->isLobby()) {
+      auto room = qobject_cast<Room *>(_room);
+      if (room->getThread()) {
+        room->getThread()->wakeUp(room->getId());
+        // TODO: signal
+      }
     }
 
     if (requestId != this->expectedReplyId)

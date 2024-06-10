@@ -86,6 +86,7 @@ jobs:
         cp -r /etc/ssl/certs .
         cp /usr/share/ca-certificates/mozilla/* certs/
         echo ${FKVER%)} > fk_ver
+        ./genfkver.sh
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}

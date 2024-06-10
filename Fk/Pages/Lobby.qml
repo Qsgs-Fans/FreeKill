@@ -11,111 +11,150 @@ import "Logic.js" as Logic
 Item {
   id: root
   property alias roomModel: roomModel
+  property var roomInfoCache: ({})
 
   property string password
 
-  Rectangle {
-    width: parent.width / 2 - roomListLayout.width / 2 - 50
-    height: parent.height * 0.7
-    anchors.top: exitButton.bottom
-    anchors.bottom: createRoomButton.top
-    anchors.right: parent.right
-    anchors.rightMargin: 20
-    color: "#88EEEEEE"
-    radius: 6
+  Component {
+    id: roomDelegate
 
-    Flickable {
-      id: flickableContainer
-      ScrollBar.vertical: ScrollBar {}
-      anchors.horizontalCenter: parent.horizontalCenter
-      anchors.top: parent.top
-      anchors.topMargin: 10
-      flickableDirection: Flickable.VerticalFlick
-      width: parent.width - 10
-      height: parent.height - 10
-      contentHeight: bulletin_info.height
-      clip: true
+    Rectangle {
+      radius: 8
+      height: 124 - 8
+      width: 124 - 8
+      color: outdated ? "#E2E2E2" : "lightgreen"
 
       Text {
-        id: bulletin_info
-        width: parent.width
-        wrapMode: TextEdit.WordWrap
-        textFormat: Text.MarkdownText
-        text: config.serverMotd + "\n___\n" + luatr('Bulletin Info')
-        onLinkActivated: Qt.openUrlExternally(link);
+        id: roomNameText
+        horizontalAlignment: Text.AlignLeft
+        width: parent.width - 16
+        height: contentHeight
+        maximumLineCount: 2
+        wrapMode: Text.WrapAnywhere
+        textFormat: Text.PlainText
+        text: roomName
+        // color: outdated ? "gray" : "black"
+        font.pixelSize: 16
+        // elide: Label.ElideRight
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.margins: 8
+      }
+
+      Text {
+        id: roomIdText
+        text: luatr(gameMode) + ' #' + roomId
+        anchors.top: roomNameText.bottom
+        anchors.left: roomNameText.left
+      }
+
+      Image {
+        source: AppPath + "/image/button/skill/locked.png"
+        visible: hasPassword
+        scale: 0.8
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.margins: -4
+      }
+
+      Text {
+        color: (playerNum == capacity) ? "red" : "black"
+        text: playerNum + "/" + capacity
+        font.pixelSize: 18
+        font.bold: true
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 8
+        anchors.right: parent.right
+        anchors.rightMargin: 8
+      }
+
+      TapHandler {
+        gesturePolicy: TapHandler.WithinBounds
+        enabled: !opTimer.running && !outdated
+
+        onTapped: {
+          lobby_dialog.sourceComponent = roomDetailDialog;
+          lobby_dialog.item.roomData = {
+            roomId, roomName, gameMode, playerNum, capacity,
+            hasPassword, outdated,
+          };
+          lobby_dialog.item.roomConfig = config.roomConfigCache?.[config.serverAddr]?.[roomId]
+          lobby_drawer.open();
+        }
       }
     }
   }
 
   Component {
-    id: roomDelegate
+    id: roomDetailDialog
+    ColumnLayout {
+      property var roomData: ({
+        roomName: "",
+        hasPassword: true,
+      })
+      property var roomConfig: undefined
+      signal finished()
+      anchors.fill: parent
+      anchors.margins: 16
 
-    Item {
-      height: 48
-      width: roomList.width
+      Text {
+        text: roomData.roomName
+        font.pixelSize: 18
+      }
+
+      Text {
+        font.pixelSize: 18
+        text: {
+          let ret = luatr(roomData.gameMode);
+          ret += (' #' + roomData.roomId);
+          ret += ('   ' + roomData.playerNum + '/' + roomData.capacity);
+          return ret;
+        }
+      }
+
+      Item { Layout.fillHeight: true }
+
+      // Dummy
+      Text {
+        text: "在未来的版本中这一块区域将增加更多实用的功能，<br>"+
+          "例如直接查看房间的各种配置信息<br>"+
+          "以及更多与禁将有关的实用功能！"+
+          "<font color='gray'>注：绿色按钮为试做型UI 后面优化</font>"
+        font.pixelSize: 18
+      }
 
       RowLayout {
-        anchors.fill: parent
-        spacing: 16
+        Layout.fillWidth: true
         Text {
-          text: roomId
-          color: "grey"
+          visible: roomData.hasPassword
+          text: luatr("Please input room's password")
         }
 
-        Text {
-          horizontalAlignment: Text.AlignLeft
+        TextField {
+          id: passwordEdit
+          visible: roomData.hasPassword
           Layout.fillWidth: true
-          text: {
-            let ret = roomName;
-            if (outdated) {
-              ret = '<font color="grey"><del>' + ret + '</del></font>';
-            }
-            return ret;
-          }
-          font.pixelSize: 20
-          elide: Label.ElideRight
+          onTextChanged: root.password = text;
         }
 
         Item {
-          Layout.preferredWidth: 16
-          Image {
-            source: AppPath + "/image/button/skill/locked.png"
-            visible: hasPassword
-            anchors.centerIn: parent
-            scale: 0.8
-          }
-        }
-
-        Text {
-          text: luatr(gameMode)
-        }
-
-        Text {
-          color: (playerNum == capacity) ? "red" : "black"
-          text: playerNum + "/" + capacity
-          font.pixelSize: 20
-          font.bold: true
+          visible: !roomData.hasPassword
+          Layout.fillWidth: true
         }
 
         Button {
-          text: (playerNum < capacity) ? luatr("Enter") :
-          luatr("Observe")
-
-          enabled: !opTimer.running && !outdated
-
+          // text: "OK"
+          text: (roomData.playerNum < roomData.capacity) ? luatr("Enter") : luatr("Observe")
           onClicked: {
-            opTimer.start();
-            if (hasPassword) {
-              lobby_dialog.sourceComponent = enterPassword;
-              lobby_dialog.item.roomId = roomId;
-              lobby_dialog.item.playerNum = playerNum;
-              lobby_dialog.item.capacity = capacity;
-              lobby_drawer.open();
-            } else {
-              enterRoom(roomId, playerNum, capacity, "");
-            }
+            enterRoom(roomData.roomId, roomData.playerNum, roomData.capacity,
+              roomData.hasPassword ? root.password : "");
+            lobby_dialog.item.finished();
           }
         }
+      }
+
+      Component.onCompleted: {
+        passwordEdit.text = "";
       }
     }
   }
@@ -124,8 +163,7 @@ Item {
     id: roomModel
   }
 
-  PersonalSettings {
-  }
+  PersonalSettings {}
 
   Timer {
     id: opTimer
@@ -134,69 +172,132 @@ Item {
 
   ColumnLayout {
     id: roomListLayout
-    anchors.top: parent.top
-    anchors.topMargin: 10
-    anchors.horizontalCenter: parent.horizontalCenter
-    width: root.width * 0.48
-    height: root.height - 80
-    Button {
-      Layout.alignment: Qt.AlignRight
-      text: luatr("Refresh Room List")
-      enabled: !opTimer.running
-      onClicked: {
-        opTimer.start();
-        ClientInstance.notifyServer("RefreshRoomList", "");
+    height: root.height - 72
+    y: 16
+    anchors.left: parent.left
+    anchors.leftMargin: root.width * 0.03 + root.width * 0.94 * 0.8 % 128 / 2
+    width: {
+      let ret = root.width * 0.94 * 0.8;
+      ret -= ret % 128;
+      return ret;
+    }
+    clip: true
+
+    RowLayout {
+      Layout.fillWidth: true
+      Item { Layout.fillWidth: true }
+      Button {
+        Layout.alignment: Qt.AlignRight
+        text: luatr("Refresh Room List").arg(roomModel.count)
+        enabled: !opTimer.running
+        onClicked: {
+          opTimer.start();
+          ClientInstance.notifyServer("RefreshRoomList", "");
+        }
+      }
+      Button {
+        text: luatr("Create Room")
+        onClicked: {
+          lobby_dialog.sourceComponent =
+            Qt.createComponent("../LobbyElement/CreateRoom.qml");
+          lobby_drawer.open();
+          config.observing = false;
+          config.replaying = false;
+        }
       }
     }
-    Item {
-      Layout.fillWidth: true
+
+    GridView {
+      id: roomList
+      cellWidth: 128
+      cellHeight: 128
       Layout.fillHeight: true
-      Rectangle {
-        anchors.fill: parent
-        anchors.centerIn: parent
-        color: "#88EEEEEE"
-        radius: 16
-        Text {
-          width: parent.width
-          horizontalAlignment: Text.AlignHCenter
-          text: luatr("Room List").arg(roomModel.count)
-        }
-        ListView {
-          id: roomList
-          height: parent.height * 0.9
-          width: parent.width * 0.95
-          contentHeight: roomDelegate.height * count
-          ScrollBar.vertical: ScrollBar {}
-          anchors.centerIn: parent
-          delegate: roomDelegate
-          clip: true
-          model: roomModel
-        }
-      }
+      Layout.fillWidth: true
+      ScrollBar.vertical: ScrollBar {}
+      delegate: roomDelegate
+      clip: true
+      model: roomModel
     }
   }
 
-  Button {
-    id: createRoomButton
-    anchors.bottom: buttonRow.top
+  Rectangle {
+    id: serverInfoLayout
+    height: root.height - 112
+    y: 56
+    width: root.width * 0.94 * 0.2
     anchors.right: parent.right
-    width: 120
-    display: AbstractButton.TextUnderIcon
-    icon.name: "media-playback-start"
-    text: luatr("Create Room")
-    onClicked: {
-      lobby_dialog.sourceComponent =
-        Qt.createComponent("../LobbyElement/CreateRoom.qml");
-      lobby_drawer.open();
-      config.observing = false;
-      config.replaying = false;
+    anchors.rightMargin: root.width * 0.03
+    // anchors.horizontalCenter: parent.horizontalCenter
+    color: "#88EEEEEE"
+    property bool chatShown: true
+
+    Flickable {
+      ScrollBar.vertical: ScrollBar {}
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      anchors.topMargin: 10
+      flickableDirection: Flickable.VerticalFlick
+      width: parent.width - 10
+      height: parent.height - 10 - (parent.chatShown ? 200 : 0)
+      contentHeight: bulletin_info.height
+      clip: true
+
+      Text {
+        id: bulletin_info
+        width: parent.width
+        wrapMode: TextEdit.WordWrap
+        textFormat: Text.MarkdownText
+        text: config.serverMotd + "\n\n___\n\n" + luatr('Bulletin Info')
+        onLinkActivated: Qt.openUrlExternally(link);
+      }
+    }
+
+    MetroButton {
+      text: "🗨️" + (parent.chatShown ? "➖" : "➕")
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.bottom: lobbyChat.top
+      onClicked: {
+        parent.chatShown = !parent.chatShown
+      }
+    }
+
+    ChatBox {
+      id: lobbyChat
+      width: parent.width
+      height: parent.chatShown ? 200 : 0
+      Behavior on height { NumberAnimation { duration: 200 } }
+      anchors.bottom: parent.bottom
+      isLobby: true
+      color: "#88EEEEEE"
+      clip: true
     }
   }
 
   RowLayout {
     id: buttonRow
-    anchors.right: parent.right
+    anchors.left: parent.left
     anchors.bottom: parent.bottom
+    width: parent.width
+
+    Rectangle {
+      Layout.fillHeight: true
+      Layout.preferredWidth: childrenRect.width + 48
+
+      gradient: Gradient {
+        orientation: Gradient.Horizontal
+        GradientStop { position: 0.8; color: "white" }
+        GradientStop { position: 1.0; color: "transparent" }
+      }
+      Text {
+        x: 16; y: 4
+        font.pixelSize: 16
+        text: luatr("$OnlineInfo")
+          .arg(lobbyPlayerNum).arg(serverPlayerNum) + "\n"
+          + "Powered by FreeKill " + FkVersion
+      }
+    }
+
+    Item { Layout.fillWidth: true }
     Button {
       text: luatr("Generals Overview")
       onClicked: {
@@ -276,39 +377,6 @@ Item {
     }
   }
 
-  Component {
-    id: enterPassword
-    ColumnLayout {
-      property int roomId
-      property int playerNum
-      property int capacity
-      signal finished()
-      anchors.fill: parent
-      anchors.margins: 16
-
-      Text {
-        text: luatr("Please input room's password")
-      }
-
-      TextField {
-        id: passwordEdit
-        onTextChanged: root.password = text;
-      }
-
-      Button {
-        text: "OK"
-        onClicked: {
-          enterRoom(roomId, playerNum, capacity, root.password);
-          parent.finished();
-        }
-      }
-
-      Component.onCompleted: {
-        passwordEdit.text = "";
-      }
-    }
-  }
-
   function enterRoom(roomId, playerNum, capacity, pw) {
     config.replaying = false;
     if (playerNum < capacity) {
@@ -333,40 +401,15 @@ Item {
   property int lobbyPlayerNum: 0
   property int serverPlayerNum: 0
 
+  /*
   function updateOnlineInfo() {
   }
 
   onLobbyPlayerNumChanged: updateOnlineInfo();
   onServerPlayerNumChanged: updateOnlineInfo();
 
-  Rectangle {
-    id: info
-    color: "#88EEEEEE"
-    width: root.width * 0.23 // childrenRect.width + 8
-    height: childrenRect.height + 4
-    anchors.bottom: parent.bottom
-    anchors.left: parent.left
-    radius: 4
-
-    Text {
-      anchors.horizontalCenter: parent.horizontalCenter
-      x: 4; y: 2
-      font.pixelSize: 16
-      text: luatr("$OnlineInfo")
-        .arg(lobbyPlayerNum).arg(serverPlayerNum) + "\n"
-        + "Powered by FreeKill " + FkVersion
-    }
-  }
-
-  ChatBox {
-    id: lobbyChat
-    anchors.bottom: info.top
-    width: info.width
-    height: root.height * 0.6
-    isLobby: true
-    color: "#88EEEEEE"
-    radius: 4
-  }
+  /*
+  */
 
   Danmaku {
     id: danmaku

@@ -15,6 +15,7 @@
 /*.kdev4
 /.cache/
 /tags
+/.luarc.json
 
 # file produced by game
 /FreeKill
