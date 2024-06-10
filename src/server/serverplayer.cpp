@@ -14,6 +14,7 @@ ServerPlayer::ServerPlayer(RoomBase *room) {
   this->room = room;
   server = room->getServer();
   connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
+  connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
 
   alive = true;
   m_busy = false;
@@ -42,7 +43,7 @@ void ServerPlayer::setSocket(ClientSocket *socket) {
   this->socket = nullptr;
   if (socket != nullptr) {
     connect(socket, &ClientSocket::disconnected, this,
-            &ServerPlayer::disconnected);
+            &ServerPlayer::onDisconnected);
     this->socket = socket;
   }
 
@@ -158,4 +159,52 @@ void ServerPlayer::resumeGameTimer() {
 
 int ServerPlayer::getGameTime() {
   return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
+}
+
+void ServerPlayer::onStateChanged() {
+  auto _room = getRoom();
+  if (!_room || _room->isLobby()) return;
+  auto room = qobject_cast<Room *>(_room);
+  if (room->isAbandoned()) return;
+
+  auto state = getState();
+  room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
+      QString("[%1,\"%2\"]").arg(getId()).arg(getStateString()));
+
+  if (state == Player::Online) {
+    resumeGameTimer();
+  } else {
+    pauseGameTimer();
+  }
+}
+
+void ServerPlayer::onDisconnected() {
+  qInfo() << "Player" << getId() << "disconnected";
+  if (server->getPlayers().count() <= 10) {
+    server->broadcast("ServerMessage", tr("%1 logged out").arg(getScreenName()));
+  }
+
+  auto _room = getRoom();
+  if (_room->isLobby()) {
+    setState(Player::Robot); // 大厅！然而又不能设Offline
+    deleteLater();
+  } else {
+    auto room = qobject_cast<Room *>(_room);
+    if (room->isStarted()) {
+      if (room->getObservers().contains(this)) {
+        room->removeObserver(this);
+        deleteLater();
+        return;
+      }
+      setState(Player::Offline);
+      setSocket(nullptr);
+      // TODO: add a robot
+    } else {
+      setState(Player::Robot); // 大厅！然而又不能设Offline
+      // 这里有一个多线程问题，可能与Room::gameOver同时deleteLater导致出事
+      // FIXME: 这种解法肯定不安全
+      if (!room->insideGameOver)
+        deleteLater();
+    }
+  }
 }

@@ -66,8 +66,6 @@ public slots:
   void processRequest(const QByteArray &msg);
 
   void onRoomAbandoned();
-  void onUserDisconnected();
-  void onUserStateChanged();
 
 private:
   friend class Shell;

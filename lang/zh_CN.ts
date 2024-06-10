@@ -125,7 +125,7 @@
   </message>
   <message>
     <source>help: unknown password error</source>
-    <translation>提示：请尝试重新启动程序</translation>
+    <translation>提示：请使用“编辑服务器”删除该服务器，然后重新添加服务器并重新输入用户名和密码</translation>
   </message>
   <message>
     <source>help: you have been banned!</source>

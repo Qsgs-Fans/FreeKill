@@ -52,8 +52,11 @@ public:
   int getGameTime();
 
 signals:
-  void disconnected();
   void kicked();
+
+public slots:
+  void onStateChanged();
+  void onDisconnected();
 
 private:
   ClientSocket *socket;   // socket for communicating with client

@@ -24,8 +24,9 @@ bool ServerSocket::listen(const QHostAddress &address, ushort port) {
 void ServerSocket::processNewConnection() {
   QTcpSocket *socket = server->nextPendingConnection();
   ClientSocket *connection = new ClientSocket(socket);
-  connect(connection, &ClientSocket::disconnected, this,
-          [connection]() { connection->deleteLater(); });
+  // 这里怎么能一断连就自己删呢，应该让上层的来
+  //connect(connection, &ClientSocket::disconnected, this,
+  //        [connection]() { connection->deleteLater(); });
   emit new_connection(connection);
 }
 
