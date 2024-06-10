@@ -33,8 +33,8 @@ private slots:
   void raiseError(QAbstractSocket::SocketError error);
 
 private:
-  QByteArray aesEncrypt(const QByteArray &in);
-  QByteArray aesDecrypt(const QByteArray &out);
+  QByteArray aesEnc(const QByteArray &in);
+  QByteArray aesDec(const QByteArray &out);
   AES_KEY aes_key;
   bool aes_ready;
   QTcpSocket *socket;

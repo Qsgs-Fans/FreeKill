@@ -3,14 +3,14 @@
 %module fk
 
 %{
-#include "client.h"
-#include "server.h"
-#include "serverplayer.h"
-#include "clientplayer.h"
-#include "room.h"
-#include "roomthread.h"
-#include "qmlbackend.h"
-#include "util.h"
+#include "client/client.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "client/clientplayer.h"
+#include "server/room.h"
+#include "server/roomthread.h"
+#include "ui/qmlbackend.h"
+#include "core/util.h"
 
 const char *FK_VER = FK_VERSION;
 %}

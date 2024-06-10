@@ -503,6 +503,8 @@ Item {
 
       Item {
         id: generalInfo
+        x: 5
+        y: 10
         width: 150
         ColumnLayout {
           width: parent.width
@@ -516,6 +518,7 @@ Item {
 
           Text {
             Layout.fillWidth: true
+            wrapMode: Text.WordWrap
             textFormat: TextEdit.RichText
             font.pixelSize: 16
             function trans(str) {

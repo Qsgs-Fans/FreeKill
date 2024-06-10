@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "packman.h"
+#include "core/packman.h"
 #include "git2.h"
-#include "util.h"
-#include "qmlbackend.h"
-#include <qjsondocument.h>
+#include "core/util.h"
+#include "ui/qmlbackend.h"
 
 PackMan *Pacman;
 
@@ -70,13 +69,16 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       auto obj = e.toObject();
       auto name = obj["name"].toString();
       auto url = obj["url"].toString();
-#ifndef FK_SERVER_ONLY
-      Backend->showToast(tr("[%1/%2] upgrading package '%3'").arg(i).arg(arr.count()).arg(name));
-#endif
+      bool toast_showed = false;
       if (SelectFromDatabase(
               db,
               QString("SELECT name FROM packages WHERE name='%1';").arg(name))
               .isEmpty()) {
+#ifndef FK_SERVER_ONLY
+        Backend->showToast(tr("[%1/%2] upgrading package '%3'")
+            .arg(i).arg(arr.count()).arg(name));
+        toast_showed = true;
+#endif
         downloadNewPack(url);
       }
       ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
@@ -85,6 +87,11 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       enablePack(name);
 
       if (head(name) != obj["hash"].toString()) {
+#ifndef FK_SERVER_ONLY
+        if (!toast_showed)
+          Backend->showToast(tr("[%1/%2] upgrading package '%3'")
+              .arg(i).arg(arr.count()).arg(name));
+#endif
         updatePack(name);
       }
     }
@@ -171,7 +178,7 @@ void PackMan::updatePack(const QString &pack) {
   if (error != 0) {
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
-      Backend->showToast(tr("packages/%1: some error occured.").arg(pack));
+      Backend->dialog("critical", tr("packages/%1: some error occured.").arg(pack));
     }
 #endif
     return;
@@ -193,7 +200,7 @@ void PackMan::upgradePack(const QString &pack) {
   if (error != 0) {
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
-      Backend->showToast(tr("packages/%1: some error occured.").arg(pack));
+      Backend->showDialog("critical", tr("packages/%1: some error occured.").arg(pack));
     }
 #endif
     return;

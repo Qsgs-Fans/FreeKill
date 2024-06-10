@@ -1,0 +1,10 @@
+{
+  "banwords": [ "习近", "近平", "共产党", "介石", "刘少奇", "邓小平", "江泽民", "胡锦涛", "毛泽东" ],
+  "description": "新月杀 [0.4.15] 主力联机服务器！请素质交流、理性对局！<b>交流请去贴吧[新月杀]吧</b>",
+  "iconUrl": "http://175.178.66.93/ba-freekill.png",
+  "capacity": 800,
+  "tempBanTime": 15,
+  "motd": "6.5更新\n\n手杀测试服：司马孚、成济、SP毌丘俭、李昭焦伯；十周年（一将24获奖版初稿）：宣公主、徐琨、令狐愚、司马孚\n\n6.3~6.4更新\n\nOL：界法正、蒋琬（注：暂不实现禁用手牌排序，且点击“牌序”按钮并不影响真实顺序，如不小心点击则通过点击武将上的“自若”标记查看真实顺序）；十周年：韩嵩、马铁；线下：周姬、鄂焕\n\n5.31~6.1更新\n\n十周年：乐诸葛果、小孙权、乐邹氏、乐祢衡、谋张绣；\n\n\n\n请为新月杀的Github仓库点一个star吧！感谢！ https://github.com/Notify-ctrl/FreeKill\n\n## 点此查看游玩教程： https://fkbook-all-in-one.readthedocs.io",
+  "hiddenPacks": [],
+  "enableBots": false
+}

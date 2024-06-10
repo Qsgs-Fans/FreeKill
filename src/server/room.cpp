@@ -1,28 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "room.h"
-
-#include <qjsonarray.h>
-#include <qjsondocument.h>
+#include "server/room.h"
+#include "server/lobby.h"
 
 #ifdef FK_SERVER_ONLY
 static void *ClientInstance = nullptr;
 #else
-#include "client.h"
+#include "client/client.h"
 #endif
 
-#include "client_socket.h"
-#include "roomthread.h"
-#include "server.h"
-#include "serverplayer.h"
-#include "util.h"
+#include "network/client_socket.h"
+#include "server/roomthread.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
 
 Room::Room(RoomThread *m_thread) {
   auto server = ServerInstance;
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  setThread(m_thread);
   if (m_thread) { // In case of lobby
     m_thread->addRoom(this);
   }
@@ -36,14 +33,8 @@ Room::Room(RoomThread *m_thread) {
 
   m_ready = true;
 
-  // 如果是普通房间而不是大厅，就初始化Lua，否则置Lua为nullptr
-  if (!isLobby()) {
-    // 如果不是大厅，那么：
-    // * 只要房间添加人了，那么从大厅中移掉这个人
-    // * 只要有人离开房间，那就把他加到大厅去
-    connect(this, &Room::playerAdded, server->lobby(), &Room::removePlayer);
-    connect(this, &Room::playerRemoved, server->lobby(), &Room::addPlayer);
-  }
+  connect(this, &Room::playerAdded, server->lobby(), &Lobby::removePlayer);
+  connect(this, &Room::playerRemoved, server->lobby(), &Lobby::addPlayer);
 }
 
 Room::~Room() {
@@ -55,8 +46,6 @@ Room::~Room() {
     m_thread->removeRoom(this);
   }
 }
-
-Server *Room::getServer() const { return server; }
 
 RoomThread *Room::getThread() const { return m_thread; }
 
@@ -70,8 +59,6 @@ void Room::setThread(RoomThread *t) {
 int Room::getId() const { return id; }
 
 void Room::setId(int id) { this->id = id; }
-
-bool Room::isLobby() const { return id == 0; }
 
 QString Room::getName() const { return name; }
 
@@ -88,9 +75,6 @@ const QByteArray Room::getSettings() const { return settings; }
 void Room::setSettings(QByteArray settings) { this->settings = settings; }
 
 bool Room::isAbandoned() const {
-  if (isLobby())
-    return false;
-
   if (players.isEmpty())
     return true;
 
@@ -151,72 +135,60 @@ void Room::addPlayer(ServerPlayer *player) {
   auto mode = settings["gameMode"].toString();
 
   // 告诉房里所有玩家有新人进来了
-  if (!isLobby()) {
-    jsonData << player->getId();
-    jsonData << player->getScreenName();
-    jsonData << player->getAvatar();
-    jsonData << player->isReady();
-    jsonData << player->getTotalGameTime();
-    doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
-  }
+  jsonData << player->getId();
+  jsonData << player->getScreenName();
+  jsonData << player->getAvatar();
+  jsonData << player->isReady();
+  jsonData << player->getTotalGameTime();
+  doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
 
   players.append(player);
   player->setRoom(this);
 
-  if (isLobby()) {
-    // 有机器人进入大厅（可能因为被踢），那么改为销毁
-    if (player->getState() == Player::Robot) {
-      removePlayer(player);
-      player->deleteLater();
-    } else {
-      player->doNotify("EnterLobby", "[]");
-    }
-  } else {
-    // Second, let the player enter room and add other players
+  // Second, let the player enter room and add other players
+  jsonData = QJsonArray();
+  jsonData << this->capacity;
+  jsonData << this->timeout;
+  jsonData << QJsonDocument::fromJson(this->settings).object();
+  player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
+
+  foreach (ServerPlayer *p, getOtherPlayers(player)) {
     jsonData = QJsonArray();
-    jsonData << this->capacity;
-    jsonData << this->timeout;
-    jsonData << QJsonDocument::fromJson(this->settings).object();
-    player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
+    jsonData << p->getId();
+    jsonData << p->getScreenName();
+    jsonData << p->getAvatar();
+    jsonData << p->isReady();
+    jsonData << p->getTotalGameTime();
+    player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
 
-    foreach (ServerPlayer *p, getOtherPlayers(player)) {
-      jsonData = QJsonArray();
-      jsonData << p->getId();
-      jsonData << p->getScreenName();
-      jsonData << p->getAvatar();
-      jsonData << p->isReady();
-      jsonData << p->getTotalGameTime();
-      player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
-
-      jsonData = QJsonArray();
-      jsonData << p->getId();
-      foreach (int i, p->getGameData()) {
-        jsonData << i;
-      }
-      player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
+    jsonData = QJsonArray();
+    jsonData << p->getId();
+    foreach (int i, p->getGameData()) {
+      jsonData << i;
     }
-
-    if (this->owner != nullptr) {
-      jsonData = QJsonArray();
-      jsonData << this->owner->getId();
-      player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
-    }
-
-    if (player->getLastGameMode() != mode) {
-      player->setLastGameMode(mode);
-      updatePlayerGameData(player->getId(), mode);
-    } else {
-      auto jsonData = QJsonArray();
-      jsonData << player->getId();
-      foreach (int i, player->getGameData()) {
-        jsonData << i;
-      }
-      doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
-    }
-    // 玩家手动启动
-    // if (isFull() && !gameStarted)
-    //  start();
+    player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
   }
+
+  if (this->owner != nullptr) {
+    jsonData = QJsonArray();
+    jsonData << this->owner->getId();
+    player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
+  }
+
+  if (player->getLastGameMode() != mode) {
+    player->setLastGameMode(mode);
+    updatePlayerGameData(player->getId(), mode);
+  } else {
+    auto jsonData = QJsonArray();
+    jsonData << player->getId();
+    foreach (int i, player->getGameData()) {
+      jsonData << i;
+    }
+    doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
+  }
+  // 玩家手动启动
+  // if (isFull() && !gameStarted)
+  //  start();
   emit playerAdded(player);
 }
 
@@ -251,12 +223,7 @@ void Room::removePlayer(ServerPlayer *player) {
     }
     emit playerRemoved(player);
 
-    if (isLobby())
-      return;
-
-    QJsonArray jsonData;
-    jsonData << player->getId();
-    doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes(jsonData));
+    doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes({ player->getId() }));
   } else {
     // 否则给跑路玩家召唤个AI代打
     // TODO: if the player is died..
@@ -287,7 +254,7 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
-    m_thread->wakeUp();
+    // m_thread->wakeUp();
 
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
@@ -310,22 +277,6 @@ void Room::removePlayer(ServerPlayer *player) {
   } else if (player == owner) {
     setOwner(players.first());
   }
-}
-
-QList<ServerPlayer *> Room::getPlayers() const { return players; }
-
-QList<ServerPlayer *> Room::getOtherPlayers(ServerPlayer *expect) const {
-  QList<ServerPlayer *> others = getPlayers();
-  others.removeOne(expect);
-  return others;
-}
-
-ServerPlayer *Room::findPlayer(int id) const {
-  foreach (ServerPlayer *p, players) {
-    if (p->getId() == id)
-      return p;
-  }
-  return nullptr;
 }
 
 void Room::addObserver(ServerPlayer *player) {
@@ -371,6 +322,10 @@ int Room::getTimeout() const { return timeout; }
 
 void Room::setTimeout(int timeout) { this->timeout = timeout; }
 
+void Room::delay(int ms) {
+  m_thread->delay(id, ms);
+}
+
 bool Room::isOutdated() {
   bool ret = md5 != server->getMd5();
   if (ret) md5 = "";
@@ -378,42 +333,6 @@ bool Room::isOutdated() {
 }
 
 bool Room::isStarted() const { return gameStarted; }
-
-void Room::doBroadcastNotify(const QList<ServerPlayer *> targets,
-                             const QString &command, const QString &jsonData) {
-  foreach (ServerPlayer *p, targets) {
-    p->doNotify(command, jsonData);
-  }
-}
-
-void Room::chat(ServerPlayer *sender, const QString &jsonData) {
-  auto doc = String2Json(jsonData).object();
-  auto type = doc["type"].toInt();
-  doc["sender"] = sender->getId();
-
-  // 屏蔽.号，防止有人在HTML文本发链接，而正常发链接看不出来有啥改动
-  auto msg = doc["msg"].toString();
-  msg.replace(".", "․");
-  // 300字限制，与客户端相同
-  msg.erase(msg.begin() + 300, msg.end());
-  doc["msg"] = msg;
-  if (!server->checkBanWord(msg)) {
-    return;
-  }
-
-  if (type == 1) {
-    doc["userName"] = sender->getScreenName();
-    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
-    doBroadcastNotify(players, "Chat", json);
-  } else {
-    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
-    doBroadcastNotify(players, "Chat", json);
-    doBroadcastNotify(observers, "Chat", json);
-  }
-
-  qInfo("[Chat] %s: %s", sender->getScreenName().toUtf8().constData(),
-        doc["msg"].toString().toUtf8().constData());
-}
 
 static const QString findWinRate =
     QString("SELECT win, lose, draw "
@@ -551,18 +470,18 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
   auto room = player->getRoom();
   player->setGameData(total, win, run);
   auto data_arr = QJsonArray({ player->getId(), total, win, run });
-  if (!room->isLobby()) {
-    room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", JsonArray2Bytes(data_arr));
-  }
+  room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", JsonArray2Bytes(data_arr));
 }
 
 void Room::gameOver() {
   if (!gameStarted) return;
+  insideGameOver = true;
   gameStarted = false;
   runned_players.clear();
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
+  server->beginTransaction();
   foreach (ServerPlayer *p, players) {
     auto pid = p->getId();
 
@@ -578,7 +497,7 @@ void Room::gameOver() {
         realPlayer->doNotify("AddTotalGameTime", bytes);
       }
 
-      // 摸了，这么写总之不会有问题
+      // 将游戏时间更新到数据库中
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       ExecSQL(server->getDatabase(), info_update);
@@ -587,18 +506,13 @@ void Room::gameOver() {
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
         addRunRate(pid, mode);
-        // addRunRate(pid, mode);
         server->temporarilyBan(pid);
       }
       p->deleteLater();
     }
   }
-  // 旁观者不能在这清除，因为removePlayer逻辑不一样
-  // observers.clear();
-  // 玩家也不能在这里清除，因为要能返回原来房间继续玩呢
-  // players.clear();
-  // owner = nullptr;
-  // clearRequest();
+  server->endTransaction();
+  insideGameOver = true;
 }
 
 void Room::manuallyStart() {
@@ -620,7 +534,6 @@ void Room::pushRequest(const QString &req) {
 }
 
 void Room::addRejectId(int id) {
-  if (isLobby()) return;
   rejected_players << id;
 }
 
@@ -629,184 +542,84 @@ void Room::removeRejectId(int id) {
 }
 
 // ------------------------------------------------
-static void updateAvatar(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto avatar = arr[0].toString();
-
-  if (CheckSqlString(avatar)) {
-    auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
-      .arg(avatar)
-      .arg(sender->getId());
-    ExecSQL(ServerInstance->getDatabase(), sql);
-    sender->setAvatar(avatar);
-    sender->doNotify("UpdateAvatar", avatar);
-  }
-}
-
-static void updatePassword(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto oldpw = arr[0].toString();
-  auto newpw = arr[1].toString();
-  auto sql_find =
-    QString("SELECT password, salt FROM userinfo WHERE id=%1;")
-    .arg(sender->getId());
-
-  auto passed = false;
-  auto arr2 = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
-  auto result = arr2[0].toObject();
-  passed = (result["password"].toString() ==
-      QCryptographicHash::hash(
-        oldpw.append(result["salt"].toString()).toLatin1(),
-        QCryptographicHash::Sha256)
-      .toHex());
-  if (passed) {
-    auto sql_update =
-      QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
-      .arg(QCryptographicHash::hash(
-            newpw.append(result["salt"].toString()).toLatin1(),
-            QCryptographicHash::Sha256)
-          .toHex())
-      .arg(sender->getId());
-    ExecSQL(ServerInstance->getDatabase(), sql_update);
-  }
-
-  sender->doNotify("UpdatePassword", passed ? "1" : "0");
-}
-
-static void createRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto name = arr[0].toString();
-  auto capacity = arr[1].toInt();
-  auto timeout = arr[2].toInt();
-  auto settings =
-    QJsonDocument(arr[3].toObject()).toJson(QJsonDocument::Compact);
-  ServerInstance->createRoom(sender, name, capacity, timeout, settings);
-}
-
-static void enterRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto roomId = arr[0].toInt();
-  auto room = ServerInstance->findRoom(roomId);
-  if (room) {
-    auto settings = QJsonDocument::fromJson(room->getSettings());
-    auto password = settings["password"].toString();
-    if (password.isEmpty() || arr[1].toString() == password) {
-      if (room->isOutdated()) {
-        sender->doNotify("ErrorMsg", "room is outdated");
-      } else {
-        room->addPlayer(sender);
-      }
-    } else {
-      sender->doNotify("ErrorMsg", "room password error");
-    }
-  } else {
-    sender->doNotify("ErrorMsg", "no such room");
-  }
-}
-
-static void observeRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto roomId = arr[0].toInt();
-  auto room = ServerInstance->findRoom(roomId);
-  if (room) {
-    auto settings = QJsonDocument::fromJson(room->getSettings());
-    auto password = settings["password"].toString();
-    if (password.isEmpty() || arr[1].toString() == password) {
-      if (room->isOutdated()) {
-        sender->doNotify("ErrorMsg", "room is outdated");
-      } else {
-        room->addObserver(sender);
-      }
-    } else {
-      sender->doNotify("ErrorMsg", "room password error");
-    }
-  } else {
-    sender->doNotify("ErrorMsg", "no such room");
-  }
-}
-
-static void refreshRoomList(ServerPlayer *sender, const QString &) {
-  ServerInstance->updateRoomList(sender);
-};
-
-static void quitRoom(ServerPlayer *player, const QString &) {
-  auto room = player->getRoom();
-  room->removePlayer(player);
-  if (room->isOutdated()) {
+void Room::quitRoom(ServerPlayer *player, const QString &) {
+  removePlayer(player);
+  if (isOutdated()) {
     player->kicked();
   }
 }
 
-static void addRobot(ServerPlayer *player, const QString &) {
-  auto room = player->getRoom();
+void Room::addRobotRequest(ServerPlayer *player, const QString &) {
   if (ServerInstance->getConfig("enableBots").toBool())
-    room->addRobot(player);
+    addRobot(player);
 }
 
-static void kickPlayer(ServerPlayer *player, const QString &jsonData) {
-  auto room = player->getRoom();
+void Room::kickPlayer(ServerPlayer *player, const QString &jsonData) {
   int i = jsonData.toInt();
-  auto p = room->findPlayer(i);
-  if (p && !room->isStarted()) {
-    room->removePlayer(p);
-    room->addRejectId(i);
-    QTimer::singleShot(30000, room, [=]() {
-        room->removeRejectId(i);
+  auto p = findPlayer(i);
+  if (p && !isStarted()) {
+    removePlayer(p);
+    addRejectId(i);
+    QTimer::singleShot(30000, this, [=]() {
+        removeRejectId(i);
         });
   }
 }
 
-static void ready(ServerPlayer *player, const QString &) {
-  auto room = player->getRoom();
+void Room::ready(ServerPlayer *player, const QString &) {
   player->setReady(!player->isReady());
-  room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+  doBroadcastNotify(getPlayers(), "ReadyChanged",
       QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
 }
 
-static void startGame(ServerPlayer *player, const QString &) {
-  auto room = player->getRoom();
-  if (room->isOutdated()) {
-    foreach (auto p, room->getPlayers()) {
+void Room::startGame(ServerPlayer *player, const QString &) {
+  if (isOutdated()) {
+    foreach (auto p, getPlayers()) {
       p->doNotify("ErrorMsg", "room is outdated");
       p->kicked();
     }
   } else {
-    room->manuallyStart();
+    manuallyStart();
   }
 }
 
-typedef void (*room_cb)(ServerPlayer *, const QString &);
-static const QMap<QString, room_cb> lobby_actions = {
-  {"UpdateAvatar", updateAvatar},
-  {"UpdatePassword", updatePassword},
-  {"CreateRoom", createRoom},
-  {"EnterRoom", enterRoom},
-  {"ObserveRoom", observeRoom},
-  {"RefreshRoomList", refreshRoomList},
-};
-
-static const QMap<QString, room_cb> room_actions = {
-  {"QuitRoom", quitRoom},
-  {"AddRobot", addRobot},
-  {"KickPlayer", kickPlayer},
-  {"Ready", ready},
-  {"StartGame", startGame},
-};
+typedef void (Room::*room_cb)(ServerPlayer *, const QString &);
 
 void Room::handlePacket(ServerPlayer *sender, const QString &command,
                         const QString &jsonData) {
-  if (command == "Chat") {
-    chat(sender, jsonData);
+  static const QMap<QString, room_cb> room_actions = {
+    {"QuitRoom", &Room::quitRoom},
+    {"AddRobot", &Room::addRobotRequest},
+    {"KickPlayer", &Room::kickPlayer},
+    {"Ready", &Room::ready},
+    {"StartGame", &Room::startGame},
+    {"Chat", &Room::chat},
+  };
+
+  if (command == "PushRequest") {
+    pushRequest(QString("%1,").arg(sender->getId()) + jsonData);
     return;
-  } else if (command == "PushRequest") {
-    if (!isLobby())
-      pushRequest(QString("%1,").arg(sender->getId()) + jsonData);
   }
 
-  auto func_table = lobby_actions;
-  if (!isLobby()) func_table = room_actions;
-  auto func = func_table[command];
-  if (func) {
-    func(sender, jsonData);
-  }
+  auto func = room_actions[command];
+  if (func) (this->*func)(sender, jsonData);
+}
+
+// Lua用：request之前设置计时器防止等到死。
+void Room::setRequestTimer(int ms) {
+  request_timer = new QTimer();
+  request_timer->setSingleShot(true);
+  request_timer->setInterval(ms);
+  connect(request_timer, &QTimer::timeout, this, [=](){
+      m_thread->wakeUp(id);
+      });
+  request_timer->start();
+}
+
+// Lua用：当request完成后手动销毁计时器。
+void Room::destroyRequestTimer() {
+  if (!request_timer) return;
+  request_timer->stop();
+  delete request_timer;
+  request_timer = nullptr;
 }

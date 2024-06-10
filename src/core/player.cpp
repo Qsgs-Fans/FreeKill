@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "player.h"
+#include "core/player.h"
 
 Player::Player(QObject *parent)
     : QObject(parent), id(0), state(Player::Invalid), totalGameTime(0), ready(false),

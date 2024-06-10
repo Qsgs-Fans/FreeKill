@@ -1,5 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+%nodefaultctor Server;
+%nodefaultdtor Server;
+class Server : public QObject {
+public:
+  void beginTransaction();
+  void endTransaction();
+};
+extern Server *ServerInstance;
+
 %nodefaultctor Room;
 %nodefaultdtor Room;
 class Room : public QObject {
@@ -14,11 +23,14 @@ public:
   QList<ServerPlayer *> getObservers() const;
   bool hasObserver(ServerPlayer *player) const;
   int getTimeout() const;
+  void delay(int ms);
   void checkAbandoned();
 
   void updateWinRate(int id, const QString &general, const QString &mode,
                      int result, bool dead);
   void gameOver();
+  void setRequestTimer(int ms);
+  void destroyRequestTimer();
 };
 
 %extend Room {
@@ -33,25 +45,26 @@ class RoomThread : public QThread {
 public:
   Room *getRoom(int id);
 
-  QString fetchRequest();
-  void clearRequest();
-  bool hasRequest();
+  // QString fetchRequest();
+  // void clearRequest();
+  // bool hasRequest();
 
-  void trySleep(int ms);
-  bool isTerminated() const;
+  // void trySleep(int ms);
+  // bool isTerminated() const;
 
   bool isConsoleStart() const;
   bool isOutdated();
 };
 
 %{
-void RoomThread::run()
+#include "server/scheduler.h"
+void Scheduler::tellThreadToLua()
 {
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
   lua_getglobal(L, "InitScheduler");
-  SWIG_NewPointerObj(L, this, SWIGTYPE_p_RoomThread, 0);
+  SWIG_NewPointerObj(L, m_thread, SWIGTYPE_p_RoomThread, 0);
   int error = lua_pcall(L, 1, 0, -2);
   lua_pop(L, 1);
   if (error) {

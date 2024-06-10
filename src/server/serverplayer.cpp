@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "serverplayer.h"
-#include "client_socket.h"
-#include "room.h"
-#include "roomthread.h"
-#include "router.h"
-#include "server.h"
+#include "server/serverplayer.h"
+#include "network/client_socket.h"
+#include "server/room.h"
+#include "server/roomthread.h"
+#include "network/router.h"
+#include "server/server.h"
 
-ServerPlayer::ServerPlayer(Room *room) {
+ServerPlayer::ServerPlayer(RoomBase *room) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
   setState(Player::Online);
@@ -61,9 +61,9 @@ void ServerPlayer::removeSocket() {
 
 Server *ServerPlayer::getServer() const { return server; }
 
-Room *ServerPlayer::getRoom() const { return room; }
+RoomBase *ServerPlayer::getRoom() const { return room; }
 
-void ServerPlayer::setRoom(Room *room) { this->room = room; }
+void ServerPlayer::setRoom(RoomBase *room) { this->room = room; }
 
 void ServerPlayer::speak(const QString &message) { ; }
 
@@ -110,6 +110,24 @@ void ServerPlayer::kick() {
     socket->disconnectFromHost();
   }
   setSocket(nullptr);
+}
+
+void ServerPlayer::reconnect(ClientSocket *client) {
+  setSocket(client);
+  alive = true;
+  client->disconnect(this);
+  if (server->getPlayers().count() <= 10) {
+    server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()));
+  }
+
+  if (room && !room->isLobby()) {
+    server->setupPlayer(this, true);
+    qobject_cast<Room *>(room)->pushRequest(QString("%1,reconnect").arg(getId()));
+  } else {
+    // 懒得处理掉线玩家在大厅了！踢掉得了
+    doNotify("ErrorMsg", "Unknown Error");
+    emit kicked();
+  }
 }
 
 bool ServerPlayer::thinking() {

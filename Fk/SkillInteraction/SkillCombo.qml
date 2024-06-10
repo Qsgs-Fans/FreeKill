@@ -32,6 +32,7 @@ MetroButton {
     const box = roomScene.popupBox.item;
     box.options = choices;
     box.all_options = all_choices;
+    box.skill_name = skill;
     box.accepted.connect(() => {
       answer = all_choices[box.result];
     });

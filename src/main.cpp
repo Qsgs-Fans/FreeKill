@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "client.h"
-#include "util.h"
+#include "client/client.h"
+#include "core/util.h"
 using namespace fkShell;
 
-#include "packman.h"
-#include "server.h"
+#include "core/packman.h"
+#include "server/server.h"
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-#include "shell.h"
+#include "server/shell.h"
 #endif
 
 #if defined(Q_OS_WIN32)
@@ -22,7 +22,7 @@ using namespace fkShell;
 #ifndef Q_OS_ANDROID
 #include <QQuickStyle>
 #endif
-#include "qmlbackend.h"
+#include "ui/qmlbackend.h"
 #endif
 
 #if defined(Q_OS_ANDROID)
@@ -113,10 +113,10 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  fprintf(stderr, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(stderr, "%02d/%02d ", date.month(), date.day());
   fprintf(stderr, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
-  fprintf(file, "\r%02d/%02d ", date.month(), date.day());
+  fprintf(file, "%02d/%02d ", date.month(), date.day());
   fprintf(file, "%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
 
@@ -150,8 +150,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
             "C", localMsg.constData());
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
-      Backend->notifyUI(
-          "ErrorDialog",
+      Backend->notifyUI("ErrorDialog",
           QString("⛔ %1/Error occured!\n  %2").arg(threadName).arg(localMsg));
     }
 #endif
@@ -329,6 +328,7 @@ int main(int argc, char *argv[]) {
 #if defined(Q_OS_ANDROID)
   system = "Android";
 #elif defined(Q_OS_WIN32)
+  qputenv("QT_MEDIA_BACKEND", "windows");
   system = "Win";
   ::system("chcp 65001");
 #elif defined(Q_OS_LINUX)

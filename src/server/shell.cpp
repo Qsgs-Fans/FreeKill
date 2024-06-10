@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-#include "shell.h"
-#include "packman.h"
-#include "server.h"
-#include "serverplayer.h"
-#include "util.h"
+#include "server/shell.h"
+#include "core/packman.h"
+#include "server/server.h"
+#include "server/serverplayer.h"
+#include "core/util.h"
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <signal.h>

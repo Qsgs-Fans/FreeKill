@@ -2,6 +2,7 @@
 
 import QtQuick
 import Qt5Compat.GraphicalEffects
+import QtQuick.Controls
 
 Item {
   id: root
@@ -86,7 +87,40 @@ Item {
   }
 
   TapHandler {
-    enabled: root.type !== "notactive" && root.enabled
-    onTapped: parent.pressed = !parent.pressed;
+    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
+    onTapped: (p, btn) => {
+      if ((btn === Qt.LeftButton || btn === Qt.NoButton) && root.type !== "notactive" && root.enabled) {
+        parent.pressed = !parent.pressed;
+      } else if (btn === Qt.RightButton) {
+        skillDetail.open();
+      }
+    }
+  }
+
+  Popup {
+    id: skillDetail
+    x: Math.round((parent.width - width) / 2)
+    y: Math.round((parent.height - height) / 2)
+    property string text: ""
+    width: Math.min(contentWidth, realMainWin.width * 0.4)
+    height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+    padding: 12
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+    contentItem: Text {
+      text: "<b>" + luatr(orig) + "</b>: " + luatr(":" + orig)
+      font.pixelSize: 20
+      wrapMode: Text.WordWrap
+      textFormat: TextEdit.RichText
+
+      TapHandler {
+        onTapped: skillDetail.close();
+      }
+    }
   }
 }

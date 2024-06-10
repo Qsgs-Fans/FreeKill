@@ -40,8 +40,13 @@ Flickable {
 
     extra_data.generals.forEach((g) => {
       const data = lcall("GetGeneralDetail", g);
-      skillDesc.append(luatr(data.kingdom) + " " + luatr(g) + " " + data.hp +
-                       "/" + data.maxHp);
+      skillDesc.append(luatr(data.kingdom) + " " + luatr(g) + " " + (data.hp === data.maxHp
+        ? ((g.startsWith('hs__') || g.startsWith('ld__') || g.includes('heg__'))
+          ? ((data.mainMaxHp != 0 || data.deputyMaxHp != 0)
+            ? ((data.hp + data.mainMaxHp) / 2 + '/' + (data.hp + data.deputyMaxHp) / 2)
+            : data.hp / 2)
+          : data.hp)
+        : data.hp + "/" + data.maxHp));
       if (data.companions.length > 0){
         let ret = '';
         ret +="<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
