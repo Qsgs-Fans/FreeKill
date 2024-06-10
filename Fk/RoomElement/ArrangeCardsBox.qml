@@ -2,23 +2,29 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk
 import Fk.Pages
+import Fk.RoomElement
 
 GraphicsBox {
   id: root
   property string prompt
   property var cards: []
   property var org_cards: []
-  property var movepos: []
-  property var dragging_card: ""
   property var result: []
   property var areaCapacities: []
   property var areaLimits: []
   property var areaNames: []
+  property var dragging_card: ""
+  property var movepos: []
   property bool free_arrange: true
+  property bool cancelable: false
+  property string poxi_type: ""
+  property string pattern: "."
+  property int size: 0
   property int padding: 25
 
-  title.text: luatr(prompt !== "" ? prompt : "Please arrange cards")
+  title.text: Backend.translate(prompt !== "" ? Util.processPrompt(prompt) : "Please arrange cards")
   width: body.width + padding * 2
   height: title.height + body.height + padding * 2
 
@@ -26,18 +32,17 @@ GraphicsBox {
     id: body
     x: padding
     y: parent.height - padding - height
-    spacing: 20
+    spacing: 10
 
     Repeater {
       id: areaRepeater
       model: areaCapacities
 
       Row {
-        spacing: 5
+        spacing: 7
 
         property int areaCapacity: modelData
-        property string areaName: index < areaNames.length
-                                  ? qsTr(areaNames[index]) : ""
+        property string areaName: index < areaNames.length ? qsTr(Backend.translate(areaNames[index])) : ""
 
         Rectangle {
           anchors.verticalCenter: parent.verticalCenter
@@ -63,35 +68,56 @@ GraphicsBox {
 
         Repeater {
           id: cardRepeater
-          model: areaCapacity
+          model: (size === 0) ? areaCapacity : 1
 
           Rectangle {
             color: "#1D1E19"
-            width: 93
+            width: (size === 0) ? 93 : size * 100 - 7
             height: 130
 
-            Text {
-              anchors.centerIn: parent
-              text: areaName
-              color: "#59574D"
-              width: parent.width * 0.8
-              wrapMode: Text.WordWrap
-            }
           }
         }
         property alias cardRepeater: cardRepeater
       }
     }
 
-    MetroButton {
-      Layout.alignment: Qt.AlignHCenter
-      id: buttonConfirm
-      text: luatr("OK")
-      width: 120
-      height: 35
+    Row {
+      anchors.bottom: parent.bottom
+      anchors.horizontalCenter: parent.horizontalCenter
+      spacing: 32
 
-      onClicked: close();
+      MetroButton {
+        width: 120
+        height: 35
+        id: buttonConfirm
+        text: luatr("OK")
+        onClicked: {
+          close();
+          roomScene.state = "notactive";
+          const reply = JSON.stringify(getResult());
+          ClientInstance.replyToServer("", reply);
+        }
+      }
+
+      MetroButton {
+        width: 120
+        height: 35
+        text: luatr("Cancel")
+        visible: root.cancelable
+        onClicked: {
+          close();
+          roomScene.state = "notactive";
+          const ret = [];
+          let i;
+          for (i = 0; i < result.length; i++) {
+            ret.push([]);
+          }
+          const reply = JSON.stringify(ret);
+          ClientInstance.replyToServer("", reply);
+        }
+      }
     }
+
   }
 
   Repeater {
@@ -105,8 +131,8 @@ GraphicsBox {
       name: modelData.name
       suit: modelData.suit
       number: modelData.number
-      mark: modelData.mark
       draggable: true
+      onReleased: updateCardReleased(this);
       onDraggingChanged: {
         if (!dragging) return;
         dragging_card = this;
@@ -117,9 +143,9 @@ GraphicsBox {
             card.draggable = false;
         }
       }
-      onReleased: updateCardReleased(this);
       onXChanged : updateCardDragging(this);
       onYChanged : updateCardDragging(this);
+      onSelectedChanged : updateCardSelected(this);
     }
   }
 
@@ -137,7 +163,7 @@ GraphicsBox {
       }
       pile = areaRepeater.itemAt(j);
       if (pile.y === 0) {
-        pile.y = j * 150
+        pile.y = j * 140
       }
       box = pile.cardRepeater.itemAt(0);
       pos = mapFromItem(pile, box.x, box.y);
@@ -234,6 +260,60 @@ GraphicsBox {
     arrangeCards();
   }
 
+  function updateCardSelected(_card) {
+    let i = result[0].indexOf(_card);
+    let j;
+    if (i === -1) {
+      if (result[0].length < areaCapacities[0]) {
+        if (free_arrange || !org_cards[0].includes(_card.cid)) {
+          for (j = 1; j < result.length; j++) {
+            i = result[j].indexOf(_card);
+            if (i !==-1) {
+              result[j].splice(i, 1);
+              result[0].push(_card);
+              arrangeCards();
+              break;
+            }
+          }
+        } else {
+          i = 0;
+          j = 0;
+          while (i < result[0].length && j < org_cards[0].length) {
+            if (org_cards[0][j] === _card.cid) break;
+            if (result[0][i].cid === org_cards[0][j]) {
+              i++;
+              j++;
+            } else {
+              if (org_cards[0].includes(result[0][i].cid))
+                j++;
+              else
+                i++;
+            }
+          }
+          let index;
+          for (j = 1; j < result.length; j++) {
+            index = result[j].indexOf(_card);
+            if (index !== -1) {
+              result[j].splice(index, 1);
+              result[0].splice(i, 0, _card);
+              arrangeCards();
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      for (j = 1; j < result.length; j++) {
+        if (result[j].length < areaCapacities[j]) {
+          result[0].splice(i, 1);
+          result[j].push(_card);
+          arrangeCards();
+          break;
+        }
+      }
+    }
+  }
+
   function arrangeCards() {
     let i, j, a, b;
     let card, box, pos, pile;
@@ -245,7 +325,7 @@ GraphicsBox {
       pile = areaRepeater.itemAt(j);
       box = pile.cardRepeater.itemAt(0);
       if (pile.y === 0) {
-        pile.y = j * 150
+        pile.y = j * 140
       }
       a = result[j].length;
       if (movepos.length === 2) {
@@ -255,7 +335,7 @@ GraphicsBox {
           a--;
         }
       }
-      spacing = 100;
+      spacing = (size > 0 && a > size) ? ((size - 1) * 100 / (a - 1)) : 100;
       b = 0;
       for (i = 0; i < result[j].length; i++) {
         card = result[j][i];
@@ -268,6 +348,7 @@ GraphicsBox {
           b++;
         pos = mapFromItem(pile, box.x, box.y);
         card.glow.visible = false;
+        card.chosenInBox = (movepos.length === 2 && result[j].length === areaCapacities[j] && movepos[0] === j && movepos[1] === b);
         card.origX = (movepos.length === 2 && movepos[0] === j && b > (movepos[1] - (is_exchange ? 0 : 1))) ? (pos.x + (b - 1) * spacing + 100) : (pos.x + b * spacing);
         card.origY = pos.y;
         card.opacity = 1;
@@ -275,18 +356,24 @@ GraphicsBox {
         card.initialZ = i + 1;
         card.maxZ = cardItem.count;
 
-        if (free_arrange || dragging_card === "")
-          card.selectable = true;
-        else if (result[j].length < areaCapacities[j] + (result[j].includes(dragging_card) ? 1 : 0))
-          card.selectable = (j !== 0);
+        if (poxi_type !== "")
+          card.selectable = lcall("PoxiFilter", poxi_type, card.cid, [dragging_card.cid], c_result, org_cards);
+        else if (pattern !== ".")
+          card.selectable = lcall("CardFitPattern", card.cid, pattern);
         else {
-          if (j === 0)
-            card.selectable = !org_cards[0].includes(dragging_card.cid) || i === org_cards[0].indexOf(dragging_card.cid);
+          if (free_arrange || dragging_card === "")
+            card.selectable = true;
+          else if (result[j].length < areaCapacities[j] + (result[j].includes(dragging_card) ? 1 : 0))
+            card.selectable = (j !== 0);
           else {
-            if (result[0].includes(dragging_card))
-              card.selectable = result[0].length < areaCapacities[0] || !org_cards[0].includes(card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
-            else
-              card.selectable = org_cards[0].includes(dragging_card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
+            if (j === 0)
+              card.selectable = !org_cards[0].includes(dragging_card.cid) || i === org_cards[0].indexOf(dragging_card.cid);
+            else {
+              if (result[0].includes(dragging_card))
+                card.selectable = result[0].length < areaCapacities[0] || !org_cards[0].includes(card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
+              else
+                card.selectable = org_cards[0].includes(dragging_card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
+            }
           }
         }
         card.draggable = (dragging_card === "") && (free_arrange || j > 0 || card.selectable);
@@ -300,7 +387,7 @@ GraphicsBox {
         buttonConfirm.enabled = false;
         break;
       }
-      buttonConfirm.enabled = true;
+      buttonConfirm.enabled = poxi_type ? lcall("PoxiFeasible", poxi_type, [], c_result, org_cards) : true;
     }
   }
 
