@@ -53,7 +53,14 @@ GameRule = fk.CreateTriggerSkill{
         end)
         if #cardNames == 0 then return end
 
-        local peach_use = room:askForUseCard(player, "peach", table.concat(cardNames, ",") , prompt, true, {analepticRecover = true})
+        local peach_use = room:askForUseCard(
+          player,
+          "peach",
+          table.concat(cardNames, ","),
+          prompt,
+          true,
+          {analepticRecover = true, must_targets = { dyingPlayer.id }}
+        )
         if not peach_use then break end
         peach_use.tos = { {dyingPlayer.id} }
         if peach_use.card.trueName == "analeptic" then

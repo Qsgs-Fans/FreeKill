@@ -90,8 +90,19 @@ function Skill:addRelatedSkill(skill)
 end
 
 --- 确认本技能是否为装备技能。
+---@param player Player
 ---@return boolean
-function Skill:isEquipmentSkill()
+function Skill:isEquipmentSkill(player)
+  if player then
+    local filterSkills = Fk:currentRoom().status_skills[FilterSkill]
+    for _, filter in ipairs(filterSkills) do
+      local result = filter:equipSkillFilter(self, player)
+      if result then
+        return true
+      end
+    end
+  end
+
   return self.attached_equip and type(self.attached_equip) == 'string' and self.attached_equip ~= ""
 end
 
@@ -124,6 +135,13 @@ end
 --- 判断某个技能是否为转换技
 function Skill:isSwitchSkill()
   return self.switchSkillName and type(self.switchSkillName) == 'string' and self.switchSkillName ~= ""
+end
+
+--判断技能是否为角色技能
+---@param player Player
+---@return boolean
+function Skill:isPlayerSkill(player)
+  return not (self:isEquipmentSkill(player) or self.name:endsWith("&"))
 end
 
 return Skill

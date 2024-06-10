@@ -52,6 +52,8 @@ Fk:loadTranslationTable({
   ["method_draw"] = "draw",
   ["method_discard"] = "discard",
 
+  ["prohibit"] = " prohibit ",
+
   ["slash"] = "Slash",
   [":slash"] = "Slash (basic card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Another player within your ATK range<br /><b>Effect</b>: Deal 1 DMG to the targets.<br/><b>Note</b>: You can only use 1 Slash per action phase.",
   ["#slash-jink"] = "%src used Slash to you, please use a Dodge",

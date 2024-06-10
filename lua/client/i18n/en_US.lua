@@ -12,7 +12,10 @@ Fk:loadTranslationTable({
   -- ["Old Password"] = "旧密码",
   -- ["New Password"] = "新密码",
   -- ["Update Avatar"] = "更新头像",
+  -- ["Update avatar done."] = "头像已更新",
   -- ["Update Password"] = "更新密码",
+  -- ["Update password done."] = "密码已更新",
+  -- ["Old password wrong!"] = "旧密码错误！",
   -- ["Lobby BG"] = "大厅壁纸",
   -- ["Room BG"] = "房间背景",
   -- ["Game BGM"] = "游戏BGM",
@@ -90,9 +93,14 @@ Fk:loadTranslationTable({
   ["Cards Overview"] = "Cards",
   ["Special card skills:"] = "<b>Special use method:</b>",
   ["Every suit & number:"] = "<b>All suit and number:</b>",
+  -- ["Male Audio"] = "男性音效",
+  -- ["Female Audio"] = "女性音效",
+  -- ["Equip Effect Audio"] = "效果音效",
+  -- ["Equip Use Audio"] = "使用音效",
   ["Scenarios Overview"] = "Game modes",
   -- ["Replay"] = "录像",
   -- ["Replay Manager"] = "来欣赏潇洒的录像吧！",
+  -- ["Replay from File"] = "从文件打开",
   ["Game Win"] = "Win",
   ["Game Lose"] = "Lose",
   ["Play the Replay"] = "Play",
@@ -156,7 +164,7 @@ Fk:loadTranslationTable({
   ["IncludeDeputy"] = "<font color=\"red\">Deputy character enabled</font>",
 
   -- Room
-  ["$EnterRoom"] = "Successfully entered the room.",
+  ["$EnterRoom"] = "Successfully entered the room",
   ["#currentRoundNum"] = "Round #%1",
   ["$Choice"] = "%1: Please choose",
   ["$ChooseGeneral"] = "Please choose %1 character(s)",
@@ -347,7 +355,7 @@ Fk:loadTranslationTable({
 
   -- get/lose skill
   ["#AcquireSkill"] = '%from acquired the skill "%arg"',
-	["#LoseSkill"] = '%from lost the skill "%arg"',
+  ["#LoseSkill"] = '%from lost the skill "%arg"',
 
   -- moveCards (they are sent by notifyMoveCards)
   ["$PutCard"] = "%arg card(s) of %from were put into draw pile",
@@ -405,8 +413,8 @@ Fk:loadTranslationTable({
 
   -- turnOver
   ["#TurnOver"] = "%from turned over character card, now his status is %arg",
-	["face_up"] = "face up",
-	["face_down"] = "face down",
+  ["face_up"] = "face up",
+  ["face_down"] = "face down",
 
   -- damage, heal and lose HP
   ["#Damage"] = "%to dealt %arg %arg2 DMG to %from",
@@ -443,4 +451,6 @@ Fk:loadTranslationTable({
   ["##ResponsePlayCard"] = "%from plays",
   ["##ShowCard"] = "%from shows",
   ["##JudgeCard"] = "%arg judge",
+  ["##PindianCard"] = "%from point fights",
+  ["##RecastCard"] = "%from recasts",
 }, "en_US")

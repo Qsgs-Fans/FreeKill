@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.Dying] = function(self)
+---@class GameEvent.Dying : GameEvent
+local Dying = GameEvent:subclass("GameEvent.Dying")
+function Dying:main()
   local dyingStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -27,7 +29,7 @@ GameEvent.functions[GameEvent.Dying] = function(self)
   end
 end
 
-GameEvent.exit_funcs[GameEvent.Dying] = function(self)
+function Dying:exit()
   local room = self.room
   local logic = room.logic
   local dyingStruct = self.data[1]
@@ -41,7 +43,9 @@ GameEvent.exit_funcs[GameEvent.Dying] = function(self)
   logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct, self.interrupted)
 end
 
-GameEvent.prepare_funcs[GameEvent.Death] = function(self)
+---@class GameEvent.Death : GameEvent
+local Death = GameEvent:subclass("GameEvent.Death")
+function Death:prepare()
   local deathStruct = table.unpack(self.data)
   local room = self.room
   local victim = room:getPlayerById(deathStruct.who)
@@ -50,7 +54,7 @@ GameEvent.prepare_funcs[GameEvent.Death] = function(self)
   end
 end
 
-GameEvent.functions[GameEvent.Death] = function(self)
+function Death:main()
   local deathStruct = table.unpack(self.data)
   local room = self.room
   local victim = room:getPlayerById(deathStruct.who)
@@ -99,7 +103,9 @@ GameEvent.functions[GameEvent.Death] = function(self)
   logic:trigger(fk.Deathed, victim, deathStruct)
 end
 
-GameEvent.functions[GameEvent.Revive] = function(self)
+---@class GameEvent.Revive : GameEvent
+local Revive = GameEvent:subclass("GameEvent.Revive")
+function Revive:main()
   local room = self.room
   local player, sendLog, reason = table.unpack(self.data)
 
@@ -118,3 +124,5 @@ GameEvent.functions[GameEvent.Revive] = function(self)
   reason = reason or ""
   room.logic:trigger(fk.AfterPlayerRevived, player, { reason = reason })
 end
+
+return { Dying, Death, Revive }

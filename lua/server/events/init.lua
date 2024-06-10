@@ -5,51 +5,46 @@
 -- 某类事件对应的结束事件，其id刚好就是那个事件的相反数
 -- GameEvent.EventFinish = -1
 
-GameEvent.Game = 0
+local tmp
+tmp = require "server.events.misc"
+GameEvent.Game = tmp[1]
+GameEvent.ChangeProperty = tmp[2]
+GameEvent.ClearEvent = tmp[3]
 
-GameEvent.ChangeHp = 1
-GameEvent.Damage = 2
-GameEvent.LoseHp = 3
-GameEvent.Recover = 4
-GameEvent.ChangeMaxHp = 5
-dofile "lua/server/events/hp.lua"
+tmp = require "server.events.hp"
+GameEvent.ChangeHp = tmp[1]
+GameEvent.Damage = tmp[2]
+GameEvent.LoseHp = tmp[3]
+GameEvent.Recover = tmp[4]
+GameEvent.ChangeMaxHp = tmp[5]
 
-GameEvent.Dying = 6
-GameEvent.Death = 7
-GameEvent.Revive = 22
-dofile "lua/server/events/death.lua"
+tmp = require "server.events.death"
+GameEvent.Dying = tmp[1]
+GameEvent.Death = tmp[2]
+GameEvent.Revive = tmp[3]
 
-GameEvent.MoveCards = 8
-dofile "lua/server/events/movecard.lua"
+tmp = require "server.events.movecard"
+GameEvent.MoveCards = tmp
 
-GameEvent.UseCard = 9
-GameEvent.RespondCard = 10
-GameEvent.CardEffect = 20
-dofile "lua/server/events/usecard.lua"
+tmp = require "server.events.usecard"
+GameEvent.UseCard = tmp[1]
+GameEvent.RespondCard = tmp[2]
+GameEvent.CardEffect = tmp[3]
 
-GameEvent.SkillEffect = 11
--- GameEvent.AddSkill = 12
--- GameEvent.LoseSkill = 13
-dofile "lua/server/events/skill.lua"
+tmp = require "server.events.skill"
+GameEvent.SkillEffect = tmp
 
-GameEvent.Judge = 14
-dofile "lua/server/events/judge.lua"
+tmp = require "server.events.judge"
+GameEvent.Judge = tmp
 
-GameEvent.DrawInitial = 15
-GameEvent.Round = 16
-GameEvent.Turn = 17
-GameEvent.Phase = 18
-dofile "lua/server/events/gameflow.lua"
+tmp = require "server.events.gameflow"
+GameEvent.DrawInitial = tmp[1]
+GameEvent.Round = tmp[2]
+GameEvent.Turn = tmp[3]
+GameEvent.Phase = tmp[4]
 
-GameEvent.Pindian = 19
-dofile "lua/server/events/pindian.lua"
-
--- 20 = CardEffect
-GameEvent.ChangeProperty = 21
-
--- 新的clear函数专用
-GameEvent.ClearEvent = 9999
-dofile "lua/server/events/misc.lua"
+tmp = require "server.events.pindian"
+GameEvent.Pindian = tmp
 
 for _, l in ipairs(Fk._custom_events) do
   local name, p, m, c, e = l.name, l.p, l.m, l.c, l.e
@@ -57,38 +52,4 @@ for _, l in ipairs(Fk._custom_events) do
   GameEvent.functions[name] = m
   GameEvent.cleaners[name] = c
   GameEvent.exit_funcs[name] = e
-end
-
-local eventTranslations = {
-  [GameEvent.Game] = "GameEvent.Game",
-
-  [GameEvent.ChangeHp] = "GameEvent.ChangeHp",
-  [GameEvent.Damage] = "GameEvent.Damage",
-  [GameEvent.LoseHp] = "GameEvent.LoseHp",
-  [GameEvent.Recover] = "GameEvent.Recover",
-  [GameEvent.ChangeMaxHp] = "GameEvent.ChangeMaxHp",
-  [GameEvent.Dying] = "GameEvent.Dying",
-  [GameEvent.Death] = "GameEvent.Death",
-  [GameEvent.Revive] = "GameEvent.Revive",
-  [GameEvent.MoveCards] = "GameEvent.MoveCards",
-  [GameEvent.UseCard] = "GameEvent.UseCard",
-  [GameEvent.RespondCard] = "GameEvent.RespondCard",
-  [GameEvent.CardEffect] = "GameEvent.CardEffect",
-  [GameEvent.SkillEffect] = "GameEvent.SkillEffect",
-  [GameEvent.Judge] = "GameEvent.Judge",
-  [GameEvent.DrawInitial] = "GameEvent.DrawInitial",
-  [GameEvent.Round] = "GameEvent.Round",
-  [GameEvent.Turn] = "GameEvent.Turn",
-  [GameEvent.Phase] = "GameEvent.Phase",
-  [GameEvent.Pindian] = "GameEvent.Pindian",
-
-  [GameEvent.ChangeProperty] = "GameEvent.ChangeProperty",
-
-  [GameEvent.ClearEvent] = "GameEvent.ClearEvent",
-}
-
-function GameEvent.static:translate(id)
-  local ret = eventTranslations[id]
-  if not ret then ret = id end
-  return ret
 end

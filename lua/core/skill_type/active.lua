@@ -21,47 +21,51 @@ function ActiveSkill:initialize(name, frequency)
 end
 
 ---------
--- Note: these functions are used both client and ai
+-- 注：客户端函数，AI也会调用以作主动技判断
 ------- {
 
---- Determine whether the skill can be used in playing phase
----@param player Player
----@param card Card @ helper
+-- 判断该技能是否可主动发动
+---@param player Player @ 使用者
+---@param card Card @ 牌
+---@param extra_data UseExtraData @ 额外数据
+---@return bool
 function ActiveSkill:canUse(player, card, extra_data)
   return self:isEffectable(player)
 end
 
---- Determine whether a card can be selected by this skill
---- only used in skill of players
----@param to_select integer @ id of a card not selected
----@param selected integer[] @ ids of selected cards
----@param selected_targets integer[] @ ids of selected players
+-- 判断一张牌是否可被此技能选中
+---@param to_select integer @ 待选牌
+---@param selected integer[] @ 已选牌
+---@param selected_targets integer[] @ 已选目标
+---@return bool
 function ActiveSkill:cardFilter(to_select, selected, selected_targets)
   return true
 end
 
---- Determine whether a target can be selected by this skill
---- only used in skill of players
----@param to_select integer @ id of the target
----@param selected integer[] @ ids of selected targets
----@param selected_cards integer[] @ ids of selected cards
----@param card Card @ helper
----@param extra_data? any @ extra_data
+-- 判断一名角色是否可被此技能选中
+---@param to_select integer @ 待选目标
+---@param selected integer[] @ 已选目标
+---@param selected_cards integer[] @ 已选牌
+---@param card Card @ 牌
+---@param extra_data UseExtraData @ 额外数据
+---@return bool
 function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
   return false
 end
 
---- Determine whether a target can be selected by this skill(in modifying targets)
---- only used in skill of players
----@param to_select integer @ id of the target
----@param selected? integer[] @ ids of selected targets
----@param user? integer @ id of the userdata
----@param card? Card @ helper
----@param distance_limited? boolean @ is limited by distance
+-- 判断一名角色是否可成为此技能的目标
+---@param to_select integer @ 待选目标
+---@param selected integer[] @ 已选目标
+---@param user? integer @ 使用者
+---@param card? Card @ 牌
+---@param distance_limited? boolean @ 是否受距离限制
+---@return bool
 function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end
 
+-- 获得技能的最小目标数
+---@return number @ 最小目标数
 function ActiveSkill:getMinTargetNum()
   local ret
   if self.target_num then ret = self.target_num
@@ -78,6 +82,10 @@ function ActiveSkill:getMinTargetNum()
   end
 end
 
+-- 获得技能的最大目标数
+---@param player Player @ 使用者
+---@param card Card @ 牌
+---@return number @ 最大目标数
 function ActiveSkill:getMaxTargetNum(player, card)
   local ret
   if self.target_num then ret = self.target_num
@@ -100,6 +108,8 @@ function ActiveSkill:getMaxTargetNum(player, card)
   return ret
 end
 
+-- 获得技能的最小卡牌数
+---@return number @ 最小卡牌数
 function ActiveSkill:getMinCardNum()
   local ret
   if self.card_num then ret = self.card_num
@@ -116,6 +126,8 @@ function ActiveSkill:getMinCardNum()
   end
 end
 
+-- 获得技能的最大卡牌数
+---@return number @ 最大卡牌数
 function ActiveSkill:getMaxCardNum()
   local ret
   if self.card_num then ret = self.card_num
@@ -132,6 +144,11 @@ function ActiveSkill:getMaxCardNum()
   end
 end
 
+-- 获得技能的距离限制
+---@param player Player @ 使用者
+---@param card Card @ 使用卡牌
+---@param to Player @ 目标
+---@return number @ 距离限制
 function ActiveSkill:getDistanceLimit(player, card, to)
   local ret = self.distance_limit or 0
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
@@ -143,8 +160,14 @@ function ActiveSkill:getDistanceLimit(player, card, to)
   return ret
 end
 
+-- 判断一个角色是否在技能的距离限制内
+---@param player Player @ 使用者
+---@param isattack bool @ 是否使用攻击距离
+---@param card Card @ 使用卡牌
+---@param to Player @ 目标
+---@return bool
 function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
-  if to and to.dead then return false end
+  if not to or player:distanceTo(to) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
@@ -174,7 +197,7 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
   end
 
   return (isattack and player:inMyAttackRange(to)) or
-  (player:distanceTo(to) > 0 and player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
+  (player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
   hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
   hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
   hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)
@@ -189,26 +212,32 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
   -- end)))
 end
 
---- Determine if selected cards and targets are valid for this skill
---- If returns true, the OK button should be enabled
---- only used in skill of players
-
--- NOTE: don't reclaim it
----@param selected integer[] @ ids of selected players
----@param selected_cards integer[] @ ids of selected cards
+-- 判断一个技能是否可发动（也就是确认键是否可点击）
+-- 警告：没啥事别改
+---@param selected integer[] @ 已选目标
+---@param selected_cards integer[] @ 已选牌
+---@param player Player @ 使用者
+---@param card Card @ 牌
+---@return bool
 function ActiveSkill:feasible(selected, selected_cards, player, card)
   return #selected >= self:getMinTargetNum() and #selected <= self:getMaxTargetNum(player, card)
     and #selected_cards >= self:getMinCardNum() and #selected_cards <= self:getMaxCardNum()
 end
 
+-- 使用技能时默认的烧条提示（一般会在主动使用时出现）
+---@param selected_cards integer[] @ 已选牌
+---@param selected_targets integer[] @ 已选目标
+---@return string?
+function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
+
 ------- }
 
 ---@param room Room
----@param cardUseEvent CardUseStruct
+---@param cardUseEvent CardUseStruct | SkillEffectEvent
 function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
----@param cardUseEvent CardUseStruct
+---@param cardUseEvent CardUseStruct | SkillEffectEvent
 ---@param finished? bool
 function ActiveSkill:onAction(room, cardUseEvent, finished) end
 
@@ -224,9 +253,5 @@ function ActiveSkill:onEffect(room, cardEffectEvent) end
 ---@param room Room
 ---@param cardEffectEvent CardEffectEvent | SkillEffectEvent
 function ActiveSkill:onNullified(room, cardEffectEvent) end
-
----@param selected_cards integer[] @ ids of selected cards
----@param selected_targets integer[] @ ids of selected players
-function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
 
 return ActiveSkill

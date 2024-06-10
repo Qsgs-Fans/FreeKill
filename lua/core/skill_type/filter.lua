@@ -17,4 +17,11 @@ function FilterSkill:viewAs(card, player)
   return nil
 end
 
+---@param skill Skill
+---@param player Player
+---@return string
+function FilterSkill:equipSkillFilter(skill, player)
+  return nil
+end
+
 return FilterSkill

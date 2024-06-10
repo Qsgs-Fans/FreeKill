@@ -4,6 +4,7 @@
 #include "network/client_socket.h"
 #include "server/server.h"
 #include "core/util.h"
+#include <QNetworkDatagram>
 
 ServerSocket::ServerSocket(QObject *parent) : QObject(parent) {
   server = new QTcpServer(this);

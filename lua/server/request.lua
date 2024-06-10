@@ -2,8 +2,12 @@
 
 local function tellRoomToObserver(self, player)
   local observee = self.players[1]
+  local start_time = os.getms()
   local summary = self:getSummary(observee, true)
   player:doNotify("Observe", json.encode(summary))
+
+  fk.qInfo(string.format("[Observe] %d, %s, in %.3fms",
+    self.id, player:getScreenName(), (os.getms() - start_time) / 1000))
 
   table.insert(self.observers, {observee.id, player, player:getId()})
 end
@@ -76,6 +80,7 @@ request_handlers["luckcard"] = function(room, id, reqlist)
     p:doNotify("AskForLuckCard", pdata.luckTime)
   else
     p.serverplayer:setThinking(false)
+    ResumeRoom(room.id)
   end
 
   room:setTag("LuckCardData", luck_data)
@@ -111,6 +116,7 @@ request_handlers["surrender"] = function(room, id, reqlist)
   room.hasSurrendered = true
   player.surrendered = true
   room:doBroadcastNotify("CancelRequest", "")
+  ResumeRoom(room.id)
 end
 
 request_handlers["updatemini"] = function(room, pid, reqlist)
@@ -127,6 +133,7 @@ end
 
 request_handlers["newroom"] = function(s, id)
   s:registerRoom(id)
+  ResumeRoom(id)
 end
 
 request_handlers["reloadpackage"] = function(_, _, reqlist)
@@ -135,31 +142,16 @@ request_handlers["reloadpackage"] = function(_, _, reqlist)
   Fk:reloadPackage(path)
 end
 
--- 处理异步请求的协程，本身也是个死循环就是了。
--- 为了适应调度器，目前又暂且将请求分为“耗时请求”和不耗时请求。
--- 耗时请求处理后会立刻挂起。不耗时的请求则会不断处理直到请求队列空后再挂起。
-local function requestLoop(self)
-  while true do
-    local ret = false
-    local request = self.thread:fetchRequest()
-    if request ~= "" then
-      ret = true
-      local reqlist = request:split(",")
-      local roomId = tonumber(table.remove(reqlist, 1))
-      local room = self:getRoom(roomId)
+return function(self, request)
+  local reqlist = request:split(",")
+  local roomId = tonumber(table.remove(reqlist, 1))
+  local room = self:getRoom(roomId)
 
-      if room then
-        RoomInstance = room
-        local id = tonumber(reqlist[1])
-        local command = reqlist[2]
-        Pcall(request_handlers[command], room, id, reqlist)
-        RoomInstance = nil
-      end
-    end
-    if not ret then
-      coroutine.yield()
-    end
+  if room then
+    RoomInstance = room
+    local id = tonumber(reqlist[1])
+    local command = reqlist[2]
+    Pcall(request_handlers[command], room, id, reqlist)
+    RoomInstance = nil
   end
 end
-
-return requestLoop

@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.MoveCards] = function(self)
+---@class GameEvent.MoveCards : GameEvent
+local MoveCards = GameEvent:subclass("GameEvent.MoveCards")
+function MoveCards:main()
   local args = self.data
   local room = self.room
   ---@type CardsMoveStruct[]
@@ -57,6 +59,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           specialVisible = cardsMoveInfo.specialVisible,
           drawPilePosition = cardsMoveInfo.drawPilePosition,
           moveMark = cardsMoveInfo.moveMark,
+          visiblePlayers = cardsMoveInfo.visiblePlayers,
         }
 
         table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -69,10 +72,11 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           from = cardsMoveInfo.from,
           toArea = Card.DiscardPile,
           moveReason = fk.ReasonPutIntoDiscardPile,
-          specialName = cardsMoveInfo.specialName,
-          specialVisible = cardsMoveInfo.specialVisible,
-          drawPilePosition = cardsMoveInfo.drawPilePosition,
-          moveMark = cardsMoveInfo.moveMark,
+          moveVisible = true,
+          --specialName = cardsMoveInfo.specialName,
+          --specialVisible = cardsMoveInfo.specialVisible,
+          --drawPilePosition = cardsMoveInfo.drawPilePosition,
+          --moveMark = cardsMoveInfo.moveMark,
         }
 
         table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -159,7 +163,7 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           realFromArea == Player.Equip and
           beforeCard.type == Card.TypeEquip and
           data.from ~= nil and
-          beforeCard.equip_skill
+          #beforeCard:getEquipSkills(room:getPlayerById(data.from)) > 0
         then
           beforeCard:onUninstall(room, room:getPlayerById(data.from))
         end
@@ -183,15 +187,20 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
           end
         end
         if data.moveMark then
-          local mark = table.clone(data.moveMark) or {"", 0}
-          room:setCardMark(currentCard, mark[1], mark[2])
+          local mark = data.moveMark
+          if type(mark) == "string" then
+            room:setCardMark(currentCard, mark, 1)
+          elseif type(mark) == "table" then
+            mark = table.clone(data.moveMark) or {"", 0}
+            room:setCardMark(currentCard, mark[1], mark[2])
+          end
         end
         if
           data.toArea == Player.Equip and
           currentCard.type == Card.TypeEquip and
           data.to ~= nil and
           room:getPlayerById(data.to):isAlive() and
-          currentCard.equip_skill
+          #currentCard:getEquipSkills(room:getPlayerById(data.to)) > 0
         then
           currentCard:onInstall(room, room:getPlayerById(data.to))
         end
@@ -202,3 +211,5 @@ GameEvent.functions[GameEvent.MoveCards] = function(self)
   room.logic:trigger(fk.AfterCardsMove, nil, cardsMoveStructs)
   return true
 end
+
+return MoveCards

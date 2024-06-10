@@ -31,7 +31,9 @@ local function sendDamageLog(room, damageStruct)
   })
 end
 
-GameEvent.functions[GameEvent.ChangeHp] = function(self)
+---@class GameEvent.ChangeHp : GameEvent
+local ChangeHp = GameEvent:subclass("GameEvent.ChangeHp")
+function ChangeHp:main()
   local player, num, reason, skillName, damageStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -112,17 +114,21 @@ GameEvent.functions[GameEvent.ChangeHp] = function(self)
   return true
 end
 
-GameEvent.functions[GameEvent.Damage] = function(self)
+---@class GameEvent.Damage : GameEvent
+local Damage = GameEvent:subclass("GameEvent.Damage")
+function Damage:main()
   local damageStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
 
-  if not damageStruct.chain and logic:damageByCardEffect(not not damageStruct.from) then
+  if not damageStruct.chain and logic:damageByCardEffect(false) then
     local cardEffectData = logic:getCurrentEvent():findParent(GameEvent.CardEffect)
     if cardEffectData then
       local cardEffectEvent = cardEffectData.data[1]
       damageStruct.damage = damageStruct.damage + (cardEffectEvent.additionalDamage or 0)
-      damageStruct.by_user = true
+      if damageStruct.from and cardEffectEvent.from == damageStruct.from.id then
+        damageStruct.by_user = true
+      end
     end
   end
 
@@ -137,12 +143,14 @@ GameEvent.functions[GameEvent.Damage] = function(self)
 
   assert(damageStruct.to:isInstanceOf(ServerPlayer))
 
-  local stages = {
-    {fk.PreDamage, "from"},
-  }
+  local stages = {}
 
   if not damageStruct.isVirtualDMG then
-    table.insertTable(stages, { { fk.DamageCaused, "from" }, { fk.DamageInflicted, "to" } })
+    stages = {
+      { fk.PreDamage, "from"},
+      { fk.DamageCaused, "from" },
+      { fk.DamageInflicted, "to" },
+    }
   end
 
   for _, struct in ipairs(stages) do
@@ -198,7 +206,7 @@ GameEvent.functions[GameEvent.Damage] = function(self)
   return true
 end
 
-GameEvent.exit_funcs[GameEvent.Damage] = function(self)
+function Damage:exit()
   local room = self.room
   local logic = room.logic
   local damageStruct = self.data[1]
@@ -230,7 +238,9 @@ GameEvent.exit_funcs[GameEvent.Damage] = function(self)
   end
 end
 
-GameEvent.functions[GameEvent.LoseHp] = function(self)
+---@class GameEvent.LoseHp : GameEvent
+local LoseHp = GameEvent:subclass("GameEvent.LoseHp")
+function LoseHp:main()
   local player, num, skillName = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -258,7 +268,9 @@ GameEvent.functions[GameEvent.LoseHp] = function(self)
   return true
 end
 
-GameEvent.functions[GameEvent.Recover] = function(self)
+---@class GameEvent.Recover : GameEvent
+local Recover = GameEvent:subclass("GameEvent.Recover")
+function Recover:main()
   local recoverStruct = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -289,7 +301,9 @@ GameEvent.functions[GameEvent.Recover] = function(self)
   return true
 end
 
-GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
+---@class GameEvent.ChangeMaxHp : GameEvent
+local ChangeMaxHp = GameEvent:subclass("GameEvent.ChangeMaxHp")
+function ChangeMaxHp:main()
   local player, num = table.unpack(self.data)
   local room = self.room
 
@@ -344,3 +358,5 @@ GameEvent.functions[GameEvent.ChangeMaxHp] = function(self)
   room.logic:trigger(fk.MaxHpChanged, player, { num = num })
   return true
 end
+
+return { ChangeHp, Damage, LoseHp, Recover, ChangeMaxHp }

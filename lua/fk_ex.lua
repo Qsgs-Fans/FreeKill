@@ -180,11 +180,11 @@ end
 ---@field public card_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_targets: integer[]): boolean?
 ---@field public target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card, extra_data: any): boolean?
 ---@field public feasible? fun(self: ActiveSkill, selected: integer[], selected_cards: integer[]): boolean?
----@field public on_use? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct): boolean?
----@field public on_action? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct, finished: boolean): boolean?
----@field public about_to_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
----@field public on_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
----@field public on_nullified? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent): boolean?
+---@field public on_use? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct | SkillEffectEvent): boolean?
+---@field public on_action? fun(self: ActiveSkill, room: Room, cardUseEvent: CardUseStruct | SkillEffectEvent, finished: boolean): boolean?
+---@field public about_to_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent | SkillEffectEvent): boolean?
+---@field public on_effect? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent | SkillEffectEvent): boolean?
+---@field public on_nullified? fun(self: ActiveSkill, room: Room, cardEffectEvent: CardEffectEvent | SkillEffectEvent): boolean?
 ---@field public mod_target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean?
 ---@field public prompt? string|fun(self: ActiveSkill, selected_cards: integer[], selected_targets: integer[]): string
 ---@field public interaction any
@@ -335,12 +335,14 @@ end
 ---@field public correct_func? fun(self: AttackRangeSkill, from: Player, to: Player): number?
 ---@field public fixed_func? fun(self: AttackRangeSkill, player: Player): number?
 ---@field public within_func? fun(self: AttackRangeSkill, from: Player, to: Player): boolean?
+---@field public without_func? fun(self: AttackRangeSkill, from: Player, to: Player): boolean?
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
 function fk.CreateAttackRangeSkill(spec)
   assert(type(spec.name) == "string")
-  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or type(spec.within_func) == "function")
+  assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or
+    type(spec.within_func) == "function" or type(spec.without_func) == "function")
 
   local skill = AttackRangeSkill:new(spec.name)
   readStatusSpecToSkill(skill, spec)
@@ -352,6 +354,9 @@ function fk.CreateAttackRangeSkill(spec)
   end
   if spec.within_func then
     skill.withinAttackRange = spec.within_func
+  end
+  if spec.without_func then
+    skill.withoutAttackRange = spec.without_func
   end
 
   return skill
@@ -417,6 +422,7 @@ end
 ---@class FilterSpec: StatusSkillSpec
 ---@field public card_filter? fun(self: FilterSkill, card: Card, player: Player, isJudgeEvent: boolean): boolean?
 ---@field public view_as? fun(self: FilterSkill, card: Card, player: Player): Card?
+---@field public equip_skill_filter? fun(self: FilterSkill, skill: Skill, player: Player): string?
 
 ---@param spec FilterSpec
 ---@return FilterSkill
@@ -427,6 +433,7 @@ function fk.CreateFilterSkill(spec)
   readStatusSpecToSkill(skill, spec)
   skill.cardFilter = spec.card_filter
   skill.viewAs = spec.view_as
+  skill.equipSkillFilter = spec.equip_skill_filter
 
   return skill
 end
@@ -526,7 +533,20 @@ function fk.CreateDelayedTrickCard(spec)
 end
 
 local function readCardSpecToEquip(card, spec)
-  card.equip_skill = spec.equip_skill
+  if spec.equip_skill then
+    if spec.equip_skill.class and spec.equip_skill:isInstanceOf(Skill) then
+      card.equip_skill = spec.equip_skill
+      card.equip_skills = { spec.equip_skill }
+    else
+      card.equip_skill = spec.equip_skill[1]
+      card.equip_skills = spec.equip_skill
+    end
+  end
+
+  if spec.dynamic_equip_skills then
+    assert(type(spec.dynamic_equip_skills) == "function")
+    card.dynamicEquipSkills = spec.dynamic_equip_skills
+  end
 
   if spec.on_install then card.onInstall = spec.on_install end
   if spec.on_uninstall then card.onUninstall = spec.on_uninstall end
@@ -543,6 +563,11 @@ function fk.CreateWeapon(spec)
   local card = Weapon:new(spec.name, spec.suit, spec.number, spec.attack_range)
   readCardSpecToCard(card, spec)
   readCardSpecToEquip(card, spec)
+  if spec.dynamic_attack_range then
+    assert(type(spec.dynamic_attack_range) == "function")
+    card.dynamicAttackRange = spec.dynamic_attack_range
+  end
+
   return card
 end
 
@@ -609,6 +634,10 @@ function fk.CreateGameMode(spec)
   if spec.is_counted then
     assert(type(spec.is_counted) == "function")
     ret.countInFunc = spec.is_counted
+  end
+  if spec.get_adjusted then
+    assert(type(spec.get_adjusted) == "function")
+    ret.getAdjustedProperty = spec.get_adjusted
   end
   return ret
 end

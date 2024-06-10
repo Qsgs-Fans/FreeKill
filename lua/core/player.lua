@@ -260,13 +260,7 @@ function Player:removeCards(playerArea, cardIds, specialName)
       if #fromAreaIds == 0 then
         break
       end
-
-      if table.contains(fromAreaIds, id) then
-        table.removeOne(fromAreaIds, id)
-      -- FIXME: 为客户端移动id为-1的牌考虑，但总感觉有地方需要商讨啊！
-      elseif table.every(fromAreaIds, function(e) return e == -1 end) then
-        table.remove(fromAreaIds, 1)
-      elseif id == -1 then
+      if not table.removeOne(fromAreaIds, id) and not table.removeOne(fromAreaIds, -1) then
         table.remove(fromAreaIds, 1)
       end
     end
@@ -455,7 +449,7 @@ function Player:getAttackRange()
     baseValue = 0
     for _, id in ipairs(weapons) do
       local weapon = Fk:getCardById(id)
-      baseValue = math.max(baseValue, weapon.attack_range or 1)
+      baseValue = math.max(baseValue, weapon:getAttackRange(self) or 1)
     end
   end
 
@@ -563,7 +557,7 @@ end
 --- 比较距离
 ---@param other Player @ 终点角色
 ---@param num integer @ 比较基准
----@param operator string @ 运算符，有 ``"<"`` ``">"`` ``"<="`` ``">="`` ``"=="`` ``"~="``
+---@param operator "<"|">"|"<="|">="|"=="|"~=" @ 运算符
 ---@return boolean @ 返回比较结果，不计入距离结果永远为false
 function Player:compareDistance(other, num, operator)
   local distance = self:distanceTo(other)
@@ -597,6 +591,11 @@ function Player:inMyAttackRange(other, fixLimit)
 
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
+    if skill:withoutAttackRange(self, other) then
+      return false
+    end
+  end
+  for _, skill in ipairs(status_skills) do
     if skill:withinAttackRange(self, other) then
       return true
     end
@@ -609,7 +608,8 @@ end
 --- 获取下家。
 ---@param ignoreRemoved? boolean @ 忽略被移除
 ---@param num? integer @ 第几个，默认1
----@return ServerPlayer
+---@param ignoreRest? boolean @ 是否忽略休整
+---@return Player
 function Player:getNextAlive(ignoreRemoved, num, ignoreRest)
   if #Fk:currentRoom().alive_players == 0 then
     return self.rest > 0 and self.next.rest > 0 and self.next or self
@@ -631,9 +631,9 @@ function Player:getNextAlive(ignoreRemoved, num, ignoreRest)
 end
 
 --- 获取上家。
----@param ignoreRemoved boolean @ 忽略被移除
+---@param ignoreRemoved? boolean @ 忽略被移除
 ---@param num? integer @ 第几个，默认1
----@return ServerPlayer
+---@return Player
 function Player:getLastAlive(ignoreRemoved, num)
   num = num or 1
   local index = (ignoreRemoved and #Fk:currentRoom().alive_players or #table.filter(Fk:currentRoom().alive_players, function(p) return not p:isRemoved() end)) - num
@@ -1019,9 +1019,11 @@ function Player:prohibitReveal(isDeputy)
   return false
 end
 
----@param to Player
----@param ignoreFromKong? boolean
----@param ignoreToKong? boolean
+--- 判断能否拼点
+---@param to Player @ 拼点对象
+---@param ignoreFromKong? boolean @ 忽略发起者没有手牌
+---@param ignoreToKong? boolean @ 忽略对象没有手牌
+---@return boolean
 function Player:canPindian(to, ignoreFromKong, ignoreToKong)
   if self == to then return false end
 
@@ -1073,6 +1075,10 @@ function Player:getSwitchSkillState(skillName, afterUse, inWord)
   end
 end
 
+--- 是否能移动特定牌至特定角色
+---@param to Player @ 移动至的角色
+---@param id integer @ 移动的牌
+---@return boolean
 function Player:canMoveCardInBoardTo(to, id)
   if self == to then
     return false
@@ -1094,6 +1100,11 @@ function Player:canMoveCardInBoardTo(to, id)
   end
 end
 
+--- 是否能移动特定牌至特定角色
+--- @param to Player @ 移动至的角色
+--- @param flag? string @ 移动的区域，`e`为装备区，`j`为判定区，`nil`为装备区和判定区
+--- @param excludeIds? integer[] @ 排除的牌
+---@return boolean
 function Player:canMoveCardsInBoardTo(to, flag, excludeIds)
   if self == to then
     return false
@@ -1120,6 +1131,9 @@ function Player:canMoveCardsInBoardTo(to, flag, excludeIds)
   return false
 end
 
+--- 获取使命技状态
+---@param skillName string
+---@return string? @ 存在返回`failed` or `succeed`，不存在返回`nil`
 function Player:getQuestSkillState(skillName)
   local questSkillState = self:getMark(MarkEnum.QuestSkillPreName .. skillName)
   return type(questSkillState) == "string" and questSkillState or nil

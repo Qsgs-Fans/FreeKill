@@ -4,8 +4,7 @@
 -- 向Lua虚拟机中加载库、游戏中的类，以及加载Mod等等。
 
 -- 加载第三方库
-package.path = package.path .. ";./lua/lib/?.lua"
-                            .. ";./lua/?.lua"
+package.path = "./?.lua;./?/init.lua;./lua/lib/?.lua;./lua/?.lua"
 
 -- middleclass: 轻量级的面向对象库
 class = require "middleclass"
@@ -62,7 +61,9 @@ UI = require "ui-util"
 -- 读取配置文件。
 -- 因为io马上就要被禁用了，所以赶紧先在这里读取配置文件。
 local function loadConf()
-  local cfg = io.open("freekill.client.config.json")
+  local new_core = FileIO.pwd():endsWith("packages/freekill-core")
+
+  local cfg = io.open((new_core and "../../" or "") .. "freekill.client.config.json")
   local ret
   if cfg == nil then
     ret = {

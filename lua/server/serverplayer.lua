@@ -53,16 +53,24 @@ end
 ---@param command string
 ---@param jsonData string
 function ServerPlayer:doNotify(command, jsonData)
+  local room = self.room
   for _, p in ipairs(self._observers) do
+    if p:getState() ~= fk.Player_Robot then
+      room.notify_count = room.notify_count + 1
+    end
     p:doNotify(command, jsonData)
   end
 
-  local room = self.room
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
     if id == self.id and room.room:hasObserver(p) then
       p:doNotify(command, jsonData)
     end
+  end
+
+  if room.notify_count >= room.notify_max and
+    coroutine.status(room.main_co) == "normal" then
+    room:delay(100)
   end
 end
 
@@ -153,6 +161,16 @@ local function _waitForReply(player, timeout)
 
     coroutine.yield("__handleRequest", rest)
   end
+end
+
+--- 发送一句聊天
+---@param msg string
+function ServerPlayer:chat(msg)
+  self.room:doBroadcastNotify("Chat", json.encode {
+    type = 2,
+    sender = self.id,
+    msg = msg,
+  })
 end
 
 --- Wait for at most *timeout* seconds for reply from client.
@@ -369,7 +387,7 @@ function ServerPlayer:changePhase(from_phase, to_phase)
     table.remove(self.phases, 1)
   end
 
-  GameEvent(GameEvent.Phase, self, self.phase):exec()
+  GameEvent.Phase:create(self, self.phase):exec()
 
   return false
 end
@@ -412,7 +430,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
       arg = phase_name_table[phase],
     }
 
-    GameEvent(GameEvent.Phase, self, self.phase):exec()
+    GameEvent.Phase:create(self, self.phase):exec()
 
     phase_change = {
       from = phase,
@@ -491,7 +509,7 @@ function ServerPlayer:play(phase_table)
     end
 
     if (not skip) or (cancel_skip) then
-      GameEvent(GameEvent.Phase, self, self.phase):exec()
+      GameEvent.Phase:create(self, self.phase):exec()
     else
       room:sendLog{
         type = "#PhaseSkipped",
@@ -554,7 +572,7 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName)
   local ex_tag = self.tag["_extra_turn_count"]
   table.insert(ex_tag, skillName)
 
-  GameEvent(GameEvent.Turn, self):exec()
+  GameEvent.Turn:create(self):exec()
 
   table.remove(ex_tag)
 
@@ -581,18 +599,21 @@ end
 ---@param num integer @ 摸牌数
 ---@param skillName? string @ 技能名
 ---@param fromPlace? string @ 摸牌的位置，"top" 或者 "bottom"
+---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 ---@return integer[] @ 摸到的牌
-function ServerPlayer:drawCards(num, skillName, fromPlace)
-  return self.room:drawCards(self, num, skillName, fromPlace)
+function ServerPlayer:drawCards(num, skillName, fromPlace, moveMark)
+  return self.room:drawCards(self, num, skillName, fromPlace, moveMark)
 end
 
 ---@param pile_name string
----@param card integer|Card
+---@param card integer | integer[] | Card | Card[]
 ---@param visible? boolean
 ---@param skillName? string
-function ServerPlayer:addToPile(pile_name, card, visible, skillName)
-  local room = self.room
-  room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible)
+---@param proposer? integer
+---@param visiblePlayers? integer | integer[] @ 为nil时默认对自己可见
+function ServerPlayer:addToPile(pile_name, card, visible, skillName, proposer, visiblePlayers)
+  self.room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible,
+  proposer or self.id, nil, visiblePlayers)
 end
 
 function ServerPlayer:bury()
@@ -637,6 +658,7 @@ function ServerPlayer:clearPiles()
 end
 
 function ServerPlayer:addVirtualEquip(card)
+  self:removeVirtualEquip(card:getEffectiveId())
   Player.addVirtualEquip(self, card)
   self.room:doBroadcastNotify("AddVirtualEquip", json.encode{
     player = self.id,
@@ -647,10 +669,12 @@ end
 
 function ServerPlayer:removeVirtualEquip(cid)
   local ret = Player.removeVirtualEquip(self, cid)
-  self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode{
-    player = self.id,
-    id = cid,
-  })
+  if ret then
+    self.room:doBroadcastNotify("RemoveVirtualEquip", json.encode{
+      player = self.id,
+      id = cid,
+    })
+  end
   return ret
 end
 

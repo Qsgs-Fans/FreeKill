@@ -15,7 +15,17 @@ function AttackRangeSkill:getFixed(from)
   return nil
 end
 
+---@param from Player
+---@param to Player
+---@return boolean
 function AttackRangeSkill:withinAttackRange(from, to)
+  return false
+end
+
+---@param from Player
+---@param to Player
+---@return boolean
+function AttackRangeSkill:withoutAttackRange(from, to)
   return false
 end
 

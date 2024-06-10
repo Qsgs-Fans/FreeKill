@@ -547,16 +547,16 @@ void QmlBackend::readPendingDatagrams() {
 }
 
 void QmlBackend::showDialog(const QString &type, const QString &text, const QString &orig) {
-  static const QString title = tr("FreeKill") + " v" + FK_VERSION;
+  //static const QString title = tr("FreeKill") + " v" + FK_VERSION;
   QMessageBox *box = nullptr;
   if (type == "critical") {
-    box = new QMessageBox(QMessageBox::Critical, title, text, QMessageBox::Ok);
+    box = new QMessageBox(QMessageBox::Critical, text, text, QMessageBox::Ok);
     connect(box, &QMessageBox::buttonClicked, box, &QObject::deleteLater);
   } else if (type == "info") {
-    box = new QMessageBox(QMessageBox::Information, title, text, QMessageBox::Ok);
+    box = new QMessageBox(QMessageBox::Information, text, text, QMessageBox::Ok);
     connect(box, &QMessageBox::buttonClicked, box, &QObject::deleteLater);
   } else if (type == "warning") {
-    box = new QMessageBox(QMessageBox::Warning, title, text, QMessageBox::Ok);
+    box = new QMessageBox(QMessageBox::Warning, text, text, QMessageBox::Ok);
     connect(box, &QMessageBox::buttonClicked, box, &QObject::deleteLater);
   }
 

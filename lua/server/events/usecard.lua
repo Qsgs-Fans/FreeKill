@@ -162,7 +162,9 @@ local sendCardEmotionAndLog = function(room, cardUseEvent)
   return _card
 end
 
-GameEvent.functions[GameEvent.UseCard] = function(self)
+---@class GameEvent.UseCard : GameEvent
+local UseCard = GameEvent:subclass("GameEvent.UseCard")
+function UseCard:main()
   local cardUseEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -183,6 +185,27 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
 
   if cardUseEvent.card.skill then
     cardUseEvent.card.skill:onUse(room, cardUseEvent)
+  end
+
+  if cardUseEvent.card.type == Card.TypeEquip then
+    local targets = TargetGroup:getRealTargets(cardUseEvent.tos)
+    if #targets == 1 then
+      local target = room:getPlayerById(targets[1])
+      local subType = cardUseEvent.card.sub_type
+      local equipsExist = target:getEquipments(subType)
+
+      if #equipsExist > 0 and not target:hasEmptyEquipSlot(subType) then
+        local choices = table.map(
+          equipsExist,
+          function(id, index)
+            return "#EquipmentChoice:" .. index .. "::" .. Fk:translate(Fk:getCardById(id).name) end
+        )
+        if target:hasEmptyEquipSlot(subType) then
+          table.insert(choices, target:getAvailableEquipSlots(subType)[1])
+        end
+        cardUseEvent.toPutSlot = room:askForChoice(target, choices, "replace_equip", "#GameRuleReplaceEquipment")
+      end
+    end
   end
 
   if logic:trigger(fk.PreCardUse, room:getPlayerById(cardUseEvent.from), cardUseEvent) then
@@ -238,7 +261,7 @@ GameEvent.functions[GameEvent.UseCard] = function(self)
   end
 end
 
-GameEvent.cleaners[GameEvent.UseCard] = function(self)
+function UseCard:clear()
   local cardUseEvent = table.unpack(self.data)
   local room = self.room
 
@@ -254,7 +277,9 @@ GameEvent.cleaners[GameEvent.UseCard] = function(self)
   end
 end
 
-GameEvent.functions[GameEvent.RespondCard] = function(self)
+---@class GameEvent.RespondCard : GameEvent
+local RespondCard = GameEvent:subclass("GameEvent.RespondCard")
+function RespondCard:main()
   local cardResponseEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -306,7 +331,7 @@ GameEvent.functions[GameEvent.RespondCard] = function(self)
   logic:trigger(fk.CardResponding, room:getPlayerById(cardResponseEvent.from), cardResponseEvent)
 end
 
-GameEvent.cleaners[GameEvent.RespondCard] = function(self)
+function RespondCard:clear()
   local cardResponseEvent = table.unpack(self.data)
   local room = self.room
 
@@ -322,7 +347,9 @@ GameEvent.cleaners[GameEvent.RespondCard] = function(self)
   end
 end
 
-GameEvent.functions[GameEvent.CardEffect] = function(self)
+---@class GameEvent.CardEffect : GameEvent
+local CardEffect = GameEvent:subclass("GameEvent.CardEffect")
+function CardEffect:main()
   local cardEffectEvent = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -359,13 +386,16 @@ GameEvent.functions[GameEvent.CardEffect] = function(self)
         end
         logic:breakEvent()
       end
-    elseif cardEffectEvent.to and logic:trigger(event, room:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
-      cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
-      table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
-
+    elseif logic:trigger(event, room:getPlayerById(cardEffectEvent.to), cardEffectEvent) then
+      if cardEffectEvent.to then
+        cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
+        table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)
+      end
       logic:breakEvent()
     end
 
     room:handleCardEffect(event, cardEffectEvent)
   end
 end
+
+return { UseCard, RespondCard, CardEffect }

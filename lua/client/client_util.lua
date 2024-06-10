@@ -16,6 +16,8 @@ function GetGeneralData(name)
     subkingdom = general.subkingdom,
     hp = general.hp,
     maxHp = general.maxHp,
+    mainMaxHpAdjustedValue = general.mainMaxHpAdjustedValue,
+    deputyMaxHpAdjustedValue = general.deputyMaxHpAdjustedValue,
     shield = general.shield,
     hidden = general.hidden,
     total_hidden = general.total_hidden,
@@ -31,6 +33,8 @@ function GetGeneralDetail(name)
     kingdom = general.kingdom,
     hp = general.hp,
     maxHp = general.maxHp,
+    mainMaxHp = general.mainMaxHpAdjustedValue,
+    deputyMaxHp = general.deputyMaxHpAdjustedValue,
     gender = general.gender,
     skill = {},
     related_skill = {},
@@ -382,6 +386,22 @@ function CardFeasible(card, selected_targets)
   return ret
 end
 
+---@param card string | integer
+---@param selected_targets integer[] @ ids of selected players
+function CardPrompt(card, selected_targets)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    local t = json.decode(card)
+    return ActiveSkillPrompt(t.skill, t.subcards, selected_targets)
+  end
+
+  return ActiveSkillPrompt(c.skill, selected_cards, selected_targets)
+end
+
 -- Handle skills
 
 function GetSkillData(skill_name)
@@ -621,6 +641,7 @@ end
 function GetInteractionOfSkill(skill_name)
   local skill = Fk.skills[skill_name]
   if skill and skill.interaction then
+    skill.interaction.data = nil
     return skill:interaction()
   end
   return nil
@@ -738,10 +759,9 @@ function GetCardProhibitReason(cid, method, pattern)
   local skillName = s.name
   local ret = Fk:translate(skillName)
   if ret ~= skillName then
-    -- TODO: translate
-    return ret .. "禁" .. (method == "use" and "使用" or "打出")
+    return ret .. Fk:translate("prohibit") .. Fk:translate(method == "use" and "method_use" or "method_response_play")
   elseif skillName:endsWith("_prohibit") and skillName:startsWith("#") then
-    return Fk:translate(skillName:sub(2, -10)) .. "禁" .. (method == "use" and "使用" or "打出")
+    return Fk:translate(skillName:sub(2, -10)) .. Fk:translate("prohibit") .. Fk:translate(method == "use" and "method_use" or "method_response_play")
   else
     return ret
   end

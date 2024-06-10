@@ -10,7 +10,7 @@
 ---@field public cleaner_stack Stack
 ---@field public role_table string[][]
 ---@field public all_game_events GameEvent[]
----@field public event_recorder table<integer, GameEvent>
+---@field public event_recorder table<GameEvent, GameEvent>
 ---@field public current_event_id integer
 local GameLogic = class("GameLogic")
 
@@ -23,7 +23,21 @@ function GameLogic:initialize(room)
   self.game_event_stack = Stack:new()
   self.cleaner_stack = Stack:new()
   self.all_game_events = {}
-  self.event_recorder = {}
+  self.event_recorder = setmetatable({}, {
+    -- 对派生事件而言 共用一个键 键取决于最接近GameEvent类的基类
+    __newindex = function(t, k, v)
+      if type(k) == "table" and k:isSubclassOf(GameEvent) then
+        k = k:getBaseClass()
+      end
+      rawset(t, k, v)
+    end,
+    __index = function(t, k)
+      if type(k) == "table" and k:isSubclassOf(GameEvent) then
+        k = k:getBaseClass()
+      end
+      return rawget(t, k)
+    end,
+  })
   self.current_event_id = 0
   self.specific_events_id = {
     [GameEvent.Damage] = 1,
@@ -65,12 +79,12 @@ function GameLogic:run()
   self:action()
 end
 
-local function execGameEvent(type, ...)
-  local event = GameEvent:new(type, ...)
+---@return boolean
+local function execGameEvent(tp, ...)
+  local event = tp:create(...)
   local _, ret = event:exec()
   return ret
 end
-
 
 function GameLogic:assignRoles()
   local room = self.room
@@ -113,17 +127,13 @@ function GameLogic:chooseGenerals()
     generals = table.filter(generals, function(g) return not table.contains(lord_generals, g) end)
     room:returnToGeneralPile(generals)
 
-    room:setPlayerGeneral(lord, lord_general, true)
+    room:prepareGeneral(lord, lord_general, deputy, true)
+
     room:askForChooseKingdom({lord})
-    room:broadcastProperty(lord, "general")
-    room:broadcastProperty(lord, "kingdom")
-    room:setDeputyGeneral(lord, deputy)
-    room:broadcastProperty(lord, "deputyGeneral")
   end
 
   local nonlord = room:getOtherPlayers(lord, true)
-  local generals = room:getNGenerals(#nonlord * generalNum)
-  table.shuffle(generals)
+  local generals = table.random(room.general_pile, #nonlord * generalNum)
   for i, p in ipairs(nonlord) do
     local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
     p.request_data = json.encode{ arg, n }
@@ -133,24 +143,21 @@ function GameLogic:chooseGenerals()
   room:notifyMoveFocus(nonlord, "AskForGeneral")
   room:doBroadcastRequest("AskForGeneral", nonlord)
 
-  local selected = {}
   for _, p in ipairs(nonlord) do
+    local general, deputy
     if p.general == "" and p.reply_ready then
       local general_ret = json.decode(p.client_reply)
-      local general = general_ret[1]
-      local deputy = general_ret[2]
-      table.insertTableIfNeed(selected, general_ret)
-      room:setPlayerGeneral(p, general, true, true)
-      room:setDeputyGeneral(p, deputy)
+      general = general_ret[1]
+      deputy = general_ret[2]
     else
-      room:setPlayerGeneral(p, p.default_reply[1], true, true)
-      room:setDeputyGeneral(p, p.default_reply[2])
+      general = p.default_reply[1]
+      deputy = p.default_reply[2]
     end
+    room:findGeneral(general)
+    room:findGeneral(deputy)
+    room:prepareGeneral(p, general, deputy)
     p.default_reply = ""
   end
-
-  generals = table.filter(generals, function(g) return not table.contains(selected, g) end)
-  room:returnToGeneralPile(generals)
 
   room:askForChooseKingdom(nonlord)
 end
@@ -178,14 +185,25 @@ function GameLogic:broadcastGeneral()
     p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
     -- TODO: setup AI here
 
-    if p.role ~= "lord" then
-      room:broadcastProperty(p, "general")
-      room:broadcastProperty(p, "kingdom")
-      room:broadcastProperty(p, "deputyGeneral")
-    elseif #players >= 5 then
-      p.maxHp = p.maxHp + 1
-      p.hp = p.hp + 1
+    local changer = Fk.game_modes[room.settings.gameMode]:getAdjustedProperty(p)
+    if changer then
+      for key, value in pairs(changer) do
+        p[key] = value
+      end
     end
+    local fixMaxHp = Fk.generals[p.general].fixMaxHp
+    local deputyFix = Fk.generals[p.deputyGeneral] and Fk.generals[p.deputyGeneral].fixMaxHp
+    if deputyFix then
+      fixMaxHp = fixMaxHp and math.min(fixMaxHp, deputyFix) or deputyFix
+    end
+    if fixMaxHp then
+      p.maxHp = fixMaxHp
+    end
+    p.hp = math.min(p.maxHp, p.hp)
+
+    room:broadcastProperty(p, "general")
+    room:broadcastProperty(p, "deputyGeneral")
+    room:broadcastProperty(p, "kingdom")
     room:broadcastProperty(p, "maxHp")
     room:broadcastProperty(p, "hp")
     room:broadcastProperty(p, "shield")
@@ -416,7 +434,7 @@ end
 
 -- 此为启动事件管理器并启动第一个事件的初始函数
 function GameLogic:start()
-  local root_event = GameEvent:new(GameEvent.Game)
+  local root_event = GameEvent.Game:create()
 
   self:pushEvent(root_event)
 
@@ -424,10 +442,8 @@ function GameLogic:start()
   -- 事件管理器协程，同时也是Game事件
   -- 当新事件想要exec时，就切回此处，由这里负责调度协程
   -- 一个事件结束后也切回此处，然后resume
-  local co = coroutine.create(root_event.main_func)
+  local co = coroutine.create(function() return root_event:main() end)
   root_event._co = co
-
-  local jump_to -- shutdown函数用
 
   while true do
     -- 对于cleaner和正常事件，处理更后面来的
@@ -435,14 +451,11 @@ function GameLogic:start()
     local ce = self:getCurrentCleaner()
     local e = ce and (ce.id >= ne.id and ce or ne) or ne
 
-    -- 如果正在jump的话，判断是否需要继续clean，否则正常继续
-    if e == ne and jump_to ~= nil then
+    if e == ne and e.killed then
       e.interrupted = true
-      e.killed = e ~= jump_to
       self:clearEvent(e)
       coroutine.close(e._co)
       e.status = "dead"
-      if e == jump_to then jump_to = nil end -- shutdown结束了
       e = self:getCurrentCleaner()
     end
 
@@ -467,11 +480,12 @@ function GameLogic:start()
       coroutine.close(e._co)
       e.status = "dead"
     elseif ret == true then
-      -- 跳到越早发生的事件越好
-      if not jump_to then
-        jump_to = evt
-      else
-        jump_to = jump_to.id < evt.id and jump_to or evt
+      -- 遍历栈，将shutdown图中的事件全标记上killed
+      -- 被标记killed的事件之后会自动结束并清理
+      for i = self.game_event_stack.p, 1, -1 do
+        local event = self.game_event_stack.t[i]
+        event.killed = true
+        if event == evt then break end
       end
     end
   end
@@ -551,9 +565,9 @@ function GameLogic:clearEvent(event)
   if event.event == GameEvent.ClearEvent then return end
   if event.status == "exiting" then return end
   event.status = "exiting"
-  local ce = GameEvent(GameEvent.ClearEvent, event)
+  local ce = GameEvent.ClearEvent:create(event)
   ce.id = self.current_event_id
-  local co = coroutine.create(ce.main_func)
+  local co = coroutine.create(function() return ce:main() end)
   ce._co = co
   self.cleaner_stack:push(ce)
 end
@@ -563,7 +577,7 @@ function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
 end
 
----@param eventType integer
+---@param eventType GameEvent
 function GameLogic:getMostRecentEvent(eventType)
   return self:getCurrentEvent():findParent(eventType, true)
 end
@@ -581,7 +595,7 @@ function GameLogic:getCurrentSkillName()
 end
 
 -- 在指定历史范围中找至多n个符合条件的事件
----@param eventType integer @ 要查找的事件类型
+---@param eventType GameEvent @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
 ---@param func fun(e: GameEvent): boolean @ 过滤用的函数
 ---@param scope integer @ 查询历史范围，只能是当前阶段/回合/轮次

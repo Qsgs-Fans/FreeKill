@@ -172,10 +172,16 @@ static void writeDirMD5(QFile &dest, const QString &dir,
 static void writeFkVerMD5(QFile &dest) {
   QFile flist("fk_ver");
   if (flist.exists() && flist.open(QIODevice::ReadOnly)) {
+    flist.readLine();
+    QStringList allNames;
     while (true) {
       QByteArray bytes = flist.readLine().simplified();
       if (bytes.isNull()) break;
-      writeFileMD5(dest, bytes);
+      allNames << QString::fromLocal8Bit(bytes);
+    }
+    allNames.sort();
+    foreach(auto s, allNames) {
+      writeFileMD5(dest, s);
     }
   }
 }

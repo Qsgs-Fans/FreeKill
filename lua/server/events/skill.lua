@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.SkillEffect] = function(self)
+---@class GameEvent.SkillEffect : GameEvent
+local SkillEffect = GameEvent:subclass("GameEvent.SkillEffect")
+function SkillEffect:main()
   local effect_cb, player, _skill = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -19,3 +21,5 @@ GameEvent.functions[GameEvent.SkillEffect] = function(self)
   logic:trigger(fk.AfterSkillEffect, player, skill)
   return ret
 end
+
+return SkillEffect

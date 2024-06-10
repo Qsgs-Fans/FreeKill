@@ -52,6 +52,7 @@ Fk:loadTranslationTable({
   ["liubei"] = "Liu Bei",
   ["rende"] = "Benevolence",
   [":rende"] = "In your Action Phase: you can give any # of hand cards to other players; then, if you have given a total of 2 or more cards, you heal 1 HP (only once).",
+  ["#rende-active"] = "Use Benevolence, give any # of hand cards to other players;<br >then, if you have given a total of 2 or more cards, you heal 1 HP (only once)",
   ["jijiang"] = "Rouse",
   [":jijiang"] = "(lord) When you need to use/play Slash: you can ask other Shu characters to play Slash, which is regard as you use/play that.",
   ["#jijiang-ask"] = "Rouse: you can play a Slash, which is regarded as %src uses/plays",
@@ -89,6 +90,7 @@ Fk:loadTranslationTable({
   ["sunquan"] = "Sun Quan",
   ["zhiheng"] = "Balance of Power",
   [":zhiheng"] = "Once per Action Phase: you can discard any # of cards; then, draw the same # of cards.",
+  ["#zhiheng-active"] = "Use Balance of Power, discard any # of cards; then, draw the same # of cards",
   ["jiuyuan"] = "Rescued",
   [":jiuyuan"] = "(lord, forced) When another Wu character uses Peach to you, you heal +1 HP.",
 
@@ -103,18 +105,20 @@ Fk:loadTranslationTable({
   ["huanggai"] = "Huang Gai",
   ["kurou"] = "Trojan Flesh",
   [":kurou"] = "In your Action Phase: you can lose 1 HP; then, draw 2 cards.",
+  ["#kurou-active"] = "Use Trojan Flesh, lose 1 HP; then, draw 2 cards",
 
   ["zhouyu"] = "Zhou Yu",
   ["yingzi"] = "Handsome",
   [":yingzi"] = "In your Draw Phase: you can draw +1 additional card.",
   ["fanjian"] = "Sow Dissension",
-  [":fanjian"] = "Once per Action Phase: you can make another player choose 1 suit; then, that player takes 1 hand card from you and displays it. If the guess was wrong, you cause him 1 DMG.",
+  [":fanjian"] = "Once per Action Phase: you can make another player choose 1 suit; then, he takes 1 hand card from you and displays it. If the guess was wrong, you cause him 1 DMG.",
+  ["#fanjian-active"] = "Use Sow Dissension, select another player; he chooses 1 suit;<br />then he takes 1 hand card from you and displays it. If the guess was wrong, you cause him 1 DMG",
 
   ["daqiao"] = "Da Qiao",
   ["guose"] = "National Beauty",
   [":guose"] = "You can use any diamond card as Indulgence.",
   ["liuli"] = "Shirk",
-  [":liuli"] = "When you become the target of Slash: you can discard 1 card and select another player (except the attacker) within your attack range; then, that player becomes the target of the Slash instead.",
+  [":liuli"] = "When you become the target of Slash: you can discard 1 card and select another player (except the attacker) within your attack range; then, he becomes the target of the Slash instead.",
   ["#liuli-target"] = "Shirk: you can discard 1 card and transfer the Slash",
 
   ["luxun"] = "Lu Xun",
@@ -128,10 +132,12 @@ Fk:loadTranslationTable({
   [":xiaoji"] = "After you lose 1 card in your equipment area: you can draw 2 cards.",
   ["jieyin"] = "Marriage",
   [":jieyin"] = "Once per Action Phase: you can discard 2 hand cards and select a hurt male character; then, both of you heal 1 HP.",
+  ["#jieyin-active"] = "Use Marriage, discard 2 hand cards and select a hurt male character; then, both of you heal 1 HP",
 
   ["huatuo"] = "Hua Tuo",
   ["qingnang"] = "Green Salve",
   [":qingnang"] = "Once per Action Phase: you can discard 1 hand card and select a wounded player; then, he heals 1 HP.",
+  ["#qingnang-active"] = "Use Green Salve, discard 1 hand card and select a wounded player; then, he heals 1 HP",
   ["jijiu"] = "First Aid",
   [":jijiu"] = "Outside of your turn: you can use any red card as Peach.",
 
@@ -142,6 +148,7 @@ Fk:loadTranslationTable({
   ["diaochan"] = "Diao Chan",
   ["lijian"] = "Seed of Animosity",
   [":lijian"] = "Once per Action Phase: you may discard 1 card and select 2 male characters; then, this is regarded as one of them having used Duel to target the other. This Duel can't be countered by Nullification.",
+  ["#lijian-active"] = "Use Seed of Animosity, discard 1 card and select 2 male characters;<br />then, this is regarded as one of them having used Duel to target the other.<br />This Duel can't be countered by Nullification",
   ["biyue"] = "Envious by Moon",
   [":biyue"] = "In your Finish Phase, you can draw 1 card.",
 

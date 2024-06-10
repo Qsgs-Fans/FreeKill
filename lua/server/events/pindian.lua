@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.Pindian] = function(self)
+---@class GameEvent.Pindian : GameEvent
+local Pindian = GameEvent:subclass("GameEvent.Pindian")
+function Pindian:main()
   local pindianData = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -35,6 +37,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     pindianCard:addSubcard(_pindianCard.id)
 
     pindianData.fromCard = pindianCard
+    pindianData._fromCard = _pindianCard
 
     table.insert(moveInfos, {
       ids = { _pindianCard.id },
@@ -53,6 +56,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
       pindianCard:addSubcard(_pindianCard.id)
 
       pindianData.results[to.id].toCard = pindianCard
+      pindianData.results[to.id]._toCard = _pindianCard
 
       table.insert(moveInfos, {
         ids = { _pindianCard.id },
@@ -86,9 +90,11 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
 
     if p == pindianData.from then
       pindianData.fromCard = pindianCard
+      pindianData._fromCard = _pindianCard
     else
       pindianData.results[p.id] = pindianData.results[p.id] or {}
       pindianData.results[p.id].toCard = pindianCard
+      pindianData.results[p.id]._toCard = _pindianCard
     end
 
     table.insert(moveInfos, {
@@ -109,10 +115,21 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
 
   room:moveCards(table.unpack(moveInfos))
 
+  room:sendFootnote({ pindianData._fromCard.id }, {
+    type = "##PindianCard",
+    from = pindianData.from.id,
+  })
+  for _, to in ipairs(pindianData.tos) do
+    room:sendFootnote({ pindianData.results[to.id]._toCard.id }, {
+      type = "##PindianCard",
+      from = to.id,
+    })
+  end
+
   logic:trigger(fk.PindianCardsDisplayed, nil, pindianData)
 
-  for toId, result in pairs(pindianData.results) do
-    local to = room:getPlayerById(toId)
+  for _, to in ipairs(pindianData.tos) do
+    local result = pindianData.results[to.id]
     if pindianData.fromCard.number > result.toCard.number then
       result.winner = pindianData.from
     elseif pindianData.fromCard.number < result.toCard.number then
@@ -131,9 +148,13 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
     room:sendLog{
       type = "#ShowPindianResult",
       from = pindianData.from.id,
-      to = { toId },
+      to = { to.id },
       arg = result.winner == pindianData.from and "pindianwin" or "pindiannotwin"
     }
+
+    -- room:setCardEmotion(pindianData._fromCard.id, result.winner == pindianData.from and "pindianwin" or "pindiannotwin")
+    -- room:setCardEmotion(pindianData.results[to.id]._toCard.id, result.winner == to and "pindianwin" or "pindiannotwin")
+
     logic:trigger(fk.PindianResultConfirmed, nil, singlePindianData)
   end
 
@@ -142,7 +163,7 @@ GameEvent.functions[GameEvent.Pindian] = function(self)
   end
 end
 
-GameEvent.cleaners[GameEvent.Pindian] = function(self)
+function Pindian:clear()
   local pindianData = table.unpack(self.data)
   local room = self.room
 
@@ -168,3 +189,5 @@ GameEvent.cleaners[GameEvent.Pindian] = function(self)
   end
   if not self.interrupted then return end
 end
+
+return Pindian

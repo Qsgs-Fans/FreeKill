@@ -4,15 +4,11 @@
 ---@field public id integer @ 事件的id，随着时间推移自动增加并分配给新事件
 ---@field public end_id integer @ 事件的对应结束id，如果整个事件中未插入事件，那么end_id就是自己的id
 ---@field public room Room @ room实例
----@field public event integer @ 该事件对应的EventType
+---@field public event GameEvent @ 该事件对应的EventType，现已改为对应的class
 ---@field public data any @ 事件的附加数据，视类型而定
 ---@field public parent GameEvent @ 事件的父事件（栈中的上一层事件）
----@field public prepare_func fun(self: GameEvent) @ 事件即将开始时执行的函数
----@field public main_func fun(self: GameEvent) @ 事件的主函数
----@field public clear_func fun(self: GameEvent) @ 事件结束时执行的函数
----@field public extra_clear_funcs fun(self:GameEvent)[] @ 事件结束时执行的自定义函数列表
----@field public exit_func fun(self: GameEvent) @ 事件结束后执行的函数
----@field public extra_exit_funcs fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
+---@field public extra_clear fun(self:GameEvent)[] @ 事件结束时执行的自定义函数列表
+---@field public extra_exit fun(self:GameEvent)[] @ 事件结束后执行的自定义函数
 ---@field public exec_ret boolean? @ exec函数的返回值，可能不存在
 ---@field public status string @ ready, running, exiting, dead
 ---@field public interrupted boolean @ 事件是否是因为被中断而结束的，可能是防止事件或者被杀
@@ -31,61 +27,96 @@ GameEvent.cleaners = {}
 ---@type (fun(self: GameEvent): bool)[]
 GameEvent.exit_funcs = {}
 
-local function wrapCoFunc(f, ...)
-  if not f then return nil end
-  local args = {...}
-  return function() return f(table.unpack(args)) end
-end
 local dummyFunc = Util.DummyFunc
 
 function GameEvent:initialize(event, ...)
   self.id = -1
   self.end_id = -1
   self.room = RoomInstance
+  -- for compat
   self.event = event
+  ---@diagnostic disable-next-line
+  -- self.event = self.class
   self.data = { ... }
-  self.prepare_func = GameEvent.prepare_funcs[event] or dummyFunc
-  self.main_func = wrapCoFunc(GameEvent.functions[event], self) or dummyFunc
-  self.clear_func = GameEvent.cleaners[event] or dummyFunc
-  self.extra_clear_funcs = Util.DummyTable
-  self.exit_func = GameEvent.exit_funcs[event] or dummyFunc
-  self.extra_exit_funcs = Util.DummyTable
   self.status = "ready"
   self.interrupted = false
+
+  self.extra_clear = Util.DummyTable
+  self.extra_exit = Util.DummyTable
 end
 
--- 静态函数，实际定义在events/init.lua
-function GameEvent:translate(id)
-  error('static')
+---@generic T
+---@param self T
+---@return T
+function GameEvent.create(self, ...)
+  if self.class then error('cannot use "create()" by event instances') end
+  return self:new(self, ...)
+end
+
+-- 获取最接近GameEvent的基类
+---@return GameEvent
+function GameEvent.getBaseClass(self, ...)
+  if self.class then error('cannot use "getBaseClass()" by event instances') end
+  if self.super == GameEvent or self == GameEvent then
+    return self
+  end
+  return self.super:getBaseClass()
+end
+
+function GameEvent.static:subclassed(subclass)
+  local mt = getmetatable(subclass)
+  -- 适配老代码event == GameEvent.Turn之类的奇技淫巧，危险性待评估
+  -- 这样若某个模式启用派生类修改逻辑，那么findParent之类的基于父类也能找
+  mt.__eq = function(a, b)
+    if not a.super or not b.super then return false end
+    return rawequal(a, b) or a:isSubclassOf(b) or b:isSubclassOf(a)
+  end
 end
 
 function GameEvent:__tostring()
-  return string.format("<%s #%d>", GameEvent:translate(self.event), self.id)
+  return string.format("<%s #%d>",
+    type(self.event == "string") and self.event or self.class.name, self.id)
+end
+
+function GameEvent:prepare()
+  return (GameEvent.prepare_funcs[self.event] or dummyFunc)(self)
+end
+
+function GameEvent:main()
+  return (GameEvent.functions[self.event] or dummyFunc)(self)
+end
+
+function GameEvent:clear()
+  return (GameEvent.cleaners[self.event] or dummyFunc)(self)
+end
+
+function GameEvent:exit()
+  return (GameEvent.exit_funcs[self.event] or dummyFunc)(self)
 end
 
 function GameEvent:addCleaner(f)
-  if self.extra_clear_funcs == Util.DummyTable then
-    self.extra_clear_funcs = {}
+  if self.extra_clear == Util.DummyTable then
+    self.extra_clear= {}
   end
-  table.insert(self.extra_clear_funcs, f)
+  table.insert(self.extra_clear, f)
 end
 
 function GameEvent:addExitFunc(f)
-  if self.extra_exit_funcs == Util.DummyTable then
-    self.extra_exit_funcs = {}
+  if self.extra_exit== Util.DummyTable then
+    self.extra_exit= {}
   end
-  table.insert(self.extra_exit_funcs, f)
+  table.insert(self.extra_exit, f)
 end
 
 function GameEvent:prependExitFunc(f)
-  if self.extra_exit_funcs == Util.DummyTable then
-    self.extra_exit_funcs = {}
+  if self.extra_exit== Util.DummyTable then
+    self.extra_exit= {}
   end
-  table.insert(self.extra_exit_funcs, 1, f)
+  table.insert(self.extra_exit, 1, f)
 end
 
 -- 找第一个与当前事件有继承关系的特定事件
----@param eventType integer @ 事件类型
+---@param eventType GameEvent @ 事件类型
 ---@param includeSelf bool @ 是否包括本事件
 ---@param depth? integer @ 搜索深度
 ---@return GameEvent?
@@ -187,18 +218,18 @@ function GameEvent:exec()
 
   self.parent = logic:getCurrentEvent()
 
-  if self:prepare_func() then return true end
+  if self:prepare() then return true end
 
   logic:pushEvent(self)
 
-  local co = coroutine.create(self.main_func)
+  local co = coroutine.create(function() return self:main() end)
   self._co = co
   self.status = "running"
 
   coroutine.yield(self, "__newEvent")
 
-  Pcall(self.exit_func, self)
-  for _, f in ipairs(self.extra_exit_funcs) do
+  Pcall(self.exit, self)
+  for _, f in ipairs(self.extra_exit) do
     if type(f) == "function" then
       Pcall(f, self)
     end

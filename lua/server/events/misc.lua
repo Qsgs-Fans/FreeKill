@@ -1,10 +1,14 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.Game] = function(self)
+---@class GameEvent.Game : GameEvent
+local Game = GameEvent:subclass("GameEvent.Game")
+function Game:main()
   self.room.logic:run()
 end
 
-GameEvent.functions[GameEvent.ChangeProperty] = function(self)
+---@class GameEvent.ChangeProperty : GameEvent
+local ChangeProperty = GameEvent:subclass("GameEvent.Game")
+function ChangeProperty:main()
   local data = table.unpack(self.data)
   local room = self.room
   local player = data.from
@@ -125,12 +129,14 @@ GameEvent.functions[GameEvent.ChangeProperty] = function(self)
   logic:trigger(fk.AfterPropertyChange, player, data)
 end
 
-GameEvent.functions[GameEvent.ClearEvent] = function(self)
+---@class GameEvent.ClearEvent : GameEvent
+local ClearEvent = GameEvent:subclass("GameEvent.ClearEvent")
+function ClearEvent:main()
   local event = self.data[1]
   local logic = self.room.logic
   -- 不可中断
-  Pcall(event.clear_func, event)
-  for _, f in ipairs(event.extra_clear_funcs) do
+  Pcall(event.clear, event)
+  for _, f in ipairs(event.extra_clear) do
     if type(f) == "function" then Pcall(f, event) end
   end
 
@@ -147,3 +153,5 @@ GameEvent.functions[GameEvent.ClearEvent] = function(self)
   logic.game_event_stack:pop()
   logic.cleaner_stack:pop()
 end
+
+return { Game, ChangeProperty, ClearEvent }

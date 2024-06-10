@@ -676,9 +676,10 @@ end
 ---
 --- 其实就是翻译了 ":" .. name 罢了
 ---@param name string @ 要获得描述的名字
+---@param lang? string @ 要使用的语言，默认读取config
 ---@return string @ 描述
-function Engine:getDescription(name)
-  return self:translate(":" .. name)
+function Engine:getDescription(name, lang)
+  return self:translate(":" .. name, lang)
 end
 
 return Engine

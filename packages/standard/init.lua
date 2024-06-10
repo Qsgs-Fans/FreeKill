@@ -13,11 +13,7 @@ local jianxiong = fk.CreateTriggerSkill{
   anim_type = "masochism",
   events = {fk.Damaged},
   can_trigger = function(self, event, target, player, data)
-    if target == player and player:hasSkill(self) and data.card then
-      local room = player.room
-      local subcards = data.card:isVirtual() and data.card.subcards or {data.card.id}
-      return #subcards>0 and table.every(subcards, function(id) return room:getCardArea(id) == Card.Processing end)
-    end
+    return target == player and player:hasSkill(self) and data.card and player.room:getCardArea(data.card) == Card.Processing
   end,
   on_use = function(self, event, target, player, data)
     player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
@@ -157,11 +153,11 @@ local tuxi = fk.CreateTriggerSkill{
   events = {fk.EventPhaseStart},
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(self) and player.phase == Player.Draw and
-      table.find(player.room:getOtherPlayers(player), function(p) return not p:isKongcheng() end)
+      table.find(player.room:getOtherPlayers(player, false), function(p) return not p:isKongcheng() end)
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local targets = table.map(table.filter(room:getOtherPlayers(player), function(p)
+    local targets = table.map(table.filter(room:getOtherPlayers(player, false), function(p)
       return not p:isKongcheng() end), Util.IdMapper)
 
     local result = room:askForChoosePlayers(player, targets, 1, 2, "#tuxi-ask", self.name)
@@ -273,7 +269,8 @@ local yiji = fk.CreateTriggerSkill{
         for _, id in ipairs(ret.cards) do
           table.removeOne(ids, id)
         end
-        room:moveCardTo(ret.cards, Card.PlayerHand, room:getPlayerById(ret.targets[1]), fk.ReasonGive, self.name, nil, false, player.id)
+        room:moveCardTo(ret.cards, Card.PlayerHand, room:getPlayerById(ret.targets[1]), fk.ReasonGive,
+        self.name, nil, false, player.id, nil, player.id)
         if #ids == 0 then break end
         if player.dead then
           room:moveCards({
@@ -357,6 +354,7 @@ zhenji:addSkill(qingguo)
 
 local rende = fk.CreateActiveSkill{
   name = "rende",
+  prompt = "#rende-active",
   anim_type = "support",
   card_filter = function(self, to_select, selected)
     return Fk:currentRoom():getCardArea(to_select) == Card.PlayerHand
@@ -633,6 +631,7 @@ huangyueying:addSkill(qicai)
 
 local zhiheng = fk.CreateActiveSkill{
   name = "zhiheng",
+  prompt = "#zhiheng-active",
   anim_type = "drawcard",
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
@@ -737,10 +736,9 @@ lvmeng:addSkill(keji)
 
 local kurou = fk.CreateActiveSkill{
   name = "kurou",
+  prompt = "#kurou-active",
   anim_type = "drawcard",
-  card_filter = function(self, to_select, selected, selected_targets)
-    return false
-  end,
+  card_filter = Util.FalseFunc,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
     room:loseHp(from, 1, self.name)
@@ -762,6 +760,7 @@ local yingzi = fk.CreateTriggerSkill{
 }
 local fanjian = fk.CreateActiveSkill{
   name = "fanjian",
+  prompt = "#fanjian-active",
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
   end,
@@ -937,6 +936,7 @@ local xiaoji = fk.CreateTriggerSkill{
 }
 local jieyin = fk.CreateActiveSkill{
   name = "jieyin",
+  prompt = "#jieyin-active",
   anim_type = "support",
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
@@ -978,6 +978,7 @@ sunshangxiang:addSkill(jieyin)
 
 local qingnang = fk.CreateActiveSkill{
   name = "qingnang",
+  prompt = "#qingnang-active",
   anim_type = "support",
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
@@ -993,8 +994,8 @@ local qingnang = fk.CreateActiveSkill{
   card_num = 1,
   on_use = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
-    room:throwCard(effect.cards, self.name, from, from)
     local to = room:getPlayerById(effect.tos[1])
+    room:throwCard(effect.cards, self.name, from, from)
     if to:isAlive() and to:isWounded() then
       room:recover({
         who = to,
@@ -1063,6 +1064,7 @@ lvbu:addSkill(wushuang)
 
 local lijian = fk.CreateActiveSkill{
   name = "lijian",
+  prompt = "#lijian-active",
   anim_type = "offensive",
   can_use = function(self, player)
     return player:usedSkillTimes(self.name, Player.HistoryPhase) == 0
@@ -1072,7 +1074,9 @@ local lijian = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected)
     if #selected < 2 and to_select ~= Self.id then
-      return Fk:currentRoom():getPlayerById(to_select):isMale()
+      local target = Fk:currentRoom():getPlayerById(to_select)
+      return target:isMale() and (#selected == 0 or
+      target:canUseTo(Fk:cloneCard("duel"), Fk:currentRoom():getPlayerById(selected[1])))
     end
   end,
   target_num = 2,
@@ -1151,12 +1155,10 @@ local role_getlogic = function()
       end)
       room:returnToGeneralPile(generals)
 
-      room:setPlayerGeneral(lord, lord_general, true)
+      room:prepareGeneral(lord, lord_general, deputy, true)
+
       room:askForChooseKingdom({lord})
-      room:broadcastProperty(lord, "general")
       room:broadcastProperty(lord, "kingdom")
-      room:setDeputyGeneral(lord, deputy)
-      room:broadcastProperty(lord, "deputyGeneral")
 
       -- 显示技能
       local canAttachSkill = function(player, skillName)
@@ -1210,8 +1212,7 @@ local role_getlogic = function()
     end
 
     local nonlord = room:getOtherPlayers(lord, true)
-    local generals = room:getNGenerals(#nonlord * generalNum)
-    table.shuffle(generals)
+    local generals = table.random(room.general_pile, #nonlord * generalNum)
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
       p.request_data = json.encode{ arg, n }
@@ -1221,29 +1222,21 @@ local role_getlogic = function()
     room:notifyMoveFocus(nonlord, "AskForGeneral")
     room:doBroadcastRequest("AskForGeneral", nonlord)
 
-    local selected = {}
     for _, p in ipairs(nonlord) do
+      local general, deputy
       if p.general == "" and p.reply_ready then
         local general_ret = json.decode(p.client_reply)
-        local general = general_ret[1]
-        local deputy = general_ret[2]
-        table.insertTableIfNeed(selected, general_ret)
-        room:setPlayerGeneral(p, general, true, true)
-        room:setDeputyGeneral(p, deputy)
+        general = general_ret[1]
+        deputy = general_ret[2]
       else
-        table.insertTableIfNeed(selected, p.default_reply)
-        room:setPlayerGeneral(p, p.default_reply[1], true, true)
-        room:setDeputyGeneral(p, p.default_reply[2])
+        general = p.default_reply[1]
+        deputy = p.default_reply[2]
       end
+      room:findGeneral(general)
+      room:findGeneral(deputy)
+      room:prepareGeneral(p, general, deputy)
       p.default_reply = ""
     end
-
-    generals = table.filter(generals, function(g)
-      return not table.find(selected, function(lg)
-        return Fk.generals[lg].trueName == Fk.generals[g].trueName
-      end)
-    end)
-    room:returnToGeneralPile(generals)
 
     room:askForChooseKingdom(nonlord)
   end

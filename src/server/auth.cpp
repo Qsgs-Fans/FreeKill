@@ -3,6 +3,7 @@
 #include "server/serverplayer.h"
 #include "core/util.h"
 #include "network/client_socket.h"
+#include <openssl/bn.h>
 
 AuthManager::AuthManager(QObject *parent) : QObject(parent) {
   rsa = initRSA();

@@ -71,4 +71,16 @@ function GameMode:countInFunc(room)
   return true
 end
 
+-- 修改角色的属性
+---@param player ServerPlayer
+---@return table @ 返回表，键为调整的角色属性，值为调整后的属性
+function GameMode:getAdjustedProperty (player)
+  local list = {}
+  if player.role == "lord" and player.role_shown and #player.room.players > 4 then
+    list.hp = player.hp + 1
+    list.maxHp = player.maxHp + 1
+  end
+  return list
+end
+
 return GameMode

@@ -9,6 +9,7 @@
 ---@field public discard_pile integer[] @ 弃牌堆
 ---@field public observing boolean
 ---@field public record any
+---@field public last_update_ui integer @ 上次刷新状态技UI的时间
 Client = AbstractRoom:subclass('Client')
 
 -- load client classes
@@ -65,6 +66,23 @@ function Client:initialize()
     else
       self:notifyUI(command, data)
     end
+
+    if self.recording and command == "GameLog" then
+      --and os.getms() - self.last_update_ui > 60000 then
+      -- self.last_update_ui = os.getms()
+      -- TODO: create a function
+      -- 刷所有人手牌上限
+      for _, p in ipairs(self.alive_players) do
+        self:notifyUI("MaxCard", {
+          pcardMax = p:getMaxCards(),
+          id = p.id,
+        })
+      end
+      -- 刷自己的手牌
+      for _, cid in ipairs(Self:getCardIds("h")) do
+        self:notifyUI("UpdateCard", cid)
+      end
+    end
   end
 
   self.discard_pile = {}
@@ -72,6 +90,7 @@ function Client:initialize()
 
   self.disabled_packs = {}
   self.disabled_generals = {}
+  -- self.last_update_ui = os.getms()
 
   self.recording = false
 end
@@ -114,10 +133,6 @@ function Client:moveCards(moves)
   for _, move in ipairs(moves) do
     if move.from and move.fromArea then
       local from = self:getPlayerById(move.from)
-      self:notifyUI("MaxCard", {
-        pcardMax = from:getMaxCards(),
-        id = move.from,
-      })
       if move.fromArea == Card.PlayerHand and not Self:isBuddy(self:getPlayerById(move.from)) then
         for _ = 1, #move.ids do
           table.remove(from.player_cards[Player.Hand])
@@ -133,13 +148,11 @@ function Client:moveCards(moves)
 
     if move.to and move.toArea then
       local ids = move.ids
-      self:notifyUI("MaxCard", {
-        pcardMax = self:getPlayerById(move.to):getMaxCards(),
-        id = move.to,
-      })
-      if (not Self:isBuddy(self:getPlayerById(move.to)) and move.toArea == Card.PlayerHand) or table.contains(ids, -1) then
-        ids = table.map(ids, function() return -1 end)
+      if (move.toArea == Card.PlayerHand and not Self:isBuddy(self:getPlayerById(move.to))) or
+      (move.toArea == Card.PlayerSpecial and not move.moveVisible) then
+        ids = {-1}
       end
+
       self:getPlayerById(move.to):addCards(move.toArea, ids, move.specialName)
     elseif move.toArea == Card.DiscardPile then
       table.insert(self.discard_pile, move.ids[1])
@@ -340,6 +353,7 @@ fk.client_callback["AddObserver"] = function(data)
   }
   local p = ClientPlayer:new(player)
   table.insert(ClientInstance.observers, p)
+  -- ClientInstance:notifyUI("ServerMessage", string.format(Fk:translate("$AddObserver"), name))
 end
 
 fk.client_callback["RemoveObserver"] = function(data)
@@ -347,6 +361,7 @@ fk.client_callback["RemoveObserver"] = function(data)
   for _, p in ipairs(ClientInstance.observers) do
     if p.player:getId() == id then
       table.removeOne(ClientInstance.observers, p)
+      -- ClientInstance:notifyUI("ServerMessage", string.format(Fk:translate("$RemoveObserver"), p.player:getScreenName()))
       break
     end
   end
@@ -387,10 +402,6 @@ fk.client_callback["PropertyUpdate"] = function(data)
   end
 
   ClientInstance:notifyUI("PropertyUpdate", data)
-  ClientInstance:notifyUI("MaxCard", {
-    pcardMax = ClientInstance:getPlayerById(id):getMaxCards(),
-    id = id,
-  })
 end
 
 fk.client_callback["AskForCardChosen"] = function(data)
@@ -474,7 +485,38 @@ end
 ---@param moves CardsMoveStruct[]
 local function separateMoves(moves)
   local ret = {}  ---@type CardsMoveInfo[]
+
+  local function containArea(area, relevant, defaultVisible) --处理区的处理？
+    local areas = relevant
+      and {Card.PlayerEquip, Card.PlayerJudge, Card.PlayerHand}
+      or {Card.PlayerEquip, Card.PlayerJudge}
+    return table.contains(areas, area) or (defaultVisible and table.contains({Card.Processing, Card.DiscardPile}, area))
+  end
+
   for _, move in ipairs(moves) do
+    local singleVisible = move.moveVisible
+    if not singleVisible then
+      if move.visiblePlayers then
+        local visiblePlayers = move.visiblePlayers
+        if type(visiblePlayers) == "number" then
+          if Self:isBuddy(visiblePlayers) then
+            singleVisible = true
+          end
+        elseif type(visiblePlayers) == "table" then
+          if table.find(visiblePlayers, function(pid) return Self:isBuddy(pid) end) then
+            singleVisible = true
+          end
+        end
+      else
+        if move.to and move.toArea == Card.PlayerSpecial and Self:isBuddy(move.to) then
+          singleVisible = true
+        end
+      end
+    end
+    if not singleVisible then
+      singleVisible = containArea(move.toArea, move.to and Self:isBuddy(move.to), move.moveVisible == nil)
+    end
+
     for _, info in ipairs(move.moveInfo) do
       table.insert(ret, {
         ids = {info.cardId},
@@ -486,6 +528,7 @@ local function separateMoves(moves)
         specialName = move.specialName,
         fromSpecialName = info.fromSpecialName,
         proposer = move.proposer,
+        moveVisible = singleVisible or containArea(info.fromArea, move.from and Self:isBuddy(move.from), move.moveVisible == nil)
       })
     end
   end
@@ -513,7 +556,7 @@ local function mergeMoves(moves)
         proposer = move.proposer,
       }
     end
-    table.insert(temp[info].ids, move.ids[1])
+    table.insert(temp[info].ids, move.moveVisible and move.ids[1] or -1)
   end
   for _, v in pairs(temp) do
     table.insert(ret, v)
@@ -609,8 +652,27 @@ local function sendMoveCardLog(move)
       from = move.from,
       card = move.ids,
     }
-  -- elseif move.toArea == Card.Processing then
-    -- nop
+  elseif move.toArea == Card.Processing then
+    if move.fromArea == Card.DrawPile and (move.moveReason == fk.ReasonPut or move.moveReason == fk.ReasonJustMove) then
+      if hidden then
+        client:appendLog{
+          type = "$ViewCardFromDrawPile",
+          from = move.proposer,
+          arg = #move.ids,
+        }
+      else
+        client:appendLog{
+          type = "$TurnOverCardFromDrawPile",
+          from = move.proposer,
+          card = move.ids,
+          arg = #move.ids,
+        }
+        client:setCardNote(move.ids, {
+          type = "$$TurnOverCard",
+          from = move.proposer,
+        })
+      end
+    end
   elseif move.from and move.toArea == Card.DrawPile then
     msgtype = hidden and "$PutCard" or "$PutKnownCard"
     client:appendLog{
@@ -1029,7 +1091,7 @@ end
 
 fk.client_callback["EnterLobby"] = function(jsonData)
   local c = ClientInstance
-  --[[
+  ---[[
   if c.recording and not c.observing then
     c.recording = false
     c.record[2] = table.concat({
@@ -1120,7 +1182,7 @@ local function loadPlayerSummary(pdata)
       to = id,
       toArea = Card.PlayerSpecial,
       specialName = k,
-      specialVisible = Self.id == id,
+      moveVisible = true,
     }
     table.insert(card_moves, move)
   end

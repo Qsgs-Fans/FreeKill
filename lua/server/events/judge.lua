@@ -1,6 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-GameEvent.functions[GameEvent.Judge] = function(self)
+---@class GameEvent.Judge : GameEvent
+local Judge = GameEvent:subclass("GameEvent.Judge")
+function Judge:main()
   local data = table.unpack(self.data)
   local room = self.room
   local logic = room.logic
@@ -53,7 +55,7 @@ GameEvent.functions[GameEvent.Judge] = function(self)
   end
 end
 
-GameEvent.cleaners[GameEvent.Judge] = function(self)
+function Judge:clear()
   local data = table.unpack(self.data)
   local room = self.room
   if (self.interrupted or not data.skipDrop) and room:getCardArea(data.card.id) == Card.Processing then
@@ -71,3 +73,5 @@ GameEvent.cleaners[GameEvent.Judge] = function(self)
     end
   })
 end
+
+return Judge
