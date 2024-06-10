@@ -63,7 +63,7 @@ public:
 
   Q_INVOKABLE void detectServer();
   Q_INVOKABLE void getServerInfo(const QString &addr);
-  
+
   Q_INVOKABLE void showDialog(const QString &type, const QString &text,
       const QString &orig = QString());
 
