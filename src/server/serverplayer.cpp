@@ -116,7 +116,7 @@ void ServerPlayer::kick() {
 void ServerPlayer::reconnect(ClientSocket *client) {
   setSocket(client);
   alive = true;
-  client->disconnect(this);
+  // client->disconnect(this);
   if (server->getPlayers().count() <= 10) {
     server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()));
   }

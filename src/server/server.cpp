@@ -261,7 +261,7 @@ void Server::processNewConnection(ClientSocket *client) {
 
 void Server::processRequest(const QByteArray &msg) {
   ClientSocket *client = qobject_cast<ClientSocket *>(sender());
-  client->disconnect(this, SLOT(processRequest(const QByteArray &)));
+  disconnect(client, &ClientSocket::message_got, this, &Server::processRequest);
   client->timerSignup.stop();
 
   bool valid = true;
