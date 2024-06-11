@@ -169,7 +169,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
   if (players.value(id)) {
     auto player = players.value(id);
     // 顶号机制，如果在线的话就让他变成不在线
-    if (player->getState() == Player::Online) {
+    if (player->getState() == Player::Online || player->getState() == Player::Robot) {
       player->doNotify("ErrorDlg", "others logged in again with this name");
       emit player->kicked();
     }

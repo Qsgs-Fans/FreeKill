@@ -37,15 +37,16 @@ void RoomBase::chat(ServerPlayer *sender, const QString &jsonData) {
   auto type = doc["type"].toInt();
   doc["sender"] = sender->getId();
 
-  // 屏蔽.号，防止有人在HTML文本发链接，而正常发链接看不出来有啥改动
   auto msg = doc["msg"].toString();
-  msg.replace(".", "․");
-  // 300字限制，与客户端相同
-  msg.erase(msg.begin() + 300, msg.end());
-  doc["msg"] = msg;
   if (!server->checkBanWord(msg)) {
     return;
   }
+  // 屏蔽.号和百分号，防止有人在HTML文本发链接，而正常发链接看不出来有啥改动
+  msg.replace(".", "․");
+  msg.replace("%", "％");
+  // 300字限制，与客户端相同
+  msg.erase(msg.begin() + 300, msg.end());
+  doc["msg"] = msg;
 
   if (type == 1) {
     doc["userName"] = sender->getScreenName();
@@ -57,6 +58,9 @@ void RoomBase::chat(ServerPlayer *sender, const QString &jsonData) {
     doBroadcastNotify(observers, "Chat", json);
   }
 
-  qInfo("[Chat] %s: %s", sender->getScreenName().toUtf8().constData(),
+  qInfo("[Chat/%s] %s: %s",
+        isLobby() ? "Lobby" : QString("#%1").arg(qobject_cast<Room *>(this)
+          ->getId()).toUtf8().constData(),
+        sender->getScreenName().toUtf8().constData(),
         doc["msg"].toString().toUtf8().constData());
 }

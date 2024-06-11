@@ -109,6 +109,9 @@ void ServerPlayer::kick() {
   setState(Player::Offline);
   if (socket != nullptr) {
     socket->disconnectFromHost();
+  } else {
+    // 还是得走一遍这个流程才行
+    onDisconnected();
   }
   setSocket(nullptr);
 }
