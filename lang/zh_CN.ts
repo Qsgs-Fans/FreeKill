@@ -109,7 +109,7 @@
   </message>
   <message>
     <source>packages/%1: some error occured.</source>
-    <translation>拓展包 %1 出了点问题，尝试在管理拓展包中删除之再试试</translation>
+    <translation>拓展包 %1 出了点问题，可以尝试：进入“管理拓展包”，找到 %1，删除，然后再尝试</translation>
   </message>
 </context>
 
@@ -125,7 +125,7 @@
   </message>
   <message>
     <source>help: unknown password error</source>
-    <translation>提示：请尝试重新启动程序</translation>
+    <translation>提示：请使用“编辑服务器”删除该服务器，然后重新添加服务器并重新输入用户名和密码；若为单机启动则在“加入服务器”中选中服务器127.0.0.1，编辑服务器->删除，然后再单机启动</translation>
   </message>
   <message>
     <source>help: you have been banned!</source>
@@ -141,7 +141,19 @@
   </message>
   <message>
     <source>help: username or password error</source>
-    <translation>提示：可能该用户名已被占用，或者密码错误，如果你是初次注册的话考虑用另一个用户名密码进行登入</translation>
+    <translation>提示：可能该用户名已被占用，或者密码错误，如果你是初次注册的话考虑用另一个用户名密码进行登入；若为单机启动则在“加入服务器”中选中服务器127.0.0.1，编辑服务器->删除，然后再单机启动</translation>
+  </message>
+  <message>
+    <source>help: md5 fail</source>
+    <translation>检测到MD5错误且未发生拓展包变动，若该情况多次发生请考虑点击主界面“资源修复”蓝色文字</translation>
+  </message>
+  <message>
+    <source>fix resource</source>
+    <translation>修复资源文件</translation>
+  </message>
+  <message>
+    <source>help: fix resource</source>
+    <translation>点击“确定”将立刻关闭游戏，下次启动时重新复制资源文件，适用于进入服务器多次提示MD5失败，是否继续？</translation>
   </message>
 </context>
 
@@ -178,6 +190,10 @@
   <message>
     <source>FAQ</source>
     <translation>常见疑问</translation>
+  </message>
+  <message>
+    <source>ResFix</source>
+    <translation>资源修复</translation>
   </message>
   <message>
     <source>$LoginFAQ</source>
@@ -317,6 +333,10 @@
   <message>
     <source>MD5 check failed!</source>
     <translation>MD5检测失败！请与服务端保持一致后再登入</translation>
+  </message>
+  <message>
+    <source>md5 fail</source>
+    <translation>资源文件错误</translation>
   </message>
   <message>
     <source>others logged in with this name</source>

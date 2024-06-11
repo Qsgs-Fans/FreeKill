@@ -570,6 +570,18 @@ void QmlBackend::showDialog(const QString &type, const QString &text, const QStr
   }
 }
 
+void QmlBackend::askFixResource() {
+#if defined(Q_OS_ANDROID) || defined(Q_OS_LINUX)
+  auto box = new QMessageBox(QMessageBox::Question, tr("fix resource"),
+      tr("help: fix resource"), QMessageBox::Ok | QMessageBox::Cancel);
+  connect(box, &QMessageBox::accepted, box, []() {
+      QFile::remove("fk_ver"); qApp->exit(); });
+  connect(box, &QMessageBox::finished, box, &QObject::deleteLater);
+  box->setWindowModality(Qt::NonModal);
+  box->show();
+#endif
+}
+
 void QmlBackend::removeRecord(const QString &fname) {
   QFile::remove("recording/" + fname);
 }

@@ -22,7 +22,7 @@ Item {
       radius: 8
       height: 124 - 8
       width: 124 - 8
-      color: outdated ? "#E2E2E2" : "lightgreen"
+      color: outdated ? "#E2E2E2" : "#DDDDDDDD"
 
       Text {
         id: roomNameText
@@ -281,7 +281,7 @@ Item {
 
     Rectangle {
       Layout.fillHeight: true
-      Layout.preferredWidth: childrenRect.width + 48
+      Layout.preferredWidth: childrenRect.width + 72
 
       gradient: Gradient {
         orientation: Gradient.Horizontal

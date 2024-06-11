@@ -107,6 +107,7 @@ Item {
       }
 
       Text {
+        id: faqTxt
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.rightMargin: 8
@@ -120,6 +121,24 @@ Item {
           onTapped: {
             mainStack.push(Qt.createComponent("../Tutorial.qml")
                            .createObject());
+          }
+        }
+      }
+
+      Text {
+        anchors.right: faqTxt.left
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: 8
+        anchors.bottomMargin: 8
+        text: qsTr("ResFix")
+        color: "blue"
+        font.pixelSize: 24
+        font.underline: true
+        visible: OS === "Android"
+
+        TapHandler {
+          onTapped: {
+            Backend.askFixResource();
           }
         }
       }

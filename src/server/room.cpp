@@ -240,9 +240,6 @@ void Room::removePlayer(ServerPlayer *player) {
     // 然后基于跑路玩家的socket，创建一个新ServerPlayer对象用来通信
     ServerPlayer *runner = new ServerPlayer(this);
     runner->setSocket(socket);
-    connect(runner, &ServerPlayer::disconnected, server,
-            &Server::onUserDisconnected);
-    connect(runner, &Player::stateChanged, server, &Server::onUserStateChanged);
     runner->setScreenName(player->getScreenName());
     runner->setAvatar(player->getAvatar());
     runner->setId(player->getId());
@@ -512,7 +509,7 @@ void Room::gameOver() {
     }
   }
   server->endTransaction();
-  insideGameOver = true;
+  insideGameOver = false;
 }
 
 void Room::manuallyStart() {

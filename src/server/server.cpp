@@ -261,7 +261,7 @@ void Server::processNewConnection(ClientSocket *client) {
 
 void Server::processRequest(const QByteArray &msg) {
   ClientSocket *client = qobject_cast<ClientSocket *>(sender());
-  client->disconnect(this, SLOT(processRequest(const QByteArray &)));
+  disconnect(client, &ClientSocket::message_got, this, &Server::processRequest);
   client->timerSignup.stop();
 
   bool valid = true;
@@ -339,9 +339,6 @@ void Server::processRequest(const QByteArray &msg) {
   ServerPlayer *player = new ServerPlayer(lobby());
   player->setSocket(client);
   client->disconnect(this);
-  connect(player, &ServerPlayer::disconnected, this,
-      &Server::onUserDisconnected);
-  connect(player, &Player::stateChanged, this, &Server::onUserStateChanged);
   player->setScreenName(name);
   player->setAvatar(obj["avatar"].toString());
   player->setId(id);
@@ -372,56 +369,6 @@ void Server::onRoomAbandoned() {
   idle_rooms.push(room);
   room->getThread()->wakeUp(room->getId());
   room->getThread()->removeRoom(room);
-}
-
-void Server::onUserDisconnected() {
-  auto player = qobject_cast<ServerPlayer *>(sender());
-  qInfo() << "Player" << player->getId() << "disconnected";
-  if (players.count() <= 10) {
-    broadcast("ServerMessage", tr("%1 logged out").arg(player->getScreenName()));
-  }
-
-  auto _room = player->getRoom();
-  if (_room->isLobby()) {
-    player->setState(Player::Robot); // 大厅！然而又不能设Offline
-    player->deleteLater();
-  } else {
-    auto room = qobject_cast<Room *>(_room);
-    if (room->isStarted()) {
-      if (room->getObservers().contains(player)) {
-        room->removeObserver(player);
-        player->deleteLater();
-        return;
-      }
-      player->setState(Player::Offline);
-      player->setSocket(nullptr);
-      // TODO: add a robot
-    } else {
-      player->setState(Player::Robot); // 大厅！然而又不能设Offline
-      // 这里有一个多线程问题，可能与Room::gameOver同时deleteLater导致出事
-      // FIXME: 这种解法肯定不安全
-      if (!room->insideGameOver)
-        player->deleteLater();
-    }
-  }
-}
-
-void Server::onUserStateChanged() {
-  ServerPlayer *player = qobject_cast<ServerPlayer *>(sender());
-  auto _room = player->getRoom();
-  if (!_room || _room->isLobby()) return;
-  auto room = qobject_cast<Room *>(_room);
-  if (room->isAbandoned()) return;
-
-  auto state = player->getState();
-  room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
-      QString("[%1,\"%2\"]").arg(player->getId()).arg(player->getStateString()));
-
-  if (state == Player::Online) {
-    player->resumeGameTimer();
-  } else {
-    player->pauseGameTimer();
-  }
 }
 
 #define SET_DEFAULT_CONFIG(k, v) do {\
