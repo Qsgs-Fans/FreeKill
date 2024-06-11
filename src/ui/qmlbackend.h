@@ -66,6 +66,7 @@ public:
 
   Q_INVOKABLE void showDialog(const QString &type, const QString &text,
       const QString &orig = QString());
+  Q_INVOKABLE void askFixResource();
 
   qreal volume() const { return m_volume; }
   void setVolume(qreal v) { m_volume = v; }
