@@ -108,19 +108,35 @@ local analepticSkill = fk.CreateActiveSkill{
   name = "analeptic_skill",
   prompt = "#analeptic_skill",
   max_turn_use_time = 1,
-  mod_target_filter = function(self, to_select, _, _, card, _)
-    return not table.find(Fk:currentRoom().alive_players, function(p)
+  target_num = 1,
+  mod_target_filter = function(self, to_select, selected, _, card, _)
+    return #selected == 0 or not table.find(Fk:currentRoom().alive_players, function(p)
       return p.dying
     end)
   end,
-  can_use = function(self, player, card, extra_data)
-    return not player:isProhibited(player, card) and ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
-      self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
-  end,
-  on_use = function(_, _, use)
-    if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
-      use.tos = { { use.from } }
+  target_filter = function(self, to_select, selected, selected_cards, card, extra_data)
+    if #selected < self:getMaxTargetNum(Self, card) then
+      local player = Fk:currentRoom():getPlayerById(to_select)
+      return self:modTargetFilter(to_select, selected, Self.id, card) and
+      (
+        #selected > 0 or
+        Self.phase ~= Player.Play or
+        (extra_data and extra_data.bypass_times) or
+        self:withinTimesLimit(Self, Player.HistoryTurn, card, "analeptic", player)
+      )
     end
+  end,
+  preselected = function(self, selected_cards, card, player, extra_data)
+    return { Self.id }
+  end,
+  -- can_use = function(self, player, card, extra_data)
+  --   return not player:isProhibited(player, card) and ((extra_data and (extra_data.bypass_times or extra_data.analepticRecover)) or
+  --     self:withinTimesLimit(player, Player.HistoryTurn, card, "analeptic", player))
+  -- end,
+  on_use = function(_, _, use)
+    -- if not use.tos or #TargetGroup:getRealTargets(use.tos) == 0 then
+    --   use.tos = { { use.from } }
+    -- end
 
     if use.extra_data and use.extra_data.analepticRecover then
       use.extraUse = true

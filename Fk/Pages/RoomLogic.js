@@ -522,7 +522,8 @@ function doIndicate(from, tos) {
 
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
-  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
+  if (photo.general === "anjiang" &&
+    (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
     return luatr("seat#" + photo.seatNumber);
   }
 
@@ -639,14 +640,20 @@ function enableTargets(card) {
   }
 
   if (candidate) {
-    const data = {
-      ok_enabled: false,
-      enabled_targets: []
-    }
+    const preselected_targets = lcall("CardPreselectedTarget", card,
+                                      JSON.stringify(roomScene.extra_data));
+    preselected_targets.forEach(id => {
+      const photo = getPhoto(id);
+      photo.selected = true;
+    })
 
     all_photos.forEach(photo => {
       photo.state = "candidate";
       const id = photo.playerid;
+      if (photo.selected) {
+        photo.selectable = false;
+        return;
+      }
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                         JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
@@ -754,16 +761,22 @@ function updateSelectedTargets(playerid, selected) {
 
     roomScene.resetPrompt(); // update prompt due to selected_targets
     const prompt = lcall("ActiveSkillPrompt",
-      dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
+      dashboard.pending_skill !== "" ? dashboard.pending_skill:
+                                       lcall("GetCardSkill", card),
       dashboard.pending_skill !== "" ? dashboard.pendings : [card],
       selected_targets);
     if (prompt !== "") {
       roomScene.setPrompt(Util.processPrompt(prompt));
     }
+    const preselected_targets = lcall("CardPreselectedTarget", card,
+                                      JSON.stringify(roomScene.extra_data));
 
     all_photos.forEach(photo => {
-      if (photo.selected) return;
       const id = photo.playerid;
+      if (photo.selected) {
+        if (preselected_targets.includes(id)) photo.selectable = false;
+        return;
+      }
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                          JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
@@ -1250,7 +1263,8 @@ callbacks["AskForCardsChosen"] = (data) => {
   const reason = data._reason;
   const prompt = data._prompt;
   if (prompt === "") {
-    roomScene.promptText = luatr(processPrompt("#AskForChooseCards:" + data._id))
+    roomScene.promptText = luatr(processPrompt(
+                                 "#AskForChooseCards:" + data._id))
     .arg(luatr(reason)).arg(min).arg(max);
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
