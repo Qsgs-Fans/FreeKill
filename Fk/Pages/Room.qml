@@ -268,90 +268,25 @@ Item {
   }
 
   states: [
-    State { name: "notactive" }, // Normal status
-    State { name: "playing" }, // Playing cards in playing phase
-    State { name: "responding" }, // all requests need to operate dashboard
-    State { name: "replying" } // requests only operate a popup window
+    State { name: "notactive" },
+    State { name: "active" }
   ]
   state: "notactive"
   transitions: [
     Transition {
-      from: "*"; to: "notactive"
+      from: "active"; to: "notactive"
       ScriptAction {
         script: {
-          skillInteraction.sourceComponent = undefined;
-          promptText = "";
-          currentPrompt = "";
           progress.visible = false;
-          okCancel.visible = false;
-          endPhaseButton.visible = false;
-          respond_play = false;
-          extra_data = {};
-          mainWindow.pending_message = [];
-          mainWindow.is_pending = false;
-
-          if (dashboard.pending_skill !== "")
-            dashboard.stopPending();
-          dashboard.updateHandcards();
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
-          dashboard.retractAllPiles();
-          selected_targets = [];
-          autoPending = false;
-
-          if (popupBox.item != null) {
-            popupBox.item.finished();
-          }
         }
       }
     },
 
     Transition {
-      from: "*"; to: "playing"
+      from: "notactive"; to: "active"
       ScriptAction {
         script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards();
-          dashboard.enableSkills();
           progress.visible = true;
-          okCancel.visible = true;
-          autoPending = false;
-          endPhaseButton.visible = true;
-          respond_play = false;
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "responding"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards(responding_card);
-          dashboard.enableSkills(responding_card, respond_play);
-          autoPending = false;
-          progress.visible = true;
-          okCancel.visible = true;
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "replying"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
-          progress.visible = true;
-          respond_play = false;
-          autoPending = false;
-          roomScene.okCancel.visible = false;
-          roomScene.okButton.enabled = false;
-          roomScene.cancelButton.enabled = false;
         }
       }
     }

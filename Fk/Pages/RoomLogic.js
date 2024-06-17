@@ -1341,13 +1341,7 @@ callbacks["MoveCards"] = (moves) => {
   moveCards(moves);
 }
 
-callbacks["PlayCard"] = (playerId) => {
-  // jsonData: int playerId
-  if (playerId === Self.id) {
-    roomScene.setPrompt(luatr("#PlayCard"), true);
-    roomScene.state = "playing";
-    okButton.enabled = false;
-  }
+callbacks["PlayCard"] = () => {
 }
 
 callbacks["LoseSkill"] = (data) => {
