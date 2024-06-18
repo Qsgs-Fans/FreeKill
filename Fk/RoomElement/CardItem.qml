@@ -65,7 +65,7 @@ Item {
   property alias dragging: drag.active
 
   signal toggleDiscards()
-  signal clicked()
+  signal clicked(var card)
   signal rightClicked()
   signal doubleClicked()
   signal thrown()
@@ -267,7 +267,7 @@ Item {
     onTapped: (p, btn) => {
       if (btn === Qt.LeftButton || btn === Qt.NoButton) {
         selected = selectable ? !selected : false;
-        parent.clicked();
+        parent.clicked(root);
       } else if (btn === Qt.RightButton) {
         parent.rightClicked();
       }

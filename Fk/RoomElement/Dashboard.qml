@@ -57,7 +57,8 @@ RowLayout {
   Connections {
     target: handcardAreaItem
     function onCardSelected(cardId, selected) {
-      dashboard.selectCard(cardId, selected);
+      // dashboard.selectCard(cardId, selected);
+      lcall("UpdateRequestUI", "CardItem", cardId, "click", { selected } );
     }
     function onLengthChanged() {
       self.handcards = handcardAreaItem.length;
@@ -505,5 +506,12 @@ RowLayout {
 
     cards = roomScene.drawPile.remove(lcall("GetPlayerHandcards", Self.id));
     handcardAreaItem.add(cards);
+  }
+
+  function applyChange(uiUpdate) {
+    // TODO: 先确定要不要展开相关Pile
+    // card - HandcardArea
+    handcardAreaItem.applyChange(uiUpdate["CardItem"])
+    // skillBtn - SkillArea
   }
 }

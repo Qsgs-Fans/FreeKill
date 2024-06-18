@@ -1341,7 +1341,10 @@ callbacks["MoveCards"] = (moves) => {
   moveCards(moves);
 }
 
+// 切换状态 -> 向Lua询问UI情况
+// 所以Lua一开始就要设置好各种亮灭的值 而这个自然是通过update
 callbacks["PlayCard"] = () => {
+  roomScene.state = "active";
 }
 
 callbacks["LoseSkill"] = (data) => {
@@ -1753,8 +1756,30 @@ callbacks["AskForLuckCard"] = (j) => {
   roomScene.cancelButton.enabled = true;
 }
 
-callbacks["CancelRequest"] = (jsonData) => {
-  ClientInstance.replyToServer("", "__cancel")
+//callbacks["CancelRequest"] = (jsonData) => {
+//  ClientInstance.replyToServer("", "__cancel")
+//}
+
+callbacks["UpdateRequestUI"] = (uiUpdate) => {
+  console.log(JSON.stringify(uiUpdate));
+  if (uiUpdate._type == "Dashboard") {
+    // 需要判断是不是第一次收到这样的数据，可以通过state判断
+    // 因为是先收到Lua的数据，再切换状态的
+    // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
+    if (roomScene.state === "notactive") {
+      okCancel.visible = true;
+      okButton.enabled = false;
+      cancelButton.enabled = false;
+      endPhaseButton.visible = true;
+    }
+    dashboard.applyChange(uiUpdate);
+  }
+}
+
+// FIXME: 完全是因为ChangeSelf需要向服务器询问此人手牌信息导致不能直接暴力reply+设置notactive
+// FIXME: 后面需要杀掉所有客户端未知牌
+callbacks["ReplyToServer"] = (data) => {
+  replyToServer(data);
 }
 
 callbacks["ReplayerDurationSet"] = (j) => {

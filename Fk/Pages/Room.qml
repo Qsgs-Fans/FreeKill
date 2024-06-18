@@ -277,7 +277,20 @@ Item {
       from: "active"; to: "notactive"
       ScriptAction {
         script: {
+          skillInteraction.sourceComponent = undefined;
+          promptText = "";
           progress.visible = false;
+          okCancel.visible = false;
+          endPhaseButton.visible = false;
+          progress.visible = false;
+
+          dashboard.disableAllCards();
+          dashboard.disableSkills();
+          dashboard.retractAllPiles();
+
+          if (popupBox.item != null) {
+            popupBox.item.finished();
+          }
         }
       }
     },
@@ -658,13 +671,13 @@ Item {
       Button {
         id: okButton
         text: luatr("OK")
-        onClicked: Logic.doOkButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "Ok");
       }
 
       Button {
         id: cancelButton
         text: luatr("Cancel")
-        onClicked: Logic.doCancelButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "Cancel");
       }
     }
 
@@ -676,7 +689,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 30
       visible: false;
-      onClicked: Logic.replyToServer("");
+      onClicked: lcall("UpdateRequestUI", "Button", "End");
     }
   }
 
