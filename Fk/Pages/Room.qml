@@ -1267,13 +1267,13 @@ Item {
     buttons?.forEach(bdata => {
       switch (bdata.id) {
         case "Ok":
-          okButton.enabled = pdata.enabled;
+          okButton.enabled = bdata.enabled;
           break;
         case "Cancel":
-          cancelButton.enabled = pdata.enabled;
+          cancelButton.enabled = bdata.enabled;
           break;
         case "End":
-          endPhaseButton.enabled = pdata.enabled;
+          endPhaseButton.enabled = bdata.enabled;
           break;
       }
     })
