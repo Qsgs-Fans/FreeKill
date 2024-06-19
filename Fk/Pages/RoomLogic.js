@@ -1762,7 +1762,7 @@ callbacks["AskForLuckCard"] = (j) => {
 
 callbacks["UpdateRequestUI"] = (uiUpdate) => {
   console.log(JSON.stringify(uiUpdate));
-  if (uiUpdate._type == "Dashboard") {
+  if (uiUpdate._type == "RoomScene") {
     // 需要判断是不是第一次收到这样的数据，可以通过state判断
     // 因为是先收到Lua的数据，再切换状态的
     // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
@@ -1772,7 +1772,7 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
       cancelButton.enabled = false;
       endPhaseButton.visible = true;
     }
-    dashboard.applyChange(uiUpdate);
+    roomScene.applyChange(uiUpdate);
   }
 }
 

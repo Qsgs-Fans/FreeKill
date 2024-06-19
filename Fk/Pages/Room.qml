@@ -353,7 +353,8 @@ Item {
         sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
-          Logic.updateSelectedTargets(playerid, selected);
+          // Logic.updateSelectedTargets(playerid, selected);
+          lcall("UpdateRequestUI", "Photo", playerid, "click", { selected } );
         }
 
         Component.onCompleted: {
@@ -1248,6 +1249,34 @@ Item {
 
   function getPhoto(id) {
     return Logic.getPhoto(id);
+  }
+
+  function applyChange(uiUpdate) {
+    // 手牌
+    dashboard.applyChange(uiUpdate);
+    // 照片
+    const pdatas = uiUpdate["Photo"];
+    pdatas?.forEach(pdata => {
+      const photo = Logic.getPhoto(pdata.id);
+      photo.state = pdata.state;
+      photo.selectable = pdata.enabled;
+      photo.selected = pdata.selected;
+    })
+    // 按钮
+    const buttons = uiUpdate["Button"];
+    buttons?.forEach(bdata => {
+      switch (bdata.id) {
+        case "Ok":
+          okButton.enabled = pdata.enabled;
+          break;
+        case "Cancel":
+          cancelButton.enabled = pdata.enabled;
+          break;
+        case "End":
+          endPhaseButton.enabled = pdata.enabled;
+          break;
+      }
+    })
   }
 
   Component.onCompleted: {
