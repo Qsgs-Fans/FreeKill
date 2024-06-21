@@ -522,7 +522,7 @@ function doIndicate(from, tos) {
 
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
-  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
+  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !photo.deputyGeneral)) {
     return luatr("seat#" + photo.seatNumber);
   }
 
