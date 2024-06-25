@@ -284,9 +284,9 @@ Item {
           endPhaseButton.visible = false;
           progress.visible = false;
 
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
-          dashboard.retractAllPiles();
+          // dashboard.disableAllCards();
+          // dashboard.disableSkills();
+          // dashboard.retractAllPiles();
 
           if (popupBox.item != null) {
             popupBox.item.finished();

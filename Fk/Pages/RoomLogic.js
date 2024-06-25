@@ -166,30 +166,30 @@ function doCancelButton() {
   if (_is_canceling) return;
   _is_canceling = true;
 
-  if (roomScene.state === "playing") {
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    dashboard.enableCards();
-    dashboard.enableSkills();
+  // if (roomScene.state === "playing") {
+  //   dashboard.stopPending();
+  //   dashboard.deactivateSkillButton();
+  //   dashboard.unSelectAll();
+  //   dashboard.enableCards();
+  //   dashboard.enableSkills();
 
-    _is_canceling = false;
-    return;
-  } else if (roomScene.state === "responding") {
-    const p = dashboard.pending_skill;
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    if (roomScene.autoPending || !p) {
-      replyToServer("__cancel");
-    } else {
-      dashboard.enableCards(roomScene.responding_card);
-      dashboard.enableSkills(roomScene.responding_card);
-    }
+  //   _is_canceling = false;
+  //   return;
+  // } else if (roomScene.state === "responding") {
+  //   const p = dashboard.pending_skill;
+  //   dashboard.stopPending();
+  //   dashboard.deactivateSkillButton();
+  //   dashboard.unSelectAll();
+  //   if (roomScene.autoPending || !p) {
+  //     replyToServer("__cancel");
+  //   } else {
+  //     dashboard.enableCards(roomScene.responding_card);
+  //     dashboard.enableSkills(roomScene.responding_card);
+  //   }
 
-    _is_canceling = false;
-    return;
-  }
+  //   _is_canceling = false;
+  //   return;
+  // }
 
   if (roomScene.extra_data.luckCard) {
     ClientInstance.notifyServer("PushRequest", [
@@ -1388,17 +1388,17 @@ callbacks["AskForUseActiveSkill"] = (data) => {
   }
 
   roomScene.respond_play = false;
-  roomScene.state = "responding";
+  roomScene.state = "active";
 
-  if (lcall('GetSkillData', skill_name).isViewAsSkill) {
-    roomScene.responding_card = ".";
-  }
+  // if (lcall('GetSkillData', skill_name).isViewAsSkill) {
+  //   roomScene.responding_card = ".";
+  // }
 
-  roomScene.autoPending = true;
-  roomScene.extra_data = extra_data;
-  // dashboard.startPending(skill_name);
-  roomScene.activateSkill(skill_name, true);
-  cancelButton.enabled = cancelable;
+  // roomScene.autoPending = true;
+  // roomScene.extra_data = extra_data;
+  // // dashboard.startPending(skill_name);
+  // // roomScene.activateSkill(skill_name, true);
+  // cancelButton.enabled = cancelable;
 }
 
 callbacks["CancelRequest"] = () => {

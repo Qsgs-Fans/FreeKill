@@ -65,13 +65,13 @@ RowLayout {
     }
   }
 
-  function disableAllCards() {
-    handcardAreaItem.enableCards([]);
-  }
+  // function disableAllCards() {
+  //   handcardAreaItem.enableCards([]);
+  // }
 
-  function unSelectAll(expectId) {
-    handcardAreaItem.unselectAll(expectId);
-  }
+  // function unSelectAll(expectId) {
+  //   handcardAreaItem.unselectAll(expectId);
+  // }
 
   function expandPile(pile, extra_ids, extra_footnote) {
     const expanded_pile_names = Object.keys(expanded_piles);
