@@ -199,6 +199,10 @@ void ServerPlayer::onDisconnected() {
         deleteLater();
         return;
       }
+      if (room->getThread()) {
+       // && thinking()) {
+        room->getThread()->wakeUp(room->getId());
+      }
       setState(Player::Offline);
       setSocket(nullptr);
       // TODO: add a robot

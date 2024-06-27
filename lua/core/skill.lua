@@ -94,7 +94,7 @@ end
 ---@return boolean
 function Skill:isEquipmentSkill(player)
   if player then
-    local filterSkills = Fk:currentRoom().status_skills[FilterSkill]
+    local filterSkills = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable
     for _, filter in ipairs(filterSkills) do
       local result = filter:equipSkillFilter(self, player)
       if result then

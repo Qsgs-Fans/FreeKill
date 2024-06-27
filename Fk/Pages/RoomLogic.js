@@ -522,7 +522,7 @@ function doIndicate(from, tos) {
 
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
-  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
+  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !photo.deputyGeneral)) {
     return luatr("seat#" + photo.seatNumber);
   }
 
@@ -755,7 +755,7 @@ function updateSelectedTargets(playerid, selected) {
     roomScene.resetPrompt(); // update prompt due to selected_targets
     const prompt = lcall("ActiveSkillPrompt",
       dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
-      dashboard.pending_skill !== "" ? dashboard.pendings : [card],
+      dashboard.pending_skill !== "" ? dashboard.pendings : card,
       selected_targets);
     if (prompt !== "") {
       roomScene.setPrompt(Util.processPrompt(prompt));
