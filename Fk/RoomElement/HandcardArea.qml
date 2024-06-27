@@ -79,6 +79,18 @@ Item {
     adjustCards();
   }
 
+  function enableCards(cardIds)
+  {
+    let card, i;
+    cards.forEach(card => {
+      card.selectable = cardIds.includes(card.cid);
+      if (!card.selectable) {
+        card.selected = false;
+      }
+    });
+    updateCardPosition(true);
+  }
+
   function unselectAll() {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];

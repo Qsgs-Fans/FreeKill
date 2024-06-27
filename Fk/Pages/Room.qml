@@ -284,9 +284,16 @@ Item {
           endPhaseButton.visible = false;
           progress.visible = false;
 
-          // dashboard.disableAllCards();
-          // dashboard.disableSkills();
-          // dashboard.retractAllPiles();
+          dashboard.disableAllCards();
+          dashboard.disableSkills();
+          dashboard.retractAllPiles();
+
+          for (let i = 0; i < photoModel.count; i++) {
+            const item = photos.itemAt(i);
+            item.state = "normal";
+            item.selected = false;
+            item.selectable = false;
+          }
 
           if (popupBox.item != null) {
             popupBox.item.finished();
@@ -672,7 +679,7 @@ Item {
       Button {
         id: okButton
         text: luatr("OK")
-        onClicked: lcall("UpdateRequestUI", "Button", "Ok");
+        onClicked: lcall("UpdateRequestUI", "Button", "OK");
       }
 
       Button {
@@ -1266,7 +1273,7 @@ Item {
     const buttons = uiUpdate["Button"];
     buttons?.forEach(bdata => {
       switch (bdata.id) {
-        case "Ok":
+        case "OK":
           okButton.enabled = bdata.enabled;
           break;
         case "Cancel":
@@ -1274,6 +1281,7 @@ Item {
           break;
         case "End":
           endPhaseButton.enabled = bdata.enabled;
+          endPhaseButton.visible = bdata.enabled;
           break;
       }
     })

@@ -1770,7 +1770,7 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
       okCancel.visible = true;
       okButton.enabled = false;
       cancelButton.enabled = false;
-      endPhaseButton.visible = true;
+      // endPhaseButton.visible = true;
     }
     roomScene.applyChange(uiUpdate);
   }
