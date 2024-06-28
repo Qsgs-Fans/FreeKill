@@ -6,10 +6,7 @@ using namespace fkShell;
 
 #include "core/packman.h"
 #include "server/server.h"
-
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "server/shell.h"
-#endif
 
 #if defined(Q_OS_WIN32)
 #include "applink.c"
@@ -230,11 +227,8 @@ int main(int argc, char *argv[]) {
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-      // Linux 服务器的话可以启用一个 Shell 来操作服务器。
       auto shell = new Shell;
       shell->start();
-#endif
     }
     return app->exec();
   }
