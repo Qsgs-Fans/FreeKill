@@ -16,6 +16,7 @@ set(freekill_SRCS
   "server/room.cpp"
   "server/roomthread.cpp"
   "server/scheduler.cpp"
+  "server/shell.cpp"
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
@@ -67,7 +68,6 @@ else ()
   set(SQLITE3_LIB sqlite3)
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(READLINE_LIB readline)
-  list(APPEND freekill_SRCS "server/shell.cpp")
   set(GIT_LIB git2)
 endif ()
 

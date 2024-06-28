@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "server/shell.h"
 #include "core/packman.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "core/util.h"
+#ifndef Q_OS_WIN32
 #include <readline/history.h>
 #include <readline/readline.h>
 #include <signal.h>
+#else
+#include <cstdio>
+#include <cstring>
+#endif
 #include <QJsonDocument>
 
+#ifndef Q_OS_WIN32
 static void sigintHandler(int) {
   fprintf(stderr, "\n");
   rl_reset_line_state();
@@ -18,6 +23,7 @@ static void sigintHandler(int) {
   rl_crlf();
   rl_redisplay();
 }
+#endif
 
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
@@ -382,7 +388,9 @@ void Shell::resetPasswordCommand(QStringList &list) {
 
 Shell::Shell() {
   setObjectName("Shell");
+#ifndef Q_OS_WIN32
   signal(SIGINT, sigintHandler);
+#endif
 
   static const QHash<QString, void (Shell::*)(QStringList &)> handlers = {
     {"help", &Shell::helpCommand},
@@ -424,7 +432,23 @@ void Shell::run() {
   printf("[v%s] This is server cli. Enter \"help\" for usage hints.\n", FK_VERSION);
 
   while (true) {
+#ifndef Q_OS_WIN32
     char *bytes = readline("fk> ");
+    if (bytes && *bytes)
+      add_history(bytes);
+#else
+    char *bytes = NULL;
+    size_t bufsize = 512;
+    printf("\rfk> ");
+    int ret = getline(&bytes, &bufsize, stdin);
+    if (ret == -1 || ret == 0) {
+      free(bytes);
+      bytes = NULL;
+    } else {
+      bytes[strlen(bytes) - 1] = '\0'; // remove \n
+    }
+#endif
+
     if (!bytes || !strcmp(bytes, "quit")) {
       qInfo("Server is shutting down.");
       qApp->quit();
@@ -437,9 +461,6 @@ void Shell::run() {
       qFatal("Crashing."); // should dump core
       return;
     }
-
-    if (*bytes)
-      add_history(bytes);
 
     auto command = QString(bytes);
     auto command_list = command.split(' ');
@@ -456,5 +477,3 @@ void Shell::run() {
     free(bytes);
   }
 }
-
-#endif
