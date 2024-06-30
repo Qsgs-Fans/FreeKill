@@ -14,6 +14,7 @@ protected:
   virtual void run();
 
 private:
+  bool done = false;
   QHash<QString, void (Shell::*)(QStringList &)> handler_map;
   void helpCommand(QStringList &);
   void quitCommand(QStringList &);

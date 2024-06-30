@@ -444,6 +444,7 @@ void Shell::handleLine(char *bytes) {
   if (!bytes || !strncmp(bytes, "quit", 4)) {
     qInfo("Server is shutting down.");
     qApp->quit();
+    done = true;
     return;
   }
 
@@ -693,6 +694,7 @@ void Shell::run() {
     char *bytes = NULL;
     size_t bufsize = 512;
     printf("\rfk> ");
+    fflush(stdin);
     int ret = getline(&bytes, &bufsize, stdin);
     if (ret == -1 || ret == 0) {
       free(bytes);
@@ -702,5 +704,6 @@ void Shell::run() {
     }
 #endif
     handleLine(bytes);
+    if (done) break;
   }
 }
