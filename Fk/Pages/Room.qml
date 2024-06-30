@@ -292,7 +292,7 @@ Item {
             const item = photos.itemAt(i);
             item.state = "normal";
             item.selected = false;
-            item.selectable = false;
+            // item.selectable = false;
           }
 
           if (popupBox.item != null) {
@@ -752,53 +752,54 @@ Item {
     z: 999
   }
 
-  function activateSkill(skill_name, pressed) {
-    if (pressed) {
-      const data = lcall("GetInteractionOfSkill", skill_name);
-      if (data) {
-        lcall("SetInteractionDataOfSkill", skill_name, "null");
-        switch (data.type) {
-        case "combo":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.default_choice = data["default"];
-          skillInteraction.item.choices = data.choices;
-          skillInteraction.item.detailed = data.detailed;
-          skillInteraction.item.all_choices = data.all_choices;
-          skillInteraction.item.clicked();
-          break;
-        case "spin":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.from = data.from;
-          skillInteraction.item.to = data.to;
-          skillInteraction.item.clicked();
-          break;
-        case "custom":
-          skillInteraction.sourceComponent =
-            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.extra_data = data;
-          skillInteraction.item.clicked();
-          break;
-        default:
-          skillInteraction.sourceComponent = undefined;
-          break;
-        }
-      } else {
-        skillInteraction.sourceComponent = undefined;
-      }
+  function activateSkill(skill_name, selected) {
+    // if (pressed) {
+    //   const data = lcall("GetInteractionOfSkill", skill_name);
+    //   if (data) {
+    //     lcall("SetInteractionDataOfSkill", skill_name, "null");
+    //     switch (data.type) {
+    //     case "combo":
+    //       skillInteraction.sourceComponent =
+    //         Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+    //       skillInteraction.item.skill = skill_name;
+    //       skillInteraction.item.default_choice = data["default"];
+    //       skillInteraction.item.choices = data.choices;
+    //       skillInteraction.item.detailed = data.detailed;
+    //       skillInteraction.item.all_choices = data.all_choices;
+    //       skillInteraction.item.clicked();
+    //       break;
+    //     case "spin":
+    //       skillInteraction.sourceComponent =
+    //         Qt.createComponent("../SkillInteraction/SkillSpin.qml");
+    //       skillInteraction.item.skill = skill_name;
+    //       skillInteraction.item.from = data.from;
+    //       skillInteraction.item.to = data.to;
+    //       skillInteraction.item.clicked();
+    //       break;
+    //     case "custom":
+    //       skillInteraction.sourceComponent =
+    //         Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+    //       skillInteraction.item.skill = skill_name;
+    //       skillInteraction.item.extra_data = data;
+    //       skillInteraction.item.clicked();
+    //       break;
+    //     default:
+    //       skillInteraction.sourceComponent = undefined;
+    //       break;
+    //     }
+    //   } else {
+    //     skillInteraction.sourceComponent = undefined;
+    //   }
 
-      dashboard.startPending(skill_name);
-      cancelButton.enabled = true;
-    } else {
-      skillInteraction.sourceComponent = undefined;
-      if (roomScene.popupBox.item)
-        roomScene.popupBox.item.close();
-      Logic.doCancelButton();
-    }
+    //   dashboard.startPending(skill_name);
+    //   cancelButton.enabled = true;
+    // } else {
+    //   skillInteraction.sourceComponent = undefined;
+    //   if (roomScene.popupBox.item)
+    //     roomScene.popupBox.item.close();
+    //   Logic.doCancelButton();
+    // }
+    lcall("UpdateRequestUI", "SkillButton", skill_name, "click", { selected } );
   }
 
   Drawer {
@@ -1264,7 +1265,7 @@ Item {
     // 照片
     const pdatas = uiUpdate["Photo"];
     pdatas?.forEach(pdata => {
-      const photo = Logic.getPhoto(pdata.id);
+      const photo = getPhoto(pdata.id);
       photo.state = pdata.state;
       photo.selectable = pdata.enabled;
       photo.selected = pdata.selected;

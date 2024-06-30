@@ -437,33 +437,33 @@ RowLayout {
     }
   }
 
-  function enableSkills(cname, cardResponsing) {
-    if (cname) {
-      // if cname is presented, we are responding use or play.
-      for (let i = 0; i < skillButtons.count; i++) {
-        const item = skillButtons.itemAt(i);
-        if (disabledSkillNames.includes(item.orig)) {
-          item.enabled = false;
-          continue;
-        }
+  // function enableSkills(cname, cardResponsing) {
+  //   if (cname) {
+  //     // if cname is presented, we are responding use or play.
+  //     for (let i = 0; i < skillButtons.count; i++) {
+  //       const item = skillButtons.itemAt(i);
+  //       if (disabledSkillNames.includes(item.orig)) {
+  //         item.enabled = false;
+  //         continue;
+  //       }
 
-        const fitpattern = lcall("SkillFitPattern", item.orig, cname);
-        const canresp = lcall("SkillCanResponse", item.orig, cardResponsing);
-        item.enabled = fitpattern && canresp;
-      }
-      return;
-    }
-    for (let i = 0; i < skillButtons.count; i++) {
-      const item = skillButtons.itemAt(i);
-      if (disabledSkillNames.includes(item.orig)) {
-        item.enabled = false;
-        continue;
-      }
+  //       const fitpattern = lcall("SkillFitPattern", item.orig, cname);
+  //       const canresp = lcall("SkillCanResponse", item.orig, cardResponsing);
+  //       item.enabled = fitpattern && canresp;
+  //     }
+  //     return;
+  //   }
+  //   for (let i = 0; i < skillButtons.count; i++) {
+  //     const item = skillButtons.itemAt(i);
+  //     if (disabledSkillNames.includes(item.orig)) {
+  //       item.enabled = false;
+  //       continue;
+  //     }
 
-      item.enabled = lcall("ActiveCanUse", item.orig,
-                           JSON.stringify(roomScene.extra_data));
-    }
-  }
+  //     item.enabled = lcall("ActiveCanUse", item.orig,
+  //                          JSON.stringify(roomScene.extra_data));
+  //   }
+  // }
 
   function disableSkills() {
     disabledSkillNames = [];
@@ -513,5 +513,16 @@ RowLayout {
     // card - HandcardArea
     handcardAreaItem.applyChange(uiUpdate["CardItem"])
     // skillBtn - SkillArea
+    const skDatas = uiUpdate["SkillButton"]
+    skDatas?.forEach(skdata => {
+      for (let i = 0; i < skillButtons.count; i++) {
+        const skillBtn = skillButtons.itemAt(i);
+        if (skillBtn.orig == skdata.id) {
+          skillBtn.enabled = skdata.enabled;
+          skillBtn.pressed = skdata.selected;
+          break;
+        }
+      }
+    })
   }
 }
