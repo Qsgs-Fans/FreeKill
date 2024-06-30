@@ -21,6 +21,10 @@ typedef int LuaFunction;
 #define DESKTOP_BUILD
 #endif
 
+#if defined (Q_OS_LINUX) && !defined (Q_OS_ANDROID)
+#define FK_USE_READLINE
+#endif
+
 // You may define FK_SERVER_ONLY with cmake .. -D...
 #ifndef FK_SERVER_ONLY
 #include <QApplication>

@@ -8,10 +8,13 @@ class Shell: public QThread {
 public:
   Shell();
 
+  void handleLine(char *);
+
 protected:
   virtual void run();
 
 private:
+  bool done = false;
   QHash<QString, void (Shell::*)(QStringList &)> handler_map;
   void helpCommand(QStringList &);
   void quitCommand(QStringList &);
@@ -33,6 +36,20 @@ private:
   void unbanUuidCommand(QStringList &);
   void reloadConfCommand(QStringList &);
   void resetPasswordCommand(QStringList &);
+
+#ifdef FK_USE_READLINE
+private:
+  QString syntaxHighlight(char *);
+public:
+  void redisplay();
+  void moveCursorToStart();
+  void clearLine();
+  bool lineDone() const;
+  char *generateCommand(const char *, int);
+
+#endif
 };
+
+extern Shell *ShellInstance;
 
 #endif
