@@ -110,8 +110,13 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  fprintf(stderr, "%02d/%02d ", date.month(), date.day());
-  fprintf(stderr, "%s ",
+#ifndef Q_OS_WIN32
+  ShellInstance->clearLine();
+#else
+  printf("\r");
+#endif
+  printf("%02d/%02d ", date.month(), date.day());
+  printf("%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
   fprintf(file, "%02d/%02d ", date.month(), date.day());
   fprintf(file, "%s ",
@@ -122,26 +127,26 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "%s[D] %s\n", threadName.constData(),
+    printf("%s[D] %s\n", threadName.constData(),
             localMsg.constData());
     fprintf(file, "%s[D] %s\n", threadName.constData(),
             localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("I", Green).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "I", localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("W", Yellow, Bold).toUtf8().constData(),
             localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "W", localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "C", localMsg.constData());
@@ -153,12 +158,18 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #endif
     break;
   case QtFatalMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "E", localMsg.constData());
     break;
   }
+
+#ifndef Q_OS_WIN32
+  if (ShellInstance && !ShellInstance->lineDone()) {
+    ShellInstance->redisplay();
+  }
+#endif
 }
 
 // FreeKill 的程序主入口。整个程序就是从这里开始执行的。

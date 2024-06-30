@@ -8,6 +8,8 @@ class Shell: public QThread {
 public:
   Shell();
 
+  void handleLine(char *);
+
 protected:
   virtual void run();
 
@@ -33,6 +35,19 @@ private:
   void unbanUuidCommand(QStringList &);
   void reloadConfCommand(QStringList &);
   void resetPasswordCommand(QStringList &);
+
+#ifndef Q_OS_WIN32
+private:
+  QString syntaxHighlight(char *);
+public:
+  void redisplay();
+  void moveCursorToStart();
+  void clearLine();
+  bool lineDone() const;
+
+#endif
 };
+
+extern Shell *ShellInstance;
 
 #endif

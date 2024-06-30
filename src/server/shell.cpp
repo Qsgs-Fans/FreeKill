@@ -8,22 +8,17 @@
 #ifndef Q_OS_WIN32
 #include <readline/history.h>
 #include <readline/readline.h>
-#include <signal.h>
+//#include <signal.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 #else
 #include <cstdio>
 #include <cstring>
 #endif
 #include <QJsonDocument>
 
-#ifndef Q_OS_WIN32
-static void sigintHandler(int) {
-  fprintf(stderr, "\n");
-  rl_reset_line_state();
-  rl_replace_line("", 0);
-  rl_crlf();
-  rl_redisplay();
-}
-#endif
+Shell *ShellInstance = nullptr;
+static const char *prompt = "Fk> ";
 
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
@@ -386,10 +381,31 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 }
 
+/*
+#ifndef Q_OS_WIN32
+static void sigintHandler(int) {
+  rl_reset_line_state();
+  rl_replace_line("", 0);
+  rl_show_char('^');
+  rl_show_char('C');
+  rl_crlf();
+  rl_redisplay();
+}
+#endif
+*/
+
 Shell::Shell() {
+  ShellInstance = this;
   setObjectName("Shell");
 #ifndef Q_OS_WIN32
-  signal(SIGINT, sigintHandler);
+  // Setup readline here
+
+  // 别管Ctrl+C了
+  //rl_catch_signals = 1;
+  //rl_catch_sigwinch = 1;
+  //rl_persistent_signal_handlers = 1;
+  //rl_set_signals();
+  //signal(SIGINT, sigintHandler);
 #endif
 
   static const QHash<QString, void (Shell::*)(QStringList &)> handlers = {
@@ -421,6 +437,84 @@ Shell::Shell() {
   handler_map = handlers;
 }
 
+void Shell::handleLine(char *bytes) {
+  if (!bytes || !strcmp(bytes, "quit")) {
+    qInfo("Server is shutting down.");
+    qApp->quit();
+    return;
+  }
+
+  qInfo("Running command: \"%s\"", bytes);
+
+  if (!strcmp(bytes, "crash")) {
+    qFatal("Crashing."); // should dump core
+    return;
+  }
+
+#ifndef Q_OS_WIN32
+  add_history(bytes);
+#endif
+
+  auto command = QString(bytes);
+  auto command_list = command.split(' ');
+  auto func = handler_map[command_list.first()];
+  if (!func) {
+    auto bytes = command_list.first().toUtf8();
+    qWarning("Unknown command \"%s\". Type \"help\" for hints.",
+        bytes.constData());
+  } else {
+    command_list.removeFirst();
+    (this->*func)(command_list);
+  }
+
+  free(bytes);
+}
+
+#ifndef Q_OS_WIN32
+void Shell::redisplay() {
+  QString tmp = syntaxHighlight(rl_line_buffer);
+  rl_clear_visible_line();
+  rl_forced_update_display();
+
+  //moveCursorToStart();
+  //printf("\r%s%s", prompt, tmp.toUtf8().constData());
+}
+
+void Shell::moveCursorToStart() {
+  winsize sz;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz);
+  int lines = (rl_end + strlen(prompt) - 1) / sz.ws_col;
+  printf("\e[%d;%dH", sz.ws_row - lines, 0);
+}
+
+void Shell::clearLine() {
+  rl_clear_visible_line();
+}
+
+bool Shell::lineDone() const {
+  return (bool)rl_done;
+}
+
+// 最简单的语法高亮，若命令可执行就涂绿，否则涂红
+QString Shell::syntaxHighlight(char *bytes) {
+  QString ret(bytes);
+  auto command = ret.split(' ').first();
+  auto func = handler_map[command];
+  auto colored_command = command;
+  if (!func) {
+    colored_command = Color(command, fkShell::Red, fkShell::Bold);
+  } else {
+    colored_command = Color(command, fkShell::Green);
+  }
+  ret.replace(0, command.length(), colored_command);
+  return ret;
+}
+
+static void linehandler(char *bytes) {
+  ShellInstance->handleLine(bytes);
+}
+#endif
+
 void Shell::run() {
   printf("\rFreeKill, Copyright (C) 2022-2023, GNU GPL'd, by Notify et al.\n");
   printf("This program comes with ABSOLUTELY NO WARRANTY.\n");
@@ -429,13 +523,16 @@ void Shell::run() {
   printf("certain conditions; For more information visit "
          "http://www.gnu.org/licenses.\n\n");
 
-  printf("[v%s] This is server cli. Enter \"help\" for usage hints.\n", FK_VERSION);
+  printf("[v%s] Welcome to CLI. Enter \"help\" for usage hints.\n", FK_VERSION);
+
+#ifndef Q_OS_WIN32
+  rl_callback_handler_install(prompt, linehandler);
+#endif
 
   while (true) {
 #ifndef Q_OS_WIN32
-    char *bytes = readline("fk> ");
-    if (bytes && *bytes)
-      add_history(bytes);
+    rl_callback_read_char();
+    redisplay();
 #else
     char *bytes = NULL;
     size_t bufsize = 512;
@@ -447,33 +544,7 @@ void Shell::run() {
     } else {
       bytes[strlen(bytes) - 1] = '\0'; // remove \n
     }
+    handleLine(bytes);
 #endif
-
-    if (!bytes || !strcmp(bytes, "quit")) {
-      qInfo("Server is shutting down.");
-      qApp->quit();
-      return;
-    }
-
-    qInfo("Running command: \"%s\"", bytes);
-
-    if (!strcmp(bytes, "crash")) {
-      qFatal("Crashing."); // should dump core
-      return;
-    }
-
-    auto command = QString(bytes);
-    auto command_list = command.split(' ');
-    auto func = handler_map[command_list.first()];
-    if (!func) {
-      auto bytes = command_list.first().toUtf8();
-      qWarning("Unknown command \"%s\". Type \"help\" for hints.",
-               bytes.constData());
-    } else {
-      command_list.removeFirst();
-      (this->*func)(command_list);
-    }
-
-    free(bytes);
   }
 }
