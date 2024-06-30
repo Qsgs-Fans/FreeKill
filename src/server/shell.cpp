@@ -5,10 +5,10 @@
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "core/util.h"
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
 #include <readline/history.h>
 #include <readline/readline.h>
-//#include <signal.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #else
@@ -56,7 +56,7 @@ void Shell::helpCommand(QStringList &) {
   qInfo("===== Package commands =====");
   HELP_MSG("%s: Install a new package from <url>.", "install");
   HELP_MSG("%s: Remove a package.", "remove");
-  HELP_MSG("%s: List all packages.", "lspkg");
+  HELP_MSG("%s: List all packages.", "pkgs");
   HELP_MSG("%s: Enable a package.", "enable");
   HELP_MSG("%s: Disable a package.", "disable");
   HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade/u");
@@ -381,23 +381,21 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 }
 
-/*
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
 static void sigintHandler(int) {
   rl_reset_line_state();
   rl_replace_line("", 0);
-  rl_show_char('^');
-  rl_show_char('C');
   rl_crlf();
-  rl_redisplay();
+  rl_forced_update_display();
 }
+static char **fk_completion(const char *text, int start, int end);
+static char *null_completion(const char *, int) { return NULL; }
 #endif
-*/
 
 Shell::Shell() {
   ShellInstance = this;
   setObjectName("Shell");
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
   // Setup readline here
 
   // 别管Ctrl+C了
@@ -405,7 +403,9 @@ Shell::Shell() {
   //rl_catch_sigwinch = 1;
   //rl_persistent_signal_handlers = 1;
   //rl_set_signals();
-  //signal(SIGINT, sigintHandler);
+  signal(SIGINT, sigintHandler);
+  rl_attempted_completion_function = fk_completion;
+  rl_completion_entry_function = null_completion;
 #endif
 
   static const QHash<QString, void (Shell::*)(QStringList &)> handlers = {
@@ -417,7 +417,7 @@ Shell::Shell() {
     {"remove", &Shell::removeCommand},
     {"upgrade", &Shell::upgradeCommand},
     {"u", &Shell::upgradeCommand},
-    {"lspkg", &Shell::lspkgCommand},
+    {"pkgs", &Shell::lspkgCommand},
     {"enable", &Shell::enableCommand},
     {"disable", &Shell::disableCommand},
     {"kick", &Shell::kickCommand},
@@ -433,12 +433,15 @@ Shell::Shell() {
     {"r", &Shell::reloadConfCommand},
     {"resetpassword", &Shell::resetPasswordCommand},
     {"rp", &Shell::resetPasswordCommand},
+    // special command
+    {"quit", &Shell::helpCommand},
+    {"crash", &Shell::helpCommand},
   };
   handler_map = handlers;
 }
 
 void Shell::handleLine(char *bytes) {
-  if (!bytes || !strcmp(bytes, "quit")) {
+  if (!bytes || !strncmp(bytes, "quit", 4)) {
     qInfo("Server is shutting down.");
     qApp->quit();
     return;
@@ -446,12 +449,12 @@ void Shell::handleLine(char *bytes) {
 
   qInfo("Running command: \"%s\"", bytes);
 
-  if (!strcmp(bytes, "crash")) {
+  if (!strncmp(bytes, "crash", 5)) {
     qFatal("Crashing."); // should dump core
     return;
   }
 
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
   add_history(bytes);
 #endif
 
@@ -470,7 +473,7 @@ void Shell::handleLine(char *bytes) {
   free(bytes);
 }
 
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
 void Shell::redisplay() {
   QString tmp = syntaxHighlight(rl_line_buffer);
   rl_clear_visible_line();
@@ -513,10 +516,168 @@ QString Shell::syntaxHighlight(char *bytes) {
 static void linehandler(char *bytes) {
   ShellInstance->handleLine(bytes);
 }
+
+char *Shell::generateCommand(const char *text, int state) {
+  static int list_index, len;
+  static auto keys = handler_map.keys();
+  const char *name;
+
+  if (state == 0) {
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while (list_index < keys.length()) {
+    name = keys[list_index].toUtf8().constData();
+    ++list_index;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+static char *command_generator(const char *text, int state) {
+  return ShellInstance->generateCommand(text, state);
+}
+
+static char *repo_generator(const char *text, int state) {
+  static QStringList recommend_repos = {
+    "https://gitee.com/Qsgs-Fans/standard_ex",
+    "https://gitee.com/Qsgs-Fans/shzl",
+    "https://gitee.com/Qsgs-Fans/sp",
+    "https://gitee.com/Qsgs-Fans/yj",
+    "https://gitee.com/Qsgs-Fans/ol",
+    "https://gitee.com/Qsgs-Fans/mougong",
+    "https://gitee.com/Qsgs-Fans/mobile",
+    "https://gitee.com/Qsgs-Fans/tenyear",
+    "https://gitee.com/Qsgs-Fans/overseas",
+    "https://gitee.com/Qsgs-Fans/jsrg",
+    "https://gitee.com/Qsgs-Fans/qsgs",
+    "https://gitee.com/Qsgs-Fans/mini",
+    "https://gitee.com/Qsgs-Fans/gamemode",
+    "https://gitee.com/Qsgs-Fans/utility",
+    "https://gitee.com/Qsgs-Fans/freekill-core",
+    "https://gitee.com/Qsgs-Fans/offline",
+    "https://gitee.com/Qsgs-Fans/hegemony",
+    "https://gitee.com/Qsgs-Fans/lunar",
+  };
+  static int list_index, len;
+  const char *name;
+
+  if (state == 0) {
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while (list_index < recommend_repos.count()) {
+    name = recommend_repos[list_index].toUtf8().constData();
+    ++list_index;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+static char *package_generator(const char *text, int state) {
+  static QJsonArray arr;
+  static int list_index, len;
+  const char *name;
+
+  if (state == 0) {
+    arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while (list_index < arr.count()) {
+    name = arr[list_index].toObject().value("name").toString().toUtf8().constData();
+    ++list_index;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+}
+
+static char *user_generator(const char *text, int state) {
+  // TODO: userinfo表需要一个cache机制
+  static QJsonArray arr;
+  static int list_index, len;
+  const char *name;
+
+  if (state == 0) {
+    arr = SelectFromDatabase(ServerInstance->getDatabase(),
+        "SELECT name FROM userinfo;");
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while (list_index < arr.count()) {
+    name = arr[list_index].toObject().value("name").toString().toUtf8().constData();
+    ++list_index;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+};
+
+static char *banned_user_generator(const char *text, int state) {
+  // TODO: userinfo表需要一个cache机制
+  static QJsonArray arr;
+  static int list_index, len;
+  const char *name;
+
+  if (state == 0) {
+    arr = SelectFromDatabase(ServerInstance->getDatabase(),
+        "SELECT name FROM userinfo WHERE banned = 1;");
+    list_index = 0;
+    len = strlen(text);
+  }
+
+  while (list_index < arr.count()) {
+    name = arr[list_index].toObject().value("name").toString().toUtf8().constData();
+    ++list_index;
+    if (strncmp(name, text, len) == 0) {
+      return strdup(name);
+    }
+  }
+
+  return NULL;
+};
+
+static char **fk_completion(const char* text, int start, int end) {
+  char **matches = NULL;
+  if (start == 0) {
+    matches = rl_completion_matches(text, command_generator);
+  } else {
+    auto command_list = QString(rl_line_buffer).split(' ');
+    if (command_list.length() > 2) return NULL;
+    auto command = command_list[0];
+    if (command == "install") {
+      matches = rl_completion_matches(text, repo_generator);
+    } else if (command == "remove" || command == "upgrade"
+        || command == "enable" || command == "disable") {
+      matches = rl_completion_matches(text, package_generator);
+    } else if (command.startsWith("ban") || command == "resetpassword" || command == "rp") {
+      matches = rl_completion_matches(text, user_generator);
+    } else if (command.startsWith("unban")) {
+      matches = rl_completion_matches(text, banned_user_generator);
+    }
+  }
+
+  return matches;
+}
 #endif
 
 void Shell::run() {
-  printf("\rFreeKill, Copyright (C) 2022-2023, GNU GPL'd, by Notify et al.\n");
+  printf("\rFreeKill, Copyright (C) 2022-2024, GNU GPL'd, by Notify et al.\n");
   printf("This program comes with ABSOLUTELY NO WARRANTY.\n");
   printf(
       "This is free software, and you are welcome to redistribute it under\n");
@@ -525,14 +686,9 @@ void Shell::run() {
 
   printf("[v%s] Welcome to CLI. Enter \"help\" for usage hints.\n", FK_VERSION);
 
-#ifndef Q_OS_WIN32
-  rl_callback_handler_install(prompt, linehandler);
-#endif
-
   while (true) {
-#ifndef Q_OS_WIN32
-    rl_callback_read_char();
-    redisplay();
+#ifdef FK_USE_READLINE
+    char *bytes = readline(prompt);
 #else
     char *bytes = NULL;
     size_t bufsize = 512;
@@ -544,7 +700,7 @@ void Shell::run() {
     } else {
       bytes[strlen(bytes) - 1] = '\0'; // remove \n
     }
-    handleLine(bytes);
 #endif
+    handleLine(bytes);
   }
 }

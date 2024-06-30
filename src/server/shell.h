@@ -36,7 +36,7 @@ private:
   void reloadConfCommand(QStringList &);
   void resetPasswordCommand(QStringList &);
 
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
 private:
   QString syntaxHighlight(char *);
 public:
@@ -44,6 +44,7 @@ public:
   void moveCursorToStart();
   void clearLine();
   bool lineDone() const;
+  char *generateCommand(const char *, int);
 
 #endif
 };

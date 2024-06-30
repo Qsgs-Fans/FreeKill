@@ -110,7 +110,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
   ShellInstance->clearLine();
 #else
   printf("\r");
@@ -165,7 +165,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-#ifndef Q_OS_WIN32
+#ifdef FK_USE_READLINE
   if (ShellInstance && !ShellInstance->lineDone()) {
     ShellInstance->redisplay();
   }
