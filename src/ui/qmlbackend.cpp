@@ -210,7 +210,7 @@ void QmlBackend::startServer(ushort port) {
   }
 }
 
-void QmlBackend::joinServer(QString address) {
+void QmlBackend::joinServer(QString address, ushort port) {
   if (ClientInstance != nullptr)
     return;
   Client *client = new Client(this);
@@ -222,6 +222,7 @@ void QmlBackend::joinServer(QString address) {
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
   });
+  /*
   QString addr = "127.0.0.1";
   ushort port = 9527u;
 
@@ -232,7 +233,7 @@ void QmlBackend::joinServer(QString address) {
   } else {
     addr = address;
     // SRV解析查询
-    QDnsLookup* dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
+    QDnsLookup *dns = new QDnsLookup(QDnsLookup::SRV, "_freekill._tcp." + addr);
     QEventLoop eventLoop;
     // 阻塞的SRV解析查询回调
     connect(dns, &QDnsLookup::finished,[&eventLoop](void){
@@ -250,8 +251,9 @@ void QmlBackend::joinServer(QString address) {
       }
     }
   }
+  */
 
-  client->connectToHost(addr, port);
+  client->connectToHost(address, port);
 }
 
 void QmlBackend::quitLobby(bool close) {
@@ -325,6 +327,22 @@ QVariant QmlBackend::evalLuaExp(const QString &lua) {
   lua_pop(L, 1);
 
   return result;
+}
+
+QString QmlBackend::getPublicServerList() {
+  QFile conf("server-list.json");
+  // TODO: Download new JSON via http
+  if (!conf.exists()) {
+    conf.open(QIODevice::WriteOnly);
+    static const char *init_conf = "{}";
+    conf.write(init_conf);
+    conf.close();
+    return init_conf;
+  }
+  conf.open(QIODevice::ReadOnly);
+  auto ret = conf.readAll();
+  conf.close();
+  return ret;
 }
 
 QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
@@ -473,21 +491,14 @@ void QmlBackend::detectServer() {
       9527);
 }
 
-void QmlBackend::getServerInfo(const QString &address) {
-  QString addr = "127.0.0.1";
-  ushort port = 9527u;
+void QmlBackend::getServerInfo(const QString &address, ushort port) {
+  QString addr = address;
+  // ushort port = 9527u;
   static const char *ask_str = "fkGetDetail,";
-
-  if (address.contains(QChar(':'))) {
-    QStringList texts = address.split(QChar(':'));
-    addr = texts.value(0);
-    port = texts.value(1).toUShort();
-  } else {
-    addr = address;
-  }
 
   QByteArray ask(ask_str);
   ask.append(address.toLatin1());
+  ask.append(QString(",%1").arg(port).toUtf8());
 
   if (QHostAddress(addr).isNull()) { // 不是ip？考虑解析域名
     QHostInfo::lookupHost(addr, this, [=](const QHostInfo &host) {
