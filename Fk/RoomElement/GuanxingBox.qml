@@ -268,6 +268,10 @@ GraphicsBox {
           b++;
         pos = mapFromItem(pile, box.x, box.y);
         card.glow.visible = false;
+        if (movepos.length === 2 && result[j].length === areaCapacities[j] && movepos[0] === j && movepos[1] === b) {
+          card.glow.color = "gold";
+          card.glow.visible = true;
+        } else card.glow.color = "#88FFFFFF";
         card.origX = (movepos.length === 2 && movepos[0] === j && b > (movepos[1] - (is_exchange ? 0 : 1))) ? (pos.x + (b - 1) * spacing + 100) : (pos.x + b * spacing);
         card.origY = pos.y;
         card.opacity = 1;
@@ -284,9 +288,9 @@ GraphicsBox {
             card.selectable = !org_cards[0].includes(dragging_card.cid) || i === org_cards[0].indexOf(dragging_card.cid);
           else {
             if (result[0].includes(dragging_card))
-              card.selectable = result[0].length < areaCapacities[0] || !org_cards[0].includes(card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
+              card.selectable = result[0].length < areaCapacities[0] || !org_cards[0].includes(card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)];
             else
-              card.selectable = org_cards[0].includes(dragging_card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)]
+              card.selectable = org_cards[0].includes(dragging_card.cid) || card.cid === org_cards[0][result[0].indexOf(dragging_card)];
           }
         }
         card.draggable = (dragging_card === "") && (free_arrange || j > 0 || card.selectable);
