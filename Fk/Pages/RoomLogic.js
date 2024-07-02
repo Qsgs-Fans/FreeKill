@@ -1042,10 +1042,11 @@ callbacks["AskForSkillInvoke"] = (data) => {
   const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt)
                               : luatr("#AskForSkillInvoke").arg(luatr(skill));
-  roomScene.state = "replying";
-  roomScene.okCancel.visible = true;
-  roomScene.okButton.enabled = true;
-  roomScene.cancelButton.enabled = true;
+  // roomScene.state = "replying";
+  // roomScene.okCancel.visible = true;
+  // roomScene.okButton.enabled = true;
+  // roomScene.cancelButton.enabled = true;
+  roomScene.state = "active";
 }
 
 callbacks["AskForArrangeCards"] = (data) => {
@@ -1762,7 +1763,7 @@ callbacks["AskForLuckCard"] = (j) => {
 
 callbacks["UpdateRequestUI"] = (uiUpdate) => {
   console.log(JSON.stringify(uiUpdate));
-  if (uiUpdate._type == "RoomScene") {
+  if (uiUpdate._type == "RoomScene" || uiUpdate._type == "OKScene") {
     // 需要判断是不是第一次收到这样的数据，可以通过state判断
     // 因为是先收到Lua的数据，再切换状态的
     // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
