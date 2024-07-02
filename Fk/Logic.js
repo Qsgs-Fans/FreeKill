@@ -26,7 +26,8 @@ callbacks["ServerDetected"] = (j) => {
   }
   const item = serverDialog.item;
   if (item) {
-    toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+    // toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+    item.addLANServer(j.slice(7))
   }
 }
 

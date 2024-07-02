@@ -48,10 +48,17 @@ Item {
             text: {
               if (name) return name;
               let a = addr;
-              if (a.includes(":")) { // IPv6
+              let p = port;
+              if (p === 9527) p = 0;
+              if (a.includes(":") && p) { // IPv6
                 a = `[${a}]`;
               }
-              return `${a}:${port}`;
+              if (p) {
+                p = `:${p}`;
+              } else {
+                p = "";
+              }
+              return `${a}${p}`;
             }
             font.bold: true
             color: favicon ? "black" : "gray"
@@ -81,9 +88,9 @@ Item {
           font.pixelSize: 26
           color: favicon ? "black" : "gray"
         }
-      }
 
-      Item {}
+        Item {}
+      }
 
       TapHandler {
         onTapped: {
@@ -101,10 +108,55 @@ Item {
         Item { Layout.fillHeight: true }
         Image {
           Layout.preferredWidth: 24; Layout.preferredHeight: 23
+          source: SkinBank.MISC_DIR + "network_local"
+          visible: lan
+        }
+        Image {
+          Layout.preferredWidth: 24; Layout.preferredHeight: 23
           source: SkinBank.MISC_DIR + "favorite"
           visible: favorite
         }
       }
+    }
+  }
+
+  RowLayout {
+    id: serverListBar
+    height: childrenRect.height
+    width: serverList.width
+    Text {
+      text: "已收藏服务器与公共服务器列表"
+      font.pixelSize: 18
+      font.bold: true
+      x: 32; y: 8
+    }
+    Item { Layout.fillWidth: true }
+    Button {
+      text: qsTr("Refresh List")
+      enabled: !opTimer.running
+      onClicked: {
+        opTimer.start();
+        for (let i = 0; i < serverModel.count; i++) {
+          const item = serverModel.get(i);
+          if (!item.favorite && !item.lan) break;
+          item.delayBegin = (new Date).getTime();
+          Backend.getServerInfo(item.addr, item.port);
+        }
+      }
+    }
+
+    Button {
+      text: qsTr("Detect LAN")
+      enabled: !opTimer.running
+      onClicked: {
+        opTimer.start();
+        Backend.detectServer();
+      }
+    }
+
+    Button {
+      text: qsTr("Go Back")
+      onClicked: serverDialog.hide();
     }
   }
 
@@ -168,7 +220,7 @@ Item {
         usernameEdit.text && passwordEdit.text)
       onClicked: {
         const _addr = addressEdit.text;
-        const _port = portEdit.text;
+        const _port = parseInt(portEdit.text);
         const _username = usernameEdit.text;
         const _password = passwordEdit.text;
         config.screenName = _username;
@@ -176,19 +228,23 @@ Item {
         mainWindow.busy = true;
         config.serverAddr = _addr;
         config.serverPort = _port;
+        let name = selectedServer?.name;
+        if (_addr !== selectedServer?.addr || _port !== selectedServer?.port) {
+          name = "";
+        }
         addFavorite(config.serverAddr, config.serverPort, name,
           config.screenName, config.password);
         Backend.joinServer(_addr, _port);
       }
     }
-  }
-
-  Text {
-    id: serverListBar
-    text: "已收藏服务器与公共服务器列表"
-    font.pixelSize: 18
-    font.bold: true
-    x: 32; y: 8
+    Button {
+      text: "从收藏夹删除"
+      Layout.fillWidth: true
+      visible: !!(selectedServer?.favorite)
+      onClicked: {
+        removeFavorite(selectedServer.addr, selectedServer.port);
+      }
+    }
   }
 
   GridView {
@@ -210,57 +266,19 @@ Item {
     currentIndex: -1
   }
 
-  /*
-  GridLayout {
-    id: controlPanel
-    anchors.top: serverList.bottom
-    anchors.topMargin: 10
-    width: parent.width - 80
-    anchors.horizontalCenter: parent.horizontalCenter
-    height: joinButton.height * 2 + 10
-    columns: 3
-
-    Button {
-      id: joinButton
-      Layout.fillWidth: true
-      enabled: serverList.currentIndex !== -1
-      text: qsTr("Join Server")
-    }
-
-    Button {
-      Layout.fillWidth: true
-      text: qsTr("Refresh List")
-      enabled: !opTimer.running
-      onClicked: {
-        opTimer.start();
-        for (let i = 0; i < serverModel.count; i++) {
-          const item = serverModel.get(i);
-          Backend.getServerInfo(item.serverIP);
+  function addFavorite(addr, port, name, username, password) {
+    const newItem = config.addFavorite(addr, port, name, username, password);
+    if (!newItem) {
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === addr && s.port === port && s.favorite) {
+          s.name = name;
+          s.username = username;
+          s.password = password;
+          return;
         }
       }
     }
-
-    Button {
-      Layout.fillWidth: true
-      text: qsTr("Detect LAN")
-      enabled: !opTimer.running
-      onClicked: {
-        opTimer.start();
-        Backend.detectServer();
-      }
-    }
-
-    Button {
-      Layout.fillWidth: true
-      text: qsTr("Go Back")
-      onClicked: serverDialog.hide();
-    }
-  }
-  */
-
-  function addFavorite(addr, port, name, username, password) {
-    const newItem = config.addFavorite(addr, port, name, username, password);
-    if (!newItem) return;
     serverModel.insert(0, {
       addr, port, name, username, password,
       misMatchMsg: "",
@@ -271,57 +289,51 @@ Item {
       delayBegin: (new Date).getTime(),
       delay: -1,
       favorite: true,
+      lan: false,
     });
+    Backend.getServerInfo(addr, port);
   }
 
-  function addNewServer(addr, name, password) {
-    if (config.savedPassword[addr]) {
-      return;
+  function removeFavorite(addr, port) {
+    config.removeFavorite(addr, port);
+    for (let i = 0; i < serverModel.count; i++) {
+      const s = serverModel.get(i);
+      if (s.addr === addr && s.port === port && s.favorite) {
+        serverModel.remove(i);
+        serverList.currentIndex = -1;
+        return;
+      }
     }
+  }
 
-    config.savedPassword[addr] = {
-      username: name,
-      password: password,
-    };
-    config.saveConf();
-
-    serverModel.append({
-      serverIP: addr,
+  function addLANServer(addr) {
+    const port = 9527;
+    if (config.findFavorite(addr, port)) return;
+    for (let i = 0; i < serverModel.count; i++) {
+      const s = serverModel.get(i);
+      if (s.addr === addr && s.port === port && s.lan) {
+        s.delayBegin = (new Date).getTime();
+        Backend.getServerInfo(addr, port);
+        return;
+      }
+      if (!s.lan && !s.favorite) break;
+    }
+    serverModel.insert(0, {
+      addr, port,
+      name: "",
+      username: "",
+      password: "",
       misMatchMsg: "",
       description: qsTr("Server not up"),
-      online: "-",
-      capacity: "-",
-      favicon: "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png",
+      online: "?",
+      capacity: "??",
+      favicon: "",
+      delayBegin: (new Date).getTime(),
+      delay: -1,
+      favorite: false,
+      lan: true,
     });
-    Backend.getServerInfo(addr);
-  }
-
-  function editCurrentServer(name, password) {
-    const addr = serverModel.get(serverList.currentIndex).serverIP;
-    if (!config.savedPassword[addr]) {
-      return;
-    }
-
-    config.savedPassword[addr] = {
-      username: name,
-      password: password,
-      shorten_password: undefined,
-      key: undefined,
-    };
-    config.saveConf();
-  }
-
-  function deleteCurrentServer() {
-    const addr = serverModel.get(serverList.currentIndex).serverIP;
-    if (!config.savedPassword[addr]) {
-      return;
-    }
-
-    config.savedPassword[addr] = undefined;
-    config.saveConf();
-
-    serverModel.remove(serverList.currentIndex, 1);
-    serverList.currentIndex = -1;
+    Backend.getServerInfo(addr, port);
   }
 
   function updateServerDetail(addr, port, data) {
@@ -338,11 +350,11 @@ Item {
         }
 
         item.delay = ms - item.delayBegin;
-        item.delayBegin = ms;
         item.description = desc;
         item.favicon = icon;
         item.online = count.toString();
         item.capacity = capacity.toString();
+        return;
       }
     }
   }
@@ -368,6 +380,7 @@ Item {
         delayBegin: (new Date).getTime(),
         delay: -1,
         favorite: !!password,
+        lan: false,
       });
       Backend.getServerInfo(addr, port);
     }
