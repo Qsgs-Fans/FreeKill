@@ -26,7 +26,8 @@ callbacks["ServerDetected"] = (j) => {
   }
   const item = serverDialog.item;
   if (item) {
-    toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+    // toast.show(qsTr("Detected Server %1").arg(j.slice(7)), 10000);
+    item.addLANServer(j.slice(7))
   }
 }
 
@@ -38,7 +39,9 @@ callbacks["GetServerDetail"] = (j) => {
   }
   const item = serverDialog.item;
   if (item) {
-    item.updateServerDetail(addr, [ver, icon, desc, capacity, count]);
+    let [_addr, port] = addr.split(',');
+    port = parseInt(port);
+    item.updateServerDetail(_addr, port, [ver, icon, desc, capacity, count]);
   }
 }
 
@@ -46,18 +49,18 @@ callbacks["NetworkDelayTest"] = (jsonData) => {
   // jsonData: RSA pub key
   let cipherText;
   let aeskey;
-  const savedPw = config.savedPassword[config.serverAddr];
-  if (savedPw?.shorten_password === config.password) {
-    cipherText = config.savedPassword[config.serverAddr].password;
-    aeskey = config.savedPassword[config.serverAddr].key;
-    config.aeskey = aeskey ?? "";
-    Backend.setAESKey(aeskey);
-    if (Debugging)
-      console.log("use remembered password", config.password);
-  } else {
-    cipherText = Backend.pubEncrypt(jsonData, config.password);
-    config.aeskey = Backend.getAESKey();
-  }
+  // const savedPw = config.savedPassword[config.serverAddr];
+  // if (savedPw?.shorten_password === config.password) {
+  //   cipherText = config.savedPassword[config.serverAddr].password;
+  //   aeskey = config.savedPassword[config.serverAddr].key;
+  //   config.aeskey = aeskey ?? "";
+  //   Backend.setAESKey(aeskey);
+  //   if (Debugging)
+  //     console.log("use remembered password", config.password);
+  // } else {
+  cipherText = Backend.pubEncrypt(jsonData, config.password);
+  config.aeskey = Backend.getAESKey();
+  // }
   config.cipherText = cipherText;
   Backend.replyDelayTest(config.screenName, cipherText);
 }
@@ -130,12 +133,12 @@ callbacks["EnterLobby"] = (jsonData) => {
   if (mainStack.depth === 1) {
     // we enter the lobby successfully, so save password now.
     config.lastLoginServer = config.serverAddr;
-    config.savedPassword[config.serverAddr] = {
-      username: config.screenName,
-      password: config.cipherText,
-      key: config.aeskey,
-      shorten_password: config.cipherText.slice(0, 8)
-    }
+    // config.savedPassword[config.serverAddr] = {
+    //   username: config.screenName,
+    //   password: config.cipherText,
+    //   key: config.aeskey,
+    //   shorten_password: config.cipherText.slice(0, 8)
+    // }
     mainStack.push(lobby);
   } else {
     mainStack.pop();

@@ -3,10 +3,12 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk
 
 Item {
   id: root
   anchors.fill: parent
+  property var selectedServer: serverModel.get(serverList.currentIndex)
 
   Timer {
     id: opTimer
@@ -18,18 +20,24 @@ Item {
 
     Item {
       height: 64
-      width: serverList.width - 48
-      clip: true
+      width: serverList.width / 2 - 4
 
       RowLayout {
         anchors.fill: parent
         spacing: 16
 
+        Item {}
+
         Image {
-          Layout.preferredHeight: 60
-          Layout.preferredWidth: 60
+          Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+          Layout.preferredHeight: 56
+          Layout.preferredWidth: 56
           fillMode: Image.PreserveAspectFit
-          source: favicon
+          source: {
+            if (!favicon) return SkinBank.MISC_DIR + "server_icon";
+            if (favicon === "default") return AppPath + "/image/icon.png";
+            return favicon;
+          }
         }
 
         ColumnLayout {
@@ -37,22 +45,51 @@ Item {
           Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
-            text: serverIP + " " + misMatchMsg
+            text: {
+              if (name) return name;
+              let a = addr;
+              let p = port;
+              if (p === 9527) p = 0;
+              if (a.includes(":") && p) { // IPv6
+                a = `[${a}]`;
+              }
+              if (p) {
+                p = `:${p}`;
+              } else {
+                p = "";
+              }
+              return `${a}${p}`;
+            }
             font.bold: true
+            color: favicon ? "black" : "gray"
           }
 
           Text {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
-            text: description
+            text: delay + " ms " + misMatchMsg
             textFormat: TextEdit.RichText
+            color: {
+              if (delay < 0) {
+                return "gray";
+              } else if (delay >= 0 && delay < 100) {
+                return "green";
+              } else if (delay >= 100 && delay < 500) {
+                return "orange";
+              } else {
+                return "red";
+              }
+            }
           }
         }
 
         Text {
-          text: online + "/" + capacity
-          font.pixelSize: 30
+          text: online + "/<font size='1'>" + capacity + "</font>"
+          font.pixelSize: 26
+          color: favicon ? "black" : "gray"
         }
+
+        Item {}
       }
 
       TapHandler {
@@ -64,90 +101,51 @@ Item {
           }
         }
       }
+
+      ColumnLayout {
+        x: 6
+        height: parent.height
+        Item { Layout.fillHeight: true }
+        Image {
+          Layout.preferredWidth: 24; Layout.preferredHeight: 23
+          source: SkinBank.MISC_DIR + "network_local"
+          visible: lan
+        }
+        Image {
+          Layout.preferredWidth: 24; Layout.preferredHeight: 23
+          source: SkinBank.MISC_DIR + "favorite"
+          visible: favorite
+        }
+      }
     }
   }
 
-  ListView {
-    id: serverList
-    height: parent.height - controlPanel.height - 30
-    width: parent.width - 80
-    anchors.horizontalCenter: parent.horizontalCenter
-    anchors.top: parent.top
-    anchors.topMargin: 10
-    contentHeight: serverDelegate.height * count
-    model: ListModel {
-      id: serverModel
+  RowLayout {
+    id: serverListBar
+    height: childrenRect.height
+    width: serverList.width
+    Text {
+      text: "已收藏服务器与公共服务器列表"
+      font.pixelSize: 18
+      font.bold: true
+      x: 32; y: 8
     }
-    delegate: serverDelegate
-    ScrollBar.vertical: ScrollBar {}
-    clip: true
-    highlight: Rectangle {
-      color: "#AA9ABFEF"; radius: 5
-      // border.color: "black"; border.width: 2
-    }
-    // highlightMoveDuration: 0
-    currentIndex: -1
-  }
-
-  GridLayout {
-    id: controlPanel
-    anchors.top: serverList.bottom
-    anchors.topMargin: 10
-    width: parent.width - 80
-    anchors.horizontalCenter: parent.horizontalCenter
-    height: joinButton.height * 2 + 10
-    columns: 3
-
+    Item { Layout.fillWidth: true }
     Button {
-      id: joinButton
-      Layout.fillWidth: true
-      enabled: serverList.currentIndex !== -1
-      text: qsTr("Join Server")
-      onClicked: {
-        const item = serverModel.get(serverList.currentIndex);
-        const serverCfg = config.savedPassword[item.serverIP];
-        config.serverAddr = item.serverIP;
-        config.screenName = serverCfg.username;
-        config.password = serverCfg.shorten_password ?? serverCfg.password;
-        mainWindow.busy = true;
-        Backend.joinServer(item.serverIP);
-      }
-    }
-
-    Button {
-      Layout.fillWidth: true
-      text: qsTr("Add New Server")
-      onClicked: {
-        drawerLoader.sourceComponent = newServerComponent;
-        drawer.open();
-      }
-    }
-
-    Button {
-      Layout.fillWidth: true
-      enabled: serverList.currentIndex !== -1
-      text: qsTr("Edit Server")
-      onClicked: {
-        drawerLoader.sourceComponent = editServerComponent;
-        drawer.open();
-      }
-    }
-
-    Button {
-      Layout.fillWidth: true
       text: qsTr("Refresh List")
       enabled: !opTimer.running
       onClicked: {
         opTimer.start();
         for (let i = 0; i < serverModel.count; i++) {
           const item = serverModel.get(i);
-          Backend.getServerInfo(item.serverIP);
+          if (!item.favorite && !item.lan) break;
+          item.delayBegin = (new Date).getTime();
+          Backend.getServerInfo(item.addr, item.port);
         }
       }
     }
 
     Button {
-      Layout.fillWidth: true
       text: qsTr("Detect LAN")
       enabled: !opTimer.running
       onClicked: {
@@ -157,251 +155,234 @@ Item {
     }
 
     Button {
-      Layout.fillWidth: true
       text: qsTr("Go Back")
       onClicked: serverDialog.hide();
     }
   }
 
-  Component {
-    id: newServerComponent
-    ColumnLayout {
-      signal finished();
-
+  ColumnLayout {
+    id: serverPanel
+    anchors.right: parent.right
+    anchors.top: parent.top
+    anchors.margins: 8
+    height: parent.height - 16
+    width: parent.width * 0.3
+    TextField {
+      id: addressEdit
+      maximumLength: 64
+      Layout.fillWidth: true
+      placeholderText: "服务器地址"
+      text: selectedServer?.addr ?? ""
+    }
+    TextField {
+      id: portEdit
+      maximumLength: 6
+      Layout.fillWidth: true
+      placeholderText: "端口"
+      text: selectedServer?.port ?? ""
+    }
+    Flickable {
+      Layout.fillHeight: true
+      Layout.fillWidth: true
+      contentHeight: descText.height
+      clip: true
       Text {
-        text: qsTr("@NewServer")
-        font.pixelSize: 24
-        font.bold: true
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
+        id: descText
+        width: parent.width
+        text: selectedServer?.description ?? ""
+        wrapMode: Text.WrapAnywhere
+        font.pixelSize: 18
       }
-
-      Text {
-        text: qsTr("@NewServerHint")
-        font.pixelSize: 16
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-      }
-
+    }
+    RowLayout {
+      Layout.fillWidth: true
       TextField {
-        id: serverAddrEdit
-        Layout.fillWidth: true
-        placeholderText: qsTr("Server Addr")
-        text: ""
-      }
-
-      TextField {
-        id: screenNameEdit
+        id: usernameEdit
         maximumLength: 32
         Layout.fillWidth: true
-        placeholderText: qsTr("Username")
-        text: ""
+        placeholderText: "用户名"
+        text: selectedServer?.username ?? ""
       }
-
       TextField {
         id: passwordEdit
-        maximumLength: 64
+        maximumLength: 32
         Layout.fillWidth: true
-        placeholderText: qsTr("Password")
-        text: ""
-        echoMode: showPasswordCheck.checked ? TextInput.Normal
-                                            : TextInput.Password
+        placeholderText: "密码"
         passwordCharacter: "*"
+        echoMode: TextInput.Password
+        text: selectedServer?.password ?? ""
       }
-
-      CheckBox {
-        id: showPasswordCheck
-        text: qsTr("Show Password")
-      }
-
-      Button {
-        Layout.fillWidth: true
-        enabled: serverAddrEdit.text !== "" && screenNameEdit.text !== ""
-                 && passwordEdit.text !== ""
-        text: "OK"
-        onClicked: {
-          root.addNewServer(serverAddrEdit.text, screenNameEdit.text,
-                            passwordEdit.text);
-          finished();
+    }
+    Button {
+      text: "登录（首次登录自动注册）"
+      Layout.fillWidth: true
+      enabled: !!(addressEdit.text && portEdit.text &&
+        usernameEdit.text && passwordEdit.text)
+      onClicked: {
+        const _addr = addressEdit.text;
+        const _port = parseInt(portEdit.text);
+        const _username = usernameEdit.text;
+        const _password = passwordEdit.text;
+        config.screenName = _username;
+        config.password = _password;
+        mainWindow.busy = true;
+        config.serverAddr = _addr;
+        config.serverPort = _port;
+        let name = selectedServer?.name;
+        if (_addr !== selectedServer?.addr || _port !== selectedServer?.port) {
+          name = "";
         }
+        addFavorite(config.serverAddr, config.serverPort, name,
+          config.screenName, config.password);
+        Backend.joinServer(_addr, _port);
+      }
+    }
+    Button {
+      text: "从收藏夹删除"
+      Layout.fillWidth: true
+      visible: !!(selectedServer?.favorite)
+      onClicked: {
+        removeFavorite(selectedServer.addr, selectedServer.port);
       }
     }
   }
 
-  Component {
-    id: editServerComponent
-    ColumnLayout {
-      signal finished();
-
-      Text {
-        text: qsTr("@EditServer")
-        font.pixelSize: 24
-        font.bold: true
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-      }
-
-      Text {
-        text: qsTr("@EditServerHint")
-        font.pixelSize: 16
-        Layout.fillWidth: true
-        wrapMode: Text.WordWrap
-      }
-
-      TextField {
-        id: screenNameEdit
-        maximumLength: 32
-        Layout.fillWidth: true
-        placeholderText: qsTr("Username")
-        text: ""
-      }
-
-      TextField {
-        id: passwordEdit
-        maximumLength: 64
-        Layout.fillWidth: true
-        placeholderText: qsTr("Password")
-        text: ""
-        echoMode: showPasswordCheck.checked ? TextInput.Normal
-                                            : TextInput.Password
-        passwordCharacter: "*"
-      }
-
-      CheckBox {
-        id: showPasswordCheck
-        text: qsTr("Show Password")
-      }
-
-      Button {
-        Layout.fillWidth: true
-        enabled: screenNameEdit.text !== "" && passwordEdit.text !== ""
-        text: "OK"
-        onClicked: {
-          root.editCurrentServer(screenNameEdit.text, passwordEdit.text);
-          finished();
-        }
-      }
-
-      Button {
-        Layout.fillWidth: true
-        text: qsTr("Delete Server")
-        onClicked: {
-          root.deleteCurrentServer();
-          finished();
-        }
-      }
-    }
-  }
-
-  Drawer {
-    id: drawer
-    width: parent.width * 0.3 / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    dim: false
+  GridView {
+    id: serverList
+    height: parent.height - 16 - serverListBar.height
+    width: parent.width - 24 - serverPanel.width
+    anchors.top: serverListBar.bottom
+    anchors.left: parent.left
+    anchors.margins: 8
+    model: ListModel { id: serverModel }
+    delegate: serverDelegate
+    cellHeight: 64 + 8
+    cellWidth: serverList.width / 2
     clip: true
-    dragMargin: 0
-    scale: mainWindow.scale
-    transformOrigin: Item.TopLeft
-
-    Loader {
-      id: drawerLoader
-      anchors.fill: parent
-      anchors.margins: 16
-      onSourceChanged: {
-        if (item === null)
-          return;
-        item.finished.connect(() => {
-          sourceComponent = undefined;
-          drawer.close();
-        });
-      }
-      onSourceComponentChanged: sourceChanged();
+    highlight: Rectangle {
+      color: "#AA9ABFEF"; radius: 5
+      // border.color: "black"; border.width: 2
     }
+    currentIndex: -1
   }
 
-  function addNewServer(addr, name, password) {
-    if (config.savedPassword[addr]) {
-      return;
+  function addFavorite(addr, port, name, username, password) {
+    const newItem = config.addFavorite(addr, port, name, username, password);
+    if (!newItem) {
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === addr && s.port === port && s.favorite) {
+          s.name = name;
+          s.username = username;
+          s.password = password;
+          return;
+        }
+      }
     }
-
-    config.savedPassword[addr] = {
-      username: name,
-      password: password,
-    };
-    config.saveConf();
-
-    serverModel.append({
-      serverIP: addr,
+    serverModel.insert(0, {
+      addr, port, name, username, password,
       misMatchMsg: "",
       description: qsTr("Server not up"),
-      online: "-",
-      capacity: "-",
-      favicon: "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png",
+      online: "?",
+      capacity: "??",
+      favicon: "",
+      delayBegin: (new Date).getTime(),
+      delay: -1,
+      favorite: true,
+      lan: false,
     });
-    Backend.getServerInfo(addr);
+    Backend.getServerInfo(addr, port);
   }
 
-  function editCurrentServer(name, password) {
-    const addr = serverModel.get(serverList.currentIndex).serverIP;
-    if (!config.savedPassword[addr]) {
-      return;
+  function removeFavorite(addr, port) {
+    config.removeFavorite(addr, port);
+    for (let i = 0; i < serverModel.count; i++) {
+      const s = serverModel.get(i);
+      if (s.addr === addr && s.port === port && s.favorite) {
+        serverModel.remove(i);
+        serverList.currentIndex = -1;
+        return;
+      }
     }
-
-    config.savedPassword[addr] = {
-      username: name,
-      password: password,
-      shorten_password: undefined,
-      key: undefined,
-    };
-    config.saveConf();
   }
 
-  function deleteCurrentServer() {
-    const addr = serverModel.get(serverList.currentIndex).serverIP;
-    if (!config.savedPassword[addr]) {
-      return;
+  function addLANServer(addr) {
+    const port = 9527;
+    if (config.findFavorite(addr, port)) return;
+    for (let i = 0; i < serverModel.count; i++) {
+      const s = serverModel.get(i);
+      if (s.addr === addr && s.port === port && s.lan) {
+        s.delayBegin = (new Date).getTime();
+        Backend.getServerInfo(addr, port);
+        return;
+      }
+      if (!s.lan && !s.favorite) break;
     }
-
-    config.savedPassword[addr] = undefined;
-    config.saveConf();
-
-    serverModel.remove(serverList.currentIndex, 1);
-    serverList.currentIndex = -1;
+    serverModel.insert(0, {
+      addr, port,
+      name: "",
+      username: "",
+      password: "",
+      misMatchMsg: "",
+      description: qsTr("Server not up"),
+      online: "?",
+      capacity: "??",
+      favicon: "",
+      delayBegin: (new Date).getTime(),
+      delay: -1,
+      favorite: false,
+      lan: true,
+    });
+    Backend.getServerInfo(addr, port);
   }
 
-  function updateServerDetail(addr, data) {
+  function updateServerDetail(addr, port, data) {
     const [ver, icon, desc, capacity, count] = data;
     for (let i = 0; i < serverModel.count; i++) {
       const item = serverModel.get(i);
-      const ip = item.serverIP;
-      if (addr.endsWith(ip)) { // endsWith是为了应付IPv6格式的ip
+      const ip = item.addr;
+      const itemPort = item.port;
+      if (addr === ip && port == itemPort) {
+        const ms = (new Date).getTime();
         item.misMatchMsg = "";
         if (FkVersion !== ver) {
           item.misMatchMsg = qsTr("@VersionMismatch").arg(ver);
         }
 
+        item.delay = ms - item.delayBegin;
         item.description = desc;
         item.favicon = icon;
         item.online = count.toString();
         item.capacity = capacity.toString();
+        return;
       }
     }
   }
 
   function loadConfig() {
-    if (serverModel.count > 0) {
-      return;
-    }
-    for (let key in config.savedPassword) {
+    if (serverModel.count > 0) { return; }
+    const serverList = JSON.parse(Backend.getPublicServerList());
+    serverList.unshift(...config.favoriteServers);
+    for (const server of serverList) {
+      let { addr, port, name, username, password } = server;
+      name = name ?? "";
+      username = username ?? "";
+      password = password ?? "";
+      if (port === -1) break;
+      if (!password && config.findFavorite(addr, port)) continue;
       serverModel.append({
-        serverIP: key,
+        addr, port, name, username, password,
         misMatchMsg: "",
         description: qsTr("Server not up"),
-        online: "-",
-        capacity: "-",
+        online: "?",
+        capacity: "??",
         favicon: "",
+        delayBegin: (new Date).getTime(),
+        delay: -1,
+        favorite: !!password,
+        lan: false,
       });
-      Backend.getServerInfo(key);
+      Backend.getServerInfo(addr, port);
     }
   }
 }

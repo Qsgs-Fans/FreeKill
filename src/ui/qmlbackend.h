@@ -33,7 +33,7 @@ public:
   void setEngine(QQmlApplicationEngine *engine);
 
   Q_INVOKABLE void startServer(ushort port);
-  Q_INVOKABLE void joinServer(QString address);
+  Q_INVOKABLE void joinServer(QString address, ushort port = 9527);
 
   // Lobby
   Q_INVOKABLE void quitLobby(bool close = true);
@@ -44,6 +44,7 @@ public:
                                       QVariantList params);
   Q_INVOKABLE QVariant evalLuaExp(const QString &lua);
 
+  Q_INVOKABLE QString getPublicServerList();
   Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();
   Q_INVOKABLE QString loadTips();
@@ -62,7 +63,7 @@ public:
   Q_INVOKABLE void createModBackend();
 
   Q_INVOKABLE void detectServer();
-  Q_INVOKABLE void getServerInfo(const QString &addr);
+  Q_INVOKABLE void getServerInfo(const QString &addr, ushort port = 9527u);
 
   Q_INVOKABLE void showDialog(const QString &type, const QString &text,
       const QString &orig = QString());
