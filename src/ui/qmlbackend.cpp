@@ -350,7 +350,8 @@ QString QmlBackend::pubEncrypt(const QString &key, const QString &data) {
   // AES密钥和IV都是固定16字节的，所以可以放在开头
   auto key_bytes = key.toLatin1();
   BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
-  PEM_read_bio_RSAPublicKey(keyio, &rsa, NULL, NULL);
+  RSA_free(rsa);
+  rsa = PEM_read_bio_RSAPublicKey(keyio, NULL, NULL, NULL);
   BIO_free_all(keyio);
 
   auto data_bytes = data.toUtf8();

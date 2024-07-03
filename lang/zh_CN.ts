@@ -125,7 +125,7 @@
   </message>
   <message>
     <source>help: unknown password error</source>
-    <translation>提示：请使用“编辑服务器”删除该服务器，然后重新添加服务器并重新输入用户名和密码；若为单机启动则在“加入服务器”中选中服务器127.0.0.1，编辑服务器->删除，然后再单机启动</translation>
+    <translation>提示：请重启程序</translation>
   </message>
   <message>
     <source>help: you have been banned!</source>
@@ -141,7 +141,7 @@
   </message>
   <message>
     <source>help: username or password error</source>
-    <translation>提示：可能该用户名已被占用，或者密码错误，如果你是初次注册的话考虑用另一个用户名密码进行登入；若为单机启动则在“加入服务器”中选中服务器127.0.0.1，编辑服务器->删除，然后再单机启动</translation>
+    <translation>提示：可能该用户名已被占用，或者密码错误，如果你是初次注册的话考虑用另一个用户名密码进行登入</translation>
   </message>
   <message>
     <source>help: md5 fail</source>
@@ -348,7 +348,7 @@
   </message>
   <message>
     <source>unknown password error</source>
-    <translation>服务端解密密码时出现未知错误</translation>
+    <translation>未知登录错误</translation>
   </message>
   <message>
     <source>user name not in whitelist</source>
