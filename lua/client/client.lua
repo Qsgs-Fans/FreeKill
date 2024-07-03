@@ -28,6 +28,7 @@ local pattern_refresh_commands = {
 -- 无需进行JSON.parse，但可能传入JSON字符串的command
 local no_decode_commands = {
   "ErrorMsg",
+  "ErrorDlg",
   "Heartbeat",
 }
 

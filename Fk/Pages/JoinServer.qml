@@ -127,7 +127,6 @@ Item {
     Text {
       text: "已收藏服务器与公共服务器列表"
       font.pixelSize: 18
-      font.bold: true
       x: 32; y: 8
     }
     Item { Layout.fillWidth: true }

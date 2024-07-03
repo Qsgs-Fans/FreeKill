@@ -93,14 +93,16 @@ Flickable {
 
       MetroButton {
         text: {
-          const blocked = !config.blockedUsers.includes(screenName.text);
+          const name = extra_data?.photo?.screenName;
+          const blocked = !config.blockedUsers.includes(name);
           return blocked ? luatr("Block Chatter") : luatr("Unblock Chatter");
         }
         enabled: pid !== Self.id && pid > 0
         onClicked: {
-          const idx = config.blockedUsers.indexOf(screenName.text);
+          const name = extra_data?.photo?.screenName;
+          const idx = config.blockedUsers.indexOf(name);
           if (idx === -1) {
-            config.blockedUsers.push(screenName.text);
+            config.blockedUsers.push(name);
           } else {
             config.blockedUsers.splice(idx, 1);
           }

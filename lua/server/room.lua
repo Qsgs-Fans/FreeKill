@@ -1446,9 +1446,6 @@ end
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[], integer[]
 function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
-  if minCardNum < 1 or minTargetNum < 1 then
-    return {}, {}
-  end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
   pattern = pattern or "."
@@ -1467,8 +1464,6 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     min_c_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
-    -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
-    -- expand_pile = expandPile,
   }
   local _, ret = self:askForUseActiveSkill(player, "ex__choose_skill", prompt or "", cancelable, data, no_indicate)
   if ret then

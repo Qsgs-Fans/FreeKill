@@ -85,6 +85,7 @@ jobs:
         cd assets/res
         cp -r /etc/ssl/certs .
         cp /usr/share/ca-certificates/mozilla/* certs/
+        curl https://raw.githubusercontent.com/Qsgs-Fans/freekill-server-list/master/server-list.json > server-list.json
         cd ../..
         echo ${FKVER%)} > ../fk_ver
         ../genfkver.sh

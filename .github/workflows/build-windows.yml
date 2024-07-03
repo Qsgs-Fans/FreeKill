@@ -73,6 +73,7 @@ jobs:
         cp -r ../.git .
         git restore .
         rm -rf .git* android doc lib lang translations src
+        curl https://raw.githubusercontent.com/Qsgs-Fans/freekill-server-list/master/server-list.json > server-list.json
         cd ..
         cp lib/win/* FreeKill-release
         cp build/zh_CN.qm FreeKill-release
