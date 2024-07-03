@@ -14,6 +14,7 @@
 #else
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #endif
 #include <QJsonDocument>
 
@@ -691,16 +692,15 @@ void Shell::run() {
 #ifdef FK_USE_READLINE
     char *bytes = readline(prompt);
 #else
-    char *bytes = NULL;
-    size_t bufsize = 512;
+    char *bytes;
     printf("\rfk> ");
     fflush(stdin);
-    int ret = getline(&bytes, &bufsize, stdin);
-    if (ret == -1 || ret == 0) {
-      free(bytes);
+    std::string str;
+    std::getline(std::cin, str);
+    if (std::cin.fail()) {
       bytes = NULL;
     } else {
-      bytes[strlen(bytes) - 1] = '\0'; // remove \n
+      bytes = strdup(str.c_str());
     }
 #endif
     handleLine(bytes);
