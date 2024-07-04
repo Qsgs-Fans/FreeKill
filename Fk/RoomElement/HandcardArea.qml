@@ -106,6 +106,7 @@ Item {
         if (card.cid === cdata.id) {
           card.selectable = cdata.enabled;
           card.selected = cdata.selected;
+          updateCardPosition(true);
           break;
         }
       }
