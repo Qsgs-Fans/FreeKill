@@ -1433,12 +1433,13 @@ callbacks["AskForUseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = false;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.state = "active";
+  // roomScene.responding_card = pattern;
+  // roomScene.respond_play = false;
+  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
+  // roomScene.state = "responding";
+  // okButton.enabled = false;
+  // cancelButton.enabled = true;
 }
 
 callbacks["AskForResponseCard"] = (data) => {
@@ -1454,12 +1455,13 @@ callbacks["AskForResponseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = true;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.state = "active";
+  // roomScene.responding_card = pattern;
+  // roomScene.respond_play = true;
+  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
+  // roomScene.state = "responding";
+  // okButton.enabled = false;
+  // cancelButton.enabled = true;
 }
 
 callbacks["WaitForNullification"] = () => {
