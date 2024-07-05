@@ -104,6 +104,10 @@ Item {
         skillDetail.open();
       }
     }
+
+    onLongPressed: {
+      skillDetail.open();
+    }
   }
 
   Popup {
