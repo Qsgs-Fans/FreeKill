@@ -672,7 +672,7 @@ Item {
                  && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
-          Logic.doCancelButton();
+          // Logic.doCancelButton();
         }
       }
 
@@ -1013,21 +1013,21 @@ Item {
     }
   }
 
-  Shortcut {
-    sequence: "Return"
-    enabled: okButton.enabled
-    onActivated: Logic.doOkButton();
-  }
+  // Shortcut {
+  //   sequence: "Return"
+  //   enabled: okButton.enabled
+  //   onActivated: Logic.doOkButton();
+  // }
 
-  Shortcut {
-    sequence: "Space"
-    enabled: cancelButton.enabled || endPhaseButton.visible;
-    onActivated: if (cancelButton.enabled) {
-      Logic.doCancelButton();
-    } else {
-      Logic.replyToServer("");
-    }
-  }
+  // Shortcut {
+  //   sequence: "Space"
+  //   enabled: cancelButton.enabled || endPhaseButton.visible;
+  //   onActivated: if (cancelButton.enabled) {
+  //     Logic.doCancelButton();
+  //   } else {
+  //     Logic.replyToServer("");
+  //   }
+  // }
 
   Shortcut {
     sequence: "Escape"

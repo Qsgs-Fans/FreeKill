@@ -134,37 +134,37 @@ function arrangePhotos() {
   }
 }
 
-function doOkButton() {
-  if (roomScene.state === "playing" || roomScene.state === "responding") {
-    const reply = JSON.stringify({
-      card: dashboard.getSelectedCard(),
-      targets: selected_targets,
-      special_skill: roomScene.getCurrentCardUseMethod(),
-      interaction_data: roomScene.skillInteraction.item ?
-                        roomScene.skillInteraction.item.answer : undefined,
-    });
-    replyToServer(reply);
-    return;
-  }
-  if (roomScene.extra_data.luckCard) {
-    okButton.enabled = false;
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", true
-    ].join(","));
+// function doOkButton() {
+//   if (roomScene.state === "playing" || roomScene.state === "responding") {
+//     const reply = JSON.stringify({
+//       card: dashboard.getSelectedCard(),
+//       targets: selected_targets,
+//       special_skill: roomScene.getCurrentCardUseMethod(),
+//       interaction_data: roomScene.skillInteraction.item ?
+//                         roomScene.skillInteraction.item.answer : undefined,
+//     });
+//     replyToServer(reply);
+//     return;
+//   }
+//   if (roomScene.extra_data.luckCard) {
+//     okButton.enabled = false;
+//     ClientInstance.notifyServer("PushRequest", [
+//       "luckcard", true
+//     ].join(","));
 
-    if (roomScene.extra_data.time === 1) {
-      roomScene.state = "notactive";
-    }
+//     if (roomScene.extra_data.time === 1) {
+//       roomScene.state = "notactive";
+//     }
 
-    return;
-  }
-  replyToServer("1");
-}
+//     return;
+//   }
+//   replyToServer("1");
+// }
 
-let _is_canceling = false;
-function doCancelButton() {
-  if (_is_canceling) return;
-  _is_canceling = true;
+// let _is_canceling = false;
+// function doCancelButton() {
+//   if (_is_canceling) return;
+//   _is_canceling = true;
 
   // if (roomScene.state === "playing") {
   //   dashboard.stopPending();
@@ -191,19 +191,19 @@ function doCancelButton() {
   //   return;
   // }
 
-  if (roomScene.extra_data.luckCard) {
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", false
-    ].join(","));
-    roomScene.state = "notactive";
+  //   if (roomScene.extra_data.luckCard) {
+  //     ClientInstance.notifyServer("PushRequest", [
+  //       "luckcard", false
+  //     ].join(","));
+  //     roomScene.state = "notactive";
 
-    _is_canceling = false;
-    return;
-  }
+  //     _is_canceling = false;
+  //     return;
+  //   }
 
-  replyToServer("__cancel");
-  _is_canceling = false;
-}
+  //   replyToServer("__cancel");
+  //   _is_canceling = false;
+  // }
 
 function replyToServer(jsonData) {
   ClientInstance.replyToServer("", jsonData);
@@ -1420,7 +1420,7 @@ callbacks["AskForUseCard"] = (data) => {
   if (extra_data != null) {
     if (extra_data.effectTo !== Self.id &&
         roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
-      doCancelButton();
+      // doCancelButton();
       return;
     } else {
       roomScene.extra_data = extra_data;
