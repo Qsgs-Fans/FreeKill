@@ -1127,6 +1127,8 @@ Item {
     const general = luatr(data.general);
 
     if (msg.startsWith("!")) {
+      if (config.hidePresents)
+        return true;
       const splited = msg.split(":");
       const type = splited[0].slice(1);
       switch (type) {

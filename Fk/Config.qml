@@ -26,6 +26,7 @@ QtObject {
   property bool hideUseless
   property bool hideObserverChatter
   property bool rotateTableCard
+  property bool hidePresents
   // property list<string> disabledGenerals: []
   // property list<var> disableGeneralSchemes: []
   // property int disableSchemeIdx: 0
@@ -133,6 +134,7 @@ QtObject {
     hideUseless = conf.hideUseless ?? false;
     hideObserverChatter = conf.hideObserverChatter ?? false;
     rotateTableCard = conf.rotateTableCard ?? false;
+    hidePresents = conf.hidePresents ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     firstRun = conf.firstRun ?? true;
@@ -173,6 +175,7 @@ QtObject {
     conf.hideUseless = hideUseless;
     conf.hideObserverChatter = hideObserverChatter;
     conf.rotateTableCard = rotateTableCard;
+    conf.hidePresents = hidePresents;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.firstRun = firstRun;
