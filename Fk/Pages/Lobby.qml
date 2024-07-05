@@ -35,6 +35,7 @@ Item {
         text: roomName
         // color: outdated ? "gray" : "black"
         font.pixelSize: 16
+        font.strikeout: outdated
         // elide: Label.ElideRight
         anchors.top: parent.top
         anchors.left: parent.left
@@ -44,6 +45,7 @@ Item {
       Text {
         id: roomIdText
         text: luatr(gameMode) + ' #' + roomId
+        font.strikeout: outdated
         anchors.top: roomNameText.bottom
         anchors.left: roomNameText.left
       }
