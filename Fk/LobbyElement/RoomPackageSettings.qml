@@ -22,9 +22,11 @@ Flickable {
     anchors.top: parent.top
     anchors.topMargin: 8
 
+    /* 
     Switch {
       text: luatr("Disable Extension")
     }
+    */
 
     RowLayout {
       Text {
