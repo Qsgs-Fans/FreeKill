@@ -228,6 +228,10 @@
     <translation>编辑服务器</translation>
   </message>
   <message>
+    <source>List of Favorites and Public Servers</source>
+    <translation>已收藏服务器与公共服务器列表</translation>
+  </message>
+  <message>
     <source>Refresh List</source>
     <translation>刷新列表</translation>
   </message>
@@ -239,6 +243,15 @@
     <source>Go Back</source>
     <translation>返回</translation>
   </message>
+  <message>
+    <source>Server Address</source>
+    <translation>服务器地址</translation>
+  </message>
+  <message>
+    <source>Port</source>
+    <translation>端口</translation>
+  </message>
+  
 
   <message>
     <source>@VersionMismatch</source>
@@ -285,6 +298,14 @@
   <message>
     <source>Delete Server</source>
     <translation>删除服务器</translation>
+  </message>
+  <message>
+    <source>LOGIN (Auto-registration)</source>
+    <translation>登录（首次登录自动注册）</translation>
+  </message>
+  <message>
+    <source>Remove from Favorites</source>
+    <translation>从收藏夹删除</translation>
   </message>
 </context>
 
@@ -549,8 +570,7 @@
     <source>tutor_msg_3</source>
     <translation>新月杀本身默认只含标准包！&lt;br>
         想要体验更多武将，就要通过联机获取！&lt;br>
-    在主界面点击“加入服务器” -> 添加服务器。&lt;br>
-        （目前推荐的服务器IP是175.178.66.93）</translation>
+    在主界面点击“加入服务器” -> 进入公共服务器或添加新服务器。</translation>
   </message>
   <message>
     <source>tutor_msg_4</source>
@@ -561,8 +581,8 @@
   </message>
   <message>
     <source>tutor_msg_5</source>
-    <translation>更多指引可以去查阅下载链接附送的pdf。
-        这些pdf都是由开发者们编写的，不仅能让你快速掌握游戏的深入玩法，
+    <translation>更多指引可以去查阅新月之书：&lt;a href="https://fkbook-all-in-one.readthedocs.io">https://fkbook-all-in-one.readthedocs.io&lt;/a>&lt;br>。
+        这些文档都是由开发者们编写的，不仅能让你快速掌握游戏的深入玩法，
     还可以告诉你关于开设私服、制作拓展之类的知识。</translation>
   </message>
   <message>
