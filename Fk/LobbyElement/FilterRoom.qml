@@ -198,7 +198,7 @@ Flickable {
     }
 
     // capacity
-    /*     
+    /*
     Column {
       ButtonGroup {
         id: childCapacity
@@ -231,8 +231,6 @@ Flickable {
     }
     */
 
-    
-
     Component.onCompleted: {
       const mode_data = lcall("GetGameModes");
       mode_data.forEach(d => {
@@ -260,7 +258,7 @@ Flickable {
     f.hasPassword = parentPwBox.checkState === Qt.PartiallyChecked ? (pwStates.itemAt(0).checked ? 0 : 1) : 2;
 
     // capacity
-    /* 
+    /*
     let capacityList = [];
     if (parentCapacityBox.checkState === Qt.PartiallyChecked) {
       for (let index = 0; index < capacityStates.count; index++) {
