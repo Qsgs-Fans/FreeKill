@@ -102,6 +102,32 @@ Item {
         }
       }
 
+      ToolButton {
+        x: parent.width - 32
+        y: parent.height / 2 - 8
+        Layout.preferredWidth: 32
+        Layout.preferredHeight: 32
+        visible: !!favorite
+        text: "···"
+        onClicked: {
+          if (menu.visible){
+            menu.close();
+          } else {
+            menu.open();
+          }
+        }
+
+        Menu {
+          id: menu
+          MenuItem {
+            text: qsTr("Remove from Favorites")
+            onTriggered: {
+              removeFavorite(addr, port);
+            }
+          }
+        }
+      }
+
       ColumnLayout {
         x: 6
         height: parent.height
@@ -125,7 +151,7 @@ Item {
     height: childrenRect.height
     width: serverList.width
     Text {
-      text: "已收藏服务器与公共服务器列表"
+      text: qsTr("List of Favorites and Public Servers")
       font.pixelSize: 18
       x: 32; y: 8
     }
@@ -170,14 +196,14 @@ Item {
       id: addressEdit
       maximumLength: 64
       Layout.fillWidth: true
-      placeholderText: "服务器地址"
+      placeholderText: qsTr("Server Address")
       text: selectedServer?.addr ?? ""
     }
     TextField {
       id: portEdit
       maximumLength: 6
       Layout.fillWidth: true
-      placeholderText: "端口"
+      placeholderText: qsTr("Port")
       text: selectedServer?.port ?? ""
     }
     Flickable {
@@ -199,21 +225,21 @@ Item {
         id: usernameEdit
         maximumLength: 32
         Layout.fillWidth: true
-        placeholderText: "用户名"
+        placeholderText: qsTr("Username")
         text: selectedServer?.username ?? ""
       }
       TextField {
         id: passwordEdit
         maximumLength: 32
         Layout.fillWidth: true
-        placeholderText: "密码"
+        placeholderText: qsTr("Password")
         passwordCharacter: "*"
         echoMode: TextInput.Password
         text: selectedServer?.password ?? ""
       }
     }
     Button {
-      text: "登录（首次登录自动注册）"
+      text: qsTr("LOGIN (Auto-registration)")
       Layout.fillWidth: true
       enabled: !!(addressEdit.text && portEdit.text &&
         usernameEdit.text && passwordEdit.text)
@@ -237,9 +263,9 @@ Item {
       }
     }
     Button {
-      text: "从收藏夹删除"
+      text: qsTr("Remove from Favorites")
       Layout.fillWidth: true
-      visible: !!(selectedServer?.favorite)
+      visible: false // !!(selectedServer?.favorite) // 暂时禁用
       onClicked: {
         removeFavorite(selectedServer.addr, selectedServer.port);
       }

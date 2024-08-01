@@ -11,6 +11,7 @@ Item {
   property string orig: ""
   property bool pressed: false
   property bool prelighted: false
+  property bool locked: false
 
   onEnabledChanged: {
     if (!enabled)
@@ -56,6 +57,14 @@ Item {
     font.bold: true
   }
 
+  Image {
+    source: AppPath + "/image/button/skill/locked.png"
+    scale: 0.8
+    z: 1
+    visible: root.locked
+    anchors.centerIn: parent
+  }
+
   Glow {
     id: glowItem
     source: skill
@@ -94,6 +103,10 @@ Item {
       } else if (btn === Qt.RightButton) {
         skillDetail.open();
       }
+    }
+
+    onLongPressed: {
+      skillDetail.open();
     }
   }
 

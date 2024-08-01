@@ -933,6 +933,16 @@ callbacks["UpdateCard"] = (j) => {
   card.setData(lcall("GetCardData", id));
 }
 
+callbacks["UpdateSkill"] = (j) => {
+  const all_skills = [roomScene.dashboard.skillButtons, roomScene.dashboard.notActiveButtons];
+  for (const skills of all_skills) {
+    for (let i = 0; i < skills.count; i++) {
+      const item = skills.itemAt(i);
+      item.locked = lcall("GetSkillLocked", item.orig);
+    }
+  }
+}
+
 callbacks["StartGame"] = (jsonData) => {
   roomScene.isStarted = true;
 

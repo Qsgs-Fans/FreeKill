@@ -7,6 +7,7 @@ Flickable {
   id: root
   property alias skill_buttons: skill_buttons
   property alias prelight_buttons: prelight_buttons
+  property alias not_active_buttons: not_active_buttons
 
   clip: true
   contentWidth: panel.width
@@ -91,6 +92,7 @@ Flickable {
       columnSpacing: 2
       rowSpacing: 2
       Repeater {
+        id: not_active_buttons
         model: not_active_skills
         onItemAdded: parent.forceLayout()
         SkillButton {

@@ -20,12 +20,14 @@ QtObject {
   property string preferedMode
   property int preferedPlayerNum
   property int preferredGeneralNum
+  property var preferredFilter
   property string ladyImg
   property real bgmVolume
   property bool disableMsgAudio
   property bool hideUseless
   property bool hideObserverChatter
   property bool rotateTableCard
+  property bool hidePresents
   // property list<string> disabledGenerals: []
   // property list<var> disableGeneralSchemes: []
   // property int disableSchemeIdx: 0
@@ -126,6 +128,13 @@ QtObject {
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;
     preferredGeneralNum = conf.preferredGeneralNum ?? 3;
+    preferredFilter = conf.preferredFilter ?? {
+      name: "", // 房间名
+      id: "", // 房间ID
+      modes : [], // 游戏模式
+      full : 2, // 满员，0满，1未满，2不限
+      hasPassword : 2, // 密码，0有，1无，2不限
+    };
     ladyImg = conf.ladyImg ?? AppPath + "/image/lady";
     Backend.volume = conf.effectVolume ?? 50.;
     bgmVolume = conf.bgmVolume ?? 50.;
@@ -133,6 +142,7 @@ QtObject {
     hideUseless = conf.hideUseless ?? false;
     hideObserverChatter = conf.hideObserverChatter ?? false;
     rotateTableCard = conf.rotateTableCard ?? false;
+    hidePresents = conf.hidePresents ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     firstRun = conf.firstRun ?? true;
@@ -165,6 +175,7 @@ QtObject {
     // conf.disabledPack = disabledPack;
     conf.preferedMode = preferedMode;
     conf.preferedPlayerNum = preferedPlayerNum;
+    conf.preferredFilter = preferredFilter;
     conf.ladyImg = ladyImg;
     conf.preferredGeneralNum = preferredGeneralNum;
     conf.effectVolume = Backend.volume;
@@ -173,6 +184,7 @@ QtObject {
     conf.hideUseless = hideUseless;
     conf.hideObserverChatter = hideObserverChatter;
     conf.rotateTableCard = rotateTableCard;
+    conf.hidePresents = hidePresents;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.firstRun = firstRun;
