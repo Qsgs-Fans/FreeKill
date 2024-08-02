@@ -51,9 +51,21 @@ Item {
     topPadding: 5
     id: skill
     font.family: fontLi2.name
-    font.pixelSize: Math.max(26 - text.length, 18)
+    font.pixelSize: sizefit(text.length)
     visible: false
     font.bold: true
+  }
+
+    function sizefit(len)
+  {
+    if (len<4) {  
+        return Math.max(26 - len, 18);  
+      } else if (len<5) {  
+        return 15; 
+      } else {  
+        return 13; 
+      } 
+
   }
 
   Glow {
