@@ -566,6 +566,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     anchors.topMargin: 2
+    width: parent.width - role.width - hp.width - 20
 
     font.pixelSize: 16
     text: {
@@ -574,7 +575,8 @@ Item {
         ret = luatr("<Blocked> ") + ret;
       return ret;
     }
-
+    elide: Text.ElideMiddle
+    horizontalAlignment: Qt.AlignHCenter
     glow.radius: 8
   }
 
