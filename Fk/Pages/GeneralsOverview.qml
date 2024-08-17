@@ -9,6 +9,7 @@ import "RoomLogic.js" as RoomLogic
 
 Item {
   id: root
+  objectName: "GeneralsOverview"
 
   property bool loaded: false
   property int stat: 0 // 0=normal 1=banPkg 2=banChara
@@ -165,6 +166,7 @@ Item {
           return luatr("BanGeneral");
         }
         enabled: stat !== 1
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           if (stat === 0) {
             stat = 2;
@@ -182,6 +184,7 @@ Item {
           return luatr("BanPackage");
         }
         enabled: stat !== 2
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           if (stat === 0) {
             stat = 1;
@@ -194,6 +197,7 @@ Item {
       ToolButton {
         text: luatr("Quit")
         font.pixelSize: 20
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           mainStack.pop();
           config.saveConf();
@@ -586,6 +590,7 @@ Item {
 
           Button {
             text: luatr("Set as Avatar")
+            visible: mainStack.currentItem.objectName === "GeneralsOverview"
             enabled: detailGeneralCard.name !== "" && !opTimer.running
               && Self.avatar !== detailGeneralCard.name
             onClicked: {

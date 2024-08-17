@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 
 Item {
+  objectName: "ModesOverview"
   RowLayout {
     anchors.fill: parent
     spacing: 10
@@ -30,6 +31,7 @@ Item {
         TapHandler {
           onTapped: {
             listView.currentIndex = index;
+            detailFlickable.contentY = 0; // 重置滚动条
           }
         }
       }
@@ -40,6 +42,7 @@ Item {
       Layout.fillHeight: true
       color: "#88EEEEEE"
       Flickable {
+        id: detailFlickable
         width: parent.width - 16
         height: parent.height - 16
         anchors.centerIn: parent
@@ -62,6 +65,7 @@ Item {
   Button {
     text: luatr("Quit")
     anchors.bottom: parent.bottom
+    visible: mainStack.currentItem.objectName === "ModesOverview"
     onClicked: {
       mainStack.pop();
     }

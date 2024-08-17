@@ -322,7 +322,7 @@ Item {
       }
     }
     Button {
-      text: luatr("Scenarios Overview")
+      text: luatr("Modes Overview")
       onClicked: {
         mainStack.push(mainWindow.modesOverviewPage);
       }

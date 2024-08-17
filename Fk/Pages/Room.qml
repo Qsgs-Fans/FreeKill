@@ -100,11 +100,12 @@ Item {
     Menu {
       id: menuContainer
       y: menuButton.height - 12
-      width: 100
+      width: parent.width * 1.8
 
       MenuItem {
         id: quitButton
-        text: luatr("Quit")
+        text: "↪️     " + luatr("Quit")
+        // icon.source: AppPath + "/image/button/tileicon/quit" //"/image/modmaker/back"
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
@@ -118,9 +119,52 @@ Item {
       }
 
       MenuItem {
+        id: volumeButton
+        text: "⚙     " + luatr("Audio Settings")
+        // icon.source: AppPath + "/image/button/tileicon/configure"
+        onClicked: {
+          volumeDialog.open();
+        }
+      }
+
+      Menu {
+        title: "📖     " + luatr("Overview")
+        //icon.source: AppPath + "/image/button/tileicon/rule_summary"
+        MenuItem {
+          id: generalButton
+          text: luatr("Generals Overview")
+          icon.source: AppPath + "/image/button/tileicon/general_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Generals";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: cardslButton
+          text: luatr("Cards Overview")
+          icon.source: AppPath + "/image/button/tileicon/card_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Cards";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: modesButton
+          text: luatr("Modes Overview")
+          icon.source: AppPath + "/image/button/tileicon/rule_summary"
+          onClicked: {
+            overviewLoader.overviewType = "Modes";
+            overviewDialog.open();
+          }
+        }
+      }
+
+      MenuItem {
         id: surrenderButton
-        enabled: !config.observing && !config.replaying
-        text: luatr("Surrender")
+        enabled: !config.observing && !config.replaying && isStarted
+        text: "🏳     " + luatr("Surrender")
         onClicked: {
           const photo = getPhoto(Self.id);
           if (isStarted && !(photo.dead && photo.rest <= 0)) {
@@ -130,19 +174,11 @@ Item {
                 luatr('Surrender is disabled in this mode');
             } else {
               surrenderDialog.informativeText = surrenderCheck
-                .map(str => `${luatr(str.text)}（${str.passed ? '√' : '×'}）`)
+                .map(str => `${luatr(str.text)}（${str.passed ? '✓' : '✗'}）`)
                 .join('<br>');
             }
             surrenderDialog.open();
           }
-        }
-      }
-
-      MenuItem {
-        id: volumeButton
-        text: luatr("Audio Settings")
-        onClicked: {
-          volumeDialog.open();
         }
       }
     }
@@ -991,6 +1027,28 @@ Item {
       height: parent.height / mainWindow.scale
       scale: mainWindow.scale
       source: AppPath + "/Fk/LobbyElement/AudioSetting.qml"
+    }
+  }
+
+  Popup {
+    id: overviewDialog
+    width: realMainWin.width * 0.75
+    height: realMainWin.height * 0.75
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+    Loader {
+      id: overviewLoader
+      property string overviewType: "Generals"
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/Pages/" + overviewType + "Overview.qml"
     }
   }
 
