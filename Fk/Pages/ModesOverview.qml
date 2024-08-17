@@ -72,5 +72,6 @@ Item {
     for (let d of mode_data) {
       modeList.append(d);
     }
+    listView.currentIndex = 0;
   }
 }
