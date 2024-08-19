@@ -363,7 +363,8 @@ function sortHandcards(sortMethods) {
       }
     });
 
-    let i = 0; // Check if the cards are sorted by type
+    // Check if the cards are sorted by type
+    let i = 0;
     handcards.forEach(c => {
       if (hand[i] !== c.cid) {
         sortedByType = false;

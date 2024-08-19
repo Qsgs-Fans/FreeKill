@@ -105,7 +105,7 @@ Item {
       MenuItem {
         id: quitButton
         text: luatr("Quit")
-        icon.source: AppPath + "/image/modmaker/back" //"/image/button/tileicon/quit" 
+        icon.source: AppPath + "/image/modmaker/back"
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
