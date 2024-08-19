@@ -297,12 +297,26 @@ function moveCards(moves) {
   }
 }
 
+const suitInteger = {
+  spade: 1, heart: 3,
+  club: 2, diamond: 4,
+}
 
-
-function resortHandcards() {
+function sortHandcards(sortMethods) {
   if (!dashboard.handcardArea.cards.length) {
     return;
   }
+
+  const cardType = sortMethods[0];
+  const cardNum = sortMethods[1];
+  const cardSuit = sortMethods[2];
+
+  if (!cardType && !cardNum && !cardSuit) {
+    return;
+  }
+
+  let sortOutputs = [];
+  let sortedStatus = [];
 
   const subtypeString2Number = {
     ["none"]: Card.SubtypeNone,
@@ -318,51 +332,59 @@ function resortHandcards() {
     return c.cid;
   })
 
-  dashboard.handcardArea.cards.sort((prev, next) => {
-    if (prev.footnote === next.footnote) {
-      if (prev.type === next.type) {
-        const prevSubtypeNumber = subtypeString2Number[prev.subtype];
-        const nextSubtypeNumber = subtypeString2Number[next.subtype];
-        if (prevSubtypeNumber === nextSubtypeNumber) {
-          const splitedPrevName = prev.name.split('__');
-          const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+  let sortedByType = true;
+  let handcards
+  if (cardType) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (prev.type === next.type) {
+          const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+          const nextSubtypeNumber = subtypeString2Number[next.subtype];
+          if (prevSubtypeNumber === nextSubtypeNumber) {
+            const splitedPrevName = prev.name.split('__');
+            const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
 
-          const splitedNextName = next.name.split('__');
-          const nextTrueName = splitedNextName[splitedNextName.length - 1];
-          if (prevTrueName === nextTrueName) {
-            return prev.cid - next.cid;
+            const splitedNextName = next.name.split('__');
+            const nextTrueName = splitedNextName[splitedNextName.length - 1];
+            if (prevTrueName === nextTrueName) {
+              return prev.cid - next.cid;
+            } else {
+              return prevTrueName > nextTrueName ? -1 : 1;
+            }
           } else {
-            return prevTrueName > nextTrueName ? -1 : 1;
+            return prevSubtypeNumber - nextSubtypeNumber;
           }
         } else {
-          return prevSubtypeNumber - nextSubtypeNumber;
+          return prev.type - next.type;
         }
       } else {
-        return prev.type - next.type;
+        return prev.footnote > next.footnote ? 1 : -1;
       }
-    } else {
-      return prev.footnote > next.footnote ? 1 : -1;
-    }
-  });
+    });
 
-  let i = 0;
-  let resort = true;
-  dashboard.handcardArea.cards.forEach(c => {
-    if (hand[i] !== c.cid) {
-      resort = false;
-      return;
-    }
-    i++;
-  })
+    let i = 0; // Check if the cards are sorted by type
+    handcards.forEach(c => {
+      if (hand[i] !== c.cid) {
+        sortedByType = false;
+        return false;
+      }
+      i++;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByType);
+  }
 
-  if (resort) {
-    dashboard.handcardArea.cards.sort((prev, next) => {
+  let sortedByNum = true;
+  if (cardNum) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
-        if (prev.number === next.number) { // 按点数排
-          if (prev.suit === next.suit) {
+        if (prev.number === next.number) {
+          if (suitInteger[prev.suit] === suitInteger[next.suit]) {
             return prev.cid - next.cid;
           } else {
-            return prev.suit - next.suit;
+            return suitInteger[prev.suit] - suitInteger[next.suit];
           }
         } else {
           return prev.number - next.number;
@@ -371,8 +393,59 @@ function resortHandcards() {
         return prev.footnote > next.footnote ? 1 : -1;
       }
     });
+
+    let i = 0;
+    handcards.forEach(c => {
+      if (hand[i] !== c.cid) {
+        sortedByNum = false;
+        return false;
+      }
+      i++;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByNum);
   }
 
+  let sortedBySuit = true;
+  if (cardSuit) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (suitInteger[prev.suit] === suitInteger[next.suit]) {
+          if (prev.number === next.number) {
+            return prev.cid - next.cid;
+          } else {
+            return prev.number - next.number;
+          }
+        } else {
+          return suitInteger[prev.suit] - suitInteger[next.suit];
+        }
+      } else {
+        return prev.footnote > next.footnote ? 1 : -1;
+      }
+    });
+
+    let i = 0;
+    handcards.forEach(c => {
+      if (hand[i] !== c.cid) {
+        sortedBySuit = false;
+        return false;
+      }
+      i++;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedBySuit);
+  }
+  let output
+  for (let i = 0; i < sortedStatus.length; i++) {
+    if (sortedStatus[i]) {
+      let j = i < sortedStatus.length - 1 ? i + 1 : 0;
+      output = sortOutputs[j];
+      break;
+    }
+  }
+  if (!output) output = sortOutputs[0];
+  dashboard.handcardArea.cards = output;
   dashboard.handcardArea.updateCardPosition(true);
 }
 

@@ -104,8 +104,8 @@ Item {
 
       MenuItem {
         id: quitButton
-        text: "↪️     " + luatr("Quit")
-        // icon.source: AppPath + "/image/button/tileicon/quit" //"/image/modmaker/back"
+        text: luatr("Quit")
+        icon.source: AppPath + "/image/modmaker/back" //"/image/button/tileicon/quit" 
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
@@ -120,16 +120,19 @@ Item {
 
       MenuItem {
         id: volumeButton
-        text: "⚙     " + luatr("Audio Settings")
-        // icon.source: AppPath + "/image/button/tileicon/configure"
+        text: luatr("Audio Settings")
+        icon.source: AppPath + "/image/button/tileicon/configure"
         onClicked: {
           volumeDialog.open();
         }
       }
 
       Menu {
-        title: "📖     " + luatr("Overview")
-        //icon.source: AppPath + "/image/button/tileicon/rule_summary"
+        title: luatr("Overview")
+        icon.source: AppPath + "/image/button/tileicon/rule_summary"
+        icon.width: 24
+        icon.height: 24
+        icon.color: palette.windowText
         MenuItem {
           id: generalButton
           text: luatr("Generals Overview")
@@ -153,7 +156,7 @@ Item {
         MenuItem {
           id: modesButton
           text: luatr("Modes Overview")
-          icon.source: AppPath + "/image/button/tileicon/rule_summary"
+          icon.source: AppPath + "/image/misc/paper"
           onClicked: {
             overviewLoader.overviewType = "Modes";
             overviewDialog.open();
@@ -164,7 +167,8 @@ Item {
       MenuItem {
         id: surrenderButton
         enabled: !config.observing && !config.replaying && isStarted
-        text: "🏳     " + luatr("Surrender")
+        text: luatr("Surrender")
+        icon.source: AppPath + "/image/misc/surrender"
         onClicked: {
           const photo = getPhoto(Self.id);
           if (isStarted && !(photo.dead && photo.rest <= 0)) {
@@ -504,7 +508,73 @@ Item {
       MetroButton {
         text: luatr("Sort Cards")
         textFont.pixelSize: 28
-        onClicked: Logic.resortHandcards();
+        onClicked: {
+          if (leval(
+            `(function()
+              local p = ClientInstance:getPlayerById(${Self.id})
+              return p:getMark(MarkEnum.SortProhibited) == 0
+            end)()`
+          )) {
+            let sortMethods = [];
+            for (let index = 0; index < sortMenuRepeater.count; index++) {
+              var tCheckBox = sortMenuRepeater.itemAt(index)
+              sortMethods.push(tCheckBox.checked)
+            }
+            Logic.sortHandcards(sortMethods);
+          }
+        }
+
+        onRightClicked: {
+          if (sortMenu.visible) {
+            sortMenu.close();
+          } else {
+            sortMenu.open();
+          }
+        }
+
+        Menu {
+          id: sortMenu
+          x: parent.width
+          y: -25
+          width: parent.width * 2
+          background: Rectangle {
+            color: "black"
+            border.width: 3
+            border.color: "white"
+            opacity: 0.8
+          }
+
+          Repeater {
+            id: sortMenuRepeater
+            model: ["Sort by Type", "Sort by Number", "Sort by Suit"]
+
+            CheckBox {
+              id: control
+              text: "<font color='white'>" + luatr(modelData) + "</font>"
+              checked: modelData === "Sort by Type"
+              font.pixelSize: 20
+
+              indicator: Rectangle {
+                implicitWidth: 26
+                implicitHeight: 26
+                x: control.leftPadding
+                y: control.height / 2 - height / 2
+                radius: 3
+                border.color: "white"
+
+                Rectangle {
+                  width: 14
+                  height: 14
+                  x: 6
+                  y: 6
+                  radius: 2
+                  color: control.down ? "#17a81a" : "#21be2b"
+                  visible: control.checked
+                }
+              }
+            }
+          }
+        }
       }
       MetroButton {
         text: luatr("Chat")
