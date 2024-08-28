@@ -400,7 +400,7 @@ Item {
       onPressAndHold: {
         Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
               + (idx ? idx.toString() : "") + ':');
-        toast.show(luatr("Audio Copy Success"));
+        toast.show(luatr("Audio Code Copy Success"));
       }
 
       ToolButton {
@@ -424,6 +424,7 @@ Item {
             onTriggered: {
               Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
               + (idx ? idx.toString() : "") + ':');
+              toast.show(luatr("Audio Code Copy Success"));
             }
           }
           MenuItem {
@@ -431,6 +432,7 @@ Item {
             onTriggered: {
               Backend.copyToClipboard(luatr('$' + name + (specific ? '_' + detailGeneralCard.name : "")
               + (idx ? idx.toString() : "")));
+              toast.show(luatr("Audio Text Copy Success"));
             }
           }
         }
@@ -676,7 +678,7 @@ Item {
 
             onPressAndHold: {
               Backend.copyToClipboard("$~" + generalDetail.general);
-              toast.show(luatr("Audio Copy Success"));
+              toast.show(luatr("Audio Code Copy Success"));
             }
 
             ToolButton {
@@ -699,12 +701,14 @@ Item {
                   text: luatr("Copy Audio Code")
                   onTriggered: {
                     Backend.copyToClipboard("$~" + generalDetail.general);
+                    toast.show(luatr("Audio Code Copy Success"));
                   }
                 }
                 MenuItem {
                   text: luatr("Copy Audio Text")
                   onTriggered: {
                     Backend.copyToClipboard(luatr("~" + generalDetail.general));
+                    toast.show(luatr("Audio Text Copy Success"));
                   }
                 }
               }
