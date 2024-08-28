@@ -365,12 +365,13 @@ function sortHandcards(sortMethods) {
 
     // Check if the cards are sorted by type
     let i = 0;
-    handcards.forEach(c => {
+    handcards.every(c => {
       if (hand[i] !== c.cid) {
         sortedByType = false;
         return false;
       }
       i++;
+      return true;
     })
     sortOutputs.push(handcards);
     sortedStatus.push(sortedByType);
@@ -396,12 +397,13 @@ function sortHandcards(sortMethods) {
     });
 
     let i = 0;
-    handcards.forEach(c => {
+    handcards.every(c => {
       if (hand[i] !== c.cid) {
         sortedByNum = false;
         return false;
       }
       i++;
+      return true;
     })
     sortOutputs.push(handcards);
     sortedStatus.push(sortedByNum);
@@ -427,12 +429,13 @@ function sortHandcards(sortMethods) {
     });
 
     let i = 0;
-    handcards.forEach(c => {
+    handcards.every(c => {
       if (hand[i] !== c.cid) {
         sortedBySuit = false;
         return false;
       }
       i++;
+      return true;
     })
     sortOutputs.push(handcards);
     sortedStatus.push(sortedBySuit);
@@ -1012,7 +1015,9 @@ callbacks["UpdateSkill"] = (j) => {
   for (const skills of all_skills) {
     for (let i = 0; i < skills.count; i++) {
       const item = skills.itemAt(i);
-      item.locked = lcall("GetSkillLocked", item.orig);
+      const dat = lcall("GetSkillStatus", item.orig);
+      item.locked = dat.locked;
+      item.times = dat.times;
     }
   }
 }

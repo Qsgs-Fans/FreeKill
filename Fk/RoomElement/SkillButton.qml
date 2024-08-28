@@ -12,6 +12,7 @@ Item {
   property bool pressed: false
   property bool prelighted: false
   property bool locked: false
+  property int times: -1
 
   onEnabledChanged: {
     if (!enabled)
@@ -57,14 +58,6 @@ Item {
     font.bold: true
   }
 
-  Image {
-    source: AppPath + "/image/button/skill/locked.png"
-    scale: 0.8
-    z: 1
-    visible: root.locked
-    anchors.centerIn: parent
-  }
-
   Glow {
     id: glowItem
     source: skill
@@ -91,6 +84,76 @@ Item {
       GradientStop {
         position: 1
         color: "#BE9878"
+      }
+    }
+  }
+
+  Image {
+    source: AppPath + "/image/button/skill/locked.png"
+    scale: 0.8
+    z: 2
+    visible: root.locked
+    opacity: 0.8
+    anchors.centerIn: parent
+  }
+
+  Item {
+    width: 12
+    height: 12
+    visible: root.times > -1
+    anchors.right: parent.right
+    anchors.rightMargin: type === "notactive" ? -13 : 5
+    anchors.top: parent.top
+    anchors.topMargin: 5
+
+    Rectangle {
+      width: Math.max(15, 1.4 * count.contentWidth)
+      height: 15
+      radius: width * 0.5
+      x: (parent.width - width) / 2
+      y: -1.5
+      color: "transparent"
+      border.color: "#D2AD4A"
+      border.width: 1.1
+    }
+
+    Text {
+      id: count
+      anchors.centerIn: parent
+      font.pixelSize: 16
+      font.family: fontLibian.name
+      font.bold: true
+      text: root.times
+      z: 1.5
+    }
+
+    Glow {
+      source: count
+      anchors.fill: count
+      color: "black"
+      spread: 0.3
+      radius: 5
+    }
+
+    LinearGradient {
+      anchors.fill: count
+      z: 3
+      source: count
+      gradient: Gradient {
+        GradientStop {
+          position: 0
+          color: "#FEF7C2"
+        }
+
+        GradientStop {
+          position: 0.8
+          color: "#D2AD4A"
+        }
+
+        GradientStop {
+          position: 1
+          color: "#BE9878"
+        }
       }
     }
   }
