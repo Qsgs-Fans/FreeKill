@@ -575,7 +575,7 @@ Item {
         ret = luatr("<Blocked> ") + ret;
       return ret;
     }
-    elide: Text.ElideMiddle
+    elide: root.playerid === Self.id ? Text.ElideNone : Text.ElideMiddle
     horizontalAlignment: Qt.AlignHCenter
     glow.radius: 8
   }

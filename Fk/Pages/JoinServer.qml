@@ -108,7 +108,7 @@ Item {
         Layout.preferredWidth: 32
         Layout.preferredHeight: 32
         visible: !!favorite
-        text: "···"
+        text: "⋮"
         onClicked: {
           if (menu.visible){
             menu.close();
