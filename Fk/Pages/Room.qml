@@ -509,12 +509,7 @@ Item {
         text: luatr("Sort Cards")
         textFont.pixelSize: 28
         onClicked: {
-          if (leval(
-            `(function()
-              local p = ClientInstance:getPlayerById(${Self.id})
-              return p:getMark(MarkEnum.SortProhibited) == 0
-            end)()`
-          )) {
+          if (lcall("CanSortHandcards", Self.id)) {
             let sortMethods = [];
             for (let index = 0; index < sortMenuRepeater.count; index++) {
               var tCheckBox = sortMenuRepeater.itemAt(index)
