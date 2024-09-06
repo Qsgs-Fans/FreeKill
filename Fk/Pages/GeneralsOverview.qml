@@ -517,14 +517,8 @@ Item {
       }
 
       data.skill.forEach(t => {
-        generalText.append("<b>" + luatr(t.name) +
-          "</b>: " + t.description);
-
-        addSkillAudio(t.name);
-      });
-      data.related_skill.forEach(t => {
-        generalText.append("<font color=\"purple\"><b>" + luatr(t.name) +
-          "</b>: " + t.description + "</font>");
+        generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
+          "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
 
         addSkillAudio(t.name);
       });
