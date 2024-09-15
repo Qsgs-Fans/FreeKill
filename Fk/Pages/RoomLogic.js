@@ -612,6 +612,7 @@ callbacks["AddPlayer"] = (data) => {
   }
 }
 
+/*
 // card: int | { skill: string, subcards: int[] }
 function enableTargets(card) {
   if (roomScene.respond_play) {
@@ -822,6 +823,7 @@ function updateSelectedTargets(playerid, selected) {
     okButton.enabled = false;
   }
 }
+*/
 
 callbacks["RemovePlayer"] = (data) => {
   // jsonData: int uid
@@ -1764,7 +1766,6 @@ callbacks["AskForLuckCard"] = (j) => {
 //}
 
 callbacks["UpdateRequestUI"] = (uiUpdate) => {
-  console.log(JSON.stringify(uiUpdate));
   if (uiUpdate._type == "RoomScene" || uiUpdate._type == "OKScene") {
     // 需要判断是不是第一次收到这样的数据，可以通过state判断
     // 因为是先收到Lua的数据，再切换状态的

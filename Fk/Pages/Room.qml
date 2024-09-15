@@ -753,52 +753,52 @@ Item {
   }
 
   function activateSkill(skill_name, selected) {
-    // if (pressed) {
-    //   const data = lcall("GetInteractionOfSkill", skill_name);
-    //   if (data) {
-    //     lcall("SetInteractionDataOfSkill", skill_name, "null");
-    //     switch (data.type) {
-    //     case "combo":
-    //       skillInteraction.sourceComponent =
-    //         Qt.createComponent("../SkillInteraction/SkillCombo.qml");
-    //       skillInteraction.item.skill = skill_name;
-    //       skillInteraction.item.default_choice = data["default"];
-    //       skillInteraction.item.choices = data.choices;
-    //       skillInteraction.item.detailed = data.detailed;
-    //       skillInteraction.item.all_choices = data.all_choices;
-    //       skillInteraction.item.clicked();
-    //       break;
-    //     case "spin":
-    //       skillInteraction.sourceComponent =
-    //         Qt.createComponent("../SkillInteraction/SkillSpin.qml");
-    //       skillInteraction.item.skill = skill_name;
-    //       skillInteraction.item.from = data.from;
-    //       skillInteraction.item.to = data.to;
-    //       skillInteraction.item.clicked();
-    //       break;
-    //     case "custom":
-    //       skillInteraction.sourceComponent =
-    //         Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
-    //       skillInteraction.item.skill = skill_name;
-    //       skillInteraction.item.extra_data = data;
-    //       skillInteraction.item.clicked();
-    //       break;
-    //     default:
-    //       skillInteraction.sourceComponent = undefined;
-    //       break;
-    //     }
-    //   } else {
-    //     skillInteraction.sourceComponent = undefined;
-    //   }
+    /*if (pressed) {
+      const data = lcall("GetInteractionOfSkill", skill_name);
+      if (data) {
+        lcall("SetInteractionDataOfSkill", skill_name, "null");
+        switch (data.type) {
+        case "combo":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.default_choice = data["default"];
+          skillInteraction.item.choices = data.choices;
+          skillInteraction.item.detailed = data.detailed;
+          skillInteraction.item.all_choices = data.all_choices;
+          skillInteraction.item.clicked();
+          break;
+        case "spin":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.from = data.from;
+          skillInteraction.item.to = data.to;
+          skillInteraction.item.clicked();
+          break;
+        case "custom":
+          skillInteraction.sourceComponent =
+            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
+          skillInteraction.item.clicked();
+          break;
+        default:
+          skillInteraction.sourceComponent = undefined;
+          break;
+        }
+      } else {
+        skillInteraction.sourceComponent = undefined;
+      }
 
-    //   dashboard.startPending(skill_name);
-    //   cancelButton.enabled = true;
-    // } else {
-    //   skillInteraction.sourceComponent = undefined;
-    //   if (roomScene.popupBox.item)
-    //     roomScene.popupBox.item.close();
-    //   Logic.doCancelButton();
-    // }
+      dashboard.startPending(skill_name);
+      cancelButton.enabled = true;
+    } else {
+      skillInteraction.sourceComponent = undefined;
+      if (roomScene.popupBox.item)
+        roomScene.popupBox.item.close();
+      Logic.doCancelButton();
+    }*/
     lcall("UpdateRequestUI", "SkillButton", skill_name, "click", { selected } );
   }
 
@@ -1013,21 +1013,21 @@ Item {
     }
   }
 
-  // Shortcut {
-  //   sequence: "Return"
-  //   enabled: okButton.enabled
-  //   onActivated: Logic.doOkButton();
-  // }
+  Shortcut {
+    sequence: "Return"
+    enabled: okButton.enabled
+    onActivated: Logic.doOkButton();
+  }
 
-  // Shortcut {
-  //   sequence: "Space"
-  //   enabled: cancelButton.enabled || endPhaseButton.visible;
-  //   onActivated: if (cancelButton.enabled) {
-  //     Logic.doCancelButton();
-  //   } else {
-  //     Logic.replyToServer("");
-  //   }
-  // }
+  Shortcut {
+    sequence: "Space"
+    enabled: cancelButton.enabled || endPhaseButton.visible;
+    onActivated: if (cancelButton.enabled) {
+      Logic.doCancelButton();
+    } else {
+      Logic.replyToServer("");
+    }
+  }
 
   Shortcut {
     sequence: "Escape"
@@ -1256,9 +1256,7 @@ Item {
   }
 
   function applyChange(uiUpdate) {
-    // 手牌
     dashboard.applyChange(uiUpdate);
-    // 照片
     const pdatas = uiUpdate["Photo"];
     pdatas?.forEach(pdata => {
       const photo = Logic.getPhoto(pdata.id);
@@ -1266,7 +1264,6 @@ Item {
       photo.selectable = pdata.enabled;
       photo.selected = pdata.selected;
     })
-    // 按钮
     const buttons = uiUpdate["Button"];
     buttons?.forEach(bdata => {
       switch (bdata.id) {
