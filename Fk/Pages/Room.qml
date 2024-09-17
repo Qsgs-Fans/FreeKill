@@ -286,7 +286,7 @@ Item {
 
           dashboard.disableAllCards();
           dashboard.disableSkills();
-          dashboard.retractAllPiles();
+          // dashboard.retractAllPiles();
 
           for (let i = 0; i < photoModel.count; i++) {
             const item = photos.itemAt(i);
