@@ -10,7 +10,6 @@ SpinBox {
   // from, to
 
   onValueChanged: {
-    lcall("SetInteractionDataOfSkill", skill, JSON.stringify(answer));
-    roomScene.dashboard.startPending(skill);
+    lcall("UpdateRequestUI", "Interaction", "1", "update", value);
   }
 }
