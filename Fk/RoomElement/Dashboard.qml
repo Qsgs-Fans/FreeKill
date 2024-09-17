@@ -511,7 +511,30 @@ RowLayout {
   function applyChange(uiUpdate) {
     // TODO: 先确定要不要展开相关Pile
     // card - HandcardArea
-    handcardAreaItem.applyChange(uiUpdate["CardItem"])
+    const parentPos = roomScene.mapFromItem(self, 0, 0);
+    const component = Qt.createComponent("../RoomElement/CardItem.qml");
+
+    uiUpdate["_delete"]?.forEach(data => {
+      if (data.type == "CardItem") {
+        const card = handcardAreaItem.remove([data.id])[0];
+        card.origX = parentPos.x;
+        card.origY = parentPos.y;
+        card.destroyOnStop();
+        card.goBack(true);
+      }
+    });
+    uiUpdate["_new"]?.forEach(dat => {
+      if (dat.type == "CardItem") {
+        const data = lcall("GetCardData", dat.data.id);
+        data.x = parentPos.x;
+        data.y = parentPos.y;
+        const card = component.createObject(roomScene, data);
+        card.footnoteVisible = true;
+        card.footnote = luatr(dat.ui_data.footnote);
+        handcardAreaItem.add(card);
+      }
+    });
+    handcardAreaItem.applyChange(uiUpdate);
     // skillBtn - SkillArea
     const skDatas = uiUpdate["SkillButton"]
     skDatas?.forEach(skdata => {

@@ -100,7 +100,7 @@ Item {
   }
 
   function applyChange(uiUpdate) {
-    uiUpdate?.forEach(cdata => {
+    uiUpdate["CardItem"]?.forEach(cdata => {
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
         if (card.cid === cdata.id) {

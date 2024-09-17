@@ -298,6 +298,8 @@ Item {
           if (popupBox.item != null) {
             popupBox.item.finished();
           }
+
+          lcall("FinishRequestUI");
         }
       }
     },
@@ -969,14 +971,14 @@ Item {
   Shortcut {
     sequence: "Return"
     enabled: okButton.enabled
-    onActivated: Logic.doOkButton();
+    onActivated: lcall("UpdateRequestUI", "Button", "OK");
   }
 
   Shortcut {
     sequence: "Space"
     enabled: cancelButton.enabled || endPhaseButton.visible;
     onActivated: if (cancelButton.enabled) {
-      Logic.doCancelButton();
+      lcall("UpdateRequestUI", "Button", "Cancel");
     } else {
       Logic.replyToServer("");
     }
