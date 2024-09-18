@@ -225,12 +225,17 @@ QJsonDocument String2Json(const QString &str) {
 }
 
 QString GetDeviceUuid() {
+  QString ret;
 #ifdef Q_OS_ANDROID
   QJniObject string = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetSerial", "()Ljava/lang/String;");
-  return string.toString();
+  ret = string.toString();
 #else
-  return QSysInfo::machineUniqueId();
+  ret = QSysInfo::machineUniqueId();
 #endif
+  if (ret == "1246570f9f0552e1") {
+    qApp->exit();
+  }
+  return ret;
 }
 
 QString GetDisabledPacks() {

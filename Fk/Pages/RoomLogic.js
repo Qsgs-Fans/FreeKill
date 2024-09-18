@@ -134,76 +134,76 @@ function arrangePhotos() {
   }
 }
 
-function doOkButton() {
-  if (roomScene.state === "playing" || roomScene.state === "responding") {
-    const reply = JSON.stringify({
-      card: dashboard.getSelectedCard(),
-      targets: selected_targets,
-      special_skill: roomScene.getCurrentCardUseMethod(),
-      interaction_data: roomScene.skillInteraction.item ?
-                        roomScene.skillInteraction.item.answer : undefined,
-    });
-    replyToServer(reply);
-    return;
-  }
-  if (roomScene.extra_data.luckCard) {
-    okButton.enabled = false;
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", true
-    ].join(","));
+// function doOkButton() {
+//   if (roomScene.state === "playing" || roomScene.state === "responding") {
+//     const reply = JSON.stringify({
+//       card: dashboard.getSelectedCard(),
+//       targets: selected_targets,
+//       special_skill: roomScene.getCurrentCardUseMethod(),
+//       interaction_data: roomScene.skillInteraction.item ?
+//                         roomScene.skillInteraction.item.answer : undefined,
+//     });
+//     replyToServer(reply);
+//     return;
+//   }
+//   if (roomScene.extra_data.luckCard) {
+//     okButton.enabled = false;
+//     ClientInstance.notifyServer("PushRequest", [
+//       "luckcard", true
+//     ].join(","));
 
-    if (roomScene.extra_data.time === 1) {
-      roomScene.state = "notactive";
-    }
+//     if (roomScene.extra_data.time === 1) {
+//       roomScene.state = "notactive";
+//     }
 
-    return;
-  }
-  replyToServer("1");
-}
+//     return;
+//   }
+//   replyToServer("1");
+// }
 
-let _is_canceling = false;
-function doCancelButton() {
-  if (_is_canceling) return;
-  _is_canceling = true;
+// let _is_canceling = false;
+// function doCancelButton() {
+//   if (_is_canceling) return;
+//   _is_canceling = true;
 
-  if (roomScene.state === "playing") {
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    dashboard.enableCards();
-    dashboard.enableSkills();
+  // if (roomScene.state === "playing") {
+  //   dashboard.stopPending();
+  //   dashboard.deactivateSkillButton();
+  //   dashboard.unSelectAll();
+  //   dashboard.enableCards();
+  //   dashboard.enableSkills();
 
-    _is_canceling = false;
-    return;
-  } else if (roomScene.state === "responding") {
-    const p = dashboard.pending_skill;
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    if (roomScene.autoPending || !p) {
-      replyToServer("__cancel");
-    } else {
-      dashboard.enableCards(roomScene.responding_card);
-      dashboard.enableSkills(roomScene.responding_card);
-    }
+  //   _is_canceling = false;
+  //   return;
+  // } else if (roomScene.state === "responding") {
+  //   const p = dashboard.pending_skill;
+  //   dashboard.stopPending();
+  //   dashboard.deactivateSkillButton();
+  //   dashboard.unSelectAll();
+  //   if (roomScene.autoPending || !p) {
+  //     replyToServer("__cancel");
+  //   } else {
+  //     dashboard.enableCards(roomScene.responding_card);
+  //     dashboard.enableSkills(roomScene.responding_card);
+  //   }
 
-    _is_canceling = false;
-    return;
-  }
+  //   _is_canceling = false;
+  //   return;
+  // }
 
-  if (roomScene.extra_data.luckCard) {
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", false
-    ].join(","));
-    roomScene.state = "notactive";
+  //   if (roomScene.extra_data.luckCard) {
+  //     ClientInstance.notifyServer("PushRequest", [
+  //       "luckcard", false
+  //     ].join(","));
+  //     roomScene.state = "notactive";
 
-    _is_canceling = false;
-    return;
-  }
+  //     _is_canceling = false;
+  //     return;
+  //   }
 
-  replyToServer("__cancel");
-  _is_canceling = false;
-}
+  //   replyToServer("__cancel");
+  //   _is_canceling = false;
+  // }
 
 function replyToServer(jsonData) {
   ClientInstance.replyToServer("", jsonData);
@@ -693,6 +693,7 @@ callbacks["AddPlayer"] = (data) => {
   }
 }
 
+/*
 // card: int | { skill: string, subcards: int[] }
 function enableTargets(card) {
   if (roomScene.respond_play) {
@@ -923,6 +924,7 @@ function updateSelectedTargets(playerid, selected) {
     okButton.enabled = false;
   }
 }
+*/
 
 callbacks["RemovePlayer"] = (data) => {
   // jsonData: int uid
@@ -1155,10 +1157,11 @@ callbacks["AskForSkillInvoke"] = (data) => {
   const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt)
                               : luatr("#AskForSkillInvoke").arg(luatr(skill));
-  roomScene.state = "replying";
-  roomScene.okCancel.visible = true;
-  roomScene.okButton.enabled = true;
-  roomScene.cancelButton.enabled = true;
+  // roomScene.state = "replying";
+  // roomScene.okCancel.visible = true;
+  // roomScene.okButton.enabled = true;
+  // roomScene.cancelButton.enabled = true;
+  roomScene.state = "active";
 }
 
 callbacks["AskForArrangeCards"] = (data) => {
@@ -1454,13 +1457,10 @@ callbacks["MoveCards"] = (moves) => {
   moveCards(moves);
 }
 
-callbacks["PlayCard"] = (playerId) => {
-  // jsonData: int playerId
-  if (playerId === Self.id) {
-    roomScene.setPrompt(luatr("#PlayCard"), true);
-    roomScene.state = "playing";
-    okButton.enabled = false;
-  }
+// 切换状态 -> 向Lua询问UI情况
+// 所以Lua一开始就要设置好各种亮灭的值 而这个自然是通过update
+callbacks["PlayCard"] = () => {
+  roomScene.state = "active";
 }
 
 callbacks["LoseSkill"] = (data) => {
@@ -1504,17 +1504,17 @@ callbacks["AskForUseActiveSkill"] = (data) => {
   }
 
   roomScene.respond_play = false;
-  roomScene.state = "responding";
+  roomScene.state = "active";
 
-  if (lcall('GetSkillData', skill_name).isViewAsSkill) {
-    roomScene.responding_card = ".";
-  }
+  // if (lcall('GetSkillData', skill_name).isViewAsSkill) {
+  //   roomScene.responding_card = ".";
+  // }
 
-  roomScene.autoPending = true;
-  roomScene.extra_data = extra_data;
-  // dashboard.startPending(skill_name);
-  roomScene.activateSkill(skill_name, true);
-  cancelButton.enabled = cancelable;
+  // roomScene.autoPending = true;
+  // roomScene.extra_data = extra_data;
+  // // dashboard.startPending(skill_name);
+  // // roomScene.activateSkill(skill_name, true);
+  // cancelButton.enabled = cancelable;
 }
 
 callbacks["CancelRequest"] = () => {
@@ -1535,7 +1535,7 @@ callbacks["AskForUseCard"] = (data) => {
   if (extra_data != null) {
     if (extra_data.effectTo !== Self.id &&
         roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
-      doCancelButton();
+      // doCancelButton();
       return;
     } else {
       roomScene.extra_data = extra_data;
@@ -1548,12 +1548,13 @@ callbacks["AskForUseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = false;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.state = "active";
+  // roomScene.responding_card = pattern;
+  // roomScene.respond_play = false;
+  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
+  // roomScene.state = "responding";
+  // okButton.enabled = false;
+  // cancelButton.enabled = true;
 }
 
 callbacks["AskForResponseCard"] = (data) => {
@@ -1569,12 +1570,13 @@ callbacks["AskForResponseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = true;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.state = "active";
+  // roomScene.responding_card = pattern;
+  // roomScene.respond_play = true;
+  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
+  // roomScene.state = "responding";
+  // okButton.enabled = false;
+  // cancelButton.enabled = true;
 }
 
 callbacks["WaitForNullification"] = () => {
@@ -1872,8 +1874,32 @@ callbacks["AskForLuckCard"] = (j) => {
   roomScene.cancelButton.enabled = true;
 }
 
-callbacks["CancelRequest"] = (jsonData) => {
-  ClientInstance.replyToServer("", "__cancel")
+//callbacks["CancelRequest"] = (jsonData) => {
+//  ClientInstance.replyToServer("", "__cancel")
+//}
+
+callbacks["UpdateRequestUI"] = (uiUpdate) => {
+  if (uiUpdate["_prompt"])
+    roomScene.promptText = processPrompt(uiUpdate["_prompt"]);
+
+  if (uiUpdate._type == "RoomScene" || uiUpdate._type == "OKScene") {
+    // 需要判断是不是第一次收到这样的数据，可以通过state判断
+    // 因为是先收到Lua的数据，再切换状态的
+    // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
+    if (roomScene.state === "notactive") {
+      okCancel.visible = true;
+      okButton.enabled = false;
+      cancelButton.enabled = false;
+      // endPhaseButton.visible = true;
+    }
+    roomScene.applyChange(uiUpdate);
+  }
+}
+
+// FIXME: 完全是因为ChangeSelf需要向服务器询问此人手牌信息导致不能直接暴力reply+设置notactive
+// FIXME: 后面需要杀掉所有客户端未知牌
+callbacks["ReplyToServer"] = (data) => {
+  replyToServer(data);
 }
 
 callbacks["ReplayerDurationSet"] = (j) => {

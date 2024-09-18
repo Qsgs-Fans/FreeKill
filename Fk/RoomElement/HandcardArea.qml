@@ -56,19 +56,6 @@ Item {
     return result;
   }
 
-  function enableCards(cardIds)
-  {
-    let card, i;
-    cards.forEach(card => {
-      card.selectable = cardIds.includes(card.cid);
-      if (!card.selectable) {
-        card.selected = false;
-        unselectCard(card);
-      }
-    });
-    updateCardPosition(true);
-  }
-
   function updateCardPosition(animated)
   {
     cardArea.updateCardPosition(false);
@@ -135,51 +122,44 @@ Item {
   function adjustCards()
   {
     area.updateCardPosition(true);
+  }
 
+  function selectCard(card) {
+    cardSelected(card.cid, card.selected);
+    adjustCards();
+  }
+
+  function enableCards(cardIds)
+  {
+    let card, i;
+    cards.forEach(card => {
+      card.selectable = cardIds.includes(card.cid);
+      if (!card.selectable) {
+        card.selected = false;
+      }
+    });
+    updateCardPosition(true);
+  }
+
+  function unselectAll() {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
-      if (card.selected) {
-        if (!selectedCards.includes(card))
-          selectCard(card);
-      } else {
-        if (selectedCards.includes(card))
-          unselectCard(card);
-      }
-    }
-  }
-
-  function selectCard(card)
-  {
-    selectedCards.push(card);
-    cardSelected(card.cid, true);
-  }
-
-  function unselectCard(card)
-  {
-    for (let i = 0; i < selectedCards.length; i++) {
-      if (selectedCards[i] === card) {
-        selectedCards.splice(i, 1);
-        cardSelected(card.cid, false);
-        break;
-      }
-    }
-  }
-
-  function unselectAll(exceptId) {
-    let card = undefined;
-    for (let i = 0; i < selectedCards.length; i++) {
-      if (selectedCards[i].cid !== exceptId) {
-        selectedCards[i].selected = false;
-      } else {
-        card = selectedCards[i];
-        card.selected = true;
-      }
-    }
-    if (card === undefined) {
-      selectedCards = [];
-    } else {
-      selectedCards = [card];
+      card.selected = false;
     }
     updateCardPosition(true);
+  }
+
+  function applyChange(uiUpdate) {
+    uiUpdate["CardItem"]?.forEach(cdata => {
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if (card.cid === cdata.id) {
+          card.selectable = cdata.enabled;
+          card.selected = cdata.selected;
+          updateCardPosition(true);
+          break;
+        }
+      }
+    })
   }
 }

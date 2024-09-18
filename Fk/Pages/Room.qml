@@ -308,90 +308,47 @@ Item {
   }
 
   states: [
-    State { name: "notactive" }, // Normal status
-    State { name: "playing" }, // Playing cards in playing phase
-    State { name: "responding" }, // all requests need to operate dashboard
-    State { name: "replying" } // requests only operate a popup window
+    State { name: "notactive" },
+    State { name: "active" }
   ]
   state: "notactive"
   transitions: [
     Transition {
-      from: "*"; to: "notactive"
+      from: "active"; to: "notactive"
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
-          currentPrompt = "";
           progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
-          respond_play = false;
-          extra_data = {};
-          mainWindow.pending_message = [];
-          mainWindow.is_pending = false;
+          progress.visible = false;
 
-          if (dashboard.pending_skill !== "")
-            dashboard.stopPending();
-          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
-          dashboard.retractAllPiles();
-          selected_targets = [];
-          autoPending = false;
+          // dashboard.retractAllPiles();
+
+          for (let i = 0; i < photoModel.count; i++) {
+            const item = photos.itemAt(i);
+            item.state = "normal";
+            item.selected = false;
+            // item.selectable = false;
+          }
 
           if (popupBox.item != null) {
             popupBox.item.finished();
           }
+
+          lcall("FinishRequestUI");
         }
       }
     },
 
     Transition {
-      from: "*"; to: "playing"
+      from: "notactive"; to: "active"
       ScriptAction {
         script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards();
-          dashboard.enableSkills();
           progress.visible = true;
-          okCancel.visible = true;
-          autoPending = false;
-          endPhaseButton.visible = true;
-          respond_play = false;
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "responding"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards(responding_card);
-          dashboard.enableSkills(responding_card, respond_play);
-          autoPending = false;
-          progress.visible = true;
-          okCancel.visible = true;
-        }
-      }
-    },
-
-    Transition {
-      from: "*"; to: "replying"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
-          progress.visible = true;
-          respond_play = false;
-          autoPending = false;
-          roomScene.okCancel.visible = false;
-          roomScene.okButton.enabled = false;
-          roomScene.cancelButton.enabled = false;
         }
       }
     }
@@ -445,7 +402,8 @@ Item {
         sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
-          Logic.updateSelectedTargets(playerid, selected);
+          // Logic.updateSelectedTargets(playerid, selected);
+          if ( state === "candidate" ) lcall("UpdateRequestUI", "Photo", playerid, "click", { selected } );
         }
 
         Component.onCompleted: {
@@ -796,7 +754,6 @@ Item {
 
     Loader {
       id: skillInteraction
-      visible: dashboard.pending_skill !== ""
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 8
       anchors.right: okCancel.left
@@ -817,20 +774,20 @@ Item {
                  && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
-          Logic.doCancelButton();
+          // Logic.doCancelButton();
         }
       }
 
       Button {
         id: okButton
         text: luatr("OK")
-        onClicked: Logic.doOkButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "OK");
       }
 
       Button {
         id: cancelButton
         text: luatr("Cancel")
-        onClicked: Logic.doCancelButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "Cancel");
       }
     }
 
@@ -842,7 +799,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 30
       visible: false;
-      onClicked: Logic.replyToServer("");
+      onClicked: lcall("UpdateRequestUI", "Button", "End");
     }
   }
 
@@ -897,53 +854,8 @@ Item {
     z: 999
   }
 
-  function activateSkill(skill_name, pressed) {
-    if (pressed) {
-      const data = lcall("GetInteractionOfSkill", skill_name);
-      if (data) {
-        lcall("SetInteractionDataOfSkill", skill_name, "null");
-        switch (data.type) {
-        case "combo":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.default_choice = data["default"];
-          skillInteraction.item.choices = data.choices;
-          skillInteraction.item.detailed = data.detailed;
-          skillInteraction.item.all_choices = data.all_choices;
-          skillInteraction.item.clicked();
-          break;
-        case "spin":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.from = data.from;
-          skillInteraction.item.to = data.to;
-          skillInteraction.item.clicked();
-          break;
-        case "custom":
-          skillInteraction.sourceComponent =
-            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.extra_data = data;
-          skillInteraction.item.clicked();
-          break;
-        default:
-          skillInteraction.sourceComponent = undefined;
-          break;
-        }
-      } else {
-        skillInteraction.sourceComponent = undefined;
-      }
-
-      dashboard.startPending(skill_name);
-      cancelButton.enabled = true;
-    } else {
-      skillInteraction.sourceComponent = undefined;
-      if (roomScene.popupBox.item)
-        roomScene.popupBox.item.close();
-      Logic.doCancelButton();
-    }
+  function activateSkill(skill_name, selected) {
+    lcall("UpdateRequestUI", "SkillButton", skill_name, "click", { selected } );
   }
 
   Drawer {
@@ -1182,14 +1094,14 @@ Item {
   Shortcut {
     sequence: "Return"
     enabled: okButton.enabled
-    onActivated: Logic.doOkButton();
+    onActivated: lcall("UpdateRequestUI", "Button", "OK");
   }
 
   Shortcut {
     sequence: "Space"
     enabled: cancelButton.enabled || endPhaseButton.visible;
     onActivated: if (cancelButton.enabled) {
-      Logic.doCancelButton();
+      lcall("UpdateRequestUI", "Button", "Cancel");
     } else {
       Logic.replyToServer("");
     }
@@ -1423,8 +1335,75 @@ Item {
     });
   }
 
-  function getPhoto(id) {
-    return Logic.getPhoto(id);
+  function applyChange(uiUpdate) {
+    //console.log(JSON.stringify(uiUpdate))
+    uiUpdate["_delete"]?.forEach(data => {
+      if (data.type == "Interaction") {
+        skillInteraction.sourceComponent = undefined;
+        if (roomScene.popupBox.item)
+          roomScene.popupBox.item.close();
+      }
+    });
+    uiUpdate["_new"]?.forEach(dat => {
+      if (dat.type == "Interaction") {
+        const data = dat.data.spec;
+        const skill_name = dat.data.skill_name;
+        switch (data.type) {
+        case "combo":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.default_choice = data["default"];
+          skillInteraction.item.choices = data.choices;
+          skillInteraction.item.detailed = data.detailed;
+          skillInteraction.item.all_choices = data.all_choices;
+          skillInteraction.item.clicked();
+          break;
+        case "spin":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.from = data.from;
+          skillInteraction.item.to = data.to;
+          skillInteraction.item?.clicked();
+          break;
+        case "custom":
+          skillInteraction.sourceComponent =
+            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
+          skillInteraction.item?.clicked();
+          break;
+        default:
+          skillInteraction.sourceComponent = undefined;
+          break;
+        }
+      }
+    });
+
+    dashboard.applyChange(uiUpdate);
+    const pdatas = uiUpdate["Photo"];
+    pdatas?.forEach(pdata => {
+      const photo = Logic.getPhoto(pdata.id);
+      photo.state = pdata.state;
+      photo.selectable = pdata.enabled;
+      photo.selected = pdata.selected;
+    })
+    const buttons = uiUpdate["Button"];
+    buttons?.forEach(bdata => {
+      switch (bdata.id) {
+        case "OK":
+          okButton.enabled = bdata.enabled;
+          break;
+        case "Cancel":
+          cancelButton.enabled = bdata.enabled;
+          break;
+        case "End":
+          endPhaseButton.enabled = bdata.enabled;
+          endPhaseButton.visible = bdata.enabled;
+          break;
+      }
+    })
   }
 
   Component.onCompleted: {
