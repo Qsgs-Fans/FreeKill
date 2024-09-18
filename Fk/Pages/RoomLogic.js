@@ -619,11 +619,15 @@ function processPrompt(prompt) {
   if (raw.match("%src"))
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, getPlayerStr(dest));
-  if (raw.match("%arg2"))
-    raw = raw.replace(/%arg2/g, luatr(data[4]));
-  if (raw.match("%arg"))
-    raw = raw.replace(/%arg/g, luatr(data[3]));
+    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+
+  if (data.length > 3) {
+    for (let i = data.length - 1; i > 3; i--) {
+      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
+    }
+
+    raw = raw.replace(new RegExp("%arg", "g"), luatr(data[3]));
+  }
   return raw;
 }
 
@@ -727,6 +731,15 @@ function enableTargets(card) {
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                         JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
         const included = roomScene.extra_data.include_targets;
@@ -771,6 +784,7 @@ function enableTargets(card) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
@@ -839,10 +853,19 @@ function updateSelectedTargets(playerid, selected) {
     }
 
     all_photos.forEach(photo => {
-      if (photo.selected) return;
       const id = photo.playerid;
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                          JSON.stringify(roomScene.extra_data));
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
+      if (photo.selected) return;
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
@@ -892,6 +915,7 @@ function updateSelectedTargets(playerid, selected) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
