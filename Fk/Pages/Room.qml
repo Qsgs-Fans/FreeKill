@@ -100,11 +100,12 @@ Item {
     Menu {
       id: menuContainer
       y: menuButton.height - 12
-      width: 100
+      width: parent.width * 1.8
 
       MenuItem {
         id: quitButton
         text: luatr("Quit")
+        icon.source: AppPath + "/image/modmaker/back"
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
@@ -118,9 +119,56 @@ Item {
       }
 
       MenuItem {
+        id: volumeButton
+        text: luatr("Audio Settings")
+        icon.source: AppPath + "/image/button/tileicon/configure"
+        onClicked: {
+          volumeDialog.open();
+        }
+      }
+
+      Menu {
+        title: luatr("Overview")
+        icon.source: AppPath + "/image/button/tileicon/rule_summary"
+        icon.width: 24
+        icon.height: 24
+        icon.color: palette.windowText
+        MenuItem {
+          id: generalButton
+          text: luatr("Generals Overview")
+          icon.source: AppPath + "/image/button/tileicon/general_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Generals";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: cardslButton
+          text: luatr("Cards Overview")
+          icon.source: AppPath + "/image/button/tileicon/card_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Cards";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: modesButton
+          text: luatr("Modes Overview")
+          icon.source: AppPath + "/image/misc/paper"
+          onClicked: {
+            overviewLoader.overviewType = "Modes";
+            overviewDialog.open();
+          }
+        }
+      }
+
+      MenuItem {
         id: surrenderButton
-        enabled: !config.observing && !config.replaying
+        enabled: !config.observing && !config.replaying && isStarted
         text: luatr("Surrender")
+        icon.source: AppPath + "/image/misc/surrender"
         onClicked: {
           const photo = getPhoto(Self.id);
           if (isStarted && !(photo.dead && photo.rest <= 0)) {
@@ -130,19 +178,11 @@ Item {
                 luatr('Surrender is disabled in this mode');
             } else {
               surrenderDialog.informativeText = surrenderCheck
-                .map(str => `${luatr(str.text)}（${str.passed ? '√' : '×'}）`)
+                .map(str => `${luatr(str.text)}（${str.passed ? '✓' : '✗'}）`)
                 .join('<br>');
             }
             surrenderDialog.open();
           }
-        }
-      }
-
-      MenuItem {
-        id: volumeButton
-        text: luatr("Audio Settings")
-        onClicked: {
-          volumeDialog.open();
         }
       }
     }
@@ -468,7 +508,68 @@ Item {
       MetroButton {
         text: luatr("Sort Cards")
         textFont.pixelSize: 28
-        onClicked: Logic.resortHandcards();
+        onClicked: {
+          if (lcall("CanSortHandcards", Self.id)) {
+            let sortMethods = [];
+            for (let index = 0; index < sortMenuRepeater.count; index++) {
+              var tCheckBox = sortMenuRepeater.itemAt(index)
+              sortMethods.push(tCheckBox.checked)
+            }
+            Logic.sortHandcards(sortMethods);
+          }
+        }
+
+        onRightClicked: {
+          if (sortMenu.visible) {
+            sortMenu.close();
+          } else {
+            sortMenu.open();
+          }
+        }
+
+        Menu {
+          id: sortMenu
+          x: parent.width
+          y: -25
+          width: parent.width * 2
+          background: Rectangle {
+            color: "black"
+            border.width: 3
+            border.color: "white"
+            opacity: 0.8
+          }
+
+          Repeater {
+            id: sortMenuRepeater
+            model: ["Sort by Type", "Sort by Number", "Sort by Suit"]
+
+            CheckBox {
+              id: control
+              text: "<font color='white'>" + luatr(modelData) + "</font>"
+              checked: modelData === "Sort by Type"
+              font.pixelSize: 20
+
+              indicator: Rectangle {
+                implicitWidth: 26
+                implicitHeight: 26
+                x: control.leftPadding
+                y: control.height / 2 - height / 2
+                radius: 3
+                border.color: "white"
+
+                Rectangle {
+                  width: 14
+                  height: 14
+                  x: 6
+                  y: 6
+                  radius: 2
+                  color: control.down ? "#17a81a" : "#21be2b"
+                  visible: control.checked
+                }
+              }
+            }
+          }
+        }
       }
       MetroButton {
         text: luatr("Chat")
@@ -994,6 +1095,28 @@ Item {
     }
   }
 
+  Popup {
+    id: overviewDialog
+    width: realMainWin.width * 0.75
+    height: realMainWin.height * 0.75
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+    Loader {
+      id: overviewLoader
+      property string overviewType: "Generals"
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/Pages/" + overviewType + "Overview.qml"
+    }
+  }
+
   GlowText {
     anchors.centerIn: dashboard
     visible: Logic.getPhoto(Self.id).rest > 0 && !config.observing
@@ -1127,6 +1250,8 @@ Item {
     const general = luatr(data.general);
 
     if (msg.startsWith("!")) {
+      if (config.hidePresents)
+        return true;
       const splited = msg.split(":");
       const type = splited[0].slice(1);
       switch (type) {

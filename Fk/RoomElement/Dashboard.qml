@@ -17,6 +17,7 @@ RowLayout {
   property int selected_card: -1
 
   property alias skillButtons: skillPanel.skill_buttons
+  property alias notActiveButtons: skillPanel.not_active_buttons
 
   property var expanded_piles: ({}) // name -> int[]
   property var extra_cards: []

@@ -13,6 +13,7 @@ Item {
   property alias style: textItem.style
   property alias styleColor: textItem.styleColor
   property alias wrapMode: textItem.wrapMode
+  property alias elide: textItem.elide
   property alias lineHeight: textItem.lineHeight
   property alias glow: glowItem
 

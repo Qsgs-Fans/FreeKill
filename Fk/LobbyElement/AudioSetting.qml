@@ -70,5 +70,13 @@ ColumnLayout {
     }
   }
 
+  Switch {
+    text: luatr("Hide presents")
+    checked: config.hidePresents
+    onCheckedChanged: {
+      config.hidePresents = checked;
+    }
+  }
+
   }
 }
