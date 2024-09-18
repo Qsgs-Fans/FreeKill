@@ -35,7 +35,7 @@ function processPrompt(prompt) {
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
     raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-  
+
   if (data.length > 3) {
     for (let i = 4; i < data.length; i++) {
       raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), data[i]);

@@ -620,7 +620,7 @@ function processPrompt(prompt) {
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
     raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
-  
+
   if (data.length > 3) {
     for (let i = data.length - 1; i > 3; i--) {
       raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
