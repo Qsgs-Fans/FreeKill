@@ -731,6 +731,15 @@ function enableTargets(card) {
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                         JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
         const included = roomScene.extra_data.include_targets;
@@ -775,6 +784,7 @@ function enableTargets(card) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
@@ -843,10 +853,19 @@ function updateSelectedTargets(playerid, selected) {
     }
 
     all_photos.forEach(photo => {
-      if (photo.selected) return;
       const id = photo.playerid;
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                          JSON.stringify(roomScene.extra_data));
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
+      if (photo.selected) return;
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
@@ -896,6 +915,7 @@ function updateSelectedTargets(playerid, selected) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
