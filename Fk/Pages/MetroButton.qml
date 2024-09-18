@@ -13,6 +13,7 @@ Item {
   property int padding: 5
 
   signal clicked
+  signal rightClicked
 
   id: button
   width: icon.width + title.implicitWidth + padding * 2
@@ -44,7 +45,19 @@ Item {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
     gesturePolicy: TapHandler.WithinBounds
 
-    onTapped: if (parent.enabled) parent.clicked()
+    onTapped: (p, btn) => {
+      if (parent.enabled) {
+        if (btn === Qt.LeftButton || btn === Qt.NoButton) {
+          parent.clicked();
+        } else if (btn === Qt.RightButton) {
+          parent.rightClicked();
+        }
+      }
+    }
+
+    onLongPressed: {
+      parent.rightClicked();
+    }
   }
 
   HoverHandler {

@@ -6,6 +6,8 @@ import Fk
 Item {
   property alias cards: cardArea.cards
   property alias length: cardArea.length
+  property var selectedCards: []
+  property var movepos
 
   signal cardSelected(int cardId, bool selected)
 
@@ -31,9 +33,11 @@ Item {
   function filterInputCard(card)
   {
     card.autoBack = true;
-    card.draggable = true;
+    card.draggable = lcall("CanSortHandcards", Self.id);
     card.selectable = false;
-    card.clicked.connect(selectCard);
+    card.clicked.connect(adjustCards);
+    card.released.connect(updateCardReleased);
+    card.xChanged.connect(updateCardDragging);
   }
 
   function remove(outputs)
@@ -44,7 +48,9 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
-      card.clicked.disconnect(selectCard);
+      card.selectedChanged.disconnect(adjustCards);
+      card.released.disconnect(updateCardReleased);
+      card.xChanged.disconnect(updateCardDragging);
       card.prohibitReason = "";
     }
     return result;
@@ -70,7 +76,51 @@ Item {
     }
   }
 
-  function adjustCards() {
+  function updateCardDragging()
+  {
+    let _card, c;
+    let index;
+    for (index = 0; index < cards.length; index++) {
+      c = cards[index];
+      if (c.dragging) {
+        _card = c;
+        break;
+      }
+    }
+    if (!_card) return;
+    _card.goBackAnim.stop();
+    _card.opacity = 0.8
+
+    let card;
+    movepos = null;
+    for (let i = 0; i < cards.length; i++) {
+      card = cards[i];
+      if (card.dragging) continue;
+
+      if (card.x > _card.x) {
+        movepos = i - (index < i ? 1 : 0);
+        break;
+      }
+    }
+    if (movepos == null) { // 最右
+      movepos = cards.length;
+    }
+  }
+
+  function updateCardReleased(_card)
+  {
+    let i;
+    if (movepos != null) {
+      i = cards.indexOf(_card);
+      cards.splice(i, 1);
+      cards.splice(movepos, 0, _card);
+      movepos = null;
+    }
+    updateCardPosition(true);
+  }
+
+  function adjustCards()
+  {
     area.updateCardPosition(true);
   }
 

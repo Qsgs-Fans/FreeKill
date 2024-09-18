@@ -58,6 +58,8 @@ Item {
 
   property bool playing: false
   property bool surrendered: false
+
+  property var targetTip: []
   onPlayingChanged: {
     if (playing) {
       animPlaying.start();
@@ -566,6 +568,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     anchors.topMargin: 2
+    width: parent.width - role.width - hp.width - 20
 
     font.pixelSize: 16
     text: {
@@ -574,7 +577,8 @@ Item {
         ret = luatr("<Blocked> ") + ret;
       return ret;
     }
-
+    elide: root.playerid === Self.id ? Text.ElideNone : Text.ElideMiddle
+    horizontalAlignment: Qt.AlignHCenter
     glow.radius: 8
   }
 
@@ -744,6 +748,53 @@ Item {
     Text {
       text: distance
       anchors.centerIn: parent
+    }
+  }
+
+  RowLayout {
+    anchors.centerIn: parent
+    spacing: 5
+
+    Repeater {
+      model: root.targetTip
+
+      Item {
+        Layout.alignment: Qt.AlignHCenter
+        width: 30
+
+        GlowText {
+          anchors.centerIn: parent
+          visible: modelData.type === "normal"
+          text: Util.processPrompt(modelData.content)
+          font.family: fontLibian.name
+          color: "#F7F589"
+          font.pixelSize: 30
+          font.bold: true
+          glow.color: "black"
+          glow.spread: 0.3
+          glow.radius: 5
+          horizontalAlignment: Text.AlignHCenter
+          wrapMode: Text.WrapAnywhere
+          width: 30
+        }
+
+        Text {
+          anchors.centerIn: parent
+          visible: modelData.type === "warning"
+          font.family: fontLibian.name
+          font.pixelSize: 24
+          opacity: 0.9
+          horizontalAlignment: Text.AlignHCenter
+          lineHeight: 24
+          lineHeightMode: Text.FixedHeight
+          color: "#EAC28A"
+          width: 24
+          wrapMode: Text.WrapAnywhere
+          style: Text.Outline
+          styleColor: "#83231F"
+          text: Util.processPrompt(modelData.content)
+        }
+      }
     }
   }
 

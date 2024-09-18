@@ -160,6 +160,25 @@ function Room:makeGeneralPile()
   return true
 end
 
+-- 因为现在已经不是轮询了，加上有点难分析
+-- 选择开摆
+function Room:isReady()
+  -- 因为delay函数而延时：判断延时是否已经结束。
+  -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
+  --[[
+  if self.in_delay then
+    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
+    if rest <= 50 then
+      self.in_delay = false
+      return true
+    end
+    return false, rest
+  end
+  --]]
+  return true
+end
+
+--[[
 -- 供调度器使用的函数，用来指示房间是否就绪。
 -- 如果没有就绪的话，可能会返回第二个值来告诉调度器自己还有多久就绪。
 function Room:isReady()
@@ -197,6 +216,7 @@ function Room:isReady()
   end
   return ret, (rest and rest > 1) and rest or nil
 end
+--]]
 
 function Room:checkNoHuman(chkOnly)
   if #self.players == 0 then return end
@@ -920,6 +940,10 @@ end
 --- 延迟一段时间。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
+  local start = os.getms()
+  self.delay_start = start
+  self.delay_duration = ms
+  self.in_delay = true
   self.room:delay(ms)
   coroutine.yield("__handleRequest", ms)
 end
@@ -1422,9 +1446,6 @@ end
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[], integer[]
 function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate)
-  if minCardNum < 1 or minTargetNum < 1 then
-    return {}, {}
-  end
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
   pattern = pattern or "."
@@ -1443,8 +1464,6 @@ function Room:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, target
     min_c_num = minCardNum,
     pattern = pattern,
     skillName = skillName,
-    -- include_equip = includeEquip, -- FIXME: 预定一个破坏性更新
-    -- expand_pile = expandPile,
   }
   local _, ret = self:askForUseActiveSkill(player, "ex__choose_skill", prompt or "", cancelable, data, no_indicate)
   if ret then
@@ -2115,9 +2134,14 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
   local command = "AskForGuanxing"
   self:notifyMoveFocus(player, customNotify or command)
   local max_top = top_limit and top_limit[2] or #cards
-  local card_map = {table.slice(cards, 1, max_top + 1)}
+  local card_map = {}
+  if max_top > 0 then
+    table.insert(card_map, table.slice(cards, 1, max_top + 1))
+  else
+    table.insert(card_map, {})
+  end
   if max_top < #cards then
-    table.insert(card_map, table.slice(cards, max_top))
+    table.insert(card_map, table.slice(cards, max_top + 1))
   end
   local data = {
     prompt = "",

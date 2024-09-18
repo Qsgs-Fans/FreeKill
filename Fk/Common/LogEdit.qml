@@ -40,7 +40,7 @@ ListView {
   }
 
   Button {
-    text: "Return to Bottom"
+    text: luatr("Return to Bottom")
     visible: root.currentIndex !== logModel.count - 1
     onClicked: root.currentIndex = logModel.count - 1;
   }

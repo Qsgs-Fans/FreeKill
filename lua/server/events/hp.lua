@@ -270,8 +270,21 @@ end
 
 ---@class GameEvent.Recover : GameEvent
 local Recover = GameEvent:subclass("GameEvent.Recover")
+function Recover:prepare()
+  local recoverStruct = table.unpack(self.data) ---@type RecoverStruct
+  local room = self.room
+  local logic = room.logic
+
+  local who = recoverStruct.who
+
+  if who.maxHp - who.hp < 0 then
+    return true
+  end
+
+end
+
 function Recover:main()
-  local recoverStruct = table.unpack(self.data)
+  local recoverStruct = table.unpack(self.data) ---@type RecoverStruct
   local room = self.room
   local logic = room.logic
 
@@ -283,14 +296,16 @@ function Recover:main()
     end
   end
 
-  if recoverStruct.num < 1 then
-    return false
-  end
-
   local who = recoverStruct.who
 
-  if logic:trigger(fk.PreHpRecover, who, recoverStruct) or recoverStruct.num < 1 then
+  if logic:trigger(fk.PreHpRecover, who, recoverStruct) then
     logic:breakEvent(false)
+  end
+
+  recoverStruct.num = math.min(recoverStruct.num, who.maxHp - who.hp)
+
+  if recoverStruct.num < 1 then
+    return false
   end
 
   if not room:changeHp(who, recoverStruct.num, "recover", recoverStruct.skillName) then

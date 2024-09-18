@@ -297,12 +297,26 @@ function moveCards(moves) {
   }
 }
 
+const suitInteger = {
+  spade: 1, heart: 3,
+  club: 2, diamond: 4,
+}
 
-
-function resortHandcards() {
+function sortHandcards(sortMethods) {
   if (!dashboard.handcardArea.cards.length) {
     return;
   }
+
+  const cardType = sortMethods[0];
+  const cardNum = sortMethods[1];
+  const cardSuit = sortMethods[2];
+
+  if (!cardType && !cardNum && !cardSuit) {
+    return;
+  }
+
+  let sortOutputs = [];
+  let sortedStatus = [];
 
   const subtypeString2Number = {
     ["none"]: Card.SubtypeNone,
@@ -318,51 +332,61 @@ function resortHandcards() {
     return c.cid;
   })
 
-  dashboard.handcardArea.cards.sort((prev, next) => {
-    if (prev.footnote === next.footnote) {
-      if (prev.type === next.type) {
-        const prevSubtypeNumber = subtypeString2Number[prev.subtype];
-        const nextSubtypeNumber = subtypeString2Number[next.subtype];
-        if (prevSubtypeNumber === nextSubtypeNumber) {
-          const splitedPrevName = prev.name.split('__');
-          const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+  let sortedByType = true;
+  let handcards
+  if (cardType) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (prev.type === next.type) {
+          const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+          const nextSubtypeNumber = subtypeString2Number[next.subtype];
+          if (prevSubtypeNumber === nextSubtypeNumber) {
+            const splitedPrevName = prev.name.split('__');
+            const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
 
-          const splitedNextName = next.name.split('__');
-          const nextTrueName = splitedNextName[splitedNextName.length - 1];
-          if (prevTrueName === nextTrueName) {
-            return prev.cid - next.cid;
+            const splitedNextName = next.name.split('__');
+            const nextTrueName = splitedNextName[splitedNextName.length - 1];
+            if (prevTrueName === nextTrueName) {
+              return prev.cid - next.cid;
+            } else {
+              return prevTrueName > nextTrueName ? -1 : 1;
+            }
           } else {
-            return prevTrueName > nextTrueName ? -1 : 1;
+            return prevSubtypeNumber - nextSubtypeNumber;
           }
         } else {
-          return prevSubtypeNumber - nextSubtypeNumber;
+          return prev.type - next.type;
         }
       } else {
-        return prev.type - next.type;
+        return prev.footnote > next.footnote ? 1 : -1;
       }
-    } else {
-      return prev.footnote > next.footnote ? 1 : -1;
-    }
-  });
+    });
 
-  let i = 0;
-  let resort = true;
-  dashboard.handcardArea.cards.forEach(c => {
-    if (hand[i] !== c.cid) {
-      resort = false;
-      return;
-    }
-    i++;
-  })
+    // Check if the cards are sorted by type
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedByType = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByType);
+  }
 
-  if (resort) {
-    dashboard.handcardArea.cards.sort((prev, next) => {
+  let sortedByNum = true;
+  if (cardNum) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
-        if (prev.number === next.number) { // 按点数排
-          if (prev.suit === next.suit) {
+        if (prev.number === next.number) {
+          if (suitInteger[prev.suit] === suitInteger[next.suit]) {
             return prev.cid - next.cid;
           } else {
-            return prev.suit - next.suit;
+            return suitInteger[prev.suit] - suitInteger[next.suit];
           }
         } else {
           return prev.number - next.number;
@@ -371,8 +395,61 @@ function resortHandcards() {
         return prev.footnote > next.footnote ? 1 : -1;
       }
     });
+
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedByNum = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByNum);
   }
 
+  let sortedBySuit = true;
+  if (cardSuit) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (suitInteger[prev.suit] === suitInteger[next.suit]) {
+          if (prev.number === next.number) {
+            return prev.cid - next.cid;
+          } else {
+            return prev.number - next.number;
+          }
+        } else {
+          return suitInteger[prev.suit] - suitInteger[next.suit];
+        }
+      } else {
+        return prev.footnote > next.footnote ? 1 : -1;
+      }
+    });
+
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedBySuit = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedBySuit);
+  }
+  let output
+  for (let i = 0; i < sortedStatus.length; i++) {
+    if (sortedStatus[i]) {
+      let j = i < sortedStatus.length - 1 ? i + 1 : 0;
+      output = sortOutputs[j];
+      break;
+    }
+  }
+  if (!output) output = sortOutputs[0];
+  dashboard.handcardArea.cards = output;
   dashboard.handcardArea.updateCardPosition(true);
 }
 
@@ -522,7 +599,7 @@ function doIndicate(from, tos) {
 
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
-  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !p.deputyGeneral)) {
+  if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !photo.deputyGeneral)) {
     return luatr("seat#" + photo.seatNumber);
   }
 
@@ -542,11 +619,15 @@ function processPrompt(prompt) {
   if (raw.match("%src"))
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, getPlayerStr(dest));
-  if (raw.match("%arg2"))
-    raw = raw.replace(/%arg2/g, luatr(data[4]));
-  if (raw.match("%arg"))
-    raw = raw.replace(/%arg/g, luatr(data[3]));
+    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+
+  if (data.length > 3) {
+    for (let i = data.length - 1; i > 3; i--) {
+      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
+    }
+
+    raw = raw.replace(new RegExp("%arg", "g"), luatr(data[3]));
+  }
   return raw;
 }
 
@@ -651,6 +732,15 @@ function enableTargets(card) {
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                         JSON.stringify(roomScene.extra_data));
       photo.selectable = ret;
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
         const included = roomScene.extra_data.include_targets;
@@ -695,6 +785,7 @@ function enableTargets(card) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
@@ -756,17 +847,26 @@ function updateSelectedTargets(playerid, selected) {
     roomScene.resetPrompt(); // update prompt due to selected_targets
     const prompt = lcall("ActiveSkillPrompt",
       dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
-      dashboard.pending_skill !== "" ? dashboard.pendings : [card],
+      dashboard.pending_skill !== "" ? dashboard.pendings : card,
       selected_targets);
     if (prompt !== "") {
       roomScene.setPrompt(Util.processPrompt(prompt));
     }
 
     all_photos.forEach(photo => {
-      if (photo.selected) return;
       const id = photo.playerid;
       const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
                          JSON.stringify(roomScene.extra_data));
+
+      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
+        ret, JSON.stringify(roomScene.extra_data));
+      if (tipText) {
+        photo.targetTip = tipText;
+      } else {
+        photo.targetTip = [];
+      }
+
+      if (photo.selected) return;
       photo.selectable = ret;
       if (roomScene.extra_data instanceof Object) {
         const must = roomScene.extra_data.must_targets;
@@ -816,6 +916,7 @@ function updateSelectedTargets(playerid, selected) {
     }
   } else {
     all_photos.forEach(photo => {
+      photo.targetTip = [];
       photo.state = "normal";
       photo.selected = false;
     });
@@ -933,6 +1034,18 @@ callbacks["UpdateCard"] = (j) => {
   }
 
   card.setData(lcall("GetCardData", id));
+}
+
+callbacks["UpdateSkill"] = (j) => {
+  const all_skills = [roomScene.dashboard.skillButtons, roomScene.dashboard.notActiveButtons];
+  for (const skills of all_skills) {
+    for (let i = 0; i < skills.count; i++) {
+      const item = skills.itemAt(i);
+      const dat = lcall("GetSkillStatus", item.orig);
+      item.locked = dat.locked;
+      item.times = dat.times;
+    }
+  }
 }
 
 callbacks["StartGame"] = (jsonData) => {

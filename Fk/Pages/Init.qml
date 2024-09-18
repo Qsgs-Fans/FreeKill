@@ -60,12 +60,16 @@ Item {
           text: qsTr("Console start")
           onClicked: {
             config.serverAddr = "127.0.0.1";
-            const serverCfg = config.savedPassword["127.0.0.1"] ?? {};
-            config.screenName = serverCfg.username ?? "player";
-            config.password = serverCfg.shorten_password ?? "1234";
+            config.serverPort = 9527;
+            // const serverCfg = config.savedPassword["127.0.0.1"] ?? {};
+            const serverCfg = config.findFavorite("127.0.0.1", 9527);
+            config.screenName = serverCfg?.username ?? "player";
+            config.password = serverCfg?.password ?? "1234";
             mainWindow.busy = true;
+            config.addFavorite(config.serverAddr, config.serverPort, "",
+              config.screenName, config.password);
             Backend.startServer(9527);
-            Backend.joinServer("127.0.0.1");
+            Backend.joinServer("127.0.0.1", 9527);
           }
         }
 

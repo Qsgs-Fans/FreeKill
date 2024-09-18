@@ -355,9 +355,8 @@ function CardEffect:main()
   local logic = room.logic
 
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting, fk.CardEffectFinished }) do
-    local user = cardEffectEvent.from and room:getPlayerById(cardEffectEvent.from) or nil
     if cardEffectEvent.isCancellOut then
-      if logic:trigger(fk.CardEffectCancelledOut, user, cardEffectEvent) then
+      if logic:trigger(fk.CardEffectCancelledOut, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
         cardEffectEvent.isCancellOut = false
       else
         logic:breakEvent()
@@ -379,7 +378,7 @@ function CardEffect:main()
     end
 
     if event == fk.PreCardEffect then
-      if cardEffectEvent.from and logic:trigger(event, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
+      if logic:trigger(event, room:getPlayerById(cardEffectEvent.from), cardEffectEvent) then
         if cardEffectEvent.to then
           cardEffectEvent.nullifiedTargets = cardEffectEvent.nullifiedTargets or {}
           table.insert(cardEffectEvent.nullifiedTargets, cardEffectEvent.to)

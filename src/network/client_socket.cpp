@@ -15,6 +15,7 @@ ClientSocket::ClientSocket(QTcpSocket *socket) {
   timerSignup.setSingleShot(true);
   connect(&timerSignup, &QTimer::timeout, this,
           &ClientSocket::disconnectFromHost);
+  connect(&timerSignup, &QTimer::timeout, this, &QObject::deleteLater);
   init();
 }
 

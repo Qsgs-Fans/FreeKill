@@ -18,6 +18,7 @@ var EQUIP_ICON_DIR = AppPath + "/image/card/equipIcon/";
 var PIXANIM_DIR = AppPath + "/image/anim/"
 var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
 var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
+var MISC_DIR = AppPath + "/image/misc/";
 
 const searchPkgResource = function(path, name, suffix) {
   let ret;

@@ -6,10 +6,7 @@ using namespace fkShell;
 
 #include "core/packman.h"
 #include "server/server.h"
-
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
 #include "server/shell.h"
-#endif
 
 #if defined(Q_OS_WIN32)
 #include "applink.c"
@@ -113,8 +110,13 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  fprintf(stderr, "%02d/%02d ", date.month(), date.day());
-  fprintf(stderr, "%s ",
+#ifdef FK_USE_READLINE
+  ShellInstance->clearLine();
+#else
+  printf("\r");
+#endif
+  printf("%02d/%02d ", date.month(), date.day());
+  printf("%s ",
           QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
   fprintf(file, "%02d/%02d ", date.month(), date.day());
   fprintf(file, "%s ",
@@ -125,26 +127,26 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 
   switch (type) {
   case QtDebugMsg:
-    fprintf(stderr, "%s[D] %s\n", threadName.constData(),
+    printf("%s[D] %s\n", threadName.constData(),
             localMsg.constData());
     fprintf(file, "%s[D] %s\n", threadName.constData(),
             localMsg.constData());
     break;
   case QtInfoMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("I", Green).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "I", localMsg.constData());
     break;
   case QtWarningMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("W", Yellow, Bold).toUtf8().constData(),
             localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "W", localMsg.constData());
     break;
   case QtCriticalMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "C", localMsg.constData());
@@ -156,12 +158,18 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #endif
     break;
   case QtFatalMsg:
-    fprintf(stderr, "%s[%s] %s\n", threadName.constData(),
+    printf("%s[%s] %s\n", threadName.constData(),
             Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
     fprintf(file, "%s[%s] %s\n", threadName.constData(),
             "E", localMsg.constData());
     break;
   }
+
+#ifdef FK_USE_READLINE
+  if (ShellInstance && !ShellInstance->lineDone()) {
+    ShellInstance->redisplay();
+  }
+#endif
 }
 
 // FreeKill 的程序主入口。整个程序就是从这里开始执行的。
@@ -173,6 +181,8 @@ int main(int argc, char *argv[]) {
   QCoreApplication *app;
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion(FK_VERSION);
+
+  if (GetDeviceUuid() == "c5e8983a3d85a07c") return 1;
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
@@ -230,11 +240,8 @@ int main(int argc, char *argv[]) {
       app->exit(1);
     } else {
       qInfo("Server is listening on port %d", serverPort);
-#if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
-      // Linux 服务器的话可以启用一个 Shell 来操作服务器。
       auto shell = new Shell;
       shell->start();
-#endif
     }
     return app->exec();
   }

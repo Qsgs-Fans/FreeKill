@@ -386,7 +386,7 @@ void Server::readConfig() {
 
   // defaults
   SET_DEFAULT_CONFIG("description", "FreeKill Server");
-  SET_DEFAULT_CONFIG("iconUrl", "https://img1.imgtp.com/2023/07/01/DGUdj8eu.png");
+  SET_DEFAULT_CONFIG("iconUrl", "default");
   SET_DEFAULT_CONFIG("capacity", 100);
   SET_DEFAULT_CONFIG("tempBanTime", 20);
   SET_DEFAULT_CONFIG("motd", "Welcome!");

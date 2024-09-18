@@ -69,7 +69,7 @@ Item {
   signal rightClicked()
   signal doubleClicked()
   signal thrown()
-  signal released()
+  signal released(var card)
   signal entered()
   signal exited()
   signal moveFinished()
@@ -287,7 +287,7 @@ Item {
 
     onGrabChanged: (transtition, point) => {
       if (transtition !== PointerDevice.UngrabExclusive) return;
-      parent.released();
+      parent.released(root);
       if (autoBack)
         goBackAnimation.start();
     }

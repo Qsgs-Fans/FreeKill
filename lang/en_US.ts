@@ -21,7 +21,7 @@
 
   <message>
     <source>@VersionMismatch</source>
-    <translation>&lt;font color="red" size="4">&lt;b>Mismatch version: server is at v%1&lt;/b>&lt;/font></translation>
+    <translation>&lt;font color="red" size="4">&lt;b>!! v%1&lt;/b>&lt;/font></translation>
   </message>
 
   <message>

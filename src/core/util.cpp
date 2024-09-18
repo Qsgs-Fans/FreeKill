@@ -120,9 +120,12 @@ static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
 }
 
 QJsonArray SelectFromDatabase(sqlite3 *db, const QString &sql) {
+  static QMutex select_lock;
   QJsonArray arr;
   auto bytes = sql.toUtf8();
+  select_lock.lock();
   sqlite3_exec(db, bytes.data(), callback, (void *)&arr, nullptr);
+  select_lock.unlock();
   return arr;
 }
 

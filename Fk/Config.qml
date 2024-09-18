@@ -10,7 +10,8 @@ QtObject {
   property real winHeight
   property var conf: ({})
   property string lastLoginServer
-  property var savedPassword: ({})
+  //property var savedPassword: ({})
+  property var favoriteServers: []
   property string lobbyBg
   property string roomBg
   property string bgmFile
@@ -19,12 +20,14 @@ QtObject {
   property string preferedMode
   property int preferedPlayerNum
   property int preferredGeneralNum
+  property var preferredFilter
   property string ladyImg
   property real bgmVolume
   property bool disableMsgAudio
   property bool hideUseless
   property bool hideObserverChatter
   property bool rotateTableCard
+  property bool hidePresents
   // property list<string> disabledGenerals: []
   // property list<var> disableGeneralSchemes: []
   // property int disableSchemeIdx: 0
@@ -39,6 +42,7 @@ QtObject {
 
   // Player property of client
   property string serverAddr
+  property int serverPort
   property string screenName: ""
   property string password: ""
   property string cipherText
@@ -63,6 +67,43 @@ QtObject {
   //   disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
   // }
 
+  function findFavorite(addr, port) {
+    for (const s of favoriteServers) {
+      if (s.addr === addr && s.port === port) {
+        return s;
+      }
+    }
+    return undefined;
+  }
+
+  function removeFavorite(addr, port) {
+    for (const i in favoriteServers) {
+      const s = favoriteServers[i];
+      if (s.addr === addr && s.port === port) {
+        favoriteServers.splice(i, 1);
+        saveConf();
+        return;
+      }
+    }
+  }
+
+  function addFavorite(addr, port, name, username, password) {
+    for (const i in favoriteServers) {
+      const s = favoriteServers[i];
+      if (s.addr === addr && s.port === port) {
+        s.name = name;
+        s.username = username;
+        s.password = password;
+        saveConf();
+        return false;
+      }
+    }
+    favoriteServers.unshift({ addr, port, name, username, password });
+    saveConf();
+    return true;
+  }
+
+
   function loadConf() {
     conf = JSON.parse(Backend.loadConf());
     winX = conf.winX ?? 100;
@@ -70,7 +111,8 @@ QtObject {
     winWidth = conf.winWidth ?? 960;
     winHeight = conf.winHeight ?? 540;
     lastLoginServer = conf.lastLoginServer ?? "127.0.0.1";
-    savedPassword = conf.savedPassword ?? {};
+    //savedPassword = conf.savedPassword ?? {};
+    favoriteServers = conf.favoriteServers ?? [];
     lobbyBg = conf.lobbyBg ?? AppPath + "/image/background";
     roomBg = conf.roomBg ?? AppPath + "/image/gamebg";
     bgmFile = conf.bgmFile ?? AppPath + "/audio/system/bgm.mp3";
@@ -86,6 +128,13 @@ QtObject {
     preferedMode = conf.preferedMode ?? "aaa_role_mode";
     preferedPlayerNum = conf.preferedPlayerNum ?? 2;
     preferredGeneralNum = conf.preferredGeneralNum ?? 3;
+    preferredFilter = conf.preferredFilter ?? {
+      name: "", // 房间名
+      id: "", // 房间ID
+      modes : [], // 游戏模式
+      full : 2, // 满员，0满，1未满，2不限
+      hasPassword : 2, // 密码，0有，1无，2不限
+    };
     ladyImg = conf.ladyImg ?? AppPath + "/image/lady";
     Backend.volume = conf.effectVolume ?? 50.;
     bgmVolume = conf.bgmVolume ?? 50.;
@@ -93,6 +142,7 @@ QtObject {
     hideUseless = conf.hideUseless ?? false;
     hideObserverChatter = conf.hideObserverChatter ?? false;
     rotateTableCard = conf.rotateTableCard ?? false;
+    hidePresents = conf.hidePresents ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     firstRun = conf.firstRun ?? true;
@@ -116,7 +166,8 @@ QtObject {
     conf.winWidth = realMainWin.width;
     conf.winHeight = realMainWin.height;
     conf.lastLoginServer = lastLoginServer;
-    conf.savedPassword = savedPassword;
+    //conf.savedPassword = savedPassword;
+    conf.favoriteServers = favoriteServers;
     conf.lobbyBg = lobbyBg;
     conf.roomBg = roomBg;
     conf.bgmFile = bgmFile;
@@ -124,6 +175,7 @@ QtObject {
     // conf.disabledPack = disabledPack;
     conf.preferedMode = preferedMode;
     conf.preferedPlayerNum = preferedPlayerNum;
+    conf.preferredFilter = preferredFilter;
     conf.ladyImg = ladyImg;
     conf.preferredGeneralNum = preferredGeneralNum;
     conf.effectVolume = Backend.volume;
@@ -132,6 +184,7 @@ QtObject {
     conf.hideUseless = hideUseless;
     conf.hideObserverChatter = hideObserverChatter;
     conf.rotateTableCard = rotateTableCard;
+    conf.hidePresents = hidePresents;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.firstRun = firstRun;
