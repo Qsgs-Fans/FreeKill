@@ -35,6 +35,7 @@ Item {
     card.autoBack = true;
     card.draggable = lcall("CanSortHandcards", Self.id);
     card.selectable = false;
+    card.clicked.connect(selectCard);
     card.clicked.connect(adjustCards);
     card.released.connect(updateCardReleased);
     card.xChanged.connect(updateCardDragging);
@@ -48,6 +49,7 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
+      card.clicked.connect(selectCard);
       card.selectedChanged.disconnect(adjustCards);
       card.released.disconnect(updateCardReleased);
       card.xChanged.disconnect(updateCardDragging);
