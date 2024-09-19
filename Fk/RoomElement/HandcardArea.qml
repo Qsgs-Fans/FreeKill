@@ -127,7 +127,7 @@ Item {
   }
 
   function selectCard(card) {
-    cardSelected(card.cid, card.selected);
+    if (card.selectable) cardSelected(card.cid, card.selected);
     adjustCards();
   }
 
