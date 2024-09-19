@@ -1882,7 +1882,7 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
   if (uiUpdate["_prompt"])
     roomScene.promptText = processPrompt(uiUpdate["_prompt"]);
 
-  if (uiUpdate._type == "RoomScene" || uiUpdate._type == "OKScene") {
+  if (uiUpdate._type == "Room") {
     // 需要判断是不是第一次收到这样的数据，可以通过state判断
     // 因为是先收到Lua的数据，再切换状态的
     // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
