@@ -1136,7 +1136,7 @@ callbacks["AskForGeneral"] = (data) => {
   const convert = data[2];
   const heg = data[3];
   roomScene.setPrompt(luatr("#AskForGeneral"), true);
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   const box = roomScene.popupBox.item;
@@ -1157,7 +1157,7 @@ callbacks["AskForSkillInvoke"] = (data) => {
   const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt)
                               : luatr("#AskForSkillInvoke").arg(luatr(skill));
-  // roomScene.state = "replying";
+  // roomScene.state = "active";
   // roomScene.okCancel.visible = true;
   // roomScene.okButton.enabled = true;
   // roomScene.cancelButton.enabled = true;
@@ -1165,7 +1165,7 @@ callbacks["AskForSkillInvoke"] = (data) => {
 }
 
 callbacks["AskForArrangeCards"] = (data) => {
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/ArrangeCardsBox.qml");
   const box = roomScene.popupBox.item;
@@ -1196,7 +1196,7 @@ callbacks["AskForGuanxing"] = (data) => {
   const top_area_name = data.top_area_name;
   const bottom_area_name = data.bottom_area_name;
   const prompt = data.prompt;
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   const box = roomScene.popupBox.item;
@@ -1232,7 +1232,7 @@ callbacks["AskForExchange"] = (data) => {
   const cards_name = [];
   const capacities = [];
   const limits = [];
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
@@ -1271,7 +1271,7 @@ callbacks["AskForChoice"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.state = "active";
   let qmlSrc;
   if (!detailed) {
     qmlSrc = "../RoomElement/ChoiceBox.qml";
@@ -1305,7 +1305,7 @@ callbacks["AskForChoices"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.state = "active";
   let qmlSrc;
   if (!detailed) {
     qmlSrc = "../RoomElement/CheckBox.qml";
@@ -1340,7 +1340,7 @@ callbacks["AskForCardChosen"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PlayerCardBox.qml");
 
@@ -1372,7 +1372,7 @@ callbacks["AskForCardsChosen"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
 
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   const box = roomScene.popupBox.item;
@@ -1397,7 +1397,7 @@ callbacks["AskForCardsChosen"] = (data) => {
 callbacks["AskForPoxi"] = (dat) => {
   const { type, data, extra_data, cancelable } = dat;
 
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
@@ -1423,7 +1423,7 @@ callbacks["AskForPoxi"] = (dat) => {
 callbacks["AskForMoveCardInBoard"] = (data) => {
   const { cards, cardsPosition, generalNames, playerIds } = data;
 
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
 
@@ -1763,7 +1763,7 @@ callbacks["FillAG"] = (data) => {
 }
 
 callbacks["AskForAG"] = (j) => {
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.manualBox.item.interactive = true;
 }
 
@@ -1783,7 +1783,7 @@ callbacks["CloseAG"] = () => roomScene.manualBox.item.close();
 callbacks["CustomDialog"] = (data) => {
   const path = data.path;
   const dat = data.data;
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.source = AppPath + "/" + path;
   if (dat) {
     roomScene.popupBox.item.loadData(dat);
@@ -1794,7 +1794,7 @@ callbacks["MiniGame"] = (data) => {
   const game = data.type;
   const dat = data.data;
   const gdata = lcall("GetMiniGame", game, Self.id, JSON.stringify(dat));
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.popupBox.source = AppPath + "/" + gdata.qml_path + ".qml";
   if (dat) {
     roomScene.popupBox.item.loadData(dat);
@@ -1864,7 +1864,7 @@ callbacks["AskForLuckCard"] = (j) => {
   if (config.observing || config.replaying) return;
   const time = parseInt(j);
   roomScene.setPrompt(luatr("#AskForLuckCard").arg(time), true);
-  roomScene.state = "replying";
+  roomScene.state = "active";
   roomScene.extra_data = {
     luckCard: true,
     time: time,

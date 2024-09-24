@@ -78,6 +78,7 @@ void Router::request(int type, const QString &command, const QString &jsonData,
   body << command;
   body << jsonData;
   body << timeout;
+  body << requestStartTime.toMSecsSinceEpoch();
 
   emit messageReady(JsonArray2Bytes(body));
 }
@@ -165,10 +166,12 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
     this->requestTimeout = packet[4].toInt();
+    this->requestTimestamp = packet[5].toInteger();
 
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      qobject_cast<Client *>(parent())->callLua(command, jsonData, true);
+      auto client = qobject_cast<Client *>(parent());
+      client->callLua(command, jsonData, true);
 #endif
     } else {
       // requesting server is not allowed

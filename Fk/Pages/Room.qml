@@ -319,7 +319,6 @@ Item {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
-          progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
           progress.visible = false;
@@ -348,6 +347,12 @@ Item {
       from: "notactive"; to: "active"
       ScriptAction {
         script: {
+          const dat = Backend.getRequestData();
+          const total = dat["timeout"] * 1000;
+          const now = Date.now(); // ms
+          const elapsed = now - (dat["timestamp"] ?? now);
+          progressAnim.from = (1 - elapsed / total) * 100.0;
+          progressAnim.duration = total - elapsed;
           progress.visible = true;
         }
       }
@@ -684,6 +689,7 @@ Item {
       }
 
       NumberAnimation on value {
+        id: progressAnim
         running: progress.visible
         from: 100.0
         to: 0.0

@@ -48,6 +48,9 @@ public:
 
   QString waitForReply(int timeout);
 
+  int getRequestId() const { return requestId; }
+  qint64 getRequestTimestamp() { return requestTimestamp; }
+
 signals:
   void messageReady(const QByteArray &message);
   void unknownPacket(const QByteArray &packet);
@@ -60,11 +63,12 @@ private:
   ClientSocket *socket;
   RouterType type;
 
-  // For sender
+  // For client side
   int requestId;
   int requestTimeout;
+  qint64 requestTimestamp;
 
-  // For receiver
+  // For server side
   QDateTime requestStartTime;
   QMutex replyMutex;
   int expectedReplyId;
