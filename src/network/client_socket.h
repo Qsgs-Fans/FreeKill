@@ -5,6 +5,12 @@
 
 #include <openssl/aes.h>
 
+/*!
+ * ClientSocket: QTcpSocket的封装，提供收发数据的功能
+ *
+ * 当数据长度超过一定量时进行压缩传输。
+ * 当设置了AES密钥时使用AES将数据加密后再传输。
+ */
 class ClientSocket : public QObject {
   Q_OBJECT
 

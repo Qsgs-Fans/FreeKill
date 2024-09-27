@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set(freekill_SRCS
-  "main.cpp"
+  # "main.cpp"
+  "freekill.cpp"
   "core/player.cpp"
   "core/util.cpp"
   "core/packman.cpp"
@@ -71,9 +72,9 @@ else ()
   set(GIT_LIB git2)
 endif ()
 
-target_sources(FreeKill PRIVATE ${freekill_SRCS})
-target_precompile_headers(FreeKill PRIVATE "pch.h")
-target_link_libraries(FreeKill PRIVATE
+add_library(libFreeKill STATIC ${freekill_SRCS})
+target_precompile_headers(libFreeKill PRIVATE "pch.h")
+target_link_libraries(libFreeKill PRIVATE
   ${LUA_LIB}
   ${SQLITE3_LIB}
   ${CRYPTO_LIB}
@@ -83,6 +84,10 @@ target_link_libraries(FreeKill PRIVATE
   ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
+)
+target_sources(FreeKill PRIVATE main.cpp)
+target_link_libraries(FreeKill PRIVATE
+  libFreeKill
 )
 
 install(TARGETS FreeKill DESTINATION bin)
