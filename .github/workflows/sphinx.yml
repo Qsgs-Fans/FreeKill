@@ -1,4 +1,4 @@
-name: Deploy Sphinx documentation to Pages
+name: Deploy Doxygen to Pages
 
 # Runs on pushes targeting the default branch
 on:
@@ -15,5 +15,15 @@ jobs:
       pages: write
       id-token: write
     steps:
-    - id: deployment
-      uses: sphinx-notes/pages@v3
+    - id: build
+      uses: mattnotmitt/doxygen-action@1.9.8
+      with:
+        working-directory: './docs/'
+        doxyfile-path: 'docs/Doxyfile'
+
+    - id: deploy
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.MY_TOKEN }}
+        publish_dir: './docs/build/html'
+
