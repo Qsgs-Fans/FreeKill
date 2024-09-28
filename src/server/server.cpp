@@ -106,13 +106,12 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     nextRoomId++;
     room->setAbandoned(false);
     thread->addRoom(room);
-    rooms.insert(room->getId(), room);
   } else {
     room = new Room(thread);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-    rooms.insert(room->getId(), room);
   }
 
+  rooms.insert(room->getId(), room);
   room->setName(name);
   room->setCapacity(capacity);
   room->setTimeout(timeout);
