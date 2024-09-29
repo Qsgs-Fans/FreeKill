@@ -6,12 +6,12 @@
 class ClientSocket;
 
 /**
-  \brief 向Server转达新的连接请求，并负责显示服务器信息。
+  @brief 向Server转达新的连接请求，并负责显示服务器信息。
 
   ServerSocket是对QTcpServer与QUdpSocket的封装。
 
   功能有：
-  - 当接受到TCP连接请求时，创建新的\ref ClientSocket 并向\ref Server 发送信号。
+  - 当接受到TCP连接请求时，创建新的@ref ClientSocket 并向@ref Server 发送信号。
   - 当接受到格式正确的UDP报文时，发回关于服务器的信息。
 */
 class ServerSocket : public QObject {
@@ -21,7 +21,7 @@ public:
   /**
     创建新的ServerSocket对象。
 
-    仅用于\ref Server 的构造函数中，作为Server的一个子成员。
+    仅用于@ref Server 的构造函数中，作为Server的一个子成员。
    */
   ServerSocket(QObject *parent = nullptr);
 

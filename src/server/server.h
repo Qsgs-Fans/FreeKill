@@ -13,7 +13,7 @@ class Lobby;
 #include "server/room.h"
 
 /**
-  \brief Server类负责管理游戏服务端的运行。
+  @brief Server类负责管理游戏服务端的运行。
 
   该类用于服务端程序运行。当客户端使用单机启动时，Server类也会被实例化。
   Server的具体运行逻辑依托于Qt的事件循环与信号槽机制：当Server被创建后，
@@ -38,7 +38,7 @@ public:
               ushort port = 9527u);
 
   /**
-    \brief 创建新的房间并加入到房间列表中。
+    @brief 创建新的房间并加入到房间列表中。
 
     创建新的房间。
 
@@ -50,8 +50,8 @@ public:
     之后，将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
     房间，通过addPlayer将房主添加到房间中，并使用setOwner将其设为房主。
 
-    \param owner 创建房间的那名玩家；房主
-    \param settings 表示JSON对象的字符串，用作房间配置
+    @param owner 创建房间的那名玩家；房主
+    @param settings 表示JSON对象的字符串，用作房间配置
     */
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
                   int timeout = 15, const QByteArray &settings = "{}");

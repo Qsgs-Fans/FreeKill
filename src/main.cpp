@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
   return freekill_main(argc, argv);
 }
 
-/** \mainpage 新月杀文档 - Cpp代码部分
+/** @mainpage 新月杀文档 - Cpp代码部分
 
   本文档专门针对新月杀的C++代码部分，采用Doxygen生成。
   关于项目的主文档请参见新月之书： https://fkbook-all-in-one.readthedocs.io/
@@ -26,14 +26,14 @@ int main(int argc, char **argv) {
 
   比较复杂的主要是服务端代码。具体可以查看每个类的文档
 
-  \note 为了详细说明程序运行原理，private成员也将会在文档中呈现。
+  @note 为了详细说明程序运行原理，private成员也将会在文档中呈现。
 */
 
-/** \page page_network 网络连接
+/** @page page_network 网络连接
 
   相关类：
 
-  \ref ServerSocket
-  \ref ClientSocket
-  \ref Router
+  @ref ServerSocket
+  @ref ClientSocket
+  @ref Router
 */
