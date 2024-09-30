@@ -548,7 +548,7 @@ Item {
     anchors.top: roomArea.bottom
     anchors.left: dashboardBtn.right
 
-    onCardSelected: function(card) {
+    /*onCardSelected: function(card) {
       Logic.enableTargets(card);
       if (typeof card === "number" && card !== -1
         && roomScene.state === "playing"
@@ -569,7 +569,7 @@ Item {
       } else {
         specialCardSkills.model = [];
       }
-    }
+    }*/
   }
 
   Rectangle {
@@ -709,7 +709,7 @@ Item {
       color: "#88EEEEEE"
       radius: 8
       visible: {
-        if (roomScene.state !== "playing") {
+        if (roomScene.state !== "active") {
           return false;
         }
         if (!specialCardSkills) {
@@ -733,7 +733,7 @@ Item {
             text: luatr(modelData)
             checked: index === 0
             onCheckedChanged: {
-              roomScene.resetPrompt();
+              /*roomScene.resetPrompt();
               const card = dashboard.selected_card;
               let prompt = ""
               if (modelData === "_normal_use") {
@@ -751,7 +751,8 @@ Item {
               }
               if (prompt !== "") {
                 roomScene.setPrompt(Util.processPrompt(prompt));
-              }
+              }*/
+              lcall("UpdateRequestUI", "SpecialSkills", "1", "click", modelData);
             }
           }
         }
@@ -1118,7 +1119,7 @@ Item {
     onActivated: menuContainer.open();
   }
 
-  function getCurrentCardUseMethod() {
+  /*function getCurrentCardUseMethod() {
     if (specialCardSkills.count === 1
             && specialCardSkills.model[0] !== "_normal_use") {
       return specialCardSkills.model[0];
@@ -1131,7 +1132,7 @@ Item {
         return ret;
       }
     }
-  }
+  }*/
 
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
@@ -1386,6 +1387,11 @@ Item {
         }
       }
     });
+
+    const sskilldata = uiUpdate["SpecialSkills"]?.[0]
+    if (sskilldata) {
+      specialCardSkills.model = sskilldata?.skills ?? [];
+    }
 
     dashboard.applyChange(uiUpdate);
     const pdatas = uiUpdate["Photo"];
