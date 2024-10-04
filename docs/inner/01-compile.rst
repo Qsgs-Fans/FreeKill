@@ -98,7 +98,25 @@ Linux服务器
 MacOS
 -----
 
-大致与Windows类似，但尚且缺少确切的方案。
+安装依赖：
+
+.. code:: sh
+
+   $ brew install libgit2 swig qt lua
+
+更新submodule：
+
+.. code:: sh
+
+   $ git submodule update --init --recursive
+
+然后使用命令行编译：
+
+.. code:: sh
+
+   $ mkdir build && cd build
+   $ cmake ..
+   $ make -j8
 
 --------------
 

@@ -1,4 +1,4 @@
-<!DOCTYPE TS><TS>
+<!DOCTYPE TS><TS language="zh_CN">
 <context>
   <name>ClientSocket</name>
   <message>

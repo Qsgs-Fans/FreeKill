@@ -1,4 +1,4 @@
-<!DOCTYPE TS><TS>
+<!DOCTYPE TS><TS language="en_US">
 
 <context>
   <name>Init</name>
