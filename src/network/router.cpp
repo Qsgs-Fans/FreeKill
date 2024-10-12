@@ -57,7 +57,7 @@ void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
 }
 
 void Router::request(int type, const QString &command, const QString &jsonData,
-                     int timeout) {
+                     int timeout, qint64 timestamp) {
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
@@ -78,7 +78,7 @@ void Router::request(int type, const QString &command, const QString &jsonData,
   body << command;
   body << jsonData;
   body << timeout;
-  body << requestStartTime.toMSecsSinceEpoch();
+  body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
 
   emit messageReady(JsonArray2Bytes(body));
 }
