@@ -134,77 +134,6 @@ function arrangePhotos() {
   }
 }
 
-// function doOkButton() {
-//   if (roomScene.state === "playing" || roomScene.state === "responding") {
-//     const reply = JSON.stringify({
-//       card: dashboard.getSelectedCard(),
-//       targets: selected_targets,
-//       special_skill: roomScene.getCurrentCardUseMethod(),
-//       interaction_data: roomScene.skillInteraction.item ?
-//                         roomScene.skillInteraction.item.answer : undefined,
-//     });
-//     replyToServer(reply);
-//     return;
-//   }
-//   if (roomScene.extra_data.luckCard) {
-//     okButton.enabled = false;
-//     ClientInstance.notifyServer("PushRequest", [
-//       "luckcard", true
-//     ].join(","));
-
-//     if (roomScene.extra_data.time === 1) {
-//       roomScene.state = "notactive";
-//     }
-
-//     return;
-//   }
-//   replyToServer("1");
-// }
-
-// let _is_canceling = false;
-// function doCancelButton() {
-//   if (_is_canceling) return;
-//   _is_canceling = true;
-
-  // if (roomScene.state === "playing") {
-  //   dashboard.stopPending();
-  //   dashboard.deactivateSkillButton();
-  //   dashboard.unSelectAll();
-  //   dashboard.enableCards();
-  //   dashboard.enableSkills();
-
-  //   _is_canceling = false;
-  //   return;
-  // } else if (roomScene.state === "responding") {
-  //   const p = dashboard.pending_skill;
-  //   dashboard.stopPending();
-  //   dashboard.deactivateSkillButton();
-  //   dashboard.unSelectAll();
-  //   if (roomScene.autoPending || !p) {
-  //     replyToServer("__cancel");
-  //   } else {
-  //     dashboard.enableCards(roomScene.responding_card);
-  //     dashboard.enableSkills(roomScene.responding_card);
-  //   }
-
-  //   _is_canceling = false;
-  //   return;
-  // }
-
-  //   if (roomScene.extra_data.luckCard) {
-  //     ClientInstance.notifyServer("PushRequest", [
-  //       "luckcard", false
-  //     ].join(","));
-  //     roomScene.state = "notactive";
-
-  //     _is_canceling = false;
-  //     return;
-  //   }
-
-  //   replyToServer("__cancel");
-  //   _is_canceling = false;
-  // }
-
 function replyToServer(jsonData) {
   ClientInstance.replyToServer("", jsonData);
   if (!mainWindow.is_pending) {
@@ -692,239 +621,6 @@ callbacks["AddPlayer"] = (data) => {
     }
   }
 }
-
-/*
-// card: int | { skill: string, subcards: int[] }
-function enableTargets(card) {
-  if (roomScene.respond_play) {
-    const candidate = (!isNaN(card) && card !== -1)
-                    || typeof(card) === "string";
-    if (candidate) {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        !lcall("CardProhibitedResponse", card);
-    } else {
-      okButton.enabled = false;
-    }
-    return;
-  }
-
-  let i = 0;
-  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  const all_photos = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos.push(photos.itemAt(i))
-  }
-  selected_targets = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos[i].selected = false;
-  }
-
-  if (candidate) {
-    const data = {
-      ok_enabled: false,
-      enabled_targets: []
-    }
-
-    all_photos.forEach(photo => {
-      photo.state = "candidate";
-      const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
-                        JSON.stringify(roomScene.extra_data));
-      photo.selectable = ret;
-
-      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
-        ret, JSON.stringify(roomScene.extra_data));
-      if (tipText) {
-        photo.targetTip = tipText;
-      } else {
-        photo.targetTip = [];
-      }
-
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        const exclusive = roomScene.extra_data.exclusive_targets;
-        if (exclusive instanceof Array) {
-          if (exclusive.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0 && included.indexOf(id) === -1)
-                                   photo.selectable = false;
-        }
-      }
-    })
-
-    okButton.enabled = lcall("CardFeasible", card, selected_targets);
-    if (okButton.enabled && roomScene.state === "responding") {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        (roomScene.autoPending || !lcall("CardProhibitedUse", card));
-    } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id,
-                               JSON.stringify(roomScene.extra_data));
-    }
-    if (okButton.enabled) {
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        if (must instanceof Array) {
-          if(must.length === 0) okButton.enabled = false;
-        }
-        if (included instanceof Array) {
-          if (included.length === 0) okButton.enabled = false;
-        }
-      }
-    }
-  } else {
-    all_photos.forEach(photo => {
-      photo.targetTip = [];
-      photo.state = "normal";
-      photo.selected = false;
-    });
-
-    okButton.enabled = false;
-  }
-}
-
-function updateSelectedTargets(playerid, selected) {
-  let i = 0;
-  const card = dashboard.getSelectedCard();
-  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  const all_photos = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos.push(photos.itemAt(i))
-  }
-
-  if (selected) {
-    selected_targets.push(playerid);
-  } else {
-    selected_targets.splice(selected_targets.indexOf(playerid), 1);
-  }
-
-  if (candidate) {
-    if (!selected) {
-      const remain_targets = [];
-      selected_targets.forEach(id => {
-        const photo = getPhoto(id);
-        const ret = lcall("CanUseCardToTarget", card, id, remain_targets,
-                           JSON.stringify(roomScene.extra_data));
-        let bool = ret;
-        if (roomScene.extra_data instanceof Object) {
-          const must = roomScene.extra_data.must_targets;
-          const included = roomScene.extra_data.include_targets;
-          const exclusive = roomScene.extra_data.exclusive_targets;
-          if (exclusive instanceof Array) {
-            if (exclusive.indexOf(id) === -1) bool = false;
-          }
-          if (must instanceof Array) {
-            if (must.filter((val) => {
-              return remain_targets.indexOf(val) === -1;
-            }).length !== 0 && must.indexOf(id) === -1) bool = false;
-          }
-          if (included instanceof Array) {
-            if (included.filter((val) => {
-              return remain_targets.indexOf(val) !== -1;
-            }).length === 0 && included.indexOf(id) === -1) bool = false;
-          }
-        }
-        if (bool) {
-          remain_targets.push(id);
-        } else {
-          photo.selected = false;
-        }
-      })
-      selected_targets = remain_targets;
-    }
-
-    roomScene.resetPrompt(); // update prompt due to selected_targets
-    const prompt = lcall("ActiveSkillPrompt",
-      dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
-      dashboard.pending_skill !== "" ? dashboard.pendings : card,
-      selected_targets);
-    if (prompt !== "") {
-      roomScene.setPrompt(Util.processPrompt(prompt));
-    }
-
-    all_photos.forEach(photo => {
-      const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
-                         JSON.stringify(roomScene.extra_data));
-
-      let tipText = lcall("GetUseCardTargetTip", card, id, selected_targets,
-        ret, JSON.stringify(roomScene.extra_data));
-      if (tipText) {
-        photo.targetTip = tipText;
-      } else {
-        photo.targetTip = [];
-      }
-
-      if (photo.selected) return;
-      photo.selectable = ret;
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        const exclusive = roomScene.extra_data.exclusive_targets;
-        if (exclusive instanceof Array) {
-          if (exclusive.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0 && included.indexOf(id) === -1)
-                                   photo.selectable = false;
-        }
-      }
-    })
-
-    okButton.enabled = lcall("CardFeasible", card, selected_targets);
-    if (okButton.enabled && roomScene.state === "responding") {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        (roomScene.autoPending || !lcall("CardProhibitedUse", card));
-    } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id,
-                               JSON.stringify(roomScene.extra_data));
-    }
-    if (okButton.enabled) {
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0) okButton.enabled = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0) okButton.enabled = false;
-        }
-      }
-    }
-  } else {
-    all_photos.forEach(photo => {
-      photo.targetTip = [];
-      photo.state = "normal";
-      photo.selected = false;
-    });
-
-    okButton.enabled = false;
-  }
-}
-*/
 
 callbacks["RemovePlayer"] = (data) => {
   // jsonData: int uid
@@ -1532,15 +1228,6 @@ callbacks["AskForUseCard"] = (data) => {
   const prompt = data[2];
   const extra_data = data[4];
   const disabledSkillNames = data[5];
-  if (extra_data != null) {
-    if (extra_data.effectTo !== Self.id &&
-        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
-      // doCancelButton();
-      return;
-    } else {
-      roomScene.extra_data = extra_data;
-    }
-  }
 
   if (prompt === "") {
     roomScene.promptText = luatr("#AskForUseCard")
@@ -1549,6 +1236,15 @@ callbacks["AskForUseCard"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.state = "active";
+  if (extra_data != null) {
+    if (extra_data.effectTo !== Self.id &&
+        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
+      lcall("UpdateRequestUI", "Button", "Cancel");
+      return;
+    } else {
+      roomScene.extra_data = extra_data;
+    }
+  }
   // roomScene.responding_card = pattern;
   // roomScene.respond_play = false;
   // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
@@ -1859,10 +1555,6 @@ callbacks["ChangeSelf"] = (j) => {
   changeSelf(data);
 }
 
-//callbacks["CancelRequest"] = (jsonData) => {
-//  ClientInstance.replyToServer("", "__cancel")
-//}
-
 callbacks["UpdateRequestUI"] = (uiUpdate) => {
   if (uiUpdate["_prompt"])
     roomScene.promptText = processPrompt(uiUpdate["_prompt"]);
@@ -1871,12 +1563,12 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
     // 需要判断是不是第一次收到这样的数据，可以通过state判断
     // 因为是先收到Lua的数据，再切换状态的
     // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
-    if (roomScene.state === "notactive") {
-      okCancel.visible = true;
-      okButton.enabled = false;
-      cancelButton.enabled = false;
-      // endPhaseButton.visible = true;
-    }
+    // if (roomScene.state === "notactive") {
+    //   okCancel.visible = true;
+    //   okButton.enabled = false;
+    //   cancelButton.enabled = false;
+    //   // endPhaseButton.visible = true;
+    // }
     roomScene.applyChange(uiUpdate);
   }
 }
