@@ -1859,21 +1859,6 @@ callbacks["ChangeSelf"] = (j) => {
   changeSelf(data);
 }
 
-callbacks["AskForLuckCard"] = (j) => {
-  // jsonData: int time
-  if (config.observing || config.replaying) return;
-  const time = parseInt(j);
-  roomScene.setPrompt(luatr("#AskForLuckCard").arg(time), true);
-  roomScene.state = "active";
-  roomScene.extra_data = {
-    luckCard: true,
-    time: time,
-  };
-  roomScene.okCancel.visible = true;
-  roomScene.okButton.enabled = true;
-  roomScene.cancelButton.enabled = true;
-}
-
 //callbacks["CancelRequest"] = (jsonData) => {
 //  ClientInstance.replyToServer("", "__cancel")
 //}
