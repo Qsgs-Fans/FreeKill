@@ -460,6 +460,7 @@ Item {
         onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
       }
       MetroButton {
+        id: revertSelectionBtn
         text: luatr("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
