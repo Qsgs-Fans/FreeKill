@@ -37,7 +37,7 @@ public:
   void setReplyReadySemaphore(QSemaphore *semaphore);
 
   void request(int type, const QString &command,
-              const QString &jsonData, int timeout);
+              const QString &jsonData, int timeout, qint64 timestamp = -1);
   void reply(int type, const QString &command, const QString &jsonData);
   void notify(int type, const QString &command, const QString &jsonData);
 
@@ -47,6 +47,9 @@ public:
   void abortRequest();
 
   QString waitForReply(int timeout);
+
+  int getRequestId() const { return requestId; }
+  qint64 getRequestTimestamp() { return requestTimestamp; }
 
 signals:
   void messageReady(const QByteArray &message);
@@ -60,11 +63,12 @@ private:
   ClientSocket *socket;
   RouterType type;
 
-  // For sender
+  // For client side
   int requestId;
   int requestTimeout;
+  qint64 requestTimestamp;
 
-  // For receiver
+  // For server side
   QDateTime requestStartTime;
   QMutex replyMutex;
   int expectedReplyId;

@@ -41,6 +41,7 @@ SWIG_arg ++;
 
 %typemap(out) QString
 %{
+  // FIXME: 这里针对高频出现的字符串减少toUtf8调用避免创建新的bytearray...
   if ($1.isEmpty()) {
     lua_pushstring(L, "");
   } else if ($1 == "__notready") {
@@ -52,13 +53,11 @@ SWIG_arg ++;
 %}
 
 // const QString &
-%typemap(arginit) QString const &
-  "QString $1_str;"
 
-%typemap(in, checkfn = "lua_isstring") QString const &
+%typemap(in, checkfn = "lua_isstring") QString const & ($*1_ltype temp)
 %{
-  $1_str = QString::fromUtf8(lua_tostring(L, $input));
-  $1 = &$1_str;
+  temp = QString::fromUtf8(lua_tostring(L, $input));
+  $1 = &temp;
 %}
 
 %typemap(out) QString const &
@@ -72,6 +71,11 @@ SWIG_arg ++;
   }
   SWIG_arg++;
 %}
+
+// 解决函数重载中类型检测问题
+%typecheck(SWIG_TYPECHECK_STRING) QString, QString const& {
+  $1 = lua_isstring(L,$input);
+}
 
 // QStringList
 %naturalvar QStringList;

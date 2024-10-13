@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "ui/qmlbackend.h"
+#include <qjsondocument.h>
+#include <qjsonobject.h>
 
 #ifndef FK_SERVER_ONLY
 #include <QAudioOutput>
@@ -645,6 +647,15 @@ void QmlBackend::controlReplayer(QString type) {
   } else if (type == "shutdown") {
     emit replayerShutdown();
   }
+}
+
+QJsonObject QmlBackend::getRequestData() const {
+  auto obj = QJsonObject();
+  auto router = ClientInstance->getRouter();
+  obj["id"] = router->getRequestId();
+  obj["timeout"] = router->getTimeout();
+  obj["timestamp"] = router->getRequestTimestamp();
+  return obj;
 }
 
 #endif

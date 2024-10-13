@@ -314,15 +314,15 @@ Item {
   state: "notactive"
   transitions: [
     Transition {
-      from: "active"; to: "notactive"
+      from: "*"; to: "notactive"
       ScriptAction {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
-          progress.visible = false;
           okCancel.visible = false;
           endPhaseButton.visible = false;
           progress.visible = false;
+          extra_data = {};
 
           dashboard.disableAllCards();
           dashboard.disableSkills();
@@ -348,6 +348,12 @@ Item {
       from: "notactive"; to: "active"
       ScriptAction {
         script: {
+          const dat = Backend.getRequestData();
+          const total = dat["timeout"] * 1000;
+          const now = Date.now(); // ms
+          const elapsed = now - (dat["timestamp"] ?? now);
+          progressAnim.from = (1 - elapsed / total) * 100.0;
+          progressAnim.duration = total - elapsed;
           progress.visible = true;
         }
       }
@@ -402,7 +408,6 @@ Item {
         sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
-          // Logic.updateSelectedTargets(playerid, selected);
           if ( state === "candidate" ) lcall("UpdateRequestUI", "Photo", playerid, "click", { selected } );
         }
 
@@ -455,6 +460,7 @@ Item {
         onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
       }
       MetroButton {
+        id: revertSelectionBtn
         text: luatr("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
@@ -542,29 +548,6 @@ Item {
     width: roomScene.width - dashboardBtn.width
     anchors.top: roomArea.bottom
     anchors.left: dashboardBtn.right
-
-    onCardSelected: function(card) {
-      Logic.enableTargets(card);
-      if (typeof card === "number" && card !== -1
-        && roomScene.state === "playing"
-        && lcall("GetPlayerHandcards", Self.id).includes(card)) {
-
-        const skills = lcall("GetCardSpecialSkills", card);
-        if (lcall("CanUseCard", card, Self.id,
-                  JSON.stringify(roomScene.extra_data))) {
-          skills.unshift("_normal_use");
-        }
-        specialCardSkills.model = skills;
-        const skillName = lcall("GetCardSkill", card);
-        const prompt = lcall("ActiveSkillPrompt", skillName, card,
-                             selected_targets);
-        if (prompt !== "") {
-          roomScene.setPrompt(Util.processPrompt(prompt));
-        }
-      } else {
-        specialCardSkills.model = [];
-      }
-    }
   }
 
   Rectangle {
@@ -684,6 +667,7 @@ Item {
       }
 
       NumberAnimation on value {
+        id: progressAnim
         running: progress.visible
         from: 100.0
         to: 0.0
@@ -703,7 +687,7 @@ Item {
       color: "#88EEEEEE"
       radius: 8
       visible: {
-        if (roomScene.state !== "playing") {
+        if (roomScene.state !== "active") {
           return false;
         }
         if (!specialCardSkills) {
@@ -727,25 +711,7 @@ Item {
             text: luatr(modelData)
             checked: index === 0
             onCheckedChanged: {
-              roomScene.resetPrompt();
-              const card = dashboard.selected_card;
-              let prompt = ""
-              if (modelData === "_normal_use") {
-                Logic.enableTargets(card);
-                const skillName = lcall("GetCardSkill", card);
-                prompt = lcall("ActiveSkillPrompt", skillName, card,
-                               selected_targets);
-              } else {
-                Logic.enableTargets(JSON.stringify({
-                  skill: modelData,
-                  subcards: [card],
-                }));
-                prompt = lcall("ActiveSkillPrompt", modelData, card,
-                               selected_targets);
-              }
-              if (prompt !== "") {
-                roomScene.setPrompt(Util.processPrompt(prompt));
-              }
+              lcall("UpdateRequestUI", "SpecialSkills", "1", "click", modelData);
             }
           }
         }
@@ -774,7 +740,7 @@ Item {
                  && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
-          // Logic.doCancelButton();
+          lcall("UpdateRequestUI", "Button", "Cancel");
         }
       }
 
@@ -1112,21 +1078,6 @@ Item {
     onActivated: menuContainer.open();
   }
 
-  function getCurrentCardUseMethod() {
-    if (specialCardSkills.count === 1
-            && specialCardSkills.model[0] !== "_normal_use") {
-      return specialCardSkills.model[0];
-    }
-
-    for (let i = 1; i < specialCardSkills.count; i++) {
-      const item = specialCardSkills.itemAt(i);
-      if (item.checked) {
-        const ret = item.orig_text;
-        return ret;
-      }
-    }
-  }
-
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
     const photo = Logic.getPhoto(pid);
@@ -1336,7 +1287,6 @@ Item {
   }
 
   function applyChange(uiUpdate) {
-    //console.log(JSON.stringify(uiUpdate))
     uiUpdate["_delete"]?.forEach(data => {
       if (data.type == "Interaction") {
         skillInteraction.sourceComponent = undefined;
@@ -1381,6 +1331,11 @@ Item {
       }
     });
 
+    const sskilldata = uiUpdate["SpecialSkills"]?.[0]
+    if (sskilldata) {
+      specialCardSkills.model = sskilldata?.skills ?? [];
+    }
+
     dashboard.applyChange(uiUpdate);
     const pdatas = uiUpdate["Photo"];
     pdatas?.forEach(pdata => {
@@ -1390,6 +1345,11 @@ Item {
       photo.selected = pdata.selected;
     })
     const buttons = uiUpdate["Button"];
+    if (buttons) {
+      okCancel.visible = true;
+      okButton.enabled = false;
+      cancelButton.enabled = false;
+    }
     buttons?.forEach(bdata => {
       switch (bdata.id) {
         case "OK":

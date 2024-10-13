@@ -80,6 +80,8 @@ public:
   void setReplayer(Replayer *rep);
   Q_INVOKABLE void controlReplayer(QString type);
 
+  Q_INVOKABLE QJsonObject getRequestData() const;
+
 signals:
   void notifyUI(const QString &command, const QVariant &data);
   void dialog(const QString &type, const QString &text, const QString &orig = QString());

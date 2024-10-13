@@ -79,7 +79,7 @@ void Scheduler::tellThreadToLua()
 class ServerPlayer : public Player {
 public:
   void doRequest(const QString &command,
-           const QString &json_data, int timeout);
+           const QString &json_data, int timeout, long long timestamp = -1);
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
 

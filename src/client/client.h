@@ -36,6 +36,8 @@ public:
 
   bool isConsoleStart() const;
   void startWatchFiles();
+
+  Router *getRouter() const { return router; }
 signals:
   void error_message(const QString &msg);
 
