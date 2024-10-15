@@ -199,14 +199,15 @@ function getAreaItem(area, id) {
   return null;
 }
 
-function moveCards(moves) {
+function moveCards(data) {
+  const moves = data.merged;
   for (let i = 0; i < moves.length; i++) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
     if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
-    const items = from.remove(move.ids, move.fromSpecialName);
+    const items = from.remove(move.ids, move.fromSpecialName, data);
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
