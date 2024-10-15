@@ -570,30 +570,6 @@ callbacks["MaxCard"] = (data) => {
   }
 }
 
-function changeSelf(id) {
-  lcall("ChangeSelf", id);
-
-  // move new selfPhoto to dashboard
-  let order = new Array(photoModel.count);
-  for (let i = 0; i < photoModel.count; i++) {
-    const item = photoModel.get(i);
-    order[item.seatNumber - 1] = item.id;
-    if (item.id === Self.id) {
-      dashboard.self = photos.itemAt(i);
-    }
-  }
-  callbacks["ArrangeSeats"](order);
-
-  // update dashboard
-  dashboard.update();
-
-  // handle pending messages
-  if (mainWindow.is_pending) {
-    const data = mainWindow.fetchMessage();
-    return mainWindow.handleMessage(data.command, data.jsonData);
-  }
-}
-
 callbacks["AddPlayer"] = (data) => {
   // jsonData: int id, string screenName, string avatar, bool ready
   for (let i = 0; i < photoModel.count; i++) {
@@ -1539,21 +1515,20 @@ callbacks["UpdateGameData"] = (data) => {
 }
 
 // 神貂蝉
-
-callbacks["StartChangeSelf"] = (j) => {
-  const id = parseInt(j);
-  ClientInstance.notifyServer("PushRequest", "changeself," + j);
-}
-
 callbacks["ChangeSelf"] = (j) => {
-  const data = parseInt(j);
-  if (Self.id === data) {
-    const msg = mainWindow.fetchMessage();
-    if (!msg) return;
-    mainWindow.handleMessage(msg.command, msg.jsonData);
-    return;
+  // move new selfPhoto to dashboard
+  let order = new Array(photoModel.count);
+  for (let i = 0; i < photoModel.count; i++) {
+    const item = photoModel.get(i);
+    order[item.seatNumber - 1] = item.id;
+    if (item.id === Self.id) {
+      dashboard.self = photos.itemAt(i);
+    }
   }
-  changeSelf(data);
+  callbacks["ArrangeSeats"](order);
+
+  // update dashboard
+  dashboard.update();
 }
 
 callbacks["UpdateRequestUI"] = (uiUpdate) => {

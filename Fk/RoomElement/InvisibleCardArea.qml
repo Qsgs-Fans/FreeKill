@@ -67,7 +67,7 @@ Item {
         card.x -= card.width / 2;
         card.x += (i - outputs.length / 2) * 15;
         card.y -= card.height / 2;
-        card.known = visibleData[outputs[i].toString()];
+        if (visibleData) card.known = visibleData[outputs[i].toString()];
         items.push(card);
         if (checkExisting) {
           for (let j = 0; j < length; j++) {

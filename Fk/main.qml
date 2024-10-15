@@ -26,8 +26,6 @@ Window {
       ? 540 : 960 * parent.height / parent.width
     scale: parent.width / width
     anchors.centerIn: parent
-    property bool is_pending: false
-    property var pending_message: []
 
     Config {
       id: config
@@ -158,17 +156,7 @@ Window {
           errDialog.open();
           return;
         }
-        if (mainWindow.is_pending && command !== "ChangeSelf") {
-          mainWindow.pending_message.push({
-                                            command: command,
-                                            jsonData: jsonData,
-                                          });
-        } else {
-          if (command === "StartChangeSelf") {
-            mainWindow.is_pending = true;
-          }
-          mainWindow.handleMessage(command, jsonData);
-        }
+        mainWindow.handleMessage(command, jsonData);
       }
     }
 
