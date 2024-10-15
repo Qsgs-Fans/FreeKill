@@ -21,7 +21,7 @@ Item {
   function inTable(cid) {
     return leval(`(function()
       local client = Fk:currentRoom()
-      if client._processing[${cid}] then
+      if table.contains(client.processing_area, ${cid}) then
         return true
       end
       return false
