@@ -244,6 +244,7 @@ Item {
           config.curSchemeChanged();
         } else {
           generalText.clear();
+          generalText.clearSavedText();
           generalDetail.general = modelData;
           generalDetail.updateGeneral();
           generalDetail.open();
@@ -505,6 +506,7 @@ Item {
       detailFlickable.contentY = 0; // 重置滚动条
       const data = lcall("GetGeneralDetail", general);
       generalText.clear();
+      generalText.clearSavedText();
       audioModel.clear();
 
       if (data.companions.length > 0){
@@ -619,6 +621,10 @@ Item {
           TextEdit {
             id: generalText
 
+            property var savedtext: []
+            function clearSavedText() {
+              savedtext = [];
+            }
             Layout.fillWidth: true
             readOnly: true
             selectByKeyboard: true
@@ -626,6 +632,14 @@ Item {
             wrapMode: TextEdit.WordWrap
             textFormat: TextEdit.RichText
             font.pixelSize: 18
+            onLinkActivated: (link) => {
+              if (link === "back") {
+                text = savedtext.pop();
+              } else {
+                savedtext.push(text);
+                text = '<a href="back">点击返回</a><br>' + luatr(link);
+              }
+            }
           }
 
           GridLayout {
