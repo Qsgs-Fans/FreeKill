@@ -581,7 +581,7 @@ function ServerPlayer:waitForReply()
   return ""
 end
 function ServerPlayer:doNotify(cmd, j)
-  if self.id ~= 1 then
+  if self.id ~= 100 then
     return
   end
   if cmd == "GameLog" then

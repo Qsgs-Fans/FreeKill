@@ -3,6 +3,8 @@
 local fk = {}
 local testFail = false
 
+local json = require "lua.lib.json"
+
 local os, io = os, io
 
 -- 这下Linux专用了
@@ -13,12 +15,35 @@ end
 
 function fk.QmlBackend_isDir(dir)
   local f = io.popen("if [ -d " .. dir .. " ]; then echo OK; fi")
-  return f:read("*a"):startsWith("OK")
+  return f:read("*a"):sub(1, 2) == "OK"
 end
 
 function fk.QmlBackend_exists(dir)
   local f = io.popen("if [ -e " .. dir .. " ]; then echo OK; fi")
-  return f:read("*a"):startsWith("OK")
+  return f:read("*a"):sub(1, 2) == "OK"
+end
+
+function fk.QmlBackend_pwd()
+  local f = io.popen("pwd")
+  return f:read("*a")
+end
+
+function fk.QmlBackend_cd(dir) end
+
+function fk.QJsonDocument_fromVariant(e)
+  return {
+    toJson = function(_, __)
+      return json.encode(e)
+    end,
+  }
+end
+
+function fk.QJsonDocument_fromJson(str)
+  return {
+    toVariant = function(_)
+      return json.decode(str)
+    end,
+  }
 end
 
 function fk.GetDisabledPacks()
@@ -46,7 +71,7 @@ end
 function fk.roomtest(croom, f)
   local room = Room(croom)
   RoomInstance = room
-  room.action = function() f(room) end
+  --room.action = function() f(room) end
   while true do
     local over = room:resume()
     if over then break else room.in_delay = false end
