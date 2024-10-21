@@ -356,6 +356,22 @@ test2:addSkill(test_zhenggong)
 test2:addSkill(change_hero)
 -- test2:addSkill(test_feichu)
 
+local kansha=fk.CreateVisibilitySkill{
+  name='test_kansha',
+  frequency=Skill.Compulsory,
+  card_visible = function(self, player, card)
+    if player:hasSkill(self) and card.trueName == 'slash' and
+      Fk:currentRoom():getCardArea(card) == Card.PlayerHand then
+      return true
+    end
+  end
+}
+test2:addSkill(kansha)
+Fk:loadTranslationTable{
+  ["test_kansha"] = "看杀",
+  [":test_kansha"] = "锁定技，你看得到人们手中的【杀】"
+}
+
 local shibing = General(extension, "blank_shibing", "qun", 5)
 shibing.hidden = true
 Fk:loadTranslationTable{

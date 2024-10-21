@@ -533,7 +533,6 @@ Item {
     id: role
     value: {
       if (root.role === "hidden") return "hidden";
-      console.log(lcall("RoleVisibility", root.playerid));
       lcall("RoleVisibility", root.playerid) ? root.role : "unknown";
     }
     anchors.top: parent.top
@@ -804,7 +803,8 @@ Item {
     visible: {
       if (root.playerid === Self.id) return false;
       if (root.handcards === 0) return false; // 优先绑定再判buddy，否则不会更新
-      if (!lcall("IsMyBuddy", Self.id, root.playerid)) return false;
+      if (!lcall("IsMyBuddy", Self.id, root.playerid) &&
+        !lcall("HasVisibleCard", Self.id, root.playerid)) return false;
       return true;
     }
 
@@ -822,6 +822,7 @@ Item {
             txt.push("...");
             break;
           }
+          if (!lcall("CardVisibility", cid)) continue;
           const data = lcall("GetCardData", cid);
           let a = luatr(data.name);
           /* if (a.length === 1) {
@@ -831,6 +832,18 @@ Item {
             a = a.slice(0, 2);
           }
           txt.push(a);
+        }
+
+        if (txt.length < 5) {
+          const unknownCards = ids.length - txt.length;
+          for (let i = 0; i < unknownCards; i++) {
+            if (txt.length >= 4) {
+              txt.push("...");
+              break;
+            } else {
+              txt.push("?");
+            }
+          }
         }
 
         return txt.join("<br>");
@@ -846,6 +859,7 @@ Item {
       onTapped: {
         const params = { name: "hand_card" };
         let data = lcall("GetPlayerHandcards", root.playerid);
+        data = data.filter((e) => lcall("CardVisibility", e));
 
         params.ids = data;
 
