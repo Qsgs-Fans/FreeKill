@@ -507,23 +507,6 @@ Item {
       anchors.bottomMargin: 4
       style: Text.Outline
     }
-
-    TapHandler {
-      enabled: (root.state != "candidate" || !root.selectable)
-               && root.playerid !== Self.id
-      onTapped: {
-        const params = { name: "hand_card" };
-        let data = lcall("GetPlayerHandcards", root.playerid);
-        data = data.filter((e) => e !== -1);
-        if (data.length === 0)
-          return;
-
-        params.ids = data;
-
-        // Just for using room's right drawer
-        roomScene.startCheat("../RoomElement/ViewPile", params);
-      }
-    }
   }
 
   TapHandler {
@@ -794,6 +777,72 @@ Item {
           styleColor: "#83231F"
           text: Util.processPrompt(modelData.content)
         }
+      }
+    }
+  }
+
+  Rectangle {
+    color: "#CC2E2C27"
+    radius: 6
+    border.color: "#A6967A"
+    border.width: 1
+    width: 44
+    height: 112
+    /* 有点小问题，因为绝大部分都是手机玩家我还是无脑放左
+    x: {
+      const roomX = mapToItem(roomScene, root.x, root.y).x;
+      if (roomX < 48) return 175;
+      return -44;
+    }
+    */
+    x: -44
+    y: 128
+    visible: {
+      if (root.playerid === Self.id) return false;
+      if (!lcall("IsMyBuddy", Self.id, root.playerid)) return false;
+      if (root.handcards === 0) return false;
+      return true;
+    }
+
+    Text {
+      x: 4; y: 2
+      text: {
+        if (!parent.visible) return "";
+        const unused = root.handcards; // 绑定
+        const ids = lcall("GetPlayerHandcards", root.playerid);
+        const txt = [];
+        for (const cid of ids) {
+          if (txt.length >= 4) {
+            txt.push("&nbsp;&nbsp;&nbsp;...");
+            break;
+          }
+          const data = lcall("GetCardData", cid);
+          let a = luatr(data.name);
+          if (a.length === 1) {
+            a = "&nbsp;&nbsp;" + a;
+          } else if (a.length >= 2) {
+            a = a.slice(0, 2);
+          }
+          txt.push(a);
+        }
+
+        return txt.join("<br>");
+      }
+      color: "#E4D5A0"
+      font.family: fontLibian.name
+      font.pixelSize: 18
+      textFormat: Text.RichText
+    }
+
+    TapHandler {
+      onTapped: {
+        const params = { name: "hand_card" };
+        let data = lcall("GetPlayerHandcards", root.playerid);
+
+        params.ids = data;
+
+        // Just for using room's right drawer
+        roomScene.startCheat("../RoomElement/ViewPile", params);
       }
     }
   }
