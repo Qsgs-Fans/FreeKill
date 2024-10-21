@@ -1,5 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
+if (DEFINED FK_SERVER_ONLY)
+  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-nogui.i)
+else ()
+  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
+endif ()
+
+add_custom_command(
+  OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
+  DEPENDS ${SWIG_FILES}
+  COMMENT "Generating freekill-wrap.cxx"
+  COMMAND swig -c++ -lua -Wall -o
+    ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
+    ${SWIG_SOURCE}
+)
+
 set(freekill_SRCS
   # "main.cpp"
   "freekill.cpp"
@@ -21,6 +37,8 @@ set(freekill_SRCS
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
+set_source_files_properties(
+  "swig/freekill-wrap.cxx" PROPERTIES GENERATED TRUE)
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS

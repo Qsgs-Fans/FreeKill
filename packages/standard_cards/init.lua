@@ -305,7 +305,7 @@ local duelSkill = fk.CreateActiveSkill{
 
       local cardResponded
       for i = 1, loopTimes do
-        cardResponded = room:askForResponse(currentResponser, 'slash', nil, nil, false, nil, effect)
+        cardResponded = room:askForResponse(currentResponser, 'slash', nil, nil, true, nil, effect)
         if cardResponded then
           room:responseCard({
             from = currentResponser.id,
@@ -495,7 +495,7 @@ local savageAssaultSkill = fk.CreateActiveSkill{
     return user ~= to_select
   end,
   on_effect = function(self, room, effect)
-    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, false, nil, effect)
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'slash', nil, nil, true, nil, effect)
 
     if cardResponded then
       room:responseCard({
@@ -539,7 +539,7 @@ local archeryAttackSkill = fk.CreateActiveSkill{
     return user ~= to_select
   end,
   on_effect = function(self, room, effect)
-    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, false, nil, effect)
+    local cardResponded = room:askForResponse(room:getPlayerById(effect.to), 'jink', nil, nil, true, nil, effect)
 
     if cardResponded then
       room:responseCard({
@@ -631,6 +631,7 @@ local amazingGraceSkill = fk.CreateActiveSkill{
 
       use.extra_data = use.extra_data or {}
       use.extra_data.AGFilled = toDisplay
+      use.extra_data.AGResult = {}
     else
       if use.extra_data and use.extra_data.AGFilled then
         table.forEach(room.players, function(p)
@@ -661,7 +662,8 @@ local amazingGraceSkill = fk.CreateActiveSkill{
 
     local chosen = room:askForAG(to, effect.extra_data.AGFilled, false, self.name)
     room:takeAG(to, chosen, room.players)
-    room:obtainCard(effect.to, chosen, true, fk.ReasonPrey)
+    table.insert(effect.extra_data.AGResult, {effect.to, chosen})
+    room:moveCardTo(chosen, Card.PlayerHand, effect.to, fk.ReasonPrey, self.name, nil, true, effect.to)
     table.removeOne(effect.extra_data.AGFilled, chosen)
   end
 }
@@ -705,7 +707,8 @@ local lightningSkill = fk.CreateActiveSkill{
         to = to,
         damage = 3,
         card = effect.card,
-        damageType = fk.ThunderDamage,
+        -- damageType = fk.ThunderDamage,
+        damageType = Fk:getDamageNature(fk.ThunderDamage) and fk.ThunderDamage or fk.NormalDamage,
         skillName = self.name,
       }
 
@@ -1048,17 +1051,20 @@ local axeSkill = fk.CreateTriggerSkill{
   attached_equip = "axe",
   events = {fk.CardEffectCancelledOut},
   can_trigger = function(self, event, target, player, data)
-    return player:hasSkill(self) and data.from == player.id and data.card.trueName == "slash" and not player.room:getPlayerById(data.to).dead
+    return player:hasSkill(self) and data.from == player.id and data.card.trueName == "slash" and
+      not player.room:getPlayerById(data.to).dead
   end,
   on_cost = function(self, event, target, player, data)
     local room = player.room
-    local pattern
-    if player:getEquipment(Card.SubtypeWeapon) then
-      pattern = ".|.|.|.|.|.|^"..tostring(player:getEquipment(Card.SubtypeWeapon))
-    else
-      pattern = "."
+    local cards = {}
+    for _, id in ipairs(player:getCardIds("he")) do
+      if not player:prohibitDiscard(id) and
+        not (table.contains(player:getEquipments(Card.SubtypeWeapon), id) and Fk:getCardById(id).name == "axe") then
+        table.insert(cards, id)
+      end
     end
-    local cards = room:askForDiscard(player, 2, 2, true, self.name, true, pattern, "#axe-invoke::"..data.to, true)
+    cards = room:askForDiscard(player, 2, 2, true, self.name, true, ".|.|.|.|.|.|"..table.concat(cards, ","),
+      "#axe-invoke::"..data.to, true)
     if #cards > 0 then
       self.cost_data = cards
       return true
@@ -1248,84 +1254,134 @@ extension:addCards({
   niohShield,
 })
 
-local horseSkill = fk.CreateDistanceSkill{
-  name = "horse_skill",
-  global = true,
+local diluSkill = fk.CreateDistanceSkill{
+  name = "#dilu_skill",
+  attached_equip = "dilu",
   correct_func = function(self, from, to)
-    local ret = 0
-    if from:getEquipment(Card.SubtypeOffensiveRide) then
-      ret = ret - 1
+    if to:hasSkill(self) then
+      return 1
     end
-    if to:getEquipment(Card.SubtypeDefensiveRide) then
-      ret = ret + 1
-    end
-    return ret
   end,
 }
-if not Fk.skills["horse_skill"] then
-  Fk:addSkill(horseSkill)
-end
-
+Fk:addSkill(diluSkill)
 local diLu = fk.CreateDefensiveRide{
   name = "dilu",
   suit = Card.Club,
   number = 5,
+  equip_skill = diluSkill,
 }
 
 extension:addCards({
   diLu,
 })
 
+local jueyingSkill = fk.CreateDistanceSkill{
+  name = "#jueying_skill",
+  attached_equip = "jueying",
+  correct_func = function(self, from, to)
+    if to:hasSkill(self) then
+      return 1
+    end
+  end,
+}
+Fk:addSkill(jueyingSkill)
 local jueYing = fk.CreateDefensiveRide{
   name = "jueying",
   suit = Card.Spade,
   number = 5,
+  equip_skill = jueyingSkill,
 }
 
 extension:addCards({
   jueYing,
 })
 
+local zhuahuangfeidianSkill = fk.CreateDistanceSkill{
+  name = "#zhuahuangfeidian_skill",
+  attached_equip = "zhuahuangfeidian",
+  correct_func = function(self, from, to)
+    if to:hasSkill(self) then
+      return 1
+    end
+  end,
+}
+Fk:addSkill(zhuahuangfeidianSkill)
 local zhuaHuangFeiDian = fk.CreateDefensiveRide{
   name = "zhuahuangfeidian",
   suit = Card.Heart,
   number = 13,
+  equip_skill = zhuahuangfeidianSkill,
 }
 
 extension:addCards({
   zhuaHuangFeiDian,
 })
 
+local chituSkill = fk.CreateDistanceSkill{
+  name = "#chitu_skill",
+  attached_equip = "chitu",
+  correct_func = function(self, from, to)
+    if from:hasSkill(self) then
+      return -1
+    end
+  end,
+}
+Fk:addSkill(chituSkill)
 local chiTu = fk.CreateOffensiveRide{
   name = "chitu",
   suit = Card.Heart,
   number = 5,
+  equip_skill = chituSkill,
 }
 
 extension:addCards({
   chiTu,
 })
 
+local dayuanSkill = fk.CreateDistanceSkill{
+  name = "#dayuan_skill",
+  attached_equip = "dayuan",
+  correct_func = function(self, from, to)
+    if from:hasSkill(self) then
+      return -1
+    end
+  end,
+}
+Fk:addSkill(dayuanSkill)
 local daYuan = fk.CreateOffensiveRide{
   name = "dayuan",
   suit = Card.Spade,
   number = 13,
+  equip_skill = dayuanSkill,
 }
 
 extension:addCards({
   daYuan,
 })
 
+local zixingSkill = fk.CreateDistanceSkill{
+  name = "#zixing_skill",
+  attached_equip = "zixing",
+  correct_func = function(self, from, to)
+    if from:hasSkill(self) then
+      return -1
+    end
+  end,
+}
+Fk:addSkill(zixingSkill)
 local ziXing = fk.CreateOffensiveRide{
   name = "zixing",
   suit = Card.Diamond,
   number = 13,
+  equip_skill = zixingSkill,
 }
 
 extension:addCards({
   ziXing,
 })
 
-dofile "packages/standard_cards/i18n/init.lua"
+local pkgprefix = "packages/"
+if UsingNewCore then pkgprefix = "packages/freekill-core/" end
+dofile(pkgprefix .. "standard_cards/i18n/init.lua")
 
 return extension

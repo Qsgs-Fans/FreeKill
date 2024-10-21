@@ -13,6 +13,7 @@
 ---@field public shield integer @ 护甲数
 ---@field public kingdom string @ 势力
 ---@field public role string @ 身份
+---@field public role_shown boolean
 ---@field public general string @ 武将
 ---@field public deputyGeneral string @ 副将
 ---@field public gender integer @ 性别
@@ -71,6 +72,11 @@ Player.JudgeSlot = 'JudgeSlot'
 --- 构造函数。总之这不是随便调用的函数
 function Player:initialize()
   self.id = 0
+  self.property_keys = {
+    "general", "deputyGeneral", "maxHp", "hp", "shield", "gender", "kingdom",
+    "dead", "role", "role_shown", "rest", "seat", "phase", "faceup", "chained",
+    "sealedSlots",
+  }
   self.hp = 0
   self.maxHp = 0
   self.kingdom = "qun"
@@ -98,8 +104,8 @@ function Player:initialize()
     [Player.Equip] = {},
     [Player.Judge] = {},
   }
-  self.virtual_equips = {}
   self.special_cards = {}
+  self.virtual_equips = {}
 
   self.equipSlots = {
     Player.WeaponSlot,
@@ -219,6 +225,15 @@ function Player:getMark(mark)
   if not mark then return 0 end
   if type(mark) == "table" then return table.simpleClone(mark) end
   return mark
+end
+
+--- 获取角色对应Mark并初始化为table
+---@param mark string @ 标记
+---@return table
+function Player:getTableMark(mark)
+  local mark = self.mark[mark]
+  if type(mark) == "table" then return table.simpleClone(mark) end
+  return {}
 end
 
 --- 获取角色有哪些Mark。
@@ -623,7 +638,7 @@ function Player:getNextAlive(ignoreRemoved, num, ignoreRest)
   num = num or 1
   for _ = 1, num do
     ret = ret.next
-    while (ret.dead and not ignoreRest) or (doNotIgnore and ret:isRemoved()) do
+    while (ret.dead and (ret.rest == 0 or not ignoreRest)) or (doNotIgnore and ret:isRemoved()) do
       ret = ret.next
     end
   end
@@ -1179,6 +1194,71 @@ function Player:isBuddy(other)
   return self.id == id or table.contains(self.buddy_list, id)
 end
 
+--- Player是否可看到某card
+--- @param cardId integer
+---@param move? CardsMoveStruct
+---@return boolean
+function Player:cardVisible(cardId, move)
+  if move then
+    if table.find(move.moveInfo, function(info) return info.cardId == cardId end) then
+      if move.moveVisible then return true end
+      -- specialVisible还要控制这个pile对他人是否应该可见，但是不在这里生效
+      if move.specialVisible then return true end
+
+      if (type(move.visiblePlayers) == "number" and move.visiblePlayers == self.id) or
+      (type(move.visiblePlayers) == "table" and table.find(move.visiblePlayers, self.id)) then
+        return true
+      end
+    end
+  end
+
+  local room = Fk:currentRoom()
+  local area = room:getCardArea(cardId)
+  local card = Fk:getCardById(cardId)
+
+  local public_areas = {Card.DiscardPile, Card.Processing, Card.Void, Card.PlayerEquip, Card.PlayerJudge}
+  local player_areas = {Card.PlayerHand, Card.PlayerSpecial}
+
+  if room.observing == true then return table.contains(public_areas, area) end
+
+  local status_skills = Fk:currentRoom().status_skills[VisibilitySkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    local f = skill:cardVisible(self, card)
+    if f ~= nil then
+      return f
+    end
+  end
+
+  if area == Card.DrawPile then return false
+  elseif table.contains(public_areas, area) then return true
+  elseif move and area == Card.PlayerSpecial and not move.specialName:startsWith("$") then
+    return true
+  elseif table.contains(player_areas, area) then
+    local to = room:getCardOwner(cardId)
+    return to == self or self:isBuddy(to)
+  else
+    return false
+  end
+end
+
+--- Player是否可看到某target的身份
+--- @param target Player
+---@return boolean
+function Player:roleVisible(target)
+  local room = Fk:currentRoom()
+  local status_skills = room.status_skills[VisibilitySkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    local f = skill:roleVisible(self, target)
+    if f ~= nil then
+      return f
+    end
+  end
+
+  if room.observing == false and target == self then return true end
+
+  return target.role_shown
+end
+
 --- 比较两名角色的性别是否相同。
 ---@param other Player @ 另一名角色
 ---@param diff? bool @ 比较二者不同
@@ -1202,6 +1282,52 @@ end
 --- 是否为女性（包括双性）。
 function Player:isFemale()
   return self.gender == General.Female or self.gender == General.Bigender
+end
+
+function Player:toJsonObject()
+  local ptable = {}
+  for _, k in ipairs(self.property_keys) do
+    ptable[k] = self[k]
+  end
+
+  return {
+    properties = ptable,
+    card_history = self.cardUsedHistory,
+    skill_history = self.skillUsedHistory,
+    mark = self.mark,
+    skills = table.map(self.player_skills, Util.NameMapper),
+    player_cards = self.player_cards,
+    special_cards = self.special_cards,
+    buddy_list = self.buddy_list,
+  }
+end
+
+function Player:loadJsonObject(o)
+  for k, v in pairs(o.properties) do self[k] = v end
+  self.cardUsedHistory = o.card_history
+  self.skillUsedHistory = o.skill_history
+  self.mark = o.mark
+  for _, sname in ipairs(o.skills) do self:addSkill(sname) end
+  self.player_cards = o.player_cards
+  self.special_cards = o.special_cards
+  self.buddy_list = o.buddy_list
+
+  local pid = self.id
+  local room = Fk:currentRoom()
+  for _, id in ipairs(o.player_cards[Player.Hand]) do
+    room:setCardArea(id, Card.PlayerHand, pid)
+  end
+  for _, id in ipairs(o.player_cards[Player.Equip]) do
+    room:setCardArea(id, Card.PlayerEquip, pid)
+  end
+  for _, id in ipairs(o.player_cards[Player.Judge]) do
+    room:setCardArea(id, Card.PlayerJudge, pid)
+  end
+  for _, ids in ipairs(o.special_cards) do
+    for _, id in ipairs(ids) do
+      room:setCardArea(id, Card.PlayerSpecial, pid)
+    end
+  end
 end
 
 return Player

@@ -35,6 +35,8 @@ function Object:isInstanceOf(class) end
 ---@return boolean
 function Object:isSubclassOf(class) end
 
+function Object:include(e) end
+
 ---@class json
 json = {}
 

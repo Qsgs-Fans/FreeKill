@@ -1,4 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-dofile "packages/standard/i18n/zh_CN.lua"
-dofile "packages/standard/i18n/en_US.lua"
+local pkgprefix = "packages/"
+if UsingNewCore then pkgprefix = "packages/freekill-core/" end
+dofile(pkgprefix .. "standard/i18n/zh_CN.lua")
+dofile(pkgprefix .. "standard/i18n/en_US.lua")

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 // 为了写测试而特意给程序本身单独分出一个main.cpp 顺便包含项目文档（这样真的好吗）
-#include "freekill.h"
+int freekill_main(int argc, char **argv);
 int main(int argc, char **argv) {
   return freekill_main(argc, argv);
 }

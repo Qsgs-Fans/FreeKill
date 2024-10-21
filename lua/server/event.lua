@@ -12,6 +12,7 @@ fk.BeforeTurnStart = 83
 fk.TurnStart = 3
 fk.TurnEnd = 73
 fk.AfterTurnEnd = 84
+fk.EventTurnChanging = 96
 fk.EventPhaseStart = 4
 fk.EventPhaseProceeding = 5
 fk.EventPhaseEnd = 6
@@ -95,6 +96,10 @@ fk.GameFinished = 66
 
 fk.AskForCardUse = 67
 fk.AskForCardResponse = 68
+fk.HandleAskForPlayCard = 97
+fk.AfterAskForCardUse = 98
+fk.AfterAskForCardResponse = 99
+fk.AfterAskForNullification = 100
 
 fk.StartPindian = 69
 fk.PindianCardsDisplayed = 70
@@ -138,4 +143,10 @@ fk.AfterPropertyChange = 94
 
 fk.AfterPlayerRevived = 95
 
-fk.NumOfEvents = 96
+-- 96 = EventTurnChanging
+-- 97 = HandleAskForPlayCard
+-- 98 = AfterAskForCardUse
+-- 99 = AfterAskForCardResponse
+-- 100 = AfterAskForNullification
+
+fk.NumOfEvents = 101

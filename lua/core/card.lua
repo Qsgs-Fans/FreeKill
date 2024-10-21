@@ -20,7 +20,7 @@
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
 ---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
----@field public skill Skill @ 技能（用于实现卡牌效果）
+---@field public skill ActiveSkill @ 技能（用于实现卡牌效果）
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
@@ -512,6 +512,14 @@ function Card.static:getIdList(c)
     table.insertTable(ret, Card:getIdList(c2))
   end
   return ret
+end
+
+--- 获得卡牌的标记并初始化为表
+---@param mark string @ 标记
+---@return table
+function Card:getTableMark(mark)
+  local ret = self:getMark(mark)
+  return type(ret) == "table" and ret or {}
 end
 
 return Card

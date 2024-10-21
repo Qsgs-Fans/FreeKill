@@ -29,6 +29,7 @@ Fk:loadTranslationTable{
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Hide observer chatter"] = "屏蔽旁观者聊天",
   ["Rotate table card"] = "处理区的牌随机旋转",
+  ["Hide presents"] = "屏蔽送花砸蛋",
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
   ["Search"] = "搜索",
@@ -37,7 +38,9 @@ Fk:loadTranslationTable{
   ["Refresh Room List"] = "刷新房间列表 (%1个房间)",
 
   ["Disable Extension"] = "禁用Lua拓展 (重启后生效)",
+  ["Filter"] = "筛选",
   ["Create Room"] = "创建房间",
+  ["Room ID"] = "房间ID",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
   ["Player num"] = "玩家数目",
@@ -45,9 +48,14 @@ Fk:loadTranslationTable{
   ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["Luck Card Times"] = "手气卡次数",
-  ["Has Password"] = "（有密码）",
+  ["Has Password"] = "有密码",
+  ["No Password"] = "无密码",
   ["Room Password"] = "房间密码",
   ["Please input room's password"] = "请输入房间的密码",
+  ["Room Fullness"] = "房间满员",
+  ["Full"] = "已满",
+  ["Not Full"] = "未满",
+  ["Room Capacity"] = "人数上限",
   ["Add Robot"] = "添加机器人",
   ["Start Game"] = "开始游戏",
   ["Ready"] = "准备",
@@ -97,6 +105,7 @@ Fk:loadTranslationTable{
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
+  ["Overview"] = "一览",
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
   ["Special card skills:"] = "<b>卡牌的特殊用法:</b>",
@@ -105,7 +114,7 @@ Fk:loadTranslationTable{
   ["Female Audio"] = "女性音效",
   ["Equip Effect Audio"] = "效果音效",
   ["Equip Use Audio"] = "使用音效",
-  ["Scenarios Overview"] = "玩法一览",
+  ["Modes Overview"] = "玩法一览",
   ["Replay"] = "录像",
   ["Replay Manager"] = "来欣赏潇洒的录像吧！",
   ["Replay from File"] = "从文件打开",
@@ -120,6 +129,8 @@ Fk:loadTranslationTable{
 以便于DIY为首要目的的开源三国杀游戏。
 
 项目链接： https://github.com/Notify-ctrl/FreeKill
+
+使用手册： https://fkbook-all-in-one.readthedocs.io
 
 ---
 
@@ -196,6 +207,8 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   -- ["Quit"] = "退出",
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Enable"] = "启用",
+  ["Prohibit"] = "禁",
   ["BanPackage"] = "禁拓展包",
   ["$BanPkgHelp"] = "正在禁用拓展包",
   ["$BanCharaHelp"] = "正在禁用武将",
@@ -207,6 +220,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Designer"] = "设计：",
   ["Voice Actor"] = "配音：",
   ["Illustrator"] = "画师：",
+  ["Hidden General"] = "隐藏武将",
+  ["Audio Code Copy Success"] = "语音代码已复制到剪贴板",
+  ["Audio Text Copy Success"] = "语音文本已复制到剪贴板",
+  ["Copy Audio Code"] = "复制语音代码",
+  ["Copy Audio Text"] = "复制语音文本",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
   ["GameMode"] = "游戏模式：",
@@ -229,7 +247,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#PlayCard"] = "出牌阶段，请使用一张牌",
   ["#AskForGeneral"] = "请选择 1 名武将",
   ["#AskForSkillInvoke"] = "你想发动〖%1〗吗？",
-  ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %1 次，剩余手气卡∞张",
+  ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %arg 次，剩余手气卡∞张",
   ["AskForLuckCard"] = "手气卡",
   ["#AskForChoice"] = "%1：请选择",
   ["#AskForChoices"] = "%1：请选择",
@@ -307,8 +325,12 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
+  ["Sort by Type"] = "按类型",
+  ["Sort by Number"] = "按点数",
+  ["Sort by Suit"] = "按花色",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+  ["Return to Bottom"] = "回到底部",
   ["Trusting ..."] = "托管中 ...",
   ["Observing ..."] = "旁观中 ...",
   ["Resting, don't leave!"] = "稍后你可返回战局，不要离开",
@@ -360,16 +382,20 @@ Fk:loadTranslationTable{
   ["hp_lost"] = "失去体力",
   ["lose_hp"] = "失去体力",
 
+  ["phase_roundstart"] = "回合开始",
   ["phase_start"] = "准备阶段",
   ["phase_judge"] = "判定阶段",
   ["phase_draw"] = "摸牌阶段",
   ["phase_play"] = "出牌阶段",
   ["phase_discard"] = "弃牌阶段",
   ["phase_finish"] = "结束阶段",
+  ["phase_notactive"] = "回合外",
+  ["phase_phasenone"] = "临时阶段",
 
   ["chained"] = "横置",
   ["un-chained"] = "重置",
   ["reset-general"] = "复原",
+  ["reset"] = "复原武将牌",
 
   ["yang"] = "阳",
   ["yin"] = "阴",
@@ -396,6 +422,7 @@ Fk:loadTranslationTable{
   ["Distance"] = "距离",
   ["Judge"] = "判定",
   ["Retrial"] = "改判",
+  ["Pindian"] = "拼点",
 
   ["_sealed"] = "废除",
   ["weapon_sealed"] = "武器栏废除",
@@ -408,6 +435,8 @@ Fk:loadTranslationTable{
   ["DefensiveRideSlot"] = "防御坐骑栏",
   ["TreasureSlot"] = "宝物栏",
   ["JudgeSlot"] = "判定区",
+
+  ["skill"] = "技能",
 }
 
 -- related to sendLog
@@ -474,9 +503,12 @@ Fk:loadTranslationTable{
   ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
 
   ["#FilterCard"] = "由于 %arg 的效果，与 %from 相关的 %arg2 被视为了 %arg3",
+  ["#AddTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 增加了目标 %to",
+  ["#RemoveTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 取消了目标 %to",
 
   -- skill
   ["#InvokeSkill"] = "%from 发动了〖%arg〗",
+  ["#InvokeSkillTo"] = "%from 对 %to 发动了〖%arg〗",
 
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",
@@ -488,6 +520,7 @@ Fk:loadTranslationTable{
   ["#TurnOver"] = "%from 将武将牌翻面，现在是 %arg",
   ["face_up"] = "正面朝上",
   ["face_down"] = "背面朝上",
+  ["turnOver"] = "翻面",
 
   -- damage, heal and lose HP
   ["#Damage"] = "%to 对 %from 造成了 %arg 点 %arg2 伤害",

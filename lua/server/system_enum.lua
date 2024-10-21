@@ -82,6 +82,7 @@ fk.IceDamage = 4
 ---@field public skillName? string @ 造成本次伤害的技能名
 ---@field public beginnerOfTheDamage? boolean @ 是否是本次铁索传导的起点
 ---@field public by_user? boolean @ 是否由卡牌直接生效造成的伤害
+---@field public chain_table? ServerPlayer[] @ 铁索连环表
 
 --- RecoverStruct 描述和回复体力有关的数据。
 ---@class RecoverStruct

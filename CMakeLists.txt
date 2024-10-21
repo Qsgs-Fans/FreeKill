@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-project(FreeKill VERSION 0.4.19)
+project(FreeKill VERSION 0.4.20)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 find_package(Qt6 REQUIRED COMPONENTS
@@ -39,22 +39,6 @@ include_directories(include/lua)
 include_directories(include)
 include_directories(include/libgit2)
 include_directories(src)
-
-file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
-if (DEFINED FK_SERVER_ONLY)
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-nogui.i)
-else ()
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
-endif ()
-
-add_custom_command(
-  OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
-  DEPENDS ${SWIG_FILES}
-  COMMENT "Generating freekill-wrap.cxx"
-  COMMAND swig -c++ -lua -Wall -o
-    ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
-    ${SWIG_SOURCE}
-)
 
 qt_add_executable(FreeKill)
 

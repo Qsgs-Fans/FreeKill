@@ -152,8 +152,8 @@ Fk:loadTranslationTable({
   ["biyue"] = "Envious by Moon",
   [":biyue"] = "In your Finish Phase, you can draw 1 card.",
 
-  ["fastchat_m"] = "快捷短语",
-  ["fastchat_f"] = "快捷短语",
+  ["fastchat_m"] = "quick chats",
+  ["fastchat_f"] = "quick chats",
 
   ["$fastchat_m1"] = "能不能快一点啊，兵贵神速啊。",
   ["$fastchat_m2"] = "主公，别开枪，自己人！",
@@ -171,6 +171,13 @@ Fk:loadTranslationTable({
   ["$fastchat_m14"] = "哥们，给力点行吗？",
   ["$fastchat_m15"] = "哥哥，交个朋友吧。",
   ["$fastchat_m16"] = "妹子，交个朋友吧。",
+  ["$fastchat_m17"] = "我从未见过如此厚颜无耻之人！",
+  ["$fastchat_m18"] = "你随便杀，闪不了算我输。",
+  ["$fastchat_m19"] = "这波，不亏。",
+  ["$fastchat_m20"] = "请收下我的膝盖。",
+  ["$fastchat_m21"] = "你咋不上天呢？",
+  ["$fastchat_m22"] = "放开我的队友，冲我来。",
+  ["$fastchat_m23"] = "见证奇迹的时刻到了。",
   ["$fastchat_f1"] = "能不能快一点啊，兵贵神速啊。",
   ["$fastchat_f2"] = "主公，别开枪，自己人！",
   ["$fastchat_f3"] = "小内再不跳，后面还怎么玩啊？",
@@ -187,6 +194,13 @@ Fk:loadTranslationTable({
   ["$fastchat_f14"] = "哥们，给力点行吗？",
   ["$fastchat_f15"] = "哥，交个朋友吧。",
   ["$fastchat_f16"] = "妹子，交个朋友吧。",
+  ["$fastchat_f17"] = "我从未见过如此厚颜无耻之人！",
+  ["$fastchat_f18"] = "你随便杀，闪不了算我输。",
+  ["$fastchat_f19"] = "这波，不亏。",
+  ["$fastchat_f20"] = "请收下我的膝盖。",
+  ["$fastchat_f21"] = "你咋不上天呢？",
+  ["$fastchat_f22"] = "放开我的队友，冲我来。",
+  ["$fastchat_f23"] = "见证奇迹的时刻到了。",
 
   ["aaa_role_mode"] = "Role mode",
   [":aaa_role_mode"] = [[

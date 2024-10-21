@@ -37,31 +37,13 @@ function GetGeneralDetail(name)
     deputyMaxHp = general.deputyMaxHpAdjustedValue,
     gender = general.gender,
     skill = {},
-    related_skill = {},
     companions = general.companions
   }
-  for _, s in ipairs(general.skills) do
+  for _, s in ipairs(general.all_skills) do
     table.insert(ret.skill, {
-      name = s.name,
-      description = Fk:getDescription(s.name)
-    })
-  end
-  for _, s in ipairs(general.other_skills) do
-    table.insert(ret.skill, {
-      name = s,
-      description = Fk:getDescription(s)
-    })
-  end
-  for _, s in ipairs(general.related_skills) do
-    table.insert(ret.related_skill, {
-      name = s.name,
-      description = Fk:getDescription(s.name)
-    })
-  end
-  for _, s in ipairs(general.related_other_skills) do
-    table.insert(ret.related_skill, {
-      name = s,
-      description = Fk:getDescription(s)
+      name = s[1],
+      description = Fk:getDescription(s[1]),
+      is_related_skill = s[2],
     })
   end
   for _, g in pairs(Fk.generals) do
@@ -114,7 +96,8 @@ function GetCardData(id, virtualCardForm)
     color = card:getColorString(),
     mark = mark,
     type = card.type,
-    subtype = cardSubtypeStrings[card.sub_type]
+    subtype = cardSubtypeStrings[card.sub_type],
+    known = Self:cardVisible(id)
   }
   if card.skillName ~= "" then
     local orig = Fk:getCardById(id, true)
@@ -353,6 +336,49 @@ function CanUseCardToTarget(card, to_select, selected, extra_data_str)
 end
 
 ---@param card string | integer
+---@param to_select integer @ id of the target
+---@param selected integer[] @ ids of selected targets
+---@param selectable bool
+---@param extra_data_str string @ extra data
+function GetUseCardTargetTip(card, to_select, selected, selectable, extra_data_str)
+  local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
+  local c   ---@type Card
+  local selected_cards
+  if type(card) == "number" then
+    c = Fk:getCardById(card)
+    selected_cards = {card}
+  else
+    local t = json.decode(card)
+    return ActiveTargetTip(t.skill, to_select, selected, t.subcards, selectable, extra_data)
+  end
+
+  local ret
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    ret = ret or {}
+    if #ret > 4 then
+      return ret
+    end
+
+    local tip = skill:getTargetTip(Self, to_select, selected, selected_cards, c, selectable, extra_data)
+    if type(tip) == "string" then
+      table.insert(ret, { content = ret, type = "normal" })
+    elseif type(tip) == "table" then
+      table.insertTable(ret, tip)
+    end
+  end
+
+  ret = ret or {}
+  local tip = c.skill:targetTip(to_select, selected, selected_cards, c, selectable, extra_data)
+  if type(tip) == "string" then
+    table.insert(ret, { content = ret, type = "normal" })
+  elseif type(tip) == "table" then
+    table.insertTable(ret, tip)
+  end
+  return ret
+end
+
+---@param card string | integer
 ---@param to_select integer @ id of a card not selected
 ---@param selected_targets integer[] @ ids of selected players
 function CanSelectCardForSkill(card, to_select, selected_targets)
@@ -430,6 +456,18 @@ function GetSkillData(skill_name)
   }
 end
 
+function GetSkillStatus(skill_name)
+  local skill = Fk.skills[skill_name]
+  local locked = not skill:isEffectable(Self)
+  if not locked and type(Self:getMark(MarkEnum.InvalidSkills)) == "table" and table.contains(Self:getMark(MarkEnum.InvalidSkills), skill_name) then
+    locked = true
+  end
+  return {
+    locked = locked, ---@type boolean
+    times = skill:getTimes()
+  }
+end
+
 function ActiveCanUse(skill_name, extra_data_str)
   local extra_data = extra_data_str == "" and nil or json.decode(extra_data_str)
   local skill = Fk.skills[skill_name]
@@ -499,6 +537,46 @@ function ActiveTargetFilter(skill_name, to_select, selected, selected_cards, ext
       if card then
         ret = card.skill:targetFilter(to_select, selected, selected_cards, card, extra_data)
         ret = ret and not Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card)
+      end
+    end
+  end
+  return ret
+end
+
+function ActiveTargetTip(skill_name, to_select, selected, selected_cards, selectable, extra_data)
+  local skill = Fk.skills[skill_name]
+  local ret
+  if skill then
+    if skill:isInstanceOf(ActiveSkill) then
+      ret = skill:targetTip(to_select, selected, selected_cards, nil, selectable)
+      if type(ret) == "string" then
+        ret = { { content = ret, type = "normal" } }
+      end
+    elseif skill:isInstanceOf(ViewAsSkill) then
+      local card = skill:viewAs(selected_cards)
+      if card then
+        local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+        for _, skill in ipairs(status_skills) do
+          ret = ret or {}
+          if #ret > 4 then
+            return ret
+          end
+
+          local tip = skill:getTargetTip(Self, to_select, selected, selected_cards, card, selectable, extra_data)
+          if type(tip) == "string" then
+            table.insert(ret, { content = ret, type = "normal" })
+          elseif type(tip) == "table" then
+            table.insertTable(ret, tip)
+          end
+        end
+
+        ret = ret or {}
+        local tip = card.skill:targetTip(to_select, selected, selected_cards, card, selectable, extra_data)
+        if type(tip) == "string" then
+          table.insert(ret, { content = ret, type = "normal" })
+        elseif type(tip) == "table" then
+          table.insertTable(ret, tip)
+        end
       end
     end
   end
@@ -654,12 +732,6 @@ function SetInteractionDataOfSkill(skill_name, data)
   end
 end
 
-function ChangeSelf(pid)
-  local c = ClientInstance
-  c.client:changeSelf(pid) -- for qml
-  Self = c:getPlayerById(pid)
-end
-
 function GetPlayerHandcards(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)
@@ -767,6 +839,10 @@ function GetCardProhibitReason(cid, method, pattern)
   end
 end
 
+function CanSortHandcards(pid)
+  return ClientInstance:getPlayerById(pid):getMark(MarkEnum.SortProhibited) == 0
+end
+
 function PoxiPrompt(poxi_type, data, extra_data)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi or not poxi.prompt then return "" end
@@ -808,6 +884,93 @@ end
 
 function ReloadPackage(path)
   Fk:reloadPackage(path)
+end
+
+function GetPendingSkill()
+  local h = ClientInstance.current_request_handler
+  local reqActive = Fk.request_handlers["AskForUseActiveSkill"]
+  return h and h:isInstanceOf(reqActive) and
+    (h.selected_card == nil and h.skill_name) or ""
+end
+
+function RevertSelection()
+  local h = ClientInstance.current_request_handler ---@type ReqActiveSkill
+  local reqActive = Fk.request_handlers["AskForUseActiveSkill"]
+  if not (h and h:isInstanceOf(reqActive) and h.pendings) then return end
+  h.change = {}
+  -- 1. 取消选中所有已选 2. 尝试选中所有之前未选的牌
+  local unselectData = { selected = false }
+  local selectData = { selected = true }
+  local to_select = {}
+  for cid, cardItem in pairs(h.scene:getAllItems("CardItem")) do
+    if table.contains(h.pendings, cid) then
+      h:selectCard(cid, unselectData)
+    else
+      table.insert(to_select, cardItem)
+    end
+  end
+  for _, cardItem in ipairs(to_select) do
+    if cardItem.enabled then
+      h:selectCard(cardItem.id, selectData)
+    end
+  end
+  h.scene:notifyUI()
+end
+
+function UpdateRequestUI(elemType, id, action, data)
+  local h = ClientInstance.current_request_handler
+  h.change = {}
+  local finish = h:update(elemType, id, action, data)
+  if not finish then
+    h.scene:notifyUI()
+  else
+    h:_finish()
+  end
+end
+
+function FinishRequestUI()
+  local h = ClientInstance.current_request_handler
+  if h then
+    h:_finish()
+  end
+end
+
+-- TODO 传参带上cardMoveData...
+function CardVisibility(cardId, move)
+  local player = Self
+  local card = Fk:getCardById(cardId)
+  if not card then return false end
+  return player:cardVisible(cardId, move)
+end
+
+function RoleVisibility(targetId)
+  local player = Self
+  local target = ClientInstance:getPlayerById(targetId)
+  if not target then return false end
+  return player:roleVisible(target)
+end
+
+function IsMyBuddy(me, other)
+  local from = ClientInstance:getPlayerById(me)
+  local to = ClientInstance:getPlayerById(other)
+  return from and to and from:isBuddy(to)
+end
+
+-- special_name 为nil时是手牌
+function HasVisibleCard(me, other, special_name)
+  local from = ClientInstance:getPlayerById(me)
+  local to = ClientInstance:getPlayerById(other)
+  if not (from and to) then return false end
+  local ids
+  if not special_name then ids = to:getCardIds("h")
+  else ids = to:getPile(special_name) end
+
+  for _, id in ipairs(ids) do
+    if from:cardVisible(id) then
+      return true
+    end
+  end
+  return false
 end
 
 dofile "lua/client/i18n/init.lua"
