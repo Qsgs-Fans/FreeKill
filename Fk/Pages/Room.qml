@@ -326,6 +326,7 @@ Item {
 
           dashboard.disableAllCards();
           dashboard.disableSkills();
+          dashboard.pending_skill = "";
           // dashboard.retractAllPiles();
 
           for (let i = 0; i < photoModel.count; i++) {
@@ -451,11 +452,11 @@ Item {
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
-          if (roomScene.state === "notactive"
-                  || roomScene.state === "replying") {
-            return false;
+          const cards = dashboard.handcardArea.cards;
+          for (const card in cards) {
+            if (card.selectable) return true;
           }
-          return true;
+          return false;
         }
         onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
       }
@@ -464,7 +465,10 @@ Item {
         text: luatr("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
-        onClicked: dashboard.revertSelection();
+        onClicked: //dashboard.revertSelection();
+        {
+          lcall("RevertSelection");
+        }
       }
       // MetroButton {
       //   text: luatr("Trust")

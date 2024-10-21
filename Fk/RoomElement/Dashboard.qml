@@ -91,17 +91,6 @@ RowLayout {
     }
   }
 
-  function getSelectedCard() {
-    if (pending_skill !== "") {
-      return JSON.stringify({
-        skill: pending_skill,
-        subcards: pendings
-      });
-    } else {
-      return selected_card;
-    }
-  }
-
   function deactivateSkillButton() {
     for (let i = 0; i < skillButtons.count; i++) {
       let item = skillButtons.itemAt(i);
@@ -209,6 +198,8 @@ RowLayout {
           break;
         }
       }
-    })
+    });
+
+    pending_skill = lcall("GetPendingSkill");
   }
 }
