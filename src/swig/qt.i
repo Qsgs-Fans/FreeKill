@@ -50,3 +50,26 @@ public:
   QByteArray toJson(QJsonDocument::JsonFormat format = 1) const;
   QVariant toVariant() const;
 };
+
+class QRandomGenerator {
+public:
+  QRandomGenerator(unsigned int seed = 1);
+  unsigned int generate();
+  unsigned int bounded(unsigned int lowest, unsigned int highest);
+};
+
+%extend QRandomGenerator {
+  QVariant random(int low = -1, int high = -1) {
+    QVariant ret;
+    if (high < 0) {
+      if (low < 1) {
+        ret.setValue($self->bounded(0, 100001) / 100000);
+      } else {
+        ret.setValue($self->bounded(1, low + 1));
+      }
+    } else {
+      ret.setValue($self->bounded(low, high + 1));
+    }
+    return ret;
+  }
+}

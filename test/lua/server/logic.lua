@@ -5,7 +5,7 @@ _TestGameLogic = {
   setup = function()
     croom = fk.Room:new()
     croom.players = {
-      fk.ServerPlayer:new(1),
+      fk.ServerPlayer:new(100),
       fk.ServerPlayer:new(2),
       fk.ServerPlayer:new(3),
       fk.ServerPlayer:new(4),

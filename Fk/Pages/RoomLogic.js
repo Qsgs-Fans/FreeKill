@@ -199,14 +199,15 @@ function getAreaItem(area, id) {
   return null;
 }
 
-function moveCards(moves) {
+function moveCards(data) {
+  const moves = data.merged;
   for (let i = 0; i < moves.length; i++) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
     if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
-    const items = from.remove(move.ids, move.fromSpecialName);
+    const items = from.remove(move.ids, move.fromSpecialName, data);
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
@@ -566,30 +567,6 @@ callbacks["MaxCard"] = (data) => {
   const photo = getPhoto(id);
   if (photo) {
     photo.maxCard = cardMax;
-  }
-}
-
-function changeSelf(id) {
-  lcall("ChangeSelf", id);
-
-  // move new selfPhoto to dashboard
-  let order = new Array(photoModel.count);
-  for (let i = 0; i < photoModel.count; i++) {
-    const item = photoModel.get(i);
-    order[item.seatNumber - 1] = item.id;
-    if (item.id === Self.id) {
-      dashboard.self = photos.itemAt(i);
-    }
-  }
-  callbacks["ArrangeSeats"](order);
-
-  // update dashboard
-  dashboard.update();
-
-  // handle pending messages
-  if (mainWindow.is_pending) {
-    const data = mainWindow.fetchMessage();
-    return mainWindow.handleMessage(data.command, data.jsonData);
   }
 }
 
@@ -1538,21 +1515,20 @@ callbacks["UpdateGameData"] = (data) => {
 }
 
 // 神貂蝉
-
-callbacks["StartChangeSelf"] = (j) => {
-  const id = parseInt(j);
-  ClientInstance.notifyServer("PushRequest", "changeself," + j);
-}
-
 callbacks["ChangeSelf"] = (j) => {
-  const data = parseInt(j);
-  if (Self.id === data) {
-    const msg = mainWindow.fetchMessage();
-    if (!msg) return;
-    mainWindow.handleMessage(msg.command, msg.jsonData);
-    return;
+  // move new selfPhoto to dashboard
+  let order = new Array(photoModel.count);
+  for (let i = 0; i < photoModel.count; i++) {
+    const item = photoModel.get(i);
+    order[item.seatNumber - 1] = item.id;
+    if (item.id === Self.id) {
+      dashboard.self = photos.itemAt(i);
+    }
   }
-  changeSelf(data);
+  callbacks["ArrangeSeats"](order);
+
+  // update dashboard
+  dashboard.update();
 }
 
 callbacks["UpdateRequestUI"] = (uiUpdate) => {

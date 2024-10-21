@@ -75,7 +75,7 @@ GraphicsBox {
             suit: model.suit || ""
             number: model.number || 0
             autoBack: false
-            known: model.cid !== -1
+            known: model.known
             selectable: true
             onClicked: {
               if (!root.multiChoose) {

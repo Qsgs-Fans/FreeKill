@@ -7,6 +7,11 @@ function Room:getPlayers() return self.players end
 function Room:getTimeout() return 15 end
 function Room:updateWinRate() end
 function Room:gameOver() end
+function Room:setRequestTimer() end
+function Room:destroyRequestTimer() end
+function Room:delay(ms)
+--  fk.io.popen("sleep " .. ms/1000):read()
+end
 function Room:settings()
   return json.encode{
     enableFreeAssign = false,

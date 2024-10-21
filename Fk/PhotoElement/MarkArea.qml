@@ -88,7 +88,7 @@ Item {
           } else {
             if (!root.parent.playerid) return;
             let data = lcall("GetPile", root.parent.playerid, mark_name);
-            data = data.filter((e) => e !== -1);
+            data = data.filter((e) => lcall("CardVisibility", e));
             if (data.length === 0)
               return;
 
