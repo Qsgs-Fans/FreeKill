@@ -799,8 +799,8 @@ Item {
     y: 128
     visible: {
       if (root.playerid === Self.id) return false;
+      if (root.handcards === 0) return false; // 优先绑定再判buddy，否则不会更新
       if (!lcall("IsMyBuddy", Self.id, root.playerid)) return false;
-      if (root.handcards === 0) return false;
       return true;
     }
 
