@@ -805,7 +805,8 @@ Item {
     }
 
     Text {
-      x: 4; y: 2
+      x: 2; y: 2
+      width: 42
       text: {
         if (!parent.visible) return "";
         const unused = root.handcards; // 绑定
@@ -813,14 +814,16 @@ Item {
         const txt = [];
         for (const cid of ids) {
           if (txt.length >= 4) {
-            txt.push("&nbsp;&nbsp;&nbsp;...");
+            // txt.push("&nbsp;&nbsp;&nbsp;...");
+            txt.push("...");
             break;
           }
           const data = lcall("GetCardData", cid);
           let a = luatr(data.name);
-          if (a.length === 1) {
+          /* if (a.length === 1) {
             a = "&nbsp;&nbsp;" + a;
-          } else if (a.length >= 2) {
+          } else  */
+          if (a.length >= 2) {
             a = a.slice(0, 2);
           }
           txt.push(a);
@@ -832,6 +835,7 @@ Item {
       font.family: fontLibian.name
       font.pixelSize: 18
       textFormat: Text.RichText
+      horizontalAlignment: Text.AlignHCenter
     }
 
     TapHandler {
