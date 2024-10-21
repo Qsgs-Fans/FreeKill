@@ -531,7 +531,11 @@ Item {
 
   RoleComboBox {
     id: role
-    value: root.role
+    value: {
+      if (root.role === "hidden") return "hidden";
+      console.log(lcall("RoleVisibility", root.playerid));
+      lcall("RoleVisibility", root.playerid) ? root.role : "unknown";
+    }
     anchors.top: parent.top
     anchors.topMargin: -4
     anchors.right: parent.right
