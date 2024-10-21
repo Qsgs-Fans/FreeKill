@@ -1286,6 +1286,10 @@ Item {
     });
   }
 
+  function getPhoto(id) {
+    return Logic.getPhoto(id);
+  }
+
   function applyChange(uiUpdate) {
     uiUpdate["_delete"]?.forEach(data => {
       if (data.type == "Interaction") {
