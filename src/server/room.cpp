@@ -608,7 +608,7 @@ void Room::setRequestTimer(int ms) {
   request_timer->setSingleShot(true);
   request_timer->setInterval(ms);
   connect(request_timer, &QTimer::timeout, this, [=](){
-      m_thread->wakeUp(id);
+      m_thread->wakeUp(id, "request_timer");
       });
   request_timer->start();
 }

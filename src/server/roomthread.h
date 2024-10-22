@@ -37,7 +37,7 @@ class RoomThread : public QThread {
  signals:
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
-  void wakeUp(int roomId);
+  void wakeUp(int roomId, const char *);
 
  protected:
   virtual void run();
