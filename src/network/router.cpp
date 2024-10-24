@@ -186,7 +186,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     if (!_room->isLobby()) {
       auto room = qobject_cast<Room *>(_room);
       if (room->getThread()) {
-        room->getThread()->wakeUp(room->getId());
+        room->getThread()->wakeUp(room->getId(), "reply");
         // TODO: signal
       }
     }

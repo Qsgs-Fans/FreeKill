@@ -201,7 +201,7 @@ void ServerPlayer::onDisconnected() {
       }
       if (room->getThread()) {
        // && thinking()) {
-        room->getThread()->wakeUp(room->getId());
+        room->getThread()->wakeUp(room->getId(), "player_disconnect");
       }
       setState(Player::Offline);
       setSocket(nullptr);

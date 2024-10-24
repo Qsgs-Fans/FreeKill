@@ -60,8 +60,6 @@ public:
   Q_INVOKABLE QString getAESKey() const;
   Q_INVOKABLE void installAESKey();
 
-  Q_INVOKABLE void createModBackend();
-
   Q_INVOKABLE void detectServer();
   Q_INVOKABLE void getServerInfo(const QString &addr, ushort port = 9527u);
 

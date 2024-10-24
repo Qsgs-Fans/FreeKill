@@ -42,8 +42,6 @@ Item {
 
   property var selected_targets: []
   property string responding_card
-  property bool respond_play: false
-  property bool autoPending: false
   property var extra_data: ({})
   property var skippedUseEventId: []
 
@@ -353,6 +351,11 @@ Item {
           const total = dat["timeout"] * 1000;
           const now = Date.now(); // ms
           const elapsed = now - (dat["timestamp"] ?? now);
+
+          if (total <= elapsd) {
+            roomScene.state = "notactive";
+          }
+
           progressAnim.from = (1 - elapsed / total) * 100.0;
           progressAnim.duration = total - elapsed;
           progress.visible = true;
@@ -449,11 +452,12 @@ Item {
         text: luatr("Choose one handcard")
         textFont.pixelSize: 28
         visible: {
+          if (roomScene.state === "notactive") return false;
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
           const cards = dashboard.handcardArea.cards;
-          for (const card in cards) {
+          for (const card of cards) {
             if (card.selectable) return true;
           }
           return false;
@@ -1292,6 +1296,11 @@ Item {
 
   function getPhoto(id) {
     return Logic.getPhoto(id);
+  }
+
+  function activate() {
+    if (state === "active") state = "notactive";
+    state = "active";
   }
 
   function applyChange(uiUpdate) {

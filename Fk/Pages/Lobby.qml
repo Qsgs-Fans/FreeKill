@@ -390,7 +390,6 @@ Item {
     config.replaying = false;
     if (playerNum < capacity) {
       config.observing = false;
-      lcall("SetObserving", false);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
@@ -398,7 +397,6 @@ Item {
       );
     } else {
       config.observing = true;
-      lcall("SetObserving", true);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",

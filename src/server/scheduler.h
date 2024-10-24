@@ -18,7 +18,7 @@ class Scheduler : public QObject {
   // 跨线程传递引用可能出问题！
   void handleRequest(const QString &req);
   void doDelay(int roomId, int ms);
-  bool resumeRoom(int roomId);
+  bool resumeRoom(int roomId, const char *reason);
 
  private:
   RoomThread *m_thread;

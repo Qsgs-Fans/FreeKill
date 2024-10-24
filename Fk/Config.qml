@@ -63,6 +63,9 @@ QtObject {
   property list<string> blockedUsers: []
   property int totalTime: 0 // FIXME: only for notifying
 
+  onObservingChanged: lcall("SetObserving", observing);
+  //onReplayingChanged: lcall("SetReplaying", replaying);
+
   // onDisabledGeneralsChanged: {
   //   disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
   // }

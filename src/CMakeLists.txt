@@ -16,6 +16,10 @@ add_custom_command(
     ${SWIG_SOURCE}
 )
 
+set(freekill_EXESRCS
+  "main.cpp"
+)
+
 set(freekill_SRCS
   # "main.cpp"
   "freekill.cpp"
@@ -69,7 +73,7 @@ if (WIN32)
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/win/libgit2.dll)
   set(app_icon_resource_windows "${PROJECT_SOURCE_DIR}/image/icon.rc")
-  list(APPEND freekill_SRCS ${app_icon_resource_windows})
+  list(APPEND freekill_EXESRCS ${app_icon_resource_windows})
 elseif (ANDROID)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
@@ -127,7 +131,7 @@ target_link_libraries(libFreeKill PRIVATE
   ${GIT_LIB}
   ${IDBFS_LIB}
 )
-target_sources(FreeKill PRIVATE main.cpp)
+target_sources(FreeKill PRIVATE ${freekill_EXESRCS})
 target_link_libraries(FreeKill PRIVATE
   libFreeKill
 )
