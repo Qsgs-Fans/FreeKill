@@ -352,7 +352,7 @@ Item {
           const now = Date.now(); // ms
           const elapsed = now - (dat["timestamp"] ?? now);
 
-          if (total <= elapsd) {
+          if (total <= elapsed) {
             roomScene.state = "notactive";
           }
 
