@@ -1293,6 +1293,11 @@ Item {
     return Logic.getPhoto(id);
   }
 
+  function activate() {
+    if (state === "active") state = "notactive";
+    state = "active";
+  }
+
   function applyChange(uiUpdate) {
     uiUpdate["_delete"]?.forEach(data => {
       if (data.type == "Interaction") {
