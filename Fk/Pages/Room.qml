@@ -351,6 +351,11 @@ Item {
           const total = dat["timeout"] * 1000;
           const now = Date.now(); // ms
           const elapsed = now - (dat["timestamp"] ?? now);
+
+          if (total <= elapsd) {
+            roomScene.state = "notactive";
+          }
+
           progressAnim.from = (1 - elapsed / total) * 100.0;
           progressAnim.duration = total - elapsed;
           progress.visible = true;
