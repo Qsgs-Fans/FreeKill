@@ -1,5 +1,21 @@
 # ChangeLog
 
+## v0.4.21
+
+- 修复了确认键亮起时取消键不可用的bug
+- lua端的ob属性根本没同步，同步一下
+- [需要C++] 让requestTimer的超时影响到Lua
+- 修复windows没图标
+- 移除了modmaker
+- 修理了选卡器
+- 修理了确定取消消失
+- 删除了已经不用的autoPending和respond_play
+- 修复异常烧条（或许吧）
+- 修复负数烧条时间，若为负数则无事发生
+
+___
+
+
 ## v0.4.20
 
 - 重构了UI逻辑

@@ -318,6 +318,8 @@ Item {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
           okCancel.visible = false;
+          okButton.enabled = false;
+          cancelButton.enabled = false;
           endPhaseButton.visible = false;
           progress.visible = false;
           extra_data = {};
@@ -1364,8 +1366,6 @@ Item {
     const buttons = uiUpdate["Button"];
     if (buttons) {
       okCancel.visible = true;
-      okButton.enabled = false;
-      cancelButton.enabled = false;
     }
     buttons?.forEach(bdata => {
       switch (bdata.id) {
