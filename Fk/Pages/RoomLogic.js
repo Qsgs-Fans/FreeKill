@@ -1134,6 +1134,7 @@ callbacks["MoveCards"] = (moves) => {
 // 所以Lua一开始就要设置好各种亮灭的值 而这个自然是通过update
 callbacks["PlayCard"] = () => {
   roomScene.state = "active";
+  roomScene.okCancel.visible = true;
 }
 
 callbacks["LoseSkill"] = (data) => {
@@ -1178,6 +1179,7 @@ callbacks["AskForUseActiveSkill"] = (data) => {
 
   roomScene.respond_play = false;
   roomScene.state = "active";
+  roomScene.okCancel.visible = true;
 
   // if (lcall('GetSkillData', skill_name).isViewAsSkill) {
   //   roomScene.responding_card = ".";
@@ -1213,6 +1215,7 @@ callbacks["AskForUseCard"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.state = "active";
+  roomScene.okCancel.visible = true;
   if (extra_data != null) {
     if (extra_data.effectTo !== Self.id &&
         roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
@@ -1244,6 +1247,7 @@ callbacks["AskForResponseCard"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
   roomScene.state = "active";
+  roomScene.okCancel.visible = true;
   // roomScene.responding_card = pattern;
   // roomScene.respond_play = true;
   // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
