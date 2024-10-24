@@ -449,11 +449,12 @@ Item {
         text: luatr("Choose one handcard")
         textFont.pixelSize: 28
         visible: {
+          if (roomScene.state === "notactive") return false;
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
           const cards = dashboard.handcardArea.cards;
-          for (const card in cards) {
+          for (const card of cards) {
             if (card.selectable) return true;
           }
           return false;

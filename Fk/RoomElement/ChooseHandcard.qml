@@ -40,7 +40,7 @@ ColumnLayout {
         for (let cd of clist) {
           if (cd.cid == cid) {
             cd.selected = !cd.selected;
-            cd.clicked();
+            cd.clicked(cd);
             finish();
           }
         }
