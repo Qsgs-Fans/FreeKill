@@ -58,7 +58,7 @@ QtObject {
   property int roomTimeout: 0
   property bool heg: false
   property bool enableFreeAssign: false
-  property var observing: null
+  property bool observing: false
   property bool replaying: false
   property list<string> blockedUsers: []
   property int totalTime: 0 // FIXME: only for notifying
