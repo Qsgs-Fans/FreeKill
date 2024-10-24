@@ -42,8 +42,6 @@ Item {
 
   property var selected_targets: []
   property string responding_card
-  property bool respond_play: false
-  property bool autoPending: false
   property var extra_data: ({})
   property var skippedUseEventId: []
 

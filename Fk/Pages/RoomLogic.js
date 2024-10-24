@@ -1177,19 +1177,8 @@ callbacks["AskForUseActiveSkill"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
 
-  roomScene.respond_play = false;
   roomScene.state = "active";
   roomScene.okCancel.visible = true;
-
-  // if (lcall('GetSkillData', skill_name).isViewAsSkill) {
-  //   roomScene.responding_card = ".";
-  // }
-
-  // roomScene.autoPending = true;
-  // roomScene.extra_data = extra_data;
-  // // dashboard.startPending(skill_name);
-  // // roomScene.activateSkill(skill_name, true);
-  // cancelButton.enabled = cancelable;
 }
 
 callbacks["CancelRequest"] = () => {
@@ -1226,7 +1215,6 @@ callbacks["AskForUseCard"] = (data) => {
     }
   }
   // roomScene.responding_card = pattern;
-  // roomScene.respond_play = false;
   // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
   // roomScene.state = "responding";
   // okButton.enabled = false;
@@ -1248,12 +1236,6 @@ callbacks["AskForResponseCard"] = (data) => {
   }
   roomScene.state = "active";
   roomScene.okCancel.visible = true;
-  // roomScene.responding_card = pattern;
-  // roomScene.respond_play = true;
-  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  // roomScene.state = "responding";
-  // okButton.enabled = false;
-  // cancelButton.enabled = true;
 }
 
 callbacks["WaitForNullification"] = () => {
@@ -1540,21 +1522,10 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
     roomScene.promptText = processPrompt(uiUpdate["_prompt"]);
 
   if (uiUpdate._type == "Room") {
-    // 需要判断是不是第一次收到这样的数据，可以通过state判断
-    // 因为是先收到Lua的数据，再切换状态的
-    // FIXME: 当然了 非常可能出现因为网络延迟过大导致在active状态收到新Request的情况！
-    // if (roomScene.state === "notactive") {
-    //   okCancel.visible = true;
-    //   okButton.enabled = false;
-    //   cancelButton.enabled = false;
-    //   // endPhaseButton.visible = true;
-    // }
     roomScene.applyChange(uiUpdate);
   }
 }
 
-// FIXME: 完全是因为ChangeSelf需要向服务器询问此人手牌信息导致不能直接暴力reply+设置notactive
-// FIXME: 后面需要杀掉所有客户端未知牌
 callbacks["ReplyToServer"] = (data) => {
   replyToServer(data);
 }
