@@ -4,7 +4,7 @@
 # 2022-01-24 新建文件夹 2023-02-21 发布v0.0.1版本
 # ------------------------------------------------------------
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project(FreeKill VERSION 0.4.20)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")

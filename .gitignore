@@ -16,6 +16,7 @@
 /.cache/
 /tags
 /.luarc.json
+/.qmllint.ini
 
 # file produced by game
 /FreeKill
