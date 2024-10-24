@@ -491,13 +491,14 @@ end
 -- 作用是启动新事件 都是结构差不多的函数
 ---@param event GameEvent
 ---@return boolean, GameEvent?
-function GameLogic:resumeEvent(event, ...)
+function GameLogic:resumeEvent(event)
   local ret, evt
 
   local co = event._co
+  local resume_reason = "unknown"
 
   while true do
-    local err, yield_result, extra_yield_result = coroutine.resume(co, ...)
+    local err, yield_result, extra_yield_result = coroutine.resume(co, resume_reason)
 
     if err == false then
       -- handle error, then break
@@ -510,7 +511,8 @@ function GameLogic:resumeEvent(event, ...)
 
     if yield_result == "__handleRequest" then
       -- yield to requestLoop
-      coroutine.yield(yield_result, extra_yield_result)
+      -- handleRequest类的最后被ResumeRoom唤醒，接收原因
+      resume_reason = coroutine.yield(yield_result, extra_yield_result)
 
     elseif type(yield_result) == "table" and yield_result.class
       and yield_result:isInstanceOf(GameEvent) then

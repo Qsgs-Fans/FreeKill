@@ -33,6 +33,7 @@
 ---@field public id? integer[]
 
 -- v0.2.6改动： cardType会被解析为trueName数组和name数组，而不是自己单独成立
+-- core改动： name数组为空时，将根据trueName数组生成对应的name数组
 
 local numbertable = {
   ["A"] = 1,
@@ -48,6 +49,8 @@ local placetable = {
 
 local card_type_table = {}
 
+local card_truename_table = {}
+
 local function fillCardTypeTable()
   local tmp = {}
   for _, cd in ipairs(Fk.cards) do
@@ -62,6 +65,20 @@ local function fillCardTypeTable()
       table.insertIfNeed(card_type_table[t], tn)
       table.insertIfNeed(card_type_table[st], tn)
       tmp[tn] = true
+    end
+  end
+end
+
+local function fillCardTrueNameTable()
+  local tmp = {}
+  for _, cd in ipairs(Fk.cards) do
+    local tn = cd.trueName
+    local n = cd.name
+
+    if not tmp[n] then
+      card_truename_table[tn] = card_truename_table[tn] or {}
+      table.insertIfNeed(card_truename_table[tn], n)
+      tmp[n] = true
     end
   end
 end
@@ -302,7 +319,9 @@ local function parseMatcher(str)
 
   ret.suit = not table.contains(t[3], ".") and t[3] or nil
   ret.place = not table.contains(t[4], ".") and t[4] or nil
-  ret.name = not table.contains(t[5], ".") and t[5] or nil
+  if table.empty(card_truename_table) then
+    fillCardTrueNameTable()
+  end
   -- ret.cardType = not table.contains(t[6], ".") and t[6] or nil
   if table.empty(card_type_table) then
     fillCardTypeTable()
@@ -323,6 +342,29 @@ local function parseMatcher(str)
       table.insertTable(temp, card_type_table[ctype] or Util.DummyTable)
     end
     table.insert(ret.trueName.neg, temp)
+  end
+
+  if table.contains(t[5], ".") then
+    if ret.trueName then
+      ret.name = {}
+      for _, tn in ipairs(ret.trueName) do
+        table.insertTableIfNeed(ret.name, card_truename_table[tn] or Util.DummyTable)
+      end
+      for _, neg in ipairs(ret.trueName.neg or Util.DummyTable) do
+        if type(neg) ~= "table" then neg = { neg } end
+        if not ret.name.neg then ret.name.neg = {} end
+
+        local temp = {}
+        for _, tn in ipairs(neg) do
+          table.insertTableIfNeed(temp, card_truename_table[tn] or Util.DummyTable)
+        end
+        table.insert(ret.name.neg, temp)
+      end
+    else
+      ret.name = nil
+    end
+  else
+    ret.name = t[5]
   end
 
   if not table.contains(t[7], ".") then

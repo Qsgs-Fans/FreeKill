@@ -1254,7 +1254,7 @@ function Player:roleVisible(target)
     end
   end
 
-  if room.observing == false and target == self then return true end
+  if not room.observing and target == self then return true end
 
   return target.role_shown
 end

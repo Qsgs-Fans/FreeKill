@@ -81,6 +81,7 @@ function CardManager:getCardsByArea(area, player, dup, special_name)
     assert(player ~= nil)
     if area == Player.Special then
       assert(special_name ~= nil)
+      player.special_cards[special_name] = player.special_cards[special_name] or {}
       ret = player.special_cards[special_name]
     else
       ret = player.player_cards[area]

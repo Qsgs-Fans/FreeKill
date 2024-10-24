@@ -902,8 +902,11 @@ function RevertSelection()
   local unselectData = { selected = false }
   local selectData = { selected = true }
   local to_select = {}
+  local lastcid
+  local lastselected = false
   for cid, cardItem in pairs(h.scene:getAllItems("CardItem")) do
     if table.contains(h.pendings, cid) then
+      lastcid = cid
       h:selectCard(cid, unselectData)
     else
       table.insert(to_select, cardItem)
@@ -911,8 +914,15 @@ function RevertSelection()
   end
   for _, cardItem in ipairs(to_select) do
     if cardItem.enabled then
+      lastcid = cardItem.id
+      lastselected = true
       h:selectCard(cardItem.id, selectData)
     end
+  end
+  -- 最后模拟一次真实点击卡牌以更新目标和按钮状态
+  if lastcid then
+    h:selectCard(lastcid, { selected = not lastselected })
+    h:update("CardItem", lastcid, "click", { selected = lastselected })
   end
   h.scene:notifyUI()
 end
@@ -935,12 +945,11 @@ function FinishRequestUI()
   end
 end
 
--- TODO 传参带上cardMoveData...
-function CardVisibility(cardId, move)
+function CardVisibility(cardId)
   local player = Self
   local card = Fk:getCardById(cardId)
   if not card then return false end
-  return player:cardVisible(cardId, move)
+  return player:cardVisible(cardId)
 end
 
 function RoleVisibility(targetId)

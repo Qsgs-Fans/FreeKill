@@ -48,6 +48,7 @@ GameRule = fk.CreateTriggerSkill{
         end
 
         cardNames = table.filter(cardNames, function (cardName)
+          -- FIXME: 应该印一个“任何情况都适合”的牌，或者说根本不该有这个过滤
           local cardCloned = Fk:cloneCard(cardName)
           return not (player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned))
         end)

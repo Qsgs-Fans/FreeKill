@@ -243,7 +243,7 @@ end
 
 fk.client_callback["EnterRoom"] = function(_data)
   Self = ClientPlayer:new(fk.Self)
-  -- 垃圾bug 怎么把这玩意忘了
+  -- FIXME: 需要改Qml
   local ob = ClientInstance.observing
   ClientInstance = Client:new() -- clear old client data
   ClientInstance.observing = ob

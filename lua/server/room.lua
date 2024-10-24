@@ -89,7 +89,8 @@ function Room:initialize(_room)
 end
 
 -- 供调度器使用的函数。能让房间开始运行/从挂起状态恢复。
-function Room:resume()
+---@param reason string?
+function Room:resume(reason)
   -- 如果还没运行的话就先创建自己的主协程
   if not self.main_co then
     self.main_co = coroutine.create(function()
@@ -107,7 +108,7 @@ function Room:resume()
 
   if not self.game_finished then
     self.notify_count = 0
-    ret, err_msg, rest_time = coroutine.resume(main_co, err_msg)
+    ret, err_msg, rest_time = coroutine.resume(main_co, reason)
 
     -- handle error
     if ret == false then
@@ -598,45 +599,6 @@ function Room:prepareGeneral(player, general, deputy, broadcast)
       self:notifyProperty(player, player, property)
     end
   end
-end
-
---- 房间信息摘要，返回房间的大致信息
---- 用于旁观和重连，但也可用于debug
-function Room:getSummary(player, observe)
-  local printed_cards = {}
-  for i = -2, -math.huge, -1 do
-    local c = Fk.printed_cards[i]
-    if not c then break end
-    table.insert(printed_cards, { c.name, c.suit, c.number })
-  end
-
-  local players = {}
-  for _, p in ipairs(self.players) do
-    players[tostring(p.id)] = p:getSummary(player, observe)
-  end
-
-  local cmarks = {}
-  for k, v in pairs(self.card_marks) do
-    cmarks[tostring(k)] = v
-  end
-
-  return {
-    you = player.id or player:getId(),
-    -- data for EnterRoom
-    d = {
-      -- #self.players, 留给客户端自己思考
-      self.timeout,
-      self.settings,
-    },
-    pc = printed_cards,
-    cm = cmarks,
-    b = self.banners,
-
-    circle = table.map(self.players, Util.IdMapper),
-    p = players,
-    rnd = self:getTag("RoundCount") or 0,
-    dp = #self.draw_pile,
-  }
 end
 
 function Room:toJsonObject(player)
@@ -1169,7 +1131,7 @@ end
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的牌的id列表，可能是空的
 function Room:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
-  if minNum < 1 then
+  if maxNum < 1 then
     return {}
   end
   cancelable = (cancelable == nil) and true or cancelable
@@ -1312,7 +1274,7 @@ end
 ---@param expand_pile? string @ 可选私人牌堆名称，如要分配你武将牌上的牌请填写
 ---@param skipMove? boolean @ 是否跳过移动。默认不跳过
 ---@param single_max? integer|table @ 限制每人能获得的最大牌数。输入整数或(以角色id为键以整数为值)的表
----@return table<integer[]> @ 返回一个表，键为角色id，值为分配给其的牌id数组
+---@return table<integer, integer[]> @ 返回一个表，键为角色id转字符串，值为分配给其的牌id数组
 function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prompt, expand_pile, skipMove, single_max)
   targets = targets or self.alive_players
   cards = cards or player:getCardIds("he")
@@ -1347,7 +1309,7 @@ function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prom
     residued_list = residueMap,
     expand_pile = expand_pile
   }
-  p(json.encode(residueMap))
+  -- p(json.encode(residueMap))
 
   while maxNum > 0 and #_cards > 0 do
     data.max_num = maxNum
@@ -1384,7 +1346,7 @@ function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prom
     end
   end
   if not skipMove then
-    self:doYiji(self, list, player.id, skillName)
+    self:doYiji(list, player.id, skillName)
   end
 
   return list
@@ -2019,18 +1981,20 @@ end
 --- 询问玩家任意交换几堆牌堆。
 ---
 ---@param player ServerPlayer @ 要询问的玩家
----@param piles table<string, integer[]> @ 卡牌id列表的列表，也就是……几堆牌堆的集合
----@param piles_name string[] @ 牌堆名，必须一一对应，否则统一替换为“牌堆X”
+---@param piles (integer[])[] @ 卡牌id列表的列表，也就是……几堆牌堆的集合
+---@param piles_name string[] @ 牌堆名，不足部分替换为“牌堆1、牌堆2...”
 ---@param customNotify? string @ 自定义读条操作提示
----@return table<string, integer[]>
+---@return (integer[])[]
 function Room:askForExchange(player, piles, piles_name, customNotify)
   local command = "AskForExchange"
   piles_name = piles_name or Util.DummyTable
-  if #piles_name ~= #piles then
-    piles_name = {}
-    for i, _ in ipairs(piles) do
+  local x = #piles - #piles_name
+  if x > 0 then
+    for i = 1, x, 1 do
       table.insert(piles_name, Fk:translate("Pile") .. i)
     end
+  elseif x < 0 then
+    piles_name = table.slice(piles_name, 1, #piles + 1)
   end
   self:notifyMoveFocus(player, customNotify or command)
   local data = {
@@ -2884,6 +2848,7 @@ function Room:abortPlayerArea(player, playerSlots)
     from = player.id,
     toArea = Card.DiscardPile,
     moveReason = fk.ReasonPutIntoDiscardPile,
+    skillName = "gamerule_aborted"
   })
 
   table.insertTable(player.sealedSlots, slotsToSeal)

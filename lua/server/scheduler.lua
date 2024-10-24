@@ -46,12 +46,12 @@ function HandleRequest(req)
   return true
 end
 
-function ResumeRoom(roomId)
+function ResumeRoom(roomId, reason)
   local room = requestRoom:getRoom(roomId)
   if not room then return false end
   if not room:isReady() then return false end
   RoomInstance = (room ~= requestRoom and room or nil)
-  local over = room:resume()
+  local over = room:resume(reason)
   RoomInstance = nil
 
   if over then

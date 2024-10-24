@@ -360,9 +360,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.4.13
+  ## v0.4.21
 
-  优化性能
+  UI重构！还有很长一段路要走……
 
   ]==],
 }

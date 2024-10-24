@@ -238,7 +238,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
 
   local cancel_skip = true
   if phase ~= Player.NotActive and (skip) then
-    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, phase)
   end
   if (not skip) or (cancel_skip) then
     room:sendLog{
@@ -260,6 +260,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
       from = self.id,
       arg = Util.PhaseStrMapper(phase),
     }
+    logic:trigger(fk.EventPhaseSkipped, self, phase)
   end
 
   self.phase = current
@@ -322,7 +323,7 @@ function ServerPlayer:play(phase_table)
 
     local cancel_skip = true
     if phases[i] ~= Player.NotActive and (skip) then
-      cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+      cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, self.phase)
     end
 
     if (not skip) or (cancel_skip) then
@@ -333,6 +334,7 @@ function ServerPlayer:play(phase_table)
         from = self.id,
         arg = Util.PhaseStrMapper(self.phase),
       }
+      logic:trigger(fk.EventPhaseSkipped, self, self.phase)
     end
   end
 end

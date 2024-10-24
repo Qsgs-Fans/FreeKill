@@ -19,6 +19,7 @@ fk.EventPhaseEnd = 6
 fk.AfterPhaseEnd = 86
 fk.EventPhaseChanging = 7
 fk.EventPhaseSkipping = 8
+fk.EventPhaseSkipped = 101
 
 fk.BeforeCardsMove = 9
 fk.AfterCardsMove = 10
@@ -149,4 +150,4 @@ fk.AfterPlayerRevived = 95
 -- 99 = AfterAskForCardResponse
 -- 100 = AfterAskForNullification
 
-fk.NumOfEvents = 101
+fk.NumOfEvents = 102

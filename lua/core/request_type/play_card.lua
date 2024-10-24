@@ -100,10 +100,17 @@ function ReqPlayCard:doEndButton()
 end
 
 function ReqPlayCard:selectCard(cid, data)
-  ReqUseCard.selectCard(self, cid, data)
-  if self.skill_name and not self.selected_card then return end
+  if self.skill_name and not self.selected_card then
+    return ReqActiveSkill.selectCard(self, cid, data)
+  end
+  local scene = self.scene
+  local selected = data.selected
+  scene:update("CardItem", cid, data)
 
-  if self.selected_card then
+  if selected then
+    self.skill_name = nil
+    self.selected_card = Fk:getCardById(cid)
+    scene:unselectOtherCards(cid)
     self:setSkillPrompt(self.selected_card.skill, self.selected_card:getEffectiveId())
     local sp_skills = {}
     if self.selected_card.special_skills then
@@ -114,9 +121,15 @@ function ReqPlayCard:selectCard(cid, data)
     end
     self.scene:update("SpecialSkills", "1", { skills = sp_skills })
   else
+    self.selected_card = nil
     self:setPrompt(self.original_prompt)
     self.scene:update("SpecialSkills", "1", { skills = {} })
   end
+end
+
+function ReqPlayCard:selectSkill(skill, data)
+  ReqUseCard.selectSkill(self, skill, data)
+  self.scene:update("SpecialSkills", "1", { skills = {} })
 end
 
 function ReqPlayCard:update(elemType, id, action, data)

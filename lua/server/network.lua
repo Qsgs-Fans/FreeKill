@@ -176,6 +176,7 @@ function Request:ask()
 
   local players = table.simpleClone(self.players)
   local currentTime = os.time()
+  local resume_reason = "unknown"
 
   -- 1. 向所有人发送询问请求
   for _, p in ipairs(players) do
@@ -191,7 +192,7 @@ function Request:ask()
     -- 判断1：若投降则直接结束全部询问，若超时则踢掉所有人类玩家（这样AI还可计算）
     if room.hasSurrendered then break end
     local elapsed = os.time() - currentTime
-    if self.timeout - elapsed <= 0 then
+    if self.timeout - elapsed <= 0 or resume_reason == "request_timer" then
       for i = #players, 1, -1 do
         if self.send_success[players[i].serverplayer] then
           table.remove(players, i)
@@ -246,7 +247,7 @@ function Request:ask()
 
     -- 需要等待呢，等待被唤醒吧
     if not changed then
-      coroutine.yield("__handleRequest")
+      resume_reason = coroutine.yield("__handleRequest")
     end
   end
 

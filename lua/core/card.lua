@@ -90,6 +90,8 @@ function Card:initialize(name, suit, number, color)
     self.color = Card.Red
   elseif color ~= nil then
     self.color = color
+  elseif suit == Card.Unknown then
+    self.color = Card.Unknown
   else
     self.color = Card.NoColor
   end
@@ -242,7 +244,7 @@ end
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
   local suit = self.suit
-  local ret
+  local ret = "unknown"
   if suit == Card.Spade then
     ret = "spade"
   elseif suit == Card.Heart then
@@ -251,7 +253,7 @@ function Card:getSuitString(symbol)
     ret = "club"
   elseif suit == Card.Diamond then
     ret = "diamond"
-  else
+  elseif suit == Card.NoSuit then
     ret = "nosuit"
   end
   return symbol and "log_" .. ret or ret
@@ -265,8 +267,10 @@ function Card:getColorString()
     return "black"
   elseif color == Card.Red then
     return "red"
+  elseif color == Card.NoColor then
+    return "nocolor"
   end
-  return "nocolor"
+  return "unknown"
 end
 
 --- 获取卡牌类型并返回类型描述（例如基本牌/锦囊牌/装备牌）。
@@ -426,8 +430,11 @@ end
 --- 比较两张卡牌的花色是否相同
 ---@param anotherCard Card @ 另一张卡牌
 ---@param diff? boolean @ 比较二者不同
----@return boolean 返回比较结果
+---@return boolean @ 返回比较结果
 function Card:compareSuitWith(anotherCard, diff)
+  if table.contains({ self.suit, anotherCard.suit }, Card.Unknown) then
+    return true
+  end
   if self ~= anotherCard and table.contains({ self.suit, anotherCard.suit }, Card.NoSuit) then
     return false
   end
@@ -444,6 +451,9 @@ end
 ---@param diff? boolean @ 比较二者不同
 ---@return boolean @ 返回比较结果
 function Card:compareColorWith(anotherCard, diff)
+  if table.contains({ self.color, anotherCard.color }, Card.Unknown) then
+    return true
+  end
   if self ~= anotherCard and table.contains({ self.color, anotherCard.color }, Card.NoColor) then
     return false
   end

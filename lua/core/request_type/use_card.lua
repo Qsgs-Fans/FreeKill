@@ -4,6 +4,12 @@ local ReqResponseCard = require 'core.request_type.response_card'
 ---@class ReqUseCard: ReqResponseCard
 local ReqUseCard = ReqResponseCard:subclass("ReqUseCard")
 
+function ReqUseCard:skillButtonValidity(name)
+  local player = self.player
+  local skill = Fk.skills[name]
+  return skill:isInstanceOf(ViewAsSkill) and skill:enabledAtResponse(player, false)
+end
+
 function ReqUseCard:cardValidity(cid)
   if self.skill_name then return ReqActiveSkill.cardValidity(self, cid) end
   local card = cid
@@ -31,6 +37,9 @@ end
 function ReqUseCard:feasible()
   local skill = Fk.skills[self.skill_name]
   local card = self.selected_card
+  if skill then
+    card = skill:viewAs(self.pendings)
+  end
   local ret = false
   if card and self:cardFeasible(card) then
     ret = card.skill:feasible(self.selected_targets,
