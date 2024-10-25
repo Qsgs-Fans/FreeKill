@@ -18,6 +18,7 @@ Item {
   property string deputyGeneral: ""
   property string screenName: ""
   property string role: "unknown"
+  property bool role_shown: false
   property string kingdom: "qun"
   property string netstate: "online"
   property alias handcards: handcardAreaItem.length
@@ -533,6 +534,7 @@ Item {
     id: role
     value: {
       if (root.role === "hidden") return "hidden";
+      if (root.role_shown) return root.role;
       lcall("RoleVisibility", root.playerid) ? root.role : "unknown";
     }
     anchors.top: parent.top

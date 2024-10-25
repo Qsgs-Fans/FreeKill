@@ -396,6 +396,7 @@ Item {
         deputyGeneral: model.deputyGeneral
         screenName: model.screenName
         role: model.role
+        role_shown: model.role_shown
         kingdom: model.kingdom
         netstate: model.netstate
         maxHp: model.maxHp
@@ -1396,6 +1397,7 @@ Item {
         deputyGeneral: "",
         screenName: i ? "" : Self.screenName,
         role: "unknown",
+        role_shown: false,
         kingdom: "unknown",
         netstate: "online",
         maxHp: 0,
