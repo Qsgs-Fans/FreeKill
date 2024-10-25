@@ -1019,6 +1019,7 @@ callbacks["AskForCardChosen"] = (data) => {
 
   const box = roomScene.popupBox.item;
   box.prompt = prompt;
+  box.visible_data = data.visible_data ?? {};
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
@@ -1053,6 +1054,7 @@ callbacks["AskForCardsChosen"] = (data) => {
   box.min = min;
   box.max = max;
   box.prompt = prompt;
+  box.visible_data = data.visible_data ?? {};
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];

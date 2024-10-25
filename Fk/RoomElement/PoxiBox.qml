@@ -71,7 +71,11 @@ GraphicsBox {
             suit: model.suit || ""
             number: model.number || 0
             autoBack: false
-            known: model.known
+            known: {
+              const visible_data = extra_data?.visible_data ?? {};
+              if (visible_data[cid.toString()] == false) return false;
+              return true;
+            }
             selectable: chosenInBox ||
               lcall("PoxiFilter", root.poxi_type, model.cid, root.selected_ids,
                     root.card_data, root.extra_data);
