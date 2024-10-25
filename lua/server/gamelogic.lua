@@ -59,9 +59,9 @@ function GameLogic:run()
   -- default logic
   local room = self.room
   table.shuffle(self.room.players)
-  self:assignRoles()
   self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
+  self:assignRoles()
   room:adjustSeats()
   --[[ 因为未完工，在release版暂时不启用。
   for _, p in ipairs(room.players) do

@@ -85,6 +85,19 @@ function ServerPlayer:__index(k)
   end
 end
 
+-- FIXME: 理由同上，垃圾request体系赶紧狠狠重构
+function ServerPlayer:__newindex(k, v)
+  if k == "client_reply" then
+    local request = self.room.last_request
+    if not request then return end
+    request.result[self.id] = v
+    return
+  elseif k == "reply_ready" then
+    return
+  end
+  rawset(self, k, v)
+end
+
 --- 发送一句聊天
 ---@param msg string
 function ServerPlayer:chat(msg)

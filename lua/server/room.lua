@@ -150,64 +150,6 @@ function Room:makeGeneralPile()
   return true
 end
 
--- 因为现在已经不是轮询了，加上有点难分析
--- 选择开摆
-function Room:isReady()
-  -- 因为delay函数而延时：判断延时是否已经结束。
-  -- 注意整个delay函数的实现都搬到这来了，delay本身只负责挂起协程了。
-  --[[
-  if self.in_delay then
-    local rest = self.delay_duration - (os.getms() - self.delay_start) / 1000
-    if rest <= 50 then
-      self.in_delay = false
-      return true
-    end
-    return false, rest
-  end
-  --]]
-  return true
-end
-
---[[
--- 供调度器使用的函数，用来指示房间是否就绪。
--- 如果没有就绪的话，可能会返回第二个值来告诉调度器自己还有多久就绪。
-function Room:isReady()
-  -- 没有活人了？那就告诉调度器我就绪了，恢复时候就会自己杀掉
-  if self:checkNoHuman(true) then
-    return true
-  end
-
-  -- 剩下的就是因为等待应答而未就绪了
-  -- 检查所有正在等回答的玩家，如果已经过了烧条时间
-  -- 那么就不认为他还需要时间就绪了
-  -- 然后在调度器第二轮刷新的时候就应该能返回自己已就绪
-  local ret = true
-  local rest
-  for _, p in ipairs(self.players) do
-    -- 这里判断的话需要用_splayer了，不然一控多的情况下会导致重复判断
-    if p._splayer:thinking() then
-      -- 烧条烧光了的话就把thinking设为false
-      rest = p.request_timeout * 1000 - (os.getms() -
-        p.request_start) / 1000
-
-      if rest <= 0 or p.serverplayer:getState() ~= fk.Player_Online then
-        p._splayer:setThinking(false)
-      else
-        ret = false
-      end
-    end
-
-    if self.race_request_list and table.contains(self.race_request_list, p) then
-      local result = p.serverplayer:waitForReply(0)
-      if result ~= "__notready" and result ~= "__cancel" and result ~= "" then
-        return true
-      end
-    end
-  end
-  return ret, (rest and rest > 1) and rest or nil
-end
---]]
-
 function Room:checkNoHuman(chkOnly)
   if #self.players == 0 then return end
 
@@ -1614,17 +1556,21 @@ function Room:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
     skillName = reason,
     prompt = prompt,
   }
+  local visible_data = {}
   local cards_data = {}
   if type(flag) == "string" then
     local handcards = target:getCardIds(Player.Hand)
     local equips = target:getCardIds(Player.Equip)
     local judges = target:getCardIds(Player.Judge)
     if string.find(flag, "h") and #handcards > 0 then
-      -- TODO: 关于明置的牌
-      if target ~= chooser then
-        handcards = table.map(handcards, function() return -1 end)
-      end
       table.insert(cards_data, {"$Hand", handcards})
+      for _, id in ipairs(handcards) do
+        if not chooser:cardVisible(id) then
+          visible_data[tostring(id)] = false
+        end
+      end
+      if next(visible_data) == nil then visible_data = nil end
+      data.visible_data = visible_data
     end
     if string.find(flag, "e") and #equips > 0 then
       table.insert(cards_data, {"$Equip", equips})
@@ -2710,7 +2656,8 @@ function Room:gameOver(winner)
   self.game_finished = true
 
   for _, p in ipairs(self.players) do
-    self:broadcastProperty(p, "role")
+    -- self:broadcastProperty(p, "role")
+    self:setPlayerProperty(p, "role_shown", true)
   end
   self:doBroadcastNotify("GameOver", winner)
   fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self.settings.gameMode, winner, os.time() - self.start_time))

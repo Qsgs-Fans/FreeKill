@@ -42,6 +42,7 @@ function ReqResponseCard:skillButtonValidity(name)
   local player = self.player
   local skill = Fk.skills[name]
   return skill:isInstanceOf(ViewAsSkill) and skill:enabledAtResponse(player, true)
+    and skill.pattern and Exppattern:Parse(self.pattern):matchExp(skill.pattern)
 end
 
 function ReqResponseCard:cardValidity(cid)
@@ -74,22 +75,7 @@ end
 function ReqResponseCard:updateSkillButtons()
   local scene = self.scene
   for name, item in pairs(scene:getAllItems("SkillButton")) do
-    local skill = Fk.skills[name]
-    local ret = self:skillButtonValidity(name)
-    if ret and skill:isInstanceOf(ViewAsSkill) then
-      local exp = Exppattern:Parse(skill.pattern)
-      local cnames = {}
-      for _, m in ipairs(exp.matchers) do
-        if m.name then table.insertTable(cnames, m.name) end
-        if m.trueName then table.insertTable(cnames, m.trueName) end
-      end
-      for _, n in ipairs(cnames) do
-        local c = Fk:cloneCard(n)
-        c.skillName = name
-        ret = self:cardValidity(c)
-        if ret then break end
-      end
-    end
+    local ret = self:skillButtonValidity(name) -- 分散判断
     scene:update("SkillButton", name, { enabled = not not ret })
   end
 end

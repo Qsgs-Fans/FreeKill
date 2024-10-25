@@ -178,6 +178,11 @@ function Request:ask()
   local currentTime = os.time()
   local resume_reason = "unknown"
 
+  -- 设置所有人为未思考
+  for _, p in ipairs(players) do
+    p.serverplayer:setThinking(false)
+  end
+
   -- 1. 向所有人发送询问请求
   for _, p in ipairs(players) do
     self:_sendPacket(p)

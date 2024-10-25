@@ -73,17 +73,17 @@ Item {
     gradient: Gradient {
       GradientStop {
         position: 0
-        color: "#FEF7C2"
+        color: root.locked ? "#CCC8C4" : "#FEF7C2"
       }
 
       GradientStop {
-        position: 0.5
-        color: "#D2AD4A"
+        position: 0.8
+        color: root.locked ? "#A09691" : "#D2AD4A"
       }
 
       GradientStop {
         position: 1
-        color: "#BE9878"
+        color: root.locked ? "#787173" : "#BE9878"
       }
     }
   }
@@ -142,17 +142,17 @@ Item {
       gradient: Gradient {
         GradientStop {
           position: 0
-          color: "#FEF7C2"
+          color: root.locked ? "#CCC8C4" : "#FEF7C2"
         }
 
         GradientStop {
           position: 0.8
-          color: "#D2AD4A"
+          color: root.locked ? "#A09691" : "#D2AD4A"
         }
 
         GradientStop {
           position: 1
-          color: "#BE9878"
+          color: root.locked ? "#787173" : "#BE9878"
         }
       }
     }

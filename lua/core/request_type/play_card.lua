@@ -37,7 +37,17 @@ function ReqPlayCard:cardValidity(cid)
           return true
         end
       end
-      return false
+      ret = false
+    end
+  end
+
+  if not ret then
+    local skills = card.special_skills
+    if not skills then return false end
+    for _, skill in ipairs(skills) do
+      if Fk.skills[skill]:canUse(player) then
+        return true
+      end
     end
   end
   return ret
@@ -47,7 +57,27 @@ function ReqPlayCard:skillButtonValidity(name)
   local player = self.player
   local skill = Fk.skills[name]
   if skill:isInstanceOf(ViewAsSkill) then
-    return skill:enabledAtPlay(player, true)
+    local ret = skill:enabledAtPlay(player, true)
+    if ret then -- 没有pattern，或者至少有一个满足
+      local exp = Exppattern:Parse(skill.pattern)
+      local cnames = {}
+      for _, m in ipairs(exp.matchers) do
+        if m.name then
+          table.insertTable(cnames, m.name)
+        end
+        if m.trueName then
+          table.insertTable(cnames, m.trueName)
+        end
+      end
+      local extra_data = self.extra_data
+      for _, n in ipairs(cnames) do
+        local c = Fk:cloneCard(n)
+        c.skillName = name
+        ret = c.skill:canUse(Self, c, extra_data)
+        if ret then break end
+      end
+    end
+    return ret
   elseif skill:isInstanceOf(ActiveSkill) then
     return skill:canUse(player, nil)
   end
@@ -65,6 +95,11 @@ function ReqPlayCard:feasible()
     ret = skill:feasible(self.selected_targets, { card.id }, player, card)
   end
   return ret
+end
+
+function ReqPlayCard:isCancelable()
+  if self.skill_name and self.selected_card then return false end
+  return ReqUseCard.isCancelable(self)
 end
 
 function ReqPlayCard:selectSpecialUse(data)
@@ -115,14 +150,17 @@ function ReqPlayCard:selectCard(cid, data)
     local sp_skills = {}
     if self.selected_card.special_skills then
       sp_skills = table.simpleClone(self.selected_card.special_skills)
-      if self:cardValidity(self.selected_card) then
+      if self.player:canUse(self.selected_card) then
         table.insert(sp_skills, 1, "_normal_use")
+      else
+        self:selectSpecialUse(sp_skills[1])
       end
     end
     self.scene:update("SpecialSkills", "1", { skills = sp_skills })
   else
     self.selected_card = nil
     self:setPrompt(self.original_prompt)
+    self.skill_name = nil
     self.scene:update("SpecialSkills", "1", { skills = {} })
   end
 end

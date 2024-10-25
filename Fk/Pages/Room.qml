@@ -1095,6 +1095,19 @@ Item {
     onActivated: menuContainer.open();
   }
 
+  Timer {
+    id: statusSkillTimer
+    interval: 200
+    running: isStarted
+    repeat: true
+    onTriggered: {
+      lcall("RefreshStatusSkills");
+      // 刷大家的明置手牌提示框
+      for (let i = 0; i < photos.count; i++)
+        photos.itemAt(i).handcardsChanged();
+    }
+  }
+
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
     const photo = Logic.getPhoto(pid);
@@ -1313,6 +1326,39 @@ Item {
   }
 
   function applyChange(uiUpdate) {
+    const sskilldata = uiUpdate["SpecialSkills"]?.[0]
+    if (sskilldata) {
+      specialCardSkills.model = sskilldata?.skills ?? [];
+    }
+
+    dashboard.applyChange(uiUpdate);
+    const pdatas = uiUpdate["Photo"];
+    pdatas?.forEach(pdata => {
+      const photo = Logic.getPhoto(pdata.id);
+      photo.state = pdata.state;
+      photo.selectable = pdata.enabled;
+      photo.selected = pdata.selected;
+    })
+    const buttons = uiUpdate["Button"];
+    if (buttons) {
+      okCancel.visible = true;
+    }
+    buttons?.forEach(bdata => {
+      switch (bdata.id) {
+        case "OK":
+          okButton.enabled = bdata.enabled;
+          break;
+        case "Cancel":
+          cancelButton.enabled = bdata.enabled;
+          break;
+        case "End":
+          endPhaseButton.enabled = bdata.enabled;
+          endPhaseButton.visible = bdata.enabled;
+          break;
+      }
+    })
+
+    // Interaction最后上桌 太给脸了居然插结
     uiUpdate["_delete"]?.forEach(data => {
       if (data.type == "Interaction") {
         skillInteraction.sourceComponent = undefined;
@@ -1356,38 +1402,6 @@ Item {
         }
       }
     });
-
-    const sskilldata = uiUpdate["SpecialSkills"]?.[0]
-    if (sskilldata) {
-      specialCardSkills.model = sskilldata?.skills ?? [];
-    }
-
-    dashboard.applyChange(uiUpdate);
-    const pdatas = uiUpdate["Photo"];
-    pdatas?.forEach(pdata => {
-      const photo = Logic.getPhoto(pdata.id);
-      photo.state = pdata.state;
-      photo.selectable = pdata.enabled;
-      photo.selected = pdata.selected;
-    })
-    const buttons = uiUpdate["Button"];
-    if (buttons) {
-      okCancel.visible = true;
-    }
-    buttons?.forEach(bdata => {
-      switch (bdata.id) {
-        case "OK":
-          okButton.enabled = bdata.enabled;
-          break;
-        case "Cancel":
-          cancelButton.enabled = bdata.enabled;
-          break;
-        case "End":
-          endPhaseButton.enabled = bdata.enabled;
-          endPhaseButton.visible = bdata.enabled;
-          break;
-      }
-    })
   }
 
   Component.onCompleted: {

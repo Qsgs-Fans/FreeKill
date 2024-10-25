@@ -13,7 +13,7 @@ end
 local function fillMoveData(card_moves, visible_data, self, area, specialName)
   local cards = self.player_cards
   local ids = cards[area]
-  if specialName then ids = ids[specialName] end
+  if specialName then ids = self.special_cards[specialName] end
   if #ids ~= 0 then
     for _, id in ipairs(ids) do
       visible_data[tostring(id)] = Self:cardVisible(id)

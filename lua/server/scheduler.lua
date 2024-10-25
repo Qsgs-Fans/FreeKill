@@ -49,7 +49,6 @@ end
 function ResumeRoom(roomId, reason)
   local room = requestRoom:getRoom(roomId)
   if not room then return false end
-  if not room:isReady() then return false end
   RoomInstance = (room ~= requestRoom and room or nil)
   local over = room:resume(reason)
   RoomInstance = nil

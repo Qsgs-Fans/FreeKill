@@ -103,7 +103,8 @@ function Death:main()
   room:sendLogEvent("Death", {to = victim.id})
 
   if victim.rest == 0 then
-    room:broadcastProperty(victim, "role")
+    room:setPlayerProperty(victim, "role_shown", true)
+    -- room:broadcastProperty(victim, "role")
   end
   room:broadcastProperty(victim, "dead")
 

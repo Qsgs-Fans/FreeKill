@@ -353,6 +353,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$AddObserver"] = '玩家 <b>%s</b> 开始旁观',
   ["$RemoveObserver"] = '旁观者 <b>%s</b> 离开了房间',
 
+  ["Show All Cards"] = "显示未知信息",
   ["Speed Resume"] = "匀速",
   ["Speed Up"] = "加速",
   ["Speed Down"] = "减速",

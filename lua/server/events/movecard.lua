@@ -112,6 +112,7 @@ function MoveCards:main()
 
       ---@param info MoveInfo
       for _, info in ipairs(data.moveInfo) do
+        local realFromArea = room:getCardArea(info.cardId)
         room:applyMoveInfo(data, info)
         if data.toArea == Card.DrawPile or realFromArea == Card.DrawPile then
           room:doBroadcastNotify("UpdateDrawPile", #room.draw_pile)
@@ -140,8 +141,6 @@ function MoveCards:main()
           if name:find("-inarea", 1, true) and
           type(value) == "table" and table.contains(value, realFromArea) and not table.contains(value, data.toArea)
           then
-            p(realFromArea)
-            p(value)
             room:setCardMark(currentCard, name, 0)
           end
         end
