@@ -208,6 +208,7 @@ function moveCards(data) {
     if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
     const items = from.remove(move.ids, move.fromSpecialName, data);
+    items.forEach((item) => item.known = !!data[item.cid.toString()]);
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
