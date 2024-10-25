@@ -60,11 +60,13 @@ QtObject {
   property bool enableFreeAssign: false
   property bool observing: false
   property bool replaying: false
+  property bool replayingShowCards: false
   property list<string> blockedUsers: []
   property int totalTime: 0 // FIXME: only for notifying
 
   onObservingChanged: lcall("SetObserving", observing);
-  //onReplayingChanged: lcall("SetReplaying", replaying);
+  onReplayingChanged: lcall("SetReplaying", replaying);
+  onReplayingShowCardsChanged: lcall("SetReplayingShowCards", replayingShowCards);
 
   // onDisabledGeneralsChanged: {
   //   disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;

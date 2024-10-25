@@ -208,6 +208,7 @@ function moveCards(data) {
     if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
     const items = from.remove(move.ids, move.fromSpecialName, data);
+    items.forEach((item) => item.known = !!data[item.cid.toString()]);
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
@@ -1019,6 +1020,7 @@ callbacks["AskForCardChosen"] = (data) => {
 
   const box = roomScene.popupBox.item;
   box.prompt = prompt;
+  box.visible_data = data.visible_data ?? {};
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];
@@ -1053,6 +1055,7 @@ callbacks["AskForCardsChosen"] = (data) => {
   box.min = min;
   box.max = max;
   box.prompt = prompt;
+  box.visible_data = data.visible_data ?? {};
   for (let d of data.card_data) {
     const arr = [];
     const ids = d[1];

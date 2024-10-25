@@ -153,6 +153,14 @@ Flickable {
         selectByMouse: false
         wrapMode: TextEdit.WordWrap
         textFormat: TextEdit.RichText
+        onLinkActivated: (link) => {
+          if (link === "back") {
+            text = savedtext.pop();
+          } else {
+            savedtext.push(text);
+            text = '<a href="back">点击返回</a><br>' + luatr(link);
+          }
+        }
       }
     }
   }

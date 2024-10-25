@@ -25,6 +25,7 @@ GraphicsBox {
   property int min: 0
   property int max: 1
   property var selected_ids: []
+  property var visible_data: ({})
 
   ListModel {
     id: cardModel
@@ -75,7 +76,10 @@ GraphicsBox {
             suit: model.suit || ""
             number: model.number || 0
             autoBack: false
-            known: model.known
+            known: {
+              if (visible_data[cid.toString()] == false) return false;
+              return true;
+            }
             selectable: true
             onClicked: {
               if (!root.multiChoose) {
