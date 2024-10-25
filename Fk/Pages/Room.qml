@@ -590,6 +590,12 @@ Item {
       }
 
       Switch {
+        text: luatr("Show All Cards")
+        checked: config.replayingShowCards
+        onCheckedChanged: config.replayingShowCards = checked;
+      }
+
+      Switch {
         text: luatr("Speed Resume")
         checked: false
         onCheckedChanged: Backend.controlReplayer("uniform");
