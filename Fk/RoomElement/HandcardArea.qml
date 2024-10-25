@@ -49,7 +49,7 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
-      card.clicked.connect(selectCard);
+      card.clicked.disconnect(selectCard);
       card.selectedChanged.disconnect(adjustCards);
       card.released.disconnect(updateCardReleased);
       card.xChanged.disconnect(updateCardDragging);
