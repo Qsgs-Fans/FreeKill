@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "ui/qmlbackend.h"
+#include <qjsondocument.h>
+#include <qjsonobject.h>
 
 #ifndef FK_SERVER_ONLY
 #include <QAudioOutput>
@@ -10,7 +12,6 @@
 #include <QClipboard>
 #include <QMediaPlayer>
 #include <QMessageBox>
-// #include "mod.h"
 #endif
 
 #include <cstdlib>
@@ -479,10 +480,6 @@ void QmlBackend::installAESKey() {
   ClientInstance->installAESKey(aes_key.toLatin1());
 }
 
-void QmlBackend::createModBackend() {
-  //engine->rootContext()->setContextProperty("ModBackend", new ModMaker);
-}
-
 
 void QmlBackend::detectServer() {
   static const char *ask_str = "fkDetectServer";
@@ -645,6 +642,15 @@ void QmlBackend::controlReplayer(QString type) {
   } else if (type == "shutdown") {
     emit replayerShutdown();
   }
+}
+
+QJsonObject QmlBackend::getRequestData() const {
+  auto obj = QJsonObject();
+  auto router = ClientInstance->getRouter();
+  obj["id"] = router->getRequestId();
+  obj["timeout"] = router->getTimeout();
+  obj["timestamp"] = router->getRequestTimestamp();
+  return obj;
 }
 
 #endif

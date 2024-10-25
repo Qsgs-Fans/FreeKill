@@ -1,4 +1,4 @@
-name: Deploy Sphinx documentation to Pages
+name: Deploy Doxygen to Pages
 
 # Runs on pushes targeting the default branch
 on:
@@ -6,7 +6,7 @@ on:
     branches: [master]
 
 jobs:
-  pages:
+  build:
     runs-on: ubuntu-20.04
     environment:
       name: github-pages
@@ -15,5 +15,33 @@ jobs:
       pages: write
       id-token: write
     steps:
-    - id: deployment
-      uses: sphinx-notes/pages@v3
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+
+    - id: build
+      uses: mattnotmitt/doxygen-action@1.9.8
+      with:
+        working-directory: 'docs/'
+        doxyfile-path: 'Doxyfile'
+
+    - name: Upload static files as artifact
+      id: deployment
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/build/html
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+

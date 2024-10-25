@@ -1,5 +1,8 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+---@class MiscEventWrappers: Object
+local MiscEventWrappers = {} -- mixin
+
 ---@class GameEvent.Game : GameEvent
 local Game = GameEvent:subclass("GameEvent.Game")
 function Game:main()
@@ -129,6 +132,63 @@ function ChangeProperty:main()
   logic:trigger(fk.AfterPropertyChange, player, data)
 end
 
+---@param player ServerPlayer @ 要换将的玩家
+---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策不存在变身为士兵
+---@param full? boolean @ 是否血量满状态变身
+---@param isDeputy? boolean @ 是否变的是副将
+---@param sendLog? boolean @ 是否发Log
+---@param maxHpChange? boolean @ 是否改变体力上限，默认改变
+function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange, kingdomChange)
+  local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
+
+  kingdomChange = (kingdomChange == nil) and true or kingdomChange
+  local kingdom = (isDeputy or not kingdomChange) and player.kingdom or new.kingdom
+  if not isDeputy and kingdomChange then
+    local allKingdoms = {}
+    if new.subkingdom then
+      allKingdoms = { new.kingdom, new.subkingdom }
+    else
+      allKingdoms = Fk:getKingdomMap(new.kingdom)
+    end
+    if #allKingdoms > 0 then
+      kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+    end
+  end
+
+  ChangeProperty:create({
+    from = player,
+    general = not isDeputy and new_general or nil,
+    deputyGeneral = isDeputy and new_general or nil,
+    gender = isDeputy and player.gender or new.gender,
+    kingdom = kingdom,
+    sendLog = sendLog,
+    results = {},
+  }):exec()
+
+  maxHpChange = (maxHpChange == nil) and true or maxHpChange
+  if maxHpChange then
+    self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  end
+  if full or player.hp > player.maxHp then
+    self:setPlayerProperty(player, "hp", player.maxHp)
+  end
+end
+
+---@param player ServerPlayer @ 要变更势力的玩家
+---@param kingdom string @ 要变更的势力
+---@param sendLog? boolean @ 是否发Log
+function MiscEventWrappers:changeKingdom(player, kingdom, sendLog)
+  if kingdom == player.kingdom then return end
+  sendLog = sendLog or false
+
+  ChangeProperty:create({
+    from = player,
+    kingdom = kingdom,
+    sendLog = sendLog,
+    results = {},
+  }):exec()
+end
+
 ---@class GameEvent.ClearEvent : GameEvent
 local ClearEvent = GameEvent:subclass("GameEvent.ClearEvent")
 function ClearEvent:main()
@@ -154,4 +214,4 @@ function ClearEvent:main()
   logic.cleaner_stack:pop()
 end
 
-return { Game, ChangeProperty, ClearEvent }
+return { Game, ChangeProperty, ClearEvent, MiscEventWrappers }

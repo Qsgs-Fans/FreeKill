@@ -40,4 +40,13 @@ function TargetModSkill:getExtraTargetNum(player, card_skill, card)
   return 0
 end
 
+---@param player Player
+---@param to_select integer @ id of the target
+---@param selected integer[] @ ids of selected targets
+---@param selected_cards integer[] @ ids of selected cards
+---@param card Card @ helper
+---@param selectable boolean @can be selected
+---@param extra_data? any @ extra_data
+function TargetModSkill:getTargetTip(player, to_select, selected, selected_cards, card, selectable, extra_data) end
+
 return TargetModSkill

@@ -1,5 +1,15 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+---@class PindianEventWrappers: Object
+local PindianEventWrappers = {} -- mixin
+
+---@return boolean
+local function exec(tp, ...)
+  local event = tp:create(...)
+  local _, ret = event:exec()
+  return ret
+end
+
 ---@class GameEvent.Pindian : GameEvent
 local Pindian = GameEvent:subclass("GameEvent.Pindian")
 function Pindian:main()
@@ -190,4 +200,11 @@ function Pindian:clear()
   if not self.interrupted then return end
 end
 
-return Pindian
+
+--- 根据拼点信息开始拼点。
+---@param pindianData PindianStruct
+function PindianEventWrappers:pindian(pindianData)
+  return exec(Pindian, pindianData)
+end
+
+return { Pindian, PindianEventWrappers }

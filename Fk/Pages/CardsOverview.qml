@@ -8,6 +8,7 @@ import Fk.RoomElement
 
 Item {
   id: root
+  objectName: "CardsOverview"
 
   property bool loaded: false
 
@@ -196,6 +197,7 @@ Item {
     property var cards
     function updateCard() {
       const data = lcall("GetCardData", cid);
+      detailFlickable.contentY = 0; // 重置滚动条
       const suitTable = {
         spade: "♠", heart: '<font color="red">♥</font>',
         club: "♣", diamond: '<font color="red">♦</font>',
@@ -234,6 +236,7 @@ Item {
     }
 
     Flickable {
+      id: detailFlickable
       flickableDirection: Flickable.VerticalFlick
       contentHeight: detailLayout.height
       width: parent.width - 40
@@ -323,6 +326,7 @@ Item {
   Button {
     text: luatr("Quit")
     anchors.right: parent.right
+    visible: mainStack.currentItem.objectName === "CardsOverview"
     onClicked: {
       mainStack.pop();
     }

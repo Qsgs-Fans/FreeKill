@@ -2,9 +2,12 @@
 
 local extension = Package:new("standard")
 extension.metadata = require "packages.standard.metadata"
-dofile "packages/standard/game_rule.lua"
-dofile "packages/standard/aux_skills.lua"
-dofile "packages/standard/aux_poxi.lua"
+
+local pkgprefix = "packages/"
+if UsingNewCore then pkgprefix = "packages/freekill-core/" end
+dofile(pkgprefix .. "standard/game_rule.lua")
+dofile(pkgprefix .. "standard/aux_skills.lua")
+dofile(pkgprefix .. "standard/aux_poxi.lua")
 
 Fk:appendKingdomMap("god", {"wei", "shu", "wu", "qun"})
 
@@ -162,15 +165,15 @@ local tuxi = fk.CreateTriggerSkill{
 
     local result = room:askForChoosePlayers(player, targets, 1, 2, "#tuxi-ask", self.name)
     if #result > 0 then
-      self.cost_data = result
+      room:sortPlayersByAction(result)
+      self.cost_data = {tos = result}
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    room:sortPlayersByAction(self.cost_data)
-    for _, id in ipairs(self.cost_data) do
-      if player.dead then return end
+    for _, id in ipairs(self.cost_data.tos) do
+      if player.dead then break end
       local p = room:getPlayerById(id)
       if not p.dead and not p:isKongcheng() then
         local c = room:askForCardChosen(player, p, "h", self.name)
@@ -1368,6 +1371,6 @@ Fk:loadTranslationTable{
 }
 
 -- load translations of this package
-dofile "packages/standard/i18n/init.lua"
+dofile(pkgprefix .. "standard/i18n/init.lua")
 
 return extension

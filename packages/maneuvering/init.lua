@@ -4,6 +4,9 @@ local extension = Package:new("maneuvering", Package.CardPack)
 
 local slash = Fk:cloneCard("slash")
 
+Fk:addDamageNature(fk.FireDamage, "fire_damage")
+Fk:addDamageNature(fk.ThunderDamage, "thunder_damage")
+
 local thunderSlashSkill = fk.CreateActiveSkill{
   name = "thunder__slash_skill",
   prompt = function(self, selected_cards)
@@ -462,10 +465,21 @@ local silverLion = fk.CreateArmor{
 }
 extension:addCard(silverLion)
 
+local hualiuSkill = fk.CreateDistanceSkill{
+  name = "#hualiu_skill",
+  attached_equip = "hualiu",
+  correct_func = function(self, from, to)
+    if to:hasSkill(self) then
+      return 1
+    end
+  end,
+}
+Fk:addSkill(hualiuSkill)
 local huaLiu = fk.CreateDefensiveRide{
   name = "hualiu",
   suit = Card.Diamond,
   number = 13,
+  equip_skill = hualiuSkill,
 }
 
 extension:addCards({
@@ -549,6 +563,8 @@ Fk:loadTranslationTable{
   [":hualiu"] = "装备牌·坐骑<br /><b>坐骑技能</b>：其他角色与你的距离+1。",
 }
 
-Fk:loadTranslationTable(require 'packages/maneuvering/i18n/en_US', 'en_US')
+local pkgprefix = "packages/"
+if UsingNewCore then pkgprefix = "packages/freekill-core/" end
+Fk:loadTranslationTable(require(pkgprefix .. 'maneuvering/i18n/en_US'), 'en_US')
 
 return extension

@@ -57,7 +57,7 @@ void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
 }
 
 void Router::request(int type, const QString &command, const QString &jsonData,
-                     int timeout) {
+                     int timeout, qint64 timestamp) {
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
     replyReadySemaphore.acquire(replyReadySemaphore.available());
@@ -78,6 +78,7 @@ void Router::request(int type, const QString &command, const QString &jsonData,
   body << command;
   body << jsonData;
   body << timeout;
+  body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
 
   emit messageReady(JsonArray2Bytes(body));
 }
@@ -165,10 +166,12 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
     this->requestTimeout = packet[4].toInt();
+    this->requestTimestamp = packet[5].toInteger();
 
     if (type & DEST_CLIENT) {
 #ifndef FK_SERVER_ONLY
-      qobject_cast<Client *>(parent())->callLua(command, jsonData, true);
+      auto client = qobject_cast<Client *>(parent());
+      client->callLua(command, jsonData, true);
 #endif
     } else {
       // requesting server is not allowed
@@ -183,7 +186,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     if (!_room->isLobby()) {
       auto room = qobject_cast<Room *>(_room);
       if (room->getThread()) {
-        room->getThread()->wakeUp(room->getId());
+        room->getThread()->wakeUp(room->getId(), "reply");
         // TODO: signal
       }
     }

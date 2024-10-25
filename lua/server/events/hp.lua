@@ -1,32 +1,43 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-local damage_nature_table = {
-  [fk.NormalDamage] = "normal_damage",
-  [fk.FireDamage] = "fire_damage",
-  [fk.ThunderDamage] = "thunder_damage",
-  [fk.IceDamage] = "ice_damage",
-}
+---@class HpEventWrappers: Object
+local HpEventWrappers = {} -- mixin
+
+---@return boolean
+local function exec(tp, ...)
+  local event = tp:create(...)
+  local _, ret = event:exec()
+  return ret
+end
+
+-- local damage_nature_table = {
+--   [fk.NormalDamage] = "normal_damage",
+--   [fk.FireDamage] = "fire_damage",
+--   [fk.ThunderDamage] = "thunder_damage",
+--   [fk.IceDamage] = "ice_damage",
+-- }
 
 local function sendDamageLog(room, damageStruct)
+  local damageName = Fk:getDamageNatureName(damageStruct.damageType)
   if damageStruct.from then
     room:sendLog{
       type = "#Damage",
       to = {damageStruct.from.id},
       from = damageStruct.to.id,
       arg = damageStruct.damage,
-      arg2 = damage_nature_table[damageStruct.damageType],
+      arg2 = damageName,
     }
   else
     room:sendLog{
       type = "#DamageWithNoFrom",
       from = damageStruct.to.id,
       arg = damageStruct.damage,
-      arg2 = damage_nature_table[damageStruct.damageType],
+      arg2 = damageName,
     }
   end
   room:sendLogEvent("Damage", {
     to = damageStruct.to.id,
-    damageType = damage_nature_table[damageStruct.damageType],
+    damageType = damageName,
     damageNum = damageStruct.damage,
   })
 end
@@ -51,6 +62,17 @@ function ChangeHp:main()
   }
 
   if reason == "damage" then
+    if damageStruct then
+      if Fk:canChain(damageStruct.damageType) and damageStruct.to.chained then
+        damageStruct.to:setChainState(false)
+        if not damageStruct.chain then
+          damageStruct.beginnerOfTheDamage = true
+          damageStruct.chain_table = table.filter(room:getOtherPlayers(damageStruct.to), function(p)
+            return p.chained
+          end)
+        end
+      end
+    end
     data.shield_lost = math.min(-num, player.shield)
     data.num = num + data.shield_lost
   end
@@ -112,6 +134,17 @@ function ChangeHp:main()
   end
 
   return true
+end
+
+--- 改变一名玩家的体力。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 变化量
+---@param reason? string @ 原因
+---@param skillName? string @ 技能名
+---@param damageStruct? DamageStruct @ 伤害数据
+---@return boolean
+function HpEventWrappers:changeHp(player, num, reason, skillName, damageStruct)
+  return exec(ChangeHp, player, num, reason, skillName, damageStruct)
 end
 
 ---@class GameEvent.Damage : GameEvent
@@ -178,11 +211,6 @@ function Damage:main()
     end
   end
 
-  if damageStruct.damageType ~= fk.NormalDamage and damageStruct.to.chained then
-    if not damageStruct.chain then damageStruct.beginnerOfTheDamage = true end
-    damageStruct.to:setChainState(false)
-  end
-
   if not room:changeHp(
     damageStruct.to,
     -damageStruct.damage,
@@ -213,11 +241,11 @@ function Damage:exit()
 
   logic:trigger(fk.DamageFinished, damageStruct.to, damageStruct)
 
-  if damageStruct.beginnerOfTheDamage and not damageStruct.chain then
-    local targets = table.filter(room:getOtherPlayers(damageStruct.to), function(p)
-      return p.chained
+  if damageStruct.chain_table and #damageStruct.chain_table > 0 then
+    damageStruct.chain_table = table.filter(damageStruct.chain_table, function(p)
+      return p:isAlive() and p.chained
     end)
-    for _, p in ipairs(targets) do
+    for _, p in ipairs(damageStruct.chain_table) do
       room:sendLog{
         type = "#ChainDamage",
         from = p.id
@@ -236,6 +264,13 @@ function Damage:exit()
       room:damage(dmg)
     end
   end
+end
+
+--- 根据伤害数据造成伤害。
+---@param damageStruct DamageStruct
+---@return boolean
+function HpEventWrappers:damage(damageStruct)
+  return exec(Damage, damageStruct)
 end
 
 ---@class GameEvent.LoseHp : GameEvent
@@ -266,6 +301,15 @@ function LoseHp:main()
 
   logic:trigger(fk.HpLost, player, data)
   return true
+end
+
+--- 令一名玩家失去体力。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 失去的数量
+---@param skillName? string @ 技能名
+---@return boolean
+function HpEventWrappers:loseHp(player, num, skillName)
+  return exec(LoseHp, player, num, skillName)
 end
 
 ---@class GameEvent.Recover : GameEvent
@@ -314,6 +358,13 @@ function Recover:main()
 
   logic:trigger(fk.HpRecover, who, recoverStruct)
   return true
+end
+
+--- 根据回复数据回复体力。
+---@param recoverStruct RecoverStruct
+---@return boolean
+function HpEventWrappers:recover(recoverStruct)
+  return exec(Recover, recoverStruct)
 end
 
 ---@class GameEvent.ChangeMaxHp : GameEvent
@@ -374,4 +425,12 @@ function ChangeMaxHp:main()
   return true
 end
 
-return { ChangeHp, Damage, LoseHp, Recover, ChangeMaxHp }
+--- 改变一名玩家的体力上限。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 变化量
+---@return boolean
+function HpEventWrappers:changeMaxHp(player, num)
+  return exec(ChangeMaxHp, player, num)
+end
+
+return { ChangeHp, Damage, LoseHp, Recover, ChangeMaxHp, HpEventWrappers }

@@ -7,6 +7,13 @@ Util.FalseFunc = function() return false end
 Util.DummyTable = setmetatable({}, {
   __newindex = function() error("Cannot assign to dummy table") end
 })
+Util.array2hash = function(t)
+  local ret = {}
+  for _, e in ipairs(t) do
+    ret[e] = true
+  end
+  return ret
+end
 
 local metamethods = {
   "__add", "__sub", "__mul", "__div", "__mod", "__pow", "__unm", "__idiv",
@@ -133,6 +140,23 @@ Util.Name2SkillMapper = function(e) return Fk.skills[e] end
 --- 返回译文
 Util.TranslateMapper = function(str) return Fk:translate(str) end
 
+-- 阶段int型和string型互换
+---@return string|integer
+Util.PhaseStrMapper = function(phase)
+  local phase_table = {
+    [Player.RoundStart] = "phase_roundstart",
+    [Player.Start] = "phase_start",
+    [Player.Judge] = "phase_judge",
+    [Player.Draw] = "phase_draw",
+    [Player.Play] = "phase_play",
+    [Player.Discard] = "phase_discard",
+    [Player.Finish] = "phase_finish",
+    [Player.NotActive] = "phase_notactive",
+    [Player.PhaseNone] = "phase_phasenone",
+  }
+  return type(phase) == "string" and table.indexOf(phase_table, phase) or phase_table[phase]
+end
+
 -- for card preset
 
 --- 全局卡牌(包括自己)的canUse
@@ -249,14 +273,16 @@ function table:contains(element)
   end
 end
 
-function table:shuffle()
+function table:shuffle(seed)
+  seed = seed or math.random(2 << 32 - 1)
+  local rnd = fk.QRandomGenerator(seed)
   if #self == 2 then
-    if math.random() < 0.5 then
+    if rnd:random() < 0.5 then
       self[1], self[2] = self[2], self[1]
     end
   else
     for i = #self, 2, -1 do
-        local j = math.random(i)
+        local j = rnd:random(i)
         self[i], self[j] = self[j], self[i]
     end
   end
@@ -412,6 +438,17 @@ function table:assign(targetTbl)
       self[key] = value
     end
   end
+end
+
+function table:hasIntersection(table)
+  local hash = {}
+  for _, value in ipairs(self) do
+    hash[value] = true
+  end
+  for _, value in ipairs(table) do
+    if hash[value] then return true end
+  end
+  return false
 end
 
 function table.empty(t)

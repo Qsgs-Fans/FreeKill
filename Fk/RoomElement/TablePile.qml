@@ -21,7 +21,7 @@ Item {
   function inTable(cid) {
     return leval(`(function()
       local client = Fk:currentRoom()
-      if client._processing[${cid}] then
+      if table.contains(client.processing_area, ${cid}) then
         return true
       end
       return false
@@ -105,10 +105,10 @@ Item {
       for (i = 0; i < outputs.length; i++) {
         let exists = false;
         for (j = 0; j < result.length; j++) {
-           if (result[j].cid === outputs[i]) {
-             exists = true;
-             break;
-           }
+          if (result[j].cid === outputs[i]) {
+            exists = true;
+            break;
+          }
         }
         if (!exists)
           vanished.push(outputs[i]);

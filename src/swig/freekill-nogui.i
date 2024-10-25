@@ -2,6 +2,8 @@
 
 %module fk
 
+%include "naturalvar.i"
+
 %{
 #include "server/server.h"
 #include "server/serverplayer.h"
@@ -13,7 +15,6 @@
 class ClientPlayer *Self = nullptr;
 %}
 
-%include "naturalvar.i"
 %include "qt.i"
 %include "qml-nogui.i"
 %include "player.i"

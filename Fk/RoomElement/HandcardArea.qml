@@ -7,6 +7,7 @@ Item {
   property alias cards: cardArea.cards
   property alias length: cardArea.length
   property var selectedCards: []
+  property var movepos
 
   signal cardSelected(int cardId, bool selected)
 
@@ -32,9 +33,12 @@ Item {
   function filterInputCard(card)
   {
     card.autoBack = true;
-    card.draggable = true;
+    card.draggable = lcall("CanSortHandcards", Self.id);
     card.selectable = false;
+    card.clicked.connect(selectCard);
     card.clicked.connect(adjustCards);
+    card.released.connect(updateCardReleased);
+    card.xChanged.connect(updateCardDragging);
   }
 
   function remove(outputs)
@@ -45,23 +49,13 @@ Item {
       card = result[i];
       card.draggable = false;
       card.selectable = false;
+      card.clicked.connect(selectCard);
       card.selectedChanged.disconnect(adjustCards);
+      card.released.disconnect(updateCardReleased);
+      card.xChanged.disconnect(updateCardDragging);
       card.prohibitReason = "";
     }
     return result;
-  }
-
-  function enableCards(cardIds)
-  {
-    let card, i;
-    cards.forEach(card => {
-      card.selectable = cardIds.includes(card.cid);
-      if (!card.selectable) {
-        card.selected = false;
-        unselectCard(card);
-      }
-    });
-    updateCardPosition(true);
   }
 
   function updateCardPosition(animated)
@@ -84,54 +78,90 @@ Item {
     }
   }
 
-  function adjustCards()
+  function updateCardDragging()
   {
-    area.updateCardPosition(true);
-
-    for (let i = 0; i < cards.length; i++) {
-      const card = cards[i];
-      if (card.selected) {
-        if (!selectedCards.includes(card))
-          selectCard(card);
-      } else {
-        if (selectedCards.includes(card))
-          unselectCard(card);
-      }
-    }
-  }
-
-  function selectCard(card)
-  {
-    selectedCards.push(card);
-    cardSelected(card.cid, true);
-  }
-
-  function unselectCard(card)
-  {
-    for (let i = 0; i < selectedCards.length; i++) {
-      if (selectedCards[i] === card) {
-        selectedCards.splice(i, 1);
-        cardSelected(card.cid, false);
+    let _card, c;
+    let index;
+    for (index = 0; index < cards.length; index++) {
+      c = cards[index];
+      if (c.dragging) {
+        _card = c;
         break;
       }
     }
-  }
+    if (!_card) return;
+    _card.goBackAnim.stop();
+    _card.opacity = 0.8
 
-  function unselectAll(exceptId) {
-    let card = undefined;
-    for (let i = 0; i < selectedCards.length; i++) {
-      if (selectedCards[i].cid !== exceptId) {
-        selectedCards[i].selected = false;
-      } else {
-        card = selectedCards[i];
-        card.selected = true;
+    let card;
+    movepos = null;
+    for (let i = 0; i < cards.length; i++) {
+      card = cards[i];
+      if (card.dragging) continue;
+
+      if (card.x > _card.x) {
+        movepos = i - (index < i ? 1 : 0);
+        break;
       }
     }
-    if (card === undefined) {
-      selectedCards = [];
-    } else {
-      selectedCards = [card];
+    if (movepos == null) { // 最右
+      movepos = cards.length;
+    }
+  }
+
+  function updateCardReleased(_card)
+  {
+    let i;
+    if (movepos != null) {
+      i = cards.indexOf(_card);
+      cards.splice(i, 1);
+      cards.splice(movepos, 0, _card);
+      movepos = null;
     }
     updateCardPosition(true);
+  }
+
+  function adjustCards()
+  {
+    area.updateCardPosition(true);
+  }
+
+  function selectCard(card) {
+    if (card.selectable) cardSelected(card.cid, card.selected);
+    adjustCards();
+  }
+
+  function enableCards(cardIds)
+  {
+    let card, i;
+    cards.forEach(card => {
+      card.selectable = cardIds.includes(card.cid);
+      if (!card.selectable) {
+        card.selected = false;
+      }
+    });
+    updateCardPosition(true);
+  }
+
+  function unselectAll() {
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      card.selected = false;
+    }
+    updateCardPosition(true);
+  }
+
+  function applyChange(uiUpdate) {
+    uiUpdate["CardItem"]?.forEach(cdata => {
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if (card.cid === cdata.id) {
+          card.selectable = cdata.enabled;
+          card.selected = cdata.selected;
+          updateCardPosition(true);
+          break;
+        }
+      }
+    })
   }
 }

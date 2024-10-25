@@ -1,5 +1,15 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+---@class DeathEventWrappers: Object
+local DeathEventWrappers = {} -- mixin
+
+---@return boolean
+local function exec(tp, ...)
+  local event = tp:create(...)
+  local _, ret = event:exec()
+  return ret
+end
+
 ---@class GameEvent.Dying : GameEvent
 local Dying = GameEvent:subclass("GameEvent.Dying")
 function Dying:main()
@@ -41,6 +51,12 @@ function Dying:exit()
     room:broadcastProperty(dyingPlayer, "dying")
   end
   logic:trigger(fk.AfterDying, dyingPlayer, dyingStruct, self.interrupted)
+end
+
+--- 根据濒死数据让人进入濒死。
+---@param dyingStruct DyingStruct
+function DeathEventWrappers:enterDying(dyingStruct)
+  return exec(Dying, dyingStruct)
 end
 
 ---@class GameEvent.Death : GameEvent
@@ -103,6 +119,12 @@ function Death:main()
   logic:trigger(fk.Deathed, victim, deathStruct)
 end
 
+--- 根据死亡数据杀死角色。
+---@param deathStruct DeathStruct
+function DeathEventWrappers:killPlayer(deathStruct)
+  return exec(Death, deathStruct)
+end
+
 ---@class GameEvent.Revive : GameEvent
 local Revive = GameEvent:subclass("GameEvent.Revive")
 function Revive:main()
@@ -125,4 +147,10 @@ function Revive:main()
   room.logic:trigger(fk.AfterPlayerRevived, player, { reason = reason })
 end
 
-return { Dying, Death, Revive }
+---@param player ServerPlayer
+---@param sendLog? bool
+function DeathEventWrappers:revivePlayer(player, sendLog, reason)
+  return exec(Revive, player, sendLog, reason)
+end
+
+return { Dying, Death, Revive, DeathEventWrappers }

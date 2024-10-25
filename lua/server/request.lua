@@ -1,9 +1,12 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+-- 本文件是用来处理各种异步请求的
+-- 与游戏中常见的请求-答复没有什么联系
+
 local function tellRoomToObserver(self, player)
   local observee = self.players[1]
   local start_time = os.getms()
-  local summary = self:getSummary(observee, true)
+  local summary = self:toJsonObject(observee)
   player:doNotify("Observe", json.encode(summary))
 
   fk.qInfo(string.format("[Observe] %d, %s, in %.3fms",
@@ -59,54 +62,6 @@ request_handlers["prelight"] = function(room, id, reqlist)
   if p then
     p:prelightSkill(reqlist[3], reqlist[4] == "true")
   end
-end
-
-request_handlers["luckcard"] = function(room, id, reqlist)
-  local p = room:getPlayerById(id)
-  local cancel = reqlist[3] == "false"
-  local luck_data = room:getTag("LuckCardData")
-  if not (p and luck_data) then return end
-  local pdata = luck_data[id]
-
-  if not cancel then
-    pdata.luckTime = pdata.luckTime - 1
-    luck_data.discardInit(room, p)
-    luck_data.drawInit(room, p, pdata.num)
-  else
-    pdata.luckTime = 0
-  end
-
-  if pdata.luckTime > 0 then
-    p:doNotify("AskForLuckCard", pdata.luckTime)
-  else
-    p.serverplayer:setThinking(false)
-    ResumeRoom(room.id)
-  end
-
-  room:setTag("LuckCardData", luck_data)
-end
-
-request_handlers["changeself"] = function(room, id, reqlist)
-  local p = room:getPlayerById(id)
-  local toId = tonumber(reqlist[3])
-  local from = p
-  local to = room:getPlayerById(toId)
-  local from_sp = from._splayer
-
-  -- 注意发来信息的玩家的主视角可能已经不是自己了
-  -- 先换成正确的玩家
-  from = table.find(room.players, function(p)
-    return table.contains(p._observers, from_sp)
-  end)
-
-  -- 切换视角
-  table.removeOne(from._observers, from_sp)
-  table.insert(to._observers, from_sp)
-  from_sp:doNotify("ChangeSelf", json.encode {
-    id = toId,
-    handcards = to:getCardIds(Player.Hand),
-    special_cards = to.special_cards,
-  })
 end
 
 request_handlers["surrender"] = function(room, id, reqlist)

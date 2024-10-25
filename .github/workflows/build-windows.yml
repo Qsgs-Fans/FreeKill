@@ -41,6 +41,7 @@ jobs:
         find -name "*.cpp" -exec sed -i '1i #include "pch.h"' "{}" \;
         find -name "*.h" -exec sed -i '1i #include "pch.h"' "{}" \;
         sed -i '1d' pch.h
+        sed -i '1d' main.cpp
         sed -i '/pch.h/d' CMakeLists.txt
 
     - name: Configure CMake Project

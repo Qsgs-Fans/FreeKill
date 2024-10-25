@@ -69,11 +69,11 @@ void ServerPlayer::setRoom(RoomBase *room) { this->room = room; }
 void ServerPlayer::speak(const QString &message) { ; }
 
 void ServerPlayer::doRequest(const QString &command, const QString &jsonData,
-                             int timeout) {
+                             int timeout, qint64 timestamp) {
   if (getState() != Player::Online)
     return;
   int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
-  router->request(type, command, jsonData, timeout);
+  router->request(type, command, jsonData, timeout, timestamp);
 }
 
 void ServerPlayer::abortRequest() { router->abortRequest(); }
@@ -201,7 +201,7 @@ void ServerPlayer::onDisconnected() {
       }
       if (room->getThread()) {
        // && thinking()) {
-        room->getThread()->wakeUp(room->getId());
+        room->getThread()->wakeUp(room->getId(), "player_disconnect");
       }
       setState(Player::Offline);
       setSocket(nullptr);

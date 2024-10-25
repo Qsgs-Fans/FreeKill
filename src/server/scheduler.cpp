@@ -36,16 +36,17 @@ void Scheduler::handleRequest(const QString &req) {
 }
 
 void Scheduler::doDelay(int roomId, int ms) {
-  QTimer::singleShot(ms, [=](){ resumeRoom(roomId); });
+  QTimer::singleShot(ms, [=](){ resumeRoom(roomId, "delay_done"); });
 }
 
-bool Scheduler::resumeRoom(int roomId) {
+bool Scheduler::resumeRoom(int roomId, const char *reason) {
   lua_getglobal(L, "ResumeRoom");
   lua_pushnumber(L, roomId);
+  lua_pushstring(L, reason);
 
-  int err = lua_pcall(L, 1, 1, 0);
-  const char *result = lua_tostring(L, -1);
+  int err = lua_pcall(L, 2, 1, 0);
   if (err) {
+    const char *result = lua_tostring(L, -1);
     qCritical() << result;
     lua_pop(L, 1);
     return true;

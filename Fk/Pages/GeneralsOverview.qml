@@ -9,6 +9,7 @@ import "RoomLogic.js" as RoomLogic
 
 Item {
   id: root
+  objectName: "GeneralsOverview"
 
   property bool loaded: false
   property int stat: 0 // 0=normal 1=banPkg 2=banChara
@@ -165,6 +166,7 @@ Item {
           return luatr("BanGeneral");
         }
         enabled: stat !== 1
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           if (stat === 0) {
             stat = 2;
@@ -182,6 +184,7 @@ Item {
           return luatr("BanPackage");
         }
         enabled: stat !== 2
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           if (stat === 0) {
             stat = 1;
@@ -194,6 +197,7 @@ Item {
       ToolButton {
         text: luatr("Quit")
         font.pixelSize: 20
+        visible: mainStack.currentItem.objectName === "GeneralsOverview"
         onClicked: {
           mainStack.pop();
           config.saveConf();
@@ -240,6 +244,7 @@ Item {
           config.curSchemeChanged();
         } else {
           generalText.clear();
+          generalText.clearSavedText();
           generalDetail.general = modelData;
           generalDetail.updateGeneral();
           generalDetail.open();
@@ -283,9 +288,9 @@ Item {
           const gdata = lcall("GetGeneralData", modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
-            if (s.banPkg[pack].includes(modelData)) return '启用';
+            if (s.banPkg[pack].includes(modelData)) return luatr('Enable');
           } else {
-            if (!!s.normalPkg[pack]?.includes(modelData)) return '禁';
+            if (!!s.normalPkg[pack]?.includes(modelData)) return luatr('Prohibit');
           }
         }
         anchors.centerIn: parent
@@ -370,17 +375,9 @@ Item {
         Text {
           Layout.fillWidth: true
           text: {
-            const orig = '$' + name + (idx ? idx.toString() : "");
-            const orig_trans = luatr(orig);
-
-            // try general specific
-            const orig_g = '$' + name + '_' + detailGeneralCard.name
+            const orig = '$' + name + (specific ? '_' + detailGeneralCard.name : "")
               + (idx ? idx.toString() : "");
-            const orig_g_trans = luatr(orig_g);
-
-            if (orig_g_trans !== orig_g) {
-              return orig_g_trans;
-            }
+            const orig_trans = luatr(orig);
 
             if (orig_trans !== orig) {
               return orig_trans;
@@ -396,9 +393,50 @@ Item {
         callbacks["LogEvent"]({
           type: "PlaySkillSound",
           name: name,
-          general: detailGeneralCard.name,
+          general: specific ? detailGeneralCard.name : null, // 分化特别和一般
           i: idx,
         });
+      }
+
+      onPressAndHold: {
+        Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
+              + (idx ? idx.toString() : "") + ':');
+        toast.show(luatr("Audio Code Copy Success"));
+      }
+
+      ToolButton {
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        Layout.preferredWidth: 32
+        Layout.preferredHeight: 32
+        visible: parent.hovered
+        text: "⋮"
+        onClicked: {
+          if (skillAudioMenu.visible){
+            skillAudioMenu.close();
+          } else {
+            skillAudioMenu.open();
+          }
+        }
+        Menu {
+          id: skillAudioMenu
+          MenuItem {
+            text: luatr("Copy Audio Code")
+            onTriggered: {
+              Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
+              + (idx ? idx.toString() : "") + ':');
+              toast.show(luatr("Audio Code Copy Success"));
+            }
+          }
+          MenuItem {
+            text: luatr("Copy Audio Text")
+            onTriggered: {
+              Backend.copyToClipboard(luatr('$' + name + (specific ? '_' + detailGeneralCard.name : "")
+              + (idx ? idx.toString() : "")));
+              toast.show(luatr("Audio Text Copy Success"));
+            }
+          }
+        }
       }
     }
   }
@@ -427,7 +465,7 @@ Item {
 
         if (Backend.exists(fname)) {
           ret = true;
-          audioModel.append({ name: skill, idx: i });
+          audioModel.append({ name: skill, idx: i, specific: true });
         } else {
           if (i > 0) break;
         }
@@ -445,7 +483,7 @@ Item {
           skill + (i !== 0 ? i.toString() : "") + ".mp3";
 
         if (Backend.exists(fname)) {
-          audioModel.append({ name: skill, idx: i });
+          audioModel.append({ name: skill, idx: i, specific: false});
         } else {
           if (i > 0) break;
         }
@@ -465,8 +503,10 @@ Item {
 
     function updateGeneral() {
       detailGeneralCard.name = general;
+      detailFlickable.contentY = 0; // 重置滚动条
       const data = lcall("GetGeneralDetail", general);
       generalText.clear();
+      generalText.clearSavedText();
       audioModel.clear();
 
       if (data.companions.length > 0){
@@ -479,14 +519,8 @@ Item {
       }
 
       data.skill.forEach(t => {
-        generalText.append("<b>" + luatr(t.name) +
-          "</b>: " + t.description);
-
-        addSkillAudio(t.name);
-      });
-      data.related_skill.forEach(t => {
-        generalText.append("<font color=\"purple\"><b>" + luatr(t.name) +
-          "</b>: " + t.description + "</font>");
+        generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
+          "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
 
         addSkillAudio(t.name);
       });
@@ -521,6 +555,8 @@ Item {
             wrapMode: Text.WordWrap
             textFormat: TextEdit.RichText
             font.pixelSize: 16
+            lineHeight: 21
+            lineHeightMode: Text.FixedHeight
             function trans(str) {
               const ret = luatr(str);
               if (ret === str) {
@@ -530,13 +566,18 @@ Item {
             }
             text: {
               const general = generalDetail.general;
-              return [
-                luatr(lcall("GetGeneralData", general).package),
+              const gdata = lcall("GetGeneralData", general);
+              let ret = [
+                luatr(gdata.package),
                 luatr("Title") + trans("#" + general),
                 luatr("Designer") + trans("designer:" + general),
                 luatr("Voice Actor") + trans("cv:" + general),
                 luatr("Illustrator") + trans("illustrator:" + general),
               ].join("<br>");
+              if (gdata.hidden) {
+                ret += "<br><font color=\"grey\">" + luatr("Hidden General") + "</font>";
+              }
+              return ret;
             }
           }
 
@@ -547,6 +588,7 @@ Item {
 
           Button {
             text: luatr("Set as Avatar")
+            visible: mainStack.currentItem.objectName === "GeneralsOverview"
             enabled: detailGeneralCard.name !== "" && !opTimer.running
               && Self.avatar !== detailGeneralCard.name
             onClicked: {
@@ -562,6 +604,7 @@ Item {
       }
 
       Flickable {
+        id: detailFlickable
         flickableDirection: Flickable.VerticalFlick
         contentHeight: detailLayout.height
         width: parent.width - 40 - generalInfo.width
@@ -578,6 +621,10 @@ Item {
           TextEdit {
             id: generalText
 
+            property var savedtext: []
+            function clearSavedText() {
+              savedtext = [];
+            }
             Layout.fillWidth: true
             readOnly: true
             selectByKeyboard: true
@@ -585,6 +632,14 @@ Item {
             wrapMode: TextEdit.WordWrap
             textFormat: TextEdit.RichText
             font.pixelSize: 18
+            onLinkActivated: (link) => {
+              if (link === "back") {
+                text = savedtext.pop();
+              } else {
+                savedtext.push(text);
+                text = '<a href="back">点击返回</a><br>' + luatr(link);
+              }
+            }
           }
 
           GridLayout {
@@ -627,6 +682,44 @@ Item {
               const extension = lcall("GetGeneralData", general).extension;
               Backend.playSound("./packages/" + extension + "/audio/death/"
                 + general);
+            }
+
+            onPressAndHold: {
+              Backend.copyToClipboard("$~" + generalDetail.general);
+              toast.show(luatr("Audio Code Copy Success"));
+            }
+
+            ToolButton {
+              anchors.right: parent.right
+              anchors.verticalCenter: parent.verticalCenter
+              Layout.preferredWidth: 32
+              Layout.preferredHeight: 32
+              visible: parent.hovered
+              text: "⋮"
+              onClicked: {
+                if (deathAudioMenu.visible){
+                  deathAudioMenu.close();
+                } else {
+                  deathAudioMenu.open();
+                }
+              }
+              Menu {
+                id: deathAudioMenu
+                MenuItem {
+                  text: luatr("Copy Audio Code")
+                  onTriggered: {
+                    Backend.copyToClipboard("$~" + generalDetail.general);
+                    toast.show(luatr("Audio Code Copy Success"));
+                  }
+                }
+                MenuItem {
+                  text: luatr("Copy Audio Text")
+                  onTriggered: {
+                    Backend.copyToClipboard(luatr("~" + generalDetail.general));
+                    toast.show(luatr("Audio Text Copy Success"));
+                  }
+                }
+              }
             }
           }
         }

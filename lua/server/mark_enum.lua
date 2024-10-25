@@ -29,10 +29,14 @@ MarkEnum.BypassTimesLimitTo = "BypassTimesLimitTo"
 MarkEnum.BypassDistancesLimitTo = "BypassDistancesLimitTo"
 ---非锁定技失效
 MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
+---失效技能表
+MarkEnum.InvalidSkills = "InvalidSkills"
 ---不可明置（值为表，m - 主将, d - 副将）
 MarkEnum.RevealProhibited = "RevealProhibited"
 ---不计入距离、座次后缀
 MarkEnum.PlayerRemoved = "PlayerRemoved"
+---不能调整手牌
+MarkEnum.SortProhibited = "SortProhibited"
 
 ---各种清除标记后缀
 ---

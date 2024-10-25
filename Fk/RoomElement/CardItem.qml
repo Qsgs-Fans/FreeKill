@@ -65,11 +65,11 @@ Item {
   property alias dragging: drag.active
 
   signal toggleDiscards()
-  signal clicked()
+  signal clicked(var card)
   signal rightClicked()
   signal doubleClicked()
   signal thrown()
-  signal released()
+  signal released(var card)
   signal entered()
   signal exited()
   signal moveFinished()
@@ -267,7 +267,7 @@ Item {
     onTapped: (p, btn) => {
       if (btn === Qt.LeftButton || btn === Qt.NoButton) {
         selected = selectable ? !selected : false;
-        parent.clicked();
+        parent.clicked(root);
       } else if (btn === Qt.RightButton) {
         parent.rightClicked();
       }
@@ -287,7 +287,7 @@ Item {
 
     onGrabChanged: (transtition, point) => {
       if (transtition !== PointerDevice.UngrabExclusive) return;
-      parent.released();
+      parent.released(root);
       if (autoBack)
         goBackAnimation.start();
     }

@@ -22,6 +22,7 @@
 ---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
+---@field public all_skills table @ 武将的所有技能，包括相关技能和属于其他武将的技能
 ---@field public companions string [] @ 有珠联璧合关系的武将
 ---@field public hidden boolean @ 不在选将框里出现，可以点将，可以在武将一览里查询到
 ---@field public total_hidden boolean @ 完全隐藏
@@ -60,6 +61,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
   self.related_skills = {} -- skills related to this general, but not first added to it, e.g. "jixi" of dengai
   self.related_other_skills = {} -- skills related to this general and belong to other generals, e.g. "yingzi" of sunce
+  self.all_skills = {}
 
   self.companions = {}
 
@@ -75,8 +77,10 @@ end
 function General:addSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.other_skills, skill)
+    table.insert(self.all_skills, {skill, false})
   elseif (skill.class and skill.class:isSubclassOf(Skill)) then
     table.insert(self.skills, skill)
+    table.insert(self.all_skills, {skill.name, false})
     skill.package = self.package
   end
 end
@@ -86,8 +90,10 @@ end
 function General:addRelatedSkill(skill)
   if (type(skill) == "string") then
     table.insert(self.related_other_skills, skill)
+    table.insert(self.all_skills, {skill, true}) -- only for UI
   elseif (skill.class and skill.class:isSubclassOf(Skill)) then
     table.insert(self.related_skills, skill)
+    table.insert(self.all_skills, {skill.name, true}) -- only for UI
     Fk:addSkill(skill)
     skill.package = self.package
   end

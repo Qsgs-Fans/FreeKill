@@ -29,10 +29,13 @@
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
 ---@field private kingdoms string[] @ 总势力
 ---@field private kingdom_map table<string, string[]> @ 势力映射表
+---@field private damage_nature table<any, table> @ 伤害映射表
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
 ---@field public mini_games table<string, MiniGameSpec> @ 自定义多人交互表
+---@field public request_handlers table<string, RequestHandler> @ 请求处理程序
+---@field public target_tips table<string, TargetTipSpec> @ 选择目标提示对应表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -69,13 +72,18 @@ function Engine:initialize()
   self.game_mode_disabled = {}
   self.kingdoms = {}
   self.kingdom_map = {}
+  self.damage_nature = { [fk.NormalDamage] = { "normal_damage", false } }
   self._custom_events = {}
   self.poxi_methods = {}
   self.qml_marks = {}
   self.mini_games = {}
+  self.request_handlers = {}
+  self.target_tips = {}
 
   self:loadPackages()
+  self:setLords()
   self:loadDisabled()
+  self:loadRequestHandlers()
   self:addSkills(AuxSkills)
 end
 
@@ -201,15 +209,14 @@ end
 --- 标包和标准卡牌包比较特殊，它们永远会在第一个加载。
 ---@return nil
 function Engine:loadPackages()
-  local new_core = false
   if FileIO.pwd():endsWith("packages/freekill-core") then
-    new_core = true
+    UsingNewCore = true
     FileIO.cd("../..")
   end
   local directories = FileIO.ls("packages")
 
   -- load standard & standard_cards first
-  if new_core then
+  if UsingNewCore then
     self:loadPackage(require("packages.freekill-core.standard"))
     self:loadPackage(require("packages.freekill-core.standard_cards"))
     self:loadPackage(require("packages.freekill-core.maneuvering"))
@@ -248,7 +255,7 @@ function Engine:loadPackages()
     end
   end
 
-  if new_core then
+  if UsingNewCore then
     FileIO.cd("packages/freekill-core")
   end
 end
@@ -267,6 +274,15 @@ function Engine:loadDisabled()
     end
     self.game_mode_disabled[game_mode.name] = disabled_packages
   end
+end
+
+--- 载入响应事件
+function Engine:loadRequestHandlers()
+  self.request_handlers["AskForSkillInvoke"] = require 'core.request_type.invoke'
+  self.request_handlers["AskForUseActiveSkill"] = require 'core.request_type.active_skill'
+  self.request_handlers["AskForResponseCard"] = require 'core.request_type.response_card'
+  self.request_handlers["AskForUseCard"] = require 'core.request_type.use_card'
+  self.request_handlers["PlayCard"] = require 'core.request_type.play_card'
 end
 
 --- 向翻译表中加载新的翻译表。
@@ -349,9 +365,9 @@ function Engine:addGeneral(general)
     table.insert(self.same_generals[tName], general.name)
   end
 
-  if table.find(general.skills, function(s) return s.lordSkill end) then
-    table.insert(self.lords, general.name)
-  end
+  -- if table.find(general.skills, function(s) return s.lordSkill end) then
+  --   table.insert(self.lords, general.name)
+  -- end
 end
 
 --- 加载一系列武将。
@@ -360,6 +376,19 @@ function Engine:addGenerals(generals)
   assert(type(generals) == "table")
   for _, general in ipairs(generals) do
     self:addGeneral(general)
+  end
+end
+
+--- 为所有武将加载主公技和主公判定
+function Engine:setLords()
+  for _, general in pairs(self.generals) do
+    local other_skills = table.map(general.other_skills, Util.Name2SkillMapper)
+    local skills = table.connect(general.skills, other_skills)
+    for _, skill in ipairs(skills) do
+      if skill.lordSkill then
+        table.insert(self.lords, general.name)
+      end
+    end
   end
 end
 
@@ -385,6 +414,50 @@ function Engine:getKingdomMap(kingdom)
     end
   end
   return ret
+end
+
+--- 注册一个伤害
+---@param nature string | number @ 伤害ID
+---@param name string @ 属性伤害名
+---@param can_chain bool @ 是否可传导
+function Engine:addDamageNature(nature, name, can_chain)
+  assert(table.contains({ "string", "number" }, type(nature)), "Must use string or number as nature!")
+  assert(type(name) == "string", "Must use string as this damage nature's name!")
+  if can_chain == nil then can_chain = true end
+  self.damage_nature[nature] = { name, can_chain }
+end
+
+--- 返回伤害列表
+---@return table @ 具体信息（伤害ID => {伤害名，是否可传导}）
+function Engine:getDamageNatures()
+  local ret = {}
+  for k, v in pairs(self.damage_nature) do
+    ret[k] = v
+  end
+  return ret
+end
+
+--- 由伤害ID获得伤害属性
+---@param nature string | number @ 伤害ID
+---@return table @ 具体信息（{伤害名，是否可传导}），若不存在则为空
+function Engine:getDamageNature(nature)
+  return self.damage_nature[nature]
+end
+
+--- 由伤害ID获得伤害名
+---@param nature string | number @ 伤害ID
+---@return string @ 伤害名
+function Engine:getDamageNatureName(nature)
+  local ret = self:getDamageNature(nature)
+  return ret and ret[1] or ""
+end
+
+--- 判断一种伤害是否可传导
+---@param nature string | number @ 伤害ID
+---@return bool
+function Engine:canChain(nature)
+  local ret = self:getDamageNature(nature)
+  return ret and ret[2]
 end
 
 --- 判断一个武将是否在本房间可用。
@@ -504,6 +577,15 @@ function Engine:addMiniGame(spec)
   self.mini_games[spec.name] = spec
 end
 
+---@param spec TargetTipSpec
+function Engine:addTargetTip(spec)
+  assert(type(spec.name) == "string")
+  if self.target_tips[spec.name] then
+    fk.qCritical("Warning: duplicated target tip type " .. spec.name)
+  end
+  self.target_tips[spec.name] = spec
+end
+
 --- 从已经开启的拓展包中，随机选出若干名武将。
 ---
 --- 对于同名武将不会重复选取。
@@ -595,72 +677,7 @@ end
 ---@param player Player @ 和这张牌扯上关系的那名玩家
 ---@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
 function Engine:filterCard(id, player, data)
-  if player == nil then
-    self.filtered_cards[id] = nil
-    return
-  end
-
-  local card = self:getCardById(id, true)
-  local filters = self:currentRoom().status_skills[FilterSkill] or Util.DummyTable
-
-  if #filters == 0 then
-    self.filtered_cards[id] = nil
-    return
-  end
-
-  local modify = false
-  if data and type(data) == "table" and data.card
-    and type(data.card) == "table" and data.card:isInstanceOf(Card) then
-    modify = true
-  end
-
-  for _, f in ipairs(filters) do
-    if f:cardFilter(card, player, type(data) == "table" and data.isJudgeEvent) then
-      local _card = f:viewAs(card, player)
-      _card.id = id
-      _card.skillName = f.name
-      if modify and RoomInstance then
-        if not f.mute then
-          player:broadcastSkillInvoke(f.name)
-          RoomInstance:doAnimate("InvokeSkill", {
-            name = f.name,
-            player = player.id,
-            skill_type = f.anim_type,
-          })
-        end
-        RoomInstance:sendLog{
-          type = "#FilterCard",
-          arg = f.name,
-          from = player.id,
-          arg2 = card:toLogString(),
-          arg3 = _card:toLogString(),
-        }
-      end
-      card = _card
-    end
-    if card == nil then
-      card = self:getCardById(id)
-    end
-    self.filtered_cards[id] = card
-  end
-
-  if modify then
-    self.filtered_cards[id] = nil
-    data.card = card
-    return
-  end
-end
-
---- 添加一张现场打印的牌到游戏中。
----
---- 这张牌必须是clone出来的虚拟牌，不能有子卡；因为他接下来就要变成实体卡了
----@param card Card
-function Engine:_addPrintedCard(card)
-  assert(card:isVirtual() and #card.subcards == 0)
-  table.insert(self.printed_cards, card)
-  local id = -#self.printed_cards - 1
-  card.id = id
-  self.printed_cards[id] = card
+  return Fk:currentRoom():filterCard(id, player, data)
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。

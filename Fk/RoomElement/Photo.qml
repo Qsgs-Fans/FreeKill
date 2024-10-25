@@ -58,6 +58,8 @@ Item {
 
   property bool playing: false
   property bool surrendered: false
+
+  property var targetTip: []
   onPlayingChanged: {
     if (playing) {
       animPlaying.start();
@@ -505,23 +507,6 @@ Item {
       anchors.bottomMargin: 4
       style: Text.Outline
     }
-
-    TapHandler {
-      enabled: (root.state != "candidate" || !root.selectable)
-               && root.playerid !== Self.id
-      onTapped: {
-        const params = { name: "hand_card" };
-        let data = lcall("GetPlayerHandcards", root.playerid);
-        data = data.filter((e) => e !== -1);
-        if (data.length === 0)
-          return;
-
-        params.ids = data;
-
-        // Just for using room's right drawer
-        roomScene.startCheat("../RoomElement/ViewPile", params);
-      }
-    }
   }
 
   TapHandler {
@@ -546,7 +531,10 @@ Item {
 
   RoleComboBox {
     id: role
-    value: root.role
+    value: {
+      if (root.role === "hidden") return "hidden";
+      lcall("RoleVisibility", root.playerid) ? root.role : "unknown";
+    }
     anchors.top: parent.top
     anchors.topMargin: -4
     anchors.right: parent.right
@@ -566,6 +554,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     anchors.topMargin: 2
+    width: parent.width - role.width - hp.width - 20
 
     font.pixelSize: 16
     text: {
@@ -574,7 +563,8 @@ Item {
         ret = luatr("<Blocked> ") + ret;
       return ret;
     }
-
+    elide: root.playerid === Self.id ? Text.ElideNone : Text.ElideMiddle
+    horizontalAlignment: Qt.AlignHCenter
     glow.radius: 8
   }
 
@@ -744,6 +734,138 @@ Item {
     Text {
       text: distance
       anchors.centerIn: parent
+    }
+  }
+
+  RowLayout {
+    anchors.centerIn: parent
+    spacing: 5
+
+    Repeater {
+      model: root.targetTip
+
+      Item {
+        Layout.alignment: Qt.AlignHCenter
+        width: 30
+
+        GlowText {
+          anchors.centerIn: parent
+          visible: modelData.type === "normal"
+          text: Util.processPrompt(modelData.content)
+          font.family: fontLibian.name
+          color: "#F7F589"
+          font.pixelSize: 30
+          font.bold: true
+          glow.color: "black"
+          glow.spread: 0.3
+          glow.radius: 5
+          horizontalAlignment: Text.AlignHCenter
+          wrapMode: Text.WrapAnywhere
+          width: 30
+        }
+
+        Text {
+          anchors.centerIn: parent
+          visible: modelData.type === "warning"
+          font.family: fontLibian.name
+          font.pixelSize: 24
+          opacity: 0.9
+          horizontalAlignment: Text.AlignHCenter
+          lineHeight: 24
+          lineHeightMode: Text.FixedHeight
+          color: "#EAC28A"
+          width: 24
+          wrapMode: Text.WrapAnywhere
+          style: Text.Outline
+          styleColor: "#83231F"
+          text: Util.processPrompt(modelData.content)
+        }
+      }
+    }
+  }
+
+  Rectangle {
+    color: "#CC2E2C27"
+    radius: 6
+    border.color: "#A6967A"
+    border.width: 1
+    width: 44
+    height: 112
+    /* 有点小问题，因为绝大部分都是手机玩家我还是无脑放左
+    x: {
+      const roomX = mapToItem(roomScene, root.x, root.y).x;
+      if (roomX < 48) return 175;
+      return -44;
+    }
+    */
+    x: -44
+    y: 128
+    visible: {
+      if (root.playerid === Self.id) return false;
+      if (root.handcards === 0) return false; // 优先绑定再判buddy，否则不会更新
+      if (!lcall("IsMyBuddy", Self.id, root.playerid) &&
+        !lcall("HasVisibleCard", Self.id, root.playerid)) return false;
+      return true;
+    }
+
+    Text {
+      x: 2; y: 2
+      width: 42
+      text: {
+        if (!parent.visible) return "";
+        const unused = root.handcards; // 绑定
+        const ids = lcall("GetPlayerHandcards", root.playerid);
+        const txt = [];
+        for (const cid of ids) {
+          if (txt.length >= 4) {
+            // txt.push("&nbsp;&nbsp;&nbsp;...");
+            txt.push("...");
+            break;
+          }
+          if (!lcall("CardVisibility", cid)) continue;
+          const data = lcall("GetCardData", cid);
+          let a = luatr(data.name);
+          /* if (a.length === 1) {
+            a = "&nbsp;&nbsp;" + a;
+          } else  */
+          if (a.length >= 2) {
+            a = a.slice(0, 2);
+          }
+          txt.push(a);
+        }
+
+        if (txt.length < 5) {
+          const unknownCards = ids.length - txt.length;
+          for (let i = 0; i < unknownCards; i++) {
+            if (txt.length >= 4) {
+              txt.push("...");
+              break;
+            } else {
+              txt.push("?");
+            }
+          }
+        }
+
+        return txt.join("<br>");
+      }
+      color: "#E4D5A0"
+      font.family: fontLibian.name
+      font.pixelSize: 18
+      textFormat: Text.RichText
+      horizontalAlignment: Text.AlignHCenter
+    }
+
+    TapHandler {
+      onTapped: {
+        const params = { name: "hand_card" };
+        let data = lcall("GetPlayerHandcards", root.playerid);
+        data = data.filter((e) => lcall("CardVisibility", e));
+
+        params.ids = data;
+
+        // Just for using room's right drawer
+        roomScene.startCheat("../RoomElement/ViewPile", params);
+      }
     }
   }
 

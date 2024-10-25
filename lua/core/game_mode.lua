@@ -1,5 +1,21 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+-- 呃 起码要做出以下几种吧：
+-- Switch：那个开关组件 [boolean model=nil]
+-- RadioButton：那个多选一，圆圈里面打点组件 [string model={ label, value }[]]
+-- ComboBox: 那个多选一，下拉一个菜单并选择一个的组件 [string model同上]
+-- CheckBox: 那个多选多打钩组件 [string[], model={ choices = {label,value}[], min, max}]
+-- Spinner: 选integer的组件吧，带加号减号那个 [integer model={min, max}]
+
+--- 定义一套配置项，供玩家在创建房间时配置。配置完成后返回一个表保存配置信息，
+--- 下面假设这个配置信息是表`cfg = {}`
+---@class GameModeConfigEntry
+---@field public name string @ 配置项的内部名，cfg的键
+---@field public label? string @ 界面上显示的提示信息
+---@field public delegate string @ 要显示哪种？
+---@field public model any @ 这种delegate需要的model：参见注释
+---@field public default? any @ 默认值 cfg的value
+
 --- GameMode用来描述一个游戏模式。
 ---
 --- 可以参考欢乐斗地主。
@@ -12,6 +28,7 @@
 ---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
 ---@field public whitelist? string[] @ 白名单
 ---@field public blacklist? string[] @ 黑名单
+---@field public config_template? GameModeConfigEntry[] 游戏模式的配置页面，如此一个数组
 local GameMode = class("GameMode")
 
 --- 构造函数，不可随意调用。
@@ -81,6 +98,16 @@ function GameMode:getAdjustedProperty (player)
     list.maxHp = player.maxHp + 1
   end
   return list
+end
+
+--- 向游戏模式中添加拓展包过滤。
+---@param whitelist string[] @ 白名单
+---@param blacklist string[] @ 黑名单
+function GameMode:addPackageFilter(whitelist, blacklist)
+  assert(type(whitelist) == "table")
+  assert(type(blacklist) == "table")
+  table.insertTable(self.whitelist, whitelist)
+  table.insertTable(self.blacklist, blacklist)
 end
 
 return GameMode

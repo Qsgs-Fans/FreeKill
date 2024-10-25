@@ -28,7 +28,7 @@ public:
   void speak(const QString &message);
 
   void doRequest(const QString &command,
-           const QString &jsonData, int timeout = -1);
+           const QString &jsonData, int timeout = -1, qint64 timestamp = -1);
   void abortRequest();
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &jsonData);

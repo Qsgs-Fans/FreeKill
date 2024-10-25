@@ -134,77 +134,6 @@ function arrangePhotos() {
   }
 }
 
-function doOkButton() {
-  if (roomScene.state === "playing" || roomScene.state === "responding") {
-    const reply = JSON.stringify({
-      card: dashboard.getSelectedCard(),
-      targets: selected_targets,
-      special_skill: roomScene.getCurrentCardUseMethod(),
-      interaction_data: roomScene.skillInteraction.item ?
-                        roomScene.skillInteraction.item.answer : undefined,
-    });
-    replyToServer(reply);
-    return;
-  }
-  if (roomScene.extra_data.luckCard) {
-    okButton.enabled = false;
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", true
-    ].join(","));
-
-    if (roomScene.extra_data.time === 1) {
-      roomScene.state = "notactive";
-    }
-
-    return;
-  }
-  replyToServer("1");
-}
-
-let _is_canceling = false;
-function doCancelButton() {
-  if (_is_canceling) return;
-  _is_canceling = true;
-
-  if (roomScene.state === "playing") {
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    dashboard.enableCards();
-    dashboard.enableSkills();
-
-    _is_canceling = false;
-    return;
-  } else if (roomScene.state === "responding") {
-    const p = dashboard.pending_skill;
-    dashboard.stopPending();
-    dashboard.deactivateSkillButton();
-    dashboard.unSelectAll();
-    if (roomScene.autoPending || !p) {
-      replyToServer("__cancel");
-    } else {
-      dashboard.enableCards(roomScene.responding_card);
-      dashboard.enableSkills(roomScene.responding_card);
-    }
-
-    _is_canceling = false;
-    return;
-  }
-
-  if (roomScene.extra_data.luckCard) {
-    ClientInstance.notifyServer("PushRequest", [
-      "luckcard", false
-    ].join(","));
-    roomScene.state = "notactive";
-
-    _is_canceling = false;
-    return;
-  }
-
-  replyToServer("__cancel");
-  _is_canceling = false;
-}
-
 function replyToServer(jsonData) {
   ClientInstance.replyToServer("", jsonData);
   if (!mainWindow.is_pending) {
@@ -270,14 +199,15 @@ function getAreaItem(area, id) {
   return null;
 }
 
-function moveCards(moves) {
+function moveCards(data) {
+  const moves = data.merged;
   for (let i = 0; i < moves.length; i++) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
     if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
       continue;
-    const items = from.remove(move.ids, move.fromSpecialName);
+    const items = from.remove(move.ids, move.fromSpecialName, data);
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
@@ -297,12 +227,26 @@ function moveCards(moves) {
   }
 }
 
+const suitInteger = {
+  spade: 1, heart: 3,
+  club: 2, diamond: 4,
+}
 
-
-function resortHandcards() {
+function sortHandcards(sortMethods) {
   if (!dashboard.handcardArea.cards.length) {
     return;
   }
+
+  const cardType = sortMethods[0];
+  const cardNum = sortMethods[1];
+  const cardSuit = sortMethods[2];
+
+  if (!cardType && !cardNum && !cardSuit) {
+    return;
+  }
+
+  let sortOutputs = [];
+  let sortedStatus = [];
 
   const subtypeString2Number = {
     ["none"]: Card.SubtypeNone,
@@ -318,51 +262,61 @@ function resortHandcards() {
     return c.cid;
   })
 
-  dashboard.handcardArea.cards.sort((prev, next) => {
-    if (prev.footnote === next.footnote) {
-      if (prev.type === next.type) {
-        const prevSubtypeNumber = subtypeString2Number[prev.subtype];
-        const nextSubtypeNumber = subtypeString2Number[next.subtype];
-        if (prevSubtypeNumber === nextSubtypeNumber) {
-          const splitedPrevName = prev.name.split('__');
-          const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
+  let sortedByType = true;
+  let handcards
+  if (cardType) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (prev.type === next.type) {
+          const prevSubtypeNumber = subtypeString2Number[prev.subtype];
+          const nextSubtypeNumber = subtypeString2Number[next.subtype];
+          if (prevSubtypeNumber === nextSubtypeNumber) {
+            const splitedPrevName = prev.name.split('__');
+            const prevTrueName = splitedPrevName[splitedPrevName.length - 1];
 
-          const splitedNextName = next.name.split('__');
-          const nextTrueName = splitedNextName[splitedNextName.length - 1];
-          if (prevTrueName === nextTrueName) {
-            return prev.cid - next.cid;
+            const splitedNextName = next.name.split('__');
+            const nextTrueName = splitedNextName[splitedNextName.length - 1];
+            if (prevTrueName === nextTrueName) {
+              return prev.cid - next.cid;
+            } else {
+              return prevTrueName > nextTrueName ? -1 : 1;
+            }
           } else {
-            return prevTrueName > nextTrueName ? -1 : 1;
+            return prevSubtypeNumber - nextSubtypeNumber;
           }
         } else {
-          return prevSubtypeNumber - nextSubtypeNumber;
+          return prev.type - next.type;
         }
       } else {
-        return prev.type - next.type;
+        return prev.footnote > next.footnote ? 1 : -1;
       }
-    } else {
-      return prev.footnote > next.footnote ? 1 : -1;
-    }
-  });
+    });
 
-  let i = 0;
-  let resort = true;
-  dashboard.handcardArea.cards.forEach(c => {
-    if (hand[i] !== c.cid) {
-      resort = false;
-      return;
-    }
-    i++;
-  })
+    // Check if the cards are sorted by type
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedByType = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByType);
+  }
 
-  if (resort) {
-    dashboard.handcardArea.cards.sort((prev, next) => {
+  let sortedByNum = true;
+  if (cardNum) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
-        if (prev.number === next.number) { // 按点数排
-          if (prev.suit === next.suit) {
+        if (prev.number === next.number) {
+          if (suitInteger[prev.suit] === suitInteger[next.suit]) {
             return prev.cid - next.cid;
           } else {
-            return prev.suit - next.suit;
+            return suitInteger[prev.suit] - suitInteger[next.suit];
           }
         } else {
           return prev.number - next.number;
@@ -371,8 +325,61 @@ function resortHandcards() {
         return prev.footnote > next.footnote ? 1 : -1;
       }
     });
+
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedByNum = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedByNum);
   }
 
+  let sortedBySuit = true;
+  if (cardSuit) {
+    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards.sort((prev, next) => {
+      if (prev.footnote === next.footnote) {
+        if (suitInteger[prev.suit] === suitInteger[next.suit]) {
+          if (prev.number === next.number) {
+            return prev.cid - next.cid;
+          } else {
+            return prev.number - next.number;
+          }
+        } else {
+          return suitInteger[prev.suit] - suitInteger[next.suit];
+        }
+      } else {
+        return prev.footnote > next.footnote ? 1 : -1;
+      }
+    });
+
+    let i = 0;
+    handcards.every(c => {
+      if (hand[i] !== c.cid) {
+        sortedBySuit = false;
+        return false;
+      }
+      i++;
+      return true;
+    })
+    sortOutputs.push(handcards);
+    sortedStatus.push(sortedBySuit);
+  }
+  let output
+  for (let i = 0; i < sortedStatus.length; i++) {
+    if (sortedStatus[i]) {
+      let j = i < sortedStatus.length - 1 ? i + 1 : 0;
+      output = sortOutputs[j];
+      break;
+    }
+  }
+  if (!output) output = sortOutputs[0];
+  dashboard.handcardArea.cards = output;
   dashboard.handcardArea.updateCardPosition(true);
 }
 
@@ -542,11 +549,15 @@ function processPrompt(prompt) {
   if (raw.match("%src"))
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, getPlayerStr(dest));
-  if (raw.match("%arg2"))
-    raw = raw.replace(/%arg2/g, luatr(data[4]));
-  if (raw.match("%arg"))
-    raw = raw.replace(/%arg/g, luatr(data[3]));
+    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+
+  if (data.length > 3) {
+    for (let i = data.length - 1; i > 3; i--) {
+      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
+    }
+
+    raw = raw.replace(new RegExp("%arg", "g"), luatr(data[3]));
+  }
   return raw;
 }
 
@@ -556,30 +567,6 @@ callbacks["MaxCard"] = (data) => {
   const photo = getPhoto(id);
   if (photo) {
     photo.maxCard = cardMax;
-  }
-}
-
-function changeSelf(id) {
-  lcall("ChangeSelf", id);
-
-  // move new selfPhoto to dashboard
-  let order = new Array(photoModel.count);
-  for (let i = 0; i < photoModel.count; i++) {
-    const item = photoModel.get(i);
-    order[item.seatNumber - 1] = item.id;
-    if (item.id === Self.id) {
-      dashboard.self = photos.itemAt(i);
-    }
-  }
-  callbacks["ArrangeSeats"](order);
-
-  // update dashboard
-  dashboard.update();
-
-  // handle pending messages
-  if (mainWindow.is_pending) {
-    const data = mainWindow.fetchMessage();
-    return mainWindow.handleMessage(data.command, data.jsonData);
   }
 }
 
@@ -609,217 +596,6 @@ callbacks["AddPlayer"] = (data) => {
 
       return;
     }
-  }
-}
-
-// card: int | { skill: string, subcards: int[] }
-function enableTargets(card) {
-  if (roomScene.respond_play) {
-    const candidate = (!isNaN(card) && card !== -1)
-                    || typeof(card) === "string";
-    if (candidate) {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        !lcall("CardProhibitedResponse", card);
-    } else {
-      okButton.enabled = false;
-    }
-    return;
-  }
-
-  let i = 0;
-  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  const all_photos = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos.push(photos.itemAt(i))
-  }
-  selected_targets = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos[i].selected = false;
-  }
-
-  if (candidate) {
-    const data = {
-      ok_enabled: false,
-      enabled_targets: []
-    }
-
-    all_photos.forEach(photo => {
-      photo.state = "candidate";
-      const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
-                        JSON.stringify(roomScene.extra_data));
-      photo.selectable = ret;
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        const exclusive = roomScene.extra_data.exclusive_targets;
-        if (exclusive instanceof Array) {
-          if (exclusive.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0 && included.indexOf(id) === -1)
-                                   photo.selectable = false;
-        }
-      }
-    })
-
-    okButton.enabled = lcall("CardFeasible", card, selected_targets);
-    if (okButton.enabled && roomScene.state === "responding") {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        (roomScene.autoPending || !lcall("CardProhibitedUse", card));
-    } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id,
-                               JSON.stringify(roomScene.extra_data));
-    }
-    if (okButton.enabled) {
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        if (must instanceof Array) {
-          if(must.length === 0) okButton.enabled = false;
-        }
-        if (included instanceof Array) {
-          if (included.length === 0) okButton.enabled = false;
-        }
-      }
-    }
-  } else {
-    all_photos.forEach(photo => {
-      photo.state = "normal";
-      photo.selected = false;
-    });
-
-    okButton.enabled = false;
-  }
-}
-
-function updateSelectedTargets(playerid, selected) {
-  let i = 0;
-  const card = dashboard.getSelectedCard();
-  const candidate = (!isNaN(card) && card !== -1) || typeof(card) === "string";
-  const all_photos = [];
-  for (i = 0; i < playerNum; i++) {
-    all_photos.push(photos.itemAt(i))
-  }
-
-  if (selected) {
-    selected_targets.push(playerid);
-  } else {
-    selected_targets.splice(selected_targets.indexOf(playerid), 1);
-  }
-
-  if (candidate) {
-    if (!selected) {
-      const remain_targets = [];
-      selected_targets.forEach(id => {
-        const photo = getPhoto(id);
-        const ret = lcall("CanUseCardToTarget", card, id, remain_targets,
-                           JSON.stringify(roomScene.extra_data));
-        let bool = ret;
-        if (roomScene.extra_data instanceof Object) {
-          const must = roomScene.extra_data.must_targets;
-          const included = roomScene.extra_data.include_targets;
-          const exclusive = roomScene.extra_data.exclusive_targets;
-          if (exclusive instanceof Array) {
-            if (exclusive.indexOf(id) === -1) bool = false;
-          }
-          if (must instanceof Array) {
-            if (must.filter((val) => {
-              return remain_targets.indexOf(val) === -1;
-            }).length !== 0 && must.indexOf(id) === -1) bool = false;
-          }
-          if (included instanceof Array) {
-            if (included.filter((val) => {
-              return remain_targets.indexOf(val) !== -1;
-            }).length === 0 && included.indexOf(id) === -1) bool = false;
-          }
-        }
-        if (bool) {
-          remain_targets.push(id);
-        } else {
-          photo.selected = false;
-        }
-      })
-      selected_targets = remain_targets;
-    }
-
-    roomScene.resetPrompt(); // update prompt due to selected_targets
-    const prompt = lcall("ActiveSkillPrompt",
-      dashboard.pending_skill !== "" ? dashboard.pending_skill: lcall("GetCardSkill", card),
-      dashboard.pending_skill !== "" ? dashboard.pendings : card,
-      selected_targets);
-    if (prompt !== "") {
-      roomScene.setPrompt(Util.processPrompt(prompt));
-    }
-
-    all_photos.forEach(photo => {
-      if (photo.selected) return;
-      const id = photo.playerid;
-      const ret = lcall("CanUseCardToTarget", card, id, selected_targets,
-                         JSON.stringify(roomScene.extra_data));
-      photo.selectable = ret;
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        const exclusive = roomScene.extra_data.exclusive_targets;
-        if (exclusive instanceof Array) {
-          if (exclusive.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0 && must.indexOf(id) === -1) photo.selectable = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0 && included.indexOf(id) === -1)
-                                   photo.selectable = false;
-        }
-      }
-    })
-
-    okButton.enabled = lcall("CardFeasible", card, selected_targets);
-    if (okButton.enabled && roomScene.state === "responding") {
-      okButton.enabled =
-        lcall("CardFitPattern", card, roomScene.responding_card) &&
-        (roomScene.autoPending || !lcall("CardProhibitedUse", card));
-    } else if (okButton.enabled && roomScene.state === "playing") {
-      okButton.enabled = lcall("CanUseCard", card, Self.id,
-                               JSON.stringify(roomScene.extra_data));
-    }
-    if (okButton.enabled) {
-      if (roomScene.extra_data instanceof Object) {
-        const must = roomScene.extra_data.must_targets;
-        const included = roomScene.extra_data.include_targets;
-        if (must instanceof Array) {
-          if (must.filter((val) => {
-            return selected_targets.indexOf(val) === -1;
-          }).length !== 0) okButton.enabled = false;
-        }
-        if (included instanceof Array) {
-          if (included.filter((val) => {
-            return selected_targets.indexOf(val) !== -1;
-          }).length === 0) okButton.enabled = false;
-        }
-      }
-    }
-  } else {
-    all_photos.forEach(photo => {
-      photo.state = "normal";
-      photo.selected = false;
-    });
-
-    okButton.enabled = false;
   }
 }
 
@@ -933,6 +709,18 @@ callbacks["UpdateCard"] = (j) => {
   card.setData(lcall("GetCardData", id));
 }
 
+callbacks["UpdateSkill"] = (j) => {
+  const all_skills = [roomScene.dashboard.skillButtons, roomScene.dashboard.notActiveButtons];
+  for (const skills of all_skills) {
+    for (let i = 0; i < skills.count; i++) {
+      const item = skills.itemAt(i);
+      const dat = lcall("GetSkillStatus", item.orig);
+      item.locked = dat.locked;
+      item.times = dat.times;
+    }
+  }
+}
+
 callbacks["StartGame"] = (jsonData) => {
   roomScene.isStarted = true;
 
@@ -1021,7 +809,7 @@ callbacks["AskForGeneral"] = (data) => {
   const convert = data[2];
   const heg = data[3];
   roomScene.setPrompt(luatr("#AskForGeneral"), true);
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   const box = roomScene.popupBox.item;
@@ -1042,14 +830,15 @@ callbacks["AskForSkillInvoke"] = (data) => {
   const prompt = data[1];
   roomScene.promptText = prompt ? processPrompt(prompt)
                               : luatr("#AskForSkillInvoke").arg(luatr(skill));
-  roomScene.state = "replying";
-  roomScene.okCancel.visible = true;
-  roomScene.okButton.enabled = true;
-  roomScene.cancelButton.enabled = true;
+  // roomScene.activate();
+  // roomScene.okCancel.visible = true;
+  // roomScene.okButton.enabled = true;
+  // roomScene.cancelButton.enabled = true;
+  roomScene.activate();
 }
 
 callbacks["AskForArrangeCards"] = (data) => {
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/ArrangeCardsBox.qml");
   const box = roomScene.popupBox.item;
@@ -1080,7 +869,7 @@ callbacks["AskForGuanxing"] = (data) => {
   const top_area_name = data.top_area_name;
   const bottom_area_name = data.bottom_area_name;
   const prompt = data.prompt;
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   const box = roomScene.popupBox.item;
@@ -1116,7 +905,7 @@ callbacks["AskForExchange"] = (data) => {
   const cards_name = [];
   const capacities = [];
   const limits = [];
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/GuanxingBox.qml");
   let for_i = 0;
@@ -1155,7 +944,7 @@ callbacks["AskForChoice"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.activate();
   let qmlSrc;
   if (!detailed) {
     qmlSrc = "../RoomElement/ChoiceBox.qml";
@@ -1189,7 +978,7 @@ callbacks["AskForChoices"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.activate();
   let qmlSrc;
   if (!detailed) {
     qmlSrc = "../RoomElement/CheckBox.qml";
@@ -1224,7 +1013,7 @@ callbacks["AskForCardChosen"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PlayerCardBox.qml");
 
@@ -1256,7 +1045,7 @@ callbacks["AskForCardsChosen"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
 
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PlayerCardBox.qml");
   const box = roomScene.popupBox.item;
@@ -1281,7 +1070,7 @@ callbacks["AskForCardsChosen"] = (data) => {
 callbacks["AskForPoxi"] = (dat) => {
   const { type, data, extra_data, cancelable } = dat;
 
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/PoxiBox.qml");
   const box = roomScene.popupBox.item;
@@ -1307,7 +1096,7 @@ callbacks["AskForPoxi"] = (dat) => {
 callbacks["AskForMoveCardInBoard"] = (data) => {
   const { cards, cardsPosition, generalNames, playerIds } = data;
 
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.sourceComponent =
     Qt.createComponent("../RoomElement/MoveCardInBoardBox.qml");
 
@@ -1341,13 +1130,11 @@ callbacks["MoveCards"] = (moves) => {
   moveCards(moves);
 }
 
-callbacks["PlayCard"] = (playerId) => {
-  // jsonData: int playerId
-  if (playerId === Self.id) {
-    roomScene.setPrompt(luatr("#PlayCard"), true);
-    roomScene.state = "playing";
-    okButton.enabled = false;
-  }
+// 切换状态 -> 向Lua询问UI情况
+// 所以Lua一开始就要设置好各种亮灭的值 而这个自然是通过update
+callbacks["PlayCard"] = () => {
+  roomScene.activate();
+  roomScene.okCancel.visible = true;
 }
 
 callbacks["LoseSkill"] = (data) => {
@@ -1390,18 +1177,8 @@ callbacks["AskForUseActiveSkill"] = (data) => {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
 
-  roomScene.respond_play = false;
-  roomScene.state = "responding";
-
-  if (lcall('GetSkillData', skill_name).isViewAsSkill) {
-    roomScene.responding_card = ".";
-  }
-
-  roomScene.autoPending = true;
-  roomScene.extra_data = extra_data;
-  // dashboard.startPending(skill_name);
-  roomScene.activateSkill(skill_name, true);
-  cancelButton.enabled = cancelable;
+  roomScene.activate();
+  roomScene.okCancel.visible = true;
 }
 
 callbacks["CancelRequest"] = () => {
@@ -1419,15 +1196,6 @@ callbacks["AskForUseCard"] = (data) => {
   const prompt = data[2];
   const extra_data = data[4];
   const disabledSkillNames = data[5];
-  if (extra_data != null) {
-    if (extra_data.effectTo !== Self.id &&
-        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
-      doCancelButton();
-      return;
-    } else {
-      roomScene.extra_data = extra_data;
-    }
-  }
 
   if (prompt === "") {
     roomScene.promptText = luatr("#AskForUseCard")
@@ -1435,12 +1203,22 @@ callbacks["AskForUseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = false;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.activate();
+  roomScene.okCancel.visible = true;
+  if (extra_data != null) {
+    if (extra_data.effectTo !== Self.id &&
+        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
+      lcall("UpdateRequestUI", "Button", "Cancel");
+      return;
+    } else {
+      roomScene.extra_data = extra_data;
+    }
+  }
+  // roomScene.responding_card = pattern;
+  // disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
+  // roomScene.state = "responding";
+  // okButton.enabled = false;
+  // cancelButton.enabled = true;
 }
 
 callbacks["AskForResponseCard"] = (data) => {
@@ -1456,12 +1234,8 @@ callbacks["AskForResponseCard"] = (data) => {
   } else {
     roomScene.setPrompt(processPrompt(prompt), true);
   }
-  roomScene.responding_card = pattern;
-  roomScene.respond_play = true;
-  disabledSkillNames && (dashboard.disabledSkillNames = disabledSkillNames);
-  roomScene.state = "responding";
-  okButton.enabled = false;
-  cancelButton.enabled = true;
+  roomScene.activate();
+  roomScene.okCancel.visible = true;
 }
 
 callbacks["WaitForNullification"] = () => {
@@ -1648,7 +1422,7 @@ callbacks["FillAG"] = (data) => {
 }
 
 callbacks["AskForAG"] = (j) => {
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.manualBox.item.interactive = true;
 }
 
@@ -1668,7 +1442,7 @@ callbacks["CloseAG"] = () => roomScene.manualBox.item.close();
 callbacks["CustomDialog"] = (data) => {
   const path = data.path;
   const dat = data.data;
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.source = AppPath + "/" + path;
   if (dat) {
     roomScene.popupBox.item.loadData(dat);
@@ -1679,7 +1453,7 @@ callbacks["MiniGame"] = (data) => {
   const game = data.type;
   const dat = data.data;
   const gdata = lcall("GetMiniGame", game, Self.id, JSON.stringify(dat));
-  roomScene.state = "replying";
+  roomScene.activate();
   roomScene.popupBox.source = AppPath + "/" + gdata.qml_path + ".qml";
   if (dat) {
     roomScene.popupBox.item.loadData(dat);
@@ -1727,40 +1501,33 @@ callbacks["UpdateGameData"] = (data) => {
 }
 
 // 神貂蝉
-
-callbacks["StartChangeSelf"] = (j) => {
-  const id = parseInt(j);
-  ClientInstance.notifyServer("PushRequest", "changeself," + j);
-}
-
 callbacks["ChangeSelf"] = (j) => {
-  const data = parseInt(j);
-  if (Self.id === data) {
-    const msg = mainWindow.fetchMessage();
-    if (!msg) return;
-    mainWindow.handleMessage(msg.command, msg.jsonData);
-    return;
+  // move new selfPhoto to dashboard
+  let order = new Array(photoModel.count);
+  for (let i = 0; i < photoModel.count; i++) {
+    const item = photoModel.get(i);
+    order[item.seatNumber - 1] = item.id;
+    if (item.id === Self.id) {
+      dashboard.self = photos.itemAt(i);
+    }
   }
-  changeSelf(data);
+  callbacks["ArrangeSeats"](order);
+
+  // update dashboard
+  dashboard.update();
 }
 
-callbacks["AskForLuckCard"] = (j) => {
-  // jsonData: int time
-  if (config.observing || config.replaying) return;
-  const time = parseInt(j);
-  roomScene.setPrompt(luatr("#AskForLuckCard").arg(time), true);
-  roomScene.state = "replying";
-  roomScene.extra_data = {
-    luckCard: true,
-    time: time,
-  };
-  roomScene.okCancel.visible = true;
-  roomScene.okButton.enabled = true;
-  roomScene.cancelButton.enabled = true;
+callbacks["UpdateRequestUI"] = (uiUpdate) => {
+  if (uiUpdate["_prompt"])
+    roomScene.promptText = processPrompt(uiUpdate["_prompt"]);
+
+  if (uiUpdate._type == "Room") {
+    roomScene.applyChange(uiUpdate);
+  }
 }
 
-callbacks["CancelRequest"] = (jsonData) => {
-  ClientInstance.replyToServer("", "__cancel")
+callbacks["ReplyToServer"] = (data) => {
+  replyToServer(data);
 }
 
 callbacks["ReplayerDurationSet"] = (j) => {

@@ -96,11 +96,9 @@ function GameLogic:assignRoles()
     local p = room.players[i]
     p.role = roles[i]
     if p.role == "lord" then
-      p.role_shown = true
-      room:broadcastProperty(p, "role")
-    else
-      room:notifyProperty(p, p, "role")
+      room:setPlayerProperty(p, "role_shown", true)
     end
+    room:broadcastProperty(p, "role")
   end
 end
 
@@ -212,22 +210,9 @@ end
 
 function GameLogic:prepareDrawPile()
   local room = self.room
-  local allCardIds = Fk:getAllCardIds()
-
-  for i = #allCardIds, 1, -1 do
-    if Fk:getCardById(allCardIds[i]).is_derived then
-      local id = allCardIds[i]
-      table.removeOne(allCardIds, id)
-      table.insert(room.void, id)
-      room:setCardArea(id, Card.Void, nil)
-    end
-  end
-
-  table.shuffle(allCardIds)
-  room.draw_pile = allCardIds
-  for _, id in ipairs(room.draw_pile) do
-    self.room:setCardArea(id, Card.DrawPile, nil)
-  end
+  local seed = math.random(2 << 32 - 1)
+  room:prepareDrawPile(seed)
+  room:doBroadcastNotify("PrepareDrawPile", seed)
 end
 
 function GameLogic:attachSkillToPlayers()
@@ -506,13 +491,14 @@ end
 -- 作用是启动新事件 都是结构差不多的函数
 ---@param event GameEvent
 ---@return boolean, GameEvent?
-function GameLogic:resumeEvent(event, ...)
+function GameLogic:resumeEvent(event)
   local ret, evt
 
   local co = event._co
+  local resume_reason = "unknown"
 
   while true do
-    local err, yield_result, extra_yield_result = coroutine.resume(co, ...)
+    local err, yield_result, extra_yield_result = coroutine.resume(co, resume_reason)
 
     if err == false then
       -- handle error, then break
@@ -525,7 +511,8 @@ function GameLogic:resumeEvent(event, ...)
 
     if yield_result == "__handleRequest" then
       -- yield to requestLoop
-      coroutine.yield(yield_result, extra_yield_result)
+      -- handleRequest类的最后被ResumeRoom唤醒，接收原因
+      resume_reason = coroutine.yield(yield_result, extra_yield_result)
 
     elseif type(yield_result) == "table" and yield_result.class
       and yield_result:isInstanceOf(GameEvent) then
@@ -774,7 +761,7 @@ function GameLogic:damageByCardEffect(is_exact)
   local c_event = d_event:findParent(GameEvent.CardEffect, false, 2)
   if c_event == nil then return false end
   return damage.card == c_event.data[1].card and
-  (not is_exact or d_event.data[1].from.id == c_event.data[1].from)
+  (not is_exact or (damage.from or {}).id == c_event.data[1].from)
 end
 
 function GameLogic:dumpEventStack(detailed)

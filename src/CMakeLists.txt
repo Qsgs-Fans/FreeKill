@@ -1,7 +1,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-set(freekill_SRCS
+file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
+if (DEFINED FK_SERVER_ONLY)
+  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-nogui.i)
+else ()
+  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
+endif ()
+
+add_custom_command(
+  OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
+  DEPENDS ${SWIG_FILES}
+  COMMENT "Generating freekill-wrap.cxx"
+  COMMAND swig -c++ -lua -Wall -o
+    ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
+    ${SWIG_SOURCE}
+)
+
+set(freekill_EXESRCS
   "main.cpp"
+)
+
+set(freekill_SRCS
+  # "main.cpp"
+  "freekill.cpp"
   "core/player.cpp"
   "core/util.cpp"
   "core/packman.cpp"
@@ -20,6 +41,8 @@ set(freekill_SRCS
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"
 )
+set_source_files_properties(
+  "swig/freekill-wrap.cxx" PROPERTIES GENERATED TRUE)
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
@@ -50,7 +73,7 @@ if (WIN32)
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/win/libgit2.dll)
   set(app_icon_resource_windows "${PROJECT_SOURCE_DIR}/image/icon.rc")
-  list(APPEND freekill_SRCS ${app_icon_resource_windows})
+  list(APPEND freekill_EXESRCS ${app_icon_resource_windows})
 elseif (ANDROID)
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
@@ -63,6 +86,30 @@ elseif (ANDROID)
     QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${SSH_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
+elseif (APPLE)
+  set(LUA_LIB ${LUA_LIBRARIES})
+  set(SQLITE3_LIB sqlite3)
+  set(CRYPTO_LIB OpenSSL::Crypto)
+  set(READLINE_LIB readline)
+
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/opt/homebrew/Cellar/libgit2")
+  find_package(PkgConfig)
+  if (PkgConfig_FOUND)
+    pkg_check_modules(LIBGIT2 libgit2)
+    if (LIBGIT2_FOUND)
+      message(STATUS "Found libgit2: ${LIBGIT2_LIBRARIES}")
+    else ()
+      message(WARNING "libgit2 not found, try to find libgit2 by CMake")
+      find_package(LibGit2)
+    endif ()
+  else ()
+    message(WARNING "PkgConfig not found, try to find libgit2 by CMake")
+    find_package(LibGit2)
+  endif ()
+  set(GIT_LIB ${LIBGIT2_LIBRARIES})
+  target_link_directories(FreeKill PRIVATE
+    ${LIBGIT2_LIBRARY_DIRS}
+  )
 else ()
   set(LUA_LIB lua5.4)
   set(SQLITE3_LIB sqlite3)
@@ -71,9 +118,9 @@ else ()
   set(GIT_LIB git2)
 endif ()
 
-target_sources(FreeKill PRIVATE ${freekill_SRCS})
-target_precompile_headers(FreeKill PRIVATE "pch.h")
-target_link_libraries(FreeKill PRIVATE
+add_library(libFreeKill STATIC ${freekill_SRCS})
+target_precompile_headers(libFreeKill PRIVATE "pch.h")
+target_link_libraries(libFreeKill PRIVATE
   ${LUA_LIB}
   ${SQLITE3_LIB}
   ${CRYPTO_LIB}
@@ -83,6 +130,10 @@ target_link_libraries(FreeKill PRIVATE
   ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
+)
+target_sources(FreeKill PRIVATE ${freekill_EXESRCS})
+target_link_libraries(FreeKill PRIVATE
+  libFreeKill
 )
 
 install(TARGETS FreeKill DESTINATION bin)

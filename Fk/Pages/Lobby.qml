@@ -35,6 +35,7 @@ Item {
         text: roomName
         // color: outdated ? "gray" : "black"
         font.pixelSize: 16
+        font.strikeout: outdated
         // elide: Label.ElideRight
         anchors.top: parent.top
         anchors.left: parent.left
@@ -44,6 +45,7 @@ Item {
       Text {
         id: roomIdText
         text: luatr(gameMode) + ' #' + roomId
+        font.strikeout: outdated
         anchors.top: roomNameText.bottom
         anchors.left: roomNameText.left
       }
@@ -119,7 +121,7 @@ Item {
         text: "在未来的版本中这一块区域将增加更多实用的功能，<br>"+
           "例如直接查看房间的各种配置信息<br>"+
           "以及更多与禁将有关的实用功能！"+
-          "<font color='gray'>注：绿色按钮为试做型UI 后面优化</font>"
+          "<font color='gray'>注：灰色按钮为试做型UI 后面优化</font>"
         font.pixelSize: 18
       }
 
@@ -193,6 +195,13 @@ Item {
         onClicked: {
           opTimer.start();
           ClientInstance.notifyServer("RefreshRoomList", "");
+        }
+      }
+      Button {
+        text: luatr("Filter")
+        onClicked: {
+          lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/FilterRoom.qml"); //roomFilterDialog;
+          lobby_drawer.open();
         }
       }
       Button {
@@ -313,7 +322,7 @@ Item {
       }
     }
     Button {
-      text: luatr("Scenarios Overview")
+      text: luatr("Modes Overview")
       onClicked: {
         mainStack.push(mainWindow.modesOverviewPage);
       }
@@ -381,7 +390,6 @@ Item {
     config.replaying = false;
     if (playerNum < capacity) {
       config.observing = false;
-      lcall("SetObserving", false);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
@@ -389,7 +397,6 @@ Item {
       );
     } else {
       config.observing = true;
-      lcall("SetObserving", true);
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",

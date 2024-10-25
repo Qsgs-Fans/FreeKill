@@ -212,5 +212,17 @@ Flickable {
       skillDesc.append("--------------------");
       skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
     });
+
+    const judge = leval(
+      `(function()
+        local p = ClientInstance:getPlayerById(${id})
+        return p.player_cards[Player.Judge]
+      end)()`
+    );
+    judge.forEach(cid => {
+      const t = lcall("GetCardData", cid);
+      skillDesc.append("--------------------");
+      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
+    });
   }
 }

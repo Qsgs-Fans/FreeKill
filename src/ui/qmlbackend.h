@@ -60,8 +60,6 @@ public:
   Q_INVOKABLE QString getAESKey() const;
   Q_INVOKABLE void installAESKey();
 
-  Q_INVOKABLE void createModBackend();
-
   Q_INVOKABLE void detectServer();
   Q_INVOKABLE void getServerInfo(const QString &addr, ushort port = 9527u);
 
@@ -79,6 +77,8 @@ public:
   Replayer *getReplayer() const;
   void setReplayer(Replayer *rep);
   Q_INVOKABLE void controlReplayer(QString type);
+
+  Q_INVOKABLE QJsonObject getRequestData() const;
 
 signals:
   void notifyUI(const QString &command, const QVariant &data);

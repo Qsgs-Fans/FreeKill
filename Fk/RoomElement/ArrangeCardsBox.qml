@@ -82,8 +82,7 @@ GraphicsBox {
     }
 
     Row {
-      anchors.bottom: parent.bottom
-      anchors.horizontalCenter: parent.horizontalCenter
+      Layout.alignment: Qt.AlignHCenter
       spacing: 32
 
       MetroButton {

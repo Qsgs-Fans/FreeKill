@@ -14,7 +14,6 @@
 ---@field public skipped_phases Phase[]
 ---@field public phase_state table[]
 ---@field public phase_index integer
----@field public role_shown boolean
 ---@field private _fake_skills Skill[]
 ---@field private _manually_fake_skills Skill[]
 ---@field public prelighted_skills Skill[]
@@ -32,11 +31,12 @@ function ServerPlayer:initialize(_self)
   self.room = nil
 
   -- Below are for doBroadcastRequest
+  -- 但是几乎全部被船新request杀了
   self.request_data = ""
-  self.client_reply = ""
+  --self.client_reply = ""
   self.default_reply = ""
-  self.reply_ready = false
-  self.reply_cancel = false
+  --self.reply_ready = false
+  --self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
   self.phase_state = {}
@@ -74,92 +74,14 @@ function ServerPlayer:doNotify(command, jsonData)
   end
 end
 
---- Send a request to client, and allow client to reply within *timeout* seconds.
----
---- *timeout* must not be negative. If nil, room.timeout is used.
----@param command string
----@param jsonData string
----@param timeout? integer
-function ServerPlayer:doRequest(command, jsonData, timeout)
-  self.client_reply = ""
-  self.reply_ready = false
-  self.reply_cancel = false
-
-  if self.serverplayer:busy() then
-    self.room.request_queue[self.serverplayer] = self.room.request_queue[self.serverplayer] or {}
-    table.insert(self.room.request_queue[self.serverplayer], { self.id, command, jsonData, timeout })
-    return
-  end
-
-  self.room.request_self[self.serverplayer:getId()] = self.id
-
-  if not table.contains(self._observers, self.serverplayer) then
-    self.serverplayer:doNotify("StartChangeSelf", tostring(self.id))
-  end
-
-  timeout = timeout or self.room.timeout
-  self.serverplayer:setBusy(true)
-  self.ai_data = {
-    command = command,
-    jsonData = jsonData,
-  }
-  self.serverplayer:doRequest(command, jsonData, timeout)
-end
-
-local function _waitForReply(player, timeout)
-  local result
-  local start = os.getms()
-  local state = player.serverplayer:getState()
-  player.request_timeout = timeout
-  player.request_start = start
-  if state ~= fk.Player_Online then
-    if player.room.hasSurrendered then
-      return "__cancel"
-    end
-
-    if state ~= fk.Player_Robot then
-      player.room:checkNoHuman()
-      player.room:delay(500)
-      return "__cancel"
-    end
-    -- Let AI make reply. First handle request
-    -- coroutine.yield("__handleRequest", 0)
-
-    player.room:checkNoHuman()
-    player.ai:readRequestData()
-    local reply = player.ai:makeReply()
-    if reply == "" then reply = "__cancel" end
-    return reply
-  end
-  while true do
-    player.serverplayer:setThinking(true)
-    result = player.serverplayer:waitForReply(0)
-    if result ~= "__notready" then
-      player._timewaste_count = 0
-      player.serverplayer:setThinking(false)
-      return result
-    end
-    local rest = timeout * 1000 - (os.getms() - start) / 1000
-    if timeout and rest <= 0 then
-      if timeout >= 15 then
-        player._timewaste_count = player._timewaste_count + 1
-      end
-      player.serverplayer:setThinking(false)
-
-      if player._timewaste_count >= 3 then
-        player._timewaste_count = 0
-        player.serverplayer:emitKick()
-      end
-
-      return ""
-    end
-
-    if player.room.hasSurrendered then
-      player.serverplayer:setThinking(false)
-      return ""
-    end
-
-    coroutine.yield("__handleRequest", rest)
+-- FIXME: 基本都改成新写法后删了这个兼容玩意
+function ServerPlayer:__index(k)
+  local request = self.room.last_request
+  if not request then return nil end
+  if k == "client_reply" then
+    return request.result[self.id]
+  elseif k == "reply_ready" then
+    return request.result[self.id] and request.result[self.id] ~= ""
   end
 end
 
@@ -173,128 +95,27 @@ function ServerPlayer:chat(msg)
   })
 end
 
---- Wait for at most *timeout* seconds for reply from client.
----
---- If *timeout* is negative or **nil**, the function will wait forever until get reply.
----@param timeout integer @ seconds to wait
----@return string @ JSON data
-function ServerPlayer:waitForReply(timeout)
-  local result = _waitForReply(self, timeout)
-  local sid = self.serverplayer:getId()
-  local id = self.id
-  if self.room.request_self[sid] ~= id then
-    result = ""
-  end
-
-  self.request_data = ""
-  self.client_reply = result
-  if result == "__cancel" then
-    result = ""
-    self.reply_cancel = true
-    self.serverplayer:setBusy(false)
-    self.serverplayer:setThinking(false)
-  end
-  if result ~= "" then
-    self.reply_ready = true
-    self.serverplayer:setBusy(false)
-    self.serverplayer:setThinking(false)
-  end
-
-  -- FIXME: 一控多求无懈
-  local queue = self.room.request_queue[self.serverplayer]
-  if queue and #queue > 0 and not self.serverplayer:busy() then
-    local i, c, j, t = table.unpack(table.remove(queue, 1))
-    self.room:getPlayerById(i):doRequest(c, j, t)
-  end
-
-  return result
-end
-
-local function assign(t1, t2, k)
-  t1[k] = t2[k]
-end
-
--- 获取摘要信息。供重连/旁观使用
--- 根据参数，返回一个大表保存自己的信息，客户端自行分析
----@param player ServerPlayer
----@param observe? boolean
-function ServerPlayer:getSummary(player, observe)
-  local room = self.room
-  if not room.game_started then
-    local ret = { p = {} }
-    -- If game does not starts, that mean we are entering room that
-    -- all players are choosing their generals.
-    -- Note that when we are in this function, the main thread must be
-    -- calling delay() or waiting for reply.
-    if self.role_shown then
-      -- room:notifyProperty(player, self, "role")
-      ret.p.general = self.general
-      ret.p.deputyGeneral = self.deputyGeneral
-      ret.p.role = self.role
-    end
-    return ret
-  end
-
-  local properties = {}
-
-  assign(properties, self, "general")
-  assign(properties, self, "deputyGeneral")
-  assign(properties, self, "maxHp")
-  assign(properties, self, "hp")
-  assign(properties, self, "shield")
-  assign(properties, self, "gender")
-  assign(properties, self, "kingdom")
-
-  if self.dead then
-    assign(properties, self, "dead")
-    assign(properties, self, self.rest > 0 and "rest" or "role")
-  else
-    assign(properties, self, "seat")
-    assign(properties, self, "phase")
-  end
-
-  if not self.faceup then
-    assign(properties, self, "faceup")
-  end
-
-  if self.chained then
-    assign(properties, self, "chained")
-  end
-
-  if self.role_shown then
-    assign(properties, self, "role")
-  end
-
-  if #self.sealedSlots > 0 then
-    assign(properties, self, "sealedSlots")
-  end
-
+function ServerPlayer:toJsonObject()
+  local o = Player.toJsonObject(self)
   local sp = self._splayer
-
-  return {
-    -- data for Setup/AddPlayer
-    d = {
-      self.id,
-      sp:getScreenName(),
-      sp:getAvatar(),
-      false,
-      sp:getTotalGameTime(),
-    },
-    p = properties,
-    ch = self.cardUsedHistory,
-    sh = self.skillUsedHistory,
-    m = self.mark,
-    s = table.map(self.player_skills, Util.NameMapper),
-    c = self.player_cards,
-    sc = self.special_cards,
+  o.setup_data = {
+    self.id,
+    sp:getScreenName(),
+    sp:getAvatar(),
+    false,
+    sp:getTotalGameTime(),
   }
+  return o
 end
+
+-- 似乎没有必要
+-- function ServerPlayer:loadJsonObject() end
 
 function ServerPlayer:reconnect()
   local room = self.room
   self.serverplayer:setState(fk.Player_Online)
 
-  local summary = room:getSummary(self, false)
+  local summary = room:toJsonObject(self)
   self:doNotify("Reconnect", json.encode(summary))
   room:notifyProperty(self, self, "role")
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
@@ -331,6 +152,7 @@ function ServerPlayer:turnOver()
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 
+---@param cards integer|integer[]|Card|Card[]
 function ServerPlayer:showCards(cards)
   cards = Card:getIdList(cards)
   for _, id in ipairs(cards) do
@@ -355,12 +177,7 @@ function ServerPlayer:showCards(cards)
   room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end
 
-local phase_name_table = {
-  [Player.Judge] = "phase_judge",
-  [Player.Draw] = "phase_draw",
-  [Player.Play] = "phase_play",
-  [Player.Discard] = "phase_discard",
-}
+
 
 ---@param from_phase Phase
 ---@param to_phase Phase
@@ -421,13 +238,13 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
 
   local cancel_skip = true
   if phase ~= Player.NotActive and (skip) then
-    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, phase)
   end
   if (not skip) or (cancel_skip) then
     room:sendLog{
       type = "#GainAnExtraPhase",
       from = self.id,
-      arg = phase_name_table[phase],
+      arg = Util.PhaseStrMapper(phase),
     }
 
     GameEvent.Phase:create(self, self.phase):exec()
@@ -441,8 +258,9 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
     room:sendLog{
       type = "#PhaseSkipped",
       from = self.id,
-      arg = phase_name_table[phase],
+      arg = Util.PhaseStrMapper(phase),
     }
+    logic:trigger(fk.EventPhaseSkipped, self, phase)
   end
 
   self.phase = current
@@ -479,7 +297,7 @@ function ServerPlayer:play(phase_table)
   end
 
   for i = 1, #phases do
-    if self.dead then
+    if self.dead or room:getTag("endTurn") or phases[i] == nil then
       self:changePhase(self.phase, Player.NotActive)
       break
     end
@@ -505,7 +323,7 @@ function ServerPlayer:play(phase_table)
 
     local cancel_skip = true
     if phases[i] ~= Player.NotActive and (skip) then
-      cancel_skip = logic:trigger(fk.EventPhaseSkipping, self)
+      cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, self.phase)
     end
 
     if (not skip) or (cancel_skip) then
@@ -514,8 +332,9 @@ function ServerPlayer:play(phase_table)
       room:sendLog{
         type = "#PhaseSkipped",
         from = self.id,
-        arg = phase_name_table[self.phase],
+        arg = Util.PhaseStrMapper(self.phase),
       }
+      logic:trigger(fk.EventPhaseSkipped, self, self.phase)
     end
   end
 end
@@ -540,8 +359,15 @@ end
 
 --- 当进行到出牌阶段空闲点时，结束出牌阶段。
 function ServerPlayer:endPlayPhase()
-  self._play_phase_end = true
+  if self.phase == Player.Play then
+    self._phase_end = true
+  end
   -- TODO: send log
+end
+
+--- 结束当前阶段。
+function ServerPlayer:endCurrentPhase()
+  self._phase_end = true
 end
 
 --- 获得一个额外回合
@@ -1014,7 +840,7 @@ function ServerPlayer:addBuddy(other)
     other = self.room:getPlayerById(other)
   end
   Player.addBuddy(self, other)
-  self:doNotify("AddBuddy", json.encode{ other.id, other.player_cards[Player.Hand] })
+  self.room:doBroadcastNotify("AddBuddy", json.encode{ self.id, other.id })
 end
 
 function ServerPlayer:removeBuddy(other)
@@ -1022,7 +848,7 @@ function ServerPlayer:removeBuddy(other)
     other = self.room:getPlayerById(other)
   end
   Player.removeBuddy(self, other)
-  self:doNotify("RmBuddy", tostring(other.id))
+  self.room:doBroadcastNotify("RmBuddy", json.encode{ self.id, other.id })
 end
 
 return ServerPlayer

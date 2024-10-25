@@ -42,8 +42,6 @@ Item {
 
   property var selected_targets: []
   property string responding_card
-  property bool respond_play: false
-  property bool autoPending: false
   property var extra_data: ({})
   property var skippedUseEventId: []
 
@@ -100,11 +98,12 @@ Item {
     Menu {
       id: menuContainer
       y: menuButton.height - 12
-      width: 100
+      width: parent.width * 1.8
 
       MenuItem {
         id: quitButton
         text: luatr("Quit")
+        icon.source: AppPath + "/image/modmaker/back"
         onClicked: {
           if (config.replaying) {
             Backend.controlReplayer("shutdown");
@@ -118,9 +117,56 @@ Item {
       }
 
       MenuItem {
+        id: volumeButton
+        text: luatr("Audio Settings")
+        icon.source: AppPath + "/image/button/tileicon/configure"
+        onClicked: {
+          volumeDialog.open();
+        }
+      }
+
+      Menu {
+        title: luatr("Overview")
+        icon.source: AppPath + "/image/button/tileicon/rule_summary"
+        icon.width: 24
+        icon.height: 24
+        icon.color: palette.windowText
+        MenuItem {
+          id: generalButton
+          text: luatr("Generals Overview")
+          icon.source: AppPath + "/image/button/tileicon/general_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Generals";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: cardslButton
+          text: luatr("Cards Overview")
+          icon.source: AppPath + "/image/button/tileicon/card_overview"
+          onClicked: {
+            overviewLoader.overviewType = "Cards";
+            overviewDialog.open();
+            overviewLoader.item.loadPackages();
+          }
+        }
+        MenuItem {
+          id: modesButton
+          text: luatr("Modes Overview")
+          icon.source: AppPath + "/image/misc/paper"
+          onClicked: {
+            overviewLoader.overviewType = "Modes";
+            overviewDialog.open();
+          }
+        }
+      }
+
+      MenuItem {
         id: surrenderButton
-        enabled: !config.observing && !config.replaying
+        enabled: !config.observing && !config.replaying && isStarted
         text: luatr("Surrender")
+        icon.source: AppPath + "/image/misc/surrender"
         onClicked: {
           const photo = getPhoto(Self.id);
           if (isStarted && !(photo.dead && photo.rest <= 0)) {
@@ -130,19 +176,11 @@ Item {
                 luatr('Surrender is disabled in this mode');
             } else {
               surrenderDialog.informativeText = surrenderCheck
-                .map(str => `${luatr(str.text)}（${str.passed ? '√' : '×'}）`)
+                .map(str => `${luatr(str.text)}（${str.passed ? '✓' : '✗'}）`)
                 .join('<br>');
             }
             surrenderDialog.open();
           }
-        }
-      }
-
-      MenuItem {
-        id: volumeButton
-        text: luatr("Audio Settings")
-        onClicked: {
-          volumeDialog.open();
         }
       }
     }
@@ -268,10 +306,8 @@ Item {
   }
 
   states: [
-    State { name: "notactive" }, // Normal status
-    State { name: "playing" }, // Playing cards in playing phase
-    State { name: "responding" }, // all requests need to operate dashboard
-    State { name: "replying" } // requests only operate a popup window
+    State { name: "notactive" },
+    State { name: "active" }
   ]
   state: "notactive"
   transitions: [
@@ -281,77 +317,50 @@ Item {
         script: {
           skillInteraction.sourceComponent = undefined;
           promptText = "";
-          currentPrompt = "";
-          progress.visible = false;
           okCancel.visible = false;
+          okButton.enabled = false;
+          cancelButton.enabled = false;
           endPhaseButton.visible = false;
-          respond_play = false;
+          progress.visible = false;
           extra_data = {};
-          mainWindow.pending_message = [];
-          mainWindow.is_pending = false;
 
-          if (dashboard.pending_skill !== "")
-            dashboard.stopPending();
-          dashboard.updateHandcards();
           dashboard.disableAllCards();
           dashboard.disableSkills();
-          dashboard.retractAllPiles();
-          selected_targets = [];
-          autoPending = false;
+          dashboard.pending_skill = "";
+          // dashboard.retractAllPiles();
+
+          for (let i = 0; i < photoModel.count; i++) {
+            const item = photos.itemAt(i);
+            item.state = "normal";
+            item.selected = false;
+            // item.selectable = false;
+          }
 
           if (popupBox.item != null) {
             popupBox.item.finished();
           }
+
+          lcall("FinishRequestUI");
         }
       }
     },
 
     Transition {
-      from: "*"; to: "playing"
+      from: "notactive"; to: "active"
       ScriptAction {
         script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards();
-          dashboard.enableSkills();
-          progress.visible = true;
-          okCancel.visible = true;
-          autoPending = false;
-          endPhaseButton.visible = true;
-          respond_play = false;
-        }
-      }
-    },
+          const dat = Backend.getRequestData();
+          const total = dat["timeout"] * 1000;
+          const now = Date.now(); // ms
+          const elapsed = now - (dat["timestamp"] ?? now);
 
-    Transition {
-      from: "*"; to: "responding"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.enableCards(responding_card);
-          dashboard.enableSkills(responding_card, respond_play);
-          autoPending = false;
-          progress.visible = true;
-          okCancel.visible = true;
-        }
-      }
-    },
+          if (total <= elapsed) {
+            roomScene.state = "notactive";
+          }
 
-    Transition {
-      from: "*"; to: "replying"
-      ScriptAction {
-        script: {
-          skillInteraction.sourceComponent = undefined;
-          dashboard.updateHandcards();
-          dashboard.disableAllCards();
-          dashboard.disableSkills();
+          progressAnim.from = (1 - elapsed / total) * 100.0;
+          progressAnim.duration = total - elapsed;
           progress.visible = true;
-          respond_play = false;
-          autoPending = false;
-          roomScene.okCancel.visible = false;
-          roomScene.okButton.enabled = false;
-          roomScene.cancelButton.enabled = false;
         }
       }
     }
@@ -405,7 +414,7 @@ Item {
         sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
-          Logic.updateSelectedTargets(playerid, selected);
+          if ( state === "candidate" ) lcall("UpdateRequestUI", "Photo", playerid, "click", { selected } );
         }
 
         Component.onCompleted: {
@@ -445,22 +454,27 @@ Item {
         text: luatr("Choose one handcard")
         textFont.pixelSize: 28
         visible: {
+          if (roomScene.state === "notactive") return false;
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
-          if (roomScene.state === "notactive"
-                  || roomScene.state === "replying") {
-            return false;
+          const cards = dashboard.handcardArea.cards;
+          for (const card of cards) {
+            if (card.selectable) return true;
           }
-          return true;
+          return false;
         }
         onClicked: roomScene.startCheat("../RoomElement/ChooseHandcard");
       }
       MetroButton {
+        id: revertSelectionBtn
         text: luatr("Revert Selection")
         textFont.pixelSize: 28
         enabled: dashboard.pending_skill !== ""
-        onClicked: dashboard.revertSelection();
+        onClicked: //dashboard.revertSelection();
+        {
+          lcall("RevertSelection");
+        }
       }
       // MetroButton {
       //   text: luatr("Trust")
@@ -468,7 +482,68 @@ Item {
       MetroButton {
         text: luatr("Sort Cards")
         textFont.pixelSize: 28
-        onClicked: Logic.resortHandcards();
+        onClicked: {
+          if (lcall("CanSortHandcards", Self.id)) {
+            let sortMethods = [];
+            for (let index = 0; index < sortMenuRepeater.count; index++) {
+              var tCheckBox = sortMenuRepeater.itemAt(index)
+              sortMethods.push(tCheckBox.checked)
+            }
+            Logic.sortHandcards(sortMethods);
+          }
+        }
+
+        onRightClicked: {
+          if (sortMenu.visible) {
+            sortMenu.close();
+          } else {
+            sortMenu.open();
+          }
+        }
+
+        Menu {
+          id: sortMenu
+          x: parent.width
+          y: -25
+          width: parent.width * 2
+          background: Rectangle {
+            color: "black"
+            border.width: 3
+            border.color: "white"
+            opacity: 0.8
+          }
+
+          Repeater {
+            id: sortMenuRepeater
+            model: ["Sort by Type", "Sort by Number", "Sort by Suit"]
+
+            CheckBox {
+              id: control
+              text: "<font color='white'>" + luatr(modelData) + "</font>"
+              checked: modelData === "Sort by Type"
+              font.pixelSize: 20
+
+              indicator: Rectangle {
+                implicitWidth: 26
+                implicitHeight: 26
+                x: control.leftPadding
+                y: control.height / 2 - height / 2
+                radius: 3
+                border.color: "white"
+
+                Rectangle {
+                  width: 14
+                  height: 14
+                  x: 6
+                  y: 6
+                  radius: 2
+                  color: control.down ? "#17a81a" : "#21be2b"
+                  visible: control.checked
+                }
+              }
+            }
+          }
+        }
       }
       MetroButton {
         text: luatr("Chat")
@@ -483,29 +558,6 @@ Item {
     width: roomScene.width - dashboardBtn.width
     anchors.top: roomArea.bottom
     anchors.left: dashboardBtn.right
-
-    onCardSelected: function(card) {
-      Logic.enableTargets(card);
-      if (typeof card === "number" && card !== -1
-        && roomScene.state === "playing"
-        && lcall("GetPlayerHandcards", Self.id).includes(card)) {
-
-        const skills = lcall("GetCardSpecialSkills", card);
-        if (lcall("CanUseCard", card, Self.id,
-                  JSON.stringify(roomScene.extra_data))) {
-          skills.unshift("_normal_use");
-        }
-        specialCardSkills.model = skills;
-        const skillName = lcall("GetCardSkill", card);
-        const prompt = lcall("ActiveSkillPrompt", skillName, card,
-                             selected_targets);
-        if (prompt !== "") {
-          roomScene.setPrompt(Util.processPrompt(prompt));
-        }
-      } else {
-        specialCardSkills.model = [];
-      }
-    }
   }
 
   Rectangle {
@@ -625,6 +677,7 @@ Item {
       }
 
       NumberAnimation on value {
+        id: progressAnim
         running: progress.visible
         from: 100.0
         to: 0.0
@@ -644,7 +697,7 @@ Item {
       color: "#88EEEEEE"
       radius: 8
       visible: {
-        if (roomScene.state !== "playing") {
+        if (roomScene.state !== "active") {
           return false;
         }
         if (!specialCardSkills) {
@@ -668,25 +721,7 @@ Item {
             text: luatr(modelData)
             checked: index === 0
             onCheckedChanged: {
-              roomScene.resetPrompt();
-              const card = dashboard.selected_card;
-              let prompt = ""
-              if (modelData === "_normal_use") {
-                Logic.enableTargets(card);
-                const skillName = lcall("GetCardSkill", card);
-                prompt = lcall("ActiveSkillPrompt", skillName, card,
-                               selected_targets);
-              } else {
-                Logic.enableTargets(JSON.stringify({
-                  skill: modelData,
-                  subcards: [card],
-                }));
-                prompt = lcall("ActiveSkillPrompt", modelData, card,
-                               selected_targets);
-              }
-              if (prompt !== "") {
-                roomScene.setPrompt(Util.processPrompt(prompt));
-              }
+              lcall("UpdateRequestUI", "SpecialSkills", "1", "click", modelData);
             }
           }
         }
@@ -695,7 +730,6 @@ Item {
 
     Loader {
       id: skillInteraction
-      visible: dashboard.pending_skill !== ""
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 8
       anchors.right: okCancel.left
@@ -716,20 +750,20 @@ Item {
                  && !skippedUseEventId.find(id => id === extra_data.useEventId)
         onClicked: {
           skippedUseEventId.push(extra_data.useEventId);
-          Logic.doCancelButton();
+          lcall("UpdateRequestUI", "Button", "Cancel");
         }
       }
 
       Button {
         id: okButton
         text: luatr("OK")
-        onClicked: Logic.doOkButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "OK");
       }
 
       Button {
         id: cancelButton
         text: luatr("Cancel")
-        onClicked: Logic.doCancelButton();
+        onClicked: lcall("UpdateRequestUI", "Button", "Cancel");
       }
     }
 
@@ -741,7 +775,7 @@ Item {
       anchors.right: parent.right
       anchors.rightMargin: 30
       visible: false;
-      onClicked: Logic.replyToServer("");
+      onClicked: lcall("UpdateRequestUI", "Button", "End");
     }
   }
 
@@ -796,53 +830,8 @@ Item {
     z: 999
   }
 
-  function activateSkill(skill_name, pressed) {
-    if (pressed) {
-      const data = lcall("GetInteractionOfSkill", skill_name);
-      if (data) {
-        lcall("SetInteractionDataOfSkill", skill_name, "null");
-        switch (data.type) {
-        case "combo":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.default_choice = data["default"];
-          skillInteraction.item.choices = data.choices;
-          skillInteraction.item.detailed = data.detailed;
-          skillInteraction.item.all_choices = data.all_choices;
-          skillInteraction.item.clicked();
-          break;
-        case "spin":
-          skillInteraction.sourceComponent =
-            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.from = data.from;
-          skillInteraction.item.to = data.to;
-          skillInteraction.item.clicked();
-          break;
-        case "custom":
-          skillInteraction.sourceComponent =
-            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
-          skillInteraction.item.skill = skill_name;
-          skillInteraction.item.extra_data = data;
-          skillInteraction.item.clicked();
-          break;
-        default:
-          skillInteraction.sourceComponent = undefined;
-          break;
-        }
-      } else {
-        skillInteraction.sourceComponent = undefined;
-      }
-
-      dashboard.startPending(skill_name);
-      cancelButton.enabled = true;
-    } else {
-      skillInteraction.sourceComponent = undefined;
-      if (roomScene.popupBox.item)
-        roomScene.popupBox.item.close();
-      Logic.doCancelButton();
-    }
+  function activateSkill(skill_name, selected) {
+    lcall("UpdateRequestUI", "SkillButton", skill_name, "click", { selected } );
   }
 
   Drawer {
@@ -994,6 +983,28 @@ Item {
     }
   }
 
+  Popup {
+    id: overviewDialog
+    width: realMainWin.width * 0.75
+    height: realMainWin.height * 0.75
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+    Loader {
+      id: overviewLoader
+      property string overviewType: "Generals"
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/Pages/" + overviewType + "Overview.qml"
+    }
+  }
+
   GlowText {
     anchors.centerIn: dashboard
     visible: Logic.getPhoto(Self.id).rest > 0 && !config.observing
@@ -1059,14 +1070,14 @@ Item {
   Shortcut {
     sequence: "Return"
     enabled: okButton.enabled
-    onActivated: Logic.doOkButton();
+    onActivated: lcall("UpdateRequestUI", "Button", "OK");
   }
 
   Shortcut {
     sequence: "Space"
     enabled: cancelButton.enabled || endPhaseButton.visible;
     onActivated: if (cancelButton.enabled) {
-      Logic.doCancelButton();
+      lcall("UpdateRequestUI", "Button", "Cancel");
     } else {
       Logic.replyToServer("");
     }
@@ -1075,21 +1086,6 @@ Item {
   Shortcut {
     sequence: "Escape"
     onActivated: menuContainer.open();
-  }
-
-  function getCurrentCardUseMethod() {
-    if (specialCardSkills.count === 1
-            && specialCardSkills.model[0] !== "_normal_use") {
-      return specialCardSkills.model[0];
-    }
-
-    for (let i = 1; i < specialCardSkills.count; i++) {
-      const item = specialCardSkills.itemAt(i);
-      if (item.checked) {
-        const ret = item.orig_text;
-        return ret;
-      }
-    }
   }
 
   function addToChat(pid, raw, msg) {
@@ -1127,6 +1123,8 @@ Item {
     const general = luatr(data.general);
 
     if (msg.startsWith("!")) {
+      if (config.hidePresents)
+        return true;
       const splited = msg.split(":");
       const type = splited[0].slice(1);
       switch (type) {
@@ -1300,6 +1298,89 @@ Item {
 
   function getPhoto(id) {
     return Logic.getPhoto(id);
+  }
+
+  function activate() {
+    if (state === "active") state = "notactive";
+    state = "active";
+  }
+
+  function applyChange(uiUpdate) {
+    uiUpdate["_delete"]?.forEach(data => {
+      if (data.type == "Interaction") {
+        skillInteraction.sourceComponent = undefined;
+        if (roomScene.popupBox.item)
+          roomScene.popupBox.item.close();
+      }
+    });
+    uiUpdate["_new"]?.forEach(dat => {
+      if (dat.type == "Interaction") {
+        const data = dat.data.spec;
+        const skill_name = dat.data.skill_name;
+        switch (data.type) {
+        case "combo":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillCombo.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.default_choice = data["default"];
+          skillInteraction.item.choices = data.choices;
+          skillInteraction.item.detailed = data.detailed;
+          skillInteraction.item.all_choices = data.all_choices;
+          skillInteraction.item.clicked();
+          break;
+        case "spin":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("../SkillInteraction/SkillSpin.qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.from = data.from;
+          skillInteraction.item.to = data.to;
+          skillInteraction.item?.clicked();
+          break;
+        case "custom":
+          skillInteraction.sourceComponent =
+            Qt.createComponent(AppPath + "/" + data.qml_path + ".qml");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
+          skillInteraction.item?.clicked();
+          break;
+        default:
+          skillInteraction.sourceComponent = undefined;
+          break;
+        }
+      }
+    });
+
+    const sskilldata = uiUpdate["SpecialSkills"]?.[0]
+    if (sskilldata) {
+      specialCardSkills.model = sskilldata?.skills ?? [];
+    }
+
+    dashboard.applyChange(uiUpdate);
+    const pdatas = uiUpdate["Photo"];
+    pdatas?.forEach(pdata => {
+      const photo = Logic.getPhoto(pdata.id);
+      photo.state = pdata.state;
+      photo.selectable = pdata.enabled;
+      photo.selected = pdata.selected;
+    })
+    const buttons = uiUpdate["Button"];
+    if (buttons) {
+      okCancel.visible = true;
+    }
+    buttons?.forEach(bdata => {
+      switch (bdata.id) {
+        case "OK":
+          okButton.enabled = bdata.enabled;
+          break;
+        case "Cancel":
+          cancelButton.enabled = bdata.enabled;
+          break;
+        case "End":
+          endPhaseButton.enabled = bdata.enabled;
+          endPhaseButton.visible = bdata.enabled;
+          break;
+      }
+    })
   }
 
   Component.onCompleted: {

@@ -34,11 +34,15 @@ function processPrompt(prompt) {
   if (raw.match("%src"))
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, getPlayerStr(dest));
-  if (raw.match("%arg2"))
-    raw = raw.replace(/%arg2/g, luatr(data[4]));
-  if (raw.match("%arg"))
-    raw = raw.replace(/%arg/g, luatr(data[3]));
+    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+
+  if (data.length > 3) {
+    for (let i = 4; i < data.length; i++) {
+      raw = raw.replace(new RegExp("%arg" + (i - 2), "g"), luatr(data[i]));
+    }
+
+    raw = raw.replace(new RegExp("%arg", "g"), luatr(data[3]));
+  }
   return raw;
 }
 

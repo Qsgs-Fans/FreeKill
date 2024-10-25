@@ -106,13 +106,12 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     nextRoomId++;
     room->setAbandoned(false);
     thread->addRoom(room);
-    rooms.insert(room->getId(), room);
   } else {
     room = new Room(thread);
     connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-    rooms.insert(room->getId(), room);
   }
 
+  rooms.insert(room->getId(), room);
   room->setName(name);
   room->setCapacity(capacity);
   room->setTimeout(timeout);
@@ -367,7 +366,7 @@ void Server::onRoomAbandoned() {
   // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
   // room->deleteLater();
   idle_rooms.push(room);
-  room->getThread()->wakeUp(room->getId());
+  room->getThread()->wakeUp(room->getId(), "abandon");
   room->getThread()->removeRoom(room);
 }
 

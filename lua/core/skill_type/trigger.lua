@@ -72,9 +72,17 @@ function TriggerSkill:doCost(event, target, player, data)
   self.cost_data = cost_data_bak
 
   if ret then
+    local skill_data = {cost_data = cost_data_bak, tos = {}, cards = {}}
+    if type(cost_data_bak) == "table" then
+      if type(cost_data_bak.tos) == "table" and #cost_data_bak.tos > 0 and type(cost_data_bak.tos[1]) == "number" and
+      room:getPlayerById(cost_data_bak.tos[1]) ~= nil then
+        skill_data.tos = cost_data_bak.tos
+      end
+      if type(cost_data_bak.cards) == "table" then skill_data.cards = cost_data_bak.cards end
+    end
     return room:useSkill(player, self, function()
       return self:use(event, target, player, data)
-    end)
+    end, skill_data)
   end
 end
 
