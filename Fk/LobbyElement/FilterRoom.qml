@@ -186,7 +186,7 @@ Flickable {
       }
 
       Button {
-        text: luatr("Filter")
+        text: luatr("OK")
         // width: 200
         // enabled: !opTimer.running
         onClicked: {

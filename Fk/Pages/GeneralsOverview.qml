@@ -519,10 +519,12 @@ Item {
       }
 
       data.skill.forEach(t => {
-        generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
-          "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
+        if (!t.name.startsWith('#')) {
+          generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
+            "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
 
-        addSkillAudio(t.name);
+          addSkillAudio(t.name);
+        }
       });
       findDeathAudio(general);
 
