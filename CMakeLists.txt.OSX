@@ -1,0 +1,72 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# ------------------------------------------------------------
+#  此为新月杀的项目组织文件，采用CMake+QT
+# 2022-01-24 新建文件夹 2023-02-21 发布v0.0.1版本
+# ------------------------------------------------------------
+
+cmake_minimum_required(VERSION 3.22)
+
+project(FreeKill VERSION 0.4.22)
+add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
+set(LIBGIT2_DIR "/opt/homebrew/Cellar/libgit2/1.8.3")
+set(LUA_DIR "/opt/homebrew/Cellar/lua/5.4.7")
+
+find_package(Qt6 REQUIRED COMPONENTS
+  Network
+)
+
+if (NOT DEFINED FK_SERVER_ONLY)
+  find_package(Qt6 REQUIRED COMPONENTS
+    Gui
+    Qml
+    Widgets
+    Multimedia
+    QuickControls2
+    LinguistTools
+  )
+else ()
+  add_definitions(-DFK_SERVER_ONLY)
+endif()
+
+find_package(OpenSSL)
+find_package(Lua)
+find_package(SQLite3)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(REQUIRED_QT_VERSION "6.4")
+
+include_directories("${LUA_DIR}/include/lua")
+include_directories(include)
+include_directories("${LIBGIT2_DIR}/include")
+include_directories(src)
+
+link_directories("${LIBGIT2_DIR}/lib")
+link_directories("${LUA_DIR}/lib")
+
+qt_add_executable(FreeKill)
+target_link_libraries(FreeKill PRIVATE git2)
+
+if (NOT DEFINED FK_SERVER_ONLY)
+  qt_add_translations(FreeKill
+    TS_FILES lang/zh_CN.ts
+    QM_FILES_OUTPUT_VARIABLE zh_CN.qm
+
+    TS_FILES lang/en_US.ts
+    QM_FILES_OUTPUT_VARIABLE en_US.qm
+  )
+endif()
+
+add_custom_command(
+  TARGET FreeKill
+  POST_BUILD
+  COMMENT "Generating version file fk_ver"
+  COMMAND echo ${CMAKE_PROJECT_VERSION} > ${PROJECT_SOURCE_DIR}/fk_ver
+  COMMAND ${PROJECT_SOURCE_DIR}/genfkver.sh
+)
+
+add_subdirectory(src)
+
+enable_testing()
+add_subdirectory(test)
