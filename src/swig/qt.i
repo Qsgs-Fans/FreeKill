@@ -63,7 +63,7 @@ public:
     QVariant ret;
     if (high < 0) {
       if (low < 1) {
-        ret.setValue($self->bounded(0, 100001) / 100000);
+        ret.setValue(qreal($self->bounded(0, 100000001)) / 100000000);
       } else {
         ret.setValue($self->bounded(1, low + 1));
       }

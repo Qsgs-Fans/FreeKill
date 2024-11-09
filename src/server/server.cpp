@@ -212,6 +212,7 @@ void Server::setupPlayer(ServerPlayer *player, bool all_info) {
   arr << player->getId();
   arr << player->getScreenName();
   arr << player->getAvatar();
+  arr << QDateTime::currentMSecsSinceEpoch();
   player->doNotify("Setup", JsonArray2Bytes(arr));
 
   if (all_info) {

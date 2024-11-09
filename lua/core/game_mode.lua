@@ -1,6 +1,22 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
--- 呃 起码要做出以下几种吧：
+--- GameMode用来描述一个游戏模式。
+---
+--- 可以参考欢乐斗地主。
+---
+---@class GameMode: Object
+---@field public name string @ 游戏模式名
+---@field public minPlayer integer @ 最小玩家数
+---@field public maxPlayer integer @ 最大玩家数
+---@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
+---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
+---@field public whitelist? string[] | fun(self: GameMode, pkg: Package): bool @ 白名单
+---@field public blacklist? string[] | fun(self: GameMode, pkg: Package): bool @ 黑名单
+---@field public config_template? GameModeConfigEntry[] 游戏模式的配置页面，如此一个数组
+---@field public main_mode? string @ 主模式名（用于判断此模式是否为某模式的衍生）
+local GameMode = class("GameMode")
+
+-- 呃 起码要做出以下几种吧：(class必须放顶层否则文档那个东西不识别 辣鸡
 -- Switch：那个开关组件 [boolean model=nil]
 -- RadioButton：那个多选一，圆圈里面打点组件 [string model={ label, value }[]]
 -- ComboBox: 那个多选一，下拉一个菜单并选择一个的组件 [string model同上]
@@ -15,21 +31,6 @@
 ---@field public delegate string @ 要显示哪种？
 ---@field public model any @ 这种delegate需要的model：参见注释
 ---@field public default? any @ 默认值 cfg的value
-
---- GameMode用来描述一个游戏模式。
----
---- 可以参考欢乐斗地主。
----
----@class GameMode: Object
----@field public name string @ 游戏模式名
----@field public minPlayer integer @ 最小玩家数
----@field public maxPlayer integer @ 最大玩家数
----@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
----@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
----@field public whitelist? string[] @ 白名单
----@field public blacklist? string[] @ 黑名单
----@field public config_template? GameModeConfigEntry[] 游戏模式的配置页面，如此一个数组
-local GameMode = class("GameMode")
 
 --- 构造函数，不可随意调用。
 ---@param name string @ 游戏模式名
@@ -100,14 +101,17 @@ function GameMode:getAdjustedProperty (player)
   return list
 end
 
---- 向游戏模式中添加拓展包过滤。
----@param whitelist string[] @ 白名单
----@param blacklist string[] @ 黑名单
-function GameMode:addPackageFilter(whitelist, blacklist)
-  assert(type(whitelist) == "table")
-  assert(type(blacklist) == "table")
-  table.insertTable(self.whitelist, whitelist)
-  table.insertTable(self.blacklist, blacklist)
+
+-- 执行死亡奖惩
+---@param victim ServerPlayer @ 死亡角色
+---@param killer? ServerPlayer @ 击杀者
+function GameMode:deathRewardAndPunish (victim, killer)
+  if not killer or killer.dead then return end
+  if victim.role == "rebel" then
+    killer:drawCards(3, "kill")
+  elseif victim.role == "loyalist" and killer.role == "lord" then
+    killer:throwAllCards("he")
+  end
 end
 
 return GameMode

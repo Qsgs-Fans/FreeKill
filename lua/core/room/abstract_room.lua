@@ -89,4 +89,11 @@ function AbstractRoom:loadJsonObject(o)
   end
 end
 
+-- 判断当前模式是否为某类模式
+---@param mode string @ 需要判定的模式类型
+---@return boolean
+function AbstractRoom:isGameMode(mode)
+  return table.contains(Fk.main_mode_list[mode] or {}, self.settings.gameMode)
+end
+
 return AbstractRoom

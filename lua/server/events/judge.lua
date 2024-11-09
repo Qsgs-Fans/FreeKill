@@ -100,29 +100,17 @@ end
 ---@param exchange? boolean @ 是否要替换原有判定牌（即类似鬼道那样）
 function JudgeEventWrappers:retrial(card, player, judge, skillName, exchange)
   if not card then return end
-  local triggerResponded = self.owner_map[card:getEffectiveId()] == player
-  local isHandcard = (triggerResponded and self:getCardArea(card:getEffectiveId()) == Card.PlayerHand)
 
-  if triggerResponded then
-    local resp = {} ---@type CardResponseEvent
-    resp.from = player.id
-    resp.card = card
-    resp.skipDrop = true
-    self:responseCard(resp)
-  else
-    local move1 = {} ---@type CardsMoveInfo
-    move1.ids = { card:getEffectiveId() }
-    move1.from = player.id
-    move1.toArea = Card.Processing
-    move1.moveReason = fk.ReasonJustMove
-    move1.skillName = skillName
-    self:moveCards(move1)
-  end
+  local move1 = {} ---@type CardsMoveInfo
+  move1.ids = { card:getEffectiveId() }
+  move1.from = self.owner_map[card:getEffectiveId()]
+  move1.toArea = Card.Processing
+  move1.moveReason = fk.ReasonJustMove
+  move1.skillName = skillName
+  self:moveCards(move1)
 
   local oldJudge = judge.card
   judge.card = card
-  local rebyre = judge.retrial_by_response
-  judge.retrial_by_response = player
 
   self:sendLog{
     type = "#ChangedJudge",
@@ -134,16 +122,18 @@ function JudgeEventWrappers:retrial(card, player, judge, skillName, exchange)
 
   Fk:filterCard(judge.card.id, judge.who, judge)
 
-  exchange = exchange and not player.dead
+  if self:getCardArea(oldJudge) == Card.Processing then
+    exchange = exchange and not player.dead
 
-  local move2 = {} ---@type CardsMoveInfo
-  move2.ids = { oldJudge:getEffectiveId() }
-  move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
-  move2.moveReason = exchange and fk.ReasonJustMove or fk.ReasonJudge
-  move2.to = exchange and player.id or nil
-  move2.skillName = skillName
+    local move2 = {} ---@type CardsMoveInfo
+    move2.ids = { oldJudge:getEffectiveId() }
+    move2.toArea = exchange and Card.PlayerHand or Card.DiscardPile
+    move2.moveReason = exchange and fk.ReasonJustMove or fk.ReasonJudge
+    move2.to = exchange and player.id or nil
+    move2.skillName = skillName
+    self:moveCards(move2)
+  end
 
-  self:moveCards(move2)
 end
 
 return { Judge, JudgeEventWrappers }

@@ -17,6 +17,19 @@ local ReqActiveSkill = require 'core.request_type.active_skill'
 ---@field public original_prompt string 最开始的提示信息；这种涉及技能按钮的需要这样一下
 local ReqResponseCard = ReqActiveSkill:subclass("ReqResponseCard")
 
+function ReqResponseCard:initialize(player, data)
+  ReqActiveSkill.initialize(self, player)
+
+  if data then
+    -- self.skill_name = data[1] (skill_name是给选中的视为技用的)
+    self.pattern    = data[2]
+    self.prompt     = data[3]
+    self.cancelable = data[4]
+    self.extra_data = data[5]
+    self.disabledSkillNames = data[6]
+  end
+end
+
 function ReqResponseCard:setup()
   if not self.original_prompt then
     self.original_prompt = self.prompt or ""
@@ -25,6 +38,7 @@ function ReqResponseCard:setup()
   ReqActiveSkill.setup(self)
   self.selected_card = nil
   self:updateSkillButtons()
+  self:updatePrompt()
 end
 
 -- FIXME: 关于&牌堆的可使用打出瞎jb写了点 来个懂哥优化一下
@@ -41,8 +55,12 @@ end
 function ReqResponseCard:skillButtonValidity(name)
   local player = self.player
   local skill = Fk.skills[name]
-  return skill:isInstanceOf(ViewAsSkill) and skill:enabledAtResponse(player, true)
-    and skill.pattern and Exppattern:Parse(self.pattern):matchExp(skill.pattern)
+  return
+    skill:isInstanceOf(ViewAsSkill) and
+    skill:enabledAtResponse(player, true) and
+    skill.pattern and
+    Exppattern:Parse(self.pattern):matchExp(skill.pattern) and
+    not table.contains(self.disabledSkillNames or {}, name)
 end
 
 function ReqResponseCard:cardValidity(cid)
@@ -86,7 +104,11 @@ function ReqResponseCard:doOKButton()
     card = self.selected_card:getEffectiveId(),
     targets = self.selected_targets,
   }
-  ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+  if ClientInstance then
+    ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+  else
+    return reply
+  end
 end
 
 function ReqResponseCard:doCancelButton()
@@ -109,9 +131,10 @@ function ReqResponseCard:selectSkill(skill, data)
     end
     self.skill_name = skill
     self.selected_card = nil
-    self:setSkillPrompt(skill)
 
     ReqActiveSkill.setup(self)
+
+    -- self:setSkillPrompt(Fk.skills[skill])
   else
     self.skill_name = nil
     self.prompt = self.original_prompt

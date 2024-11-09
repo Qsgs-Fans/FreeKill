@@ -289,16 +289,21 @@ QVariant QmlBackend::callLuaFunction(const QString &func_name,
   if (!ClientInstance) return QVariantMap();
 
   lua_State *L = ClientInstance->getLuaState();
+
+  lua_getglobal(L, "debug");
+  lua_getfield(L, -1, "traceback");
+  lua_replace(L, -2);
+
   lua_getglobal(L, func_name.toLatin1().data());
 
   foreach (QVariant v, params) {
     pushLuaValue(L, v);
   }
 
-  int err = lua_pcall(L, params.length(), 1, 0);
+  int err = lua_pcall(L, params.length(), 1, -params.length() - 2);
   if (err) {
     qCritical() << lua_tostring(L, -1);
-    lua_pop(L, 1);
+    lua_pop(L, 2);
     return QVariant();
   }
   auto result = readLuaValue(L);
@@ -649,7 +654,10 @@ QJsonObject QmlBackend::getRequestData() const {
   auto router = ClientInstance->getRouter();
   obj["id"] = router->getRequestId();
   obj["timeout"] = router->getTimeout();
-  obj["timestamp"] = router->getRequestTimestamp();
+  auto timestamp = router->getRequestTimestamp();
+  // 因为timestamp是服务器发来的时间，如果自己比服务器的时钟快的话，那么就得加上这个差值才行
+  timestamp += ClientInstance->getServerLag();
+  obj["timestamp"] = timestamp;
   return obj;
 }
 

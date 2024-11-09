@@ -4,11 +4,27 @@ local ReqResponseCard = require 'core.request_type.response_card'
 ---@class ReqUseCard: ReqResponseCard
 local ReqUseCard = ReqResponseCard:subclass("ReqUseCard")
 
+function ReqUseCard:updatePrompt()
+  if self.skill_name then
+    return ReqActiveSkill.updatePrompt(self)
+  end
+  local card = self.selected_card
+  if card and card.skill then
+    self:setSkillPrompt(card.skill, self.selected_card.id)
+  else
+    self:setPrompt(self.original_prompt or "")
+  end
+end
+
 function ReqUseCard:skillButtonValidity(name)
   local player = self.player
   local skill = Fk.skills[name]
-  return skill:isInstanceOf(ViewAsSkill) and skill:enabledAtResponse(player, false)
-    and skill.pattern and Exppattern:Parse(self.pattern):matchExp(skill.pattern)
+  return
+    skill:isInstanceOf(ViewAsSkill) and
+    skill:enabledAtResponse(player, false) and
+    skill.pattern and
+    Exppattern:Parse(self.pattern):matchExp(skill.pattern) and
+    not table.contains(self.disabledSkillNames or {}, name)
 end
 
 function ReqUseCard:cardValidity(cid)
@@ -45,7 +61,7 @@ function ReqUseCard:targetValidity(pid)
       -- 若include中全都没选，且target不在include中则不可选择
       if table.every(data.include_targets, function(id)
         return not table.contains(self.selected_targets, id)
-      end) and not table.contains(data.must_targets, pid) then
+      end) and not table.contains(data.include_targets, pid) then
         ret = false
       end
     end
@@ -108,7 +124,7 @@ function ReqUseCard:selectTarget(playerid, data)
       self.selected_targets = {}
       for _, pid in ipairs(previous_targets) do
         local ret
-        ret = not player:isProhibited(pid, card) and skill and
+        ret = not player:isProhibited(self.room:getPlayerById(pid), card) and skill and
           skill:targetFilter(pid, self.selected_targets,
         { card.id }, card, data.extra_data)
         -- 从头开始写目标

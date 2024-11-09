@@ -85,21 +85,4 @@ function Package:addGameMode(game_mode)
   table.insert(self.game_modes, game_mode)
 end
 
---- 向拓展包中设置游戏模式过滤。
----@param whitelist string[] @ 白名单
----@param blacklist string[] @ 黑名单
-function Package:setGameModeFilter(whitelist, blacklist)
-  self.game_modes_whitelist = whitelist
-  self.game_modes_blacklist = blacklist
-end
-
---- 向拓展包中添加游戏模式过滤。
----@param whitelist string[] @ 白名单
----@param blacklist string[] @ 黑名单
-function Package:addGameModeFilter(whitelist, blacklist)
-  assert(type(whitelist) == "table")
-  assert(type(blacklist) == "table")
-  table.insertTable(self.game_modes_whitelist, whitelist)
-  table.insertTable(self.game_modes_blacklist, blacklist)
-end
 return Package

@@ -30,13 +30,6 @@ function ServerPlayer:initialize(_self)
   self.id = _self:getId()
   self.room = nil
 
-  -- Below are for doBroadcastRequest
-  -- 但是几乎全部被船新request杀了
-  self.request_data = ""
-  --self.client_reply = ""
-  self.default_reply = ""
-  --self.reply_ready = false
-  --self.reply_cancel = false
   self.phases = {}
   self.skipped_phases = {}
   self.phase_state = {}
@@ -47,7 +40,7 @@ function ServerPlayer:initialize(_self)
   self._prelighted_skills = {}
 
   self._timewaste_count = 0
-  self.ai = RandomAI:new(self)
+  self.ai = SmartAI:new(self)
 end
 
 ---@param command string
@@ -284,6 +277,9 @@ end
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then
+    if not table.contains(phase_table, Player.RoundStart) then
+      table.insert(phase_table, 1, Player.RoundStart)
+    end
     if not table.contains(phase_table, Player.NotActive) then
       table.insert(phase_table, Player.NotActive)
     end
@@ -384,17 +380,19 @@ function ServerPlayer:endCurrentPhase()
 end
 
 --- 获得一个额外回合
----@param delay? boolean
----@param skillName? string
-function ServerPlayer:gainAnExtraTurn(delay, skillName)
+---@param delay? boolean @ 是否延迟到当前回合结束再开启额外回合，默认是
+---@param skillName? string @ 额外回合原因
+---@param turnData? TurnStruct @ 额外回合的信息
+function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
   local room = self.room
   delay = (delay == nil) and true or delay
-  skillName = (skillName == nil) and room.logic:getCurrentSkillName() or skillName
+  skillName = skillName or room.logic:getCurrentSkillName() or "game_rule"
+  turnData = turnData or {}
+  turnData.reason = skillName
   if delay then
-    local logic = room.logic
-    local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
+    local turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName) end)
+      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName, turnData) end)
       return
     end
   end
@@ -407,13 +405,15 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName)
   local current = room.current
   room.current = self
 
-  self.tag["_extra_turn_count"] = self.tag["_extra_turn_count"] or {}
-  local ex_tag = self.tag["_extra_turn_count"]
-  table.insert(ex_tag, skillName)
+  room:addTableMark(self, "_extra_turn_count", skillName)
 
-  GameEvent.Turn:create(self):exec()
+  GameEvent.Turn:create(self, turnData):exec()
 
-  table.remove(ex_tag)
+  local mark = self:getTableMark("_extra_turn_count")
+  if #mark > 0 then
+    table.remove(mark)
+    room:setPlayerMark(self, "_extra_turn_count", mark)
+  end
 
   room.current = current
 end
@@ -421,17 +421,14 @@ end
 --- 当前是否处于额外的回合。
 --- @return boolean
 function ServerPlayer:insideExtraTurn()
-  return self.tag["_extra_turn_count"] and #self.tag["_extra_turn_count"] > 0
+  return self:getCurrentExtraTurnReason() ~= "game_rule"
 end
 
---- 当前额外回合的技能原因。
+--- 当前额外回合的技能原因。非额外回合则为game_rule
 ---@return string
 function ServerPlayer:getCurrentExtraTurnReason()
-  local ex_tag = self.tag["_extra_turn_count"]
-  if (not ex_tag) or #ex_tag == 0 then
-    return "game_rule"
-  end
-  return ex_tag[#ex_tag]
+  local mark = self:getTableMark("_extra_turn_count")
+  return mark[#mark] or "game_rule"
 end
 
 --- 角色摸牌。
@@ -461,6 +458,7 @@ function ServerPlayer:bury()
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
+  self:onAllSkillLose()
   self:reset()
 end
 
@@ -480,6 +478,12 @@ function ServerPlayer:throwAllCards(flag)
   end
 
   self.room:throwCard(cardIds, "", self)
+end
+
+function ServerPlayer:onAllSkillLose()
+  for _, skill in ipairs(self:getAllSkills()) do
+    skill:onLose(self, true)
+  end
 end
 
 function ServerPlayer:throwAllMarks()

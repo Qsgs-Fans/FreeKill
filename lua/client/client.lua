@@ -213,18 +213,21 @@ fk.client_callback["SetCardFootnote"] = function(data)
   ClientInstance:setCardNote(data[1], data[2]);
 end
 
-local function setup(id, name, avatar)
+local function setup(id, name, avatar, msec)
   local self = fk.Self
   self:setId(id)
   self:setScreenName(name)
   self:setAvatar(avatar)
   Self = ClientPlayer:new(fk.Self)
+  if msec then
+    fk.ClientInstance:setupServerLag(msec)
+  end
 end
 
 fk.client_callback["Setup"] = function(data)
   -- jsonData: [ int id, string screenName, string avatar ]
-  local id, name, avatar = data[1], data[2], data[3]
-  setup(id, name, avatar)
+  local id, name, avatar, msec = data[1], data[2], data[3], data[4]
+  setup(id, name, avatar, msec)
 end
 
 fk.client_callback["EnterRoom"] = function(_data)
@@ -243,7 +246,7 @@ fk.client_callback["EnterRoom"] = function(_data)
 
   local data = _data[3]
   ClientInstance.enter_room_data = json.encode(_data);
-  ClientInstance.room_settings = data
+  ClientInstance.settings = data
   table.insertTableIfNeed(
     data.disabledPack,
     Fk.game_mode_disabled[data.gameMode]
@@ -857,13 +860,9 @@ fk.client_callback["AskForUseActiveSkill"] = function(data)
   local skill = Fk.skills[data[1]]
   local extra_data = data[4]
   skill._extra_data = extra_data
-
   Fk.currentResponseReason = extra_data.skillName
-  local h = Fk.request_handlers["AskForUseActiveSkill"]:new(Self)
-  h.skill_name = data[1]
-  h.prompt     = data[2]
-  h.cancelable = data[3]
-  h.extra_data = data[4]
+
+  local h = Fk.request_handlers["AskForUseActiveSkill"]:new(Self, data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
@@ -873,12 +872,7 @@ end
 fk.client_callback["AskForUseCard"] = function(data)
   -- jsonData: card, pattern, prompt, cancelable, {}
   Fk.currentResponsePattern = data[2]
-  local h = Fk.request_handlers["AskForUseCard"]:new(Self)
-  -- h.skill_name = data[1] (skill_name是给选中的视为技用的)
-  h.pattern    = data[2]
-  h.prompt     = data[3]
-  h.cancelable = data[4]
-  h.extra_data = data[5]
+  local h = Fk.request_handlers["AskForUseCard"]:new(Self, data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
@@ -888,12 +882,7 @@ end
 fk.client_callback["AskForResponseCard"] = function(data)
   -- jsonData: card, pattern, prompt, cancelable, {}
   Fk.currentResponsePattern = data[2]
-  local h = Fk.request_handlers["AskForResponseCard"]:new(Self)
-  -- h.skill_name = data[1] (skill_name是给选中的视为技用的)
-  h.pattern    = data[2]
-  h.prompt     = data[3]
-  h.cancelable = data[4]
-  h.extra_data = data[5]
+  local h = Fk.request_handlers["AskForResponseCard"]:new(Self, data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
@@ -1100,7 +1089,7 @@ fk.client_callback["GameOver"] = function(jsonData)
     c.record[2] = table.concat({
       c.record[2],
       Self.player:getScreenName(),
-      c.room_settings.gameMode,
+      c.settings.gameMode,
       Self.general,
       Self.role,
       jsonData,
@@ -1118,7 +1107,7 @@ fk.client_callback["EnterLobby"] = function(jsonData)
     c.record[2] = table.concat({
       c.record[2],
       Self.player:getScreenName(),
-      c.room_settings.gameMode,
+      c.settings.gameMode,
       Self.general,
       Self.role,
       "",

@@ -768,26 +768,17 @@ callbacks["MoveFocus"] = (data) => {
   cancelAllFocus();
   const focuses = data[0];
   const command = data[1];
+  const timeout = data[2] ?? (config.roomTimeout * 1000);
 
   let item, model;
   for (let i = 0; i < playerNum; i++) {
     model = photoModel.get(i);
     if (focuses.indexOf(model.id) != -1) {
       item = photos.itemAt(i);
+      item.progressBar.duration = timeout;
       item.progressBar.visible = true;
       item.progressTip = luatr(command)
         + luatr(" thinking...");
-
-      /*
-      if (command === "PlayCard") {
-        item.playing = true;
-      }
-    } else {
-      item = photos.itemAt(i);
-      if (command === "PlayCard") {
-        item.playing = false;
-      }
-    */
     }
   }
 }
@@ -1241,10 +1232,6 @@ callbacks["AskForResponseCard"] = (data) => {
   roomScene.okCancel.visible = true;
 }
 
-callbacks["WaitForNullification"] = () => {
-  roomScene.state = "notactive";
-}
-
 callbacks["SetPlayerMark"] = (data) => {
   const player = getPhoto(data[0]);
   const mark = data[1];
@@ -1467,6 +1454,10 @@ callbacks["UpdateMiniGame"] = (data) => {
   if (roomScene.popupBox.item) {
     roomScene.popupBox.item.updateData(data);
   }
+}
+
+callbacks["EmptyRequest"] = (data) => {
+  roomScene.activate();
 }
 
 callbacks["UpdateLimitSkill"] = (data) => {

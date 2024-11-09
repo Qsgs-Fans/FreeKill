@@ -627,13 +627,14 @@ Item {
     anchors.bottomMargin: -4
     from: 0.0
     to: 100.0
+    property int duration: config.roomTimeout * 1000
 
     visible: false
     NumberAnimation on value {
       running: progressBar.visible
       from: 100.0
       to: 0.0
-      duration: config.roomTimeout * 1000
+      duration: progressBar.duration
 
       onFinished: {
         progressBar.visible = false;
@@ -663,6 +664,59 @@ Item {
     anchors.centerIn: parent
     loop: true
     visible: root.state === "candidate" && selectable
+  }
+
+  RowLayout {
+    anchors.centerIn: parent
+    spacing: 5
+
+    Repeater {
+      model: root.targetTip
+
+      Item {
+        // Layout.alignment: Qt.AlignHCenter
+        width: modelData.type === "normal" ? 40 : 24
+
+        GlowText {
+          anchors.centerIn: parent
+          visible: modelData.type === "normal"
+          text: Util.processPrompt(modelData.content)
+          font.family: fontLi2.name
+          color: "#FEFE84"
+          font.pixelSize: {
+            if (text.length <= 3) return 36;
+            else return 28;
+          }
+          //font.bold: true
+          glow.color: "black"
+          glow.spread: 0.3
+          glow.radius: 5
+          lineHeight: 0.85
+          horizontalAlignment: Text.AlignHCenter
+          wrapMode: Text.WrapAnywhere
+          width: font.pixelSize + 4
+        }
+
+        Text {
+          anchors.centerIn: parent
+          visible: modelData.type === "warning"
+          font.family: fontLibian.name
+          font.pixelSize: 24
+          opacity: 0.9
+          horizontalAlignment: Text.AlignHCenter
+          lineHeight: 24
+          lineHeightMode: Text.FixedHeight
+          //color: "#EAC28A"
+          color: "snow"
+          width: 24
+          wrapMode: Text.WrapAnywhere
+          style: Text.Outline
+          //styleColor: "#83231F"
+          styleColor: "red"
+          text: Util.processPrompt(modelData.content)
+        }
+      }
+    }
   }
 
   InvisibleCardArea {
@@ -736,53 +790,6 @@ Item {
     Text {
       text: distance
       anchors.centerIn: parent
-    }
-  }
-
-  RowLayout {
-    anchors.centerIn: parent
-    spacing: 5
-
-    Repeater {
-      model: root.targetTip
-
-      Item {
-        Layout.alignment: Qt.AlignHCenter
-        width: 30
-
-        GlowText {
-          anchors.centerIn: parent
-          visible: modelData.type === "normal"
-          text: Util.processPrompt(modelData.content)
-          font.family: fontLibian.name
-          color: "#F7F589"
-          font.pixelSize: 30
-          font.bold: true
-          glow.color: "black"
-          glow.spread: 0.3
-          glow.radius: 5
-          horizontalAlignment: Text.AlignHCenter
-          wrapMode: Text.WrapAnywhere
-          width: 30
-        }
-
-        Text {
-          anchors.centerIn: parent
-          visible: modelData.type === "warning"
-          font.family: fontLibian.name
-          font.pixelSize: 24
-          opacity: 0.9
-          horizontalAlignment: Text.AlignHCenter
-          lineHeight: 24
-          lineHeightMode: Text.FixedHeight
-          color: "#EAC28A"
-          width: 24
-          wrapMode: Text.WrapAnywhere
-          style: Text.Outline
-          styleColor: "#83231F"
-          text: Util.processPrompt(modelData.content)
-        }
-      }
     }
   }
 

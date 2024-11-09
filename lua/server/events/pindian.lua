@@ -42,17 +42,19 @@ function Pindian:main()
     table.insert(targets, pindianData.from)
     pindianData.from.request_data = json.encode(data)
   else
-    local _pindianCard = pindianData.fromCard
-    local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
-    pindianCard:addSubcard(_pindianCard.id)
+    if not pindianData._fromCard then
+      local _pindianCard = pindianData.fromCard
+      local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+      pindianCard:addSubcard(_pindianCard.id)
 
-    pindianData.fromCard = pindianCard
-    pindianData._fromCard = _pindianCard
+      pindianData.fromCard = pindianCard
+      pindianData._fromCard = _pindianCard
+    end
 
     table.insert(moveInfos, {
-      ids = { _pindianCard.id },
-      from = room.owner_map[_pindianCard.id],
-      fromArea = room:getCardArea(_pindianCard.id),
+      ids = { pindianData._fromCard.id },
+      from = room.owner_map[pindianData._fromCard.id],
+      fromArea = room:getCardArea(pindianData._fromCard.id),
       toArea = Card.Processing,
       moveReason = fk.ReasonPut,
       skillName = pindianData.reason,
@@ -61,17 +63,19 @@ function Pindian:main()
   end
   for _, to in ipairs(pindianData.tos) do
     if pindianData.results[to.id] and pindianData.results[to.id].toCard then
-      local _pindianCard = pindianData.results[to.id].toCard
-      local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
-      pindianCard:addSubcard(_pindianCard.id)
+      if not pindianData.results[to.id]._toCard then
+        local _pindianCard = pindianData.results[to.id].toCard
+        local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+        pindianCard:addSubcard(_pindianCard.id)
 
-      pindianData.results[to.id].toCard = pindianCard
-      pindianData.results[to.id]._toCard = _pindianCard
+        pindianData.results[to.id].toCard = pindianCard
+        pindianData.results[to.id]._toCard = _pindianCard
+      end
 
       table.insert(moveInfos, {
-        ids = { _pindianCard.id },
-        from = room.owner_map[_pindianCard.id],
-        fromArea = room:getCardArea(_pindianCard.id),
+        ids = { pindianData.results[to.id]._toCard.id },
+        from = room.owner_map[pindianData.results[to.id]._toCard.id],
+        fromArea = room:getCardArea(pindianData.results[to.id]._toCard.id),
         toArea = Card.Processing,
         moveReason = fk.ReasonPut,
         skillName = pindianData.reason,
@@ -79,48 +83,51 @@ function Pindian:main()
       })
     else
       table.insert(targets, to)
-      to.request_data = json.encode(data)
     end
   end
 
-  room:notifyMoveFocus(targets, "AskForPindian")
-  room:doBroadcastRequest("AskForUseActiveSkill", targets)
+  if #targets ~= 0 then
+    local req = Request:new(targets, "AskForUseActiveSkill")
+    for _, p in ipairs(targets) do req:setData(p, data) end
+    req.focus_text = "AskForPindian"
 
-  for _, p in ipairs(targets) do
-    local _pindianCard
-    if p.reply_ready then
-      local replyCard = json.decode(p.client_reply).card
-      _pindianCard = Fk:getCardById(json.decode(replyCard).subcards[1])
-    else
-      _pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
+    for _, p in ipairs(targets) do
+      local _pindianCard
+      local result = req:getResult(p)
+      if result ~= "" then
+        local replyCard = result.card
+        _pindianCard = Fk:getCardById(json.decode(replyCard).subcards[1])
+      else
+        _pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
+      end
+
+      local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
+      pindianCard:addSubcard(_pindianCard.id)
+
+      if p == pindianData.from then
+        pindianData.fromCard = pindianCard
+        pindianData._fromCard = _pindianCard
+      else
+        pindianData.results[p.id] = pindianData.results[p.id] or {}
+        pindianData.results[p.id].toCard = pindianCard
+        pindianData.results[p.id]._toCard = _pindianCard
+      end
+
+      table.insert(moveInfos, {
+        ids = { _pindianCard.id },
+        from = p.id,
+        toArea = Card.Processing,
+        moveReason = fk.ReasonPut,
+        skillName = pindianData.reason,
+        moveVisible = true,
+      })
+
+      room:sendLog{
+        type = "#ShowPindianCard",
+        from = p.id,
+        arg = _pindianCard:toLogString(),
+      }
     end
-
-    local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
-    pindianCard:addSubcard(_pindianCard.id)
-
-    if p == pindianData.from then
-      pindianData.fromCard = pindianCard
-      pindianData._fromCard = _pindianCard
-    else
-      pindianData.results[p.id] = pindianData.results[p.id] or {}
-      pindianData.results[p.id].toCard = pindianCard
-      pindianData.results[p.id]._toCard = _pindianCard
-    end
-
-    table.insert(moveInfos, {
-      ids = { _pindianCard.id },
-      from = p.id,
-      toArea = Card.Processing,
-      moveReason = fk.ReasonPut,
-      skillName = pindianData.reason,
-      moveVisible = true,
-    })
-
-    room:sendLog{
-      type = "#ShowPindianCard",
-      from = p.id,
-      card = { _pindianCard.id },
-    }
   end
 
   room:moveCards(table.unpack(moveInfos))

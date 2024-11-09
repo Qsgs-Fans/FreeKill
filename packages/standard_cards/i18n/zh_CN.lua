@@ -26,10 +26,12 @@ Fk:loadTranslationTable{
   ["basic_char"] = "基",
   ["trick_char"] = "锦",
   ["equip_char"] = "装",
+  ["non_basic_char"] = "非基",
 
   ["basic"] = "基本牌",
   ["trick"] = "锦囊牌",
   ["equip"] = "装备牌",
+  ["non_basic"] = "非基本牌",
   ["weapon"] = "武器牌",
   ["armor"] = "防具牌",
   ["defensive_horse"] = "防御坐骑牌",

@@ -18,6 +18,8 @@ extern QmlBackend *Backend;
 %nodefaultdtor Client;
 class Client : public QObject {
 public:
+  void setupServerLag(long long server_time);
+
   void replyToServer(const QString &command, const QString &json_data);
   void notifyServer(const QString &command, const QString &json_data);
 

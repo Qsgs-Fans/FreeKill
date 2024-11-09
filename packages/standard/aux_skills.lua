@@ -27,7 +27,7 @@ local discardSkill = fk.CreateActiveSkill{
         return false
       end
     end
-    if Fk.currentResponseReason == "game_rule" then
+    if Fk.currentResponseReason == "phase_discard" then
       status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
       for _, skill in ipairs(status_skills) do
         if skill:excludeFrom(Self, card) then

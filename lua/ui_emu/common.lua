@@ -4,6 +4,11 @@ local SelectableItem = base.SelectableItem
 ---@class CardItem: SelectableItem
 local CardItem = SelectableItem:subclass("CardItem")
 
+function CardItem:initialize(scene, id)
+  SelectableItem.initialize(self, scene, id)
+  Fk:filterCard(id, Fk:currentRoom():getCardOwner(id))
+end
+
 ---@class Photo: SelectableItem
 ---@field public state string
 local Photo = SelectableItem:subclass("Photo")

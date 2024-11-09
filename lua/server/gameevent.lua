@@ -181,7 +181,7 @@ local function bin_search(events, from, to, n, func)
 end
 
 -- 从某个区间中，找出类型符合且符合func函数检测的至多n个事件。
----@param eventType integer @ 要查找的事件类型
+---@param eventType GameEvent @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
 ---@param func fun(e: GameEvent): boolean? @ 过滤用的函数
 ---@param endEvent? GameEvent @ 区间终止点，默认为本事件结束

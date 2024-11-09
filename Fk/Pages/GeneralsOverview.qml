@@ -5,7 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Fk
 import Fk.RoomElement
-import "RoomLogic.js" as RoomLogic
+// import "RoomLogic.js" as RoomLogic
 
 Item {
   id: root
@@ -390,12 +390,28 @@ Item {
       }
 
       onClicked: {
-        callbacks["LogEvent"]({
-          type: "PlaySkillSound",
-          name: name,
-          general: specific ? detailGeneralCard.name : null, // 分化特别和一般
-          i: idx,
-        });
+        const skill = name;
+        const general = specific ? detailGeneralCard.name : null;
+        let extension;
+        let path;
+        let dat;
+
+        // try main general
+        if (general) {
+          dat = lcall("GetGeneralData", general);
+          extension = dat.extension;
+          path = "./packages/" + extension + "/audio/skill/" + skill + "_" + general;
+          if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+            Backend.playSound(path, idx);
+            return;
+          }
+        }
+
+        // finally normal skill
+        dat = lcall("GetSkillData", skill);
+        extension = dat.extension;
+        path = "./packages/" + extension + "/audio/skill/" + skill;
+        Backend.playSound(path, idx);
       }
 
       onPressAndHold: {

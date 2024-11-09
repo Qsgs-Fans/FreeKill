@@ -132,29 +132,18 @@ function GameLogic:chooseGenerals()
 
   local nonlord = room:getOtherPlayers(lord, true)
   local generals = table.random(room.general_pile, #nonlord * generalNum)
+
+  local req = Request:new(nonlord, "AskForGeneral")
   for i, p in ipairs(nonlord) do
     local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
-    p.request_data = json.encode{ arg, n }
-    p.default_reply = table.random(arg, n)
+    req:setData(p, { arg, n })
+    req:setDefaultReply(p, table.random(arg, n))
   end
 
-  room:notifyMoveFocus(nonlord, "AskForGeneral")
-  room:doBroadcastRequest("AskForGeneral", nonlord)
-
   for _, p in ipairs(nonlord) do
-    local general, deputy
-    if p.general == "" and p.reply_ready then
-      local general_ret = json.decode(p.client_reply)
-      general = general_ret[1]
-      deputy = general_ret[2]
-    else
-      general = p.default_reply[1]
-      deputy = p.default_reply[2]
-    end
-    room:findGeneral(general)
-    room:findGeneral(deputy)
+    local result = req:getResult(p)
+    local general, deputy = result[1], result[2]
     room:prepareGeneral(p, general, deputy)
-    p.default_reply = ""
   end
 
   room:askForChooseKingdom(nonlord)
@@ -233,7 +222,9 @@ function GameLogic:attachSkillToPlayers()
       return
     end
 
-    room:handleAddLoseSkills(player, skillName, nil, false)
+    room:handleAddLoseSkills(player, skillName, nil, false, true)
+    self:trigger(fk.EventAcquireSkill, player, skill)
+    skill:onAcquire(player, true)
   end
   for _, p in ipairs(room.alive_players) do
     local skills = Fk.generals[p.general].skills
@@ -278,6 +269,8 @@ function GameLogic:action()
   while true do
     execGameEvent(GameEvent.Round)
     if room.game_finished then break end
+    if table.every(room.players, function(p) return p.dead and p.rest == 0 end) then room:gameOver("") end
+    room.current = room.players[1]
   end
 end
 
@@ -570,9 +563,10 @@ function GameLogic:getMostRecentEvent(eventType)
 end
 
 --- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。
+---@return string|nil
 function GameLogic:getCurrentSkillName()
   local skillEvent = self:getCurrentEvent()
-  local ret = ""
+  local ret = nil
   if skillEvent.event == GameEvent.SkillEffect then
     local _, _, _skill = table.unpack(skillEvent.data)
     local skill = _skill.main_skill and _skill.main_skill or _skill
@@ -605,7 +599,7 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
 end
 
 -- 在指定历史范围中找符合条件的事件（逆序）
----@param eventType integer @ 要查找的事件类型
+---@param eventType GameEvent @ 要查找的事件类型
 ---@param func fun(e: GameEvent): boolean @ 过滤用的函数
 ---@param n integer @ 最多找多少个
 ---@param end_id integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）

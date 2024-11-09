@@ -17,6 +17,8 @@ public:
   ~Client();
 
   void connectToHost(const QString &server, ushort port);
+  void setupServerLag(qint64 server_time);
+  qint64 getServerLag() const;
 
   Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
@@ -51,6 +53,8 @@ private:
   Router *router;
   QMap<int, ClientPlayer *> players;
   ClientPlayer *self;
+  qint64 start_connent_timestamp; // 连接时的时间戳 单位毫秒
+  qint64 server_lag = 0; // 与服务器时差，单位毫秒，正数表示自己快了 负数表示慢了
 
   lua_State *L;
   QFileSystemWatcher fsWatcher;

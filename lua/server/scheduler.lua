@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-local Room = require "server.room"
+Room = require "server.room"
 
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type table<integer, Room>

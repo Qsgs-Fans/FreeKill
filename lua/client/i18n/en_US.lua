@@ -236,7 +236,7 @@ Fk:loadTranslationTable({
   ["#replaceEquip"] = "Please Choose a Equip Card to be replaced",
   ["#askForPindian"] = "%arg: please choose a hand card for point fight",
   ["#StartPindianReason"] = "%from started point fight (%arg)",
-  ["#ShowPindianCard"] = "The point fight card of %from is %card",
+  ["#ShowPindianCard"] = "The point fight card of %from is %arg",
   ["#ShowPindianResult"] = "%from %arg the point fight between %from and %to",
   ["pindianwin"] = "won",
   ["pindiannotwin"] = "lost",

@@ -1,14 +1,5 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
----@param killer ServerPlayer
-local function rewardAndPunish(killer, victim)
-  if killer.dead then return end
-  if victim.role == "rebel" then
-    killer:drawCards(3, "kill")
-  elseif victim.role == "loyalist" and killer.role == "lord" then
-    killer:throwAllCards("he")
-  end
-end
 
 GameRule = fk.CreateTriggerSkill{
   name = "game_rule",
@@ -90,14 +81,11 @@ GameRule = fk.CreateTriggerSkill{
     end,
     [fk.BuryVictim] = function()
       player:bury()
-      if room.tag["SkipNormalDeathProcess"] or player.rest > 0 then
+      if room.tag["SkipNormalDeathProcess"] or player.rest > 0 or (data.extra_data and data.extra_data.skip_reward_punish) then
         return false
       end
       local damage = data.damage
-      if damage and damage.from then
-        local killer = damage.from
-        rewardAndPunish(killer, player);
-      end
+      Fk.game_modes[room.settings.gameMode]:deathRewardAndPunish(player, damage and damage.from)
     end,
     default = function()
       print("game_rule: Event=" .. event)

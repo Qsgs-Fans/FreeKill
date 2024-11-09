@@ -246,6 +246,11 @@ fk.IceDamage = 4
 ---@field public skillName string @ 技能名
 ---@field public fromPlace "top"|"bottom" @ 摸牌的位置
 
+---@--- TurnStruct 回合事件的数据
+---@class TurnStruct
+---@field public reason string? @ 当前额外回合的原因，不为额外回合则为game_rule
+---@field public phase_table? Phase[] @ 此回合将进行的阶段，填空则为正常流程
+
 --- 移动理由
 ---@alias CardMoveReason integer
 fk.ReasonJustMove = 1

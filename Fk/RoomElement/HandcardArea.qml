@@ -162,6 +162,13 @@ Item {
           break;
         }
       }
-    })
+    });
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      if (!card.selectable) {
+        const reason = lcall("GetCardProhibitReason", card.cid);
+        card.prohibitReason = reason;
+      }
+    }
   }
 }

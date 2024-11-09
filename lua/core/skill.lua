@@ -156,4 +156,16 @@ function Skill:getTimes()
   return ret
 end
 
+-- 获得此技能时，触发此函数
+---@param player ServerPlayer
+---@param is_start bool
+function Skill:onAcquire(player, is_start)
+end
+
+-- 失去此技能时，触发此函数
+---@param player ServerPlayer
+---@param is_death bool
+function Skill:onLose(player, is_death)
+end
+
 return Skill

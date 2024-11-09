@@ -23,7 +23,7 @@ function Traceback()
 end
 
 local msgh = function(err)
-  fk.qCritical(err .. "\n" .. debug.traceback(nil, 2))
+  fk.qCritical(tostring(err) .. "\n" .. debug.traceback(nil, 2))
 end
 
 function Pcall(f, ...)
@@ -36,3 +36,10 @@ end
 
 function p(v) print(inspect(v)) end
 function pt(t) for k, v in pairs(t) do print(k, v) end end
+
+local _verbose = false
+function verbose(fmt, ...)
+  if not _verbose then return end
+  local str = fmt:format(...)
+  fk.qInfo(str)
+end

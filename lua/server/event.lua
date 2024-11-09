@@ -48,6 +48,7 @@ fk.FinishJudge = 27
 
 fk.RoundStart = 28
 fk.RoundEnd = 29
+fk.AfterRoundEnd = 85
 
 fk.BeforeTurnOver = 79
 fk.TurnedOver = 30
@@ -126,7 +127,7 @@ fk.AfterSkillEffect = 82
 
 -- 83 = PreTurnStart
 -- 84 = AfterTurnEnd
--- 85 = xxx
+-- 85 = AfterRoundEnd
 -- 86 = AfterPhaseEnd
 
 fk.AreaAborted = 87

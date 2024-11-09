@@ -46,8 +46,18 @@ Client::~Client() {
 }
 
 void Client::connectToHost(const QString &server, ushort port) {
+  start_connent_timestamp = QDateTime::currentMSecsSinceEpoch();
   router->getSocket()->connectToHost(server, port);
 }
+
+void Client::setupServerLag(qint64 server_time) {
+  auto now = QDateTime::currentMSecsSinceEpoch();
+  auto ping = now - start_connent_timestamp;
+  auto lag = now - server_time;
+  server_lag = lag - ping / 2;
+}
+
+qint64 Client::getServerLag() const { return server_lag; }
 
 void Client::replyToServer(const QString &command, const QString &jsonData) {
   int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;

@@ -1097,6 +1097,14 @@ local lijian = fk.CreateActiveSkill{
     }
     room:useCard(new_use)
   end,
+  target_tip = function(self, to_select, selected, _, __, selectable, ____)
+    if not selectable then return end
+    if #selected == 0 or (#selected > 0 and selected[1] == to_select) then
+      return "lijian_tip_1"
+    else
+      return "lijian_tip_2"
+    end
+  end,
 }
 local biyue = fk.CreateTriggerSkill{
   name = "biyue",
@@ -1215,30 +1223,20 @@ local role_getlogic = function()
     end
 
     local nonlord = room:getOtherPlayers(lord, true)
+    local req = Request:new(nonlord, "AskForGeneral")
     local generals = table.random(room.general_pile, #nonlord * generalNum)
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
-      p.request_data = json.encode{ arg, n }
-      p.default_reply = table.random(arg, n)
+      req:setData(p, { arg, n })
+      req:setDefaultReply(p, table.random(arg, n))
     end
 
-    room:notifyMoveFocus(nonlord, "AskForGeneral")
-    room:doBroadcastRequest("AskForGeneral", nonlord)
-
     for _, p in ipairs(nonlord) do
-      local general, deputy
-      if p.general == "" and p.reply_ready then
-        local general_ret = json.decode(p.client_reply)
-        general = general_ret[1]
-        deputy = general_ret[2]
-      else
-        general = p.default_reply[1]
-        deputy = p.default_reply[2]
-      end
+      local result = req:getResult(p)
+      local general, deputy = result[1], result[2]
       room:findGeneral(general)
       room:findGeneral(deputy)
       room:prepareGeneral(p, general, deputy)
-      p.default_reply = ""
     end
 
     room:askForChooseKingdom(nonlord)
@@ -1252,6 +1250,7 @@ local role_mode = fk.CreateGameMode{
   minPlayer = 2,
   maxPlayer = 8,
   logic = role_getlogic,
+  main_mode = "role_mode",
   is_counted = function(self, room)
     return #room.players >= 5
   end,

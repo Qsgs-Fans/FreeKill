@@ -153,6 +153,10 @@ Flickable {
         selectByMouse: false
         wrapMode: TextEdit.WordWrap
         textFormat: TextEdit.RichText
+        property var savedtext: []
+        function clearSavedText() {
+          savedtext = [];
+        }
         onLinkActivated: (link) => {
           if (link === "back") {
             text = savedtext.pop();
@@ -180,6 +184,7 @@ Flickable {
     screenName.text = "";
     playerGameData.text = "";
     skillDesc.text = "";
+    skillDesc.clearSavedText();
 
     const id = extra_data.photo.playerid;
     if (id === 0) return;

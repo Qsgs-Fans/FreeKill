@@ -24,7 +24,10 @@ function Object:initialize(...) end
 ---@return T
 function Object:new(...)end
 
+---@generic T
+---@param self T
 ---@param name string
+---@return T
 function Object:subclass(name)end
 
 ---@param class class|Object

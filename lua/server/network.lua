@@ -1,19 +1,23 @@
 ---@class Request : Object
 ---@field public room Room
 ---@field public players ServerPlayer[]
----@field public n integer @ n个人做出回复后，询问结束
----@field public accept_cancel? boolean @ 是否将取消也算作是收到回复
+---@field public n integer @ 产生n个winner后，询问直接结束
+---@field public accept_cancel? boolean @ 是否将取消也算作是收到肯定答复
 ---@field public ai_start_time integer? @ 只剩AI思考开始的时间（微秒），delay专用
 ---@field public timeout? integer @ 本次耗时（秒），默认为房间内配置的出手时间
 ---@field public command string @ command自然就是command
 ---@field public data table<integer, any> @ 每个player对应的询问数据
----@field public default_reply table<integer, any> @ 玩家id - 默认回复内容
----@field public send_json boolean? @ 是否需要对data使用json.encode，默认true
----@field public receive_json boolean? @ 是否需要对reply使用json.decode，默认true
+---@field public default_reply table<integer, any> @ 玩家id - 默认回复内容 默认空串
+---@field public send_encode boolean? @ 是否需要对data使用json.encode，默认true
+---@field public receive_decode boolean? @ 是否需要对reply使用json.decode，默认true
 ---@field private send_success table<fk.ServerPlayer, boolean> @ 数据是否发送成功，不成功的后面全部视为AI
 ---@field public result table<integer, any> @ 玩家id - 回复内容 nil表示完全未回复
+---@field public winners ServerPlayer[] @ 按肯定回复先后顺序排序 由于有概率所有人烧条 可能会空
 ---@field public luck_data any? @ 是否是询问手气卡 TODO: 有需求的话把这个通用化一点
 ---@field private pending_requests table<fk.ServerPlayer, integer[]> @ 一控多时暂存的请求
+---@field private _asked boolean? @ 是否询问过了
+---@field public focus_players? ServerPlayer[] @ 要moveFocus的玩家们 默认参与者
+---@field public focus_text? string @ 要moveFocus的文字 默认self.command
 local Request = class("Request")
 
 -- TODO: 懒得思考了
@@ -23,9 +27,10 @@ local Request = class("Request")
 -- 若还能再用一次，那就重新发Request并继续等
 
 ---@param command string
----@param players ServerPlayer[]
+---@param players ServerPlayer|ServerPlayer[]
 ---@param n? integer
-function Request:initialize(command, players, n)
+function Request:initialize(players, command, n)
+  if (not players[1]) and players.class then players = { players } end
   assert(#players > 0)
   self.command = command
   self.players = players
@@ -36,27 +41,41 @@ function Request:initialize(command, players, n)
   self.room = room
   self.data = {}
   self.default_reply = {}
-  for _, p in ipairs(players) do self.default_reply[p.id] = "__cancel" end
   self.timestamp = math.ceil(os.getms() / 1000)
   self.timeout = room.timeout
-  self.send_json = true
-  self.receive_json = true -- 除了几个特殊字符串之外都decode
+  self.send_encode = true
+  self.receive_decode = true -- 除了几个特殊字符串之外都decode
 
   self.pending_requests = setmetatable({}, { __mode = "k" })
   self.send_success = setmetatable({}, { __mode = "k" })
   self.result = {}
+  self.winners = {}
 end
 
 function Request:__tostring()
-  return "<Request>"
+  return string.format("<Request '%s'>", self.command)
 end
 
+---@param player ServerPlayer
+---@param data any
 function Request:setData(player, data)
   self.data[player.id] = data
 end
 
+---@param player ServerPlayer
+---@param data any @ 注意不要json.encode
 function Request:setDefaultReply(player, data)
   self.default_reply[player.id] = data
+end
+
+--- 获取本次Request中此人的回复，若还未询问过，那么先询问
+--- * <any>: 成功发出回复 获取的是decode后的回复
+--- * "" (空串): 发出了“取消” 或者烧完了绳子 反正就是取消
+---@param player ServerPlayer
+---@return any
+function Request:getResult(player)
+  if not self._asked then self:ask() end
+  return self.result[player.id]
 end
 
 -- 将相应请求数据发给player
@@ -86,7 +105,7 @@ function Request:_sendPacket(player)
 
   -- 发送请求数据并将控制者标记为烧条中
   local jsonData = self.data[player.id]
-  if self.send_json then jsonData = json.encode(jsonData) end
+  if self.send_encode then jsonData = json.encode(jsonData) end
   -- FIXME: 这里确认数据是否发送的环节一定要写在C++代码中
   self.send_success[controller] = controller:getState() == fk.Player_Online
   controller:doRequest(self.command, jsonData, self.timeout, self.timestamp)
@@ -142,34 +161,21 @@ function Request:_checkReply(player, use_ai)
     if use_ai then
       player.ai.command = self.command
       -- FIXME: 后面进行SmartAI的时候准备爆破此处
-      -- player.ai.data = self.data[player.id]
-      player.ai.jsonData = self.data[player.id]
-      if player.ai:isInstanceOf(RandomAI) then
-        reply = "__cancel"
-      else
-        reply = player.ai:makeReply()
-      end
+      player.ai.data = self.data[player.id]
+      reply = Pcall(player.ai.makeReply, player.ai)
     else
       -- 还没轮到AI呢，所以需要标记为未答复
       reply = "__notready"
     end
   end
 
+  if reply == '' then reply = '__cancel' end
   return reply
 end
 
-function Request:getWinners()
-  local ret = {}
-  for _, p in ipairs(self.players) do
-    local result = self.result[p.id]
-    if result and result ~= "" then
-      table.insert(ret, p)
-    end
-  end
-  return ret
-end
-
 function Request:ask()
+  if self._asked then return end
+
   local room = self.room
   -- 0. 设置计时器，防止因无人回复一直等下去
   room.room:setRequestTimer(self.timeout * 1000 + 500)
@@ -183,6 +189,10 @@ function Request:ask()
     p.serverplayer:setThinking(false)
   end
 
+  -- 发送focus
+  room:notifyMoveFocus(self.focus_players or self.players, self.focus_text or self.command,
+    math.floor(self.timeout * 1000))
+
   -- 1. 向所有人发送询问请求
   for _, p in ipairs(players) do
     self:_sendPacket(p)
@@ -191,10 +201,9 @@ function Request:ask()
   -- 2. 进入循环等待，结束条件为已有n个回复或者超时或者有人点了
   --    若很多人都取消了导致最多回复数达不到n了，那么也结束
   local replied_players = 0
-  local ready_players = 0
   while true do
     local changed = false
-    -- 判断1：若投降则直接结束全部询问，若超时则踢掉所有人类玩家（这样AI还可计算）
+    -- 若投降则直接结束全部询问，若超时则踢掉所有人类玩家（让AI还可计算）
     if room.hasSurrendered then break end
     local elapsed = os.time() - currentTime
     if self.timeout - elapsed <= 0 or resume_reason == "request_timer" then
@@ -205,22 +214,23 @@ function Request:ask()
       end
     end
 
+    -- 若players中只剩人机，那么允许人机进行计算
     if table.every(players, function(p)
       return p.serverplayer:getState() ~= fk.Player_Online or not
         self.send_success[p.serverplayer]
     end) then
       self.ai_start_time = os.getms()
     end
-
-    -- 判断2：收到足够多回复了
     local use_ai = self.ai_start_time ~= nil
 
+    -- 轮询所有参与回答的玩家，如果作出了答复，那么就把他从名单移除；
+    -- 然后如果作出的是“肯定”答复，那么添加到winner里面
     for i = #players, 1, -1 do
       local player = players[i]
       local reply = self:_checkReply(player, use_ai)
 
       if reply ~= "__notready" then
-        if reply ~= "__cancel" and self.receive_json then
+        if reply ~= "__cancel" and (self.receive_decode and not use_ai) then
           reply = json.decode(reply)
         end
         self.result[player.id] = reply
@@ -229,35 +239,39 @@ function Request:ask()
         changed = true
 
         if reply ~= "__cancel" or self.accept_cancel then
-          ready_players = ready_players + 1
-          if ready_players >= self.n then
-            for _, p in ipairs(self.players) do
+          table.insert(self.winners, player)
+          if #self.winners >= self.n then
+            -- winner数量已经足够，剩下的人不用算了
+            for _, p in ipairs(players) do
               -- 避免触发后续的烧条检测
               if self.result[p.id] == nil then
                 self.result[p.id] = "__failed_in_race"
               end
             end
+            players = {} -- 清空参与者名单
             break -- 注意外面还有一层循环
           end
         end
       end
     end
 
-    if #players + ready_players < self.n then break end
-    if ready_players >= self.n then break end
+    if #players == 0 then break end
+    if #self.winners >= self.n then break end
 
     -- 防止万一，如果AI算完后还是有机器人notready的话也别等了
     -- 不然就永远别想被唤醒了
     if self.ai_start_time then break end
 
-    -- 需要等待呢，等待被唤醒吧
+    -- 需要等待呢，等待被唤醒吧，唤醒后继续下一次轮询检测
     if not changed then
       resume_reason = coroutine.yield("__handleRequest")
     end
   end
 
   room.room:destroyRequestTimer()
-  self:finish()
+  self:_finish()
+
+  self._asked = true
 end
 
 local function surrenderCheck(room)
@@ -283,15 +297,19 @@ local function surrenderCheck(room)
 end
 
 -- 善后工作，主要是result规范化、投降检测等
-function Request:finish()
+function Request:_finish()
   local room = self.room
   surrenderCheck(room)
-  -- FIXME: 这里QML中有个bug，这个命令应该是用来暗掉玩家面板的
-  -- room:doBroadcastNotify("CancelRequest", "")
+
   for _, p in ipairs(self.players) do
     p.serverplayer:setThinking(false)
+    -- 这个什么timewaste_count也该扔了
+    if self.result[p.id] == "__failed_in_race" then
+      p:doNotify("CancelRequest", "")
+      self.result[p.id] = self.default_reply[p.id] or ""
+    end
     if self.result[p.id] == nil then
-      self.result[p.id] = self.default_reply[p.id]
+      self.result[p.id] = self.default_reply[p.id] or ""
       p._timewaste_count = p._timewaste_count + 1
       if p._timewaste_count >= 3 and p.serverplayer:getState() == fk.Player_Online then
         p._timewaste_count = 0
@@ -301,10 +319,7 @@ function Request:finish()
       p._timewaste_count = 0
     end
     if self.result[p.id] == "__cancel" then
-      self.result[p.id] = ""
-    end
-    if self.result[p.id] == "__failed_in_race" then
-      self.result[p.id] = nil
+      self.result[p.id] = (not self.accept_cancel) and self.default_reply[p.id] or ""
     end
   end
   room.last_request = self
@@ -312,7 +327,7 @@ function Request:finish()
   for _, isHuman in pairs(self.send_success) do
     if not self.ai_start_time then break end
     if not isHuman then
-      local to_delay = 500 - (os.getms() - self.ai_start_time) / 1000
+      local to_delay = 800 - (os.getms() - self.ai_start_time) / 1000
       room:delay(to_delay)
       break
     end

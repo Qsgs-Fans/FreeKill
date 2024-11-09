@@ -858,6 +858,9 @@ function UseCardEventWrappers:handleCardEffect(event, cardEffectEvent)
           extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectEvent.to }
         end
       end
+      if #players > 0 and cardEffectEvent.card.trueName == "nullification" then
+        self:animDelay(2)
+      end
       local use = self:askForNullification(players, nil, nil, prompt, true, extra_data, cardEffectEvent)
       if use then
         use.toCard = cardEffectEvent.card

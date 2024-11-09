@@ -79,17 +79,18 @@ end
 Config = loadConf()
 
 -- 禁用各种危险的函数，尽可能让Lua执行安全的代码。
-local _os = {
+os = {
   time = os.time,
   date = os.date,
   clock = os.clock,
   difftime = os.difftime,
   getms = os.getms,
 }
-os = _os
-io = nil
+io = {
+  lines = io.lines
+}
 package = nil
-load = nil
+-- load = nil
 loadfile = nil
 local _dofile = dofile
 dofile = function(f)

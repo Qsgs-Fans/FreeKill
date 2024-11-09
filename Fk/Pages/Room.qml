@@ -341,6 +341,7 @@ Item {
           }
 
           lcall("FinishRequestUI");
+          applyChange({});
         }
       }
     },
@@ -1338,7 +1339,12 @@ Item {
       photo.state = pdata.state;
       photo.selectable = pdata.enabled;
       photo.selected = pdata.selected;
-    })
+    });
+    for (let i = 0; i < photoModel.count; i++) {
+      const item = photos.itemAt(i);
+      item.targetTip = lcall("GetTargetTip", item.playerid);
+    }
+
     const buttons = uiUpdate["Button"];
     if (buttons) {
       okCancel.visible = true;

@@ -222,7 +222,7 @@ Fk:loadTranslationTable({
   ["revealMain"] = "Reveal main character %arg",
   ["revealDeputy"] = "Reveal deputy character %arg",
 
-  ["game_rule"] = "Discard",
+  ["game_rule"] = "GameRule",
 }, "en_US")
 
 -- init

@@ -19,10 +19,12 @@
 ---@field public same_generals table<string, string[]> @ 所有同名武将组合
 ---@field public lords string[] @ 所有主公武将，用于常备主公
 ---@field public all_card_types table<string, Card> @ 所有的卡牌类型以及一张样板牌
+---@field public all_card_names string[] @ 有序的所有的卡牌牌名，顺序：基本牌（杀置顶），普通锦囊，延时锦囊，按副类别排序的装备
 ---@field public cards Card[] @ 所有卡牌
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public game_modes table<string, GameMode> @ 所有游戏模式
 ---@field public game_mode_disabled table<string, string[]> @ 游戏模式禁用的包
+---@field public main_mode_list table<string, string[]> @ 主模式检索表
 ---@field public currentResponsePattern string @ 要求用牌的种类（如要求用特定花色的桃···）
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
@@ -66,10 +68,12 @@ function Engine:initialize()
   self.same_generals = {}
   self.lords = {}     -- lordName[]
   self.all_card_types = {}
+  self.all_card_names = {}
   self.cards = {}     -- Card[]
   self.translations = {}  -- srcText --> translated
   self.game_modes = {}
   self.game_mode_disabled = {}
+  self.main_mode_list = {}
   self.kingdoms = {}
   self.kingdom_map = {}
   self.damage_nature = { [fk.NormalDamage] = { "normal_damage", false } }
@@ -82,6 +86,7 @@ function Engine:initialize()
 
   self:loadPackages()
   self:setLords()
+  self:loadCardNames()
   self:loadDisabled()
   self:loadRequestHandlers()
   self:addSkills(AuxSkills)
@@ -265,9 +270,28 @@ function Engine:loadDisabled()
   for mode_name, game_mode in pairs(self.game_modes) do
     local disabled_packages = {}
     for name, pkg in pairs(self.packages) do
-      if table.contains(game_mode.blacklist or Util.DummyTable, name) or
-      (game_mode.whitelist and not table.contains(game_mode.whitelist, name)) or
-      table.contains(pkg.game_modes_blacklist or Util.DummyTable, mode_name) or
+      --- GameMode对Package筛选
+      if type(game_mode.whitelist) == "function" then
+        if not game_mode:whitelist(pkg) then
+          table.insert(disabled_packages, name)
+        end
+      elseif type(game_mode.whitelist) == "table" then
+        if not table.contains(game_mode.whitelist, name) then
+          table.insert(disabled_packages, name)
+        end
+      end
+      if type(game_mode.blacklist) == "function" then
+        if game_mode:blacklist(pkg) then
+          table.insert(disabled_packages, name)
+        end
+      elseif type(game_mode.blacklist) == "table" then
+        if table.contains(game_mode.blacklist, name) then
+          table.insert(disabled_packages, name)
+        end
+      end
+
+      --- Package对GameMode筛选
+      if table.contains(pkg.game_modes_blacklist or Util.DummyTable, mode_name) or
       (pkg.game_modes_whitelist and not table.contains(pkg.game_modes_whitelist, mode_name)) then
         table.insert(disabled_packages, name)
       end
@@ -387,6 +411,7 @@ function Engine:setLords()
     for _, skill in ipairs(skills) do
       if skill.lordSkill then
         table.insert(self.lords, general.name)
+        break
       end
     end
   end
@@ -498,6 +523,7 @@ function Engine:addCard(card)
   if self.all_card_types[card.name] == nil then
     self.skills[card.skill.name] = card.skill
     self.all_card_types[card.name] = card
+    table.insert(self.all_card_names, card.name)
   end
 end
 
@@ -522,6 +548,23 @@ function Engine:cloneCard(name, suit, number)
   local ret = cd:clone(suit, number)
   ret.package = cd.package
   return ret
+end
+
+--- 为所有加载的卡牌牌名排序
+function Engine:loadCardNames()
+  local slash, basic, commonTrick, other = {}, {}, {}, {}
+  for _, name in ipairs(self.all_card_names) do
+    local card = self.all_card_types[name]
+    if card.type == Card.TypeBasic then
+      table.insert(card.trueName == "slash" and slash or basic, name)
+    elseif card:isCommonTrick() then
+      table.insert(commonTrick, name)
+    else
+      table.insert(other, name)
+    end
+  end
+  table.sort(other, function(a, b) return self.all_card_types[a].sub_type < self.all_card_types[b].sub_type end)
+  self.all_card_names = table.connect(slash, basic, commonTrick, other)
 end
 
 --- 向Engine中添加一系列游戏模式。

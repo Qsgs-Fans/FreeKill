@@ -37,7 +37,7 @@
 ---@field public change { [string]: Item[] } 将会传递给UI的更新数据
 local RequestHandler = class("RequestHandler")
 
-function RequestHandler:initialize(player)
+function RequestHandler:initialize(player, data)
   self.room = Fk:currentRoom()
   self.player = player
   -- finish只在Client执行 用于保证UI执行了某些必须执行的善后

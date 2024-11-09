@@ -45,6 +45,16 @@ local function readCommonSpecToSkill(skill, spec)
     assert(type(spec.relate_to_place) == "string")
     skill.relate_to_place = spec.relate_to_place
   end
+
+  if spec.on_acquire then
+    assert(type(spec.on_acquire) == "function")
+    skill.onAcquire = spec.on_acquire
+  end
+
+  if spec.on_lose then
+    assert(type(spec.on_lose) == "function")
+    skill.onLose = spec.on_lose
+  end
 end
 
 local function readUsableSpecToSkill(skill, spec)
@@ -88,6 +98,8 @@ end
 ---@field public max_round_use_time? integer
 ---@field public max_game_use_time? integer
 ---@field public times? integer | fun(self: UsableSkill): integer
+---@field public on_acquire? fun(self: UsableSkill, player: ServerPlayer, is_start: boolean)
+---@field public on_lose? fun(self: UsableSkill, player: ServerPlayer, is_death: boolean)
 
 ---@class StatusSkillSpec: StatusSkill
 
@@ -191,6 +203,7 @@ end
 ---@field public mod_target_filter? fun(self: ActiveSkill, to_select: integer, selected: integer[], user: integer, card: Card, distance_limited: boolean): boolean?
 ---@field public prompt? string|fun(self: ActiveSkill, selected_cards: integer[], selected_targets: integer[]): string
 ---@field public interaction any
+---@field public target_tip? fun(self: ActiveSkill, to_select: integer, selected: integer[], selected_cards: integer[], card: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
 
 ---@param spec ActiveSkillSpec
 ---@return ActiveSkill
@@ -635,7 +648,14 @@ function fk.CreateTreasure(spec)
   return card
 end
 
----@param spec GameMode
+---@class GameModeSpec: GameMode
+---@field public winner_getter? fun(self: GameMode, victim: ServerPlayer): string
+---@field public surrender_func? fun(self: GameMode, playedTime: number): string
+---@field public is_counted? fun(self: GameMode, room: Room): boolean
+---@field public get_adjusted? fun(self: GameMode, player: ServerPlayer): table
+---@field public reward_punish? fun(self: GameMode, victim: ServerPlayer, killer: ServerPlayer)
+
+---@param spec GameModeSpec
 ---@return GameMode
 function fk.CreateGameMode(spec)
   assert(type(spec.name) == "string")
@@ -646,6 +666,9 @@ function fk.CreateGameMode(spec)
   ret.blacklist = spec.blacklist
   ret.rule = spec.rule
   ret.logic = spec.logic
+  ret.main_mode = spec.main_mode or spec.name
+  Fk.main_mode_list[ret.main_mode] = Fk.main_mode_list[ret.main_mode] or {}
+  table.insert(Fk.main_mode_list[ret.main_mode], ret.name)
 
   if spec.winner_getter then
     assert(type(spec.winner_getter) == "function")
@@ -662,6 +685,10 @@ function fk.CreateGameMode(spec)
   if spec.get_adjusted then
     assert(type(spec.get_adjusted) == "function")
     ret.getAdjustedProperty = spec.get_adjusted
+  end
+  if spec.reward_punish then
+    assert(type(spec.reward_punish) == "function")
+    ret.deathRewardAndPunish = spec.reward_punish
   end
   return ret
 end
