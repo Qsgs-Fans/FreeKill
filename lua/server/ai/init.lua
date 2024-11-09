@@ -15,10 +15,10 @@ if UsingNewCore then
   require "standard.ai"
   -- require "maneuvering.ai"
 else
-  directories = FileIO.ls("packages")
-  require "packages.standard.ai"
-  require "packages.standard_cards.ai"
-  require "packages.maneuvering.ai"
+  --directories = FileIO.ls("packages")
+  --require "packages.standard.ai"
+  --require "packages.standard_cards.ai"
+  --require "packages.maneuvering.ai"
 end
 table.removeOne(directories, "standard")
 table.removeOne(directories, "standard_cards")

@@ -665,6 +665,7 @@ function Room:animDelay(sec)
   local req = Request:new(self.alive_players, "EmptyRequest")
   req.focus_text = ''
   req.timeout = sec
+  req.no_time_waste_check = true
   req:ask()
 end
 

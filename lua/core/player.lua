@@ -1194,10 +1194,10 @@ function Player:isBuddy(other)
   return self.id == id or table.contains(self.buddy_list, id)
 end
 
-local function defaultCardVisible(self, cardId, area, owner, falsy)
-  local public_areas = {Card.DiscardPile, Card.Processing, Card.Void, Card.PlayerEquip, Card.PlayerJudge}
-  local player_areas = {Card.PlayerHand, Card.PlayerSpecial}
+local public_areas = {Card.DiscardPile, Card.Processing, Card.Void, Card.PlayerEquip, Card.PlayerJudge}
+local player_areas = {Card.PlayerHand, Card.PlayerSpecial}
 
+local function defaultCardVisible(self, cardId, area, owner, falsy)
   if area == Card.DrawPile then return false
   elseif table.contains(public_areas, area) then return not falsy
   elseif table.contains(player_areas, area) then

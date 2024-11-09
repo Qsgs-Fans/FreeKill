@@ -781,6 +781,7 @@ function GetCardProhibitReason(cid)
     response = "method_response_play",
     discard = "method_discard",
   }
+  if not fn_table[method] then return "" end
 
   local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
   local s
@@ -815,6 +816,7 @@ function GetTargetTip(pid)
   local card = handler.selected_card --[[@as Card?]]
   local skill = Fk.skills[handler.skill_name]
   local photo = handler.scene.items["Photo"][pid] --[[@as Photo]]
+  if not photo then return {} end
   local selectable = photo.enabled
   local extra_data = handler.extra_data
 

@@ -133,7 +133,7 @@ Item {
 
   Rectangle {
     id: virt_rect
-    visible: root.virt_name !== "" && root.virt_name !== root.name
+    visible: known && root.virt_name !== "" && root.virt_name !== root.name
     width: parent.width
     height: 20
     y: 40
@@ -218,6 +218,7 @@ Item {
     columns: 2
     rowSpacing: 1
     columnSpacing: 0
+    visible: known
     Repeater {
       model: mark
       delegate: cardMarkDelegate
