@@ -125,6 +125,8 @@ QtObject {
       let ret = SysLocale;
       if (ret.startsWith('zh_')) {
         return 'zh_CN';
+      } else if (ret.startsWith('vi_')) {
+        return 'vi_VN';
       } else {
         return 'en_US';
       }

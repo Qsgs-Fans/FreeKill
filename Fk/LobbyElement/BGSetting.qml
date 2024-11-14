@@ -93,7 +93,7 @@ ColumnLayout {
       text: "Language"
     }
     ComboBox {
-      model: ["zh_CN", "en_US"]
+      model: ["zh_CN", "en_US", "vi_VN"]
       currentIndex: model.indexOf(config.language)
       onCurrentTextChanged: { config.language = currentText; }
     }
