@@ -80,7 +80,6 @@
  lý do: %2</translation>
   </message>
 </context>
-
 <context>
   <name>Server</name>
   <message>
@@ -96,7 +95,6 @@
     <translation>Người chơi &lt;b>%1&lt;/b> đã quay trở lại trò chơi</translation>
   </message>
 </context>
-
 <context>
   <name>PackMan</name>
   <message>
@@ -112,7 +110,6 @@
     <translation>Gói %1 gặp sự cố. Bạn có thể thử: vào “quản lý gói mở rộng”, tìm %1, xóa, rồi thử lại</translation>
   </message>
 </context>
-
 <context>
   <name>QmlBackend</name>
   <message>
@@ -156,7 +153,6 @@
     <translation>Nhấn “Đồng ý” sẽ ngay lập tức đóng trò chơi, khi khởi động lại sẽ sao chép lại tài nguyên, áp dụng cho những lần vào máy chủ nhiều lần báo lỗi MD5, có tiếp tục không?</translation>
   </message>
 </context>
-
 <context>
   <name>Init</name>
   <message>
@@ -208,7 +204,6 @@
     <translation>Đã đồng bộ gói mở rộng với máy chủ cho bạn, vui lòng thử kết nối lại</translation>
   </message>
 </context>
-
 <context>
   <name>JoinServer</name>
   <message>
@@ -247,7 +242,6 @@
     <source>Port</source>
     <translation>Cổng</translation>
   </message>
-
   <message>
     <source>@VersionMismatch</source>
     <translation>&lt;font color="red" size="4">&lt;b>!! v%1&lt;/b>&lt;/font></translation>
@@ -256,7 +250,6 @@
     <source>Server not up</source>
     <translation>Máy chủ dường như không hoạt động.</translation>
   </message>
-
   <message>
     <source>@NewServer</source>
     <translation>Thêm máy chủ mới</translation>
@@ -303,7 +296,6 @@
     <translation>Xóa khỏi danh sách yêu thích</translation>
   </message>
 </context>
-
 <context>
   <name>main</name>
   <message>
@@ -315,7 +307,6 @@
     <translation>Bạn có chắc chắn muốn thoát không?</translation>
   </message>
 </context>
-
 <context>
   <name>Splash</name>
   <message>
@@ -339,7 +330,6 @@
     <translation>Nhấn bất kỳ phím nào...</translation>
   </message>
 </context>
-
 <context>
   <name>Logic</name>
   <message>
@@ -427,7 +417,6 @@
     <translation>Máy chủ đã đầy!</translation>
   </message>
 </context>
-
 <context>
   <name>PackageManage</name>
   <message>
@@ -471,7 +460,6 @@
     <translation>Cập nhật tất cả</translation>
   </message>
 </context>
-
 <context>
   <name>ModInit</name>
   <message>
@@ -492,7 +480,6 @@ Hãy nhấp vào góc trên bên phải để cấu hình tên người dùng v�
     <translation>Không thể sử dụng tên mod này</translation>
   </message>
 </context>
-
 <context>
   <name>UserInfo</name>
   <message>
@@ -520,7 +507,6 @@ Hãy nhấp vào góc trên bên phải để cấu hình tên người dùng v�
     <translation>Public key đã được sao chép vào bộ nhớ tạm.</translation>
   </message>
 </context>
-
 <context>
   <name>CreateSomething</name>
   <message>
@@ -544,7 +530,6 @@ Hãy nhấp vào góc trên bên phải để cấu hình tên người dùng v�
     <translation>Vui lòng nhập tên mã của gói mở rộng.</translation>
   </message>
 </context>
-
 <context>
   <name>Tutorial</name>
   <message>
@@ -576,12 +561,12 @@ Hãy nhấp vào góc trên bên phải để cấu hình tên người dùng v�
   <message>
     <source>tutor_msg_6</source>
     <translation>Nếu muốn liên hệ với chúng tôi, bạn có thể dùng những cách này: &lt;br>
-		Đội ngũ phát triển:&lt;br>
-		Baidu Tieba: 新月杀吧&lt;br>
+        Đội ngũ phát triển:&lt;br>
+        Baidu Tieba: 新月杀吧&lt;br>
         Discord server: &lt;a href="https://discord.gg/tp35GrQR6v">https://discord.gg/tp35GrQR6v&lt;/a>&lt;br>
         QQ channel: freekill01&lt;br>
-		
-		Đội ngũ Việt hóa&lt;br>
+
+        Đội ngũ Việt hóa&lt;br>
         Discord: &lt;a href="https://discord.gg/jfm4PKpjmN">https://discord.gg/jfm4PKpjmN&lt;/a>&lt;br>
         Facebook: &lt;a href="https://www.facebook.com/groups/tqsvn">https://www.facebook.com/groups/tqsvn&lt;/a>&lt;br></translation>
   </message>
@@ -594,7 +579,7 @@ Hãy nhấp vào góc trên bên phải để cấu hình tên người dùng v�
   <message>
     <source>tutor_msg_5</source>
     <translation>Để có thêm chỉ dẫn, bạn có thể tham khảo sách Tân Nguyệt (Hiện chưa có tiếng Việt)
-	Các tài liệu này được viết bởi các nhà phát triển, không chỉ giúp bạn nhanh chóng nắm vững cách chơi sâu hơn của trò chơi, mà còn cung cấp kiến thức về việc mở máy chủ riêng, tạo các bản mở rộng và nhiều kiến thức liên quan khác.</translation>
+    Các tài liệu này được viết bởi các nhà phát triển, không chỉ giúp bạn nhanh chóng nắm vững cách chơi sâu hơn của trò chơi, mà còn cung cấp kiến thức về việc mở máy chủ riêng, tạo các bản mở rộng và nhiều kiến thức liên quan khác.</translation>
   </message>
   <message>
     <source>Skip</source>
