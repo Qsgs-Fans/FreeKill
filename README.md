@@ -12,41 +12,55 @@ ___
 
 ## 关于本项目
 
-新月杀（FreeKill）是一款开源的三国杀游戏，但其目的不在于补完官方所有武将，而是着力于提供一个最适合DIY的框架。
+欢迎来到新月杀！新月杀（FreeKill）是一款开源的三国杀游戏，目的是为了提供一个最适合DIY的框架。
+为了证明框架的适用性，开发组还实现了官方大部分武将技能与游戏模式，以供DIYer们参考。
 
-___
-
-## 项目文档
-
-https://fkbook-all-in-one.readthedocs.io/
+项目使用Lua语言实现游戏逻辑与房间调度，使用Qt C++为Lua提供底层支持（网络通信、JSON等），
+使用Qt Quick实现GUI界面。详细文档请查看https://fkbook-all-in-one.readthedocs.io/。
 
 ___
 
 ## 安装和使用
 
 Release页面提供Windows版和Android版的打包好的文件，请直接下载使用。
+如需版本更新的话，请直接覆盖到原先的安装上更新，无需卸载旧版。
 
-Linux用户则需要从头开始编译，不过对于ArchLinux上，可以从AUR中安装：
+Linux用户则需要从头开始编译（[详细编译流程在此](https://fkbook-all-in-one.readthedocs.io/zh-cn/latest/develop/02-env.html)）。
+以Debian为例：
 
-    $ yay -S freekill
+```sh
+$ sudo apt install git gcc g++ cmake swig
+$ sudo apt install liblua5.4-dev libsqlite3-dev libreadline-dev libssl-dev libgit2-dev
+$ sudo apt install qtcreator qt6-base-dev qt6-tools-dev-tools # TODO: 记不清qt6的dev包了，我自己用的是arch
+```
 
-初始界面是连入服务器的界面，可以选择加入服务器，也可以单机开始游戏。
+```sh
+$ git clone https://github.com/Qsgs-Fans/FreeKill.git
+$ cd FreeKill
+$ mkdir build && cd build
+$ cp -r /usr/include/lua5.4/* ../include
+$ cmake .. && make -j8
+```
 
-___
+此外ArchLinux用户也可从AUR中安装：
 
-## 如何构建
+```sh
+$ yay -S freekill
+```
 
-https://fkbook-all-in-one.readthedocs.io/zh-cn/latest/develop/02-env.html
+更多关于游玩细节与操作请[查看这里](https://fkbook-all-in-one.readthedocs.io/zh-cn/latest/newbie/index.html)。
 
 ___
 
 ## 参与其中
 
-若您能为新月杀做出贡献，我们将不胜感激。
+若您能为新月杀做出贡献，我们将不胜感激。以下是关于贡献的一些注意事项：
 
-如若您能提出良好的建议，请fork本仓库然后提交PR。您也可以单纯只提出一个issue，或者为repo点一个star。再次感谢您的帮助。
-
-有关做出贡献的细节，详见`CONTRIBUTING.md`。（施工中）
+- 项目的所有lua文件（packages/test除外）由特殊仓库https://github.com/Qsgs-Fans/freekill-core进行管理，
+  因此请不要直接修改本仓库中的Lua文件，更多信息请查看freekill-core的README页面
+- 只有本仓库是在Github上托管与实际维护的，开发组对其他官方武将的实现则分散在许多小仓库中，
+  并且在Gitee上维护。这些仓库都在我们的组织账号之下：https://gitee.com/qsgs-fans/
+- 本项目以及不少拓展包项目的需求都写在Issue中，还请善加查阅。
 
 ___
 
