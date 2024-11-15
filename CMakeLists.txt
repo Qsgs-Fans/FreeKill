@@ -49,6 +49,9 @@ if (NOT DEFINED FK_SERVER_ONLY)
 
     TS_FILES lang/en_US.ts
     QM_FILES_OUTPUT_VARIABLE en_US.qm
+
+    TS_FILES lang/vi_VN.ts
+    QM_FILES_OUTPUT_VARIABLE vi_VN.qm
   )
 endif()
 

@@ -32,6 +32,7 @@ cp ../server/init.sql assets/res/server
 cp ../LICENSE assets/res
 cp ../zh_CN.qm assets/res
 cp ../en_US.qm assets/res
+cp ../vi_VN.qm assets/res
 cp ../fk_ver assets/res
 cp ../waiting_tips.txt assets/res
 

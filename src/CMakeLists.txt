@@ -156,6 +156,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
   install(FILES
     ${CMAKE_BINARY_DIR}/zh_CN.qm
     ${CMAKE_BINARY_DIR}/en_US.qm
+    ${CMAKE_BINARY_DIR}/vi_VN.qm
     DESTINATION share/FreeKill
   )
 endif()
