@@ -6,8 +6,6 @@ set (TEST_LIB
   Qt6::Test
 )
 
-qt_add_executable(Test test.cpp)
-
-target_link_libraries(Test PRIVATE ${TEST_LIB})
-
-add_test(NAME mytest COMMAND Test)
+qt_add_executable(TestSocket network/test_socket.cpp)
+target_link_libraries(TestSocket PRIVATE ${TEST_LIB})
+add_test(NAME "socket tests" COMMAND TestSocket)

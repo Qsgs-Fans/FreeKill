@@ -55,7 +55,7 @@ endif ()
 
 set(QT_LIB
   Qt6::Network
-)
+  PARENT_SCOPE)
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND QT_LIB

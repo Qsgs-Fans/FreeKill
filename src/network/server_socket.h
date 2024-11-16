@@ -24,6 +24,7 @@ public:
     仅用于@ref Server 的构造函数中，作为Server的一个子成员。
    */
   ServerSocket(QObject *parent = nullptr);
+  // TODO: 析构函数
 
   /// 监听端口port，TCP和UDP的都监听
   bool listen(const QHostAddress &address = QHostAddress::Any, ushort port = 9527u);

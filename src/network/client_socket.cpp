@@ -39,7 +39,7 @@ void ClientSocket::getMessage() {
       msg = msg.sliced(10);
       msg = qUncompress(QByteArray::fromBase64(msg));
     }
-    emit message_got(msg);
+    emit message_got(msg.simplified());
   }
 }
 
@@ -49,6 +49,10 @@ void ClientSocket::disconnectFromHost() {
 }
 
 void ClientSocket::send(const QByteArray &msg) {
+  if (socket->state() != QTcpSocket::ConnectedState) {
+    emit error_message("Cannot send messages if not connected");
+    return;
+  }
   QByteArray _msg;
   if (msg.length() >= 1024) {
     auto comp = qCompress(msg);
@@ -150,6 +154,9 @@ void ClientSocket::installAESKey(const QByteArray &key) {
     return;
   }
   auto key_ = QByteArray::fromHex(key);
+  if (key_.length() != 16) {
+    return;
+  }
 
   AES_set_encrypt_key((const unsigned char *)key_.data(), 16 * 8, &aes_key);
   aes_ready = true;
