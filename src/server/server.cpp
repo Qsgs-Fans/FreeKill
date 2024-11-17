@@ -63,9 +63,6 @@ Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
-//  foreach (auto room, idle_rooms) {
-//    room->deleteLater();
-//  }
   foreach (auto thread, threads) {
     thread->deleteLater();
   }
@@ -100,16 +97,8 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     thread = createThread();
   }
 
-  if (!idle_rooms.isEmpty()) {
-    room = idle_rooms.pop();
-    room->setId(nextRoomId);
-    nextRoomId++;
-    room->setAbandoned(false);
-    thread->addRoom(room);
-  } else {
-    room = new Room(thread);
-    connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
-  }
+  room = new Room(thread);
+  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
 
   rooms.insert(room->getId(), room);
   room->setName(name);
@@ -362,13 +351,10 @@ void Server::onRoomAbandoned() {
   // room->gameOver(); // Lua会出手
   rooms.remove(room->getId());
   updateOnlineInfo();
-  // 按理说这时候就可以删除了，但是这里肯定比Lua先检测到。
-  // 倘若在Lua的Room:gameOver时C++的Room被删除了问题就大了。
-  // FIXME: 但是这终归是内存泄漏！以后啥时候再改吧。
-  // room->deleteLater();
-  idle_rooms.push(room);
   room->getThread()->wakeUp(room->getId(), "abandon");
   room->getThread()->removeRoom(room);
+  // lua负责deleteLater这个room
+  // room->deleteLater();
 }
 
 #define SET_DEFAULT_CONFIG(k, v) do {\

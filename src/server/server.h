@@ -42,12 +42,8 @@ public:
 
     创建新的房间。
 
-    首先，房间名是用户自定义输入内容，需要先进行内容安全检查；然后创建新房间。
-    在创建新房间时，游戏会避免创建新的Room对象；有一个idle_rooms存储着创建过
-    但目前没在使用中的房间，游戏优先从其中选择一个作为“新房间”，如果没有这样的
-    房间，那么就构造一个新的Room对象。
-
-    之后，将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
+    首先，房间名是用户自定义输入内容，需要先进行内容安全检查；然后创建新房间，
+    将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
     房间，通过addPlayer将房主添加到房间中，并使用setOwner将其设为房主。
 
     @param owner 创建房间的那名玩家；房主
@@ -104,7 +100,6 @@ private:
 
   Lobby *m_lobby;
   QMap<int, Room *> rooms;
-  QStack<Room *> idle_rooms;
   QList<RoomThread *> threads;
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
