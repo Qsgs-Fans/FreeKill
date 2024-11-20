@@ -55,4 +55,6 @@ class RoomThread : public QThread {
   // volatile bool terminated;
 };
 
+Q_DECLARE_METATYPE(RoomThread *)
+
 #endif // _ROOMTHREAD_H

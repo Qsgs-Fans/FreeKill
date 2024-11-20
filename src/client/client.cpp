@@ -3,6 +3,7 @@
 #include "client/client.h"
 #include "client/clientplayer.h"
 #include "ui/qmlbackend.h"
+#include "core/c-wrapper.h"
 #include "core/util.h"
 #include "server/server.h"
 #include "network/client_socket.h"
@@ -10,7 +11,7 @@
 Client *ClientInstance = nullptr;
 ClientPlayer *Self = nullptr;
 
-Client::Client(QObject *parent) : QObject(parent), callback(0) {
+Client::Client(QObject *parent) : QObject(parent) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
   self = Self;
@@ -19,22 +20,22 @@ Client::Client(QObject *parent) : QObject(parent), callback(0) {
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
   router = new Router(this, socket, Router::TYPE_CLIENT);
 
-  L = CreateLuaState();
+  L = new Lua;
   if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
     // 危险的cd操作，记得在lua中切回游戏根目录
     QDir::setCurrent("packages/freekill-core");
   }
 
-  DoLuaScript(L, "lua/freekill.lua");
-  DoLuaScript(L, "lua/client/client.lua");
+  L->dofile("lua/freekill.lua");
+  L->dofile("lua/client/client.lua");
 }
 
 Client::~Client() {
   ClientInstance = nullptr;
   // Self->deleteLater();
   Self = nullptr;
-  lua_close(L);
+  delete L;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
 }
@@ -64,6 +65,10 @@ void Client::notifyServer(const QString &command, const QString &jsonData) {
   router->notify(type, command, jsonData);
 }
 
+void Client::callLua(const QString& command, const QString& json_data, bool isRequest) {
+  L->call("ClientCallback", { QVariant::fromValue(this), command, json_data, isRequest });
+}
+
 ClientPlayer *Client::addPlayer(int id, const QString &name,
                                 const QString &avatar) {
   ClientPlayer *player = new ClientPlayer(id);
@@ -88,7 +93,7 @@ void Client::changeSelf(int id) {
   Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
 }
 
-lua_State *Client::getLuaState() { return L; }
+Lua *Client::getLua() { return L; }
 
 void Client::installAESKey(const QByteArray &key) {
   startWatchFiles();

@@ -25,6 +25,7 @@ set(freekill_SRCS
   "freekill.cpp"
   "core/player.cpp"
   "core/util.cpp"
+  "core/c-wrapper.cpp"
   "core/packman.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"

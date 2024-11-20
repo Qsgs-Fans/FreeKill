@@ -23,11 +23,6 @@ public:
   static Q_INVOKABLE bool exists(const QString &file);
   static Q_INVOKABLE bool isDir(const QString &file);
 
-  // 这俩函数为啥要写在这。。
-  static void pushLuaValue(lua_State *L, QVariant v);
-  static QVariant readLuaValue(lua_State *L, int index = 0,
-      QHash<const void *, bool> stack = QHash<const void *, bool>());
-
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
   void setEngine(QQmlApplicationEngine *engine);

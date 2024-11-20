@@ -4,60 +4,6 @@
 #include "core/packman.h"
 #include <QSysInfo>
 
-extern "C" {
-int luaopen_fk(lua_State *);
-}
-
-lua_State *CreateLuaState() {
-  lua_State *L = luaL_newstate();
-  luaL_openlibs(L);
-  luaopen_fk(L);
-
-  return L;
-}
-
-bool DoLuaScript(lua_State *L, const char *script) {
-  lua_getglobal(L, "debug");
-  lua_getfield(L, -1, "traceback");
-  lua_replace(L, -2);
-
-  luaL_loadfile(L, script);
-  int error = lua_pcall(L, 0, LUA_MULTRET, -2);
-
-  if (error) {
-    const char *error_msg = lua_tostring(L, -1);
-    qCritical() << error_msg;
-    lua_pop(L, 2);
-    return false;
-  }
-  lua_pop(L, 1);
-  return true;
-}
-
-// For Lua debugging
-void Dumpstack(lua_State *L) {
-  int top = lua_gettop(L);
-  for (int i = 1; i <= top; i++) {
-    printf("%d\t%s\t", i, luaL_typename(L, i));
-    switch (lua_type(L, i)) {
-    case LUA_TNUMBER:
-      printf("%g\n", lua_tonumber(L, i));
-      break;
-    case LUA_TSTRING:
-      printf("%s\n", lua_tostring(L, i));
-      break;
-    case LUA_TBOOLEAN:
-      printf("%s\n", (lua_toboolean(L, i) ? "true" : "false"));
-      break;
-    case LUA_TNIL:
-      printf("%s\n", "nil");
-      break;
-    default:
-      printf("%p\n", lua_topointer(L, i));
-      break;
-    }
-  }
-}
 
 sqlite3 *OpenDatabase(const QString &filename, const QString &initSql) {
   sqlite3 *ret;

@@ -1,0 +1,29 @@
+#ifndef _LUA_WRAPPER_H
+#define _LUA_WRAPPER_H
+
+// 为C库提供一层C++包装 方便操作
+
+struct lua_State;
+
+class Lua {
+public:
+  Lua();
+  ~Lua();
+
+  bool dofile(const char *path);
+  void dumpStack();
+
+  // 之所以static是因为swig的naturalvar环节处理QVariant需要
+  // 函数的定义在naturalvar.i中
+  static void pushValue(lua_State *L, QVariant v);
+  static QVariant readValue(lua_State *L, int index = 0,
+      QHash<const void *, bool> stack = QHash<const void *, bool>());
+
+  QVariant call(const QString &func_name, QVariantList params = QVariantList());
+  QVariant eval(const QString &lua);
+
+private:
+  lua_State *L;
+};
+
+#endif // _LUA_WRAPPER_H

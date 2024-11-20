@@ -56,24 +56,6 @@ public:
   bool isOutdated();
 };
 
-%{
-#include "server/scheduler.h"
-void Scheduler::tellThreadToLua()
-{
-  lua_getglobal(L, "debug");
-  lua_getfield(L, -1, "traceback");
-  lua_replace(L, -2);
-  lua_getglobal(L, "InitScheduler");
-  SWIG_NewPointerObj(L, m_thread, SWIGTYPE_p_RoomThread, 0);
-  int error = lua_pcall(L, 1, 0, -2);
-  lua_pop(L, 1);
-  if (error) {
-    const char *error_msg = lua_tostring(L, -1);
-    qCritical() << error_msg;
-  }
-}
-%}
-
 %nodefaultctor ServerPlayer;
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {

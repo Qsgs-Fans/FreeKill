@@ -12,8 +12,6 @@
 #include <QUdpSocket>
 
 // other libraries
-typedef int LuaFunction;
-#include "lua.hpp"
 #include "sqlite3.h"
 #define OPENSSL_API_COMPAT 0x10101000L
 

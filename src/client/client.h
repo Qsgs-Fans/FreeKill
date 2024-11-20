@@ -6,6 +6,8 @@
 #include "network/router.h"
 #include "client/clientplayer.h"
 
+class Lua;
+
 #ifndef FK_SERVER_ONLY
 #include "ui/qmlbackend.h"
 #endif
@@ -24,14 +26,13 @@ public:
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
   Q_INVOKABLE void callLua(const QString &command, const QString &jsonData, bool isRequest = false);
-  LuaFunction callback;
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
   Q_INVOKABLE void clearPlayers();
   void changeSelf(int id);
 
-  lua_State *getLuaState();
+  Lua *getLua();
   void installAESKey(const QByteArray &key);
 
   void saveRecord(const QString &json, const QString &fname);
@@ -61,10 +62,12 @@ private:
   QString screenName;
   QString password;
 
-  lua_State *L;
+  Lua *L;
   QFileSystemWatcher fsWatcher;
 };
 
 extern Client *ClientInstance;
+
+Q_DECLARE_METATYPE(Client *);
 
 #endif // _CLIENT_H
