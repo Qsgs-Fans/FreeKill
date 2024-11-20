@@ -2,7 +2,7 @@
 
 #include "client/replayer.h"
 #include "client/client.h"
-#include "ui/qmlbackend.h"
+#include "client/clientplayer.h"
 #include "core/util.h"
 
 Replayer::Replayer(QObject *parent, const QString &filename) :
@@ -31,7 +31,8 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
 
   auto ver = arr[0].toString();
   if (ver != FK_VERSION) {
-    Backend->showToast("Warning: Mismatch version of replay detected, which may cause crashes.");
+    emit ClientInstance->toast_message(
+      "Warning: Mismatch version of replay detected, which may cause crashes.");
   }
 
   roomSettings = arr[2].toString();
@@ -50,7 +51,9 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
     pairs << pair;
   }
 
-  connect(this, &Replayer::command_parsed, ClientInstance, &Client::processReplay);
+  connect(this, &Replayer::command_parsed, this, [](const QString &c, const QString &j) {
+    ClientInstance->callLua(c, j);
+  });
 
   auto playerInfoRaw = arr[3].toString();
   auto playerInfo = QJsonDocument::fromJson(playerInfoRaw.toUtf8()).array();
@@ -64,7 +67,6 @@ Replayer::~Replayer() {
   if (origPlayerInfo != "") {
     emit command_parsed("Setup", origPlayerInfo);
   }
-  Backend->setReplayer(nullptr);
   foreach (auto e, pairs) {
     delete e;
   }
@@ -130,7 +132,7 @@ void Replayer::run() {
   qint64 start = 0;
 
   if (roomSettings == "") {
-    Backend->showToast("Invalid replay file.");
+    emit ClientInstance->toast_message("Invalid replay file.");
     deleteLater();
     return;
   }

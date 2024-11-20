@@ -2,11 +2,11 @@
 
 #include "client/client.h"
 #include "client/clientplayer.h"
-#include "ui/qmlbackend.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
 #include "server/server.h"
 #include "network/client_socket.h"
+#include "network/router.h"
 
 Client *ClientInstance = nullptr;
 ClientPlayer *Self = nullptr;
@@ -90,7 +90,8 @@ void Client::clearPlayers() { players.clear(); }
 void Client::changeSelf(int id) {
   auto p = players[id];
   Self = p ? p : self;
-  Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
+  // Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
+  emit self_changed();
 }
 
 Lua *Client::getLua() { return L; }
@@ -138,17 +139,13 @@ void Client::startWatchFiles() {
       &Client::updateLuaFiles);
 }
 
-void Client::processReplay(const QString &c, const QString &j) {
-  callLua(c, j);
-}
-
 void Client::updateLuaFiles(const QString &path) {
   if (!isConsoleStart()) return;
-  Backend->showToast(tr("File %1 changed, reloading...").arg(path));
+  // Backend->showToast(tr("File %1 changed, reloading...").arg(path));
+  emit toast_message(tr("File %1 changed, reloading...").arg(path));
   QThread::msleep(100);
-  Backend->callLuaFunction("ReloadPackage", { path });
-  ClientInstance->notifyServer("PushRequest",
-      QString("reloadpackage,%1").arg(path));
+  L->call("ReloadPackage", { path });
+  notifyServer("PushRequest", QString("reloadpackage,%1").arg(path));
 
   // according to QT documentation
   if (!fsWatcher.files().contains(path) && QFile::exists(path)) {

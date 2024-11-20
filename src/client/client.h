@@ -3,14 +3,9 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include "network/router.h"
-#include "client/clientplayer.h"
-
 class Lua;
-
-#ifndef FK_SERVER_ONLY
-#include "ui/qmlbackend.h"
-#endif
+class ClientPlayer;
+class Router;
 
 class Client : public QObject {
   Q_OBJECT
@@ -44,9 +39,8 @@ public:
 signals:
   void notifyUI(const QString &command, const QVariant &jsonData);
   void error_message(const QString &msg);
-
-public slots:
-  void processReplay(const QString &, const QString &);
+  void toast_message(const QString &msg);
+  void self_changed();
 
 private slots:
   void updateLuaFiles(const QString &path);

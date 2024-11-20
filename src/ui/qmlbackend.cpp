@@ -17,9 +17,11 @@
 #include <cstdlib>
 #include "server/server.h"
 #include "client/client.h"
+#include "client/clientplayer.h"
+#include "client/replayer.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
-#include "client/replayer.h"
+#include "network/router.h"
 
 QmlBackend *Backend = nullptr;
 
@@ -111,6 +113,10 @@ void QmlBackend::joinServer(QString address, ushort port) {
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
   });
+  connect(client, &Client::self_changed, this, [=](){
+    engine->rootContext()->setContextProperty("Self", Self);
+  });
+  connect(client, &Client::toast_message, this, &QmlBackend::showToast);
 
   /*
   QString addr = "127.0.0.1";
@@ -445,6 +451,9 @@ void QmlBackend::removeRecord(const QString &fname) {
 void QmlBackend::playRecord(const QString &fname) {
   auto replayer = new Replayer(this, fname);
   setReplayer(replayer);
+  connect(replayer, &Replayer::destroyed, this, [=](){
+    setReplayer(nullptr);
+  });
   replayer->start();
 }
 
