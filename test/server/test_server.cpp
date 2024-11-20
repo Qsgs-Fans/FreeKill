@@ -71,21 +71,22 @@ private slots:
 private:
   ServerThread *server_thread;
   ClientThread *client_thread, *client_thread2;
+  Client *client;
 };
 
 void TestServer::initTestCase() {
   QDir::setCurrent("..");
   Pacman = new PackMan;
   server_thread = new ServerThread;
-  client_thread = new ClientThread;
-  client_thread2 = new ClientThread;
 
   server_thread->start();
 }
 
 void TestServer::testConnectToServer() {
-  auto client = new Client;
+  client = new Client;
+  client->setLoginInfo("player", "1234");
   client->connectToHost("localhost", test_port);
+  client->deleteLater();
 }
 
 void TestServer::cleanupTestCase() {

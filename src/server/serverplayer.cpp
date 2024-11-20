@@ -10,6 +10,24 @@
 ServerPlayer::ServerPlayer(RoomBase *room) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
+  connect(router, &Router::notification_got, this, [=](const QString &c, const QString &j) {
+    if (c == "Heartbeat") {
+      alive = true;
+      return;
+    }
+
+    this->room->handlePacket(this, c, j);
+  });
+  connect(router, &Router::replyReady, this, [=]() {
+    setThinking(false);
+    if (!this->room->isLobby()) {
+      auto _room = qobject_cast<Room *>(this->room);
+      if (_room->getThread()) {
+        _room->getThread()->wakeUp(_room->getId(), "reply");
+        // TODO: signal
+      }
+    }
+  });
   setState(Player::Online);
   this->room = room;
   server = room->getServer();
