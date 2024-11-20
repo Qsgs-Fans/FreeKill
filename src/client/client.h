@@ -41,6 +41,7 @@ public:
 
   Router *getRouter() const { return router; }
 signals:
+  void notifyUI(const QString &command, const QVariant &jsonData);
   void error_message(const QString &msg);
 
 public slots:
@@ -55,6 +56,10 @@ private:
   ClientPlayer *self;
   qint64 start_connent_timestamp; // 连接时的时间戳 单位毫秒
   qint64 server_lag = 0; // 与服务器时差，单位毫秒，正数表示自己快了 负数表示慢了
+
+  // 仅在登录时使用
+  QString screenName;
+  QString password;
 
   lua_State *L;
   QFileSystemWatcher fsWatcher;

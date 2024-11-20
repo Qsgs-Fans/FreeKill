@@ -4,7 +4,6 @@
 %nodefaultdtor QmlBackend;
 class QmlBackend : public QObject {
 public:
-  void notifyUI(const QString &command, const QVariant &data);
   static void cd(const QString &path);
   static QStringList ls(const QString &dir);
   static QString pwd();
@@ -30,6 +29,7 @@ public:
   void changeSelf(int id);
 
   void saveRecord(const QString &json, const QString &fname);
+  void notifyUI(const QString &command, const QVariant &jsonData);
 };
 
 extern Client *ClientInstance;

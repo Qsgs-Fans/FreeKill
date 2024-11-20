@@ -211,10 +211,19 @@ void QmlBackend::startServer(ushort port) {
   }
 }
 
+static ClientPlayer dummyPlayer(0, nullptr);
+
 void QmlBackend::joinServer(QString address, ushort port) {
   if (ClientInstance != nullptr)
     return;
   Client *client = new Client(this);
+  connect(client, &Client::notifyUI, this, &QmlBackend::notifyUI);
+  engine->rootContext()->setContextProperty("ClientInstance", client);
+  engine->rootContext()->setContextProperty("Self", Self);
+  connect(client, &Client::destroyed, this, [=](){
+    engine->rootContext()->setContextProperty("Self", &dummyPlayer);
+    engine->rootContext()->setContextProperty("ClientInstance", nullptr);
+  });
   connect(client, &Client::error_message, this, [=](const QString &msg) {
     if (replayer) {
       emit replayerShutdown();
@@ -223,6 +232,7 @@ void QmlBackend::joinServer(QString address, ushort port) {
     emit notifyUI("ErrorMsg", msg);
     emit notifyUI("BackToStart", "[]");
   });
+
   /*
   QString addr = "127.0.0.1";
   ushort port = 9527u;

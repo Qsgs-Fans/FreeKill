@@ -10,15 +10,10 @@
 Client *ClientInstance = nullptr;
 ClientPlayer *Self = nullptr;
 
-static ClientPlayer dummyPlayer(0, nullptr);
-
 Client::Client(QObject *parent) : QObject(parent), callback(0) {
   ClientInstance = this;
   Self = new ClientPlayer(0, this);
   self = Self;
-  QQmlApplicationEngine *engine = Backend->getEngine();
-  engine->rootContext()->setContextProperty("ClientInstance", ClientInstance);
-  engine->rootContext()->setContextProperty("Self", Self);
 
   ClientSocket *socket = new ClientSocket;
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
@@ -39,7 +34,6 @@ Client::~Client() {
   ClientInstance = nullptr;
   // Self->deleteLater();
   Self = nullptr;
-  Backend->getEngine()->rootContext()->setContextProperty("Self", &dummyPlayer);
   lua_close(L);
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
