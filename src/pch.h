@@ -12,7 +12,6 @@
 #include <QUdpSocket>
 
 // other libraries
-#include "sqlite3.h"
 #define OPENSSL_API_COMPAT 0x10101000L
 
 #if !defined (Q_OS_ANDROID)

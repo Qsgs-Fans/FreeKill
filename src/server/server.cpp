@@ -10,6 +10,7 @@
 #include "network/client_socket.h"
 #include "network/server_socket.h"
 #include "core/packman.h"
+#include "core/c-wrapper.h"
 #include "core/util.h"
 
 #include <QNetworkDatagram>
@@ -18,7 +19,7 @@ Server *ServerInstance = nullptr;
 
 Server::Server(QObject *parent) : QObject(parent) {
   ServerInstance = this;
-  db = OpenDatabase();
+  db = new Sqlite3;
   md5 = calcFileMD5();
   readConfig();
 
@@ -66,7 +67,7 @@ Server::~Server() {
   foreach (auto thread, threads) {
     thread->deleteLater();
   }
-  sqlite3_close(db);
+  delete db;
 }
 
 bool Server::listen(const QHostAddress &address, ushort port) {
@@ -177,7 +178,7 @@ void Server::updateOnlineInfo() {
                              }))));
 }
 
-sqlite3 *Server::getDatabase() { return db; }
+Sqlite3 *Server::getDatabase() { return db; }
 
 void Server::broadcast(const QString &command, const QString &jsonData) {
   foreach (ServerPlayer *p, players.values()) {
@@ -218,8 +219,7 @@ void Server::processNewConnection(ClientSocket *client) {
   qInfo() << addr << "connected";
 
   // check ban ip
-  auto result = SelectFromDatabase(
-      db, QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
+  auto result = db->select(QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
 
   auto errmsg = QString();
 
@@ -280,9 +280,8 @@ void Server::processRequest(const QByteArray &msg) {
 
   auto uuid_str = arr[4].toString();
   auto result2 = QJsonArray({1});
-  if (CheckSqlString(uuid_str)) {
-    result2 = SelectFromDatabase(
-        db, QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
+  if (Sqlite3::checkString(uuid_str)) {
+    result2 = db->select(QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
   }
 
   if (!result2.isEmpty()) {
@@ -312,16 +311,16 @@ void Server::processRequest(const QByteArray &msg) {
     QString("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
     .arg(client->peerAddress())
     .arg(id);
-  ExecSQL(db, sql_update);
+  db->exec(sql_update);
 
   auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');")
     .arg(id).arg(uuid_str);
-  ExecSQL(db, uuid_update);
+  db->exec(uuid_update);
 
   // 来晚了，有很大可能存在已经注册但是表里面没数据的人
-  ExecSQL(db, QString("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
+  db->exec(QString("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
   auto info_update = QString("UPDATE usergameinfo SET lastLoginTime=%2 where id=%1;").arg(id).arg(QDateTime::currentSecsSinceEpoch());
-  ExecSQL(db, info_update);
+  db->exec(info_update);
   endTransaction();
 
   // create new ServerPlayer and setup
@@ -338,7 +337,7 @@ void Server::processRequest(const QByteArray &msg) {
 
   setupPlayer(player);
 
-  auto result = SelectFromDatabase(db, QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
+  auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
   auto time = result[0].toObject()["totalGameTime"].toString().toInt();
   player->addTotalGameTime(time);
   player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
@@ -405,7 +404,7 @@ void Server::temporarilyBan(int playerId) {
   if (!socket) {
     QString sql_find = QString("SELECT * FROM userinfo \
         WHERE id=%1;").arg(playerId);
-    auto result = SelectFromDatabase(db, sql_find);
+    auto result = db->select(sql_find);
     if (result.isEmpty())
       return;
 
@@ -425,11 +424,11 @@ void Server::temporarilyBan(int playerId) {
 
 void Server::beginTransaction() {
   transaction_mutex.lock();
-  ExecSQL(db, "BEGIN;");
+  db->exec("BEGIN;");
 }
 
 void Server::endTransaction() {
-  ExecSQL(db, "COMMIT;");
+  db->exec("COMMIT;");
   transaction_mutex.unlock();
 }
 

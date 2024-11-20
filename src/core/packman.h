@@ -3,6 +3,8 @@
 #ifndef _PACKMAN_H
 #define _PACKMAN_H
 
+class Sqlite3;
+
 // 管理拓展包所需的类，本质上是libgit2接口的再封装。
 class PackMan : public QObject {
   Q_OBJECT
@@ -23,7 +25,7 @@ public:
   Q_INVOKABLE QString listPackages();
 
 private:
-  sqlite3 *db;
+  Sqlite3 *db;
 
   int clone(const QString &url);
   int pull(const QString &name);

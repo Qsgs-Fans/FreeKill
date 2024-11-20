@@ -14,6 +14,7 @@ static void *ClientInstance = nullptr;
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 
 Room::Room(RoomThread *m_thread) {
   auto server = ServerInstance;
@@ -361,10 +362,11 @@ static const QString insertRunRate =
 
 void Room::updateWinRate(int id, const QString &general, const QString &mode,
                          int game_result, bool dead) {
-  if (!CheckSqlString(general))
+  if (!Sqlite3::checkString(general))
     return;
-  if (!CheckSqlString(mode))
+  if (!Sqlite3::checkString(mode))
     return;
+  auto db = server->getDatabase();
 
   int win = 0;
   int lose = 0;
@@ -385,24 +387,20 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
     break;
   }
 
-  QJsonArray result =
-      SelectFromDatabase(server->getDatabase(),
-                         findWinRate.arg(QString::number(id), general, mode));
+  auto result = db->select(findWinRate.arg(QString::number(id), general, mode));
 
   if (result.isEmpty()) {
-    ExecSQL(server->getDatabase(),
-            insertWinRate.arg(QString::number(id), general, mode,
-                           QString::number(win), QString::number(lose),
-                           QString::number(draw)));
+    db->exec(insertWinRate.arg(QString::number(id), general, mode,
+                               QString::number(win), QString::number(lose),
+                               QString::number(draw)));
   } else {
     auto obj = result[0].toObject();
     win += obj["win"].toString().toInt();
     lose += obj["lose"].toString().toInt();
     draw += obj["draw"].toString().toInt();
-    ExecSQL(server->getDatabase(),
-            ::updateWinRate.arg(QString::number(id), general, mode,
-                           QString::number(win), QString::number(lose),
-                           QString::number(draw)));
+    db->exec(::updateWinRate.arg(QString::number(id), general, mode,
+                                 QString::number(win), QString::number(lose),
+                                 QString::number(draw)));
   }
 
   if (runned_players.contains(id)) {
@@ -418,20 +416,17 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
 
 void Room::addRunRate(int id, const QString &mode) {
   int run = 1;
-  QJsonArray result =
-      SelectFromDatabase(server->getDatabase(),
-                         findRunRate.arg(QString::number(id), mode));
+  auto db = server->getDatabase();
+  auto result =db->select(findRunRate.arg(QString::number(id), mode));
 
   if (result.isEmpty()) {
-    ExecSQL(server->getDatabase(),
-            insertRunRate.arg(QString::number(id), mode,
-                           QString::number(run)));
+    db->exec(insertRunRate.arg(QString::number(id), mode,
+                               QString::number(run)));
   } else {
     auto obj = result[0].toObject();
     run += obj["run"].toString().toInt();
-    ExecSQL(server->getDatabase(),
-            updateRunRate.arg(QString::number(id), mode,
-                           QString::number(run)));
+    db->exec(updateRunRate.arg(QString::number(id), mode,
+                               QString::number(run)));
   }
 }
 
@@ -448,16 +443,15 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
   int total = 0;
   int win = 0;
   int run = 0;
+  auto db = server->getDatabase();
 
-  auto result = SelectFromDatabase(server->getDatabase(),
-      findRunRate.arg(QString::number(id), mode));
+  auto result = db->select(findRunRate.arg(QString::number(id), mode));
 
   if (!result.isEmpty()) {
     run = result[0].toObject()["run"].toString().toInt();
   }
 
-  result = SelectFromDatabase(server->getDatabase(),
-      findModeRate.arg(QString::number(id), mode));
+  result = db->select(findModeRate.arg(QString::number(id), mode));
 
   if (!result.isEmpty()) {
     total = result[0].toObject()["total"].toString().toInt();
@@ -497,7 +491,7 @@ void Room::gameOver() {
       // 将游戏时间更新到数据库中
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
-      ExecSQL(server->getDatabase(), info_update);
+      server->getDatabase()->exec(info_update);
     }
 
     if (p->getState() != Player::Online) {

@@ -3,6 +3,7 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
+class Sqlite3;
 class AuthManager;
 class ServerSocket;
 class ClientSocket;
@@ -66,7 +67,7 @@ public:
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
 
-  sqlite3 *getDatabase();
+  Sqlite3 *getDatabase();
 
   void broadcast(const QString &command, const QString &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
@@ -107,7 +108,7 @@ private:
   QList<QString> temp_banlist;
 
   AuthManager *auth;
-  sqlite3 *db; ///< sqlite数据库连接实例
+  Sqlite3 *db; ///< sqlite数据库连接实例
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
 

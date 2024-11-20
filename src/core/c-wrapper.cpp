@@ -1,20 +1,10 @@
 #include "c-wrapper.h"
 #include <lua.hpp>
+#include <sqlite3.h>
 
 extern "C" {
 int luaopen_fk(lua_State *);
 }
-
-// 基于RAII的栈清理工具 这样就懒得写lua_pop了
-// 但是目前仍在TODO
-class StackCleaner {
-public:
-  StackCleaner(lua_State *l): L(l) {}
-  ~StackCleaner() {
-  }
-private:
-  lua_State *L;
-};
 
 Lua::Lua() {
   L = luaL_newstate();
@@ -109,4 +99,86 @@ QVariant Lua::eval(const QString &lua) {
   lua_pop(L, 1);
 
   return result;
+}
+
+Sqlite3::Sqlite3(const QString &filename, const QString &initSql) {
+  int rc;
+
+  QFile file(initSql);
+  if (!file.open(QIODevice::ReadOnly)) {
+    qFatal("cannot open %s. Quit now.", initSql.toUtf8().data());
+    qApp->exit(1);
+  }
+  QTextStream in(&file);
+
+  if (!QFile::exists(filename)) {
+    char *err_msg;
+    sqlite3_open(filename.toLatin1().data(), &db);
+    rc = sqlite3_exec(db, in.readAll().toLatin1().data(), nullptr, nullptr,
+                      &err_msg);
+
+    if (rc != SQLITE_OK) {
+      qCritical() << "sqlite error:" << err_msg;
+      sqlite3_free(err_msg);
+      sqlite3_close(db);
+      qApp->exit(1);
+    }
+  } else {
+    rc = sqlite3_open(filename.toLatin1().data(), &db);
+    if (rc != SQLITE_OK) {
+      qCritical() << "Cannot open database:" << sqlite3_errmsg(db);
+      sqlite3_close(db);
+      qApp->exit(1);
+    }
+
+    char *err_msg;
+    rc = sqlite3_exec(db, in.readAll().toLatin1().data(), nullptr, nullptr,
+                      &err_msg);
+
+    if (rc != SQLITE_OK) {
+      qCritical() << "sqlite error:" << err_msg;
+      sqlite3_free(err_msg);
+      sqlite3_close(db);
+      qApp->exit(1);
+    }
+  }
+}
+
+Sqlite3::~Sqlite3() {
+  sqlite3_close(db);
+}
+
+bool Sqlite3::checkString(const QString &str) {
+  static const QRegularExpression exp("['\";#* /\\\\?<>|:]+|(--)|(/\\*)|(\\*/)|(--\\+)");
+  return (!exp.match(str).hasMatch() && !str.isEmpty());
+}
+
+// callback for handling SELECT expression
+static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
+  QJsonObject obj;
+  for (int i = 0; i < argc; i++) {
+    obj[QString(cols[i])] = QString(argv[i] ? argv[i] : "#null");
+  }
+  ((QJsonArray *)jsonDoc)->append(obj);
+  return 0;
+}
+
+QJsonArray Sqlite3::select(const QString &sql) {
+  static QMutex select_lock;
+  QJsonArray arr;
+  auto bytes = sql.toUtf8();
+  select_lock.lock();
+  sqlite3_exec(db, bytes.data(), callback, (void *)&arr, nullptr);
+  select_lock.unlock();
+  return arr;
+}
+
+QString Sqlite3::selectJson(const QString &sql) {
+  auto obj = select(sql);
+  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+}
+
+void Sqlite3::exec(const QString &sql) {
+  auto bytes = sql.toUtf8();
+  sqlite3_exec(db, bytes.data(), nullptr, nullptr, nullptr);
 }

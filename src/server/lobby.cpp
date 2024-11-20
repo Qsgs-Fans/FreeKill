@@ -2,6 +2,7 @@
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 
 Lobby::Lobby(Server *server) {
   this->server = server;
@@ -33,11 +34,11 @@ void Lobby::updateAvatar(ServerPlayer *sender, const QString &jsonData) {
   auto arr = String2Json(jsonData).array();
   auto avatar = arr[0].toString();
 
-  if (CheckSqlString(avatar)) {
+  if (Sqlite3::checkString(avatar)) {
     auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
       .arg(avatar)
       .arg(sender->getId());
-    ExecSQL(ServerInstance->getDatabase(), sql);
+    ServerInstance->getDatabase()->exec(sql);
     sender->setAvatar(avatar);
     sender->doNotify("UpdateAvatar", avatar);
   }
@@ -52,7 +53,7 @@ void Lobby::updatePassword(ServerPlayer *sender, const QString &jsonData) {
     .arg(sender->getId());
 
   auto passed = false;
-  auto arr2 = SelectFromDatabase(ServerInstance->getDatabase(), sql_find);
+  auto arr2 = ServerInstance->getDatabase()->select(sql_find);
   auto result = arr2[0].toObject();
   passed = (result["password"].toString() ==
       QCryptographicHash::hash(
@@ -67,7 +68,7 @@ void Lobby::updatePassword(ServerPlayer *sender, const QString &jsonData) {
             QCryptographicHash::Sha256)
           .toHex())
       .arg(sender->getId());
-    ExecSQL(ServerInstance->getDatabase(), sql_update);
+    ServerInstance->getDatabase()->exec(sql_update);
   }
 
   sender->doNotify("UpdatePassword", passed ? "1" : "0");

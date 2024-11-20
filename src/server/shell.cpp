@@ -5,6 +5,7 @@
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 #ifdef FK_USE_READLINE
 #include <readline/history.h>
 #include <readline/readline.h>
@@ -191,18 +192,18 @@ void Shell::msgCommand(QStringList &list) {
   ServerInstance->broadcast("ServerMessage", msg);
 }
 
-static void banAccount(sqlite3 *db, const QString &name, bool banned) {
-  if (!CheckSqlString(name))
+static void banAccount(Sqlite3 *db, const QString &name, bool banned) {
+  if (!Sqlite3::checkString(name))
     return;
   QString sql_find = QString("SELECT * FROM userinfo \
         WHERE name='%1';")
                          .arg(name);
-  auto result = SelectFromDatabase(db, sql_find);
+  auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
   auto obj = result[0].toObject();
   int id = obj["id"].toString().toInt();
-  ExecSQL(db, QString("UPDATE userinfo SET banned=%2 WHERE id=%1;")
+  db->exec(QString("UPDATE userinfo SET banned=%2 WHERE id=%1;")
                   .arg(id)
                   .arg(banned ? 1 : 0));
 
@@ -249,14 +250,14 @@ void Shell::unbanCommand(QStringList &list) {
   unbanUuidCommand(list);
 }
 
-static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
-  if (!CheckSqlString(name))
+static void banIPByName(Sqlite3 *db, const QString &name, bool banned) {
+  if (!Sqlite3::checkString(name))
     return;
 
   QString sql_find = QString("SELECT * FROM userinfo \
         WHERE name='%1';")
                          .arg(name);
-  auto result = SelectFromDatabase(db, sql_find);
+  auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
   auto obj = result[0].toObject();
@@ -264,7 +265,7 @@ static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
   auto addr = obj["lastLoginIp"].toString();
 
   if (banned) {
-    ExecSQL(db, QString("INSERT INTO banip VALUES('%1');").arg(addr));
+    db->exec(QString("INSERT INTO banip VALUES('%1');").arg(addr));
 
     auto p = ServerInstance->findPlayer(id);
     if (p) {
@@ -272,7 +273,7 @@ static void banIPByName(sqlite3 *db, const QString &name, bool banned) {
     }
     qInfo("Banned IP %s.", addr.toUtf8().constData());
   } else {
-    ExecSQL(db, QString("DELETE FROM banip WHERE ip='%1';").arg(addr));
+    db->exec(QString("DELETE FROM banip WHERE ip='%1';").arg(addr));
     qInfo("Unbanned IP %s.", addr.toUtf8().constData());
   }
 }
@@ -303,27 +304,27 @@ void Shell::unbanipCommand(QStringList &list) {
   }
 }
 
-static void banUuidByName(sqlite3 *db, const QString &name, bool banned) {
-  if (!CheckSqlString(name))
+static void banUuidByName(Sqlite3 *db, const QString &name, bool banned) {
+  if (!Sqlite3::checkString(name))
     return;
 
   QString sql_find = QString("SELECT * FROM userinfo \
         WHERE name='%1';")
                          .arg(name);
-  auto result = SelectFromDatabase(db, sql_find);
+  auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
   auto obj = result[0].toObject();
   int id = obj["id"].toString().toInt();
 
-  auto result2 = SelectFromDatabase(db, QString("SELECT * FROM uuidinfo WHERE id=%1;").arg(id));
+  auto result2 = db->select(QString("SELECT * FROM uuidinfo WHERE id=%1;").arg(id));
   if (result2.isEmpty())
     return;
 
   auto uuid = result2[0].toObject()["uuid"].toString();
 
   if (banned) {
-    ExecSQL(db, QString("INSERT INTO banuuid VALUES('%1');").arg(uuid));
+    db->exec(QString("INSERT INTO banuuid VALUES('%1');").arg(uuid));
 
     auto p = ServerInstance->findPlayer(id);
     if (p) {
@@ -331,7 +332,7 @@ static void banUuidByName(sqlite3 *db, const QString &name, bool banned) {
     }
     qInfo("Banned UUID %s.", uuid.toUtf8().constData());
   } else {
-    ExecSQL(db, QString("DELETE FROM banuuid WHERE uuid='%1';").arg(uuid));
+    db->exec(QString("DELETE FROM banuuid WHERE uuid='%1';").arg(uuid));
     qInfo("Unbanned UUID %s.", uuid.toUtf8().constData());
   }
 }
@@ -376,7 +377,7 @@ void Shell::resetPasswordCommand(QStringList &list) {
   auto db = ServerInstance->getDatabase();
   foreach (auto name, list) {
     // 重置为1234
-    ExecSQL(db, QString("UPDATE userinfo SET password=\
+    db->exec(QString("UPDATE userinfo SET password=\
           'dbdc2ad3d9625407f55674a00b58904242545bfafedac67485ac398508403ade',\
           salt='00000000' WHERE name='%1';").arg(name));
   }
@@ -613,8 +614,7 @@ static char *user_generator(const char *text, int state) {
   const char *name;
 
   if (state == 0) {
-    arr = SelectFromDatabase(ServerInstance->getDatabase(),
-        "SELECT name FROM userinfo;");
+    arr = ServerInstance->getDatabase()->select("SELECT name FROM userinfo;");
     list_index = 0;
     len = strlen(text);
   }
@@ -635,10 +635,10 @@ static char *banned_user_generator(const char *text, int state) {
   static QJsonArray arr;
   static int list_index, len;
   const char *name;
+  auto db = ServerInstance->getDatabase();
 
   if (state == 0) {
-    arr = SelectFromDatabase(ServerInstance->getDatabase(),
-        "SELECT name FROM userinfo WHERE banned = 1;");
+    arr = db->select("SELECT name FROM userinfo WHERE banned = 1;");
     list_index = 0;
     len = strlen(text);
   }

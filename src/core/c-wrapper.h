@@ -2,8 +2,10 @@
 #define _LUA_WRAPPER_H
 
 // 为C库提供一层C++包装 方便操作
+// 主要是lua和sqlite
 
 struct lua_State;
+struct sqlite3;
 
 class Lua {
 public:
@@ -24,6 +26,21 @@ public:
 
 private:
   lua_State *L;
+};
+
+class Sqlite3 {
+public:
+  Sqlite3(const QString &filename = "./server/users.db", const QString &initSql = "./server/init.sql");
+  ~Sqlite3();
+
+  static bool checkString(const QString &str);
+
+  QJsonArray select(const QString &sql);
+  QString selectJson(const QString &sql);
+  void exec(const QString &sql);
+
+private:
+  sqlite3 *db;
 };
 
 #endif // _LUA_WRAPPER_H
