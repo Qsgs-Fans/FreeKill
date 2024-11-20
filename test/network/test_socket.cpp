@@ -53,7 +53,13 @@ void TestSocket::testConnect() {
 
   client->connectToHost("127.0.0.1", test_port);
   qApp->processEvents(); // 让server处理一下new_conntion信号
-  QCOMPARE_NE(client_server, nullptr);
+  qApp->processEvents(); // 让server处理一下new_conntion信号
+  qApp->processEvents(); // 让server处理一下new_conntion信号
+  qApp->processEvents(); // 让server处理一下new_conntion信号
+  qApp->processEvents(); // 让server处理一下new_conntion信号
+  if (!client_server) {
+    qFatal("Connection didnot establish. Quitting.");
+  }
 }
 
 void TestSocket::testSendMessages() {
