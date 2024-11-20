@@ -45,26 +45,6 @@ callbacks["GetServerDetail"] = (j) => {
   }
 }
 
-callbacks["NetworkDelayTest"] = (jsonData) => {
-  // jsonData: RSA pub key
-  let cipherText;
-  let aeskey;
-  // const savedPw = config.savedPassword[config.serverAddr];
-  // if (savedPw?.shorten_password === config.password) {
-  //   cipherText = config.savedPassword[config.serverAddr].password;
-  //   aeskey = config.savedPassword[config.serverAddr].key;
-  //   config.aeskey = aeskey ?? "";
-  //   Backend.setAESKey(aeskey);
-  //   if (Debugging)
-  //     console.log("use remembered password", config.password);
-  // } else {
-  cipherText = Backend.pubEncrypt(jsonData, config.password);
-  config.aeskey = Backend.getAESKey();
-  // }
-  config.cipherText = cipherText;
-  Backend.replyDelayTest(config.screenName, cipherText);
-}
-
 callbacks["ErrorMsg"] = (jsonData) => {
   let log;
   try {
@@ -212,7 +192,6 @@ callbacks["ServerMessage"] = (jsonData) => {
 }
 
 callbacks["ShowToast"] = (j) => toast.show(j);
-callbacks["InstallKey"] = (j) => Backend.installAESKey();
 
 callbacks["AddTotalGameTime"] = (jsonData) => {
   config.totalTime++;

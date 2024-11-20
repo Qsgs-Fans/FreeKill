@@ -17,6 +17,7 @@ extern QmlBackend *Backend;
 %nodefaultdtor Client;
 class Client : public QObject {
 public:
+  void sendSetupPacket(const QString &pubkey);
   void setupServerLag(long long server_time);
 
   void replyToServer(const QString &command, const QString &json_data);
@@ -29,6 +30,12 @@ public:
   void saveRecord(const QString &json, const QString &fname);
   void notifyUI(const QString &command, const QVariant &jsonData);
 };
+
+%extend Client {
+  void installMyAESKey() {
+    $self->installAESKey($self->getAESKey().toLatin1());
+  }
+}
 
 extern Client *ClientInstance;
 

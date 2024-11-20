@@ -3,6 +3,9 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 class Lua;
 class ClientPlayer;
 class Router;
@@ -14,9 +17,11 @@ public:
   ~Client();
 
   void connectToHost(const QString &server, ushort port);
+  void sendSetupPacket(const QString &pubkey);
   void setupServerLag(qint64 server_time);
   qint64 getServerLag() const;
 
+  Q_INVOKABLE void setLoginInfo(const QString &username, const QString &password);
   Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
@@ -28,6 +33,7 @@ public:
   void changeSelf(int id);
 
   Lua *getLua();
+  QString getAESKey() const { return aes_key; }
   void installAESKey(const QByteArray &key);
 
   void saveRecord(const QString &json, const QString &fname);
@@ -55,6 +61,9 @@ private:
   // 仅在登录时使用
   QString screenName;
   QString password;
+  RSA *rsa;
+  QString aes_key;
+  QString pubEncrypt(const QString &key, const QString &data);
 
   Lua *L;
   QFileSystemWatcher fsWatcher;

@@ -259,7 +259,9 @@ Item {
         }
         addFavorite(config.serverAddr, config.serverPort, name,
           config.screenName, config.password);
+
         Backend.joinServer(_addr, _port);
+        ClientInstance.setLoginInfo(config.screenName, config.password);
       }
     }
     Button {
