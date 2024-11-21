@@ -25,6 +25,7 @@ public:
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
+  ClientPlayer *getSelf() const;
   void changeSelf(int id);
 
   void saveRecord(const QString &json, const QString &fname);

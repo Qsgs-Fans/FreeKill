@@ -30,6 +30,7 @@ public:
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
   Q_INVOKABLE void clearPlayers();
+  ClientPlayer *getSelf() const { return self; }
   void changeSelf(int id);
 
   Lua *getLua();

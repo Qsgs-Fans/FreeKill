@@ -57,8 +57,9 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
 
   auto playerInfoRaw = arr[3].toString();
   auto playerInfo = QJsonDocument::fromJson(playerInfoRaw.toUtf8()).array();
-  if (playerInfo[0].toInt() != Self->getId()) {
-    origPlayerInfo = JsonArray2Bytes({ Self->getId(), Self->getScreenName(), Self->getAvatar() });
+  auto self = ClientInstance->getSelf();
+  if (playerInfo[0].toInt() != self->getId()) {
+    origPlayerInfo = JsonArray2Bytes({ self->getId(), self->getScreenName(), self->getAvatar() });
     emit command_parsed("Setup", playerInfoRaw);
   }
 }

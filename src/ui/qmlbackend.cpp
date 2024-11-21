@@ -96,7 +96,7 @@ void QmlBackend::joinServer(QString address, ushort port) {
   Client *client = new Client(this);
   connect(client, &Client::notifyUI, this, &QmlBackend::notifyUI);
   engine->rootContext()->setContextProperty("ClientInstance", client);
-  engine->rootContext()->setContextProperty("Self", Self);
+  engine->rootContext()->setContextProperty("Self", client->getSelf());
   connect(client, &Client::destroyed, this, [=](){
     engine->rootContext()->setContextProperty("Self", &dummyPlayer);
     engine->rootContext()->setContextProperty("ClientInstance", nullptr);
@@ -110,7 +110,7 @@ void QmlBackend::joinServer(QString address, ushort port) {
     emit notifyUI("BackToStart", "[]");
   });
   connect(client, &Client::self_changed, this, [=](){
-    engine->rootContext()->setContextProperty("Self", Self);
+    engine->rootContext()->setContextProperty("Self", client->getSelf());
   });
   connect(client, &Client::toast_message, this, &QmlBackend::showToast);
 

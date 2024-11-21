@@ -12,7 +12,6 @@
 #include "server/roomthread.h"
 #include "core/util.h"
 #include "ui/qmlbackend.h"
-class ClientPlayer *Self = nullptr;
 %}
 
 %include "qt.i"

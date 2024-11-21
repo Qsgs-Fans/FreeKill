@@ -41,5 +41,3 @@ public:
 class ClientPlayer : public Player {
 public:
 };
-
-extern ClientPlayer *Self;

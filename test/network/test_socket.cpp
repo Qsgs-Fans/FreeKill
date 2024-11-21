@@ -124,6 +124,6 @@ void TestSocket::processNewConnection(ClientSocket *client) {
   client_server = client;
 }
 
-QTEST_MAIN(TestSocket)
+QTEST_GUILESS_MAIN(TestSocket)
 
 #include "test_socket.moc"

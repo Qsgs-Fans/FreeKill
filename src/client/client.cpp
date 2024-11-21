@@ -9,12 +9,10 @@
 #include "network/router.h"
 
 Client *ClientInstance = nullptr;
-ClientPlayer *Self = nullptr;
 
 Client::Client(QObject *parent) : QObject(parent) {
   ClientInstance = this;
-  Self = new ClientPlayer(0, this);
-  self = Self;
+  self = new ClientPlayer(0, this);
 
   ClientSocket *socket = new ClientSocket;
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
@@ -41,8 +39,6 @@ Client::Client(QObject *parent) : QObject(parent) {
 
 Client::~Client() {
   ClientInstance = nullptr;
-  // Self->deleteLater();
-  Self = nullptr;
   delete L;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
@@ -142,8 +138,7 @@ void Client::clearPlayers() { players.clear(); }
 
 void Client::changeSelf(int id) {
   auto p = players[id];
-  Self = p ? p : self;
-  // Backend->getEngine()->rootContext()->setContextProperty("Self", Self);
+  self = p ? p : self;
   emit self_changed();
 }
 

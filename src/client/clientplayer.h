@@ -27,6 +27,4 @@ public:
 private:
 };
 
-extern ClientPlayer *Self;
-
 #endif // _CLIENTPLAYER_H

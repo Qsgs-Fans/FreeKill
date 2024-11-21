@@ -2,9 +2,9 @@
 #include <QSignalSpy>
 #include <QThread>
 
+#include "server_thread.h"
 #include "server/server.h"
 #include "client/client.h"
-#include "core/packman.h"
 #include "network/client_socket.h"
 #include "network/router.h"
 
@@ -23,33 +23,7 @@ static const char *test_name = "test_player";
 static const char *test_name2 = "test_player2";
 static const char *test_name3 = "test_player3";
 
-class ServerThread: public QThread {
-  Q_OBJECT
-
-public:
-  ~ServerThread() { quit(); wait(); }
-
-signals:
-  void listening();
-
-protected:
-  virtual void run();
-
-private:
-  Server *server;
-};
-
-void ServerThread::run() {
-  server = new Server;
-  if (!server->listen(QHostAddress::Any, test_port)) {
-    qFatal("cannot listen on port %d!\n", test_port);
-    qApp->exit(1);
-  }
-  emit listening();
-  exec();
-}
-
-class TestServer: public QObject {
+class TestLogin: public QObject {
   Q_OBJECT
 private slots:
   void initTestCase();
@@ -61,9 +35,8 @@ private:
   Client *client, *client2, *client3;
 };
 
-void TestServer::initTestCase() {
+void TestLogin::initTestCase() {
   while (!QFile::exists(".git")) QDir::setCurrent("..");
-  Pacman = new PackMan;
   server_thread = new ServerThread;
 
   QSignalSpy spy(server_thread, &ServerThread::listening);
@@ -72,7 +45,7 @@ void TestServer::initTestCase() {
   QCOMPARE(spy.count(), 1); // 应该是开始listen了，等Server加载完才可继续
 }
 
-void TestServer::testConnectToServer() {
+void TestLogin::testConnectToServer() {
   client = new Client;
   QVariantList args;
   QSignalSpy spy(client->getRouter(), &Router::notification_got);
@@ -97,14 +70,17 @@ void TestServer::testConnectToServer() {
   QCOMPARE(setup_data[3].toString(), FK_VERSION);
 
   // auth.cpp 检测密码中
-  spy.clear(); spy.wait(100);
+  spy.wait();
   QCOMPARE(spy.count(), 1); // 然后应该是收到了一条InstallKey
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "InstallKey");
   qApp->processEvents();
 
-  spy.clear(); spy.wait(100);
-  QCOMPARE(spy.count(), 1); // 然后应该是收到了一条Setup
+  // 然后应该是收到:
+  // Setup, SetServerSettings, AddTotalGameTime, EnterLobby, UpdatePlayerNum
+  // 显示房间列表由UI发起，建立连接时只有上述5条才是
+  spy.wait();
+  QVERIFY(spy.count() >= 1);
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "Setup");
   setup_data = QJsonDocument::fromJson(args[1].toString().toUtf8()).array();
@@ -112,6 +88,16 @@ void TestServer::testConnectToServer() {
   QCOMPARE(setup_data.count(), 4);
   QCOMPARE(setup_data[0].type(), QJsonValue::Double);
   QCOMPARE(setup_data[1].toString(), test_name); 
+  while (spy.count() < 4) spy.wait();
+  QCOMPARE(spy.count(), 4);
+  args = spy.takeFirst();
+  QCOMPARE(args[0].toString(), "SetServerSettings");
+  args = spy.takeFirst();
+  QCOMPARE(args[0].toString(), "AddTotalGameTime");
+  args = spy.takeFirst();
+  QCOMPARE(args[0].toString(), "EnterLobby");
+  args = spy.takeFirst();
+  QCOMPARE(args[0].toString(), "UpdatePlayerNum");
   qApp->processEvents();
 
   // 至此已完成单机启动的过程 接下来测试登录失败的情况
@@ -132,10 +118,9 @@ void TestServer::testConnectToServer() {
   client->connectToHost("localhost", test_port);
 }
 
-void TestServer::cleanupTestCase() {
+void TestLogin::cleanupTestCase() {
   server_thread->deleteLater();
-  Pacman->deleteLater();
 }
 
-QTEST_MAIN(TestServer)
-#include "test_server.moc"
+QTEST_GUILESS_MAIN(TestLogin)
+#include "test_login.moc"
