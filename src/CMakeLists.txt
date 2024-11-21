@@ -27,6 +27,8 @@ set(freekill_SRCS
   "core/util.cpp"
   "core/c-wrapper.cpp"
   "core/packman.cpp"
+  "client/client.cpp"
+  "client/clientplayer.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
@@ -47,8 +49,6 @@ set_source_files_properties(
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
-    "client/client.cpp"
-    "client/clientplayer.cpp"
     "client/replayer.cpp"
     # "ui/mod.cpp"
   )

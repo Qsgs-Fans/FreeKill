@@ -3,11 +3,6 @@ find_package(Qt6 REQUIRED COMPONENTS Test)
 set (TEST_LIB
   libFreeKill
   Qt6::Network
-  Qt6::Qml
-  Qt6::Gui
-  Qt6::Widgets
-  Qt6::Multimedia
-  Qt6::QuickControls2
   Qt6::Test
 )
 

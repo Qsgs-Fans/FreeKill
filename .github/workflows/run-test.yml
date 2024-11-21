@@ -17,7 +17,7 @@ jobs:
       run: |
         sudo apt-get install -y swig cmake make gcc g++
         sudo apt-get install -y liblua5.4-dev libsqlite3-dev libreadline-dev libssl-dev libgit2-dev
-        sudo apt-get install -y qt6-base-dev qt6-tools-dev qt6-tools-dev-tools qt6-declarative-dev qt6-multimedia-dev
+        sudo apt-get install -y qt6-base-dev qt6-tools-dev qt6-tools-dev-tools
 
     - name: Install freekill-core
       run: git clone https://github.com/Qsgs-Fans/freekill-core.git packages/freekill-core
@@ -26,7 +26,7 @@ jobs:
       run: |
         mkdir build && cd build
         cp -r /usr/include/lua5.4/* ../include
-        cmake ..
+        cmake .. -DFK_SERVER_ONLY=
         make
         cd ..
 
