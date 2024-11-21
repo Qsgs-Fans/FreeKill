@@ -23,6 +23,6 @@ int main(int argc, char **argv) {
   if (!L->dofile("test/lua/cpp_run.lua")) {
     return EXIT_FAILURE;
   }
- 
+
   return EXIT_SUCCESS;
 }

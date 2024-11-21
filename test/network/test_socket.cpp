@@ -93,7 +93,7 @@ void TestSocket::testEncryptedMessages() {
   QByteArray msg = "Hello";
   QSignalSpy spy(client_server, &ClientSocket::message_got);
   QVariantList arguments;
-  
+
   client->installAESKey(aeskey2);
   QVERIFY(!client->aesReady());
   client->installAESKey(aeskey3);

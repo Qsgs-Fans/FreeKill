@@ -84,7 +84,7 @@ void TestLogin::testConnectToServer() {
   // 格式应该是 [id，用户名，头像，延迟]
   QCOMPARE(setup_data.count(), 4);
   QCOMPARE(setup_data[0].type(), QJsonValue::Double);
-  QCOMPARE(setup_data[1].toString(), test_name); 
+  QCOMPARE(setup_data[1].toString(), test_name);
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "SetServerSettings");
   args = spy.takeFirst();
