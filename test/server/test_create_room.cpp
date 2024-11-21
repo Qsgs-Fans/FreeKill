@@ -1,6 +1,9 @@
 #include "server_thread.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
+#include "server/server.h"
+#include "server/room.h"
+#include "server/lobby.h"
 #include "client/client.h"
 #include "client/clientplayer.h"
 #include "network/router.h"
@@ -97,9 +100,23 @@ void TestRoom::testCreateRoom() {
   QCOMPARE(args[0].toString(), "UpdatePlayerNum");
   QCOMPARE(args[1].toString(), "[2,3]");
 
-  // 然后检查Server端的数据
+  // 然后检查Server端的数据，应该是创建了RoomThread，创建了Room
+  // 并且修改了Room和Lobby中的玩家们
+  auto server = ServerInstance;
+  QCOMPARE(server->getThreads().count(), 1);
+  auto thread = server->getThreads().first();
+  QCOMPARE(server->lobby()->getPlayers().count(), 2);
+  QCOMPARE(server->findRoom(1)->getPlayers().count(), 1);
+  // Lua或许也值得一看？算了懒得看 至少不在此处
 
   // 然后检查Client中的数据（主要在lua中，狠狠用eval了）
+  // 应该是发生过EnterRoom - UpdateGameData - SetOwner 就目前而言lua只用到了第一个
+  // 那么Client应该有空白的AbstractRoom 然后players和alive_players有个自己
+  auto L = client->getLua();
+  QCOMPARE(L->eval("return #ClientInstance.players").toInt(), 1);
+  QCOMPARE(L->eval("return #ClientInstance.alive_players").toInt(), 1);
+  QCOMPARE(L->eval("return ClientInstance.players[1].id").toInt(), client->getSelf()->getId());
+  // 感觉没什么好测试的，创建AbstractRoom的测试应放在Lua中
 }
 
 void TestRoom::cleanupTestCase() {

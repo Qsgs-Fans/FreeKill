@@ -56,6 +56,7 @@ public:
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
 
+  QList<RoomThread *> getThreads() const { return threads; }
   RoomThread *createThread(); /// 创建新的RoomThread，并加入列表
   void removeThread(RoomThread *thread); /// 从列表中移除thread
 

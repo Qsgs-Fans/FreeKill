@@ -13,6 +13,8 @@ class Scheduler : public QObject {
   explicit Scheduler(RoomThread *m_thread);
   ~Scheduler();
 
+  Lua *getLua() const { return L; }
+
  public slots:
   // 跨线程传递引用可能出问题！
   void handleRequest(const QString &req);

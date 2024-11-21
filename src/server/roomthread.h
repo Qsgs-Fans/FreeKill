@@ -16,19 +16,12 @@ class RoomThread : public QThread {
   Server *getServer() const;
   bool isFull() const;
 
+  int getCapacity() const { return m_capacity; }
+  Scheduler *getScheduler() const { return m_scheduler; }
   QString getMd5() const;
   Room *getRoom(int id) const;
   void addRoom(Room *room);
   void removeRoom(Room *room);
-
-  //QString fetchRequest();
-  //void clearRequest();
-  //bool hasRequest();
-
-  // void trySleep(int ms);
-
-  // void tryTerminate();
-  // bool isTerminated() const;
 
   bool isConsoleStart() const;
 
@@ -44,15 +37,10 @@ class RoomThread : public QThread {
 
  private:
   Server *m_server;
-  // QList<Room *> room_list;
   int m_capacity;
   QString md5;
 
   Scheduler *m_scheduler;
-  // QMutex request_queue_mutex;
-  // QQueue<QString> request_queue;  // json string
-  // QSemaphore sema_wake;
-  // volatile bool terminated;
 };
 
 Q_DECLARE_METATYPE(RoomThread *)
