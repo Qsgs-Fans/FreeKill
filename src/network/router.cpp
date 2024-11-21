@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "network/router.h"
-#include "client/client.h"
 #include "network/client_socket.h"
-#include "server/roomthread.h"
-#include "server/server.h"
-#include "server/serverplayer.h"
 #include "core/util.h"
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
@@ -149,47 +145,15 @@ void Router::handlePacket(const QByteArray &rawPacket) {
   QString jsonData = packet[3].toString();
 
   if (type & TYPE_NOTIFICATION) {
-    if (type & DEST_CLIENT) {
-#ifndef FK_SERVER_ONLY
-      ClientInstance->callLua(command, jsonData, false);
-#endif
-    } else {
-      ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
-      if (command == "Heartbeat") {
-        player->alive = true;
-        return;
-      }
-
-      auto room = player->getRoom();
-      room->handlePacket(player, command, jsonData);
-    }
+    emit notification_got(command, jsonData);
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
     this->requestTimeout = packet[4].toInt();
     this->requestTimestamp = packet[5].toInteger();
 
-    if (type & DEST_CLIENT) {
-#ifndef FK_SERVER_ONLY
-      auto client = qobject_cast<Client *>(parent());
-      client->callLua(command, jsonData, true);
-#endif
-    } else {
-      // requesting server is not allowed
-      Q_ASSERT(false);
-    }
+    emit request_got(command, jsonData);
   } else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
-
-    ServerPlayer *player = qobject_cast<ServerPlayer *>(parent());
-    player->setThinking(false);
-    auto _room = player->getRoom();
-    if (!_room->isLobby()) {
-      auto room = qobject_cast<Room *>(_room);
-      if (room->getThread()) {
-        room->getThread()->wakeUp(room->getId(), "reply");
-        // TODO: signal
-      }
-    }
 
     if (requestId != this->expectedReplyId)
       return;
@@ -197,12 +161,11 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     this->expectedReplyId = -1;
 
     if (replyTimeout >= 0 &&
-        replyTimeout < requestStartTime.secsTo(QDateTime::currentDateTime()))
+      replyTimeout < requestStartTime.secsTo(QDateTime::currentDateTime()))
       return;
 
     m_reply = jsonData;
     // TODO: callback?
-
     replyReadySemaphore.release();
     if (extraReplyReadySemaphore) {
       extraReplyReadySemaphore->release();

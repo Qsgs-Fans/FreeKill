@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#include <git2.h>
 #include "core/packman.h"
-#include "git2.h"
+#include "core/c-wrapper.h"
 #include "core/util.h"
 #include "ui/qmlbackend.h"
 
@@ -9,7 +10,7 @@ PackMan *Pacman;
 
 PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();
-  db = OpenDatabase("./packages/packages.db", "./packages/init.sql");
+  db = new Sqlite3("./packages/packages.db", "./packages/init.sql");
 
   QDir d("packages");
 
@@ -20,7 +21,7 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
     }
   }
 
-  foreach (auto e, SelectFromDatabase(db, "SELECT name, enabled FROM packages;")) {
+  foreach (auto e, db->select("SELECT name, enabled FROM packages;")) {
     auto obj = e.toObject();
     auto pack = obj["name"].toString();
     auto enabled = obj["enabled"].toString().toInt() == 1;
@@ -37,7 +38,7 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
 
 PackMan::~PackMan() {
   git_libgit2_shutdown();
-  sqlite3_close(db);
+  delete db;
 }
 
 QStringList PackMan::getDisabledPacks() {
@@ -45,14 +46,13 @@ QStringList PackMan::getDisabledPacks() {
 }
 
 QString PackMan::getPackSummary() {
-  return SelectFromDb(
-      db, "SELECT name, url, hash FROM packages WHERE enabled = 1;");
+  return db->selectJson("SELECT name, url, hash FROM packages WHERE enabled = 1;");
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
   auto f = [=]() {
     // First, disable all packages
-    foreach (auto e, SelectFromDatabase(db, "SELECT name FROM packages;")) {
+    foreach (auto e, db->select("SELECT name FROM packages;")) {
       disablePack(e.toObject()["name"].toString());
     }
 
@@ -70,8 +70,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       auto name = obj["name"].toString();
       auto url = obj["url"].toString();
       bool toast_showed = false;
-      if (SelectFromDatabase(
-              db,
+      if (db->select(
               QString("SELECT name FROM packages WHERE name='%1';").arg(name))
               .isEmpty()) {
 #ifndef FK_SERVER_ONLY
@@ -81,7 +80,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
 #endif
         downloadNewPack(url);
       }
-      ExecSQL(db, QString("UPDATE packages SET hash='%1' WHERE name='%2'")
+      db->exec(QString("UPDATE packages SET hash='%1' WHERE name='%2'")
                       .arg(obj["hash"].toString())
                       .arg(name));
       enablePack(name);
@@ -129,10 +128,9 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
     if (fileName.endsWith(".git"))
       fileName.chop(4);
 
-    auto result = SelectFromDatabase(db, sql_select.arg(fileName));
+    auto result = db->select(sql_select.arg(fileName));
     if (result.isEmpty()) {
-      ExecSQL(db, sql_update.arg(fileName)
-                      .arg(url)
+      db->exec(sql_update.arg(fileName).arg(url)
                       .arg(error < 0 ? "XXXXXXXX" : head(fileName)));
     }
   };
@@ -151,24 +149,22 @@ void PackMan::downloadNewPack(const QString &url, bool useThread) {
 }
 
 void PackMan::enablePack(const QString &pack) {
-  ExecSQL(
-      db,
+  db->exec(
       QString("UPDATE packages SET enabled = 1 WHERE name = '%1';").arg(pack));
 
   disabled_packs.removeOne(pack);
 }
 
 void PackMan::disablePack(const QString &pack) {
-  ExecSQL(
-      db,
-      QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
+  db->exec(
+    QString("UPDATE packages SET enabled = 0 WHERE name = '%1';").arg(pack));
 
   if (!disabled_packs.contains(pack))
     disabled_packs << pack;
 }
 
 void PackMan::updatePack(const QString &pack) {
-  auto result = SelectFromDatabase(db, QString("SELECT hash FROM packages \
+  auto result = db->select(QString("SELECT hash FROM packages \
   WHERE name = '%1';")
                                            .arg(pack));
   if (result.isEmpty())
@@ -208,25 +204,25 @@ void PackMan::upgradePack(const QString &pack) {
   error = pull(pack);
   if (error < 0)
     return;
-  ExecSQL(db, QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
+  db->exec(QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
                   .arg(head(pack))
                   .arg(pack));
 }
 
 void PackMan::removePack(const QString &pack) {
-  auto result = SelectFromDatabase(db, QString("SELECT enabled FROM packages \
+  auto result = db->select(QString("SELECT enabled FROM packages \
   WHERE name = '%1';")
                                            .arg(pack));
   if (result.isEmpty())
     return;
   bool enabled = result[0].toObject()["enabled"].toString().toInt() == 1;
-  ExecSQL(db, QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
+  db->exec(QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
   QDir d(QString("packages/%1").arg(pack));
   d.removeRecursively();
 }
 
 QString PackMan::listPackages() {
-  auto obj = SelectFromDatabase(db, QString("SELECT * FROM packages;"));
+  auto obj = db->select(QString("SELECT * FROM packages;"));
   return QJsonDocument(obj).toJson();
 }
 

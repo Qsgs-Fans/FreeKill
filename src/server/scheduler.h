@@ -5,6 +5,7 @@
 
 class Room;
 class RoomThread;
+class Lua;
 
 class Scheduler : public QObject {
   Q_OBJECT
@@ -12,7 +13,7 @@ class Scheduler : public QObject {
   explicit Scheduler(RoomThread *m_thread);
   ~Scheduler();
 
-  void tellThreadToLua(); // 转swig
+  Lua *getLua() const { return L; }
 
  public slots:
   // 跨线程传递引用可能出问题！
@@ -22,7 +23,7 @@ class Scheduler : public QObject {
 
  private:
   RoomThread *m_thread;
-  lua_State *L;
+  Lua *L;
   // QList<Room *> room_list;
 };
 

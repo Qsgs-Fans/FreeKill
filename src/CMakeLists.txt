@@ -1,11 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
-if (DEFINED FK_SERVER_ONLY)
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-nogui.i)
-else ()
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
-endif ()
+set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
 
 add_custom_command(
   OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
@@ -25,7 +21,10 @@ set(freekill_SRCS
   "freekill.cpp"
   "core/player.cpp"
   "core/util.cpp"
+  "core/c-wrapper.cpp"
   "core/packman.cpp"
+  "client/client.cpp"
+  "client/clientplayer.cpp"
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
@@ -46,16 +45,12 @@ set_source_files_properties(
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_SRCS
-    "client/client.cpp"
-    "client/clientplayer.cpp"
     "client/replayer.cpp"
     # "ui/mod.cpp"
   )
 endif ()
 
-set(QT_LIB
-  Qt6::Network
-)
+set(QT_LIB Qt6::Network)
 
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND QT_LIB

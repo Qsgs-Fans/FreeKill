@@ -66,6 +66,9 @@ signals:
   void unknownPacket(const QByteArray &packet);
   void replyReady();
 
+  void notification_got(const QString &command, const QString &jsonData);
+  void request_got(const QString &command, const QString &jsonData);
+
 protected:
   void handlePacket(const QByteArray &rawPacket);
 

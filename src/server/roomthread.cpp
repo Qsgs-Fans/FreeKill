@@ -23,9 +23,6 @@ RoomThread::~RoomThread() {
   }
   delete m_scheduler;
   m_server->removeThread(this);
-  // foreach (auto room, room_list) {
-  //   room->deleteLater();
-  // }
 }
 
 void RoomThread::run() {
@@ -42,7 +39,6 @@ Server *RoomThread::getServer() const {
 }
 
 bool RoomThread::isFull() const {
-  // return room_list.count() >= m_capacity;
   return m_capacity <= 0;
 }
 
@@ -65,64 +61,6 @@ void RoomThread::removeRoom(Room *room) {
     deleteLater();
   }
 }
-
-/*
-QString RoomThread::fetchRequest() {
-  // if (!gameStarted)
-  //   return "";
-  request_queue_mutex.lock();
-  QString ret = "";
-  if (!request_queue.isEmpty()) {
-    ret = request_queue.dequeue();
-  }
-  request_queue_mutex.unlock();
-  return ret;
-}
-
-void RoomThread::pushRequest(const QString &req) {
-  // if (!gameStarted)
-  //   return;
-  request_queue_mutex.lock();
-  request_queue.enqueue(req);
-  request_queue_mutex.unlock();
-  wakeUp();
-}
-
-void RoomThread::clearRequest() {
-  request_queue_mutex.lock();
-  request_queue.clear();
-  request_queue_mutex.unlock();
-}
-
-bool RoomThread::hasRequest() {
-  request_queue_mutex.lock();
-  auto ret = !request_queue.isEmpty();
-  request_queue_mutex.unlock();
-  return ret;
-}
-
-void RoomThread::trySleep(int ms) {
-  if (sema_wake.available() > 0) {
-    sema_wake.tryAcquire(sema_wake.available(), ms);
-    return;
-  }
-
-  sema_wake.tryAcquire(1, ms);
-}
-
-void RoomThread::wakeUp() {
-  sema_wake.release(1);
-}
-
-void RoomThread::tryTerminate() {
-  terminated = true;
-  wakeUp();
-}
-
-bool RoomThread::isTerminated() const {
-  return terminated;
-}
-*/
 
 bool RoomThread::isConsoleStart() const {
 #ifndef FK_SERVER_ONLY

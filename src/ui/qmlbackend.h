@@ -3,9 +3,6 @@
 #ifndef _QMLBACKEND_H
 #define _QMLBACKEND_H
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-
 class Replayer;
 
 #include <qtmetamacros.h>
@@ -22,11 +19,6 @@ public:
   static Q_INVOKABLE QString pwd();
   static Q_INVOKABLE bool exists(const QString &file);
   static Q_INVOKABLE bool isDir(const QString &file);
-
-  // 这俩函数为啥要写在这。。
-  static void pushLuaValue(lua_State *L, QVariant v);
-  static QVariant readLuaValue(lua_State *L, int index = 0,
-      QHash<const void *, bool> stack = QHash<const void *, bool>());
 
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
@@ -45,20 +37,14 @@ public:
   Q_INVOKABLE QVariant evalLuaExp(const QString &lua);
 
   Q_INVOKABLE QString getPublicServerList();
-  Q_INVOKABLE QString pubEncrypt(const QString &key, const QString &data);
   Q_INVOKABLE QString loadConf();
   Q_INVOKABLE QString loadTips();
   Q_INVOKABLE void saveConf(const QString &conf);
 
-  Q_INVOKABLE void replyDelayTest(const QString &screenName, const QString &cipher);
   Q_INVOKABLE void playSound(const QString &name, int index = 0);
 
   Q_INVOKABLE void copyToClipboard(const QString &s);
   Q_INVOKABLE QString readClipboard();
-
-  Q_INVOKABLE void setAESKey(const QString &key);
-  Q_INVOKABLE QString getAESKey() const;
-  Q_INVOKABLE void installAESKey();
 
   Q_INVOKABLE void detectServer();
   Q_INVOKABLE void getServerInfo(const QString &addr, ushort port = 9527u);
@@ -99,8 +85,6 @@ private:
   QQmlApplicationEngine *engine;
 
   QUdpSocket *udpSocket;
-  RSA *rsa;
-  QString aes_key;
   qreal m_volume;
 
   Replayer *replayer;

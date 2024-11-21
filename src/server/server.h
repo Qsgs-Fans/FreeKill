@@ -3,6 +3,7 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
+class Sqlite3;
 class AuthManager;
 class ServerSocket;
 class ClientSocket;
@@ -42,12 +43,8 @@ public:
 
     创建新的房间。
 
-    首先，房间名是用户自定义输入内容，需要先进行内容安全检查；然后创建新房间。
-    在创建新房间时，游戏会避免创建新的Room对象；有一个idle_rooms存储着创建过
-    但目前没在使用中的房间，游戏优先从其中选择一个作为“新房间”，如果没有这样的
-    房间，那么就构造一个新的Room对象。
-
-    之后，将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
+    首先，房间名是用户自定义输入内容，需要先进行内容安全检查；然后创建新房间，
+    将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
     房间，通过addPlayer将房主添加到房间中，并使用setOwner将其设为房主。
 
     @param owner 创建房间的那名玩家；房主
@@ -59,6 +56,7 @@ public:
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
 
+  QList<RoomThread *> getThreads() const { return threads; }
   RoomThread *createThread(); /// 创建新的RoomThread，并加入列表
   void removeThread(RoomThread *thread); /// 从列表中移除thread
 
@@ -70,7 +68,7 @@ public:
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
 
-  sqlite3 *getDatabase();
+  Sqlite3 *getDatabase();
 
   void broadcast(const QString &command, const QString &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
@@ -104,7 +102,6 @@ private:
 
   Lobby *m_lobby;
   QMap<int, Room *> rooms;
-  QStack<Room *> idle_rooms;
   QList<RoomThread *> threads;
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
@@ -112,7 +109,7 @@ private:
   QList<QString> temp_banlist;
 
   AuthManager *auth;
-  sqlite3 *db; ///< sqlite数据库连接实例
+  Sqlite3 *db; ///< sqlite数据库连接实例
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
 

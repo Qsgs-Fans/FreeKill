@@ -1,6 +1,7 @@
 #include "server/auth.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
+#include "core/c-wrapper.h"
 #include "core/util.h"
 #include "network/client_socket.h"
 #include <openssl/bn.h>
@@ -76,7 +77,7 @@ QJsonObject AuthManager::queryUserInfo(ClientSocket *client, const QString &name
   auto sql_find = QString("SELECT * FROM userinfo WHERE name='%1';")
                      .arg(name);
 
-  auto result = SelectFromDatabase(db, sql_find);
+  auto result = db->select(sql_find);
   if (result.isEmpty()) {
     auto salt_gen = QRandomGenerator::securelySeeded();
     auto salt = QByteArray::number(salt_gen(), 16);
@@ -90,12 +91,12 @@ QJsonObject AuthManager::queryUserInfo(ClientSocket *client, const QString &name
                       .arg(salt).arg("liubei").arg(client->peerAddress())
                       .arg("FALSE");
 
-    ExecSQL(db, sql_reg);
-    result = SelectFromDatabase(db, sql_find); // refresh result
+    db->exec(sql_reg);
+    result = db->select(sql_find); // refresh result
     auto obj = result[0].toObject();
 
     auto info_update = QString("INSERT INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
-    ExecSQL(db, info_update);
+    db->exec(info_update);
   }
 
   return result[0].toObject();
@@ -134,7 +135,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
     goto FAIL;
   }
 
-  if (!CheckSqlString(name) || !server->checkBanWord(name)) {
+  if (!Sqlite3::checkString(name) || !server->checkBanWord(name)) {
     error_msg = "invalid user name";
     goto FAIL;
   }

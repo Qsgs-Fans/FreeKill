@@ -69,7 +69,9 @@ Item {
             config.addFavorite(config.serverAddr, config.serverPort, "",
               config.screenName, config.password);
             Backend.startServer(9527);
+
             Backend.joinServer("127.0.0.1", 9527);
+            ClientInstance.setLoginInfo(config.screenName, config.password);
           }
         }
 

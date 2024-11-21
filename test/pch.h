@@ -11,6 +11,10 @@
 #include <QTcpSocket>
 #include <QUdpSocket>
 
+// test
+#include <QTest>
+#include <QSignalSpy>
+
 // other libraries
 #define OPENSSL_API_COMPAT 0x10101000L
 

@@ -9,7 +9,7 @@ License: BSD License, see LICENSE.txt
 ]]--
 
 ---@diagnostic disable
-local os, io = os, io
+local os, io = fk.os, fk.io
 require("math")
 local M={}
 
