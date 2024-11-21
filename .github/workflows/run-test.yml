@@ -33,4 +33,4 @@ jobs:
     - name: Run ctest
       run: |
         cd build
-        if ! ctest; then exit 1; fi
+        if ! ctest -VV; then exit 1; fi
