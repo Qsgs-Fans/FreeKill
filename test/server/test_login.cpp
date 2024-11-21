@@ -28,6 +28,7 @@ class TestLogin: public QObject {
 private slots:
   void initTestCase();
   void testConnectToServer();
+  void testPasswordError();
   void cleanupTestCase();
 
 private:
@@ -43,10 +44,11 @@ void TestLogin::initTestCase() {
   server_thread->start();
   spy.wait(10000);
   QCOMPARE(spy.count(), 1); // 应该是开始listen了，等Server加载完才可继续
+
+  client = new Client;
 }
 
 void TestLogin::testConnectToServer() {
-  client = new Client;
   QVariantList args;
   QSignalSpy spy(client->getRouter(), &Router::notification_got);
   QSignalSpy spy2(client->getRouter(), &Router::messageReady);
@@ -96,19 +98,25 @@ void TestLogin::testConnectToServer() {
   // 至此已完成单机启动的过程 接下来测试登录失败的情况
   client->getRouter()->getSocket()->disconnectFromHost();
   qApp->processEvents();
+}
+
+void TestLogin::testPasswordError() {
+  QSignalSpy spy(client->getRouter(), &Router::notification_got);
+  QSignalSpy spy2(client->getRouter(), &Router::messageReady);
+  QVariantList args;
+
   client->setLoginInfo(test_name, "1234567890");
   client->connectToHost("localhost", test_port);
-  spy.wait(100); qApp->processEvents(); // 发Setup
-  spy.wait(100); // 收到InstallKey
-  spy.clear(); spy.wait(100);
-  QCOMPARE(spy.count(), 1); // 然后应该是收到了一条ErrorDlg (弹窗)
-  args = spy.takeFirst();
+
+  QVERIFY(spy.wait(100)); qApp->processEvents(); // 发Setup
+  spy.clear();
+  // 然后应该是收到:
+  // InstallKey, ErrorDlg
+  while (spy.count() < 2) spy.wait(100);
+  QCOMPARE(spy.count(), 2);
+  args = spy.takeLast();
   QCOMPARE(args[0].toString(), "ErrorDlg");
   qApp->processEvents();
-
-  // 最后正常登录 准备下一个测试
-  client->setLoginInfo("player", "1234");
-  client->connectToHost("localhost", test_port);
 }
 
 void TestLogin::cleanupTestCase() {
