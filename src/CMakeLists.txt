@@ -1,11 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 file(GLOB SWIG_FILES "${PROJECT_SOURCE_DIR}/src/swig/*.i")
-if (DEFINED FK_SERVER_ONLY)
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill-nogui.i)
-else ()
-  set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
-endif ()
+set(SWIG_SOURCE ${PROJECT_SOURCE_DIR}/src/swig/freekill.i)
 
 add_custom_command(
   OUTPUT ${PROJECT_SOURCE_DIR}/src/swig/freekill-wrap.cxx
