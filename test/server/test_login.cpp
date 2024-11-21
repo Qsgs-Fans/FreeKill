@@ -69,18 +69,13 @@ void TestLogin::testConnectToServer() {
   QCOMPARE(setup_data[2].toString(), ServerInstance->getMd5());
   QCOMPARE(setup_data[3].toString(), FK_VERSION);
 
-  // auth.cpp 检测密码中
-  spy.wait();
-  QCOMPARE(spy.count(), 1); // 然后应该是收到了一条InstallKey
+  // 然后应该是收到:
+  // InstallKey, Setup, SetServerSettings, AddTotalGameTime, EnterLobby, UpdatePlayerNum
+  // 显示房间列表由UI发起，建立连接时只有上述5条才是
+  while (spy.count() < 6) spy.wait(100);
+  QCOMPARE(spy.count(), 6);
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "InstallKey");
-  qApp->processEvents();
-
-  // 然后应该是收到:
-  // Setup, SetServerSettings, AddTotalGameTime, EnterLobby, UpdatePlayerNum
-  // 显示房间列表由UI发起，建立连接时只有上述5条才是
-  spy.wait();
-  QVERIFY(spy.count() >= 1);
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "Setup");
   setup_data = QJsonDocument::fromJson(args[1].toString().toUtf8()).array();
@@ -88,8 +83,6 @@ void TestLogin::testConnectToServer() {
   QCOMPARE(setup_data.count(), 4);
   QCOMPARE(setup_data[0].type(), QJsonValue::Double);
   QCOMPARE(setup_data[1].toString(), test_name); 
-  while (spy.count() < 4) spy.wait();
-  QCOMPARE(spy.count(), 4);
   args = spy.takeFirst();
   QCOMPARE(args[0].toString(), "SetServerSettings");
   args = spy.takeFirst();

@@ -12,6 +12,7 @@
 #include <QClipboard>
 #include <QMediaPlayer>
 #include <QMessageBox>
+#include <QAbstractButton>
 #endif
 
 #include <cstdlib>
