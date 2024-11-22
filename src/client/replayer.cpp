@@ -37,7 +37,7 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
 
   roomSettings = arr[2].toString();
 
-  foreach (auto v, arr) {
+  for (auto v : arr) {
     if (!v.isArray()) {
       continue;
     }
@@ -68,7 +68,7 @@ Replayer::~Replayer() {
   if (origPlayerInfo != "") {
     emit command_parsed("Setup", origPlayerInfo);
   }
-  foreach (auto e, pairs) {
+  for (auto e : pairs) {
     delete e;
   }
 }
@@ -144,7 +144,7 @@ void Replayer::run() {
   emit speed_changed(getSpeed());
   emit duration_set(getDuration());
 
-  foreach (auto pair, pairs) {
+  for (auto pair : pairs) {
     if (killed) {
       break;
     }

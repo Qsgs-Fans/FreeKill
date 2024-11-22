@@ -176,7 +176,7 @@ void Client::startWatchFiles() {
     fsWatcher.addPath("fk_ver"); // dummy
   }
   auto md5pairs = flist.readAll().split(';');
-  foreach (auto md5, md5pairs) {
+  for (auto md5 : md5pairs) {
     if (md5.isEmpty()) continue;
     auto fname = md5.split('=')[0];
     if (fname.startsWith("packages") && fname.endsWith(".lua")) {

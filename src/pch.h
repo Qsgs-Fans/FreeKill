@@ -14,6 +14,8 @@
 // other libraries
 #define OPENSSL_API_COMPAT 0x10101000L
 
+#define QT_ENABLE_STRICT_MODE_UP_TO 0x060200
+
 #if !defined (Q_OS_ANDROID)
 #define DESKTOP_BUILD
 #endif

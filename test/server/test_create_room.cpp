@@ -19,6 +19,7 @@ class TestRoom: public QObject {
 private slots:
   void initTestCase();
   void testCreateRoom();
+  void testJoinRoom();
   // void testDeleteRoom();
   void cleanupTestCase();
 
@@ -117,6 +118,10 @@ void TestRoom::testCreateRoom() {
   QCOMPARE(L->eval("return #ClientInstance.alive_players").toInt(), 1);
   QCOMPARE(L->eval("return ClientInstance.players[1].id").toInt(), client->getSelf()->getId());
   // 感觉没什么好测试的，创建AbstractRoom的测试应放在Lua中
+}
+
+void TestRoom::testJoinRoom() {
+  // 现在c1在room中 令c2正常加入
 }
 
 void TestRoom::cleanupTestCase() {

@@ -21,6 +21,11 @@ target_precompile_headers(TestRoom REUSE_FROM TestSocket)
 target_link_libraries(TestRoom PRIVATE ${TEST_LIB})
 add_test(NAME "room creation tests" COMMAND TestRoom)
 
+qt_add_executable(TestScheduler server/test_scheduler.cpp server/server_thread.cpp)
+target_precompile_headers(TestScheduler REUSE_FROM TestSocket)
+target_link_libraries(TestScheduler PRIVATE ${TEST_LIB})
+add_test(NAME "room scheduling tests" COMMAND TestScheduler)
+
 qt_add_executable(TestLuaCore core/test_lua.cpp)
 target_precompile_headers(TestLuaCore REUSE_FROM TestSocket)
 target_link_libraries(TestLuaCore PRIVATE ${TEST_LIB})
