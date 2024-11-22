@@ -39,6 +39,7 @@ private:
 };
 
 void TestScheduler::initTestCase() {
+  qputenv("QT_FATAL_CRITICALS", "1"); // TODO: 找个办法在qCritical时候只是失败这个测试而不是把所有全部abort掉了
   while (!QFile::exists(".git")) QDir::setCurrent("..");
   server_thread = new ServerThread;
 
@@ -111,6 +112,7 @@ void TestScheduler::testStartGame() {
 void TestScheduler::testReconnect() {
   // 先踢了再说 强制掉线
   QSignalSpy spy_disconnet(client2, &Client::error_message);
+  QVariantList args;
   auto splayer2 = ServerInstance->findPlayer(client2->getSelf()->getId());
   emit splayer2->kicked();
   QVERIFY(spy_disconnet.wait());
@@ -122,7 +124,19 @@ void TestScheduler::testReconnect() {
   client2->setLoginInfo(test_name2, "1234");
   QSignalSpy spy2(client2->getRouter(), &Router::notification_got);
   client2->connectToHost("localhost", test_port);
-  QVERIFY(spy2.wait());
+  QVERIFY(spy2.wait()); qApp->processEvents(); // 收NetworkDelayTest 发第一个包
+  // 然后应该是以下：
+  // InstallKey, Setup, SetServerSettings, Reconnect, RoomOwner (AddSkill系列不管了)
+  // 其中一直wait直到收到RoomOwner包只是为了确保client执行了Lua
+  spy2.clear();
+  while (spy2.count() < 5) spy2.wait(100);
+  args = spy2[1];
+  QCOMPARE(args[0].toString(), "Setup");
+  auto setup_data = QJsonDocument::fromJson(args[1].toString().toUtf8()).array();
+  // 格式应该是 [id，用户名，头像，延迟] 只检查是不是设置延迟了（一定要有）
+  QCOMPARE(setup_data.count(), 4);
+  args = spy2[3];
+  QCOMPARE(args[0].toString(), "Reconnect");
 }
 
 void TestScheduler::testObserve() {

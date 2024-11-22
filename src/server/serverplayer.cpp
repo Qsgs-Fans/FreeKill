@@ -135,12 +135,14 @@ void ServerPlayer::kick() {
 }
 
 void ServerPlayer::reconnect(ClientSocket *client) {
-  setSocket(client);
-  alive = true;
-  // client->disconnect(this);
   if (server->getPlayers().count() <= 10) {
     server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()));
   }
+
+  setState(Player::Online);
+  setSocket(client);
+  alive = true;
+  // client->disconnect(this);
 
   if (room && !room->isLobby()) {
     server->setupPlayer(this, true);
