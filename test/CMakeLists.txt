@@ -4,6 +4,7 @@ set (TEST_LIB
   libFreeKill
   Qt6::Network
   Qt6::Test
+  OpenSSL::Crypto
 )
 
 qt_add_executable(TestSocket network/test_socket.cpp)
