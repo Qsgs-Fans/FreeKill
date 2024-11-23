@@ -22,9 +22,6 @@ jobs:
     - name: Install freekill-core
       run: |
         git clone https://github.com/Qsgs-Fans/freekill-core.git packages/freekill-core
-        cd packages/freekill-core
-        git switch $(cd .. && git branch --show-current && cd freekill-core) || echo 1
-        cd ../..
 
     - name: Build
       run: |
