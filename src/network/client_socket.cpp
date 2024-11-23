@@ -51,7 +51,6 @@ void ClientSocket::disconnectFromHost() {
 
 void ClientSocket::send(const QByteArray &msg) {
   if (socket->state() != QTcpSocket::ConnectedState) {
-  qDebug() << __FUNCTION__ << msg;
     emit error_message("Cannot send messages if not connected");
     return;
   }

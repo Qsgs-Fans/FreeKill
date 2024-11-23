@@ -559,8 +559,6 @@ void Room::kickPlayer(ServerPlayer *player, const QString &jsonData) {
 
 void Room::ready(ServerPlayer *player, const QString &) {
   player->setReady(!player->isReady());
-  doBroadcastNotify(getPlayers(), "ReadyChanged",
-      QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
 }
 
 void Room::startGame(ServerPlayer *player, const QString &) {

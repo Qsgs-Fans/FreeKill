@@ -7,7 +7,7 @@
 #include "network/router.h"
 #include "server/server.h"
 
-ServerPlayer::ServerPlayer(RoomBase *room) {
+ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
   connect(router, &Router::notification_got, this, [=](const QString &c, const QString &j) {
@@ -20,8 +20,8 @@ ServerPlayer::ServerPlayer(RoomBase *room) {
   });
   connect(router, &Router::replyReady, this, [=]() {
     setThinking(false);
-    if (!this->room->isLobby()) {
-      auto _room = qobject_cast<Room *>(this->room);
+    if (!room->isLobby()) {
+      auto _room = qobject_cast<Room *>(room);
       if (_room->getThread()) {
         _room->getThread()->wakeUp(_room->getId(), "reply");
         // TODO: signal
@@ -29,10 +29,16 @@ ServerPlayer::ServerPlayer(RoomBase *room) {
     }
   });
   setState(Player::Online);
-  this->room = room;
+  room = roombase;
   server = room->getServer();
   connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
+  connect(this, &Player::readyChanged, this, [=](){
+    if (room && !room->isLobby()) {
+      room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+                              QString("[%1,%2]").arg(getId()).arg(isReady()));
+    }
+  });
 
   alive = true;
   m_busy = false;
