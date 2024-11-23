@@ -37,6 +37,3 @@ public:
     $self->installAESKey($self->getAESKey().toLatin1());
   }
 }
-
-extern Client *ClientInstance;
-

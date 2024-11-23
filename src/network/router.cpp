@@ -40,10 +40,6 @@ void Router::removeSocket() {
   socket = nullptr;
 }
 
-void Router::installAESKey(const QByteArray &key) {
-  socket->installAESKey(key);
-}
-
 bool Router::isConsoleStart() const {
   return socket->peerAddress() == "127.0.0.1";
 }

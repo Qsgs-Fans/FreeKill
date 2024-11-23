@@ -16,4 +16,6 @@ dofile 'test/lua/core/util.lua'
 dofile 'test/lua/core/pattern.lua'
 dofile 'test/lua/core/testmode.lua'
 
-fk.os.exit( lu.LuaUnit.run() )
+print 'Lua unit tests start'
+
+fk.os.exit( lu.LuaUnit.run('--verbose') )
