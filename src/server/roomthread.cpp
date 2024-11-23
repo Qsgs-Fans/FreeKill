@@ -31,6 +31,7 @@ void RoomThread::run() {
   connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
   connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
   connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
+  emit scheduler_ready();
   exec();
 }
 

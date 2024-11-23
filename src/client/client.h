@@ -3,8 +3,7 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
+struct ClientPrivate;
 
 class Lua;
 class ClientPlayer;
@@ -62,7 +61,7 @@ private:
   // 仅在登录时使用
   QString screenName;
   QString password;
-  RSA *rsa;
+  ClientPrivate *p_ptr;
   QString aes_key;
   QString pubEncrypt(const QString &key, const QString &data);
 

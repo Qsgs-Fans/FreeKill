@@ -65,7 +65,7 @@ QVariant Lua::call(const QString &func_name, QVariantList params) {
 
   lua_getglobal(L, func_name.toLatin1().data());
 
-  foreach (QVariant v, params) {
+  for (auto v : params) {
     pushValue(L, v);
   }
 

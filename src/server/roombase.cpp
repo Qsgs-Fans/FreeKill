@@ -18,7 +18,7 @@ QList<ServerPlayer *> RoomBase::getOtherPlayers(ServerPlayer *expect) const {
 }
 
 ServerPlayer *RoomBase::findPlayer(int id) const {
-  foreach (ServerPlayer *p, players) {
+  for (auto p : players) {
     if (p->getId() == id)
       return p;
   }
@@ -27,7 +27,7 @@ ServerPlayer *RoomBase::findPlayer(int id) const {
 
 void RoomBase::doBroadcastNotify(const QList<ServerPlayer *> targets,
                              const QString &command, const QString &jsonData) {
-  foreach (ServerPlayer *p, targets) {
+  for (auto p : targets) {
     p->doNotify(command, jsonData);
   }
 }

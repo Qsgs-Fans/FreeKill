@@ -41,7 +41,6 @@ public:
   ClientSocket *getSocket() const;
   void setSocket(ClientSocket *socket);
   void removeSocket();
-  void installAESKey(const QByteArray &key);
   bool isConsoleStart() const;
 
   void setReplyReadySemaphore(QSemaphore *semaphore);

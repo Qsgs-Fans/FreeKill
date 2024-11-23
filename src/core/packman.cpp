@@ -15,13 +15,13 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
   QDir d("packages");
 
   // For old version
-  foreach (auto e, QmlBackend::ls("packages")) {
+  for (auto e : QmlBackend::ls("packages")) {
     if (e.endsWith(".disabled") && d.exists(e) && !d.exists(e.chopped(9))) {
       d.rename(e, e.chopped(9));
     }
   }
 
-  foreach (auto e, db->select("SELECT name, enabled FROM packages;")) {
+  for (auto e : db->select("SELECT name : enabled FROM packages;")) {
     auto obj = e.toObject();
     auto pack = obj["name"].toString();
     auto enabled = obj["enabled"].toString().toInt() == 1;
@@ -52,7 +52,7 @@ QString PackMan::getPackSummary() {
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
   auto f = [=]() {
     // First, disable all packages
-    foreach (auto e, db->select("SELECT name FROM packages;")) {
+    for (auto e : db->select("SELECT name FROM packages;")) {
       disablePack(e.toObject()["name"].toString());
     }
 
@@ -64,7 +64,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
     auto doc = QJsonDocument::fromJson(jsonData.toUtf8());
     auto arr = doc.array();
     int i = 0;
-    foreach (auto e, arr) {
+    for (auto e : arr) {
       i++;
       auto obj = e.toObject();
       auto name = obj["name"].toString();

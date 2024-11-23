@@ -22,6 +22,7 @@ ClientSocket::ClientSocket(QTcpSocket *socket) {
 void ClientSocket::init() {
   connect(socket, &QTcpSocket::connected, this, &ClientSocket::connected);
   connect(socket, &QTcpSocket::disconnected, this, &ClientSocket::disconnected);
+  connect(socket, &QTcpSocket::disconnected, this, &ClientSocket::removeAESKey);
   connect(socket, &QTcpSocket::readyRead, this, &ClientSocket::getMessage);
   connect(socket, &QTcpSocket::errorOccurred, this, &ClientSocket::raiseError);
   socket->setSocketOption(QAbstractSocket::KeepAliveOption, 1);
@@ -160,6 +161,10 @@ void ClientSocket::installAESKey(const QByteArray &key) {
 
   AES_set_encrypt_key((const unsigned char *)key_.data(), 16 * 8, &aes_key);
   aes_ready = true;
+}
+
+void ClientSocket::removeAESKey() {
+  aes_ready = false;
 }
 
 QByteArray ClientSocket::aesEnc(const QByteArray &in) {

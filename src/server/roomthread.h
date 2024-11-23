@@ -28,6 +28,7 @@ class RoomThread : public QThread {
   bool isOutdated();
 
  signals:
+  void scheduler_ready(); // 测试专用
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);

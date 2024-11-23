@@ -34,7 +34,7 @@ Server::Server(QObject *parent) : QObject(parent) {
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
     while (true) {
-      foreach (auto p, this->players.values()) {
+      for (auto p : this->players.values()) {
         if (p->getState() == Player::Online) {
           p->alive = false;
           p->doNotify("Heartbeat", "");
@@ -48,7 +48,7 @@ Server::Server(QObject *parent) : QObject(parent) {
         QThread::sleep(1);
       }
 
-      foreach (auto p, this->players.values()) {
+      for (auto p : this->players.values()) {
         if (p->getState() == Player::Online && !p->alive) {
           emit p->kicked();
         }
@@ -64,7 +64,7 @@ Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
   m_lobby->deleteLater();
-  foreach (auto thread, threads) {
+  for (auto thread : threads) {
     thread->deleteLater();
   }
   delete db;
@@ -87,7 +87,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   Room *room;
   RoomThread *thread = nullptr;
 
-  foreach (auto t, threads) {
+  for (auto t : threads) {
     if (!t->isFull() && !t->isOutdated()) {
       thread = t;
       break;
@@ -143,7 +143,7 @@ void Server::removePlayer(int id) {
 void Server::updateRoomList(ServerPlayer *teller) {
   QJsonArray arr;
   QJsonArray avail_arr;
-  foreach (Room *room, rooms) {
+  for (Room *room : rooms) {
     QJsonArray obj;
     auto settings = QJsonDocument::fromJson(room->getSettings());
     auto password = settings["password"].toString();
@@ -163,7 +163,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
     else
       avail_arr << obj;
   }
-  foreach (auto v, avail_arr) {
+  for (auto v : avail_arr) {
     arr.prepend(v);
   }
   auto jsonData = JsonArray2Bytes(arr);
@@ -181,7 +181,7 @@ void Server::updateOnlineInfo() {
 Sqlite3 *Server::getDatabase() { return db; }
 
 void Server::broadcast(const QString &command, const QString &jsonData) {
-  foreach (ServerPlayer *p, players.values()) {
+  for (ServerPlayer *p : players.values()) {
     p->doNotify(command, jsonData);
   }
 }
@@ -386,7 +386,7 @@ bool Server::checkBanWord(const QString &str) {
   if (arr.isEmpty()) {
     return true;
   }
-  foreach (auto v, arr) {
+  for (auto v : arr) {
     auto s = v.toString();
     if (str.indexOf(s) != -1) {
       return false;
@@ -438,10 +438,10 @@ const QString &Server::getMd5() const {
 
 void Server::refreshMd5() {
   md5 = calcFileMD5();
-  foreach (auto room, rooms) {
+  for (auto room : rooms) {
     if (room->isOutdated()) {
       if (!room->isStarted()) {
-        foreach (auto p, room->getPlayers()) {
+        for (auto p : room->getPlayers()) {
           p->doNotify("ErrorMsg", "room is outdated");
           p->kicked();
         }
@@ -451,7 +451,7 @@ void Server::refreshMd5() {
       }
     }
   }
-  foreach (auto p, lobby()->getPlayers()) {
+  for (auto p : lobby()->getPlayers()) {
     emit p->kicked();
   }
 }

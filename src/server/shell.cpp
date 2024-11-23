@@ -73,7 +73,7 @@ void Shell::lspCommand(QStringList &) {
     return;
   }
   qInfo("Current %lld online player(s) are:", ServerInstance->players.size());
-  foreach (auto player, ServerInstance->players) {
+  for (auto player : ServerInstance->players) {
     qInfo() << player->getId() << "," << player->getScreenName();
   }
 }
@@ -84,7 +84,7 @@ void Shell::lsrCommand(QStringList &) {
     return;
   }
   qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
-  foreach (auto room, ServerInstance->rooms) {
+  for (auto room : ServerInstance->rooms) {
     auto config = QJsonDocument::fromJson(room->getSettings());
     auto pw = config["password"].toString();
     qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
@@ -116,7 +116,7 @@ void Shell::upgradeCommand(QStringList &list) {
   if (list.isEmpty()) {
     // qWarning("The 'upgrade' command need a package name to upgrade.");
     auto arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
-    foreach (auto a, arr) {
+    for (auto a : arr) {
       auto obj = a.toObject();
       Pacman->upgradePack(obj["name"].toString());
     }
@@ -155,7 +155,7 @@ void Shell::lspkgCommand(QStringList &) {
   auto arr = QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array();
   qInfo("Name\tVersion\t\tEnabled");
   qInfo("------------------------------");
-  foreach (auto a, arr) {
+  for (auto a : arr) {
     auto obj = a.toObject();
     auto hash = obj["hash"].toString();
     qInfo() << obj["name"].toString().toUtf8().constData() << "\t"
@@ -226,7 +226,7 @@ void Shell::banCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banAccount(db, name, true);
   }
 
@@ -242,7 +242,7 @@ void Shell::unbanCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banAccount(db, name, false);
   }
 
@@ -286,7 +286,7 @@ void Shell::banipCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banIPByName(db, name, true);
   }
 }
@@ -299,7 +299,7 @@ void Shell::unbanipCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banIPByName(db, name, false);
   }
 }
@@ -345,7 +345,7 @@ void Shell::banUuidCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banUuidByName(db, name, true);
   }
 }
@@ -358,7 +358,7 @@ void Shell::unbanUuidCommand(QStringList &list) {
 
   auto db = ServerInstance->getDatabase();
 
-  foreach (auto name, list) {
+  for (auto name : list) {
     banUuidByName(db, name, false);
   }
 }
@@ -375,7 +375,7 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 
   auto db = ServerInstance->getDatabase();
-  foreach (auto name, list) {
+  for (auto name : list) {
     // 重置为1234
     db->exec(QString("UPDATE userinfo SET password=\
           'dbdc2ad3d9625407f55674a00b58904242545bfafedac67485ac398508403ade',\

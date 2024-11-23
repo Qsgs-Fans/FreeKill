@@ -79,7 +79,7 @@ bool Room::isAbandoned() const {
   if (players.isEmpty())
     return true;
 
-  foreach (ServerPlayer *p, players) {
+  for (ServerPlayer *p : players) {
     if (p->getState() == Player::Online)
       return false;
   }
@@ -153,7 +153,7 @@ void Room::addPlayer(ServerPlayer *player) {
   jsonData << QJsonDocument::fromJson(this->settings).object();
   player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
 
-  foreach (ServerPlayer *p, getOtherPlayers(player)) {
+  for (ServerPlayer *p : getOtherPlayers(player)) {
     jsonData = QJsonArray();
     jsonData << p->getId();
     jsonData << p->getScreenName();
@@ -164,7 +164,7 @@ void Room::addPlayer(ServerPlayer *player) {
 
     jsonData = QJsonArray();
     jsonData << p->getId();
-    foreach (int i, p->getGameData()) {
+    for (int i : p->getGameData()) {
       jsonData << i;
     }
     player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
@@ -182,7 +182,7 @@ void Room::addPlayer(ServerPlayer *player) {
   } else {
     auto jsonData = QJsonArray();
     jsonData << player->getId();
-    foreach (int i, player->getGameData()) {
+    for (int i : player->getGameData()) {
       jsonData << i;
     }
     doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
@@ -473,7 +473,7 @@ void Room::gameOver() {
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
   server->beginTransaction();
-  foreach (ServerPlayer *p, players) {
+  for (ServerPlayer *p : players) {
     auto pid = p->getId();
 
     if (pid > 0) {
@@ -508,7 +508,7 @@ void Room::gameOver() {
 
 void Room::manuallyStart() {
   if (isFull() && !gameStarted) {
-    foreach (auto p, players) {
+    for (auto p : players) {
       p->setReady(false);
       p->setDied(false);
       p->startGameTimer();
@@ -559,13 +559,11 @@ void Room::kickPlayer(ServerPlayer *player, const QString &jsonData) {
 
 void Room::ready(ServerPlayer *player, const QString &) {
   player->setReady(!player->isReady());
-  doBroadcastNotify(getPlayers(), "ReadyChanged",
-      QString("[%1,%2]").arg(player->getId()).arg(player->isReady()));
 }
 
 void Room::startGame(ServerPlayer *player, const QString &) {
   if (isOutdated()) {
-    foreach (auto p, getPlayers()) {
+    for (auto p : getPlayers()) {
       p->doNotify("ErrorMsg", "room is outdated");
       p->kicked();
     }

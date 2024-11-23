@@ -1,71 +1,27 @@
-#include "server_thread.h"
+#include "test_create_room.h"
+#include "globals.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #include "server/server.h"
 #include "server/room.h"
+#include "server/roomthread.h"
 #include "server/lobby.h"
 #include "client/client.h"
 #include "client/clientplayer.h"
 #include "network/router.h"
 
-static ushort test_port = 39527;
-static const char *test_name = "test_player";
-static const char *test_name2 = "test_player2";
-static const char *test_name3 = "test_player3";
-
-// ~ 房间创建篇 ~
-class TestRoom: public QObject {
-  Q_OBJECT
-private slots:
-  void initTestCase();
-  void testCreateRoom();
-  // void testDeleteRoom();
-  void cleanupTestCase();
-
-private:
-  ServerThread *server_thread;
-  Client *client, *client2, *client3;
-};
-
 void TestRoom::initTestCase() {
-  while (!QFile::exists(".git")) QDir::setCurrent("..");
-  server_thread = new ServerThread;
-
-  QSignalSpy spy(server_thread, &ServerThread::listening);
-  server_thread->start();
-  spy.wait(10000);
-  QCOMPARE(spy.count(), 1); // 应该是开始listen了，等Server加载完才可继续
-
-  client = new Client;
-  client->setLoginInfo(test_name, "1234");
-  client2 = new Client;
-  client2->setLoginInfo(test_name2, "1234");
-  client3 = new Client;
-  client3->setLoginInfo(test_name3, "1234");
-
-  client->connectToHost("localhost", test_port);
-  client2->connectToHost("localhost", test_port);
-  client3->connectToHost("localhost", test_port);
-  spy.wait(100);
-  qApp->processEvents();
+  auto client = clients[0], client2 = clients[1], client3 = clients[2];
+  client->connectToHostAndSendSetup("localhost", test_port);
+  client2->connectToHostAndSendSetup("localhost", test_port);
+  client3->connectToHostAndSendSetup("localhost", test_port);
   QSignalSpy spy2(client->getRouter(), &Router::notification_got);
-  while (spy2.wait(50));
+  while (spy2.wait(50))
+    qApp->processEvents();
 }
 
 void TestRoom::testCreateRoom() {
-  // 现在大家都在lobby中
-  // 要测试的有 CreateRoom EnterRoom ObserveRoom
-  static auto room_config = QJsonObject({
-    { "gameMode", "aaa_role_mode" },
-    { "enableFreeAssign", true },
-    { "enableDeputy", false },
-    { "generalNum", 5 },
-    { "luckTime", 0 },
-    { "password", "" },
-    { "disabledPack", QJsonArray() },
-    { "disabledGenerals", QJsonArray() },
-  });
-
+  auto client = clients[0], client2 = clients[1], client3 = clients[2];
   QSignalSpy spy(client->getRouter(), &Router::notification_got);
   QSignalSpy spy2(client2->getRouter(), &Router::notification_got);
   QSignalSpy spy3(client3->getRouter(), &Router::notification_got);
@@ -107,6 +63,9 @@ void TestRoom::testCreateRoom() {
   auto thread = server->getThreads().first();
   QCOMPARE(server->lobby()->getPlayers().count(), 2);
   QCOMPARE(server->findRoom(1)->getPlayers().count(), 1);
+  // 由于在S端手动创建房间，需要等待S端读取完lua
+  QSignalSpy spy_roomthread_ready(thread, &RoomThread::scheduler_ready);
+  QVERIFY(spy_roomthread_ready.wait());
   // Lua或许也值得一看？算了懒得看 至少不在此处
 
   // 然后检查Client中的数据（主要在lua中，狠狠用eval了）
@@ -119,12 +78,10 @@ void TestRoom::testCreateRoom() {
   // 感觉没什么好测试的，创建AbstractRoom的测试应放在Lua中
 }
 
-void TestRoom::cleanupTestCase() {
-  client3->deleteLater();
-  client2->deleteLater();
-  client->deleteLater();
-  server_thread->deleteLater();
+void TestRoom::testJoinRoom() {
+  // 现在c1在room中 令c2正常加入
 }
 
-QTEST_GUILESS_MAIN(TestRoom)
-#include "test_create_room.moc"
+void TestRoom::cleanupTestCase() {
+  server_thread->kickAllClients();
+}

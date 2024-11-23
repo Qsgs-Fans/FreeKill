@@ -638,6 +638,7 @@ function checkAllReady() {
 }
 
 callbacks["ReadyChanged"] = (data) => {
+  console.log("ReadyChanged", JSON.stringify(data));
   const id = data[0];
   const ready = data[1];
 
@@ -657,6 +658,7 @@ callbacks["NetStateChanged"] = (data) => {
   let state = data[1];
 
   const model = getPhotoModel(id);
+  if (!model) return;
   if (state === "run" && model.dead) {
     state = "leave";
   }

@@ -8,7 +8,16 @@
 #include "network/client_socket.h"
 #include "network/router.h"
 
+#include <openssl/aes.h>
+#include <openssl/pem.h>
+
 Client *ClientInstance = nullptr;
+
+struct ClientPrivate {
+  RSA *rsa;
+  ClientPrivate() { rsa = RSA_new(); }
+  ~ClientPrivate() { RSA_free(rsa); }
+};
 
 Client::Client(QObject *parent) : QObject(parent) {
   ClientInstance = this;
@@ -24,7 +33,7 @@ Client::Client(QObject *parent) : QObject(parent) {
     callLua(c, j, true);
   });
 
-  rsa = RSA_new();
+  p_ptr = new ClientPrivate;
 
   L = new Lua;
   if (QFile::exists("packages/freekill-core") &&
@@ -35,14 +44,15 @@ Client::Client(QObject *parent) : QObject(parent) {
 
   L->dofile("lua/freekill.lua");
   L->dofile("lua/client/client.lua");
+  L->call("CreateLuaClient", { QVariant::fromValue(this) });
 }
 
 Client::~Client() {
   ClientInstance = nullptr;
   delete L;
+  delete p_ptr;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
-  RSA_free(rsa);
 }
 
 void Client::connectToHost(const QString &server, ushort port) {
@@ -55,8 +65,8 @@ QString Client::pubEncrypt(const QString &key, const QString &data) {
   // AES密钥和IV都是固定16字节的，所以可以放在开头
   auto key_bytes = key.toLatin1();
   BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
-  RSA_free(rsa);
-  rsa = PEM_read_bio_RSAPublicKey(keyio, NULL, NULL, NULL);
+  RSA_free(p_ptr->rsa);
+  p_ptr->rsa = PEM_read_bio_RSAPublicKey(keyio, NULL, NULL, NULL);
   BIO_free_all(keyio);
 
   auto data_bytes = data.toUtf8();
@@ -73,11 +83,11 @@ QString Client::pubEncrypt(const QString &key, const QString &data) {
 
   data_bytes.prepend(aes_key_);
 
-  unsigned char buf[RSA_size(rsa)];
+  unsigned char buf[RSA_size(p_ptr->rsa)];
   RSA_public_encrypt(data.length() + 32,
-                     (const unsigned char *)data_bytes.constData(), buf, rsa,
+                     (const unsigned char *)data_bytes.constData(), buf, p_ptr->rsa,
                      RSA_PKCS1_PADDING);
-  return QByteArray::fromRawData((const char *)buf, RSA_size(rsa)).toBase64();
+  return QByteArray::fromRawData((const char *)buf, RSA_size(p_ptr->rsa)).toBase64();
 }
 
 void Client::sendSetupPacket(const QString &pubkey) {
@@ -146,7 +156,7 @@ Lua *Client::getLua() { return L; }
 
 void Client::installAESKey(const QByteArray &key) {
   startWatchFiles();
-  router->installAESKey(key);
+  router->getSocket()->installAESKey(key);
 }
 
 void Client::saveRecord(const QString &json, const QString &fname) {
@@ -176,7 +186,7 @@ void Client::startWatchFiles() {
     fsWatcher.addPath("fk_ver"); // dummy
   }
   auto md5pairs = flist.readAll().split(';');
-  foreach (auto md5, md5pairs) {
+  for (auto md5 : md5pairs) {
     if (md5.isEmpty()) continue;
     auto fname = md5.split('=')[0];
     if (fname.startsWith("packages") && fname.endsWith(".lua")) {

@@ -48,6 +48,7 @@ public:
   void disconnectFromHost();
   /// 设置AES密钥，同时启用加密传输。
   void installAESKey(const QByteArray &key);
+  void removeAESKey();
   bool aesReady() const { return aes_ready; }
   /// 发送消息。参见加密传输与压缩传输
   void send(const QByteArray& msg);

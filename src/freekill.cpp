@@ -36,7 +36,7 @@ static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath) {
     QStringList fileNames =
         sourceDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot |
                             QDir::Hidden | QDir::System);
-    foreach (const QString &fileName, fileNames) {
+    for (const QString &fileName : fileNames) {
       const QString newSrcFilePath = srcFilePath + QLatin1Char('/') + fileName;
       const QString newTgtFilePath = tgtFilePath + QLatin1Char('/') + fileName;
       if (!copyPath(newSrcFilePath, newTgtFilePath))

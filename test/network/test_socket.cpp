@@ -1,38 +1,6 @@
-#include <QTcpSocket>
-#include <QUdpSocket>
-#include <QTcpServer>
-#include <QTimer>
-#include <QSignalSpy>
-#include <QTest>
-
+#include "test_socket.h"
 #include "network/server_socket.h"
 #include "network/client_socket.h"
-
-// 测试ServerSocket与ClientSocket
-// 想不出测试各种网络异常的方法，所以只有这些简单的了
-class TestSocket : public QObject {
-  Q_OBJECT
-
-private slots:
-
-  // 所有测试开始之前，首先制订一个server和三个client
-  void initTestCase();
-
-  void testConnect();
-  void testSendMessages();
-  void testEncryptedMessages();
-
-  // 释放最开始创建的对象
-  void cleanupTestCase();
-
-private:
-  ServerSocket *server;
-  ClientSocket *client, *client_server = nullptr; // 前者模拟客户端，后者模拟服务端创建的用于通信的
-  ushort test_port = 39527;
-
-  void processNewConnection(ClientSocket *);
-};
-
 
 void TestSocket::initTestCase() {
   server = new ServerSocket;
@@ -123,7 +91,3 @@ void TestSocket::processNewConnection(ClientSocket *client) {
   }
   client_server = client;
 }
-
-QTEST_GUILESS_MAIN(TestSocket)
-
-#include "test_socket.moc"
