@@ -638,7 +638,6 @@ function checkAllReady() {
 }
 
 callbacks["ReadyChanged"] = (data) => {
-  console.log("ReadyChanged", JSON.stringify(data));
   const id = data[0];
   const ready = data[1];
 

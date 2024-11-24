@@ -332,19 +332,33 @@ bool Room::isOutdated() {
 
 bool Room::isStarted() const { return gameStarted; }
 
-static const QString findWinRate =
+static const QString findPWinRate =
     QString("SELECT win, lose, draw "
-            "FROM winRate WHERE id = %1 and general = '%2' and mode = '%3';");
+            "FROM pWinRate WHERE id = %1 and mode = '%2' and role = '%3';");
 
-static const QString updateWinRate =
-    QString("UPDATE winRate "
+static const QString updatePWinRate =
+    QString("UPDATE pWinRate "
             "SET win = %4, lose = %5, draw = %6 "
-            "WHERE id = %1 and general = '%2' and mode = '%3';");
+            "WHERE id = %1 and mode = '%2' and role = '%3';");
 
-static const QString insertWinRate =
-    QString("INSERT INTO winRate "
-            "(id, general, mode, win, lose, draw) "
+static const QString insertPWinRate =
+    QString("INSERT INTO pWinRate "
+            "(id, mode, role, win, lose, draw) "
             "VALUES (%1, '%2', '%3', %4, %5, %6);");
+
+static const QString findGWinRate =
+    QString("SELECT win, lose, draw "
+            "FROM gWinRate WHERE and general = '%1' and mode = '%2' and role = '%3';");
+
+static const QString updateGWinRate =
+    QString("UPDATE gWinRate "
+            "SET win = %4, lose = %5, draw = %6 "
+            "WHERE general = '%1' and mode = '%2' and role = '%3';");
+
+static const QString insertGWinRate =
+    QString("INSERT INTO gWinRate "
+            "(general, mode, role, win, lose, draw) "
+            "VALUES ('%1', '%2', '%3', %4, %5, %6);");
 
 static const QString findRunRate =
   QString("SELECT run "
@@ -361,7 +375,7 @@ static const QString insertRunRate =
             "VALUES (%1, '%2', %3);");
 
 void Room::updateWinRate(int id, const QString &general, const QString &mode,
-                         int game_result, bool dead) {
+                         const QString &role, int game_result) {
   if (!Sqlite3::checkString(general))
     return;
   if (!Sqlite3::checkString(mode))
@@ -387,10 +401,10 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
     break;
   }
 
-  auto result = db->select(findWinRate.arg(QString::number(id), general, mode));
+  auto result = db->select(findPWinRate.arg(QString::number(id), mode, role));
 
   if (result.isEmpty()) {
-    db->exec(insertWinRate.arg(QString::number(id), general, mode,
+    db->exec(insertPWinRate.arg(QString::number(id), mode, role,
                                QString::number(win), QString::number(lose),
                                QString::number(draw)));
   } else {
@@ -398,9 +412,25 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
     win += obj["win"].toString().toInt();
     lose += obj["lose"].toString().toInt();
     draw += obj["draw"].toString().toInt();
-    db->exec(::updateWinRate.arg(QString::number(id), general, mode,
-                                 QString::number(win), QString::number(lose),
-                                 QString::number(draw)));
+    db->exec(updatePWinRate.arg(QString::number(id), mode, role,
+                                QString::number(win), QString::number(lose),
+                                QString::number(draw)));
+  }
+
+  result = db->select(findGWinRate.arg(general, mode, role));
+
+  if (result.isEmpty()) {
+    db->exec(insertGWinRate.arg(general, mode, role,
+                                QString::number(win), QString::number(lose),
+                                QString::number(draw)));
+  } else {
+    auto obj = result[0].toObject();
+    win += obj["win"].toString().toInt();
+    lose += obj["lose"].toString().toInt();
+    draw += obj["draw"].toString().toInt();
+    db->exec(updateGWinRate.arg(general, mode, role,
+                                QString::number(win), QString::number(lose),
+                                QString::number(draw)));
   }
 
   if (runned_players.contains(id)) {
@@ -431,7 +461,7 @@ void Room::addRunRate(int id, const QString &mode) {
 }
 
 void Room::updatePlayerGameData(int id, const QString &mode) {
-  static const QString findModeRate = QString("SELECT win, total FROM playerWinRate "
+  static const QString findModeRate = QString("SELECT win, total FROM pWinRateView "
             "WHERE id = %1 and mode = '%2';");
 
   if (id < 0) return;
