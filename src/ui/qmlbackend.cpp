@@ -406,6 +406,15 @@ void QmlBackend::playRecord(const QString &fname) {
   replayer->start();
 }
 
+void QmlBackend::playBlobRecord(int id) {
+  auto replayer = new Replayer(this, id);
+  setReplayer(replayer);
+  connect(replayer, &Replayer::destroyed, this, [=](){
+    setReplayer(nullptr);
+  });
+  replayer->start();
+}
+
 Replayer *QmlBackend::getReplayer() const {
   return replayer;
 }

@@ -4,6 +4,7 @@
 #include "client/client.h"
 #include "client/clientplayer.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 
 Replayer::Replayer(QObject *parent, const QString &filename) :
   QThread(parent), fileName(filename), roomSettings(""), origPlayerInfo(""),
@@ -20,7 +21,21 @@ Replayer::Replayer(QObject *parent, const QString &filename) :
   file.open(QIODevice::ReadOnly);
   QByteArray raw = file.readAll();
   file.close();
+  loadRawData(raw);
+}
 
+Replayer::Replayer(QObject *parent, int id) :
+  QThread(parent), fileName(""), roomSettings(""), origPlayerInfo(""),
+  playing(true), killed(false), speed(1.0), uniformRunning(false)
+{
+  setObjectName("Replayer");
+  auto result = ClientInstance->getDatabase()->select(QString(
+    "SELECT hex(recording) as r FROM myGameRecordings WHERE id = %1;").arg(id));
+  auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
+  loadRawData(raw);
+}
+
+void Replayer::loadRawData(const QByteArray &raw) {
   auto data = qUncompress(raw);
 
   auto doc = QJsonDocument::fromJson(data);

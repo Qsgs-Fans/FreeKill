@@ -157,24 +157,34 @@ void Client::changeSelf(int id) {
 }
 
 Lua *Client::getLua() { return L; }
+Sqlite3 *Client::getDatabase() { return db; }
 
 void Client::installAESKey(const QByteArray &key) {
   startWatchFiles();
   router->getSocket()->installAESKey(key);
 }
 
+bool Client::checkSqlString(const QString &s) {
+  return Sqlite3::checkString(s);
+}
+
 // 给qml用的 转成js认识的格式
-QVariantList Client::selectFromDatabase(const QString &sql) {
+QVariantList Client::execSql(const QString &sql) {
   auto result = db->select(sql);
   QVariantList ret;
   for (auto map : result) {
     auto m = QVariantMap();
-    for (auto k : map) {
-      m[k] = map[k];
+    for (auto i = map.cbegin(), end = map.cend(); i != end; i++) {
+      m[i.key()] = i.value();
     }
     ret.append(m);
   }
   return ret;
+}
+
+QVariantList Client::getMyGameData() {
+  return execSql(QString("SELECT * FROM myGameData WHERE pid = %1 AND server_addr = '%2' ORDER BY id DESC;")
+                 .arg(self->getId()).arg(router->getSocket()->peerAddress()));
 }
 
 void Client::saveRecord(const char *json, const QString &fname) {
@@ -201,7 +211,7 @@ void Client::saveGameData(const QString &mode, const QString &general, const QSt
 
   auto time = QDateTime::currentSecsSinceEpoch();
   auto pid = self->getId();
-  auto server_addr = router->getSocket()->peerName();
+  auto server_addr = router->getSocket()->peerAddress();
   auto blob = qCompress(room_data).toHex();
   auto record_blob = qCompress(record).toHex();
   db->exec(sqlAddGamaData.arg(time).arg(pid).arg(server_addr).arg(mode)

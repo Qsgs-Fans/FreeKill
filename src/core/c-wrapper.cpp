@@ -150,7 +150,7 @@ Sqlite3::~Sqlite3() {
 
 bool Sqlite3::checkString(const QString &str) {
   static const QRegularExpression exp("['\";#* /\\\\?<>|:]+|(--)|(/\\*)|(\\*/)|(--\\+)");
-  return (!exp.match(str).hasMatch() && !str.isEmpty());
+  return (!exp.match(str).hasMatch());
 }
 
 // callback for handling SELECT expression
@@ -183,7 +183,9 @@ QString Sqlite3::selectJson(const QString &sql) {
   QJsonArray arr;
   for (auto map : ret) {
     QJsonObject obj;
-    for (auto k : map) obj[k] = map[k];
+    for (auto i = map.cbegin(), end = map.cend(); i != end; i++) {
+      obj[i.key()] = i.value();
+    }
     arr.append(obj);
   }
   return QJsonDocument(arr).toJson(QJsonDocument::Compact);

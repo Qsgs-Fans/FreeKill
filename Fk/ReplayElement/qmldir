@@ -1,0 +1,3 @@
+module Fk.ReplayElement
+GameDataOverview 1.0 GameDataOverview.qml
+ReplayRecordingFile 1.0 ReplayRecordingFile.qml

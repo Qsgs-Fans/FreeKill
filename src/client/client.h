@@ -34,10 +34,13 @@ public:
   void changeSelf(int id);
 
   Lua *getLua();
+  Sqlite3 *getDatabase();
   QString getAESKey() const { return aes_key; }
   void installAESKey(const QByteArray &key);
 
-  Q_INVOKABLE QVariantList selectFromDatabase(const QString &sql);
+  Q_INVOKABLE bool checkSqlString(const QString &s);
+  Q_INVOKABLE QVariantList execSql(const QString &sql);
+  Q_INVOKABLE QVariantList getMyGameData();
   void saveRecord(const char *json, const QString &fname);
   void saveGameData(const QString &mode, const QString &general, const QString &deputy,
                     const QString &role, int result, const QString &replay,

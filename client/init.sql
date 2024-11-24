@@ -45,7 +45,7 @@ BEGIN
 END;
 
 CREATE TABLE IF NOT EXISTS starredRecording (
-  id INTEGER PRIMARY KEY, -- gameData id
-  replay_name VARCHAR(24), -- 对应录像文件的名字 在recording/下（保存录像按钮）
+  id INTEGER, -- gameData id (可能NULL)
+  replay_name VARCHAR(24) PRIMARY KEY, -- 对应录像文件的名字 在recording/下（保存录像按钮）
   my_comment VARCHAR(24)   -- 评语
 );

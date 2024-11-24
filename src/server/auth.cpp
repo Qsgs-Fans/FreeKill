@@ -135,7 +135,7 @@ QMap<QString, QString> AuthManager::checkPassword(ClientSocket *client, const QS
     goto FAIL;
   }
 
-  if (!Sqlite3::checkString(name) || !server->checkBanWord(name)) {
+  if (name.isEmpty() || !Sqlite3::checkString(name) || !server->checkBanWord(name)) {
     error_msg = "invalid user name";
     goto FAIL;
   }
