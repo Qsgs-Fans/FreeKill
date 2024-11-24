@@ -21,7 +21,7 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
     }
   }
 
-  for (auto e : db->select("SELECT name : enabled FROM packages;")) {
+  for (auto e : db->select("SELECT name, enabled FROM packages;")) {
     auto obj = e.toObject();
     auto pack = obj["name"].toString();
     auto enabled = obj["enabled"].toString().toInt() == 1;

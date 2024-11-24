@@ -45,11 +45,14 @@ Client::Client(QObject *parent) : QObject(parent) {
   L->dofile("lua/freekill.lua");
   L->dofile("lua/client/client.lua");
   L->call("CreateLuaClient", { QVariant::fromValue(this) });
+
+  db = new Sqlite3("./client/client.db", "./client/init.sql");
 }
 
 Client::~Client() {
   ClientInstance = nullptr;
   delete L;
+  delete db;
   delete p_ptr;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
@@ -159,14 +162,41 @@ void Client::installAESKey(const QByteArray &key) {
   router->getSocket()->installAESKey(key);
 }
 
-void Client::saveRecord(const QString &json, const QString &fname) {
+void Client::saveRecord(const char *json, const QString &fname) {
   if (!QDir("recording").exists()) {
     QDir(".").mkdir("recording");
   }
   QFile c("recording/" + fname + ".fk.rep");
   c.open(QIODevice::WriteOnly);
-  c.write(qCompress(json.toUtf8()));
+  c.write(qCompress(json));
   c.close();
+}
+
+void Client::saveGameData(const QString &mode, const QString &general, const QString &deputy,
+                          const QString &role, int result, const QString &replay,
+                          const char *room_data, const char *record)
+{
+  static auto sqlAddGamaData = QString("INSERT INTO myGameData "
+            "(time, pid, server_addr, mode, general, deputy_general, role, result) "
+            "VALUES (%1, %2, '%3', '%4', '%5', '%6', '%7', %8);");
+  static auto sqlAddBlob = QString("INSERT INTO myGameRoomData "
+            "(id, room_data) VALUES (%1, x'%2');");
+  static auto sqlSaveRecord = QString("INSERT INTO myGameRecordings "
+            "(id, recording) VALUES (%1, x'%2');");
+
+  auto time = QDateTime::currentSecsSinceEpoch();
+  auto pid = self->getId();
+  auto server_addr = router->getSocket()->peerName();
+  auto blob = qCompress(room_data).toHex();
+  auto record_blob = qCompress(record).toHex();
+  db->exec(sqlAddGamaData.arg(time).arg(pid).arg(server_addr).arg(mode)
+    .arg(general).arg(deputy).arg(role).arg(result));
+
+  auto id_obj = db->select("SELECT COUNT() AS c FROM myGameData;")[0].toObject();
+  auto id = id_obj["c"].toString().toInt();
+  db->exec(sqlAddBlob.arg(id).arg(blob));
+  db->exec(sqlSaveRecord.arg(id).arg(record_blob));
+  emit toast_message("Record file auto saved.");
 }
 
 bool Client::isConsoleStart() const {

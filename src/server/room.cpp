@@ -374,10 +374,7 @@ static const QString insertRunRate =
             "(id, mode, run) "
             "VALUES (%1, '%2', %3);");
 
-void Room::updateWinRate(int id, const QString &general, const QString &mode,
-                         const QString &role, int game_result) {
-  if (!Sqlite3::checkString(general))
-    return;
+void Room::updatePlayerWinRate(int id, const QString &mode, const QString &role, int game_result) {
   if (!Sqlite3::checkString(mode))
     return;
   auto db = server->getDatabase();
@@ -388,17 +385,10 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
   int run = 0;
 
   switch (game_result) {
-  case 1:
-    win++;
-    break;
-  case 2:
-    lose++;
-    break;
-  case 3:
-    draw++;
-    break;
-  default:
-    break;
+  case 1: win++; break;
+  case 2: lose++; break;
+  case 3: draw++; break;
+  default: break;
   }
 
   auto result = db->select(findPWinRate.arg(QString::number(id), mode, role));
@@ -417,7 +407,37 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
                                 QString::number(draw)));
   }
 
-  result = db->select(findGWinRate.arg(general, mode, role));
+  if (runned_players.contains(id)) {
+    addRunRate(id, mode);
+  }
+
+  auto player = server->findPlayer(id);
+  if (players.contains(player)) {
+    player->setLastGameMode(mode);
+    updatePlayerGameData(id, mode);
+  }
+}
+
+void Room::updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int game_result) {
+  if (!Sqlite3::checkString(general))
+    return;
+  if (!Sqlite3::checkString(mode))
+    return;
+  auto db = server->getDatabase();
+
+  int win = 0;
+  int lose = 0;
+  int draw = 0;
+  int run = 0;
+
+  switch (game_result) {
+  case 1: win++; break;
+  case 2: lose++; break;
+  case 3: draw++; break;
+  default: break;
+  }
+
+  auto result = db->select(findGWinRate.arg(general, mode, role));
 
   if (result.isEmpty()) {
     db->exec(insertGWinRate.arg(general, mode, role,
@@ -431,16 +451,6 @@ void Room::updateWinRate(int id, const QString &general, const QString &mode,
     db->exec(updateGWinRate.arg(general, mode, role,
                                 QString::number(win), QString::number(lose),
                                 QString::number(draw)));
-  }
-
-  if (runned_players.contains(id)) {
-    addRunRate(id, mode);
-  }
-
-  auto player = server->findPlayer(id);
-  if (players.contains(player)) {
-    player->setLastGameMode(mode);
-    updatePlayerGameData(id, mode);
   }
 }
 

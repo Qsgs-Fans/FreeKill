@@ -54,8 +54,9 @@ class Room : public RoomBase {
   bool isStarted() const;
   // ====================================}
 
-  void updateWinRate(int id, const QString &general, const QString &mode,
-                     const QString &role, int result);
+  void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
+  void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
+
   void gameOver();
   void manuallyStart();
   void pushRequest(const QString &req);
