@@ -4,6 +4,7 @@
 #include "client/clientplayer.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
+#include "openssl/rsa.h"
 #include "server/server.h"
 #include "network/client_socket.h"
 #include "network/router.h"
