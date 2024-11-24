@@ -68,7 +68,7 @@ bool AuthManager::checkClientVersion(ClientSocket *client, const QString &cver) 
   return true;
 }
 
-QJsonObject AuthManager::queryUserInfo(ClientSocket *client, const QString &name,
+QMap<QString, QString> AuthManager::queryUserInfo(ClientSocket *client, const QString &name,
                                       const QByteArray &password) {
   auto server = qobject_cast<Server *>(parent());
   auto db = server->getDatabase();
@@ -93,22 +93,22 @@ QJsonObject AuthManager::queryUserInfo(ClientSocket *client, const QString &name
 
     db->exec(sql_reg);
     result = db->select(sql_find); // refresh result
-    auto obj = result[0].toObject();
+    auto obj = result[0];
 
-    auto info_update = QString("INSERT INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toString().toInt()).arg(QDateTime::currentSecsSinceEpoch());
+    auto info_update = QString("INSERT INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toInt()).arg(QDateTime::currentSecsSinceEpoch());
     db->exec(info_update);
   }
 
-  return result[0].toObject();
+  return result[0];
 }
 
-QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name,
+QMap<QString, QString> AuthManager::checkPassword(ClientSocket *client, const QString &name,
                                 const QString &password) {
 
   auto server = qobject_cast<Server *>(parent());
   bool passed = false;
   QString error_msg;
-  QJsonObject obj;
+  QMap<QString, QString> obj;
   int id;
   QByteArray salt;
   QByteArray passwordHash;
@@ -149,19 +149,19 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
   obj = queryUserInfo(client, name, decrypted_pw);
 
   // check ban account
-  id = obj["id"].toString().toInt();
-  passed = obj["banned"].toString().toInt() == 0;
+  id = obj["id"].toInt();
+  passed = obj["banned"].toInt() == 0;
   if (!passed) {
     error_msg = "you have been banned!";
     goto FAIL;
   }
 
   // check if password is the same
-  salt = obj["salt"].toString().toLatin1();
+  salt = obj["salt"].toLatin1();
   decrypted_pw.append(salt);
   passwordHash =
     QCryptographicHash::hash(decrypted_pw, QCryptographicHash::Sha256).toHex();
-  passed = (passwordHash == obj["password"].toString());
+  passed = (passwordHash == obj["password"]);
   if (!passed) {
     error_msg = "username or password error";
     goto FAIL;
@@ -178,7 +178,7 @@ QJsonObject AuthManager::checkPassword(ClientSocket *client, const QString &name
     if (player->getState() == Player::Offline) {
       player->reconnect(client);
       passed = true;
-      return QJsonObject();
+      return {};
     } else {
       error_msg = "others logged in with this name";
       passed = false;
@@ -190,7 +190,7 @@ FAIL:
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;
     server->sendEarlyPacket(client, "ErrorDlg", error_msg);
     client->disconnectFromHost();
-    return QJsonObject();
+    return {};
   }
 
   return obj;

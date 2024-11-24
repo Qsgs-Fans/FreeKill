@@ -398,10 +398,10 @@ void Room::updatePlayerWinRate(int id, const QString &mode, const QString &role,
                                QString::number(win), QString::number(lose),
                                QString::number(draw)));
   } else {
-    auto obj = result[0].toObject();
-    win += obj["win"].toString().toInt();
-    lose += obj["lose"].toString().toInt();
-    draw += obj["draw"].toString().toInt();
+    auto obj = result[0];
+    win += obj["win"].toInt();
+    lose += obj["lose"].toInt();
+    draw += obj["draw"].toInt();
     db->exec(updatePWinRate.arg(QString::number(id), mode, role,
                                 QString::number(win), QString::number(lose),
                                 QString::number(draw)));
@@ -444,10 +444,10 @@ void Room::updateGeneralWinRate(const QString &general, const QString &mode, con
                                 QString::number(win), QString::number(lose),
                                 QString::number(draw)));
   } else {
-    auto obj = result[0].toObject();
-    win += obj["win"].toString().toInt();
-    lose += obj["lose"].toString().toInt();
-    draw += obj["draw"].toString().toInt();
+    auto obj = result[0];
+    win += obj["win"].toInt();
+    lose += obj["lose"].toInt();
+    draw += obj["draw"].toInt();
     db->exec(updateGWinRate.arg(general, mode, role,
                                 QString::number(win), QString::number(lose),
                                 QString::number(draw)));
@@ -463,8 +463,8 @@ void Room::addRunRate(int id, const QString &mode) {
     db->exec(insertRunRate.arg(QString::number(id), mode,
                                QString::number(run)));
   } else {
-    auto obj = result[0].toObject();
-    run += obj["run"].toString().toInt();
+    auto obj = result[0];
+    run += obj["run"].toInt();
     db->exec(updateRunRate.arg(QString::number(id), mode,
                                QString::number(run)));
   }
@@ -488,14 +488,14 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
   auto result = db->select(findRunRate.arg(QString::number(id), mode));
 
   if (!result.isEmpty()) {
-    run = result[0].toObject()["run"].toString().toInt();
+    run = result[0]["run"].toInt();
   }
 
   result = db->select(findModeRate.arg(QString::number(id), mode));
 
   if (!result.isEmpty()) {
-    total = result[0].toObject()["total"].toString().toInt();
-    win = result[0].toObject()["win"].toString().toInt();
+    total = result[0]["total"].toInt();
+    win = result[0]["win"].toInt();
   }
 
   auto room = player->getRoom();

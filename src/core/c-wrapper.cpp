@@ -155,27 +155,38 @@ bool Sqlite3::checkString(const QString &str) {
 
 // callback for handling SELECT expression
 static int callback(void *jsonDoc, int argc, char **argv, char **cols) {
-  QJsonObject obj;
+  QMap<QString, QString> obj;
   for (int i = 0; i < argc; i++) {
-    obj[QString(cols[i])] = QString(argv[i] ? argv[i] : "#null");
+    obj[cols[i]] = argv[i] ? argv[i] : "#null";
   }
-  ((QJsonArray *)jsonDoc)->append(obj);
+  ((Sqlite3::QueryResult *)jsonDoc)->append(obj);
   return 0;
 }
 
-QJsonArray Sqlite3::select(const QString &sql) {
+Sqlite3::QueryResult Sqlite3::select(const QString &sql) {
   static QMutex select_lock;
-  QJsonArray arr;
+  QueryResult arr;
+  char *err = NULL;
   auto bytes = sql.toUtf8();
   select_lock.lock();
-  sqlite3_exec(db, bytes.data(), callback, (void *)&arr, nullptr);
+  sqlite3_exec(db, bytes.data(), callback, (void *)&arr, &err);
+  if (err) {
+    qCritical() << err;
+    sqlite3_free(err);
+  }
   select_lock.unlock();
   return arr;
 }
 
 QString Sqlite3::selectJson(const QString &sql) {
-  auto obj = select(sql);
-  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+  auto ret = select(sql);
+  QJsonArray arr;
+  for (auto map : ret) {
+    QJsonObject obj;
+    for (auto k : map) obj[k] = map[k];
+    arr.append(obj);
+  }
+  return QJsonDocument(arr).toJson(QJsonDocument::Compact);
 }
 
 void Sqlite3::exec(const QString &sql) {

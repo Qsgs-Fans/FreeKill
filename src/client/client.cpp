@@ -11,6 +11,7 @@
 #include <openssl/aes.h>
 #include <openssl/pem.h>
 
+#include"core/packman.h"
 Client *ClientInstance = nullptr;
 
 struct ClientPrivate {
@@ -162,6 +163,20 @@ void Client::installAESKey(const QByteArray &key) {
   router->getSocket()->installAESKey(key);
 }
 
+// 给qml用的 转成js认识的格式
+QVariantList Client::selectFromDatabase(const QString &sql) {
+  auto result = db->select(sql);
+  QVariantList ret;
+  for (auto map : result) {
+    auto m = QVariantMap();
+    for (auto k : map) {
+      m[k] = map[k];
+    }
+    ret.append(m);
+  }
+  return ret;
+}
+
 void Client::saveRecord(const char *json, const QString &fname) {
   if (!QDir("recording").exists()) {
     QDir(".").mkdir("recording");
@@ -192,8 +207,8 @@ void Client::saveGameData(const QString &mode, const QString &general, const QSt
   db->exec(sqlAddGamaData.arg(time).arg(pid).arg(server_addr).arg(mode)
     .arg(general).arg(deputy).arg(role).arg(result));
 
-  auto id_obj = db->select("SELECT COUNT() AS c FROM myGameData;")[0].toObject();
-  auto id = id_obj["c"].toString().toInt();
+  auto id_obj = db->select("SELECT COUNT() AS c FROM myGameData;")[0];
+  auto id = id_obj["c"].toInt();
   db->exec(sqlAddBlob.arg(id).arg(blob));
   db->exec(sqlSaveRecord.arg(id).arg(record_blob));
   emit toast_message("Record file auto saved.");

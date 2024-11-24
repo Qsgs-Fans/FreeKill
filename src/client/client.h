@@ -37,6 +37,7 @@ public:
   QString getAESKey() const { return aes_key; }
   void installAESKey(const QByteArray &key);
 
+  Q_INVOKABLE QVariantList selectFromDatabase(const QString &sql);
   void saveRecord(const char *json, const QString &fname);
   void saveGameData(const QString &mode, const QString &general, const QString &deputy,
                     const QString &role, int result, const QString &replay,

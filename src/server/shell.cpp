@@ -201,8 +201,8 @@ static void banAccount(Sqlite3 *db, const QString &name, bool banned) {
   auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
-  auto obj = result[0].toObject();
-  int id = obj["id"].toString().toInt();
+  auto obj = result[0];
+  int id = obj["id"].toInt();
   db->exec(QString("UPDATE userinfo SET banned=%2 WHERE id=%1;")
                   .arg(id)
                   .arg(banned ? 1 : 0));
@@ -260,9 +260,9 @@ static void banIPByName(Sqlite3 *db, const QString &name, bool banned) {
   auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
-  auto obj = result[0].toObject();
-  int id = obj["id"].toString().toInt();
-  auto addr = obj["lastLoginIp"].toString();
+  auto obj = result[0];
+  int id = obj["id"].toInt();
+  auto addr = obj["lastLoginIp"];
 
   if (banned) {
     db->exec(QString("INSERT INTO banip VALUES('%1');").arg(addr));
@@ -314,14 +314,14 @@ static void banUuidByName(Sqlite3 *db, const QString &name, bool banned) {
   auto result = db->select(sql_find);
   if (result.isEmpty())
     return;
-  auto obj = result[0].toObject();
-  int id = obj["id"].toString().toInt();
+  auto obj = result[0];
+  int id = obj["id"].toInt();
 
   auto result2 = db->select(QString("SELECT * FROM uuidinfo WHERE id=%1;").arg(id));
   if (result2.isEmpty())
     return;
 
-  auto uuid = result2[0].toObject()["uuid"].toString();
+  auto uuid = result2[0]["uuid"];
 
   if (banned) {
     db->exec(QString("INSERT INTO banuuid VALUES('%1');").arg(uuid));
@@ -609,7 +609,7 @@ static char *package_generator(const char *text, int state) {
 
 static char *user_generator(const char *text, int state) {
   // TODO: userinfo表需要一个cache机制
-  static QJsonArray arr;
+  static Sqlite3::QueryResult arr;
   static int list_index, len;
   const char *name;
 
@@ -620,7 +620,7 @@ static char *user_generator(const char *text, int state) {
   }
 
   while (list_index < arr.count()) {
-    name = arr[list_index].toObject().value("name").toString().toUtf8().constData();
+    name = arr[list_index]["name"].toUtf8().constData();
     ++list_index;
     if (strncmp(name, text, len) == 0) {
       return strdup(name);
@@ -632,7 +632,7 @@ static char *user_generator(const char *text, int state) {
 
 static char *banned_user_generator(const char *text, int state) {
   // TODO: userinfo表需要一个cache机制
-  static QJsonArray arr;
+  static Sqlite3::QueryResult arr;
   static int list_index, len;
   const char *name;
   auto db = ServerInstance->getDatabase();
@@ -644,7 +644,7 @@ static char *banned_user_generator(const char *text, int state) {
   }
 
   while (list_index < arr.count()) {
-    name = arr[list_index].toObject().value("name").toString().toUtf8().constData();
+    name = arr[list_index]["name"].toUtf8().constData();
     ++list_index;
     if (strncmp(name, text, len) == 0) {
       return strdup(name);

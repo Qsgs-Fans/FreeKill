@@ -54,17 +54,16 @@ void Lobby::updatePassword(ServerPlayer *sender, const QString &jsonData) {
 
   auto passed = false;
   auto arr2 = ServerInstance->getDatabase()->select(sql_find);
-  auto result = arr2[0].toObject();
-  passed = (result["password"].toString() ==
-      QCryptographicHash::hash(
-        oldpw.append(result["salt"].toString()).toLatin1(),
-        QCryptographicHash::Sha256)
-      .toHex());
+  auto result = arr2[0];
+  passed = (result["password"] == QCryptographicHash::hash(
+    oldpw.append(result["salt"]).toLatin1(),
+    QCryptographicHash::Sha256)
+  .toHex());
   if (passed) {
     auto sql_update =
       QString("UPDATE userinfo SET password='%1' WHERE id=%2;")
       .arg(QCryptographicHash::hash(
-            newpw.append(result["salt"].toString()).toLatin1(),
+            newpw.append(result["salt"]).toLatin1(),
             QCryptographicHash::Sha256)
           .toHex())
       .arg(sender->getId());
