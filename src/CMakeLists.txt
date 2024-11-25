@@ -140,6 +140,7 @@ install(DIRECTORY
   ${PROJECT_SOURCE_DIR}/packages
   ${PROJECT_SOURCE_DIR}/Fk
   ${PROJECT_SOURCE_DIR}/server
+  ${PROJECT_SOURCE_DIR}/client
   DESTINATION share/FreeKill
 )
 install(FILES
