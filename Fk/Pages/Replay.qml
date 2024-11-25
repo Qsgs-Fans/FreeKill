@@ -15,7 +15,7 @@ Item {
     clip: true
     width: parent.width * 0.2
     height: parent.height
-    model: ["战绩一览", "已收藏录像"]
+    model: ["战绩一览", "数据统计", "已收藏录像"]
     highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
     delegate: Item {
       width: parent.width
@@ -43,6 +43,7 @@ Item {
     orientation: Qt.Vertical
     currentIndex: bar.currentIndex
     GameDataOverview {}
+    StatisticsOverview {}
     ReplayRecordingFile {}
   }
 

@@ -183,6 +183,10 @@ QVariantList Client::execSql(const QString &sql) {
   return ret;
 }
 
+QString Client::peerAddress() {
+  return router->getSocket()->peerAddress();
+}
+
 QVariantList Client::getMyGameData() {
   return execSql(QString("SELECT * FROM myGameData WHERE pid = %1 AND server_addr = '%2' ORDER BY id DESC;")
                  .arg(self->getId()).arg(router->getSocket()->peerAddress()));

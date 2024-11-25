@@ -258,4 +258,8 @@ Window {
   function luatr(src) {
     return Backend.translate(src);
   }
+
+  function sqlquery(s) {
+    return ClientInstance.execSql(s);
+  }
 }

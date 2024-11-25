@@ -40,6 +40,7 @@ public:
 
   Q_INVOKABLE bool checkSqlString(const QString &s);
   Q_INVOKABLE QVariantList execSql(const QString &sql);
+  Q_INVOKABLE QString peerAddress();
   Q_INVOKABLE QVariantList getMyGameData();
   void saveRecord(const char *json, const QString &fname);
   void saveGameData(const QString &mode, const QString &general, const QString &deputy,
