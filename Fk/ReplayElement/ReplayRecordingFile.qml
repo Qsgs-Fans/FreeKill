@@ -131,7 +131,7 @@ Item {
             const mdata = model.get(list.currentIndex);
             if (!mdata) return;
             sqlquery(`REPLACE INTO starredRecording (id, replay_name, my_comment)
-            VALUES (${mdata.query.id ?? 'NULL'}, '${mdata.fileName}', '${text}');`);
+            VALUES (${mdata.query?.id ?? 'NULL'}, '${mdata.fileName}', '${text}');`);
 
             mdata.query = sqlquery(
               `SELECT * FROM starredRecording WHERE replay_name = '${mdata.fileName}';`)[0];
@@ -206,6 +206,8 @@ Item {
         query.id = null;
       } else {
         query.id = parseInt(query.id);
+        if (query.id !== query.id)
+          query.id = null;
       }
 
       model.append({

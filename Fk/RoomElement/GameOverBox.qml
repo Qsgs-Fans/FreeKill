@@ -52,7 +52,7 @@ GraphicsBox {
       id: repBtn
       text: luatr("Save Replay")
       anchors.horizontalCenter: parent.horizontalCenter
-      visible: !config.replaying
+      visible: config.observing && !config.replaying
 
       onClicked: {
         repBtn.visible = false;

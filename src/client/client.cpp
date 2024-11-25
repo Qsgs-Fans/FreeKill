@@ -226,7 +226,7 @@ void Client::saveGameData(const QString &mode, const QString &general, const QSt
   auto id = id_obj["c"].toInt();
   db->exec(sqlAddBlob.arg(id).arg(blob));
   db->exec(sqlSaveRecord.arg(id).arg(record_blob));
-  emit toast_message("Record file auto saved.");
+  emit toast_message(tr("$AutoSaveRecord"));
 }
 
 bool Client::isConsoleStart() const {

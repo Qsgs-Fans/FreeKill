@@ -422,7 +422,7 @@ QString QmlBackend::saveBlobRecordToFile(int id) {
   auto data = qUncompress(raw);
   auto arr = QJsonDocument::fromJson(data);
   auto fileName = arr[1].toString();
-  ClientInstance->saveRecord(raw, fileName);
+  ClientInstance->saveRecord(data, fileName);
   return fileName;
 }
 
