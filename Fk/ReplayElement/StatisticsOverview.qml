@@ -87,6 +87,7 @@ Item {
           Layout.preferredWidth: 120
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 18
+          font.bold: index === 0
           text: {
             if (mergeMode) {
               return '-';
@@ -114,6 +115,7 @@ Item {
             anchors.left: avatar.right
             anchors.leftMargin: 4
             font.pixelSize: 20
+            font.bold: index === 0
             horizontalAlignment: Text.AlignHCenter
             text: {
               if (generalFilter.length === 0) {
@@ -127,6 +129,7 @@ Item {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: {
             if (mergeMode || mergeRole) {
               return '-';
@@ -138,30 +141,35 @@ Item {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: win
         }
         Text {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: lose
         }
         Text {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: draw
         }
         Text {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: total
         }
         Text {
           Layout.preferredWidth: 50
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
+          font.bold: index === 0
           text: winRate
         }
       }

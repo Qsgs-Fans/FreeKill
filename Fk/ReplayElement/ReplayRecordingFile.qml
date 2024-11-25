@@ -85,6 +85,7 @@ Item {
             } else {
               list.currentIndex = index;
             }
+            commentEdit.updateText();
           }
         }
       }
@@ -116,22 +117,23 @@ Item {
         width: parent.width
 
         TextField {
+          id: commentEdit
           Layout.fillWidth: true
           placeholderText: "备注"
           enabled: list.currentIndex !== -1;
-          text: {
+          function updateText() {
             const mdata = model.get(list.currentIndex);
             if (!mdata) return "";
-            return mdata.query?.my_comment ?? "";
+            text = mdata.query?.my_comment ?? "";
           }
           onTextChanged: {
             if (!ClientInstance.checkSqlString(text)) return;
             const mdata = model.get(list.currentIndex);
-            ClientInstance.execSql(`
-            REPLACE INTO starredRecording (replay_name, my_comment)
-            VALUES ('${mdata.fileName}', '${text}');`);
+            if (!mdata) return;
+            sqlquery(`REPLACE INTO starredRecording (id, replay_name, my_comment)
+            VALUES (${mdata.query.id ?? 'NULL'}, '${mdata.fileName}', '${text}');`);
 
-            mdata.query = ClientInstance.execSql(
+            mdata.query = sqlquery(
               `SELECT * FROM starredRecording WHERE replay_name = '${mdata.fileName}';`)[0];
           }
         }
@@ -158,10 +160,12 @@ Item {
             Layout.fillWidth: true
             onClicked: {
               const mdata = model.get(list.currentIndex);
+              if (!mdata) return;
+              const sql = (`DELETE FROM starredRecording WHERE
+              replay_name = '${mdata.fileName}';`);
               Backend.removeRecord(mdata.fileName);
               model.remove(list.currentIndex);
-              ClientInstance.execSql(`DELETE FROM starredRecording WHERE
-              replay_name = '${mdata.fileName}';`);
+              sqlquery(sql);
             }
           }
         }
@@ -197,7 +201,12 @@ Item {
       if (d.length !== 8) return;
       // s: <time>.<screenName>.<mode>.<general>.<role>.<winner>.fk.rep
       const [t, name, mode, general, role, winner] = d;
-      const query = ClientInstance.execSql(`SELECT * FROM starredRecording WHERE replay_name = '${s}';`)[0] ?? {};
+      const query = sqlquery(`SELECT * FROM starredRecording WHERE replay_name = '${s}';`)[0] ?? {};
+      if (query.id === "#null") {
+        query.id = null;
+      } else {
+        query.id = parseInt(query.id);
+      }
 
       model.append({
         fileName: s,

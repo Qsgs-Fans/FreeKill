@@ -28,31 +28,72 @@ Item {
         width: replayList.width
         height: 64
 
-        Avatar {
-          id: generalPic
-          Layout.preferredWidth: 24
-          Layout.preferredHeight: 24
-          general: general
-        }
+        Item {
+          Layout.preferredWidth: 80
+          Layout.preferredHeight: parent.height
+          property string g: general
+          Avatar {
+            id: avatar
+            x: deputy_general ? 0 : 20
+            y: 2
+            width: 40
+            height: 40
+            general: parent.g
+          }
 
-        Text {
-          text: {
-            return ((result === "1") ? luatr("Game Win") : luatr("Game Lose"));
+          Avatar {
+            anchors.left: avatar.right
+            y: 2
+            width: 40
+            height: 40
+            visible: !!deputy_general
+            general: deputy_general || "diaochan"
+          }
+
+          Text {
+            anchors.top: avatar.bottom
+            anchors.topMargin: 2
+            anchors.horizontalCenter: parent.horizontalCenter
+            text: {
+              let ret = luatr(general);
+              if (deputy_general) {
+                ret += "/" + luatr(deputy_general);
+              }
+              return ret;
+            }
           }
         }
 
         Text {
+          Layout.preferredWidth: 60
+          font.pixelSize: 20
+          horizontalAlignment: Text.AlignHCenter
+          text: {
+            return ((result === 1) ? luatr("Game Win") : luatr("Game Lose"));
+          }
+        }
+
+        Text {
+          font.pixelSize: 20
+          Layout.preferredWidth: 100
+          horizontalAlignment: Text.AlignHCenter
           text: luatr(mode)
         }
 
         Text {
+          font.pixelSize: 20
+          Layout.preferredWidth: 60
+          horizontalAlignment: Text.AlignHCenter
           text: luatr(role)
         }
 
         Text {
+          font.pixelSize: 20
+          horizontalAlignment: Text.AlignHCenter
+          Layout.fillWidth: true
           text: {
             const date = new Date(time * 1000);
-            return date.toLocaleString();
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
           }
         }
 
@@ -99,7 +140,7 @@ Item {
             let ret = "重放录像";
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
-            const query = ClientInstance.execSql(`
+            const query = sqlquery(`
               SELECT * FROM myGameRecordings WHERE id = ${mdata.id};`);
             if (!query[0]) {
               ret = "录像已过期";
@@ -125,7 +166,7 @@ Item {
             let ret = "查看终盘战况";
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
-            const query = ClientInstance.execSql(`
+            const query = sqlquery(`
               SELECT * FROM myGameRoomData WHERE id = ${mdata.id};`);
             if (!query[0]) {
               ret = "终盘已过期";
@@ -151,7 +192,7 @@ Item {
             let ret = "收藏录像";
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
-            const query = ClientInstance.execSql(`
+            const query = sqlquery(`
               SELECT * FROM starredRecording WHERE id = ${mdata.id};`);
             if (query[0]) {
               ret = "已收藏";
@@ -166,6 +207,12 @@ Item {
           }
           Layout.fillWidth: true
           onClicked: {
+            const mdata = model.get(list.currentIndex);
+            if (!mdata) return ret;
+            const fileName = Backend.saveBlobRecordToFile(mdata.id);
+            sqlquery(`REPLACE INTO starredRecording (id, replay_name, my_comment)
+            VALUES (${mdata.id}, '${fileName + '.fk.rep'}', '⭐');`);
+            list.currentIndexChanged();
           }
         }
       }
@@ -176,6 +223,10 @@ Item {
     model.clear();
     const data = ClientInstance.getMyGameData();
     data.forEach(s => {
+      s.id = parseInt(s.id);
+      s.time = parseInt(s.time);
+      s.pid = parseInt(s.pid);
+      s.result = parseInt(s.result);
       model.append(s);
     });
   }

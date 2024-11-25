@@ -415,13 +415,18 @@ void QmlBackend::playBlobRecord(int id) {
   replayer->start();
 }
 
+QString QmlBackend::saveBlobRecordToFile(int id) {
+  auto result = ClientInstance->getDatabase()->select(QString(
+    "SELECT hex(recording) as r FROM myGameRecordings WHERE id = %1;").arg(id));
+  auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
+  auto data = qUncompress(raw);
+  auto arr = QJsonDocument::fromJson(data);
+  auto fileName = arr[1].toString();
+  ClientInstance->saveRecord(raw, fileName);
+  return fileName;
+}
+
 void QmlBackend::reviewGameOverScene(int id) {
-  /*auto replayer = new Replayer(this, id);
-  setReplayer(replayer);
-  connect(replayer, &Replayer::destroyed, this, [=](){
-    setReplayer(nullptr);
-  });
-  replayer->start();*/
   auto result = ClientInstance->getDatabase()->select(QString(
     "SELECT hex(room_data) as r FROM myGameRoomData WHERE id = %1;").arg(id));
   auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
