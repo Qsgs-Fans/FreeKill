@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS myGameRecordings (
 -- 利用trigger自动删除，只保留近5000局录像
 CREATE TRIGGER IF NOT EXISTS deleteOldRecordings AFTER INSERT ON myGameRecordings
 BEGIN
-  DELETE FROM myGameRecordings WHERE id NOT IN 
+  DELETE FROM myGameRecordings WHERE id NOT IN
     (SELECT id FROM myGameRecordings ORDER BY id DESC LIMIT 5000);
 END;
 
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS myGameRoomData (
 -- 利用trigger自动删除，只保留近50000局的终局复盘
 CREATE TRIGGER IF NOT EXISTS deleteOldRoomData AFTER INSERT ON myGameRoomData
 BEGIN
-  DELETE FROM myGameRoomData WHERE id NOT IN 
+  DELETE FROM myGameRoomData WHERE id NOT IN
     (SELECT id FROM myGameRoomData ORDER BY id DESC LIMIT 50000);
 END;
 
