@@ -51,6 +51,7 @@ Flickable {
     RowLayout {
       MetroButton {
         text: luatr("Give Flower")
+        visible: !config.observing
         onClicked: {
           enabled = false;
           root.givePresent("Flower");
@@ -60,6 +61,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Egg")
+        visible: !config.observing
         onClicked: {
           enabled = false;
           if (Math.random() < 0.03) {
@@ -73,6 +75,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Wine")
+        visible: !config.observing
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;
@@ -83,6 +86,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Shoe")
+        visible: !config.observing
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;

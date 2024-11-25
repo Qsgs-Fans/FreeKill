@@ -14,14 +14,14 @@ public:
   auto getPublicKey() const { return public_key; }
 
   bool checkClientVersion(ClientSocket *client, const QString &ver);
-  QJsonObject checkPassword(ClientSocket *client, const QString &name, const QString &password);
+  QMap<QString, QString> checkPassword(ClientSocket *client, const QString &name, const QString &password);
 
 private:
   RSA *rsa;
   QString public_key;
 
   static RSA *initRSA();
-  QJsonObject queryUserInfo(ClientSocket *client, const QString &name, const QByteArray &password);
+  QMap<QString, QString> queryUserInfo(ClientSocket *client, const QString &name, const QByteArray &password);
 };
 
 #endif // _AUTH_H

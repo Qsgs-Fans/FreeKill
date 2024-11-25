@@ -60,6 +60,9 @@ public:
 
   Q_INVOKABLE void removeRecord(const QString &);
   Q_INVOKABLE void playRecord(const QString &);
+  Q_INVOKABLE void playBlobRecord(int);
+  Q_INVOKABLE QString saveBlobRecordToFile(int);
+  Q_INVOKABLE void reviewGameOverScene(int);
   Replayer *getReplayer() const;
   void setReplayer(Replayer *rep);
   Q_INVOKABLE void controlReplayer(QString type);

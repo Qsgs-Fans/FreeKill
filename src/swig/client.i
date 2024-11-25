@@ -28,7 +28,10 @@ public:
   ClientPlayer *getSelf() const;
   void changeSelf(int id);
 
-  void saveRecord(const QString &json, const QString &fname);
+  void saveRecord(const char *json, const QString &fname);
+  void saveGameData(const QString &mode, const QString &general, const QString &deputy,
+                    const QString &role, int result, const QString &replay,
+                    const char *room_data, const char *record);
   void notifyUI(const QString &command, const QVariant &jsonData);
 };
 

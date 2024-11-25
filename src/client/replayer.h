@@ -7,6 +7,7 @@ class Replayer : public QThread {
   Q_OBJECT
 
 public:
+  explicit Replayer(QObject *parent, int id);
   explicit Replayer(QObject *parent, const QString &filename);
   ~Replayer();
 
@@ -47,6 +48,8 @@ private:
     QString jsonData;
   };
   QList<Pair *> pairs;
+
+  void loadRawData(const QByteArray &raw);
 };
 
 #endif // _REPLAYER_H

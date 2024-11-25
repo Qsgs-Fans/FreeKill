@@ -82,6 +82,14 @@
 </context>
 
 <context>
+  <name>Client</name>
+  <message>
+    <source>$AutoSaveRecord</source>
+    <translation>录像与终局战况已自动保存</translation>
+  </message>
+</context>
+
+<context>
   <name>Server</name>
   <message>
     <source>%1 logged in</source>

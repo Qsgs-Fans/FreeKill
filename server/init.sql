@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS friendinfo (
 
 -- 胜率相关
 
+/*
 CREATE TABLE IF NOT EXISTS winRate (
   id INTEGER,
   general VARCHAR(20),
@@ -48,13 +49,6 @@ CREATE TABLE IF NOT EXISTS winRate (
   lose INTEGER,
   draw INTEGER,
   PRIMARY KEY (id, general, mode)
-);
-
-CREATE TABLE IF NOT EXISTS runRate (
-  id INTEGER,
-  mode VARCHAR(16),
-  run INTEGER,
-  PRIMARY KEY (id, mode)
 );
 
 CREATE VIEW IF NOT EXISTS playerWinRate AS
@@ -78,3 +72,53 @@ CREATE VIEW IF NOT EXISTS generalWinRate AS
     ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
       AS 'winRate'
   FROM winRate GROUP BY general, mode;
+*/
+
+CREATE TABLE IF NOT EXISTS runRate (
+  id INTEGER,
+  mode VARCHAR(16),
+  run INTEGER,
+  PRIMARY KEY (id, mode)
+);
+
+CREATE TABLE IF NOT EXISTS pWinRate (
+  id INTEGER,
+  mode VARCHAR(16),
+  role VARCHAR(16),
+  win INTEGER,
+  lose INTEGER,
+  draw INTEGER,
+  PRIMARY KEY (id, mode, role)
+);
+
+CREATE TABLE IF NOT EXISTS gWinRate (
+  general VARCHAR(16),
+  mode VARCHAR(16),
+  role VARCHAR(16),
+  win INTEGER,
+  lose INTEGER,
+  draw INTEGER,
+  PRIMARY KEY (general, mode, role)
+);
+
+CREATE VIEW IF NOT EXISTS pWinRateView AS
+  SELECT pWinRate.id, name, mode,
+    SUM(win) AS 'win',
+    SUM(lose) AS 'lose',
+    SUM(draw) AS 'draw',
+    SUM(win + lose + draw) AS 'total',
+    ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
+      AS 'winRate'
+  FROM pWinRate, userinfo
+  WHERE pWinRate.id = userinfo.id
+  GROUP BY pWinRate.id, mode;
+
+CREATE VIEW IF NOT EXISTS gWinRateView AS
+  SELECT general, mode,
+    SUM(win) AS 'win',
+    SUM(lose) AS 'lose',
+    SUM(draw) AS 'draw',
+    SUM(win + lose + draw) AS 'total',
+    ROUND(SUM(win) * 1.0 / (SUM(win + lose + draw) * 1.0) * 100, 2)
+      AS 'winRate'
+  FROM gWinRate GROUP BY general, mode;

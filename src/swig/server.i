@@ -26,8 +26,8 @@ public:
   void delay(int ms);
   void checkAbandoned();
 
-  void updateWinRate(int id, const QString &general, const QString &mode,
-                     int result, bool dead);
+  void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
+  void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
   void gameOver();
   void setRequestTimer(int ms);
   void destroyRequestTimer();

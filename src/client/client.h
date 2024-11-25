@@ -6,6 +6,7 @@
 struct ClientPrivate;
 
 class Lua;
+class Sqlite3;
 class ClientPlayer;
 class Router;
 
@@ -33,10 +34,18 @@ public:
   void changeSelf(int id);
 
   Lua *getLua();
+  Sqlite3 *getDatabase();
   QString getAESKey() const { return aes_key; }
   void installAESKey(const QByteArray &key);
 
-  void saveRecord(const QString &json, const QString &fname);
+  Q_INVOKABLE bool checkSqlString(const QString &s);
+  Q_INVOKABLE QVariantList execSql(const QString &sql);
+  Q_INVOKABLE QString peerAddress();
+  Q_INVOKABLE QVariantList getMyGameData();
+  void saveRecord(const char *json, const QString &fname);
+  void saveGameData(const QString &mode, const QString &general, const QString &deputy,
+                    const QString &role, int result, const QString &replay,
+                    const char *room_data, const char *record);
 
   bool isConsoleStart() const;
   void startWatchFiles();
@@ -66,6 +75,7 @@ private:
   QString pubEncrypt(const QString &key, const QString &data);
 
   Lua *L;
+  Sqlite3 *db;
   QFileSystemWatcher fsWatcher;
 };
 

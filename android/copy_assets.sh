@@ -29,6 +29,8 @@ cp ../packages/init.sql assets/res/packages
 cp -r ../Fk assets/res
 mkdir assets/res/server
 cp ../server/init.sql assets/res/server
+mkdir assets/res/client
+cp ../client/init.sql assets/res/client
 cp ../LICENSE assets/res
 cp ../zh_CN.qm assets/res
 cp ../en_US.qm assets/res

@@ -279,7 +279,7 @@ void Server::processRequest(const QByteArray &msg) {
   if (!auth->checkClientVersion(client, arr[3].toString())) return;
 
   auto uuid_str = arr[4].toString();
-  auto result2 = QJsonArray({1});
+  Sqlite3::QueryResult result2 = { {} };
   if (Sqlite3::checkString(uuid_str)) {
     result2 = db->select(QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
   }
@@ -305,7 +305,7 @@ void Server::processRequest(const QByteArray &msg) {
   if (obj.isEmpty()) return;
 
   // update lastLoginIp
-  int id = obj["id"].toString().toInt();
+  int id = obj["id"].toInt();
   beginTransaction();
   auto sql_update =
     QString("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
@@ -328,7 +328,7 @@ void Server::processRequest(const QByteArray &msg) {
   player->setSocket(client);
   client->disconnect(this);
   player->setScreenName(name);
-  player->setAvatar(obj["avatar"].toString());
+  player->setAvatar(obj["avatar"]);
   player->setId(id);
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
@@ -338,7 +338,7 @@ void Server::processRequest(const QByteArray &msg) {
   setupPlayer(player);
 
   auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
-  auto time = result[0].toObject()["totalGameTime"].toString().toInt();
+  auto time = result[0]["totalGameTime"].toInt();
   player->addTotalGameTime(time);
   player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
 
@@ -408,8 +408,8 @@ void Server::temporarilyBan(int playerId) {
     if (result.isEmpty())
       return;
 
-    auto obj = result[0].toObject();
-    addr = obj["lastLoginIp"].toString();
+    auto obj = result[0];
+    addr = obj["lastLoginIp"];
   } else {
     addr = socket->peerAddress();
   }

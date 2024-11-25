@@ -28,6 +28,7 @@ private:
   lua_State *L;
 };
 
+
 class Sqlite3 {
 public:
   Sqlite3(const QString &filename = "./server/users.db", const QString &initSql = "./server/init.sql");
@@ -35,7 +36,8 @@ public:
 
   static bool checkString(const QString &str);
 
-  QJsonArray select(const QString &sql);
+  typedef QList< QMap<QString, QString> > QueryResult;
+  QueryResult select(const QString &sql);
   QString selectJson(const QString &sql);
   void exec(const QString &sql);
 

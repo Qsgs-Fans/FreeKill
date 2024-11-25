@@ -21,10 +21,9 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
     }
   }
 
-  for (auto e : db->select("SELECT name : enabled FROM packages;")) {
-    auto obj = e.toObject();
-    auto pack = obj["name"].toString();
-    auto enabled = obj["enabled"].toString().toInt() == 1;
+  for (auto obj : db->select("SELECT name, enabled FROM packages;")) {
+    auto pack = obj["name"];
+    auto enabled = obj["enabled"].toInt() == 1;
 
     if (!enabled) {
       disabled_packs << pack;
@@ -53,7 +52,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
   auto f = [=]() {
     // First, disable all packages
     for (auto e : db->select("SELECT name FROM packages;")) {
-      disablePack(e.toObject()["name"].toString());
+      disablePack(e["name"]);
     }
 
 #ifndef FK_SERVER_ONLY
@@ -182,7 +181,7 @@ void PackMan::updatePack(const QString &pack) {
   error = pull(pack);
   if (error < 0)
     return;
-  error = checkout(pack, result[0].toObject()["hash"].toString());
+  error = checkout(pack, result[0]["hash"]);
   if (error < 0)
     return;
 }
@@ -215,15 +214,14 @@ void PackMan::removePack(const QString &pack) {
                                            .arg(pack));
   if (result.isEmpty())
     return;
-  bool enabled = result[0].toObject()["enabled"].toString().toInt() == 1;
+  bool enabled = result[0]["enabled"].toInt() == 1;
   db->exec(QString("DELETE FROM packages WHERE name = '%1';").arg(pack));
   QDir d(QString("packages/%1").arg(pack));
   d.removeRecursively();
 }
 
 QString PackMan::listPackages() {
-  auto obj = db->select(QString("SELECT * FROM packages;"));
-  return QJsonDocument(obj).toJson();
+  return db->selectJson("SELECT * FROM packages;");
 }
 
 #define GIT_FAIL                                                               \
