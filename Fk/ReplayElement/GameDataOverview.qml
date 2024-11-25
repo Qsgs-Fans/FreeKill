@@ -139,6 +139,10 @@ Item {
           }
           Layout.fillWidth: true
           onClicked: {
+            config.observing = true;
+            config.replaying = true;
+            const mdata = model.get(list.currentIndex);
+            Backend.reviewGameOverScene(mdata.id);
           }
         }
 

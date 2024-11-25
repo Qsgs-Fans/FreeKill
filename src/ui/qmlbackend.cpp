@@ -415,6 +415,20 @@ void QmlBackend::playBlobRecord(int id) {
   replayer->start();
 }
 
+void QmlBackend::reviewGameOverScene(int id) {
+  /*auto replayer = new Replayer(this, id);
+  setReplayer(replayer);
+  connect(replayer, &Replayer::destroyed, this, [=](){
+    setReplayer(nullptr);
+  });
+  replayer->start();*/
+  auto result = ClientInstance->getDatabase()->select(QString(
+    "SELECT hex(room_data) as r FROM myGameRoomData WHERE id = %1;").arg(id));
+  auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
+  auto data = qUncompress(raw);
+  ClientInstance->callLua("Observe", data);
+}
+
 Replayer *QmlBackend::getReplayer() const {
   return replayer;
 }
