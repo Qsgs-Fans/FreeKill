@@ -12,7 +12,6 @@
 #include <openssl/aes.h>
 #include <openssl/pem.h>
 
-#include"core/packman.h"
 Client *ClientInstance = nullptr;
 
 struct ClientPrivate {

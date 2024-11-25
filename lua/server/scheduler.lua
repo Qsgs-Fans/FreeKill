@@ -52,6 +52,7 @@ function ResumeRoom(roomId, reason)
   RoomInstance = (room ~= requestRoom and room or nil)
   local over = room:resume(reason)
   RoomInstance = nil
+  Self = nil -- 致敬传奇变量Self
 
   if over then
     for _, e in ipairs(room.logic.game_event_stack.t) do
@@ -60,7 +61,6 @@ function ResumeRoom(roomId, reason)
     for _, e in ipairs(room.logic.cleaner_stack.t) do
       coroutine.close(e._co)
     end
-    room.logic = nil
     runningRooms[room.id] = nil
   end
   return over

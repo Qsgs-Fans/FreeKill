@@ -4,7 +4,6 @@ set (TEST_LIB
   libFreeKill
   Qt6::Network
   Qt6::Test
-  OpenSSL::Crypto
 )
 
 set (GUILESS_TEST_SRCS

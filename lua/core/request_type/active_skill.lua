@@ -93,6 +93,7 @@ end
 function ReqActiveSkill:setupInteraction()
   local skill = Fk.skills[self.skill_name]
   if skill and skill.interaction then
+    skill.interaction.data = nil
     local interaction = skill:interaction()
     if not interaction then
       return
@@ -205,35 +206,13 @@ function ReqActiveSkill:cardValidity(cid)
   return skill:cardFilter(cid, self.pendings)
 end
 
-function ReqActiveSkill:extraDataValidity(pid)
-  local data = self.extra_data or {}
-  -- 逻辑块地狱
-  if data.must_targets then
-    -- must_targets: 必须先选择must_targets内的**所有**目标
-    if not (#data.must_targets <= #self.selected_targets or
-      table.contains(data.must_targets, pid)) then return false end
-  end
-  if data.include_targets then
-    -- include_targets: 必须先选择include_targets内的**其中一个**目标
-    if not (table.hasIntersection(data.include_targets, self.selected_targets) or
-      table.contains(data.include_targets, pid)) then return false end
-  end
-  if data.exclusive_targets then
-    -- exclusive_targets: **只能选择**exclusive_targets内的目标
-    if not table.contains(data.exclusive_targets, pid) then return false end
-  end
-  return true
-end
-
 function ReqActiveSkill:targetValidity(pid)
-  if not self:extraDataValidity(pid) then return false end
-
   local skill = Fk.skills[self.skill_name] --- @type ActiveSkill | ViewAsSkill
   if not skill then return false end
   local card -- 姑且接一下(雾)
   if skill:isInstanceOf(ViewAsSkill) then
     card = skill:viewAs(self.pendings)
-    if not card or self.player:isProhibited(self.room:getPlayerById(pid), card) then return false end
+    if not card then return false end
     skill = card.skill
   end
   return skill:targetFilter(pid, self.selected_targets, self.pendings, card, self.extra_data)
@@ -295,7 +274,7 @@ end
 
 function ReqActiveSkill:doOKButton()
   local skill = Fk.skills[self.skill_name]
-  local cardstr = json.encode{
+  local cardstr = {
     skill = self.skill_name,
     subcards = self.pendings
   }

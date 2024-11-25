@@ -265,12 +265,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForChoices"] = "选择",
   ["AskForKingdom"] = "选择势力",
   ["AskForPindian"] = "拼点",
+  ["AskForCardChosen"] = "选牌",
+  ["AskForCardsChosen"] = "选牌",
   ["AskForMoveCardInBoard"] = "移动卡牌",
+  ["AskForArrangeCards"] = "排列卡牌",
   ["replaceEquip"] = "替换装备",
   ["PlayCard"] = "出牌",
 
-  ["AskForCardChosen"] = "选牌",
-  ["AskForCardsChosen"] = "选牌",
   ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
   ["#AskForChooseCards"] = "%1：请选择%src的%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
@@ -278,7 +279,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$Hand"] = "手牌区",
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
-  ['$Selected'] = "已选择",
+  ["$Selected"] = "已选择",
   ["#AskForUseActiveSkill"] = "请发动〖%1〗",
   ["#AskForUseCard"] = "请使用【%1】",
   ["#AskForResponseCard"] = "请打出【%1】",
@@ -299,7 +300,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["pindianwin"] = "赢",
   ["pindiannotwin"] = "没赢",
 
-  ["#ChooseInitialKingdom"] = "请选择初始势力（不可变更）",
+  ["#ChooseInitialKingdom"] = "请选择初始势力",
 
   ["#RevealGeneral"] = "%from 亮出 %arg %arg2",
   ["mainGeneral"] = "主将",
@@ -322,7 +323,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Surrender"] = "投降",
   ["Surrender is disabled in this mode"] = "投降在该模式不可用",
   ["Quit"] = "退出",
-  ["Are you sure to quit?"] = "是否确认退出对局（若对局开始则将计入逃跑次数）？",
+  ["Are you sure to quit?"] = "是否确认退出对局？（若对局开始则将计入逃跑次数）",
 
   ["Trust"] = "托管",
   ["Sort Cards"] = "牌序",
@@ -362,9 +363,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.5.0
+  ## v0.5.1
 
-  更新了不少内容！但是想不起来更新了什么了
+  自动保存录像以及终盘复盘数据
 
   ]==],
 }
@@ -415,6 +416,11 @@ Fk:loadTranslationTable{
   ["Bottom"] = "牌堆底",
   ["Shuffle"] = "洗牌",
 
+  ["draw"] = "摸",
+  ["discard"] = "弃置",
+  ["give"] = "交给",
+  ["prey"] = "获得",
+
   ["general_card"] = "武将牌",
   ["General"] = "武将",
   ["noGeneral"] = "无武将",
@@ -439,6 +445,17 @@ Fk:loadTranslationTable{
   ["JudgeSlot"] = "判定区",
 
   ["skill"] = "技能",
+
+  --utility
+  ["draw1"] = "摸一张牌",
+  ["draw2"] = "摸两张牌",
+  ["draw3"] = "摸两张牌",
+  ["recover"] = "回复1点体力",
+  ["loseHp"] = "失去1点体力",
+  ["damage1"] = "造成1点伤害",
+  ["loseMaxHp"] = "减1点体力上限",
+  ["yes"] = "是",
+  ["no"] = "否",
 }
 
 -- related to sendLog
@@ -548,6 +565,7 @@ Fk:loadTranslationTable{
   ["#ChainDamage"] = "%from 处于连环状态，将受到传导的伤害",
   ["#ChangeKingdom"] = "%from 的势力从 %arg 变成了 %arg2",
   ["#RoomOutdated"] = "服务器更新完毕！该房间已过期，将无法再次游玩",
+  ["#Choice"] = "%from 选择 %arg",
 }
 
 -- card footnote

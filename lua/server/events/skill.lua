@@ -137,6 +137,11 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
           --     table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
           --   end
           -- end
+
+          self:validateSkill(player, actual_skill)
+          for _, suf in ipairs(MarkEnum.TempMarkSuffix) do
+            self:validateSkill(player, actual_skill, suf)
+          end
         end
       end
     else

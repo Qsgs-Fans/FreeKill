@@ -18,7 +18,7 @@
 ---@field private _manually_fake_skills Skill[]
 ---@field public prelighted_skills Skill[]
 ---@field private _timewaste_count integer
----@field public ai AI
+---@field public ai SmartAI
 ---@field public ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
 
@@ -119,11 +119,9 @@ end
 
 function ServerPlayer:reconnect()
   local room = self.room
-  self.serverplayer:setState(fk.Player_Online)
 
   local summary = room:toJsonObject(self)
   self:doNotify("Reconnect", json.encode(summary))
-  room:notifyProperty(self, self, "role")
   self:doNotify("RoomOwner", json.encode{ room.room:getOwner():getId() })
 
   -- send fake skills
@@ -158,6 +156,7 @@ function ServerPlayer:turnOver()
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 
+--- 令一名角色展示一些牌，请勿用于展示不属于该角色的牌
 ---@param cards integer|integer[]|Card|Card[]
 function ServerPlayer:showCards(cards)
   cards = Card:getIdList(cards)
@@ -348,6 +347,7 @@ function ServerPlayer:play(phase_table)
   end
 end
 
+--- 跳过本回合的某个额定阶段
 ---@param phase Phase
 function ServerPlayer:skip(phase)
   if not table.contains({
@@ -453,18 +453,19 @@ function ServerPlayer:addToPile(pile_name, card, visible, skillName, proposer, v
 end
 
 function ServerPlayer:bury()
+  self:onAllSkillLose()
   self:setCardUseHistory("")
   self:setSkillUseHistory("")
   self:throwAllCards()
   self:throwAllMarks()
   self:clearPiles()
-  self:onAllSkillLose()
   self:reset()
 end
 
-function ServerPlayer:throwAllCards(flag)
+function ServerPlayer:throwAllCards(flag, skillName)
   local cardIds = {}
   flag = flag or "hej"
+  skillName = skillName or "game_rule"
   if string.find(flag, "h") then
     table.insertTable(cardIds, self.player_cards[Player.Hand])
   end
@@ -477,7 +478,14 @@ function ServerPlayer:throwAllCards(flag)
     table.insertTable(cardIds, self.player_cards[Player.Judge])
   end
 
-  self.room:throwCard(cardIds, "", self)
+  if not self.dead then
+    cardIds = table.filter(cardIds, function (id)
+      return not self:prohibitDiscard(id)
+    end)
+  end
+  if #cardIds > 0 then
+    self.room:throwCard(cardIds, skillName, self)
+  end
 end
 
 function ServerPlayer:onAllSkillLose()
@@ -521,27 +529,32 @@ function ServerPlayer:removeVirtualEquip(cid)
   return ret
 end
 
+--- 增加卡牌使用次数
 function ServerPlayer:addCardUseHistory(cardName, num)
   Player.addCardUseHistory(self, cardName, num)
   self:doNotify("AddCardUseHistory", json.encode{cardName, num})
 end
 
+--- 设置卡牌已使用次数
 function ServerPlayer:setCardUseHistory(cardName, num, scope)
   Player.setCardUseHistory(self, cardName, num, scope)
   self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
 end
 
-function ServerPlayer:addSkillUseHistory(cardName, num)
-  Player.addSkillUseHistory(self, cardName, num)
-  self.room:doBroadcastNotify("AddSkillUseHistory", json.encode{self.id, cardName, num})
+-- 增加技能发动次数
+function ServerPlayer:addSkillUseHistory(skillName, num)
+  Player.addSkillUseHistory(self, skillName, num)
+  self.room:doBroadcastNotify("AddSkillUseHistory", json.encode{self.id, skillName, num})
 end
 
-function ServerPlayer:setSkillUseHistory(cardName, num, scope)
-  Player.setSkillUseHistory(self, cardName, num, scope)
-  self.room:doBroadcastNotify("SetSkillUseHistory", json.encode{self.id, cardName, num, scope})
+-- 设置技能已发动次数
+function ServerPlayer:setSkillUseHistory(skillName, num, scope)
+  Player.setSkillUseHistory(self, skillName, num, scope)
+  self.room:doBroadcastNotify("SetSkillUseHistory", json.encode{self.id, skillName, num, scope})
 end
 
----@param chained boolean
+--- 设置连环状态
+---@param chained boolean @ true为横置，false为重置
 function ServerPlayer:setChainState(chained)
   local room = self.room
   if room.logic:trigger(fk.BeforeChainStateChange, self) then
@@ -561,6 +574,7 @@ function ServerPlayer:setChainState(chained)
   room.logic:trigger(fk.ChainStateChanged, self)
 end
 
+--- 复原武将牌（翻至正面、解除连环状态）
 function ServerPlayer:reset()
   if self.faceup and not self.chained then return end
   self.room:sendLog{

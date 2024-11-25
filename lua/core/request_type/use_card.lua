@@ -36,36 +36,8 @@ end
 
 function ReqUseCard:targetValidity(pid)
   if self.skill_name then return ReqActiveSkill.targetValidity(self, pid) end
-  local player = self.player
-  local room = self.room
-  local p = room:getPlayerById(pid)
   local card = self.selected_card
-  local ret = card and not player:isProhibited(p, card) and
-    card.skill:targetFilter(pid, self.selected_targets, { card.id }, card, self.extra_data)
-
-  if ret and self.extra_data then
-    local data = self.extra_data
-    if data.exclusive_targets then
-      -- target不在exclusive中则不可选择
-      ret = table.contains(data.exclusive_targets, pid)
-    end
-    if ret and data.must_targets then
-      -- 若must中有还没被选的且这个target不在must中则不可选择
-      if table.find(data.must_targets, function(id)
-        return not table.contains(self.selected_targets, id)
-      end) and not table.contains(data.must_targets, pid) then
-        ret = false
-      end
-    end
-    if ret and data.include_targets then
-      -- 若include中全都没选，且target不在include中则不可选择
-      if table.every(data.include_targets, function(id)
-        return not table.contains(self.selected_targets, id)
-      end) and not table.contains(data.include_targets, pid) then
-        ret = false
-      end
-    end
-  end
+  local ret = card and card.skill:targetFilter(pid, self.selected_targets, { card.id }, card, self.extra_data)
   return ret
 end
 
@@ -124,9 +96,7 @@ function ReqUseCard:selectTarget(playerid, data)
       self.selected_targets = {}
       for _, pid in ipairs(previous_targets) do
         local ret
-        ret = not player:isProhibited(self.room:getPlayerById(pid), card) and skill and
-          skill:targetFilter(pid, self.selected_targets,
-        { card.id }, card, data.extra_data)
+        ret = skill and skill:targetFilter(pid, self.selected_targets, { card.id }, card, data.extra_data)
         -- 从头开始写目标
         if ret then
           table.insert(self.selected_targets, pid)

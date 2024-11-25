@@ -26,7 +26,7 @@ TrickCard, DelayedTrickCard = table.unpack(Trick)
 local Equip = require "core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
-local function readCommonSpecToSkill(skill, spec)
+function fk.readCommonSpecToSkill(skill, spec)
   skill.mute = spec.mute
   skill.no_indicate = spec.no_indicate
   skill.anim_type = spec.anim_type
@@ -57,8 +57,8 @@ local function readCommonSpecToSkill(skill, spec)
   end
 end
 
-local function readUsableSpecToSkill(skill, spec)
-  readCommonSpecToSkill(skill, spec)
+function fk.readUsableSpecToSkill(skill, spec)
+  fk.readCommonSpecToSkill(skill, spec)
   assert(spec.main_skill == nil or spec.main_skill:isInstanceOf(UsableSkill))
   if type(spec.derived_piles) == "string" then
     skill.derived_piles = {spec.derived_piles}
@@ -85,8 +85,8 @@ local function readUsableSpecToSkill(skill, spec)
   skill.times = spec.times or skill.times
 end
 
-local function readStatusSpecToSkill(skill, spec)
-  readCommonSpecToSkill(skill, spec)
+function fk.readStatusSpecToSkill(skill, spec)
+  fk.readCommonSpecToSkill(skill, spec)
   if spec.global then
     skill.global = spec.global
   end
@@ -126,7 +126,7 @@ function fk.CreateTriggerSkill(spec)
 
   local frequency = spec.frequency or Skill.NotFrequent
   local skill = TriggerSkill:new(spec.name, frequency)
-  readUsableSpecToSkill(skill, spec)
+  fk.readUsableSpecToSkill(skill, spec)
 
   if type(spec.events) == "number" then
     table.insert(skill.events, spec.events)
@@ -210,7 +210,7 @@ end
 function fk.CreateActiveSkill(spec)
   assert(type(spec.name) == "string")
   local skill = ActiveSkill:new(spec.name, spec.frequency or Skill.NotFrequent)
-  readUsableSpecToSkill(skill, spec)
+  fk.readUsableSpecToSkill(skill, spec)
 
   if spec.can_use then
     skill.canUse = function(curSkill, player, card, extra_data)
@@ -263,7 +263,7 @@ function fk.CreateViewAsSkill(spec)
   assert(type(spec.view_as) == "function")
 
   local skill = ViewAsSkill:new(spec.name, spec.frequency or Skill.NotFrequent)
-  readUsableSpecToSkill(skill, spec)
+  fk.readUsableSpecToSkill(skill, spec)
 
   skill.viewAs = spec.view_as
   if spec.card_filter then
@@ -318,7 +318,7 @@ function fk.CreateDistanceSkill(spec)
   assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function")
 
   local skill = DistanceSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   skill.getCorrect = spec.correct_func
   skill.getFixed = spec.fixed_func
 
@@ -338,7 +338,7 @@ function fk.CreateProhibitSkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = ProhibitSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   skill.isProhibited = spec.is_prohibited or skill.isProhibited
   skill.prohibitUse = spec.prohibit_use or skill.prohibitUse
   skill.prohibitResponse = spec.prohibit_response or skill.prohibitResponse
@@ -362,7 +362,7 @@ function fk.CreateAttackRangeSkill(spec)
     type(spec.within_func) == "function" or type(spec.without_func) == "function")
 
   local skill = AttackRangeSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   if spec.correct_func then
     skill.getCorrect = spec.correct_func
   end
@@ -391,7 +391,7 @@ function fk.CreateMaxCardsSkill(spec)
   assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or type(spec.exclude_from) == "function")
 
   local skill = MaxCardsSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   if spec.correct_func then
     skill.getCorrect = spec.correct_func
   end
@@ -417,7 +417,7 @@ function fk.CreateTargetModSkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = TargetModSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   if spec.bypass_times then
     skill.bypassTimesCheck = spec.bypass_times
   end
@@ -451,7 +451,7 @@ function fk.CreateFilterSkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = FilterSkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   skill.cardFilter = spec.card_filter
   skill.viewAs = spec.view_as
   skill.equipSkillFilter = spec.equip_skill_filter
@@ -468,7 +468,7 @@ function fk.CreateInvaliditySkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = InvaliditySkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   skill.getInvalidity = spec.invalidity_func
 
   return skill
@@ -483,7 +483,7 @@ function fk.CreateVisibilitySkill(spec)
   assert(type(spec.name) == "string")
 
   local skill = VisibilitySkill:new(spec.name)
-  readStatusSpecToSkill(skill, spec)
+  fk.readStatusSpecToSkill(skill, spec)
   if spec.card_visible then skill.cardVisible = spec.card_visible end
   if spec.role_visible then skill.roleVisible = spec.role_visible end
 
@@ -650,10 +650,11 @@ end
 
 ---@class GameModeSpec: GameMode
 ---@field public winner_getter? fun(self: GameMode, victim: ServerPlayer): string
----@field public surrender_func? fun(self: GameMode, playedTime: number): string
+---@field public surrender_func? fun(self: GameMode, playedTime: number): table
 ---@field public is_counted? fun(self: GameMode, room: Room): boolean
 ---@field public get_adjusted? fun(self: GameMode, player: ServerPlayer): table
----@field public reward_punish? fun(self: GameMode, victim: ServerPlayer, killer: ServerPlayer)
+---@field public reward_punish? fun(self: GameMode, victim: ServerPlayer, killer?: ServerPlayer)
+---@field public build_draw_pile? fun(self: GameMode): integer[], integer[]
 
 ---@param spec GameModeSpec
 ---@return GameMode
@@ -689,6 +690,10 @@ function fk.CreateGameMode(spec)
   if spec.reward_punish then
     assert(type(spec.reward_punish) == "function")
     ret.deathRewardAndPunish = spec.reward_punish
+  end
+  if spec.build_draw_pile then
+    assert(type(spec.build_draw_pile) == "function")
+    ret.buildDrawPile = spec.build_draw_pile
   end
   return ret
 end

@@ -328,7 +328,8 @@ function Phase:main()
         room.logic:trigger(fk.AfterDrawNCards, player, data)
       end,
       [Player.Play] = function()
-        player._phase_end = false
+        --player._phase_end = false
+        if player._phase_end then return end
         room:doBroadcastNotify("UpdateSkill", "", {player})
         while not player.dead do
           if player._phase_end then break end

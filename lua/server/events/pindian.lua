@@ -96,7 +96,7 @@ function Pindian:main()
       local result = req:getResult(p)
       if result ~= "" then
         local replyCard = result.card
-        _pindianCard = Fk:getCardById(json.decode(replyCard).subcards[1])
+        _pindianCard = Fk:getCardById(replyCard.subcards[1])
       else
         _pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
       end

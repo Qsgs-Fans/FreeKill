@@ -57,7 +57,14 @@ local chooseCardsSkill = fk.CreateActiveSkill{
     end
 
     if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
-      if not string.find(self.pattern or "", self.expand_pile or "") then return false end
+      local pile = self.expand_pile
+      if not pile then return false end
+      if type(pile) == "string" then
+        local area = string.split(self.pattern or "", "|")[4]
+        if not (area and string.find(area, pile)) then return false end
+      elseif type(pile) == "table" then
+        if not table.contains(pile, to_select) then return false end
+      end
     end
 
     local checkpoint = true
@@ -105,7 +112,14 @@ local exChooseSkill = fk.CreateActiveSkill{
     if #selected >= self.max_c_num then return false end
 
     if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
-      if not string.find(self.pattern or "", self.expand_pile or "") then return false end
+      local pile = self.expand_pile
+      if not pile then return false end
+      if type(pile) == "string" then
+        local area = string.split(self.pattern or "", "|")[4]
+        if not (area and string.find(area, pile)) then return false end
+      elseif type(pile) == "table" then
+        if not table.contains(pile, to_select) then return false end
+      end
     end
 
     local checkpoint = true

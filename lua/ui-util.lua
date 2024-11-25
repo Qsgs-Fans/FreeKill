@@ -33,6 +33,7 @@ end
 UI.Spin = function(spec)
   assert(spec.from <= spec.to)
   spec.type = "spin"
+  spec.default = spec.default or spec.from
   return spec
 end
 

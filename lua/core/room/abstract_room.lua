@@ -48,11 +48,13 @@ function AbstractRoom:getCardOwner(cardId)
   return ret and self:getPlayerById(ret)
 end
 
+--- 设置房间banner于左上角，用于模式介绍，仁区等
 function AbstractRoom:setBanner(name, value)
   if value == 0 then value = nil end
   self.banners[name] = value
 end
 
+--- 获得房间的banner，如果不存在则返回nil
 function AbstractRoom:getBanner(name)
   return self.banners[name]
 end

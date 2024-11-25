@@ -19,12 +19,12 @@ local function addObserver(self, id)
   local all_observers = self.room:getObservers()
   for _, p in fk.qlist(all_observers) do
     if p:getId() == id then
-      tellRoomToObserver(self, p)
       self:doBroadcastNotify("AddObserver", json.encode{
         p:getId(),
         p:getScreenName(),
         p:getAvatar()
       })
+      tellRoomToObserver(self, p)
       break
     end
   end

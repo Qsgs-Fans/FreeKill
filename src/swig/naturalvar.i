@@ -6,9 +6,9 @@
 
 %{
 #include "core/c-wrapper.h"
+#include "client/client.h"
+#include "server/roomthread.h"
 
-class Client;
-class RoomThread;
 void Lua::pushValue(lua_State *L, QVariant v) {
   QVariantList list;
   QVariantMap map;

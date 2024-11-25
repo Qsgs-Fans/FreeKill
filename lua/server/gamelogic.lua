@@ -63,11 +63,6 @@ function GameLogic:run()
   room:doBroadcastNotify("StartGame", "")
   self:assignRoles()
   room:adjustSeats()
-  --[[ 因为未完工，在release版暂时不启用。
-  for _, p in ipairs(room.players) do
-    p.ai = SmartAI:new(p)
-  end
-  --]]
   self:chooseGenerals()
 
   self:buildPlayerCircle()

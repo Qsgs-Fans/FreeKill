@@ -101,7 +101,7 @@ end
 ---@return integer[]
 function AI:getSelectedCards()
   if not self:isInDashboard() then return Util.DummyTable end
-  return self.handler.pendings
+  return table.simpleClone(self.handler.pendings)
 end
 
 ---@return Card?
@@ -130,20 +130,23 @@ end
 
 function AI:selectCard(cid, selected)
   if not self:isInDashboard() then return end
-  verbose("%s选择卡牌%d(%s)", selected and "" or "取消", cid, tostring(Fk:getCardById(cid)))
+  verbose(0,"%s选择卡牌%d(%s)", selected and "" or "取消", cid, tostring(Fk:getCardById(cid)))
   self.handler:update("CardItem", cid, "click", { selected = selected })
 end
 
 ---@param player ServerPlayer
 function AI:selectTarget(player, selected)
   if not self:isInDashboard() then return end
-  verbose("%s选择角色%s", selected and "" or "取消", tostring(player))
+  verbose(0,"%s选择角色%s", selected and "" or "取消", tostring(player))
   self.handler:update("Photo", player.id, "click", { selected = selected })
 end
 
 function AI:selectSkill(skill_name, selected)
   if not self:isInDashboard() then return end
-  verbose("%s选择技能%s", selected and "" or "取消", skill_name)
+  local items = self.handler.scene.items
+  if not items["SkillButton"] then return end
+  if not items["SkillButton"][skill_name] then return end
+  verbose(0,"%s选择技能%s", selected and "" or "取消", skill_name)
   self.handler:update("SkillButton", skill_name, "click", { selected = selected })
 end
 
@@ -222,7 +225,7 @@ function AI:makeReply()
     local skill = Fk.skills[self.data[1]]
     skill._extra_data = Util.DummyTable
   end
-  verbose("%s 在%.2fms后得出结果：%s", self.command, (os.getms() - now) / 1000, json.encode(ret))
+  verbose(1,"%s 在%.2fms后得出结果：%s", self.command, (os.getms() - now) / 1000, json.encode(ret))
   return ret
 end
 

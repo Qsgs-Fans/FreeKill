@@ -16,6 +16,7 @@ Client = AbstractRoom:subclass('Client')
 -- load client classes
 ClientPlayer = require "client.clientplayer"
 
+---@type table<string, fun(self: Client, data: any)>
 fk.client_callback = {}
 
 -- 总而言之就是会让roomScene.state变为responding或者playing的状态
@@ -33,50 +34,101 @@ local no_decode_commands = {
   "Heartbeat",
 }
 
-function Client:initialize()
-  AbstractRoom.initialize(self)
-  self.client = fk.ClientInstance
-  self.notifyUI = function(_, command, data)
-    fk.Backend:notifyUI(command, data)
+ClientCallback = function(_self, command, jsonData, isRequest)
+  local self = ClientInstance
+  if self.recording then
+    table.insert(self.record, {math.floor(os.getms() / 1000), isRequest, command, jsonData})
   end
-  self.client.callback = function(_self, command, jsonData, isRequest)
-    if self.recording then
-      table.insert(self.record, {math.floor(os.getms() / 1000), isRequest, command, jsonData})
-    end
 
-    local cb = fk.client_callback[command]
-    local data
-    if table.contains(no_decode_commands, command) then
+  local cb = fk.client_callback[command]
+  local data
+  if table.contains(no_decode_commands, command) then
+    data = jsonData
+  else
+    local err, ret = pcall(json.decode, jsonData)
+    if err == false then
+      -- 不关心报错
       data = jsonData
     else
-      local err, ret = pcall(json.decode, jsonData)
-      if err == false then
-        -- 不关心报错
-        data = jsonData
-      else
-        data = ret
-      end
-    end
-
-    if table.contains(pattern_refresh_commands, command) then
-      Fk.currentResponsePattern = nil
-      Fk.currentResponseReason = nil
-    end
-
-    if (type(cb) == "function") then
-      if command:startsWith("AskFor") or command == "PlayCard" then
-        self:notifyUI("CancelRequest") -- 确保变成notactive 防止卡双active 权宜之计
-      end
-      cb(data)
-    else
-      self:notifyUI(command, data)
+      data = ret
     end
   end
+
+  if table.contains(pattern_refresh_commands, command) then
+    Fk.currentResponsePattern = nil
+    Fk.currentResponseReason = nil
+  end
+
+  if (type(cb) == "function") then
+    if command:startsWith("AskFor") or command == "PlayCard" then
+      self:notifyUI("CancelRequest") -- 确保变成notactive 防止卡双active 权宜之计
+    end
+    cb(self, data)
+  else
+    self:notifyUI(command, data)
+  end
+end
+
+function Client:initialize(_client)
+  AbstractRoom.initialize(self)
+  self.client = _client
 
   self.disabled_packs = {}
   self.disabled_generals = {}
   -- self.last_update_ui = os.getms()
 
+  self.recording = false
+end
+
+function Client:notifyUI(command, data)
+  self.client:notifyUI(command, data)
+end
+
+function Client:startRecording()
+  if self.recording then return end
+  if self.replaying then return end
+  self.record = {
+    fk.FK_VER,
+    os.date("%Y%m%d%H%M%S"),
+    self.enter_room_data,
+    json.encode { Self.id, Self.player:getScreenName(), Self.player:getAvatar() },
+    -- RESERVED
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+  }
+  for _, p in ipairs(self.players) do
+    if p.id ~= Self.id then
+      table.insert(self.record, {
+        math.floor(os.getms() / 1000),
+        false,
+        "AddPlayer",
+        json.encode {
+          p.player:getId(),
+          p.player:getScreenName(),
+          p.player:getAvatar(),
+          true,
+          p.player:getTotalGameTime(),
+        },
+      })
+    end
+  end
+  self.recording = true
+end
+
+function Client:stopRecording(jsonData)
+  if not self.recording then return end
+  self.record[2] = table.concat({
+    self.record[2],
+    Self.player:getScreenName():gsub("%.", "%%2e"),
+    self.settings.gameMode,
+    Self.general,
+    Self.role,
+    jsonData,
+  }, ".")
   self.recording = false
 end
 
@@ -209,112 +261,147 @@ function Client:setCardNote(ids, msg)
   end
 end
 
-fk.client_callback["SetCardFootnote"] = function(data)
-  ClientInstance:setCardNote(data[1], data[2]);
+function Client:toJsonObject()
+  local o = AbstractRoom.toJsonObject(self)
+  o.you = Self.id
+  return o
 end
 
-local function setup(id, name, avatar, msec)
-  local self = fk.Self
-  self:setId(id)
-  self:setScreenName(name)
-  self:setAvatar(avatar)
-  Self = ClientPlayer:new(fk.Self)
+fk.client_callback["SetCardFootnote"] = function(self, data)
+  self:setCardNote(data[1], data[2]);
+end
+
+fk.client_callback["NetworkDelayTest"] = function(self, data)
+  self.client:sendSetupPacket(data)
+end
+
+fk.client_callback["InstallKey"] = function(self)
+  self.client:installMyAESKey()
+end
+
+function Client:setup(id, name, avatar, msec)
+  local self_player = self.client:getSelf()
+  self_player:setId(id)
+  self_player:setScreenName(name)
+  self_player:setAvatar(avatar)
+  Self = ClientPlayer:new(self_player)
   if msec then
-    fk.ClientInstance:setupServerLag(msec)
+    self.client:setupServerLag(msec)
   end
 end
 
-fk.client_callback["Setup"] = function(data)
+fk.client_callback["Setup"] = function(self, data)
   -- jsonData: [ int id, string screenName, string avatar ]
   local id, name, avatar, msec = data[1], data[2], data[3], data[4]
-  setup(id, name, avatar, msec)
+  self:setup(id, name, avatar, msec)
 end
 
-fk.client_callback["EnterRoom"] = function(_data)
-  Self = ClientPlayer:new(fk.Self)
+function Client:enterRoom(_data)
+  Self = ClientPlayer:new(self.client:getSelf())
   -- FIXME: 需要改Qml
-  local ob = ClientInstance.observing
-  local replaying = ClientInstance.replaying
-  local showcards = ClientInstance.replaying_show
-  ClientInstance = Client:new() -- clear old client data
-  ClientInstance.observing = ob
-  ClientInstance.replaying = replaying
-  ClientInstance.replaying_show = showcards
-  ClientInstance.players = {Self}
-  ClientInstance.alive_players = {Self}
-  ClientInstance.discard_pile = {}
+  local ob = self.observing
+  local replaying = self.replaying
+  local showcards = self.replaying_show
+  self:initialize(self.client) -- clear old client data
+  self.observing = ob
+  self.replaying = replaying
+  self.replaying_show = showcards
+
+  self.players = {Self}
+  self.alive_players = {Self}
 
   local data = _data[3]
-  ClientInstance.enter_room_data = json.encode(_data);
-  ClientInstance.settings = data
+  self.enter_room_data = json.encode(_data);
+  self.timeout = _data[2]
+  self.settings = data
   table.insertTableIfNeed(
     data.disabledPack,
     Fk.game_mode_disabled[data.gameMode]
   )
-  ClientInstance.disabled_packs = data.disabledPack
-  ClientInstance.disabled_generals = data.disabledGenerals
-  ClientInstance:notifyUI("EnterRoom", _data)
+  self.disabled_packs = data.disabledPack
+  self.disabled_generals = data.disabledGenerals
 end
 
-fk.client_callback["AddPlayer"] = function(data)
+fk.client_callback["EnterRoom"] = function(self, data)
+  self:enterRoom(data)
+  self:notifyUI("EnterRoom", data)
+end
+
+function Client:addPlayer(id, name, avatar, time)
+  local player = self.client:addPlayer(id, name, avatar)
+  player:addTotalGameTime(time or 0)
+  local p = ClientPlayer:new(player)
+  table.insert(self.players, p)
+  table.insert(self.alive_players, p)
+end
+
+fk.client_callback["AddPlayer"] = function(self, data)
   -- jsonData: [ int id, string screenName, string avatar ]
   -- when other player enter the room, we create clientplayer(C and lua) for them
   local id, name, avatar, time = data[1], data[2], data[3], data[5]
-  local player = fk.ClientInstance:addPlayer(id, name, avatar)
-  player:addTotalGameTime(time or 0) -- 以防再次智迟
-  local p = ClientPlayer:new(player)
-  table.insert(ClientInstance.players, p)
-  table.insert(ClientInstance.alive_players, p)
-  ClientInstance:notifyUI("AddPlayer", data)
+  self:addPlayer(id, name, avatar, time)
+  self:notifyUI("AddPlayer", data)
 end
 
-fk.client_callback["RemovePlayer"] = function(data)
-  -- jsonData: [ int id ]
-  local id = data[1]
-  for _, p in ipairs(ClientInstance.players) do
+function Client:removePlayer(id)
+  for _, p in ipairs(self.players) do
     if p.player:getId() == id then
-      table.removeOne(ClientInstance.players, p)
-      table.removeOne(ClientInstance.alive_players, p)
+      table.removeOne(self.players, p)
+      table.removeOne(self.alive_players, p)
       break
     end
   end
+end
+
+fk.client_callback["RemovePlayer"] = function(self, data)
+  -- jsonData: [ int id ]
+  local id = data[1]
+  self:removePlayer(id)
   if id ~= Self.id then
-    fk.ClientInstance:removePlayer(id)
-    ClientInstance:notifyUI("RemovePlayer", data)
+    self.client:removePlayer(id)
+    self:notifyUI("RemovePlayer", data)
   end
 end
 
-fk.client_callback["AddObserver"] = function(data)
-  -- jsonData: [ int id, string screenName, string avatar ]
-  -- when observer enter the room, we create lua clientplayer for them
-  local id, name, avatar = data[1], data[2], data[3]
+function Client:addObserver(id, name, avatar)
   local player = {
     getId = function() return id end,
     getScreenName = function() return name end,
     getAvatar = function() return avatar end,
   }
   local p = ClientPlayer:new(player)
-  table.insert(ClientInstance.observers, p)
-  -- ClientInstance:notifyUI("ServerMessage", string.format(Fk:translate("$AddObserver"), name))
+  table.insert(self.observers, p)
+  -- self:notifyUI("ServerMessage", string.format(Fk:translate("$AddObserver"), name))
 end
 
-fk.client_callback["RemoveObserver"] = function(data)
-  local id = data[1]
-  for _, p in ipairs(ClientInstance.observers) do
+fk.client_callback["AddObserver"] = function(self, data)
+  -- jsonData: [ int id, string screenName, string avatar ]
+  -- when observer enter the room, we create lua clientplayer for them
+  local id, name, avatar = data[1], data[2], data[3]
+  self:addObserver(id, name, avatar)
+end
+
+function Client:removeObserver(id)
+  for _, p in ipairs(self.observers) do
     if p.player:getId() == id then
-      table.removeOne(ClientInstance.observers, p)
-      -- ClientInstance:notifyUI("ServerMessage", string.format(Fk:translate("$RemoveObserver"), p.player:getScreenName()))
+      table.removeOne(self.observers, p)
+      -- self:notifyUI("ServerMessage", string.format(Fk:translate("$RemoveObserver"), p.player:getScreenName()))
       break
     end
   end
 end
 
-fk.client_callback["ArrangeSeats"] = function(data)
-  local n = #ClientInstance.players
+fk.client_callback["RemoveObserver"] = function(self, data)
+  local id = data[1]
+  self:removeObserver(id)
+end
+
+function Client:arrangeSeats(player_circle)
+  local n = #self.players
   local players = {}
 
   for i = 1, n do
-    local p = ClientInstance:getPlayerById(data[i])
+    local p = self:getPlayerById(player_circle[i])
     p.seat = i
     table.insert(players, p)
   end
@@ -324,40 +411,43 @@ fk.client_callback["ArrangeSeats"] = function(data)
   end
   players[#players].next = players[1]
 
-  ClientInstance.players = players
+  self.players = players
 
-  ClientInstance:notifyUI("ArrangeSeats", data)
+  self:notifyUI("ArrangeSeats", player_circle)
 end
 
-fk.client_callback["PropertyUpdate"] = function(data)
-  -- jsonData: [ int id, string property_name, value ]
-  local id, name, value = data[1], data[2], data[3]
-  local p = ClientInstance:getPlayerById(id)
-  p[name] = value
+fk.client_callback["ArrangeSeats"] = Client.arrangeSeats
 
-  if name == "dead" then
+function Client:setPlayerProperty(player, property, value)
+  player[property] = value
+
+  if property == "dead" then
     if value == true then
-      table.removeOne(ClientInstance.alive_players, p)
+      table.removeOne(self.alive_players, player)
     else
-      table.insertIfNeed(ClientInstance.alive_players, p)
+      table.insertIfNeed(self.alive_players, player)
     end
   end
-
-  ClientInstance:notifyUI("PropertyUpdate", data)
 end
 
-fk.client_callback["PlayCard"] = function(data)
+fk.client_callback["PropertyUpdate"] = function(self, data)
+  -- jsonData: [ int id, string property_name, value ]
+  local id, name, value = data[1], data[2], data[3]
+  local p = self:getPlayerById(id)
+  self:setPlayerProperty(p, name, value)
+  self:notifyUI("PropertyUpdate", data)
+end
+
+fk.client_callback["PlayCard"] = function(self, data)
   local h = Fk.request_handlers["PlayCard"]:new(Self)
-  h.change = {}
-  h:setup()
-  h.scene:notifyUI()
-  ClientInstance:notifyUI("PlayCard", data)
+  h.change = {}; h:setup(); h.scene:notifyUI()
+  self:notifyUI("PlayCard", data)
 end
 
-fk.client_callback["AskForCardChosen"] = function(data)
+fk.client_callback["AskForCardChosen"] = function(self, data)
   -- jsonData: [ int target_id, string flag, int reason ]
   local id, flag, reason, prompt = data[1], data[2], data[3], data[4]
-  local target = ClientInstance:getPlayerById(id)
+  local target = self:getPlayerById(id)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
   local judge = target.player_cards[Player.Judge]
@@ -395,14 +485,14 @@ fk.client_callback["AskForCardChosen"] = function(data)
     ui_data._reason = reason
     ui_data._prompt = prompt
   end
-  ClientInstance:notifyUI("AskForCardChosen", ui_data)
+  self:notifyUI("AskForCardChosen", ui_data)
 end
 
-fk.client_callback["AskForCardsChosen"] = function(data)
+fk.client_callback["AskForCardsChosen"] = function(self, data)
   -- jsonData: [ int target_id, int min, int max, string flag, int reason ]
   local id, min, max, flag, reason, prompt = table.unpack(data)
     --data[1], data[2], data[3], data[4], data[5], data[6]
-  local target = ClientInstance:getPlayerById(id)
+  local target = self:getPlayerById(id)
   local hand = target.player_cards[Player.Hand]
   local equip = target.player_cards[Player.Equip]
   local judge = target.player_cards[Player.Judge]
@@ -444,45 +534,14 @@ fk.client_callback["AskForCardsChosen"] = function(data)
     ui_data._reason = reason
     ui_data._prompt = prompt
   end
-  ClientInstance:notifyUI("AskForCardsChosen", ui_data)
+  self:notifyUI("AskForCardsChosen", ui_data)
 end
 
 --- separated moves to many moves(one card per move)
 ---@param moves CardsMoveStruct[]
 local function separateMoves(moves)
   local ret = {}  ---@type CardsMoveInfo[]
-
-  local function containArea(area, relevant, defaultVisible) --处理区的处理？
-    local areas = relevant
-      and {Card.PlayerEquip, Card.PlayerJudge, Card.PlayerHand}
-      or {Card.PlayerEquip, Card.PlayerJudge}
-    return table.contains(areas, area) or (defaultVisible and table.contains({Card.Processing, Card.DiscardPile}, area))
-  end
-
   for _, move in ipairs(moves) do
-    local singleVisible = move.moveVisible
-    if not singleVisible then
-      if move.visiblePlayers then
-        local visiblePlayers = move.visiblePlayers
-        if type(visiblePlayers) == "number" then
-          if Self:isBuddy(visiblePlayers) then
-            singleVisible = true
-          end
-        elseif type(visiblePlayers) == "table" then
-          if table.find(visiblePlayers, function(pid) return Self:isBuddy(pid) end) then
-            singleVisible = true
-          end
-        end
-      else
-        if move.to and move.toArea == Card.PlayerSpecial and Self:isBuddy(move.to) then
-          singleVisible = true
-        end
-      end
-    end
-    if not singleVisible then
-      singleVisible = containArea(move.toArea, move.to and Self:isBuddy(move.to), move.moveVisible == nil)
-    end
-
     for _, info in ipairs(move.moveInfo) do
       table.insert(ret, {
         ids = {info.cardId},
@@ -493,8 +552,7 @@ local function separateMoves(moves)
         moveReason = move.moveReason,
         specialName = move.specialName,
         fromSpecialName = info.fromSpecialName,
-        proposer = move.proposer,
-        moveVisible = singleVisible or containArea(info.fromArea, move.from and Self:isBuddy(move.from), move.moveVisible == nil)
+        proposer = move.proposer
       })
     end
   end
@@ -693,9 +751,9 @@ local function sendMoveCardLog(move, visible_data)
 end
 
 ---@param raw_moves CardsMoveStruct[]
-fk.client_callback["MoveCards"] = function(raw_moves)
+fk.client_callback["MoveCards"] = function(self, raw_moves)
   -- jsonData: CardsMoveStruct[]
-  ClientInstance:moveCards(raw_moves)
+  self:moveCards(raw_moves)
   local visible_data = {}
   for _, move in ipairs(raw_moves) do
     for _, info in ipairs(move.moveInfo) do
@@ -706,13 +764,13 @@ fk.client_callback["MoveCards"] = function(raw_moves)
   local separated = separateMoves(raw_moves)
   local merged = mergeMoves(separated)
   visible_data.merged = merged
-  ClientInstance:notifyUI("MoveCards", visible_data)
+  self:notifyUI("MoveCards", visible_data)
   for _, move in ipairs(merged) do
     sendMoveCardLog(move, visible_data)
   end
 end
 
-fk.client_callback["ShowCard"] = function(data)
+fk.client_callback["ShowCard"] = function(self, data)
   local from = data.from
   local cards = data.cards
   local merged = {
@@ -727,7 +785,7 @@ fk.client_callback["ShowCard"] = function(data)
     vdata[tostring(id)] = true
   end
   vdata.merged = merged
-  ClientInstance:notifyUI("MoveCards", vdata)
+  self:notifyUI("MoveCards", vdata)
 end
 
 -- 说是限定技，其实也适用于觉醒技、转换技、使命技
@@ -744,16 +802,16 @@ local function updateLimitSkill(pid, skill, times)
   end
 end
 
-fk.client_callback["LoseSkill"] = function(data)
+fk.client_callback["LoseSkill"] = function(self, data)
   -- jsonData: [ int player_id, string skill_name ]
   local id, skill_name, fake = data[1], data[2], data[3]
-  local target = ClientInstance:getPlayerById(id)
+  local target = self:getPlayerById(id)
   local skill = Fk.skills[skill_name]
 
   if not fake then
     target:loseSkill(skill)
     if skill.visible then
-      ClientInstance:notifyUI("LoseSkill", data)
+      self:notifyUI("LoseSkill", data)
     end
   elseif skill.visible then
     -- 按理说能弄得更好的但还是复制粘贴舒服
@@ -769,7 +827,7 @@ fk.client_callback["LoseSkill"] = function(data)
 
     if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
       chk = true
-      ClientInstance:notifyUI("LoseSkill", data)
+      self:notifyUI("LoseSkill", data)
     end
 
     local active = table.filter(sks, function(s)
@@ -778,13 +836,13 @@ fk.client_callback["LoseSkill"] = function(data)
 
     if #active > 0 then
       chk = true
-      ClientInstance:notifyUI("LoseSkill", {
+      self:notifyUI("LoseSkill", {
         id, skill_name,
       })
     end
 
     if not chk then
-      ClientInstance:notifyUI("LoseSkill", {
+      self:notifyUI("LoseSkill", {
         id, skill_name,
       })
     end
@@ -793,16 +851,16 @@ fk.client_callback["LoseSkill"] = function(data)
   updateLimitSkill(id, skill, -1)
 end
 
-fk.client_callback["AddSkill"] = function(data)
+fk.client_callback["AddSkill"] = function(self, data)
   -- jsonData: [ int player_id, string skill_name ]
   local id, skill_name, fake = data[1], data[2], data[3]
-  local target = ClientInstance:getPlayerById(id)
+  local target = self:getPlayerById(id)
   local skill = Fk.skills[skill_name]
 
   if not fake then
     target:addSkill(skill)
     if skill.visible then
-      ClientInstance:notifyUI("AddSkill", data)
+      self:notifyUI("AddSkill", data)
     end
   elseif skill.visible then
     -- 添加假技能：服务器只会传一个主技能来。
@@ -815,7 +873,7 @@ fk.client_callback["AddSkill"] = function(data)
 
     if table.find(sks, function(s) return s:isInstanceOf(TriggerSkill) end) then
       chk = true
-      ClientInstance:notifyUI("AddSkill", data)
+      self:notifyUI("AddSkill", data)
     end
 
     local active = table.filter(sks, function(s)
@@ -824,14 +882,14 @@ fk.client_callback["AddSkill"] = function(data)
 
     if #active > 0 then
       chk = true
-      ClientInstance:notifyUI("AddSkill", {
+      self:notifyUI("AddSkill", {
         id, skill_name,
       })
     end
 
     -- 面板上总得有点啥东西表明自己有技能吧 = =
     if not chk then
-      ClientInstance:notifyUI("AddSkill", {
+      self:notifyUI("AddSkill", {
         id, skill_name,
       })
     end
@@ -844,7 +902,7 @@ fk.client_callback["AddSkill"] = function(data)
   updateLimitSkill(id, skill, target:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
-fk.client_callback["AskForSkillInvoke"] = function(data)
+fk.client_callback["AskForSkillInvoke"] = function(self, data)
   -- jsonData: [ string name, string prompt ]
 
   local h = Fk.request_handlers["AskForSkillInvoke"]:new(Self)
@@ -852,10 +910,10 @@ fk.client_callback["AskForSkillInvoke"] = function(data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
-  ClientInstance:notifyUI("AskForSkillInvoke", data)
+  self:notifyUI("AskForSkillInvoke", data)
 end
 
-fk.client_callback["AskForUseActiveSkill"] = function(data)
+fk.client_callback["AskForUseActiveSkill"] = function(self, data)
   -- jsonData: [ string skill_name, string prompt, bool cancelable. json extra_data ]
   local skill = Fk.skills[data[1]]
   local extra_data = data[4]
@@ -866,33 +924,33 @@ fk.client_callback["AskForUseActiveSkill"] = function(data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
-  ClientInstance:notifyUI("AskForUseActiveSkill", data)
+  self:notifyUI("AskForUseActiveSkill", data)
 end
 
-fk.client_callback["AskForUseCard"] = function(data)
+fk.client_callback["AskForUseCard"] = function(self, data)
   -- jsonData: card, pattern, prompt, cancelable, {}
   Fk.currentResponsePattern = data[2]
   local h = Fk.request_handlers["AskForUseCard"]:new(Self, data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
-  ClientInstance:notifyUI("AskForUseCard", data)
+  self:notifyUI("AskForUseCard", data)
 end
 
-fk.client_callback["AskForResponseCard"] = function(data)
+fk.client_callback["AskForResponseCard"] = function(self, data)
   -- jsonData: card, pattern, prompt, cancelable, {}
   Fk.currentResponsePattern = data[2]
   local h = Fk.request_handlers["AskForResponseCard"]:new(Self, data)
   h.change = {}
   h:setup()
   h.scene:notifyUI()
-  ClientInstance:notifyUI("AskForResponseCard", data)
+  self:notifyUI("AskForResponseCard", data)
 end
 
-fk.client_callback["SetPlayerMark"] = function(data)
+fk.client_callback["SetPlayerMark"] = function(self, data)
   -- jsonData: [ int id, string mark, int value ]
   local player, mark, value = data[1], data[2], data[3]
-  local p = ClientInstance:getPlayerById(player)
+  local p = self:getPlayerById(player)
   p:setMark(mark, value)
 
   if string.sub(mark, 1, 1) == "@" then
@@ -905,40 +963,40 @@ fk.client_callback["SetPlayerMark"] = function(data)
         if text == "#hidden" then data[3] = 0 end
       end
     end
-    ClientInstance:notifyUI("SetPlayerMark", data)
+    self:notifyUI("SetPlayerMark", data)
   end
 end
 
-fk.client_callback["SetBanner"] = function(data)
+fk.client_callback["SetBanner"] = function(self, data)
   -- jsonData: [ int id, string mark, int value ]
   local mark, value = data[1], data[2]
-  ClientInstance:setBanner(mark, value)
+  self:setBanner(mark, value)
 
   if string.sub(mark, 1, 1) == "@" then
-    ClientInstance:notifyUI("SetBanner", data)
+    self:notifyUI("SetBanner", data)
   end
 end
 
-fk.client_callback["SetCardMark"] = function(data)
+fk.client_callback["SetCardMark"] = function(self, data)
   -- jsonData: [ int id, string mark, int value ]
   local card, mark, value = data[1], data[2], data[3]
   Fk:getCardById(card):setMark(mark, value)
 
-  ClientInstance:notifyUI("UpdateCard", card)
+  self:notifyUI("UpdateCard", card)
 end
 
-fk.client_callback["Chat"] = function(data)
+fk.client_callback["Chat"] = function(self, data)
   -- jsonData: { int type, int sender, string msg }
   if data.type == 1 then
     data.general = ""
     data.time = os.date("%H:%M:%S")
-    ClientInstance:notifyUI("Chat", data)
+    self:notifyUI("Chat", data)
     return
   end
 
-  local p = ClientInstance:getPlayerById(data.sender)
+  local p = self:getPlayerById(data.sender)
   if not p then
-    for _, pl in ipairs(ClientInstance.observers) do
+    for _, pl in ipairs(self.observers) do
       if pl.id == data.sender then
         p = pl; break
       end
@@ -950,34 +1008,32 @@ fk.client_callback["Chat"] = function(data)
   end
   data.userName = p.player:getScreenName()
   data.time = os.date("%H:%M:%S")
-  ClientInstance:notifyUI("Chat", data)
+  self:notifyUI("Chat", data)
 end
 
-fk.client_callback["GameLog"] = function(data)
-  ClientInstance:appendLog(data)
-end
+fk.client_callback["GameLog"] = Client.appendLog
 
-fk.client_callback["LogEvent"] = function(data)
+fk.client_callback["LogEvent"] = function(self, data)
   if data.type == "Death" then
     table.removeOne(
-      ClientInstance.alive_players,
-      ClientInstance:getPlayerById(data.to)
+      self.alive_players,
+      self:getPlayerById(data.to)
     )
   end
-  ClientInstance:notifyUI("LogEvent", data)
+  self:notifyUI("LogEvent", data)
 end
 
-fk.client_callback["AddCardUseHistory"] = function(data)
+fk.client_callback["AddCardUseHistory"] = function(self, data)
   Self:addCardUseHistory(data[1], data[2])
 end
 
-fk.client_callback["SetCardUseHistory"] = function(data)
+fk.client_callback["SetCardUseHistory"] = function(self, data)
   Self:setCardUseHistory(data[1], data[2], data[3])
 end
 
-fk.client_callback["AddSkillUseHistory"] = function(data)
+fk.client_callback["AddSkillUseHistory"] = function(self, data)
   local playerid, skill_name, time = data[1], data[2], data[3]
-  local player = ClientInstance:getPlayerById(playerid)
+  local player = self:getPlayerById(playerid)
   player:addSkillUseHistory(skill_name, time)
 
   local skill = Fk.skills[skill_name]
@@ -985,9 +1041,9 @@ fk.client_callback["AddSkillUseHistory"] = function(data)
   updateLimitSkill(playerid, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
-fk.client_callback["SetSkillUseHistory"] = function(data)
+fk.client_callback["SetSkillUseHistory"] = function(self, data)
   local id, skill_name, time, scope = data[1], data[2], data[3], data[4]
-  local player = ClientInstance:getPlayerById(id)
+  local player = self:getPlayerById(id)
   player:setSkillUseHistory(skill_name, time, scope)
 
   local skill = Fk.skills[skill_name]
@@ -995,217 +1051,191 @@ fk.client_callback["SetSkillUseHistory"] = function(data)
   updateLimitSkill(id, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
-fk.client_callback["AddVirtualEquip"] = function(data)
+fk.client_callback["AddVirtualEquip"] = function(self, data)
   local cname = data.name
-  local player = ClientInstance:getPlayerById(data.player)
+  local player = self:getPlayerById(data.player)
   local subcards = data.subcards
   local c = Fk:cloneCard(cname)
   c:addSubcards(subcards)
   player:addVirtualEquip(c)
 end
 
-fk.client_callback["RemoveVirtualEquip"] = function(data)
-  local player = ClientInstance:getPlayerById(data.player)
+fk.client_callback["RemoveVirtualEquip"] = function(self, data)
+  local player = self:getPlayerById(data.player)
   player:removeVirtualEquip(data.id)
 end
 
-fk.client_callback["Heartbeat"] = function()
-  ClientInstance.client:notifyServer("Heartbeat", "")
+fk.client_callback["Heartbeat"] = function(self)
+  self.client:notifyServer("Heartbeat", "")
 end
 
-fk.client_callback["ChangeSelf"] = function(data)
+fk.client_callback["ChangeSelf"] = function(self, data)
   local pid = tonumber(data)
-  local c = ClientInstance
-  c.client:changeSelf(pid) -- for qml
-  Self = c:getPlayerById(pid)
-  ClientInstance:notifyUI("ChangeSelf", pid)
+  self.client:changeSelf(pid) -- for qml
+  Self = self:getPlayerById(pid)
+  self:notifyUI("ChangeSelf", pid)
 end
 
-fk.client_callback["UpdateQuestSkillUI"] = function(data)
+fk.client_callback["UpdateQuestSkillUI"] = function(self, data)
   local player, skillName, usedTimes = data[1], data[2], data[3]
   updateLimitSkill(player, Fk.skills[skillName], usedTimes)
 end
 
-fk.client_callback["UpdateGameData"] = function(data)
+fk.client_callback["UpdateGameData"] = function(self, data)
   local player, total, win, run = data[1], data[2], data[3], data[4]
-  player = ClientInstance:getPlayerById(player)
+  player = self:getPlayerById(player)
   if player then
     player.player:setGameData(total, win, run)
   end
 
-  ClientInstance:notifyUI("UpdateGameData", data)
+  self:notifyUI("UpdateGameData", data)
 end
 
-fk.client_callback["AddTotalGameTime"] = function(data)
+fk.client_callback["AddTotalGameTime"] = function(self, data)
   local player, time = data[1], data[2]
-  player = ClientInstance:getPlayerById(player)
+  player = self:getPlayerById(player)
   if player then
     player.player:addTotalGameTime(time)
     if player == Self then
-      ClientInstance:notifyUI("AddTotalGameTime", data)
+      self:notifyUI("AddTotalGameTime", data)
     end
   end
 end
 
-fk.client_callback["StartGame"] = function(jsonData)
-  local c = ClientInstance
-  c.record = {
-    fk.FK_VER,
-    os.date("%Y%m%d%H%M%S"),
-    c.enter_room_data,
-    json.encode { Self.id, fk.Self:getScreenName(), fk.Self:getAvatar() },
-    -- RESERVED
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  }
-  for _, p in ipairs(c.players) do
-    if p.id ~= Self.id then
-      table.insert(c.record, {
-        math.floor(os.getms() / 1000),
-        false,
-        "AddPlayer",
-        json.encode {
-          p.player:getId(),
-          p.player:getScreenName(),
-          p.player:getAvatar(),
-          true,
-          p.player:getTotalGameTime(),
-        },
-      })
+fk.client_callback["StartGame"] = function(self, jsonData)
+  self:startRecording()
+  self:notifyUI("StartGame", jsonData)
+end
+
+fk.client_callback["GameOver"] = function(self, jsonData)
+  if self.recording then
+    self:stopRecording(jsonData)
+    if not self.observing and not self.replaying then
+      local result
+      local winner = jsonData
+      if table.contains(winner:split("+"), Self.role) then
+        result = 1
+      elseif winner == "" then
+        result = 3
+      else
+        result = 2
+      end
+      self.client:saveGameData(self.settings.gameMode, Self.general,
+        Self.deputyGeneral or "", Self.role, result, self.record[2],
+        json.encode(self:toJsonObject()), json.encode(self.record))
     end
   end
-  c.recording = true
-  c:notifyUI("StartGame", jsonData)
+  self:notifyUI("GameOver", jsonData)
 end
 
-fk.client_callback["GameOver"] = function(jsonData)
-  local c = ClientInstance
-  if c.recording then
-    c.recording = false
-    c.record[2] = table.concat({
-      c.record[2],
-      Self.player:getScreenName(),
-      c.settings.gameMode,
-      Self.general,
-      Self.role,
-      jsonData,
-    }, ".")
-    -- c.client:saveRecord(json.encode(c.record), c.record[2])
-  end
-  c:notifyUI("GameOver", jsonData)
+fk.client_callback["EnterLobby"] = function(self, jsonData)
+  self:stopRecording("")
+  self:notifyUI("EnterLobby", jsonData)
 end
 
-fk.client_callback["EnterLobby"] = function(jsonData)
-  local c = ClientInstance
-  ---[[
-  if c.recording and not c.observing then
-    c.recording = false
-    c.record[2] = table.concat({
-      c.record[2],
-      Self.player:getScreenName(),
-      c.settings.gameMode,
-      Self.general,
-      Self.role,
-      "",
-    }, ".")
-    -- c.client:saveRecord(json.encode(c.record), c.record[2])
-  end
-  --]]
-  c:notifyUI("EnterLobby", jsonData)
-end
-
-fk.client_callback["PrintCard"] = function(data)
+fk.client_callback["PrintCard"] = function(self, data)
   local n, s, num = table.unpack(data)
-  ClientInstance:printCard(n, s, num)
+  self:printCard(n, s, num)
 end
 
-fk.client_callback["AddBuddy"] = function(data)
-  local c = ClientInstance
+fk.client_callback["AddBuddy"] = function(self, data)
   local fromid, id = table.unpack(data)
-  local from = c:getPlayerById(fromid)
-  local to = c:getPlayerById(id)
+  local from = self:getPlayerById(fromid)
+  local to = self:getPlayerById(id)
   from:addBuddy(to)
 end
 
-fk.client_callback["RmBuddy"] = function(data)
-  local c = ClientInstance
+fk.client_callback["RmBuddy"] = function(self, data)
   local fromid, id = table.unpack(data)
-  local from = c:getPlayerById(fromid)
-  local to = c:getPlayerById(id)
+  local from = self:getPlayerById(fromid)
+  local to = self:getPlayerById(id)
   from:removeBuddy(to)
 end
 
-local function loadRoomSummary(data)
+local function loadRoomSummary(self, data)
   local players = data.players
-
-  fk.client_callback["StartGame"]("")
 
   for _, pid in ipairs(data.circle) do
     if pid ~= data.you then
-      fk.client_callback["AddPlayer"](players[tostring(pid)].setup_data)
+      fk.client_callback["AddPlayer"](self, players[tostring(pid)].setup_data)
     end
   end
 
-  fk.client_callback["ArrangeSeats"](data.circle)
+  fk.client_callback["ArrangeSeats"](self, data.circle)
 
-  ClientInstance:loadJsonObject(data) -- 此处已同步全部数据 剩下就是更新UI
+  fk.client_callback["StartGame"](self, "")
 
-  for k, v in pairs(ClientInstance.banners) do
+  self:loadJsonObject(data) -- 此处已同步全部数据 剩下就是更新UI
+
+  for k, v in pairs(self.banners) do
     if k[1] == "@" then
-      ClientInstance:notifyUI("SetBanner", { k, v })
+      self:notifyUI("SetBanner", { k, v })
     end
   end
 
-  for _, p in ipairs(ClientInstance.players) do p:sendDataToUI() end
+  for _, p in ipairs(self.players) do p:sendDataToUI() end
 
-  ClientInstance:notifyUI("UpdateDrawPile", #ClientInstance.draw_pile)
-  ClientInstance:notifyUI("UpdateRoundNum", data.round_count)
+  self:notifyUI("UpdateDrawPile", #self.draw_pile)
+  self:notifyUI("UpdateRoundNum", data.round_count)
 end
 
-fk.client_callback["Reconnect"] = function(data)
+fk.client_callback["Reconnect"] = function(self, data)
   local players = data.players
 
-  local setup_data = players[tostring(data.you)].setup_data
-  setup(setup_data[1], setup_data[2], setup_data[3])
-  fk.client_callback["AddTotalGameTime"]{ setup_data[1], setup_data[5] }
+  if not self.replaying then
+    local setup_data = players[tostring(data.you)].setup_data
+    self:setup(setup_data[1], setup_data[2], setup_data[3])
+    fk.client_callback["AddTotalGameTime"](self, { setup_data[1], setup_data[5] })
 
-  local enter_room_data = { data.timeout, data.settings }
-  table.insert(enter_room_data, 1, #data.circle)
-  fk.client_callback["EnterLobby"]("")
-  fk.client_callback["EnterRoom"](enter_room_data)
+    local enter_room_data = { data.timeout, data.settings }
+    table.insert(enter_room_data, 1, #data.circle)
+    fk.client_callback["EnterLobby"](self, "")
+    fk.client_callback["EnterRoom"](self, enter_room_data)
 
-  loadRoomSummary(data)
+    self:startRecording()
+    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Reconnect", json.encode(data)})
+  end
+
+  loadRoomSummary(self, data)
 end
 
-fk.client_callback["Observe"] = function(data)
+fk.client_callback["Observe"] = function(self, data)
   local players = data.players
 
-  local setup_data = players[tostring(data.you)].setup_data
-  setup(setup_data[1], setup_data[2], setup_data[3])
+  if not self.replaying then
+    local setup_data = players[tostring(data.you)].setup_data
+    self:setup(setup_data[1], setup_data[2], setup_data[3])
 
-  local enter_room_data = { data.timeout, data.settings }
-  table.insert(enter_room_data, 1, #data.circle)
-  fk.client_callback["EnterRoom"](enter_room_data)
+    local enter_room_data = { data.timeout, data.settings }
+    table.insert(enter_room_data, 1, #data.circle)
+    fk.client_callback["EnterRoom"](self, enter_room_data)
 
-  loadRoomSummary(data)
+    self:startRecording()
+    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Observe", json.encode(data)})
+  end
+
+  loadRoomSummary(self, data)
 end
 
-fk.client_callback["PrepareDrawPile"] = function(data)
+fk.client_callback["PrepareDrawPile"] = function(self, data)
   local seed = tonumber(data)
-  ClientInstance:prepareDrawPile(seed)
+  self:prepareDrawPile(seed)
 end
 
-fk.client_callback["ShuffleDrawPile"] = function(data)
+fk.client_callback["ShuffleDrawPile"] = function(self, data)
   local seed = tonumber(data)
-  ClientInstance:shuffleDrawPile(seed)
+  self:shuffleDrawPile(seed)
+end
+
+fk.client_callback["SyncDrawPile"] = function(self, data)
+  self.draw_pile = data
 end
 
 -- Create ClientInstance (used by Lua)
-ClientInstance = Client:new()
+-- Let Cpp call this function to create
+function CreateLuaClient(cpp_client)
+  ClientInstance = Client:new(cpp_client)
+end
 dofile "lua/client/client_util.lua"
 
 if FileIO.pwd():endsWith("packages/freekill-core") then

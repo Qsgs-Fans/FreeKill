@@ -74,12 +74,25 @@ function ClientPlayer:sendDataToUI()
   local f = fk.client_callback["SetSkillUseHistory"]
   for k, v in pairs(self.skillUsedHistory) do
     if v[4] > 0 then
-      f{ id, k, v[1], 1 }
-      f{ id, k, v[2], 2 }
-      f{ id, k, v[3], 3 }
-      f{ id, k, v[4], 4 }
+      f(c, { id, k, v[1], 1 })
+      f(c, { id, k, v[2], 2 })
+      f(c, { id, k, v[3], 3 })
+      f(c, { id, k, v[4], 4 })
     end
   end
+end
+
+function ClientPlayer:toJsonObject()
+  local o = Player.toJsonObject(self)
+  local sp = self.player
+  o.setup_data = {
+    self.id,
+    sp:getScreenName(),
+    sp:getAvatar(),
+    false,
+    sp:getTotalGameTime(),
+  }
+  return o
 end
 
 return ClientPlayer

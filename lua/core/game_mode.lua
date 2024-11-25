@@ -42,6 +42,7 @@ function GameMode:initialize(name, min, max)
   self.maxPlayer = math.min(max, 12)
 end
 
+-- 判断胜利者的函数，若不为""，则游戏存在胜利者（一般会结束游戏）
 ---@param victim ServerPlayer @ 死者
 ---@return string @ 胜者阵营
 function GameMode:getWinner(victim)
@@ -77,16 +78,35 @@ function GameMode:getWinner(victim)
   return winner
 end
 
+-- 判断什么时候可以投降的函数
 ---@param playedTime number @ 游戏时长（单位：秒）
 ---@return table
 function GameMode:surrenderFunc(playedTime)
   return {}
 end
 
+-- 判断是否计入场次的函数
 ---@param room Room @ 游戏房间
 ---@return boolean
 function GameMode:countInFunc(room)
   return true
+end
+
+-- 决定初始牌堆以及初始游戏外区域的函数
+-- 需要返回两个数组，一个是牌堆，一个是游戏外（void）
+function GameMode:buildDrawPile()
+  local allCardIds = Fk:getAllCardIds()
+  local void = {}
+
+  for i = #allCardIds, 1, -1 do
+    if Fk:getCardById(allCardIds[i]).is_derived then
+      local id = allCardIds[i]
+      table.remove(allCardIds, i)
+      table.insert(void, id)
+    end
+  end
+
+  return allCardIds, void
 end
 
 -- 修改角色的属性

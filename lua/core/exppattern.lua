@@ -83,6 +83,7 @@ local function fillCardTrueNameTable()
   end
 end
 
+--- 判断某牌是否满足某个Matcher的某个key（例如牌名、点数、花色）
 local function matchSingleKey(matcher, card, key)
   local match = matcher[key]
   if not match then return true end
@@ -117,6 +118,7 @@ local function matchSingleKey(matcher, card, key)
   return false
 end
 
+--- 判断某个Card是否符合某个Matcher
 ---@param matcher Matcher
 ---@param card Card
 local function matchCard(matcher, card)
@@ -294,6 +296,7 @@ local function parseRawNumTable(tab)
   return ret
 end
 
+--- 将字符串pattern转化为一个Matcher
 local function parseMatcher(str)
   local t = str:split("|")
   if #t < 7 then
@@ -374,6 +377,7 @@ local function parseMatcher(str)
   return ret
 end
 
+--- 将Matcher的某个key转化为字符串
 local function matcherKeyToString(tab)
   if not tab then return "." end
   local ret = table.concat(tab, ",")
@@ -417,6 +421,7 @@ function Exppattern:initialize(spec)
   end
 end
 
+--- 将字符串pattern转化为exp类（其中含有数个Matcher）
 ---@param pattern string
 ---@return Exppattern
 function Exppattern:Parse(pattern)
@@ -432,6 +437,7 @@ function Exppattern.static:Parse(str)
   return ret
 end
 
+--- 判断输入的Card是否满足本体的规则
 ---@param card Card
 function Exppattern:match(card)
   for _, matcher in ipairs(self.matchers) do
@@ -443,6 +449,7 @@ function Exppattern:match(card)
   return false
 end
 
+--- 判断输入的exp（可为字符串）是否满足本体的规则
 function Exppattern:matchExp(exp)
   if type(exp) == "string" then
     exp = Exppattern:Parse(exp)

@@ -21,6 +21,7 @@ local slashSkill = fk.CreateActiveSkill{
   max_phase_use_time = 1,
   target_num = 1,
   can_use = function(self, player, card, extra_data)
+    if player:prohibitUse(card) then return end
     return (extra_data and extra_data.bypass_times) or player.phase ~= Player.Play or
       table.find(Fk:currentRoom().alive_players, function(p)
         return self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
@@ -32,17 +33,16 @@ local slashSkill = fk.CreateActiveSkill{
     return from ~= player and not (distance_limited and not self:withinDistanceLimit(from, true, card, player))
   end,
   target_filter = function(self, to_select, selected, _, card, extra_data)
+    if not Util.TargetFilter(self, to_select, selected, _, card, extra_data) then return end
     local count_distances = not (extra_data and extra_data.bypass_distances)
-    if #selected < self:getMaxTargetNum(Self, card) then
-      local player = Fk:currentRoom():getPlayerById(to_select)
-      return self:modTargetFilter(to_select, selected, Self.id, card, count_distances) and
-      (
-        #selected > 0 or
-        Self.phase ~= Player.Play or
-        (extra_data and extra_data.bypass_times) or
-        self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", player)
-      )
-    end
+    local target = Fk:currentRoom():getPlayerById(to_select)
+    return self:modTargetFilter(to_select, selected, Self.id, card, count_distances) and
+    (
+      #selected > 0 or
+      Self.phase ~= Player.Play or
+      (extra_data and extra_data.bypass_times) or
+      self:withinTimesLimit(Self, Player.HistoryPhase, card, "slash", target)
+    )
   end,
   on_effect = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
@@ -191,15 +191,15 @@ extension:addCards({
 local dismantlementSkill = fk.CreateActiveSkill{
   name = "dismantlement_skill",
   prompt = "#dismantlement_skill",
+  can_use = Util.CanUse,
   target_num = 1,
   mod_target_filter = function(self, to_select, selected, user, card)
     local player = Fk:currentRoom():getPlayerById(to_select)
     return user ~= to_select and not player:isAllNude()
   end,
-  target_filter = function(self, to_select, selected, _, card)
-    if #selected < self:getMaxTargetNum(Self, card) then
-      return self:modTargetFilter(to_select, selected, Self.id, card)
-    end
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    return Util.TargetFilter(self, to_select, selected, _, card, extra_data) and
+      self:modTargetFilter(to_select, selected, Self.id, card)
   end,
   on_effect = function(self, room, effect)
     local from = room:getPlayerById(effect.from)
@@ -230,6 +230,7 @@ extension:addCards({
 local snatchSkill = fk.CreateActiveSkill{
   name = "snatch_skill",
   prompt = "#snatch_skill",
+  can_use = Util.CanUse,
   distance_limit = 1,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
@@ -238,9 +239,8 @@ local snatchSkill = fk.CreateActiveSkill{
   end,
   target_filter = function(self, to_select, selected, _, card, extra_data)
     local count_distances = not (extra_data and extra_data.bypass_distances)
-    if #selected < self:getMaxTargetNum(Self, card) then
-      return self:modTargetFilter(to_select, selected, Self.id, card, count_distances)
-    end
+    if not Util.TargetFilter(self, to_select, selected, _, card, extra_data) then return end
+    return self:modTargetFilter(to_select, selected, Self.id, card, count_distances)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
@@ -270,13 +270,13 @@ extension:addCards({
 local duelSkill = fk.CreateActiveSkill{
   name = "duel_skill",
   prompt = "#duel_skill",
+  can_use = Util.CanUse,
   mod_target_filter = function(self, to_select, selected, user, card)
     return user ~= to_select
   end,
-  target_filter = function(self, to_select, selected, _, card)
-    if #selected < self:getMaxTargetNum(Self, card) then
-      return self:modTargetFilter(to_select, selected, Self.id, card)
-    end
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    return Util.TargetFilter(self, to_select, selected, _, card, extra_data) and
+      self:modTargetFilter(to_select, selected, Self.id, card)
   end,
   target_num = 1,
   on_effect = function(self, room, effect)
@@ -356,6 +356,7 @@ extension:addCards({
 local collateralSkill = fk.CreateActiveSkill{
   name = "collateral_skill",
   prompt = "#collateral_skill",
+  can_use = Util.CanUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     local player = Fk:currentRoom():getPlayerById(to_select)
     if #selected == 0 then
@@ -366,7 +367,8 @@ local collateralSkill = fk.CreateActiveSkill{
       return from:inMyAttackRange(target) and not from:isProhibited(player, Fk:cloneCard("slash"))
     end
   end,
-  target_filter = function(self, to_select, selected, _, card)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    if not Util.TargetFilter(self, to_select, selected, _, card, extra_data) then return end
     if #selected >= (self:getMaxTargetNum(Self, card) - 1) * 2 then
       return false--修改借刀的目标选择
     elseif #selected % 2 == 0 then
@@ -766,10 +768,12 @@ extension:addCards({
 local indulgenceSkill = fk.CreateActiveSkill{
   name = "indulgence_skill",
   prompt = "#indulgence_skill",
+  can_use = Util.CanUse,
   mod_target_filter = function(self, to_select, selected, user, card, distance_limited)
     return user ~= to_select
   end,
-  target_filter = function(self, to_select, selected, _, card)
+  target_filter = function(self, to_select, selected, _, card, extra_data)
+    if not Util.TargetFilter(self, to_select, selected, _, card, extra_data) then return end
     return #selected == 0 and self:modTargetFilter(to_select, selected, Self.id, card, true)
   end,
   target_num = 1,

@@ -6,7 +6,7 @@
 
 cmake_minimum_required(VERSION 3.22)
 
-project(FreeKill VERSION 0.5.0)
+project(FreeKill VERSION 0.5.1)
 add_definitions(-DFK_VERSION=\"${CMAKE_PROJECT_VERSION}\")
 
 find_package(Qt6 REQUIRED COMPONENTS
@@ -65,5 +65,7 @@ add_custom_command(
 
 add_subdirectory(src)
 
+if (DEFINED FK_TESTS)
 enable_testing()
 add_subdirectory(test)
+endif ()

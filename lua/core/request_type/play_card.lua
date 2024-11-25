@@ -98,7 +98,7 @@ function ReqPlayCard:feasible()
     local skill = card.skill ---@type ActiveSkill
     ret = skill:feasible(self.selected_targets, { card.id }, player, card)
     if ret then
-      ret = skill:canUse(player, card, self.extra_data) and not player:prohibitUse(card)
+      ret = skill:canUse(player, card, self.extra_data)
     end
   end
   return ret

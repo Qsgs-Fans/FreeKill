@@ -27,7 +27,7 @@ jobs:
       run: |
         mkdir build && cd build
         cp -r /usr/include/lua5.4/* ../include
-        cmake .. -DFK_SERVER_ONLY=
+        cmake .. -DFK_SERVER_ONLY= -DFK_TESTS=
         make
         cd ..
 

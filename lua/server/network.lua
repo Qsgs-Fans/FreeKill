@@ -331,7 +331,7 @@ function Request:_finish()
     if not self.ai_start_time then break end
     if not isHuman then
       local to_delay = 800 - (os.getms() - self.ai_start_time) / 1000
-      room:delay(to_delay)
+      if to_delay > 0 then room:delay(to_delay) end
       break
     end
   end
