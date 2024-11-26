@@ -348,7 +348,7 @@ static const QString insertPWinRate =
 
 static const QString findGWinRate =
     QString("SELECT win, lose, draw "
-            "FROM gWinRate WHERE and general = '%1' and mode = '%2' and role = '%3';");
+            "FROM gWinRate WHERE general = '%1' and mode = '%2' and role = '%3';");
 
 static const QString updateGWinRate =
     QString("UPDATE gWinRate "
