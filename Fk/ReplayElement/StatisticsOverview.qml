@@ -20,7 +20,7 @@ Item {
     COUNT(CASE result WHEN 2 THEN 1 END) AS lose,
     COUNT(CASE result WHEN 3 THEN 1 END) AS draw,
     COUNT() AS total,
-    ROUND(COUNT(CASE result WHEN 1 THEN 1 END) / COUNT() * 100, 2) AS winRate
+    ROUND(COUNT(CASE result WHEN 1 THEN 1 END) * 1.0 / COUNT() * 100, 2) AS winRate
     FROM myGameData WHERE pid = ${Self.id} AND server_addr = '${addr}'`;
 
     if (generalFilter.length !== 0) {
