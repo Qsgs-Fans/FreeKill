@@ -21,6 +21,10 @@ public:
   void removeSocket();  // For the running players
   ClientSocket *getSocket() const;
 
+  QString getPeerAddress() const;
+  QString getUuid() const;
+  void setUuid(QString uuid);
+
   Server *getServer() const;
   RoomBase *getRoom() const;
   void setRoom(RoomBase *room);
@@ -69,6 +73,8 @@ private:
 
   QString requestCommand;
   QString requestData;
+
+  QString uuid_str;
 
   int gameTime; // 在这个房间的有效游戏时长(秒)
   QElapsedTimer gameTimer;

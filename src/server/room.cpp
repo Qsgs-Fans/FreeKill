@@ -513,7 +513,7 @@ void Room::gameOver() {
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
   server->beginTransaction();
-  for (ServerPlayer *p : players) {
+  for (auto p : players) {
     auto pid = p->getId();
 
     if (pid > 0) {
@@ -548,11 +548,39 @@ void Room::gameOver() {
 
 void Room::manuallyStart() {
   if (isFull() && !gameStarted) {
+    qInfo("[GameStart] Room %d started", getId());
+    QMap<QString, QStringList> uuidList, ipList;
     for (auto p : players) {
       p->setReady(false);
       p->setDied(false);
       p->startGameTimer();
+
+      if (p->getId() < 0) continue;
+      auto uuid = p->getUuid();
+      auto ip = p->getPeerAddress();
+      auto pname = p->getScreenName();
+      if (!uuid.isEmpty()) {
+        uuidList[uuid].append(pname);
+      }
+      if (!ip.isEmpty()) {
+        ipList[ip].append(pname);
+      }
     }
+
+    for (auto i = ipList.cbegin(); i != ipList.cend(); i++) {
+      if (i.value().length() <= 1) continue;
+      auto warn = QString("*WARN* Same IP address: [%1]").arg(i.value().join(", "));
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      qInfo("%s", warn.toUtf8().constData());
+    }
+
+    for (auto i = uuidList.cbegin(); i != uuidList.cend(); i++) {
+      if (i.value().length() <= 1) continue;
+      auto warn = QString("*WARN* Same device id: [%1]").arg(i.value().join(", "));
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      qInfo("%s", warn.toUtf8().constData());
+    }
+
     gameStarted = true;
     m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
   }

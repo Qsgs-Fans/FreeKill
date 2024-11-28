@@ -330,6 +330,7 @@ void Server::processRequest(const QByteArray &msg) {
   player->setScreenName(name);
   player->setAvatar(obj["avatar"]);
   player->setId(id);
+  player->setUuid(uuid_str);
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
   }
