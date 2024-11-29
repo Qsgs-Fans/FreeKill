@@ -25,7 +25,7 @@ add_test(
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-qt_add_executable(TestLuaCore lua_test.cpp)
+qt_add_executable(TestLuaCore lua_core_test.cpp)
 target_precompile_headers(TestLuaCore REUSE_FROM TestWithoutGui)
 target_link_libraries(TestLuaCore PRIVATE ${TEST_LIB})
 add_test(

@@ -1,3 +1,2 @@
 
-TestGameEvent = {
-}
+TestGameEvent = {}

@@ -11,11 +11,8 @@ lu = require('luaunit')
 -- load FreeKill core
 dofile 'lua/client/i18n/init.lua'
 
--- load test cases
-dofile 'test/lua/core/util.lua'
-dofile 'test/lua/core/pattern.lua'
-dofile 'test/lua/core/testmode.lua'
+-- 加载测试用例
+-- 测试框架是LuaUnit 文档参见 https://luaunit.readthedocs.io/en/luaunit_v3_2_1/
+dofile 'test/lua/core/init.lua'
 
-print 'Lua unit tests start'
-
-fk.os.exit( lu.LuaUnit.run('--verbose') )
+return lu.LuaUnit.run()
