@@ -1,5 +1,3 @@
-#include "core/c-wrapper.h"
-#include "core/util.h"
 #include "network/test_socket.h"
 #include "server/globals.h"
 #include "server/test_login.h"
@@ -7,30 +5,12 @@
 #include "server/test_scheduler.h"
 
 #include "core/packman.h"
-#include "client/client.h"
 
 #define EXEC_QTEST(o) do {\
   auto tc = new (o); \
   status |= QTest::qExec(tc, argc, argv); \
   tc->deleteLater(); \
 } while (0)
-
-static int run_lua_tests() {
-  Lua L;
-  L.eval("__os = os; __io = io; __package = package"); // 保存一下
-  bool using_core = false;
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core")) {
-    QDir::setCurrent("packages/freekill-core");
-  }
-  L.dofile("lua/freekill.lua");
-  L.dofile("lua/server/scheduler.lua");
-  if (!L.dofile("test/lua/cpp_run.lua")) {
-    return EXIT_FAILURE;
-  }
-
-  return EXIT_SUCCESS;
-}
 
 static bool setupGlobalData() {
   qDebug() << "Setting up test environment";
@@ -62,8 +42,6 @@ int main(int argc, char **argv) {
   EXEC_QTEST(TestLogin);
   EXEC_QTEST(TestRoom);
   EXEC_QTEST(TestScheduler);
-
-  status |= run_lua_tests();
 
   return status;
 }
