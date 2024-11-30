@@ -22,7 +22,7 @@ bool Lua::dofile(const char *path) {
   lua_replace(L, -2);
 
   luaL_loadfile(L, path);
-  int error = lua_pcall(L, 0, LUA_MULTRET, -2);
+  int error = lua_pcall(L, 0, 0, -2);
 
   if (error) {
     const char *error_msg = lua_tostring(L, -1);
@@ -30,6 +30,7 @@ bool Lua::dofile(const char *path) {
     lua_pop(L, 2);
     return false;
   }
+
   lua_pop(L, 1);
   return true;
 }
@@ -63,43 +64,51 @@ QVariant Lua::call(const QString &func_name, QVariantList params) {
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
 
+  auto nargs = params.length();
   lua_getglobal(L, func_name.toLatin1().data());
 
   for (auto v : params) {
     pushValue(L, v);
   }
 
-  int err = lua_pcall(L, params.length(), 1, -params.length() - 2);
+  // handler位于function位置的前一个
+  int err = lua_pcall(L, nargs, 1, -nargs - 2);
   if (err) {
     qCritical() << lua_tostring(L, -1);
     lua_pop(L, 2);
     return QVariant();
   }
   auto result = readValue(L);
-  lua_pop(L, 1);
+  lua_pop(L, 2);
 
   return result;
 }
 
 QVariant Lua::eval(const QString &lua) {
+  lua_getglobal(L, "debug");
+  lua_getfield(L, -1, "traceback");
+  lua_replace(L, -2);
+
   int err;
   err = luaL_loadstring(L, lua.toUtf8().constData());
   if (err != LUA_OK) {
     qCritical() << lua_tostring(L, -1);
-    lua_pop(L, 1);
-    return "";
+    lua_pop(L, 2);
+    return QVariant();
   }
-  err = lua_pcall(L, 0, 1, 0);
+  err = lua_pcall(L, 0, 1, -2);
   if (err) {
     qCritical() << lua_tostring(L, -1);
-    lua_pop(L, 1);
+    lua_pop(L, 2);
     return QVariant();
   }
   auto result = readValue(L);
-  lua_pop(L, 1);
+  lua_pop(L, 2);
 
   return result;
 }
+
+// -----------------------------------------------------------------------
 
 Sqlite3::Sqlite3(const QString &filename, const QString &initSql) {
   int rc;
