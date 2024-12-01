@@ -54,17 +54,6 @@ Room *RoomThread::getRoom(int id) const {
   return m_server->findRoom(id);
 }
 
-void RoomThread::addRoom(Room *room) {
-  room->setThread(this);
-}
-
-void RoomThread::removeRoom(Room *room) {
-  room->setThread(nullptr);
-  if (findChildren<Room *>().isEmpty() && isOutdated()) {
-    deleteLater();
-  }
-}
-
 bool RoomThread::isConsoleStart() const {
 #ifndef FK_SERVER_ONLY
   if (!ClientInstance) return false;
@@ -82,4 +71,17 @@ bool RoomThread::isOutdated() {
     md5 = "";
   }
   return ret;
+}
+
+void RoomThread::onRoomAbandoned() {
+  auto room = qobject_cast<Room *>(sender());
+  m_server->removeRoom(room->getId());
+  m_server->updateOnlineInfo();
+
+  if (!room->isStarted()) {
+    room->deleteLater();
+  } else {
+    wakeUp(room->getId(), "abandon");
+    // Lua手动gc 释放房间
+  }
 }

@@ -25,12 +25,16 @@ ServerPlayer::ServerPlayer(RoomBase *roombase) {
 }
 
 ServerPlayer::~ServerPlayer() {
-  // clean up, quit room and server
+  // 机器人直接被Room删除了
+  if (getId() < 0) return;
+
+  // 真人的话 需要先退出房间，再退出大厅
   room->removePlayer(this);
   if (room != nullptr) {
-    // now we are in lobby, so quit lobby
     room->removePlayer(this);
   }
+
+  // 最后服务器删除他
   if (server->findPlayer(getId()) == this)
     server->removePlayer(getId());
 }
@@ -196,10 +200,8 @@ void ServerPlayer::onReplyReady() {
   setThinking(false);
   if (!room->isLobby()) {
     auto _room = qobject_cast<Room *>(room);
-    if (_room->getThread()) {
-      _room->getThread()->wakeUp(_room->getId(), "reply");
-      // TODO: signal
-    }
+    auto thread = qobject_cast<RoomThread *>(_room->parent());
+    thread->wakeUp(_room->getId(), "reply");
   }
 }
 
@@ -245,9 +247,9 @@ void ServerPlayer::onDisconnected() {
         deleteLater();
         return;
       }
-      if (room->getThread()) {
-       // && thinking()) {
-        room->getThread()->wakeUp(room->getId(), "player_disconnect");
+      if (thinking()) {
+        auto thread = qobject_cast<RoomThread *>(room->parent());
+        thread->wakeUp(room->getId(), "player_disconnect");
       }
       setState(Player::Offline);
       setSocket(nullptr);

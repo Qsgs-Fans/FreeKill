@@ -99,7 +99,6 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   }
 
   room = new Room(thread);
-  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
 
   rooms.insert(room->getId(), room);
   room->setName(name);
@@ -108,6 +107,10 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   room->setSettings(settings);
   room->addPlayer(owner);
   room->setOwner(owner);
+}
+
+void Server::removeRoom(int id) {
+  rooms.remove(id);
 }
 
 Room *Server::findRoom(int id) const { return rooms.value(id); }
@@ -344,17 +347,6 @@ void Server::processRequest(const QByteArray &msg) {
   player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
 
   lobby()->addPlayer(player);
-}
-
-void Server::onRoomAbandoned() {
-  Room *room = qobject_cast<Room *>(sender());
-  // room->gameOver(); // Lua会出手
-  rooms.remove(room->getId());
-  updateOnlineInfo();
-  room->getThread()->wakeUp(room->getId(), "abandon");
-  room->getThread()->removeRoom(room);
-  // lua负责deleteLater这个room
-  // room->deleteLater();
 }
 
 #define SET_DEFAULT_CONFIG(k, v) do {\

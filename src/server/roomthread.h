@@ -25,8 +25,6 @@ class RoomThread : public QThread {
   int getCapacity() const { return m_capacity; }
   QString getMd5() const;
   Room *getRoom(int id) const;
-  void addRoom(Room *room);
-  void removeRoom(Room *room);
 
   bool isConsoleStart() const;
 
@@ -37,6 +35,9 @@ class RoomThread : public QThread {
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);
+
+ public slots:
+  void onRoomAbandoned();
 
  protected:
   virtual void run();

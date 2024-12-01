@@ -22,9 +22,6 @@ class Room : public RoomBase {
 
   // Property reader & setter
   // ==================================={
-  RoomThread *getThread() const;
-  void setThread(RoomThread *t);
-
   int getId() const;
   void setId(int id);
   QString getName() const;
@@ -86,7 +83,6 @@ class Room : public RoomBase {
   void playerRemoved(ServerPlayer *player);
 
  private:
-  RoomThread *m_thread = nullptr;
   int id;               // Lobby's id is 0
   QString name;         // “阴间大乱斗”
   int capacity;         // by default is 5, max is 8

@@ -63,6 +63,8 @@ public:
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
                   int timeout = 15, const QByteArray &settings = "{}");
 
+  void removeRoom(int id); /// 单纯从表中删除指针 内存由对应thread管理
+
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
 
@@ -103,8 +105,6 @@ signals:
 public slots:
   void processNewConnection(ClientSocket *client);
   void processRequest(const QByteArray &msg);
-
-  void onRoomAbandoned();
 
 private:
   friend class Shell;
