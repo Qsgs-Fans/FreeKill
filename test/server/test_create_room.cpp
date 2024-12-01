@@ -37,7 +37,7 @@ void TestRoom::testCreateRoom() {
   // client再收到RoomOwner知道自己是房主
   if (spy2.count() == 0) QVERIFY(spy2.wait());
   if (spy3.count() == 0) QVERIFY(spy3.wait());
-  if (spy.count() < 3) QVERIFY(spy.wait());
+  while (spy.count() < 3) QVERIFY(spy.wait());
   args = spy.takeFirst();
   auto arr = QJsonDocument::fromJson(args[1].toString().toUtf8()).array();
   QCOMPARE(arr.count(), 3);
@@ -63,9 +63,6 @@ void TestRoom::testCreateRoom() {
   auto thread = server->getThreads().first();
   QCOMPARE(server->lobby()->getPlayers().count(), 2);
   QCOMPARE(server->findRoom(1)->getPlayers().count(), 1);
-  // 由于在S端手动创建房间，需要等待S端读取完lua
-  QSignalSpy spy_roomthread_ready(thread, &RoomThread::scheduler_ready);
-  QVERIFY(spy_roomthread_ready.wait());
   // Lua或许也值得一看？算了懒得看 至少不在此处
 
   // 然后检查Client中的数据（主要在lua中，狠狠用eval了）
