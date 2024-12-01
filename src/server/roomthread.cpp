@@ -20,6 +20,7 @@ RoomThread::RoomThread(Server *m_server) {
 RoomThread::~RoomThread() {
   if (isRunning()) {
     quit();
+    wait();
   }
   delete m_scheduler;
   m_server->removeThread(this);

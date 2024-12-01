@@ -6,7 +6,7 @@
 #include "core/util.h"
 #include "ui/qmlbackend.h"
 
-PackMan *Pacman;
+PackMan *Pacman = nullptr;
 
 PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();

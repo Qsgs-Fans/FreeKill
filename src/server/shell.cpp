@@ -67,6 +67,13 @@ void Shell::helpCommand(QStringList &) {
 #undef HELP_MSG
 }
 
+Shell::~Shell() {
+  wait();
+#ifdef FK_USE_READLINE
+  rl_clear_history();
+#endif
+}
+
 void Shell::lspCommand(QStringList &) {
   if (ServerInstance->players.size() == 0) {
     qInfo("No online player.");
