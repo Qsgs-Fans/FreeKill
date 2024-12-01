@@ -179,12 +179,12 @@ static QQmlApplicationEngine *engine = nullptr;
 static void cleanUpGlobalStates() {
 #ifndef FK_SERVER_ONLY
   if (engine) engine->deleteLater();
+  if (Backend) Backend->deleteLater();
 #endif
 
   if (ClientInstance) ClientInstance->deleteLater();
   if (ServerInstance) ServerInstance->deleteLater();
   if (ShellInstance) ShellInstance->deleteLater();
-  if (Backend) Backend->deleteLater();
   if (Pacman) Pacman->deleteLater();
 }
 
