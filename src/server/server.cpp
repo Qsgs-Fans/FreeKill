@@ -67,13 +67,6 @@ Server::~Server() {
     // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
     delete i.value();
   }
-  m_lobby->deleteLater();
-  for (auto i = rooms.cbegin(); i != rooms.cend(); i++) {
-    i.value()->deleteLater();
-  }
-  for (auto thread : threads) {
-    thread->deleteLater();
-  }
   delete db;
 }
 
@@ -385,6 +378,7 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("motd", "Welcome!");
   SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
   SET_DEFAULT_CONFIG("enableBots", true);
+  SET_DEFAULT_CONFIG("roomCountPerThread", 200);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }

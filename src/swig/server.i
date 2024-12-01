@@ -65,9 +65,6 @@ public:
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
 
-  bool busy() const;
-  void setBusy(bool busy);
-
   bool thinking();
   void setThinking(bool t);
 };

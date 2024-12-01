@@ -8,22 +8,26 @@
 #include "client/client.h"
 #endif
 
-RoomThread::RoomThread(Server *m_server) {
+RoomThread::RoomThread(Server *server) {
   setObjectName("Room");
-  this->m_server = m_server;
-  m_capacity = 100; // TODO: server cfg
-  md5 = m_server->getMd5();
+  setParent(server);
+  m_server = server;
+  m_capacity = server->getConfig("roomCountPerThread").toInt(200);
+  md5 = server->getMd5();
 
+  // 需要等待scheduler创建完毕 不然极端情况下可能导致玩家发的信号接收不到
+  QEventLoop loop;
+  connect(this, &RoomThread::scheduler_ready, &loop, &QEventLoop::quit);
   start();
+  loop.exec();
 }
 
 RoomThread::~RoomThread() {
   if (isRunning()) {
-    quit();
-    wait();
+    quit(); wait();
   }
-  delete m_scheduler;
   m_server->removeThread(this);
+  delete m_scheduler;
 }
 
 void RoomThread::run() {
@@ -41,7 +45,7 @@ Server *RoomThread::getServer() const {
 }
 
 bool RoomThread::isFull() const {
-  return m_capacity <= 0;
+  return m_capacity <= findChildren<Room *>().length();
 }
 
 QString RoomThread::getMd5() const { return md5; }
@@ -52,14 +56,11 @@ Room *RoomThread::getRoom(int id) const {
 
 void RoomThread::addRoom(Room *room) {
   room->setThread(this);
-  m_capacity--;
 }
 
 void RoomThread::removeRoom(Room *room) {
   room->setThread(nullptr);
-  m_capacity++;
-  if (m_capacity == 100 // TODO: server cfg
-      && isOutdated()) {
+  if (findChildren<Room *>().isEmpty() && isOutdated()) {
     deleteLater();
   }
 }

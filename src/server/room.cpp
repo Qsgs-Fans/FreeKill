@@ -21,10 +21,9 @@ Room::Room(RoomThread *m_thread) {
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  if (m_thread) { // In case of lobby
-    m_thread->addRoom(this);
-  }
-  // setParent(server);
+
+  setParent(m_thread);
+  m_thread->addRoom(this);
 
   m_abandoned = false;
   owner = nullptr;
@@ -34,6 +33,7 @@ Room::Room(RoomThread *m_thread) {
 
   m_ready = true;
 
+  auto lobby = server->lobby();
   connect(this, &Room::playerAdded, server->lobby(), &Lobby::removePlayer);
   connect(this, &Room::playerRemoved, server->lobby(), &Lobby::addPlayer);
 }
@@ -203,6 +203,7 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setAvatar("guanyu");
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
   robot->setReady(true);
+  robot->setParent(this);
   robot_id--;
 
   // FIXME: 会触发Lobby:removePlayer

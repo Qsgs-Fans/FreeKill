@@ -10,38 +10,17 @@
 ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
-  connect(router, &Router::notification_got, this, [=](const QString &c, const QString &j) {
-    if (c == "Heartbeat") {
-      alive = true;
-      return;
-    }
+  connect(router, &Router::notification_got, this, &ServerPlayer::onNotificationGot);
+  connect(router, &Router::replyReady, this, &ServerPlayer::onReplyReady);
 
-    this->room->handlePacket(this, c, j);
-  });
-  connect(router, &Router::replyReady, this, [=]() {
-    setThinking(false);
-    if (!room->isLobby()) {
-      auto _room = qobject_cast<Room *>(room);
-      if (_room->getThread()) {
-        _room->getThread()->wakeUp(_room->getId(), "reply");
-        // TODO: signal
-      }
-    }
-  });
   setState(Player::Online);
   room = roombase;
   server = room->getServer();
   connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
-  connect(this, &Player::readyChanged, this, [=](){
-    if (room && !room->isLobby()) {
-      room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
-                              QString("[%1,%2]").arg(getId()).arg(isReady()));
-    }
-  });
+  connect(this, &Player::readyChanged, this, &ServerPlayer::onReadyChanged);
 
   alive = true;
-  m_busy = false;
   m_thinking = false;
 }
 
@@ -54,7 +33,6 @@ ServerPlayer::~ServerPlayer() {
   }
   if (server->findPlayer(getId()) == this)
     server->removePlayer(getId());
-  router->deleteLater();
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket) {
@@ -205,6 +183,26 @@ int ServerPlayer::getGameTime() {
   return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
 }
 
+void ServerPlayer::onNotificationGot(const QString &c, const QString &j) {
+  if (c == "Heartbeat") {
+    alive = true;
+    return;
+  }
+
+  room->handlePacket(this, c, j);
+}
+
+void ServerPlayer::onReplyReady() {
+  setThinking(false);
+  if (!room->isLobby()) {
+    auto _room = qobject_cast<Room *>(room);
+    if (_room->getThread()) {
+      _room->getThread()->wakeUp(_room->getId(), "reply");
+      // TODO: signal
+    }
+  }
+}
+
 void ServerPlayer::onStateChanged() {
   auto _room = getRoom();
   if (!_room || _room->isLobby()) return;
@@ -219,6 +217,13 @@ void ServerPlayer::onStateChanged() {
     resumeGameTimer();
   } else {
     pauseGameTimer();
+  }
+}
+
+void ServerPlayer::onReadyChanged() {
+  if (room && !room->isLobby()) {
+    room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+                            QString("[%1,%2]").arg(getId()).arg(isReady()));
   }
 }
 

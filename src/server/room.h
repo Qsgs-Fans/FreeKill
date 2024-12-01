@@ -9,6 +9,11 @@ class Server;
 class ServerPlayer;
 class RoomThread;
 
+/**
+  @brief Server类负责管理游戏服务端的运行。
+
+  该类负责表示游戏房间，与大厅进行交互以调整玩家
+*/
 class Room : public RoomBase {
   Q_OBJECT
  public:
