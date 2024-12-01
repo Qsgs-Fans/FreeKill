@@ -518,6 +518,8 @@ void Room::gameOver() {
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       server->getDatabase()->exec(info_update);
+    } else {
+      players.removeOne(p);
     }
 
     if (p->getState() != Player::Online) {
