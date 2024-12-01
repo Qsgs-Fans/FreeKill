@@ -16,9 +16,9 @@ function TestCard:testInitialize()
   lu.assertIsTrue(slash_vcard:isVirtual())
 end
 
-function TestCard:testPrintCard()
+function TestCard:testVirtualCardInfo()
   -- 测试印卡函数：关于在局内印card的二三事
-  -- 在局内印卡会涉及到两个事物——有可能对应实体牌（子卡）的虚拟牌
+  -- 在局内印卡会涉及到有可能对应实体牌（子卡）的虚拟牌
   -- 本测试主要测试子卡对虚拟牌的花色/点数的影响
   local cards = {1, 8, 24, 25, 32, 35}
   -- 杀 黑桃7
