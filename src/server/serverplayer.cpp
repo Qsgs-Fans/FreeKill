@@ -10,51 +10,33 @@
 ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
-  connect(router, &Router::notification_got, this, [=](const QString &c, const QString &j) {
-    if (c == "Heartbeat") {
-      alive = true;
-      return;
-    }
+  connect(router, &Router::notification_got, this, &ServerPlayer::onNotificationGot);
+  connect(router, &Router::replyReady, this, &ServerPlayer::onReplyReady);
 
-    this->room->handlePacket(this, c, j);
-  });
-  connect(router, &Router::replyReady, this, [=]() {
-    setThinking(false);
-    if (!room->isLobby()) {
-      auto _room = qobject_cast<Room *>(room);
-      if (_room->getThread()) {
-        _room->getThread()->wakeUp(_room->getId(), "reply");
-        // TODO: signal
-      }
-    }
-  });
   setState(Player::Online);
   room = roombase;
   server = room->getServer();
   connect(this, &ServerPlayer::kicked, this, &ServerPlayer::kick);
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
-  connect(this, &Player::readyChanged, this, [=](){
-    if (room && !room->isLobby()) {
-      room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
-                              QString("[%1,%2]").arg(getId()).arg(isReady()));
-    }
-  });
+  connect(this, &Player::readyChanged, this, &ServerPlayer::onReadyChanged);
 
   alive = true;
-  m_busy = false;
   m_thinking = false;
 }
 
 ServerPlayer::~ServerPlayer() {
-  // clean up, quit room and server
+  // 机器人直接被Room删除了
+  if (getId() < 0) return;
+
+  // 真人的话 需要先退出房间，再退出大厅
   room->removePlayer(this);
   if (room != nullptr) {
-    // now we are in lobby, so quit lobby
     room->removePlayer(this);
   }
+
+  // 最后服务器删除他
   if (server->findPlayer(getId()) == this)
     server->removePlayer(getId());
-  router->deleteLater();
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket) {
@@ -75,6 +57,21 @@ void ServerPlayer::setSocket(ClientSocket *socket) {
 }
 
 ClientSocket *ServerPlayer::getSocket() const { return socket; }
+
+QString ServerPlayer::getPeerAddress() const {
+  auto p = server->findPlayer(getId());
+  if (!p || p->getState() != Player::Online)
+    return "";
+  return p->getSocket()->peerAddress();
+}
+
+QString ServerPlayer::getUuid() const {
+  return uuid_str;
+}
+
+void ServerPlayer::setUuid(QString uuid) {
+  uuid_str = uuid;
+}
 
 // 处理跑路玩家专用，就单纯把socket置为null
 // 因为后面还会用到socket所以不删除
@@ -190,6 +187,24 @@ int ServerPlayer::getGameTime() {
   return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
 }
 
+void ServerPlayer::onNotificationGot(const QString &c, const QString &j) {
+  if (c == "Heartbeat") {
+    alive = true;
+    return;
+  }
+
+  room->handlePacket(this, c, j);
+}
+
+void ServerPlayer::onReplyReady() {
+  setThinking(false);
+  if (!room->isLobby()) {
+    auto _room = qobject_cast<Room *>(room);
+    auto thread = qobject_cast<RoomThread *>(_room->parent());
+    thread->wakeUp(_room->getId(), "reply");
+  }
+}
+
 void ServerPlayer::onStateChanged() {
   auto _room = getRoom();
   if (!_room || _room->isLobby()) return;
@@ -204,6 +219,13 @@ void ServerPlayer::onStateChanged() {
     resumeGameTimer();
   } else {
     pauseGameTimer();
+  }
+}
+
+void ServerPlayer::onReadyChanged() {
+  if (room && !room->isLobby()) {
+    room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+                            QString("[%1,%2]").arg(getId()).arg(isReady()));
   }
 }
 
@@ -225,9 +247,9 @@ void ServerPlayer::onDisconnected() {
         deleteLater();
         return;
       }
-      if (room->getThread()) {
-       // && thinking()) {
-        room->getThread()->wakeUp(room->getId(), "player_disconnect");
+      if (thinking()) {
+        auto thread = qobject_cast<RoomThread *>(room->parent());
+        thread->wakeUp(room->getId(), "player_disconnect");
       }
       setState(Player::Offline);
       setSocket(nullptr);

@@ -172,6 +172,22 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #endif
 }
 
+#ifndef FK_SERVER_ONLY
+static QQmlApplicationEngine *engine = nullptr;
+#endif
+
+static void cleanUpGlobalStates() {
+#ifndef FK_SERVER_ONLY
+  if (engine) engine->deleteLater();
+  if (Backend) Backend->deleteLater();
+#endif
+
+  if (ClientInstance) ClientInstance->deleteLater();
+  if (ServerInstance) ServerInstance->deleteLater();
+  if (ShellInstance) ShellInstance->deleteLater();
+  if (Pacman) Pacman->deleteLater();
+}
+
 // FreeKill 的程序主入口。整个程序就是从这里开始执行的。
 int freekill_main(int argc, char *argv[]) {
   // 初始化一下各种杂项信息
@@ -225,6 +241,7 @@ int freekill_main(int argc, char *argv[]) {
 
   if (startServer) {
     app = new QCoreApplication(argc, argv);
+    app->connect(app, &QCoreApplication::aboutToQuit, cleanUpGlobalStates);
     QTranslator translator;
     Q_UNUSED(translator.load("zh_CN.qm"));
     QCoreApplication::installTranslator(&translator);
@@ -253,6 +270,7 @@ int freekill_main(int argc, char *argv[]) {
 #else
 
   app = new QApplication(argc, argv);
+  app->connect(app, &QCoreApplication::aboutToQuit, cleanUpGlobalStates);
 #ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
@@ -298,7 +316,7 @@ int freekill_main(int argc, char *argv[]) {
 #endif
 
   SHOW_SPLASH_MSG("Loading qml files...");
-  QQmlApplicationEngine *engine = new QQmlApplicationEngine;
+  engine = new QQmlApplicationEngine;
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
 #endif
@@ -313,15 +331,15 @@ int freekill_main(int argc, char *argv[]) {
   }
   QCoreApplication::installTranslator(&translator);
 
-  QmlBackend backend;
-  backend.setEngine(engine);
+  Backend = new QmlBackend;
+  Backend->setEngine(engine);
 
   Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
   auto root = engine->rootContext();
   root->setContextProperty("FkVersion", FK_VERSION);
-  root->setContextProperty("Backend", &backend);
+  root->setContextProperty("Backend", Backend);
   root->setContextProperty("ModBackend", nullptr);
   root->setContextProperty("Pacman", Pacman);
   root->setContextProperty("SysLocale", localeName);
@@ -362,11 +380,6 @@ int freekill_main(int argc, char *argv[]) {
   // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
-
-  // 先删除 engine
-  // 防止报一堆错 "TypeError: Cannot read property 'xxx' of null"
-  delete engine;
-  delete Pacman;
 
   if (info_log) fclose(info_log);
   if (err_log) fclose(err_log);

@@ -24,13 +24,15 @@ public:
   bool hasObserver(ServerPlayer *player) const;
   int getTimeout() const;
   void delay(int ms);
-  void checkAbandoned();
 
   void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
   void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
   void gameOver();
   void setRequestTimer(int ms);
   void destroyRequestTimer();
+
+  void increaseRefCount();
+  void decreaseRefCount();
 };
 
 %extend Room {
@@ -64,9 +66,6 @@ public:
            const QString &json_data, int timeout, long long timestamp = -1);
   QString waitForReply(int timeout);
   void doNotify(const QString &command, const QString &json_data);
-
-  bool busy() const;
-  void setBusy(bool busy);
 
   bool thinking();
   void setThinking(bool t);

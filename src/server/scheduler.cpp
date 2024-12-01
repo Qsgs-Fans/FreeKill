@@ -6,7 +6,6 @@
 #include "core/c-wrapper.h"
 
 Scheduler::Scheduler(RoomThread *thread) {
-  m_thread = thread;
   L = new Lua;
   if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
@@ -15,7 +14,7 @@ Scheduler::Scheduler(RoomThread *thread) {
   }
   L->dofile("lua/freekill.lua");
   L->dofile("lua/server/scheduler.lua");
-  L->call("InitScheduler", { QVariant::fromValue(m_thread) });
+  L->call("InitScheduler", { QVariant::fromValue(thread) });
 }
 
 Scheduler::~Scheduler() {

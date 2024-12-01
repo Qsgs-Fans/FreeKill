@@ -39,7 +39,7 @@ void TestScheduler::testStartGame() {
   QVERIFY(spy3.wait());
 
   auto room = ServerInstance->findRoom(2);
-  auto thread = room->getThread();
+  auto thread = qobject_cast<RoomThread *>(room->parent());
   QSignalSpy spy_roomthread(thread, &RoomThread::pushRequest);
 
   // 下一步c1发出StartGame命令

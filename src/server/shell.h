@@ -7,6 +7,7 @@ class Shell: public QThread {
   Q_OBJECT
 public:
   Shell();
+  ~Shell();
 
   void handleLine(char *);
 

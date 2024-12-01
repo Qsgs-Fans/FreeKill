@@ -63,9 +63,9 @@ Server::Server(QObject *parent) : QObject(parent) {
 Server::~Server() {
   isListening = false;
   ServerInstance = nullptr;
-  m_lobby->deleteLater();
-  for (auto thread : threads) {
-    thread->deleteLater();
+  for (auto i = players.cbegin(); i != players.cend(); i++) {
+    // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
+    delete i.value();
   }
   delete db;
 }
@@ -99,7 +99,6 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   }
 
   room = new Room(thread);
-  connect(room, &Room::abandoned, this, &Server::onRoomAbandoned);
 
   rooms.insert(room->getId(), room);
   room->setName(name);
@@ -108,6 +107,10 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   room->setSettings(settings);
   room->addPlayer(owner);
   room->setOwner(owner);
+}
+
+void Server::removeRoom(int id) {
+  rooms.remove(id);
 }
 
 Room *Server::findRoom(int id) const { return rooms.value(id); }
@@ -330,6 +333,7 @@ void Server::processRequest(const QByteArray &msg) {
   player->setScreenName(name);
   player->setAvatar(obj["avatar"]);
   player->setId(id);
+  player->setUuid(uuid_str);
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
   }
@@ -343,17 +347,6 @@ void Server::processRequest(const QByteArray &msg) {
   player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
 
   lobby()->addPlayer(player);
-}
-
-void Server::onRoomAbandoned() {
-  Room *room = qobject_cast<Room *>(sender());
-  // room->gameOver(); // Lua会出手
-  rooms.remove(room->getId());
-  updateOnlineInfo();
-  room->getThread()->wakeUp(room->getId(), "abandon");
-  room->getThread()->removeRoom(room);
-  // lua负责deleteLater这个room
-  // room->deleteLater();
 }
 
 #define SET_DEFAULT_CONFIG(k, v) do {\
@@ -377,6 +370,7 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("motd", "Welcome!");
   SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
   SET_DEFAULT_CONFIG("enableBots", true);
+  SET_DEFAULT_CONFIG("roomCountPerThread", 200);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
@@ -450,6 +444,10 @@ void Server::refreshMd5() {
             "{\"type\":\"#RoomOutdated\",\"toast\":true}");
       }
     }
+  }
+  for (auto thread : threads) {
+    if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty())
+      thread->deleteLater();
   }
   for (auto p : lobby()->getPlayers()) {
     emit p->kicked();

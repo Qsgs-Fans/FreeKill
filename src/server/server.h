@@ -25,6 +25,16 @@ class Lobby;
 
   ### 用户管理
 
+  ### 内存管理
+
+  在服务器监听的过程中，会有如下三种对象被动态创建：
+
+  - ServerPlayer对象：当用户登录成功后创建
+  - Room对象：当创建房间时创建
+  - RoomThread对象：当Room创建后，必须为其指派RoomThread，若无则创建
+
+  Room对象与相关RoomThread直接绑定，因此其内存交给RoomThread管理；而ServerPlayer
+  自由度更高，可能出现在不同的Room中，需要Server进行管理。不过人机由相关Room管理。
  */
 class Server : public QObject {
   Q_OBJECT
@@ -52,6 +62,8 @@ public:
     */
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
                   int timeout = 15, const QByteArray &settings = "{}");
+
+  void removeRoom(int id); /// 单纯从表中删除指针 内存由对应thread管理
 
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
@@ -94,19 +106,17 @@ public slots:
   void processNewConnection(ClientSocket *client);
   void processRequest(const QByteArray &msg);
 
-  void onRoomAbandoned();
-
 private:
   friend class Shell;
   ServerSocket *server;
 
-  Lobby *m_lobby;
-  QMap<int, Room *> rooms;
-  QList<RoomThread *> threads;
+  Lobby *m_lobby; ///< 大厅
+  QMap<int, Room *> rooms; ///< 所有的Room
+  QList<RoomThread *> threads; ///< 所有RoomThread
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
-  QHash<int, ServerPlayer *> players;
-  QList<QString> temp_banlist;
+  QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
+  QList<QString> temp_banlist; ///< 被tempban的ip列表
 
   AuthManager *auth;
   Sqlite3 *db; ///< sqlite数据库连接实例

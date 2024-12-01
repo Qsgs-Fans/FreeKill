@@ -9,6 +9,11 @@ class Server;
 class ServerPlayer;
 class RoomThread;
 
+/**
+  @brief Server类负责管理游戏服务端的运行。
+
+  该类负责表示游戏房间，与大厅进行交互以调整玩家
+*/
 class Room : public RoomBase {
   Q_OBJECT
  public:
@@ -17,9 +22,6 @@ class Room : public RoomBase {
 
   // Property reader & setter
   // ==================================={
-  RoomThread *getThread() const;
-  void setThread(RoomThread *t);
-
   int getId() const;
   void setId(int id);
   QString getName() const;
@@ -30,8 +32,6 @@ class Room : public RoomBase {
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
-  void checkAbandoned();
-  void setAbandoned(bool a);
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -74,6 +74,11 @@ class Room : public RoomBase {
   // FIXME
   volatile bool insideGameOver = false;
 
+  // Lua专用
+  int getRefCount();
+  void increaseRefCount();
+  void decreaseRefCount();
+
  signals:
   void abandoned();
 
@@ -81,7 +86,6 @@ class Room : public RoomBase {
   void playerRemoved(ServerPlayer *player);
 
  private:
-  RoomThread *m_thread = nullptr;
   int id;               // Lobby's id is 0
   QString name;         // “阴间大乱斗”
   int capacity;         // by default is 5, max is 8
@@ -97,6 +101,9 @@ class Room : public RoomBase {
 
   int timeout;
   QString md5;
+
+  int lua_ref_count = 0; ///< Lua引用计数，当Room为abandon时，只要lua中还有计数，就不可删除
+  QMutex lua_ref_mutex;
 
   QTimer *request_timer = nullptr;
 

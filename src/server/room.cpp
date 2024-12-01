@@ -16,15 +16,15 @@ static void *ClientInstance = nullptr;
 #include "core/util.h"
 #include "core/c-wrapper.h"
 
-Room::Room(RoomThread *m_thread) {
+Room::Room(RoomThread *thread) {
   auto server = ServerInstance;
   id = server->nextRoomId;
   server->nextRoomId++;
   this->server = server;
-  if (m_thread) { // In case of lobby
-    m_thread->addRoom(this);
-  }
-  // setParent(server);
+
+  setParent(thread);
+  md5 = thread->getMd5();
+  connect(this, &Room::abandoned, thread, &RoomThread::onRoomAbandoned);
 
   m_abandoned = false;
   owner = nullptr;
@@ -34,6 +34,7 @@ Room::Room(RoomThread *m_thread) {
 
   m_ready = true;
 
+  auto lobby = server->lobby();
   connect(this, &Room::playerAdded, server->lobby(), &Lobby::removePlayer);
   connect(this, &Room::playerRemoved, server->lobby(), &Lobby::addPlayer);
 }
@@ -41,19 +42,6 @@ Room::Room(RoomThread *m_thread) {
 Room::~Room() {
   if (gameStarted) {
     gameOver();
-  }
-
-  if (m_thread) {
-    m_thread->removeRoom(this);
-  }
-}
-
-RoomThread *Room::getThread() const { return m_thread; }
-
-void Room::setThread(RoomThread *t) {
-  m_thread = t;
-  if (t != nullptr) {
-    md5 = t->getMd5();
   }
 }
 
@@ -85,21 +73,6 @@ bool Room::isAbandoned() const {
   }
   return true;
 }
-
-// Lua专用，lua room销毁时检查c++的Room是不是也差不多可以销毁了
-void Room::checkAbandoned() {
-  if (isAbandoned()) {
-    bool tmp = m_abandoned;
-    m_abandoned = true;
-    if (!tmp) {
-      emit abandoned();
-    } else {
-      deleteLater();
-    }
-  }
-}
-
-void Room::setAbandoned(bool a) { m_abandoned = a; }
 
 ServerPlayer *Room::getOwner() const { return owner; }
 
@@ -145,6 +118,8 @@ void Room::addPlayer(ServerPlayer *player) {
 
   players.append(player);
   player->setRoom(this);
+  if (player->getId() > 0)
+    emit playerAdded(player);
 
   // Second, let the player enter room and add other players
   jsonData = QJsonArray();
@@ -187,10 +162,6 @@ void Room::addPlayer(ServerPlayer *player) {
     }
     doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
   }
-  // 玩家手动启动
-  // if (isFull() && !gameStarted)
-  //  start();
-  emit playerAdded(player);
 }
 
 void Room::addRobot(ServerPlayer *player) {
@@ -203,6 +174,7 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setAvatar("guanyu");
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
   robot->setReady(true);
+  robot->setParent(this);
   robot_id--;
 
   // FIXME: 会触发Lobby:removePlayer
@@ -252,8 +224,6 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
-    // m_thread->wakeUp();
-
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
 
@@ -263,7 +233,7 @@ void Room::removePlayer(ServerPlayer *player) {
     }
   }
 
-  // 如果房间空了，就把房间标为废弃，Server有信号处理函数的
+  // 如果房间空了，就把房间标为废弃，RoomThread有信号处理函数的
   if (isAbandoned()) {
     bool tmp = m_abandoned;
     m_abandoned = true;
@@ -321,7 +291,8 @@ int Room::getTimeout() const { return timeout; }
 void Room::setTimeout(int timeout) { this->timeout = timeout; }
 
 void Room::delay(int ms) {
-  m_thread->delay(id, ms);
+  auto thread = qobject_cast<RoomThread *>(parent());
+  thread->delay(id, ms);
 }
 
 bool Room::isOutdated() {
@@ -348,7 +319,7 @@ static const QString insertPWinRate =
 
 static const QString findGWinRate =
     QString("SELECT win, lose, draw "
-            "FROM gWinRate WHERE and general = '%1' and mode = '%2' and role = '%3';");
+            "FROM gWinRate WHERE general = '%1' and mode = '%2' and role = '%3';");
 
 static const QString updateGWinRate =
     QString("UPDATE gWinRate "
@@ -513,7 +484,7 @@ void Room::gameOver() {
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
   server->beginTransaction();
-  for (ServerPlayer *p : players) {
+  for (auto p : players) {
     auto pid = p->getId();
 
     if (pid > 0) {
@@ -532,6 +503,8 @@ void Room::gameOver() {
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       server->getDatabase()->exec(info_update);
+    } else {
+      players.removeOne(p);
     }
 
     if (p->getState() != Player::Online) {
@@ -548,20 +521,48 @@ void Room::gameOver() {
 
 void Room::manuallyStart() {
   if (isFull() && !gameStarted) {
+    qInfo("[GameStart] Room %d started", getId());
+    QMap<QString, QStringList> uuidList, ipList;
     for (auto p : players) {
       p->setReady(false);
       p->setDied(false);
       p->startGameTimer();
+
+      if (p->getId() < 0) continue;
+      auto uuid = p->getUuid();
+      auto ip = p->getPeerAddress();
+      auto pname = p->getScreenName();
+      if (!uuid.isEmpty()) {
+        uuidList[uuid].append(pname);
+      }
+      if (!ip.isEmpty()) {
+        ipList[ip].append(pname);
+      }
     }
+
+    for (auto i = ipList.cbegin(); i != ipList.cend(); i++) {
+      if (i.value().length() <= 1) continue;
+      auto warn = QString("*WARN* Same IP address: [%1]").arg(i.value().join(", "));
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      qInfo("%s", warn.toUtf8().constData());
+    }
+
+    for (auto i = uuidList.cbegin(); i != uuidList.cend(); i++) {
+      if (i.value().length() <= 1) continue;
+      auto warn = QString("*WARN* Same device id: [%1]").arg(i.value().join(", "));
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      qInfo("%s", warn.toUtf8().constData());
+    }
+
     gameStarted = true;
-    m_thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
+    auto thread = qobject_cast<RoomThread *>(parent());
+    thread->pushRequest(QString("-1,%1,newroom").arg(QString::number(id)));
   }
 }
 
 void Room::pushRequest(const QString &req) {
-  if (m_thread) {
-    m_thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
-  }
+  auto thread = qobject_cast<RoomThread *>(parent());
+  thread->pushRequest(QString("%1,%2").arg(QString::number(id), req));
 }
 
 void Room::addRejectId(int id) {
@@ -640,7 +641,8 @@ void Room::setRequestTimer(int ms) {
   request_timer->setSingleShot(true);
   request_timer->setInterval(ms);
   connect(request_timer, &QTimer::timeout, this, [=](){
-      m_thread->wakeUp(id, "request_timer");
+      auto thread = qobject_cast<RoomThread *>(parent());
+      thread->wakeUp(id, "request_timer");
       });
   request_timer->start();
 }
@@ -651,4 +653,25 @@ void Room::destroyRequestTimer() {
   request_timer->stop();
   delete request_timer;
   request_timer = nullptr;
+}
+
+int Room::getRefCount() {
+  lua_ref_mutex.lock();
+  auto ret = lua_ref_count;
+  lua_ref_mutex.unlock();
+  return ret;
+}
+
+void Room::increaseRefCount() {
+  lua_ref_mutex.lock();
+  lua_ref_count++;
+  lua_ref_mutex.unlock();
+}
+
+void Room::decreaseRefCount() {
+  lua_ref_mutex.lock();
+  lua_ref_count--;
+  lua_ref_mutex.unlock();
+  if (lua_ref_count == 0 && m_abandoned)
+    deleteLater();
 }
