@@ -445,6 +445,10 @@ void Server::refreshMd5() {
       }
     }
   }
+  for (auto thread : threads) {
+    if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty())
+      thread->deleteLater();
+  }
   for (auto p : lobby()->getPlayers()) {
     emit p->kicked();
   }
