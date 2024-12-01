@@ -32,8 +32,6 @@ class Room : public RoomBase {
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
-  void checkAbandoned();
-  void setAbandoned(bool a);
 
   ServerPlayer *getOwner() const;
   void setOwner(ServerPlayer *owner);
@@ -76,6 +74,11 @@ class Room : public RoomBase {
   // FIXME
   volatile bool insideGameOver = false;
 
+  // Lua专用
+  int getRefCount();
+  void increaseRefCount();
+  void decreaseRefCount();
+
  signals:
   void abandoned();
 
@@ -98,6 +101,9 @@ class Room : public RoomBase {
 
   int timeout;
   QString md5;
+
+  int lua_ref_count = 0; ///< Lua引用计数，当Room为abandon时，只要lua中还有计数，就不可删除
+  QMutex lua_ref_mutex;
 
   QTimer *request_timer = nullptr;
 

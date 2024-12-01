@@ -74,21 +74,6 @@ bool Room::isAbandoned() const {
   return true;
 }
 
-// Lua专用，lua room销毁时检查c++的Room是不是也差不多可以销毁了
-void Room::checkAbandoned() {
-  if (isAbandoned()) {
-    bool tmp = m_abandoned;
-    m_abandoned = true;
-    if (!tmp) {
-      emit abandoned();
-    } else {
-      deleteLater();
-    }
-  }
-}
-
-void Room::setAbandoned(bool a) { m_abandoned = a; }
-
 ServerPlayer *Room::getOwner() const { return owner; }
 
 void Room::setOwner(ServerPlayer *owner) {
@@ -248,7 +233,7 @@ void Room::removePlayer(ServerPlayer *player) {
     }
   }
 
-  // 如果房间空了，就把房间标为废弃，Server有信号处理函数的
+  // 如果房间空了，就把房间标为废弃，RoomThread有信号处理函数的
   if (isAbandoned()) {
     bool tmp = m_abandoned;
     m_abandoned = true;
@@ -668,4 +653,25 @@ void Room::destroyRequestTimer() {
   request_timer->stop();
   delete request_timer;
   request_timer = nullptr;
+}
+
+int Room::getRefCount() {
+  lua_ref_mutex.lock();
+  auto ret = lua_ref_count;
+  lua_ref_mutex.unlock();
+  return ret;
+}
+
+void Room::increaseRefCount() {
+  lua_ref_mutex.lock();
+  lua_ref_count++;
+  lua_ref_mutex.unlock();
+}
+
+void Room::decreaseRefCount() {
+  lua_ref_mutex.lock();
+  lua_ref_count--;
+  lua_ref_mutex.unlock();
+  if (lua_ref_count == 0 && m_abandoned)
+    deleteLater();
 }

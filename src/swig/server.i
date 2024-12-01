@@ -24,13 +24,15 @@ public:
   bool hasObserver(ServerPlayer *player) const;
   int getTimeout() const;
   void delay(int ms);
-  void checkAbandoned();
 
   void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
   void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
   void gameOver();
   void setRequestTimer(int ms);
   void destroyRequestTimer();
+
+  void increaseRefCount();
+  void decreaseRefCount();
 };
 
 %extend Room {

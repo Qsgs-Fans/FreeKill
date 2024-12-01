@@ -78,10 +78,9 @@ void RoomThread::onRoomAbandoned() {
   m_server->removeRoom(room->getId());
   m_server->updateOnlineInfo();
 
-  if (!room->isStarted()) {
+  if (room->getRefCount() == 0) {
     room->deleteLater();
   } else {
     wakeUp(room->getId(), "abandon");
-    // Lua手动gc 释放房间
   }
 }
