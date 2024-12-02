@@ -4,6 +4,7 @@
 #include "core/packman.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
+#include "server/roomthread.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #ifdef FK_USE_READLINE
@@ -390,6 +391,29 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 }
 
+void Shell::statCommand(QStringList &) {
+  auto server = ServerInstance;
+  // qInfo("uptime: %s");
+
+  auto players = server->getPlayers();
+  qInfo("Player(s) logged in: %lld", players.count());
+
+  auto threads = server->findChildren<RoomThread *>();
+  static const char *getmem = "return math.floor(collectgarbage('count') * 1024)";
+  for (auto thr : threads) {
+    auto rooms = thr->findChildren<Room *>();
+    auto L = thr->getLua();
+    auto mem = L->eval(getmem).toLongLong();
+    auto outdated = thr->isOutdated();
+    if (rooms.count() == 0 && outdated) {
+      thr->deleteLater();
+    } else {
+      qInfo("RoomThread %p | %lld bytes | %lld room(s) %s", thr, mem, rooms.count(),
+            outdated ? "| Outdated" : "");
+    }
+  }
+}
+
 #ifdef FK_USE_READLINE
 static void sigintHandler(int) {
   rl_reset_line_state();
@@ -442,6 +466,8 @@ Shell::Shell() {
     {"r", &Shell::reloadConfCommand},
     {"resetpassword", &Shell::resetPasswordCommand},
     {"rp", &Shell::resetPasswordCommand},
+    {"stat", &Shell::statCommand},
+    {"gc", &Shell::statCommand},
     // special command
     {"quit", &Shell::helpCommand},
     {"crash", &Shell::helpCommand},

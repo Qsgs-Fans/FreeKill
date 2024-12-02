@@ -16,7 +16,19 @@ Lua::~Lua() {
   lua_close(L);
 }
 
+bool Lua::needLock() {
+  auto thr = QThread::currentThread();
+  bool ret = false;
+  if (current_thread != thr) {
+    current_thread = thr;
+    ret = true;
+  }
+  return ret;
+}
+
 bool Lua::dofile(const char *path) {
+  QMutexLocker locker(needLock() ? &interpreter_lock : nullptr);
+
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
@@ -60,6 +72,8 @@ void Lua::dumpStack() {
 }
 
 QVariant Lua::call(const QString &func_name, QVariantList params) {
+  QMutexLocker locker(needLock() ? &interpreter_lock : nullptr);
+
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);
@@ -85,6 +99,8 @@ QVariant Lua::call(const QString &func_name, QVariantList params) {
 }
 
 QVariant Lua::eval(const QString &lua) {
+  QMutexLocker locker(needLock() ? &interpreter_lock : nullptr);
+
   lua_getglobal(L, "debug");
   lua_getfield(L, -1, "traceback");
   lua_replace(L, -2);

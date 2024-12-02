@@ -26,6 +26,10 @@ public:
 
 private:
   lua_State *L;
+  QMutex interpreter_lock;
+  QThread *current_thread = nullptr;
+
+  bool needLock();
 };
 
 

@@ -87,7 +87,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   Room *room;
   RoomThread *thread = nullptr;
 
-  for (auto t : threads) {
+  for (auto t : findChildren<RoomThread *>()) {
     if (!t->isFull() && !t->isOutdated()) {
       thread = t;
       break;
@@ -95,7 +95,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   }
 
   if (!thread) {
-    thread = createThread();
+    thread = new RoomThread(this);
   }
 
   room = new Room(thread);
@@ -116,16 +116,6 @@ void Server::removeRoom(int id) {
 Room *Server::findRoom(int id) const { return rooms.value(id); }
 
 Lobby *Server::lobby() const { return m_lobby; }
-
-RoomThread *Server::createThread() {
-  RoomThread *thread = new RoomThread(this);
-  threads.append(thread);
-  return thread;
-}
-
-void Server::removeThread(RoomThread *thread) {
-  threads.removeOne(thread);
-}
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
@@ -445,7 +435,7 @@ void Server::refreshMd5() {
       }
     }
   }
-  for (auto thread : threads) {
+  for (auto thread : findChildren<RoomThread *>()) {
     if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty())
       thread->deleteLater();
   }

@@ -37,6 +37,7 @@ private:
   void unbanUuidCommand(QStringList &);
   void reloadConfCommand(QStringList &);
   void resetPasswordCommand(QStringList &);
+  void statCommand(QStringList &);
 
 #ifdef FK_USE_READLINE
 private:

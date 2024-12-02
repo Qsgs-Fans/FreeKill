@@ -68,10 +68,6 @@ public:
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
 
-  QList<RoomThread *> getThreads() const { return threads; }
-  RoomThread *createThread(); /// 创建新的RoomThread，并加入列表
-  void removeThread(RoomThread *thread); /// 从列表中移除thread
-
   ServerPlayer *findPlayer(int id) const; /// 获取对应id的玩家
   void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
   void removePlayer(int id); /// 从表中删除对应id的玩家
@@ -112,7 +108,6 @@ private:
 
   Lobby *m_lobby; ///< 大厅
   QMap<int, Room *> rooms; ///< 所有的Room
-  QList<RoomThread *> threads; ///< 所有RoomThread
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
