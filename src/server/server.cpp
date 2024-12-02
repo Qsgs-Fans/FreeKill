@@ -30,6 +30,7 @@ Server::Server(QObject *parent) : QObject(parent) {
 
   nextRoomId = 1;
   m_lobby = new Lobby(this);
+  new RoomThread(this); // 创建第一个thread
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -66,6 +67,10 @@ Server::~Server() {
   for (auto i = players.cbegin(); i != players.cend(); i++) {
     // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
     delete i.value();
+  }
+  // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
+  for (auto thr : findChildren<RoomThread *>()) {
+    delete thr;
   }
   delete db;
 }

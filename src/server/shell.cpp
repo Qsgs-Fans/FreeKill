@@ -404,11 +404,12 @@ void Shell::statCommand(QStringList &) {
     auto rooms = thr->findChildren<Room *>();
     auto L = thr->getLua();
     auto mem = L->eval(getmem).toLongLong();
+    auto mem_mib = ((double)mem) / 1048576;
     auto outdated = thr->isOutdated();
     if (rooms.count() == 0 && outdated) {
       thr->deleteLater();
     } else {
-      qInfo("RoomThread %p | %lld bytes | %lld room(s) %s", thr, mem, rooms.count(),
+      qInfo("RoomThread %p | %.2f MiB | %lld room(s) %s", thr, mem_mib, rooms.count(),
             outdated ? "| Outdated" : "");
     }
   }
