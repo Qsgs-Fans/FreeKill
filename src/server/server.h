@@ -93,6 +93,8 @@ public:
   const QString &getMd5() const;
   void refreshMd5();
 
+  qint64 getUptime() const;
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -117,6 +119,8 @@ private:
   Sqlite3 *db; ///< sqlite数据库连接实例
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
+
+  QElapsedTimer uptime_counter;
 
   /**
     读取配置文件。配置文件的路径是`<pwd>/freekill.server.config.json`。

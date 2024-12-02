@@ -391,9 +391,34 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 }
 
+static QString formatMsDuration(qint64 time) {
+  QString ret;
+
+  auto ms = time % 1000;
+  time /= 1000;
+  auto sec = time % 60;
+  ret = QString("%1.%2 seconds").arg(sec).arg(ms) + ret;
+  time /= 60;
+  if (time == 0) return ret;
+
+  auto min = time % 60;
+  ret = QString("%1 minutes, ").arg(min) + ret;
+  time /= 60;
+  if (time == 0) return ret;
+
+  auto hour = time % 24;
+  ret = QString("%1 hours, ").arg(hour) + ret;
+  time /= 24;
+  if (time == 0) return ret;
+
+  ret = QString("%1 days, ").arg(time) + ret;
+  return ret;
+}
+
 void Shell::statCommand(QStringList &) {
   auto server = ServerInstance;
-  // qInfo("uptime: %s");
+  auto uptime_ms = server->getUptime();
+  qInfo("uptime: %s", formatMsDuration(uptime_ms).toUtf8().constData());
 
   auto players = server->getPlayers();
   qInfo("Player(s) logged in: %lld", players.count());

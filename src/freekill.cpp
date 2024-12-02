@@ -256,7 +256,6 @@ int freekill_main(int argc, char *argv[]) {
       qFatal("cannot listen on port %d!\n", serverPort);
       app->exit(1);
     } else {
-      qInfo("Server is listening on port %d", serverPort);
       auto shell = new Shell;
       shell->start();
     }

@@ -30,7 +30,6 @@ Server::Server(QObject *parent) : QObject(parent) {
 
   nextRoomId = 1;
   m_lobby = new Lobby(this);
-  new RoomThread(this); // 创建第一个thread
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -78,6 +77,10 @@ Server::~Server() {
 bool Server::listen(const QHostAddress &address, ushort port) {
   bool ret = server->listen(address, port);
   isListening = ret;
+  if (ret) {
+    uptime_counter.restart();
+    qInfo("Server is listening on port %d", port);
+  }
   return ret;
 }
 
@@ -447,4 +450,9 @@ void Server::refreshMd5() {
   for (auto p : lobby()->getPlayers()) {
     emit p->kicked();
   }
+}
+
+qint64 Server::getUptime() const {
+  if (!uptime_counter.isValid()) return 0;
+  return uptime_counter.elapsed();
 }
