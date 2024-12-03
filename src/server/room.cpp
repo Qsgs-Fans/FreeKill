@@ -175,6 +175,7 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
   robot->setReady(true);
   robot->setParent(this);
+  connect(robot, &QObject::destroyed, this, [=](){ players.removeOne(robot); });
   robot_id--;
 
   // FIXME: 会触发Lobby:removePlayer
@@ -503,8 +504,6 @@ void Room::gameOver() {
       auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
       "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
       server->getDatabase()->exec(info_update);
-    } else {
-      players.removeOne(p);
     }
 
     if (p->getState() != Player::Online) {

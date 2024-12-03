@@ -422,14 +422,14 @@ void Shell::statCommand(QStringList &) {
 
   auto players = server->getPlayers();
   qInfo("Player(s) logged in: %lld", players.count());
+  qInfo("Next roomId: %d", server->nextRoomId); // FIXME: friend class
 
   auto threads = server->findChildren<RoomThread *>();
-  static const char *getmem = "return math.floor(collectgarbage('count') * 1024)";
+  static const char *getmem = "return collectgarbage('count') / 1024";
   for (auto thr : threads) {
     auto rooms = thr->findChildren<Room *>();
     auto L = thr->getLua();
-    auto mem = L->eval(getmem).toLongLong();
-    auto mem_mib = ((double)mem) / 1048576;
+    auto mem_mib = L->eval(getmem).toDouble();
     auto outdated = thr->isOutdated();
     if (rooms.count() == 0 && outdated) {
       thr->deleteLater();
