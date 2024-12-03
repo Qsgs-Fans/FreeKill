@@ -416,7 +416,7 @@ Item {
 
       onPressAndHold: {
         Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
-              + (idx ? idx.toString() : "") + ':');
+             + ':' + (idx ? idx.toString() : "") );
         toast.show(luatr("Audio Code Copy Success"));
       }
 
@@ -440,7 +440,7 @@ Item {
             text: luatr("Copy Audio Code")
             onTriggered: {
               Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
-              + (idx ? idx.toString() : "") + ':');
+              + ':' + (idx ? idx.toString() : ""));
               toast.show(luatr("Audio Code Copy Success"));
             }
           }
