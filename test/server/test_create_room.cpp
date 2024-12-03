@@ -59,8 +59,8 @@ void TestRoom::testCreateRoom() {
   // 然后检查Server端的数据，应该是创建了RoomThread，创建了Room
   // 并且修改了Room和Lobby中的玩家们
   auto server = ServerInstance;
-  QCOMPARE(server->getThreads().count(), 1);
-  auto thread = server->getThreads().first();
+  QCOMPARE(server->findChildren<RoomThread *>().count(), 1);
+  auto thread = server->findChildren<RoomThread *>().first();
   QCOMPARE(server->lobby()->getPlayers().count(), 2);
   QCOMPARE(server->findRoom(1)->getPlayers().count(), 1);
   // Lua或许也值得一看？算了懒得看 至少不在此处

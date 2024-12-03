@@ -372,6 +372,26 @@ Fk:loadTranslationTable{
   [":test_kansha"] = "锁定技，你看得到人们手中的【杀】"
 }
 
+--[[
+local winwinwin = fk.CreateTriggerSkill{
+  name = "win_win_win",
+  frequency = Skill.Compulsory,
+  events = {fk.GameStart},
+  can_trigger = function(self, event, target, player, data)
+    return player:hasSkill(self)
+  end,
+  on_use = function(self, event, target, player, data)
+    local room = player.room
+    room:gameOver(player.role)
+  end,
+}
+test2:addSkill(winwinwin)
+Fk:loadTranslationTable{
+  ["win_win_win"] = "赢了",
+  [":win_win_win"] = "锁定技，赢。",
+}
+--]]
+
 local shibing = General(extension, "blank_shibing", "qun", 5)
 shibing.hidden = true
 Fk:loadTranslationTable{

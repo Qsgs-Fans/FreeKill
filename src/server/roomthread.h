@@ -3,6 +3,7 @@
 #ifndef _ROOMTHREAD_H
 #define _ROOMTHREAD_H
 
+class Lua;
 class Room;
 class Server;
 class Scheduler;
@@ -29,6 +30,8 @@ class RoomThread : public QThread {
   bool isConsoleStart() const;
 
   bool isOutdated();
+
+  Lua *getLua() const;
 
  signals:
   void scheduler_ready();

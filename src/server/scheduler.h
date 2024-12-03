@@ -17,6 +17,8 @@ class Scheduler : public QObject {
   explicit Scheduler(RoomThread *m_thread);
   ~Scheduler();
 
+  auto getLua() const { return L; }
+
  public slots:
   void handleRequest(const QString &req);
   void doDelay(int roomId, int ms);

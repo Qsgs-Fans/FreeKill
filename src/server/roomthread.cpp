@@ -26,7 +26,6 @@ RoomThread::~RoomThread() {
   if (isRunning()) {
     quit(); wait();
   }
-  m_server->removeThread(this);
   delete m_scheduler;
 }
 
@@ -71,6 +70,10 @@ bool RoomThread::isOutdated() {
     md5 = "";
   }
   return ret;
+}
+
+Lua *RoomThread::getLua() const {
+  return m_scheduler->getLua();
 }
 
 void RoomThread::onRoomAbandoned() {

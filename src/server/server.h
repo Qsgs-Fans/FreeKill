@@ -68,10 +68,6 @@ public:
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
 
-  QList<RoomThread *> getThreads() const { return threads; }
-  RoomThread *createThread(); /// 创建新的RoomThread，并加入列表
-  void removeThread(RoomThread *thread); /// 从列表中移除thread
-
   ServerPlayer *findPlayer(int id) const; /// 获取对应id的玩家
   void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
   void removePlayer(int id); /// 从表中删除对应id的玩家
@@ -97,6 +93,8 @@ public:
   const QString &getMd5() const;
   void refreshMd5();
 
+  qint64 getUptime() const;
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -112,7 +110,6 @@ private:
 
   Lobby *m_lobby; ///< 大厅
   QMap<int, Room *> rooms; ///< 所有的Room
-  QList<RoomThread *> threads; ///< 所有RoomThread
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
@@ -122,6 +119,8 @@ private:
   Sqlite3 *db; ///< sqlite数据库连接实例
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
+
+  QElapsedTimer uptime_counter;
 
   /**
     读取配置文件。配置文件的路径是`<pwd>/freekill.server.config.json`。

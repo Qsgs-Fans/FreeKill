@@ -4,6 +4,7 @@
 #include "core/packman.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
+#include "server/roomthread.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #ifdef FK_USE_READLINE
@@ -390,6 +391,55 @@ void Shell::resetPasswordCommand(QStringList &list) {
   }
 }
 
+static QString formatMsDuration(qint64 time) {
+  QString ret;
+
+  auto ms = time % 1000;
+  time /= 1000;
+  auto sec = time % 60;
+  ret = QString("%1.%2 seconds").arg(sec).arg(ms) + ret;
+  time /= 60;
+  if (time == 0) return ret;
+
+  auto min = time % 60;
+  ret = QString("%1 minutes, ").arg(min) + ret;
+  time /= 60;
+  if (time == 0) return ret;
+
+  auto hour = time % 24;
+  ret = QString("%1 hours, ").arg(hour) + ret;
+  time /= 24;
+  if (time == 0) return ret;
+
+  ret = QString("%1 days, ").arg(time) + ret;
+  return ret;
+}
+
+void Shell::statCommand(QStringList &) {
+  auto server = ServerInstance;
+  auto uptime_ms = server->getUptime();
+  qInfo("uptime: %s", formatMsDuration(uptime_ms).toUtf8().constData());
+
+  auto players = server->getPlayers();
+  qInfo("Player(s) logged in: %lld", players.count());
+  qInfo("Next roomId: %d", server->nextRoomId); // FIXME: friend class
+
+  auto threads = server->findChildren<RoomThread *>();
+  static const char *getmem = "return collectgarbage('count') / 1024";
+  for (auto thr : threads) {
+    auto rooms = thr->findChildren<Room *>();
+    auto L = thr->getLua();
+    auto mem_mib = L->eval(getmem).toDouble();
+    auto outdated = thr->isOutdated();
+    if (rooms.count() == 0 && outdated) {
+      thr->deleteLater();
+    } else {
+      qInfo("RoomThread %p | %.2f MiB | %lld room(s) %s", thr, mem_mib, rooms.count(),
+            outdated ? "| Outdated" : "");
+    }
+  }
+}
+
 #ifdef FK_USE_READLINE
 static void sigintHandler(int) {
   rl_reset_line_state();
@@ -442,6 +492,8 @@ Shell::Shell() {
     {"r", &Shell::reloadConfCommand},
     {"resetpassword", &Shell::resetPasswordCommand},
     {"rp", &Shell::resetPasswordCommand},
+    {"stat", &Shell::statCommand},
+    {"gc", &Shell::statCommand},
     // special command
     {"quit", &Shell::helpCommand},
     {"crash", &Shell::helpCommand},

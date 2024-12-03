@@ -67,12 +67,20 @@ Server::~Server() {
     // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
     delete i.value();
   }
+  // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
+  for (auto thr : findChildren<RoomThread *>()) {
+    delete thr;
+  }
   delete db;
 }
 
 bool Server::listen(const QHostAddress &address, ushort port) {
   bool ret = server->listen(address, port);
   isListening = ret;
+  if (ret) {
+    uptime_counter.restart();
+    qInfo("Server is listening on port %d", port);
+  }
   return ret;
 }
 
@@ -87,7 +95,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   Room *room;
   RoomThread *thread = nullptr;
 
-  for (auto t : threads) {
+  for (auto t : findChildren<RoomThread *>()) {
     if (!t->isFull() && !t->isOutdated()) {
       thread = t;
       break;
@@ -95,7 +103,7 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
   }
 
   if (!thread) {
-    thread = createThread();
+    thread = new RoomThread(this);
   }
 
   room = new Room(thread);
@@ -116,16 +124,6 @@ void Server::removeRoom(int id) {
 Room *Server::findRoom(int id) const { return rooms.value(id); }
 
 Lobby *Server::lobby() const { return m_lobby; }
-
-RoomThread *Server::createThread() {
-  RoomThread *thread = new RoomThread(this);
-  threads.append(thread);
-  return thread;
-}
-
-void Server::removeThread(RoomThread *thread) {
-  threads.removeOne(thread);
-}
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
@@ -445,11 +443,16 @@ void Server::refreshMd5() {
       }
     }
   }
-  for (auto thread : threads) {
+  for (auto thread : findChildren<RoomThread *>()) {
     if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty())
       thread->deleteLater();
   }
   for (auto p : lobby()->getPlayers()) {
     emit p->kicked();
   }
+}
+
+qint64 Server::getUptime() const {
+  if (!uptime_counter.isValid()) return 0;
+  return uptime_counter.elapsed();
 }
