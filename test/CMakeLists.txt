@@ -34,3 +34,12 @@ add_test(
   COMMAND TestLuaCore
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
+
+qt_add_executable(TestLuaRoom lua_room_test.cpp)
+target_precompile_headers(TestLuaRoom REUSE_FROM TestWithoutGui)
+target_link_libraries(TestLuaRoom PRIVATE ${TEST_LIB})
+add_test(
+  NAME "lua room test"
+  COMMAND TestLuaRoom
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
