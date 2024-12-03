@@ -13,5 +13,3 @@ fk.io = __io
 lu = require('luaunit')
 
 dofile 'test/lua/server/gameevent.lua'
-
-fk.os.exit( lu.LuaUnit.run() )

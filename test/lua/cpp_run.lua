@@ -14,5 +14,3 @@ dofile 'lua/client/i18n/init.lua'
 -- 加载测试用例
 -- 测试框架是LuaUnit 文档参见 https://luaunit.readthedocs.io/en/luaunit_v3_2_1/
 dofile 'test/lua/core/init.lua'
-
-return lu.LuaUnit.run()

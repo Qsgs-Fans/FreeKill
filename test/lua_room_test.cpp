@@ -13,8 +13,6 @@ private:
 };
 
 void TestLuaRoom::initTestCase() {
-  qputenv("QT_FATAL_CRITICALS", "1"); // TODO: 找个办法在qCritical时候只是失败这个测试而不是把所有全部abort掉了
-
   Pacman = new PackMan;
   for (auto obj : QJsonDocument::fromJson(Pacman->listPackages().toUtf8()).array()) {
     auto pack = obj.toObject()["name"].toString();
@@ -23,16 +21,19 @@ void TestLuaRoom::initTestCase() {
   }
   L = new Lua;
   L->eval("__os = os; __io = io; __package = package"); // 保存一下
+  bool using_core = false;
   if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
+    using_core = true;
     QDir::setCurrent("packages/freekill-core");
   }
   QVERIFY(L->dofile("lua/freekill.lua"));
-  QVERIFY(L->dofile("lua/server/scheduler.lua"));
+  if (using_core) QDir::setCurrent("../..");
 }
 
 void TestLuaRoom::testCase() {
-  QVERIFY(L->dofile("test/lua/cpp_run.lua"));
+  QVERIFY(L->dofile("test/lua/cpp_run_gamelogic.lua"));
+  QVERIFY(L->eval("return lu.LuaUnit.run()").toInt() == 0);
 }
 
 void TestLuaRoom::cleanupTestCase() {
