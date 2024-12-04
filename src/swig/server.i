@@ -1,14 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-%nodefaultctor Server;
-%nodefaultdtor Server;
-class Server : public QObject {
-public:
-  void beginTransaction();
-  void endTransaction();
-};
-extern Server *ServerInstance;
-
 %nodefaultctor Room;
 %nodefaultdtor Room;
 class Room : public QObject {

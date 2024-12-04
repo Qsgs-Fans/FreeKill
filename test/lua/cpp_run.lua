@@ -1,6 +1,7 @@
 -- Run tests with `cmake TestLuaCore && ctest`
 
 ---@diagnostic disable: lowercase-global
+---@diagnostic disable: undefined-global
 
 __package.path = __package.path .. ";./test/lua/lib/?.lua"
 
