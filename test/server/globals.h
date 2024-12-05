@@ -34,6 +34,8 @@ private:
   Server *server;
 };
 
+extern bool setupGlobalData();
+
 extern class ServerThread *server_thread;
 extern QList<TesterClient *> clients;
 

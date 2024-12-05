@@ -12,6 +12,9 @@
 #include "network/router.h"
 
 void TestScheduler::initTestCase() {
+  if (!setupGlobalData()) {
+    return;
+  }
   auto client = clients[0], client2 = clients[1], client3 = clients[2];
   client->connectToHostAndSendSetup("localhost", test_port);
   client2->connectToHostAndSendSetup("localhost", test_port);
@@ -94,3 +97,6 @@ void TestScheduler::testObserve() {
 void TestScheduler::cleanupTestCase() {
   server_thread->kickAllClients();
 }
+
+QTEST_GUILESS_MAIN(TestScheduler)
+#include "test_scheduler.moc"

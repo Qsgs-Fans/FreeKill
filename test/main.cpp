@@ -1,8 +1,5 @@
-#include "network/test_socket.h"
 #include "server/globals.h"
 #include "server/test_login.h"
-#include "server/test_create_room.h"
-#include "server/test_scheduler.h"
 
 #include "core/packman.h"
 
@@ -17,11 +14,14 @@ static bool setupGlobalData() {
   auto now = QDateTime::currentMSecsSinceEpoch();
   Pacman = new PackMan;
   server_thread = new ServerThread;
+  qDebug() << "Adding listening spy";
   QSignalSpy spy(server_thread, &ServerThread::listening);
   server_thread->start();
   if (!spy.wait()) {
+    qDebug() << "Spy isn't waiting...";
     return false;
   }
+  qDebug() << "Adding TesterClient";
   clients.append(new TesterClient(test_name, "1234"));
   clients.append(new TesterClient(test_name2, "1234"));
   clients.append(new TesterClient(test_name3, "1234"));
@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
     return EXIT_FAILURE;
   }
 
-  EXEC_QTEST(TestSocket);
-  EXEC_QTEST(TestLogin);
-  EXEC_QTEST(TestRoom);
-  EXEC_QTEST(TestScheduler);
+  // EXEC_QTEST(TestSocket);
+  // EXEC_QTEST(TestLogin);
+  // EXEC_QTEST(TestRoom);
+  // EXEC_QTEST(TestScheduler);
 
   return status;
 }

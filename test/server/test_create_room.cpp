@@ -11,6 +11,9 @@
 #include "network/router.h"
 
 void TestRoom::initTestCase() {
+  if (!setupGlobalData()) {
+    return;
+  }
   auto client = clients[0], client2 = clients[1], client3 = clients[2];
   client->connectToHostAndSendSetup("localhost", test_port);
   client2->connectToHostAndSendSetup("localhost", test_port);
@@ -82,3 +85,6 @@ void TestRoom::testJoinRoom() {
 void TestRoom::cleanupTestCase() {
   server_thread->kickAllClients();
 }
+
+QTEST_GUILESS_MAIN(TestRoom)
+#include "test_create_room.moc"

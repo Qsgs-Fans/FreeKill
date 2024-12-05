@@ -16,6 +16,7 @@ class Client;
 class TestLogin: public QObject {
   Q_OBJECT
 private slots:
+  void initTestCase();
   void testConnectToServer();
   void testPasswordError();
   void cleanupTestCase();

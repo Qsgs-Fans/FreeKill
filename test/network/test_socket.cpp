@@ -1,8 +1,12 @@
+#include "../server/globals.h"
 #include "test_socket.h"
 #include "network/server_socket.h"
 #include "network/client_socket.h"
 
 void TestSocket::initTestCase() {
+  if (!setupGlobalData()) {
+    return;
+  }
   server = new ServerSocket;
   client = new ClientSocket;
   client_server = nullptr;
@@ -91,3 +95,6 @@ void TestSocket::processNewConnection(ClientSocket *client) {
   }
   client_server = client;
 }
+
+QTEST_GUILESS_MAIN(TestSocket)
+#include "test_socket.moc"

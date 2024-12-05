@@ -7,6 +7,12 @@
 #include "network/client_socket.h"
 #include "network/router.h"
 
+void TestLogin::initTestCase() {
+  if (!setupGlobalData()) {
+    return;
+  }
+}
+
 void TestLogin::testConnectToServer() {
   auto client = clients[0];
   QVariantList args;
@@ -85,3 +91,6 @@ void TestLogin::cleanupTestCase() {
   clients[0]->setLoginInfo(test_name, "1234");
   server_thread->kickAllClients();
 }
+
+QTEST_GUILESS_MAIN(TestLogin)
+#include "test_login.moc"
