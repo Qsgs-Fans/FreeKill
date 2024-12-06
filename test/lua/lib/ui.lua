@@ -40,9 +40,9 @@ end
 return {
   cb = function(command, jsonData)
     if command == "GameLog" then
-      print(colorConvert(jsonData))
+      -- print(colorConvert(jsonData))
     elseif command == "ShowToast" then
-      print("TOAST: " .. colorConvert(jsonData))
+      -- print("TOAST: " .. colorConvert(jsonData))
     else
       -- print(command, jsonData)
     end

@@ -14,6 +14,8 @@ fk.io = __io
 lu = require('luaunit')
 local consoleUI = require 'ui'
 
+fk.qInfo = Util.DummyFunc
+
 if UsingNewCore then FileIO.cd("packages/freekill-core") end
 Room = require 'lua.server.room'
 fk.Player = require 'lua.lsp.player'
@@ -21,6 +23,8 @@ local tmp = require 'lua.lsp.server'
 fk.Room, fk.ServerPlayer = tmp[1], tmp[2]
 fk.Client = require 'lua.lsp.client'
 dofile 'lua/client/client.lua'
+
+dofile 'test/lua/testmode.lua'
 
 local createFakeQList = function(arr)
   return setmetatable(arr, {
@@ -76,7 +80,7 @@ local createFakeRoom = function(idlist)
     _settings = json.encode {
       enableFreeAssign = false,
       enableDeputy = false,
-      gameMode = "aaa_role_mode",
+      gameMode = "testmode",
       disabledPack = {},
       generalNum = 3,
       luckTime = 0,
@@ -98,6 +102,7 @@ local createFakeCppBackend = function()
   -- 以下代码全部忠于cpp原作
   CreateLuaClient(cClient)
   Self = ClientPlayer:new(cClient:getSelf())
+  ClientSelf = Self
 
   -- 模拟Room::addPlayer
   -- updateGameData就算了 没啥用
@@ -121,15 +126,45 @@ local createFakeCppBackend = function()
 end
 
 local cRoom = createFakeCppBackend()
-local room = Room:new(cRoom)
-ClientSelf = Self
-while not room.game_finished do
-  RoomInstance = room
-  local over, msg, ret, err = room:resume("request_timer")
+
+---@type Room
+LRoom = nil
+
+function InitRoom()
+  LRoom = Room:new(cRoom)
+  LRoom._test_disable_delay = true
+  RoomInstance = LRoom
+  LRoom:resume("request_timer")
   RoomInstance = nil
-  if over then break end
 end
-Self = nil
+
+function RunInRoom(fn)
+  RoomInstance = LRoom
+  LRoom:resume(fn)
+  RoomInstance = nil
+end
+
+function ClearRoom()
+  if not LRoom.game_finished then LRoom:gameOver("") end
+  -- 客户端需要模拟一次返回房间来清掉数据
+  ClientInstance:initialize(ClientInstance.client)
+  Self = ClientPlayer:new(ClientInstance.client:getSelf())
+  ClientSelf = Self
+  ClientInstance.players = {Self}
+  ClientInstance.alive_players = {Self}
+  local plist = cRoom:getPlayers()
+  local sp = cRoom:getOwner()
+  for i = 1, 7 do
+    local p = plist:at(i)
+    sp:doNotify("AddPlayer", json.encode{
+      p:getId(),
+      p:getScreenName();
+      p:getAvatar();
+      true,
+      0,
+    })
+  end
+end
 
 dofile 'test/lua/server/gameevent.lua'
 
