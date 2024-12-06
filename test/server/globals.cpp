@@ -71,24 +71,18 @@ void ServerThread::kickAllClients() {
 #include "applink.c"
 #endif
 
-extern bool setupGlobalData() {
-  qDebug() << "Setting up test environment";
+void SetupServerAndClient() {
   auto now = QDateTime::currentMSecsSinceEpoch();
   Pacman = new PackMan;
   server_thread = new ServerThread;
-  qDebug() << "Adding listening spy";
   QSignalSpy spy(server_thread, &ServerThread::listening);
   server_thread->start();
   if (!spy.wait()) {
-    qDebug() << "Spy isn't waiting...";
-    return false;
+    qFatal() << "Can not start test server!";
   }
-  qDebug() << "Adding TesterClient";
   clients.append(new TesterClient(test_name, "1234"));
   clients.append(new TesterClient(test_name2, "1234"));
   clients.append(new TesterClient(test_name3, "1234"));
-  qDebug() << QString("Created server and clients, %1ms").arg(QDateTime::currentMSecsSinceEpoch() - now);
-  return true;
 }
 
 ServerThread *server_thread;
@@ -103,5 +97,3 @@ QJsonObject room_config = {
   { "disabledPack", QJsonArray() },
   { "disabledGenerals", QJsonArray() },
 };
-
-
