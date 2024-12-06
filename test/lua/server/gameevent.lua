@@ -18,8 +18,35 @@ function TestGameEvent:testBasic()
     damage = 1
   }
 
+  --- 测试用例1：司马懿先生可以用仁王盾改判吗？
   RunInRoom(function()
-    room:damage(dmg)
+    local cards = {}
+    local targets = {"slash", "jink", "nioh_shield", "dilu"}
+    local shield
+    for _, cid in ipairs(room.draw_pile) do
+      local c = Fk:getCardById(cid)
+      if table.contains(targets, c.name) then
+        table.insert(cards, c)
+        if c.name == "nioh_shield" then
+          shield = cid
+        end
+        table.removeOne(targets, c.name)
+      end
+      if #targets == 0 then break end
+    end
+    if not shield then return error("no nioh?") end
+    room:obtainCard(me, cards)
+    room:useCard{
+      from = me.id,
+      tos = {{me.id}},
+      card = Fk:getCardById(shield)
+    }
+    room:changeHero(me, "simayi")
+    for _, c in ipairs(me:getCardIds("he")) do
+      local card = Fk:getCardById(c)
+      local exp = Exppattern:Parse(".|.|.|hand")
+      assert(c == shield or exp:match(card), string.format("no %s is allowed!", tostring(card)))
+    end
   end)
 end
 
