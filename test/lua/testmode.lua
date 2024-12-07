@@ -13,9 +13,9 @@ testmode.logic = function()
     for i = 1, n do
       local p = room.players[i]
       p.role = roles[i]
-      if p.role == "lord" then
-        room:setPlayerProperty(p, "role_shown", true)
-      end
+      -- if p.role == "lord" then
+      --   room:setPlayerProperty(p, "role_shown", true)
+      -- end
       room:broadcastProperty(p, "role")
     end
   end

@@ -133,6 +133,9 @@ LRoom = nil
 function InitRoom()
   LRoom = Room:new(cRoom)
   LRoom._test_disable_delay = true
+  for _, p in ipairs(LRoom.players) do
+    p.ai = AI:new(p) --[[@as SmartAI]]
+  end
   RoomInstance = LRoom
   LRoom:resume("request_timer")
   RoomInstance = nil
@@ -142,6 +145,16 @@ function RunInRoom(fn)
   RoomInstance = LRoom
   LRoom:resume(fn)
   RoomInstance = nil
+end
+
+function RunInClient(fn)
+  local room = RoomInstance
+  RoomInstance = nil
+  local s = Self
+  Self = ClientSelf
+  fn()
+  Self = s
+  RoomInstance = room
 end
 
 function ClearRoom()
@@ -167,4 +180,5 @@ function ClearRoom()
 end
 
 dofile 'test/lua/server/gameevent.lua'
+dofile 'test/lua/server/gamelogic.lua'
 

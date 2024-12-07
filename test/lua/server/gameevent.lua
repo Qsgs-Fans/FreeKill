@@ -45,7 +45,7 @@ function TestGameEvent:testBasic()
     for _, c in ipairs(me:getCardIds("he")) do
       local card = Fk:getCardById(c)
       local exp = Exppattern:Parse(".|.|.|hand")
-      printf("%s's result: %q", tostring(card), exp:match(card))
+      -- printf("%s's result: %q", tostring(card), exp:match(card))
       assert(c == shield or exp:match(card), string.format("no %s is allowed!", tostring(card)))
     end
   end)
