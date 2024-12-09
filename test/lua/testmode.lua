@@ -7,7 +7,7 @@ testmode.logic = function()
     local n = #room.players
     local roles = self.role_table[n]
     -- table.shuffle(roles)
-    local idlist = {1, -2, -3, -4, -5, -6, -7, -8}
+    local idlist = {1, 2, 3, 4, 5, 6, 7, 8}
     room.players = table.map(idlist, function(id) return room:getPlayerById(id) end)
 
     for i = 1, n do
