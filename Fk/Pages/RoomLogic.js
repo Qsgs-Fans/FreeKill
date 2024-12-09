@@ -550,7 +550,7 @@ function processPrompt(prompt) {
   if (raw.match("%src"))
     raw = raw.replace(/%src/g, getPlayerStr(src));
   if (raw.match("%dest"))
-    raw = raw.replace(/%dest/g, luatr(getPhoto(dest).general));
+    raw = raw.replace(/%dest/g, getPlayerStr(dest));
 
   if (data.length > 3) {
     for (let i = data.length - 1; i > 3; i--) {
