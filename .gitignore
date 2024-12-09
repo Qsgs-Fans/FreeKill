@@ -25,9 +25,8 @@
 /mymod
 /recording
 freekill-wrap.cxx
-/server/users.db
-/server/rsa
-/server/rsa_pub
+/server/*
+!/server/init.sql
 /client/client.db
 /client/autosave_recording
 /freekill.client.config.json

@@ -35,9 +35,3 @@ public:
   bool isDied() const;
   void setDied(bool died);
 };
-
-%nodefaultctor ClientPlayer;
-%nodefaultdtor ClientPlayer;
-class ClientPlayer : public Player {
-public:
-};

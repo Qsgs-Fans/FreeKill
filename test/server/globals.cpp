@@ -1,4 +1,5 @@
 #include "globals.h"
+#include "core/packman.h"
 #include "network/router.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
@@ -66,6 +67,24 @@ void ServerThread::kickAllClients() {
   qApp->processEvents();
 }
 
+#ifdef Q_OS_WIN
+#include "applink.c"
+#endif
+
+void SetupServerAndClient() {
+  auto now = QDateTime::currentMSecsSinceEpoch();
+  Pacman = new PackMan;
+  server_thread = new ServerThread;
+  QSignalSpy spy(server_thread, &ServerThread::listening);
+  server_thread->start();
+  if (!spy.wait()) {
+    qFatal("Can not start test server!");
+  }
+  clients.append(new TesterClient(test_name, "1234"));
+  clients.append(new TesterClient(test_name2, "1234"));
+  clients.append(new TesterClient(test_name3, "1234"));
+}
+
 ServerThread *server_thread;
 QList<TesterClient *> clients;
 QJsonObject room_config = {
@@ -78,5 +97,3 @@ QJsonObject room_config = {
   { "disabledPack", QJsonArray() },
   { "disabledGenerals", QJsonArray() },
 };
-
-

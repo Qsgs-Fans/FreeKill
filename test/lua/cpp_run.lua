@@ -1,6 +1,7 @@
 -- Run tests with `cmake TestLuaCore && ctest`
 
 ---@diagnostic disable: lowercase-global
+---@diagnostic disable: undefined-global
 
 __package.path = __package.path .. ";./test/lua/lib/?.lua"
 
@@ -11,11 +12,6 @@ lu = require('luaunit')
 -- load FreeKill core
 dofile 'lua/client/i18n/init.lua'
 
--- load test cases
-dofile 'test/lua/core/util.lua'
-dofile 'test/lua/core/pattern.lua'
-dofile 'test/lua/core/testmode.lua'
-
-print 'Lua unit tests start'
-
-fk.os.exit( lu.LuaUnit.run('--verbose') )
+-- 加载测试用例
+-- 测试框架是LuaUnit 文档参见 https://luaunit.readthedocs.io/en/luaunit_v3_2_1/
+dofile 'test/lua/core/init.lua'

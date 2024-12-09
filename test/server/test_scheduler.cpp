@@ -1,4 +1,3 @@
-#include "test_scheduler.h"
 #include "globals.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
@@ -11,7 +10,25 @@
 #include "server/serverplayer.h"
 #include "network/router.h"
 
+/*
+  对房间调度模块的测试。需要测试的功能有这些：
+  - 房间的启动
+  - 房间的游戏结束
+  - 房间的切出
+  - 异步处理
+*/
+class TestScheduler: public QObject {
+  Q_OBJECT
+private slots:
+  void initTestCase();
+  void testStartGame();
+  void testReconnect();
+  void testObserve();
+  void cleanupTestCase();
+};
+
 void TestScheduler::initTestCase() {
+  SetupServerAndClient();
   auto client = clients[0], client2 = clients[1], client3 = clients[2];
   client->connectToHostAndSendSetup("localhost", test_port);
   client2->connectToHostAndSendSetup("localhost", test_port);
@@ -35,10 +52,10 @@ void TestScheduler::testStartGame() {
   // 直接等到spy3收到数据（大厅人数变动） c2加入房间一样的等待
   QVERIFY(spy3.wait());
 
-  client2->notifyServer("EnterRoom", "[2,\"\"]");
+  client2->notifyServer("EnterRoom", "[1,\"\"]");
   QVERIFY(spy3.wait());
 
-  auto room = ServerInstance->findRoom(2);
+  auto room = ServerInstance->findRoom(1);
   auto thread = qobject_cast<RoomThread *>(room->parent());
   QSignalSpy spy_roomthread(thread, &RoomThread::pushRequest);
 
@@ -46,7 +63,7 @@ void TestScheduler::testStartGame() {
   client->notifyServer("StartGame", "");
   QVERIFY(spy_roomthread.wait());
   args = spy_roomthread.takeFirst();
-  QCOMPARE(args[0], "-1,2,newroom");
+  QCOMPARE(args[0], "-1,1,newroom");
   QVERIFY(room->isStarted());
 
   // 关于startGame后续的测试...
@@ -86,7 +103,7 @@ void TestScheduler::testReconnect() {
 void TestScheduler::testObserve() {
   auto client = clients[0], client2 = clients[1], client3 = clients[2];
   QSignalSpy spy3(client3->getRouter(), &Router::notification_got);
-  client3->notifyServer("ObserveRoom", "[2,\"\"]");
+  client3->notifyServer("ObserveRoom", "[1,\"\"]");
   QVERIFY(spy3.wait());
   qApp->processEvents();
 }
@@ -94,3 +111,6 @@ void TestScheduler::testObserve() {
 void TestScheduler::cleanupTestCase() {
   server_thread->kickAllClients();
 }
+
+QTEST_GUILESS_MAIN(TestScheduler)
+#include "test_scheduler.moc"

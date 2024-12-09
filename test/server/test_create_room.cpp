@@ -1,4 +1,3 @@
-#include "test_create_room.h"
 #include "globals.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
@@ -10,7 +9,18 @@
 #include "client/clientplayer.h"
 #include "network/router.h"
 
+class TestRoom: public QObject {
+  Q_OBJECT
+private slots:
+  void initTestCase();
+  void testCreateRoom();
+  void testJoinRoom();
+  // void testDeleteRoom();
+  void cleanupTestCase();
+};
+
 void TestRoom::initTestCase() {
+  SetupServerAndClient();
   auto client = clients[0], client2 = clients[1], client3 = clients[2];
   client->connectToHostAndSendSetup("localhost", test_port);
   client2->connectToHostAndSendSetup("localhost", test_port);
@@ -82,3 +92,6 @@ void TestRoom::testJoinRoom() {
 void TestRoom::cleanupTestCase() {
   server_thread->kickAllClients();
 }
+
+QTEST_GUILESS_MAIN(TestRoom)
+#include "test_create_room.moc"

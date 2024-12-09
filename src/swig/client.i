@@ -23,9 +23,9 @@ public:
   void replyToServer(const QString &command, const QString &json_data);
   void notifyServer(const QString &command, const QString &json_data);
 
-  ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
+  Player *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
-  ClientPlayer *getSelf() const;
+  Player *getSelf() const;
   void changeSelf(int id);
 
   void saveRecord(const char *json, const QString &fname);
