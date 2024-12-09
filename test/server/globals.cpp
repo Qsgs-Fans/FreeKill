@@ -78,7 +78,7 @@ void SetupServerAndClient() {
   QSignalSpy spy(server_thread, &ServerThread::listening);
   server_thread->start();
   if (!spy.wait()) {
-    qFatal() << "Can not start test server!";
+    qFatal("Can not start test server!");
   }
   clients.append(new TesterClient(test_name, "1234"));
   clients.append(new TesterClient(test_name2, "1234"));
