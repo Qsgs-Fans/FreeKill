@@ -13,6 +13,8 @@
 ---@field public current_request_handler RequestHandler @ 当前正处理的请求数据
 ---@field public timeout integer @ 出牌时长上限
 ---@field public settings table @ 房间的额外设置，差不多是json对象
+---@field public disabled_packs string[] @ 未开启的扩展包名（是小包名，不是大包名）
+---@field public disabled_generals string[] @ 未开启的武将
 local AbstractRoom = class("AbstractRoom")
 
 local CardManager = require 'core.room.card_manager'
@@ -59,6 +61,12 @@ function AbstractRoom:getBanner(name)
   return self.banners[name]
 end
 
+--- 设置房间的当前行动者
+---@param player Player
+function AbstractRoom:setCurrent(player)
+  self.current = player
+end
+
 function AbstractRoom:toJsonObject()
   local card_manager = CardManager.toJsonObject(self)
 
@@ -70,6 +78,7 @@ function AbstractRoom:toJsonObject()
   return {
     card_manager = card_manager,
     circle = table.map(self.players, Util.IdMapper),
+    current = self.current and self.current.id or nil,
     banners = self.banners,
     timeout = self.timeout,
     settings = self.settings,
@@ -82,6 +91,7 @@ function AbstractRoom:loadJsonObject(o)
   CardManager.loadJsonObject(self, o.card_manager)
 
   -- 需要上层（目前是Client）自己根据circle添加玩家
+  self.current = self:getPlayerById(o.current)
   self.banners = o.banners
   self.timeout = o.timeout
   self.settings = o.settings
@@ -89,6 +99,9 @@ function AbstractRoom:loadJsonObject(o)
     local pid = tonumber(k)
     self:getPlayerById(pid):loadJsonObject(v)
   end
+  self.alive_players = table.filter(self.players, function(p)
+    return p:isAlive()
+  end)
 end
 
 -- 判断当前模式是否为某类模式

@@ -136,8 +136,11 @@ function Engine:loadPackage(pack)
 end
 
 -- Don't do this
+
 local package = package
+
 function Engine:reloadPackage(path)
+  ---@cast package -nil
   path = path:sub(1, #path - 4)
   local oldPkg = package.loaded[path]
   package.loaded[path] = nil
@@ -176,6 +179,7 @@ function Engine:reloadPackage(path)
       end
       self.skills[skill.name] = skill
       if skill:isInstanceOf(TriggerSkill) and RoomInstance then
+        ---@cast room Room
         local logic = room.logic
         for _, event in ipairs(skill.refresh_events) do
           replace(logic.refresh_skill_table[event], skill)
@@ -188,8 +192,8 @@ function Engine:reloadPackage(path)
         replace(room.status_skills[skill.class], skill)
       end
 
-      for _, p in ipairs(room.players) do
-        replace(p.player_skills, skill)
+      for _, _p in ipairs(room.players) do
+        replace(_p.player_skills, skill)
       end
       ::CONTINUE::
     end
@@ -235,6 +239,7 @@ function Engine:loadPackages()
   table.removeOne(directories, "standard_cards")
   table.removeOne(directories, "maneuvering")
 
+  ---@type string[]
   local _disable_packs = json.decode(fk.GetDisabledPacks())
 
   for _, dir in ipairs(directories) do
@@ -271,21 +276,25 @@ function Engine:loadDisabled()
     local disabled_packages = {}
     for name, pkg in pairs(self.packages) do
       --- GameMode对Package筛选
-      if type(game_mode.whitelist) == "function" then
-        if not game_mode:whitelist(pkg) then
+      local wl = game_mode.whitelist
+      local bl = game_mode.blacklist
+      if type(wl) == "function" then
+        if not wl(game_mode, pkg) then
           table.insert(disabled_packages, name)
         end
-      elseif type(game_mode.whitelist) == "table" then
-        if not table.contains(game_mode.whitelist, name) then
+      elseif type(wl) == "table" then
+        ---@cast wl string[]
+        if not table.contains(wl, name) then
           table.insert(disabled_packages, name)
         end
       end
-      if type(game_mode.blacklist) == "function" then
-        if game_mode:blacklist(pkg) then
+      if type(bl) == "function" then
+        if bl(game_mode, pkg) then
           table.insert(disabled_packages, name)
         end
-      elseif type(game_mode.blacklist) == "table" then
-        if table.contains(game_mode.blacklist, name) then
+      elseif type(bl) == "table" then
+        ---@cast bl string[]
+        if table.contains(bl, name) then
           table.insert(disabled_packages, name)
         end
       end
@@ -691,7 +700,7 @@ end
 function Engine:getAllCardIds(except)
   local result = {}
   for _, card in ipairs(self.cards) do
-    if not (except and table.contains(except, card.id)) then
+    if card.package and not (except and table.contains(except, card.id)) then
       if not table.contains(self:currentRoom().disabled_packs, card.package.name) then
         table.insert(result, card.id)
       end

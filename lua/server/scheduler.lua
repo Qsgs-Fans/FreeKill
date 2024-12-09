@@ -18,6 +18,7 @@ local requestRoom = setmetatable({
   registerRoom = function(self, id)
     local cRoom = self.thread:getRoom(id)
     local room = Room:new(cRoom)
+    cRoom:increaseRefCount()
     runningRooms[room.id] = room
   end,
 
@@ -62,6 +63,9 @@ function ResumeRoom(roomId, reason)
       coroutine.close(e._co)
     end
     runningRooms[room.id] = nil
+    room.room:decreaseRefCount()
+    room = nil
+    collectgarbage("collect")
   end
   return over
 end

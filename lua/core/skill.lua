@@ -17,6 +17,7 @@
 ---@field public relate_to_place string @ 主将技/副将技
 ---@field public switchSkillName string @ 转换技名字
 ---@field public times integer @ 技能剩余次数，负数不显示，正数显示
+---@field public attached_skill_name string @ 给其他角色添加技能的名称
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -62,6 +63,8 @@ function Skill:initialize(name, frequency)
 
   self.attached_equip = nil
   self.relate_to_place = nil
+
+  self.attached_skill_name = nil
 end
 
 function Skill:__index(k)
@@ -174,12 +177,36 @@ end
 ---@param player ServerPlayer
 ---@param is_start bool
 function Skill:onAcquire(player, is_start)
+  local room = player.room
+
+  if self.attached_skill_name then
+    for _, p in ipairs(room.alive_players) do
+      if p ~= player then
+        room:handleAddLoseSkills(p, self.attached_skill_name, nil, false, true)
+      end
+    end
+  end
 end
 
 -- 失去此技能时，触发此函数
 ---@param player ServerPlayer
 ---@param is_death bool
 function Skill:onLose(player, is_death)
+  local room = player.room
+  if self.attached_skill_name then
+    local skill_owners = table.filter(room.alive_players, function (p)
+      return p:hasSkill(self, true)
+    end)
+    if #skill_owners == 0 then
+      for _, p in ipairs(room.alive_players) do
+        room:handleAddLoseSkills(p, "-" .. self.attached_skill_name, nil, false, true)
+      end
+    elseif #skill_owners == 1 then
+      local p = skill_owners[1]
+      room:handleAddLoseSkills(p, "-" .. self.attached_skill_name, nil, false, true)
+    end
+  end
+
 end
 
 return Skill

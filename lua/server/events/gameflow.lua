@@ -7,6 +7,7 @@ local function drawInit(room, player, n)
   for _, id in ipairs(cardIds) do
     Fk:filterCard(id, player)
   end
+
   local move_to_notify = {}   ---@type CardsMoveStruct
   move_to_notify.toArea = Card.PlayerHand
   move_to_notify.to = player.id
@@ -19,6 +20,7 @@ local function drawInit(room, player, n)
   room:notifyMoveCards(nil, {move_to_notify})
 
   for _, id in ipairs(cardIds) do
+    table.removeOne(room.draw_pile, id)
     room:setCardArea(id, Card.PlayerHand, player.id)
   end
 end
@@ -114,7 +116,7 @@ function Round:action()
     if room.current.seat > nextTurnOwner.seat and not changingData.skipRoundPlus then
       break
     else
-      room.current = nextTurnOwner
+      room:setCurrent(nextTurnOwner)
     end
   end
 end
@@ -133,7 +135,7 @@ function Round:main()
   room:setTag("RoundCount",  roundCount)
   room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
-  if roundCount >= 9999 then
+  if roundCount >= 280 then
     room:sendLog{
       type = "#TimeOutDraw",
       toast = true,
@@ -200,6 +202,10 @@ function Turn:prepare()
   if player.dead then return true end
 
   room:sendLog{ type = "$AppendSeparator" }
+
+  if logic:trigger(fk.PreTurnStart, player, data) then
+    return true
+  end
 
   if not player.faceup then
     player:turnOver()
@@ -318,11 +324,12 @@ function Phase:main()
         end
       end,
       [Player.Draw] = function()
+        if player._phase_end then return end
         local data = {
           n = 2
         }
         room.logic:trigger(fk.DrawNCards, player, data)
-        if not player._phase_end then
+        if data.n > 0 then
           room:drawCards(player, data.n, "phase_draw")
         end
         room.logic:trigger(fk.AfterDrawNCards, player, data)

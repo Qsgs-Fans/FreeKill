@@ -116,10 +116,11 @@ function GameEvent:prependExitFunc(f)
 end
 
 -- 找第一个与当前事件有继承关系的特定事件
----@param eventType GameEvent @ 事件类型
+---@generic T: GameEvent
+---@param eventType T @ 事件类型
 ---@param includeSelf bool @ 是否包括本事件
 ---@param depth? integer @ 搜索深度
----@return GameEvent?
+---@return T?
 function GameEvent:findParent(eventType, includeSelf, depth)
   if includeSelf and self.event == eventType then return self end
   if depth == 0 then return nil end
@@ -181,11 +182,12 @@ local function bin_search(events, from, to, n, func)
 end
 
 -- 从某个区间中，找出类型符合且符合func函数检测的至多n个事件。
----@param eventType GameEvent @ 要查找的事件类型
+---@generic T: GameEvent
+---@param eventType T @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
----@param func fun(e: GameEvent): boolean? @ 过滤用的函数
+---@param func fun(e: T): boolean? @ 过滤用的函数
 ---@param endEvent? GameEvent @ 区间终止点，默认为本事件结束
----@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+---@return T[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameEvent:searchEvents(eventType, n, func, endEvent)
   local logic = self.room.logic
   local events = logic.event_recorder[eventType] or Util.DummyTable

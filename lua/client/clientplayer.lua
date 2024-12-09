@@ -57,7 +57,7 @@ function ClientPlayer:sendDataToUI()
         local mtype = mark:sub(3, close - 1)
         local spec = Fk.qml_marks[mtype]
         if spec then
-          local text = spec.how_to_show(mark, value, p)
+          local text = spec.how_to_show(mark, value, self)
           if text == "#hidden" then value = 0 end
         end
       end

@@ -62,7 +62,7 @@ function GameLogic:run()
   self.room.game_started = true
   room:doBroadcastNotify("StartGame", "")
   self:assignRoles()
-  room:adjustSeats()
+  self:adjustSeats()
   self:chooseGenerals()
 
   self:buildPlayerCircle()
@@ -81,6 +81,7 @@ local function execGameEvent(tp, ...)
   return ret
 end
 
+--- 分配身份
 function GameLogic:assignRoles()
   local room = self.room
   local n = #room.players
@@ -97,6 +98,29 @@ function GameLogic:assignRoles()
   end
 end
 
+--- 安排座位。若有主公则作为1号位
+function GameLogic:adjustSeats()
+  local player_circle = {}
+  local players = self.room.players
+  local p = 1
+
+  for i = 1, #players do
+    if players[i].role == "lord" then
+      p = i
+      break
+    end
+  end
+  for j = p, #players do
+    table.insert(player_circle, players[j])
+  end
+  for j = 1, p - 1 do
+    table.insert(player_circle, players[j])
+  end
+
+  self.room:arrangeSeats(player_circle)
+end
+
+--- 进行选将
 function GameLogic:chooseGenerals()
   local room = self.room
   local generalNum = room.settings.generalNum
@@ -105,7 +129,7 @@ function GameLogic:chooseGenerals()
   local lord_generals = {}
 
   if lord ~= nil then
-    room.current = lord
+    room:setCurrent(lord)
     local generals = room:getNGenerals(generalNum)
     lord_generals = room:askForGeneral(lord, generals, n)
     local lord_general, deputy
@@ -154,6 +178,7 @@ function GameLogic:buildPlayerCircle()
   players[#players].next = players[1]
 end
 
+--- 公布武将
 function GameLogic:broadcastGeneral()
   local room = self.room
   local players = room.players
@@ -265,7 +290,7 @@ function GameLogic:action()
     execGameEvent(GameEvent.Round)
     if room.game_finished then break end
     if table.every(room.players, function(p) return p.dead and p.rest == 0 end) then room:gameOver("") end
-    room.current = room.players[1]
+    room:setCurrent(room.players[1])
   end
 end
 
@@ -424,20 +449,20 @@ function GameLogic:start()
     local ce = self:getCurrentCleaner()
     local e = ce and (ce.id >= ne.id and ce or ne) or ne
 
-    if e == ne and e.killed then
-      e.interrupted = true
-      self:clearEvent(e)
-      coroutine.close(e._co)
-      e.status = "dead"
-      e = self:getCurrentCleaner()
-    end
-
     if not e then -- 没有事件，按理说不应该，平局处理
       self.room:sendLog{
         type = "#NoEventDraw",
         toast = true,
       }
       self.room:gameOver("")
+    end
+
+    if e == ne and e.killed then
+      e.interrupted = true
+      self:clearEvent(e)
+      coroutine.close(e._co)
+      e.status = "dead"
+      e = self:getCurrentCleaner()
     end
 
     -- ret, evt解释：
@@ -571,15 +596,16 @@ function GameLogic:getCurrentSkillName()
 end
 
 -- 在指定历史范围中找至多n个符合条件的事件
----@param eventType GameEvent @ 要查找的事件类型
+---@generic T: GameEvent
+---@param eventType T @ 要查找的事件类型
 ---@param n integer @ 最多找多少个
----@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param func fun(e: T): boolean? @ 过滤用的函数
 ---@param scope integer @ 查询历史范围，只能是当前阶段/回合/轮次
----@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+---@return T[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameLogic:getEventsOfScope(eventType, n, func, scope)
   scope = scope or Player.HistoryTurn
   local event = self:getCurrentEvent()
-  local start_event ---@type GameEvent
+  local start_event ---@type GameEvent?
   if scope == Player.HistoryGame then
     start_event = self.all_game_events[1]
   elseif scope == Player.HistoryRound then
@@ -594,11 +620,12 @@ function GameLogic:getEventsOfScope(eventType, n, func, scope)
 end
 
 -- 在指定历史范围中找符合条件的事件（逆序）
----@param eventType GameEvent @ 要查找的事件类型
----@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@generic T: GameEvent
+---@param eventType T @ 要查找的事件类型
+---@param func fun(e: T): boolean? @ 过滤用的函数
 ---@param n integer @ 最多找多少个
 ---@param end_id integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）
----@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+---@return T[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameLogic:getEventsByRule(eventType, n, func, end_id)
   local ret = {}
 	local events = self.event_recorder[eventType] or Util.DummyTable
@@ -616,10 +643,10 @@ end
 
 --- 获取实际的伤害事件
 ---@param n integer @ 最多找多少个
----@param func fun(e: GameEvent): boolean @ 过滤用的函数
+---@param func fun(e: GameEvent.Damage): boolean @ 过滤用的函数
 ---@param scope? integer @ 查询历史范围，只能是当前阶段/回合/轮次
 ---@param end_id? integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）
----@return GameEvent[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
+---@return GameEvent.Damage[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
 function GameLogic:getActualDamageEvents(n, func, scope, end_id)
   if not end_id then
     scope = scope or Player.HistoryTurn
@@ -657,7 +684,7 @@ function GameLogic:getActualDamageEvents(n, func, scope, end_id)
 
   if scope then
     local event = self:getCurrentEvent()
-    local start_event ---@type GameEvent
+    local start_event ---@type GameEvent?
     if scope == Player.HistoryGame then
       start_event = self.all_game_events[1]
     elseif scope == Player.HistoryRound then

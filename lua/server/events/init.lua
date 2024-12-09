@@ -61,10 +61,16 @@ table.assign(GameEventWrappers, tmp[2])
 
 for _, l in ipairs(Fk._custom_events) do
   local name, p, m, c, e = l.name, l.p, l.m, l.c, l.e
-  GameEvent.prepare_funcs[name] = p
-  GameEvent.functions[name] = m
-  GameEvent.cleaners[name] = c
-  GameEvent.exit_funcs[name] = e
+  -- GameEvent.prepare_funcs[name] = p
+  -- GameEvent.functions[name] = m
+  -- GameEvent.cleaners[name] = c
+  -- GameEvent.exit_funcs[name] = e
+  local custom = GameEvent:subclass(name)
+  custom.prepare = p
+  custom.main = m
+  custom.clear = c
+  custom.exit = e
+  GameEvent[name] = custom
 end
 
 return GameEventWrappers

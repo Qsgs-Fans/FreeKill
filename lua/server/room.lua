@@ -15,7 +15,6 @@
 ---@field public game_finished boolean @ 游戏是否已经结束
 ---@field public tag table<string, any> @ Tag清单，其实跟Player的标记是差不多的东西
 ---@field public general_pile string[] @ 武将牌堆，这是可用武将名的数组
----@field public disabled_packs string[] @ 未开启的扩展包名（是小包名，不是大包名）
 ---@field public logic GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
 ---@field public request_queue table<userdata, table>
 ---@field public request_self table<integer, integer>
@@ -23,6 +22,7 @@
 ---@field public skill_costs table<string, any> @ 存放skill.cost_data用
 ---@field public card_marks table<integer, any> @ 存放card.mark之用
 ---@field public current_cost_skill TriggerSkill? @ AI用
+---@field public _test_disable_delay boolean? 测试专用 会禁用delay和烧条
 local Room = AbstractRoom:subclass("Room")
 
 -- load classes used by the game
@@ -171,12 +171,6 @@ end
 function Room:__tostring()
   return string.format("<Room #%d>", self.id)
 end
-
---[[ 敢删就寄，算了
-function Room:__gc()
-  self.room:checkAbandoned()
-end
---]]
 
 --- 正式在这个房间中开始游戏。
 ---
@@ -338,8 +332,6 @@ end
 
 --- 从摸牌堆中获取若干张牌。
 ---
---- 注意了，这个函数会对牌堆进行实际操作，也就是说它返回一系列id后，牌堆中就会少这么多id。
----
 --- 如果牌堆中没有足够的牌可以获得，那么会触发洗牌；还是不够的话，游戏就平局。
 ---@param num integer @ 要获得的牌的数量
 ---@param from? string @ 获得牌的位置，可以是 ``"top"`` 或者 ``"bottom"``，表示牌堆顶还是牌堆底
@@ -363,12 +355,14 @@ function Room:getNCards(num, from)
     i = #self.draw_pile + 1 - num
     j = #self.draw_pile
   end
-  local cardIds = {}
-  for index = i, j, 1 do
-    table.insert(cardIds, table.remove(self.draw_pile, i))
-  end
+  -- local cardIds = {}
+  -- for index = i, j, 1 do
+  --   table.insert(cardIds, table.remove(self.draw_pile, i))
+  -- end
 
-  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
+  local cardIds = table.slice(self.draw_pile, i, j + 1)
+
+  -- self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
 
   return cardIds
 end
@@ -479,6 +473,14 @@ end
 function Room:setBanner(name, value)
   AbstractRoom.setBanner(self, name, value)
   self:doBroadcastNotify("SetBanner", json.encode{ name, value })
+end
+
+--- 设置房间的当前行动者
+---@param player ServerPlayer
+function Room:setCurrent(player)
+  AbstractRoom.setCurrent(self, player)
+  -- rawset(self, "current", player)
+  self:doBroadcastNotify("SetCurrent", json.encode{ player and player.id or nil })
 end
 
 ---@param player ServerPlayer
@@ -651,11 +653,8 @@ end
 --- 延迟一段时间。
 ---@param ms integer @ 要延迟的毫秒数
 function Room:delay(ms)
-  local start = os.getms()
-  self.delay_start = start
-  self.delay_duration = ms
-  self.in_delay = true
   self.room:delay(math.ceil(ms))
+  if self._test_disable_delay then return end
   coroutine.yield("__handleRequest", ms)
 end
 
@@ -1275,7 +1274,6 @@ function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prom
     residued_list = residueMap,
     expand_pile = expand_pile
   }
-  -- p(json.encode(residueMap))
 
   while maxNum > 0 and #_cards > 0 do
     data.max_num = maxNum
@@ -1287,7 +1285,9 @@ function Room:askForYiji(player, cards, targets, skillName, minNum, maxNum, prom
       for _, id in ipairs(give_cards) do
         table.insert(list[to], id)
         table.removeOne(_cards, id)
-        self:setCardMark(Fk:getCardById(id), "@DistributionTo", Fk:translate(self:getPlayerById(to).general))
+        local p = self:getPlayerById(to)
+        self:setCardMark(Fk:getCardById(id), "@DistributionTo",
+          Fk:translate(p.general == "anjiang" and "seat#" .. tostring(p.seat) or p.general))
       end
       minNum = math.max(0, minNum - #give_cards)
       maxNum = maxNum - #give_cards
@@ -1874,9 +1874,11 @@ function Room:askForGuanxing(player, cards, top_limit, bottom_limit, customNotif
 
   if not noPut then
     for i = #top, 1, -1 do
+      table.removeOne(self.draw_pile, top[i])
       table.insert(self.draw_pile, 1, top[i])
     end
     for i = 1, #bottom, 1 do
+      table.removeOne(self.draw_pile, bottom[i])
       table.insert(self.draw_pile, bottom[i])
     end
 
@@ -2555,33 +2557,10 @@ end
 -- 杂项函数
 
 function Room:adjustSeats()
-  local players = {}
-  local p = 0
-
-  for i = 1, #self.players do
-    if self.players[i].role == "lord" then
-      p = i
-      break
-    end
-  end
-  for j = p, #self.players do
-    table.insert(players, self.players[j])
-  end
-  for j = 1, p - 1 do
-    table.insert(players, self.players[j])
-  end
-
-  self.players = players
-
-  local player_circle = {}
-  for i = 1, #self.players do
-    self.players[i].seat = i
-    table.insert(player_circle, self.players[i].id)
-  end
-
-  self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+  self.logic:adjustSeats()
 end
 
+--- 令两名角色交换座位
 ---@param a ServerPlayer
 ---@param b ServerPlayer
 function Room:swapSeat(a, b)
@@ -2594,18 +2573,23 @@ function Room:swapSeat(a, b)
 
   players[ai] = b
   players[bi] = a
-  a.seat, b.seat = b.seat, a.seat
 
-  local player_circle = {}
-  for _, v in ipairs(players) do
-    table.insert(player_circle, v.id)
+  self:arrangeSeats()
+end
+
+--- 按输入的角色表重新改变座位。若无输入，仅更新角色座位UI
+---@param players? ServerPlayer[]
+function Room:arrangeSeats(players)
+  assert(players == nil or #players == #self.players)
+  players = players or self.players
+  self.players = players
+
+  for i = 1, #players do
+    players[i].seat = i
+    players[i].next = players[i + 1] or players[1]
   end
 
-  for i = 1, #players - 1 do
-    players[i].next = players[i + 1]
-  end
-  players[#players].next = players[1]
-
+  local player_circle = table.map(players, Util.IdMapper)
   self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
 end
 
@@ -2680,7 +2664,7 @@ function Room:gameOver(winner)
 
         self.room:updatePlayerWinRate(id, mode, p.role, result)
         self.room:updateGeneralWinRate(general, mode, p.role, result)
-        if p.deputyGeneral then
+        if p.deputyGeneral and p.deputyGeneral ~= "" then
           self.room:updateGeneralWinRate(p.deputyGeneral, mode, p.role, result)
         end
       end

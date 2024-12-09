@@ -11,18 +11,19 @@ function UsableSkill:initialize(name, frequency)
   frequency = frequency or Skill.NotFrequent
   Skill.initialize(self, name, frequency)
 
-  self.max_use_time = {9999, 9999, 9999, 9999}
+  self.max_use_time = { nil, nil, nil, nil }
 end
 
 -- 获得技能的最大使用次数
 ---@param player Player @ 使用者
 ---@param scope integer @ 查询历史范围（默认为回合）
----@param card Card @ 卡牌
----@param to Player @ 目标
----@return number @ 最大使用次数
+---@param card? Card @ 卡牌
+---@param to? Player @ 目标
+---@return number? @ 最大使用次数，nil就是无限
 function UsableSkill:getMaxUseTime(player, scope, card, to)
   scope = scope or Player.HistoryTurn
   local ret = self.max_use_time[scope]
+  if not ret then return nil end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   for _, skill in ipairs(status_skills) do
     local correct = skill:getResidueNum(player, self, scope, card, to)
@@ -37,10 +38,10 @@ end
 ---@param scope integer @ 查询历史范围（默认为回合）
 ---@param card? Card @ 牌，若没有牌，则尝试制造一张虚拟牌
 ---@param card_name? string @ 牌名
----@param to any @ 目标
+---@param to? Player @ 目标
 ---@return bool
 function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
-  if to and to.dead then return false end
+  if to and to.dead then return false end -- 一般情况不会对死人使用技能的……
   scope = scope or Player.HistoryTurn
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card then
@@ -50,11 +51,19 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
       card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
     end
   end
-  if not card_name and card then
-    card_name = card.trueName
-  end
+
+  local limit = self:getMaxUseTime(player, scope, card, to)
+  if not limit then return true end
   for _, skill in ipairs(status_skills) do
     if skill:bypassTimesCheck(player, self, scope, card, to) then return true end
+  end
+
+  if not card_name then
+    if card then
+      card_name = card.trueName
+    else ---坏了，不是卡的技能
+      return player:usedSkillTimes(self.name, scope) < limit
+    end
   end
 
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
@@ -77,7 +86,7 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
     return false
   end
 
-  return player:usedCardTimes(card_name, scope) < self:getMaxUseTime(player, scope, card, to) or
+  return player:usedCardTimes(card_name, scope) < limit or
   hasMark(card, MarkEnum.BypassTimesLimit, card_temp_suf) or
   hasMark(player, MarkEnum.BypassTimesLimit, temp_suf) or
   hasMark(to, MarkEnum.BypassTimesLimitTo, temp_suf)
@@ -111,6 +120,8 @@ function UsableSkill:onLose(player, is_death)
       moveReason = fk.ReasonPutIntoDiscardPile,
     })
   end
+
+  Skill.onLose(self, player, is_death)
 end
 
 return UsableSkill

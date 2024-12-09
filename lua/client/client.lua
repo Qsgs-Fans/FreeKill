@@ -307,6 +307,10 @@ function Client:enterRoom(_data)
   self.replaying = replaying
   self.replaying_show = showcards
 
+  -- FIXME: 应该在C++中修改，这种改法错大发了
+  -- FIXME: C++中加入房间时需要把Self也纳入players列表
+  local sp = Self.player
+  self.client:addPlayer(sp:getId(), sp:getScreenName(), sp:getAvatar())
   self.players = {Self}
   self.alive_players = {Self}
 
@@ -771,7 +775,7 @@ fk.client_callback["MoveCards"] = function(self, raw_moves)
 end
 
 fk.client_callback["ShowCard"] = function(self, data)
-  local from = data.from
+  -- local from = data.from
   local cards = data.cards
   local merged = {
     {
@@ -975,6 +979,12 @@ fk.client_callback["SetBanner"] = function(self, data)
   if string.sub(mark, 1, 1) == "@" then
     self:notifyUI("SetBanner", data)
   end
+end
+
+fk.client_callback["SetCurrent"] = function(self, data)
+  -- jsonData: [ int id ]
+  local playerId = data[1]
+  self:setCurrent(self:getPlayerById(playerId))
 end
 
 fk.client_callback["SetCardMark"] = function(self, data)
@@ -1182,19 +1192,20 @@ end
 fk.client_callback["Reconnect"] = function(self, data)
   local players = data.players
 
+  fk.client_callback["EnterLobby"](self, "")
+
   if not self.replaying then
-    local setup_data = players[tostring(data.you)].setup_data
-    self:setup(setup_data[1], setup_data[2], setup_data[3])
-    fk.client_callback["AddTotalGameTime"](self, { setup_data[1], setup_data[5] })
-
-    local enter_room_data = { data.timeout, data.settings }
-    table.insert(enter_room_data, 1, #data.circle)
-    fk.client_callback["EnterLobby"](self, "")
-    fk.client_callback["EnterRoom"](self, enter_room_data)
-
     self:startRecording()
     table.insert(self.record, {math.floor(os.getms() / 1000), false, "Reconnect", json.encode(data)})
   end
+
+  local setup_data = players[tostring(data.you)].setup_data
+  self:setup(setup_data[1], setup_data[2], setup_data[3])
+  fk.client_callback["AddTotalGameTime"](self, { setup_data[1], setup_data[5] })
+
+  local enter_room_data = { data.timeout, data.settings }
+  table.insert(enter_room_data, 1, #data.circle)
+  fk.client_callback["EnterRoom"](self, enter_room_data)
 
   loadRoomSummary(self, data)
 end
@@ -1203,16 +1214,16 @@ fk.client_callback["Observe"] = function(self, data)
   local players = data.players
 
   if not self.replaying then
-    local setup_data = players[tostring(data.you)].setup_data
-    self:setup(setup_data[1], setup_data[2], setup_data[3])
-
-    local enter_room_data = { data.timeout, data.settings }
-    table.insert(enter_room_data, 1, #data.circle)
-    fk.client_callback["EnterRoom"](self, enter_room_data)
-
     self:startRecording()
     table.insert(self.record, {math.floor(os.getms() / 1000), false, "Observe", json.encode(data)})
   end
+
+  local setup_data = players[tostring(data.you)].setup_data
+  self:setup(setup_data[1], setup_data[2], setup_data[3])
+
+  local enter_room_data = { data.timeout, data.settings }
+  table.insert(enter_room_data, 1, #data.circle)
+  fk.client_callback["EnterRoom"](self, enter_room_data)
 
   loadRoomSummary(self, data)
 end

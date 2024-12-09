@@ -236,15 +236,20 @@ end
 
 -- Table
 
----@param func fun(element, index, array)
-function table:forEach(func)
+---@generic T
+---@param self T[]
+---@param func fun(element: T, index: integer, array: T[])
+function table.forEach(self, func)
   for i, v in ipairs(self) do
     func(v, i, self)
   end
 end
 
----@param func fun(element, index, array): any
-function table:every(func)
+---@generic T
+---@param self T[]
+---@param func fun(element: T, index: integer, array: T[]): boolean?
+---@return boolean
+function table.every(self, func)
   for i, v in ipairs(self) do
     if not func(v, i, self) then
       return false
@@ -253,8 +258,11 @@ function table:every(func)
   return true
 end
 
----@param func fun(element, index, array): any
-function table:find(func)
+---@generic T
+---@param self T[]
+---@param func fun(element: T, index: integer, array: T[]): boolean?
+---@return T?
+function table.find(self, func)
   for i, v in ipairs(self) do
     if func(v, i, self) then
       return v
@@ -265,7 +273,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param func fun(element, index, array): any
+---@param func fun(element: T, index: integer, array: T[]): boolean?
 ---@return T[]
 function table.filter(self, func)
   local ret = {}
@@ -277,8 +285,11 @@ function table.filter(self, func)
   return ret
 end
 
----@param func fun(element, index, array): any
-function table:map(func)
+---@generic T, T2
+---@param self T[]
+---@param func fun(element: T, index: integer, array: T[]): T2
+---@return T2[]
+function table.map(self, func)
   local ret = {}
   for i, v in ipairs(self) do
     table.insert(ret, func(v, i, self))
@@ -297,14 +308,21 @@ function table.reverse(self)
   return ret
 end
 
-function table:contains(element)
+---@generic T
+---@param self T[]
+---@return boolean
+function table.contains(self, element)
   if #self == 0 then return false end
   for _, e in ipairs(self) do
     if e == element then return true end
   end
+  return false
 end
 
-function table:shuffle(seed)
+---@generic T
+---@param self T[]
+---@param seed integer
+function table.shuffle(self, seed)
   seed = seed or math.random(2 << 32 - 1)
   local rnd = fk.QRandomGenerator(seed)
   if #self == 2 then
@@ -319,13 +337,21 @@ function table:shuffle(seed)
   end
 end
 
-function table:insertTable(list)
+---@generic T
+---@param self T[]
+---@param list T[]
+function table.insertTable(self, list)
   for _, e in ipairs(list) do
     table.insert(self, e)
   end
 end
 
-function table:indexOf(value, from)
+---@generic T
+---@param self T[]
+---@param value T
+---@param from? integer
+---@return integer
+function table.indexOf(self, value, from)
   from = from or 1
   for i = from, #self do
     if self[i] == value then return i end
@@ -333,7 +359,11 @@ function table:indexOf(value, from)
   return -1
 end
 
-function table:removeOne(element)
+---@generic T
+---@param self T[]
+---@param element T
+---@return boolean
+function table.removeOne(self, element)
   if #self == 0 or type(self[1]) ~= type(element) then return false end
 
   for i = 1, #self do
@@ -363,6 +393,9 @@ function table.clone(self)
 end
 
 -- similar to table.clone but not recursively
+---@generic T
+---@param self T
+---@return T
 function table.simpleClone(self)
   local ret = {}
   for k, v in pairs(self) do
@@ -389,22 +422,31 @@ function table.cloneWithoutClass(self)
 end
 
 -- if table does not contain the element, we insert it
-function table:insertIfNeed(element)
+---@generic T
+---@param self T[]
+---@param element T
+---@return boolean
+function table.insertIfNeed(self, element)
   if not table.contains(self, element) then
     table.insert(self, element)
     return true
   end
+  return false
 end
 
 -- similar to table.insertTable but insertIfNeed inside
-function table:insertTableIfNeed(list)
+---@generic T
+---@param self T[]
+---@param list T[]
+function table.insertTableIfNeed(self, list)
   for _, e in ipairs(list) do
     table.insertIfNeed(self, e)
   end
 end
 
 ---@generic T
----@return T[]
+---@param ... T
+---@return T
 function table.connect(...)
   local ret = {}
   for _, v in ipairs({...}) do
@@ -414,7 +456,8 @@ function table.connect(...)
 end
 
 ---@generic T
----@return T[]
+---@param ... T
+---@return T
 function table.connectIfNeed(...)
   local ret = {}
   for _, v in ipairs({...}) do
@@ -427,7 +470,7 @@ end
 ---@param self T[]
 ---@param n? integer
 ---@return T|T[]
-function table:random(n)
+function table.random(self, n)
   local n0 = n
   n = n or 1
   if #self == 0 then return n0 ~= nil and {} or nil end
@@ -441,7 +484,12 @@ function table:random(n)
   return n0 == nil and ret[1] or ret
 end
 
-function table:slice(begin, _end)
+--- 截取[begin, end)段（end是开区间）
+---@generic T
+---@param self T[]
+---@param begin? integer
+---@param _end? integer
+function table.slice(self, begin, _end)
   local len = #self
   begin = begin or 1
   _end = _end or len + 1
@@ -457,7 +505,10 @@ function table:slice(begin, _end)
   return ret
 end
 
-function table:assign(targetTbl)
+---@generic T, T2
+---@param self table<T, T2>
+---@param targetTbl table<T, T2>
+function table.assign(self, targetTbl)
   for key, value in pairs(targetTbl) do
     if self[key] then
       if type(value) == "table" then
@@ -471,17 +522,21 @@ function table:assign(targetTbl)
   end
 end
 
-function table:hasIntersection(table)
+---@generic T
+---@param self T[]
+---@param tbl T[]
+function table.hasIntersection(self, tbl)
   local hash = {}
   for _, value in ipairs(self) do
     hash[value] = true
   end
-  for _, value in ipairs(table) do
+  for _, value in ipairs(tbl) do
     if hash[value] then return true end
   end
   return false
 end
 
+---@param t table
 function table.empty(t)
   return next(t) == nil
 end

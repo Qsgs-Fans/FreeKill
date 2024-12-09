@@ -199,6 +199,29 @@ end
 
 -- misc
 
+--- 展示一堆牌（注意，这样子是不会过锁视技的）
+---@param cards integer|integer[]|Card|Card[] @ 要展示的牌
+---@param from? Player
+function CardManager:showCards(cards, from)
+  cards = Card:getIdList(cards)
+  if from then from = from.id end
+  self:sendLog{
+    type = "#ShowCard",
+    from = from,
+    card = cards,
+  }
+  self:doBroadcastNotify("ShowCard", json.encode{
+    from = from,
+    cards = cards,
+  })
+  self:sendFootnote(cards, {
+    type = "##ShowCard",
+    from = from,
+  })
+end
+
+--- 准备房间牌堆
+---@param seed integer @ 随机种子
 function CardManager:prepareDrawPile(seed)
   local gamemode = Fk.game_modes[self.settings.gameMode]
   assert(gamemode)

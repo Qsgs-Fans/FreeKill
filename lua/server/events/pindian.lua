@@ -88,17 +88,19 @@ function Pindian:main()
 
   if #targets ~= 0 then
     local req = Request:new(targets, "AskForUseActiveSkill")
-    for _, p in ipairs(targets) do req:setData(p, data) end
+    for _, p in ipairs(targets) do
+      req:setData(p, data)
+      req:setDefaultReply(p, p:getCardIds(Player.Hand)[1])
+    end
     req.focus_text = "AskForPindian"
 
     for _, p in ipairs(targets) do
       local _pindianCard
       local result = req:getResult(p)
-      if result ~= "" then
-        local replyCard = result.card
-        _pindianCard = Fk:getCardById(replyCard.subcards[1])
+      if type(result) == "table" then
+        _pindianCard = Fk:getCardById(result.card.subcards[1])
       else
-        _pindianCard = Fk:getCardById(p:getCardIds(Player.Hand)[1])
+        _pindianCard = Fk:getCardById(result)
       end
 
       local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)

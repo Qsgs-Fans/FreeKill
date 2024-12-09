@@ -863,15 +863,49 @@ extension:addCards({
 })
 
 fk.MarkArmorNullified = "mark__armor_nullified"
+fk.MarkArmorInvalidFrom = "mark__armor_invalid_from"
+fk.MarkArmorInvalidTo = "mark__armor_invalid_to"
 
 local armorInvalidity = fk.CreateInvaliditySkill {
   name = "armor_invalidity",
   global = true,
-  invalidity_func = function(self, from, skill)
-    if from:getMark(fk.MarkArmorNullified) > 0 and skill.attached_equip then
-      for _, card in ipairs(Fk.cards) do
-        if card.sub_type == Card.SubtypeArmor and skill.attached_equip == card.name then
-          return true
+  invalidity_func = function(self, player, skill)
+    if skill.attached_equip and Fk:cloneCard(skill.attached_equip).sub_type == Card.SubtypeArmor then
+      if player:getMark(fk.MarkArmorNullified) > 0 then return true end
+
+      --无视防具（规则集版）！
+      if RoomInstance then
+        local logic = RoomInstance.logic
+        local event = logic:getCurrentEvent()
+        local from = nil
+        repeat
+          if event.event == GameEvent.SkillEffect then
+            if not event.data[3].cardSkill then
+              from = event.data[2]
+              break
+            end
+          elseif event.event == GameEvent.Damage then
+            local damage = event.data[1]
+            if damage.to.id ~= player.id then return false end
+            from = damage.from
+            break
+          elseif event.event == GameEvent.UseCard then
+            local use = event.data[1]
+            if not table.contains(TargetGroup:getRealTargets(use.tos), player.id) then return false end
+            from = RoomInstance:getPlayerById(use.from)
+            break
+          end
+          event = event.parent
+        until event == nil
+        if from then
+          local suffixes = {""}
+          table.insertTable(suffixes, MarkEnum.TempMarkSuffix)
+          for _, suffix in ipairs(suffixes) do
+            if table.contains(from:getTableMark(fk.MarkArmorInvalidTo .. suffix), player.id) or
+            table.contains(player:getTableMark(fk.MarkArmorInvalidFrom .. suffix), from.id) then
+              return true
+            end
+          end
         end
       end
     end
@@ -885,21 +919,86 @@ local qingGangSkill = fk.CreateTriggerSkill{
   frequency = Skill.Compulsory,
   events = { fk.TargetSpecified },
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(self) and
-      data.card and data.card.trueName == "slash"
+    return target == player and player:hasSkill(self) and data.card and data.card.trueName == "slash" and
+    not player.room:getPlayerById(data.to).dead
+  end,
+  on_cost = function(self, event, target, player, data)
+    self.cost_data = { tos = {data.to} }
+    player.room:doIndicate(player.id, {data.to})
+    return true
   end,
   on_use = function(self, event, target, player, data)
-    local room = player.room
-    local to = room:getPlayerById(data.to)
-    local use_event = room.logic:getCurrentEvent():findParent(GameEvent.UseCard, true)
-    if use_event == nil then return end
-    room:addPlayerMark(to, fk.MarkArmorNullified)
-    use_event:addCleaner(function()
-      room:removePlayerMark(to, fk.MarkArmorNullified)
-    end)
+    player.room:getPlayerById(data.to):addQinggangTag(data)
   end,
 }
 Fk:addSkill(qingGangSkill)
+
+local qingGangEffect = fk.CreateTriggerSkill{
+  name = "qinggang_effect",
+  global = true,
+
+  --[[
+    1.对此目标的使用流程结束（FIXME：无法区分重复目标）
+    2.被此目标抵消
+    3.防止对此目标的效果伤害（FIXME：无法实现，取消此时点，与1合并清理）
+    4.确定对此目标的效果伤害的最终伤害值（FIXME：意义不明，改为因此伤害而扣减体力前）
+  ]]
+
+  refresh_events = {
+    fk.CardEffectFinished,
+    fk.CardEffectCancelledOut,
+    fk.DamageFinished,
+    fk.BeforeHpChanged,
+    fk.CardUseFinished
+  },
+  can_refresh = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.CardUseFinished then
+      return data.extra_data and data.extra_data.qinggang_tag and table.contains(data.extra_data.qinggang_tag, player.id)
+    end
+    local logic = room.logic
+    local game_event = logic:getCurrentEvent()
+    if event == fk.BeforeHpChanged then
+      if game_event.event ~= GameEvent.ChangeHp then return false end
+      local hpChangedData = game_event.data
+      if hpChangedData[1] ~= player or hpChangedData[3] ~= "damage" then return false end
+      game_event = game_event.parent
+      if game_event.event ~= GameEvent.Damage then return false end
+      game_event = game_event.parent
+      if game_event.event ~= GameEvent.SkillEffect or game_event.data[3].trueName ~= "slash_skill" then return false end
+      game_event = game_event.parent
+    elseif event == fk.DamageFinished then
+      if data.card == nil or data.to ~= player then return false end
+      if game_event.event ~= GameEvent.SkillEffect or game_event.data[3].trueName ~= "slash_skill" then return false end
+      game_event = game_event.parent
+    end
+    if game_event.event ~= GameEvent.CardEffect then return false end
+    local effect = game_event.data[1]
+    if player.id ~= effect.to or effect.qinggang_clean then return false end
+    game_event = game_event.parent
+    if game_event.event ~= GameEvent.UseCard then return false end
+    local use = game_event.data[1]
+
+    return use.additionalEffect == 0 and
+      use.extra_data and use.extra_data.qinggang_tag and table.contains(use.extra_data.qinggang_tag, player.id)
+  end,
+  on_refresh = function(self, event, target, player, data)
+    local room = player.room
+    if event == fk.CardUseFinished then
+      while table.removeOne(data.extra_data.qinggang_tag, player.id) do
+        room:removePlayerMark(player, fk.MarkArmorNullified)
+      end
+    else
+      local logic = room.logic
+      local cardEffectEvent = logic:getCurrentEvent():findParent(GameEvent.CardEffect, true)
+      local effect = cardEffectEvent.data[1]
+      effect.qinggang_clean = true
+      table.removeOne(effect.extra_data.qinggang_tag, player.id)
+      room:removePlayerMark(player, fk.MarkArmorNullified)
+    end
+  end,
+}
+Fk:addSkill(qingGangEffect)
 
 local qingGang = fk.CreateWeapon{
   name = "qinggang_sword",

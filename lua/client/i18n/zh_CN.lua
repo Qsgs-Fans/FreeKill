@@ -449,7 +449,7 @@ Fk:loadTranslationTable{
   --utility
   ["draw1"] = "摸一张牌",
   ["draw2"] = "摸两张牌",
-  ["draw3"] = "摸两张牌",
+  ["draw3"] = "摸三张牌",
   ["recover"] = "回复1点体力",
   ["loseHp"] = "失去1点体力",
   ["damage1"] = "造成1点伤害",

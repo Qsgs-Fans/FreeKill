@@ -412,8 +412,13 @@ local vineSkill = fk.CreateTriggerSkill{
       (effect.card.name == "slash" or effect.card.name == "savage_assault" or
       effect.card.name == "archery_attack")
   end,
-  on_use = function(_, event, _, player, data)
+  on_use = function(self, event, _, player, data)
     local room = player.room
+    room:sendLog{
+      type = "#InvokeSkill",
+      from = player.id,
+      arg = self.name,
+    }
     if event == fk.DamageInflicted then
       room:broadcastPlaySound("./packages/maneuvering/audio/card/vineburn")
       room:setEmotion(player, "./packages/maneuvering/image/anim/vineburn")
@@ -439,12 +444,35 @@ local silverLionSkill = fk.CreateTriggerSkill{
   name = "#silver_lion_skill",
   attached_equip = "silver_lion",
   frequency = Skill.Compulsory,
-  events = {fk.DamageInflicted},
-  can_trigger = function(self, _, target, player, data)
-    return target == player and player:hasSkill(self) and data.damage > 1
+  events = {fk.DamageInflicted, fk.AfterCardsMove},
+  can_trigger = function(self, event, target, player, data)
+    if event == fk.DamageInflicted then
+      return target == player and player:hasSkill(self) and data.damage > 1
+    else
+      if player.dead or not player:isWounded() then return false end
+      for _, move in ipairs(data) do
+        if move.from == player.id then
+          for _, info in ipairs(move.moveInfo) do
+            if info.fromArea == Card.PlayerEquip and Fk:getCardById(info.cardId).name == self.attached_equip then
+              return self:isEffectable(player)
+            end
+          end
+        end
+      end
+    end
   end,
-  on_use = function(_, _, _, _, data)
-    data.damage = 1
+  on_use = function(self, event, _, player, data)
+    if event == fk.DamageInflicted then
+      data.damage = 1
+    else
+      local room = player.room
+      room:recover({
+        who = player,
+        num = 1,
+        recoverBy = player,
+        skillName = self.name
+      })
+    end
   end,
 }
 Fk:addSkill(silverLionSkill)
@@ -453,18 +481,6 @@ local silverLion = fk.CreateArmor{
   suit = Card.Club,
   number = 1,
   equip_skill = silverLionSkill,
-  on_uninstall = function(self, room, player)
-    Armor.onUninstall(self, room, player)
-    if player:isAlive() and player:isWounded() and self.equip_skill:isEffectable(player) then
-      room:broadcastPlaySound("./packages/maneuvering/audio/card/silver_lion")
-      room:setEmotion(player, "./packages/maneuvering/image/anim/silver_lion")
-      room:recover{
-        who = player,
-        num = 1,
-        skillName = self.name
-      }
-    end
-  end,
 }
 extension:addCard(silverLion)
 

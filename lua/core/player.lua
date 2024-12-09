@@ -752,6 +752,10 @@ function Player:usedSkillTimes(skill_name, scope)
   return self.skillUsedHistory[skill_name][scope]
 end
 
+function Player:isAlive()
+  return self.dead == false
+end
+
 --- 获取玩家是否无手牌。
 function Player:isKongcheng()
   return #self:getCardIds(Player.Hand) == 0
@@ -1158,7 +1162,7 @@ end
 
 
 --- 获取角色未被废除的装备栏
----@param subtype? string @ 指定的装备栏类型，填空为所有装备栏
+---@param subtype? integer @ 指定的装备栏类型，填空为所有装备栏
 ---@return string[]
 function Player:getAvailableEquipSlots(subtype)
   local tempSlots = table.simpleClone(self.equipSlots)
@@ -1196,7 +1200,8 @@ function Player:removeBuddy(other)
 end
 
 function Player:isBuddy(other)
-  if Fk:currentRoom().observing then return false end
+  local room = Fk:currentRoom()
+  if room.observing and not room.replaying then return false end
   local id = type(other) == "number" and other or other.id
   return self.id == id or table.contains(self.buddy_list, id)
 end

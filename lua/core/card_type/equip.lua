@@ -72,7 +72,7 @@ function EquipCard:getEquipSkills(player)
 end
 
 function EquipCard:clone(suit, number)
-  local ret = Card.clone(self, suit, number)
+  local ret = Card.clone(self, suit, number) --[[@as EquipCard]]
   ret.equip_skill = self.equip_skill
   ret.equip_skills = self.equip_skills
   ret.dynamicEquipSkills = self.dynamicEquipSkills
@@ -93,7 +93,7 @@ function Weapon:initialize(name, suit, number, attackRange)
 end
 
 function Weapon:clone(suit, number)
-  local ret = EquipCard.clone(self, suit, number)
+  local ret = EquipCard.clone(self, suit, number) --[[@as Weapon]]
   ret.attack_range = self.attack_range
   ret.dynamicAttackRange = self.dynamicAttackRange
   return ret

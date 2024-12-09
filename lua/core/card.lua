@@ -239,7 +239,7 @@ function Card:matchPattern(pattern)
   return Exppattern:Parse(pattern):match(self)
 end
 
---- 获取卡牌花色并返回花色文字描述（如 黑桃、红桃、梅花、方块）或者符号（如♠♥♣♦，带颜色）。
+--- 获取卡牌花色并返回花色文字描述（如``spade``黑桃、``heart``红桃、``club``梅花、``diamond``方块）或者符号（如♠♥♣♦，带颜色）。
 ---@param symbol? boolean @ 是否以符号形式显示
 ---@return string @ 描述花色的字符串
 function Card:getSuitString(symbol)
@@ -259,7 +259,7 @@ function Card:getSuitString(symbol)
   return symbol and "log_" .. ret or ret
 end
 
---- 获取卡牌颜色并返回点数颜色描述（例如黑色/红色/无色）。
+--- 获取卡牌颜色并返回点数颜色描述（例如``black``黑色/``red``红色/``nocolor``无色）。
 ---@return string @ 描述颜色的字符串
 function Card:getColorString()
   local color = self.color
@@ -273,7 +273,7 @@ function Card:getColorString()
   return "unknown"
 end
 
---- 获取卡牌类型并返回类型描述（例如基本牌/锦囊牌/装备牌）。
+--- 获取卡牌类型并返回类型描述（例如``basic``基本牌/``trick``锦囊牌/``equip``装备牌）。
 function Card:getTypeString()
   local t = self.type
   if t == Card.TypeBasic then

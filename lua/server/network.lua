@@ -265,7 +265,11 @@ function Request:ask()
 
     -- 需要等待呢，等待被唤醒吧，唤醒后继续下一次轮询检测
     if not changed then
-      resume_reason = coroutine.yield("__handleRequest")
+      if room._test_disable_delay then
+        resume_reason = "request_timer"
+      else
+        resume_reason = coroutine.yield("__handleRequest")
+      end
     end
   end
 

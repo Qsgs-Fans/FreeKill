@@ -135,10 +135,6 @@ function ServerPlayer:reconnect()
   room:broadcastProperty(self, "state")
 end
 
-function ServerPlayer:isAlive()
-  return self.dead == false
-end
-
 function ServerPlayer:turnOver()
   if self.room.logic:trigger(fk.BeforeTurnOver, self) then
     return
@@ -156,7 +152,9 @@ function ServerPlayer:turnOver()
   self.room.logic:trigger(fk.TurnedOver, self)
 end
 
---- 令一名角色展示一些牌，请勿用于展示不属于该角色的牌
+--- 令一名角色展示一些牌
+---
+--- 因为要过锁视技，最好不要展示不属于你的牌
 ---@param cards integer|integer[]|Card|Card[]
 function ServerPlayer:showCards(cards)
   cards = Card:getIdList(cards)
@@ -165,19 +163,20 @@ function ServerPlayer:showCards(cards)
   end
 
   local room = self.room
-  room:sendLog{
-    type = "#ShowCard",
-    from = self.id,
-    card = cards,
-  }
-  room:doBroadcastNotify("ShowCard", json.encode{
-    from = self.id,
-    cards = cards,
-  })
-  room:sendFootnote(cards, {
-    type = "##ShowCard",
-    from = self.id,
-  })
+  -- room:sendLog{
+  --   type = "#ShowCard",
+  --   from = self.id,
+  --   card = cards,
+  -- }
+  -- room:doBroadcastNotify("ShowCard", json.encode{
+  --   from = self.id,
+  --   cards = cards,
+  -- })
+  -- room:sendFootnote(cards, {
+  --   type = "##ShowCard",
+  --   from = self.id,
+  -- })
+  self.room:showCards(cards, self)
 
   room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end
@@ -272,7 +271,8 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
   room:broadcastProperty(self, "phase")
 end
 
----@param phase_table? Phase[]
+--- 执行回合的内容，即依次执行额定阶段
+---@param phase_table? Phase[] @ 回合的额定阶段，填空则为正常流程
 function ServerPlayer:play(phase_table)
   phase_table = phase_table or {}
   if #phase_table > 0 then
@@ -403,7 +403,7 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
   }
 
   local current = room.current
-  room.current = self
+  room:setCurrent(self)
 
   room:addTableMark(self, "_extra_turn_count", skillName)
 
@@ -415,7 +415,7 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
     room:setPlayerMark(self, "_extra_turn_count", mark)
   end
 
-  room.current = current
+  room:setCurrent(current)
 end
 
 --- 当前是否处于额外的回合。
@@ -880,6 +880,20 @@ function ServerPlayer:removeBuddy(other)
   end
   Player.removeBuddy(self, other)
   self.room:doBroadcastNotify("RmBuddy", json.encode{ self.id, other.id })
+end
+
+-- 青釭剑
+
+---类〖青釭剑〗的无视防具效果（注意仅能在onAim的四个时机中使用）
+---@param data AimStruct
+function ServerPlayer:addQinggangTag(data)
+  if not data.qinggang_used then
+    data.qinggang_used = true
+    self.room:addPlayerMark(self, fk.MarkArmorNullified)
+    data.extra_data = data.extra_data or {}
+    data.extra_data.qinggang_tag = data.extra_data.qinggang_tag or {}
+    table.insert(data.extra_data.qinggang_tag, data.to)
+  end
 end
 
 return ServerPlayer

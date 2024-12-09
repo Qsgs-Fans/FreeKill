@@ -16,7 +16,7 @@
 /*.kdev4
 /.cache/
 /tags
-/.luarc.json
+# /.luarc.json
 /.qmllint.ini
 
 # file produced by game

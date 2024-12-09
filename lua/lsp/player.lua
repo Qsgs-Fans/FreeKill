@@ -3,23 +3,79 @@
 ---@meta
 
 ---@class fk.Player
-FPlayer = {}
+---@field private id integer
+---@field private screenName string
+---@field private avatar string
+---@field private state integer
+---@field private died boolean
+---@field public _fake_router fk.Client
+local FPlayer = {}
 
-function FPlayer:getId()end
-function FPlayer:getScreenName()end
-function FPlayer:getAvatar()end
+---@return integer
+function FPlayer:getId()
+  return self.id
+end
 
----@class fk.ServerPlayer : fk.Player
-FServerPlayer = {}
+---@param id integer
+function FPlayer:setId(id)
+  self.id = id
+end
 
-function FServerPlayer:doRequest(command,jsonData,timeout)end
-function FServerPlayer:waitForReply(timeout)end
-function FServerPlayer:doNotify(command,jsonData)end
-function FServerPlayer:setBusy(_) end
-function FServerPlayer:isBusy(_) end
-function FServerPlayer:setThinking(_) end
+---@return string
+function FPlayer:getScreenName()
+  return self.screenName
+end
 
-function FServerPlayer:getState() end
+---@param name string
+function FPlayer:setScreenName(name)
+  self.screenName = name
+end
 
----@type any
-fk.Self = nil
+---@return string
+function FPlayer:getAvatar()
+  return self.avatar
+end
+
+---@param avatar string
+function FPlayer:setAvatar(avatar)
+  self.avatar = avatar
+end
+
+---@return integer
+function FPlayer:getTotalGameTime()
+  return 0
+end
+
+---@param toAdd integer
+function FPlayer:addTotalGameTime(toAdd) end
+
+---@return integer
+function FPlayer:getState()
+  return self.state
+end
+
+---@param state integer
+function FPlayer:setState(state)
+  self.state = state
+end
+
+---@return integer[]
+function FPlayer:getGameData()
+end
+
+---@param total integer
+---@param win integer
+---@param run integer
+function FPlayer:setGameData(total, win, run) end
+
+---@return boolean
+function FPlayer:isDied()
+  return self.died
+end
+
+---@param died boolean
+function FPlayer:setDied(died)
+  self.died = died
+end
+
+return FPlayer
