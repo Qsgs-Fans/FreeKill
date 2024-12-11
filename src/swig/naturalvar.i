@@ -88,8 +88,8 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
     case LUA_TTABLE: {
       auto p = lua_topointer(L, index);
       if (stack[p]) {
-        luaL_error(L, "circular reference detected");
-        return QVariant(); // won't return
+        qCritical("circular reference detected");
+        return QVariant();
       }
       stack[p] = true;
 
@@ -104,7 +104,7 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
         lua_pushnil(L);
         while (lua_next(L, index) != 0) {
           if (lua_type(L, -2) != LUA_TSTRING) {
-            luaL_error(L, "key of object must be string");
+            qCritical("key of object must be string");
             return QVariant();
           }
 
@@ -135,9 +135,9 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
 
     // ignore function, userdata and thread
     default:
-      luaL_error(L, "unexpected value type %s", lua_typename(L, tp));
+      qCritical("unexpected value type %s", lua_typename(L, tp));
   }
-  return QVariant(); // won't return
+  return QVariant();
 }
 %}
 
