@@ -3,15 +3,12 @@
 // Make the base classes look like "complete"
 
 %nodefaultctor QObject;
-%nodefaultdtor QObject;
 class QObject {};
 
 %nodefaultctor QThread;
-%nodefaultdtor QThread;
 class QThread {};
 
 %nodefaultctor QList;
-%nodefaultdtor QList;
 template <class T>
 class QList {
 public:
