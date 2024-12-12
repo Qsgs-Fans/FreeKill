@@ -13,7 +13,7 @@ class RoomBase : public QObject {
   ServerPlayer *findPlayer(int id) const;
 
   void doBroadcastNotify(const QList<ServerPlayer *> targets,
-                         const QString &command, const QString &jsonData);
+                         const QByteArray &command, const QByteArray &jsonData);
 
   void chat(ServerPlayer *sender, const QString &jsonData);
 

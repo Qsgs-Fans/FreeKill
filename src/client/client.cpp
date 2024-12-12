@@ -119,13 +119,13 @@ void Client::setLoginInfo(const QString &username, const QString &password) {
 
 void Client::replyToServer(const QString &command, const QString &jsonData) {
   int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;
-  router->reply(type, command, jsonData);
+  router->reply(type, command.toUtf8(), jsonData.toUtf8());
 }
 
 void Client::notifyServer(const QString &command, const QString &jsonData) {
   int type =
       Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
-  router->notify(type, command, jsonData);
+  router->notify(type, command.toUtf8(), jsonData.toUtf8());
 }
 
 void Client::callLua(const QString& command, const QString& json_data, bool isRequest) {

@@ -197,7 +197,7 @@ void Shell::msgCommand(QStringList &list) {
   }
 
   auto msg = list.join(' ');
-  ServerInstance->broadcast("ServerMessage", msg);
+  ServerInstance->broadcast("ServerMessage", msg.toUtf8());
 }
 
 static void banAccount(Sqlite3 *db, const QString &name, bool banned) {

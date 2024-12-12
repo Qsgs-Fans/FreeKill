@@ -78,8 +78,8 @@ public:
 
   Sqlite3 *getDatabase();
 
-  void broadcast(const QString &command, const QString &jsonData);
-  void sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg);
+  void broadcast(const QByteArray &command, const QByteArray &jsonData);
+  void sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg);
   void setupPlayer(ServerPlayer *player, bool all_info = true);
   bool isListening;
 

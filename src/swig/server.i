@@ -53,10 +53,10 @@ public:
 %nodefaultdtor ServerPlayer;
 class ServerPlayer : public Player {
 public:
-  void doRequest(const QString &command,
-           const QString &json_data, int timeout, long long timestamp = -1);
+  void doRequest(const QByteArray &command,
+           const QByteArray &json_data, int timeout, long long timestamp = -1);
   QString waitForReply(int timeout);
-  void doNotify(const QString &command, const QString &json_data);
+  void doNotify(const QByteArray &command, const QByteArray &json_data);
 
   bool thinking();
   void setThinking(bool t);

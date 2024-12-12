@@ -40,7 +40,7 @@ void Lobby::updateAvatar(ServerPlayer *sender, const QString &jsonData) {
       .arg(sender->getId());
     ServerInstance->getDatabase()->exec(sql);
     sender->setAvatar(avatar);
-    sender->doNotify("UpdateAvatar", avatar);
+    sender->doNotify("UpdateAvatar", avatar.toUtf8());
   }
 }
 
@@ -90,7 +90,7 @@ void Lobby::getRoomConfig(ServerPlayer *sender, const QString &jsonData) {
   if (room) {
     auto settings = room->getSettings();
     // 手搓JSON数组 跳过编码解码
-    sender->doNotify("GetRoomConfig", QString("[%1,%2]").arg(roomId).arg(settings));
+    sender->doNotify("GetRoomConfig", QString("[%1,%2]").arg(roomId).arg(settings).toUtf8());
   } else {
     sender->doNotify("ErrorMsg", "no such room");
   }
