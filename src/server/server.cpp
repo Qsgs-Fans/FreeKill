@@ -354,7 +354,7 @@ void Server::processRequest(const QByteArray &msg) {
 
 void Server::readConfig() {
   QFile file("freekill.server.config.json");
-  QByteArray json = "{}";
+  QByteArray json = QByteArrayLiteral("{}");
   if (file.open(QIODevice::ReadOnly)) {
     json = file.readAll();
   }

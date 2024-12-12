@@ -304,7 +304,7 @@ void Room::delay(int ms) {
 
 bool Room::isOutdated() {
   bool ret = md5 != server->getMd5();
-  if (ret) md5 = "";
+  if (ret) md5 = QStringLiteral("");
   return ret;
 }
 

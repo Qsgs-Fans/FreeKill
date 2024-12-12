@@ -352,15 +352,15 @@ int freekill_main(int argc, char *argv[]) {
 
   QString system;
 #if defined(Q_OS_ANDROID)
-  system = "Android";
+  system = QStringLiteral("Android");
 #elif defined(Q_OS_WIN32)
   qputenv("QT_MEDIA_BACKEND", "windows");
-  system = "Win";
+  system = QStringLiteral("Win");
   ::system("chcp 65001");
 #elif defined(Q_OS_LINUX)
-  system = "Linux";
+  system = QStringLiteral("Linux");
 #else
-  system = "Other";
+  system = QStringLiteral("Other");
 #endif
   root->setContextProperty("OS", system);
 

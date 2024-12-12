@@ -61,7 +61,7 @@ public:
     @param settings 表示JSON对象的字符串，用作房间配置
     */
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
-                  int timeout = 15, const QByteArray &settings = "{}");
+                  int timeout = 15, const QByteArray &settings = QByteArrayLiteral("{}"));
 
   void removeRoom(int id); /// 单纯从表中删除指针 内存由对应thread管理
 

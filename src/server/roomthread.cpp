@@ -67,7 +67,7 @@ bool RoomThread::isOutdated() {
   if (ret) {
     // 让以后每次都outdate
     // 不然反复disable/enable的情况下会出乱子
-    md5 = "";
+    md5 = QStringLiteral("");
   }
   return ret;
 }

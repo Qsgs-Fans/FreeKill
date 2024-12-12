@@ -61,7 +61,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
   expectedReplyId = requestId;
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
-  m_reply = "__notready";
+  m_reply = QStringLiteral("__notready");
   replyMutex.unlock();
 
   QJsonArray body;

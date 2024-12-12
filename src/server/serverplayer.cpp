@@ -105,7 +105,7 @@ QString ServerPlayer::waitForReply(int timeout) {
 #ifndef QT_DEBUG
     QThread::sleep(1);
 #endif
-    ret = "__cancel";
+    ret = QStringLiteral("__cancel");
   } else {
     ret = router->waitForReply(timeout);
   }
