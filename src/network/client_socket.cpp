@@ -49,7 +49,11 @@ void ClientSocket::disconnectFromHost() {
   socket->disconnectFromHost();
 }
 
-void ClientSocket::send(const QByteArray &msg) {
+void ClientSocket::send(const QByteArray &msg, QThread *senderThr) {
+  if (!senderThr) senderThr = thread();
+  QSemaphoreReleaser releaser(&sendSema);
+  if (senderThr->isCurrentThread()) releaser.cancel();
+
   if (socket->state() != QTcpSocket::ConnectedState) {
     emit error_message("Cannot send messages if not connected");
     return;
