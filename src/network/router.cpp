@@ -181,5 +181,5 @@ void Router::sendMessage(const QByteArray &msg) {
   auto mainThr = this->thread();
   auto curThr = QThread::currentThread();
   emit messageReady(msg, QThread::currentThread());
-  if (mainThr != curThr) socket->sendSema.acquire();
+  if (mainThr != curThr) socket->sendSema.tryAcquire(1, 2);
 }
