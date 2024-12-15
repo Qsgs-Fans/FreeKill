@@ -179,7 +179,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 // 所以这里需要特地为此考虑多线程同步
 void Router::sendMessage(const QByteArray &msg) {
   auto mainThr = this->thread();
-  auto sameThr = mainThr->isCurrentThread();
+  auto curThr = QThread::currentThread();
   emit messageReady(msg, QThread::currentThread());
-  if (!sameThr) socket->sendSema.acquire();
+  if (mainThr != curThr) socket->sendSema.acquire();
 }
