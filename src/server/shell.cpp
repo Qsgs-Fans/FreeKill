@@ -32,7 +32,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: Shut down the server.", "quit");
   HELP_MSG("%s: Crash the server. Useful when encounter dead loop.", "crash");
   HELP_MSG("%s: List all online players.", "lsplayer");
-  HELP_MSG("%s: List all running rooms.", "lsroom");
+  HELP_MSG("%s: List all running rooms, or show player of room by an <id>.", "lsroom");
   HELP_MSG("%s: Reload server config file.", "reloadconf/r");
   HELP_MSG("%s: Kick a player by his <id>.", "kick");
   HELP_MSG("%s: Broadcast message.", "msg/m");
@@ -86,7 +86,30 @@ void Shell::lspCommand(QStringList &) {
   }
 }
 
-void Shell::lsrCommand(QStringList &) {
+void Shell::lsrCommand(QStringList &list) {
+  if (!list.isEmpty() && !list[0].isEmpty()) {
+    auto pid = list[0];
+    bool ok;
+    int id = pid.toInt(&ok);
+    if (!ok) return;
+
+    auto room = ServerInstance->findRoom(id);
+    if (!room) {
+      qInfo("No such room.");
+    } else {
+      auto config = QJsonDocument::fromJson(room->getSettings());
+      auto pw = config["password"].toString();
+      qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
+          QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
+      qInfo("Players in this room:");
+
+      for (auto p : room->getPlayers()) {
+        qInfo() << p->getId() << "," << p->getScreenName();
+      }
+    }
+
+    return;
+  }
   if (ServerInstance->rooms.size() == 0) {
     qInfo("No running room.");
     return;
