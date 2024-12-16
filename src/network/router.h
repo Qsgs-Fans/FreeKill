@@ -62,7 +62,6 @@ public:
 
 signals:
   void messageReady(const QByteArray &message);
-  void unknownPacket(const QByteArray &packet);
   void replyReady();
 
   void notification_got(const QString &command, const QString &jsonData);
