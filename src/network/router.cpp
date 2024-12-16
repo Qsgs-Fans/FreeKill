@@ -28,6 +28,7 @@ void Router::setSocket(ClientSocket *socket) {
 
   this->socket = nullptr;
   if (socket != nullptr) {
+    connect(this, &Router::messageReady, socket, &ClientSocket::send);
     connect(socket, &ClientSocket::message_got, this, &Router::handlePacket);
     connect(socket, &ClientSocket::disconnected, this, &Router::abortRequest);
     socket->setParent(this);
@@ -176,5 +177,5 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 void Router::sendMessage(const QByteArray &msg) {
   auto connType = qApp->thread() == QThread::currentThread()
     ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
-  QMetaObject::invokeMethod(qApp, [=]() { socket->send(msg); }, connType);
+  QMetaObject::invokeMethod(qApp, [=]() { emit messageReady(msg); }, connType);
 }

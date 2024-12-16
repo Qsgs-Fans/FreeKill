@@ -61,6 +61,7 @@ public:
   qint64 getRequestTimestamp() { return requestTimestamp; }
 
 signals:
+  void messageReady(const QByteArray &msg);
   void replyReady();
 
   void notification_got(const QString &command, const QString &jsonData);
