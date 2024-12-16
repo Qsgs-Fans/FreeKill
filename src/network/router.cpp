@@ -3,6 +3,7 @@
 #include "network/router.h"
 #include "network/client_socket.h"
 #include "core/util.h"
+#include <qnamespace.h>
 
 Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
     : QObject(parent) {
@@ -27,7 +28,6 @@ void Router::setSocket(ClientSocket *socket) {
 
   this->socket = nullptr;
   if (socket != nullptr) {
-    connect(this, &Router::messageReady, socket, &ClientSocket::send);
     connect(socket, &ClientSocket::message_got, this, &Router::handlePacket);
     connect(socket, &ClientSocket::disconnected, this, &Router::abortRequest);
     socket->setParent(this);
@@ -72,7 +72,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
   body << timeout;
   body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
 
-  emit messageReady(JsonArray2Bytes(body));
+  sendMessage(JsonArray2Bytes(body));
 }
 
 void Router::reply(int type, const QByteArray &command, const QByteArray &jsonData) {
@@ -82,7 +82,7 @@ void Router::reply(int type, const QByteArray &command, const QByteArray &jsonDa
   body << command.constData();
   body << jsonData.constData();
 
-  emit messageReady(JsonArray2Bytes(body));
+  sendMessage(JsonArray2Bytes(body));
 }
 
 void Router::notify(int type, const QByteArray &command, const QByteArray &jsonData) {
@@ -92,7 +92,7 @@ void Router::notify(int type, const QByteArray &command, const QByteArray &jsonD
   body << command.constData();
   body << jsonData.constData();
 
-  emit messageReady(JsonArray2Bytes(body));
+  sendMessage(JsonArray2Bytes(body));
 }
 
 int Router::getTimeout() const { return requestTimeout; }
@@ -171,4 +171,10 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     locker.unlock();
     emit replyReady();
   }
+}
+
+void Router::sendMessage(const QByteArray &msg) {
+  auto connType = qApp->thread() == QThread::currentThread()
+    ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
+  QMetaObject::invokeMethod(qApp, [=]() { socket->send(msg); }, connType);
 }
