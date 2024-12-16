@@ -438,6 +438,9 @@ void Shell::statCommand(QStringList &) {
             outdated ? "| Outdated" : "");
     }
   }
+
+  qInfo("Database memory usage: %.2f MiB", 
+        ((double)server->db->getMemUsage()) / 1048576);
 }
 
 #ifdef FK_USE_READLINE

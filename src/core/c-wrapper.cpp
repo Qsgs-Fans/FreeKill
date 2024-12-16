@@ -220,3 +220,7 @@ void Sqlite3::exec(const QString &sql) {
   auto bytes = sql.toUtf8();
   sqlite3_exec(db, bytes.data(), nullptr, nullptr, nullptr);
 }
+
+quint64 Sqlite3::getMemUsage() {
+  return sqlite3_memory_used();
+}
