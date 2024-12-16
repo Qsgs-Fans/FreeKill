@@ -43,7 +43,7 @@ public:
   ClientSocket(QTcpSocket *socket);
 
   /// 客户端使用，用于连接到远程服务器
-  void connectToHost(const QString &address = "127.0.0.1", ushort port = 9527u);
+  void connectToHost(const QString &address = QStringLiteral("127.0.0.1"), ushort port = 9527u);
   /// 双端都可使用。禁用加密传输并断开TCP连接。
   void disconnectFromHost();
   /// 设置AES密钥，同时启用加密传输。

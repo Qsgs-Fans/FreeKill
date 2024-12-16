@@ -277,7 +277,7 @@ int PackMan::clone(const QString &u) {
   QString fileName = QUrl(url).fileName();
   if (fileName.endsWith(".git"))
     fileName.chop(4);
-  fileName = "packages/" + fileName;
+  fileName = QStringLiteral("packages/") + fileName;
 
   git_clone_options opt = GIT_CLONE_OPTIONS_INIT;
   opt.fetch_opts.callbacks.transfer_progress = transfer_progress_cb;

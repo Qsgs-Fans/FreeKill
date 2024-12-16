@@ -26,7 +26,7 @@ ServerPlayer *RoomBase::findPlayer(int id) const {
 }
 
 void RoomBase::doBroadcastNotify(const QList<ServerPlayer *> targets,
-                             const QString &command, const QString &jsonData) {
+                             const QByteArray &command, const QByteArray &jsonData) {
   for (auto p : targets) {
     p->doNotify(command, jsonData);
   }

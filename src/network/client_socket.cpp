@@ -57,7 +57,7 @@ void ClientSocket::send(const QByteArray &msg) {
   QByteArray _msg;
   if (msg.length() >= 1024) {
     auto comp = qCompress(msg);
-    _msg = "Compressed" + comp.toBase64();
+    _msg = QByteArrayLiteral("Compressed") + comp.toBase64();
     _msg = aesEnc(_msg) + "\n";
   } else {
     _msg = aesEnc(msg) + "\n";

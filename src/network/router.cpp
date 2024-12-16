@@ -48,7 +48,7 @@ void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;
 }
 
-void Router::request(int type, const QString &command, const QString &jsonData,
+void Router::request(int type, const QByteArray &command, const QByteArray &jsonData,
                      int timeout, qint64 timestamp) {
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
@@ -61,36 +61,36 @@ void Router::request(int type, const QString &command, const QString &jsonData,
   expectedReplyId = requestId;
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
-  m_reply = "__notready";
+  m_reply = QStringLiteral("__notready");
   replyMutex.unlock();
 
   QJsonArray body;
   body << requestId;
   body << type;
-  body << command;
-  body << jsonData;
+  body << command.constData();
+  body << jsonData.constData();
   body << timeout;
   body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
 
   emit messageReady(JsonArray2Bytes(body));
 }
 
-void Router::reply(int type, const QString &command, const QString &jsonData) {
+void Router::reply(int type, const QByteArray &command, const QByteArray &jsonData) {
   QJsonArray body;
   body << this->requestId;
   body << type;
-  body << command;
-  body << jsonData;
+  body << command.constData();
+  body << jsonData.constData();
 
   emit messageReady(JsonArray2Bytes(body));
 }
 
-void Router::notify(int type, const QString &command, const QString &jsonData) {
+void Router::notify(int type, const QByteArray &command, const QByteArray &jsonData) {
   QJsonArray body;
   body << -2; // requestId = -2 mean this is for notification
   body << type;
-  body << command;
-  body << jsonData;
+  body << command.constData();
+  body << jsonData.constData();
 
   emit messageReady(JsonArray2Bytes(body));
 }

@@ -168,32 +168,32 @@ void Server::updateRoomList(ServerPlayer *teller) {
     arr.prepend(v);
   }
   auto jsonData = JsonArray2Bytes(arr);
-  teller->doNotify("UpdateRoomList", QString(jsonData));
+  teller->doNotify("UpdateRoomList", jsonData);
 }
 
 void Server::updateOnlineInfo() {
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdatePlayerNum",
-                             QString(JsonArray2Bytes(QJsonArray({
+                             JsonArray2Bytes(QJsonArray({
                                  lobby()->getPlayers().length(),
                                  this->players.count(),
-                             }))));
+                             })));
 }
 
 Sqlite3 *Server::getDatabase() { return db; }
 
-void Server::broadcast(const QString &command, const QString &jsonData) {
+void Server::broadcast(const QByteArray &command, const QByteArray &jsonData) {
   for (ServerPlayer *p : players.values()) {
     p->doNotify(command, jsonData);
   }
 }
 
-void Server::sendEarlyPacket(ClientSocket *client, const QString &type, const QString &msg) {
+void Server::sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg) {
   QJsonArray body;
   body << -2;
   body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
           Router::DEST_CLIENT);
-  body << type;
-  body << msg;
+  body << type.constData();
+  body << msg.constData();
   client->send(JsonArray2Bytes(body));
 }
 
@@ -222,7 +222,7 @@ void Server::processNewConnection(ClientSocket *client) {
   // check ban ip
   auto result = db->select(QString("SELECT * FROM banip WHERE ip='%1';").arg(addr));
 
-  auto errmsg = QString();
+  const char *errmsg = nullptr;
 
   if (!result.isEmpty()) {
     errmsg = "you have been banned!";
@@ -232,7 +232,7 @@ void Server::processNewConnection(ClientSocket *client) {
     errmsg = "server is full!";
   }
 
-  if (!errmsg.isEmpty()) {
+  if (errmsg) {
     sendEarlyPacket(client, "ErrorDlg", errmsg);
     qInfo() << "Refused banned IP:" << addr;
     client->disconnectFromHost();
@@ -243,7 +243,7 @@ void Server::processNewConnection(ClientSocket *client) {
           [client]() { qInfo() << client->peerAddress() << "disconnected"; });
 
   // network delay test
-  sendEarlyPacket(client, "NetworkDelayTest", auth->getPublicKey());
+  sendEarlyPacket(client, "NetworkDelayTest", auth->getPublicKey().toUtf8());
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, this, &Server::processRequest);
   client->timerSignup.start(30000);
@@ -295,7 +295,7 @@ void Server::processRequest(const QByteArray &msg) {
   auto md5_str = arr[2].toString();
   if (md5 != md5_str) {
     sendEarlyPacket(client, "ErrorMsg", "MD5 check failed!");
-    sendEarlyPacket(client, "UpdatePackage", Pacman->getPackSummary());
+    sendEarlyPacket(client, "UpdatePackage", Pacman->getPackSummary().toUtf8());
     client->disconnectFromHost();
     return;
   }
@@ -333,7 +333,7 @@ void Server::processRequest(const QByteArray &msg) {
   player->setId(id);
   player->setUuid(uuid_str);
   if (players.count() <= 10) {
-    broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()));
+    broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()).toUtf8());
   }
   players.insert(player->getId(), player);
 
@@ -354,7 +354,7 @@ void Server::processRequest(const QByteArray &msg) {
 
 void Server::readConfig() {
   QFile file("freekill.server.config.json");
-  QByteArray json = "{}";
+  QByteArray json = QByteArrayLiteral("{}");
   if (file.open(QIODevice::ReadOnly)) {
     json = file.readAll();
   }

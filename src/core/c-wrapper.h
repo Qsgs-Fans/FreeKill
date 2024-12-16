@@ -35,7 +35,8 @@ private:
 
 class Sqlite3 {
 public:
-  Sqlite3(const QString &filename = "./server/users.db", const QString &initSql = "./server/init.sql");
+  Sqlite3(const QString &filename = QStringLiteral("./server/users.db"),
+          const QString &initSql = QStringLiteral("./server/init.sql"));
   ~Sqlite3();
 
   static bool checkString(const QString &str);

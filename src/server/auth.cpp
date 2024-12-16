@@ -61,7 +61,7 @@ bool AuthManager::checkClientVersion(ClientSocket *client, const QString &cver) 
                       .arg(FK_VERSION, "1");
     }
 
-    server->sendEarlyPacket(client, "ErrorDlg", errmsg);
+    server->sendEarlyPacket(client, "ErrorDlg", errmsg.toUtf8());
     client->disconnectFromHost();
     return false;
   }
@@ -107,7 +107,7 @@ QMap<QString, QString> AuthManager::checkPassword(ClientSocket *client, const QS
 
   auto server = qobject_cast<Server *>(parent());
   bool passed = false;
-  QString error_msg;
+  const char *error_msg = nullptr;
   QMap<QString, QString> obj;
   int id;
   QByteArray salt;

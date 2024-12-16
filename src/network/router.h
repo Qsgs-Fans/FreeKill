@@ -45,10 +45,10 @@ public:
 
   void setReplyReadySemaphore(QSemaphore *semaphore);
 
-  void request(int type, const QString &command,
-              const QString &jsonData, int timeout, qint64 timestamp = -1);
-  void reply(int type, const QString &command, const QString &jsonData);
-  void notify(int type, const QString &command, const QString &jsonData);
+  void request(int type, const QByteArray &command,
+              const QByteArray &jsonData, int timeout, qint64 timestamp = -1);
+  void reply(int type, const QByteArray &command, const QByteArray &jsonData);
+  void notify(int type, const QByteArray &command, const QByteArray &jsonData);
 
   int getTimeout() const;
 
@@ -62,7 +62,6 @@ public:
 
 signals:
   void messageReady(const QByteArray &message);
-  void unknownPacket(const QByteArray &packet);
   void replyReady();
 
   void notification_got(const QString &command, const QString &jsonData);

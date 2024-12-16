@@ -43,6 +43,12 @@ Room::~Room() {
   if (gameStarted) {
     gameOver();
   }
+  for (auto p : players) {
+    if (p->getId() > 0) removePlayer(p);
+  }
+  for (auto p : observers) {
+    removeObserver(p);
+  }
 }
 
 int Room::getId() const { return id; }
@@ -99,7 +105,7 @@ void Room::addPlayer(ServerPlayer *player) {
     if (runned_players.contains(player->getId())) {
       player->doNotify("ErrorMsg", "Running away is shameful.");
     }
-    // 此时player仍在lobby中，别管就行了
+    // 此时phttps://github.com/fmanlou/qt6printerslayer仍在lobby中，别管就行了
     // emit playerRemoved(player);
     return;
   }
@@ -298,7 +304,7 @@ void Room::delay(int ms) {
 
 bool Room::isOutdated() {
   bool ret = md5 != server->getMd5();
-  if (ret) md5 = "";
+  if (ret) md5 = QStringLiteral("");
   return ret;
 }
 
@@ -542,14 +548,14 @@ void Room::manuallyStart() {
     for (auto i = ipList.cbegin(); i != ipList.cend(); i++) {
       if (i.value().length() <= 1) continue;
       auto warn = QString("*WARN* Same IP address: [%1]").arg(i.value().join(", "));
-      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn.toUtf8());
       qInfo("%s", warn.toUtf8().constData());
     }
 
     for (auto i = uuidList.cbegin(); i != uuidList.cend(); i++) {
       if (i.value().length() <= 1) continue;
       auto warn = QString("*WARN* Same device id: [%1]").arg(i.value().join(", "));
-      doBroadcastNotify(getPlayers(), "ServerMessage", warn);
+      doBroadcastNotify(getPlayers(), "ServerMessage", warn.toUtf8());
       qInfo("%s", warn.toUtf8().constData());
     }
 

@@ -89,7 +89,7 @@ void ServerPlayer::setRoom(RoomBase *room) { this->room = room; }
 
 void ServerPlayer::speak(const QString &message) { ; }
 
-void ServerPlayer::doRequest(const QString &command, const QString &jsonData,
+void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonData,
                              int timeout, qint64 timestamp) {
   if (getState() != Player::Online)
     return;
@@ -105,14 +105,14 @@ QString ServerPlayer::waitForReply(int timeout) {
 #ifndef QT_DEBUG
     QThread::sleep(1);
 #endif
-    ret = "__cancel";
+    ret = QStringLiteral("__cancel");
   } else {
     ret = router->waitForReply(timeout);
   }
   return ret;
 }
 
-void ServerPlayer::doNotify(const QString &command, const QString &jsonData) {
+void ServerPlayer::doNotify(const QByteArray &command, const QByteArray &jsonData) {
   if (getState() != Player::Online)
     return;
   int type =
@@ -139,7 +139,7 @@ void ServerPlayer::kick() {
 
 void ServerPlayer::reconnect(ClientSocket *client) {
   if (server->getPlayers().count() <= 10) {
-    server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()));
+    server->broadcast("ServerMessage", tr("%1 backed").arg(getScreenName()).toUtf8());
   }
 
   setState(Player::Online);
@@ -213,7 +213,7 @@ void ServerPlayer::onStateChanged() {
 
   auto state = getState();
   room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
-      QString("[%1,\"%2\"]").arg(getId()).arg(getStateString()));
+      QString("[%1,\"%2\"]").arg(getId()).arg(getStateString()).toUtf8());
 
   if (state == Player::Online) {
     resumeGameTimer();
@@ -225,14 +225,14 @@ void ServerPlayer::onStateChanged() {
 void ServerPlayer::onReadyChanged() {
   if (room && !room->isLobby()) {
     room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
-                            QString("[%1,%2]").arg(getId()).arg(isReady()));
+                            QString("[%1,%2]").arg(getId()).arg(isReady()).toUtf8());
   }
 }
 
 void ServerPlayer::onDisconnected() {
   qInfo() << "Player" << getId() << "disconnected";
   if (server->getPlayers().count() <= 10) {
-    server->broadcast("ServerMessage", tr("%1 logged out").arg(getScreenName()));
+      server->broadcast("ServerMessage", tr("%1 logged out").arg(getScreenName()).toUtf8());;
   }
 
   auto _room = getRoom();
