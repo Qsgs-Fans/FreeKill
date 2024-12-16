@@ -72,7 +72,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
   body << timeout;
   body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
 
-  sendMessage(JsonArray2Bytes(body));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 void Router::reply(int type, const QByteArray &command, const QByteArray &jsonData) {
@@ -82,7 +82,7 @@ void Router::reply(int type, const QByteArray &command, const QByteArray &jsonDa
   body << command.constData();
   body << jsonData.constData();
 
-  sendMessage(JsonArray2Bytes(body));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 void Router::notify(int type, const QByteArray &command, const QByteArray &jsonData) {
@@ -92,7 +92,7 @@ void Router::notify(int type, const QByteArray &command, const QByteArray &jsonD
   body << command.constData();
   body << jsonData.constData();
 
-  sendMessage(JsonArray2Bytes(body));
+  emit messageReady(JsonArray2Bytes(body));
 }
 
 int Router::getTimeout() const { return requestTimeout; }
@@ -171,15 +171,4 @@ void Router::handlePacket(const QByteArray &rawPacket) {
     locker.unlock();
     emit replyReady();
   }
-}
-
-// 当发信息系列函数用于游戏中时（player:doNotify等），那个线程只发出信号就立刻返回了
-// 在许多场合，信号的发送速度会比socket::send的速度快不少 导致队列中堆积不少信号
-// 而如果玩家此时掉线那么队列中的信号疑似永远留在了队中（久而久之占用大量内存）
-// 所以这里需要特地为此考虑多线程同步
-void Router::sendMessage(const QByteArray &msg) {
-  auto mainThr = this->thread();
-  auto sameThr = mainThr->isCurrentThread();
-  emit messageReady(msg, QThread::currentThread());
-  if (!sameThr) socket->sendSema.acquire();
 }

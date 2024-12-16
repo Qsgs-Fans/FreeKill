@@ -61,7 +61,8 @@ public:
   qint64 getRequestTimestamp() { return requestTimestamp; }
 
 signals:
-  void messageReady(const QByteArray &message, QThread *senderThr);
+  void messageReady(const QByteArray &message);
+  void unknownPacket(const QByteArray &packet);
   void replyReady();
 
   void notification_got(const QString &command, const QString &jsonData);
@@ -88,7 +89,10 @@ private:
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
 
-  void sendMessage(const QByteArray &msg);
+  // Two Lua global table for callbacks and interactions
+  // stored in the lua_State of the sender
+  // LuaTable interactions;
+  // LuaTable callbacks;
 };
 
 #endif // _ROUTER_H

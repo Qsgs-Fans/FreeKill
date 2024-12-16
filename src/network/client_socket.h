@@ -51,7 +51,7 @@ public:
   void removeAESKey();
   bool aesReady() const { return aes_ready; }
   /// 发送消息。参见加密传输与压缩传输
-  void send(const QByteArray &msg, QThread *senderThr = nullptr);
+  void send(const QByteArray& msg);
   /// 判断是否处于已连接状态
   ///
   /// @todo 这个函数好好像没用上？产生bloat了？
@@ -61,8 +61,6 @@ public:
   /// 对等端的地址
   QString peerAddress() const;
   QTimer timerSignup; ///< 创建连接时，若该计时器超时，则断开连接
-
-  QSemaphore sendSema;
 
 signals:
   /// 收到一条消息时触发的信号
