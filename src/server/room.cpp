@@ -490,6 +490,7 @@ void Room::gameOver() {
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
+  QList<ServerPlayer *> to_delete;
   server->beginTransaction();
   for (auto p : players) {
     auto pid = p->getId();
@@ -517,10 +518,14 @@ void Room::gameOver() {
         addRunRate(pid, mode);
         server->temporarilyBan(pid);
       }
-      p->deleteLater();
+      to_delete.append(p);
     }
   }
   server->endTransaction();
+  for (auto p : to_delete) {
+    p->deleteLater();
+  }
+
   insideGameOver = false;
 }
 
