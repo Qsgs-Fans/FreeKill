@@ -490,8 +490,29 @@ void Room::gameOver() {
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto settings = QJsonDocument::fromJson(this->settings);
   auto mode = settings["gameMode"].toString();
+  QList<ServerPlayer *> players = this->players;
   QList<ServerPlayer *> to_delete;
+
+  // 首先只写数据库，这个过程不能向主线程提交申请(doNotify) 否则会死锁
   server->beginTransaction();
+  for (auto p : players) {
+    auto pid = p->getId();
+
+    if (pid > 0) {
+      int time = p->getGameTime();
+
+      // 将游戏时间更新到数据库中
+      auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
+      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
+      server->getDatabase()->exec(info_update);
+    }
+
+    if (p->getState() == Player::Offline) {
+      addRunRate(pid, mode);
+    }
+  }
+  server->endTransaction();
+
   for (auto p : players) {
     auto pid = p->getId();
 
@@ -506,22 +527,16 @@ void Room::gameOver() {
         realPlayer->addTotalGameTime(time);
         realPlayer->doNotify("AddTotalGameTime", bytes);
       }
-
-      // 将游戏时间更新到数据库中
-      auto info_update = QString("UPDATE usergameinfo SET totalGameTime = "
-      "IIF(totalGameTime IS NULL, %2, totalGameTime + %2) WHERE id = %1;").arg(pid).arg(time);
-      server->getDatabase()->exec(info_update);
     }
 
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
-        addRunRate(pid, mode);
         server->temporarilyBan(pid);
       }
       to_delete.append(p);
     }
   }
-  server->endTransaction();
+
   for (auto p : to_delete) {
     p->deleteLater();
   }

@@ -75,7 +75,7 @@ private:
 
   QString uuid_str;
 
-  int gameTime; // 在这个房间的有效游戏时长(秒)
+  int gameTime = 0; // 在这个房间的有效游戏时长(秒)
   QElapsedTimer gameTimer;
 };
 
