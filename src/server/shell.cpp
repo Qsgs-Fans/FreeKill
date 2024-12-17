@@ -462,7 +462,7 @@ void Shell::statCommand(QStringList &) {
     }
   }
 
-  qInfo("Database memory usage: %.2f MiB", 
+  qInfo("Database memory usage: %.2f MiB",
         ((double)server->db->getMemUsage()) / 1048576);
 }
 
