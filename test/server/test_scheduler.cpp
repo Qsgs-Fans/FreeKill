@@ -109,7 +109,7 @@ void TestScheduler::testObserve() {
 }
 
 void TestScheduler::cleanupTestCase() {
-  server_thread->kickAllClients();
+  // server_thread->kickAllClients();
 }
 
 QTEST_GUILESS_MAIN(TestScheduler)
