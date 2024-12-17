@@ -193,13 +193,12 @@ Sqlite3::QueryResult Sqlite3::select(const QString &sql) {
   QueryResult arr;
   char *err = NULL;
   auto bytes = sql.toUtf8();
-  select_lock.lock();
+  QMutexLocker locker(&select_lock);
   sqlite3_exec(db, bytes.data(), callback, (void *)&arr, &err);
   if (err) {
     qCritical() << err;
     sqlite3_free(err);
   }
-  select_lock.unlock();
   return arr;
 }
 

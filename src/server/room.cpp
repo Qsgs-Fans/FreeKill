@@ -666,22 +666,18 @@ void Room::destroyRequestTimer() {
 }
 
 int Room::getRefCount() {
-  lua_ref_mutex.lock();
-  auto ret = lua_ref_count;
-  lua_ref_mutex.unlock();
-  return ret;
+  QMutexLocker locker(&lua_ref_mutex);
+  return lua_ref_count;
 }
 
 void Room::increaseRefCount() {
-  lua_ref_mutex.lock();
+  QMutexLocker locker(&lua_ref_mutex);
   lua_ref_count++;
-  lua_ref_mutex.unlock();
 }
 
 void Room::decreaseRefCount() {
-  lua_ref_mutex.lock();
+  QMutexLocker locker(&lua_ref_mutex);
   lua_ref_count--;
-  lua_ref_mutex.unlock();
   if (lua_ref_count == 0 && m_abandoned)
     deleteLater();
 }
