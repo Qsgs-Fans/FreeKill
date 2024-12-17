@@ -158,16 +158,13 @@ void ServerPlayer::reconnect(ClientSocket *client) {
 }
 
 bool ServerPlayer::thinking() {
-  m_thinking_mutex.lock();
-  bool ret = m_thinking;
-  m_thinking_mutex.unlock();
-  return ret;
+  QMutexLocker locker(&m_thinking_mutex);
+  return m_thinking;
 }
 
 void ServerPlayer::setThinking(bool t) {
-  m_thinking_mutex.lock();
+  QMutexLocker locker(&m_thinking_mutex);
   m_thinking = t;
-  m_thinking_mutex.unlock();
 }
 
 void ServerPlayer::startGameTimer() {

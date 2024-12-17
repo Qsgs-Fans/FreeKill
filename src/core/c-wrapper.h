@@ -46,6 +46,8 @@ public:
   QString selectJson(const QString &sql);
   void exec(const QString &sql);
 
+  quint64 getMemUsage();
+
 private:
   sqlite3 *db;
 };

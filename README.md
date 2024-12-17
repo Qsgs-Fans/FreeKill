@@ -5,7 +5,7 @@
 ![](https://img.shields.io/github/license/notify-ctrl/freekill)
 ![](https://img.shields.io/github/v/tag/notify-ctrl/freekill)
 ![](https://img.shields.io/github/issues/notify-ctrl/freekill)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://app.gitter.im/#/room/#FreeKill:gitter.im)
+[![Discord](https://img.shields.io/badge/chat-discord-blue)](https://discord.gg/tp35GrQR6v)
 ![](https://img.shields.io/github/stars/notify-ctrl/freekill?style=social)
 
 ___
