@@ -18,7 +18,7 @@ function TestGameEvent:testBasic()
     damage = 1
   }
 
-  --- 测试用例1：司马懿先生可以用仁王盾改判吗？
+  --- 测试用例1：关于区域的pattern
   RunInRoom(function()
     local cards = {}
     local targets = {"slash", "jink", "nioh_shield", "dilu"}
@@ -41,13 +41,42 @@ function TestGameEvent:testBasic()
       tos = {{me.id}},
       card = Fk:getCardById(shield)
     }
-    room:changeHero(me, "simayi")
     for _, c in ipairs(me:getCardIds("he")) do
       local card = Fk:getCardById(c)
       local exp = Exppattern:Parse(".|.|.|hand")
       -- printf("%s's result: %q", tostring(card), exp:match(card))
-      assert(c == shield or exp:match(card), string.format("no %s is allowed!", tostring(card)))
+      -- assert(c == shield or exp:match(card), string.format("no %s is allowed!", tostring(card)))
+      lu.assertTrue(c == shield or exp:match(card))
     end
+  end)
+end
+
+function TestGameEvent:testMove()
+  local room = LRoom
+  local me, comp2, comp3, comp4, comp5, comp6, comp7, comp8 = ---@type ServerPlayer
+    room.players[1], room.players[2], room.players[3], room.players[4],
+    room.players[5], room.players[6], room.players[7], room.players[8]
+
+  --- 测试用例1：通常移动
+  RunInRoom(function()
+    me:drawCards(1)
+    lu.assertEquals(me:getHandcardNum(), 1)
+
+    local card = me:getCardIds("h")[1]
+    room:obtainCard(comp2, card)
+    lu.assertEquals(me:getHandcardNum(), 0)
+    lu.assertEquals(comp2:getCardIds("h")[1], card)
+  end)
+
+  --- 测试用例2：作死级移动
+  RunInRoom(function()
+    local top = room.draw_pile[1]
+    local another = top // 2
+
+    --- 试图直接控顶
+    room:moveCardTo(another, Card.DrawPile)
+    lu.assertEquals(room.draw_pile[1], another)
+    lu.assertEquals(room.draw_pile[2], top)
   end)
 end
 
