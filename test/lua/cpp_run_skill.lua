@@ -22,8 +22,12 @@ for _, dir in ipairs(Fk.extension_names) do
   if UsingNewCore and table.contains({ "standard", "standard_cards", "maneuvering" }, dir) then
     path = "packages/freekill-core/" .. dir
   end
-  if FileIO.isDir(path .. "/test")
-  and FileIO.exists(path .. "/test/init.lua") then
-    dofile(path .. "/test/init.lua")
+  if FileIO.isDir(path .. "/test") then
+    local files = table.filter(FileIO.ls(path .. "/test"), function(s)
+      return not not s:find("test_.*.lua")
+    end)
+    for _, f in ipairs(files) do
+      dofile(path .. "/test/" .. f)
+    end
   end
 end

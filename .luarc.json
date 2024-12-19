@@ -4,6 +4,7 @@
     "/test",
     "/packages/*",
     "!/packages/freekill-core",
-    "!/packages/utility"
+    "!/packages/utility",
+    "test_*.lua"
   ]
 }
