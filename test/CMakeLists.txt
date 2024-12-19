@@ -60,3 +60,12 @@ add_test(
   COMMAND TestLuaRoom
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
+
+qt_add_executable(TestLuaSkill lua_skill_test.cpp)
+target_precompile_headers(TestLuaSkill REUSE_FROM TestSocket)
+target_link_libraries(TestLuaSkill PRIVATE ${TEST_LIB})
+add_test(
+  NAME "lua skill test"
+  COMMAND TestLuaSkill
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)

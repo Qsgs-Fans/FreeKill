@@ -123,8 +123,8 @@ function InitRoom()
 end
 
 function SetNextReplies(p, replies)
-  p._fake_router = p._fake_router or { _reply_list = {} }
-  table.insertTable(p._fake_router._reply_list, replies)
+  p.serverplayer._fake_router = p._fake_router or { _reply_list = {} }
+  table.insertTable(p.serverplayer._fake_router._reply_list, replies)
 end
 
 function RunInRoom(fn)
