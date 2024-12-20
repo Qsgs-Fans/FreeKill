@@ -16,10 +16,16 @@ Lua::~Lua() {
   lua_close(L);
 }
 
+// 只要不上锁，就必须上锁；只要另一线程仍在活动，就必须上锁
 bool Lua::needLock() {
   auto thr = QThread::currentThread();
   bool ret = false;
-  if (current_thread != thr) {
+  bool locked = true;
+  if (interpreter_lock.tryLock(0)) {
+    locked = false;
+    interpreter_lock.unlock();
+  }
+  if (!locked || current_thread != thr) {
     current_thread = thr;
     ret = true;
   }
