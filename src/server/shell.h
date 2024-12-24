@@ -38,6 +38,8 @@ private:
   void reloadConfCommand(QStringList &);
   void resetPasswordCommand(QStringList &);
   void statCommand(QStringList &);
+  void dumpRoomCommand(QStringList &);
+  void killRoomCommand(QStringList &);
 
 #ifdef FK_USE_READLINE
 private:

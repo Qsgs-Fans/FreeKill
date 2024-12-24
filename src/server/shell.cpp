@@ -55,6 +55,9 @@ void Shell::helpCommand(QStringList &) {
       "At least 1 <name> required.",
       "unbanuuid");
   HELP_MSG("%s: reset <name>'s password to 1234.", "resetpassword/rp");
+  HELP_MSG("%s: View status of server.", "stat/gc");
+  HELP_MSG("%s: View detail information (Lua) of room by an id.", "dumproom");
+  HELP_MSG("%s: Kick all players in a room, then abandon it.", "killroom");
   qInfo();
   qInfo("===== Package commands =====");
   HELP_MSG("%s: Install a new package from <url>.", "install");
@@ -466,6 +469,65 @@ void Shell::statCommand(QStringList &) {
         ((double)server->db->getMemUsage()) / 1048576);
 }
 
+void Shell::dumpRoomCommand(QStringList &list) {
+  if (list.isEmpty() || list[0].isEmpty()) {
+    static const char *code =
+      "local _, reqRoom = debug.getupvalue(ResumeRoom, 1)\n"
+      "for id, room in pairs(reqRoom.runningRooms) do\n"
+      "  fk.qInfo(string.format('<Lua> Room #%d', id))\n"
+      "end\n";
+    for (auto thr : ServerInstance->findChildren<RoomThread *>()) {
+      qInfo("== Lua room info of RoomThread %p ==", thr);
+      thr->getLua()->eval(code);
+    }
+    return;
+  }
+
+  auto pid = list[0];
+  bool ok;
+  int id = pid.toInt(&ok);
+  if (!ok) return;
+
+  auto room = ServerInstance->findRoom(id);
+  if (!room) {
+    qInfo("No such room.");
+  } else {
+    static auto code = QStringLiteral(
+      "(function(id)\n"
+      "  local _, reqRoom = debug.getupvalue(ResumeRoom, 1)\n"
+      "  local room = reqRoom.runningRooms[id]\n"
+      "  if not room then fk.qInfo('<Lua> No such room.'); return end\n"
+      "  fk.qInfo(string.format('== <Lua> Data of room %d ==', id))\n"
+      "  fk.qInfo(json.encode(room:toJsonObject(room.players[1])))\n"
+      "end)\n");
+    auto L = qobject_cast<RoomThread *>(room->parent())->getLua();
+    L->eval(code + QStringLiteral("(%1)").arg(id));
+  }
+}
+
+void Shell::killRoomCommand(QStringList &list) {
+  if (list.isEmpty() || list[0].isEmpty()) {
+    qWarning("Need room id to do this.");
+    return;
+  }
+
+  auto pid = list[0];
+  bool ok;
+  int id = pid.toInt(&ok);
+  if (!ok) return;
+
+  auto room = ServerInstance->findRoom(id);
+  if (!room) {
+    qInfo("No such room.");
+  } else {
+    qInfo("Killing room %d", id);
+    for (auto player : room->getPlayers()) {
+      if (player->getId() > 0) emit player->kicked();
+    }
+    emit room->abandoned();
+  }
+}
+
 #ifdef FK_USE_READLINE
 static void sigintHandler(int) {
   rl_reset_line_state();
@@ -520,6 +582,8 @@ Shell::Shell() {
     {"rp", &Shell::resetPasswordCommand},
     {"stat", &Shell::statCommand},
     {"gc", &Shell::statCommand},
+    {"dumproom", &Shell::dumpRoomCommand},
+    {"killroom", &Shell::killRoomCommand},
     // special command
     {"quit", &Shell::helpCommand},
     {"crash", &Shell::helpCommand},

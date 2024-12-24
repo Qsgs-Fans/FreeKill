@@ -602,7 +602,7 @@ void Room::removeRejectId(int id) {
 void Room::quitRoom(ServerPlayer *player, const QString &) {
   removePlayer(player);
   if (isOutdated()) {
-    player->kicked();
+    emit player->kicked();
   }
 }
 
@@ -631,7 +631,7 @@ void Room::startGame(ServerPlayer *player, const QString &) {
   if (isOutdated()) {
     for (auto p : getPlayers()) {
       p->doNotify("ErrorMsg", "room is outdated");
-      p->kicked();
+      emit p->kicked();
     }
   } else {
     manuallyStart();
