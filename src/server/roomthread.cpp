@@ -3,7 +3,6 @@
 #include "server/roomthread.h"
 #include "server/scheduler.h"
 #include "server/server.h"
-#include <malloc.h>
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
@@ -28,7 +27,6 @@ RoomThread::~RoomThread() {
     quit(); wait();
   }
   delete m_scheduler;
-  malloc_trim(0);
 }
 
 void RoomThread::run() {

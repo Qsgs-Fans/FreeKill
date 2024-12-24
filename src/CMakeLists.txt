@@ -125,6 +125,7 @@ target_link_libraries(libFreeKill PRIVATE
   ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
+  ${JEMALLOC_LIBRARIES}
 )
 target_sources(FreeKill PRIVATE ${freekill_EXESRCS})
 target_link_libraries(FreeKill PRIVATE

@@ -40,6 +40,14 @@ include_directories(include)
 include_directories(include/libgit2)
 include_directories(src)
 
+if (DEFINED FK_USE_JEMALLOC)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules (JEMALLOC jemalloc)
+
+  pkg_search_module(JEMALLOC REQUIRED jemalloc)
+  include_directories(${JEMALLOC_INCLUDE_DIRS})
+endif ()
+
 qt_add_executable(FreeKill)
 
 if (NOT DEFINED FK_SERVER_ONLY)
