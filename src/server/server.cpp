@@ -379,8 +379,8 @@ bool Server::checkBanWord(const QString &str) {
     return true;
   }
   for (auto v : arr) {
-    auto s = v.toString();
-    if (str.indexOf(s) != -1) {
+    auto s = v.toString().toUpperCase();
+    if (str.toUpperCase().indexOf(s) != -1) {
       return false;
     }
   }
