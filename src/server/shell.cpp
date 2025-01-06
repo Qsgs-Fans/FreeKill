@@ -265,7 +265,7 @@ void Shell::banCommand(QStringList &list) {
   }
 
   // banipCommand(list);
-  banUuidCommand(list);
+  // banUuidCommand(list);
 }
 
 void Shell::unbanCommand(QStringList &list) {
