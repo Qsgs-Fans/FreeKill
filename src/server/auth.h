@@ -4,12 +4,14 @@
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 
+class Server;
+class Sqlite3;
 class ClientSocket;
 
 class AuthManager : public QObject {
   Q_OBJECT
 public:
-  AuthManager(QObject *parent = nullptr);
+  AuthManager(Server *parent);
   ~AuthManager() noexcept;
   auto getPublicKey() const { return public_key; }
 
@@ -18,6 +20,7 @@ public:
 
 private:
   RSA *rsa;
+  Sqlite3 *db;
   QString public_key;
 
   static RSA *initRSA();

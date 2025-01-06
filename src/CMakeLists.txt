@@ -35,7 +35,6 @@ set(freekill_SRCS
   "server/lobby.cpp"
   "server/room.cpp"
   "server/roomthread.cpp"
-  "server/scheduler.cpp"
   "server/shell.cpp"
   "ui/qmlbackend.cpp"
   "swig/freekill-wrap.cxx"

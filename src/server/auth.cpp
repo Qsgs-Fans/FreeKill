@@ -6,8 +6,9 @@
 #include "network/client_socket.h"
 #include <openssl/bn.h>
 
-AuthManager::AuthManager(QObject *parent) : QObject(parent) {
+AuthManager::AuthManager(Server *parent) : QObject(parent) {
   rsa = initRSA();
+  db = parent->getDatabase();
 
   QFile file("server/rsa_pub");
   file.open(QIODevice::ReadOnly);
