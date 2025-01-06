@@ -1,30 +1,35 @@
 #ifndef _AUTH_H
 #define _AUTH_H
 
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-
 class Server;
 class Sqlite3;
 class ClientSocket;
+class AuthManagerPrivate;
 
 class AuthManager : public QObject {
   Q_OBJECT
 public:
-  AuthManager(Server *parent);
+  AuthManager(Server *server);
   ~AuthManager() noexcept;
   auto getPublicKey() const { return public_key; }
 
-  bool checkClientVersion(ClientSocket *client, const QString &ver);
-  QMap<QString, QString> checkPassword(ClientSocket *client, const QString &name, const QString &password);
+public slots:
+  void processNewConnection(const QByteArray &setup_string);
 
 private:
-  RSA *rsa;
+  Server *server;
   Sqlite3 *db;
   QString public_key;
+  AuthManagerPrivate *p_ptr;
 
-  static RSA *initRSA();
-  QMap<QString, QString> queryUserInfo(ClientSocket *client, const QString &name, const QByteArray &password);
+  bool loadSetupData(const QByteArray &msg);
+  bool checkVersion();
+  bool checkIfUuidNotBanned();
+  bool checkMd5();
+  QMap<QString, QString> checkPassword();
+  QMap<QString, QString> queryUserInfo(const QByteArray &decrypted_pw);
+
+  void updateUserLoginData(int id);
 };
 
 #endif // _AUTH_H

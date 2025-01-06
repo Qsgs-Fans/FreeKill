@@ -197,6 +197,30 @@ void Server::sendEarlyPacket(ClientSocket *client, const QByteArray &type, const
   client->send(JsonArray2Bytes(body));
 }
 
+void Server::createNewPlayer(ClientSocket *client, const QString &name, const QString &avatar, int id, const QString &uuid_str) {
+  // create new ServerPlayer and setup
+  ServerPlayer *player = new ServerPlayer(lobby());
+  player->setSocket(client);
+  client->disconnect(this);
+  player->setScreenName(name);
+  player->setAvatar(avatar);
+  player->setId(id);
+  player->setUuid(uuid_str);
+  if (players.count() <= 10) {
+    broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()).toUtf8());
+  }
+  players.insert(player->getId(), player);
+
+  setupPlayer(player);
+
+  auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
+  auto time = result[0]["totalGameTime"].toInt();
+  player->addTotalGameTime(time);
+  player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
+
+  lobby()->addPlayer(player);
+}
+
 void Server::setupPlayer(ServerPlayer *player, bool all_info) {
   // tell the lobby player's basic property
   QJsonArray arr;
@@ -245,106 +269,8 @@ void Server::processNewConnection(ClientSocket *client) {
   // network delay test
   sendEarlyPacket(client, "NetworkDelayTest", auth->getPublicKey().toUtf8());
   // Note: the client should send a setup string next
-  connect(client, &ClientSocket::message_got, this, &Server::processRequest);
+  connect(client, &ClientSocket::message_got, auth, &AuthManager::processNewConnection);
   client->timerSignup.start(30000);
-}
-
-void Server::processRequest(const QByteArray &msg) {
-  ClientSocket *client = qobject_cast<ClientSocket *>(sender());
-  disconnect(client, &ClientSocket::message_got, this, &Server::processRequest);
-  client->timerSignup.stop();
-
-  bool valid = true;
-  QJsonDocument doc = QJsonDocument::fromJson(msg);
-  if (doc.isNull() || !doc.isArray()) {
-    valid = false;
-  } else {
-    if (doc.array().size() != 4 || doc[0] != -2 ||
-        doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT |
-                   Router::DEST_SERVER) ||
-        doc[2] != "Setup")
-      valid = false;
-    else
-      valid = (String2Json(doc[3].toString()).array().size() == 5);
-  }
-
-  if (!valid) {
-    qWarning() << "Invalid setup string:" << msg;
-    sendEarlyPacket(client, "ErrorDlg", "INVALID SETUP STRING");
-    client->disconnectFromHost();
-    return;
-  }
-
-  QJsonArray arr = String2Json(doc[3].toString()).array();
-
-  if (!auth->checkClientVersion(client, arr[3].toString())) return;
-
-  auto uuid_str = arr[4].toString();
-  Sqlite3::QueryResult result2 = { {} };
-  if (Sqlite3::checkString(uuid_str)) {
-    result2 = db->select(QString("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
-  }
-
-  if (!result2.isEmpty()) {
-    sendEarlyPacket(client, "ErrorDlg", "you have been banned!");
-    qInfo() << "Refused banned UUID:" << uuid_str;
-    client->disconnectFromHost();
-    return;
-  }
-
-  auto md5_str = arr[2].toString();
-  if (md5 != md5_str) {
-    sendEarlyPacket(client, "ErrorMsg", "MD5 check failed!");
-    sendEarlyPacket(client, "UpdatePackage", Pacman->getPackSummary().toUtf8());
-    client->disconnectFromHost();
-    return;
-  }
-
-  auto name = arr[0].toString();
-  auto password = arr[1].toString();
-  auto obj = auth->checkPassword(client, name, password);
-  if (obj.isEmpty()) return;
-
-  // update lastLoginIp
-  int id = obj["id"].toInt();
-  beginTransaction();
-  auto sql_update =
-    QString("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
-    .arg(client->peerAddress())
-    .arg(id);
-  db->exec(sql_update);
-
-  auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');")
-    .arg(id).arg(uuid_str);
-  db->exec(uuid_update);
-
-  // 来晚了，有很大可能存在已经注册但是表里面没数据的人
-  db->exec(QString("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
-  auto info_update = QString("UPDATE usergameinfo SET lastLoginTime=%2 where id=%1;").arg(id).arg(QDateTime::currentSecsSinceEpoch());
-  db->exec(info_update);
-  endTransaction();
-
-  // create new ServerPlayer and setup
-  ServerPlayer *player = new ServerPlayer(lobby());
-  player->setSocket(client);
-  client->disconnect(this);
-  player->setScreenName(name);
-  player->setAvatar(obj["avatar"]);
-  player->setId(id);
-  player->setUuid(uuid_str);
-  if (players.count() <= 10) {
-    broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()).toUtf8());
-  }
-  players.insert(player->getId(), player);
-
-  setupPlayer(player);
-
-  auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
-  auto time = result[0]["totalGameTime"].toInt();
-  player->addTotalGameTime(time);
-  player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
-
-  lobby()->addPlayer(player);
 }
 
 #define SET_DEFAULT_CONFIG(k, v) do {\
@@ -369,6 +295,7 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
   SET_DEFAULT_CONFIG("enableBots", true);
   SET_DEFAULT_CONFIG("roomCountPerThread", 200);
+  SET_DEFAULT_CONFIG("maxPlayersPerDevice", 5);
 }
 
 QJsonValue Server::getConfig(const QString &key) { return config.value(key); }
