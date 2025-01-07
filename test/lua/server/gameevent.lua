@@ -80,4 +80,25 @@ function TestGameEvent:testMove()
   end)
 end
 
+function TestGameEvent:testJudge()
+  local room = LRoom ---@type Room
+  local me = ---@type ServerPlayer
+    room.players[1]
+
+  --- 测试用例1：判定
+  RunInRoom(function()
+    local card = Fk:getCardById(room.draw_pile[1])
+    local judge = {
+      who = me,
+      reason = "lightning",
+      pattern = ".|2~9|spade",
+    }
+    room:judge(judge)
+    local result = judge.card
+    lu.assertEquals(result.suit, card.suit)
+    lu.assertEquals(result.color, card.color)
+    lu.assertEquals(result.number, card.number)
+  end)
+end
+
 function TestGameEvent:tearDown() ClearRoom() end
