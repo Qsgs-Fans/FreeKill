@@ -6,5 +6,7 @@
   "tempBanTime": 20,
   "motd": "Welcome!",
   "hiddenPacks": [],
-  "enableBots": true
+  "enableBots": true,
+  "roomCountPerThread": 2000,
+  "maxPlayersPerDevice": 5
 }

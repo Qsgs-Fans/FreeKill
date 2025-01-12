@@ -99,7 +99,7 @@ bool AuthManager::loadSetupData(const QByteArray &msg) {
   QJsonArray arr;
   if (!doc.isArray()) {
     goto FAIL;
-  } 
+  }
 
   if (doc.array().size() != 4 || doc[0] != -2 ||
     doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||

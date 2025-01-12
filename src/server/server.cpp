@@ -294,7 +294,7 @@ void Server::readConfig() {
   SET_DEFAULT_CONFIG("motd", "Welcome!");
   SET_DEFAULT_CONFIG("hiddenPacks", QJsonArray());
   SET_DEFAULT_CONFIG("enableBots", true);
-  SET_DEFAULT_CONFIG("roomCountPerThread", 200);
+  SET_DEFAULT_CONFIG("roomCountPerThread", 2000);
   SET_DEFAULT_CONFIG("maxPlayersPerDevice", 5);
 }
 
