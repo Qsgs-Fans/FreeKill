@@ -387,6 +387,10 @@
     <translation>用户名不合法，只能含有英数字和汉字</translation>
   </message>
   <message>
+    <source>cannot register more new users on this device</source>
+    <translation>已达到同一设备创建账号的数量限制</translation>
+  </message>
+  <message>
     <source>username or password error</source>
     <translation>用户名或密码错误</translation>
   </message>

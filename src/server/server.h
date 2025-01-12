@@ -80,6 +80,7 @@ public:
 
   void broadcast(const QByteArray &command, const QByteArray &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg);
+  void createNewPlayer(ClientSocket *client, const QString &name, const QString &avatar, int id, const QString &uuid_str);
   void setupPlayer(ServerPlayer *player, bool all_info = true);
   bool isListening;
 
@@ -102,7 +103,6 @@ signals:
 
 public slots:
   void processNewConnection(ClientSocket *client);
-  void processRequest(const QByteArray &msg);
 
 private:
   friend class Shell;

@@ -6,7 +6,6 @@
 #include "server/server.h"
 #include "server/room.h"
 #include "server/roomthread.h"
-#include "server/scheduler.h"
 #include "server/serverplayer.h"
 #include "network/router.h"
 

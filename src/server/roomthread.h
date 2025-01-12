@@ -6,7 +6,24 @@
 class Lua;
 class Room;
 class Server;
-class Scheduler;
+class RoomThread;
+
+class Scheduler : public QObject {
+  Q_OBJECT
+ public:
+  explicit Scheduler(RoomThread *m_thread);
+  ~Scheduler();
+
+  auto getLua() const { return L; }
+
+ public slots:
+  void handleRequest(const QString &req);
+  void doDelay(int roomId, int ms);
+  bool resumeRoom(int roomId, const char *reason);
+
+ private:
+  Lua *L;
+};
 
 /**
   @brief RoomThread用来调度多个房间，运行游戏逻辑。
