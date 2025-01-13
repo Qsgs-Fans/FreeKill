@@ -30,7 +30,7 @@ end
 ---@param avatar string
 ---@return fk.Player
 function FClient:addPlayer(id, name, avatar)
-  self.players[id] = CreateFakePlayer(id, name, avatar)
+  self.players[id] = FkTest.createFakePlayer(id, name, avatar)
   return self.players[id]
 end
 

@@ -10,7 +10,9 @@ dofile 'lua/client/client.lua'
 
 dofile 'test/lua/testmode.lua'
 
-local createFakeQList = function(arr)
+FkTest = {}
+
+function FkTest.createFakeQList(arr)
   return setmetatable(arr, {
     __index = {
       at = function(self, i)
@@ -27,7 +29,7 @@ end
 ---@param name string?
 ---@param avatar string?
 ---@return fk.Player
-CreateFakePlayer = function(id, name, avatar)
+function FkTest.createFakePlayer(id, name, avatar)
   local ret = setmetatable({}, { __index = fk.ServerPlayer })
   ret:setId(id)
   ret:setScreenName(name or ("test_player_" .. id))
@@ -38,8 +40,8 @@ CreateFakePlayer = function(id, name, avatar)
   return ret
 end
 
-local createFakeClient = function()
-  local p = CreateFakePlayer(1)
+function FkTest.createFakeClient()
+  local p = FkTest.createFakePlayer(1)
   return setmetatable({
     _self = p,
     players = { [1] = p },
@@ -50,16 +52,16 @@ end
 
 ---@param idlist integer[]
 ---@return fk.Room
-local createFakeRoom = function(idlist)
+function FkTest.createFakeRoom(idlist)
   local players = {}
   for _, id in ipairs(idlist) do
-    table.insert(players, CreateFakePlayer(id))
+    table.insert(players, FkTest.createFakePlayer(id))
   end
   local ret = setmetatable({
     id = 1,
-    players = createFakeQList(players),
+    players = FkTest.createFakeQList(players),
     owner = players[1],
-    observers = createFakeQList{},
+    observers = FkTest.createFakeQList{},
     timeout = 15,
     _settings = json.encode {
       enableFreeAssign = false,
@@ -76,10 +78,10 @@ local createFakeRoom = function(idlist)
   return ret
 end
 
-local createFakeCppBackend = function()
-  local cClient = createFakeClient()
+function FkTest.createFakeCppBackend()
+  local cClient = FkTest.createFakeClient()
   local idlist = {1, 2, 3, 4, 5, 6, 7, 8}
-  local cRoom = createFakeRoom(idlist)
+  local cRoom = FkTest.createFakeRoom(idlist)
   local sp = cRoom:getOwner()
   sp._fake_router = cClient
 
@@ -109,31 +111,31 @@ local createFakeCppBackend = function()
   return cRoom
 end
 
-local cRoom = createFakeCppBackend()
+local cRoom = FkTest.createFakeCppBackend()
 
 ---@type Room
-LRoom = nil
+FkTest.room = nil
 
-function InitRoom()
-  LRoom = Room:new(cRoom)
-  LRoom._test_disable_delay = true
-  RoomInstance = LRoom
-  LRoom:resume("request_timer")
+function FkTest.initRoom()
+  FkTest.room = Room:new(cRoom)
+  FkTest.room._test_disable_delay = true
+  RoomInstance = FkTest.room
+  FkTest.room:resume("request_timer")
   RoomInstance = nil
 end
 
-function SetNextReplies(p, replies)
+function FkTest.setNextReplies(p, replies)
   p.serverplayer._fake_router = p._fake_router or { _reply_list = {} }
   table.insertTable(p.serverplayer._fake_router._reply_list, replies)
 end
 
-function RunInRoom(fn)
-  RoomInstance = LRoom
-  LRoom:resume(fn)
+function FkTest.runInRoom(fn)
+  RoomInstance = FkTest.room
+  FkTest.room:resume(fn)
   RoomInstance = nil
 end
 
-function RunInClient(fn)
+function FkTest.runInClient(fn)
   local room = RoomInstance
   RoomInstance = nil
   local s = Self
@@ -143,8 +145,8 @@ function RunInClient(fn)
   RoomInstance = room
 end
 
-function ClearRoom()
-  if not LRoom.game_finished then LRoom:gameOver("") end
+function FkTest.clearRoom()
+  if not FkTest.room.game_finished then FkTest.room:gameOver("") end
   -- 客户端需要模拟一次返回房间来清掉数据
   ClientInstance:initialize(ClientInstance.client)
   Self = ClientPlayer:new(ClientInstance.client:getSelf())

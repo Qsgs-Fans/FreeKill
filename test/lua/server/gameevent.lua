@@ -3,10 +3,10 @@ TestGameEvent = {}
 
 -- setup和tearDown会在每个单独的测试函数启动与结束调用.
 -- 可以联想setupClass和tearDownClass.
-function TestGameEvent:setup() InitRoom() end
+function TestGameEvent:setup() FkTest.initRoom() end
 
 function TestGameEvent:testBasic()
-  local room = LRoom
+  local room = FkTest.room
   local me, comp2, comp3, comp4, comp5, comp6, comp7, comp8 =
     room.players[1], room.players[2], room.players[3], room.players[4],
     room.players[5], room.players[6], room.players[7], room.players[8]
@@ -19,7 +19,7 @@ function TestGameEvent:testBasic()
   }
 
   --- 测试用例1：关于区域的pattern
-  RunInRoom(function()
+  FkTest.runInRoom(function()
     local cards = {}
     local targets = {"slash", "jink", "nioh_shield", "dilu"}
     local shield
@@ -52,13 +52,13 @@ function TestGameEvent:testBasic()
 end
 
 function TestGameEvent:testMove()
-  local room = LRoom
+  local room = FkTest.room
   local me, comp2, comp3, comp4, comp5, comp6, comp7, comp8 = ---@type ServerPlayer
     room.players[1], room.players[2], room.players[3], room.players[4],
     room.players[5], room.players[6], room.players[7], room.players[8]
 
   --- 测试用例1：通常移动
-  RunInRoom(function()
+  FkTest.runInRoom(function()
     me:drawCards(1)
     lu.assertEquals(me:getHandcardNum(), 1)
 
@@ -69,7 +69,7 @@ function TestGameEvent:testMove()
   end)
 
   --- 测试用例2：作死级移动
-  RunInRoom(function()
+  FkTest.runInRoom(function()
     local top = room.draw_pile[1]
     local another = top // 2
 
@@ -81,12 +81,12 @@ function TestGameEvent:testMove()
 end
 
 function TestGameEvent:testJudge()
-  local room = LRoom ---@type Room
+  local room = FkTest.room ---@type Room
   local me = ---@type ServerPlayer
     room.players[1]
 
   --- 测试用例1：判定
-  RunInRoom(function()
+  FkTest.runInRoom(function()
     local card = Fk:getCardById(room.draw_pile[1])
     local judge = {
       who = me,
@@ -101,4 +101,4 @@ function TestGameEvent:testJudge()
   end)
 end
 
-function TestGameEvent:tearDown() ClearRoom() end
+function TestGameEvent:tearDown() FkTest.clearRoom() end

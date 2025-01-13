@@ -6,7 +6,6 @@ import Fk.RoomElement
 
 Item {
   id: root
-  anchors.centerIn: parent
 
   property string general: "caocao"
   property bool isFavor: {

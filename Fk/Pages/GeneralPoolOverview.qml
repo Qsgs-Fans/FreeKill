@@ -21,13 +21,6 @@ Item {
         detailed: true
       }
 
-      Rectangle {
-        anchors.fill: parent
-        color: "black"
-        opacity: 0.6
-        visible: !root.allGenerals.includes(modelData)
-      }
-
       TapHandler {
         acceptedButtons: Qt.LeftButton | Qt.NoButton
         gesturePolicy: TapHandler.WithinBounds
@@ -60,7 +53,36 @@ Item {
       anchors.top: favorBar.bottom
       cellWidth: 68; cellHeight: 68
       model: config.favoriteGenerals
-      delegate: avatarCard
+      delegate: Item {
+        width: 64; height: 64
+        Avatar {
+          general: modelData
+          detailed: true
+        }
+
+        Rectangle {
+          anchors.fill: parent
+          color: "black"
+          opacity: 0.6
+          visible: !root.allGenerals.includes(modelData)
+        }
+
+        Image {
+          width: 24; height: 23
+          source: SkinBank.MISC_DIR + "favorite"
+          x: -8; y: 48
+        }
+
+        TapHandler {
+          acceptedButtons: Qt.LeftButton | Qt.NoButton
+          gesturePolicy: TapHandler.WithinBounds
+
+          onTapped: () => {
+            popLoader.item.general = modelData;
+            pop.open();
+          }
+        }
+      }
     }
   }
 
@@ -127,6 +149,7 @@ Item {
     anchors.top: topBar.bottom
     anchors.left: favorite.right
     visible: showByPkg.checked
+    interactive: showByPkg.checked
     model: ListModel {
       id: pkgModel
     }
@@ -163,6 +186,7 @@ Item {
     anchors.top: topBar.bottom
     anchors.left: favorite.right
     visible: !showByPkg.checked
+    interactive: !showByPkg.checked
     cellWidth: 68; cellHeight: 68
     model: root.allGenerals
     delegate: avatarCard
@@ -193,6 +217,7 @@ Item {
       id: popLoader
       width: parent.width / mainWindow.scale
       height: parent.height / mainWindow.scale
+      anchors.centerIn: parent
       scale: mainWindow.scale
       source: AppPath + "/Fk/Pages/GeneralDetailPage.qml"
     }
