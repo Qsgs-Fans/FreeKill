@@ -161,6 +161,15 @@ Item {
           }
         }
       }
+      MenuItem {
+        id: banSchemaButton
+        text: luatr("Ban List")
+        icon.source: AppPath + "/image/button/tileicon/create_room"
+        onClicked: {
+          overviewLoader.overviewType = "GeneralPool";
+          overviewDialog.open();
+        }
+      }
 
       MenuItem {
         id: surrenderButton

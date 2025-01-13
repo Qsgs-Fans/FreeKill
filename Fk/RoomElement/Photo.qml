@@ -556,7 +556,7 @@ Item {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     anchors.topMargin: 2
-    width: parent.width - role.width - hp.width - 20
+    width: parent.width
 
     font.pixelSize: 16
     text: {
@@ -881,7 +881,7 @@ Item {
   onGeneralChanged: {
     if (!roomScene.isStarted) return;
     const text = luatr(general);
-    if (text.length > 6) {
+    if (text.replace(/<\/?[^>]+(>|$)/g, "").length > 6) {
       generalName.text = "";
       longGeneralName.text = text;
     } else {
@@ -893,7 +893,7 @@ Item {
   onDeputyGeneralChanged: {
     if (!roomScene.isStarted) return;
     const text = luatr(deputyGeneral);
-    if (text.length > 6) {
+    if (text.replace(/<\/?[^>]+(>|$)/g, "").length > 6) {
       deputyGeneralName.text = "";
       longDeputyGeneralName.text = text;
     } else {

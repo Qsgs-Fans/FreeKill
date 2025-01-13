@@ -19,7 +19,7 @@ Item {
       pressed = false;
   }
 
-  width: type !== "notactive" ? Math.max(80, skill.width + 8) : skill.width + (root.times > -1 ? 45 : 0)
+  width: type !== "notactive" ? Math.max(80, skill.width + 8) : skill.width
   height: type !== "notactive" ? 36 : 24
 
   Image {
@@ -102,9 +102,9 @@ Item {
     height: 12
     visible: root.times > -1
     anchors.right: parent.right
-    anchors.rightMargin: 5
+    anchors.rightMargin: root.type !== "notactive" ? 5 : -5
     anchors.top: parent.top
-    anchors.topMargin: 5
+    anchors.topMargin: root.type !== "notactive" ? 5 : 0
 
     Rectangle {
       width: Math.max(15, 1.4 * count.contentWidth)

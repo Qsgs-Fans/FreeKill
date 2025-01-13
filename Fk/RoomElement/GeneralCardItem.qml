@@ -179,7 +179,7 @@ CardItem {
     x: 2
     y: lineCount > 6 ? 30 : 34
     text: name !== "" ? luatr(name) : "nil"
-    visible: luatr(name).length <= 6 && detailed && known
+    visible: luatr(name).replace(/<\/?[^>]+(>|$)/g, "").length <= 6 && detailed && known
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
@@ -194,7 +194,7 @@ CardItem {
     rotation: 90
     transformOrigin: Item.BottomLeft
     text: luatr(name)
-    visible: luatr(name).length > 6 && detailed && known
+    visible: luatr(name).replace(/<\/?[^>]+(>|$)/g, "").length > 6 && detailed && known
     color: "white"
     font.family: fontLibian.name
     font.pixelSize: 18
