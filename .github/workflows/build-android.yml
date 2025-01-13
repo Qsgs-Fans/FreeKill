@@ -143,7 +143,7 @@ jobs:
         keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
       env:
         # override default build-tools version (29.0.3) -- optional
-        BUILD_TOOLS_VERSION: "33.0.0"
+        BUILD_TOOLS_VERSION: "34.0.0"
 
     - name: Rename APK
       run: |
