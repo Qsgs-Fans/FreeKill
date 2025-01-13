@@ -1,13 +1,13 @@
 TestGameLogic = {}
 
-function TestGameLogic:setup() InitRoom() end
-function TestGameLogic:tearDown() ClearRoom() end
+function TestGameLogic:setup() FkTest.initRoom() end
+function TestGameLogic:tearDown() FkTest.clearRoom() end
 
 -- initialize与run略过
 
 function TestGameLogic:testAssignRoles()
-  local room = LRoom
-  RunInRoom(function()
+  local room = FkTest.room
+  FkTest.runInRoom(function()
     GameLogic.assignRoles(room.logic)
   end)
 
@@ -38,7 +38,7 @@ end
 -- chooseGenerals
 
 function TestGameLogic:testBuildPlayerCircle()
-  for _, room in ipairs{LRoom, ClientInstance} do
+  for _, room in ipairs{FkTest.room, ClientInstance} do
     lu.assertIsTrue(#room.players == #room.alive_players)
     for i, p in ipairs(room.players) do
       if i == #room.players then
@@ -51,7 +51,7 @@ function TestGameLogic:testBuildPlayerCircle()
 end
 
 function TestGameLogic:testAddTriggerSkill()
-  local room = LRoom
+  local room = FkTest.room
   -- 已经add过了GameRule 测试一下覆盖到的分支
   lu.assertTableContains(room.logic.skills, "game_rule")
 
@@ -59,6 +59,6 @@ function TestGameLogic:testAddTriggerSkill()
 end
 
 function TestGameLogic:testTrigger()
-  local room = LRoom
+  local room = FkTest.room
   local logic = room.logic
 end

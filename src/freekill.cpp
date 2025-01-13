@@ -2,6 +2,7 @@
 
 #include "client/client.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 using namespace fkShell;
 
 #include "core/packman.h"
@@ -188,6 +189,28 @@ static void cleanUpGlobalStates() {
   if (Pacman) Pacman->deleteLater();
 }
 
+static int runSkillTest() {
+  Pacman = new PackMan;
+  auto L = new Lua;
+  L->eval("__os = os; __io = io; __package = package"); // 保存一下
+  bool using_core = false;
+  if (QFile::exists("packages/freekill-core") &&
+      !GetDisabledPacks().contains("freekill-core")) {
+    using_core = true;
+    QDir::setCurrent("packages/freekill-core");
+  }
+  int ret = 1;
+  if (!L->dofile("lua/freekill.lua")) goto RET;
+  if (using_core) QDir::setCurrent("../..");
+  if (!L->dofile("test/lua/cpp_run_skill.lua")) goto RET;
+  ret = L->eval("return lu.LuaUnit.run()").toInt();
+
+RET:
+  delete L;
+  delete Pacman;
+  return ret;
+}
+
 // FreeKill 的程序主入口。整个程序就是从这里开始执行的。
 int freekill_main(int argc, char *argv[]) {
   // 初始化一下各种杂项信息
@@ -220,9 +243,11 @@ int freekill_main(int argc, char *argv[]) {
   // 分析命令行，如果有 -s 或者 --server 就在命令行直接开服务器
   QCommandLineParser parser;
   parser.setApplicationDescription("FreeKill server");
+  parser.setSingleDashWordOptionMode(QCommandLineParser::ParseAsLongOptions);
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
   parser.addOption({{"h", "help"}, "display help information"});
+  parser.addOption({"testskills", "run test case of skills"});
   QStringList cliOptions;
   for (int i = 0; i < argc; i++)
     cliOptions << argv[i];
@@ -234,6 +259,8 @@ int freekill_main(int argc, char *argv[]) {
   } else if (parser.isSet("help")) {
     parser.showHelp();
     return 0;
+  } else if (parser.isSet("testskills")) {
+    return runSkillTest();
   }
 
   bool startServer = parser.isSet("server");
