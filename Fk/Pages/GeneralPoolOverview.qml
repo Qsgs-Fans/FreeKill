@@ -193,6 +193,7 @@ Item {
       id: popLoader
       width: parent.width / mainWindow.scale
       height: parent.height / mainWindow.scale
+      anchors.centerIn: parent
       scale: mainWindow.scale
       source: AppPath + "/Fk/Pages/GeneralDetailPage.qml"
     }
