@@ -149,6 +149,7 @@ Item {
     anchors.top: topBar.bottom
     anchors.left: favorite.right
     visible: showByPkg.checked
+    interactive: showByPkg.checked
     model: ListModel {
       id: pkgModel
     }
@@ -185,6 +186,7 @@ Item {
     anchors.top: topBar.bottom
     anchors.left: favorite.right
     visible: !showByPkg.checked
+    interactive: !showByPkg.checked
     cellWidth: 68; cellHeight: 68
     model: root.allGenerals
     delegate: avatarCard
