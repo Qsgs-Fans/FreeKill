@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk
 import Fk.Common
 
 Item {
@@ -11,10 +12,63 @@ Item {
   property int generalCount: 0
   property var allGenerals: []
 
+  Component {
+    id: avatarCard
+    Item {
+      width: 64; height: 64
+      Avatar {
+        general: modelData
+        detailed: true
+      }
+
+      Rectangle {
+        anchors.fill: parent
+        color: "black"
+        opacity: 0.6
+        visible: !root.allGenerals.includes(modelData)
+      }
+
+      TapHandler {
+        acceptedButtons: Qt.LeftButton | Qt.NoButton
+        gesturePolicy: TapHandler.WithinBounds
+
+        onTapped: () => {
+          popLoader.item.general = modelData;
+          pop.open();
+        }
+      }
+    }
+  }
+
+  Rectangle {
+    id: favorite
+    width: 140
+    height: parent.height
+    radius: 2
+
+    Text {
+      id: favorBar
+      text: luatr("Favorite Generals")
+      font.pixelSize: 18
+      anchors.horizontalCenter: parent.horizontalCenter
+    }
+
+    GridView {
+      clip: true
+      x: 4
+      width: parent.width; height: parent.height - favorBar.height
+      anchors.top: favorBar.bottom
+      cellWidth: 68; cellHeight: 68
+      model: config.favoriteGenerals
+      delegate: avatarCard
+    }
+  }
+
   RowLayout {
     id: topBar
+    anchors.left: favorite.right
     anchors.top: parent.top
-    width: parent.width
+    width: parent.width - favorite.width
 
     Text {
       Layout.fillWidth: true
@@ -67,10 +121,11 @@ Item {
   ListView {
     id: listView
     clip: true
-    width: parent.width
+    width: parent.width - favorite.width
     height: parent.height - topBar.height - 16
     spacing: 4
     anchors.top: topBar.bottom
+    anchors.left: favorite.right
     visible: showByPkg.checked
     model: ListModel {
       id: pkgModel
@@ -80,11 +135,11 @@ Item {
 
       Text {
         text: luatr(pkname)
-        font.pixelSize: 18
+        font.pixelSize: 16
         textFormat: Text.RichText
         wrapMode: Text.WrapAnywhere
         Layout.alignment: Qt.AlignTop
-        Layout.preferredWidth: 100
+        Layout.preferredWidth: 80
       }
 
       Grid {
@@ -93,18 +148,9 @@ Item {
         rowSpacing: 4; columnSpacing: 4
         Repeater {
           id: repeater
-          model: JSON.parse(all_generals)
+          model: JSON.parse(generals)
           property var enableGenerals: JSON.parse(generals)
-          Avatar {
-            general: modelData
-            detailed: true
-            Rectangle {
-              anchors.fill: parent
-              color: "black"
-              opacity: 0.6
-              visible: !repeater.enableGenerals.includes(modelData)
-            }
-          }
+          delegate: avatarCard
         }
       }
     }
@@ -112,17 +158,14 @@ Item {
 
   GridView {
     clip: true
-    width: parent.width - (parent.width % 68)
+    width: parent.width - favorite.width
     height: parent.height - topBar.height - 16
     anchors.top: topBar.bottom
-    x: (parent.width % 68) / 2
+    anchors.left: favorite.right
     visible: !showByPkg.checked
     cellWidth: 68; cellHeight: 68
     model: root.allGenerals
-    delegate: Avatar {
-      general: modelData
-      detailed: true
-    }
+    delegate: avatarCard
   }
 
   Button {
@@ -134,6 +177,29 @@ Item {
     }
   }
 
+  Popup {
+    id: pop
+    width: realMainWin.width * 0.6
+    height: realMainWin.height * 0.8
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+
+    Loader {
+      id: popLoader
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      source: AppPath + "/Fk/Pages/GeneralDetailPage.qml"
+    }
+  }
+
+
+
   Component.onCompleted: {
     const disabledGenerals = leval("ClientInstance.disabled_generals");
     const disabledPack = leval("ClientInstance.disabled_packs");
@@ -142,14 +208,13 @@ Item {
     const allGenerals = [];
     for (let pkname of allPack) {
       if (disabledPack.includes(pkname)) continue;
-      let all_generals = lcall("GetGenerals", pkname);
-      all_generals = all_generals.filter(g => !leval(`Fk.generals['${g}'].hidden`));
-      let generals = all_generals.filter(g => !disabledGenerals.includes(g));
+      let generals = lcall("GetGenerals", pkname);
+      generals = generals.filter(g => !leval(`Fk.generals['${g}'].hidden`));
+      generals = generals.filter(g => !disabledGenerals.includes(g));
       if (generals.length === 0) continue;
       pkgModel.append({
         pkname,
         generals: JSON.stringify(generals),
-        all_generals: JSON.stringify(all_generals),
       });
       allGenerals.push(...generals);
     }
