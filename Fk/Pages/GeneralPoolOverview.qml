@@ -21,13 +21,6 @@ Item {
         detailed: true
       }
 
-      Rectangle {
-        anchors.fill: parent
-        color: "black"
-        opacity: 0.6
-        visible: !root.allGenerals.includes(modelData)
-      }
-
       TapHandler {
         acceptedButtons: Qt.LeftButton | Qt.NoButton
         gesturePolicy: TapHandler.WithinBounds
@@ -60,7 +53,36 @@ Item {
       anchors.top: favorBar.bottom
       cellWidth: 68; cellHeight: 68
       model: config.favoriteGenerals
-      delegate: avatarCard
+      delegate: Item {
+        width: 64; height: 64
+        Avatar {
+          general: modelData
+          detailed: true
+        }
+
+        Rectangle {
+          anchors.fill: parent
+          color: "black"
+          opacity: 0.6
+          visible: !root.allGenerals.includes(modelData)
+        }
+
+        Image {
+          width: 24; height: 23
+          source: SkinBank.MISC_DIR + "favorite"
+          x: -8; y: 48
+        }
+
+        TapHandler {
+          acceptedButtons: Qt.LeftButton | Qt.NoButton
+          gesturePolicy: TapHandler.WithinBounds
+
+          onTapped: () => {
+            popLoader.item.general = modelData;
+            pop.open();
+          }
+        }
+      }
     }
   }
 
