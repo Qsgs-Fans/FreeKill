@@ -453,7 +453,7 @@ end
 --- 注册一个伤害
 ---@param nature string | number @ 伤害ID
 ---@param name string @ 属性伤害名
----@param can_chain bool @ 是否可传导
+---@param can_chain boolean? @ 是否可传导
 function Engine:addDamageNature(nature, name, can_chain)
   assert(table.contains({ "string", "number" }, type(nature)), "Must use string or number as nature!")
   assert(type(name) == "string", "Must use string as this damage nature's name!")
@@ -488,7 +488,7 @@ end
 
 --- 判断一种伤害是否可传导
 ---@param nature string | number @ 伤害ID
----@return bool
+---@return boolean?
 function Engine:canChain(nature)
   local ret = self:getDamageNature(nature)
   return ret and ret[2]

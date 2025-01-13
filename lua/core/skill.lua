@@ -91,6 +91,8 @@ end
 ---@param skill Skill @ 技能
 function Skill:addRelatedSkill(skill)
   table.insert(self.related_skills, skill)
+  Fk.related_skills[self.name] = Fk.related_skills[self.name] or {}
+  table.insert(Fk.related_skills[self.name], skill)
 end
 
 --- 确认本技能是否为装备技能。
@@ -175,7 +177,7 @@ end
 
 -- 获得此技能时，触发此函数
 ---@param player ServerPlayer
----@param is_start bool
+---@param is_start boolean?
 function Skill:onAcquire(player, is_start)
   local room = player.room
 
@@ -190,7 +192,7 @@ end
 
 -- 失去此技能时，触发此函数
 ---@param player ServerPlayer
----@param is_death bool
+---@param is_death boolean?
 function Skill:onLose(player, is_death)
   local room = player.room
   if self.attached_skill_name then

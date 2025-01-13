@@ -36,6 +36,8 @@
 ---@field public skillUsedHistory table<string, integer[]> @ 发动技能次数的历史记录
 ---@field public fixedDistance table<Player, integer> @ 与其他玩家的固定距离列表
 ---@field public buddy_list integer[] @ 队友列表，或者说自己可以观看别人手牌的那些玩家的列表
+---@field public equipSlots string[] @ 装备栏列表
+---@field public sealedSlots string[] @ 被废除的装备栏列表
 local Player = class("Player")
 
 ---@alias Phase integer
@@ -75,7 +77,7 @@ function Player:initialize()
   self.property_keys = {
     "general", "deputyGeneral", "maxHp", "hp", "shield", "gender", "kingdom",
     "dead", "role", "role_shown", "rest", "seat", "phase", "faceup", "chained",
-    "sealedSlots",
+    "equipSlots", "sealedSlots",
 
     "surrendered",
   }
@@ -436,6 +438,7 @@ function Player:getEquipments(cardSubtype)
 end
 
 --- 获取玩家手牌上限。
+---@return integer
 function Player:getMaxCards()
   local baseValue = math.max(self.hp, 0)
 
@@ -459,13 +462,18 @@ function Player:getMaxCards()
 end
 
 --- 获取玩家攻击范围。
+---@return integer
 function Player:getAttackRange()
   local baseValue = 1
-  local weapons = self:getEquipments(Card.SubtypeWeapon)
+
+  local weapons = table.filter(self:getEquipments(Card.SubtypeWeapon), function (id)
+    local weapon = Fk:getCardById(id)---@class Weapon
+    return weapon:AvailableAttackRange(self)
+  end)
   if #weapons > 0 then
     baseValue = 0
     for _, id in ipairs(weapons) do
-      local weapon = Fk:getCardById(id)
+      local weapon = Fk:getCardById(id)---@class Weapon
       baseValue = math.max(baseValue, weapon:getAttackRange(self) or 1)
     end
   end
@@ -502,6 +510,7 @@ end
 --- 修改玩家与其他角色的固定距离。
 ---@param other Player @ 其他玩家
 ---@param num integer @ 距离数
+---@deprecated
 function Player:setFixedDistance(other, num)
   --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = num
@@ -509,6 +518,7 @@ end
 
 --- 移除玩家与其他角色的固定距离。
 ---@param other Player @ 其他玩家
+---@deprecated
 function Player:removeFixedDistance(other)
   --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
   self.fixedDistance[other] = nil
@@ -571,7 +581,7 @@ function Player:distanceTo(other, mode, ignore_dead)
   return math.max(ret, 1)
 end
 
---- 比较距离
+--- 比较距离（排除移出游戏（-1），故一般仅当<与<=时使用此函数有价值）
 ---@param other Player @ 终点角色
 ---@param num integer @ 比较基准
 ---@param operator "<"|">"|"<="|">="|"=="|"~=" @ 运算符
@@ -1295,7 +1305,7 @@ end
 
 --- 比较两名角色的性别是否相同。
 ---@param other Player @ 另一名角色
----@param diff? bool @ 比较二者不同
+---@param diff boolean? @ 比较二者不同
 ---@return boolean @ 返回比较结果
 function Player:compareGenderWith(other, diff)
   if self == other then return not diff end

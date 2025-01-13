@@ -28,7 +28,7 @@ local Room = AbstractRoom:subclass("Room")
 -- load classes used by the game
 Request = require "server.network"
 GameEvent = require "server.gameevent"
-GameEventWrappers = require "lua/server/events"
+GameEventWrappers = require "lua.server.events"
 Room:include(GameEventWrappers)
 GameLogic = require "server.gamelogic"
 ServerPlayer = require "server.serverplayer"
@@ -211,6 +211,22 @@ function Room:getPlayerById(id)
   return nil
 end
 
+--- 根据角色座位号，获得那名角色本人
+---@param seat integer @ 角色的座位号
+---@return ServerPlayer @ 这个座位号对应的ServerPlayer实例
+function Room:getPlayerBySeat(seat)
+  if not seat then return nil end
+
+  assert(type(seat) == "number")
+  for _, p in ipairs(self.players) do
+    if p.seat == seat then
+      return p
+    end
+  end
+
+  return nil
+end
+
 --- 将房间中的玩家按照行动顺序重新排序。
 ---@param playerIds integer[] @ 玩家id列表，这个数组会被这个函数排序
 function Room:sortPlayersByAction(playerIds, isTargetGroup)
@@ -248,7 +264,7 @@ end
 --- 获得当前房间中的所有玩家。
 ---
 --- 返回的数组的第一个元素是当前回合玩家，并且按行动顺序进行排序。
----@param sortBySeat? boolean @ 是否按座位排序，默认是
+---@param sortBySeat? boolean @ 是否从当前回合角色开始按行动顺序排序，默认是
 ---@return ServerPlayer[] @ 房间中玩家的数组
 function Room:getAllPlayers(sortBySeat)
   if not self.game_started then
@@ -270,7 +286,7 @@ function Room:getAllPlayers(sortBySeat)
 end
 
 --- 获得所有存活玩家，参看getAllPlayers
----@param sortBySeat? boolean @ 是否按座位排序，默认是
+---@param sortBySeat? boolean @ 是否从当前回合角色开始按行动顺序排序，默认是
 ---@return ServerPlayer[]
 function Room:getAlivePlayers(sortBySeat)
   if sortBySeat == nil or sortBySeat then
@@ -297,7 +313,7 @@ end
 
 --- 获得除一名玩家外的其他玩家。
 ---@param player ServerPlayer @ 要排除的玩家
----@param sortBySeat? boolean @ 是否按座位排序，默认是
+---@param sortBySeat? boolean @ 是否从当前回合角色开始按行动顺序排序，默认是
 ---@param include_dead? boolean @ 是否要把死人也算进去？
 ---@return ServerPlayer[] @ 其他玩家列表
 function Room:getOtherPlayers(player, sortBySeat, include_dead)
@@ -443,7 +459,9 @@ function Room:removeCardMark(card, mark, count)
   self:setCardMark(card, mark, math.max(num - count, 0))
 end
 
+--- 设置角色的某个属性，并广播给所有人
 ---@param player ServerPlayer
+---@param property string @ 属性名称
 function Room:setPlayerProperty(player, property, value)
   player[property] = value
   self:broadcastProperty(player, property)
@@ -599,6 +617,7 @@ end
 ---@param jsonData string @ 请求的数据
 ---@param wait? boolean @ 是否要等待答复，默认为true
 ---@return string @ 收到的答复，如果wait为false的话就返回nil
+---@deprecated
 function Room:doRequest(player, command, jsonData, wait)
   -- fk.qCritical("Room:doRequest is deprecated!")
   if wait == true then error("wait can't be true") end
@@ -615,6 +634,7 @@ end
 ---@param command string @ 请求类型
 ---@param players? ServerPlayer[] @ 发出请求的玩家列表
 ---@param jsonData? string @ 请求数据
+---@deprecated
 function Room:doBroadcastRequest(command, players, jsonData)
   -- fk.qCritical("Room:doBroadcastRequest is deprecated!")
   players = players or self.players
@@ -637,6 +657,7 @@ end
 ---@param players ServerPlayer[] @ 要竞争这次请求的玩家列表
 ---@param jsonData string @ 请求数据
 ---@return ServerPlayer? @ 在这次竞争请求中获胜的角色，可能是nil
+---@deprecated
 function Room:doRaceRequest(command, players, jsonData)
   -- fk.qCritical("Room:doRaceRequest is deprecated!")
   players = players or self.players
@@ -1043,7 +1064,7 @@ end
 ---@param maxNum integer @ 最大值
 ---@param prompt? string @ 提示信息
 ---@param skillName? string @ 技能名
----@param cancelable? boolean @ 能否点取消
+---@param cancelable? boolean @ 能否点取消，默认可以
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@param targetTipName? string @ 引用的选择目标提示的函数名
 ---@param extra_data? table @额外信息
@@ -2391,7 +2412,7 @@ function Room:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   return req:getResult(player)
 end
 
---- 询问移动场上的一张牌
+--- 询问移动场上的一张牌。不可取消
 ---@param player ServerPlayer @ 移动的操作
 ---@param targetOne ServerPlayer @ 移动的目标1玩家
 ---@param targetTwo ServerPlayer @ 移动的目标2玩家
@@ -2519,6 +2540,8 @@ function Room:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelabl
   no_indicate = (no_indicate == nil) and true or no_indicate
   excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
+  if #self:canMoveCardInBoard(flag, nil, excludeIds) == 0 and not cancelable then return {} end
+
   local data = {
     flag = flag,
     skillName = skillName,
@@ -2600,6 +2623,7 @@ function Room:shuffleDrawPile()
 
   -- self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
   self:doBroadcastNotify("ShuffleDrawPile", seed)
+  self:doBroadcastNotify("UpdateDrawPile", tostring(#self.draw_pile))
 
   self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end
@@ -2684,10 +2708,11 @@ function Room:gameOver(winner)
   end
 end
 
----@param flag? string
----@param players? ServerPlayer[]
----@param excludeIds? integer[]
----@return integer[] @ 玩家id列表 可能为空
+--- 获取可以移动场上牌的第一对目标。用于判断场上是否可以移动的牌
+---@param flag? "e"|"j" @ 判断移动的区域
+---@param players? ServerPlayer[] @ 可移动的玩家
+---@param excludeIds? integer[] @ 不能移动的卡牌id
+---@return integer[] @ 玩家id列表 可能为空表
 function Room:canMoveCardInBoard(flag, players, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")
@@ -2696,19 +2721,16 @@ function Room:canMoveCardInBoard(flag, players, excludeIds)
   players = players or self.alive_players
   excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
-  local targets = {}
-  table.find(players, function(p)
-    local canMoveTo = table.find(players, function(another)
-      return p ~= another and p:canMoveCardsInBoardTo(another, flag, excludeIds)
+  for _, from in ipairs(players) do
+    local to = table.find(players, function(p)
+      return p ~= from and from:canMoveCardsInBoardTo(p, flag, excludeIds)
     end)
-
-    if canMoveTo then
-      targets = {p.id, canMoveTo.id}
+    if to then
+      return { from.id, to.id }
     end
-    return canMoveTo
-  end)
+  end
 
-  return targets
+  return {}
 end
 
 --- 现场印卡。当然了，这个卡只和这个房间有关。
@@ -2851,6 +2873,11 @@ function Room:addPlayerEquipSlots(player, playerSlots)
     else
       table.insert(player.equipSlots, slot)
     end
+    self:sendLog{
+      type = "#AddNewArea",
+      from = player.id,
+      arg = slot,
+    }
   end
 
   self:broadcastProperty(player, "equipSlots")
@@ -2919,18 +2946,36 @@ function Room:addTableMark(sth, mark, value)
   end
 end
 
---- 为角色或牌的表型标记移除值
+--- 为角色或牌的表型标记添加值，若已存在则不添加
+---@param sth ServerPlayer|Card @ 更新标记的玩家或卡牌
+---@param mark string @ 标记的名称
+---@param value any @ 要增加的值
+---@return boolean @ 是否添加成功
+function Room:addTableMarkIfNeed(sth, mark, value)
+  local t = sth:getTableMark(mark)
+  if not table.insertIfNeed(t, value) then return false end
+  if sth:isInstanceOf(Card) then
+    self:setCardMark(sth, mark, t)
+  else
+    self:setPlayerMark(sth, mark, t)
+  end
+  return true
+end
+
+--- 为角色或牌的表型标记移除值，移为空表后重置标记值为0
 ---@param sth ServerPlayer|Card @ 更新标记的玩家或卡牌
 ---@param mark string @ 标记的名称
 ---@param value any @ 要移除的值
+---@return boolean @ 是否移除成功(若标记中未含此值则移除失败)
 function Room:removeTableMark(sth, mark, value)
   local t = sth:getTableMark(mark)
-  table.removeOne(t, value)
+  if not table.removeOne(t, value) then return false end
   if sth:isInstanceOf(Card) then
     self:setCardMark(sth, mark, #t > 0 and t or 0)
   else
     self:setPlayerMark(sth, mark, #t > 0 and t or 0)
   end
+  return true
 end
 
 --- 无效化技能
@@ -2950,5 +2995,26 @@ function Room:validateSkill(player, skill_name, temp)
   temp = temp and temp or ""
   self:removeTableMark(player, MarkEnum.InvalidSkills .. temp, skill_name)
 end
+
+
+--- 将触发技或状态技添加到房间
+---@param skill Skill|string
+function Room:addSkill(skill)
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
+  if skill == nil then return end
+  if skill:isInstanceOf(StatusSkill) then
+    self.status_skills[skill.class] = self.status_skills[skill.class] or {}
+    table.insertIfNeed(self.status_skills[skill.class], skill)
+    -- add status_skill to cilent room
+    for _, p in ipairs(self.players) do
+      p:doNotify("AddSkill", json.encode{p.id, skill.name})
+    end
+  elseif skill:isInstanceOf(TriggerSkill) then
+    self.logic:addTriggerSkill(skill)
+  end
+end
+
 
 return Room

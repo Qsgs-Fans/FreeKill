@@ -15,16 +15,16 @@
 ---@field public killed boolean @ 事件因为终止一切结算而被中断（所谓的“被杀”）
 local GameEvent = class("GameEvent")
 
----@type (fun(self: GameEvent): bool)[]
+---@type (fun(self: GameEvent): boolean?)[]
 GameEvent.prepare_funcs = {}
 
----@type (fun(self: GameEvent): bool)[]
+---@type (fun(self: GameEvent): boolean?)[]
 GameEvent.functions = {}
 
----@type (fun(self: GameEvent): bool)[]
+---@type (fun(self: GameEvent): boolean?)[]
 GameEvent.cleaners = {}
 
----@type (fun(self: GameEvent): bool)[]
+---@type (fun(self: GameEvent): boolean?)[]
 GameEvent.exit_funcs = {}
 
 local dummyFunc = Util.DummyFunc
@@ -118,7 +118,7 @@ end
 -- 找第一个与当前事件有继承关系的特定事件
 ---@generic T: GameEvent
 ---@param eventType T @ 事件类型
----@param includeSelf bool @ 是否包括本事件
+---@param includeSelf boolean? @ 是否包括本事件
 ---@param depth? integer @ 搜索深度
 ---@return T?
 function GameEvent:findParent(eventType, includeSelf, depth)

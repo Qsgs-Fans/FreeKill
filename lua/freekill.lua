@@ -4,11 +4,15 @@
 -- 向Lua虚拟机中加载库、游戏中的类，以及加载Mod等等。
 
 -- 加载第三方库
-package.path = "./?.lua;./?/init.lua;./lua/lib/?.lua;./lua/?.lua"
+package.path = "./?.lua;./?/init.lua;./lua/lib/?.lua;./lua/?.lua;./lua/?/init.lua"
 
 -- middleclass: 轻量级的面向对象库
 class = require "middleclass"
 
+-- 好像用qt的非常消耗RAM，换回来试试看
+json = require "json"
+
+--[[
 -- json: 提供json处理支持，能解析JSON和生成JSON
 -- 仍借助luajson处理简单类型。
 local luajson = require "json"
@@ -34,6 +38,7 @@ json = {
     return ret
   end,
 }
+--]]
 
 -- 初始化随机数种子
 math.randomseed(os.time())

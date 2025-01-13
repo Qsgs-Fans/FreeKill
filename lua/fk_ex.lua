@@ -5,6 +5,8 @@
 -- 关于各种CreateXXXSkill的介绍，请见相应文档，这里不做赘述。
 
 -- 首先加载所有详细的技能类型、卡牌类型等等，以及时机列表
+TriggerEvent = require "core.trigger_event"
+require "core.events"
 dofile "lua/server/event.lua"
 dofile "lua/server/system_enum.lua"
 dofile "lua/server/mark_enum.lua"
@@ -376,9 +378,9 @@ end
 
 ---@class AttackRangeSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: AttackRangeSkill, from: Player, to: Player): number?
----@field public fixed_func? fun(self: AttackRangeSkill, player: Player): number?
----@field public within_func? fun(self: AttackRangeSkill, from: Player, to: Player): any
----@field public without_func? fun(self: AttackRangeSkill, from: Player, to: Player): any
+---@field public fixed_func? fun(self: AttackRangeSkill, player: Player): number?  @ 判定角色的锁定攻击范围初值
+---@field public within_func? fun(self: AttackRangeSkill, from: Player, to: Player): any @ 判定to角色是否锁定在角色from攻击范围内
+---@field public without_func? fun(self: AttackRangeSkill, from: Player, to: Player): any @ 判定to角色是否锁定在角色from攻击范围外
 
 ---@param spec AttackRangeSpec
 ---@return AttackRangeSkill
@@ -486,7 +488,8 @@ function fk.CreateFilterSkill(spec)
 end
 
 ---@class InvaliditySpec: StatusSkillSpec
----@field public invalidity_func? fun(self: InvaliditySkill, from: Player, skill: Skill): any
+---@field public invalidity_func? fun(self: InvaliditySkill, from: Player, skill: Skill): any @ 判定角色的技能是否无效
+---@field public invalidity_attackrange? fun(self: InvaliditySkill, player: Player, card: Weapon): any @ 判定武器的攻击范围是否无效
 
 ---@param spec InvaliditySpec
 ---@return InvaliditySkill
@@ -495,7 +498,13 @@ function fk.CreateInvaliditySkill(spec)
 
   local skill = InvaliditySkill:new(spec.name)
   fk.readStatusSpecToSkill(skill, spec)
-  skill.getInvalidity = spec.invalidity_func
+
+  if spec.invalidity_func then
+    skill.getInvalidity = spec.invalidity_func
+  end
+  if spec.invalidity_attackrange then
+    skill.getInvalidityAttackRange = spec.invalidity_attackrange
+  end
 
   return skill
 end
@@ -625,7 +634,7 @@ end
 
 ---@class WeaponSpec: EquipCardSpec
 ---@field public attack_range? integer
----@field public dynamic_attack_range? fun(player: Player): int
+---@field public dynamic_attack_range? fun(player: Player): integer
 
 ---@param spec WeaponSpec
 ---@return Weapon
@@ -686,7 +695,16 @@ function fk.CreateTreasure(spec)
   return card
 end
 
----@class GameModeSpec: GameMode
+---@class GameModeSpec
+---@field public name string @ 游戏模式名
+---@field public minPlayer integer @ 最小玩家数
+---@field public maxPlayer integer @ 最大玩家数
+---@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
+---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
+---@field public whitelist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 白名单
+---@field public blacklist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 黑名单
+---@field public config_template? GameModeConfigEntry[] 游戏模式的配置页面，如此一个数组
+---@field public main_mode? string @ 主模式名（用于判断此模式是否为某模式的衍生）
 ---@field public winner_getter? fun(self: GameMode, victim: ServerPlayer): string
 ---@field public surrender_func? fun(self: GameMode, playedTime: number): table
 ---@field public is_counted? fun(self: GameMode, room: Room): boolean
@@ -740,10 +758,10 @@ end
 
 ---@class PoxiSpec
 ---@field name string
----@field card_filter fun(to_select: int, selected: int[], data: any, extra_data: any): any
----@field feasible fun(selected: int[], data: any, extra_data: any): any
----@field post_select? fun(selected: int[], data: any, extra_data: any): int[]
----@field default_choice? fun(data: any, extra_data: any): int[]
+---@field card_filter fun(to_select: integer, selected: integer[], data: any, extra_data: any): any
+---@field feasible fun(selected: integer[], data: any, extra_data: any): any
+---@field post_select? fun(selected: integer[], data: any, extra_data: any): integer[]
+---@field default_choice? fun(data: any, extra_data: any): integer[]
 ---@field prompt? string | fun(data: any, extra_data: any): string
 
 ---@class QmlMarkSpec

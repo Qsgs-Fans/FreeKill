@@ -70,6 +70,7 @@ function MoveCards:main()
           drawPilePosition = cardsMoveInfo.drawPilePosition,
           moveMark = cardsMoveInfo.moveMark,
           visiblePlayers = cardsMoveInfo.visiblePlayers,
+          extra_data = cardsMoveInfo.extra_data,
         }
 
         table.insert(cardsMoveStructs, cardsMoveStruct)
@@ -423,6 +424,27 @@ function MoveEventWrappers:moveCardIntoEquip(target, cards, skillName, convert, 
     end
   end
   self:moveCards(table.unpack(moves))
+end
+
+--- 取消一些牌的移动。请仅用于BeforeCardsMove时机
+---@param data CardsMoveStruct[]
+---@param ids? integer[] @ 取消移动的牌的id列表，填nil则取消所有
+---@param func? fun(move: CardsMoveStruct, info: MoveInfo): boolean @ 筛选取消移动的函数，与ids取并集，填nil则取消所有
+---@return integer[] @ 成功取消移动的牌id列表
+function MoveEventWrappers:cancelMove(data, ids, func)
+  local ret = {}
+  for _, move in ipairs(data) do
+    local infos = {}
+    for _, info in ipairs(move.moveInfo) do
+      if (ids == nil or table.contains(ids, info.cardId)) and (func == nil or func(move, info)) then
+        table.insert(ret, info.cardId)
+      else
+        table.insert(infos, info)
+      end
+    end
+    move.moveInfo = infos
+  end
+  return ret
 end
 
 return { MoveCards, MoveEventWrappers }

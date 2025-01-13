@@ -83,7 +83,7 @@ end
 
 ---@class Weapon : EquipCard
 ---@field public attack_range integer
----@field public dynamicAttackRange? fun(player: Player): int
+---@field public dynamicAttackRange? fun(self: Weapon, player: Player): integer
 local Weapon = EquipCard:subclass("Weapon")
 
 function Weapon:initialize(name, suit, number, attackRange)
@@ -99,8 +99,10 @@ function Weapon:clone(suit, number)
   return ret
 end
 
+--- 获取一个武器牌的攻击范围
+---@param player? Player @ 拥有此武器的角色
 function Weapon:getAttackRange(player)
-  if type(self.dynamicAttackRange) == "function" then
+  if type(self.dynamicAttackRange) == "function" and player then
     local currentAttackRange = self:dynamicAttackRange(player)
     if currentAttackRange then
       return currentAttackRange
@@ -108,6 +110,19 @@ function Weapon:getAttackRange(player)
   end
 
   return self.attack_range
+end
+
+--- 判断一个角色的某个武器的攻击范围是否有效
+---@param player Player @ 拥有此武器的角色
+function Weapon:AvailableAttackRange(player)
+  local status_skills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    local ret = skill:getInvalidityAttackRange(player, self)
+    if ret then
+      return false
+    end
+  end
+  return true
 end
 
 ---@class Armor : EquipCard

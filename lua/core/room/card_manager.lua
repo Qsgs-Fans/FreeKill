@@ -1,13 +1,13 @@
 --- 负责管理AbstractRoom中所有Card的位置，若在玩家的区域中，则管理所属玩家
 ---@class CardManager : Object
----@field public draw_pile integer[] @ 摸牌堆，这是卡牌id的数组
----@field public discard_pile integer[] @ 弃牌堆，也是卡牌id的数组
----@field public processing_area integer[] @ 处理区，依然是卡牌id数组
----@field public void integer[] @ 从游戏中除外区，一样的是卡牌id数组
+---@field public draw_pile integer[] @ 摸牌堆，是卡牌id数组
+---@field public discard_pile integer[] @ 弃牌堆，是卡牌id数组
+---@field public processing_area integer[] @ 处理区，是卡牌id数组
+---@field public void integer[] @ 从游戏中除外区，是卡牌id数组
 ---@field public card_place table<integer, CardArea> @ 每个卡牌的id对应的区域，一张表
 ---@field public owner_map table<integer, integer> @ 每个卡牌id对应的主人，表的值是那个玩家的id，可能是nil
 ---@field public filtered_cards table<integer, Card> @ 见于Engine，其实在这
----@field public printed_cards table<integer, Card> @ 同上
+---@field public printed_cards table<integer, Card> @ 见于Engine，其实在这
 ---@field public next_print_card_id integer
 ---@field public card_marks table<integer, any> @ 用来存实体卡的card.mark
 local CardManager = {}    -- mixin
@@ -27,7 +27,7 @@ function CardManager:initCardManager()
   self.card_marks = {}
 end
 
---- 基本算是私有函数，别去用
+--- 设置一张卡牌的所在区域。内部私有函数，DIY别用
 ---@param cardId integer
 ---@param cardArea CardArea
 ---@param owner? integer
@@ -58,7 +58,7 @@ end
 
 local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
 
---- 根据area获取相关的数组，若为玩家的区域则需指定玩家
+--- 根据area获取相关的卡牌id数组，若为玩家的区域则需指定玩家
 ---
 --- 若不存在这种区域，需要返回nil
 ---@param area CardArea
@@ -99,10 +99,11 @@ function CardManager:applyMoveInfo(data, info)
   local realFromArea = self:getCardArea(info.cardId)
   local room = Fk:currentRoom()
 
+  local moveFrom = self.owner_map[info.cardId]
   local fromAreaIds = self:getCardsByArea(realFromArea,
-    data.from and room:getPlayerById(data.from), false, info.fromSpecialName)
+  moveFrom and room:getPlayerById(moveFrom), false, info.fromSpecialName)
 
-  table.removeOne(fromAreaIds, info.cardId)
+  if fromAreaIds == nil or not table.removeOne(fromAreaIds, info.cardId) then return false end
 
   local toAreaIds = self:getCardsByArea(data.toArea,
     data.to and room:getPlayerById(data.to), false, data.specialName)
@@ -245,12 +246,12 @@ function CardManager:shuffleDrawPile(seed)
     return
   end
 
+  table.shuffle(self.discard_pile, seed)
   table.insertTable(self.draw_pile, self.discard_pile)
   for _, id in ipairs(self.discard_pile) do
     self:setCardArea(id, Card.DrawPile, nil)
   end
   self.discard_pile = {}
-  table.shuffle(self.draw_pile, seed)
 end
 
 --- 筛选出某卡牌在指定区域内的子牌id数组

@@ -32,6 +32,9 @@ Fk:loadTranslationTable{
   ["Hide presents"] = "屏蔽送花砸蛋",
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
+  ["Favorite Generals"] = "特别关注",
+  ["Set as Favorite"] = "设为特别关注",
+  ["Remove from Favorite"] = "移除特别关注",
   ["Search"] = "搜索",
   ["Back"] = "返回",
 
@@ -102,6 +105,9 @@ Fk:loadTranslationTable{
   ["Not JSON"] = "导入失败：数据格式不对。",
   ["Import Success"] = "从剪贴板导入禁将方案成功。",
   ["Rename"] = "重命名",
+  ["%1 generals are enabled in this room"] = "本房间一共启用了 %1 名武将",
+  ["Show general pool by packages"] = "按包显示将池",
+  ["Copy as ban scheme"] = "复制禁将方案",
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
@@ -363,9 +369,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.5.1
+  ## v0.5.3
 
-  自动保存录像以及终盘复盘数据
+  可以查看与复制对局中的禁将方案了（录像回放中亦可）
 
   ]==],
 }
@@ -495,6 +501,7 @@ Fk:loadTranslationTable{
 
   ["#AbortArea"] = "%from 的 %arg 被废除",
   ["#ResumeArea"] = "%from 的 %arg 被恢复",
+  ["#AddNewArea"] = "%from 新增了一个 %arg",
 
   ["#ShowCard"] = "%from 展示了牌 %card",
   ["#Recast"] = "%from 重铸了 %card",

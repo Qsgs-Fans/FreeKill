@@ -362,7 +362,7 @@ end
 
 --- 根据回复数据回复体力。
 ---@param recoverStruct RecoverStruct
----@return boolean
+---@return boolean @ 是否成功回复体力
 function HpEventWrappers:recover(recoverStruct)
   return exec(Recover, recoverStruct)
 end

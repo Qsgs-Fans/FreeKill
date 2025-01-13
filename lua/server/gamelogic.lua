@@ -294,6 +294,7 @@ function GameLogic:action()
   end
 end
 
+--- 将一个触发技和它的关联触发技添加到房间（触发技必须添加到房间才能正常触发）
 ---@param skill TriggerSkill
 function GameLogic:addTriggerSkill(skill)
   if skill == nil or table.contains(self.skills, skill.name) then
@@ -343,8 +344,7 @@ function GameLogic:addTriggerSkill(skill)
   end
 
   if skill.visible then
-    if (Fk.related_skills[skill.name] == nil) then return end
-    for _, s in ipairs(Fk.related_skills[skill.name]) do
+    for _, s in ipairs(skill.related_skills) do
       if (s.class == TriggerSkill) then
         self:addTriggerSkill(s)
       end
@@ -766,8 +766,8 @@ function GameLogic:getActualDamageEvents(n, func, scope, end_id)
 end
 
 --检测最近的伤害事件是否由执行牌的效果触发，即通常描述的使用牌对目标角色造成伤害
----@param is_exact? bool @ 是否进一步判定使用者和来源是否一致（默认为true）
----@return bool
+---@param is_exact boolean? @ 是否进一步判定使用者和来源是否一致（默认为true）
+---@return boolean?
 function GameLogic:damageByCardEffect(is_exact)
   is_exact = (is_exact == nil) and true or is_exact
   local d_event = self:getCurrentEvent():findParent(GameEvent.Damage, true)

@@ -149,7 +149,7 @@ function Revive:main()
 end
 
 ---@param player ServerPlayer
----@param sendLog? bool
+---@param sendLog? boolean?
 function DeathEventWrappers:revivePlayer(player, sendLog, reason)
   return exec(Revive, player, sendLog, reason)
 end

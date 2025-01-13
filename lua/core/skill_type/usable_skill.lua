@@ -39,7 +39,7 @@ end
 ---@param card? Card @ 牌，若没有牌，则尝试制造一张虚拟牌
 ---@param card_name? string @ 牌名
 ---@param to? Player @ 目标
----@return bool
+---@return boolean?
 function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   if to and to.dead then return false end -- 一般情况不会对死人使用技能的……
   scope = scope or Player.HistoryTurn
@@ -69,7 +69,7 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
 
-  ---@param object Card|Player
+  ---@param object? Card|Player
   ---@param markname string
   ---@param suffixes string[]
   ---@return boolean
@@ -103,7 +103,7 @@ end
 
 -- 失去此技能时，触发此函数
 ---@param player ServerPlayer
----@param is_death bool
+---@param is_death boolean?
 function UsableSkill:onLose(player, is_death)
   local lost_piles = {}
   if self.derived_piles then

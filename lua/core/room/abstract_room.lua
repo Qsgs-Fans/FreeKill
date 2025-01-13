@@ -42,6 +42,12 @@ end
 ---@diagnostic disable-next-line: missing-return
 function AbstractRoom:getPlayerById(id) end
 
+-- 根据角色座位号，获得那名角色本人
+---@param seat integer
+---@return Player
+---@diagnostic disable-next-line: missing-return
+function AbstractRoom:getPlayerBySeat(seat) end
+
 --- 获得拥有某一张牌的玩家。
 ---@param cardId integer | Card @ 要获得主人的那张牌，可以是Card实例或者id
 ---@return Player? @ 这张牌的主人，可能返回nil

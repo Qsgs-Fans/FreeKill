@@ -36,6 +36,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%s: Reload server config file.", "reloadconf/r");
   HELP_MSG("%s: Kick a player by his <id>.", "kick");
   HELP_MSG("%s: Broadcast message.", "msg/m");
+  HELP_MSG("%s: Broadcast message to a room.", "msgroom/mr");
   HELP_MSG("%s: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
   HELP_MSG("%s: Unban 1 or more accounts by their <name>.", "unban");
   HELP_MSG(
@@ -225,6 +226,24 @@ void Shell::msgCommand(QStringList &list) {
   auto msg = list.join(' ');
   ServerInstance->broadcast("ServerMessage", msg.toUtf8());
 }
+
+void Shell::msgRoomCommand(QStringList &list) {
+  if (list.count() < 2) {
+    qWarning("The 'msgroom' command needs <roomId> and message body.");
+    return;
+  }
+
+  auto roomId = list.takeFirst().toInt();
+  auto room = ServerInstance->findRoom(roomId);
+  if (!room) {
+    qInfo("No such room.");
+    return;
+  }
+  auto msg = list.join(' ');
+  room->doBroadcastNotify(room->getPlayers(), "ServerMessage", msg.toUtf8());
+}
+
+
 
 static void banAccount(Sqlite3 *db, const QString &name, bool banned) {
   if (!Sqlite3::checkString(name))
@@ -570,6 +589,8 @@ Shell::Shell() {
     {"kick", &Shell::kickCommand},
     {"msg", &Shell::msgCommand},
     {"m", &Shell::msgCommand},
+    {"msgroom", &Shell::msgRoomCommand},
+    {"mr", &Shell::msgRoomCommand},
     {"ban", &Shell::banCommand},
     {"unban", &Shell::unbanCommand},
     {"banip", &Shell::banipCommand},

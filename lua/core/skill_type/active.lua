@@ -28,7 +28,7 @@ end
 ---@param player Player @ 使用者
 ---@param card? Card @ 牌，若该技能是卡牌的效果技能，需输入此值
 ---@param extra_data? UseExtraData @ 额外数据
----@return bool
+---@return boolean?
 function ActiveSkill:canUse(player, card, extra_data)
   return self:isEffectable(player) and self:withinTimesLimit(player, Player.HistoryPhase, card)
 end
@@ -37,7 +37,7 @@ end
 ---@param to_select integer @ 待选牌
 ---@param selected integer[] @ 已选牌
 ---@param selected_targets? integer[] @ 已选目标
----@return bool
+---@return boolean?
 function ActiveSkill:cardFilter(to_select, selected, selected_targets)
   return true
 end
@@ -48,7 +48,7 @@ end
 ---@param selected_cards integer[] @ 已选牌
 ---@param card? Card @ 牌
 ---@param extra_data? UseExtraData @ 额外数据
----@return bool
+---@return boolean?
 function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
   return false
 end
@@ -59,7 +59,7 @@ end
 ---@param user? integer @ 使用者
 ---@param card? Card @ 牌
 ---@param distance_limited? boolean @ 是否受距离限制
----@return bool
+---@return boolean?
 function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
   return false
 end
@@ -164,10 +164,10 @@ end
 
 -- 判断一个角色是否在技能的距离限制内
 ---@param player Player @ 使用者
----@param isattack bool @ 是否使用攻击距离
+---@param isattack boolean? @ 是否使用攻击距离
 ---@param card Card @ 使用卡牌
 ---@param to Player @ 目标
----@return bool
+---@return boolean?
 function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
   if not to or player:distanceTo(to) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
@@ -220,7 +220,7 @@ end
 ---@param selected_cards integer[] @ 已选牌
 ---@param player Player @ 使用者
 ---@param card? Card @ 牌
----@return bool
+---@return boolean?
 function ActiveSkill:feasible(selected, selected_cards, player, card)
   return #selected >= self:getMinTargetNum() and #selected <= self:getMaxTargetNum(player, card)
     and #selected_cards >= self:getMinCardNum() and #selected_cards <= self:getMaxCardNum()
@@ -240,7 +240,7 @@ function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
 ---@param cardUseEvent CardUseStruct | SkillEffectEvent
----@param finished? bool
+---@param finished? boolean?
 function ActiveSkill:onAction(room, cardUseEvent, finished) end
 
 ---@param room Room

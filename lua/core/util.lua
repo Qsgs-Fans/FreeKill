@@ -35,7 +35,10 @@ Util.lockTable = function(t)
   return setmetatable({}, new_mt)
 end
 
-Util.convertSubtypeAndEquipSlot = function(value)
+---@param value integer
+---@return string
+---@overload fun(value: string): integer
+function Util.convertSubtypeAndEquipSlot(value)
   if type(value) == "number" then
     local mapper = {
       [Card.SubtypeWeapon] = Player.WeaponSlot,
@@ -125,6 +128,7 @@ end
 -- frequenly used filter & map functions
 
 --- 返回ID
+---@return integer
 Util.IdMapper = function(e) return e.id end
 --- 根据卡牌ID返回卡牌
 Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
@@ -133,6 +137,7 @@ Util.Id2PlayerMapper = function(id)
   return Fk:currentRoom():getPlayerById(id)
 end
 --- 返回武将名
+---@return string
 Util.NameMapper = function(e) return e.name end
 --- 根据武将名返回武将
 Util.Name2GeneralMapper = function(e) return Fk.generals[e] end
@@ -142,8 +147,10 @@ Util.Name2SkillMapper = function(e) return Fk.skills[e] end
 Util.TranslateMapper = function(str) return Fk:translate(str) end
 
 -- 阶段int型和string型互换
----@return string|integer
-Util.PhaseStrMapper = function(phase)
+---@param phase integer
+---@return string
+---@overload fun(phase: string): integer
+function Util.PhaseStrMapper(phase)
   local phase_table = {
     [Player.RoundStart] = "phase_roundstart",
     [Player.Start] = "phase_start",
@@ -321,7 +328,7 @@ end
 
 ---@generic T
 ---@param self T[]
----@param seed integer
+---@param seed integer?
 function table.shuffle(self, seed)
   seed = seed or math.random(2 << 32 - 1)
   local rnd = fk.QRandomGenerator(seed)
@@ -468,8 +475,15 @@ end
 
 ---@generic T
 ---@param self T[]
----@param n? integer
----@return T|T[]
+---@return T
+---@diagnostic disable-next-line
+function table.random(self) end
+
+---@generic T
+---@param self T[]
+---@param n integer
+---@return T[]
+---@diagnostic disable-next-line: duplicate-set-field
 function table.random(self, n)
   local n0 = n
   n = n or 1

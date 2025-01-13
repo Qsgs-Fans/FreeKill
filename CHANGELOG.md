@@ -1,5 +1,14 @@
 # ChangeLog
 
+## v0.5.3
+
+- 修复服务端若干的bug
+- 服务端新增若干命令：stat, lsroom, killroom, msgroom
+- 服务端新增限制单设备注册数量的配置key: maxPlayersPerDevice
+- 可以查看和复制房间中的禁将
+
+___
+
 ## v0.5.1 & v0.5.2
 
 修bug
