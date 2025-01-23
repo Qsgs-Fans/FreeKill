@@ -46,14 +46,14 @@ Item {
 
     model.clear();
     model.append({
-      general: "武将",
-      mode: "游戏模式",
-      role: "身份",
-      win: "胜利",
-      lose: "失败",
-      draw: "平局",
-      total: "总数",
-      winRate: "胜率",
+      general: luatr("General"),
+      mode: luatr("Game Mode"),
+      role: luatr("role"),
+      win: luatr("Game Win"),
+      lose: luatr("Game Lose"),
+      draw: luatr("Game Draw"),
+      total: luatr("Total"),
+      winRate: luatr("Win Rate"),
     });
     const result = sqlquery(query);
     result.forEach(e => model.append(e));
@@ -192,7 +192,7 @@ Item {
       height: parent.height
 
       Switch {
-        text: "检索时不区分游戏模式"
+        text: luatr("Merge Modes") // 检索时不区分游戏模式
         checked: root.mergeMode
         onCheckedChanged: {
           root.mergeMode = checked;
@@ -201,7 +201,7 @@ Item {
       }
 
       Switch {
-        text: "检索时不区分身份"
+        text: luatr("Merge Roles") // "检索时不区分身份"
         enabled: !root.mergeMode
         checked: root.mergeRole
         onCheckedChanged: {

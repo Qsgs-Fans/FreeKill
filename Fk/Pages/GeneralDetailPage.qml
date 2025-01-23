@@ -313,7 +313,7 @@ Item {
             text = savedtext.pop();
           } else {
             savedtext.push(text);
-            text = '<a href="back">点击返回</a><br>' + luatr(link);
+            text = '<a href="back">' + luatr("Click to back") + '</a><br>' + luatr(link);
           }
         }
       }

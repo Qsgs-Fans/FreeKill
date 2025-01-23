@@ -15,7 +15,7 @@ Item {
     clip: true
     width: parent.width * 0.2
     height: parent.height
-    model: ["战绩一览", "数据统计", "已收藏录像"]
+    model: ["Game Data Overview", "Statistics Overview", "Favorite Replay"]
     highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
     delegate: Item {
       width: parent.width
