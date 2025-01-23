@@ -565,9 +565,11 @@ function processPrompt(prompt) {
 callbacks["MaxCard"] = (data) => {
   const id = data.id;
   const cardMax = data.pcardMax;
+  const hp = data.php;
   const photo = getPhoto(id);
   if (photo) {
     photo.maxCard = cardMax;
+    photo.hp = hp;
   }
 }
 
