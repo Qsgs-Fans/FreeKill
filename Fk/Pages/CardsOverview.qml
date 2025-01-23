@@ -215,6 +215,7 @@ Item {
       }
       detailCard.known = true;
       cardText.clear();
+      cardText.clearSavedText();
       audioRow.clear();
       cardText.append(luatr(":" + data.name));
       addCardAudio(data)
@@ -270,6 +271,10 @@ Item {
         TextEdit {
           id: cardText
 
+          property var savedtext: []
+          function clearSavedText() {
+            savedtext = [];
+          }
           Layout.fillWidth: true
           readOnly: true
           selectByKeyboard: true
@@ -277,6 +282,14 @@ Item {
           wrapMode: TextEdit.WordWrap
           textFormat: TextEdit.RichText
           font.pixelSize: 16
+          onLinkActivated: (link) => {
+            if (link === "back") {
+              text = savedtext.pop();
+            } else {
+              savedtext.push(text);
+              text = '<a href="back">' + luatr("Click to back") + '</a><br>' + luatr(link);
+            }
+          }
         }
 
         GridLayout {
