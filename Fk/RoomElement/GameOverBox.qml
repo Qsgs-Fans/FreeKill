@@ -52,11 +52,24 @@ GraphicsBox {
       id: repBtn
       text: luatr("Save Replay")
       anchors.horizontalCenter: parent.horizontalCenter
-      visible: config.observing && !config.replaying
+      visible: config.observing && !config.replaying // 旁观
 
       onClicked: {
         repBtn.visible = false;
         lcall("SaveRecord");
+        toast.show("OK.");
+      }
+    }
+
+    MetroButton {
+      id: bkmBtn
+      text: luatr("Bookmark Replay")
+      anchors.horizontalCenter: parent.horizontalCenter
+      visible: !config.observing && !config.replaying // 玩家
+
+      onClicked: {
+        bkmBtn.visible = false;
+        Backend.saveBlobRecordToFile(ClientInstance.getMyGameData()[0].id); // 建立在自动保存录像基础上
         toast.show("OK.");
       }
     }
