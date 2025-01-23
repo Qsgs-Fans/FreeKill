@@ -221,7 +221,7 @@ Flickable {
     }
 
     lcall("GetPlayerSkills", id).forEach(t => {
-      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + t.description)
+      skillDesc.append("<b>" + t.name + "</b>: " + t.description)
     });
 
     lcall("GetPlayerEquips", id).forEach(cid => {
