@@ -212,7 +212,7 @@ Item {
 
       model.append({
         fileName: s,
-        repDate: t,
+        repDate: t, // 开始时间
         playerName: name,
         gameMode: mode,
         _general: general,
