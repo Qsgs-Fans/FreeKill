@@ -14,10 +14,9 @@ GraphicsBox {
   id: root
   title.text: winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
                               luatr("Game Lose") : luatr("Game Win"))
-                            : luatr("$NoWinner")
-  // title.font.family: fontLi2.name
-  width: 600//Math.max(140, body.width + 20)
-  height: 350//body.height + title.height + 25
+                            : luatr("Game Draw")
+  width: 600
+  height: 350
 
   Rectangle {
     id: queryResultList
@@ -216,7 +215,6 @@ GraphicsBox {
   
   RowLayout {
     id: body
-    //anchors.horizontalCenter: parent.horizontalCenter
     anchors.right: parent.right
     anchors.rightMargin: 15
     anchors.bottom: parent.bottom
@@ -287,50 +285,20 @@ GraphicsBox {
       //handcards: luatr("Handcards"),
     });
     summaryData.forEach(s => {
-      //var playerData = {};
-      /*
-      var playerData = leval(
-        `(function()
-          local player = ClientInstance:getPlayerById(${s})
-          return {
-            general: player.general,
-            role: player.role,
-          }
-        end)()`
-      );
-      */
-      /*
-      playerData.general = leval(
-        `(function()
-          local player = ClientInstance:getPlayerBySeat(${s})
-          return player.general
-        end)()`
-      );
-      */
+
       s.turn = s.turn.toString();
       s.recover = s.recover.toString();
       s.damage = s.damage.toString();
       s.damaged = s.damaged.toString();
       s.kill = s.kill.toString();
-      //s.role = s.role;
-      //s.scname = s.scname;
       model.append(s);
-      /* s.general = leval(
-        `(function()
-          return ClientInstance:getPlayerById(${s}).general
-        end)()`
-      );
-      s.role = leval(
-        `(function()
-          return ClientInstance:getPlayerById(${s}).role
-        end)()`
-      ); */
-      /* 
-      //s.handcards = parseInt(s.handcards);
-      //s.role = s.role;
-      //model.append(s);
-      */
     });
+  }
+
+  onWinnerChanged: {
+    Backend.playSound("./audio/system/" + (winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
+                          "lose" : "win")
+                        : "draw"));
   }
 
   Component.onCompleted: {
