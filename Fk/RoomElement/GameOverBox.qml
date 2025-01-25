@@ -15,8 +15,8 @@ GraphicsBox {
   title.text: winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
                               luatr("Game Lose") : luatr("Game Win"))
                             : luatr("Game Draw")
-  width: 600
-  height: 350
+  width: 780
+  height: 400
 
   Rectangle {
     id: queryResultList
@@ -41,63 +41,7 @@ GraphicsBox {
       }
       delegate: RowLayout {
         width: resultList.width
-        height: 40
-
-        /*
-        Item {
-          Layout.preferredWidth: 80
-          Layout.preferredHeight: parent.height
-          property string g: general
-          Avatar {
-            id: avatar
-            x: deputy ? 0 : 20
-            y: 2
-            width: 40
-            height: 40
-            detailed: true
-            visible: index !== 0
-            general: parent.g
-          }
-
-          Avatar {
-            anchors.left: avatar.right
-            y: 2
-            width: 40
-            height: 40
-            detailed: true
-            visible: !!deputy && index !== 0
-            general: deputy || "diaochan"
-          }
-
-          Text { // 右边大字；不能居中，丑死
-            anchors.left: avatar.right
-            anchors.leftMargin: 4
-            font.pixelSize: 20
-            font.bold: index === 0
-            horizontalAlignment: Text.AlignHCenter
-            text: {
-              let ret = luatr(general);
-              if (deputy) {
-                ret += "/" + luatr(deputy);
-              }
-              return ret;
-            }
-          }
-
-          Text { // 下边小字；要拉大行距
-            anchors.top: avatar.bottom
-            anchors.topMargin: 2
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: {
-              let ret = luatr(general);
-              if (deputy) {
-                ret += "/" + luatr(deputy);
-              }
-              return ret;
-            }
-          }
-        }
-        */
+        height: 35
 
         Text {
           id: generalText
@@ -168,46 +112,74 @@ GraphicsBox {
           }
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: { return luatr(role); }
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: turn
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: recover
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: damage
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: damaged
         }
         Text {
-          Layout.preferredWidth: 50
+          Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
           font.bold: index === 0
           text: kill
+        }
+        Text {
+          id: honorText
+          Layout.preferredWidth: 80
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          font.bold: index === 0
+          text: honor
+          elide: Text.ElideRight
+          MouseArea{
+            id: titleMa
+            hoverEnabled: true
+            anchors.fill: parent
+          }
+
+          ToolTip{
+            height: 25
+            x: 20
+            y: 20
+            visible: titleMa.containsMouse && honorText.contentWidth > 75
+            contentItem: Text {
+              text: honor
+              color: "#D6D6D6"
+            }
+            background: Rectangle {
+              color: "#222222"
+            }
+          }
         }
       }
     }
@@ -282,16 +254,19 @@ GraphicsBox {
       damage: luatr("Damage"),
       damaged: luatr("Damaged"),
       kill: luatr("Kill"),
+      honor: luatr("Honor"),
       //handcards: luatr("Handcards"),
     });
-    summaryData.forEach(s => {
-
-      s.turn = s.turn.toString();
-      s.recover = s.recover.toString();
-      s.damage = s.damage.toString();
-      s.damaged = s.damaged.toString();
-      s.kill = s.kill.toString();
-      model.append(s);
+    lcall("FindMosts");
+    summaryData.forEach((s, index) => {
+      let _s = lcall("Entitle", s, index, winner);
+      _s.turn = s.turn.toString();
+      _s.recover = s.recover.toString();
+      _s.damage = s.damage.toString();
+      _s.damaged = s.damaged.toString();
+      _s.kill = s.kill.toString();
+      _s.scname = s.scname; // client拿不到
+      model.append(_s); 
     });
   }
 
@@ -299,10 +274,10 @@ GraphicsBox {
     Backend.playSound("./audio/system/" + (winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
                           "lose" : "win")
                         : "draw"));
+    getSummary();
   }
 
   Component.onCompleted: {
     my_role = leval("Self.role");
-    getSummary();
   }
 }
