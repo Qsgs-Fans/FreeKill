@@ -118,3 +118,134 @@ QString Color(const QString &raw, fkShell::TextColor color,
   return raw;
 #endif
 }
+
+QByteArray FetchFileFromHttp(const QString &addr) {
+  // 初始化网络访问管理器
+  QNetworkAccessManager manager;
+
+  // 创建GET请求
+  QNetworkRequest request;
+  request.setUrl(QUrl(addr));
+  request.setHeader(QNetworkRequest::UserAgentHeader, "Qt HTTP Client");
+
+  // 发送GET请求并获取回复
+  QNetworkReply *reply = manager.get(request);
+
+  // 设置超时时间为5秒
+  QTimer timeoutTimer;
+  timeoutTimer.singleShot(5000, [=]() {
+    if (reply && reply->isRunning()) {
+      qWarning() << "Request timed out. Aborting.";
+      reply->abort();
+    }
+  });
+
+  // 使用事件循环阻塞直到请求完成或超时
+  QEventLoop loop;
+  QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+  loop.exec();
+
+  // 检查是否有错误发生
+  if (reply->error() != QNetworkReply::NoError) {
+    qWarning() << "Network error occurred:" << reply->errorString();
+    delete reply;
+    return QByteArray();
+  }
+
+  // 检查HTTP状态码是否为成功（例如200 OK）
+  int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  if (statusCode != 200) {
+    qWarning() << "HTTP request failed with status code:" << statusCode;
+    delete reply;
+    return QByteArray();
+  }
+
+  // 获取响应数据
+  QByteArray responseData = reply->readAll();
+
+  // 删除回复对象以释放资源
+  delete reply;
+
+  return responseData;
+}
+
+static QJsonDocument variantToJson(QVariant data) {
+  QJsonDocument jsonDoc;
+
+  switch (data.typeId()) {
+    case QMetaType::Int:
+      jsonDoc.setObject(QJsonObject{{"value", data.toInt()}});
+      break;
+    case QMetaType::Double:
+      jsonDoc.setObject(QJsonObject{{"value", data.toDouble()}});
+      break;
+    case QMetaType::Bool:
+      jsonDoc.setObject(QJsonObject{{"value", data.toBool()}});
+      break;
+    case QMetaType::QString: {
+      // 转义特殊字符并包裹在引号中
+      QString str = data.toString();
+      jsonDoc.setObject(QJsonObject{{"value", str}});
+      break;
+    }
+    case QMetaType::QVariantList: {
+      QJsonArray jsonArray;
+      QVariantList list = data.toList();
+      for (const auto &item : list) {
+        QJsonDocument itemDoc = variantToJson(item);
+        jsonArray.append(itemDoc.array()[0]); // 假设每个元素已经转换为适当的JSON类型
+      }
+      jsonDoc.setArray(jsonArray);
+      break;
+    }
+    case QMetaType::QVariantMap: {
+      QJsonObject jsonObj;
+      QVariantMap map = data.toMap();
+      for (const auto &key : map.keys()) {
+        QJsonDocument valueDoc = variantToJson(map[key]);
+        jsonObj.insert(key, valueDoc.object().value("value")); // 根据具体转换方式调整
+      }
+      jsonDoc.setObject(jsonObj);
+      break;
+    }
+    default:
+      // 处理未知类型，返回空字节数组或抛出异常
+      return QJsonDocument();
+  }
+
+  return jsonDoc;
+}
+
+QVariant AskOllama(const QString &apiEndpoint, const QVariant &body) {
+  QNetworkAccessManager manager;
+  QNetworkRequest request(apiEndpoint);
+
+  // 构造JSON请求体
+  QByteArray requestData = variantToJson(body).toJson(QJsonDocument::Compact);
+
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+  // 发送POST请求
+  QNetworkReply *reply = manager.post(request, requestData);
+
+  // 创建事件循环，阻塞直到响应完成
+  QEventLoop loop;
+  QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+  loop.exec();
+
+  // 检查是否有错误发生
+  if (reply->error() != QNetworkReply::NoError) {
+    // 处理错误情况，例如记录日志或抛出异常
+    qWarning() << "Network error occurred: " << reply->errorString();
+    delete reply;
+    return QByteArray();
+  }
+
+  // 读取响应数据
+  QByteArray responseData = reply->readAll();
+
+  // 删除回复对象以释放资源
+  delete reply;
+
+  return QJsonDocument::fromJson(responseData).toVariant();
+}
