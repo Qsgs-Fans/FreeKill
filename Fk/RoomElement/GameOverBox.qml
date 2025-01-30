@@ -24,7 +24,7 @@ GraphicsBox {
     width: parent.width - 30
     height: parent.height - 30 - body.height - title.height
     y: title.height + 10
-    color: "#A0EFEFEF"
+    color: "#222222"
     radius: 8
     clip: true
 
@@ -35,10 +35,99 @@ GraphicsBox {
       id: resultList
       clip: true
       anchors.fill: parent
-      width: parent.width - 5
+      //width: parent.width - 5
+      orientation: ListView.Vertical
+      boundsBehavior: Flickable.StopAtBounds // 禁止列表首尾滑动
+      //ScrollBar.horizontal: ScrollBar {}
+      //ScrollBar.horizontal: ScrollBar {
+        //active: true
+      //}
+      flickableDirection: Flickable.HorizontalFlick
+      contentWidth: 500
+      
       model: ListModel {
         id: model
       }
+      header: RowLayout {
+        width: resultList.width
+        height: 35
+        Text {
+          id: generalText
+          Layout.preferredWidth: 100
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 18
+          text: { return luatr("General"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          id: scnameText
+          Layout.preferredWidth: 100
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 18
+          text: { return luatr("Name"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Role"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Turn"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Recover"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Damage"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Damaged"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          Layout.preferredWidth: 30
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Kill"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+        Text {
+          id: honorText
+          Layout.preferredWidth: 180
+          horizontalAlignment: Text.AlignHCenter
+          font.pixelSize: 20
+          text: { return luatr("Honor"); }
+          color: "#D6D6D6"
+          font.bold: true
+        }
+      }
+
       delegate: RowLayout {
         width: resultList.width
         height: 35
@@ -48,7 +137,6 @@ GraphicsBox {
           Layout.preferredWidth: 100
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 18
-          font.bold: index === 0
           text: {
             let ret = luatr(general);
             if (deputy) {
@@ -56,6 +144,7 @@ GraphicsBox {
             }
             return ret;
           }
+          color: "#D6D6D6"
           elide: Text.ElideRight
           MouseArea{
             id: genralMa
@@ -88,8 +177,8 @@ GraphicsBox {
           Layout.preferredWidth: 100
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 18
-          font.bold: index === 0
           text: scname
+          color: "#D6D6D6"
           elide: Text.ElideRight
           MouseArea{
             id: nameMa
@@ -115,51 +204,52 @@ GraphicsBox {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: { return luatr(role); }
+          color: "#D6D6D6"
         }
         Text {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: turn
+          color: "#D6D6D6"
         }
         Text {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: recover
+          color: "#D6D6D6"
         }
         Text {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: damage
+          color: "#D6D6D6"
         }
         Text {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: damaged
+          color: "#D6D6D6"
         }
         Text {
           Layout.preferredWidth: 30
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
           text: kill
+          color: "#D6D6D6"
         }
         Text {
           id: honorText
-          Layout.preferredWidth: 80
+          //Layout.preferredWidth: 180
           horizontalAlignment: Text.AlignHCenter
           font.pixelSize: 20
-          font.bold: index === 0
+          fontSizeMode: Text.Fit
           text: honor
+          color: "#D6D6D6"
           elide: Text.ElideRight
           MouseArea{
             id: titleMa
@@ -245,18 +335,6 @@ GraphicsBox {
 
   function getSummary() {
     const summaryData = leval("ClientInstance.banners['GameSummary']");
-    model.append({
-      general: luatr("General"),
-      scname: luatr("Name"),
-      role: luatr("Role"),
-      turn: luatr("Turn"),
-      recover: luatr("Recover"),
-      damage: luatr("Damage"),
-      damaged: luatr("Damaged"),
-      kill: luatr("Kill"),
-      honor: luatr("Honor"),
-      //handcards: luatr("Handcards"),
-    });
     lcall("FindMosts");
     summaryData.forEach((s, index) => {
       let _s = lcall("Entitle", s, index, winner);
