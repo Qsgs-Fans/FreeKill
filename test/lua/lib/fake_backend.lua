@@ -124,17 +124,45 @@ function FkTest.initRoom()
   RoomInstance = nil
 end
 
+--- 设置player接下来数次收到Request时应当做出的回复
+---
+--- 注意了，replies不会自动清空的，必须有相应次数的request次数才行
+---@param p ServerPlayer
+---@param replies string[]
 function FkTest.setNextReplies(p, replies)
   p.serverplayer._fake_router = p._fake_router or { _reply_list = {} }
   table.insertTable(p.serverplayer._fake_router._reply_list, replies)
 end
 
+--- 在房间设置断点，当player遇到对应command且data符合条件的情况时，房间就会进入断点状态
+---
+--- 在断点状态中，可以针对Client编写一些测试代码并通过runInClient运行
+---@param p ServerPlayer
+---@param command string
+---@param filter_func? fun(any): boolean?
+function FkTest.setRoomBreakpoint(p, command, filter_func)
+  local room = FkTest.room
+  local breakpoints = room:getTag("__test_breakpoints") or {}
+  table.insert(breakpoints, { p, command, filter_func or Util.TrueFunc })
+  room:setTag("__test_breakpoints", breakpoints)
+end
+
+--- 在房间内运行一段代码。房间必须不处于断点状态，否则不负责
+---
+--- 可以执行游戏事件等，也会令Fk:currentRoom返回Room实例
+---@param fn? fun()
 function FkTest.runInRoom(fn)
   RoomInstance = FkTest.room
   FkTest.room:resume(fn)
   RoomInstance = nil
 end
 
+--- 唤起处于断点状态的房间
+function FkTest.resumeRoom()
+  FkTest.runInRoom()
+end
+
+--- 在客户端角度运行代码（Fk:currentRoom返回Client实例；可以使用Self）
 function FkTest.runInClient(fn)
   local room = RoomInstance
   RoomInstance = nil

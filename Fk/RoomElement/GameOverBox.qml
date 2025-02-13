@@ -44,7 +44,7 @@ GraphicsBox {
       //}
       flickableDirection: Flickable.HorizontalFlick
       contentWidth: 500
-      
+
       model: ListModel {
         id: model
       }
@@ -274,7 +274,7 @@ GraphicsBox {
       }
     }
   }
-  
+
   RowLayout {
     id: body
     anchors.right: parent.right
@@ -344,7 +344,7 @@ GraphicsBox {
       _s.damaged = s.damaged.toString();
       _s.kill = s.kill.toString();
       _s.scname = s.scname; // client拿不到
-      model.append(_s); 
+      model.append(_s);
     });
   }
 
