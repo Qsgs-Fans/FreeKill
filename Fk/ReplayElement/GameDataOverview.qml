@@ -93,7 +93,7 @@ Item {
           Layout.fillWidth: true
           text: {
             const date = new Date(time * 1000);
-            return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+            return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}` // 结束时间
           }
         }
 
@@ -137,19 +137,19 @@ Item {
         Button {
           id: replayBtn
           text: {
-            let ret = "重放录像";
+            let ret = luatr("Replay Recording"); // 重放录像
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
             const query = sqlquery(`
               SELECT * FROM myGameRecordings WHERE id = ${mdata.id};`);
             if (!query[0]) {
-              ret = "录像已过期";
+              ret = luatr("Replay Expired"); // 录像已过期
             }
             return ret;
           }
           enabled: {
             if (list.currentIndex === -1) return false;
-            if (text === "录像已过期") return false;
+            if (text === luatr("Replay Expired")) return false;
             return true;
           }
           Layout.fillWidth: true
@@ -163,19 +163,19 @@ Item {
 
         Button {
           text: {
-            let ret = "查看终盘战况";
+            let ret = luatr("View Endgame"); // 查看终盘战况
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
             const query = sqlquery(`
               SELECT * FROM myGameRoomData WHERE id = ${mdata.id};`);
             if (!query[0]) {
-              ret = "终盘已过期";
+              ret = luatr("Endgame Expired"); // 终盘已过期
             }
             return ret;
           }
           enabled: {
             if (list.currentIndex === -1) return false;
-            if (text === "终盘已过期") return false;
+            if (text === luatr("Endgame Expired")) return false;
             return true;
           }
           Layout.fillWidth: true
@@ -189,20 +189,20 @@ Item {
 
         Button {
           text: {
-            let ret = "收藏录像";
+            let ret = luatr("Bookmark Replay"); // 收藏录像
             const mdata = model.get(list.currentIndex);
             if (!mdata) return ret;
             const query = sqlquery(`
               SELECT * FROM starredRecording WHERE id = ${mdata.id};`);
             if (query[0]) {
-              ret = "已收藏";
+              ret = luatr("Already Bookmarked"); // 已收藏
             }
             return ret;
           }
           enabled: {
             if (list.currentIndex === -1) return false;
-            if (text === "已收藏") return false;
-            if (replayBtn.text === "录像已过期") return false;
+            if (text === luatr("Already Bookmarked")) return false;
+            if (replayBtn.text === luatr("Replay Expired")) return false; // 录像已过期
             return true;
           }
           Layout.fillWidth: true

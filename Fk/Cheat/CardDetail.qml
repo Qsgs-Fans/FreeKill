@@ -39,6 +39,10 @@ Flickable {
       TextEdit {
         id: skillDesc
 
+        property var savedtext: []
+        function clearSavedText() {
+          savedtext = [];
+        }
         Layout.fillWidth: true
         font.pixelSize: 18
         color: "#E4D5A0"
@@ -48,6 +52,14 @@ Flickable {
         selectByMouse: false
         wrapMode: TextEdit.WordWrap
         textFormat: TextEdit.RichText
+        onLinkActivated: (link) => {
+          if (link === "back") {
+            text = savedtext.pop();
+          } else {
+            savedtext.push(text);
+            text = '<a href="back">' + luatr("Click to back") + '</a><br>' + luatr(link);
+          }
+        }
       }
     }
   }

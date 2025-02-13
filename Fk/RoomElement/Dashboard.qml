@@ -151,9 +151,9 @@ RowLayout {
 
     skillPanel.clearSkills();
 
-    const skills = lcall("GetPlayerSkills", Self.id);
+    const skills = lcall("GetMySkills");
     for (let s of skills) {
-      addSkill(s.name);
+      addSkill(s);
     }
 
     cards = roomScene.drawPile.remove(lcall("GetPlayerHandcards", Self.id));

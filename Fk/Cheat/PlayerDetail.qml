@@ -166,7 +166,7 @@ Flickable {
             text = savedtext.pop();
           } else {
             savedtext.push(text);
-            text = '<a href="back">点击返回</a><br>' + luatr(link);
+            text = '<a href="back">' + luatr("Click to back") + '</a><br>' + luatr(link);
           }
         }
       }
@@ -221,7 +221,7 @@ Flickable {
     }
 
     lcall("GetPlayerSkills", id).forEach(t => {
-      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + t.description)
+      skillDesc.append("<b>" + t.name + "</b>: " + t.description)
     });
 
     lcall("GetPlayerEquips", id).forEach(cid => {

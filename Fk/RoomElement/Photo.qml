@@ -492,11 +492,15 @@ Item {
 
     Text {
       text: {
+        let n = root.handcards;
+        if (root.playerid === Self.id) {
+          n = lcall("GetPlayerHandcards", Self.id).length; // 不计入expand_pile
+        }
         if (root.maxCard === root.hp || root.hp < 0) {
-          return root.handcards;
+          return n;
         } else {
           const maxCard = root.maxCard < 900 ? root.maxCard : "∞";
-          return root.handcards + "/" + maxCard;
+          return n + "/" + maxCard;
         }
       }
       font.family: fontLibian.name
@@ -507,6 +511,25 @@ Item {
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 4
       style: Text.Outline
+    }
+
+    TapHandler { // 手牌图标点击查看手牌
+      enabled: {
+        if (root.playerid === Self.id) return false;
+        if (root.handcards === 0) return false; // 优先绑定再判buddy，否则不会更新
+        if (!lcall("IsMyBuddy", Self.id, root.playerid) &&
+          !lcall("HasVisibleCard", Self.id, root.playerid)) return false;
+        return true;
+      }
+      onTapped: {
+        const params = { name: "hand_card" };
+        let data = lcall("GetPlayerHandcards", root.playerid);
+        data = data.filter((e) => lcall("CardVisibility", e));
+
+        params.ids = data;
+
+        roomScene.startCheat("../RoomElement/ViewPile", params);
+      }
     }
   }
 
