@@ -208,6 +208,10 @@ static int runSkillTest(const QString &val, const QString &filepath) {
 
   if (val == "") {
     if (filepath != "") {
+      auto s = filepath;
+#ifdef Q_OS_WIN
+      s = QDir::fromNativeSeparators(filepath);
+#endif
       script = QStringLiteral(
         R"(
         local skels = { __dofile('%1') }
@@ -216,7 +220,7 @@ static int runSkillTest(const QString &val, const QString &filepath) {
           return string.format('Test%s', skill.name)
         end)
         return lu.LuaUnit.run(table.unpack(skels))
-      )").arg(filepath);
+      )").arg(s);
     } else {
       script = QStringLiteral("return lu.LuaUnit.run()");
     }
