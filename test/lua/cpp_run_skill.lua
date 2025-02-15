@@ -15,19 +15,25 @@ lu = require('luaunit')
 require 'fake_backend'
 
 fk.qInfo = Util.DummyFunc
--- 给各种extensionName文件夹下的init
-for _, dir in ipairs(Fk.extension_names) do
-  local path = "packages/" .. dir
-  -- 耦！
-  if UsingNewCore and table.contains({ "standard", "standard_cards", "maneuvering" }, dir) then
-    path = "packages/freekill-core/" .. dir
-  end
-  if FileIO.isDir(path .. "/test") then
-    local files = table.filter(FileIO.ls(path .. "/test"), function(s)
-      return not not s:find("test_.*.lua")
-    end)
-    for _, f in ipairs(files) do
-      dofile(path .. "/test/" .. f)
+
+-- 按luaUnit之礼，要把测试都整理出表并放入全局变量
+for _, pname in ipairs(Fk.package_names) do
+  local pack = Fk.packages[pname]
+  local index_mt = { setup = FkTest.initRoom, tearDown = FkTest.clearRoom }
+  for _, skel in ipairs(pack.skill_skels) do
+    local testtab = setmetatable({}, { __index = index_mt })
+    for i, fn in ipairs(skel.tests) do
+      testtab[string.format('test%s%d', skel.name, i)] = function()
+        local room = FkTest.room
+        fn(room, room.players[1])
+      end
+    end
+    local skill = Skill:new(skel.name)
+    local glob_name = string.format('Test%s', skill.name)
+    if _G[glob_name] then
+      fk.qWarning(("Duplicated test table %s detected. Skipping it."):format(glob_name))
+    else
+      _G[glob_name] = testtab
     end
   end
 end

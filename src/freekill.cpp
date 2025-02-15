@@ -189,10 +189,13 @@ static void cleanUpGlobalStates() {
   if (Pacman) Pacman->deleteLater();
 }
 
-static int runSkillTest() {
+static int runSkillTest(const QString &val, const QString &filepath) {
   Pacman = new PackMan;
   auto L = new Lua;
-  L->eval("__os = os; __io = io; __package = package"); // 保存一下
+  L->eval("__os = os; __io = io; __package = package; __dofile = dofile"); // 保存一下
+
+  QString script;
+
   bool using_core = false;
   if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
@@ -202,8 +205,31 @@ static int runSkillTest() {
   int ret = 1;
   if (!L->dofile("lua/freekill.lua")) goto RET;
   if (using_core) QDir::setCurrent("../..");
+
+  if (val == "") {
+    if (filepath != "") {
+      script = QStringLiteral(
+        R"(
+        local skels = { __dofile('%1') }
+        skels = table.map(skels, function(skel)
+          local skill = Skill:new(skel.name)
+          return string.format('Test%s', skill.name)
+        end)
+        return lu.LuaUnit.run(table.unpack(skels))
+      )").arg(filepath);
+    } else {
+      script = QStringLiteral("return lu.LuaUnit.run()");
+    }
+  } else {
+    auto splitted = QStringList();
+    for (auto s : val.split(',')) {
+      splitted << ("\"Test" + s + '"');
+    }
+    script = QStringLiteral("return lu.LuaUnit.run( %1 )").arg(splitted.join(", "));
+  }
+
   if (!L->dofile("test/lua/cpp_run_skill.lua")) goto RET;
-  ret = L->eval("return lu.LuaUnit.run()").toInt();
+  ret = L->eval(script).toInt();
 
 RET:
   delete L;
@@ -247,7 +273,8 @@ int freekill_main(int argc, char *argv[]) {
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
   parser.addOption({{"h", "help"}, "display help information"});
-  parser.addOption({"testskills", "run test case of skills"});
+  parser.addOption({"testskills", "run test case of skills", "testskills"});
+  parser.addOption({"testfile", "run test case of a skill file", "testfile"});
   QStringList cliOptions;
   for (int i = 0; i < argc; i++)
     cliOptions << argv[i];
@@ -260,7 +287,11 @@ int freekill_main(int argc, char *argv[]) {
     parser.showHelp();
     return 0;
   } else if (parser.isSet("testskills")) {
-    return runSkillTest();
+    auto val = parser.value("testskills");
+    return runSkillTest(val, "");
+  } else if (parser.isSet("testfile")) {
+    auto val = parser.value("testfile");
+    return runSkillTest("", val);
   }
 
   bool startServer = parser.isSet("server");
