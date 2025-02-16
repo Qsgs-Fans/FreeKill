@@ -112,7 +112,7 @@ function AI:getSelectedCard()
   if not handler.skill_name then return end
   local skill = Fk.skills[handler.skill_name]
   if not skill:isInstanceOf(ViewAsSkill) then return end
-  return skill:viewAs(handler.pendings)
+  return skill:viewAs(self.player, handler.pendings)
 end
 
 ---@return ServerPlayer[]

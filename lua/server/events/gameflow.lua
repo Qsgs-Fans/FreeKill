@@ -8,11 +8,12 @@ local function drawInit(room, player, n)
     Fk:filterCard(id, player)
   end
 
-  local move_to_notify = {}   ---@type CardsMoveStruct
-  move_to_notify.toArea = Card.PlayerHand
-  move_to_notify.to = player.id
-  move_to_notify.moveInfo = {}
-  move_to_notify.moveReason = fk.ReasonDraw
+  local move_to_notify = {   ---@type MoveCardsDataSpec
+    moveInfo = {},
+    to = player,
+    toArea = Card.PlayerHand,
+    moveReason = fk.ReasonDraw
+  }
   for _, id in ipairs(cardIds) do
     table.insert(move_to_notify.moveInfo,
     { cardId = id, fromArea = Card.DrawPile })
@@ -33,11 +34,12 @@ local function discardInit(room, player)
     Fk:filterCard(id, nil)
   end
 
-  local move_to_notify = {}   ---@type CardsMoveStruct
-  move_to_notify.from = player.id
-  move_to_notify.toArea = Card.DrawPile
-  move_to_notify.moveInfo = {}
-  move_to_notify.moveReason = fk.ReasonJustMove
+  local move_to_notify = { ---@type MoveCardsDataSpec
+    moveInfo = {},
+    from = player,
+    toArea = Card.DrawPile,
+    moveReason = fk.ReasonJustMove
+  }
   for _, id in ipairs(cardIds) do
     table.insert(move_to_notify.moveInfo,
     { cardId = id, fromArea = Card.PlayerHand })
@@ -61,7 +63,7 @@ function DrawInitial:main()
   }
 
   for _, player in ipairs(room.alive_players) do
-    local draw_data = { num = 4 }
+    local draw_data = DrawInitialData:new{ num = 4 }
     room.logic:trigger(fk.DrawInitialCards, player, draw_data)
     luck_data[player.id] = draw_data
     luck_data[player.id].luckTime = room.settings.luckTime
@@ -99,14 +101,20 @@ function DrawInitial:main()
 end
 
 ---@class GameEvent.Round : GameEvent
+---@field public data RoundData
 local Round = GameEvent:subclass("GameEvent.Round")
 
 function Round:action()
+  -- local data = self.data
   local room = self.room
-  local currentPlayer
+  -- local currentPlayer
 
   while true do
-    GameEvent.Turn:create(room.current):exec()
+    local data = { ---@type TurnDataSpec
+      who = room.current,
+      reason = "game_rule"
+    }
+    GameEvent.Turn:create(TurnData:new(data)):exec()
     if room.game_finished then break end
 
     local changingData = { from = room.current, to = room.current.next, skipRoundPlus = false }
@@ -119,20 +127,33 @@ function Round:action()
       room:setCurrent(nextTurnOwner)
     end
   end
+  -- for _, seat in ipairs(data.turn_table) do
+  --   local current_player = table.find(room.alive_players, function(p) return p.seat == seat end)
+  --   if current_player then
+  --     GameEvent.Turn:create(current_player):exec()
+
+  --     local changingData = { from = room.current, to = room.current.next, skipRoundPlus = false }
+  --     room.logic:trigger(fk.EventTurnChanging, current_player, changingData, true)
+
+  --     --- TODO: 给我整不会了
+  --   end
+  -- end
 end
 
 function Round:main()
   local room = self.room
   local logic = room.logic
+  local data = self.data
 
   local isFirstRound = room:getTag("FirstRound")
   if isFirstRound then
     room:setTag("FirstRound", false)
   end
 
-  local roundCount = room:getTag("RoundCount")
+  local roundCount = room:getBanner("RoundCount") or 0
   roundCount = roundCount + 1
   room:setTag("RoundCount",  roundCount)
+  room:setBanner("RoundCount",  roundCount)
   room:doBroadcastNotify("UpdateRoundNum", roundCount)
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
   if roundCount >= 280 then
@@ -144,13 +165,13 @@ function Round:main()
   end
 
   if isFirstRound then
-    logic:trigger(fk.GameStart, room.current)
+    logic:trigger(fk.GameStart, room.current, data)
   end
 
-  logic:trigger(fk.RoundStart, room.current)
+  logic:trigger(fk.RoundStart, room.current, data)
   self:action()
-  logic:trigger(fk.RoundEnd, room.current)
-  logic:trigger(fk.AfterRoundEnd, room.current)
+  logic:trigger(fk.RoundEnd, room.current, data)
+  logic:trigger(fk.AfterRoundEnd, room.current, data)
 end
 
 function Round:clear()
@@ -181,14 +202,19 @@ function Round:clear()
 end
 
 ---@class GameEvent.Turn : GameEvent
+---@field public data TurnData
 local Turn = GameEvent:subclass("GameEvent.Turn")
 function Turn:prepare()
   local room = self.room
   local logic = room.logic
-  local player = self.data[1]---@type ServerPlayer
-  if self.data[2] == nil then self.data[2] = {} end
-  local data = self.data[2]---@type TurnStruct
+  local data = self.data
+  local player = data.who
   data.reason = data.reason or "game_rule"
+  data.phase_table = data.phase_table or {
+    Player.RoundStart, Player.Start,
+    Player.Judge, Player.Draw, Player.Play, Player.Discard,
+    Player.Finish, Player.NotActive,
+  }
 
   if player.rest > 0 and player.rest < 999 then
     room:setPlayerRest(player, player.rest - 1)
@@ -217,18 +243,20 @@ end
 
 function Turn:main()
   local room = self.room
-  local player = self.data[1]---@type ServerPlayer
-  local data = self.data[2]---@type TurnStruct
+  local data = self.data
+  local player = data.who
   player.phase = Player.PhaseNone
+  room:broadcastProperty(player, "phase")
   room.logic:trigger(fk.TurnStart, player, data)
   player.phase = Player.NotActive
+  room:broadcastProperty(player, "phase")
   player:play(data.phase_table)
 end
 
 function Turn:clear()
   local room = self.room
-  local current = self.data[1]---@type ServerPlayer
-  local data = self.data[2]---@type TurnStruct
+  local data = self.data
+  local current = data.who
 
   local logic = room.logic
   if self.interrupted then
@@ -236,19 +264,21 @@ function Turn:clear()
       local current_phase = current.phase
       current.phase = Player.PhaseNone
       logic:trigger(fk.EventPhaseChanging, current,
-        { from = current_phase, to = Player.NotActive }, true)
+        { from = current_phase, to = Player.NotActive }, true) -- FIXME: 等待规范化
       current.phase = Player.NotActive
       room:broadcastProperty(current, "phase")
-      logic:trigger(fk.EventPhaseStart, current, nil, true)
+      logic:trigger(fk.EventPhaseStart, current, data, true)
     end
 
     current.skipped_phases = {}
   end
 
   current.phase = Player.PhaseNone
+  room:broadcastProperty(current, "phase")
   logic:trigger(fk.TurnEnd, current, data, self.interrupted)
   logic:trigger(fk.AfterTurnEnd, current, data, self.interrupted)
   current.phase = Player.NotActive
+  room:broadcastProperty(current, "phase")
 
   room:setTag("endTurn", false)
 
@@ -277,12 +307,14 @@ function Turn:clear()
 end
 
 ---@class GameEvent.Phase : GameEvent
+---@field public data PhaseData
 local Phase = GameEvent:subclass("GameEvent.Phase")
 function Phase:main()
   local room = self.room
   local logic = room.logic
+  local data = self.data
+  local player = data.who
 
-  local player = self.data[1] ---@type ServerPlayer
   if not logic:trigger(fk.EventPhaseStart, player) then
     if player.phase ~= Player.NotActive then
       logic:trigger(fk.EventPhaseProceeding, player)
@@ -310,11 +342,10 @@ function Phase:main()
           if table.contains(player:getCardIds(Player.Judge), cid) then
             room:moveCardTo(card, Card.Processing, nil, fk.ReasonPut, self.name)
 
-            ---@type CardEffectEvent
-            local effect_data = {
+            local effect_data = CardEffectData:new {
               card = card,
-              to = player.id,
-              tos = { {player.id} },
+              to = player,
+              tos = { player },
             }
             room:doCardEffect(effect_data)
             if effect_data.isCancellOut and card.skill then
@@ -325,9 +356,7 @@ function Phase:main()
       end,
       [Player.Draw] = function()
         if player._phase_end then return end
-        local data = {
-          n = 2
-        }
+        data.n = 2 -- FIXME: 等待阶段拆分
         room.logic:trigger(fk.DrawNCards, player, data)
         if data.n > 0 then
           room:drawCards(player, data.n, "phase_draw")
@@ -340,11 +369,11 @@ function Phase:main()
         room:doBroadcastNotify("UpdateSkill", "", {player})
         while not player.dead do
           if player._phase_end then break end
-          local data = { timeout = room.timeout }
-          logic:trigger(fk.StartPlayCard, player, data, true)
+          local dat = { timeout = room.timeout }
+          logic:trigger(fk.StartPlayCard, player, dat, true)
 
           local req = Request:new(player, "PlayCard")
-          req.timeout = data.timeout
+          req.timeout = dat.timeout
           local result = req:getResult(player)
           if result == "" then break end
 
@@ -366,7 +395,7 @@ function Phase:main()
         ) - player:getMaxCards()
         room:broadcastProperty(player, "MaxCards")
         if discardNum > 0 then
-          room:askForDiscard(player, discardNum, discardNum, false, "phase_discard", false)
+          room:askToDiscard(player, {min_num = discardNum, max_num = discardNum, include_equip = false, skill_name = "phase_discard", cancelable = false})
         end
       end,
       [Player.Finish] = function()
@@ -379,12 +408,13 @@ end
 
 function Phase:clear()
   local room = self.room
-  local player = self.data[1]
   local logic = room.logic
+  local data = self.data
+  local player = data.who
 
   if player.phase ~= Player.NotActive then
-    logic:trigger(fk.EventPhaseEnd, player, nil, self.interrupted)
-    logic:trigger(fk.AfterPhaseEnd, player, nil, self.interrupted)
+    logic:trigger(fk.EventPhaseEnd, player, data, self.interrupted)
+    logic:trigger(fk.AfterPhaseEnd, player, data, self.interrupted)
   else
     player.skipped_phases = {}
   end

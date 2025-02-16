@@ -69,10 +69,13 @@ function ReqActiveSkill:finish()
   self:retractAllPiles()
 end
 
-function ReqActiveSkill:setSkillPrompt(skill, cid)
+---@param skill ActiveSkill
+---@param selected_cards integer[] @ 选择的牌
+function ReqActiveSkill:setSkillPrompt(skill, selected_cards)
   local prompt = skill.prompt
   if type(skill.prompt) == "function" then
-    prompt = skill:prompt(cid or self.pendings, self.selected_targets)
+    prompt = skill:prompt(self.player, selected_cards or self.pendings,
+      table.map(self.selected_targets, Util.Id2PlayerMapper))
   end
   if type(prompt) == "string" then
     self:setPrompt(prompt)
@@ -94,7 +97,7 @@ function ReqActiveSkill:setupInteraction()
   local skill = Fk.skills[self.skill_name]
   if skill and skill.interaction then
     skill.interaction.data = nil
-    local interaction = skill:interaction()
+    local interaction = skill:interaction(self.player)
     if not interaction then
       return
     end
@@ -106,6 +109,11 @@ function ReqActiveSkill:setupInteraction()
   end
 end
 
+
+--- 在手牌区展开一些牌，注可以和已有的牌重复
+---@param pile string @ 牌堆名，用于标识
+---@param extra_ids? integer[] @ 额外的牌id数组
+---@param extra_footnote? string @ 卡牌底注
 function ReqActiveSkill:expandPile(pile, extra_ids, extra_footnote)
   if self.expanded_piles[pile] ~= nil then return end
   local ids, footnote
@@ -115,13 +123,15 @@ function ReqActiveSkill:expandPile(pile, extra_ids, extra_footnote)
     ids = player:getCardIds("e")
     footnote = "$Equip"
   elseif pile == "_extra" then
+    -- expand_pile为id表的情况
     ids = extra_ids
     footnote = extra_footnote
     -- self.extra_cards = exira_ids
   else
+    -- expand_pile为私人牌堆名的情况
     -- FIXME: 可能存在的浅拷贝
-    ids = table.simpleClone(player:getPile(pile))
-    footnote = pile
+    ids = extra_ids or table.simpleClone(player:getPile(pile))
+    footnote = extra_footnote or pile
   end
   self.expanded_piles[pile] = ids
 
@@ -151,10 +161,13 @@ function ReqActiveSkill:retractAllPiles()
   end
 end
 
+-- 展开额外牌堆（即将所有不在手牌区的牌在手牌区域展开）
 function ReqActiveSkill:expandPiles()
-  local skill = Fk.skills[self.skill_name]
+  local skill = Fk.skills[self.skill_name]---@type ActiveSkill | ViewAsSkill
   local player = self.player
   if not skill then return end
+
+  -- 展开自己装备区
   -- 特殊：equips至少有一张能亮着的情况下才展开 且无视是否存在skill.expand_pile
   for _, id in ipairs(player:getCardIds("e")) do
     if self:cardValidity(id) then
@@ -163,10 +176,33 @@ function ReqActiveSkill:expandPiles()
     end
   end
 
+  -- 如果可以调用如手牌般使用的牌，也展开
+  if skill.handly_pile then
+    for pile in pairs(player.special_cards) do
+      if pile:endsWith('&') then
+        self:expandPile(pile)
+      end
+    end
+
+    local cardsExpanded = {}
+    local filterSkills = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable ---@type FilterSkill[]
+    for _, filter in ipairs(filterSkills) do
+      local ids = filter:handlyCardsFilter(player)
+      if ids then
+        ids = table.filter(ids, function(id) return not table.contains(cardsExpanded, id) end)
+        if #ids > 0 then
+          self:expandPile(filter.name, ids)
+          table.insertTable(cardsExpanded, ids)
+        end
+      end
+    end
+  end
+
+  -- 展开该技能本身的额外牌堆
   if not skill.expand_pile then return end
   local pile = skill.expand_pile
   if type(pile) == "function" then
-    pile = pile(skill)
+    pile = pile(skill, player)
   end
 
   local ids = pile
@@ -176,7 +212,7 @@ function ReqActiveSkill:expandPiles()
     pile = "_extra"
   end
 
-  self:expandPile(pile, ids, self.skill_name)
+  self:expandPile(pile, ids, self.extra_data and self.extra_data.skillName)
 end
 
 function ReqActiveSkill:feasible()
@@ -184,13 +220,16 @@ function ReqActiveSkill:feasible()
   local skill = Fk.skills[self.skill_name]
   if not skill then return false end
   local ret
+  local targets = table.map(self.selected_targets, Util.Id2PlayerMapper)
   if skill:isInstanceOf(ActiveSkill) then
-    ret = skill:feasible(self.selected_targets, self.pendings, player)
+    ---@cast skill ActiveSkill
+    ret = skill:feasible(player, targets, self.pendings)
   elseif skill:isInstanceOf(ViewAsSkill) then
-    local card = skill:viewAs(self.pendings)
+    ---@cast skill ViewAsSkill
+    local card = skill:viewAs(player, self.pendings)
     if card then
-      local card_skill = card.skill ---@type ActiveSkill
-      ret = card_skill:feasible(self.selected_targets, { card.id }, player, card)
+      local card_skill = card.skill
+      ret = card_skill:feasible(player, targets, { card.id }, card)
     end
   end
   return ret
@@ -200,22 +239,28 @@ function ReqActiveSkill:isCancelable()
   return self.cancelable
 end
 
+--- 判断一张牌是否能被主动技或转化技点亮（注，使用实体牌不用此函数判断
+---@param cid integer @ 待选卡牌id
 function ReqActiveSkill:cardValidity(cid)
-  local skill = Fk.skills[self.skill_name]
+  local skill = Fk.skills[self.skill_name] --[[@as ActiveSkill | ViewAsSkill]]
   if not skill then return false end
-  return skill:cardFilter(cid, self.pendings)
+  return skill:cardFilter(self.player, cid, self.pendings)
 end
 
 function ReqActiveSkill:targetValidity(pid)
-  local skill = Fk.skills[self.skill_name] --- @type ActiveSkill | ViewAsSkill
+  local skill = Fk.skills[self.skill_name] --[[@as ActiveSkill | ViewAsSkill]]
   if not skill then return false end
   local card -- 姑且接一下(雾)
   if skill:isInstanceOf(ViewAsSkill) then
-    card = skill:viewAs(self.pendings)
+    ---@cast skill ViewAsSkill
+    card = skill:viewAs(self.player, self.pendings)
     if not card then return false end
     skill = card.skill
   end
-  return skill:targetFilter(pid, self.selected_targets, self.pendings, card, self.extra_data)
+  local room = Fk:currentRoom()
+  local p = room:getPlayerById(pid)
+  local selected = table.map(self.selected_targets, Util.Id2PlayerMapper)
+  return skill:targetFilter(self.player, p, selected, self.pendings, card, self.extra_data)
 end
 
 function ReqActiveSkill:updateButtons()
@@ -249,7 +294,7 @@ function ReqActiveSkill:initiateTargets()
   local scene = self.scene
   local skill = Fk.skills[self.skill_name]
   if skill:isInstanceOf(ViewAsSkill) then
-    local card = skill:viewAs(self.pendings)
+    local card = skill:viewAs(self.player, self.pendings)
     if card then skill = card.skill else skill = nil end
   end
 
@@ -335,7 +380,8 @@ function ReqActiveSkill:selectTarget(playerid, data)
   scene:update("Photo", playerid, data)
   -- 发生以下Viewas判断时已经是因为选角色触发的了，说明肯定有card了，这么写不会出事吧？
   if skill:isInstanceOf(ViewAsSkill) then
-    skill = skill:viewAs(self.pendings).skill
+    ---@cast skill ViewAsSkill
+    skill = skill:viewAs(self.player, self.pendings).skill
   end
 
   -- 类似选卡

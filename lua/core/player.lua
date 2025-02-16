@@ -13,7 +13,7 @@
 ---@field public shield integer @ 护甲数
 ---@field public kingdom string @ 势力
 ---@field public role string @ 身份
----@field public role_shown boolean
+---@field public role_shown boolean @ 身份是否明置
 ---@field public general string @ 武将
 ---@field public deputyGeneral string @ 副将
 ---@field public gender integer @ 性别
@@ -146,6 +146,7 @@ function Player:setGeneral(general, setHp, addSkills)
   end
 end
 
+--- 根据角色的主副将计算角色的体力上限
 function Player:getGeneralMaxHp()
   local general = Fk.generals[type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
   local deputy = Fk.generals[type(self:getMark("__heg_deputy")) == "string" and self:getMark("__heg_deputy") or self.deputyGeneral]
@@ -201,9 +202,9 @@ function Player:addMark(mark, count)
   self:setMark(mark, math.max(num + count, 0))
 end
 
---- 为角色移除Mark。
+--- 为角色移除数个Mark。仅能用于数字型标记，且至多减至0
 ---@param mark string @ 标记
----@param count integer @ 为标记删除的数量
+---@param count? integer @ 为标记删除的数量，默认1
 function Player:removeMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
@@ -213,7 +214,7 @@ end
 
 --- 为角色设置Mark至指定数量。
 ---@param mark string @ 标记
----@param count? integer @ 为标记删除的数量
+---@param count? any @ 标记要设定的数量
 function Player:setMark(mark, count)
   if count == 0 then count = nil end
   if self.mark[mark] ~= count then
@@ -388,13 +389,20 @@ end
 
 --- 返回所有“如手牌般使用或打出”的牌。
 --- 或者说，返回所有名字以“&”结尾的pile的牌。
----@param include_hand? boolean @ 是否包含真正的手牌
+---@param include_hand? boolean @ 是否包含真正的手牌，默认包含
 ---@return integer[]
 function Player:getHandlyIds(include_hand)
   include_hand = include_hand or include_hand == nil
   local ret = include_hand and self:getCardIds("h") or {}
   for k, v in pairs(self.special_cards) do
     if k:endsWith("&") then table.insertTable(ret, v) end
+  end
+  local filterSkills = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable ---@type FilterSkill[]
+  for _, filter in ipairs(filterSkills) do
+    local ids = filter:handlyCardsFilter(self)
+    if ids then
+      table.insertTableIfNeed(ret, ids)
+    end
   end
   return ret
 end
@@ -467,18 +475,18 @@ function Player:getAttackRange()
   local baseValue = 1
 
   local weapons = table.filter(self:getEquipments(Card.SubtypeWeapon), function (id)
-    local weapon = Fk:getCardById(id)---@class Weapon
+    local weapon = Fk:getCardById(id) ---@class Weapon
     return weapon:AvailableAttackRange(self)
   end)
   if #weapons > 0 then
     baseValue = 0
     for _, id in ipairs(weapons) do
-      local weapon = Fk:getCardById(id)---@class Weapon
+      local weapon = Fk:getCardById(id) ---@class Weapon
       baseValue = math.max(baseValue, weapon:getAttackRange(self) or 1)
     end
   end
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   local max_fixed, correct = nil, 0
   for _, skill in ipairs(status_skills) do
     local f = skill:getFixed(self)
@@ -563,7 +571,7 @@ function Player:distanceTo(other, mode, ignore_dead)
     ret = math.min(left, right)
   end
 
-  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable
+  local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable  ---@type DistanceSkill[]
   for _, skill in ipairs(status_skills) do
     local fixed = skill:getFixed(self, other)
     local correct = skill:getCorrect(self, other)
@@ -616,7 +624,7 @@ function Player:inMyAttackRange(other, fixLimit)
 
   fixLimit = fixLimit or 0
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   for _, skill in ipairs(status_skills) do
     if skill:withoutAttackRange(self, other) then
       return false
@@ -771,7 +779,7 @@ function Player:isKongcheng()
   return #self:getCardIds(Player.Hand) == 0
 end
 
---- 获取玩家是否无手牌及装备牌。
+--- 获取玩家是否没有牌（即无手牌及装备区牌）。
 function Player:isNude()
   return #self:getCardIds{Player.Hand, Player.Equip} == 0
 end
@@ -870,7 +878,9 @@ function Player:addSkill(skill, source_skill)
   for _, s in ipairs(toget) do
     if not self:hasSkill(s, true, true) then
       table.insert(ret, s)
-      if s:isInstanceOf(TriggerSkill) and RoomInstance then
+      if (s:isInstanceOf(TriggerSkill) or s:isInstanceOf(LegacyTriggerSkill)) and RoomInstance then
+        ---@cast room Room
+        ---@cast s TriggerSkill|LegacyTriggerSkill
         room.logic:addTriggerSkill(s)
       end
       if s:isInstanceOf(StatusSkill) then
@@ -957,9 +967,10 @@ end
 ---@param extra_data? UseExtraData @ 额外数据
 function Player:canUseTo(card, to, extra_data)
   if self:prohibitUse(card) or self:isProhibited(to, card) then return false end
-  local distance_limited = not (extra_data and extra_data.bypass_distances)
-  local can_use = self:canUse(card, extra_data)
-  return can_use and card.skill:modTargetFilter(to.id, {}, self.id, card, distance_limited)
+  local _extra = extra_data and table.simpleClone(extra_data) or {}
+  _extra.fix_targets = {to.id}
+  local can_use = self:canUse(card, _extra) -- for judging peach canUse correctly
+  return can_use and Util.CardTargetFilter(card.skill, self, to, {}, card.subcards, card, _extra)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。

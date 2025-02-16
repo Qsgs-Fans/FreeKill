@@ -37,7 +37,9 @@ function AbstractRoom:initialize()
 end
 
 -- 仅供注释，其余空函数一样
----@param id integer
+
+--- 根据角色id，获得那名角色本人
+---@param id integer @ 角色的id
 ---@return Player
 ---@diagnostic disable-next-line: missing-return
 function AbstractRoom:getPlayerById(id) end
@@ -71,6 +73,17 @@ end
 ---@param player Player
 function AbstractRoom:setCurrent(player)
   self.current = player
+end
+
+--- 获得当前房间中的当前回合角色。
+---
+--- 游戏开始时及每轮开始时当前回合还未正式开始，该函数可能返回nil。
+---@return Player? @ 当前回合角色
+function AbstractRoom:getCurrent()
+  if self.current and self.current.phase ~= Player.NotActive then
+    return self.current
+  end
+  return nil
 end
 
 function AbstractRoom:toJsonObject()

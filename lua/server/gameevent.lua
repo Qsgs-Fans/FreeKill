@@ -38,6 +38,7 @@ function GameEvent:initialize(event, ...)
   ---@diagnostic disable-next-line
   -- self.event = self.class
   self.data = { ... }
+  if #self.data == 1 then self.data = self.data[1] end
   self.status = "ready"
   self.interrupted = false
 
@@ -229,6 +230,7 @@ function GameEvent:exec()
   self.status = "running"
 
   coroutine.yield(self, "__newEvent")
+  -- 事件的处理流程请看GameLogic:resumeEvent
 
   Pcall(self.exit, self)
   for _, f in ipairs(self.extra_exit) do

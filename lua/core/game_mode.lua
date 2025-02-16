@@ -109,7 +109,7 @@ function GameMode:buildDrawPile()
   return allCardIds, void
 end
 
--- 修改角色的属性
+-- 根据模式设定修改角色的属性。例如，至少5人局时主公+1血和上限
 ---@param player ServerPlayer
 ---@return table @ 返回表，键为调整的角色属性，值为调整后的属性
 function GameMode:getAdjustedProperty (player)

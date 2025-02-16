@@ -62,11 +62,12 @@ local playerAreas = { Player.Hand, Player.Equip, Player.Judge, Player.Special }
 ---
 --- 若不存在这种区域，需要返回nil
 ---@param area CardArea
----@param player Player?
----@param dup boolean? 是否返回复制 默认true
----@param special_name string?
+---@param player? Player | PlayerId
+---@param dup? boolean 是否返回复制 默认true
+---@param special_name? string
 function CardManager:getCardsByArea(area, player, dup, special_name)
   local ret
+  if type(player) == "number" then player = Fk:currentRoom():getPlayerById(player) end
   dup = dup == nil and true or false
 
   if area == Card.Processing then
@@ -93,11 +94,19 @@ function CardManager:getCardsByArea(area, player, dup, special_name)
 end
 
 --- 根据moveInfo来移动牌，先将牌从旧数组移动到新数组，再更新两个map表
----@param data CardsMoveStruct
+---@param data MoveCardsData
 ---@param info MoveInfo
 function CardManager:applyMoveInfo(data, info)
   local realFromArea = self:getCardArea(info.cardId)
   local room = Fk:currentRoom()
+  local to
+  if data.to then
+    if type(data.to) == "number" then
+      to = data.to
+    else
+      to = data.to.id
+    end
+  end
 
   local moveFrom = self.owner_map[info.cardId]
   local fromAreaIds = self:getCardsByArea(realFromArea,
@@ -106,7 +115,7 @@ function CardManager:applyMoveInfo(data, info)
   if fromAreaIds == nil or not table.removeOne(fromAreaIds, info.cardId) then return false end
 
   local toAreaIds = self:getCardsByArea(data.toArea,
-    data.to and room:getPlayerById(data.to), false, data.specialName)
+    to, false, data.specialName)
 
   if data.toArea == Card.DrawPile then
     local putIndex = data.drawPilePosition or 1
@@ -120,7 +129,7 @@ function CardManager:applyMoveInfo(data, info)
   else
     table.insert(toAreaIds, info.cardId)
   end
-  self:setCardArea(info.cardId, data.toArea, data.to)
+  self:setCardArea(info.cardId, data.toArea, to)
 end
 
 --- 对那个id应用锁定视为技，将它变成要被锁定视为的牌。
@@ -134,7 +143,7 @@ function CardManager:filterCard(id, player, data)
   end
 
   local card = Fk:getCardById(id, true)
-  local filters = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable
+  local filters = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable---@type FilterSkill[]
 
   if #filters == 0 then
     self.filtered_cards[id] = nil
@@ -149,7 +158,7 @@ function CardManager:filterCard(id, player, data)
 
   for _, f in ipairs(filters) do
     if f:cardFilter(card, player, type(data) == "table" and data.isJudgeEvent) then
-      local _card = f:viewAs(card, player)
+      local _card = f:viewAs(player, card)
       _card.id = id
       _card.skillName = f.name
       if modify and RoomInstance then

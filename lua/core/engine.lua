@@ -89,7 +89,6 @@ function Engine:initialize()
   self:loadCardNames()
   self:loadDisabled()
   self:loadRequestHandlers()
-  self:addSkills(AuxSkills)
 end
 
 local _foreign_keys = {
@@ -125,10 +124,12 @@ function Engine:loadPackage(pack)
   self.packages[pack.name] = pack
   table.insert(self.package_names, pack.name)
 
-  -- add cards, generals and skills to Engine
-  if pack.type == Package.CardPack then
-    self:addCards(pack.cards)
-  elseif pack.type == Package.GeneralPack then
+  -- create skills from skel
+  for _, skel in ipairs(pack.skill_skels) do
+    table.insert(pack.related_skills, skel:createSkill())
+  end
+
+  if pack.type == Package.GeneralPack then
     self:addGenerals(pack.generals)
   end
   self:addSkills(pack:getSkills())
@@ -246,7 +247,7 @@ function Engine:loadPackages()
     if (not string.find(dir, ".disabled")) and not table.contains(_disable_packs, dir)
       and FileIO.isDir("packages/" .. dir)
       and FileIO.exists("packages/" .. dir .. "/init.lua") then
-      local pack = require(string.format("packages.%s", dir))
+      local pack = Pcall(require, string.format("packages.%s", dir))
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
       if type(pack) == "table" then
@@ -262,6 +263,30 @@ function Engine:loadPackages()
           self:loadPackage(pack)
         end
       end
+    end
+  end
+
+  -- 把card放在后面加载吧
+  for _, pkname in ipairs(self.package_names) do
+    local pack = self.packages[pkname]
+
+    for _, skel in ipairs(pack.card_skels) do
+      local card = skel:createCardPrototype()
+      if card then
+        card.package = pack
+        self.skills[card.skill.name] = self.skills[card.skill.name] or card.skill
+        self.all_card_types[card.name] = card
+        table.insert(self.all_card_names, card.name)
+      end
+    end
+
+    for _, tab in ipairs(pack.card_specs) do
+      pack:addCard(self:cloneCard(tab[1], tab[2], tab[3]))
+    end
+
+    -- add cards, generals and skills to Engine
+    if pack.type == Package.CardPack then
+      self:addCards(pack.cards)
     end
   end
 
@@ -347,7 +372,7 @@ end
 --- 如果技能有关联技能，那么递归地加载那些关联技能。
 ---@param skill Skill @ 要加载的技能
 function Engine:addSkill(skill)
-  assert(skill.class:isSubclassOf(Skill))
+  assert(skill:isInstanceOf(Skill))
   if self.skills[skill.name] ~= nil then
     fk.qWarning(string.format("Duplicate skill %s detected", skill.name))
   end
@@ -553,7 +578,7 @@ end
 ---@return Card
 function Engine:cloneCard(name, suit, number)
   local cd = self.all_card_types[name]
-  assert(cd, "Attempt to clone a card that not added to engine")
+  assert(cd, string.format("Attempt to clone a card that not added to engine: name=%s", name))
   local ret = cd:clone(suit, number)
   ret.package = cd.package
   return ret
@@ -746,8 +771,32 @@ end
 --- 其实就是翻译了 ":" .. name 罢了
 ---@param name string @ 要获得描述的名字
 ---@param lang? string @ 要使用的语言，默认读取config
+---@param player? Player @ 绑定角色，用于获取技能的动态描述
 ---@return string @ 描述
-function Engine:getDescription(name, lang)
+function Engine:getDescription(name, lang, player)
+  local skill = Fk.skills[name]
+  if player and skill then
+    local dynamicDesc = skill:getDynamicDescription(player, lang)
+    if type(dynamicDesc) == "string" and dynamicDesc ~= "" then
+      local descFormatter = function(desc)
+        local descSplited = desc:split(":")
+        local descFormatted = self:translate(":" .. descSplited[1], lang)
+        if descFormatted ~= ":" .. descSplited[1] then
+          for i = 2, #descSplited do
+            local curDesc = self:translate(descSplited[i], lang)
+            descFormatted = descFormatted:gsub("{" .. (i - 1) .. "}", curDesc)
+          end
+
+          return descFormatted
+        end
+
+        return desc
+      end
+
+      return descFormatter(dynamicDesc)
+    end
+  end
+
   return self:translate(":" .. name, lang)
 end
 

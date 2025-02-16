@@ -15,6 +15,9 @@
 ---@field public game_modes GameMode[] @ 拓展包包含的游戏模式
 ---@field public game_modes_whitelist? string[] @ 拓展包关于游戏模式的白名单
 ---@field public game_modes_blacklist? string[] @ 拓展包关于游戏模式的黑名单
+---@field public skill_skels SkillSkeleton[]
+---@field public card_skels CardSkeleton[]
+---@field public card_specs [string, integer, integer][]
 local Package = class("Package")
 
 ---@alias PackageType integer
@@ -38,6 +41,9 @@ function Package:initialize(name, _type)
   self.related_skills = {}
   self.cards = {}
   self.game_modes = {}
+  self.skill_skels = {}
+  self.card_skels = {}
+  self.card_specs = {}
 end
 
 --- 获得这个包涉及的所有技能。
@@ -83,6 +89,34 @@ end
 ---@param game_mode GameMode @ 要添加的游戏模式。
 function Package:addGameMode(game_mode)
   table.insert(self.game_modes, game_mode)
+end
+
+---@param skels SkillSkeleton[]
+function Package:loadSkillSkels(skels)
+  for _, e in ipairs(skels) do
+    if type(e) == "table" then
+      table.insert(self.skill_skels, e)
+    end
+  end
+end
+
+---@param skels CardSkeleton[]
+function Package:loadCardSkels(skels)
+  for _, e in ipairs(skels) do
+    if type(e) == "table" then
+      table.insert(self.card_skels, e)
+    end
+  end
+end
+
+--- 向拓展包中添加卡牌（新方法）。
+---
+--- 这样加入的牌之后会被clone并加入包中。
+---@param name string @ 牌名
+---@param suit? Suit @ 花色
+---@param number? integer @ 点数
+function Package:addCardSpec(name, suit, number)
+  table.insert(self.card_specs, { name, suit, number })
 end
 
 return Package

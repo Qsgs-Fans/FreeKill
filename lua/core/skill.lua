@@ -14,10 +14,13 @@
 ---@field public anim_type string|AnimationType @ 技能类型定义
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
----@field public relate_to_place string @ 主将技/副将技
+---@field public relate_to_place string| "m" | "d" @ 主将技("m")/副将技("d")
 ---@field public switchSkillName string @ 转换技名字
 ---@field public times integer @ 技能剩余次数，负数不显示，正数显示
 ---@field public attached_skill_name string @ 给其他角色添加技能的名称
+---@field public main_skill Skill
+---@field public lordSkill boolean @ 是否为主公技
+---@field public cardSkill boolean @ 是否为卡牌效果对应的技能（仅用于ActiveSkill）
 local Skill = class("Skill")
 
 ---@alias Frequency integer
@@ -165,12 +168,12 @@ function Skill:isPlayerSkill(player)
 end
 
 ---@return integer
-function Skill:getTimes()
+function Skill:getTimes(player)
   local ret = self.times
   if not ret then
     return -1
   elseif type(ret) == "function" then
-    ret = ret(self)
+    ret = ret(self, player)
   end
   return ret
 end
@@ -209,6 +212,22 @@ function Skill:onLose(player, is_death)
     end
   end
 
+end
+
+---@param player Player
+---@param lang? string
+---@return string?
+function Skill:getDynamicDescription(player, lang)
+  if self:isSwitchSkill() then
+    local switchState = player:getSwitchSkillState(self.name)
+    local descKey = ":" .. self.name .. (switchState == fk.SwitchYang and "_yang" or "_yin")
+    local translation = Fk:translate(descKey, lang)
+    if translation ~= descKey then
+      return translation
+    end
+  end
+
+  return nil
 end
 
 return Skill

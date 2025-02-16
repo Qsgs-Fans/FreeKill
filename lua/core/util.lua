@@ -172,11 +172,21 @@ Util.CanUse = function(self, player, card, extra_data)
   return not player:prohibitUse(card)
 end
 
---- 指定目标卡牌的targetFilter
-Util.TargetFilter = function(self, to_select, selected, selected_cards, card, extra_data)
-  if not self:modTargetFilter(to_select, selected, Self.id, card, not (extra_data and extra_data.bypass_distances)) then return end
-  if #selected >= self:getMaxTargetNum(Self, card) then return end
-  if Self:isProhibited(Fk:currentRoom():getPlayerById(to_select), card) then return end
+---@deprecated
+--- 指定目标卡牌的targetFilter（牢函数）
+---@param skill ActiveSkill @ 使用牌的CardSkill
+---@param to_select integer @ 目标id
+---@param selected integer[] @ 已选目标id表
+---@param selected_cards integer[] @ 牌的子表
+---@param card Card @ 使用的卡牌
+---@param extra_data any? @ 额外数据
+---@param player Player @ 使用者
+Util.TargetFilter = function(skill, to_select, selected, selected_cards, card, extra_data, player)
+  if not skill:modTargetFilter(player, Fk:currentRoom():getPlayerById(to_select),
+    table.map(selected, Util.Id2PlayerMapper), card, not (extra_data and extra_data.bypass_distances), extra_data) then return end
+  local max_target_num = skill:getMaxTargetNum(player, card)
+  if max_target_num > 0 and #selected >= max_target_num then return end
+  if player:isProhibited(Fk:currentRoom():getPlayerById(to_select), card) then return end
   extra_data = extra_data or {}
   if extra_data.must_targets then
     -- must_targets: 必须先选择must_targets内的**所有**目标
@@ -195,6 +205,37 @@ Util.TargetFilter = function(self, to_select, selected, selected_cards, card, ex
   return true
 end
 
+--- 指定目标卡牌的targetFilter
+---@param skill ActiveSkill @ 使用牌的CardSkill
+---@param to_select Player @ 目标
+---@param selected Player[] @ 已选目标
+---@param selected_cards integer[] @ 牌的子表
+---@param card Card @ 使用的卡牌
+---@param extra_data any? @ 额外数据
+---@param player Player @ 使用者
+Util.CardTargetFilter = function(skill, player, to_select, selected, selected_cards, card, extra_data)
+  if not skill:modTargetFilter(player, to_select, selected, card, extra_data) then return end
+  local max_target_num = skill:getMaxTargetNum(player, card)
+  if max_target_num > 0 and #selected >= max_target_num then return end
+  if player:isProhibited(to_select, card) then return end
+  extra_data = extra_data or {}
+  if extra_data.must_targets then
+    -- must_targets: 必须先选择must_targets内的**所有**目标
+    if not (#extra_data.must_targets <= #selected or
+      table.contains(extra_data.must_targets, to_select.id)) then return false end
+  end
+  if extra_data.include_targets then
+    -- include_targets: 必须先选择include_targets内的**其中一个**目标
+    if not (table.hasIntersection(extra_data.include_targets, selected) or
+      table.contains(extra_data.include_targets, to_select.id)) then return false end
+  end
+  if extra_data.exclusive_targets then
+    -- exclusive_targets: **只能选择**exclusive_targets内的目标
+    if not table.contains(extra_data.exclusive_targets, to_select.id) then return false end
+  end
+  return true
+end
+
 --- 全局卡牌(包括自己)的canUse
 Util.GlobalCanUse = function(self, player, card)
   if player:prohibitUse(card) then return end
@@ -206,18 +247,66 @@ Util.GlobalCanUse = function(self, player, card)
   end
 end
 
+---@deprecated
+--- 默认对自己使用牌的canUse（如桃酒无中装备闪电）（牢函数）
+---@param self ActiveSkill
+---@param player Player
+---@param card Card
+---@param extra_data table?
+Util.SelfCanUse = function(self, player, card, extra_data)
+  if player:prohibitUse(card) then return end
+  local room = Fk:currentRoom()
+  local tos = (extra_data and extra_data.fix_targets) and extra_data.fix_targets or {player.id}
+  return table.find(tos, function(pid)
+    return not player:isProhibited(room:getPlayerById(pid), card)
+    and Util.TargetFilter(self, pid, {}, card.subcards, card, extra_data, player)
+  end) ~= nil
+end
+
+--- 默认对自己使用牌的canUse（如桃酒无中装备闪电）
+---@param self ActiveSkill
+---@param player Player
+---@param card Card
+---@param extra_data table?
+Util.CanUseToSelf = function(self, player, card, extra_data)
+  if player:prohibitUse(card) then return end
+  local tos = (extra_data and extra_data.fix_targets) and extra_data.fix_targets or {player.id}
+  return table.find(tos, function(pid)
+    local p = Fk:currentRoom():getPlayerById(pid)
+    return not player:isProhibited(p, card)
+    and Util.CardTargetFilter(self, player, p, {}, card.subcards, card, extra_data)
+  end) ~= nil
+end
+
 --- AOE卡牌(不包括自己)的canUse
 Util.AoeCanUse = function(self, player, card)
   if player:prohibitUse(card) then return end
-  local room = Fk:currentRoom()
-  for _, p in ipairs(room.alive_players) do
+  for _, p in ipairs(Fk:currentRoom().alive_players) do
     if p ~= player and not (card and player:isProhibited(p, card)) then
       return true
     end
   end
 end
 
---- 全局卡牌(包括自己)的onUse
+--- 全局卡牌的onUse
+---@param cardUseEvent UseCardData
+Util.AoeCardOnUse = function(self, player, cardUseEvent, include_self)
+  if not cardUseEvent.tos or #cardUseEvent.tos == 0 then
+    cardUseEvent.tos = {}
+    local players = table.simpleClone(Fk:currentRoom().alive_players) --[[ @as ServerPlayer[] ]]
+    if not include_self then
+      table.removeOne(players, player)
+    end
+    for _, p in ipairs(players) do
+      if not player:isProhibited(p, cardUseEvent.card) then
+        cardUseEvent:addTarget(p)
+      end
+    end
+  end
+end
+
+---@deprecated
+--- 全局卡牌(包括自己)的onUse（牢函数）
 Util.GlobalOnUse = function(self, room, cardUseEvent)
   if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
     cardUseEvent.tos = {}
@@ -229,7 +318,8 @@ Util.GlobalOnUse = function(self, room, cardUseEvent)
   end
 end
 
---- AOE卡牌(不包括自己)的onUse
+---@deprecated
+--- AOE卡牌(不包括自己)的onUse（牢函数）
 Util.AoeOnUse = function(self, room, cardUseEvent)
   if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
     cardUseEvent.tos = {}
@@ -520,10 +610,10 @@ function table.slice(self, begin, _end)
 end
 
 ---@generic T, T2
----@param self table<T, T2>
----@param targetTbl table<T, T2>
-function table.assign(self, targetTbl)
-  for key, value in pairs(targetTbl) do
+---@param self table<T, T2> @ 要被赋值的表
+---@param source table<T, T2> @ 赋值来源的表
+function table.assign(self, source)
+  for key, value in pairs(source) do
     if self[key] then
       if type(value) == "table" then
         table.insertTable(self[key], value)
@@ -681,163 +771,4 @@ function switch(param, case_table)
   local def = case_table["default"]
   return def and def() or nil
 end
-
----@class TargetGroup : Object
-local TargetGroup = {}
-
-function TargetGroup:getRealTargets(targetGroup)
-  if not targetGroup then
-    return {}
-  end
-
-  local realTargets = {}
-  for _, targets in ipairs(targetGroup) do
-    table.insert(realTargets, targets[1])
-  end
-
-  return realTargets
-end
-
-function TargetGroup:includeRealTargets(targetGroup, playerId)
-  if not targetGroup then
-    return false
-  end
-
-  for _, targets in ipairs(targetGroup) do
-    if targets[1] == playerId then
-      return true
-    end
-  end
-
-  return false
-end
-
-function TargetGroup:removeTarget(targetGroup, playerId)
-  if not targetGroup then
-    return
-  end
-
-  for index, targets in ipairs(targetGroup) do
-    if (targets[1] == playerId) then
-      table.remove(targetGroup, index)
-      return
-    end
-  end
-end
-
-function TargetGroup:pushTargets(targetGroup, playerIds)
-  if not targetGroup then
-    return
-  end
-
-  if type(playerIds) == "table" then
-    table.insert(targetGroup, playerIds)
-  elseif type(playerIds) == "number" then
-    table.insert(targetGroup, { playerIds })
-  end
-end
-
----@class AimGroup : Object
-local AimGroup = {}
-
-AimGroup.Undone = 1
-AimGroup.Done = 2
-AimGroup.Cancelled = 3
-
-function AimGroup:initAimGroup(playerIds)
-  return { [AimGroup.Undone] = playerIds, [AimGroup.Done] = {}, [AimGroup.Cancelled] = {} }
-end
-
-function AimGroup:getAllTargets(aimGroup)
-  local targets = {}
-  table.insertTable(targets, aimGroup[AimGroup.Undone])
-  table.insertTable(targets, aimGroup[AimGroup.Done])
-  return targets
-end
-
-function AimGroup:getUndoneOrDoneTargets(aimGroup, done)
-  return done and aimGroup[AimGroup.Done] or aimGroup[AimGroup.Undone]
-end
-
-function AimGroup:setTargetDone(aimGroup, playerId)
-  local index = table.indexOf(aimGroup[AimGroup.Undone], playerId)
-  if index ~= -1 then
-    table.remove(aimGroup[AimGroup.Undone], index)
-    table.insert(aimGroup[AimGroup.Done], playerId)
-  end
-end
-
-function AimGroup:addTargets(room, aimEvent, playerIds)
-  local playerId = type(playerIds) == "table" and playerIds[1] or playerIds
-  table.insert(aimEvent.tos[AimGroup.Undone], playerId)
-
-  if type(playerIds) == "table" then
-    for i = 2, #playerIds do
-      aimEvent.subTargets = aimEvent.subTargets or {}
-      table.insert(aimEvent.subTargets, playerIds[i])
-    end
-  end
-
-  room:sortPlayersByAction(aimEvent.tos[AimGroup.Undone])
-  if aimEvent.targetGroup then
-    TargetGroup:pushTargets(aimEvent.targetGroup, playerIds)
-  end
-end
-
-function AimGroup:cancelTarget(aimEvent, playerId)
-  local cancelled = false
-  for status = AimGroup.Undone, AimGroup.Done do
-    local indexList = {}
-    for index, pId in ipairs(aimEvent.tos[status]) do
-      if pId == playerId then
-        table.insert(indexList, index)
-      end
-    end
-
-    if #indexList > 0 then
-      cancelled = true
-      for i = 1, #indexList do
-        table.remove(aimEvent.tos[status], indexList[i])
-      end
-    end
-  end
-
-  if cancelled then
-    table.insert(aimEvent.tos[AimGroup.Cancelled], playerId)
-    if aimEvent.targetGroup then
-      TargetGroup:removeTarget(aimEvent.targetGroup, playerId)
-    end
-  end
-end
-
-function AimGroup:removeDeadTargets(room, aimEvent)
-  for index = AimGroup.Undone, AimGroup.Done do
-    aimEvent.tos[index] = room:deadPlayerFilter(aimEvent.tos[index])
-  end
-
-  if aimEvent.targetGroup then
-    local targets = TargetGroup:getRealTargets(aimEvent.targetGroup)
-    for _, target in ipairs(targets) do
-      if not room:getPlayerById(target):isAlive() then
-        TargetGroup:removeTarget(aimEvent.targetGroup, target)
-      end
-    end
-  end
-end
-
-function AimGroup:getCancelledTargets(aimGroup)
-  return aimGroup[AimGroup.Cancelled]
-end
-
----@param target ServerPlayer
----@param data AimStruct
----@return boolean
-function AimGroup:isOnlyTarget(target, data)
-  if data.tos == nil then return false end
-  local tos = AimGroup:getAllTargets(data.tos)
-  return table.contains(tos, target.id) and not table.find(target.room.alive_players, function (p)
-    return p ~= target and table.contains(tos, p.id)
-  end)
-end
-
-return { TargetGroup, AimGroup, Util }
+return Util

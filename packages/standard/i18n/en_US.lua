@@ -216,6 +216,8 @@ Fk:loadTranslationTable({
   ["ex__choose_skill"] = "Choose",
   ["distribution_select_skill"] = "Distribute",
   ["choose_players_to_move_card_in_board"] = "Choose players",
+  ["userealcard_skill"] = "Use",
+
   ["reveal_skill&"] = "Reveal",
   ["#reveal_skill&"] = "Choose a character to reveal",
   [":reveal_skill&"] = "In action phase, you can reveal a character who has Forced skills.",

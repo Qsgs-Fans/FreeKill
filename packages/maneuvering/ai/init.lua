@@ -6,15 +6,15 @@ SmartAI:setCardSkillAI("fire__slash_skill", nil, "slash_skill")
 
 SmartAI:setCardSkillAI("iron_chain_skill", {
   on_effect = function(self, logic, effect)
-    local target = logic:getPlayerById(effect.to)
+    local target = effect.to
     logic:setPlayerProperty(target, "chained", not target.chained)
   end,
 })
 
 SmartAI:setCardSkillAI("fire_attack_skill", {
   on_effect = function(self, logic, effect)
-    local from = logic:getPlayerById(effect.from)
-    local to = logic:getPlayerById(effect.to)
+    local from = effect.from
+    local to = effect.to
     if to:isKongcheng() then return end
     if from:isKongcheng() then return end
     logic:throwCard(from.player_cards[Player.Hand][1], self.skill.name, from)

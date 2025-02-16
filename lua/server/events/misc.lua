@@ -10,9 +10,10 @@ function Game:main()
 end
 
 ---@class GameEvent.ChangeProperty : GameEvent
+---@field public data PropertyChangeData
 local ChangeProperty = GameEvent:subclass("GameEvent.Game")
 function ChangeProperty:main()
-  local data = table.unpack(self.data)
+  local data = self.data
   local room = self.room
   local player = data.from
   local logic = room.logic
@@ -24,6 +25,7 @@ function ChangeProperty:main()
     logic:breakEvent()
   end
 
+  local isLord = (player.role == "lord" and player.role_shown)
   if data.general and data.general ~= "" and data.general ~= player.general then
     local originalGeneral = Fk.generals[player.general] or Fk.generals["blank_shibing"]
     local originalSkills = originalGeneral and originalGeneral:getSkillNameList(true) or Util.DummyTable
@@ -31,7 +33,7 @@ function ChangeProperty:main()
       return "-" .. e
     end))
     local newGeneral = Fk.generals[data.general] or Fk.generals["blank_shibing"]
-    for _, name in ipairs(newGeneral:getSkillNameList(data.isLord)) do
+    for _, name in ipairs(newGeneral:getSkillNameList(isLord)) do
       local s = Fk.skills[name]
       if not s.relate_to_place or s.relate_to_place == "m" then
         table.insertIfNeed(skills, name)
@@ -59,7 +61,7 @@ function ChangeProperty:main()
 
     if data.deputyGeneral ~= "" then
       local newDeputy = Fk.generals[data.deputyGeneral] or Fk.generals["blank_shibing"]
-      for _, name in ipairs(newDeputy:getSkillNameList(data.isLord)) do
+      for _, name in ipairs(newDeputy:getSkillNameList(isLord)) do
         local s = Fk.skills[name]
         if not s.relate_to_place or s.relate_to_place == "d" then
           table.insertIfNeed(skills, name)
@@ -132,12 +134,14 @@ function ChangeProperty:main()
   logic:trigger(fk.AfterPropertyChange, player, data)
 end
 
+--- 改变角色的武将
 ---@param player ServerPlayer @ 要换将的玩家
 ---@param new_general string @ 要变更的武将，若不存在则变身为孙策，孙策不存在变身为士兵
----@param full? boolean @ 是否血量满状态变身
+---@param full? boolean @ 是否血量满状态变身，默认否
 ---@param isDeputy? boolean @ 是否变的是副将
----@param sendLog? boolean @ 是否发Log
+---@param sendLog? boolean @ 是否发Log，默认否
 ---@param maxHpChange? boolean @ 是否改变体力上限，默认改变
+---@param kingdomChange? boolean @ 是否改变势力（仅更改主将时变更），默认改变
 function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange, kingdomChange)
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
 
@@ -151,11 +155,11 @@ function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendL
       allKingdoms = Fk:getKingdomMap(new.kingdom)
     end
     if #allKingdoms > 0 then
-      kingdom = self:askForChoice(player, allKingdoms, "AskForKingdom", "#ChooseInitialKingdom")
+      kingdom = self:askToChoice(player, { choices = allKingdoms, skill_name = "AskForKingdom", prompt = "#ChooseInitialKingdom" })
     end
   end
 
-  ChangeProperty:create({
+  ChangeProperty:create(PropertyChangeData:new{
     from = player,
     general = not isDeputy and new_general or nil,
     deputyGeneral = isDeputy and new_general or nil,
@@ -165,12 +169,25 @@ function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendL
     results = {},
   }):exec()
 
-  maxHpChange = (maxHpChange == nil) and true or maxHpChange
-  if maxHpChange then
-    self:setPlayerProperty(player, "maxHp", player:getGeneralMaxHp())
+  local oldHp, oldMaxHp = player.hp, player.maxHp
+  if (maxHpChange == nil) or maxHpChange then
+    local maxHp = player:getGeneralMaxHp()
+    local changer = Fk.game_modes[self.settings.gameMode]:getAdjustedProperty(player)
+    if changer and changer.maxHp then
+      maxHp = maxHp + (changer.maxHp - player.maxHp)
+    end
+    self:setPlayerProperty(player, "maxHp", maxHp)
   end
   if full or player.hp > player.maxHp then
     self:setPlayerProperty(player, "hp", player.maxHp)
+  end
+  if oldHp ~= player.hp or oldMaxHp ~= player.maxHp then
+    self:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = player.hp,
+      arg2 = player.maxHp,
+    }
   end
 end
 
@@ -181,7 +198,7 @@ function MiscEventWrappers:changeKingdom(player, kingdom, sendLog)
   if kingdom == player.kingdom then return end
   sendLog = sendLog or false
 
-  ChangeProperty:create({
+  ChangeProperty:create(PropertyChangeData:new{
     from = player,
     kingdom = kingdom,
     sendLog = sendLog,
@@ -190,9 +207,10 @@ function MiscEventWrappers:changeKingdom(player, kingdom, sendLog)
 end
 
 ---@class GameEvent.ClearEvent : GameEvent
+---@field data GameEvent
 local ClearEvent = GameEvent:subclass("GameEvent.ClearEvent")
 function ClearEvent:main()
-  local event = self.data[1]
+  local event = self.data
   local logic = self.room.logic
   -- 不可中断
   Pcall(event.clear, event)

@@ -42,7 +42,7 @@ Fk:loadTranslationTable{
   ["$ganglie1"] = "鼠辈，竟敢伤我！",
   ["$ganglie2"] = "以彼之道，还施彼身！",
   ["ganglie"] = "刚烈",
-  [":ganglie"] = "当你受到伤害后，你可以进行判定：若结果不为红桃，则伤害来源选择一项：弃置两张手牌，或受到1点伤害。",
+  [":ganglie"] = "当你受到伤害后，你可以进行判定：若结果不为<font color='red'>♥</font>，则伤害来源选择一项：弃置两张手牌，或受到1点伤害。",
 
   ["zhangliao"] = "张辽",
   ["#zhangliao"] = "前将军",
@@ -232,7 +232,7 @@ Fk:loadTranslationTable{
   ["$guose1"] = "请休息吧。",
   ["$guose2"] = "你累了。",
   ["guose"] = "国色",
-  [":guose"] = "你可以将一张方块牌当【乐不思蜀】使用。",
+  [":guose"] = "你可以将一张<font color='red'>♦</font>牌当【乐不思蜀】使用。",
   ["$liuli1"] = "交给你了。",
   ["$liuli2"] = "你来嘛～",
   ["liuli"] = "流离",
@@ -531,6 +531,7 @@ Fk:loadTranslationTable{
   ["ex__choose_skill"] = "选择",
   ["distribution_select_skill"] = "分配",
   ["choose_players_to_move_card_in_board"] = "选择角色",
+  ["userealcard_skill"] = "使用",
 
   ["AskForUseActiveSkill"] = "使用技能",
   ["AskForSkillInvoke"] = "发动技能",

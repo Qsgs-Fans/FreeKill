@@ -1,5 +1,15 @@
 # ChangeLog
 
+## v0.5.5
+
+此为不稳定版本。
+主要变动详见 https://github.com/Qsgs-Fans/freekill-core/pull/55
+
+- 增强单元测试命令行参数，可只测试一个文件。
+- 游戏结束对话框增强。
+
+___
+
 ## v0.5.3 & v0.5.4
 
 - 修复服务端若干的bug

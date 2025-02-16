@@ -190,12 +190,12 @@ function SkillAI:onTriggerUse(logic, event, target, player, data) end
 
 --- 对主动技生效/卡牌被使用时的模拟
 ---@param logic AIGameLogic
----@param event CardUseStruct | SkillEffectEvent
+---@param event UseCardData | SkillEffectData
 function SkillAI:onUse(logic, event) end
 
 --- 对卡牌生效的模拟
 ---@param logic AIGameLogic
----@param cardEffectEvent CardEffectEvent | SkillEffectEvent
+---@param cardEffectEvent CardEffectData | SkillEffectData
 function SkillAI:onEffect(logic, cardEffectEvent) end
 
 --- 最后效仿一下fk_ex故事
@@ -209,8 +209,8 @@ function SkillAI:onEffect(logic, cardEffectEvent) end
 ---@field choose_cards? fun(self: SkillAI, ai: SmartAI): boolean?
 ---@field choose_targets? fun(self: SkillAI, ai: SmartAI): any, integer?
 ---@field on_trigger_use? fun(self: SkillAI, logic: AIGameLogic, event: Event, target: ServerPlayer?, player: ServerPlayer, data: any)
----@field on_use? fun(self: SkillAI, logic: AIGameLogic, effect: SkillEffectEvent | CardEffectEvent)
----@field on_effect? fun(self: SkillAI, logic: AIGameLogic, effect: SkillEffectEvent | CardEffectEvent)
+---@field on_use? fun(self: SkillAI, logic: AIGameLogic, effect: CardEffectData | SkillEffectData)
+---@field on_effect? fun(self: SkillAI, logic: AIGameLogic, effect: CardEffectData | SkillEffectData)
 
 --- 关于某个触发技在AI中如何影响基于事件的收益推理。
 ---

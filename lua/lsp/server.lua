@@ -129,7 +129,7 @@ end
 ---@param command string
 ---@param json_data string
 function FServerPlayer:doNotify(command, json_data)
-  if self._fake_router then
+  if self._fake_router and ClientSelf.id == self:getId() then
     local room = RoomInstance
     RoomInstance = nil
     local s = Self

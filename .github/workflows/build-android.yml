@@ -105,7 +105,7 @@ jobs:
       run: make -j2
 
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: apk
         path: build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk
@@ -127,7 +127,7 @@ jobs:
         fallback: 0.0.1
 
     - name: Download APK from build
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: apk
         path: apk

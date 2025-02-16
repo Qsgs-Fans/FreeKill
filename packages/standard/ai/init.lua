@@ -6,8 +6,8 @@ end
 
 SmartAI:setSkillAI("jianxiong", {
   think_skill_invoke = function(self, ai, skill_name, prompt)
-    ---@type DamageStruct
-    local dmg = ai.room.logic:getCurrentEvent().data[1]
+    ---@type DamageData
+    local dmg = ai.room.logic:getCurrentEvent().data
     local player = ai.player
     local card = dmg.card
     if not card or player.room:getCardArea(card) ~= Card.Processing then return false end
@@ -47,8 +47,8 @@ SmartAI:setSkillAI("ganglie", {
   end,
 
   think_skill_invoke = function(self, ai, skill_name, prompt)
-    ---@type DamageStruct
-    local dmg = ai.room.logic:getCurrentEvent().data[1]
+    ---@type DamageData
+    local dmg = ai.room.logic:getCurrentEvent().data
     local from = dmg.from
     if not from then return false end
     local dmg_val = ai:getBenefitOfEvents(function(logic)
@@ -76,8 +76,8 @@ SmartAI:setSkillAI("ganglie", {
 
 SmartAI:setSkillAI("fankui", {
   think_skill_invoke = function(self, ai, skill_name, prompt)
-    ---@type DamageStruct
-    local dmg = ai.room.logic:getCurrentEvent().data[1]
+    ---@type DamageData
+    local dmg = ai.room.logic:getCurrentEvent().data
     local player = ai.player
     local from = dmg.from
     if not from then return false end
@@ -99,9 +99,9 @@ SmartAI:setSkillAI("fankui", {
 
 SmartAI:setSkillAI("guicai", {
   think = function(self, ai)
-    ---@type JudgeStruct
-    local dmg = ai.room.logic:getCurrentEvent().data[1]
-    local target = dmg.who
+    ---@type JudgeData
+    local judge = ai.room.logic:getCurrentEvent().data
+    local target = judge.who
     local isFriend = ai:isFriend(target)
 
     local function handleCardSelection(ai, cardPattern)
@@ -116,18 +116,19 @@ SmartAI:setSkillAI("guicai", {
       end
     end
 
-    local function getResponseForReason(ai, reason, dmgCard, isFriend)
+    local function getResponseForReason(ai, reason, jdgCard, isFriend)
       local patterns = {
         indulgence = { matchPattern = ".|.|heart", friendPattern = ".|.|heart", enemyPattern = ".|.|^heart" },
         supply_shortage = { matchPattern = ".|.|club", friendPattern = ".|.|club", enemyPattern = ".|.|^club" },
-        lightning = { matchPattern = ".|2~9|spade", friendPattern = ".|^2~9|^spade", enemyPattern = ".|2~9|spade" }
+        lightning = { matchPattern = ".|2~9|spade", friendPattern = "^(.|2~9|spade)", enemyPattern = ".|2~9|spade" },
+        leiji = {matchPattern = ".|.|spade", friendPattern = ".|.|^spade", enemyPattern = ".|.|spade" },
       }
 
       local patternInfo = patterns[reason]
       if not patternInfo then return {}, -1000 end
 
       local matchFunction = isFriend and patternInfo.friendPattern or patternInfo.enemyPattern
-      local matchResult = Exppattern:Parse(matchFunction):match(dmgCard)
+      local matchResult = Exppattern:Parse(matchFunction):match(jdgCard)
 
       if (isFriend and not matchResult) or (not isFriend and matchResult) then
         --- 如果目标是友方且不匹配友方结果，或者目标是敌方且匹配敌方结果（需要改判）
@@ -138,8 +139,8 @@ SmartAI:setSkillAI("guicai", {
       end
     end
 
-    local dmgCard = dmg.card
-    local response, value = getResponseForReason(ai, dmg.reason, dmgCard, isFriend)
+    local jdgCard = judge.card
+    local response, value = getResponseForReason(ai, judge.reason, jdgCard, isFriend)
 
     return response, value
   end,
@@ -234,6 +235,7 @@ SmartAI:setSkillAI("fanjian", {
   think = function(self, ai)
     local cards = ai:getEnabledCards()
     local players = ai:getEnabledTargets()
+    if #cards == 0 then return {}, -1000 end
 
     --- 获取手牌中权重偏大的牌
     local good_cards = ai:getChoiceCardsByKeepValue(cards, #cards, function(value) return value >= 45 end)
@@ -286,7 +288,7 @@ SmartAI:setSkillAI("xiaoji", {
 SmartAI:setSkillAI("tieqi", {
   think_skill_invoke = function(self, ai, skill_name, prompt)
     ---@type CardUseStruct
-    local dmg = ai.room.logic:getCurrentEvent().data[1]
+    local dmg = ai.room.logic:getCurrentEvent().data
     local targets = dmg.tos
     if not targets then return false end
 
@@ -319,7 +321,7 @@ SmartAI:setSkillAI("qingnang", {
     --- 对所有目标计算回血的收益
     local benefits = table.map(players, function(p)
       return { p, ai:getBenefitOfEvents(function(logic)
-        --- @type RecoverStruct
+        --- @type RecoverData
         logic:recover{
           who = p,
           num = 1,
@@ -350,8 +352,8 @@ SmartAI:setSkillAI("wusheng", nil, "spear_skill")
 
 SmartAI:setSkillAI("longdan", nil, "spear_skill")
 
+SmartAI:setSkillAI("qixi", nil, "spear_skill")
+
 SmartAI:setSkillAI("guose", nil, "spear_skill")
 
 SmartAI:setSkillAI("jijiu", nil, "spear_skill")
-
-SmartAI:setSkillAI("qixi", nil, "spear_skill")

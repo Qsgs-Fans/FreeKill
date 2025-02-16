@@ -120,6 +120,20 @@ end
 function Request:_checkReply(player, use_ai)
   local room = self.room
 
+  -- 此段代码为测试程序专用 用于暂时中断房间
+  -- 类似调试器中的断点
+  local breakpoints = room:getTag("__test_breakpoints")
+  if breakpoints then
+    for i, br in ipairs(breakpoints) do
+      local p, command, fn = br[1], br[2], br[3]
+      if p == player and command == self.command and fn(self.data[player.id]) then
+        table.remove(breakpoints, i)
+        coroutine.yield("__handleRequest")
+        break
+      end
+    end
+  end
+
   -- 若被人类玩家控制着，靠人类玩家自己分析了
   -- 否则交给该Player自己的AI进行考虑，换言之AI控人没有效果（不会故意杀队友）
   local controller = player.serverplayer

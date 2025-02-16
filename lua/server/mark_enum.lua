@@ -37,6 +37,10 @@ MarkEnum.RevealProhibited = "RevealProhibited"
 MarkEnum.PlayerRemoved = "PlayerRemoved"
 ---不能调整手牌
 MarkEnum.SortProhibited = "SortProhibited"
+---无效/无视防具
+MarkEnum.MarkArmorNullified = "mark__armor_nullified"
+MarkEnum.MarkArmorInvalidFrom = "mark__armor_invalid_from"
+MarkEnum.MarkArmorInvalidTo = "mark__armor_invalid_to"
 
 ---各种清除标记后缀
 ---

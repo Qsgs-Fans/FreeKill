@@ -240,14 +240,31 @@ function GetAllPiles(id)
   return ClientInstance:getPlayerById(id).special_cards or Util.DummyTable
 end
 
+function GetMySkills()
+  return table.map(Self.player_skills, function(s)
+    return s.visible and s.name or nil
+  end)
+end
+
+-- TODO: 动态技能名
 function GetPlayerSkills(id)
   local p = ClientInstance:getPlayerById(id)
-  return table.map(p.player_skills, function(s)
-    return s.visible and {
-      name = s.name,
-      description = Fk:getDescription(s.name),
-    } or nil
-  end)
+  --FIXME:本体更新时记得优化此处
+  if p == Self then
+    return table.map(p.player_skills, function(s)
+      return s.visible and {
+        name = s.name,
+        description = Fk:getDescription(s.name, nil, p),
+      } or nil
+    end)
+  else
+    return table.map(p.player_skills, function(s)
+      return s.visible and not (s.attached_equip or s.name:endsWith("&")) and {
+        name = Fk:translate(s.name) .. (s:isEffectable(p) and "" or Fk:translate("skill_invalidity")),
+        description = Fk:getDescription(s.name, nil, p),
+      } or nil
+    end)
+  end
 end
 
 -- Handle skills
@@ -283,7 +300,7 @@ function GetSkillStatus(skill_name)
   local skill = Fk.skills[skill_name]
   return {
     locked = not skill:isEffectable(player),
-    times = skill:getTimes()
+    times = skill:getTimes(Self)
   }
 end
 
@@ -300,7 +317,7 @@ function CardFitPattern(card_name, pattern)
     local skill = Fk.skills[data.skill]
     local selected_cards = data.subcards
     if skill:isInstanceOf(ViewAsSkill) then
-      c = skill:viewAs(selected_cards)
+      c = skill:viewAs(Self, selected_cards)
       if c then
         ret = exp:match(c)
       end
@@ -422,6 +439,165 @@ function CheckSurrenderAvailable(playedTime)
   return Fk.game_modes[curMode]:surrenderFunc(playedTime)
 end
 
+function FindMosts() -- 从所有的玩家结算数据中找出最佳/差玩家
+  local data = ClientInstance:getBanner("GameSummary")
+  if not data then return end -- 兼容老录像
+  local max_damage, max_damaged, max_recover, max_kill = 0, 0, 0, 0
+  local least_damage, least_damaged, least_recover, least_kill = 9999, 9999, 9999, 9999
+  local maxDamagePlayers, maxDamagedPlayers, maxRecoverPlayers, maxKillPlayers = {}, {}, {}, {}
+  local leastDamagePlayers, leastDamagedPlayers, leastRecoverPlayers, leastKillPlayers = {}, {}, {}, {}
+
+  for s, p in ipairs(data) do
+    if p.damage >= max_damage and p.damage > 0 then
+      if p.damage > max_damage then
+        max_damage = p.damage
+        maxDamagePlayers = {}
+      end
+      table.insert(maxDamagePlayers, s)
+    end
+    if p.damaged >= max_damaged and p.damaged > 0 then
+      if p.damaged > max_damaged then
+        max_damaged = p.damaged
+        maxDamagedPlayers = {}
+      end
+      table.insert(maxDamagedPlayers, s)
+    end
+    if p.recover >= max_recover and p.recover > 0 then
+      if p.recover > max_recover then
+        max_recover = p.recover
+        maxRecoverPlayers = {}
+      end
+      table.insert(maxRecoverPlayers, s)
+    end
+    if p.kill >= max_kill and p.kill > 0 then
+      if p.kill > max_kill then
+        max_kill = p.kill
+        maxKillPlayers = {}
+      end
+      table.insert(maxKillPlayers, s)
+    end
+    if p.damage <= least_damage then
+      if p.damage < least_damage then
+        least_damage = p.damage
+        leastDamagePlayers = {}
+      end
+      table.insert(leastDamagePlayers, s)
+    end
+
+    if p.damaged <= least_damaged then
+      if p.damaged < least_damaged then
+        least_damaged = p.damaged
+        leastDamagedPlayers = {}
+      end
+      table.insert(leastDamagedPlayers, s)
+    end
+    if p.recover <= least_recover then
+      if p.recover < least_recover then
+        least_recover = p.recover
+        leastRecoverPlayers = {}
+      end
+      table.insert(leastRecoverPlayers, s)
+    end
+    if p.kill <= least_kill then
+      if p.kill < least_kill then
+        least_kill = p.kill
+        leastKillPlayers = {}
+      end
+      table.insert(leastKillPlayers, s)
+    end
+
+  end
+  local mosts = {
+    maxDamagePlayers = maxDamagePlayers,
+    maxDamagedPlayers = maxDamagedPlayers,
+    maxRecoverPlayers = maxRecoverPlayers,
+    maxKillPlayers = maxKillPlayers,
+    leastDamagePlayers = leastDamagePlayers,
+    leastDamagedPlayers = leastDamagedPlayers,
+    leastRecoverPlayers = leastRecoverPlayers,
+    leastKillPlayers = leastKillPlayers,
+  }
+  ClientInstance:setBanner("GameMosts", mosts)
+end
+
+-- 赋予称号，顺带加上武将和角色
+function Entitle(data, seat, winner)
+  local honor = {}
+  seat = seat + 1
+  local player = ClientInstance:getPlayerBySeat(seat)
+  local result -- 1: 胜, 2: 败, 3: 平局
+  if table.contains(winner:split("+"), player.role) then
+    result = 1
+  elseif winner == "" then
+    result = 3
+  else
+    result = 2
+  end
+
+  local mosts = ClientInstance.banners["GameMosts"]
+  local mostDamage = table.contains(mosts.maxDamagePlayers, seat)
+  local mostDamaged = table.contains(mosts.maxDamagedPlayers, seat)
+  local mostRecover = table.contains(mosts.maxRecoverPlayers, seat)
+  local mostKill = table.contains(mosts.maxKillPlayers, seat)
+  local leastDamage = table.contains(mosts.leastDamagePlayers, seat)
+  local leastDamaged = table.contains(mosts.leastDamagedPlayers, seat)
+  local leastRecover = table.contains(mosts.leastRecoverPlayers, seat)
+  local leastKill = table.contains(mosts.leastKillPlayers, seat)
+
+  local addHonor = function(honorName)
+    table.insert(honor, Fk:translate(honorName))
+  end
+  if data.turn == 0 and player.dead then addHonor("Soy") end -- 打酱油的：没有回合就死
+  if data.turn <= 1 and result == 1 then addHonor("Rapid Victory") end -- 旗开得胜：一回合内胜利
+  if mostDamage and mostDamaged then addHonor("Burning Soul") end -- 血战：最多伤害，最多受伤
+  if mostDamage and data.kill == 0 and result == 2 then addHonor("Regretful Lose") end-- 含恨而终：伤害最多，没有击杀并失败
+  if data.kill >= #ClientInstance.players - 2 and data.kill > 0 and result == 2 then addHonor("Close But No Cigar") end -- 功亏一篑：杀死X-2个角色（X为玩家数）但失败
+  if leastDamage and mostKill then addHonor("Wicked Kill") end -- 直刺咽喉：最少伤害，最多击杀
+  if data.damage == 0 and leastDamaged and data.recover > 0 then addHonor("Peaceful Watcher") end -- 和平主义者：没有伤害，最少受伤，有回血
+  if mostKill and mostDamage and mostRecover and data.damage >= 10 and data.recover >= 10 and player:isAlive() and result == 1 then addHonor("MVP") end -- MVP：最多击杀，最多伤害，最多回血，伤害和回血都大于10,存活且获胜
+  if data.damage == 0 and data.recover == 0 and data.kill == 0 and data.damaged == 0 then addHonor("Innocent") end -- 无存在感：没有伤害，没有回血，没有击杀，没有受伤
+  if mostKill and mostDamage and data.kill > 2 and player.role == "lord" and result == 1 then addHonor("Awe Prestige") end -- 天道威仪：最多击杀，最多伤害，击杀至少3个角色，身份为主公且获胜
+  if data.damaged == 0 and player:isAlive() and result == 1 and player.role == "loyalist" then addHonor("Wisely Loyalist") end -- 能臣巧吏：没有受伤，存活，身份为忠臣且获胜
+  if data.damaged == 0 and player:isAlive() and result == 1 and player.role == "renegade" then addHonor("Conspiracy") end -- 老谋深算：没有受伤，存活，身份为内奸且获胜
+  if mostKill and data.kill > 1 and player.role ~= "lord" and player:isAlive() then addHonor("War Vanguard") end -- 破敌先锋：最多伤害，击杀至少2个角色，身份不为主公且存活
+  if data.kill > 1 and player.role == "lord" and result == 2 then addHonor("Lose Prestige") end -- 天道不佑：击杀至少2个角色，身份为主公且失败
+  if mostKill and data.kill > 1 and player.role == "lord" and result == 1 then addHonor("Fierce Lord") end -- 一世枭雄：最多击杀，击杀至少2个角色，身份为主公且获胜
+  if mostKill and data.kill >= (#ClientInstance.players / 2 + 0.5) then addHonor("Blood Judgement") end -- 嗜血判官：最多击杀，击杀大于一半的角色
+  if data.kill >= #ClientInstance.players - 1 and data.kill > 1 then addHonor("Rampage") end -- 横扫千军：杀死X-1个角色（X为玩家数且至少为3）
+  if mostKill and mostDamage and result == 2 then addHonor("Failed Ambition") end -- 大业未成：最多击杀，最多伤害但失败
+  if data.kill == 1 and player.role == "rebel" and result == 1 and #ClientInstance.players > 2 and #ClientInstance.alive_players + 1 == #ClientInstance.players then addHonor("Direct Regicide") end -- 直捣黄龙：只击杀主公，且只有主公阵亡，身份为反贼
+  if mostDamage and result == 1 and player.role ~= "lord" and player:isAlive() then addHonor("Legatus") end -- 破军功臣：最多伤害，存活，身份不为主公且获胜
+  if mostDamage and result == 1 and player.role == "lord" then addHonor("Frightful Lord") end -- 势敌千军：最多伤害，身份为主公且获胜
+  if mostDamage and data.damage >= 10 and data.damage <= 14 then addHonor("Bloody Warrior") end -- 屠戮之士：最多伤害，伤害10~14点
+  if mostDamage and data.damage >= 15 and data.damage <= 19 then addHonor("Warrior Soul") end -- 战魂：最多伤害，伤害15~19点
+  if mostDamage and data.damage >= 20 then addHonor("Wrath Warlord") end -- 暴走战神：最多伤害，伤害至少20点
+  if mostRecover and data.recover >= 10 then addHonor("Peaceful Healer") end -- 甘霖之润：最多回血，回血至少10点
+  if mostRecover and data.recover >= 5 and data.recover <= 9 then addHonor("Brilliant Healer") end -- 妙手回春：最多回血，回血5~9点
+  if mostDamaged and data.damage == 0 and player.dead and player.role ~= "lord" then addHonor("Fodder") end -- 炮灰：最多受伤，没有伤害，死亡，身份不为主公
+  if mostDamaged and data.damaged >= 15 then addHonor("Fire Target") end -- 集火目标：最多受伤，受伤至少15点
+  if mostDamaged and data.damaged >= 10 and player:isAlive() and result == 1 then addHonor("Tank") end -- 肉盾：受伤至少10点，存活且获胜
+  if mostDamaged and data.damaged >= 10 and player:isAlive() and result == 2 then addHonor("War Spirit") end -- 军魂：受伤至少10点，存活但失败
+  local players = ClientInstance.alive_players
+  local loyalistNum, rebelNum, loyalistAll, rebelAll = 0, 0, 0, 0
+  for _, p in ipairs(players) do
+    if p.role == "loyalist" then
+      loyalistAll = loyalistAll + 1
+      if p:isAlive() then loyalistNum = loyalistNum + 1 end
+    elseif p.role == "rebel" then
+      rebelAll = rebelAll + 1
+      if p:isAlive() then rebelNum = rebelNum + 1 end
+    end
+  end
+  if player:isAlive() and result == 1 and player.role == "loyalist" and loyalistNum == 1 and loyalistAll > 1 then addHonor("Priority Honor") end -- 竭忠尽智：作为剩余唯一存活的忠臣，获胜
+  if player:isAlive() and result == 1 and player.role == "rebel" and rebelNum == 1 and rebelAll > 1 then addHonor("Impasse Strike") end -- 绝境逆袭：作为剩余唯一存活的反贼，获胜
+  return {
+    honor = table.concat(honor, ", "),
+    general = player.general,
+    deputy = player.deputyGeneral,
+    role = player.role,
+  }
+end
+
 function SaveRecord()
   local c = ClientInstance
   c.client:saveRecord(json.encode(c.record), c.record[2])
@@ -497,14 +673,17 @@ function GetTargetTip(pid)
 
   if skill then
     if skill:isInstanceOf(ActiveSkill) then
-      local tip = skill:targetTip(to_select, selected, selected_cards, nil, selectable, extra_data)
+      ---@cast skill ActiveSkill
+      local tip = skill:targetTip(Self, ClientInstance:getPlayerById(to_select),
+        table.map(selected, Util.Id2PlayerMapper), selected_cards, nil, selectable, extra_data)
       if type(tip) == "string" then
         table.insert(ret, { content = tip, type = "normal" })
       elseif type(tip) == "table" then
         table.insertTable(ret, tip)
       end
     elseif skill:isInstanceOf(ViewAsSkill) then
-      card = skill:viewAs(selected_cards)
+      ---@cast skill ViewAsSkill
+      card = skill:viewAs(Self, selected_cards)
     end
   end
 
@@ -516,7 +695,8 @@ function GetTargetTip(pid)
         return ret
       end
 
-      local tip = sk:getTargetTip(Self, to_select, selected, selected_cards, card, selectable, extra_data)
+      local tip = sk:getTargetTip(Self, ClientInstance:getPlayerById(to_select),
+        table.map(selected, Util.Id2PlayerMapper), selected_cards, card, selectable, extra_data)
       if type(tip) == "string" then
         table.insert(ret, { content = tip, type = "normal" })
       elseif type(tip) == "table" then
@@ -525,7 +705,8 @@ function GetTargetTip(pid)
     end
 
     ret = ret or {}
-    local tip = card.skill:targetTip(to_select, selected, selected_cards, card, selectable, extra_data)
+    local tip = card.skill:targetTip(Self, ClientInstance:getPlayerById(to_select),
+      table.map(selected, Util.Id2PlayerMapper), selected_cards, card, selectable, extra_data)
     if type(tip) == "string" then
       table.insert(ret, { content = tip, type = "normal" })
     elseif type(tip) == "table" then
@@ -691,10 +872,11 @@ end
 function RefreshStatusSkills()
   local self = ClientInstance
   -- if not self.recording then return end -- 在回放录像就别刷了
-  -- 刷所有人手牌上限及可见标记；以及身份可见性
+  -- 刷所有人手牌上限，体力值及可见标记；以及身份可见性
   for _, p in ipairs(self.alive_players) do
     self:notifyUI("MaxCard", {
       pcardMax = p:getMaxCards(),
+      php = p.hp,
       id = p.id,
     })
 
@@ -721,6 +903,7 @@ function RefreshStatusSkills()
   for _, cid in ipairs(Self:getCardIds("h")) do
     self:notifyUI("UpdateCard", cid)
   end
+  Self:filterHandcards()
   -- 刷技能状态
   self:notifyUI("UpdateSkill", nil)
 end

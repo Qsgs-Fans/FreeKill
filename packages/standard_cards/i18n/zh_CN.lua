@@ -191,5 +191,5 @@ Fk:loadTranslationTable{
   ["zixing"] = "紫骍",
   [":zixing"] = "装备牌·坐骑<br /><b>坐骑技能</b>：你与其他角色的距离-1。",
 
-  ["#default_equip_skill"] = "装备%arg2【%arg】",
+  ["#default_equip_skill"] = "装备【%arg】",
 }

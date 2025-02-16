@@ -188,5 +188,5 @@ Fk:loadTranslationTable({
   ["zixing"] = "Zi Xing",
   [":zixing"] = "Zi Xing (equip card, horse)<br /><b>Horse skill</b>: The distance from you to other players is reduced by -1.",
 
-  ["#default_equip_skill"] = "Equip %arg2 %arg",
+  ["#default_equip_skill"] = "Equip %arg",
 }, "en_US")

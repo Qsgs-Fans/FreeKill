@@ -11,9 +11,11 @@ local function exec(tp, ...)
 end
 
 ---@class GameEvent.SkillEffect : GameEvent
+---@field public data SkillEffectData
 local SkillEffect = GameEvent:subclass("GameEvent.SkillEffect")
 function SkillEffect:main()
-  local effect_cb, player, skill, skill_data = table.unpack(self.data)
+  local data = self.data
+  local effect_cb, player, skill, skill_data = data.skill_cb, data.who, data.skill, data.skill_data
   local room = self.room
   local logic = room.logic
   local main_skill = skill.main_skill and skill.main_skill or skill
@@ -23,7 +25,7 @@ function SkillEffect:main()
   if player and not skill.cardSkill then
     player:revealBySkillName(main_skill.name)
 
-    local tos = skill_data.tos or {}
+    local tos = skill_data.tos and table.map(skill_data.tos, Util.IdMapper) or {}
     local mute, no_indicate = skill.mute, skill.no_indicate
     if type(cost_data) == "table" then
       if cost_data.mute then mute = cost_data.mute end
@@ -88,7 +90,28 @@ end
 ---@param effect_cb fun() @ 实际要调用的函数
 ---@param skill_data? table @ 技能的信息
 function SkillEventWrappers:useSkill(player, skill, effect_cb, skill_data)
-  return exec(SkillEffect, effect_cb, player, skill, skill_data or Util.DummyTable)
+  if skill_data then
+    for k, v in pairs(skill_data) do
+      if table.contains({"from"}, k) and type(v) == "number" then
+        skill_data[k] = self:getPlayerById(v)
+      elseif table.contains({"tos"}, k) and type(v[1]) == "number" then
+        local new_v = {}
+        for _, pid in ipairs(v) do
+          table.insert(new_v, self:getPlayerById(pid))
+        end
+        skill_data[k] = new_v
+      else
+        skill_data[k] = v
+      end
+    end
+  end
+  local data = SkillEffectData:new{
+    who = player,
+    skill = skill,
+    skill_cb = effect_cb,
+    skill_data = skill_data
+  }
+  return exec(SkillEffect, data)
 end
 
 --- 令一名玩家获得/失去技能。

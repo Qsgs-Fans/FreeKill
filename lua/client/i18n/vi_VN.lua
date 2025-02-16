@@ -34,6 +34,7 @@ Fk:loadTranslationTable({
   ["Set as Avatar"] = "Đặt làm Avatar",
   ["Search"] = "Tìm kiếm",
   ["Back"] = "Quay lại",
+  ["Click to back"] = "Quay lại", -- TODO
 
   ["Refresh Room List"] = "Tải lại danh sách phòng (%1 phòng)",
 
@@ -116,10 +117,30 @@ Fk:loadTranslationTable({
   ["Equip Use Audio"] = "Âm thanh trang bị",
   ["Modes Overview"] = "Chế độ chơi",
   ["Replay"] = "Xem lại",
+
+  --[[ TODO
+  ["Game Data Overview"] = "战绩一览",
+  ["Statistics Overview"] = "数据统计",
+  ["Favorite Replay"] = "已收藏录像",
+
+  ["Replay Recording"] = "重放录像",
+  ["Replay Expired"] = "录像已过期",
+  ["View Endgame"] = "查看终盘战况",
+  ["Endgame Expired"] = "终盘已过期",
+  ["Bookmark Replay"] = "收藏录像",
+  ["Already Bookmarked"] = "已收藏",
+
+  ["Total"] = "总数",
+  ["Win Rate"] = "胜率",
+  ["Merge Modes"] = "检索时不区分游戏模式",
+  ["Merge Roles"] = "检索时不区分身份",
+  --]]
+
   ["Replay Manager"] = "Quản lý xem lại",
   ["Replay from File"] = "Mở từ File",
   ["Game Win"] = "Thắng",
   ["Game Lose"] = "Thua",
+  ["Game Draw"] = "Hòa",
   ["Play the Replay"] = "Xem lại",
   ["Delete Replay"] = "Xóa",
   ["About"] = "Thông tin",
@@ -296,6 +317,7 @@ Trang chủ: https://libgit2.org
   ["#StartPindianReason"] = "%from bắt đầu đấu điểm (%arg)",
   ["#ShowPindianCard"] = "Lá đấu điểm của %from là %arg",
   ["#ShowPindianResult"] = "%from %arg đấu điểm giữa %from và %to",
+  -- ["#ChangePindianNumber"] = "由于 %arg，%to 的拼点牌点数从 %arg2 变为 %arg3",
   ["pindianwin"] = "thắng",
   ["pindiannotwin"] = "thua",
 
@@ -348,6 +370,48 @@ Trang chủ: https://libgit2.org
   ["$GameOver"] = "Trò chơi kết thúc",
   ["$Winner"] = "Người chiến thắng là %1",
   ["$NoWinner"] = "Hòa!",
+  --[[ -- TODO
+  ["Name"] = "名称",
+  ["Role"] = "身份",
+  ["Turn"] = "回合",
+  ["Recover"] = "回血",
+  -- ["Damage"] = "伤害",
+  ["Damaged"] = "受伤",
+  ["Kill"] = "击杀",
+  ["Honor"] = "称号",
+  ["Soy"] = "打酱油的",
+  ["Rapid Victory"] = "旗开得胜",
+  ["Burning Soul"] = "血战",
+  ["Regretful Lose"] = "含恨而终",
+  ["Close But No Cigar"] = "功亏一篑",
+  ["Wicked Kill"] = "直刺咽喉",
+  ["Peaceful Watcher"] = "和平主义者",
+  -- ["MVP"] = "MVP",
+  ["Innocent"] = "无存在感",
+  ["Awe Prestige"] = "天道威仪",
+  ["Wisely Loyalist"] = "能臣巧吏",
+  ["Conspiracy"] = "老谋深算",
+  ["War Vanguard"] = "破敌先锋",
+  ["Lose Prestige"] = "天道不佑",
+  ["Fierce Lord"] = "一世枭雄",
+  ["Blood Judgement"] = "嗜血判官",
+  ["Rampage"] = "横扫千军",
+  ["Failed Ambition"] = "大业未成",
+  ["Direct Regicide"] = "直捣黄龙",
+  ["Legatus"] = "破军功臣",
+  ["Frightful Lord"] = "势敌千军",
+  ["Bloody Warrior"] = "屠戮之士",
+  ["Warrior Soul"] = "战魂",
+  ["Wrath Warlord"] = "暴走战神",
+  ["Peaceful Healer"] = "甘霖之润",
+  ["Brilliant Healer"] = "妙手回春",
+  ["Fodder"] = "炮灰",
+  ["Fire Target"] = "集火目标",
+  ["Tank"] = "肉盾",
+  ["War Spirit"] = "军魂",
+  ["Priority Honor"] = "竭忠尽智",
+  ["Impasse Strike"] = "绝境逆袭",
+  ]]
   ["Back To Room"] = "Trở về phòng chơi",
   ["Back To Lobby"] = "Quay lại sảnh chờ",
   ["Save Replay"] = "Lưu Replay",
@@ -442,6 +506,7 @@ Fk:loadTranslationTable({
   ["JudgeSlot"] = "Vùng phán xét",
 
   ["skill"] = "Kỹ năng",
+  ["skill_invalidity"] = "<font color='red'> (có hiệu quả)</font>",
 }, "vi_VN")
 
 -- related to sendLog

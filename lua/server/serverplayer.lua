@@ -132,6 +132,12 @@ function ServerPlayer:reconnect()
     end
   end
 
+  for _, skills in ipairs(room.status_skills) do
+    for _, skill in ipairs(skills) do
+      self:doNotify("AddStatusSkill", json.encode{ skill.name })
+    end
+  end
+
   room:broadcastProperty(self, "state")
 end
 
@@ -208,7 +214,12 @@ function ServerPlayer:changePhase(from_phase, to_phase)
     table.remove(self.phases, 1)
   end
 
-  GameEvent.Phase:create(self, self.phase):exec()
+  local data = { ---@type PhaseDataSpec
+    who = self,
+    reason = "game_rule",
+    phase = self.phase -- FIXME: 等待拆分
+  }
+  GameEvent.Phase:create(PhaseData:new(data)):exec()
 
   return false
 end
@@ -251,7 +262,12 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
       arg = Util.PhaseStrMapper(phase),
     }
 
-    GameEvent.Phase:create(self, self.phase):exec()
+    local data = { ---@type PhaseDataSpec
+      who = self,
+      reason = "game_rule",
+      phase = self.phase -- FIXME: 等待拆分
+    }
+    GameEvent.Phase:create(PhaseData:new(data)):exec()
 
     phase_change = {
       from = phase,
@@ -264,7 +280,7 @@ function ServerPlayer:gainAnExtraPhase(phase, delay)
       from = self.id,
       arg = Util.PhaseStrMapper(phase),
     }
-    logic:trigger(fk.EventPhaseSkipped, self, phase)
+    logic:trigger(fk.EventPhaseSkipped, self, {phase = phase})
   end
 
   self.phase = current
@@ -312,16 +328,23 @@ function ServerPlayer:play(phase_table)
 
     self.phase_index = i
     local phase_change = {
-      from = self.phase,
+      -- from = self.phase,
       to = phases[i]
     }
 
     local logic = self.room.logic
     self.phase = Player.PhaseNone
+    room:broadcastProperty(self, "phase")
 
     local skip = phase_state[i].skipped
     if not skip then
       skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
+      if skip then
+        fk.qWarning("Return true at fk.EventPhaseChanging is deprecated! Use Player:skip() instead")
+      end
+      if self.skipped_phases[phases[i]] then
+        skip = true
+      end
     end
     phases[i] = phase_change.to
     phase_state[i].phase = phases[i]
@@ -335,14 +358,19 @@ function ServerPlayer:play(phase_table)
     end
 
     if (not skip) or (cancel_skip) then
-      GameEvent.Phase:create(self, self.phase):exec()
+      local data = { ---@type PhaseDataSpec
+        who = self,
+        reason = "game_rule",
+        phase = self.phase -- FIXME: 等待拆分
+      }
+      GameEvent.Phase:create(PhaseData:new(data)):exec()
     else
       room:sendLog{
         type = "#PhaseSkipped",
         from = self.id,
         arg = Util.PhaseStrMapper(self.phase),
       }
-      logic:trigger(fk.EventPhaseSkipped, self, self.phase)
+      logic:trigger(fk.EventPhaseSkipped, self, {phase = self.phase})
     end
   end
 end
@@ -382,12 +410,13 @@ end
 --- 获得一个额外回合
 ---@param delay? boolean @ 是否延迟到当前回合结束再开启额外回合，默认是
 ---@param skillName? string @ 额外回合原因
----@param turnData? TurnStruct @ 额外回合的信息
+---@param turnData? TurnDataSpec @ 额外回合的信息
 function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
   local room = self.room
   delay = (delay == nil) and true or delay
   skillName = skillName or room.logic:getCurrentSkillName() or "game_rule"
   turnData = turnData or {}
+  turnData.who = self
   turnData.reason = skillName
   if delay then
     local turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
@@ -407,7 +436,7 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
 
   room:addTableMark(self, "_extra_turn_count", skillName)
 
-  GameEvent.Turn:create(self, turnData):exec()
+  GameEvent.Turn:create(TurnData:new(turnData)):exec()
 
   local mark = self:getTableMark("_extra_turn_count")
   if #mark > 0 then
@@ -831,7 +860,7 @@ function ServerPlayer:hideGeneral(isDeputy)
   local general = Fk.generals[generalName]
   local place = isDeputy and "m" or "d"
   for _, sname in ipairs(general:getSkillNameList()) do
-    room:handleAddLoseSkills(self, "-" .. sname, nil, false, true)
+    room:handleAddLoseSkills(self, "-" .. sname, nil, false, false)
     local s = Fk.skills[sname]
     if s.relate_to_place ~= place then
       if s.frequency == Skill.Compulsory then
@@ -885,11 +914,11 @@ end
 -- 青釭剑
 
 ---类〖青釭剑〗的无视防具效果（注意仅能在onAim的四个时机中使用）
----@param data AimStruct
+---@param data AimData
 function ServerPlayer:addQinggangTag(data)
   if not data.qinggang_used then
     data.qinggang_used = true
-    self.room:addPlayerMark(self, fk.MarkArmorNullified)
+    self.room:addPlayerMark(self, MarkEnum.MarkArmorNullified)
     data.extra_data = data.extra_data or {}
     data.extra_data.qinggang_tag = data.extra_data.qinggang_tag or {}
     table.insert(data.extra_data.qinggang_tag, data.to)

@@ -34,7 +34,7 @@ function Object:subclass(name)end
 ---@return boolean
 function Object:isInstanceOf(class) end
 
----@param class class
+---@param class class|Object
 ---@return boolean
 function Object:isSubclassOf(class) end
 

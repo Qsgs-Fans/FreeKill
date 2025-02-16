@@ -25,14 +25,16 @@ end
 function ReqPlayCard:cardValidity(cid)
   if self.skill_name and not self.selected_card then return ReqActiveSkill.cardValidity(self, cid) end
   local player = self.player
-  local card = cid
+  local card = cid --[[ @as Card ]]
   if type(cid) == "number" then card = Fk:getCardById(cid) end
   local ret = player:canUse(card)
   if ret then
-    local min_target = card.skill:getMinTargetNum()
+    local min_target = card.skill:getMinTargetNum(player)
     if min_target > 0 then
       for pid, _ in pairs(self.scene:getAllItems("Photo")) do
-        if card.skill:targetFilter(pid, {}, {}, card, self.extra_data) then
+        ---@cast pid integer
+        local to_select = Fk:currentRoom():getPlayerById(pid)
+        if card.skill:targetFilter(player, to_select, {}, {}, card, self.extra_data) then
           return true
         end
       end
@@ -54,9 +56,9 @@ end
 
 function ReqPlayCard:skillButtonValidity(name)
   local player = self.player
-  local skill = Fk.skills[name]
+  local skill = Fk.skills[name]---@type ActiveSkill | ViewAsSkill
   if skill:isInstanceOf(ViewAsSkill) then
-    local ret = skill:enabledAtPlay(player, true)
+    local ret = skill:enabledAtPlay(player)
     if ret then -- 没有pattern，或者至少有一个满足
       local exp = Exppattern:Parse(skill.pattern)
       local cnames = {}
@@ -72,7 +74,7 @@ function ReqPlayCard:skillButtonValidity(name)
       for _, n in ipairs(cnames) do
         local c = Fk:cloneCard(n)
         c.skillName = name
-        ret = c.skill:canUse(Self, c, extra_data)
+        ret = c.skill:canUse(player, c, extra_data)
         if ret then break end
       end
     end
@@ -85,20 +87,24 @@ end
 function ReqPlayCard:feasible()
   local player = self.player
   local ret = false
-  local card = self.selected_card
+  local card
   if self.skill_name then
     local skill = Fk.skills[self.skill_name]
     if skill:isInstanceOf(ActiveSkill) then
+      ---@cast skill ActiveSkill
       return ReqActiveSkill.feasible(self)
     else -- viewasskill
-      card = skill:viewAs(self.pendings)
+      ---@cast skill ViewAsSkill
+      card = skill:viewAs(player, self.pendings)
     end
+  else
+    card = self.selected_card
   end
   if card then
-    local skill = card.skill ---@type ActiveSkill
-    ret = skill:feasible(self.selected_targets, { card.id }, player, card)
+    local skill = card.skill
+    ret = skill:feasible(player, table.map(self.selected_targets, Util.Id2PlayerMapper), { card.id }, card)
     if ret then
-      ret = skill:canUse(player, card, self.extra_data)
+      ret = not not skill:canUse(player, card, self.extra_data)
     end
   end
   return ret
@@ -126,7 +132,19 @@ end
 function ReqPlayCard:doOKButton()
   self.scene:update("SpecialSkills", "1", { skills = {} })
   self.scene:notifyUI()
-  return ReqUseCard.doOKButton(self)
+  if not(self.skill_name and self.selected_card) then
+    return ReqUseCard.doOKButton(self)
+  end
+  local reply = {
+    card = self.selected_card:getEffectiveId(),
+    targets = self.selected_targets,
+    special_skill = self.skill_name
+  }
+  if ClientInstance then
+    ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+  else
+    return reply
+  end
 end
 
 function ReqPlayCard:doCancelButton()
@@ -159,7 +177,7 @@ function ReqPlayCard:selectCard(cid, data)
     scene:unselectOtherCards(cid)
     -- self:setSkillPrompt(self.selected_card.skill, self.selected_card:getEffectiveId())
     local sp_skills = {}
-    if self.selected_card.special_skills then
+    if self.selected_card.special_skills and table.contains(self.player:getCardIds("h"), cid) then
       sp_skills = table.simpleClone(self.selected_card.special_skills)
       if self.player:canUse(self.selected_card) then
         table.insert(sp_skills, 1, "_normal_use")

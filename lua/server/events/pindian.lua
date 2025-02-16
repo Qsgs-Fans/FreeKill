@@ -11,9 +11,10 @@ local function exec(tp, ...)
 end
 
 ---@class GameEvent.Pindian : GameEvent
+---@field public data PindianData
 local Pindian = GameEvent:subclass("GameEvent.Pindian")
 function Pindian:main()
-  local pindianData = table.unpack(self.data)
+  local pindianData = self.data
   local room = self.room
   local logic = room.logic
   logic:trigger(fk.StartPindian, pindianData.from, pindianData)
@@ -40,7 +41,6 @@ function Pindian:main()
   local moveInfos = {}
   if not pindianData.fromCard then
     table.insert(targets, pindianData.from)
-    pindianData.from.request_data = json.encode(data)
   else
     if not pindianData._fromCard then
       local _pindianCard = pindianData.fromCard
@@ -62,20 +62,20 @@ function Pindian:main()
     })
   end
   for _, to in ipairs(pindianData.tos) do
-    if pindianData.results[to.id] and pindianData.results[to.id].toCard then
-      if not pindianData.results[to.id]._toCard then
-        local _pindianCard = pindianData.results[to.id].toCard
+    if pindianData.results[to] and pindianData.results[to].toCard then
+      if not pindianData.results[to]._toCard then
+        local _pindianCard = pindianData.results[to].toCard
         local pindianCard = _pindianCard:clone(_pindianCard.suit, _pindianCard.number)
         pindianCard:addSubcard(_pindianCard.id)
 
-        pindianData.results[to.id].toCard = pindianCard
-        pindianData.results[to.id]._toCard = _pindianCard
+        pindianData.results[to].toCard = pindianCard
+        pindianData.results[to]._toCard = _pindianCard
       end
 
       table.insert(moveInfos, {
-        ids = { pindianData.results[to.id]._toCard.id },
-        from = room.owner_map[pindianData.results[to.id]._toCard.id],
-        fromArea = room:getCardArea(pindianData.results[to.id]._toCard.id),
+        ids = { pindianData.results[to]._toCard.id },
+        from = room.owner_map[pindianData.results[to]._toCard.id],
+        fromArea = room:getCardArea(pindianData.results[to]._toCard.id),
         toArea = Card.Processing,
         moveReason = fk.ReasonPut,
         skillName = pindianData.reason,
@@ -117,7 +117,7 @@ function Pindian:main()
 
       table.insert(moveInfos, {
         ids = { _pindianCard.id },
-        from = p.id,
+        from = p,
         toArea = Card.Processing,
         moveReason = fk.ReasonPut,
         skillName = pindianData.reason,
@@ -139,7 +139,7 @@ function Pindian:main()
     from = pindianData.from.id,
   })
   for _, to in ipairs(pindianData.tos) do
-    room:sendFootnote({ pindianData.results[to.id]._toCard.id }, {
+    room:sendFootnote({ pindianData.results[to]._toCard.id }, {
       type = "##PindianCard",
       from = to.id,
     })
@@ -148,7 +148,7 @@ function Pindian:main()
   logic:trigger(fk.PindianCardsDisplayed, nil, pindianData)
 
   for _, to in ipairs(pindianData.tos) do
-    local result = pindianData.results[to.id]
+    local result = pindianData.results[to]
     if pindianData.fromCard.number > result.toCard.number then
       result.winner = pindianData.from
     elseif pindianData.fromCard.number < result.toCard.number then
@@ -183,7 +183,7 @@ function Pindian:main()
 end
 
 function Pindian:clear()
-  local pindianData = table.unpack(self.data)
+  local pindianData = self.data
   local room = self.room
 
   local toProcessingArea = {}
@@ -211,9 +211,35 @@ end
 
 
 --- 根据拼点信息开始拼点。
----@param pindianData PindianStruct
+---@param pindianData PindianDataSpec
 function PindianEventWrappers:pindian(pindianData)
-  return exec(Pindian, pindianData)
+  return exec(Pindian, PindianData:new(pindianData))
+end
+
+--- 加减拼点牌点数（最小为1，最大为13）。
+---@param pindianData PindianStruct
+---@param player ServerPlayer @ 拼点角色
+---@param number integer @ 加减的点数
+---@param skill_name string @ 技能名
+function PindianEventWrappers:changePindianNumber(pindianData, player, number, skill_name)
+  local orig_num, new_num
+  if player == pindianData.from then
+    orig_num = pindianData.fromCard.number
+    new_num = math.max(1, math.min(13, orig_num + number))
+    pindianData.fromCard.number = new_num
+  elseif pindianData.results[player.id] then
+    orig_num = pindianData.results[player.id].toCard.number
+    new_num = math.max(1, math.min(13, orig_num + number))
+    pindianData.results[player.id].toCard.number = new_num
+  end
+  self:sendLog{
+    type = "#ChangePindianNumber",
+    to = { player.id },
+    arg = skill_name,
+    arg2 = orig_num,
+    arg3 = new_num,
+    toast = true,
+  }
 end
 
 return { Pindian, PindianEventWrappers }

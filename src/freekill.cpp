@@ -208,6 +208,8 @@ static int runSkillTest(const QString &val, const QString &filepath) {
 
   if (val == "") {
     if (filepath != "") {
+      QString fp = filepath;
+      fp.replace("\\", "\\\\");
       script = QStringLiteral(
         R"(
         local skels = { __dofile('%1') }
@@ -216,7 +218,7 @@ static int runSkillTest(const QString &val, const QString &filepath) {
           return string.format('Test%s', skill.name)
         end)
         return lu.LuaUnit.run(table.unpack(skels))
-      )").arg(filepath);
+      )").arg(fp);
     } else {
       script = QStringLiteral("return lu.LuaUnit.run()");
     }

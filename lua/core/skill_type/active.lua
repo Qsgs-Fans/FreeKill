@@ -10,6 +10,8 @@
 ---@field public card_num integer
 ---@field public card_num_table integer[]
 ---@field public interaction any
+---@field public prompt string | function? @ 技能提示
+---@field public handly_pile boolean?  @ 是否能够选择“如手牌使用或打出”的牌
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name, frequency)
@@ -34,46 +36,57 @@ function ActiveSkill:canUse(player, card, extra_data)
 end
 
 -- 判断一张牌是否可被此技能选中
+---@param player Player @ 使用者
 ---@param to_select integer @ 待选牌
 ---@param selected integer[] @ 已选牌
----@param selected_targets? integer[] @ 已选目标
 ---@return boolean?
-function ActiveSkill:cardFilter(to_select, selected, selected_targets)
+function ActiveSkill:cardFilter(player, to_select, selected)
   return true
 end
 
 -- 判断一名角色是否可被此技能选中
----@param to_select integer @ 待选目标
----@param selected integer[] @ 已选目标
+---@param player Player @ 使用者
+---@param to_select Player @ 待选目标
+---@param selected Player[] @ 已选目标
 ---@param selected_cards integer[] @ 已选牌
 ---@param card? Card @ 牌
 ---@param extra_data? UseExtraData @ 额外数据
 ---@return boolean?
-function ActiveSkill:targetFilter(to_select, selected, selected_cards, card, extra_data)
+function ActiveSkill:targetFilter(player, to_select, selected, selected_cards, card, extra_data)
   return false
 end
 
 -- 判断一名角色是否可成为此技能的目标
----@param to_select integer @ 待选目标
----@param selected integer[] @ 已选目标
----@param user? integer @ 使用者
+---@param player Player @ 使用者
+---@param to_select Player @ 待选目标
+---@param selected Player[] @ 已选目标
 ---@param card? Card @ 牌
----@param distance_limited? boolean @ 是否受距离限制
+---@param extra_data? any @ 额外数据
 ---@return boolean?
-function ActiveSkill:modTargetFilter(to_select, selected, user, card, distance_limited)
+function ActiveSkill:modTargetFilter(player, to_select, selected, card, extra_data)
+  --FIXME: 删除了distance_limit牢参数，看看如何适配牢代码
   return false
 end
 
+---@param player Player @ 使用者
+---@param card? Card @ 牌
+---@param extra_data? UseExtraData @ 额外数据
+---@return Player[]?
+function ActiveSkill:fixTargets(player, card, extra_data)
+  return nil
+end
+
 -- 获得技能的最小目标数
+---@param player Player @ 使用者
 ---@return number @ 最小目标数
-function ActiveSkill:getMinTargetNum()
+function ActiveSkill:getMinTargetNum(player)
   local ret
   if self.target_num then ret = self.target_num
   elseif self.target_num_table then ret = self.target_num_table
   else ret = self.min_target_num end
 
   if type(ret) == "function" then
-    ret = ret(self)
+    ret = ret(self, player)
   end
   if type(ret) == "table" then
     return ret[1]
@@ -93,7 +106,7 @@ function ActiveSkill:getMaxTargetNum(player, card)
   else ret = self.max_target_num end
 
   if type(ret) == "function" then
-    ret = ret(self)
+    ret = ret(self, player, card)
   end
   if type(ret) == "table" then
     ret = ret[#ret]
@@ -111,15 +124,16 @@ function ActiveSkill:getMaxTargetNum(player, card)
 end
 
 -- 获得技能的最小卡牌数
+---@param player Player @ 使用者
 ---@return number @ 最小卡牌数
-function ActiveSkill:getMinCardNum()
+function ActiveSkill:getMinCardNum(player)
   local ret
   if self.card_num then ret = self.card_num
   elseif self.card_num_table then ret = self.card_num_table
   else ret = self.min_card_num end
 
   if type(ret) == "function" then
-    ret = ret(self)
+    ret = ret(self, player)
   end
   if type(ret) == "table" then
     return ret[1]
@@ -129,15 +143,16 @@ function ActiveSkill:getMinCardNum()
 end
 
 -- 获得技能的最大卡牌数
+---@param player Player @ 使用者
 ---@return number @ 最大卡牌数
-function ActiveSkill:getMaxCardNum()
+function ActiveSkill:getMaxCardNum(player)
   local ret
   if self.card_num then ret = self.card_num
   elseif self.card_num_table then ret = self.card_num_table
   else ret = self.max_card_num end
 
   if type(ret) == "function" then
-    ret = ret(self)
+    ret = ret(self, player)
   end
   if type(ret) == "table" then
     return ret[#ret]
@@ -214,54 +229,58 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
   -- end)))
 end
 
--- 判断一个技能是否可发动（也就是确认键是否可点击）
+-- 判断一个技能是否可发动（也就是确认键是否可点击）。默认值为选择卡牌数和选择目标数均在允许范围内
 -- 警告：没啥事别改
----@param selected integer[] @ 已选目标
----@param selected_cards integer[] @ 已选牌
 ---@param player Player @ 使用者
+---@param selected Player[] @ 已选目标
+---@param selected_cards integer[] @ 已选牌
 ---@param card? Card @ 牌
----@return boolean?
-function ActiveSkill:feasible(selected, selected_cards, player, card)
-  return #selected >= self:getMinTargetNum() and #selected <= self:getMaxTargetNum(player, card)
-    and #selected_cards >= self:getMinCardNum() and #selected_cards <= self:getMaxCardNum()
+---@return boolean
+function ActiveSkill:feasible(player, selected, selected_cards, card)
+  return #selected >= self:getMinTargetNum(player) and #selected <= self:getMaxTargetNum(player, card)
+    and #selected_cards >= self:getMinCardNum(player) and #selected_cards <= self:getMaxCardNum(player)
 end
 
 -- 使用技能时默认的烧条提示（一般会在主动使用时出现）
+---@param player Player @ 使用者
 ---@param selected_cards integer[] @ 已选牌
----@param selected_targets integer[] @ 已选目标
+---@param selected_targets Player[] @ 已选目标
 ---@return string?
-function ActiveSkill:prompt(selected_cards, selected_targets) return "" end
+function ActiveSkill:prompt(player, selected_cards, selected_targets) return "" end
 
 ------- }
 
 ---@param room Room
----@param cardUseEvent CardUseStruct | SkillEffectEvent
+---@param cardUseEvent UseCardData | SkillUseData
 function ActiveSkill:onUse(room, cardUseEvent) end
 
 ---@param room Room
----@param cardUseEvent CardUseStruct | SkillEffectEvent
+---@param cardUseEvent UseCardData | SkillEffectEvent
 ---@param finished? boolean?
 function ActiveSkill:onAction(room, cardUseEvent, finished) end
 
 ---@param room Room
----@param cardEffectEvent CardEffectEvent | SkillEffectEvent
+---@param cardEffectEvent CardEffectData | SkillEffectData
 function ActiveSkill:aboutToEffect(room, cardEffectEvent) end
 
 ---@param room Room
----@param cardEffectEvent CardEffectEvent | SkillEffectEvent
+---@param cardEffectEvent CardEffectData
 function ActiveSkill:onEffect(room, cardEffectEvent) end
 
 -- Delayed Trick Only
 ---@param room Room
----@param cardEffectEvent CardEffectEvent | SkillEffectEvent
+---@param cardEffectEvent CardEffectData | SkillEffectData
 function ActiveSkill:onNullified(room, cardEffectEvent) end
 
----@param to_select integer @ id of the target
----@param selected integer[] @ ids of selected targets
+--- 选择目标时产生的目标提示，贴在目标脸上
+---@param player Player @ 使用者
+---@param to_select Player @ id of the target
+---@param selected Player[] @ ids of selected targets
 ---@param selected_cards integer[] @ ids of selected cards
----@param card Card @ helper
----@param selectable boolean @can be selected
+---@param card Card? @ helper
+---@param selectable boolean? @can be selected
 ---@param extra_data? any @ extra_data
-function ActiveSkill:targetTip(to_select, selected, selected_cards, card, selectable, extra_data) end
+---@return string|table?
+function ActiveSkill:targetTip(player, to_select, selected, selected_cards, card, selectable, extra_data) end
 
 return ActiveSkill

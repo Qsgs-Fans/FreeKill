@@ -150,5 +150,5 @@ Fk:loadTranslationTable({
   [":dayuan"] = "Lá trang bị - tọa kỵ<br /><b>kỹ năng tọa kỵ</b>:khoảng cách từ bạn đến người khác -1. ",
   ["zixing"] = "Tử Tuynh",
   [":zixing"] = "Lá trang bị - tọa kỵ<br /><b>kỹ năng tọa kỵ</b>:khoảng cách từ bạn đến người khác -1. ",
-  ["#default_equip_skill"] = "Trang bị %arg2【%arg】",
+  ["#default_equip_skill"] = "Trang bị 【%arg】",
 }, "vi_VN")

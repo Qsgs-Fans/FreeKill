@@ -21,8 +21,8 @@ SmartAI:setCardSkillAI("peach_skill", nil, "default_card_skill")
 fk.ai_card_keep_value["dismantlement"] = 45
 SmartAI:setCardSkillAI("dismantlement_skill", {
   on_effect = function(self, logic, effect)
-    local from = logic:getPlayerById(effect.from)
-    local to = logic:getPlayerById(effect.to)
+    local from = effect.from
+    local to = effect.to
     if from.dead or to.dead or to:isAllNude() then return end
     local _, val = self:thinkForCardChosen(from.ai, to, "hej")
     logic.benefit = logic.benefit + val
@@ -72,7 +72,7 @@ SmartAI:setCardSkillAI("ex_nihilo_skill", {
     self.skill:onUse(logic, effect)
   end,
   on_effect = function(self, logic, effect)
-    local target = logic:getPlayerById(effect.to)
+    local target = effect.to
     logic:drawCards(target, 2, "ex_nihilo")
   end,
 })
@@ -196,7 +196,7 @@ SmartAI:setSkillAI("spear_skill", {
       logic:useCard({
         from = ai.player.id,
         tos = table.map(targets, function(p) return { p.id } end),
-        card = self.skill:viewAs(ai:getSelectedCards()),
+        card = self.skill:viewAs(ai.player, ai:getSelectedCards()),
       })
       verbose(1, "目前状况下，对[%s]的预测收益为%d", table.concat(table.map(targets, function(p)return tostring(p)end), "+"), logic.benefit)
       return logic.benefit
