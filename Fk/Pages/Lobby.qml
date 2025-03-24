@@ -248,6 +248,7 @@ Item {
       flickableDirection: Flickable.VerticalFlick
       width: parent.width - 10
       height: parent.height - 10 - (parent.chatShown ? 200 : 0)
+      Behavior on height { NumberAnimation { duration: 200 } }
       contentHeight: bulletin_info.height
       clip: true
 
