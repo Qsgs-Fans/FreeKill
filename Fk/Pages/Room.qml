@@ -590,9 +590,9 @@ Item {
         font.bold: true
         text: {
           const elapsedMin = Math.floor(replayerElapsed / 60);
-          const elapsedSec = replayerElapsed % 60;
+          const elapsedSec = addZero(replayerElapsed % 60);
           const totalMin = Math.floor(replayerDuration / 60);
-          const totalSec = replayerDuration % 60;
+          const totalSec = addZero(replayerDuration % 60);
 
           return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin
                + ":" + totalSec;
@@ -1453,5 +1453,10 @@ Item {
     }
 
     Logic.arrangePhotos();
+  }
+
+  function addZero(temp) {
+    if (temp < 10) return "0" + temp;
+    else return temp;
   }
 }
