@@ -93,6 +93,20 @@ Rectangle {
     findWinDeathAudio(deputyGeneral, false);
   }
 
+  function loadPlayers() {
+    const ps = lcall("GetPlayersAndObservers");
+    ps.forEach(p => {
+      players.append({ 
+        id: p.id,
+        screenName: p.name,
+        general: p.general,
+        deputyGeneral: p.deputy,
+        observing: p.observing,
+        avatar: p.avatar,
+      });
+    });
+  }
+
   Timer {
     id: opTimer
     interval: 1500
@@ -155,6 +169,56 @@ Rectangle {
     anchors.fill: parent
     spacing: 0
 
+    MetroButton {
+      id: memberBtn
+      text: "👥"
+      visible: !isLobby
+      //enabled: !opTimer.running;
+      onClicked: {
+        memberList.visible = !memberList.visible;
+      }
+    }
+
+    ListView {
+      id: memberList
+      Layout.fillWidth: true
+      Layout.preferredHeight: 100
+      visible: false
+      clip: true
+      ScrollBar.vertical: ScrollBar {}
+      model: ListModel {
+        id: players
+      }
+      property int playersIdx: 0
+
+      onVisibleChanged: { // 为什么和soundSelector的onVisibleChanged冲突了？
+        if (memberList.visible) {
+          loadPlayers();
+          memberList.contentY = playersIdx; // restore the last position
+        } else {
+          playersIdx = memberList.contentY;
+          players.clear();
+        }
+      }
+
+      delegate: ItemDelegate {
+        width: soundSelector.width
+        height: 30
+        text: screenName + (observing ? "  [" + luatr("Observe") +"]" : "")
+
+        onClicked: {
+          roomScene.startCheat("PlayerDetail", {
+            avatar: avatar,
+            id: id,
+            screenName: screenName,
+            general: general,
+            deputyGeneral: deputyGeneral,
+            observing: observing
+          });
+        }
+      }
+    }
+
     Item {
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -201,7 +265,7 @@ Rectangle {
       property int soundIdx: 0
 
       onVisibleChanged: {
-        if (visible) {
+        if (soundSelector.visible) {
           loadSkills();
           soundSelector.contentY = soundIdx; // restore the last position
         } else {
