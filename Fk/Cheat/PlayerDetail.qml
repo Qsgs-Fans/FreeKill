@@ -178,7 +178,7 @@ Flickable {
       "Chat",
       JSON.stringify({
         type: 2,
-        msg: "$!" + p + ":" + pid
+        msg: "$@" + p + ":" + pid
       })
     );
   }

@@ -1130,7 +1130,7 @@ Item {
       '<img src="../../image/emoji/$1.png" height="24" width="24" />');
 
     if (raw.msg.startsWith("$")) {
-      if (specialChat(pid, raw, raw.msg.slice(1))) return;
+      if (specialChat(pid, raw, raw.msg.slice(1))) return; // 蛋花、语音
     }
     chat.append(msg, raw);
 
@@ -1152,7 +1152,7 @@ Item {
     const userName = data.userName;
     const general = luatr(data.general);
 
-    if (msg.startsWith("!")) {
+    if (msg.startsWith("@")) { // 蛋花
       if (config.hidePresents)
         return true;
       const splited = msg.split(":");
@@ -1187,13 +1187,13 @@ Item {
         default:
           return false;
       }
-    } else if (msg.startsWith("~")) {
+    } else if (msg.startsWith("!") || msg.startsWith("~")) { // 胜利、阵亡
       const g = msg.slice(1);
       const extension = lcall("GetGeneralData", g).extension;
       if (!config.disableMsgAudio)
-        Backend.playSound("./packages/" + extension + "/audio/death/" + g);
+        Backend.playSound("./packages/" + extension + "/audio/" + (msg.startsWith("!") ? "win/" : "death/") + g);
 
-      const m = luatr("~" + g);
+      const m = luatr(msg);
       data.msg = m;
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`, data);
@@ -1208,7 +1208,7 @@ Item {
       photo.chat(m);
 
       return true;
-    } else {
+    } else { // 技能
       const splited = msg.split(":");
       if (splited.length < 2) return false;
       const skill = splited[0];
