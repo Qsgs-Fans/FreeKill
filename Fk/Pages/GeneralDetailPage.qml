@@ -56,6 +56,17 @@ Item {
     }
   }
 
+  function findWinAudio(general) {
+    const extension = lcall("GetGeneralData", general).extension;
+    const fname = AppPath + "/packages/" + extension + "/audio/win/"
+    + general + ".mp3";
+    if (Backend.exists(fname)) {
+      audioWin.visible = true;
+    } else {
+      audioWin.visible = false;
+    }
+  }
+
   function findDeathAudio(general) {
     const extension = lcall("GetGeneralData", general).extension;
     const fname = AppPath + "/packages/" + extension + "/audio/death/"
@@ -92,6 +103,7 @@ Item {
         addSkillAudio(t.name);
       }
     });
+    findWinAudio(general);
     findDeathAudio(general);
 
     addSkillAudio(general + "_win_audio");
@@ -326,6 +338,76 @@ Item {
             id: audioModel
           }
           delegate: skillAudioBtn
+        }
+      }
+
+      Button {
+        id: audioWin
+        Layout.fillWidth: true
+        contentItem: ColumnLayout {
+          Text {
+            Layout.fillWidth: true
+            text: luatr("Win audio")
+            font.bold: true
+            font.pixelSize: 14
+          }
+          Text {
+            Layout.fillWidth: true
+            text: {
+              const orig = "!" + root.general;
+              const tr = luatr(orig);
+              if (tr === orig) {
+                return "";
+              }
+              return tr;
+            }
+            wrapMode: Text.WordWrap
+          }
+        }
+
+        onClicked: {
+          const general = root.general
+          const extension = lcall("GetGeneralData", general).extension;
+          Backend.playSound("./packages/" + extension + "/audio/win/"
+          + general);
+        }
+
+        onPressAndHold: {
+          Backend.copyToClipboard("$!" + root.general);
+          toast.show(luatr("Audio Code Copy Success"));
+        }
+
+        ToolButton {
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          Layout.preferredWidth: 32
+          Layout.preferredHeight: 32
+          visible: parent.hovered
+          text: "⋮"
+          onClicked: {
+            if (winAudioMenu.visible){
+              winAudioMenu.close();
+            } else {
+              winAudioMenu.open();
+            }
+          }
+          Menu {
+            id: winAudioMenu
+            MenuItem {
+              text: luatr("Copy Audio Code")
+              onTriggered: {
+                Backend.copyToClipboard("$~" + root.general);
+                toast.show(luatr("Audio Code Copy Success"));
+              }
+            }
+            MenuItem {
+              text: luatr("Copy Audio Text")
+              onTriggered: {
+                Backend.copyToClipboard(luatr("~" + root.general));
+                toast.show(luatr("Audio Text Copy Success"));
+              }
+            }
+          }
         }
       }
 
