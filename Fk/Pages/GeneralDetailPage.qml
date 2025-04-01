@@ -106,7 +106,7 @@ Item {
     findWinAudio(general);
     findDeathAudio(general);
 
-    addSkillAudio(general + "_win_audio");
+    //addSkillAudio(general + "_win_audio");
   }
 
   Component {
@@ -117,9 +117,9 @@ Item {
         Text {
           Layout.fillWidth: true
           text: {
-            if (name.endsWith("_win_audio")) {
+            /* if (name.endsWith("_win_audio")) {
               return luatr("Win audio");
-            }
+            } */
             return luatr(name) + (idx ? " (" + idx.toString() + ")"
               : "");
           }

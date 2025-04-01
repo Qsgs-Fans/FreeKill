@@ -98,13 +98,13 @@ Flickable {
 
       MetroButton {
         text: {
-          const name = extra_data?.photo?.screenName;
+          const name = extra_data?.photo ? extra_data.photo.screenName : extra_data.screenName ;
           const blocked = !config.blockedUsers.includes(name);
           return blocked ? luatr("Block Chatter") : luatr("Unblock Chatter");
         }
-        enabled: pid !== Self.id && pid > 0
+        enabled: pid !== Self.id && pid > 0 // 旁观屏蔽不了正在被旁观的人
         onClicked: {
-          const name = extra_data?.photo?.screenName;
+          const name = extra_data?.photo ? extra_data.photo.screenName : extra_data.screenName ;
           const idx = config.blockedUsers.indexOf(name);
           if (idx === -1) {
             config.blockedUsers.push(name);
