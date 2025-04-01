@@ -35,7 +35,7 @@ Item {
       height: 22
       Text {
         text: luatr(mark_name) + ' '
-              + (special_value !== '' ? special_value : mark_extra)
+              + (special_value !== '' ? special_value : mark_extra) // @$ @& 直接在名字里显示个数，牌堆是updatePileInfo控制标记值
         font.family: fontLibian.name
         font.pixelSize: 22
         font.letterSpacing: -0.6
@@ -57,12 +57,14 @@ Item {
         onTapped: {
           const params = { name: mark_name };
 
+          // @& 武将牌
           if (mark_name.startsWith('@&')) {
             params.cardNames = mark_extra.split(',');
             roomScene.startCheat("../RoomElement/ViewGeneralPile", params);
             return;
           }
 
+          // @$ 游戏牌名
           if (mark_name.startsWith('@$')) {
             let data = mark_extra.split(',');
             if (!Object.is(parseInt(data[0]), NaN)) {
@@ -138,7 +140,7 @@ Item {
            : luatr(data);
     }
 
-    if (modelItem) {
+    if (modelItem) { // 如果已经存在
       modelItem.special_value = special_value;
       modelItem.mark_extra = data;
     } else {
