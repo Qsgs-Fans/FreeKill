@@ -175,16 +175,17 @@ Item {
 
   ToolTip {
     id: skillDetail
-    x: 20 // TODO: 调整
-    y: 20
+    x: Math.round((parent.width - width) / 2)
+    y: Math.round((parent.height - height) / 2)
+    width: Math.min(contentWidth, realMainWin.width * 0.4)
+    height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
     visible: false
-    //text: "<b>" + luatr(orig) + "</b>: " + luatr(":" + orig)
-    //font.pixelSize: 20
 
     contentItem: Text{
       text: "<b>" + luatr(orig) + "</b>: " + luatr(":" + orig)
       font.pixelSize: 20
       wrapMode: Text.WordWrap
+      textFormat: TextEdit.RichText
       color: "#E4D5A0"
     }
 
