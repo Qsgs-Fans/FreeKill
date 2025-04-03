@@ -11,6 +11,7 @@ Item {
   property alias border: bg.border
   property alias iconSource: icon.source
   property int padding: 5
+  property bool hovered: false
 
   signal clicked
   signal rightClicked
@@ -63,6 +64,13 @@ Item {
   HoverHandler {
     id: hover
     cursorShape: Qt.PointingHandCursor
+    onHoveredChanged: {
+      if (hovered) {
+        button.hovered = true;
+      } else {
+        button.hovered = false;
+      }
+    }
   }
 
   Row {

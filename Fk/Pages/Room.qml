@@ -512,6 +512,34 @@ Item {
           }
         }
 
+        ToolTip {
+          id: sortTip
+          x: 20
+          y: -20
+          visible: parent.hovered && !sortMenu.visible
+          delay: 1500
+          timeout: 6000
+          text: luatr("Right click or long press to choose sort method")
+          font.pixelSize: 20
+        }
+
+        /* 
+        MetroButton {
+          id: sideSort
+          anchors.left: parent.right
+          height: parent.height
+          text: "▶"
+          visible: !sortMenu.visible && (hovered || parent.hovered)
+          onClicked: {
+            if (sortMenu.visible) {
+              sortMenu.close();
+            } else {
+              sortMenu.open();
+            }
+          }
+        }
+        */
+
         Menu {
           id: sortMenu
           x: parent.width
