@@ -10,6 +10,7 @@ import Fk.RoomElement
 Item {
   id: root
   objectName: "GeneralsOverview"
+  property alias generals: gridView.model
 
   property bool loaded: false
   property int stat: 0 // 0=normal 1=banPkg 2=banChara
@@ -22,7 +23,7 @@ Item {
   }
 
   ListView {
-    id: modList
+    id: modList // 大包
     width: 130; height: parent.height
     anchors.top: listBg.top; anchors.left: listBg.left
     clip: true
@@ -58,7 +59,7 @@ Item {
   }
 
   ListView {
-    id: pkgList
+    id: pkgList // 小包
     width: 130; height: parent.height
     anchors.top: listBg.top; anchors.left: modList.right
 
@@ -159,6 +160,18 @@ Item {
       }
 
       ToolButton {
+        text: luatr("Filter")
+        font.pixelSize: 20
+        onClicked: {
+          lobby_dialog.sourceComponent = Qt.createComponent("../Pages/GeneralFilter.qml");
+          lobby_drawer.open();
+        }
+        onPressAndHold: {
+          vanishAnim.start(); // 长按重置
+        }
+      }
+
+      ToolButton {
         id: banButton
         font.pixelSize: 20
         text: {
@@ -206,6 +219,21 @@ Item {
     }
   }
 
+  ToolButton {
+    y: 16 + bar.height
+    anchors.left: listBg.right
+    visible: stat === 2
+    Behavior on opacity { NumberAnimation { duration: 200 } }
+    text: luatr("Revert Selection")
+    font.pixelSize: 20
+    font.family: fontLi2.name
+    onClicked: {
+      generals.forEach((g) => {
+        doBanGeneral(g);
+      })
+    }
+  }
+
   GridView {
     id: gridView
     clip: true
@@ -216,32 +244,14 @@ Item {
     anchors.leftMargin: 8 + (width % 100) / 2
     cellHeight: 140
     cellWidth: 100
+    model: generals
 
     delegate: GeneralCardItem {
       autoBack: false
       name: modelData
       onClicked: {
         if (stat === 2) {
-          const s = config.curScheme;
-          const gdata = lcall("GetGeneralData", modelData);
-          const pack = gdata.package;
-          let arr;
-          if (s.banPkg[pack]) {
-            arr = s.banPkg[pack];
-          } else {
-            if (!s.normalPkg[pack]) {
-              s.normalPkg[pack] = [];
-            }
-            arr = s.normalPkg[pack];
-          }
-          // TODO: 根据手动全禁/全白名单自动改为禁包
-          const idx = arr.indexOf(modelData);
-          if (idx !== -1) {
-            arr.splice(idx, 1);
-          } else {
-            arr.push(modelData);
-          }
-          config.curSchemeChanged();
+          doBanGeneral(modelData);
         } else {
           generalDetailLoader.item.general = modelData;
           generalDetail.open();
@@ -304,6 +314,8 @@ Item {
 
   ParallelAnimation {
     id: vanishAnim
+    property bool filtering: false
+    property var filter
     PropertyAnimation {
       target: gridView
       property: "opacity"
@@ -319,10 +331,13 @@ Item {
       easing.type: Easing.InOutQuad
     }
     onFinished: {
-      if (word.text !== "") {
-        gridView.model = lcall("SearchAllGenerals", word.text);
+      if (filtering) {
+        generals = lcall("FilterAllGenerals", filter);
+        filtering = false;
+      } else if (word.text !== "") {
+        generals = lcall("SearchAllGenerals", word.text);
       } else {
-        gridView.model = lcall("SearchGenerals",
+        generals = lcall("SearchGenerals",
           pkgList.model[pkgList.currentIndex], word.text);
       }
       word.text = "";
@@ -374,6 +389,44 @@ Item {
     }
   }
 
+  Popup {
+    id: lobby_drawer
+    width: realMainWin.width * 0.8
+    height: realMainWin.height * 0.85
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+
+    Loader {
+      id: lobby_dialog
+      anchors.centerIn: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      clip: true
+      onSourceChanged: {
+        if (item === null)
+          return;
+        item.finished.connect((data) => {
+          sourceComponent = undefined;
+          lobby_drawer.close();
+          if (data) {
+            vanishAnim.filtering = true;
+            vanishAnim.filter = data; // 筛选
+            vanishAnim.start();
+          } else {
+            vanishAnim.start(); // 清空
+          }
+        });
+      }
+      onSourceComponentChanged: sourceChanged();
+    }
+  }
+
   function loadPackages() {
     if (loaded) return;
     const _mods = lcall("GetAllModNames");
@@ -386,5 +439,28 @@ Item {
         mods.append({ name: name, pkgs: JSON.stringify(pkgs) });
     });
     loaded = true;
+  }
+
+  function doBanGeneral(name) {
+    const s = config.curScheme;
+    const gdata = lcall("GetGeneralData", name);
+    const pack = gdata.package;
+    let arr;
+    if (s.banPkg[pack]) {
+      arr = s.banPkg[pack];
+    } else {
+      if (!s.normalPkg[pack]) {
+        s.normalPkg[pack] = [];
+      }
+      arr = s.normalPkg[pack];
+    }
+    // TODO: 根据手动全禁/全白名单自动改为禁包
+    const idx = arr.indexOf(name);
+    if (idx !== -1) {
+      arr.splice(idx, 1);
+    } else {
+      arr.push(name);
+    }
+    config.curSchemeChanged();
   }
 }

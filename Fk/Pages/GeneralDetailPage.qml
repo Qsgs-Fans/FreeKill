@@ -243,10 +243,10 @@ Item {
         const gdata = lcall("GetGeneralData", general);
         let ret = [
           luatr(gdata.package),
-          luatr("Title") + trans("#" + general),
-          luatr("Designer") + trans("designer:" + general),
-          luatr("Voice Actor") + trans("cv:" + general),
-          luatr("Illustrator") + trans("illustrator:" + general),
+          luatr("Title") + ": " + trans("#" + general),
+          luatr("Designer") + ": " + trans("designer:" + general),
+          luatr("Voice Actor") + ": " + trans("cv:" + general),
+          luatr("Illustrator") + ": " + trans("illustrator:" + general),
         ].join("<br>");
         if (gdata.hidden) {
           ret += "<br><font color=\"grey\">" + luatr("Hidden General") + "</font>";

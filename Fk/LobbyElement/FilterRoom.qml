@@ -241,8 +241,8 @@ Flickable {
   function filterRoom() {
     let f = config.preferredFilter;
 
-    f.name = name.text;
-    f.id = id.text;
+    f.name = name.text; // 字符串
+    f.id = id.text; // 字符串
 
     // mode
     let modeList = [];
@@ -252,10 +252,10 @@ Flickable {
         if (tCheckBox.checked) {modeList.push(tCheckBox.text)}
       }
     }
-    f.modes = modeList;
+    f.modes = modeList; // 翻译后的模式名数组
 
-    f.full = parentFullBox.checkState === Qt.PartiallyChecked ? (fullStates.itemAt(0).checked ? 0 : 1) : 2;
-    f.hasPassword = parentPwBox.checkState === Qt.PartiallyChecked ? (pwStates.itemAt(0).checked ? 0 : 1) : 2;
+    f.full = parentFullBox.checkState === Qt.PartiallyChecked ? (fullStates.itemAt(0).checked ? 0 : 1) : 2; // 0: full, 1: not full, 2: all
+    f.hasPassword = parentPwBox.checkState === Qt.PartiallyChecked ? (pwStates.itemAt(0).checked ? 0 : 1) : 2; // 0: has password, 1: no password, 2: all
 
     // capacity
     /*
