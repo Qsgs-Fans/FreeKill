@@ -147,15 +147,22 @@ Item {
         clip: true
         leftPadding: 5
         rightPadding: 5
-      }
-
-      ToolButton {
-        text: luatr("Search")
-        font.pixelSize: 20
-        enabled: word.text !== ""
-        onClicked: {
-          pkgList.currentIndex = 0;
-          vanishAnim.start();
+        /* onEditingFinished: {
+          if (text !== "") {
+            pkgList.currentIndex = 0;
+            vanishAnim.start();
+          }
+        } */
+        ToolButton {
+          text: "🔍"
+          anchors.right: parent.right
+          anchors.verticalCenter: parent.verticalCenter
+          font.pixelSize: 20
+          enabled: word.text !== ""
+          onClicked: {
+            pkgList.currentIndex = 0;
+            vanishAnim.start();
+          }
         }
       }
 
@@ -168,6 +175,29 @@ Item {
         }
         onPressAndHold: {
           vanishAnim.start(); // 长按重置
+        }
+        ToolTip {
+          x : parent.width / 2
+          y : height
+          visible: parent.hovered
+          delay: 1500 
+
+          contentItem: Text{
+            text: luatr("FilterHelp")
+            font.pixelSize: 20
+            color: "white"
+          }
+        }
+      }
+
+      ToolButton {
+        text: luatr("Revert Selection")
+        enabled: stat === 2
+        font.pixelSize: 20
+        onClicked: {
+          generals.forEach((g) => {
+            doBanGeneral(g);
+          })
         }
       }
 
@@ -216,21 +246,6 @@ Item {
           config.saveConf();
         }
       }
-    }
-  }
-
-  ToolButton {
-    y: 16 + bar.height
-    anchors.left: listBg.right
-    visible: stat === 2
-    Behavior on opacity { NumberAnimation { duration: 200 } }
-    text: luatr("Revert Selection")
-    font.pixelSize: 20
-    font.family: fontLi2.name
-    onClicked: {
-      generals.forEach((g) => {
-        doBanGeneral(g);
-      })
     }
   }
 
