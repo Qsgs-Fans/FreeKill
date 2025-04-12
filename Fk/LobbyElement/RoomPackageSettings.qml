@@ -36,40 +36,99 @@ Flickable {
       Button {
         text: luatr("Select All")
         onClicked: {
-          for (let i = 0; i < gpacks.count; i++) {
-            const item = gpacks.itemAt(i);
-            item.checked = true;
+          for (let i = 0; i < mods.count; i++) {
+            const col = mods.itemAt(i);
+            const gri = col.children[1];
+            for (var j = 0; j < gri.children.length - 1; j++) { // 最后一个不是 CheckBox
+              gri.children[j].checked = true;
+            }
           }
         }
       }
       Button {
         text: luatr("Revert Selection")
         onClicked: {
-          for (let i = 0; i < gpacks.count; i++) {
-            const item = gpacks.itemAt(i);
-            item.checked = !item.checked;
+          for (let i = 0; i < mods.count; i++) {
+            const col = mods.itemAt(i);
+            const gri = col.children[1];
+            for (var j = 0; j < gri.children.length - 1; j++) {
+              gri.children[j].checked = !gri.children[j].checked;
+            }
           }
         }
       }
     }
 
-    GridLayout {
-      columns: 4
-
+    ColumnLayout {
       Repeater {
-        id: gpacks
+        id: mods
         model: ListModel {
-          id: gpacklist
+          id: modList
         }
+        Column {
+          id: modColumn
+          property bool pkgShown: config.shownPkg.includes(name) // 记忆展开状态
+          ButtonGroup {
+            id: childPkg
+            exclusive: false
+            checkState: parentModBox.checkState
+          }
 
-        CheckBox {
-          text: name
-          checked: pkg_enabled
-          enabled: orig_name !== "test_p_0"
+          RowLayout {
+            spacing: 8
+            CheckBox {
+              id: parentModBox
+              text: luatr(name)
+              font.bold: true
+              checkState: childPkg.checkState
+              Layout.minimumWidth: 100
+            }
+            ToolButton {
+              text: (modColumn.pkgShown ? "➖" : "➕")
+              onClicked: {
+                modColumn.pkgShown = !modColumn.pkgShown
+                const idx = config.shownPkg.indexOf(name);
+                if (idx === -1) {
+                  config.shownPkg.push(name);
+                } else {
+                  config.shownPkg.splice(idx, 1);
+                }
+                config.shownPkgChanged();
+              }
+              background: Rectangle {
+                implicitWidth: 20
+                implicitHeight: 20
 
-          onCheckedChanged: {
-            if (!loading) {
-              checkPackage(orig_name, checked);
+                visible: parent.down || parent.checked || parent.highlighted || parent.visualFocus
+                  || (parent.enabled && parent.hovered)
+              }
+            }
+          }
+
+          GridLayout {
+            id: pkgListLayout
+            columns: 4
+            rowSpacing: -5
+            visible: parent.pkgShown
+            Behavior on opacity { OpacityAnimator { duration: 200 } }
+
+            Repeater {
+              id: pkgList
+              model: JSON.parse(pkgs)
+
+              CheckBox {
+                text: luatr(modelData)
+                leftPadding: indicator.width
+                ButtonGroup.group: childPkg
+                enabled: modelData !== "test_p_0" // 测试包不允许选择
+                checked: !config.curScheme.banPkg[modelData] // 初始状态
+
+                onCheckedChanged: {
+                  if (!loading) {
+                    checkPackage(modelData, checked);
+                  }
+                }
+              }
             }
           }
         }
@@ -147,16 +206,15 @@ Flickable {
     loading = true;
     const g = lcall("GetAllGeneralPack");
     let orig;
-    for (orig of g) {
-      if (config.serverHiddenPacks.includes(orig)) {
-        continue;
-      }
-      gpacklist.append({
-        name: luatr(orig),
-        orig_name: orig,
-        pkg_enabled: !config.curScheme.banPkg[orig],
-      });
-    }
+    const _mods = lcall("GetAllModNames");
+    const modData = lcall("GetAllMods");
+    const packs = lcall("GetAllGeneralPack");
+    _mods.forEach(name => {
+      const pkgs = modData[name].filter(p => packs.includes(p)
+        && !config.serverHiddenPacks.includes(p));
+      if (pkgs.length > 0)
+        modList.append({ name: name, pkgs: JSON.stringify(pkgs) });
+    });
 
     const c = lcall("GetAllCardPack");
     for (orig of c) {
