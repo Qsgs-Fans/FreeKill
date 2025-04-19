@@ -234,17 +234,21 @@ Flickable {
         skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
       });
 
-      const judge = leval(
-        `(function()
-          local p = ClientInstance:getPlayerById(${id})
-          return p.player_cards[Player.Judge]
-        end)()`
-      );
+      const judge = lcall("GetPlayerJudges", id);
+      let unknownCardsNum = 0;
       judge.forEach(cid => {
         const t = lcall("GetCardData", cid);
-        skillDesc.append("--------------------");
-        skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
+        if (lcall("CardVisibility", cid)) {
+          skillDesc.append("--------------------");
+          skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
+        } else {
+          unknownCardsNum++;
+        }
       });
+      if (unknownCardsNum > 0) {
+        skillDesc.append("--------------------");
+        skillDesc.append(luatr("unknown") + " * " + (unknownCardsNum));
+      }
     }
   }
 }
