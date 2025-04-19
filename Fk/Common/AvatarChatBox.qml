@@ -96,7 +96,7 @@ Rectangle {
   function loadPlayers() {
     const ps = lcall("GetPlayersAndObservers");
     ps.forEach(p => {
-      players.append({ 
+      players.append({
         id: p.id,
         screenName: p.name,
         general: p.general,

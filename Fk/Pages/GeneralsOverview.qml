@@ -180,7 +180,7 @@ Item {
           x : parent.width / 2
           y : height
           visible: parent.hovered
-          delay: 1500 
+          delay: 1500
 
           contentItem: Text{
             text: luatr("FilterHelp")

@@ -523,7 +523,7 @@ Item {
           font.pixelSize: 20
         }
 
-        /* 
+        /*
         MetroButton {
           id: sideSort
           anchors.left: parent.right
