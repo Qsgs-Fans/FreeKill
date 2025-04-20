@@ -203,6 +203,13 @@ Item {
           opTimer.start();
           ClientInstance.notifyServer("RefreshRoomList", "");
         }
+          ToolTip {
+            text: luatr("RefreshRoomHelp")
+            visible: parent.hovered
+            delay: 1000
+            x: parent.width / 2 - 16
+            y: parent.height - 16
+          }
       }
       Button {
         text: luatr("Filter")
@@ -222,6 +229,13 @@ Item {
           opTimer.start();
           ClientInstance.notifyServer("RefreshRoomList", "");
         }
+          ToolTip {
+            text: luatr("FilterHelp")
+            visible: parent.hovered
+            delay: 1000
+            x: parent.width / 2 - 16
+            y: parent.height - 16
+          }
       }
       Button {
         text: luatr("Create Room")

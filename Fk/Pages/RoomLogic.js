@@ -1109,9 +1109,9 @@ callbacks["AskForMoveCardInBoard"] = (data) => {
   box.cardsPosition = cardsPosition;
   box.playerIds = playerIds;
   box.generalNames = generalNames.map(name => {
-    const namesSplited = name.split('/');
-    if (namesSplited.length > 1) {
-      return namesSplited.map(nameSplited => luatr(nameSplited)).join('/');
+    const namesSplit = name.split('/');
+    if (namesSplit.length > 1) {
+      return namesSplit.map(nameSplit => luatr(nameSplit)).join('/');
     }
     return luatr(name);
   });
