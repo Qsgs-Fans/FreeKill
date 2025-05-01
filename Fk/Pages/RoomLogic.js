@@ -1351,34 +1351,28 @@ callbacks["LogEvent"] = (data) => {
       let path;
       let dat;
 
-      // try main general
-      if (data.general) {
-        dat = lcall("GetGeneralData", data.general);
-        extension = dat.extension;
-        path = "./packages/" + extension + "/audio/skill/" + skill + "_"
-                + data.general;
-        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
-          Backend.playSound(path, data.i);
-          break;
+      const tryPlaySound = (general) => {
+        if (general) {
+          const dat = lcall("GetGeneralData", general);
+          const extension = dat.extension;
+          const path = `./packages/${extension}/audio/skill/${skill}_${general}`;
+          if (Backend.exists(`${path}.mp3`) || Backend.exists(`${path}1.mp3`)) {
+            Backend.playSound(path, data.i);
+            return true;
+          }
         }
-      }
+        return false;
+      };
 
-      // secondly try deputy general
-      if (data.deputy) {
-        dat = lcall("GetGeneralData", data.deputy);
-        extension = dat.extension;
-        path = "./packages/" + extension + "/audio/skill/" + skill + "_"
-                + data.deputy;
-        if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
-          Backend.playSound(path, data.i);
-          break;
-        }
+      // Try main general first, then deputy general
+      if (tryPlaySound(data.general) || tryPlaySound(data.deputy)) {
+        break;
       }
 
       // finally normal skill
       dat = lcall("GetSkillData", skill);
       extension = dat.extension;
-      path = "./packages/" + extension + "/audio/skill/" + skill;
+      path = `./packages/${extension}/audio/skill/${skill}`;
       Backend.playSound(path, data.i);
       break;
     }

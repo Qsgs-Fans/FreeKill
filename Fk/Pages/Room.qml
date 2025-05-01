@@ -1237,11 +1237,11 @@ Item {
 
       return true;
     } else { // 技能
-      const splited = msg.split(":");
-      if (splited.length < 2) return false;
-      const skill = splited[0];
-      const idx = parseInt(splited[1]);
-      const gene = splited[2];
+      const split = msg.split(":");
+      if (split.length < 2) return false;
+      const skill = split[0];
+      const idx = parseInt(split[1]);
+      const gene = split[2];
 
       if (!config.disableMsgAudio)
         try {

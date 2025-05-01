@@ -169,8 +169,8 @@ Item {
       }
 
       onPressAndHold: {
-        Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
-             + ':' + (idx ? idx.toString() : "") );
+        Backend.copyToClipboard('$' + name + ':' + (idx ? idx.toString() : "")
+          + (specific ? ':' + detailGeneralCard.name : ""));
         toast.show(luatr("Audio Code Copy Success"));
       }
 
@@ -193,8 +193,8 @@ Item {
           MenuItem {
             text: luatr("Copy Audio Code")
             onTriggered: {
-              Backend.copyToClipboard('$' + name + (specific ? '_' + detailGeneralCard.name : "")
-              + ':' + (idx ? idx.toString() : ""));
+              Backend.copyToClipboard('$' + name + ':' + (idx ? idx.toString() : "")
+                + (specific ? ':' + detailGeneralCard.name : ""));
               toast.show(luatr("Audio Code Copy Success"));
             }
           }
