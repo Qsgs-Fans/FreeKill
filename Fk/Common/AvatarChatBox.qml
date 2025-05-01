@@ -191,7 +191,7 @@ Rectangle {
       }
       property int playersIdx: 0
 
-      onVisibleChanged: { // 为什么和soundSelector的onVisibleChanged冲突了？
+      onVisibleChanged: {
         if (memberList.visible) {
           loadPlayers();
           memberList.contentY = playersIdx; // restore the last position
@@ -202,7 +202,7 @@ Rectangle {
       }
 
       delegate: ItemDelegate {
-        width: soundSelector.width
+        width: memberList.width
         height: 30
         text: screenName + (observing ? "  [" + luatr("Observe") +"]" : "")
 
