@@ -34,6 +34,7 @@ QtObject {
   property list<var> disableSchemes: []
   property int currentDisableIdx: 0
   property var curScheme
+  property list<string> shownPkg: []
   property list<string> favoriteGenerals: []
 
   property int preferredTimeout
@@ -163,6 +164,7 @@ QtObject {
     }];
     currentDisableIdx = conf.currentDisableIdx ?? 0;
     curScheme = disableSchemes[currentDisableIdx];
+    shownPkg = conf.shownPkg ?? [];
     favoriteGenerals = conf.favoriteGenerals ?? [];
     blockedUsers = conf.blockedUsers ?? [];
   }
@@ -200,6 +202,7 @@ QtObject {
     // conf.disableSchemeIdx = disableSchemeIdx;
     disableSchemes[currentDisableIdx] = curScheme;
     conf.disableSchemes = disableSchemes;
+    conf.shownPkg = shownPkg;
     conf.currentDisableIdx = currentDisableIdx;
     conf.favoriteGenerals = favoriteGenerals;
     conf.blockedUsers = blockedUsers;

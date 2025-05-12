@@ -194,3 +194,77 @@ function FkTest.clearRoom()
     })
   end
 end
+
+-- 便于测试的封装
+
+--- 在测试房间内添加技能
+---@param player ServerPlayer
+---@param skill_name string
+FkTest.RunAddSkills = function (player, skill_name)
+  FkTest.runInRoom(function ()
+    player.room:handleAddLoseSkills(player, skill_name)
+  end)
+end
+
+--- 回复使用/打出卡牌
+---@param card Card
+---@param targets? ServerPlayer[]
+---@return string
+FkTest.replyCard = function (card, targets)
+  return json.encode {
+    card = card.id,
+    targets = targets and table.map(targets, Util.IdMapper) or {},
+  }
+end
+
+--- 回复使用技能
+---@param skill_name string
+---@param targets? ServerPlayer[]
+---@param cards? integer[]
+---@return string
+FkTest.replyUseSkill = function (skill_name, targets, cards)
+  return json.encode {
+    card = { skill = skill_name, subcards = cards or {} },
+    targets = targets and table.map(targets, Util.IdMapper) or {},
+  }
+end
+
+--- 回复askToChoosePlayers
+---@param targets ServerPlayer[]
+---@return string
+FkTest.replyChoosePlayer = function (targets)
+  return FkTest.replyUseSkill("choose_players_skill", targets)
+end
+
+--- 回复askToCards等，选择自己的牌
+---@param cards integer[]
+---@return string
+FkTest.replyChooseCards = function (cards)
+  return FkTest.replyUseSkill("choose_cards_skill", nil, cards)
+end
+
+--- 回复askToDiscard等，弃置自己的牌
+---@param cards integer[]
+---@return string
+FkTest.replyDiscard = function (cards)
+  return FkTest.replyUseSkill("discard_skill", nil, cards)
+end
+
+--- 回复askToChooseCardsAndPlayers等
+---@param players ServerPlayer[]
+---@param cards integer[]
+---@return string
+FkTest.replyChooseCardAndPlayers = function (players, cards)
+  return FkTest.replyUseSkill("ex__choose_skill", players, cards)
+end
+
+--- 设置第n次询问时断点，用于setRoomBreakpoint
+---@param n integer
+---@return function
+FkTest.createClosure = function(n)
+  local i = 0
+  return function()
+    i = i + 1
+    return i == n
+  end
+end

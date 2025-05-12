@@ -6,6 +6,7 @@ import Fk.RoomElement
 
 Item {
   property bool sealed: parent.sealedSlots.includes("JudgeSlot")
+  property var cids: ({})
 
   Image {
     visible: sealed
@@ -32,10 +33,27 @@ Item {
     Repeater {
       model: cards
 
-      Image {
+      Item {
         height: 55 * 0.8
         width: 47 * 0.8
-        source: SkinBank.getDelayedTrickPicture(name)
+        Image {
+          anchors.fill: parent
+          source: SkinBank.getDelayedTrickPicture(name)
+        }
+
+        Text { // 右下角的数量，1省略
+          anchors.right: parent.right
+          anchors.rightMargin: 5
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: 5
+          text: len
+          visible: len > 1
+          font.family: fontLibian.name
+          font.pixelSize: 20
+          font.bold: true
+          color: "white"
+          style: Text.Outline
+        }
       }
     }
   }
@@ -48,13 +66,23 @@ Item {
     }
     inputs.forEach(card => {
       const v = lcall("GetVirtualEquip", parent.playerid, card.cid);
-      if (v !== null) {
-        cards.append(v);
+      let icon;
+      const cardName = v ? v.name : card.name;
+      for (let i = 0; i < cards.count; i++) {
+        const currentItem = cards.get(i);
+        if (currentItem.name === cardName) {
+          icon = currentItem;
+          break;
+        }
+      }
+      if (cids[cardName] === undefined) {
+        cids[cardName] = [];
+      }
+      cids[cardName].push(v ? v.cid : card.cid);
+      if (!icon) {
+        cards.append({ name: cardName, len: 1 });
       } else {
-        cards.append({
-          name: card.name,
-          cid: card.cid
-        });
+        icon.len = cids[cardName].length;
       }
     });
   }
@@ -66,8 +94,14 @@ Item {
       const item = result[i];
       for (let j = 0; j < cards.count; j++) {
         const icon = cards.get(j);
-        if (icon.cid === item.cid) {
-          cards.remove(j, 1);
+        const index = cids[icon.name].indexOf(item.cid);
+        if (index !== -1) {
+          cids[icon.name].splice(index, 1);
+          if (cids[icon.name].length === 0) {
+            cards.remove(j, 1);
+          } else {
+            icon.len = cids[icon.name].length;
+          }
           break;
         }
       }

@@ -202,11 +202,11 @@ GraphicsBox {
       return true;
     }
 
-    if (gcard2.kingdom == "wild") {
+    if (gcard2.kingdom.includes("wild")) { // 副将不可野（势力字符串含wild）
       return false;
     }
 
-    if (gcard1.kingdom == "wild") {
+    if (gcard1.kingdom.includes("wild")) { // 主将可野（势力字符串含wild）
       return true;
     }
 
@@ -215,15 +215,7 @@ GraphicsBox {
     const sub1 = gcard1.subkingdom;
     const sub2 = gcard2.subkingdom;
 
-    if (k1 == k2) {
-      return true;
-    }
-
-    if (sub1 && (sub1 == k2 || sub1 == sub2)) {
-      return true;
-    }
-
-    if (sub2 && sub2 == k1) {
+    if (k1 === k2 || (sub1 && (sub1 === k2 || sub1 === sub2)) || (sub2 && sub2 === k1)) {
       return true;
     }
 

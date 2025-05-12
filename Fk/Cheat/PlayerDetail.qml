@@ -12,6 +12,7 @@ Flickable {
   anchors.fill: parent
   property var extra_data: ({})
   property int pid
+  property bool isObserving: false // 指该角色是否为旁观者
 
   signal finish()
 
@@ -51,7 +52,7 @@ Flickable {
     RowLayout {
       MetroButton {
         text: luatr("Give Flower")
-        visible: !config.observing
+        visible: !config.observing && !isObserving
         onClicked: {
           enabled = false;
           root.givePresent("Flower");
@@ -61,7 +62,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Egg")
-        visible: !config.observing
+        visible: !config.observing && !isObserving
         onClicked: {
           enabled = false;
           if (Math.random() < 0.03) {
@@ -75,7 +76,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Wine")
-        visible: !config.observing
+        visible: !config.observing && !isObserving
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;
@@ -86,7 +87,7 @@ Flickable {
 
       MetroButton {
         text: luatr("Give Shoe")
-        visible: !config.observing
+        visible: !config.observing && !isObserving
         enabled: Math.random() < 0.3
         onClicked: {
           enabled = false;
@@ -97,13 +98,13 @@ Flickable {
 
       MetroButton {
         text: {
-          const name = extra_data?.photo?.screenName;
+          const name = extra_data?.photo ? extra_data.photo.screenName : extra_data.screenName ;
           const blocked = !config.blockedUsers.includes(name);
           return blocked ? luatr("Block Chatter") : luatr("Unblock Chatter");
         }
-        enabled: pid !== Self.id && pid > 0
+        enabled: pid !== Self.id && pid > 0 // 旁观屏蔽不了正在被旁观的人
         onClicked: {
-          const name = extra_data?.photo?.screenName;
+          const name = extra_data?.photo ? extra_data.photo.screenName : extra_data.screenName ;
           const idx = config.blockedUsers.indexOf(name);
           if (idx === -1) {
             config.blockedUsers.push(name);
@@ -178,26 +179,28 @@ Flickable {
       "Chat",
       JSON.stringify({
         type: 2,
-        msg: "$!" + p + ":" + pid
+        msg: "$@" + p + ":" + pid
       })
     );
   }
 
   onExtra_dataChanged: {
-    if (!extra_data.photo) return;
+    //if (!extra_data.photo) return;
+    const hasPhoto = !!extra_data.photo;
     screenName.text = "";
     playerGameData.text = "";
     skillDesc.text = "";
     skillDesc.clearSavedText();
 
-    const id = extra_data.photo.playerid;
-    if (id === 0) return;
+    const id = hasPhoto? extra_data.photo.playerid : extra_data.id;
+    if (id === 0 || id === undefined) return;
     root.pid = id;
+    root.isObserving = !hasPhoto && !!extra_data.observing;
 
-    avatar.general = extra_data.photo.avatar;
-    screenName.text = extra_data.photo.screenName;
-    mainChara.name = extra_data.photo.general;
-    deputyChara.name = extra_data.photo.deputyGeneral;
+    avatar.general = hasPhoto? extra_data.photo.avatar : extra_data.avatar;
+    screenName.text = hasPhoto? extra_data.photo.screenName : extra_data.screenName;
+    mainChara.name = hasPhoto? extra_data.photo.general : extra_data.general;
+    deputyChara.name = hasPhoto? extra_data.photo.deputyGeneral : extra_data.deputyGeneral; // 判空…
 
     if (!config.observing) {
       const gamedata = lcall("GetPlayerGameData", id);
@@ -220,26 +223,32 @@ Flickable {
       }
     }
 
-    lcall("GetPlayerSkills", id).forEach(t => {
-      skillDesc.append("<b>" + t.name + "</b>: " + t.description)
-    });
+    if (!root.isObserving) {
+      lcall("GetPlayerSkills", id).forEach(t => {
+        skillDesc.append("<b>" + t.name + "</b>: " + t.description)
+      });
 
-    lcall("GetPlayerEquips", id).forEach(cid => {
-      const t = lcall("GetCardData", cid);
-      skillDesc.append("--------------------");
-      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
-    });
+      lcall("GetPlayerEquips", id).forEach(cid => {
+        const t = lcall("GetCardData", cid);
+        skillDesc.append("--------------------");
+        skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
+      });
 
-    const judge = leval(
-      `(function()
-        local p = ClientInstance:getPlayerById(${id})
-        return p.player_cards[Player.Judge]
-      end)()`
-    );
-    judge.forEach(cid => {
-      const t = lcall("GetCardData", cid);
-      skillDesc.append("--------------------");
-      skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
-    });
+      const judge = lcall("GetPlayerJudges", id);
+      let unknownCardsNum = 0;
+      judge.forEach(cid => {
+        const t = lcall("GetCardData", cid);
+        if (lcall("CardVisibility", cid)) {
+          skillDesc.append("--------------------");
+          skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
+        } else {
+          unknownCardsNum++;
+        }
+      });
+      if (unknownCardsNum > 0) {
+        skillDesc.append("--------------------");
+        skillDesc.append(luatr("unknown") + " * " + (unknownCardsNum));
+      }
+    }
   }
 }

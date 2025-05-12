@@ -28,10 +28,83 @@ Rectangle {
     })
   }
 
+  function loadGeneralSkillAudios(general) {
+    if (general === "") return;
+    const sks = lcall("GetGeneralDetail", general).skill;
+    sks.forEach(t => {
+      if (!t.name.startsWith('#')) {
+        //generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
+        //"</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
+
+        const gdata = lcall("GetGeneralData", general);
+        const extension = gdata.extension;
+        let ret = false;
+        for (let i = 0; i < 999; i++) {
+          const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
+          t.name + "_" + general + (i !== 0 ? i.toString() : "") + ".mp3";
+
+          if (Backend.exists(fname)) {
+            ret = true;
+            skills.append({ name: t.name, idx: i, specific: true });
+          } else {
+            if (i > 0) break;
+          }
+        }
+        if (!ret) {
+          const skilldata = lcall("GetSkillData", t.name);
+          if (!skilldata) return;
+          const extension = skilldata.extension;
+          for (let i = 0; i < 999; i++) {
+            const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
+            t.name + (i !== 0 ? i.toString() : "") + ".mp3";
+
+            if (Backend.exists(fname)) {
+              skills.append({ name: t.name, idx: i, specific: false});
+            } else {
+              if (i > 0) break;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function findWinDeathAudio(general, isWin) {
+    if (general === "") return;
+    const extension = lcall("GetGeneralData", general).extension;
+    const fname = AppPath + "/packages/" + extension + "/audio/" + (isWin ? "win/" : "death/")
+    + general + ".mp3";
+    if (Backend.exists(fname)) {
+      skills.append({ name: (isWin ? "!" : "~") + general });
+    }
+  }
+
   function loadSkills() {
     for (let i = 1; i <= 23; i++) {
       skills.append({ name: "fastchat_m", idx: i });
     }
+    const general = roomScene.getPhoto(Self.id).general;
+    const deputyGeneral = roomScene.getPhoto(Self.id).deputyGeneral;
+    loadGeneralSkillAudios(general);
+    loadGeneralSkillAudios(deputyGeneral);
+    findWinDeathAudio(general, true);
+    findWinDeathAudio(deputyGeneral, true);
+    findWinDeathAudio(general, false);
+    findWinDeathAudio(deputyGeneral, false);
+  }
+
+  function loadPlayers() {
+    const ps = lcall("GetPlayersAndObservers");
+    ps.forEach(p => {
+      players.append({
+        id: p.id,
+        screenName: p.name,
+        general: p.general,
+        deputyGeneral: p.deputy,
+        observing: p.observing,
+        avatar: p.avatar,
+      });
+    });
   }
 
   Timer {
@@ -96,6 +169,56 @@ Rectangle {
     anchors.fill: parent
     spacing: 0
 
+    MetroButton {
+      id: memberBtn
+      text: "👥"
+      visible: !isLobby
+      //enabled: !opTimer.running;
+      onClicked: {
+        memberList.visible = !memberList.visible;
+      }
+    }
+
+    ListView {
+      id: memberList
+      Layout.fillWidth: true
+      Layout.preferredHeight: 100
+      visible: false
+      clip: true
+      ScrollBar.vertical: ScrollBar {}
+      model: ListModel {
+        id: players
+      }
+      property int playersIdx: 0
+
+      onVisibleChanged: {
+        if (memberList.visible) {
+          loadPlayers();
+          memberList.contentY = playersIdx; // restore the last position
+        } else {
+          playersIdx = memberList.contentY;
+          players.clear();
+        }
+      }
+
+      delegate: ItemDelegate {
+        width: memberList.width
+        height: 30
+        text: screenName + (observing ? "  [" + luatr("Observe") +"]" : "")
+
+        onClicked: {
+          roomScene.startCheat("PlayerDetail", {
+            avatar: avatar,
+            id: id,
+            screenName: screenName,
+            general: general,
+            deputyGeneral: deputyGeneral,
+            observing: observing
+          });
+        }
+      }
+    }
+
     Item {
       Layout.fillWidth: true
       Layout.fillHeight: true
@@ -139,29 +262,40 @@ Rectangle {
       model: ListModel {
         id: skills
       }
-      // onVisibleChanged: {skills.clear(); loadSkills();}
+      property int soundIdx: 0
+
+      onVisibleChanged: {
+        if (soundSelector.visible) {
+          loadSkills();
+          soundSelector.contentY = soundIdx; // restore the last position
+        } else {
+          soundIdx = soundSelector.contentY;
+          skills.clear();
+        }
+      }
 
       delegate: ItemDelegate {
         width: soundSelector.width
         height: 30
-        text: luatr("$" + name + (idx ? idx.toString() : ""))
+        text: luatr((name.startsWith("~") || name.startsWith("!")) ? name : "$" + name + (idx ? idx.toString() : ""))
 
         onClicked: {
           opTimer.start();
           const general = roomScene.getPhoto(Self.id).general;
-          let skill = "fastchat_m";
-          if (general !== "") {
-            const data = lcall("GetGeneralDetail", general);
-            const gender = data.gender;
-            if (gender !== 1) {
-              skill = "fastchat_f";
+          if ( name === "fastchat_m" ) {
+            if (general !== "") {
+              const data = lcall("GetGeneralDetail", general);
+              const gender = data.gender;
+              if (gender !== 1) {
+                name = "fastchat_f";
+              }
             }
           }
           ClientInstance.notifyServer(
             "Chat",
             JSON.stringify({
               type: isLobby ? 1 : 2,
-              msg: "$" + skill + ":" + idx
+              msg: (name.startsWith("~") || name.startsWith("!")) ? "$" + name : "$" + name + ":" + (idx ? idx.toString() : "")
             })
           );
           soundSelector.visible = false;

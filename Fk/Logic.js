@@ -143,14 +143,28 @@ callbacks["UpdateRoomList"] = (data) => {
   const current = mainStack.currentItem;  // should be lobby
   if (mainStack.depth === 2) {
     current.roomModel.clear();
+    const filtering = current.filtering;
     data.forEach(room => {
       const [roomId, roomName, gameMode, playerNum, capacity, hasPassword,
         outdated] = room;
+      if (filtering) { // 筛选
+        const f = config.preferredFilter;
+        if ((f.name !== '' && !roomName.includes(f.name))
+          || (f.id !== '' && !roomId.toString().includes(f.id))
+          || (f.modes.length > 0 && !f.modes.includes(luatr(gameMode)))
+          || (f.full !== 2 &&
+            (f.full === 0 ? playerNum < capacity : playerNum >= capacity))
+          || (f.hasPassword !== 2 &&
+            (f.hasPassword === 0 ? !hasPassword : hasPassword))
+          // || (capacityList.length > 0 && !capacityList.includes(capacity))
+        ) return;
+      }
       current.roomModel.append({
         roomId, roomName, gameMode, playerNum, capacity,
         hasPassword, outdated,
       });
     });
+    current.filtering = false;
   }
 }
 

@@ -512,6 +512,34 @@ Item {
           }
         }
 
+        ToolTip {
+          id: sortTip
+          x: 20
+          y: -20
+          visible: parent.hovered && !sortMenu.visible
+          delay: 1500
+          timeout: 6000
+          text: luatr("Right click or long press to choose sort method")
+          font.pixelSize: 20
+        }
+
+        /*
+        MetroButton {
+          id: sideSort
+          anchors.left: parent.right
+          height: parent.height
+          text: "▶"
+          visible: !sortMenu.visible && (hovered || parent.hovered)
+          onClicked: {
+            if (sortMenu.visible) {
+              sortMenu.close();
+            } else {
+              sortMenu.open();
+            }
+          }
+        }
+        */
+
         Menu {
           id: sortMenu
           x: parent.width
@@ -590,9 +618,9 @@ Item {
         font.bold: true
         text: {
           const elapsedMin = Math.floor(replayerElapsed / 60);
-          const elapsedSec = replayerElapsed % 60;
+          const elapsedSec = addZero(replayerElapsed % 60);
           const totalMin = Math.floor(replayerDuration / 60);
-          const totalSec = replayerDuration % 60;
+          const totalSec = addZero(replayerDuration % 60);
 
           return elapsedMin.toString() + ":" + elapsedSec + "/" + totalMin
                + ":" + totalSec;
@@ -1130,7 +1158,7 @@ Item {
       '<img src="../../image/emoji/$1.png" height="24" width="24" />');
 
     if (raw.msg.startsWith("$")) {
-      if (specialChat(pid, raw, raw.msg.slice(1))) return;
+      if (specialChat(pid, raw, raw.msg.slice(1))) return; // 蛋花、语音
     }
     chat.append(msg, raw);
 
@@ -1152,7 +1180,7 @@ Item {
     const userName = data.userName;
     const general = luatr(data.general);
 
-    if (msg.startsWith("!")) {
+    if (msg.startsWith("@")) { // 蛋花
       if (config.hidePresents)
         return true;
       const splited = msg.split(":");
@@ -1187,13 +1215,13 @@ Item {
         default:
           return false;
       }
-    } else if (msg.startsWith("~")) {
+    } else if (msg.startsWith("!") || msg.startsWith("~")) { // 胜利、阵亡
       const g = msg.slice(1);
       const extension = lcall("GetGeneralData", g).extension;
       if (!config.disableMsgAudio)
-        Backend.playSound("./packages/" + extension + "/audio/death/" + g);
+        Backend.playSound("./packages/" + extension + "/audio/" + (msg.startsWith("!") ? "win/" : "death/") + g);
 
-      const m = luatr("~" + g);
+      const m = luatr(msg);
       data.msg = m;
       if (general === "")
         chat.append(`[${time}] ${userName}: ${m}`, data);
@@ -1208,12 +1236,12 @@ Item {
       photo.chat(m);
 
       return true;
-    } else {
-      const splited = msg.split(":");
-      if (splited.length < 2) return false;
-      const skill = splited[0];
-      const idx = parseInt(splited[1]);
-      const gene = splited[2];
+    } else { // 技能
+      const split = msg.split(":");
+      if (split.length < 2) return false;
+      const skill = split[0];
+      const idx = parseInt(split[1]);
+      const gene = split[2];
 
       if (!config.disableMsgAudio)
         try {
@@ -1453,5 +1481,10 @@ Item {
     }
 
     Logic.arrangePhotos();
+  }
+
+  function addZero(temp) {
+    if (temp < 10) return "0" + temp;
+    else return temp;
   }
 }

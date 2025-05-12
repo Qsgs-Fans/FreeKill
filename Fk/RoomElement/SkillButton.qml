@@ -113,7 +113,7 @@ Item {
       x: (parent.width - width) / 2
       y: -1.5
       color: "transparent"
-      border.color: "#D2AD4A"
+      border.color: root.locked ? "#A09691" : "#D2AD4A"
       border.width: 1.1
     }
 
@@ -164,39 +164,36 @@ Item {
       if ((btn === Qt.LeftButton || btn === Qt.NoButton) && root.type !== "notactive" && root.enabled) {
         parent.pressed = !parent.pressed;
       } else if (btn === Qt.RightButton) {
-        skillDetail.open();
+        skillDetail.visible = true;
       }
     }
 
     onLongPressed: {
-      skillDetail.open();
+      skillDetail.visible = true;
     }
   }
 
-  Popup {
+  ToolTip {
     id: skillDetail
     x: Math.round((parent.width - width) / 2)
     y: Math.round((parent.height - height) / 2)
-    property string text: ""
     width: Math.min(contentWidth, realMainWin.width * 0.4)
     height: Math.min(contentHeight + 24, realMainWin.height * 0.9)
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-    padding: 12
-    background: Rectangle {
-      color: "#EEEEEEEE"
-      radius: 5
-      border.color: "#A6967A"
-      border.width: 1
-    }
-    contentItem: Text {
+    visible: false
+
+    contentItem: Text{
       text: "<b>" + luatr(orig) + "</b>: " + luatr(":" + orig)
       font.pixelSize: 20
       wrapMode: Text.WordWrap
       textFormat: TextEdit.RichText
+      color: "#E4D5A0"
+    }
 
-      TapHandler {
-        onTapped: skillDetail.close();
-      }
+    background: Rectangle { // same as cheatDrawer
+      color: "#CC2E2C27"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
     }
   }
 }

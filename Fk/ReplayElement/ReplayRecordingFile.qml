@@ -119,7 +119,7 @@ Item {
         TextField {
           id: commentEdit
           Layout.fillWidth: true
-          placeholderText: "备注"
+          placeholderText: luatr("Note")
           enabled: list.currentIndex !== -1;
           function updateText() {
             const mdata = model.get(list.currentIndex);

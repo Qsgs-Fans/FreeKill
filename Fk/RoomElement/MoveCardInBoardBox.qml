@@ -68,7 +68,7 @@ GraphicsBox {
               text: luatr(modelData.subtype)
               color: "#90765F"
               font.family: fontLibian.name
-               font.pixelSize: 16
+              font.pixelSize: 16
               width: parent.width * 0.8
               wrapMode: Text.WordWrap
             }
@@ -102,6 +102,7 @@ GraphicsBox {
       suit: modelData.suit
       number: modelData.number
       virt_name: modelData.virt_name || ''
+      known: lcall("CardVisibility", modelData.cid)
 
       selectable: !result || result.item === this
       onClicked: {
