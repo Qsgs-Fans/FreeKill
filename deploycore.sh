@@ -23,10 +23,12 @@ cd packages
 delcode standard
 delcode standard_cards
 delcode maneuvering
+delcode test
 
 cp -r freekill-core/lua ..
 cp -r freekill-core/standard .
 cp -r freekill-core/standard_cards .
 cp -r freekill-core/maneuvering .
+cp -r freekill-core/test .
 
 cd $PWD
