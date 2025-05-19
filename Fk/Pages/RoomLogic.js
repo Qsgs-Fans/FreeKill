@@ -596,6 +596,7 @@ callbacks["AddPlayer"] = (data) => {
       } else {
         roomScene.isFull = true;
       }
+      roomScene.playersAltered = true;
 
       return;
     }
@@ -612,6 +613,7 @@ callbacks["RemovePlayer"] = (data) => {
     model.general = "";
     model.isOwner = false;
     roomScene.isFull = false;
+    roomScene.playersAltered = true;
   }
 }
 

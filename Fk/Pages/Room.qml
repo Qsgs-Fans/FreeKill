@@ -23,6 +23,8 @@ Item {
   property bool isAllReady: false
   property bool isReady: false
   property bool canKickOwner: false
+  property bool playersAltered: false // 有人加入或离开房间
+  property bool canAddRobot: false
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -199,11 +201,33 @@ Item {
     text: luatr("Add Robot")
     visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
-    enabled: config.serverEnableBot
+    enabled: config.serverEnableBot && canAddRobot
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
+  onPlayersAlteredChanged: {
+    if (playersAltered) {
+      if (config.serverEnableBot) {
+        let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
+        if (maxComp < 0) {
+          maxComp = playerNum + maxComp;
+        }
+        if (maxComp > 0) {
+          let compNum = 0;
+          for (let i = 0; i < photoModel.count; i++) {
+            let item = photoModel.get(i);
+            if (item.screenName.includes("COMP")) {
+              compNum++;
+            }
+          }
+          canAddRobot = maxComp > compNum;
+        }
+      }
+      playersAltered = false;
+    }
+  }
+
   Button {
     text: luatr("Start Game")
     visible: isOwner && !isStarted && isFull
@@ -213,6 +237,7 @@ Item {
       ClientInstance.notifyServer("StartGame", "[]");
     }
   }
+
   Timer {
     id: opTimer
     interval: 1000
@@ -1146,6 +1171,12 @@ Item {
     }
   }
 
+  onIsOwnerChanged: {
+    if (isOwner && !isStarted && !isFull) {
+      addInitComputers();
+    }
+  }
+
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
     const photo = Logic.getPhoto(pid);
@@ -1447,6 +1478,36 @@ Item {
     });
   }
 
+  function addInitComputers() {
+    let minComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].minComp");
+    let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
+    if (minComp < 0) {
+      minComp = playerNum + minComp;
+    }
+    if (maxComp < 0) {
+      maxComp = playerNum + maxComp;
+    }
+    minComp = Math.min(minComp, maxComp);
+    if (minComp > 0) {
+      let compNum = 0;
+      for (let i = 0; i < photoModel.count; i++) {
+        let item = photoModel.get(i);
+        if (item.screenName.includes("COMP")) {
+          compNum++;
+        }
+      }
+      const robotsToAdd = Math.max(0, minComp - compNum);
+      for (let i = 0; i < robotsToAdd; i++) {
+        ClientInstance.notifyServer("AddRobot", "[]");
+      }
+    }
+  }
+
+  function addZero(temp) {
+    if (temp < 10) return "0" + temp;
+    else return temp;
+  }
+
   Component.onCompleted: {
     toast.show(luatr("$EnterRoom"));
     playerNum = config.roomCapacity;
@@ -1481,10 +1542,5 @@ Item {
     }
 
     Logic.arrangePhotos();
-  }
-
-  function addZero(temp) {
-    if (temp < 10) return "0" + temp;
-    else return temp;
   }
 }
