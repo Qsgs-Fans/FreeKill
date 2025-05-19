@@ -208,22 +208,7 @@ Item {
   }
   onPlayersAlteredChanged: {
     if (playersAltered) {
-      if (config.serverEnableBot) {
-        let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
-        if (maxComp < 0) {
-          maxComp = playerNum + maxComp;
-        }
-        if (maxComp > 0) {
-          let compNum = 0;
-          for (let i = 0; i < photoModel.count; i++) {
-            let item = photoModel.get(i);
-            if (item.screenName.includes("COMP")) {
-              compNum++;
-            }
-          }
-          canAddRobot = maxComp > compNum;
-        }
-      }
+      checkCanAddRobot();
       playersAltered = false;
     }
   }
@@ -257,7 +242,7 @@ Item {
     id: kickOwner
     anchors.horizontalCenter: parent.horizontalCenter
     y: parent.height / 2 + 30
-    text: "踢出房主"
+    text: luatr("Kick Owner")
     visible: canKickOwner && !isStarted && isFull && !isOwner
     onClicked: {
       for (let i = 0; i < photoModel.count; i++) {
@@ -1503,6 +1488,25 @@ Item {
     }
   }
 
+  function checkCanAddRobot() {
+    if (config.serverEnableBot) {
+      let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
+      if (maxComp < 0) {
+        maxComp = playerNum + maxComp;
+      }
+      if (maxComp > 0) {
+        let compNum = 0;
+        for (let i = 0; i < photoModel.count; i++) {
+          let item = photoModel.get(i);
+          if (item.screenName.includes("COMP")) {
+            compNum++;
+          }
+        }
+        canAddRobot = maxComp > compNum;
+      }
+    }
+  }
+
   function addZero(temp) {
     if (temp < 10) return "0" + temp;
     else return temp;
@@ -1542,5 +1546,6 @@ Item {
     }
 
     Logic.arrangePhotos();
+    checkCanAddRobot();
   }
 }
