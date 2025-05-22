@@ -1464,46 +1464,19 @@ Item {
   }
 
   function addInitComputers() {
-    let minComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].minComp");
-    let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
-    if (minComp < 0) {
-      minComp = playerNum + minComp;
-    }
-    if (maxComp < 0) {
-      maxComp = playerNum + maxComp;
-    }
-    minComp = Math.min(minComp, maxComp);
-    if (minComp > 0) {
-      let compNum = 0;
-      for (let i = 0; i < photoModel.count; i++) {
-        let item = photoModel.get(i);
-        if (item.screenName.includes("COMP")) {
-          compNum++;
-        }
-      }
-      const robotsToAdd = Math.max(0, minComp - compNum);
-      for (let i = 0; i < robotsToAdd; i++) {
-        ClientInstance.notifyServer("AddRobot", "[]");
-      }
+    const num = lcall("GetCompNum");
+    const min = num.minComp;
+    const cur = num.curComp;
+    const robotsToAdd = Math.max(0, min - cur);
+    for (let i = 0; i < robotsToAdd; i++) {
+      ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
 
   function checkCanAddRobot() {
     if (config.serverEnableBot) {
-      let maxComp = leval("Fk.game_modes[ClientInstance.settings.gameMode].maxComp");
-      if (maxComp < 0) {
-        maxComp = playerNum + maxComp;
-      }
-      if (maxComp > 0) {
-        let compNum = 0;
-        for (let i = 0; i < photoModel.count; i++) {
-          let item = photoModel.get(i);
-          if (item.screenName.includes("COMP")) {
-            compNum++;
-          }
-        }
-        canAddRobot = maxComp > compNum;
-      }
+      const num = lcall("GetCompNum");
+      canAddRobot = num.maxComp > num.curComp;
     }
   }
 
