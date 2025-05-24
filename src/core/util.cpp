@@ -23,15 +23,33 @@ static void writeDirMD5(QFile &dest, const QString &dir,
   auto entries = d.entryInfoList(
       QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
   auto re = QRegularExpression::fromWildcard(filter);
-  const auto disabled = Pacman->getDisabledPacks();
   for (QFileInfo info : entries) {
-    if (info.isDir() && !info.fileName().endsWith(".disabled") && !disabled.contains(info.fileName())) {
+    if (info.isDir()) {
       writeDirMD5(dest, info.filePath(), filter);
     } else {
       if (re.match(info.fileName()).hasMatch()) {
         writeFileMD5(dest, info.filePath());
       }
     }
+  }
+}
+
+static void writePkgsMD5(QFile &dest, const QString &dir,
+                        const QString &filter) {
+  QDir d(dir);
+  auto entries = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+  const auto disabled = Pacman->getDisabledPacks();
+  static const QStringList builtinPkgs = {
+    "standard", "standard_cards", "maneuvering", "test",
+  };
+  for (QFileInfo info : entries) {
+    if (!info.isDir()) continue;
+    auto dirname = info.fileName();
+    if (info.fileName().endsWith(".disabled")) continue;
+    if (disabled.contains(info.fileName())) continue;
+    if (builtinPkgs.contains(info.fileName())) continue;
+
+    writeDirMD5(dest, info.filePath(), filter);
   }
 }
 
@@ -61,9 +79,9 @@ QString calcFileMD5() {
   }
 
   writeFkVerMD5(flist);
-  writeDirMD5(flist, "packages", "*.lua");
-  writeDirMD5(flist, "packages", "*.qml");
-  writeDirMD5(flist, "packages", "*.js");
+  writePkgsMD5(flist, "packages", "*.lua");
+  writePkgsMD5(flist, "packages", "*.qml");
+  writePkgsMD5(flist, "packages", "*.js");
   // writeDirMD5(flist, "lua", "*.lua");
   // writeDirMD5(flist, "Fk", "*.qml");
   // writeDirMD5(flist, "Fk", "*.js");
