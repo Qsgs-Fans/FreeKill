@@ -134,6 +134,14 @@ function FkTest.setNextReplies(p, replies)
   table.insertTable(p.serverplayer._fake_router._reply_list, replies)
 end
 
+--- 清空player应做出的回复
+---@param p ServerPlayer
+function FkTest.cleanNextReplies(p)
+  local router = p.serverplayer._fake_router or {}
+  router._reply_list = {}
+  p.serverplayer._fake_router = router
+end
+
 --- 在房间设置断点，当player遇到对应command且data符合条件的情况时，房间就会进入断点状态
 ---
 --- 在断点状态中，可以针对Client编写一些测试代码并通过runInClient运行

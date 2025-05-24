@@ -57,7 +57,10 @@ GraphicsBox {
         Text {
           id: detail
           width: parent.width
-          text: luatr(":" + modelData)
+          text: {
+            let translated = luatr(":" + modelData);
+            return translated === (":" + modelData) ? luatr(modelData) : translated;
+          }
           color: "white"
           wrapMode: Text.WordWrap
           font.pixelSize: 16

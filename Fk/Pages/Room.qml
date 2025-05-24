@@ -23,6 +23,8 @@ Item {
   property bool isAllReady: false
   property bool isReady: false
   property bool canKickOwner: false
+  property bool playersAltered: false // 有人加入或离开房间
+  property bool canAddRobot: false
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -199,11 +201,18 @@ Item {
     text: luatr("Add Robot")
     visible: isOwner && !isStarted && !isFull
     anchors.centerIn: parent
-    enabled: config.serverEnableBot
+    enabled: config.serverEnableBot && canAddRobot
     onClicked: {
       ClientInstance.notifyServer("AddRobot", "[]");
     }
   }
+  onPlayersAlteredChanged: {
+    if (playersAltered) {
+      checkCanAddRobot();
+      playersAltered = false;
+    }
+  }
+
   Button {
     text: luatr("Start Game")
     visible: isOwner && !isStarted && isFull
@@ -213,6 +222,7 @@ Item {
       ClientInstance.notifyServer("StartGame", "[]");
     }
   }
+
   Timer {
     id: opTimer
     interval: 1000
@@ -232,7 +242,7 @@ Item {
     id: kickOwner
     anchors.horizontalCenter: parent.horizontalCenter
     y: parent.height / 2 + 30
-    text: "踢出房主"
+    text: luatr("Kick Owner")
     visible: canKickOwner && !isStarted && isFull && !isOwner
     onClicked: {
       for (let i = 0; i < photoModel.count; i++) {
@@ -1146,6 +1156,12 @@ Item {
     }
   }
 
+  onIsOwnerChanged: {
+    if (isOwner && !isStarted && !isFull) {
+      addInitComputers();
+    }
+  }
+
   function addToChat(pid, raw, msg) {
     if (raw.type === 1) return;
     const photo = Logic.getPhoto(pid);
@@ -1447,6 +1463,28 @@ Item {
     });
   }
 
+  function addInitComputers() {
+    const num = lcall("GetCompNum");
+    const min = num.minComp;
+    const cur = num.curComp;
+    const robotsToAdd = Math.max(0, min - cur);
+    for (let i = 0; i < robotsToAdd; i++) {
+      ClientInstance.notifyServer("AddRobot", "[]");
+    }
+  }
+
+  function checkCanAddRobot() {
+    if (config.serverEnableBot) {
+      const num = lcall("GetCompNum");
+      canAddRobot = num.maxComp > num.curComp;
+    }
+  }
+
+  function addZero(temp) {
+    if (temp < 10) return "0" + temp;
+    else return temp;
+  }
+
   Component.onCompleted: {
     toast.show(luatr("$EnterRoom"));
     playerNum = config.roomCapacity;
@@ -1481,10 +1519,6 @@ Item {
     }
 
     Logic.arrangePhotos();
-  }
-
-  function addZero(temp) {
-    if (temp < 10) return "0" + temp;
-    else return temp;
+    checkCanAddRobot();
   }
 }
