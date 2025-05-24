@@ -8,7 +8,9 @@
 ---@field public name string @ 游戏模式名
 ---@field public minPlayer integer @ 最小玩家数
 ---@field public maxPlayer integer @ 最大玩家数
----@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
+---@field public minComp integer @ 最小电脑数
+---@field public maxComp integer @ 最大电脑数
+---@field public rule? string @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
 ---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
 ---@field public whitelist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 白名单
 ---@field public blacklist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 黑名单
@@ -132,6 +134,18 @@ function GameMode:deathRewardAndPunish (victim, killer)
   elseif victim.role == "loyalist" and killer.role == "lord" then
     killer:throwAllCards("he")
   end
+end
+
+-- 敌友身份判断
+---@param targetOne ServerPlayer | Player @ 待判断角色1
+---@param targetTwo ServerPlayer | Player @ 待判断角色2
+function GameMode:friendEnemyJudge (targetOne, targetTwo)
+  if targetOne == targetTwo then return true end
+  if table.contains({"lord", "loyalist"}, targetOne.role) and
+    table.contains({"lord", "loyalist"}, targetTwo.role) then
+    return true
+  end
+  return targetOne.role == targetTwo.role
 end
 
 return GameMode

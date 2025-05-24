@@ -76,6 +76,7 @@ function fk.readUsableSpecToSkill(skill, spec)
   skill.times = spec.times or skill.times
   skill.is_delay_effect = not not spec.is_delay_effect
   skill.late_refresh = not not spec.late_refresh
+  skill.click_count = not not spec.click_count
 end
 
 function fk.readStatusSpecToSkill(skill, spec)
@@ -114,6 +115,7 @@ end
 ---@field public interaction? fun(self: ActiveSkill, player: Player): table? @ 选项框
 ---@field public target_tip? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
+---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 
 
 ---@class CardSkillSpec: UsableSkillSpec
@@ -143,6 +145,8 @@ end
 ---@field public prompt? string|fun(self: ViewAsSkill, player: Player, selected_cards: integer[], selected: Player[]): string
 ---@field public interaction? fun(self: ViewAsSkill, player: Player): table? @ 选项框
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
+---@field public mute_card? boolean @ 是否不播放卡牌特效和语音
+---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 
 ---@class DistanceSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
@@ -170,7 +174,7 @@ end
 ---@class TargetModSpec: StatusSkillSpec
 ---@field public bypass_times? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): any
 ---@field public residue_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number?
----@field public fix_times_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number? 
+---@field public fix_times_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number?
 ---@field public bypass_distances? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, to?: Player): any
 ---@field public distance_limit_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, to?: Player): number?
 ---@field public extra_target_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card): number?
@@ -266,7 +270,9 @@ end
 ---@field public name string @ 游戏模式名
 ---@field public minPlayer integer @ 最小玩家数
 ---@field public maxPlayer integer @ 最大玩家数
----@field public rule? TriggerSkill @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
+---@field public minComp? integer @ 最小电脑数，负数为实际玩家数+此数。创建房间后自动添加，无视服务器设置
+---@field public maxComp? integer @ 最大电脑数，负数为实际玩家数+此数
+---@field public rule? string @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
 ---@field public logic? fun(): GameLogic @ 逻辑（通过function完成，通常用来初始化、分配身份及座次）
 ---@field public whitelist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 白名单
 ---@field public blacklist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 黑名单
@@ -277,6 +283,7 @@ end
 ---@field public is_counted? fun(self: GameMode, room: Room): boolean @ 是否计入胜率统计
 ---@field public get_adjusted? fun(self: GameMode, player: ServerPlayer): table @ 调整玩家初始属性
 ---@field public reward_punish? fun(self: GameMode, victim: ServerPlayer, killer?: ServerPlayer) @ 死亡奖惩
+---@field public friend_enemy_judge? fun(self: GameMode, targetOne: ServerPlayer | Player, targetTwo: ServerPlayer | Player): boolean? @ 敌友判断
 ---@field public build_draw_pile? fun(self: GameMode): integer[], integer[]
 
 ---@param spec GameModeSpec
@@ -286,6 +293,8 @@ function fk.CreateGameMode(spec)
   assert(type(spec.minPlayer) == "number")
   assert(type(spec.maxPlayer) == "number")
   local ret = GameMode:new(spec.name, spec.minPlayer, spec.maxPlayer)
+  ret.minComp = spec.minComp or 0
+  ret.maxComp = spec.maxComp or -1
   ret.whitelist = spec.whitelist
   ret.blacklist = spec.blacklist
   ret.rule = spec.rule
@@ -317,6 +326,10 @@ function fk.CreateGameMode(spec)
   if spec.build_draw_pile then
     assert(type(spec.build_draw_pile) == "function")
     ret.buildDrawPile = spec.build_draw_pile
+  end
+  if spec.friend_enemy_judge then
+    assert(type(spec.winner_getter) == "function")
+    ret.friendEnemyJudge = spec.friend_enemy_judge
   end
   return ret
 end

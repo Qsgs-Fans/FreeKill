@@ -6,7 +6,7 @@
 ---@field public responseToEvent? CardEffectData @ 响应事件目标
 ---@field public skipDrop? boolean @ 是否不进入弃牌堆
 ---@field public customFrom? ServerPlayer @ 新响应者
----@field public attachedSkillAndUser? { user: integer, skillName: string } @ 附加技能与使用者，用于转化技
+---@field public attachedSkillAndUser? { user: integer, skillName: string, muteCard: boolean } @ 附加技能、使用者与卡牌静音，用于转化技
 
 --- 打出牌的数据
 ---@class RespondCardData: RespondCardDataSpec, TriggerData
@@ -44,7 +44,7 @@ fk.CardRespondFinished = RespondCardEvent:subclass("fk.CardRespondFinished")
 ---@field public damageDealt? table<ServerPlayer, number> @ 此牌造成的伤害
 ---@field public additionalEffect? integer @ 额外结算次数
 ---@field public noIndicate? boolean @ 隐藏指示线
----@field public attachedSkillAndUser? { user: integer, skillName: string } @ 附加技能与使用者，用于转化技
+---@field public attachedSkillAndUser? { user: integer, skillName: string, muteCard: boolean } @ 附加技能、使用者与卡牌静音，用于转化技
 
 --- 使用牌的数据
 ---@class UseCardData: UseCardDataSpec, TriggerData
@@ -163,7 +163,7 @@ end
 --- 判断使用事件是否是在使用手牌
 ---@param player ServerPlayer @ 要判断的使用者
 ---@return boolean
-function UseCardData:IsUsingHandcard(player)
+function UseCardData:isUsingHandcard(player)
   local useEvent = player.room.logic:getCurrentEvent()
   local cards = Card:getIdList(self.card)
   if #cards == 0 then return false end
@@ -187,7 +187,7 @@ end
 --- 判断打出事件是否是在打出手牌
 ---@param player ServerPlayer @ 要判断的使用者
 ---@return boolean
-function RespondCardData:IsUsingHandcard(player)
+function RespondCardData:isUsingHandcard(player)
   local useEvent = player.room.logic:getCurrentEvent()
   local cards = Card:getIdList(self.card)
   if #cards == 0 then return false end
@@ -252,7 +252,7 @@ fk.CardUseFinished = UseCardEvent:subclass("fk.CardUseFinished")
 ---@field public unoffsetable? boolean @ 是否不可抵消
 ---@field public nullified? boolean @ 是否对此目标无效
 ---@field public fixedResponseTimes? integer @ 响应此事件需要的牌张数（如杀之于决斗），默认1张
----@field public fixedAddTimesResponsors? ServerPlayer[] @ 需要应用额外响应的角色们，用于单向多次响应（无双），为nil则应用所有角色
+---@field public fixedAddTimesResponsors? ServerPlayer[] @ 需要应用额外响应的角色们，用于单向多次响应（无双决斗），为nil则应用所有角色
 ---@field public extraData? UseExtraData | any @ 额外数据
 
 --- 使用牌的数据

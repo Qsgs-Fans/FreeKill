@@ -335,6 +335,7 @@ function Client:enterRoom(_data)
   local data = _data[3]
   self.enter_room_data = json.encode(_data);
   self.timeout = _data[2]
+  self.capacity = _data[1]
   self.settings = data
   table.insertTableIfNeed(
     data.disabledPack,

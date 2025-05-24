@@ -55,7 +55,8 @@ end
 --- 播放使用卡牌的信息（此步骤在使用牌移至处理区前）
 ---@param room Room
 ---@param useCardData UseCardData
-local sendCardEmotionAndLog = function(room, useCardData)
+---@param muteEmotion? boolean @ 是否不播放特效和语音
+local sendCardEmotionAndLog = function(room, useCardData, muteEmotion)
   local from = useCardData.from
   local card = useCardData.card
 
@@ -63,7 +64,7 @@ local sendCardEmotionAndLog = function(room, useCardData)
     card = room:filterCard(card.id, from)
   end
 
-  room:playCardEmotionAndSound(from, card)
+  if not muteEmotion then room:playCardEmotionAndSound(from, card)end
 
   -- 发送目标指示线
   if not useCardData.noIndicate then
@@ -199,14 +200,14 @@ function UseCard:main()
   local logic = room.logic
 
   if useCardData.attachedSkillAndUser then
-    local skill = Fk.skills[useCardData.attachedSkillAndUser.skillName]---@type ViewAsSkill
+    local skill = Fk.skills[useCardData.attachedSkillAndUser.skillName]--[[@as ViewAsSkill]]
     local user = room:getPlayerById(useCardData.attachedSkillAndUser.user)
     if skill and skill.afterUse then
       self:addExitFunc(function()
         skill:afterUse(user, useCardData)
       end)
     end
-    useCardData.attachedSkillAndUser = nil
+    -- useCardData.attachedSkillAndUser = nil
   end
 
   -- add fix targets to usedata in place of card.skill:onUse
@@ -253,7 +254,7 @@ function UseCard:main()
     logic:breakEvent()
   end
 
-  sendCardEmotionAndLog(room, useCardData)
+  sendCardEmotionAndLog(room, useCardData, (useCardData.attachedSkillAndUser or {}).muteCard)
 
   room:moveCardTo(useCardData.card, Card.Processing, nil, fk.ReasonUse)
 
@@ -324,14 +325,14 @@ function RespondCard:main()
   local logic = room.logic
 
   if respondCardData.attachedSkillAndUser then
-    local skill = Fk.skills[respondCardData.attachedSkillAndUser.skillName]---@type ViewAsSkill
+    local skill = Fk.skills[respondCardData.attachedSkillAndUser.skillName]--[[@as ViewAsSkill]]
     local user = room:getPlayerById(respondCardData.attachedSkillAndUser.user)
     if skill and skill.afterResponse then
       self:addExitFunc(function()
         skill:afterResponse(user, respondCardData)
       end)
     end
-    respondCardData.attachedSkillAndUser = nil
+    -- respondCardData.attachedSkillAndUser = nil
   end
 
   if logic:trigger(fk.PreCardRespond, respondCardData.from, respondCardData) then
@@ -347,7 +348,9 @@ function RespondCard:main()
   local cardIds = room:getSubcardsByRule(card)
   local isVirtual = card:isVirtual() or card.name ~= Fk:getCardById(card.id, true).name
 
-  room:playCardEmotionAndSound(from, card)
+  if not (respondCardData.attachedSkillAndUser or {}).muteCard then
+    room:playCardEmotionAndSound(from, card)
+  end
 
   if isVirtual then
     if #cardIds == 0 then
@@ -453,10 +456,7 @@ end
 
 function CardEffect:clear()
   local cardEffectData = self.data
-  if cardEffectData.to then
-    local room = self.room
-    room.logic:trigger(fk.CardEffectFinished, cardEffectData.to, cardEffectData)
-  end
+  self.room.logic:trigger(fk.CardEffectFinished, cardEffectData.to, cardEffectData)
 end
 
 

@@ -404,7 +404,7 @@ function ChangeMaxHp:main()
     data.prevented = true
   end
   if data.prevented then
-    logic:breakEvent(false)
+    room.logic:breakEvent(false)
   end
 
   local player = data.who

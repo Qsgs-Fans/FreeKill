@@ -6,6 +6,7 @@ qixi:addEffect("viewas", {
   anim_type = "control",
   pattern = "dismantlement",
   prompt = "#qixi",
+  mute_card = true,
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)
     return #selected == 0 and Fk:getCardById(to_select).color == Card.Black

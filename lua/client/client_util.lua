@@ -498,6 +498,18 @@ function GetRoomConfig()
   return ClientInstance.settings
 end
 
+function GetCompNum()
+  local c = ClientInstance
+  local mode = Fk.game_modes[c.settings.gameMode]
+  local min, max = mode.minComp, mode.maxComp
+  local capacity = c.capacity
+  if min < 0 then min = capacity + min end
+  if max < 0 then max = capacity + max end
+  min = math.min(min, max) -- 最小值大于最大值时，取较小的
+  local compNum = #table.filter(c.players, function(pl) return pl.id < -1 end)
+  return { minComp = min, maxComp = max, curComp = compNum }
+end
+
 function GetPlayerGameData(pid)
   local c = ClientInstance
   local p = c:getPlayerById(pid)

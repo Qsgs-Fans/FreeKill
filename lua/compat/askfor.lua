@@ -678,7 +678,7 @@ end
 -- Popup a box that contains many cards, then ask player to choose one
 ---
 --- 存在堆叠问题，不应多用。使用askToChooseCard等。
---- 
+---
 --- 询问玩家从AG中选择一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param id_list integer[] | Card[] @ 可选的卡牌列表

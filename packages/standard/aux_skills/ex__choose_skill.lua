@@ -30,6 +30,16 @@ exChooseSkill:addEffect('active', {
       return table.contains(self.targets, to_select.id)
     end
   end,
+  feasible = function (self, player, selected, selected_cards, card)
+    if #selected_cards >= self.min_c_num and #selected_cards <= self.max_c_num and
+      #selected >= self.min_t_num and #selected <= self.max_t_num then
+      if self.equal then
+        return #selected_cards == #selected
+      else
+        return true
+      end
+    end
+  end,
   target_tip = function(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     if self.targetTipName then
       local targetTip = Fk.target_tips[self.targetTipName]

@@ -61,6 +61,7 @@ Fk:loadTranslationTable({
   ["Start Game"] = "Bắt đầu trò chơi",
   ["Ready"] = "Sẵn sàng",
   ["Cancel Ready"] = "Bỏ sẵn sàng",
+  -- ["Kick Owner"] = "踢出房主",
   ["Game Mode"] = "Chế độ chơi",
   ["Enable free assign"] = "Cho phép tự do lựa chọn",
   ["Enable deputy general"] = "Cho phép phó tướng",

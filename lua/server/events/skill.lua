@@ -63,7 +63,7 @@ function SkillEffect:main()
           end
           room:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
         end
-      else
+      elseif not skill.click_count then
         player:broadcastSkillInvoke(skill:getSkeleton().name)
         room:notifySkillInvoked(player, skill.name, skill.anim_type, no_indicate and {} or tos)
       end
@@ -152,6 +152,7 @@ end
 ---@param sendlog? boolean @ 是否发送战报，默认发送
 ---@param no_trigger? boolean @ 是否不触发相关时机
 function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no_trigger)
+  ---@cast self Room
   if type(skill_names) == "string" then
     skill_names = skill_names:split("|")
   end

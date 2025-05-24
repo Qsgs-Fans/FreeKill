@@ -57,6 +57,7 @@ Fk:loadTranslationTable({
   ["Start Game"] = "Start game",
   -- ["Ready"] = "准备",
   ["Cancel Ready"] = "Cancel ready",
+  ["Kick Owner"] = "Kick room owner",
   ["Game Mode"] = "Game mode",
   -- ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "Enable deputy character",

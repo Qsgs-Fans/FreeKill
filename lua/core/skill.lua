@@ -43,6 +43,7 @@ Skill.Family = "Family" --宗族技
 Skill.Combo = "Combo" --连招技
 Skill.Rhyme = "Rhyme" --韵律技
 Skill.Force = "Force" --奋武技
+Skill.Spirited = "Spirited" --昂扬技
 
 
 --- 构造函数，不可随意调用。

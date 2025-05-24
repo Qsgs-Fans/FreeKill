@@ -275,6 +275,31 @@ function GameLogic:prepareForStart()
   local room = self.room
   local players = room.players
 
+  --记录初始武将以用于正确胜率统计
+  local record = {}
+  for _, p in ipairs(players) do
+    local id, general, deputyGeneral = p.id, p.general, p.deputyGeneral
+
+    --隐匿
+    if p:getMark("__hidden_general") ~= 0 then
+      general = p:getMark("__hidden_general")
+    end
+    if p:getMark("__hidden_deputy") ~= 0 then
+      deputyGeneral = p:getMark("__hidden_deputy")
+    end
+
+    --国战
+    if p:getMark("__heg_general") ~= 0 then
+      general = p:getMark("__heg_general")
+    end
+    if p:getMark("__heg_deputy") ~= 0 then
+      deputyGeneral = p:getMark("__heg_deputy")
+    end
+
+    table.insert(record, {id, general, deputyGeneral})
+  end
+  room:setBanner("InitialGeneral", record)
+
   self:addTriggerSkill(Fk.skills["game_rule"] --[[@as TriggerSkill]])
   for _, trig in ipairs(Fk.global_trigger) do
     self:addTriggerSkill(trig)
@@ -283,7 +308,7 @@ function GameLogic:prepareForStart()
     self:addTriggerSkill(trig)
   end
 
-  self.room:sendLog{ type = "$GameStart" }
+  room:sendLog{ type = "$GameStart" }
 end
 
 function GameLogic:action()

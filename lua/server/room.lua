@@ -193,7 +193,7 @@ function Room:run()
   local mode = Fk.game_modes[self.settings.gameMode]
   local logic = (mode.logic and mode.logic() or GameLogic):new(self)
   self.logic = logic
-  if mode.rule then logic:addTriggerSkill(mode.rule) end
+  if mode.rule then self:addSkill(mode.rule) end
   logic:start()
 end
 
@@ -1086,6 +1086,7 @@ end
 ---@class AskToChooseCardsAndPlayersParams: AskToChoosePlayersParams
 ---@field min_card_num integer @ 选卡牌最小值
 ---@field max_card_num integer @ 选卡牌最大值
+---@field equal? boolean @ 是否要求牌数和目标数相等，默认否
 ---@field pattern? string @ 选牌规则，默认为"."
 ---@field expand_pile? string|integer[] @ 可选私人牌堆名称，或额外可选牌
 ---@field will_throw? boolean @ 选卡牌须能弃置
@@ -1101,6 +1102,7 @@ function Room:askToChooseCardsAndPlayers(player, params)
   params.cancelable = (params.cancelable == nil) and true or params.cancelable
   params.no_indicate = params.no_indicate or false
   params.pattern = params.pattern or "."
+  params.equal = params.equal or false
   local expand_pile = params.expand_pile or (params.extra_data and params.extra_data.expand_pile)
 
   local pcards = player:getCardIds("he")
@@ -1121,6 +1123,7 @@ function Room:askToChooseCardsAndPlayers(player, params)
     min_t_num = minTargetNum,
     max_c_num = maxCardNum,
     min_c_num = minCardNum,
+    equal = params.equal,
     pattern = params.pattern,
     skillName = params.skill_name,
     targetTipName = params.target_tip_name,
@@ -1153,6 +1156,7 @@ end
 ---@field expand_pile? string|integer[] @ 可选私人牌堆名称，或额外可选牌
 ---@field single_max? integer|table @ 限制每人能获得的最大牌数。输入整数或(以角色id为键以整数为值)的表
 ---@field skip? boolean @ 是否跳过移动。默认不跳过
+---@field moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 
 --- 询问将卡牌分配给任意角色。
 ---@param player ServerPlayer @ 要询问的玩家
@@ -1241,7 +1245,7 @@ function Room:askToYiji(player, params)
     end
   end
   if not params.skip then
-    self:doYiji(list, player, skillName)
+    self:doYiji(list, player, skillName, moveMark)
   end
 
   return list
@@ -2049,7 +2053,7 @@ function Room:handleUseCardReply(player, data)
         end
 
         self:useSkill(player, skill, Util.DummyFunc)
-        use.attachedSkillAndUser = { skillName = skill.name, user = player.id }
+        use.attachedSkillAndUser = { skillName = skill.name, user = player.id, muteCard = skill.mute_card }
 
         local rejectSkillName = skill:beforeUse(player, use)
         if type(rejectSkillName) == "string" then
@@ -2225,9 +2229,17 @@ function Room:askToUseVirtualCard(player, params)
         card:addSubcards(table.random(cards, params.card_filter.n))
       end
       card.skillName = skillName
-      local temp = card:getDefaultTarget(player, extra_data)
-      if temp then
-        tos = temp
+      local targets = card:getDefaultTarget(player, extra_data)
+      if #targets > 0 then
+        if card.skill.min_target_num == 0 then
+          if card.multiple_targets then
+            tos = card:getAvailableTargets(player, extra_data)
+          else
+            tos = {player}
+          end
+        else
+          tos = targets
+        end
         break
       end
     end
@@ -3018,8 +3030,8 @@ end
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
   if not self.game_started then return end
-  self.room:destroyRequestTimer()
   self:setBanner("GameSummary", self:getGameSummary())
+  self.room:destroyRequestTimer()
 
   if table.contains(
     { "running", "normal" },
@@ -3037,14 +3049,15 @@ function Room:gameOver(winner)
     for _, _p in ipairs(self.players) do -- 偷懒！
       if _p ~= p then p:addBuddy(_p) end
     end
+    p:control(p)
   end
   self:doBroadcastNotify("GameOver", winner)
   fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self.settings.gameMode, winner, os.time() - self.start_time))
 
   if shouldUpdateWinRate(self) then
+    local record = self:getBanner("InitialGeneral")
     for _, p in ipairs(self.players) do
       local id = p.id
-      local general = p.general
       local mode = self.settings.gameMode
       local result
 
@@ -3057,10 +3070,20 @@ function Room:gameOver(winner)
           result = 2
         end
 
+        local general, deputyGeneral = p.general, p.deputyGeneral
+        if record then
+          for _, info in ipairs(record) do
+            if info[1] == p.id then
+              general, deputyGeneral = info[2], info[3]
+            end
+          end
+        end
+
         self.room:updatePlayerWinRate(id, mode, p.role, result)
         self.room:updateGeneralWinRate(general, mode, p.role, result)
-        if p.deputyGeneral and p.deputyGeneral ~= "" then
-          self.room:updateGeneralWinRate(p.deputyGeneral, mode, p.role, result)
+
+        if deputyGeneral ~= "" then
+          self.room:updateGeneralWinRate(deputyGeneral, mode, p.role, result)
         end
       end
     end

@@ -312,7 +312,7 @@ function MoveEventWrappers:drawCards(player, num, skillName, fromPlace, moveMark
   if num < 1 then
     return {}
   end
-  
+
   local drawData = DrawData:new{
     who = player,
     num = num,
@@ -454,8 +454,9 @@ end
 ---@param list table<integer, integer[]> @ 分配牌和角色的数据表，键为角色id，值为分配给其的牌id数组
 ---@param proposer? ServerPlayer @ 操作者的。默认为空
 ---@param skillName? string @ 技能名。默认为“分配”
+---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 ---@return table<integer[]> @ 返回成功分配的卡牌
-function MoveEventWrappers:doYiji(list, proposer, skillName)
+function MoveEventWrappers:doYiji(list, proposer, skillName, moveMark)
   skillName = skillName or "distribution_skill"
   local moveInfos = {}
   local move_ids = {}
@@ -488,6 +489,7 @@ function MoveEventWrappers:doYiji(list, proposer, skillName)
           moveReason = fk.ReasonGive,
           proposer = proposer,
           skillName = skillName,
+          moveMark = moveMark,
         })
       end
       if #noFrom > 0 then
@@ -498,6 +500,7 @@ function MoveEventWrappers:doYiji(list, proposer, skillName)
           moveReason = fk.ReasonGive,
           proposer = proposer,
           skillName = skillName,
+          moveMark = moveMark,
         })
       end
     end

@@ -10,6 +10,7 @@
 ---@field public interaction any
 ---@field public prompt string | function? @ 技能提示
 ---@field public handly_pile boolean?  @ 是否能够选择“如手牌使用或打出”的牌
+---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 local ActiveSkill = UsableSkill:subclass("ActiveSkill")
 
 function ActiveSkill:initialize(name, frequency)

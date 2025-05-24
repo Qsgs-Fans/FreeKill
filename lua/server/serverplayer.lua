@@ -139,9 +139,20 @@ function ServerPlayer:reconnect()
   room:broadcastProperty(self, "state")
 end
 
-function ServerPlayer:turnOver()
-  if self.room.logic:trigger(fk.BeforeTurnOver, self) then
-    return
+--- 翻面
+---@param data any? 额外数据
+function ServerPlayer:turnOver(data)
+  if data == nil then
+    data = {
+      who = self,
+      reason = self.room.logic:getCurrentSkillName() or "game_rule",
+    }
+  end
+
+  self.room.logic:trigger(fk.BeforeTurnOver, self, data)
+
+  if data.prevented then
+    return false
   end
 
   self.faceup = not self.faceup
@@ -153,7 +164,7 @@ function ServerPlayer:turnOver()
     arg = self.faceup and "face_up" or "face_down",
   }
 
-  self.room.logic:trigger(fk.TurnedOver, self)
+  self.room.logic:trigger(fk.TurnedOver, self, data)
 end
 
 --- 令一名角色展示一些牌
@@ -441,10 +452,19 @@ end
 
 --- 设置连环状态
 ---@param chained boolean @ true为横置，false为重置
-function ServerPlayer:setChainState(chained)
+---@param data any? @ 额外数据
+function ServerPlayer:setChainState(chained, data)
   local room = self.room
-  if room.logic:trigger(fk.BeforeChainStateChange, self) then
-    return
+  if data == nil then
+    data = {
+      who = self,
+      reason = self.room.logic:getCurrentSkillName() or "game_rule",
+    }
+  end
+
+  room.logic:trigger(fk.BeforeChainStateChange, self, data)
+  if data.prevented then
+    return false
   end
 
   self.chained = chained
@@ -457,7 +477,7 @@ function ServerPlayer:setChainState(chained)
   }
   room:delay(150)
   room:broadcastPlaySound("./audio/system/chain")
-  room.logic:trigger(fk.ChainStateChanged, self)
+  room.logic:trigger(fk.ChainStateChanged, self, data)
 end
 
 --- 复原武将牌（翻至正面、解除连环状态）
@@ -732,6 +752,47 @@ function ServerPlayer:hideGeneral(isDeputy)
   room:broadcastProperty(self, "gender")
 
   room.logic:trigger(fk.GeneralHidden, self, generalName)
+end
+
+--- 是否为友方
+---@param to ServerPlayer @ 待判断的角色
+---@return boolean
+function ServerPlayer:isFriend(to)
+  return Fk.game_modes[self.room.settings.gameMode]:friendEnemyJudge(self, to)
+end
+
+--- 是否为敌方
+---@param to ServerPlayer @ 待判断的角色
+---@return boolean
+function ServerPlayer:isEnemy(to)
+  return not Fk.game_modes[self.room.settings.gameMode]:friendEnemyJudge(self, to)
+end
+
+--- 获得队友
+---@param include_self? boolean @ 是否包括自己。默认是
+---@param include_dead? boolean @ 是否包括死亡角色。默认否
+---@return ServerPlayer[]
+function ServerPlayer:getFriends(include_self, include_dead)
+  if include_self == nil then include_self = true end
+  local players = include_dead and self.room.players or self.room.alive_players
+  local friends = table.filter(players, function (p)
+    return self:isFriend(p)
+  end)
+  if not include_self then
+    table.removeOne(friends, self)
+  end
+  return friends
+end
+
+--- 获得敌人
+---@param include_dead? boolean @ 是否包括死亡角色。默认否
+---@return ServerPlayer[]
+function ServerPlayer:getEnemies(include_dead)
+  local players = include_dead and self.room.players or self.room.alive_players
+  local enemies = table.filter(players, function (p)
+    return self:isEnemy(p)
+  end)
+  return enemies
 end
 
 -- 神貂蝉

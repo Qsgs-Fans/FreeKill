@@ -11,6 +11,7 @@
 ---@field public card_marks table<integer, any> @ 用来存实体卡的card.mark
 ---@field public banners table<string, any> @ 全局mark
 ---@field public current_request_handler RequestHandler @ 当前正处理的请求数据
+---@field public capacity integer @ 房间的最大参战人数
 ---@field public timeout integer @ 出牌时长上限
 ---@field public settings table @ 房间的额外设置，差不多是json对象
 ---@field public disabled_packs string[] @ 未开启的扩展包名（是小包名，不是大包名）
@@ -99,6 +100,7 @@ function AbstractRoom:toJsonObject()
     circle = table.map(self.players, Util.IdMapper),
     current = self.current and self.current.id or nil,
     banners = self.banners,
+    capacity = self.capacity,
     timeout = self.timeout,
     settings = self.settings,
 
@@ -112,6 +114,7 @@ function AbstractRoom:loadJsonObject(o)
   -- 需要上层（目前是Client）自己根据circle添加玩家
   self.current = self:getPlayerById(o.current)
   self.banners = o.banners
+  self.capacity = o.capacity
   self.timeout = o.timeout
   self.settings = o.settings
   for k, v in pairs(o.players) do

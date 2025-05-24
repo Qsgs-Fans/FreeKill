@@ -64,6 +64,7 @@ Fk:loadTranslationTable{
   ["Start Game"] = "开始游戏",
   ["Ready"] = "准备",
   ["Cancel Ready"] = "取消准备",
+  ["Kick Owner"] = "踢出房主",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
   ["Enable deputy general"] = "启用副将机制",

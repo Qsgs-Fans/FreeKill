@@ -46,6 +46,17 @@ MoveCardsData = TriggerData:subclass("MoveCardsData")
 ---@field data MoveCardsData[]
 local MoveCardsEvent = TriggerEvent:subclass("MoveCardsEvent")
 
+function MoveCardsData:copy()
+  local copy = {}
+  for _, key in ipairs({
+    "moveInfo", "from", "to", "toArea", "moveReason", "proposer", "skillName", "moveVisible",
+    "specialName", "specialVisible", "drawPilePosition", "moveMark", "visiblePlayers"
+  }) do
+    copy[key] = self[key]
+  end
+  return copy
+end
+
 --- DrawData 关于摸牌的数据
 ---@class DrawDataSpec
 ---@field public who ServerPlayer @ 摸牌者

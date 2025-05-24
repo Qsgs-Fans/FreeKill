@@ -50,7 +50,7 @@ fk.PindianFinished = PindianEvent:subclass("fk.PindianFinished")
 ---  target: ServerPlayer, player: ServerPlayer, data: PindianData): any
 ---@alias SinglePindianFunc fun(self: TriggerSkill, event: SinglePindianEvent,
 ---  target: ServerPlayer, player: ServerPlayer, data: SinglePindianData): any
---- 
+---
 ---@class SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: PindianEvent,
 ---  data: TrigSkelSpec<PindianTrigFunc>, attr: TrigSkelAttribute?): SkillSkeleton
