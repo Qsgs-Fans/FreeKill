@@ -4,7 +4,6 @@ local skill = fk.CreateSkill {
 }
 
 skill:addEffect(fk.CardEffectCancelledOut, {
-  prompt = "#spear_skill",
   can_trigger = function(self, event, target, player, data)
     return player:hasSkill(skill.name) and data.from == player and data.card.trueName == "slash" and not data.to.dead
   end,
@@ -17,15 +16,22 @@ skill:addEffect(fk.CardEffectCancelledOut, {
         table.insert(cards, id)
       end
     end
-    cards = room:askForDiscard(player, 2, 2, true, self.name, true, tostring(Exppattern{ id = cards }), "#axe-invoke::"..data.to.id, true)
+    cards = room:askToDiscard(player, {
+      min_num = 2,
+      max_num = 2,
+      include_equip = true,
+      skill_name = skill.name,
+      cancelable = true,
+      pattern = tostring(Exppattern{ id = cards }),
+      prompt = "#axe-invoke::"..data.to.id, skip = true })
     if #cards > 0 then
-      self.cost_data = {cards = cards}
+      event:setCostData(self, {cards = cards})
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
-    player.room:throwCard(self.cost_data.cards, skill.name, player, player)
-    return true
+    player.room:throwCard(event:getCostData(self).cards, skill.name, player, player)
+    data.isCancellOut = false
   end,
 })
 

@@ -136,7 +136,7 @@ Util.Id2CardMapper = function(id) return Fk:getCardById(id) end
 Util.Id2PlayerMapper = function(id)
   return Fk:currentRoom():getPlayerById(id)
 end
---- 返回武将名
+--- 返回名称
 ---@return string
 Util.NameMapper = function(e) return e.name end
 --- 根据武将名返回武将
@@ -166,44 +166,6 @@ function Util.PhaseStrMapper(phase)
 end
 
 -- for card preset
-
---- 指定目标卡牌的canUse
-Util.CanUse = function(self, player, card, extra_data)
-  return not player:prohibitUse(card)
-end
-
----@deprecated
---- 指定目标卡牌的targetFilter（牢函数）
----@param skill ActiveSkill @ 使用牌的CardSkill
----@param to_select integer @ 目标id
----@param selected integer[] @ 已选目标id表
----@param selected_cards integer[] @ 牌的子表
----@param card Card @ 使用的卡牌
----@param extra_data any? @ 额外数据
----@param player Player @ 使用者
-Util.TargetFilter = function(skill, to_select, selected, selected_cards, card, extra_data, player)
-  if not skill:modTargetFilter(player, Fk:currentRoom():getPlayerById(to_select),
-    table.map(selected, Util.Id2PlayerMapper), card, not (extra_data and extra_data.bypass_distances), extra_data) then return end
-  local max_target_num = skill:getMaxTargetNum(player, card)
-  if max_target_num > 0 and #selected >= max_target_num then return end
-  if player:isProhibited(Fk:currentRoom():getPlayerById(to_select), card) then return end
-  extra_data = extra_data or {}
-  if extra_data.must_targets then
-    -- must_targets: 必须先选择must_targets内的**所有**目标
-    if not (#extra_data.must_targets <= #selected or
-      table.contains(extra_data.must_targets, to_select)) then return false end
-  end
-  if extra_data.include_targets then
-    -- include_targets: 必须先选择include_targets内的**其中一个**目标
-    if not (table.hasIntersection(extra_data.include_targets, selected) or
-      table.contains(extra_data.include_targets, to_select)) then return false end
-  end
-  if extra_data.exclusive_targets then
-    -- exclusive_targets: **只能选择**exclusive_targets内的目标
-    if not table.contains(extra_data.exclusive_targets, to_select) then return false end
-  end
-  return true
-end
 
 --- 指定目标卡牌的targetFilter
 ---@param skill ActiveSkill @ 使用牌的CardSkill
@@ -238,7 +200,6 @@ end
 
 --- 全局卡牌(包括自己)的canUse
 Util.GlobalCanUse = function(self, player, card)
-  if player:prohibitUse(card) then return end
   local room = Fk:currentRoom()
   for _, p in ipairs(room.alive_players) do
     if not (card and player:isProhibited(p, card)) then
@@ -247,29 +208,12 @@ Util.GlobalCanUse = function(self, player, card)
   end
 end
 
----@deprecated
---- 默认对自己使用牌的canUse（如桃酒无中装备闪电）（牢函数）
----@param self ActiveSkill
----@param player Player
----@param card Card
----@param extra_data table?
-Util.SelfCanUse = function(self, player, card, extra_data)
-  if player:prohibitUse(card) then return end
-  local room = Fk:currentRoom()
-  local tos = (extra_data and extra_data.fix_targets) and extra_data.fix_targets or {player.id}
-  return table.find(tos, function(pid)
-    return not player:isProhibited(room:getPlayerById(pid), card)
-    and Util.TargetFilter(self, pid, {}, card.subcards, card, extra_data, player)
-  end) ~= nil
-end
-
 --- 默认对自己使用牌的canUse（如桃酒无中装备闪电）
 ---@param self ActiveSkill
 ---@param player Player
 ---@param card Card
 ---@param extra_data table?
 Util.CanUseToSelf = function(self, player, card, extra_data)
-  if player:prohibitUse(card) then return end
   local tos = (extra_data and extra_data.fix_targets) and extra_data.fix_targets or {player.id}
   return table.find(tos, function(pid)
     local p = Fk:currentRoom():getPlayerById(pid)
@@ -280,7 +224,6 @@ end
 
 --- AOE卡牌(不包括自己)的canUse
 Util.AoeCanUse = function(self, player, card)
-  if player:prohibitUse(card) then return end
   for _, p in ipairs(Fk:currentRoom().alive_players) do
     if p ~= player and not (card and player:isProhibited(p, card)) then
       return true
@@ -300,32 +243,6 @@ Util.AoeCardOnUse = function(self, player, cardUseEvent, include_self)
     for _, p in ipairs(players) do
       if not player:isProhibited(p, cardUseEvent.card) then
         cardUseEvent:addTarget(p)
-      end
-    end
-  end
-end
-
----@deprecated
---- 全局卡牌(包括自己)的onUse（牢函数）
-Util.GlobalOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getAlivePlayers()) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
-      end
-    end
-  end
-end
-
----@deprecated
---- AOE卡牌(不包括自己)的onUse（牢函数）
-Util.AoeOnUse = function(self, room, cardUseEvent)
-  if not cardUseEvent.tos or #TargetGroup:getRealTargets(cardUseEvent.tos) == 0 then
-    cardUseEvent.tos = {}
-    for _, player in ipairs(room:getOtherPlayers(room:getPlayerById(cardUseEvent.from))) do
-      if not room:getPlayerById(cardUseEvent.from):isProhibited(player, cardUseEvent.card) then
-        TargetGroup:pushTargets(cardUseEvent.tos, player.id)
       end
     end
   end

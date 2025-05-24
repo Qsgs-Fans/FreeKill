@@ -11,7 +11,7 @@ local CompatAskFor = {} -- mixin
 ---@param extra_data? table @ 额外信息，因技能而异了
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return boolean, table? @ 返回第一个值为是否成功发动，第二值为技能选牌、目标等数据
----@deprecated
+---@deprecated @ 用askToUseActiveSkill代替
 function CompatAskFor:askForUseActiveSkill(player, skill_name, prompt, cancelable, extra_data, no_indicate)
   prompt = prompt or ""
   cancelable = (cancelable == nil) and true or cancelable
@@ -32,7 +32,7 @@ function CompatAskFor:askForUseActiveSkill(player, skill_name, prompt, cancelabl
   return success, ret
 end
 
----@deprecated
+---@deprecated @ 用askToUseViewAsSkill代替
 CompatAskFor.askForUseViewAsSkill = CompatAskFor.askForUseActiveSkill
 
 --- 询问一名角色弃牌。
@@ -49,7 +49,7 @@ CompatAskFor.askForUseViewAsSkill = CompatAskFor.askForUseActiveSkill
 ---@param skipDiscard? boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[] @ 弃掉的牌的id列表，可能是空的
----@deprecated
+---@deprecated @ 用askToDiscard代替
 function CompatAskFor:askForDiscard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, skipDiscard, no_indicate)
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
@@ -81,7 +81,7 @@ end
 ---@param targetTipName? string @ 引用的选择目标提示的函数名
 ---@param extra_data? table @额外信息
 ---@return integer[] @ 选择的玩家id列表，可能为空
----@deprecated
+---@deprecated @ 用askToChoosePlayers代替
 function CompatAskFor:askForChoosePlayers(player, targets, minNum, maxNum, prompt, skillName, cancelable, no_indicate, targetTipName, extra_data)
   if maxNum < 1 then
     return {}
@@ -117,7 +117,7 @@ end
 ---@param expand_pile? string|integer[] @ 可选私人牌堆名称，或额外可选牌
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的牌的id列表，可能是空的
----@deprecated
+---@deprecated @ 用askToCards代替
 function CompatAskFor:askForCard(player, minNum, maxNum, includeEquip, skillName, cancelable, pattern, prompt, expand_pile, no_indicate)
   if maxNum < 1 then
     return {}
@@ -155,7 +155,7 @@ end
 ---@param targetTipName? string @ 引用的选择目标提示的函数名
 ---@param extra_data? table @额外信息
 ---@return integer[], integer?
----@deprecated
+---@deprecated @ 用askToChooseCardsAndPlayers代替，注意没有askToChooseCardAndPlayers
 function CompatAskFor:askForChooseCardAndPlayers(player, targets, minNum, maxNum, pattern, prompt, skillName, cancelable, no_indicate, targetTipName, extra_data)
   if maxNum < 1 then
     return {}
@@ -164,10 +164,12 @@ function CompatAskFor:askForChooseCardAndPlayers(player, targets, minNum, maxNum
   no_indicate = no_indicate or false
   pattern = pattern or "."
 
-  local params = { ---@type AskToChooseCardAndPlayersParams
+  local params = { ---@type AskToChooseCardsAndPlayersParams
     targets = table.map(targets, Util.Id2PlayerMapper),
     min_num = minNum,
     max_num = maxNum,
+    min_card_num = 1,
+    max_card_num = 1,
     pattern = pattern,
     prompt = prompt or "",
     skill_name = skillName,
@@ -176,7 +178,7 @@ function CompatAskFor:askForChooseCardAndPlayers(player, targets, minNum, maxNum
     target_tip_name = targetTipName,
     no_indicate = no_indicate
   }
-  local selected, cardid = self:askToChooseCardAndPlayers(player, params)
+  local selected, cardid = self:askToChooseCardsAndPlayers(player, params)
   if #selected ~= 0 then
     selected = table.map(selected, Util.IdMapper)
   end
@@ -198,7 +200,7 @@ end
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@param extra_data? table @额外信息
 ---@return integer[], integer[], boolean @ 第一个是选择目标id列表，第二个是选择的牌id列表，第三个是否按了确定
----@deprecated
+---@deprecated @ 用askToChooseCardsAndPlayers代替
 function CompatAskFor:askForChooseCardsAndPlayers(player, minCardNum, maxCardNum, targets, minTargetNum, maxTargetNum, pattern, prompt, skillName, cancelable, no_indicate, targetTipName, extra_data)
   cancelable = (cancelable == nil) and true or cancelable
   no_indicate = no_indicate or false
@@ -237,7 +239,7 @@ end
 ---@param skipMove? boolean @ 是否跳过移动。默认不跳过
 ---@param single_max? integer|table @ 限制每人能获得的最大牌数。输入整数或(以角色id为键以整数为值)的表
 ---@return table<integer, integer[]> @ 返回一个表，键为角色id，值为分配给其的牌id数组
----@deprecated
+---@deprecated @ 用askToYiji代替
 function CompatAskFor:askForYiji(player, cards, targets, skillName, minNum, maxNum, prompt, expand_pile, skipMove, single_max)
   targets = targets or self.alive_players
   cards = cards or player:getCardIds("he")
@@ -265,7 +267,7 @@ end
 ---@param n integer @ 可选数量，默认为1
 ---@param noConvert? boolean @ 可否变更，默认可
 ---@return string|string[] @ 选择的武将
----@deprecated
+---@deprecated @ 用askToChooseGeneral代替
 function CompatAskFor:askForGeneral(player, generals, n, noConvert)
   n = n or 1
 
@@ -279,7 +281,7 @@ end
 
 --- 询问玩家若为神将、双势力需选择一个势力。
 ---@param players? ServerPlayer[] @ 询问目标
----@deprecated
+---@deprecated @ 用askToChooseKingdom代替
 function CompatAskFor:askForChooseKingdom(players)
   return self:askToChooseKingdom(players)
 end
@@ -291,7 +293,7 @@ end
 ---@param reason string @ 原因，一般是技能名
 ---@param prompt? string @ 提示信息
 ---@return integer @ 选择的卡牌id
----@deprecated
+---@deprecated @ 用askToChooseCard代替
 function CompatAskFor:askForCardChosen(chooser, target, flag, reason, prompt)
   prompt = prompt or ""
 
@@ -316,7 +318,7 @@ end
 ---@param extra_data any @ 额外信息
 ---@param cancelable? boolean @ 是否可取消
 ---@return integer[] @ 选择的牌ID数组
----@deprecated
+---@deprecated @ 用askToPoxi代替
 function CompatAskFor:askForPoxi(player, poxi_type, data, extra_data, cancelable)
   cancelable = (cancelable == nil) and true or cancelable
 
@@ -341,7 +343,7 @@ end
 ---@param reason string @ 原因，一般是技能名
 ---@param prompt? string @ 提示信息
 ---@return integer[] @ 选择的id
----@deprecated
+---@deprecated @ 用askToChooseCards代替
 function CompatAskFor:askForCardsChosen(chooser, target, min, max, flag, reason, prompt)
   prompt = prompt or ""
 
@@ -365,7 +367,7 @@ end
 ---@param detailed? boolean @ 选项详细描述
 ---@param all_choices? string[] @ 所有选项（不可选变灰）
 ---@return string @ 选择的选项
----@deprecated
+---@deprecated @ 用askToChoice代替
 function CompatAskFor:askForChoice(player, choices, skill_name, prompt, detailed, all_choices)
   local params = { ---@type AskToChoiceParams
     choices = choices,
@@ -389,7 +391,7 @@ end
 ---@param detailed? boolean @ 选项详细描述
 ---@param all_choices? string[] @ 所有选项（不可选变灰）
 ---@return string[] @ 选择的选项
----@deprecated
+---@deprecated @ 用askToChoices代替
 function CompatAskFor:CompatAskFor(player, choices, minNum, maxNum, skill_name, prompt, cancelable, detailed, all_choices)
   cancelable = (cancelable == nil) and true or cancelable
   local params = { ---@type AskToChoiceParams
@@ -411,7 +413,7 @@ end
 ---@param data? any @ 未使用
 ---@param prompt? string @ 提示信息
 ---@return boolean
----@deprecated
+---@deprecated @ 用askToSkillInvoke代替
 function CompatAskFor:askForSkillInvoke(player, skill_name, data, prompt)
   local params = { ---@type AskToSkillInvokeParams
     skill_name = skill_name,
@@ -434,7 +436,7 @@ end
 ---@param poxi_type? string @ 控制每张卡牌是否可以操作、确定键是否可以点击，不填写默认均可操作
 ---@param default_choice? table[] @ 超时的默认响应值，在带poxi_type时需要填写
 ---@return table[] @ 排列后的牌堆结果
----@deprecated
+---@deprecated @ 用askToArrangeCards代替
 function CompatAskFor:askForArrangeCards(player, skillname, cardMap, prompt, free_arrange, box_size, max_limit, min_limit, pattern, poxi_type, default_choice)
   prompt = prompt or ""
   local areaNames = {}
@@ -488,7 +490,7 @@ end
 ---@param noPut? boolean @ 是否进行放置牌操作
 ---@param areaNames? string[] @ 左侧提示信息
 ---@return table<"top"|"bottom", integer[]> @ 左侧提示信息
----@deprecated
+---@deprecated @ 用askToGuanxing代替
 function CompatAskFor:askForGuanxing(player, cards, top_limit, bottom_limit, customNotify, noPut, areaNames)
   -- 这一大堆都是来提前报错的
   local leng = #cards
@@ -529,7 +531,7 @@ end
 ---@param piles_name string[] @ 牌堆名，不足部分替换为“牌堆1、牌堆2...”
 ---@param customNotify? string @ 自定义读条操作提示
 ---@return integer[][] @ 交换后的结果
----@deprecated
+---@deprecated @ 用askToExchange代替
 function CompatAskFor:askForExchange(player, piles, piles_name, customNotify)
   piles_name = piles_name or Util.DummyTable
   local x = #piles - #piles_name
@@ -558,7 +560,7 @@ end
 ---@param cancelable? boolean @ 是否可以取消。默认可以取消
 ---@param skipUse? boolean @ 是否跳过使用。默认不跳过
 ---@return UseCardDataSpec? @ 返回卡牌使用框架。取消使用则返回空
----@deprecated
+---@deprecated @ 用askToUseRealCard代替
 function CompatAskFor:askForUseRealCard(player, pattern, skillName, prompt, extra_data, cancelable, skipUse)
   pattern = type(pattern) == "string" and pattern or tostring(Exppattern{ id = pattern })
   skillName = skillName or ""
@@ -597,7 +599,7 @@ end
 ---@param extra_data? UseExtraData @ 额外信息
 ---@param event_data? CardEffectData @ 事件信息
 ---@return UseCardDataSpec? @ 返回关于本次使用牌的数据，以便后续处理
----@deprecated
+---@deprecated @ 用askToUseCard代替
 function CompatAskFor:askForUseCard(player, card_name, pattern, prompt, cancelable, extra_data, event_data)
   pattern = pattern or card_name
   cancelable = (cancelable == nil) and true or cancelable
@@ -625,7 +627,7 @@ end
 ---@param extra_data? any @ 额外数据
 ---@param effectData? CardEffectData @ 关联的卡牌生效流程
 ---@return Card? @ 打出的牌
----@deprecated
+---@deprecated @ 用askToResponse代替
 function CompatAskFor:askForResponse(player, card_name, pattern, prompt, cancelable, extra_data, effectData)
   pattern = pattern or card_name
   cancelable = (cancelable == nil) and true or cancelable
@@ -674,14 +676,16 @@ end
 
 -- AG(a.k.a. Amazing Grace) functions
 -- Popup a box that contains many cards, then ask player to choose one
-
+---
+--- 存在堆叠问题，不应多用。使用askToChooseCard等。
+--- 
 --- 询问玩家从AG中选择一张牌。
 ---@param player ServerPlayer @ 要询问的玩家
 ---@param id_list integer[] | Card[] @ 可选的卡牌列表
 ---@param cancelable? boolean @ 能否点取消
 ---@param reason? string @ 原因
 ---@return integer @ 选择的卡牌
----@deprecated
+---@deprecated @ 用askToAG代替
 function CompatAskFor:askForAG(player, id_list, cancelable, reason)
   id_list = Card:getIdList(id_list)
 
@@ -698,7 +702,7 @@ end
 ---@param focus string
 ---@param game_type string
 ---@param data_table table<integer, any> @ 对应每个player
----@deprecated
+---@deprecated @ 用askToMiniGame代替
 function CompatAskFor:askForMiniGame(players, focus, game_type, data_table)
   local params = { ---@type AskToMiniGameParams
     skill_name = focus,
@@ -718,7 +722,7 @@ end
 ---@param qmlPath string
 ---@param extra_data any
 ---@return string
----@deprecated
+---@deprecated @ 用askToCustomDialog代替
 function CompatAskFor:askForCustomDialog(player, focustxt, qmlPath, extra_data)
   local params = { ---@type AskToCustomDialogParams
     skill_name = focustxt,
@@ -738,7 +742,7 @@ end
 ---@param moveFrom? ServerPlayer @ 是否只是目标1移动给目标2
 ---@param excludeIds? integer[] @ 本次不可移动的卡牌id
 ---@return table<"card"|"from"|"to">? @ 选择的卡牌、起点玩家id和终点玩家id列表
----@deprecated
+---@deprecated @ 用askToMoveCardInBoard代替
 function CompatAskFor:askForMoveCardInBoard(player, targetOne, targetTwo, skillName, flag, moveFrom, excludeIds)
   excludeIds = type(excludeIds) == "table" and excludeIds or {}
 
@@ -750,7 +754,12 @@ function CompatAskFor:askForMoveCardInBoard(player, targetOne, targetTwo, skillN
     move_from = moveFrom,
     exclude_ids = excludeIds
   }
-  return self:askToMoveCardInBoard(player, params)
+  local ret = self:askToMoveCardInBoard(player, params)
+  if ret then
+    ret.from = ret.from.id
+    ret.to = ret.to.id
+  end
+  return ret
 end
 
 --- 询问一名玩家从targets中选择出若干名玩家来移动场上的牌。
@@ -761,7 +770,7 @@ end
 ---@param flag? string @ 限定可移动的区域，值为nil（装备区和判定区）、‘e’或‘j’
 ---@param no_indicate? boolean @ 是否不显示指示线
 ---@return integer[] @ 选择的玩家id列表，可能为空
----@deprecated
+---@deprecated @ 用askToChooseToMoveCardInBoard代替
 function CompatAskFor:askForChooseToMoveCardInBoard(player, prompt, skillName, cancelable, flag, no_indicate, excludeIds)
   if flag then
     assert(flag == "e" or flag == "j")

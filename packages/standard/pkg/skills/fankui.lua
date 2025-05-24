@@ -16,11 +16,37 @@ fankui:addEffect(fk.Damaged, {
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
-    local from = data.from
-    local flag =  from == player and "e" or "he"
-    local card = room:askForCardChosen(player, from, flag, fankui.name)
-    room:obtainCard(player.id, card, false, fk.ReasonPrey)
+    local flag = data.from == player and "e" or "he"
+    local card = room:askToChooseCard(player, {
+      target = data.from,
+      flag = flag,
+      skill_name = fankui.name,
+    })
+    room:obtainCard(player, card, false, fk.ReasonPrey, player, fankui.name)
   end
+})
+
+fankui:addAI({
+  think_skill_invoke = function(self, ai, skill_name, prompt)
+    ---@type DamageData
+    local dmg = ai.room.logic:getCurrentEvent().data
+    local player = ai.player
+    local from = dmg.from
+    if not from then return false end
+    local val = ai:getBenefitOfEvents(function(logic)
+      local flag = from == player and "e" or "he"
+      local cards = from:getCardIds(flag)
+      if #cards < 1 then
+        logic.benefit = -1
+        return
+      end
+      logic:obtainCard(player, cards[1], false, fk.ReasonPrey)
+    end)
+    if val > 0 then
+      return true
+    end
+    return false
+  end,
 })
 
 fankui:addTest(function(room, me)

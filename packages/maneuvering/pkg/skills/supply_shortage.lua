@@ -2,9 +2,8 @@ local skill = fk.CreateSkill {
   name = "supply_shortage_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#supply_shortage_skill",
-  can_use = Util.CanUse,
   distance_limit = 1,
   mod_target_filter = function(self, player, to_select, selected, card, extra_data)
     return to_select ~= player and not (not (extra_data and extra_data.bypass_distances) and
@@ -20,8 +19,7 @@ skill:addEffect("active", {
       pattern = ".|.|spade,heart,diamond",
     }
     room:judge(judge)
-    local result = judge.card
-    if result.suit ~= Card.Club then
+    if judge:matchPattern() then
       to:skip(Player.Draw)
     end
     self:onNullified(room, effect)

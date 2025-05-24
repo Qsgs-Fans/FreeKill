@@ -14,6 +14,10 @@ exChooseSkill:addEffect('active', {
     local checkpoint = true
     local card = Fk:getCardById(to_select)
 
+    if self.will_throw and player:prohibitDiscard(card) then
+      return false
+    end
+
 
     if self.pattern and self.pattern ~= "" then
       checkpoint = checkpoint and (Exppattern:Parse(self.pattern):match(card))
@@ -23,14 +27,14 @@ exChooseSkill:addEffect('active', {
   target_filter = function(self, player, to_select, selected, cards)
     if #cards < self.min_c_num then return end
     if #selected < self.max_t_num then
-      return table.contains(self.targets, to_select)
+      return table.contains(self.targets, to_select.id)
     end
   end,
   target_tip = function(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     if self.targetTipName then
       local targetTip = Fk.target_tips[self.targetTipName]
       assert(targetTip)
-      return targetTip.target_tip(self, to_select, selected, selected_cards, card, selectable, extra_data)
+      return targetTip.target_tip(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     end
   end,
   min_target_num = function(self) return self.min_t_num end,

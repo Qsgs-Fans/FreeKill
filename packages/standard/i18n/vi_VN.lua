@@ -516,7 +516,7 @@ Fk:loadTranslationTable({
   ["AskForPindian"] = "Đấu điểm",
 
   ["reveal_skill&"] = "Mở tướng",
-  ["#reveal_skill&"] = "Chọn 1 tướng để mở tướng（nhấp vào khung lựa chọn bên trái để mở rộng）",
+  ["#reveal_skill&"] = "Chọn 1 tướng để mở tướng",
   [":reveal_skill&"] = "Giai đoạn ra bài, bạn có thể mở 1 tướng có Tỏa định kỹ.",
   ["revealMain"] = "Mở Chủ tướng %arg",
   ["revealDeputy"] = "Mở Phó tướng %arg",

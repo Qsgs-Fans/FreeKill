@@ -29,4 +29,38 @@ qingnang:addEffect("active", {
   end,
 })
 
+qingnang:addAI({
+  think = function(self, ai)
+    local player = ai.player
+    local cards = ai:getEnabledCards(".|.|.|hand|.|.|.")
+    local players = ai:getEnabledTargets()
+
+    --- 对所有目标计算回血的收益
+    local benefits = table.map(players, function(p)
+      return { p, ai:getBenefitOfEvents(function(logic)
+        --- @type RecoverData
+        logic:recover{
+          who = p,
+          num = 1,
+          recoverBy = player
+        }
+      end)}
+    end)
+
+    table.sort(benefits, function(a, b) return a[2] > b[2] end)
+
+    if #benefits == 0 then return {}, -1000 end
+
+    --- 尽量选择权重占比小的牌
+    cards = ai:getChoiceCardsByKeepValue(cards, 1)
+
+    --- 计算弃牌收益
+    local throw = ai:getBenefitOfEvents(function(logic)
+      logic:throwCard(cards, self.skill.name, player, player)
+    end)
+
+    return { targets = { benefits[1][1] }, cards = cards }, benefits[1][2] + throw
+  end,
+})
+
 return qingnang

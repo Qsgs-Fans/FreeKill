@@ -14,7 +14,7 @@ qingguo:addEffect("viewas", {
   view_as = function(self, player, cards)
     if #cards ~= 1 then return end
     local c = Fk:cloneCard("jink")
-    c.skillName = skill.name
+    c.skillName = qingguo.name
     c:addSubcard(cards[1])
     return c
   end,

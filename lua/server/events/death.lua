@@ -87,7 +87,7 @@ function Death:main()
   local logic = room.logic
   logic:trigger(fk.BeforeGameOverJudge, victim, deathData)
 
-  local killer = deathData.damage and deathData.damage.from or deathData.killer
+  local killer = deathData.killer
   if killer then
     room:sendLog{
       type = "#KillPlayer",

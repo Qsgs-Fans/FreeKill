@@ -1,7 +1,7 @@
 local skill = fk.CreateSkill {
   name = "#hualiu_skill",
+  tags = { Skill.Compulsory },
   attached_equip = "hualiu",
-  frequency = Skill.Compulsory,
 }
 
 skill:addEffect("distance", {

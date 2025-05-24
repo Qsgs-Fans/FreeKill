@@ -8,6 +8,10 @@ yingzi:addEffect(fk.DrawNCards, {
   end,
 })
 
+yingzi:addAI({
+  think_skill_invoke = Util.TrueFunc,
+})
+
 yingzi:addTest(function(room, me)
   FkTest.runInRoom(function()
     room:handleAddLoseSkills(me, "yingzi")
@@ -15,12 +19,7 @@ yingzi:addTest(function(room, me)
 
   FkTest.setNextReplies(me, { "1" })
   FkTest.runInRoom(function()
-    local data = { ---@type TurnDataSpec
-      who = me,
-      reason = "game_rule",
-      phase_table = { Player.Draw }
-    }
-    GameEvent.Turn:create(TurnData:new(data)):exec()
+    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Draw })):exec()
   end)
 
   lu.assertEquals(#me:getCardIds("h"), 3)

@@ -1,17 +1,15 @@
 local wushuang = fk.CreateSkill {
   name = "wushuang",
-  frequency = Skill.Compulsory,
+  tags = { Skill.Compulsory },
 }
 
+---@type TrigSkelSpec<AimFunc>
 local wushuang_spec = {
   on_use = function(self, event, target, player, data)
-    data.fixedResponseTimes = data.fixedResponseTimes or {}
-    if data.card.trueName == "slash" then
-      data.fixedResponseTimes["jink"] = 2
-    else
-      data.fixedResponseTimes["slash"] = 2
+    data.fixedResponseTimes = 2
+    if data.card.trueName == "duel" then
       data.fixedAddTimesResponsors = data.fixedAddTimesResponsors or {}
-      table.insert(data.fixedAddTimesResponsors, (event == fk.TargetSpecified) and data.to or data.from)
+      table.insertIfNeed(data.fixedAddTimesResponsors, (event == fk.TargetSpecified) and data.to or data.from)
     end
   end,
 }

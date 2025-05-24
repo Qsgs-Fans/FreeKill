@@ -1,5 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+--@field public legacy_global_trigger LegacyTriggerSkill[] @ 所有的全局触发技
 --- Engine是整个FreeKill赖以运行的核心。
 ---
 --- 它包含了FreeKill涉及的所有武将、卡牌、游戏模式等等
@@ -12,6 +13,7 @@
 ---@field public packages table<string, Package> @ 所有拓展包的列表
 ---@field public package_names string[] @ 含所有拓展包名字的数组，为了方便排序
 ---@field public skills table<string, Skill> @ 所有的技能
+---@field public skill_skels table<string, SkillSkeleton> @ 所有的SkillSkeleton
 ---@field public related_skills table<string, Skill[]> @ 所有技能的关联技能
 ---@field public global_trigger TriggerSkill[] @ 所有的全局触发技
 ---@field public global_status_skill table<class, Skill[]> @ 所有的全局状态技
@@ -31,7 +33,7 @@
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
 ---@field private kingdoms string[] @ 总势力
 ---@field private kingdom_map table<string, string[]> @ 势力映射表
----@field private damage_nature table<any, table> @ 伤害映射表
+---@field private damage_nature table<any, [string, boolean]> @ 伤害映射表
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
@@ -56,13 +58,29 @@ function Engine:initialize()
     ["standard"] = { "standard" },
     ["standard_cards"] = { "standard_cards" },
     ["maneuvering"] = { "maneuvering" },
+    ["test"] = { "test_p_0" },
   }
-  self.extension_names = { "standard", "standard_cards", "maneuvering" }
+  self.extension_names = { "standard", "standard_cards", "maneuvering", "test" }
   self.packages = {}    -- name --> Package
   self.package_names = {}
+  self.skill_keys = {    -- key --> SkillSkeleton.createSkill
+    ["distance"] = SkillSkeleton.createDistanceSkill,
+    ["prohibit"] = SkillSkeleton.createProhibitSkill,
+    ["atkrange"] = SkillSkeleton.createAttackRangeSkill,
+    ["maxcards"] = SkillSkeleton.createMaxCardsSkill,
+    ["targetmod"] = SkillSkeleton.createTargetModSkill,
+    ["filter"] = SkillSkeleton.createFilterSkill,
+    ["invalidity"] = SkillSkeleton.createInvaliditySkill,
+    ["visibility"] = SkillSkeleton.createVisibilitySkill,
+    ["active"] = SkillSkeleton.createActiveSkill,
+    ["cardskill"] = SkillSkeleton.createCardSkill,
+    ["viewas"] = SkillSkeleton.createViewAsSkill,
+  }
   self.skills = {}    -- name --> Skill
+  self.skill_skels = {}    -- name --> SkillSkeleton
   self.related_skills = {} -- skillName --> relatedSkill[]
   self.global_trigger = {}
+  self.legacy_global_trigger = {}
   self.global_status_skill = {}
   self.generals = {}    -- name --> General
   self.same_generals = {}
@@ -126,7 +144,10 @@ function Engine:loadPackage(pack)
 
   -- create skills from skel
   for _, skel in ipairs(pack.skill_skels) do
-    table.insert(pack.related_skills, skel:createSkill())
+    local skill = skel:createSkill()
+    skill.package = pack
+    table.insert(pack.related_skills, skill)
+    self.skill_skels[skel.name] = skel
   end
 
   if pack.type == Package.GeneralPack then
@@ -163,6 +184,7 @@ function Engine:reloadPackage(path)
     end
   end
 
+  ---@param p Package
   local function f(p)
     self.packages[p.name] = p
     local room = Fk:currentRoom()
@@ -230,15 +252,18 @@ function Engine:loadPackages()
     self:loadPackage(require("packages.freekill-core.standard"))
     self:loadPackage(require("packages.freekill-core.standard_cards"))
     self:loadPackage(require("packages.freekill-core.maneuvering"))
+    self:loadPackage(require("packages.freekill-core.test"))
     table.removeOne(directories, "freekill-core")
   else
     self:loadPackage(require("packages.standard"))
     self:loadPackage(require("packages.standard_cards"))
     self:loadPackage(require("packages.maneuvering"))
+    self:loadPackage(require("packages.test"))
   end
   table.removeOne(directories, "standard")
   table.removeOne(directories, "standard_cards")
   table.removeOne(directories, "maneuvering")
+  table.removeOne(directories, "test")
 
   ---@type string[]
   local _disable_packs = json.decode(fk.GetDisabledPacks())
@@ -281,7 +306,9 @@ function Engine:loadPackages()
     end
 
     for _, tab in ipairs(pack.card_specs) do
-      pack:addCard(self:cloneCard(tab[1], tab[2], tab[3]))
+      local card = self:cloneCard(tab[1], tab[2], tab[3])
+      card.extra_data = tab[4]
+      pack:addCard(card)
     end
 
     -- add cards, generals and skills to Engine
@@ -378,13 +405,17 @@ function Engine:addSkill(skill)
   end
   self.skills[skill.name] = skill
 
-  if skill.global then
-    if skill:isInstanceOf(TriggerSkill) then
-      table.insert(self.global_trigger, skill)
-    else
-      local t = self.global_status_skill
-      t[skill.class] = t[skill.class] or {}
-      table.insert(t[skill.class], skill)
+  for _, sk in ipairs{ skill, table.unpack(skill.related_skills) } do
+    if sk.global then
+      if sk:isInstanceOf(TriggerSkill) then
+        table.insertIfNeed(self.global_trigger, sk)
+      -- elseif sk:isInstanceOf(LegacyTriggerSkill) then
+      --   table.insertIfNeed(self.legacy_global_trigger, sk)
+      else
+        local t = self.global_status_skill
+        t[sk.class] = t[sk.class] or {}
+        table.insert(t[sk.class], sk)
+      end
     end
   end
 
@@ -400,6 +431,13 @@ function Engine:addSkills(skills)
   for _, skill in ipairs(skills) do
     self:addSkill(skill)
   end
+end
+
+--- 注册技能（effect）类型
+---@param key string @ 技能类型名
+---@param func function @ 技能类型创建函数
+function Engine:addSkillType(key, func)
+  self.skill_keys[key] = func
 end
 
 --- 加载一个武将到Engine中。
@@ -422,10 +460,6 @@ function Engine:addGeneral(general)
     self.same_generals[tName] = self.same_generals[tName] or { tName }
     table.insert(self.same_generals[tName], general.name)
   end
-
-  -- if table.find(general.skills, function(s) return s.lordSkill end) then
-  --   table.insert(self.lords, general.name)
-  -- end
 end
 
 --- 加载一系列武将。
@@ -443,7 +477,7 @@ function Engine:setLords()
     local other_skills = table.map(general.other_skills, Util.Name2SkillMapper)
     local skills = table.connect(general.skills, other_skills)
     for _, skill in ipairs(skills) do
-      if skill.lordSkill then
+      if skill:hasTag(Skill.Lord) then
         table.insert(self.lords, general.name)
         break
       end
@@ -478,7 +512,7 @@ end
 --- 注册一个伤害
 ---@param nature string | number @ 伤害ID
 ---@param name string @ 属性伤害名
----@param can_chain boolean? @ 是否可传导
+---@param can_chain boolean? @ 是否可传导，默认可
 function Engine:addDamageNature(nature, name, can_chain)
   assert(table.contains({ "string", "number" }, type(nature)), "Must use string or number as nature!")
   assert(type(name) == "string", "Must use string as this damage nature's name!")
@@ -487,13 +521,9 @@ function Engine:addDamageNature(nature, name, can_chain)
 end
 
 --- 返回伤害列表
----@return table @ 具体信息（伤害ID => {伤害名，是否可传导}）
+---@return table<any, [string, boolean]> @ 具体信息（伤害ID => {伤害名，是否可传导}）
 function Engine:getDamageNatures()
-  local ret = {}
-  for k, v in pairs(self.damage_nature) do
-    ret[k] = v
-  end
-  return ret
+  return table.simpleClone(self.damage_nature)
 end
 
 --- 由伤害ID获得伤害属性
@@ -619,6 +649,12 @@ function Engine:addGameMode(game_mode)
   self.game_modes[game_mode.name] = game_mode
 end
 
+--- 向Engine中添加一个自定义事件。
+---@param name string @ 名称
+---@param pfunc? function @ prepare function
+---@param mfunc function @ (main) function
+---@param cfunc? function @ cleaner function
+---@param efunc? function @ exit function
 function Engine:addGameEvent(name, pfunc, mfunc, cfunc, efunc)
   table.insert(self._custom_events, { name = name, p = pfunc, m = mfunc, c = cfunc, e = efunc })
 end
@@ -735,6 +771,43 @@ function Engine:getAllCardIds(except)
   return result
 end
 
+-- 获取加入游戏的卡的牌名（暂不考虑装备牌），常用于泛转化技能的interaction
+---@param card_type string @ 卡牌的类别，b 基本牌，t - 普通锦囊牌，d - 延时锦囊牌，e - 装备牌
+---@param true_name? boolean @ 是否使用真实卡名（即不区分【杀】、【无懈可击】等的具体种类）
+---@param is_derived? boolean @ 是否包括衍生牌，默认不包括
+---@return string[] @ 返回牌名列表
+function Engine:getAllCardNames(card_type, true_name, is_derived)
+  local all_names = {}
+  local basic, equip, normal_trick, delayed_trick = {}, {}, {}, {}
+  for _, name in ipairs(self.all_card_names) do
+    local card = self.all_card_types[name]
+    if not table.contains(self:currentRoom().disabled_packs, card.package.name) and (not card.is_derived or is_derived) then
+      if card.type == Card.TypeBasic then
+        table.insertIfNeed(basic, true_name and card.trueName or card.name)
+      elseif card.type == Card.TypeEquip then
+        table.insertIfNeed(equip, true_name and card.trueName or card.name)
+      elseif card.sub_type ~= Card.SubtypeDelayedTrick then
+        table.insertIfNeed(normal_trick, true_name and card.trueName or card.name)
+      else
+        table.insertIfNeed(delayed_trick, true_name and card.trueName or card.name)
+      end
+    end
+  end
+  if card_type:find("b") then
+    table.insertTable(all_names, basic)
+  end
+  if card_type:find("t") then
+    table.insertTable(all_names, normal_trick)
+  end
+  if card_type:find("d") then
+    table.insertTable(all_names, delayed_trick)
+  end
+  if card_type:find("e") then
+    table.insertTable(all_names, equip)
+  end
+  return all_names
+end
+
 --- 根据id返回相应的卡牌。
 ---@param id integer @ 牌的id
 ---@param ignoreFilter? boolean @ 是否要无视掉锁定视为技，直接获得真牌
@@ -751,10 +824,37 @@ end
 
 --- 对那个id应用锁定视为技，将它变成要被锁定视为的牌。
 ---@param id integer @ 要处理的id
----@param player Player @ 和这张牌扯上关系的那名玩家
----@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
-function Engine:filterCard(id, player, data)
-  return Fk:currentRoom():filterCard(id, player, data)
+---@param player? Player @ 和这张牌有关的角色。若无则还原为原卡牌
+function Engine:filterCard(id, player)
+  if player == nil then
+    self.filtered_cards[id] = nil
+    return
+  end
+
+  local card = Fk:getCardById(id, true)
+  local filters = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable---@type FilterSkill[]
+
+  if #filters == 0 then
+    self.filtered_cards[id] = nil
+    return
+  end
+
+  local modity = false
+  for _, f in ipairs(filters) do
+    if f:cardFilter(card, player) then
+      local new_card = f:viewAs(player, card)
+      if new_card then
+        new_card.id = id
+        new_card.skillName = f.name
+        card = new_card
+        self.filtered_cards[id] = card
+        modity = true
+      end
+    end
+  end
+  if not modity then
+    self.filtered_cards[id] = nil
+  end
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。
@@ -766,9 +866,31 @@ function Engine:currentRoom()
   return ClientInstance
 end
 
---- 根据字符串获得这个技能或者这张牌的描述
----
---- 其实就是翻译了 ":" .. name 罢了
+---@param name string @ 要获得描述的名字
+---@param lang? string @ 要使用的语言，默认读取config
+---@param player Player @ 绑定角色，用于获取技能的动态描述
+---@param with_effectable? boolean @ 是否需要加上无效红字显示
+---@return string @ 描述
+function Engine:getSkillName(name, lang, player, with_effectable)
+  lang = lang or (Config.language or "zh_CN")
+  local skill = Fk.skills[name]
+  local _name
+  if skill.skeleton then -- 新框架
+    _name = skill.skeleton:getDynamicName(player, lang)
+  end
+  if type(_name) == "string" and _name ~= "" then
+    _name = self:translate(_name, lang)
+  else
+    _name = self:translate(name, lang)
+  end
+  if with_effectable then
+    return _name .. (skill:isEffectable(player) and "" or self:translate("skill_invalidity", lang)) -- 无效显示
+  else
+    return _name
+  end
+end
+
+--- 根据字符串获得这个技能或者这张牌的（动态）描述
 ---@param name string @ 要获得描述的名字
 ---@param lang? string @ 要使用的语言，默认读取config
 ---@param player? Player @ 绑定角色，用于获取技能的动态描述
@@ -776,14 +898,20 @@ end
 function Engine:getDescription(name, lang, player)
   local skill = Fk.skills[name]
   if player and skill then
-    local dynamicDesc = skill:getDynamicDescription(player, lang)
+    local dynamicDesc
+    if skill.skeleton then
+      dynamicDesc = skill.skeleton:getDynamicDescription(player, lang)
+    end
+    if type(dynamicDesc) ~= "string" or dynamicDesc == "" then
+      dynamicDesc = skill:getDynamicDescription(player, lang)
+    end
     if type(dynamicDesc) == "string" and dynamicDesc ~= "" then
       local descFormatter = function(desc)
-        local descSplited = desc:split(":")
-        local descFormatted = self:translate(":" .. descSplited[1], lang)
-        if descFormatted ~= ":" .. descSplited[1] then
-          for i = 2, #descSplited do
-            local curDesc = self:translate(descSplited[i], lang)
+        local descSplit = desc:split(":")
+        local descFormatted = self:translate(":" .. descSplit[1], lang)
+        if descFormatted ~= ":" .. descSplit[1] then
+          for i = 2, #descSplit do
+            local curDesc = self:translate(descSplit[i], lang)
             descFormatted = descFormatted:gsub("{" .. (i - 1) .. "}", curDesc)
           end
 

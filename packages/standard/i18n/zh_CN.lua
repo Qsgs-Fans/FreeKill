@@ -90,6 +90,7 @@ Fk:loadTranslationTable{
   ["$qingguo1"] = "凌波微步，罗袜生尘。",
   ["$qingguo2"] = "体迅飞凫，飘忽若神。",
   ["qingguo"] = "倾国",
+  ["#qingguo"] = "倾国：你可以将一张黑色手牌当【闪】使用或打出。",
   [":qingguo"] = "你可以将一张黑色手牌当【闪】使用或打出。",
 
   ["liubei"] = "刘备",
@@ -115,6 +116,7 @@ Fk:loadTranslationTable{
   ["$wusheng2"] = "看尔乃插标卖首！",
   ["wusheng"] = "武圣",
   [":wusheng"] = "你可以将一张红色牌当【杀】使用或打出。",
+  ["#wusheng"] = "发动 武圣，将一张红色牌当【杀】使用或打出",
 
   ["zhangfei"] = "张飞",
   ["#zhangfei"] = "万夫不当",
@@ -146,6 +148,7 @@ Fk:loadTranslationTable{
   ["$longdan2"] = "吾乃常山赵子龙也！",
   ["longdan"] = "龙胆",
   [":longdan"] = "你可以将一张【杀】当【闪】使用或打出，或将一张【闪】当普通【杀】使用或打出。",
+  ["#longdan"] = "发动 龙胆，将一张【杀】当【闪】使用或打出，或将一张【闪】当【杀】使用或打出",
 
   ["machao"] = "马超",
   ["#machao"] = "一骑当千",
@@ -191,6 +194,7 @@ Fk:loadTranslationTable{
   ["$qixi2"] = "你的牌太多啦！",
   ["qixi"] = "奇袭",
   [":qixi"] = "你可以将一张黑色牌当【过河拆桥】使用。",
+  ["#qixi"] = "奇袭：你可将一张黑色牌当【过河拆桥】使用",
 
   ["lvmeng"] = "吕蒙",
   ["#lvmeng"] = "白衣渡江",
@@ -233,6 +237,7 @@ Fk:loadTranslationTable{
   ["$guose2"] = "你累了。",
   ["guose"] = "国色",
   [":guose"] = "你可以将一张<font color='red'>♦</font>牌当【乐不思蜀】使用。",
+  ["#guose"] = "发动 国色，将一张<font color='red'>♦</font>牌当【乐不思蜀】使用",
   ["$liuli1"] = "交给你了。",
   ["$liuli2"] = "你来嘛～",
   ["liuli"] = "流离",
@@ -532,6 +537,7 @@ Fk:loadTranslationTable{
   ["distribution_select_skill"] = "分配",
   ["choose_players_to_move_card_in_board"] = "选择角色",
   ["userealcard_skill"] = "使用",
+  ["virtual_viewas"] = "视为使用",
 
   ["AskForUseActiveSkill"] = "使用技能",
   ["AskForSkillInvoke"] = "发动技能",
@@ -543,7 +549,7 @@ Fk:loadTranslationTable{
   ["AskForPindian"] = "拼点",
 
   ["reveal_skill&"] = "亮将",
-  ["#reveal_skill&"] = "选择一个武将亮将（点击左侧选择框展开）",
+  ["#reveal_skill&"] = "选择一个武将亮将",
   [":reveal_skill&"] = "出牌阶段，你可明置一张有锁定技的武将。",
   ["revealMain"] = "明置主将 %arg",
   ["revealDeputy"] = "明置副将 %arg",

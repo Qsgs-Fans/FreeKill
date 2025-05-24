@@ -6,7 +6,21 @@ TrustAI = require "server.ai.trust_ai"
 
 SmartAI = require "server.ai.smart_ai"
 
--- load ai module from packages
+for _, pname in ipairs(Fk.package_names) do
+  local pack = Fk.packages[pname]
+  for _, skel in ipairs(pack.skill_skels) do
+    for _, sa in ipairs(skel.ai_list) do
+      local key, ai_spec, inherit, setTriggerSkillAI = table.unpack(sa)
+      if setTriggerSkillAI then
+        SmartAI:setTriggerSkillAI(key, ai_spec)
+      else -- 有 inherit 的稍后加载？
+        SmartAI:setSkillAI(key, ai_spec, inherit)
+      end
+    end
+  end
+end
+
+-- load ai module from packages (legacy)
 local directories = {}
 if UsingNewCore then
   require "standard_cards.ai"

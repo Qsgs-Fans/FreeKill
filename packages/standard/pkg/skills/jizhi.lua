@@ -13,6 +13,14 @@ jizhi:addEffect(fk.CardUsing, {
   end,
 })
 
+jizhi:addAI({
+  think_skill_invoke = function(self, ai, skill_name, prompt)
+    return ai:getBenefitOfEvents(function(logic)
+      logic:drawCards(ai.player, 1, self.skill.name)
+    end) > 0
+  end,
+})
+
 jizhi:addTest(function(room, me)
   local comp2 = room.players[2]
 

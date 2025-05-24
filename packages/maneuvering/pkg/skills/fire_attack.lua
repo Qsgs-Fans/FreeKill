@@ -1,10 +1,9 @@
-local skill = fk.CreateSkill {
+local fire_attack = fk.CreateSkill {
   name = "fire_attack_skill",
 }
 
-skill:addEffect("active", {
+fire_attack:addEffect("cardskill", {
   prompt = "#fire_attack_skill",
-  can_use = Util.CanUse,
   target_num = 1,
   mod_target_filter = function(self, _, to_select, _, _, _)
     return not to_select:isKongcheng()
@@ -15,12 +14,29 @@ skill:addEffect("active", {
     local to = effect.to
     if to:isKongcheng() then return end
 
-    local showCard = room:askForCard(to, 1, 1, false, self.name, false, ".|.|.|hand", "#fire_attack-show:" .. from.id)[1]
+    local params = { ---@type AskToCardsParams
+      min_num = 1,
+      max_num = 1,
+      include_equip = false,
+      skill_name = fire_attack.name,
+      cancelable = false,
+      pattern = ".|.|.|hand",
+      prompt = "#fire_attack-show:" .. from.id
+    }
+    local showCard = room:askToCards(to, params)[1]
     to:showCards(showCard)
 
     showCard = Fk:getCardById(showCard)
-    local cards = room:askForDiscard(from, 1, 1, false, self.name, true,
-      ".|.|" .. showCard:getSuitString(), "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString())
+    params = { ---@type AskToDiscardParams
+      min_num = 1,
+      max_num = 1,
+      include_equip = false,
+      skill_name = fire_attack.name,
+      cancelable = true,
+      pattern = ".|.|" .. showCard:getSuitString(),
+      prompt = "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString()
+    }
+    local cards = room:askToDiscard(from, params)
     if #cards > 0 and not to.dead then
       room:damage({
         from = from,
@@ -28,10 +44,10 @@ skill:addEffect("active", {
         card = effect.card,
         damage = 1,
         damageType = fk.FireDamage,
-        skillName = self.name,
+        skillName = fire_attack.name,
       })
     end
   end,
 })
 
-return skill
+return fire_attack

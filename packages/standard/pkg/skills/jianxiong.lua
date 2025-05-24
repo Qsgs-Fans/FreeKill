@@ -9,7 +9,24 @@ jianxiong:addEffect(fk.Damaged, {
       data.card and player.room:getCardArea(data.card) == Card.Processing
   end,
   on_use = function(self, event, target, player, data)
-    player.room:obtainCard(player.id, data.card, true, fk.ReasonJustMove)
+    player.room:obtainCard(player, data.card, true, fk.ReasonJustMove, player, jianxiong.name)
+  end,
+})
+
+jianxiong:addAI({
+  think_skill_invoke = function(self, ai, skill_name, prompt)
+    ---@type DamageData
+    local dmg = ai.room.logic:getCurrentEvent().data
+    local player = ai.player
+    local card = dmg.card
+    if not card or player.room:getCardArea(card) ~= Card.Processing then return false end
+    local val = ai:getBenefitOfEvents(function(logic)
+      logic:obtainCard(player, card, true, fk.ReasonJustMove)
+    end)
+    if val > 0 then
+      return true
+    end
+    return false
   end,
 })
 

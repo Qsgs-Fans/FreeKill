@@ -2,9 +2,8 @@ local skill = fk.CreateSkill {
   name = "duel_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#duel_skill",
-  can_use = Util.CanUse,
   mod_target_filter = function(self, player, to_select, selected, card)
     return to_select ~= player
   end,
@@ -18,37 +17,28 @@ skill:addEffect("active", {
     local currentResponser = to
 
     while currentResponser:isAlive() do
-      local loopTimes = 1
-      if effect.fixedResponseTimes then
-        local canFix = currentResponser == to
-        if effect.fixedAddTimesResponsors then
-          canFix = table.contains(effect.fixedAddTimesResponsors, currentResponser.id)
-        end
+      local loopTimes = effect:getResponseTimes(currentResponser)
 
-        if canFix then
-          if type(effect.fixedResponseTimes) == 'table' then
-            loopTimes = effect.fixedResponseTimes["slash"] or 1
-          elseif type(effect.fixedResponseTimes) == 'number' then
-            loopTimes = effect.fixedResponseTimes
-          end
-        end
-      end
-
-      local cardResponded
+      local respond
       for i = 1, loopTimes do
-        cardResponded = room:askForResponse(currentResponser, 'slash', nil, nil, true, nil, effect)
-        if cardResponded then
-          room:responseCard({
-            from = currentResponser.id,
-            card = cardResponded,
-            responseToEvent = effect,
-          })
+        local params = { ---@type AskToUseCardParams
+          skill_name = 'slash',
+          pattern = 'slash',
+          cancelable = true,
+          event_data = effect
+        }
+        if loopTimes > 1 then
+          params.prompt = "#AskForResponseMultiCard:::slash:"..i..":"..loopTimes
+        end
+        respond = room:askToResponse(currentResponser, params)
+        if respond then
+          room:responseCard(respond)
         else
           break
         end
       end
 
-      if not cardResponded then
+      if not respond then
         break
       end
 

@@ -2,7 +2,7 @@ local skill = fk.CreateSkill {
   name = "savage_assault_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#savage_assault_skill",
   can_use = Util.AoeCanUse,
   on_use = function (self, room, cardUseEvent)
@@ -13,23 +13,18 @@ skill:addEffect("active", {
     return to_select ~= player
   end,
   on_effect = function(self, room, effect)
-    local loopTimes = 1
-    if effect.fixedResponseTimes and table.contains(effect.fixedAddTimesResponsors or {}, effect.to.id) then
-      if type(effect.fixedResponseTimes) == 'table' then
-        loopTimes = effect.fixedResponseTimes["slash"] or 1
-      elseif type(effect.fixedResponseTimes) == 'number' then
-        loopTimes = effect.fixedResponseTimes
-      end
-    end
-    local cardResponded
+    local loopTimes = effect:getResponseTimes()
+    local respond
     for i = 1, loopTimes do
-      cardResponded = room:askForResponse(effect.to, 'slash', nil, nil, true, nil, effect)
-      if cardResponded then
-        room:responseCard({
-          from = effect.to.id,
-          card = cardResponded,
-          responseToEvent = effect,
-        })
+      local params = { ---@type AskToUseCardParams
+        skill_name = 'slash',
+        pattern = 'slash',
+        cancelable = true,
+        event_data = effect
+      }
+      respond = room:askToResponse(effect.to, params)
+      if respond then
+        room:responseCard(respond)
       else
         room:damage({
           from = effect.from,
@@ -45,16 +40,34 @@ skill:addEffect("active", {
   end,
 })
 
+skill:addAI({
+  on_use = function(self, logic, effect)
+    self.skill:onUse(logic, effect)
+  end,
+  on_effect = function(self, logic, effect)
+    Fk.skills["slash_skill"]:onEffect(logic, effect)
+  end,
+}, "__card_skill")
+
 skill:addTest(function(room, me)
+  local comp2 = room.players[2]
+  local card = room:printCard("slash")
+  FkTest.setNextReplies(comp2, {json.encode {
+    card = card.id,
+    targets = { }
+  }})
   FkTest.runInRoom(function()
+    room:obtainCard(comp2, card, true)
     room:useCard {
       from = me,
       card = Fk:cloneCard("savage_assault"),
+      tos = {}
     }
   end)
   lu.assertEquals(me.hp, 4)
-  lu.assertEquals(room.players[2].hp, 3)
+  lu.assertEquals(comp2.hp, 4)
   lu.assertEquals(room.players[3].hp, 3)
+  lu.assertEquals(room.players[4].hp, 3)
 end)
 
 return skill

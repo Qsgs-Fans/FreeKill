@@ -17,6 +17,7 @@ local function fillMoveData(card_moves, visible_data, self, area, specialName)
   if #ids ~= 0 then
     for _, id in ipairs(ids) do
       visible_data[tostring(id)] = Self:cardVisible(id)
+      Fk:filterCard(id, self)
     end
     local move = {
       ids = ids,

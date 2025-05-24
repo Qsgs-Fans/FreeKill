@@ -2,9 +2,8 @@ local skill = fk.CreateSkill {
   name = "indulgence_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#indulgence_skill",
-  can_use = Util.CanUse,
   mod_target_filter = function(self, player, to_select, selected, card, distance_limited)
     return to_select ~= player
   end,
@@ -18,8 +17,7 @@ skill:addEffect("active", {
       pattern = ".|.|spade,club,diamond",
     }
     room:judge(judge)
-    local result = judge.card
-    if result.suit ~= Card.Heart then
+    if judge:matchPattern() then
       to:skip(Player.Play)
     end
     self:onNullified(room, effect)
@@ -32,5 +30,7 @@ skill:addEffect("active", {
     }
   end,
 })
+
+skill:addAI(nil, "__card_skill")
 
 return skill

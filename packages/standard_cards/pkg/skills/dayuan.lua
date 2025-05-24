@@ -1,7 +1,7 @@
 local skill = fk.CreateSkill {
   name = "#dayuan_skill",
+  tags = { Skill.Compulsory },
   attached_equip = "dayuan",
-  frequency = Skill.Compulsory,
 }
 
 skill:addEffect("distance", {

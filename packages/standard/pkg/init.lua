@@ -62,7 +62,7 @@ local role_getlogic = function()
       local generals = table.connect(room:findGenerals(function(g)
         return table.contains(Fk.lords, g)
       end, lord_num), room:getNGenerals(generalNum))
-      lord_generals = room:askForGeneral(lord, generals, n)
+      lord_generals = room:askToChooseGeneral(lord, { generals = generals, n = n })
       local lord_general, deputy
       if type(lord_generals) == "table" then
         deputy = lord_generals[2]
@@ -80,7 +80,7 @@ local role_getlogic = function()
 
       room:prepareGeneral(lord, lord_general, deputy, true)
 
-      room:askForChooseKingdom({lord})
+      room:askToChooseKingdom({lord})
       room:broadcastProperty(lord, "kingdom")
 
       -- 显示技能
@@ -90,11 +90,11 @@ local role_getlogic = function()
           fk.qCritical("Skill: "..skillName.." doesn't exist!")
           return false
         end
-        if skill.lordSkill and (player.role ~= "lord" or #room.players < 5) then
+        if skill:hasTag(Skill.Lord) and not (player.role == "lord" and player.role_shown and room:isGameMode("role_mode")) then
           return false
         end
 
-        if #skill.attachedKingdom > 0 and not table.contains(skill.attachedKingdom, player.kingdom) then
+        if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
           return false
         end
 
@@ -151,7 +151,7 @@ local role_getlogic = function()
       room:prepareGeneral(p, general, deputy)
     end
 
-    room:askForChooseKingdom(nonlord)
+    room:askToChooseKingdom(nonlord)
   end
 
   return role_logic

@@ -9,6 +9,6 @@ Fk:appendKingdomMap("god", {"wei", "shu", "wu", "qun"})
 
 require(prefix .. "standard.i18n")
 
-local extension = require(prefix .. "standard.pkg")
+local extension = require(prefix .. "standard.pkg") ---@type Package
 extension:loadSkillSkels(require(prefix .. "standard.aux_skills"))
 return extension

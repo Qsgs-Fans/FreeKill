@@ -119,6 +119,7 @@ QString Color(const QString &raw, fkShell::TextColor color,
 #endif
 }
 
+/**
 QByteArray FetchFileFromHttp(const QString &addr) {
   // 初始化网络访问管理器
   QNetworkAccessManager manager;
@@ -249,3 +250,4 @@ QVariant AskOllama(const QString &apiEndpoint, const QVariant &body) {
 
   return QJsonDocument::fromJson(responseData).toVariant();
 }
+*/

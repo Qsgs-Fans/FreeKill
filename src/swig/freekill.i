@@ -24,4 +24,4 @@ const char *FK_VER = FK_VERSION;
 extern char *FK_VER;
 QString GetDisabledPacks();
 
-QVariant AskOllama(const QString &apiEndpoint, const QVariant &body);
+// QVariant AskOllama(const QString &apiEndpoint, const QVariant &body);

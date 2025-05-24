@@ -1,7 +1,7 @@
 local skill = fk.CreateSkill {
   name = "#nioh_shield_skill",
+  tags = { Skill.Compulsory },
   attached_equip = "nioh_shield",
-  frequency = Skill.Compulsory,
 }
 
 skill:addEffect(fk.PreCardEffect, {
@@ -9,8 +9,16 @@ skill:addEffect(fk.PreCardEffect, {
     return data.to == player and player:hasSkill(skill.name) and
     data.card.trueName == "slash" and data.card.color == Card.Black
   end,
-  on_use = Util.TrueFunc,
+  on_use = function(_, _, _, _, data)
+    data.nullified = true
+  end
 })
+
+skill:addAI({
+  correct_func = function(self, logic, event, target, player, data)
+    return self.skill:triggerable(event, target, player, data)
+  end,
+}, nil, nil, true)
 
 skill:addTest(function(room, me)
   local nioh_shield = room:printCard("nioh_shield")

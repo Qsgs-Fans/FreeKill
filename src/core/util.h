@@ -42,8 +42,8 @@ namespace fkShell {
 QString Color(const QString &raw, fkShell::TextColor color,
                                   fkShell::TextType type = fkShell::NoType);
 
-QByteArray FetchFileFromHttp(const QString &addr);
+// QByteArray FetchFileFromHttp(const QString &addr);
 
-QVariant AskOllama(const QString &apiEndpoint, const QVariant &body);
+// QVariant AskOllama(const QString &apiEndpoint, const QVariant &body);
 
 #endif // _GLOBAL_H

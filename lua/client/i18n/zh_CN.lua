@@ -147,6 +147,7 @@ Fk:loadTranslationTable{
   ["Game Draw"] = "平局",
   ["Play the Replay"] = "重放",
   ["Delete Replay"] = "删除",
+  ["Note"] = "备注",
   ["About"] = "关于",
   ["about_freekill_description"] = [[
 # 关于新月杀
@@ -231,6 +232,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["End"] = "结束",
   -- ["Quit"] = "退出",
   ["All"] = "全部",
+
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
   ["Enable"] = "启用",
@@ -239,10 +241,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$BanPkgHelp"] = "正在禁用拓展包",
   ["$BanCharaHelp"] = "正在禁用武将",
   ["Companions"] = "珠联璧合",
+  ["Skill Name"] = "技能名称",
+  ["Skill Description"] = "技能描述",
+  ["Audio Text"] = "语音文本",
   ["Death audio"] = "阵亡",
-  ["Win audio"] = "胜利语音",
+  ["Win audio"] = "胜利",
   ["Official"] = "官方",
-  ["Title"] = "称号：",
+  ["Title"] = "称号：", -- TODO: 0.5.6去除冒号
   ["Designer"] = "设计：",
   ["Voice Actor"] = "配音：",
   ["Illustrator"] = "画师：",
@@ -278,6 +283,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForChoice"] = "%1：请选择",
   ["#AskForChoices"] = "%1：请选择",
   ["#choose-trigger"] = "请选择一项技能发动",
+  ["#skill_muti_trigger"] = "%arg[%arg2]",
   ["trigger"] = "选择技能",
   ["Please arrange cards"] = "请拖拽移动卡牌",
   ["Please click to move card"] = "请点击移动卡牌",
@@ -313,6 +319,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForPeaches"] = "%src 生命危急，需要 %arg 个【桃】",
   ["#AskForPeachesSelf"] = "你生命危急，需要 %arg 个【桃】或【酒】",
   ["#AskForUseOneCard"] = "%arg：请使用一张牌",
+  ["#AskForUseVirtualCard"] = "%arg：请视为使用 %arg2",
+  ["#AskForUseVirtualCards"] = "%arg：请视为使用一张牌",
+  ["#AskForUseMultiCard"] = "请使用【%arg】（此为第 %arg2 张，共需 %arg3 张）",
+  ["#AskForResponseMultiCard"] = "请打出【%arg】（此为第 %arg2 张，共需 %arg3 张）",
+  ["#AskForNumber"] = "%arg：请选择一个数字",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
@@ -493,6 +504,13 @@ Fk:loadTranslationTable{
   ["general_card"] = "武将牌",
   ["General"] = "武将",
   ["noGeneral"] = "无武将",
+  ["Kingdom"] = "势力",
+  ["Gender"] = "性别",
+  ["male"] = "男性",
+  ["female"] = "女性",
+  ["bigender"] = "双性",
+  ["agender"] = "无性",
+  ["MaxHp"] = "体力上限",
   ["Hp"] = "体力",
   ["Damage"] = "伤害",
   ["Lost"] = "失去",
@@ -515,6 +533,8 @@ Fk:loadTranslationTable{
 
   ["skill"] = "技能",
   ["skill_invalidity"] = "<font color='red'>（失效）</font>",
+  ["dummyskill"] = "技能",
+  [":dummyskill"] = "无效果。",
 
   --utility
   ["draw1"] = "摸一张牌",
@@ -526,6 +546,11 @@ Fk:loadTranslationTable{
   ["loseMaxHp"] = "减1点体力上限",
   ["yes"] = "是",
   ["no"] = "否",
+  ["clockwise"] = "↻顺时针方向",
+  ["anticlockwise"] = "↺逆时针方向",
+  ["draw_card"] = "摸牌",
+  ["heal_hp"] = "回复体力",
+  ["damaged"] = "受到伤害",
 }
 
 -- related to sendLog
@@ -546,6 +571,7 @@ Fk:loadTranslationTable{
   ["$PreyCardsFromPile"] = "%from 获得了 %arg 张牌 %card",
   ["$GotCardBack"] = "%from 收回了 %arg 张牌 %card",
   ["$RecycleCard"] = "%from 从弃牌堆回收了 %arg 张牌 %card",
+  ["#DestructCards"] = "%card 被销毁了",
 
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
@@ -594,11 +620,16 @@ Fk:loadTranslationTable{
 
   ["#FilterCard"] = "由于 %arg 的效果，与 %from 相关的 %arg2 被视为了 %arg3",
   ["#AddTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 增加了目标 %to",
-  ["#RemoveTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 取消了目标 %to",
+  ["#RemoveTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 减少了目标 %to",
+
+  ["#TargetAdded"] = "%from 使用的 %arg 增加了目标 %to",
+  ["#TargetCancelled"] = "%from 使用的 %arg 取消了目标 %to",
 
   -- skill
   ["#InvokeSkill"] = "%from 发动了〖%arg〗",
   ["#InvokeSkillTo"] = "%from 对 %to 发动了〖%arg〗",
+  ["#GameEventSkill"] = "技能事件：%from 发动了〖%arg〗",
+  ["#GameEventSkillTos"] = "技能事件：%from 对 %to 发动了〖%arg〗",
 
   -- judge
   ["#StartJudgeReason"] = "%from 开始了 %arg 的判定",
@@ -615,6 +646,8 @@ Fk:loadTranslationTable{
   -- damage, heal and lose HP
   ["#Damage"] = "%to 对 %from 造成了 %arg 点 %arg2 伤害",
   ["#DamageWithNoFrom"] = "%from 受到了 %arg 点 %arg2 伤害",
+  ["#GameEventDamage"] = "伤害事件：%to 对 %from 造成 %arg 点 %arg2 伤害",
+  ["#GameEventDamageNoFrom"] = "伤害事件：%from 受到 %arg 点 %arg2 伤害",
   ["#LoseHP"] = "%from 失去了 %arg 点体力",
   ["#HealHP"] = "%from 回复了 %arg 点体力",
   ["#ShowHPAndMaxHP"] = "%from 的体力值为 %arg，体力上限为 %arg2",

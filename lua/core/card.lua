@@ -20,54 +20,82 @@
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
 ---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
----@field public skill ActiveSkill @ 技能（用于实现卡牌效果）
+---@field public skill CardSkill @ 技能（用于实现卡牌效果）
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
 ---@field public is_passive? boolean @ 是否只能在响应时使用或打出
 ---@field public is_derived? boolean @ 判断是否为衍生牌
+---@field public extra_data? table @ 保存其他信息的键值表，如“合纵”、“应变”、“赠予”等
 local Card = class("Card")
 
 ---@alias Suit integer
 
+--- 黑桃
 Card.Spade = 1
+--- 梅花
 Card.Club = 2
+--- 红桃
 Card.Heart = 3
+--- 方块
 Card.Diamond = 4
+--- 无花色
 Card.NoSuit = 5
 
 ---@alias Color integer
 
+--- 黑色
 Card.Black = 1
+--- 红色
 Card.Red = 2
+--- 无色
 Card.NoColor = 3
 
 ---@alias CardType integer
 
+--- 基本牌
 Card.TypeBasic = 1
+--- 锦囊牌
 Card.TypeTrick = 2
+--- 装备牌
 Card.TypeEquip = 3
 
 ---@alias CardSubtype integer
 
+--- 无子类型
 Card.SubtypeNone = 1
+--- 延时锦囊牌
 Card.SubtypeDelayedTrick = 2
+--- 武器牌
 Card.SubtypeWeapon = 3
+--- 防具牌
 Card.SubtypeArmor = 4
+--- 防御坐骑牌
 Card.SubtypeDefensiveRide = 5
+--- 进攻坐骑牌
 Card.SubtypeOffensiveRide = 6
+--- 宝物牌
 Card.SubtypeTreasure = 7
 
 ---@alias CardArea integer
 
+--- 未知区域
 Card.Unknown = 0
+--- 手牌区
 Card.PlayerHand = 1
+--- 装备区
 Card.PlayerEquip = 2
+--- 判定区
 Card.PlayerJudge = 3
+--- 武将牌上/旁
 Card.PlayerSpecial = 4
+--- 处理区
 Card.Processing = 5
+--- 牌堆
 Card.DrawPile = 6
+--- 弃牌堆
 Card.DiscardPile = 7
+--- 移出游戏区
 Card.Void = 8
 
 --- Card的构造函数。具体负责构建Card实例的函数，请参见fk_ex部分。
@@ -169,6 +197,7 @@ function Card:getEffectiveId()
   return self.id
 end
 
+--- 根据虚拟牌的子卡牌更新牌的颜色、花色和点数
 local function updateColorAndNumber(card)
   local color = Card.NoColor
   local number = 0
@@ -326,7 +355,7 @@ local function getNumberStr(num)
 end
 
 --- 获取卡牌点数并返回点数文字描述（仅限A/J/Q/K/X）。
----@param num integer @ 当你只想翻译点数为文字时(优先检查，请注意)
+---@param num? integer @ 当你只想翻译点数为文字时(优先检查，请注意)
 function Card:getNumberStr(num)
   return tostring(getNumberStr(num and num or self.number))
 end
@@ -420,7 +449,7 @@ function Card:getMarkNames()
   return ret
 end
 
---- 比较两张卡牌的花色是否相同
+--- 比较两张卡牌的花色是否相同（无花色牌不与其他任何牌相同）
 ---@param anotherCard Card @ 另一张卡牌
 ---@param diff? boolean @ 比较二者不同
 ---@return boolean @ 返回比较结果
@@ -439,7 +468,7 @@ function Card:compareSuitWith(anotherCard, diff)
   end
 end
 
---- 比较两张卡牌的颜色是否相同
+--- 比较两张卡牌的颜色是否相同（无颜色牌不与其他任何牌相同）
 ---@param anotherCard Card @ 另一张卡牌
 ---@param diff? boolean @ 比较二者不同
 ---@return boolean @ 返回比较结果
@@ -463,7 +492,7 @@ end
 ---@param diff? boolean @ 比较二者不同
 ---@return boolean @ 返回比较结果
 function Card:compareNumberWith(anotherCard, diff)
-  if self ~= anotherCard and self.number < 1 or anotherCard.number < 1 then
+  if self ~= anotherCard and (self.number < 1 or anotherCard.number < 1) then
     return false
   end
 
@@ -491,13 +520,14 @@ function Card:toLogString()
 end
 
 --- 静态方法。传入下列类型之一的参数，返回id列表。
----@param c integer|integer[]|Card|Card[]
+---@param c? integer|integer[]|Card|Card[]
 ---@return integer[]
 function Card:getIdList(c)
   error("This is a static method. Please use Card:getIdList instead")
 end
 
 function Card.static:getIdList(c)
+  if c == nil then return {} end
   if type(c) == "number" then
     return {c}
   end
@@ -528,21 +558,21 @@ end
 
 --- 获得使用此牌的固定目标，仅有不能自由选择目标的牌会有固定目标。即桃、无中、装备、AOE等
 ---@param player Player @ 使用者
----@param extra_data? any @ 额外数据
----@return integer[]|nil @ 可能返回空
+---@param extra_data? UseExtraData @ 额外数据
+---@return Player[]|nil @ 返回固定目标角色列表。若此牌可以选择目标，返回空值
 function Card:getFixedTargets(player, extra_data)
   local ret = extra_data and extra_data.fix_targets
-  if ret then return ret end
+  if ret then return table.map(ret, Util.Id2PlayerMapper) end
   ret = self.skill:fixTargets(player, self, extra_data)
-  if ret then return table.map(ret, Util.IdMapper) end
-  if self.skill.target_num == 0 then
+  if ret then return ret end
+  if self.skill:getMinTargetNum(player) == 0 and not self.is_passive then
     -- 此处仅作为默认值，若与默认选择规则不一致（如火烧连营）请修改cardSkill的fix_targets参数
     if self.multiple_targets then
-      return table.map(table.filter(Fk:currentRoom().alive_players, function (p)
+      return table.filter(Fk:currentRoom().alive_players, function (p)
         return self.skill:modTargetFilter(player, p, {}, self)
-      end), Util.IdMapper)
+      end)
     else
-      return {player.id}
+      return {player}
     end
   end
   return nil
@@ -553,35 +583,29 @@ end
 --- 用于判断一张牌能否使用，或用于添加默认使用目标
 ---@param player Player @ 使用者
 ---@param extra_data? table
----@return integer[] @ 返回目标id表
+---@return Player[] @ 返回目标角色表
 function Card:getAvailableTargets (player, extra_data)
   if not player:canUse(self, extra_data) or player:prohibitUse(self) then return {} end
   extra_data = extra_data or Util.DummyTable
-  local fixed_targets = extra_data.fix_targets or self:getFixedTargets(player, extra_data)
   local room = Fk:currentRoom()
-  local tos = {}
-  if fixed_targets then
-    tos = fixed_targets
-  elseif extra_data.exclusive_targets then
-    tos = extra_data.exclusive_targets
-  elseif extra_data.must_targets then
-    tos = extra_data.must_targets
-  elseif extra_data.include_targets then
-    tos = extra_data.include_targets
-  else
-    tos = table.map(room.alive_players, Util.IdMapper)
+  local ret = extra_data.fix_targets or self:getFixedTargets(player, extra_data)
+  or extra_data.exclusive_targets or extra_data.must_targets or extra_data.include_targets
+  or room.alive_players
+  if #ret == 0 then return {} end
+  local tos = table.simpleClone(ret)
+  if type(tos[1]) == "number" then
+    tos = table.map(tos, Util.Id2PlayerMapper)
   end
-  tos = table.filter(tos, function(pid)
-    local p = room:getPlayerById(pid)
+  tos = table.filter(tos, function(p)
     return not player:isProhibited(p, self)
-    and self.skill:modTargetFilter(player, p, {}, self, not extra_data.bypass_distances, extra_data)
+    and self.skill:modTargetFilter(player, p, {}, self, extra_data)
   end)
-  if self.skill:getMinTargetNum() == 2 then  -- for collateral
+  if self.skill:getMinTargetNum(player) == 2 then  -- for collateral
     for i = #tos, 1, -1 do
-      local fromId = tos[i]
+      local from = tos[i]
       if table.every(room.alive_players, function (p)
-        return p.id == fromId or not self.skill:targetFilter(player, p,
-          { Fk:currentRoom():getPlayerById(fromId) },
+        return p == from or not self.skill:targetFilter(player, p,
+          { from },
           self.subcards, self, extra_data)
       end) then
         table.remove(tos, i)
@@ -595,19 +619,19 @@ end
 --- 返回强制使用一张牌的默认目标
 ---@param player Player @ 使用者
 ---@param extra_data? table
----@return integer[] @ 目标id表。一般只返回1个值，若牌需要副目标，则返回2个。返回空表则表示无合法目标
+---@return Player[] @ 目标角色表。一般只返回1个值，若牌需要副目标，则返回2个。返回空表则表示无合法目标
 function Card:getDefaultTarget (player, extra_data)
   local targets = self:getAvailableTargets(player, extra_data)
   if #targets == 0 then return {} end
   local to = table.random(targets)
   local ret = {to}
-  if self.skill:getMinTargetNum() == 2 then  -- for collateral
+  if self.skill:getMinTargetNum(player) == 2 then  -- for collateral
     local subtarget = table.find(Fk:currentRoom().alive_players, function (p)
       return p.id ~= to and self.skill:targetFilter(player, p,
-        { Fk:currentRoom():getPlayerById(to) }, self.subcards, self, extra_data)
+        { to }, self.subcards, self, extra_data)
     end)
     if subtarget == nil then return {} end
-    table.insert(ret, subtarget.id)
+    table.insert(ret, subtarget)
   end
   return ret
 end

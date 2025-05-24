@@ -14,8 +14,8 @@ distributionSelectSkill:addEffect("active", {
   end,
   target_num = 1,
   target_filter = function(self, player, to_select, selected, selected_cards)
-    return #selected == 0 and #selected_cards > 0 and table.contains(self.targets, to_select)
-    and #selected_cards <= (self.residued_list[string.format("%d", to_select)] or 0)
+    return #selected == 0 and #selected_cards > 0 and table.contains(self.targets, to_select.id)
+    and #selected_cards <= (self.residued_list[string.format("%d", to_select.id)] or 0)
   end,
 })
 

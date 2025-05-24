@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
----@class GameLogic: Object, GameLogicLegacyMixin
+---@class GameLogic: Object --, GameLogicLegacyMixin
 ---@field public room Room
 ---@field public skill_table table<(TriggerEvent|integer|string), TriggerSkill[]>
 ---@field public skill_priority_table table<(TriggerEvent|integer|string), number[]>
@@ -234,7 +234,6 @@ end
 
 function GameLogic:attachSkillToPlayers()
   local room = self.room
-  local players = room.players
 
   local addRoleModSkills = function(player, skillName)
     local skill = Fk.skills[skillName]
@@ -242,25 +241,21 @@ function GameLogic:attachSkillToPlayers()
       fk.qCritical("Skill: "..skillName.." doesn't exist!")
       return
     end
-    if skill.lordSkill and not (player.role == "lord" and player.role_shown and room:isGameMode("role_mode")) then
+    if skill:hasTag(Skill.Lord) and not (player.role == "lord" and player.role_shown and room:isGameMode("role_mode")) then
       return
     end
 
-    if #skill.attachedKingdom > 0 and not table.contains(skill.attachedKingdom, player.kingdom) then
+    if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
       return
     end
 
     room:handleAddLoseSkills(player, skillName, nil, false, true)
     self:trigger(fk.EventAcquireSkill, player, skill)
-    skill:onAcquire(player, true)
   end
   for _, p in ipairs(room.alive_players) do
-    local skills = Fk.generals[p.general].skills
+    local skills = Fk.generals[p.general]:getSkillNameList(true)
     for _, s in ipairs(skills) do
-      addRoleModSkills(p, s.name)
-    end
-    for _, sname in ipairs(Fk.generals[p.general].other_skills) do
-      addRoleModSkills(p, sname)
+      addRoleModSkills(p, s)
     end
 
     local deputy = Fk.generals[p.deputyGeneral]
@@ -284,6 +279,9 @@ function GameLogic:prepareForStart()
   for _, trig in ipairs(Fk.global_trigger) do
     self:addTriggerSkill(trig)
   end
+  for _, trig in ipairs(Fk.legacy_global_trigger) do
+    self:addTriggerSkill(trig)
+  end
 
   self.room:sendLog{ type = "$GameStart" }
 end
@@ -303,14 +301,14 @@ function GameLogic:action()
 end
 
 --- 将一个触发技和它的关联触发技添加到房间（触发技必须添加到房间才能正常触发）
----@param skill TriggerSkill|LegacyTriggerSkill
+---@param skill TriggerSkill --|LegacyTriggerSkill
 function GameLogic:addTriggerSkill(skill)
   if not skill then return end
-  if skill:isInstanceOf(LegacyTriggerSkill) then
-    ---@cast skill LegacyTriggerSkill
-    self:addLegacyTriggerSkill(skill)
-    return
-  end
+  -- if skill:isInstanceOf(LegacyTriggerSkill) then
+  --   ---@cast skill LegacyTriggerSkill
+  --   self:addLegacyTriggerSkill(skill)
+  --   return
+  -- end
 
   ---@cast skill TriggerSkill
   if table.contains(self.skills, skill.name) then return end
@@ -341,6 +339,7 @@ function GameLogic:addTriggerSkill(skill)
   if skill.visible then
     for _, s in ipairs(skill.related_skills) do
       if (s.class == TriggerSkill) then
+        ---@cast s TriggerSkill
         self:addTriggerSkill(s)
       end
     end
@@ -351,7 +350,7 @@ end
 ---@param target? ServerPlayer
 ---@param data? any data应该传入一个构造好的某某class实例
 function GameLogic:trigger(event, target, data, refresh_only)
-  local broken = self:triggerForLegacy(event, target, data, refresh_only)
+  local broken = false --self:triggerForLegacy(event, target, data, refresh_only)
   if broken then return broken end
   if not (type(event) == "table" and event:isSubclassOf(TriggerEvent)) then
     return broken
@@ -448,7 +447,8 @@ function GameLogic:resumeEvent(event)
     if err == false then
       -- handle error, then break
       if not string.find(yield_result, "__manuallyBreak") then
-        fk.qCritical(yield_result .. "\n" .. debug.traceback(co))
+        fk.qCritical(yield_result .. "\n" .. debug.traceback(co) ..
+          "\n" .. self:dumpEventStack())
       end
       ret = true
       break
@@ -556,9 +556,28 @@ end
 ---@param eventType T @ 要查找的事件类型
 ---@param func fun(e: T): boolean? @ 过滤用的函数
 ---@param n integer @ 最多找多少个
----@param end_id integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含）
+---@param end_id? integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含），默认当前事件的id
+---@param scope? integer @ 查询历史范围：当有此参数时end_id参数失效，改为查找当前阶段/回合/轮次/游戏
 ---@return T[] @ 找到的符合条件的所有事件，最多n个但不保证有n个
-function GameLogic:getEventsByRule(eventType, n, func, end_id)
+function GameLogic:getEventsByRule(eventType, n, func, end_id, scope)
+  if scope then
+    local end_event ---@type GameEvent?
+    if scope == Player.HistoryGame then
+      end_id = 0
+    elseif scope == Player.HistoryRound then
+      end_event = self:getCurrentEvent():findParent(GameEvent.Round, true)
+    elseif scope == Player.HistoryTurn then
+      end_event = self:getCurrentEvent():findParent(GameEvent.Turn, true)
+    elseif scope == Player.HistoryPhase then
+      end_event = self:getCurrentEvent():findParent(GameEvent.Phase, true)
+    end
+    if end_event then
+      end_id = end_event.id
+    end
+  end
+  if end_id == nil then
+    end_id = self:getCurrentEvent().id
+  end
   local ret = {}
 	local events = self.event_recorder[eventType] or Util.DummyTable
   for i = #events, 1, -1 do
@@ -707,44 +726,51 @@ function GameLogic:damageByCardEffect(is_exact)
   local damage = d_event.data
   if damage.chain or damage.card == nil then return false end
   local c_event = d_event:findParent(GameEvent.CardEffect, false, 2)
-  local effect = c_event.data
   if c_event == nil then return false end
+  local effect = c_event.data
   return damage.card == effect.card and
-  (not is_exact or (damage.from or {}).id == effect.from)
+  (not is_exact or (damage.from or {}) == effect.from)
 end
 
-function GameLogic:dumpEventStack(detailed)
+--判定一些卡牌在此次移动事件发生之后没有再被移动过。根据规则集，如果需要在卡牌移动后对参与此事件的卡牌进行操作，是需要过一遍这个检测的（注意：由于洗牌的存在，若判定处在弃牌堆的卡牌需要手动判区域）
+---@param cards integer[] @ 待判定的卡牌
+---@param end_id? integer @ 查询历史范围：从最后的事件开始逆序查找直到id为end_id的事件（不含），缺省值为当前移动事件的id
+---@return integer[] @ 返回满足条件的卡牌的id列表
+function GameLogic:moveCardsHoldingAreaCheck(cards, end_id)
+  if #cards == 0 then return {} end
+  if end_id == nil then
+    local move_event = self:getCurrentEvent():findParent(GameEvent.MoveCards, true)
+    if move_event == nil then return {} end
+    end_id = move_event.id
+  end
+  local ret = table.simpleClone(cards)
+  self:getEventsByRule(GameEvent.MoveCards, 1, function (e)
+    for _, move in ipairs(e.data) do
+      for _, info in ipairs(move.moveInfo) do
+        table.removeOne(ret, info.cardId)
+      end
+    end
+    return (#ret == 0)
+  end, end_id)
+  return ret
+end
+
+function GameLogic:dumpEventStack()
   local top = self:getCurrentEvent()
   local i = self.game_event_stack.p
-  local inspect = p
   if not top then return end
 
-  print("===== Start of event stack dump =====")
-  if not detailed then print("") end
+  local ret = "===== Start of event stack dump =====\n"
 
   repeat
-    local printable_data
-    if type(top.data) ~= "table" then
-      printable_data = top.data
-    else
-      printable_data = table.cloneWithoutClass(top.data)
-    end
-
-    if not detailed then
-      print("Stack level #" .. i .. ": " .. tostring(top))
-    else
-      print("\nStack level #" .. i .. ":")
-      inspect{
-        eventId = GameEvent:translate(top.event),
-        data = printable_data or "nil",
-      }
-    end
+    ret = ret .. "Stack level #" .. i .. ": " .. tostring(top) .. "\n"
 
     top = top.parent
     i = i - 1
   until not top
 
-  print("\n===== End of event stack dump =====")
+  ret = ret .. "===== End of event stack dump =====\n"
+  return ret
 end
 
 function GameLogic:dumpAllEvents(from, to)

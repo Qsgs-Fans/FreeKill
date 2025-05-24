@@ -12,11 +12,11 @@ choosePlayersSkill:addEffect('active', {
       return table.contains(self.targets, to_select.id)
     end
   end,
-  target_tip = function(self, to_select, selected, selected_cards, card, selectable, extra_data)
+  target_tip = function(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     if self.targetTipName then
       local targetTip = Fk.target_tips[self.targetTipName]
       assert(targetTip)
-      return targetTip.target_tip(self, to_select, selected, selected_cards, card, selectable, extra_data)
+      return targetTip.target_tip(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     end
   end,
   card_num = function(self) return self.pattern ~= "" and 1 or 0 end,

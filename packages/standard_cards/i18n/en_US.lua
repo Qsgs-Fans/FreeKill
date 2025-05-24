@@ -145,9 +145,9 @@ Fk:loadTranslationTable({
 
   ["spear"] = "Spear",
   [":spear"] = "Spear (equip card, weapon)<br /><b>ATK range</b>: 3<br /><b>Weapon skill</b>: You can use/play 2 hand cards as Slash.",
-  ["spear_skill"] = "Spear",
-  [":spear_skill"] = "You can use/play 2 hand cards as Slash.",
-  ["#spear_skill"] = "You can use/play 2 hand cards as Slash",
+  ["spear_skill&"] = "Spear",
+  [":spear_skill&"] = "You can use/play 2 hand cards as Slash.",
+  ["#spear_skill&"] = "You can use/play 2 hand cards as Slash",
 
   ["axe"] = "Axe",
   [":axe"] = "Axe (equip card, weapon)<br /><b>ATK range</b>: 3<br /><b>Weapon skill</b>: When your used Slash is countered by Dodge, you can discard 2 cards (except equipped Axe), then make this Slash still effective to the target.",

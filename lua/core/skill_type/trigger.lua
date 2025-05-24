@@ -5,9 +5,10 @@
 --]]
 
 ---@class TriggerSkill : UsableSkill
----@field public global boolean
----@field public event TriggerEvent
----@field public priority number
+---@field public global boolean @ 是否为全局事件
+---@field public event TriggerEvent @ 事件时机
+---@field public priority number @ 优先级，越大越优先（默认1，装备默认0.1，游戏规则为0）
+---@field public late_refresh? boolean @ 仅用于Refresh，表示该触发技的refresh在trigger之后执行
 local TriggerSkill = UsableSkill:subclass("TriggerSkill")
 
 function TriggerSkill:initialize(name, frequency)
@@ -41,7 +42,7 @@ function TriggerSkill:refresh(event, target, player, data) end
 ---@return boolean?
 function TriggerSkill:triggerable(event, target, player, data)
   return target and (target == player)
-    and (self.global or target:hasSkill(self))
+    and (self.global or target:hasSkill(self:getSkeleton().name))
 end
 
 -- Determine how to cost this skill.
@@ -51,11 +52,14 @@ end
 ---@param data any @ useful data of the event
 ---@return boolean? @ returns true if trigger is broken
 function TriggerSkill:trigger(event, target, player, data)
+  event:setSkillData(self, "cancel_cost", false)
   return self:doCost(event, target, player, data)
 end
 
 -- do cost and skill effect.
 -- DO NOT modify this function
+---@param event TriggerEvent @ TriggerEvent
+---@return boolean? @ returns true if skill is invoked and trigger is broken
 function TriggerSkill:doCost(event, target, player, data)
   local start_time = os.getms()
   local room = player.room ---@type Room
@@ -63,30 +67,28 @@ function TriggerSkill:doCost(event, target, player, data)
   local ret = self:cost(event, target, player, data)
   local end_time = os.getms()
 
-  -- 对于那种cost直接返回true的锁定技，如果是预亮技，那么还是询问一下好
+  -- 对于那种cost直接返回true的锁定技，如果是预亮技，应询问
   if ret and player:isFakeSkill(self) and end_time - start_time < 1000 and
     (self.main_skill and self.main_skill or self).visible then
     ret = room:askToSkillInvoke(player, { skill_name = self.name })
   end
   room.current_cost_skill = nil
 
-  local cost_data_bak = self.cost_data
+  local cost_data_bak = event:getCostData(self)
   room.logic:trigger(fk.BeforeTriggerSkillUse, player, { skill = self, willUse = ret })
-  self.cost_data = cost_data_bak
+  --self.cost_data = cost_data_bak
 
   if ret then
     local skill_data = {cost_data = cost_data_bak, tos = {}, cards = {}}
-    if type(cost_data_bak) == "table" then
-      if type(cost_data_bak.tos) == "table" and #cost_data_bak.tos > 0 and type(cost_data_bak.tos[1]) == "number" and
-      room:getPlayerById(cost_data_bak.tos[1]) ~= nil then
-        skill_data.tos = cost_data_bak.tos
-      end
-      if type(cost_data_bak.cards) == "table" then skill_data.cards = cost_data_bak.cards end
+    if cost_data_bak and type(cost_data_bak) == "table" then
+      skill_data.tos = cost_data_bak.tos
+      skill_data.cards = cost_data_bak.cards
     end
     return room:useSkill(player, self, function()
       return self:use(event, target, player, data)
     end, skill_data)
   end
+  event:setSkillData(self, "cancel_cost", true)
 end
 
 -- ask player how to use this skill.
@@ -96,7 +98,7 @@ end
 ---@param data any @ useful data of the event
 ---@return boolean? @ returns true if trigger is broken
 function TriggerSkill:cost(event, target, player, data)
-  if self.frequency == Skill.Compulsory or self.frequency == Skill.Wake then
+  if self:hasTag(Skill.Compulsory) or self.is_delay_effect then
     return true
   end
 
@@ -114,6 +116,7 @@ end
 ---@return boolean?
 function TriggerSkill:use(event, target, player, data) end
 
+--- 是否满足觉醒条件，默认是
 function TriggerSkill:canWake(event, target, player, data)
   return true
 end
@@ -130,6 +133,16 @@ function TriggerSkill:enableToWake(event, target, player, data)
       return self.name == skillName
     end) or
     self:canWake(event, target, player, data)
+end
+
+-- 技能于单角色单时机内的发动次数上限
+---@param event TriggerEvent @ TriggerEvent
+---@param target ServerPlayer? @ Player who triggered this event
+---@param player ServerPlayer @ Player who is operating
+---@param data any @ useful data of the event
+---@return number @ 次数上限
+function TriggerSkill:triggerableTimes(event, target, player, data)
+  return 1
 end
 
 return TriggerSkill

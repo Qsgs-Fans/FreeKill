@@ -3,18 +3,20 @@
 ---@class FilterSkill: StatusSkill
 local FilterSkill = StatusSkill:subclass("FilterSkill")
 
----@param card Card
----@param player Player
----@param isJudgeEvent boolean?
+--- 判定此牌能否被应用锁视
+---@param card Card @ 待判定的牌
+---@param player Player @ 有关的角色
+---@param isJudgeEvent boolean? @ 是否判定事件
 function FilterSkill:cardFilter(card, player, isJudgeEvent)
   return false
 end
 
----@param player Player
----@param card Card
----@return Card?
+--- 将此牌视为什么
+---@param player Player @ 有关的角色
+---@param card Card @ 之前的牌
+---@return Card
 function FilterSkill:viewAs(player, card)
-  return nil
+  return card
 end
 
 ---@param skill Skill

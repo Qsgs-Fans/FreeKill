@@ -13,6 +13,7 @@
 ---@field private send_success table<fk.ServerPlayer, boolean> @ 数据是否发送成功，不成功的后面全部视为AI
 ---@field public result table<integer, any> @ 玩家id - 回复内容 nil表示完全未回复
 ---@field public winners ServerPlayer[] @ 按肯定回复先后顺序排序 由于有概率所有人烧条 可能会空
+---@field public overtimes ServerPlayer[] @ 超时的玩家
 ---@field public luck_data any? @ 是否是询问手气卡 TODO: 有需求的话把这个通用化一点
 ---@field private pending_requests table<fk.ServerPlayer, integer[]> @ 一控多时暂存的请求
 ---@field private _asked boolean? @ 是否询问过了
@@ -51,6 +52,7 @@ function Request:initialize(players, command, n)
   self.send_success = setmetatable({}, { __mode = "k" })
   self.result = {}
   self.winners = {}
+  self.overtimes = {}
 end
 
 function Request:__tostring()
@@ -155,7 +157,7 @@ function Request:_checkReply(player, use_ai)
             local pdata = luck_data[player.id]
             pdata.luckTime = pdata.luckTime - 1
             luck_data.discardInit(room, player)
-            luck_data.drawInit(room, player, pdata.num)
+            luck_data.drawInit(room, player, pdata.num, pdata.fix_ids)
             if pdata.luckTime > 0 then
               self:setData(player, { "AskForLuckCard", "#AskForLuckCard:::" .. pdata.luckTime })
               self:_sendPacket(player)
@@ -223,6 +225,7 @@ function Request:ask()
     local elapsed = os.time() - currentTime
     if self.timeout - elapsed <= 0 or resume_reason == "request_timer" then
       for i = #players, 1, -1 do
+        table.insert(self.overtimes, players[i])
         if self.send_success[players[i].serverplayer] then
           table.remove(players, i)
         end

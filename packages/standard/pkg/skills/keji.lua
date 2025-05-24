@@ -3,8 +3,9 @@ local keji = fk.CreateSkill{
 }
 
 keji:addEffect(fk.EventPhaseChanging, {
+  anim_type = "defensive",
   can_trigger = function(self, event, target, player, data)
-    if target == player and player:hasSkill(keji.name) and data.to == Player.Discard then
+    if target == player and player:hasSkill(keji.name) and data.phase == Player.Discard and not data.skipped then
       local room = player.room
       local logic = room.logic
       local play_ids = logic:getEventsOfScope(GameEvent.Phase, 1, function (e)
@@ -31,8 +32,12 @@ keji:addEffect(fk.EventPhaseChanging, {
     end
   end,
   on_use = function(self, event, target, player, data)
-    player:skip(Player.Discard)
+    data.skipped = true
   end,
+})
+
+keji:addAI({
+  think_skill_invoke = Util.TrueFunc,
 })
 
 keji:addTest(function(room, me)
@@ -43,12 +48,7 @@ keji:addTest(function(room, me)
   FkTest.setNextReplies(me, { "1" })
   FkTest.runInRoom(function()
     me:drawCards(10)
-    local data = { ---@type TurnDataSpec
-      who = me,
-      reason = "game_rule",
-      phase_table = { Player.Discard }
-    }
-    GameEvent.Turn:create(TurnData:new(data)):exec()
+    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Discard })):exec()
   end)
 
   lu.assertEquals(#me:getCardIds("h"), 10)

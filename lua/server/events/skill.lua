@@ -18,22 +18,31 @@ function SkillEffect:main()
   local effect_cb, player, skill, skill_data = data.skill_cb, data.who, data.skill, data.skill_data
   local room = self.room
   local logic = room.logic
-  local main_skill = skill.main_skill and skill.main_skill or skill
   skill_data = skill_data or Util.DummyTable
   local cost_data = skill_data.cost_data or Util.DummyTable
 
   if player and not skill.cardSkill then
-    player:revealBySkillName(main_skill.name)
+    if not skill.is_delay_effect then -- 延迟效果不亮将
+      local main_skill = skill.main_skill and skill.main_skill or skill
+      player:revealBySkillName(main_skill.name)
+    end
 
-    local tos = skill_data.tos and table.map(skill_data.tos, Util.IdMapper) or {}
+    local tos = skill_data.tos and ---@type integer[]
+      table.map(skill_data.tos, function (to)
+        if type(to) == "table" then
+          return to.id
+        else
+          return to
+        end
+      end) or {}
     local mute, no_indicate = skill.mute, skill.no_indicate
     if type(cost_data) == "table" then
       if cost_data.mute then mute = cost_data.mute end
       if cost_data.no_indicate then no_indicate = cost_data.no_indicate end
     end
     if not mute then
-      if skill.attached_equip then
-        local equip = Fk.all_card_types[skill.attached_equip]
+      if skill:getSkeleton() and skill:getSkeleton().attached_equip then
+        local equip = Fk.all_card_types[skill:getSkeleton().attached_equip]
         if equip then
           local pkgPath = "./packages/" .. equip.package.extensionName
           local soundName = pkgPath .. "/audio/card/" .. equip.name
@@ -55,16 +64,16 @@ function SkillEffect:main()
           room:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
         end
       else
-        player:broadcastSkillInvoke(skill.name)
-        room:notifySkillInvoked(player, skill.name, nil, no_indicate and {} or tos)
+        player:broadcastSkillInvoke(skill:getSkeleton().name)
+        room:notifySkillInvoked(player, skill.name, skill.anim_type, no_indicate and {} or tos)
       end
     end
     if not no_indicate then
       room:doIndicate(player.id, tos)
     end
 
-    if skill:isSwitchSkill() then
-      local switchSkillName = skill.switchSkillName
+    if skill:hasTag(Skill.Switch) and not skill.is_delay_effect then
+      local switchSkillName = skill:getSkeleton().name ---@type string
       room:setPlayerMark(
         player,
         MarkEnum.SwithSkillPreName .. switchSkillName,
@@ -72,15 +81,32 @@ function SkillEffect:main()
       )
     end
 
-    player:addSkillUseHistory(main_skill.name)
+    player:addSkillUseHistory(skill.name)
+    if skill.name ~= skill:getSkeleton().name and not skill.is_delay_effect then
+      player:addSkillUseHistory(skill:getSkeleton().name)
+    end
   end
 
   local cost_data_bak = skill.cost_data
-  logic:trigger(fk.SkillEffect, player, main_skill)
+  logic:trigger(fk.SkillEffect, player, data)
   skill.cost_data = cost_data_bak
 
   local ret = effect_cb and effect_cb() or false
-  logic:trigger(fk.AfterSkillEffect, player, main_skill)
+  logic:trigger(fk.AfterSkillEffect, player, data)
+  return ret
+end
+
+function SkillEffect:desc()
+  local effectData = self.data
+  local useData = effectData.skill_data
+  local ret = {
+    type = (useData.tos and #useData.tos > 0) and "#GameEventSkillTos" or "#GameEventSkill",
+    from = effectData.who.id,
+    arg = effectData.skill.name,
+  }
+  if useData.tos and #useData.tos > 0 then
+    ret.to = table.map(useData.tos, Util.IdMapper)
+  end
   return ret
 end
 
@@ -90,6 +116,7 @@ end
 ---@param effect_cb fun() @ 实际要调用的函数
 ---@param skill_data? table @ 技能的信息
 function SkillEventWrappers:useSkill(player, skill, effect_cb, skill_data)
+  ---@cast self Room
   if skill_data then
     for k, v in pairs(skill_data) do
       if table.contains({"from"}, k) and type(v) == "number" then
@@ -122,6 +149,7 @@ end
 ---@param player ServerPlayer @ 玩家
 ---@param skill_names string[] | string @ 要获得/失去的技能
 ---@param source_skill? string | Skill @ 源技能
+---@param sendlog? boolean @ 是否发送战报，默认发送
 ---@param no_trigger? boolean @ 是否不触发相关时机
 function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skill, sendlog, no_trigger)
   if type(skill_names) == "string" then
@@ -153,18 +181,18 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
             }
           end
 
-          table.insert(losts, true)
-          table.insert(triggers, s)
           -- if s.derived_piles then
           --   for _, pile_name in ipairs(s.derived_piles) do
           --     table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
           --   end
           -- end
+        end
 
-          self:validateSkill(player, actual_skill)
-          for _, suf in ipairs(MarkEnum.TempMarkSuffix) do
-            self:validateSkill(player, actual_skill, suf)
-          end
+        table.insert(losts, true)
+        table.insert(triggers, Fk.skills[actual_skill])
+        self:validateSkill(player, actual_skill)
+        for _, suf in ipairs(MarkEnum.TempMarkSuffix) do
+          self:validateSkill(player, actual_skill, suf)
         end
       end
     else
@@ -187,36 +215,34 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
               arg = s.name
             }
           end
+        end
 
-          table.insert(losts, false)
-          table.insert(triggers, s)
+        table.insert(losts, false)
+        table.insert(triggers, sk)
+      end
+    end
+  end
+
+  if #triggers > 0 then
+    no_trigger = no_trigger == nil and false or no_trigger
+    for i = 1, #triggers do
+      if losts[i] then
+        local skill = triggers[i]
+        if not no_trigger then
+          self.logic:trigger(fk.EventLoseSkill, player, skill)
+        end
+        skill:getSkeleton():onLose(player, false)
+      else
+        local skill = triggers[i]
+        if no_trigger then
+          skill:getSkeleton():onAcquire(player, player.room:getBanner("RoundCount") == nil)
+        else
+          self.logic:trigger(fk.EventAcquireSkill, player, skill)
+          skill:getSkeleton():onAcquire(player, false)
         end
       end
     end
   end
-
-  if (not no_trigger) and #triggers > 0 then
-    for i = 1, #triggers do
-      if losts[i] then
-        local skill = triggers[i]
-        skill:onLose(player)
-        self.logic:trigger(fk.EventLoseSkill, player, skill)
-      else
-        local skill = triggers[i]
-        self.logic:trigger(fk.EventAcquireSkill, player, skill)
-        skill:onAcquire(player)
-      end
-    end
-  end
-
-  -- if #lost_piles > 0 then
-  --   self:moveCards({
-  --     ids = lost_piles,
-  --     from = player.id,
-  --     toArea = Card.DiscardPile,
-  --     moveReason = fk.ReasonPutIntoDiscardPile,
-  --   })
-  -- end
 end
 
 return { SkillEffect, SkillEventWrappers }

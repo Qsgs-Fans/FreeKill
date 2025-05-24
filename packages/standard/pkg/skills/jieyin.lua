@@ -15,8 +15,8 @@ jieyin:addEffect("active", {
   target_num = 1,
   card_num = 2,
   on_use = function(self, room, effect)
-    local from = room:getPlayerById(effect.from)
-    local target = room:getPlayerById(effect.tos[1])
+    local from = effect.from
+    local target = effect.tos[1]
     room:throwCard(effect.cards, jieyin.name, from, from)
     if target:isAlive() and target:isWounded() then
       room:recover({

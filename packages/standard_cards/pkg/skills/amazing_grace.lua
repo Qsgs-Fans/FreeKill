@@ -2,7 +2,7 @@ local skill = fk.CreateSkill {
   name = "amazing_grace_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#amazing_grace_skill",
   can_use = Util.GlobalCanUse,
   on_use = function (self, room, cardUseEvent)
@@ -59,7 +59,7 @@ skill:addEffect("active", {
       return
     end
 
-    local chosen = room:askForAG(to, effect.extra_data.AGFilled, false, self.name)
+    local chosen = room:askToAG(to, { id_list = effect.extra_data.AGFilled, cancelable = false, skill_name = self.name })
     room:takeAG(to, chosen, room.players)
     table.insert(effect.extra_data.AGResult, {effect.to.id, chosen})
     room:moveCardTo(chosen, Card.PlayerHand, effect.to, fk.ReasonPrey, self.name, nil, true, effect.to.id)
@@ -71,6 +71,7 @@ skill:addTest(function(room, me)
   FkTest.runInRoom(function()
     room:useCard {
       from = me,
+      tos = {},
       card = Fk:cloneCard("amazing_grace"),
     }
   end)

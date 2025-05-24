@@ -73,7 +73,7 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
     if card then
       card_name = card.trueName
     else ---坏了，不是卡的技能
-      return player:usedSkillTimes(self.name, scope) < limit
+      return player:usedEffectTimes(self.name, scope) < limit
     end
   end
 
@@ -111,30 +111,6 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   --   return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
   -- end)))
 end
-
--- 失去此技能时，触发此函数
----@param player ServerPlayer
----@param is_death boolean?
-function UsableSkill:onLose(player, is_death)
-  local lost_piles = {}
-  if self.derived_piles then
-    for _, pile_name in ipairs(self.derived_piles) do
-      table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
-    end
-  end
-
-  if #lost_piles > 0 then
-    player.room:moveCards({
-      ids = lost_piles,
-      from = player,
-      toArea = Card.DiscardPile,
-      moveReason = fk.ReasonPutIntoDiscardPile,
-    })
-  end
-
-  Skill.onLose(self, player, is_death)
-end
-
 
 -- 获得技能的额外牌堆卡牌id表
 ---@param player Player @ 使用者

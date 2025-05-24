@@ -2,7 +2,7 @@ local skill = fk.CreateSkill{
   name = "default_card_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   on_use = function(self, room, use)
     if not use.tos or #use.tos == 0 then
       use.tos = { use.from }

@@ -1,7 +1,7 @@
 local skill = fk.CreateSkill {
   name = "#zixing_skill",
+  tags = { Skill.Compulsory },
   attached_equip = "zixing",
-  frequency = Skill.Compulsory,
 }
 
 skill:addEffect("distance", {

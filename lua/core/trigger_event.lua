@@ -7,6 +7,7 @@
 ---  某个技能在这个event范围内的数据，比如costData之类的
 ---@field public finished_skills string[] 已经发动完了的技能 不会再进行检测
 ---@field public refresh_only boolean? 这次triggerEvent是不是仅执行refresh
+---@field public invoked_times table<string, number> 技能于单角色单个时机内发动过的次数
 local TriggerEvent = class("TriggerEvent")
 
 function TriggerEvent:initialize(room, target, data)
@@ -19,6 +20,7 @@ function TriggerEvent:initialize(room, target, data)
 
   self.skill_data = {}
   self.finished_skills = {}
+  self.invoked_times = {}
 end
 
 ---[[
@@ -35,7 +37,7 @@ end
 ---@param k string
 ---@param v any
 function TriggerEvent:setSkillData(skill, k, v)
-  local name = (skill.main_skill and skill.main_skill or skill).name
+  local name = skill.name
   self.skill_data[name] = self.skill_data[name] or {}
   self.skill_data[name][k] = v
 end
@@ -43,8 +45,8 @@ end
 ---@param skill Skill
 ---@param k string
 function TriggerEvent:getSkillData(skill, k)
-  local name = (skill.main_skill and skill.main_skill or skill).name
-  return self.skill_data[name][k]
+  local name = skill.name
+  return self.skill_data[name] and self.skill_data[name][k]
 end
 
 ---@param skill Skill
@@ -57,10 +59,20 @@ function TriggerEvent:getCostData(skill)
   return self:getSkillData(skill, "cost_data")
 end
 
+--- 本事件是否要应该停止询问
+function TriggerEvent:breakCheck()
+  return false
+end
+
+---@param skill Skill
+function TriggerEvent:isCancelCost(skill)
+  return not not self:getSkillData(skill, "cancel_cost")
+end
+
 -- 先执行带refresh的，再执行带效果的
 function TriggerEvent:exec()
   local room, logic = self.room, self.room.logic
-  local skills = logic.skill_table[self.class] or Util.DummyTable
+  local skills = logic.skill_table[self.class] or Util.DummyTable ---@type TriggerSkill[]
   if #skills == 0 then return false end
 
   local _target = room.current -- for iteration
@@ -68,73 +80,113 @@ function TriggerEvent:exec()
   local event = self.class
   local target = self.target
   local data = self.data
-  local cur_event = logic:getCurrentEvent() or Util.DummyTable
-  -- 如果当前事件被杀，就强制只refresh
-  -- 因为被杀的事件再进行正常trigger只可能在cleaner和exit了
-  self.refresh_only = self.refresh_only or cur_event.killed
-
-  if self.refresh_only then return end
 
   repeat do
     -- refresh skills. This should not be broken
     for _, skill in ipairs(skills) do
-      if skill:canRefresh(self, target, player, data) then
+      if skill:canRefresh(self, target, player, data) and not skill.late_refresh then
         skill:refresh(self, target, player, data)
       end
     end
     player = player.next
   end until player == _target
 
-  local broken
+  local cur_event = logic:getCurrentEvent() or Util.DummyTable
+  -- 如果当前事件被杀，就强制只refresh
+  -- 因为被杀的事件再进行正常trigger只可能在cleaner和exit了
+  self.refresh_only = self.refresh_only or cur_event.killed
+  local broken = false
+  if not self.refresh_only then
 
-  local prio_tab = logic.skill_priority_table[event]
-  local prev_prio = math.huge
+    local prio_tab = logic.skill_priority_table[event]
+    local prev_prio = math.huge
 
-  for _, prio in ipairs(prio_tab) do
-    if broken then break end
-    if prio >= prev_prio then
-      goto continue
-    end
-
-    repeat do
-      local invoked_skills = {}
-      ---@param skill TriggerSkill
-      local filter_func = function(skill)
-        return skill.priority == prio and
-          not table.contains(invoked_skills, skill) and
-          skill:triggerable(self, target, player, data)
+    for _, prio in ipairs(prio_tab) do
+      if broken then break end
+      if prio >= prev_prio then
+        goto continue
       end
 
-      local skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
+      repeat do
+        self.invoked_times = {}
+        local triggerableLimit = {}
+        ---@param skill TriggerSkill
+        local filter_func = function(skill)
+          local invokedTimes = self.invoked_times[skill.name] or 0
+          if skill.priority ~= prio or invokedTimes == -1 then
+            return false
+          end
 
-      while #skill_names > 0 do
-        local skill_name = prio <= 0 and table.random(skill_names) or
-          room:askToChoice(player, { choices = skill_names, skill_name = "trigger", prompt = "#choose-trigger" })
+          local times = skill:triggerableTimes(self, target, player, data)
+          if (self.invoked_times[skill.name] or 0) < times and skill:triggerable(self, target, player, data) then
+            if times > 1 then
+              triggerableLimit[skill.name] = times
+            end
 
-        local skill = Fk.skills[skill_name]
-        ---@cast skill TriggerSkill
+            return true
+          end
+          
+          return false
+        end
 
-        table.insert(invoked_skills, skill)
-        broken = skill:trigger(self, target, player, data)
-        skill_names = table.map(table.filter(skills, filter_func), Util.NameMapper)
+        local skill_available = table.filter(skills, filter_func)
 
-        -- TODO: 这段开个方法，搬家到相关时机的某个方法内
-        broken = broken or (event == fk.AskForPeaches
-          and data.who.hp > 0) or
-          (table.contains({fk.PreDamage, fk.DamageCaused, fk.DamageInflicted}, event) and data.damage < 1) or
-          cur_event.killed
+        while #skill_available > 0 do
+          local player_skills = table.filter(skill_available, function(s) return s:isPlayerSkill(player) end)
+
+          local formatChoiceName = function (skill)
+            local leftTimes = (triggerableLimit[skill.name] or 1) - (self.invoked_times[skill.name] or 0)
+            if leftTimes > 1 then
+              return "#skill_muti_trigger:::" .. skill.name .. ":" .. leftTimes
+            end
+
+            return skill.name
+          end
+          local skill_name = prio <= 0 and skill_available[1].name or
+          room:askToChoice(player, { skill_name = "trigger", prompt = "#choose-trigger",
+            choices = table.map(#player_skills > 0 and player_skills or skill_available, function (skill)
+              return formatChoiceName(skill)
+            end)
+          })
+
+          if skill_name:startsWith("#skill_muti_trigger") then
+            local strSplited = skill_name:split(":")
+            skill_name = strSplited[#strSplited - 1]
+          end
+
+          local skill = Fk.skills[skill_name]
+          ---@cast skill TriggerSkill
+
+          self.invoked_times[skill.name] = (self.invoked_times[skill.name] or 0) + 1
+          broken = skill:trigger(self, target, player, data) or self:breakCheck() or cur_event.killed
+          if self:isCancelCost(skill) then
+            self.invoked_times[skill.name] = -1
+          end
+
+          if broken then break end
+
+          skill_available = table.filter(skills, filter_func)
+        end
 
         if broken then break end
-      end
 
-      if broken then break end
+        player = player.next
+      end until player == _target
 
-      player = player.next
-    end until player == _target
-
-    prev_prio = prio
-    ::continue::
+      prev_prio = prio
+      ::continue::
+    end
   end
+
+  player = _target
+  repeat do
+    for _, skill in ipairs(skills) do
+      if skill:canRefresh(self, target, player, data) and skill.late_refresh then
+        skill:refresh(self, target, player, data)
+      end
+    end
+    player = player.next
+  end until player == _target
 
   return broken
 end

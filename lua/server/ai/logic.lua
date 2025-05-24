@@ -38,10 +38,15 @@ function AIGameLogic:getCardOwner(id)
   return self.ai.room:getCardOwner(id)
 end
 
+---@param event TriggerEvent
+---@param target? ServerPlayer
+---@param data? any
+---@return boolean?
 function AIGameLogic:trigger(event, target, data)
   local ai = self.ai
   local logic = ai.room.logic
-  local skills, refresh_skills = {}, {}
+  local skills = logic.skill_table[event] or {}
+  --[[
   if logic.legacy_skill_table then
     skills = logic.legacy_skill_table[event]
   end
@@ -51,13 +56,13 @@ function AIGameLogic:trigger(event, target, data)
     refresh_skills = logic.legacy_refresh_skill_table[event]
   end
   table.insertTableIfNeed(refresh_skills, logic.legacy_refresh_skill_table[event] or {})
-
+  --]]
   local _target = ai.room.current -- for iteration
   local player = _target
   local exit
 
   repeat
-    for _, skill in ipairs(table.connectIfNeed(skills, refresh_skills)) do
+    for _, skill in ipairs(skills) do
       local skill_ai = fk.ai_trigger_skills[skill.name]
       if skill_ai then
         exit = skill_ai:getCorrect(self, event, target, player, data)
@@ -227,10 +232,10 @@ function Damage:exec()
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    if logic:trigger(event, damageData[player], damageData) then
+    logic:trigger(event, damageData[player], damageData)
+    if damageData.prevented or damageData.damage < 1 then
       return true
     end
-    if damageData.damage < 1 then return true end
   end
 
   if not damageData.isVirtualDMG then
@@ -259,7 +264,7 @@ function Damage:exec()
   end
 end
 
----@param damageData DamageData
+---@param damageData DamageDataSpec
 ---@return boolean
 function AIGameLogic:damage(damageData)
   local data = DamageData:new(damageData)
@@ -325,9 +330,9 @@ function SkillEffect:exec()
   local effect_cb, player, skill, skill_data = data.skill_cb, data.who, data.skill, data.skill_data
   local main_skill = skill.main_skill and skill.main_skill or skill
 
-  logic:trigger(fk.SkillEffect, player, main_skill)
+  logic:trigger(fk.SkillEffect, player, data)
   effect_cb()
-  logic:trigger(fk.AfterSkillEffect, player, main_skill)
+  logic:trigger(fk.AfterSkillEffect, player, data)
 end
 
 function AIGameLogic:useSkill(player, skill, effect_cb, skill_data)
@@ -347,9 +352,7 @@ function MoveCards:exec()
   local logic = self.logic
   local moveCardsData = self.data
 
-  if logic:trigger(fk.BeforeCardsMove, nil, moveCardsData) then
-    return true
-  end
+  logic:trigger(fk.BeforeCardsMove, nil, moveCardsData)
 
   for _, data in ipairs(moveCardsData) do
     for _, info in ipairs(data.moveInfo or {}) do
@@ -474,15 +477,16 @@ function UseCard:exec()
   }
 end
 
+---@param useCardData UseCardDataSpec
 function AIGameLogic:useCard(useCardData)
   local new_data
-  if type(useCardData.from) == "number" or (useCardData.tos and useCardData.tos[1]
-    and type(useCardData.tos[1][1]) == "number") then
-    new_data = UseCardData:new({})
-    new_data:loadLegacy(useCardData)
-  else
+  -- if type(useCardData.from) == "number" or (useCardData.tos and useCardData.tos[1]
+  --   and type(useCardData.tos[1][1]) == "number") then
+  --   new_data = UseCardData:new({})
+    -- new_data:loadLegacy(useCardData)
+  -- else
     new_data = UseCardData:new(useCardData)
-  end
+  -- end
   return not UseCard:new(self, new_data):getBenefit()
 end
 
@@ -509,6 +513,8 @@ function AIGameLogic:doCardEffect(CardEffectData)
   return not CardEffect:new(self, CardEffectData):getBenefit()
 end
 
+---@param event CardEffectEvent
+---@param cardEffectEvent CardEffectData
 function AIGameLogic:handleCardEffect(event, cardEffectEvent)
   -- 不考虑闪与无懈 100%生效
   -- 闪和无懈早该重构重构了

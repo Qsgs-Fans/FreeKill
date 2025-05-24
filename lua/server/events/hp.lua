@@ -73,7 +73,11 @@ function ChangeHp:main()
     data.num = num + data.shield_lost
   end
 
-  if logic:trigger(fk.BeforeHpChanged, data.who, data) then
+  logic:trigger(fk.BeforeHpChanged, data.who, data)
+  if data.num == 0 and data.shield_lost == 0 then
+    data.prevented = true
+  end
+  if data.prevented then
     logic:breakEvent(false)
   end
 
@@ -192,10 +196,13 @@ function Damage:main()
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    if logic:trigger(event, damageData[player], damageData) or damageData.damage < 1 then
+    logic:trigger(event, damageData[player], damageData)
+    if damageData.damage < 1 then
+      damageData.prevented = true
+    end
+    if damageData.prevented then
       logic:breakEvent(false)
     end
-
     assert(damageData.to:isInstanceOf(ServerPlayer))
   end
 
@@ -215,12 +222,7 @@ function Damage:main()
     end
   end
 
-  if not room:changeHp(
-    damageData.to,
-    -damageData.damage,
-    "damage",
-    damageData.skillName,
-    damageData) then
+  if not room:changeHp(damageData.to, -damageData.damage, "damage", damageData.skillName, damageData) then
     logic:breakEvent(false)
   end
 
@@ -270,6 +272,18 @@ function Damage:exit()
   end
 end
 
+function Damage:desc()
+  local damageData = self.data
+  local ret = {
+    type = damageData.from and "#GameEventDamage" or "#GameEventDamageNoFrom",
+    from = damageData.to.id,
+    arg = damageData.damage,
+    arg2 = Fk:getDamageNatureName(damageData.damageType)
+  }
+  if damageData.from then ret.to = {damageData.from.id} end
+  return ret
+end
+
 --- 根据伤害数据造成伤害。
 ---@param damageData DamageDataSpec
 ---@return boolean
@@ -292,7 +306,11 @@ function LoseHp:main()
     return false
   end
 
-  if logic:trigger(fk.PreHpLost, data.who, data) or data.num < 1 then
+  logic:trigger(fk.PreHpLost, data.who, data)
+  if data.num < 1 then
+    data.prevented = true
+  end
+  if data.prevented then
     logic:breakEvent(false)
   end
 
@@ -349,14 +367,13 @@ function Recover:main()
 
   local who = recoverData.who
 
-  if logic:trigger(fk.PreHpRecover, who, recoverData) then
-    logic:breakEvent(false)
-  end
-
+  logic:trigger(fk.PreHpRecover, who, recoverData)
   recoverData.num = math.min(recoverData.num, who.maxHp - who.hp)
-
   if recoverData.num < 1 then
-    return false
+    recoverData.prevented = true
+  end
+  if recoverData.prevented then
+    logic:breakEvent(false)
   end
 
   if not room:changeHp(who, recoverData.num, "recover", recoverData.skillName) then
@@ -382,8 +399,12 @@ function ChangeMaxHp:main()
   local data = self.data
   local room = self.room
 
-  if room.logic:trigger(fk.BeforeMaxHpChanged, data.who, data) or data.num == 0 then
-    return false
+  room.logic:trigger(fk.BeforeMaxHpChanged, data.who, data)
+  if data.num == 0 then
+    data.prevented = true
+  end
+  if data.prevented then
+    logic:breakEvent(false)
   end
 
   local player = data.who
@@ -408,7 +429,7 @@ function ChangeMaxHp:main()
       arg = 0,
       arg2 = 0,
     }
-    room:killPlayer({ who = player.id })
+    room:killPlayer({ who = player })
     return false
   end
 

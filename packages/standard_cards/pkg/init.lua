@@ -154,7 +154,7 @@ local spear = fk.CreateCard{
   type = Card.TypeEquip,
   sub_type = Card.SubtypeWeapon,
   attack_range = 3,
-  equip_skill = "spear_skill",
+  equip_skill = "spear_skill&",
 }
 
 local axe = fk.CreateCard{

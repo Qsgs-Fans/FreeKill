@@ -1,5 +1,6 @@
 local jijiang = fk.CreateSkill {
-  name = "jijiang$",
+  name = "jijiang",
+  tags = { Skill.Lord },
 }
 
 jijiang:addEffect("viewas", {
@@ -20,15 +21,17 @@ jijiang:addEffect("viewas", {
 
     for _, p in ipairs(room:getOtherPlayers(player)) do
       if p.kingdom == "shu" then
-        local cardResponded = room:askForResponse(p, "slash", "slash", "#jijiang-ask:" .. player.id, true)
-        if cardResponded then
-          room:responseCard({
-            from = p.id,
-            card = cardResponded,
-            skipDrop = true,
-          })
+        local respond = room:askToResponse(p, {
+          skill_name = jijiang.name,
+          pattern = "slash",
+          prompt = "#jijiang-ask:"..player.id,
+          cancelable = true,
+        })
+        if respond then
+          respond.skipDrop = true
+          room:responseCard(respond)
 
-          use.card = cardResponded
+          use.card = respond.card
           return
         end
       end

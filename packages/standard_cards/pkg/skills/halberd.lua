@@ -5,10 +5,12 @@ local sk = fk.CreateSkill {
 
 sk:addEffect("targetmod", {
   extra_target_func = function(self, player, skill, card)
-    if player:hasSkill(sk.name) and skill.trueName == "slash_skill" then
+    if player:hasSkill(sk.name) and skill.trueName == "slash_skill" and card and
+      not player:isKongcheng() then
       local cards = card:isVirtual() and card.subcards or {card.id}
-      local handcards = player:getCardIds("h")
-      if #handcards > 0 and #cards == #handcards and table.every(cards, function(id) return table.contains(handcards, id) end) then
+      if #cards > 0 and table.every(player:getCardIds("h"), function(id)
+        return table.contains(cards, id)
+        end) then
         return 2
       end
     end

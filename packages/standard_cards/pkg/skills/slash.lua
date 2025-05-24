@@ -2,7 +2,7 @@ local skill = fk.CreateSkill {
   name = "slash_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = function(self, player, selected_cards)
     local slash = Fk:cloneCard("slash")
     slash:addSubcards(selected_cards)
@@ -51,6 +51,17 @@ skill:addEffect("active", {
     end
   end,
 })
+
+skill:addAI(
+  {
+    estimated_benefit = 100,
+  }, "__card_skill"
+)
+skill:addAI(
+  {
+    estimated_benefit = 100,
+  }, "default_card_skill"
+)
 
 skill:addTest(function(room, me)
   local slash = Fk:getCardById(1)

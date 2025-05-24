@@ -3,32 +3,27 @@ local skill = fk.CreateSkill {
   attached_equip = "eight_diagram",
 }
 
+---@type AskForCardFunc
 local eight_diagram_on_use = function (self, event, target, player, data)
     local room = player.room
     local judgeData = {
       who = player,
-      reason = self.name,
+      reason = skill.name,
       pattern = ".|.|heart,diamond",
     }
     room:judge(judgeData)
 
-    if judgeData.card.color == Card.Red then
+    if judgeData:matchPattern() then
+      local new_card = Fk:cloneCard('jink')
+      new_card.skillName = "eight_diagram"
+      local result = {
+        from = player,
+        card = new_card,
+      }
       if event:isInstanceOf(fk.AskForCardUse) then
-        data.result = {
-          from = player,
-          card = Fk:cloneCard("jink"),
-          tos = {},
-        }
-        data.result.card.skillName = "eight_diagram"
-
-        if data.eventData then
-          data.result.toCard = data.eventData.toCard
-          data.result.responseToEvent = data.eventData.responseToEvent
-        end
-      else
-        data.result = Fk:cloneCard("jink")
-        data.result.skillName = "eight_diagram"
+        result.tos = {}
       end
+      data.result = result
 
       return true
     end
@@ -36,7 +31,7 @@ local eight_diagram_on_use = function (self, event, target, player, data)
 skill:addEffect(fk.AskForCardUse, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and
-      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none"))) and
+      Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
       not player:prohibitUse(Fk:cloneCard("jink"))
   end,
   on_use = eight_diagram_on_use,
@@ -44,7 +39,7 @@ skill:addEffect(fk.AskForCardUse, {
 skill:addEffect(fk.AskForCardResponse, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and
-      (data.cardName == "jink" or (data.pattern and Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none"))) and
+      Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
       not player:prohibitResponse(Fk:cloneCard("jink"))
   end,
   on_use = eight_diagram_on_use,

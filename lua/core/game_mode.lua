@@ -124,7 +124,7 @@ end
 
 -- 执行死亡奖惩
 ---@param victim ServerPlayer @ 死亡角色
----@param killer? ServerPlayer @ 击杀者
+---@param killer? ServerPlayer @ 击杀者，可能没有
 function GameMode:deathRewardAndPunish (victim, killer)
   if not killer or killer.dead then return end
   if victim.role == "rebel" then

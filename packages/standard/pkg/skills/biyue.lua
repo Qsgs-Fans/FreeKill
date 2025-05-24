@@ -12,6 +12,8 @@ biyue:addEffect(fk.EventPhaseStart, {
   end,
 })
 
+biyue:addAI(nil, "jizhi")
+
 biyue:addTest(function(room, me)
   FkTest.runInRoom(function()
     room:handleAddLoseSkills(me, "biyue")
@@ -19,12 +21,7 @@ biyue:addTest(function(room, me)
 
   FkTest.setNextReplies(me, { "1" })
   FkTest.runInRoom(function()
-    local data = { ---@type TurnDataSpec
-      who = me,
-      reason = "game_rule",
-      phase_table = { Player.Finish }
-    }
-    GameEvent.Turn:create(TurnData:new(data)):exec()
+    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Finish })):exec()
   end)
 
   lu.assertEquals(#me:getCardIds("h"), 1)

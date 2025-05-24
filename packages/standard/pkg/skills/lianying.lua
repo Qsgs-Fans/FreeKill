@@ -21,6 +21,15 @@ lianying:addEffect(fk.AfterCardsMove, {
   end,
 })
 
+lianying:addAI(nil, "jizhi")
+lianying:addAI({
+  correct_func = function(self, logic, event, target, player, data)
+    if self.skill:triggerable(event, target, player, data) then
+      logic:drawCards(logic.player, 1, self.skill.name)
+    end
+  end,
+}, nil, nil, true)
+
 lianying:addTest(function(room, me)
   FkTest.runInRoom(function()
     room:handleAddLoseSkills(me, lianying.name)

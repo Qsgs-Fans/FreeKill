@@ -2,7 +2,7 @@ local skill = fk.CreateSkill {
   name = "god_salvation_skill",
 }
 
-skill:addEffect("active", {
+skill:addEffect("cardskill", {
   prompt = "#god_salvation_skill",
   can_use = Util.GlobalCanUse,
   on_use = function (self, room, cardUseEvent)
@@ -26,6 +26,9 @@ skill:addEffect("active", {
     end
   end,
 })
+
+skill:addAI(nil, "__card_skill")
+skill:addAI(nil, "default_card_skill")
 
 skill:addTest(function(room, me)
   FkTest.runInRoom(function()

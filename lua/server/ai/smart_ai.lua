@@ -207,13 +207,74 @@ function SmartAI.static:setCardSkillAI(key, spec, key2)
   end
 end
 
--- 等价于SmartAI:setCardSkillAI(key, spec, "__card_skill")
+-- 等价于SmartAI:setSkillAI(key, spec, "__card_skill")
 ---@param key string
 ---@param spec? SkillAISpec 表
 ---@param key2? string 要继承的
 function SmartAI:setCardSkillAI(key, spec, key2)
   error("This is a static method. Please use SmartAI:setCardSkillAI(...)")
 end
+
+SmartAI:setCardSkillAI("default_card_skill", {
+  on_use = function(self, logic, effect)
+    self.skill:onUse(logic, effect)
+  end,
+  on_effect = function(self, logic, effect)
+    self.skill:onEffect(logic, effect)
+  end,
+})
+
+SmartAI:setSkillAI("vs_skill", {
+  choose_targets = function(self, ai)
+    local logic = AIGameLogic:new(ai)
+    local val_func = function(targets)
+      logic.benefit = 0
+      logic:useCard{
+        from = ai.player,
+        tos = targets,
+        card = self.skill:viewAs(ai.player, ai:getSelectedCards()),
+      }
+      verbose(1, "目前状况下，对[%s]的预测收益为%d", table.concat(table.map(targets, function(p)return tostring(p)end), "+"), logic.benefit)
+      return logic.benefit
+    end
+    local best_targets, best_val = nil, -100000
+    for targets in self:searchTargetSelections(ai) do
+      local val = val_func(targets)
+      if (not best_targets) or (best_val < val) then
+        best_targets, best_val = targets, val
+      end
+    end
+    return best_targets or {}, best_val
+  end,
+  think = function(self, ai)
+    local skill_name = self.skill.name
+    local estimate_val = self:getEstimatedBenefit(ai)
+    -- local cards = ai:getEnabledCards()
+    -- cards = table.random(cards, math.min(#cards, 5)) --[[@as integer[] ]]
+    -- local cid = table.random(cards)
+
+    local best_cards, best_ret, best_val = nil, "", -100000
+    for cards in self:searchCardSelections(ai) do
+      local ret, val = self:chooseTargets(ai)
+      verbose(1, "就目前选择的这张牌，考虑[%s]，收益为%d", table.concat(table.map(ret, function(p)return tostring(p)end), "+"), val)
+      val = val or -100000
+      if best_val < val then
+        best_cards, best_ret, best_val = cards, ret, val
+      end
+      -- if best_val >= estimate_val then break end
+    end
+
+    if best_ret and best_ret ~= "" then
+      if best_val < 0 then
+        return "", best_val
+      end
+
+      best_ret = { cards = best_cards, targets = best_ret }
+    end
+
+    return best_ret, best_val
+  end,
+})
 
 ---@type table<string, TriggerSkillAI>
 fk.ai_trigger_skills = {}

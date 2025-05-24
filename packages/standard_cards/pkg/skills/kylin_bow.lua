@@ -20,11 +20,12 @@ skill:addEffect(fk.DamageCaused, {
       return card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide
     end)
     if #ride_tab == 0 then return end
-    local id = room:askForCardChosen(player, to, {
+    local id = room:askToChooseCard(player, { target = to,
+    flag = {
       card_data = {
         { "equip_horse", ride_tab }
       }
-    }, self.name)
+    }, skill_name = self.name })
     room:throwCard({id}, skill.name, to, player)
   end,
 })

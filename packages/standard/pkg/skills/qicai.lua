@@ -1,6 +1,6 @@
 local qicai = fk.CreateSkill{
   name = "qicai",
-  frequency = Skill.Compulsory,
+  tags = { Skill.Compulsory },
 }
 
 qicai:addEffect("targetmod", {

@@ -7,6 +7,7 @@ return {
   require(prefix .. "slash"),
   require(prefix .. "jink"),
   require(prefix .. "peach"),
+
   require(prefix .. "dismantlement"),
   require(prefix .. "snatch"),
   require(prefix .. "duel"),
@@ -19,6 +20,7 @@ return {
   require(prefix .. "amazing_grace"),
   require(prefix .. "lightning"),
   require(prefix .. "indulgence"),
+
   require(prefix .. "crossbow"),
   require(prefix .. "qinggang_sword"),
   require(prefix .. "ice_sword"),

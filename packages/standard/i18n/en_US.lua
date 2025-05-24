@@ -60,6 +60,7 @@ Fk:loadTranslationTable({
   ["guanyu"] = "Guan Yu",
   ["wusheng"] = "Warrior Saint",
   [":wusheng"] = "You can use/play any red card as Slash.",
+  ["#wusheng"] = "Use Warrior Saint to use/play any red card as Slash.",
 
   ["zhangfei"] = "Zhang Fei",
   ["paoxiao"] = "Roar",
@@ -74,6 +75,7 @@ Fk:loadTranslationTable({
   ["zhaoyun"] = "Zhao Yun",
   ["longdan"] = "Dragon Heart",
   [":longdan"] = "You can use/play Slash as Dodge. You can use/play Dodge as Slash.",
+  ["#longdan"] = "Use Dragon Heart to use/play Slash as Dodge, or use/play Dodge as Slash.",
 
   ["machao"] = "Ma Chao",
   ["mashu"] = "Horsemanship",
@@ -117,6 +119,7 @@ Fk:loadTranslationTable({
   ["daqiao"] = "Da Qiao",
   ["guose"] = "National Beauty",
   [":guose"] = "You can use any diamond card as Indulgence.",
+  ["#guose"] = "Use National Beauty to use any diamond card as Indulgence",
   ["liuli"] = "Shirk",
   [":liuli"] = "When you become the target of Slash: you can discard 1 card and select another player (except the attacker) within your attack range; then, he becomes the target of the Slash instead.",
   ["#liuli-target"] = "Shirk: you can discard 1 card and transfer the Slash",
@@ -217,6 +220,7 @@ Fk:loadTranslationTable({
   ["distribution_select_skill"] = "Distribute",
   ["choose_players_to_move_card_in_board"] = "Choose players",
   ["userealcard_skill"] = "Use",
+  ["virtual_viewas"] = "Use",
 
   ["reveal_skill&"] = "Reveal",
   ["#reveal_skill&"] = "Choose a character to reveal",

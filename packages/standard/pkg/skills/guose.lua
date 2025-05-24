@@ -22,4 +22,6 @@ guose:addEffect("viewas", {
   end,
 })
 
+guose:addAI(nil, "vs_skill")
+
 return guose

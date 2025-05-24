@@ -6,7 +6,7 @@
 ---@field public name string @ 技能名
 ---@field public trueName string @ 技能真名
 ---@field public package Package @ 技能所属的包
----@field public frequency Frequency @ 技能发动的频繁程度，通常compulsory（锁定技）及limited（限定技）用的多。
+---@field public frequency? SkillTag @ 技能标签，如compulsory（锁定技）、limited（限定技）。（deprecated，请改为向skeleton添加tag）
 ---@field public visible boolean @ 技能是否会显示在游戏中
 ---@field public mute boolean @ 决定是否关闭技能配音
 ---@field public no_indicate boolean @ 决定是否关闭技能指示线
@@ -15,26 +15,38 @@
 ---@field public related_skills Skill[] @ 和本技能相关的其他技能，有时候一个技能实际上是通过好几个技能拼接而实现的。
 ---@field public attached_equip string @ 属于什么装备的技能？
 ---@field public relate_to_place string| "m" | "d" @ 主将技("m")/副将技("d")
----@field public switchSkillName string @ 转换技名字
 ---@field public times integer @ 技能剩余次数，负数不显示，正数显示
 ---@field public attached_skill_name string @ 给其他角色添加技能的名称
----@field public main_skill Skill
----@field public lordSkill boolean @ 是否为主公技
+---@field public main_skill Skill @ 仅用作添加技能和提示信息
+---@field public is_delay_effect boolean @ 是否是延时效果
 ---@field public cardSkill boolean @ 是否为卡牌效果对应的技能（仅用于ActiveSkill）
+---@field public skeleton SkillSkeleton @ 获取技能骨架
 local Skill = class("Skill")
 
----@alias Frequency integer
 
-Skill.Frequent = 1
-Skill.NotFrequent = 2
-Skill.Compulsory = 3
-Skill.Limited = 4
-Skill.Wake = 5
-Skill.Quest = 6
+---@alias SkillTag string
+
+Skill.NotFrequent = "NotFrequent" -- 技能frequency的默认值
+Skill.Lord = "Lord" -- 主公技
+Skill.Compulsory = "Compulsory" -- 锁定技
+Skill.Limited = "Limited" -- 限定技
+Skill.Wake = "Wake" -- 觉醒技
+Skill.Switch = "Switch" -- 转换技
+Skill.Quest = "Quest" -- 使命技
+Skill.Permanent = "Permanent" -- 持恒技
+Skill.MainPlace = "MainPlace" -- 主将技
+Skill.DeputyPlace = "DeputyPlace" -- 副将技
+Skill.Hidden = "Hidden" -- 隐匿技
+Skill.AttachedKingdom = "AttachedKingdom" --势力技
+Skill.Charge = "Charge" --蓄力技
+Skill.Family = "Family" --宗族技
+Skill.Combo = "Combo" --连招技
+Skill.Rhyme = "Rhyme" --韵律技
+Skill.Force = "Force" --奋武技
+
 
 --- 构造函数，不可随意调用。
 ---@param name string @ 技能名
----@param frequency Frequency @ 技能发动的频繁程度，通常compulsory（锁定技）及limited（限定技）用的多。
 function Skill:initialize(name, frequency)
   -- TODO: visible, lord, etc
   self.name = name
@@ -42,32 +54,25 @@ function Skill:initialize(name, frequency)
   -- if you need skills that not belongs to any general (like 'jixi')
   -- then you should use general function addRelatedSkill to assign them
   self.package = { extensionName = "standard" }
-  self.frequency = frequency
   self.visible = true
-  self.lordSkill = false
-  self.cardSkill = false
   self.mute = false
   self.no_indicate = false
   self.anim_type = ""
   self.related_skills = {}
-  self.attachedKingdom = {}
   self._extra_data = {}
+  self.is_delay_effect = false
 
-  local name_splited = name:split("__")
+  self.attached_skill_name = nil
+
+  --TODO: 以下是应当移到skeleton的参数
+  local name_splited = self.name:split("__")
   self.trueName = name_splited[#name_splited]
-
   if string.sub(name, 1, 1) == "#" then
     self.visible = false
   end
-  if string.sub(name, #name) == "$" then
-    self.name = string.sub(name, 1, #name - 1)
-    self.lordSkill = true
-  end
-
   self.attached_equip = nil
-  self.relate_to_place = nil
 
-  self.attached_skill_name = nil
+  self.frequency = self.frequency or Skill.NotFrequent
 end
 
 function Skill:__index(k)
@@ -99,7 +104,7 @@ function Skill:addRelatedSkill(skill)
 end
 
 --- 确认本技能是否为装备技能。
----@param player Player
+---@param player? Player @ 技能拥有者
 ---@return boolean
 function Skill:isEquipmentSkill(player)
   if player then
@@ -112,7 +117,7 @@ function Skill:isEquipmentSkill(player)
     end
   end
 
-  return self.attached_equip and type(self.attached_equip) == 'string' and self.attached_equip ~= ""
+  return self:getSkeleton() ~= nil and type(self:getSkeleton().attached_equip) == "string"
 end
 
 --- 判断技能是不是对于某玩家而言失效了。
@@ -121,13 +126,13 @@ end
 ---@param player Player @ 玩家
 ---@return boolean
 function Skill:isEffectable(player)
-  if self.cardSkill or self.permanent_skill then
+  if self.cardSkill or self:hasTag(Skill.Permanent) then
     return true
   end
 
   local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
   for _, nullifySkill in ipairs(nullifySkills) do
-    if self.name ~= nullifySkill.name and nullifySkill:getInvalidity(player, self) then
+    if self:getSkeleton().name ~= nullifySkill:getSkeleton().name and nullifySkill:getInvalidity(player, self) then
       return false
     end
   end
@@ -149,21 +154,12 @@ function Skill:isEffectable(player)
   return true
 end
 
---- 为技能增加所属势力，需要在隶属特定势力时才能使用此技能。
---- 案例：手杀文鸯
-function Skill:addAttachedKingdom(kingdom)
-  table.insertIfNeed(self.attachedKingdom, kingdom)
-end
-
---- 判断某个技能是否为转换技
-function Skill:isSwitchSkill()
-  return self.switchSkillName and type(self.switchSkillName) == 'string' and self.switchSkillName ~= ""
-end
-
 --判断技能是否为角色技能
----@param player Player
+---@param player? Player @ 技能拥有者
 ---@return boolean
 function Skill:isPlayerSkill(player)
+  local skel = self:getSkeleton()
+  if skel == nil then return false end
   return not (self:isEquipmentSkill(player) or self.name:endsWith("&"))
 end
 
@@ -178,49 +174,14 @@ function Skill:getTimes(player)
   return ret
 end
 
--- 获得此技能时，触发此函数
----@param player ServerPlayer
----@param is_start boolean?
-function Skill:onAcquire(player, is_start)
-  local room = player.room
-
-  if self.attached_skill_name then
-    for _, p in ipairs(room.alive_players) do
-      if p ~= player then
-        room:handleAddLoseSkills(p, self.attached_skill_name, nil, false, true)
-      end
-    end
-  end
-end
-
--- 失去此技能时，触发此函数
----@param player ServerPlayer
----@param is_death boolean?
-function Skill:onLose(player, is_death)
-  local room = player.room
-  if self.attached_skill_name then
-    local skill_owners = table.filter(room.alive_players, function (p)
-      return p:hasSkill(self, true)
-    end)
-    if #skill_owners == 0 then
-      for _, p in ipairs(room.alive_players) do
-        room:handleAddLoseSkills(p, "-" .. self.attached_skill_name, nil, false, true)
-      end
-    elseif #skill_owners == 1 then
-      local p = skill_owners[1]
-      room:handleAddLoseSkills(p, "-" .. self.attached_skill_name, nil, false, true)
-    end
-  end
-
-end
-
 ---@param player Player
 ---@param lang? string
 ---@return string?
 function Skill:getDynamicDescription(player, lang)
-  if self:isSwitchSkill() then
-    local switchState = player:getSwitchSkillState(self.name)
-    local descKey = ":" .. self.name .. (switchState == fk.SwitchYang and "_yang" or "_yin")
+  if self:hasTag(Skill.Switch) then
+    local skill_name = self:getSkeleton().name
+    local switchState = player:getSwitchSkillState(skill_name)
+    local descKey = ":" .. skill_name .. (switchState == fk.SwitchYang and "_yang" or "_yin")
     local translation = Fk:translate(descKey, lang)
     if translation ~= descKey then
       return translation
@@ -228,6 +189,43 @@ function Skill:getDynamicDescription(player, lang)
   end
 
   return nil
+end
+
+--- 找到效果的技能骨架。可能为nil
+---@return SkillSkeleton?
+function Skill:getSkeleton()
+  return self.skeleton
+  --[[
+  for _, skel in pairs(Fk.skill_skels) do
+    if table.contains(skel.effects, self) then
+      return skel
+    end
+  end
+  --]]
+end
+
+--- 判断技能是否有某标签
+---@param tag SkillTag  待判断的标签
+---@param compulsory_expand boolean?  是否“拓展”锁定技标签的含义，包括觉醒技。默认是
+---@return boolean
+function Skill:hasTag(tag, compulsory_expand)
+  local expand = (compulsory_expand == nil or compulsory_expand)
+  --兼容牢代码，注意牢代码没有skel
+  if self.frequency == tag then
+    return true
+  end
+  if expand and tag == Skill.Compulsory and table.contains({Skill.Compulsory, Skill.Wake}, self.frequency) then
+    return true
+  end
+  if self.relate_to_place == "m" and tag == Skill.MainPlace then return true end
+  if self.relate_to_place == "d" and tag == Skill.DeputyPlace then return true end
+
+  local skel = self:getSkeleton()
+  if skel == nil then return false end
+  if expand and tag == Skill.Compulsory then
+    return table.contains(skel.tags, Skill.Compulsory) or table.contains(skel.tags, Skill.Wake)
+  end
+  return table.contains(skel.tags, tag)
 end
 
 return Skill

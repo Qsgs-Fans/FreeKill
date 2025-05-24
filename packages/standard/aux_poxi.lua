@@ -14,8 +14,8 @@ Fk:addPoxiMethod{
     else
       local ret = Fk:translate("#AskForChooseCards")
       ret = ret:gsub("%%1", Fk:translate(extra_data.skillName or "AskForCardsChosen"))
-      ret = ret:gsub("%%2", Fk:translate(extra_data.min))
-      ret = ret:gsub("%%3", Fk:translate(extra_data.max))
+      ret = ret:gsub("%%2", math.floor(extra_data.min)) -- floor to avoid float number
+      ret = ret:gsub("%%3", math.floor(extra_data.max))
       return ret .. ":" ..extra_data.to
     end
   end,

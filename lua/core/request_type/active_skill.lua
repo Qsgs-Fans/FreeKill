@@ -75,7 +75,7 @@ function ReqActiveSkill:setSkillPrompt(skill, selected_cards)
   local prompt = skill.prompt
   if type(skill.prompt) == "function" then
     prompt = skill:prompt(self.player, selected_cards or self.pendings,
-      table.map(self.selected_targets, Util.Id2PlayerMapper))
+      table.map(self.selected_targets, Util.Id2PlayerMapper), self.extra_data or {})
   end
   if type(prompt) == "string" then
     self:setPrompt(prompt)

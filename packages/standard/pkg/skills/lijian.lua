@@ -25,15 +25,15 @@ lijian:addEffect("active", {
     room:throwCard(effect.cards, lijian.name, player, player)
     local duel = Fk:cloneCard("duel")
     duel.skillName = lijian.name
-    local new_use = { ---@type CardUseStruct
+    local new_use = { ---@type UseCardDataSpec
       from = effect.tos[2],
-      tos = { { effect.tos[1] } },
+      tos = { effect.tos[1] },
       card = duel,
       prohibitedCardNames = { "nullification" },
     }
     room:useCard(new_use)
   end,
-  target_tip = function(self, to_select, selected, _, _, selectable, _)
+  target_tip = function(self, _, to_select, selected, _, _, selectable, _)
     if not selectable then return end
     if #selected == 0 or (#selected > 0 and selected[1] == to_select) then
       return "lijian_tip_1"

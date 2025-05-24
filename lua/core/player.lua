@@ -7,7 +7,7 @@
 --- Player类就是这两种玩家的基类，包含它们共用的部分。
 ---
 ---@class Player : Object
----@field public id integer @ 玩家的id，每名玩家的id是唯一的。机器人的id是负数。
+---@field public id integer @ 玩家的id，每名玩家的id是唯一的，为正数。机器人的id是负数。
 ---@field public hp integer @ 体力值
 ---@field public maxHp integer @ 体力上限
 ---@field public shield integer @ 护甲数
@@ -21,7 +21,7 @@
 ---@field public next Player @ 下家
 ---@field public phase Phase @ 当前阶段
 ---@field public faceup boolean @ 是否正面朝上
----@field public chained boolean @ 是否被横直
+---@field public chained boolean @ 是否处于连环状态
 ---@field public dying boolean @ 是否处于濒死
 ---@field public dead boolean @ 是否死亡
 ---@field public player_skills Skill[] @ 当前拥有的所有技能
@@ -31,7 +31,7 @@
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public player_cards table<integer, integer[]> @ 当前拥有的所有牌，键是区域，值是id列表
 ---@field public virtual_equips Card[] @ 当前的虚拟装备牌，其实也包含着虚拟延时锦囊这种
----@field public special_cards table<string, integer[]> @ 类似“屯田”这种的私人牌堆
+---@field public special_cards table<string, integer[]> @ 类似“屯田”的“田”的私人牌堆
 ---@field public cardUsedHistory table<string, integer[]> @ 用牌次数历史记录
 ---@field public skillUsedHistory table<string, integer[]> @ 发动技能次数的历史记录
 ---@field public fixedDistance table<Player, integer> @ 与其他玩家的固定距离列表
@@ -134,6 +134,7 @@ end
 ---@param general General @ 角色类型
 ---@param setHp? boolean @ 是否设置体力
 ---@param addSkills? boolean @ 是否增加技能
+---@deprecated
 function Player:setGeneral(general, setHp, addSkills)
   self.general = general.name
   if setHp then
@@ -142,7 +143,7 @@ function Player:setGeneral(general, setHp, addSkills)
   end
 
   if addSkills then
-    table.insertTable(self.player_skills, general.skills)
+    table.insertTableIfNeed(self.player_skills, general:getSkillNameList())
   end
 end
 
@@ -160,12 +161,14 @@ end
 
 --- 查询角色是否存在flag。
 ---@param flag string @ 一种标记
+---@deprecated @ 用mark代替
 function Player:hasFlag(flag)
   return table.contains(self.flag, flag)
 end
 
 --- 为角色赋予flag。
 ---@param flag string @ 一种标记
+---@deprecated @ 用mark代替
 function Player:setFlag(flag)
   if flag == "." then
     self:clearFlags()
@@ -222,7 +225,7 @@ function Player:setMark(mark, count)
   end
 end
 
---- 获取角色对应Mark的数量。
+--- 获取角色对应Mark的数量。注意初始为0
 ---@param mark string @ 标记
 ---@return any
 function Player:getMark(mark)
@@ -242,6 +245,7 @@ function Player:getTableMark(mark)
 end
 
 --- 获取角色有哪些Mark。
+---@return string[]
 function Player:getMarkNames()
   local ret = {}
   for k, _ in pairs(self.mark) do
@@ -311,6 +315,7 @@ end
 
 --- 确认玩家是否存在虚拟装备。
 ---@param cid integer @ 卡牌ID，用来定位装备
+---@return Card?
 function Player:getVirualEquip(cid)
   for _, c in ipairs(self.virtual_equips) do
     for _, id in ipairs(c.subcards) do
@@ -319,9 +324,11 @@ function Player:getVirualEquip(cid)
       end
     end
   end
+  return nil
 end
 
 --- 确认玩家判定区是否存在延迟锦囊牌。
+---@return boolean
 function Player:hasDelayedTrick(card_name)
   for _, id in ipairs(self:getCardIds(Player.Judge)) do
     local c = self:getVirualEquip(id)
@@ -372,8 +379,9 @@ function Player:getCardIds(playerAreas, specialName)
   return cardIds
 end
 
---- 通过名字检索获取玩家对应的私人牌堆。
+--- 通过名字检索获取玩家对应的私人牌堆。没有为{}。
 ---@param name string @ 私人牌堆名
+---@return integer[]
 function Player:getPile(name)
   return table.simpleClone(self.special_cards[name] or {})
 end
@@ -387,8 +395,8 @@ function Player:getPileNameOfId(id)
   end
 end
 
---- 返回所有“如手牌般使用或打出”的牌。
---- 或者说，返回所有名字以“&”结尾的pile的牌。
+--- 返回所有名字以“&”结尾（如手牌般使用或打出）的pile的牌。
+--- 提示：VSSkill中需要```handly_pile = true```才能使用这些牌。
 ---@param include_hand? boolean @ 是否包含真正的手牌，默认包含
 ---@return integer[]
 function Player:getHandlyIds(include_hand)
@@ -408,6 +416,8 @@ function Player:getHandlyIds(include_hand)
 end
 
 -- for fkp only
+--- 获取手牌数
+---@return integer
 function Player:getHandcardNum()
   return #self:getCardIds(Player.Hand)
 end
@@ -432,12 +442,12 @@ function Player:getEquipment(cardSubtype)
 end
 
 --- 检索玩家装备区是否存在对应类型的装备列表。
----@param cardSubtype CardSubtype @ 卡牌子类
+---@param cardSubtype? CardSubtype @ 卡牌子类，不填则返回所有装备
 ---@return integer[] @ 返回卡牌ID或空表
 function Player:getEquipments(cardSubtype)
   local cardIds = {}
   for _, cardId in ipairs(self.player_cards[Player.Equip]) do
-    if Fk:getCardById(cardId).sub_type == cardSubtype then
+    if cardSubtype == nil or Fk:getCardById(cardId).sub_type == cardSubtype then
       table.insert(cardIds, cardId)
     end
   end
@@ -489,6 +499,10 @@ function Player:getAttackRange()
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   local max_fixed, correct = nil, 0
   for _, skill in ipairs(status_skills) do
+    local final = skill:getFinal(self)
+    if final then -- 目前逻辑，发现一个终值马上返回
+      return math.max(0, final)
+    end
     local f = skill:getFixed(self)
     if f ~= nil then
       max_fixed = max_fixed and math.max(max_fixed, f) or f
@@ -501,6 +515,7 @@ function Player:getAttackRange()
 end
 
 --- 获取角色是否被移除。
+---@return boolean
 function Player:isRemoved()
   for mark, _ in pairs(self.mark) do
     if mark == MarkEnum.PlayerRemoved then return true end
@@ -510,31 +525,13 @@ function Player:isRemoved()
       end
     end
   end
-  -- return self:getMark(MarkEnum.PlayerRemoved) ~= 0 or table.find(MarkEnum.TempMarkSuffix, function(s)
-  --   return self:getMark(MarkEnum.PlayerRemoved .. s) ~= 0
-  -- end)
-end
-
---- 修改玩家与其他角色的固定距离。
----@param other Player @ 其他玩家
----@param num integer @ 距离数
----@deprecated
-function Player:setFixedDistance(other, num)
-  --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
-  self.fixedDistance[other] = num
-end
-
---- 移除玩家与其他角色的固定距离。
----@param other Player @ 其他玩家
----@deprecated
-function Player:removeFixedDistance(other)
-  --print(self.name .. ": fixedDistance is deprecated. Use fixed_func instead.")
-  self.fixedDistance[other] = nil
 end
 
 --- 获取玩家与其他角色的实际距离。
 ---
 --- 通过 二者位次+距离技能之和 与 两者间固定距离 进行对比，更大的为实际距离。
+--- 
+--- 注意比较距离时使用```Player:compareDistance()```。
 ---@param other Player @ 其他玩家
 ---@param mode? string @ 计算模式(left/right/both)
 ---@param ignore_dead? boolean @ 是否忽略尸体
@@ -616,6 +613,7 @@ end
 --- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
 ---@param fixLimit? integer @ 卡牌距离限制增加专用
+---@return boolean
 function Player:inMyAttackRange(other, fixLimit)
   assert(other:isInstanceOf(Player))
   if self == other or (other and (other.dead or other:isRemoved())) or self:isRemoved() then
@@ -770,31 +768,61 @@ function Player:usedSkillTimes(skill_name, scope)
   return self.skillUsedHistory[skill_name][scope]
 end
 
+--- 获取玩家使用特定技能效果的历史次数。
+---@param skill_name string @ 技能名
+---@param scope? integer @ 查询历史范围，默认Turn
+function Player:usedEffectTimes(skill_name, scope)
+  if not self.skillUsedHistory[skill_name] then
+    return 0
+  end
+  scope = scope or Player.HistoryTurn
+  local skel = Fk.skills[skill_name]:getSkeleton()
+  if skel then
+    if skel.name ~= skill_name then
+      return self.skillUsedHistory[skill_name][scope]
+    else
+      local total = self.skillUsedHistory[skill_name][scope]
+      for _, effect in ipairs(skel.effect_names) do
+        if effect ~= skill_name and not Fk.skills[effect].is_delay_effect and self.skillUsedHistory[effect] then
+          total = total - self.skillUsedHistory[effect][scope]
+        end
+      end
+      return total
+    end
+  end
+  return self.skillUsedHistory[skill_name][scope]
+end
+
 function Player:isAlive()
   return self.dead == false
 end
 
 --- 获取玩家是否无手牌。
+---@return boolean
 function Player:isKongcheng()
   return #self:getCardIds(Player.Hand) == 0
 end
 
 --- 获取玩家是否没有牌（即无手牌及装备区牌）。
+---@return boolean
 function Player:isNude()
   return #self:getCardIds{Player.Hand, Player.Equip} == 0
 end
 
 --- 获取玩家所有区域是否无牌。
+---@return boolean
 function Player:isAllNude()
   return #self:getCardIds() == 0
 end
 
 --- 获取玩家是否受伤。
+---@return boolean
 function Player:isWounded()
   return self.hp < self.maxHp
 end
 
 --- 获取玩家已失去体力。
+---@return integer
 function Player:getLostHp()
   return math.min(self.maxHp - self.hp, self.maxHp)
 end
@@ -813,6 +841,7 @@ end
 ---@param skill string | Skill @ 技能名
 ---@param ignoreNullified? boolean @ 忽略技能是否被无效
 ---@param ignoreAlive? boolean @ 忽略角色在场与否
+---@return boolean
 function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
   if not ignoreAlive and self.dead then
     return false
@@ -829,7 +858,7 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
     if self:isInstanceOf(ServerPlayer) then
       return not self:isFakeSkill(skill)
     else
-      return table.contains(self.player_skills, skill)
+      return true
     end
   end
 
@@ -878,9 +907,9 @@ function Player:addSkill(skill, source_skill)
   for _, s in ipairs(toget) do
     if not self:hasSkill(s, true, true) then
       table.insert(ret, s)
-      if (s:isInstanceOf(TriggerSkill) or s:isInstanceOf(LegacyTriggerSkill)) and RoomInstance then
+      if (s:isInstanceOf(TriggerSkill) --[[or s:isInstanceOf(LegacyTriggerSkill)]]) and RoomInstance then
         ---@cast room Room
-        ---@cast s TriggerSkill|LegacyTriggerSkill
+        ---@cast s TriggerSkill --|LegacyTriggerSkill
         room.logic:addTriggerSkill(s)
       end
       if s:isInstanceOf(StatusSkill) then
@@ -971,6 +1000,29 @@ function Player:canUseTo(card, to, extra_data)
   _extra.fix_targets = {to.id}
   local can_use = self:canUse(card, _extra) -- for judging peach canUse correctly
   return can_use and Util.CardTargetFilter(card.skill, self, to, {}, card.subcards, card, _extra)
+end
+
+--- 当前可用的牌名筛选。用于转化技的interaction里对泛转化牌名的合法性检测
+---@param skill_name string @ 泛转化技的技能名
+---@param card_names string[] @ 待判定的牌名列表
+---@param subcards? integer[] @ 子卡（某些技能可以提前确定子卡，如奇策、妙弦）
+---@param ban_cards? string[] @ 被排除的卡名
+---@param extra_data? table @ 用于使用的额外信息
+---@return string[] @ 返回牌名列表
+function Player:getViewAsCardNames(skill_name, card_names, subcards, ban_cards, extra_data)
+  ban_cards = ban_cards or Util.DummyTable
+  extra_data = extra_data or Util.DummyTable
+  return table.filter(card_names, function (name)
+    local card = Fk:cloneCard(name)
+    card.skillName = skill_name
+    if subcards then card:addSubcards(subcards) end
+    if table.contains(ban_cards, card.trueName) or table.contains(ban_cards, card.name) then return false end
+    if Fk.currentResponsePattern == nil then
+      return self:canUse(card, extra_data)
+    else
+      return Exppattern:Parse(Fk.currentResponsePattern):match(card)
+    end
+  end)
 end
 
 --- 确认玩家是否被禁止对特定玩家使用特定牌。
@@ -1099,6 +1151,21 @@ function Player:canMoveCardIntoEquip(cardId, convert)
   return false
 end
 
+--- 角色当前拥有的技能名列表。只包含武将技能，不含装备技能、附加技能
+---@return string[]
+function Player:getSkillNameList()
+  local names = {}
+  for _, skill in ipairs(self.player_skills) do
+    if not skill.name:startsWith("#") and not skill.name:endsWith("&") then
+      local skel = skill:getSkeleton()
+      if skel and not skel.attached_equip then
+        table.insertIfNeed(names, skel.name)
+      end
+    end
+  end
+  return names
+end
+
 --转换技状态阳
 fk.SwitchYang = 0
 --转换技状态阴
@@ -1135,14 +1202,14 @@ function Player:canMoveCardInBoardTo(to, id)
     return
       not (
         table.find(to:getCardIds(Player.Judge), function(cardId)
-          return (to:getVirualEquip(cardId) or Fk:getCardById(cardId)).name == card.name
+          return ((to:getVirualEquip(cardId) or Fk:getCardById(cardId).name == card.name) and card.name ~= "premeditate")
         end) or
         table.contains(to.sealedSlots, Player.JudgeSlot)
       )
   end
 end
 
---- 是否能移动特定牌至特定角色
+--- 是否能移动特定区域牌至特定角色
 --- @param to Player @ 移动至的角色
 --- @param flag? string @ 移动的区域，`e`为装备区，`j`为判定区，`nil`为装备区和判定区
 --- @param excludeIds? integer[] @ 排除的牌
@@ -1183,7 +1250,7 @@ end
 
 
 --- 获取角色未被废除的装备栏
----@param subtype? integer @ 指定的装备栏类型，填空为所有装备栏
+---@param subtype? CardSubtype @ 指定的装备栏类型，不填则判断所有类型
 ---@return string[]
 function Player:getAvailableEquipSlots(subtype)
   local tempSlots = table.simpleClone(self.equipSlots)
@@ -1208,6 +1275,9 @@ function Player:getAvailableEquipSlots(subtype)
   return tempSlots
 end
 
+--- 检索玩家是否有对应类型的空装备栏
+---@param subtype? CardSubtype @ 指定的装备栏类型，不填则判断所有类型
+---@return boolean
 function Player:hasEmptyEquipSlot(subtype)
   return #self:getAvailableEquipSlots(subtype) - #self:getEquipments(subtype) > 0
 end

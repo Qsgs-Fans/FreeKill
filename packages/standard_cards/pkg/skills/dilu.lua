@@ -1,7 +1,7 @@
 local skill = fk.CreateSkill {
   name = "#dilu_skill",
+  tags = { Skill.Compulsory },
   attached_equip = "dilu",
-  frequency = Skill.Compulsory,
 }
 
 skill:addEffect("distance", {

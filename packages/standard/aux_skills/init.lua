@@ -9,6 +9,8 @@ return {
   require(prefix .. "choose_players_skill"),
   require(prefix .. "ex__choose_skill"),
   require(prefix .. "userealcard_skill"),
+  require(prefix .. "virtual_viewas"),
+  require(prefix .. "spin_skill"),
   require(prefix .. "max_cards_skill"),
   require(prefix .. "distribution_select_skill"),
   require(prefix .. "choose_players_to_move_card_in_board"),

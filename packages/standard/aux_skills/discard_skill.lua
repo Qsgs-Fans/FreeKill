@@ -53,4 +53,16 @@ skill:addEffect('active', {
   max_card_num = function(self, player) return self.num end,
 })
 
+skill:addAI({
+  think = function(self, ai)
+    verbose(1, "正思考discard_skill")
+    local s = self.skill
+    local cancel_val = s.cancelable and 0 or -100000
+    for cards in self:searchCardSelections(ai) do
+      verbose(1, "discard_skill打算弃置%s", json.encode(cards))
+      return ai:doOKButton()
+    end
+  end,
+})
+
 return skill

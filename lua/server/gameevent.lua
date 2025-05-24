@@ -13,6 +13,8 @@
 ---@field public status string @ ready, running, exiting, dead
 ---@field public interrupted boolean @ 事件是否是因为被中断而结束的，可能是防止事件或者被杀
 ---@field public killed boolean @ 事件因为终止一切结算而被中断（所谓的“被杀”）
+----@field public desc fun(self:GameEvent):LogMessage @ LogMessage形式的描述
+----@field public getDesc fun(self:GameEvent):string @ 获得描述
 local GameEvent = class("GameEvent")
 
 ---@type (fun(self: GameEvent): boolean?)[]
@@ -77,6 +79,111 @@ end
 function GameEvent:__tostring()
   return string.format("<%s #%d>",
     type(self.event == "string") and self.event or self.class.name, self.id)
+end
+
+--- LogMessage形式的描述
+---@return LogMessage
+function GameEvent:desc()
+  return { type = "#GameEvent" }-- .. (type(self.event == "string") and self.event or self.class.name)
+end
+
+---@param msg LogMessage
+local function parseMsg(msg, nocolor, visible_data)
+  local self = ClientInstance
+  local data = msg
+  local function getPlayerStr(pid, color)
+    if nocolor then color = "white" end
+    if not pid then
+      return ""
+    end
+    local p = self:getPlayerById(pid)
+    local str = '<font color="%s"><b>%s</b></font>'
+    if p.general == "anjiang" and (p.deputyGeneral == "anjiang"
+      or not p.deputyGeneral) then
+      local ret = Fk:translate("seat#" .. p.seat)
+      return string.format(str, color, ret)
+    end
+
+    local ret = p.general
+    ret = Fk:translate(ret)
+    if p.deputyGeneral and p.deputyGeneral ~= "" then
+      ret = ret .. "/" .. Fk:translate(p.deputyGeneral)
+    end
+    for _, p2 in ipairs(Fk:currentRoom().players) do
+      if p2 ~= p and p2.general == p.general and p2.deputyGeneral == p.deputyGeneral then
+        ret = ret .. ("[%d]"):format(p.seat)
+        break
+      end
+    end
+    ret = string.format(str, color, ret)
+    return ret
+  end
+
+  local from = getPlayerStr(data.from, "#0C8F0C")
+
+  ---@type any
+  local to = data.to or Util.DummyTable
+  local to_str = {}
+  for _, id in ipairs(to) do
+    table.insert(to_str, getPlayerStr(id, "#CC3131"))
+  end
+  to = table.concat(to_str, ", ")
+
+  ---@type any
+  local card = data.card or Util.DummyTable
+  local allUnknown = true
+  local unknownCount = 0
+  for _, id in ipairs(card) do
+    local known = id ~= -1
+    if visible_data then known = visible_data[tostring(id)] end
+    if known then
+      allUnknown = false
+    else
+      unknownCount = unknownCount + 1
+    end
+  end
+
+  if allUnknown then
+    card = ""
+  else
+    local card_str = {}
+    for _, id in ipairs(card) do
+      local known = id ~= -1
+      if visible_data then known = visible_data[tostring(id)] end
+      if known then
+        table.insert(card_str, Fk:getCardById(id, true):toLogString())
+      end
+    end
+    if unknownCount > 0 then
+      local suffix = unknownCount > 1 and ("x" .. unknownCount) or ""
+      table.insert(card_str, Fk:translate("unknown_card") .. suffix)
+    end
+    card = table.concat(card_str, ", ")
+  end
+
+  local function parseArg(arg)
+    arg = arg or ""
+    arg = Fk:translate(arg)
+    arg = string.format('<font color="%s"><b>%s</b></font>', nocolor and "white" or "#0598BC", arg)
+    return arg
+  end
+
+  local arg = parseArg(data.arg)
+  local arg2 = parseArg(data.arg2)
+  local arg3 = parseArg(data.arg3)
+
+  local log = Fk:translate(data.type)
+  log = string.gsub(log, "%%from", from)
+  log = string.gsub(log, "%%to", to)
+  log = string.gsub(log, "%%card", card)
+  log = string.gsub(log, "%%arg2", arg2)
+  log = string.gsub(log, "%%arg3", arg3)
+  log = string.gsub(log, "%%arg", arg)
+  return log
+end
+--- 获得描述
+function GameEvent:getDesc()
+  return parseMsg(self:desc())
 end
 
 function GameEvent:prepare()

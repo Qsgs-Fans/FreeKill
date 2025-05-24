@@ -10,10 +10,12 @@ local function exec(tp, ...)
   return ret
 end
 
----@param room Room
----@param player ServerPlayer
----@param card Card
-local playCardEmotionAndSound = function(room, player, card)
+
+--- 播放使用/打出卡牌的声音和特效
+---@param player ServerPlayer @ 使用者
+---@param card Card @ 使用的牌
+function UseCardEventWrappers:playCardEmotionAndSound(player, card)
+  ---@cast self Room
   if card.type ~= Card.TypeEquip then
     local anim_path = "./packages/" .. card.package.extensionName .. "/image/anim/" .. card.name
     if not FileIO.exists(anim_path) then
@@ -22,7 +24,7 @@ local playCardEmotionAndSound = function(room, player, card)
         if FileIO.exists(anim_path) then break end
       end
     end
-    if FileIO.exists(anim_path) then room:setEmotion(player, anim_path) end
+    if FileIO.exists(anim_path) then self:setEmotion(player, anim_path) end
   end
 
   local soundName
@@ -46,29 +48,24 @@ local playCardEmotionAndSound = function(room, player, card)
       .. (player.gender == General.Male and "male/" or "female/") .. orig.name
     end
   end
-  room:broadcastPlaySound(soundName)
+  self:broadcastPlaySound(soundName)
 end
 
+
+--- 播放使用卡牌的信息（此步骤在使用牌移至处理区前）
 ---@param room Room
 ---@param useCardData UseCardData
 local sendCardEmotionAndLog = function(room, useCardData)
   local from = useCardData.from
-  local _card = useCardData.card
+  local card = useCardData.card
 
-  -- when this function is called, card is already in PlaceTable and no filter skill is applied.
-  -- So filter this card manually here to get 'real' use.card
-  local card = _card
-  ---[[
-  if not _card:isVirtual() then
-    local temp = { card = _card }
-    Fk:filterCard(_card.id, room:getCardOwner(_card), temp)
-    card = temp.card
+  if not card:isVirtual() then
+    card = room:filterCard(card.id, from)
   end
-  useCardData.card = card
-  --]]
 
-  playCardEmotionAndSound(room, from, card)
+  room:playCardEmotionAndSound(from, card)
 
+  -- 发送目标指示线
   if not useCardData.noIndicate then
     local tosData
     if useCardData.tos then
@@ -85,13 +82,15 @@ local sendCardEmotionAndLog = function(room, useCardData)
   end
 
   local useCardIds = card:isVirtual() and card.subcards or { card.id }
+  local isVirtual = card:isVirtual() or card.name ~= Fk:getCardById(card.id, true).name
   if useCardData.tos and #useCardData.tos > 0 and not useCardData.noIndicate then
     local to = {}
     for _, p in ipairs(useCardData.tos) do
       table.insert(to, p.id)
     end
 
-    if card:isVirtual() or (card ~= _card) then
+    -- 使用转化牌或锁视牌
+    if isVirtual then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0CardToTargets",
@@ -117,6 +116,7 @@ local sendCardEmotionAndLog = function(room, useCardData)
       }
     end
 
+    -- 声明子目标
     for _, p in ipairs(useCardData.tos) do
       local subt = useCardData:getSubTos(p)
       if #subt > 0 then
@@ -128,8 +128,9 @@ local sendCardEmotionAndLog = function(room, useCardData)
         }
       end
     end
+    -- 因响应而使用牌
   elseif useCardData.toCard then
-    if card:isVirtual() or (card ~= _card) then
+    if isVirtual then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0CardToCard",
@@ -154,8 +155,9 @@ local sendCardEmotionAndLog = function(room, useCardData)
         arg = useCardData.toCard.name,
       }
     end
+    -- 其他一般的使用牌
   else
-    if card:isVirtual() or (card ~= _card) then
+    if isVirtual then
       if #useCardIds == 0 then
         room:sendLog{
           type = "#UseV0Card",
@@ -178,49 +180,49 @@ local sendCardEmotionAndLog = function(room, useCardData)
       }
     end
   end
-
-  return _card
 end
 
 ---@class GameEvent.UseCard : GameEvent
 ---@field public data UseCardData
 local UseCard = GameEvent:subclass("GameEvent.UseCard")
+
+function UseCard:__tostring()
+  local data = self.data
+  return string.format("<UseCard %s: %s => [%s] #%d>",
+    data.card, data.from, table.concat(
+      table.map(data.tos or {}, ServerPlayer.__tostring), ", "), self.id)
+end
+
 function UseCard:main()
   local useCardData = self.data
   local room = self.room
   local logic = room.logic
 
-  if type(useCardData.attachedSkillAndUser) == "table" then
-    local attachedSkillAndUser = table.simpleClone(useCardData.attachedSkillAndUser)
-    self:addExitFunc(function()
-      if
-        type(attachedSkillAndUser) == "table" and
-        Fk.skills[attachedSkillAndUser.skillName] and
-        Fk.skills[attachedSkillAndUser.skillName].afterUse
-      then
-        Fk.skills[attachedSkillAndUser.skillName]:afterUse(attachedSkillAndUser.user, useCardData)
-      end
-    end)
+  if useCardData.attachedSkillAndUser then
+    local skill = Fk.skills[useCardData.attachedSkillAndUser.skillName]---@type ViewAsSkill
+    local user = room:getPlayerById(useCardData.attachedSkillAndUser.user)
+    if skill and skill.afterUse then
+      self:addExitFunc(function()
+        skill:afterUse(user, useCardData)
+      end)
+    end
     useCardData.attachedSkillAndUser = nil
   end
 
   -- add fix targets to usedata in place of card.skill:onUse
-  --[[
-  local targets = TargetGroup:getRealTargets(cardUseEvent.tos)
-  if #targets == 0 then
-    local fix_targets = cardUseEvent.card:getFixedTargets()
+  if #useCardData.tos == 0 then
+    local fix_targets = useCardData.card:getFixedTargets(useCardData.from, useCardData.extra_data)
     if fix_targets then
-      local cardSkill = cardUseEvent.card.skill---@type ActiveSkill
-      if cardSkill then
-        for _, pid in ipairs(fix_targets) do
-          if cardSkill:modTargetFilter(pid, {}, room:getPlayerById(cardUseEvent.from), cardUseEvent.card, true, cardUseEvent.extra_data) then
-            TargetGroup:pushTargets(cardUseEvent.tos, pid)
+      if useCardData.card.skill then
+        for _, p in ipairs(fix_targets) do
+          if useCardData.card.skill:modTargetFilter(useCardData.from, p, {}, useCardData.card, useCardData.extra_data)
+            and not useCardData.from:isProhibited(p, useCardData.card) then
+            useCardData:addTarget(p)
           end
         end
       end
     end
   end
-  --]]
 
   if useCardData.card.skill then
     useCardData.card.skill:onUse(room, useCardData)
@@ -251,12 +253,12 @@ function UseCard:main()
     logic:breakEvent()
   end
 
-  local _card = sendCardEmotionAndLog(room, useCardData)
+  sendCardEmotionAndLog(room, useCardData)
 
   room:moveCardTo(useCardData.card, Card.Processing, nil, fk.ReasonUse)
 
   local card = useCardData.card
-  local useCardIds = card:isVirtual() and card.subcards or { card.id }
+  local useCardIds = Card:getIdList(card)
   if #useCardIds > 0 then
     if useCardData.tos and #useCardData.tos > 0 and #useCardData.tos <= 2 and not useCardData.noIndicate then
       local tos = table.map(useCardData.tos, Util.IdMapper)
@@ -265,17 +267,14 @@ function UseCard:main()
         from = useCardData.from.id,
         to = tos,
       })
-      if card:isVirtual() or card ~= _card then
-        room:sendCardVirtName(useCardIds, card.name)
-      end
     else
       room:sendFootnote(useCardIds, {
         type = "##UseCard",
         from = useCardData.from.id,
       })
-      if card:isVirtual() or card ~= _card then
-        room:sendCardVirtName(useCardIds, card.name)
-      end
+    end
+    if card:isVirtual() or card.name ~= Fk:getCardById(card.id).name then
+      room:sendCardVirtName(useCardIds, card.name)
     end
   end
 
@@ -324,15 +323,33 @@ function RespondCard:main()
   local room = self.room
   local logic = room.logic
 
+  if respondCardData.attachedSkillAndUser then
+    local skill = Fk.skills[respondCardData.attachedSkillAndUser.skillName]---@type ViewAsSkill
+    local user = room:getPlayerById(respondCardData.attachedSkillAndUser.user)
+    if skill and skill.afterResponse then
+      self:addExitFunc(function()
+        skill:afterResponse(user, respondCardData)
+      end)
+    end
+    respondCardData.attachedSkillAndUser = nil
+  end
+
   if logic:trigger(fk.PreCardRespond, respondCardData.from, respondCardData) then
     logic:breakEvent()
+  end
+
+  if not respondCardData.card:isVirtual() then
+    respondCardData.card = room:filterCard(respondCardData.card.id, respondCardData.from)
   end
 
   local from = respondCardData.customFrom or respondCardData.from
   local card = respondCardData.card
   local cardIds = room:getSubcardsByRule(card)
+  local isVirtual = card:isVirtual() or card.name ~= Fk:getCardById(card.id, true).name
 
-  if card:isVirtual() then
+  room:playCardEmotionAndSound(from, card)
+
+  if isVirtual then
     if #cardIds == 0 then
       room:sendLog{
         type = "#ResponsePlayV0Card",
@@ -355,15 +372,13 @@ function RespondCard:main()
     }
   end
 
-  playCardEmotionAndSound(room, from, card)
-
-  room:moveCardTo(card, Card.Processing, nil, fk.ReasonResonpse)
+  room:moveCardTo(card, Card.Processing, nil, fk.ReasonResponse)
   if #cardIds > 0 then
     room:sendFootnote(cardIds, {
       type = "##ResponsePlayCard",
       from = from.id,
     })
-    if card:isVirtual() then
+    if isVirtual then
       room:sendCardVirtName(cardIds, card.name)
     end
   end
@@ -382,7 +397,7 @@ function RespondCard:clear()
     room:moveCards({
       ids = realCardIds,
       toArea = Card.DiscardPile,
-      moveReason = fk.ReasonResonpse,
+      moveReason = fk.ReasonResponse,
     })
   end
 end
@@ -400,9 +415,8 @@ function CardEffect:main()
   end
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting }) do
     if cardEffectData.isCancellOut then
-      if logic:trigger(fk.CardEffectCancelledOut, cardEffectData.from, cardEffectData) then
-        cardEffectData.isCancellOut = false
-      else
+      logic:trigger(fk.CardEffectCancelledOut, cardEffectData.from, cardEffectData)
+      if cardEffectData.isCancellOut then
         logic:breakEvent()
       end
     end
@@ -417,24 +431,20 @@ function CardEffect:main()
       logic:breakEvent()
     end
 
-    if table.contains((cardEffectData.nullifiedTargets or Util.DummyTable), cardEffectData.to) then
+    if cardEffectData:isNullified() then
       logic:breakEvent()
     end
 
     if event == fk.PreCardEffect then
-      if logic:trigger(event, cardEffectData.from, cardEffectData) then
-        if cardEffectData.to then
-          cardEffectData.nullifiedTargets = cardEffectData.nullifiedTargets or {}
-          table.insert(cardEffectData.nullifiedTargets, cardEffectData.to)
-        end
+      logic:trigger(event, cardEffectData.from, cardEffectData)
+      if cardEffectData:isNullified() then
         logic:breakEvent()
       end
-    elseif logic:trigger(event, cardEffectData.to, cardEffectData) then
-      if cardEffectData.to then
-        cardEffectData.nullifiedTargets = cardEffectData.nullifiedTargets or {}
-        table.insert(cardEffectData.nullifiedTargets, cardEffectData.to)
+    else
+      logic:trigger(event, cardEffectData.to, cardEffectData)
+      if cardEffectData:isNullified() then
+        logic:breakEvent()
       end
-      logic:breakEvent()
     end
 
     room:handleCardEffect(event, cardEffectData)
@@ -454,14 +464,15 @@ end
 ---@param useCardData UseCardDataSpec @ 使用数据
 ---@return boolean
 function UseCardEventWrappers:useCard(useCardData)
-  local new_data
-  if type(useCardData.from) == "number" or (useCardData.tos and useCardData.tos[1]
-    and type(useCardData.tos[1][1]) == "number") then
-    new_data = UseCardData:new({})
-    new_data:loadLegacy(useCardData)
-  else
-    new_data = UseCardData:new(useCardData)
-  end
+  -- local new_data
+  -- if type(useCardData.from) == "number" or (useCardData.tos and useCardData.tos[1]
+  --   and type(useCardData.tos[1][1]) == "number") then
+  --   new_data = UseCardData:new({})
+  --   new_data:loadLegacy(useCardData)
+  -- else
+  local new_data = UseCardData:new(useCardData)
+  new_data.tos = new_data.tos or {}
+  -- end
   return exec(UseCard, new_data)
 end
 
@@ -493,14 +504,11 @@ local onAim = function(room, useCardData, aimEventCollaborators)
           from = useCardData.from,
           card = useCardData.card,
           to = to,
-          useTos = useCardData.tos,
-          useSubTos = useCardData.subTos,
-          nullifiedTargets = useCardData.nullifiedTargets or {},
+          use = useCardData,
           tos = aimGroup,
           firstTarget = firstTarget,
           additionalDamage = useCardData.additionalDamage,
           additionalRecover = useCardData.additionalRecover,
-          additionalEffect = useCardData.additionalEffect,
           extra_data = useCardData.extra_data,
         }
 
@@ -524,11 +532,7 @@ local onAim = function(room, useCardData, aimEventCollaborators)
         aimStruct.from = useCardData.from
         aimStruct.card = useCardData.card
         aimStruct.tos = aimGroup
-        aimStruct.useTos = useCardData.tos
-        aimStruct.useSubTos = useCardData.subTos
-        aimStruct.nullifiedTargets = useCardData.nullifiedTargets or {}
         aimStruct.firstTarget = firstTarget
-        aimStruct.additionalEffect = useCardData.additionalEffect
         aimStruct.extra_data = useCardData.extra_data
       end
 
@@ -545,9 +549,7 @@ local onAim = function(room, useCardData, aimEventCollaborators)
       -- end
 
       useCardData.from = aimStruct.from
-      useCardData.tos = aimStruct.useTos
-      useCardData.nullifiedTargets = aimStruct.nullifiedTargets
-      useCardData.additionalEffect = aimStruct.additionalEffect
+      useCardData.card = aimStruct.card
       useCardData.extra_data = aimStruct.extra_data
 
       if #aimStruct:getAllTargets() == 0 then
@@ -561,7 +563,7 @@ local onAim = function(room, useCardData, aimEventCollaborators)
           collaboratorsIndex[target] = 1
         end
       end
-      aimStruct.tos[AimGroup.Cancelled] = {}
+      aimStruct.tos[AimData.Cancelled] = {}
 
       aimEventCollaborators[to] = aimEventCollaborators[to] or {}
       if to:isAlive() then
@@ -585,7 +587,8 @@ end
 --- 对卡牌使用数据进行生效
 ---@param useCardData UseCardData
 function UseCardEventWrappers:doCardUseEffect(useCardData)
-  ---@type table<ServerPlayer, AimData>
+  ---@cast self Room
+  ---@type table<ServerPlayer, AimData[]>
   local aimEventCollaborators = {}
   if #useCardData.tos > 0 and not onAim(self, useCardData, aimEventCollaborators) then
     return
@@ -601,7 +604,7 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
     end
 
     local target = useCardData.tos[1]
-    if not (target.dead or table.contains((useCardData.nullifiedTargets or Util.DummyTable), target)) then
+    if target and not target.dead and aimEventCollaborators[target] and not aimEventCollaborators[target][1]:isNullified() then
       local existingEquipId
       if useCardData.toPutSlot and useCardData.toPutSlot:startsWith("#EquipmentChoice") then
         local index = useCardData.toPutSlot:split(":")[2]
@@ -642,7 +645,7 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
     end
 
     local target = useCardData.tos[1]
-    if not (target.dead or table.contains((useCardData.nullifiedTargets or Util.DummyTable), target)) then
+    if not target.dead and aimEventCollaborators[target] and not aimEventCollaborators[target][1]:isNullified() then
       local findSameCard = false
       for _, cardId in ipairs(target:getCardIds(Player.Judge)) do
         if Fk:getCardById(cardId).trueName == useCardData.card.trueName then
@@ -688,10 +691,8 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
       subTos = useCardData.subTos,
       card = useCardData.card,
       toCard = useCardData.toCard,
+      use = useCardData,
       responseToEvent = useCardData.responseToEvent,
-      nullifiedTargets = useCardData.nullifiedTargets,
-      disresponsiveList = useCardData.disresponsiveList,
-      unoffsetableList = useCardData.unoffsetableList,
       additionalDamage = useCardData.additionalDamage,
       additionalRecover = useCardData.additionalRecover,
       cardsResponded = useCardData.cardsResponded,
@@ -726,10 +727,8 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
           subTos = useCardData.subTos,
           card = useCardData.card,
           toCard = useCardData.toCard,
+          use = useCardData,
           responseToEvent = useCardData.responseToEvent,
-          nullifiedTargets = useCardData.nullifiedTargets,
-          disresponsiveList = useCardData.disresponsiveList,
-          unoffsetableList = useCardData.unoffsetableList,
           additionalDamage = useCardData.additionalDamage,
           additionalRecover = useCardData.additionalRecover,
           cardsResponded = useCardData.cardsResponded,
@@ -745,29 +744,9 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
           cardEffectData.subTargets = curAimEvent.subTargets
           cardEffectData.additionalDamage = curAimEvent.additionalDamage
           cardEffectData.additionalRecover = curAimEvent.additionalRecover
-
-          if curAimEvent.disresponsiveList then
-            cardEffectData.disresponsiveList = cardEffectData.disresponsiveList or {}
-
-            for _, disresponsivePlayer in ipairs(curAimEvent.disresponsiveList) do
-              if not table.contains(cardEffectData.disresponsiveList, disresponsivePlayer) then
-                table.insert(cardEffectData.disresponsiveList, disresponsivePlayer)
-              end
-            end
-          end
-
-          if curAimEvent.unoffsetableList then
-            cardEffectData.unoffsetableList = cardEffectData.unoffsetableList or {}
-
-            for _, unoffsetablePlayer in ipairs(curAimEvent.unoffsetableList) do
-              if not table.contains(cardEffectData.unoffsetableList, unoffsetablePlayer) then
-                table.insert(cardEffectData.unoffsetableList, unoffsetablePlayer)
-              end
-            end
-          end
-
           cardEffectData.disresponsive = curAimEvent.disresponsive
           cardEffectData.unoffsetable = curAimEvent.unoffsetable
+          cardEffectData.nullified = curAimEvent.nullified
           cardEffectData.fixedResponseTimes = curAimEvent.fixedResponseTimes
           cardEffectData.fixedAddTimesResponsors = curAimEvent.fixedAddTimesResponsors
 
@@ -783,9 +762,6 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
             end
           end
 
-          if type(curCardEffectEvent.nullifiedTargets) == 'table' then
-            table.insertTableIfNeed(useCardData.nullifiedTargets, curCardEffectEvent.nullifiedTargets)
-          end
         end
       end
     end
@@ -811,128 +787,9 @@ end
 ---@param event CardEffectEvent
 ---@param cardEffectData CardEffectData
 function UseCardEventWrappers:handleCardEffect(event, cardEffectData)
+  ---@cast self Room
   if event == fk.PreCardEffect then
-    if
-      cardEffectData.card.trueName == "slash" and
-      not (cardEffectData.unoffsetable or table.contains(cardEffectData.unoffsetableList or Util.DummyTable, cardEffectData.to))
-    then
-      local loopTimes = 1
-      if cardEffectData.fixedResponseTimes then
-        if type(cardEffectData.fixedResponseTimes) == "table" then
-          loopTimes = cardEffectData.fixedResponseTimes["jink"] or 1
-        elseif type(cardEffectData.fixedResponseTimes) == "number" then
-          loopTimes = cardEffectData.fixedResponseTimes
-        end
-      end
-      Fk.currentResponsePattern = "jink"
-
-      for i = 1, loopTimes do
-        local to = cardEffectData.to
-        local prompt = ""
-        if cardEffectData.from then
-          if loopTimes == 1 then
-            prompt = "#slash-jink:" .. cardEffectData.from.id
-          else
-            prompt = "#slash-jink-multi:" .. cardEffectData.from.id .. "::" .. i .. ":" .. loopTimes
-          end
-        end
-
-        local params = { ---@type AskToUseCardParams
-          pattern = "jink",
-          skill_name = "jink",
-          prompt = prompt,
-          cancelable = true,
-          event_data = evcardEffectData
-        }
-        local use = self:askToUseCard(to, params)
-        if use then
-          use.toCard = cardEffectData.card
-          use.responseToEvent = cardEffectData
-          self:useCard(use)
-        end
-
-        if not cardEffectData.isCancellOut then
-          break
-        end
-
-        cardEffectData.isCancellOut = i == loopTimes
-      end
-    elseif
-      cardEffectData.card.type == Card.TypeTrick and
-      not (cardEffectData.disresponsive or cardEffectData.unoffsetable) and
-      not table.contains(cardEffectData.prohibitedCardNames or Util.DummyTable, "nullification")
-    then
-      local players = {}
-      Fk.currentResponsePattern = "nullification"
-      local cardCloned = Fk:cloneCard("nullification")
-      for _, p in ipairs(self.alive_players) do
-        if not p:prohibitUse(cardCloned) then
-          local cards = p:getHandlyIds()
-          for _, cid in ipairs(cards) do
-            if
-              Fk:getCardById(cid).trueName == "nullification" and
-              not (
-                table.contains(cardEffectData.disresponsiveList or Util.DummyTable, p.id) or
-                table.contains(cardEffectData.unoffsetableList or Util.DummyTable, p.id)
-              )
-            then
-              table.insert(players, p)
-              break
-            end
-          end
-          if not table.contains(players, p) then
-            Self = p -- for enabledAtResponse
-            for _, s in ipairs(table.connect(p.player_skills, p._fake_skills)) do
-              if
-                s.pattern and
-                Exppattern:Parse("nullification"):matchExp(s.pattern) and
-                not (s.enabledAtResponse and not s:enabledAtResponse(p)) and
-                not (
-                  table.contains(cardEffectData.disresponsiveList or Util.DummyTable, p.id) or
-                  table.contains(cardEffectData.unoffsetableList or Util.DummyTable, p.id)
-                )
-              then
-                table.insert(players, p)
-                break
-              end
-            end
-          end
-        end
-      end
-
-      local prompt = ""
-      if cardEffectData.to then
-        prompt = "#AskForNullification::" .. cardEffectData.to.id .. ":" .. cardEffectData.card.name
-      elseif cardEffectData.from then
-        prompt = "#AskForNullificationWithoutTo:" .. cardEffectData.from.id .. "::" .. cardEffectData.card.name
-      end
-
-      local extra_data
-      if #cardEffectData.tos > 1 then
-        local parentUseEvent = self.logic:getCurrentEvent():findParent(GameEvent.UseCard)
-        if parentUseEvent then
-          extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectData.to.id }
-        end
-      end
-      if #players > 0 and cardEffectData.card.trueName == "nullification" then
-        self:animDelay(2)
-      end
-      local params = { ---@type AskToUseCardParams
-        skill_name = "nullification",
-        pattern = "nullification",
-        prompt = prompt,
-        cancelable = true,
-        extra_data = extra_data,
-        event_data = cardEffectData
-      }
-      local use = self:askToNullification(players, params)
-      if use then
-        use.toCard = cardEffectData.card
-        use.responseToEvent = cardEffectData
-        self:useCard(use)
-      end
-    end
-    Fk.currentResponsePattern = nil
+    cardEffectData.card.skill:preEffect(self, cardEffectData)
   elseif event == fk.CardEffecting then
     if cardEffectData.card.skill then
       local data = { ---@type SkillEffectDataSpec
@@ -952,9 +809,9 @@ end
 ---@param responseCardData RespondCardDataSpec
 function UseCardEventWrappers:responseCard(responseCardData)
   local new_data = RespondCardData:new(responseCardData)
-  if type(new_data.from) == "number" then
-    new_data:loadLegacy(responseCardData)
-  end
+  -- if type(new_data.from) == "number" then
+  --   new_data:loadLegacy(responseCardData)
+  -- end
   return exec(RespondCard, new_data)
 end
 
@@ -965,7 +822,7 @@ end
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName? string @ 技能名
 ---@param extra? boolean @ 是否不计入次数
----@return UseCardDataSpec | false
+---@return UseCardDataSpec?
 function UseCardEventWrappers:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
   local card = Fk:cloneCard(card_name)
   if skillName then card.skillName = skillName end

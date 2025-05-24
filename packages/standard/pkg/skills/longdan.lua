@@ -35,4 +35,6 @@ longdan:addEffect("viewas", {
   end,
 })
 
+longdan:addAI(nil, "vs_skill")
+
 return longdan

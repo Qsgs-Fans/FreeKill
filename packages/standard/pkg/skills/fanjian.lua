@@ -14,10 +14,17 @@ fanjian:addEffect("active", {
   on_use = function(self, room, effect)
     local player = effect.from
     local target = effect.tos[1]
-    local choice = room:askForChoice(target, {"spade", "heart", "club", "diamond"}, fanjian.name)
-    local card = room:askForCardChosen(target, player, 'h', fanjian.name)
-    room:obtainCard(target.id, card, true, fk.ReasonPrey)
-    if Fk:getCardById(card):getSuitString() ~= choice and target:isAlive() then
+    local choice = room:askToChoice(target, {
+      choices = {"log_spade", "log_heart", "log_club", "log_diamond"},
+      skill_name = fanjian.name,
+    })
+    local card = room:askToChooseCard(target, {
+      target = player,
+      flag = "h",
+      skill_name = fanjian.name,
+    })
+    room:obtainCard(target, card, true, fk.ReasonPrey, target, fanjian.name)
+    if Fk:getCardById(card):getSuitString(true) ~= choice and target:isAlive() then
       room:damage{
         from = player,
         to = target,
@@ -25,6 +32,47 @@ fanjian:addEffect("active", {
         skillName = fanjian.name,
       }
     end
+  end,
+})
+
+fanjian:addAI({
+  think = function(self, ai)
+    local cards = ai:getEnabledCards()
+    local players = ai:getEnabledTargets()
+    if #cards == 0 then return {}, -1000 end
+
+    --- 获取手牌中权重偏大的牌
+    local good_cards = ai:getChoiceCardsByKeepValue(cards, #cards, function(value) return value >= 45 end)
+    if (#good_cards / #cards) <= 0.8 then return {}, -1000 end
+
+    local benefits = {}
+
+    --- 遍历所有玩家，计算收益
+    for _, target in ipairs(players) do
+      --- 计算获得手牌的收益
+      local card_benefit = ai:getBenefitOfEvents(function(logic)
+        local c = ai.player:getCardIds("h")[1] --- 假设总是取第一张手牌，这里可能需要更复杂的逻辑
+        logic:obtainCard(target, c, true, fk.ReasonGive)
+      end)
+
+      --- 计算造成伤害的收益
+      local damage_benefit = ai:getBenefitOfEvents(function(logic)
+        logic:damage{
+          from = ai.player,
+          to = target,
+          damage = 1,
+          skillName = self.skill.name,
+        }
+      end)
+
+      benefits[#benefits + 1] = { target, card_benefit + damage_benefit }
+    end
+
+    table.sort(benefits, function(a, b) return a[2] < b[2] end)
+
+    if #benefits == 0 then return {}, -1000 end
+
+    return { targets = { benefits[1][1] } }, benefits[1][2]
   end,
 })
 

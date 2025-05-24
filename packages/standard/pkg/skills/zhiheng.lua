@@ -20,4 +20,18 @@ zhiheng:addEffect("active", {
   end,
 })
 
+zhiheng:addAI({
+  think = function(self, ai)
+    local player = ai.player
+    local cards = ai:getEnabledCards(".|.|.|hand|.|.|.")
+
+    cards = ai:getChoiceCardsByKeepValue(cards, #cards, function(value) return value < 45 end)
+
+    return { cards = cards }, ai:getBenefitOfEvents(function(logic)
+      logic:throwCard(cards, self.skill.name, player, player)
+      logic:drawCards(player, #cards, self.skill.name)
+    end)
+  end,
+})
+
 return zhiheng

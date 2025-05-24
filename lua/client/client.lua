@@ -817,12 +817,13 @@ end
 ---@param times integer
 local function updateLimitSkill(pid, skill, times)
   if not skill.visible then return end
-  if skill:isSwitchSkill() then
-    local _times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill.switchSkillName) == fk.SwitchYang and 0 or 1
+  local skill_name = skill:getSkeleton().name
+  if skill:hasTag(Skill.Switch) then
+    local _times = ClientInstance:getPlayerById(pid):getSwitchSkillState(skill_name) == fk.SwitchYang and 0 or 1
     if times == -1 then _times = -1 end
-    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill.switchSkillName, _times })
-  elseif skill.frequency == Skill.Limited or skill.frequency == Skill.Wake or skill.frequency == Skill.Quest then
-    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill.name, times })
+    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill_name, _times })
+  elseif skill:hasTag(Skill.Limited) or skill:hasTag(Skill.Wake) or skill:hasTag(Skill.Quest) then
+    ClientInstance:notifyUI("UpdateLimitSkill", { pid, skill_name, times })
   end
 end
 
@@ -840,11 +841,6 @@ fk.client_callback["LoseSkill"] = function(self, data)
   elseif skill.visible then
     -- 按理说能弄得更好的但还是复制粘贴舒服
     local sks = { table.unpack(skill.related_skills) }
-    --[[ 需要大伙都适配好main_skill或者讨论出更好方案才行。不敢轻举妄动
-    local sks = table.filter(skill.related_skills, function(s)
-      return s.main_skill == skill
-    end)
-    --]]
     table.insert(sks, skill)
     table.removeOne(target.player_skills, skill)
     local chk = false
@@ -890,6 +886,7 @@ fk.client_callback["AddSkill"] = function(self, data)
     -- 添加假技能：服务器只会传一个主技能来。
     -- 若有主动技则添加按钮，若有触发技则添加预亮按钮。
     -- 无视状态技。
+    -- TODO：根据skel判断，是refresh和delay就不添加按钮
     local sks = { table.unpack(skill.related_skills) }
     table.insert(sks, skill)
     table.insert(target.player_skills, skill)
@@ -919,7 +916,7 @@ fk.client_callback["AddSkill"] = function(self, data)
     end
   end
 
-  if skill.frequency == Skill.Quest then
+  if skill:hasTag(Skill.Quest) then
     return
   end
 
@@ -1075,7 +1072,7 @@ fk.client_callback["AddSkillUseHistory"] = function(self, data)
   player:addSkillUseHistory(skill_name, time)
 
   local skill = Fk.skills[skill_name]
-  if not skill or skill.frequency == Skill.Quest then return end
+  if not skill or skill:hasTag(Skill.Quest) then return end
   updateLimitSkill(playerid, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 
@@ -1085,7 +1082,7 @@ fk.client_callback["SetSkillUseHistory"] = function(self, data)
   player:setSkillUseHistory(skill_name, time, scope)
 
   local skill = Fk.skills[skill_name]
-  if not skill or skill.frequency == Skill.Quest then return end
+  if not skill or skill:hasTag(Skill.Quest) then return end
   updateLimitSkill(id, Fk.skills[skill_name], player:usedSkillTimes(skill_name, Player.HistoryGame))
 end
 

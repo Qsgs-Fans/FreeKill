@@ -5,7 +5,8 @@ local sk = fk.CreateSkill{
 sk:addEffect('invalidity', {
   global = true,
   invalidity_func = function(self, player, skill)
-    if skill.attached_equip and Fk:cloneCard(skill.attached_equip).sub_type == Card.SubtypeArmor then
+    if skill:getSkeleton() and skill:getSkeleton().attached_equip and
+      Fk:cloneCard(skill:getSkeleton().attached_equip).sub_type == Card.SubtypeArmor then
       if player:getMark(MarkEnum.MarkArmorNullified) > 0 then return true end
 
       --无视防具（规则集版）！

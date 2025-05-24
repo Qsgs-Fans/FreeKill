@@ -48,7 +48,7 @@ function ReqUseCard:cardFeasible(card)
   local exp = Exppattern:Parse(self.pattern)
   local player = self.player
   if not player:prohibitUse(card) and exp:match(card) then
-    return card.is_passive or player:canUse(card, self.extra_data)
+    return (card.is_passive and not self.extra_data.not_passive) or player:canUse(card, self.extra_data)
   end
   return false
 end

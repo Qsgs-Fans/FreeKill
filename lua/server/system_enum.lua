@@ -4,18 +4,19 @@
 
 --- askForUseCard中的extra_data
 ---@class UseExtraData
----@field public must_targets? Player[] @ 必须选择这些目标？
----@field public include_targets? Player[] @ 必须选其中一个目标？
----@field public exclusive_targets? Player[] @ 只能选择这些目标？
----@field public fix_targets? Player[] @ 将固定目标修改为这些目标（例如对他人使用桃）
+---@field public must_targets? integer[] @ 必须选择这些目标？
+---@field public include_targets? integer[] @ 必须选其中一个目标？
+---@field public exclusive_targets? integer[] @ 只能选择这些目标？
+---@field public fix_targets? integer[] @ 将固定目标修改为这些目标（例如对他人使用桃）
 ---@field public bypass_distances? boolean @ 无距离限制？
 ---@field public bypass_times? boolean @ 无次数限制？
+---@field public not_passive? boolean @ 禁止使用被动牌（用于模拟出牌阶段空闲时使用）
 ---@field public playing? boolean @ (AI专用) 出牌阶段？
 
 --- AskForCardUse 询问使用卡牌的数据
 ---@class AskForCardUse
 ---@field public user ServerPlayer @ 使用者
----@field public cardName string @ 烧条信息
+---@field public skillName string @ 烧条技能名
 ---@field public pattern string @ 可用牌过滤
 ---@field public eventData? CardEffectEvent @ 事件数据
 ---@field public extraData? UseExtraData | any @ 额外数据
@@ -24,10 +25,10 @@
 --- AskForCardResponse 询问响应卡牌的数据
 ---@class AskForCardResponse
 ---@field public user ServerPlayer @ 响应者
----@field public cardName string @ 烧条信息
+---@field public skillName string @ 烧条技能名
 ---@field public pattern string @ 可用牌过滤
 ---@field public extraData? UseExtraData | any @ 额外数据
----@field public result? Card
+---@field public result? RespondCardDataSpec @ 打出牌的数据
 
 --- LogMessage 战报信息
 ---@class LogMessage
@@ -68,7 +69,7 @@ fk.ReasonPutIntoDiscardPile = 6
 fk.ReasonPrey = 7
 fk.ReasonExchange = 8
 fk.ReasonUse = 9
-fk.ReasonResonpse = 10
+fk.ReasonResponse = 10
 fk.ReasonJudge = 11
 fk.ReasonRecast = 12
 

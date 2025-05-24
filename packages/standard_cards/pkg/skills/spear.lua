@@ -1,15 +1,14 @@
 local skill = fk.CreateSkill {
-  name = "spear_skill",
+  name = "spear_skill&",
   attached_equip = "spear",
 }
 
 skill:addEffect("viewas", {
-  prompt = "#spear_skill",
+  prompt = "#spear_skill&",
   pattern = "slash",
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)
-    if #selected == 2 then return end
-    return table.contains(player:getHandlyIds(true), to_select)
+    return #selected < 2 and table.contains(player:getHandlyIds(), to_select)
   end,
   view_as = function(self, player, cards)
     if #cards ~= 2 then return nil end
@@ -19,5 +18,7 @@ skill:addEffect("viewas", {
     return c
   end,
 })
+
+skill:addAI(nil, "vs_skill", "spear_skill")
 
 return skill

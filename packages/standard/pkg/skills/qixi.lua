@@ -22,4 +22,6 @@ qixi:addEffect("viewas", {
   end
 })
 
+qixi:addAI(nil, "vs_skill")
+
 return qixi

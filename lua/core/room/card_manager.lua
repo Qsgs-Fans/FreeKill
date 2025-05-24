@@ -36,8 +36,8 @@ function CardManager:setCardArea(cardId, cardArea, owner)
   self.owner_map[cardId] = owner
 end
 
---- 获取一张牌所处的区域。
----@param cardId integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
+--- 获取一张牌所处的区域。若为多张牌且区域不同，返回Card.Unknown
+---@param cardId? integer | Card @ 要获得区域的那张牌，可以是Card或者一个id
 ---@return CardArea @ 这张牌的区域
 function CardManager:getCardArea(cardId)
   local cardIds = {}
@@ -132,66 +132,7 @@ function CardManager:applyMoveInfo(data, info)
   self:setCardArea(info.cardId, data.toArea, to)
 end
 
---- 对那个id应用锁定视为技，将它变成要被锁定视为的牌。
----@param id integer @ 要处理的id
----@param player Player @ 和这张牌扯上关系的那名玩家
----@param data any @ 随意，目前只用到JudgeStruct，为了影响判定牌
-function CardManager:filterCard(id, player, data)
-  if player == nil then
-    self.filtered_cards[id] = nil
-    return
-  end
 
-  local card = Fk:getCardById(id, true)
-  local filters = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable---@type FilterSkill[]
-
-  if #filters == 0 then
-    self.filtered_cards[id] = nil
-    return
-  end
-
-  local modify = false
-  if data and type(data) == "table" and data.card
-    and type(data.card) == "table" and data.card:isInstanceOf(Card) then
-    modify = true
-  end
-
-  for _, f in ipairs(filters) do
-    if f:cardFilter(card, player, type(data) == "table" and data.isJudgeEvent) then
-      local _card = f:viewAs(player, card)
-      _card.id = id
-      _card.skillName = f.name
-      if modify and RoomInstance then
-        if not f.mute then
-          player:broadcastSkillInvoke(f.name)
-          RoomInstance:doAnimate("InvokeSkill", {
-            name = f.name,
-            player = player.id,
-            skill_type = f.anim_type,
-          })
-        end
-        RoomInstance:sendLog{
-          type = "#FilterCard",
-          arg = f.name,
-          from = player.id,
-          arg2 = card:toLogString(),
-          arg3 = _card:toLogString(),
-        }
-      end
-      card = _card
-    end
-    if card == nil then
-      card = Fk:getCardById(id)
-    end
-    self.filtered_cards[id] = card
-  end
-
-  if modify then
-    self.filtered_cards[id] = nil
-    data.card = card
-    return
-  end
-end
 
 --- 打印一张牌并存放于Void区
 function CardManager:printCard(name, suit, number)
@@ -214,20 +155,23 @@ end
 ---@param from? Player
 function CardManager:showCards(cards, from)
   cards = Card:getIdList(cards)
-  if from then from = from.id end
+  local src
+  if from then src = from.id end
   self:sendLog{
     type = "#ShowCard",
-    from = from,
+    from = src,
     card = cards,
   }
   self:doBroadcastNotify("ShowCard", json.encode{
-    from = from,
+    from = src,
     cards = cards,
   })
   self:sendFootnote(cards, {
     type = "##ShowCard",
-    from = from,
+    from = src,
   })
+
+  self.logic:trigger(fk.CardShown, from, { cardIds = cards })
 end
 
 --- 准备房间牌堆

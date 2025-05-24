@@ -11,7 +11,6 @@
 ---@field public reply_ready boolean
 ---@field public reply_cancel boolean
 ---@field public phases Phase[]
----@field public skipped_phases Phase[]
 ---@field public phase_state table[]
 ---@field public phase_index integer
 ---@field private _fake_skills Skill[]
@@ -31,7 +30,6 @@ function ServerPlayer:initialize(_self)
   self.room = nil
 
   self.phases = {}
-  self.skipped_phases = {}
   self.phase_state = {}
 
   self._fake_skills = {}
@@ -183,245 +181,104 @@ function ServerPlayer:showCards(cards)
   --   from = self.id,
   -- })
   self.room:showCards(cards, self)
-
-  room.logic:trigger(fk.CardShown, self, { cardIds = cards })
 end
 
 
-
----@param from_phase Phase
----@param to_phase Phase
-function ServerPlayer:changePhase(from_phase, to_phase)
-  local room = self.room
-  local logic = room.logic
-  self.phase = Player.PhaseNone
-
-  local phase_change = {
-    from = from_phase,
-    to = to_phase
-  }
-
-  local skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
-  if skip and to_phase ~= Player.NotActive then
-    self.phase = from_phase
-    return true
-  end
-
-  self.phase = to_phase
-  room:broadcastProperty(self, "phase")
-
-  if #self.phases > 0 then
-    table.remove(self.phases, 1)
-  end
-
-  local data = { ---@type PhaseDataSpec
-    who = self,
-    reason = "game_rule",
-    phase = self.phase -- FIXME: 等待拆分
-  }
-  GameEvent.Phase:create(PhaseData:new(data)):exec()
-
-  return false
-end
-
+--获得一个额外阶段
 ---@param phase Phase
+---@param skillName? string @ 额外阶段原因
 ---@param delay? boolean
-function ServerPlayer:gainAnExtraPhase(phase, delay)
+function ServerPlayer:gainAnExtraPhase(phase, skillName, delay)
   local room = self.room
   delay = (delay == nil) and true or delay
   local logic = room.logic
   if delay then
-    local turn = logic:getCurrentEvent():findParent(GameEvent.Phase, true)
+    local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraPhase(phase, false) end)
+      turn.data:gainAnExtraPhase(phase, skillName, self)
       return
     end
   end
 
   local current = self.phase
 
-  local phase_change = {
-    from = current,
-    to = phase
-  }
-
-  local skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
-
-  phase = phase_change.to
-  self.phase = phase
+  self.phase = Player.PhaseNone
   room:broadcastProperty(self, "phase")
 
-  local cancel_skip = true
-  if phase ~= Player.NotActive and (skip) then
-    cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, phase)
-  end
-  if (not skip) or (cancel_skip) then
-    room:sendLog{
-      type = "#GainAnExtraPhase",
-      from = self.id,
-      arg = Util.PhaseStrMapper(phase),
-    }
-
-    local data = { ---@type PhaseDataSpec
-      who = self,
-      reason = "game_rule",
-      phase = self.phase -- FIXME: 等待拆分
-    }
-    GameEvent.Phase:create(PhaseData:new(data)):exec()
-
-    phase_change = {
-      from = phase,
-      to = current
-    }
-    logic:trigger(fk.EventPhaseChanging, self, phase_change)
-  else
-    room:sendLog{
-      type = "#PhaseSkipped",
-      from = self.id,
-      arg = Util.PhaseStrMapper(phase),
-    }
-    logic:trigger(fk.EventPhaseSkipped, self, {phase = phase})
-  end
+  local data = { ---@type PhaseDataSpec
+    who = self,
+    reason = skillName or "game_rule",
+    phase = phase -- FIXME: 等待拆分
+  }
+  GameEvent.Phase:create(PhaseData:new(data)):exec()
 
   self.phase = current
   room:broadcastProperty(self, "phase")
 end
 
---- 执行回合的内容，即依次执行额定阶段
----@param phase_table? Phase[] @ 回合的额定阶段，填空则为正常流程
-function ServerPlayer:play(phase_table)
-  phase_table = phase_table or {}
-  if #phase_table > 0 then
-    if not table.contains(phase_table, Player.RoundStart) then
-      table.insert(phase_table, 1, Player.RoundStart)
-    end
-    if not table.contains(phase_table, Player.NotActive) then
-      table.insert(phase_table, Player.NotActive)
-    end
-  else
-    phase_table = {
-      Player.RoundStart, Player.Start,
-      Player.Judge, Player.Draw, Player.Play, Player.Discard,
-      Player.Finish, Player.NotActive,
-    }
-  end
-
-  self.phases = phase_table
-  self.phase_state = {}
-
-  local phases = self.phases
-  local phase_state = self.phase_state
+--- 跳过本回合的某个阶段
+---@param phase Phase
+function ServerPlayer:skip(phase)
   local room = self.room
-
-  for i = 1, #phases do
-    phase_state[i] = {
-      phase = phases[i],
-      skipped = self.skipped_phases[phases[i]] or false
-    }
-  end
-
-  for i = 1, #phases do
-    if self.dead or room:getTag("endTurn") or phases[i] == nil then
-      self:changePhase(self.phase, Player.NotActive)
-      break
-    end
-
-    self.phase_index = i
-    local phase_change = {
-      -- from = self.phase,
-      to = phases[i]
-    }
-
-    local logic = self.room.logic
-    self.phase = Player.PhaseNone
-    room:broadcastProperty(self, "phase")
-
-    local skip = phase_state[i].skipped
-    if not skip then
-      skip = logic:trigger(fk.EventPhaseChanging, self, phase_change)
-      if skip then
-        fk.qWarning("Return true at fk.EventPhaseChanging is deprecated! Use Player:skip() instead")
+  local current_turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
+  if current_turn then
+    local phase_data
+    for i = current_turn.data.phase_index + 1, #current_turn.data.phase_table, 1 do
+      phase_data = current_turn.data.phase_table[i]
+      if phase_data.phase == phase then
+        phase_data.skipped = true
       end
-      if self.skipped_phases[phases[i]] then
-        skip = true
-      end
-    end
-    phases[i] = phase_change.to
-    phase_state[i].phase = phases[i]
-
-    self.phase = phases[i]
-    room:broadcastProperty(self, "phase")
-
-    local cancel_skip = true
-    if phases[i] ~= Player.NotActive and (skip) then
-      cancel_skip = logic:trigger(fk.EventPhaseSkipping, self, self.phase)
-    end
-
-    if (not skip) or (cancel_skip) then
-      local data = { ---@type PhaseDataSpec
-        who = self,
-        reason = "game_rule",
-        phase = self.phase -- FIXME: 等待拆分
-      }
-      GameEvent.Phase:create(PhaseData:new(data)):exec()
-    else
-      room:sendLog{
-        type = "#PhaseSkipped",
-        from = self.id,
-        arg = Util.PhaseStrMapper(self.phase),
-      }
-      logic:trigger(fk.EventPhaseSkipped, self, {phase = self.phase})
     end
   end
 end
 
---- 跳过本回合的某个额定阶段
+--- 判断该角色是否拥有能跳过的阶段
 ---@param phase Phase
-function ServerPlayer:skip(phase)
-  if not table.contains({
-    Player.Judge,
-    Player.Draw,
-    Player.Play,
-    Player.Discard
-  }, phase) then
-    return
-  end
-  self.skipped_phases[phase] = true
-  for _, t in ipairs(self.phase_state) do
-    if t.phase == phase then
-      t.skipped = true
+---@return boolean
+function ServerPlayer:canSkip(phase)
+  local room = self.room
+  local current_turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
+  if current_turn then
+    local phase_data
+    for i = current_turn.data.phase_index + 1, #current_turn.data.phase_table, 1 do
+      phase_data = current_turn.data.phase_table[i]
+      if phase_data.phase == phase and not phase_data.skipped then
+        return true
+      end
     end
   end
+  return false
 end
 
 --- 当进行到出牌阶段空闲点时，结束出牌阶段。
 function ServerPlayer:endPlayPhase()
   if self.phase == Player.Play then
-    self._phase_end = true
+    self:endCurrentPhase()
   end
   -- TODO: send log
 end
 
 --- 结束当前阶段。
 function ServerPlayer:endCurrentPhase()
-  self._phase_end = true
+  local room = self.room
+  local current_phase = room.logic:getCurrentEvent():findParent(GameEvent.Phase, true)
+  if current_phase then
+    current_phase.data.phase_end = true
+  end
 end
 
 --- 获得一个额外回合
 ---@param delay? boolean @ 是否延迟到当前回合结束再开启额外回合，默认是
 ---@param skillName? string @ 额外回合原因
----@param turnData? TurnDataSpec @ 额外回合的信息
-function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
+---@param phases? Phase[] @ 此额外回合进行的额定阶段列表
+function ServerPlayer:gainAnExtraTurn(delay, skillName, phases)
   local room = self.room
   delay = (delay == nil) and true or delay
   skillName = skillName or room.logic:getCurrentSkillName() or "game_rule"
-  turnData = turnData or {}
-  turnData.who = self
-  turnData.reason = skillName
   if delay then
     local turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName, turnData) end)
+      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName, phases) end)
       return
     end
   end
@@ -436,7 +293,7 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName, turnData)
 
   room:addTableMark(self, "_extra_turn_count", skillName)
 
-  GameEvent.Turn:create(TurnData:new(turnData)):exec()
+  GameEvent.Turn:create(TurnData:new(self, skillName, phases)):exec()
 
   local mark = self:getTableMark("_extra_turn_count")
   if #mark > 0 then
@@ -474,11 +331,11 @@ end
 ---@param card integer | integer[] | Card | Card[]
 ---@param visible? boolean
 ---@param skillName? string
----@param proposer? integer
+---@param proposer? ServerPlayer
 ---@param visiblePlayers? integer | integer[] @ 为nil时默认对自己可见
 function ServerPlayer:addToPile(pile_name, card, visible, skillName, proposer, visiblePlayers)
   self.room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible,
-  proposer or self.id, nil, visiblePlayers)
+  proposer or self, nil, visiblePlayers)
 end
 
 function ServerPlayer:bury()
@@ -519,7 +376,7 @@ end
 
 function ServerPlayer:onAllSkillLose()
   for _, skill in ipairs(self:getAllSkills()) do
-    skill:onLose(self, true)
+    skill:getSkeleton():onLose(self, true)
   end
 end
 
@@ -615,11 +472,11 @@ function ServerPlayer:reset()
   if not self.faceup then self:turnOver() end
 end
 
---- 进行拼点。
----@param tos ServerPlayer[]
----@param skillName string
----@param initialCard? Card
----@return PindianStruct
+--- 对若干名角色发起拼点。
+---@param tos ServerPlayer[] @ 拼点目标角色
+---@param skillName string @ 技能名
+---@param initialCard? Card @ 发起者的起始拼点牌
+---@return PindianData
 function ServerPlayer:pindian(tos, skillName, initialCard)
   local pindianData = { from = self, tos = tos, reason = skillName, fromCard = initialCard, results = {} }
   self.room:pindian(pindianData)
@@ -653,9 +510,7 @@ function ServerPlayer:addFakeSkill(skill)
 
   table.insert(self._fake_skills, skill)
   for _, s in ipairs(skill.related_skills) do
-    -- if s.main_skill == skill then -- TODO: need more detailed
-      table.insert(self._fake_skills, s)
-    -- end
+    table.insert(self._fake_skills, s)
   end
 
   -- TODO
@@ -697,8 +552,7 @@ function ServerPlayer:prelightSkill(skill, isPrelight)
   if not self._prelighted_skills[skill] and not self:hasSkill(skill) then
     self._prelighted_skills[skill] = true
     -- to attach skill to room
-    self:addSkill(skill)
-    self:loseSkill(skill)
+    self.room:addSkill(skill)
   end
 
   if isPrelight then
@@ -742,7 +596,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
     for _, sname in ipairs(other:getSkillNameList(true)) do
       local s = Fk.skills[sname]
-      if s.frequency == Skill.Compulsory and s.relate_to_place ~= (isDeputy and "m" or "d") then
+      if s:hasTag(Skill.Compulsory) and not s:hasTag(isDeputy and Skill.MainPlace or Skill.DeputyPlace) then
         ret = false
         break
       end
@@ -780,10 +634,10 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   }
 
   local data = {[isDeputy and "d" or "m"] = generalName}
-  room.logic:trigger(fk.GeneralShown, self, data)
+  room.logic:trigger(fk.GeneralShown, self, data) -- 注意不应该使用这个时机发动技能
   if not no_trigger then
     local current_event = room.logic:getCurrentEvent()
-    if table.contains({GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
+    if table.contains({GameEvent.Game, GameEvent.Round, GameEvent.Turn, GameEvent.Phase}, current_event.event) then
       room.logic:trigger(fk.GeneralRevealed, self, data)
     else
       if current_event.parent then
@@ -846,8 +700,7 @@ function ServerPlayer:hideGeneral(isDeputy)
   local generalName = isDeputy and self.deputyGeneral or self.general
   local mark = isDeputy and "__heg_deputy" or "__heg_general"
 
-  self:setMark(mark, generalName)
-  self:doNotify("SetPlayerMark", json.encode{ self.id, mark, generalName})
+  room:setPlayerMark(self, mark, generalName)
 
   if isDeputy then
     room:setDeputyGeneral(self, "anjiang")
@@ -858,12 +711,12 @@ function ServerPlayer:hideGeneral(isDeputy)
   end
 
   local general = Fk.generals[generalName]
-  local place = isDeputy and "m" or "d"
+  local place = isDeputy and Skill.MainPlace or Skill.DeputyPlace
   for _, sname in ipairs(general:getSkillNameList()) do
     room:handleAddLoseSkills(self, "-" .. sname, nil, false, false)
     local s = Fk.skills[sname]
-    if s.relate_to_place ~= place then
-      if s.frequency == Skill.Compulsory then
+    if not s:hasTag(place) then
+      if s:hasTag(Skill.Compulsory) then
         self:addFakeSkill("reveal_skill&")
       end
       self:addFakeSkill(s)
@@ -873,7 +726,7 @@ function ServerPlayer:hideGeneral(isDeputy)
   self.gender = General.Agender
   if Fk.generals[self.general].gender ~= General.Agender then
     self.gender = Fk.generals[self.general].gender
-  elseif self.deputyGeneral and Fk.generals[self.deputyGeneral].gender ~= General.Agender then
+  elseif self.deputyGeneral and self.deputyGeneral ~= "" and Fk.generals[self.deputyGeneral].gender ~= General.Agender then
     self.gender = Fk.generals[self.deputyGeneral].gender
   end
   room:broadcastProperty(self, "gender")
@@ -921,7 +774,7 @@ function ServerPlayer:addQinggangTag(data)
     self.room:addPlayerMark(self, MarkEnum.MarkArmorNullified)
     data.extra_data = data.extra_data or {}
     data.extra_data.qinggang_tag = data.extra_data.qinggang_tag or {}
-    table.insert(data.extra_data.qinggang_tag, data.to)
+    table.insert(data.extra_data.qinggang_tag, data.to.id)
   end
 end
 

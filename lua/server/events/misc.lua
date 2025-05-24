@@ -25,7 +25,7 @@ function ChangeProperty:main()
     logic:breakEvent()
   end
 
-  local isLord = (player.role == "lord" and player.role_shown)
+  local isLord = (player.role == "lord" and player.role_shown) and room:isGameMode("role_mode")
   if data.general and data.general ~= "" and data.general ~= player.general then
     local originalGeneral = Fk.generals[player.general] or Fk.generals["blank_shibing"]
     local originalSkills = originalGeneral and originalGeneral:getSkillNameList(true) or Util.DummyTable
@@ -35,7 +35,7 @@ function ChangeProperty:main()
     local newGeneral = Fk.generals[data.general] or Fk.generals["blank_shibing"]
     for _, name in ipairs(newGeneral:getSkillNameList(isLord)) do
       local s = Fk.skills[name]
-      if not s.relate_to_place or s.relate_to_place == "m" then
+      if not s:hasTag(Skill.DeputyPlace) then
         table.insertIfNeed(skills, name)
       end
     end
@@ -63,7 +63,7 @@ function ChangeProperty:main()
       local newDeputy = Fk.generals[data.deputyGeneral] or Fk.generals["blank_shibing"]
       for _, name in ipairs(newDeputy:getSkillNameList(isLord)) do
         local s = Fk.skills[name]
-        if not s.relate_to_place or s.relate_to_place == "d" then
+        if not s:hasTag(Skill.MainPlace) then
           table.insertIfNeed(skills, name)
         end
       end
@@ -101,30 +101,20 @@ function ChangeProperty:main()
     room:setPlayerProperty(player, "kingdom", data.kingdom)
   end
 
-  for _, s in ipairs(Fk.generals[player.general].skills) do
-    if #s.attachedKingdom > 0 then
-      if table.contains(s.attachedKingdom, player.kingdom) then
+  local skillsAttachedKingdom = Fk.generals[player.general]:getSkillNameList(isLord)
+  if player.deputyGeneral ~= "" then
+    table.insertTableIfNeed(skillsAttachedKingdom, Fk.generals[player.deputyGeneral]:getSkillNameList(isLord))
+  end
+  for _, sname in ipairs(skillsAttachedKingdom) do
+    local s = Fk.skills[sname]
+    if s:hasTag(Skill.AttachedKingdom) then
+      if table.contains(s:getSkeleton().attached_kingdom, player.kingdom) then
         table.insertIfNeed(skills, s.name)
       else
         if table.contains(skills, s.name) then
           table.removeOne(skills, s.name)
         else
           table.insertIfNeed(skills, "-"..s.name)
-        end
-      end
-    end
-  end
-  if player.deputyGeneral ~= "" then
-    for _, s in ipairs(Fk.generals[player.deputyGeneral].skills) do
-      if #s.attachedKingdom > 0 then
-        if table.contains(s.attachedKingdom, player.kingdom) then
-          table.insertIfNeed(skills, s.name)
-        else
-          if table.contains(skills, s.name) then
-            table.removeOne(skills, s.name)
-          else
-            table.insertIfNeed(skills, "-"..s.name)
-          end
         end
       end
     end
@@ -144,7 +134,7 @@ end
 ---@param kingdomChange? boolean @ 是否改变势力（仅更改主将时变更），默认改变
 function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendLog, maxHpChange, kingdomChange)
   local new = Fk.generals[new_general] or Fk.generals["sunce"] or Fk.generals["blank_shibing"]
-
+  ---@cast self Room
   kingdomChange = (kingdomChange == nil) and true or kingdomChange
   local kingdom = (isDeputy or not kingdomChange) and player.kingdom or new.kingdom
   if not isDeputy and kingdomChange then

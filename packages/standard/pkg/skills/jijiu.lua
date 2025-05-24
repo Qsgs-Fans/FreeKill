@@ -13,8 +13,8 @@ jijiu:addEffect("viewas", {
   view_as = function(self, player, cards)
     if #cards ~= 1 then return end
     local c = Fk:cloneCard("peach")
-    c.skillName = skill.name
-    c:addSubcard(jijiu[1])
+    c.skillName = jijiu.name
+    c:addSubcard(cards[1])
     return c
   end,
   enabled_at_play = Util.FalseFunc,
@@ -22,5 +22,7 @@ jijiu:addEffect("viewas", {
     return not response and Fk:currentRoom().current ~= player
   end,
 })
+
+jijiu:addAI(nil, "vs_skill")
 
 return jijiu

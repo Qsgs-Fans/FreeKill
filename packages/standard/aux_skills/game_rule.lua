@@ -47,14 +47,18 @@ gameRule:addEffect(fk.AskForPeaches, {
       end)
       if #cardNames == 0 then return end
 
-      local peach_use = room:askForUseCard(
-        player,
-        "peach",
-        table.concat(cardNames, ","),
-        prompt,
-        true,
-        {analepticRecover = true, must_targets = { dyingPlayer.id }, fix_targets = { dyingPlayer.id }}
-      )
+      local params = { ---@type AskToUseCardParams
+        skill_name = "peach",
+        pattern = table.concat(cardNames, ","),
+        prompt = prompt,
+        cancelable = true,
+        extra_data = {
+          analepticRecover = true,
+          must_targets = { dyingPlayer.id },
+          fix_targets = { dyingPlayer.id }
+        }
+      }
+      local peach_use = room:askToUseCard(player, params)
       if not peach_use then break end
       peach_use.tos = { dyingPlayer }
       if peach_use.card.trueName == "analeptic" then
@@ -120,8 +124,7 @@ gameRule:addEffect(fk.BuryVictim, {
     if room.tag["SkipNormalDeathProcess"] or player.rest > 0 or (data.extra_data and data.extra_data.skip_reward_punish) then
       return false
     end
-    local damage = data.damage
-    Fk.game_modes[room.settings.gameMode]:deathRewardAndPunish(player, damage and damage.from)
+    Fk.game_modes[room.settings.gameMode]:deathRewardAndPunish(player, data.killer)
   end,
 })
 

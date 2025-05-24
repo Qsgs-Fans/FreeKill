@@ -3,6 +3,7 @@ local luoyi = fk.CreateSkill {
 }
 
 luoyi:addEffect(fk.DrawNCards, {
+  anim_type = "offensive",
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(luoyi.name) and data.n > 0
   end,
@@ -12,16 +13,15 @@ luoyi:addEffect(fk.DrawNCards, {
 })
 
 luoyi:addEffect(fk.DamageCaused, {
+  anim_type = "offensive",
+  is_delay_effect = true,
   can_trigger = function(self, event, target, player, data)
-    return player:usedSkillTimes(luoyi.name, Player.HistoryTurn) > 0 and
+    return player:usedSkillTimes(luoyi.name, Player.HistoryTurn) > 0 and target == player and
       data.card and (data.card.trueName == "slash" or data.card.name == "duel") and data.by_user
   end,
   on_cost = Util.TrueFunc,
   on_use = function(self, event, target, player, data)
-    local room = player.room
-    player:broadcastSkillInvoke("luoyi")
-    room:notifySkillInvoked(player, "luoyi")
-    data.damage = data.damage + 1
+    data:changeDamage(1)
   end,
 })
 
@@ -40,11 +40,7 @@ luoyi:addTest(function(room, me)
   local origin_hp = comp2.hp
   FkTest.runInRoom(function()
     room:obtainCard(me, 1)
-    local data = { ---@type TurnDataSpec
-      who = me,
-      reason = "game_rule",
-    }
-    GameEvent.Turn:create(TurnData:new(data)):exec()
+    GameEvent.Turn:create(TurnData:new(me, "game_rule")):exec()
   end)
   -- p(me:getCardIds("h"))
   lu.assertEquals(#me:getCardIds("h"), 1)

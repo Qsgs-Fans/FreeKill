@@ -1,5 +1,6 @@
 ---@class TriggerData: Object
 ---@field private _data any
+---@field public extra_data any
 TriggerData = class("TriggerData")
 
 function TriggerData:initialize(spec)
@@ -29,4 +30,4 @@ require "core.events.gameflow"
 require "core.events.pindian"
 
 -- 要兼容的嘛
-require "compat.events.init"
+-- require "compat.events.init"

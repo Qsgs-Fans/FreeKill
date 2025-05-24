@@ -15,7 +15,14 @@ skill:addEffect(fk.TargetSpecified, {
     if to:isKongcheng() then
       player:drawCards(1, skill.name)
     else
-      local result = room:askForDiscard(to, 1, 1, false, skill.name, true, nil, "#double_swords-invoke:"..player.id)
+      local result = room:askToDiscard(to, {
+        min_num = 1,
+        max_num = 1,
+        include_equip = false,
+        skill_name = skill.name,
+        cancelable = true,
+        prompt = "#double_swords-invoke:"..player.id,
+      })
       if #result == 0 then
         player:drawCards(1, skill.name)
       end

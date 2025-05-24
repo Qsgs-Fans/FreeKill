@@ -25,12 +25,7 @@ kurou:addTest(function(room, me)
     })
     FkTest.runInRoom(function()
       room:handleAddLoseSkills(me, "kurou")
-      local data = { ---@type TurnDataSpec
-        who = me,
-        reason = "game_rule",
-        phase_table = { Player.Play }
-      }
-      GameEvent.Turn:create(TurnData:new(data)):exec()
+      GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Play })):exec()
     end)
     lu.assertEquals(#me:getCardIds("h"), 2 * i)
     lu.assertEquals(me.hp, 4 - i)
@@ -43,12 +38,7 @@ kurou:addTest(function(room, me)
   })
   FkTest.runInRoom(function()
     room:handleAddLoseSkills(me, "kurou")
-    local data = { ---@type TurnDataSpec
-      who = me,
-      reason = "game_rule",
-      phase_table = { Player.Play }
-    }
-    GameEvent.Turn:create(TurnData:new(data)):exec()
+    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Play })):exec()
   end)
   lu.assertEquals(me.hp, 0)
   lu.assertEquals(#me:getCardIds("h"), 6)
