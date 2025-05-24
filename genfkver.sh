@@ -18,4 +18,8 @@ fn() {
 
 fn lua
 fn Fk
+fn packages/maneuvering
+fn packages/standard
+fn packages/standard_cards
+fn packages/test
 cd -
