@@ -11,12 +11,13 @@ GraphicsBox {
   property string winner: "tobechanged"
   property string my_role: "" // 拿不到Self.role
   property var summary: []
+  property bool summaryShown: true
 
   id: root
   title.text: winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
                               luatr("Game Lose") : luatr("Game Win"))
                             : luatr("Game Draw")
-  width: 780
+  width: summaryShown ? 780 : 400
   height: queryResultList.height + 96
 
   TableView {
@@ -25,7 +26,7 @@ GraphicsBox {
     // width: parent.width - 30
     // height: parent.height - 30 - body.height - title.height
     width: Math.min(contentWidth, parent.width - 30)
-    height: contentHeight
+    height: parent.summaryShown ? contentHeight : 0
     y: title.height + 10
     clip: true
     columnSpacing: 10
@@ -74,10 +75,19 @@ GraphicsBox {
     }
   }
 
+  ToolButton {
+    text: (parent.summaryShown ? "➖" : "➕")
+    onClicked: {
+      parent.summaryShown = !parent.summaryShown
+    }
+    anchors.top: parent.top
+    anchors.right: parent.right
+  }
+
   RowLayout {
     id: body
     anchors.right: parent.right
-    anchors.rightMargin: 15
+    anchors.rightMargin: parent.summaryShown ? 15 : parent.width / 2 - 15 - bkmBtn.width - repBtn.width / 2
     anchors.bottom: parent.bottom
     anchors.bottomMargin: 10
     width: parent.width
@@ -134,6 +144,9 @@ GraphicsBox {
 
   function getSummary() {
     const summaryData = leval("ClientInstance.banners['GameSummary']");
+    if (!summaryData || summaryData.length === 0) {
+      return;
+    }
     lcall("FindMosts");
     summaryData.forEach((s, index) => {
       let _s = lcall("Entitle", s, index, winner);
