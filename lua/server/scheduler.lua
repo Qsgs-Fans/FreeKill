@@ -64,8 +64,8 @@ function ResumeRoom(roomId, reason)
     end
     runningRooms[room.id] = nil
     room.room:decreaseRefCount()
-    room = nil
-    collectgarbage("collect")
+    -- room = nil
+    -- collectgarbage("collect")
   end
   return over
 end

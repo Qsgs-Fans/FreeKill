@@ -12,6 +12,7 @@ if ! [ -e packages/freekill-core ]; then
 fi
 
 rm -r lua/
+rm -r Fk/
 
 delcode() {
   cd $1
@@ -25,6 +26,7 @@ delcode standard_cards
 delcode maneuvering
 delcode test
 
+cp -r freekill-core/Fk ..
 cp -r freekill-core/lua ..
 cp -r freekill-core/standard .
 cp -r freekill-core/standard_cards .

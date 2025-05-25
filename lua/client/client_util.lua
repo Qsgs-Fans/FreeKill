@@ -472,6 +472,12 @@ function GetPlayerEquips(pid)
   return p.player_cards[Player.Equip]
 end
 
+function GetPlayerJudges(pid)
+  local c = ClientInstance
+  local p = c:getPlayerById(pid)
+  return p.player_cards[Player.Judge]
+end
+
 function ResetClientLua()
   local self = ClientInstance
   local _data = self.enter_room_data;

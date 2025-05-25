@@ -1161,6 +1161,7 @@ fk.client_callback["GameOver"] = function(self, jsonData)
         json.encode(self:toJsonObject()), json.encode(self.record))
     end
   end
+  Self.buddy_list = table.map(self.players, Util.IdMapper)
   self:notifyUI("GameOver", jsonData)
 end
 

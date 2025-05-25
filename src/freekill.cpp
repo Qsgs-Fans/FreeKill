@@ -427,10 +427,17 @@ int freekill_main(int argc, char *argv[]) {
   root->setContextProperty(
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
-  engine->addImportPath(QDir::currentPath());
-
-  // 加载完全局变量后，就再去加载 main.qml，此时UI界面正式显示
-  engine->load("Fk/main.qml");
+  // 加载GUI了，如果core有的话用core的
+  if (QFile::exists("packages/freekill-core") &&
+      !GetDisabledPacks().contains("freekill-core") &&
+      QFile::exists("packages/freekill-core/Fk")) {
+    // FIXME: 客户端更新core后提示重启
+    engine->addImportPath("packages/freekill-core");
+    engine->load("packages/freekill-core/Fk/main.qml");
+  } else {
+    engine->addImportPath(QDir::currentPath());
+    engine->load("Fk/main.qml");
+  }
 
   // qml 报错了就直接退出吧
   if (engine->rootObjects().isEmpty())

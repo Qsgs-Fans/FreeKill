@@ -480,13 +480,17 @@ function Player:getMaxCards()
 end
 
 --- 获取玩家攻击范围。
+---@param excludeIds? integer[] @ 忽略的自己装备的id列表
+---@param excludeSkills? string[] @ 忽略的技能名列表
 ---@return integer
-function Player:getAttackRange()
+function Player:getAttackRange(excludeIds, excludeSkills)
   local baseValue = 1
 
   local weapons = table.filter(self:getEquipments(Card.SubtypeWeapon), function (id)
-    local weapon = Fk:getCardById(id) ---@class Weapon
-    return weapon:AvailableAttackRange(self)
+    if not table.contains(excludeIds or {}, id) then
+      local weapon = Fk:getCardById(id) ---@class Weapon
+      return weapon:AvailableAttackRange(self)
+    end
   end)
   if #weapons > 0 then
     baseValue = 0
@@ -496,19 +500,36 @@ function Player:getAttackRange()
     end
   end
 
+  excludeSkills = excludeSkills or {}
+  if excludeIds then
+    for _, id in ipairs(excludeIds) do
+      local equip = self:getVirualEquip(id) --[[@as EquipCard]]
+      if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
+        equip = Fk:getCardById(id) --[[@as EquipCard]]
+      end
+      if equip then
+        for _, skill in ipairs(equip:getEquipSkills(self)) do
+          table.insertIfNeed(excludeSkills, skill.name)
+        end
+      end
+    end
+  end
+
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   local max_fixed, correct = nil, 0
   for _, skill in ipairs(status_skills) do
-    local final = skill:getFinal(self)
-    if final then -- 目前逻辑，发现一个终值马上返回
-      return math.max(0, final)
+    if not table.contains(excludeSkills, skill.name) then
+      local final = skill:getFinal(self)
+      if final then -- 目前逻辑，发现一个终值马上返回
+        return math.max(0, final)
+      end
+      local f = skill:getFixed(self)
+      if f ~= nil then
+        max_fixed = max_fixed and math.max(max_fixed, f) or f
+      end
+      local c = skill:getCorrect(self)
+      correct = correct + (c or 0)
     end
-    local f = skill:getFixed(self)
-    if f ~= nil then
-      max_fixed = max_fixed and math.max(max_fixed, f) or f
-    end
-    local c = skill:getCorrect(self)
-    correct = correct + (c or 0)
   end
 
   return math.max(math.max(baseValue, (max_fixed or 0)) + correct, 0)
@@ -535,9 +556,25 @@ end
 ---@param other Player @ 其他玩家
 ---@param mode? string @ 计算模式(left/right/both)
 ---@param ignore_dead? boolean @ 是否忽略尸体
-function Player:distanceTo(other, mode, ignore_dead)
+---@param excludeIds? integer[] @ 忽略的自己装备的id列表，用于飞刀判定
+---@param excludeSkills? string[] @ 忽略的技能名列表
+function Player:distanceTo(other, mode, ignore_dead, excludeIds, excludeSkills)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
+  excludeSkills = excludeSkills or {}
+  if excludeIds then
+    for _, id in ipairs(excludeIds) do
+      local equip = self:getVirualEquip(id) --[[@as EquipCard]]
+      if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
+        equip = Fk:getCardById(id) --[[@as EquipCard]]
+      end
+      if equip then
+        for _, skill in ipairs(equip:getEquipSkills(self)) do
+          table.insertIfNeed(excludeSkills, skill.name)
+        end
+      end
+    end
+  end
   if other == self then return 0 end
   if not ignore_dead and other.dead then
     return -1
@@ -570,13 +607,15 @@ function Player:distanceTo(other, mode, ignore_dead)
 
   local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable  ---@type DistanceSkill[]
   for _, skill in ipairs(status_skills) do
-    local fixed = skill:getFixed(self, other)
-    local correct = skill:getCorrect(self, other)
-    if fixed ~= nil then
-      ret = fixed
-      break
+    if not table.contains(excludeSkills, skill.name) then
+      local fixed = skill:getFixed(self, other)
+      local correct = skill:getCorrect(self, other)
+      if fixed ~= nil then
+        ret = fixed
+        break
+      end
+      ret = ret + (correct or 0)
     end
-    ret = ret + (correct or 0)
   end
 
   if self.fixedDistance[other] then
@@ -613,29 +652,45 @@ end
 --- 获取其他玩家是否在玩家的攻击范围内。
 ---@param other Player @ 其他玩家
 ---@param fixLimit? integer @ 卡牌距离限制增加专用
+---@param excludeIds? integer[] @ 忽略的自己装备的id列表，用于飞刀判定
+---@param excludeSkills? string[] @ 忽略的技能名列表
 ---@return boolean
-function Player:inMyAttackRange(other, fixLimit)
+function Player:inMyAttackRange(other, fixLimit, excludeIds, excludeSkills)
   assert(other:isInstanceOf(Player))
   if self == other or (other and (other.dead or other:isRemoved())) or self:isRemoved() then
     return false
   end
 
   fixLimit = fixLimit or 0
+  excludeSkills = excludeSkills or {}
+  if excludeIds then
+    for _, id in ipairs(excludeIds) do
+      local equip = self:getVirualEquip(id) --[[@as EquipCard]]
+      if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
+        equip = Fk:getCardById(id) --[[@as EquipCard]]
+      end
+      if equip then
+        for _, skill in ipairs(equip:getEquipSkills(self)) do
+          table.insertIfNeed(excludeSkills, skill.name)
+        end
+      end
+    end
+  end
 
   local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   for _, skill in ipairs(status_skills) do
-    if skill:withoutAttackRange(self, other) then
+    if not table.contains(excludeSkills, skill.name) and skill:withoutAttackRange(self, other) then
       return false
     end
   end
   for _, skill in ipairs(status_skills) do
-    if skill:withinAttackRange(self, other) then
+    if not table.contains(excludeSkills, skill.name) and skill:withinAttackRange(self, other) then
       return true
     end
   end
 
-  local baseAttackRange = self:getAttackRange()
-  return self:distanceTo(other) <= (baseAttackRange + fixLimit)
+  local baseAttackRange = self:getAttackRange(excludeIds, excludeSkills)
+  return self:distanceTo(other, nil, nil, excludeIds, excludeSkills) <= (baseAttackRange + fixLimit)
 end
 
 --- 获取下家。

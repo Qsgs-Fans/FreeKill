@@ -63,7 +63,6 @@ end
 ---@param extra_data? any @ 额外数据
 ---@return boolean?
 function ActiveSkill:modTargetFilter(player, to_select, selected, card, extra_data)
-  --FIXME: 删除了distance_limit牢参数，看看如何适配牢代码
   return false
 end
 
@@ -159,7 +158,7 @@ end
 ---@param to Player @ 目标
 ---@return boolean?
 function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
-  if not to or player:distanceTo(to) < 1 then return false end
+  if not to or player:distanceTo(to, nil, nil, Card:getIdList(card)) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
@@ -188,8 +187,8 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
     return false
   end
 
-  return (isattack and player:inMyAttackRange(to)) or
-  (player:distanceTo(to) <= self:getDistanceLimit(player, card, to)) or
+  return (isattack and player:inMyAttackRange(to, nil, Card:getIdList(card))) or
+  (player:distanceTo(to, nil, nil, Card:getIdList(card)) <= self:getDistanceLimit(player, card, to)) or
   hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
   hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
   hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)

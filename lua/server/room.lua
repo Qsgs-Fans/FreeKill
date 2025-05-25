@@ -3040,19 +3040,18 @@ function Room:gameOver(winner)
     self.logic:trigger(fk.GameFinished, nil, winner)
   end
 
-  self.game_started = false
-  self.game_finished = true
-
   for _, p in ipairs(self.players) do
-    -- self:broadcastProperty(p, "role")
     self:setPlayerProperty(p, "role_shown", true)
-    for _, _p in ipairs(self.players) do -- 偷懒！
-      if _p ~= p then p:addBuddy(_p) end
-    end
-    p:control(p)
+
+    -- 不知道某个C++ ServerPlayer此时的视角 只好都转回来
+    p._splayer:doNotify("ChangeSelf", tostring(p._splayer:getId()))
   end
+
   self:doBroadcastNotify("GameOver", winner)
   fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self.settings.gameMode, winner, os.time() - self.start_time))
+
+  self.game_started = false
+  self.game_finished = true
 
   if shouldUpdateWinRate(self) then
     local record = self:getBanner("InitialGeneral")

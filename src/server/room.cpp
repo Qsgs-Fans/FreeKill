@@ -231,6 +231,9 @@ void Room::removePlayer(ServerPlayer *player) {
     // 原先的跑路机器人会在游戏结束后自动销毁掉
     server->addPlayer(runner);
 
+    // FIX 控制bug
+    runner->doNotify("ChangeSelf", QByteArray::number(runner->getId()));
+
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
 
