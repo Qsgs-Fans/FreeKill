@@ -20,7 +20,7 @@ function TestEngine:testLoadPackages()
 end
 
 function TestEngine:testTranslate()
-  lu.assertEquals(Fk:translate("caocao"), "曹操")
+  lu.assertEquals(Fk:translate("caocao", "zh_CN"), "曹操")
 end
 
 function TestEngine:teardownClass()
