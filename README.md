@@ -31,14 +31,14 @@ Linux用户则需要从头开始编译（[详细编译流程在此](https://fkbo
 ```sh
 $ sudo apt install git gcc g++ cmake swig
 $ sudo apt install liblua5.4-dev libsqlite3-dev libreadline-dev libssl-dev libgit2-dev
-$ sudo apt install qtcreator qt6-base-dev qt6-tools-dev-tools # TODO: 记不清qt6的dev包了，我自己用的是arch
+# qt6-declarative-dev - qml, qt6-tools-dev - LinguistTools
+$ sudo apt install qt6-base-dev qt6-declarative-dev qt6-multimedia-dev qt6-tools-dev
 ```
 
 ```sh
 $ git clone https://github.com/Qsgs-Fans/FreeKill.git
 $ cd FreeKill
 $ mkdir build && cd build
-$ cp -r /usr/include/lua5.4/* ../include
 $ cmake .. && make -j8
 ```
 
@@ -47,6 +47,18 @@ $ cmake .. && make -j8
 ```sh
 $ yay -S freekill
 ```
+
+Mac 用户也需要从头开始编译
+```sh
+# install xcode and homebrew, note: qt need full xcode  
+$ brew install cmake libgit2 lua qt pkgconfig vulkan-headers swig
+$ git clone https://github.com/Qsgs-Fans/FreeKill.git
+$ cd FreeKill
+$ mkdir build && cd build
+$ cmake .. && make -j8
+$ cd .. && ./build/FreeKill
+```
+
 
 更多关于游玩细节与操作请[查看这里](https://fkbook-all-in-one.readthedocs.io/zh-cn/latest/newbie/index.html)。
 
