@@ -96,6 +96,8 @@ public:
 
   qint64 getUptime() const;
 
+  bool nameIsInWhiteList(const QString &name) const;
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -130,6 +132,9 @@ private:
     */
   void readConfig();
   QJsonObject config; ///< 配置文件其实就是一个JSON对象
+
+  bool hasWhitelist;
+  QVariantList whitelist;
 };
 
 extern Server *ServerInstance; ///< 全局Server对象

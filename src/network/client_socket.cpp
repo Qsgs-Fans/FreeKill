@@ -175,8 +175,12 @@ QByteArray ClientSocket::aesEnc(const QByteArray &in) {
   QByteArray out;
   out.resize(in.length());
 
-  auto rand_generator = QRandomGenerator::securelySeeded();
+  static auto rand_generator = QRandomGenerator::securelySeeded();
+  static QByteArray iv_raw(16, Qt::Uninitialized);
 
+  rand_generator.fillRange(reinterpret_cast<quint32*>(iv_raw.data()), 4);
+
+  /*
   QByteArray iv;
   iv.append(QByteArray::number(rand_generator.generate64(), 16));
   iv.append(QByteArray::number(rand_generator.generate64(), 16));
@@ -184,14 +188,15 @@ QByteArray ClientSocket::aesEnc(const QByteArray &in) {
     iv.append(QByteArray("0").repeated(32 - iv.length()));
   }
   auto iv_raw = QByteArray::fromHex(iv);
+  */
 
-  unsigned char tempIv[16];
+  static unsigned char tempIv[16];
   strncpy((char *)tempIv, iv_raw.constData(), 16);
   AES_cfb128_encrypt((const unsigned char *)in.constData(),
                      (unsigned char *)out.data(), in.length(), &aes_key, tempIv,
                      &num, AES_ENCRYPT);
 
-  return iv + out.toBase64();
+  return iv_raw.toHex() + out.toBase64();
 }
 QByteArray ClientSocket::aesDec(const QByteArray &in) {
   if (!aes_ready) {

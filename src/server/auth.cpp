@@ -251,8 +251,7 @@ QMap<QString, QString> AuthManager::checkPassword() {
     goto FAIL;
   }
 
-  if (server->getConfig("whitelist").isArray() &&
-      !server->getConfig("whitelist").toArray().toVariantList().contains(name)) {
+  if (!server->nameIsInWhiteList(name)) {
     error_msg = "user name not in whitelist";
     goto FAIL;
   }

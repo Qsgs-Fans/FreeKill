@@ -286,6 +286,12 @@ void Server::readConfig() {
   }
   config = QJsonDocument::fromJson(json).object();
 
+  auto whitelist_json = getConfig("whitelist");
+  if (whitelist_json.isArray()) {
+    hasWhitelist = true;
+    whitelist = whitelist_json.toArray().toVariantList();
+  }
+
   // defaults
   SET_DEFAULT_CONFIG("description", "FreeKill Server");
   SET_DEFAULT_CONFIG("iconUrl", "default");
@@ -382,4 +388,9 @@ void Server::refreshMd5() {
 qint64 Server::getUptime() const {
   if (!uptime_counter.isValid()) return 0;
   return uptime_counter.elapsed();
+}
+
+bool Server::nameIsInWhiteList(const QString &name) const {
+  if (!hasWhitelist) return true;
+  return whitelist.contains(name);
 }
