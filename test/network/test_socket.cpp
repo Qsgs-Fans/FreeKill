@@ -42,6 +42,7 @@ void TestSocket::testConnect() {
   QCOMPARE(spy.count(), 1);
 
   client->connectToHost("127.0.0.1", test_port);
+  QThread::msleep(100);
   qApp->processEvents(); // 让server处理一下new_conntion信号
   qApp->processEvents(); // 让server处理一下new_conntion信号
   qApp->processEvents(); // 让server处理一下new_conntion信号
@@ -59,6 +60,7 @@ void TestSocket::testSendMessages() {
   QVariantList arguments;
 
   client->send(msg);
+  QThread::msleep(100);
   qApp->processEvents();
   QCOMPARE(spy.count(), 1);
   arguments = spy.takeFirst();
@@ -67,6 +69,7 @@ void TestSocket::testSendMessages() {
   // compressed
   spy.clear();
   client->send(long_msg);
+  QThread::msleep(100);
   qApp->processEvents();
   QCOMPARE(spy.count(), 1);
   arguments = spy.takeFirst();
@@ -93,6 +96,7 @@ void TestSocket::testEncryptedMessages() {
 
   client_server->installAESKey(aeskey);
   client->send(msg);
+  QThread::msleep(100);
   qApp->processEvents();
   QCOMPARE(spy.count(), 1);
   arguments = spy.takeFirst();
