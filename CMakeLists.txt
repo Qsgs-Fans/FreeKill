@@ -35,10 +35,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(REQUIRED_QT_VERSION "6.4")
 
-include_directories(include/lua)
 include_directories(include)
-include_directories(include/libgit2)
 include_directories(src)
+include_directories(${LUA_INCLUDE_DIR})
+include_directories(${LIBGIT2_INCLUDE_DIRS})
+
 
 if (DEFINED FK_USE_JEMALLOC)
   find_package(PkgConfig REQUIRED)
@@ -49,6 +50,7 @@ if (DEFINED FK_USE_JEMALLOC)
 endif ()
 
 qt_add_executable(FreeKill)
+link_directories(${LIBGIT2_LIBRARY_DIRS})
 
 if (NOT DEFINED FK_SERVER_ONLY)
   qt_add_translations(FreeKill
