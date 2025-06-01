@@ -50,7 +50,7 @@ $ yay -S freekill
 
 Mac 用户也需要从头开始编译
 ```sh
-# install xcode and homebrew, note: qt need full xcode  
+# install xcode and homebrew, note: qt need full xcode
 $ brew install cmake libgit2 lua qt pkgconfig vulkan-headers swig
 $ git clone https://github.com/Qsgs-Fans/FreeKill.git
 $ cd FreeKill
