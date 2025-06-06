@@ -4,7 +4,7 @@
 # 类似其他项目中flist.txt的功能
 
 cd $(dirname $0)
-sed -i '2,$d' ./fk_ver
+sed -i.bak -e '2,$d' ./fk_ver
 
 fn() {
   for f in $(ls -1 $1 | sort); do
