@@ -23,6 +23,8 @@ using namespace fkShell;
 #include "ui/qmlbackend.h"
 #endif
 
+#include <QTextStream>
+
 #if defined(Q_OS_ANDROID)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath) {
   QFileInfo srcFileInfo(srcFilePath);
@@ -91,23 +93,25 @@ static void prepareForLinux() {
 }
 #endif
 
-static FILE *info_log = nullptr;
-static FILE *err_log = nullptr;
+static QScopedPointer<QFile> info_log(nullptr);
+static QScopedPointer<QFile> err_log(nullptr);
 
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
                   const QString &msg) {
   auto date = QDate::currentDate();
 
-  FILE *file;
+  QScopedPointer<QTextStream> ofs(nullptr);
+  QTextStream out(stdout);
+
   switch (type) {
   case QtDebugMsg:
   case QtInfoMsg:
-    file = info_log;
+    ofs.reset(new QTextStream(info_log.get()));
     break;
   case QtWarningMsg:
   case QtCriticalMsg:
   case QtFatalMsg:
-    file = err_log;
+    ofs.reset(new QTextStream(err_log.get()));
     break;
   }
 
@@ -116,55 +120,44 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #else
   printf("\r");
 #endif
-  printf("%02d/%02d ", date.month(), date.day());
-  printf("%s ",
-          QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
-  fprintf(file, "%02d/%02d ", date.month(), date.day());
-  fprintf(file, "%s ",
-          QTime::currentTime().toString("hh:mm:ss").toLatin1().constData());
 
-  auto localMsg = msg.toUtf8();
-  auto threadName = QThread::currentThread()->objectName().toLatin1();
+  auto dateStr = QString::asprintf("%02d/%02d", date.month(), date.day());
+  out << dateStr << " " << QTime::currentTime().toString("hh:mm:ss") << " ";
+  *ofs << dateStr << " " << QTime::currentTime().toString("hh:mm:ss") << " ";
+
+  auto threadName = QThread::currentThread()->objectName();
+  QString levelMark = "D";
+  const char *levelMarkNoColor = "D";
 
   switch (type) {
   case QtDebugMsg:
-    printf("%s[D] %s\n", threadName.constData(),
-            localMsg.constData());
-    fprintf(file, "%s[D] %s\n", threadName.constData(),
-            localMsg.constData());
     break;
   case QtInfoMsg:
-    printf("%s[%s] %s\n", threadName.constData(),
-            Color("I", Green).toUtf8().constData(), localMsg.constData());
-    fprintf(file, "%s[%s] %s\n", threadName.constData(),
-            "I", localMsg.constData());
+    levelMark = Color("I", Green);
+    levelMarkNoColor = "I";
     break;
   case QtWarningMsg:
-    printf("%s[%s] %s\n", threadName.constData(),
-            Color("W", Yellow, Bold).toUtf8().constData(),
-            localMsg.constData());
-    fprintf(file, "%s[%s] %s\n", threadName.constData(),
-            "W", localMsg.constData());
+    levelMark = Color("W", Yellow, Bold);
+    levelMarkNoColor = "W";
     break;
   case QtCriticalMsg:
-    printf("%s[%s] %s\n", threadName.constData(),
-            Color("C", Red, Bold).toUtf8().constData(), localMsg.constData());
-    fprintf(file, "%s[%s] %s\n", threadName.constData(),
-            "C", localMsg.constData());
+    levelMark = Color("C", Red, Bold);
+    levelMarkNoColor = "C";
 #ifndef FK_SERVER_ONLY
     if (Backend != nullptr) {
       Backend->notifyUI("ErrorDialog",
-          QString("⛔ %1/Error occured!\n  %2").arg(threadName).arg(localMsg));
+          QString("⛔ %1/Error occured!\n  %2").arg(threadName).arg(msg));
     }
 #endif
     break;
   case QtFatalMsg:
-    printf("%s[%s] %s\n", threadName.constData(),
-            Color("E", Red, Bold).toUtf8().constData(), localMsg.constData());
-    fprintf(file, "%s[%s] %s\n", threadName.constData(),
-            "E", localMsg.constData());
+    levelMark = Color("E", Red, Bold);
+    levelMarkNoColor = "E";
     break;
   }
+
+  out << threadName << "[" << levelMark << "] " << msg << Qt::endl;
+  *ofs << threadName << "[" << levelMarkNoColor << "] " << msg << Qt::endl;
 
 #ifdef FK_USE_READLINE
   if (ShellInstance && !ShellInstance->lineDone()) {
@@ -256,14 +249,14 @@ int freekill_main(int argc, char *argv[]) {
 #endif
 
   if (!info_log) {
-    info_log = fopen("freekill.server.info.log", "w+");
-    if (!info_log) {
+    info_log.reset(new QFile("freekill.server.info.log"));
+    if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
       qFatal("Cannot open info.log");
     }
   }
   if (!err_log) {
-    err_log = fopen("freekill.server.error.log", "w+");
-    if (!err_log) {
+    err_log.reset(new QFile("freekill.server.error.log"));
+    if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
       qFatal("Cannot open error.log");
     }
   }
@@ -446,9 +439,6 @@ int freekill_main(int argc, char *argv[]) {
   // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
-
-  if (info_log) fclose(info_log);
-  if (err_log) fclose(err_log);
 
   return ret;
 #endif

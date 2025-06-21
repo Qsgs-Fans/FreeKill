@@ -58,9 +58,9 @@ void RoomBase::chat(ServerPlayer *sender, const QString &jsonData) {
     doBroadcastNotify(observers, "Chat", json);
   }
 
-  qInfo("[Chat/%s] %s: %s",
-        isLobby() ? "Lobby" : QString("#%1").arg(qobject_cast<Room *>(this)
-          ->getId()).toUtf8().constData(),
-        sender->getScreenName().toUtf8().constData(),
-        doc["msg"].toString().toUtf8().constData());
+  qInfo("[Chat/%ls] %ls: %ls",
+        qUtf16Printable(isLobby() ? "Lobby" :
+                        QString("#%1").arg(qobject_cast<Room *>(this)->getId())),
+        qUtf16Printable(sender->getScreenName()),
+        qUtf16Printable(doc["msg"].toString()));
 }

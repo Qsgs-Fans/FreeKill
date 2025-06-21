@@ -13,6 +13,7 @@ Lua::Lua() {
 }
 
 Lua::~Lua() {
+  qDebug("Lua state %p closed", this);
   lua_close(L);
 }
 

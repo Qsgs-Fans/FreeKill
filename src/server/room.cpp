@@ -571,15 +571,17 @@ void Room::manuallyStart() {
     for (auto i = ipList.cbegin(); i != ipList.cend(); i++) {
       if (i.value().length() <= 1) continue;
       auto warn = QString("*WARN* Same IP address: [%1]").arg(i.value().join(", "));
-      doBroadcastNotify(getPlayers(), "ServerMessage", warn.toUtf8());
-      qInfo("%s", warn.toUtf8().constData());
+      auto warnUtf8 = warn.toUtf8();
+      doBroadcastNotify(getPlayers(), "ServerMessage", warnUtf8);
+      qInfo("%s", warnUtf8.constData());
     }
 
     for (auto i = uuidList.cbegin(); i != uuidList.cend(); i++) {
       if (i.value().length() <= 1) continue;
       auto warn = QString("*WARN* Same device id: [%1]").arg(i.value().join(", "));
-      doBroadcastNotify(getPlayers(), "ServerMessage", warn.toUtf8());
-      qInfo("%s", warn.toUtf8().constData());
+      auto warnUtf8 = warn.toUtf8();
+      doBroadcastNotify(getPlayers(), "ServerMessage", warnUtf8);
+      qInfo("%s", warnUtf8.constData());
     }
 
     gameStarted = true;

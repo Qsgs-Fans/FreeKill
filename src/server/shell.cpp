@@ -26,47 +26,47 @@ static const char *prompt = "Fk> ";
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
 #define HELP_MSG(a, b)                                                         \
-  qInfo((a), Color((b), fkShell::Cyan).toUtf8().constData());
+  qInfo((a), qUtf16Printable(Color((b), fkShell::Cyan)));
 
-  HELP_MSG("%s: Display this help message.", "help");
-  HELP_MSG("%s: Shut down the server.", "quit");
-  HELP_MSG("%s: Crash the server. Useful when encounter dead loop.", "crash");
-  HELP_MSG("%s: List all online players.", "lsplayer");
-  HELP_MSG("%s: List all running rooms, or show player of room by an <id>.", "lsroom");
-  HELP_MSG("%s: Reload server config file.", "reloadconf/r");
-  HELP_MSG("%s: Kick a player by his <id>.", "kick");
-  HELP_MSG("%s: Broadcast message.", "msg/m");
-  HELP_MSG("%s: Broadcast message to a room.", "msgroom/mr");
-  HELP_MSG("%s: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
-  HELP_MSG("%s: Unban 1 or more accounts by their <name>.", "unban");
+  HELP_MSG("%ls: Display this help message.", "help");
+  HELP_MSG("%ls: Shut down the server.", "quit");
+  HELP_MSG("%ls: Crash the server. Useful when encounter dead loop.", "crash");
+  HELP_MSG("%ls: List all online players.", "lsplayer");
+  HELP_MSG("%ls: List all running rooms, or show player of room by an <id>.", "lsroom");
+  HELP_MSG("%ls: Reload server config file.", "reloadconf/r");
+  HELP_MSG("%ls: Kick a player by his <id>.", "kick");
+  HELP_MSG("%ls: Broadcast message.", "msg/m");
+  HELP_MSG("%ls: Broadcast message to a room.", "msgroom/mr");
+  HELP_MSG("%ls: Ban 1 or more accounts, IP, UUID by their <name>.", "ban");
+  HELP_MSG("%ls: Unban 1 or more accounts by their <name>.", "unban");
   HELP_MSG(
-      "%s: Ban 1 or more IP address. "
+      "%ls: Ban 1 or more IP address. "
       "At least 1 <name> required.",
       "banip");
   HELP_MSG(
-      "%s: Unban 1 or more IP address. "
+      "%ls: Unban 1 or more IP address. "
       "At least 1 <name> required.",
       "unbanip");
   HELP_MSG(
-      "%s: Ban 1 or more UUID. "
+      "%ls: Ban 1 or more UUID. "
       "At least 1 <name> required.",
       "banuuid");
   HELP_MSG(
-      "%s: Unban 1 or more UUID. "
+      "%ls: Unban 1 or more UUID. "
       "At least 1 <name> required.",
       "unbanuuid");
-  HELP_MSG("%s: reset <name>'s password to 1234.", "resetpassword/rp");
-  HELP_MSG("%s: View status of server.", "stat/gc");
-  HELP_MSG("%s: View detail information (Lua) of room by an id.", "dumproom");
-  HELP_MSG("%s: Kick all players in a room, then abandon it.", "killroom");
+  HELP_MSG("%ls: reset <name>'s password to 1234.", "resetpassword/rp");
+  HELP_MSG("%ls: View status of server.", "stat/gc");
+  HELP_MSG("%ls: View detail information (Lua) of room by an id.", "dumproom");
+  HELP_MSG("%ls: Kick all players in a room, then abandon it.", "killroom");
   qInfo();
   qInfo("===== Package commands =====");
-  HELP_MSG("%s: Install a new package from <url>.", "install");
-  HELP_MSG("%s: Remove a package.", "remove");
-  HELP_MSG("%s: List all packages.", "pkgs");
-  HELP_MSG("%s: Enable a package.", "enable");
-  HELP_MSG("%s: Disable a package.", "disable");
-  HELP_MSG("%s: Upgrade a package. Leave empty to upgrade all.", "upgrade/u");
+  HELP_MSG("%ls: Install a new package from <url>.", "install");
+  HELP_MSG("%ls: Remove a package.", "remove");
+  HELP_MSG("%ls: List all packages.", "pkgs");
+  HELP_MSG("%ls: Enable a package.", "enable");
+  HELP_MSG("%ls: Disable a package.", "disable");
+  HELP_MSG("%ls: Upgrade a package. Leave empty to upgrade all.", "upgrade/u");
   qInfo("For more commands, check the documentation.");
 
 #undef HELP_MSG
@@ -193,9 +193,10 @@ void Shell::lspkgCommand(QStringList &) {
   for (auto a : arr) {
     auto obj = a.toObject();
     auto hash = obj["hash"].toString();
-    qInfo() << obj["name"].toString().toUtf8().constData() << "\t"
-            << hash.first(8).toUtf8().constData() << "\t"
-            << obj["enabled"].toString().toUtf8().constData();
+    qInfo("%ls\t%ls\t%ls",
+          qUtf16Printable(obj["name"].toString()),
+          qUtf16Printable(hash.first(8)),
+          qUtf16Printable(obj["enabled"].toString()));
   }
 }
 
