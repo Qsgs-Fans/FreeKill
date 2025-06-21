@@ -146,7 +146,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
   QJsonArray avail_arr;
   for (Room *room : rooms) {
     QJsonArray obj;
-    auto settings = QJsonDocument::fromJson(room->getSettings());
+    auto settings = room->getSettingsObject();
     auto password = settings["password"].toString();
     auto count = room->getPlayers().count(); // playerNum
     auto cap = room->getCapacity();          // capacity

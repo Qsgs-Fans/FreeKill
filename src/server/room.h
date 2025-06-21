@@ -29,6 +29,7 @@ class Room : public RoomBase {
   int getCapacity() const;
   void setCapacity(int capacity);
   bool isFull() const;
+  const QJsonObject getSettingsObject() const;
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
@@ -90,6 +91,7 @@ class Room : public RoomBase {
   QString name;         // “阴间大乱斗”
   int capacity;         // by default is 5, max is 8
   QByteArray settings;  // JSON string
+  QJsonObject settings_obj;  // JSON object
   bool m_abandoned;     // If room is empty, delete it
 
   ServerPlayer *owner;  // who created this room?
