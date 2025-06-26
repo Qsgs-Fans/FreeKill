@@ -126,6 +126,11 @@ target_link_libraries(libFreeKill PRIVATE
   ${IDBFS_LIB}
   ${JEMALLOC_LIBRARIES}
 )
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  target_compile_definitions(libFreeKill PRIVATE QT_QML_DEBUG)
+endif ()
+
 target_sources(FreeKill PRIVATE ${freekill_EXESRCS})
 target_link_libraries(FreeKill PRIVATE
   libFreeKill
