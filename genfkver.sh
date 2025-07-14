@@ -16,10 +16,11 @@ fn() {
   done
 }
 
-fn lua
-fn Fk
-fn packages/maneuvering
-fn packages/standard
-fn packages/standard_cards
-fn packages/test
+# v0.5.8 这些，不需要了！
+# fn lua
+# fn Fk
+# fn packages/maneuvering
+# fn packages/standard
+# fn packages/standard_cards
+# fn packages/test
 cd -

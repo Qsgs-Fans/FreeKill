@@ -53,6 +53,7 @@ static void writePkgsMD5(QFile &dest, const QString &dir,
   }
 }
 
+/*
 static void writeFkVerMD5(QFile &dest) {
   QFile flist("fk_ver");
   if (flist.exists() && flist.open(QIODevice::ReadOnly)) {
@@ -69,6 +70,7 @@ static void writeFkVerMD5(QFile &dest) {
     }
   }
 }
+*/
 
 QString calcFileMD5() {
   // First, generate flist.txt
@@ -78,7 +80,7 @@ QString calcFileMD5() {
     qFatal("Cannot open flist.txt. Quitting.");
   }
 
-  writeFkVerMD5(flist);
+  // writeFkVerMD5(flist);
   writePkgsMD5(flist, "packages", "*.lua");
   writePkgsMD5(flist, "packages", "*.qml");
   writePkgsMD5(flist, "packages", "*.js");
