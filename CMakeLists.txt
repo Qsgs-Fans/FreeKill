@@ -37,9 +37,11 @@ set(REQUIRED_QT_VERSION "6.4")
 
 include_directories(include)
 include_directories(src)
-include_directories(${LUA_INCLUDE_DIR})
-include_directories(${LIBGIT2_INCLUDE_DIRS})
-
+# 谁加的，把我Github Action搞坏了，如果是MacOS的话麻烦加if吧我现在忙着调CI没空管
+# include_directories(${LUA_INCLUDE_DIR})
+# include_directories(${LIBGIT2_INCLUDE_DIRS})
+include_directories(include/lua)
+include_directories(include/libgit2)
 
 if (DEFINED FK_USE_JEMALLOC)
   find_package(PkgConfig REQUIRED)
