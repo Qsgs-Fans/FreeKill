@@ -52,19 +52,27 @@ tuxi:addAI({
     local players = ai:getEnabledTargets()
     -- 对所有目标计算他们被拿走一张手牌后对自己的收益
     local benefits = table.map(players, function(p)
-      return { p, ai:getBenefitOfEvents(function(logic)
-        local c = p:getCardIds("h")[1]
-        logic:obtainCard(player.id, c, false, fk.ReasonPrey)
-      end)}
+      return { p, ai:askToChooseCards({
+        cards = p:getCardIds("h"),
+        skill_name = self.skill.name,
+        min = 1,
+        max = 1,
+        data = {
+          to_place = Card.PlayerHand,
+          target = ai.player,
+          reason = fk.ReasonPrey,
+          proposer = ai.player,
+        },
+      })}
     end)
     -- 选择收益最高且大于0的两位 判断偷两位的收益加上放弃摸牌的负收益是否可以补偿
     local total_benefit = -ai:getBenefitOfEvents(function(logic)
       logic:drawCards(player, 2, self.skill.name)
     end)
     local targets = {}
-    table.sort(benefits, function(a, b) return a[2] > b[2] end)
+    table.sort(benefits, function(a, b) return a[3] > b[3] end)
     for i, benefit in ipairs(benefits) do
-      local p, val = table.unpack(benefit)
+      local p, _, val = table.unpack(benefit)
       if val < 0 then break end
       table.insert(targets, p)
       total_benefit = total_benefit + val
@@ -72,6 +80,22 @@ tuxi:addAI({
     end
     if #targets == 0 or total_benefit <= 0 then return "" end
     return { targets = targets }, total_benefit
+  end,
+
+  think_card_chosen = function(self, ai, target, flag, prompt)
+    local ret, benefit = ai:askToChooseCards({
+      cards = target:getCardIds("h"),
+      skill_name = self.skill.name,
+      min = 1,
+      max = 1,
+      data = {
+        to_place = Card.PlayerHand,
+        target = ai.player,
+        reason = fk.ReasonPrey,
+        proposer = ai.player,
+      },
+    })
+    return ret[1], benefit
   end,
 })
 

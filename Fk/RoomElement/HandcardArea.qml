@@ -6,10 +6,12 @@ import Fk
 Item {
   property alias cards: cardArea.cards
   property alias length: cardArea.length
+  property bool sortable: true
   property var selectedCards: []
   property var movepos
 
   signal cardSelected(int cardId, bool selected)
+  signal cardDoubleClicked(int cardId, bool selected)
 
   id: area
 
@@ -33,10 +35,12 @@ Item {
   function filterInputCard(card)
   {
     card.autoBack = true;
-    card.draggable = lcall("CanSortHandcards", Self.id);
+    // 只有会被频繁刷新的手牌才能拖动
+    // card.draggable = lcall("CanSortHandcards", Self.id);
     card.selectable = false;
     card.clicked.connect(selectCard);
     card.clicked.connect(adjustCards);
+    card.doubleClicked.connect(doubleClickCard);
     card.released.connect(updateCardReleased);
     card.xChanged.connect(updateCardDragging);
   }
@@ -51,6 +55,7 @@ Item {
       card.selectable = false;
       card.clicked.disconnect(selectCard);
       card.selectedChanged.disconnect(adjustCards);
+      card.doubleClicked.disconnect(doubleClickCard);
       card.released.disconnect(updateCardReleased);
       card.xChanged.disconnect(updateCardDragging);
       card.prohibitReason = "";
@@ -112,7 +117,9 @@ Item {
   function updateCardReleased(_card)
   {
     let i;
-    if (movepos != null) {
+    if (movepos != null && sortable) {
+      const handcardnum = lcall("GetPlayerHandcards", Self.id).length; // 不计入expand_pile
+      if (movepos >= handcardnum) movepos = handcardnum - 1;
       i = cards.indexOf(_card);
       cards.splice(i, 1);
       cards.splice(movepos, 0, _card);
@@ -129,6 +136,12 @@ Item {
   function selectCard(card) {
     if (card.selectable) cardSelected(card.cid, card.selected);
     adjustCards();
+  }
+
+  function doubleClickCard(card) {
+    if (config.doubleClickUse) {
+      cardDoubleClicked(card.cid, card.selected);
+    }
   }
 
   function enableCards(cardIds)
@@ -152,6 +165,7 @@ Item {
   }
 
   function applyChange(uiUpdate) {
+    area.sortable = lcall("CanSortHandcards", Self.id);
     uiUpdate["CardItem"]?.forEach(cdata => {
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i];

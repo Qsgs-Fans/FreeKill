@@ -13,6 +13,15 @@ end
 ---@class GameEvent.SkillEffect : GameEvent
 ---@field public data SkillEffectData
 local SkillEffect = GameEvent:subclass("GameEvent.SkillEffect")
+
+function SkillEffect:__tostring()
+  local effectData = self.data
+  local useData = effectData.skill_data
+  return string.format("<UseSkill %s: %s => [%s] #%d>",
+    effectData.skill.name, effectData.who, table.concat(
+      table.map(useData.tos or {}, ServerPlayer.__tostring), ", "), self.id)
+end
+
 function SkillEffect:main()
   local data = self.data
   local effect_cb, player, skill, skill_data = data.skill_cb, data.who, data.skill, data.skill_data
@@ -64,7 +73,11 @@ function SkillEffect:main()
           room:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
         end
       elseif not skill.click_count then
-        player:broadcastSkillInvoke(skill:getSkeleton().name)
+        local audio_index = skill.audio_index
+        if type(audio_index) == "table" then
+          audio_index = table.random(audio_index)
+        end
+        player:broadcastSkillInvoke(skill:getSkeleton().name, audio_index)
         room:notifySkillInvoked(player, skill.name, skill.anim_type, no_indicate and {} or tos)
       end
     end
@@ -87,13 +100,15 @@ function SkillEffect:main()
     end
   end
 
-  local cost_data_bak = skill.cost_data
   logic:trigger(fk.SkillEffect, player, data)
-  skill.cost_data = cost_data_bak
+  if not data.prevented then
+    if effect_cb then
+      data.trigger_break = effect_cb()
+    end
+  end
 
-  local ret = effect_cb and effect_cb() or false
   logic:trigger(fk.AfterSkillEffect, player, data)
-  return ret
+  return data.trigger_break
 end
 
 function SkillEffect:desc()
@@ -115,6 +130,7 @@ end
 ---@param skill Skill @ 发动的技能
 ---@param effect_cb fun() @ 实际要调用的函数
 ---@param skill_data? table @ 技能的信息
+---@return SkillEffectData
 function SkillEventWrappers:useSkill(player, skill, effect_cb, skill_data)
   ---@cast self Room
   if skill_data then
@@ -138,7 +154,8 @@ function SkillEventWrappers:useSkill(player, skill, effect_cb, skill_data)
     skill_cb = effect_cb,
     skill_data = skill_data
   }
-  return exec(SkillEffect, data)
+  exec(SkillEffect, data)
+  return data
 end
 
 --- 令一名玩家获得/失去技能。
@@ -230,7 +247,7 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
       if losts[i] then
         local skill = triggers[i]
         if not no_trigger then
-          self.logic:trigger(fk.EventLoseSkill, player, skill)
+          self.logic:trigger(fk.EventLoseSkill, player, {skill = skill, who = player})
         end
         skill:getSkeleton():onLose(player, false)
       else
@@ -238,7 +255,7 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
         if no_trigger then
           skill:getSkeleton():onAcquire(player, player.room:getBanner("RoundCount") == nil)
         else
-          self.logic:trigger(fk.EventAcquireSkill, player, skill)
+          self.logic:trigger(fk.EventAcquireSkill, player, {skill = skill, who = player})
           skill:getSkeleton():onAcquire(player, false)
         end
       end

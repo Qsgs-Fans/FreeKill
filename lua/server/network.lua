@@ -211,6 +211,7 @@ function Request:ask()
     math.floor(self.timeout * 1000))
 
   -- 1. 向所有人发送询问请求
+  room.logic:trigger(fk.BeforeRequestAsk, nil, self, true)
   for _, p in ipairs(players) do
     self:_sendPacket(p)
   end
@@ -294,6 +295,10 @@ function Request:ask()
   self:_finish()
 
   self._asked = true
+
+  if not room.hasSurrendered then
+    room.logic:trigger(fk.AfterRequestAsk, nil, self, true)
+  end
 end
 
 local function surrenderCheck(room)

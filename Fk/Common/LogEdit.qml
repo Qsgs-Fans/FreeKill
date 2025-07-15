@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Controls
+import Fk.Widgets as W
 
 ListView {
   id: root
@@ -32,7 +33,7 @@ ListView {
     textFormat: TextEdit.RichText
     font.pixelSize: 16
 
-    TapHandler {
+    W.TapHandler {
       // acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
       // gesturePolicy: TapHandler.WithinBounds
       onTapped: root.currentIndex = index;
@@ -43,6 +44,11 @@ ListView {
     text: luatr("Return to Bottom")
     visible: root.currentIndex !== logModel.count - 1
     onClicked: root.currentIndex = logModel.count - 1;
+  }
+
+  function clear() {
+    logModel.clear();
+    root.currentIndex = 0;
   }
 
   function append(data) {

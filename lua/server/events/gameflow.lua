@@ -2,11 +2,11 @@
 
 local function drawInit(room, player, n, fix_ids)
   -- TODO: need a new function to call the UI
-  local cardIds = room:getNCards(n)
+  local cardIds = table.random(room.draw_pile, n)
   if fix_ids then
     cardIds = table.random(fix_ids, n)
     if #cardIds < n then
-      table.insertTable(cardIds, table.random(room.void, n - #cardIds))
+      table.insertTable(cardIds, table.random(room.draw_pile, n - #cardIds))
     end
   end
   player:addCards(Player.Hand, cardIds)
@@ -30,6 +30,7 @@ local function drawInit(room, player, n, fix_ids)
     table.removeOne(room.draw_pile, id)
     room:setCardArea(id, Card.PlayerHand, player.id)
   end
+  room:syncDrawPile()
 end
 
 local function discardInit(room, player)
@@ -76,10 +77,17 @@ local function discardInit(room, player)
   for _, id in ipairs(cardIds) do
     room:setCardArea(id, table.contains(room.draw_pile, id) and Card.DrawPile or Card.Void, nil)
   end
+  room:syncDrawPile()
 end
 
 ---@class GameEvent.DrawInitial : GameEvent
 local DrawInitial = GameEvent:subclass("GameEvent.DrawInitial")
+
+function DrawInitial:__tostring()
+  return string.format("<DrawInitial : #%d>",
+    self.id)
+end
+
 function DrawInitial:main()
   local room = self.room
 
@@ -103,6 +111,11 @@ function DrawInitial:main()
   end
 
   if room.settings.luckTime <= 0 then
+    table.shuffle(room.draw_pile)
+    for _, id in ipairs(room.draw_pile) do
+      room:setCardArea(id, Card.DrawPile, nil)
+    end
+    room:syncDrawPile()
     for _, player in ipairs(room.alive_players) do
       local draw_data = luck_data[player.id]
       draw_data.luckTime = nil
@@ -120,6 +133,11 @@ function DrawInitial:main()
   request.accept_cancel = true
   request:ask()
 
+  table.shuffle(room.draw_pile)
+  for _, id in ipairs(room.draw_pile) do
+    room:setCardArea(id, Card.DrawPile, nil)
+  end
+  room:syncDrawPile()
   for _, player in ipairs(room.alive_players) do
     local draw_data = luck_data[player.id]
     draw_data.luckTime = nil
@@ -131,36 +149,40 @@ end
 ---@field public data RoundData
 local Round = GameEvent:subclass("GameEvent.Round")
 
+function Round:__tostring()
+  return string.format("<Round : %d #%d>",
+    Fk:currentRoom():getBanner("RoundCount"), self.id)
+end
+
 function Round:action()
-  -- local data = self.data
   local room = self.room
-  -- local currentPlayer
+  local data = self.data
+  if data == nil then
+    data = {}
+  end
 
   while true do
-    GameEvent.Turn:create(TurnData:new(room.current)):exec()
-    if room.game_finished then break end
-
-    local changingData = { from = room.current, to = room.current.next, skipRoundPlus = false }
-    room.logic:trigger(fk.EventTurnChanging, room.current, changingData, true)
-
-    local nextTurnOwner = changingData.to
-    if room.current.seat > nextTurnOwner.seat and not changingData.skipRoundPlus then
-      break
-    else
-      room:setCurrent(nextTurnOwner)
+    data.turn_table = data.turn_table or {}
+    if #data.turn_table == 0 then
+      data.turn_table = table.simpleClone(room.players)
     end
+
+    data.to = data.turn_table[1]
+    room.logic:trigger(fk.EventTurnChanging, data.to, data, true)
+    room:setCurrent(data.to)
+
+    if data.skipped then
+      data.skipped = false
+    else
+      GameEvent.Turn:create(TurnData:new(room.current, "game_rule")):exec()
+    end
+
+    room:ActExtraTurn()
+    table.remove(data.turn_table, 1)
+    data.from = data.to
+
+    if #data.turn_table == 0 or room.game_finished then break end
   end
-  -- for _, seat in ipairs(data.turn_table) do
-  --   local current_player = table.find(room.alive_players, function(p) return p.seat == seat end)
-  --   if current_player then
-  --     GameEvent.Turn:create(current_player):exec()
-
-  --     local changingData = { from = room.current, to = room.current.next, skipRoundPlus = false }
-  --     room.logic:trigger(fk.EventTurnChanging, current_player, changingData, true)
-
-  --     --- TODO: 给我整不会了
-  --   end
-  -- end
 end
 
 function Round:main()
@@ -173,7 +195,7 @@ function Round:main()
   room:setBanner("RoundCount", roundCount)
   room:doBroadcastNotify("UpdateRoundNum", tostring(roundCount))
   -- 强行平局 防止can_trigger报错导致瞬间几十万轮卡炸服务器
-  if roundCount >= 280 then
+  if roundCount >= 9999 then
     room:sendLog{
       type = "#TimeOutDraw",
       toast = true,
@@ -183,11 +205,14 @@ function Round:main()
 
   if roundCount == 1 then
     logic:trigger(fk.GameStart, room.current, data)
+    room:ActExtraTurn()
   end
 
   logic:trigger(fk.RoundStart, room.current, data)
+  room:ActExtraTurn()
   self:action()
   logic:trigger(fk.RoundEnd, room.current, data)
+  room:ActExtraTurn()
 end
 
 function Round:clear()
@@ -231,6 +256,13 @@ end
 ---@class GameEvent.Turn : GameEvent
 ---@field public data TurnData
 local Turn = GameEvent:subclass("GameEvent.Turn")
+
+function Turn:__tostring()
+  local data = self.data
+  return string.format("<Turn : %s by %s #%d>",
+    data.who, data.reason, self.id)
+end
+
 function Turn:prepare()
   local room = self.room
   local logic = room.logic
@@ -250,16 +282,50 @@ function Turn:prepare()
 
   room:sendLog{ type = "$AppendSeparator" }
 
-  if logic:trigger(fk.PreTurnStart, player, data) then
-    return true
+  for _, p in ipairs(room.players) do
+    p:setCardUseHistory("", 0, Player.HistoryTurn)
+    p:setSkillUseHistory("", 0, Player.HistoryTurn)
+    for name, _ in pairs(p.mark) do
+      if name:find("-turn", 1, true) then
+        room:setPlayerMark(p, name, 0)
+      end
+    end
   end
+
+  for cid, cmark in pairs(room.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:find("-turn", 1, true) then
+        room:setCardMark(Fk:getCardById(cid), name, 0)
+      end
+    end
+  end
+
+  for name, _ in pairs(room.banners) do
+    if name:find("-turn", 1, true) then
+      room:setBanner(name, 0)
+    end
+  end
+
+  for name, _ in pairs(room.tag) do
+    if name:find("-turn", 1, true) then
+      room:setTag(name, nil)
+    end
+  end
+
+  for _, p in ipairs(room.players) do
+    p:filterHandcards()
+  end
+
+  logic:trigger(fk.PreTurnStart, player, data)
+  if data.turn_end then return true end
 
   if not player.faceup then
     player:turnOver()
     return true
   end
 
-  return logic:trigger(fk.BeforeTurnStart, player, data)
+  logic:trigger(fk.BeforeTurnStart, player, data)
+  return data.turn_end
 end
 
 function Turn:main()
@@ -336,6 +402,12 @@ end
 ---@class GameEvent.Phase : GameEvent
 ---@field public data PhaseData
 local Phase = GameEvent:subclass("GameEvent.Phase")
+
+function Phase:__tostring()
+  local data = self.data
+  return string.format("<Phase %s : %s by %s #%d>",
+    Util.PhaseStrMapper(data.phase), data.who, data.reason, self.id)
+end
 
 function Phase:prepare()
   local room = self.room
@@ -435,6 +507,10 @@ function Phase:main()
       room:doBroadcastNotify("UpdateSkill", "", {player})
       while not player.dead do
         if data.phase_end then break end
+
+        logic:trigger(fk.BeforePlayCard, player, data)
+        if data.phase_end then break end
+
         local dat = { timeout = room:getBanner("Timeout") and room:getBanner("Timeout")[tostring(player.id)] or room.timeout }
         logic:trigger(fk.StartPlayCard, player, dat, true)
 

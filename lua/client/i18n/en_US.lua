@@ -37,6 +37,8 @@ Fk:loadTranslationTable({
   ["Disable Extension"] = "Please ignore this checkbox",
   -- ["Filter"] = "筛选",
   -- ["Room ID"] = "房间ID",
+  ["RefreshRoomHelp"] = "Click to refresh filtered rooms, long press to refresh all rooms without clearing filters",
+  ["FilterHelp"] = "Long press to clear filter",
   -- ["Create Room"] = "创建房间",
   -- ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1's room",
@@ -211,6 +213,7 @@ Fk:loadTranslationTable({
   ["Show General Detail"] = "View skills",
 
   ["#PlayCard"] = "Your turn now, please use a card",
+  ["#UseSkill"] = "please use skill [%arg]",
   ["#AskForGeneral"] = "Please choose a character",
   ["#AskForSkillInvoke"] = "Do you want to use skill %1?",
   ["#AskForLuckCard"] = "Do you want to use luck card (%1 times left)?",
@@ -235,6 +238,7 @@ Fk:loadTranslationTable({
   ["replaceEquip"] = "Replacing Equip",
   ["PlayCard"] = "Playing card",
 
+  ["#AskForChooseGenerals"] = "%1：please choose %2 character(s)",
   ["AskForCardChosen"] = "Choosing card",
   ["AskForCardsChosen"] = "Choosing card",
   ["#AskForChooseCard"] = "%1: please choose a card from %src",
@@ -290,6 +294,7 @@ Fk:loadTranslationTable({
   ["seat#11"] = "Seat#11",
   ["seat#12"] = "Seat#12",
   ["@ControledBy"] = "Controller",
+  ["playerstr_self"] = "(you)",
 
   -- ["Menu"] = "菜单",
   -- ["Surrender"] = "投降",

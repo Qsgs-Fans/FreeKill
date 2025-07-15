@@ -15,13 +15,20 @@ function convertNumber(number) {
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
   if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !photo.deputyGeneral)) {
-    return luatr("seat#" + photo.seatNumber);
+    let ret = luatr("seat#" + photo.seatNumber);
+    if (playerid == Self.id) {
+      ret = ret + luatr("playerstr_self")
+    }
+    return luatr(ret);
   }
 
   let ret = photo.general;
   ret = luatr(ret);
   if (photo.deputyGeneral && photo.deputyGeneral !== "") {
     ret = ret + "/" + luatr(photo.deputyGeneral);
+  }
+  if (playerid == Self.id) {
+    ret = ret + luatr("playerstr_self")
   }
   return ret;
 }

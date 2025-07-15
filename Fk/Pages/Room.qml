@@ -9,6 +9,7 @@ import Fk
 import Fk.Common
 import Fk.RoomElement
 import Fk.PhotoElement as PhotoElement
+import Fk.Widgets
 import "RoomLogic.js" as Logic
 
 Item {
@@ -41,6 +42,9 @@ Item {
   property alias skillInteraction: skillInteraction
   property alias miscStatus: miscStatus
   property alias banner: banner
+
+  // 权宜之计 后面全改
+  property alias cheatDrawer: cheatLoader
 
   property var selected_targets: []
   property string responding_card
@@ -435,7 +439,15 @@ Item {
         sealedSlots: JSON.parse(model.sealedSlots)
 
         onSelectedChanged: {
-          if ( state === "candidate" ) lcall("UpdateRequestUI", "Photo", playerid, "click", { selected } );
+          if ( state === "candidate" )
+            lcall("UpdateRequestUI", "Photo", playerid, "click", { selected, autoTarget: config.autoTarget } );
+        }
+
+        onDoubleTappedChanged: {
+          if (doubleTapped && enabled) {
+            lcall("UpdateRequestUI", "Photo", playerid, "doubleClick", { selected, doubleClickUse: config.doubleClickUse, autoTarget: config.autoTarget } )
+            doubleTapped = false;
+          }
         }
 
         Component.onCompleted: {
@@ -501,10 +513,12 @@ Item {
       //   text: luatr("Trust")
       // }
       MetroButton {
+        id: sortBtn
         text: luatr("Sort Cards")
         textFont.pixelSize: 28
+        enabled: dashboard.sortable// lcall("CanSortHandcards", Self.id)
         onClicked: {
-          if (lcall("CanSortHandcards", Self.id)) {
+          if (dashboard.sortable) {
             let sortMethods = [];
             for (let index = 0; index < sortMenuRepeater.count; index++) {
               var tCheckBox = sortMenuRepeater.itemAt(index)
@@ -885,28 +899,52 @@ Item {
     z: 999
   }
 
-  function activateSkill(skill_name, selected) {
-    lcall("UpdateRequestUI", "SkillButton", skill_name, "click", { selected } );
+  function activateSkill(skill_name, selected, action) {
+    let data;
+    if (action === "click") data = { selected, autoTarget: config.autoTarget };
+    else if (action === "doubleClick") data = { selected, doubleClickUse: config.doubleClickUse, autoTarget: config.autoTarget };
+    else data = { selected };
+    lcall("UpdateRequestUI", "SkillButton", skill_name, action, data);
   }
 
-  Drawer {
+  PopupLoader {
     id: roomDrawer
-    width: parent.width * 0.36 / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    dim: false
-    clip: true
-    dragMargin: 0
-    scale: mainWindow.scale
-    transformOrigin: Item.TopLeft
+    width: realMainWin.width * 0.4
+    height: realMainWin.height * 0.95
+    x: realMainWin.height * 0.025
+    y: realMainWin.height * 0.025
+
+    property int rememberedIdx: 0
+
+    background: Rectangle {
+      radius: 12 * mainWindow.scale
+      color: "#FAFAFB"
+      opacity: 0.9
+    }
 
     ColumnLayout {
-      anchors.fill: parent
+      // anchors.fill: parent
+      width: parent.width / mainWindow.scale
+      height: parent.height / mainWindow.scale
+      scale: mainWindow.scale
+      transformOrigin: Item.TopLeft
+
+      ViewSwitcher {
+        id: drawerBar
+        Layout.alignment: Qt.AlignHCenter
+        model: [
+          luatr("Log"),
+          luatr("Chat"),
+          luatr("PlayerList"),
+        ]
+      }
 
       SwipeView {
         Layout.fillWidth: true
         Layout.fillHeight: true
         interactive: false
         currentIndex: drawerBar.currentIndex
+        clip: true
         Item {
           LogEdit {
             id: log
@@ -920,25 +958,50 @@ Item {
             anchors.fill: parent
           }
         }
-      }
 
-      TabBar {
-        id: drawerBar
-        width: roomDrawer.width
-        TabButton {
-          width: roomDrawer.width / 2
-          text: luatr("Log")
-        }
-        TabButton {
-          width: roomDrawer.width / 2
-          text: luatr("Chat")
+        ListView {
+          id: playerList
+
+          clip: true
+          ScrollBar.vertical: ScrollBar {}
+          model: ListModel {
+            id: playerListModel
+          }
+
+          delegate: ItemDelegate {
+            width: playerList.width
+            height: 30
+            text: screenName + (observing ? "  [" + luatr("Observe") +"]" : "")
+
+            onClicked: {
+              roomScene.startCheat("PlayerDetail", {
+                avatar: avatar,
+                id: id,
+                screenName: screenName,
+                general: general,
+                deputyGeneral: deputyGeneral,
+                observing: observing
+              });
+            }
+          }
         }
       }
     }
+
+    onAboutToHide: {
+      // 安卓下在聊天时关掉Popup会在下一次点开时完全卡死
+      // 可能是Qt的bug 总之为了伺候安卓需要把聊天框赶走
+      rememberedIdx = drawerBar.currentIndex;
+      drawerBar.currentIndex = 0;
+    }
+
+    onAboutToShow: {
+      drawerBar.currentIndex = rememberedIdx;
+    }
   }
 
-  Popup {
-    id: cheatDrawer
+  PopupLoader {
+    id: cheatLoader
     width: realMainWin.width * 0.60
     height: realMainWin.height * 0.8
     anchors.centerIn: parent
@@ -947,23 +1010,6 @@ Item {
       radius: 5
       border.color: "#A6967A"
       border.width: 1
-    }
-
-    Loader {
-      id: cheatLoader
-      anchors.centerIn: parent
-      width: parent.width / mainWindow.scale
-      height: parent.height / mainWindow.scale
-      scale: mainWindow.scale
-      clip: true
-      onSourceChanged: {
-        if (item === null)
-          return;
-        item.finish.connect(() => {
-          cheatDrawer.close();
-        });
-      }
-      onSourceComponentChanged: sourceChanged();
     }
   }
 
@@ -1029,12 +1075,12 @@ Item {
       border.width: 1
     }
 
-    Loader {
+    Loader { // 塞不下了 TODO: 换新
       anchors.centerIn: parent
       width: parent.width / mainWindow.scale
       height: parent.height / mainWindow.scale
       scale: mainWindow.scale
-      source: AppPath + "/Fk/LobbyElement/AudioSetting.qml"
+      source: "../LobbyElement/AudioSetting.qml"
     }
   }
 
@@ -1150,6 +1196,23 @@ Item {
     repeat: true
     onTriggered: {
       lcall("RefreshStatusSkills");
+      // FIXME 本来可以用客户端notifyUI(AddObserver)刷旁观列表的
+      // FIXME 但是由于重启智慧所以还是加入一秒0.2刷得了
+      if (!roomDrawer.visible) {
+        playerListModel.clear();
+        const ps = lcall("GetPlayersAndObservers");
+        ps.forEach(p => {
+          playerListModel.append({
+            id: p.id,
+            screenName: p.name,
+            general: p.general,
+            deputyGeneral: p.deputy,
+            observing: p.observing,
+            avatar: p.avatar,
+          });
+        });
+      }
+
       // 刷大家的明置手牌提示框
       for (let i = 0; i < photos.count; i++)
         photos.itemAt(i).handcardsChanged();
@@ -1169,9 +1232,9 @@ Item {
       return;
 
     msg = msg.replace(/\{emoji([0-9]+)\}/g,
-      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+      `<img src="${AppPath}/image/emoji/$1.png" height="24" width="24" />`);
     raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g,
-      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+      `<img src="${AppPath}/image/emoji/$1.png" height="24" width="24" />`);
 
     if (raw.msg.startsWith("$")) {
       if (specialChat(pid, raw, raw.msg.slice(1))) return; // 蛋花、语音
@@ -1317,7 +1380,13 @@ Item {
   function startCheat(type, data) {
     cheatLoader.sourceComponent = Qt.createComponent(`../Cheat/${type}.qml`);
     cheatLoader.item.extra_data = data;
-    cheatDrawer.open();
+    cheatLoader.open();
+  }
+
+  function startCheatByPath(path, data) {
+    cheatLoader.sourceComponent = Qt.createComponent(`${AppPath}/${path}.qml`);
+    cheatLoader.item.extra_data = data;
+    cheatLoader.open();
   }
 
   function resetToInit() {

@@ -4,7 +4,7 @@ local silverLionSkill = fk.CreateSkill {
   attached_equip = "silver_lion",
 }
 
-silverLionSkill:addEffect(fk.DamageInflicted, {
+silverLionSkill:addEffect(fk.DetermineDamageInflicted, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(silverLionSkill.name) and data.damage > 1
   end,

@@ -2,6 +2,7 @@
 
 import QtQuick
 import Fk
+import Fk.Widgets as W
 
 Image {
   property string value: "unknown"
@@ -18,7 +19,7 @@ Image {
     source: SkinBank.ROLE_DIR + value
     visible: root.value == "unknown" && optionPopupBox.visible == false
 
-    TapHandler {
+    W.TapHandler {
       onTapped: optionPopupBox.visible = true;
     }
   }
@@ -34,7 +35,7 @@ Image {
       Image {
         source: SkinBank.ROLE_DIR + modelData
 
-        TapHandler {
+        W.TapHandler {
           onTapped: {
             optionPopupBox.visible = false;
             assumptionBox.value = modelData;

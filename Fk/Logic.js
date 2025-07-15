@@ -17,7 +17,6 @@ function createClientPages() {
 */
 
 var callbacks = {};
-let sheduled_download = "";
 
 callbacks["ServerDetected"] = (j) => {
   const serverDialog = mainStack.currentItem.serverDialog;
@@ -57,11 +56,6 @@ callbacks["ErrorMsg"] = (jsonData) => {
   console.log("ERROR: " + log);
   toast.show(log, 5000);
   mainWindow.busy = false;
-  if (sheduled_download !== "") {
-    mainWindow.busy = true;
-    Pacman.loadSummary(JSON.stringify(sheduled_download), true);
-    sheduled_download = "";
-  }
 }
 
 callbacks["ErrorDlg"] = (jsonData) => {
@@ -76,11 +70,6 @@ callbacks["ErrorDlg"] = (jsonData) => {
   console.log("ERROR: " + log);
   Backend.showDialog("warning", log, jsonData);
   mainWindow.busy = false;
-  if (sheduled_download !== "") {
-    mainWindow.busy = true;
-    Pacman.loadSummary(JSON.stringify(sheduled_download), true);
-    sheduled_download = "";
-  }
 }
 
 callbacks["UpdatePackage"] = (jsonData) => sheduled_download = jsonData;
@@ -94,10 +83,27 @@ callbacks["DownloadComplete"] = () => {
   mainStack.currentItem.downloadComplete(); // should be pacman page
 }
 
+callbacks["SetDownloadingPackage"] = (name) => {
+  const page = mainStack.currentItem;
+  page.setDownloadingPackage(name);
+}
+
+callbacks["PackageDownloadError"] = (msg) => {
+  const page = mainStack.currentItem;
+  page.setDownloadError(msg);
+}
+
+callbacks["PackageTransferProgress"] = (data) => {
+  const page = mainStack.currentItem;
+  page.showTransferProgress(data);
+}
+
 callbacks["BackToStart"] = (jsonData) => {
   while (mainStack.depth > 1) {
     mainStack.pop();
   }
+
+  tryUpdatePackage();
 }
 
 callbacks["SetServerSettings"] = (data) => {

@@ -12,15 +12,8 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI({
-  on_use = function(self, logic, effect)
-    self.skill:onUse(logic, effect)
-  end,
-  on_effect = function(self, logic, effect)
-    local target = effect.to
-    logic:drawCards(target, 2, "ex_nihilo")
-  end,
-}, "__card_skill")
+skill:addAI(nil, "__card_skill")
+skill:addAI(nil, "default_card_skill")
 
 skill:addTest(function(room, me)
   local ex_nihilo = room:printCard("ex_nihilo")

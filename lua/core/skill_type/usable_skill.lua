@@ -9,7 +9,7 @@
 ---@class UsableSkill : Skill
 ---@field public max_use_time integer[]
 ---@field public expand_pile? string | integer[] | fun(self: UsableSkill, player: Player): integer[]|string? @ 额外牌堆，牌堆名称或卡牌id表
----@field public derived_piles? string | string[]
+---@field public derived_piles? string | string[] @ 与某效果联系起来的私人牌堆名，失去该效果时将之置入弃牌堆(@deprecated)
 ---@field public times? fun(self: UsableSkill, player: Player): integer
 local UsableSkill = Skill:subclass("UsableSkill")
 
@@ -80,36 +80,10 @@ function UsableSkill:withinTimesLimit(player, scope, card, card_name, to)
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
 
-  ---@param object? Card|Player
-  ---@param markname string
-  ---@param suffixes string[]
-  ---@return boolean
-  local function hasMark(object, markname, suffixes)
-    if not object then return false end
-    for mark, _ in pairs(object.mark) do
-      if mark == markname then return true end
-      if mark:startsWith(markname .. "-") then
-        for _, suffix in ipairs(suffixes) do
-          if mark:find(suffix, 1, true) then return true end
-        end
-      end
-    end
-    return false
-  end
-
   return player:usedCardTimes(card_name, scope) < limit or
-  hasMark(card, MarkEnum.BypassTimesLimit, card_temp_suf) or
-  hasMark(player, MarkEnum.BypassTimesLimit, temp_suf) or
-  hasMark(to, MarkEnum.BypassTimesLimitTo, temp_suf)
-  -- (card and table.find(card_temp_suf, function(s)
-  --   return card:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
-  -- end)) or
-  -- (table.find(temp_suf, function(s)
-  --   return player:getMark(MarkEnum.BypassTimesLimit .. s) ~= 0
-  -- end)) or
-  -- (to and (table.find(temp_suf, function(s)
-  --   return to:getMark(MarkEnum.BypassTimesLimitTo .. s) ~= 0
-  -- end)))
+  (card and not not card:hasMark(MarkEnum.BypassTimesLimit, card_temp_suf)) or
+  not not player:hasMark(MarkEnum.BypassTimesLimit, temp_suf) or
+  (to and not not to:hasMark(MarkEnum.BypassTimesLimitTo, temp_suf))
 end
 
 -- 获得技能的额外牌堆卡牌id表

@@ -12,4 +12,19 @@ skill:addEffect("distance", {
   end,
 })
 
+skill:addTest(function (room, me)
+  local card = room:printCard("dilu")
+  local origin = table.map(room:getOtherPlayers(me), function(other) return other:distanceTo(me) end)
+  FkTest.runInRoom(function ()
+    room:useCard{
+      card = card,
+      from = me,
+      tos = { me },
+    }
+  end)
+  for i, other in ipairs(room:getOtherPlayers(me)) do
+    lu.assertEquals(other:distanceTo(me), origin[i] + 1)
+  end
+end)
+
 return skill

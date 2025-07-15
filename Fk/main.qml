@@ -6,6 +6,7 @@ import QtQuick.Controls
 import QtQuick.Window
 import "Logic.js" as Logic
 import Fk.Pages
+import Fk.Widgets as W
 
 Window {
   id: realMainWin
@@ -50,7 +51,9 @@ Window {
     }
 
     Component { id: init; Init {} }
+    Component { id: packageDownload; PackageDownload {} }
     Component { id: packageManage; PackageManage {} }
+    Component { id: resourcePackManage; ResourcePackManage {} }
     Component { id: lobby; Lobby {} }
     Component { id: generalsOverview; GeneralsOverview {} }
     Component { id: cardsOverview; CardsOverview {} }
@@ -138,7 +141,7 @@ Window {
         text: errDialog.txt
         wrapMode: Text.WordWrap
 
-        TapHandler {
+        W.TapHandler {
           onTapped: errDialog.close();
         }
       }
@@ -243,6 +246,18 @@ Window {
     if (!mainWindow.closing) {
       closeEvent.accepted = false;
       exitMessageDialog.open();
+    }
+  }
+
+  property var sheduled_download: ""
+  function tryUpdatePackage() {
+    if (sheduled_download !== "") {
+      // mainWindow.busy = true;
+      mainStack.push(packageDownload);
+      const downloadPage = mainStack.currentItem as PackageDownload;
+      downloadPage.setPackages(sheduled_download);
+      Pacman.loadSummary(JSON.stringify(sheduled_download), true);
+      sheduled_download = "";
     }
   }
 

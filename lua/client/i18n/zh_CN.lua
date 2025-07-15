@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
   -- Lobby
   ["Room List"] = "房间列表 (共%1个房间)",
   ["Enter"] = "进入",
@@ -26,10 +26,14 @@ Fk:loadTranslationTable{
   ["BG Settings"] = "游戏背景",
   ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
+  ["Disable game over audio"] = "禁用游戏结束音效",
   ["Hide unselectable cards"] = "下移不可选卡牌",
   ["Hide observer chatter"] = "屏蔽旁观者聊天",
   ["Rotate table card"] = "处理区的牌随机旋转",
   ["Hide presents"] = "屏蔽送花砸蛋",
+  ["Auto select the only target"] = "自动选择唯一目标",
+  ["Double click to use card or skill"] = "双击牌或头像使用牌或技能",
+  ["Do not use nullification to own one-target trick"] = "不对自己使用的单目标<br/>锦囊使用【无懈可击】",
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
   ["Favorite Generals"] = "特别关注",
@@ -40,18 +44,25 @@ Fk:loadTranslationTable{
   ["Click to back"] = "点击返回",
 
   ["Refresh Room List"] = "刷新房间列表 (%1个房间)",
+  ["Automatically Filter Room List"] = "刷新时自动筛选房间",
 
   ["Disable Extension"] = "禁用Lua拓展 (重启后生效)",
   ["Filter"] = "筛选",
+  -- ["RefreshRoomHelp"] = "单击据筛选刷新，长按刷新全部房间但不清除刷新",
+  ["FilterHelp"] = "长按以清除筛选",
   ["Create Room"] = "创建房间",
+  ["Basic settings"] = "基本设置",
   ["Room ID"] = "房间ID",
   ["Room Name"] = "房间名字",
   ["$RoomName"] = "%1的房间",
+  ["Properties"] = "属性",
   ["Player num"] = "玩家数目",
   ["Select generals num"] = "选将数目",
   ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
+  ["help: Operation timeout"] = "一次操作的最大思考时长。",
   ["Luck Card Times"] = "手气卡次数",
+  ["help: Luck Card Times"] = "可以更换初始手牌的最多次数。",
   ["Has Password"] = "有密码",
   ["No Password"] = "无密码",
   ["Room Password"] = "房间密码",
@@ -65,9 +76,12 @@ Fk:loadTranslationTable{
   ["Ready"] = "准备",
   ["Cancel Ready"] = "取消准备",
   ["Kick Owner"] = "踢出房主",
+  ["Game Rule"] = "游戏规则",
   ["Game Mode"] = "游戏模式",
   ["Enable free assign"] = "自由选将",
+  ["help: Enable free assign"] = "启用后在选将界面长按或右键武将牌。",
   ["Enable deputy general"] = "启用副将机制",
+  ["help: Enable deputy general"] = "请注意部分模式本身不支持副将机制。",
   ["General Settings"] = "通常设置",
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
@@ -96,7 +110,7 @@ Fk:loadTranslationTable{
   ["New"] = "新建",
   ["Clear"] = "清空",
   ["Help_Ban_List"] = "导出键会将这个方案的内容复制到剪贴板中；" ..
-  "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
+      "导入键会自动读取剪贴板，若可以导入则导入，不能导入则报错。",
   ["Ban_Generals"] = "已禁用武将",
   ["Ban_Packages"] = "禁用拓展包",
   ["Whitelist_Generals"] = "白名单武将",
@@ -165,7 +179,7 @@ Fk:loadTranslationTable{
 
 开发者： RalphR Nyutanislavsky xxyheaven 妖梦厨
 
-贡献者： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主
+贡献者： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主 影月
 
 鸣谢： Mogara
 
@@ -277,6 +291,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Show General Detail"] = "查看技能",
 
   ["#PlayCard"] = "出牌阶段，请使用一张牌",
+  ["#UseSkill"] = "请使用技能〖%arg〗",
   ["#AskForGeneral"] = "请选择 1 名武将",
   ["#AskForSkillInvoke"] = "你想发动〖%1〗吗？",
   ["#AskForLuckCard"] = "你想使用手气卡吗？还可以使用 %arg 次，剩余手气卡∞张",
@@ -304,10 +319,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["replaceEquip"] = "替换装备",
   ["PlayCard"] = "出牌",
 
+  ["#AskForChooseGenerals"] = "%1：请选择%2名武将",
   ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
   ["#AskForChooseCards"] = "%1：请选择%src的%2至%3张卡牌",
   ["$ChooseCard"] = "请选择一张卡牌",
   ["$ChooseCards"] = "请选择%1至%2张卡牌",
+  ["$ViewCards"] = "请观看卡牌",
+  ["$ViewCardsFrom"] = "请观看 %src 的卡牌",
   ["$Hand"] = "手牌区",
   ["$Equip"] = "装备区",
   ["$Judge"] = "判定区",
@@ -319,9 +337,10 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForNullificationWithoutTo"] = "是否对 %src 使用的【%arg】使用【无懈可击】？",
   ["#AskForPeaches"] = "%src 生命危急，需要 %arg 个【桃】",
   ["#AskForPeachesSelf"] = "你生命危急，需要 %arg 个【桃】或【酒】",
-  ["#AskForUseOneCard"] = "%arg：请使用一张牌",
+  ["#AskForUseOneCard"] = "%arg：请使用一张实体牌",
   ["#AskForUseVirtualCard"] = "%arg：请视为使用 %arg2",
   ["#AskForUseVirtualCards"] = "%arg：请视为使用一张牌",
+  ["#AskForPlayCard"] = "%arg：请使用一张牌",
   ["#AskForUseMultiCard"] = "请使用【%arg】（此为第 %arg2 张，共需 %arg3 张）",
   ["#AskForResponseMultiCard"] = "请打出【%arg】（此为第 %arg2 张，共需 %arg3 张）",
   ["#AskForNumber"] = "%arg：请选择一个数字",
@@ -358,6 +377,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["seat#11"] = "十一号位",
   ["seat#12"] = "十二号位",
   ["@ControledBy"] = "控制者",
+  ["playerstr_self"] = "(你)",
 
   ["Menu"] = "菜单",
   ["Surrender"] = "投降",
@@ -372,6 +392,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Sort by Suit"] = "按花色",
   ["Chat"] = "聊天",
   ["Log"] = "战报",
+  ["PlayerList"] = "玩家列表",
   ["Return to Bottom"] = "回到底部",
   ["Trusting ..."] = "托管中 ...",
   ["Observing ..."] = "旁观中 ...",
@@ -444,20 +465,37 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.5.3
+  ## v0.5.7
 
-  可以查看与复制对局中的禁将方案了（录像回放中亦可）
+  修复了控制他人带来的视角相关bug
+
+  游戏结束时添加了简单的统计与称号（师承太阳神三国杀）
+
+  武将一览界面添加了筛选功能
+
+  房间里面现在可以看到有哪些旁观者了
 
   ]==],
 }
 
 -- Game concepts
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
+  ["you"] = "你",
+  ["anyone"] = "一名",
+  ["characters"] = "角色",
+  ["others"] = "其他角色",
+
   ["lord"] = "主公",
   ["loyalist"] = "忠臣",
   ["rebel"] = "反贼",
   ["renegade"] = "内奸",
   ["lord+loyalist"] = "主忠",
+  ["rebel_chief"] = "贼首",
+  ["civilian"] = "平民",
+  ["rebel+rebel_chief"] = "反贼",
+  ["rebel+rebel_chief+civilian"] = "反贼",
+  ["renegade+civilian"] = "内奸",
+  ["lord+loyalist+civilian"] = "主忠",
 
   ["normal_damage"] = "无属性",
   ["fire_damage"] = "火属性",
@@ -501,6 +539,8 @@ Fk:loadTranslationTable{
   ["discard"] = "弃置",
   ["give"] = "交给",
   ["prey"] = "获得",
+  ["use"] = "使用",
+  ["response"] = "打出",
 
   ["general_card"] = "武将牌",
   ["General"] = "武将",
@@ -541,6 +581,9 @@ Fk:loadTranslationTable{
   ["draw1"] = "摸一张牌",
   ["draw2"] = "摸两张牌",
   ["draw3"] = "摸三张牌",
+  ["discard1"] = "弃一张牌",
+  ["discard2"] = "弃两张牌",
+  ["discard3"] = "弃三张牌",
   ["recover"] = "回复1点体力",
   ["loseHp"] = "失去1点体力",
   ["damage1"] = "造成1点伤害",
@@ -552,10 +595,19 @@ Fk:loadTranslationTable{
   ["draw_card"] = "摸牌",
   ["heal_hp"] = "回复体力",
   ["damaged"] = "受到伤害",
+  ["view"] = "观看",
+
+  --numberic(need gsub)
+  ["drawX"] = "摸{num}张牌",
+  ["discardX"] = "弃{num}张牌",
+  ["recoverX"] = "回复{num}点体力",
+  ["loseHpX"] = "失去{num}点体力",
+  ["damageX"] = "造成{num}点伤害",
+  ["loseMaxHpX"] = "减{num}点体力上限",
 }
 
 -- related to sendLog
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
   -- game processing
   ["$AppendSeparator"] = '<font color="grey">------------------------------</font>',
   ["$GameStart"] = "== 游戏开始 ==",
@@ -671,10 +723,11 @@ Fk:loadTranslationTable{
   ["#ChangeKingdom"] = "%from 的势力从 %arg 变成了 %arg2",
   ["#RoomOutdated"] = "服务器更新完毕！该房间已过期，将无法再次游玩",
   ["#Choice"] = "%from 选择 %arg",
+  ["#WatchCard"] = "%from 观看了牌 %card",
 }
 
 -- card footnote
-Fk:loadTranslationTable{
+Fk:loadTranslationTable {
   ["$$DiscardCards"] = "%from弃置",
   ["$$PutCard"] = "%from置于",
   ["$$TurnOverCard"] = "%from亮出",

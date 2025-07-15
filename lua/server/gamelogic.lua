@@ -250,7 +250,7 @@ function GameLogic:attachSkillToPlayers()
     end
 
     room:handleAddLoseSkills(player, skillName, nil, false, true)
-    self:trigger(fk.EventAcquireSkill, player, skill)
+    self:trigger(fk.EventAcquireSkill, player, {skill = skill, who = player})
   end
   for _, p in ipairs(room.alive_players) do
     local skills = Fk.generals[p.general]:getSkillNameList(true)
@@ -260,12 +260,9 @@ function GameLogic:attachSkillToPlayers()
 
     local deputy = Fk.generals[p.deputyGeneral]
     if deputy then
-      skills = deputy.skills
+      skills = deputy:getSkillNameList(true)
       for _, s in ipairs(skills) do
-        addRoleModSkills(p, s.name)
-      end
-      for _, sname in ipairs(deputy.other_skills) do
-        addRoleModSkills(p, sname)
+        addRoleModSkills(p, s)
       end
     end
   end
@@ -534,6 +531,10 @@ function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
 end
 
+function GameLogic:getCurrentEventDepth()
+  return self.game_event_stack.p
+end
+
 ---@param eventType GameEvent
 function GameLogic:getMostRecentEvent(eventType)
   return self:getCurrentEvent():findParent(eventType, true)
@@ -788,7 +789,7 @@ function GameLogic:dumpEventStack()
   local ret = "===== Start of event stack dump =====\n"
 
   repeat
-    ret = ret .. "Stack level #" .. i .. ": " .. tostring(top) .. "\n"
+    ret = ret .. tostring(top) .. "\n"
 
     top = top.parent
     i = i - 1

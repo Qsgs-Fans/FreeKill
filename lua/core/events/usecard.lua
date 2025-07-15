@@ -55,20 +55,31 @@ function UseCardData:hasTarget(player)
   return table.contains(self.tos, player)
 end
 
----@param player ServerPlayer
-function UseCardData:removeTarget(player)
+--- 取消指定目标
+---@param players ServerPlayer | ServerPlayer[]
+---@return boolean @ 成功删除目标，返回假则无此目标
+function UseCardData:removeTarget(players)
+  if (not players[1]) and players.class then players = { players } end
+  if #players == 0 then return false end
+  local ret = false
   self.subTos = self.subTos or {}
-  for index, target in ipairs(self.tos) do
-    if (target == player) then
-      table.remove(self.tos, index)
-      table.remove(self.subTos, index)
-      return
+  for _, player in ipairs(players) do
+    for index, target in ipairs(self.tos) do
+      if (target == player) then
+        table.remove(self.tos, index)
+        table.remove(self.subTos, index)
+        ret = true
+        break
+      end
     end
   end
+  return ret
 end
 
+--- 取消所有目标
 function UseCardData:removeAllTargets()
   self.tos = {} ---@type ServerPlayer[] @ 目标列表
+  self.subTos = {}
 end
 
 ---@return ServerPlayer[]
@@ -77,7 +88,7 @@ function UseCardData:getAllTargets()
 end
 
 -- 获取使用牌的合法额外目标（为简化结算，不允许与已有目标重复、且【借刀杀人】等带副目标的卡牌使用首个目标的副目标）
----@param extra_data? table
+---@param extra_data? UseExtraData | table
 ---@return ServerPlayer[]
 function UseCardData:getExtraTargets(extra_data)
   if self.card.type == Card.TypeEquip or self.card.sub_type == Card.SubtypeDelayedTrick then return {} end
@@ -105,14 +116,23 @@ function UseCardData:getExtraTargets(extra_data)
 end
 
 -- 将角色添加至目标列表（若不指定副目标则继承首个目标的副目标）
----@param player ServerPlayer
----@param sub? ServerPlayer[]
+---@param player ServerPlayer | ServerPlayer[] @ 添加的目标
+---@param sub? ServerPlayer | ServerPlayer[] @ 副目标，留空则继承首个目标的副目标
 function UseCardData:addTarget(player, sub)
-  table.insert(self.tos, player)
-  self.subTos = self.subTos or {}
-  table.insert(self.subTos, sub or (#self.tos > 0 and self:getSubTos(self.tos[1]) or {}))
+  if (not player[1]) and player.class then player = { player } end
+  if #player == 0 then return end
+  for _, p in ipairs(player) do
+    table.insert(self.tos, p)
+    self.subTos = self.subTos or {}
+    for i = #self.subTos + 1, #self.tos - 1 do
+      self.subTos[i] = {}
+    end
+    if sub and sub[1] == nil then sub = {sub} end
+    self.subTos[#self.tos] = sub or (#self.tos > 0 and self:getSubTos(self.tos[1])) or {}
+  end
 end
 
+--- 获取某个目标对应的副目标
 ---@param player ServerPlayer
 ---@return ServerPlayer[]
 function UseCardData:getSubTos(player)
@@ -251,8 +271,8 @@ fk.CardUseFinished = UseCardEvent:subclass("fk.CardUseFinished")
 ---@field public disresponsive? boolean @ 是否不可响应
 ---@field public unoffsetable? boolean @ 是否不可抵消
 ---@field public nullified? boolean @ 是否对此目标无效
----@field public fixedResponseTimes? integer @ 响应此事件需要的牌张数（如杀之于决斗），默认1张
----@field public fixedAddTimesResponsors? ServerPlayer[] @ 需要应用额外响应的角色们，用于单向多次响应（无双决斗），为nil则应用所有角色
+---@field public cancelled? boolean @ 是否已被取消
+---@field public fixedResponseTimesList? table<ServerPlayer, integer> @ 某角色响应此事件需要的牌张数（如杀响应决斗），键为角色，值为响应张数
 ---@field public extraData? UseExtraData | any @ 额外数据
 
 --- 使用牌的数据
@@ -311,7 +331,7 @@ function AimData:setTargetDone(player)
 end
 
 -- 获取使用牌的合法额外目标（为简化结算，不允许与已有目标重复、且【借刀杀人】等带副目标的卡牌使用当前目标的副目标）
----@param extra_data? table
+---@param extra_data? UseExtraData|table
 ---@return ServerPlayer[]
 function AimData:getExtraTargets(extra_data)
   if self.card.type == Card.TypeEquip or self.card.sub_type == Card.SubtypeDelayedTrick then return {} end
@@ -372,49 +392,61 @@ function AimData:changeCard(name, suit, number, skill_name)
 end
 
 -- 将角色添加至目标列表（若不指定副目标则继承当前目标的副目标）
----@param player ServerPlayer
+---@param player ServerPlayer | ServerPlayer[]
 ---@param sub? ServerPlayer[]
-function AimData:addTarget(player, sub)
-  table.insert(self.tos[AimData.Undone], player)
-
-  RoomInstance:sortByAction(self.tos[AimData.Undone])
-  table.insert(self.use.tos, player)
-  table.insert(self.use.subTos, sub or self.subTargets)
+---@param setDone? boolean
+function AimData:addTarget(player, sub, setDone)
+  if (not player[1]) and player.class then player = { player } end
+  if #player == 0 then return end
+  if setDone then
+    table.insertTable(self.tos[AimData.Done], player)
+  else
+    table.insertTable(self.tos[AimData.Undone], player)
+    RoomInstance:sortByAction(self.tos[AimData.Undone])
+  end
+  for _, p in ipairs(player) do
+    table.insert(self.use.tos, p)
+    table.insert(self.use.subTos, sub or self.subTargets)
+  end
 
   RoomInstance:sendLog{
     type = "#TargetAdded",
     from = self.from.id,
-    to = {player.id},
+    to = table.map(player, Util.IdMapper),
     arg = self.card:toLogString(),
   }
 end
 
----@param player ServerPlayer
-function AimData:cancelTarget(player)
-  local cancelled = false
-  for status = AimData.Undone, AimData.Done do
-    local indexList = {}
-    for index, p in ipairs(self.tos[status]) do
-      if p == player then
-        table.insert(indexList, index)
+-- 将角色移除出目标列表（包括其对应副目标）
+--
+-- 目前的onAim逻辑不支持精准取消重复目标中的一个，故这里移除的是全部同名目标
+---@param target ServerPlayer|ServerPlayer[]
+function AimData:cancelTarget(target)
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  local actural = {}
+  for _, player in ipairs(target) do
+    local cancelled = false
+    for status = AimData.Undone, AimData.Done do
+      for i = #self.tos[status], 1, -1 do
+        if self.tos[status][i] == player then
+          table.insert(actural, player.id)
+          cancelled = true
+          table.remove(self.tos[status], i)
+        end
       end
     end
 
-    if #indexList > 0 then
-      cancelled = true
-      for i = 1, #indexList do
-        table.remove(self.tos[status], indexList[i])
+    if cancelled then
+      if player == self.to then
+        self.cancelled = true
       end
-    end
-  end
-
-  if cancelled then
-    table.insert(self.tos[AimData.Cancelled], player)
-    for i, p in ipairs(self.use.tos) do
-      if p == player then
-        table.remove(self.use.tos, i)
-        table.remove(self.use.subTos, i)
-        break
+      table.insert(self.tos[AimData.Cancelled], player)
+      for i = #self.use.tos, 1, -1 do
+        if self.use.tos[i] == player then
+          table.remove(self.use.tos, i)
+          table.remove(self.use.subTos, i)
+        end
       end
     end
   end
@@ -422,9 +454,50 @@ function AimData:cancelTarget(player)
   RoomInstance:sendLog{
     type = "#TargetCancelled",
     from = self.from.id,
-    to = {player.id},
+    to = actural,
     arg = self.card:toLogString(),
   }
+end
+
+-- 取消当前目标
+---@return boolean
+function AimData:cancelCurrentTarget()
+  if self.cancelled then return false end
+  self.cancelled = true
+
+  --当前目标必定是Undone的，因此只在这个表里移除即可
+  if not table.removeOne(self.tos[AimData.Undone], self.to) then return false end
+
+  --注意：这里千万不能添加AimData.Cancelled，否则回到onAim时会清算已经处理过的AimData
+  --table.insert(self.tos[AimData.Cancelled], self.to)
+
+  for i, p in ipairs(self.use.tos) do
+    if p == self.to then
+      table.remove(self.use.tos, i)
+      table.remove(self.use.subTos, i)
+      break
+    end
+  end
+  RoomInstance:sendLog{
+    type = "#TargetCancelled",
+    from = self.from.id,
+    to = { self.to.id },
+    arg = self.card:toLogString(),
+  }
+  return true
+end
+
+--取消所有目标
+function AimData:cancelAllTarget()
+  self.cancelled = true
+  self.use.tos = {}
+
+  -- 一些冗余但必要的清理，不这么做的话特定情况下onAim会出问题
+  self.use.subTos = {}
+  table.insertTable(self.tos[AimData.Cancelled], self.tos[AimData.Undone])
+  table.insertTable(self.tos[AimData.Cancelled], self.tos[AimData.Done])
+  self.tos[AimData.Undone] = {}
+  self.tos[AimData.Done] = {}
 end
 
 function AimData:removeDeadTargets()
@@ -440,6 +513,7 @@ function AimData:removeDeadTargets()
   end
 end
 
+--- 当前目标是否为唯一目标
 ---@param target ServerPlayer
 ---@return boolean
 function AimData:isOnlyTarget(target)
@@ -450,6 +524,7 @@ function AimData:isOnlyTarget(target)
   end)
 end
 
+--- 当前目标是否不可响应此牌
 ---@param target? ServerPlayer
 ---@return boolean
 function AimData:isDisresponsive(target)
@@ -457,6 +532,7 @@ function AimData:isDisresponsive(target)
   return self.disresponsive or (target and table.contains((self.use.disresponsiveList or Util.DummyTable), target))
 end
 
+--- 当前目标是否不可抵消此牌
 ---@param target? ServerPlayer
 ---@return boolean
 function AimData:isUnoffsetable(target)
@@ -464,9 +540,58 @@ function AimData:isUnoffsetable(target)
   return self.unoffsetable or (target and table.contains((self.use.unoffsetableList or Util.DummyTable), target))
 end
 
+--- 判断此牌是否对当前目标无效
 ---@return boolean
 function AimData:isNullified()
   return self.nullified or (self.to and table.contains((self.use.nullifiedTargets or Util.DummyTable), self.to))
+end
+
+--- 令一名角色不可响应此牌
+---@param target? ServerPlayer|ServerPlayer[]
+function AimData:setDisresponsive(target)
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  self.use.disresponsiveList = self.use.disresponsiveList or {}
+  table.insertTableIfNeed(self.use.disresponsiveList, target)
+end
+
+--- 令一名角色不可抵消此牌
+---@param target? ServerPlayer|ServerPlayer[]
+function AimData:setUnoffsetable(target)
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  self.use.unoffsetableList = self.use.unoffsetableList or {}
+  table.insertTableIfNeed(self.use.unoffsetableList, target)
+end
+
+--- 令此牌对一名角色无效
+---@param target? ServerPlayer|ServerPlayer[]
+function AimData:setNullified(target)
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  self.use.nullifiedTargets = self.use.nullifiedTargets or {}
+  table.insertTableIfNeed(self.use.nullifiedTargets, target)
+end
+
+--- 响应当前牌需要的牌张数，默认1
+---@param target? ServerPlayer @ 需要响应的角色，默认为目标角色
+---@return integer
+function AimData:getResponseTimes(target)
+  if self.fixedResponseTimesList then
+    return self.fixedResponseTimesList[target or self.to] or 1
+  end
+  return 1
+end
+
+--- 设置某角色响应当前牌需要的牌张数
+---@param num? integer @ 响应需要牌张数
+---@param target? ServerPlayer @ 需要响应的角色，默认为目标角色
+function AimData:setResponseTimes(num, target)
+  self.fixedResponseTimesList = self.fixedResponseTimesList or {}
+  self.fixedResponseTimesList[target or self.to] = num
 end
 
 ---@class AimEvent: TriggerEvent
@@ -499,14 +624,17 @@ fk.TargetConfirmed = AimEvent:subclass("fk.TargetConfirmed")
 ---@field public unoffsetable? boolean @ 是否不可抵消
 ---@field public nullified? boolean @ 是否对此目标无效
 ---@field public isCancellOut? boolean @ 是否被抵消
----@field public fixedResponseTimes? integer @ 响应此事件需要的牌张数（如杀之于决斗），默认1张
+---@field public fixedResponseTimesList? table<ServerPlayer, integer> @ 某角色响应此事件需要的牌张数（如杀响应决斗），键为角色，值为响应张数
 ---@field public fixedAddTimesResponsors? ServerPlayer[] @ 需要应用额外响应的角色们，用于单向多次响应（无双），为nil则应用所有角色
 ---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
+---@field public disresponsiveList? ServerPlayer[] @ 这些角色不可响应此牌（晚于use.disresponsiveList）
+---@field public unoffsetableList? ServerPlayer[] @ 这些角色不可抵消此牌（晚于use.unoffsetableList）
 
 --- 卡牌效果的数据
 ---@class CardEffectData: CardEffectDataSpec, TriggerData
 CardEffectData = TriggerData:subclass("CardEffectData")
 
+--- 当前数据的所有子目标（如借刀）
 ---@param player ServerPlayer
 ---@return ServerPlayer[]
 function CardEffectData:getSubTos(player)
@@ -520,11 +648,13 @@ function CardEffectData:getSubTos(player)
   return {}
 end
 
+--- 当前数据的所有目标
 ---@return ServerPlayer[]
 function CardEffectData:getAllTargets()
   return table.simpleClone(self.tos)
 end
 
+--- 当前目标是否为唯一目标
 ---@param target ServerPlayer
 ---@return boolean
 function CardEffectData:isOnlyTarget(target)
@@ -535,20 +665,32 @@ function CardEffectData:isOnlyTarget(target)
   end)
 end
 
---- 当前生效目标是否不可抵消此牌
+--- 当前生效目标是否不可响应此牌
 ---@param target? ServerPlayer
 ---@return boolean
 function CardEffectData:isDisresponsive(target)
   target = target or self.to
-  return self.disresponsive or (target and self.use ~= nil and table.contains((self.use.disresponsiveList or Util.DummyTable), target))
+  if not target then return false end
+  if self.disresponsive then return true end
+  if self.use ~= nil then
+    return table.contains((self.use.disresponsiveList or Util.DummyTable), target)
+  else
+    return table.contains((self.disresponsiveList or Util.DummyTable), target)
+  end
 end
 
---- 当前生效目标是否不可响应此牌
+--- 当前生效目标是否不可抵消此牌
 ---@param target? ServerPlayer
 ---@return boolean
 function CardEffectData:isUnoffsetable(target)
   target = target or self.to
-  return self.unoffsetable or (target and self.use ~= nil and table.contains((self.use.unoffsetableList or Util.DummyTable), target))
+  if not target then return false end
+  if self.unoffsetable then return true end
+  if self.use ~= nil then
+    return table.contains((self.use.unoffsetableList or Util.DummyTable), target)
+  else
+    return table.contains((self.unoffsetableList or Util.DummyTable), target)
+  end
 end
 
 --- 判断此牌是否对当前目标无效
@@ -557,16 +699,63 @@ function CardEffectData:isNullified()
   return self.nullified or (self.to and self.use ~= nil and table.contains((self.use.nullifiedTargets or Util.DummyTable), self.to))
 end
 
+--- 令一名角色不可响应此牌
+---@param target? ServerPlayer|ServerPlayer[]
+function CardEffectData:setDisresponsive(target)
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  if self.use ~= nil then
+    self.use.disresponsiveList = self.use.disresponsiveList or {}
+    table.insertTableIfNeed(self.use.disresponsiveList, target)
+  else
+    self.disresponsiveList = self.disresponsiveList or {}
+    table.insertTableIfNeed(self.disresponsiveList, target)
+  end
+end
+
+--- 令一名角色不可抵消此牌
+---@param target? ServerPlayer|ServerPlayer[]
+function CardEffectData:setUnoffsetable(target)
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  if self.use ~= nil then
+    self.use.unoffsetableList = self.use.unoffsetableList or {}
+    table.insertTableIfNeed(self.use.unoffsetableList, target)
+  else
+    self.unoffsetableList = self.unoffsetableList or {}
+    table.insertTableIfNeed(self.unoffsetableList, target)
+  end
+end
+
+--- 令此牌对一名角色无效
+---@param target? ServerPlayer|ServerPlayer[]
+function CardEffectData:setNullified(target)
+  if self.use == nil then return end
+  target = target or { self.to }
+  if (not target[1]) and target.class then target = { target } end
+  if #target == 0 then return end
+  self.use.nullifiedTargets = self.use.nullifiedTargets or {}
+  table.insertTableIfNeed(self.use.nullifiedTargets, target)
+end
+
 --- 响应当前牌需要的牌张数，默认1
 ---@param target? ServerPlayer @ 需要响应的角色，默认为生效目标
 ---@return integer
 function CardEffectData:getResponseTimes(target)
-  if self.fixedResponseTimes then
-    if self.fixedAddTimesResponsors == nil or table.contains(self.fixedAddTimesResponsors, target or self.to) then
-      return self.fixedResponseTimes
-    end
+  if self.fixedResponseTimesList then
+    return self.fixedResponseTimesList[target or self.to] or 1
   end
   return 1
+end
+
+--- 设置某角色响应当前牌需要的牌张数
+---@param num? integer @ 响应需要牌张数
+---@param target? ServerPlayer @ 需要响应的角色，默认为生效目标
+function CardEffectData:setResponseTimes(num, target)
+  self.fixedResponseTimesList = self.fixedResponseTimesList or {}
+  self.fixedResponseTimesList[target or self.to] = num
 end
 
 ---@class CardEffectEvent: TriggerEvent

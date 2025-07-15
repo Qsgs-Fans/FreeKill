@@ -34,12 +34,13 @@ function ActiveSkill:canUse(player, card, extra_data)
   return self:isEffectable(player) and self:withinTimesLimit(player, Player.HistoryPhase, card)
 end
 
--- 判断一张牌是否可被此技能选中
+--- 判断一张牌是否可被此技能选中
 ---@param player Player @ 使用者
 ---@param to_select integer @ 待选牌
 ---@param selected integer[] @ 已选牌
+---@param selected_targets Player[] @ 已选目标
 ---@return boolean?
-function ActiveSkill:cardFilter(player, to_select, selected)
+function ActiveSkill:cardFilter(player, to_select, selected, selected_targets)
   return self:getMaxCardNum(player) > 0
 end
 
@@ -158,7 +159,7 @@ end
 ---@param to Player @ 目标
 ---@return boolean?
 function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
-  if not to or player:distanceTo(to, nil, nil, Card:getIdList(card)) < 1 then return false end
+  if not to or player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
@@ -170,37 +171,11 @@ function ActiveSkill:withinDistanceLimit(player, isattack, card, to)
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
 
-  ---@param object Card|Player
-  ---@param markname string
-  ---@param suffixes string[]
-  ---@return boolean
-  local function hasMark(object, markname, suffixes)
-    if not object then return false end
-    for mark, _ in pairs(object.mark) do
-      if mark == markname then return true end
-      if mark:startsWith(markname .. "-") then
-        for _, suffix in ipairs(suffixes) do
-          if mark:find(suffix, 1, true) then return true end
-        end
-      end
-    end
-    return false
-  end
-
-  return (isattack and player:inMyAttackRange(to, nil, Card:getIdList(card))) or
-  (player:distanceTo(to, nil, nil, Card:getIdList(card)) <= self:getDistanceLimit(player, card, to)) or
-  hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
-  hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
-  hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)
-  -- (card and table.find(card_temp_suf, function(s)
-  --   return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  -- end)) or
-  -- (table.find(temp_suf, function(s)
-  --   return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  -- end)) or
-  -- (to and (table.find(temp_suf, function(s)
-  --   return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
-  -- end)))
+  return (isattack and player:inMyAttackRange(to, nil, table.connect(Card:getIdList(card), card.fake_subcards))) or
+  (player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) <= self:getDistanceLimit(player, card, to)) or
+  not not card:hasMark(MarkEnum.BypassDistancesLimit, card_temp_suf) or
+  not not player:hasMark(MarkEnum.BypassDistancesLimit, temp_suf) or
+  not not to:hasMark(MarkEnum.BypassDistancesLimitTo, temp_suf)
 end
 
 -- 判断一个技能是否可发动（也就是确认键是否可点击）。默认值为选择卡牌数和选择目标数均在允许范围内

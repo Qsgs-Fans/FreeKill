@@ -20,4 +20,6 @@ qingguo:addEffect("viewas", {
   end,
 })
 
+qingguo:addAI(nil, "vs_skill")
+
 return qingguo

@@ -17,7 +17,6 @@ skill:addEffect(fk.TargetSpecified, {
   end,
 })
 skill:addEffect(fk.CardUseFinished, {
-  global = true,
   can_refresh = function(self, event, target, player, data)
     return data.extra_data and data.extra_data.qinggang_tag and table.contains(data.extra_data.qinggang_tag, player.id)
   end,
@@ -29,7 +28,6 @@ skill:addEffect(fk.CardUseFinished, {
   end,
 })
 skill:addEffect(fk.BeforeHpChanged, {
-  global = true,
   can_refresh = function(self, event, target, player, data)
     local logic = player.room.logic
     local game_event = logic:getCurrentEvent()
@@ -63,7 +61,6 @@ skill:addEffect(fk.BeforeHpChanged, {
   end,
 })
 skill:addEffect(fk.DamageFinished, {
-  global = true,
   can_refresh = function(self, event, target, player, data)
     local logic = player.room.logic
     local game_event = logic:getCurrentEvent()
@@ -92,7 +89,6 @@ skill:addEffect(fk.DamageFinished, {
   end,
 })
 skill:addEffect(fk.CardEffectFinished, {
-  global = true,
   can_refresh = function(self, event, target, player, data)
     local logic = player.room.logic
     local game_event = logic:getCurrentEvent()
@@ -118,7 +114,6 @@ skill:addEffect(fk.CardEffectFinished, {
   end,
 })
 skill:addEffect(fk.CardEffectCancelledOut, {
-  global = true,
   can_refresh = function(self, event, target, player, data)
     local logic = player.room.logic
     local game_event = logic:getCurrentEvent()

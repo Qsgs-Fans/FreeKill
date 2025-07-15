@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Fk.Pages
 
 Rectangle {
+  color: "transparent"
   property bool isLobby: false
 
   function append(chatter) {
@@ -52,7 +53,7 @@ Rectangle {
         Image {
           height: 32; width: 32
           anchors.centerIn: parent
-          source: "../../image/emoji/" + index
+          source: AppPath + "/image/emoji/" + index
         }
         onClicked: chatEdit.insert(chatEdit.cursorPosition,
                                    "{emoji" + index + "}");

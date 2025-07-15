@@ -169,93 +169,51 @@ local role_mode = fk.CreateGameMode{
   surrender_func = function(self, playedTime)
     local roleCheck = false
     local roleText = ""
-    local roleTable = {
-      { "lord" },
-      { "lord", "rebel" },
-      { "lord", "rebel", "renegade" },
-      { "lord", "loyalist", "rebel", "renegade" },
-      { "lord", "loyalist", "rebel", "rebel", "renegade" },
-      { "lord", "loyalist", "rebel", "rebel", "rebel", "renegade" },
-      { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "renegade" },
-      { "lord", "loyalist", "loyalist", "rebel", "rebel", "rebel", "rebel", "renegade" },
-    }
 
-    roleTable = roleTable[#Fk:currentRoom().players]
+    local alive_players = table.filter(Fk:currentRoom().players, function(p)
+      return not p.dead or p.rest > 0
+    end)
 
     if Self.role == "renegade" then
-      local rebelNum = #table.filter(roleTable, function(role)
-        return role == "rebel"
+      roleCheck = not table.find(alive_players, function(p)
+        return p ~= Self and table.contains({"rebel", "rebel_chief", "renegade"}, p.role)
       end)
-
-      for _, p in ipairs(Fk:currentRoom().players) do
-        if p.role == "rebel" then
-          if not p.dead then
-            break
-          else
-            rebelNum = rebelNum - 1
-          end
-        end
-      end
-
-      roleCheck = rebelNum == 0
       roleText = "left lord and loyalist alive"
-    elseif Self.role == "rebel" then
-      local rebelNum = #table.filter(roleTable, function(role)
-        return role == "rebel"
-      end)
-
-      local renegadeDead = not table.find(roleTable, function(role)
-        return role == "renegade"
-      end)
-      for _, p in ipairs(Fk:currentRoom().players) do
-        if p.role == "renegade" and p.dead then
-          renegadeDead = true
-        end
-
-        if p ~= Self and p.role == "rebel" then
-          if not p.dead then
-            break
-          else
-            rebelNum = rebelNum - 1
-          end
-        end
-      end
-
-      roleCheck = renegadeDead and rebelNum == 1
+    elseif Self.role == "rebel" or Self.role == "rebel_chief" then
+      roleCheck = #table.filter(alive_players, function(p)
+        return table.contains({"rebel", "rebel_chief", "renegade"}, p.role)
+      end) == 1
       roleText = "left one rebel alive"
     else
-      if Self.role == "loyalist" then
-        return { { text = "loyalist never surrender", passed = false } }
+      if Self.role == "loyalist" or Self.role == "civilian" then
+        return { { text = Self.role.." never surrender", passed = false } }
       else
-        if #Fk:currentRoom().alive_players == 2 then
+        if #alive_players < 3 then
           roleCheck = true
         else
-          local lordNum = #table.filter(roleTable, function(role)
-            return role == "lord" or role == "loyalist"
-          end)
-
-          local renegadeDead = not table.find(roleTable, function(role)
-            return role == "renegade"
-          end)
-          for _, p in ipairs(Fk:currentRoom().players) do
-            if p.role == "renegade" and p.dead then
-              renegadeDead = true
-            end
-
-            if p ~= Self and (p.role == "lord" or p.role == "loyalist") then
-              if not p.dead then
+          roleText = "left you alive"
+          local left_loyalist, left_rebel, left_renegade = false, false, false
+          for _, p in ipairs(alive_players) do
+            if p ~= Self then
+              if table.contains({"lord", "loyalist"}, p.role) then
+                left_loyalist = true
                 break
               else
-                lordNum = lordNum - 1
+                if table.contains({"rebel", "rebel_chief"}, p.role) then
+                  left_rebel = true
+                elseif p.role == "renegade" then
+                  left_renegade = true
+                end
               end
             end
           end
-
-          roleCheck = renegadeDead and lordNum == 1
+          if left_loyalist then
+            roleCheck = false
+          else
+            roleCheck = not (left_rebel and left_renegade)
+          end
         end
       end
-
-      roleText = "left you alive"
     end
 
     return {
@@ -271,6 +229,7 @@ Fk:loadTranslationTable{
   ["left one rebel alive"] = "反贼仅剩你存活且不存在存活内奸",
   ["left you alive"] = "主忠方仅剩你存活且其他阵营仅剩一方",
   ["loyalist never surrender"] = "忠臣永不投降！",
+  ["civilian never surrender"] = "平民坚持就是成功！",
 }
 
 local anjiang = General(extension, "anjiang", "unknown", 5)

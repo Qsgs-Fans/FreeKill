@@ -6,6 +6,7 @@ import QtQuick.Window
 import QtQuick.Layouts
 import Fk.LobbyElement
 import Fk.Common
+import Fk.Widgets as W
 import "Logic.js" as Logic
 
 Item {
@@ -18,145 +19,101 @@ Item {
   Component {
     id: roomDelegate
 
-    Rectangle {
-      radius: 8
-      height: 124 - 8
-      width: 124 - 8
-      color: outdated ? "#E2E2E2" : "#DDDDDDDD"
-
-      Text {
-        id: roomNameText
-        horizontalAlignment: Text.AlignLeft
-        width: parent.width - 16
-        height: contentHeight
-        maximumLineCount: 2
-        wrapMode: Text.WrapAnywhere
-        textFormat: Text.PlainText
-        text: roomName
-        // color: outdated ? "gray" : "black"
-        font.pixelSize: 16
-        font.strikeout: outdated
-        // elide: Label.ElideRight
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.margins: 8
-      }
-
-      Text {
-        id: roomIdText
-        text: luatr(gameMode) + ' #' + roomId
-        font.strikeout: outdated
-        anchors.top: roomNameText.bottom
-        anchors.left: roomNameText.left
-      }
-
-      Image {
-        source: AppPath + "/image/button/skill/locked.png"
-        visible: hasPassword
-        scale: 0.8
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.margins: -4
-      }
-
-      Text {
-        color: (playerNum == capacity) ? "red" : "black"
-        text: playerNum + "/" + capacity
-        font.pixelSize: 18
-        font.bold: true
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 8
-        anchors.right: parent.right
-        anchors.rightMargin: 8
-      }
-
-      TapHandler {
-        gesturePolicy: TapHandler.WithinBounds
-        enabled: !opTimer.running && !outdated
-
-        onTapped: {
-          lobby_dialog.sourceComponent = roomDetailDialog;
-          lobby_dialog.item.roomData = {
-            roomId, roomName, gameMode, playerNum, capacity,
-            hasPassword, outdated,
-          };
-          lobby_dialog.item.roomConfig = config.roomConfigCache?.[config.serverAddr]?.[roomId]
-          lobby_drawer.open();
-        }
-      }
-    }
-  }
-
-  Component {
-    id: roomDetailDialog
-    ColumnLayout {
-      property var roomData: ({
-        roomName: "",
-        hasPassword: true,
-      })
-      property var roomConfig: undefined
-      signal finished()
-      anchors.fill: parent
-      anchors.margins: 16
-
-      Text {
-        text: roomData.roomName
-        font.pixelSize: 18
-      }
-
-      Text {
-        font.pixelSize: 18
-        text: {
-          let ret = luatr(roomData.gameMode);
-          ret += (' #' + roomData.roomId);
-          ret += ('   ' + roomData.playerNum + '/' + roomData.capacity);
-          return ret;
-        }
-      }
-
-      Item { Layout.fillHeight: true }
-
-      // Dummy
-      Text {
-        text: "在未来的版本中这一块区域将增加更多实用的功能，<br>"+
-          "例如直接查看房间的各种配置信息<br>"+
-          "以及更多与禁将有关的实用功能！"+
-          "<font color='gray'>注：灰色按钮为试做型UI 后面优化</font>"
-        font.pixelSize: 18
-      }
-
-      RowLayout {
-        Layout.fillWidth: true
+    Item {
+      // radius: 8
+      height: 84 - 8
+      width: 280 - 4 - 8
+      Rectangle {
+        id: roomInfoRect
+        width: childrenRect.width + 8
+        height: childrenRect.height - 2 + 16
+        radius: 6
+        color: outdated ? "#CCCCCC" : "#D4E5F6"
         Text {
-          visible: roomData.hasPassword
-          text: luatr("Please input room's password")
+          x: 4; y: -1
+          text: luatr(gameMode) + ' #' + roomId
+          font.strikeout: outdated
+        }
+      }
+
+      Rectangle {
+        id: roomMainRect
+        anchors.top: roomInfoRect.bottom
+        anchors.topMargin: -16
+        radius: 6
+        width: parent.width
+        height: parent.height - roomInfoRect.height - anchors.topMargin
+        color: outdated ? "#CCCCCC" : "#D4E5F6"
+
+        Text {
+          id: roomNameText
+          horizontalAlignment: Text.AlignLeft
+          width: parent.width - 16
+          height: contentHeight
+          maximumLineCount: 1
+          wrapMode: Text.WrapAnywhere
+          textFormat: Text.PlainText
+          text: roomName
+          // color: outdated ? "gray" : "black"
+          font.pixelSize: 16
+          font.strikeout: outdated
+          // elide: Label.ElideRight
+          anchors.top: parent.top
+          anchors.left: parent.left
+          anchors.leftMargin: 8
+          anchors.topMargin: 4
+        }
+
+        Image {
+          source: AppPath + "/image/button/skill/locked.png"
+          visible: hasPassword
+          scale: 0.8
+          anchors.top: parent.top
+          anchors.topMargin: -28
+          anchors.right: parent.right
+          anchors.rightMargin: -14
+        }
+
+        Text {
+          id: capacityText
+          color: (playerNum == capacity) ? "red" : "black"
+          text: playerNum + "/" + capacity
+          font.pixelSize: 18
+          font.bold: true
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: 4
+          anchors.left: parent.left
+          anchors.leftMargin: 8
         }
 
         TextField {
           id: passwordEdit
-          visible: roomData.hasPassword
-          Layout.fillWidth: true
+          visible: hasPassword && !outdated
+          width: parent.width - capacityText.width - enterButton.width - 4
+          height: capacityText.height + 8
+          anchors.left: capacityText.right
+          anchors.leftMargin: 2
+          anchors.bottom: parent.bottom
+          anchors.bottomMargin: 0
           onTextChanged: root.password = text;
         }
 
-        Item {
-          visible: !roomData.hasPassword
-          Layout.fillWidth: true
-        }
-
-        Button {
-          // text: "OK"
-          text: (roomData.playerNum < roomData.capacity) ? luatr("Enter") : luatr("Observe")
+        ToolButton {
+          id: enterButton
+          text: (playerNum < capacity) ? luatr("Enter") : luatr("Observe")
+          enabled: !outdated && !opTimer.running
+          font.pixelSize: 16
+          font.bold: true
+          anchors.bottom: parent.bottom
+          anchors.right: parent.right
+          //anchors.rightMargin: -4
+          anchors.bottomMargin: -4
           onClicked: {
-            enterRoom(roomData.roomId, roomData.playerNum, roomData.capacity,
-              roomData.hasPassword ? root.password : "");
-            lobby_dialog.item.finished();
+            opTimer.start();
+            enterRoom(roomId, playerNum, capacity,
+              hasPassword ? passwordEdit.text : "");
           }
         }
-      }
-
-      Component.onCompleted: {
-        passwordEdit.text = "";
       }
     }
   }
@@ -179,7 +136,7 @@ Item {
     height: root.height - 72
     y: 16
     anchors.left: parent.left
-    anchors.leftMargin: root.width * 0.03 + root.width * 0.94 * 0.8 % 128 / 2
+    anchors.leftMargin: root.width * 0.03 + root.width * 0.94 * 0.8 % roomList.cellWidth / 2
     width: {
       let ret = root.width * 0.94 * 0.8;
       ret -= ret % 128;
@@ -190,57 +147,69 @@ Item {
     RowLayout {
       Layout.fillWidth: true
       Item { Layout.fillWidth: true }
+      Rectangle {
+        color: "#88EEEEEE"
+        radius: 4
+        Layout.preferredWidth: childrenRect.width + 2
+        Layout.preferredHeight: childrenRect.height - 12
+        CheckBox {
+          anchors.centerIn: parent
+          id: autoFilterRoomCheck
+          checked: true
+          text: luatr("Automatically Filter Room List")
+        }
+      }
       Button {
         Layout.alignment: Qt.AlignRight
         text: luatr("Refresh Room List").arg(roomModel.count)
         enabled: !opTimer.running
         onClicked: { // 刷新，筛选
           opTimer.start();
-          filtering = true;
+          filtering = autoFilterRoomCheck.checked;
           ClientInstance.notifyServer("RefreshRoomList", "");
         }
-        onPressAndHold: { // 取消筛选，刷新，但不清除筛选
-          opTimer.start();
-          ClientInstance.notifyServer("RefreshRoomList", "");
-        }
-          ToolTip {
-            text: luatr("RefreshRoomHelp")
-            visible: parent.hovered
-            delay: 1000
-            x: parent.width / 2 - 16
-            y: parent.height - 16
-          }
+        // onPressAndHold: { // 取消筛选，刷新，但不清除筛选
+        //   opTimer.start();
+        //   ClientInstance.notifyServer("RefreshRoomList", "");
+        // }
+        // ToolTip {
+        //   text: luatr("RefreshRoomHelp")
+        //   visible: parent.hovered
+        //   delay: 1000
+        //   x: parent.width / 2 - 16
+        //   y: parent.height - 16
+        // }
       }
       Button {
         text: luatr("Filter")
         onClicked: { // 打开筛选框，在框内完成筛选，不刷新
-          lobby_dialog.sourceComponent = Qt.createComponent("../LobbyElement/FilterRoom.qml"); //roomFilterDialog;
+          lobby_drawer.sourceComponent = Qt.createComponent("../LobbyElement/FilterRoom.qml"); //roomFilterDialog;
           lobby_drawer.open();
         }
-        onPressAndHold: { // 清除筛选，刷新（等于筛选框里的清除）
-          config.preferredFilter = { // 清空
-            name: "", // 房间名
-            id: "", // 房间ID
-            modes : [], // 游戏模式
-            full : 2, // 满员，0满，1未满，2不限
-            hasPassword : 2, // 密码，0有，1无，2不限
-          };
-          config.preferredFilterChanged();
-          opTimer.start();
-          ClientInstance.notifyServer("RefreshRoomList", "");
-        }
-          ToolTip {
-            text: luatr("FilterHelp")
-            visible: parent.hovered
-            delay: 1000
-            x: parent.width / 2 - 16
-            y: parent.height - 16
-          }
+        // onPressAndHold: { // 清除筛选，刷新（等于筛选框里的清除）
+        //   config.preferredFilter = { // 清空
+        //     name: "", // 房间名
+        //     id: "", // 房间ID
+        //     modes : [], // 游戏模式
+        //     full : 2, // 满员，0满，1未满，2不限
+        //     hasPassword : 2, // 密码，0有，1无，2不限
+        //   };
+        //   config.preferredFilterChanged();
+        //   opTimer.start();
+        //   ClientInstance.notifyServer("RefreshRoomList", "");
+        // }
+        // ToolTip {
+        //   text: luatr("FilterHelp")
+        //   visible: parent.hovered
+        //   delay: 1000
+        //   x: parent.width / 2 - 16
+        //   y: parent.height - 16
+        // }
       }
       Button {
         text: luatr("Create Room")
         onClicked: {
-          lobby_dialog.sourceComponent =
+          lobby_drawer.sourceComponent =
             Qt.createComponent("../LobbyElement/CreateRoom.qml");
           lobby_drawer.open();
           config.observing = false;
@@ -251,8 +220,8 @@ Item {
 
     GridView {
       id: roomList
-      cellWidth: 128
-      cellHeight: 128
+      cellWidth: 280
+      cellHeight: 88
       Layout.fillHeight: true
       Layout.fillWidth: true
       ScrollBar.vertical: ScrollBar {}
@@ -389,35 +358,12 @@ Item {
     }
   }
 
-  Popup {
+  W.PopupLoader {
     id: lobby_drawer
-    width: realMainWin.width * 0.8
-    height: realMainWin.height * 0.8
+    padding: 0
+    width: realMainWin.width * 0.80
+    height: realMainWin.height * 0.95
     anchors.centerIn: parent
-    background: Rectangle {
-      color: "#EEEEEEEE"
-      radius: 5
-      border.color: "#A6967A"
-      border.width: 1
-    }
-
-    Loader {
-      id: lobby_dialog
-      anchors.centerIn: parent
-      width: parent.width / mainWindow.scale
-      height: parent.height / mainWindow.scale
-      scale: mainWindow.scale
-      clip: true
-      onSourceChanged: {
-        if (item === null)
-          return;
-        item.finished.connect(() => {
-          sourceComponent = undefined;
-          lobby_drawer.close();
-        });
-      }
-      onSourceComponentChanged: sourceChanged();
-    }
   }
 
   function enterRoom(roomId, playerNum, capacity, pw) {
@@ -460,9 +406,9 @@ Item {
   function addToChat(pid, raw, msg) {
     if (raw.type !== 1) return;
     msg = msg.replace(/\{emoji([0-9]+)\}/g,
-      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+      `<img src="${AppPath}/image/emoji/$1.png" height="24" width="24" />`);
     raw.msg = raw.msg.replace(/\{emoji([0-9]+)\}/g,
-      '<img src="../../image/emoji/$1.png" height="24" width="24" />');
+      `<img src="${AppPath}/image/emoji/$1.png" height="24" width="24" />`);
     lobbyChat.append(msg);
     danmaku.sendLog("<b>" + raw.userName + "</b>: " + raw.msg);
   }

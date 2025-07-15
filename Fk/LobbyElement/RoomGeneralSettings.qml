@@ -3,73 +3,39 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-
-Flickable {
-  flickableDirection: Flickable.AutoFlickIfNeeded
-  clip: true
-  contentHeight: layout.height
-
-  ColumnLayout {
-    id: layout
-    width: parent.width
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: luatr("Room Name")
-      }
-      TextField {
+import Fk.Widgets as W
+Item {
+  width: 600
+  height: 800
+  W.PreferencePage {
+    id: prefPage
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: buttonBar.top
+    anchors.bottomMargin: 8
+    groupWidth: width * 0.8
+    W.PreferenceGroup {
+      title: luatr("Basic settings")
+      W.EntryRow {
         id: roomName
-        maximumLength: 64
-        font.pixelSize: 18
-        Layout.rightMargin: 16
-        Layout.fillWidth: true
+        title: luatr("Room Name")
         text: luatr("$RoomName").arg(Self.screenName)
       }
     }
 
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: luatr("Game Mode")
-      }
-      ComboBox {
-        id: gameModeCombo
-        textRole: "name"
-        model: ListModel {
-          id: gameModeList
-        }
-
-        onCurrentIndexChanged: {
-          const data = gameModeList.get(currentIndex);
-          playerNum.from = data.minPlayer;
-          playerNum.to = data.maxPlayer;
-
-          config.preferedMode = data.orig_name;
-        }
+    W.PreferenceGroup {
+      W.EntryRow {
+        id: roomPassword
+        title: luatr("Room Password")
       }
     }
 
-    GridLayout {
-      anchors.rightMargin: 8
-      rowSpacing: 20
-      columnSpacing: 20
-      columns: 4
-      Text {
-        text: luatr("Player num")
-      }
-      Text {
-        text: luatr("Select generals num")
-      }
-      Text {
-        text: luatr("Operation timeout")
-      }
-      Text {
-        text: luatr("Luck Card Times")
-      }
-      SpinBox {
+    W.PreferenceGroup {
+      title: luatr("Properties")
+      W.SpinRow {
         id: playerNum
+        title: luatr("Player num")
         from: 2
         to: 12
         value: config.preferedPlayerNum
@@ -78,8 +44,9 @@ Flickable {
           config.preferedPlayerNum = value;
         }
       }
-      SpinBox {
+      W.SpinRow {
         id: generalNum
+        title: luatr("Select generals num")
         from: 3
         to: 18
         value: config.preferredGeneralNum
@@ -88,7 +55,8 @@ Flickable {
           config.preferredGeneralNum = value;
         }
       }
-      SpinBox {
+      W.SpinRow {
+        title: luatr("Operation timeout")
         from: 10
         to: 60
         editable: true
@@ -98,7 +66,9 @@ Flickable {
           config.preferredTimeout = value;
         }
       }
-      SpinBox {
+      W.SpinRow {
+        title: luatr("Luck Card Times")
+        subTitle: luatr("help: Luck Card Times")
         from: 0
         to: 8
         value: config.preferredLuckTime
@@ -109,61 +79,86 @@ Flickable {
       }
     }
 
-    /*
-    Text {
-      id: warning
-      anchors.rightMargin: 8
-      visible: {
-        const avail = lcall("GetAvailableGeneralsNum");
-        const ret = avail <
-                  config.preferredGeneralNum * config.preferedPlayerNum;
-        return ret;
-      }
-      text: luatr("No enough generals")
-      color: "red"
-    }
-    */
+    W.PreferenceGroup {
+      title: luatr("Game Rule")
+      W.ComboRow {
+        id: gameModeCombo
+        title: luatr("Game Mode")
+        textRole: "name"
+        model: ListModel {
+          id: gameModeList
+        }
 
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Text {
-        text: luatr("Room Password")
-      }
-      TextField {
-        id: roomPassword
-        maximumLength: 16
-        font.pixelSize: 18
-        Layout.rightMargin: 16
-        Layout.fillWidth: true
-      }
-    }
+        onCurrentValueChanged: {
+          const data = currentValue;
+          playerNum.from = data.minPlayer;
+          playerNum.to = data.maxPlayer;
 
-    RowLayout {
-      anchors.rightMargin: 8
-      spacing: 16
-      Switch {
+          config.preferedMode = data.orig_name;
+        }
+      }
+
+      W.SwitchRow {
         id: freeAssignCheck
-        checked: Debugging ? true : false
-        text: luatr("Enable free assign")
+        // checked: Debugging ? true : false
+        checked: config.enableFreeAssign
+        onCheckedChanged: config.enableFreeAssign = checked;
+        title: luatr("Enable free assign")
+        subTitle: luatr("help: Enable free assign")
       }
 
-      Switch {
+      W.SwitchRow {
         id: deputyCheck
-        checked: Debugging ? true : false
-        text: luatr("Enable deputy general")
+        // checked: Debugging ? true : false
+        checked: config.enableDeputy
+        onCheckedChanged: config.enableDeputy = checked;
+        title: luatr("Enable deputy general")
+        subTitle: luatr("help: Enable deputy general")
       }
     }
 
+
+    Component.onCompleted: {
+      const mode_data = lcall("GetGameModes");
+      let i = 0;
+      for (let d of mode_data) {
+        gameModeList.append(d);
+        if (d.orig_name === config.preferedMode) {
+          gameModeCombo.setCurrentIndex(i);
+        }
+        i += 1;
+      }
+
+      playerNum.value = config.preferedPlayerNum;
+
+      for (let k in config.curScheme.banPkg) {
+        lcall("UpdatePackageEnable", k, false);
+      }
+      config.curScheme.banCardPkg.forEach(p =>
+      lcall("UpdatePackageEnable", p, false));
+      config.curSchemeChanged();
+    }
+  }
+
+
+  Rectangle {
+    id: buttonBar
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    height: 56
+    color: "transparent"
     RowLayout {
+      anchors.fill: parent
       anchors.rightMargin: 8
       spacing: 16
-      Button {
+      W.ButtonContent {
+        Layout.fillWidth: true
         text: luatr("OK")
         // enabled: !(warning.visible)
         onClicked: {
           config.saveConf();
-          root.finished();
+          root.finish();
           mainWindow.busy = true;
           let k, arr;
 
@@ -180,13 +175,13 @@ Flickable {
           for (k in config.curScheme.normalPkg) {
             arr = config.curScheme.normalPkg[k] ?? [];
             if (arr.length !== 0)
-              disabledGenerals.push(...arr);
+            disabledGenerals.push(...arr);
           }
 
           let disabledPack = config.curScheme.banCardPkg.slice();
           for (k in config.curScheme.banPkg) {
             if (config.curScheme.banPkg[k].length === 0)
-              disabledPack.push(k);
+            disabledPack.push(k);
           }
           config.serverHiddenPacks.forEach(p => {
             if (!disabledPack.includes(p)) {
@@ -197,7 +192,7 @@ Flickable {
           ClientInstance.notifyServer(
             "CreateRoom",
             JSON.stringify([roomName.text, playerNum.value,
-                            config.preferredTimeout, {
+            config.preferredTimeout, {
               enableFreeAssign: freeAssignCheck.checked,
               enableDeputy: deputyCheck.checked,
               gameMode: config.preferedMode,
@@ -210,33 +205,14 @@ Flickable {
           );
         }
       }
-      Button {
+
+      W.ButtonContent {
+        Layout.fillWidth: true
         text: luatr("Cancel")
         onClicked: {
-          root.finished();
+          root.finish();
         }
       }
-    }
-
-    Component.onCompleted: {
-      const mode_data = lcall("GetGameModes");
-      let i = 0;
-      for (let d of mode_data) {
-        gameModeList.append(d);
-        if (d.orig_name === config.preferedMode) {
-          gameModeCombo.currentIndex = i;
-        }
-        i += 1;
-      }
-
-      playerNum.value = config.preferedPlayerNum;
-
-      for (let k in config.curScheme.banPkg) {
-        lcall("UpdatePackageEnable", k, false);
-      }
-      config.curScheme.banCardPkg.forEach(p =>
-        lcall("UpdatePackageEnable", p, false));
-      config.curSchemeChanged();
     }
   }
 }

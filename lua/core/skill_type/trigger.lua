@@ -64,7 +64,7 @@ function TriggerSkill:doCost(event, target, player, data)
   local start_time = os.getms()
   local room = player.room ---@type Room
   room.current_cost_skill = self
-  local ret = self:cost(event, target, player, data)
+  local ret = self:cost(event, target, player, data) -- 执行消耗
   local end_time = os.getms()
 
   -- 对于那种cost直接返回true的锁定技，如果是预亮技，应询问
@@ -78,15 +78,16 @@ function TriggerSkill:doCost(event, target, player, data)
   room.logic:trigger(fk.BeforeTriggerSkillUse, player, { skill = self, willUse = ret })
   --self.cost_data = cost_data_bak
 
-  if ret then
+  if ret then -- 如果完成了消耗，则执行技能效果，并判断是否要终结此时机
     local skill_data = {cost_data = cost_data_bak, tos = {}, cards = {}}
     if cost_data_bak and type(cost_data_bak) == "table" then
       skill_data.tos = cost_data_bak.tos
       skill_data.cards = cost_data_bak.cards
     end
-    return room:useSkill(player, self, function()
+    local skillEffectData = room:useSkill(player, self, function()
       return self:use(event, target, player, data)
     end, skill_data)
+    return skillEffectData.trigger_break
   end
   event:setSkillData(self, "cancel_cost", true)
 end

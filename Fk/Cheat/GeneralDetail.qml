@@ -47,6 +47,7 @@ Flickable {
             : data.hp / 2)
           : data.hp)
         : data.hp + "/" + data.maxHp));
+      if (data.headnote !== "") skillDesc.append("<font color=\"lightslategrey\">" + luatr(data.headnote) + "</font>");
       if (data.companions.length > 0){
         let ret = '';
         ret +="<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
@@ -59,6 +60,7 @@ Flickable {
         skillDesc.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + luatr(t.name) +
           "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
       });
+      if (data.endnote !== "") skillDesc.append("<font color=\"lightslategrey\">" + luatr(data.endnote) + "</font>");
       skillDesc.append("\n");
     });
   }

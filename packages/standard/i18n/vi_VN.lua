@@ -426,6 +426,7 @@ Fk:loadTranslationTable({
   ["$jijiu2"] = "Cứu một mạng người, hơn xây bảy tòa tháp.",
   ["jijiu"] = "Cấp Cứu",
   [":jijiu"] = "Ngoài lượt của bạn, bạn có thể chuyển hóa sử dụng 1 lá đỏ -> 【Đào】.",
+  -- ["#jijiu"] = "发动 急救，将一张红色牌当【桃】使用",
   ["lvbu"] = "Lữ Bố",
   ["#lvbu"] = "Võ Đích Hoá Thân",
   ["illustrator:lvbu"] = "KayaK",

@@ -4,7 +4,7 @@ local liuli = fk.CreateSkill{
 
 liuli:addEffect(fk.TargetConfirming, {
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(liuli.name) and data.card.trueName == "slash" and
+    return target == player and player:hasSkill(liuli.name) and not data.cancelled and data.card.trueName == "slash" and
       table.find(player.room.alive_players, function (p)
         return player:inMyAttackRange(p) and p ~= data.from and not data.from:isProhibited(p, data.card)
       end) and
@@ -36,8 +36,9 @@ liuli:addEffect(fk.TargetConfirming, {
     local room = player.room
     local to = event:getCostData(self).tos[1]
     room:throwCard(event:getCostData(self).cards, liuli.name, player, player)
-    data:cancelTarget(player)
-    data:addTarget(to)
+    if data:cancelCurrentTarget() then
+      data:addTarget(to)
+    end
   end,
 })
 

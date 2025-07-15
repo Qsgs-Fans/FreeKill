@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Fk
 import Fk.Common
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -78,7 +79,7 @@ Item {
           anchors.verticalCenter: parent.verticalCenter
         }
 
-        TapHandler {
+        W.TapHandler {
           onTapped: {
             if (list.currentIndex === index) {
               list.currentIndex = -1;

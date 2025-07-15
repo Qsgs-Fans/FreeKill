@@ -19,23 +19,31 @@ skill:addEffect("cardskill", {
   end,
 })
 
-local snatch_ai_spec = {
-  think_card_chosen = function(self, ai, target, _, __)
-    local cards = target:getCardIds("hej")
-    local cid, val = -1, -100000
-    for _, id in ipairs(cards) do
-      local v = ai:getBenefitOfEvents(function(logic)
-        logic:obtainCard(ai.player, id, false, fk.ReasonPrey)
-      end)
-      if v > val then
-        cid, val = id, v
-      end
-    end
-    return cid, val
+skill:addAI({
+  on_effect = function(self, logic, effect)
+    local from = effect.from
+    local to = effect.to
+    if from.dead or to.dead or to:isAllNude() then return end
+    local _, val = self:thinkForCardChosen(from.ai, to, "hej")
+    logic.benefit = logic.benefit + val
   end,
-}
-skill:addAI(snatch_ai_spec, "__card_skill")
-skill:addAI(snatch_ai_spec, "dismantlement_skill")
+
+  think_card_chosen = function(self, ai, target, flag, prompt)
+    local ret, benefit = ai:askToChooseCards({
+      cards = target:getCardIds("hej"),
+      skill_name = self.skill.name,
+      min = 1,
+      max = 1,
+      data = {
+        to_place = Card.PlayerHand,
+        target = ai.player,
+        reason = fk.ReasonPrey,
+        proposer = ai.player,
+      },
+    })
+    return ret[1], benefit
+  end,
+}, "__card_skill")
 
 skill:addTest(function(room, me)
   local snatch = Fk:cloneCard("snatch")

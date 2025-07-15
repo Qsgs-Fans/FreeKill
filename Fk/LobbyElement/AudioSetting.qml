@@ -47,6 +47,12 @@ ColumnLayout {
   }
 
   Switch {
+    text: luatr("Disable game over audio")
+    checked: config.disableGameOverAudio
+    onCheckedChanged: config.disableGameOverAudio = checked;
+  }
+
+  Switch {
     text: luatr("Hide unselectable cards")
     checked: config.hideUseless
     onCheckedChanged: {
@@ -75,6 +81,30 @@ ColumnLayout {
     checked: config.hidePresents
     onCheckedChanged: {
       config.hidePresents = checked;
+    }
+  }
+
+  Switch {
+    text: luatr("Auto select the only target")
+    checked: config.autoTarget
+    onCheckedChanged: {
+      config.autoTarget = checked;
+    }
+  }
+
+  Switch {
+    text: luatr("Double click to use card or skill")
+    checked: config.doubleClickUse
+    onCheckedChanged: {
+      config.doubleClickUse = checked;
+    }
+  }
+
+  Switch {
+    text: luatr("Do not use nullification to own one-target trick")
+    checked: config.noSelfNullification
+    onCheckedChanged: {
+      config.noSelfNullification = checked;
     }
   }
 

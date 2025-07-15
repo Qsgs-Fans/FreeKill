@@ -13,6 +13,14 @@ end
 ---@class GameEvent.Pindian : GameEvent
 ---@field public data PindianData
 local Pindian = GameEvent:subclass("GameEvent.Pindian")
+
+function Pindian:__tostring()
+  local data = self.data
+  return string.format("<Pindian %s: %s => [%s] #%d>",
+    data.reason, data.from, table.concat(
+      table.map(data.tos or {}, ServerPlayer.__tostring), ", "), self.id)
+end
+
 function Pindian:main()
   local pindianData = self.data
   local room = self.room
@@ -34,19 +42,20 @@ function Pindian:main()
   end
 
   -- 将拼点牌变为虚拟牌
+  ---@param card Card
   local virtualize = function (card)
     local _card = card:clone(card.suit, card.number)
     if card:getEffectiveId() then
       _card.subcards = { card:getEffectiveId() }
     end
-    card = _card
+    return _card
   end
 
   ---@type ServerPlayer[]
   local targets = {}
-  local moveInfos = {}
+  local moveInfos = {} ---@type MoveInfo[]
   if pindianData.fromCard then
-    virtualize(pindianData.fromCard)
+    pindianData.fromCard = virtualize(pindianData.fromCard)
     local cid = pindianData.fromCard:getEffectiveId()
     if cid and room:getCardArea(cid) ~= Card.Processing and
       not table.find(moveInfos, function (info)
@@ -54,7 +63,7 @@ function Pindian:main()
       end) then
       table.insert(moveInfos, {
         ids = { cid },
-        from = room.owner_map[cid],
+        from = room:getCardOwner(cid),
         toArea = Card.Processing,
         moveReason = fk.ReasonPut,
         skillName = pindianData.reason,
@@ -66,7 +75,7 @@ function Pindian:main()
   end
   for _, to in ipairs(pindianData.tos) do
     if results[to] and results[to].toCard then
-      virtualize(results[to].toCard)
+      results[to].toCard = virtualize(results[to].toCard)
 
       local cid = results[to].toCard:getEffectiveId()
       if cid and room:getCardArea(cid) ~= Card.Processing and
@@ -75,7 +84,7 @@ function Pindian:main()
         end) then
         table.insert(moveInfos, {
           ids = { cid },
-          from = room.owner_map[cid],
+          from = room:getCardOwner(cid),
           toArea = Card.Processing,
           moveReason = fk.ReasonPut,
           skillName = pindianData.reason,
@@ -109,7 +118,7 @@ function Pindian:main()
       local result = req:getResult(to)
       local card = Fk:getCardById(result.card.subcards[1])
 
-      virtualize(card)
+      card = virtualize(card)
 
       if to == from then
         pindianData.fromCard = card
@@ -130,16 +139,24 @@ function Pindian:main()
         })
       end
 
-      room:sendLog{
-        type = "#ShowPindianCard",
-        from = to.id,
-        arg = card:toLogString(),
-      }
     end
   end
 
   if #moveInfos > 0 then
     room:moveCards(table.unpack(moveInfos))
+  end
+
+  room:sendLog{
+    type = "#ShowPindianCard",
+    from = from.id,
+    arg = pindianData.fromCard:toLogString(),
+  }
+  for _, to in ipairs(pindianData.tos) do
+    room:sendLog{
+      type = "#ShowPindianCard",
+      from = to.id,
+      arg = pindianData.results[to].toCard:toLogString(),
+    }
   end
 
   local cid = pindianData.fromCard:getEffectiveId()

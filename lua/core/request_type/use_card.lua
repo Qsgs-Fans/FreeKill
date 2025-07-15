@@ -10,7 +10,7 @@ function ReqUseCard:updatePrompt()
   end
   local card = self.selected_card
   if card and card.skill then
-    self:setSkillPrompt(card.skill, {self.selected_card.id})
+    self:setSkillPrompt(card.skill, {card.id})
   else
     self:setPrompt(self.original_prompt or "")
   end
@@ -27,20 +27,22 @@ function ReqUseCard:skillButtonValidity(name)
     not table.contains(self.disabledSkillNames or {}, name)
 end
 
+--- 一张牌能否被点亮
+---@param cid integer
 function ReqUseCard:cardValidity(cid)
   if self.skill_name then return ReqActiveSkill.cardValidity(self, cid) end
-  local card = cid
+  local card = cid ---@type Card
   if type(cid) == "number" then card = Fk:getCardById(cid) end
-  return self:cardFeasible(card)
+  return not not self:cardFeasible(card)
 end
 
 function ReqUseCard:targetValidity(pid)
   if self.skill_name then return ReqActiveSkill.targetValidity(self, pid) end
   local card = self.selected_card
   local p = Fk:currentRoom():getPlayerById(pid)
-  local selected = table.map(self.selected_targets, Util.Id2PlayerMapper)
+  local selected = table.map(self.selected_targets or {}, Util.Id2PlayerMapper)
   local ret = card and card.skill:targetFilter(self.player, p, selected, { card.id }, card, self.extra_data)
-  return ret
+  return not not ret
 end
 
 ---@param card Card
@@ -64,7 +66,7 @@ function ReqUseCard:feasible()
     ret = card.skill:feasible(self.player, table.map(self.selected_targets, Util.Id2PlayerMapper),
       skill and self.pendings or { card.id }, card)
   end
-  return ret
+  return not not ret
 end
 
 function ReqUseCard:initiateTargets()
@@ -73,6 +75,7 @@ function ReqUseCard:initiateTargets()
   end
 
   -- 重置
+
   self.selected_targets = {}
   self.scene:unselectAllTargets()
   self:updateUnselectedTargets()

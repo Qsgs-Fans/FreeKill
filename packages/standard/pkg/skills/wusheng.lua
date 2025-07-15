@@ -6,7 +6,7 @@ wusheng:addEffect("viewas", {
   anim_type = "offensive",
   pattern = "slash",
   prompt = "#wusheng",
-  mute_card = true,
+  -- mute_card = true,
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)
     return #selected == 0 and Fk:getCardById(to_select).color == Card.Red

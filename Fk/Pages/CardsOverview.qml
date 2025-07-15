@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Fk
+import Fk.Widgets as W
 import Fk.RoomElement
 
 Item {
@@ -41,7 +42,7 @@ Item {
         anchors.centerIn: parent
       }
 
-      TapHandler {
+      W.TapHandler {
         onTapped: {
           listView.currentIndex = index;
         }

@@ -5,6 +5,11 @@ local MiscEventWrappers = {} -- mixin
 
 ---@class GameEvent.Game : GameEvent
 local Game = GameEvent:subclass("GameEvent.Game")
+
+function Game:__tostring()
+  return string.format("<Game #%d>", self.id)
+end
+
 function Game:main()
   self.room.logic:run()
 end
@@ -12,6 +17,11 @@ end
 ---@class GameEvent.ChangeProperty : GameEvent
 ---@field public data PropertyChangeData
 local ChangeProperty = GameEvent:subclass("GameEvent.Game")
+
+function ChangeProperty:__tostring()
+  return string.format("<ChangeProperty %s #%d>", self.data.from, self.id)
+end
+
 function ChangeProperty:main()
   local data = self.data
   local room = self.room

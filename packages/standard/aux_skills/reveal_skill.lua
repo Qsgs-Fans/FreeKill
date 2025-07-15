@@ -10,7 +10,7 @@ revealSkill:addEffect("active", {
       local general = Fk.generals[player:getMark("__heg_general")]
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
-        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.DeputyPlace) then
+        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.DeputyPlace) and table.contains(player.player_skills, s) then
           table.insert(choiceList, "revealMain:::" .. general.name)
           break
         end
@@ -20,7 +20,7 @@ revealSkill:addEffect("active", {
       local general = Fk.generals[player:getMark("__heg_deputy")]
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
-        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.MainPlace) then
+        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.MainPlace) and table.contains(player.player_skills, s) then
           table.insert(choiceList, "revealDeputy:::" .. general.name)
           break
         end
@@ -44,7 +44,7 @@ revealSkill:addEffect("active", {
       local general = Fk.generals[player:getMark("__heg_general")]
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
-        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.DeputyPlace) then
+        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.DeputyPlace) and table.contains(player.player_skills, s) then
           return true
         end
       end
@@ -53,7 +53,7 @@ revealSkill:addEffect("active", {
       local general = Fk.generals[player:getMark("__heg_deputy")]
       for _, sname in ipairs(general:getSkillNameList(true)) do
         local s = Fk.skills[sname]
-        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.MainPlace) then
+        if s:hasTag(Skill.Compulsory) and not s:hasTag(Skill.MainPlace) and table.contains(player.player_skills, s) then
           return true
         end
       end

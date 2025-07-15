@@ -13,9 +13,9 @@ JudgeData = TriggerData:subclass("JudgeData")
 
 --- 构造函数
 function JudgeData:initialize(spec)
-    TriggerData.initialize(self, spec)
-    self.pattern = spec.pattern or "."
-    spec.matchPattern = JudgeData.matchPattern
+  TriggerData.initialize(self, spec)
+  self.pattern = spec.pattern or "."
+  spec.matchPattern = JudgeData.matchPattern
 end
 
 ---@class JudgeEvent: TriggerEvent
@@ -40,8 +40,8 @@ fk.FinishJudge = JudgeEvent:subclass("fk.FinishJudge")
 
 -- 判定成功
 function JudgeData:matchPattern()
-    if self.card then
-        return self.card:matchPattern(self.pattern)
-    end
-    return false
+  if self.card then
+    return self.card:matchPattern(self.pattern)
+  end
+  return false
 end

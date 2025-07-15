@@ -20,6 +20,28 @@ end
 ---@class GameEvent.MoveCards : GameEvent
 ---@field public data MoveCardsData[]
 local MoveCards = GameEvent:subclass("GameEvent.MoveCards")
+
+function MoveCards:__tostring()
+  local data = self.data
+  local ret = "<MoveCards "
+  for _, move in ipairs(data) do
+    local r = string.format(" of %s => %s of %s", move.from, move.toArea, move.to)
+    local cards = {} ---@type table<CardArea, integer[]>
+    for _, info in ipairs(move.moveInfo) do
+      cards[info.fromArea] = cards[info.fromArea] or {}
+      table.insert(cards[info.fromArea], info.cardId)
+    end
+    for area, cs in pairs(cards) do
+      ret = ret .. string.format("[%s]: %s",
+        table.concat(table.map(cs, function(id)
+          return Fk:getCardById(id):__tostring()
+        end), ", "), area) .. r
+    end
+  end
+  ret = ret .. string.format(" #%d>", self.id)
+  return ret
+end
+
 function MoveCards:main()
   local room = self.room
   local moveCardsData = self.data
@@ -30,7 +52,7 @@ function MoveCards:main()
   for _, data in ipairs(moveCardsData) do
     local new_move = {}
     if #data.moveInfo > 0 and data.toArea ~= Card.Void then
-      local orig_info, new_info = {}, {}
+      local orig_info, new_info, destruct_ids = {}, {}, {}
       for i = 1, #data.moveInfo do
         local info = data.moveInfo[i]
         local will_destruct = false
@@ -42,17 +64,15 @@ function MoveCards:main()
           will_destruct = info.fromArea == Card.PlayerEquip
         end
         if card:getMark(MarkEnum.DestructOutEquip) ~= 0 and
-          (info.fromArea == Card.PlayerEquip and data.toArea ~= Card.PlayerEquip and data.toArea ~= Card.Processing) then
+          ((info.fromArea == Card.PlayerEquip or info.fromArea == Card.Processing) and
+          data.toArea ~= Card.PlayerEquip and data.toArea ~= Card.Processing) then
           will_destruct = true
         end
         if will_destruct then
           room:setCardMark(card, MarkEnum.DestructIntoDiscard, 0)
           room:setCardMark(card, MarkEnum.DestructOutMyEquip, 0)
           room:setCardMark(card, MarkEnum.DestructOutEquip, 0)
-          room:sendLog{
-            type = "#DestructCards",
-            card = {info.cardId},
-          }
+          table.insert(destruct_ids, info.cardId)
           table.insert(new_info, info)
         else
           table.insert(orig_info, info)
@@ -71,6 +91,12 @@ function MoveCards:main()
           moveVisible = true,
         }
       end
+      if #destruct_ids > 0 then
+        room:sendLog{
+          type = "#DestructCards",
+          card = destruct_ids,
+        }
+      end
     end
     if next(new_move) then
       table.insert(new_data, new_move)
@@ -78,6 +104,16 @@ function MoveCards:main()
   end
   if next(new_data) then
     table.insertTable(moveCardsData, new_data)
+  end
+
+  for i = #moveCardsData, 1, -1 do
+    local data = moveCardsData[i]
+    if #data.moveInfo == 0 then
+      table.remove(moveCardsData, i)
+    end
+  end
+  if #moveCardsData == 0 then
+    room.logic:breakEvent()
   end
 
   room:notifyMoveCards(nil, moveCardsData)
@@ -93,7 +129,7 @@ function MoveCards:main()
           room:doBroadcastNotify("UpdateDrawPile", #room.draw_pile)
         end
 
-        local beforeCard = Fk:getCardById(info.cardId)
+        local beforeCard = Fk:getCardById(info.cardId) --[[@as EquipCard]]
         if
           realFromArea == Player.Equip and
           beforeCard.type == Card.TypeEquip and
@@ -105,7 +141,7 @@ function MoveCards:main()
 
         Fk:filterCard(info.cardId, data.to)
 
-        local currentCard = Fk:getCardById(info.cardId)
+        local currentCard = Fk:getCardById(info.cardId) --[[@as EquipCard]]
         for name, value in pairs(currentCard.mark) do
           if name:find("-inhand", 1, true) and
           realFromArea == Player.Hand and
@@ -244,6 +280,7 @@ end
 ---@param ... CardsMoveInfo
 ---@return boolean?
 function MoveEventWrappers:moveCards(...)
+  ---@cast self Room
   local datas = moveInfoTranslate(self, ...)
   if #datas == 0 then
     return false
@@ -255,6 +292,7 @@ end
 ---@param players? ServerPlayer[] @ 要被告知的玩家列表，默认为全员
 ---@param moveDatas MoveCardsData[] @ 要告知的移牌信息列表
 function MoveEventWrappers:notifyMoveCards(players, moveDatas)
+  ---@cast self Room
   if players == nil or #players == 0 then players = self.players end
   for _, p in ipairs(players) do
     local arg = {}
@@ -293,10 +331,10 @@ end
 ---@param card integer|integer[]|Card|Card[] @ 要拿到的卡牌
 ---@param visible? boolean @ 是否明着拿
 ---@param reason? CardMoveReason @ 卡牌移动的原因
----@param proposer? ServerPlayer @ 移动操作者的id
+---@param proposer? ServerPlayer @ 移动操作者
 ---@param skill_name? string @ 技能名
 ---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
----@param visiblePlayers? integer|integer[] @ 控制移动对特定角色可见（在moveVisible为false时生效）
+---@param visiblePlayers? ServerPlayer|ServerPlayer[] @ 控制移动对特定角色可见（在moveVisible为false时生效）
 function MoveEventWrappers:obtainCard(player, card, visible, reason, proposer, skill_name, moveMark, visiblePlayers)
   self:moveCardTo(card, Card.PlayerHand, player, reason, skill_name, nil, visible, proposer or player, moveMark, visiblePlayers)
 end
@@ -309,6 +347,7 @@ end
 ---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 ---@return integer[] @ 摸到的牌
 function MoveEventWrappers:drawCards(player, num, skillName, fromPlace, moveMark)
+  ---@cast self Room
   if num < 1 then
     return {}
   end
@@ -351,7 +390,7 @@ end
 ---@param visible? boolean @ 是否明置
 ---@param proposer? ServerPlayer @ 移动操作者
 ---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
----@param visiblePlayers? integer|integer[] @ 控制移动对特定角色可见（在moveVisible为false时生效）
+---@param visiblePlayers? ServerPlayer|ServerPlayer[] @ 控制移动对特定角色可见（在moveVisible为false时生效）
 function MoveEventWrappers:moveCardTo(card, to_place, target, reason, skill_name, special_name, visible, proposer, moveMark, visiblePlayers)
   ---@cast self Room
   reason = reason or fk.ReasonJustMove
@@ -407,6 +446,9 @@ end
 function MoveEventWrappers:throwCard(card_ids, skillName, who, thrower)
   skillName = skillName or ""
   thrower = thrower or who
+  assert(table.every(Card:getIdList(card_ids), function(id)
+    return self:getCardOwner(id) == who
+  end), "Attempt to throw card from false owner!")
   self:moveCards({
     ids = Card:getIdList(card_ids),
     from = who,
@@ -424,6 +466,7 @@ end
 ---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
 ---@return integer[] @ 摸到的牌
 function MoveEventWrappers:recastCard(card_ids, who, skillName, moveMark)
+  ---@cast self Room
   if type(card_ids) == "number" then
     card_ids = {card_ids}
   end
@@ -455,8 +498,9 @@ end
 ---@param proposer? ServerPlayer @ 操作者的。默认为空
 ---@param skillName? string @ 技能名。默认为“分配”
 ---@param moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
----@return table<integer[]> @ 返回成功分配的卡牌
+---@return integer[] @ 返回成功分配的卡牌
 function MoveEventWrappers:doYiji(list, proposer, skillName, moveMark)
+  ---@cast self Room
   skillName = skillName or "distribution_skill"
   local moveInfos = {}
   local move_ids = {}
@@ -633,8 +677,15 @@ function MoveEventWrappers:swapCards(player, card_data, skillName, toArea)
   ---@cast self Room
   toArea = toArea or Card.PlayerHand
   local target1, cards1, target2, cards2 = card_data[1][1], card_data[1][2], card_data[2][1], card_data[2][2]
+  local virualEquips = {}
   local moveInfos = {}
   if #cards1 > 0 then
+    local judge = target1:getCardIds("j")
+    for _, id in ipairs(cards1) do
+      if table.contains(judge, id) then
+        virualEquips[id] = target1:getVirualEquip(id)
+      end
+    end
     table.insert(moveInfos, {
       from = target1,
       ids = cards1,
@@ -646,6 +697,12 @@ function MoveEventWrappers:swapCards(player, card_data, skillName, toArea)
     })
   end
   if #cards2 > 0 then
+    local judge = target2:getCardIds("j")
+    for _, id in ipairs(cards2) do
+      if table.contains(judge, id) then
+        virualEquips[id] = target2:getVirualEquip(id)
+      end
+    end
     table.insert(moveInfos, {
       from = target2,
       ids = cards2,
@@ -660,17 +717,26 @@ function MoveEventWrappers:swapCards(player, card_data, skillName, toArea)
     self:moveCards(table.unpack(moveInfos))
   end
   moveInfos = {}
+
+  --- 判断某牌能否进入目标区域
+  ---@param to ServerPlayer @ 目标角色
+  local function canMoveIn(id, to)
+    if self:getCardArea(id) == Card.Processing then
+      if toArea == Card.PlayerEquip then
+        return #to:getAvailableEquipSlots(Fk:getCardById(id).sub_type) > 0  --多个同副类别装备如何处理，待定
+      elseif toArea == Card.PlayerJudge then
+        local vcard = virualEquips[id] or Fk:getCardById(id)
+        return not table.contains(to.sealedSlots, Player.JudgeSlot) and not to:isProhibitedTarget(vcard)
+      else
+        return true
+      end
+    end
+    return false
+  end
+
   if not target2.dead then
     local to_ex_cards = table.filter(cards1, function (id)
-      if self:getCardArea(id) == Card.Processing then
-        if toArea == Card.PlayerEquip then
-          return #target2:getAvailableEquipSlots(Fk:getCardById(id).sub_type) > 0  --多个同副类别装备如何处理，待定
-        elseif toArea == Card.PlayerJudge then
-          return not table.contains(target2.sealedSlots, Player.JudgeSlot)
-        else
-          return true
-        end
-      end
+      return canMoveIn(id, target2)
     end)
     if #to_ex_cards > 0 then
       table.insert(moveInfos, {
@@ -688,13 +754,7 @@ function MoveEventWrappers:swapCards(player, card_data, skillName, toArea)
   end
   if not target1.dead then
     local to_ex_cards = table.filter(cards2, function (id)
-      if toArea == Card.PlayerEquip then
-        return #target1:getAvailableEquipSlots(Fk:getCardById(id).sub_type) > 0
-      elseif toArea == Card.PlayerJudge then
-        return not table.contains(target1.sealedSlots, Player.JudgeSlot)
-      else
-        return true
-      end
+      return canMoveIn(id, target1)
     end)
     if #to_ex_cards > 0 then
       table.insert(moveInfos, {
@@ -712,6 +772,12 @@ function MoveEventWrappers:swapCards(player, card_data, skillName, toArea)
   end
   if #moveInfos > 0 then
     self:moveCards(table.unpack(moveInfos))
+    for cid, vcard in pairs(virualEquips) do
+      local owner = self:getCardOwner(cid)
+      if owner and self:getCardArea(cid) == toArea then
+        owner:addVirtualEquip(vcard)
+      end
+    end
   end
   self:cleanProcessingArea(table.connect(cards1, cards2), skillName)
 end

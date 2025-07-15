@@ -6,7 +6,10 @@
 ---@field public no_indicate? boolean @ 决定是否关闭技能指示线
 ---@field public anim_type? string|AnimationType @ 技能类型定义
 ---@field public global? boolean @ 决定是否是全局技能
----@field public dynamic_desc? fun(self: Skill, player: Player, lang: string): string @ 动态描述函数
+---@field public dynamic_desc? fun(self: Skill, player: Player, lang: string): string? @ 动态描述函数
+---@field public derived_piles? string|string[] @ 与某效果联系起来的私人牌堆名，失去该效果时将之置入弃牌堆(@deprecated)
+---@field public audio_index? table|integer @ 此技能效果播放的语音序号，可为int或int表
+---@field public extra? table @ 塞进技能里的各种数据
 
 ---@class SkillSkeletonSpec
 ---@field public name? string @ 骨架名，即此技能集合的外在名称
@@ -15,7 +18,10 @@
 ---@field public attached_kingdom? string[] @ 只有哪些势力可以获得，若为空则均可。用于势力技。
 ---@field public attached_skill_name? string @ 向其他角色分发的技能名（如黄天）
 ---@field public dynamic_name? fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态名称函数
----@field public dynamic_desc? fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态描述函数
+---@field public dynamic_desc? fun(self: SkillSkeleton, player: Player, lang?: string): string? @ 动态描述函数
+---@field public derived_piles? string | string[] @ 与该技能联系起来的私人牌堆名，失去该技能时将之置入弃牌堆
+---@field public mode_skill? boolean @ 是否为模式技能（诸如斗地主的“飞扬”和“跋扈”）
+---@field public extra? table @ 塞进技能里的各种数据
 
 ---@class SkillSkeleton : Object, SkillSkeletonSpec
 ---@field public effects Skill[] 技能对应的所有效果
@@ -23,6 +29,12 @@
 ---@field public effect_spec_list ([any, any, any])[] 技能对应的效果信息
 ---@field public ai_list ([string, any, string, boolean?])[]
 ---@field public tests fun(room: Room, me: ServerPlayer)[]
+---@field public dynamicName fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态名称函数
+---@field public dynamicDesc fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态描述函数
+---@field public derived_piles? string[] @ 与一个技能同在的私有牌堆名，失去时弃置其中的所有牌
+---@field public addTest fun(self: SkillSkeleton, fn: fun(room: Room, me: ServerPlayer)) @ 测试函数
+---@field public onAcquire fun(self: SkillSkeleton, player: ServerPlayer, is_start: boolean)
+---@field public onLose fun(self: SkillSkeleton, player: ServerPlayer, is_death: boolean)
 ---@field public addEffect fun(self: SkillSkeleton, key: "distance", data: DistanceSpec, attribute: nil): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: "prohibit", data: ProhibitSpec, attribute: nil): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: "atkrange", data: AttackRangeSpec, attribute: nil): SkillSkeleton
@@ -34,11 +46,6 @@
 ---@field public addEffect fun(self: SkillSkeleton, key: "active", data: ActiveSkillSpec, attribute: nil): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: "cardskill", data: CardSkillSpec, attribute: nil): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: "viewas", data: ViewAsSkillSpec, attribute: nil): SkillSkeleton
----@field public onAcquire fun(self: SkillSkeleton, player: ServerPlayer, is_start: boolean)
----@field public onLose fun(self: SkillSkeleton, player: ServerPlayer, is_death: boolean)
----@field public dynamicName fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态名称函数
----@field public dynamicDesc fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态描述函数
----@field public addTest fun(self: SkillSkeleton, fn: fun(room: Room, me: ServerPlayer)) @ 测试函数
 local SkillSkeleton = class("SkillSkeleton")
 
 
@@ -52,8 +59,8 @@ function SkillSkeleton:initialize(spec)
   self.ai_list = {}
   self.tests = {}
 
-  local name_splited = self.name:split("__")
-  self.trueName = name_splited[#name_splited]
+  local name_split = self.name:split("__")
+  self.trueName = name_split[#name_split]
 
   self.tags = spec.tags or {}
 
@@ -71,6 +78,15 @@ function SkillSkeleton:initialize(spec)
   self.dynamicName = spec.dynamic_name
   self.dynamicDesc = spec.dynamic_desc
 
+  if type(spec.derived_piles) == "string" then
+    self.derived_piles = { spec.derived_piles }
+  else
+    self.derived_piles = spec.derived_piles
+  end
+  self.mode_skill = spec.mode_skill
+
+  self.extra = spec.extra or {}
+
   --Notify智慧，当不存在main_skill时，用于创建main_skill。看上去毫无用处
   fk.readCommonSpecToSkill(self, spec)
 end
@@ -81,12 +97,10 @@ function SkillSkeleton:addEffect(key, data, attribute)
   -- 'active' 和 'viewas' 必须唯一
 
   local function getTypePriority(k)
-    if k == 'active' or k == 'viewas' or k == 'cardskill' then
-      return 5
-    elseif type(k) == 'table' then -- 触发技
+    if type(k) == 'table' then -- 触发技
       return 3
     else
-      return 1
+      return Fk.skill_keys[k][2] or 1
     end
   end
   local main_effect = self.effect_spec_list[1]
@@ -139,7 +153,7 @@ function SkillSkeleton:createSkill()
     attr = attr or Util.DummyTable
     local sk
     if type(k) == "string" then
-      local createSkillFunc = Fk.skill_keys[k]
+      local createSkillFunc = Fk.skill_keys[k][1]
       if createSkillFunc then
         sk = createSkillFunc(self, self, i, k, attr, data)
       end
@@ -193,6 +207,7 @@ end
 --- frequency?: string,
 --- is_delay_effect?: boolean,
 --- late_refresh?: boolean,
+--- audio_index?: integer|table,
 --- trigger_times?: T,
 --- priority? : number,
 --- }
@@ -347,6 +362,9 @@ function SkillSkeleton:createTargetModSkill(_skill, idx, key, attr, spec)
   if spec.fix_times_func then
     skill.getFixedNum = spec.fix_times_func
   end
+  if spec.fix_target_func then
+    skill.getFixedTargets = spec.fix_target_func
+  end
   if spec.bypass_distances then
     skill.bypassDistancesCheck = spec.bypass_distances
   end
@@ -394,6 +412,7 @@ function SkillSkeleton:createInvaliditySkill(_skill, idx, key, attr, spec)
   if spec.invalidity_attackrange then
     skill.getInvalidityAttackRange = spec.invalidity_attackrange
   end
+  skill.recheck_invalidity = not not spec.recheck_invalidity
 
   return skill
 end
@@ -408,6 +427,7 @@ function SkillSkeleton:createVisibilitySkill(_skill, idx, key, attr, spec)
   fk.readStatusSpecToSkill(skill, spec)
   if spec.card_visible then skill.cardVisible = spec.card_visible end
   if spec.role_visible then skill.roleVisible = spec.role_visible end
+  if spec.move_visible then skill.moveVisible = spec.move_visible end
 
   return skill
 end
@@ -522,8 +542,17 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
 
   if spec.click_count then skill.click_count = spec.click_count end
 
+  if type(spec.enabled_at_nullification) == "function" then
+    skill.enabledAtNullification = spec.enabled_at_nullification
+  end
+
   skill.handly_pile = spec.handly_pile
-  skill.mute_card = spec.mute_card
+
+  if spec.mute_card ~= nil then
+    skill.mute_card = spec.mute_card
+  else
+    skill.mute_card = not (string.find(skill.pattern, "|") or skill.pattern == "." or string.find(skill.pattern, ","))
+  end
 
   return skill
 end
@@ -560,6 +589,11 @@ function SkillSkeleton:onLose(player, is_death)
     end
   end
   local lost_piles = {}
+  if self.derived_piles then
+    for _, pile_name in ipairs(self.derived_piles) do
+      table.insertTableIfNeed(lost_piles, player:getPile(pile_name))
+    end
+  end
   for _, effect in ipairs(self.effects) do
     if effect.derived_piles then
       if type(effect.derived_piles) == "string" then
@@ -592,6 +626,7 @@ function SkillSkeleton:addAcquireEffect(fn)
     fn(self, player, is_start)
   end
 end
+
 -- 失去此技能时，触发此函数
 ---@param fn fun(self:SkillSkeleton, player:ServerPlayer, is_death:boolean?)
 function SkillSkeleton:addLoseEffect(fn)
@@ -600,6 +635,7 @@ function SkillSkeleton:addLoseEffect(fn)
   end
 end
 
+--- 获取技能动态技能名
 ---@param player Player
 ---@param lang? string
 ---@return string?
@@ -611,7 +647,7 @@ end
 ---@param lang? string
 ---@return string?
 function SkillSkeleton:getDynamicDescription(player, lang)
-  if table.contains(self.tags, Skill.Switch) then
+  if table.contains(self.tags, Skill.Switch) or table.contains(self.tags, Skill.Rhyme) then
     local skill_name = self.name
     local switchState = player:getSwitchSkillState(skill_name)
     local descKey = ":" .. skill_name .. (switchState == fk.SwitchYang and "_yang" or "_yin")

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import Fk.Widgets as W
 
 Item {
   property bool enabled: true
@@ -50,7 +51,7 @@ Item {
     }
   ]
 
-  TapHandler {
+  W.TapHandler {
     id: mouse
     onTapped: if (parent.enabled) {
       triggered = !triggered;

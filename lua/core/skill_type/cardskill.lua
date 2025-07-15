@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class CardSkill : ActiveSkill
----@field public distance_limit? integer @ 距离限制（牢代码）
+---@field public distance_limit? integer @ 目标距离限制，与目标距离小于等于此值方可使用
 ---@field public offset_func? fun(self: CardSkill, room: Room, data: CardEffectData)  @ 卡牌的特殊抵消方式，覆盖原方式(杀问闪，锦囊问无懈)
 local CardSkill = ActiveSkill:subclass("CardSkill")
 
@@ -11,6 +11,7 @@ function CardSkill:initialize(name, frequency)
   self.max_target_num = 999
   self.min_card_num = 0
   self.max_card_num = 999
+  self.cardSkill = true
 end
 
 ---------
@@ -163,7 +164,7 @@ end
 ---@param to Player @ 目标
 ---@return boolean?
 function CardSkill:withinDistanceLimit(player, isattack, card, to)
-  if not to or player:distanceTo(to, nil, nil, Card:getIdList(card)) < 1 then return false end
+  if not to or player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
@@ -175,37 +176,11 @@ function CardSkill:withinDistanceLimit(player, isattack, card, to)
   local temp_suf = table.simpleClone(MarkEnum.TempMarkSuffix)
   local card_temp_suf = table.simpleClone(MarkEnum.CardTempMarkSuffix)
 
-  ---@param object Card|Player
-  ---@param markname string
-  ---@param suffixes string[]
-  ---@return boolean
-  local function hasMark(object, markname, suffixes)
-    if not object then return false end
-    for mark, _ in pairs(object.mark) do
-      if mark == markname then return true end
-      if mark:startsWith(markname .. "-") then
-        for _, suffix in ipairs(suffixes) do
-          if mark:find(suffix, 1, true) then return true end
-        end
-      end
-    end
-    return false
-  end
-
-  return (isattack and player:inMyAttackRange(to, nil, Card:getIdList(card))) or
-  (player:distanceTo(to, nil, nil, Card:getIdList(card)) <= self:getDistanceLimit(player, card, to)) or
-  hasMark(card, MarkEnum.BypassDistancesLimit, card_temp_suf) or
-  hasMark(player, MarkEnum.BypassDistancesLimit, temp_suf) or
-  hasMark(to, MarkEnum.BypassDistancesLimitTo, temp_suf)
-  -- (card and table.find(card_temp_suf, function(s)
-  --   return card:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  -- end)) or
-  -- (table.find(temp_suf, function(s)
-  --   return player:getMark(MarkEnum.BypassDistancesLimit .. s) ~= 0
-  -- end)) or
-  -- (to and (table.find(temp_suf, function(s)
-  --   return to:getMark(MarkEnum.BypassDistancesLimitTo .. s) ~= 0
-  -- end)))
+  return (isattack and player:inMyAttackRange(to, nil, table.connect(Card:getIdList(card), card.fake_subcards))) or
+  (player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) <= self:getDistanceLimit(player, card, to)) or
+  not not card:hasMark(MarkEnum.BypassDistancesLimit, card_temp_suf) or
+  not not player:hasMark(MarkEnum.BypassDistancesLimit, temp_suf) or
+  not not to:hasMark(MarkEnum.BypassDistancesLimitTo, temp_suf)
 end
 
 
@@ -288,15 +263,11 @@ function CardSkill:preEffect(room, cardEffectData)
       if not p:prohibitUse(cardCloned) then
         local cards = p:getHandlyIds()
         for _, cid in ipairs(cards) do
-          if
-            Fk:getCardById(cid).trueName == "nullification" and
-            (
-              cardEffectData.use == nil or
-              not (
-                table.contains(cardEffectData.use.disresponsiveList or Util.DummyTable, p) or
-                table.contains(cardEffectData.use.unoffsetableList or Util.DummyTable, p)
-              )
-            )
+          if Fk:getCardById(cid).trueName == "nullification" and
+            (not (
+              cardEffectData:isDisresponsive(p) or
+              cardEffectData:isUnoffsetable(p)
+            ))
           then
             table.insert(players, p)
             break
@@ -304,18 +275,16 @@ function CardSkill:preEffect(room, cardEffectData)
         end
         if not table.contains(players, p) then
           Self = p -- for enabledAtResponse
-          for _, s in ipairs(table.connect(p.player_skills, rawget(p, "_fake_skills"))) do
+          for _, s in ipairs(table.connect(p:getAllSkills(), rawget(p, "_fake_skills"))) do
             ---@cast s ViewAsSkill
             if
               s.pattern and
               Exppattern:Parse("nullification"):matchExp(s.pattern) and
-              (
-                cardEffectData.use == nil or
-                not (
-                  table.contains(cardEffectData.use.disresponsiveList or Util.DummyTable, p) or
-                  table.contains(cardEffectData.use.unoffsetableList or Util.DummyTable, p)
-                )
-              )
+              (s:enabledAtNullification(p, cardEffectData) or s:enabledAtResponse(p)) and
+              (not (
+                cardEffectData:isDisresponsive(p) or
+                cardEffectData:isUnoffsetable(p)
+              ))
             then
               table.insert(players, p)
               break
@@ -332,13 +301,15 @@ function CardSkill:preEffect(room, cardEffectData)
       prompt = "#AskForNullificationWithoutTo:" .. cardEffectData.from.id .. "::" .. cardEffectData.card.name
     end
 
-    local extra_data
+    local extra_data = { effectCardId = cardEffectData.card.id }
     if #cardEffectData.tos > 1 then
       local parentUseEvent = room.logic:getCurrentEvent():findParent(GameEvent.UseCard)
       if parentUseEvent then
-        extra_data = { useEventId = parentUseEvent.id, effectTo = cardEffectData.to.id }
+        extra_data.useEventId = parentUseEvent.id
+        extra_data.effectTo = cardEffectData.to.id
       end
     end
+    extra_data.effectFrom = cardEffectData.from and cardEffectData.from.id or nil
     if #players > 0 and cardEffectData.card.trueName == "nullification" then
       room:animDelay(2)
     end

@@ -29,7 +29,7 @@ MarkEnum.BypassTimesLimitTo = "BypassTimesLimitTo"
 MarkEnum.BypassDistancesLimitTo = "BypassDistancesLimitTo"
 ---非锁定技失效
 MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
----失效技能表（用``Room:invalidateSkill``和``Room:validateSkill``控制）
+---失效技能键值表，键为失效技能，值为控制技能表（用``Room:invalidateSkill``和``Room:validateSkill``控制）
 MarkEnum.InvalidSkills = "InvalidSkills"
 ---不可明置（值为表，m - 主将, d - 副将）
 MarkEnum.RevealProhibited = "RevealProhibited"
@@ -64,3 +64,14 @@ MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 ---inarea：离开标记值指定的特定区域后
 MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round",
                                 "-inhand", "-inarea" }
+
+---销毁
+
+-- 进入弃牌堆销毁 例OL蒲元
+MarkEnum.DestructIntoDiscard = "__destr_discard"
+
+-- 离开自己的装备区销毁 例新服刘晔
+MarkEnum.DestructOutMyEquip = "__destr_my_equip"
+
+-- 进入非装备区销毁(可在装备区/处理区移动) 例OL冯方女
+MarkEnum.DestructOutEquip = "__destr_equip"

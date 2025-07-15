@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Fk
 import Fk.RoomElement
+import Fk.Widgets as W
 // import "RoomLogic.js" as RoomLogic
 
 Item {
@@ -50,7 +51,7 @@ Item {
         anchors.centerIn: parent
       }
 
-      TapHandler {
+      W.TapHandler {
         onTapped: {
           modList.currentIndex = index;
         }
@@ -88,7 +89,7 @@ Item {
         scale: 0.8
       }
 
-      TapHandler {
+      W.TapHandler {
         onTapped: {
           if (stat === 1) {
             const name = modelData;
@@ -147,12 +148,13 @@ Item {
         clip: true
         leftPadding: 5
         rightPadding: 5
-        /* onEditingFinished: {
+        focus: true
+        onEditingFinished: {
           if (text !== "") {
             pkgList.currentIndex = 0;
             vanishAnim.start();
           }
-        } */
+        }
         ToolButton {
           text: "🔍"
           anchors.right: parent.right
@@ -325,6 +327,19 @@ Item {
         glow.radius: 5
       }
     }
+
+    footer: Item {
+      width: parent.width
+      height: 40
+      Label {
+        text: "共" + (generals !== undefined ? generals.length : 0) + "个武将"
+        font.pixelSize: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        horizontalAlignment: Text.AlignHCenter
+        font.family: fontLibian.name
+        color: "lightgrey"
+      }
+    }
   }
 
   ParallelAnimation {
@@ -353,7 +368,7 @@ Item {
         generals = lcall("SearchAllGenerals", word.text);
       } else {
         generals = lcall("SearchGenerals",
-          pkgList.model[pkgList.currentIndex], word.text);
+        pkgList.model[pkgList.currentIndex], word.text);
       }
       word.text = "";
       appearAnim.start();
@@ -400,7 +415,7 @@ Item {
       height: parent.height / mainWindow.scale
       anchors.centerIn: parent
       scale: mainWindow.scale
-      source: AppPath + "/Fk/Pages/GeneralDetailPage.qml"
+      source: "GeneralDetailPage.qml"
     }
   }
 

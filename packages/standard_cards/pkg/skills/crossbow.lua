@@ -7,8 +7,7 @@ local sk = fk.CreateSkill {
 sk:addEffect("targetmod", {
   bypass_times = function(self, player, skill, scope, card)
     if player:hasSkill(sk.name) and card and card.trueName == "slash" and scope == Player.HistoryPhase then
-      --FIXME: 无法检测到非转化的cost选牌的情况，如活墨等
-      local cardIds = Card:getIdList(card)
+      local cardIds = table.connect(Card:getIdList(card), card.fake_subcards)
       local crossbows = table.filter(player:getEquipments(Card.SubtypeWeapon), function(id)
         return Fk:getCardById(id).name == sk.attached_equip
       end)

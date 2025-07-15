@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 ---@class InvaliditySkill : StatusSkill
+---@field public recheck_invalidity boolean? @ 是否涉及检测其他失效性
 local InvaliditySkill = StatusSkill:subclass("InvaliditySkill")
 
 --- 判断一名角色的某技能是否被无效

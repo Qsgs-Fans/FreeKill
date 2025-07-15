@@ -181,7 +181,10 @@ GraphicsBox {
         sound = "lose";
       }
     }
-    Backend.playSound("./audio/system/" + sound);
+    if (!config.disableGameOverAudio) {
+      Backend.playSound("./audio/system/" + sound);
+    }
+
     getSummary();
   }
 

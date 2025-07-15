@@ -24,10 +24,14 @@ QtObject {
   property string ladyImg
   property real bgmVolume
   property bool disableMsgAudio
+  property bool disableGameOverAudio
   property bool hideUseless
   property bool hideObserverChatter
   property bool rotateTableCard
   property bool hidePresents
+  property bool autoTarget
+  property bool doubleClickUse
+  property bool noSelfNullification
   // property list<string> disabledGenerals: []
   // property list<var> disableGeneralSchemes: []
   // property int disableSchemeIdx: 0
@@ -36,9 +40,12 @@ QtObject {
   property var curScheme
   property list<string> shownPkg: []
   property list<string> favoriteGenerals: []
+  property list<string> enabledResourcePacks: []
 
   property int preferredTimeout
   property int preferredLuckTime
+  property bool enableFreeAssign
+  property bool enableDeputy
 
   property bool firstRun: true
 
@@ -57,7 +64,6 @@ QtObject {
   property int roomCapacity: 0
   property int roomTimeout: 0
   property bool heg: false
-  property bool enableFreeAssign: false
   property bool observing: false
   property bool replaying: false
   property bool replayingShowCards: false
@@ -146,12 +152,18 @@ QtObject {
     Backend.volume = conf.effectVolume ?? 50.;
     bgmVolume = conf.bgmVolume ?? 50.;
     disableMsgAudio = conf.disableMsgAudio ?? false;
+    disableGameOverAudio = conf.disableGameOverAudio ?? false;
     hideUseless = conf.hideUseless ?? false;
     hideObserverChatter = conf.hideObserverChatter ?? false;
     rotateTableCard = conf.rotateTableCard ?? false;
     hidePresents = conf.hidePresents ?? false;
+    autoTarget = conf.autoTarget ?? false;
+    doubleClickUse = conf.doubleClickUse ?? false;
+    noSelfNullification = conf.noSelfNullification ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
+    enableFreeAssign = conf.enableFreeAssign ?? false;
+    enableDeputy = conf.enableDeputy ?? false;
     firstRun = conf.firstRun ?? true;
     // disabledGenerals = conf.disabledGenerals ?? [];
     // disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
@@ -167,6 +179,7 @@ QtObject {
     shownPkg = conf.shownPkg ?? [];
     favoriteGenerals = conf.favoriteGenerals ?? [];
     blockedUsers = conf.blockedUsers ?? [];
+    enabledResourcePacks = conf.enabledResourcePacks ?? [];
   }
 
   function saveConf() {
@@ -190,12 +203,18 @@ QtObject {
     conf.effectVolume = Backend.volume;
     conf.bgmVolume = bgmVolume;
     conf.disableMsgAudio = disableMsgAudio;
+    conf.disableGameOverAudio = disableGameOverAudio;
     conf.hideUseless = hideUseless;
     conf.hideObserverChatter = hideObserverChatter;
     conf.rotateTableCard = rotateTableCard;
     conf.hidePresents = hidePresents;
+    conf.autoTarget = autoTarget;
+    conf.doubleClickUse = doubleClickUse;
+    conf.noSelfNullification = noSelfNullification;
     conf.preferredTimeout = preferredTimeout;
     conf.preferredLuckTime = preferredLuckTime;
+    conf.enableFreeAssign = enableFreeAssign;
+    conf.enableDeputy = enableDeputy;
     conf.firstRun = firstRun;
     // conf.disabledGenerals = disabledGenerals;
     // conf.disableGeneralSchemes = disableGeneralSchemes;
@@ -206,6 +225,7 @@ QtObject {
     conf.currentDisableIdx = currentDisableIdx;
     conf.favoriteGenerals = favoriteGenerals;
     conf.blockedUsers = blockedUsers;
+    conf.enabledResourcePacks = enabledResourcePacks;
 
     Backend.saveConf(JSON.stringify(conf, undefined, 2));
   }

@@ -50,10 +50,13 @@ Item {
 
   onUsedtimesChanged: {
     x.visible = false;
+    visible = false;
+    if (usedtimes > -1) {
+      visible = true;
+    }
     if (skilltype === "wake") {
       visible = (usedtimes > 0);
     } else if (skilltype === "limit") {
-      visible = true;
       if (usedtimes >= 1) {
         x.visible = true;
         bg.source = SkinBank.LIMIT_SKILL_DIR + "limit-used";
@@ -62,11 +65,9 @@ Item {
         bg.source = SkinBank.LIMIT_SKILL_DIR + "limit";
       }
     } else if (skilltype === 'switch') {
-      visible = true;
       bg.source = SkinBank.LIMIT_SKILL_DIR +
         (usedtimes < 1 ? 'switch' : 'switch-yin');
     } else if (skilltype === 'quest') {
-      visible = true
       if (usedtimes > 1) {
         x.visible = true;
         bg.source = SkinBank.LIMIT_SKILL_DIR + "limit-used";

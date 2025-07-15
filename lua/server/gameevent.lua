@@ -89,7 +89,7 @@ end
 
 ---@param msg LogMessage
 local function parseMsg(msg, nocolor, visible_data)
-  local self = ClientInstance
+  local self = Fk:currentRoom()
   local data = msg
   local function getPlayerStr(pid, color)
     if nocolor then color = "white" end
@@ -181,7 +181,8 @@ local function parseMsg(msg, nocolor, visible_data)
   log = string.gsub(log, "%%arg", arg)
   return log
 end
---- 获得描述
+--- 获得Log描述
+---@return string
 function GameEvent:getDesc()
   return parseMsg(self:desc())
 end

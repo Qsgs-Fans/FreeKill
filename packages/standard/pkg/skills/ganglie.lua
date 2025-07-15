@@ -39,7 +39,6 @@ ganglie:addAI({
     local cards = ai:getEnabledCards()
     if #cards < 2 then return "" end
 
-    local to_discard = ai:getChoiceCardsByKeepValue(cards, 2)
     local cancel_val = ai:getBenefitOfEvents(function(logic)
       logic:damage{
         from = ai.room.logic:getCurrentEvent().data[2],
@@ -48,9 +47,12 @@ ganglie:addAI({
         skillName = self.skill.name,
       }
     end)
-    local discard_val = ai:getBenefitOfEvents(function(logic)
-      logic:throwCard(to_discard, self.skill.name, ai.player, ai.player)
-    end)
+    local to_discard, discard_val = ai:askToDiscard({
+      min_num = 2,
+      max_num = 2,
+      skill_name = self.skill.name,
+      cancelable = false,
+    })
 
     if discard_val > cancel_val then
       return { cards = to_discard }

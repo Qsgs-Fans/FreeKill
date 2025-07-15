@@ -17,25 +17,16 @@ fk.DrawInitialCards = DrawInitialEvent:subclass("fk.DrawInitialCards")
 ---@class fk.AfterDrawInitialCards: DrawInitialEvent
 fk.AfterDrawInitialCards = DrawInitialEvent:subclass("fk.AfterDrawInitialCards")
 
----@class EventTurnChangingDataSpec
----@field public from ServerPlayer
----@field public to ServerPlayer
----@field public skipRoundPlus boolean?
-
----@class EventTurnChangingData: EventTurnChangingDataSpec, TriggerData
-EventTurnChangingData = TriggerData:subclass("EventTurnChangingData")
-
----@class fk.EventTurnChanging: TriggerEvent
----@field data EventTurnChangingData
-fk.EventTurnChanging = TriggerEvent:subclass("fk.EventTurnChanging")
-
 --- RoundData 轮次的数据
----@class RoundDataSpec -- TODO: 发挥想象力，填写这个Spec吧
----@field turn_table? integer[] @ 额定回合表，填空则为正常流程
+---@class RoundDataSpec
+---@field public from ServerPlayer @ 上个执行额定回合的角色
+---@field public to ServerPlayer @ 即将执行额定回合的角色
+---@field public turn_table? ServerPlayer[] @ 额定回合表，对于通常模式是所有玩家
+---@field public skipped? boolean @ 是否跳过额定回合
 
 --- 轮次的数据
 ---@class RoundData: RoundDataSpec, TriggerData
----@field turn_table integer[] @ 额定回合表
+---@field turn_table ServerPlayer[] @ 额定回合表
 RoundData = TriggerData:subclass("RoundData")
 
 ---@class RoundEvent: TriggerEvent
@@ -48,6 +39,8 @@ fk.RoundStart = RoundEvent:subclass("fk.RoundStart")
 fk.RoundEnd = RoundEvent:subclass("fk.RoundEnd")
 ---@class fk.GameStart: RoundEvent
 fk.GameStart = RoundEvent:subclass("fk.GameStart")
+---@class fk.EventTurnChanging: RoundEvent
+fk.EventTurnChanging = RoundEvent:subclass("fk.EventTurnChanging")
 
 --- TurnData 回合的数据
 ---@class TurnDataSpec -- TODO: 发挥想象力，填写这个Spec吧
@@ -93,11 +86,13 @@ end
 ---@param phase Phase @ 阶段名称
 ---@param reason? string @ 额外阶段的原因，不为额外阶段则为game_rule
 ---@param who? ServerPlayer @ 额外阶段的执行者（默认为当前回合角色）
-function TurnData:gainAnExtraPhase(phase, reason, who)
+---@param extra_data? table @ 额外信息
+function TurnData:gainAnExtraPhase(phase, reason, who, extra_data)
   table.insert(self.phase_table, self.phase_index + 1, PhaseData:new{
     who = who or self.who,
     reason = reason or "game_rule",
-    phase = phase
+    phase = phase,
+    extra_data = extra_data
   })
 end
 
@@ -142,6 +137,8 @@ fk.EventPhaseChanging = PhaseEvent:subclass("fk.EventPhaseChanging")
 fk.EventPhaseSkipping = PhaseEvent:subclass("fk.EventPhaseSkipping")
 ---@class fk.EventPhaseSkipped: PhaseEvent
 fk.EventPhaseSkipped = PhaseEvent:subclass("fk.EventPhaseSkipped")
+---@class fk.BeforePlayCard: PhaseEvent
+fk.BeforePlayCard = PhaseEvent:subclass("fk.BeforePlayCard")
 
 ---@class DrawNCardsData: PhaseData
 ---@field public n integer 摸牌数量

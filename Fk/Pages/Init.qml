@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -94,6 +95,15 @@ Item {
 
         Button {
           Layout.fillWidth: true
+          text: qsTr("管理资源包")
+          onClicked: {
+            mainStack.push(resourcePackManage);
+            // 资源包管理界面后续实现
+          }
+        }
+
+        Button {
+          Layout.fillWidth: true
           text: qsTr("Quit Game")
           onClicked: {
             config.saveConf();
@@ -123,7 +133,7 @@ Item {
         font.pixelSize: 24
         font.underline: true
 
-        TapHandler {
+        W.TapHandler {
           onTapped: {
             mainStack.push(Qt.createComponent("../Tutorial.qml")
                            .createObject());
@@ -142,7 +152,7 @@ Item {
         font.underline: true
         visible: OS === "Android"
 
-        TapHandler {
+        W.TapHandler {
           onTapped: {
             Backend.askFixResource();
           }

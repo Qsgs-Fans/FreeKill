@@ -43,6 +43,15 @@ Item {
           implicitWidth: 120
           color: "transparent"
         }
+        focus: true
+        onEditingFinished: {
+          if (text !== "") {
+            if (stack.depth > 1) stack.pop();
+            generalModel = lcall("SearchAllGenerals", word.text);
+            stack.push(generalList);
+            word.text = "";
+          }
+        }
       }
 
       ToolButton {

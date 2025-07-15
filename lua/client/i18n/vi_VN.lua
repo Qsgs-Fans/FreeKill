@@ -40,6 +40,8 @@ Fk:loadTranslationTable({
 
   ["Disable Extension"] = "Vô hiệu tất cả mở rộng",
   ["Filter"] = "Lọc",
+  -- ["RefreshRoomHelp"] = "单击据筛选刷新，长按刷新全部房间但不清除刷新",
+  -- ["FilterHelp"] = "长按以清除筛选",
   ["Create Room"] = "Tạo phòng",
   ["Room ID"] = "ID phòng",
   ["Room Name"] = "Tên phòng",
@@ -161,7 +163,7 @@ Tác giả： Notify Ho-spair
 
 Developer： RalphR Nyutanislavsky xxyheaven 妖梦厨
 
-Đóng góp： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主
+Đóng góp： 假象 deepskybird 板蓝根 s1134s 喑黒毀灭емо公主 影月
 
 Việt hóa: Lãng Khách
 
@@ -296,6 +298,7 @@ Trang chủ: https://libgit2.org
   ["replaceEquip"] = "Thay thế trang bị",
   ["PlayCard"] = "Đánh lá",
 
+  -- ["#AskForChooseGenerals"] = "%1：请选择%2名武将",
   ["AskForCardChosen"] = "Chọn lá",
   ["AskForCardsChosen"] = "Chọn lá",
   ["#AskForChooseCard"] = "%1: hãy chọn 1 lá từ %src",
@@ -345,6 +348,7 @@ Trang chủ: https://libgit2.org
   ["seat#11"] = "#11",
   ["seat#12"] = "#12",
   ["@ControledBy"] = "Bị kiểm soát bởi",
+  --["playerstr_self"] = "(你)",
 
   ["Menu"] = "Menu",
   ["Surrender"] = "Đầu hàng",

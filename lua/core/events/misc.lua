@@ -25,19 +25,30 @@ fk.PropertyChange = PropertyChangeEvent:subclass("fk.PropertyChange")
 fk.AfterPropertyChange = PropertyChangeEvent:subclass("fk.AfterPropertyChange")
 
 ---@class NilEvent: TriggerEvent
----@field data nil
+---@field data any
 local NilEvent = TriggerEvent:subclass("NilEvent")
 
 ---@class fk.BeforeTurnOver: NilEvent
+--- 武将牌翻面变化前
 fk.BeforeTurnOver = NilEvent:subclass("fk.BeforeTurnOver")
+--- 武将牌翻面变化后
 ---@class fk.TurnedOver: NilEvent
 fk.TurnedOver = NilEvent:subclass("fk.TurnedOver")
+--- 连环状态变化前
 ---@class fk.BeforeChainStateChange: NilEvent
 fk.BeforeChainStateChange = NilEvent:subclass("fk.BeforeChainStateChange")
+--- 连环状态变化后
 ---@class fk.ChainStateChanged: NilEvent
 fk.ChainStateChanged = NilEvent:subclass("fk.ChainStateChanged")
+--- 牌堆洗牌后
 ---@class fk.AfterDrawPileShuffle: NilEvent
 fk.AfterDrawPileShuffle = NilEvent:subclass("fk.AfterDrawPileShuffle")
+--- 请求响应前
+---@class fk.BeforeRequestAsk: NilEvent
+fk.BeforeRequestAsk = NilEvent:subclass("fk.BeforeRequestAsk")
+--- 请求响应后
+---@class fk.AfterRequestAsk: NilEvent
+fk.AfterRequestAsk = NilEvent:subclass("fk.AfterRequestAsk")
 
 ---@class BeforeTriggerSkillUseData
 ---@field skill TriggerSkill
@@ -60,8 +71,10 @@ fk.CardShown = TriggerEvent:subclass("fk.CardShown")
 ---@class AreaAbortResumeEvent: TriggerEvent
 local AreaAbortResumeEvent = TriggerEvent:subclass("AreaAbortResumeEvent")
 
+--- 区域被废除后
 ---@class fk.AreaAborted: AreaAbortResumeEvent
 fk.AreaAborted = AreaAbortResumeEvent:subclass("fk.AreaAborted")
+--- 区域被恢复后
 ---@class fk.AreaResumed: AreaAbortResumeEvent
 fk.AreaResumed = AreaAbortResumeEvent:subclass("fk.AreaResumed")
 

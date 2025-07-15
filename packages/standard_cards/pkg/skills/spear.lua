@@ -6,6 +6,7 @@ local skill = fk.CreateSkill {
 skill:addEffect("viewas", {
   prompt = "#spear_skill&",
   pattern = "slash",
+  mute_card = false,
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)
     return #selected < 2 and table.contains(player:getHandlyIds(), to_select)

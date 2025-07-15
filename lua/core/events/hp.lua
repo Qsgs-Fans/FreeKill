@@ -138,9 +138,15 @@ fk.PreDamage = DamageEvent:subclass("fk.PreDamage")
 --- 造成伤害时
 ---@class fk.DamageCaused: DamageEvent
 fk.DamageCaused = DamageEvent:subclass("fk.DamageCaused")
+--- 造成伤害时②（用于确定伤害值，如改为固定伤害值或防止伤害）
+---@class fk.DetermineDamageCaused: DamageEvent
+fk.DetermineDamageCaused = DamageEvent:subclass("fk.DetermineDamageCaused")
 --- 受到伤害时
 ---@class fk.DamageInflicted: DamageEvent
 fk.DamageInflicted = DamageEvent:subclass("fk.DamageInflicted")
+--- 受到伤害时②（用于确定伤害值，如改为固定伤害值或防止伤害）
+---@class fk.DetermineDamageInflicted: DamageEvent
+fk.DetermineDamageInflicted = DamageEvent:subclass("fk.DetermineDamageInflicted")
 --- 造成伤害后
 ---@class fk.Damage: DamageEvent
 fk.Damage = DamageEvent:subclass("fk.Damage")
@@ -212,5 +218,5 @@ fk.MaxHpChanged = MaxHpChangedEvent:subclass("fk.MaxHpChanged")
 ---  data: TrigSkelSpec<MaxHpChangedTrigFunc>, attr: TrigSkelAttribute?): SkillSkeleton
 
 function DamageEvent:breakCheck()
-    return self.data.damage < 1 or self.data.prevented
+  return self.data.damage < 1 or self.data.prevented
 end

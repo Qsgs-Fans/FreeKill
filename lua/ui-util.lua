@@ -37,4 +37,15 @@ UI.Spin = function(spec)
   return spec
 end
 
+-- CardNameBox：用于选牌名的组件，和UI.ComboBox差不多。一般用于泛转化技
+-- 必输参数：可选牌名choices；可输参数：全部牌名all_choices
+UI.CardNameBox = function(spec)
+  spec.choices = type(spec.choices) == "table" and spec.choices or Util.DummyTable
+  spec.all_choices = type(spec.all_choices) == "table" and spec.all_choices or spec.choices
+  spec.default_choice = spec.default_choice and spec.default_choice or spec.choices[1]
+  spec.type = "custom"
+  spec.qml_path = "packages/freekill-core/Fk/SkillInteraction/SkillCardName"
+  return spec
+end
+
 return UI

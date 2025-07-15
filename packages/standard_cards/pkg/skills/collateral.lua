@@ -8,7 +8,7 @@ skill:addEffect("cardskill", {
     if #selected == 0 then
       return to_select ~= player and #to_select:getEquipments(Card.SubtypeWeapon) > 0
     elseif #selected == 1 then
-      return selected[1]:inMyAttackRange(to_select)
+      return selected[1]:inMyAttackRange(to_select, nil, table.connect(Card:getIdList(card), card.fake_subcards))
     end
   end,
   target_filter = function(self, player, to_select, selected, _, card, extra_data)
@@ -17,7 +17,7 @@ skill:addEffect("cardskill", {
     elseif #selected == 0 then
       return Util.CardTargetFilter(self, player, to_select, selected, _, card, extra_data)
     else
-      return selected[1]:inMyAttackRange(to_select)
+      return selected[1]:inMyAttackRange(to_select, nil, table.connect(Card:getIdList(card), card.fake_subcards))
     end
   end,
   target_num = 2,
@@ -37,7 +37,7 @@ skill:addEffect("cardskill", {
       if from.dead then return end
       local weapons = to:getEquipments(Card.SubtypeWeapon)
       if #weapons > 0 then
-        room:moveCardTo(weapons, Card.PlayerHand, from, fk.ReasonGive, skill.name, nil, true, to.id)
+        room:moveCardTo(weapons, Card.PlayerHand, from, fk.ReasonGive, skill.name, nil, true, to)
       end
     end
     if #(effect.subTargets or {}) == 0 then

@@ -3,7 +3,14 @@
 Fk:addPoxiMethod{
   name = "AskForCardsChosen",
   card_filter = function(to_select, selected, data, extra_data)
-    return #selected < extra_data.max
+    if #selected >= extra_data.max then return end
+    if extra_data.visible_data and extra_data.pattern then
+      if extra_data.visible_data[string.format("%i", to_select)] == false then
+        return false
+      end
+      return Exppattern:Parse(extra_data.pattern):match(Fk:getCardById(to_select))
+    end
+    return true
   end,
   feasible = function(selected, data, extra_data)
     return #selected >= extra_data.min and #selected <= extra_data.max

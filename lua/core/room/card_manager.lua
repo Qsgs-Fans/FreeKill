@@ -48,6 +48,8 @@ function CardManager:getCardArea(cardId)
   return #cardIds == 1 and cardIds[1] or Card.Unknown
 end
 
+---@param cardId integer | Card @ 卡牌id
+---@return integer? @ 拥有者的id
 function CardManager:getCardOwner(cardId)
   if type(cardId) ~= "number" then
     assert(cardId and cardId:isInstanceOf(Card))

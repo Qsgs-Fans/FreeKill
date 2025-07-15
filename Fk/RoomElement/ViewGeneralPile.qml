@@ -30,6 +30,9 @@ ColumnLayout {
       id: cardItem
       autoBack: false
       name: modelData
+      onClicked: { // FIXME: rightClicked不能覆写
+        roomScene.startCheat("GeneralDetail", { generals: [modelData] });
+      }
     }
   }
 }

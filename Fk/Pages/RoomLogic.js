@@ -259,14 +259,27 @@ function sortHandcards(sortMethods) {
     ["treasure"]: Card.SubtypeTreasure,
   }
 
-  const hand = dashboard.handcardArea.cards.map(c => {
+  const others = [];
+  const hands = [];
+  const orignal_hands = lcall("GetPlayerHandcards", Self.id); // 不计入expand_pile
+
+  dashboard.handcardArea.cards.forEach(c => {
+    if (orignal_hands.includes(c.cid)) {
+      hands.push(c);
+    } else {
+      others.push(c);
+    }
+  })
+
+  const orignal = hands.map(c => {
     return c.cid;
   })
+
 
   let sortedByType = true;
   let handcards
   if (cardType) {
-    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards = hands.slice(0);
     handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
         if (prev.type === next.type) {
@@ -297,7 +310,7 @@ function sortHandcards(sortMethods) {
     // Check if the cards are sorted by type
     let i = 0;
     handcards.every(c => {
-      if (hand[i] !== c.cid) {
+      if (orignal[i] !== c.cid) {
         sortedByType = false;
         return false;
       }
@@ -310,7 +323,7 @@ function sortHandcards(sortMethods) {
 
   let sortedByNum = true;
   if (cardNum) {
-    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards = hands.slice(0);
     handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
         if (prev.number === next.number) {
@@ -329,7 +342,7 @@ function sortHandcards(sortMethods) {
 
     let i = 0;
     handcards.every(c => {
-      if (hand[i] !== c.cid) {
+      if (orignal[i] !== c.cid) {
         sortedByNum = false;
         return false;
       }
@@ -342,7 +355,7 @@ function sortHandcards(sortMethods) {
 
   let sortedBySuit = true;
   if (cardSuit) {
-    handcards = dashboard.handcardArea.cards.slice(0);
+    handcards = hands.slice(0);
     handcards.sort((prev, next) => {
       if (prev.footnote === next.footnote) {
         if (suitInteger[prev.suit] === suitInteger[next.suit]) {
@@ -361,7 +374,7 @@ function sortHandcards(sortMethods) {
 
     let i = 0;
     handcards.every(c => {
-      if (hand[i] !== c.cid) {
+      if (orignal[i] !== c.cid) {
         sortedBySuit = false;
         return false;
       }
@@ -380,6 +393,24 @@ function sortHandcards(sortMethods) {
     }
   }
   if (!output) output = sortOutputs[0];
+  others.forEach(c => {
+    output.push(c);
+  });
+  /*
+  console.log("----------------------");
+  dashboard.handcardArea.cards.forEach(c => {
+    console.log("handcards: " + c.cid);
+  });
+  console.log("----------------------");
+  others.forEach(c => {
+    console.log("others: " + c.cid);
+  });
+  console.log("----------------------");
+  output.forEach(c => {
+    console.log("output: " + c.cid);
+  });
+  console.log("----------------------");
+  */
   dashboard.handcardArea.cards = output;
   dashboard.handcardArea.updateCardPosition(true);
 }
@@ -531,13 +562,20 @@ function doIndicate(from, tos) {
 function getPlayerStr(playerid) {
   const photo = getPhoto(playerid);
   if (photo.general === "anjiang" && (photo.deputyGeneral === "anjiang" || !photo.deputyGeneral)) {
-    return luatr("seat#" + photo.seatNumber);
+    let ret = luatr("seat#" + photo.seatNumber);
+    if (playerid == Self.id) {
+      ret = ret + luatr("playerstr_self")
+    }
+    return luatr(ret);
   }
 
   let ret = photo.general;
   ret = luatr(ret);
   if (photo.deputyGeneral && photo.deputyGeneral !== "") {
     ret = ret + "/" + luatr(photo.deputyGeneral);
+  }
+  if (playerid == Self.id) {
+    ret = ret + luatr("playerstr_self")
   }
   return ret;
 }
@@ -689,6 +727,34 @@ callbacks["PropertyUpdate"] = (data) => {
   }
 }
 
+callbacks["UpdateHandcard"] = (j) => {
+  const id = parseInt(j);
+  const sortable = lcall("CanSortHandcards", Self.id);
+  let card;
+  roomScene.tableCards.forEach((v) => {
+    if (v.cid === id) {
+      card = v;
+      return;
+    }
+  });
+
+  if (!card) {
+    roomScene.dashboard.handcardArea.cards.forEach((v) => {
+      if (v.cid === id) {
+        card = v;
+        return;
+      }
+    });
+  }
+
+  if (!card) {
+    return;
+  }
+
+  card.setData(lcall("GetCardData", id));
+  card.draggable = sortable;
+}
+
 callbacks["UpdateCard"] = (j) => {
   const id = parseInt(j);
   let card;
@@ -716,6 +782,9 @@ callbacks["UpdateCard"] = (j) => {
 }
 
 callbacks["UpdateSkill"] = (j) => {
+  const sortable = lcall("CanSortHandcards", Self.id);
+  dashboard.sortable = sortable;
+  dashboard.handcardArea.sortable = sortable;
   const all_skills = [roomScene.dashboard.skillButtons, roomScene.dashboard.notActiveButtons];
   for (const skills of all_skills) {
     for (let i = 0; i < skills.count; i++) {
@@ -800,11 +869,15 @@ callbacks["PlayerRunned"] = (data) => {
 }
 
 callbacks["AskForGeneral"] = (data) => {
-  // jsonData: string[] Generals
+  // jsonData: string[] generals, integer n, boolean no_convert, boolean heg, string rule, table extra_data
+  //const {generals, n, no_convert, heg, rule, extra_data } = data;
   const generals = data[0];
   const n = data[1];
-  const convert = data[2];
+  const no_convert = data[2];
   const heg = data[3];
+  const rule = data[4];
+  const extra_data = data[5];
+
   roomScene.setPrompt(luatr("#AskForGeneral"), true);
   roomScene.activate();
   roomScene.popupBox.sourceComponent =
@@ -813,12 +886,16 @@ callbacks["AskForGeneral"] = (data) => {
   box.accepted.connect(() => {
     replyToServer(JSON.stringify(box.choices));
   });
-  box.choiceNum = n;
-  box.convertDisabled = !!convert;
+  box.generals = generals;
+  box.choiceNum = n ?? 1;
+  box.convertDisabled = !!no_convert;
   box.hegemony = !!heg;
+  box.rule_type = rule ?? (heg? "heg_general_choose" : "askForGeneralsChosen"); // 若heg为true，默认应用国战选将
+  box.extra_data = extra_data ?? { n : n };
   for (let i = 0; i < generals.length; i++)
     box.generalList.append({ "name": generals[i] });
   box.updatePosition();
+  box.refreshPrompt();
 }
 
 callbacks["AskForSkillInvoke"] = (data) => {
@@ -1124,6 +1201,32 @@ callbacks["AskForMoveCardInBoard"] = (data) => {
   });
 }
 
+callbacks["AskForCardsAndChoice"] = (data) => {
+  // jsonData: [ int[] handcards, int[] equips, int[] delayedtricks,
+  //  int min, int max, string reason ]
+  const { cards, choices, prompt, cancel_choices, min, max, filter_skel, disabled, extra_data } = data;
+
+  roomScene.activate();
+  roomScene.popupBox.sourceComponent =
+    Qt.createComponent("../RoomElement/ChooseCardsAndChoiceBox.qml");
+
+  const boxCards = [];
+  cards.forEach(id => boxCards.push(lcall("GetCardData", id)));
+
+  const box = roomScene.popupBox.item;
+  box.cards = boxCards;
+  box.ok_options = choices;
+  box.prompt = prompt ?? "";
+  box.cancel_options = cancel_choices ?? [];
+  box.min = min ?? 1;
+  box.max = max ?? 1;
+  box.disable_cards = disabled ?? [];
+  box.filter_skel = filter_skel ?? "";
+  box.extra_data = extra_data;
+
+  roomScene.popupBox.moveToCenter();
+}
+
 callbacks["MoveCards"] = (moves) => {
   // jsonData: merged moves
   moveCards(moves);
@@ -1205,8 +1308,10 @@ callbacks["AskForUseCard"] = (data) => {
   roomScene.activate();
   roomScene.okCancel.visible = true;
   if (extra_data != null) {
-    if (extra_data.effectTo !== Self.id &&
-        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) {
+    if ((extra_data.effectTo !== Self.id && // 忽略本轮无懈可击，但目标是自己时不忽略
+        roomScene.skippedUseEventId.find(id => id === extra_data.useEventId)) ||
+        (config.noSelfNullification && extra_data.effectFrom === Self.id &&
+        !lcall("GetCardData", extra_data.effectCardId).multiple_targets)) { // 不对自己使用的单目标锦囊牌无懈
       lcall("UpdateRequestUI", "Button", "Cancel");
       return;
     } else {
@@ -1517,6 +1622,14 @@ callbacks["UpdateRequestUI"] = (uiUpdate) => {
   if (uiUpdate._type == "Room") {
     roomScene.applyChange(uiUpdate);
   }
+}
+
+// 蒋琬
+callbacks["GetPlayerHandcards"] = (data) => {
+  const hand = dashboard.handcardArea.cards.map(c => {
+    return c.cid;
+  })
+  replyToServer(JSON.stringify(hand));
 }
 
 callbacks["ReplyToServer"] = (data) => {

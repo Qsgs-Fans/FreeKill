@@ -214,9 +214,8 @@ end
 ---@param card Card
 ---@param extra_data table?
 Util.CanUseToSelf = function(self, player, card, extra_data)
-  local tos = (extra_data and extra_data.fix_targets) and extra_data.fix_targets or {player.id}
-  return table.find(tos, function(pid)
-    local p = Fk:currentRoom():getPlayerById(pid)
+  local tos = card:getFixedTargets(player, extra_data)
+  return tos and table.find(tos, function(p)
     return not player:isProhibited(p, card)
     and Util.CardTargetFilter(self, player, p, {}, card.subcards, card, extra_data)
   end) ~= nil
@@ -510,6 +509,7 @@ end
 ---@param self T[]
 ---@param begin? integer
 ---@param _end? integer
+---@return T[]
 function table.slice(self, begin, _end)
   local len = #self
   begin = begin or 1

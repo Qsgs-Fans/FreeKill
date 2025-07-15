@@ -18,21 +18,27 @@
 ---@field public deputyMaxHpAdjustedValue integer @ 副将体力上限调整
 ---@field public shield integer @ 初始护甲
 ---@field public gender Gender @ 武将性别
----@field public skills Skill[] @ 武将技能
----@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用
+---@field public skills Skill[] @ 武将技能（0.5.5后无效）
+---@field public other_skills string[] @ 武将身上属于其他武将的技能，通过字符串调用（0.5.5后合并skills）
 ---@field public related_skills Skill[] @ 武将相关的不属于其他武将的技能，例如邓艾的急袭
 ---@field public related_other_skills string [] @ 武将相关的属于其他武将的技能，例如孙策的英姿
 ---@field public all_skills table @ 武将的所有技能，包括相关技能和属于其他武将的技能
 ---@field public companions string [] @ 有珠联璧合关系的武将
+---@field public headnote string @ 顶注。在武将介绍界面出现
+---@field public endnote string @ 尾注。在武将介绍界面出现
 ---@field public hidden boolean @ 不在选将框里出现，可以点将，可以在武将一览里查询到
 ---@field public total_hidden boolean @ 完全隐藏
 General = class("General")
 
 ---@alias Gender integer
 
+--- 男性
 General.Male = 1
+--- 女性
 General.Female = 2
+--- 双性
 General.Bigender = 3
+--- 无性
 General.Agender = 4
 
 --- 构造函数，不可随意调用。
@@ -64,6 +70,9 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.all_skills = {}
 
   self.companions = {}
+
+  self.headnote = ""
+  self.endnote = ""
 
   package:addGeneral(self)
 end
@@ -142,11 +151,14 @@ end
 
 --- 是否与另一武将构成珠联璧合关系。
 ---@param other General @ 另一武将
+---@return boolean
 function General:isCompanionWith(other)
+  assert(other:isInstanceOf(General))
+  if self == other then return false end
   return table.contains(self.companions, other.name) or table.contains(other.companions, self.name)
-    or (string.find(self.name, "lord") and (other.kingdom == self.kingdom or other.subkingdom == self.kingdom))
-    or (string.find(other.name, "lord") and (self.kingdom == other.kingdom or self.subkingdom == other.kingdom))
-    or (string.find(self.name, "all_comp") or string.find(other.name, "all_comp")) -- all_comp 所有都珠联璧合
+    or (not not string.find(self.name, "lord") and (other.kingdom == self.kingdom or other.subkingdom == self.kingdom))
+    or (not not string.find(other.name, "lord") and (self.kingdom == other.kingdom or self.subkingdom == other.kingdom))
+    or (not not string.find(self.name, "all_comp") or not not string.find(other.name, "all_comp")) -- all_comp 所有都珠联璧合
 end
 
 return General

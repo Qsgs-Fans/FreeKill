@@ -13,6 +13,13 @@ end
 ---@class GameEvent.Dying : GameEvent
 ---@field data DyingData
 local Dying = GameEvent:subclass("GameEvent.Dying")
+
+function Dying:__tostring()
+  local data = self.data
+  return string.format("<Dying %s <= %s #%d>",
+    data.who, data.killer, self.id)
+end
+
 function Dying:main()
   local dyingData = self.data
   local room = self.room
@@ -64,6 +71,13 @@ end
 ---@class GameEvent.Death : GameEvent
 ---@field data DeathData
 local Death = GameEvent:subclass("GameEvent.Death")
+
+function Death:__tostring()
+  local data = self.data
+  return string.format("<Death %s <= %s #%d>",
+    data.who, data.killer, self.id)
+end
+
 function Death:prepare()
   local deathData = self.data
   local victim = deathData.who
@@ -114,6 +128,7 @@ function Death:main()
   room:broadcastProperty(victim, "drank")
   victim.shield = 0
   room:broadcastProperty(victim, "shield")
+  room:updateAllLimitSkillUI(victim)
 
   logic:trigger(fk.GameOverJudge, victim, deathData)
   logic:trigger(fk.Death, victim, deathData)
@@ -132,6 +147,13 @@ end
 ---@class GameEvent.Revive : GameEvent
 ---@field data ReviveData
 local Revive = GameEvent:subclass("GameEvent.Revive")
+
+function Revive:__tostring()
+  local data = self.data
+  return string.format("<Revive %s #%d>",
+    data.who, self.id)
+end
+
 function Revive:main()
   local room = self.room
   local data = self.data
@@ -142,6 +164,7 @@ function Revive:main()
   room:setPlayerProperty(data.who, "dying", false)
   room:setPlayerProperty(data.who, "hp", data.who.maxHp)
   table.insertIfNeed(room.alive_players, data.who)
+  room:updateAllLimitSkillUI(data.who)
 
   if data.send_log then
     room:sendLog { type = "#Revive", from = data.who.id }

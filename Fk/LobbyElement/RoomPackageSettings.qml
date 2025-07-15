@@ -80,6 +80,7 @@ Flickable {
               id: parentModBox
               text: luatr(name)
               font.bold: true
+              enabled: false
               checkState: childPkg.checkState
               Layout.minimumWidth: 100
             }
@@ -120,7 +121,8 @@ Flickable {
                 text: luatr(modelData)
                 leftPadding: indicator.width
                 ButtonGroup.group: childPkg
-                enabled: modelData !== "test_p_0" // 测试包不允许选择
+                // enabled: modelData !== "test_p_0" // 测试包不允许选择
+                enabled: false // 此处不允许选择 前往武将一览
                 checked: !config.curScheme.banPkg[modelData] // 初始状态
 
                 onCheckedChanged: {
@@ -190,16 +192,18 @@ Flickable {
   }
 
   function checkPackage(orig_name, checked) {
-    const s = config.curScheme;
-    if (!checked) {
-      s.banPkg[orig_name] = [];
-      delete s.normalPkg[orig_name];
-    } else {
-      delete s.normalPkg[orig_name];
-      delete s.banPkg[orig_name];
-    }
-    lcall("UpdatePackageEnable", orig_name, checked);
-    config.curSchemeChanged();
+    return;
+
+    // const s = config.curScheme;
+    // if (!checked) {
+    //   s.banPkg[orig_name] = [];
+    //   delete s.normalPkg[orig_name];
+    // } else {
+    //   delete s.normalPkg[orig_name];
+    //   delete s.banPkg[orig_name];
+    // }
+    // lcall("UpdatePackageEnable", orig_name, checked);
+    // config.curSchemeChanged();
   }
 
   Component.onCompleted: {

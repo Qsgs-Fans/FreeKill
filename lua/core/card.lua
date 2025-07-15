@@ -17,6 +17,7 @@
 ---@field public area CardArea @ 卡牌所在区域（例如手牌区，判定区，装备区，牌堆，弃牌堆···）
 ---@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
 ---@field public subcards integer[] @ 子卡ID表
+---@field public fake_subcards integer[] @ 伪子卡ID表，用于活墨类转化和飞刀判定
 ---@field public skillName string @ 虚拟牌的技能名 for virtual cards
 ---@field private _skillName string
 ---@field public skillNames string[] @ 虚拟牌的技能名们（一张虚拟牌可能有多个技能名，如芳魂、龙胆、朱雀羽扇）
@@ -24,6 +25,7 @@
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
+---@field public stackable_delayed boolean @ 是否为可堆叠的延时锦囊牌
 ---@field public is_passive? boolean @ 是否只能在响应时使用或打出
 ---@field public is_derived? boolean @ 判断是否为衍生牌
 ---@field public extra_data? table @ 保存其他信息的键值表，如“合纵”、“应变”、“赠予”等
@@ -130,6 +132,7 @@ function Card:initialize(name, suit, number, color)
   self.sub_type = Card.SubtypeNone
   -- self.skill = nil
   self.subcards = {}
+  self.fake_subcards = {}
   -- self.skillName = nil
   self._skillName = ""
   self.skillNames = {}
@@ -176,6 +179,7 @@ function Card:clone(suit, number)
   newCard.special_skills = self.special_skills
   newCard.is_damage_card = self.is_damage_card
   newCard.multiple_targets = self.multiple_targets
+  newCard.stackable_delayed = self.stackable_delayed
   newCard.is_passive = self.is_passive
   newCard.is_derived = self.is_derived
   return newCard
@@ -254,6 +258,30 @@ end
 function Card:addSubcards(cards)
   for _, c in ipairs(cards) do
     self:addSubcard(c)
+  end
+end
+
+--- 将一张子卡加入某张牌的虚拟子卡，用于活墨类转化和飞刀判定
+---@param card integer|Card @ 要加入的虚拟子卡
+function Card:addFakeSubcard(card)
+  -- assert(self:isVirtual(), "")
+  if type(card) == "number" then
+    table.insert(self.fake_subcards, card)
+  else
+    assert(card:isInstanceOf(Card))
+    if card:isVirtual() then
+      table.insertTable(self.fake_subcards, card.fake_subcards)
+    else
+      table.insert(self.fake_subcards, card.id)
+    end
+  end
+end
+
+--- 将一批子卡加入某张牌的虚拟子卡，用于活墨类转化和飞刀判定
+---@param cards integer[] | Card[] @ 要加入的虚拟子卡列表
+function Card:addFakeSubcards(cards)
+  for _, c in ipairs(cards) do
+    self:addFakeSubcard(c)
   end
 end
 
@@ -449,6 +477,23 @@ function Card:getMarkNames()
   return ret
 end
 
+--- 检索角色是否拥有指定Mark，考虑后缀(find)。返回检索到的的第一个标记值与标记名
+---@param mark string @ 标记名
+---@param suffixes? string[] @ 后缀，默认为```MarkEnum.CardTempMarkSuffix```
+---@return [any, integer]|nil @ 返回一个表，包含标记值与标记名，或nil
+function Card:hasMark(mark, suffixes)
+  if suffixes == nil then suffixes = MarkEnum.CardTempMarkSuffix end
+  for m, _ in pairs(self.mark) do
+    if m == mark then return {self.mark[m], m} end
+    if m:startsWith(mark .. "-") then
+      for _, suffix in ipairs(suffixes) do
+        if m:find(suffix, 1, true) then return {self.mark[m], m} end
+      end
+    end
+  end
+  return nil
+end
+
 --- 比较两张卡牌的花色是否相同（无花色牌不与其他任何牌相同）
 ---@param anotherCard Card @ 另一张卡牌
 ---@param diff? boolean @ 比较二者不同
@@ -563,8 +608,17 @@ end
 function Card:getFixedTargets(player, extra_data)
   local ret = extra_data and extra_data.fix_targets
   if ret then return table.map(ret, Util.Id2PlayerMapper) end
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable---@type TargetModSkill[]
+  for _, skill in ipairs(status_skills) do
+    local targetIds = skill:getFixedTargets(player, self.skill, self, extra_data)
+    if targetIds then
+      return table.map(targetIds, Util.Id2PlayerMapper)
+    end
+  end
+  -- 卡牌自身赋予的默认目标
   ret = self.skill:fixTargets(player, self, extra_data)
   if ret then return ret end
+  -- 以下为适用所有牌的默认值
   if self.skill:getMinTargetNum(player) == 0 and not self.is_passive then
     -- 此处仅作为默认值，若与默认选择规则不一致（如火烧连营）请修改cardSkill的fix_targets参数
     if self.multiple_targets then
@@ -579,36 +633,45 @@ function Card:getFixedTargets(player, extra_data)
 end
 
 
---- 获得一张牌在出牌阶段空闲时可以正常选择的目标角色表
---- 用于判断一张牌能否使用，或用于添加默认使用目标
+--- 获得使用一张牌的所有合法目标角色表。用于判断一张必须使用的牌能否使用
+---
+--- eg.杀返回攻击范围内***所有***角色，桃返回自己，濒死桃返回目标濒死角色，借刀杀人***返回目标角色不返回子目标***
 ---@param player Player @ 使用者
----@param extra_data? table
+---@param extra_data? UseExtraData|table
 ---@return Player[] @ 返回目标角色表
 function Card:getAvailableTargets (player, extra_data)
   if not player:canUse(self, extra_data) or player:prohibitUse(self) then return {} end
   extra_data = extra_data or Util.DummyTable
   local room = Fk:currentRoom()
-  local ret = extra_data.fix_targets or self:getFixedTargets(player, extra_data)
-  or extra_data.exclusive_targets or extra_data.must_targets or extra_data.include_targets
-  or room.alive_players
-  if #ret == 0 then return {} end
-  local tos = table.simpleClone(ret)
-  if type(tos[1]) == "number" then
-    tos = table.map(tos, Util.Id2PlayerMapper)
+  -- 选定目标的优先逻辑：额外的锁定目标(求桃锁定濒死角色)>牌本身的锁定目标(南蛮无中装备)>所有角色
+  local avail = (self:getFixedTargets(player, extra_data) or room.alive_players)
+  local tos = table.simpleClone(avail)
+  -- 过滤额外的目标限制
+  for _, limit in ipairs({"exclusive_targets", "must_targets", "include_targets"}) do
+    if type(extra_data[limit]) == "table" and #extra_data[limit] > 0 then
+      tos = table.filter(tos, function(p) return table.contains(extra_data[limit], p.id) end)
+    end
   end
+  if #tos == 0 then return {} end
   tos = table.filter(tos, function(p)
-    return not player:isProhibited(p, self)
-    and self.skill:modTargetFilter(player, p, {}, self, extra_data)
+    return not player:isProhibited(p, self) and self.skill:modTargetFilter(player, p, {}, self, extra_data)
   end)
-  if self.skill:getMinTargetNum(player) == 2 then  -- for collateral
-    for i = #tos, 1, -1 do
-      local from = tos[i]
-      if table.every(room.alive_players, function (p)
-        return p == from or not self.skill:targetFilter(player, p,
-          { from },
-          self.subcards, self, extra_data)
-      end) then
-        table.remove(tos, i)
+  local n = self.skill:getMinTargetNum(player)
+  if n > 1 then
+    if n == 2 then
+      for i = #tos, 1, -1 do
+        if not table.find(room.alive_players, function (p)
+          return p ~= tos[i] and self.skill:targetFilter(player, p, {tos[i]}, {}, self, extra_data)
+        end) then
+          table.remove(tos, i)
+        end
+      end
+    else
+      --最小目标过多则直接当作没有复杂规则，每个目标平权。eg.荆襄盛世
+      if #tos >= n then
+        return table.random(tos, n)
+      else
+        return {}
       end
     end
   end
@@ -616,24 +679,32 @@ function Card:getAvailableTargets (player, extra_data)
 end
 
 
---- 返回强制使用一张牌的默认目标
+-- 获得使用一张牌的一个可能的指定方式。
+---
+---用于判断一张必须使用的牌能否使用，或给一张必须使用的牌添加默认目标。
+---
+--- eg.杀返回攻击范围内***一个***合法目标，借刀杀人返回***一对***角色，南蛮入侵返回***所有***其他角色
 ---@param player Player @ 使用者
----@param extra_data? table
----@return Player[] @ 目标角色表。一般只返回1个值，若牌需要副目标，则返回2个。返回空表则表示无合法目标
+---@param extra_data? UseExtraData|table
+---@return Player[] @ 目标角色表。返回空表表示无合法目标
 function Card:getDefaultTarget (player, extra_data)
-  local targets = self:getAvailableTargets(player, extra_data)
-  if #targets == 0 then return {} end
-  local to = table.random(targets)
-  local ret = {to}
-  if self.skill:getMinTargetNum(player) == 2 then  -- for collateral
-    local subtarget = table.find(Fk:currentRoom().alive_players, function (p)
-      return p.id ~= to and self.skill:targetFilter(player, p,
-        { to }, self.subcards, self, extra_data)
-    end)
-    if subtarget == nil then return {} end
-    table.insert(ret, subtarget)
+  extra_data = extra_data or Util.DummyTable
+  local tos = self:getAvailableTargets(player, extra_data)
+  if #tos == 0 then return {} end
+  local n = self.skill:getMinTargetNum(player)
+  if n == 0 then
+    return tos
+  elseif n == 2 then
+    for i = #tos, 1, -1 do
+      for _, p in ipairs(Fk:currentRoom().alive_players) do
+        if p ~= tos[i] and self.skill:targetFilter(player, p, {tos[i]}, {}, self, extra_data) then
+          return {tos[i], p}
+        end
+      end
+    end
+  else
+    return table.random(tos, n)
   end
-  return ret
 end
 
 return Card

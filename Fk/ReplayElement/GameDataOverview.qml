@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Fk.Common
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -186,7 +187,7 @@ Item {
           }
         }
 
-        TapHandler {
+        W.TapHandler {
           onTapped: {
             if (list.currentIndex === index) {
               list.currentIndex = -1;

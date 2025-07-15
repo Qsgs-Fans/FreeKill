@@ -26,6 +26,7 @@ function RoomScene:initialize(parent)
   end
 end
 
+--- 取消选择此牌外的所有牌，一般用于选真牌使用
 function RoomScene:unselectOtherCards(cid)
   local dat = { selected = false }
   for id, _ in pairs(self:getAllItems("CardItem")) do
@@ -34,6 +35,8 @@ function RoomScene:unselectOtherCards(cid)
     end
   end
 end
+
+--- 取消此目标外的所有目标
 function RoomScene:unselectOtherTargets(pid)
   local dat = { selected = false }
   for id, _ in pairs(self:getAllItems("Photo")) do
@@ -42,6 +45,7 @@ function RoomScene:unselectOtherTargets(pid)
     end
   end
 end
+
 RoomScene.unselectAllCards = RoomScene.unselectOtherCards
 RoomScene.unselectAllTargets = RoomScene.unselectOtherTargets
 

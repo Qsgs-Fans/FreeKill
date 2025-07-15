@@ -28,9 +28,12 @@ ColumnLayout {
         return;
       }
     }
-    skills.append({
-      skillname_: skill,
-      times: times,
-    });
+    if (times > -1) {
+      skills.append({
+        skillname_: skill,
+        times: times,
+      });
+    }
   }
+
 }

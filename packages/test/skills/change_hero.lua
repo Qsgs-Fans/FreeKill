@@ -27,9 +27,13 @@ change_hero:addEffect("active", {
     local choice = self.interaction.data
     local generals = room:getNGenerals(8)
     local general = room:askToChooseGeneral(from, {generals = generals, n = 1})
-    table.removeOne(generals, general)
-    room:changeHero(target, general, false, choice == "deputyGeneral", true)
+    local origin = choice == "deputyGeneral" and target.deputyGeneral or target.general
+    if origin ~= "" then
+      table.insertIfNeed(generals, origin)
+    end
     room:returnToGeneralPile(generals)
+    room:findGeneral(general)
+    room:changeHero(target, general, false, choice == "deputyGeneral", true)
   end,
 })
 

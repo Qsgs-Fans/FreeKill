@@ -55,19 +55,19 @@ function GameMode:getWinner(victim)
   local room = victim.room
   local winner = ""
   local alive = table.filter(room.players, function(p)
-    return not p.surrendered and not (p.dead and p.rest == 0)
+    return not p.surrendered and not (p.dead and p.rest == 0) and p.role ~= "civilian"
   end)
 
   if victim.role == "lord" then
     if #alive == 1 and alive[1].role == "renegade" then
       winner = "renegade"
     else
-      winner = "rebel"
+      winner = "rebel+rebel_chief"
     end
   elseif victim.role ~= "loyalist" then
     local lord_win = true
     for _, p in ipairs(alive) do
-      if p.role == "rebel" or p.role == "renegade" then
+      if p.role == "rebel" or p.role == "rebel_chief" or p.role == "renegade" then
         lord_win = false
         break
       end
@@ -75,6 +75,10 @@ function GameMode:getWinner(victim)
     if lord_win then
       winner = "lord+loyalist"
     end
+  end
+
+  if winner ~= "" then
+    winner = winner.. "+civilian"
   end
 
   return winner
@@ -129,10 +133,12 @@ end
 ---@param killer? ServerPlayer @ 击杀者，可能没有
 function GameMode:deathRewardAndPunish (victim, killer)
   if not killer or killer.dead then return end
-  if victim.role == "rebel" then
+  if victim.role == "rebel" or victim.role == "rebel_chief" then
     killer:drawCards(3, "kill")
   elseif victim.role == "loyalist" and killer.role == "lord" then
     killer:throwAllCards("he")
+  elseif victim.role == "civilian" then
+    killer:drawCards(2, "kill")
   end
 end
 
@@ -141,8 +147,13 @@ end
 ---@param targetTwo ServerPlayer | Player @ 待判断角色2
 function GameMode:friendEnemyJudge (targetOne, targetTwo)
   if targetOne == targetTwo then return true end
+  if targetOne.role == "civilian" or targetTwo.role == "civilian" then return true end
   if table.contains({"lord", "loyalist"}, targetOne.role) and
     table.contains({"lord", "loyalist"}, targetTwo.role) then
+    return true
+  end
+  if table.contains({"rebel", "rebel_chief"}, targetOne.role) and
+    table.contains({"rebel", "rebel_chief"}, targetTwo.role) then
     return true
   end
   return targetOne.role == targetTwo.role

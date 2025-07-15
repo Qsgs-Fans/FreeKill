@@ -3,7 +3,7 @@ local skill = fk.CreateSkill {
   attached_equip = "ice_sword",
 }
 
-skill:addEffect(fk.DamageCaused, {
+skill:addEffect(fk.DetermineDamageCaused, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and (not data.chain) and
       data.card and data.card.trueName == "slash" and not data.to:isNude()

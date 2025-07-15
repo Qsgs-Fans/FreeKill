@@ -40,6 +40,7 @@
 ---@field public mini_games table<string, MiniGameSpec> @ 自定义多人交互表
 ---@field public request_handlers table<string, RequestHandler> @ 请求处理程序
 ---@field public target_tips table<string, TargetTipSpec> @ 选择目标提示对应表
+---@field public choose_general_rule table<string, ChooseGeneralSpec> @ 选将框操作方法表
 local Engine = class("Engine")
 
 --- Engine的构造函数。
@@ -63,18 +64,18 @@ function Engine:initialize()
   self.extension_names = { "standard", "standard_cards", "maneuvering", "test" }
   self.packages = {}    -- name --> Package
   self.package_names = {}
-  self.skill_keys = {    -- key --> SkillSkeleton.createSkill
-    ["distance"] = SkillSkeleton.createDistanceSkill,
-    ["prohibit"] = SkillSkeleton.createProhibitSkill,
-    ["atkrange"] = SkillSkeleton.createAttackRangeSkill,
-    ["maxcards"] = SkillSkeleton.createMaxCardsSkill,
-    ["targetmod"] = SkillSkeleton.createTargetModSkill,
-    ["filter"] = SkillSkeleton.createFilterSkill,
-    ["invalidity"] = SkillSkeleton.createInvaliditySkill,
-    ["visibility"] = SkillSkeleton.createVisibilitySkill,
-    ["active"] = SkillSkeleton.createActiveSkill,
-    ["cardskill"] = SkillSkeleton.createCardSkill,
-    ["viewas"] = SkillSkeleton.createViewAsSkill,
+  self.skill_keys = {    -- key --> {SkillSkeleton.createSkill, integer}
+    ["distance"] = {SkillSkeleton.createDistanceSkill, 1},
+    ["prohibit"] = {SkillSkeleton.createProhibitSkill, 1},
+    ["atkrange"] = {SkillSkeleton.createAttackRangeSkill, 1},
+    ["maxcards"] = {SkillSkeleton.createMaxCardsSkill, 1},
+    ["targetmod"] = {SkillSkeleton.createTargetModSkill, 1},
+    ["filter"] = {SkillSkeleton.createFilterSkill, 1},
+    ["invalidity"] = {SkillSkeleton.createInvaliditySkill, 1},
+    ["visibility"] = {SkillSkeleton.createVisibilitySkill, 1},
+    ["active"] = {SkillSkeleton.createActiveSkill, 5},
+    ["cardskill"] = {SkillSkeleton.createCardSkill, 5},
+    ["viewas"] = {SkillSkeleton.createViewAsSkill, 5},
   }
   self.skills = {}    -- name --> Skill
   self.skill_skels = {}    -- name --> SkillSkeleton
@@ -101,6 +102,7 @@ function Engine:initialize()
   self.mini_games = {}
   self.request_handlers = {}
   self.target_tips = {}
+  self.choose_general_rule = {}
 
   self:loadPackages()
   self:setLords()
@@ -401,7 +403,11 @@ end
 function Engine:addSkill(skill)
   assert(skill:isInstanceOf(Skill))
   if self.skills[skill.name] ~= nil then
-    fk.qWarning(string.format("Duplicate skill %s detected", skill.name))
+    local old = self.skills[skill.name]
+    fk.qWarning(string.format("Duplicate skill %s detected[package exist %s, new package %s ]",
+    skill.name,
+    old.package and old.package.name or "unknown_pack",
+    skill.package and skill.package.name or "unknown_pack"))
   end
   self.skills[skill.name] = skill
 
@@ -414,7 +420,7 @@ function Engine:addSkill(skill)
       else
         local t = self.global_status_skill
         t[sk.class] = t[sk.class] or {}
-        table.insert(t[sk.class], sk)
+        table.insertIfNeed(t[sk.class], sk)
       end
     end
   end
@@ -436,8 +442,9 @@ end
 --- 注册技能（effect）类型
 ---@param key string @ 技能类型名
 ---@param func function @ 技能类型创建函数
-function Engine:addSkillType(key, func)
-  self.skill_keys[key] = func
+---@param priority integer? @ 优先级，默认为1
+function Engine:addSkillType(key, func, priority)
+  self.skill_keys[key] = {func, priority or 1}
 end
 
 --- 加载一个武将到Engine中。
@@ -447,7 +454,12 @@ end
 function Engine:addGeneral(general)
   assert(general:isInstanceOf(General))
   if self.generals[general.name] ~= nil then
-    error(string.format("Duplicate general %s detected", general.name))
+    local old = self.generals[general.name]
+    error(string.format("Duplicate general %s detected[package exist %s, new package %s ]",
+    general.name,
+    old.package and old.package.name or "unknown_pack",
+    general.package and general.package.name or "unknown_pack"
+    ))
   end
   self.generals[general.name] = general
 
@@ -699,6 +711,20 @@ function Engine:addTargetTip(spec)
   self.target_tips[spec.name] = spec
 end
 
+---@param spec ChooseGeneralSpec
+function Engine:addChooseGeneralRule(spec)
+  assert(type(spec.name) == "string")
+  assert(type(spec.card_filter) == "function")
+  assert(type(spec.feasible) == "function")
+  if self.choose_general_rule[spec.name] then
+    fk.qCritical("Warning: duplicated choose_general_rule " .. spec.name)
+  end
+  self.choose_general_rule[spec.name] = spec
+  --spec.card_filter = spec.card_filter or function() return {} end
+  --spec.feasible = spec.feasible or Util.TrueFunc
+  spec.default_choice = spec.default_choice or function() return {} end
+end
+
 --- 从已经开启的拓展包中，随机选出若干名武将。
 ---
 --- 对于同名武将不会重复选取。
@@ -779,8 +805,7 @@ end
 function Engine:getAllCardNames(card_type, true_name, is_derived)
   local all_names = {}
   local basic, equip, normal_trick, delayed_trick = {}, {}, {}, {}
-  for _, name in ipairs(self.all_card_names) do
-    local card = self.all_card_types[name]
+  for _, card in ipairs(self.cards) do
     if not table.contains(self:currentRoom().disabled_packs, card.package.name) and (not card.is_derived or is_derived) then
       if card.type == Card.TypeBasic then
         table.insertIfNeed(basic, true_name and card.trueName or card.name)

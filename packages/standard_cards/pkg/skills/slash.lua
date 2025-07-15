@@ -21,7 +21,7 @@ skill:addEffect("cardskill", {
     if player:prohibitUse(card) then return end
     return (extra_data and extra_data.bypass_times) or player.phase ~= Player.Play or
       table.find(Fk:currentRoom().alive_players, function(p)
-        return self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
+        return self:targetFilter(player, p, {}, {}, card, extra_data)
       end)
   end,
   mod_target_filter = function(self, player, to_select, selected, card, extra_data)
@@ -52,16 +52,18 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI(
-  {
-    estimated_benefit = 100,
-  }, "__card_skill"
-)
-skill:addAI(
-  {
-    estimated_benefit = 100,
-  }, "default_card_skill"
-)
+skill:addAI({
+  on_effect = function(self, logic, effect)
+    logic:damage({
+      from = effect.from,
+      to = effect.to,
+      card = effect.card,
+      damage = 1,
+      damageType = fk.NormalDamage,
+      skillName = skill.name
+    })
+  end,
+}, "__card_skill")
 
 skill:addTest(function(room, me)
   local slash = Fk:getCardById(1)

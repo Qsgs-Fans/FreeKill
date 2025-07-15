@@ -19,6 +19,7 @@
 ---@field public attached_skill_name string @ 给其他角色添加技能的名称
 ---@field public main_skill Skill @ 仅用作添加技能和提示信息
 ---@field public is_delay_effect boolean @ 是否是延时效果
+---@field public audio_index integer|table @ 发动此技能时播放的语音序号，可为int或int表
 ---@field public cardSkill boolean @ 是否为卡牌效果对应的技能（仅用于ActiveSkill）
 ---@field public skeleton SkillSkeleton @ 获取技能骨架
 local Skill = class("Skill")
@@ -131,19 +132,33 @@ function Skill:isEffectable(player)
     return true
   end
 
-  local nullifySkills = Fk:currentRoom().status_skills[InvaliditySkill] or Util.DummyTable
+  local room = Fk:currentRoom()
+  local recheck_skills = {}
+
+  local nullifySkills = room.status_skills[InvaliditySkill] or Util.DummyTable---@type InvaliditySkill[]
   for _, nullifySkill in ipairs(nullifySkills) do
-    if self:getSkeleton().name ~= nullifySkill:getSkeleton().name and nullifySkill:getInvalidity(player, self) then
+    if nullifySkill.recheck_invalidity then
+      if not room.invalidity_rechecking then
+        table.insert(recheck_skills, nullifySkill)
+      end
+    elseif nullifySkill:getInvalidity(player, self) then
       return false
     end
   end
 
+  if #recheck_skills > 0 then
+    room.invalidity_rechecking = true
+    local ret = table.find(recheck_skills, function(s) return s:getInvalidity(player, self) end)
+    room.invalidity_rechecking = false
+    if ret then return false end
+  end
+
   for mark, value in pairs(player.mark) do -- 耦合 MarkEnum.InvalidSkills ！
     if mark == MarkEnum.InvalidSkills then
-      if table.contains(value, self.name) then
+      if value[self.name] then
         return false
       end
-    elseif mark:startsWith(MarkEnum.InvalidSkills .. "-") and table.contains(value, self.name) then
+    elseif mark:startsWith(MarkEnum.InvalidSkills .. "-") and value[self.name] then
       for _, suffix in ipairs(MarkEnum.TempMarkSuffix) do
         if mark:find(suffix, 1, true) then
           return false
@@ -157,11 +172,18 @@ end
 
 --判断技能是否为角色技能
 ---@param player? Player @ 技能拥有者
+---@param includeModeSkill? boolean @ 是否包含模式技
 ---@return boolean
-function Skill:isPlayerSkill(player)
+function Skill:isPlayerSkill(player, includeModeSkill)
   local skel = self:getSkeleton()
   if skel == nil then return false end
-  return not (self:isEquipmentSkill(player) or self.name:endsWith("&"))
+  return
+    not (
+      self.cardSkill or
+      self:isEquipmentSkill(player) or
+      self.name:endsWith("&") or
+      (not includeModeSkill and skel.mode_skill)
+    )
 end
 
 ---@return integer
@@ -207,7 +229,7 @@ end
 
 --- 判断技能是否有某标签
 ---@param tag SkillTag  待判断的标签
----@param compulsory_expand boolean?  是否“拓展”锁定技标签的含义，包括觉醒技。默认是
+---@param compulsory_expand boolean?  是否“拓展”锁定技和限定技标签的含义，包括觉醒技。默认是
 ---@return boolean
 function Skill:hasTag(tag, compulsory_expand)
   local expand = (compulsory_expand == nil or compulsory_expand)
@@ -215,16 +237,24 @@ function Skill:hasTag(tag, compulsory_expand)
   if self.frequency == tag then
     return true
   end
-  if expand and tag == Skill.Compulsory and table.contains({Skill.Compulsory, Skill.Wake}, self.frequency) then
-    return true
+  if expand then
+    if tag == Skill.Compulsory and table.contains({Skill.Compulsory, Skill.Wake}, self.frequency) then
+      return true
+    elseif tag == Skill.Limited and table.contains({Skill.Limited, Skill.Wake}, self.frequency) then
+      return true
+    end
   end
   if self.relate_to_place == "m" and tag == Skill.MainPlace then return true end
   if self.relate_to_place == "d" and tag == Skill.DeputyPlace then return true end
 
   local skel = self:getSkeleton()
   if skel == nil then return false end
-  if expand and tag == Skill.Compulsory then
-    return table.contains(skel.tags, Skill.Compulsory) or table.contains(skel.tags, Skill.Wake)
+  if expand then
+    if tag == Skill.Compulsory then
+      return table.contains(skel.tags, Skill.Compulsory) or table.contains(skel.tags, Skill.Wake)
+    elseif tag == Skill.Limited then
+      return table.contains(skel.tags, Skill.Limited) or table.contains(skel.tags, Skill.Wake)
+    end
   end
   return table.contains(skel.tags, tag)
 end

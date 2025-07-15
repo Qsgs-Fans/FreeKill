@@ -36,6 +36,17 @@ function TargetModSkill:getFixedNum(player, card_skill, scope, card, to)
   return nil
 end
 
+
+-- 锁定某技能的默认目标
+---@param player Player @ 使用者
+---@param skill ActiveSkill @ 目标技能
+---@param card? Card @ 使用牌时的牌
+---@param extra_data? UseExtraData @ 额外数据
+---@return integer[]? @ 目标角色id表
+function TargetModSkill:getFixedTargets(player, skill, card, extra_data)
+  return nil
+end
+
 -- 使用某技能无距离限制
 ---@param player Player @ 使用者
 ---@param card_skill ActiveSkill @ 目标技能

@@ -12,9 +12,8 @@ local ReqActiveSkill = require 'core.request_type.active_skill'
 --]]
 
 ---@class ReqResponseCard: ReqActiveSkill
----@field public selected_card? Card 使用一张牌时会用到 支持锁视技
+---@field public selected_card? Card 选中的牌（锁视技转化后），用于使用真牌
 ---@field public pattern string 请求格式
----@field public original_prompt string 最开始的提示信息；这种涉及技能按钮的需要这样一下
 local ReqResponseCard = ReqActiveSkill:subclass("ReqResponseCard")
 
 function ReqResponseCard:initialize(player, data)
@@ -79,7 +78,7 @@ function ReqResponseCard:cardValidity(cid)
   if self.skill_name then return ReqActiveSkill.cardValidity(self, cid) end
   local card = cid
   if type(cid) == "number" then card = Fk:getCardById(cid) end
-  return self:cardFeasible(card)
+  return not not self:cardFeasible(card)
 end
 
 function ReqResponseCard:cardFeasible(card)
@@ -94,12 +93,12 @@ function ReqResponseCard:feasible()
   if skill then
     card = skill:viewAs(self.player, self.pendings)
   end
-  return card and self:cardFeasible(card)
+  return (card ~= nil) and self:cardFeasible(card)
 end
 
 function ReqResponseCard:isCancelable()
   if self.skill_name then return true end
-  return self.cancelable
+  return not not self.cancelable
 end
 
 function ReqResponseCard:updateSkillButtons()
@@ -113,8 +112,8 @@ end
 function ReqResponseCard:doOKButton()
   if self.skill_name then return ReqActiveSkill.doOKButton(self) end
   local reply = {
-    card = self.selected_card:getEffectiveId(),
-    targets = self.selected_targets,
+    card = self.selected_card:getEffectiveId(), -- FIXME: 以小错防大错
+    targets = self.selected_targets or {},
   }
   if ClientInstance then
     ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
@@ -171,12 +170,68 @@ function ReqResponseCard:selectCard(cid, data)
   end
 end
 
+--- 自动选择唯一目标
+---@param req ReqResponseCard
+local function autoSelectOnlyFeasibleTarget(req, data)
+  if data.autoTarget and not req:feasible() then
+    local tars = {}
+    for _, to in ipairs(req.room.alive_players) do
+      if req:targetValidity(to.id) then
+        table.insert(tars, to.id)
+        if #tars > 1 then return end
+      end
+    end
+    if #tars == 1 then
+      req.selected_targets = tars
+      req.scene:update("Photo", tars[1], { selected = true })
+      req:updateUnselectedTargets()
+      if req:feasible() then
+        req:updateButtons()
+      else
+        req.selected_targets = {}
+        req.scene:update("Photo", tars[1], { selected = false })
+        req:updateUnselectedTargets()
+      end
+    end
+  end
+end
+
 function ReqResponseCard:update(elemType, id, action, data)
   if elemType == "CardItem" then
     self:selectCard(id, data)
     self:updateButtons()
+    -- 双击打出
+    if action == "doubleClick" and data.doubleClickUse then
+      if not data.selected then -- 未选中的选中
+        data.selected = true
+        self:selectCard(id, data)
+      end
+      if self:feasible() then
+        self:doOKButton()
+      else
+        data.selected = false
+        self:selectCard(id, data)
+      end
+    end
   elseif elemType == "SkillButton" then
     self:selectSkill(id, data)
+    -- 自动选择唯一目标
+    autoSelectOnlyFeasibleTarget(self, data)
+    -- 双击发动技能
+    if data.doubleClickUse and action == "doubleClick" then
+      if not data.selected then -- 未选中的选中
+        self:selectSkill(id, data)
+        self:initiateTargets()
+        autoSelectOnlyFeasibleTarget(self, data)
+      end
+      if self:feasible() then
+        self:doOKButton()
+      else
+        data.selected = false
+        self:selectSkill(id, data)
+        self:initiateTargets()
+      end
+    end
   else -- if elemType == "Button" or elemType == "Interaction" then
     return ReqActiveSkill.update(self, elemType, id, action, data)
   end

@@ -196,8 +196,21 @@ Flickable {
     const hasPhoto = !!extra_data.photo;
     screenName.text = "";
     playerGameData.text = "";
+    const skillnamecss = `
+    <style>
+    .skill-name {
+      color: "#9FD49C";
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .skill-name.locked {
+      color: "grey";
+    }
+    </style>
+    `;
     skillDesc.text = "";
     skillDesc.clearSavedText();
+
 
     const id = hasPhoto? extra_data.photo.playerid : extra_data.id;
     if (id === 0 || id === undefined) return;
@@ -232,12 +245,21 @@ Flickable {
 
     if (!root.isObserving) {
       lcall("GetPlayerSkills", id).forEach(t => {
-        skillDesc.append("<b>" + t.name + "</b>: " + t.description)
+        // TODO 等core更新强制重启后把这个智慧杀了 GetPlayerSkill直接返回invalid
+        const invalid = t.name.endsWith(luatr('skill_invalidity'));
+        let skillText = `${skillnamecss}<font class='${invalid ? "skill-name locked" : "skill-name"}'>${t.name}</font> `;
+        if (invalid) {
+          skillText += `<font color='grey'>${t.description}</font>`;
+        } else {
+          skillText += `${t.description}`;
+        }
+
+        skillDesc.append(skillText);
       });
 
       lcall("GetPlayerEquips", id).forEach(cid => {
         const t = lcall("GetCardData", cid);
-        skillDesc.append("--------------------");
+        skillDesc.append("------------------------------------")
         skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
       });
 
@@ -246,14 +268,14 @@ Flickable {
       judge.forEach(cid => {
         const t = lcall("GetCardData", cid);
         if (lcall("CardVisibility", cid)) {
-          skillDesc.append("--------------------");
+          skillDesc.append("------------------------------------")
           skillDesc.append("<b>" + luatr(t.name) + "</b>: " + luatr(":" + t.name));
         } else {
           unknownCardsNum++;
         }
       });
       if (unknownCardsNum > 0) {
-        skillDesc.append("--------------------");
+        skillDesc.append("------------------------------------")
         skillDesc.append(luatr("unknown") + " * " + (unknownCardsNum));
       }
     }

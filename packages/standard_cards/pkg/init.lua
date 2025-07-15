@@ -303,7 +303,7 @@ extension:addCardSpec("peach", Card.Heart, 7)
 extension:addCardSpec("peach", Card.Heart, 8)
 extension:addCardSpec("peach", Card.Heart, 9)
 extension:addCardSpec("peach", Card.Heart, 12)
-extension:addCardSpec("peach", Card.Heart, 12)
+extension:addCardSpec("peach", Card.Diamond, 12)
 
 extension:addCardSpec("dismantlement", Card.Spade, 3)
 extension:addCardSpec("dismantlement", Card.Spade, 4)

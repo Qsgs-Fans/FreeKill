@@ -90,5 +90,5 @@ fk.AfterPlayerRevived = ReviveEvent:subclass("fk.AfterPlayerRevived")
 ---  data: TrigSkelSpec<ReviveTrigFunc>, attr: TrigSkelAttribute?): SkillSkeleton
 
 function fk.AskForPeaches:breakCheck()
-    return self.data.who.hp > 0
+  return self.data.who.hp > 0
 end

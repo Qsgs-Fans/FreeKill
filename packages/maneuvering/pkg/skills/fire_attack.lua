@@ -1,8 +1,8 @@
-local fire_attack = fk.CreateSkill {
+local skill = fk.CreateSkill {
   name = "fire_attack_skill",
 }
 
-fire_attack:addEffect("cardskill", {
+skill:addEffect("cardskill", {
   prompt = "#fire_attack_skill",
   target_num = 1,
   mod_target_filter = function(self, _, to_select, _, _, _)
@@ -18,7 +18,7 @@ fire_attack:addEffect("cardskill", {
       min_num = 1,
       max_num = 1,
       include_equip = false,
-      skill_name = fire_attack.name,
+      skill_name = skill.name,
       cancelable = false,
       pattern = ".|.|.|hand",
       prompt = "#fire_attack-show:" .. from.id
@@ -31,7 +31,7 @@ fire_attack:addEffect("cardskill", {
       min_num = 1,
       max_num = 1,
       include_equip = false,
-      skill_name = fire_attack.name,
+      skill_name = skill.name,
       cancelable = true,
       pattern = ".|.|" .. showCard:getSuitString(),
       prompt = "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString()
@@ -44,10 +44,23 @@ fire_attack:addEffect("cardskill", {
         card = effect.card,
         damage = 1,
         damageType = fk.FireDamage,
-        skillName = fire_attack.name,
+        skillName = skill.name,
       })
     end
   end,
 })
 
-return fire_attack
+skill:addAI({
+  on_effect = function(self, logic, effect)
+    logic:damage({
+      from = effect.from,
+      to = effect.to,
+      card = effect.card,
+      damage = 1,
+      damageType = fk.FireDamage,
+      skillName = skill.name,
+    })
+  end,
+}, "__card_skill")
+
+return skill

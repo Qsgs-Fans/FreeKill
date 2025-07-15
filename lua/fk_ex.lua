@@ -33,10 +33,13 @@ _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
 
 -- dofile "lua/compat/fk_ex.lua"
 
+---@param skill SkillSkeleton|Skill
+---@param spec table
 function fk.readCommonSpecToSkill(skill, spec)
   skill.mute = spec.mute
   skill.no_indicate = spec.no_indicate
   skill.anim_type = spec.anim_type
+  skill.audio_index = spec.audio_index
 
   if spec.relate_to_place then
     assert(type(spec.relate_to_place) == "string")
@@ -90,11 +93,11 @@ end
 ---@field public main_skill? UsableSkill
 ---@field public max_use_time? integer[]
 ---@field public expand_pile? string | integer[] | fun(self: UsableSkill, player: ServerPlayer): integer[]|string? @ 额外牌堆，牌堆名称或卡牌id表
----@field public derived_piles? string | string[]
----@field public max_phase_use_time? integer
----@field public max_turn_use_time? integer
----@field public max_round_use_time? integer
----@field public max_game_use_time? integer
+---@field public derived_piles? string | string[] @ 与某效果联系起来的私人牌堆名，失去该效果时将之置入弃牌堆(@deprecated)
+---@field public max_phase_use_time? integer  @ 每阶段使用次数上限
+---@field public max_turn_use_time? integer  @ 每回合使用次数上限
+---@field public max_round_use_time? integer  @ 每回合使用次数上限
+---@field public max_game_use_time? integer  @ 整场游戏使用次数上限
 ---@field public times? integer | fun(self: UsableSkill, player: Player): integer
 ---@field public min_target_num? integer
 ---@field public max_target_num? integer
@@ -102,18 +105,19 @@ end
 ---@field public min_card_num? integer
 ---@field public max_card_num? integer
 ---@field public card_num? integer
+---@field public distance_limit? integer @ 目标距离限制，与目标距离小于等于此值方可使用
 
 ---@class StatusSkillSpec: SkillSpec
 
 ---@class ActiveSkillSpec: UsableSkillSpec
 ---@field public can_use? fun(self: ActiveSkill, player: Player): any @ 判断主动技能否发动
----@field public card_filter? fun(self: ActiveSkill, player: Player, to_select: integer, selected: integer[]): any @ 判断卡牌能否选择
----@field public target_filter? fun(self: ActiveSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[]): any @ 判定目标能否选择
+---@field public card_filter? fun(self: ActiveSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
+---@field public target_filter? fun(self: ActiveSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card: Card?, extra_data: UseExtraData|table?): any @ 判定目标能否选择
 ---@field public feasible? fun(self: ActiveSkill, player: Player, selected: Player[], selected_cards: integer[], card: Card): any @ 判断卡牌和目标是否符合技能限制
 ---@field public on_use? fun(self: ActiveSkill, room: Room, skillUseEvent: SkillUseData): any
 ---@field public prompt? string|fun(self: ActiveSkill, player: Player, selected_cards: integer[], selected_targets: Player[]): string @ 提示信息
 ---@field public interaction? fun(self: ActiveSkill, player: Player): table? @ 选项框
----@field public target_tip? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
+---@field public target_tip? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec? @ 显示在目标武将牌脸上的提示
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 
@@ -125,17 +129,17 @@ end
 ---@field public can_use? fun(self: CardSkill, player: Player, card: Card, extra_data: any): any @ 判断主动技能否发动
 ---@field public on_use? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData): any
 ---@field public fix_targets? fun(self: CardSkill, player: Player, card: Card, extra_data: any): Player[]? @ 设置固定目标
----@field public on_action? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData | SkillUseData, finished: boolean): any
+---@field public on_action? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData, finished: boolean): any
 ---@field public about_to_effect? fun(self: CardSkill, room: Room, effect: CardEffectData): boolean? @ 生效前判断，返回true则取消效果
 ---@field public on_effect? fun(self: CardSkill, room: Room, effect: CardEffectData): any
 ---@field public on_nullified? fun(self: CardSkill, room: Room, effect: CardEffectData): any @ (仅用于延时锦囊)被抵消时执行内容
 ---@field public offset_func? fun(self: CardSkill, room: Room, effect: CardEffectData): any @ 重新定义抵消方式
----@field public prompt? string|fun(self: ActiveSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): string @ 提示信息
+---@field public prompt? string|fun(self: CardSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): string @ 提示信息
 ---@field public interaction? any
----@field public target_tip? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
+---@field public target_tip? fun(self: CardSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec? @ 显示在目标武将牌脸上的提示
 
 ---@class ViewAsSkillSpec: UsableSkillSpec
----@field public card_filter? fun(self: ViewAsSkill, player: Player, to_select: integer, selected: integer[]): any @ 判断卡牌能否选择
+---@field public card_filter? fun(self: ViewAsSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
 ---@field public view_as fun(self: ViewAsSkill, player: Player, cards: integer[]): Card? @ 判断转化为什么牌
 ---@field public pattern? string
 ---@field public enabled_at_play? fun(self: ViewAsSkill, player: Player): any
@@ -145,15 +149,16 @@ end
 ---@field public prompt? string|fun(self: ViewAsSkill, player: Player, selected_cards: integer[], selected: Player[]): string
 ---@field public interaction? fun(self: ViewAsSkill, player: Player): table? @ 选项框
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
----@field public mute_card? boolean @ 是否不播放卡牌特效和语音
+---@field public mute_card? boolean @ 是否不播放卡牌特效和语音。一个牌名的默认不播放，其他默认播放
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
+---@field public enabled_at_nullification? fun(self: ViewAsSkill, player: Player, data: CardEffectData): boolean? @ 判断一张牌是否能被此技能转化无懈来响应
 
 ---@class DistanceSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
 ---@field public fixed_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
 
 ---@class ProhibitSpec: StatusSkillSpec
----@field public is_prohibited? fun(self: ProhibitSkill, from: Player, to: Player, card: Card): any
+---@field public is_prohibited? fun(self: ProhibitSkill, from: Player?, to: Player, card: Card): any
 ---@field public prohibit_use? fun(self: ProhibitSkill, player: Player, card: Card): any
 ---@field public prohibit_response? fun(self: ProhibitSkill, player: Player, card: Card): any
 ---@field public prohibit_discard? fun(self: ProhibitSkill, player: Player, card: Card): any
@@ -172,10 +177,11 @@ end
 ---@field public exclude_from? fun(self: MaxCardsSkill, player: Player, card: Card): any @ 判定某牌是否不计入手牌上限
 
 ---@class TargetModSpec: StatusSkillSpec
----@field public bypass_times? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): any
----@field public residue_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number?
----@field public fix_times_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number?
----@field public bypass_distances? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, to?: Player): any
+---@field public bypass_times? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): any @ 是否无次数限制
+---@field public residue_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number? @ 令使用次数上限增加多少
+---@field public fix_times_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, scope: integer, card?: Card, to?: Player): number? @ 锁定使用次数上限
+---@field public fix_target_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, extra_data: UseExtraData): integer[]? @ 修改默认目标
+---@field public bypass_distances? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, to?: Player): any @ 是否无距离限制
 ---@field public distance_limit_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card, to?: Player): number?
 ---@field public extra_target_func? fun(self: TargetModSkill, player: Player, skill: ActiveSkill, card?: Card): number?
 ---@field public target_tip_func? fun(self: TargetModSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
@@ -190,10 +196,12 @@ end
 ---@class InvaliditySpec: StatusSkillSpec
 ---@field public invalidity_func? fun(self: InvaliditySkill, from: Player, skill: Skill): any @ 判定角色的技能是否无效
 ---@field public invalidity_attackrange? fun(self: InvaliditySkill, player: Player, card: Weapon): any @ 判定武器的攻击范围是否无效
+---@field public recheck_invalidity? boolean @ 是否涉及其他技能的失效性
 
 ---@class VisibilitySpec: StatusSkillSpec
----@field public card_visible? fun(self: VisibilitySkill, player: Player, card: Card): any
----@field public role_visible? fun(self: VisibilitySkill, player: Player, target: Player): any
+---@field public card_visible? fun(self: VisibilitySkill, player: Player, card: Card): any @ 某牌的可见性
+---@field public move_visible? fun(self: VisibilitySkill, player: Player, info: MoveInfo, move: MoveCardsDataSpec): any @ 某牌在某次移动中的可见性
+---@field public role_visible? fun(self: VisibilitySkill, player: Player, target: Player): any @ 身份的可见性
 
 ---@class CardSpec
 ---@field public name string @ 卡牌的名字
@@ -203,6 +211,7 @@ end
 ---@field public special_skills? string[]
 ---@field public is_damage_card? boolean @ 是否为伤害类卡牌
 ---@field public multiple_targets? boolean @ 是否为多目标卡牌
+---@field public stackable_delayed? boolean @ 是否为可堆叠的延时锦囊牌
 ---@field public is_passive? boolean @ 是否为被动使用的卡牌，如闪、无懈
 ---@field public extra_data? table @ 保存其他信息的键值表，如“合纵”、“应变”、“赠予”等
 
@@ -224,6 +233,7 @@ function fk.readCardSpecToCard(card, spec)
   card.special_skills = spec.special_skills
   card.is_damage_card = spec.is_damage_card
   card.multiple_targets = spec.multiple_targets
+  card.stackable_delayed = spec.stackable_delayed
   card.is_passive = spec.is_passive
   card.extra_data = spec.extra_data
 end
@@ -346,8 +356,9 @@ end
 
 ---@class QmlMarkSpec
 ---@field name string
----@field qml_path string | fun(name: string, value?: any, player?: Player): string
----@field how_to_show fun(name: string, value?: any, player?: Player): string?
+---@field qml_path? string | fun(name: string, value?: any, player?: Player): string
+---@field qml_data? fun(name: string, value?: any, player?: Player): any
+---@field how_to_show? fun(name: string, value?: any, player?: Player): string?
 
 -- TODO: 断连 不操作的人观看 现在只做了专为22设计的框
 ---@class MiniGameSpec
@@ -363,3 +374,10 @@ end
 ---@class TargetTipSpec
 ---@field name string
 ---@field target_tip fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec?
+
+---@class ChooseGeneralSpec
+---@field name string
+---@field card_filter fun(to_select: string, selected: string[], data: string[], extra_data: any): boolean?
+---@field feasible fun(selected: string[], data: string[], extra_data: any): boolean?
+---@field default_choice? fun(data: string[], extra_data: any): string[]
+---@field prompt? string | fun(data: string[], extra_data: any): string

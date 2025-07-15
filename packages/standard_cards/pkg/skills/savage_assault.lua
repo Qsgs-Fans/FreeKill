@@ -34,20 +34,15 @@ skill:addEffect("cardskill", {
           damageType = fk.NormalDamage,
           skillName = skill.name,
         })
+        break
       end
       if effect.to.dead then break end
     end
   end,
 })
 
-skill:addAI({
-  on_use = function(self, logic, effect)
-    self.skill:onUse(logic, effect)
-  end,
-  on_effect = function(self, logic, effect)
-    Fk.skills["slash_skill"]:onEffect(logic, effect)
-  end,
-}, "__card_skill")
+skill:addAI(nil, "__card_skill")
+skill:addAI(nil, "default_card_skill")
 
 skill:addTest(function(room, me)
   local comp2 = room.players[2]

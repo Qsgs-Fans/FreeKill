@@ -36,5 +36,40 @@ function AIUtil:getChoiceCardsByKeepValue(cards, number, filter)
   return ret
 end
 
+---@class AIAskToChoosePlayersParams: AskToUseActiveSkillParams
+---@field min_num integer @ 最小值
+---@field max_num integer @ 最大值
+---@field targets ServerPlayer[] @ 可以选的目标范围
+---@field skill_name string @ 请求发动的技能名
+---@field cancelable? boolean @ 是否可以点取消
+---@field strategy_data any? @ 一些简易策略，表示选择角色将用来执行何种操作
+
+--- 令AI askToChoosePlayers
+---@param player SmartAI @ 要做选择的AI
+---@param params AIAskToChoosePlayersParams @ 各种变量
+---@return ServerPlayer[] @ 选择的玩家列表，可能为空
+function AIUtil:askToChoosePlayers(player, params)
+  local maxNum, minNum, targets = params.max_num, params.min_num, params.targets
+  if maxNum < 1 or #targets == 0 then
+    return {}
+  end
+  local skill_name = params.skill_name
+  local cancelable = (params.cancelable == nil) and true or params.cancelable
+  local data = params.strategy_data
+  if data == nil then
+    if cancelable then
+      return {}
+    else
+      return table.random(targets, minNum)
+    end
+  else
+    if data.strategy_type == "discard" then
+    elseif data.strategy_type == "prey_card" then
+    elseif data.strategy_type == "damage" then
+    elseif data.strategy_type == "recover" then
+    end
+  end
+end
+
 
 return AIUtil

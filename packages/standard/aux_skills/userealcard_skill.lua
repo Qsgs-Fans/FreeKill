@@ -10,7 +10,10 @@ useRealCardSkill:addEffect("viewas", {
     if #cards == 1 then
       return Fk:getCardById(cards[1])
     end
+    return nil
   end,
 })
+
+useRealCardSkill:addAI(nil, "vs_skill")
 
 return useRealCardSkill

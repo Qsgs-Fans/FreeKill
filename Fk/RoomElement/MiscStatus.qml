@@ -54,7 +54,7 @@ Item {
     anchors.topMargin: 8
     anchors.right: parent.right
     anchors.rightMargin: 12
-    source: SkinBank.CARD_DIR + "card-back"
+    source: SkinBank.searchBuiltinPic("/image/card/", "card-back")
     width: 32
     height: 42
   }

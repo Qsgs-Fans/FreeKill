@@ -25,10 +25,11 @@
 ---@field public dying boolean @ 是否处于濒死
 ---@field public dead boolean @ 是否死亡
 ---@field public player_skills Skill[] @ 当前拥有的所有技能
----@field public derivative_skills table<Skill, Skill[]> @ 当前拥有的派生技能
+---@field public derivative_skills table<Skill, Skill[]> @ 角色派生技能，键为使获得此派生技能的源技能，值为派生技能表
+---@field private _fake_skills Skill[]
 ---@field public flag string[] @ 当前拥有的flag，不过好像没用过
 ---@field public tag table<string, any> @ 当前拥有的所有tag，好像也没用过
----@field public mark table<string, integer> @ 当前拥有的所有标记，用烂了
+---@field public mark table<string, any> @ 当前拥有的所有标记，键为标记名，值为标记值
 ---@field public player_cards table<integer, integer[]> @ 当前拥有的所有牌，键是区域，值是id列表
 ---@field public virtual_equips Card[] @ 当前的虚拟装备牌，其实也包含着虚拟延时锦囊这种
 ---@field public special_cards table<string, integer[]> @ 类似“屯田”的“田”的私人牌堆
@@ -100,6 +101,7 @@ function Player:initialize()
 
   self.player_skills = {}
   self.derivative_skills = {}
+  self._fake_skills = {}
   self.flag = {}
   self.tag = {}
   self.mark = {}
@@ -254,6 +256,23 @@ function Player:getMarkNames()
   return ret
 end
 
+--- 检索角色是否拥有指定Mark，考虑后缀(find)。返回检索到的的第一个标记名与标记值
+---@param mark string @ 标记名
+---@param suffixes? string[] @ 后缀，默认为```MarkEnum.TempMarkSuffix```
+---@return [string, any]|nil @ 返回一个表，包含标记名与标记值，或nil
+function Player:hasMark(mark, suffixes)
+  if suffixes == nil then suffixes = MarkEnum.TempMarkSuffix end
+  for m, _ in pairs(self.mark) do
+    if m == mark then return {self.mark[m], m} end
+    if m:startsWith(mark .. "-") then
+      for _, suffix in ipairs(suffixes) do
+        if m:find(suffix, 1, true) then return {self.mark[m], m} end
+      end
+    end
+  end
+  return nil
+end
+
 --- 将指定数量的牌加入玩家的对应区域。
 ---@param playerArea PlayerCardArea @ 玩家牌所在的区域
 ---@param cardIds integer[] @ 牌的ID，返回唯一牌
@@ -337,6 +356,7 @@ function Player:hasDelayedTrick(card_name)
       return true
     end
   end
+  return false
 end
 
 --- 获取玩家特定区域所有牌的ID。
@@ -507,7 +527,7 @@ function Player:getAttackRange(excludeIds, excludeSkills)
       if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
         equip = Fk:getCardById(id) --[[@as EquipCard]]
       end
-      if equip then
+      if equip and equip.type == Card.TypeEquip then
         for _, skill in ipairs(equip:getEquipSkills(self)) do
           table.insertIfNeed(excludeSkills, skill.name)
         end
@@ -568,7 +588,7 @@ function Player:distanceTo(other, mode, ignore_dead, excludeIds, excludeSkills)
       if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
         equip = Fk:getCardById(id) --[[@as EquipCard]]
       end
-      if equip then
+      if equip and equip.type == Card.TypeEquip then
         for _, skill in ipairs(equip:getEquipSkills(self)) do
           table.insertIfNeed(excludeSkills, skill.name)
         end
@@ -669,7 +689,7 @@ function Player:inMyAttackRange(other, fixLimit, excludeIds, excludeSkills)
       if equip == nil and table.contains(self:getCardIds("e"), id) and Fk:getCardById(id).type == Card.TypeEquip then
         equip = Fk:getCardById(id) --[[@as EquipCard]]
       end
-      if equip then
+      if equip and equip.type == Card.TypeEquip then
         for _, skill in ipairs(equip:getEquipSkills(self)) do
           table.insertIfNeed(excludeSkills, skill.name)
         end
@@ -780,12 +800,17 @@ function Player:addSkillUseHistory(skill_name, num)
 end
 
 --- 设定玩家使用特定技能的历史次数。
----@param skill_name string @ 技能名
+---@param skill_name? string @ 技能名，不写则默认改变所有技能的历史次数
 ---@param num? integer @ 次数 默认0
 ---@param scope? integer @ 查询历史范围
 function Player:setSkillUseHistory(skill_name, num, scope)
-  if skill_name == "" and num == nil and scope == nil then
-    self.skillUsedHistory = {}
+  skill_name = skill_name or ""
+  if num == nil and scope == nil then
+    if skill_name ~= "" then
+      self.skillUsedHistory[skill_name] = {0, 0, 0, 0}
+    else
+      self.skillUsedHistory = {}
+    end
     return
   end
 
@@ -813,7 +838,7 @@ function Player:usedCardTimes(cardName, scope)
 end
 
 --- 获取玩家使用特定技能的历史次数。
----@param skill_name string @ 技能名
+---@param skill_name string @ 技能(skill skeleton)名
 ---@param scope? integer @ 查询历史范围，默认Turn
 function Player:usedSkillTimes(skill_name, scope)
   if not self.skillUsedHistory[skill_name] then
@@ -824,7 +849,7 @@ function Player:usedSkillTimes(skill_name, scope)
 end
 
 --- 获取玩家使用特定技能效果的历史次数。
----@param skill_name string @ 技能名
+---@param skill_name string @ 效果(skill effect)名
 ---@param scope? integer @ 查询历史范围，默认Turn
 function Player:usedEffectTimes(skill_name, scope)
   if not self.skillUsedHistory[skill_name] then
@@ -902,31 +927,35 @@ function Player:hasSkill(skill, ignoreNullified, ignoreAlive)
     return false
   end
 
-  skill = getActualSkill(skill)
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+    if skill == nil then return false end
+  end
+  local skel = skill:getSkeleton()
+  local effect = skill
+  if skel then
+    skill = Fk.skills[skel.name]
+  end
 
   if not (ignoreNullified or skill:isEffectable(self)) then
     return false
   end
 
-  if table.contains(self.player_skills, skill) then
-    if not skill:isInstanceOf(StatusSkill) then return true end
-    if self:isInstanceOf(ServerPlayer) then
-      return not self:isFakeSkill(skill)
+  if self:isInstanceOf(ServerPlayer) and ---@cast self ServerPlayer
+    self:isFakeSkill(skill) and
+    table.contains(self.prelighted_skills, skill) then -- 预亮的技能
+
+    return not effect:isInstanceOf(StatusSkill) -- 预亮技能的effect状态技为false
+  end
+
+  if table.contains(self.player_skills, skill) then -- shownSkill
+    if not effect:isInstanceOf(StatusSkill) then return true
     else
-      return true
+      return not self:isFakeSkill(skill)
     end
-  end
-
-  if self:isInstanceOf(ServerPlayer) and -- isInstanceOf(nil) will return false
-    table.contains(self._fake_skills, skill) and
-    table.contains(self.prelighted_skills, skill) then
-
-    return true
-  end
-
-  for _, v in pairs(self.derivative_skills) do
-    if table.contains(v, skill) then
-      return true
+  else
+    for _, skills in pairs(self.derivative_skills) do
+      if table.contains(skills, skill) then return true end
     end
   end
 
@@ -939,10 +968,13 @@ end
 function Player:hasShownSkill(skill, ignoreNullified, ignoreAlive)
   if not self:hasSkill(skill, ignoreNullified, ignoreAlive) then return false end
 
-  if self:isInstanceOf(ServerPlayer) then
+  if self:isInstanceOf(ServerPlayer) then ---@cast self ServerPlayer
     return not self:isFakeSkill(skill)
   else
     if type(skill) == "string" then skill = Fk.skills[skill] end
+    for _, skills in pairs(self.derivative_skills) do
+      if table.contains(skills, skill) then return true end
+    end
     return table.contains(self.player_skills, skill)
   end
 end
@@ -1008,6 +1040,9 @@ function Player:loseSkill(skill, source_skill)
       self.derivative_skills[source_skill] = {}
     end
     table.removeOne(self.derivative_skills[source_skill], skill)
+    if #self.derivative_skills[source_skill] == 0 then
+      self.derivative_skills[source_skill] = nil
+    end
   else
     table.removeOne(self.player_skills, skill)
   end
@@ -1026,14 +1061,55 @@ function Player:loseSkill(skill, source_skill)
   return ret
 end
 
+-- Hegemony func
+
+---@param skill Skill | string
+---@return Skill?
+function Player:addFakeSkill(skill)
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+    assert(skill, "Skill not found")
+  end
+  if table.contains(self._fake_skills, skill) then return end
+
+  table.insert(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    table.insert(self._fake_skills, s)
+  end
+  return skill
+end
+
+---@param skill Skill | string
+---@return Skill?
+function Player:loseFakeSkill(skill)
+  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+  end
+  if not table.contains(self._fake_skills, skill) then return end
+
+  table.removeOne(self._fake_skills, skill)
+  for _, s in ipairs(skill.related_skills) do
+    table.removeOne(self._fake_skills, s)
+  end
+  return skill
+end
+
+---@param skill Skill | string
+function Player:isFakeSkill(skill)
+  if type(skill) == "string" then skill = Fk.skills[skill] end
+  assert(skill:isInstanceOf(Skill))
+  return table.contains(self._fake_skills, skill)
+end
+
 --- 获取对应玩家所有技能。
 -- return all skills that xxx:hasSkill() == true
+---@return Skill[]
 function Player:getAllSkills()
   local ret = {table.unpack(self.player_skills)}
-  for _, t in pairs(self.derivative_skills) do
-    for _, s in ipairs(t) do
-      table.insertIfNeed(ret, s)
-    end
+  for _, skills in pairs(self.derivative_skills) do
+    table.insertTableIfNeed(ret, skills)
   end
   return ret
 end
@@ -1062,7 +1138,7 @@ end
 ---@param card_names string[] @ 待判定的牌名列表
 ---@param subcards? integer[] @ 子卡（某些技能可以提前确定子卡，如奇策、妙弦）
 ---@param ban_cards? string[] @ 被排除的卡名
----@param extra_data? table @ 用于使用的额外信息
+---@param extra_data? UseExtraData|table @ 用于使用的额外信息
 ---@return string[] @ 返回牌名列表
 function Player:getViewAsCardNames(skill_name, card_names, subcards, ban_cards, extra_data)
   ban_cards = ban_cards or Util.DummyTable
@@ -1103,6 +1179,30 @@ function Player:isProhibited(to, card)
   end
   return false
 end
+
+--- 确认角色是否被禁止成为特定牌的目标（目前仅用于移动场上的延时锦囊）
+---@param card Card @ 特定牌
+function Player:isProhibitedTarget(card)
+  local r = Fk:currentRoom()
+
+  if card.type == Card.TypeEquip and #self:getAvailableEquipSlots(card.sub_type) == 0 then
+    return true
+  end
+
+  if card.sub_type == Card.SubtypeDelayedTrick and
+      (table.contains(self.sealedSlots, Player.JudgeSlot) or (self:hasDelayedTrick(card.name) and not card.stackable_delayed)) then
+    return true
+  end
+
+  local status_skills = r.status_skills[ProhibitSkill] or Util.DummyTable
+  for _, skill in ipairs(status_skills) do
+    if skill:isProhibited(nil, self, card) then
+      return true
+    end
+  end
+  return false
+end
+
 
 --- 确认玩家是否被禁止使用特定牌。
 ---@param card Card @ 特定的牌
@@ -1254,13 +1354,7 @@ function Player:canMoveCardInBoardTo(to, id)
   if card.type == Card.TypeEquip then
     return to:hasEmptyEquipSlot(card.sub_type)
   else
-    return
-      not (
-        table.find(to:getCardIds(Player.Judge), function(cardId)
-          return ((to:getVirualEquip(cardId) or Fk:getCardById(cardId).name == card.name) and card.name ~= "premeditate")
-        end) or
-        table.contains(to.sealedSlots, Player.JudgeSlot)
-      )
+    return not to:isProhibitedTarget(card)
   end
 end
 
@@ -1345,6 +1439,8 @@ function Player:removeBuddy(other)
   table.removeOne(self.buddy_list, other.id)
 end
 
+--- 是否为通牌队友
+---@param other Player|integer
 function Player:isBuddy(other)
   local room = Fk:currentRoom()
   if room.observing and not room.replaying then return false end
@@ -1354,7 +1450,7 @@ end
 
 --- Player是否可看到某card
 --- @param cardId integer
----@param move? CardsMoveStruct
+---@param move? CardsMoveStruct @ 移动数据，注意涉及Player全是id
 ---@return boolean
 function Player:cardVisible(cardId, move)
   local room = Fk:currentRoom()
@@ -1370,12 +1466,21 @@ function Player:cardVisible(cardId, move)
     return table.contains(areas, area) or (defaultVisible and table.contains({Card.Processing, Card.DiscardPile}, area))
   end
 
+  local status_skills = Fk:currentRoom().status_skills[VisibilitySkill] or Util.DummyTable---@type VisibilitySkill[]
+
   local falsy = true -- 当难以决定时是否要选择暗置？
   local oldarea, oldspecial, oldowner
   if move then
     ---@type MoveInfo
     local info = table.find(move.moveInfo, function(info) return info.cardId == cardId end)
     if info then
+      for _, skill in ipairs(status_skills) do
+        local f = skill:moveVisible(self, info, move)
+        if f ~= nil then
+          return f
+        end
+      end
+
       oldarea = info.fromArea
       oldspecial = info.fromSpecialName
       oldowner = move.from and room:getPlayerById(move.from)
@@ -1404,7 +1509,6 @@ function Player:cardVisible(cardId, move)
   local card = Fk:getCardById(cardId)
 
   if not room.observing then
-    local status_skills = Fk:currentRoom().status_skills[VisibilitySkill] or Util.DummyTable
     for _, skill in ipairs(status_skills) do
       local f = skill:cardVisible(self, card)
       if f ~= nil then
@@ -1504,6 +1608,42 @@ function Player:getEnemies(include_dead)
   end)
   return enemies
 end
+
+--- 判断角色是否可以排序手牌
+---@return boolean
+function Player:canSortHandcards()
+  for m, _ in pairs(self.mark) do
+    if m == MarkEnum.SortProhibited or m:startsWith(MarkEnum.SortProhibited .. "-") then return false end
+  end
+  return true
+end
+
+
+--- 能否获得某技能（用于游戏开始时或变更武将时，主动技、势力技、主副将技等特殊限制技能的判断）
+---@param skill Skill|string @ 待获取的技能
+---@param relate_to_place? "m" | "d" @ 此技能属于主将或副将，不填则不做判断
+---@return boolean
+function Player:canAttachSkill(skill, relate_to_place)
+  if type(skill) == "string" then
+    skill = Fk.skills[skill]
+    if skill == nil then return false end
+  end
+  -- 主公技的获取条件暂定为:身份为主公且可见，游戏模式为身份模式
+  if skill:hasTag(Skill.Lord) and not (self.role == "lord" and self.role_shown and Fk:currentRoom():isGameMode("role_mode")) then
+    return false
+  end
+  if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, self.kingdom) then
+    return false
+  end
+  if skill:hasTag(skill.MainPlace) and relate_to_place and relate_to_place ~= "m"  then
+    return false
+  end
+  if skill:hasTag(skill.DeputyPlace) and relate_to_place and relate_to_place ~= "d" then
+    return false
+  end
+  return true
+end
+
 
 function Player:toJsonObject()
   local ptable = {}

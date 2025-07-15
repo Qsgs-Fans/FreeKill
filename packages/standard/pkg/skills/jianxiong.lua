@@ -21,7 +21,7 @@ jianxiong:addAI({
     local card = dmg.card
     if not card or player.room:getCardArea(card) ~= Card.Processing then return false end
     local val = ai:getBenefitOfEvents(function(logic)
-      logic:obtainCard(player, card, true, fk.ReasonJustMove)
+      logic:obtainCard(player, card, true, fk.ReasonJustMove, player, jianxiong.name)
     end)
     if val > 0 then
       return true

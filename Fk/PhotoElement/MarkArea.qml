@@ -2,6 +2,7 @@
 
 import QtQuick
 import QtQuick.Layouts
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -52,7 +53,7 @@ Item {
         NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
       }
 
-      TapHandler {
+      W.TapHandler {
         enabled: root.parent.state != "candidate" || !root.parent.selectable
         onTapped: {
           const params = { name: mark_name };
@@ -82,9 +83,9 @@ Item {
             let data = lcall("GetQmlMark", mark_type, mark_name, _data,
                              root.parent?.playerid);
             if (data && data.qml_path) {
-              params.data = JSON.parse(_data);
+              params.data = data.qml_data;
               params.owner = root.parent?.playerid;
-              roomScene.startCheat("../../" + data.qml_path, params);
+              roomScene.startCheatByPath(data.qml_path, params);
             }
             return;
           } else {

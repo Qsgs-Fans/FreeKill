@@ -3,6 +3,7 @@
 import QtQuick
 import Qt5Compat.GraphicalEffects
 import QtQuick.Controls
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -10,6 +11,7 @@ Item {
   property string type: "active"
   property string orig: ""
   property bool pressed: false
+  property bool doubleTapped: false
   property bool prelighted: false
   property bool locked: false
   property int times: -1
@@ -158,7 +160,7 @@ Item {
     }
   }
 
-  TapHandler {
+  W.TapHandler {
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
     onTapped: (p, btn) => {
       if ((btn === Qt.LeftButton || btn === Qt.NoButton) && root.type !== "notactive" && root.enabled) {
@@ -170,6 +172,12 @@ Item {
 
     onLongPressed: {
       skillDetail.visible = true;
+    }
+
+    onDoubleTapped: (p, btn) => {
+      if (btn === Qt.LeftButton || btn === Qt.NoButton) {
+        parent.doubleTapped = true;
+      }
     }
   }
 

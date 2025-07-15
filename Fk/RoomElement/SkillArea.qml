@@ -78,7 +78,14 @@ Flickable {
 
           onPressedChanged: {
             if (enabled)
-              roomScene.activateSkill(orig, pressed);
+              roomScene.activateSkill(orig, pressed, "click");
+          }
+
+          onDoubleTappedChanged: {
+            if (doubleTapped && enabled) {
+              roomScene.activateSkill(orig, true, "doubleClick");
+              doubleTapped = false;
+            }
           }
         }
       }

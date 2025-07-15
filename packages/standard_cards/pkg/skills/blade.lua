@@ -24,12 +24,12 @@ skill:addEffect(fk.CardEffectCancelledOut, {
     local use = room:askToUseCard(player, params)
     if use then
       use.extraUse = true
-      self.cost_data = use
+      event:setCostData(self, {extra_data = use})
       return true
     end
   end,
   on_use = function(self, event, target, player, data)
-    player.room:useCard(self.cost_data)
+    player.room:useCard(event:getCostData(self).extra_data)
   end,
 })
 

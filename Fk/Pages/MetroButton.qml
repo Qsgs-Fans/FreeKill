@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
+import Fk.Widgets as W
 
 Item {
   property bool enabled: true
@@ -41,7 +42,7 @@ Item {
     }
   ]
 
-  TapHandler {
+  W.TapHandler {
     id: mouse
     acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
     gesturePolicy: TapHandler.WithinBounds

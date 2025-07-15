@@ -5,21 +5,24 @@ import Fk
 import Fk.Pages
 
 GraphicsBox {
+  property string prompt: ""
   property alias generalList: generalList
-  // property var generalList: []
+  property var generals: []
   property int choiceNum: 1
+  property bool convertDisabled: false
+  property string rule_type: ""
+  property var extra_data
+  property bool hegemony: false
   property var choices: []
   property var selectedItem: []
   property bool loaded: false
-  property bool convertDisabled: false
-  property bool hegemony: false
 
   ListModel {
     id: generalList
   }
 
   id: root
-  title.text: luatr("$ChooseGeneral").arg(choiceNum) +
+  title.text: prompt !== "" ? prompt : luatr("$ChooseGeneral").arg(choiceNum) +
     (config.enableFreeAssign ? "(" + luatr("Enable free assign") + ")" : "")
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
   height: body.implicitHeight + body.anchors.topMargin +
@@ -118,7 +121,7 @@ GraphicsBox {
 
         MetroButton {
           id: fightButton
-          text: luatr("Fight")
+          text: luatr("OK")
           width: 120
           height: 35
           enabled: false
@@ -145,8 +148,7 @@ GraphicsBox {
 
     GeneralCardItem {
       name: model.name
-      //enabled: //!(choices[0] && choices[0].kingdom !== this.kingdom)
-      selectable: !(selectedItem[0] && selectedItem[0].kingdom !== kingdom)
+      selectable: true
       draggable: true
 
       onClicked: {
@@ -156,6 +158,7 @@ GraphicsBox {
           if (selectedItem[i] === this) {
             toSelect = false;
             selectedItem.splice(i, 1);
+            break;
           }
         }
         if (toSelect && selectedItem.length < choiceNum)
@@ -193,35 +196,6 @@ GraphicsBox {
     updatePosition();
   }
 
-  /*
-    主副将的主势力和副势力至少有一个相同；
-    副将不可野 主将可野
-   */
-  function isHegPair(gcard1, gcard2) {
-    if (!gcard1 || gcard1 === gcard2) {
-      return true;
-    }
-
-    if (gcard2.kingdom.includes("wild")) { // 副将不可野（势力字符串含wild）
-      return false;
-    }
-
-    if (gcard1.kingdom.includes("wild")) { // 主将可野（势力字符串含wild）
-      return true;
-    }
-
-    const k1 = gcard1.kingdom;
-    const k2 = gcard2.kingdom;
-    const sub1 = gcard1.subkingdom;
-    const sub2 = gcard2.subkingdom;
-
-    if (k1 === k2 || (sub1 && (sub1 === k2 || sub1 === sub2)) || (sub2 && sub2 === k1)) {
-      return true;
-    }
-
-    return false;
-  }
-
   function updateCompanion(gcard1, gcard2, overwrite) {
     if (lcall("IsCompanionWith", gcard1.name, gcard2.name)) {
       gcard1.hasCompanions = true;
@@ -247,14 +221,15 @@ GraphicsBox {
     }
     root.choicesChanged();
 
-    fightButton.enabled = (choices.length == choiceNum) &&
-      (hegemony ? isHegPair(selectedItem[0], selectedItem[1]) : true);
+    fightButton.enabled = lcall("ChooseGeneralFeasible", root.rule_type, root.choices,
+                                root.generals, root.extra_data);
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
-      item.selectable = hegemony ? isHegPair(selectedItem[0], item)
-                                        : true;
-      if (hegemony) {
+      item.selectable = choices.includes(item.name) ||
+              lcall("ChooseGeneralFilter", root.rule_type, item.name, root.choices,
+                    root.generals, root.extra_data);
+      if (hegemony) { // 珠联璧合相关
         item.inPosition = 0;
         if (selectedItem[0]) {
           if (selectedItem[1]) {
@@ -292,7 +267,7 @@ GraphicsBox {
       }
     }
 
-    if (hegemony) {
+    if (hegemony) { // 主副将调整阴阳鱼
       if (selectedItem[0]) {
         if (selectedItem[0].mainMaxHp < 0) {
           selectedItem[0].inPosition = 1;
@@ -316,5 +291,9 @@ GraphicsBox {
       }
     }
     convertBtn.enabled = false;
+  }
+
+  function refreshPrompt() {
+    prompt = Util.processPrompt(lcall("ChooseGeneralPrompt", rule_type, generals, extra_data))
   }
 }

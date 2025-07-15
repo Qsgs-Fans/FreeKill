@@ -45,6 +45,13 @@ end
 ---@class GameEvent.ChangeHp : GameEvent
 ---@field public data HpChangedData
 local ChangeHp = GameEvent:subclass("GameEvent.ChangeHp")
+
+function ChangeHp:__tostring()
+  local data = self.data
+  return string.format("<ChangeHp %d : %s <= %s %s #%d>",
+    data.num, data.who, data.reason, data.skillName, self.id)
+end
+
 function ChangeHp:main()
   local data = self.data
   local room = self.room
@@ -157,6 +164,13 @@ end
 ---@class GameEvent.Damage : GameEvent
 ---@field public data DamageData
 local Damage = GameEvent:subclass("GameEvent.Damage")
+
+function Damage:__tostring()
+  local data = self.data
+  return string.format("<Damage %d %s : %s <= %s #%d>",
+    data.damage, Fk:getDamageNatureName(data.damageType), data.to, data.from, self.id)
+end
+
 function Damage:main()
   local damageData = self.data
   local room = self.room
@@ -190,7 +204,9 @@ function Damage:main()
     stages = {
       { fk.PreDamage, "from"},
       { fk.DamageCaused, "from" },
+      { fk.DetermineDamageCaused, "from" },
       { fk.DamageInflicted, "to" },
+      { fk.DetermineDamageInflicted, "to" },
     }
   end
 
@@ -248,26 +264,25 @@ function Damage:exit()
   logic:trigger(fk.DamageFinished, damageData.to, damageData)
 
   if damageData.chain_table and #damageData.chain_table > 0 then
-    damageData.chain_table = table.filter(damageData.chain_table, function(p)
-      return p:isAlive() and p.chained
-    end)
     for _, p in ipairs(damageData.chain_table) do
-      room:sendLog{
-        type = "#ChainDamage",
-        from = p.id
-      }
+      if p:isAlive() and p.chained then
+        room:sendLog{
+          type = "#ChainDamage",
+          from = p.id
+        }
 
-      local dmg = {
-        from = damageData.from,
-        to = p,
-        damage = damageData.damage,
-        damageType = damageData.damageType,
-        card = damageData.card,
-        skillName = damageData.skillName,
-        chain = true,
-      }
+        local dmg = {
+          from = damageData.from,
+          to = p,
+          damage = damageData.damage,
+          damageType = damageData.damageType,
+          card = damageData.card,
+          skillName = damageData.skillName,
+          chain = true,
+        }
 
-      room:damage(dmg)
+        room:damage(dmg)
+      end
     end
   end
 end
@@ -295,6 +310,13 @@ end
 ---@class GameEvent.LoseHp : GameEvent
 ---@field public data HpLostData
 local LoseHp = GameEvent:subclass("GameEvent.LoseHp")
+
+function LoseHp:__tostring()
+  local data = self.data
+  return string.format("<LoseHp %d : %s #%d>",
+    data.num, data.who, self.id)
+end
+
 function LoseHp:main()
   local data = self.data
   local room = self.room
@@ -339,6 +361,13 @@ end
 ---@class GameEvent.Recover : GameEvent
 ---@field public data RecoverData
 local Recover = GameEvent:subclass("GameEvent.Recover")
+
+function Recover:__tostring()
+  local data = self.data
+  return string.format("<Recover %d : %s <= %s #%d>",
+    data.num, data.who, data.recoverBy, self.id)
+end
+
 function Recover:prepare()
   local recoverData = self.data
   -- local room = self.room
@@ -395,6 +424,13 @@ end
 ---@class GameEvent.ChangeMaxHp : GameEvent
 ---@field public data MaxHpChangedData
 local ChangeMaxHp = GameEvent:subclass("GameEvent.ChangeMaxHp")
+
+function ChangeMaxHp:__tostring()
+  local data = self.data
+  return string.format("<ChangeMaxHp %d : %s #%d>",
+    data.num, data.who, self.id)
+end
+
 function ChangeMaxHp:main()
   local data = self.data
   local room = self.room
@@ -437,15 +473,22 @@ function ChangeMaxHp:main()
   if diff > 0 then
     if not room:changeHp(player, -diff) then
       player.hp = player.hp - diff
-    end
-  end
 
-  room:sendLog{
-    type = "#ShowHPAndMaxHP",
-    from = player.id,
-    arg = player.hp,
-    arg2 = player.maxHp,
-  }
+      room:sendLog{
+        type = "#ShowHPAndMaxHP",
+        from = player.id,
+        arg = player.hp,
+        arg2 = player.maxHp,
+      }
+    end
+  else
+    room:sendLog{
+      type = "#ShowHPAndMaxHP",
+      from = player.id,
+      arg = player.hp,
+      arg2 = player.maxHp,
+    }
+  end
 
   room.logic:trigger(fk.MaxHpChanged, player, data)
   return true

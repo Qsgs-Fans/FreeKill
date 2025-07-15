@@ -97,22 +97,22 @@ function AIGameLogic:setPlayerProperty(player, key, value)
   self.benefit = self.benefit + benefit
 end
 
---- 牌差收益论（瞎jb乱填版）：
---- 根据moveInfo判断玩家是拿牌还是掉牌进而暴力算收益
+--- 牌差收益论：根据moveInfo判断收益
 ---@param data MoveCardsData
 ---@param info MoveInfo
 function AIGameLogic:applyMoveInfo(data, info)
   local benefit = 0
+  local card_value = fk.ai_card_keep_value[Fk:getCardById(info.cardId).name] or 100
 
-  if data.from then
+  if data.from and data.moveReason ~= fk.ReasonUse then
     if info.fromArea == Player.Hand then
-      benefit = -90
+      benefit = -(card_value - 10)
     elseif info.fromArea == Player.Equip then
-      benefit = -110
+      benefit = -(card_value + 10)
     elseif info.fromArea == Player.Judge then
-      benefit = 180
+      benefit = card_value
     elseif info.fromArea == Player.Special then
-      benefit = -60
+      benefit = -(card_value / 2)
     end
 
     local from = data.from
@@ -123,13 +123,13 @@ function AIGameLogic:applyMoveInfo(data, info)
 
   if data.to then
     if data.toArea == Player.Hand then
-      benefit = 90
+      benefit = card_value - 10
     elseif data.toArea == Player.Equip then
-      benefit = 110
+      benefit = card_value + 10
     elseif data.toArea == Player.Judge then
-      benefit = -180
+      benefit = -card_value
     elseif data.toArea == Player.Special then
-      benefit = 60
+      benefit = card_value / 2
     end
 
     local to = data.to
@@ -191,7 +191,11 @@ function ChangeHp:exec()
   local data = self.data
   local player = data.who
 
-  if logic:trigger(fk.BeforeHpChanged, player, data) then
+  logic:trigger(fk.BeforeHpChanged, player, data)
+  if data.num == 0 and data.shield_lost == 0 then
+    data.prevented = true
+  end
+  if data.prevented then
     return true
   end
 
@@ -226,7 +230,9 @@ function Damage:exec()
     stages = {
       { fk.PreDamage, "from"},
       { fk.DamageCaused, "from" },
+      { fk.DetermineDamageCaused, "from" },
       { fk.DamageInflicted, "to" },
+      { fk.DetermineDamageInflicted, "to" },
     }
   end
 
@@ -298,7 +304,11 @@ function Recover:exec()
 
   local who = RecoverData.who
 
-  if logic:trigger(fk.PreHpRecover, who, RecoverData) then
+  logic:trigger(fk.PreHpRecover, who, RecoverData)
+  if RecoverData.num == 0 then
+    RecoverData.prevented = true
+  end
+  if RecoverData.prevented then
     return true
   end
 
@@ -452,9 +462,7 @@ function UseCard:exec()
     if skill_ai then skill_ai:onUse(logic, useCardData) end
   end
 
-  if logic:trigger(fk.PreCardUse, useCardData.from, useCardData) then
-    return true
-  end
+  logic:trigger(fk.PreCardUse, useCardData.from, useCardData)
   logic:moveCardTo(useCardData.card, Card.Processing, nil, fk.ReasonUse)
 
   for _, event in ipairs({ fk.AfterCardUseDeclared, fk.AfterCardTargetDeclared, fk.CardUsing }) do
@@ -480,13 +488,7 @@ end
 ---@param useCardData UseCardDataSpec
 function AIGameLogic:useCard(useCardData)
   local new_data
-  -- if type(useCardData.from) == "number" or (useCardData.tos and useCardData.tos[1]
-  --   and type(useCardData.tos[1][1]) == "number") then
-  --   new_data = UseCardData:new({})
-    -- new_data:loadLegacy(useCardData)
-  -- else
-    new_data = UseCardData:new(useCardData)
-  -- end
+  new_data = UseCardData:new(useCardData)
   return not UseCard:new(self, new_data):getBenefit()
 end
 

@@ -13,7 +13,6 @@
 ---@field public phases Phase[]
 ---@field public phase_state table[]
 ---@field public phase_index integer
----@field private _fake_skills Skill[]
 ---@field private _manually_fake_skills Skill[]
 ---@field public prelighted_skills Skill[]
 ---@field private _timewaste_count integer
@@ -32,7 +31,6 @@ function ServerPlayer:initialize(_self)
   self.phases = {}
   self.phase_state = {}
 
-  self._fake_skills = {}
   self._manually_fake_skills = {}
   self.prelighted_skills = {}
   self._prelighted_skills = {}
@@ -141,6 +139,7 @@ end
 
 --- 翻面
 ---@param data any? 额外数据
+---@return boolean @ 是否成功翻面
 function ServerPlayer:turnOver(data)
   if data == nil then
     data = {
@@ -165,6 +164,7 @@ function ServerPlayer:turnOver(data)
   }
 
   self.room.logic:trigger(fk.TurnedOver, self, data)
+  return true
 end
 
 --- 令一名角色展示一些牌
@@ -199,14 +199,15 @@ end
 ---@param phase Phase
 ---@param skillName? string @ 额外阶段原因
 ---@param delay? boolean
-function ServerPlayer:gainAnExtraPhase(phase, skillName, delay)
+---@param extra_data? table @ 额外信息（@寤寐）
+function ServerPlayer:gainAnExtraPhase(phase, skillName, delay, extra_data)
   local room = self.room
   delay = (delay == nil) and true or delay
   local logic = room.logic
   if delay then
     local turn = logic:getCurrentEvent():findParent(GameEvent.Turn, true)
     if turn then
-      turn.data:gainAnExtraPhase(phase, skillName, self)
+      turn.data:gainAnExtraPhase(phase, skillName, self, extra_data)
       return
     end
   end
@@ -219,7 +220,8 @@ function ServerPlayer:gainAnExtraPhase(phase, skillName, delay)
   local data = { ---@type PhaseDataSpec
     who = self,
     reason = skillName or "game_rule",
-    phase = phase -- FIXME: 等待拆分
+    phase = phase,
+    extra_data = extra_data,
   }
   GameEvent.Phase:create(PhaseData:new(data)):exec()
 
@@ -282,16 +284,14 @@ end
 ---@param delay? boolean @ 是否延迟到当前回合结束再开启额外回合，默认是
 ---@param skillName? string @ 额外回合原因
 ---@param phases? Phase[] @ 此额外回合进行的额定阶段列表
-function ServerPlayer:gainAnExtraTurn(delay, skillName, phases)
+---@param extra_data? table @ 额外数据
+function ServerPlayer:gainAnExtraTurn(delay, skillName, phases, extra_data)
   local room = self.room
   delay = (delay == nil) and true or delay
   skillName = skillName or room.logic:getCurrentSkillName() or "game_rule"
   if delay then
-    local turn = room.logic:getCurrentEvent():findParent(GameEvent.Turn, true)
-    if turn then
-      turn:prependExitFunc(function() self:gainAnExtraTurn(false, skillName, phases) end)
-      return
-    end
+    table.insert(room.extra_turn_list, 1, {who = self, reason = skillName, phases = phases, extra_data = extra_data})
+    return
   end
 
   room:sendLog{
@@ -304,7 +304,10 @@ function ServerPlayer:gainAnExtraTurn(delay, skillName, phases)
 
   room:addTableMark(self, "_extra_turn_count", skillName)
 
-  GameEvent.Turn:create(TurnData:new(self, skillName, phases)):exec()
+  local turn_data = TurnData:new(self, skillName, phases)
+  turn_data.extra_data = extra_data
+
+  GameEvent.Turn:create(turn_data):exec()
 
   local mark = self:getTableMark("_extra_turn_count")
   if #mark > 0 then
@@ -338,12 +341,13 @@ function ServerPlayer:drawCards(num, skillName, fromPlace, moveMark)
   return self.room:drawCards(self, num, skillName, fromPlace, moveMark)
 end
 
+--- 将一些牌加入私人牌堆
 ---@param pile_name string
 ---@param card integer | integer[] | Card | Card[]
 ---@param visible? boolean
 ---@param skillName? string
 ---@param proposer? ServerPlayer
----@param visiblePlayers? integer | integer[] @ 为nil时默认对自己可见
+---@param visiblePlayers? ServerPlayer | ServerPlayer[] @ 为nil时默认对自己可见
 function ServerPlayer:addToPile(pile_name, card, visible, skillName, proposer, visiblePlayers)
   self.room:moveCardTo(card, Card.PlayerSpecial, self, fk.ReasonJustMove, skillName, pile_name, visible,
   proposer or self, nil, visiblePlayers)
@@ -429,13 +433,13 @@ end
 --- 增加卡牌使用次数
 function ServerPlayer:addCardUseHistory(cardName, num)
   Player.addCardUseHistory(self, cardName, num)
-  self:doNotify("AddCardUseHistory", json.encode{cardName, num})
+  self.room:doBroadcastNotify("AddCardUseHistory", json.encode{self.id, cardName, num})
 end
 
 --- 设置卡牌已使用次数
 function ServerPlayer:setCardUseHistory(cardName, num, scope)
   Player.setCardUseHistory(self, cardName, num, scope)
-  self:doNotify("SetCardUseHistory", json.encode{cardName, num, scope})
+  self.room:doBroadcastNotify("SetCardUseHistory", json.encode{self.id, cardName, num, scope})
 end
 
 -- 增加技能发动次数
@@ -453,6 +457,7 @@ end
 --- 设置连环状态
 ---@param chained boolean @ true为横置，false为重置
 ---@param data any? @ 额外数据
+---@return boolean @ 是否成功横置或重置
 function ServerPlayer:setChainState(chained, data)
   local room = self.room
   if data == nil then
@@ -478,6 +483,7 @@ function ServerPlayer:setChainState(chained, data)
   room:delay(150)
   room:broadcastPlaySound("./audio/system/chain")
   room.logic:trigger(fk.ChainStateChanged, self, data)
+  return true
 end
 
 --- 复原武将牌（翻至正面、解除连环状态）
@@ -488,8 +494,28 @@ function ServerPlayer:reset()
     from = self.id,
     arg = "reset-general"
   }
-  if self.chained then self:setChainState(false) end
-  if not self.faceup then self:turnOver() end
+  if self.dead then
+    if self.chained then
+      self.chained = false
+      self.room:broadcastProperty(self, "chained")
+    end
+    if not self.faceup then
+      self.faceup = true
+      self.room:broadcastProperty(self, "faceup")
+    end
+  else
+    if self.chained then
+      self:setChainState(false)
+    end
+    if not self.faceup then
+      if self.dead then
+        self.faceup = true
+        self.room:broadcastProperty(self, "faceup")
+      else
+        self:turnOver()
+      end
+    end
+  end
 end
 
 --- 对若干名角色发起拼点。
@@ -520,18 +546,11 @@ end
 
 ---@param skill Skill | string
 function ServerPlayer:addFakeSkill(skill)
-  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
-  if type(skill) == "string" then
-    skill = Fk.skills[skill]
+  skill = Player.addFakeSkill(self, skill)
+  if not skill then
+    return
   end
-  if table.contains(self._fake_skills, skill) then return end
-
   table.insertIfNeed(self._manually_fake_skills, skill)
-
-  table.insert(self._fake_skills, skill)
-  for _, s in ipairs(skill.related_skills) do
-    table.insert(self._fake_skills, s)
-  end
 
   -- TODO
   self:doNotify("AddSkill", json.encode{ self.id, skill.name, true })
@@ -539,28 +558,14 @@ end
 
 ---@param skill Skill | string
 function ServerPlayer:loseFakeSkill(skill)
-  assert(type(skill) == "string" or skill:isInstanceOf(Skill))
-  if type(skill) == "string" then
-    skill = Fk.skills[skill]
+  skill = Player.loseFakeSkill(self, skill)
+  if not skill then
+    return
   end
-  if not table.contains(self._fake_skills, skill) then return end
-
   table.removeOne(self._manually_fake_skills, skill)
-
-  table.removeOne(self._fake_skills, skill)
-  for _, s in ipairs(skill.related_skills) do
-    table.removeOne(self._fake_skills, s)
-  end
 
   -- TODO
   self:doNotify("LoseSkill", json.encode{ self.id, skill.name, true })
-end
-
----@param skill Skill | string
-function ServerPlayer:isFakeSkill(skill)
-  if type(skill) == "string" then skill = Fk.skills[skill] end
-  assert(skill:isInstanceOf(Skill))
-  return table.contains(self._fake_skills, skill)
 end
 
 ---@param skill string | Skill
@@ -606,9 +611,14 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
   end
 
   local general = Fk.generals[generalName] or Fk.generals["blank_shibing"]
+  local tolose = {}
   for _, s in ipairs(general:getSkillNameList(true)) do
     local skill = Fk.skills[s]
-    self:loseFakeSkill(skill)
+    if self:isFakeSkill(skill) then
+      self:loseFakeSkill(skill)
+    else
+      table.insert(tolose, skill.name)
+    end
   end
 
   local ret = true
@@ -616,7 +626,7 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
     local other = Fk.generals[self:getMark(isDeputy and "__heg_general" or "__heg_deputy")] or Fk.generals["blank_shibing"]
     for _, sname in ipairs(other:getSkillNameList(true)) do
       local s = Fk.skills[sname]
-      if s:hasTag(Skill.Compulsory) and not s:hasTag(isDeputy and Skill.MainPlace or Skill.DeputyPlace) then
+      if s:hasTag(Skill.Compulsory) and not s:hasTag(isDeputy and Skill.DeputyPlace or Skill.MainPlace) and self:isFakeSkill(s) then
         ret = false
         break
       end
@@ -628,6 +638,9 @@ function ServerPlayer:revealGeneral(isDeputy, no_trigger)
 
   local oldKingdom = self.kingdom
   room:changeHero(self, generalName, false, isDeputy, false, false, false)
+  if #tolose > 0 then
+    room:handleAddLoseSkills(self, "-"..table.concat(tolose, "|-"), nil, false)
+  end
   if oldKingdom ~= "wild" then
     local kingdom = (self:getMark("__heg_wild") == 1 and not isDeputy) and "wild" or self:getMark("__heg_kingdom")
     self.kingdom = kingdom
@@ -733,13 +746,15 @@ function ServerPlayer:hideGeneral(isDeputy)
   local general = Fk.generals[generalName]
   local place = isDeputy and Skill.MainPlace or Skill.DeputyPlace
   for _, sname in ipairs(general:getSkillNameList()) do
-    room:handleAddLoseSkills(self, "-" .. sname, nil, false, false)
-    local s = Fk.skills[sname]
-    if not s:hasTag(place) then
-      if s:hasTag(Skill.Compulsory) then
-        self:addFakeSkill("reveal_skill&")
+    if self:hasSkill(sname, true, true) then
+      room:handleAddLoseSkills(self, "-" .. sname, nil, false, false)
+      local s = Fk.skills[sname]
+      if not s:hasTag(place) then
+        if s:hasTag(Skill.Compulsory) then
+          self:addFakeSkill("reveal_skill&")
+        end
+        self:addFakeSkill(s)
       end
-      self:addFakeSkill(s)
     end
   end
 
@@ -830,6 +845,7 @@ end
 ---类〖青釭剑〗的无视防具效果（注意仅能在onAim的四个时机中使用）
 ---@param data AimData
 function ServerPlayer:addQinggangTag(data)
+  self.room:addSkill("#qinggang_sword_skill")
   if not data.qinggang_used then
     data.qinggang_used = true
     self.room:addPlayerMark(self, MarkEnum.MarkArmorNullified)

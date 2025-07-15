@@ -143,6 +143,7 @@ Fk:loadTranslationTable({
   ["#qingnang-active"] = "Use Green Salve, discard 1 hand card and select a wounded player; then, he heals 1 HP",
   ["jijiu"] = "First Aid",
   [":jijiu"] = "Outside of your turn: you can use any red card as Peach.",
+  ["#jijiu"] = "Use First Aid, use any red card as Peach",
 
   ["lvbu"] = "Lü Bu",
   ["wushuang"] = "Without Equal",

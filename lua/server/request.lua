@@ -68,8 +68,13 @@ request_handlers["surrender"] = function(room, id, reqlist)
   local player = room:getPlayerById(id)
   if not player then return end
 
-  room.hasSurrendered = true
   player.surrendered = true
+  if Fk.game_modes[room.settings.gameMode]:getWinner(player) == "" then
+    player.surrendered = false
+    return
+  end
+
+  room.hasSurrendered = true
   room:doBroadcastNotify("CancelRequest", "")
   ResumeRoom(room.id)
 end

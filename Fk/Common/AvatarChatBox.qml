@@ -4,8 +4,10 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Fk.Pages
+import Fk.Widgets as W
 
 Rectangle {
+  color: "transparent"
   property bool isLobby: false
 
   function append(chatter, data) {
@@ -45,7 +47,7 @@ Rectangle {
 
           if (Backend.exists(fname)) {
             ret = true;
-            skills.append({ name: t.name, idx: i, specific: true });
+            skills.append({ name: t.name, idx: i, specific: true, general: general });
           } else {
             if (i > 0) break;
           }
@@ -59,7 +61,7 @@ Rectangle {
             t.name + (i !== 0 ? i.toString() : "") + ".mp3";
 
             if (Backend.exists(fname)) {
-              skills.append({ name: t.name, idx: i, specific: false});
+              skills.append({ name: t.name, idx: i, specific: false, general: general});
             } else {
               if (i > 0) break;
             }
@@ -80,31 +82,22 @@ Rectangle {
   }
 
   function loadSkills() {
-    for (let i = 1; i <= 23; i++) {
-      skills.append({ name: "fastchat_m", idx: i });
+    skills.clear();
+    const general = roomScene.getPhoto(Self.id)?.general;
+    if (general) {
+      loadGeneralSkillAudios(general);
+      findWinDeathAudio(general, true);
+      findWinDeathAudio(general, false);
     }
-    const general = roomScene.getPhoto(Self.id).general;
-    const deputyGeneral = roomScene.getPhoto(Self.id).deputyGeneral;
-    loadGeneralSkillAudios(general);
-    loadGeneralSkillAudios(deputyGeneral);
-    findWinDeathAudio(general, true);
-    findWinDeathAudio(deputyGeneral, true);
-    findWinDeathAudio(general, false);
-    findWinDeathAudio(deputyGeneral, false);
-  }
-
-  function loadPlayers() {
-    const ps = lcall("GetPlayersAndObservers");
-    ps.forEach(p => {
-      players.append({
-        id: p.id,
-        screenName: p.name,
-        general: p.general,
-        deputyGeneral: p.deputy,
-        observing: p.observing,
-        avatar: p.avatar,
-      });
-    });
+    const deputyGeneral = roomScene.getPhoto(Self.id)?.deputyGeneral;
+    if (deputyGeneral) {
+      loadGeneralSkillAudios(deputyGeneral);
+      findWinDeathAudio(deputyGeneral, true);
+      findWinDeathAudio(deputyGeneral, false);
+    }
+    for (let i = 1; i <= 23; i++) {
+      skills.append({ name: "fastchat_m", idx: i, specific: false });
+    }
   }
 
   Timer {
@@ -157,7 +150,7 @@ Rectangle {
         }
       }
 
-      TapHandler {
+      W.TapHandler {
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
         gesturePolicy: TapHandler.WithinBounds
         onTapped: chatLogBox.currentIndex = index;
@@ -168,56 +161,6 @@ Rectangle {
   ColumnLayout {
     anchors.fill: parent
     spacing: 0
-
-    MetroButton {
-      id: memberBtn
-      text: "👥"
-      visible: !isLobby
-      //enabled: !opTimer.running;
-      onClicked: {
-        memberList.visible = !memberList.visible;
-      }
-    }
-
-    ListView {
-      id: memberList
-      Layout.fillWidth: true
-      Layout.preferredHeight: 100
-      visible: false
-      clip: true
-      ScrollBar.vertical: ScrollBar {}
-      model: ListModel {
-        id: players
-      }
-      property int playersIdx: 0
-
-      onVisibleChanged: {
-        if (memberList.visible) {
-          loadPlayers();
-          memberList.contentY = playersIdx; // restore the last position
-        } else {
-          playersIdx = memberList.contentY;
-          players.clear();
-        }
-      }
-
-      delegate: ItemDelegate {
-        width: memberList.width
-        height: 30
-        text: screenName + (observing ? "  [" + luatr("Observe") +"]" : "")
-
-        onClicked: {
-          roomScene.startCheat("PlayerDetail", {
-            avatar: avatar,
-            id: id,
-            screenName: screenName,
-            general: general,
-            deputyGeneral: deputyGeneral,
-            observing: observing
-          });
-        }
-      }
-    }
 
     Item {
       Layout.fillWidth: true
@@ -245,7 +188,7 @@ Rectangle {
         Image {
           height: 32; width: 32
           anchors.centerIn: parent
-          source: "../../image/emoji/" + index
+          source: AppPath + "/image/emoji/" + index
         }
         onClicked: chatEdit.insert(chatEdit.cursorPosition,
                                    "{emoji" + index + "}");
@@ -277,7 +220,16 @@ Rectangle {
       delegate: ItemDelegate {
         width: soundSelector.width
         height: 30
-        text: luatr((name.startsWith("~") || name.startsWith("!")) ? name : "$" + name + (idx ? idx.toString() : ""))
+        text: {
+          const isWinOrDeathAudio = name.startsWith("~") || name.startsWith("!");
+          let ret = name;
+
+          if (!isWinOrDeathAudio) {
+            ret = `$${name}${specific ? '_' + general : ""}${idx}`;
+          }
+
+          return luatr(ret);
+        }
 
         onClicked: {
           opTimer.start();
@@ -295,7 +247,9 @@ Rectangle {
             "Chat",
             JSON.stringify({
               type: isLobby ? 1 : 2,
-              msg: (name.startsWith("~") || name.startsWith("!")) ? "$" + name : "$" + name + ":" + (idx ? idx.toString() : "")
+              msg: (name.startsWith("~") || name.startsWith("!")) ?
+                "$" + name :
+                "$" + name + ":" + (idx ? idx.toString() : "") + (specific ? ":" + general : "")
             })
           );
           soundSelector.visible = false;
@@ -304,34 +258,30 @@ Rectangle {
     }
 
     RowLayout {
-      Rectangle {
+      TextField {
+        id: chatEdit
         Layout.fillWidth: true
-        Layout.preferredHeight: 28
-        color: "#040403"
-        radius: 3
-        border.width: 1
-        border.color: "#A6967A"
+        Layout.preferredHeight: 48
+        // color: "#040403"
+        // radius: 3
+        // border.width: 1
+        // border.color: "#A6967A"
 
-        TextInput {
-          id: chatEdit
-          anchors.fill: parent
-          anchors.margins: 6
-          color: "white"
-          clip: true
-          font.pixelSize: 14
-          maximumLength: 300
+        // color: "white"
+        clip: true
+        font.pixelSize: 14
+        maximumLength: 300
 
-          onAccepted: {
-            if (text != "") {
-              ClientInstance.notifyServer(
-                "Chat",
-                JSON.stringify({
-                  type: isLobby ? 1 : 2,
-                  msg: text
-                })
-              );
-              text = "";
-            }
+        onAccepted: {
+          if (text != "") {
+            ClientInstance.notifyServer(
+              "Chat",
+              JSON.stringify({
+                type: isLobby ? 1 : 2,
+                msg: text
+              })
+            );
+            text = "";
           }
         }
       }

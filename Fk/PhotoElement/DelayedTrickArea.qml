@@ -39,6 +39,7 @@ Item {
         Image {
           anchors.fill: parent
           source: SkinBank.getDelayedTrickPicture(name)
+          fillMode: Image.PreserveAspectFit
         }
 
         Text { // 右下角的数量，1省略

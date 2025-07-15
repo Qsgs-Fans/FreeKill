@@ -58,24 +58,14 @@ Item {
 
   function findWinAudio(general) {
     const extension = lcall("GetGeneralData", general).extension;
-    const fname = AppPath + "/packages/" + extension + "/audio/win/"
-    + general + ".mp3";
-    if (Backend.exists(fname)) {
-      audioWin.visible = true;
-    } else {
-      audioWin.visible = false;
-    }
+    const fname = `${AppPath}/packages/${extension}/audio/win/${general}.mp3`;
+    audioWin.visible = Backend.exists(fname);
   }
 
   function findDeathAudio(general) {
     const extension = lcall("GetGeneralData", general).extension;
-    const fname = AppPath + "/packages/" + extension + "/audio/death/"
-    + general + ".mp3";
-    if (Backend.exists(fname)) {
-      audioDeath.visible = true;
-    } else {
-      audioDeath.visible = false;
-    }
+    const fname = `${AppPath}/packages/${extension}/audio/death/${general}.mp3`;
+    audioDeath.visible = Backend.exists(fname);
   }
 
   function updateGeneral() {
@@ -86,13 +76,12 @@ Item {
     generalText.clearSavedText();
     audioModel.clear();
 
+    if (data.headnote !== "") generalText.append("<font color=\"lightslategrey\">" + luatr(data.headnote) + "</font>");
+
     if (data.companions.length > 0){
-      let ret = "<font color=\"slategrey\"><b>" + luatr("Companions")
-      + "</b>: ";
-      data.companions.forEach(t => {
-        ret += luatr(t) + ' '
-      });
-      generalText.append(ret)
+      let ret = "<font color=\"slategrey\"><b>" + luatr("Companions") + "</b>: ";
+      ret += data.companions.map(luatr).join(" ");
+      generalText.append(ret);
     }
 
     data.skill.forEach(t => {
@@ -106,7 +95,7 @@ Item {
     findWinAudio(general);
     findDeathAudio(general);
 
-    //addSkillAudio(general + "_win_audio");
+    if (data.endnote !== "") generalText.append("<font color=\"lightslategrey\">" + luatr(data.endnote) + "</font>");
   }
 
   Component {

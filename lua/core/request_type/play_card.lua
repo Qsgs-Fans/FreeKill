@@ -3,6 +3,10 @@ local ReqUseCard = require 'lua.core.request_type.use_card'
 local SpecialSkills = require 'ui_emu.specialskills'
 local Button = (require 'ui_emu.control').Button
 
+--[[
+  负责处理出牌阶段空闲时使用牌（包括转化牌）
+--]]
+
 ---@class ReqPlayCard: ReqUseCard
 local ReqPlayCard = ReqUseCard:subclass("ReqPlayCard")
 
@@ -51,7 +55,7 @@ function ReqPlayCard:cardValidity(cid)
       end
     end
   end
-  return ret
+  return not not ret
 end
 
 function ReqPlayCard:skillButtonValidity(name)
@@ -70,17 +74,18 @@ function ReqPlayCard:skillButtonValidity(name)
           table.insertTable(cnames, m.trueName)
         end
       end
+      --- FIXME: 使用无子卡（无花色）的虚拟牌判定合法性吗？不太严谨，会导致许攸成略不生效的问题
       local extra_data = self.extra_data
       for _, n in ipairs(cnames) do
         local c = Fk:cloneCard(n)
         c.skillName = name
-        ret = c.skill:canUse(player, c, extra_data)
+        ret = c.skill:canUse(player, c, extra_data) and not player:prohibitUse(c)
         if ret then break end
       end
     end
-    return ret
+    return not not ret
   elseif skill:isInstanceOf(ActiveSkill) then
-    return skill:canUse(player, nil)
+    return not not skill:canUse(player, nil)
   end
 end
 
@@ -103,11 +108,10 @@ function ReqPlayCard:feasible()
   if card then
     local skill = card.skill
     ret = skill:feasible(player, table.map(self.selected_targets, Util.Id2PlayerMapper), { card.id }, card)
-    if ret then
-      ret = not not skill:canUse(player, card, self.extra_data)
-    end
+    and skill:canUse(player, card, self.extra_data)
+    and not player:prohibitUse(card)
   end
-  return ret
+  return not not ret
 end
 
 function ReqPlayCard:isCancelable()
@@ -115,6 +119,8 @@ function ReqPlayCard:isCancelable()
   return ReqUseCard.isCancelable(self)
 end
 
+--- 选择一个卡牌特殊技能（如重铸）
+---@param data string? @ 特殊技能名，不填为正常使用
 function ReqPlayCard:selectSpecialUse(data)
   -- 相当于使用一个以已选牌为pendings的主动技
   if not data or data == "_normal_use" then

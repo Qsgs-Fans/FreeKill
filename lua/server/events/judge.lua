@@ -13,6 +13,13 @@ end
 ---@class GameEvent.Judge : GameEvent
 ---@field public data JudgeData
 local Judge = GameEvent:subclass("GameEvent.Judge")
+
+function Judge:__tostring()
+  local data = self.data
+  return string.format("<Judge %s: %s #%d>",
+    data.reason, data.who, self.id)
+end
+
 function Judge:main()
   local data = self.data
   local room = self.room

@@ -4,6 +4,7 @@ local prefix = "packages."
 if UsingNewCore then prefix = "packages.freekill-core." end
 
 require(prefix .. "standard.aux_poxi")
+require(prefix .. "standard.aux_choose_general")
 
 Fk:appendKingdomMap("god", {"wei", "shu", "wu", "qun"})
 

@@ -50,6 +50,7 @@ function TriggerEvent:getSkillData(skill, k)
 end
 
 ---@param skill Skill
+---@param v any @ cost_data，建议为键值表，```tos```(ServerPlayer[])为目标、```cards```(integer[])为牌
 function TriggerEvent:setCostData(skill, v)
   self:setSkillData(skill, "cost_data", v)
 end
@@ -132,7 +133,7 @@ function TriggerEvent:exec()
         local skill_available = table.filter(skills, filter_func)
 
         while #skill_available > 0 do
-          local player_skills = table.filter(skill_available, function(s) return s:isPlayerSkill(player) end)
+          local player_skills = table.filter(skill_available, function(s) return s:isPlayerSkill(player, true) end)
 
           local formatChoiceName = function (skill)
             local leftTimes = (triggerableLimit[skill.name] or 1) - (self.invoked_times[skill.name] or 0)

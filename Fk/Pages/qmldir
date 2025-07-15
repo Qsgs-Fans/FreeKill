@@ -9,6 +9,8 @@ MetroButton 1.0 MetroButton.qml
 MetroToggleButton 1.0 MetroToggleButton.qml
 ModesOverview 1.0 ModesOverview.qml
 PackageManage 1.0 PackageManage.qml
+PackageDownload 1.0 PackageDownload.qml
+ResourcePackManage 1.0 ResourcePackManage.qml
 Room 1.0 Room.qml
 Replay 1.0 Replay.qml
 TileButton 1.0 TileButton.qml

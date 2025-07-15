@@ -295,6 +295,10 @@ function UseCard:main()
 
     logic:trigger(event, useCardData.from, useCardData)
     if event == fk.CardUsing then
+      if not useCardData.toCard and #useCardData.tos == 0 then
+        break
+      end
+
       room:doCardUseEffect(useCardData)
     end
   end
@@ -319,6 +323,13 @@ end
 ---@class GameEvent.RespondCard : GameEvent
 ---@field public data RespondCardData
 local RespondCard = GameEvent:subclass("GameEvent.RespondCard")
+
+function RespondCard:__tostring()
+  local data = self.data
+  return string.format("<RespondCard %s: %s #%d>",
+    data.card, data.from, self.id)
+end
+
 function RespondCard:main()
   local respondCardData = self.data
   local room = self.room
@@ -408,6 +419,14 @@ end
 ---@class GameEvent.CardEffect : GameEvent
 ---@field public data CardEffectData
 local CardEffect = GameEvent:subclass("GameEvent.CardEffect")
+
+function CardEffect:__tostring()
+  local data = self.data
+  return string.format("<CardEffect %s: %s => [%s] #%d>",
+    data.card, data.from, table.concat(
+      table.map(data.tos or {}, ServerPlayer.__tostring), ", "), self.id)
+end
+
 function CardEffect:main()
   local cardEffectData = self.data
   local room = self.room
@@ -417,38 +436,39 @@ function CardEffect:main()
     logic:breakEvent()
   end
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting }) do
-    if cardEffectData.isCancellOut then
-      logic:trigger(fk.CardEffectCancelledOut, cardEffectData.from, cardEffectData)
-      if cardEffectData.isCancellOut then
+
+    local function effectCancellOutCheck(effect)
+      if effect.isCancellOut then
+        logic:trigger(fk.CardEffectCancelledOut, effect.from, effect)
+        if effect.isCancellOut then
+          logic:breakEvent()
+        end
+      end
+
+      if
+        not effect.toCard and
+        (
+          not (effect.to and effect.to:isAlive())
+          or #room:deadPlayerFilter(effect.tos) == 0
+        )
+      then
+        logic:breakEvent()
+      end
+
+      if effect:isNullified() then
         logic:breakEvent()
       end
     end
 
-    if
-      not cardEffectData.toCard and
-      (
-        not (cardEffectData.to and cardEffectData.to:isAlive())
-        or #room:deadPlayerFilter(cardEffectData.tos) == 0
-      )
-    then
-      logic:breakEvent()
-    end
-
-    if cardEffectData:isNullified() then
-      logic:breakEvent()
-    end
+    effectCancellOutCheck(cardEffectData)
 
     if event == fk.PreCardEffect then
       logic:trigger(event, cardEffectData.from, cardEffectData)
-      if cardEffectData:isNullified() then
-        logic:breakEvent()
-      end
     else
       logic:trigger(event, cardEffectData.to, cardEffectData)
-      if cardEffectData:isNullified() then
-        logic:breakEvent()
-      end
     end
+
+    effectCancellOutCheck(cardEffectData)
 
     room:handleCardEffect(event, cardEffectData)
   end
@@ -507,8 +527,6 @@ local onAim = function(room, useCardData, aimEventCollaborators)
           use = useCardData,
           tos = aimGroup,
           firstTarget = firstTarget,
-          additionalDamage = useCardData.additionalDamage,
-          additionalRecover = useCardData.additionalRecover,
           extra_data = useCardData.extra_data,
         }
 
@@ -565,18 +583,23 @@ local onAim = function(room, useCardData, aimEventCollaborators)
       end
       aimStruct.tos[AimData.Cancelled] = {}
 
-      aimEventCollaborators[to] = aimEventCollaborators[to] or {}
-      if to:isAlive() then
-        if initialEvent then
-          table.insert(aimEventCollaborators[to], aimStruct)
+      if to:isAlive() and not table.contains(cancelledTargets, to) then
+        aimEventCollaborators[to] = aimEventCollaborators[to] or {}
+        if aimStruct.cancelled then
+          if not initialEvent then
+            table.remove(aimEventCollaborators[to], collaboratorsIndex[to])
+          end
         else
-          aimEventCollaborators[to][collaboratorsIndex[to]] = aimStruct
+          if initialEvent then
+            table.insert(aimEventCollaborators[to], aimStruct)
+          else
+            aimEventCollaborators[to][collaboratorsIndex[to]] = aimStruct
+          end
+          collaboratorsIndex[to] = collaboratorsIndex[to] + 1
+          aimStruct:setTargetDone(to)
         end
-
-        collaboratorsIndex[to] = collaboratorsIndex[to] + 1
       end
 
-      aimStruct:setTargetDone(to)
       aimGroup = aimStruct.tos
     until #aimGroup[AimData.Undone] == 0
   end
@@ -742,13 +765,16 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
           local curAimEvent = aimEventCollaborators[to][collaboratorsIndex[to]]
 
           cardEffectData.subTargets = curAimEvent.subTargets
-          cardEffectData.additionalDamage = curAimEvent.additionalDamage
-          cardEffectData.additionalRecover = curAimEvent.additionalRecover
+          if curAimEvent.additionalDamage then
+            cardEffectData.additionalDamage = (cardEffectData.additionalDamage or 0) + curAimEvent.additionalDamage
+          end
+          if curAimEvent.additionalRecover then
+            cardEffectData.additionalRecover = (cardEffectData.additionalRecover or 0) + curAimEvent.additionalRecover
+          end
           cardEffectData.disresponsive = curAimEvent.disresponsive
           cardEffectData.unoffsetable = curAimEvent.unoffsetable
           cardEffectData.nullified = curAimEvent.nullified
-          cardEffectData.fixedResponseTimes = curAimEvent.fixedResponseTimes
-          cardEffectData.fixedAddTimesResponsors = curAimEvent.fixedAddTimesResponsors
+          cardEffectData.fixedResponseTimesList = curAimEvent.fixedResponseTimesList
 
           collaboratorsIndex[to] = collaboratorsIndex[to] + 1
 

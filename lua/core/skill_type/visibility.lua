@@ -6,10 +6,20 @@
 ---@class VisibilitySkill : StatusSkill
 local VisibilitySkill = StatusSkill:subclass("VisibilitySkill")
 
+--- 某牌的可见性
 ---@param player Player
 ---@param card Card
 ---@return boolean?
 function VisibilitySkill:cardVisible(player, card)
+  return nil
+end
+
+--- 某牌在某次移动中的可见性
+---@param player Player
+---@param info MoveInfo
+---@param move MoveCardsDataSpec
+---@return boolean?
+function VisibilitySkill:moveVisible(player, info, move)
   return nil
 end
 

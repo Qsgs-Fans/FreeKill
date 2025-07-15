@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs
 import Fk.ReplayElement
 import Fk.Common
+import Fk.Widgets as W
 
 Item {
   id: root
@@ -27,7 +28,7 @@ Item {
         font.pixelSize: 20
       }
 
-      TapHandler {
+      W.TapHandler {
         onTapped: {
           bar.currentIndex = index;
         }

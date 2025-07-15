@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Fk
+import Fk.Widgets as W
 
 /* Layout of card:
  *      +--------+
@@ -34,6 +35,7 @@ Item {
   property string prohibitReason: ""
   property bool known: true     // if false it only show a card back
   property bool enabled: true   // if false the card will be grey
+  property bool multiple_targets: false
   property alias card: cardItem
   property alias glow: glowItem
   property var mark: ({})
@@ -67,7 +69,7 @@ Item {
   signal toggleDiscards()
   signal clicked(var card)
   signal rightClicked()
-  signal doubleClicked()
+  signal doubleClicked(var card)
   signal thrown()
   signal released(var card)
   signal entered()
@@ -95,7 +97,7 @@ Item {
   Image {
     id: cardItem
     source: known ? SkinBank.getCardPicture(cid || name)
-            : (SkinBank.CARD_DIR + "card-back")
+            : (SkinBank.searchBuiltinPic("/image/card/", "card-back"))
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
   }
@@ -103,8 +105,8 @@ Item {
   Image {
     id: suitItem
     visible: known
-    source: (suit !== "" && suit !== "nosuit") ? SkinBank.CARD_SUIT_DIR + suit
-                                               : ""
+    source: (suit !== "" && suit !== "nosuit") ?
+      SkinBank.searchBuiltinPic("/image/card/suit/", suit) : ""
     x: 3
     y: 19
     width: 21
@@ -114,8 +116,8 @@ Item {
   Image {
     id: numberItem
     visible: known
-    source: (suit != "" && number > 0) ? SkinBank.CARD_DIR
-      + "number/" + root.getColor() + "/" + number : ""
+    source: (suit != "" && number > 0) ?
+      SkinBank.searchBuiltinPic(`/image/card/number/${root.getColor()}/`, number) : ""
     x: 0
     y: 0
     width: 27
@@ -261,10 +263,7 @@ Item {
     text: prohibitReason
   }
 
-  TapHandler {
-    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.NoButton
-    gesturePolicy: TapHandler.WithinBounds
-
+  W.TapHandler {
     onTapped: (p, btn) => {
       if (btn === Qt.LeftButton || btn === Qt.NoButton) {
         selected = selectable ? !selected : false;
@@ -276,6 +275,12 @@ Item {
 
     onLongPressed: {
       parent.rightClicked();
+    }
+
+    onDoubleTapped: (p, btn) => {
+      if (btn === Qt.LeftButton || btn === Qt.NoButton) {
+        parent.doubleClicked(root);
+      }
     }
   }
 
