@@ -355,8 +355,16 @@ int freekill_main(int argc, char *argv[]) {
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
 
-  info_log = freopen("freekill.server.info.log", "w+", info_log);
-  err_log = freopen("freekill.server.error.log", "w+", err_log);
+  // info_log = freopen("freekill.server.info.log", "w+", info_log);
+  // err_log = freopen("freekill.server.error.log", "w+", err_log);
+  info_log.reset(new QFile("freekill.server.info.log"));
+  if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
+    qFatal("Cannot open info.log");
+  }
+  err_log.reset(new QFile("freekill.server.error.log"));
+  if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
+    qFatal("Cannot open error.log");
+  }
 #else
   // 不是安卓，使用QLocale获得系统语言
   QLocale l = QLocale::system();
