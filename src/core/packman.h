@@ -13,14 +13,14 @@ public:
   PackMan(QObject *parent = nullptr);
   ~PackMan();
 
-  QString getPackSummary();
+  Q_INVOKABLE QString getPackSummary();
   Q_INVOKABLE QStringList getDisabledPacks();
   Q_INVOKABLE void loadSummary(const QString &, bool useThread = false);
-  Q_INVOKABLE void downloadNewPack(const QString &url, bool useThread = false);
+  Q_INVOKABLE int downloadNewPack(const QString &url, bool useThread = false);
   Q_INVOKABLE void enablePack(const QString &pack);
   Q_INVOKABLE void disablePack(const QString &pack);
-  Q_INVOKABLE void updatePack(const QString &pack);
-  Q_INVOKABLE void upgradePack(const QString &pack);
+  Q_INVOKABLE int updatePack(const QString &pack);
+  Q_INVOKABLE int upgradePack(const QString &pack);
   Q_INVOKABLE void removePack(const QString &pack);
   Q_INVOKABLE QString listPackages();
 
