@@ -1,4 +1,3 @@
-
 fk.ai_card_keep_value["slash"] = 100
 
 -- jink
@@ -63,3 +62,4 @@ fk.ai_card_keep_value["chitu"] = 100
 fk.ai_card_keep_value["dayuan"] = 100
 
 fk.ai_card_keep_value["zixing"] = 100
+

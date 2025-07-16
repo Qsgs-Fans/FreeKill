@@ -9,7 +9,6 @@ Item {
 
   function setPackages(summary) {
     const localSummary = JSON.parse(Pacman.getPackSummary());
-    console.log(Pacman.getPackSummary());
     packageModel.clear();
     for (let data of summary) {
       data.oldHash = localSummary.find(d => d.name === data.name)?.hash ?? "(nil)";
@@ -35,7 +34,6 @@ Item {
       }
     }
     if (coreItem && coreModel) {
-      console.log(coreItem, coreModel. oldHash, coreModel.hash, coreItem.hasError)
       if (coreModel.oldHash !== coreModel.hash && coreItem.hasError === false) {
         root.needRestart = true;
       }

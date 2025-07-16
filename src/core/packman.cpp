@@ -92,7 +92,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       enablePack(name);
 
       if (head(name) != obj["hash"].toString()) {
-        err = updatePack(name);
+        err = updatePack(name, obj["hash"].toString());
         if (err != 0) {
 #ifndef FK_SERVER_ONLY
           QString msg;
@@ -184,14 +184,7 @@ void PackMan::disablePack(const QString &pack) {
     disabled_packs << pack;
 }
 
-int PackMan::updatePack(const QString &pack) {
-  auto result = db->select(QString("SELECT hash FROM packages \
-  WHERE name = '%1';")
-                                           .arg(pack));
-  if (result.isEmpty())
-    // 真的返回0么
-    return 0;
-
+int PackMan::updatePack(const QString &pack, const QString &hash) {
   int err;
   err = status(pack);
   if (err != 0)
@@ -199,7 +192,7 @@ int PackMan::updatePack(const QString &pack) {
   err = pull(pack);
   if (err < 0)
     return err;
-  err = checkout(pack, result[0]["hash"]);
+  err = checkout(pack, hash);
   if (err < 0)
     return err;
   return 0;

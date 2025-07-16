@@ -19,7 +19,7 @@ public:
   Q_INVOKABLE int downloadNewPack(const QString &url, bool useThread = false);
   Q_INVOKABLE void enablePack(const QString &pack);
   Q_INVOKABLE void disablePack(const QString &pack);
-  Q_INVOKABLE int updatePack(const QString &pack);
+  Q_INVOKABLE int updatePack(const QString &pack, const QString &hash);
   Q_INVOKABLE int upgradePack(const QString &pack);
   Q_INVOKABLE void removePack(const QString &pack);
   Q_INVOKABLE QString listPackages();

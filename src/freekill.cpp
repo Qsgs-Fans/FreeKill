@@ -101,7 +101,6 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   auto date = QDate::currentDate();
 
   QScopedPointer<QTextStream> ofs(nullptr);
-  QTextStream out(stdout);
 
   switch (type) {
   case QtDebugMsg:
@@ -120,10 +119,6 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
 #else
   printf("\r");
 #endif
-
-  auto dateStr = QString::asprintf("%02d/%02d", date.month(), date.day());
-  out << dateStr << " " << QTime::currentTime().toString("hh:mm:ss") << " ";
-  *ofs << dateStr << " " << QTime::currentTime().toString("hh:mm:ss") << " ";
 
   auto threadName = QThread::currentThread()->objectName();
   QString levelMark = "D";
@@ -156,8 +151,21 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  out << threadName << "[" << levelMark << "] " << msg << Qt::endl;
-  *ofs << threadName << "[" << levelMarkNoColor << "] " << msg << Qt::endl;
+  auto dateStr = QString::asprintf("%02d/%02d", date.month(), date.day());
+  auto timeStr = QTime::currentTime().toString("hh:mm:ss");
+#ifndef Q_OS_WIN32
+  QTextStream out(stdout);
+  out << dateStr << " " << timeStr << " " << threadName <<
+    "[" << levelMark << "] " << msg << Qt::endl;
+#else
+  // 略win区，你赢了
+  // 但至少win肯定支持wchar_t，%ls放心用
+  printf("%ls %ls %ls[%ls] %ls\r\n", qUtf16Printable(dateStr),
+         qUtf16Printable(timeStr), qUtf16Printable(threadName),
+         qUtf16Printable(levelMark), qUtf16Printable(msg));
+#endif
+  *ofs << dateStr << " " << timeStr << " " << threadName <<
+    "[" << levelMarkNoColor << "] " << msg << Qt::endl;
 
 #ifdef FK_USE_READLINE
   if (ShellInstance && !ShellInstance->lineDone()) {
