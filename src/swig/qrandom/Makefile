@@ -1,7 +1,7 @@
 # Compiler settings
 CXX = g++
 CXXFLAGS =  -fPIC -shared -Wall -Wextra
-LDFLAGS = -llua -lQt6Core
+LDFLAGS = -llua5.4 -lQt6Core
 
 # Paths
 LUA_INC = /usr/include/lua5.4

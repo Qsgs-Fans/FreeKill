@@ -133,7 +133,7 @@ private:
   void readConfig();
   QJsonObject config; ///< 配置文件其实就是一个JSON对象
 
-  bool hasWhitelist;
+  bool hasWhitelist = false;
   QVariantList whitelist;
 };
 

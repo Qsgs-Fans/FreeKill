@@ -392,5 +392,5 @@ qint64 Server::getUptime() const {
 
 bool Server::nameIsInWhiteList(const QString &name) const {
   if (!hasWhitelist) return true;
-  return whitelist.contains(name);
+  return whitelist.length() > 0 && whitelist.contains(name);
 }

@@ -127,7 +127,7 @@ target_link_libraries(libFreeKill PRIVATE
   ${JEMALLOC_LIBRARIES}
 )
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (${CMAKE_BUILD_TYPE}0 STREQUAL "Debug0")
   target_compile_definitions(libFreeKill PRIVATE QT_QML_DEBUG)
 endif ()
 
