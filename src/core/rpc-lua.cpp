@@ -3,6 +3,10 @@
 #include "core/packman.h"
 #include "core/util.h"
 
+#ifdef Q_OS_LINUX
+#include <unistd.h>
+#endif
+
 #ifdef RPC_DEBUG
 constexpr bool _EnableRpcDebug = true;
 #else
@@ -132,4 +136,28 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
 QVariant RpcLua::eval(const QString &lua) {
   // TODO; 可能根本不会去做
   return QVariant();
+}
+
+QString RpcLua::getConnectionInfo() const {
+  auto process = dynamic_cast<QProcess *>(socket);
+
+  if (process) {
+    auto pid = process->processId();
+    auto ret = QString("PID %1").arg(pid);
+
+#ifdef Q_OS_LINUX
+    // 若为Linux，附送RSS信息
+    QFile f(QString("/proc/%1/statm").arg(pid));
+    if (f.open(QIODevice::ReadOnly)) {
+      const QList<QByteArray> parts = f.readAll().split(' ');
+      const long pageSize = sysconf(_SC_PAGESIZE);
+      auto mem_mib = (parts[1].toLongLong() * pageSize) / (1024.0 * 1024.0);
+      ret += QString::asprintf(" (RSS = %.2f MiB)", mem_mib);
+    }
+#endif
+
+    return ret;
+  } else {
+    return "unknown";
+  }
 }

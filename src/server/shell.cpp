@@ -2,6 +2,7 @@
 
 #include "server/shell.h"
 #include "core/packman.h"
+#include "core/rpc-lua.h"
 #include "server/server.h"
 #include "server/serverplayer.h"
 #include "server/roomthread.h"
@@ -475,12 +476,22 @@ void Shell::statCommand(QStringList &) {
   for (auto thr : threads) {
     auto rooms = thr->findChildren<Room *>();
     auto L = thr->getLua();
-    auto mem_mib = L->eval(getmem).toDouble();
+
+    QString stat_str = QStringLiteral("unknown");
+    if (server->isRpcEnabled()) {
+      auto rpcL = dynamic_cast<RpcLua *>(L);
+      if (rpcL) {
+        stat_str = rpcL->getConnectionInfo();
+      }
+    } else {
+      auto mem_mib = L->eval(getmem).toDouble();
+      stat_str = QString::asprintf("%.2f MiB", mem_mib);
+    }
     auto outdated = thr->isOutdated();
     if (rooms.count() == 0 && outdated) {
       thr->deleteLater();
     } else {
-      qInfo("RoomThread %p | %.2f MiB | %lld room(s) %s", thr, mem_mib, rooms.count(),
+      qInfo("RoomThread %p | %ls | %lld room(s) %s", thr, qUtf16Printable(stat_str), rooms.count(),
             outdated ? "| Outdated" : "");
     }
   }

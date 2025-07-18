@@ -26,7 +26,6 @@ Scheduler::Scheduler(RoomThread *thread) {
     L->call("InitScheduler", { QVariant::fromValue(thread) });
 
   } else {
-    qDebug("Using RpcLua");
     L = new RpcLua(ServerRpcMethods);
   }
 }

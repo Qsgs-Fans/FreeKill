@@ -12,6 +12,8 @@ public:
   QVariant call(const QString &func_name, QVariantList params = QVariantList());
   QVariant eval(const QString &lua);
 
+  QString getConnectionInfo() const;
+
 private:
   QIODevice *socket = nullptr;
   const JsonRpc::RpcMethodMap &methods;
