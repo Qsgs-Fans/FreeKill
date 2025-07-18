@@ -27,10 +27,11 @@ Client::Client(QObject *parent) : QObject(parent) {
   ClientSocket *socket = new ClientSocket;
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
   router = new Router(this, socket, Router::TYPE_CLIENT);
-  connect(router, &Router::notification_got, this, [=](const QString &c, const QString &j) {
+  connect(router, &Router::notification_got, this, [&](const QString &c, const QString &j) {
+    qDebug() << c << j;
     callLua(c, j, false);
   });
-  connect(router, &Router::request_got, this, [=](const QString &c, const QString &j) {
+  connect(router, &Router::request_got, this, [&](const QString &c, const QString &j) {
     callLua(c, j, true);
   });
 

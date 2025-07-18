@@ -17,6 +17,25 @@ using RpcMethod =
     std::function<std::pair<bool, QJsonValue>(const QJsonArray &)>;
 using RpcMethodMap = std::map<QString, RpcMethod>;
 
+// 检查params参数列表
+template<typename... Types>
+bool checkParams(const QJsonArray &params, Types... expectedTypes) {
+  const QJsonValue::Type types[] = {static_cast<QJsonValue::Type>(expectedTypes)...};
+  constexpr size_t typeCount = sizeof...(Types);
+
+  if (params.size() != static_cast<int>(typeCount)) {
+    return false;
+  }
+
+  for (size_t i = 0; i < typeCount; ++i) {
+    if (params[i].type() != types[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 struct JsonRpcError {
   int code;
   QString message;

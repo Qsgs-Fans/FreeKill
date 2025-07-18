@@ -127,17 +127,32 @@ Lobby *Server::lobby() const { return m_lobby; }
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
+ServerPlayer *Server::findPlayerByConnId(const QString &connId) const {
+  return players_conn.value(connId);
+}
+
 void Server::addPlayer(ServerPlayer *player) {
   int id = player->getId();
-  if (players.contains(id))
-    players.remove(id);
+  if (id > 0) {
+    if (players.contains(id))
+      players.remove(id);
 
-  players.insert(id, player);
+    players.insert(id, player);
+  }
+
+  players_conn.insert(player->getConnId(), player);
+  qDebug() << player->getConnId() << player << player->getId();
 }
 
 void Server::removePlayer(int id) {
   if (players[id]) {
     players.remove(id);
+  }
+}
+
+void Server::removePlayerByConnId(QString connId) {
+  if (players_conn[connId]) {
+    players_conn.remove(connId);
   }
 }
 
@@ -209,7 +224,7 @@ void Server::createNewPlayer(ClientSocket *client, const QString &name, const QS
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()).toUtf8());
   }
-  players.insert(player->getId(), player);
+  addPlayer(player);
 
   setupPlayer(player);
 

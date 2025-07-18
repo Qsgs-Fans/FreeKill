@@ -6,6 +6,7 @@
 #include "core/c-wrapper.h"
 #include "core/rpc-lua.h"
 #include "server/roomthread-rpc.h"
+#include "server/serverplayer.h"
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
@@ -44,6 +45,7 @@ void Scheduler::doDelay(int roomId, int ms) {
 }
 
 bool Scheduler::resumeRoom(int roomId, const char *reason) {
+  auto room = ServerInstance->findRoom(roomId);
   return L->call("ResumeRoom", { roomId, reason }).toBool();
 }
 
