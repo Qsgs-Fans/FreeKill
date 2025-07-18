@@ -4,21 +4,30 @@
 #include "server/server.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
+#include "core/rpc-lua.h"
+#include "server/roomthread-rpc.h"
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
 #endif
 
 Scheduler::Scheduler(RoomThread *thread) {
-  L = new Lua;
-  if (QFile::exists("packages/freekill-core") &&
+  if (!ServerInstance->isRpcEnabled()) {
+    L = new Lua;
+    if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
-    // 危险的cd操作，记得在lua中切回游戏根目录
-    QDir::setCurrent("packages/freekill-core");
+      // 危险的cd操作，记得在lua中切回游戏根目录
+      QDir::setCurrent("packages/freekill-core");
+    }
+
+    L->dofile("lua/freekill.lua");
+    L->dofile("lua/server/scheduler.lua");
+    L->call("InitScheduler", { QVariant::fromValue(thread) });
+
+  } else {
+    qDebug("Using RpcLua");
+    L = new RpcLua(ServerRpcMethods);
   }
-  L->dofile("lua/freekill.lua");
-  L->dofile("lua/server/scheduler.lua");
-  L->call("InitScheduler", { QVariant::fromValue(thread) });
 }
 
 Scheduler::~Scheduler() {
@@ -102,7 +111,7 @@ bool RoomThread::isOutdated() {
   return ret;
 }
 
-Lua *RoomThread::getLua() const {
+LuaInterface *RoomThread::getLua() const {
   return m_scheduler->getLua();
 }
 

@@ -7,7 +7,18 @@
 struct lua_State;
 struct sqlite3;
 
-class Lua {
+class LuaInterface {
+public:
+  // LuaInterface() {}
+  virtual ~LuaInterface() {}
+
+  virtual bool dofile(const char *path) = 0;
+  virtual QVariant call(const QString &func_name,
+                        QVariantList params = QVariantList()) = 0;
+  virtual QVariant eval(const QString &lua) = 0;
+};
+
+class Lua : public LuaInterface {
 public:
   Lua();
   ~Lua();
@@ -18,8 +29,9 @@ public:
   // 之所以static是因为swig的naturalvar环节处理QVariant需要
   // 函数的定义在naturalvar.i中
   static void pushValue(lua_State *L, QVariant v);
-  static QVariant readValue(lua_State *L, int index = 0,
-      QHash<const void *, bool> stack = QHash<const void *, bool>());
+  static QVariant
+  readValue(lua_State *L, int index = 0,
+            QHash<const void *, bool> stack = QHash<const void *, bool>());
 
   QVariant call(const QString &func_name, QVariantList params = QVariantList());
   QVariant eval(const QString &lua);
@@ -32,7 +44,6 @@ private:
   bool needLock();
 };
 
-
 class Sqlite3 {
 public:
   Sqlite3(const QString &filename = QStringLiteral("./server/users.db"),
@@ -41,7 +52,7 @@ public:
 
   static bool checkString(const QString &str);
 
-  typedef QList< QMap<QString, QString> > QueryResult;
+  typedef QList<QMap<QString, QString>> QueryResult;
   QueryResult select(const QString &sql);
   QString selectJson(const QString &sql);
   void exec(const QString &sql);
