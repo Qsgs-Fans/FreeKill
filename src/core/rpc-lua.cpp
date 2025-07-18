@@ -105,9 +105,15 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
 
     auto packet = doc.object();
     if (packet["jsonrpc"] == "2.0" && packet["id"] == id && packet["method"].isNull()) {
-      rpc_debug("Me <-- %ls: %s",
-             qUtf16Printable(Color("response", fkShell::Green, fkShell::Bold)),
-             qUtf8Printable(QJsonDocument({ packet["result"] }).toJson(QJsonDocument::Compact)));
+      if (packet.value("error").isObject()) {
+        rpc_debug("Me <-- %ls: %s",
+                  qUtf16Printable(Color("response (error)", fkShell::Red, fkShell::Bold)),
+                  qUtf8Printable(QJsonDocument(packet).toJson(QJsonDocument::Compact)));
+      } else {
+        rpc_debug("Me <-- %ls: %s",
+                  qUtf16Printable(Color("response", fkShell::Green, fkShell::Bold)),
+                  qUtf8Printable(QJsonDocument({ packet["result"] }).toJson(QJsonDocument::Compact)));
+      }
       return packet["result"].toVariant();
     } else {
       rpc_debug("  Me <-- %ls: %ls %s",

@@ -214,7 +214,7 @@ void ServerPlayer::onStateChanged() {
 
   auto thread = qobject_cast<RoomThread *>(room->parent());
   if (thread) {
-    emit thread->setPlayerState(this, room->getId());
+    emit thread->setPlayerState(connId, room->getId());
   }
 
   if (room->isAbandoned()) return;

@@ -48,11 +48,16 @@ bool Scheduler::resumeRoom(int roomId, const char *reason) {
   return L->call("ResumeRoom", { roomId, reason }).toBool();
 }
 
-void Scheduler::setPlayerState(ServerPlayer *player, int roomId) {
+void Scheduler::setPlayerState(const QString &connId, int roomId) {
+  auto player = ServerInstance->findPlayerByConnId(connId);
+  if (!player) return;
   L->call("SetPlayerState", { roomId, player->getId(), player->getState() });
 }
 
-void Scheduler::addObserver(ServerPlayer *p, int roomId) {
+void Scheduler::addObserver(const QString &connId, int roomId) {
+  auto p = ServerInstance->findPlayerByConnId(connId);
+  if (!p) return;
+
   QVariantList gameData;
   for (auto i : p->getGameData()) gameData << i;
 
@@ -72,7 +77,10 @@ void Scheduler::addObserver(ServerPlayer *p, int roomId) {
   });
 }
 
-void Scheduler::removeObserver(ServerPlayer *player, int roomId) {
+void Scheduler::removeObserver(const QString &connId, int roomId) {
+  auto player = ServerInstance->findPlayerByConnId(connId);
+  if (!player) return;
+
   L->call("RemoveObserver", { roomId, player->getId() });
 }
 

@@ -23,9 +23,9 @@ class Scheduler : public QObject {
   bool resumeRoom(int roomId, const char *reason);
 
   // 只在rpc模式下有效果
-  void setPlayerState(ServerPlayer *, int roomId);
-  void addObserver(ServerPlayer *, int roomId);
-  void removeObserver(ServerPlayer *, int roomId);
+  void setPlayerState(const QString &, int roomId);
+  void addObserver(const QString &, int roomId);
+  void removeObserver(const QString &, int roomId);
 
  private:
   LuaInterface *L;
@@ -63,9 +63,9 @@ class RoomThread : public QThread {
   void wakeUp(int roomId, const char *);
 
   // 只在rpc模式下有效果
-  void setPlayerState(ServerPlayer *, int roomId);
-  void addObserver(ServerPlayer *, int roomId);
-  void removeObserver(ServerPlayer *, int roomId);
+  void setPlayerState(const QString &, int roomId);
+  void addObserver(const QString &, int roomId);
+  void removeObserver(const QString &, int roomId);
 
  public slots:
   void onRoomAbandoned();
