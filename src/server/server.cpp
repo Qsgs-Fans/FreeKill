@@ -141,7 +141,6 @@ void Server::addPlayer(ServerPlayer *player) {
   }
 
   players_conn.insert(player->getConnId(), player);
-  qDebug() << player->getConnId() << player << player->getId();
 }
 
 void Server::removePlayer(int id) {

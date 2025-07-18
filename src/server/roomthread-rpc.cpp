@@ -119,21 +119,6 @@ static _rpcRet _rpc_ServerPlayer_doNotify(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_ServerPlayer_getState(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
-    return { false, nullVal };
-  }
-
-  QString connId = params[0].toString();
-  auto player = ServerInstance->findPlayerByConnId(connId);
-  if (!player) {
-    return { false, "Player not found" };
-  }
-
-  auto ret = player->getState();
-  return { true, ret };
-}
-
 static _rpcRet _rpc_ServerPlayer_thinking(const QJsonArray &params) {
   if (!checkParams(params, QJsonValue::String)) {
     return { false, nullVal };
@@ -163,6 +148,38 @@ static _rpcRet _rpc_ServerPlayer_setThinking(const QJsonArray &params) {
   }
 
   player->setThinking(thinking);
+  return { true, nullVal };
+}
+
+static _rpcRet _rpc_ServerPlayer_setDied(const QJsonArray &params) {
+  if (!checkParams(params, QJsonValue::String, QJsonValue::Bool)) {
+    return { false, nullVal };
+  }
+
+  QString connId = params[0].toString();
+  bool died = params[1].toBool();
+
+  auto player = ServerInstance->findPlayerByConnId(connId);
+  if (!player) {
+    return { false, "Player not found" };
+  }
+
+  player->setDied(died);
+  return { true, nullVal };
+}
+
+static _rpcRet _rpc_ServerPlayer_emitKick(const QJsonArray &params) {
+  if (!checkParams(params, QJsonValue::String)) {
+    return { false, nullVal };
+  }
+
+  QString connId = params[0].toString();
+  auto player = ServerInstance->findPlayerByConnId(connId);
+  if (!player) {
+    return { false, "Player not found" };
+  }
+
+  emit player->kicked();
   return { true, nullVal };
 }
 
@@ -284,6 +301,38 @@ static _rpcRet _rpc_Room_destroyRequestTimer(const QJsonArray &params) {
   return { true, nullVal };
 }
 
+static _rpcRet _rpc_Room_increaseRefCount(const QJsonArray &params) {
+  if (!checkParams(params, QJsonValue::Double)) {
+    return { false, nullVal };
+  }
+
+  int roomId = params[0].toInt(-1);
+  auto room = ServerInstance->findRoom(roomId);
+  if (!room) {
+    return { false, "Room not found" };
+  }
+
+  room->increaseRefCount();
+
+  return { true, nullVal };
+}
+
+static _rpcRet _rpc_Room_decreaseRefCount(const QJsonArray &params) {
+  if (!checkParams(params, QJsonValue::Double)) {
+    return { false, nullVal };
+  }
+
+  int roomId = params[0].toInt(-1);
+  auto room = ServerInstance->findRoom(roomId);
+  if (!room) {
+    return { false, "Room not found" };
+  }
+
+  room->decreaseRefCount();
+
+  return { true, nullVal };
+}
+
 // 收官：getRoom
 
 static QJsonObject getPlayerObject(ServerPlayer *p) {
@@ -296,6 +345,8 @@ static QJsonObject getPlayerObject(ServerPlayer *p) {
     { "screenName", p->getScreenName() },
     { "avatar", p->getAvatar() },
     { "totalGameTime", p->getTotalGameTime() },
+
+    { "state", p->getState() },
 
     { "gameData", gameData },
   };
@@ -341,9 +392,10 @@ const JsonRpc::RpcMethodMap ServerRpcMethods {
   { "ServerPlayer_doRequest", _rpc_ServerPlayer_doRequest },
   { "ServerPlayer_waitForReply", _rpc_ServerPlayer_waitForReply },
   { "ServerPlayer_doNotify", _rpc_ServerPlayer_doNotify },
-  { "ServerPlayer_getState", _rpc_ServerPlayer_getState },
   { "ServerPlayer_thinking", _rpc_ServerPlayer_thinking },
   { "ServerPlayer_setThinking", _rpc_ServerPlayer_setThinking },
+  { "ServerPlayer_setDied", _rpc_ServerPlayer_setDied },
+  { "ServerPlayer_emitKick", _rpc_ServerPlayer_emitKick },
 
   { "Room_delay", _rpc_Room_delay },
   { "Room_updatePlayerWinRate", _rpc_Room_updatePlayerWinRate },
@@ -351,6 +403,8 @@ const JsonRpc::RpcMethodMap ServerRpcMethods {
   { "Room_gameOver", _rpc_Room_gameOver },
   { "Room_setRequestTimer", _rpc_Room_setRequestTimer },
   { "Room_destroyRequestTimer", _rpc_Room_destroyRequestTimer },
+  { "Room_increaseRefCount", _rpc_Room_increaseRefCount },
+  { "Room_decreaseRefCount", _rpc_Room_decreaseRefCount },
 
   { "RoomThread_getRoom", _rpc_RoomThread_getRoom },
 };

@@ -49,6 +49,10 @@ Room::~Room() {
   for (auto p : observers) {
     removeObserver(p);
   }
+
+  auto server = ServerInstance;
+  server->removeRoom(getId());
+  server->updateOnlineInfo();
 }
 
 int Room::getId() const { return id; }
@@ -286,6 +290,8 @@ void Room::addObserver(ServerPlayer *player) {
   observers.append(player);
   player->setRoom(this);
   emit playerAdded(player);
+  auto thread = qobject_cast<RoomThread *>(parent());
+  emit thread->addObserver(player, id);
   pushRequest(QString("%1,observe").arg(player->getId()));
 }
 
@@ -302,6 +308,8 @@ void Room::removeObserver(ServerPlayer *player) {
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
   }
+  auto thread = qobject_cast<RoomThread *>(parent());
+  emit thread->removeObserver(player, id);
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
 
