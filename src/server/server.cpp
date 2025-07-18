@@ -62,16 +62,16 @@ Server::Server(QObject *parent) : QObject(parent) {
 
 Server::~Server() {
   isListening = false;
-  ServerInstance = nullptr;
-  for (auto i = players.cbegin(); i != players.cend(); i++) {
-    // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
-    delete i.value();
+  for (auto p : players) {
+    p->deleteLater();
   }
   // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
   for (auto thr : findChildren<RoomThread *>()) {
     delete thr;
   }
   delete db;
+
+  ServerInstance = nullptr;
 }
 
 bool Server::listen(const QHostAddress &address, ushort port) {

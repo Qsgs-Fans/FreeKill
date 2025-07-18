@@ -625,10 +625,10 @@ void Room::removeRejectId(int id) {
 
 // ------------------------------------------------
 void Room::quitRoom(ServerPlayer *player, const QString &) {
+  removePlayer(player);
   if (isOutdated()) {
     emit player->kicked();
   }
-  removePlayer(player);
 }
 
 void Room::addRobotRequest(ServerPlayer *player, const QString &) {

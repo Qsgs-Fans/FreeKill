@@ -51,12 +51,13 @@ Client::Client(QObject *parent) : QObject(parent) {
 }
 
 Client::~Client() {
-  ClientInstance = nullptr;
   delete L;
   delete db;
   delete p_ptr;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
+
+  ClientInstance = nullptr;
 }
 
 void Client::connectToHost(const QString &server, ushort port) {
