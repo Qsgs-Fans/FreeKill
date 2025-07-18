@@ -69,8 +69,10 @@ public:
   Lobby *lobby() const; /// 获取大厅对象
 
   ServerPlayer *findPlayer(int id) const; /// 获取对应id的玩家
+  ServerPlayer *findPlayerByConnId(const QString &connId) const; /// 获取对应connId的玩家
   void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
   void removePlayer(int id); /// 从表中删除对应id的玩家
+  void removePlayerByConnId(QString connid); /// 从表中删除对应connid的玩家
   auto getPlayers() { return players; } /// 获取players表
 
   void updateRoomList(ServerPlayer *teller);
@@ -98,6 +100,9 @@ public:
 
   bool nameIsInWhiteList(const QString &name) const;
 
+  void enableRpc() { useRpc = true; }
+  bool isRpcEnabled() const { return useRpc; }
+
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -115,6 +120,7 @@ private:
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
+  QHash<QString, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
   QList<QString> temp_banlist; ///< 被tempban的ip列表
 
   AuthManager *auth;
@@ -135,6 +141,8 @@ private:
 
   bool hasWhitelist = false;
   QVariantList whitelist;
+
+  bool useRpc = false;
 };
 
 extern Server *ServerInstance; ///< 全局Server对象

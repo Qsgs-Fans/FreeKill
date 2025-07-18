@@ -20,6 +20,7 @@ ServerPlayer::ServerPlayer(RoomBase *roombase) {
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
   connect(this, &Player::readyChanged, this, &ServerPlayer::onReadyChanged);
 
+  connId = QUuid::createUuid().toString();
   alive = true;
   m_thinking = false;
 }
@@ -37,6 +38,8 @@ ServerPlayer::~ServerPlayer() {
   // 最后服务器删除他
   if (server->findPlayer(getId()) == this)
     server->removePlayer(getId());
+
+  server->removePlayerByConnId(connId);
 }
 
 void ServerPlayer::setSocket(ClientSocket *socket) {
@@ -93,6 +96,7 @@ void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonDa
                              int timeout, qint64 timestamp) {
   if (getState() != Player::Online)
     return;
+
   int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
   router->request(type, command, jsonData, timeout, timestamp);
 }
@@ -206,6 +210,13 @@ void ServerPlayer::onStateChanged() {
   auto _room = getRoom();
   if (!_room || _room->isLobby()) return;
   auto room = qobject_cast<Room *>(_room);
+  if (room->hasObserver(this)) return;
+
+  auto thread = qobject_cast<RoomThread *>(room->parent());
+  if (thread) {
+    emit thread->setPlayerState(this, room->getId());
+  }
+
   if (room->isAbandoned()) return;
 
   auto state = getState();

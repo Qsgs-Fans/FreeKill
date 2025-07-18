@@ -49,6 +49,10 @@ Room::~Room() {
   for (auto p : observers) {
     removeObserver(p);
   }
+
+  auto server = ServerInstance;
+  server->removeRoom(getId());
+  server->updateOnlineInfo();
 }
 
 int Room::getId() const { return id; }
@@ -188,6 +192,8 @@ void Room::addRobot(ServerPlayer *player) {
   connect(robot, &QObject::destroyed, this, [=](){ players.removeOne(robot); });
   robot_id--;
 
+  server->addPlayer(robot);
+
   // FIXME: 会触发Lobby:removePlayer
   addPlayer(robot);
 }
@@ -212,10 +218,17 @@ void Room::removePlayer(ServerPlayer *player) {
     // 否则给跑路玩家召唤个AI代打
     // TODO: if the player is died..
 
+
     // 首先拿到跑路玩家的socket，然后把玩家的状态设为逃跑，这样自动被机器人接管
     ClientSocket *socket = player->getSocket();
     player->setState(Player::Run);
     player->removeSocket();
+
+    // 设完state后把房间叫起来
+    if (player->thinking()) {
+      auto thread = qobject_cast<RoomThread *>(parent());
+      thread->wakeUp(getId(), "player_disconnect");
+    }
 
     if (!player->isDied()) {
       runned_players << player->getId();
@@ -277,6 +290,8 @@ void Room::addObserver(ServerPlayer *player) {
   observers.append(player);
   player->setRoom(this);
   emit playerAdded(player);
+  auto thread = qobject_cast<RoomThread *>(parent());
+  emit thread->addObserver(player, id);
   pushRequest(QString("%1,observe").arg(player->getId()));
 }
 
@@ -293,6 +308,8 @@ void Room::removeObserver(ServerPlayer *player) {
     arr << player->getAvatar();
     player->doNotify("Setup", JsonArray2Bytes(arr));
   }
+  auto thread = qobject_cast<RoomThread *>(parent());
+  emit thread->removeObserver(player, id);
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
 
@@ -608,10 +625,10 @@ void Room::removeRejectId(int id) {
 
 // ------------------------------------------------
 void Room::quitRoom(ServerPlayer *player, const QString &) {
+  removePlayer(player);
   if (isOutdated()) {
     emit player->kicked();
   }
-  removePlayer(player);
 }
 
 void Room::addRobotRequest(ServerPlayer *player, const QString &) {

@@ -26,6 +26,10 @@ else ()
   add_definitions(-DFK_SERVER_ONLY)
 endif()
 
+if (DEFINED RPC_DEBUG)
+  add_definitions(-DRPC_DEBUG)
+endif()
+
 find_package(OpenSSL)
 find_package(Lua)
 find_package(SQLite3)

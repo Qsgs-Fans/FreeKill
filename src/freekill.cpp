@@ -276,6 +276,9 @@ int freekill_main(int argc, char *argv[]) {
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
   parser.addOption({{"h", "help"}, "display help information"});
+#ifdef Q_OS_LINUX
+  parser.addOption({"rpc", "enable rpc mode if is server"});
+#endif
   parser.addOption({"testskills", "run test case of skills", "testskills"});
   parser.addOption({"testfile", "run test case of a skill file", "testfile"});
   QStringList cliOptions;
@@ -313,6 +316,11 @@ int freekill_main(int argc, char *argv[]) {
 
     Pacman = new PackMan;
     Server *server = new Server;
+#ifdef Q_OS_LINUX
+    if (parser.isSet("rpc")) {
+      server->enableRpc();
+    }
+#endif
     if (!server->listen(QHostAddress::Any, serverPort)) {
       qFatal("cannot listen on port %d!\n", serverPort);
       app->exit(1);

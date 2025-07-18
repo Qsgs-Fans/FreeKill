@@ -62,16 +62,16 @@ Server::Server(QObject *parent) : QObject(parent) {
 
 Server::~Server() {
   isListening = false;
-  ServerInstance = nullptr;
-  for (auto i = players.cbegin(); i != players.cend(); i++) {
-    // deleteLater时顺序无法确定 需要在此立刻delete掉以触发析构函数
-    delete i.value();
+  for (auto p : players) {
+    p->deleteLater();
   }
   // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
   for (auto thr : findChildren<RoomThread *>()) {
     delete thr;
   }
   delete db;
+
+  ServerInstance = nullptr;
 }
 
 bool Server::listen(const QHostAddress &address, ushort port) {
@@ -80,6 +80,10 @@ bool Server::listen(const QHostAddress &address, ushort port) {
   if (ret) {
     uptime_counter.restart();
     qInfo("Server is listening on port %d", port);
+
+    if (useRpc) {
+      qInfo("This server uses json-rpc to communicate with Lua VM.");
+    }
   }
   return ret;
 }
@@ -127,17 +131,31 @@ Lobby *Server::lobby() const { return m_lobby; }
 
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
+ServerPlayer *Server::findPlayerByConnId(const QString &connId) const {
+  return players_conn.value(connId);
+}
+
 void Server::addPlayer(ServerPlayer *player) {
   int id = player->getId();
-  if (players.contains(id))
-    players.remove(id);
+  if (id > 0) {
+    if (players.contains(id))
+      players.remove(id);
 
-  players.insert(id, player);
+    players.insert(id, player);
+  }
+
+  players_conn.insert(player->getConnId(), player);
 }
 
 void Server::removePlayer(int id) {
   if (players[id]) {
     players.remove(id);
+  }
+}
+
+void Server::removePlayerByConnId(QString connId) {
+  if (players_conn[connId]) {
+    players_conn.remove(connId);
   }
 }
 
@@ -209,7 +227,7 @@ void Server::createNewPlayer(ClientSocket *client, const QString &name, const QS
   if (players.count() <= 10) {
     broadcast("ServerMessage", tr("%1 logged in").arg(player->getScreenName()).toUtf8());
   }
-  players.insert(player->getId(), player);
+  addPlayer(player);
 
   setupPlayer(player);
 

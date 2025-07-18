@@ -3,9 +3,10 @@
 #ifndef _ROOMTHREAD_H
 #define _ROOMTHREAD_H
 
-class Lua;
+class LuaInterface;
 class Room;
 class Server;
+class ServerPlayer;
 class RoomThread;
 
 class Scheduler : public QObject {
@@ -21,8 +22,13 @@ class Scheduler : public QObject {
   void doDelay(int roomId, int ms);
   bool resumeRoom(int roomId, const char *reason);
 
+  // 只在rpc模式下有效果
+  void setPlayerState(ServerPlayer *, int roomId);
+  void addObserver(ServerPlayer *, int roomId);
+  void removeObserver(ServerPlayer *, int roomId);
+
  private:
-  Lua *L;
+  LuaInterface *L;
 };
 
 /**
@@ -48,13 +54,18 @@ class RoomThread : public QThread {
 
   bool isOutdated();
 
-  Lua *getLua() const;
+  LuaInterface *getLua() const;
 
  signals:
   void scheduler_ready();
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);
+
+  // 只在rpc模式下有效果
+  void setPlayerState(ServerPlayer *, int roomId);
+  void addObserver(ServerPlayer *, int roomId);
+  void removeObserver(ServerPlayer *, int roomId);
 
  public slots:
   void onRoomAbandoned();
