@@ -5,6 +5,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Fk.Pages
 import Fk.Widgets as W
+import Fk
+import Fk.RoomElement
 
 Rectangle {
   color: "transparent"
@@ -42,10 +44,9 @@ Rectangle {
         const extension = gdata.extension;
         let ret = false;
         for (let i = 0; i < 999; i++) {
-          const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-          t.name + "_" + general + (i !== 0 ? i.toString() : "") + ".mp3";
+          const fname = SkinBank.getAudioRealPath(t.name + "_" + general + (i !== 0 ? i.toString() : ""), extension, "skill");
 
-          if (Backend.exists(fname)) {
+          if (fname !== undefined) {
             ret = true;
             skills.append({ name: t.name, idx: i, specific: true, general: general });
           } else {
@@ -57,10 +58,9 @@ Rectangle {
           if (!skilldata) return;
           const extension = skilldata.extension;
           for (let i = 0; i < 999; i++) {
-            const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-            t.name + (i !== 0 ? i.toString() : "") + ".mp3";
+            const fname = SkinBank.getAudioRealPath(t.name+ (i !== 0 ? i.toString() : ""), extension, "skill");
 
-            if (Backend.exists(fname)) {
+            if (fname !== undefined) {
               skills.append({ name: t.name, idx: i, specific: false, general: general});
             } else {
               if (i > 0) break;
@@ -74,8 +74,7 @@ Rectangle {
   function findWinDeathAudio(general, isWin) {
     if (general === "") return;
     const extension = lcall("GetGeneralData", general).extension;
-    const fname = AppPath + "/packages/" + extension + "/audio/" + (isWin ? "win/" : "death/")
-    + general + ".mp3";
+    const fname = SkinBank.getAudioRealPath(general, extension, isWin ? "win" : "death");
     if (Backend.exists(fname)) {
       skills.append({ name: (isWin ? "!" : "~") + general });
     }
@@ -225,7 +224,7 @@ Rectangle {
           let ret = name;
 
           if (!isWinOrDeathAudio) {
-            ret = `$${name}${specific ? '_' + general : ""}${idx}`;
+            ret = `$${name}${specific ? '_' + general : ""}${idx ? idx.toString() : ""}`;
           }
 
           return luatr(ret);

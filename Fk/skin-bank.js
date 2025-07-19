@@ -24,11 +24,11 @@ var TILE_ICON_DIR = AppPath + "/image/button/tileicon/"
 var LOBBY_IMG_DIR = AppPath + "/image/lobby/";
 var MISC_DIR = AppPath + "/image/misc/";
 
-const searchPkgResource = function(path, name, suffix) {
+const searchPkgResource = function (path, name, suffix) {
   suffix = suffix ?? ".png";
   const dirs = Backend.ls(AppPath + "/packages/").filter(dir =>
     !Pacman.getDisabledPacks().includes(dir) &&
-      !dir.endsWith(".disabled")
+    !dir.endsWith(".disabled")
   );
   if (typeof config !== "undefined" && config.enabledResourcePacks) {
     for (const packName of config.enabledResourcePacks) {
@@ -46,7 +46,7 @@ const searchPkgResource = function(path, name, suffix) {
   }
 }
 
-const searchPkgResourceWithExtension = function(extension, path, name, suffix) {
+const searchPkgResourceWithExtension = function (extension, path, name, suffix) {
   suffix = suffix ?? ".png";
   if (typeof config !== "undefined" && config.enabledResourcePacks) {
     for (const packName of config.enabledResourcePacks) {
@@ -57,6 +57,40 @@ const searchPkgResourceWithExtension = function(extension, path, name, suffix) {
 
   const ret = AppPath + "/packages/" + extension + path + name + suffix;
   if (Backend.exists(ret)) return ret;
+}
+
+// 尝试在资源包中查找武将技能语音
+const searchAudioResourceWithExtension = function (extension, path, name, suffix = ".mp3") {
+  if (typeof config !== "undefined" && config.enabledResourcePacks) {
+    for (const packName of config.enabledResourcePacks) {
+      const resPath = `${AppPath}/resource_pak/${packName}/packages/${extension}${path}${name}${suffix}`;
+      if (Backend.exists(resPath)) {
+        return `./resource_pak/${packName}/packages/${extension}${path}${name}`;
+      }
+    }
+  }
+
+  const retPath = `${AppPath}/packages/${extension}${path}${name}${suffix}`;
+  if (Backend.exists(retPath)) {
+    return `./packages/${extension}${path}${name}`;
+  }
+}
+
+// 尝试在资源包中根据路径查找音效
+const searchAudioResourceByPath = function (path) {
+  if (typeof config !== "undefined" && config.enabledResourcePacks) {
+    for (const packName of config.enabledResourcePacks) {
+      const resPath = `${AppPath}/resource_pak/${packName}${path}`;
+      if (Backend.exists(resPath)) {
+        return `./resource_pak/${packName}${path}`;
+      }
+    }
+  }
+
+  const retPath = `${AppPath}/${path}`;
+  if (Backend.exists(retPath)) {
+    return path;
+  }
 }
 
 function searchBuiltinPic(path, name, suffix) {
@@ -180,4 +214,39 @@ function getMarkPic(mark) {
   let ret = searchPkgResource("/image/mark/", mark);
   if (ret) return ret;
   return "";
+}
+
+function removeMp3Suffix(path) {
+  return path.replace(/(1)?\.mp3$/i, "");
+}
+
+// 武将技能语音
+function getAudio(name, extension, audiotype) {
+  const basePath = "/audio/" + audiotype + "/";
+  const tryPaths = [
+    [extension, basePath, name, ".mp3"],
+    [extension, basePath, name, "1.mp3"]
+  ];
+
+  for (const args of tryPaths) {
+    const ret = searchAudioResourceWithExtension(...args);
+    if (ret) {
+      return ret;
+    }
+  }
+}
+
+// 非技能的卡牌和其他语音
+function getAudioByPath(path) {
+  const ret = searchAudioResourceByPath(path + ".mp3")
+  if (ret) {
+    return removeMp3Suffix(ret);
+  }
+}
+
+function getAudioRealPath(name, extension, audiotype) {
+  const ret = searchPkgResourceWithExtension(extension, "/audio/" + audiotype + "/", name, ".mp3");
+  if (Backend.exists(ret)) {
+    return ret;
+  }
 }

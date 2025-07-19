@@ -1,5 +1,13 @@
 # ChangeLog
 
+## v0.5.10
+
+（仅Linux）服务端可以以rpc模式启动，详见lua/server/rpc以及src/swig/qrandom
+
+修复libgit2若干bug，适配1.9.1，修复一直存在的逻辑问题
+
+___
+
 ## v0.5.8
 
 新增了更新拓展包时的ui（主要是C++上的传信号方式）

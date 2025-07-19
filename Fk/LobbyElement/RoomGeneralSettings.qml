@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Fk.Widgets as W
+
 Item {
   width: 600
   height: 800
@@ -146,14 +147,18 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: parent.bottom
-    height: 56
+    anchors.bottomMargin: 8
+    height: 56 - 8
     color: "transparent"
     RowLayout {
-      anchors.fill: parent
-      anchors.rightMargin: 8
+      width: parent.width * 0.5
+      height: parent.height
+      anchors.centerIn: parent
+      // anchors.rightMargin: 8
       spacing: 16
       W.ButtonContent {
         Layout.fillWidth: true
+        Layout.preferredHeight: 40
         text: luatr("OK")
         // enabled: !(warning.visible)
         onClicked: {
@@ -208,6 +213,7 @@ Item {
 
       W.ButtonContent {
         Layout.fillWidth: true
+        Layout.preferredHeight: 40
         text: luatr("Cancel")
         onClicked: {
           root.finish();

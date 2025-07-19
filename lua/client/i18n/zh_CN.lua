@@ -6,6 +6,7 @@ Fk:loadTranslationTable {
   ["Enter"] = "进入",
   ["Observe"] = "旁观",
 
+  ["Userinfo Settings"] = "个人信息",
   ["Edit Profile"] = "编辑个人信息",
   ["Username"] = "用户名",
   ["Avatar"] = "头像",
@@ -16,24 +17,38 @@ Fk:loadTranslationTable {
   ["Update Password"] = "更新密码",
   ["Update password done."] = "密码已更新",
   ["Old password wrong!"] = "旧密码错误！",
+
+  ["BG Settings"] = "游戏背景",
   ["Lobby BG"] = "大厅壁纸",
   ["Room BG"] = "房间背景",
   ["Game BGM"] = "游戏BGM",
   ["Poster Girl"] = "看板娘",
+
+  ["Audio Settings"] = "音频",
+  ["Audio and Message"] = "音频和消息",
   ["BGM Volume"] = "BGM音量",
   ["Effect Volume"] = "音效音量",
-  ["Userinfo Settings"] = "个人信息",
-  ["BG Settings"] = "游戏背景",
-  ["Audio Settings"] = "音频",
   ["Disable message audio"] = "禁用聊天语音",
-  ["Disable game over audio"] = "禁用游戏结束音效",
+  ["help: Disable message audio"] = "屏蔽所有玩家发送的聊天语音",
+  ["Disable game over audio"] = "禁用终局音效",
+  ["help: Disable game over audio"] = "禁用游戏结束框的胜利和失败音效",
+  ["Hide observer chatter"] = "屏蔽旁观者",
+  ["help: Hide observer chatter"] = "屏蔽旁观者发送的聊天消息和语音",
+  ["Hide presents"] = "屏蔽礼物",
+  ["help: Hide presents"] = "屏蔽所有玩家的送花、砸蛋、酒杯、拖鞋",
+
+  ["Control Settings"] = "游戏控制",
   ["Hide unselectable cards"] = "下移不可选卡牌",
-  ["Hide observer chatter"] = "屏蔽旁观者聊天",
-  ["Rotate table card"] = "处理区的牌随机旋转",
-  ["Hide presents"] = "屏蔽送花砸蛋",
+  ["help: Hide unselectable cards"] = "将不可选的卡牌移到屏幕下方",
+  ["Rotate table card"] = "随机旋转处理区",
+  ["help: Rotate table card"] = "将处理区内的卡牌随机旋转",
   ["Auto select the only target"] = "自动选择唯一目标",
-  ["Double click to use card or skill"] = "双击牌或头像使用牌或技能",
-  ["Do not use nullification to own one-target trick"] = "不对自己使用的单目标<br/>锦囊使用【无懈可击】",
+  ["help: Auto select the only target"] = "选择牌或技能后若只有一个目标则自动选择",
+  ["Double click to use card or skill"] = "双击使用",
+  ["help: Double click to use card or skill"] = "双击牌或头像以使用或打出牌或技能",
+  ["Do not use nullification to own one-target trick"] = "不无懈自己的单目标锦囊",
+  ["help: Do not use nullification to own one-target trick"] = "不对自己使用的单目标锦囊询问使用【无懈可击】",
+
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
   ["Favorite Generals"] = "特别关注",
@@ -127,6 +142,7 @@ Fk:loadTranslationTable {
 
   ["$OnlineInfo"] = "大厅人数：%1，总在线人数：%2",
 
+  ["Settings"] = "设置", -- in Room
   ["Overview"] = "一览",
   ["Generals Overview"] = "武将一览",
   ["Cards Overview"] = "卡牌一览",
@@ -410,6 +426,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["$Winner"] = "%1 获胜",
   ["$NoWinner"] = "平局！",
   ["Name"] = "名称",
+  ["Victory or Defeat"] = "胜负",
   ["Role"] = "身份",
   ["Turn"] = "回合",
   ["Recover"] = "回血",
@@ -465,15 +482,11 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.5.7
+  ## v0.5.9
 
-  修复了控制他人带来的视角相关bug
+  新增了更新拓展包时的ui
 
-  游戏结束时添加了简单的统计与称号（师承太阳神三国杀）
-
-  武将一览界面添加了筛选功能
-
-  房间里面现在可以看到有哪些旁观者了
+  并且更新freekill-core后提示客户端必须重启
 
   ]==],
 }

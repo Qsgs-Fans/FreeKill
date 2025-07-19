@@ -9,7 +9,8 @@ import Fk
 import Fk.Common
 import Fk.RoomElement
 import Fk.PhotoElement as PhotoElement
-import Fk.Widgets
+import Fk.Widgets as W
+import Fk.LobbyElement as L
 import "RoomLogic.js" as Logic
 
 Item {
@@ -124,10 +125,10 @@ Item {
 
       MenuItem {
         id: volumeButton
-        text: luatr("Audio Settings")
+        text: luatr("Settings")
         icon.source: AppPath + "/image/button/tileicon/configure"
         onClicked: {
-          volumeDialog.open();
+          settingsDialog.open();
         }
       }
 
@@ -907,7 +908,7 @@ Item {
     lcall("UpdateRequestUI", "SkillButton", skill_name, action, data);
   }
 
-  PopupLoader {
+  W.PopupLoader {
     id: roomDrawer
     width: realMainWin.width * 0.4
     height: realMainWin.height * 0.95
@@ -929,7 +930,7 @@ Item {
       scale: mainWindow.scale
       transformOrigin: Item.TopLeft
 
-      ViewSwitcher {
+      W.ViewSwitcher {
         id: drawerBar
         Layout.alignment: Qt.AlignHCenter
         model: [
@@ -1000,7 +1001,7 @@ Item {
     }
   }
 
-  PopupLoader {
+  W.PopupLoader {
     id: cheatLoader
     width: realMainWin.width * 0.60
     height: realMainWin.height * 0.8
@@ -1063,10 +1064,11 @@ Item {
     }
   }
 
-  Popup {
-    id: volumeDialog
-    width: realMainWin.width * 0.5
-    height: realMainWin.height * 0.5
+  W.PopupLoader {
+    id: settingsDialog
+    padding: 0
+    width: realMainWin.width * 0.6
+    height: realMainWin.height * 0.6
     anchors.centerIn: parent
     background: Rectangle {
       color: "#EEEEEEEE"
@@ -1075,16 +1077,30 @@ Item {
       border.width: 1
     }
 
-    Loader { // 塞不下了 TODO: 换新
-      anchors.centerIn: parent
-      width: parent.width / mainWindow.scale
-      height: parent.height / mainWindow.scale
-      scale: mainWindow.scale
-      source: "../LobbyElement/AudioSetting.qml"
+    W.SideBarSwitcher {
+      id: settingBar
+      width: 200
+      height: parent.height
+      model: ListModel {
+        ListElement { name: "Audio Settings" }
+        ListElement { name: "Control Settings" }
+      }
+    }
+
+    SwipeView {
+      width: settingsDialog.width - settingBar.width - 16
+      x: settingBar.width + 16
+      height: parent.height
+      interactive: false
+      orientation: Qt.Vertical
+      currentIndex: settingBar.currentIndex
+      clip: true
+      L.AudioSetting {}
+      L.ControlSetting {}
     }
   }
 
-  Popup {
+  W.PopupLoader {
     id: overviewDialog
     width: realMainWin.width * 0.75
     height: realMainWin.height * 0.75
@@ -1102,7 +1118,7 @@ Item {
       width: parent.width / mainWindow.scale
       height: parent.height / mainWindow.scale
       scale: mainWindow.scale
-      source: AppPath + "/Fk/Pages/" + overviewType + "Overview.qml"
+      source: overviewType + "Overview.qml"
     }
   }
 
@@ -1259,6 +1275,7 @@ Item {
     const userName = data.userName;
     const general = luatr(data.general);
 
+
     if (msg.startsWith("@")) { // 蛋花
       if (config.hidePresents)
         return true;
@@ -1297,8 +1314,10 @@ Item {
     } else if (msg.startsWith("!") || msg.startsWith("~")) { // 胜利、阵亡
       const g = msg.slice(1);
       const extension = lcall("GetGeneralData", g).extension;
-      if (!config.disableMsgAudio)
-        Backend.playSound("./packages/" + extension + "/audio/" + (msg.startsWith("!") ? "win/" : "death/") + g);
+      if (!config.disableMsgAudio) {
+        const path = SkinBank.getAudio(g, extension, msg.startsWith("!") ? "win" : "death");
+        Backend.playSound(path);
+      }
 
       const m = luatr(msg);
       data.msg = m;
@@ -1321,7 +1340,6 @@ Item {
       const skill = split[0];
       const idx = parseInt(split[1]);
       const gene = split[2];
-
       if (!config.disableMsgAudio)
         try {
           callbacks["LogEvent"]({

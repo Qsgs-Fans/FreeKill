@@ -384,12 +384,26 @@ function Room:getNCards(num, from)
   return cardIds
 end
 
---- 将一名玩家的某种标记数量相应的值。
----
---- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
----@param player ServerPlayer @ 要被更新标记的那个玩家
+--- 将一名玩家的某种标记设置为某值，并通知所有客户端更新。
+--- 
+--- 值可以是数字、字符串、表、键值表等。注意键值表做值时键值表的键不能是数字。
+--- 
+--- 通用的mark名称及后缀参见`mark_enum.lua`。
+--- 
+-- mark name and UI:
+--
+-- ```xxx```: invisible mark
+--
+-- ```@xxx```: mark with extra data (maybe string or number) 表会显示所有元素，以空格分隔
+--
+-- ```@@xxx```: mark with invisible extra data
+--
+-- ```@$xxx```: mark with card_name[] data
+--
+-- ```@&xxx```: mark with general_name[] data
+---@param player ServerPlayer @ 更新标记的玩家
 ---@param mark string @ 标记的名称
----@param value any @ 要设为的值，其实也可以设为字符串
+---@param value any @ 设置的值，可以是数字、字符串、表、键值表等
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
   self:doBroadcastNotify("SetPlayerMark", json.encode{
@@ -399,10 +413,12 @@ function Room:setPlayerMark(player, mark, value)
   })
 end
 
---- 将一名玩家的mark标记增加count个。
----@param player ServerPlayer @ 要加标记的玩家
+--- 将一名玩家的```mark```标记增加```count```个，并通知所有客户端更新。
+--- 
+--- tableMark有封装方法```addTableMark```和```addTableMarkIfNeed```
+---@param player ServerPlayer @ 加标记的玩家
 ---@param mark string @ 标记名称
----@param count? integer @ 要增加的数量，默认为1
+---@param count? integer @ 增加的数量，默认为1
 function Room:addPlayerMark(player, mark, count)
   count = count or 1
   local num = player:getMark(mark)
@@ -410,10 +426,12 @@ function Room:addPlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num + count, 0))
 end
 
---- 将一名玩家的mark标记减少count个。
----@param player ServerPlayer @ 要减标记的玩家
+--- 将一名玩家的```mark```标记减少```count```个，并通知所有客户端更新。
+--- 
+--- tableMark有封装方法```removeTableMark```
+---@param player ServerPlayer @ 减标记的玩家
 ---@param mark string @ 标记名称
----@param count? integer  @ 要减少的数量，默认为1
+---@param count? integer  @ 减少的数量，默认为1
 function Room:removePlayerMark(player, mark, count)
   count = count or 1
   local num = player:getMark(mark)
@@ -421,7 +439,7 @@ function Room:removePlayerMark(player, mark, count)
   self:setPlayerMark(player, mark, math.max(num - count, 0))
 end
 
---清除一名角色手牌中的某种标记
+--- 清除一名角色手牌中的某种标记
 ---@param player ServerPlayer @ 要清理标记的角色
 ---@param name string @ 要清理的标记名
 function Room:clearHandMark(player, name)
@@ -434,12 +452,12 @@ function Room:clearHandMark(player, name)
   end
 end
 
---- 将一张卡牌的某种标记数量相应的值。
----
---- 在设置之后，会通知所有客户端也更新一下标记的值。之后的两个相同
----@param card Card @ 要被更新标记的那张牌
+--- 将一张卡牌的```mark```标记设置为```value```，并通知所有客户端更新。
+--- 
+--- 通用的mark名称及后缀参见```mark_enum.lua```。
+---@param card Card @ 更新标记的牌
 ---@param mark string @ 标记的名称
----@param value any @ 要设为的值，其实也可以设为字符串
+---@param value any @ 设置的值，可以是数字、字符串、表、键值表等
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
   if not card:isVirtual() then
@@ -451,10 +469,10 @@ function Room:setCardMark(card, mark, value)
   end
 end
 
---- 将一张卡牌的mark标记增加count个。
----@param card Card @ 要被增加标记的那张牌
+--- 将一张卡牌的```mark```标记增加```count```个，并通知所有客户端更新。
+---@param card Card @ 增加标记的牌
 ---@param mark string @ 标记名称
----@param count? integer @ 要增加的数量，默认为1
+---@param count? integer @ 增加的数量，默认为1
 function Room:addCardMark(card, mark, count)
   count = count or 1
   local num = card:getMark(mark)
@@ -462,10 +480,10 @@ function Room:addCardMark(card, mark, count)
   self:setCardMark(card, mark, math.max(num + count, 0))
 end
 
---- 将一名玩家的mark标记减少count个。
----@param card Card @ 要被减少标记的那张牌
+--- 将一名玩家的```mark```标记减少```count```个，并通知所有客户端更新。
+---@param card Card @ 减少标记的牌
 ---@param mark string @ 标记名称
----@param count? integer @ 要减少的数量，默认为1
+---@param count? integer @ 减少的数量，默认为1
 function Room:removeCardMark(card, mark, count)
   count = count or 1
   local num = card:getMark(mark)
@@ -482,8 +500,10 @@ function Room:setPlayerProperty(player, property, value)
 end
 
 --- 将房间中某个tag设为特定值。
---- 注意：客户端无法获取room tag，请改用setBanner
---- 当在编程中想在服务端搞点全局变量的时候哦，不要自己设置全局变量或者上值，而是应该使用room的tag。
+--- 
+--- 注意：客户端无法获取room tag，请改用```setBanner```
+--- 
+--- 当想在服务端搞点全局变量时，不要自己设置全局变量或者上值，而应该使用room的tag。
 ---@param tag_name string @ tag名字
 ---@param value any @ 值
 function Room:setTag(tag_name, value)
@@ -502,7 +522,11 @@ function Room:removeTag(tag_name)
   self.tag[tag_name] = nil
 end
 
---- 设置房间banner于左上角，用于模式介绍，仁区等
+--- 设置房间banner，显示于左上角，用于模式介绍、仁区等
+--- 
+--- 房间版mark
+---@param name string @ banner的名称
+---@param value any
 function Room:setBanner(name, value)
   AbstractRoom.setBanner(self, name, value)
   self:doBroadcastNotify("SetBanner", json.encode{ name, value })
@@ -1741,7 +1765,7 @@ end
 --- 同时询问多名玩家选择一些牌（要求所有玩家选牌规则相同，不同的请自行构造request）
 ---@param player ServerPlayer @ 发起者
 ---@param params askToJointCardsParams @ 各种变量
----@return table<Player, integer[]> @ 返回键值表，键为Player、值为选择的牌id列表
+---@return table<ServerPlayer, integer[]> @ 返回键值表，键为Player、值为选择的牌id列表
 function Room:askToJointCards(player, params)
   local skill_name = params.skill_name or "AskForCardChosen"
   local cancelable = (params.cancelable == nil) and true or params.cancelable
@@ -3285,11 +3309,28 @@ local function shouldUpdateWinRate(room)
   return Fk.game_modes[room.settings.gameMode]:countInFunc(room)
 end
 
+--- 获取一名角色一局游戏的胜负结果。
+--- 胜利1；失败2；平局3。
+---@param winner string @ 获胜的身份，空字符串表示平局
+---@param role string @ 角色的身份
+---@return integer @ 胜负结果
+local function victoryResult(winner, role)
+  local ret
+  if table.contains(winner:split("+"), role) then
+    ret = 1
+  elseif winner == "" then
+    ret = 3
+  else
+    ret = 2
+  end
+  return ret
+end
+
 --- 结束一局游戏。
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
   if not self.game_started then return end
-  self:setBanner("GameSummary", self:getGameSummary())
+  self:setBanner("GameSummary", self:getGameSummary(winner))
   self.room:destroyRequestTimer()
 
   if table.contains(
@@ -3320,13 +3361,7 @@ function Room:gameOver(winner)
       local result
 
       if p.id > 0 then
-        if table.contains(winner:split("+"), p.role) then
-          result = 1
-        elseif winner == "" then
-          result = 3
-        else
-          result = 2
-        end
+        result = victoryResult(winner, p.role)
 
         local general, deputyGeneral = p.general, p.deputyGeneral
         if record then
@@ -3362,7 +3397,7 @@ end
 
 --- 获取一局游戏的总结，包括每个玩家的回合数、回血、伤害、受伤、击杀
 ---@return table<integer, integer[]> @ 玩家id到总结的映射
-function Room:getGameSummary()
+function Room:getGameSummary(winner)
   local summary = {}
   for _, p in ipairs(self.players) do
     -- 选将阶段直接房间解散的智慧 有点意思

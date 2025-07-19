@@ -33,7 +33,7 @@ MarkEnum.UncompulsoryInvalidity = "UncompulsoryInvalidity"
 MarkEnum.InvalidSkills = "InvalidSkills"
 ---不可明置（值为表，m - 主将, d - 副将）
 MarkEnum.RevealProhibited = "RevealProhibited"
----不计入距离、座次后缀
+---不计入距离、座次
 MarkEnum.PlayerRemoved = "PlayerRemoved"
 ---不能调整手牌
 MarkEnum.SortProhibited = "SortProhibited"
@@ -42,7 +42,7 @@ MarkEnum.MarkArmorNullified = "mark__armor_nullified"
 MarkEnum.MarkArmorInvalidFrom = "mark__armor_invalid_from"
 MarkEnum.MarkArmorInvalidTo = "mark__armor_invalid_to"
 
----各种清除标记后缀
+---角色标记的清除标记后缀
 ---
 ---phase：阶段结束后
 ---
@@ -51,7 +51,7 @@ MarkEnum.MarkArmorInvalidTo = "mark__armor_invalid_to"
 ---round：轮次结束后
 MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 
----卡牌标记版本的清除标记后缀
+---卡牌标记的清除标记后缀
 ---
 ---phase：阶段结束后
 ---

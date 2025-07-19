@@ -320,14 +320,17 @@ Item {
               }
               onClicked: {
                 const data = lcall("GetCardData", cardDetail.cid);
+                let path;
                 if (audioType === "male" || audioType === "female") {
-                  Backend.playSound("./packages/" + extension + "/audio/card/"
-                                  + audioType + "/" + data.name);
+                  path = SkinBank.getAudio(data.name, extension, "card/" + audioType);
                 } else if (audioType === "equip_effect") {
-                  Backend.playSound("./packages/" + extension + "/audio/card/"
-                                  + "/" + data.name);
+                  path = SkinBank.getAudio(data.name, extension, "card");
                 } else {
                   Backend.playSound("./audio/card/common/" + extension);
+                  return;
+                }
+                if (path) {
+                  Backend.playSound(path);
                 }
               }
             }

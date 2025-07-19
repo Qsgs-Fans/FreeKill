@@ -46,13 +46,13 @@ function ServerPlayer:doNotify(command, jsonData)
   for _, p in ipairs(self._observers) do
     if p:getState() ~= fk.Player_Robot then
       room.notify_count = room.notify_count + 1
+      p:doNotify(command, jsonData)
     end
-    p:doNotify(command, jsonData)
   end
 
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
-    if id == self.id and room.room:hasObserver(p) then
+    if id == self.id and room.room:hasObserver(p) and p:getState() ~= fk.Player_Robot then
       p:doNotify(command, jsonData)
     end
   end
