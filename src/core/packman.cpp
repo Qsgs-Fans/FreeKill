@@ -238,6 +238,19 @@ QString PackMan::listPackages() {
   return db->selectJson("SELECT * FROM packages;");
 }
 
+void PackMan::forceCheckoutMaster(const QString &pack) {
+  checkout_branch(pack, "master");
+}
+
+void PackMan::syncCommitHashToDatabase() {
+  for (auto e : db->select("SELECT name FROM packages;")) {
+    auto pack = e["name"];
+    db->exec(QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
+             .arg(head(pack))
+             .arg(pack));
+  }
+}
+
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", err, e->klass, e->message)
@@ -324,6 +337,7 @@ int PackMan::pull(const QString &name) {
   auto path = QString("packages/%1").arg(name).toUtf8();
   git_fetch_options opt;
   git_fetch_init_options(&opt, GIT_FETCH_OPTIONS_VERSION);
+  opt.proxy_opts.version = 1;
   opt.callbacks.transfer_progress = transfer_progress_cb;
 
   git_checkout_options opt2 = GIT_CHECKOUT_OPTIONS_INIT;
@@ -491,7 +505,7 @@ QString PackMan::head(const QString &name) {
 clean:
   git_object_free(obj);
   git_repository_free(repo);
-  return QString();
+  return QString("0000000000000000000000000000000000000000");
 }
 
 #undef GIT_FAIL

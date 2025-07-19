@@ -65,6 +65,7 @@ void Shell::helpCommand(QStringList &) {
   HELP_MSG("%ls: Install a new package from <url>.", "install");
   HELP_MSG("%ls: Remove a package.", "remove");
   HELP_MSG("%ls: List all packages.", "pkgs");
+  HELP_MSG("%ls: Get packages hash from file system and write to database.", "syncpkgs");
   HELP_MSG("%ls: Enable a package.", "enable");
   HELP_MSG("%ls: Disable a package.", "disable");
   HELP_MSG("%ls: Upgrade a package. Leave empty to upgrade all.", "upgrade/u");
@@ -199,6 +200,11 @@ void Shell::lspkgCommand(QStringList &) {
           qUtf16Printable(hash.first(8)),
           qUtf16Printable(obj["enabled"].toString()));
   }
+}
+
+void Shell::syncpkgCommand(QStringList &) {
+  Pacman->syncCommitHashToDatabase();
+  qInfo("Done.");
 }
 
 void Shell::kickCommand(QStringList &list) {
@@ -596,6 +602,7 @@ Shell::Shell() {
     {"upgrade", &Shell::upgradeCommand},
     {"u", &Shell::upgradeCommand},
     {"pkgs", &Shell::lspkgCommand},
+    {"syncpkgs", &Shell::syncpkgCommand},
     {"enable", &Shell::enableCommand},
     {"disable", &Shell::disableCommand},
     {"kick", &Shell::kickCommand},

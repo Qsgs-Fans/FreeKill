@@ -25,6 +25,7 @@ private:
   void removeCommand(QStringList &);
   void upgradeCommand(QStringList &);
   void lspkgCommand(QStringList &);
+  void syncpkgCommand(QStringList &);
   void enableCommand(QStringList &);
   void disableCommand(QStringList &);
   void kickCommand(QStringList &);

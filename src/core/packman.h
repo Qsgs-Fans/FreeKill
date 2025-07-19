@@ -24,6 +24,12 @@ public:
   Q_INVOKABLE void removePack(const QString &pack);
   Q_INVOKABLE QString listPackages();
 
+  Q_INVOKABLE void forceCheckoutMaster(const QString &pack);
+
+  // 从数据库读取所有包。将repo的实际HEAD写入到db
+  // 适用于自己手动git pull包后使用
+  void syncCommitHashToDatabase();
+
 private:
   Sqlite3 *db;
 
