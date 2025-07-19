@@ -186,6 +186,7 @@ void PackMan::disablePack(const QString &pack) {
 
 int PackMan::updatePack(const QString &pack, const QString &hash) {
   int err;
+  // 先status 检查dirty 后面全是带--force的操作
   err = status(pack);
   if (err != 0)
     return err;
@@ -200,13 +201,17 @@ int PackMan::updatePack(const QString &pack, const QString &hash) {
 
 int PackMan::upgradePack(const QString &pack) {
   int err;
-  err = checkout_branch(pack, "master");
-  if (err < 0)
-    return err;
+  // 先status 检查dirty 后面全是带--force的操作
   err = status(pack);
   if (err != 0)
     return err;
   err = pull(pack);
+  if (err < 0)
+    return err;
+  // 至此upgrade命令把包升到了FETCH_HEAD的commit
+  // 我们稍微操作一下，让HEAD指向最新的master
+  // 这样以后就能开新分支干活了
+  err = checkout_branch(pack, "master");
   if (err < 0)
     return err;
 
@@ -311,13 +316,16 @@ int PackMan::clone(const QString &u) {
   return err;
 }
 
+// git fetch && git checkout FETCH_HEAD -f
 int PackMan::pull(const QString &name) {
   git_repository *repo = NULL;
   int err;
   git_remote *remote = NULL;
   auto path = QString("packages/%1").arg(name).toUtf8();
-  git_fetch_options opt = GIT_FETCH_OPTIONS_INIT;
+  git_fetch_options opt;
+  git_fetch_init_options(&opt, GIT_FETCH_OPTIONS_VERSION);
   opt.callbacks.transfer_progress = transfer_progress_cb;
+
   git_checkout_options opt2 = GIT_CHECKOUT_OPTIONS_INIT;
   opt2.checkout_strategy = GIT_CHECKOUT_FORCE;
 
@@ -327,12 +335,14 @@ int PackMan::pull(const QString &name) {
   // first git fetch origin
   err = git_remote_lookup(&remote, repo, "origin");
   GIT_CHK_CLEAN;
+
   err = git_remote_fetch(remote, NULL, &opt, NULL);
   GIT_CHK_CLEAN;
 
   // then git checkout FETCH_HEAD
   err = git_repository_set_head(repo, "FETCH_HEAD");
   GIT_CHK_CLEAN;
+
   err = git_checkout_head(repo, &opt2);
   GIT_CHK_CLEAN;
 
@@ -367,22 +377,67 @@ clean:
   return err;
 }
 
+// git checkout -B branch origin/branch --force
 int PackMan::checkout_branch(const QString &name, const QString &branch) {
   git_repository *repo = NULL;
   git_oid oid = {0};
   int err;
   git_object *obj = NULL;
+  git_reference *branch_ref = NULL;
+  git_reference *remote_ref = NULL;
+  git_reference *new_branch_ref = NULL;
+  git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+  checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+
+  QString local_branch;
+  QString remote_branch;
+
+  // 打开仓库
   auto path = QString("packages/%1").arg(name).toUtf8();
   err = git_repository_open(&repo, path);
   GIT_CHK_CLEAN;
-  err = git_revparse_single(&obj, repo, branch.toUtf8());
+
+  // 查找远程分支的引用 (refs/remotes/origin/branch)
+  remote_branch = QString("refs/remotes/origin/%1").arg(branch);
+  err = git_reference_lookup(&remote_ref, repo, remote_branch.toUtf8());
   GIT_CHK_CLEAN;
-  err = git_checkout_tree(repo, obj, NULL);
+
+  // 获取远程分支指向的对象
+  err = git_reference_peel(&obj, remote_ref, GIT_OBJECT_COMMIT);
+  GIT_CHK_CLEAN;
+
+  // 获取commit的OID
+  git_oid_cpy(&oid, git_object_id(obj));
+
+   // 查找本地分支的引用
+  local_branch = QString("refs/heads/%1").arg(branch);
+  err = git_reference_lookup(&branch_ref, repo, local_branch.toUtf8());
+  if (err == 0) {
+    // 分支存在，强制重置
+    err = git_reference_set_target(&new_branch_ref, branch_ref, &oid, "reset: moving to remote branch");
+    GIT_CHK_CLEAN;
+  } else {
+    // 分支不存在，创建新分支
+    err = git_branch_create(&new_branch_ref, repo, branch.toUtf8(),
+        (git_commit*)obj, 0);
+    GIT_CHK_CLEAN;
+  }
+
+  // 设HEAD到分支
+  err = git_repository_set_head(repo, git_reference_name(new_branch_ref));
+  GIT_CHK_CLEAN;
+
+  // 强制检出到HEAD
+  err = git_checkout_head(repo, &checkout_opts);
   GIT_CHK_CLEAN;
 
 clean:
+  git_reference_free(new_branch_ref);
+  git_reference_free(branch_ref);
+  git_reference_free(remote_ref);
   git_object_free(obj);
   git_repository_free(repo);
+
   return err;
 }
 
