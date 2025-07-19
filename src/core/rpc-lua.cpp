@@ -91,7 +91,7 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
   //        qUtf16Printable(func_name),
   //        qUtf8Printable(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
 
-  while (socket->waitForReadyRead(15000)) {
+  while (socket->canReadLine() || socket->waitForReadyRead(15000)) {
     auto msg = socket->readLine();
     if (msg.isNull()) {
       rpc_debug("Me <-- EOF");
