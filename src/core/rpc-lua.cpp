@@ -77,6 +77,8 @@ bool RpcLua::dofile(const char *path) {
 static QJsonObject dummyObj;
 
 QVariant RpcLua::call(const QString &func_name, QVariantList params) {
+  QMutexLocker locker(&io_lock);
+
   // 如同Lua中callRpc那样
   QJsonArray arr;
   for (auto v : params) arr << QJsonValue::fromVariant(v);

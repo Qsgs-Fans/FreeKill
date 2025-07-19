@@ -16,5 +16,6 @@ public:
 
 private:
   QIODevice *socket = nullptr;
+  QMutex io_lock;
   const JsonRpc::RpcMethodMap &methods;
 };
