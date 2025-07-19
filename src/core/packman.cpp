@@ -314,7 +314,9 @@ int PackMan::clone(const QString &u) {
     fileName.chop(4);
   fileName = QStringLiteral("packages/") + fileName;
 
-  git_clone_options opt = GIT_CLONE_OPTIONS_INIT;
+  git_clone_options opt;
+  git_clone_init_options(&opt, GIT_CLONE_OPTIONS_VERSION);
+  opt.fetch_opts.proxy_opts.version = 1;
   opt.fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
   int err = git_clone(&repo, url.toUtf8(), fileName.toUtf8(), &opt);
   if (err < 0) {
