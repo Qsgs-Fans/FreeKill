@@ -1,6 +1,6 @@
 # Compiler settings
 CXX = g++
-CXXFLAGS =  -fPIC -shared -Wall -Wextra
+CXXFLAGS = -std=c++17 -fPIC -shared -Wall -Wextra
 LDFLAGS = -llua5.4 -lQt6Core
 
 # Paths
