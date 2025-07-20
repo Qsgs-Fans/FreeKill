@@ -1,5 +1,5 @@
 #pragma once
 
-#include "core/jsonrpc.h"
+#include "server/rpc-lua/jsonrpc.h"
 
 extern const JsonRpc::RpcMethodMap ServerRpcMethods;

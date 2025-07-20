@@ -7,7 +7,7 @@ using namespace fkShell;
 
 #include "core/packman.h"
 #include "server/server.h"
-#include "server/shell.h"
+#include "server/cli/shell.h"
 
 #if defined(Q_OS_WIN32)
 #include "applink.c"

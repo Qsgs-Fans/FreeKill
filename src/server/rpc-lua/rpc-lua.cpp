@@ -1,5 +1,5 @@
-#include "core/rpc-lua.h"
-#include "core/jsonrpc.h"
+#include "server/rpc-lua/rpc-lua.h"
+#include "server/rpc-lua/jsonrpc.h"
 #include "core/packman.h"
 #include "core/util.h"
 

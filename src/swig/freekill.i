@@ -7,9 +7,9 @@
 %{
 #include "client/client.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
-#include "server/room.h"
-#include "server/roomthread.h"
+#include "server/user/serverplayer.h"
+#include "server/room/room.h"
+#include "server/gamelogic/roomthread.h"
 #include "ui/qmlbackend.h"
 #include "core/util.h"
 

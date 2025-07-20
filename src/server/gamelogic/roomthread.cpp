@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/roomthread.h"
+#include "server/gamelogic/roomthread.h"
 #include "server/server.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
-#include "core/rpc-lua.h"
-#include "server/roomthread-rpc.h"
-#include "server/serverplayer.h"
+#include "server/rpc-lua/rpc-lua.h"
+#include "server/gamelogic/rpc-dispatchers.h"
+#include "server/user/serverplayer.h"
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"

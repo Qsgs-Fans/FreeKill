@@ -3,7 +3,7 @@
 #ifndef _ROOM_H
 #define _ROOM_H
 
-#include "server/roombase.h"
+#include "server/room/roombase.h"
 
 class Server;
 class ServerPlayer;

@@ -1,4 +1,4 @@
-#include "core/jsonrpc.h"
+#include "server/rpc-lua/jsonrpc.h"
 #include <QDebug>
 #include <QJsonDocument>
 #include <QJsonValue>

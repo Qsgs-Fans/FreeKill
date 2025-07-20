@@ -1,6 +1,6 @@
-#include "server/roomthread-rpc.h"
+#include "server/gamelogic/rpc-dispatchers.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 
 // 这何尝不是一种手搓swig。。
 

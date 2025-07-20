@@ -11,7 +11,7 @@ class ServerPlayer;
 class RoomThread;
 class Lobby;
 
-#include "server/room.h"
+#include "server/room/room.h"
 
 /**
   @brief Server类负责管理游戏服务端的运行。

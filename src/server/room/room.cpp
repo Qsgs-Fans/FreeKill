@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/room.h"
-#include "server/lobby.h"
+#include "server/room/room.h"
+#include "server/room/lobby.h"
 
 #ifdef FK_SERVER_ONLY
 static void *ClientInstance = nullptr;
@@ -10,9 +10,9 @@ static void *ClientInstance = nullptr;
 #endif
 
 #include "network/client_socket.h"
-#include "server/roomthread.h"
+#include "server/gamelogic/roomthread.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 

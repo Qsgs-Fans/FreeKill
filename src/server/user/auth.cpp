@@ -1,6 +1,6 @@
-#include "server/auth.h"
+#include "server/user/auth.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
 #include "core/packman.h"

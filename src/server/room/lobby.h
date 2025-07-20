@@ -1,7 +1,7 @@
 #ifndef _LOBBY_H
 #define _LOBBY_H
 
-#include "server/roombase.h"
+#include "server/room/roombase.h"
 
 class Lobby : public RoomBase {
   Q_OBJECT

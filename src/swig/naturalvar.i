@@ -7,7 +7,7 @@
 %{
 #include "core/c-wrapper.h"
 #include "client/client.h"
-#include "server/roomthread.h"
+#include "server/gamelogic/roomthread.h"
 
 void Lua::pushValue(lua_State *L, QVariant v) {
   QVariantList list;

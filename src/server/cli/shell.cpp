@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/shell.h"
+#include "server/cli/shell.h"
 #include "core/packman.h"
-#include "core/rpc-lua.h"
+#include "server/rpc-lua/rpc-lua.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
-#include "server/roomthread.h"
+#include "server/user/serverplayer.h"
+#include "server/gamelogic/roomthread.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #ifdef FK_USE_READLINE

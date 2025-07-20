@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "server/server.h"
-#include "server/auth.h"
-#include "server/room.h"
-#include "server/lobby.h"
-#include "server/roomthread.h"
-#include "server/serverplayer.h"
+#include "server/user/auth.h"
+#include "server/user/serverplayer.h"
+#include "server/room/room.h"
+#include "server/room/lobby.h"
+#include "server/gamelogic/roomthread.h"
 #include "network/router.h"
 #include "network/client_socket.h"
 #include "network/server_socket.h"

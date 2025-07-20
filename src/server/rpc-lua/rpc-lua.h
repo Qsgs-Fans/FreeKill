@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/c-wrapper.h"
-#include "core/jsonrpc.h"
+#include "server/rpc-lua/jsonrpc.h"
 
 class RpcLua : public LuaInterface {
 public:
