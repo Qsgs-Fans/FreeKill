@@ -109,6 +109,9 @@ function Pindian:main()
 
     local req = Request:new(targets, "AskForUseActiveSkill")
     for _, to in ipairs(targets) do
+      if pindianData.expandCards and pindianData.expandCards[to] then
+        req_data[4] = pindianData.expandCards[to]
+      end
       req:setData(to, req_data)
       req:setDefaultReply(to, {card = {subcards = {to:getCardIds(Player.Hand)[1]}}})
     end

@@ -191,15 +191,10 @@ function Player:clearFlags()
   self.flag = {}
 end
 
---- 为角色赋予Mark。
+--- 为角色```mark```增加```count```个。
+--- 实践上通常直接使用包含通知客户端的```Room:addPlayerMark```
 ---@param mark string @ 标记
 ---@param count integer @ 为标记赋予的数量
--- mark name and UI:
--- 'xxx': invisible mark
--- '@mark': mark with extra data (maybe string or number)
--- '@@mark': mark without data
--- '@$mark': mark with card_name[] data
--- '@&mark': mark with general_name[] data
 function Player:addMark(mark, count)
   count = count or 1
   local num = self.mark[mark]
@@ -218,6 +213,17 @@ function Player:removeMark(mark, count)
 end
 
 --- 为角色设置Mark至指定数量。
+-- mark name and UI:
+--
+-- ```xxx```: invisible mark
+--
+-- ```@xxx```: mark with extra data (maybe string or number)
+--
+-- ```@@xxx```: mark with invisible extra data
+--
+-- ```@$xxx```: mark with card_name[] data
+--
+-- ```@&xxx```: mark with general_name[] data
 ---@param mark string @ 标记
 ---@param count? any @ 标记要设定的数量
 function Player:setMark(mark, count)

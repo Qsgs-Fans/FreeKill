@@ -44,10 +44,11 @@ function SkillEffect:main()
           return to
         end
       end) or {}
-    local mute, no_indicate = skill.mute, skill.no_indicate
+    local mute, no_indicate, audio_index = skill.mute, skill.no_indicate, skill.audio_index
     if type(cost_data) == "table" then
       if cost_data.mute then mute = cost_data.mute end
       if cost_data.no_indicate then no_indicate = cost_data.no_indicate end
+      if cost_data.audio_index then audio_index = cost_data.audio_index end
     end
     if not mute then
       if skill:getSkeleton() and skill:getSkeleton().attached_equip then
@@ -73,7 +74,6 @@ function SkillEffect:main()
           room:setEmotion(player, pkgPath .. "/image/anim/" .. equip.name)
         end
       elseif not skill.click_count then
-        local audio_index = skill.audio_index
         if type(audio_index) == "table" then
           audio_index = table.random(audio_index)
         end

@@ -21,7 +21,7 @@ Item {
   function downloadComplete() {
     const item = packageRepeater.itemAt(root.currentPackageIndex);
     if (!item.hasError) {
-      item.subTitle = "✅ Download Complete.";
+      item.subTitle = "<font color='lime'>✓</font> Download Complete.";
     }
 
     let coreItem, coreModel;
@@ -48,7 +48,7 @@ Item {
       if (item.myName === name) {
         const oldItem = packageRepeater.itemAt(root.currentPackageIndex);
         if (!oldItem.hasError) {
-          oldItem.subTitle = "✅ Download Complete.";
+          oldItem.subTitle = "<font color='lime'>✓</font> Download Complete.";
         }
 
         root.currentPackageIndex = i;
@@ -60,7 +60,7 @@ Item {
 
   function setDownloadError(msg) {
     const item = packageRepeater.itemAt(root.currentPackageIndex);
-    item.subTitle = "❌ " + msg;
+    item.subTitle = "<font color='red'>✗</font> " + msg;
     item.hasError = true;
   }
 
@@ -78,7 +78,7 @@ Item {
                      .arg(data.indexed_objects)
                      .arg(data.received_bytes / 1024);
     }
-    item.subTitle = "⬇️ " + msg;
+    item.subTitle = "<font color='blue'>↓</font> " + msg;
   }
 
   W.PreferencePage {
@@ -108,7 +108,7 @@ Item {
             const now = hash.substring(0, 8);
             let ret = `<b>${name}</b> `;
             if (old === now) {
-              ret += "(Nothing to do)";
+              ret += "（无变化）"; //(Nothing to do)
             } else {
               ret += `${old} -> ${now}`;
             }

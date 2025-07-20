@@ -14,9 +14,7 @@ GraphicsBox {
   property bool summaryShown: true
 
   id: root
-  title.text: winner !== "" ? (winner.split("+").indexOf(my_role)=== -1 ?
-                              luatr("Game Lose") : luatr("Game Win"))
-                            : luatr("Game Draw")
+  title.text: victoryResult(winner, my_role, true)
   width: summaryShown ? 780 : 400
   height: queryResultList.height + 96
 
@@ -44,6 +42,7 @@ GraphicsBox {
       id: tableModel
       TableModelColumn { display: "general" }
       TableModelColumn { display: "scname" }
+      TableModelColumn { display: "win" }
       TableModelColumn { display: "role" }
       TableModelColumn { display: "turn" }
       TableModelColumn { display: "recover" }
@@ -56,6 +55,7 @@ GraphicsBox {
         {
           general: `<b>${luatr("General")}</b>`,
           scname: `<b>${luatr("Name")}</b>`,
+          win: `<b>${luatr("Victory or Defeat")}</b>`,
           role: `<b>${luatr("Role")}</b>`,
           turn: `<b>${luatr("Turn")}</b>`,
           recover: `<b>${luatr("Recover")}</b>`,
@@ -156,6 +156,7 @@ GraphicsBox {
       _s.damaged = s.damaged.toString();
       _s.kill = s.kill.toString();
       _s.scname = s.scname; // client拿不到
+      _s.win = victoryResult(winner, _s.role, true);
       _s.role = luatr(_s.role);
       _s.general = luatr(_s.general);
       if (!_s.general) {
@@ -169,20 +170,27 @@ GraphicsBox {
     });
   }
 
-  onWinnerChanged: {
-    let sound;
+  function victoryResult(winner, role, cap) {
+    let ret = "";
     if (winner === "") {
-      sound = "draw";
+      ret = 3; // draw
+    } else if (winner.split("+").includes(role)) {
+      ret = 1; // win
     } else {
-      let splited = winner.split("+");
-      if (splited.includes(my_role)) {
-        sound = "win";
-      } else {
-        sound = "lose";
-      }
+      ret = 2; // lose
     }
+    if (cap) {
+      return ret === 1 ? luatr("Game Win") :
+        (ret === 2 ? luatr("Game Lose") : luatr("Game Draw"));
+    } else {
+      return ret === 1 ? "win" :
+        (ret === 2 ? "lose" : "draw");
+    }
+  }
+
+  onWinnerChanged: {
     if (!config.disableGameOverAudio) {
-      Backend.playSound("./audio/system/" + sound);
+      Backend.playSound("./audio/system/" + victoryResult(winner, my_role, false));
     }
 
     getSummary();

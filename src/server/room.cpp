@@ -40,6 +40,9 @@ Room::Room(RoomThread *thread) {
 }
 
 Room::~Room() {
+  // 标记为过期 避免封人
+  md5 = "";
+
   if (gameStarted) {
     gameOver();
   }
@@ -254,8 +257,8 @@ void Room::removePlayer(ServerPlayer *player) {
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
 
-    // 如果走小道的人不是单机启动玩家 那么直接ban
-    if (!ClientInstance && !player->isDied()) {
+    // 如果走小道的人不是单机启动玩家 且房没过期 那么直接ban
+    if (!ClientInstance && !isOutdated() && !player->isDied()) {
       server->temporarilyBan(runner->getId());
     }
   }
@@ -553,7 +556,7 @@ void Room::gameOver() {
     }
 
     if (p->getState() != Player::Online) {
-      if (p->getState() == Player::Offline) {
+      if (p->getState() == Player::Offline && !isOutdated()) {
         server->temporarilyBan(pid);
       }
       to_delete.append(p);
@@ -627,7 +630,7 @@ void Room::removeRejectId(int id) {
 void Room::quitRoom(ServerPlayer *player, const QString &) {
   removePlayer(player);
   if (isOutdated()) {
-    emit player->kicked();
+    emit server->findPlayer(player->getId())->kicked();
   }
 }
 

@@ -9,6 +9,7 @@ SwitchRow 1.0 SwitchRow.qml
 ButtonRow 1.0 ButtonRow.qml
 ComboRow 1.0 ComboRow.qml
 SpinRow 1.0 SpinRow.qml
+SliderRow 1.0 SliderRow.qml
 EntryRow 1.0 EntryRow.qml
 
 ViewSwitcher 1.0 ViewSwitcher.qml

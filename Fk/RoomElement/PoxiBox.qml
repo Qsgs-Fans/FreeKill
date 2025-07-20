@@ -21,6 +21,7 @@ GraphicsBox {
   property var card_data
   property bool cancelable: true
   property var extra_data
+  property var allCardItems: []
 
   ListModel {
     id: cardModel
@@ -91,6 +92,9 @@ GraphicsBox {
               root.selected_ids = root.selected_ids;
               refreshPrompt();
             }
+            Component.onCompleted: {
+              root.allCardItems.push(this);
+            }
           }
         }
       }
@@ -109,7 +113,9 @@ GraphicsBox {
       text: luatr("OK")
       enabled: lcall("PoxiFeasible", root.poxi_type, root.selected_ids,
                      root.card_data, root.extra_data);
-      onClicked: root.cardsSelected(root.selected_ids)
+      onClicked: {
+        shuffleInvisibleOutput();
+      }
     }
 
     MetroButton {
@@ -118,6 +124,31 @@ GraphicsBox {
       text: luatr("Cancel")
       visible: root.cancelable
       onClicked: root.cardsSelected([])
+    }
+
+    MetroButton {
+      text: luatr("Revert Selection")
+      onClicked: {
+        let old_selected = root.selected_ids.slice();
+        for (let i = 0; i < old_selected.length; i++) {
+          let cid = old_selected[i];
+          let item = findCardItem(cid);
+          item.selected = false;
+        }
+        for (let i = 0; i < cardModel.count; i++) {
+          let cards = cardModel.get(i).areaCards;
+          for (let j = 0; j < cards.count; j++) {
+            let card = cards.get(j);
+            if (old_selected.indexOf(card.cid) === -1 && lcall("PoxiFilter", root.poxi_type, card.cid, root.selected_ids,
+              root.card_data, root.extra_data)) {
+              let item = findCardItem(card.cid);
+              item.selected = true;
+            }
+          }
+        }
+        root.selected_ids = root.selected_ids;
+        refreshPrompt();
+      }
     }
 
   }
@@ -159,4 +190,44 @@ GraphicsBox {
   function refreshPrompt() {
     root.title.text = Util.processPrompt(lcall("PoxiPrompt", poxi_type, card_data, extra_data))
   }
+
+  function findCardItem(cid) {
+    for (let i = 0; i < root.allCardItems.length; i++) {
+      let item = root.allCardItems[i];
+      if (item.cid === cid) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  function shuffleInvisibleOutput() {
+    let output = root.selected_ids.slice();
+    const visible_data = extra_data?.visible_data ?? {};
+
+    for (let h = 0; h < cardModel.count; h++) {
+      let cards = cardModel.get(h).areaCards;
+      let invisible = [];
+      let chosenInvisible = [];
+      for (let j = 0; j < cards.count; j++) {
+        let cid = cards.get(j).cid;
+        if (visible_data[cid.toString()] == false) {
+          invisible.push(cid);
+          let k = output.indexOf(cid)
+          if (k !== -1) {
+            chosenInvisible.push(k);
+          }
+        }
+      }
+      if (!chosenInvisible.length) continue;
+      for (let i = 0; i < chosenInvisible.length; i++) {
+        const randomIndex = Math.floor(Math.random() * invisible.length);
+        let newCid = invisible.splice(randomIndex, 1)[0];
+        output[chosenInvisible[i]] = newCid;
+      }
+
+    }
+    root.cardsSelected(output);
+  }
+
 }

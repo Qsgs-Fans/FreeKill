@@ -6,6 +6,7 @@
 ---@field public fromCard? Card @ 拼点发起者的初始拼点牌
 ---@field public results table<ServerPlayer, PindianResult> @ 所有的拼点结果
 ---@field public reason string @ 拼点原因，一般为技能名
+---@field public expandCards? table<ServerPlayer, AskToCardsParams> @ 修改的拼点选牌（暂行，先给手杀笮融使用，后面看有没别的法子）
 
 --- PindianResult 拼点结果
 ---@class PindianResult

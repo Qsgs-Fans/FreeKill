@@ -70,6 +70,37 @@ bool QmlBackend::isDir(const QString &file) {
   return QFileInfo(QUrl(file).path()).isDir();
 }
 
+QJsonObject QmlBackend::readJsonObjectFromFile(const QString &file) {
+  QJsonObject jsonObject;
+
+  // Open the file
+  QFile jsonFile(file);
+  if (!jsonFile.open(QIODevice::ReadOnly)) {
+    qWarning() << "Failed to open file:" << file;
+    return jsonObject; // Return empty object on failure
+  }
+
+  // Read the file content
+  QByteArray jsonData = jsonFile.readAll();
+  jsonFile.close();
+
+  // Parse the JSON data
+  QJsonParseError parseError;
+  QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData, &parseError);
+
+  if (parseError.error != QJsonParseError::NoError) {
+    qWarning() << "Failed to parse JSON:" << parseError.errorString();
+    return jsonObject; // Return empty object on parse error
+  }
+
+  if (!jsonDoc.isObject()) {
+    qWarning() << "JSON document is not an object";
+    return jsonObject; // Return empty object if not a JSON object
+  }
+
+  return jsonDoc.object();
+}
+
 #ifndef FK_SERVER_ONLY
 
 QQmlApplicationEngine *QmlBackend::getEngine() const { return engine; }

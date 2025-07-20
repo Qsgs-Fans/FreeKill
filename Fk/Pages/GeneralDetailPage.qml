@@ -26,8 +26,7 @@ Item {
     const extension = gdata.extension;
     let ret = false;
     for (let i = 0; i < 999; i++) {
-      const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-      skill + "_" + general + (i !== 0 ? i.toString() : "") + ".mp3";
+      const fname = SkinBank.getAudioRealPath(skill + "_" + general+(i !== 0 ? i.toString() : ""), extension, "skill");
 
       if (Backend.exists(fname)) {
         ret = true;
@@ -45,8 +44,7 @@ Item {
     if (!skilldata) return;
     const extension = skilldata.extension;
     for (let i = 0; i < 999; i++) {
-      const fname = AppPath + "/packages/" + extension + "/audio/skill/" +
-      skill + (i !== 0 ? i.toString() : "") + ".mp3";
+      const fname = SkinBank.getAudioRealPath(skill +(i !== 0 ? i.toString() : ""), extension, "skill");
 
       if (Backend.exists(fname)) {
         audioModel.append({ name: skill, idx: i, specific: false});
@@ -58,13 +56,13 @@ Item {
 
   function findWinAudio(general) {
     const extension = lcall("GetGeneralData", general).extension;
-    const fname = `${AppPath}/packages/${extension}/audio/win/${general}.mp3`;
+    const fname = SkinBank.getAudioRealPath(general, extension, "win");
     audioWin.visible = Backend.exists(fname);
   }
 
   function findDeathAudio(general) {
     const extension = lcall("GetGeneralData", general).extension;
-    const fname = `${AppPath}/packages/${extension}/audio/death/${general}.mp3`;
+    const fname = SkinBank.getAudioRealPath(general, extension, "death");
     audioDeath.visible = Backend.exists(fname);
   }
 
@@ -143,8 +141,9 @@ Item {
         if (general) {
           dat = lcall("GetGeneralData", general);
           extension = dat.extension;
-          path = "./packages/" + extension + "/audio/skill/" + skill + "_" + general;
-          if (Backend.exists(path + ".mp3") || Backend.exists(path + "1.mp3")) {
+          path = SkinBank.getAudio(skill + "_" + general, extension, "skill");
+          //path = "./packages/" + extension + "/audio/skill/" + skill + "_" + general;
+          if (path !== undefined) {
             Backend.playSound(path, idx);
             return;
           }
@@ -153,7 +152,7 @@ Item {
         // finally normal skill
         dat = lcall("GetSkillData", skill);
         extension = dat.extension;
-        path = "./packages/" + extension + "/audio/skill/" + skill;
+        path = SkinBank.getAudio(skill, extension, "skill");
         Backend.playSound(path, idx);
       }
 
@@ -357,8 +356,10 @@ Item {
         onClicked: {
           const general = root.general
           const extension = lcall("GetGeneralData", general).extension;
-          Backend.playSound("./packages/" + extension + "/audio/win/"
-          + general);
+          const path = SkinBank.getAudio(general, extension, "win");
+          if (path !== undefined) {
+            Backend.playSound(path);
+          }
         }
 
         onPressAndHold: {
@@ -427,8 +428,10 @@ Item {
         onClicked: {
           const general = root.general
           const extension = lcall("GetGeneralData", general).extension;
-          Backend.playSound("./packages/" + extension + "/audio/death/"
-          + general);
+          const path = SkinBank.getAudio(general, extension, "death");
+          if (path !== undefined) {
+            Backend.playSound(path);
+          }
         }
 
         onPressAndHold: {

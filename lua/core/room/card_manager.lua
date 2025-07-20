@@ -248,42 +248,25 @@ function CardManager:getCardsFromPileByRule(pattern, num, fromPile)
     return {}
   end
 
+  local matchedIds = {}
+  for _, id in ipairs(pileToSearch) do
+    if Fk:getCardById(id):matchPattern(pattern) then
+      table.insert(matchedIds, id)
+    end
+  end
+
+  if #matchedIds == 0 then
+    return {}
+  end
+
   local cardPack = {}
-  if num < 3 then
-    for i = 1, num do
-      local randomIndex = math.random(1, #pileToSearch)
-      local curIndex = randomIndex
-      repeat
-        local curCardId = pileToSearch[curIndex]
-        if Fk:getCardById(curCardId):matchPattern(pattern) and not table.contains(cardPack, curCardId) then
-          table.insert(cardPack, pileToSearch[curIndex])
-          break
-        end
 
-        curIndex = curIndex + 1
-        if curIndex > #pileToSearch then
-          curIndex = 1
-        end
-      until curIndex == randomIndex
-
-      if #cardPack == 0 then
-        break
-      end
-    end
-  else
-    local matchedIds = {}
-    for _, id in ipairs(pileToSearch) do
-      if Fk:getCardById(id):matchPattern(pattern) then
-        table.insert(matchedIds, id)
-      end
-    end
-
-    local loopTimes = math.min(num, #matchedIds)
-    for i = 1, loopTimes do
-      local randomCardId = matchedIds[math.random(1, #matchedIds)]
-      table.insert(cardPack, randomCardId)
-      table.removeOne(matchedIds, randomCardId)
-    end
+  local loopTimes = math.min(num, #matchedIds)
+  local i
+  for _ = 1, loopTimes do
+    i = math.random(1, #matchedIds)
+    table.insert(cardPack, matchedIds[i])
+    table.remove(matchedIds, i)
   end
 
   return cardPack

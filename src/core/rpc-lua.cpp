@@ -14,7 +14,7 @@ constexpr bool _EnableRpcDebug = false;
 #endif
 
 template <typename... Args>
-void rpc_debug(const char *fmt, Args... args) {
+static void rpc_debug(const char *fmt, Args... args) {
   if constexpr (_EnableRpcDebug) {
     qDebug(fmt, args...);
   }
@@ -92,6 +92,7 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
   //        qUtf8Printable(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
 
   while (socket->canReadLine() || socket->waitForReadyRead(15000)) {
+    if (!socket->canReadLine()) continue;
     auto msg = socket->readLine();
     if (msg.isNull()) {
       rpc_debug("Me <-- EOF");

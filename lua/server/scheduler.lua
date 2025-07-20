@@ -70,6 +70,16 @@ function ResumeRoom(roomId, reason)
   return over
 end
 
+-- 这三个空函数是为了兼容同名Rpc方法
+SetPlayerState = Util.DummyFunc
+AddObserver = Util.DummyFunc
+RemoveObserver = Util.DummyFunc
+
+-- Rpc用
+function GetRoom(id)
+  return requestRoom:getRoom(id)
+end
+
 if FileIO.pwd():endsWith("packages/freekill-core") then
   FileIO.cd("../..")
 end

@@ -150,6 +150,9 @@ function Engine:loadPackage(pack)
     skill.package = pack
     table.insert(pack.related_skills, skill)
     self.skill_skels[skel.name] = skel
+    for _, s in ipairs(skill.related_skills) do
+      s.package = pack
+    end
   end
 
   if pack.type == Package.GeneralPack then

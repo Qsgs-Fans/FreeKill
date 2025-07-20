@@ -112,10 +112,8 @@ Flickable {
 
       GridLayout {
         columns: 10
-        height: parent.kingdomShown ? 36 : 0
-        Behavior on height { NumberAnimation { duration: 200 } }
+        height: parent.kingdomShown ? kingdomStates.contentHeight : 0
         visible: parent.kingdomShown
-        Behavior on opacity { OpacityAnimator { duration: 200 } }
 
         Repeater {
           id: kingdomStates
@@ -166,10 +164,8 @@ Flickable {
 
       GridLayout {
         columns: 10
-        height: parent.maxHpShown ? 36 : 0
-        Behavior on height { NumberAnimation { duration: 200 } }
+        height: parent.maxHpShown ? maxHpStates.contentHeigh : 0
         visible: parent.maxHpShown
-        Behavior on opacity { OpacityAnimator { duration: 200 } }
 
         Repeater {
           id: maxHpStates
@@ -220,10 +216,8 @@ Flickable {
 
       GridLayout {
         columns: 10
-        height: parent.hpShown ? 36 : 0
-        Behavior on height { NumberAnimation { duration: 200 } }
+        height: parent.hpShown ? hpStates.contentHeigh : 0
         visible: parent.hpShown
-        Behavior on opacity { OpacityAnimator { duration: 200 } }
 
         Repeater {
           id: hpStates
@@ -274,10 +268,8 @@ Flickable {
 
       GridLayout {
         columns: 6
-        height: parent.genderShown ? 36 : 0
-        Behavior on height { NumberAnimation { duration: 200 } }
+        height: parent.genderShown ? gendersStates.contentHeigh : 0
         visible: parent.genderShown
-        Behavior on opacity { OpacityAnimator { duration: 200 } }
 
         Repeater {
           id: gendersStates

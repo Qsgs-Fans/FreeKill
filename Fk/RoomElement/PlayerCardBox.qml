@@ -83,7 +83,7 @@ GraphicsBox {
             selectable: true
             onClicked: {
               if (!root.multiChoose) {
-                root.cardSelected(cid);
+                shuffleInvisibleOutput(cid);
               }
             }
             onSelectedChanged: {
@@ -141,5 +141,27 @@ GraphicsBox {
     } else {
       area.append(cards);
     }
+  }
+
+  // only for single card output. because multichoose should use poxiBox
+  function shuffleInvisibleOutput(cid) {
+    const visible_data = extra_data?.visible_data ?? {};
+    for (let h = 0; h < cardModel.count; h++) {
+      let cards = cardModel.get(h).areaCards;
+      let invisible = [];
+      for (let j = 0; j < cards.count; j++) {
+        let _cid = cards.get(j).cid;
+        if (visible_data[_cid.toString()] == false) {
+          invisible.push(_cid);
+        }
+      }
+      if (invisible.indexOf(cid) !== -1) {
+        const randomIndex = Math.floor(Math.random() * invisible.length);
+        let newCid = invisible.splice(randomIndex, 1)[0];
+        root.cardSelected(newCid);
+        return;
+      }
+    }
+    root.cardSelected(cid);
   }
 }

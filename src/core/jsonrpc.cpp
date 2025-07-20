@@ -73,6 +73,7 @@ QJsonObject request(const QString &method, const QJsonArray &params, int id) {
   QJsonObject obj = notification(method, params);
   if (id == -1) {
     id = _reqId++;
+    if (_reqId > 10000000) _reqId = 1;
   }
   obj["id"] = id;
   return obj;

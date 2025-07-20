@@ -20,6 +20,9 @@ public:
   static Q_INVOKABLE bool exists(const QString &file);
   static Q_INVOKABLE bool isDir(const QString &file);
 
+  // only used in qml
+  static Q_INVOKABLE QJsonObject readJsonObjectFromFile(const QString &file);
+
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
   void setEngine(QQmlApplicationEngine *engine);
