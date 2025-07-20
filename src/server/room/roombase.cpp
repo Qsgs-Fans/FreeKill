@@ -1,12 +1,11 @@
 #include "server/room/roombase.h"
+#include "server/room/lobby.h"
 #include "server/user/serverplayer.h"
 #include "server/server.h"
 #include "core/util.h"
 
-Server *RoomBase::getServer() const { return server; }
-
 bool RoomBase::isLobby() const {
-  return inherits("Lobby");
+  return dynamic_cast<const Lobby *>(this) != nullptr;
 }
 
 QList<ServerPlayer *> RoomBase::getPlayers() const { return players; }

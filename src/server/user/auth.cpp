@@ -55,10 +55,10 @@ AuthManagerPrivate::AuthManagerPrivate() {
   fclose(keyFile);
 }
 
-AuthManager::AuthManager(Server *parent) : QObject(parent) {
-  server = parent;
+AuthManager::AuthManager() {
+  server = ServerInstance;
   p_ptr = new AuthManagerPrivate;
-  db = parent->getDatabase();
+  db = server->getDatabase();
 
   QFile file("server/rsa_pub");
   file.open(QIODevice::ReadOnly);

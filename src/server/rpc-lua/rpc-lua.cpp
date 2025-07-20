@@ -21,8 +21,8 @@ static void rpc_debug(const char *fmt, Args... args) {
 }
 
 RpcLua::RpcLua(const JsonRpc::RpcMethodMap &methodMap) : methods(methodMap) {
-  auto process = new QProcess();
-  socket = process;
+  auto process = std::make_unique<QProcess>();
+  socket = std::move(process);
 
   auto env = QProcessEnvironment::systemEnvironment();
 
@@ -60,14 +60,13 @@ RpcLua::~RpcLua() {
     rpc_debug("Me <-- %s", qUtf8Printable(msg));
     //qUtf16Printable(Color("Byebye", fkShell::Blue)));
 
-    auto process = dynamic_cast<QProcess *>(socket);
+    auto process = dynamic_cast<QProcess *>(socket.get());
     if (process) process->waitForFinished();
   } else {
     // 不管他了，杀了
   }
 
-  // SIGKILL!!
-  delete socket;
+  // SIGKILL!! 让unique_ptr完成析构
 }
 
 bool RpcLua::dofile(const char *path) {
@@ -157,7 +156,7 @@ QVariant RpcLua::eval(const QString &lua) {
 }
 
 QString RpcLua::getConnectionInfo() const {
-  auto process = dynamic_cast<QProcess *>(socket);
+  auto process = dynamic_cast<QProcess *>(socket.get());
 
   if (process) {
     auto pid = process->processId();

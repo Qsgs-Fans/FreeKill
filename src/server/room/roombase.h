@@ -4,9 +4,8 @@
 class Server;
 class ServerPlayer;
 
-class RoomBase : public QObject {
+class RoomBase {
  public:
-  Server *getServer() const;
   bool isLobby() const;
   QList<ServerPlayer *> getPlayers() const;
   QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
@@ -21,8 +20,8 @@ class RoomBase : public QObject {
   virtual void removePlayer(ServerPlayer *player) = 0;
   virtual void handlePacket(ServerPlayer *sender, const QString &command,
       const QString &jsonData) = 0;
+
  protected:
-  Server *server;
   QList<ServerPlayer *> players;
   QList<ServerPlayer *> observers;
 };

@@ -7,6 +7,7 @@
 #include "server/rpc-lua/rpc-lua.h"
 #include "server/gamelogic/rpc-dispatchers.h"
 #include "server/user/serverplayer.h"
+#include "server/room/room_manager.h"
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
@@ -14,7 +15,7 @@
 
 Scheduler::Scheduler(RoomThread *thread) {
   if (!ServerInstance->isRpcEnabled()) {
-    L = new Lua;
+    L = std::make_unique<Lua>();
     if (QFile::exists("packages/freekill-core") &&
       !GetDisabledPacks().contains("freekill-core")) {
       // 危险的cd操作，记得在lua中切回游戏根目录
@@ -26,13 +27,11 @@ Scheduler::Scheduler(RoomThread *thread) {
     L->call("InitScheduler", { QVariant::fromValue(thread) });
 
   } else {
-    L = new RpcLua(ServerRpcMethods);
+    L = std::make_unique<RpcLua>(ServerRpcMethods);
   }
 }
 
-Scheduler::~Scheduler() {
-  delete L;
-}
+Scheduler::~Scheduler() {}
 
 void Scheduler::handleRequest(const QString &req) {
   auto bytes = req.toUtf8();
@@ -40,7 +39,7 @@ void Scheduler::handleRequest(const QString &req) {
 }
 
 void Scheduler::doDelay(int roomId, int ms) {
-  QTimer::singleShot(ms, [=](){ resumeRoom(roomId, "delay_done"); });
+  QTimer::singleShot(ms, [&](){ resumeRoom(roomId, "delay_done"); });
 }
 
 bool Scheduler::resumeRoom(int roomId, const char *reason) {
@@ -87,7 +86,6 @@ void Scheduler::removeObserver(const QString &connId, int roomId) {
 RoomThread::RoomThread(Server *server) {
   setObjectName("Room");
   setParent(server);
-  m_server = server;
   m_capacity = server->getConfig("roomCountPerThread").toInt(200);
   md5 = server->getMd5();
 
@@ -102,26 +100,23 @@ RoomThread::~RoomThread() {
   if (isRunning()) {
     quit(); wait();
   }
-  delete m_scheduler;
 }
 
 void RoomThread::run() {
   // 在run中创建，这样就能在接下来的exec中处理事件了
-  m_scheduler = new Scheduler(this);
-  connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
-  connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
-  connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
+  m_scheduler = std::make_unique<Scheduler>(this);
 
-  connect(this, &RoomThread::setPlayerState, m_scheduler, &Scheduler::setPlayerState);
-  connect(this, &RoomThread::addObserver, m_scheduler, &Scheduler::addObserver);
-  connect(this, &RoomThread::removeObserver, m_scheduler, &Scheduler::removeObserver);
+  auto raw_scheduler = m_scheduler.get();
+  connect(this, &RoomThread::pushRequest, raw_scheduler, &Scheduler::handleRequest);
+  connect(this, &RoomThread::delay, raw_scheduler, &Scheduler::doDelay);
+  connect(this, &RoomThread::wakeUp, raw_scheduler, &Scheduler::resumeRoom);
+
+  connect(this, &RoomThread::setPlayerState, raw_scheduler, &Scheduler::setPlayerState);
+  connect(this, &RoomThread::addObserver, raw_scheduler, &Scheduler::addObserver);
+  connect(this, &RoomThread::removeObserver, raw_scheduler, &Scheduler::removeObserver);
 
   emit scheduler_ready();
   exec();
-}
-
-Server *RoomThread::getServer() const {
-  return m_server;
 }
 
 bool RoomThread::isFull() const {
@@ -131,7 +126,8 @@ bool RoomThread::isFull() const {
 QString RoomThread::getMd5() const { return md5; }
 
 Room *RoomThread::getRoom(int id) const {
-  return m_server->findRoom(id);
+  auto &rooms = ServerInstance->getRoomManager();
+  return rooms->getRoom(id);
 }
 
 bool RoomThread::isConsoleStart() const {
@@ -144,7 +140,7 @@ bool RoomThread::isConsoleStart() const {
 }
 
 bool RoomThread::isOutdated() {
-  bool ret = md5 != m_server->getMd5();
+  bool ret = md5 != ServerInstance->getMd5();
   if (ret) {
     // 让以后每次都outdate
     // 不然反复disable/enable的情况下会出乱子
@@ -153,7 +149,7 @@ bool RoomThread::isOutdated() {
   return ret;
 }
 
-LuaInterface *RoomThread::getLua() const {
+auto &RoomThread::getLua() const {
   return m_scheduler->getLua();
 }
 

@@ -15,7 +15,7 @@ public:
   QString getConnectionInfo() const;
 
 private:
-  QIODevice *socket = nullptr;
+  std::unique_ptr<QIODevice> socket;
   QMutex io_lock;
   const JsonRpc::RpcMethodMap &methods;
 };

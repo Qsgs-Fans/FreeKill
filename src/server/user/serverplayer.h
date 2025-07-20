@@ -67,7 +67,6 @@ public slots:
 private:
   ClientSocket *socket;   // socket for communicating with client
   Router *router;
-  Server *server;
   RoomBase *room;       // Room that player is in, maybe lobby
   bool m_thinking; // 是否在烧条？
   QMutex m_thinking_mutex;

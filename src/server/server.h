@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef _SERVER_H
-#define _SERVER_H
+#pragma once
 
 class Sqlite3;
-class AuthManager;
 class ServerSocket;
 class ClientSocket;
 class ServerPlayer;
-class RoomThread;
-class Lobby;
+
+class UserManager;
+class RoomManager;
+class RoomThreadManager;
 
 #include "server/room/room.h"
 
@@ -48,37 +48,13 @@ public:
   bool listen(const QHostAddress &address = QHostAddress::Any,
               ushort port = 9527u);
 
-  /**
-    @brief 创建新的房间并加入到房间列表中。
-
-    创建新的房间。
-
-    首先，房间名是用户自定义输入内容，需要先进行内容安全检查；然后创建新房间，
-    将新的room添加到rooms表中；然后将参数中指定的各个属性都赋予给新的
-    房间，通过addPlayer将房主添加到房间中，并使用setOwner将其设为房主。
-
-    @param owner 创建房间的那名玩家；房主
-    @param settings 表示JSON对象的字符串，用作房间配置
-    */
-  void createRoom(ServerPlayer *owner, const QString &name, int capacity,
-                  int timeout = 15, const QByteArray &settings = QByteArrayLiteral("{}"));
-
-  void removeRoom(int id); /// 单纯从表中删除指针 内存由对应thread管理
-
-  Room *findRoom(int id) const; /// 获取对应id的房间
-  Lobby *lobby() const; /// 获取大厅对象
-
-  ServerPlayer *findPlayer(int id) const; /// 获取对应id的玩家
-  ServerPlayer *findPlayerByConnId(const QString &connId) const; /// 获取对应connId的玩家
-  void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
-  void removePlayer(int id); /// 从表中删除对应id的玩家
-  void removePlayerByConnId(QString connid); /// 从表中删除对应connid的玩家
-  auto getPlayers() { return players; } /// 获取players表
-
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
 
-  Sqlite3 *getDatabase();
+  auto &getUserManager() const { return user_manager; }
+  auto &getRoomManager() const { return room_manager; }
+  auto &getThreadManager() const { return thread_manager; }
+  auto &getDatabase() const { return db; }
 
   void broadcast(const QByteArray &command, const QByteArray &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg);
@@ -112,19 +88,15 @@ public slots:
   void processNewConnection(ClientSocket *client);
 
 private:
+  std::unique_ptr<UserManager> user_manager;
+  std::unique_ptr<RoomManager> room_manager;
+  std::unique_ptr<RoomThreadManager> thread_manager;
+
+  std::unique_ptr<Sqlite3> db; ///< sqlite数据库连接实例
+
   friend class Shell;
   ServerSocket *server;
 
-  Lobby *m_lobby; ///< 大厅
-  QMap<int, Room *> rooms; ///< 所有的Room
-  int nextRoomId;
-  friend Room::Room(RoomThread *m_thread);
-  QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
-  QHash<QString, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
-  QList<QString> temp_banlist; ///< 被tempban的ip列表
-
-  AuthManager *auth;
-  Sqlite3 *db; ///< sqlite数据库连接实例
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
 
@@ -146,5 +118,3 @@ private:
 };
 
 extern Server *ServerInstance; ///< 全局Server对象
-
-#endif // _SERVER_H

@@ -14,7 +14,7 @@ class RoomThread;
 
   该类负责表示游戏房间，与大厅进行交互以调整玩家
 */
-class Room : public RoomBase {
+class Room : public RoomBase, public QObject {
   Q_OBJECT
  public:
   explicit Room(RoomThread *m_thread);

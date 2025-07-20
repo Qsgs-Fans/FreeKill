@@ -4,9 +4,7 @@
 #include "core/util.h"
 #include "core/c-wrapper.h"
 
-Lobby::Lobby(Server *server) {
-  this->server = server;
-  setParent(server);
+Lobby::Lobby() {
 }
 
 void Lobby::addPlayer(ServerPlayer *player) {
