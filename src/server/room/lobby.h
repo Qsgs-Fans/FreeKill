@@ -4,8 +4,9 @@
 #include "server/room/roombase.h"
 
 class Lobby : public RoomBase {
+  Q_OBJECT
  public:
-  Lobby();
+  Lobby(Server *server);
 
   void addPlayer(ServerPlayer *player);
   void removePlayer(ServerPlayer *player);

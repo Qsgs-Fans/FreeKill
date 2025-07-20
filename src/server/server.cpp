@@ -3,7 +3,6 @@
 #include "server/server.h"
 #include "server/user/auth.h"
 #include "server/user/serverplayer.h"
-#include "server/user/user_manager.h"
 #include "server/room/room.h"
 #include "server/room/lobby.h"
 #include "server/gamelogic/roomthread.h"
@@ -24,9 +23,13 @@ Server::Server(QObject *parent) : QObject(parent) {
   md5 = calcFileMD5();
   readConfig();
 
+  auth = new AuthManager(this);
   server = new ServerSocket(this);
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
+
+  nextRoomId = 1;
+  m_lobby = new Lobby(this);
 
   // 启动心跳包线程
   auto heartbeatThread = QThread::create([=]() {
@@ -83,6 +86,77 @@ bool Server::listen(const QHostAddress &address, ushort port) {
     }
   }
   return ret;
+}
+
+void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
+                        int timeout, const QByteArray &settings) {
+  if (!checkBanWord(name)) {
+    if (owner) {
+      owner->doNotify("ErrorMsg", "unk error");
+    }
+    return;
+  }
+  Room *room;
+  RoomThread *thread = nullptr;
+
+  for (auto t : findChildren<RoomThread *>()) {
+    if (!t->isFull() && !t->isOutdated()) {
+      thread = t;
+      break;
+    }
+  }
+
+  if (!thread) {
+    thread = new RoomThread(this);
+  }
+
+  room = new Room(thread);
+
+  rooms.insert(room->getId(), room);
+  room->setName(name);
+  room->setCapacity(capacity);
+  room->setTimeout(timeout);
+  room->setSettings(settings);
+  room->addPlayer(owner);
+  room->setOwner(owner);
+}
+
+void Server::removeRoom(int id) {
+  rooms.remove(id);
+}
+
+Room *Server::findRoom(int id) const { return rooms.value(id); }
+
+Lobby *Server::lobby() const { return m_lobby; }
+
+ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
+
+ServerPlayer *Server::findPlayerByConnId(const QString &connId) const {
+  return players_conn.value(connId);
+}
+
+void Server::addPlayer(ServerPlayer *player) {
+  int id = player->getId();
+  if (id > 0) {
+    if (players.contains(id))
+      players.remove(id);
+
+    players.insert(id, player);
+  }
+
+  players_conn.insert(player->getConnId(), player);
+}
+
+void Server::removePlayer(int id) {
+  if (players[id]) {
+    players.remove(id);
+  }
+}
+
+void Server::removePlayerByConnId(QString connId) {
+  if (players_conn[connId]) {
+    players_conn.remove(connId);
+  }
 }
 
 void Server::updateRoomList(ServerPlayer *teller) {

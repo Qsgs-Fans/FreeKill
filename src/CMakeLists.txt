@@ -36,12 +36,10 @@ set(freekill_SRCS
 
   "server/user/auth.cpp"
   "server/user/serverplayer.cpp"
-  "server/user/user_manager.cpp"
 
   "server/room/roombase.cpp"
   "server/room/lobby.cpp"
   "server/room/room.cpp"
-  "server/room/room_manager.cpp"
 
   "server/rpc-lua/jsonrpc.cpp"
   "server/rpc-lua/rpc-lua.cpp"

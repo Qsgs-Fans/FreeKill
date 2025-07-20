@@ -9,7 +9,7 @@ class AuthManagerPrivate;
 class AuthManager : public QObject {
   Q_OBJECT
 public:
-  AuthManager();
+  AuthManager(Server *server);
   ~AuthManager() noexcept;
   auto getPublicKey() const { return public_key; }
 

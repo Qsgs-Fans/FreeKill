@@ -15,7 +15,7 @@ class Scheduler : public QObject {
   explicit Scheduler(RoomThread *m_thread);
   ~Scheduler();
 
-  auto &getLua() const { return L; }
+  auto getLua() const { return L; }
 
  public slots:
   void handleRequest(const QString &req);
@@ -28,7 +28,7 @@ class Scheduler : public QObject {
   void removeObserver(const QString &, int roomId);
 
  private:
-  std::unique_ptr<LuaInterface> L;
+  LuaInterface *L;
 };
 
 /**
@@ -40,7 +40,7 @@ class Scheduler : public QObject {
 class RoomThread : public QThread {
   Q_OBJECT
  public:
-  explicit RoomThread();
+  explicit RoomThread(Server *m_server);
   ~RoomThread();
 
   Server *getServer() const;
@@ -54,7 +54,7 @@ class RoomThread : public QThread {
 
   bool isOutdated();
 
-  auto &getLua() const;
+  LuaInterface *getLua() const;
 
  signals:
   void scheduler_ready();
@@ -74,11 +74,12 @@ class RoomThread : public QThread {
   virtual void run();
 
  private:
+  Server *m_server;
   // Rooms用findChildren<Room *>拿
   int m_capacity;
   QString md5;
 
-  std::unique_ptr<Scheduler> m_scheduler;
+  Scheduler *m_scheduler;
 };
 
 Q_DECLARE_METATYPE(RoomThread *)
