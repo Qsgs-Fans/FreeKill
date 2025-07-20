@@ -630,7 +630,8 @@ void Room::removeRejectId(int id) {
 void Room::quitRoom(ServerPlayer *player, const QString &) {
   removePlayer(player);
   if (isOutdated()) {
-    emit server->findPlayer(player->getId())->kicked();
+    auto p = server->findPlayer(player->getId());
+    if (p) emit p->kicked();
   }
 }
 
