@@ -43,7 +43,7 @@ bool checkParams(const QCborArray &params, Types... expectedTypes) {
   }
 
   for (size_t i = 0; i < typeCount; ++i) {
-    if (params[i].type() != types[i]) {
+    if (params[i].type() & types[i] != types[i]) {
       return false;
     }
   }
