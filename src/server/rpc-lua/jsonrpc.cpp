@@ -1,7 +1,6 @@
 #include "server/rpc-lua/jsonrpc.h"
 #include <QDebug>
-#include <QJsonDocument>
-#include <QJsonValue>
+#include <QCborValue>
 
 static int _reqId = 1;
 
@@ -59,87 +58,87 @@ bool removeErrorObject(const std::string &errorName) {
   return false;
 }
 
-QJsonObject notification(const QString &method, const QJsonArray &params) {
-  QJsonObject obj;
-  obj["jsonrpc"] = "2.0";
-  obj["method"] = method;
+QCborMap notification(const QString &method, const QCborArray &params) {
+  QCborMap obj;
+  obj[JsonRpc] = "2.0";
+  obj[Method] = method;
   if (!params.isEmpty()) {
-    obj["params"] = params;
+    obj[Params] = params;
   }
   return obj;
 }
 
-QJsonObject request(const QString &method, const QJsonArray &params, int id) {
-  QJsonObject obj = notification(method, params);
+QCborMap request(const QString &method, const QCborArray &params, int id) {
+  QCborMap obj = notification(method, params);
   if (id == -1) {
     id = _reqId++;
     if (_reqId > 10000000) _reqId = 1;
   }
-  obj["id"] = id;
+  obj[Id] = id;
   return obj;
 }
 
-QJsonObject response(const QJsonObject &req, const QJsonValue &result) {
-  QJsonObject res;
-  res["jsonrpc"] = "2.0";
-  if (req.contains("id")) {
-    res["id"] = req["id"];
+QCborMap response(const QCborMap &req, const QCborValue &result) {
+  QCborMap res;
+  res[JsonRpc] = "2.0";
+  if (req.contains(Id)) {
+    res[Id] = req[Id];
   }
-  res["result"] = result;
+  res[Result] = result;
   return res;
 }
 
-QJsonObject responseError(const QJsonObject &req, const std::string &errorName,
-                          const QJsonValue &data) {
+QCborMap responseError(const QCborMap &req, const std::string &errorName,
+                          const QCborValue &data) {
   auto errorOpt = getErrorObject(errorName);
   if (!errorOpt) {
     errorOpt = getErrorObject("internal_error").value();
   }
 
-  QJsonObject errorObj;
-  errorObj["code"] = errorOpt->code;
-  errorObj["message"] = errorOpt->message;
+  QCborMap errorObj;
+  errorObj[ErrorCode] = errorOpt->code;
+  errorObj[ErrorMessage] = errorOpt->message;
   if (errorOpt->data.has_value()) {
-    errorObj["data"] = errorOpt->data.value();
+    errorObj[ErrorData] = errorOpt->data.value();
   }
 
-  QJsonObject res;
-  res["jsonrpc"] = "2.0";
-  res["error"] = errorObj;
+  QCborMap res;
+  res[JsonRpc] = "2.0";
+  res[Error] = errorObj;
 
   if (errorOpt->code == -32700 || errorOpt->code == -32600) {
     // No ID
-  } else if (req.contains("id")) {
-    res["id"] = req["id"];
+  } else if (req.contains(Id) && req[Id].isInteger()) {
+    res[Id] = req[Id];
   }
 
   if (!data.isUndefined()) {
-    res["data"] = data;
+    errorObj[ErrorData] = data;
   }
 
   return res;
 }
 
-std::optional<QJsonObject>
+std::optional<QCborMap>
 handleRequest(const std::map<QString, RpcMethod> &methods,
-              const QJsonObject &req) {
-  if (!req.contains("jsonrpc") || req["jsonrpc"].toString() != "2.0") {
+              const QCborMap &req) {
+  if (!req.contains(JsonRpc) || req[JsonRpc].toByteArray() != "2.0") {
     return responseError(req, "invalid_request");
   }
 
-  if (!req.contains("method") || !req["method"].isString()) {
+  if (!req.contains(Method) || !req[Method].isByteArray()) {
     return responseError(req, "invalid_request");
   }
 
-  QString method = req["method"].toString();
+  QString method = req[Method].toByteArray();
   auto it = methods.find(method);
   if (it == methods.end()) {
     return responseError(req, "method_not_found");
   }
 
-  QJsonArray params;
-  if (req.contains("params") && req["params"].isArray()) {
-    params = req["params"].toArray();
+  QCborArray params;
+  if (req.contains(Params) && req[Params].isArray()) {
+    params = req[Params].toArray();
   }
 
   try {
@@ -148,7 +147,7 @@ handleRequest(const std::map<QString, RpcMethod> &methods,
       // Assume error info is in result
       return responseError(req, "invalid_params", result);
     }
-    if (!req.contains("id")) {
+    if (!req.contains(Id) || !req[Id].isInteger()) {
       return std::nullopt; // notification
     }
     return response(req, result);
@@ -157,27 +156,19 @@ handleRequest(const std::map<QString, RpcMethod> &methods,
   }
 }
 
-std::optional<QJsonObject>
+std::optional<QCborMap>
 serverResponse(const std::map<QString, RpcMethod> &methods,
-               const QString &request) {
-  QJsonParseError parseError;
-  QJsonDocument doc = QJsonDocument::fromJson(request.toUtf8(), &parseError);
-  if (parseError.error != QJsonParseError::NoError) {
-    QJsonObject dummy;
-    return responseError(dummy, "parse_error", request);
+               const QCborValue &reqVal) {
+  if (!reqVal.isMap()) {
+    return responseError({}, "invalid_request", reqVal);
   }
 
-  QJsonValue reqVal = doc.object();
-  if (!reqVal.isObject()) {
-    return responseError({}, "invalid_request", request);
+  QCborMap reqObj = reqVal.toMap();
+  if (reqObj[JsonRpc].toByteArray() != "2.0") {
+    return responseError({}, "invalid_request", reqVal);
   }
 
-  QJsonObject reqObj = reqVal.toObject();
-  if (reqObj["jsonrpc"].toString() != "2.0") {
-    return responseError({}, "invalid_request", request);
-  }
-
-  if (!reqObj.contains("method")) {
+  if (!reqObj.contains(Method)) {
     return handleRequest(methods, reqObj);
   }
 

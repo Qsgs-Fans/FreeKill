@@ -1,10 +1,10 @@
 // jsonrpc.h
 // 让AI就着jsonrpc.lua改的 懒得优化写法了
+// 由于性能出现重大瓶颈，改为CBOR格式，反正这个也是Qt自带支持
 #pragma once
 
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <QCborArray>
+#include <QCborMap>
 #include <QString>
 #include <functional>
 #include <map>
@@ -13,14 +13,29 @@
 
 namespace JsonRpc {
 
+enum JsonKeys {
+  // jsonrpc
+  JsonRpc = 100,
+  Method,
+  Params,
+  Error,
+  Id,
+  Result,
+
+  // jsonrpc.error
+  ErrorCode = 200,
+  ErrorMessage,
+  ErrorData,
+};
+
 using RpcMethod =
-    std::function<std::pair<bool, QJsonValue>(const QJsonArray &)>;
+    std::function<std::pair<bool, QCborValue>(const QCborArray &)>;
 using RpcMethodMap = std::map<QString, RpcMethod>;
 
 // 检查params参数列表
 template<typename... Types>
-bool checkParams(const QJsonArray &params, Types... expectedTypes) {
-  const QJsonValue::Type types[] = {static_cast<QJsonValue::Type>(expectedTypes)...};
+bool checkParams(const QCborArray &params, Types... expectedTypes) {
+  const QCborValue::Type types[] = {static_cast<QCborValue::Type>(expectedTypes)...};
   constexpr size_t typeCount = sizeof...(Types);
 
   if (params.size() != static_cast<int>(typeCount)) {
@@ -39,7 +54,7 @@ bool checkParams(const QJsonArray &params, Types... expectedTypes) {
 struct JsonRpcError {
   int code;
   QString message;
-  std::optional<QJsonValue> data;
+  std::optional<QCborValue> data;
 };
 
 // 错误对象集合
@@ -58,26 +73,26 @@ bool addErrorObject(const std::string &errorName, const JsonRpcError &error);
 bool removeErrorObject(const std::string &errorName);
 
 // 构造通知包
-QJsonObject notification(const QString &method, const QJsonArray &params = {});
+QCborMap notification(const QString &method, const QCborArray &params = {});
 
 // 构造请求包
-QJsonObject request(const QString &method, const QJsonArray &params = {},
+QCborMap request(const QString &method, const QCborArray &params = {},
                     int id = -1);
 
 // 构造响应包
-QJsonObject response(const QJsonObject &req, const QJsonValue &result);
+QCborMap response(const QCborMap &req, const QCborValue &result);
 
 // 构造错误响应包
-QJsonObject responseError(const QJsonObject &req, const std::string &errorName,
-                          const QJsonValue &data = {});
+QCborMap responseError(const QCborMap &req, const std::string &errorName,
+                          const QCborValue &data = {});
 
 // 处理单个请求
-std::optional<QJsonObject>
-handleRequest(const RpcMethodMap &methods, const QJsonObject &req);
+std::optional<QCborMap>
+handleRequest(const RpcMethodMap &methods, const QCborMap &req);
 
 // 主处理入口：解析并处理请求
-std::optional<QJsonObject>
-serverResponse(const RpcMethodMap &methods, const QString &request);
+std::optional<QCborMap>
+serverResponse(const RpcMethodMap &methods, const QCborValue &request);
 
 // 获取下一个可用的请求ID
 int getNextFreeId();

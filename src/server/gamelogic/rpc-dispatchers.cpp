@@ -4,56 +4,56 @@
 
 // 这何尝不是一种手搓swig。。
 
-using _rpcRet = std::pair<bool, QJsonValue>;
+using _rpcRet = std::pair<bool, QCborValue>;
 using JsonRpc::checkParams;
 
-static QJsonValue nullVal;
+static QCborValue nullVal;
 
 // part1: stdout相关
 
-static _rpcRet _rpc_qDebug(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_qDebug(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  qDebug("%ls", qUtf16Printable(params[0].toString()));
+  qDebug("%s", qUtf8Printable(params[0].toByteArray()));
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_qInfo(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_qInfo(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  qInfo("%ls", qUtf16Printable(params[0].toString()));
+  qInfo("%s", qUtf8Printable(params[0].toByteArray()));
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_qWarning(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_qWarning(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
   if (!params[0].isString()) {
     return { false, nullVal };
   }
 
-  qWarning("%ls", qUtf16Printable(params[0].toString()));
+  qWarning("%s", qUtf8Printable(params[0].toByteArray()));
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_qCritical(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_qCritical(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  qCritical("%ls", qUtf16Printable(params[0].toString()));
+  qCritical("%s", qUtf8Printable(params[0].toByteArray()));
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_print(const QJsonArray &params) {
+static _rpcRet _rpc_print(const QCborArray &params) {
   QTextStream out(stdout);
   for (auto v : params) {
-    out << v.toString() << '\t';
+    out << v.toByteArray() << '\t';
   }
   out << Qt::endl;
   return { true, nullVal };
@@ -61,16 +61,16 @@ static _rpcRet _rpc_print(const QJsonArray &params) {
 
 // part2: ServerPlayer相关
 
-static _rpcRet _rpc_ServerPlayer_doRequest(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String, QJsonValue::String,
-                   QJsonValue::String, QJsonValue::Double, QJsonValue::Double)) {
+static _rpcRet _rpc_ServerPlayer_doRequest(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray, QCborValue::ByteArray,
+                   QCborValue::ByteArray, QCborValue::Integer, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
-  QString command = params[1].toString();
-  QString jsonData = params[2].toString();
-  int timeout = params[3].toInt(0);
+  QString connId = params[0].toByteArray();
+  QString command = params[1].toByteArray();
+  QString jsonData = params[2].toByteArray();
+  int timeout = params[3].toInteger(0);
   qint64 timestamp = params[4].toInteger();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -83,13 +83,13 @@ static _rpcRet _rpc_ServerPlayer_doRequest(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_ServerPlayer_waitForReply(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String, QJsonValue::Double)) {
+static _rpcRet _rpc_ServerPlayer_waitForReply(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
-  int timeout = params[1].toInt(0);
+  QString connId = params[0].toByteArray();
+  int timeout = params[1].toInteger(0);
 
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
@@ -100,14 +100,14 @@ static _rpcRet _rpc_ServerPlayer_waitForReply(const QJsonArray &params) {
   return { true, reply };
 }
 
-static _rpcRet _rpc_ServerPlayer_doNotify(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String, QJsonValue::String, QJsonValue::String)) {
+static _rpcRet _rpc_ServerPlayer_doNotify(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray, QCborValue::ByteArray, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
-  QString command = params[1].toString();
-  QString jsonData = params[2].toString();
+  QString connId = params[0].toByteArray();
+  QString command = params[1].toByteArray();
+  QString jsonData = params[2].toByteArray();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
@@ -119,12 +119,12 @@ static _rpcRet _rpc_ServerPlayer_doNotify(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_ServerPlayer_thinking(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_ServerPlayer_thinking(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
+  QString connId = params[0].toByteArray();
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
     return { false, "Player not found" };
@@ -134,12 +134,12 @@ static _rpcRet _rpc_ServerPlayer_thinking(const QJsonArray &params) {
   return { true, isThinking };
 }
 
-static _rpcRet _rpc_ServerPlayer_setThinking(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String, QJsonValue::Bool)) {
+static _rpcRet _rpc_ServerPlayer_setThinking(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray, QCborValue::SimpleType)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
+  QString connId = params[0].toByteArray();
   bool thinking = params[1].toBool();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -151,12 +151,12 @@ static _rpcRet _rpc_ServerPlayer_setThinking(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_ServerPlayer_setDied(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String, QJsonValue::Bool)) {
+static _rpcRet _rpc_ServerPlayer_setDied(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray, QCborValue::SimpleType)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
+  QString connId = params[0].toByteArray();
   bool died = params[1].toBool();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -168,12 +168,12 @@ static _rpcRet _rpc_ServerPlayer_setDied(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_ServerPlayer_emitKick(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::String)) {
+static _rpcRet _rpc_ServerPlayer_emitKick(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::ByteArray)) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toString();
+  QString connId = params[0].toByteArray();
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
     return { false, "Player not found" };
@@ -185,12 +185,12 @@ static _rpcRet _rpc_ServerPlayer_emitKick(const QJsonArray &params) {
 
 // part3: Room相关
 
-static _rpcRet _rpc_Room_delay(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_delay(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer, QCborValue::Integer)) {
     return { false, nullVal };
   }
-  int id = params[0].toInt(-1);
-  int ms = params[1].toInt(0);
+  int id = params[0].toInteger(-1);
+  int ms = params[1].toInteger(0);
   if (ms <= 0) {
     return { false, nullVal };
   }
@@ -204,17 +204,17 @@ static _rpcRet _rpc_Room_delay(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_updatePlayerWinRate(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double, QJsonValue::Double, 
-                   QJsonValue::String, QJsonValue::String, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_updatePlayerWinRate(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer, QCborValue::Integer,
+                   QCborValue::ByteArray, QCborValue::ByteArray, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
-  int playerId = params[1].toInt(-1);
-  QString mode = params[2].toString();
-  QString role = params[3].toString();
-  int result = params[4].toInt(0);
+  int roomId = params[0].toInteger(-1);
+  int playerId = params[1].toInteger(-1);
+  QString mode = params[2].toByteArray();
+  QString role = params[3].toByteArray();
+  int result = params[4].toInteger(0);
 
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
@@ -226,17 +226,17 @@ static _rpcRet _rpc_Room_updatePlayerWinRate(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_updateGeneralWinRate(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double, QJsonValue::String,
-                   QJsonValue::String, QJsonValue::String, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_updateGeneralWinRate(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer, QCborValue::ByteArray,
+                   QCborValue::ByteArray, QCborValue::ByteArray, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
-  QString general = params[1].toString();
-  QString mode = params[2].toString();
-  QString role = params[3].toString();
-  int result = params[4].toInt(0);
+  int roomId = params[0].toInteger(-1);
+  QString general = params[1].toByteArray();
+  QString mode = params[2].toByteArray();
+  QString role = params[3].toByteArray();
+  int result = params[4].toInteger(0);
 
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
@@ -248,12 +248,12 @@ static _rpcRet _rpc_Room_updateGeneralWinRate(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_gameOver(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_gameOver(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
+  int roomId = params[0].toInteger(-1);
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
     return { false, "Room not found" };
@@ -264,13 +264,13 @@ static _rpcRet _rpc_Room_gameOver(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_setRequestTimer(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_setRequestTimer(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
-  int ms = params[1].toInt(0);
+  int roomId = params[0].toInteger(-1);
+  int ms = params[1].toInteger(0);
   if (ms <= 0) {
     return { false, nullVal };
   }
@@ -285,12 +285,12 @@ static _rpcRet _rpc_Room_setRequestTimer(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_destroyRequestTimer(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_destroyRequestTimer(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
+  int roomId = params[0].toInteger(-1);
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
     return { false, "Room not found" };
@@ -301,12 +301,12 @@ static _rpcRet _rpc_Room_destroyRequestTimer(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_increaseRefCount(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_increaseRefCount(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
+  int roomId = params[0].toInteger(-1);
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
     return { false, "Room not found" };
@@ -317,12 +317,12 @@ static _rpcRet _rpc_Room_increaseRefCount(const QJsonArray &params) {
   return { true, nullVal };
 }
 
-static _rpcRet _rpc_Room_decreaseRefCount(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double)) {
+static _rpcRet _rpc_Room_decreaseRefCount(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer)) {
     return { false, nullVal };
   }
 
-  int roomId = params[0].toInt(-1);
+  int roomId = params[0].toInteger(-1);
   auto room = ServerInstance->findRoom(roomId);
   if (!room) {
     return { false, "Room not found" };
@@ -335,8 +335,8 @@ static _rpcRet _rpc_Room_decreaseRefCount(const QJsonArray &params) {
 
 // 收官：getRoom
 
-static QJsonObject getPlayerObject(ServerPlayer *p) {
-  QJsonArray gameData;
+static QCborMap getPlayerObject(ServerPlayer *p) {
+  QCborArray gameData;
   for (auto i : p->getGameData()) gameData << i;
 
   return {
@@ -352,11 +352,11 @@ static QJsonObject getPlayerObject(ServerPlayer *p) {
   };
 }
 
-static _rpcRet _rpc_RoomThread_getRoom(const QJsonArray &params) {
-  if (!checkParams(params, QJsonValue::Double)) {
+static _rpcRet _rpc_RoomThread_getRoom(const QCborArray &params) {
+  if (!checkParams(params, QCborValue::Integer)) {
     return { false, nullVal };
   }
-  int id = params[0].toInt(-1);
+  int id = params[0].toInteger(-1);
   if (id <= 0) {
     return { false, nullVal };
   }
@@ -366,12 +366,12 @@ static _rpcRet _rpc_RoomThread_getRoom(const QJsonArray &params) {
     return { false, "Room not found" };
   }
 
-  QJsonArray players;
+  QCborArray players;
   for (auto p : room->getPlayers()) {
     players << getPlayerObject(p);
   }
 
-  QJsonObject ret {
+  QCborMap ret {
     { "id", room->getId() },
     { "players", players },
     { "ownerId", room->getOwner()->getId() },

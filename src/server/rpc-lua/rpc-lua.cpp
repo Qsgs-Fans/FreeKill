@@ -20,6 +20,36 @@ static void rpc_debug(const char *fmt, Args... args) {
   }
 }
 
+static QJsonValue decodeBase64Strings(const QJsonValue &val) {
+  if (val.isString()) {
+    QByteArray decoded = QByteArray::fromBase64(val.toString().toUtf8());
+    QString decodedStr = QString::fromUtf8(decoded);
+    return QJsonValue(decodedStr);
+  } else if (val.isObject()) {
+    QJsonObject obj = val.toObject();
+    for (auto it = obj.begin(); it != obj.end(); ++it) {
+      it.value() = decodeBase64Strings(it.value());
+    }
+    return obj;
+  } else if (val.isArray()) {
+    QJsonArray arr = val.toArray();
+    for (int i = 0; i < arr.size(); ++i) {
+      arr[i] = decodeBase64Strings(arr[i]);
+    }
+    return arr;
+  } else {
+    return val;
+  }
+}
+
+static QByteArray mapToJson(const QCborValue &val, bool decode) {
+  auto obj = val.toJsonValue().toObject();
+  if (decode) {
+    obj = decodeBase64Strings(obj).toObject();
+  }
+  return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+}
+
 RpcLua::RpcLua(const JsonRpc::RpcMethodMap &methodMap) : methods(methodMap) {
   auto process = new QProcess();
   socket = process;
@@ -31,6 +61,7 @@ RpcLua::RpcLua(const JsonRpc::RpcMethodMap &methodMap) : methods(methodMap) {
     arr << pkg;
   }
   env.insert("FK_DISABLED_PACKS", QJsonDocument(arr).toJson(QJsonDocument::Compact));
+  env.insert("FK_RPC_MODE", "cbor");
   process->setProcessEnvironment(env);
   if (QFile::exists("packages/freekill-core") &&
     !Pacman->getDisabledPacks().contains("freekill-core")) {
@@ -39,10 +70,12 @@ RpcLua::RpcLua(const JsonRpc::RpcMethodMap &methodMap) : methods(methodMap) {
   process->start("lua5.4", { "lua/server/rpc/entry.lua" });
 
   // 默认等待30s 实际上加载一次差不多3000ms左右 很慢了 可能需要加大
-  if (process->waitForReadyRead()) {
-    // 把hello world的notification读了，或者可以加更严的判定
-    auto msg = process->readLine();
-    rpc_debug("Me <-- %s", qUtf8Printable(msg));
+  // 把hello world的notification读了，或者可以加更严的判定
+  process->waitForReadyRead();
+  QCborStreamReader reader(process);
+  auto msg = QCborValue::fromCbor(reader); //process->readLine();
+  if (msg.isMap()) {
+    rpc_debug("Me <-- %s", qUtf8Printable(mapToJson(msg.toMap(), true)));
     //qUtf16Printable(Color("Hello, world!", fkShell::Blue)));
   } else {
     // TODO: throw, then retry
@@ -53,7 +86,7 @@ RpcLua::RpcLua(const JsonRpc::RpcMethodMap &methodMap) : methods(methodMap) {
 }
 
 RpcLua::~RpcLua() {
-  socket->write(R"({"jsonrpc":"2.0","id":9999999,"method":"bye"})""\n");
+  call("bye");
   rpc_debug("Me --> %ls", qUtf16Printable(Color("Say goodbye", fkShell::Blue)));
   if (socket->waitForReadyRead(15000)) {
     auto msg = socket->readLine();
@@ -74,80 +107,48 @@ bool RpcLua::dofile(const char *path) {
   return call("dofile", { path }).toBool();
 }
 
-static QJsonObject dummyObj;
+static QCborMap dummyObj;
 
 QVariant RpcLua::call(const QString &func_name, QVariantList params) {
   QMutexLocker locker(&io_lock);
 
   // 如同Lua中callRpc那样
-  QJsonArray arr;
-  for (auto v : params) arr << QJsonValue::fromVariant(v);
+  QCborArray arr;
+  for (auto v : params) arr << QCborValue::fromVariant(v);
   auto req = JsonRpc::request(func_name, arr);
-  auto id = req["id"].toInt();
-  socket->write(QJsonDocument(req).toJson(QJsonDocument::Compact) + '\n');
-  rpc_debug("Me --> %s", QJsonDocument(req).toJson(QJsonDocument::Compact).constData());
-  // rpc_debug("Me --> %ls: %ls %s",
-  //        qUtf16Printable(Color("request", fkShell::Green, fkShell::Bold)),
-  //        qUtf16Printable(func_name),
-  //        qUtf8Printable(QJsonDocument(arr).toJson(QJsonDocument::Compact)));
+  auto id = req[JsonRpc::Id].toInteger();
+  socket->write(req.toCborValue().toCbor());
+  socket->waitForBytesWritten(15000);
+  rpc_debug("Me --> %s", qUtf8Printable(mapToJson(req, false)));
 
-  while (socket->canReadLine() || socket->waitForReadyRead(15000)) {
-    if (!socket->canReadLine()) continue;
-    auto msg = socket->readLine();
-    if (msg.isNull()) {
-      rpc_debug("Me <-- EOF");
-      break;
-    }
+  while (socket->bytesAvailable() > 0 || socket->waitForReadyRead(15000)) {
+    if (!socket->isOpen()) break;
+    if (socket->bytesAvailable() == 0) continue;
 
-    QJsonParseError err;
-    auto doc = QJsonDocument::fromJson(msg, &err);
-    if (doc.isNull()) {
-      rpc_debug("  Me <-- %s", qUtf8Printable(msg.trimmed()));
-      auto req = JsonRpc::responseError(dummyObj, "parse error", err.errorString());
-      socket->write(QJsonDocument(req).toJson(QJsonDocument::Compact) + '\n');
-      rpc_debug("  Me --> %s", QJsonDocument(req).toJson(QJsonDocument::Compact).constData());
-      // rpc_debug("  Me --> %ls: parse error",
-      //        qUtf16Printable(Color("response", fkShell::Red, fkShell::Bold)));
-      continue;
-    }
+    auto bytes = socket->readAll();
+    QCborStreamReader reader(bytes);
+    while (true) {
+      auto doc = QCborValue::fromCbor(reader);
+      if (!doc.isMap()) break;
 
-    auto packet = doc.object();
-    if (packet["jsonrpc"] == "2.0" && packet["id"] == id && packet["method"].isNull()) {
-      // if (packet.value("error").isObject()) {
-      //   rpc_debug("Me <-- %ls: %s",
-      //             qUtf16Printable(Color("response (error)", fkShell::Red, fkShell::Bold)),
-      //             qUtf8Printable(QJsonDocument(packet).toJson(QJsonDocument::Compact)));
-      // } else {
-      //   rpc_debug("Me <-- %ls: %s",
-      //             qUtf16Printable(Color("response", fkShell::Green, fkShell::Bold)),
-      //             qUtf8Printable(QJsonDocument({ packet["result"] }).toJson(QJsonDocument::Compact)));
-      // }
-      rpc_debug("Me <-- %s", qUtf8Printable(msg.trimmed()));
-      return packet["result"].toVariant();
-    } else {
-      rpc_debug("  Me <-- %s", qUtf8Printable(msg.trimmed()));
-      // rpc_debug("  Me <-- %ls: %ls %s",
-      //        qUtf16Printable(Color("request", fkShell::Green, fkShell::Bold)),
-      //        qUtf16Printable(packet["method"].toString()),
-      //        qUtf8Printable(QJsonDocument(packet["params"].toArray()).toJson(QJsonDocument::Compact)));
-      auto res = JsonRpc::serverResponse(methods, msg);
-      if (res) {
-        socket->write(QJsonDocument(*res).toJson(QJsonDocument::Compact) + '\n');
-        rpc_debug("  Me --> %s", QJsonDocument(*res).toJson(QJsonDocument::Compact).constData());
-        // if (!res->value("error").isObject()) {
-        //   rpc_debug("  Me --> %ls: %s",
-        //          qUtf16Printable(Color("response", fkShell::Green, fkShell::Bold)),
-        //          qUtf8Printable(QJsonDocument({ res->value("result") }).toJson(QJsonDocument::Compact)));
-        // } else {
-        //   rpc_debug("  Me --> %ls: %s",
-        //          qUtf16Printable(Color("response (error)", fkShell::Red, fkShell::Bold)),
-        //          qUtf8Printable(QJsonDocument(*res).toJson(QJsonDocument::Compact)));
-        // }
+      auto packet = doc.toMap();
+      if (packet[JsonRpc::JsonRpc].toByteArray() == "2.0" && packet[JsonRpc::Id] == id && !packet[JsonRpc::Method].isByteArray()) {
+        rpc_debug("Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+        return packet[JsonRpc::Result].toVariant();
+      } else {
+        rpc_debug("  Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+        auto res = JsonRpc::serverResponse(methods, packet);
+        if (res) {
+          socket->write(res->toCborValue().toCbor());
+          socket->waitForBytesWritten(15000);
+          rpc_debug("  Me --> %s", qUtf8Printable(mapToJson(*res, false)));
+        }
       }
     }
   }
 
   rpc_debug("Me <-- IO read timeout. Is Lua process died?");
+  qDebug() << dynamic_cast<QProcess *>(socket)->readAllStandardError();
   return QVariant();
 }
 
