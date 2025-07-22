@@ -206,13 +206,13 @@ void Server::broadcast(const QByteArray &command, const QByteArray &jsonData) {
 }
 
 void Server::sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg) {
-  QJsonArray body;
-  body << -2;
-  body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-          Router::DEST_CLIENT);
-  body << type.constData();
-  body << msg.constData();
-  client->send(JsonArray2Bytes(body));
+  QCborArray body {
+    -2,
+    (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT),
+    type,
+    msg,
+  };
+  client->send(body.toCborValue().toCbor());
 }
 
 void Server::createNewPlayer(ClientSocket *client, const QString &name, const QString &avatar, int id, const QString &uuid_str) {

@@ -64,7 +64,7 @@ public:
 
 signals:
   /// 收到一条消息时触发的信号
-  void message_got(const QByteArray& msg);
+  void message_got(const QCborArray &msg);
   /// 产生报错信息触发的信号，连接到UI中的函数
   void error_message(const QString &msg);
   /// 断开连接时的信号
@@ -97,6 +97,8 @@ private:
   AES_KEY aes_key; ///< AES密钥
   bool aes_ready;  ///< 表明是否启用AES加密传输
   QTcpSocket *socket; ///< 用于实际发送数据的socket
+
+  QByteArray cborBuffer;
 };
 
 #endif // _CLIENT_SOCKET_H

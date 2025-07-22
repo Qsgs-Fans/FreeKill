@@ -68,7 +68,7 @@ signals:
   void request_got(const QString &command, const QString &jsonData);
 
 protected:
-  void handlePacket(const QByteArray &rawPacket);
+  void handlePacket(const QCborArray &packet);
 
 private:
   ClientSocket *socket;

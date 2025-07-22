@@ -235,9 +235,10 @@ QMap<QString, QString> AuthManager::checkPassword() {
   if (decrypted_pw.length() > 32) {
     auto aes_bytes = decrypted_pw.first(32);
 
+    // TODO: 先不加密吧，把CBOR搭起来先
     // tell client to install aes key
-    server->sendEarlyPacket(client, "InstallKey", "");
-    client->installAESKey(aes_bytes);
+    // server->sendEarlyPacket(client, "InstallKey", "");
+    // client->installAESKey(aes_bytes);
     decrypted_pw.remove(0, 32);
   } else {
     // FIXME

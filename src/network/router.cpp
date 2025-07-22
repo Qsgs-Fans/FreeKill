@@ -57,6 +57,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
 
   static int requestId = 0;
   requestId++;
+  if (requestId > 10000000) requestId = 1;
 
   replyMutex.lock();
   expectedReplyId = requestId;
@@ -65,35 +66,38 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
   m_reply = QStringLiteral("__notready");
   replyMutex.unlock();
 
-  QJsonArray body;
-  body << requestId;
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
-  body << timeout;
-  body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
+  QCborArray body {
+    requestId,
+    type,
+    command,
+    jsonData,
+    timeout,
+    (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp)
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
 void Router::reply(int type, const QByteArray &command, const QByteArray &jsonData) {
-  QJsonArray body;
-  body << this->requestId;
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
+  QCborArray body {
+    this->requestId,
+    type,
+    command,
+    jsonData,
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
 void Router::notify(int type, const QByteArray &command, const QByteArray &jsonData) {
-  QJsonArray body;
-  body << -2; // requestId = -2 mean this is for notification
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
+  QCborArray body {
+    -2,
+    type,
+    command,
+    jsonData,
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
 int Router::getTimeout() const { return requestTimeout; }
@@ -131,21 +135,17 @@ void Router::abortRequest() {
   replyMutex.unlock();
 }
 
-void Router::handlePacket(const QByteArray &rawPacket) {
-  QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
-  if (packet.isNull() || !packet.isArray())
-    return;
-
-  int requestId = packet[0].toInt();
-  int type = packet[1].toInt();
-  QString command = packet[2].toString();
-  QString jsonData = packet[3].toString();
+void Router::handlePacket(const QCborArray &packet) {
+  int requestId = packet[0].toInteger();
+  int type = packet[1].toInteger();
+  auto command = packet[2].toByteArray();
+  auto jsonData = packet[3].toByteArray();
 
   if (type & TYPE_NOTIFICATION) {
     emit notification_got(command, jsonData);
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
-    this->requestTimeout = packet[4].toInt();
+    this->requestTimeout = packet[4].toInteger();
     this->requestTimestamp = packet[5].toInteger();
 
     emit request_got(command, jsonData);
@@ -177,5 +177,5 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 void Router::sendMessage(const QByteArray &msg) {
   auto connType = qApp->thread() == QThread::currentThread()
     ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
-  QMetaObject::invokeMethod(qApp, [=]() { emit messageReady(msg); }, connType);
+  QMetaObject::invokeMethod(qApp, [&]() { emit messageReady(msg); }, connType);
 }
