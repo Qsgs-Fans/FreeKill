@@ -67,10 +67,10 @@ static _rpcRet _rpc_ServerPlayer_doRequest(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
-  QString command = params[1].toByteArray();
-  QString jsonData = params[2].toByteArray();
-  int timeout = params[3].toInteger(0);
+  auto connId = params[0].toByteArray();
+  auto command = params[1].toByteArray();
+  auto jsonData = params[2].toByteArray();
+  auto timeout = params[3].toInteger(0);
   qint64 timestamp = params[4].toInteger();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -78,7 +78,7 @@ static _rpcRet _rpc_ServerPlayer_doRequest(const QCborArray &params) {
     return { false, "Player not found" };
   }
 
-  player->doRequest(command.toUtf8(), jsonData.toUtf8(), timeout, timestamp);
+  player->doRequest(command, jsonData, timeout, timestamp);
 
   return { true, nullVal };
 }
@@ -88,7 +88,7 @@ static _rpcRet _rpc_ServerPlayer_waitForReply(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
+  auto connId = params[0].toByteArray();
   int timeout = params[1].toInteger(0);
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -96,7 +96,7 @@ static _rpcRet _rpc_ServerPlayer_waitForReply(const QCborArray &params) {
     return { false, "Player not found" };
   }
 
-  QString reply = player->waitForReply(timeout);
+  auto reply = player->waitForReply(timeout);
   return { true, reply };
 }
 
@@ -105,16 +105,16 @@ static _rpcRet _rpc_ServerPlayer_doNotify(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
-  QString command = params[1].toByteArray();
-  QString jsonData = params[2].toByteArray();
+  auto connId = params[0].toByteArray();
+  auto command = params[1].toByteArray();
+  auto jsonData = params[2].toByteArray();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
     return { false, "Player not found" };
   }
 
-  player->doNotify(command.toUtf8(), jsonData.toUtf8());
+  player->doNotify(command, jsonData);
 
   return { true, nullVal };
 }
@@ -124,7 +124,7 @@ static _rpcRet _rpc_ServerPlayer_thinking(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
+  auto connId = params[0].toByteArray();
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
     return { false, "Player not found" };
@@ -139,7 +139,7 @@ static _rpcRet _rpc_ServerPlayer_setThinking(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
+  auto connId = params[0].toByteArray();
   bool thinking = params[1].toBool();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -156,7 +156,7 @@ static _rpcRet _rpc_ServerPlayer_setDied(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
+  auto connId = params[0].toByteArray();
   bool died = params[1].toBool();
 
   auto player = ServerInstance->findPlayerByConnId(connId);
@@ -173,7 +173,7 @@ static _rpcRet _rpc_ServerPlayer_emitKick(const QCborArray &params) {
     return { false, nullVal };
   }
 
-  QString connId = params[0].toByteArray();
+  auto connId = params[0].toByteArray();
   auto player = ServerInstance->findPlayerByConnId(connId);
   if (!player) {
     return { false, "Player not found" };
@@ -212,8 +212,8 @@ static _rpcRet _rpc_Room_updatePlayerWinRate(const QCborArray &params) {
 
   int roomId = params[0].toInteger(-1);
   int playerId = params[1].toInteger(-1);
-  QString mode = params[2].toByteArray();
-  QString role = params[3].toByteArray();
+  auto mode = params[2].toByteArray();
+  auto role = params[3].toByteArray();
   int result = params[4].toInteger(0);
 
   auto room = ServerInstance->findRoom(roomId);
@@ -233,9 +233,9 @@ static _rpcRet _rpc_Room_updateGeneralWinRate(const QCborArray &params) {
   }
 
   int roomId = params[0].toInteger(-1);
-  QString general = params[1].toByteArray();
-  QString mode = params[2].toByteArray();
-  QString role = params[3].toByteArray();
+  auto general = params[1].toByteArray();
+  auto mode = params[2].toByteArray();
+  auto role = params[3].toByteArray();
   int result = params[4].toInteger(0);
 
   auto room = ServerInstance->findRoom(roomId);
