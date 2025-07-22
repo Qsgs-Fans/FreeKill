@@ -119,30 +119,42 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
   auto id = req[JsonRpc::Id].toInteger();
   socket->write(req.toCborValue().toCbor());
   socket->waitForBytesWritten(15000);
-  rpc_debug("Me --> %s {%s}", qUtf8Printable(mapToJson(req, false)), qUtf8Printable(req.toCborValue().toCbor().toHex(' ')));
+  rpc_debug("Me --> %s", qUtf8Printable(mapToJson(req, false)));
 
   while (socket->bytesAvailable() > 0 || socket->waitForReadyRead(15000)) {
     if (!socket->isOpen()) break;
-    if (socket->bytesAvailable() == 0) continue;
 
     auto bytes = socket->readAll();
-    QCborStreamReader reader(bytes);
-    while (true) {
-      auto doc = QCborValue::fromCbor(reader);
-      if (!doc.isMap()) break;
-
-      auto packet = doc.toMap();
-      if (packet[JsonRpc::JsonRpc].toByteArray() == "2.0" && packet[JsonRpc::Id] == id && !packet[JsonRpc::Method].isByteArray()) {
-        rpc_debug("Me <-- %s {%s}", qUtf8Printable(mapToJson(packet, true)), qUtf8Printable(doc.toCbor().toHex(' ')));
-        return packet[JsonRpc::Result].toVariant();
+    QCborValue doc;
+    do {
+      QCborStreamReader reader(bytes);
+      doc = QCborValue::fromCbor(reader);
+      auto err = reader.lastError();
+      // rpc_debug("  *DBG* Me <-- %ls {%s}", qUtf16Printable(err.toString()), qUtf8Printable(bytes.toHex()));
+      if (err == QCborError::EndOfFile) {
+        socket->waitForReadyRead(100);
+        bytes += socket->readAll();
+        reader.clear(); reader.addData(bytes);
+        continue;
+      } else if (err == QCborError::NoError) {
+        break;
       } else {
-        rpc_debug("  Me <-- %s {%s}", qUtf8Printable(mapToJson(packet, true)), qUtf8Printable(doc.toCbor().toHex(' ')));
-        auto res = JsonRpc::serverResponse(methods, packet);
-        if (res) {
-          socket->write(res->toCborValue().toCbor());
-          socket->waitForBytesWritten(15000);
-          rpc_debug("  Me --> %s {%s}", qUtf8Printable(mapToJson(*res, false)), qUtf8Printable(res->toCborValue().toCbor().toHex(' ')));
-        }
+        rpc_debug("Me <-- Unrecoverable reader error: %ls", qUtf16Printable(err.toString()));
+        return QVariant();
+      }
+    } while (true);
+
+    auto packet = doc.toMap();
+    if (packet[JsonRpc::JsonRpc].toByteArray() == "2.0" && packet[JsonRpc::Id] == id && !packet[JsonRpc::Method].isByteArray()) {
+      rpc_debug("Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+      return packet[JsonRpc::Result].toVariant();
+    } else {
+      rpc_debug("  Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+      auto res = JsonRpc::serverResponse(methods, packet);
+      if (res) {
+        socket->write(res->toCborValue().toCbor());
+        socket->waitForBytesWritten(15000);
+        rpc_debug("  Me --> %s", qUtf8Printable(mapToJson(*res, false)));
       }
     }
   }
