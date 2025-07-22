@@ -119,7 +119,7 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
   auto id = req[JsonRpc::Id].toInteger();
   socket->write(req.toCborValue().toCbor());
   socket->waitForBytesWritten(15000);
-  rpc_debug("Me --> %s", qUtf8Printable(mapToJson(req, false)));
+  rpc_debug("Me --> %s {%s}", qUtf8Printable(mapToJson(req, false)), qUtf8Printable(req.toCborValue().toCbor().toHex(' ')));
 
   while (socket->bytesAvailable() > 0 || socket->waitForReadyRead(15000)) {
     if (!socket->isOpen()) break;
@@ -133,15 +133,15 @@ QVariant RpcLua::call(const QString &func_name, QVariantList params) {
 
       auto packet = doc.toMap();
       if (packet[JsonRpc::JsonRpc].toByteArray() == "2.0" && packet[JsonRpc::Id] == id && !packet[JsonRpc::Method].isByteArray()) {
-        rpc_debug("Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+        rpc_debug("Me <-- %s {%s}", qUtf8Printable(mapToJson(packet, true)), qUtf8Printable(doc.toCbor().toHex(' ')));
         return packet[JsonRpc::Result].toVariant();
       } else {
-        rpc_debug("  Me <-- %s", qUtf8Printable(mapToJson(packet, true)));
+        rpc_debug("  Me <-- %s {%s}", qUtf8Printable(mapToJson(packet, true)), qUtf8Printable(doc.toCbor().toHex(' ')));
         auto res = JsonRpc::serverResponse(methods, packet);
         if (res) {
           socket->write(res->toCborValue().toCbor());
           socket->waitForBytesWritten(15000);
-          rpc_debug("  Me --> %s", qUtf8Printable(mapToJson(*res, false)));
+          rpc_debug("  Me --> %s {%s}", qUtf8Printable(mapToJson(*res, false)), qUtf8Printable(res->toCborValue().toCbor().toHex(' ')));
         }
       }
     }
