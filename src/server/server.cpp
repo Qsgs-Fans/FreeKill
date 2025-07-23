@@ -62,8 +62,9 @@ Server::Server(QObject *parent) : QObject(parent) {
 
 Server::~Server() {
   isListening = false;
-  for (auto p : players) {
-    p->deleteLater();
+  // 虽然都是子对象 但析构顺序要抠一下
+  for (auto p : findChildren<ServerPlayer *>()) {
+    delete p;
   }
   // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
   for (auto thr : findChildren<RoomThread *>()) {
@@ -218,6 +219,7 @@ void Server::createNewPlayer(ClientSocket *client, const QString &name, const QS
   // create new ServerPlayer and setup
   ServerPlayer *player = new ServerPlayer(lobby());
   player->setSocket(client);
+  player->setParent(this);
   client->disconnect(this);
   player->setScreenName(name);
   player->setAvatar(avatar);

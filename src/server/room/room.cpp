@@ -224,6 +224,7 @@ void Room::removePlayer(ServerPlayer *player) {
     // 首先拿到跑路玩家的socket，然后把玩家的状态设为逃跑，这样自动被机器人接管
     ClientSocket *socket = player->getSocket();
     player->setState(Player::Run);
+    player->setParent(this);
     player->removeSocket();
 
     // 设完state后把房间叫起来
@@ -516,7 +517,6 @@ void Room::gameOver() {
   runned_players.clear();
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
   auto mode = settings_obj["gameMode"].toString();
-  QList<ServerPlayer *> players = this->players;
   QList<ServerPlayer *> to_delete;
 
   // 首先只写数据库，这个过程不能向主线程提交申请(doNotify) 否则会死锁
@@ -556,15 +556,20 @@ void Room::gameOver() {
     }
 
     if (p->getState() != Player::Online) {
-      if (p->getState() == Player::Offline && !isOutdated()) {
-        server->temporarilyBan(pid);
+      if (p->getState() == Player::Offline) {
+        if (!isOutdated()) {
+          server->temporarilyBan(pid);
+        } else {
+          emit p->kicked();
+        }
       }
       to_delete.append(p);
     }
   }
 
   for (auto p : to_delete) {
-    p->deleteLater();
+    players.removeOne(p);
+    delete p;
   }
 
   insideGameOver = false;
