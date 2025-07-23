@@ -99,7 +99,10 @@ private:
   QTcpSocket *socket; ///< 用于实际发送数据的socket
 
   QByteArray cborBuffer;
-  QCborArray tryReadCborFromBuffer(QCborError *err);
+
+  // 尝试读arr，若读出，则将bytes从首部删除相应字节
+  // 若读出空且err是NoError，说明数据流已不合法，该跑了
+  QList<QCborArray> readCborArrsFromBuffer(QCborError *err);
 };
 
 #endif // _CLIENT_SOCKET_H

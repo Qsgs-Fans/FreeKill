@@ -35,19 +35,17 @@ void ClientSocket::connectToHost(const QString &address, ushort port) {
 void ClientSocket::getMessage() {
   cborBuffer += socket->readAll();
   QCborError err;
-  while (true) {
-    auto arr = tryReadCborFromBuffer(&err);
-    if (err == QCborError::NoError) {
-      emit message_got(arr);
-    } else if (err == QCborError::EndOfFile) {
-      // TODO: recover buffer
-      break;
-    } else {
-      // TODO: close conn?
-      // 反正肯定会有不合法数据的，比如invalid setup string
-      // 旧版客户端啥的
-      break;
-    }
+  auto arr = readCborArrsFromBuffer(&err);
+  // 因为在读TcpSocket，必定读到EOF错误，上面那个函数是无限的读下去的
+  if (err == QCborError::EndOfFile) {
+    for (auto &a : arr) emit message_got(a);
+    return;
+  } else {
+    // TODO: close conn?
+    // 反正肯定会有不合法数据的，比如invalid setup string
+    // 旧版客户端啥的
+    disconnectFromHost();
+    return;
   }
   // while (socket->canReadLine()) {
   //   auto msg = socket->readLine();
@@ -227,6 +225,66 @@ QByteArray ClientSocket::aesDec(const QByteArray &in) {
   return out;
 }
 
-QCborArray ClientSocket::tryReadCborFromBuffer(QCborError *err) {
-  return {};
+// 通信上只涉及数字、bytes两种类型而已，以及array
+static QCborValue readItem(QCborStreamReader &reader) {
+  switch (reader.type()) {
+    case QCborStreamReader::UnsignedInteger:
+    case QCborStreamReader::NegativeInteger: {
+      auto val = reader.toInteger();
+      reader.next();
+      return val;
+    }
+    case QCborStreamReader::ByteArray: {
+      QByteArray ret;
+      auto r = reader.readByteArray();
+      while (r.status == QCborStreamReader::Ok) {
+        ret += r.data;
+        r = reader.readByteArray();
+      }
+
+      if (r.status == QCborStreamReader::Error) {
+        // handle error condition
+        ret.clear();
+      }
+      return ret;
+    }
+    case QCborStreamReader::Array: {
+      QCborArray arr;
+      reader.enterContainer();
+      while (reader.lastError() == QCborError::NoError && reader.hasNext()) {
+        arr << readItem(reader);
+      }
+      if (reader.lastError() == QCborError::NoError)
+        reader.leaveContainer();
+      return arr;
+    }
+    default:
+      break;
+  }
+  return QCborValue();
+}
+
+QList<QCborArray> ClientSocket::readCborArrsFromBuffer(QCborError *err) {
+  // 由于qt神秘机制，此处干脆用const char *和len手动操作缓冲区
+  auto cbuf = cborBuffer.constData();
+  auto len = cborBuffer.size();
+  QList<QCborArray> ret;
+
+  while (true) {
+  QCborStreamReader reader(cbuf, len);
+    auto item = readItem(reader);
+    if (reader.lastError() != QCborError::NoError) {
+      *err = reader.lastError();
+      break;
+    }
+    if (!item.isArray()) break;
+    ret << item.toArray();
+    auto off = reader.currentOffset();
+    cbuf += off;
+    len -= off;
+  }
+
+  // 对剩余的不全数据深拷贝 重新造bytes
+  cborBuffer = { cbuf, len };
+  return ret;
 }

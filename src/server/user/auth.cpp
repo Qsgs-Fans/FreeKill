@@ -96,9 +96,9 @@ void AuthManager::processNewConnection(const QCborArray &arr) {
 
 bool AuthManager::loadSetupData(const QCborArray &doc) {
   QJsonArray arr;
-  if (doc.size() != 4 || doc[0] != -2 ||
-    doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
-    doc[2] != "Setup")
+  if (doc.size() != 4 || doc[0].toInteger() != -2 ||
+    doc[1].toInteger() != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
+    doc[2].toByteArray() != "Setup")
   {
     goto FAIL;
   }
