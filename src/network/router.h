@@ -64,8 +64,8 @@ signals:
   void messageReady(const QByteArray &msg);
   void replyReady();
 
-  void notification_got(const QString &command, const QString &jsonData);
-  void request_got(const QString &command, const QString &jsonData);
+  void notification_got(const QByteArray &command, const QByteArray &jsonData);
+  void request_got(const QByteArray &command, const QByteArray &jsonData);
 
 protected:
   void handlePacket(const QCborArray &packet);

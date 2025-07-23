@@ -27,10 +27,10 @@ Client::Client(QObject *parent) : QObject(parent) {
   ClientSocket *socket = new ClientSocket;
   connect(socket, &ClientSocket::error_message, this, &Client::error_message);
   router = new Router(this, socket, Router::TYPE_CLIENT);
-  connect(router, &Router::notification_got, this, [&](const QString &c, const QString &j) {
+  connect(router, &Router::notification_got, this, [&](const QByteArray &c, const QByteArray &j) {
     callLua(c, j, false);
   });
-  connect(router, &Router::request_got, this, [&](const QString &c, const QString &j) {
+  connect(router, &Router::request_got, this, [&](const QByteArray &c, const QByteArray &j) {
     callLua(c, j, true);
   });
 
@@ -129,7 +129,7 @@ void Client::notifyServer(const QString &command, const QString &jsonData) {
   router->notify(type, command.toUtf8(), jsonData.toUtf8());
 }
 
-void Client::callLua(const QString& command, const QString& json_data, bool isRequest) {
+void Client::callLua(const QByteArray& command, const QByteArray& json_data, bool isRequest) {
   L->call("ClientCallback", { QVariant::fromValue(this), command, json_data, isRequest });
 }
 

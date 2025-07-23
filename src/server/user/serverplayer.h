@@ -58,7 +58,7 @@ signals:
   void kicked();
 
 public slots:
-  void onNotificationGot(const QString &c, const QString &j);
+  void onNotificationGot(const QByteArray &c, const QByteArray &j);
   void onReplyReady();
   void onStateChanged();
   void onReadyChanged();

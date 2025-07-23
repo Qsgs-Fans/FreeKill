@@ -18,7 +18,7 @@ signals:
   void duration_set(int secs);
   void elasped(int secs);
   void speed_changed(qreal speed);
-  void command_parsed(const QString &cmd, const QString &j);
+  void command_parsed(const QByteArray &cmd, const QByteArray &j);
 
 public slots:
   void uniform();

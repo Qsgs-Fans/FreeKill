@@ -33,15 +33,31 @@ void ClientSocket::connectToHost(const QString &address, ushort port) {
 }
 
 void ClientSocket::getMessage() {
-  while (socket->canReadLine()) {
-    auto msg = socket->readLine();
-    msg = aesDec(msg);
-    if (msg.startsWith("Compressed")) {
-      msg = msg.sliced(10);
-      msg = qUncompress(QByteArray::fromBase64(msg));
+  cborBuffer += socket->readAll();
+  QCborError err;
+  while (true) {
+    auto arr = tryReadCborFromBuffer(&err);
+    if (err == QCborError::NoError) {
+      emit message_got(arr);
+    } else if (err == QCborError::EndOfFile) {
+      // TODO: recover buffer
+      break;
+    } else {
+      // TODO: close conn?
+      // 反正肯定会有不合法数据的，比如invalid setup string
+      // 旧版客户端啥的
+      break;
     }
-    emit message_got(msg.simplified());
   }
+  // while (socket->canReadLine()) {
+  //   auto msg = socket->readLine();
+  //   msg = aesDec(msg);
+  //   if (msg.startsWith("Compressed")) {
+  //     msg = msg.sliced(10);
+  //     msg = qUncompress(QByteArray::fromBase64(msg));
+  //   }
+  //   emit message_got(msg.simplified());
+  // }
 }
 
 void ClientSocket::disconnectFromHost() {
@@ -54,16 +70,16 @@ void ClientSocket::send(const QByteArray &msg) {
     emit error_message("Cannot send messages if not connected");
     return;
   }
-  QByteArray _msg;
-  if (msg.length() >= 1024) {
-    auto comp = qCompress(msg);
-    _msg = QByteArrayLiteral("Compressed") + comp.toBase64();
-    _msg = aesEnc(_msg) + "\n";
-  } else {
-    _msg = aesEnc(msg) + "\n";
-  }
+  // QByteArray _msg;
+  // if (msg.length() >= 1024) {
+  //   auto comp = qCompress(msg);
+  //   _msg = QByteArrayLiteral("Compressed") + comp.toBase64();
+  //   _msg = aesEnc(_msg) + "\n";
+  // } else {
+  //   _msg = aesEnc(msg) + "\n";
+  // }
 
-  socket->write(_msg);
+  socket->write(msg);
   socket->flush();
 }
 
@@ -180,16 +196,6 @@ QByteArray ClientSocket::aesEnc(const QByteArray &in) {
 
   rand_generator.fillRange(reinterpret_cast<quint32*>(iv_raw.data()), 4);
 
-  /*
-  QByteArray iv;
-  iv.append(QByteArray::number(rand_generator.generate64(), 16));
-  iv.append(QByteArray::number(rand_generator.generate64(), 16));
-  if (iv.length() < 32) {
-    iv.append(QByteArray("0").repeated(32 - iv.length()));
-  }
-  auto iv_raw = QByteArray::fromHex(iv);
-  */
-
   static unsigned char tempIv[16];
   strncpy((char *)tempIv, iv_raw.constData(), 16);
   AES_cfb128_encrypt((const unsigned char *)in.constData(),
@@ -219,4 +225,8 @@ QByteArray ClientSocket::aesDec(const QByteArray &in) {
                      tempIv, &num, AES_DECRYPT);
 
   return out;
+}
+
+QCborArray ClientSocket::tryReadCborFromBuffer(QCborError *err) {
+  return {};
 }

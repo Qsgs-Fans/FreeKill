@@ -72,14 +72,14 @@ AuthManager::~AuthManager() noexcept {
 
 #define CHK(cond) if (!(cond)) { return; }
 
-void AuthManager::processNewConnection(const QByteArray &msg) {
+void AuthManager::processNewConnection(const QCborArray &arr) {
   ClientSocket *client = qobject_cast<ClientSocket *>(sender());
   disconnect(client, &ClientSocket::message_got, this, &AuthManager::processNewConnection);
   client->timerSignup.stop();
 
   p_ptr->client = client;
 
-  CHK(loadSetupData(msg));
+  CHK(loadSetupData(arr));
   CHK(checkVersion());
   CHK(checkIfUuidNotBanned());
   CHK(checkMd5());
@@ -94,21 +94,16 @@ void AuthManager::processNewConnection(const QByteArray &msg) {
 
 #undef CHK
 
-bool AuthManager::loadSetupData(const QByteArray &msg) {
-  QJsonDocument doc = QJsonDocument::fromJson(msg);
+bool AuthManager::loadSetupData(const QCborArray &doc) {
   QJsonArray arr;
-  if (!doc.isArray()) {
-    goto FAIL;
-  }
-
-  if (doc.array().size() != 4 || doc[0] != -2 ||
+  if (doc.size() != 4 || doc[0] != -2 ||
     doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
     doc[2] != "Setup")
   {
     goto FAIL;
   }
 
-  arr = String2Json(doc[3].toString()).array();
+  arr = QJsonDocument::fromJson(doc[3].toByteArray()).array();
 
   if (arr.count() != 5) {
     goto FAIL;
@@ -123,7 +118,7 @@ bool AuthManager::loadSetupData(const QByteArray &msg) {
   return true;
 
 FAIL:
-  qWarning() << "Invalid setup string:" << msg;
+  qWarning() << "Invalid setup string:" << doc.toCborValue().toDiagnosticNotation();
   server->sendEarlyPacket(p_ptr->client, "ErrorDlg", "INVALID SETUP STRING");
   p_ptr->client->disconnectFromHost();
   return false;

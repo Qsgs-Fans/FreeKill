@@ -25,7 +25,7 @@ public:
   Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
   Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
 
-  Q_INVOKABLE void callLua(const QString &command, const QString &jsonData, bool isRequest = false);
+  Q_INVOKABLE void callLua(const QByteArray &command, const QByteArray &jsonData, bool isRequest = false);
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);

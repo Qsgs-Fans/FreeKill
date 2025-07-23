@@ -188,7 +188,7 @@ int ServerPlayer::getGameTime() {
   return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
 }
 
-void ServerPlayer::onNotificationGot(const QString &c, const QString &j) {
+void ServerPlayer::onNotificationGot(const QByteArray &c, const QByteArray &j) {
   if (c == "Heartbeat") {
     alive = true;
     return;

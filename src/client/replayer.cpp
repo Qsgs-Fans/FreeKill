@@ -66,7 +66,7 @@ void Replayer::loadRawData(const QByteArray &raw) {
     pairs << pair;
   }
 
-  connect(this, &Replayer::command_parsed, this, [](const QString &c, const QString &j) {
+  connect(this, &Replayer::command_parsed, this, [](const QByteArray &c, const QByteArray &j) {
     ClientInstance->callLua(c, j);
   });
 
@@ -75,13 +75,13 @@ void Replayer::loadRawData(const QByteArray &raw) {
   auto self = ClientInstance->getSelf();
   if (playerInfo[0].toInt() != self->getId()) {
     origPlayerInfo = JsonArray2Bytes({ self->getId(), self->getScreenName(), self->getAvatar() });
-    emit command_parsed("Setup", playerInfoRaw);
+    emit command_parsed("Setup", playerInfoRaw.toUtf8());
   }
 }
 
 Replayer::~Replayer() {
   if (origPlayerInfo != "") {
-    emit command_parsed("Setup", origPlayerInfo);
+    emit command_parsed("Setup", origPlayerInfo.toUtf8());
   }
   for (auto e : pairs) {
     delete e;
@@ -153,7 +153,7 @@ void Replayer::run() {
     return;
   }
 
-  emit command_parsed("EnterRoom", roomSettings);
+  emit command_parsed("EnterRoom", roomSettings.toUtf8());
   emit command_parsed("StartGame", "");
 
   emit speed_changed(getSpeed());
@@ -187,7 +187,7 @@ void Replayer::run() {
       msleep(delay);
       emit elasped((pair->elapsed - start) / 1000);
 
-      emit command_parsed(pair->cmd, pair->jsonData);
+      emit command_parsed(pair->cmd.toUtf8(), pair->jsonData.toUtf8());
 
       if (!playing)
         play_sem.acquire();

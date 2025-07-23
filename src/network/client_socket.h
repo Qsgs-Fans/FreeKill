@@ -99,6 +99,7 @@ private:
   QTcpSocket *socket; ///< 用于实际发送数据的socket
 
   QByteArray cborBuffer;
+  QCborArray tryReadCborFromBuffer(QCborError *err);
 };
 
 #endif // _CLIENT_SOCKET_H
