@@ -19,7 +19,7 @@ void Lobby::addPlayer(ServerPlayer *player) {
     removePlayer(player);
     player->deleteLater();
   } else {
-    player->doNotify("EnterLobby", "[]");
+    player->doNotify("EnterLobby", QCborValue().toCbor());
   }
 
   server->updateOnlineInfo();
@@ -90,7 +90,7 @@ void Lobby::getRoomConfig(ServerPlayer *sender, const QString &jsonData) {
   if (room) {
     auto settings = room->getSettings();
     // 手搓JSON数组 跳过编码解码
-    sender->doNotify("GetRoomConfig", QString("[%1,%2]").arg(roomId).arg(settings).toUtf8());
+    sender->doNotify("GetRoomConfig", QCborArray { roomId, settings }.toCborValue().toCbor());
   } else {
     sender->doNotify("ErrorMsg", "no such room");
   }

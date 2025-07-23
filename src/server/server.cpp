@@ -160,10 +160,10 @@ void Server::removePlayerByConnId(QString connId) {
 }
 
 void Server::updateRoomList(ServerPlayer *teller) {
-  QJsonArray arr;
-  QJsonArray avail_arr;
+  QCborArray arr;
+  QCborArray avail_arr;
   for (Room *room : rooms) {
-    QJsonArray obj;
+    QCborArray obj;
     auto settings = room->getSettingsObject();
     auto password = settings["password"].toString();
     auto count = room->getPlayers().count(); // playerNum
@@ -171,7 +171,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
 
     obj << room->getId();        // roomId
     obj << room->getName();      // roomName
-    obj << settings["gameMode"]; // gameMode
+    obj << settings["gameMode"].toString(); // gameMode
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
@@ -185,16 +185,15 @@ void Server::updateRoomList(ServerPlayer *teller) {
   for (auto v : avail_arr) {
     arr.prepend(v);
   }
-  auto jsonData = JsonArray2Bytes(arr);
-  teller->doNotify("UpdateRoomList", jsonData);
+  teller->doNotify("UpdateRoomList", arr.toCborValue().toCbor());
 }
 
 void Server::updateOnlineInfo() {
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdatePlayerNum",
-                             JsonArray2Bytes(QJsonArray({
+                             QCborArray{
                                  lobby()->getPlayers().length(),
                                  this->players.count(),
-                             })));
+                             }.toCborValue().toCbor());
 }
 
 Sqlite3 *Server::getDatabase() { return db; }
@@ -234,26 +233,26 @@ void Server::createNewPlayer(ClientSocket *client, const QString &name, const QS
   auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
   auto time = result[0]["totalGameTime"].toInt();
   player->addTotalGameTime(time);
-  player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
+  player->doNotify("AddTotalGameTime", QCborArray{ id, time }.toCborValue().toCbor());
 
   lobby()->addPlayer(player);
 }
 
 void Server::setupPlayer(ServerPlayer *player, bool all_info) {
   // tell the lobby player's basic property
-  QJsonArray arr;
+  QCborArray arr;
   arr << player->getId();
   arr << player->getScreenName();
   arr << player->getAvatar();
   arr << QDateTime::currentMSecsSinceEpoch();
-  player->doNotify("Setup", JsonArray2Bytes(arr));
+  player->doNotify("Setup", arr.toCborValue().toCbor());
 
   if (all_info) {
-    player->doNotify("SetServerSettings", JsonArray2Bytes({
-          getConfig("motd"),
-          getConfig("hiddenPacks"),
-          getConfig("enableBots"),
-          }));
+    player->doNotify("SetServerSettings", QCborArray {
+          getConfig("motd").toString(),
+          QCborValue::fromJsonValue(getConfig("hiddenPacks")),
+          getConfig("enableBots").toBool(),
+          }.toCborValue().toCbor());
   }
 }
 
@@ -285,7 +284,7 @@ void Server::processNewConnection(ClientSocket *client) {
           [client]() { qInfo() << client->peerAddress() << "disconnected"; });
 
   // network delay test
-  sendEarlyPacket(client, "NetworkDelayTest", auth->getPublicKey().toUtf8());
+  sendEarlyPacket(client, "NetworkDelayTest", QCborValue(auth->getPublicKey().toUtf8()).toCbor());
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, auth, &AuthManager::processNewConnection);
   client->timerSignup.start(30000);
@@ -389,8 +388,10 @@ void Server::refreshMd5() {
           p->kicked();
         }
       } else {
-        room->doBroadcastNotify(room->getPlayers(), "GameLog",
-            "{\"type\":\"#RoomOutdated\",\"toast\":true}");
+        room->doBroadcastNotify(room->getPlayers(), "GameLog", QCborMap {
+          { "type", "#RoomOutdated" },
+          { "toast", true },
+        }.toCborValue().toCbor());
       }
     }
   }

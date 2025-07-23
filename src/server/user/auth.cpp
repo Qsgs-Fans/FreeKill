@@ -22,7 +22,7 @@ public:
   // setup message
   ClientSocket *client;
   QString name;
-  QString password;
+  QByteArray password;
   QByteArray password_decrypted;
   QString md5;
   QString version;
@@ -95,7 +95,7 @@ void AuthManager::processNewConnection(const QCborArray &arr) {
 #undef CHK
 
 bool AuthManager::loadSetupData(const QCborArray &doc) {
-  QJsonArray arr;
+  QCborArray arr;
   if (doc.size() != 4 || doc[0].toInteger() != -2 ||
     doc[1].toInteger() != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
     doc[2].toByteArray() != "Setup")
@@ -103,14 +103,14 @@ bool AuthManager::loadSetupData(const QCborArray &doc) {
     goto FAIL;
   }
 
-  arr = QJsonDocument::fromJson(doc[3].toByteArray()).array();
+  arr = QCborValue::fromCbor(doc[3].toByteArray()).toArray();
 
-  if (arr.count() != 5) {
+  if (arr.size() != 5) {
     goto FAIL;
   }
 
   p_ptr->name = arr[0].toString();
-  p_ptr->password = arr[1].toString();
+  p_ptr->password = arr[1].toByteArray();
   p_ptr->md5 = arr[2].toString();
   p_ptr->version = arr[3].toString();
   p_ptr->uuid = arr[4].toString();
@@ -220,17 +220,16 @@ QMap<QString, QString> AuthManager::checkPassword() {
   QByteArray passwordHash;
   auto players = server->getPlayers();
 
-  auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
-  RSA_private_decrypt(RSA_size(p_ptr->rsa), (const unsigned char *)encryted_pw.data(),
+  RSA_private_decrypt(RSA_size(p_ptr->rsa), (const unsigned char *)password.data(),
                       buf, p_ptr->rsa, RSA_PKCS1_PADDING);
   auto decrypted_pw =
       QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
 
   if (decrypted_pw.length() > 32) {
-    auto aes_bytes = decrypted_pw.first(32);
-
     // TODO: 先不加密吧，把CBOR搭起来先
+    // auto aes_bytes = decrypted_pw.first(32);
+
     // tell client to install aes key
     // server->sendEarlyPacket(client, "InstallKey", "");
     // client->installAESKey(aes_bytes);

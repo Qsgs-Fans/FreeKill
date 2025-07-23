@@ -72,7 +72,7 @@ private:
   QString password;
   ClientPrivate *p_ptr;
   QString aes_key;
-  QString pubEncrypt(const QString &key, const QString &data);
+  QByteArray pubEncrypt(const QByteArray &key, const QByteArray &data);
 
   Lua *L;
   Sqlite3 *db;

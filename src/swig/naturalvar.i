@@ -33,7 +33,8 @@ void Lua::pushValue(lua_State *L, QVariant v) {
     break;
   }
   case QMetaType::QByteArray: {
-    lua_pushstring(L, v.toByteArray().data());
+    auto ba = v.toByteArray();
+    lua_pushlstring(L, ba.data(), ba.size());
     break;
   }
   case QMetaType::QVariantList:
@@ -83,8 +84,10 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
       return QVariant((bool)lua_toboolean(L, index));
     case LUA_TNUMBER:
       return QVariant(lua_tonumber(L, index));
-    case LUA_TSTRING:
-      return QVariant(lua_tostring(L, index));
+    case LUA_TSTRING: {
+      size_t len = lua_rawlen(L, index);
+      return QVariant(lua_tolstring(L, index, &len));
+    }
     case LUA_TTABLE: {
       auto p = lua_topointer(L, index);
       if (stack[p]) {
@@ -237,10 +240,11 @@ SWIG_arg++;
 %typemap(arginit) QByteArray const &
   "QByteArray $1_str;"
 
-%typemap(in, checkfn = "lua_isstring") QByteArray const & (const char * temp)
+%typemap(in, checkfn = "lua_isstring") QByteArray const & (size_t tempLen, const char * temp)
 %{
-  temp = lua_tostring(L, $input);
-  $1_str = QByteArray::fromRawData(temp, strlen(temp));
+  tempLen = lua_rawlen(L, $input);
+  temp = lua_tolstring(L, $input, &tempLen);
+  $1_str = QByteArray::fromRawData(temp, tempLen);
   $1 = &$1_str;
 %}
 

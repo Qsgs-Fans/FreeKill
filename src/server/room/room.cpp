@@ -97,9 +97,8 @@ ServerPlayer *Room::getOwner() const { return owner; }
 void Room::setOwner(ServerPlayer *owner) {
   this->owner = owner;
   if (!owner) return;
-  QJsonArray jsonData;
-  jsonData << owner->getId();
-  doBroadcastNotify(players, "RoomOwner", JsonArray2Bytes(jsonData));
+  QCborArray arr { owner->getId() };
+  doBroadcastNotify(players, "RoomOwner", arr.toCborValue().toCbor());
 }
 
 void Room::addPlayer(ServerPlayer *player) {
@@ -122,16 +121,17 @@ void Room::addPlayer(ServerPlayer *player) {
     return;
   }
 
-  QJsonArray jsonData;
   auto mode = settings_obj["gameMode"].toString();
 
   // 告诉房里所有玩家有新人进来了
-  jsonData << player->getId();
-  jsonData << player->getScreenName();
-  jsonData << player->getAvatar();
-  jsonData << player->isReady();
-  jsonData << player->getTotalGameTime();
-  doBroadcastNotify(getPlayers(), "AddPlayer", JsonArray2Bytes(jsonData));
+  QCborArray arr {
+    player->getId(),
+    player->getScreenName(),
+    player->getAvatar(),
+    player->isReady(),
+    player->getTotalGameTime(),
+  };
+  doBroadcastNotify(getPlayers(), "AddPlayer", arr.toCborValue().toCbor());
 
   players.append(player);
   player->setRoom(this);
@@ -139,45 +139,44 @@ void Room::addPlayer(ServerPlayer *player) {
     emit playerAdded(player);
 
   // Second, let the player enter room and add other players
-  jsonData = QJsonArray();
-  jsonData << this->capacity;
-  jsonData << this->timeout;
-  jsonData << settings_obj;
-  player->doNotify("EnterRoom", JsonArray2Bytes(jsonData));
+  arr = {
+    this->capacity,
+    this->timeout,
+    QCborValue::fromJsonValue(settings_obj),
+  };
+  player->doNotify("EnterRoom", arr.toCborValue().toCbor());
 
   for (ServerPlayer *p : getOtherPlayers(player)) {
-    jsonData = QJsonArray();
-    jsonData << p->getId();
-    jsonData << p->getScreenName();
-    jsonData << p->getAvatar();
-    jsonData << p->isReady();
-    jsonData << p->getTotalGameTime();
-    player->doNotify("AddPlayer", JsonArray2Bytes(jsonData));
+    arr = {
+      p->getId(),
+      p->getScreenName(),
+      p->getAvatar(),
+      p->isReady(),
+      p->getTotalGameTime(),
+    };
+    player->doNotify("AddPlayer", arr.toCborValue().toCbor());
 
-    jsonData = QJsonArray();
-    jsonData << p->getId();
+    arr = { p->getId() };
     for (int i : p->getGameData()) {
-      jsonData << i;
+      arr << i;
     }
-    player->doNotify("UpdateGameData", JsonArray2Bytes(jsonData));
+    player->doNotify("UpdateGameData", arr.toCborValue().toCbor());
   }
 
   if (this->owner != nullptr) {
-    jsonData = QJsonArray();
-    jsonData << this->owner->getId();
-    player->doNotify("RoomOwner", JsonArray2Bytes(jsonData));
+    arr = { this->owner->getId() };
+    player->doNotify("RoomOwner", arr.toCborValue().toCbor());
   }
 
   if (player->getLastGameMode() != mode) {
     player->setLastGameMode(mode);
     updatePlayerGameData(player->getId(), mode);
   } else {
-    auto jsonData = QJsonArray();
-    jsonData << player->getId();
+    arr = { player->getId() };
     for (int i : player->getGameData()) {
-      jsonData << i;
+      arr << i;
     }
-    doBroadcastNotify(getPlayers(), "UpdateGameData", JsonArray2Bytes(jsonData));
+    doBroadcastNotify(getPlayers(), "UpdateGameData", arr.toCborValue().toCbor());
   }
 }
 
@@ -192,7 +191,7 @@ void Room::addRobot(ServerPlayer *player) {
   robot->setScreenName(QString("COMP-%1").arg(robot_id));
   robot->setReady(true);
   robot->setParent(this);
-  connect(robot, &QObject::destroyed, this, [=](){ players.removeOne(robot); });
+  connect(robot, &QObject::destroyed, this, [&](){ players.removeOne(robot); });
   robot_id--;
 
   server->addPlayer(robot);
@@ -216,7 +215,7 @@ void Room::removePlayer(ServerPlayer *player) {
     }
     emit playerRemoved(player);
 
-    doBroadcastNotify(getPlayers(), "RemovePlayer", JsonArray2Bytes({ player->getId() }));
+    doBroadcastNotify(getPlayers(), "RemovePlayer", QCborArray({ player->getId() }).toCborValue().toCbor());
   } else {
     // 否则给跑路玩家召唤个AI代打
     // TODO: if the player is died..
@@ -252,7 +251,7 @@ void Room::removePlayer(ServerPlayer *player) {
     server->addPlayer(runner);
 
     // FIX 控制bug
-    runner->doNotify("ChangeSelf", QByteArray::number(runner->getId()));
+    runner->doNotify("ChangeSelf", QCborValue(runner->getId()).toCbor());
 
     // 发出信号，让大厅添加这个人
     emit playerRemoved(runner);
@@ -305,11 +304,12 @@ void Room::removeObserver(ServerPlayer *player) {
   emit playerRemoved(player);
 
   if (player->getState() == Player::Online) {
-    QJsonArray arr;
-    arr << player->getId();
-    arr << player->getScreenName();
-    arr << player->getAvatar();
-    player->doNotify("Setup", JsonArray2Bytes(arr));
+    QCborArray arr {
+      player->getId(),
+      player->getScreenName(),
+      player->getAvatar(),
+    };
+    player->doNotify("Setup", arr.toCborValue().toCbor());
   }
   auto thread = qobject_cast<RoomThread *>(parent());
   emit thread->removeObserver(player->getConnId(), id);
@@ -505,8 +505,8 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
 
   auto room = player->getRoom();
   player->setGameData(total, win, run);
-  auto data_arr = QJsonArray({ player->getId(), total, win, run });
-  room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", JsonArray2Bytes(data_arr));
+  QCborArray data_arr { player->getId(), total, win, run };
+  room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", data_arr.toCborValue().toCbor());
 }
 
 void Room::gameOver() {
@@ -544,7 +544,7 @@ void Room::gameOver() {
 
     if (pid > 0) {
       int time = p->getGameTime();
-      auto bytes = JsonArray2Bytes({ pid, time });
+      auto bytes = QCborArray { pid, time }.toCborValue().toCbor();
       doBroadcastNotify(getOtherPlayers(p), "AddTotalGameTime", bytes);
 
       // 考虑到阵亡已离开啥的，时间得给真实玩家增加

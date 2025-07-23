@@ -221,7 +221,7 @@ void ServerPlayer::onStateChanged() {
 
   auto state = getState();
   room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
-      QString("[%1,\"%2\"]").arg(getId()).arg(getStateString()).toUtf8());
+      QCborArray { getId(), getStateString() }.toCborValue().toCbor());
 
   if (state == Player::Online) {
     resumeGameTimer();
@@ -233,7 +233,7 @@ void ServerPlayer::onStateChanged() {
 void ServerPlayer::onReadyChanged() {
   if (room && !room->isLobby()) {
     room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
-                            QString("[%1,%2]").arg(getId()).arg(isReady()).toUtf8());
+                            QCborArray { getId(), isReady() }.toCborValue().toCbor());
   }
 }
 

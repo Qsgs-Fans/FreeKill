@@ -65,16 +65,14 @@ void Client::connectToHost(const QString &server, ushort port) {
   router->getSocket()->connectToHost(server, port);
 }
 
-QString Client::pubEncrypt(const QString &key, const QString &data) {
+QByteArray Client::pubEncrypt(const QByteArray &key, const QByteArray &data) {
   // 在用公钥加密口令时，也随机生成AES密钥/IV，并随着口令一起加密
   // AES密钥和IV都是固定16字节的，所以可以放在开头
-  auto key_bytes = key.toLatin1();
-  BIO *keyio = BIO_new_mem_buf(key_bytes.constData(), -1);
+  BIO *keyio = BIO_new_mem_buf(key.constData(), -1);
   RSA_free(p_ptr->rsa);
   p_ptr->rsa = PEM_read_bio_RSAPublicKey(keyio, NULL, NULL, NULL);
   BIO_free_all(keyio);
 
-  auto data_bytes = data.toUtf8();
   auto rand_generator = QRandomGenerator::securelySeeded();
   QByteArray aes_key_;
   for (int i = 0; i < 2; i++) {
@@ -86,22 +84,26 @@ QString Client::pubEncrypt(const QString &key, const QString &data) {
 
   aes_key = aes_key_;
 
+  auto data_bytes = data;
   data_bytes.prepend(aes_key_);
 
   unsigned char buf[RSA_size(p_ptr->rsa)];
   RSA_public_encrypt(data.length() + 32,
                      (const unsigned char *)data_bytes.constData(), buf, p_ptr->rsa,
                      RSA_PKCS1_PADDING);
-  return QByteArray::fromRawData((const char *)buf, RSA_size(p_ptr->rsa)).toBase64();
+  return QByteArray { (const char *)buf, RSA_size(p_ptr->rsa) };
 }
 
 void Client::sendSetupPacket(const QString &pubkey) {
-  auto cipherText = pubEncrypt(pubkey, password);
+  auto cipherText = pubEncrypt(pubkey.toUtf8(), password.toUtf8());
   auto md5 = calcFileMD5();
 
-  QJsonArray arr;
+  QCborArray arr;
   arr << screenName << cipherText << md5 << FK_VERSION << GetDeviceUuid();
-  notifyServer("Setup", JsonArray2Bytes(arr));
+  // notifyServer("Setup", arr.toCborValue().toCbor());
+  int type =
+      Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
+  router->notify(type, "Setup", arr.toCborValue().toCbor());
 }
 
 void Client::setupServerLag(qint64 server_time) {
