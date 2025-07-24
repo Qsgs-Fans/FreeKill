@@ -250,8 +250,6 @@ int freekill_main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion(FK_VERSION);
 
-  if (GetDeviceUuid() == "c5e8983a3d85a07c") return 1;
-
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
 #endif
