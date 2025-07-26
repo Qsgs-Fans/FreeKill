@@ -27,7 +27,7 @@ public:
 };
 
 %extend Room {
-  QString settings() {
+  QByteArray settings() {
     return $self->getSettings();
   }
 }

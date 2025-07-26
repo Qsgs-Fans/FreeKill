@@ -22,8 +22,8 @@ public:
   qint64 getServerLag() const;
 
   Q_INVOKABLE void setLoginInfo(const QString &username, const QString &password);
-  Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
-  Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
+  Q_INVOKABLE void replyToServer(const QString &command, const QVariant &jsonData);
+  Q_INVOKABLE void notifyServer(const QString &command, const QVariant &jsonData);
 
   Q_INVOKABLE void callLua(const QByteArray &command, const QByteArray &jsonData, bool isRequest = false);
 

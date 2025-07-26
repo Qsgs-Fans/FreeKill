@@ -29,7 +29,7 @@ class Room : public RoomBase {
   int getCapacity() const;
   void setCapacity(int capacity);
   bool isFull() const;
-  const QJsonObject getSettingsObject() const;
+  const QCborMap getSettingsObject() const;
   const QByteArray getSettings() const;
   void setSettings(QByteArray settings);
   bool isAbandoned() const;
@@ -66,8 +66,8 @@ class Room : public RoomBase {
   void removeRejectId(int id);
 
   // router用
-  void handlePacket(ServerPlayer *sender, const QString &command,
-                    const QString &jsonData);
+  void handlePacket(ServerPlayer *sender, const QByteArray &command,
+                    const QByteArray &jsonData);
 
   void setRequestTimer(int ms);
   void destroyRequestTimer();
@@ -91,7 +91,7 @@ class Room : public RoomBase {
   QString name;         // “阴间大乱斗”
   int capacity;         // by default is 5, max is 8
   QByteArray settings;  // JSON string
-  QJsonObject settings_obj;  // JSON object
+  QCborMap settings_obj;  // JSON object
   bool m_abandoned;     // If room is empty, delete it
 
   ServerPlayer *owner;  // who created this room?
@@ -113,11 +113,11 @@ class Room : public RoomBase {
   void updatePlayerGameData(int id, const QString &mode);
 
   // handle packet
-  void quitRoom(ServerPlayer *, const QString &);
-  void addRobotRequest(ServerPlayer *, const QString &);
-  void kickPlayer(ServerPlayer *, const QString &);
-  void ready(ServerPlayer *, const QString &);
-  void startGame(ServerPlayer *, const QString &);
+  void quitRoom(ServerPlayer *, const QByteArray &);
+  void addRobotRequest(ServerPlayer *, const QByteArray &);
+  void kickPlayer(ServerPlayer *, const QByteArray &);
+  void ready(ServerPlayer *, const QByteArray &);
+  void startGame(ServerPlayer *, const QByteArray &);
 };
 
 #endif  // _ROOM_H

@@ -15,12 +15,12 @@ class RoomBase : public QObject {
   void doBroadcastNotify(const QList<ServerPlayer *> targets,
                          const QByteArray &command, const QByteArray &jsonData);
 
-  void chat(ServerPlayer *sender, const QString &jsonData);
+  void chat(ServerPlayer *sender, const QByteArray &jsonData);
 
   virtual void addPlayer(ServerPlayer *player) = 0;
   virtual void removePlayer(ServerPlayer *player) = 0;
-  virtual void handlePacket(ServerPlayer *sender, const QString &command,
-      const QString &jsonData) = 0;
+  virtual void handlePacket(ServerPlayer *sender, const QByteArray &command,
+      const QByteArray &jsonData) = 0;
  protected:
   Server *server;
   QList<ServerPlayer *> players;

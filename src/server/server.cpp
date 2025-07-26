@@ -15,6 +15,8 @@
 
 #include <QNetworkDatagram>
 
+using namespace Qt::Literals::StringLiterals;
+
 Server *ServerInstance = nullptr;
 
 Server::Server(QObject *parent) : QObject(parent) {
@@ -166,13 +168,13 @@ void Server::updateRoomList(ServerPlayer *teller) {
   for (Room *room : rooms) {
     QCborArray obj;
     auto settings = room->getSettingsObject();
-    auto password = settings["password"].toString();
+    auto password = settings["password"_L1].toString();
     auto count = room->getPlayers().count(); // playerNum
     auto cap = room->getCapacity();          // capacity
 
     obj << room->getId();        // roomId
     obj << room->getName();      // roomName
-    obj << settings["gameMode"].toString(); // gameMode
+    obj << settings["gameMode"_L1].toString(); // gameMode
     obj << count;
     obj << cap;
     obj << !password.isEmpty();

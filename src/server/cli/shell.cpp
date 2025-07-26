@@ -24,6 +24,8 @@
 Shell *ShellInstance = nullptr;
 static const char *prompt = "Fk> ";
 
+using namespace Qt::Literals::StringLiterals;
+
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
 #define HELP_MSG(a, b)                                                         \
@@ -103,8 +105,8 @@ void Shell::lsrCommand(QStringList &list) {
     if (!room) {
       qInfo("No such room.");
     } else {
-      auto config = QJsonDocument::fromJson(room->getSettings());
-      auto pw = config["password"].toString();
+      auto config = room->getSettingsObject();
+      auto pw = config["password"_L1].toString();
       qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
           QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
       qInfo("Players in this room:");
@@ -122,8 +124,8 @@ void Shell::lsrCommand(QStringList &list) {
   }
   qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
   for (auto room : ServerInstance->rooms) {
-    auto config = QJsonDocument::fromJson(room->getSettings());
-    auto pw = config["password"].toString();
+    auto config = room->getSettingsObject();
+    auto pw = config["password"_L1].toString();
     qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
         QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
   }

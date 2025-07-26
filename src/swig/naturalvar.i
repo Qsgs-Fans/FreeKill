@@ -232,7 +232,7 @@ SWIG_arg++;
 
 %typemap(out) QByteArray
 %{
-  lua_pushstring(L, $1.constData());
+  lua_pushlstring(L, $1.constData(), $1.size());
   SWIG_arg++;
 %}
 

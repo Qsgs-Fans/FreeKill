@@ -120,15 +120,33 @@ void Client::setLoginInfo(const QString &username, const QString &password) {
   this->password = password;
 }
 
-void Client::replyToServer(const QString &command, const QString &jsonData) {
+void Client::replyToServer(const QString &command, const QVariant &jsonData) {
   int type = Router::TYPE_REPLY | Router::SRC_CLIENT | Router::DEST_SERVER;
-  router->reply(type, command.toUtf8(), jsonData.toUtf8());
+
+  auto data = jsonData.value<QJSValue>();
+  QVariant v;
+  if (!data.isUndefined()) {
+    v = data.toVariant();
+  } else {
+    v = jsonData;
+  }
+
+  router->reply(type, command.toUtf8(), QCborValue::fromVariant(v).toCbor());
 }
 
-void Client::notifyServer(const QString &command, const QString &jsonData) {
+void Client::notifyServer(const QString &command, const QVariant &jsonData) {
   int type =
       Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER;
-  router->notify(type, command.toUtf8(), jsonData.toUtf8());
+
+  auto data = jsonData.value<QJSValue>();
+  QVariant v;
+  if (!data.isUndefined()) {
+    v = data.toVariant();
+  } else {
+    v = jsonData;
+  }
+
+  router->notify(type, command.toUtf8(), QCborValue::fromVariant(v).toCbor());
 }
 
 void Client::callLua(const QByteArray& command, const QByteArray& json_data, bool isRequest) {

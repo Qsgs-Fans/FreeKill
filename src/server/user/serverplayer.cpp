@@ -193,6 +193,7 @@ void ServerPlayer::onNotificationGot(const QByteArray &c, const QByteArray &j) {
     alive = true;
     return;
   }
+  qDebug() << this << c << j;
 
   room->handlePacket(this, c, j);
 }

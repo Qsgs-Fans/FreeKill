@@ -16,6 +16,8 @@ static void *ClientInstance = nullptr;
 #include "core/util.h"
 #include "core/c-wrapper.h"
 
+using namespace Qt::Literals::StringLiterals;
+
 Room::Room(RoomThread *thread) {
   auto server = ServerInstance;
   id = server->nextRoomId;
@@ -74,11 +76,12 @@ bool Room::isFull() const { return players.count() == capacity; }
 
 const QByteArray Room::getSettings() const { return settings; }
 
-const QJsonObject Room::getSettingsObject() const { return settings_obj; }
+const QCborMap Room::getSettingsObject() const { return settings_obj; }
 
 void Room::setSettings(QByteArray settings) {
   this->settings = settings;
-  settings_obj = QJsonDocument::fromJson(settings).object();
+  settings_obj = QCborValue::fromCbor(settings).toMap();
+  qDebug() << settings << settings_obj;
 }
 
 bool Room::isAbandoned() const {
@@ -121,7 +124,7 @@ void Room::addPlayer(ServerPlayer *player) {
     return;
   }
 
-  auto mode = settings_obj["gameMode"].toString();
+  auto mode = settings_obj["gameMode"_L1].toString();
 
   // 告诉房里所有玩家有新人进来了
   QCborArray arr {
@@ -142,7 +145,7 @@ void Room::addPlayer(ServerPlayer *player) {
   arr = {
     this->capacity,
     this->timeout,
-    QCborValue::fromJsonValue(settings_obj),
+    settings_obj,
   };
   player->doNotify("EnterRoom", arr.toCborValue().toCbor());
 
@@ -516,7 +519,7 @@ void Room::gameOver() {
   gameStarted = false;
   runned_players.clear();
   // 清理所有状态不是“在线”的玩家，增加逃率、游戏时长
-  auto mode = settings_obj["gameMode"].toString();
+  auto mode = settings_obj["gameMode"_L1].toString();
   QList<ServerPlayer *> to_delete;
 
   // 首先只写数据库，这个过程不能向主线程提交申请(doNotify) 否则会死锁
@@ -632,7 +635,7 @@ void Room::removeRejectId(int id) {
 }
 
 // ------------------------------------------------
-void Room::quitRoom(ServerPlayer *player, const QString &) {
+void Room::quitRoom(ServerPlayer *player, const QByteArray &) {
   removePlayer(player);
   if (isOutdated()) {
     auto p = server->findPlayer(player->getId());
@@ -640,13 +643,13 @@ void Room::quitRoom(ServerPlayer *player, const QString &) {
   }
 }
 
-void Room::addRobotRequest(ServerPlayer *player, const QString &) {
+void Room::addRobotRequest(ServerPlayer *player, const QByteArray &) {
   if (ServerInstance->getConfig("enableBots").toBool())
     addRobot(player);
 }
 
-void Room::kickPlayer(ServerPlayer *player, const QString &jsonData) {
-  int i = jsonData.toInt();
+void Room::kickPlayer(ServerPlayer *player, const QByteArray &jsonData) {
+  int i = QCborValue::fromCbor(jsonData).toInteger();
   auto p = findPlayer(i);
   if (p && !isStarted()) {
     removePlayer(p);
@@ -657,11 +660,11 @@ void Room::kickPlayer(ServerPlayer *player, const QString &jsonData) {
   }
 }
 
-void Room::ready(ServerPlayer *player, const QString &) {
+void Room::ready(ServerPlayer *player, const QByteArray &) {
   player->setReady(!player->isReady());
 }
 
-void Room::startGame(ServerPlayer *player, const QString &) {
+void Room::startGame(ServerPlayer *player, const QByteArray &) {
   if (isOutdated()) {
     for (auto p : getPlayers()) {
       p->doNotify("ErrorMsg", "room is outdated");
@@ -672,10 +675,10 @@ void Room::startGame(ServerPlayer *player, const QString &) {
   }
 }
 
-typedef void (Room::*room_cb)(ServerPlayer *, const QString &);
+typedef void (Room::*room_cb)(ServerPlayer *, const QByteArray &);
 
-void Room::handlePacket(ServerPlayer *sender, const QString &command,
-                        const QString &jsonData) {
+void Room::handlePacket(ServerPlayer *sender, const QByteArray &command,
+                        const QByteArray &jsonData) {
   static const QMap<QString, room_cb> room_actions = {
     {"QuitRoom", &Room::quitRoom},
     {"AddRobot", &Room::addRobotRequest},
@@ -686,7 +689,7 @@ void Room::handlePacket(ServerPlayer *sender, const QString &command,
   };
 
   if (command == "PushRequest") {
-    pushRequest(QString("%1,").arg(sender->getId()) + jsonData);
+    pushRequest(QString("%1,").arg(sender->getId()) + QCborValue::fromCbor(jsonData).toString());
     return;
   }
 
@@ -699,7 +702,7 @@ void Room::setRequestTimer(int ms) {
   request_timer = new QTimer();
   request_timer->setSingleShot(true);
   request_timer->setInterval(ms);
-  connect(request_timer, &QTimer::timeout, this, [=](){
+  connect(request_timer, &QTimer::timeout, this, [this](){
       auto thread = qobject_cast<RoomThread *>(parent());
       thread->wakeUp(id, "request_timer");
       });

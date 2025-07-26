@@ -11,17 +11,17 @@ class Lobby : public RoomBase {
   void addPlayer(ServerPlayer *player);
   void removePlayer(ServerPlayer *player);
 
-  void handlePacket(ServerPlayer *sender, const QString &command,
-                    const QString &jsonData);
+  void handlePacket(ServerPlayer *sender, const QByteArray &command,
+                    const QByteArray &jsonData);
  private:
   // for handle packet
-  void updateAvatar(ServerPlayer *, const QString &);
-  void updatePassword(ServerPlayer *, const QString &);
-  void createRoom(ServerPlayer *, const QString &);
-  void getRoomConfig(ServerPlayer *, const QString &);
-  void enterRoom(ServerPlayer *, const QString &);
-  void observeRoom(ServerPlayer *, const QString &);
-  void refreshRoomList(ServerPlayer *, const QString &);
+  void updateAvatar(ServerPlayer *, const QByteArray &);
+  void updatePassword(ServerPlayer *, const QByteArray &);
+  void createRoom(ServerPlayer *, const QByteArray &);
+  void getRoomConfig(ServerPlayer *, const QByteArray &);
+  void enterRoom(ServerPlayer *, const QByteArray &);
+  void observeRoom(ServerPlayer *, const QByteArray &);
+  void refreshRoomList(ServerPlayer *, const QByteArray &);
 };
 
 #endif // _LOBBY_H
