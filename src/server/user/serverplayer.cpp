@@ -103,13 +103,13 @@ void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonDa
 
 void ServerPlayer::abortRequest() { router->abortRequest(); }
 
-QString ServerPlayer::waitForReply(int timeout) {
-  QString ret;
+QByteArray ServerPlayer::waitForReply(int timeout) {
+  QByteArray ret;
   if (getState() != Player::Online) {
 #ifndef QT_DEBUG
     QThread::sleep(1);
 #endif
-    ret = QStringLiteral("__cancel");
+    ret = QByteArrayLiteral("__cancel");
   } else {
     ret = router->waitForReply(timeout);
   }
@@ -193,7 +193,6 @@ void ServerPlayer::onNotificationGot(const QByteArray &c, const QByteArray &j) {
     alive = true;
     return;
   }
-  qDebug() << this << c << j;
 
   room->handlePacket(this, c, j);
 }

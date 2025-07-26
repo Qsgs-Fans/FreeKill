@@ -55,7 +55,7 @@ class ServerPlayer : public Player {
 public:
   void doRequest(const QByteArray &command,
            const QByteArray &json_data, int timeout, long long timestamp = -1);
-  QString waitForReply(int timeout);
+  QByteArray waitForReply(int timeout);
   void doNotify(const QByteArray &command, const QByteArray &json_data);
 
   bool thinking();

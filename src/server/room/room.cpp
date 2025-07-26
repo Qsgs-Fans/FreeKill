@@ -81,7 +81,6 @@ const QCborMap Room::getSettingsObject() const { return settings_obj; }
 void Room::setSettings(QByteArray settings) {
   this->settings = settings;
   settings_obj = QCborValue::fromCbor(settings).toMap();
-  qDebug() << settings << settings_obj;
 }
 
 bool Room::isAbandoned() const {

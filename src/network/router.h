@@ -55,7 +55,7 @@ public:
   void cancelRequest();
   void abortRequest();
 
-  QString waitForReply(int timeout);
+  QByteArray waitForReply(int timeout);
 
   int getRequestId() const { return requestId; }
   qint64 getRequestTimestamp() { return requestTimestamp; }
@@ -84,7 +84,7 @@ private:
   QMutex replyMutex;
   int expectedReplyId;
   int replyTimeout;
-  QString m_reply;    // should be json string
+  QByteArray m_reply;    // should be json string
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
 

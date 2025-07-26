@@ -63,7 +63,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &cbor
   expectedReplyId = requestId;
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
-  m_reply = QStringLiteral("__notready");
+  m_reply = QByteArrayLiteral("__notready");
   replyMutex.unlock();
 
   QCborArray body {
@@ -114,8 +114,8 @@ void Router::cancelRequest() {
     replyReadySemaphore.acquire(replyReadySemaphore.available());
 }
 
-QString Router::waitForReply(int timeout) {
-  QString ret;
+QByteArray Router::waitForReply(int timeout) {
+  QByteArray ret;
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
   replyMutex.lock();
   ret = m_reply;
