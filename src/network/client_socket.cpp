@@ -252,7 +252,9 @@ static QCborValue readItem(QCborStreamReader &reader) {
       QCborArray arr;
       reader.enterContainer();
       while (reader.lastError() == QCborError::NoError && reader.hasNext()) {
-        arr << readItem(reader);
+        auto item = readItem(reader);
+        if (item.isUndefined()) break;
+        arr << item;
       }
       if (reader.lastError() == QCborError::NoError)
         reader.leaveContainer();
@@ -271,7 +273,7 @@ QList<QCborArray> ClientSocket::readCborArrsFromBuffer(QCborError *err) {
   QList<QCborArray> ret;
 
   while (true) {
-  QCborStreamReader reader(cbuf, len);
+    QCborStreamReader reader(cbuf, len);
     auto item = readItem(reader);
     if (reader.lastError() != QCborError::NoError) {
       *err = reader.lastError();
