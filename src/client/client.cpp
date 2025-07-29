@@ -7,6 +7,7 @@
 #include "server/server.h"
 #include "network/client_socket.h"
 #include "network/router.h"
+#include "ui/qmlbackend.h"
 
 #include <openssl/rsa.h>
 #include <openssl/aes.h>
@@ -141,7 +142,9 @@ void Client::notifyServer(const QString &command, const QVariant &jsonData) {
   auto data = jsonData.value<QJSValue>();
   QVariant v;
   if (!data.isUndefined()) {
-    v = data.toVariant();
+    auto qmlEngine = Backend->getEngine();
+    const auto jsonValue = qmlEngine->fromScriptValue<QJsonValue>(data);
+    v = jsonValue.toVariant();
   } else {
     v = jsonData;
   }
