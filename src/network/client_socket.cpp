@@ -36,8 +36,7 @@ void ClientSocket::getMessage() {
   cborBuffer += socket->readAll();
   QCborError err;
   auto arr = readCborArrsFromBuffer(&err);
-  // 因为在读TcpSocket，必定读到EOF错误，上面那个函数是无限的读下去的
-  if (err == QCborError::EndOfFile) {
+  if (err == QCborError::EndOfFile || err == QCborError::NoError) {
     for (auto &a : arr) emit message_got(a);
     return;
   } else {
