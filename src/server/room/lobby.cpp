@@ -5,7 +5,7 @@
 #include "core/c-wrapper.h"
 
 using namespace Qt::Literals::StringLiterals;
-    
+
 Lobby::Lobby(Server *server) {
   this->server = server;
   setParent(server);

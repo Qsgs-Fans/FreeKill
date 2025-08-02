@@ -166,7 +166,15 @@ bool AuthManager::checkMd5() {
   auto md5_str = p_ptr->md5;
   if (server->getMd5() != md5_str) {
     server->sendEarlyPacket(p_ptr->client, "ErrorMsg", "MD5 check failed!");
-    server->sendEarlyPacket(p_ptr->client, "UpdatePackage", Pacman->getPackSummary().toUtf8());
+    server->sendEarlyPacket(
+      p_ptr->client,
+      "UpdatePackage",
+      QCborValue::fromJsonValue(
+        QJsonDocument::fromJson(
+          Pacman->getPackSummary().toUtf8()
+        ).array()
+      ).toCbor()
+    );
     p_ptr->client->disconnectFromHost();
     return false;
   }

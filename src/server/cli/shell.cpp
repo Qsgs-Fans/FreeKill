@@ -2,7 +2,6 @@
 
 #include "server/cli/shell.h"
 #include "core/packman.h"
-#include "server/rpc-lua/rpc-lua.h"
 #include "server/server.h"
 #include "server/user/serverplayer.h"
 #include "server/gamelogic/roomthread.h"
@@ -486,15 +485,8 @@ void Shell::statCommand(QStringList &) {
     auto L = thr->getLua();
 
     QString stat_str = QStringLiteral("unknown");
-    if (server->isRpcEnabled()) {
-      auto rpcL = dynamic_cast<RpcLua *>(L);
-      if (rpcL) {
-        stat_str = rpcL->getConnectionInfo();
-      }
-    } else {
-      auto mem_mib = L->eval(getmem).toDouble();
-      stat_str = QString::asprintf("%.2f MiB", mem_mib);
-    }
+    auto mem_mib = L->eval(getmem).toDouble();
+    stat_str = QString::asprintf("%.2f MiB", mem_mib);
     auto outdated = thr->isOutdated();
     if (rooms.count() == 0 && outdated) {
       thr->deleteLater();

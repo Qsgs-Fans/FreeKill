@@ -100,9 +100,6 @@ public:
 
   bool nameIsInWhiteList(const QString &name) const;
 
-  void enableRpc() { useRpc = true; }
-  bool isRpcEnabled() const { return useRpc; }
-
 signals:
   void roomCreated(Room *room);
   void playerAdded(ServerPlayer *player);
@@ -141,8 +138,6 @@ private:
 
   bool hasWhitelist = false;
   QVariantList whitelist;
-
-  bool useRpc = false;
 };
 
 extern Server *ServerInstance; ///< 全局Server对象

@@ -41,11 +41,7 @@ set(freekill_SRCS
   "server/room/lobby.cpp"
   "server/room/room.cpp"
 
-  "server/rpc-lua/jsonrpc.cpp"
-  "server/rpc-lua/rpc-lua.cpp"
-
   "server/gamelogic/roomthread.cpp"
-  "server/gamelogic/rpc-dispatchers.cpp"
 
   "server/cli/shell.cpp"
 

@@ -83,10 +83,6 @@ bool Server::listen(const QHostAddress &address, ushort port) {
   if (ret) {
     uptime_counter.restart();
     qInfo("Server is listening on port %d", port);
-
-    if (useRpc) {
-      qInfo("This server uses json-rpc to communicate with Lua VM.");
-    }
   }
   return ret;
 }
