@@ -47,6 +47,11 @@ include_directories(src)
 include_directories(include/lua)
 include_directories(include/libgit2)
 
+if (${CMAKE_BUILD_TYPE}0 STREQUAL "Debug0")
+  add_compile_options(-fsanitize=address -fsanitize=undefined)
+  add_link_options(-fsanitize=address -fsanitize=undefined)
+endif ()
+
 if (DEFINED FK_USE_JEMALLOC)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules (JEMALLOC jemalloc)

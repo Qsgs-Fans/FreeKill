@@ -115,7 +115,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   }
 
 #ifdef FK_USE_READLINE
-  ShellInstance->clearLine();
+  if (ShellInstance) ShellInstance->clearLine();
 #else
   printf("\r");
 #endif

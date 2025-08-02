@@ -127,7 +127,9 @@ void Client::replyToServer(const QString &command, const QVariant &jsonData) {
   auto data = jsonData.value<QJSValue>();
   QVariant v;
   if (!data.isUndefined()) {
-    v = data.toVariant();
+    auto qmlEngine = Backend->getEngine();
+    const auto jsonValue = qmlEngine->fromScriptValue<QJsonValue>(data);
+    v = jsonValue.toVariant();
   } else {
     v = jsonData;
   }

@@ -96,6 +96,34 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
       }
       stack[p] = true;
 
+      if (lua_getmetatable(L, index)) {
+        lua_pushstring(L, "__tocbor");
+        lua_rawget(L, -2);
+        if (!lua_isnil(L, -1)) {
+          // Found __tocbor metamethod
+          lua_pushvalue(L, index);  // Push the table as argument
+          if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
+            qCritical("error calling __tocbor: %s", lua_tostring(L, -1));
+            lua_pop(L, 1);  // pop error message
+            return QVariant();
+          }
+
+          // Get the result string (must be string)
+          if (!lua_isstring(L, -1)) {
+            qCritical("__tocbor must return a string");
+            lua_pop(L, 1);  // pop non-string result
+            return QVariant();
+          }
+
+          size_t len = lua_rawlen(L, -1);
+          const char* data = lua_tolstring(L, -1, &len);
+          QByteArray result(data, len);
+          lua_pop(L, 1);  // pop the result
+          lua_pop(L, 1);  // pop the metatable
+          return QVariant(result);
+        }
+      }
+
       lua_len(L, index);
       int length = lua_tointeger(L, -1);
       lua_pop(L, 1);
@@ -106,12 +134,16 @@ QVariant Lua::readValue(lua_State *L, int index, QHash<const void *, bool> stack
 
         lua_pushnil(L);
         while (lua_next(L, index) != 0) {
-          if (lua_type(L, -2) != LUA_TSTRING) {
+          QString key;
+          if (lua_type(L, -2) == LUA_TNUMBER) {
+            key = lua_tostring(L, -2);
+          } else if (lua_type(L, -2) == LUA_TSTRING) {
+            key = lua_tostring(L, -2);
+          } else {
             qCritical("key of object must be string");
             return QVariant();
           }
 
-          const char *key = lua_tostring(L, -2);
           auto value = readValue(L, lua_gettop(L), stack);
           lua_pop(L, 1);
 

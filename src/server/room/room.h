@@ -58,7 +58,7 @@ class Room : public RoomBase {
   void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
   void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
 
-  void gameOver();
+  void _gameOver();
   void manuallyStart();
   void pushRequest(const QString &req);
 
@@ -82,6 +82,7 @@ class Room : public RoomBase {
 
  signals:
   void abandoned();
+  void gameOver();
 
   void playerAdded(ServerPlayer *player);
   void playerRemoved(ServerPlayer *player);

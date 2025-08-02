@@ -28,6 +28,9 @@ Room::Room(RoomThread *thread) {
   md5 = thread->getMd5();
   connect(this, &Room::abandoned, thread, &RoomThread::onRoomAbandoned);
 
+  // gameOver放主线剧情
+  connect(this, &Room::gameOver, this, &Room::_gameOver);
+
   m_abandoned = false;
   owner = nullptr;
   gameStarted = false;
@@ -512,7 +515,7 @@ void Room::updatePlayerGameData(int id, const QString &mode) {
   room->doBroadcastNotify(room->getPlayers(), "UpdateGameData", data_arr.toCborValue().toCbor());
 }
 
-void Room::gameOver() {
+void Room::_gameOver() {
   if (!gameStarted) return;
   insideGameOver = true;
   gameStarted = false;
