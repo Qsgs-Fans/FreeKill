@@ -4,6 +4,7 @@
 #include "server/server.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
+#include "core/packman.h"
 #include "server/user/serverplayer.h"
 
 #ifndef FK_SERVER_ONLY
@@ -12,8 +13,7 @@
 
 Scheduler::Scheduler(RoomThread *thread) {
   L = new Lua;
-  if (QFile::exists("packages/freekill-core") &&
-    !GetDisabledPacks().contains("freekill-core")) {
+  if (Pacman->shouldUseCore()) {
     // 危险的cd操作，记得在lua中切回游戏根目录
     QDir::setCurrent("packages/freekill-core");
   }

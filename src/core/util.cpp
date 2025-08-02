@@ -3,6 +3,7 @@
 #include "core/util.h"
 #include "core/packman.h"
 #include <QSysInfo>
+#include <git2.h>
 
 static void writeFileMD5(QFile &dest, const QString &fname) {
   QFile f(fname);
@@ -245,3 +246,4 @@ QVariant AskOllama(const QString &apiEndpoint, const QVariant &body) {
   return QJsonDocument::fromJson(responseData).toVariant();
 }
 */
+

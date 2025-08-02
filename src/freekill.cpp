@@ -198,8 +198,7 @@ static int runSkillTest(const QString &val, const QString &filepath) {
   QString script;
 
   bool using_core = false;
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core")) {
+  if (Pacman->shouldUseCore()) {
     using_core = true;
     QDir::setCurrent("packages/freekill-core");
   }
@@ -435,8 +434,7 @@ int freekill_main(int argc, char *argv[]) {
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
   // 加载GUI了，如果core有的话用core的
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core") &&
+  if (Pacman->shouldUseCore() &&
       QFile::exists("packages/freekill-core/Fk")) {
     // FIXME: 客户端更新core后提示重启
     engine->addImportPath("packages/freekill-core");
