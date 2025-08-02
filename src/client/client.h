@@ -22,10 +22,10 @@ public:
   qint64 getServerLag() const;
 
   Q_INVOKABLE void setLoginInfo(const QString &username, const QString &password);
-  Q_INVOKABLE void replyToServer(const QString &command, const QString &jsonData);
-  Q_INVOKABLE void notifyServer(const QString &command, const QString &jsonData);
+  Q_INVOKABLE void replyToServer(const QString &command, const QVariant &jsonData);
+  Q_INVOKABLE void notifyServer(const QString &command, const QVariant &jsonData);
 
-  Q_INVOKABLE void callLua(const QString &command, const QString &jsonData, bool isRequest = false);
+  Q_INVOKABLE void callLua(const QByteArray &command, const QByteArray &jsonData, bool isRequest = false);
 
   ClientPlayer *addPlayer(int id, const QString &name, const QString &avatar);
   void removePlayer(int id);
@@ -72,7 +72,7 @@ private:
   QString password;
   ClientPrivate *p_ptr;
   QString aes_key;
-  QString pubEncrypt(const QString &key, const QString &data);
+  QByteArray pubEncrypt(const QByteArray &key, const QByteArray &data);
 
   Lua *L;
   Sqlite3 *db;

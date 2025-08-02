@@ -19,27 +19,34 @@ set(freekill_EXESRCS
 set(freekill_SRCS
   # "main.cpp"
   "freekill.cpp"
+
   "core/player.cpp"
   "core/util.cpp"
   "core/c-wrapper.cpp"
   "core/packman.cpp"
-  "core/jsonrpc.cpp"
-  "core/rpc-lua.cpp"
+
   "client/client.cpp"
   "client/clientplayer.cpp"
+
   "network/server_socket.cpp"
   "network/client_socket.cpp"
   "network/router.cpp"
-  "server/auth.cpp"
+
   "server/server.cpp"
-  "server/serverplayer.cpp"
-  "server/roombase.cpp"
-  "server/lobby.cpp"
-  "server/room.cpp"
-  "server/roomthread.cpp"
-  "server/roomthread-rpc.cpp"
-  "server/shell.cpp"
+
+  "server/user/auth.cpp"
+  "server/user/serverplayer.cpp"
+
+  "server/room/roombase.cpp"
+  "server/room/lobby.cpp"
+  "server/room/room.cpp"
+
+  "server/gamelogic/roomthread.cpp"
+
+  "server/cli/shell.cpp"
+
   "ui/qmlbackend.cpp"
+
   "swig/freekill-wrap.cxx"
 )
 set_source_files_properties(

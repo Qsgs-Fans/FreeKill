@@ -251,6 +251,76 @@ void PackMan::syncCommitHashToDatabase() {
   }
 }
 
+static bool is_head_newer_than_commit(const char *repo_path, const char *commit_hash) {
+  git_repository *repo = NULL;
+  git_commit *given_commit = NULL;
+  git_commit *head_commit = NULL;
+  bool result = false;
+
+  // 初始化 libgit2
+  git_libgit2_init();
+
+  // 打开仓库
+  if (git_repository_open(&repo, repo_path) != 0) {
+    // fprintf(stderr, "Could not open repository: %s\n", repo_path);
+    goto cleanup;
+  }
+
+  // 解析给定的 commit
+  git_oid given_oid;
+  if (git_oid_fromstr(&given_oid, commit_hash) != 0) {
+    // fprintf(stderr, "Invalid commit hash: %s\n", commit_hash);
+    goto cleanup;
+  }
+
+  // 检查给定的 commit 是否存在
+  if (git_commit_lookup(&given_commit, repo, &given_oid) != 0) {
+    // fprintf(stderr, "Commit not found: %s\n", commit_hash);
+    goto cleanup;
+  }
+
+  // 获取 HEAD 指向的 commit
+  git_oid head_oid;
+  if (git_reference_name_to_id(&head_oid, repo, "HEAD") != 0) {
+    // fprintf(stderr, "Could not get HEAD\n");
+    goto cleanup;
+  }
+
+  if (git_commit_lookup(&head_commit, repo, &head_oid) != 0) {
+    // fprintf(stderr, "Could not lookup HEAD commit\n");
+    goto cleanup;
+  }
+
+  // 比较两个 commit 的先后关系
+  if (git_graph_descendant_of(repo, &head_oid, &given_oid) == 1) {
+    result = true;
+  }
+
+  // 补：相同的话也可以
+  if (strncmp((char*)head_oid.id, (char*)given_oid.id, 20) == 0) {
+    result = true;
+  }
+
+cleanup:
+  git_commit_free(given_commit);
+  git_commit_free(head_commit);
+  git_repository_free(repo);
+  git_libgit2_shutdown();
+
+  return result;
+}
+
+// 0.5.11 测试版。此commit为all-in-cbor分支的
+// 现在肯定不能进master，先在分支上部署测试服
+static const char *min_commit = "d72661f1f07707a1cf887d8a32868b4f2790681f";
+
+bool PackMan::shouldUseCore() {
+  if (!QFile::exists("packages/freekill-core")) return false;
+  if (disabled_packs.contains("freekill-core")) return false;
+  bool ret = is_head_newer_than_commit("packages/freekill-core", min_commit);
+  return ret;
+}
+
 #define GIT_FAIL                                                               \
   const git_error *e = git_error_last();                                       \
   qCritical("Error %d/%d: %s\n", err, e->klass, e->message)

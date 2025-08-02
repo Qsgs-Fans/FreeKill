@@ -11,7 +11,7 @@ class ServerPlayer;
 class RoomThread;
 class Lobby;
 
-#include "server/room.h"
+#include "server/room/room.h"
 
 /**
   @brief Server类负责管理游戏服务端的运行。
@@ -61,7 +61,7 @@ public:
     @param settings 表示JSON对象的字符串，用作房间配置
     */
   void createRoom(ServerPlayer *owner, const QString &name, int capacity,
-                  int timeout = 15, const QByteArray &settings = QByteArrayLiteral("{}"));
+                  int timeout = 15, const QByteArray &settings = QByteArrayLiteral("\xA0"));
 
   void removeRoom(int id); /// 单纯从表中删除指针 内存由对应thread管理
 
@@ -99,9 +99,6 @@ public:
   qint64 getUptime() const;
 
   bool nameIsInWhiteList(const QString &name) const;
-
-  void enableRpc() { useRpc = true; }
-  bool isRpcEnabled() const { return useRpc; }
 
 signals:
   void roomCreated(Room *room);
@@ -141,8 +138,6 @@ private:
 
   bool hasWhitelist = false;
   QVariantList whitelist;
-
-  bool useRpc = false;
 };
 
 extern Server *ServerInstance; ///< 全局Server对象

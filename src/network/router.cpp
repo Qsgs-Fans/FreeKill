@@ -49,7 +49,7 @@ void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;
 }
 
-void Router::request(int type, const QByteArray &command, const QByteArray &jsonData,
+void Router::request(int type, const QByteArray &command, const QByteArray &cborData,
                      int timeout, qint64 timestamp) {
   // In case a request is called without a following waitForReply call
   if (replyReadySemaphore.available() > 0)
@@ -57,43 +57,47 @@ void Router::request(int type, const QByteArray &command, const QByteArray &json
 
   static int requestId = 0;
   requestId++;
+  if (requestId > 10000000) requestId = 1;
 
   replyMutex.lock();
   expectedReplyId = requestId;
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
-  m_reply = QStringLiteral("__notready");
+  m_reply = QByteArrayLiteral("__notready");
   replyMutex.unlock();
 
-  QJsonArray body;
-  body << requestId;
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
-  body << timeout;
-  body << (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp);
+  QCborArray body {
+    requestId,
+    type,
+    command,
+    cborData,
+    timeout,
+    (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp)
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
-void Router::reply(int type, const QByteArray &command, const QByteArray &jsonData) {
-  QJsonArray body;
-  body << this->requestId;
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
+void Router::reply(int type, const QByteArray &command, const QByteArray &cborData) {
+  QCborArray body {
+    this->requestId,
+    type,
+    command,
+    cborData,
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
-void Router::notify(int type, const QByteArray &command, const QByteArray &jsonData) {
-  QJsonArray body;
-  body << -2; // requestId = -2 mean this is for notification
-  body << type;
-  body << command.constData();
-  body << jsonData.constData();
+void Router::notify(int type, const QByteArray &command, const QByteArray &cborData) {
+  QCborArray body {
+    -2,
+    type,
+    command,
+    cborData,
+  };
 
-  sendMessage(JsonArray2Bytes(body));
+  sendMessage(body.toCborValue().toCbor());
 }
 
 int Router::getTimeout() const { return requestTimeout; }
@@ -110,8 +114,8 @@ void Router::cancelRequest() {
     replyReadySemaphore.acquire(replyReadySemaphore.available());
 }
 
-QString Router::waitForReply(int timeout) {
-  QString ret;
+QByteArray Router::waitForReply(int timeout) {
+  QByteArray ret;
   replyReadySemaphore.tryAcquire(1, timeout * 1000);
   replyMutex.lock();
   ret = m_reply;
@@ -131,24 +135,20 @@ void Router::abortRequest() {
   replyMutex.unlock();
 }
 
-void Router::handlePacket(const QByteArray &rawPacket) {
-  QJsonDocument packet = QJsonDocument::fromJson(rawPacket);
-  if (packet.isNull() || !packet.isArray())
-    return;
-
-  int requestId = packet[0].toInt();
-  int type = packet[1].toInt();
-  QString command = packet[2].toString();
-  QString jsonData = packet[3].toString();
+void Router::handlePacket(const QCborArray &packet) {
+  int requestId = packet[0].toInteger();
+  int type = packet[1].toInteger();
+  auto command = packet[2].toByteArray();
+  auto cborData = packet[3].toByteArray();
 
   if (type & TYPE_NOTIFICATION) {
-    emit notification_got(command, jsonData);
+    emit notification_got(command, cborData);
   } else if (type & TYPE_REQUEST) {
     this->requestId = requestId;
-    this->requestTimeout = packet[4].toInt();
+    this->requestTimeout = packet[4].toInteger();
     this->requestTimestamp = packet[5].toInteger();
 
-    emit request_got(command, jsonData);
+    emit request_got(command, cborData);
   } else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
 
@@ -161,7 +161,7 @@ void Router::handlePacket(const QByteArray &rawPacket) {
       replyTimeout < requestStartTime.secsTo(QDateTime::currentDateTime()))
       return;
 
-    m_reply = jsonData;
+    m_reply = cborData;
     // TODO: callback?
     replyReadySemaphore.release();
     if (extraReplyReadySemaphore) {
@@ -177,5 +177,5 @@ void Router::handlePacket(const QByteArray &rawPacket) {
 void Router::sendMessage(const QByteArray &msg) {
   auto connType = qApp->thread() == QThread::currentThread()
     ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
-  QMetaObject::invokeMethod(qApp, [=]() { emit messageReady(msg); }, connType);
+  QMetaObject::invokeMethod(qApp, [&]() { emit messageReady(msg); }, connType);
 }

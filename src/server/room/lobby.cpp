@@ -1,8 +1,10 @@
-#include "server/lobby.h"
+#include "server/room/lobby.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
+
+using namespace Qt::Literals::StringLiterals;
 
 Lobby::Lobby(Server *server) {
   this->server = server;
@@ -19,7 +21,7 @@ void Lobby::addPlayer(ServerPlayer *player) {
     removePlayer(player);
     player->deleteLater();
   } else {
-    player->doNotify("EnterLobby", "[]");
+    player->doNotify("EnterLobby", QCborValue().toCbor());
   }
 
   server->updateOnlineInfo();
@@ -30,9 +32,8 @@ void Lobby::removePlayer(ServerPlayer *player) {
   server->updateOnlineInfo();
 }
 
-void Lobby::updateAvatar(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto avatar = arr[0].toString();
+void Lobby::updateAvatar(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto avatar = QCborValue::fromCbor(jsonData).toString();
 
   if (Sqlite3::checkString(avatar)) {
     auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
@@ -44,8 +45,8 @@ void Lobby::updateAvatar(ServerPlayer *sender, const QString &jsonData) {
   }
 }
 
-void Lobby::updatePassword(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
+void Lobby::updatePassword(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto arr = QCborValue::fromCbor(jsonData).toArray();
   auto oldpw = arr[0].toString();
   auto newpw = arr[1].toString();
   auto sql_find =
@@ -73,36 +74,35 @@ void Lobby::updatePassword(ServerPlayer *sender, const QString &jsonData) {
   sender->doNotify("UpdatePassword", passed ? "1" : "0");
 }
 
-void Lobby::createRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
+void Lobby::createRoom(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto arr = QCborValue::fromCbor(jsonData).toArray();
   auto name = arr[0].toString();
-  auto capacity = arr[1].toInt();
-  auto timeout = arr[2].toInt();
-  auto settings =
-    QJsonDocument(arr[3].toObject()).toJson(QJsonDocument::Compact);
+  auto capacity = arr[1].toInteger();
+  auto timeout = arr[2].toInteger();
+  auto settings = arr[3].toCbor();
   ServerInstance->createRoom(sender, name, capacity, timeout, settings);
 }
 
-void Lobby::getRoomConfig(ServerPlayer *sender, const QString &jsonData) {
+void Lobby::getRoomConfig(ServerPlayer *sender, const QByteArray &jsonData) {
   auto arr = String2Json(jsonData).array();
   auto roomId = arr[0].toInt();
   auto room = ServerInstance->findRoom(roomId);
   if (room) {
     auto settings = room->getSettings();
     // 手搓JSON数组 跳过编码解码
-    sender->doNotify("GetRoomConfig", QString("[%1,%2]").arg(roomId).arg(settings).toUtf8());
+    sender->doNotify("GetRoomConfig", QCborArray { roomId, settings }.toCborValue().toCbor());
   } else {
     sender->doNotify("ErrorMsg", "no such room");
   }
 }
 
-void Lobby::enterRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto roomId = arr[0].toInt();
+void Lobby::enterRoom(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto arr = QCborValue::fromCbor(jsonData).toArray();
+  auto roomId = arr[0].toInteger();
   auto room = ServerInstance->findRoom(roomId);
   if (room) {
-    auto settings = QJsonDocument::fromJson(room->getSettings());
-    auto password = settings["password"].toString();
+    auto settings = room->getSettingsObject();
+    auto password = settings["password"_L1].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
       if (room->isOutdated()) {
         sender->doNotify("ErrorMsg", "room is outdated");
@@ -117,13 +117,13 @@ void Lobby::enterRoom(ServerPlayer *sender, const QString &jsonData) {
   }
 }
 
-void Lobby::observeRoom(ServerPlayer *sender, const QString &jsonData) {
-  auto arr = String2Json(jsonData).array();
-  auto roomId = arr[0].toInt();
+void Lobby::observeRoom(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto arr = QCborValue::fromCbor(jsonData).toArray();
+  auto roomId = arr[0].toInteger();
   auto room = ServerInstance->findRoom(roomId);
   if (room) {
-    auto settings = QJsonDocument::fromJson(room->getSettings());
-    auto password = settings["password"].toString();
+    auto settings = room->getSettingsObject();
+    auto password = settings["password"_L1].toString();
     if (password.isEmpty() || arr[1].toString() == password) {
       if (room->isOutdated()) {
         sender->doNotify("ErrorMsg", "room is outdated");
@@ -138,14 +138,14 @@ void Lobby::observeRoom(ServerPlayer *sender, const QString &jsonData) {
   }
 }
 
-void Lobby::refreshRoomList(ServerPlayer *sender, const QString &) {
+void Lobby::refreshRoomList(ServerPlayer *sender, const QByteArray &) {
   ServerInstance->updateRoomList(sender);
 };
 
-typedef void (Lobby::*room_cb)(ServerPlayer *, const QString &);
+typedef void (Lobby::*room_cb)(ServerPlayer *, const QByteArray &);
 
-void Lobby::handlePacket(ServerPlayer *sender, const QString &command,
-                        const QString &jsonData) {
+void Lobby::handlePacket(ServerPlayer *sender, const QByteArray &command,
+                        const QByteArray &jsonData) {
   static const QMap<QString, room_cb> lobby_actions = {
     {"UpdateAvatar", &Lobby::updateAvatar},
     {"UpdatePassword", &Lobby::updatePassword},

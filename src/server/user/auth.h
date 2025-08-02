@@ -14,7 +14,7 @@ public:
   auto getPublicKey() const { return public_key; }
 
 public slots:
-  void processNewConnection(const QByteArray &setup_string);
+  void processNewConnection(const QCborArray &setup_packet);
 
 private:
   Server *server;
@@ -22,7 +22,7 @@ private:
   QString public_key;
   AuthManagerPrivate *p_ptr;
 
-  bool loadSetupData(const QByteArray &msg);
+  bool loadSetupData(const QCborArray &msg);
   bool checkVersion();
   bool checkIfUuidNotBanned();
   bool checkMd5();

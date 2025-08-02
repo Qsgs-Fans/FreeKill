@@ -46,16 +46,16 @@ public:
   void setReplyReadySemaphore(QSemaphore *semaphore);
 
   void request(int type, const QByteArray &command,
-              const QByteArray &jsonData, int timeout, qint64 timestamp = -1);
-  void reply(int type, const QByteArray &command, const QByteArray &jsonData);
-  void notify(int type, const QByteArray &command, const QByteArray &jsonData);
+              const QByteArray &cborData, int timeout, qint64 timestamp = -1);
+  void reply(int type, const QByteArray &command, const QByteArray &cborData);
+  void notify(int type, const QByteArray &command, const QByteArray &cborData);
 
   int getTimeout() const;
 
   void cancelRequest();
   void abortRequest();
 
-  QString waitForReply(int timeout);
+  QByteArray waitForReply(int timeout);
 
   int getRequestId() const { return requestId; }
   qint64 getRequestTimestamp() { return requestTimestamp; }
@@ -64,11 +64,11 @@ signals:
   void messageReady(const QByteArray &msg);
   void replyReady();
 
-  void notification_got(const QString &command, const QString &jsonData);
-  void request_got(const QString &command, const QString &jsonData);
+  void notification_got(const QByteArray &command, const QByteArray &cborData);
+  void request_got(const QByteArray &command, const QByteArray &cborData);
 
 protected:
-  void handlePacket(const QByteArray &rawPacket);
+  void handlePacket(const QCborArray &packet);
 
 private:
   ClientSocket *socket;
@@ -84,7 +84,7 @@ private:
   QMutex replyMutex;
   int expectedReplyId;
   int replyTimeout;
-  QString m_reply;    // should be json string
+  QByteArray m_reply;    // should be json string
   QSemaphore replyReadySemaphore;
   QSemaphore *extraReplyReadySemaphore;
 

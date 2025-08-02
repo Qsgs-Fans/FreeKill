@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "server/server.h"
-#include "server/auth.h"
-#include "server/room.h"
-#include "server/lobby.h"
-#include "server/roomthread.h"
-#include "server/serverplayer.h"
+#include "server/user/auth.h"
+#include "server/user/serverplayer.h"
+#include "server/room/room.h"
+#include "server/room/lobby.h"
+#include "server/gamelogic/roomthread.h"
 #include "network/router.h"
 #include "network/client_socket.h"
 #include "network/server_socket.h"
@@ -14,6 +14,8 @@
 #include "core/util.h"
 
 #include <QNetworkDatagram>
+
+using namespace Qt::Literals::StringLiterals;
 
 Server *ServerInstance = nullptr;
 
@@ -62,8 +64,9 @@ Server::Server(QObject *parent) : QObject(parent) {
 
 Server::~Server() {
   isListening = false;
-  for (auto p : players) {
-    p->deleteLater();
+  // 虽然都是子对象 但析构顺序要抠一下
+  for (auto p : findChildren<ServerPlayer *>()) {
+    delete p;
   }
   // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
   for (auto thr : findChildren<RoomThread *>()) {
@@ -80,10 +83,6 @@ bool Server::listen(const QHostAddress &address, ushort port) {
   if (ret) {
     uptime_counter.restart();
     qInfo("Server is listening on port %d", port);
-
-    if (useRpc) {
-      qInfo("This server uses json-rpc to communicate with Lua VM.");
-    }
   }
   return ret;
 }
@@ -160,18 +159,18 @@ void Server::removePlayerByConnId(QString connId) {
 }
 
 void Server::updateRoomList(ServerPlayer *teller) {
-  QJsonArray arr;
-  QJsonArray avail_arr;
+  QCborArray arr;
+  QCborArray avail_arr;
   for (Room *room : rooms) {
-    QJsonArray obj;
+    QCborArray obj;
     auto settings = room->getSettingsObject();
-    auto password = settings["password"].toString();
+    auto password = settings["password"_L1].toString();
     auto count = room->getPlayers().count(); // playerNum
     auto cap = room->getCapacity();          // capacity
 
     obj << room->getId();        // roomId
     obj << room->getName();      // roomName
-    obj << settings["gameMode"]; // gameMode
+    obj << settings["gameMode"_L1].toString(); // gameMode
     obj << count;
     obj << cap;
     obj << !password.isEmpty();
@@ -185,16 +184,15 @@ void Server::updateRoomList(ServerPlayer *teller) {
   for (auto v : avail_arr) {
     arr.prepend(v);
   }
-  auto jsonData = JsonArray2Bytes(arr);
-  teller->doNotify("UpdateRoomList", jsonData);
+  teller->doNotify("UpdateRoomList", arr.toCborValue().toCbor());
 }
 
 void Server::updateOnlineInfo() {
   lobby()->doBroadcastNotify(lobby()->getPlayers(), "UpdatePlayerNum",
-                             JsonArray2Bytes(QJsonArray({
+                             QCborArray{
                                  lobby()->getPlayers().length(),
                                  this->players.count(),
-                             })));
+                             }.toCborValue().toCbor());
 }
 
 Sqlite3 *Server::getDatabase() { return db; }
@@ -206,19 +204,20 @@ void Server::broadcast(const QByteArray &command, const QByteArray &jsonData) {
 }
 
 void Server::sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg) {
-  QJsonArray body;
-  body << -2;
-  body << (Router::TYPE_NOTIFICATION | Router::SRC_SERVER |
-          Router::DEST_CLIENT);
-  body << type.constData();
-  body << msg.constData();
-  client->send(JsonArray2Bytes(body));
+  QCborArray body {
+    -2,
+    (Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT),
+    type,
+    msg,
+  };
+  client->send(body.toCborValue().toCbor());
 }
 
 void Server::createNewPlayer(ClientSocket *client, const QString &name, const QString &avatar, int id, const QString &uuid_str) {
   // create new ServerPlayer and setup
   ServerPlayer *player = new ServerPlayer(lobby());
   player->setSocket(client);
+  player->setParent(this);
   client->disconnect(this);
   player->setScreenName(name);
   player->setAvatar(avatar);
@@ -234,26 +233,26 @@ void Server::createNewPlayer(ClientSocket *client, const QString &name, const QS
   auto result = db->select(QString("SELECT totalGameTime FROM usergameinfo WHERE id=%1;").arg(id));
   auto time = result[0]["totalGameTime"].toInt();
   player->addTotalGameTime(time);
-  player->doNotify("AddTotalGameTime", JsonArray2Bytes({ id, time }));
+  player->doNotify("AddTotalGameTime", QCborArray{ id, time }.toCborValue().toCbor());
 
   lobby()->addPlayer(player);
 }
 
 void Server::setupPlayer(ServerPlayer *player, bool all_info) {
   // tell the lobby player's basic property
-  QJsonArray arr;
+  QCborArray arr;
   arr << player->getId();
   arr << player->getScreenName();
   arr << player->getAvatar();
   arr << QDateTime::currentMSecsSinceEpoch();
-  player->doNotify("Setup", JsonArray2Bytes(arr));
+  player->doNotify("Setup", arr.toCborValue().toCbor());
 
   if (all_info) {
-    player->doNotify("SetServerSettings", JsonArray2Bytes({
-          getConfig("motd"),
-          getConfig("hiddenPacks"),
-          getConfig("enableBots"),
-          }));
+    player->doNotify("SetServerSettings", QCborArray {
+          getConfig("motd").toString(),
+          QCborValue::fromJsonValue(getConfig("hiddenPacks")),
+          getConfig("enableBots").toBool(),
+          }.toCborValue().toCbor());
   }
 }
 
@@ -285,7 +284,7 @@ void Server::processNewConnection(ClientSocket *client) {
           [client]() { qInfo() << client->peerAddress() << "disconnected"; });
 
   // network delay test
-  sendEarlyPacket(client, "NetworkDelayTest", auth->getPublicKey().toUtf8());
+  sendEarlyPacket(client, "NetworkDelayTest", QCborValue(auth->getPublicKey().toUtf8()).toCbor());
   // Note: the client should send a setup string next
   connect(client, &ClientSocket::message_got, auth, &AuthManager::processNewConnection);
   client->timerSignup.start(30000);
@@ -389,8 +388,10 @@ void Server::refreshMd5() {
           p->kicked();
         }
       } else {
-        room->doBroadcastNotify(room->getPlayers(), "GameLog",
-            "{\"type\":\"#RoomOutdated\",\"toast\":true}");
+        room->doBroadcastNotify(room->getPlayers(), "GameLog", QCborMap {
+          { "type", "#RoomOutdated" },
+          { "toast", true },
+        }.toCborValue().toCbor());
       }
     }
   }

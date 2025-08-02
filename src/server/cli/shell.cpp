@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/shell.h"
+#include "server/cli/shell.h"
 #include "core/packman.h"
-#include "core/rpc-lua.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
-#include "server/roomthread.h"
+#include "server/user/serverplayer.h"
+#include "server/gamelogic/roomthread.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #ifdef FK_USE_READLINE
@@ -23,6 +22,8 @@
 
 Shell *ShellInstance = nullptr;
 static const char *prompt = "Fk> ";
+
+using namespace Qt::Literals::StringLiterals;
 
 void Shell::helpCommand(QStringList &) {
   qInfo("Frequently used commands:");
@@ -103,8 +104,8 @@ void Shell::lsrCommand(QStringList &list) {
     if (!room) {
       qInfo("No such room.");
     } else {
-      auto config = QJsonDocument::fromJson(room->getSettings());
-      auto pw = config["password"].toString();
+      auto config = room->getSettingsObject();
+      auto pw = config["password"_L1].toString();
       qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
           QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
       qInfo("Players in this room:");
@@ -122,8 +123,8 @@ void Shell::lsrCommand(QStringList &list) {
   }
   qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
   for (auto room : ServerInstance->rooms) {
-    auto config = QJsonDocument::fromJson(room->getSettings());
-    auto pw = config["password"].toString();
+    auto config = room->getSettingsObject();
+    auto pw = config["password"_L1].toString();
     qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
         QString("%1 [pw=%2]").arg(room->getName()).arg(pw));
   }
@@ -484,15 +485,8 @@ void Shell::statCommand(QStringList &) {
     auto L = thr->getLua();
 
     QString stat_str = QStringLiteral("unknown");
-    if (server->isRpcEnabled()) {
-      auto rpcL = dynamic_cast<RpcLua *>(L);
-      if (rpcL) {
-        stat_str = rpcL->getConnectionInfo();
-      }
-    } else {
-      auto mem_mib = L->eval(getmem).toDouble();
-      stat_str = QString::asprintf("%.2f MiB", mem_mib);
-    }
+    auto mem_mib = L->eval(getmem).toDouble();
+    stat_str = QString::asprintf("%.2f MiB", mem_mib);
     auto outdated = thr->isOutdated();
     if (rooms.count() == 0 && outdated) {
       thr->deleteLater();

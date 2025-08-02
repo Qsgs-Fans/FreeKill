@@ -3,6 +3,7 @@
 #include "core/util.h"
 #include "core/packman.h"
 #include <QSysInfo>
+#include <git2.h>
 
 static void writeFileMD5(QFile &dest, const QString &fname) {
   QFile f(fname);
@@ -53,25 +54,6 @@ static void writePkgsMD5(QFile &dest, const QString &dir,
   }
 }
 
-/*
-static void writeFkVerMD5(QFile &dest) {
-  QFile flist("fk_ver");
-  if (flist.exists() && flist.open(QIODevice::ReadOnly)) {
-    flist.readLine();
-    QStringList allNames;
-    while (true) {
-      QByteArray bytes = flist.readLine().simplified();
-      if (bytes.isNull()) break;
-      allNames << QString::fromLocal8Bit(bytes);
-    }
-    allNames.sort();
-    foreach(auto s, allNames) {
-      writeFileMD5(dest, s);
-    }
-  }
-}
-*/
-
 QString calcFileMD5() {
   // First, generate flist.txt
   // flist.txt is a file contains all md5sum for code files
@@ -80,19 +62,15 @@ QString calcFileMD5() {
     qFatal("Cannot open flist.txt. Quitting.");
   }
 
-  // writeFkVerMD5(flist);
   writePkgsMD5(flist, "packages", "*.lua");
   writePkgsMD5(flist, "packages", "*.qml");
   writePkgsMD5(flist, "packages", "*.js");
-  // writeDirMD5(flist, "lua", "*.lua");
-  // writeDirMD5(flist, "Fk", "*.qml");
-  // writeDirMD5(flist, "Fk", "*.js");
 
   // then, return flist.txt's md5
   flist.close();
   flist.open(QIODevice::ReadOnly);
   auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
-  // flist.remove(); // delete flist.txt
+
   flist.close();
   return ret.toHex();
 }
@@ -115,9 +93,6 @@ QString GetDeviceUuid() {
 #else
   ret = QSysInfo::machineUniqueId();
 #endif
-  if (ret == "1246570f9f0552e1") {
-    qApp->exit();
-  }
   return ret;
 }
 
@@ -271,3 +246,4 @@ QVariant AskOllama(const QString &apiEndpoint, const QVariant &body) {
   return QJsonDocument::fromJson(responseData).toVariant();
 }
 */
+

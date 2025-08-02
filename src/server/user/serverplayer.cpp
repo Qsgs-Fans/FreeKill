@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 #include "network/client_socket.h"
-#include "server/room.h"
-#include "server/roomthread.h"
+#include "server/room/room.h"
+#include "server/gamelogic/roomthread.h"
 #include "network/router.h"
 #include "server/server.h"
 
@@ -103,13 +103,13 @@ void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonDa
 
 void ServerPlayer::abortRequest() { router->abortRequest(); }
 
-QString ServerPlayer::waitForReply(int timeout) {
-  QString ret;
+QByteArray ServerPlayer::waitForReply(int timeout) {
+  QByteArray ret;
   if (getState() != Player::Online) {
 #ifndef QT_DEBUG
     QThread::sleep(1);
 #endif
-    ret = QStringLiteral("__cancel");
+    ret = QByteArrayLiteral("__cancel");
   } else {
     ret = router->waitForReply(timeout);
   }
@@ -188,7 +188,7 @@ int ServerPlayer::getGameTime() {
   return gameTime + (getState() == Player::Online ? gameTimer.elapsed() / 1000 : 0);
 }
 
-void ServerPlayer::onNotificationGot(const QString &c, const QString &j) {
+void ServerPlayer::onNotificationGot(const QByteArray &c, const QByteArray &j) {
   if (c == "Heartbeat") {
     alive = true;
     return;
@@ -221,7 +221,7 @@ void ServerPlayer::onStateChanged() {
 
   auto state = getState();
   room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
-      QString("[%1,\"%2\"]").arg(getId()).arg(getStateString()).toUtf8());
+      QCborArray { getId(), getStateString() }.toCborValue().toCbor());
 
   if (state == Player::Online) {
     resumeGameTimer();
@@ -233,7 +233,7 @@ void ServerPlayer::onStateChanged() {
 void ServerPlayer::onReadyChanged() {
   if (room && !room->isLobby()) {
     room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
-                            QString("[%1,%2]").arg(getId()).arg(isReady()).toUtf8());
+                            QCborArray { getId(), isReady() }.toCborValue().toCbor());
   }
 }
 

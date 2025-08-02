@@ -33,15 +33,28 @@ void ClientSocket::connectToHost(const QString &address, ushort port) {
 }
 
 void ClientSocket::getMessage() {
-  while (socket->canReadLine()) {
-    auto msg = socket->readLine();
-    msg = aesDec(msg);
-    if (msg.startsWith("Compressed")) {
-      msg = msg.sliced(10);
-      msg = qUncompress(QByteArray::fromBase64(msg));
-    }
-    emit message_got(msg.simplified());
+  cborBuffer += socket->readAll();
+  QCborError err;
+  auto arr = readCborArrsFromBuffer(&err);
+  if (err == QCborError::EndOfFile || err == QCborError::NoError) {
+    for (auto &a : arr) emit message_got(a);
+    return;
+  } else {
+    // TODO: close conn?
+    // 反正肯定会有不合法数据的，比如invalid setup string
+    // 旧版客户端啥的
+    disconnectFromHost();
+    return;
   }
+  // while (socket->canReadLine()) {
+  //   auto msg = socket->readLine();
+  //   msg = aesDec(msg);
+  //   if (msg.startsWith("Compressed")) {
+  //     msg = msg.sliced(10);
+  //     msg = qUncompress(QByteArray::fromBase64(msg));
+  //   }
+  //   emit message_got(msg.simplified());
+  // }
 }
 
 void ClientSocket::disconnectFromHost() {
@@ -54,16 +67,16 @@ void ClientSocket::send(const QByteArray &msg) {
     emit error_message("Cannot send messages if not connected");
     return;
   }
-  QByteArray _msg;
-  if (msg.length() >= 1024) {
-    auto comp = qCompress(msg);
-    _msg = QByteArrayLiteral("Compressed") + comp.toBase64();
-    _msg = aesEnc(_msg) + "\n";
-  } else {
-    _msg = aesEnc(msg) + "\n";
-  }
+  // QByteArray _msg;
+  // if (msg.length() >= 1024) {
+  //   auto comp = qCompress(msg);
+  //   _msg = QByteArrayLiteral("Compressed") + comp.toBase64();
+  //   _msg = aesEnc(_msg) + "\n";
+  // } else {
+  //   _msg = aesEnc(msg) + "\n";
+  // }
 
-  socket->write(_msg);
+  socket->write(msg);
   socket->flush();
 }
 
@@ -180,16 +193,6 @@ QByteArray ClientSocket::aesEnc(const QByteArray &in) {
 
   rand_generator.fillRange(reinterpret_cast<quint32*>(iv_raw.data()), 4);
 
-  /*
-  QByteArray iv;
-  iv.append(QByteArray::number(rand_generator.generate64(), 16));
-  iv.append(QByteArray::number(rand_generator.generate64(), 16));
-  if (iv.length() < 32) {
-    iv.append(QByteArray("0").repeated(32 - iv.length()));
-  }
-  auto iv_raw = QByteArray::fromHex(iv);
-  */
-
   static unsigned char tempIv[16];
   strncpy((char *)tempIv, iv_raw.constData(), 16);
   AES_cfb128_encrypt((const unsigned char *)in.constData(),
@@ -219,4 +222,70 @@ QByteArray ClientSocket::aesDec(const QByteArray &in) {
                      tempIv, &num, AES_DECRYPT);
 
   return out;
+}
+
+// 通信上只涉及数字、bytes两种类型而已，以及array
+static QCborValue readItem(QCborStreamReader &reader) {
+  switch (reader.type()) {
+    case QCborStreamReader::UnsignedInteger:
+    case QCborStreamReader::NegativeInteger: {
+      auto val = reader.toInteger();
+      reader.next();
+      return val;
+    }
+    case QCborStreamReader::ByteArray: {
+      QByteArray ret;
+      auto r = reader.readByteArray();
+      while (r.status == QCborStreamReader::Ok) {
+        ret += r.data;
+        r = reader.readByteArray();
+      }
+
+      if (r.status == QCborStreamReader::Error) {
+        // handle error condition
+        ret.clear();
+      }
+      return ret;
+    }
+    case QCborStreamReader::Array: {
+      QCborArray arr;
+      reader.enterContainer();
+      while (reader.lastError() == QCborError::NoError && reader.hasNext()) {
+        auto item = readItem(reader);
+        if (item.isUndefined()) break;
+        arr << item;
+      }
+      if (reader.lastError() == QCborError::NoError)
+        reader.leaveContainer();
+      return arr;
+    }
+    default:
+      break;
+  }
+  return QCborValue();
+}
+
+QList<QCborArray> ClientSocket::readCborArrsFromBuffer(QCborError *err) {
+  // 由于qt神秘机制，此处干脆用const char *和len手动操作缓冲区
+  auto cbuf = cborBuffer.constData();
+  auto len = cborBuffer.size();
+  QList<QCborArray> ret;
+
+  while (true) {
+    QCborStreamReader reader(cbuf, len);
+    auto item = readItem(reader);
+    if (reader.lastError() != QCborError::NoError) {
+      *err = reader.lastError();
+      break;
+    }
+    if (!item.isArray()) break;
+    ret << item.toArray();
+    auto off = reader.currentOffset();
+    cbuf += off;
+    len -= off;
+  }
+
+  // 对剩余的不全数据深拷贝 重新造bytes
+  cborBuffer = { cbuf, len };
+  return ret;
 }

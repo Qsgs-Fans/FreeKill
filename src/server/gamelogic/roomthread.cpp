@@ -1,33 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#include "server/roomthread.h"
+#include "server/gamelogic/roomthread.h"
 #include "server/server.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
-#include "core/rpc-lua.h"
-#include "server/roomthread-rpc.h"
-#include "server/serverplayer.h"
+#include "core/packman.h"
+#include "server/user/serverplayer.h"
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
 #endif
 
 Scheduler::Scheduler(RoomThread *thread) {
-  if (!ServerInstance->isRpcEnabled()) {
-    L = new Lua;
-    if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core")) {
-      // 危险的cd操作，记得在lua中切回游戏根目录
-      QDir::setCurrent("packages/freekill-core");
-    }
-
-    L->dofile("lua/freekill.lua");
-    L->dofile("lua/server/scheduler.lua");
-    L->call("InitScheduler", { QVariant::fromValue(thread) });
-
-  } else {
-    L = new RpcLua(ServerRpcMethods);
+  L = new Lua;
+  if (Pacman->shouldUseCore()) {
+    // 危险的cd操作，记得在lua中切回游戏根目录
+    QDir::setCurrent("packages/freekill-core");
   }
+
+  L->dofile("lua/freekill.lua");
+  L->dofile("lua/server/scheduler.lua");
+  L->call("InitScheduler", { QVariant::fromValue(thread) });
 }
 
 Scheduler::~Scheduler() {

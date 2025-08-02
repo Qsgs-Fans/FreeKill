@@ -30,6 +30,8 @@ public:
   // 适用于自己手动git pull包后使用
   void syncCommitHashToDatabase();
 
+  bool shouldUseCore();
+
 private:
   Sqlite3 *db;
 

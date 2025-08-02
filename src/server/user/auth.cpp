@@ -1,6 +1,6 @@
-#include "server/auth.h"
+#include "server/user/auth.h"
 #include "server/server.h"
-#include "server/serverplayer.h"
+#include "server/user/serverplayer.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
 #include "core/packman.h"
@@ -22,7 +22,7 @@ public:
   // setup message
   ClientSocket *client;
   QString name;
-  QString password;
+  QByteArray password;
   QByteArray password_decrypted;
   QString md5;
   QString version;
@@ -72,14 +72,14 @@ AuthManager::~AuthManager() noexcept {
 
 #define CHK(cond) if (!(cond)) { return; }
 
-void AuthManager::processNewConnection(const QByteArray &msg) {
+void AuthManager::processNewConnection(const QCborArray &arr) {
   ClientSocket *client = qobject_cast<ClientSocket *>(sender());
   disconnect(client, &ClientSocket::message_got, this, &AuthManager::processNewConnection);
   client->timerSignup.stop();
 
   p_ptr->client = client;
 
-  CHK(loadSetupData(msg));
+  CHK(loadSetupData(arr));
   CHK(checkVersion());
   CHK(checkIfUuidNotBanned());
   CHK(checkMd5());
@@ -94,28 +94,23 @@ void AuthManager::processNewConnection(const QByteArray &msg) {
 
 #undef CHK
 
-bool AuthManager::loadSetupData(const QByteArray &msg) {
-  QJsonDocument doc = QJsonDocument::fromJson(msg);
-  QJsonArray arr;
-  if (!doc.isArray()) {
-    goto FAIL;
-  }
-
-  if (doc.array().size() != 4 || doc[0] != -2 ||
-    doc[1] != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
-    doc[2] != "Setup")
+bool AuthManager::loadSetupData(const QCborArray &doc) {
+  QCborArray arr;
+  if (doc.size() != 4 || doc[0].toInteger() != -2 ||
+    doc[1].toInteger() != (Router::TYPE_NOTIFICATION | Router::SRC_CLIENT | Router::DEST_SERVER) ||
+    doc[2].toByteArray() != "Setup")
   {
     goto FAIL;
   }
 
-  arr = String2Json(doc[3].toString()).array();
+  arr = QCborValue::fromCbor(doc[3].toByteArray()).toArray();
 
-  if (arr.count() != 5) {
+  if (arr.size() != 5) {
     goto FAIL;
   }
 
   p_ptr->name = arr[0].toString();
-  p_ptr->password = arr[1].toString();
+  p_ptr->password = arr[1].toByteArray();
   p_ptr->md5 = arr[2].toString();
   p_ptr->version = arr[3].toString();
   p_ptr->uuid = arr[4].toString();
@@ -123,7 +118,7 @@ bool AuthManager::loadSetupData(const QByteArray &msg) {
   return true;
 
 FAIL:
-  qWarning() << "Invalid setup string:" << msg;
+  qWarning() << "Invalid setup string:" << doc.toCborValue().toDiagnosticNotation();
   server->sendEarlyPacket(p_ptr->client, "ErrorDlg", "INVALID SETUP STRING");
   p_ptr->client->disconnectFromHost();
   return false;
@@ -171,7 +166,15 @@ bool AuthManager::checkMd5() {
   auto md5_str = p_ptr->md5;
   if (server->getMd5() != md5_str) {
     server->sendEarlyPacket(p_ptr->client, "ErrorMsg", "MD5 check failed!");
-    server->sendEarlyPacket(p_ptr->client, "UpdatePackage", Pacman->getPackSummary().toUtf8());
+    server->sendEarlyPacket(
+      p_ptr->client,
+      "UpdatePackage",
+      QCborValue::fromJsonValue(
+        QJsonDocument::fromJson(
+          Pacman->getPackSummary().toUtf8()
+        ).array()
+      ).toCbor()
+    );
     p_ptr->client->disconnectFromHost();
     return false;
   }
@@ -225,19 +228,19 @@ QMap<QString, QString> AuthManager::checkPassword() {
   QByteArray passwordHash;
   auto players = server->getPlayers();
 
-  auto encryted_pw = QByteArray::fromBase64(password.toLatin1());
   unsigned char buf[4096] = {0};
-  RSA_private_decrypt(RSA_size(p_ptr->rsa), (const unsigned char *)encryted_pw.data(),
+  RSA_private_decrypt(RSA_size(p_ptr->rsa), (const unsigned char *)password.data(),
                       buf, p_ptr->rsa, RSA_PKCS1_PADDING);
   auto decrypted_pw =
       QByteArray::fromRawData((const char *)buf, strlen((const char *)buf));
 
   if (decrypted_pw.length() > 32) {
-    auto aes_bytes = decrypted_pw.first(32);
+    // TODO: 先不加密吧，把CBOR搭起来先
+    // auto aes_bytes = decrypted_pw.first(32);
 
     // tell client to install aes key
-    server->sendEarlyPacket(client, "InstallKey", "");
-    client->installAESKey(aes_bytes);
+    // server->sendEarlyPacket(client, "InstallKey", "");
+    // client->installAESKey(aes_bytes);
     decrypted_pw.remove(0, 32);
   } else {
     // FIXME

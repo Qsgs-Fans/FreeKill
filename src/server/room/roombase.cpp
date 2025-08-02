@@ -1,7 +1,9 @@
-#include "server/roombase.h"
-#include "server/serverplayer.h"
+#include "server/room/roombase.h"
+#include "server/user/serverplayer.h"
 #include "server/server.h"
 #include "core/util.h"
+
+using namespace Qt::Literals::StringLiterals;
 
 Server *RoomBase::getServer() const { return server; }
 
@@ -32,12 +34,13 @@ void RoomBase::doBroadcastNotify(const QList<ServerPlayer *> targets,
   }
 }
 
-void RoomBase::chat(ServerPlayer *sender, const QString &jsonData) {
-  auto doc = String2Json(jsonData).object();
-  auto type = doc["type"].toInt();
-  doc["sender"] = sender->getId();
+void RoomBase::chat(ServerPlayer *sender, const QByteArray &jsonData) {
+  auto doc = QCborValue::fromCbor(jsonData).toMap();
+  auto type = doc.value("type").toInteger();
+  doc["sender"_L1] = sender->getId();
+  auto msgkey = "msg"_L1;
 
-  auto msg = doc["msg"].toString();
+  auto msg = doc.value(msgkey).toString();
   if (!server->checkBanWord(msg)) {
     return;
   }
@@ -46,21 +49,19 @@ void RoomBase::chat(ServerPlayer *sender, const QString &jsonData) {
   msg.replace("%", "％");
   // 300字限制，与客户端相同
   msg.erase(msg.begin() + 300, msg.end());
-  doc["msg"] = msg;
+  doc[msgkey] = msg;
 
   if (type == 1) {
-    doc["userName"] = sender->getScreenName();
-    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
-    doBroadcastNotify(players, "Chat", json);
+    doc["userName"_L1] = sender->getScreenName();
+    doBroadcastNotify(players, "Chat", doc.toCborValue().toCbor());
   } else {
-    auto json = QJsonDocument(doc).toJson(QJsonDocument::Compact);
-    doBroadcastNotify(players, "Chat", json);
-    doBroadcastNotify(observers, "Chat", json);
+    doBroadcastNotify(players, "Chat", doc.toCborValue().toCbor());
+    doBroadcastNotify(observers, "Chat", doc.toCborValue().toCbor());
   }
 
   qInfo("[Chat/%ls] %ls: %ls",
         qUtf16Printable(isLobby() ? "Lobby" :
                         QString("#%1").arg(qobject_cast<Room *>(this)->getId())),
         qUtf16Printable(sender->getScreenName()),
-        qUtf16Printable(doc["msg"].toString()));
+        qUtf16Printable(doc[msgkey].toString()));
 }

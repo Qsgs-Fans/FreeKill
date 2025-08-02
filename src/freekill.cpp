@@ -7,7 +7,7 @@ using namespace fkShell;
 
 #include "core/packman.h"
 #include "server/server.h"
-#include "server/shell.h"
+#include "server/cli/shell.h"
 
 #if defined(Q_OS_WIN32)
 #include "applink.c"
@@ -115,7 +115,7 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   }
 
 #ifdef FK_USE_READLINE
-  ShellInstance->clearLine();
+  if (ShellInstance) ShellInstance->clearLine();
 #else
   printf("\r");
 #endif
@@ -198,8 +198,7 @@ static int runSkillTest(const QString &val, const QString &filepath) {
   QString script;
 
   bool using_core = false;
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core")) {
+  if (Pacman->shouldUseCore()) {
     using_core = true;
     QDir::setCurrent("packages/freekill-core");
   }
@@ -250,8 +249,6 @@ int freekill_main(int argc, char *argv[]) {
   QCoreApplication::setApplicationName("FreeKill");
   QCoreApplication::setApplicationVersion(FK_VERSION);
 
-  if (GetDeviceUuid() == "c5e8983a3d85a07c") return 1;
-
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
 #endif
@@ -276,9 +273,6 @@ int freekill_main(int argc, char *argv[]) {
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
   parser.addOption({{"h", "help"}, "display help information"});
-#ifdef Q_OS_LINUX
-  parser.addOption({"rpc", "enable rpc mode if is server"});
-#endif
   parser.addOption({"testskills", "run test case of skills", "testskills"});
   parser.addOption({"testfile", "run test case of a skill file", "testfile"});
   QStringList cliOptions;
@@ -316,11 +310,6 @@ int freekill_main(int argc, char *argv[]) {
 
     Pacman = new PackMan;
     Server *server = new Server;
-#ifdef Q_OS_LINUX
-    if (parser.isSet("rpc")) {
-      server->enableRpc();
-    }
-#endif
     if (!server->listen(QHostAddress::Any, serverPort)) {
       qFatal("cannot listen on port %d!\n", serverPort);
       app->exit(1);
@@ -445,8 +434,7 @@ int freekill_main(int argc, char *argv[]) {
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
 
   // 加载GUI了，如果core有的话用core的
-  if (QFile::exists("packages/freekill-core") &&
-      !GetDisabledPacks().contains("freekill-core") &&
+  if (Pacman->shouldUseCore() &&
       QFile::exists("packages/freekill-core/Fk")) {
     // FIXME: 客户端更新core后提示重启
     engine->addImportPath("packages/freekill-core");

@@ -36,7 +36,7 @@ public:
   void doRequest(const QByteArray &command,
            const QByteArray &jsonData, int timeout = -1, qint64 timestamp = -1);
   void abortRequest();
-  QString waitForReply(int timeout);
+  QByteArray waitForReply(int timeout);
   void doNotify(const QByteArray &command, const QByteArray &jsonData);
 
   void prepareForRequest(const QString &command,
@@ -58,7 +58,7 @@ signals:
   void kicked();
 
 public slots:
-  void onNotificationGot(const QString &c, const QString &j);
+  void onNotificationGot(const QByteArray &c, const QByteArray &j);
   void onReplyReady();
   void onStateChanged();
   void onReadyChanged();
