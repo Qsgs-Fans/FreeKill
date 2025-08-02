@@ -15,7 +15,36 @@
 ---@field message string
 ---@field data? any
 
+local os = os
 local json = require 'json'
+local cbor = require 'server.rpc.cbor'
+local RPC_MODE = os.getenv("FK_RPC_MODE") == "cbor" and "cbor" or "json"
+
+local key_jsonrpc, key_method, key_params, key_error, key_id, key_result,
+key_error_code, key_error_message, key_error_data
+if RPC_MODE == 'json' then
+  key_jsonrpc = "jsonrpc"
+  key_method = "method"
+  key_params = "params"
+  key_error = "error"
+  key_id = "id"
+  key_result = "result"
+
+  key_error_code = "code"
+  key_error_message = "message"
+  key_error_data = "data"
+elseif RPC_MODE == 'cbor' then
+  key_jsonrpc = 100
+  key_method = 101
+  key_params = 102
+  key_error = 103
+  key_id = 104
+  key_result = 105
+
+  key_error_code = 200
+  key_error_message = 201
+  key_error_data = 202
+end
 
 -- Standard error objects which can be extended with user defined error objects
 -- having error codes from -32000 to -32099. Helper functions add_error_object
@@ -99,7 +128,11 @@ local function encode_rpc(func, method, params, id)
     error("Function cannot be found")
   end
   local obj = func(method, params, id)
-  return json.encode(obj)
+  if RPC_MODE == "json" then
+    return json.encode(obj)
+  else
+    return cbor.encode(obj)
+  end
 end
 
 ---@return JsonRpcPacket
@@ -108,9 +141,9 @@ local function notification(method, params)
     error("A method in an RPC cannot be empty")
   end
   local req = {
-    jsonrpc = "2.0",
-    method = method,
-    params = params,
+    [key_jsonrpc] = "2.0",
+    [key_method] = method,
+    [key_params] = params,
   }
   return req
 end
@@ -118,9 +151,9 @@ end
 ---@return JsonRpcPacket
 local function request(method, params, id)
   local req = notification(method, params)
-  req.id = id or _reqId
-  if req.id == _reqId then
-    _reqId = req.id + 1
+  req[key_id] = id or _reqId
+  if req[key_id] == _reqId then
+    _reqId = req[key_id] + 1
     if _reqId > 10000000 then _reqId = 1 end
   end
   return req
@@ -130,9 +163,9 @@ end
 ---@return JsonRpcPacket
 local function response(req, results)
   return {
-    jsonrpc = "2.0",
-    id = req.id,
-    result = results,
+    [key_jsonrpc] = "2.0",
+    [key_id] = req[key_id],
+    [key_result] = results,
   }
 end
 
@@ -145,18 +178,18 @@ local function response_error(req, error_name, data)
       get_error_object('internal_error')
   ---@cast error_object -nil
 
-  res.jsonrpc = "2.0"
-  res.error = {
-    code = error_object.code,
-    message = error_object.message,
+  res[key_jsonrpc] = "2.0"
+  res[key_error] = {
+    [key_error_code] = error_object.code,
+    [key_error_message] = error_object.message,
   }
 
-  res.data = data
+  res[key_error][key_error_data] = data
 
   if (error_object.code == -32700) or (error_object.code == -32600) then
-    res.id = nil --json.util.null()
+    res[key_id] = nil --json.util.null()
   else
-    res.id = req.id
+    res[key_id] = req[key_id]
   end
   return res
 end
@@ -167,20 +200,20 @@ local function handle_request(methods, req)
   if type(req) ~= 'table' then
     return response_error(req, 'invalid_request', req)
   end
-  if type(req.method) ~= 'string' then
+  if type(req[key_method]) ~= 'string' then
     return response_error(req, 'invalid_request', req)
   end
-  if type(req.id) ~= 'number' or req.id <= 0 then
+  if type(req[key_id]) ~= 'number' or req[key_id] <= 0 then
     return response_error(req, 'invalid_request', req)
   end
 
-  local fnc = methods[req.method]
+  local fnc = methods[req[key_method]]
   -- Method not found
   if type(fnc) ~= 'function' then
     return response_error(req, 'method_not_found')
   end
 
-  local params = req.params
+  local params = req[key_params]
   if params == nil then
     params = {}
   end
@@ -213,7 +246,7 @@ local function handle_request(methods, req)
   end
 
   -- Notification only
-  if not req.id then
+  if not req[key_id] then
     return nil
   end
 
@@ -246,7 +279,7 @@ local function server_response(methods, request)
   end
   ---@cast req -string
 
-  if (#req == 0) and (req.jsonrpc == "2.0") then
+  if (#req == 0) and (req[key_jsonrpc] == "2.0") then
     return handle_request(methods, req)
   elseif #req == 0 then
     return response_error(req, 'invalid_request', req)
@@ -280,5 +313,15 @@ M.response_error = response_error
 M.get_next_free_id = get_next_free_id
 
 M.server_response = server_response
+
+M.key_jsonrpc = key_jsonrpc
+M.key_method = key_method
+M.key_params = key_params
+M.key_error = key_error
+M.key_id = key_id
+M.key_result = key_result
+M.key_error_code = key_error_code
+M.key_error_message = key_error_message
+M.key_error_data = key_error_data
 
 return M

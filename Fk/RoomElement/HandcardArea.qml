@@ -34,6 +34,7 @@ Item {
 
   function filterInputCard(card)
   {
+    card.markVisible = true;
     card.autoBack = true;
     // 只有会被频繁刷新的手牌才能拖动
     // card.draggable = lcall("CanSortHandcards", Self.id);

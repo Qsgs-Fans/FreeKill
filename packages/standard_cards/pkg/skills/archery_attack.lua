@@ -21,6 +21,9 @@ skill:addEffect("cardskill", {
         cancelable = true,
         event_data = effect
       }
+      if loopTimes > 1 then
+        params.prompt = "#AskForResponseMultiCard:::jink:"..i..":"..loopTimes
+      end
       respond = room:askToResponse(effect.to, params)
       if respond then
         room:responseCard(respond)

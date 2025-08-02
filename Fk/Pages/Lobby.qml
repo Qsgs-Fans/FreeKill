@@ -373,14 +373,14 @@ Item {
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "EnterRoom",
-        JSON.stringify([roomId, pw])
+        [roomId, pw]
       );
     } else {
       config.observing = true;
       mainWindow.busy = true;
       ClientInstance.notifyServer(
         "ObserveRoom",
-        JSON.stringify([roomId, pw])
+        [roomId, pw]
       );
     }
   }

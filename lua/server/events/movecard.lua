@@ -322,7 +322,7 @@ function MoveEventWrappers:notifyMoveCards(players, moveDatas)
       end
       table.insert(arg, v)
     end
-    p:doNotify("MoveCards", json.encode(arg))
+    p:doNotify("MoveCards", arg)
   end
 end
 

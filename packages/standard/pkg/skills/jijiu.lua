@@ -4,7 +4,7 @@ local jijiu = fk.CreateSkill {
 
 jijiu:addEffect("viewas", {
   anim_type = "support",
-  pattern = "peach",
+  pattern = "peach|.|heart,diamond",
   prompt = "#jijiu",
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)

@@ -244,12 +244,12 @@ Rectangle {
           }
           ClientInstance.notifyServer(
             "Chat",
-            JSON.stringify({
+            {
               type: isLobby ? 1 : 2,
               msg: (name.startsWith("~") || name.startsWith("!")) ?
                 "$" + name :
                 "$" + name + ":" + (idx ? idx.toString() : "") + (specific ? ":" + general : "")
-            })
+            }
           );
           soundSelector.visible = false;
         }
@@ -275,10 +275,10 @@ Rectangle {
           if (text != "") {
             ClientInstance.notifyServer(
               "Chat",
-              JSON.stringify({
+              {
                 type: isLobby ? 1 : 2,
                 msg: text
-              })
+              }
             );
             text = "";
           }

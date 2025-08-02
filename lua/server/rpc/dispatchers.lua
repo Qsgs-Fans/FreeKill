@@ -30,7 +30,7 @@ local handleRequest = function(params)
   end
 
   local ok, ret = pcall(HandleRequest, params[1])
-  if not ok then return false, 'internal_error' end
+  if not ok then return false, 'internal_error', 'internal_error' end
   return true, ret
 end
 
@@ -45,34 +45,34 @@ local setPlayerState = function(params)
 
   local room = GetRoom(roomId)
   if not room then
-    return false, "Room not found"
+    return false, "internal_error", "Room not found"
   end
 
   for _, p in ipairs(room.room:getPlayers()) do
     if p.id == playerId then
       p.state = newState
-      return true, nil
+      return true, true
     end
   end
 
-  return false, "Player not found"
+  return false, "internal_error", "Player not found"
 end
 
 local addObserver = function(params)
-  if not (type(params[1]) == "number" and type(params[2]) == "table") then
+  if not (type(params[1]) == "number" and type(params[2]) == "string") then
     return false, nil
   end
 
   local roomId = params[1]
-  local obj = params[2]
+  local obj = cbor.decode(params[2])
 
   local room = GetRoom(roomId)
   if not room then
-    return false, "Room not found"
+    return false, "internal_error", "Room not found"
   end
 
   table.insert(room.room:getObservers(), fk.ServerPlayer(obj))
-  return true, nil
+  return true, true
 end
 
 local removeObserver = function(params)
@@ -85,18 +85,18 @@ local removeObserver = function(params)
 
   local room = GetRoom(roomId)
   if not room then
-    return false, "Room not found"
+    return false, "internal_error", "Room not found"
   end
 
   local observers = room.room:getObservers()
   for i, p in ipairs(observers) do
     if p.id == playerId then
       table.remove(observers, i)
-      return true, nil
+      return true, true
     end
   end
 
-  return false, "Player not found"
+  return false, "internal_error", "Player not found"
 end
 
 ---@type table<string, fun(...): boolean, ...>

@@ -186,6 +186,7 @@ RowLayout {
         data.y = parentPos.y;
         const card = component.createObject(roomScene, data);
         card.footnoteVisible = true;
+        card.markVisible = false;
         card.footnote = luatr(dat.ui_data.footnote);
         handcardAreaItem.add(card);
       }

@@ -93,7 +93,7 @@ GraphicsBox {
         onClicked: {
           close();
           roomScene.state = "notactive";
-          const reply = JSON.stringify(getResult());
+          const reply = getResult();
           ClientInstance.replyToServer("", reply);
         }
       }
@@ -111,7 +111,7 @@ GraphicsBox {
           for (i = 0; i < result.length; i++) {
             ret.push([]);
           }
-          const reply = JSON.stringify(ret);
+          const reply = ret;
           ClientInstance.replyToServer("", reply);
         }
       }

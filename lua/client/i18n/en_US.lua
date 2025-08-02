@@ -455,8 +455,14 @@ Fk:loadTranslationTable({
 Fk:loadTranslationTable({
   -- game processing
   ["$AppendSeparator"] = '<font color="grey">------------------------------</font>',
-  ["$GameStart"] = "== Game Started ==",
+  ["$GameStart"] = "== Game %arg Started ==",
   ["$GameEnd"] = "== Game Over ==",
+  ["$TurnStart"] = "<font color='grey'>-------</font>%from's Turn Start <font color='grey'>-------</font>",
+  ["$ExtraTurnStart"] = "<font color='grey'>-------</font>%arg Turn of %from Start<font color='grey'>-------</font>",
+  ["$TurnEnd"] = "<font color='grey'>-------</font> %from's Turn End <font color='grey'>-------</font>",
+  ["$ExtraTurnEnd"] = "<font color='grey'>-------</font>%arg Turn of %from End <font color='grey'>-------</font>",
+  ["$RoundStart"] = "<font color='grey'>--------------</font> %arg th Round Start <font color='grey'>--------------</font>",
+  ["$RoundEnd"] = "<font color='grey'>--------------</font> %arg th Round End <font color='grey'>--------------</font>",
 
   -- get/lose skill
   ["#AcquireSkill"] = '%from acquired the skill "%arg"',

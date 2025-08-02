@@ -5,7 +5,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("viewas", {
   prompt = "#spear_skill&",
-  pattern = "slash",
+  pattern = "slash|0|red,black,nocolor",
   mute_card = false,
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)

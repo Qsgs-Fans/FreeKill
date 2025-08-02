@@ -132,6 +132,20 @@ function Player:__tostring()
   return string.format("<%s %d>", self.id < 0 and "Bot" or "Player", math.abs(self.id))
 end
 
+local CBOR_TAG_PLAYER = 33001
+function Player:__tocbor()
+  return cbor.encode(cbor.tagged(CBOR_TAG_PLAYER, self.id))
+end
+function Player:__touistring()
+  if self.deputyGeneral == "" then
+    return Fk:translate(self.general)
+  end
+  return Fk:translate("seat#" .. self.seat)
+end
+cbor.tagged_decoders[CBOR_TAG_PLAYER] = function(v)
+  return Fk:currentRoom():getPlayerById(v)
+end
+
 --- 设置角色、体力、技能。
 ---@param general General @ 角色类型
 ---@param setHp? boolean @ 是否设置体力
@@ -1145,14 +1159,19 @@ end
 ---@param subcards? integer[] @ 子卡（某些技能可以提前确定子卡，如奇策、妙弦）
 ---@param ban_cards? string[] @ 被排除的卡名
 ---@param extra_data? UseExtraData|table @ 用于使用的额外信息
+---@param vs_pattern? string @ 转化后的卡牌pattern
 ---@return string[] @ 返回牌名列表
-function Player:getViewAsCardNames(skill_name, card_names, subcards, ban_cards, extra_data)
+function Player:getViewAsCardNames(skill_name, card_names, subcards, ban_cards, extra_data, vs_pattern)
   ban_cards = ban_cards or Util.DummyTable
   extra_data = extra_data or Util.DummyTable
   return table.filter(card_names, function (name)
     local card = Fk:cloneCard(name)
-    card.skillName = skill_name
-    if subcards then card:addSubcards(subcards) end
+    if subcards then
+      card.skillName = skill_name
+      card:addSubcards(subcards)
+    else
+      card:setVSPattern(skill_name, vs_pattern)
+    end
     if table.contains(ban_cards, card.trueName) or table.contains(ban_cards, card.name) then return false end
     if Fk.currentResponsePattern == nil then
       return self:canUse(card, extra_data)

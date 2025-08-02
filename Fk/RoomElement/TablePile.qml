@@ -75,6 +75,7 @@ Item {
     for (let i = 0; i < inputs.length; i++) {
       const c = inputs[i];
       c.footnoteVisible = true;
+      c.markVisible = false;
       c.selectable = true;
       c.height = c.height * 0.8;
       c.width = c.width * 0.8;

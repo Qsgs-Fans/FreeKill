@@ -76,6 +76,8 @@ Fk:loadTranslationTable {
   ["No enough generals"] = "可用武将不足！",
   ["Operation timeout"] = "操作时长(秒)",
   ["help: Operation timeout"] = "一次操作的最大思考时长。",
+  ["Choose General timeout"] = "选将时长(秒)",
+  ["help: Choose General timeout"] = "选将的最大思考时长。",
   ["Luck Card Times"] = "手气卡次数",
   ["help: Luck Card Times"] = "可以更换初始手牌的最多次数。",
   ["Has Password"] = "有密码",
@@ -292,6 +294,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["GameMode"] = "游戏模式：",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
+  ["ChooseGeneralTime"] = "选将时间：",
   ["GeneralBoxNum"] = "选将框数：",
   ["CardPackages"] = "使用牌堆：",
   ["IncludeFreeAssign"] = "<font color=\"red\">可自由点将</font>",
@@ -623,8 +626,14 @@ Fk:loadTranslationTable {
 Fk:loadTranslationTable {
   -- game processing
   ["$AppendSeparator"] = '<font color="grey">------------------------------</font>',
-  ["$GameStart"] = "== 游戏开始 ==",
-  ["$GameEnd"] = "== 游戏结束 ==",
+  ["$GameStart"] = "== 游戏 %arg 开始 ==",
+  ["$GameEnd"] = "<font color='grey'>------------</font> 游戏结束 <font color='grey'>------------</font>",
+  ["$TurnStart"] = "<font color='grey'>-------</font> %from 回合开始 <font color='grey'>-------</font>",
+  ["$ExtraTurnStart"] = "<font color='grey'>-------</font> %from 的 %arg 回合开始 <font color='grey'>-------</font>",
+  ["$TurnEnd"] = "<font color='grey'>-------</font> %from 回合结束 <font color='grey'>-------</font>",
+  ["$ExtraTurnEnd"] = "<font color='grey'>-------</font> %from 的 %arg 回合结束 <font color='grey'>-------</font>",
+  ["$RoundStart"] = "<font color='grey'>--------------</font> 第 %arg 轮开始 <font color='grey'>--------------</font>",
+  ["$RoundEnd"] = "<font color='grey'>--------------</font> 第 %arg 轮结束 <font color='grey'>--------------</font>",
 
   -- get/lose skill
   ["#AcquireSkill"] = "%from 获得了〖%arg〗",
@@ -665,7 +674,7 @@ Fk:loadTranslationTable {
 
   -- phase
   ["#PhaseSkipped"] = "%from 跳过了 %arg",
-  ["#GainAnExtraTurn"] = "%from 开始进行一个额外的回合",
+  --["#GainAnExtraTurn"] = "%from 开始进行一个额外的回合",
   ["#GainAnExtraPhase"] = "%from 开始进行一个额外的 %arg",
 
   -- useCard

@@ -11,6 +11,7 @@ extension:loadSkillSkelsByPath(prefix .. "test/skills")
 local test2 = General(extension, "mouxusheng", "wu", 4, 4, General.Female)
 test2.shield = 3
 test2.hidden = true
+test2.endnote = "mouxusheng_endnote"
 test2:addSkills {
   "test_rende",
   "cheat",
@@ -26,6 +27,7 @@ Fk:loadTranslationTable{
   ["test"] = "测试",
   ["mouxusheng"] = "谋徐盛",
   ["~mouxusheng"] = "来世，愿再为我江东之臣……",
+  ["mouxusheng_endnote"] = "测试用武将",
 }
 
 local shibing = General(extension, "blank_shibing", "qun", 5)

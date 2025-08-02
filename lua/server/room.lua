@@ -88,7 +88,7 @@ function Room:initialize(_room)
   self.notify_count = 0
   self.notify_max = 500
 
-  self.settings = json.decode(self.room:settings())
+  self.settings = cbor.decode(self.room:settings())
   self.disabled_packs = self.settings.disabledPack
   if not Fk.game_modes[self.settings.gameMode] then
     self.settings.gameMode = "aaa_role_mode"
@@ -406,7 +406,7 @@ end
 ---@param value any @ 设置的值，可以是数字、字符串、表、键值表等
 function Room:setPlayerMark(player, mark, value)
   player:setMark(mark, value)
-  self:doBroadcastNotify("SetPlayerMark", json.encode{
+  self:doBroadcastNotify("SetPlayerMark", {
     player.id,
     mark,
     value
@@ -461,7 +461,7 @@ end
 function Room:setCardMark(card, mark, value)
   card:setMark(mark, value)
   if not card:isVirtual() then
-    self:doBroadcastNotify("SetCardMark", json.encode{
+    self:doBroadcastNotify("SetCardMark", {
       card.id,
       mark,
       value
@@ -529,7 +529,7 @@ end
 ---@param value any
 function Room:setBanner(name, value)
   AbstractRoom.setBanner(self, name, value)
-  self:doBroadcastNotify("SetBanner", json.encode{ name, value })
+  self:doBroadcastNotify("SetBanner", { name, value })
 end
 
 --- 设置房间的当前行动者
@@ -537,7 +537,7 @@ end
 function Room:setCurrent(player)
   AbstractRoom.setCurrent(self, player)
   -- rawset(self, "current", player)
-  self:doBroadcastNotify("SetCurrent", json.encode{ player and player.id or nil })
+  self:doBroadcastNotify("SetCurrent", { player and player.id or nil })
 end
 
 ---@param player ServerPlayer
@@ -632,7 +632,7 @@ end
 ---@param player ServerPlayer @ 拥有那个属性的玩家
 ---@param property string @ 属性名称
 function Room:notifyProperty(p, player, property)
-  p:doNotify("PropertyUpdate", json.encode{
+  p:doNotify("PropertyUpdate", {
     player.id,
     property,
     player[property],
@@ -641,7 +641,7 @@ end
 
 --- 向多名玩家广播一条消息。
 ---@param command string @ 发出这条消息的消息类型
----@param jsonData string @ 消息的数据，一般是JSON字符串，也可以是普通字符串，取决于client怎么处理了
+---@param jsonData any @ 消息的数据，一般是JSON字符串，也可以是普通字符串，取决于client怎么处理了
 ---@param players? ServerPlayer[] @ 要告知的玩家列表，默认为所有人
 function Room:doBroadcastNotify(command, jsonData, players)
   players = players or self.players
@@ -693,7 +693,7 @@ function Room:notifyMoveFocus(players, command, timeout)
     end
   end
 
-  self:doBroadcastNotify("MoveFocus", json.encode{
+  self:doBroadcastNotify("MoveFocus", {
     ids,
     command,
     timeout
@@ -703,21 +703,21 @@ end
 --- 向战报中发送一条log。
 ---@param log LogMessage @ Log的实际内容
 function Room:sendLog(log)
-  self:doBroadcastNotify("GameLog", json.encode(log))
+  self:doBroadcastNotify("GameLog", log)
 end
 
 -- 为一些牌设置脚注
 ---@param ids integer[] @ 要设置虚拟牌名的牌的id列表
 ---@param log LogMessage @ Log的实际内容
 function Room:sendFootnote(ids, log)
-  self:doBroadcastNotify("SetCardFootnote", json.encode{ ids, log })
+  self:doBroadcastNotify("SetCardFootnote", { ids, log })
 end
 
---- 为一些牌设置虚拟转化牌名
+--- 为一些牌设置虚拟转化牌名（仅影响桌面上的牌，处理区/弃牌堆/虚空区）
 ---@param ids integer[] @ 要设置虚拟牌名的牌的id列表
 ---@param name string @ 虚拟牌名
 function Room:sendCardVirtName(ids, name)
-  self:doBroadcastNotify("SetCardVirtName", json.encode{ ids, name })
+  self:doBroadcastNotify("SetCardVirtName", { ids, name })
 end
 
 --- 播放某种动画效果给players看。
@@ -727,7 +727,7 @@ end
 function Room:doAnimate(type, data, players)
   players = players or self.players
   data.type = type
-  self:doBroadcastNotify("Animate", json.encode(data), players)
+  self:doBroadcastNotify("Animate", data, players)
 end
 
 --- 在player脸上展示名为name的emotion动效。
@@ -770,7 +770,7 @@ end
 function Room:sendLogEvent(type, data, players)
   players = players or self.players
   data.type = type
-  self:doBroadcastNotify("LogEvent", json.encode(data), players)
+  self:doBroadcastNotify("LogEvent", data, players)
 end
 
 --- 播放一段音频。
@@ -831,10 +831,11 @@ function Room:notifySkillInvoked(player, skill_name, skill_type, tos)
       skill_type = skill_type,
     })
   else
+    skill_name = (skill:getSkeleton() or skill).name
     self:doAnimate("InvokeUltSkill", {
       name = skill_name,
       player = player.id,
-      deputy = player.deputyGeneral and player.deputyGeneral ~= "" and table.contains(Fk.generals[player.deputyGeneral]:getSkillNameList(true), skill_name),
+      deputy = Fk.generals[player.deputyGeneral] ~= nil and table.contains(Fk.generals[player.deputyGeneral]:getSkillNameList(true), skill_name),
     })
     self:delay(2000)
   end
@@ -1196,7 +1197,7 @@ function Room:askToChooseCardsAndChoice(player, params)
     disabled = all_cards and table.filter(all_cards, function (id)
       return not table.contains(cards, id)
     end) or {},
-    extra_data = params.extra_data
+    extra_data = params.extra_data or {}
   }
   local command = "AskForCardsAndChoice"
   local req = Request:new(player, command)
@@ -1402,6 +1403,7 @@ function Room:askToChooseGeneral(player, params)
   local defaultChoice = rule.default_choice(generals, extra_data)
 
   local req = Request:new(player, command)
+  req.timeout = self.settings.generalTimeout
   local data = {
     generals,
     n,
@@ -1452,7 +1454,7 @@ end
 
 ---@class AskToChooseCardParams: AskToSkillInvokeParams
 ---@field target ServerPlayer @ 被选牌的人
----@field flag string | table @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
+---@field flag string | {card_data: [string, integer[]][]} @ 用"hej"三个字母的组合表示能选择哪些区域, h 手牌区, e - 装备区, j - 判定区
 ---@field skill_name string @ 原因，一般是技能名
 
 --- 询问player，选择target的一张牌。
@@ -2868,7 +2870,7 @@ function Room:fillAG(players, id_list, disable_ids)
   end
   self:setTag("AGrecord", record)
   for _, player in ipairs(players) do
-    player:doNotify("FillAG", json.encode{ id_list, disable_ids })
+    player:doNotify("FillAG", { id_list, disable_ids })
   end
 end
 
@@ -2877,7 +2879,7 @@ end
 ---@param id integer @ 被拿走的牌
 ---@param notify_list? ServerPlayer[] @ 要告知的玩家，默认为全员
 function Room:takeAG(taker, id, notify_list)
-  self:doBroadcastNotify("TakeAG", json.encode{ taker.id, id }, notify_list)
+  self:doBroadcastNotify("TakeAG", { taker.id, id }, notify_list)
   local record = self:getTag("AGrecord") or {}
   if #record > 0 then
     local currentRecord = record[#record]
@@ -2909,10 +2911,10 @@ function Room:closeAG(player)
       local newRecord = record[#record]
       local players = table.map(newRecord[1], Util.Id2PlayerMapper)
       for _, p in ipairs(players) do
-        p:doNotify("FillAG", json.encode{ newRecord[2], newRecord[3] })
+        p:doNotify("FillAG", { newRecord[2], newRecord[3] })
       end
       for cid, pid in pairs(newRecord[4]) do
-        self:doBroadcastNotify("TakeAG", json.encode{ pid, tonumber(cid) }, players)
+        self:doBroadcastNotify("TakeAG", { pid, tonumber(cid) }, players)
       end
     end
   end
@@ -2922,6 +2924,7 @@ end
 ---@field skill_name string @ 烧条时显示的技能名
 ---@field game_type string @ 小游戏框关键词
 ---@field data_table table<integer, any> @ 以每个playerID为键的数据数组
+---@field timeout? integer @ 烧条时间，单位为秒。默认使用房间的timeout
 
 -- TODO: 重构request机制，不然这个还得手动拿client_reply
 ---@param players ServerPlayer[] @ 需要参与这个框的角色
@@ -2934,12 +2937,13 @@ function Room:askToMiniGame(players, params)
   local req = Request:new(players, command)
   req.focus_text = params.skill_name
   req.receive_decode = false -- 和customDialog同理
+  req.timeout = params.timeout or self.timeout
 
   for _, p in ipairs(players) do
     local data = params.data_table[p.id]
     p.mini_game_data = { type = params.game_type, data = data }
     req:setData(p, p.mini_game_data)
-    req:setDefaultReply(p, game.default_choice and json.encode(game.default_choice(p, data)))
+    req:setDefaultReply(p, game.default_choice and game.default_choice(p, data))
   end
 
   req:ask()
@@ -3275,7 +3279,7 @@ function Room:arrangeSeats(players)
   end
 
   local player_circle = table.map(players, Util.IdMapper)
-  self:doBroadcastNotify("ArrangeSeats", json.encode(player_circle))
+  self:doBroadcastNotify("ArrangeSeats", player_circle)
 end
 
 --- 洗牌。
@@ -3284,15 +3288,15 @@ function Room:shuffleDrawPile()
   AbstractRoom.shuffleDrawPile(self, seed)
 
   self:doBroadcastNotify("ShuffleDrawPile", seed)
-  self:doBroadcastNotify("UpdateDrawPile", tostring(#self.draw_pile))
+  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
 
   self.logic:trigger(fk.AfterDrawPileShuffle, nil, {})
 end
 
 -- 强制同步牌堆（用于在不因任何移动事件且不因洗牌导致的牌堆变动）
 function Room:syncDrawPile()
-  self:doBroadcastNotify("SyncDrawPile", json.encode(self.draw_pile))
-  self:doBroadcastNotify("UpdateDrawPile", tostring(#self.draw_pile))
+  self:doBroadcastNotify("SyncDrawPile", self.draw_pile)
+  self:doBroadcastNotify("UpdateDrawPile", #self.draw_pile)
 end
 
 ---@param room Room
@@ -3330,7 +3334,7 @@ end
 ---@param winner string @ 获胜的身份，空字符串表示平局
 function Room:gameOver(winner)
   if not self.game_started then return end
-  self:setBanner("GameSummary", self:getGameSummary(winner))
+  self:setBanner("GameSummary", self:getGameSummary())
   self.room:destroyRequestTimer()
 
   if table.contains(
@@ -3344,7 +3348,8 @@ function Room:gameOver(winner)
     self:setPlayerProperty(p, "role_shown", true)
 
     -- 不知道某个C++ ServerPlayer此时的视角 只好都转回来
-    p._splayer:doNotify("ChangeSelf", tostring(p._splayer:getId()))
+    -- 直接调C++的话还必须手搓cbor.encode 没一点脾气
+    p._splayer:doNotify("ChangeSelf", cbor.encode(p._splayer:getId()))
   end
 
   self:doBroadcastNotify("GameOver", winner)
@@ -3397,7 +3402,7 @@ end
 
 --- 获取一局游戏的总结，包括每个玩家的回合数、回血、伤害、受伤、击杀
 ---@return table<integer, integer[]> @ 玩家id到总结的映射
-function Room:getGameSummary(winner)
+function Room:getGameSummary()
   local summary = {}
   for _, p in ipairs(self.players) do
     -- 选将阶段直接房间解散的智慧 有点意思
@@ -3496,7 +3501,7 @@ end
 ---@return Card
 function Room:printCard(name, suit, number)
   local cd = AbstractRoom.printCard(self, name, suit, number)
-  self:doBroadcastNotify("PrintCard", json.encode{ name, suit, number })
+  self:doBroadcastNotify("PrintCard", { name, suit, number })
   return cd
 end
 
@@ -3510,7 +3515,7 @@ function Room:updateQuestSkillState(player, skillName, failed)
   self:setPlayerMark(player, MarkEnum.QuestSkillPreName .. skillName, failed and "failed" or "succeed")
   local updateValue = failed and 2 or 1
 
-  self:doBroadcastNotify("UpdateQuestSkillUI", json.encode{
+  self:doBroadcastNotify("UpdateQuestSkillUI", {
     player.id,
     skillName,
   })
@@ -3520,7 +3525,7 @@ end
 ---@param player ServerPlayer
 function Room:updateAllLimitSkillUI(player)
   for _, skill in ipairs(player.player_skills) do
-    self:doBroadcastNotify("UpdateQuestSkillUI", json.encode{
+    self:doBroadcastNotify("UpdateQuestSkillUI", {
       player.id,
       skill.name,
     })
@@ -3790,7 +3795,7 @@ function Room:addSkill(skill)
     self.status_skills[skill.class] = self.status_skills[skill.class] or {}
     table.insertIfNeed(self.status_skills[skill.class], skill)
     -- add status_skill to cilent room
-    self:doBroadcastNotify("AddStatusSkill", json.encode{ skill.name })
+    self:doBroadcastNotify("AddStatusSkill", { skill.name })
   elseif skill:isInstanceOf(TriggerSkill) then
     ---@cast skill TriggerSkill
     self.logic:addTriggerSkill(skill)
@@ -3874,12 +3879,15 @@ end
 
 
 --- 进行待执行的额外回合
-function Room:ActExtraTurn()
+function Room:actExtraTurn()
   while #self.extra_turn_list > 0 do
     local data = table.remove(self.extra_turn_list, 1)
     data.who:gainAnExtraTurn(false, data.reason, data.phases, data.extra_data)
   end
 end
+
+---@deprecated @ 用actExtraTurn代替
+Room.ActExtraTurn = Room.actExtraTurn
 
 local function isSame(table1, table2)
   if #table1 ~= #table2 then return false end
@@ -3934,6 +3942,48 @@ end
 function Room:unbanSortingHandcards(player, suffix)
   suffix = suffix or ""
   self:setPlayerMark(player, MarkEnum.SortProhibited .. suffix, 0)
+end
+
+---阶段性清理各种标记
+---@param scope integer
+function Room:clearHistory (scope)
+  local suffixMap = {
+    [Player.HistoryPhase] = "-phase", [Player.HistoryTurn] = "-turn", [Player.HistoryRound] = "-round",
+  }
+  local suffix = suffixMap[scope]
+  for _, p in ipairs(self.players) do
+    p:setCardUseHistory("", 0, scope)
+    p:setSkillUseHistory("", 0, scope)
+    for name, _ in pairs(p.mark) do
+      if name:find(suffix, 1, true) then
+        self:setPlayerMark(p, name, 0)
+      end
+    end
+  end
+
+  for cid, cmark in pairs(self.card_marks) do
+    for name, _ in pairs(cmark) do
+      if name:find(suffix, 1, true) then
+        self:setCardMark(Fk:getCardById(cid), name, 0)
+      end
+    end
+  end
+
+  for name, _ in pairs(self.banners) do
+    if name:find(suffix, 1, true) then
+      self:setBanner(name, 0)
+    end
+  end
+
+  for name, _ in pairs(self.tag) do
+    if name:find(suffix, 1, true) then
+      self:setTag(name, nil)
+    end
+  end
+
+  for _, p in ipairs(self.players) do
+    p:filterHandcards()
+  end
 end
 
 return Room

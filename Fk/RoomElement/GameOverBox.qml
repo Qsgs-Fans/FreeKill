@@ -112,7 +112,7 @@ GraphicsBox {
           mainStack.pop();
           Backend.controlReplayer("shutdown");
         } else {
-          ClientInstance.notifyServer("QuitRoom", "[]");
+          ClientInstance.notifyServer("QuitRoom", "");
         }
       }
     }

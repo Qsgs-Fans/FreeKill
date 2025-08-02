@@ -5,10 +5,13 @@
 
 package.path = package.path .. "./?.lua;./?/init.lua;./lua/lib/?.lua;./lua/?.lua;./lua/?/init.lua"
 
+local os = os
 fk = require "server.rpc.fk"
+local RPC_MODE = os.getenv("FK_RPC_MODE") == "cbor" and "cbor" or "json"
 local jsonrpc = require "server.rpc.jsonrpc"
 local stdio = require "server.rpc.stdio"
 local dispatchers = require "server.rpc.dispatchers"
+local cbor = require 'server.rpc.cbor'
 
 -- 加载新月杀相关内容并ban掉两个吃stdin的
 dofile "lua/freekill.lua"
@@ -49,17 +52,38 @@ coroutine.resume = function(co, ...)
   return coresume(co, ...)
 end
 
-local mainLoop = function()
-  InitScheduler(fk.RoomThread())
-  stdio.send(jsonrpc.encode_rpc(jsonrpc.notification, "hello", { "world" }))
+local mainLoop
+if RPC_MODE == "json" then
+  mainLoop = function()
+    InitScheduler(fk.RoomThread())
+    stdio.send(jsonrpc.encode_rpc(jsonrpc.notification, "hello", { "world" }))
 
-  while true do
-    local msg = stdio.receive()
-    if msg == nil then break end
+    while true do
+      local msg = stdio.receive()
+      if msg == nil then break end
 
-    local res = jsonrpc.server_response(dispatchers, msg)
-    if res then
-      stdio.send(json.encode(res))
+      local res = jsonrpc.server_response(dispatchers, msg)
+      if res then
+        stdio.send(json.encode(res))
+      end
+    end
+  end
+elseif RPC_MODE == "cbor" then
+  mainLoop = function()
+    InitScheduler(fk.RoomThread())
+    stdio.stdout:write(jsonrpc.encode_rpc(jsonrpc.notification, "hello", { "world" }))
+    stdio.stdout:flush()
+
+    while true do
+      if fk._rpc_finished then break end
+      local msg = cbor.decode_file(stdio.stdin)
+      if msg == nil then break end
+
+      local res = jsonrpc.server_response(dispatchers, msg)
+      if res then
+        stdio.stdout:write(cbor.encode(res))
+        stdio.stdout:flush()
+      end
     end
   end
 end

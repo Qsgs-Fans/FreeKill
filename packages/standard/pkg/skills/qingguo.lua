@@ -4,7 +4,7 @@ local qingguo = fk.CreateSkill {
 
 qingguo:addEffect("viewas", {
   anim_type = "defensive",
-  pattern = "jink",
+  pattern = "jink|.|spade,club",
   prompt = "#qingguo",
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)

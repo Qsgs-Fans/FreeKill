@@ -39,6 +39,7 @@ Item {
   property alias card: cardItem
   property alias glow: glowItem
   property var mark: ({})
+  property bool markVisible: false
   property alias chosenInBox: chosen.visible
 
   function getColor() {
@@ -178,6 +179,7 @@ Item {
   Component {
     id: cardMarkDelegate
     Item {
+      visible : markVisible || modelData.k.includes("-public")
       width: root.width / 2
       height: 16
       Rectangle {
@@ -369,6 +371,9 @@ Item {
     subtype = data.subtype ? data.subtype : "";
     virt_name = data.virt_name ? data.virt_name : "";
     mark = data.mark ?? {};
+    if (data.markVisible) {
+      markVisible = true;
+    }
   }
 
   function toData()

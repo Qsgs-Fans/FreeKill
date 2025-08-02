@@ -258,7 +258,7 @@ Item {
         opTimer.start();
         ClientInstance.notifyServer(
           "UpdateAvatar",
-          JSON.stringify([detailGeneralCard.name])
+          detailGeneralCard.name
         );
       }
     }

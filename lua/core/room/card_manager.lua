@@ -154,8 +154,9 @@ end
 
 --- 展示一堆牌（注意，这样子是不会过锁视技的）
 ---@param cards integer|integer[]|Card|Card[] @ 要展示的牌
----@param from? Player
+---@param from? ServerPlayer
 function CardManager:showCards(cards, from)
+  ---@cast self Room
   cards = Card:getIdList(cards)
   local src
   if from then src = from.id end
@@ -164,7 +165,7 @@ function CardManager:showCards(cards, from)
     from = src,
     card = cards,
   }
-  self:doBroadcastNotify("ShowCard", json.encode{
+  self:doBroadcastNotify("ShowCard", {
     from = src,
     cards = cards,
   })

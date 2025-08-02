@@ -4,6 +4,15 @@
 ---@field public from ServerPlayer @ 使用者
 ---@field public tos ServerPlayer[] @ 角色目标
 ---@field public cards integer[] @ 选择卡牌
+---@field public cost_data? CostData|table @ 发动技能时的消耗数据，请使用event:setCostData(skill)指定
+
+---@class CostData
+---@field public tos? ServerPlayer[] @ 技能指定的角色目标
+---@field public cards? integer[] @ 技能指定的卡牌目标
+---@field public mute? boolean @ 发动时是否播放动画/声效
+---@field public no_indicate? boolean @ 发动时是否不显示指示线
+---@field public audio_index? number @ 发动时是否播放特定编号台词
+---@field public anim_type? AnimationType|string @ 发动时是否播放特定动画
 
 --- 技能使用的数据
 ---@class SkillUseData: SkillUseDataSpec, TriggerData

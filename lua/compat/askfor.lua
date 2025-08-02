@@ -32,7 +32,7 @@ function CompatAskFor:askForUseActiveSkill(player, skill_name, prompt, cancelabl
   return success, ret
 end
 
----@deprecated @ 用askToUseViewAsSkill代替
+---@deprecated @ 用askToUseActiveSkill代替
 CompatAskFor.askForUseViewAsSkill = CompatAskFor.askForUseActiveSkill
 
 --- 询问一名角色弃牌。

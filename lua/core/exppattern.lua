@@ -85,11 +85,13 @@ end
 
 --- 判断某牌是否满足某个Matcher的某个key（例如牌名、点数、花色）
 local function matchSingleKey(matcher, card, key)
-  local match = matcher[key]
+  local match = matcher[key == "color" and "suit" or key]
   if not match then return true end
   local val = card[key]
   if key == "suit" then
     val = card:getSuitString()
+  elseif key == "color" then
+    val = card:getColorString()
   -- elseif key == "cardType" then
   --   val = card:getTypeString()
   elseif key == "place" then
@@ -128,7 +130,8 @@ local function matchCard(matcher, card)
 
   return matchSingleKey(matcher, card, "trueName")
      and matchSingleKey(matcher, card, "number")
-     and matchSingleKey(matcher, card, "suit")
+     and (matchSingleKey(matcher, card, "suit")
+     or matchSingleKey(matcher, card, "color"))
      and matchSingleKey(matcher, card, "place")
      and matchSingleKey(matcher, card, "name")
      -- and matchSingleKey(matcher, card, "cardType")

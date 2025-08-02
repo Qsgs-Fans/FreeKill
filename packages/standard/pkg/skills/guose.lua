@@ -4,7 +4,7 @@ local guose = fk.CreateSkill {
 
 guose:addEffect("viewas", {
   anim_type = "control",
-  pattern = "indulgence",
+  pattern = "indulgence|.|diamond",
   prompt = "#guose",
   handly_pile = true,
   card_filter = function(self, player, to_select, selected)

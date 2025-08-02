@@ -37,7 +37,7 @@ GraphicsBox {
           if (root.interactive && selectable) {
             root.interactive = false;
             roomScene.state = "notactive";
-            ClientInstance.replyToServer("", cid.toString());
+            ClientInstance.replyToServer("", cid);
           }
         }
       }

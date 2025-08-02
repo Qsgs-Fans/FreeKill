@@ -848,8 +848,9 @@ end
 ---@param tos ServerPlayer | ServerPlayer[] @ 目标角色（列表）
 ---@param skillName? string @ 技能名
 ---@param extra? boolean @ 是否不计入次数
+---@param extra_data? table @ 使用事件的extra_data
 ---@return UseCardDataSpec?
-function UseCardEventWrappers:useVirtualCard(card_name, subcards, from, tos, skillName, extra)
+function UseCardEventWrappers:useVirtualCard(card_name, subcards, from, tos, skillName, extra, extra_data)
   local card = Fk:cloneCard(card_name)
   if skillName then card.skillName = skillName end
 
@@ -871,7 +872,8 @@ function UseCardEventWrappers:useVirtualCard(card_name, subcards, from, tos, ski
     from = from,
     tos = tos,
     card = card,
-    extraUse = extra
+    extraUse = extra,
+    extra_data = extra_data,
   }
   self:useCard(use)
 

@@ -68,6 +68,17 @@ Item {
         }
       }
       W.SpinRow {
+        title: luatr("Choose General timeout")
+        from: 10
+        to: 60
+        editable: true
+        value: config.preferredChooseGeneralTimeout
+
+        onValueChanged: {
+          config.preferredChooseGeneralTimeout = value;
+        }
+      }
+      W.SpinRow {
         title: luatr("Luck Card Times")
         subTitle: luatr("help: Luck Card Times")
         from: 0
@@ -196,17 +207,20 @@ Item {
 
           ClientInstance.notifyServer(
             "CreateRoom",
-            JSON.stringify([roomName.text, playerNum.value,
-            config.preferredTimeout, {
-              enableFreeAssign: freeAssignCheck.checked,
-              enableDeputy: deputyCheck.checked,
-              gameMode: config.preferedMode,
-              disabledPack: disabledPack,
-              generalNum: config.preferredGeneralNum,
-              luckTime: config.preferredLuckTime,
-              password: roomPassword.text,
-              disabledGenerals,
-            }])
+            [
+              roomName.text, playerNum.value,
+              config.preferredTimeout, {
+                enableFreeAssign: freeAssignCheck.checked,
+                enableDeputy: deputyCheck.checked,
+                gameMode: config.preferedMode,
+                disabledPack: disabledPack,
+                generalNum: config.preferredGeneralNum,
+                generalTimeout: config.preferredChooseGeneralTimeout,
+                luckTime: config.preferredLuckTime,
+                password: roomPassword.text,
+                disabledGenerals,
+              }
+            ]
           );
         }
       }

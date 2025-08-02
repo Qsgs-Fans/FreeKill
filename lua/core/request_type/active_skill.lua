@@ -379,7 +379,7 @@ function ReqActiveSkill:doOKButton()
     reply.special_skill = self.skill_name
   end
   if ClientInstance then
-    ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+    ClientInstance:notifyUI("ReplyToServer", reply)
   else
     return reply
   end
@@ -500,6 +500,7 @@ function ReqActiveSkill:update(elemType, id, action, data)
     self:initiateTargets()
     autoSelectOnlyFeasibleTarget(self, data)
     -- 双击卡牌使用卡牌
+    --[[
     if action == "doubleClick" and data.doubleClickUse then
       if not data.selected then -- 未选中的选中
         data.selected = true
@@ -515,10 +516,12 @@ function ReqActiveSkill:update(elemType, id, action, data)
         self:initiateTargets()
       end
     end
+    ]]
   elseif elemType == "Photo" then
     ---@cast id integer
     self:selectTarget(id, data)
     -- 双击目标使用卡牌
+    --[[
     if action == "doubleClick" and data.doubleClickUse then
       if not data.selected then -- 未选中的选中
         data.selected = true
@@ -531,6 +534,7 @@ function ReqActiveSkill:update(elemType, id, action, data)
         self:selectTarget(id, data)
       end
     end
+    ]]
   elseif elemType == "Interaction" then
     self:updateInteraction(data)
   end

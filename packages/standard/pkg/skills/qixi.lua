@@ -4,7 +4,7 @@ local qixi = fk.CreateSkill {
 
 qixi:addEffect("viewas", {
   anim_type = "control",
-  pattern = "dismantlement",
+  pattern = "dismantlement|.|spade,club",
   prompt = "#qixi",
   -- mute_card = true,
   handly_pile = true,

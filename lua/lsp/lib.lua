@@ -51,3 +51,5 @@ function json.encode(obj)end
 ---@param str string @ JSON string to decode
 ---@return any
 function json.decode(str)end
+
+cbor = {}

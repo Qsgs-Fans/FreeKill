@@ -116,7 +116,7 @@ function ReqResponseCard:doOKButton()
     targets = self.selected_targets or {},
   }
   if ClientInstance then
-    ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+    ClientInstance:notifyUI("ReplyToServer", reply)
   else
     return reply
   end
@@ -201,6 +201,7 @@ function ReqResponseCard:update(elemType, id, action, data)
     self:selectCard(id, data)
     self:updateButtons()
     -- 双击打出
+    --[[
     if action == "doubleClick" and data.doubleClickUse then
       if not data.selected then -- 未选中的选中
         data.selected = true
@@ -213,11 +214,13 @@ function ReqResponseCard:update(elemType, id, action, data)
         self:selectCard(id, data)
       end
     end
+    ]]
   elseif elemType == "SkillButton" then
     self:selectSkill(id, data)
     -- 自动选择唯一目标
     autoSelectOnlyFeasibleTarget(self, data)
     -- 双击发动技能
+    --[[
     if data.doubleClickUse and action == "doubleClick" then
       if not data.selected then -- 未选中的选中
         self:selectSkill(id, data)
@@ -232,6 +235,7 @@ function ReqResponseCard:update(elemType, id, action, data)
         self:initiateTargets()
       end
     end
+    ]]
   else -- if elemType == "Button" or elemType == "Interaction" then
     return ReqActiveSkill.update(self, elemType, id, action, data)
   end

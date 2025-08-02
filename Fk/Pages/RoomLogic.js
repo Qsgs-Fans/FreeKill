@@ -136,13 +136,7 @@ function arrangePhotos() {
 
 function replyToServer(jsonData) {
   ClientInstance.replyToServer("", jsonData);
-  if (!mainWindow.is_pending) {
-    roomScene.state = "notactive";
-  } else {
-    roomScene.state = "";
-    const data = mainWindow.fetchMessage();
-    return mainWindow.handleMessage(data.command, data.jsonData);
-  }
+  roomScene.state = "notactive";
 }
 
 function getPhotoModel(id) {
@@ -205,10 +199,13 @@ function moveCards(data) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
-    if (!from || !to || (from === to && move.fromArea !== Card.DiscardPile))
+    if (!from || !to)
       continue;
     const items = from.remove(move.ids, move.fromSpecialName, data);
-    items.forEach((item) => item.known = !!data[item.cid.toString()]);
+    items.forEach((item) => item.known = !!data[item.cid.toString()]); // updata card visible. must be before move animation
+    if (from === to && from !== tablePile) // decide whether to play the move animation
+      continue;
+    //items.forEach((item) => item.markVisible = (to === dashboard.handcardArea)); // cardMark only visible in my handcardArea
     if (to === tablePile) {
       let vanished = items.filter(c => c.cid === -1);
       if (vanished.length > 0) {
@@ -884,7 +881,7 @@ callbacks["AskForGeneral"] = (data) => {
     Qt.createComponent("../RoomElement/ChooseGeneralBox.qml");
   const box = roomScene.popupBox.item;
   box.accepted.connect(() => {
-    replyToServer(JSON.stringify(box.choices));
+    replyToServer(box.choices);
   });
   box.generals = generals;
   box.choiceNum = n ?? 1;
@@ -970,7 +967,7 @@ callbacks["AskForGuanxing"] = (data) => {
   }, []);
   box.initializeCards();
   box.accepted.connect(() => {
-    replyToServer(JSON.stringify(box.getResult()));
+    replyToServer(box.getResult());
   });
 }
 
@@ -1000,7 +997,7 @@ callbacks["AskForExchange"] = (data) => {
   box.areaNames = cards_name
   box.initializeCards();
   box.accepted.connect(() => {
-    replyToServer(JSON.stringify(box.getResult()));
+    replyToServer(box.getResult());
   });
 }
 
@@ -1072,7 +1069,7 @@ callbacks["AskForChoices"] = (data) => {
     box.result.forEach(id => {
       ret.push(all_choices[id]);
     });
-    replyToServer(JSON.stringify(ret));
+    replyToServer(ret);
   });
 }
 
@@ -1139,7 +1136,7 @@ callbacks["AskForCardsChosen"] = (data) => {
 
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {
-    replyToServer(JSON.stringify(ids));
+    replyToServer(ids);
   });
 }
 
@@ -1165,7 +1162,7 @@ callbacks["AskForPoxi"] = (dat) => {
 
   roomScene.popupBox.moveToCenter();
   box.cardsSelected.connect((ids) => {
-    replyToServer(JSON.stringify(ids));
+    replyToServer(ids);
   });
 }
 
@@ -1197,7 +1194,7 @@ callbacks["AskForMoveCardInBoard"] = (data) => {
 
   box.arrangeCards();
   box.accepted.connect(() => {
-    replyToServer(JSON.stringify(box.getResult()));
+    replyToServer(box.getResult());
   });
 }
 
@@ -1342,10 +1339,28 @@ callbacks["AskForResponseCard"] = (data) => {
   roomScene.okCancel.visible = true;
 }
 
+const getMarkValue = function(value) {
+  if (value instanceof ArrayBuffer) {
+    const uint8Array = new Uint8Array(value);
+    let result = "";
+
+    for (const byte of uint8Array) {
+      // 将字节转换为两位十六进制，并添加\x前缀
+      result += `\\x${byte.toString(16).padStart(2, '0')}`;
+    }
+    return leval(`(function(s) return ToUIString(cbor.decode(s)) end)("${result}")`)
+  } else if (!(value instanceof Object)) {
+    return value.toString();
+  } else {
+    return value;
+  }
+}
+
 callbacks["SetPlayerMark"] = (data) => {
   const player = getPhoto(data[0]);
   const mark = data[1];
-  const value = data[2] instanceof Object ? data[2] : data[2].toString();
+  const value = getMarkValue(data[2]);
+
   let area = mark.startsWith("@!") ? player.picMarkArea : player.markArea;
   if (data[2] === 0) {
     area.removeMark(mark);
@@ -1356,7 +1371,7 @@ callbacks["SetPlayerMark"] = (data) => {
 
 callbacks["SetBanner"] = (data) => {
   const mark = data[0];
-  const value = data[1] instanceof Object ? data[1] : data[1].toString();
+  const value = getMarkValue(data[1]);
   let area = roomScene.banner;
   if (data[1] === 0) {
     area.removeMark(mark);
@@ -1629,7 +1644,7 @@ callbacks["GetPlayerHandcards"] = (data) => {
   const hand = dashboard.handcardArea.cards.map(c => {
     return c.cid;
   })
-  replyToServer(JSON.stringify(hand));
+  replyToServer(hand);
 }
 
 callbacks["ReplyToServer"] = (data) => {

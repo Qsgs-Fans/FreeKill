@@ -44,11 +44,12 @@ function SkillEffect:main()
           return to
         end
       end) or {}
-    local mute, no_indicate, audio_index = skill.mute, skill.no_indicate, skill.audio_index
+    local mute, no_indicate, audio_index, anim_type = skill.mute, skill.no_indicate, skill.audio_index, skill.anim_type
     if type(cost_data) == "table" then
       if cost_data.mute then mute = cost_data.mute end
       if cost_data.no_indicate then no_indicate = cost_data.no_indicate end
       if cost_data.audio_index then audio_index = cost_data.audio_index end
+      if cost_data.anim_type then anim_type = cost_data.anim_type end
     end
     if not mute then
       if skill:getSkeleton() and skill:getSkeleton().attached_equip then
@@ -78,7 +79,7 @@ function SkillEffect:main()
           audio_index = table.random(audio_index)
         end
         player:broadcastSkillInvoke(skill:getSkeleton().name, audio_index)
-        room:notifySkillInvoked(player, skill.name, skill.anim_type, no_indicate and {} or tos)
+        room:notifySkillInvoked(player, skill.name, anim_type, no_indicate and {} or tos)
       end
     end
     if not no_indicate then
@@ -186,7 +187,7 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
       if player:hasSkill(actual_skill, true, true) then
         local lost_skills = player:loseSkill(actual_skill, source_skill)
         for _, s in ipairs(lost_skills) do
-          self:doBroadcastNotify("LoseSkill", json.encode{
+          self:doBroadcastNotify("LoseSkill", {
             player.id,
             s.name
           })
@@ -221,7 +222,7 @@ function SkillEventWrappers:handleAddLoseSkills(player, skill_names, source_skil
         for _, s in ipairs(got_skills) do
           -- TODO: limit skill mark
 
-          self:doBroadcastNotify("AddSkill", json.encode{
+          self:doBroadcastNotify("AddSkill", {
             player.id,
             s.name
           })

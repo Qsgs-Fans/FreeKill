@@ -127,7 +127,7 @@ Flickable {
           return true;
         }
         onClicked: {
-          ClientInstance.notifyServer("KickPlayer", pid.toString());
+          ClientInstance.notifyServer("KickPlayer", pid);
           root.finish();
         }
       }
@@ -184,10 +184,10 @@ Flickable {
   function givePresent(p) {
     ClientInstance.notifyServer(
       "Chat",
-      JSON.stringify({
+      {
         type: 2,
         msg: "$@" + p + ":" + pid
-      })
+      }
     );
   }
 

@@ -43,6 +43,7 @@ QtObject {
   property list<string> enabledResourcePacks: []
 
   property int preferredTimeout
+  property int preferredChooseGeneralTimeout
   property int preferredLuckTime
   property bool enableFreeAssign
   property bool enableDeputy
@@ -63,6 +64,7 @@ QtObject {
   property bool serverEnableBot: true
   property int roomCapacity: 0
   property int roomTimeout: 0
+  //property int roomChooseGeneralTimeout: 0
   property bool heg: false
   property bool observing: false
   property bool replaying: false
@@ -161,6 +163,7 @@ QtObject {
     doubleClickUse = conf.doubleClickUse ?? false;
     noSelfNullification = conf.noSelfNullification ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
+    preferredChooseGeneralTimeout = conf.preferredChooseGeneralTimeout ?? 20;
     preferredLuckTime = conf.preferredLuckTime ?? 0;
     enableFreeAssign = conf.enableFreeAssign ?? false;
     enableDeputy = conf.enableDeputy ?? false;
@@ -212,6 +215,7 @@ QtObject {
     conf.doubleClickUse = doubleClickUse;
     conf.noSelfNullification = noSelfNullification;
     conf.preferredTimeout = preferredTimeout;
+    conf.preferredChooseGeneralTimeout = preferredChooseGeneralTimeout;
     conf.preferredLuckTime = preferredLuckTime;
     conf.enableFreeAssign = enableFreeAssign;
     conf.enableDeputy = enableDeputy;

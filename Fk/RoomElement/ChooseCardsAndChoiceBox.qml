@@ -131,7 +131,7 @@ GraphicsBox {
           onClicked: {
             close();
             roomScene.state = "notactive";
-            const reply = JSON.stringify(
+            const reply = (
               {
                 cards: root.selected_ids,
                 choice: modelData,
@@ -153,7 +153,7 @@ GraphicsBox {
           onClicked: {
             close();
             roomScene.state = "notactive";
-            const reply = JSON.stringify(
+            const reply = (
               {
                 cards: [],
                 choice: modelData,

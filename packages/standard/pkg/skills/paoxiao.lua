@@ -5,7 +5,7 @@ local paoxiao = fk.CreateSkill{
 
 paoxiao:addEffect("targetmod", {
   bypass_times = function(self, player, skill, scope, card)
-    if player:hasSkill(paoxiao.name) and card and skill.trueName == "slash_skill" and scope == Player.HistoryPhase then
+    if player:hasSkill(paoxiao.name) and card and card.trueName == "slash" and scope == Player.HistoryPhase then
       return true
     end
   end,

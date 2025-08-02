@@ -127,7 +127,7 @@ local role_getlogic = function()
         end
       end
       for _, skill in ipairs(lord_skills) do
-        room:doBroadcastNotify("AddSkill", json.encode{
+        room:doBroadcastNotify("AddSkill", {
           lord.id,
           skill
         })
@@ -136,6 +136,7 @@ local role_getlogic = function()
 
     local nonlord = room:getOtherPlayers(lord, true)
     local req = Request:new(nonlord, "AskForGeneral")
+    req.timeout = self.room.settings.generalTimeout
     local generals = table.random(room.general_pile, #nonlord * generalNum)
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)

@@ -45,7 +45,7 @@ ColumnLayout {
         opTimer.start();
         ClientInstance.notifyServer(
           "UpdateAvatar",
-          JSON.stringify([avatarName.text])
+          avatarName.text
         );
       }
     }
@@ -87,7 +87,7 @@ ColumnLayout {
         opTimer.start();
         ClientInstance.notifyServer(
           "UpdatePassword",
-          JSON.stringify([oldPassword.text, newPassword.text])
+          [oldPassword.text, newPassword.text]
         );
       }
     }

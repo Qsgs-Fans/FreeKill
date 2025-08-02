@@ -74,11 +74,11 @@ function ReqPlayCard:skillButtonValidity(name)
           table.insertTable(cnames, m.trueName)
         end
       end
-      --- FIXME: 使用无子卡（无花色）的虚拟牌判定合法性吗？不太严谨，会导致许攸成略不生效的问题
+
       local extra_data = self.extra_data
       for _, n in ipairs(cnames) do
         local c = Fk:cloneCard(n)
-        c.skillName = name
+        c:setVSPattern(name)
         ret = c.skill:canUse(player, c, extra_data) and not player:prohibitUse(c)
         if ret then break end
       end
@@ -147,7 +147,7 @@ function ReqPlayCard:doOKButton()
     special_skill = self.skill_name
   }
   if ClientInstance then
-    ClientInstance:notifyUI("ReplyToServer", json.encode(reply))
+    ClientInstance:notifyUI("ReplyToServer", reply)
   else
     return reply
   end

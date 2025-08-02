@@ -514,6 +514,15 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
   if spec.card_filter then
     skill.cardFilter = spec.card_filter
   end
+
+  if type(spec.filter_pattern) == "table" then
+    skill.filterPattern = function ()
+      return spec.filter_pattern
+    end
+  else
+    skill.filterPattern = spec.filter_pattern
+  end
+
   if type(spec.pattern) == "string" then
     skill.pattern = spec.pattern
   end

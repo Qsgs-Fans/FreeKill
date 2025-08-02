@@ -90,10 +90,10 @@ Rectangle {
           }
           ClientInstance.notifyServer(
             "Chat",
-            JSON.stringify({
+            {
               type: isLobby ? 1 : 2,
               msg: "$" + skill + ":" + idx
-            })
+            }
           );
           soundSelector.visible = false;
         }
@@ -122,10 +122,10 @@ Rectangle {
             if (text != "") {
               ClientInstance.notifyServer(
                 "Chat",
-                JSON.stringify({
+                {
                   type: isLobby ? 1 : 2,
                   msg: text
-                })
+                }
               );
               text = "";
             }

@@ -163,14 +163,6 @@ Window {
       }
     }
 
-    function fetchMessage() {
-      const ret = pending_message.splice(0, 1)[0];
-      if (pending_message.length === 0) {
-        is_pending = false;
-      }
-      return ret;
-    }
-
     function handleMessage(command, jsonData) {
       const cb = callbacks[command]
       if (typeof(cb) === "function") {

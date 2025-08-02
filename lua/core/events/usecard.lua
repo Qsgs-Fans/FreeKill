@@ -244,16 +244,22 @@ end
 ---@field data UseCardData
 local UseCardEvent = TriggerEvent:subclass("UseCardEvent")
 
+--- 使用牌前
 ---@class fk.PreCardUse: UseCardEvent
 fk.PreCardUse = UseCardEvent:subclass("fk.PreCardUse")
+--- 声明使用牌后
 ---@class fk.AfterCardUseDeclared: UseCardEvent
 fk.AfterCardUseDeclared = UseCardEvent:subclass("fk.AfterCardUseDeclared")
+--- 选择目标后
 ---@class fk.AfterCardTargetDeclared: UseCardEvent
 fk.AfterCardTargetDeclared = UseCardEvent:subclass("fk.AfterCardTargetDeclared")
+--- 使用牌时（规则集“牌被使用时”）
 ---@class fk.CardUsing: UseCardEvent
 fk.CardUsing = UseCardEvent:subclass("fk.CardUsing")
+--- 牌生效前
 ---@class fk.BeforeCardUseEffect: UseCardEvent
 fk.BeforeCardUseEffect = UseCardEvent:subclass("fk.BeforeCardUseEffect")
+--- 使用结算结束后
 ---@class fk.CardUseFinished: UseCardEvent
 fk.CardUseFinished = UseCardEvent:subclass("fk.CardUseFinished")
 
@@ -756,6 +762,19 @@ end
 function CardEffectData:setResponseTimes(num, target)
   self.fixedResponseTimesList = self.fixedResponseTimesList or {}
   self.fixedResponseTimesList[target or self.to] = num
+end
+
+-- 改变生效卡牌的卡牌技能
+---@param skill string
+function CardEffectData:changeCardSkill(skill)
+  assert(Fk.skills[skill] and Fk.skills[skill]:isInstanceOf(CardSkill))
+  local card = self.card:clone()
+  local c = table.simpleClone(self.card)
+  for k, v in pairs(c) do
+    card[k] = v
+  end
+  card.skill = Fk.skills[skill]
+  self.card = card
 end
 
 ---@class CardEffectEvent: TriggerEvent

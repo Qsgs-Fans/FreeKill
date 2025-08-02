@@ -31,12 +31,14 @@ W.PreferencePage {
     onCheckedChanged: config.autoTarget = checked;
   }
 
+  /*
   W.SwitchRow {
     title: luatr("Double click to use card or skill")
     subTitle: luatr("help: Double click to use card or skill")
     checked: config.doubleClickUse
     onCheckedChanged: config.doubleClickUse = checked;
   }
+  */
 
   W.SwitchRow {
     title: luatr("Do not use nullification to own one-target trick")

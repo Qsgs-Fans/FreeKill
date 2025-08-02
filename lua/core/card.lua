@@ -477,7 +477,7 @@ function Card:getMarkNames()
   return ret
 end
 
---- 检索角色是否拥有指定Mark，考虑后缀(find)。返回检索到的的第一个标记值与标记名
+--- 检索角色是否拥有指定Mark，考虑后缀(字符串find)。返回检索到的的第一个标记值与标记名
 ---@param mark string @ 标记名
 ---@param suffixes? string[] @ 后缀，默认为```MarkEnum.CardTempMarkSuffix```
 ---@return [any, integer]|nil @ 返回一个表，包含标记值与标记名，或nil
@@ -486,8 +486,14 @@ function Card:hasMark(mark, suffixes)
   for m, _ in pairs(self.mark) do
     if m == mark then return {self.mark[m], m} end
     if m:startsWith(mark .. "-") then
-      for _, suffix in ipairs(suffixes) do
-        if m:find(suffix, 1, true) then return {self.mark[m], m} end
+      local parts = m:split("-")
+      if #parts > 1 then
+        table.remove(parts, 1) -- 去掉标记名称主体，只留下后缀
+        if table.every(parts, function (s)
+          return table.contains(suffixes, "-" .. s)
+        end) then
+          return {self.mark[m], m}
+        end
       end
     end
   end
@@ -705,6 +711,42 @@ function Card:getDefaultTarget (player, extra_data)
   else
     return table.random(tos, n)
   end
+end
+
+--- 给卡牌赋予skillname，并赋予pattern（适用于转化技在合法性判断时未确定实体牌的情况）
+function Card:setVSPattern(skillName, pattern)
+  self.skillName = skillName
+  if pattern then
+    self:setMark("Global_VS_Pattern", pattern)
+  else
+    local skill = Fk.skills[skillName]---@type ActiveSkill | ViewAsSkill
+    if skill:isInstanceOf(ViewAsSkill) then
+      self:setMark("Global_VS_Pattern", skill.pattern or ".")
+    end
+  end
+end
+
+--- 判断此牌能否符合一个卡牌规则（适用于转化技在合法性判断时未确定实体牌的情况）
+function Card:matchVSPattern(pattern)
+  local vs_pattern = self:getMark("Global_VS_Pattern")
+  if type(vs_pattern) == "string" then
+    local exp = Exppattern:Parse(vs_pattern)
+    local matchers = {}
+    for _, m in ipairs(exp.matchers) do
+      --因为牌名信息已确认，直接指定之即可
+      --FIXME: 未考虑neg（似乎暂时用不到？）
+      if (m.name == nil or table.contains(m.name, self.name)) and
+        (m.trueName == nil or table.contains(m.trueName, self.trueName)) then
+        m.name = { self.name }
+        m.trueName = { self.trueName }
+        table.insert(matchers, m)
+      end
+    end
+    if #matchers == 0 then return false end
+    exp.matchers = matchers
+    return exp:matchExp(pattern)
+  end
+  return Exppattern:Parse(pattern):match(self)
 end
 
 return Card

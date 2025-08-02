@@ -74,11 +74,14 @@ DrawData = TriggerData:subclass("DrawData")
 ---@field data DrawData
 local DrawEvent = TriggerEvent:subclass("DrawEvent")
 
+--- 牌移动前
 ---@class fk.BeforeCardsMove: MoveCardsEvent
 fk.BeforeCardsMove = MoveCardsEvent:subclass("fk.BeforeCardsMove")
+--- 牌移动后
 ---@class fk.AfterCardsMove: MoveCardsEvent
 fk.AfterCardsMove = MoveCardsEvent:subclass("fk.AfterCardsMove")
 
+--- 摸牌前
 ---@class fk.BeforeDrawCard: DrawEvent
 fk.BeforeDrawCard = DrawEvent:subclass("fk.BeforeDrawCard")
 

@@ -63,7 +63,7 @@ MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
 ---
 ---inarea：离开标记值指定的特定区域后
 MarkEnum.CardTempMarkSuffix = { "-phase", "-turn", "-round",
-                                "-inhand", "-inarea" }
+                                "-inhand", "-inarea", "-public" }
 
 ---销毁
 

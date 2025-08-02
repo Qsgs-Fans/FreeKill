@@ -6,7 +6,7 @@
 依赖：
 
 - 必须是Linux系统，已测试过Debian与Arch
-- 安装lua-posix包
+- 安装lua-posix包（Debian12验证失败，暂不需要安装）
 - 安装lua-socket包
 - 安装lua-filesystem包
 - 去freekill的repo底下找到src/swig/qrandom文件夹，按里面README操作

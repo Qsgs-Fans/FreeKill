@@ -1201,4 +1201,17 @@ function GetPlayersAndObservers()
   return ret
 end
 
+function ToUIString(obj)
+  local f = getmetatable(obj).__touistring
+  if f then
+    local ret = f(obj)
+    if type(ret) == "string" then
+      return ret
+    end
+  end
+
+  -- 这里故意返回中文
+  return "未知类型"
+end
+
 dofile "lua/client/i18n/init.lua"

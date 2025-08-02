@@ -103,12 +103,12 @@ function Request:_sendPacket(player)
     -- 切换视角
     table.removeOne(from._observers, controller)
     table.insert(player._observers, controller)
-    controller:doNotify("ChangeSelf", tostring(player.id))
+    controller:doNotify("ChangeSelf", cbor.encode(player.id))
   end
 
   -- 发送请求数据并将控制者标记为烧条中
   local jsonData = self.data[player.id]
-  if self.send_encode then jsonData = json.encode(jsonData) end
+  if self.send_encode then jsonData = cbor.encode(jsonData) end
   -- FIXME: 这里确认数据是否发送的环节一定要写在C++代码中
   self.send_success[controller] = controller:getState() == fk.Player_Online
   controller:doRequest(self.command, jsonData, self.timeout, self.timestamp)
@@ -119,6 +119,7 @@ end
 -- 一般来说，在一次同时询问中，需要人类玩家全部回复完了，AI才进行回复
 ---@param player ServerPlayer
 ---@param use_ai boolean
+---@return any
 function Request:_checkReply(player, use_ai)
   local room = self.room
 
@@ -186,6 +187,11 @@ function Request:_checkReply(player, use_ai)
     end
   end
 
+  local ok, ret = pcall(cbor.decode, reply)
+  if ok then
+    reply = ret
+  end
+
   if reply == '' then reply = '__cancel' end
   return reply
 end
@@ -246,12 +252,9 @@ function Request:ask()
     -- 然后如果作出的是“肯定”答复，那么添加到winner里面
     for i = #players, 1, -1 do
       local player = players[i]
-      local reply = self:_checkReply(player, use_ai)
+      local reply = self.timeout > 0 and self:_checkReply(player, use_ai) or "__notready"
 
       if reply ~= "__notready" then
-        if reply ~= "__cancel" and (self.receive_decode and not use_ai) then
-          reply = json.decode(reply)
-        end
         self.result[player.id] = reply
         table.remove(players, i)
         replied_players = replied_players + 1

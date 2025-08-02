@@ -9,36 +9,10 @@ package.path = "./?.lua;./?/init.lua;./lua/lib/?.lua;./lua/?.lua;./lua/?/init.lu
 -- middleclass: 轻量级的面向对象库
 class = require "middleclass"
 
--- 好像用qt的非常消耗RAM，换回来试试看
+-- 老json只能待命了
 json = require "json"
 
---[[
--- json: 提供json处理支持，能解析JSON和生成JSON
--- 仍借助luajson处理简单类型。
-local luajson = require "json"
-json = {
-  encode = function(val, t)
-    if type(val) ~= "table" then return luajson.encode(val) end
-    t = t or 1 -- Compact
-    ---@diagnostic disable-next-line
-    local doc = fk.QJsonDocument_fromVariant(val)
-    local ret = doc:toJson(t)
-    return ret
-  end,
-  decode = function(str)
-    if str == "null" then return nil end
-    local start = str:sub(1, 1)
-    if start ~= "[" and start ~= "{" then
-      return luajson.decode(str)
-    end
-    ---@diagnostic disable-next-line
-    local doc = fk.QJsonDocument_fromJson(str)
-    local ret = doc:toVariant()
-    -- if ret == "" then ret = luajson.decode(str) end
-    return ret
-  end,
-}
---]]
+cbor = require "server.rpc.cbor"
 
 -- 初始化随机数种子
 math.randomseed(os.time())

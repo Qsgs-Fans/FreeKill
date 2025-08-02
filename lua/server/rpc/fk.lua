@@ -7,13 +7,16 @@
 
 local os = os
 
+local RPC_MODE = os.getenv("FK_RPC_MODE") == "cbor" and "cbor" or "json"
+local cbor = require 'server.rpc.cbor'
+
 -- 下面俩是系统上要安装的 freekill不提供
 
 -- 需安装lua-posix包
-local posix = require 'posix'
+-- local posix = require 'posix'
 
 -- 需安装lua-socket包
--- local socket = require "socket"
+local socket = require "socket"
 
 -- 需安装lua-filesystem包
 local fs = require "lfs"
@@ -24,31 +27,37 @@ local jsonrpc = require "server.rpc.jsonrpc"
 local stdio = require "server.rpc.stdio"
 local dispatchers = require "server.rpc.dispatchers"
 
-local notifyRpc = function(method, params)
-  local req = jsonrpc.notification(method, params)
-  stdio.send(json.encode(req))
-end
-
 local callRpc = function(method, params)
   local req = jsonrpc.request(method, params)
-  local id = req.id
-  stdio.send(json.encode(req))
+  local id = req[jsonrpc.key_id]
+  if RPC_MODE == "json" then
+    stdio.send(json.encode(req))
+  else
+    stdio.stdout:write(cbor.encode(req))
+    stdio.stdout:flush()
+  end
 
   while true do
-    local msg = stdio.receive()
-    if msg == nil then break end
+    local msg, packet
+    if RPC_MODE == "json" then
+      msg = stdio.receive()
+      if msg == nil then break end
 
-    local ok, packet = pcall(json.decode, msg)
-    if not ok then
-      stdio.send(json.encode(jsonrpc.response_error(req, 'parse_error', packet)))
-      goto continue
+      local ok
+      ok, packet = pcall(json.decode, msg)
+      if not ok then
+        stdio.send(json.encode(jsonrpc.response_error(req, 'parse_error', packet)))
+        goto continue
+      end
+    else
+      packet = cbor.decode_file(stdio.stdin)
+      if packet == nil then break end
     end
 
-    if packet.jsonrpc == "2.0" and packet.id == id and packet.method == nil then
-      ---@cast packet JsonRpcPacket
-      return packet.result, packet.error
-
-    elseif packet.error then
+    if packet[jsonrpc.key_jsonrpc] == "2.0" and
+        packet[jsonrpc.key_id] == id and type(packet[jsonrpc.key_method]) ~= "string" then
+      return packet[jsonrpc.key_result], packet[jsonrpc.key_error]
+    elseif packet[jsonrpc.key_error] then
       -- 和Json RPC spec不合的一集，我们可能收到预期之外的error
       -- 这可能是我io编程不达标导致的
       -- 对于这种id不合的error包扔了
@@ -56,7 +65,12 @@ local callRpc = function(method, params)
     else
       local res = jsonrpc.server_response(dispatchers, packet)
       if res then
-        stdio.send(json.encode(res))
+        if RPC_MODE == "json" then
+          stdio.send(json.encode(res))
+        else
+          stdio.stdout:write(cbor.encode(res))
+          stdio.stdout:flush()
+        end
       end
     end
 
@@ -80,7 +94,7 @@ fk.QList = function(arr)
   return setmetatable(arr, {
     __index = {
       at = function(self, i)
-        return self[i+1]
+        return self[i + 1]
       end,
       length = function(self)
         return #self
@@ -91,26 +105,27 @@ end
 
 ---@return integer
 function fk.GetMicroSecond()
-  local date = posix.sys.time.gettimeofday()
-  return date.tv_sec * 1000000 + date.tv_usec
+  -- local date = posix.sys.time.gettimeofday()
+  -- return date.tv_sec * 1000000 + date.tv_usec
+  return socket.gettime() * 1000 * 1000;
 end
 
 fk.QRandomGenerator = qrandom.new
 
 function fk.qDebug(fmt, ...)
-  notifyRpc("qDebug", { string.format(fmt, ...) })
+  callRpc("qDebug", { string.format(fmt, ...) })
 end
 
 function fk.qInfo(fmt, ...)
-  notifyRpc("qInfo", { string.format(fmt, ...) })
+  callRpc("qInfo", { string.format(fmt, ...) })
 end
 
 function fk.qWarning(fmt, ...)
-  notifyRpc("qWarning", { string.format(fmt, ...) })
+  callRpc("qWarning", { string.format(fmt, ...) })
 end
 
 function fk.qCritical(fmt, ...)
-  notifyRpc("qCritical", { string.format(fmt, ...) })
+  callRpc("qCritical", { string.format(fmt, ...) })
 end
 
 -- 连print也要？！
@@ -122,7 +137,7 @@ function print(...)
   for i = 1, n do
     table.insert(params, tostring(args[i]))
   end
-  notifyRpc("print", params)
+  callRpc("print", params)
 end
 
 -- swig/player.i
@@ -342,7 +357,7 @@ end
 
 local _RoomThread_getRoom = function(_, id)
   local roomData = callRpc("RoomThread_getRoom", { id })
-  return fk.Room(roomData)
+  return fk.Room(cbor.decode(roomData))
 end
 
 fk.RoomThread = function()
