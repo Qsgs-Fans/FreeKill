@@ -74,12 +74,10 @@ void Replayer::loadRawData(const QByteArray &raw) {
   auto playerInfoRaw = arr[3].toByteArray();
   auto playerInfo = QCborValue::fromCbor(playerInfoRaw).toArray();
   auto self = ClientInstance->getSelf();
-  if (playerInfo[0].toInteger() != self->getId()) {
-    origPlayerInfo = QCborArray({
-      self->getId(), self->getScreenName(), self->getAvatar()
-    }).toCborValue().toCbor();
-    emit command_parsed("Setup", playerInfoRaw);
-  }
+  origPlayerInfo = QCborArray({
+    self->getId(), self->getScreenName(), self->getAvatar()
+  }).toCborValue().toCbor();
+  emit command_parsed("Setup", playerInfoRaw);
 }
 
 Replayer::~Replayer() {
