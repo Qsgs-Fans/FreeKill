@@ -36,16 +36,17 @@ private:
   bool playing;
   bool killed;
   bool uniformRunning;
-  QString roomSettings;
-  QString origPlayerInfo;
+  QByteArray roomSettings;
+  QByteArray origPlayerInfo;
+  QByteArray recordType = "normal";
   QMutex mutex;
   QSemaphore play_sem;
 
   struct Pair {
     qint64 elapsed;
     bool isRequest;
-    QString cmd;
-    QString jsonData;
+    QByteArray cmd;
+    QByteArray jsonData;
   };
   QList<Pair *> pairs;
 

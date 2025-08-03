@@ -27,10 +27,10 @@ public:
   Player *getSelf() const;
   void changeSelf(int id);
 
-  void saveRecord(const char *json, const QString &fname);
+  void saveRecord(const QByteArray &json, const QString &fname);
   void saveGameData(const QString &mode, const QString &general, const QString &deputy,
                     const QString &role, int result, const QString &replay,
-                    const char *room_data, const char *record);
+                    const QByteArray &room_data, const QByteArray &record);
   void notifyUI(const QString &command, const QVariant &jsonData);
 };
 

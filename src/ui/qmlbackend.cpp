@@ -451,8 +451,8 @@ QString QmlBackend::saveBlobRecordToFile(int id) {
     "SELECT hex(recording) as r FROM myGameRecordings WHERE id = %1;").arg(id));
   auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
   auto data = qUncompress(raw);
-  auto arr = QJsonDocument::fromJson(data);
-  auto fileName = arr[1].toString();
+  auto arr = QCborValue::fromCbor(data).toArray();
+  auto fileName = arr[1].toByteArray();
   ClientInstance->saveRecord(data, fileName);
   return fileName;
 }

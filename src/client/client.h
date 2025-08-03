@@ -42,10 +42,10 @@ public:
   Q_INVOKABLE QVariantList execSql(const QString &sql);
   Q_INVOKABLE QString peerAddress();
   Q_INVOKABLE QVariantList getMyGameData();
-  void saveRecord(const char *json, const QString &fname);
+  void saveRecord(const QByteArray &json, const QString &fname);
   void saveGameData(const QString &mode, const QString &general, const QString &deputy,
                     const QString &role, int result, const QString &replay,
-                    const char *room_data, const char *record);
+                    const QByteArray &room_data, const QByteArray &record);
 
   bool isConsoleStart() const;
   void startWatchFiles();

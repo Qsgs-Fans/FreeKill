@@ -217,7 +217,7 @@ QVariantList Client::getMyGameData() {
                  .arg(self->getId()).arg(router->getSocket()->peerAddress()));
 }
 
-void Client::saveRecord(const char *json, const QString &fname) {
+void Client::saveRecord(const QByteArray &json, const QString &fname) {
   if (!QDir("recording").exists()) {
     QDir(".").mkdir("recording");
   }
@@ -229,7 +229,7 @@ void Client::saveRecord(const char *json, const QString &fname) {
 
 void Client::saveGameData(const QString &mode, const QString &general, const QString &deputy,
                           const QString &role, int result, const QString &replay,
-                          const char *room_data, const char *record)
+                          const QByteArray &room_data, const QByteArray &record)
 {
   static auto sqlAddGamaData = QString("INSERT INTO myGameData "
             "(time, pid, server_addr, mode, general, deputy_general, role, result) "
@@ -251,7 +251,8 @@ void Client::saveGameData(const QString &mode, const QString &general, const QSt
   auto id = id_obj["c"].toInt();
   db->exec(sqlAddBlob.arg(id).arg(blob));
   db->exec(sqlSaveRecord.arg(id).arg(record_blob));
-  emit toast_message(tr("$AutoSaveRecord"));
+  // 不emit了 省得天天被问
+  // emit toast_message(tr("$AutoSaveRecord"));
 }
 
 bool Client::isConsoleStart() const {

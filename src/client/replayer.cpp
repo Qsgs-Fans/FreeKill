@@ -38,19 +38,20 @@ Replayer::Replayer(QObject *parent, int id) :
 void Replayer::loadRawData(const QByteArray &raw) {
   auto data = qUncompress(raw);
 
-  auto doc = QJsonDocument::fromJson(data);
-  auto arr = doc.array();
-  if (arr.count() < 10) {
+  auto doc = QCborValue::fromCbor(data);
+  auto arr = doc.toArray();
+  if (arr.size() < 10) {
     return;
   }
 
-  auto ver = arr[0].toString();
+  auto ver = arr[0].toByteArray();
   if (ver != FK_VERSION) {
     emit ClientInstance->toast_message(
       "Warning: Mismatch version of replay detected, which may cause crashes.");
   }
 
-  roomSettings = arr[2].toString();
+  roomSettings = arr[2].toByteArray();
+  recordType = arr[5].toByteArray();
 
   for (auto v : arr) {
     if (!v.isArray()) {
@@ -61,8 +62,8 @@ void Replayer::loadRawData(const QByteArray &raw) {
     Pair *pair = new Pair;
     pair->elapsed = a[0].toInteger();
     pair->isRequest = a[1].toBool();
-    pair->cmd = a[2].toString();
-    pair->jsonData = a[3].toString();
+    pair->cmd = a[2].toByteArray();
+    pair->jsonData = a[3].toByteArray();
     pairs << pair;
   }
 
@@ -70,18 +71,20 @@ void Replayer::loadRawData(const QByteArray &raw) {
     ClientInstance->callLua(c, j);
   });
 
-  auto playerInfoRaw = arr[3].toString();
-  auto playerInfo = QJsonDocument::fromJson(playerInfoRaw.toUtf8()).array();
+  auto playerInfoRaw = arr[3].toByteArray();
+  auto playerInfo = QCborValue::fromCbor(playerInfoRaw).toArray();
   auto self = ClientInstance->getSelf();
-  if (playerInfo[0].toInt() != self->getId()) {
-    origPlayerInfo = JsonArray2Bytes({ self->getId(), self->getScreenName(), self->getAvatar() });
-    emit command_parsed("Setup", playerInfoRaw.toUtf8());
+  if (playerInfo[0].toInteger() != self->getId()) {
+    origPlayerInfo = QCborArray({
+      self->getId(), self->getScreenName(), self->getAvatar()
+    }).toCborValue().toCbor();
+    emit command_parsed("Setup", playerInfoRaw);
   }
 }
 
 Replayer::~Replayer() {
   if (origPlayerInfo != "") {
-    emit command_parsed("Setup", origPlayerInfo.toUtf8());
+    emit command_parsed("Setup", origPlayerInfo);
   }
   for (auto e : pairs) {
     delete e;
@@ -153,8 +156,15 @@ void Replayer::run() {
     return;
   }
 
-  emit command_parsed("EnterRoom", roomSettings.toUtf8());
-  emit command_parsed("StartGame", "");
+  if (recordType == "normal") {
+    auto connType = qApp->thread() == QThread::currentThread()
+      ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
+    QMetaObject::invokeMethod(qApp, [&]() {
+      emit command_parsed("EnterRoom", roomSettings);
+    }, connType);
+
+    emit command_parsed("StartGame", "\x40");
+  }
 
   emit speed_changed(getSpeed());
   emit duration_set(getDuration());
@@ -187,7 +197,7 @@ void Replayer::run() {
       msleep(delay);
       emit elasped((pair->elapsed - start) / 1000);
 
-      emit command_parsed(pair->cmd.toUtf8(), pair->jsonData.toUtf8());
+      emit command_parsed(pair->cmd, pair->jsonData);
 
       if (!playing)
         play_sem.acquire();
