@@ -681,7 +681,7 @@ callbacks["ReadyChanged"] = (data) => {
   const ready = data[1];
 
   if (id === Self.id) {
-    roomScene.isReady = ready === 1;
+    roomScene.isReady = !!ready;
   }
 
   const model = getPhotoModel(id);

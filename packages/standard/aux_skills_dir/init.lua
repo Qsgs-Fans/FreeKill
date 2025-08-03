@@ -1,6 +1,6 @@
-local prefix = "packages.standard.aux_skills."
+local prefix = "packages.standard.aux_skills_dir."
 if UsingNewCore then
-  prefix = "packages.freekill-core.standard.aux_skills."
+  prefix = "packages.freekill-core.standard.aux_skills_dir."
 end
 
 return {

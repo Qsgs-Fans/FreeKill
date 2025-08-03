@@ -835,7 +835,7 @@ end
 
 function SaveRecord()
   local c = ClientInstance
-  c.client:saveRecord(json.encode(c.record), c.record[2])
+  c.client:saveRecord(cbor.encode(c.record), c.record[2])
 end
 
 function GetCardProhibitReason(cid)

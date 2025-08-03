@@ -373,7 +373,20 @@ Item {
       if (addr === ip && port == itemPort) {
         const ms = (new Date).getTime();
         item.misMatchMsg = "";
-        if (FkVersion !== ver) {
+        if (ver.endsWith("+")) {
+          const [x, y, z] = FkVersion.split('.').map(Number);
+          const requiredVersionClean = ver.slice(0, -1);
+          const [x2, y2, z2] = requiredVersionClean.split('.').map(Number);
+
+          // 离散数学这一块
+          let ok = ((x > x2) || (x == x2 && y > y2) || (x == x2 && y == y2 && z >= z2));
+
+          if (ok) {
+            item.misMatchMsg = qsTr("@VersionMatch").arg(ver);
+          } else {
+            item.misMatchMsg = qsTr("@VersionMismatch").arg(ver);
+          }
+        } else if (FkVersion !== ver) {
           item.misMatchMsg = qsTr("@VersionMismatch").arg(ver);
         }
 

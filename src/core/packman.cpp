@@ -310,9 +310,9 @@ cleanup:
   return result;
 }
 
-// 0.5.11 测试版。此commit为all-in-cbor分支的
-// 现在肯定不能进master，先在分支上部署测试服
-static const char *min_commit = "d72661f1f07707a1cf887d8a32868b4f2790681f";
+// 写死一个freekill-core的commit（一般是发布时freekill-core的版本）
+// 达到强制加载高版本脚本的效果 防止老core爆炸
+static const char *min_commit = "1dde1adc60a1fb7d91f51a705c5cba91746d590a";
 
 bool PackMan::shouldUseCore() {
   if (!QFile::exists("packages/freekill-core")) return false;

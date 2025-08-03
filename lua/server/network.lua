@@ -154,7 +154,11 @@ function Request:_checkReply(player, use_ai)
         -- FIXME: 写的依托且不考虑控制 后面看情况改！
         if self.luck_data then
           local luck_data = self.luck_data
-          if reply ~= "__cancel" then
+          -- 此处是CBOR化的影响
+          -- 除了默认的__notready和__cancel之外其他实际的消息必定是cbor编码过的
+          -- 这个函数的末尾强制用了cbor.decode，但是此处判断的时机还非常早
+          -- 所以手动判一下好了 不解析了
+          if reply ~= "__cancel" and reply ~= "\x68__cancel" then
             local pdata = luck_data[player.id]
             pdata.luckTime = pdata.luckTime - 1
             luck_data.discardInit(room, player)

@@ -94,9 +94,9 @@ function Client:startRecording()
     fk.FK_VER,
     os.date("%Y%m%d%H%M%S"),
     self.enter_room_data,
-    json.encode { Self.id, Self.player:getScreenName(), Self.player:getAvatar() },
+    cbor.encode { Self.id, Self.player:getScreenName(), Self.player:getAvatar() },
+    "normal", -- 表示本录像是正常全流程，还是重连，还是旁观
     -- RESERVED
-    "",
     "",
     "",
     "",
@@ -109,7 +109,7 @@ function Client:startRecording()
         math.floor(os.getms() / 1000),
         false,
         "AddPlayer",
-        json.encode {
+        cbor.encode {
           p.player:getId(),
           p.player:getScreenName(),
           p.player:getAvatar(),
@@ -342,7 +342,11 @@ function Client:enterRoom(_data)
   self.alive_players = {Self}
 
   local data = _data[3]
-  self.enter_room_data = json.encode(_data);
+  self.enter_room_data = cbor.encode(_data);
+  -- 补一个，防止爆炸
+  if self.recording then
+    self.record[3] = self.enter_room_data
+  end
   self.timeout = _data[2]
   self.capacity = _data[1]
   self.settings = data
@@ -1192,7 +1196,7 @@ fk.client_callback["GameOver"] = function(self, jsonData)
       end
       self.client:saveGameData(self.settings.gameMode, Self.general,
         Self.deputyGeneral or "", Self.role, result, self.record[2],
-        json.encode(self:toJsonObject()), json.encode(self.record))
+        cbor.encode(self:toJsonObject()), cbor.encode(self.record))
     end
   end
   Self.buddy_list = table.map(self.players, Util.IdMapper)
@@ -1258,7 +1262,8 @@ fk.client_callback["Reconnect"] = function(self, data)
 
   if not self.replaying then
     self:startRecording()
-    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Reconnect", json.encode(data)})
+    self.record[5] = "reconnect"
+    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Reconnect", cbor.encode(data)})
   end
 
   local setup_data = players[tostring(data.you)].setup_data
@@ -1277,7 +1282,8 @@ fk.client_callback["Observe"] = function(self, data)
 
   if not self.replaying then
     self:startRecording()
-    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Observe", json.encode(data)})
+    self.record[5] = "reconnect"
+    table.insert(self.record, {math.floor(os.getms() / 1000), false, "Observe", cbor.encode(data)})
   end
 
   local setup_data = players[tostring(data.you)].setup_data
