@@ -265,6 +265,10 @@
     <translation>&lt;font color="red" size="4">&lt;b>!! v%1&lt;/b>&lt;/font></translation>
   </message>
   <message>
+    <source>@VersionMatch</source>
+    <translation>&lt;font color="green" size="4">&lt;b>✓ v%1&lt;/b>&lt;/font></translation>
+  </message>
+  <message>
     <source>Server not up</source>
     <translation>服务器似乎没有启动。</translation>
   </message>
@@ -407,6 +411,10 @@
     <translation>服务端使用的是版本%1，该更新你的客户端了</translation>
   </message>
   <message>
+    <source>server supports version %1, please update</source>
+    <translation>服务端支持版本%1，请使用合适的版本连接</translation>
+  </message>
+  <message>
     <source>room password error</source>
     <translation>房间密码错误</translation>
   </message>
@@ -423,8 +431,8 @@
     <translation>你已经被该服务器封禁！</translation>
   </message>
   <message>
-    <source>you have been temporarily banned!</source>
-    <translation>由于逃跑或者其他不正当行为，你已经被暂时封禁！</translation>
+    <source>you have been banned! expire at %1</source>
+    <translation>你已经被封禁！&lt;br>&lt;br>封禁到期时间：&lt;b>%1&lt;/b></translation>
   </message>
   <message>
     <source>Can only observe running room.</source>
