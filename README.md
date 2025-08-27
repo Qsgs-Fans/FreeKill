@@ -16,7 +16,7 @@ ___
 为了证明框架的适用性，开发组还实现了官方大部分武将技能与游戏模式，以供DIYer们参考。
 
 项目使用Lua语言实现游戏逻辑与房间调度，使用Qt C++为Lua提供底层支持（网络通信、JSON等），
-使用Qt Quick实现GUI界面。详细文档请查看https://fkbook-all-in-one.readthedocs.io/。
+使用Qt Quick实现GUI界面。详细文档请查看<https://fkbook-all-in-one.readthedocs.io/>。
 
 ___
 
