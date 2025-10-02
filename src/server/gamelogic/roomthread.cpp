@@ -127,15 +127,6 @@ Room *RoomThread::getRoom(int id) const {
   return m_server->findRoom(id);
 }
 
-bool RoomThread::isConsoleStart() const {
-#ifndef FK_SERVER_ONLY
-  if (!ClientInstance) return false;
-  return ClientInstance->isConsoleStart();
-#else
-  return false;
-#endif
-}
-
 bool RoomThread::isOutdated() {
   bool ret = md5 != m_server->getMd5();
   if (ret) {

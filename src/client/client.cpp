@@ -190,7 +190,6 @@ Lua *Client::getLua() { return L; }
 Sqlite3 *Client::getDatabase() { return db; }
 
 void Client::installAESKey(const QByteArray &key) {
-  startWatchFiles();
   router->getSocket()->installAESKey(key);
 }
 
@@ -257,46 +256,4 @@ void Client::saveGameData(const QString &mode, const QString &general, const QSt
   db->exec(sqlSaveRecord.arg(id).arg(record_blob));
   // 不emit了 省得天天被问
   // emit toast_message(tr("$AutoSaveRecord"));
-}
-
-bool Client::isConsoleStart() const {
-  if (!ClientInstance || !ServerInstance) {
-    return false;
-  }
-
-  return router->isConsoleStart();
-}
-
-void Client::startWatchFiles() {
-  if (!isConsoleStart()) return;
-  if (!fsWatcher.files().empty()) return;
-  QFile flist("flist.txt");
-  if (!flist.open(QIODevice::ReadOnly)) {
-    qCritical("Cannot open flist.txt. Won't watch files.");
-    fsWatcher.addPath("fk_ver"); // dummy
-  }
-  auto md5pairs = flist.readAll().split(';');
-  for (auto md5 : md5pairs) {
-    if (md5.isEmpty()) continue;
-    auto fname = md5.split('=')[0];
-    if (fname.startsWith("packages") && fname.endsWith(".lua")) {
-      fsWatcher.addPath(fname);
-    }
-  }
-  connect(&fsWatcher, &QFileSystemWatcher::fileChanged, this,
-      &Client::updateLuaFiles);
-}
-
-void Client::updateLuaFiles(const QString &path) {
-  if (!isConsoleStart()) return;
-  // Backend->showToast(tr("File %1 changed, reloading...").arg(path));
-  emit toast_message(tr("File %1 changed, reloading...").arg(path));
-  QThread::msleep(100);
-  L->call("ReloadPackage", { path });
-  notifyServer("PushRequest", QString("reloadpackage,%1").arg(path));
-
-  // according to QT documentation
-  if (!fsWatcher.files().contains(path) && QFile::exists(path)) {
-    fsWatcher.addPath(path);
-  }
 }

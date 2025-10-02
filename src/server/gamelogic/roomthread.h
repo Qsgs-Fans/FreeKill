@@ -50,8 +50,6 @@ class RoomThread : public QThread {
   QString getMd5() const;
   Room *getRoom(int id) const;
 
-  bool isConsoleStart() const;
-
   bool isOutdated();
 
   LuaInterface *getLua() const;

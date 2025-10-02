@@ -47,18 +47,12 @@ public:
                     const QString &role, int result, const QString &replay,
                     const QByteArray &room_data, const QByteArray &record);
 
-  bool isConsoleStart() const;
-  void startWatchFiles();
-
   Router *getRouter() const { return router; }
 signals:
   void notifyUI(const QString &command, const QVariant &jsonData);
   void error_message(const QString &msg);
   void toast_message(const QString &msg);
   void self_changed();
-
-private slots:
-  void updateLuaFiles(const QString &path);
 
 private:
   Router *router;

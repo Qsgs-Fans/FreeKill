@@ -38,14 +38,6 @@ class RoomThread : public QThread {
 public:
   Room *getRoom(int id);
 
-  // QString fetchRequest();
-  // void clearRequest();
-  // bool hasRequest();
-
-  // void trySleep(int ms);
-  // bool isTerminated() const;
-
-  bool isConsoleStart() const;
   bool isOutdated();
 };
 

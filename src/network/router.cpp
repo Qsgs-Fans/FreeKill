@@ -41,10 +41,6 @@ void Router::removeSocket() {
   socket = nullptr;
 }
 
-bool Router::isConsoleStart() const {
-  return socket->peerAddress() == "127.0.0.1";
-}
-
 void Router::setReplyReadySemaphore(QSemaphore *semaphore) {
   extraReplyReadySemaphore = semaphore;
 }
