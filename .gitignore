@@ -28,6 +28,7 @@
 freekill-wrap.cxx
 /server/*
 !/server/init.sql
+!/server/gamedb_init.sql
 /client/client.db
 /client/autosave_recording
 /freekill.client.config.json

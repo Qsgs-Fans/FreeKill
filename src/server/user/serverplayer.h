@@ -54,6 +54,11 @@ public:
   void resumeGameTimer();
   int getGameTime();
 
+  void saveState(const QString &jsonData);
+  QString getSaveState();
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
+
 signals:
   void kicked();
 

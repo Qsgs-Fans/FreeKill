@@ -6,6 +6,9 @@
 #include "server/gamelogic/roomthread.h"
 #include "network/router.h"
 #include "server/server.h"
+#include "core/c-wrapper.h"
+
+using namespace Qt::Literals::StringLiterals;
 
 ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
@@ -270,4 +273,88 @@ void ServerPlayer::onDisconnected() {
         deleteLater();
     }
   }
+}
+
+void ServerPlayer::saveState(const QString &jsonData) {
+  if (getId() < 0) return;
+  auto room_base = getRoom();
+  if (!room_base) return;
+  auto room = dynamic_cast<Room *>(room_base);
+  if (!room) return;
+  QString mode { room->getSettingsObject()["gameMode"_L1].toString() };
+
+  if (!Sqlite3::checkString(mode)) {
+    qWarning("Invalid mode string for saveState: %ls", qUtf16Printable(mode));
+    return;
+  }
+
+  auto hexData = jsonData.toUtf8().toHex();
+  auto gamedb = ServerInstance->getGameDatabase();
+  auto sql = QString("REPLACE INTO gameSaves (uid, mode, data) VALUES (%1,'%2',X'%3')").arg(getId()).arg(mode).arg(hexData);
+
+  gamedb->exec(sql);
+}
+
+QString ServerPlayer::getSaveState() {
+  auto room_base = getRoom();
+  if (!room_base) return "{}";
+  auto room = dynamic_cast<Room *>(room_base);
+  if (!room) return "{}";
+  QString mode { room->getSettingsObject()["gameMode"_L1].toString() };
+
+  if (!Sqlite3::checkString(mode)) {
+    qWarning("Invalid mode string for saveState: %ls", qUtf16Printable(mode));
+    return "{}";
+  }
+
+  auto sql = QString("SELECT data FROM gameSaves WHERE uid = %1 AND mode = '%2'").arg(getId()).arg(mode);
+
+  auto result = ServerInstance->getGameDatabase()->select(sql);
+  if (result.empty() || result[0].count("data") == 0 || result[0]["data"] == "#null") {
+    return "{}";
+  }
+
+  const auto& data = result[0]["data"];
+  if (!data.isEmpty() && (data[0] == '{' || data[0] == '[')) {
+    return data;
+  }
+
+  qWarning("Returned data is not valid JSON: %ls", qUtf16Printable(data));
+  return "{}";
+}
+
+void ServerPlayer::saveGlobalState(const QString &key, const QString &jsonData) {
+  if (getId() < 0) return;
+  if (!Sqlite3::checkString(key)) {
+    qWarning("Invalid key string for saveGlobalState: %ls", qUtf16Printable(key));
+    return;
+  }
+
+  auto hexData = jsonData.toUtf8().toHex();
+  auto gamedb = ServerInstance->getGameDatabase();
+  auto sql = QString("REPLACE INTO globalSaves (uid, key, data) VALUES (%1,'%2',X'%3')").arg(getId()).arg(key).arg(hexData);
+
+  gamedb->exec(sql);
+}
+
+QString ServerPlayer::getGlobalSaveState(const QString &key) {
+  if (!Sqlite3::checkString(key)) {
+    qWarning("Invalid key string for getGlobalSaveState: %ls", qUtf16Printable(key));
+    return "{}";
+  }
+
+  auto sql = QString("SELECT data FROM globalSaves WHERE uid = %1 AND key = '%2'").arg(getId()).arg(key);
+
+  auto result = ServerInstance->getGameDatabase()->select(sql);
+  if (result.empty() || result[0].count("data") == 0 || result[0]["data"] == "#null") {
+    return "{}";
+  }
+
+  const auto& data = result[0]["data"];
+  if (!data.isEmpty() && (data[0] == '{' || data[0] == '[')) {
+    return data;
+  }
+
+  qWarning("Returned data is not valid JSON: %ls", qUtf16Printable(data));
+  return "{}";
 }

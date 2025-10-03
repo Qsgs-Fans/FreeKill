@@ -79,6 +79,7 @@ public:
   void updateOnlineInfo();
 
   Sqlite3 *getDatabase();
+  Sqlite3 *getGameDatabase();
 
   void broadcast(const QByteArray &command, const QByteArray &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg);
@@ -122,6 +123,7 @@ private:
 
   AuthManager *auth;
   Sqlite3 *db; ///< sqlite数据库连接实例
+  Sqlite3 *gamedb;  // 存档变量
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
 

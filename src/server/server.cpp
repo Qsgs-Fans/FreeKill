@@ -22,6 +22,7 @@ Server *ServerInstance = nullptr;
 Server::Server(QObject *parent) : QObject(parent) {
   ServerInstance = this;
   db = new Sqlite3;
+  gamedb = new Sqlite3("./server/game.db", "./server/gamedb_init.sql");
   md5 = calcFileMD5();
   readConfig();
 
@@ -73,6 +74,7 @@ Server::~Server() {
     delete thr;
   }
   delete db;
+  delete gamedb;
 
   ServerInstance = nullptr;
 }
@@ -196,6 +198,7 @@ void Server::updateOnlineInfo() {
 }
 
 Sqlite3 *Server::getDatabase() { return db; }
+Sqlite3 *Server::getGameDatabase() { return gamedb; }
 
 void Server::broadcast(const QByteArray &command, const QByteArray &jsonData) {
   for (ServerPlayer *p : players.values()) {
