@@ -133,8 +133,18 @@ function TriggerEvent:exec()
 
         local skill_available = table.filter(skills, filter_func)
 
+        local playerSkillFinished = false
         while #skill_available > 0 do
-          local player_skills = table.filter(skill_available, function(s) return s:isPlayerSkill(player, true) end)
+          local player_skills = {}
+          if not playerSkillFinished then
+            player_skills = table.filter(skill_available, function(s) return s:isPlayerSkill(player, true) end)
+            playerSkillFinished = #player_skills == 0
+          else
+            skill_available = table.filter(skill_available, function(s) return not s:isPlayerSkill(player, true) end)
+            if #skill_available == 0 then
+              break
+            end
+          end
 
           local formatChoiceName = function (skill)
             local leftTimes = (triggerableLimit[skill.name] or 1) - (self.invoked_times[skill.name] or 0)

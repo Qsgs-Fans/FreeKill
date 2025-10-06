@@ -20,5 +20,6 @@ ButtonContent 1.0 ButtonContent.qml
 CommonScrollBar 1.0 CommonScrollBar.qml
 
 # 只是封装而已
+PageBase 1.0 PageBase.qml
 PopupLoader 1.0 PopupLoader.qml
 TapHandler 1.0 TapHandler.qml

@@ -7,31 +7,28 @@
 -- 首先加载所有详细的技能类型、卡牌类型等等，以及时机列表
 
 TriggerEvent = require "core.trigger_event"
-require "core.events"
-dofile "lua/server/event.lua"
-dofile "lua/server/system_enum.lua"
-dofile "lua/server/mark_enum.lua"
-TriggerSkill = require "core.skill_type.trigger"
+require "lunarltk.core.events"
+dofile "lua/lunarltk/server/system_enum.lua"
+dofile "lua/lunarltk/server/mark_enum.lua"
+TriggerSkill = require "lunarltk.core.skill_type.trigger"
 -- LegacyTriggerSkill = require "compat.trigger_legacy"
-ActiveSkill = require "core.skill_type.active"
-CardSkill = require "core.skill_type.cardskill"
-ViewAsSkill = require "core.skill_type.view_as"
-DistanceSkill = require "core.skill_type.distance"
-ProhibitSkill = require "core.skill_type.prohibit"
-AttackRangeSkill = require "core.skill_type.attack_range"
-MaxCardsSkill = require "core.skill_type.max_cards"
-TargetModSkill = require "core.skill_type.target_mod"
-FilterSkill = require "core.skill_type.filter"
-InvaliditySkill = require "lua.core.skill_type.invalidity"
-VisibilitySkill = require "lua.core.skill_type.visibility"
+ActiveSkill = require "lunarltk.core.skill_type.active"
+CardSkill = require "lunarltk.core.skill_type.cardskill"
+ViewAsSkill = require "lunarltk.core.skill_type.view_as"
+DistanceSkill = require "lunarltk.core.skill_type.distance"
+ProhibitSkill = require "lunarltk.core.skill_type.prohibit"
+AttackRangeSkill = require "lunarltk.core.skill_type.attack_range"
+MaxCardsSkill = require "lunarltk.core.skill_type.max_cards"
+TargetModSkill = require "lunarltk.core.skill_type.target_mod"
+FilterSkill = require "lunarltk.core.skill_type.filter"
+InvaliditySkill = require "lunarltk.core.skill_type.invalidity"
+VisibilitySkill = require "lunarltk.core.skill_type.visibility"
 
-BasicCard = require "core.card_type.basic"
-local Trick = require "core.card_type.trick"
+BasicCard = require "lunarltk.core.card_type.basic"
+local Trick = require "lunarltk.core.card_type.trick"
 TrickCard, DelayedTrickCard = table.unpack(Trick)
-local Equip = require "core.card_type.equip"
+local Equip = require "lunarltk.core.card_type.equip"
 _, Weapon, Armor, DefensiveRide, OffensiveRide, Treasure = table.unpack(Equip)
-
--- dofile "lua/compat/fk_ex.lua"
 
 ---@param skill SkillSkeleton|Skill
 ---@param spec table
@@ -80,6 +77,8 @@ function fk.readUsableSpecToSkill(skill, spec)
   skill.is_delay_effect = not not spec.is_delay_effect
   skill.late_refresh = not not spec.late_refresh
   skill.click_count = not not spec.click_count
+  skill.history_branch = spec.history_branch
+  skill.include_equip = spec.include_equip
 end
 
 function fk.readStatusSpecToSkill(skill, spec)
@@ -90,15 +89,15 @@ function fk.readStatusSpecToSkill(skill, spec)
 end
 
 ---@class UsableSkillSpec: SkillSpec
----@field public main_skill? UsableSkill
----@field public max_use_time? integer[]
+---@field public main_skill? UsableSkill @ 该技能是否为某技能的主框架
+---@field public max_phase_use_time? integer|fun(self: SkillSkeleton, player: Player): integer? @ 该技能效果的最大使用次数——阶段
+---@field public max_turn_use_time? integer|fun(self: SkillSkeleton, player: Player): integer? @ 该技能效果的最大使用次数——回合
+---@field public max_round_use_time? integer|fun(self: SkillSkeleton, player: Player): integer? @ 该技能效果的最大使用次数——轮次
+---@field public max_game_use_time? integer|fun(self: SkillSkeleton, player: Player): integer? @ 该技能效果的最大使用次数——本局游戏
+---@field public history_branch? string|fun(self: UsableSkill, player: ServerPlayer, data: SkillUseData):string? @ 裁定本技能发动时（on_cost->on_use）将技能历史额外添加到某处分支下（内部有独立的时段细分），无法约束本技能是否可用
 ---@field public expand_pile? string | integer[] | fun(self: UsableSkill, player: ServerPlayer): integer[]|string? @ 额外牌堆，牌堆名称或卡牌id表
 ---@field public derived_piles? string | string[] @ 与某效果联系起来的私人牌堆名，失去该效果时将之置入弃牌堆(@deprecated)
----@field public max_phase_use_time? integer  @ 每阶段使用次数上限
----@field public max_turn_use_time? integer  @ 每回合使用次数上限
----@field public max_round_use_time? integer  @ 每回合使用次数上限
----@field public max_game_use_time? integer  @ 整场游戏使用次数上限
----@field public times? integer | fun(self: UsableSkill, player: Player): integer
+---@field public times? integer | fun(self: UsableSkill, player: Player): integer @ 显示在技能按钮上的发动次数数字，负数不显示
 ---@field public min_target_num? integer
 ---@field public max_target_num? integer
 ---@field public target_num? integer
@@ -114,12 +113,15 @@ end
 ---@field public card_filter? fun(self: ActiveSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
 ---@field public target_filter? fun(self: ActiveSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card: Card?, extra_data: UseExtraData|table?): any @ 判定目标能否选择
 ---@field public feasible? fun(self: ActiveSkill, player: Player, selected: Player[], selected_cards: integer[], card: Card): any @ 判断卡牌和目标是否符合技能限制
+---@field public on_cost? fun(self: ActiveSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table @ 自定义技能的消耗信息
+---@field public history_branch? string|fun(self: ActiveSkill, player: ServerPlayer, data: SkillUseData):string? @ 裁定本技能发动时（on_cost->on_use）将技能历史额外添加到某处分支下（内部有独立的时段细分），无法约束本技能是否可用
 ---@field public on_use? fun(self: ActiveSkill, room: Room, skillUseEvent: SkillUseData): any
 ---@field public prompt? string|fun(self: ActiveSkill, player: Player, selected_cards: integer[], selected_targets: Player[]): string @ 提示信息
 ---@field public interaction? fun(self: ActiveSkill, player: Player): table? @ 选项框
 ---@field public target_tip? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec? @ 显示在目标武将牌脸上的提示
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
+---@field public include_equip? boolean @ 选牌时是否展开装备区
 
 ---@class CardSkillSpec: UsableSkillSpec
 ---@field public mod_target_filter? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], card: Card, extra_data: any): any @ 判定目标是否合法（例如不能杀自己，火攻无手牌目标）
@@ -138,9 +140,14 @@ end
 ---@field public target_tip? fun(self: CardSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec? @ 显示在目标武将牌脸上的提示
 
 ---@class ViewAsSkillSpec: UsableSkillSpec
----@field public filter_pattern? table|fun(self: ViewAsSkill, player: Player): table
+---@field public filter_pattern? ViewAsPattern|fun(self: ViewAsSkill, player: Player, card_name: string?, selected: integer[]?): ViewAsPattern?
 ---@field public card_filter? fun(self: ViewAsSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
+---@field public target_filter? fun(self: ViewAsSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card: Card?, extra_data: UseExtraData|table?): any @ 判定目标能否选择
+---@field public feasible? fun(self: ViewAsSkill, player: Player, selected: Player[], selected_cards: integer[], card: Card): any @ 判断卡牌和目标是否符合技能限制
+---@field public on_use? fun(self: ViewAsSkill, room: Room, skillUseEvent: SkillUseData, card: Card, params: handleUseCardParams?): UseCardDataSpec|string?
 ---@field public view_as fun(self: ViewAsSkill, player: Player, cards: integer[]): Card? @ 判断转化为什么牌
+---@field public on_cost? fun(self: ViewAsSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table @ 自定义技能的消耗信息
+---@field public history_branch? string|fun(self: ViewAsSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):string? @ 裁定本技能发动时（on_cost->on_use）将技能历史额外添加到某处分支下（内部有独立的时段细分），无法约束本技能是否可用
 ---@field public pattern? string
 ---@field public enabled_at_play? fun(self: ViewAsSkill, player: Player): any
 ---@field public enabled_at_response? fun(self: ViewAsSkill, player: Player, response: boolean): any
@@ -152,6 +159,7 @@ end
 ---@field public mute_card? boolean @ 是否不播放卡牌特效和语音。一个牌名的默认不播放，其他默认播放
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 ---@field public enabled_at_nullification? fun(self: ViewAsSkill, player: Player, data: CardEffectData): boolean? @ 判断一张牌是否能被此技能转化无懈来响应
+---@field public include_equip? boolean @ 选牌时是否展开装备区
 
 ---@class DistanceSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player): integer?

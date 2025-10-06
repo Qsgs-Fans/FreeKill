@@ -1,6 +1,0 @@
-module Fk.Cheat
-CardDetail 1.0 CardDetail.qml
-FreeAssign 1.0 FreeAssign.qml
-GeneralDetail 1.0 GeneralDetail.qml
-PlayerDetail 1.0 PlayerDetail.qml
-SameConvert 1.0 SameConvert.qml

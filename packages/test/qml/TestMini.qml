@@ -32,7 +32,7 @@ ColumnLayout {
     onClicked: {
       close();
       roomScene.state = "notactive";
-      ClientInstance.replyToServer("", JSON.stringify("Hello"));
+      ClientInstance.replyToServer("", "Hello");
     }
   }
 }

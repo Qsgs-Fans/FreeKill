@@ -13,7 +13,7 @@ luoshen:addEffect(fk.EventPhaseStart, {
       local judge = {
         who = player,
         reason = luoshen.name,
-        pattern = ".|.|spade,club",
+        pattern = ".|.|black",
       }
       room:judge(judge)
       if not judge:matchPattern() or player.dead or not room:askToSkillInvoke(player, { skill_name = luoshen.name }) then

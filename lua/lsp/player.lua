@@ -61,12 +61,15 @@ end
 
 ---@return integer[]
 function FPlayer:getGameData()
+  return self.gamedata
 end
 
 ---@param total integer
 ---@param win integer
 ---@param run integer
-function FPlayer:setGameData(total, win, run) end
+function FPlayer:setGameData(total, win, run)
+  self.gamedata = FkTest.createFakeQList { total, win, run }
+end
 
 ---@return boolean
 function FPlayer:isDied()

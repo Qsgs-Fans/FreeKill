@@ -4,13 +4,14 @@ local qingguo = fk.CreateSkill {
 
 qingguo:addEffect("viewas", {
   anim_type = "defensive",
-  pattern = "jink|.|spade,club",
+  pattern = "jink",
   prompt = "#qingguo",
   handly_pile = true,
-  card_filter = function(self, player, to_select, selected)
-    return #selected == 0 and Fk:getCardById(to_select).color == Card.Black and
-      table.contains(player:getHandlyIds(), to_select)
-  end,
+  filter_pattern = {
+    min_num = 1,
+    max_num = 1,
+    pattern = ".|.|black|^equip",
+  },
   view_as = function(self, player, cards)
     if #cards ~= 1 then return end
     local c = Fk:cloneCard("jink")

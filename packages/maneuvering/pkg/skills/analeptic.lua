@@ -101,7 +101,7 @@ analepticSkill:addTest(function(room, me)
   lu.assertEquals(comp2.hp, 2)
 
   -- test3: 濒死时喝酒，改为回血
-  FkTest.setNextReplies(me, { json.encode {
+  FkTest.setNextReplies(me, { {
     card = analeptic.id,
   } })
   FkTest.runInRoom(function()

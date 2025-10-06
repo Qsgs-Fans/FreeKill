@@ -56,6 +56,28 @@ Fk:loadTranslationTable{
   ["method_draw"] = "摸",
   ["method_discard"] = "弃置",
 
+  ["reason_justmove"] = "移动",
+  ["reason_draw"] = "摸牌",
+  ["reason_discard"] = "弃置",
+  ["reason_give"] = "交出",
+  ["reason_put"] = "置入",
+  ["reason_put_in_discard"] = "置入弃牌堆",
+  ["reason_prey"] = "获得",
+  ["reason_exchange"] = "交换",
+  ["reason_use"] = "使用",
+  ["reason_response"] = "打出",
+  ["reason_judge"] = "判定",
+  ["reason_recast"] = "重铸",
+  ["reason_pindian"] = "拼点",
+
+  --numberic(need gsub)
+  ["drawX"] = "摸{num}张牌",
+  ["discardX"] = "弃{num}张牌",
+  ["recoverX"] = "回复{num}点体力",
+  ["loseHpX"] = "失去{num}点体力",
+  ["damageX"] = "造成{num}点伤害",
+  ["loseMaxHpX"] = "减{num}点体力上限",
+
   ["prohibit"] = "禁",
 
   ["slash"] = "杀",
@@ -71,6 +93,7 @@ Fk:loadTranslationTable{
   ["peach"] = "桃",
   [":peach"] = "基本牌<br /><b>时机</b>：出牌阶段/一名角色处于濒死状态时<br /><b>目标</b>：已受伤的你/处于濒死状态的角色<br /><b>效果</b>：目标角色回复1点体力。",
   ["#peach_skill"] = "你回复1点体力",
+  ["#peach_dying"] = "%dest 回复1点体力",
 
   ["dismantlement"] = "过河拆桥",
   [":dismantlement"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名区域内有牌的其他角色。<br /><b>效果</b>：你弃置目标角色区域内的一张牌。",

@@ -1,5 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
+-- 呃，怎么办呢。。
+
 --- GameMode用来描述一个游戏模式。
 ---
 --- 可以参考欢乐斗地主。
@@ -16,6 +18,7 @@
 ---@field public blacklist? string[] | fun(self: GameMode, pkg: Package): boolean? @ 黑名单
 ---@field public config_template? GameModeConfigEntry[] 游戏模式的配置页面，如此一个数组
 ---@field public main_mode? string @ 主模式名（用于判断此模式是否为某模式的衍生）
+---@field public game_name? string @ 哪款桌游？默认lunarltk
 local GameMode = class("GameMode")
 
 -- 呃 起码要做出以下几种吧：(class必须放顶层否则文档那个东西不识别 辣鸡
@@ -160,3 +163,4 @@ function GameMode:friendEnemyJudge (targetOne, targetTwo)
 end
 
 return GameMode
+

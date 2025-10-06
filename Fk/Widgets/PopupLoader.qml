@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Fk
 
 // 你游的定制Popup 为了沟槽的缩放功能设计
 // 本体的宽高从realMainWin计算
@@ -12,7 +13,7 @@ Popup {
   property alias sourceComponent: loader.sourceComponent
 
   clip: true
-  padding: 4 * mainWindow.scale
+  padding: 4 * Config.winScale
 
   background: Rectangle {
     color: "#FAFAFB"
@@ -24,9 +25,9 @@ Popup {
   Loader {
     id: loader
     anchors.centerIn: parent
-    width: parent.width / mainWindow.scale
-    height: parent.height / mainWindow.scale
-    scale: mainWindow.scale
+    width: parent.width / Config.winScale
+    height: parent.height / Config.winScale
+    scale: Config.winScale
     clip: true
     onSourceChanged: {
       if (item === null) {

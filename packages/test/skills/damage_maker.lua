@@ -9,6 +9,7 @@ Fk:loadTranslationTable{
   ["#revive-ask"] = "复活一名角色！",
   ["damage_maker_tip_1"] = "目标",
   ["damage_maker_tip_2"] = "来源",
+  ["#damage_maker_choose_number"] = "%arg：选择数值",
 
   ["$damage_maker"] = "区区数百魏军，看我一击灭之！",
 
@@ -16,6 +17,7 @@ Fk:loadTranslationTable{
   ["lose_max_hp"] = "减体力上限",
   ["heal_max_hp"] = "加体力上限",
   ["shield"] = "护甲",
+  ["rest"] = "休整",
   ["kill"] = "杀死",
   ["revive"] = "复活",
 }
@@ -46,7 +48,7 @@ damage_maker:addEffect("active", {
       end
       player:setMark("damageNatures", damageNatures)
     end
-    local choices = table.connect(damageNatures, {"lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp", "shield", "kill", "revive"})
+    local choices = table.connect(damageNatures, {"lose_hp", "heal_hp", "lose_max_hp", "heal_max_hp", "shield", "rest", "kill", "revive"})
     return UI.ComboBox {
       choices = choices
     }
@@ -66,7 +68,11 @@ damage_maker:addEffect("active", {
       for i = 1, 99 do
         table.insert(choices, tostring(i))
       end
-      number = tonumber(room:askToChoice(effect.from, {choices = choices, skill_name = damage_maker.name})) ---@type integer
+      number = tonumber(room:askToChoice(effect.from, { ---@type integer
+        choices = choices,
+        skill_name = damage_maker.name,
+        prompt = "#damage_maker_choose_number:::" .. choice
+      }))
     end
     if choice == "heal_hp" then
       room:recover{
@@ -83,6 +89,12 @@ damage_maker:addEffect("active", {
       room:loseHp(victim, number, damage_maker.name)
     elseif choice == "shield" then
       room:changeShield(victim, number)
+    elseif choice == "rest" then
+      room:killPlayer{
+        who = victim,
+      }
+      victim._splayer:setDied(false)
+      room:setPlayerRest(victim, number)
     elseif choice == "kill" then
       room:killPlayer{
         who = victim,

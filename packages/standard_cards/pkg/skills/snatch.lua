@@ -56,7 +56,7 @@ skill:addTest(function(room, me)
   lu.assertIsTrue(me:canUseTo(snatch, room.players[3], {bypass_distances = true}))
 
   local comp2 = room.players[2]
-  FkTest.setNextReplies(me, { "1" })
+  FkTest.setNextReplies(me, { 1 })
   FkTest.runInRoom(function()
     room:obtainCard(comp2, 1)
     room:useCard {

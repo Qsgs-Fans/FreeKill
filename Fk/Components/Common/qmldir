@@ -1,0 +1,13 @@
+# 权宜之计 后面杀了
+module Fk.Components.Common
+
+ChatBox 1.0 ChatBox.qml
+LogEdit 1.0 LogEdit.qml
+Avatar 1.0 Avatar.qml
+AvatarChatBox 1.0 AvatarChatBox.qml
+
+MetroButton 1.0 MetroButton.qml
+MetroToggleButton 1.0 MetroToggleButton.qml
+Danmu 1.0 Danmu.qml
+TileButton 1.0 TileButton.qml
+GlowText 1.0 GlowText.qml

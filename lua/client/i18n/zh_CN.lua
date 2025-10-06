@@ -24,6 +24,12 @@ Fk:loadTranslationTable {
   ["Game BGM"] = "游戏BGM",
   ["Poster Girl"] = "看板娘",
 
+  ["UI settings"] = "UI设置",
+  ["No available UI package"] = "无可用UI",
+  ["lunarltk"] = "新月杀",
+  ["default"] = "默认",
+  ["UI packages select"] = "设置UI",
+
   ["Audio Settings"] = "音频",
   ["Audio and Message"] = "音频和消息",
   ["BGM Volume"] = "BGM音量",
@@ -48,6 +54,8 @@ Fk:loadTranslationTable {
   ["help: Double click to use card or skill"] = "双击牌或头像以使用或打出牌或技能",
   ["Do not use nullification to own one-target trick"] = "不无懈自己的单目标锦囊",
   ["help: Do not use nullification to own one-target trick"] = "不对自己使用的单目标锦囊询问使用【无懈可击】",
+  ["Enable Super Drag"] = "启用拖动出牌",
+  ["help: Enable Super Drag"] = "将牌拖出手牌区使用，拖入目标即可选择目标或取消选择目标",
 
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
@@ -102,6 +110,7 @@ Fk:loadTranslationTable {
   ["General Settings"] = "通常设置",
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
+  ["General Packages Help"] = "武将拓展包设置请移步大厅界面右下角的“武将一览”", -- TODO
   ["Card Packages"] = "卡牌拓展包",
   ["Select All"] = "全选",
   ["Choose one handcard"] = "选卡",
@@ -114,6 +123,7 @@ Fk:loadTranslationTable {
   ["Give Shoe"] = "拖鞋",
   ["Block Chatter"] = "屏蔽发言",
   ["Unblock Chatter"] = "解除屏蔽",
+  ["Change Skin"] = "换肤",
   ["<Blocked> "] = '<font color="red">[已屏蔽]</font> ',
   ["Kick From Room"] = "踢出房间",
   ["Newbie"] = "新手保护ing",
@@ -265,6 +275,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["End"] = "结束",
   -- ["Quit"] = "退出",
   ["All"] = "全部",
+  ["Info"] = "信息",
+  ["Save"] = "保存",
+  ["Undo"] = "撤销",
 
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
@@ -273,6 +286,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["BanPackage"] = "禁拓展包",
   ["$BanPkgHelp"] = "正在禁用拓展包",
   ["$BanCharaHelp"] = "正在禁用武将",
+  ["$TotalGenerals"] = "共%1个武将",
   ["Companions"] = "珠联璧合",
   ["Skill Name"] = "技能名称",
   ["Skill Description"] = "技能描述",
@@ -308,6 +322,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Same General Convert"] = "替换武将",
   ["Fight"] = "出战",
   ["Show General Detail"] = "查看技能",
+  ["Click The Game Scene to back"] = "点击游戏画面可退出菜单，继续操作",
 
   ["#PlayCard"] = "出牌阶段，请使用一张牌",
   ["#UseSkill"] = "请使用技能〖%arg〗",
@@ -337,6 +352,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["AskForArrangeCards"] = "排列卡牌",
   ["replaceEquip"] = "替换装备",
   ["PlayCard"] = "出牌",
+  ["GetPlayerHandcards"] = "出牌",
 
   ["#AskForChooseGenerals"] = "%1：请选择%2名武将",
   ["#AskForChooseCard"] = "%1：请选择%src的一张卡牌",
@@ -363,6 +379,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["#AskForUseMultiCard"] = "请使用【%arg】（此为第 %arg2 张，共需 %arg3 张）",
   ["#AskForResponseMultiCard"] = "请打出【%arg】（此为第 %arg2 张，共需 %arg3 张）",
   ["#AskForNumber"] = "%arg：请选择一个数字",
+  ["#AskToChooseToMoveCardInBoard"] = "%arg：请移动场上一张牌",
 
   ["#AskForDiscard"] = "请弃置 %arg 张牌，最少 %arg2 张",
   ["#AskForCard"] = "请选择 %arg 张牌，最少 %arg2 张",
@@ -612,14 +629,6 @@ Fk:loadTranslationTable {
   ["heal_hp"] = "回复体力",
   ["damaged"] = "受到伤害",
   ["view"] = "观看",
-
-  --numberic(need gsub)
-  ["drawX"] = "摸{num}张牌",
-  ["discardX"] = "弃{num}张牌",
-  ["recoverX"] = "回复{num}点体力",
-  ["loseHpX"] = "失去{num}点体力",
-  ["damageX"] = "造成{num}点伤害",
-  ["loseMaxHpX"] = "减{num}点体力上限",
 }
 
 -- related to sendLog
@@ -650,6 +659,8 @@ Fk:loadTranslationTable {
 
   ["$InstallEquip"] = "%from 装备了 %card",
   ["$UninstallEquip"] = "%from 卸载了 %card",
+  ["$InstallVirtualEquip"] = "%from 装备了 %arg (转化自 %card)",
+  ["$UninstallVirtualEquip"] = "%from 卸载了 %arg (转化自 %card)",
 
   ["$LightningMove"] = "%card 从 %from 转移到了 %to",
   ["$PasteCard"] = "%from 给 %to 贴了张 %card",

@@ -356,4 +356,49 @@ function GameEvent:shutdown()
   coroutine.yield(self, "__breakEvent")
 end
 
+-- 应该也是两个通用event
+
+---@class GameEvent.Game : GameEvent
+local Game = GameEvent:subclass("GameEvent.Game")
+
+function Game:__tostring()
+  return string.format("<Game %s #%d>", Fk:currentRoom().settings.gameMode, self.id)
+end
+
+function Game:main()
+  local room = self.room
+  room.game_started = true
+  room:doBroadcastNotify("StartGame", "")
+  room.logic:run()
+end
+
+---@class GameEvent.ClearEvent : GameEvent
+---@field data GameEvent
+local ClearEvent = GameEvent:subclass("GameEvent.ClearEvent")
+function ClearEvent:main()
+  local event = self.data
+  local logic = self.room.logic
+  -- 不可中断
+  Pcall(event.clear, event)
+  for _, f in ipairs(event.extra_clear) do
+    if type(f) == "function" then Pcall(f, event) end
+  end
+
+  -- cleaner顺利执行完了，出栈吧
+  local end_id = logic.current_event_id + 1
+  if event.id ~= end_id - 1 then
+    logic.all_game_events[end_id] = event.event
+    logic.current_event_id = end_id
+    event.end_id = end_id
+  else
+    event.end_id = event.id
+  end
+
+  logic.game_event_stack:pop()
+  logic.cleaner_stack:pop()
+end
+
+GameEvent.Game = Game
+GameEvent.ClearEvent = ClearEvent
+
 return GameEvent

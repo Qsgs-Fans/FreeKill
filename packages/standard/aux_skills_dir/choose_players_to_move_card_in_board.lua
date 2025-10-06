@@ -8,9 +8,9 @@ choosePlayersToMoveCardInBoardSkill:addEffect("active", {
   target_filter = function(self, player, to_select, selected, cards)
     if #selected > 0 then
       return selected[1]:canMoveCardsInBoardTo(to_select, self.flag, self.excludeIds) and
-        table.contains(self.tos, to_select.id)
+        table.contains(self.tos, to_select)
     end
-    if not table.contains(self.froms, to_select.id) then return false end
+    if not table.contains(self.froms, to_select) then return false end
 
     local fromAreas = { Player.Equip, Player.Judge }
     if self.flag == "e" then

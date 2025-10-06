@@ -97,27 +97,4 @@ end
 function FQJsonDocument:toVariant()
 end
 
----@class fk.QRandomGenerator
-local FQRandomGenerator = {}
-
----@param seed integer
----@return fk.QRandomGenerator
-function fk.QRandomGenerator(seed)
-end
-
----@return integer
-function FQRandomGenerator:generate()
-end
-
----@param lowest integer
----@param highest integer
----@return integer
-function FQRandomGenerator:bounded(lowest, highest)
-end
-
----@param low integer
----@param high integer
----@return number
-function FQRandomGenerator:random(low, high) end
-
 fk.FK_VER = '0.0.0'

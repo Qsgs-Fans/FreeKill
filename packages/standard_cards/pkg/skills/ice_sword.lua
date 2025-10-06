@@ -5,7 +5,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect(fk.DetermineDamageCaused, {
   can_trigger = function(self, event, target, player, data)
-    return target == player and player:hasSkill(skill.name) and (not data.chain) and
+    return target == player and player:hasSkill(skill.name) and data.by_user and
       data.card and data.card.trueName == "slash" and not data.to:isNude()
   end,
   on_use = function(self, event, target, player, data)

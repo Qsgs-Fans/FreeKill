@@ -30,12 +30,12 @@ testmode.logic = function()
   end
   function l:prepareDrawPile()
     local room = self.room
-    local seed = 12345678
-    room:prepareDrawPile(seed)
-    room:doBroadcastNotify("PrepareDrawPile", seed)
+    local gamemode = Fk.game_modes[room.settings.gameMode] or Fk.game_modes["aaa_role_mode"]
+    local draw_pile = gamemode:buildDrawPile()
+    room:prepareDrawPile(draw_pile)
+    room:doBroadcastNotify("PrepareDrawPile", draw_pile)
   end
-  function l:attachSkillToPlayers()
-  end
+  function l:attachSkillToPlayers() end
   function l:action()
     while true do
       local fn = coroutine.yield("__handleRequest")

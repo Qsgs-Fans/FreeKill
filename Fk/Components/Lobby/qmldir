@@ -1,0 +1,4 @@
+module Fk.Components.Lobby
+
+RoomDelegate 1.0 RoomDelegate.qml
+PersonalSettings 1.0 PersonalSettings.qml

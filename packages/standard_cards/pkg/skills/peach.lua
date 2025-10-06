@@ -3,7 +3,9 @@ local skill = fk.CreateSkill {
 }
 
 skill:addEffect("cardskill", {
-  prompt = "#peach_skill",
+  prompt = function(self, _, _, _, extra_data)
+    return extra_data.analepticRecover and "#peach_dying::" .. extra_data.must_targets[1] or "#peach_skill"
+  end,
   mod_target_filter = function(self, player, to_select)
     return to_select:isWounded()
   end,

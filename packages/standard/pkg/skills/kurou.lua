@@ -18,7 +18,7 @@ kurou:addEffect("active", {
 kurou:addTest(function(room, me)
   for i = 1, 3, 1 do
     FkTest.setNextReplies(me, {
-      json.encode {
+      {
         card = { skill = "kurou", subcards = {} },
       },
       "",
@@ -31,7 +31,7 @@ kurou:addTest(function(room, me)
     lu.assertEquals(me.hp, 4 - i)
   end
   FkTest.setNextReplies(me, {
-    json.encode {
+    {
       card = { skill = "kurou", subcards = {} },
     },
     "",

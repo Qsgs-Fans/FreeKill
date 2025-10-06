@@ -40,8 +40,12 @@ function pt(t) for k, v in pairs(t) do print(k, v) end end
 -- 0: 模拟UI的提示
 -- 1:
 local _verbose_level = 999
+
+---@param level integer
+---@param fmt string
 function verbose(level, fmt, ...)
   if _verbose_level > level then return end
+  fmt = tostring(fmt)
   local str = fmt:format(...)
-  print("[verbose] " .. str)
+  print(("[%12.6f] %s"):format(os.clock(), str))
 end

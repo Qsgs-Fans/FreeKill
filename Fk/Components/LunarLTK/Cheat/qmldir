@@ -1,0 +1,10 @@
+module Fk.Components.LunarLTK.Cheat
+CardDetail 1.0 CardDetail.qml
+FreeAssign 1.0 FreeAssign.qml
+GeneralDetail 1.0 GeneralDetail.qml
+PlayerDetail 1.0 PlayerDetail.qml
+SameConvert 1.0 SameConvert.qml
+ChooseHandcard 1.0 ChooseHandcard.qml
+ViewPile 1.0 ViewPile.qml
+ViewGeneralPile 1.0 ViewGeneralPile.qml
+SkinsDetail 1.0 SkinsDetail.qml

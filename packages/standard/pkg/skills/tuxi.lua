@@ -120,7 +120,7 @@ tuxi:addTest(function(room, me)
   end
 
   -- 好了，让突袭选comp2和comp3吧，设置回复内容并返回房间运行
-  FkTest.setNextReplies(me, { json.encode {
+  FkTest.setNextReplies(me, { {
     card = { skill = "choose_players_skill", subcards = {} },
     targets = { comp2.id, comp3.id }
   } })

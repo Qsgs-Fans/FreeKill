@@ -20,8 +20,6 @@ local socket = require "socket"
 
 -- 需安装lua-filesystem包
 local fs = require "lfs"
--- 需手动编译安装，详见src/swig/qrandom文件夹
-local qrandom = require 'freekill-qrandomgen'
 
 local jsonrpc = require "server.rpc.jsonrpc"
 local stdio = require "server.rpc.stdio"
@@ -109,8 +107,6 @@ function fk.GetMicroSecond()
   -- return date.tv_sec * 1000000 + date.tv_usec
   return socket.gettime() * 1000 * 1000;
 end
-
-fk.QRandomGenerator = qrandom.new
 
 function fk.qDebug(fmt, ...)
   callRpc("qDebug", { string.format(fmt, ...) })
@@ -200,10 +196,15 @@ end
 ---@param timeout integer
 ---@param timestamp? integer
 local _ServerPlayer_doRequest = function(self, command, jsondata, timeout, timestamp)
+  assert(math.type(timeout) == "integer")
+  assert(timestamp and math.type(timestamp) == "integer")
+
   callRpc("ServerPlayer_doRequest", { self.connId, command, tostring(jsondata), timeout, timestamp })
 end
 
 local _ServerPlayer_waitForReply = function(self, timeout)
+  assert(math.type(timeout) == "integer")
+
   local ret, err = callRpc("ServerPlayer_waitForReply", { self.connId, timeout })
   if err ~= nil then
     return "__cancel"
@@ -231,6 +232,31 @@ local _ServerPlayer_emitKick = function(self)
   callRpc("ServerPlayer_emitKick", { self.connId })
 end
 
+-- 存档相关
+local _ServerPlayer_saveState = function(self, jsonData)
+  callRpc("ServerPlayer_saveState", { self.connId, tostring(jsonData) })
+end
+
+local _ServerPlayer_getSaveState = function(self)
+  local ret, err = callRpc("ServerPlayer_getSaveState", { self.connId })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
+local _ServerPlayer_saveGlobalState = function(self, key, jsonData)
+  callRpc("ServerPlayer_saveGlobalState", { self.connId, tostring(key), tostring(jsonData) })
+end
+
+local _ServerPlayer_getGlobalSaveState = function(self, key)
+  local ret, err = callRpc("ServerPlayer_getGlobalSaveState", { self.connId, tostring(key) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
 ---@type metatable
 local _ServerPlayer_MT = {
   __index = setmetatable({
@@ -243,6 +269,11 @@ local _ServerPlayer_MT = {
 
     setDied = _ServerPlayer_setDied,
     emitKick = _ServerPlayer_emitKick,
+
+    saveState = _ServerPlayer_saveState,
+    getSaveState = _ServerPlayer_getSaveState,
+    saveGlobalState = _ServerPlayer_saveGlobalState,
+    getGlobalSaveState = _ServerPlayer_getGlobalSaveState,
   }, _Player_MT),
 }
 
@@ -282,6 +313,8 @@ local room_hasObserver = function(self, player)
 end
 
 local _Room_delay = function(self, ms)
+  assert(math.type(ms) == "integer")
+
   callRpc("Room_delay", { self.id, ms })
 end
 
@@ -298,6 +331,8 @@ local _Room_gameOver = function(self)
 end
 
 local _Room_setRequestTimer = function(self, ms)
+  assert(math.type(ms) == "integer")
+
   callRpc("Room_setRequestTimer", { self.id, ms })
 end
 

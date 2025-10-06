@@ -66,7 +66,7 @@ fankui:addTest(function(room, me)
   lu.assertEquals(#me:getCardIds("h"), 0)
 
   -- 有牌的情况
-  FkTest.setNextReplies(me, { "__cancel", "1", "3" })
+  FkTest.setNextReplies(me, { "__cancel", "1", 3 })
   FkTest.runInRoom(function()
     room:obtainCard(comp2, { 3 })
     room:useCard{

@@ -43,7 +43,6 @@ jianxiong:addTest(function(room, me)
       card = slash,
     }
   end)
-  -- p(me:toJsonObject())
   lu.assertEquals(me:getCardIds("h")[1], 1)
 end)
 

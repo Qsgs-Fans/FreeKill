@@ -6,19 +6,18 @@ longdan:addEffect("viewas", {
   pattern = "slash,jink",
   prompt = "#longdan",
   handly_pile = true,
-  card_filter = function(self, player, to_select, selected)
-    if #selected == 1 then return end
-    local _c = Fk:getCardById(to_select)
-    local c
-    if _c.trueName == "slash" then
-      c = Fk:cloneCard("jink")
-    elseif _c.name == "jink" then
-      c = Fk:cloneCard("slash")
-    else
-      return false
+  filter_pattern = function (self, player, card_name)
+    local vs_pattern = {
+      max_num = 1,
+      min_num = 1,
+      pattern = "slash,jink",
+    }
+    if card_name == "slash" then
+      vs_pattern.pattern = "jink"
+    elseif card_name == "jink" then
+      vs_pattern.pattern = "slash"
     end
-    return (Fk.currentResponsePattern == nil and player:canUse(c)) or
-      (Fk.currentResponsePattern and Exppattern:Parse(Fk.currentResponsePattern):match(c))
+    return vs_pattern
   end,
   view_as = function(self, player, cards)
     if #cards ~= 1 then return end
@@ -28,6 +27,8 @@ longdan:addEffect("viewas", {
       c = Fk:cloneCard("jink")
     elseif _c.name == "jink" then
       c = Fk:cloneCard("slash")
+    else
+      return nil
     end
     c.skillName = longdan.name
     c:addSubcard(cards[1])

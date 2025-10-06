@@ -60,6 +60,7 @@ Fk:loadTranslationTable({
   ["peach"] = "Đào",
   [":peach"] = "Lá cơ bản<br /><b>thời điểm</b>:giai đoạn ra bài / khi 1 người trong trạng thái hấp hối<br /><b>mục tiêu</b>:bạn đang mất máu / người trong trạng thái hấp hối<br /><b>hiệu quả</b>:mục tiêu hồi 1 máu. ",
   ["#peach_skill"] = "Bạn hồi 1 máu",
+  ["#peach_dying"] = "%dest hồi 1 máu",
   ["dismantlement"] = "Quá Hà Sách Kiều",
   [":dismantlement"] = "Lá công cụ<br /><b>thời điểm</b>:giai đoạn ra bài<br /><b>mục tiêu</b>:1 người có bài trong vùng chơi. <br /><b>hiệu quả</b>:bạn bỏ 1 lá trong vùng chơi của mục tiêu. ",
   ["dismantlement_skill"] = "Quá Hà Sách Kiều",

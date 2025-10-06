@@ -59,4 +59,25 @@ skill:addEffect("cardskill", {
   end,
 })
 
+skill:addAI({
+  on_effect = function(self, logic, effect)
+    local from, to = effect.from, effect.to
+    if #table.filter(from:getHandlyIds(), function (id)
+      return Fk:getCardById(id).trueName == "slash" and not from:prohibitResponse(Fk:getCardById(id))
+    end) < #table.filter(to:getHandlyIds(), function (id)
+      return Fk:getCardById(id).trueName == "slash" and not to:prohibitResponse(Fk:getCardById(id))
+    end) then
+      from, to = to, from
+    end
+    logic:damage({
+      from = from,
+      to = to,
+      card = effect.card,
+      damage = 1,
+      damageType = fk.NormalDamage,
+      skillName = skill.name
+    })
+  end,
+}, "__card_skill")
+
 return skill

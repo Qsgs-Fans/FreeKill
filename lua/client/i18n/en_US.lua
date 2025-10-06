@@ -170,6 +170,7 @@ Fk:loadTranslationTable({
   -- ["Cancel"] = "取消",
   -- ["End"] = "结束",
   -- ["Quit"] = "退出",
+
   ["BanGeneral"] = "Ban",
   ["ResumeGeneral"] = "Unban",
   -- ["Enable"] = "启用",
@@ -177,6 +178,7 @@ Fk:loadTranslationTable({
   ["BanPackage"] = "Ban packages",
   ["$BanPkgHelp"] = "Banning packages",
   ["$BanCharaHelp"] = "Banning characters",
+  ["$TotalGenerals"] = "Total: %1 character(s)",
   -- ["Companions"] = "珠联璧合",
   -- ["Skill Name"] = "技能名称",
   -- ["Skill Description"] = "技能描述",
@@ -317,7 +319,7 @@ Fk:loadTranslationTable({
   ["#NoGeneralDraw"] = "General Pile is empty",
   ["#NoEventDraw"] = "All game events terminated",
   ["#NoEnoughGeneralDraw"] = "No enough generals! (%arg/%arg2)",
-  ["#TimeOutDraw"] = "It's over 9999 Round!",
+  ["#TimeOutDraw"] = "It's over thousands Round!",
 
   ["$GameOver"] = "Game Over",
   ["$Winner"] = "Winner is %1",
@@ -485,6 +487,8 @@ Fk:loadTranslationTable({
   ["$DiscardOther"] = "%to discarded %arg card(s) %card from %from",
   ["$InstallEquip"] = "%from equipped %card",
   ["$UninstallEquip"] = "%from uninstalled %card",
+  ["$InstallVirtualEquip"] = "%from equipped %arg(from %card)",
+  ["$UninstallVirtualEquip"] = "%from uninstalled %arg(from %card)",
 
   ["#ShowCard"] = "%from showed card(s) %card",
   ["#Recast"] = "%from recasted %card",

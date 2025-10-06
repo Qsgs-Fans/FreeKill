@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
+
+import Fk
+import Fk.Widgets as W
+
+W.PageBase {
+  id: root
+
+  RowLayout {
+    anchors.fill: parent
+    spacing: 10
+
+    Rectangle {
+      color: "#88EEEEEE"
+      radius: 6
+      width: parent.width * 0.2
+      height: parent.height
+
+      ListView {
+        id: listView
+        clip: true
+        //width: parent.width * 0.2
+        //height: parent.height
+        anchors.fill:parent
+        model: ListModel {
+          id: modeList
+        }
+        highlight: Rectangle { color: "#E91E63"; radius: 5 }
+        delegate: Item {
+          width: parent.width
+          height: 40
+
+          Text {
+            text: name
+            anchors.centerIn: parent
+          }
+
+          W.TapHandler {
+            onTapped: {
+              listView.currentIndex = index;
+              detailFlickable.contentY = 0; // 重置滚动条
+            }
+          }
+        }
+      }
+    }
+
+    Rectangle {
+      Layout.fillWidth: true
+      Layout.fillHeight: true
+      color: "#88EEEEEE"
+      Flickable {
+        id: detailFlickable
+        width: parent.width - 16
+        height: parent.height - 16
+        anchors.centerIn: parent
+        contentHeight: modeDesc.height
+        ScrollBar.vertical: ScrollBar {}
+        clip: true
+
+        Text {
+          id: modeDesc
+          width: parent.width - 16
+          wrapMode: Text.WordWrap
+          text: Lua.tr(":" + modeList.get(listView.currentIndex).orig_name)
+          textFormat: Text.MarkdownText
+          font.pixelSize: 16
+        }
+      }
+    }
+  }
+
+  Button {
+    text: Lua.tr("Quit")
+    anchors.bottom: parent.bottom
+    visible: root.parent instanceof StackView
+    onClicked: {
+      App.quitPage();
+    }
+  }
+
+  Component.onCompleted: {
+    const mode_data = Lua.call("GetGameModes");
+    for (let d of mode_data) {
+      modeList.append(d);
+    }
+    listView.currentIndex = 0;
+  }
+}

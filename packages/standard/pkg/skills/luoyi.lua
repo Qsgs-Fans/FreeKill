@@ -31,7 +31,7 @@ luoyi:addTest(function(room, me)
     room:handleAddLoseSkills(me, luoyi.name)
   end)
   local slash = Fk:getCardById(1)
-  FkTest.setNextReplies(me, { "1", json.encode {
+  FkTest.setNextReplies(me, { "1", {
     card = 1,
     targets = { comp2.id }
   } })
@@ -42,7 +42,6 @@ luoyi:addTest(function(room, me)
     room:obtainCard(me, 1)
     GameEvent.Turn:create(TurnData:new(me, "game_rule")):exec()
   end)
-  -- p(me:getCardIds("h"))
   lu.assertEquals(#me:getCardIds("h"), 1)
   lu.assertEquals(comp2.hp, origin_hp - 2)
 

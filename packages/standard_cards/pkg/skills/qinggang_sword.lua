@@ -9,7 +9,7 @@ skill:addEffect(fk.TargetSpecified, {
     return target == player and player:hasSkill(skill.name) and data.card and data.card.trueName == "slash" and not data.to.dead
   end,
   on_cost = function(self, event, target, player, data)
-    event:setCostData(self, { tos = { data.to.id } })
+    event:setCostData(self, { tos = { data.to } })
     return true
   end,
   on_use = function(self, event, target, player, data)

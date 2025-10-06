@@ -16,7 +16,7 @@ ColumnLayout {
     Layout.fillWidth: true
     Layout.preferredHeight: childrenRect.height + 4
 
-    text: luatr(extra_data.name)
+    text: Lua.tr(extra_data.name)
   }
 
   PathView {

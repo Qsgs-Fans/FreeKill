@@ -65,7 +65,7 @@ ganglie:addAI({
     ---@type DamageData
     local dmg = ai.room.logic:getCurrentEvent().data
     local from = dmg.from
-    if not from then return false end
+    if not from or ai:isFriend(dmg.from) then return false end
     local dmg_val = ai:getBenefitOfEvents(function(logic)
       logic:damage{
         from = ai.player,
@@ -116,7 +116,7 @@ ganglie:addTest(function(room, me)
   -- 第二段：测试我发动刚烈，AI丢二
   origin_hp = comp2.hp
   FkTest.setNextReplies(me, { "__cancel", "1" })
-  FkTest.setNextReplies(comp2, { json.encode {
+  FkTest.setNextReplies(comp2, { {
     card = { skill = "discard_skill", subcards = { 3, 4 } },
     targets = {}
   } })

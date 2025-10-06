@@ -1,0 +1,3 @@
+module Fk.Components.WaitingRoom
+
+WaitingPhoto 1.0 WaitingPhoto.qml

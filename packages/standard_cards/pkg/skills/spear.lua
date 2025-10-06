@@ -5,12 +5,14 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("viewas", {
   prompt = "#spear_skill&",
-  pattern = "slash|0|red,black,nocolor",
+  pattern = "slash",
   mute_card = false,
   handly_pile = true,
-  card_filter = function(self, player, to_select, selected)
-    return #selected < 2 and table.contains(player:getHandlyIds(), to_select)
-  end,
+  filter_pattern = {
+    min_num = 2,
+    max_num = 2,
+    pattern = ".|.|.|^equip",
+  },
   view_as = function(self, player, cards)
     if #cards ~= 2 then return nil end
     local c = Fk:cloneCard("slash")

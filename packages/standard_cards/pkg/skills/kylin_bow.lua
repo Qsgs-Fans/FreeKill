@@ -6,19 +6,20 @@ local skill = fk.CreateSkill {
 skill:addEffect(fk.DamageCaused, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and
-      data.card and data.card.trueName == "slash" and not data.chain and
-      table.find(data.to:getCardIds("e"), function (id)
-        local card = Fk:getCardById(id)
+      data.card and data.card.trueName == "slash" and data.by_user and
+      table.find(data.to:getEquipCards(), function(card)
         return card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide
       end)
   end,
   on_use = function(self, event, target, player, data)
     local room = player.room
     local to = data.to
-    local ride_tab = table.filter(to:getCardIds("e"), function (id)
-      local card = Fk:getCardById(id)
-      return card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide
-    end)
+    local ride_tab = {}
+    for _, card in ipairs(to:getEquipCards()) do
+      if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
+        table.insert(ride_tab, card:getEffectiveId())
+      end
+    end
     if #ride_tab == 0 then return end
     local id = room:askToChooseCard(player, { target = to,
     flag = {

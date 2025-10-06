@@ -52,14 +52,20 @@ skill:addEffect("cardskill", {
 
 skill:addAI({
   on_effect = function(self, logic, effect)
-    logic:damage({
-      from = effect.from,
-      to = effect.to,
-      card = effect.card,
-      damage = 1,
-      damageType = fk.FireDamage,
-      skillName = skill.name,
-    })
+    if table.find(effect.from:getCardIds("h"), function (id)
+      return table.find(effect.to:getCardIds("h"), function (id2)
+        return Fk:getCardById(id):compareSuitWith(Fk:getCardById(id2))
+      end) and not effect.from:prohibitDiscard(id)
+    end) then
+      logic:damage({
+        from = effect.from,
+        to = effect.to,
+        card = effect.card,
+        damage = 1,
+        damageType = fk.FireDamage,
+        skillName = skill.name
+      })
+    end
   end,
 }, "__card_skill")
 

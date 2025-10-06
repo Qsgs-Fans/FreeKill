@@ -1,6 +1,28 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
-Room = require "server.room"
+Request = require "server.request"
+GameEvent = require "server.gameevent"
+GameLogic = require "lunarltk.server.gamelogic"
+ServerPlayer = require "lunarltk.server.serverplayer"
+Room = require "lunarltk.server.room"
+
+for _, l in ipairs(Fk._custom_events) do
+  local name, p, m, c, e = l.name, l.p, l.m, l.c, l.e
+  -- GameEvent.prepare_funcs[name] = p
+  -- GameEvent.functions[name] = m
+  -- GameEvent.cleaners[name] = c
+  -- GameEvent.exit_funcs[name] = e
+  local custom = GameEvent:subclass(name)
+  custom.prepare = p
+  custom.main = m
+  custom.clear = c
+  custom.exit = e
+  GameEvent[name] = custom
+end
+
+---@type Player
+Self = nil -- `Self' is client-only, but we need it in AI
+dofile "lua/lunarltk/server/ai/init.lua"
 
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type table<integer, Room>
@@ -16,12 +38,26 @@ local requestRoom = setmetatable({
   end,
 
   registerRoom = function(self, id)
-    local cRoom = self.thread:getRoom(id)
-    local room = Room:new(cRoom)
-    cRoom:increaseRefCount()
+    local cRoom = self.thread:getRoom(id) ---@type fk.Room
+
+    local gameMode
+    local ok, settings = pcall(cbor.decode, cRoom:settings())
+    if ok then
+      gameMode = settings.gameMode
+    end
+
+    local room_klass = Fk:getBoardGame(gameMode).room_klass
+    local room = room_klass:new(cRoom)
+    cRoom:increaseRefCount() -- FIXME: 这行理应不需要了 但是Qt版服务端还依赖着
     runningRooms[room.id] = room
   end,
 
+  callbacks = {
+    ["newroom"] = function(s, id)
+      s:registerRoom(id)
+      ResumeRoom(id)
+    end,
+  }
 }, {
   __tostring = function()
     return "<Request Room>"
@@ -41,9 +77,20 @@ function IsConsoleStart()
   return requestRoom.thread:isConsoleStart()
 end
 
-local Req = require "server.request"
 function HandleRequest(req)
-  Req(requestRoom, req)
+  local reqlist = req:split(",")
+  local roomId = tonumber(table.remove(reqlist, 1))
+  local room = requestRoom:getRoom(roomId)
+
+  if room then
+    RoomInstance = room
+    local id = tonumber(reqlist[1])
+    local command = reqlist[2]
+    local fn = room.callbacks[command] or Util.DummyFunc
+    Pcall(fn, room, id, reqlist)
+    RoomInstance = nil
+  end
+
   return true
 end
 

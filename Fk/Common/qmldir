@@ -1,5 +1,0 @@
-module Fk.Common
-ChatBox 1.0 ChatBox.qml
-LogEdit 1.0 LogEdit.qml
-Avatar 1.0 Avatar.qml
-AvatarChatBox 1.0 AvatarChatBox.qml

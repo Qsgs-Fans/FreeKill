@@ -1,16 +1,20 @@
 local consoleUI = require 'ui'
 
 if UsingNewCore then FileIO.cd("packages/freekill-core") end
-Room = require 'lua.server.room'
-fk.Player = require 'lua.lsp.player'
-local tmp = require 'lua.lsp.server'
+fk.Player = require 'lsp.player'
+local tmp = require 'lsp.server'
 fk.Room, fk.ServerPlayer = tmp[1], tmp[2]
-fk.Client = require 'lua.lsp.client'
-dofile 'lua/client/client.lua'
-
-dofile 'test/lua/testmode.lua'
+fk.Client = require 'lsp.client'
 
 FkTest = {}
+
+dofile 'lua/lsp/test_util.lua'
+dofile 'lua/client/client.lua'
+
+if UsingNewCore then FileIO.cd("packages/freekill-core") end
+dofile 'lua/server/scheduler.lua'
+
+dofile 'test/lua/testmode.lua'
 
 function FkTest.createFakeQList(arr)
   return setmetatable(arr, {
@@ -37,6 +41,7 @@ function FkTest.createFakePlayer(id, name, avatar)
   ret:setState(id > 0 and fk.Player_Online or fk.Player_Robot)
   ret:setDied(false)
   ret:setThinking(false)
+  ret:setGameData(0, 0, 0)
   return ret
 end
 
@@ -63,7 +68,7 @@ function FkTest.createFakeRoom(idlist)
     owner = players[1],
     observers = FkTest.createFakeQList{},
     timeout = 15,
-    _settings = json.encode {
+    _settings = cbor.encode {
       enableFreeAssign = false,
       enableDeputy = false,
       gameMode = "testmode",
@@ -92,11 +97,11 @@ function FkTest.createFakeCppBackend()
 
   -- 模拟Room::addPlayer
   -- updateGameData就算了 没啥用
-  sp:doNotify("EnterRoom", json.encode{ 8, 15, json.decode(cRoom:settings()) })
+  sp:doNotify("EnterRoom", cbor.encode { 8, 15, cbor.decode(cRoom:settings()) })
   local plist = cRoom:getPlayers()
   for i = 1, 7 do
     local p = plist:at(i)
-    sp:doNotify("AddPlayer", json.encode{
+    sp:doNotify("AddPlayer", cbor.encode {
       p:getId(),
       p:getScreenName();
       p:getAvatar();
@@ -104,7 +109,7 @@ function FkTest.createFakeCppBackend()
       0,
     })
   end
-  sp:doNotify("RoomOwner", json.encode{1})
+  sp:doNotify("RoomOwner", cbor.encode {1})
 
   -- 如此如此 就有了一个已经加入房间的client了 在全局变量ClientInstance
   -- 返回创建的room备用
@@ -122,16 +127,22 @@ function FkTest.initRoom()
   RoomInstance = FkTest.room
   FkTest.room:resume("request_timer")
   RoomInstance = nil
+
+  for _, p in ipairs(FkTest.room.players) do
+    FkTest.cleanNextReplies(p)
+  end
 end
 
 --- 设置player接下来数次收到Request时应当做出的回复
 ---
 --- 注意了，replies不会自动清空的，必须有相应次数的request次数才行
 ---@param p ServerPlayer
----@param replies string[]
+---@param replies any[]
 function FkTest.setNextReplies(p, replies)
   p.serverplayer._fake_router = p._fake_router or { _reply_list = {} }
-  table.insertTable(p.serverplayer._fake_router._reply_list, replies)
+  for _, v in ipairs(replies) do
+    table.insert(p.serverplayer._fake_router._reply_list, cbor.encode(v))
+  end
 end
 
 --- 清空player应做出的回复
@@ -189,90 +200,17 @@ function FkTest.clearRoom()
   ClientSelf = Self
   ClientInstance.players = {Self}
   ClientInstance.alive_players = {Self}
+
   local plist = cRoom:getPlayers()
   local sp = cRoom:getOwner()
   for i = 1, 7 do
     local p = plist:at(i)
-    sp:doNotify("AddPlayer", json.encode{
+    sp:doNotify("AddPlayer", cbor.encode {
       p:getId(),
       p:getScreenName();
       p:getAvatar();
       true,
       0,
     })
-  end
-end
-
--- 便于测试的封装
-
---- 在测试房间内添加技能
----@param player ServerPlayer
----@param skill_name string
-FkTest.RunAddSkills = function (player, skill_name)
-  FkTest.runInRoom(function ()
-    player.room:handleAddLoseSkills(player, skill_name)
-  end)
-end
-
---- 回复使用/打出卡牌
----@param card Card
----@param targets? ServerPlayer[]
----@return string
-FkTest.replyCard = function (card, targets)
-  return json.encode {
-    card = card.id,
-    targets = targets and table.map(targets, Util.IdMapper) or {},
-  }
-end
-
---- 回复使用技能
----@param skill_name string
----@param targets? ServerPlayer[]
----@param cards? integer[]
----@return string
-FkTest.replyUseSkill = function (skill_name, targets, cards)
-  return json.encode {
-    card = { skill = skill_name, subcards = cards or {} },
-    targets = targets and table.map(targets, Util.IdMapper) or {},
-  }
-end
-
---- 回复askToChoosePlayers
----@param targets ServerPlayer[]
----@return string
-FkTest.replyChoosePlayer = function (targets)
-  return FkTest.replyUseSkill("choose_players_skill", targets)
-end
-
---- 回复askToCards等，选择自己的牌
----@param cards integer[]
----@return string
-FkTest.replyChooseCards = function (cards)
-  return FkTest.replyUseSkill("choose_cards_skill", nil, cards)
-end
-
---- 回复askToDiscard等，弃置自己的牌
----@param cards integer[]
----@return string
-FkTest.replyDiscard = function (cards)
-  return FkTest.replyUseSkill("discard_skill", nil, cards)
-end
-
---- 回复askToChooseCardsAndPlayers等
----@param players ServerPlayer[]
----@param cards integer[]
----@return string
-FkTest.replyChooseCardAndPlayers = function (players, cards)
-  return FkTest.replyUseSkill("ex__choose_skill", players, cards)
-end
-
---- 设置第n次询问时断点，用于setRoomBreakpoint
----@param n integer
----@return function
-FkTest.createClosure = function(n)
-  local i = 0
-  return function()
-    i = i + 1
-    return i == n
   end
 end

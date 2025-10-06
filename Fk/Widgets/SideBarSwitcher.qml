@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Controls
+
+import Fk
 import Fk.Widgets as W
 
 ListView {
@@ -31,7 +33,7 @@ ListView {
     height: 40
 
     Text {
-      text: luatr(name)
+      text: Lua.tr(name)
       anchors.centerIn: parent
     }
 

@@ -19,7 +19,7 @@ skill:addTest(function (room, me)
   lu.assertEquals(me.hp, 3)
 
   local card = room:printCard("jink")
-  FkTest.setNextReplies(me, { json.encode {
+  FkTest.setNextReplies(me, { {
     card = card.id,
   } })
   FkTest.runInRoom(function ()

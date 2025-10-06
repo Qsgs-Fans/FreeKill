@@ -12,7 +12,8 @@ skill:addEffect(fk.CardEffectCancelledOut, {
     local cards = {}
     for _, id in ipairs(player:getCardIds("he")) do
       if not player:prohibitDiscard(id) and
-        not (table.contains(player:getEquipments(Card.SubtypeWeapon), id) and Fk:getCardById(id).name == "axe") then
+        not (table.contains(player:getEquipments(Card.SubtypeWeapon), id)
+         and (player:getVirtualEquip(id) or Fk:getCardById(id)).name == "axe") then
         table.insert(cards, id)
       end
     end

@@ -70,13 +70,15 @@ local cardSubtypeStrings = {
   [Card.SubtypeDelayedTrick] = "delayed_trick",
   [Card.SubtypeWeapon] = "weapon",
   [Card.SubtypeArmor] = "armor",
-  [Card.SubtypeDefensiveRide] = "defensive_horse",
-  [Card.SubtypeOffensiveRide] = "offensive_horse",
+  [Card.SubtypeDefensiveRide] = "defensive_ride",
+  [Card.SubtypeOffensiveRide] = "offensive_ride",
   [Card.SubtypeTreasure] = "treasure",
 }
 
-function GetCardData(id, virtualCardForm)
-  local card = Fk:getCardById(id)
+---@param id integer
+---@param filterCard? boolean @ 是否获取经过锁视的牌？
+function GetCardData(id, filterCard)
+  local card = Fk:getCardById(id, not filterCard)
   if card == nil then
     return {
       cid = id,
@@ -103,17 +105,10 @@ function GetCardData(id, virtualCardForm)
     subtype = cardSubtypeStrings[card.sub_type],
     multiple_targets = card.multiple_targets,
   }
-  if card.skillName ~= "" then
+  if filterCard and card.skillName ~= "" then
     local orig = Fk:getCardById(id, true)
     ret.name = orig.name
     ret.virt_name = card.name
-  end
-  if virtualCardForm then
-    local virtualCard = ClientInstance:getPlayerById(virtualCardForm):getVirualEquip(id)
-    if virtualCard then
-      ret.virt_name = virtualCard.name
-      ret.subtype = cardSubtypeStrings[virtualCard.sub_type]
-    end
   end
   return ret
 end
@@ -229,6 +224,33 @@ local translateInfo = function(text)
   return ret == text and Fk:translate("Official") or ret
 end
 
+---封装 string.find 并默认自动转义特殊字符（按字面匹配）
+---@param str string|number 目标字符串（待查找的文本）
+---@param pattern string|number 查找模式（可能包含特殊字符）
+---@param start_pos? integer 起始查找位置，默认为 1（字符串第一个字符位置）
+---@param plain? boolean
+---@param auto_escape? boolean
+---@return integer|nil start
+---@return integer|nil end
+---@return any|nil ... captured
+local function find_with_escape(str, pattern, start_pos, plain, auto_escape)
+  -- 处理可选参数的默认值
+  start_pos = start_pos or 1         -- 默认为从第一个字符开始查找
+  plain = plain or false             -- 默认为模式匹配（非纯文本）
+  auto_escape = auto_escape ~= false -- 默认为自动转义（除非显式传 false）
+
+  -- 仅在需要模式匹配（plain=false）且开启自动转义时，处理特殊字符
+  if auto_escape and not plain then
+    local special_chars = "([%.%+%-%*%?%[%^%$%(%)%%])"    -- 需转义的特殊字符列表
+    pattern = string.gsub(pattern, special_chars, "%%%1") -- 转义处理
+  end
+
+  -- 调用原生 string.find，保持功能一致
+  return string.find(str, pattern, start_pos, plain)
+end
+
+
+
 ---@param general General
 ---@param filter any
 ---@return boolean
@@ -248,8 +270,8 @@ local function filterGeneral(general, filter)
   local illustrator = filter.illustrator ---@type string
   local audioText = filter.audioText ---@type string
   return not (
-    (name ~= "" and not string.find(Fk:translate(general.name), name)) or
-    (title ~= "" and not string.find(translateInfo("#" .. general.name), title)) or
+    (name ~= "" and not find_with_escape(Fk:translate(general.name), name)) or
+    (title ~= "" and not find_with_escape(translateInfo("#" .. general.name), title)) or
     (#kingdoms > 0 and not table.contains(kingdoms, Fk:translate(general.kingdom)) and
       not table.contains(kingdoms, Fk:translate(general.subkingdom))) or
     (#maxHps > 0 and not table.contains(maxHps, tostring(general.maxHp))) or
@@ -257,15 +279,15 @@ local function filterGeneral(general, filter)
     (#genders > 0 and not table.contains(genders, genderMapper[general.gender])) or
     (skillName ~= "" and not table.find(general:getSkillNameList(true), function(s)
       return
-          not not string.find(Fk:translate(s), skillName)
+          not not find_with_escape(Fk:translate(s), skillName)
     end)) or
     (skillDesc ~= "" and not table.find(general:getSkillNameList(true), function(s)
       return
-          not not string.find(Fk:getDescription(s), skillDesc)
+          not not find_with_escape(Fk:getDescription(s), skillDesc)
     end)) or
-    (designer ~= "" and not string.find(translateInfo("designer:" .. general.name), designer)) or
-    (voiceActor ~= "" and not string.find(translateInfo("cv:" .. general.name), voiceActor)) or
-    (illustrator ~= "" and not string.find(translateInfo("illustrator:" .. general.name), illustrator)) or
+    (designer ~= "" and not find_with_escape(translateInfo("designer:" .. general.name), designer)) or
+    (voiceActor ~= "" and not find_with_escape(translateInfo("cv:" .. general.name), voiceActor)) or
+    (illustrator ~= "" and not find_with_escape(translateInfo("illustrator:" .. general.name), illustrator)) or
     (audioText ~= "" and not findAudioText(general, audioText))
   )
 end
@@ -365,7 +387,7 @@ function GetPlayerSkills(id)
   local p = ClientInstance:getPlayerById(id)
   if p == Self then
     return table.map(p.player_skills, function(s)
-      local skel = s:getSkeleton() or s
+      local skel = s:getSkeleton()
       return s.visible and {
         name = Fk:getSkillName(skel.name, nil, p, true),
         description = Fk:getDescription(s.name, nil, p),
@@ -373,7 +395,7 @@ function GetPlayerSkills(id)
     end)
   else
     return table.map(p.player_skills, function(s)
-      local skel = s:getSkeleton() or s
+      local skel = s:getSkeleton()
       return s.visible and not (s.attached_equip or s.name:endsWith("&")) and {
         name = Fk:getSkillName(skel.name, nil, p, true),
         description = Fk:getDescription(s.name, nil, p),
@@ -445,12 +467,30 @@ function CardFitPattern(card_name, pattern)
   return ret
 end
 
-function GetVirtualEquip(player, cid)
-  local c = ClientInstance:getPlayerById(player):getVirualEquip(cid)
+--- 获取某牌的虚拟装备/延时锦囊信息
+---@param playerid integer @ 拥有此牌的角色id，找不到时会在全场找此牌拥有者
+---@param cid integer @ 牌的id
+function GetVirtualEquipData(playerid, cid)
+  local c, player
+  player = ClientInstance:getPlayerById(playerid)
+  if not player then
+    for _, p in ipairs(ClientInstance.players) do
+      c = p:getVirtualEquip(cid)
+      if c then break end
+    end
+  end
+  if player then
+    c = player:getVirtualEquip(cid)
+  end
   if not c then return nil end
   return {
     name = c.name,
     cid = c.subcards[1],
+    extension = c.package.extensionName,
+    suit = c:getSuitString(),
+    number = c.number,
+    type = c.type,
+    subtype = c:getSubtypeString(),
   }
 end
 
@@ -486,26 +526,41 @@ function GetPlayerJudges(pid)
   return p.player_cards[Player.Judge]
 end
 
+-- 重新创建Lua client，但是继承ClientBase之类的数据，将和游戏状态有关的数据抹杀
+-- 继承的数据只要足以支持等待界面的房间就行
 function ResetClientLua()
   local self = ClientInstance
-  local _data = self.enter_room_data;
-  local data = self.settings
-  Self = ClientPlayer:new(self.client:getSelf())
-  self:initialize(self.client) -- clear old client data
-  self.players = { Self }
-  self.alive_players = { Self }
-  self.discard_pile = {}
+  local client_klass = self.class --[[@as Client]]
+  local cpp_client = self.client
+  local cpp_players = table.map(self.players, function(p)
+    return { p.player, p.ready, p.owner }
+  end)
+  -- FIXME 擦屁股之Qt版server没给机器人发removePlayer
+  cpp_players = table.filter(cpp_players, function(arr)
+    return arr[1]:getId() > 0
+  end)
+
+  local _data = self.enter_room_data
+
+  self = client_klass:new(cpp_client) -- clear old client data
+  self.players = table.map(cpp_players, function(p)
+    local cp = self:createPlayer(p[1])
+    cp.ready = p[2]
+    cp.owner = p[3]
+    return cp
+  end)
+  Self = self:getPlayerById(Self.id)
 
   self.enter_room_data = _data;
-  self.settings = data
+  local data = cbor.decode(_data)
+  self.capacity = data[1]
+  self.timeout = data[2]
+  self.settings = data[3]
 
-  self.disabled_packs = data.disabledPack
-  self.disabled_generals = data.disabledGenerals
-  -- ClientInstance:notifyUI("EnterRoom", jsonData)
-end
-
-function ResetAddPlayer(j)
-  fk.client_callback["AddPlayer"](ClientInstance, j)
+  -- FIXME 怎么混入三国杀要素了，非常坏
+  self.disabled_packs = ClientInstance.disabled_packs
+  self.disabled_generals = ClientInstance.disabled_generals
+  ClientInstance = self
 end
 
 function GetRoomConfig()
@@ -514,7 +569,7 @@ end
 
 function GetCompNum()
   local c = ClientInstance
-  local mode = Fk.game_modes[c.settings.gameMode]
+  local mode = Fk.game_modes[c.settings.gameMode] or Fk.game_modes["aaa_role_mode"]
   local min, max = mode.minComp, mode.maxComp
   local capacity = c.capacity
   if min < 0 then min = capacity + min end
@@ -567,9 +622,11 @@ function SetReplayingShowCards(o)
   end
 end
 
-function CheckSurrenderAvailable(playedTime)
+function CheckSurrenderAvailable()
   local curMode = ClientInstance.settings.gameMode
-  return Fk.game_modes[curMode]:surrenderFunc(playedTime)
+  local mode = Fk.game_modes[curMode] or Fk.game_modes["aaa_role_mode"]
+  local playedTime = os.time() - ClientInstance.gameStartTime
+  return mode:surrenderFunc(playedTime)
 end
 
 function FindMosts()          -- 从所有的玩家结算数据中找出最佳/差玩家
@@ -842,7 +899,7 @@ function GetCardProhibitReason(cid)
   local card = Fk:getCardById(cid)
   if not card then return "" end
   local handler = ClientInstance.current_request_handler
-  if (not handler) or (not handler:isInstanceOf(Fk.request_handlers["AskForUseActiveSkill"])) then return "" end
+  if (not handler) or (not handler:isInstanceOf(ClientInstance.request_handlers["AskForUseActiveSkill"])) then return "" end
   local method, pattern = "", handler.pattern or "."
 
   if handler.class.name == "ReqPlayCard" then
@@ -896,7 +953,7 @@ end
 
 function GetTargetTip(pid)
   local handler = ClientInstance.current_request_handler --[[@as ReqPlayCard ]]
-  if (not handler) or (not handler:isInstanceOf(Fk.request_handlers["AskForUseActiveSkill"])) then return "" end
+  if (not handler) or (not handler:isInstanceOf(ClientInstance.request_handlers["AskForUseActiveSkill"])) then return "" end
 
   local to_select = pid
   local selected = handler.selected_targets
@@ -1005,17 +1062,22 @@ function PoxiFeasible(poxi_type, selected, data, extra_data)
   return poxi.feasible(selected, data, extra_data)
 end
 
-function GetQmlMark(mtype, name, value, p)
+function GetQmlMark(mtype, name, p)
   local spec = Fk.qml_marks[mtype]
   if not spec then return {} end
+  local value
   p = ClientInstance:getPlayerById(p)
-  value = json.decode(value)
   if p then
     local pile = p:getPile(name)
     if #pile > 0 then
       value = pile
+    else
+      value = p.mark[name]
     end
+  else
+    value = ClientInstance:getBanner(name)
   end
+  if (not p) and (not value) or (value == 0) then return {} end
   return {
     qml_path = type(spec.qml_path) == "function" and spec.qml_path(name, value, p) or spec.qml_path,
     qml_data = type(spec.qml_data) == "function" and spec.qml_data(name, value, p) or value,
@@ -1038,14 +1100,14 @@ end
 
 function GetPendingSkill()
   local h = ClientInstance.current_request_handler
-  local reqActive = Fk.request_handlers["AskForUseActiveSkill"]
+  local reqActive = ClientInstance.request_handlers["AskForUseActiveSkill"]
   return h and h:isInstanceOf(reqActive) and
       (h.selected_card == nil and h.skill_name) or ""
 end
 
 function RevertSelection()
   local h = ClientInstance.current_request_handler ---@type ReqActiveSkill
-  local reqActive = Fk.request_handlers["AskForUseActiveSkill"]
+  local reqActive = ClientInstance.request_handlers["AskForUseActiveSkill"]
   if not (h and h:isInstanceOf(reqActive) and h.pendings) then return end
   h.change = {}
   -- 1. 取消选中所有已选 2. 尝试选中所有之前未选的牌
@@ -1175,11 +1237,14 @@ function RefreshStatusSkills()
       p.id, "role_shown", not not RoleVisibility(p.id)
     })
   end
+
+  -- 刷牌堆数
+  self:notifyUI("UpdateDrawPile", #self.draw_pile)
+
   -- 刷自己的手牌
-  for _, cid in ipairs(Self:getCardIds("h")) do
-    self:notifyUI("UpdateHandcard", cid)
-  end
   Self:filterHandcards()
+  self:notifyUI("UpdateHandcard")
+
   -- 刷技能状态
   self:notifyUI("UpdateSkill", nil)
 end
@@ -1189,20 +1254,30 @@ function GetPlayersAndObservers()
   local players = table.connect(self.observers, self.players)
   local ret = {}
   for _, p in ipairs(players) do
+    local state = p.player:getState()
+    if state == fk.Player_Run and p.dead then
+      state = fk.Player_Offline
+    end
     table.insert(ret, {
       id = table.contains(self.players, p) and p.id or p.player:getId(),
       general = p.general,
       deputy = p.deputyGeneral,
       name = p.player:getScreenName(),
       observing = table.contains(self.observers, p),
+      state = state,
       avatar = p.player:getAvatar(),
     })
   end
   return ret
 end
 
-function ToUIString(obj)
-  local f = getmetatable(obj).__touistring
+function ToUIString(v)
+  local ok, obj = pcall(cbor.decode, v)
+  if not ok then return "未知类型" end
+  local mt = getmetatable(obj)
+  if not mt then return "未知类型" end
+
+  local f = mt.__touistring
   if f then
     local ret = f(obj)
     if type(ret) == "string" then
@@ -1212,6 +1287,39 @@ function ToUIString(obj)
 
   -- 这里故意返回中文
   return "未知类型"
+end
+
+local defaultQml = {
+  -- 比照Qt.createComponent参数名而设
+  uri = "QtQuick",
+  name = "Rectangle",
+
+  -- 或者可以写QML文件路径
+  url = nil,
+
+  -- 比照Component.createObject
+  prop = {
+    width = 80,
+    height = 100,
+    color = "green",
+  },
+}
+
+function ToQml(v)
+  local ok, obj = pcall(cbor.decode, v)
+  if not ok then return defaultQml end
+  local mt = getmetatable(obj)
+  if not mt then return defaultQml end
+
+  local f = mt.__toqml
+  if f then
+    local ret = f(obj)
+    if type(ret) == "table" then
+      return ret
+    end
+  end
+
+  return defaultQml
 end
 
 dofile "lua/client/i18n/init.lua"

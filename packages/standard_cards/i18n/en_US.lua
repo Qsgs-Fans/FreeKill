@@ -68,6 +68,7 @@ Fk:loadTranslationTable({
   ["peach"] = "Peach",
   [":peach"] = "Peach (basic card)<br /><b>Phase</b>: 1. Action phase 2. When a player is dying<br /><b>Target</b>: Wounded yourself/the player who is dying<br /><b>Effect</b>: The target heals 1 HP.",
   ["#peach_skill"] = "You heal 1 HP",
+  ["#peach_dying"] = "%dest heal 1 HP",
 
   ["dismantlement"] = "Dismantlement",
   [":dismantlement"] = "Dismantlement (trick card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: Another player with cards in any area<br /><b>Effect</b>: Discard 1 card in one of the areas of the target player.",

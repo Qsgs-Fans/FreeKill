@@ -35,6 +35,13 @@ Util.lockTable = function(t)
   return setmetatable({}, new_mt)
 end
 
+-- 是否是可以被编解码成cbor tagged的
+Util.isCborObject = function(v)
+  if type(v) ~= "table" then return false end
+  local mt = getmetatable(v)
+  return mt and mt.__tocbor ~= nil
+end
+
 ---@param value integer
 ---@return string
 ---@overload fun(value: string): integer
@@ -80,6 +87,41 @@ Util.getSuitFromString = function(symbol)
   end
 end
 
+--- 令移动原因字符串化
+---@param item CardMoveReason @ 移动方式枚举
+---@return string @ 移动方式字符串
+---@diagnostic disable-next-line
+function Util.moveReasonMapper(item) end
+
+--- 将字符串转为移动原因枚举
+---@param item string @ 移动方式字符串
+---@return CardMoveReason? @ 移动方式枚举
+---@diagnostic disable-next-line
+Util.moveReasonMapper = function(item)
+  local moveMapper = {
+    ["reason_justmove"] = fk.ReasonJustMove,
+    ["reason_draw"] = fk.ReasonDraw,
+    ["reason_discard"] = fk.ReasonDiscard,
+    ["reason_give"] = fk.ReasonGive,
+    ["reason_put"] = fk.ReasonPut,
+    ["reason_put_in_discard"] = fk.ReasonPutIntoDiscardPile,
+    ["reason_use"] = fk.ReasonUse,
+    ["reason_response"] = fk.ReasonResponse,
+    ["reason_judge"] = fk.ReasonJudge,
+    ["reason_recast"] = fk.ReasonRecast,
+    ["reason_pindian"] = fk.ReasonPindian,
+  }
+  if type(item) == "string" then
+    return moveMapper[item] or fk.ReasonJustMove
+  else
+    for k, v in pairs(moveMapper) do
+      ---@diagnostic disable-next-line
+      if v == item then return k end
+    end
+  end
+end
+
+---@diagnostic disable-next-line: lowercase-global
 function printf(fmt, ...)
   print(string.format(fmt, ...))
 end
@@ -168,7 +210,7 @@ end
 -- for card preset
 
 --- 指定目标卡牌的targetFilter
----@param skill ActiveSkill @ 使用牌的CardSkill
+---@param skill CardSkill @ 使用牌的CardSkill
 ---@param to_select Player @ 目标
 ---@param selected Player[] @ 已选目标
 ---@param selected_cards integer[] @ 牌的子表
@@ -310,6 +352,25 @@ function table.map(self, func)
   return ret
 end
 
+--- 归约一个表的所有内容到一个变量
+---@generic T, T2
+---@param self T[] @ 要被归约的表
+---@param init T2 @ 初始值
+---@param func fun(result: T2, element: T, last_element: T?): T2 @ 循环调用函数
+---@return T2
+function table.reduce(self, init, func)
+  if #self == 0 then return init end
+  if #self == 1 then return func(init, self[1]) end
+
+  local ret = init
+  local last_element
+  for _, v in ipairs(self) do
+    ret = func(ret, v, last_element)
+    last_element = v
+  end
+  return ret
+end
+
 ---@generic T
 ---@param self T[]
 ---@return T[]
@@ -334,18 +395,15 @@ end
 
 ---@generic T
 ---@param self T[]
----@param seed integer?
-function table.shuffle(self, seed)
-  seed = seed or math.random(2 << 32 - 1)
-  local rnd = fk.QRandomGenerator(seed)
+function table.shuffle(self)
   if #self == 2 then
-    if rnd:random() < 0.5 then
+    if math.random() < 0.5 then
       self[1], self[2] = self[2], self[1]
     end
   else
     for i = #self, 2, -1 do
-        local j = rnd:random(i)
-        self[i], self[j] = self[j], self[i]
+      local j = math.random(i)
+      self[i], self[j] = self[j], self[i]
     end
   end
 end
@@ -541,6 +599,19 @@ function table.assign(self, source)
       self[key] = value
     end
   end
+end
+
+---@generic T
+---@param self T[]
+---@param other T[]
+---@return boolean
+function table.isEqual(self, other)
+  if #self ~= #other then return false end
+  local tabledup = table.simpleClone(other)
+  for _, j in ipairs(self) do
+    if not table.removeOne(tabledup, j) then return false end
+  end
+  return #tabledup == 0
 end
 
 ---@generic T

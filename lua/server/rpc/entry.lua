@@ -21,6 +21,7 @@ dofile "lua/server/scheduler.lua"
 dbg = Util.DummyFunc
 debug.debug = Util.DummyFunc
 
+--[[
 local deadline_tab = setmetatable({}, { __mode = "k" })
 
 local TIMEOUT = 10
@@ -51,6 +52,7 @@ coroutine.resume = function(co, ...)
   deadline_tab[co] = deadline
   return coresume(co, ...)
 end
+--]]
 
 local mainLoop
 if RPC_MODE == "json" then

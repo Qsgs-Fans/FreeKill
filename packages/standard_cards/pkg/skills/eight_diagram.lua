@@ -9,7 +9,7 @@ local eight_diagram_on_use = function (self, event, target, player, data)
     local judgeData = {
       who = player,
       reason = skill.name,
-      pattern = ".|.|heart,diamond",
+      pattern = ".|.|red",
     }
     room:judge(judgeData)
 

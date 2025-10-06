@@ -4,14 +4,14 @@ local wusheng = fk.CreateSkill {
 
 wusheng:addEffect("viewas", {
   anim_type = "offensive",
-  pattern = "slash|.|heart,diamond",
+  pattern = "slash",
   prompt = "#wusheng",
   -- mute_card = true,
   handly_pile = true,
   filter_pattern = {
     min_num = 1,
     max_num = 1,
-    pattern = ".|.|heart,diamond",
+    pattern = ".|.|red",
   },
   view_as = function(self, player, cards)
     if #cards ~= 1 then return end

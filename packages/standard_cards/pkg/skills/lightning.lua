@@ -38,7 +38,7 @@ skill:addEffect("cardskill", {
     repeat
       nextp = nextp:getNextAlive(true)
       if nextp == to then
-        if nextp:isProhibitedTarget(effect.card) or nextp:hasDelayedTrick("lightning") then
+        if nextp:isProhibitedTarget(effect.card) then
           room:moveCards{
             ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
             toArea = Card.DiscardPile,
@@ -48,19 +48,20 @@ skill:addEffect("cardskill", {
         end
         break
       end
-    until not nextp:hasDelayedTrick("lightning") and not nextp:isProhibitedTarget(effect.card)
+    until not nextp:isProhibitedTarget(effect.card)
 
-
-    if effect.card:isVirtual() then
-      nextp:addVirtualEquip(effect.card)
-    end
-
-    room:moveCards{
+    local move = { ---@type CardsMoveInfo
       ids = room:getSubcardsByRule(effect.card, { Card.Processing }),
       to = nextp,
       toArea = Card.PlayerJudge,
       moveReason = fk.ReasonPut,
     }
+
+    if effect.card:isVirtual() then
+      move.virtualEquip = effect.card
+    end
+
+    room:moveCards(move)
   end,
 })
 

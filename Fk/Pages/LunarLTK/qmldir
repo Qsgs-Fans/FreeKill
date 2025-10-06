@@ -1,0 +1,19 @@
+module Fk.Pages.LunarLTK
+
+# 此为游戏全屏主页面
+Room 1.0 Room.qml
+
+AG 1.0 AG.qml
+ArrangeCardsBox 1.0 ArrangeCardsBox.qml
+CheckBox 1.0 CheckBox.qml
+ChoiceBox 1.0 ChoiceBox.qml
+ChooseCardsAndChoiceBox 1.0 ChooseCardsAndChoiceBox.qml
+ChooseGeneralBox 1.0 ChooseGeneralBox.qml
+DetailedCheckBox 1.0 DetailedCheckBox.qml
+DetailedChoiceBox 1.0 DetailedChoiceBox.qml
+GameOverBox 1.0 GameOverBox.qml
+GraphicsBox 1.0 GraphicsBox.qml
+GuanxingBox 1.0 GuanxingBox.qml
+MoveCardInBoardBox 1.0 MoveCardInBoardBox.qml
+PlayerCardBox 1.0 PlayerCardBox.qml
+PoxiBox 1.0 PoxiBox.qml

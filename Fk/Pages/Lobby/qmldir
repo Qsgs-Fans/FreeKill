@@ -1,0 +1,20 @@
+module Fk.Pages.Lobby
+
+Lobby 1.0 Lobby.qml
+
+# 弹窗：筛选
+FilterRoom 1.0 FilterRoom.qml
+
+# 弹窗：创建房间
+CreateRoom 1.0 CreateRoom.qml
+RoomGeneralSettings 1.0 RoomGeneralSettings.qml
+RoomPackageSettings 1.0 RoomPackageSettings.qml
+BanGeneralSetting 1.0 BanGeneralSetting.qml
+
+# 弹窗：个人设置
+EditProfile 1.0 EditProfile.qml
+UserInfo 1.0 UserInfo.qml
+BGSetting 1.0 BGSetting.qml
+AudioSetting 1.0 AudioSetting.qml
+ControlSetting 1.0 ControlSetting.qml
+UISetting 1.0 UISetting.qml

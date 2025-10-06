@@ -3,6 +3,7 @@ local tieqi = fk.CreateSkill {
 }
 
 tieqi:addEffect(fk.TargetSpecified, {
+  anim_type = "offensive",
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(tieqi.name) and data.card.trueName == "slash"
   end,
@@ -11,7 +12,7 @@ tieqi:addEffect(fk.TargetSpecified, {
     local judge = {
       who = player,
       reason = tieqi.name,
-      pattern = ".|.|heart,diamond",
+      pattern = ".|.|red",
     }
     room:judge(judge)
     if judge:matchPattern() then
