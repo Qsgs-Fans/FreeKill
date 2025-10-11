@@ -68,10 +68,10 @@ ___
 
 若您能为新月杀做出贡献，我们将不胜感激。以下是关于贡献的一些注意事项：
 
-- 项目的所有lua文件（packages/test除外）由特殊仓库https://github.com/Qsgs-Fans/freekill-core进行管理，
+- 项目的所有lua文件（packages/test除外）由特殊仓库<https://github.com/Qsgs-Fans/freekill-core>进行管理，
   因此请不要直接修改本仓库中的Lua文件，更多信息请查看freekill-core的README页面
 - 只有本仓库是在Github上托管与实际维护的，开发组对其他官方武将的实现则分散在许多小仓库中，
-  并且在Gitee上维护。这些仓库都在我们的组织账号之下：https://gitee.com/qsgs-fans/
+  并且在Gitee上维护。这些仓库都在我们的组织账号之下：<https://gitee.com/qsgs-fans/>
 - 本项目以及不少拓展包项目的需求都写在Issue中，还请善加查阅。
 
 ___
