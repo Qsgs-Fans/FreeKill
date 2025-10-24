@@ -93,26 +93,14 @@ static void prepareForLinux() {
 }
 #endif
 
-static QScopedPointer<QFile> info_log(nullptr);
-static QScopedPointer<QFile> err_log(nullptr);
+static std::unique_ptr<QFile> log_file(nullptr);
 
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
                   const QString &msg) {
   auto date = QDate::currentDate();
 
-  QScopedPointer<QTextStream> ofs(nullptr);
-
-  switch (type) {
-  case QtDebugMsg:
-  case QtInfoMsg:
-    ofs.reset(new QTextStream(info_log.get()));
-    break;
-  case QtWarningMsg:
-  case QtCriticalMsg:
-  case QtFatalMsg:
-    ofs.reset(new QTextStream(err_log.get()));
-    break;
-  }
+  std::unique_ptr<QTextStream> ofs(nullptr);
+  ofs.reset(new QTextStream(log_file.get()));
 
 #ifdef FK_USE_READLINE
   if (ShellInstance) ShellInstance->clearLine();
@@ -253,16 +241,10 @@ int freekill_main(int argc, char *argv[]) {
   prepareForLinux();
 #endif
 
-  if (!info_log) {
-    info_log.reset(new QFile("freekill.server.info.log"));
-    if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
+  if (!log_file) {
+    log_file.reset(new QFile("freekill.server.log"));
+    if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
       qFatal("Cannot open info.log");
-    }
-  }
-  if (!err_log) {
-    err_log.reset(new QFile("freekill.server.error.log"));
-    if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
-      qFatal("Cannot open error.log");
     }
   }
 
@@ -360,15 +342,9 @@ int freekill_main(int argc, char *argv[]) {
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
 
-  // info_log = freopen("freekill.server.info.log", "w+", info_log);
-  // err_log = freopen("freekill.server.error.log", "w+", err_log);
-  info_log.reset(new QFile("freekill.server.info.log"));
-  if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
+  log_file.reset(new QFile("freekill.server.log"));
+  if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
     qFatal("Cannot open info.log");
-  }
-  err_log.reset(new QFile("freekill.server.error.log"));
-  if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
-    qFatal("Cannot open error.log");
   }
 #else
   // 不是安卓，使用QLocale获得系统语言
@@ -451,6 +427,8 @@ int freekill_main(int argc, char *argv[]) {
   // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
+
+  qInstallMessageHandler(nullptr);
 
   return ret;
 #endif

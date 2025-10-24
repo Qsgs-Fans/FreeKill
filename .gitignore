@@ -35,6 +35,7 @@ freekill-wrap.cxx
 /freekill.server.config.json
 /freekill.server.error.log
 /freekill.server.info.log
+/freekill.server.log
 /flist.txt
 /server-list.json
 /resource_pak
