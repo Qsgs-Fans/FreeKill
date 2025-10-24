@@ -29,7 +29,7 @@ Replayer::Replayer(QObject *parent, int id) :
   playing(true), killed(false), speed(1.0), uniformRunning(false)
 {
   setObjectName("Replayer");
-  auto result = ClientInstance->getDatabase()->select(QString(
+  auto result = ClientInstance->database().select(QString(
     "SELECT hex(recording) as r FROM myGameRecordings WHERE id = %1;").arg(id));
   auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
   loadRawData(raw);

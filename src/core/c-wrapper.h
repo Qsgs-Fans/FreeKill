@@ -21,6 +21,8 @@ public:
 class Lua : public LuaInterface {
 public:
   Lua();
+  Lua(Lua &) = delete;
+  Lua(Lua &&) = delete;
   ~Lua();
 
   bool dofile(const char *path);
@@ -48,6 +50,8 @@ class Sqlite3 {
 public:
   Sqlite3(const QString &filename = QStringLiteral("./server/users.db"),
           const QString &initSql = QStringLiteral("./server/init.sql"));
+  Sqlite3(Sqlite3 &) = delete;
+  Sqlite3(Sqlite3 &&) = delete;
   ~Sqlite3();
 
   static bool checkString(const QString &str);

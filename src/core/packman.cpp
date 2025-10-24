@@ -11,7 +11,7 @@ PackMan *Pacman = nullptr;
 
 PackMan::PackMan(QObject *parent) : QObject(parent) {
   git_libgit2_init();
-  db = new Sqlite3("./packages/packages.db", "./packages/init.sql");
+  db = std::make_unique<Sqlite3>("./packages/packages.db", "./packages/init.sql");
 
   QDir d("packages");
 
@@ -38,7 +38,6 @@ PackMan::PackMan(QObject *parent) : QObject(parent) {
 
 PackMan::~PackMan() {
   git_libgit2_shutdown();
-  delete db;
 }
 
 QStringList PackMan::getDisabledPacks() {

@@ -78,8 +78,8 @@ public:
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
 
-  Sqlite3 *getDatabase();
-  Sqlite3 *getGameDatabase();
+  Sqlite3 &database();
+  Sqlite3 &gameDatabase();
 
   void broadcast(const QByteArray &command, const QByteArray &jsonData);
   void sendEarlyPacket(ClientSocket *client, const QByteArray &type, const QByteArray &msg);
@@ -101,11 +101,6 @@ public:
 
   bool nameIsInWhiteList(const QString &name) const;
 
-signals:
-  void roomCreated(Room *room);
-  void playerAdded(ServerPlayer *player);
-  void playerRemoved(ServerPlayer *player);
-
 public slots:
   void processNewConnection(ClientSocket *client);
 
@@ -121,9 +116,9 @@ private:
   QHash<QString, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
   QList<QString> temp_banlist; ///< 被tempban的ip列表
 
-  AuthManager *auth;
-  Sqlite3 *db; ///< sqlite数据库连接实例
-  Sqlite3 *gamedb;  // 存档变量
+  std::unique_ptr<AuthManager> auth;
+  std::unique_ptr<Sqlite3> db; ///< sqlite数据库连接实例
+  std::unique_ptr<Sqlite3> gamedb;  // 存档变量
   QMutex transaction_mutex; ///< 可能有多线程同时对数据库请求，需要加锁
   QString md5; ///< 服务端当前允许用户登录的MD5值
 

@@ -14,6 +14,7 @@
 #include "core/util.h"
 
 #include <QNetworkDatagram>
+#include <memory>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -21,12 +22,12 @@ Server *ServerInstance = nullptr;
 
 Server::Server(QObject *parent) : QObject(parent) {
   ServerInstance = this;
-  db = new Sqlite3;
-  gamedb = new Sqlite3("./server/game.db", "./server/gamedb_init.sql");
+  db = std::make_unique<Sqlite3>();
+  gamedb = std::make_unique<Sqlite3>("./server/game.db", "./server/gamedb_init.sql");
   md5 = calcFileMD5();
   readConfig();
 
-  auth = new AuthManager(this);
+  auth = std::make_unique<AuthManager>();
   server = new ServerSocket(this);
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
@@ -73,8 +74,6 @@ Server::~Server() {
   for (auto thr : findChildren<RoomThread *>()) {
     delete thr;
   }
-  delete db;
-  delete gamedb;
 
   ServerInstance = nullptr;
 }
@@ -197,8 +196,8 @@ void Server::updateOnlineInfo() {
                              }.toCborValue().toCbor());
 }
 
-Sqlite3 *Server::getDatabase() { return db; }
-Sqlite3 *Server::getGameDatabase() { return gamedb; }
+Sqlite3 &Server::database() { return *db; }
+Sqlite3 &Server::gameDatabase() { return *gamedb; }
 
 void Server::broadcast(const QByteArray &command, const QByteArray &jsonData) {
   for (ServerPlayer *p : players.values()) {
@@ -289,7 +288,7 @@ void Server::processNewConnection(ClientSocket *client) {
   // network delay test
   sendEarlyPacket(client, "NetworkDelayTest", QCborValue(auth->getPublicKey().toUtf8()).toCbor());
   // Note: the client should send a setup string next
-  connect(client, &ClientSocket::message_got, auth, &AuthManager::processNewConnection);
+  connect(client, &ClientSocket::message_got, auth.get(), &AuthManager::processNewConnection);
   client->timerSignup.start(30000);
 }
 
