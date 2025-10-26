@@ -49,6 +49,32 @@ jobs:
         cd ../FreeKill
         cp -r ../openssl-3.5.4/include/openssl ./include
 
+    - name: Build libgit2 1.9.0
+      run: |
+        cd ..
+        git clone https://github.com/libgit2/libgit2
+        cd libgit2
+        git checkout v1.9.0
+        mkdir build
+        cd build
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+        SSL_DIR=$(pwd)/../../openssl-3.5.4
+        cmake .. \
+          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_CLI=OFF \
+          -DCMAKE_SYSTEM_NAME=Android \
+          -DCMAKE_SYSTEM_VERSION=29 \
+          -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+          -DCMAKE_ANDROID_NDK=${ANDROID_NDK_ROOT} \
+          -DOPENSSL_INCLUDE_DIR="${SSL_DIR}/include" \
+          -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto.so" \
+          -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl.so"
+        make
+        cp libgit2.so ${SSL_DIR}
+
     - name: Install swig
       run: |
         sudo apt-get install -y swig

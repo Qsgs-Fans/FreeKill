@@ -84,14 +84,15 @@ elseif (ANDROID)
     message(STATUS "Using SSL libraries from environment variable: ${SSL_DIR}")
     set(CRYPTO_LIB ${SSL_DIR}/libcrypto.so)
     set(SSL_LIB ${SSL_DIR}/libssl.so)
+    set(GIT_LIB ${SSL_DIR}/libgit2.so)
   else ()
     set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto.so)
     set(SSL_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssl.so)
+    set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
+    set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.so)
   endif ()
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
-  set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
-  set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.so)
 
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
