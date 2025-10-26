@@ -134,8 +134,9 @@ int PackMan::downloadNewPack(const QString &url, bool useThread) {
 
   auto threadFunc = [=]() -> int {
     int err = clone(url);
-    if (err < 0)
-      return err;
+    // if (err < 0) {
+    //   return err;
+    // }
 
     auto u = url;
     while (u.endsWith('/')) {
