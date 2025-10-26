@@ -26,10 +26,10 @@ jobs:
         wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip commandlinetools-linux-9477386_latest.zip
         yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
-          "platforms;android-33" \
+          "platforms;android-35" \
           "platform-tools" \
-          "build-tools;33.0.0" \
-          "ndk;25.1.8937393"
+          "build-tools;35.0.0" \
+          "ndk;27.2.12479018"
 
     - name: Setup OpenSSL 3.0.18
       run: |
