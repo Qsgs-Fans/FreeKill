@@ -43,6 +43,14 @@ jobs:
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
         ./Configure android-arm64 -D__ANDROID_API__=29
         make
+
+        # 如同Qt文档所言 手动为库添加后缀 避免和系统ssl冲突
+        cp libcrypto.so libcrypto_3.so
+        cp libssl.so libssl_3.so
+        patchelf --set-soname libcrypto_3.so libcrypto_3.so
+        patchelf --set-soname libssl_3.so libssl_3.so
+        patchelf --replace-needed libcrypto.so libcrypto_3.so libssl_3.so
+
         cd ../FreeKill
         cp -r ../openssl-3.5.4/include/openssl ./include
 
@@ -70,8 +78,8 @@ jobs:
           -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
           -DCMAKE_ANDROID_NDK=${ANDROID_NDK_ROOT} \
           -DOPENSSL_INCLUDE_DIR="${SSL_DIR}/include" \
-          -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto.so" \
-          -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl.so"
+          -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto_3.so" \
+          -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl_3.so"
         make
         cp libgit2.so ${SSL_DIR}
 

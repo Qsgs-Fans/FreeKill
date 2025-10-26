@@ -322,6 +322,8 @@ int freekill_main(int argc, char *argv[]) {
   // 直接改用Android原生Mediaplayer了，不用你Qt家的
   // qputenv("QT_MEDIA_BACKEND", "android");
 
+  qputenv("ANDROID_OPENSSL_SUFFIX", "_3");
+
   // 安卓：获取系统语言需要使用Java才行
   QString localeName = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetLocaleCode", "()Ljava/lang/String;").toString();
 
