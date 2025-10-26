@@ -216,7 +216,7 @@ QString QmlBackend::getPublicServerList() {
   // TODO: Download new JSON via http
   if (!conf.exists()) {
     conf.open(QIODevice::WriteOnly);
-    static const char *init_conf = "{}";
+    static const char *init_conf = "[]";
     conf.write(init_conf);
     conf.close();
     return init_conf;
