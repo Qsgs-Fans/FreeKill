@@ -21,6 +21,34 @@ jobs:
     #- name: Setup Debug Session
     #  uses: csexton/debugger-action@master
 
+    - name: Setup Android Environment
+      run: |
+        cd ..
+        mkdir android
+        cd android
+        wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip commandlinetools-linux-9477386_latest.zip
+        yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
+          "platforms;android-33" \
+          "platform-tools" \
+          "build-tools;33.0.0" \
+          "ndk;25.1.8937393"
+
+    - name: Setup OpenSSL 3.5.4
+      run: |
+        cd ..
+        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.5.4/openssl-3.5.4.tar.gz
+        tar xf ./openssl-3.5.4.tar.gz
+        cd openssl-3.5.4
+
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+        ./Configure android-arm64 -D__ANDROID_API__=29
+        make
+        cd ../FreeKill
+        cp -r ../openssl-3.5.4/include/openssl ./include
+
     - name: Install swig
       run: |
         sudo apt-get install -y swig
@@ -46,32 +74,6 @@ jobs:
         target: 'android'
         arch: 'android_arm64_v8a'
         modules: 'qtmultimedia qt5compat qtshadertools'
-
-    - name: Setup Android for Qt
-      run: |
-        cd ..
-        mkdir android
-        cd android
-        wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip commandlinetools-linux-9477386_latest.zip
-        yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
-          "platforms;android-33" \
-          "platform-tools" \
-          "build-tools;33.0.0" \
-          "ndk;25.1.8937393"
-
-    - name: Setup OpenSSL 3.5.4
-      run: |
-        cd ..
-        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.5.4/openssl-3.5.4.tar.gz
-        tar xf ./openssl-3.5.4.tar.gz
-        cd openssl-3.5.4
-        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
-        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
-        ./Configure android-arm64 -D__ANDROID_API__=29
-        make
-        cd ../FreeKill
-        cp -r ../openssl-3.5.4/include/openssl ./include
 
     - name: Copy android assets
       run: |
