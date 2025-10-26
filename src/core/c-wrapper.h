@@ -65,6 +65,7 @@ public:
 
 private:
   sqlite3 *db;
+  std::unique_ptr<QLockFile> locker;
 };
 
 #endif // _LUA_WRAPPER_H

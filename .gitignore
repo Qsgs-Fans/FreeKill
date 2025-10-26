@@ -21,6 +21,7 @@
 /.qmllint.ini
 
 # file produced by game
+*.lock
 /FreeKill
 /FreeKill.exe
 /mymod
