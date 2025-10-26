@@ -46,8 +46,8 @@ jobs:
         cd ../FreeKill
         cp -r ../openssl-3.5.4/include/openssl ./include
 
-    - name: Setup Debug Session
-      uses: owenthereal/action-upterm@v1
+    #- name: Setup Debug Session
+    #  uses: owenthereal/action-upterm@v1
 
     - name: Build libgit2 1.9.0
       run: |
@@ -57,12 +57,12 @@ jobs:
         git checkout v1.9.0
         mkdir build
         cd build
-        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_SDK_ROOT=$(pwd)/../../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
         SSL_DIR=$(pwd)/../../openssl-3.5.4
         cmake .. \
-          -DBUILD_SHARED_LIBS=OFF \
+          -DBUILD_SHARED_LIBS=ON \
           -DBUILD_TESTS=OFF \
           -DBUILD_CLI=OFF \
           -DCMAKE_SYSTEM_NAME=Android \
