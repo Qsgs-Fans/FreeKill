@@ -39,7 +39,7 @@ jobs:
         cd openssl-3.0.18
 
         export ANDROID_SDK_ROOT=$(pwd)/../android
-        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
         ./Configure android-arm64 -D__ANDROID_API__=29 -DOPENSSL_NO_VERSIONING
 
@@ -67,7 +67,7 @@ jobs:
         mkdir build
         cd build
         export ANDROID_SDK_ROOT=$(pwd)/../../android
-        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
         SSL_DIR=$(pwd)/../../openssl-3.0.18
         cmake .. \
@@ -134,7 +134,7 @@ jobs:
       run: |
         export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
         export ANDROID_SDK_ROOT=$(pwd)/../android
-        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
         export FK_ANDROID_SSL_DIR=$(pwd)/../openssl-3.0.18
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
         ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
