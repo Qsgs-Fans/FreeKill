@@ -14,13 +14,15 @@ using namespace fkShell;
 #endif
 
 #ifndef FK_SERVER_ONLY
-#include <QFileDialog>
-#include <QScreen>
-#include <QSplashScreen>
-#ifndef Q_OS_ANDROID
-#include <QQuickStyle>
-#endif
-#include "ui/qmlbackend.h"
+ #include <QFileDialog>
+ #include <QScreen>
+ #include <QSplashScreen>
+ #ifndef Q_OS_ANDROID
+  #include <QQuickStyle>
+ #else
+  #include <QNativeInterface>
+ #endif
+ #include "ui/qmlbackend.h"
 #endif
 
 #include <QTextStream>
@@ -324,14 +326,25 @@ int freekill_main(int argc, char *argv[]) {
 
   qputenv("ANDROID_OPENSSL_SUFFIX", "_3");
 
+  // 安卓：从Qt 6.8起需要别的办法拿activity
+  // 参考文献 https://forum.qt.io/topic/159350/qt-6-8-0-replacement-for-qtnative-activity
+  QJniObject::callStaticObjectMethod<void>(
+    "org/notify/FreeKill/Helper", "SetActivity",
+    "(Landroid/app/Activity;)V", QNativeInterface::QAndroidApplication::context().object()
+  );
+
   // 安卓：获取系统语言需要使用Java才行
   QString localeName = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetLocaleCode", "()Ljava/lang/String;").toString();
 
   // 安卓：先切换到我们安装程序的那个外部存储目录去
-  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView",
-                                     "()V");
-  QDir::setCurrent(
-      "/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView", "()V");
+  QDir::setCurrent("/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+
+  // 切目录后重新设置log文件路径
+  log_file.reset(new QFile("freekill.server.log"));
+  if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+    qFatal("Cannot open info.log");
+  }
 
   // 然后显示欢迎界面，并在需要时复制资源素材等
   QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
@@ -343,11 +356,6 @@ int freekill_main(int argc, char *argv[]) {
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
-
-  log_file.reset(new QFile("freekill.server.log"));
-  if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
-    qFatal("Cannot open info.log");
-  }
 #else
   // 不是安卓，使用QLocale获得系统语言
   QLocale l = QLocale::system();
