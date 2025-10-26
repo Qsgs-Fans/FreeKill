@@ -34,7 +34,7 @@ public:
   void changeSelf(int id);
 
   Lua *getLua();
-  Sqlite3 *getDatabase();
+  Sqlite3 &database();
   QString getAESKey() const { return aes_key; }
   void installAESKey(const QByteArray &key);
 
@@ -69,7 +69,7 @@ private:
   QByteArray pubEncrypt(const QByteArray &key, const QByteArray &data);
 
   Lua *L;
-  Sqlite3 *db;
+  std::unique_ptr<Sqlite3> db;
   QFileSystemWatcher fsWatcher;
 };
 

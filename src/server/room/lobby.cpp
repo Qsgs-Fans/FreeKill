@@ -39,7 +39,7 @@ void Lobby::updateAvatar(ServerPlayer *sender, const QByteArray &jsonData) {
     auto sql = QString("UPDATE userinfo SET avatar='%1' WHERE id=%2;")
       .arg(avatar)
       .arg(sender->getId());
-    ServerInstance->getDatabase()->exec(sql);
+    ServerInstance->database().exec(sql);
     sender->setAvatar(avatar);
     sender->doNotify("UpdateAvatar", avatar.toUtf8());
   }
@@ -54,7 +54,7 @@ void Lobby::updatePassword(ServerPlayer *sender, const QByteArray &jsonData) {
     .arg(sender->getId());
 
   auto passed = false;
-  auto arr2 = ServerInstance->getDatabase()->select(sql_find);
+  auto arr2 = ServerInstance->database().select(sql_find);
   auto result = arr2[0];
   passed = (result["password"] == QCryptographicHash::hash(
     oldpw.append(result["salt"]).toLatin1(),
@@ -68,7 +68,7 @@ void Lobby::updatePassword(ServerPlayer *sender, const QByteArray &jsonData) {
             QCryptographicHash::Sha256)
           .toHex())
       .arg(sender->getId());
-    ServerInstance->getDatabase()->exec(sql_update);
+    ServerInstance->database().exec(sql_update);
   }
 
   sender->doNotify("UpdatePassword", passed ? "1" : "0");

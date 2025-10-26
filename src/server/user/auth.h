@@ -1,6 +1,7 @@
 #ifndef _AUTH_H
 #define _AUTH_H
 
+#include <qtclasshelpermacros.h>
 class Server;
 class Sqlite3;
 class ClientSocket;
@@ -9,16 +10,13 @@ class AuthManagerPrivate;
 class AuthManager : public QObject {
   Q_OBJECT
 public:
-  AuthManager(Server *server);
+  AuthManager();
   ~AuthManager() noexcept;
   auto getPublicKey() const { return public_key; }
 
-public slots:
   void processNewConnection(const QCborArray &setup_packet);
 
 private:
-  Server *server;
-  Sqlite3 *db;
   QString public_key;
   AuthManagerPrivate *p_ptr;
 

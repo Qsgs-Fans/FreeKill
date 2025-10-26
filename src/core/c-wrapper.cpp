@@ -136,6 +136,8 @@ QVariant Lua::eval(const QString &lua) {
 Sqlite3::Sqlite3(const QString &filename, const QString &initSql) {
   int rc;
 
+  locker = std::make_unique<QLockFile>(filename + ".lock");
+
   QFile file(initSql);
   if (!file.open(QIODevice::ReadOnly)) {
     qFatal("cannot open %s. Quit now.", initSql.toUtf8().data());
@@ -223,8 +225,17 @@ QString Sqlite3::selectJson(const QString &sql) {
 }
 
 void Sqlite3::exec(const QString &sql) {
+  // 写入时需要用到锁
+  if (!locker->lock()) {
+    qCritical("Cannot lock database lock file");
+    return;
+  }
+
   auto bytes = sql.toUtf8();
   sqlite3_exec(db, bytes.data(), nullptr, nullptr, nullptr);
+
+  // 怎么还要手动解锁 我locker_guard呢
+  locker->unlock();
 }
 
 quint64 Sqlite3::getMemUsage() {

@@ -14,13 +14,15 @@ using namespace fkShell;
 #endif
 
 #ifndef FK_SERVER_ONLY
-#include <QFileDialog>
-#include <QScreen>
-#include <QSplashScreen>
-#ifndef Q_OS_ANDROID
-#include <QQuickStyle>
-#endif
-#include "ui/qmlbackend.h"
+ #include <QFileDialog>
+ #include <QScreen>
+ #include <QSplashScreen>
+ #ifndef Q_OS_ANDROID
+  #include <QQuickStyle>
+ #else
+  // #include <QNativeInterface>
+ #endif
+ #include "ui/qmlbackend.h"
 #endif
 
 #include <QTextStream>
@@ -93,26 +95,14 @@ static void prepareForLinux() {
 }
 #endif
 
-static QScopedPointer<QFile> info_log(nullptr);
-static QScopedPointer<QFile> err_log(nullptr);
+static std::unique_ptr<QFile> log_file(nullptr);
 
 void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
                   const QString &msg) {
   auto date = QDate::currentDate();
 
-  QScopedPointer<QTextStream> ofs(nullptr);
-
-  switch (type) {
-  case QtDebugMsg:
-  case QtInfoMsg:
-    ofs.reset(new QTextStream(info_log.get()));
-    break;
-  case QtWarningMsg:
-  case QtCriticalMsg:
-  case QtFatalMsg:
-    ofs.reset(new QTextStream(err_log.get()));
-    break;
-  }
+  std::unique_ptr<QTextStream> ofs(nullptr);
+  ofs.reset(new QTextStream(log_file.get()));
 
 #ifdef FK_USE_READLINE
   if (ShellInstance) ShellInstance->clearLine();
@@ -253,16 +243,10 @@ int freekill_main(int argc, char *argv[]) {
   prepareForLinux();
 #endif
 
-  if (!info_log) {
-    info_log.reset(new QFile("freekill.server.info.log"));
-    if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
+  if (!log_file) {
+    log_file.reset(new QFile("freekill.server.log"));
+    if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
       qFatal("Cannot open info.log");
-    }
-  }
-  if (!err_log) {
-    err_log.reset(new QFile("freekill.server.error.log"));
-    if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
-      qFatal("Cannot open error.log");
     }
   }
 
@@ -340,14 +324,27 @@ int freekill_main(int argc, char *argv[]) {
   // 直接改用Android原生Mediaplayer了，不用你Qt家的
   // qputenv("QT_MEDIA_BACKEND", "android");
 
+  qputenv("ANDROID_OPENSSL_SUFFIX", "_3");
+
+  // 安卓：从Qt 6.8起需要别的办法拿activity
+  // 参考文献 https://forum.qt.io/topic/159350/qt-6-8-0-replacement-for-qtnative-activity
+  QJniObject::callStaticMethod<void>(
+    "org/notify/FreeKill/Helper", "SetActivity",
+    "(Landroid/app/Activity;)V", QNativeInterface::QAndroidApplication::context().object()
+  );
+
   // 安卓：获取系统语言需要使用Java才行
   QString localeName = QJniObject::callStaticObjectMethod("org/notify/FreeKill/Helper", "GetLocaleCode", "()Ljava/lang/String;").toString();
 
   // 安卓：先切换到我们安装程序的那个外部存储目录去
-  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView",
-                                     "()V");
-  QDir::setCurrent(
-      "/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+  QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "InitView", "()V");
+  QDir::setCurrent("/storage/emulated/0/Android/data/org.notify.FreeKill/files");
+
+  // 切目录后重新设置log文件路径
+  log_file.reset(new QFile("freekill.server.log"));
+  if (!log_file->open(QIODevice::WriteOnly | QIODevice::Text)) {
+    qFatal("Cannot open info.log");
+  }
 
   // 然后显示欢迎界面，并在需要时复制资源素材等
   QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
@@ -359,17 +356,6 @@ int freekill_main(int argc, char *argv[]) {
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
-
-  // info_log = freopen("freekill.server.info.log", "w+", info_log);
-  // err_log = freopen("freekill.server.error.log", "w+", err_log);
-  info_log.reset(new QFile("freekill.server.info.log"));
-  if (!info_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
-    qFatal("Cannot open info.log");
-  }
-  err_log.reset(new QFile("freekill.server.error.log"));
-  if (!err_log->open(QIODevice::WriteOnly | QIODevice::Text)) {
-    qFatal("Cannot open error.log");
-  }
 #else
   // 不是安卓，使用QLocale获得系统语言
   QLocale l = QLocale::system();
@@ -451,6 +437,8 @@ int freekill_main(int argc, char *argv[]) {
   // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
+
+  qInstallMessageHandler(nullptr);
 
   return ret;
 #endif

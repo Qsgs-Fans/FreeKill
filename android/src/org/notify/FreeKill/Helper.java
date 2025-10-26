@@ -9,11 +9,16 @@ import android.view.View;
 import android.view.WindowManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
-import org.qtproject.qt.android.QtNative;
 
 public class Helper {
+  private static Activity m_activity = null;
+
+  public static void SetActivity(Activity activity) {
+    m_activity = activity;
+  }
+
   public static void InitView() {
-    Activity activity = QtNative.activity();
+    Activity activity = m_activity;
 
     // create app-specific dir on external storage
     activity.getExternalFilesDir("");
@@ -52,7 +57,7 @@ public class Helper {
   }
 
   public static String GetSerial() {
-    Activity activity = QtNative.activity();
+    Activity activity = m_activity;
     return Settings.Secure.getString(
       activity.getContentResolver(),
       Settings.Secure.ANDROID_ID

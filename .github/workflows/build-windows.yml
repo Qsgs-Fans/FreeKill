@@ -27,12 +27,12 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.5.3'
+        version: '6.8.3'
         host: 'windows'
         target: 'desktop'
         arch: 'win64_mingw'
         modules: 'qtmultimedia qt5compat qtshadertools'
-        tools: 'tools_opensslv3_x64'
+        tools: 'tools_opensslv3_x64 tools_mingw1310'
 
     - name: Disable PCH
       shell: bash
@@ -44,10 +44,16 @@ jobs:
         sed -i '1d' main.cpp
         sed -i '/pch.h/d' CMakeLists.txt
 
+    # - name: Setup Debug Session
+    #  uses: owenthereal/action-upterm@v1
+
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        CC: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/gcc.exe
+        CXX: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/g++.exe
+        RC: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/windres.exe
         OPENSSL_ROOT_DIR: ${{env.Qt6_Dir}}/../../Tools/OpenSSLv3/Win_x64
         OPENSSL_INCLUDE_DIR: ${{env.OPENSSL_ROOT_DIR}}/include
         OPENSSL_CRYPTO_LIBRARY: ${{env.OPENSSL_ROOT_DIR}}/bin/libcrypto-3-x64.dll
@@ -56,11 +62,7 @@ jobs:
 
     - name: Build project
       working-directory: ${{github.workspace}}/build
-      run: mingw32-make -j2
-
-   # - name: Setup tmate session
-   #   uses: mxschmitt/action-tmate@v3
-   #   timeout-minutes: 15
+      run: mingw32-make -j4
 
     - name: Compress portable program
       working-directory: ${{github.workspace}}
@@ -80,7 +82,7 @@ jobs:
         cp build/zh_CN.qm FreeKill-release
         cp build/en_US.qm FreeKill-release
         cp fk_ver FreeKill-release
-        cp ../Qt/6.5.3/mingw_64/bin/li*.dll FreeKill-release
+        cp ../Qt/6.8.3/mingw_64/bin/li*.dll FreeKill-release
         cp ../Qt/Tools/OpenSSLv3/Win_x64/bin/*.dll FreeKill-release
         7z a -t7z FreeKill-release.7z FreeKill-release -r -mx=9 -m0=LZMA2 -ms=10m -mf=on -mhc=on -mmt=on
 

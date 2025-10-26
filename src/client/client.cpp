@@ -48,12 +48,11 @@ Client::Client(QObject *parent) : QObject(parent) {
   L->dofile("lua/client/client.lua");
   L->call("CreateLuaClient", { QVariant::fromValue(this) });
 
-  db = new Sqlite3("./client/client.db", "./client/init.sql");
+  db = std::make_unique<Sqlite3>("./client/client.db", "./client/init.sql");
 }
 
 Client::~Client() {
   delete L;
-  delete db;
   delete p_ptr;
   router->getSocket()->disconnectFromHost();
   router->getSocket()->deleteLater();
@@ -187,7 +186,7 @@ void Client::changeSelf(int id) {
 }
 
 Lua *Client::getLua() { return L; }
-Sqlite3 *Client::getDatabase() { return db; }
+Sqlite3 &Client::database() { return *db; }
 
 void Client::installAESKey(const QByteArray &key) {
   router->getSocket()->installAESKey(key);

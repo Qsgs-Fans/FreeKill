@@ -30,6 +30,8 @@ if (DEFINED RPC_DEBUG)
   add_definitions(-DRPC_DEBUG)
 endif()
 
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
 find_package(OpenSSL)
 find_package(Lua)
 find_package(SQLite3)

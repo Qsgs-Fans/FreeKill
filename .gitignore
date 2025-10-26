@@ -21,6 +21,7 @@
 /.qmllint.ini
 
 # file produced by game
+*.lock
 /FreeKill
 /FreeKill.exe
 /mymod
@@ -35,6 +36,7 @@ freekill-wrap.cxx
 /freekill.server.config.json
 /freekill.server.error.log
 /freekill.server.info.log
+/freekill.server.log
 /flist.txt
 /server-list.json
 /resource_pak

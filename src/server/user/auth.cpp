@@ -55,10 +55,8 @@ AuthManagerPrivate::AuthManagerPrivate() {
   fclose(keyFile);
 }
 
-AuthManager::AuthManager(Server *parent) : QObject(parent) {
-  server = parent;
+AuthManager::AuthManager() {
   p_ptr = new AuthManagerPrivate;
-  db = parent->getDatabase();
 
   QFile file("server/rsa_pub");
   file.open(QIODevice::ReadOnly);
@@ -73,7 +71,7 @@ AuthManager::~AuthManager() noexcept {
 #define CHK(cond) if (!(cond)) { return; }
 
 void AuthManager::processNewConnection(const QCborArray &arr) {
-  ClientSocket *client = qobject_cast<ClientSocket *>(sender());
+  auto client = dynamic_cast<ClientSocket *>(sender());
   disconnect(client, &ClientSocket::message_got, this, &AuthManager::processNewConnection);
   client->timerSignup.stop();
 
@@ -89,7 +87,7 @@ void AuthManager::processNewConnection(const QCborArray &arr) {
 
   int id = obj["id"].toInt();
   updateUserLoginData(id);
-  server->createNewPlayer(client, p_ptr->name, obj["avatar"], id, p_ptr->uuid);
+  ServerInstance->createNewPlayer(client, p_ptr->name, obj["avatar"], id, p_ptr->uuid);
 }
 
 #undef CHK
@@ -119,7 +117,7 @@ bool AuthManager::loadSetupData(const QCborArray &doc) {
 
 FAIL:
   qWarning() << "Invalid setup string:" << doc.toCborValue().toDiagnosticNotation();
-  server->sendEarlyPacket(p_ptr->client, "ErrorDlg", "INVALID SETUP STRING");
+  ServerInstance->sendEarlyPacket(p_ptr->client, "ErrorDlg", "INVALID SETUP STRING");
   p_ptr->client->disconnectFromHost();
   return false;
 }
@@ -138,7 +136,7 @@ bool AuthManager::checkVersion() {
                       .arg(FK_VERSION, "1");
     }
 
-    server->sendEarlyPacket(p_ptr->client, "ErrorDlg", errmsg.toUtf8());
+    ServerInstance->sendEarlyPacket(p_ptr->client, "ErrorDlg", errmsg.toUtf8());
     p_ptr->client->disconnectFromHost();
     return false;
   }
@@ -147,13 +145,14 @@ bool AuthManager::checkVersion() {
 
 bool AuthManager::checkIfUuidNotBanned() {
   auto uuid_str = p_ptr->uuid;
+  auto &db = ServerInstance->database();
   Sqlite3::QueryResult result2 = { {} };
   if (Sqlite3::checkString(uuid_str)) {
-    result2 = db->select(QStringLiteral("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
+    result2 = db.select(QStringLiteral("SELECT * FROM banuuid WHERE uuid='%1';").arg(uuid_str));
   }
 
   if (!result2.isEmpty()) {
-    server->sendEarlyPacket(p_ptr->client, "ErrorDlg", "you have been banned!");
+    ServerInstance->sendEarlyPacket(p_ptr->client, "ErrorDlg", "you have been banned!");
     qInfo() << "Refused banned UUID:" << uuid_str;
     p_ptr->client->disconnectFromHost();
     return false;
@@ -164,6 +163,7 @@ bool AuthManager::checkIfUuidNotBanned() {
 
 bool AuthManager::checkMd5() {
   auto md5_str = p_ptr->md5;
+  auto server = ServerInstance;
   if (server->getMd5() != md5_str) {
     server->sendEarlyPacket(p_ptr->client, "ErrorMsg", "MD5 check failed!");
     server->sendEarlyPacket(
@@ -182,18 +182,18 @@ bool AuthManager::checkMd5() {
 }
 
 QMap<QString, QString> AuthManager::queryUserInfo(const QByteArray &password) {
-  auto db = server->getDatabase();
+  auto &db = ServerInstance->database();
   auto pw = password;
   auto sql_find = QStringLiteral("SELECT * FROM userinfo WHERE name='%1';")
     .arg(p_ptr->name);
   auto sql_count_uuid = QStringLiteral("SELECT COUNT() AS cnt FROM uuidinfo WHERE uuid='%1';")
     .arg(p_ptr->uuid);
 
-  auto result = db->select(sql_find);
+  auto result = db.select(sql_find);
   if (result.isEmpty()) {
-    auto result2 = db->select(sql_count_uuid);
+    auto result2 = db.select(sql_count_uuid);
     auto num = result2[0]["cnt"].toInt();
-    if (num >= server->getConfig("maxPlayersPerDevice").toInt()) {
+    if (num >= ServerInstance->getConfig("maxPlayersPerDevice").toInt()) {
       return {};
     }
     auto salt_gen = QRandomGenerator::securelySeeded();
@@ -206,12 +206,12 @@ avatar,lastLoginIp,banned) VALUES ('%1','%2','%3','%4','%5',%6);")
       .arg(p_ptr->name).arg(QString(passwordHash))
       .arg(salt).arg("liubei").arg(p_ptr->client->peerAddress())
       .arg("FALSE");
-    db->exec(sql_reg);
-    result = db->select(sql_find); // refresh result
+    db.exec(sql_reg);
+    result = db.select(sql_find); // refresh result
     auto obj = result[0];
 
     auto info_update = QString("INSERT INTO usergameinfo (id, registerTime) VALUES (%1, %2);").arg(obj["id"].toInt()).arg(QDateTime::currentSecsSinceEpoch());
-    db->exec(info_update);
+    db.exec(info_update);
   }
   return result[0];
 }
@@ -226,7 +226,7 @@ QMap<QString, QString> AuthManager::checkPassword() {
   int id;
   QByteArray salt;
   QByteArray passwordHash;
-  auto players = server->getPlayers();
+  auto players = ServerInstance->getPlayers();
 
   unsigned char buf[4096] = {0};
   RSA_private_decrypt(RSA_size(p_ptr->rsa), (const unsigned char *)password.data(),
@@ -249,12 +249,12 @@ QMap<QString, QString> AuthManager::checkPassword() {
     goto FAIL;
   }
 
-  if (name.isEmpty() || !Sqlite3::checkString(name) || !server->checkBanWord(name)) {
+  if (name.isEmpty() || !Sqlite3::checkString(name) || !ServerInstance->checkBanWord(name)) {
     error_msg = "invalid user name";
     goto FAIL;
   }
 
-  if (!server->nameIsInWhiteList(name)) {
+  if (!ServerInstance->nameIsInWhiteList(name)) {
     error_msg = "user name not in whitelist";
     goto FAIL;
   }
@@ -306,7 +306,7 @@ QMap<QString, QString> AuthManager::checkPassword() {
 FAIL:
   if (!passed) {
     qInfo() << client->peerAddress() << "lost connection:" << error_msg;
-    server->sendEarlyPacket(client, "ErrorDlg", error_msg);
+    ServerInstance->sendEarlyPacket(client, "ErrorDlg", error_msg);
     client->disconnectFromHost();
     return {};
   }
@@ -315,20 +315,21 @@ FAIL:
 }
 
 void AuthManager::updateUserLoginData(int id) {
-  server->beginTransaction();
+  ServerInstance->beginTransaction();
+  auto &db = ServerInstance->database();
   auto sql_update =
     QStringLiteral("UPDATE userinfo SET lastLoginIp='%1' WHERE id=%2;")
     .arg(p_ptr->client->peerAddress())
     .arg(id);
-  db->exec(sql_update);
+  db.exec(sql_update);
 
   auto uuid_update = QString("REPLACE INTO uuidinfo (id, uuid) VALUES (%1, '%2');")
     .arg(id).arg(p_ptr->uuid);
-  db->exec(uuid_update);
+  db.exec(uuid_update);
 
   // 来晚了，有很大可能存在已经注册但是表里面没数据的人
-  db->exec(QStringLiteral("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
+  db.exec(QStringLiteral("INSERT OR IGNORE INTO usergameinfo (id) VALUES (%1);").arg(id));
   auto info_update = QStringLiteral("UPDATE usergameinfo SET lastLoginTime=%2 where id=%1;").arg(id).arg(QDateTime::currentSecsSinceEpoch());
-  db->exec(info_update);
-  server->endTransaction();
+  db.exec(info_update);
+  ServerInstance->endTransaction();
 }

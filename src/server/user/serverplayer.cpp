@@ -289,10 +289,10 @@ void ServerPlayer::saveState(const QString &jsonData) {
   }
 
   auto hexData = jsonData.toUtf8().toHex();
-  auto gamedb = ServerInstance->getGameDatabase();
+  auto &gamedb = ServerInstance->gameDatabase();
   auto sql = QString("REPLACE INTO gameSaves (uid, mode, data) VALUES (%1,'%2',X'%3')").arg(getId()).arg(mode).arg(hexData);
 
-  gamedb->exec(sql);
+  gamedb.exec(sql);
 }
 
 QString ServerPlayer::getSaveState() {
@@ -309,7 +309,7 @@ QString ServerPlayer::getSaveState() {
 
   auto sql = QString("SELECT data FROM gameSaves WHERE uid = %1 AND mode = '%2'").arg(getId()).arg(mode);
 
-  auto result = ServerInstance->getGameDatabase()->select(sql);
+  auto result = ServerInstance->gameDatabase().select(sql);
   if (result.empty() || result[0].count("data") == 0 || result[0]["data"] == "#null") {
     return "{}";
   }
@@ -331,10 +331,10 @@ void ServerPlayer::saveGlobalState(const QString &key, const QString &jsonData) 
   }
 
   auto hexData = jsonData.toUtf8().toHex();
-  auto gamedb = ServerInstance->getGameDatabase();
+  auto &gamedb = ServerInstance->gameDatabase();
   auto sql = QString("REPLACE INTO globalSaves (uid, key, data) VALUES (%1,'%2',X'%3')").arg(getId()).arg(key).arg(hexData);
 
-  gamedb->exec(sql);
+  gamedb.exec(sql);
 }
 
 QString ServerPlayer::getGlobalSaveState(const QString &key) {
@@ -345,7 +345,7 @@ QString ServerPlayer::getGlobalSaveState(const QString &key) {
 
   auto sql = QString("SELECT data FROM globalSaves WHERE uid = %1 AND key = '%2'").arg(getId()).arg(key);
 
-  auto result = ServerInstance->getGameDatabase()->select(sql);
+  auto result = ServerInstance->gameDatabase().select(sql);
   if (result.empty() || result[0].count("data") == 0 || result[0]["data"] == "#null") {
     return "{}";
   }

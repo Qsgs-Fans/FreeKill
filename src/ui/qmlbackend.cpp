@@ -216,7 +216,7 @@ QString QmlBackend::getPublicServerList() {
   // TODO: Download new JSON via http
   if (!conf.exists()) {
     conf.open(QIODevice::WriteOnly);
-    static const char *init_conf = "{}";
+    static const char *init_conf = "[]";
     conf.write(init_conf);
     conf.close();
     return init_conf;
@@ -447,7 +447,7 @@ void QmlBackend::playBlobRecord(int id) {
 }
 
 QString QmlBackend::saveBlobRecordToFile(int id) {
-  auto result = ClientInstance->getDatabase()->select(QString(
+  auto result = ClientInstance->database().select(QString(
     "SELECT hex(recording) as r FROM myGameRecordings WHERE id = %1;").arg(id));
   auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
   auto data = qUncompress(raw);
@@ -458,7 +458,7 @@ QString QmlBackend::saveBlobRecordToFile(int id) {
 }
 
 void QmlBackend::reviewGameOverScene(int id) {
-  auto result = ClientInstance->getDatabase()->select(QString(
+  auto result = ClientInstance->database().select(QString(
     "SELECT hex(room_data) as r FROM myGameRoomData WHERE id = %1;").arg(id));
   auto raw = QByteArray::fromHex(result[0]["r"].toLatin1());
   auto data = qUncompress(raw);

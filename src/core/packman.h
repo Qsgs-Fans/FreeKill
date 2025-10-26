@@ -33,7 +33,7 @@ public:
   bool shouldUseCore();
 
 private:
-  Sqlite3 *db;
+  std::unique_ptr<Sqlite3> db;
 
   int clone(const QString &url);
   int pull(const QString &name);
