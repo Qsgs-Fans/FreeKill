@@ -47,18 +47,6 @@ jobs:
         arch: 'android_arm64_v8a'
         modules: 'qtmultimedia qt5compat qtshadertools'
 
-    # 快点TM升级到OpenSSL 3！1.1.1今年就走到生命期末尾了！
-    - name: Setup OpenSSL 1.1.1 headers
-      run: |
-        cd ..
-        wget --quiet https://www.openssl.org/source/openssl-1.1.1t.tar.gz
-        tar xf ./openssl-1.1.1t.tar.gz
-        cd openssl-1.1.1t
-        ./config
-        make include/openssl/opensslconf.h
-        cd ../FreeKill
-        cp -r ../openssl-1.1.1t/include/openssl ./include
-
     - name: Setup Android for Qt
       run: |
         cd ..
@@ -71,6 +59,19 @@ jobs:
           "platform-tools" \
           "build-tools;33.0.0" \
           "ndk;25.1.8937393"
+
+    - name: Setup OpenSSL 3.5.4
+      run: |
+        cd ..
+        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.5.4/openssl-3.5.4.tar.gz
+        tar xf ./openssl-3.5.4.tar.gz
+        cd openssl-3.5.4
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+        ./Configure android-arm64 -D__ANDROID_API__=29
+        make
+        cd ../FreeKill
+        cp -r ../openssl-3.5.4/include/openssl ./include
 
     - name: Copy android assets
       run: |
@@ -97,6 +98,7 @@ jobs:
         export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
         export ANDROID_SDK_ROOT=$(pwd)/../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
+        export FK_ANDROID_SSL_DIR=$(pwd)/../openssl-3.5.4
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
         ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
 

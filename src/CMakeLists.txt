@@ -79,15 +79,22 @@ if (WIN32)
   set(app_icon_resource_windows "${PROJECT_SOURCE_DIR}/image/icon.rc")
   list(APPEND freekill_EXESRCS ${app_icon_resource_windows})
 elseif (ANDROID)
+  if (DEFINED ENV{FK_ANDROID_SSL_DIR})
+    set(SSL_DIR $ENV{FK_ANDROID_SSL_DIR})
+    message(STATUS "Using SSL libraries from environment variable: ${SSL_DIR}")
+    set(CRYPTO_LIB ${SSL_DIR}/libcrypto.so)
+    set(SSL_LIB ${SSL_DIR}/libssl.so)
+  else ()
+    set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto.so)
+    set(SSL_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssl.so)
+  endif ()
   set(LUA_LIB ${PROJECT_SOURCE_DIR}/lib/android/liblua54.so)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/android/libsqlite3.so)
-  set(CRYPTO_LIB ${PROJECT_SOURCE_DIR}/lib/android/libcrypto.so)
-  set(SSL_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssl.so)
-  set(SSH_LIB ${PROJECT_SOURCE_DIR}/lib/android/libssh2.so)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/android/libgit2.so)
+
   set_target_properties(FreeKill PROPERTIES
     QT_ANDROID_PACKAGE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/android
-    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${SSH_LIB};${GIT_LIB}"
+    QT_ANDROID_EXTRA_LIBS "${LUA_LIB};${SQLITE3_LIB};${CRYPTO_LIB};${SSL_LIB};${GIT_LIB}"
   )
   list(REMOVE_ITEM QT_LIB Qt6::QuickControls2)
 elseif (APPLE)
