@@ -20,7 +20,7 @@ using namespace fkShell;
  #ifndef Q_OS_ANDROID
   #include <QQuickStyle>
  #else
-  #include <QNativeInterface>
+  // #include <QNativeInterface>
  #endif
  #include "ui/qmlbackend.h"
 #endif

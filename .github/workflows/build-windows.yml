@@ -32,7 +32,7 @@ jobs:
         target: 'desktop'
         arch: 'win64_mingw'
         modules: 'qtmultimedia qt5compat qtshadertools'
-        tools: 'tools_opensslv3_x64'
+        tools: 'tools_opensslv3_x64 tools_mingw1310'
 
     - name: Disable PCH
       shell: bash
