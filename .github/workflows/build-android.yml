@@ -47,7 +47,7 @@ jobs:
         cp -r ../openssl-3.5.4/include/openssl ./include
 
     - name: Setup Debug Session
-      uses: csexton/debugger-action@master
+      uses: owenthereal/action-upterm@v1
 
     - name: Build libgit2 1.9.0
       run: |
