@@ -328,7 +328,7 @@ int freekill_main(int argc, char *argv[]) {
 
   // 安卓：从Qt 6.8起需要别的办法拿activity
   // 参考文献 https://forum.qt.io/topic/159350/qt-6-8-0-replacement-for-qtnative-activity
-  QJniObject::callStaticObjectMethod<void>(
+  QJniObject::callStaticMethod<void>(
     "org/notify/FreeKill/Helper", "SetActivity",
     "(Landroid/app/Activity;)V", QNativeInterface::QAndroidApplication::context().object()
   );
