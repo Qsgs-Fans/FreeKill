@@ -44,9 +44,8 @@ jobs:
         sed -i '1d' main.cpp
         sed -i '/pch.h/d' CMakeLists.txt
 
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      timeout-minutes: 15
+    - name: Setup Debug Session
+      uses: owenthereal/action-upterm@v1
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
