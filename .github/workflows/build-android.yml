@@ -96,7 +96,7 @@ jobs:
         version: '6.8.3'
         host: 'linux'
         target: 'desktop'
-        arch: 'gcc_64'
+        arch: 'linux_gcc_64'
         modules: 'qtmultimedia qt5compat qtshadertools'
 
     - name: Install Qt for Android
