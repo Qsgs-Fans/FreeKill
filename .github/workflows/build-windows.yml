@@ -44,13 +44,16 @@ jobs:
         sed -i '1d' main.cpp
         sed -i '/pch.h/d' CMakeLists.txt
 
-    - name: Setup Debug Session
-      uses: owenthereal/action-upterm@v1
+    # - name: Setup Debug Session
+    #  uses: owenthereal/action-upterm@v1
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
       env:
         CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        CMAKE_C_COMPILER: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/gcc.exe
+        CMAKE_CXX_COMPILER: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/g++.exe
+        CMAKE_RC_COMPILER: ${{env.Qt6_Dir}}/../../Tools/mingw1310_64/bin/windres.exe
         OPENSSL_ROOT_DIR: ${{env.Qt6_Dir}}/../../Tools/OpenSSLv3/Win_x64
         OPENSSL_INCLUDE_DIR: ${{env.OPENSSL_ROOT_DIR}}/include
         OPENSSL_CRYPTO_LIBRARY: ${{env.OPENSSL_ROOT_DIR}}/bin/libcrypto-3-x64.dll
@@ -59,7 +62,7 @@ jobs:
 
     - name: Build project
       working-directory: ${{github.workspace}}/build
-      run: mingw32-make -j2
+      run: mingw32-make -j4
 
     - name: Compress portable program
       working-directory: ${{github.workspace}}
