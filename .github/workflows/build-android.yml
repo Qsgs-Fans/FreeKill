@@ -193,12 +193,12 @@ jobs:
     - name: Rename APK
       run: |
         mv ${{ steps.sign_app.outputs.signedReleaseFile }} \
-          apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
+          apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apK
 
     - name: Upload Release APK
       uses: softprops/action-gh-release@v1
       with:
         token: ${{ secrets.MY_TOKEN }}
         tag_name: ${{ steps.previoustag.outputs.tag }}
-        files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
+        files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apK
 
