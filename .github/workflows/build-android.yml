@@ -31,20 +31,21 @@ jobs:
           "build-tools;33.0.0" \
           "ndk;25.1.8937393"
 
-    - name: Setup OpenSSL 3.5.4
+    - name: Setup OpenSSL 3.0.18
       run: |
         cd ..
-        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.5.4/openssl-3.5.4.tar.gz
-        tar xf ./openssl-3.5.4.tar.gz
-        cd openssl-3.5.4
+        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.0.18/openssl-3.0.18.tar.gz
+        tar xf ./openssl-3.0.18.tar.gz
+        cd openssl-3.0.18
 
         export ANDROID_SDK_ROOT=$(pwd)/../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
-        ./Configure android-arm64 -D__ANDROID_API__=29
-        make -j$(nproc) SHLIB_VERSION_NUMBER= build_libs
+        ./Configure android-arm64 -D__ANDROID_API__=29 -DOPENSSL_NO_VERSIONING
 
         # 如同Qt文档所言 手动为库添加后缀 避免和系统ssl冲突
+        make -j$(nproc) SHLIB_VERSION_NUMBER= build_libs
+
         cp libcrypto.so libcrypto_3.so
         cp libssl.so libssl_3.so
         patchelf --set-soname libcrypto_3.so libcrypto_3.so
@@ -52,7 +53,7 @@ jobs:
         patchelf --replace-needed libcrypto.so libcrypto_3.so libssl_3.so
 
         cd ../FreeKill
-        cp -r ../openssl-3.5.4/include/openssl ./include
+        cp -r ../openssl-3.0.18/include/openssl ./include
 
     #- name: Setup Debug Session
     #  uses: owenthereal/action-upterm@v1
@@ -68,7 +69,7 @@ jobs:
         export ANDROID_SDK_ROOT=$(pwd)/../../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
         PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
-        SSL_DIR=$(pwd)/../../openssl-3.5.4
+        SSL_DIR=$(pwd)/../../openssl-3.0.18
         cmake .. \
           -DBUILD_SHARED_LIBS=ON \
           -DBUILD_TESTS=OFF \
@@ -80,7 +81,7 @@ jobs:
           -DOPENSSL_INCLUDE_DIR="${SSL_DIR}/include" \
           -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto_3.so" \
           -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl_3.so"
-        make
+        make -j$(nproc)
         cp libgit2.so ${SSL_DIR}
 
     - name: Install swig
@@ -92,7 +93,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.5.3'
+        version: '6.8.5'
         host: 'linux'
         target: 'desktop'
         arch: 'gcc_64'
@@ -103,7 +104,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.5.3'
+        version: '6.8.5'
         host: 'linux'
         target: 'android'
         arch: 'android_arm64_v8a'
@@ -134,7 +135,7 @@ jobs:
         export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
         export ANDROID_SDK_ROOT=$(pwd)/../android
         export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
-        export FK_ANDROID_SSL_DIR=$(pwd)/../openssl-3.5.4
+        export FK_ANDROID_SSL_DIR=$(pwd)/../openssl-3.0.18
         sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
         ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
 
