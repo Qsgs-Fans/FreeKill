@@ -116,7 +116,7 @@ function ServerRoomBase:run()
     table.insert(self.players, player)
   end
 
-  local mode = Fk.game_modes[self.settings.gameMode]
+  local mode = Fk.game_modes[self:getSettings('gameMode')]
   local logic = (mode.logic and mode.logic() or self.logic_klass):new(self)
   self.logic = logic
   if mode.rule then self:addSkill(mode.rule) end
@@ -271,7 +271,7 @@ function ServerRoomBase:hasSkill(skill)
 end
 
 function ServerRoomBase:shouldUpdateWinRate()
-  if self.settings.enableFreeAssign then
+  if self:getSettings("enableFreeAssign") then
     return false
   end
   if os.time() - self.start_time < 45 then
@@ -280,7 +280,7 @@ function ServerRoomBase:shouldUpdateWinRate()
   for _, p in ipairs(self.players) do
     if p.id < 0 then return false end
   end
-  return Fk.game_modes[self.settings.gameMode]:countInFunc(self)
+  return Fk.game_modes[self:getSettings('gameMode')]:countInFunc(self)
 end
 
 --- 获取一名角色一局游戏的胜负结果。
@@ -312,7 +312,7 @@ function ServerRoomBase:gameOver(winner)
   end
 
   self:doBroadcastNotify("GameOver", winner)
-  fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self.settings.gameMode, winner, os.time() - self.start_time))
+  fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self:getSettings('gameMode'), winner, os.time() - self.start_time))
 
   self.game_started = false
   self.game_finished = true
@@ -321,7 +321,7 @@ function ServerRoomBase:gameOver(winner)
   if self:shouldUpdateWinRate() then
     for _, p in ipairs(self.players) do
       local id = p.id
-      local mode = self.settings.gameMode
+      local mode = self:getSettings('gameMode')
       local result
 
       if p.id > 0 then
@@ -395,7 +395,7 @@ function ServerRoomBase:handleSurrender(id, data)
   if not player then return end
 
   player.surrendered = true
-  if Fk.game_modes[self.settings.gameMode]:getWinner(player) == "" then
+  if Fk.game_modes[self:getSettings('gameMode')]:getWinner(player) == "" then
     player.surrendered = false
     return
   end
@@ -502,6 +502,45 @@ function ServerRoomBase:serialize(player)
     o.you = player.id
   end
   return o
+end
+
+function ServerRoomBase:getSessionId()
+  if type(self.room.getSessionId) ~= "function" then
+    fk.qWarning("Room::getSessionId doesn't exist, please use freekill-asio 0.0.8+")
+    return 0
+  end
+
+  return self.room:getSessionId()
+end
+
+function ServerRoomBase:getSessionData()
+  if type(self.room.getSessionData) ~= "function" then
+    fk.qWarning("Room::getSessionData doesn't exist, please use freekill-asio 0.0.8+")
+    return {}
+  end
+
+  local data = self.room:getSessionData()
+  local ok, result = pcall(json.decode, data or "{}")
+  if ok then
+    return result
+  else
+    fk.qWarning("Failed to decode save data: " .. data)
+    return {}
+  end
+end
+
+function ServerRoomBase:setSessionData(data)
+  if type(self.room.setSessionData) ~= "function" then
+    fk.qWarning("Room::setSessionData doesn't exist, please use freekill-asio 0.0.8+")
+    return 0
+  end
+
+  local ok, jsonData = pcall(json.encode, data)
+  if ok then
+    self.room:setSessionData(jsonData)
+  else
+    fk.qWarning("Failed to encode global save data: " .. data)
+  end
 end
 
 return ServerRoomBase

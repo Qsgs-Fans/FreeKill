@@ -38,7 +38,7 @@ fk.CardRespondFinished = RespondCardEvent:subclass("fk.CardRespondFinished")
 ---@field public unoffsetableList? ServerPlayer[] @ 这些角色不可抵消此牌
 ---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
 ---@field public additionalRecover? integer @ 额外回复值
----@field public extra_data? any @ 额外数据（如目标过滤等）
+---@field public extra_data? UseExtraData | table @ 额外数据（如目标过滤等）
 ---@field public cardsResponded? Card[] @ 响应此牌的牌
 ---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
 ---@field public damageDealt? table<ServerPlayer, number> @ 此牌造成的伤害
@@ -188,9 +188,10 @@ end
 
 --- 判断使用事件是否是在使用手牌
 ---@param player ServerPlayer @ 要判断的使用者
+---@param realUseEvent? GameEvent.UseCard @ 指定使用事件，用于记录器判断
 ---@return boolean
-function UseCardData:isUsingHandcard(player)
-  local useEvent = player.room.logic:getCurrentEvent()
+function UseCardData:isUsingHandcard(player, realUseEvent)
+  local useEvent = realUseEvent or player.room.logic:getCurrentEvent()
   local cards = Card:getIdList(self.card)
   if #cards == 0 then return false end
   local moveEvents = useEvent:searchEvents(GameEvent.MoveCards, 1, function(e)
@@ -212,9 +213,10 @@ end
 
 --- 判断打出事件是否是在打出手牌
 ---@param player ServerPlayer @ 要判断的使用者
+---@param realRespondEvent? GameEvent.RespondCard @ 指定使用事件，用于记录器判断
 ---@return boolean
-function RespondCardData:isUsingHandcard(player)
-  local useEvent = player.room.logic:getCurrentEvent()
+function RespondCardData:isUsingHandcard(player, realRespondEvent)
+  local useEvent = realRespondEvent or player.room.logic:getCurrentEvent()
   local cards = Card:getIdList(self.card)
   if #cards == 0 then return false end
   local moveEvents = useEvent:searchEvents(GameEvent.MoveCards, 1, function(e)
@@ -285,7 +287,7 @@ fk.CardUseFinished = UseCardEvent:subclass("fk.CardUseFinished")
 ---@field public nullified? boolean @ 是否对此目标无效
 ---@field public cancelled? boolean @ 是否已被取消
 ---@field public fixedResponseTimesList? table<ServerPlayer, integer> @ 某角色响应此事件需要的牌张数（如杀响应决斗），键为角色，值为响应张数
----@field public extraData? UseExtraData | any @ 额外数据
+---@field public extra_data? UseExtraData | table @ 额外数据
 
 --- 使用牌的数据
 ---@class AimData: AimDataSpec, TriggerData
@@ -394,7 +396,7 @@ function AimData:addTarget(player, sub, setDone)
     type = "#TargetAdded",
     from = self.from.id,
     to = table.map(player, Util.IdMapper),
-    arg = self.card:toLogString(),
+    arg = self.card,
   }
 end
 
@@ -436,7 +438,7 @@ function AimData:cancelTarget(target)
     type = "#TargetCancelled",
     from = self.from.id,
     to = actural,
-    arg = self.card:toLogString(),
+    arg = self.card,
   }
 end
 
@@ -463,7 +465,7 @@ function AimData:cancelCurrentTarget()
     type = "#TargetCancelled",
     from = self.from.id,
     to = { self.to.id },
-    arg = self.card:toLogString(),
+    arg = self.card,
   }
   return true
 end
@@ -599,7 +601,7 @@ fk.TargetConfirmed = AimEvent:subclass("fk.TargetConfirmed")
 ---@field public responseToEvent? CardEffectData @ 响应事件目标
 ---@field public additionalDamage? integer @ 额外伤害值（如酒之于杀）
 ---@field public additionalRecover? integer @ 额外回复值
----@field public extra_data? any @ 额外数据（如目标过滤等）
+---@field public extra_data? UseExtraData | table @ 额外数据（如目标过滤等）
 ---@field public cardsResponded? Card[] @ 响应此牌的牌
 ---@field public disresponsive? boolean @ 是否不可响应
 ---@field public unoffsetable? boolean @ 是否不可抵消

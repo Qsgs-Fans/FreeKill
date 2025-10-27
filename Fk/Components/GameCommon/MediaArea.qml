@@ -5,6 +5,7 @@ Item {
   id: root
   property string source: ""
   property bool hasDeputy: false //是否使用dual这个功能还是相信后人智慧吧
+  property int fillMode: Image.PreserveAspectCrop
 
   Loader {
     id: imgLoader
@@ -12,7 +13,7 @@ Item {
     sourceComponent: {
       if (root.source.endsWith(".gif")) {
         return animated;
-      } else if (root.source.endsWith(".mp4")) {
+      } else if (root.source.endsWith(".mp4" || root.source.endsWith(".avi") || root.source.endsWith(".mov") || root.source.endsWith(".mkv"))) {
         return videoImg;
       } else {
         return staticImg;
@@ -24,7 +25,7 @@ Item {
     id: staticImg
     Image {
       anchors.fill: parent
-      fillMode: Image.PreserveAspectCrop
+      fillMode: root.fillMode
       source: root.source
     }
   }
@@ -33,7 +34,7 @@ Item {
     id: animated
     AnimatedImage {
       anchors.fill: parent
-      fillMode: Image.PreserveAspectCrop
+      fillMode: root.fillMode
       source: root.source
       playing: true
     }
@@ -45,7 +46,7 @@ Item {
       anchors.fill: parent
       source: root.source
       loops: MediaPlayer.Infinite
-      fillMode: Image.PreserveAspectCrop
+      fillMode: root.fillMode
       muted: true
 
       Component.onCompleted: play()

@@ -67,6 +67,50 @@ function AbstractRoom:getCurrent()
   return nil
 end
 
+--- 在判定或使用流程中，将使用或判定牌应用锁视转化，并返回转化后的牌
+---@param id integer @ 牌id
+---@param player Player @ 使用者或判定角色
+---@param judgeEvent boolean? @ 是否为判定事件
+---@return Card @ 返回应用锁视后的牌
+function AbstractRoom:filterCard(id, player, judgeEvent)
+  local card = Fk:getCardById(id, true)
+  local filters = self.status_skills[FilterSkill] or Util.DummyTable---@type FilterSkill[]
+
+  if #filters == 0 then
+    self.filtered_cards[id] = nil
+    return card
+  end
+
+  local modify = false
+  for _, f in ipairs(filters) do
+    if f:cardFilter(card, player, judgeEvent) then
+      local new_card = f:viewAs(player, card)
+      if new_card then
+        modify = true
+        local skill_name = f:getSkeleton().name
+        new_card.id = id
+        new_card.skillName = skill_name
+        if self:isInstanceOf(Room) and not f.mute then
+          ---@cast self Room
+          ---@cast player ServerPlayer
+          player:broadcastSkillInvoke(skill_name)
+          self:doAnimate("InvokeSkill", {
+            name = skill_name,
+            player = player.id,
+            skill_type = f.anim_type,
+          })
+        end
+        card = new_card
+        self.filtered_cards[id] = card
+      end
+    end
+  end
+  if not modify then
+    self.filtered_cards[id] = nil
+  end
+  return card
+end
+
 
 function AbstractRoom:serialize()
   local o = RoomBase.serialize(self)
@@ -92,7 +136,7 @@ end
 ---@param mode string @ 需要判定的模式类型
 ---@return boolean
 function AbstractRoom:isGameMode(mode)
-  return table.contains(Fk.main_mode_list[mode] or {}, self.settings.gameMode)
+  return table.contains(Fk.main_mode_list[mode] or {}, self:getSettings('gameMode'))
 end
 
 return AbstractRoom

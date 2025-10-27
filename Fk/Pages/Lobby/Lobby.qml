@@ -177,7 +177,7 @@ W.PageBase {
     width: parent.width
 
     Rectangle {
-      Layout.fillHeight: true
+      Layout.preferredHeight: 54
       Layout.preferredWidth: childrenRect.width + 72
 
       gradient: Gradient {
@@ -195,34 +195,184 @@ W.PageBase {
     }
 
     Item { Layout.fillWidth: true }
-    Button {
-      text: Lua.tr("Generals Overview")
-      onClicked: {
-        App.enterNewPage("Fk.Pages.Common", "GeneralsOverview");
+
+    Repeater {
+      Layout.alignment: Qt.AlignVCenter
+      model: ListModel {
+        id: preferredButtonsModel
+      }
+      delegate: W.ButtonContent {
+        text: Lua.tr(name)
+        font.bold: true
+        icon.source: iconUrl
+        plainButton: false
+
+        onClicked: root.handleClickButton(model)
       }
     }
-    Button {
-      text: Lua.tr("Cards Overview")
+
+    W.ButtonContent {
+      Layout.alignment: Qt.AlignVCenter
+      plainButton: false
+      text: "更多..."
+      font.bold: true
+      icon.source: "http://175.178.66.93/symbolic/categories/emoji-symbols-symbolic.svg"
       onClicked: {
-        App.enterNewPage("Fk.Pages.Common", "CardsOverview");
+        morePagesDrawer.open();
       }
     }
-    Button {
-      text: Lua.tr("Modes Overview")
-      onClicked: {
-        App.enterNewPage("Fk.Pages.Common", "ModesOverview");
+
+    Item { Layout.preferredWidth: 2 }
+  }
+
+  Drawer {
+    id: morePagesDrawer
+    width: 0.6 * Config.winWidth
+    height: Config.winHeight
+    edge: Qt.RightEdge
+
+    dim: false
+
+    background: Rectangle {
+      color: "#DDF1F1F2"
+      gradient: Gradient {
+        orientation: Gradient.Horizontal
+        GradientStop { position: 0.0; color: "transparent" }
+        GradientStop { position: 0.2; color: "#DDF1F1F2" }
       }
     }
-    Button {
-      text: Lua.tr("Replay")
-      onClicked: {
-        App.enterNewPage("Fk.Pages.Replay", "Replay");
-      }
-    }
-    Button {
-      text: Lua.tr("About")
-      onClicked: {
-        App.enterNewPage("Fk.Pages.Common", "About");
+
+    Item {
+      // 经典Popup要套壳个Item 烂QML
+      id: moreManager
+      property bool isManageMode: false
+
+      width: parent.width / Config.winScale
+      height: parent.height / Config.winScale
+      scale: Config.winScale
+      anchors.centerIn: parent
+
+      ColumnLayout {
+        height: parent.height - 20
+        width: parent.width * 0.8 - 80//- 40 - 40
+        anchors.right: parent.right
+        anchors.rightMargin: 40
+
+        ListView {
+          id: morePagesListView
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          clip: true
+
+          spacing: 16
+
+          model: ListModel {
+            id: morePagesModel
+          }
+
+          delegate: ColumnLayout {
+            id: morePagesItem
+            width: morePagesListView.width
+
+            Text {
+              text: Lua.tr(pkname)
+              font.pixelSize: 18
+              // font.bold: true
+              textFormat: Text.RichText
+              wrapMode: Text.WrapAnywhere
+              Layout.fillWidth: true
+            }
+
+            Rectangle {
+              Layout.fillWidth: true
+              Layout.preferredHeight: 2
+              color: "black"
+              gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.4; color: "black" }
+                GradientStop { position: 0.6; color: "transparent" }
+              }
+            }
+
+            Item {
+              Layout.preferredHeight: 4
+            }
+
+            Grid {
+              rowSpacing: 8
+              columnSpacing: 8
+              columns: 3
+              Layout.leftMargin: 2
+
+              Repeater {
+                model: pages
+                delegate: W.ButtonContent {
+                  text: Lua.tr(name)
+                  font.bold: true
+                  icon.source: iconUrl
+                  width: morePagesItem.width / 3 - 8
+                  plainButton: false
+
+                  onClicked: {
+                    if (moreManager.isManageMode) {
+                      const idx = Config.preferredButtons.indexOf(name);
+                      if (idx !== -1) {
+                        Config.preferredButtons.splice(idx, 1);
+                      } else {
+                        Config.preferredButtons.unshift(name);
+                        if (Config.preferredButtons.length > 5) {
+                          Config.preferredButtons.pop();
+                        }
+                      }
+                      Config.saveConf();
+                      root.rearrangePreferred();
+                    } else {
+                      morePagesDrawer.close();
+                      root.handleClickButton(model);
+                    }
+                  }
+
+                  backgroundColor: {
+                    if (moreManager.isManageMode && Config.preferredButtons.includes(name)) {
+                      return "gold";
+                    }
+                    return "#E6E6E7";
+                  }
+
+                  Behavior on backgroundColor {
+                    ColorAnimation { duration: 200 } }
+                }
+              }
+            }
+          }
+        }
+
+        Rectangle {
+          Layout.fillWidth: true
+          Layout.preferredHeight: 2
+          color: "black"
+          gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.4; color: "transparent" }
+            GradientStop { position: 0.6; color: "black" }
+          }
+        }
+
+        Item {
+          Layout.preferredHeight: 4
+        }
+
+        W.ButtonContent {
+          Layout.alignment: Qt.AlignRight
+          Layout.preferredWidth: parent.width / 3 - 4
+          text: moreManager.isManageMode ? "完成修改" : "添加到下方"
+          font.bold: true
+          icon.source: "http://175.178.66.93/symbolic/places/user-bookmarks-symbolic.svg"
+          plainButton: false
+          onClicked: {
+            moreManager.isManageMode = !moreManager.isManageMode;
+          }
+        }
       }
     }
   }
@@ -319,12 +469,55 @@ W.PageBase {
     Config.roomCapacity = data[0];
     Config.roomTimeout = data[1] - 1;
     const roomSettings = data[2];
-    Config.enableFreeAssign = roomSettings.enableFreeAssign;
+    // Config.enableFreeAssign = roomSettings.enableFreeAssign;
     Config.heg = roomSettings.gameMode.includes('heg_mode');
+    let displayName = roomSettings.roomName;
+    if (roomSettings.roomId !== undefined) {
+      displayName += "[{id}]".replace("{id}", roomSettings.roomId);
+    }
+    Config.headerName = Lua.tr("Current room: %1").arg(displayName);
     App.enterNewPage("Fk.Pages.Common", "RoomPage", {
       gameComponent: Qt.createComponent("Fk.Pages.Common", "WaitingRoom"),
     });
     App.setBusy(false);
+  }
+
+  function handleClickButton(data) {
+    const { popup, qml } = data;
+    if (!popup) {
+      if (qml.uri && qml.name) {
+        App.enterNewPage(qml.uri, qml.name);
+      } else {
+        App.enterNewPage(Cpp.path + "/" + qml.url);
+      }
+    } else {
+      let comp;
+      if (qml.uri && qml.name) {
+        comp = Qt.createComponent(qml.uri, qml.name);
+      } else {
+        comp = Qt.createComponent(Cpp.path + "/" + qml.url);
+      }
+      lobby_drawer.sourceComponent = comp;
+      lobby_drawer.open();
+    }
+  }
+
+  function rearrangePreferred(){
+    const preferredOrder = [];
+    preferredButtonsModel.clear();
+    for (let i = 0; i < morePagesModel.count; i++) {
+      const v = morePagesModel.get(i);
+      for (let j = 0; j < v.pages.count; j++) {
+        const vp = v.pages.get(j);
+        const vi = Config.preferredButtons.indexOf(vp.name)
+        if (vi !== -1) {
+          preferredOrder[vi] = vp;
+        }
+      }
+    }
+    for (const vp of preferredOrder) {
+      preferredButtonsModel.append(vp);
+    }
   }
 
   Component.onCompleted: {
@@ -333,6 +526,83 @@ W.PageBase {
 
     addCallback(Command.EnterRoom, handleEnterRoom);
 
+    const customPagesSpecs = Lua.fn(`function()
+      local pkgs = table.map(table.filter(Fk.package_names, function(name)
+        return Fk.packages[name].customPages ~= nil
+      end), function(name)
+        return {
+          name = name,
+          pages = Fk.packages[name].customPages
+        }
+      end)
+
+      return pkgs
+    end`)();
+
+    customPagesSpecs.unshift({
+      name: "default",
+      pages: [
+        {
+          name: "Modes Overview",
+          iconUrl: "http://175.178.66.93/symbolic/categories/applications-games-symbolic.svg",
+          qml: {
+            uri: "Fk.Pages.Common",
+            name: "ModesOverview",
+          }
+        },
+        {
+          name: "Replay",
+          iconUrl: "http://175.178.66.93/symbolic/categories/emoji-recent-symbolic.svg",
+          qml: {
+            uri: "Fk.Pages.Replay",
+            name: "Replay",
+          }
+        },
+        {
+          name: "Settings",
+          iconUrl: "http://175.178.66.93/symbolic/categories/applications-system-symbolic.svg",
+          popup: true,
+          qml: {
+            uri: "Fk.Pages.Lobby",
+            name: "EditProfile",
+          }
+        },
+        {
+          name: "About",
+          iconUrl: "http://175.178.66.93/symbolic/actions/help-about-symbolic.svg",
+          qml: {
+            uri: "Fk.Pages.Common",
+            name: "About",
+          }
+        },
+      ],
+    })
+
+    for (const v of customPagesSpecs) {
+      morePagesModel.append({
+        pkname: v.name,
+        pages: v.pages,
+      });
+    }
+    // const preferredOrder = [];
+    // for (const v of customPagesSpecs) {
+    //   morePagesModel.append({
+    //     pkname: v.name,
+    //     pages: v.pages,
+    //   });
+    //   for (const vp of v.pages) {
+    //     const vi = Config.preferredButtons.indexOf(vp.name)
+    //     if (vi !== -1) {
+    //       preferredOrder[vi] = vp;
+    //     }
+    //   }
+    // }
+    // for (const vp of preferredOrder) {
+    //   preferredButtonsModel.append(vp);
+    // }
+    rearrangePreferred();
+
+    Db.tryInitModeSettings();
     App.showToast(Lua.tr("$WelcomeToLobby"));
   }
 }

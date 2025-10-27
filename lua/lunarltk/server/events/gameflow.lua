@@ -101,7 +101,7 @@ function DrawInitial:main()
     local draw_data = DrawInitialData:new{ num = 4 }
     room.logic:trigger(fk.DrawInitialCards, player, draw_data)
     luck_data[player.id] = draw_data
-    luck_data[player.id].luckTime = room.settings.luckTime
+    luck_data[player.id].luckTime = room:getSettings('luckTime')
     if player.id < 0 then -- Robot
       luck_data[player.id].luckTime = 0
     end
@@ -110,7 +110,7 @@ function DrawInitial:main()
     end
   end
 
-  if room.settings.luckTime <= 0 then
+  if room:getSettings('luckTime') <= 0 then
     table.shuffle(room.draw_pile)
     for _, id in ipairs(room.draw_pile) do
       room:setCardArea(id, Card.DrawPile, nil)
@@ -126,7 +126,7 @@ function DrawInitial:main()
 
   local request = Request:new(room.alive_players, "AskForSkillInvoke")
   for _, p in ipairs(room.alive_players) do
-    request:setData(p, { "AskForLuckCard", "#AskForLuckCard:::" .. room.settings.luckTime })
+    request:setData(p, { "AskForLuckCard", "#AskForLuckCard:::" .. room:getSettings('luckTime') })
   end
   request.focus_text = "AskForLuckCard"
   request.luck_data = luck_data

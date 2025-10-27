@@ -208,6 +208,7 @@ PhotoBase {
 
   MarkArea {
     id: markAreaItem
+    visible: !((root.dead && !root.rest) || root.dying || root.surrendered)
 
     anchors.bottom: equipAreaItem.top
     x: 23

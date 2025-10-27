@@ -21,10 +21,10 @@ dofile "lua/server/scheduler.lua"
 dbg = Util.DummyFunc
 debug.debug = Util.DummyFunc
 
---[[
+---[[
 local deadline_tab = setmetatable({}, { __mode = "k" })
 
-local TIMEOUT = 10
+local TIMEOUT = 15
 local infinity = 1 / 0
 local function deadLoopCheck()
   local co = coroutine.running()

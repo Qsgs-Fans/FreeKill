@@ -42,6 +42,8 @@ MarkEnum.MarkArmorNullified = "mark__armor_nullified"
 MarkEnum.MarkArmorInvalidFrom = "mark__armor_invalid_from"
 MarkEnum.MarkArmorInvalidTo = "mark__armor_invalid_to"
 
+---@alias TempMarkSuffix "-round" | "-turn" | "-phase" | "-noclear"
+
 ---角色标记的清除标记后缀
 ---
 ---phase：阶段结束后
@@ -49,7 +51,9 @@ MarkEnum.MarkArmorInvalidTo = "mark__armor_invalid_to"
 ---turn：回合结束后
 ---
 ---round：轮次结束后
-MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round" }
+---
+---noclear: 不能被一键清除（如死亡时清理标记）
+MarkEnum.TempMarkSuffix = { "-phase", "-turn", "-round", "-noclear" }
 
 ---卡牌标记的清除标记后缀
 ---

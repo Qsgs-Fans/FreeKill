@@ -42,6 +42,8 @@ Game.PokerCard {
 
   property int holding_event_id: 0
 
+  hoverHandler.cursorShape: selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
+
   signal toggleDiscards()
   signal thrown()
   signal entered()

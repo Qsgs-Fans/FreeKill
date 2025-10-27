@@ -81,6 +81,14 @@ function RoomBase:getBanner(name)
   return v
 end
 
+-- 读取key对应的配置项
+function RoomBase:getSettings(key)
+  local t = self.settings
+  if t._mode and t._mode[key] ~= nil then return t._mode[key] end
+  if t._game and t._game[key] ~= nil then return t._game[key] end
+  return t[key]
+end
+
 -- 底层逻辑这一块之序列化和反序列化
 
 function RoomBase:serialize()

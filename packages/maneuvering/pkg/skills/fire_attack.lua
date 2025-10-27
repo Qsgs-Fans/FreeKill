@@ -36,6 +36,20 @@ skill:addEffect("cardskill", {
       pattern = ".|.|" .. showCard:getSuitString(),
       prompt = "#fire_attack-discard:" .. to.id .. "::" .. showCard:getSuitString()
     }
+
+    --火攻特化的特殊效果
+    if effect.extra_data and effect.extra_data.extra_effect then
+      local extra_effects = effect.extra_data.extra_effect or {}
+      for k, func in pairs(extra_effects) do
+        if type(func) == "function" then
+          params = func(room, effect, showCard, params)
+        end
+      end
+      if not params.skill_name then
+        params.skill_name = skill.name
+      end
+    end
+
     local cards = room:askToDiscard(from, params)
     if #cards > 0 and not to.dead then
       room:damage({

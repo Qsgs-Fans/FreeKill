@@ -403,7 +403,8 @@ Item {
 
   function loadConfig() {
     if (serverModel.count > 0) { return; }
-    const serverList = JSON.parse(Backend.getPublicServerList());
+    let serverList = JSON.parse(Backend.getPublicServerList());
+    if (!(serverList instanceof Array)) serverList = [];
     serverList.unshift(...Config.favoriteServers);
     for (const server of serverList) {
       let { addr, port, name, username, password } = server;

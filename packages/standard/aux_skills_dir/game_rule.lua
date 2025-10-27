@@ -41,8 +41,8 @@ gameRule:addEffect(fk.AskForPeaches, {
       end
 
       cardNames = table.filter(cardNames, function (cardName)
-        -- FIXME: 应该印一个“任何情况都适合”的牌，或者说根本不该有这个过滤
         local cardCloned = Fk:cloneCard(cardName)
+        cardCloned:setVSPattern(nil, nil, ".")
         return not (player:prohibitUse(cardCloned) or player:isProhibited(dyingPlayer, cardCloned))
       end)
       if #cardNames == 0 then return end
@@ -102,7 +102,7 @@ gameRule:addEffect(fk.GameOverJudge, {
       return false
     end
 
-    local winner = Fk.game_modes[room.settings.gameMode]:getWinner(player)
+    local winner = Fk.game_modes[room:getSettings('gameMode')]:getWinner(player)
     if winner ~= "" then
       room:gameOver(winner)
       return true
@@ -124,7 +124,7 @@ gameRule:addEffect(fk.BuryVictim, {
     if room.tag["SkipNormalDeathProcess"] or player.rest > 0 or (data.extra_data and data.extra_data.skip_reward_punish) then
       return false
     end
-    Fk.game_modes[room.settings.gameMode]:deathRewardAndPunish(player, data.killer)
+    Fk.game_modes[room:getSettings('gameMode')]:deathRewardAndPunish(player, data.killer)
   end,
 })
 

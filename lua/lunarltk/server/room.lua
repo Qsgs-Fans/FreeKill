@@ -68,13 +68,13 @@ function Room:initialize(_room)
   self.extra_turn_list = {}
   self.general_pile = {}
 
-  self.disabled_packs = self.settings.disabledPack
-  if not Fk.game_modes[self.settings.gameMode] then
+  self.disabled_packs = self:getSettings('disabledPack')
+  if not Fk.game_modes[self:getSettings('gameMode')] then
     self.settings.gameMode = "aaa_role_mode"
   end
 
-  table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self.settings.gameMode])
-  self.disabled_generals = self.settings.disabledGenerals
+  table.insertTable(self.disabled_packs, Fk.game_mode_disabled[self:getSettings('gameMode')])
+  self.disabled_generals = self:getSettings('disabledGenerals')
 
   self:addCallback("prelight", self.handlePrelight)
   self:addCallback("updatemini", self.handleUpdateMini)
@@ -1186,7 +1186,7 @@ function Room:askToChooseGeneral(player, params)
   local defaultChoice = rule.default_choice(generals, extra_data)
 
   local req = Request:new(player, command)
-  req.timeout = self.settings.generalTimeout
+  req.timeout = self:getSettings('generalTimeout')
   local data = {
     generals,
     n,
@@ -2132,7 +2132,7 @@ end
 ---@class askToUseVirtualCardParams: AskToSkillInvokeParams
 ---@field name string|string[] @ 可以选择的虚拟卡名，可以多个
 ---@field subcards? integer[] @ 虚拟牌的子牌，默认空
----@field card_filter? { cards: integer[]?, n: integer|integer[]?, pattern: string? } @选牌规则，优先级低于```subcards```，可选参数：```n```（牌数，填数字表示此只能此数量，填{a, b}表示至少为a至多为b）```pattern```（选牌规则）```cards```（可选牌的范围）
+---@field card_filter? { cards: integer[]?, n: integer|integer[]?, pattern: string?, fake_subcards: boolean? } @选牌规则，优先级低于```subcards```，可选参数：```n```（牌数，填数字表示此只能此数量，填{a, b}表示至少为a至多为b）```pattern```（选牌规则）```cards```（可选牌的范围）```fake_subcards```（是否不计为实际子卡）
 ---@field prompt? string @ 询问提示信息。默认为：请视为使用xx
 ---@field extra_data? UseExtraData|table @ 额外信息，因技能而异了
 ---@field cancelable? boolean @ 是否可以取消。默认可以取消
@@ -2193,7 +2193,11 @@ function Room:askToUseVirtualCard(player, params)
         if #cards < params.card_filter.n[1] then
           return nil
         end
-        card:addSubcards(table.random(cards, params.card_filter.n[1]))
+        if params.card_filter.fake_subcards then
+          card:addFakeSubcards(table.random(cards, params.card_filter.n[1]))
+        else
+          card:addSubcards(table.random(cards, params.card_filter.n[1]))
+        end
       end
       card.skillName = skillName
       if #card:getDefaultTarget(player, extra_data) > 0 then
@@ -2221,7 +2225,11 @@ function Room:askToUseVirtualCard(player, params)
     if #subcards > 0 then
       card:addSubcards(subcards)
     elseif #dat.cards > 0 then
-      card:addSubcards(dat.cards)
+      if params.card_filter.fake_subcards then
+        card:addFakeSubcards(dat.cards)
+      else
+        card:addSubcards(dat.cards)
+      end
     end
     card.skillName = skillName
     tos = #dat.targets > 0 and dat.targets or card:getDefaultTarget(player, extra_data)
@@ -2238,7 +2246,11 @@ function Room:askToUseVirtualCard(player, params)
         if #cards < params.card_filter.n[1] then
           return nil
         end
-        card:addSubcards(table.random(cards, params.card_filter.n[1]))
+        if params.card_filter.fake_subcards then
+          card:addFakeSubcards(table.random(cards, params.card_filter.n[1]))
+        else
+          card:addSubcards(table.random(cards, params.card_filter.n[1]))
+        end
       end
       card.skillName = skillName
       tos = card:getDefaultTarget(player, extra_data)
@@ -3123,7 +3135,7 @@ function Room:gameOver(winner)
   if self:shouldUpdateWinRate() then
     local record = self:getBanner("InitialGeneral")
     for _, p in ipairs(self.players) do
-      local mode = self.settings.gameMode
+      local mode = self:getSettings('gameMode')
       local result
 
       if p.id > 0 then
@@ -3502,12 +3514,10 @@ function Room:removeTableMark(sth, mark, value)
   return true
 end
 
----@alias TempMarkSuffix "-round" | "-turn" | "-phase"
-
 --- 无效化技能
 ---@param player ServerPlayer @ 技能被无效的角色
 ---@param skill_name string @ 被无效的技能
----@param temp? TempMarkSuffix|"" @ 作用范围，``-round`` ``-turn`` ``-phase``或不填
+---@param temp? TempMarkSuffix|"" @ 作用范围或其他后缀
 ---@param source_skill? string @ 控制失效与否的技能。（保证不会与其他控制技能互相干扰）
 function Room:invalidateSkill(player, skill_name, temp, source_skill)
   temp = temp or ""
@@ -3518,10 +3528,10 @@ function Room:invalidateSkill(player, skill_name, temp, source_skill)
   self:setPlayerMark(player, MarkEnum.InvalidSkills .. temp, record)
 end
 
---- 有效化技能
+--- 移除技能的无效化状态
 ---@param player ServerPlayer @ 技能被有效的角色
 ---@param skill_name string @ 被有效的技能
----@param temp? TempMarkSuffix|"" @ 作用范围，``-round`` ``-turn`` ``-phase``或不填
+---@param temp? TempMarkSuffix|"" @ 作用范围或其他后缀
 ---@param source_skill? string @ 控制生效与否的技能。（保证不会与其他控制技能互相干扰）
 function Room:validateSkill(player, skill_name, temp, source_skill)
   temp = temp or ""
@@ -3533,55 +3543,16 @@ function Room:validateSkill(player, skill_name, temp, source_skill)
   self:setPlayerMark(player, MarkEnum.InvalidSkills .. temp, record)
 end
 
---- 在判定或使用流程中，将使用或判定牌应用锁视转化，发出战报，并返回转化后的牌
+--- 在判定或使用流程中，将使用或判定牌应用锁视转化，并返回转化后的牌
 ---@param id integer @ 牌id
 ---@param player ServerPlayer @ 使用者或判定角色
----@param JudgeEvent boolean? @ 是否为判定事件
+---@param judgeEvent boolean? @ 是否为判定事件
 ---@return Card @ 返回应用锁视后的牌
-function Room:filterCard(id, player, JudgeEvent)
-  local card = Fk:getCardById(id, true)
-  local filters = Fk:currentRoom().status_skills[FilterSkill] or Util.DummyTable---@type FilterSkill[]
-
-  if #filters == 0 then
-    self.filtered_cards[id] = nil
-    return card
-  end
-
-  local modify = false
-  for _, f in ipairs(filters) do
-    if f:cardFilter(card, player, JudgeEvent) then
-      local new_card = f:viewAs(player, card)
-      if new_card then
-        modify = true
-        local skill_name = f:getSkeleton().name
-        new_card.id = id
-        new_card.skillName = skill_name
-        if not f.mute then
-          player:broadcastSkillInvoke(skill_name)
-          self:doAnimate("InvokeSkill", {
-            name = skill_name,
-            player = player.id,
-            skill_type = f.anim_type,
-          })
-        end
-        self:sendLog{
-          type = "#FilterCard",
-          arg = skill_name,
-          from = player.id,
-          arg2 = card:toLogString(),
-          arg3 = new_card:toLogString(),
-        }
-        card = new_card
-        self.filtered_cards[id] = card
-      end
-    end
-  end
-  if not modify then
-    self.filtered_cards[id] = nil
-  end
-  return card
+function Room:filterCard(id, player, judgeEvent)
+  local ret = AbstractRoom.filterCard(self, id, player, judgeEvent)
+  self:doBroadcastNotify("FilterCard", { id, player, judgeEvent })
+  return ret
 end
-
 
 --- 进行待执行的额外回合
 function Room:actExtraTurn()

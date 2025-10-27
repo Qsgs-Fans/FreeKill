@@ -23,7 +23,7 @@ Item {
     const items = [];
     for (let i = 0; i < datas.length; i++) {
       const d = datas[i];
-      const component = Qt.createComponent(d.uri, d.name);
+      const component = d.path === undefined ? Qt.createComponent(d.uri, d.name) : Qt.createComponent(d.path);
       const state = d.prop;
       state.x = parentPos.x;
       state.y = parentPos.y;

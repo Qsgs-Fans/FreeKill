@@ -76,7 +76,8 @@ W.PageBase {
 
   Button {
     text: Lua.tr("Quit")
-    anchors.bottom: parent.bottom
+    anchors.top: parent.top
+    anchors.right: parent.right
     visible: root.parent instanceof StackView
     onClicked: {
       App.quitPage();

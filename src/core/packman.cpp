@@ -312,7 +312,7 @@ cleanup:
 
 // 写死一个freekill-core的commit（一般是发布时freekill-core的版本）
 // 达到强制加载高版本脚本的效果 防止老core爆炸
-static const char *min_commit = "1dde1adc60a1fb7d91f51a705c5cba91746d590a";
+static const char *min_commit = "b57d89fa4c1a1ae5a0711b97598747b8cbc7428e";
 
 bool PackMan::shouldUseCore() {
   if (!QFile::exists("packages/freekill-core")) return false;

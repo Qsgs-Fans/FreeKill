@@ -259,7 +259,7 @@ Util.CanUseToSelf = function(self, player, card, extra_data)
   local tos = card:getFixedTargets(player, extra_data)
   return tos and table.find(tos, function(p)
     return not player:isProhibited(p, card)
-    and Util.CardTargetFilter(self, player, p, {}, card.subcards, card, extra_data)
+    and Util.CardTargetFilter(card.skill, player, p, {}, card.subcards, card, extra_data)
   end) ~= nil
 end
 
@@ -287,6 +287,19 @@ Util.AoeCardOnUse = function(self, player, cardUseEvent, include_self)
       end
     end
   end
+end
+
+--- 默认目标的canUse
+---@param self ActiveSkill
+---@param player Player
+---@param card Card
+---@param extra_data table?
+Util.CanUseFixedTarget = function(self, player, card, extra_data)
+  local tos = card:getFixedTargets(player, extra_data)
+  return tos and table.find(tos, function(p)
+    return not player:isProhibited(p, card)
+    and Util.CardTargetFilter(card.skill, player, p, {}, card.subcards, card, extra_data)
+  end) ~= nil
 end
 
 -- Table

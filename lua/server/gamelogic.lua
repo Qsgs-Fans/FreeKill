@@ -119,16 +119,16 @@ end
 ---@param event TriggerEvent|integer|string
 ---@param target? ServerPlayer
 ---@param data? any data应该传入一个构造好的某某class实例
+---@return boolean, TriggerEvent
 function GameLogic:trigger(event, target, data, refresh_only)
-  local broken = false --self:triggerForLegacy(event, target, data, refresh_only)
-  if broken then return broken end
   if not (type(event) == "table" and event:isSubclassOf(TriggerEvent)) then
-    return broken
+    ---@diagnostic disable-next-line
+    return true
   end
 
   local event_obj = event:new(self.room, target, data)
   event_obj.refresh_only = refresh_only
-  return event_obj:exec()
+  return event_obj:exec(), event_obj
 end
 
 -- 此为启动事件管理器并启动第一个事件的初始函数

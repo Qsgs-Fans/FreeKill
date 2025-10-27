@@ -4,10 +4,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("cardskill", {
   prompt = "#archery_attack_skill",
-  can_use = Util.AoeCanUse,
-  on_use = function (self, room, cardUseEvent)
-    return Util.AoeCardOnUse(self, cardUseEvent.from, cardUseEvent, false)
-  end,
+  can_use = Util.CanUseFixedTarget,
   mod_target_filter = function(self, player, to_select, selected, card, distance_limited)
     return to_select ~= player
   end,

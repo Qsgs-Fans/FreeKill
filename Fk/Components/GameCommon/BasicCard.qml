@@ -27,7 +27,7 @@ BasicItem {
     }
   }
 
-  Image {
+  MediaArea {
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
     source: parent.known ? parent.cardFrontSource : parent.cardBackSource

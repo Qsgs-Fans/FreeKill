@@ -8,6 +8,8 @@
 ---@field public finished_skills string[] 已经发动完了的技能 不会再进行检测
 ---@field public refresh_only boolean? 这次triggerEvent是不是仅执行refresh
 ---@field public invoked_times table<string, number> 技能于单角色单个时机内发动过的次数
+---@field public broken boolean? 是否被防止了
+---@field public break_reason string? 被防止了的话，是谁干的呢
 local TriggerEvent = class("TriggerEvent")
 
 function TriggerEvent:initialize(room, target, data)
@@ -175,7 +177,11 @@ function TriggerEvent:exec()
             self.invoked_times[skill.name] = -1
           end
 
-          if broken then break end
+          if broken then
+            self.broken = true
+            self.break_reason = skill.name
+            break
+          end
 
           skill_available = table.filter(skills, filter_func)
         end

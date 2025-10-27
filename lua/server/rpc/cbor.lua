@@ -160,6 +160,10 @@ function encoder.float(num)
   if num ~= num then -- NaN shortcut
     return "\251\127\255\255\255\255\255\255\255";
   end
+  -- 本项目特化 禁止传入.0
+  if num == m_floor(num) then
+    return encoder.integer(num)
+  end
   local sign = (num > 0 or 1 / num > 0) and 0 or 1;
   num = m_abs(num)
   if num == m_huge then
@@ -491,6 +495,15 @@ if s_unpack then
   function read_double(fh) return s_unpack(">d", read_bytes(fh, 8)) end
 end
 
+-- notify按: QML会把本来从Lua传入的整数转为浮点数 并cbor后发送到服务端
+-- 为了解决这个 这里干脆直接杜绝了让cbor.decode解析出一切1.0之类的.0浮点数 强制转成整数
+local function convert_dot0(n)
+  if n == m_floor(n) then
+    return m_floor(n)
+  end
+  return n
+end
+
 local function read_simple(fh, value, opts)
   if value == 24 then
     value = read_byte(fh);
@@ -504,11 +517,11 @@ local function read_simple(fh, value, opts)
   elseif value == 23 then
     return undefined;
   elseif value == 25 then
-    return read_half_float(fh);
+    return convert_dot0(read_half_float(fh));
   elseif value == 26 then
-    return read_float(fh);
+    return convert_dot0(read_float(fh));
   elseif value == 27 then
-    return read_double(fh);
+    return convert_dot0(read_double(fh));
   elseif value == 31 then
     return BREAK;
   end

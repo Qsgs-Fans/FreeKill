@@ -8,6 +8,8 @@ FilterRoom 1.0 FilterRoom.qml
 # 弹窗：创建房间
 CreateRoom 1.0 CreateRoom.qml
 RoomGeneralSettings 1.0 RoomGeneralSettings.qml
+GameModeSelectPage 1.0 GameModeSelectPage.qml
+LuaSettingsPage 1.0 LuaSettingsPage.qml
 RoomPackageSettings 1.0 RoomPackageSettings.qml
 BanGeneralSetting 1.0 BanGeneralSetting.qml
 

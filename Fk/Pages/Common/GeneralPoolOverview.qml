@@ -8,7 +8,7 @@ import Fk
 import Fk.Components.Common
 import Fk.Widgets as W
 
-Item {
+W.PageBase {
   id: root
   objectName: "GeneralPoolOverview"
   property int generalCount: 0
@@ -140,6 +140,14 @@ Item {
         App.showToast(Lua.tr("Export Success"));
       }
     }
+
+    Button {
+      text: Lua.tr("Quit")
+      visible: root.parent instanceof StackView
+      onClicked: {
+        App.quitPage();
+      }
+    }
   }
 
   ListView {
@@ -158,13 +166,23 @@ Item {
     delegate: RowLayout {
       width: listView.width
 
-      Text {
-        text: Lua.tr(pkname)
-        font.pixelSize: 16
-        textFormat: Text.RichText
-        wrapMode: Text.WrapAnywhere
+      Item {
         Layout.alignment: Qt.AlignTop
         Layout.preferredWidth: 80
+
+        Rectangle {
+          anchors.fill: pkgNameText
+          color: '#afffffff'
+        }
+        Text {
+          id: pkgNameText
+          text: Lua.tr(pkname)
+          font.pixelSize: 16
+          textFormat: Text.RichText
+          wrapMode: Text.WrapAnywhere
+          width: parent.width
+          height: contentHeight
+        }
       }
 
       Grid {
@@ -192,15 +210,6 @@ Item {
     cellWidth: 68; cellHeight: 68
     model: root.allGenerals
     delegate: avatarCard
-  }
-
-  Button {
-    text: Lua.tr("Quit")
-    anchors.bottom: parent.bottom
-    visible: root.parent instanceof StackView
-    onClicked: {
-      App.quitPage();
-    }
   }
 
   Popup {

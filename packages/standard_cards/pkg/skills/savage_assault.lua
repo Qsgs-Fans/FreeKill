@@ -4,11 +4,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("cardskill", {
   prompt = "#savage_assault_skill",
-  can_use = Util.AoeCanUse,
-  on_use = function (self, room, cardUseEvent)
-    ---@cast cardUseEvent -SkillUseData
-    return Util.AoeCardOnUse(self, cardUseEvent.from, cardUseEvent, false)
-  end,
+  can_use = Util.CanUseFixedTarget,
   mod_target_filter = function(self, player, to_select, selected, card, distance_limited)
     return to_select ~= player
   end,

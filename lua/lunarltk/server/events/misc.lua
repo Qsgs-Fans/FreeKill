@@ -161,7 +161,7 @@ function MiscEventWrappers:changeHero(player, new_general, full, isDeputy, sendL
   local oldHp, oldMaxHp = player.hp, player.maxHp
   if (maxHpChange == nil) or maxHpChange then
     local maxHp = player:getGeneralMaxHp()
-    local changer = Fk.game_modes[self.settings.gameMode]:getAdjustedProperty(player)
+    local changer = Fk.game_modes[self:getSettings('gameMode')]:getAdjustedProperty(player)
     if changer and changer.maxHp then
       maxHp = maxHp + (changer.maxHp - player.maxHp)
     end

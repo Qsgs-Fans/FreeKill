@@ -10,6 +10,7 @@
 ---@field client_klass any client类
 ---@field room_klass any room类
 ---@field page QmlComponent 主游戏页面数据
+---@field ui_settings any
 
 --- 定义某款桌游。桌游大类只负责：
 ---
@@ -26,6 +27,7 @@ function BoardGame:initialize(spec)
   self.client_klass = spec.client_klass
   self.room_klass = spec.room_klass
   self.page = spec.page
+  self.ui_settings = spec.ui_settings
 end
 
 return BoardGame

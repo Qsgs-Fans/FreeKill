@@ -26,6 +26,7 @@ Fk:loadTranslationTable {
 
   ["UI settings"] = "UI设置",
   ["No available UI package"] = "无可用UI",
+  ["Game UI settings"] = "游戏UI设置",
   ["lunarltk"] = "新月杀",
   ["default"] = "默认",
   ["UI packages select"] = "设置UI",
@@ -281,7 +282,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   ["BanGeneral"] = "禁将",
   ["ResumeGeneral"] = "解禁",
+  ["Enabled Status"] = "启用状态",
   ["Enable"] = "启用",
+  ["Disabled"] = "禁用",
   ["Prohibit"] = "禁",
   ["BanPackage"] = "禁拓展包",
   ["$BanPkgHelp"] = "正在禁用拓展包",
@@ -305,6 +308,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Copy Audio Text"] = "复制语音文本",
 
   ["$WelcomeToLobby"] = "欢迎进入新月杀游戏大厅！",
+  ["Current room: %1"] = "当前房间：%1",
   ["GameMode"] = "游戏模式：",
   ["LuckCardNum"] = "手气卡次数：",
   ["ResponseTime"] = "出手时间：",
@@ -695,6 +699,7 @@ Fk:loadTranslationTable {
   ["#UseCardToCard"] = "%from 使用了牌 %card，目标是 %arg",
   ["#ResponsePlayCard"] = "%from 打出了牌 %card",
 
+  -- deprecated...
   ["#UseVCard"] = "%from 将 %card 当 %arg 使用",
   ["#UseVCardToTargets"] = "%from 将 %card 当 %arg 使用，目标是 %to",
   ["#UseVCardToCard"] = "%from 将 %card 当 %arg2 使用，目标是 %arg",
@@ -703,8 +708,8 @@ Fk:loadTranslationTable {
   ["#UseV0CardToTargets"] = "%from 使用了 %arg，目标是 %to",
   ["#UseV0CardToCard"] = "%from 使用了 %arg2，目标是 %arg",
   ["#ResponsePlayV0Card"] = "%from 打出了 %arg",
-
   ["#FilterCard"] = "由于 %arg 的效果，与 %from 相关的 %arg2 被视为了 %arg3",
+
   ["#AddTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 增加了目标 %to",
   ["#RemoveTargetsBySkill"] = "用于 %arg 的效果，%from 使用的 %arg2 减少了目标 %to",
 
@@ -732,6 +737,8 @@ Fk:loadTranslationTable {
   -- damage, heal and lose HP
   ["#Damage"] = "%to 对 %from 造成了 %arg 点 %arg2 伤害",
   ["#DamageWithNoFrom"] = "%from 受到了 %arg 点 %arg2 伤害",
+  ["#PreventDamage"] = "由于 %arg，%to 即将对 %from 造成的 %arg2 伤害被防止了",
+  ["#PreventDamageWithNoFrom"] = "由于 %arg，%from 即将受到的 %arg2 伤害被防止了",
   ["#GameEventDamage"] = "伤害事件：%to 对 %from 造成 %arg 点 %arg2 伤害",
   ["#GameEventDamageNoFrom"] = "伤害事件：%from 受到 %arg 点 %arg2 伤害",
   ["#LoseHP"] = "%from 失去了 %arg 点体力",
@@ -757,6 +764,7 @@ Fk:loadTranslationTable {
   ["#RoomOutdated"] = "服务器更新完毕！该房间已过期，将无法再次游玩",
   ["#Choice"] = "%from 选择 %arg",
   ["#WatchCard"] = "%from 观看了牌 %card",
+  ["$ShuffleDrawPile"] = "已重新洗牌，牌堆现有 %arg 张牌",
 }
 
 -- card footnote

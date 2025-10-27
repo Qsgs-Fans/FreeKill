@@ -4,10 +4,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("cardskill", {
   prompt = "#amazing_grace_skill",
-  can_use = Util.GlobalCanUse,
-  on_use = function (self, room, cardUseEvent)
-    return Util.AoeCardOnUse(self, cardUseEvent.from, cardUseEvent, true)
-  end,
+  can_use = Util.CanUseFixedTarget,
   mod_target_filter = Util.TrueFunc,
   on_action = function(self, room, use, finished)
     use.extra_data = use.extra_data or {}

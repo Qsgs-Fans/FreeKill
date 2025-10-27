@@ -105,15 +105,20 @@ function Pindian:main()
       reason = pindianData.reason,
     }
     local prompt = "#askForPindian:::" .. pindianData.reason
-    local req_data = { "choose_cards_skill", prompt, false, extraData }
 
     local req = Request:new(targets, "AskForUseActiveSkill")
     for _, to in ipairs(targets) do
+      local req_data = { "choose_cards_skill", prompt, false, extraData }
+      local defaultId = to:getCardIds(Player.Hand)[1]
       if pindianData.expandCards and pindianData.expandCards[to] then
         req_data[4] = pindianData.expandCards[to]
+        if pindianData.expandCards[to].defaultReply then
+          defaultId = pindianData.expandCards[to].defaultReply
+        end
       end
       req:setData(to, req_data)
-      req:setDefaultReply(to, {card = {subcards = {to:getCardIds(Player.Hand)[1]}}})
+
+      req:setDefaultReply(to, { card = { subcards = { defaultId } } })
     end
     req.focus_text = "AskForPindian"
 
@@ -152,13 +157,13 @@ function Pindian:main()
   room:sendLog{
     type = "#ShowPindianCard",
     from = from.id,
-    arg = pindianData.fromCard:toLogString(),
+    arg = pindianData.fromCard,
   }
   for _, to in ipairs(pindianData.tos) do
     room:sendLog{
       type = "#ShowPindianCard",
       from = to.id,
-      arg = pindianData.results[to].toCard:toLogString(),
+      arg = pindianData.results[to].toCard,
     }
   end
 

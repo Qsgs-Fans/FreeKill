@@ -286,6 +286,58 @@ Flickable {
       }
     }
 
+    // enabledStatus
+    Column {
+      id: enabledColumn
+      property bool enabledShown: false
+      ButtonGroup {
+        id: childEnabled
+        exclusive: false
+        checkState: parentEnabledBox.checkState
+      }
+
+      RowLayout {
+        spacing: 8
+        height: enabledColumn.enabledShown ? 32 : 36
+        CheckBox {
+          id: parentEnabledBox
+          text: Lua.tr("Enabled Status")
+          font.bold: true
+          checkState: childEnabled.checkState
+          Layout.minimumWidth: 100
+        }
+        ToolButton {
+          text: (enabledColumn.enabledShown ? "➖" : "➕")
+          onClicked: {
+            enabledColumn.enabledShown = !enabledColumn.enabledShown
+          }
+          background: Rectangle {
+            implicitWidth: 20
+            implicitHeight: 20
+
+            visible: parent.down || parent.checked || parent.highlighted || parent.visualFocus
+              || (parent.enabled && parent.hovered)
+          }
+        }
+      }
+
+      GridLayout {
+        columns: 6
+        height: parent.enabledShown ? enabledStates.contentHeigh : 0
+        visible: parent.enabledShown
+
+        Repeater {
+          id: enabledStates
+
+          CheckBox {
+            text: modelData
+            leftPadding: indicator.width
+            ButtonGroup.group: childEnabled
+          }
+        }
+      }
+    }
+
     GridLayout {
       anchors.topMargin: 8
       columns: 2
@@ -436,6 +488,7 @@ Flickable {
       maxHpStates.model = properties.maxHps;
       hpStates.model = properties.hps;
       //shieldStates.model = properties.shields;
+      enabledStates.model = properties.enabledStates;
     }
   }
 
@@ -466,6 +519,8 @@ Flickable {
     // f.shield = getCheck(parentShieldBox, shieldStates);
     // gender
     f.genders = getCheck(parentGenderBox, gendersStates);
+    // enabledStatus
+    f.enabledStates = getCheck(parentEnabledBox, enabledStates);
     // skillName
     f.skillName = skillName.text;
     // skillDesc

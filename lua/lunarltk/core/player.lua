@@ -1710,14 +1710,14 @@ end
 ---@param to Player @ 待判断的角色
 ---@return boolean
 function Player:isFriend(to)
-  return Fk.game_modes[Fk:currentRoom().settings.gameMode]:friendEnemyJudge(self, to)
+  return Fk.game_modes[Fk:currentRoom():getSettings('gameMode')]:friendEnemyJudge(self, to)
 end
 
 --- 是否为敌方
 ---@param to Player @ 待判断的角色
 ---@return boolean
 function Player:isEnemy(to)
-  return not Fk.game_modes[Fk:currentRoom().settings.gameMode]:friendEnemyJudge(self, to)
+  return not Fk.game_modes[Fk:currentRoom():getSettings('gameMode')]:friendEnemyJudge(self, to)
 end
 
 --- 获得队友

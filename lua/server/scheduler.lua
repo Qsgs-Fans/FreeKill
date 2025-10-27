@@ -1,7 +1,6 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 Request = require "server.request"
-GameEvent = require "server.gameevent"
 GameLogic = require "lunarltk.server.gamelogic"
 ServerPlayer = require "lunarltk.server.serverplayer"
 Room = require "lunarltk.server.room"

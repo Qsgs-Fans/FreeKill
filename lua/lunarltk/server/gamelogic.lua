@@ -83,8 +83,8 @@ end
 --- 进行选将
 function GameLogic:chooseGenerals()
   local room = self.room
-  local generalNum = room.settings.generalNum
-  local n = room.settings.enableDeputy and 2 or 1
+  local generalNum = room:getSettings('generalNum')
+  local n = room:getSettings('enableDeputy') and 2 or 1
   local lord = room:getLord()
   local lord_generals = {}
 
@@ -113,7 +113,7 @@ function GameLogic:chooseGenerals()
   local generals = table.random(room.general_pile, #nonlord * generalNum)
 
   local req = Request:new(nonlord, "AskForGeneral")
-  req.timeout = self.room.settings.generalTimeout
+  req.timeout = self.room:getSettings('generalTimeout')
   for i, p in ipairs(nonlord) do
     local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)
     req:setData(p, { arg, n })
@@ -153,7 +153,7 @@ function GameLogic:broadcastGeneral()
     p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
     -- TODO: setup AI here
 
-    local changer = Fk.game_modes[room.settings.gameMode]:getAdjustedProperty(p)
+    local changer = Fk.game_modes[room:getSettings('gameMode')]:getAdjustedProperty(p)
     if changer then
       for key, value in pairs(changer) do
         p[key] = value
@@ -254,7 +254,7 @@ function GameLogic:prepareForStart()
     self:addTriggerSkill(trig)
   end
 
-  room:sendLog{ type = "$GameStart", arg = room.settings.gameMode }
+  room:sendLog{ type = "$GameStart", arg = room:getSettings('gameMode') }
 end
 
 function GameLogic:action()

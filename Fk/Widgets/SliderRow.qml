@@ -4,9 +4,9 @@ import QtQuick.Controls
 ActionRow {
   id: root
 
-  property int from
-  property int to
-  property int value
+  property real from
+  property real to
+  property real value
 
   suffixComponent: Slider {
     from: root.from

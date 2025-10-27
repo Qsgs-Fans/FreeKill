@@ -319,7 +319,7 @@ local function surrenderCheck(room)
     return
   end
   room:broadcastProperty(player, "surrendered")
-  local mode = Fk.game_modes[room.settings.gameMode]
+  local mode = Fk.game_modes[room:getSettings('gameMode')]
   local winner = Pcall(mode.getWinner, mode, player)
   if winner ~= "" then
     room:gameOver(winner)

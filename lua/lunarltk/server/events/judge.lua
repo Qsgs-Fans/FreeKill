@@ -46,7 +46,7 @@ function Judge:main()
   room:sendLog{
     type = "#InitialJudge",
     from = who.id,
-    arg = data.card:toLogString(),
+    arg = data.card,
   }
   room:moveCardTo(data.card, Card.Processing, nil, fk.ReasonJudge)
   room:sendFootnote({ data.card:getEffectiveId() }, {
@@ -63,7 +63,7 @@ function Judge:main()
   room:sendLog{
     type = "#JudgeResult",
     from = who.id,
-    arg = data.card:toLogString(),
+    arg = data.card,
   }
 
   cid = data.card:getEffectiveId()
@@ -170,7 +170,7 @@ function JudgeEventWrappers:changeJudge(params)
     type = "#ChangedJudge",
     from = player.id,
     to = { data.who.id },
-    arg2 = card:toLogString(),
+    arg2 = card,
     arg = skillName,
   }
 

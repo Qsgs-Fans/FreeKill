@@ -19,15 +19,15 @@ end
 function EquipCard:onInstall(room, player)
   local equipSkills = self:getEquipSkills(player)
   if #equipSkills > 0 then
-    local noTrigger = table.filter(equipSkills, function(skill) return skill.attached_equip ~= nil end)
+    local noTrigger = table.filter(equipSkills, function(skill) return skill:getSkeleton().attached_equip ~= nil end)
     if #noTrigger > 0 then
-      noTrigger = table.map(noTrigger, function(skill) return skill.name end)
+      noTrigger = table.map(noTrigger, Util.NameMapper)
       room:handleAddLoseSkills(player, table.concat(noTrigger, "|"), nil, false, true)
     end
 
-    local toTrigger = table.filter(equipSkills, function(skill) return not skill.attached_equip end)
+    local toTrigger = table.filter(equipSkills, function(skill) return not skill:getSkeleton().attached_equip end)
     if #toTrigger > 0 then
-      toTrigger = table.map(toTrigger, function(skill) return skill.name end)
+      toTrigger = table.map(toTrigger, Util.NameMapper)
       room:handleAddLoseSkills(player, table.concat(toTrigger, "|"), nil, false)
     end
   end

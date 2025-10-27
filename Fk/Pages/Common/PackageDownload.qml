@@ -8,10 +8,12 @@ W.PageBase {
 
 
   property bool needRestart: false
+  property var hasHandlerModel: []
 
   function setPackages(summary) {
     const localSummary = JSON.parse(Pacman.getPackSummary());
     packageModel.clear();
+    hasHandlerModel = [];
     for (let data of summary) {
       data.oldHash = localSummary.find(d => d.name === data.name)?.hash ?? "(nil)";
       packageModel.append(data);
@@ -41,6 +43,9 @@ W.PageBase {
       }
     }
 
+    if (hasHandlerModel.length > 0) {
+      repairButton.visible = true;
+    }
     backButton.visible = true;
   }
 
@@ -62,8 +67,14 @@ W.PageBase {
 
   function setDownloadError(sender, msg) {
     const item = packageRepeater.itemAt(root.currentPackageIndex);
-    item.subTitle = "<font color='red'>✗</font> " + msg;
     item.hasError = true;
+    item.subTitle = "<font color='red'>✗</font> " + msg;
+    if (item.myName !== "freekill-core") {
+      [item.errorMsg, item.errorHandler] = fastRepair(msg);
+      if (item.errorHandler !== null) {
+        root.hasHandlerModel.push(root.currentPackageIndex);
+      }
+    }
   }
 
   function showTransferProgress(sender, data) {
@@ -104,6 +115,8 @@ W.PageBase {
         W.ActionRow {
           property string myName: name
           property bool hasError: false
+          property string errorMsg: ""
+          property var errorHandler: null
 
           title: {
             const old = oldHash === "(nil)" ? oldHash : oldHash.substring(0, 8);
@@ -113,6 +126,9 @@ W.PageBase {
               ret += "（无变化）"; //(Nothing to do)
             } else {
               ret += `${old} -> ${now}`;
+            }
+            if (errorMsg !== "") {
+              ret += ` <font color='red'>(错误: ${errorMsg})</font>`;
             }
             return ret;
           }
@@ -124,6 +140,17 @@ W.PageBase {
             border.color: "#E91E63"
             border.width: 4
             visible: root.currentPackageIndex === index
+          }
+
+          W.ButtonContent {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: "修复"
+            visible: parent.errorHandler !== null
+            onClicked: {;
+              parent.errorHandler(parent.myName, index);
+              root.hasHandlerModel.remove(index);
+            }
           }
         }
       }
@@ -169,6 +196,24 @@ W.PageBase {
         }
       }
     }
+
+    W.ButtonContent {
+      id: repairButton
+      visible: false
+      text: "修复全部内容并退出"
+      anchors.bottom: backButton.top
+      anchors.bottomMargin: 8
+      width: parent.width - 16
+      x: 8
+
+      onClicked: {
+        for (let idx of root.hasHandlerModel) {
+          const it = packageRepeater.itemAt(idx);
+          it.errorHandler(it.myName, idx);
+        }
+        App.quitPage();
+      }
+    }
   }
 
   Component.onCompleted: {
@@ -176,5 +221,28 @@ W.PageBase {
     addCallback(Command.SetDownloadingPackage, setDownloadingPackage);
     addCallback(Command.PackageDownloadError, setDownloadError);
     addCallback(Command.PackageTransferProgress, showTransferProgress);
+  }
+
+  function fastRepair(errorMsg) {
+    if (/Workspace is dirty/g.exec(errorMsg)) {
+      return ["工作区有未保存的人为修改", (packageName, index) => {
+        console.log("Uninstalling " + packageName);
+        Pacman.removePack(packageName);
+        // updatePackageList();
+        packageModel.remove(index);
+      }];
+    }else if (/exists and is not an empty directory/g.exec(errorMsg)) {
+      return ["目录已存在且非空", null];
+    } else if (/no such file or directory/g.exec(errorMsg)) {
+      return ["文件或目录不存在", null];
+    } else if (/authentiation required but no callback is set/g.exec(errorMsg)) {
+      return ["无法访问仓库URL", null];
+    } else if (/no match for id/g.exec(errorMsg)) {
+      return ["服务器所需的版本不存在", null];
+    } else if (/Http/g.exec(errorMsg)) {
+      return ["网络错误", null];
+    }
+  
+    return [null, null];
   }
 }

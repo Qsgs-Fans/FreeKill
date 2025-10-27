@@ -5,6 +5,7 @@ TextField {
   id: root
 
   property string title
+  property alias value: root.text
 
   placeholderText: title
 

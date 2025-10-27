@@ -212,11 +212,28 @@ function Damage:main()
 
   for _, struct in ipairs(stages) do
     local event, player = table.unpack(struct)
-    logic:trigger(event, damageData[player], damageData)
+    local _, eventObj = logic:trigger(event, damageData[player], damageData)
     if damageData.damage < 1 then
       damageData.prevented = true
     end
     if damageData.prevented then
+      local damageName = Fk:getDamageNatureName(damageData.damageType)
+      if damageData.from then
+        room:sendLog {
+          type = "#PreventDamage",
+          to = {damageData.from.id},
+          from = damageData.to.id,
+          arg = eventObj.break_reason,
+          arg2 = damageName,
+        }
+      else
+        room:sendLog {
+          type = "#PreventDamageWithNoFrom",
+          from = damageData.to.id,
+          arg = eventObj.break_reason,
+          arg2 = damageName,
+        }
+      end
       logic:breakEvent(false)
     end
     assert(damageData.to:isInstanceOf(ServerPlayer))

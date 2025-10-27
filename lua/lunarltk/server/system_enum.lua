@@ -8,9 +8,11 @@
 ---@field public include_targets? integer[] @ 必须选其中一个目标？
 ---@field public exclusive_targets? integer[] @ 只能选择这些目标？
 ---@field public fix_targets? integer[] @ 将固定目标修改为这些目标（例如对他人使用桃）
+---@field public fix_user? integer @ 修改使用者（盼睇）
 ---@field public bypass_distances? boolean @ 无距离限制？
 ---@field public bypass_times? boolean @ 无次数限制？
 ---@field public not_passive? boolean @ 禁止使用被动牌（用于模拟出牌阶段空闲时使用）
+---@field public extra_effect? table<integer, function> @ 特殊的卡牌效果
 ---@field public playing? boolean @ (AI专用) 出牌阶段？
 
 --- AskForCardUse 询问使用卡牌的数据
@@ -35,10 +37,16 @@
 ---@field public type string @ log主体
 ---@field public from? integer @ 要替换%from的玩家的id
 ---@field public to? integer[] @ 要替换%to的玩家id列表
----@field public card? integer[] @ 要替换%card的卡牌id列表
+---@field public card? integer[]|Card[] @ 要替换%card的卡牌id列表或卡牌列表
 ---@field public arg? any @ 要替换%arg的内容
 ---@field public arg2? any @ 要替换%arg2的内容
 ---@field public arg3? any @ 要替换%arg3的内容
+---@field public arg4? any @ 要替换%arg4的内容
+---@field public arg5? any @ 要替换%arg5的内容
+---@field public arg6? any @ 要替换%arg6的内容
+---@field public arg7? any @ 要替换%arg7的内容
+---@field public arg8? any @ 要替换%arg8的内容
+---@field public arg9? any @ 要替换%arg9的内容
 ---@field public toast? boolean @ 是否顺手把消息发送一条相同的toast
 
 --- SkillUseStruct 使用技能的数据

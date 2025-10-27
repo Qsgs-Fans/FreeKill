@@ -8,6 +8,7 @@ ActionRow 1.0 ActionRow.qml
 SwitchRow 1.0 SwitchRow.qml
 ButtonRow 1.0 ButtonRow.qml
 ComboRow 1.0 ComboRow.qml
+TranslatedComboRow 1.0 TranslatedComboRow.qml
 SpinRow 1.0 SpinRow.qml
 SliderRow 1.0 SliderRow.qml
 EntryRow 1.0 EntryRow.qml

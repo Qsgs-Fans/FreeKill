@@ -22,7 +22,7 @@ W.PreferencePage {
   W.PreferenceGroup {
     id: boardGameUI
     property list<string> visibleBoardgames: []
-    title: "游戏UI设置"
+    title: Lua.tr("Game UI settings")
     Repeater {
       id: currentRepeater
       model: getBoardGames()
@@ -64,9 +64,9 @@ W.PreferencePage {
 
       function getBoardGames() {
         return Lua.evaluate(`(function()
-          local names = {"lunarltk"}
+          local names = {}
           for k, v in pairs(Fk.boardgames) do
-            table.insert(names, k)
+            table.insertIfNeed(names, k)
           end
           return names
         end)()`)
@@ -78,7 +78,7 @@ W.PreferencePage {
           return json.encode(list["${boardgame}"] or {})
         end)()`);
         let _list = JSON.parse(list);
-        _list.splice(0, 0, "default")
+        _list.splice(0, 0, "default");
         return _list
       }
 

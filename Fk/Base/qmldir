@@ -7,6 +7,7 @@ singleton App 1.0 AppUtil.qml
 singleton Cpp 1.0 CppUtil.qml
 singleton Lua 1.0 LuaUtil.qml
 singleton SkinBank 1.0 SkinBank.qml
+singleton Db 1.0 DatabaseUtil.qml
 singleton Util 1.0 Util.qml
 
 RootPage 1.0 RootPage.qml

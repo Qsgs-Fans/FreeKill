@@ -11,11 +11,6 @@ skill:addEffect("cardskill", {
     return #to_select:getAvailableEquipSlots(card.sub_type) > 0
   end,
   can_use = Util.CanUseToSelf,
-  on_use = function(self, room, use)
-    if not use.tos or #use.tos == 0 then
-      use.tos = { use.from }
-    end
-  end
 })
 
 skill:addAI(

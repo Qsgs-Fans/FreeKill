@@ -4,10 +4,7 @@ local skill = fk.CreateSkill {
 
 skill:addEffect("cardskill", {
   prompt = "#god_salvation_skill",
-  can_use = Util.GlobalCanUse,
-  on_use = function (self, room, cardUseEvent)
-    return Util.AoeCardOnUse(self, cardUseEvent.from, cardUseEvent, true)
-  end,
+  can_use = Util.CanUseFixedTarget,
   mod_target_filter = Util.TrueFunc,
   about_to_effect = function(self, room, effect)
     if not effect.to:isWounded() then

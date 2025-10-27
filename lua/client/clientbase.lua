@@ -99,7 +99,7 @@ function ClientBase:stopRecording(jsonData)
   self.record[2] = table.concat({
     self.record[2],
     Self.player:getScreenName():gsub("%.", "%%2e"),
-    self.settings.gameMode,
+    self:getSettings('gameMode'),
     Self.general or "",
     Self.role or "unknown",
     jsonData,
@@ -494,14 +494,17 @@ function ClientBase:parseMsg(msg, nocolor)
     return arg
   end
 
-  local arg = parseArg(data.arg)
-  local arg2 = parseArg(data.arg2)
-  local arg3 = parseArg(data.arg3)
-
   local log = Fk:translate(data.type)
-  log = string.gsub(log, "%%arg2", arg2)
-  log = string.gsub(log, "%%arg3", arg3)
-  log = string.gsub(log, "%%arg", arg)
+
+  for i = 2, 9 do
+    local v = data["arg" .. i]
+    if v == nil then break end
+    local arg = parseArg(v)
+    log = log:gsub("%%arg" .. i, arg)
+  end
+  local arg = parseArg(data.arg)
+  log = log:gsub("%%arg", arg)
+
   return log
 end
 
@@ -526,7 +529,7 @@ function ClientBase:gameOver(jsonData)
       else
         result = 2
       end
-      self.client:saveGameData(self.settings.gameMode, Self.general or "",
+      self.client:saveGameData(self:getSettings('gameMode'), Self.general or "",
         Self.deputyGeneral or "", Self.role or "", result, self.record[2],
         cbor.encode(self:serialize()), cbor.encode(self.record))
     end

@@ -21,7 +21,7 @@ MetroButton {
   }
 
   onClicked: {
-    if (choices.length < 2) return;
+    if (all_choices.length < 2) return;
     if (detailed) {
       roomScene.popupBox.sourceComponent =
         Qt.createComponent("../../../Pages/LunarLTK/DetailedChoiceBox.qml");

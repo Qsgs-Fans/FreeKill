@@ -31,7 +31,6 @@ silverLionSkill:addEffect(fk.AfterCardsMove, {
     room:recover{
       who = player,
       num = 1,
-      recoverBy = player,
       skillName = silverLionSkill.name,
     }
   end,

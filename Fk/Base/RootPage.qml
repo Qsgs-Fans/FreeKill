@@ -37,6 +37,11 @@ W.PageBase {
     source: Cpp.path + "/fonts/FZLE.ttf"
   }
 
+  FontLoader {
+    id: fontLiSu
+    source: Cpp.path + "/fonts/simli.ttf"
+  }
+
   StackView {
     id: mainStack
     visible: !root.busy
@@ -130,11 +135,12 @@ W.PageBase {
   Connections {
     target: Mediator
     function onCommandGot(sender, command, data) {
+      let error = true;
       if (root.canHandleCommand(command)) {
         root.handleCommand(sender, command, data);
+        error = false;
       }
 
-      let error = true;
       for (let i = mainStack.depth; i >= 0; i--) {
         const page = mainStack.get(i, StackView.DontLoad);
         if (!page) continue;

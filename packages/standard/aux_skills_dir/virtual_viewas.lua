@@ -37,7 +37,11 @@ virtual_viewas:addEffect("viewas", {
     else
       if #cards < self.card_filter.n[1] or #cards > self.card_filter.n[2] then return end
       if #cards > 0 then
-        card:addSubcards(cards)
+        if self.card_filter.fake_subcards then
+          card:addFakeSubcards(cards)
+        else
+          card:addSubcards(cards)
+        end
       end
     end
     if player:prohibitUse(card) then return nil end -- FIXME: 修复合法性判断后删除此段

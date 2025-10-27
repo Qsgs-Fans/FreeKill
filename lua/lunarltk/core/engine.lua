@@ -23,9 +23,9 @@ local baseEngine = require "core.engine"
 ---@field public currentResponseReason string @ 要求用牌的原因（如濒死，被特定牌指定，使用特定技能···）
 ---@field public filtered_cards table<integer, Card> @ 被锁视技影响的卡牌
 ---@field public printed_cards table<integer, Card> @ 被某些房间现场打印的卡牌，id都是负数且从-2开始
----@field private kingdoms string[] @ 总势力
----@field private kingdom_map table<string, string[]> @ 势力映射表
----@field private damage_nature table<any, [string, boolean]> @ 伤害映射表
+---@field public kingdoms string[] @ 总势力
+---@field public kingdom_map table<string, string[]> @ 势力映射表
+---@field public damage_nature table<any, [string, boolean]> @ 伤害映射表
 ---@field private _custom_events any[] @ 自定义事件列表
 ---@field public poxi_methods table<string, PoxiSpec> @ “魄袭”框操作方法表
 ---@field public qml_marks table<string, QmlMarkSpec> @ 自定义Qml标记的表
@@ -85,7 +85,9 @@ function Engine:initialize()
   self.target_tips = {}
   self.choose_general_rule = {}
   self.skin_packages = {}
+end
 
+function Engine:load()
   self:loadPackages()
 
   -- 唉，杀批的Engine又搞特殊了

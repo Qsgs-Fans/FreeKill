@@ -8,6 +8,7 @@ AbstractButton {
   implicitWidth: 120
   implicitHeight: 40
   property color backgroundColor: "#E6E6E7"
+  property bool plainButton: true
 
   contentItem: RowLayout {
     anchors.fill: parent
@@ -57,6 +58,11 @@ AbstractButton {
         duration: 200
         easing.type: Easing.OutQuad
       }
+    }
+
+    layer.enabled: !root.plainButton
+    layer.effect: DropShadow {
+      opacity: 0.8
     }
   }
 }

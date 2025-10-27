@@ -41,23 +41,31 @@ function ReqUseCard:targetValidity(pid)
     local skill = Fk.skills[self.skill_name] --[[@as ActiveSkill | ViewAsSkill]]
     if not skill then return false end
     local card -- 姑且接一下(雾)
+    local user = self.player
     if skill:isInstanceOf(ViewAsSkill) then
       ---@cast skill ViewAsSkill
       card = skill:viewAs(self.player, self.pendings)
       --不要在当前转化卡牌不可用的情况下开启选目标
       if card and self:cardFeasible(card) then
         skill = card.skill
+        if self.extra_data and self.extra_data.fix_user then
+          user = Fk:currentRoom():getPlayerById(self.extra_data.fix_user)
+        end
       end
     end
     local room = Fk:currentRoom()
     local p = room:getPlayerById(pid)
     local selected = table.map(self.selected_targets, Util.Id2PlayerMapper)
-    return not not skill:targetFilter(self.player, p, selected, self.pendings, card, self.extra_data)
+    return not not skill:targetFilter(user, p, selected, self.pendings, card, self.extra_data)
   end
   local card = self.selected_card
   local p = Fk:currentRoom():getPlayerById(pid)
   local selected = table.map(self.selected_targets or {}, Util.Id2PlayerMapper)
-  local ret = card and card.skill:targetFilter(self.player, p, selected, { card.id }, card, self.extra_data)
+  local user = self.player
+  if self.extra_data and self.extra_data.fix_user then
+    user = Fk:currentRoom():getPlayerById(self.extra_data.fix_user)
+  end
+  local ret = card and card.skill:targetFilter(user, p, selected, { card.id }, card, self.extra_data)
   return not not ret
 end
 
@@ -65,6 +73,9 @@ end
 function ReqUseCard:cardFeasible(card)
   local exp = Exppattern:Parse(self.pattern or ".")
   local player = self.player
+  if self.extra_data and self.extra_data.fix_user then
+    player = Fk:currentRoom():getPlayerById(self.extra_data.fix_user)
+  end
   if not player:prohibitUse(card) and exp:match(card) then
     return (card.is_passive and not (self.extra_data or Util.DummyTable).not_passive) or player:canUse(card, self.extra_data)
   end
@@ -83,7 +94,11 @@ function ReqUseCard:feasible()
   end
   local ret = false
   if card and self:cardFeasible(card) then
-    ret = card.skill:feasible(self.player, table.map(self.selected_targets, Util.Id2PlayerMapper),
+    local user = self.player
+    if self.extra_data and self.extra_data.fix_user then
+      user = Fk:currentRoom():getPlayerById(self.extra_data.fix_user)
+    end
+    ret = card.skill:feasible(user, table.map(self.selected_targets, Util.Id2PlayerMapper),
       skill and self.pendings or { card.id }, card)
   end
   return not not ret

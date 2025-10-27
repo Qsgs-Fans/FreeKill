@@ -23,7 +23,7 @@ MetroButton {
   onClicked: {
     if (choices.length < 2 && choices.includes(answer)) return;
     roomScene.popupBox.sourceComponent =
-      Qt.createComponent(AppPath + "/packages/utility/qml/CardNamesBox.qml");
+      Qt.createComponent("../../../Pages/LunarLTK/CardNamesBox.qml");
 
     const box = roomScene.popupBox.item;
     box.all_names = all_choices;

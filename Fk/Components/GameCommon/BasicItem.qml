@@ -11,6 +11,7 @@ Item {
   property bool draggable: false
   property alias dragging: drag.active
   property alias dragCenter: drag.centroid.position
+  property alias hoverHandler: hover
 
   property bool enabled: true   // if false the card will be grey
 

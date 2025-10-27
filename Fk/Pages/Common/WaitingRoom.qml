@@ -91,23 +91,37 @@ W.PageBase {
           const data = Lua.call("GetRoomConfig");
           let cardpack = Lua.call("GetAllCardPack");
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
+          const gameMode = data.gameMode;
+          const getUIData = Lua.fn("GetUIDataOfSettings");
+          const boardgameSettingsData = getUIData(gameMode, null, true);
+          const gameSettingsData = getUIData(gameMode, null, false);
 
-          text = Lua.tr("GameMode") + Lua.tr(data.gameMode) + "<br />"
-            + Lua.tr("LuckCardNum") + "<b>" + data.luckTime + "</b><br />"
-            + Lua.tr("ResponseTime") + "<b>" + Config.roomTimeout + "</b><br />"
-            + Lua.tr("ChooseGeneralTime") + "<b>" + data.generalTimeout + "</b><br />"
-            + Lua.tr("GeneralBoxNum") + "<b>" + data.generalNum + "</b>"
-            + (data.enableFreeAssign ? "<br />" + Lua.tr("IncludeFreeAssign")
-                                     : "")
-            + (data.enableDeputy ? " " + Lua.tr("IncludeDeputy") : "")
-            + '<br />' + Lua.tr('CardPackages') + cardpack.map(e => {
-              let ret = Lua.tr(e);
-              // TODO: 这种东西最好还是变量名规范化= =
-              if (ret.search(/特殊牌|衍生牌/) === -1) {
-                ret = "<b>" + ret + "</b>";
-              }
-              return ret;
-            }).join('，');
+          let retText = Lua.tr("GameMode") + Lua.tr(gameMode) + "<br />"
+            + Lua.tr("ResponseTime") + "<b>" + Config.roomTimeout + "</b><br />";
+
+          for (const group of boardgameSettingsData) {
+            for (const prop of group['_children']) {
+              retText += `${Lua.tr(prop.title)}:<b>
+              ${Lua.tr(data?.['_game']?.[prop['_settingsKey']])}</b><br />`
+            }
+          }
+          for (const group of gameSettingsData) {
+            for (const prop of group['_children']) {
+              retText += `${Lua.tr(prop.title)}:<b>
+              ${Lua.tr(data?.['_mode']?.[prop['_settingsKey']])}</b><br />`
+            }
+          }
+
+          retText += Lua.tr('CardPackages') + cardpack.map(e => {
+            let ret = Lua.tr(e);
+            // TODO: 这种东西最好还是变量名规范化= =
+            if (ret.search(/特殊牌|衍生牌/) === -1) {
+              ret = "<b>" + ret + "</b>";
+            }
+            return ret;
+          }).join('，');
+
+          text = retText;
         }
       }
     }

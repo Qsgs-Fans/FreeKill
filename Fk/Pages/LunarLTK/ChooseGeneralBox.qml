@@ -24,8 +24,12 @@ GraphicsBox {
   }
 
   id: root
-  title.text: prompt !== "" ? prompt : Lua.tr("$ChooseGeneral").arg(choiceNum) +
-    (Config.enableFreeAssign ? "(" + Lua.tr("Enable free assign") + ")" : "")
+  title.text: {
+    if (prompt !== "") return prompt;
+    const suffix = Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")') ? `(${Lua.tr("Enable free assign")})` : "";
+    const ret = Lua.tr("$ChooseGeneral").arg(choiceNum) + suffix;
+    return ret;
+  }
   width: generalArea.width + body.anchors.leftMargin + body.anchors.rightMargin
   height: body.implicitHeight + body.anchors.topMargin +
           body.anchors.bottomMargin
@@ -169,7 +173,7 @@ GraphicsBox {
       }
 
       onRightClicked: {
-        if (selectedItem.indexOf(this) === -1 && Config.enableFreeAssign)
+        if (selectedItem.indexOf(this) === -1 && Lua.evaluate('ClientInstance:getSettings("enableFreeAssign")'))
           roomScene.startCheat("FreeAssign", { card: this });
       }
 

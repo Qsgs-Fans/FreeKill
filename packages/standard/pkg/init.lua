@@ -39,8 +39,8 @@ local role_getlogic = function()
 
   function role_logic:chooseGenerals()
     local room = self.room ---@class Room
-    local generalNum = room.settings.generalNum
-    local n = room.settings.enableDeputy and 2 or 1
+    local generalNum = room:getSettings('generalNum')
+    local n = room:getSettings('enableDeputy') and 2 or 1
     local lord = room:getLord()
     local lord_generals = {}
     local lord_num = 3
@@ -136,7 +136,7 @@ local role_getlogic = function()
 
     local nonlord = room:getOtherPlayers(lord, true)
     local req = Request:new(nonlord, "AskForGeneral")
-    req.timeout = self.room.settings.generalTimeout
+    req.timeout = self.room:getSettings('generalTimeout')
     local generals = table.random(room.general_pile, #nonlord * generalNum)
     for i, p in ipairs(nonlord) do
       local arg = table.slice(generals, (i - 1) * generalNum + 1, i * generalNum + 1)

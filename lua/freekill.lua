@@ -37,6 +37,7 @@ GameMode = require "core.game_mode"
 RequestHandler = require "core.request_handler"
 AbstractRoom = require "lunarltk.core.room.abstract_room"
 UI = require "ui-util"
+GameEvent = require "server.gameevent"
 
 -- 读取配置文件。
 -- 因为io马上就要被禁用了，所以赶紧先在这里读取配置文件。
@@ -82,4 +83,7 @@ end
 
 -- 初始化Engine类并置于Fk全局变量中，这里会加载拓展包
 dofile "lua/fk_ex.lua"
+
 Fk = Engine:new()
+dofile "lua/lunarltk/init.lua"
+Fk:load()

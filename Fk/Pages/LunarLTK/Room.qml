@@ -16,6 +16,7 @@ W.PageBase {
   id: roomScene
 
   property int playerNum: 0
+  property int dashboardId: 0
 
   property alias popupBox: popupBox
   property alias manualBox: manualBox
@@ -231,8 +232,9 @@ W.PageBase {
       MetroButton {
         id: trustBtn
         text: Lua.tr("Trust")
+        enabled: !Config.observing && !Config.replaying
+        visible: !Config.observing && !Config.replaying
         textFont.pixelSize: 28
-        enabled: true;
         onClicked: {
           Cpp.notifyServer("Trust", "");
           trustBtn.enabled = false;
@@ -809,6 +811,13 @@ W.PageBase {
           skillInteraction.item.extra_data = data;
           skillInteraction.item?.clicked();
           break;
+        case "cardname":
+          skillInteraction.sourceComponent =
+            Qt.createComponent("Fk.Components.LunarLTK.SkillInteraction", "SkillCardName");
+          skillInteraction.item.skill = skill_name;
+          skillInteraction.item.extra_data = data;
+          skillInteraction.item?.clicked();
+          break;
         case "checkbox":
           skillInteraction.sourceComponent =
             Qt.createComponent("Fk.Components.LunarLTK.SkillInteraction", "SkillCheckBox");
@@ -910,6 +919,7 @@ W.PageBase {
 
     const luaSelfIdx = Lua.evaluate('table.indexOf(ClientInstance.players, Self)') - 1;
 
+    dashboardId = Self.id;
     for (let i = 0; i < playerNum; i++) {
       const state = Lua.evaluate(`ClientInstance.players[${(luaSelfIdx + i) % playerNum + 1}]:__toqml().prop`);
       const modelData = {

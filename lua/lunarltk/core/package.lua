@@ -169,7 +169,11 @@ function Package:install(engine)
   engine:addGameModes(self.game_modes)
 
   for g, skins in pairs(self.skin_specs) do
-    engine.skin_packages[g] = skins
+    if engine.skin_packages[g] then
+      table.insertTable(engine.skin_packages[g], skins)
+    else
+      engine.skin_packages[g] = skins
+    end
   end
 end
 

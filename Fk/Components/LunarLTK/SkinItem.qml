@@ -2,6 +2,7 @@ import QtQuick
 import Qt5Compat.GraphicalEffects
 
 import Fk
+import Fk.Components.LunarLTK.Photo
 
 Item {
   id: root
@@ -11,12 +12,11 @@ Item {
   property url source: ""
   property bool selected: false
 
-  Image {
+  SkinArea {
     id: skinImg
     source: root.source
     width: 120
     height: 170
-    fillMode: Image.PreserveAspectCrop
     visible: false
   }
 

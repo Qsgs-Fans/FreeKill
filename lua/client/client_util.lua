@@ -146,9 +146,10 @@ function GetAllProperties()
       table.insertIfNeed(hps, g.hp)
     end
   end
+  local enabledStates = { Fk:translate("Enable"), Fk:translate("Disabled") }
   table.sort(maxHps)
   table.sort(hps)
-  return { kingdoms = kingdoms, maxHps = maxHps, hps = hps }
+  return { kingdoms = kingdoms, maxHps = maxHps, hps = hps, enabledStates = enabledStates }
 end
 
 function GetGenerals(pack_name)
@@ -269,6 +270,7 @@ local function filterGeneral(general, filter)
   local voiceActor = filter.voiceActor ---@type string
   local illustrator = filter.illustrator ---@type string
   local audioText = filter.audioText ---@type string
+  local enabledStates = filter.enabledStates ---@type string[]
   return not (
     (name ~= "" and not find_with_escape(Fk:translate(general.name), name)) or
     (title ~= "" and not find_with_escape(translateInfo("#" .. general.name), title)) or
@@ -277,18 +279,21 @@ local function filterGeneral(general, filter)
     (#maxHps > 0 and not table.contains(maxHps, tostring(general.maxHp))) or
     (#hps > 0 and not table.contains(hps, tostring(general.hp))) or
     (#genders > 0 and not table.contains(genders, genderMapper[general.gender])) or
-    (skillName ~= "" and not table.find(general:getSkillNameList(true), function(s)
-      return
-          not not find_with_escape(Fk:translate(s), skillName)
-    end)) or
-    (skillDesc ~= "" and not table.find(general:getSkillNameList(true), function(s)
-      return
-          not not find_with_escape(Fk:getDescription(s), skillDesc)
-    end)) or
+    (skillName ~= "" and not (table.find(general:getSkillNameList(true), function(s)
+      return not not find_with_escape(Fk:translate(s), skillName)
+    end) or table.find(general.related_other_skills, function(s)
+      return not not find_with_escape(Fk:translate(s), skillName)
+    end))) or
+    (skillDesc ~= "" and not (table.find(general:getSkillNameList(true), function(s)
+      return not not find_with_escape(Fk:getDescription(s), skillDesc)
+    end) or table.find(general.related_other_skills, function(s)
+      return not not find_with_escape(Fk:getDescription(s), skillDesc)
+    end))) or
     (designer ~= "" and not find_with_escape(translateInfo("designer:" .. general.name), designer)) or
     (voiceActor ~= "" and not find_with_escape(translateInfo("cv:" .. general.name), voiceActor)) or
     (illustrator ~= "" and not find_with_escape(translateInfo("illustrator:" .. general.name), illustrator)) or
     (audioText ~= "" and not findAudioText(general, audioText))
+    or (#enabledStates > 0 and not table.contains(enabledStates, Fk:canUseGeneral(general.name) and Fk:translate("Enable") or Fk:translate("Disabled")))
   )
 end
 
@@ -496,15 +501,18 @@ end
 
 function GetGameModes()
   local ret = {}
-  for k, v in pairs(Fk.game_modes) do
-    table.insert(ret, {
-      name = Fk:translate(v.name),
-      orig_name = v.name,
-      minPlayer = v.minPlayer,
-      maxPlayer = v.maxPlayer,
-    })
+  for _, name in ipairs(Fk.package_names) do
+    local pk = Fk.packages[name]
+    for _, v in ipairs(pk.game_modes) do
+      table.insert(ret, {
+        name = Fk:translate(v.name),
+        orig_name = v.name,
+        minPlayer = v.minPlayer,
+        maxPlayer = v.maxPlayer,
+      })
+    end
   end
-  table.sort(ret, function(a, b) return a.name > b.name end)
+  -- table.sort(ret, function(a, b) return a.name > b.name end)
   return ret
 end
 
@@ -569,7 +577,7 @@ end
 
 function GetCompNum()
   local c = ClientInstance
-  local mode = Fk.game_modes[c.settings.gameMode] or Fk.game_modes["aaa_role_mode"]
+  local mode = Fk.game_modes[c:getSettings('gameMode')] or Fk.game_modes["aaa_role_mode"]
   local min, max = mode.minComp, mode.maxComp
   local capacity = c.capacity
   if min < 0 then min = capacity + min end
@@ -623,7 +631,7 @@ function SetReplayingShowCards(o)
 end
 
 function CheckSurrenderAvailable()
-  local curMode = ClientInstance.settings.gameMode
+  local curMode = ClientInstance:getSettings('gameMode')
   local mode = Fk.game_modes[curMode] or Fk.game_modes["aaa_role_mode"]
   local playedTime = os.time() - ClientInstance.gameStartTime
   return mode:surrenderFunc(playedTime)
@@ -1320,6 +1328,20 @@ function ToQml(v)
   end
 
   return defaultQml
+end
+
+local W = require "ui_emu.preferences"
+
+function GetUIDataOfSettings(mode, settings, isBoardGame)
+  local ui_settings
+  if isBoardGame then
+    ui_settings = Fk:getBoardGame(mode).ui_settings
+  else
+    ui_settings = Fk.game_modes[mode].ui_settings
+  end
+
+  if not ui_settings then return {} end
+  return W.toQmlData(ui_settings, settings)
 end
 
 dofile "lua/client/i18n/init.lua"

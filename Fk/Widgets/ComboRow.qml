@@ -6,6 +6,7 @@ ActionRow {
 
   property var model
   property var currentValue
+  property alias value: root.currentValue
   // property var currentIndex
   property string textRole
 
@@ -20,7 +21,13 @@ ActionRow {
       implicitWidth: 120
     }
 
-    onCurrentIndexChanged: root.currentValue = model.get(currentIndex);
+    onCurrentIndexChanged: {
+      if (model instanceof ListModel) {
+        root.currentValue = model.get(currentIndex);
+      } else {
+        root.currentValue = model[currentIndex];
+      }
+    }
   }
 
   function setCurrentIndex(idx) {

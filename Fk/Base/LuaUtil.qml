@@ -21,6 +21,23 @@ QtObject {
     return backend.callLuaFunction(funcName, [...params]);
   }
 
+  function fn(func) {
+    if (func.startsWith("function")) {
+      return (...params) => {
+        let exp = `(${func})(`;
+        exp += [...params].map(v => {
+          return `json.decode '${JSON.stringify(v)}'`;
+        }).join(', ');
+        exp += ')';
+
+        return evaluate(exp);
+      }
+    }
+    return (...params) => {
+      return backend.callLuaFunction(func, [...params]);
+    }
+  }
+
   function evaluate(lua) {
     return backend.evalLuaExp(`return ${lua}`);
   }

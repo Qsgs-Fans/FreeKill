@@ -307,7 +307,9 @@ end
 
 function ServerPlayer:throwAllMarks()
   for name, _ in pairs(self.mark) do
-    self.room:setPlayerMark(self, name, 0)
+    if not name:find("-noclear", 1, true) then
+      self.room:setPlayerMark(self, name, 0)
+    end
   end
 end
 
@@ -695,14 +697,14 @@ end
 ---@param to ServerPlayer @ 待判断的角色
 ---@return boolean
 function ServerPlayer:isFriend(to)
-  return Fk.game_modes[self.room.settings.gameMode]:friendEnemyJudge(self, to)
+  return Fk.game_modes[self.room:getSettings('gameMode')]:friendEnemyJudge(self, to)
 end
 
 --- 是否为敌方
 ---@param to ServerPlayer @ 待判断的角色
 ---@return boolean
 function ServerPlayer:isEnemy(to)
-  return not Fk.game_modes[self.room.settings.gameMode]:friendEnemyJudge(self, to)
+  return not Fk.game_modes[self.room:getSettings('gameMode')]:friendEnemyJudge(self, to)
 end
 
 --- 获得队友

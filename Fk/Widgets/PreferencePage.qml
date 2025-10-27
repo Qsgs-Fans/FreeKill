@@ -8,6 +8,7 @@ Flickable {
   // TODO 键盘/手柄操作各个config的逻辑，以及焦点转换时滚动都在此实现
 
   property real groupWidth: width
+  property alias layout: layout
   property alias spacing: layout.spacing
   default property alias children: layout.children
 

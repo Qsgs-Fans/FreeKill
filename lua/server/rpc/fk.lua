@@ -53,13 +53,29 @@ local callRpc = function(method, params)
     end
 
     if packet[jsonrpc.key_jsonrpc] == "2.0" and
-        packet[jsonrpc.key_id] == id and type(packet[jsonrpc.key_method]) ~= "string" then
-      return packet[jsonrpc.key_result], packet[jsonrpc.key_error]
+      packet[jsonrpc.key_id] == id and
+      type(packet[jsonrpc.key_method]) ~= "string" and
+      not packet[jsonrpc.key_error] then
+
+      return packet[jsonrpc.key_result]
+
     elseif packet[jsonrpc.key_error] then
+      local errmsg = ("method=%s params=%s ec=%d msg=%s"):format(
+        method,
+        json.encode(params),
+        packet[jsonrpc.key_error][jsonrpc.key_error_code],
+        packet[jsonrpc.key_error][jsonrpc.key_error_message]
+      )
+
       -- 和Json RPC spec不合的一集，我们可能收到预期之外的error
       -- 这可能是我io编程不达标导致的
-      -- 对于这种id不合的error包扔了
-      fk.qCritical(msg)
+      if packet[jsonrpc.key_id] == id then
+        -- id符合的话就爆error
+        error("RPC call error: " .. errmsg)
+      else
+        -- 对于这种id不合的error包扔了
+        fk.qCritical("RPC call error, but id is not same: " .. errmsg)
+      end
     else
       local res = jsonrpc.server_response(dispatchers, packet)
       if res then
@@ -341,11 +357,23 @@ local _Room_destroyRequestTimer = function(self)
 end
 
 local _Room_increaseRefCount = function(self)
-  callRpc("Room_increaseRefCount", { self.id })
+  -- callRpc("Room_increaseRefCount", { self.id })
 end
 
 local _Room_decreaseRefCount = function(self)
   callRpc("Room_decreaseRefCount", { self.id })
+end
+
+local _Room_getSessionId = function(self)
+  return callRpc("Room_getSessionId", { self.id })
+end
+
+local _Room_getSessionData = function(self)
+  return callRpc("Room_getSessionData", { self.id })
+end
+
+local _Room_setSessionData = function(self, jsonData)
+  callRpc("Room_setSessionData", { self.id, tostring(jsonData) })
 end
 
 ---@type metatable
@@ -368,6 +396,10 @@ local _Room_MT = {
     -- 虽然C++ Room变成NULL无关紧要了，但我们希望先保存数据库再销毁房间，所以做了
     increaseRefCount = _Room_increaseRefCount,
     decreaseRefCount = _Room_decreaseRefCount,
+
+    getSessionId = _Room_getSessionId,
+    getSessionData = _Room_getSessionData,
+    setSessionData = _Room_setSessionData,
 
     settings = function(t) return t._settings end,
   }

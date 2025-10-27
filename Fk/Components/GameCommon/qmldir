@@ -11,3 +11,4 @@ PokerCard 1.0 PokerCard.qml
 ItemArea 1.0 ItemArea.qml
 InvisibleItemArea 1.0 InvisibleItemArea.qml
 ChatBubble 1.0 ChatBubble.qml
+MediaArea 1.0 MediaArea.qml
