@@ -31,13 +31,6 @@ jobs:
           "build-tools;35.0.0" \
           "ndk;27.2.12479018"
 
-    - name: Setup Vulkan headers
-      run: |
-        cd ..
-        git clone https://github.com/KhronosGroup/Vulkan-Headers
-        cd FreeKill
-        cp -r ../Vulkan-Headers/include/* ./include
-
     - name: Setup OpenSSL 3.1.8
       run: |
         cd ..

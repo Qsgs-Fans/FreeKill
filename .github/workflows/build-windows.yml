@@ -34,13 +34,6 @@ jobs:
         modules: 'qtmultimedia qt5compat qtshadertools'
         tools: 'tools_opensslv3_x64 tools_mingw1310'
 
-    - name: Setup Vulkan headers
-      run: |
-        cd ..
-        git clone https://github.com/KhronosGroup/Vulkan-Headers
-        cd FreeKill
-        cp -r ../Vulkan-Headers/include/* ./include
-
     - name: Disable PCH
       shell: bash
       run: |
