@@ -17,6 +17,8 @@ using namespace fkShell;
  #include <QFileDialog>
  #include <QScreen>
  #include <QSplashScreen>
+ #include <QtQuick/QQuickWindow>
+ #include <QVulkanInstance>
  #ifndef Q_OS_ANDROID
   #include <QQuickStyle>
  #else
@@ -315,6 +317,12 @@ int freekill_main(int argc, char *argv[]) {
 #ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
+
+  QVulkanInstance vkInst;
+  if (vkInst.create()) {
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
+  }
+  qDebug() << "QSGRendererInterface::RenderMode = " << QQuickWindow::graphicsApi();
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);

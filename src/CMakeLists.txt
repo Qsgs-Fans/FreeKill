@@ -64,6 +64,7 @@ set(QT_LIB Qt6::Network)
 if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND QT_LIB
     Qt6::Qml
+    Qt6::Quick
     Qt6::Gui
     Qt6::Widgets
     Qt6::Multimedia
