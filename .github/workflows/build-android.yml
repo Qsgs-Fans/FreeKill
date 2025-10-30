@@ -99,7 +99,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.8.3'
+        version: '6.10.0'
         host: 'linux'
         target: 'desktop'
         arch: 'linux_gcc_64'
@@ -110,7 +110,7 @@ jobs:
       with:
         aqtversion: '==3.1.*'
         py7zrversion: '>=0.20.2'
-        version: '6.8.3'
+        version: '6.10.0'
         host: 'linux'
         target: 'android'
         arch: 'android_arm64_v8a'
