@@ -17,6 +17,7 @@ using namespace fkShell;
  #include <QFileDialog>
  #include <QScreen>
  #include <QSplashScreen>
+ #include <QtQuick/QQuickWindow>
  #ifndef Q_OS_ANDROID
   #include <QQuickStyle>
  #else
@@ -315,6 +316,9 @@ int freekill_main(int argc, char *argv[]) {
 #ifdef DESKTOP_BUILD
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
+
+  // 设置 QML 使用 OpenGL 渲染
+QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
