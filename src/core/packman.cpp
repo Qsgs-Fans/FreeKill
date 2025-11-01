@@ -190,9 +190,14 @@ int PackMan::updatePack(const QString &pack, const QString &hash) {
   err = status(pack);
   if (err != 0)
     return err;
-  err = pull(pack);
-  if (err < 0)
-    return err;
+
+  // 检测一下是否已经存在该commit hash，不存在就pull
+  err = hasCommit(pack, hash);
+  if (err != 0) {
+    err = pull(pack);
+    if (err < 0)
+      return err;
+  }
   err = checkout(pack, hash);
   if (err < 0)
     return err;
@@ -437,6 +442,27 @@ int PackMan::pull(const QString &name) {
 
 clean:
   git_remote_free(remote);
+  git_repository_free(repo);
+  return err;
+}
+
+int PackMan::hasCommit(const QString &name, const QString &hash) {
+  git_repository *repo = NULL;
+  int err;
+  git_oid oid = {0};
+  git_commit *commit = NULL;
+
+  auto path = QString("packages/%1").arg(name).toUtf8();
+  auto sha = hash.toLatin1();
+  err = git_repository_open(&repo, path);
+  GIT_CHK_CLEAN;
+  err = git_oid_fromstr(&oid, sha);
+  GIT_CHK_CLEAN;
+  err = git_commit_lookup(&commit, repo, &oid);
+  GIT_CHK_CLEAN;
+
+clean:
+  git_commit_free(commit);
   git_repository_free(repo);
   return err;
 }

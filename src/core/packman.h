@@ -37,6 +37,7 @@ private:
 
   int clone(const QString &url);
   int pull(const QString &name);
+  int hasCommit(const QString &name, const QString &hash);
   int checkout(const QString &name, const QString &hash);
   int checkout_branch(const QString &name, const QString &branch);
   int status(const QString &name); // return 1 if the workdir is modified
