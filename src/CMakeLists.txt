@@ -69,6 +69,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
     Qt6::Widgets
     Qt6::Multimedia
     Qt6::QuickControls2
+    Qt6::Concurrent
   )
 endif()
 

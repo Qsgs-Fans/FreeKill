@@ -21,6 +21,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
     Widgets
     Multimedia
     QuickControls2
+    Concurrent
     LinguistTools
   )
 else ()

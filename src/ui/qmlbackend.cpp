@@ -13,6 +13,7 @@
 #include <QMediaPlayer>
 #include <QMessageBox>
 #include <QAbstractButton>
+#include <QtConcurrent>
 #endif
 
 #include <cstdlib>
@@ -125,7 +126,21 @@ static ClientPlayer dummyPlayer(0, nullptr);
 void QmlBackend::joinServer(QString address, ushort port) {
   if (ClientInstance != nullptr)
     return;
-  Client *client = new Client(this);
+
+  auto future = QtConcurrent::run([&] {
+    auto ret = new Client;
+    ret->moveToThread(qApp->thread());
+    return ret;
+  });
+  QFutureWatcher<Client *> watcher;
+  watcher.setFuture(future);
+
+  QEventLoop loop;
+  connect(&watcher, &QFutureWatcher<Client *>::finished, &loop, &QEventLoop::quit);
+  loop.exec();
+
+  auto client = future.result();
+  client->setParent(this);
   connect(client, &Client::notifyUI, this, &QmlBackend::notifyUI);
   engine->rootContext()->setContextProperty("ClientInstance", client);
   engine->rootContext()->setContextProperty("Self", client->getSelf());
