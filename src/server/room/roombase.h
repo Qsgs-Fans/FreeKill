@@ -6,6 +6,8 @@ class ServerPlayer;
 
 class RoomBase : public QObject {
  public:
+  ~RoomBase();
+
   Server *getServer() const;
   bool isLobby() const;
   QList<ServerPlayer *> getPlayers() const;

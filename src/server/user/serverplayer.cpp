@@ -33,10 +33,14 @@ ServerPlayer::~ServerPlayer() {
   if (getId() < 0) return;
 
   // 真人的话 需要先退出房间，再退出大厅
-  room->removePlayer(this);
-  if (room != nullptr) {
+  if (room) {
     room->removePlayer(this);
   }
+  if (room) {
+    room->removePlayer(this);
+  }
+
+  if (!ServerInstance) return;
 
   // 最后服务器删除他
   if (server->findPlayer(getId()) == this)

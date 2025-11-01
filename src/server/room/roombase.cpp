@@ -5,6 +5,12 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+RoomBase::~RoomBase() {
+  for (auto p : players) {
+    p->setRoom(nullptr);
+  }
+}
+
 Server *RoomBase::getServer() const { return server; }
 
 bool RoomBase::isLobby() const {

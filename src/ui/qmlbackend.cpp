@@ -111,7 +111,7 @@ void QmlBackend::setEngine(QQmlApplicationEngine *engine) {
 
 void QmlBackend::startServer(ushort port) {
   if (!ServerInstance) {
-    Server *server = new Server(this);
+    Server *server = new Server(nullptr);
 
     if (!server->listen(QHostAddress::Any, port)) {
       server->deleteLater();

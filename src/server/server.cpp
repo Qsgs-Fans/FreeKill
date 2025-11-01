@@ -67,9 +67,10 @@ Server::Server(QObject *parent) : QObject(parent) {
 Server::~Server() {
   isListening = false;
   // 虽然都是子对象 但析构顺序要抠一下
-  for (auto p : findChildren<ServerPlayer *>()) {
-    delete p;
-  }
+  // for (auto p : findChildren<ServerPlayer *>()) {
+  //   delete p;
+  // }
+
   // 得先清理threads及其Rooms 因为其中某些析构函数要调用sql
   for (auto thr : findChildren<RoomThread *>()) {
     delete thr;

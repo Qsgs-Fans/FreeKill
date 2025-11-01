@@ -171,14 +171,17 @@ static QQmlApplicationEngine *engine = nullptr;
 
 static void cleanUpGlobalStates() {
 #ifndef FK_SERVER_ONLY
-  if (engine) engine->deleteLater();
-  if (Backend) Backend->deleteLater();
+  if (engine) delete engine;
+  if (Backend) delete Backend;
 #endif
 
-  if (ClientInstance) ClientInstance->deleteLater();
-  if (ServerInstance) ServerInstance->deleteLater();
-  if (ShellInstance) ShellInstance->deleteLater();
-  if (Pacman) Pacman->deleteLater();
+  if (ClientInstance) delete ClientInstance;
+  // if (ServerInstance) delete ServerInstance;
+  if (ShellInstance) delete ShellInstance;
+  if (Pacman) delete Pacman;
+
+  qInstallMessageHandler(nullptr);
+  qApp->deleteLater();
 }
 
 static int runSkillTest(const QString &val, const QString &filepath) {
@@ -318,7 +321,7 @@ int freekill_main(int argc, char *argv[]) {
 #endif
 
   // 设置 QML 使用 OpenGL 渲染
-QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+  QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
@@ -372,6 +375,7 @@ QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
 
   SHOW_SPLASH_MSG("Loading qml files...");
   engine = new QQmlApplicationEngine;
+
 #ifndef Q_OS_ANDROID
   QQuickStyle::setStyle("Material");
 #endif
@@ -441,8 +445,6 @@ QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
   // 关闭欢迎界面，然后进入Qt主循环
   splash.close();
   int ret = app->exec();
-
-  qInstallMessageHandler(nullptr);
 
   return ret;
 #endif
