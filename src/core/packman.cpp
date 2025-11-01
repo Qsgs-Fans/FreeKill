@@ -459,7 +459,8 @@ int PackMan::hasCommit(const QString &name, const QString &hash) {
   err = git_oid_fromstr(&oid, sha);
   GIT_CHK_CLEAN;
   err = git_commit_lookup(&commit, repo, &oid);
-  GIT_CHK_CLEAN;
+  // 这里就没必要弹窗了
+  // GIT_CHK_CLEAN;
 
 clean:
   git_commit_free(commit);
