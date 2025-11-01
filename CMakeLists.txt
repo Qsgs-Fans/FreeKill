@@ -17,6 +17,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
   find_package(Qt6 REQUIRED COMPONENTS
     Gui
     Qml
+    Quick
     Widgets
     Multimedia
     QuickControls2
