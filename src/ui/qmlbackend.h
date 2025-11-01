@@ -72,8 +72,6 @@ public:
 
   Q_INVOKABLE QJsonObject getRequestData() const;
 
-  Q_INVOKABLE void clearComponentCache();
-
 signals:
   void notifyUI(const QString &command, const QVariant &data);
   void dialog(const QString &type, const QString &text, const QString &orig = QString());

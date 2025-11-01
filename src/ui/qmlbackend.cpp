@@ -535,8 +535,4 @@ QJsonObject QmlBackend::getRequestData() const {
   return obj;
 }
 
-void QmlBackend::clearComponentCache() {
-  engine->clearComponentCache();
-}
-
 #endif
