@@ -209,10 +209,23 @@ W.PageBase {
   }
 
   function setServerSettings(sender, data) {
-    const [ motd, hiddenPacks, enableBots ] = data;
+    const [ motd, hiddenPacks, enabledFeatures ] = data;
     Config.serverMotd = motd;
     Config.serverHiddenPacks = hiddenPacks;
-    Config.serverEnableBot = enableBots;
+
+    // 历史问题：相当多版本的data[2]是布尔，表示是否允许BOT
+    if (typeof enabledFeatures !== "object") {
+      const enableBots = enabledFeatures;
+      const features = [];
+
+      if (enableBots) features.push("AddRobot");
+      if (data[3]) features.push("ChangeRoom");
+
+      Config.serverFeatures = features;
+
+    } else if (enabledFeatures instanceof Array) {
+      Config.serverFeatures = enabledFeatures;
+    }
   }
 
   function setBusy(sender, data) {

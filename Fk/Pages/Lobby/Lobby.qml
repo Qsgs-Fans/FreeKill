@@ -216,7 +216,7 @@ W.PageBase {
       plainButton: false
       text: "更多..."
       font.bold: true
-      icon.source: "http://175.178.66.93/symbolic/categories/emoji-symbols-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/categories/emoji-symbols-symbolic.svg"
       onClicked: {
         morePagesDrawer.open();
       }
@@ -367,7 +367,7 @@ W.PageBase {
           Layout.preferredWidth: parent.width / 3 - 4
           text: moreManager.isManageMode ? "完成修改" : "添加到下方"
           font.bold: true
-          icon.source: "http://175.178.66.93/symbolic/places/user-bookmarks-symbolic.svg"
+          icon.source: Cpp.path + "/image/symbolic/places/user-bookmarks-symbolic.svg"
           plainButton: false
           onClicked: {
             moreManager.isManageMode = !moreManager.isManageMode;
@@ -469,8 +469,8 @@ W.PageBase {
     Config.roomCapacity = data[0];
     Config.roomTimeout = data[1] - 1;
     const roomSettings = data[2];
-    // Config.enableFreeAssign = roomSettings.enableFreeAssign;
     Config.heg = roomSettings.gameMode.includes('heg_mode');
+
     let displayName = roomSettings.roomName;
     if (roomSettings.roomId !== undefined) {
       displayName += "[{id}]".replace("{id}", roomSettings.roomId);
@@ -544,7 +544,7 @@ W.PageBase {
       pages: [
         {
           name: "Modes Overview",
-          iconUrl: "http://175.178.66.93/symbolic/categories/applications-games-symbolic.svg",
+          iconUrl: Cpp.path + "/image/symbolic/categories/applications-games-symbolic.svg",
           qml: {
             uri: "Fk.Pages.Common",
             name: "ModesOverview",
@@ -552,7 +552,7 @@ W.PageBase {
         },
         {
           name: "Replay",
-          iconUrl: "http://175.178.66.93/symbolic/categories/emoji-recent-symbolic.svg",
+          iconUrl: Cpp.path + "/image/symbolic/categories/emoji-recent-symbolic.svg",
           qml: {
             uri: "Fk.Pages.Replay",
             name: "Replay",
@@ -560,7 +560,7 @@ W.PageBase {
         },
         {
           name: "Settings",
-          iconUrl: "http://175.178.66.93/symbolic/categories/applications-system-symbolic.svg",
+          iconUrl: Cpp.path + "/image/symbolic/categories/applications-system-symbolic.svg",
           popup: true,
           qml: {
             uri: "Fk.Pages.Lobby",
@@ -569,7 +569,7 @@ W.PageBase {
         },
         {
           name: "About",
-          iconUrl: "http://175.178.66.93/symbolic/actions/help-about-symbolic.svg",
+          iconUrl: Cpp.path + "/image/symbolic/actions/help-about-symbolic.svg",
           qml: {
             uri: "Fk.Pages.Common",
             name: "About",

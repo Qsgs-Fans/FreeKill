@@ -853,6 +853,13 @@ W.PageBase {
     }
   }
 
+  function updateMarkArea(sender, data) {
+    const { id, change } = data;
+    const photo = Logic.getPhoto(id);
+    if (!photo) return;
+    photo.handleMarkAreaUpdate(change);
+  }
+
   Component.onCompleted: {
     addCallback(Command.NetStateChanged, netStateChanged);
 
@@ -913,6 +920,8 @@ W.PageBase {
     addCallback(Command.GetPlayerHandcards, Logic.callbacks["GetPlayerHandcards"]);
     addCallback(Command.ReplyToServer, Logic.callbacks["ReplyToServer"]);
     addCallback(Command.ChangeSkin, Logic.callbacks["ChangeSkin"]);
+
+    addCallback(Command.UpdateMarkArea, updateMarkArea);
 
     playerNum = Config.roomCapacity;
     bgm.play();

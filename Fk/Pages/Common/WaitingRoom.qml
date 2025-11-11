@@ -15,7 +15,7 @@ W.PageBase {
 
   property bool isAllReady: false
   property bool canAddRobot: false
-
+  property bool canChangeRoom: false
   property bool isOwner: false
   property bool isFull: false
   property bool isReady: false
@@ -87,7 +87,7 @@ W.PageBase {
         font.pixelSize: 16
         width: parent.width
         wrapMode: TextEdit.WordWrap
-        Component.onCompleted: {
+        function refresh() {
           const data = Lua.call("GetRoomConfig");
           let cardpack = Lua.call("GetAllCardPack");
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
@@ -123,12 +123,22 @@ W.PageBase {
 
           text = retText;
         }
+
+        Component.onCompleted: refresh();
       }
     }
   }
 
   ListModel {
     id: photoModel
+  }
+
+  W.PopupLoader {
+    id: room_drawer
+    padding: 0
+    width: Config.winWidth * 0.80
+    height: Config.winHeight * 0.95
+    anchors.centerIn: parent
   }
 
   GridLayout {
@@ -250,7 +260,7 @@ W.PageBase {
               } else {
                 Config.blockedUsers.splice(idx, 1);
               }
-              Config.blockedUsers = Config.blockedUsers;
+              Config.blockedUsersChanged();
             }
           }
 
@@ -282,6 +292,19 @@ W.PageBase {
     anchors.right: parent.right
     anchors.bottom: parent.bottom
     anchors.margins: 40
+
+    W.ButtonContent{
+      visible: isOwner && canChangeRoom
+      text: Lua.tr("Change Room Config")
+      onClicked: {
+        room_drawer.sourceComponent =
+          Qt.createComponent("../Lobby/CreateRoom.qml");
+        room_drawer.item.isChangeRoom = true;
+        room_drawer.open();
+        Config.observing = false;
+        Config.replaying = false;
+      }
+    }
 
     W.ButtonContent {
       text: Lua.tr("Chat")
@@ -320,7 +343,7 @@ W.PageBase {
       W.ButtonContent {
         text: Lua.tr("Add Robot")
         visible: isOwner && !isFull
-        enabled: Config.serverEnableBot && canAddRobot
+        enabled: Config.serverFeatures.includes("AddRobot") && canAddRobot
         onClicked: {
           Cpp.notifyServer("AddRobot", "");
         }
@@ -370,7 +393,7 @@ W.PageBase {
   }
 
   function checkCanAddRobot() {
-    if (Config.serverEnableBot) {
+    if (Config.serverFeatures.includes("AddRobot")) {
       const num = Lua.call("GetCompNum");
       canAddRobot = num.maxComp > num.curComp;
     }
@@ -538,6 +561,8 @@ W.PageBase {
       model.win = d.win;
       model.run = d.run;
     }
+
+    checkAllReady();
   }
 
   function startGame() {
@@ -556,6 +581,34 @@ W.PageBase {
     App.changeRoomPage(data);
   }
 
+  function changeRoomConfig(_, data) {
+    App.setBusy(false);
+
+    Config.roomCapacity = data[0];
+    Config.roomTimeout = data[1] - 1;
+    const roomSettings = data[2];
+    Config.heg = roomSettings.gameMode.includes('heg_mode');
+
+    let displayName = roomSettings.roomName;
+    if (roomSettings.roomId !== undefined) {
+      displayName += "[{id}]".replace("{id}", roomSettings.roomId);
+    }
+    Config.headerName = Lua.tr("Current room: %1").arg(displayName);
+
+    playerNum = Config.roomCapacity;
+    for (let i = 0; i < 10; i++) {
+      photoModel.get(i).sealed = i >= playerNum;
+    }
+    roominfo.refresh();
+
+    checkAllReady();
+    if (getPhoto(-1)) {
+      isFull = false;
+    } else {
+      isFull = true;
+    }
+  }
+
   Component.onCompleted: {
     addCallback(Command.UpdateGameData, updateGameData);
     addCallback(Command.RoomOwner, setRoomOwner);
@@ -567,9 +620,11 @@ W.PageBase {
     addCallback(Command.StartGame, startGame);
     addCallback(Command.BackToRoom, loadPlayerData);
 
+    addCallback(Command.ChangeRoom, changeRoomConfig);
+
     App.showToast(Lua.tr("$EnterRoom"));
     playerNum = Config.roomCapacity;
-
+    canChangeRoom = Config.serverFeatures.includes("ChangeRoom");
     resetPhotos();
   }
 }

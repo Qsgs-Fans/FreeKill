@@ -282,7 +282,7 @@ function Card:clone(suit, number)
   return newCard
 end
 
---- 检测是否为虚拟或转化卡牌，如果其ID为0，则为虚拟卡牌。
+--- 检测是否为虚拟或转化卡牌，如果其ID为0，则为虚拟或转化卡牌。
 function Card:isVirtual()
   return self.id == 0
 end

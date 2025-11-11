@@ -51,6 +51,7 @@ function Client:initialize(_client)
   self:addCallback("RemoveVirtualEquip", self.removeVirtualEquip)
   self:addCallback("ChangeSelf", self.changeSelf)
   self:addCallback("UpdateQuestSkillUI", self.updateQuestSkillUI)
+  self:addCallback("UpdateMarkArea", self.UpdateMarkArea)
   self:addCallback("PrintCard", self.handlePrintCard)
   self:addCallback("AddBuddy", self.addBuddy)
   self:addCallback("RmBuddy", self.rmBuddy)
@@ -866,6 +867,14 @@ end
 function Client:updateQuestSkillUI(data)
   local playerId, skillName = data[1], data[2]
   updateLimitSkill(playerId, Fk.skills[skillName])
+end
+
+function Client:UpdateMarkArea(data)
+  local player = ClientInstance:getPlayerById(data.id)
+  for key, value in pairs(data.change) do
+    player.markArea[key] = value
+  end
+  self:notifyUI("UpdateMarkArea", data)
 end
 
 function Client:handlePrintCard(data)

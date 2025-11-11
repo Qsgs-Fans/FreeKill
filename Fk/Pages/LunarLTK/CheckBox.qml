@@ -44,7 +44,7 @@ GraphicsBox {
           } else {
             root.result.splice(root.result.indexOf(index), 1);
           }
-          root.result = root.result;
+          root.resultChanged();
         }
       }
     }

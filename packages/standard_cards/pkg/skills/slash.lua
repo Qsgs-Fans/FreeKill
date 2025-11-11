@@ -20,8 +20,9 @@ skill:addEffect("cardskill", {
   can_use = function(self, player, card, extra_data)
     if player:prohibitUse(card) then return end
     return (extra_data and extra_data.bypass_times) or player.phase ~= Player.Play or
+      self:withinTimesLimit(player, Player.HistoryPhase, card, "slash") or
       table.find(Fk:currentRoom().alive_players, function(p)
-        return self:targetFilter(player, p, {}, {}, card, extra_data)
+        return p ~= player and self:withinTimesLimit(player, Player.HistoryPhase, card, "slash", p)
       end) ~= nil
   end,
   mod_target_filter = function(self, player, to_select, selected, card, extra_data)

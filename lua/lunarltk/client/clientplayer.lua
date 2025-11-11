@@ -4,8 +4,12 @@
 local ClientPlayer = Player:subclass("ClientPlayer")
 ClientPlayer:include(Fk.Base.ClientPlayerBase)
 
+---@class ClientMarkData
+---@field public visible boolean? @ 标记区域是否可见，默认可见
+
 ---@class ClientPlayer
 ---@field public next ClientPlayer
+---@field public markArea ClientMarkData? @ 关于标记显示的一些事项
 
 function ClientPlayer:initialize(cp)
   Player.initialize(self)

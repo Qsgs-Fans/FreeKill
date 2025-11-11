@@ -130,8 +130,6 @@ GraphicsBox {
           }
 
           onClicked: {
-            close();
-            roomScene.state = "notactive";
             const reply = (
               {
                 cards: root.selected_ids,
@@ -139,6 +137,8 @@ GraphicsBox {
               }
             );
             ClientInstance.replyToServer("", reply);
+            close();
+            roomScene.state = "notactive";
           }
         }
       }
@@ -152,8 +152,6 @@ GraphicsBox {
           enabled: true
 
           onClicked: {
-            close();
-            roomScene.state = "notactive";
             const reply = (
               {
                 cards: [],
@@ -161,6 +159,8 @@ GraphicsBox {
               }
             );
             ClientInstance.replyToServer("", reply);
+            close();
+            roomScene.state = "notactive";
           }
         }
       }

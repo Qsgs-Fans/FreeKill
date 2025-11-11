@@ -181,7 +181,7 @@ Flickable {
             full : 2,
             hasPassword : 2,
           }
-          Config.preferredFilter = Config.preferredFilter;
+          Config.preferredFilterChanged();
           ClientInstance.notifyServer("RefreshRoomList", "");
           lobby_dialog.item.finished();
         }
@@ -270,7 +270,7 @@ Flickable {
     }
     */
 
-    Config.preferredFilter = Config.preferredFilter;
+    Config.preferredFilterChanged();
 
     for (let i = roomModel.count - 1; i >= 0; i--) {
       const r = roomModel.get(i);

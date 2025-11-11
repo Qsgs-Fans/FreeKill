@@ -67,7 +67,7 @@ QtObject {
   // Client data
   property string serverMotd: ""
   property list<string> serverHiddenPacks: []
-  property bool serverEnableBot: true
+  property list<string> serverFeatures: []
   property string headerName: ""
   property int roomCapacity: 0
   property int roomTimeout: 0

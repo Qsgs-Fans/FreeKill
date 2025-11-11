@@ -121,6 +121,12 @@ gameRule:addEffect(fk.BuryVictim, {
     end
 
     player:bury()
+    room:doBroadcastNotify("UpdateMarkArea", {
+      id = player.id,
+      change = {
+        visible = false,
+      },
+    })
     if room.tag["SkipNormalDeathProcess"] or player.rest > 0 or (data.extra_data and data.extra_data.skip_reward_punish) then
       return false
     end

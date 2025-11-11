@@ -27,10 +27,11 @@ BasicItem {
     }
   }
 
-  MediaArea {
+  Image {
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
     source: parent.known ? parent.cardFrontSource : parent.cardBackSource
+    asynchronous: true
   }
 
   Text {

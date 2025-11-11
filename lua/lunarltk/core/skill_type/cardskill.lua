@@ -141,11 +141,11 @@ function CardSkill:feasible(player, selected, selected_cards, card)
     and #selected_cards >= self:getMinCardNum(player) and #selected_cards <= self:getMaxCardNum(player)
 end
 
--- 获得技能的距离限制
+-- 获得此牌技能的距离限制
 ---@param player Player @ 使用者
 ---@param card Card @ 使用卡牌
 ---@param to Player @ 目标
----@return number @ 距离限制
+---@return number? @ 距离限制，nil则无限制
 function CardSkill:getDistanceLimit(player, card, to)
   local ret = self.distance_limit or 0
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
@@ -153,6 +153,32 @@ function CardSkill:getDistanceLimit(player, card, to)
     local correct = skill:getDistanceLimit(player, self, card, to)
     if correct == nil then correct = 0 end
     ret = ret + correct
+  end
+  return ret
+end
+
+-- 获得此牌技能的次数限制
+---@param player Player @ 使用者
+---@param scope? integer @ 查询历史范围（默认为回合）
+---@param card? Card @ 卡牌
+---@param to? Player @ 目标
+---@return number? @ 最大使用次数，nil就是无限
+function CardSkill:getMaxUseTime(player, scope, card, to)
+  scope = scope or Player.HistoryTurn
+  local ret = self.max_use_time[scope]
+  if not ret then return nil end
+  if card then
+    local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+    for _, skill in ipairs(status_skills) do
+      local fix = skill:getFixedNum(player, self, scope, card, to)
+      if fix ~= nil then -- 典中典之先到先得
+        ret = fix
+        break
+      end
+      local correct = skill:getResidueNum(player, self, scope, card, to)
+      if correct == nil then correct = 0 end
+      ret = ret + correct
+    end
   end
   return ret
 end
@@ -178,6 +204,46 @@ function CardSkill:withinDistanceLimit(player, isattack, card, to)
   not not card:hasMark(MarkEnum.BypassDistancesLimit) or
   not not player:hasMark(MarkEnum.BypassDistancesLimit) or
   not not to:hasMark(MarkEnum.BypassDistancesLimitTo)
+end
+
+-- 判断一个角色是否在此牌技能的次数限制内
+---@param player Player @ 使用者
+---@param scope? integer @ 查询历史范围（默认为回合）
+---@param card? Card @ 牌，若没有牌，则尝试制造一张虚拟牌
+---@param card_name? string @ 牌名
+---@param to? Player @ 目标
+---@return boolean?
+function CardSkill:withinTimesLimit(player, scope, card, card_name, to)
+  if to and to.dead then return false end -- 一般情况不会对死人使用技能的……
+  scope = scope or Player.HistoryTurn
+  local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+  if not card then
+    if card_name then
+      card = Fk:cloneCard(card_name)
+    elseif self.name:endsWith("_skill") then
+      card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
+    end
+  end
+
+  local limit = self:getMaxUseTime(player, scope, card, to)
+  if not limit then return true end
+
+  if not card_name then
+    if card then
+      card_name = card.trueName
+    else ---坏了，不是卡的技能
+      return player:usedEffectTimes(self.name, scope) < limit
+    end
+  end
+
+  for _, skill in ipairs(status_skills) do
+    if skill:bypassTimesCheck(player, self, scope, card, to) then return true end
+  end
+
+  return player:usedCardTimes(card_name, scope) < limit or
+  (card and not not card:hasMark(MarkEnum.BypassTimesLimit)) or
+  not not player:hasMark(MarkEnum.BypassTimesLimit) or
+  (to and not not to:hasMark(MarkEnum.BypassTimesLimitTo))
 end
 
 

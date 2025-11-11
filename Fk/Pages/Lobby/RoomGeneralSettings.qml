@@ -67,7 +67,7 @@ Item {
         Lua.call("UpdatePackageEnable", k, false);
       }
       Config.curScheme.banCardPkg.forEach(p => Lua.call("UpdatePackageEnable", p, false));
-      Config.curScheme = Config.curScheme;
+      Config.curSchemeChanged();
     }
   }
 

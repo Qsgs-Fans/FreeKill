@@ -208,7 +208,6 @@ PhotoBase {
 
   MarkArea {
     id: markAreaItem
-    visible: !((root.dead && !root.rest) || root.dying || root.surrendered)
 
     anchors.bottom: equipAreaItem.top
     x: 23
@@ -509,6 +508,13 @@ PhotoBase {
 
   function updateLimitSkill(skill, time) {
     limitSkills.update(skill, time);
+  }
+
+  function handleMarkAreaUpdate(data) {
+    if (data.visible !== undefined) {
+      picMarkAreaItem.visible = data.visible;
+      markAreaItem.visible = data.visible;
+    }
   }
 
   function showDetail() {

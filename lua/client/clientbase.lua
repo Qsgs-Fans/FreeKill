@@ -20,6 +20,7 @@ function ClientBase:initialize(_client)
   self:addCallback("Heartbeat", self.heartbeat)
 
   self:addCallback("EnterRoom", self.enterRoom, true)
+  self:addCallback("ChangeRoom", self.changeRoom, true)
   self:addCallback("EnterLobby", self.quitRoom, true)
   self:addCallback("AddPlayer", self.addPlayer)
   self:addCallback("RemovePlayer", self.removePlayer)
@@ -164,6 +165,53 @@ function ClientBase:enterRoom(_data)
   self.alive_players = {Self}
 
   self.enter_room_data = cbor.encode(_data);
+  -- 补一个，防止爆炸
+  if self.recording then
+    self.record[3] = self.enter_room_data
+  end
+  self.capacity = _data[1]
+  self.timeout = _data[2]
+  self.settings = data
+end
+
+function ClientBase:changeRoom(_data)
+  -- 怎么data[1]是个name，扬了，主要c++中偷懒了
+  table.remove(_data, 1)
+
+  local data = _data[3]
+
+  -- 玩家还是同一批人，只是配置信息改变，所以这里也简单点
+  -- 不过Client还是必须重新创建
+
+  -- FIXME: 需要改Qml
+  local ob = self.observing
+  local replaying = self.replaying
+  local showcards = self.replaying_show
+  local recording = self.recording
+  -- FIXME: 写出record的时候就该好好反省一下哪里设计出问题了
+  local record = self.record
+
+  local old_players = self.players
+
+  local client_klass = Fk:getBoardGame(data.gameMode).client_klass
+  ClientInstance = client_klass:new(self.client)
+  self = ClientInstance
+
+  self.observing = ob
+  self.replaying = replaying
+  self.replaying_show = showcards
+  self.recording = recording -- 重连/旁观的录像后面那段EnterRoom会触发该函数
+  self.record = record
+
+  local new_players = table.map(old_players, function(p)
+    return self.clientplayer_klass:new(p.player)
+  end)
+  self.players = new_players
+  self.alive_players = new_players
+  Self = self:getPlayerById(Self.id)
+
+  self.enter_room_data = cbor.encode(_data);
+
   -- 补一个，防止爆炸
   if self.recording then
     self.record[3] = self.enter_room_data

@@ -357,11 +357,11 @@ W.PageBase {
       midfix = "";
     }
     let fname = prefix + extension + "/audio/card/" + midfix + suffix;
-    if (Backend.exists(fname)) {
+    if (Fs.exists(fname)) {
       audioRow.append( { audioType: type, extension: extension } );
     } else {
       fname = prefix + orig_extension + "/audio/card/" + midfix + suffix;
-      if (Backend.exists(fname)) {
+      if (Fs.exists(fname)) {
         audioRow.append( { audioType: type, extension: orig_extension} );
       }
     }

@@ -31,7 +31,7 @@ Item {
     for (let i = 0; i < 999; i++) {
       const fname = SkinBank.getAudioRealPath(skill + "_" + general+(i !== 0 ? i.toString() : ""), extension, "skill");
 
-      if (Backend.exists(fname)) {
+      if (fname) {
         ret = true;
         audioModel.append({ name: skill, idx: i, specific: true });
       } else {
@@ -49,7 +49,7 @@ Item {
     for (let i = 0; i < 999; i++) {
       const fname = SkinBank.getAudioRealPath(skill +(i !== 0 ? i.toString() : ""), extension, "skill");
 
-      if (Backend.exists(fname)) {
+      if (fname) {
         audioModel.append({ name: skill, idx: i, specific: false});
       } else {
         if (i > 0) break;
@@ -60,13 +60,13 @@ Item {
   function findWinAudio(general) {
     const extension = Lua.call("GetGeneralData", general).extension;
     const fname = SkinBank.getAudioRealPath(general, extension, "win");
-    audioWin.visible = Backend.exists(fname);
+    audioWin.visible = !!fname;
   }
 
   function findDeathAudio(general) {
     const extension = Lua.call("GetGeneralData", general).extension;
     const fname = SkinBank.getAudioRealPath(general, extension, "death");
-    audioDeath.visible = Backend.exists(fname);
+    audioDeath.visible = !!fname;
   }
 
   function updateGeneral() {
@@ -85,31 +85,37 @@ Item {
       generalText.append(ret);
     }
 
-    data.skill.forEach(t => {
-      if (!t.name.startsWith('#')) {
-        generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + Lua.tr(t.name) +
-        "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
+    for (const t of data.skill) {
+      Qt.callLater(() => {
+        if (!t.name.startsWith('#')) {
+          generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + Lua.tr(t.name) +
+          "</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
 
-        addSkillAudio(t.name);
+          addSkillAudio(t.name);
+        }
+      });
+    }
+
+    Qt.callLater(() => {
+      findWinAudio(general);
+      findDeathAudio(general);
+    });
+
+    Qt.callLater(() => {
+      if (data.endnote !== "") {
+        generalText.append("<font color=\"lightslategrey\">" + Lua.tr(data.endnote) + "</font>");
       }
     });
-    findWinAudio(general);
-    findDeathAudio(general);
-
-    if (data.endnote !== "") generalText.append("<font color=\"lightslategrey\">" + Lua.tr(data.endnote) + "</font>");
   }
 
   Component {
     id: skillAudioBtn
     Button {
       Layout.fillWidth: true
-      contentItem: ColumnLayout {
+      contentItem: Column {
         Text {
-          Layout.fillWidth: true
+          width: parent.width
           text: {
-            /* if (name.endsWith("_win_audio")) {
-              return Lua.tr("Win audio");
-            } */
             return Lua.tr(name) + (idx ? " (" + idx.toString() + ")"
               : "");
           }
@@ -117,7 +123,7 @@ Item {
           font.pixelSize: 14
         }
         Text {
-          Layout.fillWidth: true
+          width: parent.width
           text: {
             const orig = '$' + name + (specific ? '_' + detailGeneralCard.name : "")
               + (idx ? idx.toString() : "");
@@ -335,15 +341,15 @@ Item {
       Button {
         id: audioWin
         Layout.fillWidth: true
-        contentItem: ColumnLayout {
+        contentItem: Column {
           Text {
-            Layout.fillWidth: true
+            // Layout.fillWidth: true
             text: Lua.tr("Win audio")
             font.bold: true
             font.pixelSize: 14
           }
           Text {
-            Layout.fillWidth: true
+            // Layout.fillWidth: true
             text: {
               const orig = "!" + root.general;
               const tr = Lua.tr(orig);

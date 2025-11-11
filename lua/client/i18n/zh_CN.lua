@@ -97,6 +97,7 @@ Fk:loadTranslationTable {
   ["Full"] = "已满",
   ["Not Full"] = "未满",
   ["Room Capacity"] = "人数上限",
+  ["Change Room Config"] = "房间配置",
   ["Add Robot"] = "添加机器人",
   ["Start Game"] = "开始游戏",
   ["Ready"] = "准备",

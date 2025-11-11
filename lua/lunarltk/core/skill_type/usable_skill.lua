@@ -104,21 +104,21 @@ end
 
 --- 发动技能前确定cost_data的函数
 ---@param player ServerPlayer @ 使用者
----@param skillData SkillUseData @ 技能使用数据
----@param extra_data? UseExtraData|table @ 额外数据
----@return table|CostData @ cost_data，其中的from/cards/tos会同步到skillData上。
+---@param skillData SkillUseDataSpec @ 技能使用数据
+---@param extra_data? UseExtraData|table @ 额外数据，请注意这不是skillData的extra_data
+---@return CostData|table? @ cost_data，默认为空表，其中的from/cards/tos/extra_data会同步到skillData上。
 function UsableSkill:onCost(player, skillData, extra_data)
-  return {}
+  return nil
 end
 
 -- 处理技能的发动信息（仅限服务端）
 ---@param player ServerPlayer @ 使用者
----@param use_spec SkillUseDataSpec @ 技能发动信息
----@param extra_data? UseExtraData|table @ 额外数据
+---@param use_spec SkillUseDataSpec @ 技能使用数据
+---@param extra_data? UseExtraData|table @ 额外数据，请注意这不是use_data的extra_data
 ---@return SkillUseData @ 技能发动数据
 function UsableSkill:handleCostData(player, use_spec, extra_data)
   local use_data = SkillUseData:new(use_spec)
-  use_data.cost_data = self:onCost(player, use_spec, extra_data)
+  use_data.cost_data = self:onCost(player, use_spec, extra_data) or {}
   if use_data.cost_data.from then
     use_data.from = use_data.cost_data.from
   end
@@ -130,6 +130,9 @@ function UsableSkill:handleCostData(player, use_spec, extra_data)
   end
   if use_data.cost_data.interaction_data then
     use_data.interaction_data = use_data.cost_data.interaction_data
+  end
+  if use_data.cost_data.extra_data then
+    use_data.extra_data = use_data.cost_data.extra_data
   end
   if not use_data.cost_data.history_branch then
     local branch = self.history_branch

@@ -113,7 +113,7 @@ end
 ---@field public card_filter? fun(self: ActiveSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
 ---@field public target_filter? fun(self: ActiveSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card: Card?, extra_data: UseExtraData|table?): any @ 判定目标能否选择
 ---@field public feasible? fun(self: ActiveSkill, player: Player, selected: Player[], selected_cards: integer[], card: Card): any @ 判断卡牌和目标是否符合技能限制
----@field public on_cost? fun(self: ActiveSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table @ 自定义技能的消耗信息
+---@field public on_cost? fun(self: ActiveSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table? @ 自定义技能的消耗信息
 ---@field public history_branch? string|fun(self: ActiveSkill, player: ServerPlayer, data: SkillUseData):string? @ 发动技能时增加添加对应某处分支的次数
 ---@field public on_use? fun(self: ActiveSkill, room: Room, skillUseEvent: SkillUseData): any
 ---@field public prompt? string|fun(self: ActiveSkill, player: Player, selected_cards: integer[], selected_targets: Player[]): string @ 提示信息

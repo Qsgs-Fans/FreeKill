@@ -121,7 +121,7 @@ Item {
           plainButton: false
           Layout.preferredWidth: 40
           // text: Lua.tr("Speed Down")
-          icon.source: "http://175.178.66.93/symbolic/actions/media-seek-backward-symbolic.svg"
+          icon.source: Cpp.path + "/image/symbolic/actions/media-seek-backward-symbolic.svg"
           onClicked: Backend.controlReplayer("slowdown");
         }
 
@@ -135,7 +135,7 @@ Item {
           plainButton: false
           Layout.preferredWidth: 40
           // text: Lua.tr("Speed Up")
-          icon.source: "http://175.178.66.93/symbolic/actions/media-seek-forward-symbolic.svg"
+          icon.source: Cpp.path + "/image/symbolic/actions/media-seek-forward-symbolic.svg"
           onClicked: Backend.controlReplayer("speedup");
         }
 
@@ -145,8 +145,8 @@ Item {
           Layout.preferredWidth: 40
           // text: Lua.tr(running ? "Pause" : "Resume")
           icon.source: running ?
-            "http://175.178.66.93/symbolic/actions/media-playback-pause-symbolic.svg" :
-            "http://175.178.66.93/symbolic/actions/media-playback-start-symbolic.svg"
+            Cpp.path + "/image/symbolic/actions/media-playback-pause-symbolic.svg" :
+            Cpp.path + "/image/symbolic/actions/media-playback-start-symbolic.svg"
           onClicked: {
             running = !running;
             Backend.controlReplayer("toggle");
@@ -169,7 +169,7 @@ Item {
       id: quitButton
       plainButton: false
       text: Lua.tr("Quit")
-      icon.source: "http://175.178.66.93/symbolic/actions/application-exit-rtl-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/actions/application-exit-rtl-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
@@ -181,7 +181,7 @@ Item {
       id: volumeButton
       plainButton: false
       text: Lua.tr("Settings")
-      icon.source: "http://175.178.66.93/symbolic/categories/applications-system-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/categories/applications-system-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
@@ -193,7 +193,7 @@ Item {
       id: banSchemaButton
       plainButton: false
       text: Lua.tr("Info")
-      icon.source: "http://175.178.66.93/symbolic/mimetypes/x-office-document-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/mimetypes/x-office-document-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
@@ -263,7 +263,7 @@ Item {
       id: modesButton
       plainButton: false
       text: Lua.tr("Modes Overview")
-      icon.source: "http://175.178.66.93/symbolic/categories/applications-games-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/categories/applications-games-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
@@ -280,7 +280,7 @@ Item {
       id: chatButton
       plainButton: false
       text: Lua.tr("Chat")
-      icon.source: "http://175.178.66.93/symbolic/actions/chat-message-new-symbolic.svg"
+      icon.source: Cpp.path + "/image/symbolic/actions/chat-message-new-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {

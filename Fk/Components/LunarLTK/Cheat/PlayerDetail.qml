@@ -113,7 +113,7 @@ Flickable {
           } else {
             Config.blockedUsers.splice(idx, 1);
           }
-          Config.blockedUsers = Config.blockedUsers;
+          Config.blockedUsersChanged();
         }
       }
 

@@ -91,7 +91,7 @@ GraphicsBox {
                 chosenInBox = false;
                 root.selected_ids.splice(root.selected_ids.indexOf(cid), 1);
               }
-              root.selected_ids = root.selected_ids;
+              root.selected_idsChanged();
               refreshPrompt();
             }
             Component.onCompleted: {
@@ -148,7 +148,7 @@ GraphicsBox {
             }
           }
         }
-        root.selected_ids = root.selected_ids;
+        root.selected_idsChanged();
         refreshPrompt();
       }
     }

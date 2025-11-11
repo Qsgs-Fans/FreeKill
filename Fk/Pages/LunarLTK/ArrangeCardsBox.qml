@@ -92,10 +92,10 @@ GraphicsBox {
         id: buttonConfirm
         text: Lua.tr("OK")
         onClicked: {
-          close();
-          roomScene.state = "notactive";
-          const reply = getResult();
+          const reply = root.getResult();
           ClientInstance.replyToServer("", reply);
+          roomScene.state = "notactive";
+          root.close();
         }
       }
 
@@ -105,8 +105,6 @@ GraphicsBox {
         text: Lua.tr("Cancel")
         visible: root.cancelable
         onClicked: {
-          close();
-          roomScene.state = "notactive";
           const ret = [];
           let i;
           for (i = 0; i < result.length; i++) {
@@ -114,6 +112,8 @@ GraphicsBox {
           }
           const reply = ret;
           ClientInstance.replyToServer("", reply);
+          roomScene.state = "notactive";
+          close();
         }
       }
     }

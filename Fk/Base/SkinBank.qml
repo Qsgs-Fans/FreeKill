@@ -38,7 +38,7 @@ QtObject {
       for (const packName of Config.enabledResourcePacks) {
         for (const dir of dirs) {
           const resPath = Cpp.path + "/resource_pak/" + packName + "/packages/" + dir + path + name + suffix;
-          if (Backend.exists(resPath)) return resPath;
+          if (Fs.exists(resPath)) return resPath;
         }
       }
     }
@@ -46,7 +46,7 @@ QtObject {
     let ret;
     for (const dir of dirs) {
       ret = Cpp.path + "/packages/" + dir + path + name + suffix;
-      if (Backend.exists(ret)) return ret;
+      if (Fs.exists(ret)) return ret;
     }
   }
 
@@ -55,12 +55,12 @@ QtObject {
     if (typeof Config !== "undefined" && Config.enabledResourcePacks) {
       for (const packName of Config.enabledResourcePacks) {
         const resPath = Cpp.path + "/resource_pak/" + packName + "/packages/" + extension + path + name + suffix;
-        if (Backend.exists(resPath)) return resPath;
+        if (Fs.exists(resPath)) return resPath;
       }
     }
 
     const ret = Cpp.path + "/packages/" + extension + path + name + suffix;
-    if (Backend.exists(ret)) return ret;
+    if (Fs.exists(ret)) return ret;
   }
 
   // 尝试在资源包中查找武将技能语音
@@ -68,14 +68,14 @@ QtObject {
     if (typeof Config !== "undefined" && Config.enabledResourcePacks) {
       for (const packName of Config.enabledResourcePacks) {
         const resPath = `${Cpp.path}/resource_pak/${packName}/packages/${extension}${path}${name}${suffix}`;
-        if (Backend.exists(resPath)) {
+        if (Fs.exists(resPath)) {
           return `./resource_pak/${packName}/packages/${extension}${path}${name}`;
         }
       }
     }
 
     const retPath = `${Cpp.path}/packages/${extension}${path}${name}${suffix}`;
-    if (Backend.exists(retPath)) {
+    if (Fs.exists(retPath)) {
       return `./packages/${extension}${path}${name}`;
     }
   }
@@ -85,14 +85,14 @@ QtObject {
     if (typeof Config !== "undefined" && Config.enabledResourcePacks) {
       for (const packName of Config.enabledResourcePacks) {
         const resPath = `${Cpp.path}/resource_pak/${packName}${path}`;
-        if (Backend.exists(resPath)) {
+        if (Fs.exists(resPath)) {
           return `./resource_pak/${packName}${path}`;
         }
       }
     }
 
     const retPath = `${Cpp.path}/${path}`;
-    if (Backend.exists(retPath)) {
+    if (Fs.exists(retPath)) {
       return path;
     }
   }
@@ -102,11 +102,11 @@ QtObject {
     if (typeof Config !== "undefined" && Config.enabledResourcePacks) {
       for (const packName of Config.enabledResourcePacks) {
         const resPath = Cpp.path + "/resource_pak/" + packName + path + name + suffix;
-        if (Backend.exists(resPath)) return resPath;
+        if (Fs.exists(resPath)) return resPath;
       }
     }
     let ret = Cpp.path + path + name + suffix;
-    if (Backend.exists(ret)) return ret;
+    if (Fs.exists(ret)) return ret;
   }
 
   function getGeneralExtraPic(name, extra) {
@@ -252,9 +252,6 @@ QtObject {
   }
 
   function getAudioRealPath(name, extension, audiotype) {
-    const ret = searchPkgResourceWithExtension(extension, "/audio/" + audiotype + "/", name, ".mp3");
-    if (Backend.exists(ret)) {
-      return ret;
-    }
+    return searchPkgResourceWithExtension(extension, "/audio/" + audiotype + "/", name, ".mp3");
   }
 }
