@@ -18,6 +18,7 @@ using namespace fkShell;
  #include <QScreen>
  #include <QSplashScreen>
  #include <QtQuick/QQuickWindow>
+ #include <QSurfaceFormat>
  #ifndef Q_OS_ANDROID
   #include <QQuickStyle>
  #else
@@ -322,6 +323,12 @@ int freekill_main(int argc, char *argv[]) {
 
   // 设置 QML 使用 OpenGL 渲染
   QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+  // 在此基础上再指定使用OpenGL ES
+  {
+    auto fmt = QSurfaceFormat::defaultFormat();
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+    QSurfaceFormat::setDefaultFormat(fmt);
+  }
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
