@@ -321,6 +321,7 @@ int freekill_main(int argc, char *argv[]) {
   ((QApplication *)app)->setWindowIcon(QIcon("image/icon.png"));
 #endif
 
+#ifndef Q_OS_MACOS
   // 设置 QML 使用 OpenGL 渲染
   QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
   // 在此基础上再指定使用OpenGL ES
@@ -329,6 +330,7 @@ int freekill_main(int argc, char *argv[]) {
     fmt.setRenderableType(QSurfaceFormat::OpenGLES);
     QSurfaceFormat::setDefaultFormat(fmt);
   }
+#endif
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
@@ -337,6 +339,9 @@ int freekill_main(int argc, char *argv[]) {
   // 投降喵，设为android根本无效
   // 直接改用Android原生Mediaplayer了，不用你Qt家的
   // qputenv("QT_MEDIA_BACKEND", "android");
+
+  // 禁用accessible（可能会流畅点但没有证据 纯抓瞎
+  qputenv("QT_ANDROID_DISABLE_ACCESSIBILITY", "1");
 
   qputenv("ANDROID_OPENSSL_SUFFIX", "_3");
 
