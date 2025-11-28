@@ -34,8 +34,5 @@ package() {
   mkdir -p ${pkgdir}/usr/bin
   mkdir -p ${pkgdir}/usr/lib
   cd ${srcdir}/${_upper_pkgname}-${pkgver}
-  cmake --install build --prefix ${pkgdir}/usr --config Release
-
-  install -Dm644 image/icon.png ${pkgdir}/usr/share/icons/freekill_logo.png
-  install -Dm644 freekill.desktop ${pkgdir}/usr/share/applications/freekill.desktop
+  cmake --install build --prefix ${pkgdir} --config Release
 }

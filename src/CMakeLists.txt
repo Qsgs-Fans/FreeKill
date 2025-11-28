@@ -157,21 +157,40 @@ target_link_libraries(FreeKill PRIVATE
   libFreeKill
 )
 
-install(TARGETS FreeKill DESTINATION bin)
+install(TARGETS FreeKill RUNTIME DESTINATION usr/bin)
 install(DIRECTORY
   ${PROJECT_SOURCE_DIR}/audio
   ${PROJECT_SOURCE_DIR}/fonts
   ${PROJECT_SOURCE_DIR}/image
   ${PROJECT_SOURCE_DIR}/lua
-  ${PROJECT_SOURCE_DIR}/packages
   ${PROJECT_SOURCE_DIR}/Fk
   ${PROJECT_SOURCE_DIR}/server
   ${PROJECT_SOURCE_DIR}/client
-  DESTINATION share/FreeKill
+  DESTINATION usr/share/FreeKill
+)
+install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/packages/standard
+  ${PROJECT_SOURCE_DIR}/packages/standard_cards
+  ${PROJECT_SOURCE_DIR}/packages/test
+  ${PROJECT_SOURCE_DIR}/packages/maneuvering
+  DESTINATION usr/share/FreeKill/packages
 )
 install(FILES
   ${PROJECT_SOURCE_DIR}/fk_ver
-  DESTINATION share/FreeKill
+  DESTINATION usr/share/FreeKill
+)
+install(FILES
+  ${PROJECT_SOURCE_DIR}/packages/init.sql
+  DESTINATION usr/share/FreeKill/packages
+)
+install(FILES
+  ${PROJECT_SOURCE_DIR}/image/icon.png
+  DESTINATION usr/share/icons
+  RENAME FreeKill.png
+)
+install(FILES
+  ${PROJECT_SOURCE_DIR}/freekill.desktop
+  DESTINATION usr/share/applications
 )
 
 if (NOT DEFINED FK_SERVER_ONLY)
@@ -179,6 +198,26 @@ if (NOT DEFINED FK_SERVER_ONLY)
     ${CMAKE_BINARY_DIR}/zh_CN.qm
     ${CMAKE_BINARY_DIR}/en_US.qm
     ${CMAKE_BINARY_DIR}/vi_VN.qm
-    DESTINATION share/FreeKill
+    DESTINATION usr/share/FreeKill
   )
+endif()
+
+if(CPACK_GENERATOR STREQUAL "AppImage")
+  install(CODE "
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+                usr/share/icons/FreeKill.png
+                \${CMAKE_INSTALL_PREFIX}/FreeKill.png
+    )
+  ")
+
+  qt_generate_deploy_qml_app_script(
+    TARGET FreeKill
+    OUTPUT_SCRIPT deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+  )
+  install(SCRIPT ${deploy_script})
+
+  set(CPACK_PACKAGE_ICON FreeKill)
+  include(CPack)
 endif()
