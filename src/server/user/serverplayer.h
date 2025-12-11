@@ -35,7 +35,6 @@ public:
 
   void doRequest(const QByteArray &command,
            const QByteArray &jsonData, int timeout = -1, qint64 timestamp = -1);
-  void abortRequest();
   QByteArray waitForReply(int timeout);
   void doNotify(const QByteArray &command, const QByteArray &jsonData);
 

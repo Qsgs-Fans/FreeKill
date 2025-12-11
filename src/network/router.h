@@ -52,7 +52,6 @@ public:
   int getTimeout() const;
 
   void cancelRequest();
-  void abortRequest();
 
   QByteArray waitForReply(int timeout);
 
@@ -81,7 +80,7 @@ private:
   // For server side
   QDateTime requestStartTime;
   QMutex replyMutex;
-  int expectedReplyId;
+  std::vector<int> expectedReplyIds;
   int replyTimeout;
   QByteArray m_reply;    // should be json string
   QSemaphore replyReadySemaphore;

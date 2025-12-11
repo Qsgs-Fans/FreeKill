@@ -7,18 +7,7 @@
 struct lua_State;
 struct sqlite3;
 
-class LuaInterface {
-public:
-  // LuaInterface() {}
-  virtual ~LuaInterface() {}
-
-  virtual bool dofile(const char *path) = 0;
-  virtual QVariant call(const QString &func_name,
-                        QVariantList params = QVariantList()) = 0;
-  virtual QVariant eval(const QString &lua) = 0;
-};
-
-class Lua : public LuaInterface {
+class Lua {
 public:
   Lua();
   Lua(Lua &) = delete;

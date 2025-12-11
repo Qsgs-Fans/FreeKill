@@ -39,6 +39,7 @@ set(freekill_SRCS
 
   "server/room/roombase.cpp"
   "server/room/lobby.cpp"
+  "server/room/lobby_lua_task.cpp"
   "server/room/room.cpp"
 
   "server/gamelogic/roomthread.cpp"

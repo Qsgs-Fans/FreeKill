@@ -108,8 +108,6 @@ void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonDa
   router->request(type, command, jsonData, timeout, timestamp);
 }
 
-void ServerPlayer::abortRequest() { router->abortRequest(); }
-
 QByteArray ServerPlayer::waitForReply(int timeout) {
   QByteArray ret;
   if (getState() != Player::Online) {

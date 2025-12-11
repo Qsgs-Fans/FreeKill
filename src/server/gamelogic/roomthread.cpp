@@ -137,7 +137,7 @@ bool RoomThread::isOutdated() {
   return ret;
 }
 
-LuaInterface *RoomThread::getLua() const {
+Lua *RoomThread::getLua() const {
   return m_scheduler->getLua();
 }
 

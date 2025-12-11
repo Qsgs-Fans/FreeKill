@@ -3,7 +3,7 @@
 #ifndef _ROOMTHREAD_H
 #define _ROOMTHREAD_H
 
-class LuaInterface;
+class Lua;
 class Room;
 class Server;
 class ServerPlayer;
@@ -28,7 +28,7 @@ class Scheduler : public QObject {
   void removeObserver(const QString &, int roomId);
 
  private:
-  LuaInterface *L;
+  Lua *L;
 };
 
 /**
@@ -52,7 +52,7 @@ class RoomThread : public QThread {
 
   bool isOutdated();
 
-  LuaInterface *getLua() const;
+  Lua *getLua() const;
 
  signals:
   void scheduler_ready();
