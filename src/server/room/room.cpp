@@ -735,3 +735,15 @@ void Room::decreaseRefCount() {
   if (lua_ref_count == 0 && m_abandoned)
     deleteLater();
 }
+
+int Room::getSessionId() const {
+  return session_id;
+}
+
+QString Room::getSessionData() const {
+  return session_data;
+}
+
+void Room::setSessionData(const QString &json) {
+  session_data = json;
+}

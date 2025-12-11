@@ -75,6 +75,10 @@ class Room : public RoomBase {
   // FIXME
   volatile bool insideGameOver = false;
 
+  int getSessionId() const;
+  QString getSessionData() const;
+  void setSessionData(const QString &json);
+
   // Lua专用
   int getRefCount();
   void increaseRefCount();
@@ -107,6 +111,11 @@ class Room : public RoomBase {
 
   int lua_ref_count = 0; ///< Lua引用计数，当Room为abandon时，只要lua中还有计数，就不可删除
   QMutex lua_ref_mutex;
+
+  // 表示此房正在运行第几局游戏
+  int session_id = 0;
+  // 以及某个供Lua往里面放点数据的东西
+  QString session_data = "{}";
 
   QTimer *request_timer = nullptr;
 

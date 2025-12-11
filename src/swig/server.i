@@ -24,6 +24,10 @@ public:
 
   void increaseRefCount();
   void decreaseRefCount();
+
+  int getSessionId() const;
+  QString getSessionData() const;
+  void setSessionData(const QString &json);
 };
 
 %extend Room {
