@@ -79,6 +79,10 @@ class Room : public RoomBase {
   QString getSessionData() const;
   void setSessionData(const QString &json);
 
+  ServerPlayer *addNpc();
+
+  void removeNpc(ServerPlayer *);
+
   // Lua专用
   int getRefCount();
   void increaseRefCount();

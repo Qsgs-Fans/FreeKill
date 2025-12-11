@@ -747,3 +747,27 @@ QString Room::getSessionData() const {
 void Room::setSessionData(const QString &json) {
   session_data = json;
 }
+
+ServerPlayer *Room::addNpc() {
+  ServerPlayer *robot = new ServerPlayer(this);
+  robot->setState(Player::Robot);
+  robot->setId(robot_id);
+  robot->setAvatar("guanyu");
+  robot->setScreenName(QString("COMP-%1").arg(robot_id));
+  robot->setReady(true);
+  robot->setParent(this);
+  connect(robot, &QObject::destroyed, this, [&](){ players.removeOne(robot); });
+  robot_id--;
+
+  server->addPlayer(robot);
+  robot->setRoom(this);
+
+  return robot;
+}
+
+void Room::removeNpc(ServerPlayer *player) {
+  if (!players.contains(player)) return;
+
+  players.removeOne(player);
+  server->removePlayerByConnId(player->getConnId());
+}

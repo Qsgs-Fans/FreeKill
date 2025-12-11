@@ -28,6 +28,10 @@ public:
   int getSessionId() const;
   QString getSessionData() const;
   void setSessionData(const QString &json);
+
+  ServerPlayer *addNpc();
+
+  void removeNpc(ServerPlayer *);
 };
 
 %extend Room {
