@@ -19,6 +19,9 @@ class RoomBase : public QObject {
 
   void chat(ServerPlayer *sender, const QByteArray &jsonData);
 
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
+
   virtual void addPlayer(ServerPlayer *player) = 0;
   virtual void removePlayer(ServerPlayer *player) = 0;
   virtual void handlePacket(ServerPlayer *sender, const QByteArray &command,

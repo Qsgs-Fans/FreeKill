@@ -2,6 +2,7 @@
 #include "server/user/serverplayer.h"
 #include "server/server.h"
 #include "core/util.h"
+#include "core/c-wrapper.h"
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -70,4 +71,39 @@ void RoomBase::chat(ServerPlayer *sender, const QByteArray &jsonData) {
                         QString("#%1").arg(qobject_cast<Room *>(this)->getId())),
         qUtf16Printable(sender->getScreenName()),
         qUtf16Printable(doc[msgkey].toString()));
+}
+
+void RoomBase::saveGlobalState(const QString &key, const QString &jsonData) {
+  if (!Sqlite3::checkString(key)) {
+    qWarning("Invalid key string for saveGlobalState: %ls", qUtf16Printable(key));
+    return;
+  }
+
+  auto hexData = jsonData.toUtf8().toHex();
+  auto &gamedb = ServerInstance->gameDatabase();
+  auto sql = QString("REPLACE INTO globalSaves (uid, key, data) VALUES (%1,'%2',X'%3')").arg(0).arg(key).arg(hexData);
+
+  gamedb.exec(sql);
+}
+
+QString RoomBase::getGlobalSaveState(const QString &key) {
+  if (!Sqlite3::checkString(key)) {
+    qWarning("Invalid key string for getGlobalSaveState: %ls", qUtf16Printable(key));
+    return "{}";
+  }
+
+  auto sql = QString("SELECT data FROM globalSaves WHERE uid = %1 AND key = '%2'").arg(0).arg(key);
+
+  auto result = ServerInstance->gameDatabase().select(sql);
+  if (result.empty() || result[0].count("data") == 0 || result[0]["data"] == "#null") {
+    return "{}";
+  }
+
+  const auto& data = result[0]["data"];
+  if (!data.isEmpty() && (data[0] == '{' || data[0] == '[')) {
+    return data;
+  }
+
+  qWarning("Returned data is not valid JSON: %ls", qUtf16Printable(data));
+  return "{}";
 }

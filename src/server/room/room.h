@@ -80,7 +80,6 @@ class Room : public RoomBase {
   void setSessionData(const QString &json);
 
   ServerPlayer *addNpc();
-
   void removeNpc(ServerPlayer *);
 
   // Lua专用

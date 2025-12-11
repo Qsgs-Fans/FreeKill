@@ -30,8 +30,10 @@ public:
   void setSessionData(const QString &json);
 
   ServerPlayer *addNpc();
-
   void removeNpc(ServerPlayer *);
+
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
 };
 
 %extend Room {
