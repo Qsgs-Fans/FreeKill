@@ -244,10 +244,11 @@ void Server::setupPlayer(ServerPlayer *player, bool all_info) {
 
   if (all_info) {
     player->doNotify("SetServerSettings", QCborArray {
-          getConfig("motd").toString(),
-          QCborValue::fromJsonValue(getConfig("hiddenPacks")),
-          getConfig("enableBots").toBool(),
-          }.toCborValue().toCbor());
+      getConfig("motd").toString(),
+      QCborValue::fromJsonValue(getConfig("hiddenPacks")),
+      // FIXME: 摆烂！懒得管本体这边的server配置了等后人加强
+      QCborValue::fromVariant(QStringList { "AddRobot", "ChangeRoom" }),
+    }.toCborValue().toCbor());
   }
 }
 

@@ -91,7 +91,7 @@ bool Room::isAbandoned() const {
     return true;
 
   for (ServerPlayer *p : players) {
-    if (p->getState() == Player::Online)
+    if (p->isOnline())
       return false;
   }
   return true;
@@ -556,6 +556,11 @@ void Room::_gameOver() {
       }
     }
 
+    // 游戏结束变回来
+    if (p->getState() == Player::Trust) {
+      p->setState(Player::Online);
+    }
+
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
         if (!isOutdated()) {
@@ -673,6 +678,59 @@ void Room::startGame(ServerPlayer *player, const QByteArray &) {
   }
 }
 
+
+void Room::trust(ServerPlayer *player, const QByteArray &) {
+  // 仅在对局中允许托管
+  if (!isStarted()) return;
+
+  // 将玩家置为托管
+  if (player->getState() != Player::Trust) {
+    player->setState(Player::Trust);
+    if (player->thinking()) {
+      auto thread = qobject_cast<RoomThread *>(parent());
+      thread->wakeUp(id, "player_trust");
+    }
+  } else {
+    player->setState(Player::Online);
+  }
+}
+
+// 改变房间配置
+void Room::changeRoom(ServerPlayer *player, const QByteArray &jsonData) {
+  // 检查权限：只有房主才能修改房间配置
+  if (player != owner) {
+    player->doNotify("ErrorMsg", "只有房主才能修改房间配置");
+    return;
+  }
+
+  auto arr = QCborValue::fromCbor(jsonData).toArray();
+  auto newname = arr[0].toString();
+  auto newcapacity = arr[1].toInteger();
+  auto newtimeout = arr[2].toInteger();
+  auto newsettings = arr[3].toCbor();
+
+  auto currentplayers = getPlayers();
+
+  // 房间人数大于新容量，不允许
+  if (newcapacity < int(players.size())) {
+    player->doNotify("ErrorMsg", "新容量不得低于现有玩家数！");
+    return;
+  }
+
+  setName(newname);
+  setCapacity(newcapacity);
+  setTimeout(newtimeout);
+  setSettings(newsettings);
+
+  doBroadcastNotify(players, "ChangeRoom", jsonData);
+
+  // 按官服 修改配置后所有人重新准备
+  for (auto &p : players) {
+    if (!p) continue;
+    p->setReady(false);
+  }
+}
+
 typedef void (Room::*room_cb)(ServerPlayer *, const QByteArray &);
 
 void Room::handlePacket(ServerPlayer *sender, const QByteArray &command,
@@ -683,6 +741,8 @@ void Room::handlePacket(ServerPlayer *sender, const QByteArray &command,
     {"KickPlayer", &Room::kickPlayer},
     {"Ready", &Room::ready},
     {"StartGame", &Room::startGame},
+    {"Trust", &Room::trust},
+    {"ChangeRoom", &Room::changeRoom},
     {"Chat", &Room::chat},
   };
 

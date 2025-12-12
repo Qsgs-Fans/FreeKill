@@ -87,6 +87,10 @@ void ServerPlayer::setUuid(QString uuid) {
   uuid_str = uuid;
 }
 
+bool ServerPlayer::isOnline() const {
+  return router->getSocket() != nullptr;
+}
+
 // 处理跑路玩家专用，就单纯把socket置为null
 // 因为后面还会用到socket所以不删除
 void ServerPlayer::removeSocket() {
@@ -126,7 +130,7 @@ QByteArray ServerPlayer::waitForReply(int timeout) {
 }
 
 void ServerPlayer::doNotify(const QByteArray &command, const QByteArray &jsonData) {
-  if (getState() != Player::Online)
+  if (!isOnline())
     return;
   int type =
       Router::TYPE_NOTIFICATION | Router::SRC_SERVER | Router::DEST_CLIENT;

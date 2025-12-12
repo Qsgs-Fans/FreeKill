@@ -131,6 +131,8 @@ class Room : public RoomBase {
   void kickPlayer(ServerPlayer *, const QByteArray &);
   void ready(ServerPlayer *, const QByteArray &);
   void startGame(ServerPlayer *, const QByteArray &);
+  void trust(ServerPlayer *, const QByteArray &);
+  void changeRoom(ServerPlayer *, const QByteArray &);
 };
 
 #endif  // _ROOM_H

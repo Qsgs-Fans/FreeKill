@@ -25,6 +25,8 @@ public:
   QString getUuid() const;
   void setUuid(QString uuid);
 
+  bool isOnline() const;
+
   int getConnId() const { return connId; }
 
   Server *getServer() const;
