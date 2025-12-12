@@ -160,7 +160,7 @@ target_link_libraries(FreeKill PRIVATE
   libFreeKill
 )
 
-install(TARGETS FreeKill RUNTIME DESTINATION usr/bin)
+install(TARGETS FreeKill DESTINATION usr/bin)
 install(DIRECTORY
   ${PROJECT_SOURCE_DIR}/audio
   ${PROJECT_SOURCE_DIR}/fonts

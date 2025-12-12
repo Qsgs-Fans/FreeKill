@@ -144,8 +144,8 @@ private:
   QVariantList whitelist;
 };
 
-extern Server *ServerInstance; ///< 全局Server对象
-
 Q_DECLARE_METATYPE(Server *)
+
+extern Server *ServerInstance; ///< 全局Server对象
 
 #endif // _SERVER_H
