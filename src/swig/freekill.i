@@ -7,6 +7,8 @@
 %{
 #include "client/client.h"
 #include "server/server.h"
+#include "server/task/task.h"
+#include "server/task/task_manager.h"
 #include "server/user/serverplayer.h"
 #include "server/room/room.h"
 #include "server/gamelogic/roomthread.h"

@@ -10,12 +10,12 @@ Router::Router(QObject *parent, ClientSocket *socket, RouterType type)
   this->type = type;
   this->socket = nullptr;
   setSocket(socket);
-  expectedReplyId = -1;
+  expectedReplyIds.clear();
   replyTimeout = 0;
   extraReplyReadySemaphore = nullptr;
 }
 
-Router::~Router() { abortRequest(); }
+Router::~Router() {}
 
 ClientSocket *Router::getSocket() const { return socket; }
 
@@ -30,7 +30,6 @@ void Router::setSocket(ClientSocket *socket) {
   if (socket != nullptr) {
     connect(this, &Router::messageReady, socket, &ClientSocket::send);
     connect(socket, &ClientSocket::message_got, this, &Router::handlePacket);
-    connect(socket, &ClientSocket::disconnected, this, &Router::abortRequest);
     socket->setParent(this);
     this->socket = socket;
   }
@@ -56,7 +55,7 @@ void Router::request(int type, const QByteArray &command, const QByteArray &cbor
   if (requestId > 10000000) requestId = 1;
 
   replyMutex.lock();
-  expectedReplyId = requestId;
+  expectedReplyIds.push_back(requestId);
   replyTimeout = timeout;
   requestStartTime = QDateTime::currentDateTime();
   m_reply = QByteArrayLiteral("__notready");
@@ -101,7 +100,7 @@ int Router::getTimeout() const { return requestTimeout; }
 // cancel last request from the sender
 void Router::cancelRequest() {
   replyMutex.lock();
-  expectedReplyId = -1;
+  expectedReplyIds.pop_back();
   replyTimeout = 0;
   extraReplyReadySemaphore = nullptr;
   replyMutex.unlock();
@@ -117,18 +116,6 @@ QByteArray Router::waitForReply(int timeout) {
   ret = m_reply;
   replyMutex.unlock();
   return ret;
-}
-
-void Router::abortRequest() {
-  replyMutex.lock();
-  if (expectedReplyId != -1) {
-    replyReadySemaphore.release();
-    if (extraReplyReadySemaphore)
-      extraReplyReadySemaphore->release();
-    expectedReplyId = -1;
-    extraReplyReadySemaphore = nullptr;
-  }
-  replyMutex.unlock();
 }
 
 void Router::handlePacket(const QCborArray &packet) {
@@ -148,10 +135,11 @@ void Router::handlePacket(const QCborArray &packet) {
   } else if (type & TYPE_REPLY) {
     QMutexLocker locker(&replyMutex);
 
-    if (requestId != this->expectedReplyId)
+    auto it = std::find(expectedReplyIds.begin(), expectedReplyIds.end(), requestId);
+    if (it == expectedReplyIds.end())
       return;
 
-    this->expectedReplyId = -1;
+    expectedReplyIds.erase(it);
 
     if (replyTimeout >= 0 &&
       replyTimeout < requestStartTime.secsTo(QDateTime::currentDateTime()))

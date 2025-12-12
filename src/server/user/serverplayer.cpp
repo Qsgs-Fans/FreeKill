@@ -10,6 +10,8 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+static int nextConnId = 1000;
+
 ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
@@ -23,7 +25,9 @@ ServerPlayer::ServerPlayer(RoomBase *roombase) {
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
   connect(this, &Player::readyChanged, this, &ServerPlayer::onReadyChanged);
 
-  connId = QUuid::createUuid().toString();
+  connId = nextConnId++;
+  if (nextConnId >= 0x7FFFFF00) nextConnId = 1000;
+
   alive = true;
   m_thinking = false;
 }
@@ -107,8 +111,6 @@ void ServerPlayer::doRequest(const QByteArray &command, const QByteArray &jsonDa
   int type = Router::TYPE_REQUEST | Router::SRC_SERVER | Router::DEST_CLIENT;
   router->request(type, command, jsonData, timeout, timestamp);
 }
-
-void ServerPlayer::abortRequest() { router->abortRequest(); }
 
 QByteArray ServerPlayer::waitForReply(int timeout) {
   QByteArray ret;
@@ -218,11 +220,6 @@ void ServerPlayer::onStateChanged() {
   if (!_room || _room->isLobby()) return;
   auto room = qobject_cast<Room *>(_room);
   if (room->hasObserver(this)) return;
-
-  auto thread = qobject_cast<RoomThread *>(room->parent());
-  if (thread) {
-    emit thread->setPlayerState(connId, room->getId());
-  }
 
   if (room->isAbandoned()) return;
 

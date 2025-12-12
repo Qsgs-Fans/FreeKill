@@ -2,6 +2,9 @@
 #define _LOBBY_H
 
 #include "server/room/roombase.h"
+// #include "server/room/lobby_lua_task.h"
+
+class RoomThread;
 
 class Lobby : public RoomBase {
   Q_OBJECT
@@ -13,6 +16,7 @@ class Lobby : public RoomBase {
 
   void handlePacket(ServerPlayer *sender, const QByteArray &command,
                     const QByteArray &jsonData);
+
  private:
   // for handle packet
   void updateAvatar(ServerPlayer *, const QByteArray &);
@@ -22,6 +26,7 @@ class Lobby : public RoomBase {
   void enterRoom(ServerPlayer *, const QByteArray &);
   void observeRoom(ServerPlayer *, const QByteArray &);
   void refreshRoomList(ServerPlayer *, const QByteArray &);
+  void handleTask(ServerPlayer *, const QByteArray &);
 };
 
 #endif // _LOBBY_H

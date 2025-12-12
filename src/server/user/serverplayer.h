@@ -25,7 +25,7 @@ public:
   QString getUuid() const;
   void setUuid(QString uuid);
 
-  QString getConnId() const { return connId; }
+  int getConnId() const { return connId; }
 
   Server *getServer() const;
   RoomBase *getRoom() const;
@@ -35,7 +35,6 @@ public:
 
   void doRequest(const QByteArray &command,
            const QByteArray &jsonData, int timeout = -1, qint64 timestamp = -1);
-  void abortRequest();
   QByteArray waitForReply(int timeout);
   void doNotify(const QByteArray &command, const QByteArray &jsonData);
 
@@ -77,7 +76,7 @@ private:
   bool m_thinking; // 是否在烧条？
   QMutex m_thinking_mutex;
 
-  QString connId;
+  int connId;
 
   QString requestCommand;
   QString requestData;

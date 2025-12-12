@@ -298,8 +298,6 @@ void Room::addObserver(ServerPlayer *player) {
   observers.append(player);
   player->setRoom(this);
   emit playerAdded(player);
-  auto thread = qobject_cast<RoomThread *>(parent());
-  emit thread->addObserver(player->getConnId(), id);
   pushRequest(QString("%1,observe").arg(player->getId()));
 }
 
@@ -317,8 +315,6 @@ void Room::removeObserver(ServerPlayer *player) {
     };
     player->doNotify("Setup", arr.toCborValue().toCbor());
   }
-  auto thread = qobject_cast<RoomThread *>(parent());
-  emit thread->removeObserver(player->getConnId(), id);
   pushRequest(QString("%1,leave").arg(player->getId()));
 }
 

@@ -20,7 +20,7 @@ Scheduler::Scheduler(RoomThread *thread) {
 
   L->dofile("lua/freekill.lua");
   L->dofile("lua/server/scheduler.lua");
-  L->call("InitScheduler", { QVariant::fromValue(thread) });
+  L->call("InitScheduler", { QVariant::fromValue(thread), QVariant::fromValue(ServerInstance) });
 }
 
 Scheduler::~Scheduler() {
@@ -33,7 +33,7 @@ void Scheduler::handleRequest(const QString &req) {
 }
 
 void Scheduler::doDelay(int roomId, int ms) {
-  QTimer::singleShot(ms, [=](){ resumeRoom(roomId, "delay_done"); });
+  QTimer::singleShot(ms, [roomId, this](){ resumeRoom(roomId, "delay_done"); });
 }
 
 bool Scheduler::resumeRoom(int roomId, const char *reason) {
@@ -41,40 +41,8 @@ bool Scheduler::resumeRoom(int roomId, const char *reason) {
   return L->call("ResumeRoom", { roomId, reason }).toBool();
 }
 
-void Scheduler::setPlayerState(const QString &connId, int roomId) {
-  auto player = ServerInstance->findPlayerByConnId(connId);
-  if (!player) return;
-  L->call("SetPlayerState", { roomId, player->getId(), player->getState() });
-}
-
-void Scheduler::addObserver(const QString &connId, int roomId) {
-  auto p = ServerInstance->findPlayerByConnId(connId);
-  if (!p) return;
-
-  QVariantList gameData;
-  for (auto i : p->getGameData()) gameData << i;
-
-  L->call("AddObserver", {
-    roomId,
-    QVariantMap {
-      { "connId", p->getConnId() },
-      { "id", p->getId() },
-      { "screenName", p->getScreenName() },
-      { "avatar", p->getAvatar() },
-      { "totalGameTime", p->getTotalGameTime() },
-
-      { "state", p->getState() },
-
-      { "gameData", gameData },
-    }
-  });
-}
-
-void Scheduler::removeObserver(const QString &connId, int roomId) {
-  auto player = ServerInstance->findPlayerByConnId(connId);
-  if (!player) return;
-
-  L->call("RemoveObserver", { roomId, player->getId() });
+void Scheduler::triggerTask(const char *reason) {
+  L->call("TriggerTask", { reason });
 }
 
 RoomThread::RoomThread(Server *server) {
@@ -104,10 +72,7 @@ void RoomThread::run() {
   connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
   connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
   connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
-
-  connect(this, &RoomThread::setPlayerState, m_scheduler, &Scheduler::setPlayerState);
-  connect(this, &RoomThread::addObserver, m_scheduler, &Scheduler::addObserver);
-  connect(this, &RoomThread::removeObserver, m_scheduler, &Scheduler::removeObserver);
+  connect(this, &RoomThread::triggerTask, m_scheduler, &Scheduler::triggerTask);
 
   emit scheduler_ready();
   exec();
@@ -137,8 +102,25 @@ bool RoomThread::isOutdated() {
   return ret;
 }
 
-LuaInterface *RoomThread::getLua() const {
+Lua *RoomThread::getLua() const {
   return m_scheduler->getLua();
+}
+
+int RoomThread::getRefCount() const {
+  return m_ref_count;
+}
+
+void RoomThread::increaseRefCount() {
+  m_ref_count++;
+}
+
+void RoomThread::decreaseRefCount() {
+  m_ref_count--;
+  if (m_ref_count > 0) return;
+
+  if (isOutdated() && findChildren<Room *>().size() == 0) {
+    deleteLater();
+  }
 }
 
 void RoomThread::onRoomAbandoned() {

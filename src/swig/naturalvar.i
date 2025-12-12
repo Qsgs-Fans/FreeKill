@@ -66,6 +66,8 @@ void Lua::pushValue(lua_State *L, QVariant v) {
       SWIG_NewPointerObj(L, v.value<Client *>(), SWIGTYPE_p_Client, 0);
     } else if (typeId == QMetaType::fromType<RoomThread *>().id()) {
       SWIG_NewPointerObj(L, v.value<RoomThread *>(), SWIGTYPE_p_RoomThread, 0);
+    } else if (typeId == QMetaType::fromType<Server *>().id()) {
+      SWIG_NewPointerObj(L, v.value<Server *>(), SWIGTYPE_p_Server, 0);
     } else {
       qCritical() << "cannot handle QVariant type" << v.typeId();
       lua_pushnil(L);

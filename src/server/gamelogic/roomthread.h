@@ -3,7 +3,7 @@
 #ifndef _ROOMTHREAD_H
 #define _ROOMTHREAD_H
 
-class LuaInterface;
+class Lua;
 class Room;
 class Server;
 class ServerPlayer;
@@ -21,14 +21,10 @@ class Scheduler : public QObject {
   void handleRequest(const QString &req);
   void doDelay(int roomId, int ms);
   bool resumeRoom(int roomId, const char *reason);
-
-  // 只在rpc模式下有效果
-  void setPlayerState(const QString &, int roomId);
-  void addObserver(const QString &, int roomId);
-  void removeObserver(const QString &, int roomId);
+  void triggerTask(const char *);
 
  private:
-  LuaInterface *L;
+  Lua *L;
 };
 
 /**
@@ -52,18 +48,18 @@ class RoomThread : public QThread {
 
   bool isOutdated();
 
-  LuaInterface *getLua() const;
+  Lua *getLua() const;
+
+  int getRefCount() const;
+  void increaseRefCount();
+  void decreaseRefCount();
 
  signals:
   void scheduler_ready();
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);
-
-  // 只在rpc模式下有效果
-  void setPlayerState(const QString &, int roomId);
-  void addObserver(const QString &, int roomId);
-  void removeObserver(const QString &, int roomId);
+  void triggerTask(const char *);
 
  public slots:
   void onRoomAbandoned();
@@ -78,6 +74,9 @@ class RoomThread : public QThread {
   QString md5;
 
   Scheduler *m_scheduler;
+
+  // 为什么不直接用智能指针呢，算了，这个值表示当前引用它的task数量
+  int m_ref_count = 0;
 };
 
 Q_DECLARE_METATYPE(RoomThread *)

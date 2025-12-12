@@ -41,6 +41,9 @@ set(freekill_SRCS
   "server/room/lobby.cpp"
   "server/room/room.cpp"
 
+  "server/task/task_manager.cpp"
+  "server/task/task.cpp"
+
   "server/gamelogic/roomthread.cpp"
 
   "server/cli/shell.cpp"
