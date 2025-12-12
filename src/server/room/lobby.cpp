@@ -27,10 +27,6 @@ void Lobby::addPlayer(ServerPlayer *player) {
   }
 
   server->updateOnlineInfo();
-
-  auto &tm = ServerInstance->task_manager();
-  auto &task = tm.createTask("HelloWorld", QCborValue({1,2,3,4}).toCbor());
-  task.start();
 }
 
 void Lobby::removePlayer(ServerPlayer *player) {

@@ -49,6 +49,10 @@ class RoomThread : public QThread {
 
   Lua *getLua() const;
 
+  int getRefCount() const;
+  void increaseRefCount();
+  void decreaseRefCount();
+
  signals:
   void scheduler_ready();
   void pushRequest(const QString &req);
@@ -68,6 +72,9 @@ class RoomThread : public QThread {
   QString md5;
 
   Scheduler *m_scheduler;
+
+  // 为什么不直接用智能指针呢，算了，这个值表示当前引用它的task数量
+  int m_ref_count = 0;
 };
 
 Q_DECLARE_METATYPE(RoomThread *)

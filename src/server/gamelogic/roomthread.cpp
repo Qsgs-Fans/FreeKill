@@ -101,6 +101,23 @@ Lua *RoomThread::getLua() const {
   return m_scheduler->getLua();
 }
 
+int RoomThread::getRefCount() const {
+  return m_ref_count;
+}
+
+void RoomThread::increaseRefCount() {
+  m_ref_count++;
+}
+
+void RoomThread::decreaseRefCount() {
+  m_ref_count--;
+  if (m_ref_count > 0) return;
+
+  if (isOutdated() && findChildren<Room *>().size() == 0) {
+    deleteLater();
+  }
+}
+
 void RoomThread::onRoomAbandoned() {
   auto room = qobject_cast<Room *>(sender());
 

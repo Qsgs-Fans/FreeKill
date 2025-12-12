@@ -27,6 +27,10 @@ public:
 
   void delay(int ms);
 
+  int getRefCount();
+  void increaseRefCount();
+  void decreaseRefCount();
+
 private:
   int id; // 负数
   int userConnId = 0; // 关联的用户，0表示无
@@ -37,4 +41,7 @@ private:
 
   // 很遗憾，负责执行Lua代码的那个类命名成这样了 导致在这里有点违和
   RoomThread *m_thread;
+
+  int lua_ref_count = 0;
+  QMutex lua_ref_mutex;
 };

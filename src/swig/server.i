@@ -10,11 +10,13 @@ public:
   QByteArray getData() const;
 
   void delay(int ms);
+
+  void decreaseRefCount();
 };
 
 %extend Task {
   ServerPlayer *getPlayer() {
-    return ServerInstance->findPlayer($self->getUserConnId());
+    return ServerInstance->findPlayerByConnId($self->getUserConnId());
   }
 }
 

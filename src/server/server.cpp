@@ -391,7 +391,7 @@ void Server::refreshMd5() {
     }
   }
   for (auto thread : findChildren<RoomThread *>()) {
-    if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty())
+    if (thread->isOutdated() && thread->findChildren<Room *>().isEmpty() && thread->getRefCount() == 0)
       thread->deleteLater();
   }
   for (auto p : lobby()->getPlayers()) {
