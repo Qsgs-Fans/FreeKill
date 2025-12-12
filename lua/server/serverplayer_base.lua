@@ -94,7 +94,10 @@ function ServerPlayerBase:saveState(data)
   end
   local ok, jsonData = pcall(json.encode, data)
   if ok then
-    self._splayer:saveState(jsonData)
+    local ret = self._splayer:saveState(jsonData)
+    if type(ret) == "boolean" then
+      coroutine.yield("__handleRequest")
+    end
   else
     fk.qWarning("Failed to encode save data: " .. jsonData)
   end
@@ -109,6 +112,9 @@ function ServerPlayerBase:getSaveState()
     return {}
   end
   local data = self._splayer:getSaveState()
+  if type(data) == "boolean" then
+    data = coroutine.yield("__handleRequest")
+  end
   local ok, result = pcall(json.decode, data or "{}")
   if ok then
     return result
@@ -129,7 +135,10 @@ function ServerPlayerBase:saveGlobalState(key, data)
   end
   local ok, jsonData = pcall(json.encode, data)
   if ok then
-    self._splayer:saveGlobalState(key, jsonData)
+    local ret = self._splayer:saveGlobalState(key, jsonData)
+    if type(ret) == "boolean" then
+      coroutine.yield("__handleRequest")
+    end
   else
     fk.qWarning("Failed to encode global save data: " .. jsonData)
   end
@@ -145,6 +154,9 @@ function ServerPlayerBase:getGlobalSaveState(key)
     return {}
   end
   local data = self._splayer:getGlobalSaveState(key)
+  if type(data) == "boolean" then
+    data = coroutine.yield("__handleRequest")
+  end
   local ok, result = pcall(json.decode, data or "{}")
   if ok then
     return result

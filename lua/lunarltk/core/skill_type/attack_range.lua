@@ -39,4 +39,10 @@ function AttackRangeSkill:withoutAttackRange(from, to)
   return false
 end
 
+---@param player Player
+---@return integer|nil
+function AttackRangeSkill:getVirtualWeaponAttackRange(player)
+  return nil
+end
+
 return AttackRangeSkill

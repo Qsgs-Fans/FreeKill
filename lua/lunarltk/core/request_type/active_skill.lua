@@ -358,6 +358,16 @@ function ReqActiveSkill:updateUnselectedTargets()
       scene:updateTargetEnability(pid, self:targetValidity(pid))
     end
   end
+
+  local player = self.player
+  local target_fixed = true
+
+  if self.skill_name then
+    local skill = Fk.skills[self.skill_name] --[[@as ActiveSkill | ViewAsSkill]]
+    target_fixed = not not skill:fixTargets(player, self.pendings, nil, self.extra_data)
+  end
+
+  scene:updateTargetState(target_fixed)
 end
 
 --- 调整选牌后，随之调整目标
@@ -545,6 +555,9 @@ function ReqActiveSkill:update(elemType, id, action, data)
   elseif elemType == "Photo" then
     ---@cast id integer
     self:selectTarget(id, data)
+    if #self.selected_targets == 0 then
+      autoSelectOnlyFeasibleTarget(self, data)
+    end
     -- 双击目标使用卡牌
     --[[
     if action == "doubleClick" and data.doubleClickUse then

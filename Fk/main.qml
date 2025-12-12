@@ -34,6 +34,9 @@ Window {
         root.width = Config.winWidth;
         root.height = Config.winHeight;
       } else {
+        // 安卓强制拉满整个Screen！
+        root.width = Screen.width;
+        root.height = Screen.height;
         Config.winWidth = root.width;
         Config.winHeight = root.height;
       }

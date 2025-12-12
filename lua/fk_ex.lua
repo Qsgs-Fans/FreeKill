@@ -79,6 +79,8 @@ function fk.readUsableSpecToSkill(skill, spec)
   skill.click_count = not not spec.click_count
   skill.history_branch = spec.history_branch
   skill.include_equip = spec.include_equip
+
+  if spec.on_cost then skill.onCost = spec.on_cost end
 end
 
 function fk.readStatusSpecToSkill(skill, spec)
@@ -122,14 +124,16 @@ end
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 ---@field public include_equip? boolean @ 选牌时是否展开装备区
+---@field public fix_targets? fun(self: ActiveSkill, player: Player, selected_cards: integer[], card: Card, extra_data: any): Player[]? @ 设置固定目标
 
 ---@class CardSkillSpec: UsableSkillSpec
 ---@field public mod_target_filter? fun(self: ActiveSkill, player: Player, to_select: Player, selected: Player[], card: Card, extra_data: any): any @ 判定目标是否合法（例如不能杀自己，火攻无手牌目标）
 ---@field public target_filter? fun(self: CardSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, extra_data: any): any @ 判定目标能否选择
 ---@field public feasible? fun(self: CardSkill, player: Player, selected: Player[], selected_cards: integer[]): any @ 判断卡牌和目标是否符合技能限制
 ---@field public can_use? fun(self: CardSkill, player: Player, card: Card, extra_data: any): any @ 判断卡牌技能否发动
----@field public on_use? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData): any
----@field public fix_targets? fun(self: CardSkill, player: Player, card: Card, extra_data: any): Player[]? @ 设置固定目标
+---@field public on_use? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData): any @ 实际使用的函数
+---@field public on_cost? fun(self: CardSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table? @ 自定义技能的消耗信息
+---@field public fix_targets? fun(self: CardSkill, player: Player, selected_cards: integer[], card: Card, extra_data: any): Player[]? @ 设置固定目标
 ---@field public on_action? fun(self: CardSkill, room: Room, cardUseEvent: UseCardData, finished: boolean): any
 ---@field public about_to_effect? fun(self: CardSkill, room: Room, effect: CardEffectData): boolean? @ 生效前判断，返回true则取消效果
 ---@field public on_effect? fun(self: CardSkill, room: Room, effect: CardEffectData): any
@@ -146,7 +150,7 @@ end
 ---@field public feasible? fun(self: ViewAsSkill, player: Player, selected: Player[], selected_cards: integer[], card: Card): any @ 判断卡牌和目标是否符合技能限制
 ---@field public on_use? fun(self: ViewAsSkill, room: Room, skillUseEvent: SkillUseData, card: Card, params: handleUseCardParams?): UseCardDataSpec|string?
 ---@field public view_as fun(self: ViewAsSkill, player: Player, cards: integer[]): Card? @ 判断转化为什么牌
----@field public on_cost? fun(self: ViewAsSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table @ 自定义技能的消耗信息
+---@field public on_cost? fun(self: ViewAsSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):CostData|table? @ 自定义技能的消耗信息
 ---@field public history_branch? string|fun(self: ViewAsSkill, player: ServerPlayer, data: SkillUseData, extra_data?: UseExtraData|table):string? @ 发动技能时增加添加对应某处分支的次数
 ---@field public pattern? string
 ---@field public enabled_at_play? fun(self: ViewAsSkill, player: Player): any
@@ -160,6 +164,7 @@ end
 ---@field public click_count? boolean @ 是否在点击按钮瞬间就计数并播放特效和语音
 ---@field public enabled_at_nullification? fun(self: ViewAsSkill, player: Player, data: CardEffectData): boolean? @ 判断一张牌是否能被此技能转化无懈来响应
 ---@field public include_equip? boolean @ 选牌时是否展开装备区
+---@field public fix_targets? fun(self: ViewAsSkill, player: Player, selected_cards: integer[], card: Card, extra_data: any): Player[]? @ 设置固定目标
 
 ---@class DistanceSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
@@ -178,6 +183,7 @@ end
 ---@field public final_func? fun(self: AttackRangeSkill, player: Player): number?  @ 判定角色的锁定攻击范围终值
 ---@field public within_func? fun(self: AttackRangeSkill, from: Player, to: Player): any @ 判定to角色是否锁定在角色from攻击范围内
 ---@field public without_func? fun(self: AttackRangeSkill, from: Player, to: Player): any @ 判定to角色是否锁定在角色from攻击范围外
+---@field public virtual_weapon_func? fun(self: AttackRangeSkill, player: Player): any @ 虚拟武器攻击范围
 
 ---@class MaxCardsSpec: StatusSkillSpec
 ---@field public correct_func? fun(self: MaxCardsSkill, player: Player): number?
@@ -207,7 +213,7 @@ end
 ---@field public recheck_invalidity? boolean @ 是否涉及其他技能的失效性
 
 ---@class VisibilitySpec: StatusSkillSpec
----@field public card_visible? fun(self: VisibilitySkill, player: Player, card: Card): any @ 某牌的可见性
+---@field public card_visible? fun(self: VisibilitySkill, player: Player, card: Card, toChoose: boolean): any @ 某牌的可见性
 ---@field public move_visible? fun(self: VisibilitySkill, player: Player, info: MoveInfo, move: MoveCardsDataSpec): any @ 某牌在某次移动中的可见性
 ---@field public role_visible? fun(self: VisibilitySkill, player: Player, target: Player): any @ 身份的可见性
 

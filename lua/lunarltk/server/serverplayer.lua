@@ -85,7 +85,9 @@ end
 ---
 --- 因为要过锁视技，最好不要展示不属于你的牌
 ---@param cards integer|integer[]|Card|Card[]
-function ServerPlayer:showCards(cards)
+---@param proposer? ServerPlayer @ 展示牌操作者
+function ServerPlayer:showCards(cards, proposer)
+  proposer = proposer or self
   cards = Card:getIdList(cards)
   for _, id in ipairs(cards) do
     Fk:filterCard(id, self)
@@ -105,7 +107,7 @@ function ServerPlayer:showCards(cards)
   --   type = "##ShowCard",
   --   from = self.id,
   -- })
-  self.room:showCards(cards, self)
+  self.room:showCards(cards, self, proposer)
 end
 
 

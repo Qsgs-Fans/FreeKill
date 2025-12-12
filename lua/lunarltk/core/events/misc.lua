@@ -24,22 +24,35 @@ fk.PropertyChange = PropertyChangeEvent:subclass("fk.PropertyChange")
 ---@class fk.AfterPropertyChange: PropertyChangeEvent
 fk.AfterPropertyChange = PropertyChangeEvent:subclass("fk.AfterPropertyChange")
 
+---@class SimpleChangeDataSpec
+---@field public who ServerPlayer @ 变动的发起者
+---@field public reason string @ 变动的原因
+---@field public prevented? boolean @ 是否被阻止
+
+---@class SimpleChangeData: SimpleChangeDataSpec, TriggerData
+SimpleChangeData = TriggerData:subclass("SimpleChangeData")
+
+---@class SimpleChangeEvent: TriggerEvent
+---@field data SimpleChangeData
+local SimpleChangeEvent = TriggerEvent:subclass("SimpleChangeEvent")
+
+---@class fk.BeforeTurnOver: SimpleChangeEvent
+--- 武将牌翻面变化前
+fk.BeforeTurnOver = SimpleChangeEvent:subclass("fk.BeforeTurnOver")
+--- 武将牌翻面变化后
+---@class fk.TurnedOver: SimpleChangeEvent
+fk.TurnedOver = SimpleChangeEvent:subclass("fk.TurnedOver")
+--- 连环状态变化前
+---@class fk.BeforeChainStateChange: SimpleChangeEvent
+fk.BeforeChainStateChange = SimpleChangeEvent:subclass("fk.BeforeChainStateChange")
+--- 连环状态变化后
+---@class fk.ChainStateChanged: SimpleChangeEvent
+fk.ChainStateChanged = SimpleChangeEvent:subclass("fk.ChainStateChanged")
+
 ---@class NilEvent: TriggerEvent
 ---@field data any
 local NilEvent = TriggerEvent:subclass("NilEvent")
 
----@class fk.BeforeTurnOver: NilEvent
---- 武将牌翻面变化前
-fk.BeforeTurnOver = NilEvent:subclass("fk.BeforeTurnOver")
---- 武将牌翻面变化后
----@class fk.TurnedOver: NilEvent
-fk.TurnedOver = NilEvent:subclass("fk.TurnedOver")
---- 连环状态变化前
----@class fk.BeforeChainStateChange: NilEvent
-fk.BeforeChainStateChange = NilEvent:subclass("fk.BeforeChainStateChange")
---- 连环状态变化后
----@class fk.ChainStateChanged: NilEvent
-fk.ChainStateChanged = NilEvent:subclass("fk.ChainStateChanged")
 --- 牌堆洗牌后
 ---@class fk.AfterDrawPileShuffle: NilEvent
 fk.AfterDrawPileShuffle = NilEvent:subclass("fk.AfterDrawPileShuffle")
@@ -135,6 +148,8 @@ fk.AfterAskForNullification = AskForCardEvent:subclass("fk.AfterAskForNullificat
 
 ---@alias PropertyChangeFunc fun(self: TriggerSkill, event: PropertyChangeEvent,
 ---  target: ServerPlayer, player: ServerPlayer, data: PropertyChangeData): any
+---@alias SimpleChangeFunc fun(self: TriggerSkill, event: SimpleChangeEvent,
+---  target: ServerPlayer, player: ServerPlayer, data: SimpleChangeData): any
 ---@alias NilEventFunc fun(self: TriggerSkill, event: NilEvent,
 ---  target: ServerPlayer, player: ServerPlayer, data: nil): any
 ---@alias StringEventFunc fun(self: TriggerSkill, event: StringEvent,
@@ -153,6 +168,8 @@ fk.AfterAskForNullification = AskForCardEvent:subclass("fk.AfterAskForNullificat
 ---@class SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: PropertyChangeEvent,
 ---  data: TrigSkelSpec<PropertyChangeFunc>, attr: TrigSkelAttribute?): SkillSkeleton
+---@field public addEffect fun(self: SkillSkeleton, key: SimpleChangeEvent,
+---  data: TrigSkelSpec<SimpleChangeFunc>, attr: TrigSkelAttribute?): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: NilEvent,
 ---  data: TrigSkelSpec<NilEventFunc>, attr: TrigSkelAttribute?): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: StringEvent,

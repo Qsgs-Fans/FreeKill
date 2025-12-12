@@ -114,6 +114,7 @@ function arrangePhotos() {
   ];
 
   const regularSeatIndex = [
+    [0],
     [0, 4],
     [0, 3, 5],
     [0, 1, 4, 7],
@@ -122,7 +123,7 @@ function arrangePhotos() {
     [0, 1, 2, 3, 5, 6, 7],
     [0, 1, 2, 3, 4, 5, 6, 7],
   ];
-  const seatIndex = regularSeatIndex[playerNum - 2];
+  const seatIndex = regularSeatIndex[playerNum - 1];
 
   let item, region, i;
 
@@ -196,8 +197,8 @@ function moveCards(data) {
     const move = moves[i];
     const from = getAreaItem(move.fromArea, move.from);
     const to = getAreaItem(move.toArea, move.to);
-    //if (!from || !to || (from === to && from !== tablePile) || (from === tablePile && move.toArea === Card.DiscardPile))
-    //  continue;
+    if (!from || !to || (from === to && from !== tablePile) || (from === tablePile && move.toArea === Card.DiscardPile))
+      continue;
     const items = from.remove(move.ids, move.fromSpecialName, data);
     items.forEach((item) => item.known = !!data[item.cid.toString()]); // updata card visible. must be before move animation
     if (to === tablePile) {
@@ -1581,4 +1582,35 @@ callbacks["GetPlayerHandcards"] = (sender, data) => {
 
 callbacks["ReplyToServer"] = (sender, data) => {
   replyToServer(data);
+}
+
+callbacks["AddNpc"] = (_, data) => {
+  const [id, name, avatar, ready, time] = data;
+  const modelData = {
+    id,
+    index: 0,   // For animating seat swap
+    general: avatar,
+    avatar,
+    deputyGeneral: "",
+    screenName: name,
+    role: "unknown",
+    role_shown: false,
+    kingdom: "unknown",
+    netstate: "online",
+    maxHp: 0,
+    hp: 0,
+    shield: 0,
+    seatNumber: 1,
+    dead: false,
+    dying: false,
+    faceup: true,
+    chained: false,
+    drank: 0,
+    rest: 0,
+    surrendered: false,
+    sealedSlots: "[]",
+  };
+  photoModel.append(modelData);
+
+  playerNum = photoModel.count; //?
 }

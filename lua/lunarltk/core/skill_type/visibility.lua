@@ -9,8 +9,9 @@ local VisibilitySkill = StatusSkill:subclass("VisibilitySkill")
 --- 某牌的可见性
 ---@param player Player
 ---@param card Card
+---@param toChoose? boolean @ 是否将用于选牌判断
 ---@return boolean?
-function VisibilitySkill:cardVisible(player, card)
+function VisibilitySkill:cardVisible(player, card, toChoose)
   return nil
 end
 

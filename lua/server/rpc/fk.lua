@@ -70,8 +70,10 @@ local callRpc = function(method, params)
       -- 和Json RPC spec不合的一集，我们可能收到预期之外的error
       -- 这可能是我io编程不达标导致的
       if packet[jsonrpc.key_id] == id then
-        -- id符合的话就爆error
-        error("RPC call error: " .. errmsg)
+        -- id符合的话就报warn然后结束本函数
+        fk.qWarning("RPC call error: " .. errmsg)
+
+        return
       else
         -- 对于这种id不合的error包扔了
         fk.qCritical("RPC call error, but id is not same: " .. errmsg)
@@ -207,6 +209,70 @@ end
 
 -- swig/server.i
 
+local _Task_delay = function(self, ms)
+  assert(math.type(ms) == "integer")
+
+  callRpc("Task_delay", { self.id, ms })
+end
+
+local _Task_decreaseRefCount = function(self)
+  callRpc("Task_decreaseRefCount", { self.id })
+end
+
+local _Task_saveGlobalState = function(self, key, jsonData)
+  local ret, err = callRpc("Task_saveGlobalState", { self.id, tostring(key), tostring(jsonData) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
+local _Task_getGlobalSaveState = function(self, key)
+  local ret, err = callRpc("Task_getGlobalSaveState", { self.id, tostring(key) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
+local _Task_getPlayer = function(self)
+  local playerData = callRpc("Task_getPlayer", { self.id })
+  return fk.ServerPlayer(cbor.decode(playerData))
+end
+
+local _Task_MT = {
+  __index = {
+    getId = function(t) return t.id end,
+    getTaskType = function(t) return t.taskType end,
+    getData = function(t) return t.data end,
+
+    delay = _Task_delay,
+    decreaseRefCount = _Task_decreaseRefCount,
+    saveGlobalState = _Task_saveGlobalState,
+    getGlobalSaveState = _Task_getGlobalSaveState,
+    getPlayer = _Task_getPlayer,
+  }
+}
+
+fk.Task = function(t)
+  return setmetatable({
+    id = t.id,
+    taskType = t.taskType,
+    data = t.data,
+  }, _Task_MT)
+end
+
+local _Server_getTask = function(_, id)
+  local taskData = callRpc("Server_getTask", { id })
+  return fk.Task(cbor.decode(taskData))
+end
+
+fk.Server = function()
+  return {
+    getTask = _Server_getTask,
+  }
+end
+
 ---@param command string
 ---@param jsondata string
 ---@param timeout integer
@@ -250,7 +316,11 @@ end
 
 -- 存档相关
 local _ServerPlayer_saveState = function(self, jsonData)
-  callRpc("ServerPlayer_saveState", { self.connId, tostring(jsonData) })
+  local ret, err = callRpc("ServerPlayer_saveState", { self.connId, tostring(jsonData) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
 end
 
 local _ServerPlayer_getSaveState = function(self)
@@ -262,7 +332,11 @@ local _ServerPlayer_getSaveState = function(self)
 end
 
 local _ServerPlayer_saveGlobalState = function(self, key, jsonData)
-  callRpc("ServerPlayer_saveGlobalState", { self.connId, tostring(key), tostring(jsonData) })
+  local ret, err = callRpc("ServerPlayer_saveGlobalState", { self.connId, tostring(key), tostring(jsonData) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
 end
 
 local _ServerPlayer_getGlobalSaveState = function(self, key)
@@ -376,6 +450,31 @@ local _Room_setSessionData = function(self, jsonData)
   callRpc("Room_setSessionData", { self.id, tostring(jsonData) })
 end
 
+local _Room_addNpc = function(self)
+  local ret = callRpc("Room_addNpc", { self.id })
+  return fk.ServerPlayer(cbor.decode(ret))
+end
+
+local _Room_removeNpc = function(self, player)
+  callRpc("Room_removeNpc", { self.id, player.connId })
+end
+
+local _Room_saveGlobalState = function(self, key, jsonData)
+  local ret, err = callRpc("Room_saveGlobalState", { self.id, tostring(key), tostring(jsonData) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
+local _Room_getGlobalSaveState = function(self, key)
+  local ret, err = callRpc("Room_getGlobalSaveState", { self.id, tostring(key) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
 ---@type metatable
 local _Room_MT = {
   __index = {
@@ -400,6 +499,12 @@ local _Room_MT = {
     getSessionId = _Room_getSessionId,
     getSessionData = _Room_getSessionData,
     setSessionData = _Room_setSessionData,
+
+    addNpc = _Room_addNpc,
+    removeNpc = _Room_removeNpc,
+
+    saveGlobalState = _Room_saveGlobalState,
+    getGlobalSaveState = _Room_getGlobalSaveState,
 
     settings = function(t) return t._settings end,
   }

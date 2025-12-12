@@ -224,7 +224,7 @@ function GameEvent:prependExitFunc(f)
   table.insert(self.extra_exit, 1, f)
 end
 
--- 找第一个与当前事件有继承关系的特定事件
+-- 找第一个与此事件有继承关系的特定事件
 ---@generic T: GameEvent
 ---@param eventType T @ 事件类型
 ---@param includeSelf boolean? @ 是否包括本事件

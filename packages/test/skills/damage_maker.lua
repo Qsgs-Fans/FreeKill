@@ -29,6 +29,9 @@ damage_maker:addEffect("active", {
   can_use = Util.TrueFunc,
   card_filter = Util.FalseFunc,
   card_num = 0,
+  fix_targets = function(self, player, selected_cards, card, extra_data)
+    if self.interaction.data == "revive" then return {} end
+  end,
   target_filter = function(self, player, to_select, selected)
     if self.interaction.data == "revive" then return false end
     return #selected < 2

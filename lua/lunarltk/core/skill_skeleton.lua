@@ -358,7 +358,7 @@ end
 function SkillSkeleton:createAttackRangeSkill(_skill, idx, key, attr, spec)
   assert(type(spec.correct_func) == "function" or type(spec.fixed_func) == "function" or
     type(spec.within_func) == "function" or type(spec.without_func) == "function" or
-    type(spec.final_func) == "function")
+    type(spec.final_func) == "function" or type(spec.virtual_weapon_func) == "function")
   local new_name = string.format("#%s_%d_atkrange", _skill.name, idx)
   Fk:loadTranslationTable({ [new_name] = Fk:translate(_skill.name) }, Config.language)
 
@@ -378,6 +378,9 @@ function SkillSkeleton:createAttackRangeSkill(_skill, idx, key, attr, spec)
   end
   if spec.without_func then
     skill.withoutAttackRange = spec.without_func
+  end
+  if spec.virtual_weapon_func then
+    skill.getVirtualWeaponAttackRange = spec.virtual_weapon_func
   end
 
   return skill
@@ -553,12 +556,19 @@ function SkillSkeleton:createActiveSkill(_skill, idx, key, attr, spec)
   if spec.card_filter then skill.cardFilter = spec.card_filter end
   if spec.target_filter then skill.targetFilter = spec.target_filter end
   if spec.feasible then skill.feasible = spec.feasible end
-  if spec.on_cost then skill.onCost = spec.on_cost end
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.prompt then skill.prompt = spec.prompt end
   if spec.target_tip then skill.targetTip = spec.target_tip end
   if spec.handly_pile then skill.handly_pile = spec.handly_pile end
   if spec.click_count then skill.click_count = spec.click_count end
+
+  if spec.fix_targets then
+    skill.fixTargets = spec.fix_targets
+  elseif spec.target_filter == nil then
+    skill.fixTargets = function()
+      return {}
+    end
+  end
 
   fk.readInteractionToSkill(skill, spec)
   return skill
@@ -614,6 +624,12 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
     end
   else
     skill.filterPattern = spec.filter_pattern
+  end
+
+  if spec.fix_targets then
+    skill.fixTargets = spec.fix_targets
+  elseif spec.target_filter then
+    skill.fixTargets = Util.DummyFunc
   end
 
   if spec.target_filter then skill.targetFilter = spec.target_filter end
@@ -702,8 +718,6 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
   else
     skill.mute_card = not (string.find(skill.pattern, "|") or skill.pattern == "." or string.find(skill.pattern, ","))
   end
-
-  if spec.on_cost then skill.onCost = spec.on_cost end
 
   return skill
 end

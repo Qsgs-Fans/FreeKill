@@ -1,5 +1,7 @@
 import QtQuick
 
+import Fk.Widgets as W
+
 // https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.ViewSwitcher.html
 
 ListView {
@@ -30,7 +32,7 @@ ListView {
       font.bold: true
     }
 
-    TapHandler {
+    W.TapHandler {
       onTapped: root.currentIndex = index
     }
   }

@@ -57,7 +57,7 @@ end
 local mainLoop
 if RPC_MODE == "json" then
   mainLoop = function()
-    InitScheduler(fk.RoomThread())
+    InitScheduler(fk.RoomThread(), fk.Server())
     stdio.send(jsonrpc.encode_rpc(jsonrpc.notification, "hello", { "world" }))
 
     while true do
@@ -72,7 +72,7 @@ if RPC_MODE == "json" then
   end
 elseif RPC_MODE == "cbor" then
   mainLoop = function()
-    InitScheduler(fk.RoomThread())
+    InitScheduler(fk.RoomThread(), fk.Server())
     stdio.stdout:write(jsonrpc.encode_rpc(jsonrpc.notification, "hello", { "world" }))
     stdio.stdout:flush()
 

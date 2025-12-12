@@ -27,8 +27,10 @@ local GameMode = class("GameMode")
 ---@param max integer @ 最大玩家数
 function GameMode:initialize(name, min, max)
   self.name = name
-  self.minPlayer = math.max(min, 2)
-  self.maxPlayer = math.min(max, 12)
+  -- 为了PVE，允许开只有1人的房
+  self.minPlayer = math.max(min, 1)
+  -- 房间等待的UI只适配10人 待更新
+  self.maxPlayer = math.min(max, 10)
 end
 
 -- 判断胜利者的函数，若不为""，则游戏存在胜利者（一般会结束游戏）

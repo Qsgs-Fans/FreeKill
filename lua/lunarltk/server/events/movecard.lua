@@ -412,7 +412,8 @@ function MoveEventWrappers:drawCards(player, num, skillName, fromPlace, moveMark
     skillName = skillName,
     fromPlace = fromPlace or "top",
   }
-  if self.logic:trigger(fk.BeforeDrawCard, player, drawData) then
+  self.logic:trigger(fk.BeforeDrawCard, player, drawData)
+  if drawData.num <= 0 then
     return {}
   end
 

@@ -66,6 +66,67 @@ Game.BasicCard {
     visible: parent.detailed && parent.known
   }
 
+  Component {
+    id: duelkingdomMagatama
+    Item {
+      width: childrenRect.width
+      height: childrenRect.height
+      Image {
+        id: mainMagatama
+        source: SkinBank.getGeneralCardDir(root.kingdom) + root.kingdom + "-magatama"
+        visible: !root.subkingdom
+      }
+      LinearGradient {
+        id: mainMagatamaMask
+        visible: false
+        anchors.fill: mainMagatama
+        gradient: Gradient {
+          GradientStop { position: 0.2; color: "white" }
+          GradientStop { position: 0.8; color: "transparent" }
+        }
+      }
+      OpacityMask {
+        anchors.fill: mainMagatama
+        source: mainMagatama
+        maskSource: mainMagatamaMask
+        visible: !!root.subkingdom
+      }
+
+      Image {
+        id: subkingdomMagatama
+        visible: false
+        source: root.subkingdom ? SkinBank.getGeneralCardDir(root.subkingdom) +
+                             root.subkingdom + "-magatama" : ""
+      }
+      LinearGradient {
+        id: subkingdomMask
+        visible: false
+        anchors.fill: subkingdomMagatama
+        gradient: Gradient {
+          GradientStop { position: 0.2; color: "transparent" }
+          GradientStop { position: 0.8; color: "white" }
+        }
+      }
+      OpacityMask {
+        anchors.fill: subkingdomMagatama
+        source: subkingdomMagatama
+        maskSource: subkingdomMask
+        visible: root.subkingdom
+      }
+    }
+  }
+
+  Component {
+    id: singlekingdomMagatama
+    Item {
+      width: childrenRect.width
+      height: childrenRect.height
+      Image {
+        source: SkinBank.getGeneralCardDir(root.kingdom) + root.kingdom + "-magatama"
+      }
+    }
+  }
+
   Row {
     x: 34
     y: 4
@@ -74,52 +135,7 @@ Game.BasicCard {
     Repeater {
       id: hpRepeater
       model: (!root.heg) ? ((root.hp > 5 || root.hp !== root.maxHp) ? 1 : root.hp) : 0
-      Item {
-        width: childrenRect.width
-        height: childrenRect.height
-        Image {
-          id: mainMagatama
-          source: SkinBank.getGeneralCardDir(root.kingdom) + root.kingdom + "-magatama"
-          visible: !root.subkingdom
-        }
-        LinearGradient {
-          id: mainMagatamaMask
-          visible: false
-          anchors.fill: mainMagatama
-          gradient: Gradient {
-            GradientStop { position: 0.2; color: "white" }
-            GradientStop { position: 0.8; color: "transparent" }
-          }
-        }
-        OpacityMask {
-          anchors.fill: mainMagatama
-          source: mainMagatama
-          maskSource: mainMagatamaMask
-          visible: !!root.subkingdom
-        }
-
-        Image {
-          id: subkingdomMagatama
-          visible: false
-          source: root.subkingdom ? SkinBank.getGeneralCardDir(root.subkingdom) +
-                               root.subkingdom + "-magatama" : ""
-        }
-        LinearGradient {
-          id: subkingdomMask
-          visible: false
-          anchors.fill: subkingdomMagatama
-          gradient: Gradient {
-            GradientStop { position: 0.2; color: "transparent" }
-            GradientStop { position: 0.8; color: "white" }
-          }
-        }
-        OpacityMask {
-          anchors.fill: subkingdomMagatama
-          source: subkingdomMagatama
-          maskSource: subkingdomMask
-          visible: root.subkingdom
-        }
-      }
+      delegate: root.subkingdom ? duelkingdomMagatama : singlekingdomMagatama
     }
 
     Text {

@@ -233,8 +233,13 @@ W.PageBase {
       }];
     }else if (/exists and is not an empty directory/g.exec(errorMsg)) {
       return ["目录已存在且非空", null];
-    } else if (/no such file or directory/g.exec(errorMsg)) {
-      return ["文件或目录不存在", null];
+    } else if (/o such file or directory/g.exec(errorMsg)) {
+      return ["文件或目录不存在", (packageName, index) => {
+        console.log("Uninstalling " + packageName);
+        Pacman.removePack(packageName);
+        // updatePackageList();
+        packageModel.remove(index);
+      }];
     } else if (/authentiation required but no callback is set/g.exec(errorMsg)) {
       return ["无法访问仓库URL", null];
     } else if (/no match for id/g.exec(errorMsg)) {

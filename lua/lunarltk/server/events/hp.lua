@@ -59,6 +59,7 @@ function ChangeHp:main()
   local num = data.num
   local reason = data.reason
   local damageData = data.damageEvent
+  local hpLostData = data.hpLostEvent
   if num == 0 then
     return false
   end
@@ -132,6 +133,7 @@ function ChangeHp:main()
         who = data.who,
         damage = damageData,
         killer = damageData and damageData.from,
+        hpLost = hpLostData,
       }
       room:enterDying(dyingDataSpec)
     end
@@ -149,14 +151,16 @@ end
 ---@param reason? string @ 原因
 ---@param skillName? string @ 技能名
 ---@param damageData? DamageData @ 伤害数据
+---@param hpLostData? HpLostData @ 体力流失数据
 ---@return boolean
-function HpEventWrappers:changeHp(player, num, reason, skillName, damageData)
+function HpEventWrappers:changeHp(player, num, reason, skillName, damageData, hpLostData)
   local data = HpChangedData:new{
     who = player,
     num = num,
     reason = reason,
     skillName = skillName,
-    damageEvent = damageData
+    damageEvent = damageData,
+    hpLostEvent = hpLostData,
   }
   return exec(ChangeHp, data)
 end
@@ -339,6 +343,7 @@ function LoseHp:main()
   local room = self.room
   local logic = room.logic
 
+  data.proposer = data.proposer or data.who
   if data.num == nil then
     data.num = 1
   elseif data.num < 1 then
@@ -353,7 +358,7 @@ function LoseHp:main()
     logic:breakEvent(false)
   end
 
-  if not room:changeHp(data.who, -data.num, "loseHp", data.skillName) then
+  if not room:changeHp(data.who, -data.num, "loseHp", data.skillName, nil, data) then
     logic:breakEvent(false)
   end
 
@@ -365,12 +370,14 @@ end
 ---@param player ServerPlayer @ 玩家
 ---@param num integer @ 失去的数量
 ---@param skillName? string @ 技能名
+---@param proposer? ServerPlayer @ 体力流失来源
 ---@return boolean
-function HpEventWrappers:loseHp(player, num, skillName)
+function HpEventWrappers:loseHp(player, num, skillName, proposer)
   local data = HpLostData:new{
     who = player,
     num = num,
     skillName = skillName,
+    proposer = proposer,
   }
   return exec(LoseHp, data)
 end

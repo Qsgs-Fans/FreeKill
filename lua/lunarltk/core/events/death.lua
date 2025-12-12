@@ -4,6 +4,7 @@
 ---@field public who ServerPlayer @ 濒死角色
 ---@field public killer? ServerPlayer @ 凶手
 ---@field public damage? DamageData @ 造成此次濒死的伤害数据
+---@field public hpLost? HpLostData @ 造成此次濒死的体力流失数据
 ---@field public ignoreDeath? boolean @ 是否不进行死亡结算
 
 --- 描述和濒死事件有关的数据

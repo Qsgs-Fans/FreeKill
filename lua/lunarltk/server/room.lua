@@ -1986,10 +1986,19 @@ function Room:handleUseCardReply(player, data, params)
     if skill:isInstanceOf(ActiveSkill) then
       ---@cast skill ActiveSkill
 
+      local tos = {}
+      if #targets > 0 then
+        tos = table.map(targets, Util.Id2PlayerMapper)
+      else
+        --使用预设目标，并自动排序
+        tos = skill:fixTargets(player, selected_cards, nil, extra_data) or {}
+        self:sortByAction(tos)
+      end
+
       local use_spec = {
         from = player,
         cards = selected_cards,
-        tos = table.map(targets, Util.Id2PlayerMapper),
+        tos = tos,
         interaction_data = data.interaction_data,
       }
       local use_data = skill:handleCostData(player, use_spec, extra_data)
@@ -2004,10 +2013,19 @@ function Room:handleUseCardReply(player, data, params)
       local useResult
       local c = skill:viewAs(player, selected_cards)
 
+      local tos = {}
+      if #targets > 0 then
+        tos = table.map(targets, Util.Id2PlayerMapper)
+      else
+        --使用预设目标，并自动排序
+        tos = skill:fixTargets(player, selected_cards, nil, extra_data) or {}
+        self:sortByAction(tos)
+      end
+
       local use_spec = {
         from = player,
         cards = selected_cards,
-        tos = table.map(targets, Util.Id2PlayerMapper),
+        tos = tos,
         interaction_data = data.interaction_data,
       }
       local use_data = skill:handleCostData(player, use_spec, extra_data)
@@ -3680,7 +3698,9 @@ end
 --- 展示一堆牌（注意，这样子是不会过锁视技的）
 ---@param cards integer|integer[]|Card|Card[] @ 要展示的牌
 ---@param from? ServerPlayer
-function Room:showCards(cards, from)
+---@param proposer? ServerPlayer @ 展示牌操作者
+function Room:showCards(cards, from, proposer)
+  proposer = proposer or from
   cards = Card:getIdList(cards)
   local src
   if from then src = from.id end
@@ -3710,7 +3730,7 @@ function Room:showCards(cards, from)
 
   self:doBroadcastNotify("ShowCard", { cards, src, n })
 
-  self.logic:trigger(fk.CardShown, from, { cardIds = cards })
+  self.logic:trigger(fk.CardShown, proposer, { cardIds = cards })
 end
 
 --- 将虚拟牌展示到桌面（仅动画）
@@ -3734,5 +3754,12 @@ function Room:destroyTableCardByEvent(id)
   self:doBroadcastNotify("DestroyTableCardByEvent", id)
 end
 
+function Room:addNpc(nextPlayer)
+  local ret = ServerRoomBase.addNpc(self, nextPlayer)
+
+  self.alive_players = table.filter(self.players, function(p) return not p.dead end)
+
+  return ret
+end
 
 return Room

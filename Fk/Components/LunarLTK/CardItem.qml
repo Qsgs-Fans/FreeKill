@@ -109,7 +109,7 @@ Game.PokerCard {
         text: {
           let ret = Lua.tr(modelData.k);
           if (!modelData.k.startsWith("@@")) {
-            ret += modelData.v.toString();
+            ret += Lua.tr(modelData.v.toString());
           }
           return ret;
         }

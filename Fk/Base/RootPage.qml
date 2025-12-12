@@ -50,7 +50,7 @@ W.PageBase {
 
   BusyIndicator {
     id: busyIndicator
-    running: true
+    running: visible
     anchors.centerIn: parent
     visible: root.busy === true
   }

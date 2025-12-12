@@ -73,7 +73,7 @@ Item {
 
     Text {
       id: capacityText
-      color: (playerNum == capacity) ? "red" : "black"
+      color: (playerNum >= capacity) ? "red" : "black"
       text: playerNum + "/" + capacity
       font.pixelSize: 18
       font.bold: true

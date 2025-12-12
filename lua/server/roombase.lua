@@ -2,6 +2,8 @@
 ---@class ServerRoomBase : Base.RoomBase
 ---@field public id integer @ 房间的id
 ---@field public room fk.Room @ C++层面的Room类实例，别管他就是了，用不着
+---@field public hidden_players fk.ServerPlayer[] @ 未上场的玩家们（不是角色）
+---@field public unused_bots fk.ServerPlayer[] @ 未上场的人机们
 ---@field public main_co any @ 本房间的主协程
 ---@field public tag table<string, any> @ tag类似banner，但是只存在于服务端，可用于强行制造信息不对等
 ---@field public game_started boolean @ 游戏是否已经开始
@@ -18,6 +20,9 @@ local ServerRoomBase = {}
 function ServerRoomBase:initialize(_room)
   self.room = _room
   self.id = _room:getId()
+
+  self.hidden_players = {}
+  self.unused_bots = {}
 
   self.tag = {}
 
@@ -542,5 +547,72 @@ function ServerRoomBase:setSessionData(data)
     fk.qWarning("Failed to encode global save data: " .. data)
   end
 end
+
+-- 向本房间players列表添加一个新玩家，并通知客户端
+---@param nextPlayer ServerPlayerBase 新玩家的下家
+function ServerRoomBase:addNpc(nextPlayer)
+  local bot_splayer = table.remove(self.unused_bots) ---@type fk.ServerPlayer
+  if not bot_splayer then
+    bot_splayer = self.room:addNpc()
+  end
+
+  local bot = self.serverplayer_klass:new(bot_splayer)
+  bot.room = self
+
+  table.insert(self.players, table.indexOf(self.players, nextPlayer), bot)
+  self:doBroadcastNotify("AddNpc", {
+    bot_splayer:getId(),
+    bot_splayer:getScreenName(),
+    bot_splayer:getAvatar(),
+    true,
+    0,
+  })
+  self:arrangeSeats()
+
+  return bot
+end
+
+--- 全局存档
+---@param key string 存档名
+---@param data table
+function ServerRoomBase:saveGlobalState(key, data)
+  if not self.room then return nil end
+  if type(self.room.saveGlobalState) ~= "function" then
+    fk.qWarning("self._splayer.saveGlobalState doesn't exist, Please ensure that the server version is freekill-asio 0.0.6+")
+    return nil
+  end
+  local ok, jsonData = pcall(json.encode, data)
+  if ok then
+    local ret = self.room:saveGlobalState(key, jsonData)
+    if type(ret) == "boolean" then
+      coroutine.yield("__handleRequest")
+    end
+  else
+    fk.qWarning("Failed to encode global save data: " .. jsonData)
+  end
+end
+
+--- 获取全局存档
+---@param key string 存档名
+---@return table @ 不存在返回空表
+function ServerRoomBase:getGlobalSaveState(key)
+  if not self.room then return {} end
+  if type(self.room.getGlobalSaveState) ~= "function" then
+    fk.qWarning("self._splayer.getGlobalSaveState doesn't exist, Please ensure that the server version is freekill-asio 0.0.6+")
+    return {}
+  end
+  local data = self.room:getGlobalSaveState(key)
+  if type(data) == "boolean" then
+    data = coroutine.yield("__handleRequest")
+  end
+  local ok, result = pcall(json.decode, data or "{}")
+  if ok then
+    return result
+  else
+    fk.qWarning("Failed to decode global save data: " .. result)
+    return {}
+  end
+end
+
 
 return ServerRoomBase

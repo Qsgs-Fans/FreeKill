@@ -61,8 +61,8 @@ Fk:loadTranslationTable {
   ["Ban General Settings"] = "禁将",
   ["Set as Avatar"] = "设为头像",
   ["Favorite Generals"] = "特别关注",
-  ["Set as Favorite"] = "设为特别关注",
-  ["Remove from Favorite"] = "移除特别关注",
+  ["Set as Favorite"] = "设为关注",
+  ["Remove from Favorite"] = "移除关注",
   ["Search"] = "搜索",
   ["Back"] = "返回",
   ["Click to back"] = "点击返回",
@@ -321,6 +321,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
 
   -- Room
   ["$EnterRoom"] = "成功加入房间",
+  ["$RoomConfigChanged"] = "房间配置已经修改，请重新准备！",
   ["#currentRoundNum"] = "第 %1 轮",
   ["$Choice"] = "%1：请选择",
   ["$ChooseGeneral"] = "请选择 %1 名武将",

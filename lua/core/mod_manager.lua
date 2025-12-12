@@ -6,6 +6,7 @@
 ---@field public extension_names string[] @ Mod名字的数组，为了方便排序
 ---@field public translations table<string, table<string, string>> @ 翻译表
 ---@field public boardgames { [string] : BoardGame } @ name -> game
+---@field public taskdefs { [string] : TaskDef } @ name -> taskdef
 local ModManager = {}
 
 local BoardGame = require "core.boardgame"
@@ -22,6 +23,8 @@ function ModManager:initModManager()
   self.translations = {}  -- srcText --> translated
 
   self.boardgames = {}
+
+  self.taskdefs = {}
 
   self.Base = {
     Player = require "core.player",
@@ -145,6 +148,25 @@ function ModManager:getBoardGame(name)
       name = "Room",
     }
   }
+end
+
+local TaskDef = require "core.task_def"
+
+---@param t TaskDefSpec
+function ModManager:addTaskDef(t)
+  local def = TaskDef:new(t.type)
+  def.handler = t.handler
+  if self.taskdefs[def.type] then
+    fk.qCritical(string.format("Duplicated task type %s detected. Skipping.", def.type))
+    return
+  end
+
+  self.taskdefs[def.type] = def
+end
+
+---@return TaskDef?
+function ModManager:getTaskDef(tp)
+  return self.taskdefs[tp]
 end
 
 --- 获知当前的Engine是跑在服务端还是客户端，并返回相应的实例。

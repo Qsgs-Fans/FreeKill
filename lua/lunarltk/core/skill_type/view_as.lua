@@ -107,6 +107,20 @@ function ViewAsSkill:targetFilter(player, to_select, selected, selected_cards, c
   return false
 end
 
+-- 获取使用此牌时的固定目标。注意，不需要进行任何合法性判断
+---@param player Player @ 使用者
+---@param selected_cards integer[] @ 已选牌
+---@param c? Card @ 牌
+---@param extra_data? UseExtraData @ 额外数据
+---@return Player[]? @ 返回固定目标角色列表。若此牌可以选择目标，返回空表
+function ViewAsSkill:fixTargets(player, selected_cards, c, extra_data)
+  local card = self:viewAs(player, selected_cards)
+  if card == nil or card:getFixedTargets(player, extra_data) then
+    return {}
+  end
+  return nil
+end
+
 -- 判断一个转化技是否可发动（也就是确认键是否可点击）
 -- 警告：没啥事别改
 ---@param player Player @ 使用者

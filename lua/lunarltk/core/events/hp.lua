@@ -7,6 +7,7 @@
 ---@field public reason string @ 体力变化原因
 ---@field public skillName string @ 引起体力变化的技能名
 ---@field public damageEvent? DamageData @ 引起这次体力变化的伤害数据
+---@field public hpLostEvent? DamageData @ 引起这次体力变化的体力流失数据
 ---@field public preventDying? boolean @ 是否阻止本次体力变更流程引发濒死流程
 ---@field public prevented boolean? @ 体力变化是否被防止
 
@@ -19,6 +20,7 @@ HpChangedData = TriggerData:subclass("HpChangedData")
 ---@field public who ServerPlayer @ 失去体力的角色
 ---@field public num integer @ 失去体力的数值
 ---@field public skillName string @ 导致这次失去的技能名
+---@field public proposer ServerPlayer @ 体力流失来源
 ---@field public prevented boolean? @ 失去体力是否被防止
 
 --- 描述跟失去体力有关的数据

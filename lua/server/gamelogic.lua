@@ -274,6 +274,7 @@ function GameLogic:clearEvent(event)
   self.cleaner_stack:push(ce)
 end
 
+-- 获得当前事件
 ---@return GameEvent
 function GameLogic:getCurrentEvent()
   return self.game_event_stack.t[self.game_event_stack.p]
@@ -283,9 +284,13 @@ function GameLogic:getCurrentEventDepth()
   return self.game_event_stack.p
 end
 
----@param eventType GameEvent
-function GameLogic:getMostRecentEvent(eventType)
-  return self:getCurrentEvent():findParent(eventType, true)
+-- 在当前事件的继承链中找第一个特定类型的事件
+---@generic T: GameEvent
+---@param eventType T @ 要查找的事件类型
+---@param includeSelf? boolean @ 是否包括本事件，默认是
+---@return T? @ 找到的最近的该类型事件实例，找不到则返回nil
+function GameLogic:getMostRecentEvent(eventType, includeSelf)
+  return self:getCurrentEvent():findParent(eventType, includeSelf == nil and true or includeSelf)
 end
 
 --- 如果当前事件刚好是技能生效事件，就返回那个技能名，否则返回空串。

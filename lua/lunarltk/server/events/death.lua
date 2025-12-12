@@ -47,7 +47,7 @@ function Dying:main()
   end
 end
 
-function Dying:exit()
+function Dying:clear()
   local room = self.room
   local logic = room.logic
   local dyingData = self.data

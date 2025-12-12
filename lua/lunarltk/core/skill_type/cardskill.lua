@@ -58,10 +58,11 @@ end
 
 -- 获取使用此牌时的固定目标。注意，不需要进行任何合法性判断
 ---@param player Player @ 使用者
+---@param selected_cards integer[] @ 已选牌
 ---@param card? Card @ 牌
 ---@param extra_data? UseExtraData @ 额外数据
 ---@return Player[]? @ 返回固定目标角色列表。若此牌可以选择目标，返回空表
-function CardSkill:fixTargets(player, card, extra_data)
+function CardSkill:fixTargets(player, selected_cards, card, extra_data)
   return nil
 end
 

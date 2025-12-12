@@ -84,6 +84,7 @@ function Player:initialize()
   })
   self.hp = 0
   self.maxHp = 0
+  self.shield = 0
   self.kingdom = "qun"
   self.general = ""
   self.deputyGeneral = ""
@@ -491,6 +492,7 @@ end
 ---@param excludeSkills? string[] @ 忽略的技能名列表
 ---@return integer
 function Player:getAttackRange(excludeIds, excludeSkills)
+  excludeSkills = excludeSkills or {}
   local baseValue = 1
 
   local weapons = table.filter(self:getEquipments(Card.SubtypeWeapon), function (id)
@@ -499,6 +501,8 @@ function Player:getAttackRange(excludeIds, excludeSkills)
       return weapon:AvailableAttackRange(self)
     end
   end)
+
+  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   if #weapons > 0 then
     baseValue = 0
     for _, id in ipairs(weapons) do
@@ -507,7 +511,13 @@ function Player:getAttackRange(excludeIds, excludeSkills)
     end
   end
 
-  excludeSkills = excludeSkills or {}
+  for _, skill in ipairs(status_skills) do
+    if not table.contains(excludeSkills, skill.name) then
+      local atkRange = skill:getVirtualWeaponAttackRange(self)
+      baseValue = math.max(baseValue, atkRange or 0)
+    end
+  end
+
   if excludeIds then
     for _, id in ipairs(excludeIds) do
       local equip = self:getVirtualEquip(id) --[[@as EquipCard]]
@@ -522,7 +532,6 @@ function Player:getAttackRange(excludeIds, excludeSkills)
     end
   end
 
-  local status_skills = Fk:currentRoom().status_skills[AttackRangeSkill] or Util.DummyTable ---@type AttackRangeSkill[]
   local max_fixed, correct = nil, 0
   for _, skill in ipairs(status_skills) do
     if not table.contains(excludeSkills, skill.name) then
@@ -1585,8 +1594,9 @@ end
 --- Player是否可看到某card
 --- @param cardId integer
 ---@param move? MoveCardsData @ 移动数据，注意涉及Player全是id
+---@param toChoose? boolean @ 是否将用于选牌判断
 ---@return boolean
-function Player:cardVisible(cardId, move)
+function Player:cardVisible(cardId, move, toChoose)
   local room = Fk:currentRoom()
   if room.replaying and room.replaying_show then return true end
 
@@ -1648,7 +1658,7 @@ function Player:cardVisible(cardId, move)
 
   if not room.observing then
     for _, skill in ipairs(status_skills) do
-      local f = skill:cardVisible(self, card)
+      local f = skill:cardVisible(self, card, toChoose)
       if f ~= nil then
         return f
       end

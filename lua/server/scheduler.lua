@@ -23,17 +23,27 @@ end
 Self = nil -- `Self' is client-only, but we need it in AI
 dofile "lua/lunarltk/server/ai/init.lua"
 
+local Task = require "server.task"
+
 -- 所有当前正在运行的房间（即游戏尚未结束的房间）
 ---@type table<integer, Room>
 local runningRooms = {}
+
+-- 所有正在执行中的Lobby task
+local runningTasks = {}
 
 -- 仿照Room接口编写的request协程处理器
 local requestRoom = setmetatable({
   id = -1,
   runningRooms = runningRooms,
+  runningTasks = runningTasks,
 
   getRoom = function(_, roomId)
     return runningRooms[roomId]
+  end,
+
+  getTask = function(_, taskId)
+    return runningTasks[taskId]
   end,
 
   registerRoom = function(self, id)
@@ -51,9 +61,21 @@ local requestRoom = setmetatable({
     runningRooms[room.id] = room
   end,
 
+  registerTask = function(self, id)
+    local cTask = self.server:getTask(id)
+
+    local task = Task:new(self.server, cTask)
+    runningTasks[task.id] = task
+  end,
+
   callbacks = {
     ["newroom"] = function(s, id)
       s:registerRoom(id)
+      ResumeRoom(id)
+    end,
+
+    ["newtask"] = function(s, id)
+      s:registerTask(id)
       ResumeRoom(id)
     end,
   }
@@ -65,11 +87,9 @@ local requestRoom = setmetatable({
 
 runningRooms[-1] = requestRoom
 
--- 当Cpp侧的RoomThread运行时，以下这个函数就是这个线程的主函数。
--- 而这个函数里面又调用了上面的mainLoop。
-function InitScheduler(_thread)
+function InitScheduler(_thread, _server)
   requestRoom.thread = _thread
-  -- Pcall(mainLoop)
+  requestRoom.server = _server
 end
 
 function IsConsoleStart()
@@ -93,7 +113,23 @@ function HandleRequest(req)
   return true
 end
 
+local function resumeTask(taskId, reason)
+  local task = requestRoom:getTask(taskId)
+  if not task then return false end
+  local over = task:resume(reason)
+
+  if over then
+    runningTasks[task.id] = nil
+    task.cTask:decreaseRefCount()
+  end
+  return over
+end
+
 function ResumeRoom(roomId, reason)
+  if roomId < 0 then
+    return resumeTask(roomId, reason)
+  end
+
   local room = requestRoom:getRoom(roomId)
   if not room then return false end
   RoomInstance = (room ~= requestRoom and room or nil)
@@ -110,8 +146,6 @@ function ResumeRoom(roomId, reason)
     end
     runningRooms[room.id] = nil
     room.room:decreaseRefCount()
-    -- room = nil
-    -- collectgarbage("collect")
   end
   return over
 end

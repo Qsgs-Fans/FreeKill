@@ -64,12 +64,27 @@ function Client:initialize(_client)
   self:addCallback("ShowVirtualCard", self.showVirtualCard)
   self:addCallback("ChangeSkin", self.changeSkin)
 
+  self:addCallback("AddNpc", self.addNpc)
+
   self.disabled_packs = {}
   self.disabled_generals = {}
 end
 
 function Client:enterRoom(_data)
   ClientBase.enterRoom(self, _data)
+  self = ClientInstance
+
+  local data = _data[3]
+  table.insertTableIfNeed(
+    data.disabledPack,
+    Fk.game_mode_disabled[data.gameMode] or Util.DummyTable
+  )
+  self.disabled_packs = data.disabledPack
+  self.disabled_generals = data.disabledGenerals
+end
+
+function Client:changeRoom(_data)
+  ClientBase.changeRoom(self, _data)
   self = ClientInstance
 
   local data = _data[3]
@@ -272,7 +287,7 @@ function Client:askForCardChosen(data)
     end
     local visible_data = {}
     for _, cid in ipairs(table.connect(hand, judge)) do
-      if not Self:cardVisible(cid) then
+      if not Self:cardVisible(cid, nil, true) then
         visible_data[tostring(cid)] = false
       end
     end
@@ -941,6 +956,12 @@ function Client:sendDataToUI(data)
   ClientBase.sendDataToUI(self)
 
   self:notifyUI("UpdateRoundNum", data.round_count)
+end
+
+function Client:addNpc(data)
+  ClientBase.addNpc(self, data)
+  self.alive_players = table.filter(self.players, function(p) return not p.dead end)
+  print 'client new add npc'
 end
 
 return Client

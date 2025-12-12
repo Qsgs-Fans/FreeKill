@@ -444,6 +444,8 @@ W.PageBase {
     if (typeof(model) !== "undefined") {
       model.isOwner = true;
     }
+
+    checkAllReady();
   }
 
   function readyChanged(sender, data) {
@@ -526,7 +528,7 @@ W.PageBase {
 
     checkCanAddRobot();
     checkAllReady();
-    isFull = false;
+    isFull = !getPhoto(-1);
   }
 
   function loadPlayerData(sender) {
@@ -607,6 +609,8 @@ W.PageBase {
     } else {
       isFull = true;
     }
+
+    App.showToast(Lua.tr("$RoomConfigChanged"));
   }
 
   Component.onCompleted: {

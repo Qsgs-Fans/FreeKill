@@ -921,6 +921,9 @@ W.PageBase {
     addCallback(Command.ReplyToServer, Logic.callbacks["ReplyToServer"]);
     addCallback(Command.ChangeSkin, Logic.callbacks["ChangeSkin"]);
 
+    // 偷懒
+    addCallback("AddNpc", Logic.callbacks["AddNpc"]);
+
     addCallback(Command.UpdateMarkArea, updateMarkArea);
 
     playerNum = Config.roomCapacity;
