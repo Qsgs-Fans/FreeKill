@@ -1,8 +1,51 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+%nodefaultctor Task;
+%nodefaultdtor Task;
+class Task {
+public:
+  int getId() const;
+
+  QString getTaskType() const;
+  QByteArray getData() const;
+
+  void delay(int ms);
+};
+
+%extend Task {
+  ServerPlayer *getPlayer() {
+    return ServerInstance->findPlayer($self->getUserConnId());
+  }
+}
+
+%nodefaultctor Server;
+%nodefaultdtor Server;
+class Server {
+  Lobby *lobby() const; /// 获取大厅对象
+};
+
+%extend Server {
+  Task *getTask(int id) {
+    return $self->task_manager().getTask(id);
+  }
+}
+
+%nodefaultctor RoomBase;
+%nodefaultdtor RoomBase;
+class RoomBase {
+public:
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
+};
+
+%nodefaultctor Lobby;
+%nodefaultdtor Lobby;
+class Lobby : public RoomBase {
+};
+
 %nodefaultctor Room;
 %nodefaultdtor Room;
-class Room : public QObject {
+class Room : public RoomBase {
 public:
   // Property reader & setter
   // ==================================={
@@ -31,9 +74,6 @@ public:
 
   ServerPlayer *addNpc();
   void removeNpc(ServerPlayer *);
-
-  void saveGlobalState(const QString &key, const QString &jsonData);
-  QString getGlobalSaveState(const QString &key);
 };
 
 %extend Room {

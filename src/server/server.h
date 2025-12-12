@@ -10,6 +10,7 @@ class ClientSocket;
 class ServerPlayer;
 class RoomThread;
 class Lobby;
+class TaskManager;
 
 #include "server/room/room.h"
 
@@ -67,12 +68,14 @@ public:
 
   Room *findRoom(int id) const; /// 获取对应id的房间
   Lobby *lobby() const; /// 获取大厅对象
+  
+  TaskManager &task_manager() const;
 
   ServerPlayer *findPlayer(int id) const; /// 获取对应id的玩家
-  ServerPlayer *findPlayerByConnId(const QString &connId) const; /// 获取对应connId的玩家
+  ServerPlayer *findPlayerByConnId(int connId) const; /// 获取对应connId的玩家
   void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
   void removePlayer(int id); /// 从表中删除对应id的玩家
-  void removePlayerByConnId(QString connid); /// 从表中删除对应connid的玩家
+  void removePlayerByConnId(int connid); /// 从表中删除对应connid的玩家
   auto getPlayers() { return players; } /// 获取players表
 
   void updateRoomList(ServerPlayer *teller);
@@ -101,6 +104,8 @@ public:
 
   bool nameIsInWhiteList(const QString &name) const;
 
+  RoomThread *getAvailableThread();
+
 public slots:
   void processNewConnection(ClientSocket *client);
 
@@ -113,8 +118,10 @@ private:
   int nextRoomId;
   friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
-  QHash<QString, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
+  QHash<int, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
   QList<QString> temp_banlist; ///< 被tempban的ip列表
+
+  std::unique_ptr<TaskManager> m_task_manager;
 
   std::unique_ptr<AuthManager> auth;
   std::unique_ptr<Sqlite3> db; ///< sqlite数据库连接实例
@@ -138,5 +145,7 @@ private:
 };
 
 extern Server *ServerInstance; ///< 全局Server对象
+
+Q_DECLARE_METATYPE(Server *)
 
 #endif // _SERVER_H

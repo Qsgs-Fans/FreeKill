@@ -20,7 +20,7 @@ Scheduler::Scheduler(RoomThread *thread) {
 
   L->dofile("lua/freekill.lua");
   L->dofile("lua/server/scheduler.lua");
-  L->call("InitScheduler", { QVariant::fromValue(thread) });
+  L->call("InitScheduler", { QVariant::fromValue(thread), QVariant::fromValue(ServerInstance) });
 }
 
 Scheduler::~Scheduler() {

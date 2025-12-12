@@ -10,6 +10,8 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+static int nextConnId = 1000;
+
 ServerPlayer::ServerPlayer(RoomBase *roombase) {
   socket = nullptr;
   router = new Router(this, socket, Router::TYPE_SERVER);
@@ -23,7 +25,9 @@ ServerPlayer::ServerPlayer(RoomBase *roombase) {
   connect(this, &Player::stateChanged, this, &ServerPlayer::onStateChanged);
   connect(this, &Player::readyChanged, this, &ServerPlayer::onReadyChanged);
 
-  connId = QUuid::createUuid().toString();
+  connId = nextConnId++;
+  if (nextConnId >= 0x7FFFFF00) nextConnId = 1000;
+
   alive = true;
   m_thinking = false;
 }

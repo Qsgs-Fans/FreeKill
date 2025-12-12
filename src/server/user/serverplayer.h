@@ -25,7 +25,7 @@ public:
   QString getUuid() const;
   void setUuid(QString uuid);
 
-  QString getConnId() const { return connId; }
+  int getConnId() const { return connId; }
 
   Server *getServer() const;
   RoomBase *getRoom() const;
@@ -76,7 +76,7 @@ private:
   bool m_thinking; // 是否在烧条？
   QMutex m_thinking_mutex;
 
-  QString connId;
+  int connId;
 
   QString requestCommand;
   QString requestData;

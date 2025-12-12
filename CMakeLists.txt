@@ -39,9 +39,9 @@ find_package(Lua)
 find_package(SQLite3)
 
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(REQUIRED_QT_VERSION "6.4")
+set(REQUIRED_QT_VERSION "6.8")
 
 include_directories(include)
 include_directories(src)

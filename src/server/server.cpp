@@ -12,6 +12,8 @@
 #include "core/packman.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
+#include "server/task/task_manager.h"
+#include "server/task/task.h"
 
 #include <QNetworkDatagram>
 #include <memory>
@@ -26,6 +28,8 @@ Server::Server(QObject *parent) : QObject(parent) {
   gamedb = std::make_unique<Sqlite3>("./server/game.db", "./server/gamedb_init.sql");
   md5 = calcFileMD5();
   readConfig();
+
+  m_task_manager = std::make_unique<TaskManager>();
 
   auth = std::make_unique<AuthManager>();
   server = new ServerSocket(this);
@@ -97,22 +101,8 @@ void Server::createRoom(ServerPlayer *owner, const QString &name, int capacity,
     }
     return;
   }
-  Room *room;
-  RoomThread *thread = nullptr;
 
-  for (auto t : findChildren<RoomThread *>()) {
-    if (!t->isFull() && !t->isOutdated()) {
-      thread = t;
-      break;
-    }
-  }
-
-  if (!thread) {
-    thread = new RoomThread(this);
-  }
-
-  room = new Room(thread);
-
+  auto room = new Room(getAvailableThread());
   rooms.insert(room->getId(), room);
   room->setName(name);
   room->setCapacity(capacity);
@@ -130,9 +120,11 @@ Room *Server::findRoom(int id) const { return rooms.value(id); }
 
 Lobby *Server::lobby() const { return m_lobby; }
 
+TaskManager &Server::task_manager() const { return *m_task_manager; }
+
 ServerPlayer *Server::findPlayer(int id) const { return players.value(id); }
 
-ServerPlayer *Server::findPlayerByConnId(const QString &connId) const {
+ServerPlayer *Server::findPlayerByConnId(int connId) const {
   return players_conn.value(connId);
 }
 
@@ -154,7 +146,7 @@ void Server::removePlayer(int id) {
   }
 }
 
-void Server::removePlayerByConnId(QString connId) {
+void Server::removePlayerByConnId(int connId) {
   if (players_conn[connId]) {
     players_conn.remove(connId);
   }
@@ -415,4 +407,14 @@ qint64 Server::getUptime() const {
 bool Server::nameIsInWhiteList(const QString &name) const {
   if (!hasWhitelist) return true;
   return whitelist.length() > 0 && whitelist.contains(name);
+}
+
+RoomThread *Server::getAvailableThread() {
+  for (auto t : findChildren<RoomThread *>()) {
+    if (!t->isFull() && !t->isOutdated()) {
+      return t;
+    }
+  }
+
+  return new RoomThread(this);
 }

@@ -3,6 +3,8 @@
 #include "server/user/serverplayer.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
+#include "server/task/task_manager.h"
+#include "server/task/task.h"
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -25,10 +27,19 @@ void Lobby::addPlayer(ServerPlayer *player) {
   }
 
   server->updateOnlineInfo();
+
+  auto &tm = ServerInstance->task_manager();
+  auto &task = tm.createTask("HelloWorld", QCborValue({1,2,3,4}).toCbor());
+  task.start();
 }
 
 void Lobby::removePlayer(ServerPlayer *player) {
   players.removeOne(player);
+
+  auto &tm = ServerInstance->task_manager();
+  auto connId = player->getConnId();
+  tm.removeAllTasksByUser(connId);
+
   server->updateOnlineInfo();
 }
 
@@ -142,6 +153,18 @@ void Lobby::refreshRoomList(ServerPlayer *sender, const QByteArray &) {
   ServerInstance->updateRoomList(sender);
 };
 
+void Lobby::handleTask(ServerPlayer *sender, const QByteArray &cbor) {
+  auto arr = QCborValue::fromCbor(cbor).toArray();
+  if (arr.size() != 2) return;
+  auto type = QString::fromUtf8(arr[0].toByteArray());
+  auto data = arr[1].toByteArray();
+
+  auto &tm = ServerInstance->task_manager();
+  auto &task = tm.createTask(type, data);
+  tm.attachTaskToUser(task.getId(), sender->getConnId());
+  task.start();
+}
+
 typedef void (Lobby::*room_cb)(ServerPlayer *, const QByteArray &);
 
 void Lobby::handlePacket(ServerPlayer *sender, const QByteArray &command,
@@ -154,6 +177,7 @@ void Lobby::handlePacket(ServerPlayer *sender, const QByteArray &command,
     {"EnterRoom", &Lobby::enterRoom},
     {"ObserveRoom", &Lobby::observeRoom},
     {"RefreshRoomList", &Lobby::refreshRoomList},
+    {"LobbyTask", &Lobby::handleTask},
     {"Chat", &Lobby::chat},
   };
 
