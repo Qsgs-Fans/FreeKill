@@ -1,4 +1,5 @@
 #include "server/room/roombase.h"
+#include "server/room/room.h"
 #include "server/user/serverplayer.h"
 #include "server/server.h"
 #include "core/util.h"

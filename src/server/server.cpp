@@ -36,7 +36,6 @@ Server::Server(QObject *parent) : QObject(parent) {
   connect(server, &ServerSocket::new_connection, this,
           &Server::processNewConnection);
 
-  nextRoomId = 1;
   m_lobby = new Lobby(this);
 
   // 启动心跳包线程

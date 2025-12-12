@@ -18,10 +18,11 @@ static void *ClientInstance = nullptr;
 
 using namespace Qt::Literals::StringLiterals;
 
+static int nextRoomId = 0;
+
 Room::Room(RoomThread *thread) {
   auto server = ServerInstance;
-  id = server->nextRoomId;
-  server->nextRoomId++;
+  id = nextRoomId++;
   this->server = server;
 
   setParent(thread);

@@ -2,6 +2,7 @@
 
 #include "server/gamelogic/roomthread.h"
 #include "server/server.h"
+#include "server/room/room.h"
 #include "core/util.h"
 #include "core/c-wrapper.h"
 #include "core/packman.h"

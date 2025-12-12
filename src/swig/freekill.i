@@ -2,8 +2,6 @@
 
 %module fk
 
-%include "naturalvar.i"
-
 %{
 #include "client/client.h"
 #include "server/server.h"
@@ -17,6 +15,8 @@
 
 const char *FK_VER = FK_VERSION;
 %}
+
+%include "naturalvar.i"
 
 %include "qt.i"
 %include "player.i"

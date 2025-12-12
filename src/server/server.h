@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-#ifndef _SERVER_H
-#define _SERVER_H
+#pragma once
 
 class Sqlite3;
 class AuthManager;
@@ -12,7 +11,7 @@ class RoomThread;
 class Lobby;
 class TaskManager;
 
-#include "server/room/room.h"
+class Room;
 
 /**
   @brief Server类负责管理游戏服务端的运行。
@@ -76,7 +75,8 @@ public:
   void addPlayer(ServerPlayer *player); /// 将玩家加入表中，若重复则覆盖旧的
   void removePlayer(int id); /// 从表中删除对应id的玩家
   void removePlayerByConnId(int connid); /// 从表中删除对应connid的玩家
-  auto getPlayers() { return players; } /// 获取players表
+  const auto getPlayers() const { return players; } /// 获取players表
+  const auto getRooms() const { return rooms; } /// 获取players表
 
   void updateRoomList(ServerPlayer *teller);
   void updateOnlineInfo();
@@ -106,17 +106,16 @@ public:
 
   RoomThread *getAvailableThread();
 
+  void readConfig();
+
 public slots:
   void processNewConnection(ClientSocket *client);
 
 private:
-  friend class Shell;
   ServerSocket *server;
 
   Lobby *m_lobby; ///< 大厅
   QMap<int, Room *> rooms; ///< 所有的Room
-  int nextRoomId;
-  friend Room::Room(RoomThread *m_thread);
   QHash<int, ServerPlayer *> players; ///< 所有连接到服务器的真人玩家
   QHash<int, ServerPlayer *> players_conn; ///< 所有连接到服务器的严格版真人玩家
   QList<QString> temp_banlist; ///< 被tempban的ip列表
@@ -137,7 +136,6 @@ private:
     若读取失败（包含文件不存在、有语法错误等情况），则使用一个空JSON对象；
     否则使用从文件读取并解析后的JSON对象。最后为一些必须存在而实际为空值的key设置默认值。
     */
-  void readConfig();
   QJsonObject config; ///< 配置文件其实就是一个JSON对象
 
   bool hasWhitelist = false;
@@ -147,5 +145,3 @@ private:
 Q_DECLARE_METATYPE(Server *)
 
 extern Server *ServerInstance; ///< 全局Server对象
-
-#endif // _SERVER_H

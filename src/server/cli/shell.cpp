@@ -3,6 +3,7 @@
 #include "server/cli/shell.h"
 #include "core/packman.h"
 #include "server/server.h"
+#include "server/room/room.h"
 #include "server/user/serverplayer.h"
 #include "server/gamelogic/roomthread.h"
 #include "core/util.h"
@@ -83,12 +84,13 @@ Shell::~Shell() {
 }
 
 void Shell::lspCommand(QStringList &) {
-  if (ServerInstance->players.size() == 0) {
+  auto players = ServerInstance->getPlayers();
+  if (players.size() == 0) {
     qInfo("No online player.");
     return;
   }
-  qInfo("Current %lld online player(s) are:", ServerInstance->players.size());
-  for (auto player : ServerInstance->players) {
+  qInfo("Current %lld online player(s) are:", players.size());
+  for (auto player : players) {
     qInfo() << player->getId() << "," << player->getScreenName();
   }
 }
@@ -117,12 +119,12 @@ void Shell::lsrCommand(QStringList &list) {
 
     return;
   }
-  if (ServerInstance->rooms.size() == 0) {
+  if (ServerInstance->getRooms().size() == 0) {
     qInfo("No running room.");
     return;
   }
-  qInfo("Current %lld running rooms are:", ServerInstance->rooms.size());
-  for (auto room : ServerInstance->rooms) {
+  qInfo("Current %lld running rooms are:", ServerInstance->getRooms().size());
+  for (auto room : ServerInstance->getRooms()) {
     auto config = room->getSettingsObject();
     auto pw = config["password"_L1].toString();
     qInfo() << room->getId() << "," << (pw.isEmpty() ? QString("%1").arg(room->getName()) :
@@ -476,7 +478,6 @@ void Shell::statCommand(QStringList &) {
 
   auto players = server->getPlayers();
   qInfo("Player(s) logged in: %lld", players.count());
-  qInfo("Next roomId: %d", server->nextRoomId); // FIXME: friend class
 
   auto threads = server->findChildren<RoomThread *>();
   static const char *getmem = "return collectgarbage('count') / 1024";
@@ -497,7 +498,7 @@ void Shell::statCommand(QStringList &) {
   }
 
   qInfo("Database memory usage: %.2f MiB",
-        ((double)server->db->getMemUsage()) / 1048576);
+        ((double)server->database().getMemUsage()) / 1048576);
 }
 
 void Shell::dumpRoomCommand(QStringList &list) {
