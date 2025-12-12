@@ -18,7 +18,7 @@ public:
   void attachTaskToUser(int taskId, int connId);
   void setTaskExpectedReplyId(int taskId, int reqId);
 
-  void trigger(const char *event);
+  // void trigger(const char *event);
 
 private:
 

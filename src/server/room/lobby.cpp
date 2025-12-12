@@ -152,8 +152,8 @@ void Lobby::refreshRoomList(ServerPlayer *sender, const QByteArray &) {
 void Lobby::handleTask(ServerPlayer *sender, const QByteArray &cbor) {
   auto arr = QCborValue::fromCbor(cbor).toArray();
   if (arr.size() != 2) return;
-  auto type = QString::fromUtf8(arr[0].toByteArray());
-  auto data = arr[1].toByteArray();
+  auto type = arr[0].toString();
+  auto data = arr[1].toCbor();
 
   auto &tm = ServerInstance->task_manager();
   auto &task = tm.createTask(type, data);

@@ -1,7 +1,7 @@
 #include "server/task/task_manager.h"
 #include "server/task/task.h"
-#include "server/server.h"
-#include "server/gamelogic/roomthread.h"
+// #include "server/server.h"
+// #include "server/gamelogic/roomthread.h"
 
 TaskManager::TaskManager() {}
 
@@ -102,7 +102,7 @@ void TaskManager::setTaskExpectedReplyId(int taskId, int reqId) {
   task_request_id_map[reqId] = taskId;
 }
 
-void TaskManager::trigger(const char *event) {
-  auto thread = ServerInstance->getAvailableThread();
-  emit thread->triggerTask(event);
-}
+// void TaskManager::trigger(const char *event) {
+//   auto thread = ServerInstance->getAvailableThread();
+//   emit thread->triggerTask(event);
+// }

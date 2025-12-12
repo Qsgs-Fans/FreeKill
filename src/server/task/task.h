@@ -37,7 +37,7 @@ private:
   int expectedReplyId = 0; // 正在等待的requestId
 
   QString taskType;
-  QByteArray data;
+  QByteArray data = "\xF6"; // 必须是CBOR，默认null
 
   // 很遗憾，负责执行Lua代码的那个类命名成这样了 导致在这里有点违和
   RoomThread *m_thread;
