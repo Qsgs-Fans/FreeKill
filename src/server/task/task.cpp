@@ -2,6 +2,7 @@
 #include "server/task/task_manager.h"
 #include "server/server.h"
 #include "server/gamelogic/roomthread.h"
+#include "server/room/lobby.h"
 
 Task::Task(const QString &type, const QByteArray &data)
     : taskType { type }, data { data }, m_thread { ServerInstance->getAvailableThread() }
@@ -62,6 +63,16 @@ void Task::abort() {
 
 void Task::delay(int ms) {
   m_thread->delay(id, ms);
+}
+
+void Task::saveGlobalState(const QString &key, const QString &jsonData) {
+  auto lobby = ServerInstance->lobby();
+  return lobby->saveGlobalState(key, jsonData);
+}
+
+QString Task::getGlobalSaveState(const QString &key) {
+  auto lobby = ServerInstance->lobby();
+  return lobby->getGlobalSaveState(key);
 }
 
 int Task::getRefCount() {

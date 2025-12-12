@@ -26,6 +26,8 @@ public:
   void abort();
 
   void delay(int ms);
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
 
   int getRefCount();
   void increaseRefCount();

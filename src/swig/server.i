@@ -10,6 +10,8 @@ public:
   QByteArray getData() const;
 
   void delay(int ms);
+  void saveGlobalState(const QString &key, const QString &jsonData);
+  QString getGlobalSaveState(const QString &key);
 
   void decreaseRefCount();
 };
@@ -23,7 +25,6 @@ public:
 %nodefaultctor Server;
 %nodefaultdtor Server;
 class Server {
-  Lobby *lobby() const; /// 获取大厅对象
 };
 
 %extend Server {
@@ -38,11 +39,6 @@ class RoomBase {
 public:
   void saveGlobalState(const QString &key, const QString &jsonData);
   QString getGlobalSaveState(const QString &key);
-};
-
-%nodefaultctor Lobby;
-%nodefaultdtor Lobby;
-class Lobby : public RoomBase {
 };
 
 %nodefaultctor Room;
