@@ -22,11 +22,6 @@ class Scheduler : public QObject {
   void doDelay(int roomId, int ms);
   bool resumeRoom(int roomId, const char *reason);
 
-  // 只在rpc模式下有效果
-  void setPlayerState(const QString &, int roomId);
-  void addObserver(const QString &, int roomId);
-  void removeObserver(const QString &, int roomId);
-
  private:
   Lua *L;
 };
@@ -59,11 +54,6 @@ class RoomThread : public QThread {
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);
-
-  // 只在rpc模式下有效果
-  void setPlayerState(const QString &, int roomId);
-  void addObserver(const QString &, int roomId);
-  void removeObserver(const QString &, int roomId);
 
  public slots:
   void onRoomAbandoned();

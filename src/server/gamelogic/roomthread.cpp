@@ -41,42 +41,6 @@ bool Scheduler::resumeRoom(int roomId, const char *reason) {
   return L->call("ResumeRoom", { roomId, reason }).toBool();
 }
 
-void Scheduler::setPlayerState(const QString &connId, int roomId) {
-  auto player = ServerInstance->findPlayerByConnId(connId);
-  if (!player) return;
-  L->call("SetPlayerState", { roomId, player->getId(), player->getState() });
-}
-
-void Scheduler::addObserver(const QString &connId, int roomId) {
-  auto p = ServerInstance->findPlayerByConnId(connId);
-  if (!p) return;
-
-  QVariantList gameData;
-  for (auto i : p->getGameData()) gameData << i;
-
-  L->call("AddObserver", {
-    roomId,
-    QVariantMap {
-      { "connId", p->getConnId() },
-      { "id", p->getId() },
-      { "screenName", p->getScreenName() },
-      { "avatar", p->getAvatar() },
-      { "totalGameTime", p->getTotalGameTime() },
-
-      { "state", p->getState() },
-
-      { "gameData", gameData },
-    }
-  });
-}
-
-void Scheduler::removeObserver(const QString &connId, int roomId) {
-  auto player = ServerInstance->findPlayerByConnId(connId);
-  if (!player) return;
-
-  L->call("RemoveObserver", { roomId, player->getId() });
-}
-
 RoomThread::RoomThread(Server *server) {
   setObjectName("Room");
   setParent(server);
@@ -104,10 +68,6 @@ void RoomThread::run() {
   connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
   connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
   connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
-
-  connect(this, &RoomThread::setPlayerState, m_scheduler, &Scheduler::setPlayerState);
-  connect(this, &RoomThread::addObserver, m_scheduler, &Scheduler::addObserver);
-  connect(this, &RoomThread::removeObserver, m_scheduler, &Scheduler::removeObserver);
 
   emit scheduler_ready();
   exec();

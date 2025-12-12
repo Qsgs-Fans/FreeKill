@@ -2,6 +2,7 @@
 #define _LOBBY_H
 
 #include "server/room/roombase.h"
+class LobbyLuaTask;
 
 class Lobby : public RoomBase {
   Q_OBJECT
@@ -22,6 +23,8 @@ class Lobby : public RoomBase {
   void enterRoom(ServerPlayer *, const QByteArray &);
   void observeRoom(ServerPlayer *, const QByteArray &);
   void refreshRoomList(ServerPlayer *, const QByteArray &);
+
+  // std::unordered_map<int, LobbyLuaTask> task_map;
 };
 
 #endif // _LOBBY_H

@@ -16,7 +16,10 @@ public:
   void abort();
 
 private:
-  int id;
+  int id; // 负数
+  int userConnId = 0; // 关联的用户，0表示无
+  int expectedReplyId = 0; // 正在等待的requestId
+
   std::string taskType;
   std::string data;
 
