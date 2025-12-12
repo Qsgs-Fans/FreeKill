@@ -33,12 +33,16 @@ void Scheduler::handleRequest(const QString &req) {
 }
 
 void Scheduler::doDelay(int roomId, int ms) {
-  QTimer::singleShot(ms, [=](){ resumeRoom(roomId, "delay_done"); });
+  QTimer::singleShot(ms, [roomId, this](){ resumeRoom(roomId, "delay_done"); });
 }
 
 bool Scheduler::resumeRoom(int roomId, const char *reason) {
   auto room = ServerInstance->findRoom(roomId);
   return L->call("ResumeRoom", { roomId, reason }).toBool();
+}
+
+void Scheduler::triggerTask(const char *reason) {
+  L->call("TriggerTask", { reason });
 }
 
 RoomThread::RoomThread(Server *server) {
@@ -68,6 +72,7 @@ void RoomThread::run() {
   connect(this, &RoomThread::pushRequest, m_scheduler, &Scheduler::handleRequest);
   connect(this, &RoomThread::delay, m_scheduler, &Scheduler::doDelay);
   connect(this, &RoomThread::wakeUp, m_scheduler, &Scheduler::resumeRoom);
+  connect(this, &RoomThread::triggerTask, m_scheduler, &Scheduler::triggerTask);
 
   emit scheduler_ready();
   exec();

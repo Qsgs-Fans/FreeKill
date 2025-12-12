@@ -21,6 +21,7 @@ class Scheduler : public QObject {
   void handleRequest(const QString &req);
   void doDelay(int roomId, int ms);
   bool resumeRoom(int roomId, const char *reason);
+  void triggerTask(const char *);
 
  private:
   Lua *L;
@@ -58,6 +59,7 @@ class RoomThread : public QThread {
   void pushRequest(const QString &req);
   void delay(int roomId, int ms);
   void wakeUp(int roomId, const char *);
+  void triggerTask(const char *);
 
  public slots:
   void onRoomAbandoned();
