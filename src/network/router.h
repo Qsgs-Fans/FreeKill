@@ -20,6 +20,8 @@ public:
     DEST这几种枚举通过按位与的方式拼接而成。
     */
   enum PacketType {
+    COMPRESSED = 0x1000, // 若此位被设置，表示packet.cborData被压缩
+
     TYPE_REQUEST = 0x100,      ///< 类型为Request的包
     TYPE_REPLY = 0x200,        ///< 类型为Reply的包
     TYPE_NOTIFICATION = 0x400, ///< 类型为Notify的包

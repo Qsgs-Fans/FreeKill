@@ -70,3 +70,23 @@ public:
     return ret;
   }
 }
+
+%native(addQmlImportPath) int addQmlImportPath(lua_State *L);
+%{
+static int addQmlImportPath(lua_State *L) {
+  int argc = lua_gettop(L);
+  if (argc != 1 || !lua_isstring(L, 1)) {
+    return luaL_error(L, "addQmlImportPath expects 1 string argument");
+  }
+
+  const char *path = lua_tostring(L, 1);
+
+  auto engine = Backend->getEngine();
+  auto list = engine->importPathList();
+  list << path;
+  engine->setImportPathList(list);
+
+  return 0;
+}
+%}
+

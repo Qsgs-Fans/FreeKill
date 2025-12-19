@@ -61,11 +61,18 @@ void Router::request(int type, const QByteArray &command, const QByteArray &cbor
   m_reply = QByteArrayLiteral("__notready");
   replyMutex.unlock();
 
+  auto data = cborData;
+  // TODO: 这些注释过几个版本再解锁，先只实现端解析压缩传输的那部分
+  // if (cborData.size() > 1024) {
+  //   data = qCompress(cborData);
+  //   type |= COMPRESSED;
+  // }
+
   QCborArray body {
     requestId,
     type,
     command,
-    cborData,
+    data,
     timeout,
     (timestamp <= 0 ? requestStartTime.toMSecsSinceEpoch() : timestamp)
   };
@@ -74,22 +81,34 @@ void Router::request(int type, const QByteArray &command, const QByteArray &cbor
 }
 
 void Router::reply(int type, const QByteArray &command, const QByteArray &cborData) {
+  auto data = cborData;
+  // if (cborData.size() > 1024) {
+  //   data = qCompress(cborData);
+  //   type |= COMPRESSED;
+  // }
+
   QCborArray body {
     this->requestId,
     type,
     command,
-    cborData,
+    data,
   };
 
   sendMessage(body.toCborValue().toCbor());
 }
 
 void Router::notify(int type, const QByteArray &command, const QByteArray &cborData) {
+  auto data = cborData;
+  // if (cborData.size() > 1024) {
+  //   data = qCompress(cborData);
+  //   type |= COMPRESSED;
+  // }
+
   QCborArray body {
     -2,
     type,
     command,
-    cborData,
+    data,
   };
 
   sendMessage(body.toCborValue().toCbor());
@@ -123,6 +142,10 @@ void Router::handlePacket(const QCborArray &packet) {
   int type = packet[1].toInteger();
   auto command = packet[2].toByteArray();
   auto cborData = packet[3].toByteArray();
+
+  if (type & COMPRESSED) {
+    cborData = qUncompress(cborData);
+  }
 
   if (type & TYPE_NOTIFICATION) {
     emit notification_got(command, cborData);
