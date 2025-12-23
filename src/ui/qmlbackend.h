@@ -92,6 +92,7 @@ private:
 
   QUdpSocket *udpSocket;
   qreal m_volume;
+  int maxConcurrentPlayback = 13;
 
   Replayer *replayer;
 #endif

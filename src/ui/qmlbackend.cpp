@@ -306,18 +306,29 @@ void QmlBackend::playSound(const QString &name, int index) {
       "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
 #else
+  if (maxConcurrentPlayback < 0) return;
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
-  player->setAudioOutput(output);
-  player->setSource(QUrl::fromLocalFile(fname));
-  output->setVolume(m_volume / 100);
-  connect(player, &QMediaPlayer::playbackStateChanged, this, [=]() {
-    if (player->playbackState() == QMediaPlayer::StoppedState) {
-      player->deleteLater();
-      output->deleteLater();
-    }
+  maxConcurrentPlayback--;
+
+  // 避免windows掉帧 使用线程池
+  auto future = QtConcurrent::run([=, this] {
+    player->setAudioOutput(output);
+    player->setSource(QUrl::fromLocalFile(fname));
+    output->setVolume(m_volume / 100);
+
+    connect(player, &QMediaPlayer::playbackStateChanged, this, [=, this] {
+      auto state = player->playbackState();
+      if (state != QMediaPlayer::PlayingState) {
+        player->deleteLater();
+        output->deleteLater();
+        maxConcurrentPlayback++;
+      }
+    });
+
+    player->play();
   });
-  player->play();
+  Q_UNUSED(future);
 #endif
 }
 
