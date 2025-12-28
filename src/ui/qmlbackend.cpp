@@ -76,8 +76,8 @@ QJsonObject QmlBackend::readJsonObjectFromFile(const QString &file) {
   QString s = file;
 
 #ifdef Q_OS_WIN
-  if (d.startsWith("file:///"))
-    d.replace(0, 8, "file://");
+  if (s.startsWith("file:///"))
+    s.replace(0, 8, "file://");
 #endif
 
   // Open the file
