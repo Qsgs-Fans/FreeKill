@@ -235,6 +235,22 @@ local _Task_getGlobalSaveState = function(self, key)
   return ret
 end
 
+local _Task_savePlayerGlobalState = function(self, key, jsonData)
+  local ret, err = callRpc("Task_savePlayerGlobalState", { self.id, tostring(key), tostring(jsonData) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
+local _Task_getPlayerGlobalSaveState = function(self, key)
+  local ret, err = callRpc("Task_getPlayerGlobalSaveState", { self.id, tostring(key) })
+  if err ~= nil then
+    return nil
+  end
+  return ret
+end
+
 local _Task_getPlayer = function(self)
   local playerData = callRpc("Task_getPlayer", { self.id })
   return fk.ServerPlayer(cbor.decode(playerData))
@@ -250,6 +266,8 @@ local _Task_MT = {
     decreaseRefCount = _Task_decreaseRefCount,
     saveGlobalState = _Task_saveGlobalState,
     getGlobalSaveState = _Task_getGlobalSaveState,
+    savePlayerGlobalState = _Task_savePlayerGlobalState,
+    getPlayerGlobalSaveState = _Task_getPlayerGlobalSaveState,
     getPlayer = _Task_getPlayer,
   }
 }

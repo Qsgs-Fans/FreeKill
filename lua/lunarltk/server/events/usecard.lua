@@ -357,16 +357,26 @@ function CardEffect:__tostring()
       table.map(data.tos or {}, ServerPlayer.__tostring), ", "), self.id)
 end
 
+function CardEffect:prepare()
+  local cardEffectData = self.data
+  local room = self.room
+
+  -- 先进行生效前置判断（如桃园的满血、五谷的空牌）等
+  local skill = cardEffectData.card.skill --[[@as CardSkill]]
+  if skill:aboutToEffect(room, cardEffectData) then
+    return true
+  end
+end
+
 function CardEffect:main()
   local cardEffectData = self.data
   local room = self.room
   local logic = room.logic
 
-  if cardEffectData.card.skill:aboutToEffect(room, cardEffectData) then
-    logic:breakEvent()
-  end
+  -- PreCardEffect: 询问闪和无懈等可能打消整个效果的
+  -- BeforeCardEffect: 卡牌生效之前的一个时机
+  -- CardEffecting: 卡牌生效时，处理完触发技后进入实际的效果
   for _, event in ipairs({ fk.PreCardEffect, fk.BeforeCardEffect, fk.CardEffecting }) do
-
     local function effectCancellOutCheck(effect)
       if effect.isCancellOut then
         logic:trigger(fk.CardEffectCancelledOut, effect.from, effect)
@@ -400,7 +410,23 @@ function CardEffect:main()
 
     effectCancellOutCheck(cardEffectData)
 
-    room:handleCardEffect(event, cardEffectData)
+    local skill = cardEffectData.card.skill --[[@as CardSkill]]
+
+    if event == fk.PreCardEffect then
+      skill:preEffect(room, cardEffectData)
+    elseif event == fk.CardEffecting then
+      if cardEffectData.card.skill then
+        local data = { ---@type SkillEffectDataSpec
+          who = cardEffectData.from,
+          skill = skill,
+          skill_cb = function ()
+            skill:onEffect(room, cardEffectData)
+          end,
+          skill_data = Util.DummyTable
+        }
+        exec(GameEvent.SkillEffect, SkillEffectData:new(data))
+      end
+    end
   end
 end
 
@@ -408,7 +434,10 @@ function CardEffect:clear()
   local cardEffectData = self.data
   if cardEffectData.isCancellOut then
     local room = self.room
-    room:setCardEmotion(cid, "judgebad")
+    local ids = Card:getIdList(cardEffectData.card)
+    for _, cid in ipairs(ids) do
+      room:setCardEmotion(cid, "judgebad")
+    end
   end
   self.room.logic:trigger(fk.CardEffectFinished, cardEffectData.to, cardEffectData)
 end
@@ -465,7 +494,7 @@ local onAim = function(room, useCardData, aimEventCollaborators)
         }
 
         local index = 1
-        for i1, target in ipairs(useCardData.tos) do
+        for _, target in ipairs(useCardData.tos) do
           if index > collaboratorsIndex[to] then
             break
           end
@@ -554,7 +583,8 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
   local realCardIds = self:getSubcardsByRule(useCardData.card, { Card.Processing })
 
   self.logic:trigger(fk.BeforeCardUseEffect, useCardData.from, useCardData)
-  -- If using Equip or Delayed trick, move them to the area and return
+
+  -- 若为使用装备或延时锦囊牌，则直接置入对应区域，不进行生效结算了
   if useCardData.card.type == Card.TypeEquip then
     if #realCardIds == 0 then
       return
@@ -638,7 +668,7 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
     return
   end
 
-  -- If using card to other card (like jink or nullification), simply effect and return
+  -- 如果是闪无懈这种直接count掉一张牌的（即有toCard时），那么简单生效一次就结束结算
   if useCardData.toCard ~= nil then
     local cardEffectData = CardEffectData:new{
       from = useCardData.from,
@@ -665,6 +695,8 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
     return
   end
 
+  -- 否则根据记载的额外结算回数进行x次结算
+  -- 每次结算中，先调用onAction（开幕），再对每个目标生效，再调用onAction（结束）
   useCardData.additionalEffect = useCardData.additionalEffect or 0
   while true do
     if #useCardData.tos > 0 and useCardData.card.skill.onAction then
@@ -740,27 +772,6 @@ end
 ---@param cardEffectData CardEffectData
 function UseCardEventWrappers:doCardEffect(cardEffectData)
   return exec(CardEffect, cardEffectData)
-end
-
----@param event CardEffectEvent
----@param cardEffectData CardEffectData
-function UseCardEventWrappers:handleCardEffect(event, cardEffectData)
-  ---@cast self Room
-  if event == fk.PreCardEffect then
-    cardEffectData.card.skill:preEffect(self, cardEffectData)
-  elseif event == fk.CardEffecting then
-    if cardEffectData.card.skill then
-      local data = { ---@type SkillEffectDataSpec
-        who = cardEffectData.from,
-        skill = cardEffectData.card.skill,
-        skill_cb = function ()
-          cardEffectData.card.skill:onEffect(self, cardEffectData)
-        end,
-        skill_data = Util.DummyTable
-      }
-      exec(GameEvent.SkillEffect, SkillEffectData:new(data))
-    end
-  end
 end
 
 --- 对“打出牌”进行处理

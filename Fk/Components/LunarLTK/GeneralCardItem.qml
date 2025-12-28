@@ -34,6 +34,7 @@ Game.BasicCard {
   property int inPosition: 0
   property string pkgName: ""
   property bool detailed: true
+  property bool showIsFavorite: true
   property alias hasCompanions: companions.visible
 
   footnote: ""
@@ -46,19 +47,25 @@ Game.BasicCard {
                      name.includes('heg__')
 
   Image {
+    anchors.fill: parent
+    anchors.margins: -1
+    fillMode: Image.PreserveAspectFit
     source: parent.known ? (SkinBank.generalCardDir + "border") : ""
   }
 
   Image {
     scale: parent.subkingdom ? 0.6 : 1
     width: 34; fillMode: Image.PreserveAspectFit
-    transformOrigin: Item.TopLeft
+    anchors.top: parent.top
+    anchors.topMargin: parent.subkingdom ? -7 : -2
+    anchors.left: parent.left
+    anchors.leftMargin: parent.subkingdom ? -8 : -2
     source: SkinBank.getGeneralCardDir(parent.kingdom) + parent.kingdom
     visible: parent.detailed && parent.known
   }
 
   Image {
-    scale: 0.6; x: 9; y: 12
+    scale: 0.6; x: 8; y: 12
     transformOrigin: Item.TopLeft
     width: 34; fillMode: Image.PreserveAspectFit
     source: parent.subkingdom ? SkinBank.getGeneralCardDir(parent.subkingdom) + parent.subkingdom
@@ -69,11 +76,13 @@ Game.BasicCard {
   Component {
     id: duelkingdomMagatama
     Item {
-      width: childrenRect.width
-      height: childrenRect.height
+      width: 10
+      height: 10 / childrenRect.width * childrenRect.height
       Image {
         id: mainMagatama
         source: SkinBank.getGeneralCardDir(root.kingdom) + root.kingdom + "-magatama"
+        width: 10
+        height: 10 / sourceSize.width * sourceSize.height
         visible: !root.subkingdom
       }
       LinearGradient {
@@ -95,6 +104,8 @@ Game.BasicCard {
       Image {
         id: subkingdomMagatama
         visible: false
+        width: 10
+        height: 10 / sourceSize.width * sourceSize.height
         source: root.subkingdom ? SkinBank.getGeneralCardDir(root.subkingdom) +
                              root.subkingdom + "-magatama" : ""
       }
@@ -122,14 +133,17 @@ Game.BasicCard {
       width: childrenRect.width
       height: childrenRect.height
       Image {
+        id: singleMagatamaImg
         source: SkinBank.getGeneralCardDir(root.kingdom) + root.kingdom + "-magatama"
+        width: 10
+        height: 10 / sourceSize.width * sourceSize.height
       }
     }
   }
 
   Row {
-    x: 34
-    y: 4
+    id: magatamaRow
+    x: 34; y: 4
     spacing: 1
     visible: parent.detailed && parent.known && !parent.heg
     Repeater {
@@ -137,15 +151,19 @@ Game.BasicCard {
       model: (!root.heg) ? ((root.hp > 5 || root.hp !== root.maxHp) ? 1 : root.hp) : 0
       delegate: root.subkingdom ? duelkingdomMagatama : singlekingdomMagatama
     }
+  }
 
-    Text {
-      visible: root.hp > 5 || root.hp !== root.maxHp
-      text: root.hp === root.maxHp ? ("x" + root.hp) : (" " + root.hp + "/" + root.maxHp)
-      color: "white"
-      font.pixelSize: 14
-      style: Text.Outline
-      y: -6
-    }
+  Text {
+    anchors.left: magatamaRow.right
+    anchors.leftMargin: -1
+    visible: root.hp > 5 || root.hp !== root.maxHp
+    text: root.hp === root.maxHp ? (" x" + root.hp) : (" " + root.hp + "/" + root.maxHp)
+    color: "white"
+    font.family: Config.libianName
+    font.pixelSize: 14
+    font.bold: true
+    style: Text.Outline
+    y: 1
   }
 
   Row {
@@ -210,18 +228,27 @@ Game.BasicCard {
     anchors.horizontalCenter: parent.horizontalCenter
     y: 80
   }
+  
+  Glow {
+    source: generalName
+    anchors.fill: generalName
+    color: "black"
+    spread: 0.3
+    radius: 5
+  }
 
   Text {
+    id: generalName
     width: 20
     height: 80
     x: 3
-    y: lineCount > 4 ? 30 : 34
+    y: lineCount > 4 ? 28 : 30
     text: name !== "" ? Lua.tr(name) : "nil"
     visible: detailed && known
     color: "white"
     font.family: "LiSu"
     font.pixelSize: 18
-    lineHeight: Math.max(1.4 - lineCount / 8, 0.8)
+    lineHeight: Math.max(1.25 - lineCount / 8, 0.8)
     style: Text.Outline
     wrapMode: Text.WrapAnywhere
   }
@@ -229,25 +256,80 @@ Game.BasicCard {
   Rectangle {
     visible: pkgName !== "" && detailed && known
     height: 16
-    width: childrenRect.width + 4
+    width: pkgNameText.width + 15
     anchors.bottom: parent.bottom
-    anchors.bottomMargin: 4
     anchors.right: parent.right
-    anchors.rightMargin: 4
 
-    color: "#3C3229"
-    opacity: 0.8
-    radius: 4
-    border.color: "white"
-    border.width: 1
+    color: "transparent"
+
+    gradient: Gradient {
+      orientation: Gradient.Horizontal
+      GradientStop {
+        position: 0
+        color: Qt.rgba(0, 0, 0, 0)
+      }
+      GradientStop {
+        position: 0.35
+        color: Qt.rgba(0, 0, 0, 0.5)
+      }
+      GradientStop {
+        position: 1
+        color: Qt.rgba(0, 0, 0, 1)
+      }
+    }
     Text {
+      id: pkgNameText
       text: Lua.tr(pkgName)
-      x: 2; y: 1
+      x: 13; y: 1
       font.family: Config.libianName
       font.pixelSize: 14
       color: "white"
       style: Text.Outline
       textFormat: Text.RichText
+      width: implicitWidth
+    }
+  }
+
+  Item {
+    visible: Config.favoriteGenerals.includes(parent.name) && parent.showIsFavorite
+    width: 15; height: 15
+    anchors.bottom: parent.bottom
+    anchors.left: parent.left
+    anchors.margins: 1
+    Canvas {
+      id: starCanvas
+      anchors.fill: parent
+      onPaint: {
+        var ctx = getContext("2d");
+        ctx.reset();
+        var cx = width/2;
+        var cy = height/2;
+        var spikes = 5;
+        var outerRadius = Math.min(width, height) * 0.45;
+        var innerRadius = outerRadius * 0.45;
+        var rot = -Math.PI/2; // start at top
+        ctx.beginPath();
+        for (var i = 0; i < spikes; i++) {
+          var x = cx + Math.cos(rot) * outerRadius;
+          var y = cy + Math.sin(rot) * outerRadius;
+          ctx.lineTo(x, y);
+          rot += Math.PI / spikes;
+
+          x = cx + Math.cos(rot) * innerRadius;
+          y = cy + Math.sin(rot) * innerRadius;
+          ctx.lineTo(x, y);
+          rot += Math.PI / spikes;
+        }
+        ctx.closePath();
+        ctx.fillStyle = "red";
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "white";
+        ctx.stroke();
+      }
+      Component.onCompleted: requestPaint()
+      onWidthChanged: requestPaint()
+      onHeightChanged: requestPaint()
     }
   }
 

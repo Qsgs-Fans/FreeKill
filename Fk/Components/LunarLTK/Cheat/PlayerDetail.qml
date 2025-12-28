@@ -273,42 +273,71 @@ Flickable {
       }
     }
 
-    if (!root.isObserving) {
-      Lua.call("GetPlayerSkills", id).forEach(t => {
-        // TODO 等core更新强制重启后把这个智慧杀了 GetPlayerSkill直接返回invalid
-        const invalid = t.name.endsWith(Lua.tr('skill_invalidity'));
-        let skillText = `${skillnamecss}<font class='${invalid ? "skill-name locked" : "skill-name"}'>${t.name}</font> `;
-        if (invalid) {
-          skillText += `<font color='grey'>${t.description}</font>`;
-        } else {
-          skillText += `${t.description}`;
-        }
+    if (root.isObserving) return; // 以前可以看旁观玩家的详情时，有这个玩意
 
-        skillDesc.append(skillText);
-      });
+    Lua.call("GetPlayerSkills", id).forEach(t => {
+      // TODO 等core更新强制重启后把这个智慧杀了 GetPlayerSkill直接返回invalid
+      const invalid = t.name.endsWith(Lua.tr('skill_invalidity'));
+      let skillText = `${skillnamecss}<font class='${invalid ? "skill-name locked" : "skill-name"}'>${t.name}</font> `;
+      if (invalid) {
+        skillText += `<font color='grey'>${t.description}</font>`;
+      } else {
+        skillText += `${t.description}`;
+      }
 
-      var ej = Lua.call("GetPlayerEquips", id).concat(Lua.call("GetPlayerJudges", id));
-      let unknownCardsNum = 0;
-      ej.forEach(cid => {
-        const t = Lua.call("GetCardData", cid);
-        if (Lua.call("CardVisibility", cid)) {
-          skillDesc.append("------------------------------------")
-          const v = Lua.call("GetVirtualEquipData", id, cid);
-          if (v) {
-            skillDesc.append(
-              "<b>" + "(" + Lua.tr(t.name) + Lua.tr("log_" + t.suit) + Lua.tr(t.number.toString()) + ")" 
-              + Lua.tr(v.name) + "</b>: " + Lua.tr(":" + v.name)
-            );
-          } else {
-            skillDesc.append("<b>" + Lua.tr(t.name) + "</b>: " + Lua.tr(":" + t.name));
-          }
-        } else {
-          unknownCardsNum++;
-        }
-      });
-      if (unknownCardsNum > 0) {
+      skillDesc.append(skillText);
+    });
+
+    var ej = Lua.call("GetPlayerEquips", id).concat(Lua.call("GetPlayerJudges", id));
+    let unknownCardsNum = 0;
+    ej.forEach(cid => {
+      const t = Lua.call("GetCardData", cid);
+      if (Lua.call("CardVisibility", cid)) {
         skillDesc.append("------------------------------------")
-        skillDesc.append(Lua.tr("unknown") + " * " + (unknownCardsNum));
+        const v = Lua.call("GetVirtualEquipData", id, cid);
+        if (v) {
+          skillDesc.append(
+            "<b>" + "(" + Lua.tr(t.name) + Lua.tr("log_" + t.suit) + Lua.tr(t.number.toString()) + ")" 
+            + Lua.tr(v.name) + "</b>: " + Lua.tr(":" + v.name)
+          );
+        } else {
+          skillDesc.append(
+            "<b>" + Lua.tr(t.name) + "(" + Lua.tr("log_" + t.suit) + Lua.tr(t.number.toString()) + ")"
+            + "</b>: " + Lua.tr(":" + t.name)
+          );
+        }
+      } else {
+        unknownCardsNum++;
+      }
+    });
+    if (unknownCardsNum > 0) {
+      skillDesc.append("------------------------------------")
+      skillDesc.append(Lua.tr("unknown") + " * " + (unknownCardsNum));
+    }
+
+    // 幽默记牌器环节 FIXME：帮忙补补翻译表 FIXME: 帮忙补补区域 FIXME: 帮忙整个重做
+    skillDesc.append("------------------------------------");
+    const knownHandcards = Lua.evaluate(`Self.card_tracker:getPlayerKnownCards(${id}, Player.Hand)`);
+    if (!knownHandcards) {
+      skillDesc.append("没有已知手牌");
+    } else {
+      const realKnown = knownHandcards.known_cards;
+      const uncertain = knownHandcards.uncertain_cards;
+      if (realKnown.length === 0 && uncertain.length === 0) {
+        skillDesc.append("没有已知手牌");
+      } else {
+        if (realKnown.length > 0) {
+          skillDesc.append("已知手牌：" +
+            realKnown.map(id => {
+              return Lua.evaluate(`Fk:getCardById(${id}):toLogString(false)`);
+            }).join(","));
+        }
+        if (uncertain.length > 0) {
+          skillDesc.append("不确定手中是否拥有的手牌：" +
+            uncertain.map(id => {
+              return Lua.evaluate(`Fk:getCardById(${id}):toLogString(false)`);
+            }).join(","));
+        }
       }
     }
   }

@@ -31,4 +31,32 @@ skill:addEffect('active', {
   max_card_num = function(self, player) return self.num end,
 })
 
+skill:addAI(Fk.Ltk.AI.newActiveStrategy {
+  think = function(self, ai)
+    local data = ai.data[4]
+    local orig = Fk.skills[data.skillName] or skill
+    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.CardsStrategy, orig.name)
+    if not strategy then
+      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.CardsStrategy, skill.name)
+      ---@cast strategy -nil
+    end
+
+    local cards, benefit = strategy:chooseCards(ai)
+    if cards then
+      return { cards, {} }, benefit or 0
+    end
+  end,
+})
+
+skill:addAI(Fk.Ltk.AI.newCardsStrategy {
+  choose_cards = function(self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_cards = ai:getEnabledCards()
+
+    if ai.data[3] --[[ cancelable ]] then return {}, 0 end
+
+    return table.random(available_cards, data.min_num), 0
+  end
+})
+
 return skill

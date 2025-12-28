@@ -116,7 +116,7 @@ function MoveCards:main()
     room.logic:breakEvent()
   end
 
-  local uninstalls, installs = {}, {}
+  local uninstalls, installs, filtercards = {}, {}, {}
 
   for _, data in ipairs(moveCardsData) do
     if #data.moveInfo > 0 then
@@ -132,8 +132,6 @@ function MoveCards:main()
         if realFromArea == Player.Equip and data.from and info.beforeCard.type == Card.TypeEquip then
           table.insert(uninstalls, {info.beforeCard, data.from})
         end
-
-        Fk:filterCard(info.cardId, data.to)
 
         local currentCard = Fk:getCardById(info.cardId) --[[@as EquipCard]]
         for name, value in pairs(currentCard.mark) do
@@ -159,6 +157,8 @@ function MoveCards:main()
           end
         end
 
+        table.insert(filtercards, {info.cardId, data.to})
+
         -- FIXME: 随便擦了几下 等设计师亲手鉴定
         local realCurrentCard = Fk:getCardById(info.cardId, true)
         if currentCard.type == Card.TypeEquip and realCurrentCard.type ~= Card.TypeEquip and not info.virtualEquip then
@@ -181,6 +181,9 @@ function MoveCards:main()
   end
 
   room:notifyMoveCards(nil, moveCardsData, self.id)
+  for _, p in ipairs(room.players) do
+    p.card_tracker:applyMoveDatas(moveCardsData)
+  end
 
   for _, v in ipairs(uninstalls) do
     local card, from = table.unpack(v)
@@ -190,6 +193,11 @@ function MoveCards:main()
   for _, v in ipairs(installs) do
     local card, to = table.unpack(v)
     card:onInstall(room, to)
+  end
+
+  for _, v in ipairs(filtercards) do
+    local id, to = table.unpack(v)
+    Fk:filterCard(id, to)
   end
 
   room.logic:trigger(fk.AfterCardsMove, nil, moveCardsData)
@@ -366,6 +374,7 @@ function MoveEventWrappers:notifyMoveCards(players, moveDatas, event_id)
     for _, move in ipairs(moveDatas) do
 
       -- 在转成json传输之前先变一下
+      -- 主要还是因为QML还在用playerId
       local _data = rawget(move, "_data")
       local v = table.simpleClone(_data and _data or move)
       v.from = v.from and v.from.id

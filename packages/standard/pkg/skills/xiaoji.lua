@@ -38,10 +38,10 @@ xiaoji:addEffect(fk.AfterCardsMove, {
   end,
 })
 
-xiaoji:addAI({
-  think_skill_invoke = function(self, ai, skill_name, prompt)
+xiaoji:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
     return ai:getBenefitOfEvents(function(logic)
-      logic:drawCards(ai.player, 2, self.skill.name)
+      logic:drawCards(ai.player, 2, self.skill_name)
     end) > 0
   end,
 })

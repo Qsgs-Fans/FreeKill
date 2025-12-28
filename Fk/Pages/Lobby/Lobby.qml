@@ -603,6 +603,9 @@ W.PageBase {
     rearrangePreferred();
 
     Db.tryInitModeSettings();
+
+    Config.observing = false;
+    Config.replaying = false;
     App.showToast(Lua.tr("$WelcomeToLobby"));
   }
 }

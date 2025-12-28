@@ -32,7 +32,7 @@
 ---@field public effects Skill[] @ 该技能对应的所有效果
 ---@field public effect_names string[] @ 该技能对应的效果名
 ---@field public effect_spec_list ([any, any, any])[] @ 该技能对应的效果信息
----@field public ai_list ([string, any, string, boolean?])[]
+---@field public ai_strategies { [AIStrategy]: AIStrategy[] }
 ---@field public tests fun(room: Room, me: ServerPlayer)[]
 ---@field public dynamicName fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态名称函数
 ---@field public dynamicDesc fun(self: SkillSkeleton, player: Player, lang?: string): string @ 动态描述函数
@@ -63,7 +63,7 @@ function SkillSkeleton:initialize(spec)
   self.effects = {}
   self.effect_names = {}
   self.effect_spec_list = {}
-  self.ai_list = {}
+  self.ai_strategies = {}
   self.tests = {}
 
   local name_split = self.name:split("__")
@@ -150,6 +150,7 @@ function SkillSkeleton:addEffect(key, data, attribute)
   return self
 end
 
+--[[
 ---@param spec? SkillAISpec|TriggerSkillAISpec
 ---@param inherit? string
 ---@param key? string
@@ -157,6 +158,20 @@ end
 ---@return SkillSkeleton
 function SkillSkeleton:addAI(spec, inherit, key, setTriggerSkillAI)
   table.insert(self.ai_list, { key or self.name, spec, inherit, setTriggerSkillAI })
+  return self
+end
+--]]
+
+---@param strategy AIStrategy
+function SkillSkeleton:addAI(strategy)
+  if type(strategy) ~= "table" then return self end
+  local klass = strategy.class
+  if not klass then return self end
+
+  self.ai_strategies[klass] = self.ai_strategies[klass] or {}
+  strategy.skill_name = self.name
+  table.insert(self.ai_strategies[klass], strategy)
+
   return self
 end
 

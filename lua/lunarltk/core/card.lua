@@ -657,22 +657,32 @@ end
 
 -- for sendLog
 --- 获取卡牌的文字信息并准备作为log发送。
-function Card:toLogString()
-  local startBrace = '<font color="#0598BC"><b>[</b></font>'
-  local endBrace = '<font color="#0598BC"><b>]</b></font>'
-  local startBrace2 = '<font color="#0598BC"><b>{</b></font>'
-  local endBrace2 = '<font color="#0598BC"><b>}</b></font>'
+---@param colorful boolean? 默认true，设为false会导致只给花色上色
+function Card:toLogString(colorful)
+  if colorful == nil then colorful = true end
+
+  local startBrace = colorful and '<font color="#0598BC"><b>[</b></font>' or '<b>[</b>'
+  local endBrace = colorful and '<font color="#0598BC"><b>]</b></font>' or '<b>]</b>'
+  local startBrace2 = colorful and '<font color="#0598BC"><b>{</b></font>' or '<b>{</b>'
+  local endBrace2 = colorful and '<font color="#0598BC"><b>}</b></font>' or '<b>}</b>'
 
   -- 牌名与花色/颜色小尾巴
-  local ret = string.format('<font color="#0598BC"><b>%s</b></font>', Fk:translate(self.name) .. "[")
+  local ret = string.format(colorful and '<font color="#0598BC"><b>%s</b></font>' or '<b>%s</b>',
+    Fk:translate(self.name) .. "[")
+
   if self:isVirtual() and #self.subcards ~= 1 then
     ret = ret .. Fk:translate(self:getColorString())
   else
     ret = ret .. Fk:translate("log_" .. self:getSuitString())
     if self.number > 0 then
-      ret = ret ..
+      if colorful then
+        ret = ret ..
           string.format('<font color="%s"><b>%s</b></font>', self.color == Card.Red and "#CC3131" or "black",
             getNumberStr(self.number))
+      else
+        ret = ret ..
+          string.format('<b>%s</b>', getNumberStr(self.number))
+      end
     end
   end
   ret = ret .. endBrace
@@ -680,7 +690,7 @@ function Card:toLogString()
   -- 子卡小尾巴
   if #self.subcards > 0 then
     ret = ret .. startBrace2 .. table.concat(table.map(self.subcards, function(cid)
-      return Fk:getCardById(cid):toLogString()
+      return Fk:getCardById(cid):toLogString(colorful)
     end), ", ") .. endBrace2
   end
 
@@ -695,7 +705,7 @@ function Card:toLogString()
         fk.qWarning("Detected skillName=" .. self.skillName ..
           " on real card " .. self.id)
       else
-        ret = ret .. '・' .. Fk:getCardById(self.id, true):toLogString()
+        ret = ret .. '・' .. Fk:getCardById(self.id, true):toLogString(colorful)
       end
     end
 

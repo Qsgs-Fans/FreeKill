@@ -20,7 +20,16 @@ function TrustAI:handleAskForUseCard(data)
   if pattern == "jink" then
     wontuse = false
   elseif pattern == "nullification" then
-    wontuse = prompt:split(":")[3] ~= tostring(self.player.id)
+    local splitted = prompt:split(":")
+
+    -- 这只是复刻托管AI的逻辑而已 写死几个牌名即可
+    local cardName = splitted[4]
+    local goodCard = table.contains({ "ex_nihilo", "amazing_grace", "god_salvation" }, cardName)
+
+    local toId = splitted[3]
+    local toOther = toId ~= tostring(self.player.id)
+
+    wontuse = goodCard or toOther
   elseif pattern == "peach" or pattern == "peach,analeptic" then
     wontuse = not prompt:startsWith("#AskForPeachesSelf")
   end

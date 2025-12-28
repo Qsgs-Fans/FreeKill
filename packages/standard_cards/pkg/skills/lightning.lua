@@ -65,4 +65,10 @@ skill:addEffect("cardskill", {
   end,
 })
 
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = -1,
+  use_value = 0,
+  use_priority = 0,
+})
+
 return skill

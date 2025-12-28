@@ -31,6 +31,10 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI(nil, "__card_skill")
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.5,
+  use_value = 8,
+  use_priority = 0.5,
+})
 
 return skill

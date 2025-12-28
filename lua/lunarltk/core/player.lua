@@ -1,6 +1,7 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
 local basePlayer = require "core.player"
+local KnownCardTracker = require "lunarltk.core.known_card_tracker"
 
 --- 玩家分为客户端要处理的玩家，以及服务端处理的玩家两种。
 ---
@@ -30,6 +31,7 @@ local basePlayer = require "core.player"
 ---@field public player_cards table<integer, integer[]> @ 当前拥有的所有牌，键是区域，值是id列表
 ---@field public virtual_equips Card[] @ 当前的虚拟装备牌，其实也包含着虚拟延时锦囊这种
 ---@field public special_cards table<string, integer[]> @ 类似“屯田”的“田”的私人牌堆
+---@field public card_tracker KnownCardTracker @ 记牌器
 ---@field public cardUsedHistory table<string, integer[]> @ 用牌次数历史记录
 ---@field public skillUsedHistory table<string, integer[]> @ 发动技能次数的历史记录
 ---@field public skillBranchUsedHistory table<string, table<string, integer[]>> @ 发动技能某分支次数的历史记录
@@ -109,6 +111,7 @@ function Player:initialize()
   }
   self.special_cards = {}
   self.virtual_equips = {}
+  self.card_tracker = KnownCardTracker:new(self)
 
   self.equipSlots = {
     Player.WeaponSlot,
@@ -574,7 +577,8 @@ end
 ---@param ignore_dead? boolean @ 是否忽略尸体
 ---@param excludeIds? integer[] @ 忽略的自己装备的id列表，用于飞刀判定
 ---@param excludeSkills? string[] @ 忽略的技能名列表
-function Player:distanceTo(other, mode, ignore_dead, excludeIds, excludeSkills)
+---@param cardForUsing? Card @ 将会转化的牌
+function Player:distanceTo(other, mode, ignore_dead, excludeIds, excludeSkills, cardForUsing)
   assert(other:isInstanceOf(Player))
   mode = mode or "both"
   excludeSkills = excludeSkills or {}
@@ -624,8 +628,8 @@ function Player:distanceTo(other, mode, ignore_dead, excludeIds, excludeSkills)
   local status_skills = Fk:currentRoom().status_skills[DistanceSkill] or Util.DummyTable  ---@type DistanceSkill[]
   for _, skill in ipairs(status_skills) do
     if not table.contains(excludeSkills, skill.name) then
-      local fixed = skill:getFixed(self, other)
-      local correct = skill:getCorrect(self, other)
+      local fixed = skill:getFixed(self, other, cardForUsing)
+      local correct = skill:getCorrect(self, other, cardForUsing)
       if fixed ~= nil then
         ret = fixed
         break
@@ -666,8 +670,9 @@ end
 ---@param fixLimit? integer @ 卡牌距离限制增加专用
 ---@param excludeIds? integer[] @ 忽略的自己装备的id列表，用于飞刀判定
 ---@param excludeSkills? string[] @ 忽略的技能名列表
+---@param cardForUsing? Card @ 将会转化的牌
 ---@return boolean
-function Player:inMyAttackRange(other, fixLimit, excludeIds, excludeSkills)
+function Player:inMyAttackRange(other, fixLimit, excludeIds, excludeSkills, cardForUsing)
   assert(other:isInstanceOf(Player))
   if self == other or (other and (other.dead or other:isRemoved())) or self:isRemoved() then
     return false
@@ -702,7 +707,7 @@ function Player:inMyAttackRange(other, fixLimit, excludeIds, excludeSkills)
   end
 
   local baseAttackRange = self:getAttackRange(excludeIds, excludeSkills)
-  return self:distanceTo(other, nil, nil, excludeIds, excludeSkills) <= (baseAttackRange + fixLimit)
+  return self:distanceTo(other, nil, nil, excludeIds, excludeSkills, cardForUsing) <= (baseAttackRange + fixLimit)
 end
 
 --- 获取下家。
@@ -1586,7 +1591,7 @@ end
 ---@param other Player|integer
 function Player:isBuddy(other)
   local room = Fk:currentRoom()
-  if room.observing and not room.replaying then return false end
+  if room.observing and not room.replaying and not room:getSettings("enableObserverViewCard") then return false end
   local id = type(other) == "number" and other or other.id
   return self.id == id or table.contains(self.buddy_list, id)
 end
@@ -1615,10 +1620,13 @@ function Player:cardVisible(cardId, move, toChoose)
   local falsy = true -- 当难以决定时是否要选择暗置？
   local oldarea, oldspecial, oldowner
   if move then
-    move = table.simpleClone(move)
-    -- 把playerId转为Player
-    if type(move.to) == "number" then move.to = room:getPlayerById(move.to) end
-    if type(move.from) == "number" then move.from = room:getPlayerById(move.from) end
+    if not move.class then
+      move = table.simpleClone(move)
+      -- 把playerId转为Player
+      if type(move.to) == "number" then move.to = room:getPlayerById(move.to) end
+      if type(move.from) == "number" then move.from = room:getPlayerById(move.from) end
+    end
+
     ---@type MoveInfo
     local info = table.find(move.moveInfo, function(info) return info.cardId == cardId end)
     if info then
@@ -1656,7 +1664,7 @@ function Player:cardVisible(cardId, move, toChoose)
   local owner = room:getCardOwner(cardId)
   local card = Fk:getCardById(cardId)
 
-  if not room.observing then
+  if not (room.observing and not room:getSettings("enableObserverViewCard")) then
     for _, skill in ipairs(status_skills) do
       local f = skill:cardVisible(self, card, toChoose)
       if f ~= nil then

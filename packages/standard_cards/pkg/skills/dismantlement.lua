@@ -16,29 +16,24 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI({
-  on_effect = function(self, logic, effect)
-    local from = effect.from
-    local to = effect.to
-    if from.dead or to.dead or to:isAllNude() then return end
-    local _, val = self:thinkForCardChosen(from.ai, to, "hej")
-    logic.benefit = logic.benefit + val
-  end,
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.44,
+  use_value = 5.6,
+  use_priority = 4.4,
 
-  think_card_chosen = function(self, ai, target, flag, prompt)
-    local ret, benefit = ai:askToChooseCards({
-      cards = target:getCardIds("hej"),
-      skill_name = self.skill.name,
-      min = 1,
-      max = 1,
+  on_effect = function(self, logic, effect)
+    local ret, benefit = effect.from.ai:askToChooseCards({
+      cards = effect.to:getCardIds("hej"),
+      skill_name = skill.name,
       data = {
         to_place = Card.DiscardPile,
         reason = fk.ReasonDiscard,
-        proposer = ai.player,
+        proposer = effect.from,
       },
     })
-    return ret[1], benefit
+    logic:throwCard(ret[1], skill.name, effect.to, effect.from)
   end,
-}, "__card_skill")
+  }
+)
 
 return skill

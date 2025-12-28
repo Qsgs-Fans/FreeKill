@@ -40,8 +40,22 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI(nil, "__card_skill")
-skill:addAI(nil, "default_card_skill")
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.36,
+  use_value = 3.9,
+  use_priority = 3.5,
+
+  on_effect = function(self, logic, effect)
+    logic:damage({
+      from = effect.from,
+      to = effect.to,
+      card = effect.card,
+      damage = 1,
+      damageType = fk.NormalDamage,
+      skillName = skill.name
+    })
+  end,
+})
 
 skill:addTest(function(room, me)
   local comp2 = room.players[2]

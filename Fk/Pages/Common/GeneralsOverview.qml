@@ -419,6 +419,13 @@ W.PageBase {
       anchors.centerIn: parent
       scale: Config.winScale
       source: "GeneralDetailPage.qml"
+      onLoaded: {
+        item.onChangeGeneralDetailInside.connect(function(to_general) {
+          generalDetailLoader.item.general = to_general;
+          generalDetailLoader.item.canSetAvatar = root.parent instanceof StackView;
+          generalDetail.open();
+        })
+      }
     }
   }
 

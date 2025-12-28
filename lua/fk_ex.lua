@@ -167,8 +167,8 @@ end
 ---@field public fix_targets? fun(self: ViewAsSkill, player: Player, selected_cards: integer[], card: Card, extra_data: any): Player[]? @ 设置固定目标
 
 ---@class DistanceSpec: StatusSkillSpec
----@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
----@field public fixed_func? fun(self: DistanceSkill, from: Player, to: Player): integer?
+---@field public correct_func? fun(self: DistanceSkill, from: Player, to: Player, card?: Card): integer?
+---@field public fixed_func? fun(self: DistanceSkill, from: Player, to: Player, card?: Card): integer?
 
 ---@class ProhibitSpec: StatusSkillSpec
 ---@field public is_prohibited? fun(self: ProhibitSkill, from: Player?, to: Player, card: Card): any

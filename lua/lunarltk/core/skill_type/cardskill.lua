@@ -191,7 +191,7 @@ end
 ---@param to Player @ 目标
 ---@return boolean?
 function CardSkill:withinDistanceLimit(player, isattack, card, to)
-  if not to or player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) < 1 then return false end
+  if not to or player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards), nil, card) < 1 then return false end
   local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
   if not card and self.name:endsWith("_skill") then
     card = Fk:cloneCard(self.name:sub(1, #self.name - 6))
@@ -200,8 +200,8 @@ function CardSkill:withinDistanceLimit(player, isattack, card, to)
     if skill:bypassDistancesCheck(player, self, card, to) then return true end
   end
 
-  return (isattack and player:inMyAttackRange(to, nil, table.connect(Card:getIdList(card), card.fake_subcards))) or
-  (player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards)) <= self:getDistanceLimit(player, card, to)) or
+  return (isattack and player:inMyAttackRange(to, nil, table.connect(Card:getIdList(card), card.fake_subcards), nil, card)) or
+  (player:distanceTo(to, nil, nil, table.connect(Card:getIdList(card), card.fake_subcards), nil, card) <= self:getDistanceLimit(player, card, to)) or
   not not card:hasMark(MarkEnum.BypassDistancesLimit) or
   not not player:hasMark(MarkEnum.BypassDistancesLimit) or
   not not to:hasMark(MarkEnum.BypassDistancesLimitTo)
@@ -247,8 +247,6 @@ function CardSkill:withinTimesLimit(player, scope, card, card_name, to)
   (to and not not to:hasMark(MarkEnum.BypassTimesLimitTo))
 end
 
-
-
 ---@param room Room
 ---@param cardUseEvent UseCardData
 function CardSkill:onUse(room, cardUseEvent) end
@@ -270,8 +268,6 @@ function CardSkill:onEffect(room, cardEffectEvent) end
 ---@param room Room
 ---@param cardEffectEvent CardEffectData
 function CardSkill:onNullified(room, cardEffectEvent) end
-
-
 
 -- 卡牌生效前，询问抵消（默认杀询问闪，锦囊询问无懈）
 ---@param room Room

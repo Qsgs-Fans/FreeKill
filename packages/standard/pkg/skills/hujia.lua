@@ -50,8 +50,8 @@ local hujia_spec = {
 hujia:addEffect(fk.AskForCardUse, hujia_spec)
 hujia:addEffect(fk.AskForCardResponse, hujia_spec)
 
-hujia:addAI({
-  think_skill_invoke = function(self, ai, skill_name, prompt)
+hujia:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
     for _, p in ipairs(ai.player.room.alive_players) do
       if ai:isFriend(p) and p.kingdom == "wei" and #table.filter(ai.player:getHandlyIds(), function(cid)
             return Fk:getCardById(cid).trueName == "jink"

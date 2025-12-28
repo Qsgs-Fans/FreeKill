@@ -1321,6 +1321,7 @@ end
 ---@class AskToChooseCardsParams: AskToChooseCardParams
 ---@field min integer @ 最小选牌数
 ---@field max integer @ 最大选牌数
+---@field cancelable? boolean @ 是否可取消，**默认不可**
 ---@field pattern? string @ 只针对可见牌的选牌规则
 
 --- 完全类似askForCardChosen，但是可以选择多张牌。
@@ -1330,8 +1331,9 @@ end
 ---@return integer[] @ 选择的id
 function Room:askToChooseCards(player, params)
   local target, flag, reason, prompt = params.target, params.flag, params.skill_name, params.prompt
+  params.cancelable = not not params.cancelable
   local min, max = params.min, params.max
-  if min == 1 and max == 1 then
+  if min == 1 and max == 1 and not params.cancelable and not params.pattern then
     return { self:askToChooseCard(player, params) }
   end
 
@@ -1386,7 +1388,7 @@ function Room:askToChooseCards(player, params)
     poxi_type = "AskForCardsChosen",
     data = cards_data,
     extra_data = data,
-    cancelable = false
+    cancelable = params.cancelable
   }
 
   local ret = self:askToPoxi(player, poxiParams)
@@ -1412,6 +1414,13 @@ end
 ---@param params AskToChoiceParams @ 各种变量
 ---@return string @ 选择的选项
 function Room:askToChoice(player, params)
+  local choices = params.choices
+  if params.cancelable then
+    table.insertIfNeed(choices, "Cancel")
+    if params.all_choices then
+      table.insertIfNeed(params.all_choices, "Cancel")
+    end
+  end
   if #params.choices == 1 and not params.all_choices then return params.choices[1] end
   assert(not params.all_choices or table.every(params.choices, function(c) return table.contains(params.all_choices, c) end))
   local command = "AskForChoice"
@@ -3709,6 +3718,13 @@ function Room:showCards(cards, from, proposer)
     from = src,
     card = cards,
   }
+  if from then
+    for _, p in ipairs(self.players) do
+      for _, id in ipairs(cards) do
+        p.card_tracker:setCardKnown(id, from, Card.PlayerHand)
+      end
+    end
+  end
 
   --[[ -- 原版
 
@@ -3720,7 +3736,7 @@ function Room:showCards(cards, from, proposer)
     type = "##ShowCard",
     from = src,
   })
-  
+
   --]]
 
   local n = 0

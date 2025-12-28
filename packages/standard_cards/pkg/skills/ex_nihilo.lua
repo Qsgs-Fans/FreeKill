@@ -12,8 +12,15 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI(nil, "__card_skill")
-skill:addAI(nil, "default_card_skill")
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.9,
+  use_value = 10,
+  use_priority = 9.3,
+
+  on_effect = function(self, logic, effect)
+    logic:drawCards(effect.to, 2, skill.name)
+  end,
+})
 
 skill:addTest(function(room, me)
   local ex_nihilo = room:printCard("ex_nihilo")

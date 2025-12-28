@@ -64,23 +64,21 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI({
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.3,
+  use_value = 4.8,
+  use_priority = 4.5,
+
   on_effect = function(self, logic, effect)
-    if table.find(effect.from:getCardIds("h"), function (id)
-      return table.find(effect.to:getCardIds("h"), function (id2)
-        return Fk:getCardById(id):compareSuitWith(Fk:getCardById(id2))
-      end) and not effect.from:prohibitDiscard(id)
-    end) then
-      logic:damage({
-        from = effect.from,
-        to = effect.to,
-        card = effect.card,
-        damage = 1,
-        damageType = fk.FireDamage,
-        skillName = skill.name
-      })
-    end
+    logic:damage({
+      from = effect.from,
+      to = effect.to,
+      card = effect.card,
+      damage = 1,
+      damageType = fk.FireDamage,
+      skillName = skill.name
+    })
   end,
-}, "__card_skill")
+})
 
 return skill

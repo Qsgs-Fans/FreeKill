@@ -4,12 +4,25 @@
 ---@field public command string
 ---@field public data any
 ---@field public handler any
+---@field public _debug boolean?
 local AI = class("Base.AI")
 
 function AI:initialize(player)
   ---@diagnostic disable-next-line
   self.room = RoomInstance
   self.player = player
+
+  -- 直接用verbose结合verbose_level不是个好办法
+  -- 因为lua会先计算参数再调用函数，在不启用verbose的情况下
+  -- 那些调试用的json.encode就变成纯累赘了
+  --
+  -- 当然verbose本身能显示cpu时间是很不错的，只是需要结合if判断才能避免浪费
+  -- 如果有C++的宏那就好了
+  --
+  -- 总之开发底层ai时设为true就可以了
+  --
+  -- [!!] 提交到master的话这个务必设为false!
+  self._debug = false
 end
 
 function AI:__tostring()
@@ -31,7 +44,10 @@ function AI:makeReply()
   end
   if ret == nil or ret == "" then ret = "__cancel" end
   self.handler = nil
-  verbose(1,"%s 在%.2fms后得出结果：%s", self.command, (os.getms() - now) / 1000, json.encode(ret))
+
+  if self._debug then
+    verbose(1, "%s 在%.2fms后得出结果：%s", self.command, (os.getms() - now) / 1000, json.encode(ret))
+  end
   return ret
 end
 

@@ -111,10 +111,10 @@ function CardManager:applyMoveInfo(data, info)
       to = data.to.id
     end
   end
+  ---@cast to integer?
 
-  local moveFrom = self.owner_map[info.cardId]
-  local fromAreaIds = self:getCardsByArea(realFromArea,
-  moveFrom and room:getPlayerById(moveFrom), false, info.fromSpecialName)
+  local moveFrom = self.owner_map[info.cardId] and room:getPlayerById(self.owner_map[info.cardId])
+  local fromAreaIds = self:getCardsByArea(realFromArea, moveFrom, false, info.fromSpecialName)
 
   if fromAreaIds == nil or not table.removeOne(fromAreaIds, info.cardId) then return false end
 

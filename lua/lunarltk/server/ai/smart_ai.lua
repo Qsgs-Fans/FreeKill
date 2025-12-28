@@ -1,62 +1,44 @@
 -- SPDX-License-Identifier: GPL-3.0-or-later
 
---[[
-
-一套基于收益论和简易收益预测的AI框架
-
---]]
-
---- 卡牌对于AI的价值
-fk.ai_card_keep_value = {}
+---@class SmartAI.Memory : { [string]: any }
+---@field intentionScore table<SmartAI.Intention, number> 行动意向打分
 
 ---@class SmartAI: TrustAI, AIUtil
----@field private _memory table<string, any> @ AI底层的空间换时间机制
----@field public friends ServerPlayer[] @ 队友
----@field public enemies ServerPlayer[] @ 敌人
+---@field public mem SmartAI.Memory @ 暂存某些值避免重复计算
 local SmartAI = TrustAI:subclass("SmartAI")
 
-local require_skill = require "lunarltk.server.ai.skill"
-SkillAI, TriggerSkillAI = require_skill[1], require_skill[2]
 local AIUtil = require 'lunarltk.server.ai.util'
 SmartAI:include(AIUtil)
 
----@type table<string, AIGameEvent>
-fk.ai_events = {}
-AIGameLogic, AIGameEvent = require "lunarltk.server.ai.logic"
+local AIGameLogic, AIGameEvent = require "lunarltk.server.ai.logic"
+local AI = require "lunarltk.server.ai.strategies"
 
 function SmartAI:initialize(player)
   TrustAI.initialize(self, player)
 end
 
 function SmartAI:makeReply()
-  self._memory = setmetatable({}, { __mode = "k" })
+  self.mem = setmetatable({}, { __mode = "k" })
   return TrustAI.makeReply(self)
 end
 
-function SmartAI:__index(k)
-  if self._memory[k] then
-    return self._memory[k]
+---@generic T: AIStrategy
+---@param tp T
+---@param skill_name string
+---@return T?
+function SmartAI:findStrategyOfSkill(tp, skill_name)
+  local skill = Fk.skills[skill_name]
+  if not skill then return end
+  local skel = skill:getSkeleton()
+  if not skel then return end
+  local list = skel.ai_strategies[tp] or Util.DummyTable
+  for _, v in ipairs(list) do
+    if v:matchContext(self) then
+      return v
+    end
   end
-  local ret
-  if k == "enemies" then
-    ret = table.filter(self.room.alive_players, function(p)
-      return self:isEnemy(p)
-    end)
-  elseif k == "friends" then
-    ret = table.filter(self.room.alive_players, function(p)
-      return self:isFriend(p)
-    end)
-  end
-  self._memory[k] = ret
-  return ret
+  return nil
 end
-
--- 四面板交互，全部依赖skillAI:think
---===================================================
-
-
---@field ask_use_card? fun(skill: ActiveSkill, ai: SmartAI): any
---@field ask_response? fun(skill: ActiveSkill, ai: SmartAI): any
 
 ---@type table<string, SkillAI>
 fk.ai_skills = {}
@@ -65,69 +47,7 @@ fk.ai_skills = {}
 ---@param spec? SkillAISpec
 ---@param inherit? string
 function SmartAI.static:setSkillAI(key, spec, inherit)
-  if not fk.ai_skills[key] then
-    fk.ai_skills[key] = SkillAI:new(key)
-  end
-  local ai = fk.ai_skills[key]
-
-  -- 神杀智慧之sgs_ex.lua: 致敬传奇靠造表创建对象写法
-  local qsgs_wisdom_map = {
-    estimated_benefit = "getEstimatedBenefit",
-    think = "think",
-    think_card_chosen = "thinkForCardChosen",
-    think_skill_invoke = "thinkForSkillInvoke",
-    think_choice = "thinkForChoice",
-    choose_interaction = "chooseInteraction",
-    choose_cards = "chooseCards",
-    choose_targets = "chooseTargets",
-
-    on_trigger_use = "onTriggerUse",
-    on_use = "onUse",
-    on_effect = "onEffect",
-  }
-  if inherit then
-    local ai2 = fk.ai_skills[inherit]
-    for _, k in pairs(qsgs_wisdom_map) do
-      ai[k] = ai2[k]
-    end
-  end
-  if not spec then return end
-  for k, v in pairs(spec) do
-    local key2 = qsgs_wisdom_map[k]
-    if key2 == "think" then
-      ai.think = function(_self, _ai)
-        local ret, val = v(_self, _ai)
-        if ret and type(ret) == "table" then
-          if ret.cards then
-            ret.card = { skill = _self.skill.name, subcards = ret.cards }
-            ret.cards = nil
-          end
-          if not ret.card then
-            ret.card = { skill = _self.skill.name, subcards = Util.DummyTable }
-          end
-          if ret.targets then
-            if type(ret.targets[1]) == "table" then
-              ret.targets = table.map(ret.targets, Util.IdMapper)
-            end
-          else
-            ret.targets = Util.DummyTable
-          end
-        end
-        return ret, val
-      end
-    elseif key2 then
-      ai[key2] = type(v) == "function" and v or function() return v end
-    end
-  end
-end
-
---- 将spec中的键值保存到这个技能的ai中
----@param key string
----@param spec? SkillAISpec 表
----@param inherit? string 可以直接复用某个技能已有的函数 自然spec中更加优先
----@diagnostic disable-next-line
-function SmartAI:setSkillAI(key, spec, inherit)
-  error("This is a static method. Please use SmartAI:setSkillAI(...)")
+  do return end
 end
 
 SmartAI:setSkillAI("__card_skill", {
@@ -142,7 +62,9 @@ SmartAI:setSkillAI("__card_skill", {
         tos = targets,
         card = ai:getSelectedCard(),
       })
-      verbose(1, "目前状况下，对[%s]的预测收益为%g", table.concat(table.map(targets, function(p)return tostring(p)end), "+"), logic.benefit)
+      if self._debug then
+        verbose(1, "目前状况下，对[%s]的预测收益为%g", table.concat(table.map(targets, function(p)return tostring(p)end), "+"), logic.benefit)
+      end
       return logic.benefit
     end
     local best_targets, best_val = nil, -100000
@@ -157,51 +79,11 @@ SmartAI:setSkillAI("__card_skill", {
   end,
 
   think = function(self, ai)
-    local skill_name = self.skill.name
-    local pattern = ".|.|.|.|" .. skill_name:sub(1, #skill_name - 6)
-    local estimate_val = self:getEstimatedBenefit(ai)
-    local cards = ai:getEnabledCards(pattern)
-    cards = table.random(cards, math.min(#cards, 5)) --[[@as integer[] ]]
-    -- local cid = table.random(cards)
-
-    local best_ret, best_val = "", -100000
-    for _, cid in ipairs(cards) do
-      ai:selectCard(cid, true)
-      local ret, val = self:chooseTargets(ai)
-      verbose(1, "就目前选择的这张牌，考虑[%s]，收益为%g", table.concat(table.map(ret, function(p)return tostring(p)end), "+"), val)
-      val = val or -100000
-      if best_val < val then
-        best_ret, best_val = ret, val
-      end
-      if best_val >= estimate_val then break end
-      ai:unSelectAll()
-    end
-
-    if best_ret and best_ret ~= "" then
-      if best_val < 0 then
-        return "", best_val
-      end
-
-      best_ret = { card = ai:getSelectedCard().id, targets = best_ret }
-    end
-
-    return best_ret, best_val
   end,
 })
 
 function SmartAI.static:setCardSkillAI(key, spec, key2)
-  SmartAI:setSkillAI(key, spec, "__card_skill")
-  if key2 then
-    SmartAI:setSkillAI(key, spec, key2)
-  end
-end
-
--- 等价于SmartAI:setSkillAI(key, spec, "__card_skill")
----@param key string
----@param spec? SkillAISpec 表
----@param key2? string 要继承的
-function SmartAI:setCardSkillAI(key, spec, key2)
-  error("This is a static method. Please use SmartAI:setCardSkillAI(...)")
+  do return end
 end
 
 SmartAI:setCardSkillAI("default_card_skill", {
@@ -213,139 +95,133 @@ SmartAI:setCardSkillAI("default_card_skill", {
   end,
 })
 
-SmartAI:setSkillAI("vs_skill", {
-  choose_targets = function(self, ai)
-    local logic = AIGameLogic:new(ai)
-    local card = self.skill:viewAs(ai.player, ai:getSelectedCards())
-    if card == nil then
-      return {}, -100000
-    end
-    local val_func = function(targets)
-      logic.benefit = 0
-      logic:useCard{
-        from = ai.player,
-        tos = targets,
-        card = card,
-      }
-      verbose(1, "目前状况下，对[%s]的预测收益为%g", table.concat(table.map(targets, function(p)return tostring(p)end), "+"), logic.benefit)
-      return logic.benefit
-    end
-    local best_targets, best_val = nil, -100000
-    for targets in self:searchTargetSelections(ai) do
-      local val = val_func(targets)
-      if (not best_targets) or (best_val < val) then
-        best_targets, best_val = targets, val
-      end
-    end
-    return best_targets or {}, best_val
-  end,
-  think = function(self, ai)
-    local best_ret
-    local best_cards, best_targets, best_interaction, best_val = {}, "", nil, -100000
-    if self.skill.interaction ~= nil then
-      best_interaction = self.skill.interaction.data
-    end
-    for cards in self:searchCardSelections(ai) do
-      local targets, val = self:chooseTargets(ai)
-      verbose(1, "就目前选择的这张牌，考虑[%s]，收益为%g", table.concat(table.map(targets, function(p) return tostring(p)end), "+"), val)
-      val = val or -100000
-      if val > best_val then
-        best_cards, best_targets, best_val = cards, targets, val
-        best_ret = { cards = best_cards, targets = best_targets, interaction_data = best_interaction }
-      end
-    end
-    if best_ret ~= nil then
-      if best_val < 0 then
-        return "", best_val
-      end
-    end
-    return best_ret, best_val
-  end,
-})
-
 ---@type table<string, TriggerSkillAI>
 fk.ai_trigger_skills = {}
 
----@param spec TriggerSkillAISpec
 function SmartAI.static:setTriggerSkillAI(key, spec)
-  if not fk.ai_trigger_skills[key] then
-    fk.ai_trigger_skills[key] = TriggerSkillAI:new(key)
-  end
-  local ai = fk.ai_trigger_skills[key]
-  if spec.correct_func then
-    ai.getCorrect = spec.correct_func
-  end
-end
-
---- 将spec中的键值保存到这个技能的ai中
----@param key string
----@param spec TriggerSkillAISpec
----@diagnostic disable-next-line
-function SmartAI:setTriggerSkillAI(key, spec)
-  error("This is a static method. Please use SmartAI:setTriggerSkillAI(...)")
+  do return end
 end
 
 function SmartAI:handleAskForUseActiveSkill()
   local name = self.handler.skill_name
-  local current_skill = self:currentSkill()
 
   local ai
-  if current_skill then ai = fk.ai_skills[current_skill.name] end
-  if not ai then ai = fk.ai_skills[name] end
+  if self:currentSkill() then
+    ai = self:findStrategyOfSkill(AI.ActiveStrategy, self:currentSkill().name)
+  end
+  if not ai then
+    ai = self:findStrategyOfSkill(AI.ActiveStrategy, name)
+  end
   if not ai then return "" end
-  verbose(1, "正在询问技能：%s", ai.skill.name)
-  local ret, real_val = ai:think(self)
-  verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill.name, json.encode(ret), json.encode(real_val))
+  local _dbg_skill = ai.skill and ai.skill.name or "unknown"
+  if self._debug then
+    verbose(1, "正在询问技能：%s", _dbg_skill)
+  end
+  local ret, real_val = ai:makeReply(self)
+  if self._debug then
+    verbose(1, "%s: 思考结果是%s, 收益是%s", _dbg_skill, json.encode(ret), json.encode(real_val))
+  end
   return ret, real_val
 end
 
-function SmartAI:handlePlayCard()
-  local card_ids = self:getEnabledCards()
-  local skill_ai_list = {}
-  for _, id in ipairs(card_ids) do
-    local cd = Fk:getCardById(id)
-    local ai = fk.ai_skills[cd.skill.name]
-    if ai then
-      table.insertIfNeed(skill_ai_list, ai)
-    end
-  end
-  for _, sname in ipairs(self:getEnabledSkills()) do
-    local ai = fk.ai_skills[sname]
-    if ai then
-      table.insertIfNeed(skill_ai_list, ai)
-    end
-  end
-  verbose(1, "======== %s: 开始计算出牌阶段 ========", tostring(self))
-  verbose(1, "待选技能：[%s]", table.concat(table.map(skill_ai_list, function(ai) return ai.skill.name end), ", "))
+-- 出牌阶段AI的步骤是：
+-- 1. 分析手中的手牌、技能按钮以及局势，判断出本次行动意向，目前设计的意向有：
+--    进攻、防御、控制
+-- 2. (TODO) 为可以点击的卡牌转化技确定要转化的牌名 然后将该单一牌名纳入下一步那种牌名的考虑内
+-- 3. 将可用卡牌和技能按优先级排序，根据之前推测出的趋向，某些卡牌/技能的优先级会被修正
+-- 4. 计算优先级最高的3个卡牌/技能的方案及其收益
+--  * 收益值也会被意向值修正
+--  * 如果都为负收益则顺延直到有3个正收益选项
+--  * 如果依然全部为负收益则与直接点击取消键的收益进行权衡
+-- 5. 返回收益最高者
+--
+-- 这个行动意向的设计是为了解决【杀】的收益必定大于【过河拆桥】导致ai喜欢先杀再拆的问题。
+--
+-- 推算的相关中间变量都保存在self.mem中，方便各种和ai相关的函数读取。
+-- self.mem在每次思考最开始时自动清空。单独开class方便编辑器补全
+--====================
 
-  local value_func = function(ai)
-    if not ai then return -500 end
-    local val = ai:getEstimatedBenefit(self)
-    return val or 0
+---@alias SmartAI.Intention "attack"|"defense"|"control"
+
+-- 考虑如何计算行动意向。
+-- 由于可选行动会有很多，因此计算出的意向也不好直接摁死，采用为每种意向进行评分的机制。
+-- 行动意向评分表保存在mem中。
+--
+-- 上文说了意向评分受可用技能（卡牌算技能）和局势影响，那么至少技能需要提供自身的功能倾向
+-- 而局势判断可以先写死
+
+function SmartAI:initIntentionScore()
+  if self.mem.intentionScore then return end
+  self.mem.intentionScore = {}
+end
+
+function SmartAI:handlePlayCard()
+  local active_strategy_list = {} ---@type AI.ActiveStrategy[]
+  do
+    local skills = self:getEnabledSkills()
+    local card_ids = self:getEnabledCards()
+    local tmp = {}
+    for _, id in ipairs(card_ids) do
+      local cd = Fk:getCardById(id)
+      tmp[cd.skill.name] = true
+    end
+
+    for sname in pairs(tmp) do
+      local ai = self:findStrategyOfSkill(AI.CardSkillStrategy, sname)
+      if ai then
+        table.insert(active_strategy_list, ai)
+      end
+    end
+
+    for _, sname in ipairs(skills) do
+      local ai = self:findStrategyOfSkill(AI.ActiveStrategy, sname)
+      if ai then
+        table.insert(active_strategy_list, ai)
+      end
+    end
+  end
+
+  if self._debug then
+    verbose(1, "======== %s: 开始计算出牌阶段 ========", tostring(self))
   end
 
   local cancel_val = math.min(90 * (self.player:getMaxCards() - self.player:getHandcardNum()), -1)
 
   local best_ret, best_val = "", cancel_val
-  verbose(1, "目前的决策：直接取消(收益%g)", best_val)
-  for _, ai, val in fk.sorted_pairs(skill_ai_list, value_func) do
-    verbose(1, "[*] 考虑 %s (预估收益%g)", ai.skill.name, val)
-    if val < cancel_val then
-      verbose(1, "由于预估收益小于取消的收益，不再思考")
-      break
+  if self._debug then
+    verbose(1, "目前的决策：直接取消(收益%g)", best_val)
+  end
+  for _, ai in fk.sorted_pairs(active_strategy_list, function(a) return a.use_priority end) do
+    self:selectSkill(ai.skill_name, true)
+
+    -- 干脆直接走handleActive的流程
+
+    local ret, real_val = ai:makeReply(self) -- "", -10000 -- ai:think(self)
+    if self._debug then
+      verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill_name, json.encode(ret), json.encode(real_val))
     end
-    self:selectSkill(ai.skill.name, true)
-    local ret, real_val = ai:think(self)
-    verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill.name, json.encode(ret), json.encode(real_val))
     real_val = real_val or -100000
+
     -- if ret and ret ~= "" then return ret end
     if best_val < real_val then
-      verbose(1, "将决策%s换成更好的%s (收益%g => %g)", json.encode(best_ret), json.encode(ret), best_val, real_val)
+      if self._debug then
+        verbose(1, "将决策%s换成更好的%s (收益%g => %g)", json.encode(best_ret), json.encode(ret), best_val, real_val)
+      end
       best_ret, best_val = ret, real_val
     end
     self:unSelectAll()
+
+    -- FIXME: 为了实现按优先级出牌，干脆只要收益为正就出
+    if best_val > 0 and best_val > cancel_val then
+      if self._debug then
+        verbose(1, "懒得推测了，得出决策%s", json.encode(best_ret))
+      end
+      return best_ret
+    end
   end
-  verbose(1, "推测出最佳决策是%s", json.encode(best_ret))
+  if self._debug then
+    verbose(1, "推测出最佳决策是%s", json.encode(best_ret))
+  end
   if best_ret and best_ret ~= "" then return best_ret end
   return ""
 end
@@ -359,38 +235,53 @@ end
 function SmartAI:handleAskForCardChosen(data)
   local target_id, flag, reason, prompt = table.unpack(data)
   local target = self.room:getPlayerById(target_id)
-  local ai = fk.ai_skills[reason]
+  local ai = self:findStrategyOfSkill(AI.CardChosenStrategy, reason)
   if ai then
-    local ret = ai:thinkForCardChosen(self, target, flag, prompt)
+    if self._debug then
+      verbose(1, "正在询问技能：%s, %s", ai.skill_name, prompt)
+    end
+    local ret, real_val = ai:makeReply(self)
+    if self._debug then
+      verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill_name, json.encode(ret), real_val)
+    end
     return ret
   end
 end
 
 function SmartAI:handleAskForSkillInvoke(data)
   local skillName, prompt = data[1], data[2]
-  local ai = fk.ai_skills[skillName]
+  local ai = self:findStrategyOfSkill(AI.InvokeStrategy, skillName)
   if ai then
-    local ret = ai:thinkForSkillInvoke(self, skillName, prompt)
+    if self._debug then
+      verbose(1, "正在询问技能：%s, %s", skillName, prompt)
+    end
+    local ret = ai:makeReply(self)
+    if self._debug then
+      verbose(1, "%s: 思考结果是%s", skillName, json.encode(ret))
+    end
     return ret and "1" or ""
   else
-    local skill = Fk.skills[skillName]
-    if skill then
-      return "1"
-    end
+    return ""
   end
 end
 
 function SmartAI:handleAskForChoice(data)
   local choices, allChoices, skillName, prompt = table.unpack(data)
-  local ai = fk.ai_skills[skillName]
+  local ai = self:findStrategyOfSkill(AI.ChoiceStrategy, skillName)
   if ai then
-    local ret = ai:thinkForChoice(self, choices, prompt, allChoices)
-    return ret
+    if self._debug then
+      verbose(1, "正在询问技能：%s, 可选选项列表：%s", ai.skill_name, table.concat(choices, "+"))
+    end
+    local ret, real_val = ai:makeReply(self)
+    if self._debug then
+      verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill_name, json.encode(ret), real_val)
+    end
+    return ret or choices[1]
   else
     return choices[1]
   end
 end
-
+--[==[
 function SmartAI:handleAskForUseCard(data)
   local card_ids = self:getEnabledCards()
   local pattern = data[2]
@@ -443,8 +334,10 @@ function SmartAI:handleAskForUseCard(data)
       table.insertIfNeed(skill_ai_list, ai)
     end
   end
-  verbose(1, "======== %s: 开始计算出牌阶段 ========", tostring(self))
-  verbose(1, "待选技能：[%s]", table.concat(table.map(skill_ai_list, function(ai) return ai.skill.name end), ", "))
+  if self._debug then
+    verbose(1, "======== %s: 开始计算出牌阶段 ========", tostring(self))
+    verbose(1, "待选技能：[%s]", table.concat(table.map(skill_ai_list, function(ai) return ai.skill.name end), ", "))
+  end
 
   local value_func = function(ai)
     if not ai then return -500 end
@@ -454,22 +347,31 @@ function SmartAI:handleAskForUseCard(data)
 
   local best_ret, best_val = "", -100000
   for _, ai, val in fk.sorted_pairs(skill_ai_list, value_func) do
-    verbose(1, "[*] 考虑 %s (预估收益%g)", ai.skill.name, val)
+    if self._debug then
+      verbose(1, "[*] 考虑 %s (预估收益%g)", ai.skill.name, val)
+    end
     self:selectSkill(ai.skill.name, true)
     local ret, real_val = ai:think(self)
-    verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill.name, json.encode(ret), json.encode(real_val))
+    if self._debug then
+      verbose(1, "%s: 思考结果是%s, 收益是%s", ai.skill.name, json.encode(ret), json.encode(real_val))
+    end
     real_val = real_val or -100000
     -- if ret and ret ~= "" then return ret end
     if best_val < real_val then
-      verbose(1, "将决策%s换成更好的%s (收益%g => %g)", json.encode(best_ret), json.encode(ret), best_val, real_val)
+      if self._debug then
+        verbose(1, "将决策%s换成更好的%s (收益%g => %g)", json.encode(best_ret), json.encode(ret), best_val, real_val)
+      end
       best_ret, best_val = ret, real_val
     end
     self:unSelectAll()
   end
-  verbose(1, "推测出最佳决策是%s", json.encode(best_ret))
+  if self._debug then
+    verbose(1, "推测出最佳决策是%s", json.encode(best_ret))
+  end
   if best_ret and best_ret ~= "" then return best_ret end
   return ""
 end
+--]==]
 
 -- 敌友判断相关。
 -- 目前才开始，做个明身份打牌的就行了。
@@ -492,6 +394,57 @@ end
 
 -- sorted_pairs 见 core/util.lua
 
+---@param tab ServerPlayer[]
+---@param key "hp"|"handcard"|"handcard_defense"|"value"|"taunt"|"defense"|"threat"
+---@param reverse boolean?
+function SmartAI:sortPlayers(tab, key, reverse)
+end
+
+---@param card integer|Card
+---@return number
+function SmartAI:getKeepValue(card)
+  if type(card) == "number" then
+    card = Fk:getCardById(card)
+  end
+  ---@cast card -integer
+
+  local strategy = self:findStrategyOfSkill(AI.CardSkillStrategy, card.skill.name)
+  local ret = 0
+  if strategy then
+    -- TODO: 可能可以是function
+    ret = strategy.keep_value
+  end
+
+  -- TODO: 可能可以类似状态技一样给Room挂点状态技性质策略
+  -- TODO: 这样那些策略会影响某些卡的keep value
+
+  return ret
+end
+
+-- 将卡牌id数组按照某种估值方针从小到大原地排序
+---@param tab integer[]
+---@param key "keep_value"|"use_value"|"use_priority"
+---@param reverse boolean? 是否反过来排序（从大到小）
+function SmartAI:sortCards(tab, key, reverse)
+  -- value_tab是必须的，因为table.sort每轮比较时都会调用一次fun(a,b)
+  -- 太阳神卡慢的点之一就是没有提前计算出结果
+  local value_tab = {}
+  for _, id in ipairs(tab) do
+    if key == "keep_value" then
+      value_tab[id] = self:getKeepValue(id)
+    end
+  end
+
+  table.sort(tab, function(a, b)
+    local va, vb = value_tab[a], value_tab[b]
+    if reverse then
+      return va > vb
+    else
+      return va < vb
+    end
+  end)
+end
+
 -- 基于事件的收益推理；内置事件
 --=================================================
 
@@ -507,40 +460,6 @@ end
 
 -- 封装一些简单策略
 -- ========================================
-
----@class AIAskToDiscardParams: AskToUseActiveSkillParams
----@field skill_name string @ 技能名
----@field min_num integer @ 最小值
----@field max_num integer @ 最大值
-
---- 弃牌
----@param params AIAskToDiscardParams @ 各种变量
----@return integer[], integer @ 本次弃牌收益最大的一种情况，返回选择的卡牌和收益
-function SmartAI:askToDiscard(params)
-  local cards = self:getEnabledCards()
-  params.skill_name = params.skill_name or ""
-  params.max_num = math.min(params.max_num, #cards)
-  local benefit, ret = -100000, {}
-  if #cards < params.min_num then
-    ret = cards
-    benefit = self:getBenefitOfEvents(function(logic)
-      logic:throwCard(cards, params.skill_name, self.player, self.player)
-    end)
-  else
-    cards = self:getChoiceCardsByKeepValue(cards, math.min(params.max_num, #cards))
-    for i = params.min_num, params.max_num do
-      local ids = table.slice(cards, 1, i + 1)
-      local discard_val = self:getBenefitOfEvents(function(logic)
-        logic:throwCard(ids, params.skill_name, self.player, self.player)
-      end)
-      if discard_val > benefit then
-        benefit = discard_val
-        ret = ids
-      end
-    end
-  end
-  return ret, benefit
-end
 
 ---@class AIAskToChooseCardsParams
 ---@field cards integer[] @ 被选择的牌

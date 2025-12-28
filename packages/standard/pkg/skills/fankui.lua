@@ -26,26 +26,26 @@ fankui:addEffect(fk.Damaged, {
   end
 })
 
-fankui:addAI({
-  think_skill_invoke = function(self, ai, skill_name, prompt)
+fankui:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
     ---@type DamageData
     local dmg = ai.room.logic:getCurrentEvent().data
     local player = ai.player
     local from = dmg.from
-    if not from then return false end
+    local ret, benefit = player.ai:askToChooseCards({
+      cards = from:getCardIds("hej"),
+      skill_name = fankui.name,
+      data = {
+        to_place = Card.PlayerHand,
+        target = player,
+        reason = fk.ReasonPrey,
+        proposer = player,
+      },
+    })
     local val = ai:getBenefitOfEvents(function(logic)
-      local flag = from == player and "e" or "he"
-      local cards = from:getCardIds(flag)
-      if #cards < 1 then
-        logic.benefit = -1
-        return
-      end
-      logic:obtainCard(player, cards[1], false, fk.ReasonPrey)
+      logic:obtainCard(player, ret[1], false, fk.ReasonPrey, player, fankui.name)
     end)
-    if val > 0 then
-      return true
-    end
-    return false
+    return val > 0
   end,
 })
 

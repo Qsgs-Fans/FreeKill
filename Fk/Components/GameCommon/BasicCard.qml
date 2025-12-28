@@ -6,6 +6,8 @@ import Fk
 BasicItem {
   id: root
 
+  property bool enabledDynamicImage: false
+
   property bool known: true     // if false it only show a card back
 
   property url cardFrontSource
@@ -27,11 +29,10 @@ BasicItem {
     }
   }
 
-  Image {
+  MediaArea {
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
-    source: parent.known ? parent.cardFrontSource : parent.cardBackSource
-    asynchronous: true
+    source: root.known ? root.cardFrontSource : root.cardBackSource
   }
 
   Text {

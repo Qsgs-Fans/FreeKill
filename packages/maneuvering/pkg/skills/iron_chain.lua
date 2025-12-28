@@ -13,6 +13,14 @@ skill:addEffect("cardskill", {
   end,
 })
 
-skill:addAI(nil, "__card_skill")
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.34,
+  use_value = 5.4,
+  use_priority = 9.1,
+
+  on_effect = function(self, logic, effect)
+    logic:setPlayerProperty(effect.to, "chained", not effect.to.chained)
+  end,
+})
 
 return skill

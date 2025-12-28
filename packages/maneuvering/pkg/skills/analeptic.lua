@@ -63,8 +63,24 @@ analepticSkill:addEffect(fk.TurnEnd, {
   end,
 })
 
-analepticSkill:addAI(nil, "__card_skill")
-analepticSkill:addAI(nil, "default_card_skill")
+analepticSkill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 4.1,
+  use_value = 5.98,
+  use_priority = 3.0,
+
+  on_effect = function (self, logic, effect)
+    if effect.extra_data and effect.extra_data.analepticRecover then
+      logic:recover({
+        who = effect.to,
+        num = 1,
+        recoverBy = effect.from,
+        card = effect.card,
+      })
+    else
+      Util.TrueFunc()
+    end
+  end
+})
 
 analepticSkill:addTest(function(room, me)
   local analeptic = room:printCard("analeptic")

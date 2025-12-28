@@ -13,10 +13,10 @@ jizhi:addEffect(fk.CardUsing, {
   end,
 })
 
-jizhi:addAI({
-  think_skill_invoke = function(self, ai, skill_name, prompt)
+jizhi:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
     return ai:getBenefitOfEvents(function(logic)
-      logic:drawCards(ai.player, 1, self.skill.name)
+      logic:drawCards(ai.player, 1, self.skill_name)
     end) > 0
   end,
 })

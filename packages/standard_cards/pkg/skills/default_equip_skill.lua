@@ -13,43 +13,17 @@ skill:addEffect("cardskill", {
   can_use = Util.CanUseToSelf,
 })
 
-skill:addAI(
-  {
-    on_use = function(self, logic, effect)
-      self.skill:onUse(logic, effect)
-    end,
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 2.02,
+  use_value = 2.04,
+  use_priority = 4.1,
 
-    think = function(self, ai)
-      local estimate_val = self:getEstimatedBenefit(ai)
-      local cards = ai:getEnabledCards()
-      cards = table.filter(cards, function(cid) return Fk:getCardById(cid).skill.name == "default_equip_skill" end)
-      cards = table.random(cards, math.min(#cards, 5)) --[[@as integer[] ]]
-      -- local cid = table.random(cards)
-
-      local best_ret, best_val = "", -100000
-      for _, cid in ipairs(cards) do
-        ai:selectCard(cid, true)
-        local ret, val = self:chooseTargets(ai)
-        val = val or -100000
-        if best_val < val then
-          best_ret, best_val = ret, val
-        end
-        if best_val >= estimate_val then break end
-        ai:unSelectAll()
-      end
-
-      if best_ret and best_ret ~= "" then
-        if best_val < 0 then
-          return ""
-        end
-
-        best_ret = { card = ai:getSelectedCard().id, targets = best_ret }
-      end
-
-      return best_ret, best_val
-    end,
-  }, "__card_skill"
-)
+  on_use = function(self, logic, use)
+    if not use.tos or #use.tos == 0 then
+      use.tos = { use.from }
+    end
+  end,
+})
 
 skill:addTest(function(room, me)
   local spear = room:printCard("spear")

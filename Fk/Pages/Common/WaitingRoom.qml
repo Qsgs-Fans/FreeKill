@@ -567,6 +567,11 @@ W.PageBase {
     checkAllReady();
   }
 
+  function restartGame(sender) {
+    loadPlayerData(sender);
+    Cpp.notifyServer("StartGame", "");
+  }
+
   function startGame() {
     canKickOwner = false;
     kickOwnerTimer.stop();
@@ -604,6 +609,7 @@ W.PageBase {
     roominfo.refresh();
 
     checkAllReady();
+    checkCanAddRobot();
     if (getPhoto(-1)) {
       isFull = false;
     } else {
@@ -623,6 +629,7 @@ W.PageBase {
 
     addCallback(Command.StartGame, startGame);
     addCallback(Command.BackToRoom, loadPlayerData);
+    addCallback(Command.RestartGame, restartGame);
 
     addCallback(Command.ChangeRoom, changeRoomConfig);
 

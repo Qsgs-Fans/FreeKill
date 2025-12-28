@@ -89,7 +89,7 @@ Item {
         Layout.fillWidth: true
         Layout.preferredHeight: 40
         text: Lua.tr("OK")
-        // enabled: !(warning.visible)
+        enabled: Lua.evaluate(`Fk.game_modes['${Config.preferedMode}'] ~= nil`)
         onClicked: {
           Config.saveConf();
           root.finish();

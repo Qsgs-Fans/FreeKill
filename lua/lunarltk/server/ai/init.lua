@@ -6,6 +6,7 @@ TrustAI = require "lunarltk.server.ai.trust_ai"
 
 SmartAI = require "lunarltk.server.ai.smart_ai"
 
+--[[
 for _, pname in ipairs(Fk.package_names) do
   local pack = Fk.packages[pname]
   for _, skel in ipairs(pack.skill_skels) do
@@ -53,3 +54,4 @@ end
 if UsingNewCore then
   FileIO.cd("packages/freekill-core")
 end
+--]]

@@ -109,6 +109,8 @@ Fk:loadTranslationTable {
   ["help: Enable free assign"] = "启用后在选将界面长按或右键武将牌。",
   ["Enable deputy general"] = "启用副将机制",
   ["help: Enable deputy general"] = "请注意部分模式本身不支持副将机制。",
+  ["Observer can view card"] = "旁观者可见手牌",
+  ["help: Observer can view card"] = "开启后，旁观者将可以看到其视角下的牌，包括切换视角后",
   ["General Settings"] = "通常设置",
   ["Package Settings"] = "拓展包设置",
   ["General Packages"] = "武将拓展包",
@@ -295,6 +297,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Skill Name"] = "技能名称",
   ["Skill Description"] = "技能描述",
   ["Audio Text"] = "语音文本",
+  ["Other Same Name Generals"] = "其他同名武将",
   ["Death audio"] = "阵亡",
   ["Win audio"] = "胜利",
   ["Official"] = "官方",
@@ -494,6 +497,7 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Impasse Strike"] = "绝境逆袭",
 
   ["Back To Room"] = "回到房间",
+  ["Continue Game"] = "继续游戏",
   ["Back To Lobby"] = "返回大厅",
   ["Save Replay"] = "保存录像",
 
@@ -673,8 +677,8 @@ Fk:loadTranslationTable {
 
   ["$AddToPile"] = "%arg2 张牌 %card 被作为 %from 的 %arg 移出游戏",
 
-  ["$PutCard"] = "%from 的 %arg 张牌被置于牌堆",
-  ["$PutKnownCard"] = "%from 的牌 %card 被置于牌堆",
+  ["$PutCard"] = "%from 的 %arg2 张牌 %card 被置于 %arg",
+  ["$PutCardNoFrom"] = "%arg2 张牌 %card 被置于 %arg",
   ["$DiscardCards"] = "%from 弃置了 %arg 张牌 %card",
   ["$DiscardOther"] = "%to 弃置了 %from 的 %arg 张牌 %card",
   ["$PutToDiscard"] = "%arg 张牌 %card 被置入弃牌堆",

@@ -19,5 +19,42 @@ distributionSelectSkill:addEffect("active", {
   end,
 })
 
+distributionSelectSkill:addAI(Fk.Ltk.AI.newActiveStrategy {
+  think = function(self, ai)
+    local data = ai.data[4]
+    local orig = Fk.skills[data.skillName] or distributionSelectSkill
+    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseStrategy, orig.name)
+    if not strategy then
+      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseStrategy, distributionSelectSkill.name)
+      ---@cast strategy -nil
+    end
+
+    local cards, card_benefit = strategy:chooseCards(ai)
+    local players, player_benefit = strategy:choosePlayers(ai)
+    if cards then
+      return { cards, players }, (card_benefit * player_benefit) or 0
+    end
+  end,
+})
+
+distributionSelectSkill:addAI(Fk.Ltk.AI.newYijiStrategy {
+  choose_cards = function (self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_cards = ai:getEnabledCards()
+
+    if ai.data[3] --[[ cancelable ]] or data.pattern == "" then return {}, 0 end
+
+    return table.random(available_cards, data.max_num), 0
+  end,
+  choose_players = function(self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_players = ai:getEnabledTargets()
+
+    if ai.data[3] --[[ cancelable ]] then return {}, 0 end
+
+    return table.random(available_players, 1), 0
+  end
+})
+
 
 return distributionSelectSkill

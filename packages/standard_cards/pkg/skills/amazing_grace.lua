@@ -50,17 +50,21 @@ skill:addEffect("cardskill", {
       use.extra_data.AGFilled = nil
     end
   end,
+  about_to_effect = function(self, room, effect)
+    if not (effect.extra_data and next(effect.extra_data.AGFilled or {})) then
+      return true
+    end
+  end,
   on_effect = function(self, room, effect)
     local to = effect.to
-    if not (effect.extra_data and effect.extra_data.AGFilled) then
-      return
-    end
 
     local chosen = room:askToAG(to, { id_list = effect.extra_data.AGFilled, cancelable = false, skill_name = self.name })
     room:takeAG(to, chosen, room.players)
     table.insert(effect.extra_data.AGResult, {effect.to.id, chosen})
     room:moveCardTo(chosen, Card.PlayerHand, effect.to, fk.ReasonPrey, self.name, nil, true, effect.to)
-    table.removeOne(effect.extra_data.AGFilled, chosen)
+    effect.extra_data.AGFilled = table.filter(effect.extra_data.AGFilled, function(id)
+      return room:getCardArea(id) == Card.Processing
+    end)
   end,
 })
 
@@ -76,5 +80,11 @@ skill:addTest(function(room, me)
   lu.assertEquals(#room.players[2]:getCardIds("h"), 1)
   lu.assertEquals(#room.players[3]:getCardIds("h"), 1)
 end)
+
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = -1,
+  use_value = 3,
+  use_priority = 1.2,
+})
 
 return skill

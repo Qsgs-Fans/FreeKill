@@ -36,8 +36,8 @@ keji:addEffect(fk.EventPhaseChanging, {
   end,
 })
 
-keji:addAI({
-  think_skill_invoke = Util.TrueFunc,
+keji:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = Util.TrueFunc
 })
 
 keji:addTest(function(room, me)

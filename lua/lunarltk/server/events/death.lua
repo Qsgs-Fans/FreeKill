@@ -34,7 +34,6 @@ function Dying:main()
   logic:trigger(fk.EnterDying, dyingPlayer, dyingData)
 
   if dyingPlayer.hp < 1 then
-    -- room.logic:trigger(fk.Dying, dyingPlayer, dyingStruct)
     local savers = room:getAlivePlayers()
     for _, p in ipairs(savers) do
       if not p.dead then
@@ -43,6 +42,7 @@ function Dying:main()
         end
       end
     end
+    -- 在GameRule中，通过触发技进行killPlayer
     logic:trigger(fk.AskForPeachesDone, dyingPlayer, dyingData)
   end
 end

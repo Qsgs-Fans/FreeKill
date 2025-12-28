@@ -11,6 +11,7 @@
 ---@field public fix_user? integer @ 修改使用者（盼睇）
 ---@field public bypass_distances? boolean @ 无距离限制？
 ---@field public bypass_times? boolean @ 无次数限制？
+---@field public extraUse? boolean @ 不计入次数？
 ---@field public not_passive? boolean @ 禁止使用被动牌（用于模拟出牌阶段空闲时使用）
 ---@field public extra_effect? table<integer, function> @ 特殊的卡牌效果
 ---@field public playing? boolean @ (AI专用) 出牌阶段？

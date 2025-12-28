@@ -85,6 +85,12 @@ function Engine:initialize()
   self.target_tips = {}
   self.choose_general_rule = {}
   self.skin_packages = {}
+
+  self.Ltk = {
+    AIStrategy = require 'lunarltk.server.ai.strategy',
+
+    AI = require 'lunarltk.server.ai.strategies',
+  }
 end
 
 function Engine:load()

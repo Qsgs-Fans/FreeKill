@@ -9,8 +9,8 @@ yingzi:addEffect(fk.DrawNCards, {
   end,
 })
 
-yingzi:addAI({
-  think_skill_invoke = Util.TrueFunc,
+yingzi:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = Util.TrueFunc
 })
 
 yingzi:addTest(function(room, me)

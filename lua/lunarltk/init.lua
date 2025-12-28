@@ -39,6 +39,15 @@ local settings = {
       title = "Enable deputy general",
     },
   },
+
+  W.PreferenceGroup {
+    title = "Observe",
+
+    W.SwitchRow {
+      _settingsKey = "enableObserverViewCard",
+      title = "Observer can view card",
+    }
+  }
 }
 
 Fk:addBoardGame {

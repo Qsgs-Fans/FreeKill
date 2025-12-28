@@ -1,10 +1,10 @@
 local skill_name = "discard_skill"
 
-local skill = fk.CreateSkill{
+local _skill = fk.CreateSkill{
   name = skill_name,
 }
 
-skill:addEffect('active', {
+_skill:addEffect('active', {
   card_filter = function(self, player, to_select, selected)
     if #selected >= self.num then
       return false
@@ -53,18 +53,47 @@ skill:addEffect('active', {
   max_card_num = function(self, player) return self.num end,
 })
 
-skill:addAI({
+_skill:addAI(Fk.Ltk.AI.newActiveStrategy {
   think = function(self, ai)
-    local to_discard, _ = ai:askToDiscard({
-      min_num = self.skill.min_num,
-      max_num = self.skill.num,
-      skill_name = self.skill.name,
-      cancelable = self.skill.cancelable,
-    })
-    if #to_discard > 0 then
-      return { cards = to_discard }
+    local data = ai.data[4]
+    local skill = Fk.skills[data.skillName] or _skill
+    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.DiscardStrategy, skill.name)
+    if not strategy then
+      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.DiscardStrategy, _skill.name)
+      ---@cast strategy -nil
+    end
+
+    local cards, benefit = strategy:chooseCards(ai)
+    if cards then
+      return { cards, {} }, benefit or 0
     end
   end,
 })
 
-return skill
+_skill:addAI(Fk.Ltk.AI.newDiscardStrategy {
+  choose_cards = function(self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_cards = ai:getEnabledCards()
+
+    if ai.data[3] --[[ cancelable ]] then return {}, 0 end
+    -- TODO: cancelable分支下可能由于某些技能导致自己有点想要弃牌（如扔掉狮子）
+
+    local num = data.num
+    local min_num = data.min_num
+
+    ai:sortCards(available_cards, "keep_value")
+    if ai._debug then
+      verbose(0, "[默认弃牌AI] 已完成卡牌的排序，排序后的卡牌为%s", table.concat(
+        table.map(available_cards, function(id)
+          local cd = Fk:getCardById(id)
+          local log = cd:toLogString()
+          local v = ai:getKeepValue(id)
+          return ("%s(id=%s, v=%s)"):format(log, id, v)
+        end), ","))
+    end
+    -- TODO: 收益忘了，乱写的
+    return table.slice(available_cards, 1, min_num + 1), -10 * min_num
+  end,
+})
+
+return _skill

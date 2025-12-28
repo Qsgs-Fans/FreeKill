@@ -20,6 +20,8 @@ Item {
     return fav.includes(g);
   }
 
+  signal changeGeneralDetailInside(string to_general)
+
   onGeneralChanged: {
     generalText.clear();
     generalText.clearSavedText();
@@ -188,6 +190,23 @@ Item {
 
       otherText.append(winRateTxt);
     });
+  }
+
+  function getSameNameGenerals(general) {
+    if (general === undefined) return [];
+    let generals = Lua.evaluate(`(function(general)
+      local trueName = (Fk.generals[general] or {}).trueName
+      local generals = {}
+      if trueName then
+        for i, g in pairs(Fk.generals) do
+          if g.trueName == trueName and i ~= general then
+            table.insert(generals, i)
+          end
+        end
+      end
+      return generals
+    end)("${general}")`)
+    return generals
   }
 
   Component {
@@ -583,7 +602,7 @@ Item {
 
       Flickable {
         clip: true
-        contentHeight: audioLayout.height
+        contentHeight: otherText.height
         TextEdit {
           id: otherText
           width: parent.width - 4
@@ -597,6 +616,30 @@ Item {
           font.pixelSize: 18
         }
       }
+
+      Flickable {
+        clip: true
+        contentHeight: otherSameLayout.height
+        GridLayout {
+          id: otherSameLayout
+          columns: 5
+          columnSpacing: 5
+          rowSpacing: 5
+          Repeater {
+            model: root.getSameNameGenerals(root.general)
+            delegate: GeneralCardItem {
+              id: sameNameGeneralCard
+              name: modelData
+              scale: 1; transformOrigin: Item.TopLeft
+
+              onClicked: {
+                drawerBar.currentIndex = 0;
+                root.changeGeneralDetailInside(modelData)
+              }
+            }
+          }
+        }
+      }
     }
 
     W.ViewSwitcher {
@@ -606,6 +649,7 @@ Item {
         Lua.tr("Skill Description"),
         Lua.tr("Audio Text"),
         Lua.tr("Statistics Overview"),
+        Lua.tr("Other Same Name Generals"),
       ]
     }
   }

@@ -13,20 +13,16 @@ jianxiong:addEffect(fk.Damaged, {
   end,
 })
 
-jianxiong:addAI({
-  think_skill_invoke = function(self, ai, skill_name, prompt)
+jianxiong:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
     ---@type DamageData
     local dmg = ai.room.logic:getCurrentEvent().data
-    local player = ai.player
+    local player = dmg.to
     local card = dmg.card
-    if not card or player.room:getCardArea(card) ~= Card.Processing then return false end
     local val = ai:getBenefitOfEvents(function(logic)
       logic:obtainCard(player, card, true, fk.ReasonJustMove, player, jianxiong.name)
     end)
-    if val > 0 then
-      return true
-    end
-    return false
+    return val > 0
   end,
 })
 

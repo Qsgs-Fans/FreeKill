@@ -135,7 +135,14 @@ RowLayout {
       addSkill(s);
     }
 
-    cards = roomScene.drawPile.remove(Lua.call("GetPlayerHandcards", Self.id));
+    cards = roomScene.drawPile.remove(Lua.call("GetPlayerHandcards", Self.id), null,
+    Lua.fn(`function()
+      local ret = {}
+      for _, cid in ipairs(Self:getCardIds("h")) do
+        ret[tostring(cid)] = Self:cardVisible(cid)
+      end
+      return ret
+    end`)());
     handcardAreaItem.add(cards);
   }
 

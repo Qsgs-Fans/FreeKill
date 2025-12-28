@@ -39,8 +39,8 @@ Item {
       W.SpinRow {
         id: playerNum
         title: Lua.tr("Player num")
-        from: 2
-        to: 12
+        from: 1
+        to: 10
         value: Config.preferedPlayerNum
 
         onValueChanged: {

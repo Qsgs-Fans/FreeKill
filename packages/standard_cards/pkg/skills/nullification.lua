@@ -30,4 +30,9 @@ skill:addTest(function (room, me)
   lu.assertIsTrue(me:isKongcheng())
 end)
 
+skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
+  keep_value = 3.9,
+  use_value = 8,
+})
+
 return skill

@@ -25,4 +25,43 @@ choosePlayersToMoveCardInBoardSkill:addEffect("active", {
   end,
 })
 
+-- choosePlayersToMoveCardInBoardSkill:addAI(Fk.Ltk.AI.newActiveStrategy {
+--   think = function(self, ai)
+--     local data = ai.data[4]
+--     local orig = Fk.skills[data.skillName] or choosePlayersToMoveCardInBoardSkill
+--     local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.MoveBoardStrategy, orig.name)
+--     if not strategy then
+--       strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.MoveBoardStrategy, choosePlayersToMoveCardInBoardSkill.name)
+--       ---@cast strategy -nil
+--     end
+
+--     local from, from_benefit = strategy:chooseMoveFrom(ai)
+--     local to, to_benefit = strategy:chooseMoveTo(ai)
+--     if from and to then
+--       return { nil, { from, to } }, (from_benefit + to_benefit) or 0
+--     end
+--   end,
+-- })
+
+-- choosePlayersToMoveCardInBoardSkill:addAI(Fk.Ltk.AI.newMoveBoardStrategy {
+--   choose_move_from = function(self, ai)
+--     local data = ai.data[4] -- extra_data
+--     local available_players = ai:getEnabledTargets()
+
+--     if ai.data[3] --[[ cancelable ]] then return nil, 0 end
+
+--     table.shuffle(available_players) -- 随机选择以视高深莫测
+--     return table.slice(available_players, 1, 1)[1].id, 0
+--   end,
+--   choose_move_to = function(self, ai)
+--     local data = ai.data[4] -- extra_data
+--     local available_players = ai:getEnabledTargets()
+
+--     if ai.data[3] --[[ cancelable ]] then return nil, 0 end
+
+--     table.shuffle(available_players) -- 随机选择以视高深莫测
+--     return table.slice(available_players, 1, 1)[1].id, 0
+--   end,
+-- })
+
 return choosePlayersToMoveCardInBoardSkill

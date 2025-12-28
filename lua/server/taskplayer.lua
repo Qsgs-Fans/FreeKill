@@ -20,6 +20,21 @@ end
 ---@param key string 存档名
 ---@param data table
 function TaskPlayer:saveGlobalState(key, data)
+  if type(self.task.cTask) ~= "userdata" then
+    -- asio版的情况...
+    local ok, jsonData = pcall(json.encode, data)
+    if ok then
+      local ret = self.task.cTask:savePlayerGlobalState(key, jsonData)
+      if type(ret) == "boolean" then
+        coroutine.yield("__handleRequest")
+      end
+    else
+      fk.qWarning("Failed to encode global save data: " .. jsonData)
+    end
+
+    return
+  end
+
   if not self._splayer then return nil end
   if type(self._splayer.saveGlobalState) ~= "function" then
     fk.qWarning("self._splayer.saveGlobalState doesn't exist, Please ensure that the server version is freekill-asio 0.0.6+")
@@ -40,6 +55,21 @@ end
 ---@param key string 存档名
 ---@return table @ 不存在返回空表
 function TaskPlayer:getGlobalSaveState(key)
+  if type(self.task.cTask) ~= "userdata" then
+    -- asio版的情况...
+    local data = self.task.cTask:getPlayerGlobalSaveState(key)
+    if type(data) == "boolean" then
+      data = coroutine.yield("__handleRequest")
+    end
+    local ok, result = pcall(json.decode, data or "{}")
+    if ok then
+      return result
+    else
+      fk.qWarning("Failed to decode global save data: " .. result)
+      return {}
+    end
+  end
+
   if not self._splayer then return {} end
   if type(self._splayer.getGlobalSaveState) ~= "function" then
     fk.qWarning("self._splayer.getGlobalSaveState doesn't exist, Please ensure that the server version is freekill-asio 0.0.6+")

@@ -504,6 +504,13 @@ Item {
               }
               return ret;
             }
+
+            onClicked: {
+              if (!Config.observing) return;
+              if (observing) return;
+              if (screenName == Self.screenName) return;
+              Lua.evaluate(`ClientInstance:changeSelf(${pid})`)
+            }
           }
         }
       }
@@ -522,7 +529,7 @@ Item {
       const ps = Lua.call("GetPlayersAndObservers");
       ps.forEach(p => {
         playerListModel.append({
-          id: p.id,
+          pid: p.id,
           screenName: p.name,
           general: p.general ?? "",
           deputyGeneral: p.deputy ?? "",
@@ -729,6 +736,14 @@ Item {
     Mediator.notify(this, Command.BackToRoom);
   }
 
+  function continueGame() {
+    Lua.call("ResetClientLua");
+    gameLoader.sourceComponent = Qt.createComponent("Fk.Pages.Common", "WaitingRoom");
+    log.clear();
+    chat.clear();
+    Mediator.notify(this, Command.RestartGame);
+  }
+
   function tryQuitRoom() {
     if (Config.replaying) {
       App.quitPage();
@@ -760,6 +775,7 @@ Item {
     overlay.addCallback(Command.ReplyToServer, replyToServer);
     overlay.addCallback(Command.ChangeRoomPage, changeRoomPage);
     overlay.addCallback(Command.ResetRoomPage, resetRoomPage);
+    overlay.addCallback(Command.ContinueGame, continueGame);
 
     overlay.addCallback(Command.IWantToQuitRoom, tryQuitRoom);
     overlay.addCallback(Command.IWantToSaveRecord, trySaveRecord);

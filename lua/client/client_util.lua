@@ -37,7 +37,7 @@ function GetGeneralDetail(name)
     deputyMaxHp = general.deputyMaxHpAdjustedValue,
     gender = general.gender,
     skill = {},
-    companions = general.companions,
+    companions = {},
     headnote = general.headnote,
     endnote = general.endnote,
   }
@@ -48,9 +48,16 @@ function GetGeneralDetail(name)
       is_related_skill = s[2],
     })
   end
+  local _companions = {}
+  for _, gname in ipairs(general.companions) do
+    local name_splited = gname:split("__")
+    if table.insertIfNeed(_companions, name_splited[#name_splited]) then
+      table.insert(ret.companions, gname) -- 只显示一个（防止trueName没有翻译）
+    end
+  end
   for _, g in pairs(Fk.generals) do
-    if table.contains(g.companions, general.name) then
-      table.insertIfNeed(ret.companions, g.name)
+    if table.contains(g.companions, general.name) and table.insertIfNeed(_companions, g.trueName) then -- 按照name判断
+      table.insertIfNeed(ret.companions, g.name) -- 只显示一个（防止trueName没有翻译）
     end
   end
   return ret

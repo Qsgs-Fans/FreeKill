@@ -9,6 +9,10 @@
 ---@field public handler ReqActiveSkill
 local AI = Fk.Base.AI:subclass("AI")
 
+function AI:initialize(player)
+  Fk.Base.AI.initialize(self, player)
+end
+
 -- activeSkill, responseCard, useCard, playCard 四巨头专属
 function AI:isInDashboard()
   if not (self.handler and self.handler:isInstanceOf(self.room.request_handlers["AskForUseActiveSkill"])) then
@@ -118,15 +122,20 @@ end
 
 function AI:selectCard(cid, selected)
   if not self:isInDashboard() then return end
-  verbose(0,"%s选择卡牌%d(%s)", selected and "" or "取消", cid, tostring(Fk:getCardById(cid)))
   self.handler:update("CardItem", cid, "click", { selected = selected })
+  if self._debug then
+    verbose(0, "[UI] 已%s选择卡牌%d(%s)", selected and "" or "取消", cid, tostring(Fk:getCardById(cid)))
+  end
 end
 
 ---@param player ServerPlayer
 function AI:selectTarget(player, selected)
   if not self:isInDashboard() then return end
-  verbose(0,"%s选择角色%s", selected and "" or "取消", tostring(player))
   self.handler:update("Photo", player.id, "click", { selected = selected })
+
+  if self._debug then
+    verbose(0, "[UI] 已%s选择角色%s", selected and "" or "取消", tostring(player))
+  end
 end
 
 function AI:selectSkill(skill_name, selected)
@@ -134,8 +143,11 @@ function AI:selectSkill(skill_name, selected)
   local items = self.handler.scene.items
   if not items["SkillButton"] then return end
   if not items["SkillButton"][skill_name] then return end
-  verbose(0,"%s选择技能%s", selected and "" or "取消", skill_name)
   self.handler:update("SkillButton", skill_name, "click", { selected = selected })
+
+  if self._debug then
+    verbose(0, "[UI] 已%s选择技能%s", selected and "" or "取消", skill_name)
+  end
 end
 
 function AI:unSelectAllCards()

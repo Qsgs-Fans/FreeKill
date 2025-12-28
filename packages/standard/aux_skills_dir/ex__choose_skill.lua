@@ -53,4 +53,41 @@ exChooseSkill:addEffect('active', {
   max_card_num = function(self) return self.max_c_num end,
 })
 
+exChooseSkill:addAI(Fk.Ltk.AI.newActiveStrategy {
+  think = function(self, ai)
+    local data = ai.data[4]
+    local orig = Fk.skills[data.skillName] or exChooseSkill
+    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseCardsAndPlayersStrategy, orig.name)
+    if not strategy then
+      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseCardsAndPlayersStrategy, exChooseSkill.name)
+      ---@cast strategy -nil
+    end
+
+    local cards, card_benefit = strategy:chooseCards(ai)
+    local players, player_benefit = strategy:choosePlayers(ai)
+    if cards then
+      return { cards, players }, (card_benefit * player_benefit) or 0
+    end
+  end,
+})
+
+exChooseSkill:addAI(Fk.Ltk.AI.newChooseCardsAndPlayersStrategy {
+  choose_cards = function (self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_cards = ai:getEnabledCards()
+
+    if ai.data[3] --[[ cancelable ]] or data.min_c_num == 0 then return {}, 0 end
+
+    return table.random(available_cards, data.min_c_num), 0
+  end,
+  choose_players = function(self, ai)
+    local data = ai.data[4] -- extra_data
+    local available_players = ai:getEnabledTargets()
+
+    if ai.data[3] --[[ cancelable ]] or data.min_t_num == 0 then return {}, 0 end
+
+    return table.random(available_players, data.min_t_num), 0
+  end
+})
+
 return exChooseSkill
