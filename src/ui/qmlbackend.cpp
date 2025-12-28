@@ -73,9 +73,15 @@ bool QmlBackend::isDir(const QString &file) {
 
 QJsonObject QmlBackend::readJsonObjectFromFile(const QString &file) {
   QJsonObject jsonObject;
+  QString s = file;
+
+#ifdef Q_OS_WIN
+  if (d.startsWith("file:///"))
+    d.replace(0, 8, "file://");
+#endif
 
   // Open the file
-  QFile jsonFile(file);
+  QFile jsonFile(QUrl(s).path());
   if (!jsonFile.open(QIODevice::ReadOnly)) {
     qWarning() << "Failed to open file:" << file;
     return jsonObject; // Return empty object on failure

@@ -3,7 +3,6 @@
     "/lua",
     "/packages/*",
     "!/packages/freekill-core",
-    "!/packages/lunarltk",
     "!/packages/utility",
     "test_*.lua"
   ],
