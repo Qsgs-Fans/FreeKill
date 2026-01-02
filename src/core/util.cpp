@@ -68,7 +68,9 @@ QString calcFileMD5() {
 
   // then, return flist.txt's md5
   flist.close();
-  flist.open(QIODevice::ReadOnly);
+  if (!flist.open(QIODevice::ReadOnly)) {
+    qFatal("Cannot open flist.txt. Quitting.");
+  }
   auto ret = QCryptographicHash::hash(flist.readAll(), QCryptographicHash::Md5);
 
   flist.close();

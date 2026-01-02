@@ -324,6 +324,15 @@ int freekill_main(int argc, char *argv[]) {
 #ifdef Q_OS_WIN32
   // 设置 QML 使用 OpenGL 渲染
   QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+#elif defined(Q_OS_ANDROID)
+  // 设置 QML 使用 OpenGL 渲染
+  QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+  // 在此基础上再指定使用OpenGL ES
+  {
+    auto fmt = QSurfaceFormat::defaultFormat();
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+    QSurfaceFormat::setDefaultFormat(fmt);
+  }
 #endif
 
 #define SHOW_SPLASH_MSG(msg)                                                   \

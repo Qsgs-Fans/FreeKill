@@ -658,7 +658,7 @@ void Room::kickPlayer(ServerPlayer *player, const QByteArray &jsonData) {
   if (p && !isStarted()) {
     removePlayer(p);
     addRejectId(i);
-    QTimer::singleShot(30000, this, [=]() {
+    QTimer::singleShot(30000, this, [=, this] {
         removeRejectId(i);
         });
   }

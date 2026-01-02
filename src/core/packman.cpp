@@ -49,7 +49,7 @@ QString PackMan::getPackSummary() {
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
-  auto f = [=]() {
+  auto f = [=, this] {
     // First, disable all packages
     for (auto e : db->select("SELECT name FROM packages;")) {
       disablePack(e["name"]);
@@ -132,7 +132,7 @@ int PackMan::downloadNewPack(const QString &url, bool useThread) {
   static auto sql_update = QString("INSERT INTO packages (name,url,hash,enabled) \
       VALUES ('%1','%2','%3',1);");
 
-  auto threadFunc = [=]() -> int {
+  auto threadFunc = [=, this] {
     int err = clone(url);
     // if (err < 0) {
     //   return err;

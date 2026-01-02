@@ -59,7 +59,9 @@ AuthManager::AuthManager() {
   p_ptr = new AuthManagerPrivate;
 
   QFile file("server/rsa_pub");
-  file.open(QIODevice::ReadOnly);
+  if (!file.open(QIODevice::ReadOnly)) {
+    qFatal("Cannot open server/rsa_pub");
+  }
   QTextStream in(&file);
   public_key = in.readAll();
 }

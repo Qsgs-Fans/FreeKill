@@ -224,7 +224,7 @@ void Client::saveRecord(const QByteArray &json, const QString &fname) {
     QDir(".").mkdir("recording");
   }
   QFile c("recording/" + fname + ".fk.rep");
-  c.open(QIODevice::WriteOnly);
+  if (!c.open(QIODevice::WriteOnly)) return;
   c.write(qCompress(json));
   c.close();
 }

@@ -39,7 +39,7 @@ Server::Server(QObject *parent) : QObject(parent) {
   m_lobby = new Lobby(this);
 
   // 启动心跳包线程
-  auto heartbeatThread = QThread::create([=]() {
+  auto heartbeatThread = QThread::create([=, this] {
     while (true) {
       for (auto p : this->players.values()) {
         if (p->getState() == Player::Online) {
@@ -353,7 +353,7 @@ void Server::temporarilyBan(int playerId) {
   temp_banlist.append(addr);
 
   auto time = getConfig("tempBanTime").toInt();
-  QTimer::singleShot(time * 60000, this, [=]() {
+  QTimer::singleShot(time * 60000, this, [=, this] {
       temp_banlist.removeOne(addr);
       });
   emit player->kicked();
