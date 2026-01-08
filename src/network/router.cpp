@@ -182,7 +182,5 @@ void Router::handlePacket(const QCborArray &packet) {
 }
 
 void Router::sendMessage(const QByteArray &msg) {
-  auto connType = qApp->thread() == QThread::currentThread()
-    ? Qt::DirectConnection : Qt::BlockingQueuedConnection;
-  QMetaObject::invokeMethod(qApp, [&]() { emit messageReady(msg); }, connType);
+  emit messageReady(msg);
 }
