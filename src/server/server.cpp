@@ -169,7 +169,7 @@ void Server::updateRoomList(ServerPlayer *teller) {
     obj << !password.isEmpty();
     obj << room->isOutdated();
 
-    if (count == cap)
+    if (count >= cap)
       arr << obj;
     else
       avail_arr << obj;
