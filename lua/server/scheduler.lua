@@ -126,9 +126,8 @@ local function resumeTask(taskId, reason)
 end
 
 function ResumeRoom(roomId, reason)
-  if roomId < 0 then
-    return resumeTask(roomId, reason)
-  end
+  -- 经典负id干别的
+  if roomId < 0 then return resumeTask(roomId, reason) end
 
   local room = requestRoom:getRoom(roomId)
   if not room then return false end

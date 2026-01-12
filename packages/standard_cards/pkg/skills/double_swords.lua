@@ -30,4 +30,8 @@ skill:addEffect(fk.TargetSpecified, {
   end,
 })
 
+skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = Util.TrueFunc,
+})
+
 return skill

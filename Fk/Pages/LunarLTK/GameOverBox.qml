@@ -7,6 +7,7 @@ import Qt.labs.qmlmodels
 
 import Fk
 import Fk.Components.Common
+import Fk.Components.LunarLTK
 
 GraphicsBox {
   property string winner: "tobechanged"
@@ -151,9 +152,9 @@ GraphicsBox {
     if (!summaryData || summaryData.length === 0) {
       return;
     }
-    Lua.call("FindMosts");
+    Ltk.findMosts();
     summaryData.forEach((s, index) => {
-      let _s = Lua.call("Entitle", s, index, winner);
+      let _s = Ltk.entitle(s, index, winner);
       _s.turn = s.turn.toString();
       _s.recover = s.recover.toString();
       _s.damage = s.damage.toString();

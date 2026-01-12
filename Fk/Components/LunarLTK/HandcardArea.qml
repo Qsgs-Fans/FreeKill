@@ -2,6 +2,7 @@
 
 import QtQuick
 import Fk
+import Fk.Components.LunarLTK
 
 Item {
   id: area
@@ -38,7 +39,7 @@ Item {
     card.markVisible = true;
     card.autoBack = true;
     // 只有会被频繁刷新的手牌才能拖动
-    // card.draggable = Lua.call("CanSortHandcards", Self.id);
+    // card.draggable = Ltk.canSortHandcards(Self.id);
     card.selectable = false;
     card.clicked.connect(selectCard);
     card.clicked.connect(adjustCards);
@@ -171,7 +172,7 @@ Item {
     }
 
     if (sortable && movepos != null) {
-      const handcardnum = Lua.call("GetPlayerHandcards", Self.id).length; // 不计入expand_pile
+      const handcardnum = Ltk.getPlayerHandcards(Self.id).length; // 不计入expand_pile
       const isMyHandcard = Lua.evaluate(`ClientInstance:getCardArea(${_card.cid}) == Card.PlayerHand and ClientInstance:getCardOwner(${_card.cid}) == Self`);
       if (isMyHandcard) {
         if (movepos >= handcardnum) movepos = handcardnum - 1;
@@ -221,7 +222,7 @@ Item {
   }
 
   function applyChange(uiUpdate) {
-    area.sortable = Lua.call("CanSortHandcards", Self.id);
+    area.sortable = Ltk.canSortHandcards(Self.id);
     uiUpdate["CardItem"]?.forEach(cdata => {
       for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
@@ -236,7 +237,7 @@ Item {
     for (let i = 0; i < cards.length; i++) {
       const card = cards[i];
       if (!card.selectable) {
-        const reason = Lua.call("GetCardProhibitReason", card.cid);
+        const reason = Ltk.getCardProhibitReason(card.cid);
         card.prohibitReason = reason;
       }
     }

@@ -47,7 +47,7 @@ ColumnLayout {
         }
       }
       Component.onCompleted: {
-        setData(Lua.call("GetCardData", modelData.cid));
+        setData(Ltk.getCardData(modelData.cid));
       }
     }
   }

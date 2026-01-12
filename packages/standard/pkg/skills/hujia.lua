@@ -53,9 +53,10 @@ hujia:addEffect(fk.AskForCardResponse, hujia_spec)
 hujia:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = function(self, ai)
     for _, p in ipairs(ai.player.room.alive_players) do
-      if ai:isFriend(p) and p.kingdom == "wei" and #table.filter(ai.player:getHandlyIds(), function(cid)
-            return Fk:getCardById(cid).trueName == "jink"
-          end) <= 1 then
+      if ai:isFriend(p) and p.kingdom == "wei" and
+        (p:hasSkill("#eight_diagram_skill") or #table.filter(ai.player:getHandlyIds(), function(cid)
+          return Fk:getCardById(cid).trueName == "jink"
+        end) <= 1) then
         return true
       end
     end

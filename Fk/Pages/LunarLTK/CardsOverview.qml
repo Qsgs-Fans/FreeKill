@@ -120,8 +120,8 @@ W.PageBase {
     }
     onFinished: {
       const pkg = listView.model.get(listView.currentIndex).name;
-      const idList = Lua.call("GetCards", pkg);
-      const cardList = idList.map(id => Lua.call("GetCardData", id));
+      const idList = Ltk.getCards(pkg);
+      const cardList = idList.map(id => Ltk.getCardData(id));
 
       const groupedCardList = [];
       let groupedCards = {};
@@ -197,7 +197,7 @@ W.PageBase {
     property int cid: 1
     property var cards
     function updateCard() {
-      const data = Lua.call("GetCardData", cid);
+      const data = Ltk.getCardData(cid);
       detailFlickable.contentY = 0; // 重置滚动条
       const suitTable = {
         spade: "♠", heart: '<font color="red">♥</font>',
@@ -220,7 +220,7 @@ W.PageBase {
       audioRow.clear();
       cardText.append(Lua.tr(":" + data.name));
       addCardAudio(data)
-      const skills = Lua.call("GetCardSpecialSkills", cid);
+      const skills = Ltk.getCardSpecialSkills(cid);
       if (skills.length > 0) {
         cardText.append("<br/>" + Lua.tr("Special card skills:"));
         skills.forEach(t => {
@@ -319,7 +319,7 @@ W.PageBase {
                 font.pixelSize: 14
               }
               onClicked: {
-                const data = Lua.call("GetCardData", cardDetail.cid);
+                const data = Ltk.getCardData(cardDetail.cid);
                 let path;
                 if (audioType === "male" || audioType === "female") {
                   path = SkinBank.getAudio(data.name, extension, "card/" + audioType);
@@ -369,7 +369,7 @@ W.PageBase {
 
   function addCardAudio(card) {
     const extension = card.extension;
-    const orig_extension = Lua.call("GetCardExtensionByName", card.name);
+    const orig_extension = Ltk.getCardExtensionByName(card.name);
     loadAudio(card.name, "male", extension, orig_extension);
     loadAudio(card.name, "female", extension, orig_extension);
     if (audioRow.count === 0 && card.type === 3) {
@@ -390,7 +390,7 @@ W.PageBase {
 
   function loadPackages() {
     if (loaded) return;
-    const packs = Lua.call("GetAllCardPack");
+    const packs = Ltk.getAllCardPack();
     packs.forEach(name => {
       if (!Config.serverHiddenPacks.includes(name)) {
         packages.append({ name: name });

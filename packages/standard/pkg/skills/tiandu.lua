@@ -29,4 +29,15 @@ tiandu:addTest(function(room, me)
   lu.assertEquals(#me:getCardIds("h"), 1)
 end)
 
+tiandu:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    ---@type JudgeData
+    local data = ai.room.logic:getCurrentEvent().data
+    local val = ai:getBenefitOfEvents(function(logic)
+      logic:obtainCard(data.who, data.card, true, fk.ReasonJustMove, data.who, tiandu.name)
+    end)
+    return val > 0
+  end,
+})
+
 return tiandu

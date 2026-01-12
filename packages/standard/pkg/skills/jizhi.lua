@@ -13,13 +13,8 @@ jizhi:addEffect(fk.CardUsing, {
   end,
 })
 
-jizhi:addAI(Fk.Ltk.AI.newInvokeStrategy{
-  think = function(self, ai)
-    return ai:getBenefitOfEvents(function(logic)
-      logic:drawCards(ai.player, 1, self.skill_name)
-    end) > 0
-  end,
-})
+local AI = Fk.Ltk.AI
+jizhi:addAI(AI.reuse("biyue", AI.InvokeStrategy))
 
 jizhi:addTest(function(room, me)
   local comp2 = room.players[2]

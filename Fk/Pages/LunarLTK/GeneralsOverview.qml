@@ -283,7 +283,7 @@ W.PageBase {
         color: "black"
         opacity: {
           const s = Config.curScheme;
-          const gdata = Lua.call("GetGeneralData", modelData);
+          const gdata = Ltk.getGeneralData(modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
             if (!s.banPkg[pack].includes(modelData)) return 0.5;
@@ -301,7 +301,7 @@ W.PageBase {
         id: banText
         visible: {
           const s = Config.curScheme;
-          const gdata = Lua.call("GetGeneralData", modelData);
+          const gdata = Ltk.getGeneralData(modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
             return s.banPkg[pack].includes(modelData);
@@ -312,7 +312,7 @@ W.PageBase {
         text: {
           if (!visible) return '';
           const s = Config.curScheme;
-          const gdata = Lua.call("GetGeneralData", modelData);
+          const gdata = Ltk.getGeneralData(modelData);
           const pack = gdata.package;
           if (s.banPkg[pack]) {
             if (s.banPkg[pack].includes(modelData)) return Lua.tr('Enable');
@@ -365,12 +365,12 @@ W.PageBase {
     }
     onFinished: {
       if (filtering) {
-        generals = Lua.call("FilterAllGenerals", filter);
+        generals = Ltk.filterAllGenerals(filter);
         filtering = false;
       } else if (word.text !== "") {
-        generals = Lua.call("SearchAllGenerals", word.text);
+        generals = Ltk.searchAllGenerals(word.text);
       } else {
-        generals = Lua.call("SearchGenerals",
+        generals = Ltk.searchGenerals(
         pkgList.model[pkgList.currentIndex], word.text);
       }
       word.text = "";
@@ -469,9 +469,9 @@ W.PageBase {
 
   function loadPackages() {
     if (loaded) return;
-    const _mods = Lua.call("GetAllModNames");
-    const modData = Lua.call("GetAllMods");
-    const packs = Lua.call("GetAllGeneralPack");
+    const _mods = Ltk.getAllModNames();
+    const modData = Ltk.getAllMods();
+    const packs = Ltk.getAllGeneralPack();
     _mods.forEach(name => {
       const pkgs = modData[name].filter(p => packs.includes(p)
         && !Config.serverHiddenPacks.includes(p));
@@ -483,7 +483,7 @@ W.PageBase {
 
   function doBanGeneral(name) {
     const s = Config.curScheme;
-    const gdata = Lua.call("GetGeneralData", name);
+    const gdata = Ltk.getGeneralData(name);
     const pack = gdata.package;
     let arr;
     if (s.banPkg[pack]) {

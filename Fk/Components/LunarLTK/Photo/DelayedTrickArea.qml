@@ -66,7 +66,7 @@ Item {
       inputs = [inputs];
     }
     inputs.forEach(card => {
-      const v = Lua.call("GetVirtualEquipData", parent.playerid, card.cid);
+      const v = Ltk.getVirtualEquipData(parent.playerid, card.cid);
       let icon;
       const cardName = v ? v.name : card.name;
       for (let i = 0; i < cards.count; i++) {

@@ -29,6 +29,10 @@ local function convertSpec(spec)
 end
 
 W.toQmlData = function(spec, settings)
+  if spec[1] then
+    return table.map(spec, function(s) return W.toQmlData(s, settings) end)
+  end
+
   if not spec._needcopy then
     return spec
   end
@@ -56,15 +60,22 @@ W.toQmlData = function(spec, settings)
   return ret
 end
 
+--- 函数系字段传入的参数，注意直接修改里面的字段值是无效的。
+---@class W.SettingsParam
+---@field playerNum integer 游戏人数
+---@field timeout integer 出手时间
+---@field gameMode string 游戏模式
+---@field _game table<string, any> “游戏设置”中的配置，内容不明
+---@field _mode table<string, any> “模式设置”中的配置，内容不明
+
 ---@class W.CommonSpec
----@field title string 主提示文本（翻译之前
----@field subTitle string? 副提示文本（翻译之前 默认是 "help: " .. title
+---@field title string|fun(settings: W.SettingsParam): string 主提示文本（翻译之前
+---@field subTitle? string|fun(settings: W.SettingsParam): string  副提示文本（翻译之前 默认是 "help: " .. title
 ---@field _qml QmlComponent?
 ---@field _needcopy any
 ---@field _children any
 
 ---@class W.PreferenceGroupSpec: W.CommonSpec
----@field title string? 主提示文本（翻译之前
 
 ---@param spec W.PreferenceGroupSpec
 W.PreferenceGroup = function(spec)
@@ -101,6 +112,8 @@ end
 
 ---@class W.CommonValueSpec : W.CommonSpec
 ---@field _settingsKey string 你这个value对应到settings的哪个key
+---@field enabled? boolean|fun(settings: W.SettingsParam): boolean? 控件是否可交互？
+---@field value? fun(settings: W.SettingsParam): any 要绑定的value，要么不写要么必须是function
 
 ---@param spec W.CommonValueSpec
 W.SwitchRow = function(spec)
@@ -113,7 +126,7 @@ W.SwitchRow = function(spec)
 end
 
 ---@class W.ComboRowSpec : W.CommonValueSpec
----@field model string[]
+---@field model string[]|fun(settings: W.SettingsParam): string[]
 
 ---@param spec W.ComboRowSpec
 W.ComboRow = function(spec)
@@ -126,8 +139,8 @@ W.ComboRow = function(spec)
 end
 
 ---@class W.SpinRowSpec : W.CommonValueSpec
----@field from integer
----@field to integer
+---@field from integer|fun(settings: W.SettingsParam): integer
+---@field to integer|fun(settings: W.SettingsParam): integer
 
 ---@param spec W.SpinRowSpec
 W.SpinRow = function(spec)

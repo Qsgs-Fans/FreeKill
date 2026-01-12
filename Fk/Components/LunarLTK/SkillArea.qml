@@ -123,7 +123,7 @@ Flickable {
       return false;
     };
 
-    const data = Lua.call("GetSkillData", skill_name);
+    const data = Ltk.getSkillData(skill_name);
 
     if (prelight) {
       if (!modelContains(prelight_skills, data))

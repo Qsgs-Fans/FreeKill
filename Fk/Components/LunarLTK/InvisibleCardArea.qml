@@ -28,7 +28,7 @@ Item {
     const datas = [];
 
     for (let i = 0; i < outputs.length; i++) {
-      const prop = Lua.call("GetCardData", outputs[i]);
+      const prop = Ltk.getCardData(outputs[i]);
       if (visibleData) prop.known = !!visibleData[outputs[i].toString()];
 
       datas.push({

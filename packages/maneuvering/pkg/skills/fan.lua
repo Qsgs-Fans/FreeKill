@@ -44,4 +44,28 @@ fanSkill:addTest(function (room, me)
   lu.assertEquals(comp2.hp, 1)
 end)
 
+fanSkill:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    ---@type UseCardData
+    local data = ai.room.logic:getCurrentEvent().data
+    local new_data = table.simpleClone(data)
+    local card = Fk:cloneCard("fire__slash", data.card.suit, data.card.number)
+    if data.card:isVirtual() then
+      card.subcards = data.card.subcards
+    else
+      card.id = data.card.id
+    end
+    card.virt_id = data.card.virt_id
+    card.skillNames = data.card.skillNames
+    new_data.card = card
+    new_data.from = data.from
+    new_data.tos = data.tos
+    return ai:getBenefitOfEvents(function(logic)
+      logic:useCard(new_data)
+    end) >= ai:getBenefitOfEvents(function(logic)
+      logic:useCard(data)
+    end)
+  end,
+})
+
 return fanSkill

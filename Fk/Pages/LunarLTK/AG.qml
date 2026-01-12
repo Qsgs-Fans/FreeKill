@@ -49,7 +49,7 @@ GraphicsBox {
 
   function addIds(ids) {
     ids.forEach((id) => {
-      let data = Lua.call("GetCardData", id);
+      let data = Ltk.getCardData(id);
       data.selectable = true;
       data.footnote = "";
       cards.append(data);

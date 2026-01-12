@@ -2,6 +2,7 @@ import QtQuick
 
 import Fk
 import Fk.Widgets as W
+import Fk.Components.LunarLTK
 
 Rectangle {
   id: root
@@ -22,7 +23,7 @@ Rectangle {
     text: {
       if (!parent.visible) return "";
       const unused = root.handcards; // 绑定
-      const ids = Lua.call("GetPlayerHandcards", root.playerid);
+      const ids = Ltk.getPlayerHandcards(root.playerid);
       const txt = [];
       for (const cid of ids) {
         if (txt.length >= 4) {
@@ -30,8 +31,8 @@ Rectangle {
           txt.push("...");
           break;
         }
-        if (!Lua.call("CardVisibility", cid)) continue;
-        const data = Lua.call("GetCardData", cid, true);
+        if (!Ltk.cardVisibility(cid)) continue;
+        const data = Ltk.getCardData(cid, true);
         let a = Lua.tr(data.name);
         /* if (a.length === 1) {
            a = "&nbsp;&nbsp;" + a;
@@ -66,8 +67,8 @@ Rectangle {
    W.TapHandler {
      onTapped: {
        const params = { name: "hand_card" };
-       let data = Lua.call("GetPlayerHandcards", root.playerid);
-       data = data.filter((e) => Lua.call("CardVisibility", e));
+       let data = Ltk.getPlayerHandcards(root.playerid);
+       data = data.filter((e) => Ltk.cardVisibility(e));
 
        params.ids = data;
 

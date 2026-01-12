@@ -2,6 +2,9 @@ module Fk.Pages.LunarLTK
 
 # 此为游戏全屏主页面
 Room 1.0 Room.qml
+CardsOverview 1.0 CardsOverview.qml
+GeneralsOverview 1.0 GeneralsOverview.qml
+GeneralPoolOverview 1.0 GeneralPoolOverview.qml
 
 AG 1.0 AG.qml
 ArrangeCardsBox 1.0 ArrangeCardsBox.qml

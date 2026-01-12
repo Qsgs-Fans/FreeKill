@@ -6,6 +6,7 @@ import QtQuick.Layouts
 
 import Fk
 import Fk.Components.Common
+import Fk.Components.LunarLTK
 import Fk.Components.LunarLTK.Photo
 import Fk.Widgets as W
 
@@ -183,7 +184,7 @@ PhotoBase {
 
     function updatePileInfo(areaName) {
       if (areaName.startsWith('#')) return;
-      const data = Lua.call("GetPile", root.playerid, areaName);
+      const data = Ltk.getPile(root.playerid, areaName);
       if (data.length === 0) {
         root.markArea.removeMark(areaName);
       } else {
@@ -258,7 +259,7 @@ PhotoBase {
     Text {
       text: {
         let n = root.handcards;
-        n = Lua.call("GetPlayerHandcards", root.playerid).length;
+        n = Ltk.getPlayerHandcards(root.playerid).length;
         if (root.maxCard === root.hp || root.hp < 0) {
           return n;
         } else {
@@ -286,7 +287,7 @@ PhotoBase {
     value: {
       if (root.role === "hidden") return "hidden";
       if (root.role_shown) return root.role;
-      Lua.call("RoleVisibility", root.playerid) ? root.role : "unknown";
+      Ltk.roleVisibility(root.playerid) ? root.role : "unknown";
     }
     anchors.top: parent.top
     anchors.topMargin: -4
@@ -500,8 +501,8 @@ PhotoBase {
     visible: {
       if (root.playerid === Self.id) return false;
       if (root.handcards === 0) return false; // 优先绑定再判buddy，否则不会更新
-      if (!Lua.call("IsMyBuddy", Self.id, root.playerid) &&
-      !Lua.call("HasVisibleCard", Self.id, root.playerid)) return false;
+      if (!Ltk.isMyBuddy(Self.id, root.playerid) &&
+      !Ltk.hasVisibleCard(Self.id, root.playerid)) return false;
       return true;
     }
   }

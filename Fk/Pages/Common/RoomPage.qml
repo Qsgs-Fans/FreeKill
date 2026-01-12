@@ -197,6 +197,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
+        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
         overviewLoader.overviewType = "GeneralPool";
         overviewDialog.open();
       }
@@ -239,6 +240,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
+        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
         overviewLoader.overviewType = "Generals";
         overviewDialog.open();
         overviewLoader.item.loadPackages();
@@ -253,6 +255,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
+        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
         overviewLoader.overviewType = "Cards";
         overviewDialog.open();
         overviewLoader.item.loadPackages();
@@ -267,6 +270,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
+        overviewLoader.overviewSource = "Fk.Pages.Common";
         overviewLoader.overviewType = "Modes";
         overviewDialog.open();
       }
@@ -347,12 +351,13 @@ Item {
     }
     Loader {
       id: overviewLoader
+      property string overviewSource: "Fk.Pages.LunarLTK"
       property string overviewType: "GeneralPool"
       anchors.centerIn: parent
       width: parent.width / Config.winScale
       height: parent.height / Config.winScale
       scale: Config.winScale
-      source: "../Common/" + overviewType + "Overview.qml"
+      sourceComponent: Qt.createComponent(overviewSource, overviewType + "Overview")
     }
   }
 
@@ -469,7 +474,6 @@ Item {
         }
 
         Item {
-          visible: !Config.replaying
           AvatarChatBox {
             id: chat
             anchors.fill: parent

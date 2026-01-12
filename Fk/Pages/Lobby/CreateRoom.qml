@@ -45,23 +45,50 @@ Item {
         const boardgameName = Lua.evaluate(`Fk:getBoardGame('${gameMode}').name`);
 
         const boardgameConf = Db.getModeSettings(boardgameName);
-        const boardgameSettingsData = getUIData(gameMode, null, true);
+        const gameModeConf = Db.getModeSettings(boardgameName + ':' + gameMode);
+        const config = {
+          playerNum: roomGeneralSettings.playerNum,
+          timeout: Config.preferredTimeout,
+          gameMode: Config.preferedMode,
+          _game: boardgameConf,
+          _mode: gameModeConf,
+        };
+
+        let needcopy = false;
+
+        const boardgameSettingsData = getUIData(gameMode, config, true);
+        const gameSettingsData = getUIData(gameMode, config, false);
+        needcopy = needcopy || !!boardgameSettingsData.find(v => v["_needcopy"])
+          || !!gameSettingsData.find(v => v["_needcopy"]);
+
         boardgameSettings.configName = boardgameName;
-        boardgameSettings.config = boardgameConf;
+        boardgameSettings.gameModeName = gameMode;
+        boardgameSettings.config = config;
+        boardgameSettings.needcopy = needcopy;
         boardgameSettings.loadSettingsUI(boardgameSettingsData);
 
-        const gameModeConf = Db.getModeSettings(boardgameName + ':' + gameMode);
-        const gameSettingsData = getUIData(gameMode, null, false);
         gameModeSettings.configName = `${boardgameName}:${gameMode}`;
-        gameModeSettings.config = gameModeConf;
+        gameModeSettings.gameModeName = gameMode;
+        gameModeSettings.config = config;
+        gameModeSettings.needcopy = needcopy;
         gameModeSettings.loadSettingsUI(gameSettingsData);
       }
     }
     LuaSettingsPage {
       id: boardgameSettings
+      isBoardgame: true
+      onSettingsUpdated: {
+        boardgameSettings.updateSettingsUI();
+        gameModeSettings.updateSettingsUI();
+      }
     }
     LuaSettingsPage {
       id: gameModeSettings
+      isBoardgame: false
+      onSettingsUpdated: {
+        boardgameSettings.updateSettingsUI();
+        gameModeSettings.updateSettingsUI();
+      }
     }
     Item {
       RoomPackageSettings {

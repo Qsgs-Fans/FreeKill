@@ -3,6 +3,7 @@
 import QtQuick
 import Fk
 import Fk.Components.Common
+import Fk.Components.LunarLTK
 
 MetroButton {
   id: root
@@ -17,7 +18,7 @@ MetroButton {
 
   onAnswerChanged: {
     if (!answer) return;
-    Lua.call("UpdateRequestUI", "Interaction", "1", "update", answer);
+    Ltk.updateRequestUI("Interaction", "1", "update", answer);
   }
 
   onClicked: {

@@ -20,12 +20,10 @@ control:addEffect("active", {
   on_use = function(self, room, effect)
     local from = effect.from
     for _, to in ipairs(effect.tos) do
-      if to:getMark("mouxushengcontrolled") == 0 then
-        room:addPlayerMark(to, "mouxushengcontrolled")
+      if not from:isControlling(to) then
         from:control(to)
       else
-        room:setPlayerMark(to, "mouxushengcontrolled", 0)
-        to:control(to)
+        from:uncontrol(to)
       end
     end
   end,

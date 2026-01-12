@@ -124,6 +124,38 @@ local sendCardEmotionAndLog = function(room, useCardData, muteEmotion)
   end
 end
 
+-- 填充使用/打出前此牌在原区域内的卡牌信息
+---@param room Room
+---@param useCardData UseCardData|RespondCardData
+local markBeforeCardInfo = function(room, useCardData)
+  local infos = {}
+  for _, id in ipairs(Card:getIdList(useCardData.card)) do
+    local info = {}
+    local card = Fk:getCardById(id)
+    local owner = room:getCardOwner(id)
+    if owner then
+      card = owner:getVirtualEquip(id) or card
+    end
+    local c = Fk:cloneCard(card.name, card.suit, card.number)
+    --c.id = card.id
+    c.skillNames = card.skillNames
+    local markTable = card:isVirtual() and card.mark or room.card_marks[card.id]
+    if markTable then
+      for k, v in pairs(markTable) do
+        c.mark[k] = v
+      end
+    end
+
+    info.cardId = id
+    info.beforeCard = c
+    info.from = owner
+    info.fromArea = room:getCardArea(id)
+    info.fromSpecialName = owner and owner:getPileNameOfId(id)
+    table.insert(infos, info)
+  end
+  useCardData.subcardsFromInfo = infos
+end
+
 ---@class GameEvent.UseCard : GameEvent
 ---@field public data UseCardData
 local UseCard = GameEvent:subclass("GameEvent.UseCard")
@@ -191,6 +223,8 @@ function UseCard:main()
   end
 
   sendCardEmotionAndLog(room, useCardData, (useCardData.attachedSkillAndUser or {}).muteCard)
+
+  markBeforeCardInfo(room, useCardData)
 
   room:moveCardTo(useCardData.card, Card.Processing, nil, fk.ReasonUse)
 
@@ -310,6 +344,8 @@ function RespondCard:main()
     from = from.id,
     card = { card },
   }
+
+  markBeforeCardInfo(room, respondCardData)
 
   room:moveCardTo(card, Card.Processing, nil, fk.ReasonResponse)
   local footnote = {
@@ -699,11 +735,12 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
   -- 每次结算中，先调用onAction（开幕），再对每个目标生效，再调用onAction（结束）
   useCardData.additionalEffect = useCardData.additionalEffect or 0
   while true do
+    -- onAction：开始时（为什么不设计成两个方法呢）
     if #useCardData.tos > 0 and useCardData.card.skill.onAction then
       useCardData.card.skill:onAction(self, useCardData)
     end
 
-    -- Else: do effect to all targets
+    -- 对所有目标按顺序各进行生效
     local collaboratorsIndex = {}
     for _, to in ipairs(useCardData.tos) do
       if to:isAlive() then
@@ -739,23 +776,35 @@ function UseCardEventWrappers:doCardUseEffect(useCardData)
           cardEffectData.unoffsetable = curAimEvent.unoffsetable
           cardEffectData.nullified = curAimEvent.nullified
           cardEffectData.fixedResponseTimesList = curAimEvent.fixedResponseTimesList
+          cardEffectData.currentExtraData = curAimEvent.currentExtraData
 
           collaboratorsIndex[to] = collaboratorsIndex[to] + 1
 
-          local curCardEffectEvent = CardEffectData:new(table.simpleClone(cardEffectData))
-          self:doCardEffect(curCardEffectEvent)
+          while to:isAlive() do
+            local curCardEffectEvent = CardEffectData:new(table.simpleClone(cardEffectData))
+            self:doCardEffect(curCardEffectEvent)
 
-          if curCardEffectEvent.cardsResponded then
-            useCardData.cardsResponded = useCardData.cardsResponded or {}
-            for _, card in ipairs(curCardEffectEvent.cardsResponded) do
-              table.insertIfNeed(useCardData.cardsResponded, card)
+            if curCardEffectEvent.cardsResponded then
+              useCardData.cardsResponded = useCardData.cardsResponded or {}
+              for _, card in ipairs(curCardEffectEvent.cardsResponded) do
+                table.insertIfNeed(useCardData.cardsResponded, card)
+              end
+            end
+
+            local effectTimeTab = useCardData.additionalEffectToPlayer
+            if not effectTimeTab then break end
+            if not effectTimeTab[to] then break end
+            if effectTimeTab[to] > 0 then
+              effectTimeTab[to] = effectTimeTab[to] - 1
+            else
+              break
             end
           end
-
         end
       end
     end
 
+    -- onAction：结束时（为什么不设计成两个方法呢）
     if #useCardData.tos > 0 and useCardData.card.skill.onAction then
       useCardData.card.skill:onAction(self, useCardData, true)
     end

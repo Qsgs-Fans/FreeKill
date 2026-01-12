@@ -87,7 +87,7 @@ _skill:addAI(Fk.Ltk.AI.newDiscardStrategy {
         table.map(available_cards, function(id)
           local cd = Fk:getCardById(id)
           local log = cd:toLogString()
-          local v = ai:getKeepValue(id)
+          local v = ai:getCardValue(id)
           return ("%s(id=%s, v=%s)"):format(log, id, v)
         end), ","))
     end

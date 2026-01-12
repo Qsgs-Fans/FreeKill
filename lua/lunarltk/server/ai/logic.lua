@@ -94,17 +94,17 @@ end
 ---@param info MoveInfo
 function AIGameLogic:applyMoveInfo(data, info)
   local benefit = 0
-  local card_value = 100 --fk.ai_card_keep_value[Fk:getCardById(info.cardId).name] or 100
+  local card_value = 100
 
   if data.from then
     if info.fromArea == Player.Hand then
+      card_value = 25 * self.ai:getCardValue(info.cardId)
       benefit = -(card_value - 10)
     elseif info.fromArea == Player.Equip then
+      card_value = 25 * self.ai:getCardValue(info.cardId)
       benefit = -(card_value + 10)
     elseif info.fromArea == Player.Judge then
       benefit = card_value
-    elseif info.fromArea == Player.Special then
-      benefit = -(card_value / 2)
     end
 
     local from = data.from
@@ -303,12 +303,14 @@ end
 ---@param player ServerPlayer
 ---@param num integer
 ---@param skillName string
+---@param proposer? ServerPlayer
 ---@return boolean
-function AIGameLogic:loseHp(player, num, skillName)
+function AIGameLogic:loseHp(player, num, skillName, proposer)
   local data = HpLostData:new{
     who = player,
     num = num,
     skillName = skillName,
+    proposer = proposer or player,
   }
   return not LoseHp:new(self, data):getBenefit()
 end

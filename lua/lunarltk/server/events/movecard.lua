@@ -152,8 +152,9 @@ function MoveCards:main()
           if type(mark) == "string" then
             room:setCardMark(currentCard, mark, 1)
           elseif type(mark) == "table" then
-            mark = table.clone(mark)
-            room:setCardMark(currentCard, mark[1], mark[2])
+            for i = 1, #mark // 2 do
+              room:setCardMark(currentCard, mark[2 * i - 1], mark[2 * i])
+            end
           end
         end
 
@@ -295,13 +296,24 @@ local function moveInfoTranslate(room, ...)
 
       -- 若移动到被废除的装备栏，则修改为置入弃牌堆
       local toAbortDrop = false
-      if cardsMoveInfo.toArea == Card.PlayerEquip and cardsMoveInfo.to then
-        local moveToPlayer = cardsMoveInfo.to
-        ---@cast moveToPlayer -nil 防止判空波浪线
+      local to = cardsMoveInfo.to
+      if to then
         local card = cardsMoveInfo.virtualEquip or Fk:getCardById(id)
-        if card.type == Card.TypeEquip and #moveToPlayer:getAvailableEquipSlots(card.sub_type) == 0 then
-          table.insert(abortMoveInfos, info)
-          toAbortDrop = true
+        if cardsMoveInfo.toArea == Card.PlayerEquip then
+          if card.type == Card.TypeEquip and #to:getAvailableEquipSlots(card.sub_type) == 0 then
+            table.insert(abortMoveInfos, info)
+            toAbortDrop = true
+          end
+        elseif cardsMoveInfo.toArea == Card.PlayerJudge then
+          if to:isJudgeAreaSealed() then
+            table.insert(abortMoveInfos, info)
+            toAbortDrop = true
+          end
+        elseif cardsMoveInfo.toArea == Card.PlayerHand then
+          if to:isHandAreaSealed() then
+            table.insert(abortMoveInfos, info)
+            toAbortDrop = true
+          end
         end
       end
 
@@ -734,7 +746,7 @@ function MoveEventWrappers:returnCardsToDrawPile(player, cards, skillName, toPla
     proposer = player,
     moveVisible = (moveVisible == nil or moveVisible == true),
     visiblePlayers = visiblePlayers or (moveVisible == false and { player } or nil),
-    drawPilePosition = toPlace == "top" and 1 or -1
+    drawPilePosition = toPlace == "bottom" and -1 or nil
   }
 end
 

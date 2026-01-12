@@ -12,7 +12,13 @@ biyue:addEffect(fk.EventPhaseStart, {
   end,
 })
 
-biyue:addAI(nil, "jizhi")
+biyue:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    return ai:getBenefitOfEvents(function(logic)
+      logic:drawCards(ai.player, 1, self.skill_name)
+    end) > 0
+  end,
+})
 
 biyue:addTest(function(room, me)
   FkTest.runInRoom(function()

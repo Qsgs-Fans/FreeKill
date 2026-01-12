@@ -357,9 +357,9 @@ GraphicsBox {
         card.maxZ = cardItem.count;
 
         if (poxi_type !== "")
-          card.selectable = Lua.call("PoxiFilter", poxi_type, card.cid, [dragging_card.cid], c_result, org_cards);
+          card.selectable = Ltk.poxiFilter(poxi_type, card.cid, [dragging_card.cid], c_result, org_cards);
         else if (pattern !== ".")
-          card.selectable = Lua.call("CardFitPattern", card.cid, pattern);
+          card.selectable = Ltk.cardFitPattern(card.cid, pattern);
         else {
           if (free_arrange || dragging_card === "")
             card.selectable = true;
@@ -387,7 +387,7 @@ GraphicsBox {
         buttonConfirm.enabled = false;
         break;
       }
-      buttonConfirm.enabled = poxi_type ? Lua.call("PoxiFeasible", poxi_type, [], c_result, org_cards) : true;
+      buttonConfirm.enabled = poxi_type ? Ltk.poxiFeasible(poxi_type, [], c_result, org_cards) : true;
     }
   }
 

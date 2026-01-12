@@ -257,6 +257,9 @@ Rectangle {
     }
 
     RowLayout {
+      id: inputPanel
+      visible: !Config.replaying
+
       TextField {
         id: chatEdit
         Layout.fillWidth: true

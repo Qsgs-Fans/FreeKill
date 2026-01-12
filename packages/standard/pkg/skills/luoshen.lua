@@ -57,4 +57,16 @@ luoshen:addTest(function(room, me)
   lu.assertEquals(#me:getCardIds("h"), rnd)
 end)
 
+luoshen:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    return ai:getBenefitOfEvents(function(logic)
+      logic:judge({
+        who = ai.player,
+        reason = luoshen.name,
+        pattern = ".|.|black",
+      })
+    end) >= -100
+  end,
+})
+
 return luoshen

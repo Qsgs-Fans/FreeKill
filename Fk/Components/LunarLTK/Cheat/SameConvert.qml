@@ -36,7 +36,7 @@ Item {
             columns: 6
 
             Repeater {
-              model: Lua.call("GetSameGenerals", gname)
+              model: Ltk.getSameGenerals(gname)
 
               GeneralCardItem {
                 name: modelData

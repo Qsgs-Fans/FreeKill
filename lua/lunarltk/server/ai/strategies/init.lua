@@ -21,18 +21,38 @@ local invoke = require 'lunarltk.server.ai.strategies.invoke'
 local arrange_cards = require 'lunarltk.server.ai.strategies.arrange_cards'
 local guanxing = require 'lunarltk.server.ai.strategies.guanxing'
 local exchange = require 'lunarltk.server.ai.strategies.exchange'
-local use_real_card = require 'lunarltk.server.ai.strategies.use_real_card'
-local use_virtual_card = require 'lunarltk.server.ai.strategies.use_virtual_card'
-local play_card = require 'lunarltk.server.ai.strategies.play_card'
 local number = require 'lunarltk.server.ai.strategies.number'
-local use_card = require 'lunarltk.server.ai.strategies.use_card'
-local response = require 'lunarltk.server.ai.strategies.response'
-local nullification = require 'lunarltk.server.ai.strategies.nullification'
 local ag = require 'lunarltk.server.ai.strategies.ag'
-local mini_game = require 'lunarltk.server.ai.strategies.mini_game'
-local custom_dialog = require 'lunarltk.server.ai.strategies.custom_dialog'
-local move_card_in_board = require 'lunarltk.server.ai.strategies.move_card_in_board'
-local choose_to_move_card_in_board = require 'lunarltk.server.ai.strategies.choose_to_move_card_in_board'
+
+---@class AIReuseSpec
+---@field public _reuse boolean
+---@field public _reuse_key string
+---@field public _reuse_type AIStrategy?
+
+--- 复用来自其他技能的策略，或策略的单个字段（可以是函数或固定值）
+---
+--- 若为复用策略，则还需要在参数2指定策略类型，复用函数时无需指定。
+---
+--- 复用策略只在使用到的时候会进行复用解析，若解析失败则相当于nil，解析成功会替换掉值避免重复解析。
+--- 同时支持链式复用。不过如果出现循环式复用的话整个循环依赖会全部变成nil。
+---
+--- 例1：
+---   skill:addAI(Fk.Ltk.AI.reuse('zhiheng', Fk.Ltk.AI.ActiveStrategy))
+--- 例2：
+---   skill:addAI(Fk.Ltk.AI.newActiveStrategy {
+---     -- ...
+---     choose_players = Fk.Ltk.AI.reuse 'tuxi',
+---   })
+---@param name string 要复用的技能名或预定策略名
+---@param tp AIStrategy? 若直接复用整个策略，需指定类型
+---@return any
+local reuse = function(name, tp)
+  return {
+    _reuse = true,
+    _reuse_key = name,
+    _reuse_type = tp,
+  }
+end
 
 return {
   ActiveStrategy = active[1],
@@ -106,39 +126,11 @@ return {
   ExchangeStrategy = exchange[1],
   newExchangeStrategy = exchange[2],
 
-  -- UseRealCardStrategy = use_real_card[1],
-  -- newUseRealCardStrategy = use_real_card[2],
-
-  -- UseVirtualCardStrategy = use_virtual_card[1],
-  -- newUseVirtualCardStrategy = use_virtual_card[2],
-
-  -- PlayCardStrategy = play_card[1],
-  -- newPlayCardStrategy = play_card[2],
-
   NumberStrategy = number[1],
   newNumberStrategy = number[2],
-
-  -- UseCardStrategy = use_card[1],
-  -- newUseCardStrategy = use_card[2],
-
-  -- ResponseStrategy = response[1],
-  -- newResponseStrategy = response[2],
-
-  -- NullificationStrategy = nullification[1],
-  -- newNullificationStrategy = nullification[2],
 
   AGStrategy = ag[1],
   newAGStrategy = ag[2],
 
-  -- MiniGameStrategy = mini_game[1],
-  -- newMiniGameStrategy = mini_game[2],
-
-  -- CustomDialogStrategy = custom_dialog[1],
-  -- newCustomDialogStrategy = custom_dialog[2],
-
-  -- MoveCardInBoardStrategy = move_card_in_board[1],
-  -- newMoveCardInBoardStrategy = move_card_in_board[2],
-
-  -- ChooseToMoveCardInBoardStrategy = choose_to_move_card_in_board[1],
-  -- newChooseToMoveCardInBoardStrategy = choose_to_move_card_in_board[2],
+  reuse = reuse,
 }

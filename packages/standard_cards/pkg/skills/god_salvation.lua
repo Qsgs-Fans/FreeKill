@@ -30,13 +30,15 @@ skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
   use_priority = 1.1,
 
   on_effect = function(self, logic, effect)
-    logic:recover{
-      who = effect.to,
-      num = 1,
-      card = effect.card,
-      recoverBy = effect.from,
-      skillName = skill.name,
-    }
+    if effect.to:isWounded() then
+      logic:recover{
+        who = effect.to,
+        num = 1,
+        card = effect.card,
+        recoverBy = effect.from,
+        skillName = skill.name,
+      }
+    end
   end,
 })
 

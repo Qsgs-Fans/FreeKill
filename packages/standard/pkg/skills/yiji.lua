@@ -41,4 +41,12 @@ yiji:addEffect(fk.Damaged, {
   end,
 })
 
+yiji:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    return ai:getBenefitOfEvents(function(logic)
+      logic:moveCardTo(ai.room:getNCards(2), Card.PlayerHand, ai.player, fk.ReasonGive, yiji.name, nil, false, ai.player)
+    end) > 0
+  end,
+})
+
 return yiji

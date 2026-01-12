@@ -11,6 +11,7 @@ local slash = fk.CreateCard{
   name = "slash",
   type = Card.TypeBasic,
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
   skill = "slash_skill",
 }
 
@@ -44,6 +45,7 @@ local duel = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "duel_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
 }
 
 local collateral = fk.CreateCard{
@@ -70,6 +72,7 @@ local savage_assault = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "savage_assault_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
   multiple_targets = true,
 }
 
@@ -78,6 +81,7 @@ local archery_attack = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "archery_attack_skill",
   is_damage_card = true,
+  damage_type = fk.NormalDamage,
   multiple_targets = true,
 }
 
@@ -99,6 +103,7 @@ local lightning = fk.CreateCard{
   name = "lightning",
   type = Card.TypeTrick,
   sub_type = Card.SubtypeDelayedTrick,
+  damage_type = fk.ThunderDamage,
   skill = "lightning_skill",
 }
 

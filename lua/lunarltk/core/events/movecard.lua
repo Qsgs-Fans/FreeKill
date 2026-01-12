@@ -38,7 +38,7 @@
 ---@field public specialName? string @ 若终点区域为PlayerSpecial，则存至对应私人牌堆内
 ---@field public specialVisible? boolean @ 控制上述创建私人牌堆后是否令其可见
 ---@field public drawPilePosition? integer @ 移至牌堆的索引位置，值为-1代表置入牌堆底，或者牌堆牌数+1也为牌堆底
----@field public moveMark? table|string @ 移动后自动赋予标记，格式：{标记名(支持-inarea后缀，移出值代表区域后清除), 值}
+---@field public moveMark? table|string @ 移动后自动赋予标记，格式：{标记名1, 值1，标记2，值2...}
 ---@field public visiblePlayers? ServerPlayer | ServerPlayer[] @ 控制移动对特定角色可见（在moveVisible为false时生效）
 
 --- 移动牌的数据（数组）

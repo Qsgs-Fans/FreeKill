@@ -149,7 +149,7 @@ Flickable {
         enabled: {
           if (pid === Self.id) return false;
           if (pid < -1) {
-            const { minComp, curComp } = Lua.call("GetCompNum");
+            const { minComp, curComp } = Ltk.getCompNum();
             return curComp > minComp;
           }
           return true;
@@ -253,7 +253,7 @@ Flickable {
     deputyChara.name = hasPhoto? extra_data.photo.deputyGeneral : extra_data.deputyGeneral; // 判空…
 
     if (!Config.observing) {
-      const gamedata = Lua.call("GetPlayerGameData", id);
+      const gamedata = Ltk.getPlayerGameData(id);
       const total = gamedata[0];
       const win = gamedata[1];
       const run = gamedata[2];
@@ -275,7 +275,7 @@ Flickable {
 
     if (root.isObserving) return; // 以前可以看旁观玩家的详情时，有这个玩意
 
-    Lua.call("GetPlayerSkills", id).forEach(t => {
+    Ltk.getPlayerSkills(id).forEach(t => {
       // TODO 等core更新强制重启后把这个智慧杀了 GetPlayerSkill直接返回invalid
       const invalid = t.name.endsWith(Lua.tr('skill_invalidity'));
       let skillText = `${skillnamecss}<font class='${invalid ? "skill-name locked" : "skill-name"}'>${t.name}</font> `;
@@ -288,13 +288,13 @@ Flickable {
       skillDesc.append(skillText);
     });
 
-    var ej = Lua.call("GetPlayerEquips", id).concat(Lua.call("GetPlayerJudges", id));
+    var ej = Ltk.getPlayerEquips(id).concat(Ltk.getPlayerJudges(id));
     let unknownCardsNum = 0;
     ej.forEach(cid => {
-      const t = Lua.call("GetCardData", cid);
-      if (Lua.call("CardVisibility", cid)) {
+      const t = Ltk.getCardData(cid);
+      if (Ltk.cardVisibility(cid)) {
         skillDesc.append("------------------------------------")
-        const v = Lua.call("GetVirtualEquipData", id, cid);
+        const v = Ltk.getVirtualEquipData(id, cid);
         if (v) {
           skillDesc.append(
             "<b>" + "(" + Lua.tr(t.name) + Lua.tr("log_" + t.suit) + Lua.tr(t.number.toString()) + ")" 

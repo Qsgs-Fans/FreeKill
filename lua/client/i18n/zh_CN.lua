@@ -613,6 +613,7 @@ Fk:loadTranslationTable {
   ["OffensiveRideSlot"] = "进攻坐骑栏",
   ["DefensiveRideSlot"] = "防御坐骑栏",
   ["TreasureSlot"] = "宝物栏",
+  ["HandSlot"] = "手牌区",
   ["JudgeSlot"] = "判定区",
 
   ["skill"] = "技能",
@@ -624,9 +625,13 @@ Fk:loadTranslationTable {
   ["draw1"] = "摸一张牌",
   ["draw2"] = "摸两张牌",
   ["draw3"] = "摸三张牌",
+  ["draw4"] = "摸四张牌",
+  ["draw5"] = "摸五张牌",
   ["discard1"] = "弃一张牌",
   ["discard2"] = "弃两张牌",
   ["discard3"] = "弃三张牌",
+  ["discard4"] = "弃四张牌",
+  ["discard5"] = "弃五张牌",
   ["recover"] = "回复1点体力",
   ["loseHp"] = "失去1点体力",
   ["damage1"] = "造成1点伤害",
@@ -636,6 +641,10 @@ Fk:loadTranslationTable {
   ["clockwise"] = "↻顺时针方向",
   ["anticlockwise"] = "↺逆时针方向",
   ["draw_card"] = "摸牌",
+  ["discard_card"] = "弃牌",
+  ["prey_card"] = "获得牌",
+  ["recast_card"] = "重铸牌",
+  ["use_card"] = "使用牌",
   ["heal_hp"] = "回复体力",
   ["damaged"] = "受到伤害",
   ["view"] = "观看",
@@ -771,6 +780,9 @@ Fk:loadTranslationTable {
   ["#Choice"] = "%from 选择 %arg",
   ["#WatchCard"] = "%from 观看了牌 %card",
   ["$ShuffleDrawPile"] = "已重新洗牌，牌堆现有 %arg 张牌",
+  ["#ChangeController"] = "%from 现在由玩家 %arg 操控",
+  ["#QuitControl"] = "%from 现在由玩家 %arg2 操控，因为玩家 %arg 解除了操控",
+  ["#SummonPlayer"] = "%from 被召唤到场上，下家为 %to，听从玩家 %arg 指示",
 }
 
 -- card footnote

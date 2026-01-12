@@ -49,7 +49,7 @@ Item {
         onEditingFinished: {
           if (text !== "") {
             if (stack.depth > 1) stack.pop();
-            generalModel = Lua.call("SearchAllGenerals", word.text);
+            generalModel = Ltk.searchAllGenerals(word.text);
             stack.push(generalList);
             word.text = "";
           }
@@ -61,7 +61,7 @@ Item {
         enabled: word.text !== ""
         onClicked: {
           if (stack.depth > 1) stack.pop();
-          generalModel = Lua.call("SearchAllGenerals", word.text);
+          generalModel = Ltk.searchAllGenerals(word.text);
           stack.push(generalList);
           word.text = "";
         }
@@ -104,7 +104,7 @@ Item {
         }
 
         onClicked: {
-          generalModel = Lua.call("GetGenerals", packages.get(index).name);
+          generalModel = Ltk.getGenerals(packages.get(index).name);
           stack.push(generalList);
         }
       }
@@ -143,7 +143,7 @@ Item {
   }
 
   function load() {
-    const packs = Lua.call("GetAllGeneralPack");
+    const packs = Ltk.getAllGeneralPack();
     packs.forEach((name) => packages.append({ name: name }));
   }
 

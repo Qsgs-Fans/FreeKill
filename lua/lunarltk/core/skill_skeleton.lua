@@ -40,7 +40,7 @@
 ---@field public max_use_time table<integer, integer?> @ 该技能在各时机内最大的使用次数
 ---@field public max_branches_use_time? table<string, table<integer, integer?>?> | fun(self: SkillSkeleton, player: Player): table<string, table<integer, integer?>?>? @ 该技能的最大使用次数——任意标签（内部有独立的时段细分）
 ---@field public addTest fun(self: SkillSkeleton, fn: fun(room: Room, me: ServerPlayer)) @ 测试函数
----@field public onAcquire fun(self: SkillSkeleton, player: ServerPlayer, is_start: boolean) @ 获得技能时执行的函数
+---@field public onAcquire fun(self: SkillSkeleton, player: ServerPlayer, is_start: boolean, src: ServerPlayer) @ 获得技能时执行的函数
 ---@field public onLose fun(self: SkillSkeleton, player: ServerPlayer, is_death: boolean) @ 失去技能时执行的函数
 ---@field public addEffect fun(self: SkillSkeleton, key: "distance", data: DistanceSpec, attribute: nil): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: "prohibit", data: ProhibitSpec, attribute: nil): SkillSkeleton
@@ -150,22 +150,16 @@ function SkillSkeleton:addEffect(key, data, attribute)
   return self
 end
 
---[[
----@param spec? SkillAISpec|TriggerSkillAISpec
----@param inherit? string
----@param key? string
----@param setTriggerSkillAI? boolean
----@return SkillSkeleton
-function SkillSkeleton:addAI(spec, inherit, key, setTriggerSkillAI)
-  table.insert(self.ai_list, { key or self.name, spec, inherit, setTriggerSkillAI })
-  return self
-end
---]]
-
----@param strategy AIStrategy
+---@param strategy AIStrategy|AIReuseSpec
 function SkillSkeleton:addAI(strategy)
   if type(strategy) ~= "table" then return self end
-  local klass = strategy.class
+  local klass
+  if strategy._reuse then
+    klass = strategy._reuse_type
+  else
+    klass = strategy.class
+  end
+
   if not klass then return self end
 
   self.ai_strategies[klass] = self.ai_strategies[klass] or {}
@@ -737,7 +731,7 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
   return skill
 end
 
-function SkillSkeleton:onAcquire(player, is_start)
+function SkillSkeleton:onAcquire(player, is_start, src)
   local room = player.room
   if self.attached_skill_name then
     for _, p in ipairs(room.alive_players) do
@@ -747,7 +741,7 @@ function SkillSkeleton:onAcquire(player, is_start)
     end
   end
   if self.on_acquire then
-    self.on_acquire(player, is_start)
+    self.on_acquire(player, is_start, src)
   end
 end
 
@@ -798,12 +792,12 @@ function SkillSkeleton:onLose(player, is_death)
 end
 
 -- 获得此技能时，触发此函数
----@param fn fun(self:SkillSkeleton, player:ServerPlayer, is_start:boolean?)
+---@param fn fun(self:SkillSkeleton, player:ServerPlayer, is_start:boolean?, src:ServerPlayer?)
 function SkillSkeleton:addAcquireEffect(fn)
   ---@param player ServerPlayer
   ---@param is_start boolean?
-  self.on_acquire = function (player, is_start)
-    fn(self, player, is_start)
+  self.on_acquire = function (player, is_start, src)
+    fn(self, player, is_start, src)
   end
 end
 

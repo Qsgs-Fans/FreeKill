@@ -93,8 +93,8 @@ W.PageBase {
           cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
           const gameMode = data.gameMode;
           const getUIData = Lua.fn("GetUIDataOfSettings");
-          const boardgameSettingsData = getUIData(gameMode, null, true);
-          const gameSettingsData = getUIData(gameMode, null, false);
+          const boardgameSettingsData = getUIData(gameMode, data, true);
+          const gameSettingsData = getUIData(gameMode, data, false);
 
           let retText = Lua.tr("GameMode") + Lua.tr(gameMode) + "<br />"
             + Lua.tr("ResponseTime") + "<b>" + Config.roomTimeout + "</b><br />";

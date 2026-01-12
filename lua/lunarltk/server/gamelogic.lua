@@ -129,6 +129,7 @@ function GameLogic:chooseGenerals()
   room:askToChooseKingdom(nonlord)
 end
 
+--- 把玩家们按座位顺序串成循环链表（即注册每个人的下家next）
 function GameLogic:buildPlayerCircle()
   local room = self.room
   local players = room.players
@@ -139,42 +140,48 @@ function GameLogic:buildPlayerCircle()
   players[#players].next = players[1]
 end
 
---- 公布武将
+--- 公布某个玩家的武将
+---@param p ServerPlayer
+function GameLogic:broadcastGeneralForPlayer(p)
+  local room = self.room
+  assert(p.general ~= "")
+  local general = Fk.generals[p.general]
+  local deputy = Fk.generals[p.deputyGeneral]
+  p.maxHp = p:getGeneralMaxHp()
+  p.hp = deputy and math.floor((deputy.hp + general.hp) / 2) or general.hp
+  p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
+
+  local changer = Fk.game_modes[room:getSettings('gameMode')]:getAdjustedProperty(p)
+  if changer then
+    for key, value in pairs(changer) do
+      p[key] = value
+    end
+  end
+  local fixMaxHp = Fk.generals[p.general].fixMaxHp
+  local deputyFix = Fk.generals[p.deputyGeneral] and Fk.generals[p.deputyGeneral].fixMaxHp
+  if deputyFix then
+    fixMaxHp = fixMaxHp and math.min(fixMaxHp, deputyFix) or deputyFix
+  end
+  if fixMaxHp then
+    p.maxHp = fixMaxHp
+  end
+  p.hp = math.min(p.maxHp, p.hp)
+
+  room:broadcastProperty(p, "general")
+  room:broadcastProperty(p, "deputyGeneral")
+  room:broadcastProperty(p, "kingdom")
+  room:broadcastProperty(p, "maxHp")
+  room:broadcastProperty(p, "hp")
+  room:broadcastProperty(p, "shield")
+end
+
+--- 公布所有人武将
 function GameLogic:broadcastGeneral()
   local room = self.room
   local players = room.players
 
   for _, p in ipairs(players) do
-    assert(p.general ~= "")
-    local general = Fk.generals[p.general]
-    local deputy = Fk.generals[p.deputyGeneral]
-    p.maxHp = p:getGeneralMaxHp()
-    p.hp = deputy and math.floor((deputy.hp + general.hp) / 2) or general.hp
-    p.shield = math.min(general.shield + (deputy and deputy.shield or 0), 5)
-    -- TODO: setup AI here
-
-    local changer = Fk.game_modes[room:getSettings('gameMode')]:getAdjustedProperty(p)
-    if changer then
-      for key, value in pairs(changer) do
-        p[key] = value
-      end
-    end
-    local fixMaxHp = Fk.generals[p.general].fixMaxHp
-    local deputyFix = Fk.generals[p.deputyGeneral] and Fk.generals[p.deputyGeneral].fixMaxHp
-    if deputyFix then
-      fixMaxHp = fixMaxHp and math.min(fixMaxHp, deputyFix) or deputyFix
-    end
-    if fixMaxHp then
-      p.maxHp = fixMaxHp
-    end
-    p.hp = math.min(p.maxHp, p.hp)
-
-    room:broadcastProperty(p, "general")
-    room:broadcastProperty(p, "deputyGeneral")
-    room:broadcastProperty(p, "kingdom")
-    room:broadcastProperty(p, "maxHp")
-    room:broadcastProperty(p, "hp")
-    room:broadcastProperty(p, "shield")
+    self:broadcastGeneralForPlayer(p)
   end
 end
 
@@ -184,70 +191,85 @@ function GameLogic:prepareDrawPile()
   room:doBroadcastNotify("PrepareDrawPile", room.draw_pile)
 end
 
+---@param player ServerPlayer
+---@param skillName string
+function GameLogic:attachSkillToPlayer(player, skillName)
+  local room = self.room
+  local skill = Fk.skills[skillName]
+  if not skill then
+    fk.qCritical("Skill: "..skillName.." doesn't exist!")
+    return
+  end
+  if skill:hasTag(Skill.Lord) and not (player.role == "lord" and player.role_shown and room:isGameMode("role_mode")) then
+    return
+  end
+
+  if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
+    return
+  end
+
+  room:handleAddLoseSkills(player, skillName, nil, false, true)
+  self:trigger(fk.EventAcquireSkill, player, {skill = skill, who = player})
+end
+
+--- 将p选择的武将的技能交给他
+function GameLogic:attachGeneralSkillsToPlayer(p)
+  local skills = Fk.generals[p.general]:getSkillNameList(true)
+  for _, s in ipairs(skills) do
+    self:attachSkillToPlayer(p, s)
+  end
+
+  local deputy = Fk.generals[p.deputyGeneral]
+  if deputy then
+    skills = deputy:getSkillNameList(true)
+    for _, s in ipairs(skills) do
+      self:attachSkillToPlayer(p, s)
+    end
+  end
+end
+
+--- 初始化所有人的技能
 function GameLogic:attachSkillToPlayers()
   local room = self.room
-
-  local addRoleModSkills = function(player, skillName)
-    local skill = Fk.skills[skillName]
-    if not skill then
-      fk.qCritical("Skill: "..skillName.." doesn't exist!")
-      return
-    end
-    if skill:hasTag(Skill.Lord) and not (player.role == "lord" and player.role_shown and room:isGameMode("role_mode")) then
-      return
-    end
-
-    if skill:hasTag(Skill.AttachedKingdom) and not table.contains(skill:getSkeleton().attached_kingdom, player.kingdom) then
-      return
-    end
-
-    room:handleAddLoseSkills(player, skillName, nil, false, true)
-    self:trigger(fk.EventAcquireSkill, player, {skill = skill, who = player})
-  end
   for _, p in ipairs(room.alive_players) do
-    local skills = Fk.generals[p.general]:getSkillNameList(true)
-    for _, s in ipairs(skills) do
-      addRoleModSkills(p, s)
-    end
-
-    local deputy = Fk.generals[p.deputyGeneral]
-    if deputy then
-      skills = deputy:getSkillNameList(true)
-      for _, s in ipairs(skills) do
-        addRoleModSkills(p, s)
-      end
-    end
+    self:attachGeneralSkillsToPlayer(p)
   end
+end
+
+---@param p ServerPlayer
+function GameLogic:recordInitialGeneral(p)
+  local room = self.room
+  local record = room:getBanner("InitialGeneral") or {}
+  local id, general, deputyGeneral = p.id, p.general, p.deputyGeneral
+
+  -- 隐匿 烂完了隐匿
+  if p:getMark("__hidden_general") ~= 0 then
+    general = p:getMark("__hidden_general")
+  end
+  if p:getMark("__hidden_deputy") ~= 0 then
+    deputyGeneral = p:getMark("__hidden_deputy")
+  end
+
+  -- 国战 TODO 现在国战模式完全可以自己重写该方法
+  if p:getMark("__heg_general") ~= 0 then
+    general = p:getMark("__heg_general")
+  end
+  if p:getMark("__heg_deputy") ~= 0 then
+    deputyGeneral = p:getMark("__heg_deputy")
+  end
+
+  table.insert(record, {id, general, deputyGeneral})
+  room:setBanner("InitialGeneral", record)
 end
 
 function GameLogic:prepareForStart()
   local room = self.room
   local players = room.players
 
-  --记录初始武将以用于正确胜率统计
-  local record = {}
+  -- 记录初始武将以用于正确胜率统计
   for _, p in ipairs(players) do
-    local id, general, deputyGeneral = p.id, p.general, p.deputyGeneral
-
-    --隐匿
-    if p:getMark("__hidden_general") ~= 0 then
-      general = p:getMark("__hidden_general")
-    end
-    if p:getMark("__hidden_deputy") ~= 0 then
-      deputyGeneral = p:getMark("__hidden_deputy")
-    end
-
-    --国战
-    if p:getMark("__heg_general") ~= 0 then
-      general = p:getMark("__heg_general")
-    end
-    if p:getMark("__heg_deputy") ~= 0 then
-      deputyGeneral = p:getMark("__heg_deputy")
-    end
-
-    table.insert(record, {id, general, deputyGeneral})
+    self:recordInitialGeneral(p)
   end
-  room:setBanner("InitialGeneral", record)
 
   self:addTriggerSkill(Fk.skills["game_rule"] --[[@as TriggerSkill]])
   for _, trig in ipairs(Fk.global_trigger) do

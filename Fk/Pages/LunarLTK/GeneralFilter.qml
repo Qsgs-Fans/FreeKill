@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Fk
+import Fk.Components.LunarLTK
 
 Flickable {
   id: root
@@ -483,7 +484,7 @@ Flickable {
     }
 
     Component.onCompleted: {
-      const properties = Lua.call("GetAllProperties");
+      const properties = Ltk.getAllProperties();
       kingdomStates.model = properties.kingdoms;
       maxHpStates.model = properties.maxHps;
       hpStates.model = properties.hps;

@@ -2,6 +2,7 @@
 
 import QtQuick
 import Fk
+import Fk.Components.LunarLTK
 
 Item {
   id: root
@@ -39,7 +40,7 @@ Item {
   }
 
   onSkillnameChanged: {
-    let data = Lua.call("GetSkillData", skillname);
+    let data = Ltk.getSkillData(skillname);
     if (data.frequency || data.switchSkillName) {
       skilltype = data.switchSkillName ? 'switch' : data.frequency;
       visible = true;

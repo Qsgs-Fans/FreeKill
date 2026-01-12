@@ -116,7 +116,7 @@ function ActiveStrategy:searchTargetSelections(ai)
   local searched = {}
   local function search()
     local selected = ai:getSelectedTargets() -- 搜索起点
-    -- local to_remove = selected[#selected]
+    local to_remove = selected[#selected]
     -- 空情况也考虑一下
     if ai._debug then
       verbose(1, "当前已选：%s", table.concat(table.map(selected, Util.IdMapper), "|"))

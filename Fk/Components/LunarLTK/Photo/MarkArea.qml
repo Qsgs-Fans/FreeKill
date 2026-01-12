@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Fk
 import Fk.Widgets as W
+import Fk.Components.LunarLTK
 
 Item {
   id: root
@@ -89,7 +90,7 @@ Item {
 
             const mark_type = mark_name.slice(2, close_br);
             const _data = mark_extra;
-            let data = Lua.call("GetQmlMark", mark_type, mark_name,
+            let data = Ltk.getQmlMark(mark_type, mark_name,
                              root.parent?.playerid);
             if (data && data.qml_path) {
               params.data = data.qml_data;
@@ -99,8 +100,8 @@ Item {
             return;
           } else {
             if (!root.parent.playerid) return;
-            let data = Lua.call("GetPile", root.parent.playerid, mark_name);
-            data = data.filter((e) => Lua.call("CardVisibility", e));
+            let data = Ltk.getPile(root.parent.playerid, mark_name);
+            data = data.filter((e) => Ltk.cardVisibility(e));
             if (data.length === 0)
               return;
 
@@ -138,7 +139,7 @@ Item {
       const close_br = mark.indexOf(']');
       if (close_br !== -1) {
         const mark_type = mark.slice(2, close_br);
-        const _data = Lua.call("GetQmlMark", mark_type, mark,
+        const _data = Ltk.getQmlMark(mark_type, mark,
                             root.parent?.playerid);
         if (_data && _data.text) {
           special_value = _data.text;

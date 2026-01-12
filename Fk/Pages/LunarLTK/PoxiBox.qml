@@ -10,7 +10,7 @@ import Fk.Components.LunarLTK
 GraphicsBox {
   id: root
 
-  title.text: Util.processPrompt(Lua.call("PoxiPrompt", poxi_type, card_data, extra_data))
+  title.text: Util.processPrompt(Ltk.poxiPrompt(poxi_type, card_data, extra_data))
 
   // TODO: Adjust the UI design in case there are more than 7 cards
   width: 70 + 700
@@ -80,7 +80,7 @@ GraphicsBox {
               return true;
             }
             selectable: chosenInBox ||
-              Lua.call("PoxiFilter", root.poxi_type, model.cid, root.selected_ids,
+              Ltk.poxiFilter(root.poxi_type, model.cid, root.selected_ids,
                     root.card_data, root.extra_data);
 
             onSelectedChanged: {
@@ -113,7 +113,7 @@ GraphicsBox {
       width: 120
       height: 35
       text: Lua.tr("OK")
-      enabled: Lua.call("PoxiFeasible", root.poxi_type, root.selected_ids,
+      enabled: Ltk.poxiFeasible(root.poxi_type, root.selected_ids,
                      root.card_data, root.extra_data);
       onClicked: {
         shuffleInvisibleOutput();
@@ -141,7 +141,7 @@ GraphicsBox {
           let cards = cardModel.get(i).areaCards;
           for (let j = 0; j < cards.count; j++) {
             let card = cards.get(j);
-            if (old_selected.indexOf(card.cid) === -1 && Lua.call("PoxiFilter", root.poxi_type, card.cid, root.selected_ids,
+            if (old_selected.indexOf(card.cid) === -1 && Ltk.poxiFilter(root.poxi_type, card.cid, root.selected_ids,
               root.card_data, root.extra_data)) {
               let item = findCardItem(card.cid);
               item.selected = true;
@@ -190,7 +190,7 @@ GraphicsBox {
   }
 
   function refreshPrompt() {
-    root.title.text = Util.processPrompt(Lua.call("PoxiPrompt", poxi_type, card_data, extra_data))
+    root.title.text = Util.processPrompt(Ltk.poxiPrompt(poxi_type, card_data, extra_data))
   }
 
   function findCardItem(cid) {

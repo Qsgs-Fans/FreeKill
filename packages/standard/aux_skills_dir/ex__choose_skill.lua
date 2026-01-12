@@ -25,7 +25,8 @@ exChooseSkill:addEffect('active', {
     return checkpoint
   end,
   target_filter = function(self, player, to_select, selected, cards)
-    if #cards < self.min_c_num then return end
+    -- 这有啥好判的
+    -- if #cards < self.min_c_num then return end
     if #selected < self.max_t_num then
       return table.contains(self.targets, to_select.id)
     end

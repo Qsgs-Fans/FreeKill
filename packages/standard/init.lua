@@ -22,7 +22,7 @@ extension.customPages = {
     name = "Generals Overview",
     iconUrl = "http://175.178.66.93/symbolic/lunarltk/jiang.png",
     qml = {
-      uri = "Fk.Pages.Common",
+      uri = "Fk.Pages.LunarLTK",
       name = "GeneralsOverview",
     }
   },
@@ -30,7 +30,7 @@ extension.customPages = {
     name = "Cards Overview",
     iconUrl = "http://175.178.66.93/symbolic/lunarltk/cards.svg",
     qml = {
-      uri = "Fk.Pages.Common",
+      uri = "Fk.Pages.LunarLTK",
       name = "CardsOverview",
     }
   },
@@ -39,7 +39,7 @@ extension.customPages = {
     iconUrl = "http://175.178.66.93/symbolic/mimetypes/x-office-document-symbolic.svg",
     popup = true,
     qml = {
-      uri = "Fk.Pages.Common",
+      uri = "Fk.Pages.LunarLTK",
       name = "GeneralPoolOverview",
     }
   }

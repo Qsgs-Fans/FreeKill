@@ -34,7 +34,7 @@ ColumnLayout {
       Component.onCompleted: {
         let data = {}
         if (extra_data.ids) {
-          data = Lua.call("GetCardData", modelData);
+          data = Ltk.getCardData(modelData);
         } else {
           data.cid = 0;
           data.name = modelData;

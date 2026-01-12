@@ -23,13 +23,16 @@ distributionSelectSkill:addAI(Fk.Ltk.AI.newActiveStrategy {
   think = function(self, ai)
     local data = ai.data[4]
     local orig = Fk.skills[data.skillName] or distributionSelectSkill
-    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseStrategy, orig.name)
+    local strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.YijiStrategy, orig.name)
     if not strategy then
-      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.ChooseStrategy, distributionSelectSkill.name)
+      strategy = ai:findStrategyOfSkill(Fk.Ltk.AI.YijiStrategy, distributionSelectSkill.name)
       ---@cast strategy -nil
     end
 
     local cards, card_benefit = strategy:chooseCards(ai)
+    for _, cid in ipairs(cards or {}) do
+      ai:selectCard(cid, true)
+    end
     local players, player_benefit = strategy:choosePlayers(ai)
     if cards then
       return { cards, players }, (card_benefit * player_benefit) or 0

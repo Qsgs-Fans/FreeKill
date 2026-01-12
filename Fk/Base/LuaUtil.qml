@@ -22,19 +22,14 @@ QtObject {
   }
 
   function fn(func) {
-    if (func.startsWith("function")) {
-      return (...params) => {
-        let exp = `(${func})(`;
-        exp += [...params].map(v => {
-          return `json.decode '${JSON.stringify(v)}'`;
-        }).join(', ');
-        exp += ')';
-
-        return evaluate(exp);
-      }
-    }
     return (...params) => {
-      return backend.callLuaFunction(func, [...params]);
+      let exp = `(${func})(`;
+      exp += [...params].map(v => {
+        return `json.decode '${JSON.stringify(v)}'`;
+      }).join(', ');
+      exp += ')';
+
+      return evaluate(exp);
     }
   }
 

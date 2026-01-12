@@ -20,4 +20,34 @@ skill:addEffect(fk.DetermineDamageCaused, {
   end,
 })
 
+skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    ---@type DamageData
+    local data = ai.room.logic:getCurrentEvent().data
+    local player = ai.player
+    local ret, benefit = player.ai:askToChooseCards({
+      cards = data.to:getCardIds("he"),
+      skill_name = skill.name,
+      data = {
+        min = math.min(#data.to:getCardIds("he"), 2),
+        to_place = Card.DiscardPile,
+        reason = fk.ReasonDiscard,
+        proposer = player,
+      },
+    })
+    local val = ai:getBenefitOfEvents(function(logic)
+      logic:throwCard(ret, skill.name, data.to, player)
+    end)
+    return 1.1 * val > ai:getBenefitOfEvents(function(logic)
+      logic:damage({
+        from = player,
+        to = data.to,
+        card = data.card,
+        damage = data.damage,
+        damageType = data.damageType,
+      })
+    end)
+  end,
+})
+
 return skill

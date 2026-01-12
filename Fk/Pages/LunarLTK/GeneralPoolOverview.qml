@@ -7,6 +7,7 @@ import QtQuick.Controls
 import Fk
 import Fk.Components.Common
 import Fk.Widgets as W
+import Fk.Components.LunarLTK
 
 W.PageBase {
   id: root
@@ -113,10 +114,10 @@ W.PageBase {
       onClicked: {
         const disabledGenerals = Lua.evaluate("ClientInstance.disabled_generals");
         const disabledPack = Lua.evaluate("ClientInstance.disabled_packs");
-        const allPack = Lua.call("GetAllGeneralPack");
+        const allPack = Ltk.getAllGeneralPack();
         const scheme = {
           name: (new Date).toJSON(),
-          banCardPkg: Lua.call("GetAllCardPack").filter(p => disabledPack.includes(p)),
+          banCardPkg: Ltk.getAllCardPack().filter(p => disabledPack.includes(p)),
           banPkg: {},
           normalPkg: {},
         };
@@ -125,7 +126,7 @@ W.PageBase {
             scheme.banPkg[pkname] = [];
             continue;
           }
-          let generals = Lua.call("GetGenerals", pkname);
+          let generals = Ltk.getGenerals(pkname);
           let enabled_generals = generals.filter(g => !disabledGenerals.includes(g));
           let disabled_generals = generals.filter(g => !enabled_generals.includes(g));
           if (enabled_generals.length > generals.length * 0.4) {
@@ -239,12 +240,12 @@ W.PageBase {
   Component.onCompleted: {
     const disabledGenerals = Lua.evaluate("ClientInstance.disabled_generals");
     const disabledPack = Lua.evaluate("ClientInstance.disabled_packs");
-    const allPack = Lua.call("GetAllGeneralPack");
+    const allPack = Ltk.getAllGeneralPack();
     pkgModel.clear();
     const allGenerals = [];
     for (let pkname of allPack) {
       if (disabledPack.includes(pkname)) continue;
-      let generals = Lua.call("GetGenerals", pkname);
+      let generals = Ltk.getGenerals(pkname);
       generals = generals.filter(g => !Lua.evaluate(`Fk.generals['${g}'].hidden`));
       generals = generals.filter(g => !disabledGenerals.includes(g));
       if (generals.length === 0) continue;

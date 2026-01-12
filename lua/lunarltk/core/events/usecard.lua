@@ -3,6 +3,7 @@
 ---@class RespondCardDataSpec
 ---@field public from ServerPlayer @ 使用/打出者
 ---@field public card Card @ 卡牌本牌
+---@field public subcardsFromInfo? { cardId: integer, beforeCard: Card, from?: ServerPlayer, fromArea: CardArea, fromSpecialName?: string }[] @ 实体牌来源
 ---@field public responseToEvent? CardEffectData @ 响应事件目标
 ---@field public skipDrop? boolean @ 是否不进入弃牌堆
 ---@field public customFrom? ServerPlayer @ 新响应者
@@ -27,6 +28,7 @@ fk.CardRespondFinished = RespondCardEvent:subclass("fk.CardRespondFinished")
 ---@class UseCardDataSpec
 ---@field public from ServerPlayer @ 使用/打出者
 ---@field public card Card @ 卡牌本牌
+---@field public subcardsFromInfo? { cardId: integer, beforeCard: Card, from?: ServerPlayer, fromArea: CardArea, fromSpecialName?: string }[] @ 实体牌来源
 ---@field public tos ServerPlayer[] @ 目标列表
 ---@field public subTos? ServerPlayer[][] @ 子目标列表，借刀最爱的一集
 ---@field public toCard? Card @ 卡牌目标
@@ -43,6 +45,7 @@ fk.CardRespondFinished = RespondCardEvent:subclass("fk.CardRespondFinished")
 ---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
 ---@field public damageDealt? table<ServerPlayer, number> @ 此牌造成的伤害
 ---@field public additionalEffect? integer @ 额外结算次数
+---@field public additionalEffectToPlayer? table<ServerPlayer, integer> @ 对某人的额外生效次数
 ---@field public noIndicate? boolean @ 隐藏指示线
 ---@field public attachedSkillAndUser? { user: integer, skillName: string, muteCard: boolean } @ 附加技能、使用者与卡牌静音，用于转化技
 
@@ -187,53 +190,97 @@ function UseCardData:changeCard(name, suit, number, skill_name)
 end
 
 --- 判断使用事件是否是在使用手牌
----@param player ServerPlayer @ 要判断的使用者
----@param realUseEvent? GameEvent.UseCard @ 指定使用事件，用于记录器判断
+---@param player? ServerPlayer @ 要判断的使用者
 ---@return boolean
-function UseCardData:isUsingHandcard(player, realUseEvent)
-  local useEvent = realUseEvent or player.room.logic:getCurrentEvent()
-  local cards = Card:getIdList(self.card)
-  if #cards == 0 then return false end
-  local moveEvents = useEvent:searchEvents(GameEvent.MoveCards, 1, function(e)
-    return e.parent and e.parent.id == useEvent.id
+function UseCardData:isUsingHandcard(player)
+  player = player or self.from
+  local infos = self.subcardsFromInfo
+  return infos ~= nil and #infos > 0 and table.every(infos, function(info)
+    return info.from == player and info.fromArea == Card.PlayerHand
   end)
-  if #moveEvents == 0 then return false end
-  local subcheck = table.simpleClone(cards)
-  for _, move in ipairs(moveEvents[1].data) do
-    if move.moveReason == fk.ReasonUse then
-      for _, info in ipairs(move.moveInfo) do
-        if table.removeOne(subcheck, info.cardId) and info.fromArea ~= Card.PlayerHand then
-          return false
-        end
-      end
-    end
-  end
-  return #subcheck == 0
 end
 
 --- 判断打出事件是否是在打出手牌
----@param player ServerPlayer @ 要判断的使用者
----@param realRespondEvent? GameEvent.RespondCard @ 指定使用事件，用于记录器判断
+---@param player? ServerPlayer @ 要判断的使用者
 ---@return boolean
-function RespondCardData:isUsingHandcard(player, realRespondEvent)
-  local useEvent = realRespondEvent or player.room.logic:getCurrentEvent()
-  local cards = Card:getIdList(self.card)
-  if #cards == 0 then return false end
-  local moveEvents = useEvent:searchEvents(GameEvent.MoveCards, 1, function(e)
-    return e.parent and e.parent.id == useEvent.id
-  end)
-  if #moveEvents == 0 then return false end
-  local subcheck = table.simpleClone(cards)
-  for _, move in ipairs(moveEvents[1].data) do
-    if move.moveReason == fk.ReasonResponse then
-      for _, info in ipairs(move.moveInfo) do
-        if table.removeOne(subcheck, info.cardId) and info.fromArea ~= Card.PlayerHand then
-          return false
-        end
+function RespondCardData:isUsingHandcard(player)
+  -- 复用 UseCardData 的逻辑，通过类型注解规避警告
+  ---@diagnostic disable-next-line
+  return UseCardData.isUsingHandcard(self, player)
+end
+
+--- 获取使用事件的实体牌带有的标记
+---@param name string @ 标记名称（要检查的卡牌标记字符串）
+---@return table
+function UseCardData:getMark(name)
+  local marks = {}
+  local infos = self.subcardsFromInfo
+  if infos then
+    for i = 1, #infos do
+      local mark = infos[i].beforeCard:getMark(name)
+      if mark ~= 0 then
+        table.insert(marks, mark)
       end
     end
   end
-  return #subcheck == 0
+  return marks
+end
+
+--- 获取打出事件的实体牌带有的标记
+---@param name string @ 标记名称（要检查的卡牌标记字符串）
+---@return table
+function RespondCardData:getMark(name)
+  -- 复用 UseCardData 的逻辑，通过类型注解规避警告
+  ---@diagnostic disable-next-line
+  return UseCardData.getMark(self, name)
+end
+
+--- 判断使用事件是否是在使用带标记的牌
+---@param name string @ 标记名称（要检查的卡牌标记字符串）
+---@param findOne? boolean @ 查找逻辑开关：true=只要有任意一张卡牌带该标记就返回true；false=要求所有卡牌都带该标记才返回true，否则返回false
+---@return boolean
+function UseCardData:hasMark(name, findOne)
+  -- 缓存子卡牌列表（仅保留必要的非空判断）
+  local infos = self.subcardsFromInfo
+  if not infos or #infos == 0 then
+    return false
+  end
+
+  -- 拆分逻辑，删除循环内的空值校验
+  if findOne then
+    -- 找任意一个符合条件的卡牌，找到即返回
+    for i = 1, #infos do
+      local info = infos[i]
+      -- 直接判断标记，取消 info/card 的空值校验
+      if info.beforeCard:getMark(name) > 0 then
+        return true
+      end
+    end
+  else
+    -- 要求所有卡牌都符合条件，找到一个不符合就返回
+    for i = 1, #infos do
+      local info = infos[i]
+      -- 直接判断标记，取消 info/card 的空值校验
+      if info.beforeCard:getMark(name) <= 0 then
+        return false
+      end
+    end
+    -- 所有卡牌都符合条件，返回true
+    return true
+  end
+
+  -- 遍历结束未找到符合条件的，返回false
+  return false
+end
+
+--- 判断打出事件是否是在使用带标记的牌
+---@param name string @ 标记名称（要检查的卡牌标记字符串）
+---@param findOne? boolean @ 查找逻辑开关：true=只要有任意一张卡牌带该标记就返回true；false=要求所有卡牌都带该标记才返回true，否则返回false
+---@return boolean
+function RespondCardData:hasMark(name, findOne)
+  -- 复用 UseCardData 的逻辑，通过类型注解规避警告
+  ---@diagnostic disable-next-line
+  return UseCardData.hasMark(self, name, findOne)
 end
 
 --- 判断一名角色是否是该使用事件的唯一目标
@@ -246,6 +293,17 @@ function UseCardData:isOnlyTarget(target)
   return table.contains(tos, target) and not table.find(target.room.alive_players, function (p)
     return p ~= target and table.contains(tos, p)
   end)
+end
+
+--- 让此卡对player多生效n次，可以在生效途中修改
+---
+--- n可以是负数，此时为少生效相应次（注意无效是另外一个字段）
+---@param player ServerPlayer
+---@param n integer
+function UseCardData:changeEffectTimes(player, n)
+  self.additionalEffectToPlayer = self.additionalEffectToPlayer or {}
+  self.additionalEffectToPlayer[player] = self.additionalEffectToPlayer[player] or 0
+  self.additionalEffectToPlayer[player] = self.additionalEffectToPlayer[player] + n
 end
 
 ---@class UseCardEvent: TriggerEvent
@@ -288,6 +346,7 @@ fk.CardUseFinished = UseCardEvent:subclass("fk.CardUseFinished")
 ---@field public cancelled? boolean @ 是否已被取消
 ---@field public fixedResponseTimesList? table<ServerPlayer, integer> @ 某角色响应此事件需要的牌张数（如杀响应决斗），键为角色，值为响应张数
 ---@field public extra_data? UseExtraData | table @ 额外数据
+---@field public currentExtraData? UseExtraData | table @ 额外数据（仅当前目标，继承给对应生效事件）
 
 --- 使用牌的数据
 ---@class AimData: AimDataSpec, TriggerData
@@ -612,6 +671,7 @@ fk.TargetConfirmed = AimEvent:subclass("fk.TargetConfirmed")
 ---@field public prohibitedCardNames? string[] @ 这些牌名的牌不可响应此牌
 ---@field public disresponsiveList? ServerPlayer[] @ 这些角色不可响应此牌（晚于use.disresponsiveList）
 ---@field public unoffsetableList? ServerPlayer[] @ 这些角色不可抵消此牌（晚于use.unoffsetableList）
+---@field public currentExtraData? UseExtraData | table @ 额外数据（仅当前目标，继承给对应生效事件）
 
 --- 卡牌效果的数据
 ---@class CardEffectData: CardEffectDataSpec, TriggerData

@@ -58,10 +58,10 @@ RowLayout {
   Connections {
     target: handcardAreaItem
     function onCardSelected(cardId, selected) {
-      Lua.call("UpdateRequestUI", "CardItem", cardId, "click", { selected, autoTarget: Config.autoTarget } );
+      Ltk.updateRequestUI("CardItem", cardId, "click", { selected, autoTarget: Config.autoTarget } );
     }
     function onCardDoubleClicked(cardId, selected) {
-      Lua.call("UpdateRequestUI", "CardItem", cardId, "doubleClick", { selected, doubleClickUse: Config.doubleClickUse, autoTarget: Config.autoTarget } );
+      Ltk.updateRequestUI("CardItem", cardId, "doubleClick", { selected, doubleClickUse: Config.doubleClickUse, autoTarget: Config.autoTarget } );
     }
     function onLengthChanged() {
       self.handcards = handcardAreaItem.length;
@@ -106,9 +106,9 @@ RowLayout {
   }
 
   function updateHandcards() {
-    Lua.call("FilterMyHandcards");
+    Ltk.filterMyHandcards();
     handcardAreaItem.cards.forEach(v => {
-      v.setData(Lua.call("GetCardData", v.cid, true));
+      v.setData(Ltk.getCardData(v.cid, true));
     });
   }
 
@@ -130,12 +130,12 @@ RowLayout {
 
     skillPanel.clearSkills();
 
-    const skills = Lua.call("GetMySkills");
+    const skills = Ltk.getMySkills();
     for (let s of skills) {
       addSkill(s);
     }
 
-    cards = roomScene.drawPile.remove(Lua.call("GetPlayerHandcards", Self.id), null,
+    cards = roomScene.drawPile.remove(Ltk.getPlayerHandcards(Self.id), null,
     Lua.fn(`function()
       local ret = {}
       for _, cid in ipairs(Self:getCardIds("h")) do
@@ -163,14 +163,14 @@ RowLayout {
     });
     uiUpdate["_new"]?.forEach(dat => {
       if (dat.type == "CardItem") {
-        const data = Lua.call("GetCardData", dat.data.id);
+        const data = Ltk.getCardData(dat.data.id);
         data.x = parentPos.x;
         data.y = parentPos.y;
         const card = component.createObject(roomScene, data);
         card.footnoteVisible = true;
         card.markVisible = false;
         card.footnote = Lua.tr(dat.ui_data.footnote);
-        const vcard = Lua.call("GetVirtualEquipData", 0, dat.data.id);
+        const vcard = Ltk.getVirtualEquipData(0, dat.data.id);
         if (vcard) {
           card.virt_name = vcard.name;
         }
@@ -192,6 +192,6 @@ RowLayout {
       }
     });
 
-    pending_skill = Lua.call("GetPendingSkill");
+    pending_skill = Ltk.getPendingSkill();
   }
 }

@@ -18,7 +18,7 @@ rende:addEffect("active", {
     local player = effect.from
     local cards = effect.cards
     local marks = player:getMark("_rende_cards-phase")
-    room:moveCardTo(cards, Player.Hand, target, fk.ReasonGive, rende.name, nil, false, player.id)
+    room:moveCardTo(cards, Player.Hand, target, fk.ReasonGive, rende.name, nil, false, player)
     room:addPlayerMark(player, "_rende_cards-phase", #cards)
     if marks < 2 and marks + #cards >= 2 and not player.dead and player:isWounded() then
       room:recover{

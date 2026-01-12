@@ -462,7 +462,6 @@ function Room:animDelay(sec)
   local req = Request:new(self.alive_players, "EmptyRequest")
   req.focus_text = ''
   req.timeout = sec
-  req.no_time_waste_check = true
   req:ask()
 end
 
@@ -699,7 +698,7 @@ function Room:askToUseActiveSkill(player, params)
     from = player,
     cards = selected_cards,
     tos = table.map(targets, Util.Id2PlayerMapper),
-    interaction = interaction
+    interaction_data = interaction
   }
   local use_data = skill:handleCostData(player, use_spec, params.extra_data)
 
@@ -710,7 +709,7 @@ function Room:askToUseActiveSkill(player, params)
   return true, {
     cards = use_data.cards,
     targets = use_data.tos,
-    interaction = interaction
+    interaction = use_data.interaction_data
   }
 end
 
@@ -3113,21 +3112,20 @@ end
 function Room:arrangeTurn(players)
   if self.current == nil then return end
   local round_event = self.logic:getCurrentEvent():findParent(GameEvent.Round, true)
-  if round_event then
-    local turn_table = round_event.data.turn_table
-    if turn_table then
-      local new_turn_table = {}
-      if players then
-        new_turn_table = table.simpleClone(players)
-      else
-        local current = round_event.data.to
-        if current == nil then return end
-        for i = table.indexOf(self.players, current), #self.players do
-          table.insert(new_turn_table, self.players[i])
-        end
+  if not round_event then return end
+  local turn_table = round_event.data.turn_table
+  if turn_table then
+    local new_turn_table = {}
+    if players then
+      new_turn_table = table.simpleClone(players)
+    else
+      local current = round_event.data.to
+      if current == nil then return end
+      for i = table.indexOf(self.players, current), #self.players do
+        table.insert(new_turn_table, self.players[i])
       end
-      round_event.data.turn_table = new_turn_table
     end
+    round_event.data.turn_table = new_turn_table
   end
 end
 
@@ -3337,11 +3335,20 @@ function Room:abortPlayerArea(player, playerSlots)
   for _, slot in ipairs(playerSlots) do
     if slot == Player.JudgeSlot then
       if not table.contains(player.sealedSlots, Player.JudgeSlot) then
-        table.insertIfNeed(slotsToSeal, Player.JudgeSlot)
+        table.insert(slotsToSeal, Player.JudgeSlot)
 
         local delayedTricks = player:getCardIds(Player.Judge)
         if #delayedTricks > 0 then
           table.insertTable(cardsToDrop, delayedTricks)
+        end
+      end
+    elseif slot == Player.HandSlot then
+      if not table.contains(player.sealedSlots, Player.HandSlot) then
+        table.insert(slotsToSeal, Player.HandSlot)
+
+        local cids = player:getCardIds(Player.Hand)
+        if #cids > 0 then
+          table.insertTable(cardsToDrop, cids)
         end
       end
     else
@@ -3381,6 +3388,7 @@ function Room:abortPlayerArea(player, playerSlots)
       arg = s,
     }
   end
+
   self.logic:trigger(fk.AreaAborted, player, { slots = slotsToSeal })
 end
 
@@ -3396,7 +3404,7 @@ function Room:resumePlayerArea(player, playerSlots)
 
   local slotsToResume = {}
   for _, slot in ipairs(playerSlots) do
-    for i = 1, #player.sealedSlots do
+    for i = #player.sealedSlots, 1, -1 do
       if player.sealedSlots[i] == slot then
         table.remove(player.sealedSlots, i)
         table.insert(slotsToResume, slot)
@@ -3770,10 +3778,102 @@ function Room:destroyTableCardByEvent(id)
   self:doBroadcastNotify("DestroyTableCardByEvent", id)
 end
 
-function Room:addNpc(nextPlayer)
-  local ret = ServerRoomBase.addNpc(self, nextPlayer)
+---@class AddNpcParams
+---@field controller fk.ServerPlayer? 这名人机的初始控制者，默认人机自己
+---@field general string? 初始武将，默认男士兵，不支持隐匿
+---@field deputy string? 初始副将
+---@field role string? 身份，默认反贼（呃）
+---@field role_shown boolean? 身份可见？默认不可见
+---@field skip_preparation boolean? 跳过初始化流程？可用于游戏模式logic的早期环节
+---@field send_log boolean? 是否发一句log，默认发
+
+--- 创建一个人机作为新玩家加入场上，必须通过参数指定座位，还可以指定其他参数
+---@param nextPlayer ServerPlayer 新玩家的下家
+---@param params? AddNpcParams 更多数据
+---@return ServerPlayer
+function Room:addNpc(nextPlayer, params)
+  params = params or Util.DummyTable --[[@as AddNpcParams]]
+  local ret = ServerRoomBase.addNpc(self, nextPlayer) --[[@as ServerPlayer]]
 
   self.alive_players = table.filter(self.players, function(p) return not p.dead end)
+
+  -- 在三国杀中，中途加入一个人机光是有个玩家还不够，得走一次开始游戏之前的流程
+  -- 不过底下这堆东西为什么没有封装啊
+
+  if params.controller then
+    ret:setInitController(params.controller)
+  end
+
+  -- 如果不需要初始化，就不弄接下来这堆了
+  if params.skip_preparation then
+    return ret
+  end
+
+  local logic = self.logic
+
+  -- 分配身份
+  self:setPlayerProperty(ret, "role_shown", not not params.role_shown)
+  self:setPlayerProperty(ret, "role", params.role or "rebel")
+
+  -- 选将与亮将
+  local general = params.general or "blank_shibing"
+  local deputy = params.deputy or ""
+
+  -- 有些模式不启用隐匿，不使用prepareGeneral
+  -- 我也不知道prepareGeneral这种身份局专用的函数为什么要在room类底下
+  self:setPlayerGeneral(ret, general, true, true)
+  ret.deputyGeneral = deputy
+  logic:broadcastGeneralForPlayer(ret)
+  logic:recordInitialGeneral(ret)
+
+  -- 分配技能
+  logic:attachGeneralSkillsToPlayer(ret)
+
+  -- 以上应该就是初始化一个角色的流程吧
+  -- 初始手牌不做
+
+  -- 更新额定回合表。。
+  self:arrangeTurn()
+
+  return ret
+end
+
+--- 增加更多默认条件与限制条件的addNpc，推荐用这个
+---
+--- - 默认由operator操控召唤的人机
+--- - 默认与operator同阵营
+--- - 身份可见性与operator一致
+--- - 游戏人数不得超过12否则会返回nil
+---@param operator ServerPlayer
+---@param nextPlayer ServerPlayer
+---@param params? AddNpcParams
+---@return ServerPlayer?
+function Room:summonPlayer(operator, nextPlayer, params)
+  if #self.players >= 12 then return nil end
+  params = params or {}
+  params.controller = params.controller or operator._splayer
+  if params.send_log == nil then params.send_log = true end
+  if not params.role then
+    params.role = operator.role
+    if operator.role == "lord" then
+      params.role = "loyalist"
+    end
+  end
+
+  if params.role_shown == nil then
+    params.role_shown = operator.role_shown
+  end
+
+  local ret = self:addNpc(nextPlayer, params)
+
+  if params.send_log then
+    self:sendLog {
+      type = "#SummonPlayer",
+      from = ret.id,
+      to = { nextPlayer.id },
+      arg = ret.serverplayer:getScreenName(),
+    }
+  end
 
   return ret
 end

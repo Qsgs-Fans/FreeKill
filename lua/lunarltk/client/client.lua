@@ -464,12 +464,35 @@ local function sendMoveCardLog(move, visible_data)
       from = move.to,
       card = logCards,
     }, visible_data)
-  --elseif move.fromArea == Card.PlayerEquip then
-  --  client:appendLog({
-  --    type = "$UninstallEquip",
-  --    from = move.from,
-  --    card = logCards,
-  --  }, visible_data)
+  elseif move.toArea == Card.DrawPile then
+    msgtype = move.from and "$PutCard" or "$PutCardNoFrom"
+    local pos = move.drawPilePosition
+    local arg
+    if pos == nil then
+      arg = "Top"
+    elseif pos == -1 then
+      arg = "Bottom"
+    else
+      arg = "Pile"
+    end
+
+    client:appendLog({
+      type = msgtype,
+      from = move.from,
+      card = logCards,
+      arg = arg,
+      arg2 = #move.ids,
+    }, visible_data)
+    client:setCardNote(move.ids, {
+      type = "$$PutCard",
+      from = move.from,
+    })
+  elseif move.fromArea == Card.PlayerEquip then
+    client:appendLog({
+      type = "$UninstallEquip",
+      from = move.from,
+      card = logCards,
+    }, visible_data)
   elseif move.toArea == Card.Processing then
     if move.fromArea == Card.DrawPile and (move.moveReason == fk.ReasonPut or move.moveReason == fk.ReasonJustMove) then
       if hidden then
@@ -491,30 +514,6 @@ local function sendMoveCardLog(move, visible_data)
         })
       end
     end
-  elseif move.toArea == Card.DrawPile then
-    msgtype = move.from and "$PutCard" or "$PutCardNoFrom"
-    local pos = move.drawPilePosition
-    local arg
-    --if pos == nil or pos == 1 then
-    --  arg = "Top"
-    --elseif pos == -1 then
-    if pos == -1 then
-      arg = "Bottom"
-    else
-      arg = "Pile"
-    end
-
-    client:appendLog({
-      type = msgtype,
-      from = move.from,
-      card = logCards,
-      arg = arg,
-      arg2 = #move.ids,
-    }, visible_data)
-    client:setCardNote(move.ids, {
-      type = "$$PutCard",
-      from = move.from,
-    })
   elseif move.toArea == Card.DiscardPile then
     if move.moveReason == fk.ReasonDiscard then
       if move.proposer and move.proposer ~= move.from then

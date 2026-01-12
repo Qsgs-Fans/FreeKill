@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 
 import Fk
+import Fk.Components.LunarLTK
 
 Flickable {
   id: root
@@ -41,7 +42,7 @@ Flickable {
     skillDesc.text = "";
 
     extra_data.generals.forEach((g) => {
-      const data = Lua.call("GetGeneralDetail", g);
+      const data = Ltk.getGeneralDetail(g);
       skillDesc.append(Lua.tr(data.kingdom) + " " + Lua.tr(g) + " " + (data.hp === data.maxHp
         ? ((g.startsWith('hs__') || g.startsWith('ld__') || g.includes('heg__'))
           ? ((data.mainMaxHp != 0 || data.deputyMaxHp != 0)

@@ -28,6 +28,7 @@
 ---@field public endnote string @ 尾注。在武将介绍界面出现
 ---@field public hidden boolean @ 不在选将框里出现，可以点将，可以在武将一览里查询到
 ---@field public total_hidden boolean @ 完全隐藏
+---@field public attached_personal_mark string @ 私有qml标记
 General = class("General")
 
 ---@alias Gender integer
@@ -67,6 +68,7 @@ function General:initialize(package, name, kingdom, hp, maxHp, gender)
   self.other_skills = {}  -- skill belongs other general, e.g. "mashu" of pangde
   self.related_skills = {} -- skills related to this general, but not first added to it, e.g. "jixi" of dengai
   self.related_other_skills = {} -- skills related to this general and belong to other generals, e.g. "yingzi" of sunce
+  self.attached_personal_mark = ""
   self.all_skills = {}
 
   self.companions = {}
@@ -182,6 +184,10 @@ function General:isCompanionWith(other)
     or (not not string.find(self.name, "lord") and (other.kingdom == self.kingdom or other.subkingdom == self.kingdom))
     or (not not string.find(other.name, "lord") and (self.kingdom == other.kingdom or self.subkingdom == other.kingdom))
     or (not not string.find(self.name, "all_comp") or not not string.find(other.name, "all_comp")) -- all_comp 所有都珠联璧合
+end
+
+function General:addAttachedPersonalMark(mark)
+  self.attached_personal_mark = mark
 end
 
 return General

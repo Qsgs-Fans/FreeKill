@@ -3,7 +3,7 @@
 ---@field public serverplayer fk.ServerPlayer @ 控制者对应的C++玩家
 ---@field public _splayer fk.ServerPlayer @ 对应的C++玩家
 ---@field public room ServerRoomBase
----@field public _timewaste_count integer
+---@field public _timewaste_count integer @连续烧绳时间，单位为秒
 ---@field public ai Base.AI
 local ServerPlayerBase = {}
 
@@ -96,7 +96,7 @@ function ServerPlayerBase:saveState(data)
   if ok then
     local ret = self._splayer:saveState(jsonData)
     if type(ret) == "boolean" then
-      coroutine.yield("__handleRequest")
+      self.room:yield(function(r) return r == "query_done" end)
     end
   else
     fk.qWarning("Failed to encode save data: " .. jsonData)
@@ -113,7 +113,10 @@ function ServerPlayerBase:getSaveState()
   end
   local data = self._splayer:getSaveState()
   if type(data) == "boolean" then
-    data = coroutine.yield("__handleRequest")
+    data = self.room:yield(function(reason)
+      local ok = pcall(json.decode, reason)
+      return ok
+    end)
   end
   local ok, result = pcall(json.decode, data or "{}")
   if ok then
@@ -137,7 +140,7 @@ function ServerPlayerBase:saveGlobalState(key, data)
   if ok then
     local ret = self._splayer:saveGlobalState(key, jsonData)
     if type(ret) == "boolean" then
-      coroutine.yield("__handleRequest")
+      self.room:yield(function(r) return r == "query_done" end)
     end
   else
     fk.qWarning("Failed to encode global save data: " .. jsonData)
@@ -155,7 +158,10 @@ function ServerPlayerBase:getGlobalSaveState(key)
   end
   local data = self._splayer:getGlobalSaveState(key)
   if type(data) == "boolean" then
-    data = coroutine.yield("__handleRequest")
+    data = self.room:yield(function(reason)
+      local ok = pcall(json.decode, reason)
+      return ok
+    end)
   end
   local ok, result = pcall(json.decode, data or "{}")
   if ok then

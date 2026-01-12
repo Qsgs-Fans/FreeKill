@@ -7,8 +7,8 @@
 ---@field public phase_index integer
 ---@field private _manually_fake_skills Skill[]
 ---@field public prelighted_skills Skill[]
+---@field private _controller_stack fk.ServerPlayer[] 控制着该角色的玩家栈
 ---@field public ai SmartAI
----@field public ai_data any
 local ServerPlayer = Player:subclass("ServerPlayer")
 
 ---@class ServerPlayer
@@ -29,6 +29,8 @@ function ServerPlayer:initialize(_self)
   self._manually_fake_skills = {}
   self.prelighted_skills = {}
   self._prelighted_skills = {}
+
+  self._controller_stack = { self.serverplayer }
 
   self.ai = SmartAI:new(self)
 end
@@ -738,14 +740,72 @@ end
 
 -- 神貂蝉
 
+---@param player ServerPlayer
+local function updateControllerUI(player)
+  local room = player.room
+  if player._splayer == player.serverplayer then
+    room:setPlayerMark(player, "@ControledBy", 0)
+  else
+    local p2 = table.find(room.players, function(p) return p._splayer == player.serverplayer end)
+    if p2 then
+      room:setPlayerMark(player, "@ControledBy", p2)
+    end
+  end
+end
+
+--- 让自己的初始控制者取得角色p的控制权。注意归还控制权时请使用uncontrol函数而不是让他控制自己。
 ---@param p ServerPlayer
 function ServerPlayer:control(p)
-  if self == p then
-    self.room:setPlayerMark(p, "@ControledBy", 0)
-  else
-    self.room:setPlayerMark(p, "@ControledBy", self)
+  local tab = p._controller_stack
+  table.insert(tab, self._controller_stack[1])
+  p.serverplayer = tab[#tab]
+  self.room:sendLog {
+    type = "#ChangeController",
+    from = p.id,
+    arg = p.serverplayer:getScreenName(),
+  }
+  updateControllerUI(p)
+end
+
+--- 让出自己的初始控制者角色p的控制权，这样p就由上个控制他的玩家控制。不能让出初始玩家的控制权
+---
+--- 这个函数会把玩家self从控制列表删除，如果角色p此时由self操控则会引起控制权变更。
+---@param p ServerPlayer
+function ServerPlayer:uncontrol(p)
+  local tab = p._controller_stack
+  if #tab == 1 then return end
+  local givenUp = false
+  for i = #tab, 2, -1 do
+    if tab[i] == self._controller_stack[1] then
+      givenUp = true
+      table.remove(tab, i)
+      break
+    end
   end
-  p.serverplayer = self._splayer
+  p.serverplayer = tab[#tab]
+  if givenUp then
+    self.room:sendLog {
+      type = "#QuitControl",
+      from = p.id,
+      arg = self._controller_stack[1]:getScreenName(),
+      arg2 = p.serverplayer:getScreenName(),
+    }
+  end
+  updateControllerUI(p)
+end
+
+--- 自己的初始控制者是否控制着角色p？
+---@param p ServerPlayer
+function ServerPlayer:isControlling(p)
+  return p.serverplayer == self._controller_stack[1]
+end
+
+--- 将本角色的初始控制者设为玩家p。见于统率三军等需要召唤机器人的模式
+---@param p fk.ServerPlayer
+function ServerPlayer:setInitController(p)
+  self._controller_stack[1] = p
+  self.serverplayer = self._controller_stack[#self._controller_stack]
+  updateControllerUI(self)
 end
 
 -- 22

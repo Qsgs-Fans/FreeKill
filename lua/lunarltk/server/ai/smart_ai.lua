@@ -22,6 +22,92 @@ function SmartAI:makeReply()
   return TrustAI.makeReply(self)
 end
 
+--- 解析对整个策略的复用，技能和类型由spec指定
+---@param spec AIReuseSpec
+---@param stack any? 避免循环依赖
+---@return AIStrategy?
+local function resolveStrategyReuse(spec, stack)
+  stack = stack or {}
+  if stack[spec] then
+    fk.qWarning("AI strategy reuse loop detected (=> %s)", spec._reuse_key)
+    return nil
+  end
+  stack[spec] = true
+
+  local skill = Fk.skills[spec._reuse_key]
+  if not skill then return end
+  local skel = skill:getSkeleton()
+  if not skel then return end
+
+  local resolved
+  local reuse_tp = spec._reuse_type
+  if not reuse_tp then
+    fk.qWarning("reuse: no strategy type specified")
+    stack[spec] = nil
+    return nil
+  end
+
+  local list = skel.ai_strategies[reuse_tp] or Util.DummyTable
+  resolved = list[1]
+  if not resolved then
+    fk.qWarning("reuse: failed to reuse %s (=>%s)", tostring(reuse_tp), spec._reuse_key)
+    stack[spec] = nil
+    return nil
+  end
+
+  local reuse = resolved --[[@as AIReuseSpec]]
+  if reuse._reuse then
+    resolved = resolveStrategyReuse(reuse, stack) --[[@as AIStrategy]]
+    list[1] = resolved
+  end
+
+  stack[spec] = nil
+  return resolved
+end
+
+--- 解析策略的某个字段的复用
+---@param spec AIReuseSpec
+---@param tp AIStrategy 类型
+---@param key string 字段名
+---@param stack any? 避免循环依赖
+---@return any
+local function resolveFieldReuseOfStrategy(spec, tp, key, stack)
+  stack = stack or {}
+  if stack[spec] then
+    fk.qWarning("AI strategy reuse loop detected (=> %s)", spec._reuse_key)
+    return nil
+  end
+  stack[spec] = true
+
+  local skill = Fk.skills[spec._reuse_key]
+  if not skill then return end
+  local skel = skill:getSkeleton()
+  if not skel then return end
+
+  local resolved
+
+  local list = skel.ai_strategies[tp] or Util.DummyTable
+  if not list[1] then return end
+  resolved = list[1][key]
+  if not resolved then
+    fk.qWarning("reuse: failed to reuse %s (=>%s)", tostring(tp), spec._reuse_key)
+    stack[spec] = nil
+    return nil
+  end
+
+  local reuse = resolved --[[@as AIReuseSpec]]
+  if type(reuse) == "table" and reuse._reuse then
+    resolved = resolveFieldReuseOfStrategy(reuse, tp, key, stack) --[[@as AIStrategy]]
+    list[1][key] = resolved
+  end
+
+  stack[spec] = nil
+  return resolved
+end
+
+--- 根据给定的类别、技能名，找到符合目前询问上下文的策略。
+---
+--- 如果有需要的话，会解析复用的策略/方法等。
 ---@generic T: AIStrategy
 ---@param tp T
 ---@param skill_name string
@@ -32,12 +118,42 @@ function SmartAI:findStrategyOfSkill(tp, skill_name)
   local skel = skill:getSkeleton()
   if not skel then return end
   local list = skel.ai_strategies[tp] or Util.DummyTable
-  for _, v in ipairs(list) do
-    if v:matchContext(self) then
-      return v
+
+  local ret
+  for i = #list, 1, -1 do
+    local tmp = list[i] --[[@as AIReuseSpec]]
+    local v
+    if tmp._reuse then
+      local t = resolveStrategyReuse(tmp)
+      if t then
+        v = t
+        list[i] = t
+      else
+        table.remove(list, i)
+      end
+    else
+      v = list[i]
+    end
+
+    if v and v:matchContext(self) then
+      ret = v
+      break
     end
   end
-  return nil
+  if not ret then return nil end
+
+  if ret._resolved then return ret end
+
+  -- 确保找到的ret没有复用字段，可以直接拿来用了
+  for k in pairs(ret) do
+    local tmp = ret[k] --[[@as AIReuseSpec]]
+    if type(tmp) == "table" and tmp._reuse then
+      ret[k] = resolveFieldReuseOfStrategy(tmp, tp, k)
+      -- 如果方法变成nil的话 会自动调这个class的默认方法的
+    end
+  end
+
+  return ret
 end
 
 ---@type table<string, SkillAI>
@@ -401,8 +517,9 @@ function SmartAI:sortPlayers(tab, key, reverse)
 end
 
 ---@param card integer|Card
+---@param key "keep_value"|"use_value"|nil
 ---@return number
-function SmartAI:getKeepValue(card)
+function SmartAI:getCardValue(card, key)
   if type(card) == "number" then
     card = Fk:getCardById(card)
   end
@@ -431,7 +548,7 @@ function SmartAI:sortCards(tab, key, reverse)
   local value_tab = {}
   for _, id in ipairs(tab) do
     if key == "keep_value" then
-      value_tab[id] = self:getKeepValue(id)
+      value_tab[id] = self:getCardValue(id)
     end
   end
 
@@ -471,14 +588,23 @@ end
 ---@return integer[], integer @ 返回本次选牌收益最大的一种情况，选择的卡牌和收益
 function SmartAI:askToChooseCards(params)
   local skill_name, data = params.skill_name, params.data
-  local ret, benefit = { -1 }, -100000
-  for _, id in ipairs(params.cards) do
-    local v = self:getBenefitOfEvents(function(logic)
-      logic:moveCardTo(id, data.to_place, data.target, data.reason, skill_name, nil, false, data.proposer)
-    end)
-    if v > benefit then
-      ret, benefit = { id }, v
+  data.min = data.min or 1
+  data.max = data.max or data.min
+  local cards = table.simpleClone(params.cards)
+  local ret, benefit = { }, -100000
+  for _ = data.max, 1, -1 do
+    local tmp_id, tmp_benefit = -1, -100000
+    for _, id in ipairs(cards) do
+      local v = self:getBenefitOfEvents(function(logic)
+        logic:moveCardTo(id, data.to_place, data.target, data.reason, skill_name, nil, false, data.proposer)
+      end)
+      if v > tmp_benefit then
+        tmp_id, tmp_benefit = id, v
+      end
     end
+    table.insertIfNeed(ret, tmp_id)
+    benefit = benefit + tmp_benefit
+    table.removeOne(cards, tmp_id)
   end
   return ret, benefit
 end

@@ -19,7 +19,6 @@
 ---@field private _asked boolean? @ 是否询问过了
 ---@field public focus_players? ServerPlayer[] @ 要moveFocus的玩家们 默认参与者
 ---@field public focus_text? string @ 要moveFocus的文字 默认self.command
----@field public no_time_waste_check? boolean
 local Request = class("Request")
 
 -- TODO: 懒得思考了
@@ -133,7 +132,7 @@ function Request:_checkReply(player, use_ai)
       local p, command, fn = br[1], br[2], br[3]
       if p == player and command == self.command and fn(self.data[player.id]) then
         table.remove(breakpoints, i)
-        coroutine.yield("__handleRequest")
+        room:yield()
         break
       end
     end
@@ -237,8 +236,20 @@ function Request:ask()
     local elapsed = os.time() - currentTime
     if self.timeout - elapsed <= 0 or resume_reason == "request_timer" then
       for i = #players, 1, -1 do
-        table.insert(self.overtimes, players[i])
-        if self.send_success[players[i].serverplayer] then
+        local player = players[i]
+        if self.timeout - elapsed <= 0 then
+          table.insert(self.overtimes, player)
+
+          -- TODO: 烧完整管后若累计烧了60s则托管，但这个功能目前无法实现
+          -- player._timewaste_count = player._timewaste_count + elapsed
+          -- if player._timewaste_count >= 60 and
+          --   player.serverplayer:getState() == fk.Player_Online then
+          --   player._timewaste_count = 0
+            -- freekill-asio中并没有setState。
+            -- player.serverplayer:setState(fk.Player_Trust)
+          -- end
+        end
+        if self.send_success[player.serverplayer] then
           table.remove(players, i)
         end
       end
@@ -246,8 +257,7 @@ function Request:ask()
 
     -- 若players中只剩人机，那么允许人机进行计算
     if table.every(players, function(p)
-      return p.serverplayer:getState() ~= fk.Player_Online or not
-        self.send_success[p.serverplayer]
+      return p.serverplayer:getState() ~= fk.Player_Online or not self.send_success[p.serverplayer]
     end) then
       self.ai_start_time = os.getms()
     end
@@ -266,6 +276,7 @@ function Request:ask()
         changed = true
 
         if reply ~= "__cancel" or self.accept_cancel then
+          player._timewaste_count = 0
           table.insert(self.winners, player)
           if #self.winners >= self.n then
             -- winner数量已经足够，剩下的人不用算了
@@ -294,7 +305,7 @@ function Request:ask()
       if room._test_disable_delay then
         resume_reason = "request_timer"
       else
-        resume_reason = coroutine.yield("__handleRequest")
+        resume_reason = room:yield()
       end
     end
   end
@@ -345,15 +356,6 @@ function Request:_finish()
     end
     if self.result[p.id] == nil then
       self.result[p.id] = self.default_reply[p.id] or ""
-      if not self.no_time_waste_check then
-        p._timewaste_count = p._timewaste_count + 1
-        if p._timewaste_count >= 3 and p.serverplayer:getState() == fk.Player_Online then
-          p._timewaste_count = 0
-          p.serverplayer:emitKick()
-        end
-      end
-    else
-      p._timewaste_count = 0
     end
     if self.result[p.id] == "__cancel" then
       self.result[p.id] = (not self.accept_cancel) and self.default_reply[p.id] or ""

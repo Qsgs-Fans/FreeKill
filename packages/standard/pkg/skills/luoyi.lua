@@ -57,4 +57,12 @@ luoyi:addTest(function(room, me)
   lu.assertEquals(comp2.hp, origin_hp - 1)
 end)
 
+luoyi:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    return #table.filter(ai.player:getHandlyIds(), function (id)
+      return Fk:getCardById(id).trueName == "slash" or Fk:getCardById(id).name == "duel"
+    end) > 0
+  end,
+})
+
 return luoyi

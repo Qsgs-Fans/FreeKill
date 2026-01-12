@@ -16,4 +16,8 @@ guanxing:addEffect(fk.EventPhaseStart, {
   end,
 })
 
+guanxing:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = Util.TrueFunc,
+})
+
 return guanxing

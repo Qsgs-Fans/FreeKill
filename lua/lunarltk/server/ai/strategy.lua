@@ -1,5 +1,6 @@
 ---@class AIStrategy : Object
 ---@field skill_name string
+---@field _resolved boolean? 是否已经解析完所有reuse？只用于底层代码
 local AIStrategy = class("AIStrategy")
 
 --- 判断这个strategy是否是需要的 一般直接返true

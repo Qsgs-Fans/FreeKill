@@ -45,15 +45,15 @@ local Player = basePlayer:subclass("Player")
 
 ---@alias Phase integer
 
-Player.RoundStart = 1
-Player.Start = 2
-Player.Judge = 3
-Player.Draw = 4
-Player.Play = 5
-Player.Discard = 6
-Player.Finish = 7
-Player.NotActive = 8
-Player.PhaseNone = 9
+Player.RoundStart = 1     -- 回合开始阶段(不要用)
+Player.Start = 2          -- 准备阶段
+Player.Judge = 3          -- 判定阶段
+Player.Draw = 4           -- 摸牌阶段
+Player.Play = 5           -- 出牌阶段
+Player.Discard = 6        -- 弃牌阶段
+Player.Finish = 7         -- 结束阶段
+Player.NotActive = 8      -- 不活跃阶段(回合外)
+Player.PhaseNone = 9      -- 无阶段(阶段之间的间隙)
 
 ---@alias PlayerCardArea integer
 
@@ -72,6 +72,7 @@ Player.ArmorSlot = 'ArmorSlot'
 Player.OffensiveRideSlot = 'OffensiveRideSlot'
 Player.DefensiveRideSlot = 'DefensiveRideSlot'
 Player.TreasureSlot = 'TreasureSlot'
+Player.HandSlot = 'HandSlot'
 Player.JudgeSlot = 'JudgeSlot'
 
 function Player:initialize()
@@ -1305,7 +1306,7 @@ function Player:isProhibited(to, card)
   end
 
   if card.sub_type == Card.SubtypeDelayedTrick and
-      (table.contains(to.sealedSlots, Player.JudgeSlot) or to:hasDelayedTrick(card.name)) then
+      (to:isJudgeAreaSealed() or to:hasDelayedTrick(card.name)) then
     return true
   end
 
@@ -1328,7 +1329,7 @@ function Player:isProhibitedTarget(card)
   end
 
   if card.sub_type == Card.SubtypeDelayedTrick and
-      (table.contains(self.sealedSlots, Player.JudgeSlot) or (self:hasDelayedTrick(card.name) and not card.stackable_delayed)) then
+      (self:isJudgeAreaSealed() or (self:hasDelayedTrick(card.name) and not card.stackable_delayed)) then
     return true
   end
 
@@ -1577,6 +1578,16 @@ end
 ---@return boolean
 function Player:hasEmptyEquipSlot(subtype)
   return #self:getAvailableEquipSlots(subtype) - #self:getEquipments(subtype) > 0
+end
+
+-- 手牌区被废除？
+function Player:isHandAreaSealed()
+  return table.contains(self.sealedSlots, Player.HandSlot)
+end
+
+-- 判定区被废除？
+function Player:isJudgeAreaSealed()
+  return table.contains(self.sealedSlots, Player.JudgeSlot)
 end
 
 function Player:addBuddy(other)

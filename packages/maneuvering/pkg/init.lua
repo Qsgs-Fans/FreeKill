@@ -13,6 +13,7 @@ local thunder__slash = fk.CreateCard{
   name = "thunder__slash",
   type = Card.TypeBasic,
   is_damage_card = true,
+  damage_type = fk.ThunderDamage,
   skill = "thunder__slash_skill",
 }
 
@@ -20,6 +21,7 @@ local fire__slash = fk.CreateCard{
   name = "fire__slash",
   type = Card.TypeBasic,
   is_damage_card = true,
+  damage_type = fk.FireDamage,
   skill = "fire__slash_skill",
 }
 
@@ -42,6 +44,7 @@ local fire_attack = fk.CreateCard{
   type = Card.TypeTrick,
   skill = "fire_attack_skill",
   is_damage_card = true,
+  damage_type = fk.FireDamage,
 }
 
 local supply_shortage = fk.CreateCard{

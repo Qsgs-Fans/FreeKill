@@ -24,6 +24,7 @@
 ---@field public skill CardSkill @ 技能（用于实现卡牌效果）
 ---@field public special_skills? string[] @ 衍生技能，如重铸
 ---@field public is_damage_card boolean @ 是否为会造成伤害的牌
+---@field public damage_type integer @ 牌造成伤害的属性
 ---@field public multiple_targets boolean @ 是否为指定多个目标的牌
 ---@field public stackable_delayed boolean @ 是否为可堆叠的延时锦囊牌
 ---@field public is_passive? boolean @ 是否只能在响应时使用或打出
@@ -275,6 +276,7 @@ function Card:clone(suit, number)
   newCard.skill = self.skill
   newCard.special_skills = self.special_skills
   newCard.is_damage_card = self.is_damage_card
+  newCard.damage_type = self.damage_type
   newCard.multiple_targets = self.multiple_targets
   newCard.stackable_delayed = self.stackable_delayed
   newCard.is_passive = self.is_passive

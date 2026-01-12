@@ -14,6 +14,7 @@
 ---@field public last_request Request @ 上一次完成的request
 ---@field public _test_disable_delay boolean? 测试专用 会禁用delay和烧条
 ---@field public callbacks { [string|integer]: fun(self, sender: integer, data) }
+---@field private _resume_fn fun(reason): boolean? 判断对于reason是否接受唤醒
 local ServerRoomBase = {}
 
 ---@param _room fk.Room
@@ -37,12 +38,21 @@ function ServerRoomBase:initialize(_room)
   self.timeout = _room:getTimeout()
   self.settings = cbor.decode(self.room:settings())
 
+  self._resume_fn = Util.TrueFunc
+
   self.callbacks = {}
   ------------------------
   self:addCallback("reconnect", self.playerReconnect)
   self:addCallback("observe", self.addObserver)
   self:addCallback("leave", self.removeObserver)
   self:addCallback("surrender", self.handleSurrender)
+end
+
+---@param check_fn? fun(reason: string): boolean?
+function ServerRoomBase:yield(check_fn, ...)
+  check_fn = check_fn or Util.TrueFunc
+  self._resume_fn = check_fn
+  return coroutine.yield("__handleRequest", ...)
 end
 
 ---@param func fun(self, sender: integer, data)
@@ -63,12 +73,21 @@ function ServerRoomBase:resume(reason)
   local ret, err_msg, rest_time = true, true, nil
   local main_co = self.main_co
 
+  -- 高优先事项：无人时不继续游戏了，直接结束
   if self:checkNoHuman() then
     goto GAME_OVER
   end
 
+  -- 若有reason且拒绝被reason唤醒，则不管他了
+  if reason and not self._resume_fn(reason) then
+    return false
+  end
+  -- 立刻设置回去防止某处漏了导致锁死
+  self._resume_fn = Util.TrueFunc
+
   if not self.game_finished then
     self.notify_count = 0
+
     ret, err_msg, rest_time = coroutine.resume(main_co, reason)
 
     -- handle error
@@ -229,7 +248,7 @@ end
 function ServerRoomBase:delay(ms)
   self.room:delay(math.ceil(ms))
   if self._test_disable_delay then return end
-  coroutine.yield("__handleRequest", ms)
+  self:yield(function(r) return r == "delay_done" end, ms)
 end
 
 --- 将触发技或状态技添加到房间
@@ -282,8 +301,11 @@ function ServerRoomBase:shouldUpdateWinRate()
   if os.time() - self.start_time < 45 then
     return false
   end
+
+  -- 由于召唤术的存在，人机不能一刀切的不算分
+  -- 话说为什么这玩意在ServerRoomBase，还有顶上的自选武将，这乱套了啊
   for _, p in ipairs(self.players) do
-    if p.id < 0 then return false end
+    if p.id < 0 and (p._controller_stack or {})[1] == p._splayer then return false end
   end
   return Fk.game_modes[self:getSettings('gameMode')]:countInFunc(self)
 end
@@ -585,7 +607,7 @@ function ServerRoomBase:saveGlobalState(key, data)
   if ok then
     local ret = self.room:saveGlobalState(key, jsonData)
     if type(ret) == "boolean" then
-      coroutine.yield("__handleRequest")
+      self:yield(function(r) return r == "query_done" end)
     end
   else
     fk.qWarning("Failed to encode global save data: " .. jsonData)
@@ -603,7 +625,10 @@ function ServerRoomBase:getGlobalSaveState(key)
   end
   local data = self.room:getGlobalSaveState(key)
   if type(data) == "boolean" then
-    data = coroutine.yield("__handleRequest")
+    data = self:yield(function(reason)
+      local ok = pcall(json.decode, reason)
+      return ok
+    end)
   end
   local ok, result = pcall(json.decode, data or "{}")
   if ok then

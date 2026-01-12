@@ -21,8 +21,10 @@ local function drawInit(room, player, n, fix_ids)
     moveReason = fk.ReasonDraw
   }
   for _, id in ipairs(cardIds) do
-    table.insert(move_to_notify.moveInfo,
-    { cardId = id, fromArea = room:getCardArea(id) })
+    table.insert(move_to_notify.moveInfo, {
+      cardId = id,
+      fromArea = room:getCardArea(id),
+    })
   end
   room:notifyMoveCards(nil, {move_to_notify})
 
@@ -31,6 +33,7 @@ local function drawInit(room, player, n, fix_ids)
     room:setCardArea(id, Card.PlayerHand, player.id)
   end
   room:syncDrawPile()
+  return cardIds
 end
 
 local function discardInit(room, player)
@@ -51,12 +54,16 @@ local function discardInit(room, player)
   }
   for _, id in ipairs(cardIds) do
     if id > 0 then
-      table.insert(move_to_notify.moveInfo,
-      { cardId = id, fromArea = Card.PlayerHand })
+      table.insert(move_to_notify.moveInfo, {
+        cardId = id,
+        fromArea = Card.PlayerHand,
+      })
       table.insert(room.draw_pile, id)
     else
-      table.insert(move_to_void_notify.moveInfo,
-      { cardId = id, fromArea = Card.PlayerHand })
+      table.insert(move_to_void_notify.moveInfo, {
+        cardId = id,
+        fromArea = Card.PlayerHand,
+      })
       table.insert(room.void, id)
     end
   end
@@ -95,6 +102,7 @@ function DrawInitial:main()
     drawInit = drawInit,
     discardInit = discardInit,
     playerList = table.map(room.alive_players, Util.IdMapper),
+    cards = {},
   }
 
   for _, player in ipairs(room.alive_players) do
@@ -106,7 +114,8 @@ function DrawInitial:main()
       luck_data[player.id].luckTime = 0
     end
     if draw_data.num > 0 then
-      drawInit(room, player, draw_data.num, luck_data[player.id].fix_ids)
+      draw_data.cards = drawInit(room, player, draw_data.num, luck_data[player.id].fix_ids)
+      luck_data[player.id].cards = draw_data.cards
     end
   end
 
@@ -119,6 +128,7 @@ function DrawInitial:main()
     for _, player in ipairs(room.alive_players) do
       local draw_data = luck_data[player.id]
       draw_data.luckTime = nil
+      draw_data.cards = luck_data[player.id].cards
       room.logic:trigger(fk.AfterDrawInitialCards, player, draw_data)
     end
     return
@@ -162,6 +172,7 @@ function Round:action()
   end
 
   while true do
+    -- 此为本轮游戏的额定回合表，每次循环中都会剔除一个
     data.turn_table = data.turn_table or {}
     if #data.turn_table == 0 then
       data.turn_table = table.simpleClone(room.players)

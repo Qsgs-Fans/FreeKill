@@ -203,7 +203,7 @@ GraphicsBox {
   }
 
   function updateCompanion(gcard1, gcard2, overwrite) {
-    if (Lua.call("IsCompanionWith", gcard1.name, gcard2.name)) {
+    if (Ltk.isCompanionWith(gcard1.name, gcard2.name)) {
       gcard1.hasCompanions = true;
     } else if (overwrite) {
       gcard1.hasCompanions = false;
@@ -227,13 +227,13 @@ GraphicsBox {
     }
     root.choicesChanged();
 
-    fightButton.enabled = Lua.call("ChooseGeneralFeasible", root.rule_type, root.choices,
+    fightButton.enabled = Ltk.chooseGeneralFeasible(root.rule_type, root.choices,
                                 root.generals, root.extra_data);
 
     for (i = 0; i < generalCardList.count; i++) {
       item = generalCardList.itemAt(i);
       item.selectable = choices.includes(item.name) ||
-              Lua.call("ChooseGeneralFilter", root.rule_type, item.name, root.choices,
+              Ltk.chooseGeneralFilter(root.rule_type, item.name, root.choices,
                     root.generals, root.extra_data);
       if (hegemony) { // 珠联璧合相关
         item.inPosition = 0;
@@ -291,7 +291,7 @@ GraphicsBox {
     }
 
     for (let i = 0; i < generalList.count; i++) {
-      if (Lua.call("GetSameGenerals", generalList.get(i).name).length > 0) {
+      if (Ltk.getSameGenerals(generalList.get(i).name).length > 0) {
         convertBtn.enabled = true;
         return;
       }
@@ -300,6 +300,6 @@ GraphicsBox {
   }
 
   function refreshPrompt() {
-    prompt = Util.processPrompt(Lua.call("ChooseGeneralPrompt", rule_type, generals, extra_data))
+    prompt = Util.processPrompt(Ltk.chooseGeneralPrompt(rule_type, generals, extra_data))
   }
 }

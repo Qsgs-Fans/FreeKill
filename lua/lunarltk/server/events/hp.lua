@@ -470,7 +470,13 @@ function ChangeMaxHp:main()
   local player = data.who
   local num = data.num
 
-  room:setPlayerProperty(player, "maxHp", math.max(player.maxHp + num, 0))
+  local maxhp = math.max(player.maxHp + num, 0)
+  if player.hp > maxhp then
+    player.hp = maxhp
+    room:broadcastProperty(player, "hp")
+  end
+  room:setPlayerProperty(player, "maxHp", maxhp)
+
   room:sendLogEvent("ChangeMaxHp", {
     player = player.id,
     num = num,
@@ -480,38 +486,16 @@ function ChangeMaxHp:main()
     from = player.id,
     arg = num > 0 and num or - num,
   }
+  room:sendLog{
+    type = "#ShowHPAndMaxHP",
+    from = player.id,
+    arg = player.hp,
+    arg2 = player.maxHp,
+  }
+
   if player.maxHp == 0 then
-    player.hp = 0
-    room:broadcastProperty(player, "hp")
-    room:sendLog{
-      type = "#ShowHPAndMaxHP",
-      from = player.id,
-      arg = 0,
-      arg2 = 0,
-    }
     room:killPlayer({ who = player })
     return false
-  end
-
-  local diff = player.hp - player.maxHp
-  if diff > 0 then
-    if not room:changeHp(player, -diff) then
-      player.hp = player.hp - diff
-
-      room:sendLog{
-        type = "#ShowHPAndMaxHP",
-        from = player.id,
-        arg = player.hp,
-        arg2 = player.maxHp,
-      }
-    end
-  else
-    room:sendLog{
-      type = "#ShowHPAndMaxHP",
-      from = player.id,
-      arg = player.hp,
-      arg2 = player.maxHp,
-    }
   end
 
   room.logic:trigger(fk.MaxHpChanged, player, data)

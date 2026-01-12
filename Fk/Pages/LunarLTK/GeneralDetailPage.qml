@@ -30,7 +30,7 @@ Item {
   }
 
   function addSpecialSkillAudio(skill) {
-    const gdata = Lua.call("GetGeneralData", general);
+    const gdata = Ltk.getGeneralData(general);
     const extension = gdata.extension;
     let ret = false;
     for (let i = 0; i < 999; i++) {
@@ -48,7 +48,7 @@ Item {
 
   function addSkillAudio(skill) {
     if (addSpecialSkillAudio(skill)) return;
-    const skilldata = Lua.call("GetSkillData", skill);
+    const skilldata = Ltk.getSkillData(skill);
     if (!skilldata) return;
     const extension = skilldata.extension;
     for (let i = 0; i < 999; i++) {
@@ -63,13 +63,13 @@ Item {
   }
 
   function findWinAudio(general) {
-    const extension = Lua.call("GetGeneralData", general).extension;
+    const extension = Ltk.getGeneralData(general).extension;
     const fname = SkinBank.getAudioRealPath(general, extension, "win");
     audioWin.visible = !!fname;
   }
 
   function findDeathAudio(general) {
-    const extension = Lua.call("GetGeneralData", general).extension;
+    const extension = Ltk.getGeneralData(general).extension;
     const fname = SkinBank.getAudioRealPath(general, extension, "death");
     audioDeath.visible = !!fname;
   }
@@ -77,7 +77,7 @@ Item {
   function updateGeneral() {
     detailGeneralCard.name = general;
     //detailFlickable.contentY = 0; // 重置滚动条
-    const data = Lua.call("GetGeneralDetail", general);
+    const data = Ltk.getGeneralDetail(general);
     generalText.clear();
     generalText.clearSavedText();
     audioModel.clear();
@@ -249,7 +249,7 @@ Item {
 
         // try main general
         if (general) {
-          dat = Lua.call("GetGeneralData", general);
+          dat = Ltk.getGeneralData(general);
           extension = dat.extension;
           path = SkinBank.getAudio(skill + "_" + general, extension, "skill");
           //path = "./packages/" + extension + "/audio/skill/" + skill + "_" + general;
@@ -260,7 +260,7 @@ Item {
         }
 
         // finally normal skill
-        dat = Lua.call("GetSkillData", skill);
+        dat = Ltk.getSkillData(skill);
         extension = dat.extension;
         path = SkinBank.getAudio(skill, extension, "skill");
         Backend.playSound(path, idx);
@@ -338,7 +338,7 @@ Item {
       }
       text: {
         const general = root.general;
-        const gdata = Lua.call("GetGeneralData", general);
+        const gdata = Ltk.getGeneralData(general);
         let ret = [
           Lua.tr(gdata.package),
           Lua.tr("Title") + ": " + trans("#" + general),
@@ -480,7 +480,7 @@ Item {
 
             onClicked: {
               const general = root.general
-              const extension = Lua.call("GetGeneralData", general).extension;
+              const extension = Ltk.getGeneralData(general).extension;
               const path = SkinBank.getAudio(general, extension, "win");
               if (path !== undefined) {
                 Backend.playSound(path);
@@ -552,7 +552,7 @@ Item {
 
             onClicked: {
               const general = root.general
-              const extension = Lua.call("GetGeneralData", general).extension;
+              const extension = Ltk.getGeneralData(general).extension;
               const path = SkinBank.getAudio(general, extension, "death");
               if (path !== undefined) {
                 Backend.playSound(path);

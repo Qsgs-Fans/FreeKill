@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Controls
 
 import Fk
+import Fk.Components.LunarLTK
 
 SpinBox {
   background: Rectangle { color: "#88EEEEEE" }
@@ -12,6 +13,6 @@ SpinBox {
   // from, to
 
   onValueChanged: {
-    Lua.call("UpdateRequestUI", "Interaction", "1", "update", value);
+    Ltk.updateRequestUI("Interaction", "1", "update", value);
   }
 }

@@ -21,13 +21,38 @@ skill:addEffect(fk.DamageCaused, {
       end
     end
     if #ride_tab == 0 then return end
-    local id = room:askToChooseCard(player, { target = to,
-    flag = {
-      card_data = {
-        { "equip_horse", ride_tab }
-      }
-    }, skill_name = self.name })
-    room:throwCard({id}, skill.name, to, player)
+    local id = room:askToChooseCard(player, {
+      target = to,
+      flag = { card_data = { { "equip_horse", ride_tab } } },
+      skill_name = self.name,
+    })
+    room:throwCard(id, skill.name, to, player)
+  end,
+})
+
+skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
+  think = function(self, ai)
+    ---@type DamageData
+    local data = ai.room.logic:getCurrentEvent().data
+    local player = ai.player
+    local ride_tab = {}
+    for _, card in ipairs(data.to:getEquipCards()) do
+      if card.sub_type == Card.SubtypeDefensiveRide or card.sub_type == Card.SubtypeOffensiveRide then
+        table.insert(ride_tab, card:getEffectiveId())
+      end
+    end
+    local ret, benefit = player.ai:askToChooseCards({
+      cards = ride_tab,
+      skill_name = skill.name,
+      data = {
+        to_place = Card.DiscardPile,
+        reason = fk.ReasonDiscard,
+        proposer = player,
+      },
+    })
+    return ai:getBenefitOfEvents(function(logic)
+      logic:throwCard(ret, skill.name, data.to, player)
+    end) >= 0
   end,
 })
 

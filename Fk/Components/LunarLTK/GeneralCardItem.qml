@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 
 import Fk
 import Fk.Components.GameCommon as Game
+import Fk.Components.LunarLTK
 import Fk.Components.LunarLTK.Photo
 
 /* Layout of general card:
@@ -334,7 +335,7 @@ Game.BasicCard {
   }
 
   onNameChanged: {
-    const data = Lua.call("GetGeneralData", name);
+    const data = Ltk.getGeneralData(name);
     kingdom = data.kingdom;
     subkingdom = (data.subkingdom !== kingdom && data.subkingdom) || "";
     hp = data.hp;

@@ -210,7 +210,7 @@ end
 -- swig/server.i
 
 local _Task_delay = function(self, ms)
-  assert(math.type(ms) == "integer")
+  ms = math.floor(ms)
 
   callRpc("Task_delay", { self.id, ms })
 end
@@ -296,14 +296,14 @@ end
 ---@param timeout integer
 ---@param timestamp? integer
 local _ServerPlayer_doRequest = function(self, command, jsondata, timeout, timestamp)
-  assert(math.type(timeout) == "integer")
+  timeout = math.ceil(timeout) -- 细节向上取整
   assert(timestamp and math.type(timestamp) == "integer")
 
   callRpc("ServerPlayer_doRequest", { self.connId, command, tostring(jsondata), timeout, timestamp })
 end
 
 local _ServerPlayer_waitForReply = function(self, timeout)
-  assert(math.type(timeout) == "integer")
+  timeout = math.floor(timeout)
 
   local ret, err = callRpc("ServerPlayer_waitForReply", { self.connId, timeout })
   if err ~= nil then
@@ -421,7 +421,7 @@ local room_hasObserver = function(self, player)
 end
 
 local _Room_delay = function(self, ms)
-  assert(math.type(ms) == "integer")
+  ms = math.floor(ms)
 
   callRpc("Room_delay", { self.id, ms })
 end
@@ -439,7 +439,7 @@ local _Room_gameOver = function(self)
 end
 
 local _Room_setRequestTimer = function(self, ms)
-  assert(math.type(ms) == "integer")
+  ms = math.floor(ms)
 
   callRpc("Room_setRequestTimer", { self.id, ms })
 end
