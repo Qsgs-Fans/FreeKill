@@ -143,8 +143,8 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
     break;
   }
 
-  auto dateStr = QString::asprintf("%02d/%02d", date.month(), date.day());
-  auto timeStr = QTime::currentTime().toString("hh:mm:ss");
+  auto dateStr = QString::asprintf("%02d-%02d-%02d", date.year(), date.month(), date.day());
+  auto timeStr = QTime::currentTime().toString("hh:mm:ss.zzz");
 #ifndef Q_OS_WIN32
   QTextStream out(stdout);
   out << dateStr << " " << timeStr << " " << threadName <<

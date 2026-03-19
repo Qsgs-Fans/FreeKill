@@ -133,7 +133,9 @@ void QmlBackend::joinServer(QString address, ushort port) {
   if (ClientInstance != nullptr)
     return;
 
-  auto future = QtConcurrent::run([&] {
+  auto future = QtConcurrent::run([] {
+    QThread::currentThread()->setObjectName("Pool");
+
     auto ret = new Client;
     ret->moveToThread(qApp->thread());
     return ret;
