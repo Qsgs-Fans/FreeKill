@@ -10,6 +10,7 @@ using namespace fkShell;
 #include "server/cli/shell.h"
 
 #if defined(Q_OS_WIN32)
+#include <windows.h>
 #include "applink.c"
 #endif
 
@@ -150,11 +151,11 @@ void fkMsgHandler(QtMsgType type, const QMessageLogContext &context,
   out << dateStr << " " << timeStr << " " << threadName <<
     "[" << levelMark << "] " << msg << Qt::endl;
 #else
-  // 略win区，你赢了
-  // 但至少win肯定支持wchar_t，%ls放心用
-  printf("%ls %ls %ls[%ls] %ls\r\n", qUtf16Printable(dateStr),
-         qUtf16Printable(timeStr), qUtf16Printable(threadName),
-         qUtf16Printable(levelMark), qUtf16Printable(msg));
+  // Use UTF-8 for Windows console
+  printf("%s %s %s[%s] %s\n", qUtf8Printable(dateStr),
+         qUtf8Printable(timeStr), qUtf8Printable(threadName),
+         qUtf8Printable(levelMark), qUtf8Printable(msg));
+  fflush(stdout);
 #endif
   *ofs << dateStr << " " << timeStr << " " << threadName <<
     "[" << levelMarkNoColor << "] " << msg << Qt::endl;
@@ -431,7 +432,7 @@ int freekill_main(int argc, char *argv[]) {
 #elif defined(Q_OS_WIN32)
   qputenv("QT_MEDIA_BACKEND", "windows");
   system = QStringLiteral("Win");
-  ::system("chcp 65001");
+  SetConsoleOutputCP(CP_UTF8);
 #elif defined(Q_OS_LINUX)
   system = QStringLiteral("Linux");
 #else
