@@ -1,4 +1,4 @@
-name: Build For Android
+name: Build For Android Arm32
 
 on:
   workflow_dispatch:
@@ -55,8 +55,8 @@ jobs:
         git clone https://github.com/KDAB/android_openssl
         rm -rf include
         cp -r android_openssl/ssl_3/include .
-        cp -r android_openssl/ssl_3/arm64-v8a/libcrypto_3.so .
-        cp -r android_openssl/ssl_3/arm64-v8a/libssl_3.so .
+        cp -r android_openssl/ssl_3/armeabi-v7a/libcrypto_3.so .
+        cp -r android_openssl/ssl_3/armeabi-v7a/libssl_3.so .
 
         cd ../FreeKill
         cp -r ../openssl-3.1.8/include/openssl ./include
@@ -82,13 +82,62 @@ jobs:
           -DBUILD_CLI=OFF \
           -DCMAKE_SYSTEM_NAME=Android \
           -DCMAKE_SYSTEM_VERSION=29 \
-          -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+          -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a \
           -DCMAKE_ANDROID_NDK=${ANDROID_NDK_ROOT} \
           -DOPENSSL_INCLUDE_DIR="${SSL_DIR}/include" \
           -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto_3.so" \
           -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl_3.so"
         make -j$(nproc)
         cp libgit2.so ${SSL_DIR}
+
+    - name: Build Lua 5.4.8
+      run: |
+        cd ..
+        wget https://www.lua.org/ftp/lua-5.4.8.tar.gz
+        tar -xf ./lua-5.4.8.tar.gz
+        cd lua-5.4.8
+        
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+
+        
+        export API=24
+        export TOOLCHAIN=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+        export TARGET=armv7a-linux-androideabi
+        export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+        export AR=$TOOLCHAIN/bin/llvm-ar
+        export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+        
+        make CC="$CC" AR="$AR rcu" RANLIB="$RANLIB" MYCFLAGS="-fPIC -DLUA_USE_LINUX" all
+        rm src/lua.o src/luac.o
+        armv7a-linux-androideabi29-clang -shared -o liblua54.so src/*.o -lm -llog -ldl
+
+        cp -f liblua54.so $(pwd)/../FreeKill/lib/android/
+    
+    - name: Build SQLite 3.51.2
+      run: |
+        cd ..
+        wget https://www.sqlite.org/2026/sqlite-src-3510200.zip
+        unzip sqlite-src-3510200.zip
+        cd sqlite-src-3510200
+
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+
+        
+        export API=23
+        export TOOLCHAIN=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+        export TARGET=armv7a-linux-androideabi
+        export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+        export AR=$TOOLCHAIN/bin/llvm-ar
+        export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+        
+        ./configure --build=arm-v7-linux-androideabi --prefix=$(pwd)/install --enable-shared CFLAGS="-fPIC -Os -DSQLITE_ENABLE_UNLOCK_NOTIFY=1 -DSQLITE_OMIT_LOAD_EXTENSION=1"
+        make all
+        
+        cp -f libsqlite3.so $(pwd)/../FreeKill/lib/android/
 
     - name: Install swig
       run: |
@@ -113,7 +162,7 @@ jobs:
         version: '6.10.0'
         host: 'linux'
         target: 'android'
-        arch: 'android_arm64_v8a'
+        arch: 'android_armv7'
         modules: 'qtmultimedia qt5compat qtshadertools'
 
     - name: Copy android assets
@@ -134,6 +183,9 @@ jobs:
         echo ${FKVER%)} > ../fk_ver
         ../genfkver.sh
         cp ../fk_ver assets/res
+        
+    - name: Fix qt-cmake permissions (workaround for cached Qt)
+      run: chmod +x ${Qt6_DIR}/bin/qt-cmake
 
     - name: Configure CMake Project
       working-directory: ${{github.workspace}}
@@ -201,4 +253,3 @@ jobs:
         token: ${{ secrets.MY_TOKEN }}
         tag_name: ${{ steps.previoustag.outputs.tag }}
         files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
-
