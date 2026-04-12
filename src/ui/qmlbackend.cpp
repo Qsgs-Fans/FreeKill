@@ -14,6 +14,12 @@
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <QtConcurrent>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <mmsystem.h>
+#endif
+
 #endif
 
 #include <cstdlib>
@@ -294,13 +300,27 @@ void QmlBackend::playSound(const QString &name, int index) {
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
       "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
+#elif defined (Q_OS_WIN)
+  QString abs = QFileInfo(fname).absoluteFilePath();
+  abs = QDir::toNativeSeparators(abs);
+
+  QString cmdOpen = QString("open \"%1\" type mpegvideo alias sfx").arg(abs);
+  mciSendStringW((LPCWSTR)cmdOpen.utf16(), NULL, 0, NULL);
+
+  QString cmdVolume = QString("setaudio sfx volume to %1")
+                          .arg((int)(m_volume * 10)); // 0~1000
+  mciSendStringW((LPCWSTR)cmdVolume.utf16(), NULL, 0, NULL);
+
+  mciSendStringW(L"play sfx from 0", NULL, 0, NULL);
+
+  // 不需要close，MCI会自动管理，重复open同alias会复用
+  return;
 #else
   if (maxConcurrentPlayback < 0) return;
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
   maxConcurrentPlayback--;
 
-  // 避免windows掉帧 使用线程池
   auto future = QtConcurrent::run([=, this] {
     player->setAudioOutput(output);
     player->setSource(QUrl::fromLocalFile(fname));
