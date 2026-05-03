@@ -12,6 +12,7 @@
 # IDE & LSP
 /.kdev4/
 /.vscode/
+/.qtcreator
 /*.user
 *-swp
 /*.kdev4
