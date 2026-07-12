@@ -65,6 +65,28 @@ if (DEFINED FK_USE_JEMALLOC)
 endif ()
 
 qt_add_executable(FreeKill)
+
+if (APPLE AND NOT IOS)
+  set_target_properties(FreeKill PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_BUNDLE_NAME "FreeKill"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "org.notify.FreeKill"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION}"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
+  )
+elseif (IOS)
+  set_target_properties(FreeKill PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_BUNDLE_NAME "FreeKill"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "org.notify.FreeKill"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${CMAKE_PROJECT_VERSION}"
+    MACOSX_BUNDLE_BUNDLE_VERSION "${CMAKE_PROJECT_VERSION}"
+    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "org.notify.FreeKill"
+    XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+    XCODE_ATTRIBUTE_SUPPORTS_MACCATALYST "NO"
+  )
+endif()
+
 link_directories(${LIBGIT2_LIBRARY_DIRS})
 
 if (NOT DEFINED FK_SERVER_ONLY)
@@ -80,6 +102,30 @@ if (NOT DEFINED FK_SERVER_ONLY)
   )
 endif()
 
+if (APPLE)
+  file(GLOB_RECURSE FK_APP_RESOURCES CONFIGURE_DEPENDS
+    RELATIVE ${PROJECT_SOURCE_DIR}
+    audio/*
+    client/*
+    Fk/*
+    fonts/*
+    image/*
+    lua/*
+    packages/init.sql
+    packages/maneuvering/*
+    packages/standard/*
+    packages/standard_cards/*
+    packages/test/*
+    server/*
+    fk_ver
+  )
+  qt_add_resources(FreeKill "app_resources"
+    PREFIX "/res"
+    BASE ${PROJECT_SOURCE_DIR}
+    FILES ${FK_APP_RESOURCES}
+  )
+endif()
+
 add_custom_command(
   TARGET FreeKill
   POST_BUILD
@@ -89,6 +135,15 @@ add_custom_command(
 )
 
 add_subdirectory(src)
+
+if (APPLE)
+  qt_generate_deploy_qml_app_script(
+    TARGET FreeKill
+    OUTPUT_SCRIPT apple_deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+  )
+  install(SCRIPT ${apple_deploy_script})
+endif()
 
 if (DEFINED FK_TESTS)
 enable_testing()
