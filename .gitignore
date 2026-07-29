@@ -28,6 +28,8 @@
 /mymod
 /recording
 freekill-wrap.cxx
+/compile_commands.json
+/quick_start.json
 /server/*
 !/server/init.sql
 !/server/gamedb_init.sql

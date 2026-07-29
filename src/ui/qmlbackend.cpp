@@ -29,6 +29,7 @@ QmlBackend *Backend = nullptr;
 
 QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
+  m_quickStartMode = QStringLiteral("");
 #ifndef FK_SERVER_ONLY
   engine = nullptr;
   replayer = nullptr;

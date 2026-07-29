@@ -263,6 +263,7 @@ int freekill_main(int argc, char *argv[]) {
   parser.addVersionOption();
   parser.addOption({{"s", "server"}, "start server at <port>", "port"});
   parser.addOption({{"h", "help"}, "display help information"});
+  parser.addOption({{"q", "quick-start"}, "quick start a single-player room with <gameMode>", "gameMode"});
   parser.addOption({"testskills", "run test case of skills", "testskills"});
   parser.addOption({"testfile", "run test case of a skill file", "testfile"});
   QStringList cliOptions;
@@ -409,6 +410,37 @@ int freekill_main(int argc, char *argv[]) {
   Backend = new QmlBackend;
   Backend->setEngine(engine);
 
+  // 处理单机快速启动参数
+  QVariantMap quickStartConfig;
+  if (parser.isSet("quick-start")) {
+    QString mode = parser.value("quick-start");
+    if (mode.isEmpty()) {
+      // 未指定模式时从 quick_start.json 读取
+      QFile configFile("quick_start.json");
+      if (configFile.exists() && configFile.open(QIODevice::ReadOnly)) {
+        auto doc = QJsonDocument::fromJson(configFile.readAll());
+        if (doc.isObject()) {
+          quickStartConfig = doc.object().toVariantMap();
+          mode = quickStartConfig.value("gameMode").toString();
+        }
+        configFile.close();
+      }
+      if (mode.isEmpty()) {
+        // 文件不存在或无效则创建默认配置
+        quickStartConfig["gameMode"] = QStringLiteral("aaa_role_mode");
+        QJsonObject defaultConfig;
+        defaultConfig["gameMode"] = QStringLiteral("aaa_role_mode");
+        configFile.open(QIODevice::WriteOnly);
+        configFile.write(QJsonDocument(defaultConfig).toJson());
+        configFile.close();
+        mode = QStringLiteral("aaa_role_mode");
+      }
+    } else {
+      quickStartConfig["gameMode"] = mode;
+    }
+    Backend->setQuickStartMode(mode);
+  }
+
   Pacman = new PackMan;
 
   // 向 Qml 中先定义几个全局变量
@@ -418,6 +450,7 @@ int freekill_main(int argc, char *argv[]) {
   root->setContextProperty("ModBackend", nullptr);
   root->setContextProperty("Pacman", Pacman);
   root->setContextProperty("SysLocale", localeName);
+  root->setContextProperty("_quickStartConfig", quickStartConfig);
 
 #ifdef QT_DEBUG
   bool debugging = true;

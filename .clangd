@@ -1,2 +1,10 @@
 CompileFlags:
+  CompilationDatabase: build/
   Remove: ["-mno-direct-extern-access"]
+
+Index:
+  Background: Build
+
+Diagnostics:
+  Suppress:
+    - "pp_file_not_found"
