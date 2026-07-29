@@ -64,3 +64,4 @@ freekill-wrap.cxx
 /translations/
 /*.dll
 /*.bat
+build.ps1

@@ -54,6 +54,13 @@ bool Lua::dofile(const char *path) {
   return true;
 }
 
+void Lua::setGlobal(const QString &name, const QString &jsonValue) {
+  QMutexLocker locker(needLock() ? &interpreter_lock : nullptr);
+  auto bytes = jsonValue.toUtf8();
+  lua_pushlstring(L, bytes.constData(), bytes.size());
+  lua_setglobal(L, name.toUtf8().constData());
+}
+
 void Lua::dumpStack() {
   int top = lua_gettop(L);
   for (int i = 1; i <= top; i++) {

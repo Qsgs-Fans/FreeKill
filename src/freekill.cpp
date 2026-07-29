@@ -439,6 +439,7 @@ int freekill_main(int argc, char *argv[]) {
       quickStartConfig["gameMode"] = mode;
     }
     Backend->setQuickStartMode(mode);
+    Backend->setQuickStartConfig(quickStartConfig);
   }
 
   Pacman = new PackMan;

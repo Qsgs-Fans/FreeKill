@@ -76,6 +76,9 @@ public:
   QString quickStartMode() const { return m_quickStartMode; }
   void setQuickStartMode(const QString &mode) { m_quickStartMode = mode; emit quickStartModeChanged(); }
 
+  QVariantMap quickStartConfig() const { return m_quickStartConfig; }
+  void setQuickStartConfig(const QVariantMap &config) { m_quickStartConfig = config; }
+
 signals:
   void quickStartModeChanged();
   void notifyUI(const QString &command, const QVariant &data);
@@ -101,6 +104,7 @@ private:
 
   Replayer *replayer;
   QString m_quickStartMode;
+  QVariantMap m_quickStartConfig;
 #endif
 };
 

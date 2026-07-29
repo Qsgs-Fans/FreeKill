@@ -10,6 +10,7 @@
 
 #ifndef FK_SERVER_ONLY
 #include "client/client.h"
+#include "ui/qmlbackend.h"
 #endif
 
 Scheduler::Scheduler(RoomThread *thread) {
@@ -18,6 +19,16 @@ Scheduler::Scheduler(RoomThread *thread) {
     // 危险的cd操作，记得在lua中切回游戏根目录
     QDir::setCurrent("packages/freekill-core");
   }
+
+#ifndef FK_SERVER_ONLY
+  // 单机快速启动时，将配置注入Lua全局变量
+  if (Backend && !Backend->quickStartMode().isEmpty()) {
+    auto config = Backend->quickStartConfig();
+    if (!config.isEmpty()) {
+      L->setGlobal("__quickStartConfig", QJsonDocument(QJsonObject::fromVariantMap(config)).toJson());
+    }
+  }
+#endif
 
   L->dofile("lua/freekill.lua");
   L->dofile("lua/server/scheduler.lua");

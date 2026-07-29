@@ -26,6 +26,7 @@ public:
 
   QVariant call(const QString &func_name, QVariantList params = QVariantList());
   QVariant eval(const QString &lua);
+  void setGlobal(const QString &name, const QString &jsonValue);
 
 private:
   lua_State *L;
