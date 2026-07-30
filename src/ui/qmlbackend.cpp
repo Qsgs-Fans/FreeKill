@@ -13,7 +13,14 @@
 #include <QMediaPlayer>
 #include <QMessageBox>
 #include <QAbstractButton>
+#include <QAtomicInt>
 #include <QtConcurrent>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
+#endif
 #endif
 
 #include <cstdlib>
@@ -295,30 +302,70 @@ void QmlBackend::playSound(const QString &name, int index) {
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
       "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
+#elif defined(Q_OS_WIN)
+  // 使用 Windows MCI 播放，避免 QMediaPlayer(WMF) 对高码率MP3支持不佳的问题
+  // 每个音效用唯一别名支持并发播放
+  if (maxConcurrentPlayback < 0) return;
+  static QAtomicInt sfxCounter(0);
+  int id = sfxCounter.fetchAndAddRelaxed(1) % 100000;
+  QString alias = QString("fk_sfx_%1").arg(id);
+  QString abs = QDir::toNativeSeparators(QFileInfo(fname).absoluteFilePath());
+
+  QString cmdOpen = QString("open \"%1\" type mpegvideo alias %2").arg(abs, alias);
+  if (mciSendStringW((LPCWSTR)cmdOpen.utf16(), NULL, 0, NULL) != 0)
+    return;
+
+  QString cmdVolume = QString("setaudio %1 volume to %2")
+                          .arg(alias).arg((int)(m_volume * 10));
+  mciSendStringW((LPCWSTR)cmdVolume.utf16(), NULL, 0, NULL);
+
+  mciSendStringW((LPCWSTR)QString("play %1 from 0").arg(alias).utf16(), NULL, 0, NULL);
+  maxConcurrentPlayback--;
+
+  // 轮询播放状态，结束后清理
+  auto timer = new QTimer(this);
+  timer->setInterval(300);
+  connect(timer, &QTimer::timeout, this, [=]() mutable {
+    wchar_t buf[64] = {0};
+    mciSendStringW((LPCWSTR)QString("status %1 mode").arg(alias).utf16(), buf, 63, NULL);
+    if (wcscmp(buf, L"playing") != 0) {
+      mciSendStringW((LPCWSTR)QString("close %1").arg(alias).utf16(), NULL, 0, NULL);
+      timer->stop();
+      timer->deleteLater();
+      maxConcurrentPlayback++;
+    }
+  });
+  timer->start();
 #else
   if (maxConcurrentPlayback < 0) return;
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
   maxConcurrentPlayback--;
 
-  // 避免windows掉帧 使用线程池
-  auto future = QtConcurrent::run([=, this] {
-    player->setAudioOutput(output);
-    player->setSource(QUrl::fromLocalFile(fname));
-    output->setVolume(m_volume / 100);
+  player->setAudioOutput(output);
+  player->setSource(QUrl::fromLocalFile(fname));
+  output->setVolume(m_volume / 100);
 
-    connect(player, &QMediaPlayer::playbackStateChanged, this, [=, this] {
-      auto state = player->playbackState();
+  // 使用独立线程驱动事件循环，避免主线程卡顿且保证QMediaPlayer正常解码
+  auto thread = new QThread;
+  player->moveToThread(thread);
+  output->moveToThread(thread);
+
+  connect(thread, &QThread::started, player, &QMediaPlayer::play);
+  connect(player, &QMediaPlayer::playbackStateChanged, thread,
+    [=](QMediaPlayer::PlaybackState state) {
       if (state != QMediaPlayer::PlayingState) {
-        player->deleteLater();
-        output->deleteLater();
-        maxConcurrentPlayback++;
+        thread->quit();
       }
     });
-
-    player->play();
+  connect(thread, &QThread::finished, this, [=] {
+    player->deleteLater();
+    output->deleteLater();
+    thread->deleteLater();
+    maxConcurrentPlayback++;
   });
-  Q_UNUSED(future);
+
+  thread->start();
 #endif
 }
 
