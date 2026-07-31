@@ -55,6 +55,9 @@ class Room : public RoomBase {
   bool isStarted() const;
   // ====================================}
 
+  // 向所有Player和observer广播某个消息
+  void broadcast(const QByteArray &command, const QByteArray &data);
+
   void updatePlayerWinRate(int id, const QString &mode, const QString &role, int result);
   void updateGeneralWinRate(const QString &general, const QString &mode, const QString &role, int result);
 
@@ -131,6 +134,8 @@ class Room : public RoomBase {
   void kickPlayer(ServerPlayer *, const QByteArray &);
   void ready(ServerPlayer *, const QByteArray &);
   void startGame(ServerPlayer *, const QByteArray &);
+  void switchToPlayer(ServerPlayer *, const QByteArray &);
+  void switchToObserver(ServerPlayer *, const QByteArray &);
   void trust(ServerPlayer *, const QByteArray &);
   void changeRoom(ServerPlayer *, const QByteArray &);
 };
